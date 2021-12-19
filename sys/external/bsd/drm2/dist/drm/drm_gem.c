@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.17 2021/12/19 01:02:44 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.18 2021/12/19 09:59:57 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.17 2021/12/19 01:02:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.18 2021/12/19 09:59:57 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -565,12 +565,14 @@ EXPORT_SYMBOL(drm_gem_create_mmap_offset);
  * Move pages to appropriate lru and release the pagevec, decrementing the
  * ref count of those pages.
  */
+#ifndef __NetBSD__
 static void drm_gem_check_release_pagevec(struct pagevec *pvec)
 {
 	check_move_unevictable_pages(pvec);
 	__pagevec_release(pvec);
 	cond_resched();
 }
+#endif
 
 /**
  * drm_gem_get_pages - helper to allocate backing pages for a GEM object
