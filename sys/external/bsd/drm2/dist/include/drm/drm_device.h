@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_device.h,v 1.4 2021/12/19 09:52:43 riastradh Exp $	*/
+/*	$NetBSD: drm_device.h,v 1.5 2021/12/19 09:52:50 riastradh Exp $	*/
 
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
@@ -335,7 +335,8 @@ struct drm_device {
 
 	/* Everything below here is for legacy driver, never use! */
 	/* private: */
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
+#if IS_ENABLED(CONFIG_DRM_LEGACY) || \
+    defined(__NetBSD__) /* XXX drm_vm.c / drm_cdevsw.c use this */
 	/* Context handle management - linked list of context handles */
 	struct list_head ctxlist;
 
