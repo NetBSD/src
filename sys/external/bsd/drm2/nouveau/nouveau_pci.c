@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.34 2021/12/19 12:28:12 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.35 2021/12/19 12:45:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.34 2021/12/19 12:28:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.35 2021/12/19 12:45:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #if defined(__arm__) || defined(__aarch64__)
@@ -109,26 +109,19 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	/*
-	 * NetBSD drm2 doesn't support Pascal, Volta or Turing based cards:
-	 *   0x1580-0x15ff 	GP100
-	 *   0x1b00-0x1b7f 	GP102
-	 *   0x1b80-0x1bff 	GP104
-	 *   0x1c00-0x1c7f 	GP106
-	 *   0x1c80-0x1cff 	GP107
-	 *   0x1d00-0x1d7f 	GP108
-	 *   0x1d80-0x1dff 	GV100
-	 *   0x1e00-0x1e7f 	TU102
-	 *   0x1e80-0x1eff 	TU104
-	 *   0x1f00-0x1f7f 	TU106
-	 *   0x1f80-0x1fff 	TU117
-	 *   0x2180-0x21ff 	TU116
+	 * NetBSD drm2/5.6 doesn't support Ampere (GTX 30 series) based cards:
+	 *   0x2080-0x20ff 	GA100
+	 *   0x2200-0x227f 	GA102
+	 *   0x2300-0x237f 	GA103
+	 *   0x2480-0x24ff 	GA104
+	 *   0x2500-0x257f 	GA106
+	 *   0x2580-0x25ff 	GA107
 	 *
-	 * reduce this to >= 1580, so that new chipsets not explictly
-	 * listed above will be picked up.
-	 *
-	 * XXX perhaps switch this to explicitly match known list.
+	 * TU116 (GTX 16xx) occupies the space from 0x2180-0x21ff.
 	 */
-	if (PCI_PRODUCT(pa->pa_id) >= 0x1580)
+	if (PCI_PRODUCT(pa->pa_id) >= 0x1fff && PCI_PRODUCT(pa->pa_id) < 0x2180)
+		return 0;
+	if (PCI_PRODUCT(pa->pa_id) >= 0x21ff)
 		return 0;
 
 	linux_pci_dev_init(&pdev, parent /* XXX bogus */, parent, pa, 0);
