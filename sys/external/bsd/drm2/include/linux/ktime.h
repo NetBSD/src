@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.17 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.18 2021/12/19 12:01:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -143,6 +143,12 @@ ktime_get_raw(void)
 {
 	/* XXX */
 	return ktime_get();
+}
+
+static inline uint64_t
+ktime_get_ns(void)
+{
+	return ktime_to_ns(ktime_get());
 }
 
 static inline uint64_t
