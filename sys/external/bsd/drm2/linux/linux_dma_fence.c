@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.1 2021/12/19 00:27:01 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.2 2021/12/19 00:27:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,50 +30,51 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.1 2021/12/19 00:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.2 2021/12/19 00:27:17 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
 
 #include <linux/atomic.h>
+#include <linux/dma-fence.h>
 #include <linux/errno.h>
 #include <linux/kref.h>
-#include <linux/fence.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
 
 /*
- * linux_fence_trace
+ * linux_dma_fence_trace
  *
- *	True if we print FENCE_TRACE messages, false if not.  These are
- *	extremely noisy, too much even for AB_VERBOSE and AB_DEBUG in
- *	boothowto.
+ *	True if we print DMA_FENCE_TRACE messages, false if not.  These
+ *	are extremely noisy, too much even for AB_VERBOSE and AB_DEBUG
+ *	in boothowto.
  */
-int	linux_fence_trace = 0;
+int	linux_dma_fence_trace = 0;
 
 /*
- * fence_referenced_p(fence)
+ * dma_fence_referenced_p(fence)
  *
  *	True if fence has a positive reference count.  True after
- *	fence_init; after the last fence_put, this becomes false.
+ *	dma_fence_init; after the last dma_fence_put, this becomes
+ *	false.
  */
 static inline bool __diagused
-fence_referenced_p(struct fence *fence)
+dma_fence_referenced_p(struct dma_fence *fence)
 {
 
 	return kref_referenced_p(&fence->refcount);
 }
 
 /*
- * fence_init(fence, ops, lock, context, seqno)
+ * dma_fence_init(fence, ops, lock, context, seqno)
  *
- *	Initialize fence.  Caller should call fence_destroy when done,
- *	after all references have been released.
+ *	Initialize fence.  Caller should call dma_fence_destroy when
+ *	done, after all references have been released.
  */
 void
-fence_init(struct fence *fence, const struct fence_ops *ops, spinlock_t *lock,
-    unsigned context, unsigned seqno)
+dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
+    spinlock_t *lock, unsigned context, unsigned seqno)
 {
 
 	kref_init(&fence->refcount);
@@ -83,38 +84,38 @@ fence_init(struct fence *fence, const struct fence_ops *ops, spinlock_t *lock,
 	fence->seqno = seqno;
 	fence->ops = ops;
 	TAILQ_INIT(&fence->f_callbacks);
-	cv_init(&fence->f_cv, "fence");
+	cv_init(&fence->f_cv, "dmafence");
 }
 
 /*
- * fence_destroy(fence)
+ * dma_fence_destroy(fence)
  *
- *	Clean up memory initialized with fence_init.  This is meant to
- *	be used after a fence release callback.
+ *	Clean up memory initialized with dma_fence_init.  This is meant
+ *	to be used after a fence release callback.
  */
 void
-fence_destroy(struct fence *fence)
+dma_fence_destroy(struct dma_fence *fence)
 {
 
-	KASSERT(!fence_referenced_p(fence));
+	KASSERT(!dma_fence_referenced_p(fence));
 
 	KASSERT(TAILQ_EMPTY(&fence->f_callbacks));
 	cv_destroy(&fence->f_cv);
 }
 
 static void
-fence_free_cb(struct rcu_head *rcu)
+dma_fence_free_cb(struct rcu_head *rcu)
 {
-	struct fence *fence = container_of(rcu, struct fence, f_rcu);
+	struct dma_fence *fence = container_of(rcu, struct dma_fence, f_rcu);
 
-	KASSERT(!fence_referenced_p(fence));
+	KASSERT(!dma_fence_referenced_p(fence));
 
-	fence_destroy(fence);
+	dma_fence_destroy(fence);
 	kfree(fence);
 }
 
 /*
- * fence_free(fence)
+ * dma_fence_free(fence)
  *
  *	Schedule fence to be destroyed and then freed with kfree after
  *	any pending RCU read sections on all CPUs have completed.
@@ -123,25 +124,25 @@ fence_free_cb(struct rcu_head *rcu)
  *
  *	NOTE: Callers assume kfree will be used.  We don't even use
  *	kmalloc to allocate these -- caller is expected to allocate
- *	memory with kmalloc to be initialized with fence_init.
+ *	memory with kmalloc to be initialized with dma_fence_init.
  */
 void
-fence_free(struct fence *fence)
+dma_fence_free(struct dma_fence *fence)
 {
 
-	KASSERT(!fence_referenced_p(fence));
+	KASSERT(!dma_fence_referenced_p(fence));
 
-	call_rcu(&fence->f_rcu, &fence_free_cb);
+	call_rcu(&fence->f_rcu, &dma_fence_free_cb);
 }
 
 /*
- * fence_context_alloc(n)
+ * dma_fence_context_alloc(n)
  *
  *	Return the first of a contiguous sequence of unique
  *	identifiers, at least until the system wraps around.
  */
 unsigned
-fence_context_alloc(unsigned n)
+dma_fence_context_alloc(unsigned n)
 {
 	static volatile unsigned next_context = 0;
 
@@ -149,7 +150,7 @@ fence_context_alloc(unsigned n)
 }
 
 /*
- * fence_is_later(a, b)
+ * dma_fence_is_later(a, b)
  *
  *	True if the sequence number of fence a is later than the
  *	sequence number of fence b.  Since sequence numbers wrap
@@ -160,7 +161,7 @@ fence_context_alloc(unsigned n)
  *	The two fences must have the same context.
  */
 bool
-fence_is_later(struct fence *a, struct fence *b)
+dma_fence_is_later(struct dma_fence *a, struct dma_fence *b)
 {
 
 	KASSERTMSG(a->context == b->context, "incommensurate fences"
@@ -170,13 +171,13 @@ fence_is_later(struct fence *a, struct fence *b)
 }
 
 /*
- * fence_get(fence)
+ * dma_fence_get(fence)
  *
  *	Acquire a reference to fence.  The fence must not be being
  *	destroyed.  Return the fence.
  */
-struct fence *
-fence_get(struct fence *fence)
+struct dma_fence *
+dma_fence_get(struct dma_fence *fence)
 {
 
 	if (fence)
@@ -185,14 +186,14 @@ fence_get(struct fence *fence)
 }
 
 /*
- * fence_get_rcu(fence)
+ * dma_fence_get_rcu(fence)
  *
  *	Attempt to acquire a reference to a fence that may be about to
  *	be destroyed, during a read section.  Return the fence on
  *	success, or NULL on failure.
  */
-struct fence *
-fence_get_rcu(struct fence *fence)
+struct dma_fence *
+dma_fence_get_rcu(struct dma_fence *fence)
 {
 
 	if (!kref_get_unless_zero(&fence->refcount))
@@ -201,36 +202,37 @@ fence_get_rcu(struct fence *fence)
 }
 
 static void
-fence_release(struct kref *refcount)
+dma_fence_release(struct kref *refcount)
 {
-	struct fence *fence = container_of(refcount, struct fence, refcount);
+	struct dma_fence *fence = container_of(refcount, struct dma_fence,
+	    refcount);
 
-	KASSERT(!fence_referenced_p(fence));
+	KASSERT(!dma_fence_referenced_p(fence));
 
 	if (fence->ops->release)
 		(*fence->ops->release)(fence);
 	else
-		fence_free(fence);
+		dma_fence_free(fence);
 }
 
 /*
- * fence_put(fence)
+ * dma_fence_put(fence)
  *
  *	Release a reference to fence.  If this was the last one, call
  *	the fence's release callback.
  */
 void
-fence_put(struct fence *fence)
+dma_fence_put(struct dma_fence *fence)
 {
 
 	if (fence == NULL)
 		return;
-	KASSERT(fence_referenced_p(fence));
-	kref_put(&fence->refcount, &fence_release);
+	KASSERT(dma_fence_referenced_p(fence));
+	kref_put(&fence->refcount, &dma_fence_release);
 }
 
 /*
- * fence_ensure_signal_enabled(fence)
+ * dma_fence_ensure_signal_enabled(fence)
  *
  *	Internal subroutine.  If the fence was already signalled,
  *	return -ENOENT.  Otherwise, if the enable signalling callback
@@ -241,27 +243,27 @@ fence_put(struct fence *fence)
  *	Caller must hold the fence's lock.
  */
 static int
-fence_ensure_signal_enabled(struct fence *fence)
+dma_fence_ensure_signal_enabled(struct dma_fence *fence)
 {
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 	KASSERT(spin_is_locked(fence->lock));
 
 	/* If the fence was already signalled, fail with -ENOENT.  */
-	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT))
+	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT))
 		return -ENOENT;
 
 	/*
 	 * If the enable signaling callback has been called, success.
 	 * Otherwise, set the bit indicating it.
 	 */
-	if (test_and_set_bit(FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags))
+	if (test_and_set_bit(DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags))
 		return 0;
 
 	/* Otherwise, note that we've called it and call it.  */
 	if (!(*fence->ops->enable_signaling)(fence)) {
 		/* If it failed, signal and return -ENOENT.  */
-		fence_signal_locked(fence);
+		dma_fence_signal_locked(fence);
 		return -ENOENT;
 	}
 
@@ -270,7 +272,7 @@ fence_ensure_signal_enabled(struct fence *fence)
 }
 
 /*
- * fence_add_callback(fence, fcb, fn)
+ * dma_fence_add_callback(fence, fcb, fn)
  *
  *	If fence has been signalled, return -ENOENT.  If the enable
  *	signalling callback hasn't been called yet, call it; if it
@@ -278,18 +280,19 @@ fence_ensure_signal_enabled(struct fence *fence)
  *	fcb) when it is signalled, and return 0.
  *
  *	The fence uses memory allocated by the caller in fcb from the
- *	time of fence_add_callback either to the time of
- *	fence_remove_callback, or just before calling fn.
+ *	time of dma_fence_add_callback either to the time of
+ *	dma_fence_remove_callback, or just before calling fn.
  */
 int
-fence_add_callback(struct fence *fence, struct fence_cb *fcb, fence_func_t fn)
+dma_fence_add_callback(struct dma_fence *fence, struct dma_fence_cb *fcb,
+    dma_fence_func_t fn)
 {
 	int ret;
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 
 	/* Optimistically try to skip the lock if it's already signalled.  */
-	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT)) {
+	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT)) {
 		ret = -ENOENT;
 		goto out0;
 	}
@@ -298,7 +301,7 @@ fence_add_callback(struct fence *fence, struct fence_cb *fcb, fence_func_t fn)
 	spin_lock(fence->lock);
 
 	/* Ensure signalling is enabled, or fail if we can't.  */
-	ret = fence_ensure_signal_enabled(fence);
+	ret = dma_fence_ensure_signal_enabled(fence);
 	if (ret)
 		goto out1;
 
@@ -313,19 +316,19 @@ out0:	return ret;
 }
 
 /*
- * fence_remove_callback(fence, fcb)
+ * dma_fence_remove_callback(fence, fcb)
  *
  *	Remove the callback fcb from fence.  Return true if it was
  *	removed from the list, or false if it had already run and so
  *	was no longer queued anyway.  Caller must have already called
- *	fence_add_callback(fence, fcb).
+ *	dma_fence_add_callback(fence, fcb).
  */
 bool
-fence_remove_callback(struct fence *fence, struct fence_cb *fcb)
+dma_fence_remove_callback(struct dma_fence *fence, struct dma_fence_cb *fcb)
 {
 	bool onqueue;
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 
 	spin_lock(fence->lock);
 	onqueue = fcb->fcb_onqueue;
@@ -339,7 +342,7 @@ fence_remove_callback(struct fence *fence, struct fence_cb *fcb)
 }
 
 /*
- * fence_enable_sw_signaling(fence)
+ * dma_fence_enable_sw_signaling(fence)
  *
  *	If it hasn't been called yet and the fence hasn't been
  *	signalled yet, call the fence's enable_sw_signaling callback.
@@ -347,54 +350,54 @@ fence_remove_callback(struct fence *fence, struct fence_cb *fcb)
  *	returning false, signal the fence.
  */
 void
-fence_enable_sw_signaling(struct fence *fence)
+dma_fence_enable_sw_signaling(struct dma_fence *fence)
 {
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 
 	spin_lock(fence->lock);
-	(void)fence_ensure_signal_enabled(fence);
+	(void)dma_fence_ensure_signal_enabled(fence);
 	spin_unlock(fence->lock);
 }
 
 /*
- * fence_is_signaled(fence)
+ * dma_fence_is_signaled(fence)
  *
  *	Test whether the fence has been signalled.  If it has been
- *	signalled by fence_signal(_locked), return true.  If the
+ *	signalled by dma_fence_signal(_locked), return true.  If the
  *	signalled callback returns true indicating that some implicit
  *	external condition has changed, call the callbacks as if with
- *	fence_signal.
+ *	dma_fence_signal.
  */
 bool
-fence_is_signaled(struct fence *fence)
+dma_fence_is_signaled(struct dma_fence *fence)
 {
 	bool signaled;
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 
 	spin_lock(fence->lock);
-	signaled = fence_is_signaled_locked(fence);
+	signaled = dma_fence_is_signaled_locked(fence);
 	spin_unlock(fence->lock);
 
 	return signaled;
 }
 
 /*
- * fence_is_signaled_locked(fence)
+ * dma_fence_is_signaled_locked(fence)
  *
  *	Test whether the fence has been signalled.  Like
- *	fence_is_signaleed, but caller already holds the fence's lock.
+ *	dma_fence_is_signaleed, but caller already holds the fence's lock.
  */
 bool
-fence_is_signaled_locked(struct fence *fence)
+dma_fence_is_signaled_locked(struct dma_fence *fence)
 {
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 	KASSERT(spin_is_locked(fence->lock));
 
 	/* Check whether we already set the signalled bit.  */
-	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT))
+	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT))
 		return true;
 
 	/* If there's a signalled callback, test it.  */
@@ -403,9 +406,9 @@ fence_is_signaled_locked(struct fence *fence)
 			/*
 			 * It's been signalled implicitly by some
 			 * external phenomonen.  Act as though someone
-			 * has called fence_signal.
+			 * has called dma_fence_signal.
 			 */
-			fence_signal_locked(fence);
+			dma_fence_signal_locked(fence);
 			return true;
 		}
 	}
@@ -414,7 +417,7 @@ fence_is_signaled_locked(struct fence *fence)
 }
 
 /*
- * fence_signal(fence)
+ * dma_fence_signal(fence)
  *
  *	Signal the fence.  If it has already been signalled, return
  *	-EINVAL.  If it has not been signalled, call the enable
@@ -423,35 +426,35 @@ fence_is_signaled_locked(struct fence *fence)
  *	return 0.
  */
 int
-fence_signal(struct fence *fence)
+dma_fence_signal(struct dma_fence *fence)
 {
 	int ret;
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 
 	spin_lock(fence->lock);
-	ret = fence_signal_locked(fence);
+	ret = dma_fence_signal_locked(fence);
 	spin_unlock(fence->lock);
 
 	return ret;
 }
 
 /*
- * fence_signal_locked(fence)
+ * dma_fence_signal_locked(fence)
  *
- *	Signal the fence.  Like fence_signal, but caller already holds
- *	the fence's lock.
+ *	Signal the fence.  Like dma_fence_signal, but caller already
+ *	holds the fence's lock.
  */
 int
-fence_signal_locked(struct fence *fence)
+dma_fence_signal_locked(struct dma_fence *fence)
 {
-	struct fence_cb *fcb, *next;
+	struct dma_fence_cb *fcb, *next;
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 	KASSERT(spin_is_locked(fence->lock));
 
 	/* If it's been signalled, fail; otherwise set the signalled bit.  */
-	if (test_and_set_bit(FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+	if (test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
 		return -EINVAL;
 
 	/* Wake waiters.  */
@@ -469,7 +472,7 @@ fence_signal_locked(struct fence *fence)
 }
 
 struct wait_any {
-	struct fence_cb	fcb;
+	struct dma_fence_cb	fcb;
 	struct wait_any1 {
 		kmutex_t	lock;
 		kcondvar_t	cv;
@@ -478,11 +481,11 @@ struct wait_any {
 };
 
 static void
-wait_any_cb(struct fence *fence, struct fence_cb *fcb)
+wait_any_cb(struct dma_fence *fence, struct dma_fence_cb *fcb)
 {
 	struct wait_any *cb = container_of(fcb, struct wait_any, fcb);
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 
 	mutex_enter(&cb->common->lock);
 	cb->common->done = true;
@@ -491,14 +494,14 @@ wait_any_cb(struct fence *fence, struct fence_cb *fcb)
 }
 
 /*
- * fence_wait_any_timeout(fence, nfences, intr, timeout)
+ * dma_fence_wait_any_timeout(fence, nfences, intr, timeout)
  *
  *	Wait for any of fences[0], fences[1], fences[2], ...,
  *	fences[nfences-1] to be signaled.
  */
 long
-fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
-    long timeout)
+dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
+    bool intr, long timeout)
 {
 	struct wait_any1 common;
 	struct wait_any *cb;
@@ -521,8 +524,9 @@ fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
 	/* Add a callback to each of the fences, or stop here if we can't.  */
 	for (i = 0; i < nfences; i++) {
 		cb[i].common = &common;
-		KASSERT(fence_referenced_p(fences[i]));
-		ret = fence_add_callback(fences[i], &cb[i].fcb, &wait_any_cb);
+		KASSERT(dma_fence_referenced_p(fences[i]));
+		ret = dma_fence_add_callback(fences[i], &cb[i].fcb,
+		    &wait_any_cb);
 		if (ret)
 			goto out1;
 	}
@@ -533,7 +537,7 @@ fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
 	 * notified by one of the callbacks when they have.
 	 */
 	for (j = 0; j < nfences; j++) {
-		if (test_bit(FENCE_FLAG_SIGNALED_BIT, &fences[j]->flags))
+		if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fences[j]->flags))
 			goto out1;
 	}
 
@@ -590,7 +594,7 @@ fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
 	}
 
 out1:	while (i --> 0)
-		(void)fence_remove_callback(fences[i], &cb[i].fcb);
+		(void)dma_fence_remove_callback(fences[i], &cb[i].fcb);
 	cv_destroy(&common.cv);
 	mutex_destroy(&common.lock);
 	kfree(cb);
@@ -598,7 +602,7 @@ out0:	return ret;
 }
 
 /*
- * fence_wait_timeout(fence, intr, timeout)
+ * dma_fence_wait_timeout(fence, intr, timeout)
  *
  *	Wait until fence is signalled; or until interrupt, if intr is
  *	true; or until timeout, if positive.  Return -ERESTARTSYS if
@@ -611,10 +615,10 @@ out0:	return ret;
  *	MAX_SCHEDULE_TIMEOUT.
  */
 long
-fence_wait_timeout(struct fence *fence, bool intr, long timeout)
+dma_fence_wait_timeout(struct dma_fence *fence, bool intr, long timeout)
 {
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 	KASSERT(timeout >= 0);
 	KASSERT(timeout < MAX_SCHEDULE_TIMEOUT);
 
@@ -622,7 +626,7 @@ fence_wait_timeout(struct fence *fence, bool intr, long timeout)
 }
 
 /*
- * fence_wait(fence, intr)
+ * dma_fence_wait(fence, intr)
  *
  *	Wait until fence is signalled; or until interrupt, if intr is
  *	true.  Return -ERESTARTSYS if interrupted, negative error code
@@ -630,11 +634,11 @@ fence_wait_timeout(struct fence *fence, bool intr, long timeout)
  *	wait callback with MAX_SCHEDULE_TIMEOUT.
  */
 long
-fence_wait(struct fence *fence, bool intr)
+dma_fence_wait(struct dma_fence *fence, bool intr)
 {
 	long ret;
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 
 	ret = (*fence->ops->wait)(fence, intr, MAX_SCHEDULE_TIMEOUT);
 	KASSERT(ret != 0);
@@ -643,7 +647,7 @@ fence_wait(struct fence *fence, bool intr)
 }
 
 /*
- * fence_default_wait(fence, intr, timeout)
+ * dma_fence_default_wait(fence, intr, timeout)
  *
  *	Default implementation of fence wait callback using a condition
  *	variable.  If the fence is already signalled, return timeout,
@@ -653,25 +657,25 @@ fence_wait(struct fence *fence, bool intr)
  *	timeout is MAX_SCHEDULE_TIMEOUT, treat it as no timeout.
  */
 long
-fence_default_wait(struct fence *fence, bool intr, long timeout)
+dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
 {
 	int starttime = 0, now = 0, deadline = 0; /* XXXGCC */
 	kmutex_t *lock = &fence->lock->sl_lock;
 	long ret = 0;
 
-	KASSERT(fence_referenced_p(fence));
+	KASSERT(dma_fence_referenced_p(fence));
 	KASSERTMSG(timeout >= 0, "timeout %ld", timeout);
 	KASSERTMSG(timeout <= MAX_SCHEDULE_TIMEOUT, "timeout %ld", timeout);
 
 	/* Optimistically try to skip the lock if it's already signalled.  */
-	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT))
+	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT))
 		return (timeout < MAX_SCHEDULE_TIMEOUT ? timeout : 1);
 
 	/* Acquire the lock.  */
 	spin_lock(fence->lock);
 
 	/* Ensure signalling is enabled, or fail if we can't.  */
-	ret = fence_ensure_signal_enabled(fence);
+	ret = dma_fence_ensure_signal_enabled(fence);
 	if (ret)
 		goto out;
 
@@ -684,7 +688,7 @@ fence_default_wait(struct fence *fence, bool intr, long timeout)
 	}
 
 	/* Wait until the signalled bit is set.  */
-	while (!(fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT))) {
+	while (!(fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT))) {
 		/*
 		 * If there's a timeout and we've passed the deadline,
 		 * give up.
