@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_fence_reg.c,v 1.3 2021/12/19 11:31:19 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_fence_reg.c,v 1.4 2021/12/19 11:31:26 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -24,8 +24,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence_reg.c,v 1.3 2021/12/19 11:31:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence_reg.c,v 1.4 2021/12/19 11:31:26 riastradh Exp $");
 
+#include <linux/bitmap.h>
 #include <drm/i915_drm.h>
 
 #include "i915_drv.h"
