@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.10 2021/12/19 12:03:30 riastradh Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.11 2021/12/19 12:04:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ io_mapping_map_wc(struct io_mapping *mapping, bus_addr_t offset,
 		    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE);
 		KASSERT(cookie != (paddr_t)-1);
 
-		pmap_kenter_pa(va, pmap_phys_address(cookie),
+		pmap_kenter_pa(va + pg*PAGE_SIZE, pmap_phys_address(cookie),
 		    PROT_READ|PROT_WRITE, pmap_mmap_flags(cookie));
 	}
 	pmap_update(pmap_kernel());
@@ -166,7 +166,7 @@ io_mapping_unmap(struct io_mapping *mapping, void *ptr __diagused)
 	KASSERT(!mapping->diom_atomic);
 	KASSERT(mapping->diom_va != va);
 
-	pmap_kremove(va, PAGE_SIZE);
+	pmap_kremove(va, mapping->diom_mapsize);
 	pmap_update(pmap_kernel());
 
 	uvm_km_free(kernel_map, va, mapping->diom_mapsize, UVM_KMF_VAONLY);
