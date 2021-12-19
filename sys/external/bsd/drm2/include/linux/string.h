@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.8 2021/12/19 09:51:20 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.9 2021/12/19 10:48:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -132,5 +132,21 @@ memset_p(void **p, void *v, size_t n)
 }
 
 #define str_has_prefix(str, prefix) strncmp(str, prefix, strlen(prefix))
+
+static inline int
+match_string(const char *const *haystack, size_t n, const char *needle)
+{
+	int i;
+
+	for (i = 0; i < n; i++) {
+		if (haystack[i] == NULL)
+			break;
+		if (strcmp(haystack[i], needle) == 0)
+			return i;
+		if (i == INT_MAX)
+			break;
+	}
+	return -EINVAL;
+}
 
 #endif  /* _LINUX_STRING_H_ */
