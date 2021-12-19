@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_client.c,v 1.1 2021/12/19 10:46:35 riastradh Exp $	*/
+/*	$NetBSD: drm_client.c,v 1.2 2021/12/19 11:07:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_client.c,v 1.1 2021/12/19 10:46:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_client.c,v 1.2 2021/12/19 11:07:49 riastradh Exp $");
 
 #include <sys/kmem.h>
 
@@ -42,6 +42,9 @@ int
 drm_client_init(struct drm_device *dev, struct drm_client_dev *client,
     const char *name, const struct drm_client_funcs *funcs)
 {
+
+	client->dev = dev;
+
 	return 0;
 }
 
