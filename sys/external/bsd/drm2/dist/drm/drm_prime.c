@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.12 2021/12/19 01:53:39 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.13 2021/12/19 01:56:58 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.12 2021/12/19 01:53:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.13 2021/12/19 01:56:58 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -990,7 +990,7 @@ EXPORT_SYMBOL(drm_gem_prime_mmap);
  * Returns 0 on success or a negative error code on failure.
  */
 #ifdef __NetBSD__
-static int
+int
 drm_gem_dmabuf_mmap(struct dma_buf *dma_buf, off_t *offp, size_t size,
     int prot, int *flagsp, int *advicep, struct uvm_object **uobjp,
     int *maxprotp)
