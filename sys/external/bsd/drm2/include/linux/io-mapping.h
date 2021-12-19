@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.9 2021/12/19 11:57:43 riastradh Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.10 2021/12/19 12:03:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,7 +45,8 @@ struct io_mapping {
 	bus_addr_t		base; /* Linux API */
 	bus_size_t		size; /* Linux API */
 	vaddr_t			diom_va;
-	bool			diom_mapped;
+	bus_size_t		diom_mapsize;
+	bool			diom_atomic;
 };
 
 static inline bool
@@ -77,7 +78,8 @@ bus_space_io_mapping_init_wc(bus_space_tag_t bst, struct io_mapping *mapping,
 	mapping->diom_bst = bst;
 	mapping->base = addr;
 	mapping->size = size;
-	mapping->diom_mapped = false;
+	mapping->diom_mapsize = 0;
+	mapping->diom_atomic = false;
 
 	/* Allocate kva for one page.  */
 	mapping->diom_va = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
@@ -91,7 +93,8 @@ static inline void
 io_mapping_fini(struct io_mapping *mapping)
 {
 
-	KASSERT(!mapping->diom_mapped);
+	KASSERT(mapping->diom_mapsize == 0);
+	KASSERT(!mapping->diom_atomic);
 
 	uvm_km_free(kernel_map, mapping->diom_va, PAGE_SIZE, UVM_KMF_VAONLY);
 	mapping->diom_va = 0;	/* paranoia */
@@ -124,14 +127,65 @@ static inline void *
 io_mapping_map_wc(struct io_mapping *mapping, bus_addr_t offset,
     bus_size_t size)
 {
+	bus_size_t pg, npgs = size >> PAGE_SHIFT;
+	vaddr_t va;
 	paddr_t cookie;
 
-	KASSERT(size == PAGE_SIZE);
 	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
 	KASSERT(PAGE_SIZE <= mapping->size);
 	KASSERT(offset <= (mapping->size - PAGE_SIZE));
 	KASSERT(__type_fit(off_t, offset));
-	KASSERT(!mapping->diom_mapped);
+	KASSERT(mapping->diom_mapsize == 0);
+	KASSERT(!mapping->diom_atomic);
+
+	va = uvm_km_alloc(kernel_map, size, PAGE_SIZE,
+	    UVM_KMF_VAONLY|UVM_KMF_WAITVA);
+	for (pg = 0; pg < npgs; pg++) {
+		cookie = bus_space_mmap(mapping->diom_bst, mapping->base,
+		    offset + pg*PAGE_SIZE,
+		    PROT_READ|PROT_WRITE,
+		    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE);
+		KASSERT(cookie != (paddr_t)-1);
+
+		pmap_kenter_pa(va, pmap_phys_address(cookie),
+		    PROT_READ|PROT_WRITE, pmap_mmap_flags(cookie));
+	}
+	pmap_update(pmap_kernel());
+
+	mapping->diom_mapsize = size;
+	mapping->diom_atomic = false;
+	return (void *)va;
+}
+
+static inline void
+io_mapping_unmap(struct io_mapping *mapping, void *ptr __diagused)
+{
+	vaddr_t va = (vaddr_t)ptr;
+
+	KASSERT(mapping->diom_mapsize);
+	KASSERT(!mapping->diom_atomic);
+	KASSERT(mapping->diom_va != va);
+
+	pmap_kremove(va, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	uvm_km_free(kernel_map, va, mapping->diom_mapsize, UVM_KMF_VAONLY);
+
+	mapping->diom_mapsize = 0;
+	mapping->diom_atomic = false;
+}
+
+static inline void *
+io_mapping_map_atomic_wc(struct io_mapping *mapping, bus_addr_t offset)
+{
+	paddr_t cookie;
+
+	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
+	KASSERT(PAGE_SIZE <= mapping->size);
+	KASSERT(offset <= (mapping->size - PAGE_SIZE));
+	KASSERT(__type_fit(off_t, offset));
+	KASSERT(mapping->diom_mapsize == 0);
+	KASSERT(!mapping->diom_atomic);
 
 	cookie = bus_space_mmap(mapping->diom_bst, mapping->base, offset,
 	    PROT_READ|PROT_WRITE,
@@ -142,35 +196,24 @@ io_mapping_map_wc(struct io_mapping *mapping, bus_addr_t offset,
 	    PROT_READ|PROT_WRITE, pmap_mmap_flags(cookie));
 	pmap_update(pmap_kernel());
 
-	mapping->diom_mapped = true;
+	mapping->diom_mapsize = PAGE_SIZE;
+	mapping->diom_atomic = true;
 	return (void *)mapping->diom_va;
 }
 
 static inline void
-io_mapping_unmap(struct io_mapping *mapping, void *ptr __diagused)
+io_mapping_unmap_atomic(struct io_mapping *mapping, void *ptr __diagused)
 {
 
-	KASSERT(mapping->diom_mapped);
+	KASSERT(mapping->diom_mapsize);
+	KASSERT(mapping->diom_atomic);
 	KASSERT(mapping->diom_va == (vaddr_t)ptr);
 
 	pmap_kremove(mapping->diom_va, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 
-	mapping->diom_mapped = false;
-}
-
-static inline void *
-io_mapping_map_atomic_wc(struct io_mapping *mapping, unsigned long offset)
-{
-
-	return io_mapping_map_wc(mapping, offset, PAGE_SIZE);
-}
-
-static inline void
-io_mapping_unmap_atomic(struct io_mapping *mapping, void *ptr)
-{
-
-	io_mapping_unmap(mapping, ptr);
+	mapping->diom_mapsize = 0;
+	mapping->diom_atomic = false;
 }
 
 #endif  /* _LINUX_IO_MAPPING_H_ */
