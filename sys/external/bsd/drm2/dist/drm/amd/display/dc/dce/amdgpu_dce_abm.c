@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce_abm.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce_abm.c,v 1.3 2021/12/19 11:23:26 riastradh Exp $	*/
 
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_abm.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_abm.c,v 1.3 2021/12/19 11:23:26 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -92,8 +92,8 @@ static unsigned int calculate_16_bit_backlight_from_pwm(struct dce_abm *abm_dce)
 {
 	uint64_t current_backlight;
 	uint32_t round_result;
-	uint32_t pwm_period_cntl, bl_period, bl_int_count;
-	uint32_t bl_pwm_cntl, bl_pwm, fractional_duty_cycle_en;
+	uint32_t pwm_period_cntl __unused, bl_period, bl_int_count;
+	uint32_t bl_pwm_cntl __unused, bl_pwm, fractional_duty_cycle_en;
 	uint32_t bl_period_mask, bl_pwm_mask;
 
 	pwm_period_cntl = REG_READ(BL_PWM_PERIOD_CNTL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce_stream_encoder.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce_stream_encoder.c,v 1.3 2021/12/19 11:23:26 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_stream_encoder.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_stream_encoder.c,v 1.3 2021/12/19 11:23:26 riastradh Exp $");
 
 #include <linux/delay.h>
 
@@ -72,7 +72,7 @@ static void dce110_update_generic_info_packet(
 	uint32_t packet_index,
 	const struct dc_info_packet *info_packet)
 {
-	uint32_t regval;
+	uint32_t regval __unused;
 	/* TODOFPGA Figure out a proper number for max_retries polling for lock
 	 * use 50 for now.
 	 */
@@ -1341,7 +1341,7 @@ static void dce110_se_audio_setup(
 {
 	struct dce110_stream_encoder *enc110 = DCE110STRENC_FROM_STRENC(enc);
 
-	uint32_t speakers = 0;
+	uint32_t speakers __unused = 0;
 	uint32_t channels = 0;
 
 	ASSERT(audio_info);
