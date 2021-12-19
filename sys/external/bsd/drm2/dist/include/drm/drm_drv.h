@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.h,v 1.4 2021/12/19 01:56:33 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.h,v 1.5 2021/12/19 09:50:36 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -431,7 +431,7 @@ struct drm_driver {
 	 * Interrupt handler called when using drm_irq_install(). Not used by
 	 * drivers which implement their own interrupt handling.
 	 */
-	irqreturn_t(*irq_handler) (int irq, void *arg);
+	irqreturn_t(*irq_handler) (DRM_IRQ_ARGS);
 
 	/**
 	 * @irq_preinstall:
