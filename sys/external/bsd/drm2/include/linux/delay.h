@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.h,v 1.7 2021/05/31 10:33:04 riastradh Exp $	*/
+/*	$NetBSD: delay.h,v 1.8 2021/12/19 09:43:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+
+#include <linux/kernel.h>
 
 #define	MAX_UDELAY_MS	5
 
