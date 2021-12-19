@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.5 2021/12/19 10:28:31 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.6 2021/12/19 10:28:52 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,12 +6,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.5 2021/12/19 10:28:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.6 2021/12/19 10:28:52 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
 #include <asm/set_memory.h>
 #include <asm/smp.h>
+
+#ifdef __NetBSD__
+#include <drm/io-mapping.h>
+#endif
 
 #include "intel_gt.h"
 #include "i915_drv.h"
