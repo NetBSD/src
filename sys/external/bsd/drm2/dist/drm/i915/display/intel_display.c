@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.4 2021/12/19 11:55:07 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.4 2021/12/19 11:55:07 riastradh Exp $");
 
 #include "intel_display.h"	/* for pipe_drmhack */
 
@@ -15674,6 +15674,7 @@ static int do_rps_boost(struct wait_queue_entry *_wait,
 static void add_rps_boost_after_vblank(struct drm_crtc *crtc,
 				       struct dma_fence *fence)
 {
+#ifndef __NetBSD__		/* XXX i915 rps boost */
 	struct wait_rps_boost *wait;
 
 	if (!dma_fence_is_i915(fence))
@@ -15685,9 +15686,6 @@ static void add_rps_boost_after_vblank(struct drm_crtc *crtc,
 	if (drm_crtc_vblank_get(crtc))
 		return;
 
-#ifdef __NetBSD__
-	panic("NYI %p", &wait);
-#else
 	wait = kmalloc(sizeof(*wait), GFP_KERNEL);
 	if (!wait) {
 		drm_crtc_vblank_put(crtc);
