@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_evict.c,v 1.4 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_evict.c,v 1.5 2021/12/19 11:27:20 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2010 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_evict.c,v 1.4 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_evict.c,v 1.5 2021/12/19 11:27:20 riastradh Exp $");
 
 #include <drm/i915_drm.h>
 
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_evict.c,v 1.4 2021/12/19 01:24:25 riastradh
 
 #include "i915_drv.h"
 #include "i915_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 I915_SELFTEST_DECLARE(static struct igt_evict_ctl {
 	bool fail_if_busy:1;
