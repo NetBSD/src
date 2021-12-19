@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.6 2021/12/19 11:08:02 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.7 2021/12/19 11:08:10 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.6 2021/12/19 11:08:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.7 2021/12/19 11:08:10 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -345,12 +345,14 @@ u64 drm_crtc_accurate_vblank_count(struct drm_crtc *crtc)
 	WARN_ONCE(drm_debug_enabled(DRM_UT_VBL) && !dev->driver->get_vblank_timestamp,
 		  "This function requires support for accurate vblank timestamps.");
 
+	spin_lock(&dev->vbl_lock);
 	spin_lock_irqsave(&dev->vblank_time_lock, flags);
 
 	drm_update_vblank_count(dev, pipe, false);
 	vblank = drm_vblank_count(dev, pipe);
 
 	spin_unlock_irqrestore(&dev->vblank_time_lock, flags);
+	spin_unlock(&dev->vbl_lock);
 
 	return vblank;
 }
