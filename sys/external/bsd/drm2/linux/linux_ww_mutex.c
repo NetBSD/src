@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.7 2019/05/09 05:00:31 ozaki-r Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.8 2021/12/19 10:38:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.7 2019/05/09 05:00:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.8 2021/12/19 10:38:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -831,4 +831,28 @@ ww_mutex_unlock(struct ww_mutex *mutex)
 	WW_UNLOCKED(mutex);
 	cv_broadcast(&mutex->wwm_cv);
 	mutex_exit(&mutex->wwm_lock);
+}
+
+struct ww_acquire_ctx *
+ww_mutex_locking_ctx(struct ww_mutex *mutex)
+{
+	struct ww_acquire_ctx *ctx;
+
+	mutex_enter(&mutex->wwm_lock);
+	switch (mutex->wwm_state) {
+	case WW_UNLOCKED:
+	case WW_OWNED:
+		ctx = NULL;
+		break;
+	case WW_CTX:
+	case WW_WANTOWN:
+		ctx = mutex->wwm_u.ctx;
+		break;
+	default:
+		panic("wait/wound mutex %p in bad state: %d",
+		    mutex, (int)mutex->wwm_state);
+	}
+	mutex_exit(&mutex->wwm_lock);
+
+	return ctx;
 }

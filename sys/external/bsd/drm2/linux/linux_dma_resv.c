@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.3 2021/12/19 10:37:47 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.4 2021/12/19 10:38:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.3 2021/12/19 10:37:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.4 2021/12/19 10:38:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -196,6 +196,20 @@ dma_resv_trylock(struct dma_resv *robj)
 {
 
 	return ww_mutex_trylock(&robj->lock);
+}
+
+/*
+ * dma_resv_locking_ctx(robj)
+ *
+ *	Return a pointer to the ww_acquire_ctx used by the owner of
+ *	the reservation object's lock, or NULL if it is either not
+ *	owned or if it is locked without context.
+ */
+struct ww_acquire_ctx *
+dma_resv_locking_ctx(struct dma_resv *robj)
+{
+
+	return ww_mutex_locking_ctx(&robj->lock);
 }
 
 /*
