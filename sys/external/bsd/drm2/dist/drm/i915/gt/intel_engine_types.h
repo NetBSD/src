@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_types.h,v 1.5 2021/12/19 11:13:22 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_types.h,v 1.6 2021/12/19 11:46:47 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -166,9 +166,11 @@ struct intel_engine_execlists {
 	bool no_priolist;
 
 #ifdef __NetBSD__
-#  define	__iomem
-#endif
-
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t submit_reg;
+	bus_size_t ctrl_reg;
+#else
 	/**
 	 * @submit_reg: gen-specific execlist submission register
 	 * set to the ExecList Submission Port (elsp) register pre-Gen11 and to
@@ -181,9 +183,6 @@ struct intel_engine_execlists {
 	 * submit queue on the HW and to request preemptions to idle
 	 */
 	u32 __iomem *ctrl_reg;
-
-#ifdef __NetBSD__
-#  undef	__iomem
 #endif
 
 #define EXECLIST_MAX_PORTS 2
