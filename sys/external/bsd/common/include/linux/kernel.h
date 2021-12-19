@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.43 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.44 2021/12/19 11:35:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -63,6 +63,11 @@
 #define	IS_REACHABLE(option)	(option)
 
 #define	might_sleep	ASSERT_SLEEPABLE
+#define	might_sleep_if(C) do						      \
+{									      \
+	if (C)								      \
+		might_sleep();						      \
+} while (0)
 
 #define	DEFINE_STATIC_KEY_FALSE(N)	bool N __unused = false
 
