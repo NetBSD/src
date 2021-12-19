@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.13 2021/12/19 12:43:37 riastradh Exp $ */
+/* $NetBSD: rk_vop.c,v 1.14 2021/12/19 12:45:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.13 2021/12/19 12:43:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.14 2021/12/19 12:45:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -624,13 +624,25 @@ rk_vop_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_clock_assign(phandle);
 
+	/* assert all the reset signals for 20us */
 	for (n = 0; n < __arraycount(reset_names); n++) {
 		rst = fdtbus_reset_get(phandle, reset_names[n]);
-		if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
-			aprint_error(": couldn't de-assert reset %s\n", reset_names[n]);
+		if (rst == NULL || fdtbus_reset_assert(rst) != 0) {
+			aprint_error(": couldn't assert reset %s\n",
+			    reset_names[n]);
 			return;
 		}
 	}
+	DELAY(10);
+	for (n = 0; n < __arraycount(reset_names); n++) {
+		rst = fdtbus_reset_get(phandle, reset_names[n]);
+		if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
+			aprint_error(": couldn't de-assert reset %s\n",
+			    reset_names[n]);
+			return;
+		}
+	}
+
 	for (n = 0; n < __arraycount(clock_names); n++) {
 		if (fdtbus_clock_enable(phandle, clock_names[n], true) != 0) {
 			aprint_error(": couldn't enable clock %s\n", clock_names[n]);
