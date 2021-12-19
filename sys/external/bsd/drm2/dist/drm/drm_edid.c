@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_edid.c,v 1.13 2021/12/19 01:02:54 riastradh Exp $	*/
+/*	$NetBSD: drm_edid.c,v 1.14 2021/12/19 09:46:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.13 2021/12/19 01:02:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.14 2021/12/19 09:46:13 riastradh Exp $");
 
 #include <linux/hdmi.h>
 #include <linux/i2c.h>
@@ -1593,7 +1593,7 @@ MODULE_PARM_DESC(edid_fixup,
 
 static void drm_get_displayid(struct drm_connector *connector,
 			      struct edid *edid);
-static int validate_displayid(u8 *displayid, int length, int idx);
+static int validate_displayid(const u8 *displayid, int length, int idx);
 
 static int drm_edid_block_checksum(const u8 *raw_edid)
 {
@@ -3186,7 +3186,7 @@ static const u8 *drm_find_edid_extension(const struct edid *edid, int ext_id)
 }
 
 
-static u8 *drm_find_displayid_extension(const struct edid *edid)
+static const u8 *drm_find_displayid_extension(const struct edid *edid)
 {
 	return drm_find_edid_extension(edid, DISPLAYID_EXT);
 }
@@ -3196,9 +3196,9 @@ static const u8 *drm_find_cea_extension(const struct edid *edid)
 	int ret;
 	int idx = 1;
 	int length = EDID_LENGTH;
-	struct displayid_block *block;
-	u8 *cea;
-	u8 *displayid;
+	const struct displayid_block *block;
+	const u8 *cea;
+	const u8 *displayid;
 
 	/* Look for a top level CEA extension block */
 	cea = drm_find_edid_extension(edid, CEA_EXT);
@@ -3217,7 +3217,7 @@ static const u8 *drm_find_cea_extension(const struct edid *edid)
 	idx += sizeof(struct displayid_hdr);
 	for_each_displayid_db(displayid, block, idx, length) {
 		if (block->tag == DATA_BLOCK_CTA) {
-			cea = (u8 *)block;
+			cea = (const u8 *)block;
 			break;
 		}
 	}

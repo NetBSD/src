@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_displayid.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: drm_displayid.h,v 1.4 2021/12/19 09:46:13 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat Inc.
@@ -95,11 +95,11 @@ struct displayid_detailed_timing_block {
 };
 
 #define for_each_displayid_db(displayid, block, idx, length) \
-	for ((block) = (struct displayid_block *)&(displayid)[idx]; \
+	for ((block) = (const struct displayid_block *)&(displayid)[idx]; \
 	     (idx) + sizeof(struct displayid_block) <= (length) && \
 	     (idx) + sizeof(struct displayid_block) + (block)->num_bytes <= (length) && \
 	     (block)->num_bytes > 0; \
 	     (idx) += (block)->num_bytes + sizeof(struct displayid_block), \
-	     (block) = (struct displayid_block *)&(displayid)[idx])
+	     (block) = (const struct displayid_block *)&(displayid)[idx])
 
 #endif
