@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.6 2021/12/19 01:39:41 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.7 2021/12/19 01:55:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ clear_user(void __user *user_ptr, size_t size)
 	 * out an int.
 	 */
 	while (n --> 0) {
-		if (subyte(p, 0) != 0)
+		if (ustore_char(p, 0) != 0)
 			return ++n;
 	}
 
