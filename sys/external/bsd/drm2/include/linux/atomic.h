@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.27 2021/12/19 01:44:19 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.28 2021/12/19 01:45:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -153,6 +153,23 @@ atomic_dec_and_test(atomic_t *atomic)
 {
 	/* membar implied by atomic_dec_return */
 	return atomic_dec_return(atomic) == 0;
+}
+
+static inline int
+atomic_dec_if_positive(atomic_t *atomic)
+{
+	int v;
+
+	smp_mb__before_atomic();
+	do {
+		v = atomic->a_u.au_uint;
+		__insn_barrier();
+		if (v <= 0)
+			break;
+	} while (atomic_cas_uint(&atomic->a_u.au_uint, v, v - 1) != v);
+	smp_mb__after_atomic();
+
+	return v - 1;
 }
 
 static inline void
