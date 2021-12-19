@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.34 2021/12/19 12:35:21 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.35 2021/12/19 12:38:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.34 2021/12/19 12:35:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.35 2021/12/19 12:38:06 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -406,16 +406,14 @@ dma_fence_ensure_signal_enabled(struct dma_fence *fence)
 
 	/*
 	 * Otherwise, if it wasn't enabled yet, try to enable
-	 * signalling, or fail if the fence doesn't support that.
+	 * signalling.
 	 */
-	if (!already_enabled) {
-		if (fence->ops->enable_signaling == NULL)
-			return -ENOENT;
-		if (!(*fence->ops->enable_signaling)(fence)) {
-			/* If it failed, signal and return -ENOENT.  */
-			dma_fence_signal_locked(fence);
-			return -ENOENT;
-		}
+	if (!already_enabled &&
+	    fence->ops->enable_signaling &&
+	    !(*fence->ops->enable_signaling)(fence)) {
+		/* If it failed, signal and return -ENOENT.  */
+		dma_fence_signal_locked(fence);
+		return -ENOENT;
 	}
 
 	/* Success!  */
