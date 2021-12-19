@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.3 2021/12/19 01:33:44 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.4 2021/12/19 01:39:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #include <linux/gfp.h>
 #include <linux/rcupdate.h>
+
+#define	ARCH_KMALLOC_MINALIGN	4 /* XXX ??? */
 
 /* XXX Should use kmem, but Linux kfree doesn't take the size.  */
 
