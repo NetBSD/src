@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_framebuffer.c,v 1.4 2021/12/19 01:00:09 riastradh Exp $	*/
+/*	$NetBSD: drm_framebuffer.c,v 1.5 2021/12/19 09:47:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,9 +23,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_framebuffer.c,v 1.4 2021/12/19 01:00:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_framebuffer.c,v 1.5 2021/12/19 09:47:35 riastradh Exp $");
 
 #include <linux/export.h>
+#include <linux/capability.h>
 #include <linux/uaccess.h>
 
 #include <drm/drm_atomic.h>
