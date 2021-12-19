@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.7 2021/12/19 11:39:55 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.8 2021/12/19 11:50:39 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.7 2021/12/19 11:39:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.8 2021/12/19 11:50:39 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -100,7 +100,9 @@ int i915_ggtt_init_hw(struct drm_i915_private *i915)
 {
 	int ret;
 
+#ifndef __NetBSD__
 	stash_init(&i915->mm.wc_stash);
+#endif
 
 	/*
 	 * Note that we use page colouring to enforce a guard page at the
