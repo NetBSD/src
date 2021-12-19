@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.51 2021/12/19 01:24:13 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.52 2021/12/19 01:51:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.51 2021/12/19 01:24:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.52 2021/12/19 01:51:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -224,19 +224,20 @@ linux_workqueue_fini(void)
  */
 
 /*
- * alloc_ordered_workqueue(name, flags)
+ * alloc_workqueue(name, flags, max_active)
  *
- *	Create a workqueue of the given name.  No flags are currently
- *	defined.  Return NULL on failure, pointer to struct
- *	workqueue_struct object on success.
+ *	Create a workqueue of the given name.  max_active is the
+ *	maximum number of work items in flight, or 0 for the default.
+ *	Return NULL on failure, pointer to struct workqueue_struct
+ *	object on success.
  */
 struct workqueue_struct *
-alloc_ordered_workqueue(const char *name, int flags)
+alloc_workqueue(const char *name, int flags, unsigned max_active)
 {
 	struct workqueue_struct *wq;
 	int error;
 
-	KASSERT(flags == 0);
+	KASSERT(max_active == 0 || max_active == 1);
 
 	wq = kmem_zalloc(sizeof(*wq), KM_SLEEP);
 
@@ -267,6 +268,18 @@ fail0:	KASSERT(TAILQ_EMPTY(&wq->wq_dqueue));
 	mutex_destroy(&wq->wq_lock);
 	kmem_free(wq, sizeof(*wq));
 	return NULL;
+}
+
+/*
+ * alloc_ordered_workqueue(name, flags)
+ *
+ *	Same as alloc_workqueue(name, flags, 1).
+ */
+struct workqueue_struct *
+alloc_ordered_workqueue(const char *name, int flags)
+{
+
+	return alloc_workqueue(name, flags, 1);
 }
 
 /*
