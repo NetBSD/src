@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_main.c,v 1.10 2021/12/19 12:42:40 riastradh Exp $	*/
+/*	$NetBSD: sched_main.c,v 1.11 2021/12/19 12:42:58 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.10 2021/12/19 12:42:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.11 2021/12/19 12:42:58 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/wait.h>
@@ -751,6 +751,12 @@ static int drm_sched_main(void *param)
 
 	sched_setscheduler(current, SCHED_FIFO, &sparam);
 
+	/* Wait for sched->thread to be initialized by drm_sched_init.  */
+	spin_lock(&sched->job_list_lock);
+	DRM_SPIN_WAIT_UNTIL(r, &sched->wake_up_worker, &sched->job_list_lock,
+	    sched->thread != NULL);
+	spin_unlock(&sched->job_list_lock);
+
 	while (!kthread_should_stop()) {
 		struct drm_sched_entity *entity = NULL;
 		struct drm_sched_fence *s_fence;
@@ -854,14 +860,19 @@ int drm_sched_init(struct drm_gpu_scheduler *sched,
 	atomic64_set(&sched->job_id_count, 0);
 
 	/* Each scheduler will run on a seperate kernel thread */
-	sched->thread = kthread_run(drm_sched_main, sched, sched->name,
-	    &sched->job_list_lock, &sched->wake_up_worker);
-	if (IS_ERR(sched->thread)) {
-		ret = PTR_ERR(sched->thread);
+	struct task_struct *thread =
+	    kthread_run(drm_sched_main, sched, sched->name,
+		&sched->job_list_lock, &sched->wake_up_worker);
+	if (IS_ERR(thread)) {
+		ret = PTR_ERR(thread);
 		sched->thread = NULL;
 		DRM_ERROR("Failed to create scheduler for %s.\n", name);
 		return ret;
 	}
+	spin_lock(&sched->job_list_lock);
+	sched->thread = thread;
+	DRM_SPIN_WAKEUP_ALL(&sched->wake_up_worker, &sched->job_list_lock);
+	spin_unlock(&sched->job_list_lock);
 
 	sched->ready = true;
 	return 0;
