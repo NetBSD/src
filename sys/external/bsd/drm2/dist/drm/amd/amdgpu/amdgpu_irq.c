@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_irq.c,v 1.7 2021/12/19 12:23:16 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_irq.c,v 1.8 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.7 2021/12/19 12:23:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.8 2021/12/19 12:31:45 riastradh Exp $");
 
 #include <linux/irq.h>
 #include <linux/pci.h>
@@ -353,6 +353,8 @@ void amdgpu_irq_fini(struct amdgpu_device *adev)
 		kfree(adev->irq.client[i].sources);
 		adev->irq.client[i].sources = NULL;
 	}
+
+	spin_lock_destroy(&adev->irq.lock);
 }
 
 /**

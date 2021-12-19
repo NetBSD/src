@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
 
 /* The caprices of the preprocessor require that this be declared right here */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $");
 
 #define CREATE_TRACE_POINTS
 
@@ -4455,6 +4455,7 @@ static void amdgpu_dm_connector_destroy(struct drm_connector *connector)
 		i2c_del_adapter(&aconnector->i2c->base);
 		kfree(aconnector->i2c);
 	}
+	mutex_destroy(&aconnector->hpd_lock);
 
 	kfree(connector);
 }

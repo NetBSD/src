@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gfx.c,v 1.5 2021/12/19 12:02:13 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gfx.c,v 1.6 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx.c,v 1.5 2021/12/19 12:02:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx.c,v 1.6 2021/12/19 12:31:45 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "amdgpu_gfx.h"
@@ -328,6 +328,7 @@ void amdgpu_gfx_kiq_free_ring(struct amdgpu_ring *ring)
 {
 	amdgpu_device_wb_free(ring->adev, ring->adev->gfx.kiq.reg_val_offs);
 	amdgpu_ring_fini(ring);
+	spin_lock_destroy(&ring->adev->gfx.kiq.ring_lock);
 }
 
 void amdgpu_gfx_kiq_fini(struct amdgpu_device *adev)

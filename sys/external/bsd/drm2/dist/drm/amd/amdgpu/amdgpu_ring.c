@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ring.c,v 1.6 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ring.c,v 1.7 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  *          Christian König
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ring.c,v 1.6 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ring.c,v 1.7 2021/12/19 12:31:45 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/slab.h>
@@ -381,6 +381,8 @@ void amdgpu_ring_fini(struct amdgpu_ring *ring)
 	ring->me = 0;
 
 	ring->adev->rings[ring->idx] = NULL;
+
+	mutex_destroy(&ring->priority_mutex);
 }
 
 /**

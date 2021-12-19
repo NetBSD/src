@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ctx.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ctx.c,v 1.7 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ctx.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ctx.c,v 1.7 2021/12/19 12:31:45 riastradh Exp $");
 
 #include <drm/drm_auth.h>
 #include "amdgpu.h"
@@ -201,6 +201,7 @@ static void amdgpu_ctx_fini(struct kref *ref)
 	}
 
 	mutex_destroy(&ctx->lock);
+	spin_lock_destroy(&ctx->ring_lock);
 	kfree(ctx);
 }
 
