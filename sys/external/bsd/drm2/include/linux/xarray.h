@@ -1,4 +1,4 @@
-/*	$NetBSD: xarray.h,v 1.3 2021/12/19 10:36:40 riastradh Exp $	*/
+/*	$NetBSD: xarray.h,v 1.4 2021/12/19 11:00:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -45,16 +45,24 @@ struct xa_limit {
 		(ENTRY) = xa_find_after((XA), &(INDEX), ULONG_MAX, 0))
 
 #define	xa_alloc	linux_xa_alloc
+#define	xa_erase	linux_xa_erase
 #define	xa_find		linux_xa_find
 #define	xa_find_after	linux_xa_find_after
-#define	xa_store	linux_xa_store
+#define	xa_init_flags	linux_xa_init_flags
 #define	xa_limit_32b	linux_xa_limit_32b
+#define	xa_load		linux_xa_load
+#define	xa_store	linux_xa_store
+
+void	xa_init_flags(struct xarray *, gfp_t);
+void	xa_destroy(struct xarray *);
 
 int	xa_alloc(struct xarray *, uint32_t *, void *, struct xa_limit, gfp_t);
+void *	xa_load(struct xarray *, unsigned long);
 void *	xa_find(struct xarray *, unsigned long *, unsigned long, unsigned);
 void *	xa_find_after(struct xarray *, unsigned long *, unsigned long,
 	    unsigned);
 void	xa_store(struct xarray *, unsigned long, void *, gfp_t);
+void *	xa_erase(struct xarray *, unsigned long);
 
 extern const struct xa_limit xa_limit_32b;
 
