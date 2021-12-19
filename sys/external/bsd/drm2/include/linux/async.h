@@ -1,4 +1,4 @@
-/*	$NetBSD: async.h,v 1.4 2018/08/27 07:55:49 riastradh Exp $	*/
+/*	$NetBSD: async.h,v 1.5 2021/12/19 11:39:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -58,6 +58,17 @@ async_schedule(void (*fn)(void *, async_cookie_t), void *arg)
  */
 static inline void
 async_synchronize_full(void)
+{
+}
+
+/*
+ * async_synchronize_cookie(cookie)
+ *
+ *	Wait until the function passed to the async_schedule call that
+ *	returned cookie has completed.
+ */
+static inline void
+async_synchronize_cookie(unsigned long cookie)
 {
 }
 
