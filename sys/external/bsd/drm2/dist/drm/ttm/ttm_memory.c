@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_memory.c,v 1.8 2021/12/19 10:29:08 riastradh Exp $	*/
+/*	$NetBSD: ttm_memory.c,v 1.9 2021/12/19 11:07:20 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -29,7 +29,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.8 2021/12/19 10:29:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.9 2021/12/19 11:07:20 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -503,9 +503,7 @@ void ttm_mem_global_release(struct ttm_mem_global *glob)
 		kobject_put(&zone->kobj);
 #endif
 	}
-#ifdef __NetBSD__
-	kfree(glob);
-#else
+#ifndef __NetBSD__
 	kobject_del(&glob->kobj);
 	kobject_put(&glob->kobj);
 #endif
