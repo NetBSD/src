@@ -1,4 +1,4 @@
-/*	$NetBSD: sizes.h,v 1.2 2021/12/19 11:14:56 riastradh Exp $	*/
+/*	$NetBSD: sizes.h,v 1.3 2021/12/19 11:15:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,9 +32,33 @@
 #ifndef	_LINUX_SIZES_H_
 #define	_LINUX_SIZES_H_
 
-#define	SZ_8K		0x00008000
-#define	SZ_64K		0x00010000
-#define	SZ_1M		0x00100000
-#define	SZ_2M		0x00200000
+#define	SZ_64		64u
+#define	SZ_128		128u
+#define	SZ_256		256u
+#define	SZ_512		512u
+#define	SZ_1K		1024u
+#define	SZ_2K		(2ul*SZ_1K)
+#define	SZ_4K		(4ul*SZ_1K)
+#define	SZ_8K		(8ul*SZ_1K)
+#define	SZ_16K		(16ul*SZ_1K)
+#define	SZ_32K		(32ul*SZ_1K)
+#define	SZ_64K		(64ul*SZ_1K)
+#define	SZ_128K		(128ul*SZ_1K)
+#define	SZ_256K		(256ul*SZ_1K)
+#define	SZ_512K		(512ul*SZ_1K)
+#define	SZ_1M		(1024ul*SZ_1K)
+#define	SZ_2M		(2ul*SZ_1M)
+#define	SZ_4M		(4ul*SZ_1M)
+#define	SZ_8M		(8ul*SZ_1M)
+#define	SZ_16M		(16ul*SZ_1M)
+#define	SZ_32M		(32ul*SZ_1M)
+#define	SZ_64M		(64ul*SZ_1M)
+#define	SZ_128M		(128ul*SZ_1M)
+#define	SZ_256M		(256ul*SZ_1M)
+#define	SZ_512M		(512ul*SZ_1M)
+#define	SZ_1G		(1024ul*SZ_1M)
+#define	SZ_2G		(2ul*SZ_1G)
+#define	SZ_4G		(4ull*SZ_1G)
+#define	SZ_8G		(8ull*SZ_1G)
 
 #endif	/* _LINUX_SIZES_H_ */
