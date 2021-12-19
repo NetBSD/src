@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.10 2021/12/19 11:06:19 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.11 2021/12/19 11:07:11 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.10 2021/12/19 11:06:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.11 2021/12/19 11:07:11 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -69,8 +69,10 @@ void
 nvkm_object_remove(struct nvkm_object *object)
 {
 #ifdef __NetBSD__
-	if (object->on_tree)
+	if (object->on_tree) {
 		rb_tree_remove_node(&object->client->objtree, object);
+		object->on_tree = false;
+	}
 #else
 	if (!RB_EMPTY_NODE(&object->node))
 		rb_erase(&object->node, &object->client->objroot);
@@ -83,7 +85,12 @@ nvkm_object_insert(struct nvkm_object *object)
 #ifdef __NetBSD__
 	struct nvkm_object *collision =
 	    rb_tree_insert_node(&object->client->objtree, object);
-	return collision == object;
+
+	if (collision != object)
+		return false;	/* EEXIST */
+
+	object->on_tree = true;
+	return true;
 #else
 	struct rb_node **ptr = &object->client->objroot.rb_node;
 	struct rb_node *parent = NULL;
