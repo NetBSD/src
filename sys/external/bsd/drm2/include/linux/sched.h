@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.20 2021/12/19 12:23:17 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.21 2021/12/19 12:35:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -66,14 +66,16 @@ task_pid_nr(struct proc *p)
 static inline long
 schedule_timeout_uninterruptible(long timeout)
 {
-	long remain;
-	int start, end;
+	unsigned start, end;
+
+	KASSERT(timeout >= 0);
+	KASSERT(timeout < MAX_SCHEDULE_TIMEOUT);
 
 	if (cold) {
 		unsigned us;
 		if (hz <= 1000) {
 			unsigned ms = hztoms(MIN((unsigned long)timeout,
-			    mstohz(INT_MAX)));
+			    mstohz(INT_MAX/2)));
 			us = MIN(ms, INT_MAX/1000)*1000;
 		} else if (hz <= 1000000) {
 			us = MIN(timeout, (INT_MAX/1000000)/hz)*hz*1000000;
@@ -86,11 +88,10 @@ schedule_timeout_uninterruptible(long timeout)
 
 	start = getticks();
 	/* Caller is expected to loop anyway, so no harm in truncating.  */
-	(void)kpause("loonix", false /*!intr*/, MIN(timeout, INT_MAX), NULL);
+	(void)kpause("loonix", /*intr*/false, MIN(timeout, INT_MAX/2), NULL);
 	end = getticks();
 
-	remain = timeout - (end - start);
-	return remain > 0 ? remain : 0;
+	return timeout - MIN(timeout, (end - start));
 }
 
 static inline bool
