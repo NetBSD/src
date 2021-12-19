@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.52 2021/12/19 09:46:55 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.53 2021/12/19 09:50:50 riastradh Exp $
 
 version	20180827
 
@@ -73,6 +73,7 @@ makeoptions 	drmkms 	"CWARNFLAGS.drm_dp_helper.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_fb_helper.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_modes.c"+="-Wno-shadow"
 
 #file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms	# drmkms_pci
 file	external/bsd/drm2/dist/drm/drm_atomic.c	drmkms
