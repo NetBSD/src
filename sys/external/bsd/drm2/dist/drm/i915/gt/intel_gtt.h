@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.4 2021/12/19 01:35:35 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -142,6 +142,13 @@ typedef u64 gen8_pte_t;
 
 struct i915_page_dma {
 	struct page *page;
+#ifdef __NetBSD__
+	union {
+		bus_dma_segment_t seg;
+		uint32_t ggtt_offset;
+	};
+	bus_dmamap_t map;
+#else
 	union {
 		dma_addr_t daddr;
 
@@ -151,6 +158,7 @@ struct i915_page_dma {
 		 */
 		u32 ggtt_offset;
 	};
+#endif
 };
 
 struct i915_page_scratch {
@@ -182,7 +190,11 @@ struct i915_page_directory {
 	__px_choose_expr(px, struct i915_page_table *, &__x->base, \
 	__px_choose_expr(px, struct i915_page_directory *, &__x->pt.base, \
 	(void)0))))
+#ifdef __NetBSD__
+#define px_dma(px) (px_base(px)->map->dm_segs[0].ds_addr)
+#else
 #define px_dma(px) (px_base(px)->daddr)
+#endif
 
 #define px_pt(px) \
 	__px_choose_expr(px, struct i915_page_table *, __x, \
@@ -213,8 +225,10 @@ struct i915_vma_ops {
 };
 
 struct pagestash {
+#ifndef __NetBSD__
 	spinlock_t lock;
 	struct pagevec pvec;
+#endif
 };
 
 void stash_init(struct pagestash *stash);
@@ -226,7 +240,12 @@ struct i915_address_space {
 	struct drm_mm mm;
 	struct intel_gt *gt;
 	struct drm_i915_private *i915;
+#ifdef __NetBSD__
+	bus_dma_tag_t dmat;
+#else
 	struct device *dma;
+#endif
+
 	/*
 	 * Every address space belongs to a struct file - except for the global
 	 * GTT that is owned by the driver (and so @file is set to NULL). In
@@ -264,7 +283,9 @@ struct i915_address_space {
 	 */
 	struct list_head bound_list;
 
+#ifndef __NetBSD__
 	struct pagestash free_pages;
+#endif
 
 	/* Global GTT */
 	bool is_ggtt:1;
@@ -313,11 +334,36 @@ struct i915_ggtt {
 	struct i915_address_space vm;
 
 	struct io_mapping iomap;	/* Mapping to our CPU mappable region */
+#ifdef __NetBSD__
+	struct {
+		bus_addr_t start;
+	} gmadr;
+#else
 	struct resource gmadr;          /* GMADR resource */
+#endif
 	resource_size_t mappable_end;	/* End offset that we can CPU map */
 
 	/** "Graphics Stolen Memory" holds the global PTEs */
+#ifdef __NetBSD__
+	/*
+	 * This is not actually the `Graphics Stolen Memory'; it is the
+	 * graphics translation table, which we write to through the
+	 * GTTADR/GTTMMADR PCI BAR, and which is backed by `Graphics
+	 * GTT Stolen Memory'.  That isn't the `Graphics Stolen Memory'
+	 * either, although it is stolen from main memory.
+	 */
+	bus_space_tag_t		gsmt;
+	bus_space_handle_t	gsmh;
+	bus_size_t		gsmsz;
+
+	/* Maximum physical address that can be wired into a GTT entry.  */
+	uint64_t		max_paddr;
+
+	/* Page freelist for pages limited to the above maximum address.  */
+	int			pgfl;
+#else
 	void __iomem *gsm;
+#endif
 	void (*invalidate)(struct i915_ggtt *ggtt);
 
 	/** PPGTT used for aliasing the PPGTT with the GTT */
@@ -369,7 +415,11 @@ i915_vm_is_4lvl(const struct i915_address_space *vm)
 static inline bool
 i915_vm_has_scratch_64K(struct i915_address_space *vm)
 {
+#ifdef __NetBSD__
+	return vm->scratch_page.seg.ds_len == I915_GTT_PAGE_SIZE_64K;
+#else
 	return vm->scratch_order == get_order(I915_GTT_PAGE_SIZE_64K);
+#endif
 }
 
 static inline bool

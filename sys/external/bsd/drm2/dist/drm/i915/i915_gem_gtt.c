@@ -1,13 +1,12 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.20 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.21 2021/12/19 01:35:35 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
  * Copyright © 2010 Daniel Vetter
  * Copyright © 2020 Intel Corporation
  */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.20 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.21 2021/12/19 01:35:35 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -57,7 +56,7 @@ int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 		 * map or page list.
 		 */
 		if (bus_dmamap_load_pglist(obj->base.dev->dmat, pages,
-			&obj->pageq, pages->dm_mapsize, BUS_DMA_NOWAIT) == 0)
+			&obj->mm.pageq, pages->dm_mapsize, BUS_DMA_NOWAIT) == 0)
 			return 0;
 #else
 		if (dma_map_sg_attrs(&obj->base.dev->pdev->dev,
@@ -93,7 +92,7 @@ void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
 {
 	struct drm_i915_private *dev_priv = to_i915(obj->base.dev);
 #ifdef __NetBSD__
-	bus_dma_tag_t dmat = dev_priv->drm.dev->dmat;
+	bus_dma_tag_t dmat = dev_priv->drm.dmat;
 #else
 	struct device *kdev = &dev_priv->drm.pdev->dev;
 #endif
