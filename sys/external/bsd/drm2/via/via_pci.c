@@ -1,4 +1,4 @@
-/*	$NetBSD: via_pci.c,v 1.6 2021/12/19 10:33:00 riastradh Exp $	*/
+/*	$NetBSD: via_pci.c,v 1.7 2021/12/19 12:30:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_pci.c,v 1.6 2021/12/19 10:33:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_pci.c,v 1.7 2021/12/19 12:30:23 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -39,6 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: via_pci.c,v 1.6 2021/12/19 10:33:00 riastradh Exp $"
 
 #include <linux/pci.h>
 
+#include <drm/drm_device.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_pci.h>
 #include <drm/drm_pciids.h>
 #include <drm/via_drm.h>
 
@@ -50,6 +53,8 @@ struct viadrm_softc {
 	device_t		sc_dev;
 	struct pci_dev		sc_pci_dev;
 	struct drm_device	*sc_drm_dev;
+	bool			sc_pci_attached;
+	bool			sc_dev_registered;
 };
 
 static int	viadrm_match(device_t, cfdata_t, void *);
@@ -120,19 +125,35 @@ viadrm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
 	/* Initialize the Linux PCI device descriptor.  */
 	linux_pci_dev_init(&sc->sc_pci_dev, self, device_parent(self), pa, 0);
 
+	sc->sc_drm_dev = drm_dev_alloc(via_drm_driver, self);
+	if (IS_ERR(sc->sc_drm_dev)) {
+		aprint_error_dev(self, "unable to create drm device: %ld\n",
+		    PTR_ERR(sc->sc_drm_dev));
+		sc->sc_drm_dev = NULL;
+		return;
+	}
+
 	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, via_drm_driver,
-	    *cookiep, &sc->sc_drm_dev);
+	error = -drm_pci_attach(sc->sc_drm_dev, &sc->sc_pci_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
 		return;
 	}
+	sc->sc_pci_attached = true;
+
+	/* XXX errno Linux->NetBSD */
+	error = -drm_dev_register(sc->sc_drm_dev, *cookiep);
+	if (error) {
+		aprint_error_dev(self, "unable to register drm: %d\n", error);
+		return;
+	}
+	sc->sc_dev_registered = true;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -144,15 +165,21 @@ viadrm_detach(device_t self, int flags)
 	error = config_detach_children(self, flags);
 	if (error)
 		return error;
-	if (sc->sc_drm_dev == NULL)
-		goto out;
-	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_detach(sc->sc_drm_dev, flags);
-	if (error)
-		return error;
-	sc->sc_drm_dev = NULL;
 
-out:	linux_pci_dev_destroy(&sc->sc_pci_dev);
 	pmf_device_deregister(self);
+	if (sc->sc_dev_registered) {
+		drm_dev_unregister(sc->sc_drm_dev);
+		sc->sc_dev_registered = false;
+	}
+	if (sc->sc_pci_attached) {
+		drm_pci_detach(sc->sc_drm_dev);
+		sc->sc_pci_attached = false;
+	}
+	if (sc->sc_drm_dev) {
+		drm_dev_put(sc->sc_drm_dev);
+		sc->sc_drm_dev = NULL;
+	}
+	linux_pci_dev_destroy(&sc->sc_pci_dev);
+
 	return 0;
 }

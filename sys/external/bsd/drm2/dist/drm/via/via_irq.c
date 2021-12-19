@@ -1,4 +1,4 @@
-/*	$NetBSD: via_irq.c,v 1.8 2021/12/18 23:45:44 riastradh Exp $	*/
+/*	$NetBSD: via_irq.c,v 1.9 2021/12/19 12:30:23 riastradh Exp $	*/
 
 /* via_irq.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.8 2021/12/18 23:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.9 2021/12/19 12:30:23 riastradh Exp $");
 
 #include <drm/drm_device.h>
 #include <drm/drm_vblank.h>
@@ -129,7 +129,7 @@ irqreturn_t via_driver_irq_handler(DRM_IRQ_ARGS)
 			dev_priv->last_vblank_valid = 1;
 		}
 		if (!(atomic_read(&dev_priv->vbl_received) & 0xFF)) {
-			DRM_DEBUG("nsec per vblank is: %llu\n",
+			DRM_DEBUG("nsec per vblank is: %"PRIu64"\n",
 				  ktime_to_ns(dev_priv->nsec_per_vblank));
 		}
 		drm_handle_vblank(dev, 0);
@@ -252,7 +252,7 @@ via_driver_irq_wait(struct drm_device *dev, unsigned int irq, int force_sequence
 	if (masks[real_irq][2] && !force_sequence) {
 		DRM_SPIN_WAIT_ON(ret, &cur_irq->irq_queue, &cur_irq->irq_lock,
 		    3 * HZ,
-		    ((VIA_READ(masks[irq][2]) & masks[irq][3]) ==
+		    ((via_read(dev_priv, masks[irq][2]) & masks[irq][3]) ==
 			masks[irq][4]));
 		cur_irq_sequence = cur_irq->irq_received;
 	} else {

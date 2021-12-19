@@ -1,4 +1,4 @@
-/*	$NetBSD: via_dmablit.c,v 1.10 2021/12/19 12:29:47 riastradh Exp $	*/
+/*	$NetBSD: via_dmablit.c,v 1.11 2021/12/19 12:30:23 riastradh Exp $	*/
 
 /* via_dmablit.c -- PCI DMA BitBlt support for the VIA Unichrome/Pro
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.10 2021/12/19 12:29:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.11 2021/12/19 12:30:23 riastradh Exp $");
 
 #include <linux/pagemap.h>
 #include <linux/pci.h>
@@ -205,10 +205,11 @@ via_free_sg_info(struct drm_device *dev, struct pci_dev *pdev,
 
 	switch (vsg->state) {
 	case dr_via_device_mapped:
-		via_unmap_blit_from_device(pdev, vsg);
+		via_unmap_blit_from_device(dev, pdev, vsg);
 		/* fall through */
 	case dr_via_desc_pages_alloc:
 #ifdef __NetBSD__
+		__USE(i);
 		bus_dmamap_unload(dev->dmat, vsg->desc_dmamap);
 		bus_dmamap_destroy(dev->dmat, vsg->desc_dmamap);
 		bus_dmamem_unmap(dev->dmat, vsg->desc_kva,
@@ -224,8 +225,13 @@ via_free_sg_info(struct drm_device *dev, struct pci_dev *pdev,
 		kfree(vsg->desc_pages);
 		/* fall through */
 	case dr_via_pages_locked:
+#ifdef __NetBSD__
+		/* XXX uvm_vsunlock? */
+		bus_dmamap_unload(dev->dmat, vsg->dmamap);
+#else
 		unpin_user_pages_dirty_lock(vsg->pages, vsg->num_pages,
 					   (vsg->direction == DMA_FROM_DEVICE));
+#endif
 		/* fall through */
 	case dr_via_pages_alloc:
 #ifdef __NetBSD__
@@ -299,6 +305,7 @@ via_lock_all_dma_pages(struct drm_device *dev, drm_via_sg_info_t *vsg,
 		DRM_ERROR("bus_dmamap_create failed: %d\n", ret);
 		return ret;
 	}
+	/* XXX uvm_vslock? */
 	ret = -bus_dmamap_load_uio(dev->dmat, vsg->dmamap, &uio,
 	    BUS_DMA_WAITOK | (xfer->to_fb? BUS_DMA_WRITE : BUS_DMA_READ));
 	if (ret) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.20 2021/12/19 12:24:05 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.21 2021/12/19 12:30:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -221,6 +221,13 @@ static inline time_t
 ktime_get_real_seconds(void)
 {
 	return time_second;
+}
+
+static inline void
+ktime_get_ts64(struct timespec64 *ts)
+{
+
+	nanotime(ts);
 }
 
 #endif  /* _LINUX_KTIME_H_ */

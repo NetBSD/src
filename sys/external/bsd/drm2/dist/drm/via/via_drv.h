@@ -1,4 +1,4 @@
-/*	$NetBSD: via_drv.h,v 1.6 2021/12/18 23:45:44 riastradh Exp $	*/
+/*	$NetBSD: via_drv.h,v 1.7 2021/12/19 12:30:23 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -139,19 +139,19 @@ enum via_family {
 /* VIA MMIO register access */
 static inline u32 via_read(struct drm_via_private *dev_priv, u32 reg)
 {
-	return readl((void __iomem *)(dev_priv->mmio->handle + reg));
+	return DRM_READ32(dev_priv->mmio, reg);
 }
 
 static inline void via_write(struct drm_via_private *dev_priv, u32 reg,
 			     u32 val)
 {
-	writel(val, (void __iomem *)(dev_priv->mmio->handle + reg));
+	DRM_WRITE32(dev_priv->mmio, reg, val);
 }
 
 static inline void via_write8(struct drm_via_private *dev_priv, u32 reg,
 			      u32 val)
 {
-	writeb(val, (void __iomem *)(dev_priv->mmio->handle + reg));
+	DRM_WRITE8(dev_priv->mmio, reg, val);
 }
 
 static inline void via_write8_mask(struct drm_via_private *dev_priv,
@@ -159,9 +159,9 @@ static inline void via_write8_mask(struct drm_via_private *dev_priv,
 {
 	u32 tmp;
 
-	tmp = readb((void __iomem *)(dev_priv->mmio->handle + reg));
+	tmp = DRM_READ8(dev_priv->mmio, reg);
 	tmp = (tmp & ~mask) | (val & mask);
-	writeb(tmp, (void __iomem *)(dev_priv->mmio->handle + reg));
+	DRM_WRITE8(dev_priv->mmio, reg, tmp);
 }
 
 /*
