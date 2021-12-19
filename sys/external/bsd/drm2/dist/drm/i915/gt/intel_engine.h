@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine.h,v 1.4 2021/12/19 12:40:43 riastradh Exp $	*/
+/*	$NetBSD: intel_engine.h,v 1.5 2021/12/19 12:40:59 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef _INTEL_RINGBUFFER_H_
@@ -125,7 +125,7 @@ static inline void
 execlists_active_unlock_bh(struct intel_engine_execlists *execlists, int s)
 {
 	tasklet_unlock(&execlists->tasklet);
-	splraise(s); /* restore softirq, and kick ksoftirqd! */
+	splx(s); /* restore softirq, and kick ksoftirqd! */
 }
 #else
 static inline void
