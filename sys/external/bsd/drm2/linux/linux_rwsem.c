@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rwsem.c,v 1.3 2021/12/19 11:21:45 riastradh Exp $	*/
+/*	$NetBSD: linux_rwsem.c,v 1.4 2021/12/19 11:21:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rwsem.c,v 1.3 2021/12/19 11:21:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rwsem.c,v 1.4 2021/12/19 11:21:54 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -143,8 +143,9 @@ down_read_trylock(struct rw_semaphore *rwsem)
 	}
 	mutex_exit(&rwsem->rws_lock);
 
-	if (ret)
+	if (ret) {
 		RWSEM_LOCKED_SH(rwsem);
+	}
 
 	return ret;
 }
