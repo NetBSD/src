@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.h,v 1.3 2021/12/19 00:46:23 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Intel Corp.
@@ -32,6 +32,10 @@
 
 #include <drm/drm_file.h>
 #include <drm/drm_modes.h>
+
+#ifdef __NetBSD__		/* XXX */
+#include <drm/drm_wait_netbsd.h>
+#endif
 
 struct drm_device;
 struct drm_crtc;
