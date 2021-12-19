@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_trace_netbsd.h,v 1.1 2018/08/27 15:23:40 riastradh Exp $	*/
+/*	$NetBSD: drm_trace_netbsd.h,v 1.2 2021/12/19 12:42:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,5 +66,11 @@
 #define	TRACE5(m,p,n,a,b,c,d,e)		SDT_PROBE5(sdt,m,p,n,a,b,c,d,e)
 #define	TRACE6(m,p,n,a,b,c,d,e,f)	SDT_PROBE6(sdt,m,p,n,a,b,c,d,e,f)
 #define	TRACE7(m,p,n,a,b,c,d,e,f,g)	SDT_PROBE7(sdt,m,p,n,a,b,c,d,e,f,g)
+
+#ifdef KDTRACE_HOOKS
+#define	__trace_used	/* empty */
+#else
+#define	__trace_used	__unused
+#endif
 
 #endif	/* _LINUX_TRACEPOINT_H_ */
