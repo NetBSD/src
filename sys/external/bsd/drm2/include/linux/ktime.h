@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.12 2021/12/19 01:16:28 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.13 2021/12/19 01:18:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,6 +58,12 @@ static inline ktime_t
 ns_to_ktime(int64_t nsec)
 {
 	return nsec;
+}
+
+static inline ktime_t
+ktime_add(ktime_t a, ktime_t b)
+{
+	return ns_to_ktime(ktime_to_ns(a) + ktime_to_ns(b));
 }
 
 static inline ktime_t
