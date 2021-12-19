@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.3 2021/12/19 09:48:29 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.4 2021/12/19 10:47:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -42,17 +42,9 @@
 
 #define	RCU_INIT_POINTER(P, V)	((P) = (V))
 
-#define	rcu_assign_pointer(P, V) do {					      \
-	__typeof__(*(P)) *__rcu_assign_pointer_tmp = (V);		      \
-	membar_exit();							      \
-	(P) = __rcu_assign_pointer_tmp;					      \
-} while (0)
-
-#define	rcu_dereference(P) ({						      \
-	__typeof__(*(P)) *__rcu_dereference_tmp = (P);			      \
-	membar_datadep_consumer();					      \
-	__rcu_dereference_tmp;						      \
-})
+#define	rcu_assign_pointer(P,V)	atomic_store_release(&(P), (V))
+#define	rcu_dereference(P)	atomic_load_consume(&(P))
+#define	rcu_access_pointer(P) 	atomic_load_relaxed(&(P))
 
 #define	rcu_dereference_raw	rcu_dereference
 
@@ -61,11 +53,6 @@
 	(P);								      \
 })
 
-#define	rcu_access_pointer(P) ({					      \
-	__typeof__(*(P)) *__rcu_access_pointer_tmp = (P);		      \
-	__insn_barrier();						      \
-	__rcu_access_pointer_tmp;					      \
-})
 
 /* kill_dependency */
 #define	rcu_pointer_handoff(P)	(P)
