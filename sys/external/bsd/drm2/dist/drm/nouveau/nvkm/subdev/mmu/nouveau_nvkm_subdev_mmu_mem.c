@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.5 2021/12/19 11:06:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.6 2021/12/19 11:06:36 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.5 2021/12/19 11:06:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.6 2021/12/19 11:06:36 riastradh Exp $");
 
 #define nvkm_mem(p) container_of((p), struct nvkm_mem, memory)
 #include "mem.h"
@@ -175,7 +175,7 @@ nvkm_mem_map_host(struct nvkm_memory *memory, void **pmap)
 			*pmap = NULL;
 			return ret;
 		}
-		*tagp = tag;
+		*tagp = dmat;
 		return 0;
 #else
 		*pmap = vmap(mem->mem, mem->pages, VM_MAP, PAGE_KERNEL);
