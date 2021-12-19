@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.66 2021/12/19 11:09:47 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.67 2021/12/19 11:49:35 riastradh Exp $
 
 version	20180827
 
@@ -56,6 +56,7 @@ makeoptions	drmkms	"CWARNFLAGS.drmkms"+="-Wno-missing-field-initializers"
 file	external/bsd/drm2/drm/drm_agp_hook.c		drmkms
 file	external/bsd/drm2/drm/drm_cdevsw.c		drmkms
 file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
+file	external/bsd/drm2/drm/drm_hdcp.c		drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
 file	external/bsd/drm2/drm/drm_stub.c		!drmkms & !drmbase
 file	external/bsd/drm2/drm/drm_sysctl.c		drmkms
