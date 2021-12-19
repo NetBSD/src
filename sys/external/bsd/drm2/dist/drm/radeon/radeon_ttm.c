@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.20 2021/12/19 09:56:45 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.21 2021/12/19 09:56:53 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.20 2021/12/19 09:56:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.21 2021/12/19 09:56:53 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/pagemap.h>
@@ -812,7 +812,7 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm,
 
 	if (slave && ttm->sg) {
 #ifdef __NetBSD__
-		r = drm_prime_bus_dmamap_load_sgt(ttm->bdev->dmat,
+		int r = drm_prime_bus_dmamap_load_sgt(ttm->bdev->dmat,
 		    gtt->ttm.dma_address, ttm->sg);
 		if (r)
 			return r;
