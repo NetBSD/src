@@ -1,4 +1,4 @@
-/*	$NetBSD: gen6_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: gen6_ppgtt.c,v 1.4 2021/12/19 11:15:04 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.4 2021/12/19 11:15:04 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -15,6 +15,7 @@ __KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp
 #include "i915_trace.h"
 #include "i915_vgpu.h"
 #include "intel_gt.h"
+#include <linux/nbsd-namespace.h>
 
 /* Write pde (index) from the page directory @pd to the page table @pt */
 static inline void gen6_write_pde(const struct gen6_ppgtt *ppgtt,
