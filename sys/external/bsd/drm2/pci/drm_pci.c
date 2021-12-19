@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.36 2021/12/19 01:23:30 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.37 2021/12/19 09:51:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.36 2021/12/19 01:23:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.37 2021/12/19 09:51:04 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.36 2021/12/19 01:23:30 riastradh Exp $
 #include <dev/pci/pcivar.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_legacy.h>
 
 #include "../dist/drm/drm_internal.h"
