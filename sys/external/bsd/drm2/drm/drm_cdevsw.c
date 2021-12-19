@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.19 2021/12/19 00:48:45 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.20 2021/12/19 00:58:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.19 2021/12/19 00:48:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.20 2021/12/19 00:58:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -274,35 +274,82 @@ drm_read(struct file *fp, off_t *off, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct drm_file *const file = fp->f_data;
+	struct drm_device *const dev = file->minor->dev;
 	struct drm_pending_event *event;
 	bool first;
-	int error = 0;
+	int ret = 0;
+
+	/*
+	 * Only one event reader at a time, so that if copyout faults
+	 * after dequeueing one event and we have to put the event
+	 * back, another reader won't see out-of-order events.
+	 */
+	spin_lock(&dev->event_lock);
+	DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &file->event_read_wq, &dev->event_lock,
+	    file->event_read_lock == NULL);
+	if (ret) {
+		spin_unlock(&dev->event_lock);
+		/* XXX errno Linux->NetBSD */
+		return -ret;
+	}
+	file->event_read_lock = curlwp;
+	spin_unlock(&dev->event_lock);
 
 	for (first = true; ; first = false) {
 		int f = 0;
+		off_t offset;
+		size_t resid;
 
 		if (!first || ISSET(fp->f_flag, FNONBLOCK))
 			f |= FNONBLOCK;
 
-		/* XXX errno Linux->NetBSD */
-		error = -drm_dequeue_event(file, uio->uio_resid, &event, f);
-		if (error) {
-			if ((error == EWOULDBLOCK) && !first)
-				error = 0;
+		ret = drm_dequeue_event(file, uio->uio_resid, &event, f);
+		if (ret) {
+			if ((ret == -EWOULDBLOCK) && !first)
+				ret = 0;
 			break;
 		}
 		if (event == NULL)
 			break;
-		error = uiomove(event->event, event->event->length, uio);
-		if (error)	/* XXX Requeue the event?  */
+
+		offset = uio->uio_offset;
+		resid = uio->uio_resid;
+		/* XXX errno NetBSD->Linux */
+		ret = -uiomove(event->event, event->event->length, uio);
+		if (ret) {
+			/*
+			 * Faulted on copyout.  Put the event back and
+			 * stop here.
+			 */
+			if (!first) {
+				/*
+				 * Already transferred some events.
+				 * Rather than back them all out, just
+				 * say we succeeded at returning those.
+				 */
+				ret = 0;
+			}
+			uio->uio_offset = offset;
+			uio->uio_resid = resid;
+			drm_requeue_event(file, event);
 			break;
-		(*event->destroy)(event);
+		}
+		kfree(event);
 	}
 
+	/* Release the event read lock.  */
+	spin_lock(&dev->event_lock);
+	KASSERT(file->event_read_lock == curlwp);
+	file->event_read_lock = NULL;
+	DRM_SPIN_WAKEUP_ONE(&file->event_read_wq, &dev->event_lock);
+	spin_unlock(&dev->event_lock);
+
+	/* XXX errno Linux->NetBSD */
+
 	/* Success!  */
-	if (error == ERESTARTSYS)
-		error = ERESTART;
-	return error;
+	if (ret == ERESTARTSYS)
+		ret = ERESTART;
+	return -ret;
 }
 
 static int
@@ -341,6 +388,19 @@ drm_dequeue_event(struct drm_file *file, size_t max_length,
 out:	spin_unlock_irqrestore(&dev->event_lock, irqflags);
 	*eventp = event;
 	return ret;
+}
+
+static void
+drm_requeue_event(struct drm_file *file, struct drm_pending_event *event)
+{
+	struct drm_device *const dev = file->minor->dev;
+	unsigned long irqflags;
+
+	spin_lock_irqsave(&dev->event_lock, irqflags);
+	list_add(&event->link, &file->event_list);
+	KASSERT(file->event_space >= event->event->length);
+	file->event_space -= event->event->length;
+	spin_unlock_irqrestore(&dev->event_lock, irqflags);
 }
 
 static int
