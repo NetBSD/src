@@ -1,8 +1,9 @@
-#       $NetBSD: files.linux,v 1.2 2021/12/19 01:17:14 riastradh Exp $
+#       $NetBSD: files.linux,v 1.3 2021/12/19 01:33:17 riastradh Exp $
 
 define	linux
 
 makeoptions 	linux	CPPFLAGS+="-I$S/external/bsd/common/include"
 
+file	external/bsd/common/linux/linux_rcu.c		linux
 file	external/bsd/common/linux/linux_tasklet.c	linux
 file	external/bsd/common/linux/linux_work.c		linux
