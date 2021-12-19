@@ -1,11 +1,8 @@
-/*	$NetBSD: drm_sysfs.c,v 1.7 2021/12/19 10:35:52 riastradh Exp $	*/
+/*	$NetBSD: drm_sysfs.h,v 1.1 2021/12/19 10:35:52 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,18 +26,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_sysfs.c,v 1.7 2021/12/19 10:35:52 riastradh Exp $");
+#ifndef _DRM_DRM_SYSFS_H_
+#define	_DRM_DRM_SYSFS_H_
 
-#include <drm/drm_sysfs.h>
+struct drm_connector;
+struct drm_device;
+struct drm_property;
 
-void
-drm_sysfs_hotplug_event(struct drm_device *dev)
-{
-}
+void	drm_sysfs_hotplug_event(struct drm_device *);
+void	drm_sysfs_connector_status_event(struct drm_connector *,
+	    struct drm_property *);
 
-void
-drm_sysfs_connector_status_event(struct drm_connector *connector,
-    struct drm_property *prop)
-{
-}
+#endif	/* _DRM_DRM_SYSFS_H_ */
