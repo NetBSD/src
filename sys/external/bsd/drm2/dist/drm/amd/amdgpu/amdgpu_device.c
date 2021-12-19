@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.13 2021/12/19 12:36:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.14 2021/12/19 12:36:59 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.13 2021/12/19 12:36:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.14 2021/12/19 12:36:59 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -528,6 +528,9 @@ void amdgpu_mm_wdoorbell64(struct amdgpu_device *adev, u32 index, u64 v)
 		bus_space_write_8(adev->doorbell.bst, adev->doorbell.bsh,
 		    8*index, v);
 #else
+		/*
+		 * XXX This might not be as atomic as one might hope...
+		 */
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 		bus_space_write_4(adev->doorbell.bst, adev->doorbell.bsh,
 		    8*index, v & 0xffffffffU);
