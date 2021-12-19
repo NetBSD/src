@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.17 2020/02/14 04:36:56 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.18 2021/12/19 09:48:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@
  * away some conditionalization in drmP.h.
  */
 #define	CONFIG_PCI	1
+
+#define	CONFIG_LOCKDEP	0
 
 #ifdef notyet
 #if defined(__i386__)
