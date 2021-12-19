@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.12 2018/08/27 15:24:53 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.13 2021/12/19 01:00:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.12 2018/08/27 15:24:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.13 2021/12/19 01:00:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -173,8 +173,17 @@ void
 idr_init(struct idr *idr)
 {
 
+	idr_init_base(idr, 0);
+}
+
+void
+idr_init_base(struct idr *idr, int base)
+{
+
 	mutex_init(&idr->idr_lock, MUTEX_DEFAULT, IPL_VM);
 	rb_tree_init(&idr->idr_tree, &idr_rb_ops);
+	idr->idr_base = base;
+
 	SDT_PROBE1(sdt, linux, idr, init,  idr);
 }
 
