@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.19 2021/12/19 01:23:38 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.20 2021/12/19 01:25:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.19 2021/12/19 01:23:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.20 2021/12/19 01:25:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -92,8 +92,8 @@ reservation_object_init(struct reservation_object *robj)
 
 	ww_mutex_init(&robj->lock, &reservation_ww_class);
 	seqcount_init(&robj->seq);
-	robj->robj_fence = NULL;
-	robj->robj_list = NULL;
+	robj->fence_excl = NULL;
+	robj->fence = NULL;
 	robj->robj_prealloc = NULL;
 }
 
@@ -110,13 +110,13 @@ reservation_object_fini(struct reservation_object *robj)
 
 	if (robj->robj_prealloc)
 		objlist_free(robj->robj_prealloc);
-	if (robj->robj_list) {
-		for (i = 0; i < robj->robj_list->shared_count; i++)
-			dma_fence_put(robj->robj_list->shared[i]);
-		objlist_free(robj->robj_list);
+	if (robj->fence) {
+		for (i = 0; i < robj->fence->shared_count; i++)
+			dma_fence_put(robj->fence->shared[i]);
+		objlist_free(robj->fence);
 	}
-	if (robj->robj_fence)
-		dma_fence_put(robj->robj_fence);
+	if (robj->fence_excl)
+		dma_fence_put(robj->fence_excl);
 	ww_mutex_destroy(&robj->lock);
 }
 
@@ -202,7 +202,7 @@ reservation_object_get_excl(struct reservation_object *robj)
 {
 
 	KASSERT(reservation_object_held(robj));
-	return robj->robj_fence;
+	return robj->fence_excl;
 }
 
 /*
@@ -218,7 +218,7 @@ reservation_object_get_list(struct reservation_object *robj)
 {
 
 	KASSERT(reservation_object_held(robj));
-	return robj->robj_list;
+	return robj->fence;
 }
 
 /*
@@ -240,7 +240,7 @@ reservation_object_reserve_shared(struct reservation_object *robj)
 
 	KASSERT(reservation_object_held(robj));
 
-	list = robj->robj_list;
+	list = robj->fence;
 	prealloc = robj->robj_prealloc;
 
 	/* If there's an existing list, check it for space.  */
@@ -376,8 +376,8 @@ void
 reservation_object_add_excl_fence(struct reservation_object *robj,
     struct dma_fence *fence)
 {
-	struct dma_fence *old_fence = robj->robj_fence;
-	struct reservation_object_list *old_list = robj->robj_list;
+	struct dma_fence *old_fence = robj->fence_excl;
+	struct reservation_object_list *old_list = robj->fence;
 	uint32_t old_shared_count;
 	struct reservation_object_write_ticket ticket;
 
@@ -398,7 +398,7 @@ reservation_object_add_excl_fence(struct reservation_object *robj,
 	reservation_object_write_begin(robj, &ticket);
 
 	/* Replace the fence and zero the shared count.  */
-	robj->robj_fence = fence;
+	robj->fence_excl = fence;
 	if (old_list)
 		old_list->shared_count = 0;
 
@@ -431,7 +431,7 @@ void
 reservation_object_add_shared_fence(struct reservation_object *robj,
     struct dma_fence *fence)
 {
-	struct reservation_object_list *list = robj->robj_list;
+	struct reservation_object_list *list = robj->fence;
 	struct reservation_object_list *prealloc = robj->robj_prealloc;
 	struct reservation_object_write_ticket ticket;
 	struct dma_fence *replace = NULL;
@@ -504,7 +504,7 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
 		reservation_object_write_begin(robj, &ticket);
 
 		/* Replace the list.  */
-		robj->robj_list = prealloc;
+		robj->fence = prealloc;
 		robj->robj_prealloc = NULL;
 
 		/* Commit the update.  */
@@ -535,7 +535,7 @@ reservation_object_get_excl_rcu(struct reservation_object *robj)
 	struct dma_fence *fence;
 
 	rcu_read_lock();
-	fence = dma_fence_get_rcu_safe(&robj->robj_fence);
+	fence = dma_fence_get_rcu_safe(&robj->fence_excl);
 	rcu_read_unlock();
 
 	return fence;
@@ -560,7 +560,7 @@ top:
 	reservation_object_read_begin(robj, &ticket);
 
 	/* If there is a shared list, grab it.  */
-	if ((list = robj->robj_list) != NULL) {
+	if ((list = robj->fence) != NULL) {
 		/* Make sure the content of the list has been published.  */
 		membar_datadep_consumer();
 
@@ -615,7 +615,7 @@ top:
 	}
 
 	/* If there is an exclusive fence, grab it.  */
-	if ((fence = robj->robj_fence) != NULL) {
+	if ((fence = robj->fence_excl) != NULL) {
 		/* Make sure the content of the fence has been published.  */
 		membar_datadep_consumer();
 	}
@@ -695,7 +695,7 @@ top:
 	reservation_object_read_begin(robj, &ticket);
 
 	/* If shared is requested and there is a shared list, test it.  */
-	if (shared && (list = robj->robj_list) != NULL) {
+	if (shared && (list = robj->fence) != NULL) {
 		/* Make sure the content of the list has been published.  */
 		membar_datadep_consumer();
 
@@ -727,7 +727,7 @@ top:
 	}
 
 	/* If there is an exclusive fence, test it.  */
-	if ((fence = robj->robj_fence) != NULL) {
+	if ((fence = robj->fence_excl) != NULL) {
 		/* Make sure the content of the fence has been published.  */
 		membar_datadep_consumer();
 
@@ -792,7 +792,7 @@ top:
 	reservation_object_read_begin(robj, &ticket);
 
 	/* If shared is requested and there is a shared list, wait on it.  */
-	if (shared && (list = robj->robj_list) != NULL) {
+	if (shared && (list = robj->fence) != NULL) {
 		/* Make sure the content of the list has been published.  */
 		membar_datadep_consumer();
 
@@ -823,7 +823,7 @@ top:
 	}
 
 	/* If there is an exclusive fence, test it.  */
-	if ((fence = robj->robj_fence) != NULL) {
+	if ((fence = robj->fence_excl) != NULL) {
 		/* Make sure the content of the fence has been published.  */
 		membar_datadep_consumer();
 
@@ -964,7 +964,7 @@ top:
 	reservation_object_read_begin(robj, &ticket);
 
 	/* If we want to wait for all fences, get the shared list.  */
-	if ((events & POLLOUT) && (list = robj->robj_list) != NULL) do {
+	if ((events & POLLOUT) && (list = robj->fence) != NULL) do {
 		/* Make sure the content of the list has been published.  */
 		membar_datadep_consumer();
 
@@ -1036,7 +1036,7 @@ top:
 	} while (0);
 
 	/* We always wait for at least the exclusive fence, so get it.  */
-	if ((fence = robj->robj_fence) != NULL) do {
+	if ((fence = robj->fence_excl) != NULL) do {
 		/* Make sure the content of the fence has been published.  */
 		membar_datadep_consumer();
 
