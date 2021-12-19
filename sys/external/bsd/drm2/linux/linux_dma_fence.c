@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.12 2021/12/19 11:03:57 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.13 2021/12/19 11:04:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.12 2021/12/19 11:03:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.13 2021/12/19 11:04:50 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -613,8 +613,8 @@ wait_any_cb(struct dma_fence *fence, struct dma_fence_cb *fcb)
  * dma_fence_wait_any_timeout(fence, nfences, intr, timeout, ip)
  *
  *	Wait for any of fences[0], fences[1], fences[2], ...,
- *	fences[nfences-1] to be signaled.  If ip is nonnull, set *ip to
- *	the index of the first one.
+ *	fences[nfences-1] to be signalled.  If ip is nonnull, set *ip
+ *	to the index of the first one.
  */
 long
 dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
