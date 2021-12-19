@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fence.c,v 1.19 2021/12/19 09:55:55 riastradh Exp $	*/
+/*	$NetBSD: radeon_fence.c,v 1.20 2021/12/19 11:08:17 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.19 2021/12/19 09:55:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.20 2021/12/19 11:08:17 riastradh Exp $");
 
 #include <linux/atomic.h>
 #include <linux/firmware.h>
@@ -521,7 +521,7 @@ bool radeon_fence_signaled(struct radeon_fence *fence)
 	if (radeon_fence_seq_signaled(fence->rdev, fence->seq, fence->ring)) {
 		int ret;
 
-		ret = dma_fence_signal(&fence->base);
+		ret = dma_fence_signal_locked(&fence->base);
 		if (!ret)
 			DMA_FENCE_TRACE(&fence->base, "signaled from radeon_fence_signaled\n");
 		return true;
