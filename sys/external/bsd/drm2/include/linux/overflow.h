@@ -1,4 +1,4 @@
-/*	$NetBSD: overflow.h,v 1.1 2021/12/19 00:59:01 riastradh Exp $	*/
+/*	$NetBSD: overflow.h,v 1.2 2021/12/19 09:58:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -44,5 +44,8 @@ array_size(size_t nelem, size_t elemsize)
 
 	return nelem*elemsize;
 }
+
+#define	check_mul_overflow(a, b, res)	__builtin_mul_overflow(a, b, res)
+#define	check_add_overflow(a, b, res)	__builtin_add_overflow(a, b, res)
 
 #endif  /* _LINUX_OVERFLOW_H_ */
