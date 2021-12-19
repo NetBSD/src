@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.65 2021/12/19 01:50:47 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.66 2021/12/19 10:28:31 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.65 2021/12/19 01:50:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.66 2021/12/19 10:28:31 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -1260,6 +1260,7 @@ void i915_gem_cleanup_early(struct drm_i915_private *dev_priv)
 	GEM_BUG_ON(!llist_empty(&dev_priv->mm.free_list));
 	GEM_BUG_ON(atomic_read(&dev_priv->mm.free_count));
 	WARN_ON(dev_priv->mm.shrink_count);
+	spin_lock_destroy(&dev_priv->fb_tracking.lock);
 }
 
 int i915_gem_freeze(struct drm_i915_private *dev_priv)
@@ -1321,6 +1322,12 @@ void i915_gem_release(struct drm_device *dev, struct drm_file *file)
 	list_for_each_entry(request, &file_priv->mm.request_list, client_link)
 		request->file_priv = NULL;
 	spin_unlock(&file_priv->mm.lock);
+
+	/*
+	 * XXX This is probably too early -- need to defer with
+	 * callrcu; caller already defers free with kfree_rcu.
+	 */
+	spin_lock_destroy(&file_priv->mm.lock);
 }
 
 int i915_gem_open(struct drm_i915_private *i915, struct drm_file *file)
