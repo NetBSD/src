@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.2 2021/12/19 10:36:55 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.3 2021/12/19 10:37:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.2 2021/12/19 10:36:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.3 2021/12/19 10:37:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -278,12 +278,13 @@ dma_resv_get_list(struct dma_resv *robj)
  *	we don't have enough.  This is not guaranteed.
  */
 int
-dma_resv_reserve_shared(struct dma_resv *robj)
+dma_resv_reserve_shared(struct dma_resv *robj, unsigned int num_fences)
 {
 	struct dma_resv_list *list, *prealloc;
 	uint32_t n, nalloc;
 
 	KASSERT(dma_resv_held(robj));
+	KASSERT(num_fences == 1);
 
 	list = robj->fence;
 	prealloc = robj->robj_prealloc;
