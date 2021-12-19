@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: drm2netbsd,v 1.4 2021/12/19 10:39:49 riastradh Exp $
+#	$NetBSD: drm2netbsd,v 1.5 2021/12/19 10:46:17 riastradh Exp $
 #
 # $ /path/to/drm2netbsd > /path/to/files.drm.new
 #
@@ -23,8 +23,11 @@ env CONFIG_DRM_VM=y \
 make -f Makefile -V '$(drm-y)' -V '$(drm_kms_helper-y)' \
 | tr ' ' '\n' \
 | grep -v '^$' \
-| sed -e 's,\.o$,.c,' \
-| sort -u \
+| {
+	sed -e 's,\.o$,.c,'
+	# Separate objects.
+	echo drm_panel_orientation_quirks.c
+} | sort -u \
 | while read f; do
 	printf 'file\t%s\t%s\n' "$drmkms_top/$f" "$drmkms_flag"
 done
