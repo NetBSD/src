@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_property.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_property.c,v 1.3 2021/12/19 01:14:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_property.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_property.c,v 1.3 2021/12/19 01:14:22 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/uaccess.h>
@@ -576,7 +576,7 @@ drm_property_create_blob(struct drm_device *dev, size_t length,
 	/* This must be explicitly initialised, so we can safely call list_del
 	 * on it in the removal handler, even if it isn't in a file list. */
 	INIT_LIST_HEAD(&blob->head_file);
-	blob->data = (void *)blob + sizeof(*blob);
+	blob->data = (char *)blob + sizeof(*blob);
 	blob->length = length;
 	blob->dev = dev;
 
