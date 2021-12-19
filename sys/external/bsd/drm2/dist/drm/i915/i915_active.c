@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.5 2021/12/19 11:57:54 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.6 2021/12/19 11:58:25 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.5 2021/12/19 11:57:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.6 2021/12/19 11:58:25 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -939,7 +939,7 @@ __i915_active_fence_set(struct i915_active_fence *active,
 	KASSERT(active->cb.func == node_retire ||
 	    active->cb.func == excl_retire ||
 	    active->cb.func == i915_active_noop);
-	dma_fence_add_callback(fence, &active->cb, node_retire);
+	dma_fence_add_callback(fence, &active->cb, active->cb.func);
 #endif
 
 	return prev;
