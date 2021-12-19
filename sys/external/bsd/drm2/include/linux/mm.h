@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.15 2021/12/19 01:14:14 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.16 2021/12/19 01:49:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -64,6 +64,14 @@ si_meminfo(struct sysinfo *si)
 	si->totalhigh = kernel_map->size >> PAGE_SHIFT;
 	si->mem_unit = PAGE_SIZE;
 	/* XXX Fill in more as needed.  */
+}
+
+static inline size_t
+si_mem_available(void)
+{
+
+	/* XXX ? */
+	return uvmexp.free;
 }
 
 static inline unsigned long
