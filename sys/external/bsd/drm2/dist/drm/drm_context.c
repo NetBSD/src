@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_context.c,v 1.7 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_context.c,v 1.8 2021/12/19 00:56:09 riastradh Exp $	*/
 
 /*
  * Legacy: Generic DRM Contexts
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.7 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.8 2021/12/19 00:56:09 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/uaccess.h>
@@ -389,7 +389,7 @@ int drm_legacy_addctx(struct drm_device *dev, void *data,
 		tmp_handle = drm_legacy_ctxbitmap_next(dev);
 	}
 	DRM_DEBUG("%d\n", tmp_handle);
-	if (tmp_handle < 0) {
+	if ((int)ctx->handle < 0) {
 		DRM_DEBUG("Not enough free contexts.\n");
 		/* Should this return -EBUSY instead? */
 		return tmp_handle;
