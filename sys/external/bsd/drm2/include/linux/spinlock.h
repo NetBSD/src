@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.11 2021/12/19 11:35:51 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.12 2021/12/19 11:38:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -185,6 +185,16 @@ read_unlock(rwlock_t *rw)
 	KASSERT(0 < rw->rw_nreaders);
 	rw->rw_nreaders--;
 	mutex_spin_exit(&rw->rw_lock);
+}
+
+static inline void
+local_bh_disable(void)
+{
+}
+
+static inline void
+local_bh_enable(void)
+{
 }
 
 #endif  /* _LINUX_SPINLOCK_H_ */

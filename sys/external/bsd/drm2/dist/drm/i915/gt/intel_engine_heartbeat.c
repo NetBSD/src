@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_heartbeat.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_heartbeat.c,v 1.3 2021/12/19 11:38:37 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_heartbeat.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_heartbeat.c,v 1.3 2021/12/19 11:38:37 riastradh Exp $");
 
 #include "i915_request.h"
 
@@ -95,9 +95,17 @@ static void heartbeat(struct work_struct *wrk)
 			if (rq->sched.attr.priority >= attr.priority)
 				attr.priority = I915_PRIORITY_BARRIER;
 
+#ifdef __NetBSD__
+			int s = splsoftserial();
+#else
 			local_bh_disable();
+#endif
 			engine->schedule(rq, &attr);
+#ifdef __NetBSD__
+			splx(s);
+#else
 			local_bh_enable();
+#endif
 		} else {
 			if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
 				show_heartbeat(rq, engine);

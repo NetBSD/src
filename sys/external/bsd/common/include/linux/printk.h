@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.10 2021/12/19 10:57:05 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.11 2021/12/19 11:38:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -67,12 +67,12 @@ struct va_format {
 #define	DUMP_PREFIX_OFFSET	1
 #define	DUMP_PREFIX_ADDRESS	2
 
-static inline void
+static inline size_t
 hex_dump_to_buffer(const void *buf, size_t buf_size, int bytes_per_line,
     int bytes_per_group, char *output, size_t output_size, bool ascii __unused)
 {
 	const uint8_t *bytes = buf;
-	size_t i = 0, n;
+	int i = 0, t = 0, n;
 
 	KASSERT(output_size >= 1);
 	KASSERT((bytes_per_line == 16) || (bytes_per_line == 32));
@@ -83,6 +83,7 @@ hex_dump_to_buffer(const void *buf, size_t buf_size, int bytes_per_line,
 	output[output_size - 1] = '\0';
 	while (i < buf_size) {
 		n = snprintf(output, output_size, "%02x", bytes[i++]);
+		t += n;
 		if (n >= output_size)
 			break;
 		output += n; output_size -= n;
@@ -92,10 +93,13 @@ hex_dump_to_buffer(const void *buf, size_t buf_size, int bytes_per_line,
 			n = snprintf(output, output_size, " ");
 		else
 			n = 0;
+		t += n;
 		if (n >= output_size)
 			break;
 		output += n; output_size -= n;
 	}
+
+	return t;
 }
 
 static inline void
