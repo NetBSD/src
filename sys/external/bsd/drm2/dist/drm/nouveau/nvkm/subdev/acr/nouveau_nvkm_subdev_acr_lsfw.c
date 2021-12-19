@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_acr_lsfw.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_acr_lsfw.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Red Hat Inc.
@@ -22,13 +22,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_acr_lsfw.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_acr_lsfw.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "priv.h"
 #include <core/falcon.h>
 #include <core/firmware.h>
 #include <nvfw/fw.h>
 #include <nvfw/ls.h>
+
+#include <linux/nbsd-namespace.h>
 
 void
 nvkm_acr_lsfw_del(struct nvkm_acr_lsfw *lsfw)

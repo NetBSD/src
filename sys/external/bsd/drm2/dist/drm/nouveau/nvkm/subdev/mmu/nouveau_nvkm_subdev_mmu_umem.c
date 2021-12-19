@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_umem.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_umem.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_umem.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_umem.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "umem.h"
 #include "ummu.h"
@@ -81,7 +81,11 @@ nvkm_umem_unmap(struct nvkm_object *object)
 			umem->bar = NULL;
 		}
 	} else {
+#ifdef __NetBSD__
+		bus_dmamem_unmap(umem->dmat, umem->map, umem->size);
+#else
 		vunmap(umem->map);
+#endif
 		umem->map = NULL;
 	}
 
@@ -89,8 +93,14 @@ nvkm_umem_unmap(struct nvkm_object *object)
 }
 
 static int
+#ifdef __NetBSD__
+nvkm_umem_map(struct nvkm_object *object, void *argv, u32 argc,
+	      enum nvkm_object_map *type,
+	      bus_space_tag_t *tag, u64 *handle, u64 *length)
+#else
 nvkm_umem_map(struct nvkm_object *object, void *argv, u32 argc,
 	      enum nvkm_object_map *type, u64 *handle, u64 *length)
+#endif
 {
 	struct nvkm_umem *umem = nvkm_umem(object);
 	struct nvkm_mmu *mmu = umem->mmu;
@@ -101,10 +111,18 @@ nvkm_umem_map(struct nvkm_object *object, void *argv, u32 argc,
 		return -EEXIST;
 
 	if ((umem->type & NVKM_MEM_HOST) && !argc) {
+#ifdef __NetBSD__
+		int ret = nvkm_mem_map_host(umem->memory, &umem->dmat,
+		    &umem->map, &umem->size);
+#else
 		int ret = nvkm_mem_map_host(umem->memory, &umem->map);
+#endif
 		if (ret)
 			return ret;
 
+#ifdef __NetBSD__
+		*tag = NULL;
+#endif
 		*handle = (unsigned long)(void *)umem->map;
 		*length = nvkm_memory_size(umem->memory);
 		*type = NVKM_OBJECT_MAP_VA;
@@ -112,8 +130,13 @@ nvkm_umem_map(struct nvkm_object *object, void *argv, u32 argc,
 	} else
 	if ((umem->type & NVKM_MEM_VRAM) ||
 	    (umem->type & NVKM_MEM_KIND)) {
+#ifdef __NetBSD__
+		int ret = mmu->func->mem.umap(mmu, umem->memory, argv, argc,
+					      tag, handle, length, &umem->bar);
+#else
 		int ret = mmu->func->mem.umap(mmu, umem->memory, argv, argc,
 					      handle, length, &umem->bar);
+#endif
 		if (ret)
 			return ret;
 

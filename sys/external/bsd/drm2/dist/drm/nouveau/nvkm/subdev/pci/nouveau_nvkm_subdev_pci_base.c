@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.8 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.9 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.8 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.9 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "priv.h"
 #include "agp.h"
@@ -77,8 +77,10 @@ nvkm_pci_intr(DRM_IRQ_ARGS)
 	struct nvkm_device *device = pci->subdev.device;
 	bool handled = false;
 
+#ifndef __NetBSD__
 	if (pci->irq < 0)
 		return IRQ_HANDLED;
+#endif
 
 	nvkm_mc_intr_unarm(device);
 	if (pci->msi)
@@ -92,18 +94,6 @@ static int
 nvkm_pci_fini(struct nvkm_subdev *subdev, bool suspend)
 {
 	struct nvkm_pci *pci = nvkm_pci(subdev);
-
-#ifdef __NetBSD__ /* XXX post-merge audit */
-	const struct pci_attach_args *pa = &pci->pdev->pd_pa;
-	if (pci->pci_intrcookie != NULL) {
-		pci_intr_disestablish(pa->pa_pc, pci->pci_intrcookie);
-		pci->pci_intrcookie = NULL;
-	}
-	if (pci->pci_ihp != NULL) {
-		pci_intr_release(pa->pa_pc, pci->pci_ihp, 1);
-		pci->pci_ihp = NULL;
-	}
-#endif
 
 	if (pci->agp.bridge)
 		nvkm_agp_fini(pci);
@@ -224,6 +214,17 @@ nvkm_pci_dtor(struct nvkm_subdev *subdev)
 
 	nvkm_agp_dtor(pci);
 
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &pci->pdev->pd_pa;
+	if (pci->pci_intrcookie != NULL) {
+		pci_intr_disestablish(pa->pa_pc, pci->pci_intrcookie);
+		pci->pci_intrcookie = NULL;
+	}
+	if (pci->pci_ihp != NULL) {
+		pci_intr_release(pa->pa_pc, pci->pci_ihp, 1);
+		pci->pci_ihp = NULL;
+	}
+#else
 	if (pci->irq >= 0) {
 		/* freq_irq() will call the handler, we use pci->irq == -1
 		 * to signal that it's been torn down and should be a noop.
@@ -232,6 +233,7 @@ nvkm_pci_dtor(struct nvkm_subdev *subdev)
 		pci->irq = -1;
 		free_irq(irq, pci);
 	}
+#endif
 
 	if (pci->msi)
 		pci_disable_msi(pci->pdev);

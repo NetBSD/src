@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mc_gp10b.c,v 1.2 2021/12/18 23:45:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mc_gp10b.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
@@ -24,11 +24,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mc_gp10b.c,v 1.2 2021/12/18 23:45:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mc_gp10b.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "priv.h"
 
-void
+static void
 gp10b_mc_init(struct nvkm_mc *mc)
 {
 	struct nvkm_device *device = mc->subdev.device;

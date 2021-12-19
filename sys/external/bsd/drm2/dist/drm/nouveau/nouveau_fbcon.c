@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.13 2021/12/19 10:46:43 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.14 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.13 2021/12/19 10:46:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.14 2021/12/19 10:51:56 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.13 2021/12/19 10:46:43 riastradh
 
 #ifdef __NetBSD__
 #include "nouveaufb.h"
+#include <linux/nbsd-namespace.h>
 #endif
 
 #ifdef __NetBSD__		/* XXX nouveau fbaccel */
@@ -67,11 +68,13 @@ int nouveau_nofbaccel = 1;
 MODULE_PARM_DESC(nofbaccel, "Disable fbcon acceleration");
 int nouveau_nofbaccel = 0;
 module_param_named(nofbaccel, nouveau_nofbaccel, int, 0400);
+#endif
 
 MODULE_PARM_DESC(fbcon_bpp, "fbcon bits-per-pixel (default: auto)");
 static int nouveau_fbcon_bpp;
 module_param_named(fbcon_bpp, nouveau_fbcon_bpp, int, 0400);
 
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 static void
 nouveau_fbcon_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 {
@@ -309,7 +312,10 @@ static void
 nouveau_fbcon_zfill(struct drm_device *dev, struct nouveau_fbdev *fbcon)
 {
 #ifdef __NetBSD__		/* XXX nouveau fbaccel */
-	struct nouveau_bo *const nvbo = fbcon->nouveau_fb.nvbo;
+	struct drm_framebuffer *fb = fbcon->helper.fb;
+	struct nouveau_framebuffer *nvfb = container_of(fb,
+	    struct nouveau_framebuffer, base);
+	struct nouveau_bo *nvbo = nvfb->nvbo;
 
 	(void)memset(__UNVOLATILE(nvbo_kmap_obj_iovirtual(nvbo)), 0,
 	    nvbo->bo.num_pages << PAGE_SHIFT);
@@ -402,16 +408,14 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	}
 
 #ifdef __NetBSD__
-	nouveau_framebuffer_init(dev, &fbcon->nouveau_fb, &mode_cmd, nvbo);
-	nouveau_fb = &fbcon->nouveau_fb;
-	fb = &nouveau_fb->base;
+	fbcon->helper.fb = &fb->base;
 
 	nouveau_fbcon_zfill(dev, fbcon);
 
 	struct nouveaufb_attach_args nfa;
 
 	memset(&nfa, 0, sizeof(nfa));
-	nfa.nfa_fb_helper = helper;
+	nfa.nfa_fb_helper = &fbcon->helper;
 	nfa.nfa_fb_sizes = *sizes;
 	nfa.nfa_fb_ptr = nvbo_kmap_obj_iovirtual(nvbo);
 	nfa.nfa_fb_linebytes = mode_cmd.pitches[0];
@@ -421,8 +425,6 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	if (helper->fbdev == NULL) {
 		goto out_unlock;
 	}
-
-	helper->fb = fb;
 
 	return 0;
 #else

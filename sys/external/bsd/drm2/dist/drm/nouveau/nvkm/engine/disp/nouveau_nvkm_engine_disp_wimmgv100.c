@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_wimmgv100.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_wimmgv100.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_wimmgv100.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_wimmgv100.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "channv50.h"
 
@@ -65,7 +65,7 @@ gv100_disp_wimm_new_(const struct nv50_disp_chan_func *func,
 	nvif_ioctl(parent, "create window imm channel dma size %d\n", argc);
 	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
 		nvif_ioctl(parent, "create window imm channel dma vers %d "
-				   "pushbuf %016llx index %d\n",
+				   "pushbuf %016"PRIx64" index %d\n",
 			   args->v0.version, args->v0.pushbuf, args->v0.index);
 		if (!(disp->wndw.mask & BIT(args->v0.index)))
 			return -EINVAL;

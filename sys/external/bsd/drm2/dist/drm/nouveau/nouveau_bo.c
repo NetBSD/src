@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.18 2021/12/19 10:47:46 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.19 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.18 2021/12/19 10:47:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.19 2021/12/19 10:51:56 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -1591,6 +1591,9 @@ nouveau_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_reg *reg)
 
 			ret = nvif_object_map_handle(&mem->mem.object,
 						     &args, argc,
+#ifdef __NetBSD__
+						     NULL,
+#endif
 						     &handle, &length);
 			if (ret != 1)
 				return ret ? ret : -EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.4 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_DEVICE_PCI_H__
@@ -8,6 +8,10 @@
 struct nvkm_device_pci {
 	struct nvkm_device device;
 	struct pci_dev *pdev;
+#ifdef __NetBSD__
+	bus_dma_tag_t bus_dmat;
+	bus_dma_tag_t dmat;
+#endif
 	bool suspend;
 };
 

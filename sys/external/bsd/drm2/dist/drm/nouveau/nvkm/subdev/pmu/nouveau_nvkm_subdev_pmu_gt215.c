@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pmu_gt215.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pmu_gt215.c,v 1.4 2021/12/19 10:51:59 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_gt215.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_gt215.c,v 1.4 2021/12/19 10:51:59 riastradh Exp $");
 
 #include "priv.h"
 #include "fuc/gt215.fuc3.h"
@@ -79,7 +79,10 @@ gt215_pmu_send(struct nvkm_pmu *pmu, u32 reply[2],
 
 	/* wait for reply, if requested */
 	if (reply) {
-		wait_event(pmu->recv.wait, (pmu->recv.process == 0));
+		int ret;
+		DRM_WAIT_NOINTR_UNTIL(ret, &pmu->recv.wait, &subdev->mutex,
+		    (pmu->recv.process == 0));
+		KASSERT(ret == 0);
 		reply[0] = pmu->recv.data[0];
 		reply[1] = pmu->recv.data[1];
 	}
@@ -121,10 +124,12 @@ gt215_pmu_recv(struct nvkm_pmu *pmu)
 	if (pmu->recv.process) {
 		if (process == pmu->recv.process &&
 		    message == pmu->recv.message) {
+			mutex_lock(&subdev->mutex);
 			pmu->recv.data[0] = data0;
 			pmu->recv.data[1] = data1;
 			pmu->recv.process = 0;
-			wake_up(&pmu->recv.wait);
+			DRM_WAKEUP_ONE(&pmu->recv.wait, &subdev->mutex);
+			mutex_unlock(&subdev->mutex);
 			return;
 		}
 	}

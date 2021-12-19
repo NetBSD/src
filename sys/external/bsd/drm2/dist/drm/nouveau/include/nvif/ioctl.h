@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.5 2021/12/18 23:45:33 riastradh Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.6 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVIF_IOCTL_H__
@@ -105,10 +105,14 @@ struct nvif_ioctl_map_v0 {
 struct nvif_ioctl_map_netbsd_v0 {
 	/* nvif_ioctl ... */
 	__u8  version;
-	__u8  pad01[3];
+#define NVIF_IOCTL_MAP_V0_IO                                               0x00
+#define NVIF_IOCTL_MAP_V0_VA                                               0x01
+	__u8  type;
+	__u8  pad02[6];
 	bus_space_tag_t tag;
-	__u32 length;
 	__u64 handle;
+	__u64 length;
+	__u8  data[];
 };
 #endif
 

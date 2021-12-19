@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.h,v 1.4 2021/12/18 23:45:33 riastradh Exp $	*/
+/*	$NetBSD: memory.h,v 1.5 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_MEMORY_H__
@@ -104,13 +104,23 @@ void nvkm_memory_tags_put(struct nvkm_memory *, struct nvkm_device *,
 } while(0)
 
 #define nvkm_wobj(o,a,p,s) do {                                                \
-	u32 _addr = (a), _size = (s) >> 2, *_data = (void *)(p);               \
+	u32 _addr = (a), _size = (s) >> 2;                                     \
+	const u32 *_data = (const void *)(p);                                  \
 	while (_size--) {                                                      \
 		nvkm_wo32((o), _addr, *(_data++));                             \
 		_addr += 4;                                                    \
 	}                                                                      \
 } while(0)
 
+#ifdef __NetBSD__		/* XXX */
+#define nvkm_fill(t,s,o,a,d,c) do {                                            \
+	u64 _a = (a), _c = (c), _d = (d);                                      \
+	(void)nvkm_kmap(o);                                                    \
+	for (; _c; _c--, _a += BIT(s))                                         \
+		nvkm_wo##t((o), _a, _d);                                       \
+	nvkm_done(o);                                                          \
+} while(0)
+#else
 #define nvkm_fill(t,s,o,a,d,c) do {                                            \
 	u64 _a = (a), _c = (c), _d = (d), _o = _a >> s, _s = _c << s;          \
 	u##t __iomem *_m = nvkm_kmap(o);                                       \
@@ -127,6 +137,7 @@ void nvkm_memory_tags_put(struct nvkm_memory *, struct nvkm_device *,
 	}                                                                      \
 	nvkm_done(o);                                                          \
 } while(0)
+#endif
 #define nvkm_fo32(o,a,d,c) nvkm_fill(32, 2, (o), (a), (d), (c))
 #define nvkm_fo64(o,a,d,c) nvkm_fill(64, 3, (o), (a), (d), (c))
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgf100.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgf100.c,v 1.4 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgf100.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgf100.c,v 1.4 2021/12/19 10:51:58 riastradh Exp $");
 
 #define gf100_ram(p) container_of((p), struct gf100_ram, base)
 #include "ram.h"
@@ -524,9 +524,9 @@ gf100_ram_ctor(const struct nvkm_ram_func *func, struct nvkm_fb *fb,
 	ubase = lcomm + func->upper;
 	usize = total - lower;
 
-	nvkm_debug(subdev, "Lower: %4lld MiB @ %010llx\n", lower >> 20, 0ULL);
-	nvkm_debug(subdev, "Upper: %4lld MiB @ %010llx\n", usize >> 20, ubase);
-	nvkm_debug(subdev, "Total: %4lld MiB\n", total >> 20);
+	nvkm_debug(subdev, "Lower: %4"PRId64" MiB @ %010llx\n", lower >> 20, 0ULL);
+	nvkm_debug(subdev, "Upper: %4"PRId64" MiB @ %010"PRIx64"\n", usize >> 20, ubase);
+	nvkm_debug(subdev, "Total: %4"PRId64" MiB\n", total >> 20);
 
 	ret = nvkm_ram_ctor(func, fb, type, total, ram);
 	if (ret)

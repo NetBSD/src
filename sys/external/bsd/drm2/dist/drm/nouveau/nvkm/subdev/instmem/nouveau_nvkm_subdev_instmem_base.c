@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.6 2021/12/18 23:45:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.7 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.6 2021/12/18 23:45:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.7 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "priv.h"
 
@@ -150,7 +150,7 @@ nvkm_instobj_new(struct nvkm_instmem *imem, u32 size, u32 align, bool zero,
 		goto done;
 	}
 
-	nvkm_trace(subdev, "new %08x %08x %d: %010llx %010llx\n", size, align,
+	nvkm_trace(subdev, "new %08x %08x %d: %010"PRIx64" %010"PRIx64"\n", size, align,
 		   zero, nvkm_memory_addr(memory), nvkm_memory_size(memory));
 
 	if (!imem->func->zero && zero) {

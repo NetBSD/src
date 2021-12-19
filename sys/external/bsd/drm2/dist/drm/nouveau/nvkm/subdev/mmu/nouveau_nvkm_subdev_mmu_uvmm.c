@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_uvmm.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_uvmm.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_uvmm.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_uvmm.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "uvmm.h"
 #include "umem.h"
@@ -130,13 +130,13 @@ nvkm_uvmm_mthd_unmap(struct nvkm_uvmm *uvmm, void *argv, u32 argc)
 	mutex_lock(&vmm->mutex);
 	vma = nvkm_vmm_node_search(vmm, addr);
 	if (ret = -ENOENT, !vma || vma->addr != addr) {
-		VMM_DEBUG(vmm, "lookup %016llx: %016llx",
-			  addr, vma ? vma->addr : ~0ULL);
+		VMM_DEBUG(vmm, "lookup %016"PRIx64": %016"PRIx64"",
+			  addr, vma ? vma->addr : ~(u64)0);
 		goto done;
 	}
 
 	if (ret = -ENOENT, (!vma->user && !client->super) || vma->busy) {
-		VMM_DEBUG(vmm, "denied %016llx: %d %d %d", addr,
+		VMM_DEBUG(vmm, "denied %016"PRIx64": %d %d %d", addr,
 			  vma->user, !client->super, vma->busy);
 		goto done;
 	}
@@ -176,24 +176,24 @@ nvkm_uvmm_mthd_map(struct nvkm_uvmm *uvmm, void *argv, u32 argc)
 
 	memory = nvkm_umem_search(client, handle);
 	if (IS_ERR(memory)) {
-		VMM_DEBUG(vmm, "memory %016llx %ld\n", handle, PTR_ERR(memory));
+		VMM_DEBUG(vmm, "memory %016"PRIx64" %ld\n", handle, PTR_ERR(memory));
 		return PTR_ERR(memory);
 	}
 
 	mutex_lock(&vmm->mutex);
 	if (ret = -ENOENT, !(vma = nvkm_vmm_node_search(vmm, addr))) {
-		VMM_DEBUG(vmm, "lookup %016llx", addr);
+		VMM_DEBUG(vmm, "lookup %016"PRIx64"", addr);
 		goto fail;
 	}
 
 	if (ret = -ENOENT, (!vma->user && !client->super) || vma->busy) {
-		VMM_DEBUG(vmm, "denied %016llx: %d %d %d", addr,
+		VMM_DEBUG(vmm, "denied %016"PRIx64": %d %d %d", addr,
 			  vma->user, !client->super, vma->busy);
 		goto fail;
 	}
 
 	if (ret = -EINVAL, vma->mapped && !vma->memory) {
-		VMM_DEBUG(vmm, "pfnmap %016llx", addr);
+		VMM_DEBUG(vmm, "pfnmap %016"PRIx64"", addr);
 		goto fail;
 	}
 
@@ -201,7 +201,7 @@ nvkm_uvmm_mthd_map(struct nvkm_uvmm *uvmm, void *argv, u32 argc)
 		if (addr + size > vma->addr + vma->size || vma->memory ||
 		    (vma->refd == NVKM_VMA_PAGE_NONE && !vma->mapref)) {
 			VMM_DEBUG(vmm, "split %d %d %d "
-				       "%016llx %016llx %016llx %016llx",
+				       "%016"PRIx64" %016"PRIx64" %016"PRIx64" %016"PRIx64"",
 				  !!vma->memory, vma->refd, vma->mapref,
 				  addr, size, vma->addr, (u64)vma->size);
 			goto fail;
@@ -252,13 +252,13 @@ nvkm_uvmm_mthd_put(struct nvkm_uvmm *uvmm, void *argv, u32 argc)
 	mutex_lock(&vmm->mutex);
 	vma = nvkm_vmm_node_search(vmm, args->v0.addr);
 	if (ret = -ENOENT, !vma || vma->addr != addr || vma->part) {
-		VMM_DEBUG(vmm, "lookup %016llx: %016llx %d", addr,
-			  vma ? vma->addr : ~0ULL, vma ? vma->part : 0);
+		VMM_DEBUG(vmm, "lookup %016"PRIx64": %016"PRIx64" %d", addr,
+			  vma ? vma->addr : ~(u64)0, vma ? vma->part : 0);
 		goto done;
 	}
 
 	if (ret = -ENOENT, (!vma->user && !client->super) || vma->busy) {
-		VMM_DEBUG(vmm, "denied %016llx: %d %d %d", addr,
+		VMM_DEBUG(vmm, "denied %016"PRIx64": %d %d %d", addr,
 			  vma->user, !client->super, vma->busy);
 		goto done;
 	}
