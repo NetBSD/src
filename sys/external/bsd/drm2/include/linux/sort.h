@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.1 2021/12/19 00:28:12 riastradh Exp $	*/
+/*	$NetBSD: sort.h,v 1.2 2021/12/19 00:58:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,5 +31,25 @@
 
 #ifndef	_LINUX_SORT_H_
 #define	_LINUX_SORT_H_
+
+#include <sys/kmem.h>
+
+#include <lib/libkern/libkern.h>
+
+static inline void
+sort(void *array, size_t nelem, size_t elemsize,
+    int (*cmp)(const void *, const void *),
+    void (*swap)(void *, void *, int))
+{
+	void *tmp;
+
+	KASSERT(swap == NULL);	/* XXX */
+	KASSERT(elemsize != 0);
+	KASSERT(nelem <= SIZE_MAX/elemsize);
+
+	tmp = kmem_alloc(nelem*elemsize, KM_SLEEP);
+	kheapsort(array, nelem, elemsize, cmp, tmp);
+	kmem_free(tmp, nelem*elemsize);
+}
 
 #endif	/* _LINUX_SORT_H_ */
