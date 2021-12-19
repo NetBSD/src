@@ -1,4 +1,4 @@
-/*	$NetBSD: stop_machine.h,v 1.2 2021/12/19 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: linux_stop_machine.c,v 1.1 2021/12/19 01:34:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,13 +29,62 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_LINUX_STOP_MACHINE_H_
-#define	_LINUX_STOP_MACHINE_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_stop_machine.c,v 1.1 2021/12/19 01:34:57 riastradh Exp $");
 
-#define	stop_machine		linux_stop_machine
+#include <sys/atomic.h>
+#include <sys/intr.h>
+#include <sys/lock.h>
+#include <sys/systm.h>
+#include <sys/xcall.h>
 
-struct kcpuset;
+#include <linux/stop_machine.h>
 
-void	stop_machine(int (*)(void *), void *, const struct kcpuset *);
+struct stop_machine {
+	int			(*callback)(void *);
+	void			*cookie;
+	volatile unsigned	ncpu;
+	volatile bool		done;
+};
 
-#endif	/* _LINUX_STOP_MACHINE_H_ */
+static void
+stop_machine_xcall(void *a, void *b)
+{
+	struct stop_machine *S = a;
+	int s;
+
+	/* Block all activity on this CPU.  */
+	s = splhigh();
+
+	/* Note that we're ready, and see whether we're the chosen one.  */
+	if (atomic_dec_uint_nv(&S->ncpu) != 0) {
+		/* Not the chosen one.  Wait until done.  */
+		while (!S->done)
+			SPINLOCK_BACKOFF_HOOK;
+		goto out;
+	}
+
+	/* It's time.  Call the callback.  */
+	S->callback(S->cookie);
+
+	/* Notify everyone else that we're done.  */
+	S->done = true;
+
+	/* Allow activity again.  */
+out:	splx(s);
+}
+
+void
+stop_machine(int (*callback)(void *), void *cookie, const struct kcpuset *cpus)
+{
+	struct stop_machine stop, *S = &stop;
+
+	KASSERT(cpus == NULL);	/* not implemented */
+
+	S->callback = callback;
+	S->cookie = cookie;
+	S->ncpu = ncpu;		/* XXX cpu hotplug */
+	S->done = false;
+
+	xc_wait(xc_broadcast(0, stop_machine_xcall, &S, NULL));
+}
