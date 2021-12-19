@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_trace.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: drm_trace.h,v 1.3 2021/12/19 01:16:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,13 +35,14 @@
 #include <sys/types.h>
 
 static inline void
-trace_drm_vblank_event_delivered(pid_t pid __unused, int pipe __unused,
-    uint32_t sequence __unused)
+trace_drm_vblank_event_delivered(struct drm_file *fp __unused,
+    int pipe __unused, uint32_t sequence __unused)
 {
 }
 
 static inline void
-trace_drm_vblank_event_queued(pid_t pid __unused, int pipe __unused,
+trace_drm_vblank_event_queued(struct drm_file *file __unused,
+    int pipe __unused,
     uint32_t sequence __unused)
 {
 }
