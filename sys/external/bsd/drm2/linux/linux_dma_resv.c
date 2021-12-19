@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.4 2021/12/19 10:38:14 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.5 2021/12/19 11:52:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.4 2021/12/19 10:38:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.5 2021/12/19 11:52:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -1093,8 +1093,9 @@ restart:
 
 wait:
 	/*
-	 * Exit the RCU read section and wait for it.  If we time out
-	 * or fail, bail.  Otherwise, go back to the top.
+	 * Exit the RCU read section, wait for it, and release the
+	 * fence when we're done.  If we time out or fail, bail.
+	 * Otherwise, go back to the top.
 	 */
 	KASSERT(fence != NULL);
 	rcu_read_unlock();
