@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_trace.h,v 1.3 2021/12/19 01:16:44 riastradh Exp $	*/
+/*	$NetBSD: drm_trace.h,v 1.4 2021/12/19 09:53:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,9 @@ trace_drm_vblank_event_queued(struct drm_file *file __unused,
 }
 
 static inline void
-trace_drm_vblank_event(int crtc __unused, uint32_t sequence __unused)
+trace_drm_vblank_event(int crtc __unused, uint32_t sequence __unused,
+    ktime_t time __unused,
+    bool condition __unused)
 {
 }
 
