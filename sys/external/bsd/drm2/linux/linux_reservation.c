@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.20 2021/12/19 01:25:43 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.21 2021/12/19 01:48:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.20 2021/12/19 01:25:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.21 2021/12/19 01:48:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -187,6 +187,18 @@ reservation_object_held(struct reservation_object *robj)
 {
 
 	return ww_mutex_is_locked(&robj->lock);
+}
+
+/*
+ * reservation_object_assert_held(robj)
+ *
+ *	Panic if robj is not held, in DIAGNOSTIC builds.
+ */
+void
+reservation_object_assert_held(struct reservation_object *robj)
+{
+
+	KASSERT(reservation_object_held(robj));
 }
 
 /*
