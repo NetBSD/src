@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.28 2021/12/19 11:36:41 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.29 2021/12/19 12:23:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.28 2021/12/19 11:36:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.29 2021/12/19 12:23:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -101,7 +101,7 @@ const struct cdevsw drm_cdevsw = {
 	.d_flag = D_NEGOFFSAFE,
 };
 
-static const struct fileops drm_fileops = {
+const struct fileops drm_fileops = {
 	.fo_name = "drm",
 	.fo_read = drm_read,
 	.fo_write = fbadop_write,

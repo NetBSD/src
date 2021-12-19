@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_drv.c,v 1.7 2021/12/19 12:01:48 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_drv.c,v 1.8 2021/12/19 12:23:42 riastradh Exp $	*/
 
 /*
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.7 2021/12/19 12:01:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.8 2021/12/19 12:23:42 riastradh Exp $");
 
 #include <drm/amdgpu_drm.h>
 #include <drm/drm_drv.h>
@@ -1376,7 +1376,6 @@ static const struct file_operations amdgpu_driver_kms_fops = {
 static const struct uvm_pagerops amdgpu_gem_uvm_ops;
 #endif
 
-#ifndef __NetBSD__
 int amdgpu_file_to_fpriv(struct file *filp, struct amdgpu_fpriv **fpriv)
 {
         struct drm_file *file;
@@ -1384,15 +1383,22 @@ int amdgpu_file_to_fpriv(struct file *filp, struct amdgpu_fpriv **fpriv)
 	if (!filp)
 		return -EINVAL;
 
+#ifdef __NetBSD__
+	if (filp->f_ops != &drm_fileops)
+		return -EINVAL;
+	file = filp->f_data;
+	if (file->minor->dev->driver != &kms_driver)
+		return -EINVAL;
+#else
 	if (filp->f_op != &amdgpu_driver_kms_fops) {
 		return -EINVAL;
 	}
 
 	file = filp->private_data;
+#endif
 	*fpriv = file->driver_priv;
 	return 0;
 }
-#endif
 
 static bool
 amdgpu_get_crtc_scanout_position(struct drm_device *dev, unsigned int pipe,
