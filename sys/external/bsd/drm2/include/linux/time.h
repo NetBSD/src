@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.9 2021/12/19 09:44:11 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.10 2021/12/19 11:12:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/time.h>
 
 #include <linux/math64.h>
+#include <linux/seqlock.h>
 
 #define	timespec64	timespec	/* take that, 2038 */
 
