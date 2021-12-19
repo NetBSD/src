@@ -1,4 +1,4 @@
-/*	$NetBSD: nv50_display.h,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nv50_display.h,v 1.4 2021/12/19 10:48:54 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -33,7 +33,4 @@
 #include "nouveau_reg.h"
 
 int  nv50_display_create(struct drm_device *);
-void nv50_display_destroy(struct drm_device *);
-int  nv50_display_init(struct drm_device *);
-void nv50_display_fini(struct drm_device *);
 #endif /* __NV50_DISPLAY_H__ */
