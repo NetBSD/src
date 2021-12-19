@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce120_hw_sequencer.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce120_hw_sequencer.c,v 1.3 2021/12/19 11:23:00 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce120_hw_sequencer.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce120_hw_sequencer.c,v 1.3 2021/12/19 11:23:00 riastradh Exp $");
 
 #include "dm_services.h"
 #include "dc.h"
@@ -55,7 +55,7 @@ struct dce120_hw_seq_reg_offsets {
 	uint32_t crtc;
 };
 
-static const struct dce120_hw_seq_reg_offsets reg_offsets[] = {
+static const struct dce120_hw_seq_reg_offsets reg_offsets[] __unused = {
 {
 	.crtc = (mmCRTC0_CRTC_GSL_CONTROL - mmCRTC0_CRTC_GSL_CONTROL),
 },
