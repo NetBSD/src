@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.39 2021/12/19 10:51:17 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.40 2021/12/19 10:56:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/endian.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -54,12 +53,6 @@
 #define U64_MAX UINT64_MAX
 
 #define	oops_in_progress	(panicstr != NULL)
-
-#if BYTE_ORDER == BIG_ENDIAN
-#define	__BIG_ENDIAN		_BIG_ENDIAN
-#else
-#define	__LITTLE_ENDIAN		_LITTLE_ENDIAN
-#endif
 
 #define	IS_BUILTIN(option)	(1) /* Probably... */
 #define	IS_ENABLED(option)	(option)
