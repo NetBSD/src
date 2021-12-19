@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.c,v 1.7 2021/12/19 09:50:12 riastradh Exp $	*/
+/*	$NetBSD: drm_print.c,v 1.8 2021/12/19 09:50:19 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.7 2021/12/19 09:50:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.8 2021/12/19 09:50:19 riastradh Exp $");
 
 #ifndef __NetBSD__		/* XXX ??? */
 #define DEBUG /* for pr_debug() */
@@ -291,7 +291,7 @@ void drm_dev_dbg(const struct device *dev, enum drm_debug_category category,
 #ifdef __NetBSD__
 	va_list va;
 
-	if (!(drm_debug & category))
+	if (!(__drm_debug & category))
 		return;
 
 	va_start(va, format);
@@ -327,7 +327,7 @@ void __drm_dbg(enum drm_debug_category category, const char *format, ...)
 #ifdef __NetBSD__
 	va_list va;
 
-	if (!(drm_debug & category))
+	if (!(__drm_debug & category))
 		return;
 
 	va_start(va, format);
