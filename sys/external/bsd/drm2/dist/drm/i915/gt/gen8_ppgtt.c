@@ -1,4 +1,4 @@
-/*	$NetBSD: gen8_ppgtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $	*/
+/*	$NetBSD: gen8_ppgtt.c,v 1.5 2021/12/19 11:15:18 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.5 2021/12/19 11:15:18 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -391,14 +391,15 @@ gen8_ppgtt_insert_pte(struct i915_ppgtt *ppgtt,
 		KASSERT((seg->ds_addr & (I915_GTT_PAGE_SIZE - 1)) == 0);
 		KASSERT((seg->ds_len & (I915_GTT_PAGE_SIZE - 1)) == 0);
 		KASSERT(iter->off <= seg->ds_len - I915_GTT_PAGE_SIZE);
-		vaddr[idx->pte] = pte_encode | (seg->ds_addr + iter->off);
+		vaddr[gen8_pd_index(idx, 0)] =
+		    pte_encode | (seg->ds_addr + iter->off);
 		iter->off += I915_GTT_PAGE_SIZE;
 		if (iter->off >= seg->ds_len) {
 			GEM_BUG_ON(iter->off > seg->ds_len);
 			iter->off = 0;
 			if (++iter->seg >= iter->map->dm_nsegs) {
 				GEM_BUG_ON(iter->seg > iter->map->dm_nsegs);
-				ret = false;
+				idx = 0;
 				break;
 			}
 		}
@@ -503,7 +504,7 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 
 		do {
 #ifdef __NetBSD__
-			GEM_BUG_ON((iter->map->ds_segs[iter->seg].ds_len -
+			GEM_BUG_ON((iter->map->dm_segs[iter->seg].ds_len -
 				iter->off) < page_size);
 #else
 			GEM_BUG_ON(iter->sg->length < page_size);
@@ -514,9 +515,9 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 #ifdef __NetBSD__
 			iter->off += page_size;
 			rem -= page_size;
-			if (iter->off >= iter->map->ds_seg[iter->seg].ds_len) {
+			if (iter->off >= iter->map->dm_segs[iter->seg].ds_len) {
 				GEM_BUG_ON(iter->off >
-				    iter->map->ds_seg[iter->seg].ds_len);
+				    iter->map->dm_segs[iter->seg].ds_len);
 				iter->off = 0;
 				if (++iter->seg >= iter->map->dm_nsegs) {
 					GEM_BUG_ON(iter->seg >
@@ -529,7 +530,7 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 				    !(IS_ALIGNED((seg->ds_addr + iter->off),
 					    I915_GTT_PAGE_SIZE_64K) &&
 					(IS_ALIGNED(rem,
-					    I915_GEM_PAGE_SIZE_64K) ||
+					    I915_GTT_PAGE_SIZE_64K) ||
 					    rem >= ((I915_PDES - index) * I915_GTT_PAGE_SIZE))))
 					maybe_64K = false;
 				if (unlikely(!IS_ALIGNED((seg->ds_addr +
