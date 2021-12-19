@@ -1,4 +1,4 @@
-/*	$NetBSD: dmabuf.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
+/*	$NetBSD: dmabuf.c,v 1.3 2021/12/19 11:06:55 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Intel Corporation. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmabuf.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmabuf.c,v 1.3 2021/12/19 11:06:55 riastradh Exp $");
 
 #include <linux/dma-buf.h>
 #include <linux/vfio.h>
@@ -486,7 +486,9 @@ int intel_vgpu_query_plane(struct intel_vgpu *vgpu, void *args)
 
 	dmabuf_obj->vgpu = vgpu;
 
+	idr_preload(GFP_NOWAIT); /* XXX ??? */
 	ret = idr_alloc(&vgpu->object_idr, dmabuf_obj, 1, 0, GFP_NOWAIT);
+	idr_preload_end();
 	if (ret < 0)
 		goto out_free_info;
 	gfx_plane_info->dmabuf_id = ret;

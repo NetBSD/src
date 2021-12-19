@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mode_object.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_mode_object.c,v 1.3 2021/12/19 11:06:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mode_object.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mode_object.c,v 1.3 2021/12/19 11:06:54 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/uaccess.h>
@@ -49,6 +49,7 @@ int __drm_mode_object_add(struct drm_device *dev, struct drm_mode_object *obj,
 
 	WARN_ON(!dev->driver->load && dev->registered && !obj_free_cb);
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&dev->mode_config.idr_mutex);
 	ret = idr_alloc(&dev->mode_config.object_idr, register_obj ? obj : NULL,
 			1, 0, GFP_KERNEL);
@@ -65,6 +66,7 @@ int __drm_mode_object_add(struct drm_device *dev, struct drm_mode_object *obj,
 		}
 	}
 	mutex_unlock(&dev->mode_config.idr_mutex);
+	idr_preload_end();
 
 	return ret < 0 ? ret : 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vgem_fence.c,v 1.2 2021/12/18 23:45:44 riastradh Exp $	*/
+/*	$NetBSD: vgem_fence.c,v 1.3 2021/12/19 11:06:55 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vgem_fence.c,v 1.2 2021/12/18 23:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vgem_fence.c,v 1.3 2021/12/19 11:06:55 riastradh Exp $");
 
 #include <linux/dma-buf.h>
 #include <linux/dma-resv.h>
@@ -173,9 +173,11 @@ int vgem_fence_attach_ioctl(struct drm_device *dev,
 
 	/* Record the fence in our idr for later signaling */
 	if (ret == 0) {
+		idr_preload(GFP_KERNEL);
 		mutex_lock(&vfile->fence_mutex);
 		ret = idr_alloc(&vfile->fence_idr, fence, 1, 0, GFP_KERNEL);
 		mutex_unlock(&vfile->fence_mutex);
+		idr_preload_end();
 		if (ret > 0) {
 			arg->out_fence = ret;
 			ret = 0;
