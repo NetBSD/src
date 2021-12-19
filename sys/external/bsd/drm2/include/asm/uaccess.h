@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.4 2021/12/19 00:50:11 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.5 2021/12/19 00:55:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -71,6 +71,25 @@ copy_to_user(void *user_addr, const void *kernel_addr, size_t len)
 	const typeof(*(USER_PTR)) __put_user_tmp = (KERNEL_RVAL);	      \
 	copy_to_user((USER_PTR), &__put_user_tmp, sizeof(__put_user_tmp));    \
 })
+
+static inline size_t
+clear_user(void __user *user_ptr, size_t size)
+{
+	char __user *p = user_ptr;
+	size_t n = size;
+
+	/*
+	 * This loop which sets up a fault handler on every iteration
+	 * is not going to win any speed records, but it'll do to copy
+	 * out an int.
+	 */
+	while (n --> 0) {
+		if (subyte(p, 0) != 0)
+			return ++n;
+	}
+
+	return 0;
+}
 
 #if 0
 /*
