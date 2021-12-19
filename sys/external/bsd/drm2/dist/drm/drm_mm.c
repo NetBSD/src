@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.9 2021/12/19 11:00:36 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.10 2021/12/19 11:03:09 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.9 2021/12/19 11:00:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.10 2021/12/19 11:03:09 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
@@ -133,14 +133,14 @@ static void show_leaks(struct drm_mm *mm)
 
 	list_for_each_entry(node, drm_mm_nodes(mm), node_list) {
 		if (!node->stack) {
-			DRM_ERROR("node [%08llx + %08llx]: unknown owner\n",
+			DRM_ERROR("node [%08"PRIx64" + %08"PRIx64"]: unknown owner\n",
 				  node->start, node->size);
 			continue;
 		}
 
 		nr_entries = stack_depot_fetch(node->stack, &entries);
 		stack_trace_snprint(buf, BUFSZ, entries, nr_entries, 0);
-		DRM_ERROR("node [%08llx + %08llx]: inserted at\n%s",
+		DRM_ERROR("node [%08"PRIx64" + %08"PRIx64"]: inserted at\n%s",
 			  node->start, node->size, buf);
 	}
 
@@ -157,19 +157,31 @@ static void show_leaks(struct drm_mm *mm) { }
 #define START(node) ((node)->start)
 #define LAST(node)  ((node)->start + (node)->size - 1)
 
+#ifndef __NetBSD__
 INTERVAL_TREE_DEFINE(struct drm_mm_node, rb,
 		     u64, __subtree_last,
 		     START, LAST, static inline, drm_mm_interval_tree)
+#endif
 
 struct drm_mm_node *
 __drm_mm_interval_first(const struct drm_mm *mm_const, u64 start, u64 last)
 {
 	struct drm_mm *mm = __UNCONST(mm_const);
+#ifdef __NetBSD__
+	struct drm_mm_node *node;
+	list_for_each_entry(node, &mm->head_node.node_list, node_list) {
+		if (node->start <= start)
+			return node;
+	}
+	return NULL;
+#else
 	return drm_mm_interval_tree_iter_first((struct rb_root_cached *)&mm->interval_tree,
 					       start, last) ?: (struct drm_mm_node *)&mm->head_node;
+#endif
 }
 EXPORT_SYMBOL(__drm_mm_interval_first);
 
+#ifndef __NetBSD__
 static void drm_mm_interval_tree_add_node(struct drm_mm_node *hole_node,
 					  struct drm_mm_node *node)
 {
@@ -217,6 +229,7 @@ static void drm_mm_interval_tree_add_node(struct drm_mm_node *hole_node,
 	rb_insert_augmented_cached(&node->rb, &mm->interval_tree, leftmost,
 				   &drm_mm_interval_tree_augment);
 }
+#endif
 
 #ifdef __NetBSD__
 
@@ -349,7 +362,7 @@ static void add_hole(struct drm_mm_node *node)
 	insert_hole_size(&mm->holes_size, node);
 #ifdef __NetBSD__
 	struct drm_mm_node *collision __diagused;
-	collision = rb_tree_insert_node(&mm->holes_addr, node);
+	collision = rb_tree_insert_node(&mm->holes_addr.rbr_tree, node);
 	KASSERT(collision == node);
 #else
 	RB_INSERT(mm->holes_addr, rb_hole_addr, HOLE_ADDR);
@@ -387,6 +400,9 @@ static inline u64 rb_hole_size(struct rb_node *rb)
 
 static struct drm_mm_node *best_hole(struct drm_mm *mm, u64 size)
 {
+#ifdef __NetBSD__
+	return rb_tree_find_node_geq(&mm->holes_size.rb_root.rbr_tree, &size);
+#else
 	struct rb_node *rb = mm->holes_size.rb_root.rb_node;
 	struct drm_mm_node *best = NULL;
 
@@ -403,10 +419,14 @@ static struct drm_mm_node *best_hole(struct drm_mm *mm, u64 size)
 	} while (rb);
 
 	return best;
+#endif
 }
 
 static struct drm_mm_node *find_hole(struct drm_mm *mm, u64 addr)
 {
+#ifdef __NetBSD__
+	return rb_tree_find_node_leq(&mm->holes_addr.rbr_tree, &addr);
+#else
 	struct rb_node *rb = mm->holes_addr.rb_node;
 	struct drm_mm_node *node = NULL;
 
@@ -425,6 +445,7 @@ static struct drm_mm_node *find_hole(struct drm_mm *mm, u64 addr)
 	}
 
 	return node;
+#endif
 }
 
 static struct drm_mm_node *
@@ -527,7 +548,9 @@ int drm_mm_reserve_node(struct drm_mm *mm, struct drm_mm_node *node)
 
 	__set_bit(DRM_MM_NODE_ALLOCATED_BIT, &node->flags);
 	list_add(&node->node_list, &hole->node_list);
+#ifndef __NetBSD__
 	drm_mm_interval_tree_add_node(hole, node);
+#endif
 	node->hole_size = 0;
 
 	rm_hole(hole);
@@ -646,7 +669,9 @@ int drm_mm_insert_node_in_range(struct drm_mm * const mm,
 
 		__set_bit(DRM_MM_NODE_ALLOCATED_BIT, &node->flags);
 		list_add(&node->node_list, &hole->node_list);
+#ifndef __NetBSD__
 		drm_mm_interval_tree_add_node(hole, node);
+#endif
 
 		rm_hole(hole);
 		if (adj_start > hole_start)
@@ -688,7 +713,11 @@ void drm_mm_remove_node(struct drm_mm_node *node)
 	if (drm_mm_hole_follows(node))
 		rm_hole(node);
 
+#ifdef __NetBSD__
+	__USE(mm);
+#else
 	drm_mm_interval_tree_remove(node, &mm->interval_tree);
+#endif
 	list_del(&node->node_list);
 
 	if (drm_mm_hole_follows(prev_node))
@@ -718,7 +747,9 @@ void drm_mm_replace_node(struct drm_mm_node *old, struct drm_mm_node *new)
 
 	__set_bit(DRM_MM_NODE_ALLOCATED_BIT, &new->flags);
 	list_replace(&old->node_list, &new->node_list);
+#ifndef __NetBSD__
 	rb_replace_node_cached(&old->rb, &new->rb, &mm->interval_tree);
+#endif
 
 	if (drm_mm_hole_follows(old)) {
 		list_replace(&old->hole_stack, &new->hole_stack);
@@ -1019,7 +1050,7 @@ void drm_mm_init(struct drm_mm *mm, u64 start, u64 size)
 
 	INIT_LIST_HEAD(&mm->hole_stack);
 #ifdef __NetBSD__
-	drm_mm_interval_tree_init(&mm->interval_tree);
+	/* XXX interval tree */
 	rb_tree_init(&mm->holes_size.rb_root.rbr_tree, &holes_size_rb_ops);
 	rb_tree_init(&mm->holes_addr.rbr_tree, &holes_addr_rb_ops);
 #else
@@ -1081,7 +1112,7 @@ void drm_mm_print(const struct drm_mm *mm, struct drm_printer *p)
 	total_free += drm_mm_dump_hole(p, &mm->head_node);
 
 	drm_mm_for_each_node(entry, mm) {
-		drm_printf(p, "%#018llx-%#018llx: %"PRIu64": used\n", entry->start,
+		drm_printf(p, "%#018"PRIx64"-%#018"PRIx64": %"PRIu64": used\n", entry->start,
 			   entry->start + entry->size, entry->size);
 		total_used += entry->size;
 		total_free += drm_mm_dump_hole(p, entry);

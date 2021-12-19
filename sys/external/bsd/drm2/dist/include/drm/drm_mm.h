@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.h,v 1.6 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.h,v 1.7 2021/12/19 11:03:09 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -165,7 +165,9 @@ struct drm_mm_node {
 	struct drm_mm *mm;
 	struct list_head node_list;
 	struct list_head hole_stack;
+#ifndef __NetBSD__		/* XXX interval tree */
 	struct rb_node rb;
+#endif
 	struct rb_node rb_hole_size;
 	struct rb_node rb_hole_addr;
 	u64 __subtree_last;
@@ -206,8 +208,10 @@ struct drm_mm {
 	/* head_node.node_list is the list of all memory nodes, ordered
 	 * according to the (increasing) start address of the memory node. */
 	struct drm_mm_node head_node;
+#ifndef __NetBSD__		/* XXX interval tree */
 	/* Keep an interval_tree for fast lookup of drm_mm_nodes by address. */
 	struct rb_root_cached interval_tree;
+#endif
 	struct rb_root_cached holes_size;
 	struct rb_root holes_addr;
 
