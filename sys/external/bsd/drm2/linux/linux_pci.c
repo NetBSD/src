@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.17 2021/12/19 10:59:48 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.18 2021/12/19 11:09:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.17 2021/12/19 10:59:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.18 2021/12/19 11:09:48 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -788,10 +788,4 @@ linux_pci_dev_destroy(struct pci_dev *pdev)
 	/* There is no way these should be still in use.  */
 	KASSERT(pdev->pd_saved_state == NULL);
 	KASSERT(pdev->pd_intr_handles == NULL);
-}
-
-bool
-dev_is_pci(struct pci_dev *pdev)
-{
-	return pdev != NULL;
 }

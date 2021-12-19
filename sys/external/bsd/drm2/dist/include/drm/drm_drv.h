@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.h,v 1.7 2021/12/19 10:51:39 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.h,v 1.8 2021/12/19 11:09:47 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -43,7 +43,6 @@ struct dma_buf_attachment;
 struct drm_display_mode;
 struct drm_mode_create_dumb;
 struct drm_printer;
-struct drm_unique;
 
 /**
  * enum drm_driver_feature - feature flags
@@ -800,7 +799,6 @@ struct drm_driver {
 	int (*dma_ioctl) (struct drm_device *dev, void *data, struct drm_file *file_priv);
 	int (*dma_quiescent) (struct drm_device *);
 	int (*context_dtor) (struct drm_device *dev, int context);
-	int (*set_busid)(struct drm_device *dev, struct drm_master *master);
 	int dev_priv_size;
 };
 
