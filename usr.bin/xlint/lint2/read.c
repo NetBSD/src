@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.72 2021/12/16 03:53:13 rillig Exp $ */
+/* $NetBSD: read.c,v 1.73 2021/12/19 10:19:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.72 2021/12/16 03:53:13 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.73 2021/12/19 10:19:58 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -140,7 +140,7 @@ parse_short(const char **p)
 }
 
 static void
-read_ln_line(const char *line, size_t len)
+read_ln_line(const char *line)
 {
 	const char *cp;
 	int cline, isrc, iline;
@@ -234,7 +234,7 @@ readfile(const char *name)
 			inperr("missing newline after '%s'", &line[len - 1]);
 		line[len - 1] = '\0';
 
-		read_ln_line(line, len);
+		read_ln_line(line);
 		readfile_line = NULL;
 	}
 
