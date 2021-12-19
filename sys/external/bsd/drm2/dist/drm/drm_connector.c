@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_connector.c,v 1.4 2021/12/19 01:02:10 riastradh Exp $	*/
+/*	$NetBSD: drm_connector.c,v 1.5 2021/12/19 09:51:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_connector.c,v 1.4 2021/12/19 01:02:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_connector.c,v 1.5 2021/12/19 09:51:50 riastradh Exp $");
 
 #include <drm/drm_connector.h>
 #include <drm/drm_edid.h>
@@ -630,7 +630,7 @@ const char *drm_get_connector_force_name(enum drm_connector_force force)
 	}
 }
 
-#ifdef CONFIG_LOCKDEP
+#if IS_ENABLED(CONFIG_LOCKDEP)
 static struct lockdep_map connector_list_iter_dep_map = {
 	.name = "drm_connector_list_iter"
 };
