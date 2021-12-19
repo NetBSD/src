@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.c,v 1.6 2021/12/19 01:02:02 riastradh Exp $	*/
+/*	$NetBSD: drm_vma_manager.c,v 1.7 2021/12/19 11:34:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.6 2021/12/19 01:02:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.7 2021/12/19 11:34:20 riastradh Exp $");
 
 #include <sys/kmem.h>
 #include <sys/rbtree.h>
@@ -233,7 +233,7 @@ drm_vma_offset_lookup_locked(struct drm_vma_offset_manager *mgr,
 	if (node == NULL)
 		return NULL;
 	KASSERT(node->von_startpage <= startpage);
-	if (npages < node->von_npages)
+	if (node->von_npages < npages)
 		return NULL;
 	if (node->von_npages - npages < startpage - node->von_startpage)
 		return NULL;
