@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lspcon.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_lspcon.c,v 1.3 2021/12/19 11:47:33 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lspcon.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lspcon.c,v 1.3 2021/12/19 11:47:33 riastradh Exp $");
 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_dp_dual_mode_helper.h>
@@ -388,7 +388,7 @@ static bool _lspcon_write_avi_infoframe_mca(struct drm_dp_aux *aux,
 	while (val < len) {
 		/* DPCD write for AVI IF can fail on a slow FW day, so retry */
 		for (retry = 0; retry < 5; retry++) {
-			ret = drm_dp_dpcd_write(aux, reg, (void *)data, 1);
+			ret = drm_dp_dpcd_write(aux, reg, (void *)__UNCONST(data), 1);
 			if (ret == 1) {
 				break;
 			} else if (retry < 4) {
