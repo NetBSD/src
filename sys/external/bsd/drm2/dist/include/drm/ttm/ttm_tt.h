@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.h,v 1.4 2021/12/19 09:58:00 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.h,v 1.5 2021/12/19 09:58:30 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -111,7 +111,12 @@ struct ttm_tt {
 	uint32_t page_flags;
 	unsigned long num_pages;
 	struct sg_table *sg; /* for SG objects via dma-buf */
+#ifdef __NetBSD__
+	struct uvm_object *swap_storage;
+	struct pglist pglist;
+#else
 	struct file *swap_storage;
+#endif
 	enum ttm_caching_state caching_state;
 	enum {
 		tt_bound,
@@ -211,6 +216,25 @@ void ttm_tt_destroy(struct ttm_tt *ttm);
  */
 void ttm_tt_unbind(struct ttm_tt *ttm);
 
+#ifdef __NetBSD__
+/**
+ * ttm_tt_wire
+ *
+ * @ttm The struct ttm_tt.
+ *
+ * Wire the pages of a ttm_tt, allocating pages for it if necessary.
+ */
+extern int ttm_tt_wire(struct ttm_tt *ttm);
+
+/**
+ * ttm_tt_unwire
+ *
+ * @ttm The struct ttm_tt.
+ *
+ * Unwire the pages of a ttm_tt.
+ */
+extern void ttm_tt_unwire(struct ttm_tt *ttm);
+#else
 /**
  * ttm_tt_swapin:
  *
@@ -219,6 +243,7 @@ void ttm_tt_unbind(struct ttm_tt *ttm);
  * Swap in a previously swap out ttm_tt.
  */
 int ttm_tt_swapin(struct ttm_tt *ttm);
+#endif
 
 /**
  * ttm_tt_set_placement_caching:
