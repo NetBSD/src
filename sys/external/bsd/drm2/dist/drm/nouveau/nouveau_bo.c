@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.17 2021/12/19 01:53:39 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.18 2021/12/19 10:47:46 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.17 2021/12/19 01:53:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.18 2021/12/19 10:47:46 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -207,7 +207,7 @@ nouveau_bo_alloc(struct nouveau_cli *cli, u64 *size, int *align, u32 flags,
 	int i, pi = -1;
 
 	if (!*size) {
-		NV_WARN(drm, "skipped size %016llx\n", *size);
+		NV_WARN(drm, "skipped size %016"PRIx64"\n", *size);
 		return ERR_PTR(-EINVAL);
 	}
 
@@ -557,7 +557,7 @@ nouveau_bo_sync_for_device(struct nouveau_bo *nvbo)
 		return;
 
 #ifdef __NetBSD__
-	bus_dma_tag_t dmat = device->func->dma_tag(device);
+	bus_dma_tag_t dmat = drm->dev->dmat;
 	bus_dmamap_sync(dmat, ttm_dma->dma_address, 0,
 	    PAGE_SIZE*ttm_dma->ttm.num_pages,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -586,7 +586,7 @@ nouveau_bo_sync_for_cpu(struct nouveau_bo *nvbo)
 		return;
 
 #ifdef __NetBSD__
-	bus_dma_tag_t dmat = device->func->dma_tag(device);
+	bus_dma_tag_t dmat = drm->dev->dmat;
 	bus_dmamap_sync(dmat, ttm_dma->dma_address, 0,
 	    PAGE_SIZE*ttm_dma->ttm.num_pages,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1516,10 +1516,14 @@ out:
 static int
 nouveau_bo_verify_access(struct ttm_buffer_object *bo, struct file *filp)
 {
+#ifdef __NetBSD__
+	struct drm_file *file = filp->f_data;
+#else
+	struct drm_file *file = filp->private_data;
+#endif
 	struct nouveau_bo *nvbo = nouveau_bo(bo);
 
-	return drm_vma_node_verify_access(&nvbo->bo.base.vma_node,
-					  filp->private_data);
+	return drm_vma_node_verify_access(&nvbo->bo.base.vma_node, file);
 }
 
 static int
@@ -1705,13 +1709,14 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
 	}
 #endif
 
+#ifdef __NetBSD__
+	__USE(i);
+	__USE(dev);
+	return ttm_bus_dma_populate(ttm_dma);
+#else
 #if IS_ENABLED(CONFIG_SWIOTLB) && IS_ENABLED(CONFIG_X86)
 	if (swiotlb_nr_tbl()) {
-#ifdef __NetBSD__
-		return ttm_bus_dma_populate(ttm_dma);
-#else
 		return ttm_dma_populate((void *)ttm, dev, ctx);
-#endif
 	}
 #endif
 
@@ -1739,6 +1744,7 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
 		ttm_dma->dma_address[i] = addr;
 	}
 	return 0;
+#endif
 }
 
 static void
@@ -1763,16 +1769,17 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	}
 #endif
 
+#ifdef __NetBSD__
+	__USE(i);
+	__USE(dev);
+	ttm_bus_dma_unpopulate(ttm_dma);
+#else
 #if IS_ENABLED(CONFIG_SWIOTLB) && IS_ENABLED(CONFIG_X86)
 	if (swiotlb_nr_tbl()) {
-#ifdef __NetBSD__
-		ttm_bus_dma_unpopulate(ttm_dma);
-#else
 		ttm_dma_unpopulate((void *)ttm, dev);
 #endif
 		return;
 	}
-#endif
 
 	for (i = 0; i < ttm->num_pages; i++) {
 		if (ttm_dma->dma_address[i]) {
@@ -1782,6 +1789,7 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	}
 
 	ttm_pool_unpopulate(ttm);
+#endif
 }
 
 #ifdef __NetBSD__
