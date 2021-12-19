@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.15 2021/12/19 12:43:29 riastradh Exp $ */
+/* $NetBSD: rk_drm.c,v 1.16 2021/12/19 12:43:37 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.15 2021/12/19 12:43:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.16 2021/12/19 12:43:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,8 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.15 2021/12/19 12:43:29 riastradh Exp $"
 
 #include <arm/rockchip/rk_drm.h>
 
+#include <drm/drm_atomic_helper.h>
 #include <drm/drm_auth.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_damage_helper.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_fourcc.h>
@@ -85,7 +87,7 @@ static void	rk_drm_unload(struct drm_device *);
 static void	rk_drm_task_work(struct work *, void *);
 
 static struct drm_driver rk_drm_driver = {
-	.driver_features = DRIVER_MODESET | DRIVER_GEM,
+	.driver_features = DRIVER_MODESET | DRIVER_ATOMIC | DRIVER_GEM,
 	.dev_priv_size = 0,
 	.load = rk_drm_load,
 	.unload = rk_drm_unload,
@@ -252,6 +254,7 @@ rk_drm_fb_destroy(struct drm_framebuffer *fb)
 static const struct drm_framebuffer_funcs rk_drm_framebuffer_funcs = {
 	.create_handle = rk_drm_fb_create_handle,
 	.destroy = rk_drm_fb_destroy,
+	.dirty = drm_atomic_helper_dirtyfb,
 };
 
 static struct drm_framebuffer *
@@ -289,6 +292,12 @@ dealloc:
 
 static struct drm_mode_config_funcs rk_drm_mode_config_funcs = {
 	.fb_create = rk_drm_fb_create,
+	.atomic_check = drm_atomic_helper_check,
+	.atomic_commit = drm_atomic_helper_commit,
+};
+
+static struct drm_mode_config_helper_funcs rk_drm_mode_config_helper_funcs = {
+	.atomic_commit_tail = drm_atomic_helper_commit_tail_rpm,
 };
 
 static int
@@ -328,7 +337,6 @@ rk_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size 
 	fb->offsets[0] = 0;
 	fb->width = width;
 	fb->height = height;
-	fb->dev = ddev;
 	fb->modifier = 0;
 	fb->flags = 0;
 #ifdef __ARM_BIG_ENDIAN
@@ -336,6 +344,7 @@ rk_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size 
 #else
 	fb->format = drm_format_info(DRM_FORMAT_XRGB8888);
 #endif
+	fb->dev = ddev;
 
 	error = drm_framebuffer_init(ddev, fb, &rk_drm_framebuffer_funcs);
 	if (error != 0) {
@@ -381,6 +390,7 @@ rk_drm_load(struct drm_device *ddev, unsigned long flags)
 	ddev->mode_config.max_width = RK_DRM_MAX_WIDTH;
 	ddev->mode_config.max_height = RK_DRM_MAX_HEIGHT;
 	ddev->mode_config.funcs = &rk_drm_mode_config_funcs;
+	ddev->mode_config.helper_private = &rk_drm_mode_config_helper_funcs;
 
 	num_crtc = 0;
 	data = fdtbus_get_prop(sc->sc_phandle, "ports", &datalen);
@@ -423,8 +433,6 @@ rk_drm_load(struct drm_device *ddev, unsigned long flags)
 	fbdev->helper.fb = kmem_zalloc(sizeof(struct rk_drm_framebuffer), KM_SLEEP);
 
 	drm_fb_helper_single_add_all_connectors(&fbdev->helper);
-
-	drm_helper_disable_unused_functions(ddev);
 
 	drm_fb_helper_initial_config(&fbdev->helper, 32);
 
