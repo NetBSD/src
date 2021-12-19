@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.7 2021/12/19 01:49:21 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.8 2021/12/19 12:30:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _LINUX_IO_H_
 
 #include <linux/types.h>
+#include <linux/err.h>
 
 #include <asm/io.h>
 

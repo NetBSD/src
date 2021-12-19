@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_bufs.c,v 1.15 2021/12/19 00:55:51 riastradh Exp $	*/
+/*	$NetBSD: drm_bufs.c,v 1.16 2021/12/19 12:30:04 riastradh Exp $	*/
 
 /*
  * Legacy: Generic DRM Buffer Management
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.15 2021/12/19 00:55:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.16 2021/12/19 12:30:04 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/log2.h>
@@ -262,14 +262,14 @@ static int drm_addmap_core(struct drm_device *dev, resource_size_t offset,
 		map->offset = (unsigned long)map->handle;
 		if (map->flags & _DRM_CONTAINS_LOCK) {
 			/* Prevent a 2nd X Server from creating a 2nd lock */
-			spin_lock(&dev->primary->master->lock.spinlock);
+			spin_lock(&dev->master->lock.spinlock);
 			if (dev->master->lock.hw_lock != NULL) {
 				spin_unlock(&dev->master->lock.spinlock);
 				vfree(map->handle);
 				kfree(map);
 				return -EBUSY;
 			}
-			spin_unlock(&dev->primary->master->lock.spinlock);
+			spin_unlock(&dev->master->lock.spinlock);
 			dev->sigdata.lock = dev->master->lock.hw_lock = map->handle;	/* Pointer to lock */
 		}
 		break;
@@ -588,7 +588,7 @@ int drm_legacy_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 			 * equivalent to having a master set?
 			 *
 			 * XXX There is copypasta of this in
-			 * drm_fops.c.
+			 * drm_lock.c, drm_legacy_lock_master_cleanup.
 			 */
 			BUG_ON(master->lock.hw_lock == NULL);
 			if (dev->sigdata.lock == master->lock.hw_lock)
@@ -1514,8 +1514,13 @@ int drm_legacy_freebufs(struct drm_device *dev, void *data,
 		idx = array_index_nospec(idx, dma->buf_count);
 		buf = dma->buflist[idx];
 		if (buf->file_priv != file_priv) {
+#ifdef __NetBSD__
+			DRM_ERROR("Process %d freeing buffer not owned\n",
+				  (int)curproc->p_pid);
+#else
 			DRM_ERROR("Process %d freeing buffer not owned\n",
 				  task_pid_nr(current));
+#endif
 			return -EINVAL;
 		}
 		drm_legacy_free_buffer(dev, buf);

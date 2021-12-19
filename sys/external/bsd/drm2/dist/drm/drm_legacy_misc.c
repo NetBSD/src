@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_legacy_misc.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_legacy_misc.c,v 1.3 2021/12/19 12:30:04 riastradh Exp $	*/
 
 /*
  * \file drm_legacy_misc.c
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_legacy_misc.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_legacy_misc.c,v 1.3 2021/12/19 12:30:04 riastradh Exp $");
 
 #include <drm/drm_agpsupport.h>
 #include <drm/drm_device.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_legacy_misc.c,v 1.2 2021/12/18 23:44:57 riastrad
 
 #include "drm_internal.h"
 #include "drm_legacy.h"
+
+#include <linux/nbsd-namespace.h>
 
 void drm_legacy_init_members(struct drm_device *dev)
 {
@@ -59,6 +61,7 @@ void drm_legacy_init_members(struct drm_device *dev)
 void drm_legacy_destroy_members(struct drm_device *dev)
 {
 	mutex_destroy(&dev->ctxlist_mutex);
+	spin_lock_destroy(&dev->buf_lock);
 }
 
 int drm_legacy_setup(struct drm_device * dev)
@@ -108,5 +111,5 @@ void drm_legacy_dev_reinit(struct drm_device *dev)
 void drm_master_legacy_init(struct drm_master *master)
 {
 	spin_lock_init(&master->lock.spinlock);
-	init_waitqueue_head(&master->lock.lock_queue);
+	DRM_INIT_WAITQUEUE(&master->lock.lock_queue, "drmlock");
 }
