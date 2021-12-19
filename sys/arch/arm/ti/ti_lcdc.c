@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.c,v 1.7 2021/08/07 16:18:46 thorpej Exp $ */
+/* $NetBSD: ti_lcdc.c,v 1.8 2021/12/19 11:01:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.7 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.8 2021/12/19 11:01:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -420,7 +420,7 @@ tilcdc_attach(device_t parent, device_t self, void *aux)
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_ENCODER);
 
 	sc->sc_ddev = drm_dev_alloc(driver, sc->sc_dev);
-	if (sc->sc_ddev == NULL) {
+	if (IS_ERR(sc->sc_ddev)) {
 		aprint_error_dev(self, "couldn't allocate DRM device\n");
 		return;
 	}
