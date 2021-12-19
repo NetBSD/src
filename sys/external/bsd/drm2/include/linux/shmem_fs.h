@@ -1,4 +1,4 @@
-/*	$NetBSD: shmem_fs.h,v 1.3 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: shmem_fs.h,v 1.4 2021/12/19 12:13:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ shmem_truncate_range(struct uvm_object *uobj, voff_t start, voff_t end)
 		KASSERT(0 <= start);
 		KASSERT(start <= end);
 	}
+
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	(*uobj->pgops->pgo_put)(uobj, start, end, flags);
 }
 
