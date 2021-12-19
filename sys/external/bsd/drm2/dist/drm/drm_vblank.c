@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.14 2021/12/19 12:32:01 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.15 2021/12/19 12:36:31 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.14 2021/12/19 12:32:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.15 2021/12/19 12:36:31 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -1787,10 +1787,12 @@ int drm_wait_vblank_ioctl(struct drm_device *dev, void *data,
 
 		DRM_DEBUG("waiting on vblank count %"PRIu64", crtc %u\n",
 			  req_seq, pipe);
+		spin_lock(&dev->event_lock);
 		DRM_SPIN_TIMED_WAIT_UNTIL(wait, &vblank->queue,
 		    &dev->event_lock, msecs_to_jiffies(3000),
 		    (vblank_passed(drm_vblank_count(dev, pipe), req_seq) ||
 			!READ_ONCE(vblank->enabled)));
+		spin_unlock(&dev->event_lock);
 
 		switch (wait) {
 		case 0:
