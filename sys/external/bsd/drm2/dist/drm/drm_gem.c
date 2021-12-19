@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.22 2021/12/19 11:32:53 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.23 2021/12/19 11:58:49 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.22 2021/12/19 11:32:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.23 2021/12/19 11:58:49 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -1064,7 +1064,6 @@ drm_gem_object_release(struct drm_gem_object *obj)
 #endif
 
 #ifdef __NetBSD__
-	drm_vma_node_destroy(&obj->vma_node);
 	if (obj->filp)
 		uao_detach(obj->filp);
 	uvm_obj_destroy(&obj->gemo_uvmobj, /*free lock*/true);
@@ -1075,6 +1074,9 @@ drm_gem_object_release(struct drm_gem_object *obj)
 
 	dma_resv_fini(&obj->_resv);
 	drm_gem_free_mmap_offset(obj);
+#ifdef __NetBSD__
+	drm_vma_node_destroy(&obj->vma_node);
+#endif
 }
 EXPORT_SYMBOL(drm_gem_object_release);
 
