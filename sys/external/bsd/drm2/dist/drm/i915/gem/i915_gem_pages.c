@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_pages.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_pages.c,v 1.4 2021/12/19 01:34:08 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.4 2021/12/19 01:34:08 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "i915_gem_object.h"
@@ -421,6 +421,7 @@ void __i915_gem_object_flush_map(struct drm_i915_gem_object *obj,
 	}
 }
 
+#ifndef __NetBSD__
 struct scatterlist *
 i915_gem_object_get_sg(struct drm_i915_gem_object *obj,
 		       unsigned int n,
@@ -533,10 +534,35 @@ lookup:
 
 	return sg;
 }
+#endif
 
 struct page *
 i915_gem_object_get_page(struct drm_i915_gem_object *obj, unsigned int n)
 {
+#ifdef __NetBSD__
+	struct vm_page *page;
+
+	if (obj->phys_handle) {
+		vaddr_t va = (vaddr_t)obj->phys_handle->vaddr;
+		paddr_t pa;
+		if (!pmap_extract(pmap_kernel(), va + n*PAGE_SIZE, &pa))
+			panic("i915 gem object phys-attached but not mapped:"
+			    " obj=%p pgno=%d va=%p", obj, n,
+			    obj->phys_handle->vaddr);
+		page = PHYS_TO_VM_PAGE(pa);
+	} else {
+		/*
+		 * Pages must be pinned so that we need not hold the
+		 * lock to prevent them from disappearing.
+		 */
+		KASSERT(obj->mm.pages != NULL);
+		mutex_enter(obj->base.filp->vmobjlock);
+		page = uvm_pagelookup(obj->base.filp, ptoa(n));
+		mutex_exit(obj->base.filp->vmobjlock);
+	}
+	KASSERT(page != NULL);
+	return container_of(page, struct page, p_vmp);
+#else
 	struct scatterlist *sg;
 	unsigned int offset;
 
@@ -544,6 +570,7 @@ i915_gem_object_get_page(struct drm_i915_gem_object *obj, unsigned int n)
 
 	sg = i915_gem_object_get_sg(obj, n, &offset);
 	return nth_page(sg_page(sg), offset);
+#endif
 }
 
 /* Like i915_gem_object_get_page(), but mark the returned page dirty */
@@ -565,6 +592,18 @@ i915_gem_object_get_dma_address_len(struct drm_i915_gem_object *obj,
 				    unsigned long n,
 				    unsigned int *len)
 {
+#ifdef __NetBSD__
+	bus_addr_t poff = (bus_addr_t)n << PAGE_SHIFT;
+	unsigned seg;
+
+	for (seg = 0; seg < obj->mm.pages->dm_nsegs; seg++) {
+		if (poff <= obj->mm.pages->dm_segs[seg].ds_len)
+			return obj->mm.pages->dm_segs[seg].ds_addr + poff;
+		poff -= obj->mm.pages->dm_segs[seg].ds_len;
+	}
+	KASSERT(0);
+	return 0;
+#else
 	struct scatterlist *sg;
 	unsigned int offset;
 
@@ -574,6 +613,7 @@ i915_gem_object_get_dma_address_len(struct drm_i915_gem_object *obj,
 		*len = sg_dma_len(sg) - (offset << PAGE_SHIFT);
 
 	return sg_dma_address(sg) + (offset << PAGE_SHIFT);
+#endif
 }
 
 dma_addr_t
