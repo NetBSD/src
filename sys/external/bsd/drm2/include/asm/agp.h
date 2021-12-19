@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.h,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: agp.h,v 1.3 2021/12/19 01:51:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,19 @@
 
 #ifndef _ASM_AGP_H_
 #define _ASM_AGP_H_
+
+struct page;
+
+static inline void
+map_page_into_agp(struct page *p)
+{
+	/* XXX Linux does set_pages_uc here.  */
+}
+
+static inline void
+unmap_page_from_agp(struct page *p)
+{
+	/* XXX Linux does set_pages_wb here.  */
+}
 
 #endif  /* _ASM_AGP_H_ */
