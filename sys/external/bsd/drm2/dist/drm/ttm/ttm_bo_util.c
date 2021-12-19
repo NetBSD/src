@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.24 2021/12/19 09:57:51 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.25 2021/12/19 10:47:30 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.24 2021/12/19 09:57:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.25 2021/12/19 10:47:30 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
 #include <drm/drm_vma_manager.h>
-#include <drm/drm_os_netbsd.h>
 #include <linux/io.h>
 #include <linux/highmem.h>
 #include <linux/wait.h>
