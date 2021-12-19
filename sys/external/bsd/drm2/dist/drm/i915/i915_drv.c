@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.28 2021/12/19 11:17:27 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.29 2021/12/19 11:17:44 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.28 2021/12/19 11:17:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.29 2021/12/19 11:17:44 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.28 2021/12/19 11:17:27 riastradh Exp 
 #endif
 #endif
 #endif
+
+#include <linux/nbsd-namespace.h>
 
 static struct drm_driver driver;
 
