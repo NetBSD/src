@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.2 2021/12/19 00:58:50 riastradh Exp $	*/
+/*	$NetBSD: sort.h,v 1.3 2021/12/19 11:20:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -47,9 +47,9 @@ sort(void *array, size_t nelem, size_t elemsize,
 	KASSERT(elemsize != 0);
 	KASSERT(nelem <= SIZE_MAX/elemsize);
 
-	tmp = kmem_alloc(nelem*elemsize, KM_SLEEP);
+	tmp = kmem_alloc(elemsize, KM_SLEEP);
 	kheapsort(array, nelem, elemsize, cmp, tmp);
-	kmem_free(tmp, nelem*elemsize);
+	kmem_free(tmp, elemsize);
 }
 
 #endif	/* _LINUX_SORT_H_ */
