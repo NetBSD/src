@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.14 2021/12/19 00:50:18 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.15 2021/12/19 00:54:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,9 +40,6 @@
 
 #include <linux/list.h>
 #include <linux/spinlock.h>
-
-#define	__acquires(lock)	/* XXX lockdep annotation */
-#define	__releases(lock)	/* XXX lockdep annotation */
 
 struct mutex {
 	kmutex_t mtx_lock;
@@ -111,15 +108,6 @@ mutex_lock_nest_lock(struct mutex *mutex, struct mutex *already)
 	KASSERT(mutex_is_locked(already));
 	mutex_lock(mutex);
 }
-
-#define	__lockdep_used			__diagused
-#define	lockdep_assert_held(m)		KASSERT(mutex_owned(&(m)->mtx_lock))
-#define	lockdep_assert_held_once(m)	KASSERT(mutex_owned(&(m)->mtx_lock))
-#define	lockdep_is_held(m)		mutex_owned(&(m)->mtx_lock)
-
-#define	might_lock(m)			KDASSERT(mutex_ownable(&(m)->mtx_lock))
-
-#define	SINGLE_DEPTH_NESTING	0
 
 static inline void
 mutex_lock_nested(struct mutex *mutex, unsigned subclass __unused)
