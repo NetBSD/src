@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gem.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gem.c,v 1.8 2021/12/19 09:59:38 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.8 2021/12/19 09:59:38 riastradh Exp $");
 
 #include <linux/ktime.h>
 #include <linux/module.h>
@@ -592,7 +592,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 	int r = 0;
 
 	if (args->va_address < AMDGPU_VA_RESERVED_SIZE) {
-		dev_dbg(&dev->pdev->dev,
+		dev_dbg(pci_dev_dev(dev->pdev),
 			"va_address 0x%LX is in reserved area 0x%LX\n",
 			args->va_address, AMDGPU_VA_RESERVED_SIZE);
 		return -EINVAL;
@@ -600,7 +600,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 
 	if (args->va_address >= AMDGPU_GMC_HOLE_START &&
 	    args->va_address < AMDGPU_GMC_HOLE_END) {
-		dev_dbg(&dev->pdev->dev,
+		dev_dbg(pci_dev_dev(dev->pdev),
 			"va_address 0x%LX is in VA hole 0x%LX-0x%LX\n",
 			args->va_address, AMDGPU_GMC_HOLE_START,
 			AMDGPU_GMC_HOLE_END);
@@ -610,7 +610,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 	args->va_address &= AMDGPU_GMC_HOLE_MASK;
 
 	if ((args->flags & ~valid_flags) && (args->flags & ~prt_flags)) {
-		dev_dbg(&dev->pdev->dev, "invalid flags combination 0x%08X\n",
+		dev_dbg(pci_dev_dev(dev->pdev), "invalid flags combination 0x%08X\n",
 			args->flags);
 		return -EINVAL;
 	}
@@ -622,7 +622,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 	case AMDGPU_VA_OP_REPLACE:
 		break;
 	default:
-		dev_err(pci_dev_dev(dev->pdev), "unsupported operation %d\n",
+		dev_dbg(pci_dev_dev(dev->pdev), "unsupported operation %d\n",
 			args->operation);
 		return -EINVAL;
 	}
