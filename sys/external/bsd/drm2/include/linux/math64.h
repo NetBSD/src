@@ -1,4 +1,4 @@
-/*	$NetBSD: math64.h,v 1.8 2021/12/19 10:48:07 riastradh Exp $	*/
+/*	$NetBSD: math64.h,v 1.9 2021/12/19 10:58:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -73,6 +73,23 @@ static inline uint64_t
 mul_u32_u32(uint32_t a, uint32_t b)
 {
 	return (uint64_t)a * (uint64_t)b;
+}
+
+/* return floor((a*b) / 2^c) */
+static inline uint64_t
+mul_u64_u32_shr(uint64_t a, uint32_t b, unsigned c)
+{
+	/* 2^32 a_hi + a_lo := a */
+	uint64_t a_hi = a >> 32;
+	uint64_t a_lo = a & 0xffffffffU;
+
+	if (c >= 32) {
+		/* (a*b) / 2^c = (a_hi b + a_lo b / 2^32) / 2^{c - 32} */
+		return ((a_hi * b) + ((a_lo * b) >> 32)) >> (c - 32);
+	} else {
+		/* (a*b) / 2^c = 2^{32 - c} a_hi b + a_lo b / 2^c */
+		return ((a_hi * b) << (32 - c)) + ((a_lo * b) >> c);
+	}
 }
 
 #endif  /* _LINUX_MATH64_H_ */
