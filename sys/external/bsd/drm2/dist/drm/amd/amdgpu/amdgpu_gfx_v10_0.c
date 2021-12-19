@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gfx_v10_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gfx_v10_0.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v10_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v10_0.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/kernel.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v10_0.c,v 1.2 2021/12/18 23:44:58 riastra
 #include "v10_structs.h"
 #include "gfx_v10_0.h"
 #include "nbio_v2_3.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * Navi10 has two graphic rings to share each graphic pipe.
@@ -608,15 +610,15 @@ static void gfx_v10_0_init_rlc_ext_microcode(struct amdgpu_device *adev)
 	adev->gfx.rlc_srlc_fw_version = le32_to_cpu(rlc_hdr->save_restore_list_cntl_ucode_ver);
 	adev->gfx.rlc_srlc_feature_version = le32_to_cpu(rlc_hdr->save_restore_list_cntl_feature_ver);
 	adev->gfx.rlc.save_restore_list_cntl_size_bytes = le32_to_cpu(rlc_hdr->save_restore_list_cntl_size_bytes);
-	adev->gfx.rlc.save_restore_list_cntl = (u8 *)rlc_hdr + le32_to_cpu(rlc_hdr->save_restore_list_cntl_offset_bytes);
+	adev->gfx.rlc.save_restore_list_cntl = (const u8 *)rlc_hdr + le32_to_cpu(rlc_hdr->save_restore_list_cntl_offset_bytes);
 	adev->gfx.rlc_srlg_fw_version = le32_to_cpu(rlc_hdr->save_restore_list_gpm_ucode_ver);
 	adev->gfx.rlc_srlg_feature_version = le32_to_cpu(rlc_hdr->save_restore_list_gpm_feature_ver);
 	adev->gfx.rlc.save_restore_list_gpm_size_bytes = le32_to_cpu(rlc_hdr->save_restore_list_gpm_size_bytes);
-	adev->gfx.rlc.save_restore_list_gpm = (u8 *)rlc_hdr + le32_to_cpu(rlc_hdr->save_restore_list_gpm_offset_bytes);
+	adev->gfx.rlc.save_restore_list_gpm = (const u8 *)rlc_hdr + le32_to_cpu(rlc_hdr->save_restore_list_gpm_offset_bytes);
 	adev->gfx.rlc_srls_fw_version = le32_to_cpu(rlc_hdr->save_restore_list_srm_ucode_ver);
 	adev->gfx.rlc_srls_feature_version = le32_to_cpu(rlc_hdr->save_restore_list_srm_feature_ver);
 	adev->gfx.rlc.save_restore_list_srm_size_bytes = le32_to_cpu(rlc_hdr->save_restore_list_srm_size_bytes);
-	adev->gfx.rlc.save_restore_list_srm = (u8 *)rlc_hdr + le32_to_cpu(rlc_hdr->save_restore_list_srm_offset_bytes);
+	adev->gfx.rlc.save_restore_list_srm = (const u8 *)rlc_hdr + le32_to_cpu(rlc_hdr->save_restore_list_srm_offset_bytes);
 	adev->gfx.rlc.reg_list_format_direct_reg_list_length =
 			le32_to_cpu(rlc_hdr->reg_list_format_direct_reg_list_length);
 }
@@ -997,12 +999,12 @@ static void gfx_v10_0_rlc_fini(struct amdgpu_device *adev)
 	/* clear state block */
 	amdgpu_bo_free_kernel(&adev->gfx.rlc.clear_state_obj,
 			&adev->gfx.rlc.clear_state_gpu_addr,
-			(void **)&adev->gfx.rlc.cs_ptr);
+			(void **)__UNVOLATILE(&adev->gfx.rlc.cs_ptr));
 
 	/* jump table block */
 	amdgpu_bo_free_kernel(&adev->gfx.rlc.cp_table_obj,
 			&adev->gfx.rlc.cp_table_gpu_addr,
-			(void **)&adev->gfx.rlc.cp_table_ptr);
+			(void **)__UNVOLATILE(&adev->gfx.rlc.cp_table_ptr));
 }
 
 static int gfx_v10_0_rlc_init(struct amdgpu_device *adev)
@@ -1254,7 +1256,7 @@ static int gfx_v10_0_gfx_ring_init(struct amdgpu_device *adev, int ring_id,
 		ring->doorbell_index = adev->doorbell_index.gfx_ring0 << 1;
 	else
 		ring->doorbell_index = adev->doorbell_index.gfx_ring1 << 1;
-	sprintf(ring->name, "gfx_%d.%d.%d", ring->me, ring->pipe, ring->queue);
+	snprintf(ring->name, sizeof(ring->name), "gfx_%d.%d.%d", ring->me, ring->pipe, ring->queue);
 
 	irq_type = AMDGPU_CP_IRQ_GFX_ME0_PIPE0_EOP + ring->pipe;
 	r = amdgpu_ring_init(adev, ring, 1024,
@@ -1283,7 +1285,7 @@ static int gfx_v10_0_compute_ring_init(struct amdgpu_device *adev, int ring_id,
 	ring->doorbell_index = (adev->doorbell_index.mec_ring0 + ring_id) << 1;
 	ring->eop_gpu_addr = adev->gfx.mec.hpd_eop_gpu_addr
 				+ (ring_id * GFX10_MEC_HPD_SIZE);
-	sprintf(ring->name, "comp_%d.%d.%d", ring->me, ring->pipe, ring->queue);
+	snprintf(ring->name, sizeof(ring->name), "comp_%d.%d.%d", ring->me, ring->pipe, ring->queue);
 
 	irq_type = AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE0_EOP
 		+ ((ring->me - 1) * adev->gfx.mec.num_pipe_per_mec)
@@ -2149,7 +2151,7 @@ static void gfx_v10_0_rlc_backdoor_autoload_copy_sdma_ucode(struct amdgpu_device
 				FIRMWARE_ID_SDMA0_UCODE, fw_data, fw_size);
 			gfx_v10_0_rlc_backdoor_autoload_copy_ucode(adev,
 				FIRMWARE_ID_SDMA0_JT,
-				(uint32_t *)fw_data +
+				(const uint32_t *)fw_data +
 				sdma_hdr->jt_offset,
 				sdma_hdr->jt_size * 4);
 		} else if (i == 1) {
@@ -2157,7 +2159,7 @@ static void gfx_v10_0_rlc_backdoor_autoload_copy_sdma_ucode(struct amdgpu_device
 				FIRMWARE_ID_SDMA1_UCODE, fw_data, fw_size);
 			gfx_v10_0_rlc_backdoor_autoload_copy_ucode(adev,
 				FIRMWARE_ID_SDMA1_JT,
-				(uint32_t *)fw_data +
+				(const uint32_t *)fw_data +
 				sdma_hdr->jt_offset,
 				sdma_hdr->jt_size * 4);
 		}
@@ -4321,7 +4323,7 @@ static u64 gfx_v10_0_ring_get_wptr_gfx(struct amdgpu_ring *ring)
 
 	/* XXX check if swapping is necessary on BE */
 	if (ring->use_doorbell) {
-		wptr = atomic64_read((atomic64_t *)&adev->wb.wb[ring->wptr_offs]);
+		wptr = atomic_load_relaxed(&adev->wb.wb[ring->wptr_offs]);
 	} else {
 		wptr = RREG32_SOC15(GC, 0, mmCP_RB0_WPTR);
 		wptr += (u64)RREG32_SOC15(GC, 0, mmCP_RB0_WPTR_HI) << 32;
@@ -4336,7 +4338,7 @@ static void gfx_v10_0_ring_set_wptr_gfx(struct amdgpu_ring *ring)
 
 	if (ring->use_doorbell) {
 		/* XXX check if swapping is necessary on BE */
-		atomic64_set((atomic64_t *)&adev->wb.wb[ring->wptr_offs], ring->wptr);
+		atomic_store_relaxed(&adev->wb.wb[ring->wptr_offs], ring->wptr);
 		WDOORBELL64(ring->doorbell_index, ring->wptr);
 	} else {
 		WREG32_SOC15(GC, 0, mmCP_RB0_WPTR, lower_32_bits(ring->wptr));
@@ -4355,7 +4357,7 @@ static u64 gfx_v10_0_ring_get_wptr_compute(struct amdgpu_ring *ring)
 
 	/* XXX check if swapping is necessary on BE */
 	if (ring->use_doorbell)
-		wptr = atomic64_read((atomic64_t *)&ring->adev->wb.wb[ring->wptr_offs]);
+		wptr = atomic_load_relaxed(&ring->adev->wb.wb[ring->wptr_offs]);
 	else
 		BUG();
 	return wptr;
@@ -4367,7 +4369,7 @@ static void gfx_v10_0_ring_set_wptr_compute(struct amdgpu_ring *ring)
 
 	/* XXX check if swapping is necessary on BE */
 	if (ring->use_doorbell) {
-		atomic64_set((atomic64_t *)&adev->wb.wb[ring->wptr_offs], ring->wptr);
+		atomic_store_relaxed(&adev->wb.wb[ring->wptr_offs], ring->wptr);
 		WDOORBELL64(ring->doorbell_index, ring->wptr);
 	} else {
 		BUG(); /* only DOORBELL method supported on gfx10 now */

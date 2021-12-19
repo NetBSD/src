@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_jpeg_v2_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_jpeg_v2_0.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_jpeg_v2_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_jpeg_v2_0.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "amdgpu_jpeg.h"
@@ -110,7 +110,7 @@ static int jpeg_v2_0_sw_init(void *handle)
 	ring = &adev->jpeg.inst->ring_dec;
 	ring->use_doorbell = true;
 	ring->doorbell_index = (adev->doorbell_index.vcn.vcn_ring0_1 << 1) + 1;
-	sprintf(ring->name, "jpeg_dec");
+	snprintf(ring->name, sizeof(ring->name), "jpeg_dec");
 	r = amdgpu_ring_init(adev, ring, 512, &adev->jpeg.inst->irq, 0);
 	if (r)
 		return r;

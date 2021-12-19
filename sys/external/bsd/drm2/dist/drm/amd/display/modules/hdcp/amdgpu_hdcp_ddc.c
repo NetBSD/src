@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_hdcp_ddc.c,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_hdcp_ddc.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -26,11 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_hdcp_ddc.c,v 1.2 2021/12/18 23:45:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_hdcp_ddc.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include "hdcp.h"
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define HDCP_I2C_ADDR 0x3a	/* 0x74 >> 1*/
 #define KSV_READ_SIZE 0xf	/* 0x6803b - 0x6802c */
 #define HDCP_MAX_AUX_TRANSACTION_SIZE 16

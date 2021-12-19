@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ids.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ids.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ids.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ids.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include "amdgpu_ids.h"
 
@@ -34,6 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_ids.c,v 1.2 2021/12/18 23:44:58 riastradh Exp
 #include "amdgpu.h"
 #include "amdgpu_trace.h"
 
+#include <linux/nbsd-namespace.h>
+
 /*
  * PASID manager
  *
@@ -43,7 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_ids.c,v 1.2 2021/12/18 23:44:58 riastradh Exp
  * space. Therefore PASIDs are allocated using a global IDA. VMs are
  * looked up from the PASID per amdgpu_device.
  */
+#ifdef __NetBSD__		/* XXX */
+struct ida amdgpu_pasid_ida;
+#else
 static DEFINE_IDA(amdgpu_pasid_ida);
+#endif
 
 /* Helper to free pasid from a fence callback */
 struct amdgpu_pasid_cb {

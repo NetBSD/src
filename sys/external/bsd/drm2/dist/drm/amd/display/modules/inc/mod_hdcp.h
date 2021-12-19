@@ -1,4 +1,4 @@
-/*	$NetBSD: mod_hdcp.h,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
+/*	$NetBSD: mod_hdcp.h,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -289,10 +289,10 @@ enum mod_hdcp_status mod_hdcp_process_event(struct mod_hdcp *hdcp,
 		enum mod_hdcp_event event, struct mod_hdcp_output *output);
 
 /* called to convert enum mod_hdcp_status to c string */
-char *mod_hdcp_status_to_str(int32_t status);
+const char *mod_hdcp_status_to_str(int32_t status);
 
 /* called to convert state id to c string */
-char *mod_hdcp_state_id_to_str(int32_t id);
+const char *mod_hdcp_state_id_to_str(int32_t id);
 
 /* called to convert signal type to operation mode */
 enum mod_hdcp_operation_mode mod_hdcp_signal_type_to_operation_mode(

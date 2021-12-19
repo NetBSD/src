@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fb.c,v 1.9 2021/12/19 10:46:43 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fb.c,v 1.10 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.9 2021/12/19 10:46:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.10 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/pm_runtime.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.9 2021/12/19 10:46:43 riastradh Exp 
    the helper contains a pointer to amdgpu framebuffer baseclass.
 */
 
+#ifndef __NetBSD__
+
 static int
 amdgpufb_open(struct fb_info *info, int user)
 {
@@ -80,7 +82,6 @@ amdgpufb_release(struct fb_info *info, int user)
 	return 0;
 }
 
-#ifndef __NetBSD__
 static const struct fb_ops amdgpufb_ops = {
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
@@ -90,6 +91,7 @@ static const struct fb_ops amdgpufb_ops = {
 	.fb_copyarea = drm_fb_helper_cfb_copyarea,
 	.fb_imageblit = drm_fb_helper_cfb_imageblit,
 };
+
 #endif
 
 
@@ -213,17 +215,13 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 {
 	struct amdgpu_fbdev *rfbdev = (struct amdgpu_fbdev *)helper;
 	struct amdgpu_device *adev = rfbdev->adev;
-#ifndef __NetBSD__
 	struct fb_info *info;
-#endif
 	struct drm_framebuffer *fb = NULL;
 	struct drm_mode_fb_cmd2 mode_cmd;
 	struct drm_gem_object *gobj = NULL;
 	struct amdgpu_bo *abo = NULL;
 	int ret;
-#ifndef __NetBSD__
 	unsigned long tmp;
-#endif
 
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
@@ -242,40 +240,14 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 
 	abo = gem_to_amdgpu_bo(gobj);
 
-#ifdef __NetBSD__
-	ret = amdgpu_framebuffer_init(adev->ddev, &rfbdev->rfb, &mode_cmd, gobj);
-	if (ret) {
-		DRM_ERROR("failed to initialize framebuffer %d\n", ret);
-		goto out_unref;
-	}
-
-	(void)memset(rbo->kptr, 0, amdgpu_bo_size(rbo));
-
-    {
-	static const struct amdgpufb_attach_args zero_afa;
-	struct amdgpufb_attach_args afa = zero_afa;
-
-	afa.afa_fb_helper = helper;
-	afa.afa_fb_sizes = *sizes;
-	afa.afa_fb_ptr = rbo->kptr;
-	afa.afa_fb_linebytes = mode_cmd.pitches[0];
-
-	helper->fbdev = config_found(adev->ddev->dev, &afa, NULL,
-	    CFARGS(.iattr = "amdgpufbbus"));
-	if (helper->fbdev == NULL) {
-		DRM_ERROR("failed to attach amdgpufb\n");
-		goto out_unref;
-	}
-    }
-	fb = &rfbdev->rfb.base;
-	rfbdev->helper.fb = fb;
-#else  /* __NetBSD__ */
+#ifndef __NetBSD__
 	/* okay we have an object now allocate the framebuffer */
 	info = drm_fb_helper_alloc_fbi(helper);
 	if (IS_ERR(info)) {
 		ret = PTR_ERR(info);
 		goto out;
 	}
+#endif
 
 	ret = amdgpu_display_framebuffer_init(adev->ddev, &rfbdev->rfb,
 					      &mode_cmd, gobj);
@@ -289,6 +261,27 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 	/* setup helper */
 	rfbdev->helper.fb = fb;
 
+#ifdef __NetBSD__
+    {
+	static const struct amdgpufb_attach_args zero_afa;
+	struct amdgpufb_attach_args afa = zero_afa;
+
+	__USE(tmp);
+	__USE(info);
+
+	afa.afa_fb_helper = helper;
+	afa.afa_fb_sizes = *sizes;
+	afa.afa_fb_ptr = amdgpu_bo_kptr(abo);
+	afa.afa_fb_linebytes = mode_cmd.pitches[0];
+
+	helper->fbdev = config_found(adev->ddev->dev, &afa, NULL,
+	    CFARGS(.iattr = "amdgpufbbus"));
+	if (helper->fbdev == NULL) {
+		DRM_ERROR("failed to attach amdgpufb\n");
+		goto out;
+	}
+    }
+#else  /* __NetBSD__ */
 	info->fbops = &amdgpufb_ops;
 
 	tmp = amdgpu_bo_gpu_offset(abo) - adev->gmc.vram_start;

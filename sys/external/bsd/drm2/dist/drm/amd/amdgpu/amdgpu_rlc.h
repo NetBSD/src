@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_rlc.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_rlc.h,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -170,9 +170,9 @@ struct amdgpu_rlc {
 
 	u32 *register_list_format;
 	u32 *register_restore;
-	u8 *save_restore_list_cntl;
-	u8 *save_restore_list_gpm;
-	u8 *save_restore_list_srm;
+	const u8 *save_restore_list_cntl;
+	const u8 *save_restore_list_gpm;
+	const u8 *save_restore_list_srm;
 
 	bool is_rlc_v2_1;
 

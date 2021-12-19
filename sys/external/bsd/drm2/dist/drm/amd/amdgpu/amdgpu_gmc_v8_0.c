@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gmc_v8_0.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gmc_v8_0.c,v 1.5 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc_v8_0.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc_v8_0.c,v 1.5 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -1148,7 +1148,7 @@ static int gmc_v8_0_sw_init(void *handle)
 	adev->gmc.mc_mask = 0xffffffffffULL; /* 40 bit MC */
 
 #ifdef __NetBSD__
-	r = drm_limit_dma_space(adev->ddev, 0, __BITS(39,0));
+	r = drm_limit_dma_space(adev->ddev, 0, DMA_BIT_MASK(40));
 #else
 	r = dma_set_mask_and_coherent(adev->dev, DMA_BIT_MASK(40));
 #endif

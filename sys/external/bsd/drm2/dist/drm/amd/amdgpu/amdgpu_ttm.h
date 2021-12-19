@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.h,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.h,v 1.4 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -138,7 +138,11 @@ void amdgpu_ttm_tt_set_user_pages(struct ttm_tt *ttm, struct page **pages);
 int amdgpu_ttm_tt_set_userptr(struct ttm_tt *ttm, uint64_t addr,
 				     uint32_t flags);
 bool amdgpu_ttm_tt_has_userptr(struct ttm_tt *ttm);
+#ifdef __NetBSD__
+struct vmspace *amdgpu_ttm_tt_get_usermm(struct ttm_tt *ttm);
+#else
 struct mm_struct *amdgpu_ttm_tt_get_usermm(struct ttm_tt *ttm);
+#endif
 bool amdgpu_ttm_tt_affect_userptr(struct ttm_tt *ttm, unsigned long start,
 				  unsigned long end);
 bool amdgpu_ttm_tt_userptr_invalidated(struct ttm_tt *ttm,

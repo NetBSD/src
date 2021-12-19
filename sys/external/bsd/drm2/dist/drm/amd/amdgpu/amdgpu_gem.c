@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gem.c,v 1.8 2021/12/19 09:59:38 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gem.c,v 1.9 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.8 2021/12/19 09:59:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.9 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/ktime.h>
 #include <linux/module.h>
@@ -133,11 +133,19 @@ int amdgpu_gem_object_open(struct drm_gem_object *obj,
 	struct amdgpu_fpriv *fpriv = file_priv->driver_priv;
 	struct amdgpu_vm *vm = &fpriv->vm;
 	struct amdgpu_bo_va *bo_va;
+#ifdef __NetBSD__
+	struct vmspace *mm;
+#else
 	struct mm_struct *mm;
+#endif
 	int r;
 
 	mm = amdgpu_ttm_tt_get_usermm(abo->tbo.ttm);
+#ifdef __NetBSD__
+	if (mm && mm != curproc->p_vmspace)
+#else
 	if (mm && mm != current->mm)
+#endif
 		return -EPERM;
 
 	if (abo->flags & AMDGPU_GEM_CREATE_VM_ALWAYS_VALID &&
@@ -593,17 +601,17 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 
 	if (args->va_address < AMDGPU_VA_RESERVED_SIZE) {
 		dev_dbg(pci_dev_dev(dev->pdev),
-			"va_address 0x%LX is in reserved area 0x%LX\n",
-			args->va_address, AMDGPU_VA_RESERVED_SIZE);
+			"va_address 0x%"PRIX64" is in reserved area 0x%"PRIX64"\n",
+			args->va_address, (uint64_t)AMDGPU_VA_RESERVED_SIZE);
 		return -EINVAL;
 	}
 
 	if (args->va_address >= AMDGPU_GMC_HOLE_START &&
 	    args->va_address < AMDGPU_GMC_HOLE_END) {
 		dev_dbg(pci_dev_dev(dev->pdev),
-			"va_address 0x%LX is in VA hole 0x%LX-0x%LX\n",
-			args->va_address, AMDGPU_GMC_HOLE_START,
-			AMDGPU_GMC_HOLE_END);
+			"va_address 0x%"PRIX64" is in VA hole 0x%"PRIX64"-0x%"PRIX64"\n",
+			args->va_address, (uint64_t)AMDGPU_GMC_HOLE_START,
+			(uint64_t)AMDGPU_GMC_HOLE_END);
 		return -EINVAL;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.c,v 1.7 2021/12/19 10:56:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.c,v 1.8 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.7 2021/12/19 10:56:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.8 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/iommu.h>
@@ -769,7 +769,11 @@ struct amdgpu_ttm_tt {
 	struct drm_gem_object	*gobj;
 	u64			offset;
 	uint64_t		userptr;
+#ifdef __NetBSD__
+	struct proc		*usertask;
+#else
 	struct task_struct	*usertask;
+#endif
 	uint32_t		userflags;
 #if IS_ENABLED(CONFIG_DRM_AMDGPU_USERPTR)
 	struct hmm_range	*range;
@@ -1452,7 +1456,11 @@ int amdgpu_ttm_tt_set_userptr(struct ttm_tt *ttm, uint64_t addr,
 /**
  * amdgpu_ttm_tt_get_usermm - Return memory manager for ttm_tt object
  */
+#ifdef __NetBSD__
+struct vmspace *amdgpu_ttm_tt_get_usermm(struct ttm_tt *ttm)
+#else
 struct mm_struct *amdgpu_ttm_tt_get_usermm(struct ttm_tt *ttm)
+#endif
 {
 	struct amdgpu_ttm_tt *gtt = (void *)ttm;
 
@@ -1462,7 +1470,11 @@ struct mm_struct *amdgpu_ttm_tt_get_usermm(struct ttm_tt *ttm)
 	if (gtt->usertask == NULL)
 		return NULL;
 
+#ifdef __NetBSD__
+	return gtt->usertask->p_vmspace;
+#else
 	return gtt->usertask->mm;
+#endif
 }
 
 /**

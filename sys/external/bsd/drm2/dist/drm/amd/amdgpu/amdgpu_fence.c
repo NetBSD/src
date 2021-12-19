@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fence.c,v 1.9 2021/12/19 11:55:47 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fence.c,v 1.10 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.9 2021/12/19 11:55:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.10 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
@@ -422,7 +422,7 @@ int amdgpu_fence_driver_start_ring(struct amdgpu_ring *ring,
 	ring->fence_drv.initialized = true;
 
 	DRM_DEV_DEBUG(adev->dev, "fence driver on ring %s use gpu addr "
-		      "0x%016"RPIx64", cpu addr 0x%p\n", ring->name,
+		      "0x%016"PRIx64", cpu addr 0x%p\n", ring->name,
 		      ring->fence_drv.gpu_addr, ring->fence_drv.cpu_addr);
 	return 0;
 }
@@ -668,6 +668,7 @@ static void amdgpu_fence_free(struct rcu_head *rcu)
 {
 	struct dma_fence *f = container_of(rcu, struct dma_fence, rcu);
 	struct amdgpu_fence *fence = to_amdgpu_fence(f);
+	dma_fence_destroy(f);
 	kmem_cache_free(amdgpu_fence_slab, fence);
 }
 

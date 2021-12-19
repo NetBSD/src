@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gfx_v6_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gfx_v6_0.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v6_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v6_0.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -2410,7 +2410,7 @@ static int gfx_v6_0_rlc_init(struct amdgpu_device *adev)
 					      AMDGPU_GEM_DOMAIN_VRAM,
 					      &adev->gfx.rlc.clear_state_obj,
 					      &adev->gfx.rlc.clear_state_gpu_addr,
-					      (void **)&adev->gfx.rlc.cs_ptr);
+					      (void **)__UNVOLATILE(&adev->gfx.rlc.cs_ptr));
 		if (r) {
 			dev_warn(adev->dev, "(%d) create RLC c bo failed\n", r);
 			amdgpu_gfx_rlc_fini(adev);
@@ -3117,7 +3117,7 @@ static int gfx_v6_0_sw_init(void *handle)
 	for (i = 0; i < adev->gfx.num_gfx_rings; i++) {
 		ring = &adev->gfx.gfx_ring[i];
 		ring->ring_obj = NULL;
-		sprintf(ring->name, "gfx");
+		snprintf(ring->name, sizeof(ring->name), "gfx");
 		r = amdgpu_ring_init(adev, ring, 1024,
 				     &adev->gfx.eop_irq, AMDGPU_CP_IRQ_GFX_ME0_PIPE0_EOP);
 		if (r)
@@ -3138,7 +3138,7 @@ static int gfx_v6_0_sw_init(void *handle)
 		ring->me = 1;
 		ring->pipe = i;
 		ring->queue = i;
-		sprintf(ring->name, "comp_%d.%d.%d", ring->me, ring->pipe, ring->queue);
+		snprintf(ring->name, sizeof(ring->name), "comp_%d.%d.%d", ring->me, ring->pipe, ring->queue);
 		irq_type = AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE0_EOP + ring->pipe;
 		r = amdgpu_ring_init(adev, ring, 1024,
 				     &adev->gfx.eop_irq, irq_type);

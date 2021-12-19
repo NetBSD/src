@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gart.h,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -42,6 +42,10 @@ struct amdgpu_bo;
 #define AMDGPU_GPU_PAGES_IN_CPU_PAGE (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE)
 
 struct amdgpu_gart {
+#ifdef __NetBSD__
+	bus_dma_segment_t		ag_table_seg;
+	bus_dmamap_t			ag_table_map;
+#endif
 	struct amdgpu_bo		*bo;
 	/* CPU kmapped address of gart table */
 	void				*ptr;

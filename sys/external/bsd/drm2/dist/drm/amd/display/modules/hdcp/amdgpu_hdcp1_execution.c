@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_hdcp1_execution.c,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_hdcp1_execution.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_hdcp1_execution.c,v 1.2 2021/12/18 23:45:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_hdcp1_execution.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include "hdcp.h"
 
@@ -449,7 +449,7 @@ out:
 
 uint8_t mod_hdcp_execute_and_set(
 		mod_hdcp_action func, uint8_t *flag,
-		enum mod_hdcp_status *status, struct mod_hdcp *hdcp, char *str)
+		enum mod_hdcp_status *status, struct mod_hdcp *hdcp, const char *str)
 {
 	*status = func(hdcp);
 	if (*status == MOD_HDCP_STATUS_SUCCESS && *flag != PASS) {

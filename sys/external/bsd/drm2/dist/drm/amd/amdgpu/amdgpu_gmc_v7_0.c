@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gmc_v7_0.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gmc_v7_0.c,v 1.5 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc_v7_0.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc_v7_0.c,v 1.5 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -1027,20 +1027,15 @@ static int gmc_v7_0_sw_init(void *handle)
 	 */
 	adev->gmc.mc_mask = 0xffffffffffULL; /* 40 bit MC */
 
-#ifdef __NetBSD__ /* XXX post-merge audit - switch to DMA_BIT_MASK */
-	adev->need_dma32 = false;
-	dma_bits = adev->need_dma32 ? 32 : 40;
-
-	r = drm_limit_dma_space(adev->ddev, 0, __BITS(dma_bits - 1, 0));
-	if (r)
-		DRM_ERROR("No suitable DMA available.\n");
+#ifdef __NetBSD__
+	r = drm_limit_dma_space(adev->ddev, 0, DMA_BIT_MASK(40));
 #else
 	r = dma_set_mask_and_coherent(adev->dev, DMA_BIT_MASK(40));
+#endif
 	if (r) {
 		pr_warn("amdgpu: No suitable DMA available\n");
 		return r;
 	}
-#endif	/* __NetBSD__ */
 	adev->need_swiotlb = drm_need_swiotlb(40);
 
 	r = gmc_v7_0_init_microcode(adev);

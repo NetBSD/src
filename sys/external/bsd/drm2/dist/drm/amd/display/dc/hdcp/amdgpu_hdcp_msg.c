@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_hdcp_msg.c,v 1.2 2021/12/18 23:45:05 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_hdcp_msg.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_hdcp_msg.c,v 1.2 2021/12/18 23:45:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_hdcp_msg.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -121,7 +121,7 @@ struct protection_properties {
 		struct hdcp_protection_message *message_info);
 };
 
-static const struct protection_properties non_supported_protection = {
+static const struct protection_properties non_supported_protection __unused = {
 	.supported = false
 };
 
@@ -184,7 +184,7 @@ static bool hdmi_14_process_transaction(
 	return result;
 }
 
-static const struct protection_properties hdmi_14_protection = {
+static const struct protection_properties hdmi_14_protection __unused = {
 	.supported = true,
 	.process_transaction = hdmi_14_process_transaction
 };
@@ -322,7 +322,7 @@ static bool dp_11_process_transaction(
 		hdcp_cmd_is_read[message_info->msg_id]);
 }
 
-static const struct protection_properties dp_11_protection = {
+static const struct protection_properties dp_11_protection __unused = {
 	.supported = true,
 	.process_transaction = dp_11_process_transaction
 };

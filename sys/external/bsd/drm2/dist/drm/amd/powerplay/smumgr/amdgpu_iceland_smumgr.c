@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_iceland_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_iceland_smumgr.c,v 1.3 2021/12/19 12:02:40 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_iceland_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_iceland_smumgr.c,v 1.3 2021/12/19 12:02:40 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/types.h>
@@ -2095,7 +2095,7 @@ int iceland_thermal_setup_fan_table(struct pp_hwmgr *hwmgr)
 	uint32_t t_diff1, t_diff2, pwm_diff1, pwm_diff2;
 	uint16_t fdo_min, slope1, slope2;
 	uint32_t reference_clock;
-	int res;
+	int res __unused;
 	uint64_t tmp64;
 
 	if (!phm_cap_enabled(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_MicrocodeFanControl))

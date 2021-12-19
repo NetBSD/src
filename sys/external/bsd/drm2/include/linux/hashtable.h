@@ -1,4 +1,4 @@
-/*	$NetBSD: hashtable.h,v 1.5 2018/08/27 06:39:27 riastradh Exp $	*/
+/*	$NetBSD: hashtable.h,v 1.6 2021/12/19 12:02:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/cdefs.h>
 
+#include <linux/hash.h>
 #include <linux/list.h>
 
 #define DECLARE_HASHTABLE(name, bits)					      \

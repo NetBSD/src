@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_hdcp_log.c,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_hdcp_log.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_hdcp_log.c,v 1.2 2021/12/18 23:45:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_hdcp_log.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include "hdcp.h"
 
@@ -49,14 +49,14 @@ void mod_hdcp_dump_binary_message(uint8_t *msg, uint32_t msg_size,
 		for (i = 0; i < msg_size; i++) {
 			if (i % bytes_per_line == 0)
 				buf[buf_pos++] = '\n';
-			sprintf(&buf[buf_pos], "%02X ", msg[i]);
+			snprintf(&buf[buf_pos], sizeof(buf) - buf_pos, "%02X ", msg[i]);
 			buf_pos += byte_size;
 		}
 		buf[buf_pos++] = '\0';
 	}
 }
 
-char *mod_hdcp_status_to_str(int32_t status)
+const char *mod_hdcp_status_to_str(int32_t status)
 {
 	switch (status) {
 	case MOD_HDCP_STATUS_SUCCESS:
@@ -178,7 +178,7 @@ char *mod_hdcp_status_to_str(int32_t status)
 	}
 }
 
-char *mod_hdcp_state_id_to_str(int32_t id)
+const char *mod_hdcp_state_id_to_str(int32_t id)
 {
 	switch (id) {
 	case HDCP_UNINITIALIZED:
