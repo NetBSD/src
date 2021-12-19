@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_main.c,v 1.4 2021/12/19 12:29:55 riastradh Exp $	*/
+/*	$NetBSD: sched_main.c,v 1.5 2021/12/19 12:32:45 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.4 2021/12/19 12:29:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.5 2021/12/19 12:32:45 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/wait.h>
@@ -883,5 +883,14 @@ void drm_sched_fini(struct drm_gpu_scheduler *sched)
 	}
 
 	sched->ready = false;
+
+	spin_lock_destroy(&sched->job_list_lock);
+	DRM_DESTROY_WAITQUEUE(&sched->job_scheduled);
+	DRM_DESTROY_WAITQUEUE(&sched->wake_up_worker);
+
+	for (int i = DRM_SCHED_PRIORITY_MIN; i < DRM_SCHED_PRIORITY_MAX; i++) {
+		struct drm_sched_rq *rq = &sched->sched_rq[i];
+		spin_lock_destroy(&rq->lock);
+	}
 }
 EXPORT_SYMBOL(drm_sched_fini);

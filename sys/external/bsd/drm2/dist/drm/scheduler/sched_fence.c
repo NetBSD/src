@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_fence.c,v 1.4 2021/12/19 12:24:12 riastradh Exp $	*/
+/*	$NetBSD: sched_fence.c,v 1.5 2021/12/19 12:32:45 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.4 2021/12/19 12:24:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.5 2021/12/19 12:32:45 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/module.h>
@@ -104,6 +104,8 @@ static void drm_sched_fence_free(struct rcu_head *rcu)
 {
 	struct dma_fence *f = container_of(rcu, struct dma_fence, rcu);
 	struct drm_sched_fence *fence = to_drm_sched_fence(f);
+
+	spin_lock_destroy(&fence->lock);
 
 	kmem_cache_free(sched_fence_slab, fence);
 }
