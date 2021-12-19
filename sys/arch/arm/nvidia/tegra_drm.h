@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.10 2021/12/19 12:44:14 riastradh Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.11 2021/12/19 12:44:50 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,8 @@
 #ifndef _ARM_TEGRA_DRM_H
 #define _ARM_TEGRA_DRM_H
 
+#include <sys/workqueue.h>
+
 #include <drm/drm_encoder.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_gem_cma_helper.h>
@@ -53,6 +55,12 @@ struct tegra_drm_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	int			sc_phandle;
+
+	struct lwp			*sc_task_thread;
+	SIMPLEQ_HEAD(, tegra_drm_task)	sc_tasks;
+	struct workqueue		*sc_task_wq;
+
+	bool			sc_dev_registered;
 
 	struct clk		*sc_clk_host1x;
 	struct fdtbus_reset	*sc_rst_host1x;
@@ -124,6 +132,14 @@ struct tegra_fbdev {
 	struct drm_fb_helper	helper;
 };
 
+struct tegra_drm_task {
+	union {
+		SIMPLEQ_ENTRY(tegra_drm_task)	queue;
+		struct work			work;
+	}		tdt_u;
+	void		(*tdt_fn)(struct tegra_drm_task *);
+};
+
 #define HDMI_READ(enc, reg)			\
     bus_space_read_4((enc)->bst, (enc)->bsh, (reg))
 #define HDMI_WRITE(enc, reg, val)		\
@@ -154,5 +170,9 @@ int	tegra_drm_enable_vblank(struct drm_device *, unsigned int);
 void	tegra_drm_disable_vblank(struct drm_device *, unsigned int);
 int	tegra_drm_framebuffer_init(struct drm_device *,
 	    struct tegra_framebuffer *);
+
+void	tegra_task_init(struct tegra_drm_task *,
+	    void (*)(struct tegra_drm_task *));
+void	tegra_task_schedule(device_t, struct tegra_drm_task *);
 
 #endif /* _ARM_TEGRA_DRM_H */

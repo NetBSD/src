@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fb.c,v 1.5 2021/12/19 12:44:14 riastradh Exp $ */
+/* $NetBSD: tegra_fb.c,v 1.6 2021/12/19 12:44:50 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.5 2021/12/19 12:44:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.6 2021/12/19 12:44:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.5 2021/12/19 12:44:14 riastradh Exp $
 static int	tegra_fb_match(device_t, cfdata_t, void *);
 static void	tegra_fb_attach(device_t, device_t, void *);
 
+static void	tegra_fb_init(struct tegra_drm_task *);
+
 static bool	tegra_fb_shutdown(device_t, int);
 
 struct tegra_fb_softc {
@@ -50,6 +52,7 @@ struct tegra_fb_softc {
 	struct tegra_drm_softc	*sc_drm;
 	struct tegra_drmfb_attach_args sc_tfa;
 	struct tegra_framebuffer *sc_fb;
+	struct tegra_drm_task	sc_attach_task;
 };
 
 static paddr_t	tegra_fb_mmapfb(struct drmfb_softc *, off_t, int);
@@ -77,7 +80,6 @@ tegra_fb_attach(device_t parent, device_t self, void *aux)
 	struct tegra_fb_softc * const sc = device_private(self);
 	struct tegra_drm_softc * const drmsc = device_private(parent);
 	struct tegra_drmfb_attach_args * const tfa = aux;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_drm = drmsc;
@@ -87,6 +89,17 @@ tegra_fb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	tegra_task_init(&sc->sc_attach_task, &tegra_fb_init);
+	tegra_task_schedule(parent, &sc->sc_attach_task);
+}
+
+static void
+tegra_fb_init(struct tegra_drm_task *task)
+{
+	struct tegra_fb_softc *sc = container_of(task, struct tegra_fb_softc,
+	    sc_attach_task);
+	device_t self = sc->sc_dev;
+	struct tegra_drmfb_attach_args * const tfa = &sc->sc_tfa;
 	const struct drmfb_attach_args da = {
 		.da_dev = self,
 		.da_fb_helper = tfa->tfa_fb_helper,
@@ -95,6 +108,7 @@ tegra_fb_attach(device_t parent, device_t self, void *aux)
 		.da_fb_linebytes = tfa->tfa_fb_linebytes,
 		.da_params = &tegrafb_drmfb_params,
 	};
+	int error;
 
 	error = drmfb_attach(&sc->sc_drmfb, &da);
 	if (error) {
