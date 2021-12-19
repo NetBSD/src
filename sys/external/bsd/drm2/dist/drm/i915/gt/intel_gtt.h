@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.8 2021/12/19 11:15:33 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.9 2021/12/19 11:15:49 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -32,6 +32,17 @@
 #include "i915_gem_fence_reg.h"
 #include "i915_selftest.h"
 #include "i915_vma_types.h"
+
+#ifdef __NetBSD__
+#include <drm/bus_dma_hacks.h>
+#include <x86/machdep.h>
+#include <x86/pte.h>
+#define	_PAGE_PRESENT	PG_V	/* 0x01 PTE is present / valid */
+#define	_PAGE_RW	PG_RW	/* 0x02 read/write */
+#define	_PAGE_PWT	PG_WT	/* 0x08 write-through */
+#define	_PAGE_PCD	PG_N	/* 0x10 page cache disabled / non-cacheable */
+#define	_PAGE_PAT	PG_PAT	/* 0x80 page attribute table on PTE */
+#endif
 
 #define I915_GFP_ALLOW_FAIL (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
 
