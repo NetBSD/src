@@ -1,11 +1,8 @@
-/*	$NetBSD: bug.h,v 1.3 2021/12/19 11:10:41 riastradh Exp $	*/
+/*	$NetBSD: build_bug.h,v 1.1 2021/12/19 11:10:41 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,36 +26,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ASM_BUG_H_
-#define _ASM_BUG_H_
+#ifndef	_LINUX_BUILD_BUG_H_
+#define	_LINUX_BUILD_BUG_H_
 
-#include <sys/cdefs.h>
-#include <sys/systm.h>
+#include <lib/libkern/libkern.h>
 
-#include <linux/build_bug.h>	/* XXX */
+/*
+ * static_assert is violated with runtime-only compiler semantics in a few
+ * places. Instead of breaking the build, stop asserting these corner cases.
+ */
 
-#define	BUG()			panic("%s:%d: BUG!", __FILE__, __LINE__)
-#define	BUG_ON(CONDITION)	KASSERT(!(CONDITION))
+#define DRMCTASSERT(x)	CTASSERT((__builtin_choose_expr(		\
+			__builtin_constant_p(x), (x), 1)))
 
-/* XXX Rate limit?  */
-#define WARN(CONDITION, FMT, ...)					\
-	linux_warning((CONDITION)?					\
-	    (printf("warning: %s:%d: " FMT, __FILE__, __LINE__,		\
-		##__VA_ARGS__), 1)					\
-	    : 0)
+#define	BUILD_BUG()		do {} while (0)
+#define	BUILD_BUG_ON(CONDITION)	DRMCTASSERT(!(CONDITION))
+#define	BUILD_BUG_ON_MSG(CONDITION,MSG)	DRMCTASSERT(!(CONDITION))
+#define	BUILD_BUG_ON_INVALID(EXPR)	((void)sizeof((long)(EXPR)))
 
-#define	WARN_ONCE(CONDITION, FMT, ...)					\
-	WARN(CONDITION, FMT, ##__VA_ARGS__) /* XXX */
-
-#define	WARN_ON(CONDITION)	WARN(CONDITION, "%s\n", #CONDITION)
-#define	WARN_ON_SMP(CONDITION)	WARN_ON(CONDITION) /* XXX */
-#define	WARN_ON_ONCE(CONDITION)	WARN_ON(CONDITION) /* XXX */
-
-/* XXX Kludge to avoid GCC warning about statements without effect.  */
-static inline int
-linux_warning(int x)
-{
-	return x;
-}
-
-#endif  /* _ASM_BUG_H_ */
+#endif	/* _LINUX_BUILD_BUG_H_ */
