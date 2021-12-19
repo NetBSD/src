@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.14 2021/12/19 09:44:27 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.15 2021/12/19 09:49:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -106,8 +106,9 @@ sign_extend64(uint64_t x, unsigned n)
 #define	BITS_TO_LONGS(n)						\
 	roundup2((n), (sizeof(unsigned long) * CHAR_BIT))
 
-#define	BITS_PER_BYTE	NBBY
-#define	BITS_PER_LONG	(__SIZEOF_LONG__ * CHAR_BIT)
+#define	BITS_PER_TYPE(type)	(sizeof(type) * NBBY)
+#define	BITS_PER_BYTE		NBBY
+#define	BITS_PER_LONG		(__SIZEOF_LONG__ * CHAR_BIT)
 
 #define	BIT(n)		((unsigned long)__BIT(n))
 #define	BIT_ULL(n)	((unsigned long long)__BIT(n))
