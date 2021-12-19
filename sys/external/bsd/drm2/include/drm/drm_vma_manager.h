@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.h,v 1.4 2021/12/19 01:20:38 riastradh Exp $	*/
+/*	$NetBSD: drm_vma_manager.h,v 1.5 2021/12/19 09:45:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <sys/rbtree.h>
 #include <sys/rwlock.h>
 #include <sys/vmem.h>
+
+#include <linux/mm.h>
 
 struct drm_file;
 
