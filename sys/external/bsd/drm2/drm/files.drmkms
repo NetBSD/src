@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.40 2021/12/19 00:27:52 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.41 2021/12/19 00:30:18 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -34,6 +34,9 @@ makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
+
+makeoptions	drmkms	CPPFLAGS+="-DIS_ENABLED\(X\)=X"
+makeoptions	drmkms	CPPFLAGS+="-DIS_REACHABLE\(X\)=X"
 
 # NetBSD additions.
 file	external/bsd/drm2/drm/drm_agp_hook.c		drmkms
