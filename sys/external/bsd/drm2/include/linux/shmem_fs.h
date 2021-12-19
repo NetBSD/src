@@ -1,4 +1,4 @@
-/*	$NetBSD: shmem_fs.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: shmem_fs.h,v 1.3 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,56 @@
 
 #ifndef _LINUX_SHMEM_FS_H_
 #define _LINUX_SHMEM_FS_H_
+
+#include <sys/types.h>
+#include <sys/param.h>
+
+#include <sys/rwlock.h>
+
+#include <lib/libkern/libkern.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <linux/err.h>
+#include <linux/gfp.h>
+#include <linux/mm_types.h>
+
+static inline struct page *
+shmem_read_mapping_page_gfp(struct uvm_object *uobj, voff_t i, gfp_t gfp)
+{
+	struct vm_page *vm_page;
+	int error;
+
+	error = uvm_obj_wirepages(uobj, i*PAGE_SIZE, (i + 1)*PAGE_SIZE, NULL);
+	if (error)
+		return ERR_PTR(-error); /* XXX errno NetBSD->Linux */
+
+	rw_enter(uobj->vmobjlock, RW_READER);
+	vm_page = uvm_pagelookup(uobj, i*PAGE_SIZE);
+	rw_exit(uobj->vmobjlock);
+
+	KASSERT(vm_page);
+	return container_of(vm_page, struct page, p_vmp);
+}
+
+static inline struct page *
+shmem_read_mapping_page(struct uvm_object *uobj, voff_t i)
+{
+	return shmem_read_mapping_page_gfp(uobj, i, GFP_KERNEL);
+}
+
+static inline void
+shmem_truncate_range(struct uvm_object *uobj, voff_t start, voff_t end)
+{
+	int flags = PGO_FREE;
+
+	if (start == 0 && end == -1) {
+		flags |= PGO_ALLPAGES;
+	} else {
+		KASSERT(0 <= start);
+		KASSERT(start <= end);
+	}
+	(*uobj->pgops->pgo_put)(uobj, start, end, flags);
+}
 
 #endif  /* _LINUX_SHMEM_FS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pagemap.h,v 1.5 2021/12/19 11:15:26 riastradh Exp $	*/
+/*	$NetBSD: pagemap.h,v 1.6 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,8 +34,11 @@
 
 #include <sys/types.h>
 
+#include <linux/gfp.h>
 #include <linux/highmem.h>
 #include <linux/uaccess.h>
+
+struct uvm_object;
 
 static inline int
 fault_in_multipages_readable(const char *uaddr __unused, size_t len __unused)
@@ -47,6 +50,12 @@ static inline int
 fault_in_multipages_writeable(char *uaddr __unused, size_t len __unused)
 {
 	return 0;
+}
+
+static inline gfp_t
+mapping_gfp_mask(struct uvm_object *uobj __unused)
+{
+	return GFP_KERNEL;
 }
 
 #endif  /* _LINUX_PAGEMAP_H_ */

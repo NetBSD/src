@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_rps.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_rps.h,v 1.3 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -37,5 +37,7 @@ u32 intel_rps_read_actual_frequency(struct intel_rps *rps);
 void gen5_rps_irq_handler(struct intel_rps *rps);
 void gen6_rps_irq_handler(struct intel_rps *rps, u32 pm_iir);
 void gen11_rps_irq_handler(struct intel_rps *rps, u32 pm_iir);
+
+extern spinlock_t mchdev_lock;
 
 #endif /* INTEL_RPS_H */

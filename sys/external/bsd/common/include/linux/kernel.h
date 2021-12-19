@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.42 2021/12/19 11:33:09 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.43 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -259,6 +259,15 @@ u64_to_user_ptr(uint64_t addr)
 static inline void
 add_taint(unsigned taint, int lockdep)
 {
+}
+
+#define	DFEINE_STATIC_KEY_FALSE(FLAG)					      \
+	bool FLAG = false
+
+static inline bool
+static_branch_likely(const bool *flagp)
+{
+	return __predict_true(*flagp);
 }
 
 #endif  /* _LINUX_KERNEL_H_ */

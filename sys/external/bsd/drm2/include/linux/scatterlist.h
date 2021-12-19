@@ -1,4 +1,4 @@
-/*	$NetBSD: scatterlist.h,v 1.4 2021/12/19 11:33:31 riastradh Exp $	*/
+/*	$NetBSD: scatterlist.h,v 1.5 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <linux/types.h>
 
 /* namespace */
+#define	__sg_alloc_table_from_pages	linux___sg_alloc_table_from_pages
 #define	dma_map_sg			linux_dma_map_sg
 #define	dma_map_sg_attrs		linux_dma_map_sg_attrs
 #define	dma_unmap_sg			linux_dma_unmap_sg
@@ -61,6 +62,8 @@ struct sg_table {
 };
 
 int sg_alloc_table(struct sg_table *, unsigned, gfp_t);
+int __sg_alloc_table_from_pages(struct sg_table *, struct page **, unsigned,
+    bus_size_t, bus_size_t, unsigned, gfp_t);
 int sg_alloc_table_from_pages(struct sg_table *, struct page **, unsigned,
     bus_size_t, bus_size_t, gfp_t);
 int sg_alloc_table_from_bus_dmamem(struct sg_table *, bus_dma_tag_t,

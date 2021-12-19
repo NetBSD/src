@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_memcpy.c,v 1.3 2021/12/19 01:40:41 riastradh Exp $	*/
+/*	$NetBSD: i915_memcpy.c,v 1.4 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,12 +25,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_memcpy.c,v 1.3 2021/12/19 01:40:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_memcpy.c,v 1.4 2021/12/19 11:33:49 riastradh Exp $");
 
 #include <linux/kernel.h>
 #include <asm/fpu/api.h>
 
 #include "i915_memcpy.h"
+
+#include <linux/nbsd-namespace.h>
 
 #if IS_ENABLED(CONFIG_DRM_I915_DEBUG)
 #define CI_BUG_ON(expr) BUG_ON(expr)

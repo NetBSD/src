@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sg.c,v 1.1 2021/12/19 11:33:31 riastradh Exp $	*/
+/*	$NetBSD: linux_sg.c,v 1.2 2021/12/19 11:33:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1 2021/12/19 11:33:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.2 2021/12/19 11:33:50 riastradh Exp $");
 
 #include <sys/bus.h>
 #include <sys/errno.h>
@@ -54,8 +54,9 @@ sg_alloc_table(struct sg_table *sgt, unsigned npgs, gfp_t gfp)
 }
 
 int
-sg_alloc_table_from_pages(struct sg_table *sgt, struct page **pgs,
-    unsigned npgs, bus_size_t offset, bus_size_t size, gfp_t gfp)
+__sg_alloc_table_from_pages(struct sg_table *sgt, struct page **pgs,
+    unsigned npgs, bus_size_t offset, bus_size_t size, unsigned maxseg,
+    gfp_t gfp)
 {
 	unsigned i;
 	int ret;
@@ -71,6 +72,15 @@ sg_alloc_table_from_pages(struct sg_table *sgt, struct page **pgs,
 		sgt->sgl->sg_pgs[i] = pgs[i];
 
 	return 0;
+}
+
+int
+sg_alloc_table_from_pages(struct sg_table *sgt, struct page **pgs,
+    unsigned npgs, bus_size_t offset, bus_size_t size, gfp_t gfp)
+{
+
+	return __sg_alloc_table_from_pages(sgt, pgs, npgs, offset, size,
+	    -1, gfp);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_region.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_region.c,v 1.3 2021/12/19 11:33:49 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_region.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_region.c,v 1.3 2021/12/19 11:33:49 riastradh Exp $");
 
 #include "intel_memory_region.h"
 #include "i915_gem_region.h"
@@ -20,6 +20,10 @@ i915_gem_object_put_pages_buddy(struct drm_i915_gem_object *obj,
 	__intel_memory_region_put_pages_buddy(obj->mm.region, &obj->mm.blocks);
 
 	obj->mm.dirty = false;
+#ifdef __NetBSD__
+	bus_dmamap_unload(obj->base.dev->dmat, pages->sgl->sg_dmamap);
+	bus_dmamap_destroy(obj->base.dev->dmat, pages->sgl->sg_dmamap);
+#endif
 	sg_free_table(pages);
 	kfree(pages);
 }
@@ -58,6 +62,50 @@ i915_gem_object_get_pages_buddy(struct drm_i915_gem_object *obj)
 	GEM_BUG_ON(list_empty(blocks));
 
 	sg = st->sgl;
+#ifdef __NetBSD__
+	__USE(prev_end);
+	__USE(sg_page_sizes);
+	bus_dma_tag_t dmat = obj->base.dev->dmat;
+	bus_dma_segment_t *segs = NULL;
+	int i = 0, nsegs = 0;
+	bool loaded = false;
+
+	list_for_each_entry(block, blocks, link) {
+		if (nsegs >= INT_MAX ||
+		    nsegs >= SIZE_MAX/sizeof(segs[0]))
+			goto err;
+		nsegs++;
+	}
+	segs = kmem_zalloc(nsegs * sizeof(segs[0]), KM_SLEEP);
+	list_for_each_entry(block, blocks, link) {
+		u64 block_size, offset;
+
+		block_size = min_t(u64, size,
+				   i915_buddy_block_size(&mem->mm, block));
+		offset = i915_buddy_block_offset(block);
+
+		segs[i].ds_addr = mem->region.start + offset;
+		segs[i].ds_len = block_size;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, size, nsegs, size, 0, BUS_DMA_WAITOK,
+	    &sg->sg_dmamap);
+	if (ret)
+		goto err;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_load_raw(dmat, sg->sg_dmamap, segs, nsegs, size,
+	    BUS_DMA_WAITOK);
+	if (ret)
+		goto err;
+	loaded = true;
+
+	kmem_free(segs, nsegs * sizeof(segs[0]));
+	segs = NULL;
+
+	__i915_gem_object_set_pages(obj, st, i915_sg_page_sizes(sg));
+#else
 	st->nents = 0;
 	sg_page_sizes = 0;
 	prev_end = (resource_size_t)-1;
@@ -97,9 +145,20 @@ i915_gem_object_get_pages_buddy(struct drm_i915_gem_object *obj)
 	i915_sg_trim(st);
 
 	__i915_gem_object_set_pages(obj, st, sg_page_sizes);
+#endif
 
 	return 0;
 
+#ifdef __NetBSD__
+err:
+	if (loaded)
+		bus_dmamap_unload(dmat, st->sgl->sg_dmamap);
+	if (st->sgl->sg_dmamap)
+		bus_dmamap_destroy(dmat, st->sgl->sg_dmamap);
+	if (segs)
+		kmem_free(segs, nsegs * sizeof(segs[0]));
+	__intel_memory_region_put_pages_buddy(mem, blocks);
+#endif
 err_free_sg:
 	sg_free_table(st);
 	kfree(st);

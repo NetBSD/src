@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.7 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.8 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.7 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.8 2021/12/19 11:33:49 riastradh Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -23,12 +23,14 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.7 2021/12/19 11:33:30 riastradh
  * Move pages to appropriate lru and release the pagevec, decrementing the
  * ref count of those pages.
  */
+#ifndef __NetBSD__
 static void check_release_pagevec(struct pagevec *pvec)
 {
 	check_move_unevictable_pages(pvec);
 	__pagevec_release(pvec);
 	cond_resched();
 }
+#endif
 
 static int shmem_get_pages(struct drm_i915_gem_object *obj)
 {
@@ -36,7 +38,11 @@ static int shmem_get_pages(struct drm_i915_gem_object *obj)
 	struct intel_memory_region *mem = obj->mm.region;
 	const unsigned long page_count = obj->base.size / PAGE_SIZE;
 	unsigned long i;
+#ifdef __NetBSD__
+	struct uvm_object *mapping;
+#else
 	struct address_space *mapping;
+#endif
 	struct sg_table *st;
 	struct scatterlist *sg;
 	struct sgt_iter sgt_iter;
@@ -44,7 +50,9 @@ static int shmem_get_pages(struct drm_i915_gem_object *obj)
 	unsigned long last_pfn = 0;	/* suppress gcc warning */
 	unsigned int max_segment = i915_sg_segment_size();
 	unsigned int sg_page_sizes;
+#ifndef __NetBSD__
 	struct pagevec pvec;
+#endif
 	gfp_t noreclaim;
 	int ret;
 
@@ -79,10 +87,14 @@ rebuild_st:
 	 *
 	 * Fail silently without starting the shrinker
 	 */
+#ifdef __NetBSD__
+	mapping = obj->base.filp;
+#else
 	mapping = obj->base.filp->f_mapping;
 	mapping_set_unevictable(mapping);
 	noreclaim = mapping_gfp_constraint(mapping, ~__GFP_RECLAIM);
 	noreclaim |= __GFP_NORETRY | __GFP_NOWARN;
+#endif
 
 	sg = st->sgl;
 	st->nents = 0;
@@ -116,6 +128,7 @@ rebuild_st:
 			 * defer the oom here by reporting the ENOMEM back
 			 * to userspace.
 			 */
+#ifndef __NetBSD__
 			if (!*s) {
 				/* reclaim and warn, but no oom */
 				gfp = mapping_gfp_mask(mapping);
@@ -136,8 +149,14 @@ rebuild_st:
 				 */
 				gfp |= __GFP_RETRY_MAYFAIL;
 			}
+#endif
 		} while (1);
 
+#ifdef __NetBSD__
+		__USE(last_pfn);
+		KASSERT(st->nents == i);
+		sg->sg_pgs[st->nents++] = page;
+#else
 		if (!i ||
 		    sg->length >= max_segment ||
 		    page_to_pfn(page) != last_pfn + 1) {
@@ -154,11 +173,14 @@ rebuild_st:
 
 		/* Check that the i965g/gm workaround works. */
 		WARN_ON((gfp & __GFP_DMA32) && (last_pfn >= 0x00100000UL));
+#endif
 	}
+#ifndef __NetBSD__
 	if (sg) { /* loop terminated early; short sg table */
 		sg_page_sizes |= sg->length;
 		sg_mark_end(sg);
 	}
+#endif
 
 	/* Trim unused sg entries to avoid wasting memory. */
 	i915_sg_trim(st);
@@ -171,14 +193,19 @@ rebuild_st:
 		 * for PAGE_SIZE chunks instead may be helpful.
 		 */
 		if (max_segment > PAGE_SIZE) {
+#ifdef __NetBSD__
+			__USE(sgt_iter);
+			uvm_obj_unwirepages(mapping, 0, obj->base.size);
+#else
 			for_each_sgt_page(page, sgt_iter, st)
 				put_page(page);
+#endif
 			sg_free_table(st);
 
 			max_segment = PAGE_SIZE;
 			goto rebuild_st;
 		} else {
-			dev_warn(&i915->drm.pdev->dev,
+			dev_warn(i915->drm.dev,
 				 "Failed to DMA remap %lu pages\n",
 				 page_count);
 			goto err_pages;
@@ -193,8 +220,13 @@ rebuild_st:
 	return 0;
 
 err_sg:
+#ifndef __NetBSD__
 	sg_mark_end(sg);
+#endif
 err_pages:
+#ifdef __NetBSD__
+	uvm_obj_unwirepages(mapping, 0, obj->base.size);
+#else
 	mapping_clear_unevictable(mapping);
 	pagevec_init(&pvec);
 	for_each_sgt_page(page, sgt_iter, st) {
@@ -203,6 +235,7 @@ err_pages:
 	}
 	if (pagevec_count(&pvec))
 		check_release_pagevec(&pvec);
+#endif
 	sg_free_table(st);
 	kfree(st);
 
@@ -238,6 +271,7 @@ shmem_truncate(struct drm_i915_gem_object *obj)
 static void
 shmem_writeback(struct drm_i915_gem_object *obj)
 {
+#ifndef __NetBSD__
 	struct address_space *mapping;
 	struct writeback_control wbc = {
 		.sync_mode = WB_SYNC_NONE,
@@ -278,6 +312,7 @@ shmem_writeback(struct drm_i915_gem_object *obj)
 put:
 		put_page(page);
 	}
+#endif
 }
 
 void
@@ -302,8 +337,10 @@ static void
 shmem_put_pages(struct drm_i915_gem_object *obj, struct sg_table *pages)
 {
 	struct sgt_iter sgt_iter;
+#ifndef __NetBSD__
 	struct pagevec pvec;
 	struct page *page;
+#endif
 
 	__i915_gem_object_release_shmem(obj, pages, true);
 
@@ -312,6 +349,10 @@ shmem_put_pages(struct drm_i915_gem_object *obj, struct sg_table *pages)
 	if (i915_gem_object_needs_bit17_swizzle(obj))
 		i915_gem_object_save_bit_17_swizzle(obj, pages);
 
+#ifdef __NetBSD__
+	__USE(sgt_iter);
+	uvm_obj_unwirepages(obj->base.filp, 0, obj->base.size);
+#else
 	mapping_clear_unevictable(file_inode(obj->base.filp)->i_mapping);
 
 	pagevec_init(&pvec);
@@ -327,6 +368,7 @@ shmem_put_pages(struct drm_i915_gem_object *obj, struct sg_table *pages)
 	}
 	if (pagevec_count(&pvec))
 		check_release_pagevec(&pvec);
+#endif
 	obj->mm.dirty = false;
 
 	sg_free_table(pages);
@@ -337,7 +379,11 @@ static int
 shmem_pwrite(struct drm_i915_gem_object *obj,
 	     const struct drm_i915_gem_pwrite *arg)
 {
+#ifdef __NetBSD__
+	struct uvm_object *mapping = obj->base.filp;
+#else
 	struct address_space *mapping = obj->base.filp->f_mapping;
+#endif
 	char __user *user_data = u64_to_user_ptr(arg->data_ptr);
 	u64 remain, offset;
 	unsigned int pg;
@@ -372,6 +418,24 @@ shmem_pwrite(struct drm_i915_gem_object *obj,
 	offset = arg->offset;
 	pg = offset_in_page(offset);
 
+#ifdef __NetBSD__
+	__USE(pg);
+	struct iovec iov = { .iov_base = user_data, .iov_len = remain };
+	struct uio uio = {
+		.uio_iov = &iov,
+		.uio_iovcnt = 1,
+		.uio_offset = offset,
+		.uio_resid = remain,
+		.uio_rw = UIO_WRITE,
+		.uio_vmspace = curproc->p_vmspace,
+	};
+	int ret;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -ubc_uiomove(mapping, &uio, remain, UVM_ADV_NORMAL, UBC_WRITE);
+	if (ret)
+		return ret;
+#else
 	do {
 		unsigned int len, unwritten;
 		struct page *page;
@@ -419,6 +483,7 @@ shmem_pwrite(struct drm_i915_gem_object *obj,
 		offset += len;
 		pg = 0;
 	} while (remain);
+#endif
 
 	return 0;
 }
@@ -454,7 +519,7 @@ static int __create_shmem(struct drm_i915_private *i915,
 			  resource_size_t size)
 {
 #ifdef __NetBSD__
-	return drm_gem_object_init(dev, obj, size);
+	return drm_gem_object_init(&i915->drm, obj, size);
 #else
 	unsigned long flags = VM_NORESERVE;
 	struct file *filp;
@@ -502,9 +567,13 @@ create_shmem(struct intel_memory_region *mem,
 		mask |= __GFP_DMA32;
 	}
 
+#ifdef __NetBSD__
+	__USE(mapping);
+#else
 	mapping = obj->base.filp->f_mapping;
 	mapping_set_gfp_mask(mapping, mask);
 	GEM_BUG_ON(!(mapping_gfp_mask(mapping) & __GFP_RECLAIM));
+#endif
 
 	i915_gem_object_init(obj, &i915_gem_shmem_ops, &lock_class);
 
