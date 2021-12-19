@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_led.h,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_led.h,v 1.3 2021/12/19 10:50:13 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Martin Peres
@@ -34,7 +34,9 @@ struct led_classdev;
 struct nouveau_led {
 	struct drm_device *dev;
 
+#if IS_REACHABLE(CONFIG_LEDS_CLASS)
 	struct led_classdev led;
+#endif
 };
 
 static inline struct nouveau_led *

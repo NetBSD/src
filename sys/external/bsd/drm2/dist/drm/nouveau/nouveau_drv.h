@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drv.h,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drv.h,v 1.3 2021/12/19 10:50:13 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_DRV_H__
@@ -242,6 +242,8 @@ nouveau_drm_use_coherent_gpu_mapping(struct nouveau_drm *drm)
 }
 
 #ifdef __NetBSD__
+int nouveau_drm_device_init(struct drm_device *);
+void nouveau_drm_device_fini(struct drm_device *);
 int nouveau_pmops_suspend(struct drm_device *);
 int nouveau_pmops_resume(struct drm_device *);
 #else
