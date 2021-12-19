@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_tasklet.c,v 1.1 2021/12/19 01:17:14 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.2 2021/12/19 01:17:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.1 2021/12/19 01:17:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.2 2021/12/19 01:17:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -382,6 +382,7 @@ tasklet_disable(struct tasklet_struct *tasklet)
 	/* Increment the disable count.  */
 	disablecount = atomic_inc_uint_nv(&tasklet->tl_disablecount);
 	KASSERT(disablecount < UINT_MAX);
+	KASSERT(disablecount != 0);
 
 	/* Wait for it to finish running, if it was running.  */
 	while (tasklet->tl_state & TASKLET_RUNNING)
