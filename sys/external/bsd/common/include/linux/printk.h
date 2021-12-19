@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.8 2021/12/19 01:14:07 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.9 2021/12/19 09:42:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <linux/export.h>
 
 #define	printk		printf
 #define	vprintk		vprintf
