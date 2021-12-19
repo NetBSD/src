@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_dual_mode_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_dual_mode_helper.c,v 1.3 2021/12/19 00:56:32 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_dual_mode_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_dual_mode_helper.c,v 1.3 2021/12/19 00:56:32 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -125,7 +125,7 @@ ssize_t drm_dp_dual_mode_write(struct i2c_adapter *adapter,
 	msg.buf = data;
 
 	memcpy(data, &offset, 1);
-	memcpy(data + 1, buffer, size);
+	memcpy((char *)data + 1, buffer, size);
 
 	ret = i2c_transfer(adapter, &msg, 1);
 
