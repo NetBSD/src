@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_manager.c,v 1.5 2021/12/18 23:45:44 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_manager.c,v 1.6 2021/12/19 12:37:43 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_manager.c,v 1.5 2021/12/18 23:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_manager.c,v 1.6 2021/12/19 12:37:43 riastradh Exp $");
 
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_bo_driver.h>
@@ -133,6 +133,7 @@ static int ttm_bo_man_takedown(struct ttm_mem_type_manager *man)
 	if (drm_mm_clean(mm)) {
 		drm_mm_takedown(mm);
 		spin_unlock(&rman->lock);
+		spin_lock_destroy(&rman->lock);
 		kfree(rman);
 		man->priv = NULL;
 		return 0;
