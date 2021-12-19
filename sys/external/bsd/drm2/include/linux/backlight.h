@@ -1,4 +1,4 @@
-/*	$NetBSD: backlight.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: backlight.h,v 1.3 2021/12/19 10:40:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,13 @@
 
 #ifndef _LINUX_BACKLIGHT_H_
 #define _LINUX_BACKLIGHT_H_
+
+struct backlight_device;
+
+#define	backlight_disable	linux_backlight_disable
+#define	backlight_enable	linux_backlight_enable
+
+int	backlight_disable(struct backlight_device *);
+int	backlight_enable(struct backlight_device *);
 
 #endif  /* _LINUX_BACKLIGHT_H_ */
