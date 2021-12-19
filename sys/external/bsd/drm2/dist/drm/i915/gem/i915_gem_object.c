@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object.c,v 1.8 2021/12/19 11:58:57 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object.c,v 1.9 2021/12/19 12:12:31 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.8 2021/12/19 11:58:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.9 2021/12/19 12:12:31 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/sched/mm.h>
@@ -131,7 +131,6 @@ void i915_gem_close_object(struct drm_gem_object *gem, struct drm_file *file)
 	}
 	i915_gem_object_unlock(obj);
 
-	spin_lock(&obj->mmo.lock);
 #ifdef __NetBSD__
 	__USE(mn);
 	for (enum i915_mmap_type t = 0; t < I915_MMAP_NTYPES; t++) {
@@ -140,10 +139,11 @@ void i915_gem_close_object(struct drm_gem_object *gem, struct drm_file *file)
 		drm_vma_node_revoke(&mmo->vma_node, file);
 	}
 #else
+	spin_lock(&obj->mmo.lock);
 	rbtree_postorder_for_each_entry_safe(mmo, mn, &obj->mmo.offsets, offset)
 		drm_vma_node_revoke(&mmo->vma_node, file);
-#endif
 	spin_unlock(&obj->mmo.lock);
+#endif
 
 	list_for_each_entry_safe(lut, ln, &close, obj_link) {
 		struct i915_gem_context *ctx = lut->ctx;
