@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.h,v 1.8 2021/12/19 10:47:30 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.h,v 1.9 2021/12/19 11:32:54 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -41,8 +41,6 @@ struct page;
 
 void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
 #ifdef __NetBSD__		/* XXX drm clflush */
-struct pglist;
-void drm_clflush_pglist(struct pglist *);
 void drm_clflush_page(struct page *);
 void drm_clflush_virt_range(const void *, size_t);
 #else

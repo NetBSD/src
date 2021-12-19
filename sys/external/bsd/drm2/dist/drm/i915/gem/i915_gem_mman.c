@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.4 2021/12/19 11:26:35 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.5 2021/12/19 11:32:53 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.4 2021/12/19 11:26:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.5 2021/12/19 11:32:53 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -508,7 +508,9 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 	spin_lock(&obj->mmo.lock);
 #ifdef __NetBSD__
 	enum i915_mmap_type t;
-	struct vm_page *pg;
+	struct page *page;
+	struct vm_page *vm_page;
+	unsigned i;
 
 	(void)mmo;
 	(void)mn;
@@ -519,8 +521,11 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 		 * XXX Gotta take some uvm object's lock, outside the
 		 * spin lock, probably?
 		 */
-		TAILQ_FOREACH(pg, &obj->mm.pageq, pageq.queue)
-			pmap_page_protect(pg, VM_PROT_NONE);
+		for (i = 0; i < obj->base.size >> PAGE_SHIFT; i++) {
+			page = obj->mm.pagearray[i];
+			vm_page = &page->p_vmp;
+			pmap_page_protect(vm_page, VM_PROT_NONE);
+		}
 	}
 #else
 	rbtree_postorder_for_each_entry_safe(mmo, mn,

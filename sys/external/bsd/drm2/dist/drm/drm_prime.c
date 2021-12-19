@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.14 2021/12/19 10:38:22 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.15 2021/12/19 11:32:53 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.14 2021/12/19 10:38:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.15 2021/12/19 11:32:53 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -84,31 +84,6 @@ sg_alloc_table_from_pages(struct sg_table *sgt, struct page **pages,
 
 	for (i = 0; i < npages; i++)
 		sgt->sgt_pgs[i] = VM_PAGE_TO_PHYS(&pages[i]->p_vmp);
-
-	return 0;
-}
-
-static int
-sg_alloc_table_from_pglist(struct sg_table *sgt, const struct pglist *pglist,
-    unsigned npages, bus_size_t offset, bus_size_t size, gfp_t gfp)
-{
-	struct vm_page *pg;
-	unsigned i;
-
-	KASSERT(offset == 0);
-	KASSERT(size == npages << PAGE_SHIFT);
-
-	sgt->sgt_pgs = kcalloc(npages, sizeof(sgt->sgt_pgs[0]), gfp);
-	if (sgt->sgt_pgs == NULL)
-		return -ENOMEM;
-	sgt->sgt_npgs = npages;
-
-	i = 0;
-	TAILQ_FOREACH(pg, pglist, pageq.queue) {
-		KASSERT(i < npages);
-		sgt->sgt_pgs[i] = VM_PAGE_TO_PHYS(pg);
-	}
-	KASSERT(i == npages);
 
 	return 0;
 }
@@ -1234,30 +1209,6 @@ drm_prime_bus_dmamem_to_sg(bus_dma_tag_t dmat, const bus_dma_segment_t *segs,
 		goto out;
 
 	return sg;
-out:
-	kfree(sg);
-	return ERR_PTR(ret);
-}
-
-struct sg_table *
-drm_prime_pglist_to_sg(struct pglist *pglist, unsigned npages)
-{
-	struct sg_table *sg;
-	int ret;
-
-	sg = kmalloc(sizeof(*sg), GFP_KERNEL);
-	if (sg == NULL) {
-		ret = -ENOMEM;
-		goto out;
-	}
-
-	ret = sg_alloc_table_from_pglist(sg, pglist, 0, npages << PAGE_SHIFT,
-	    npages, GFP_KERNEL);
-	if (ret)
-		goto out;
-
-	return sg;
-
 out:
 	kfree(sg);
 	return ERR_PTR(ret);

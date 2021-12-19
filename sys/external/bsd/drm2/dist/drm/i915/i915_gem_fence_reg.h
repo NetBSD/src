@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_fence_reg.h,v 1.3 2021/12/19 01:34:08 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_fence_reg.h,v 1.4 2021/12/19 11:32:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -63,9 +63,9 @@ void i915_gem_restore_fences(struct i915_ggtt *ggtt);
 
 #ifdef __NetBSD__
 void i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj,
-				       struct pglist *pages);
+				       struct page **pages);
 void i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj,
-					 struct pglist *pages);
+					 struct page **pages);
 #else
 void i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj,
 				       struct sg_table *pages);
