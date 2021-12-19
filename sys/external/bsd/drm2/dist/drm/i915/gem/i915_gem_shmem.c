@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.4 2021/12/19 01:34:08 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.4 2021/12/19 01:34:08 riastradh Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -557,8 +557,19 @@ i915_gem_object_create_shmem_from_data(struct drm_i915_private *dev_priv,
 				       const void *data, resource_size_t size)
 {
 	struct drm_i915_gem_object *obj;
+#ifdef __NetBSD__
+	struct iovec iov = { .iov_base = __UNCONST(data), .iov_len = size };
+	struct uio uio = {
+	    .uio_iov = &iov,
+	    .uio_iovcnt = 1,
+	    .uio_offset = 0,
+	    .uio_resid = size,
+	    .uio_rw = UIO_WRITE,
+	};
+#else
 	struct file *file;
 	resource_size_t offset;
+#endif
 	int err;
 
 	obj = i915_gem_object_create_shmem(dev_priv, round_up(size, PAGE_SIZE));
@@ -567,6 +578,14 @@ i915_gem_object_create_shmem_from_data(struct drm_i915_private *dev_priv,
 
 	GEM_BUG_ON(obj->write_domain != I915_GEM_DOMAIN_CPU);
 
+#ifdef __NetBSD__
+	UIO_SETUP_SYSSPACE(&uio);
+	/* XXX errno NetBSD->Linux */
+	err = -ubc_uiomove(obj->base.filp, &uio, size, UVM_ADV_NORMAL,
+	    UBC_WRITE);
+	if (err)
+		goto fail;
+#else
 	file = obj->base.filp;
 	offset = 0;
 	do {
@@ -594,6 +613,7 @@ i915_gem_object_create_shmem_from_data(struct drm_i915_private *dev_priv,
 		data += len;
 		offset += len;
 	} while (size);
+#endif
 
 	return obj;
 

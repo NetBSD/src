@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object.c,v 1.3 2021/12/19 01:34:08 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.3 2021/12/19 01:34:08 riastradh Exp $");
 
 #include <linux/sched/mm.h>
 
@@ -75,8 +75,10 @@ void i915_gem_object_init(struct drm_i915_gem_object *obj,
 	obj->ops = ops;
 
 	obj->mm.madv = I915_MADV_WILLNEED;
+#ifndef __NetBSD__
 	INIT_RADIX_TREE(&obj->mm.get_page.radix, GFP_KERNEL | __GFP_NOWARN);
 	mutex_init(&obj->mm.get_page.lock);
+#endif
 }
 
 /**

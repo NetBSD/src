@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_wait.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_wait.c,v 1.3 2021/12/19 01:34:08 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_wait.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_wait.c,v 1.3 2021/12/19 01:34:08 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/jiffies.h>
@@ -103,6 +103,9 @@ static void __fence_set_priority(struct dma_fence *fence,
 {
 	struct i915_request *rq;
 	struct intel_engine_cs *engine;
+#ifdef __NetBSD__
+	int s;
+#endif
 
 	if (dma_fence_is_signaled(fence) || !dma_fence_is_i915(fence))
 		return;
@@ -110,12 +113,20 @@ static void __fence_set_priority(struct dma_fence *fence,
 	rq = to_request(fence);
 	engine = rq->engine;
 
+#ifdef __NetBSD__
+	s = splsoftserial();
+#else
 	local_bh_disable();
+#endif
 	rcu_read_lock(); /* RCU serialisation for set-wedged protection */
 	if (engine->schedule)
 		engine->schedule(rq, attr);
 	rcu_read_unlock();
+#ifdef __NetBSD__
+	splx(s);
+#else
 	local_bh_enable(); /* kick the tasklets if queues were reprioritised */
+#endif
 }
 
 static void fence_set_priority(struct dma_fence *fence,
