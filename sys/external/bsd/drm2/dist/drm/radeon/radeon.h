@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon.h,v 1.10 2021/12/18 23:45:42 riastradh Exp $	*/
+/*	$NetBSD: radeon.h,v 1.11 2021/12/19 11:52:38 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -392,11 +392,7 @@ struct radeon_fence {
 	unsigned		ring;
 	bool			is_vm_update;
 
-#ifdef __NetBSD__
 	TAILQ_ENTRY(radeon_fence)	fence_check;
-#else
-	wait_queue_entry_t		fence_wake;
-#endif
 };
 
 int radeon_fence_driver_start_ring(struct radeon_device *rdev, int ring);
@@ -2435,13 +2431,9 @@ struct radeon_device {
 	struct radeon_doorbell		doorbell;
 	struct radeon_mman		mman;
 	struct radeon_fence_driver	fence_drv[RADEON_NUM_RINGS];
-#ifdef __NetBSD__
 	spinlock_t			fence_lock;
 	drm_waitqueue_t			fence_queue;
 	TAILQ_HEAD(, radeon_fence)	fence_check;
-#else
-	wait_queue_head_t		fence_queue;
-#endif
 	u64				fence_context;
 	struct mutex			ring_lock;
 	struct radeon_ring		ring[RADEON_NUM_RINGS];
