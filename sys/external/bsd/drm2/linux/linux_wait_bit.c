@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_wait_bit.c,v 1.3 2021/12/19 01:42:02 riastradh Exp $	*/
+/*	$NetBSD: linux_wait_bit.c,v 1.4 2021/12/19 11:26:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_wait_bit.c,v 1.3 2021/12/19 01:42:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_wait_bit.c,v 1.4 2021/12/19 11:26:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -110,6 +110,17 @@ wake_up_bit(const volatile unsigned long *bitmap, unsigned bit)
 	struct waitbitentry *wbe;
 
 	wbe = wait_bit_enter(bitmap, bit);
+	cv_broadcast(&wbe->cv);
+	wait_bit_exit(wbe);
+}
+
+void
+clear_and_wake_up_bit(int bit, volatile unsigned long *bitmap)
+{
+	struct waitbitentry *wbe;
+
+	wbe = wait_bit_enter(bitmap, bit);
+	clear_bit(bit, bitmap);
 	cv_broadcast(&wbe->cv);
 	wait_bit_exit(wbe);
 }

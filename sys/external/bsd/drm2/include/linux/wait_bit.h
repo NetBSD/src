@@ -1,4 +1,4 @@
-/*	$NetBSD: wait_bit.h,v 1.2 2021/12/19 01:42:01 riastradh Exp $	*/
+/*	$NetBSD: wait_bit.h,v 1.3 2021/12/19 11:26:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef	_LINUX_WAIT_BIT_H_
 #define	_LINUX_WAIT_BIT_H_
 
+#define	clear_and_wake_up_bit	linux_clear_and_wake_up_bit
 #define	wait_on_bit		linux_wait_on_bit
 #define	wait_on_bit_timeout	linux_wait_on_bit_timeout
 #define	wake_up_bit		linux_wake_up_bit
@@ -40,6 +41,7 @@ int	linux_wait_bit_init(void);
 void	linux_wait_bit_fini(void);
 
 void	wake_up_bit(const volatile unsigned long *, unsigned);
+void	clear_and_wake_up_bit(int, volatile unsigned long *);
 int	wait_on_bit(const volatile unsigned long *, unsigned, int);
 int	wait_on_bit_timeout(const volatile unsigned long *, unsigned, int,
 	    unsigned long);
