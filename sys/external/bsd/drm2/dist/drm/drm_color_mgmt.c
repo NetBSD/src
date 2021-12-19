@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_color_mgmt.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_color_mgmt.c,v 1.3 2021/12/19 09:43:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_color_mgmt.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_color_mgmt.c,v 1.3 2021/12/19 09:43:05 riastradh Exp $");
 
 #include <linux/uaccess.h>
 
@@ -283,13 +283,13 @@ int drm_mode_gamma_set_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-	g_base = r_base + size;
+	g_base = (char *)r_base + size;
 	if (copy_from_user(g_base, (void __user *)(unsigned long)crtc_lut->green, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
-	b_base = g_base + size;
+	b_base = (char *)g_base + size;
 	if (copy_from_user(b_base, (void __user *)(unsigned long)crtc_lut->blue, size)) {
 		ret = -EFAULT;
 		goto out;
@@ -347,13 +347,13 @@ int drm_mode_gamma_get_ioctl(struct drm_device *dev,
 		goto out;
 	}
 
-	g_base = r_base + size;
+	g_base = (char *)r_base + size;
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->green, g_base, size)) {
 		ret = -EFAULT;
 		goto out;
 	}
 
-	b_base = g_base + size;
+	b_base = (char *)g_base + size;
 	if (copy_to_user((void __user *)(unsigned long)crtc_lut->blue, b_base, size)) {
 		ret = -EFAULT;
 		goto out;
