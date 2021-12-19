@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.c,v 1.4 2021/12/19 11:09:34 riastradh Exp $	*/
+/*	$NetBSD: drm_file.c,v 1.5 2021/12/19 11:21:03 riastradh Exp $	*/
 
 /*
  * \author Rickard E. (Rik) Faith <faith@valinux.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.4 2021/12/19 11:09:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.5 2021/12/19 11:21:03 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/dma-fence.h>
@@ -301,6 +301,7 @@ void drm_file_free(struct drm_file *file)
 
 #ifdef __NetBSD__
 	DRM_DESTROY_WAITQUEUE(&file->event_wait);
+	DRM_DESTROY_WAITQUEUE(&file->event_read_wq);
 	seldestroy(&file->event_selq);
 #else
 	put_pid(file->pid);
