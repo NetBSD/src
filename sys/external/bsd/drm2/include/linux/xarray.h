@@ -1,4 +1,4 @@
-/*	$NetBSD: xarray.h,v 1.7 2021/12/19 11:50:47 riastradh Exp $	*/
+/*	$NetBSD: xarray.h,v 1.8 2021/12/19 11:51:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,21 +36,33 @@
 struct xarray;
 struct xa_limit;
 
+struct xa_limit {
+	uint32_t	max;
+	uint32_t	min;
+};
+
 struct xarray {
 	kmutex_t		xa_lock;
 	struct radix_tree	xa_tree;
 	gfp_t			xa_gfp;
 };
 
-struct xa_limit {
-	uint32_t	max;
-	uint32_t	min;
-};
-
 #define	xa_for_each(XA, INDEX, ENTRY)					      \
-	for ((INDEX) = 0, (ENTRY) = xa_find((XA), &(INDEX), ULONG_MAX, 0);    \
+	for ((INDEX) = 0, (ENTRY) = xa_find((XA), &(INDEX), ULONG_MAX, -1);   \
 		(ENTRY) != NULL;					      \
 		(ENTRY) = xa_find_after((XA), &(INDEX), ULONG_MAX, 0))
+
+#define	XA_ERROR(error)	((void *)(((uintptr_t)error << 2) | 2))
+
+static inline int
+xa_err(void *cookie)
+{
+
+	if (((uintptr_t)cookie & 3) != 2)
+		return 0;
+
+	return (uintptr_t)cookie >> 2;
+}
 
 #define	XA_FLAGS_ALLOC	0
 
