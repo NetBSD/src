@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.35 2021/12/19 12:38:06 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.36 2021/12/19 12:38:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.35 2021/12/19 12:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.36 2021/12/19 12:38:15 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
+#include <sys/sdt.h>
 
 #include <linux/atomic.h>
 #include <linux/dma-fence.h>
@@ -45,6 +46,44 @@ __KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.35 2021/12/19 12:38:06 riastra
 
 #define	FENCE_MAGIC_GOOD	0x607ba424048c37e5ULL
 #define	FENCE_MAGIC_BAD		0x7641ca721344505fULL
+
+SDT_PROBE_DEFINE1(sdt, drm, fence, init,
+    "struct dma_fence *"/*fence*/);
+SDT_PROBE_DEFINE1(sdt, drm, fence, reset,
+    "struct dma_fence *"/*fence*/);
+SDT_PROBE_DEFINE1(sdt, drm, fence, release,
+    "struct dma_fence *"/*fence*/);
+SDT_PROBE_DEFINE1(sdt, drm, fence, free,
+    "struct dma_fence *"/*fence*/);
+SDT_PROBE_DEFINE1(sdt, drm, fence, destroy,
+    "struct dma_fence *"/*fence*/);
+
+SDT_PROBE_DEFINE1(sdt, drm, fence, enable_signaling,
+    "struct dma_fence *"/*fence*/);
+SDT_PROBE_DEFINE2(sdt, drm, fence, add_callback,
+    "struct dma_fence *"/*fence*/,
+    "struct dma_fence_callback *"/*callback*/);
+SDT_PROBE_DEFINE2(sdt, drm, fence, remove_callback,
+    "struct dma_fence *"/*fence*/,
+    "struct dma_fence_callback *"/*callback*/);
+SDT_PROBE_DEFINE2(sdt, drm, fence, callback,
+    "struct dma_fence *"/*fence*/,
+    "struct dma_fence_callback *"/*callback*/);
+SDT_PROBE_DEFINE1(sdt, drm, fence, test,
+    "struct dma_fence *"/*fence*/);
+SDT_PROBE_DEFINE2(sdt, drm, fence, set_error,
+    "struct dma_fence *"/*fence*/,
+    "int"/*error*/);
+SDT_PROBE_DEFINE1(sdt, drm, fence, signal,
+    "struct dma_fence *"/*fence*/);
+
+SDT_PROBE_DEFINE3(sdt, drm, fence, wait_start,
+    "struct dma_fence *"/*fence*/,
+    "bool"/*intr*/,
+    "long"/*timeout*/);
+SDT_PROBE_DEFINE2(sdt, drm, fence, wait_done,
+    "struct dma_fence *"/*fence*/,
+    "long"/*ret*/);
 
 /*
  * linux_dma_fence_trace
@@ -97,6 +136,8 @@ dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
 #ifdef DIAGNOSTIC
 	fence->f_magic = FENCE_MAGIC_GOOD;
 #endif
+
+	SDT_PROBE1(sdt, drm, fence, init,  fence);
 }
 
 /*
@@ -126,6 +167,8 @@ dma_fence_reset(struct dma_fence *fence, const struct dma_fence_ops *ops,
 	fence->context = context;
 	fence->seqno = seqno;
 	fence->error = 0;
+
+	SDT_PROBE1(sdt, drm, fence, reset,  fence);
 }
 
 /*
@@ -141,6 +184,8 @@ dma_fence_destroy(struct dma_fence *fence)
 {
 
 	KASSERT(!dma_fence_referenced_p(fence));
+
+	SDT_PROBE1(sdt, drm, fence, destroy,  fence);
 
 #ifdef DIAGNOSTIC
 	fence->f_magic = FENCE_MAGIC_BAD;
@@ -178,6 +223,8 @@ dma_fence_free(struct dma_fence *fence)
 {
 
 	KASSERT(!dma_fence_referenced_p(fence));
+
+	SDT_PROBE1(sdt, drm, fence, free,  fence);
 
 	call_rcu(&fence->rcu, &dma_fence_free_cb);
 }
@@ -355,6 +402,8 @@ dma_fence_release(struct kref *refcount)
 	    "fence %p has pending callbacks", fence);
 	KASSERT(!dma_fence_referenced_p(fence));
 
+	SDT_PROBE1(sdt, drm, fence, release,  fence);
+
 	if (fence->ops->release)
 		(*fence->ops->release)(fence);
 	else
@@ -408,12 +457,13 @@ dma_fence_ensure_signal_enabled(struct dma_fence *fence)
 	 * Otherwise, if it wasn't enabled yet, try to enable
 	 * signalling.
 	 */
-	if (!already_enabled &&
-	    fence->ops->enable_signaling &&
-	    !(*fence->ops->enable_signaling)(fence)) {
-		/* If it failed, signal and return -ENOENT.  */
-		dma_fence_signal_locked(fence);
-		return -ENOENT;
+	if (!already_enabled && fence->ops->enable_signaling) {
+		SDT_PROBE1(sdt, drm, fence, enable_signaling,  fence);
+		if (!(*fence->ops->enable_signaling)(fence)) {
+			/* If it failed, signal and return -ENOENT.  */
+			dma_fence_signal_locked(fence);
+			return -ENOENT;
+		}
 	}
 
 	/* Success!  */
@@ -456,6 +506,7 @@ dma_fence_add_callback(struct dma_fence *fence, struct dma_fence_cb *fcb,
 		goto out1;
 
 	/* Insert the callback.  */
+	SDT_PROBE2(sdt, drm, fence, add_callback,  fence, fcb);
 	fcb->func = fn;
 	TAILQ_INSERT_TAIL(&fence->f_callbacks, fcb, fcb_entry);
 	fcb->fcb_onqueue = true;
@@ -488,6 +539,7 @@ dma_fence_remove_callback(struct dma_fence *fence, struct dma_fence_cb *fcb)
 	spin_lock(fence->lock);
 	onqueue = fcb->fcb_onqueue;
 	if (onqueue) {
+		SDT_PROBE2(sdt, drm, fence, remove_callback,  fence, fcb);
 		TAILQ_REMOVE(&fence->f_callbacks, fcb, fcb_entry);
 		fcb->fcb_onqueue = false;
 	}
@@ -558,6 +610,7 @@ dma_fence_is_signaled_locked(struct dma_fence *fence)
 
 	/* If there's a signalled callback, test it.  */
 	if (fence->ops->signaled) {
+		SDT_PROBE1(sdt, drm, fence, test,  fence);
 		if ((*fence->ops->signaled)(fence)) {
 			/*
 			 * It's been signalled implicitly by some
@@ -589,6 +642,7 @@ dma_fence_set_error(struct dma_fence *fence, int error)
 	KASSERTMSG(error >= -ELAST, "%d", error);
 	KASSERTMSG(error < 0, "%d", error);
 
+	SDT_PROBE2(sdt, drm, fence, set_error,  fence, error);
 	fence->error = error;
 }
 
@@ -662,6 +716,8 @@ dma_fence_signal_locked(struct dma_fence *fence)
 	if (test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
 		return -EINVAL;
 
+	SDT_PROBE1(sdt, drm, fence, signal,  fence);
+
 	/* Set the timestamp.  */
 	fence->timestamp = ktime_get();
 	set_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags);
@@ -671,6 +727,7 @@ dma_fence_signal_locked(struct dma_fence *fence)
 
 	/* Remove and call the callbacks.  */
 	TAILQ_FOREACH_SAFE(fcb, &fence->f_callbacks, fcb_entry, next) {
+		SDT_PROBE2(sdt, drm, fence, callback,  fence, fcb);
 		TAILQ_REMOVE(&fence->f_callbacks, fcb, fcb_entry);
 		fcb->fcb_onqueue = false;
 		(*fcb->func)(fence, fcb);
@@ -877,15 +934,20 @@ out:	while (i --> 0)
 long
 dma_fence_wait_timeout(struct dma_fence *fence, bool intr, long timeout)
 {
+	long ret;
 
 	KASSERT(dma_fence_referenced_p(fence));
 	KASSERTMSG(timeout >= 0, "timeout %ld", timeout);
 	KASSERTMSG(timeout <= MAX_SCHEDULE_TIMEOUT, "timeout %ld", timeout);
 
+	SDT_PROBE3(sdt, drm, fence, wait_start,  fence, intr, timeout);
 	if (fence->ops->wait)
-		return (*fence->ops->wait)(fence, intr, timeout);
+		ret = (*fence->ops->wait)(fence, intr, timeout);
 	else
-		return dma_fence_default_wait(fence, intr, timeout);
+		ret = dma_fence_default_wait(fence, intr, timeout);
+	SDT_PROBE2(sdt, drm, fence, wait_done,  fence, ret);
+
+	return ret;
 }
 
 /*
@@ -1071,6 +1133,8 @@ __dma_fence_signal_wake(struct dma_fence *fence, ktime_t timestamp)
 	spin_lock(fence->lock);
 
 	KASSERT(fence->flags & DMA_FENCE_FLAG_SIGNALED_BIT);
+
+	SDT_PROBE1(sdt, drm, fence, signal,  fence);
 
 	/* Set the timestamp.  */
 	fence->timestamp = timestamp;
