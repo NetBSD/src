@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.34 2021/12/19 11:03:01 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.35 2021/12/19 11:04:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,11 @@
 #define	xchg(P, V)							      \
 	(sizeof(*(P)) == 4 ? atomic_swap_32((volatile uint32_t *)P, V)	      \
 	    : sizeof(*(P)) == 8 ? atomic_swap_64((volatile uint64_t *)P, V)   \
+	    : (__builtin_abort(), 0))
+
+#define	cmpxchg(P, O, N)						      \
+	(sizeof(*(P)) == 4 ? atomic_cas_32((volatile uint32_t *)P, O, N)      \
+	    : sizeof(*(P)) == 8 ? atomic_cas_64((volatile uint64_t *)P, O, N) \
 	    : (__builtin_abort(), 0))
 
 /*
