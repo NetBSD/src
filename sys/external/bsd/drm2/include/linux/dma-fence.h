@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.4 2021/12/19 01:16:05 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.5 2021/12/19 01:25:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ struct dma_fence {
 	unsigned			context;
 	unsigned			seqno;
 	const struct dma_fence_ops	*ops;
+	int				error;
 
 	TAILQ_HEAD(, dma_fence_cb)	f_callbacks;
 	kcondvar_t			f_cv;
@@ -91,6 +92,7 @@ struct dma_fence_cb {
 #define	dma_fence_is_signaled_locked	linux_dma_fence_is_signaled_locked
 #define	dma_fence_put			linux_dma_fence_put
 #define	dma_fence_remove_callback	linux_dma_fence_remove_callback
+#define	dma_fence_set_error		linux_dma_fence_set_error
 #define	dma_fence_signal		linux_dma_fence_signal
 #define	dma_fence_signal_locked		linux_dma_fence_signal_locked
 #define	dma_fence_wait			linux_dma_fence_wait
@@ -123,6 +125,7 @@ void	dma_fence_enable_sw_signaling(struct dma_fence *);
 
 bool	dma_fence_is_signaled(struct dma_fence *);
 bool	dma_fence_is_signaled_locked(struct dma_fence *);
+void	dma_fence_set_error(struct dma_fence *, int);
 int	dma_fence_signal(struct dma_fence *);
 int	dma_fence_signal_locked(struct dma_fence *);
 long	dma_fence_default_wait(struct dma_fence *, bool, long);
