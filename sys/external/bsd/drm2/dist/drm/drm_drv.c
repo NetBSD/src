@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.15 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.16 2021/12/19 00:57:06 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.15 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.16 2021/12/19 00:57:06 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -942,9 +942,13 @@ static int create_compat_control_link(struct drm_device *dev)
 	if (!name)
 		return -ENOMEM;
 
+#ifdef __NetBSD__		/* XXX sysfs */
+	ret = 0;
+#else
 	ret = sysfs_create_link(minor->kdev->kobj.parent,
 				&minor->kdev->kobj,
 				name);
+#endif
 
 	kfree(name);
 
@@ -967,7 +971,9 @@ static void remove_compat_control_link(struct drm_device *dev)
 	if (!name)
 		return;
 
+#ifndef __NetBSD__		/* XXX sysfs */
 	sysfs_remove_link(minor->kdev->kobj.parent, name);
+#endif
 
 	kfree(name);
 }
