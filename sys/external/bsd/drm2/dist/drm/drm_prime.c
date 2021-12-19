@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.10 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.11 2021/12/19 01:16:36 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.10 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.11 2021/12/19 01:16:36 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -199,11 +199,81 @@ struct drm_prime_member {
 	struct rb_node handle_rb;
 };
 
+#ifdef __NetBSD__
+static int
+compare_dmabufs(void *cookie, const void *va, const void *vb)
+{
+	const struct drm_prime_member *ma = va;
+	const struct drm_prime_member *mb = vb;
+
+	if (ma->dma_buf < mb->dma_buf)
+		return -1;
+	if (ma->dma_buf > mb->dma_buf)
+		return +1;
+	return 0;
+}
+
+static int
+compare_dmabuf_key(void *cookie, const void *vm, const void *vk)
+{
+	const struct drm_prime_member *m = vm;
+	const struct dma_buf *const *kp = vk;
+
+	if (m->dma_buf < *kp)
+		return -1;
+	if (m->dma_buf > *kp)
+		return +1;
+	return 0;
+}
+
+static int
+compare_handles(void *cookie, const void *va, const void *vb)
+{
+	const struct drm_prime_member *ma = va;
+	const struct drm_prime_member *mb = vb;
+
+	if (ma->handle < mb->handle)
+		return -1;
+	if (ma->handle > mb->handle)
+		return +1;
+	return 0;
+}
+
+static int
+compare_handle_key(void *cookie, const void *vm, const void *vk)
+{
+	const struct drm_prime_member *m = vm;
+	const uint32_t *kp = vk;
+
+	if (m->handle < *kp)
+		return -1;
+	if (m->handle > *kp)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t dmabuf_ops = {
+	.rbto_compare_nodes = compare_dmabufs,
+	.rbto_compare_key = compare_dmabuf_key,
+	.rbto_node_offset = offsetof(struct drm_prime_member, dmabuf_rb),
+};
+
+static const rb_tree_ops_t handle_ops = {
+	.rbto_compare_nodes = compare_handles,
+	.rbto_compare_key = compare_handle_key,
+	.rbto_node_offset = offsetof(struct drm_prime_member, handle_rb),
+};
+#endif
+
 static int drm_prime_add_buf_handle(struct drm_prime_file_private *prime_fpriv,
 				    struct dma_buf *dma_buf, uint32_t handle)
 {
 	struct drm_prime_member *member;
+#ifdef __NetBSD__
+	struct drm_prime_member *collision __diagused;
+#else
 	struct rb_node **p, *rb;
+#endif
 
 	member = kmalloc(sizeof(*member), GFP_KERNEL);
 	if (!member)
@@ -213,6 +283,11 @@ static int drm_prime_add_buf_handle(struct drm_prime_file_private *prime_fpriv,
 	member->dma_buf = dma_buf;
 	member->handle = handle;
 
+#ifdef __NetBSD__
+	collision = rb_tree_insert_node(&prime_fpriv->dmabufs.rbr_tree,
+	    member);
+	KASSERT(collision == NULL);
+#else
 	rb = NULL;
 	p = &prime_fpriv->dmabufs.rb_node;
 	while (*p) {
@@ -227,7 +302,13 @@ static int drm_prime_add_buf_handle(struct drm_prime_file_private *prime_fpriv,
 	}
 	rb_link_node(&member->dmabuf_rb, rb, p);
 	rb_insert_color(&member->dmabuf_rb, &prime_fpriv->dmabufs);
+#endif
 
+#ifdef __NetBSD__
+	collision = rb_tree_insert_node(&prime_fpriv->handles.rbr_tree,
+	    member);
+	KASSERT(collision == NULL);
+#else
 	rb = NULL;
 	p = &prime_fpriv->handles.rb_node;
 	while (*p) {
@@ -242,6 +323,7 @@ static int drm_prime_add_buf_handle(struct drm_prime_file_private *prime_fpriv,
 	}
 	rb_link_node(&member->handle_rb, rb, p);
 	rb_insert_color(&member->handle_rb, &prime_fpriv->handles);
+#endif
 
 	return 0;
 }
@@ -249,6 +331,9 @@ static int drm_prime_add_buf_handle(struct drm_prime_file_private *prime_fpriv,
 static struct dma_buf *drm_prime_lookup_buf_by_handle(struct drm_prime_file_private *prime_fpriv,
 						      uint32_t handle)
 {
+#ifdef __NetBSD__
+	return rb_tree_find_node(&prime_fpriv->handles.rbr_tree, &handle);
+#else
 	struct rb_node *rb;
 
 	rb = prime_fpriv->handles.rb_node;
@@ -265,12 +350,22 @@ static struct dma_buf *drm_prime_lookup_buf_by_handle(struct drm_prime_file_priv
 	}
 
 	return NULL;
+#endif
 }
 
 static int drm_prime_lookup_buf_handle(struct drm_prime_file_private *prime_fpriv,
 				       struct dma_buf *dma_buf,
 				       uint32_t *handle)
 {
+#ifdef __NetBSD__
+	struct drm_prime_member *member;
+
+	member = rb_tree_find_node(&prime_fpriv->dmabufs.rbr_tree, &dma_buf);
+	if (member == NULL)
+		return -ENOENT;
+	*handle = member->handle;
+	return 0;
+#else
 	struct rb_node *rb;
 
 	rb = prime_fpriv->dmabufs.rb_node;
@@ -289,11 +384,21 @@ static int drm_prime_lookup_buf_handle(struct drm_prime_file_private *prime_fpri
 	}
 
 	return -ENOENT;
+#endif
 }
 
 void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpriv,
 					struct dma_buf *dma_buf)
 {
+#ifdef __NetBSD__
+	struct drm_prime_member *member;
+
+	member = rb_tree_find_node(&prime_fpriv->dmabufs.rbr_tree, &dma_buf);
+	if (member != NULL) {
+		rb_tree_remove_node(&prime_fpriv->handles.rbr_tree, member);
+		rb_tree_remove_node(&prime_fpriv->dmabufs.rbr_tree, member);
+	}
+#else
 	struct rb_node *rb;
 
 	rb = prime_fpriv->dmabufs.rb_node;
@@ -315,17 +420,30 @@ void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpr
 		}
 #endif
 	}
+#endif
 }
 
 void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv)
 {
+#ifdef __NetBSD__
+	linux_mutex_init(&prime_fpriv->lock);
+#else
 	mutex_init(&prime_fpriv->lock);
+#endif
+#ifdef __NetBSD__
+	rb_tree_init(&prime_fpriv->dmabufs.rbr_tree, &dmabuf_ops);
+	rb_tree_init(&prime_fpriv->handles.rbr_tree, &handle_ops);
+#else
 	prime_fpriv->dmabufs = RB_ROOT;
 	prime_fpriv->handles = RB_ROOT;
+#endif
 }
 
 void drm_prime_destroy_file_private(struct drm_prime_file_private *prime_fpriv)
 {
+#ifdef __NetBSD__ /* XXX post-merge linux doesn't destroy it's lock now? */
+	linux_mutex_destroy(&prime_fpriv->lock);
+#endif
 	/* by now drm_gem_release should've made sure the list is empty */
 	WARN_ON(!RB_EMPTY_ROOT(&prime_fpriv->dmabufs));
 }
