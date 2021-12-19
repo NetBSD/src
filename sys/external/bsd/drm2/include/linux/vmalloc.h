@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.8 2021/12/19 00:59:01 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.9 2021/12/19 01:22:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <linux/overflow.h>
 
 #include <asm/page.h>
+
+struct notifier_block;
 
 /*
  * XXX vmalloc and kmalloc both use malloc(9).  If you change this, be
@@ -139,6 +141,18 @@ vunmap(void *ptr, unsigned npages)
 	 */
 	uvm_km_free(kernel_map, va, (vsize_t)npages << PAGE_SHIFT,
 	    UVM_KMF_VAONLY);
+}
+
+static inline int
+register_vmap_purge_notifier(struct notifier_block *nb __unused)
+{
+	return 0;
+}
+
+static inline int
+unregister_vmap_purge_notifier(struct notifier_block *nb __unused)
+{
+	return 0;
 }
 
 #endif  /* _LINUX_VMALLOC_H_ */
