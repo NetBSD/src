@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.16 2021/12/19 11:02:12 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.17 2021/12/19 11:13:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -42,12 +42,12 @@
 #include <drm/drm_trace_netbsd.h>
 
 DEFINE_TRACE3(i915,, cpu__fifo__underrun,
-    "enum i915_pipe"/*pipe*/,
+    "enum pipe_drmhack"/*pipe*/,
     "uint32_t"/*frame*/,
     "uint32_t"/*scanline*/);
 static inline void
 trace_intel_cpu_fifo_underrun(struct drm_i915_private *dev_priv,
-    enum i915_pipe pipe)
+    enum pipe pipe)
 {
 	TRACE3(i915,, cpu__fifo__underrun,
 	    pipe,
@@ -56,12 +56,12 @@ trace_intel_cpu_fifo_underrun(struct drm_i915_private *dev_priv,
 }
 
 DEFINE_TRACE3(i915,, pch__fifo__underrun,
-    "enum i915_pipe"/*pipe*/,
+    "enum pipe_drmhack"/*pipe*/,
     "uint32_t"/*frame*/,
     "uint32_t"/*scanline*/);
 static inline void
 trace_intel_pch_fifo_underrun(struct drm_i915_private *dev_priv,
-    enum i915_pipe pipe)
+    enum pipe pipe)
 {
 	TRACE3(i915,, pch__fifo__underrun,
 	    pipe,
@@ -470,7 +470,7 @@ trace_i915_gem_shrink(struct drm_i915_private *dev_priv, unsigned long target,
 }
 
 DEFINE_TRACE5(i915,, pipe__update__start,
-    "enum i915_pipe"/*pipe*/,
+    "enum pipe_drmhack"/*pipe*/,
     "uint32_t"/*frame*/,
     "int"/*scanline*/,
     "uint32_t"/*min*/,
@@ -488,7 +488,7 @@ trace_i915_pipe_update_start(struct intel_crtc *crtc)
 }
 
 DEFINE_TRACE5(i915,, pipe__update__vblank__evaded,
-    "enum i915_pipe"/*pipe*/,
+    "enum pipe_drmhack"/*pipe*/,
     "uint32_t"/*frame*/,
     "int"/*scanline*/,
     "uint32_t"/*min*/,
@@ -505,7 +505,7 @@ trace_i915_pipe_update_vblank_evaded(struct intel_crtc *crtc)
 }
 
 DEFINE_TRACE3(i915,, pipe__update__end,
-    "enum i915_pipe"/*pipe*/,
+    "enum pipe_drmhack"/*pipe*/,
     "uint32_t"/*frame*/,
     "int"/*scanline*/);
 static inline void
