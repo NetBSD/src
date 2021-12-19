@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.42 2021/12/19 11:18:35 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.43 2021/12/19 11:32:35 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2052,13 +2052,8 @@ int i915_reg_read_ioctl(struct drm_device *dev, void *data,
  * therefore generally be serialised, by either the dev_priv->uncore.lock or
  * a more localised lock guarding all access to that bank of registers.
  */
-#ifdef __NetBSD__
-#define I915_READ_FW(reg__) bus_space_read_4(dev_priv->regs_bst, dev_priv->regs_bsh, (reg__))
-#define I915_WRITE_FW(reg__, val__) bus_space_write_4(dev_priv->regs_bst, dev_priv->regs_bsh, (reg__), (val__))
-#else
 #define I915_READ_FW(reg__) __I915_REG_OP(read_fw, dev_priv, (reg__))
 #define I915_WRITE_FW(reg__, val__) __I915_REG_OP(write_fw, dev_priv, (reg__), (val__))
-#endif
 
 /* register wait wrappers for display regs */
 #define intel_de_wait_for_register(dev_priv_, reg_, mask_, value_, timeout_) \
