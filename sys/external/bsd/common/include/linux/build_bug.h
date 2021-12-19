@@ -1,4 +1,4 @@
-/*	$NetBSD: build_bug.h,v 1.2 2021/12/19 11:10:48 riastradh Exp $	*/
+/*	$NetBSD: build_bug.h,v 1.3 2021/12/19 11:14:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -41,5 +41,6 @@
 #define	BUILD_BUG()			do {} while (0)
 #define	BUILD_BUG_ON_MSG(EXPR,MSG)	BUILD_BUG_ON(EXPR)
 #define	BUILD_BUG_ON_INVALID(EXPR)	((void)sizeof((long)(EXPR)))
+#define	BUILD_BUG_ON_ZERO(EXPR)		0
 
 #endif	/* _LINUX_BUILD_BUG_H_ */
