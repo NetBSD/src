@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.27 2021/12/19 19:15:48 skrll Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.28 2021/12/19 19:26:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.27 2021/12/19 19:15:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.28 2021/12/19 19:26:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1049,7 +1049,6 @@ acpi_pci_link_route_interrupt(void *v, pci_chipset_tag_t pc, int index,
 		return (link->l_irq);
 	}
 
-	/* Choose an IRQ if we need one. */
 	if (PCI_INTERRUPT_VALID(link->l_irq)) {
 		*irq = link->l_irq;
 		*pol = link->l_pol;
@@ -1057,15 +1056,15 @@ acpi_pci_link_route_interrupt(void *v, pci_chipset_tag_t pc, int index,
 		goto done;
 	}
 
+	/* The link device doesn't have an interrupt, so try to choose one. */
 	link->l_irq = acpi_pci_link_choose_irq(sc, link);
+	if (!PCI_INTERRUPT_VALID(link->l_irq))
+		goto done;
 
 	/*
 	 * Try to route the interrupt we picked.  If it fails, then
 	 * assume the interrupt is not routed.
 	 */
-	if (!PCI_INTERRUPT_VALID(link->l_irq))
-		goto done;
-
 	acpi_pci_link_route_irqs(sc, irq, pol, trig);
 	if (!link->l_routed) {
 		link->l_irq = PCI_INVALID_IRQ;
