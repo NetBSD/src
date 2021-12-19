@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.8 2021/12/19 09:45:56 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.9 2021/12/19 09:46:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -85,6 +85,13 @@
 static inline void
 dev_pm_set_driver_flags(struct device *dev, uint32_t flags)
 {
+}
+
+static inline int
+devm_add_action(struct device *parent, void (*func)(void *),
+    void *data)
+{
+	panic("TODO");
 }
 
 #endif  /* _LINUX_DEVICE_H_ */
