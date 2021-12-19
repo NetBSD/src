@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_head507d.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_head507d.c,v 1.3 2021/12/19 10:49:38 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,10 +22,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_head507d.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_head507d.c,v 1.3 2021/12/19 10:49:38 riastradh Exp $");
 
 #include "head.h"
 #include "core.h"
+
+#include <linux/nbsd-namespace.h>
 
 void
 head507d_procamp(struct nv50_head *head, struct nv50_head_atom *asyh)
