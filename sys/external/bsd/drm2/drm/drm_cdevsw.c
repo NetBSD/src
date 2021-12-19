@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.17 2021/12/19 00:28:20 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.18 2021/12/19 00:48:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.17 2021/12/19 00:28:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.18 2021/12/19 00:48:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -182,7 +182,7 @@ fail2:	mutex_lock(&drm_global_mutex);
 	lastclose = (dev->open_count == 0);
 	mutex_unlock(&drm_global_mutex);
 	if (lastclose)
-		(void)drm_lastclose(dev);
+		drm_lastclose(dev);
 fail1:	drm_minor_release(dminor);
 fail0:	KASSERT(error);
 	if (error == ERESTARTSYS)
@@ -208,7 +208,7 @@ drm_close(struct file *fp)
 	mutex_unlock(&drm_global_mutex);
 
 	if (lastclose)
-		(void)drm_lastclose(dev);
+		drm_lastclose(dev);
 
 	drm_minor_release(dminor);
 
@@ -243,7 +243,7 @@ fail0:	KASSERT(ret);
 	return ret;
 }
 
-int
+void
 drm_lastclose(struct drm_device *dev)
 {
 
@@ -267,8 +267,6 @@ drm_lastclose(struct drm_device *dev)
 		dev->last_context = 0;
 		dev->if_version = 0;
 	}
-
-	return 0;
 }
 
 static int
