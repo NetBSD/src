@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.48 2021/12/19 01:55:45 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.49 2021/12/19 01:56:00 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -954,18 +954,6 @@ extern int drm_pcie_get_speed_cap_mask(struct drm_device *dev, u32 *speed_mask);
 /* platform section */
 extern int drm_platform_init(struct drm_driver *driver, struct platform_device *platform_device);
 extern int drm_platform_set_busid(struct drm_device *d, struct drm_master *m);
-
-/* returns true if currently okay to sleep */
-static __inline__ bool drm_can_sleep(void)
-{
-#ifdef __NetBSD__
-	return false;		/* XXX */
-#else
-	if (in_atomic() || in_dbg_master() || irqs_disabled())
-		return false;
-	return true;
-#endif
-}
 
 #ifdef __NetBSD__
 
