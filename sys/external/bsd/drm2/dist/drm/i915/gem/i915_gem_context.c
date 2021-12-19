@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_context.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_context.c,v 1.6 2021/12/19 12:43:14 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.6 2021/12/19 12:43:14 riastradh Exp $");
 
 #include <linux/log2.h>
 #include <linux/nospec.h>
@@ -2380,6 +2380,10 @@ int i915_gem_context_getparam_ioctl(struct drm_device *dev, void *data,
 		else
 			args->value = to_i915(dev)->ggtt.vm.total;
 		rcu_read_unlock();
+#ifdef __NetBSD__		/* XXX */
+		/* XXX Something is broken with EXEC_OBJECT_PINNED.  */
+		args->value = 0;
+#endif
 		break;
 
 	case I915_CONTEXT_PARAM_NO_ERROR_CAPTURE:
