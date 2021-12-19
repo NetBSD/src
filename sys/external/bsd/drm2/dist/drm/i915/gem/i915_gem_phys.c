@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_phys.c,v 1.6 2021/12/19 12:10:20 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_phys.c,v 1.7 2021/12/19 12:10:42 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.6 2021/12/19 12:10:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.7 2021/12/19 12:10:42 riastradh Exp $");
 
 #include <linux/highmem.h>
 #include <linux/shmem_fs.h>
@@ -91,8 +91,11 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 	ret = -bus_dmamap_create(dmat, roundup_pow_of_two(obj->base.size), 1,
 	    roundup_pow_of_two(obj->base.size), 0, BUS_DMA_WAITOK,
 	    &sg->sg_dmamap);
-	if (ret)
+	if (ret) {
+		sg->sg_dmamap = NULL;
 		goto err_st1;
+	}
+	sg->sg_dmat = dmat;
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_dmamap_load_raw(dmat, sg->sg_dmamap, &obj->mm.u.phys.seg, 1,
 	    roundup_pow_of_two(obj->base.size), BUS_DMA_WAITOK);
@@ -140,10 +143,6 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 err_st1:
 	if (loaded)
 		bus_dmamap_unload(dmat, st->sgl->sg_dmamap);
-	if (st->sgl->sg_dmamap) {
-		bus_dmamap_destroy(dmat, st->sgl->sg_dmamap);
-		st->sgl->sg_dmamap = NULL;
-	}
 	sg_free_table(st);
 #endif
 err_st:
@@ -219,8 +218,6 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 
 #ifdef __NetBSD__
 	bus_dmamap_unload(dmat, pages->sgl->sg_dmamap);
-	bus_dmamap_destroy(dmat, pages->sgl->sg_dmamap);
-	pages->sgl->sg_dmamap = NULL;
 #endif
 
 	sg_free_table(pages);
