@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.8 2021/12/19 11:34:45 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.9 2021/12/19 12:29:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015, NVIDIA CORPORATION. All rights reserved.
@@ -44,7 +44,7 @@
  * goes beyond a certain threshold. At the moment this limit is 1MB.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.8 2021/12/19 11:34:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.9 2021/12/19 12:29:47 riastradh Exp $");
 
 #include "priv.h"
 
@@ -507,24 +507,25 @@ gk20a_instobj_ctor_iommu(struct gk20a_instmem *imem, u32 npages, u32 align,
 	node->base.memory.ptrs = &gk20a_instobj_ptrs;
 
 #ifdef __NetBSD__
+	bus_size_t nbytes = (bus_size_t)npages << PAGE_SHIFT;
 	__USE(i);
 	__USE(r);
 	__USE(dev);
 	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamem_alloc(imem->dmat, npages << PAGE_SHIFT, PAGE_SIZE,
+	ret = -bus_dmamem_alloc(imem->dmat, nbytes, PAGE_SIZE,
 	    PAGE_SIZE, node->segs, npages, &node->nsegs, BUS_DMA_WAITOK);
 	if (ret)
 fail0:		goto out;
 	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamap_create(imem->dmat, npages << PAGE_SHIFT, 1,
-	    npages << PAGE_SHIFT, PAGE_SIZE, BUS_DMA_WAITOK, &node->map);
+	ret = -bus_dmamap_create(imem->dmat, nbytes, 1, nbytes, PAGE_SIZE,
+	    BUS_DMA_WAITOK, &node->map);
 	if (ret) {
 fail1:		bus_dmamem_free(imem->dmat, node->segs, node->nsegs);
 		goto fail0;
 	}
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_dmamap_load_raw(imem->dmat, node->map, node->segs,
-	    node->nsegs, npages << PAGE_SHIFT, BUS_DMA_WAITOK);
+	    node->nsegs, nbytes, BUS_DMA_WAITOK);
 	if (ret) {
 fail2: __unused
 		bus_dmamap_destroy(imem->dmat, node->map);
