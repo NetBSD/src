@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.8 2021/12/19 01:03:05 riastradh Exp $	*/
+/*	$NetBSD: module.h,v 1.9 2021/12/19 01:18:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -64,5 +64,6 @@ __link_set_add_rodata(linux_module_param_desc, PARAMETER ## _desc)
 #define	KBUILD_MODNAME	__file__
 
 #define	__MODULE_STRING(x)	__STRING(x)
+#define	__stringify(x)		__STRING(x)
 
 #endif  /* _LINUX_MODULE_H_ */
