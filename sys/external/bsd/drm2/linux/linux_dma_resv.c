@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.6 2021/12/19 11:53:33 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.7 2021/12/19 11:54:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.6 2021/12/19 11:53:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.7 2021/12/19 11:54:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -460,11 +460,11 @@ dma_resv_add_excl_fence(struct dma_resv *robj,
 	if (old_list)
 		old_shared_count = old_list->shared_count;
 
-	/* Begin an update.  */
+	/* Begin an update.  Implies membar_producer for fence.  */
 	dma_resv_write_begin(robj, &ticket);
 
 	/* Replace the fence and zero the shared count.  */
-	atomic_store_release(&robj->fence_excl, fence);
+	atomic_store_relaxed(&robj->fence_excl, fence);
 	if (old_list)
 		old_list->shared_count = 0;
 
@@ -525,14 +525,18 @@ dma_resv_add_shared_fence(struct dma_resv *robj,
 		for (i = 0; i < list->shared_count; i++) {
 			if (list->shared[i]->context == fence->context) {
 				replace = list->shared[i];
-				list->shared[i] = fence;
+				atomic_store_relaxed(&list->shared[i], fence);
 				break;
 			}
 		}
 
 		/* If we didn't find one, add it at the end.  */
-		if (i == list->shared_count)
-			list->shared[list->shared_count++] = fence;
+		if (i == list->shared_count) {
+			atomic_store_relaxed(&list->shared[list->shared_count],
+			    fence);
+			atomic_store_relaxed(&list->shared_count,
+			    list->shared_count + 1);
+		}
 
 		/* Commit the update.  */
 		dma_resv_write_commit(robj, &ticket);
@@ -573,7 +577,7 @@ dma_resv_add_shared_fence(struct dma_resv *robj,
 		dma_resv_write_begin(robj, &ticket);
 
 		/* Replace the list.  */
-		atomic_store_release(&robj->fence, prealloc);
+		atomic_store_relaxed(&robj->fence, prealloc);
 		robj->robj_prealloc = NULL;
 
 		/* Commit the update.  */
@@ -628,7 +632,12 @@ top:
 	rcu_read_lock();
 	dma_resv_read_begin(robj, &ticket);
 
-	/* If there is a shared list, grab it.  */
+	/*
+	 * If there is a shared list, grab it.  The atomic_load_consume
+	 * here pairs with the membar_producer in dma_resv_write_begin
+	 * to ensure the content of robj->fence is initialized before
+	 * we witness the pointer.
+	 */
 	if ((list = atomic_load_consume(&robj->fence)) != NULL) {
 
 		/* Check whether we have a buffer.  */
@@ -670,10 +679,14 @@ top:
 
 		/*
 		 * We got a buffer large enough.  Copy into the buffer
-		 * and record the number of elements.
+		 * and record the number of elements.  Could safely use
+		 * memcpy here, because even if we race with a writer
+		 * it'll invalidate the read ticket and we'll start
+		 * ove, but atomic_load in a loop will pacify kcsan.
 		 */
-		memcpy(shared, list->shared, shared_alloc * sizeof(shared[0]));
-		shared_count = list->shared_count;
+		shared_count = atomic_load_relaxed(&list->shared_count);
+		for (i = 0; i < shared_count; i++)
+			shared[i] = atomic_load_relaxed(&list->shared[i]);
 	} else {
 		/* No shared list: shared count is zero.  */
 		shared_count = 0;
@@ -703,7 +716,7 @@ top:
 	 * Try to get a reference to all of the shared fences.
 	 */
 	for (i = 0; i < shared_count; i++) {
-		if (dma_fence_get_rcu(shared[i]) == NULL)
+		if (dma_fence_get_rcu(atomic_load_relaxed(&shared[i])) == NULL)
 			goto put_restart;
 	}
 
@@ -762,7 +775,7 @@ top:
 	if ((src_list = atomic_load_consume(&src_robj->fence)) != NULL) {
 
 		/* Find out how long it is.  */
-		shared_count = src_list->shared_count;
+		shared_count = atomic_load_relaxed(&src_list->shared_count);
 
 		/*
 		 * Make sure we saw a consistent snapshot of the list
@@ -779,8 +792,8 @@ top:
 		/* Copy over all fences that are not yet signalled.  */
 		dst_list->shared_count = 0;
 		for (i = 0; i < shared_count; i++) {
-			if ((fence = dma_fence_get_rcu(src_list->shared[i]))
-			    != NULL)
+			fence = atomic_load_relaxed(&src_list->shared[i]);
+			if ((fence = dma_fence_get_rcu(fence)) != NULL)
 				goto restart;
 			if (dma_fence_is_signaled(fence)) {
 				dma_fence_put(fence);
@@ -830,11 +843,13 @@ top:
 	old_list = dst_robj->fence;
 	old_fence = dst_robj->fence_excl;
 
-	/* Begin an update.  */
+	/*
+	 * Begin an update.  Implies membar_producer for dst_list and
+	 * fence.
+	 */
 	dma_resv_write_begin(dst_robj, &write_ticket);
 
 	/* Replace the fences.  */
-	membar_exit();
 	atomic_store_relaxed(&dst_robj->fence, dst_list);
 	atomic_store_relaxed(&dst_robj->fence_excl, fence);
 
@@ -903,7 +918,7 @@ top:
 	if ((list = atomic_load_consume(&robj->fence)) != NULL) {
 
 		/* Find out how long it is.  */
-		shared_count = list->shared_count;
+		shared_count = atomic_load_relaxed(&list->shared_count);
 
 		/*
 		 * Make sure we saw a consistent snapshot of the list
@@ -919,7 +934,8 @@ top:
 		 * signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
-			fence = dma_fence_get_rcu(list->shared[i]);
+			fence = atomic_load_relaxed(&list->shared[i]);
+			fence = dma_fence_get_rcu(fence);
 			if (fence == NULL)
 				goto restart;
 			signaled &= dma_fence_is_signaled(fence);
@@ -1015,7 +1031,8 @@ top:
 		 * is not signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
-			fence = dma_fence_get_rcu(list->shared[i]);
+			fence = atomic_load_relaxed(&list->shared[i]);
+			fence = dma_fence_get_rcu(fence);
 			if (fence == NULL)
 				goto restart;
 			if (!dma_fence_is_signaled(fence))
@@ -1187,7 +1204,8 @@ top:
 		 * find any that is not signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
-			fence = dma_fence_get_rcu(list->shared[i]);
+			fence = atomic_load_relaxed(&list->shared[i]);
+			fence = dma_fence_get_rcu(fence);
 			if (fence == NULL)
 				goto restart;
 			if (!dma_fence_is_signaled(fence)) {
@@ -1223,7 +1241,8 @@ top:
 		 * callback later.
 		 */
 		for (i = 0; i < shared_count; i++) {
-			fence = dma_fence_get_rcu(list->shared[i]);
+			fence = atomic_load_relaxed(&list->shared[i]);
+			fence = dma_fence_get_rcu(fence);
 			if (fence == NULL)
 				goto restart;
 			if (!dma_fence_add_callback(fence, &rpoll->rp_fcb,
