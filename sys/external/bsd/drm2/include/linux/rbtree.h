@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.8 2021/12/19 01:48:30 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.9 2021/12/19 11:00:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/rbtree.h>
 
+#include <lib/libkern/libkern.h>
+
 struct rb_root {
 	struct rb_tree	rbr_tree;
 };
@@ -42,11 +44,28 @@ struct rb_root_cached {
 	struct rb_root	rb_root; /* Linux API name */
 };
 
+#define	rb_entry(P, T, F) container_of(P, T, F)
+#define	rb_entry_safe(P, T, F)						      \
+({									      \
+	__typeof__(P) __p = (P);					      \
+	__p ? container_of(__p, T, F) : NULL;				      \
+})
+
 static inline bool
 RB_EMPTY_ROOT(struct rb_root *root)
 {
 
 	return RB_TREE_MIN(&root->rbr_tree) == NULL;
+}
+
+static inline struct rb_node *
+rb_first_cached(struct rb_root_cached *root)
+{
+	char *vnode = RB_TREE_MIN(&root->rb_root.rbr_tree);
+
+	if (vnode)
+		vnode += root->rb_root.rbr_tree.rbt_ops->rbto_node_offset;
+	return (struct rb_node *)vnode;
 }
 
 static inline void
@@ -62,6 +81,25 @@ static inline void
 rb_erase_cached(struct rb_node *rbnode, struct rb_root_cached *root)
 {
 	rb_erase(rbnode, &root->rb_root);
+}
+
+static inline void
+rb_replace_node(struct rb_node *old, struct rb_node *new, struct rb_root *root)
+{
+	void *vold = (char *)old - root->rbr_tree.rbt_ops->rbto_node_offset;
+	void *vnew = (char *)new - root->rbr_tree.rbt_ops->rbto_node_offset;
+	void *collision __diagused;
+
+	rb_tree_remove_node(&root->rbr_tree, vold);
+	collision = rb_tree_insert_node(&root->rbr_tree, vnew);
+	KASSERT(collision == vnew);
+}
+
+static inline void
+rb_replace_node_cached(struct rb_node *old, struct rb_node *new,
+    struct rb_root_cached *root)
+{
+	rb_replace_node(old, new, &root->rb_root);
 }
 
 /*

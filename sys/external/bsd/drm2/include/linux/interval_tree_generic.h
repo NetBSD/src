@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree_generic.h,v 1.2 2021/12/19 01:51:27 riastradh Exp $	*/
+/*	$NetBSD: interval_tree_generic.h,v 1.3 2021/12/19 11:00:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ static inline int							      \
 PREFIX##__compare_key(void *__cookie, const void *__vn, const void *__vk)     \
 {									      \
 	const T *__n = __vn;						      \
-	const T *__k = __vk;						      \
+	const KT *__k = __vk;						      \
 	const KT __nstart = START(__n), __nlast = LAST(__n);		      \
 									      \
 	if (__nlast < *__k)						      \
@@ -77,7 +77,7 @@ static const rb_tree_ops_t PREFIX##__rbtree_ops = {			      \
 QUAL void								      \
 PREFIX##_init(struct rb_root_cached *__root)				      \
 {									      \
-	rb_tree_init(&__root->rbrc_tree, &PREFIX##__rbtree_ops);	      \
+	rb_tree_init(&__root->rb_root.rbr_tree, &PREFIX##__rbtree_ops);	      \
 }									      \
 									      \
 QUAL void								      \
@@ -85,14 +85,14 @@ PREFIX##_insert(T *__node, struct rb_root_cached *__root)		      \
 {									      \
 	T *__collision __diagused;					      \
 									      \
-	__collision = rb_tree_insert_node(&__root->rbrc_tree, __node);	      \
+	__collision = rb_tree_insert_node(&__root->rb_root.rbr_tree, __node); \
 	KASSERT(__collision == __node);					      \
 }									      \
 									      \
 QUAL void								      \
 PREFIX##_remove(T *__node, struct rb_root_cached *__root)		      \
 {									      \
-	rb_tree_remove_node(&__root->rbrc_tree, __node);		      \
+	rb_tree_remove_node(&__root->rb_root.rbr_tree, __node);		      \
 }									      \
 									      \
 QUAL T *								      \
@@ -100,7 +100,7 @@ PREFIX##_iter_first(struct rb_root_cached *__root, KT __start, KT __last)     \
 {									      \
 	T *__node;							      \
 									      \
-	__node = rb_tree_find_node_geq(&__root->rbrc_tree, &__start);	      \
+	__node = rb_tree_find_node_geq(&__root->rb_root.rbr_tree, &__start);  \
 	if (__node == NULL)						      \
 		return NULL;						      \
 	KASSERT(START(__node) <= __start);				      \
