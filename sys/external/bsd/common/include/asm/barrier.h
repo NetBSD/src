@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.5 2020/10/16 22:39:21 jmcneill Exp $	*/
+/*	$NetBSD: barrier.h,v 1.6 2021/12/19 10:56:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #define _ASM_BARRIER_H_
 
 #include <sys/atomic.h>
+
+#include <linux/compiler.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
