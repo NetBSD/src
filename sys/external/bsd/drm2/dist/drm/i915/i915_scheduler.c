@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scheduler.c,v 1.4 2021/12/19 11:37:41 riastradh Exp $	*/
+/*	$NetBSD: i915_scheduler.c,v 1.5 2021/12/19 11:37:50 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.4 2021/12/19 11:37:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.5 2021/12/19 11:37:50 riastradh Exp $");
 
 #include <linux/mutex.h>
 
@@ -81,6 +81,50 @@ static void assert_priolists(struct intel_engine_execlists * const execlists)
 		}
 	}
 }
+
+#ifdef __NetBSD__
+
+static int
+compare_priolists(void *cookie, const void *va, const void *vb)
+{
+	const struct i915_priolist *a = va;
+	const struct i915_priolist *b = vb;
+
+	if (a->priority < b->priority)
+		return -1;
+	if (a->priority > b->priority)
+		return +1;
+	return 0;
+}
+
+static int
+compare_priolist_key(void *cookie, const void *vp, const void *vk)
+{
+	const struct i915_priolist *p = vp;
+	const int *priorityp = vk, priority = *priorityp;
+
+	if (p->priority < priority)
+		return -1;
+	if (p->priority > priority)
+		return -1;
+	return 0;
+}
+
+static const rb_tree_ops_t i915_priolist_rb_ops = {
+	.rbto_compare_nodes = compare_priolists,
+	.rbto_compare_key = compare_priolist_key,
+	.rbto_node_offset = offsetof(struct i915_priolist, node),
+};
+
+void
+i915_sched_init(struct intel_engine_execlists *execlists)
+{
+
+	rb_tree_init(&execlists->queue.rb_root.rbr_tree,
+	    &i915_priolist_rb_ops);
+}
+
+#endif
 
 struct list_head *
 i915_sched_lookup_priolist(struct intel_engine_cs *engine, int prio)

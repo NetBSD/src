@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.3 2021/12/19 11:37:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -134,7 +134,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.3 2021/12/19 11:37:50 riastradh Exp $");
 
 #include <linux/interrupt.h>
 
@@ -4325,6 +4325,8 @@ int intel_execlists_submission_setup(struct intel_engine_cs *engine)
 	struct drm_i915_private *i915 = engine->i915;
 	struct intel_uncore *uncore = engine->uncore;
 	u32 base = engine->mmio_base;
+
+	i915_sched_init(&engine->execlists);
 
 	tasklet_init(&engine->execlists.tasklet,
 		     execlists_submission_tasklet, (unsigned long)engine);

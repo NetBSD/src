@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scheduler.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_scheduler.h,v 1.3 2021/12/19 11:37:50 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -54,5 +54,7 @@ static inline void i915_priolist_free(struct i915_priolist *p)
 	if (p->priority != I915_PRIORITY_NORMAL)
 		__i915_priolist_free(p);
 }
+
+void i915_sched_init(struct intel_engine_execlists *);
 
 #endif /* _I915_SCHEDULER_H_ */
