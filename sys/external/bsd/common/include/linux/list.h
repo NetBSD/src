@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.25 2021/12/19 10:39:28 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.26 2021/12/19 10:39:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -211,6 +211,21 @@ list_move_tail(struct list_head *node, struct list_head *head)
 {
 	list_del(node);
 	list_add_tail(node, head);
+}
+
+static inline void
+list_bulk_move_tail(struct list_head *head, struct list_head *first,
+    struct list_head *last)
+{
+
+	first->prev->next = last->next;
+	last->next->prev = first->prev;
+
+	head->prev->next = first;
+	first->prev = head->prev;
+
+	last->next = head;
+	head->prev = last;
 }
 
 static inline void
