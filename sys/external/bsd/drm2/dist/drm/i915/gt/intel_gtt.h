@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.6 2021/12/19 11:12:13 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.7 2021/12/19 11:14:48 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -181,14 +181,14 @@ struct i915_page_directory {
 	__builtin_choose_expr( \
 	__builtin_types_compatible_p(typeof(x), type) || \
 	__builtin_types_compatible_p(typeof(x), const type), \
-	({ type __x = (type)(x); expr; }), \
+	({ type __x = (type)__UNCONST(x); expr; }), \
 	other)
 
 #define px_base(px) \
-	__px_choose_expr(px, const struct i915_page_dma *, __x, \
-	__px_choose_expr(px, const struct i915_page_scratch *, &__x->base, \
-	__px_choose_expr(px, const struct i915_page_table *, &__x->base, \
-	__px_choose_expr(px, const struct i915_page_directory *, &__x->pt.base, \
+	__px_choose_expr(px, struct i915_page_dma *, __x, \
+	__px_choose_expr(px, struct i915_page_scratch *, &__x->base, \
+	__px_choose_expr(px, struct i915_page_table *, &__x->base, \
+	__px_choose_expr(px, struct i915_page_directory *, &__x->pt.base, \
 	(void)0))))
 #ifdef __NetBSD__
 #define px_dma(px) (px_base(px)->map->dm_segs[0].ds_addr)
