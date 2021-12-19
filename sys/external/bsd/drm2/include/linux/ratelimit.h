@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimit.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: ratelimit.h,v 1.3 2021/12/19 00:59:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,47 @@
 
 #ifndef _LINUX_RATELIMIT_H_
 #define _LINUX_RATELIMIT_H_
+
+#include <sys/atomic.h>
+#include <sys/stdbool.h>
+#include <sys/time.h>
+
+struct linux_ratelimit {
+	volatile unsigned	rl_lock;
+	struct timeval		rl_lasttime;
+	int			rl_curpps;
+	unsigned		rl_maxpps;
+};
+
+/*
+ * XXX Assumes hz=100 so this works in static initializers, and/or
+ * hopes the caller just uses DEFAULT_RATELIMIT_INTERVAL and doesn't
+ * mention hz.
+ */
+#define	DEFAULT_RATELIMIT_INTERVAL	(5*100)
+#define	DEFAULT_RATELIMIT_BURST		10
+
+#define	DEFINE_RATELIMIT_STATE(n, i, b)					      \
+	struct linux_ratelimit n = {					      \
+		.rl_lock = 0,						      \
+		.rl_lasttime = { .tv_sec = 0, .tv_usec = 0 },		      \
+		.rl_curpps = 0,						      \
+		.rl_maxpps = (b)/((i)/100),				      \
+	}
+
+static inline bool
+__ratelimit(struct linux_ratelimit *r)
+{
+	int ok;
+
+	if (atomic_cas_uint(&r->rl_lock, 0, 1))
+		return false;
+	membar_enter();
+	ok = ppsratecheck(&r->rl_lasttime, &r->rl_curpps, r->rl_maxpps);
+	membar_exit();
+	r->rl_lock = 0;
+
+	return ok;
+}
 
 #endif  /* _LINUX_RATELIMIT_H_ */
