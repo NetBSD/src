@@ -1,6 +1,6 @@
 /* $Sourceforge: bktr_tuner.c,v 1.5 2003/03/13 22:21:04 emsi Exp $ */
 
-/*	$NetBSD: bktr_tuner.c,v 1.12 2007/10/19 12:01:03 ad Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.13 2021/12/19 22:03:41 andvar Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp$ */
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.12 2007/10/19 12:01:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.13 2021/12/19 22:03:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: bktr_tuner.c,v 1.12 2007/10/19 12:01:03 ad Exp $");
 
 
 #if defined(TUNER_AFC)
-#define AFC_DELAY               10000   /* 10 millisend delay */
+#define AFC_DELAY               10000   /* 10 milliseconds delay */
 #define AFC_BITS                0x07
 #define AFC_FREQ_MINUS_125      0x00
 #define AFC_FREQ_MINUS_62       0x01
@@ -740,7 +740,7 @@ void    select_tuner(bktr_ptr_t bktr, int tuner_type) {
  * High band 450.00 to 855.25 MHz
  *
  *
- * Now we need to set the PLL on the tuner to the required freuqncy.
+ * Now we need to set the PLL on the tuner to the required frequency.
  * It has a programmable divisor.
  * For TV we want
  *  N = 16 (freq RF(pc) + freq IF(pc))  pc is picture carrier and RF and IF
@@ -813,7 +813,7 @@ tv_freq(bktr_ptr_t bktr, int frequency, int type)
 		 * where:
 		 *  pc is picture carrier, fRF & fIF are in MHz
 		 *
-		 * fortunatly, frequency is passed in as MHz * 16
+		 * fortunately, frequency is passed in as MHz * 16
 		 * and the TBL_IF frequency is also stored in MHz * 16
 		 */
 		N = frequency + TBL_IF;
