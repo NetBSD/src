@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.19 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.20 2021/12/19 11:02:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.19 2021/12/19 10:32:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.20 2021/12/19 11:02:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.19 2021/12/19 10:32:59 riastradh Exp $
 
 #include "i915_drv.h"
 #include "i915_pci.h"
-#include "intel_drv.h"
 #include "intelfb.h"
 
 static int	intelfb_match(device_t, cfdata_t, void *);
