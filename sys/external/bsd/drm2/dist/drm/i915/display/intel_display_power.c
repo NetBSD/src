@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display_power.c,v 1.4 2021/12/19 11:54:48 riastradh Exp $	*/
+/*	$NetBSD: intel_display_power.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display_power.c,v 1.4 2021/12/19 11:54:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display_power.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $");
 
 #include "display/intel_crt.h"
 #include "display/intel_dp.h"
@@ -4362,6 +4362,7 @@ int intel_power_domains_init(struct drm_i915_private *dev_priv)
 void intel_power_domains_cleanup(struct drm_i915_private *dev_priv)
 {
 	kfree(dev_priv->power_domains.power_wells);
+	mutex_destroy(&dev_priv->power_domains.lock);
 }
 
 static void intel_power_domains_sync_hw(struct drm_i915_private *dev_priv)

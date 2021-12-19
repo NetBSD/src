@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbc.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_fbc.c,v 1.3 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.3 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <drm/drm_fourcc.h>
 
@@ -1362,4 +1362,12 @@ void intel_fbc_init(struct drm_i915_private *dev_priv)
 	 * matches the hardware state. */
 	if (intel_fbc_hw_is_active(dev_priv))
 		intel_fbc_hw_deactivate(dev_priv);
+}
+
+void
+intel_fbc_cleanup(struct drm_i915_private *dev_priv)
+{
+	struct intel_fbc *fbc = &dev_priv->fbc;
+
+	mutex_destroy(&fbc->lock);
 }

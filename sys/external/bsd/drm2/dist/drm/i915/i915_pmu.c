@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pmu.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_pmu.c,v 1.3 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pmu.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pmu.c,v 1.3 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/irq.h>
 #include <linux/pm_runtime.h>
@@ -1202,4 +1202,5 @@ void i915_pmu_unregister(struct drm_i915_private *i915)
 	if (!is_igp(i915))
 		kfree(pmu->name);
 	free_event_attributes(pmu);
+	spin_lock_destroy(&pmu->lock);
 }

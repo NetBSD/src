@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_reset.c,v 1.5 2021/12/19 12:27:17 riastradh Exp $	*/
+/*	$NetBSD: intel_reset.c,v 1.6 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_reset.c,v 1.5 2021/12/19 12:27:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_reset.c,v 1.6 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/sched/mm.h>
 #include <linux/stop_machine.h>
@@ -1396,6 +1396,7 @@ void intel_gt_fini_reset(struct intel_gt *gt)
 {
 	cleanup_srcu_struct(&gt->reset.backoff_srcu);
 	DRM_DESTROY_WAITQUEUE(&gt->reset.queue);
+	mutex_destroy(&gt->reset.mutex);
 	spin_lock_destroy(&gt->reset.lock);
 }
 

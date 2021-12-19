@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_userptr.c,v 1.4 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_userptr.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.4 2021/12/19 11:33:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/mmu_context.h>
 #include <linux/mmu_notifier.h>
@@ -232,8 +232,10 @@ i915_mmu_notifier_find(struct i915_mm_struct *mm)
 	mutex_unlock(&mm->i915->mm_lock);
 	up_write(&mm->mm->mmap_sem);
 
-	if (mn && !IS_ERR(mn))
+	if (mn && !IS_ERR(mn)) {
+		spin_lock_destroy(&mn->lock);
 		kfree(mn);
+	}
 
 	return err ? ERR_PTR(err) : mm->mn;
 }
@@ -282,6 +284,7 @@ i915_mmu_notifier_free(struct i915_mmu_notifier *mn,
 		return;
 
 	mmu_notifier_unregister(&mn->mn, mm);
+	spin_lock_destroy(&mn->lock);
 	kfree(mn);
 }
 

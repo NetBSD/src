@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dpll_mgr.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $	*/
+/*	$NetBSD: intel_dpll_mgr.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2016 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dpll_mgr.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dpll_mgr.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $");
 
 #include "intel_display_types.h"
 #include "intel_dpio_phy.h"
@@ -3793,6 +3793,14 @@ void intel_shared_dpll_init(struct drm_device *dev)
 	mutex_init(&dev_priv->dpll_lock);
 
 	BUG_ON(dev_priv->num_shared_dpll > I915_NUM_PLLS);
+}
+
+void
+intel_shared_dpll_cleanup(struct drm_device *dev)
+{
+	struct drm_i915_private *dev_priv = to_i915(dev);
+
+	mutex_destroy(&dev_priv->dpll_lock);
 }
 
 /**

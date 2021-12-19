@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dpll_mgr.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_dpll_mgr.h,v 1.3 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2012-2016 Intel Corporation
@@ -379,6 +379,7 @@ void intel_enable_shared_dpll(const struct intel_crtc_state *crtc_state);
 void intel_disable_shared_dpll(const struct intel_crtc_state *crtc_state);
 void intel_shared_dpll_swap_state(struct intel_atomic_state *state);
 void intel_shared_dpll_init(struct drm_device *dev);
+void intel_shared_dpll_cleanup(struct drm_device *dev);
 
 void intel_dpll_dump_hw_state(struct drm_i915_private *dev_priv,
 			      const struct intel_dpll_hw_state *hw_state);

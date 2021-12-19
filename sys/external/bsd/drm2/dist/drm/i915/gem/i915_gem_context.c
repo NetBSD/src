@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_context.c,v 1.4 2021/12/19 11:27:20 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_context.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.4 2021/12/19 11:27:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/log2.h>
 #include <linux/nospec.h>
@@ -786,6 +786,7 @@ void i915_gem_init__contexts(struct drm_i915_private *i915)
 void i915_gem_driver_release__contexts(struct drm_i915_private *i915)
 {
 	flush_work(&i915->gem.contexts.free_work);
+	spin_lock_destroy(&i915->gem.contexts.lock);
 }
 
 static int vm_idr_cleanup(int id, void *p, void *data)

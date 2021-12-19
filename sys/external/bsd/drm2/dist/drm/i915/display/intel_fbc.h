@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbc.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_fbc.h,v 1.3 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -26,6 +26,7 @@ bool intel_fbc_pre_update(struct intel_crtc *crtc,
 			  const struct intel_plane_state *plane_state);
 void intel_fbc_post_update(struct intel_crtc *crtc);
 void intel_fbc_init(struct drm_i915_private *dev_priv);
+void intel_fbc_cleanup(struct drm_i915_private *dev_priv);
 void intel_fbc_enable(struct intel_crtc *crtc,
 		      const struct intel_crtc_state *crtc_state,
 		      const struct intel_plane_state *plane_state);

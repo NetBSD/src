@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.74 2021/12/19 12:27:49 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.75 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.74 2021/12/19 12:27:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.75 2021/12/19 12:32:15 riastradh Exp $");
 
 #ifdef __NetBSD__
 #include <drm/bus_dma_hacks.h>
@@ -1272,6 +1272,7 @@ void i915_gem_cleanup_early(struct drm_i915_private *dev_priv)
 	GEM_BUG_ON(atomic_read(&dev_priv->mm.free_count));
 	WARN_ON(dev_priv->mm.shrink_count);
 	spin_lock_destroy(&dev_priv->fb_tracking.lock);
+	spin_lock_destroy(&dev_priv->mm.obj_lock);
 }
 
 int i915_gem_freeze(struct drm_i915_private *dev_priv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.10 2021/12/19 12:28:55 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.11 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.10 2021/12/19 12:28:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.11 2021/12/19 12:32:15 riastradh Exp $");
 
 #include "intel_display.h"	/* for pipe_drmhack */
 
@@ -18576,7 +18576,11 @@ void intel_modeset_driver_remove(struct drm_i915_private *i915)
 
 	intel_overlay_cleanup(i915);
 
+	intel_shared_dpll_cleanup(&i915->drm);
+
 	intel_gmbus_teardown(i915);
+
+	intel_fbc_cleanup(i915);
 
 	intel_bw_cleanup(i915);
 

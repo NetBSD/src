@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_perf.c,v 1.6 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: i915_perf.c,v 1.7 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2015-2016 Intel Corporation
@@ -194,7 +194,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_perf.c,v 1.6 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_perf.c,v 1.7 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/sizes.h>
@@ -4674,6 +4674,11 @@ void i915_perf_fini(struct drm_i915_private *i915)
 
 	if (!perf->i915)
 		return;
+
+	if (perf->ops.enable_metric_set) {
+		mutex_destroy(&perf->metrics_lock);
+		mutex_destroy(&perf->lock);
+	}
 
 	idr_for_each(&perf->metrics_idr, destroy_config, perf);
 	idr_destroy(&perf->metrics_idr);
