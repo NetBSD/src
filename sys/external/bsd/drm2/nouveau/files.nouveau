@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.31 2021/12/19 00:25:34 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.32 2021/12/19 00:32:03 riastradh Exp $
 
 version	20180827
 
@@ -12,7 +12,6 @@ device	nouveaufb: nouveaufbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	nouveaufb at nouveaufbbus
 
 # Local additions.  External sources are listd below.
-file	external/bsd/drm2/nouveau/nouveau_sysfs.c		nouveau
 file	external/bsd/drm2/nouveau/nouveau_vga.c			nouveau
 file	external/bsd/drm2/nouveau/nouveaufb.c			nouveaufb
 
