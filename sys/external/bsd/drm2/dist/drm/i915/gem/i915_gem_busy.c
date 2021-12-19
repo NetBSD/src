@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_busy.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_busy.c,v 1.3 2021/12/19 11:20:25 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_busy.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_busy.c,v 1.3 2021/12/19 11:20:25 riastradh Exp $");
 
 #include "gt/intel_engine.h"
 
@@ -57,7 +57,7 @@ __busy_set_if_active(const struct dma_fence *fence, u32 (*flag)(u16 id))
 		return 0;
 
 	/* opencode to_request() in order to avoid const warnings */
-	rq = container_of(fence, const struct i915_request, fence);
+	rq = const_container_of(fence, struct i915_request, fence);
 	if (i915_request_completed(rq))
 		return 0;
 
