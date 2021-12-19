@@ -1,4 +1,4 @@
-/* $NetBSD: tda19988.c,v 1.7 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: tda19988.c,v 1.8 2021/12/19 12:44:34 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Oleksandr Tymoshenko <gonzo@freebsd.org>
@@ -27,10 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.7 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.8 2021/12/19 12:44:34 riastradh Exp $");
 
 /*
-* NXP TDA19988 HDMI encoder 
+* NXP TDA19988 HDMI encoder
 */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,10 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.7 2021/01/27 02:29:48 thorpej Exp $")
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_bridge.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_edid.h>
+#include <drm/drm_probe_helper.h>
 
 enum {
 	TDA19988_PORT_INPUT = 0
@@ -729,7 +731,6 @@ tda19988_connector_get_modes(struct drm_connector *connector)
 	struct tda19988_connector *tda_connector = to_tda_connector(connector);
 	struct tda19988_softc * const sc = tda_connector->sc;
 	struct edid *pedid = NULL;
-	int error;
 
 	if (sc->sc_edid_valid) {
 		pedid = (struct edid *)sc->sc_edid;
@@ -741,37 +742,15 @@ tda19988_connector_get_modes(struct drm_connector *connector)
 		sc->sc_edid_valid = true;
 	}
 
-	drm_mode_connector_update_edid_property(connector, pedid);
+	drm_connector_update_edid_property(connector, pedid);
 	if (pedid == NULL)
 		return 0;
 
-	error = drm_add_edid_modes(connector, pedid);
-	drm_edid_to_eld(connector, pedid);
-
-	return error;
-}
-
-static struct drm_encoder *
-tda19988_connector_best_encoder(struct drm_connector *connector)
-{
-	int enc_id = connector->encoder_ids[0];
-	struct drm_mode_object *obj;
-	struct drm_encoder *encoder = NULL;
-
-	if (enc_id) {
-		obj = drm_mode_object_find(connector->dev, enc_id,
-		    DRM_MODE_OBJECT_ENCODER);
-		if (obj == NULL)
-			return NULL;
-		encoder = obj_to_encoder(obj);
-	}
-
-	return encoder;
+	return drm_add_edid_modes(connector, pedid);
 }
 
 static const struct drm_connector_helper_funcs tda19988_connector_helper_funcs = {
 	.get_modes = tda19988_connector_get_modes,
-	.best_encoder = tda19988_connector_best_encoder,
 };
 
 static int
@@ -792,8 +771,8 @@ tda19988_bridge_attach(struct drm_bridge *bridge)
 	    DRM_MODE_CONNECTOR_HDMIA);
 	drm_connector_helper_add(connector, &tda19988_connector_helper_funcs);
 
-	error = drm_mode_connector_attach_encoder(connector, bridge->encoder);
-	if (error != 0)
+	error = drm_connector_attach_encoder(connector, bridge->encoder);
+	if (error)
 		return error;
 
 	return drm_connector_register(connector);
@@ -827,7 +806,8 @@ tda19988_bridge_post_disable(struct drm_bridge *bridge)
 
 static void
 tda19988_bridge_mode_set(struct drm_bridge *bridge,
-    struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+    const struct drm_display_mode *mode,
+    const struct drm_display_mode *adjusted_mode)
 {
 	struct tda19988_softc * const sc = bridge->driver_private;
 
@@ -882,11 +862,9 @@ tda19988_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	sc->sc_bridge.driver_private = sc;
 	sc->sc_bridge.funcs = &tda19988_bridge_funcs;
 	sc->sc_bridge.encoder = encoder;
-	error = drm_bridge_attach(encoder->dev, &sc->sc_bridge);
-	if (error != 0)
+	error = drm_bridge_attach(encoder, &sc->sc_bridge, NULL);
+	if (error)
 		return EIO;
-
-	encoder->bridge = &sc->sc_bridge;
 
 	return 0;
 }
