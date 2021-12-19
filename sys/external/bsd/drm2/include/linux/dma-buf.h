@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-buf.h,v 1.7 2021/12/19 09:50:57 riastradh Exp $	*/
+/*	$NetBSD: dma-buf.h,v 1.8 2021/12/19 10:19:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <sys/mutex.h>
 
 #include <linux/err.h>
-#include <linux/reservation.h>
+#include <linux/dma-resv.h>
 
 struct device;
 struct dma_buf;
@@ -46,7 +46,7 @@ struct dma_buf_export_info;
 struct dma_buf_ops;
 struct file;
 struct module;
-struct reservation_object;
+struct dma_resv;
 struct sg_table;
 struct uvm_object;
 
@@ -80,12 +80,12 @@ struct dma_buf {
 	void				*priv;
 	const struct dma_buf_ops	*ops;
 	size_t				size;
-	struct reservation_object	*resv;
+	struct dma_resv			*resv;
 
 	kmutex_t			db_lock;
 	volatile unsigned		db_refcnt;
-	struct reservation_poll		db_resv_poll;
-	struct reservation_object	db_resv_int[];
+	struct dma_resv_poll		db_resv_poll;
+	struct dma_resv			db_resv_int[];
 };
 
 struct dma_buf_attachment {
@@ -102,7 +102,7 @@ struct dma_buf_export_info {
 	const struct dma_buf_ops	*ops;
 	size_t				size;
 	int				flags;
-	struct reservation_object	*resv;
+	struct dma_resv			*resv;
 	void				*priv;
 };
 

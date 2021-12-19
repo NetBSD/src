@@ -1,4 +1,4 @@
-#       $NetBSD: files.drmkms_linux,v 1.23 2021/12/19 01:37:28 riastradh Exp $
+#       $NetBSD: files.drmkms_linux,v 1.24 2021/12/19 10:19:53 riastradh Exp $
 
 define	drmkms_linux: i2cexec, i2c_bitbang
 
@@ -8,6 +8,7 @@ makeoptions 	drmkms_linux	CPPFLAGS+="-I$S/external/bsd/drm2/include"
 file	external/bsd/drm2/linux/linux_atomic64.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_dma_buf.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_dma_fence.c	drmkms_linux
+file	external/bsd/drm2/linux/linux_dma_resv.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_dmi.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_i2c.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_idr.c		drmkms_linux
@@ -15,7 +16,6 @@ file	external/bsd/drm2/linux/linux_kmap.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_list_sort.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_module.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_pci.c		drmkms_linux
-file	external/bsd/drm2/linux/linux_reservation.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_stop_machine.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_wait_bit.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_writecomb.c	drmkms_linux
