@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.h,v 1.5 2021/12/19 09:50:36 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.h,v 1.6 2021/12/19 09:55:05 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -751,11 +751,11 @@ struct drm_driver {
 	/** @patchlevel: driver patch level */
 	int patchlevel;
 	/** @name: driver name */
-	char *name;
+	const char *name;
 	/** @desc: driver description */
-	char *desc;
+	const char *desc;
 	/** @date: driver date */
-	char *date;
+	const char *date;
 
 	/**
 	 * @driver_features:
