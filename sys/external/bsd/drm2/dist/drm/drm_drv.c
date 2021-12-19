@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.17 2021/12/19 00:58:30 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.18 2021/12/19 09:45:18 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.17 2021/12/19 00:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.18 2021/12/19 09:45:18 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -62,6 +62,15 @@ struct idr drm_minors_idr;
 static DEFINE_SPINLOCK(drm_minor_lock);
 static struct idr drm_minors_idr;
 #endif
+
+/*
+ * If the drm core fails to init for whatever reason,
+ * we should prevent any drivers from registering with it.
+ * It's best to check this at drm_dev_init(), as some drivers
+ * prefer to embed struct drm_device into their own device
+ * structure and call drm_dev_init() themselves.
+ */
+static bool drm_core_init_complete = false;
 
 #ifndef __NetBSD__
 static struct dentry *drm_debugfs_root;
