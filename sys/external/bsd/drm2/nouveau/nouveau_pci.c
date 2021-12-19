@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.31 2021/12/19 11:05:20 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.32 2021/12/19 11:09:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.31 2021/12/19 11:05:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.32 2021/12/19 11:09:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #if defined(__arm__) || defined(__aarch64__)
@@ -358,7 +358,6 @@ nouveau_pci_modcmd(modcmd_t cmd, void *arg __unused)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		*nouveau_drm_driver_pci = *nouveau_drm_driver_stub;
-		nouveau_drm_driver_pci->set_busid = drm_pci_set_busid;
 		nouveau_drm_driver_pci->request_irq = drm_pci_request_irq;
 		nouveau_drm_driver_pci->free_irq = drm_pci_free_irq;
 #if 0		/* XXX nouveau acpi */
