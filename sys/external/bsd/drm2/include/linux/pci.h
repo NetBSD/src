@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.50 2021/12/19 12:00:16 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.51 2021/12/19 12:13:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -119,8 +119,12 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 
 #define	PCI_DEVFN(DEV, FN)						\
 	(__SHIFTIN((DEV), __BITS(3, 7)) | __SHIFTIN((FN), __BITS(0, 2)))
-#define	PCI_SLOT(DEVFN)		__SHIFTOUT((DEVFN), __BITS(3, 7))
-#define	PCI_FUNC(DEVFN)		__SHIFTOUT((DEVFN), __BITS(0, 2))
+#define	PCI_SLOT(DEVFN)		((int)__SHIFTOUT((DEVFN), __BITS(3, 7)))
+#define	PCI_FUNC(DEVFN)		((int)__SHIFTOUT((DEVFN), __BITS(0, 2)))
+
+#define	PCI_DEVID(BUS, DEVFN)						      \
+	(__SHIFTIN((BUS), __BITS(15, 8)) | __SHIFTIN((DEVFN), __BITS(7, 0)))
+#define	PCI_BUS_NUM(DEVID)	((int)__SHIFTOUT((DEVID), __BITS(15,8)))
 
 #define	PCI_NUM_RESOURCES	((PCI_MAPREG_END - PCI_MAPREG_START) / 4)
 #define	DEVICE_COUNT_RESOURCE	PCI_NUM_RESOURCES
