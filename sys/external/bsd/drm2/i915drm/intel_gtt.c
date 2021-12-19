@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.12 2021/12/19 01:35:10 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.13 2021/12/19 11:39:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.12 2021/12/19 01:35:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.13 2021/12/19 11:39:56 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -185,9 +185,10 @@ intel_gtt_insert_page(bus_addr_t addr, unsigned va_page, unsigned flags)
 }
 
 void
-intel_gtt_insert_sg_entries(bus_dmamap_t dmamap, unsigned va_page,
+intel_gtt_insert_sg_entries(struct sg_table *sg, unsigned va_page,
     unsigned flags)
 {
+	bus_dmamap_t dmamap = sg->sgl[0].sg_dmamap;
 	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	off_t va = (off_t)va_page << PAGE_SHIFT;
 	unsigned seg;
