@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.9 2021/12/19 01:57:27 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.10 2021/12/19 01:57:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
 
