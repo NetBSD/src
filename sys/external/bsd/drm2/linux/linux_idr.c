@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.13 2021/12/19 01:00:17 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.14 2021/12/19 01:15:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.13 2021/12/19 01:00:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.14 2021/12/19 01:15:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -259,19 +259,26 @@ idr_replace(struct idr *idr, void *replacement, int id)
 	return result;
 }
 
-void
+void *
 idr_remove(struct idr *idr, int id)
 {
 	struct idr_node *node;
+	void *data;
 
 	mutex_spin_enter(&idr->idr_lock);
 	node = rb_tree_find_node(&idr->idr_tree, &id);
-	KASSERTMSG((node != NULL), "idr %p has no entry for id %d", idr, id);
-	SDT_PROBE3(sdt, linux, idr, remove,  idr, id, node->in_data);
-	rb_tree_remove_node(&idr->idr_tree, node);
+	if (node == NULL) {
+		data = NULL;
+	} else {
+		data = node->in_data;
+		SDT_PROBE3(sdt, linux, idr, remove,  idr, id, data);
+		rb_tree_remove_node(&idr->idr_tree, node);
+	}
 	mutex_spin_exit(&idr->idr_lock);
 
 	kmem_free(node, sizeof(*node));
+
+	return data;
 }
 
 void
