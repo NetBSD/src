@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.50 2021/12/19 01:56:08 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.51 2021/12/19 01:56:16 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -639,12 +639,6 @@ static __inline__ int drm_core_check_feature(struct drm_device *dev,
 					     int feature)
 {
 	return ((dev->driver->driver_features & feature) ? 1 : 0);
-}
-
-static inline void drm_device_set_unplugged(struct drm_device *dev)
-{
-	smp_wmb();
-	atomic_set(&dev->unplugged, 1);
 }
 
 static inline int drm_device_is_unplugged(struct drm_device *dev)
