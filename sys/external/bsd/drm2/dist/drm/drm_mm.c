@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.10 2021/12/19 11:03:09 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.11 2021/12/19 11:22:15 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.10 2021/12/19 11:03:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.11 2021/12/19 11:22:15 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
@@ -302,7 +302,7 @@ compare_hole_sizes(void *cookie, const void *va, const void *vb)
 		return -1;
 	if (a->hole_size > b->hole_size)
 		return +1;
-	return 0;
+	return (a < b ? -1 : a > b ? +1 : 0);
 }
 
 static int
