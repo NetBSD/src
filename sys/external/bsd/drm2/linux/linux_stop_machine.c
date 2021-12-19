@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_stop_machine.c,v 1.1 2021/12/19 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: linux_stop_machine.c,v 1.2 2021/12/19 11:22:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_stop_machine.c,v 1.1 2021/12/19 01:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_stop_machine.c,v 1.2 2021/12/19 11:22:22 riastradh Exp $");
+
+#include <sys/mutex.h> /* XXX work around cycle x86/mutex.h<->x86/intr.h */
 
 #include <sys/atomic.h>
 #include <sys/intr.h>
