@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_priolist_types.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_priolist_types.h,v 1.3 2021/12/19 11:38:37 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -27,7 +27,7 @@ enum {
 };
 
 #define I915_USER_PRIORITY_SHIFT 2
-#define I915_USER_PRIORITY(x) ((x) << I915_USER_PRIORITY_SHIFT)
+#define I915_USER_PRIORITY(x) ((x) * (1 << I915_USER_PRIORITY_SHIFT))
 
 #define I915_PRIORITY_COUNT BIT(I915_USER_PRIORITY_SHIFT)
 #define I915_PRIORITY_MASK (I915_PRIORITY_COUNT - 1)

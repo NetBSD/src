@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.75 2021/12/19 11:38:26 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.76 2021/12/19 11:38:37 riastradh Exp $
 
 version	20180827
 
@@ -33,6 +33,9 @@ makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_DEBUG_MMIO=1" #
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_FORCE_PROBE=0"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_SPIN_REQUEST=0"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_SW_FENCE_CHECK_DAG=1" # XXX expensive debug option?
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_HEARTBEAT_INTERVAL=2500" # milliseconds
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_STOP_TIMEOUT=100" # milliseconds
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_PREEMPT_TIMEOUT=640" # milliseconds
 
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-missing-field-initializers"
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-pointer-arith"
@@ -89,8 +92,8 @@ file	external/bsd/drm2/dist/drm/i915/display/intel_dpio_phy.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dpll_mgr.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dsb.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/display/intel_dsi.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/display/intel_dsi_dcs_backlight.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/display/intel_dsi_vbt.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/display/intel_dsi_dcs_backlight.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/display/intel_dsi_vbt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dvo.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_fbc.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_fbdev.c	i915drmkms
@@ -114,7 +117,7 @@ file	external/bsd/drm2/dist/drm/i915/display/intel_tc.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_tv.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_vdsc.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_vga.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/display/vlv_dsi.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/display/vlv_dsi.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/display/vlv_dsi_pll.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_busy.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_clflush.c	i915drmkms
