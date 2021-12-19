@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce110_mem_input_v.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce110_mem_input_v.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $	*/
 
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce110_mem_input_v.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce110_mem_input_v.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $");
 
 #include "dm_services.h"
 
@@ -474,7 +474,6 @@ static void program_pixel_format(
 	}
 }
 
-static
 bool dce_mem_input_v_is_surface_pending(struct mem_input *mem_input)
 {
 	struct dce_mem_input *mem_input110 = TO_DCE_MEM_INPUT(mem_input);
@@ -490,7 +489,6 @@ bool dce_mem_input_v_is_surface_pending(struct mem_input *mem_input)
 	return false;
 }
 
-static
 bool dce_mem_input_v_program_surface_flip_and_addr(
 	struct mem_input *mem_input,
 	const struct dc_plane_address *address,
@@ -568,7 +566,6 @@ static const unsigned int *get_dvmm_hw_setting(
 	}
 }
 
-static
 void dce_mem_input_v_program_pte_vm(
 		struct mem_input *mem_input,
 		enum surface_pixel_format format,
@@ -642,7 +639,6 @@ void dce_mem_input_v_program_pte_vm(
 	dm_write_reg(mem_input110->base.ctx, mmUNP_DVMM_PTE_ARB_CONTROL_C, value);
 }
 
-static
 void dce_mem_input_v_program_surface_config(
 	struct mem_input *mem_input,
 	enum surface_pixel_format format,
@@ -929,7 +925,6 @@ static void program_nbp_watermark_c(
 			marks);
 }
 
-static
 void dce_mem_input_v_program_display_marks(
 	struct mem_input *mem_input,
 	struct dce_watermarks nbp,
@@ -953,7 +948,6 @@ void dce_mem_input_v_program_display_marks(
 
 }
 
-static
 void dce_mem_input_program_chroma_display_marks(
 	struct mem_input *mem_input,
 	struct dce_watermarks nbp,
@@ -975,7 +969,6 @@ void dce_mem_input_program_chroma_display_marks(
 		stutter);
 }
 
-static
 void dce110_allocate_mem_input_v(
 	struct mem_input *mi,
 	uint32_t h_total,/* for current stream */
@@ -1018,7 +1011,6 @@ void dce110_allocate_mem_input_v(
 
 }
 
-static
 void dce110_free_mem_input_v(
 	struct mem_input *mi,
 	uint32_t total_stream_num)

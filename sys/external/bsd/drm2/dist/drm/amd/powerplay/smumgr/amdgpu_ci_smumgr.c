@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ci_smumgr.c,v 1.3 2021/12/19 10:59:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ci_smumgr.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ci_smumgr.c,v 1.3 2021/12/19 10:59:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ci_smumgr.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -188,7 +188,6 @@ static int ci_program_jump_on_start(struct pp_hwmgr *hwmgr)
 	return 0;
 }
 
-static
 bool ci_is_smc_ram_running(struct pp_hwmgr *hwmgr)
 {
 	return ((0 == PHM_READ_VFPF_INDIRECT_FIELD(hwmgr->device,
