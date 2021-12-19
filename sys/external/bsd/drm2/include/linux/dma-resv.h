@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-resv.h,v 1.8 2021/12/19 10:37:56 riastradh Exp $	*/
+/*	$NetBSD: dma-resv.h,v 1.9 2021/12/19 10:38:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ struct dma_resv_poll {
 #define	dma_resv_lock_interruptible	linux_dma_resv_lock_interruptible
 #define	dma_resv_lock_slow		linux_dma_resv_lock_slow
 #define	dma_resv_lock_slow_interruptible linux_dma_resv_lock_slow_interruptible
+#define	dma_resv_locking_ctx		linux_dma_resv_locking_ctx
 #define	dma_resv_reserve_shared		linux_dma_resv_reserve_shared
 #define	dma_resv_test_signaled_rcu	linux_dma_resv_test_signaled_rcu
 #define	dma_resv_trylock		linux_dma_resv_trylock
@@ -101,6 +102,8 @@ int	dma_resv_lock_interruptible(struct dma_resv *,
 int	dma_resv_lock_slow_interruptible(struct dma_resv *,
 	    struct ww_acquire_ctx *);
 bool	dma_resv_trylock(struct dma_resv *) __must_check;
+struct ww_acquire_ctx *
+	dma_resv_locking_ctx(struct dma_resv *);
 void	dma_resv_unlock(struct dma_resv *);
 bool	dma_resv_held(struct dma_resv *);
 void	dma_resv_assert_held(struct dma_resv *);
@@ -139,12 +142,6 @@ static inline bool
 dma_resv_has_excl_fence(const struct dma_resv *robj)
 {
 	return robj->fence_excl != NULL;
-}
-
-static inline struct ww_acquire_ctx *
-dma_resv_locking_ctx(struct dma_resv *robj)
-{
-	return robj->lock.wwm_u.ctx;
 }
 
 #endif	/* _LINUX_DMA_RESV_H_ */
