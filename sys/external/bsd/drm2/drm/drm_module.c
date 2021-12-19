@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.21 2021/12/19 01:03:22 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.22 2021/12/19 09:50:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.21 2021/12/19 01:03:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.22 2021/12/19 09:50:42 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.21 2021/12/19 01:03:22 riastradh Ex
 #include <linux/mutex.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_bridge.h>
 #include <drm/drm_encoder_slave.h>
 #include <drm/drm_sysctl.h>
 #include <drm/drm_panel.h>
