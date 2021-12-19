@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.h,v 1.7 2021/12/19 11:37:41 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.h,v 1.8 2021/12/19 12:25:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -156,7 +156,7 @@ static inline void i915_vma_put(struct i915_vma *vma)
 
 static __always_inline ptrdiff_t ptrdiff(const void *a, const void *b)
 {
-	return (const char *)a - (const char *)b;
+	return a - b;
 }
 
 static inline long

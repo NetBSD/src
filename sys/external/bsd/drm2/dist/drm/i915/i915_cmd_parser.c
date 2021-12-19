@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.27 2021/12/19 11:17:10 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.28 2021/12/19 12:25:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.27 2021/12/19 11:17:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.28 2021/12/19 12:25:37 riastradh Exp $");
 
 #include <linux/bitmap.h>
 
@@ -1158,7 +1158,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dst_obj,
 		src = i915_gem_object_pin_map(src_obj, I915_MAP_WC);
 		if (!IS_ERR(src)) {
 			i915_unaligned_memcpy_from_wc(dst,
-						      (char *)src + offset,
+						      src + offset,
 						      length);
 			i915_gem_object_unpin_map(src_obj);
 		}
@@ -1192,11 +1192,11 @@ static u32 *copy_batch(struct drm_i915_gem_object *dst_obj,
 
 			src = kmap_atomic(i915_gem_object_get_page(src_obj, n));
 			if (needs_clflush)
-				drm_clflush_virt_range((char *)src + x, len);
-			memcpy(ptr, (char *)src + x, len);
+				drm_clflush_virt_range(src + x, len);
+			memcpy(ptr, src + x, len);
 			kunmap_atomic(src);
 
-			ptr = (char *)ptr + len;
+			ptr += len;
 			length -= len;
 			x = 0;
 		}
