@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.29 2021/12/19 11:36:32 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.30 2021/12/19 11:37:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -129,6 +129,22 @@ static inline void
 list_add(struct list_head *node, struct list_head *head)
 {
 	__list_add_between(head, node, head->next);
+}
+
+static inline void
+list_add_rcu(struct list_head *node, struct list_head *head)
+{
+	struct list_head *next = head->next;
+
+	/* Initialize the new node first.  */
+	node->next = next;
+	node->prev = head;
+
+	/* Now publish it.  */
+	atomic_store_release(&head->next, node);
+
+	/* Fix up back pointers, not protected by RCU.  */
+	next->prev = node;
 }
 
 static inline void

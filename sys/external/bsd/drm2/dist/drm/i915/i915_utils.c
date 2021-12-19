@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_utils.c,v 1.3 2021/12/19 01:24:26 riastradh Exp $	*/
+/*	$NetBSD: i915_utils.c,v 1.4 2021/12/19 11:37:41 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_utils.c,v 1.3 2021/12/19 01:24:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_utils.c,v 1.4 2021/12/19 11:37:41 riastradh Exp $");
 
 #include <drm/drm_drv.h>
 
@@ -105,11 +105,15 @@ bool i915_error_injected(void)
 
 void cancel_timer(struct timer_list *t)
 {
+#ifndef __NetBSD__
 	if (!READ_ONCE(t->expires))
 		return;
+#endif
 
 	del_timer(t);
+#ifndef __NetBSD__
 	WRITE_ONCE(t->expires, 0);
+#endif
 }
 
 void set_timer_ms(struct timer_list *t, unsigned long timeout)
