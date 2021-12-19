@@ -1,4 +1,4 @@
-/*	$NetBSD: export.h,v 1.3 2021/12/19 00:29:17 riastradh Exp $	*/
+/*	$NetBSD: export.h,v 1.4 2021/12/19 00:31:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,8 +36,5 @@
 
 /* XXX Provisional -- this shouldn't happen in sources we use.  */
 #define	EXPORT_SYMBOL_GPL(name)
-
-#define	IS_ENABLED(X)	X
-#define	IS_REACHABLE(X)	X
 
 #endif  /* _LINUX_EXPORT_H_ */
