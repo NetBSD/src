@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.24 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.25 2021/12/19 11:16:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.24 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.25 2021/12/19 11:16:39 riastradh Exp $");
 
 #include "gt/intel_engine.h"
 
@@ -1173,9 +1173,15 @@ static u32 *copy_batch(struct drm_i915_gem_object *dst_obj,
 		 * We don't care about copying too much here as we only
 		 * validate up to the end of the batch.
 		 */
-		if (!(dst_obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_READ))
+		if (!(dst_obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_READ)) {
+#ifdef __NetBSD__
+			length = round_up(length,
+					  cpu_info_primary.ci_cflush_lsize);
+#else
 			length = round_up(length,
 					  boot_cpu_data.x86_clflush_size);
+#endif
+		}
 
 		ptr = dst;
 		x = offset_in_page(offset);
