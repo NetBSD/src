@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.6 2021/12/19 11:58:25 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.7 2021/12/19 11:59:04 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.6 2021/12/19 11:58:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.7 2021/12/19 11:59:04 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -575,7 +575,6 @@ int i915_request_await_active(struct i915_request *rq, struct i915_active *ref)
 	return err;
 }
 
-#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM)
 void i915_active_fini(struct i915_active *ref)
 {
 	debug_active_fini(ref);
@@ -583,8 +582,8 @@ void i915_active_fini(struct i915_active *ref)
 	GEM_BUG_ON(work_pending(&ref->work));
 	GEM_BUG_ON(!RB_EMPTY_ROOT(&ref->tree));
 	mutex_destroy(&ref->mutex);
+	spin_lock_destroy(&ref->tree_lock);
 }
-#endif
 
 static inline bool is_idle_barrier(struct active_node *node, u64 idx)
 {
