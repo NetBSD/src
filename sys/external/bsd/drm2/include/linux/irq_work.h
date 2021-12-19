@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_work.h,v 1.3 2021/12/19 11:05:27 riastradh Exp $	*/
+/*	$NetBSD: irq_work.h,v 1.4 2021/12/19 11:26:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #define	irq_work_queue	linux_irq_work_queue
 
 struct irq_work {
+	char dummy;
 };
 
 void	init_irq_work(struct irq_work *, void (*)(struct irq_work *));
