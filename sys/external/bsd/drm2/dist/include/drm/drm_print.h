@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_print.h,v 1.3 2021/12/19 01:54:20 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -93,7 +93,9 @@ void __drm_printfn_err(struct drm_printer *p, struct va_format *vaf);
 __printf(2, 3)
 void drm_printf(struct drm_printer *p, const char *f, ...);
 void drm_puts(struct drm_printer *p, const char *str);
+#ifndef __NetBSD__
 void drm_print_regset32(struct drm_printer *p, struct debugfs_regset32 *regset);
+#endif
 void drm_print_bits(struct drm_printer *p, unsigned long value,
 		    const char * const bits[], unsigned int nbits);
 
