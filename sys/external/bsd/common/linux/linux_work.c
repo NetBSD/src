@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.55 2021/12/19 11:40:14 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.56 2021/12/19 12:11:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.55 2021/12/19 11:40:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.56 2021/12/19 12:11:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -1449,20 +1449,13 @@ flush_workqueue_locked(struct workqueue_struct *wq)
 	gen = wq->wq_gen;
 
 	/*
-	 * If there's a batch of work in progress, we must wait for the
-	 * worker thread to finish that batch.
+	 * If there's any work in progress -- whether currently running
+	 * or queued to run -- we must wait for the worker thread to
+	 * finish that batch.
 	 */
-	if (wq->wq_current_work != NULL) {
-		gen++;
-		work_queued = true;
-	}
-
-	/*
-	 * If there's any work yet to be claimed from the queue by the
-	 * worker thread, we must wait for it to finish one more batch
-	 * too.
-	 */
-	if (!TAILQ_EMPTY(&wq->wq_queue) || !TAILQ_EMPTY(&wq->wq_dqueue)) {
+	if (wq->wq_current_work != NULL ||
+	    !TAILQ_EMPTY(&wq->wq_queue) ||
+	    !TAILQ_EMPTY(&wq->wq_dqueue)) {
 		gen++;
 		work_queued = true;
 	}
