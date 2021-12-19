@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.3 2021/12/19 00:58:42 riastradh Exp $	*/
+/*	$NetBSD: file.h,v 1.4 2021/12/19 01:15:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,13 @@
 #include <sys/proc.h>
 
 struct file;
+
+/* fget translates; fput(fp) doesn't because we have fd_putfile(fd).  */
+static inline struct file *
+fget(int fd)
+{
+	return fd_getfile(fd);
+}
 
 static inline void
 fd_install(int fd, struct file *fp)
