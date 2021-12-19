@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.8 2021/12/19 11:35:07 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.9 2021/12/19 11:35:27 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.8 2021/12/19 11:35:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.9 2021/12/19 11:35:27 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -580,7 +580,7 @@ static uint64_t amdgpu_invalid_rreg64(struct amdgpu_device *adev, uint32_t reg)
  */
 static void amdgpu_invalid_wreg64(struct amdgpu_device *adev, uint32_t reg, uint64_t v)
 {
-	DRM_ERROR("Invalid callback to write 64 bit register 0x%04X with 0x%08llX\n",
+	DRM_ERROR("Invalid callback to write 64 bit register 0x%04X with 0x%08"PRIX64"\n",
 		  reg, v);
 	BUG();
 }
@@ -725,7 +725,9 @@ static int amdgpu_device_doorbell_init(struct amdgpu_device *adev)
 		adev->doorbell.base = 0;
 		adev->doorbell.size = 0;
 		adev->doorbell.num_doorbells = 0;
+#ifndef __NetBSD__
 		adev->doorbell.ptr = NULL;
+#endif
 		return 0;
 	}
 
@@ -811,7 +813,7 @@ static void amdgpu_device_wb_fini(struct amdgpu_device *adev)
 	if (adev->wb.wb_obj) {
 		amdgpu_bo_free_kernel(&adev->wb.wb_obj,
 				      &adev->wb.gpu_addr,
-				      (void **)&adev->wb.wb);
+				      (void **)__UNVOLATILE(&adev->wb.wb));
 		adev->wb.wb_obj = NULL;
 	}
 }
@@ -834,7 +836,7 @@ static int amdgpu_device_wb_init(struct amdgpu_device *adev)
 		r = amdgpu_bo_create_kernel(adev, AMDGPU_MAX_WB * sizeof(uint32_t) * 8,
 					    PAGE_SIZE, AMDGPU_GEM_DOMAIN_GTT,
 					    &adev->wb.wb_obj, &adev->wb.gpu_addr,
-					    (void **)&adev->wb.wb);
+					    (void **)__UNVOLATILE(&adev->wb.wb));
 		if (r) {
 			dev_warn(adev->dev, "(%d) create WB bo failed\n", r);
 			return r;
@@ -844,7 +846,7 @@ static int amdgpu_device_wb_init(struct amdgpu_device *adev)
 		memset(&adev->wb.used, 0, sizeof(adev->wb.used));
 
 		/* clear wb memory */
-		memset((char *)adev->wb.wb, 0, AMDGPU_MAX_WB * sizeof(uint32_t) * 8);
+		memset(__UNVOLATILE(adev->wb.wb), 0, AMDGPU_MAX_WB * sizeof(uint32_t) * 8);
 	}
 
 	return 0;
@@ -910,6 +912,8 @@ int amdgpu_device_resize_fb_bar(struct amdgpu_device *adev)
 	if (amdgpu_sriov_vf(adev))
 		return 0;
 
+#ifndef __NetBSD__		/* XXX amdgpu fb resize */
+
 	/* Check if the root BUS has 64bit memory resources */
 	root = adev->pdev->bus;
 	while (root->parent)
@@ -953,6 +957,8 @@ int amdgpu_device_resize_fb_bar(struct amdgpu_device *adev)
 		return -ENODEV;
 
 	pci_write_config_word(adev->pdev, PCI_COMMAND, cmd);
+
+#endif
 
 	return 0;
 }
