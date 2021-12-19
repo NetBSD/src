@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.18 2021/12/19 11:13:14 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.19 2021/12/19 11:36:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -242,9 +242,9 @@ trace_i915_request_retire(struct i915_request *request)
 
 I915_DEFINE_TRACE_REQ(i915,, request__wait__begin);
 static inline void
-trace_i915_request_wait_begin(struct i915_request *request)
+trace_i915_request_wait_begin(struct i915_request *request, unsigned int flags)
 {
-	I915_TRACE_REQ(i915,, request__wait__begin, request, 0);
+	I915_TRACE_REQ(i915,, request__wait__begin, request, flags);
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__wait__end);
