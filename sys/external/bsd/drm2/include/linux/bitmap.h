@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmap.h,v 1.9 2021/12/19 10:57:19 riastradh Exp $	*/
+/*	$NetBSD: bitmap.h,v 1.10 2021/12/19 11:16:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
+
+#include <linux/slab.h>
 
 /*
  * bitmap_zero(bitmap, nbits)
@@ -213,6 +215,11 @@ bitmap_or(unsigned long *dst, const unsigned long *src1,
 
 	while (n --> 0)
 		*dst++ = *src1++ | *src2++;
+}
+
+static inline unsigned long *
+bitmap_zalloc(size_t size, gfp_t gfp) {
+	return kzalloc(size, gfp);
 }
 
 #endif  /* _LINUX_BITMAP_H_ */
