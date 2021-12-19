@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
+/*	$NetBSD: intel_guc.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
 
 #include "gt/intel_gt.h"
 #include "gt/intel_gt_irq.h"
@@ -15,6 +15,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_guc.c,v 1.2 2021/12/18 23:45:31 riastradh Exp 
 #include "intel_guc_ads.h"
 #include "intel_guc_submission.h"
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: GuC

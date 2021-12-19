@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.24 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.25 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.24 2021/12/19 11:33:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.25 2021/12/19 11:45:01 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1184,27 +1184,19 @@ static void intel_get_hpd_pins(struct drm_i915_private *dev_priv,
 static void gmbus_irq_handler(struct drm_i915_private *dev_priv)
 {
 
-#ifdef __NetBSD__
 	spin_lock(&dev_priv->gmbus_wait_lock);
 	DRM_SPIN_WAKEUP_ALL(&dev_priv->gmbus_wait_queue,
 	    &dev_priv->gmbus_wait_lock);
 	spin_unlock(&dev_priv->gmbus_wait_lock);
-#else
-	wake_up_all(&dev_priv->gmbus_wait_queue);
-#endif
 }
 
 static void dp_aux_irq_handler(struct drm_i915_private *dev_priv)
 {
 
-#ifdef __NetBSD__
 	spin_lock(&dev_priv->gmbus_wait_lock);
 	DRM_SPIN_WAKEUP_ALL(&dev_priv->gmbus_wait_queue,
 	    &dev_priv->gmbus_wait_lock);
 	spin_unlock(&dev_priv->gmbus_wait_lock);
-#else
-	wake_up_all(&dev_priv->gmbus_wait_queue);
-#endif
 }
 
 #if defined(CONFIG_DEBUG_FS)

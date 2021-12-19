@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.2 2021/12/19 01:34:23 riastradh Exp $	*/
+/*	$NetBSD: random.h,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -48,6 +48,16 @@ static inline long
 get_random_long(void)
 {
 	long v;
+
+	cprng_strong(kern_cprng, &v, sizeof v, 0);
+
+	return v;
+}
+
+static inline uint32_t
+get_random_u32(void)
+{
+	uint32_t v;
 
 	cprng_strong(kern_cprng, &v, sizeof v, 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 2021/12/19 10:38:59 riastradh Exp $	*/
+/*	$NetBSD: signal.h,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,5 +30,14 @@
 #define	_LINUX_SCHED_SIGNAL_H_
 
 #include <linux/sched.h>
+
+static inline bool
+signal_pending(struct proc *p)
+{
+
+	KASSERT(p == curproc);
+	return __predict_false(curlwp->l_flag & LW_PENDSIG) &&
+	    sigispending(curlwp, 0);
+}
 
 #endif	/* _LINUX_SCHED_SIGNAL_H_ */

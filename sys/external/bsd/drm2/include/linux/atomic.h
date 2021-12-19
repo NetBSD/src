@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.40 2021/12/19 11:37:41 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.41 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,11 @@
 /* XXX Hope the GCC __sync builtins work everywhere we care about!  */
 #define	xchg(P, V)		__sync_lock_test_and_set(P, V)
 #define	cmpxchg(P, O, N)	__sync_val_compare_and_swap(P, O, N)
+#define	try_cmpxchg(P, V, N)						      \
+({									      \
+	__typeof__(*(V)) *__tcx_v = (V), __tcx_expected = *__tcx_v;	      \
+	(*__tcx_v = cmpxchg((P), __tcx_expected, (N))) == __tcx_expected;     \
+})
 
 /*
  * atomic (u)int operations
