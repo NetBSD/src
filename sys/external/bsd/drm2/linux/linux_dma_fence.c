@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.16 2020/07/03 16:23:02 maxv Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.1 2021/12/19 00:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.16 2020/07/03 16:23:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.1 2021/12/19 00:27:01 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
