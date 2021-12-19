@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmap.h,v 1.8 2018/08/27 14:52:16 riastradh Exp $	*/
+/*	$NetBSD: bitmap.h,v 1.9 2021/12/19 10:57:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -162,6 +162,21 @@ bitmap_clear(unsigned long *bitmap, size_t startbit, size_t nbits)
 	/* Handle a final odd word if any by clearing its low nbits.  */
 	if (nbits)
 		*p &= ~0ULL << nbits;
+}
+
+/*
+ * bitmap_complement(dst, src, nbits)
+ *
+ *	Set dst to the the bitwise NOT of src.  dst and src may alias.
+ */
+static inline void
+bitmap_complement(unsigned long *dst, const unsigned long *src, size_t nbits)
+{
+	const size_t bpl = NBBY * sizeof(unsigned long);
+	size_t n = howmany(nbits, bpl);
+
+	while (n --> 0)
+		*dst++ = ~*src++;
 }
 
 /*
