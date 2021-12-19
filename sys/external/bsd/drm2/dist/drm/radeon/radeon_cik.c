@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cik.c,v 1.4 2021/12/19 01:47:01 riastradh Exp $	*/
+/*	$NetBSD: radeon_cik.c,v 1.5 2021/12/19 01:47:14 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cik.c,v 1.4 2021/12/19 01:47:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cik.c,v 1.5 2021/12/19 01:47:14 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -2020,7 +2020,7 @@ static int cik_init_microcode(struct radeon_device *rdev)
 		mc_req_size = BONAIRE_MC_UCODE_SIZE * 4;
 		mc2_req_size = BONAIRE_MC2_UCODE_SIZE * 4;
 		sdma_req_size = CIK_SDMA_UCODE_SIZE * 4;
-		smc_req_size = ALIGN(BONAIRE_SMC_UCODE_SIZE, 4);
+		smc_req_size = round_up(BONAIRE_SMC_UCODE_SIZE, 4);
 		num_fw = 8;
 		break;
 	case CHIP_HAWAII:
@@ -2036,7 +2036,7 @@ static int cik_init_microcode(struct radeon_device *rdev)
 		mc_req_size = HAWAII_MC_UCODE_SIZE * 4;
 		mc2_req_size = HAWAII_MC2_UCODE_SIZE * 4;
 		sdma_req_size = CIK_SDMA_UCODE_SIZE * 4;
-		smc_req_size = ALIGN(HAWAII_SMC_UCODE_SIZE, 4);
+		smc_req_size = round_up(HAWAII_SMC_UCODE_SIZE, 4);
 		num_fw = 8;
 		break;
 	case CHIP_KAVERI:
