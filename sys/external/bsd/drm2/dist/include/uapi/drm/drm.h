@@ -1,4 +1,4 @@
-/*	$NetBSD: drm.h,v 1.4 2021/12/19 00:47:09 riastradh Exp $	*/
+/*	$NetBSD: drm.h,v 1.5 2021/12/19 01:53:57 riastradh Exp $	*/
 
 /**
  * \file drm.h
@@ -55,7 +55,7 @@ typedef unsigned int drm_handle_t;
 #endif
 
 #ifdef __NetBSD__
-#include <stdint.h>
+#include <sys/stdint.h>
 #include <sys/ioccom.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
