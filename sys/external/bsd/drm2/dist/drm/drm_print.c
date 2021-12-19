@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.c,v 1.4 2021/12/19 01:07:52 riastradh Exp $	*/
+/*	$NetBSD: drm_print.c,v 1.5 2021/12/19 01:54:20 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.4 2021/12/19 01:07:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.5 2021/12/19 01:54:20 riastradh Exp $");
 
 #ifndef __NetBSD__		/* XXX ??? */
 #define DEBUG /* for pr_debug() */
@@ -364,6 +364,7 @@ void __drm_err(const char *format, ...)
 }
 EXPORT_SYMBOL(__drm_err);
 
+#ifndef __NetBSD__
 /**
  * drm_print_regset32 - print the contents of registers to a
  * &drm_printer stream.
@@ -391,3 +392,4 @@ void drm_print_regset32(struct drm_printer *p, struct debugfs_regset32 *regset)
 	}
 }
 EXPORT_SYMBOL(drm_print_regset32);
+#endif
