@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.49 2021/12/19 01:56:00 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.50 2021/12/19 01:56:08 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -129,30 +129,6 @@ typedef int drm_ioctl_t(struct drm_device *dev, void *data,
 
 typedef int drm_ioctl_compat_t(struct file *filp, unsigned int cmd,
 			       unsigned long arg);
-
-#ifdef __NetBSD__
-/* XXX Kludge...is there a better way to do this?  */
-#define	DRM_IOCTL_NR(n)							\
-	(IOCBASECMD(n) &~ (IOC_DIRMASK | (IOCGROUP(n) << IOCGROUP_SHIFT)))
-#define	DRM_MAJOR	cdevsw_lookup_major(&drm_cdevsw)
-#else
-#define DRM_IOCTL_NR(n)                _IOC_NR(n)
-#define DRM_MAJOR       226
-#endif
-
-#define DRM_AUTH	0x1
-#define	DRM_MASTER	0x2
-#define DRM_ROOT_ONLY	0x4
-#define DRM_CONTROL_ALLOW 0x8
-#define DRM_UNLOCKED	0x10
-#define DRM_RENDER_ALLOW 0x20
-
-struct drm_ioctl_desc {
-	unsigned int cmd;
-	int flags;
-	drm_ioctl_t *func;
-	const char *name;
-};
 
 /**
  * Creates a driver or general drm_ioctl_desc array entry for the given
@@ -696,20 +672,6 @@ static inline bool drm_is_primary_client(const struct drm_file *file_priv)
 /******************************************************************/
 /** \name Internal function definitions */
 /*@{*/
-
-				/* Driver support (drm_drv.h) */
-extern int drm_ioctl_permit(u32 flags, struct drm_file *file_priv);
-#ifdef __NetBSD__
-extern int drm_ioctl(struct file *, unsigned long, void *);
-extern struct spinlock drm_minor_lock;
-extern struct idr drm_minors_idr;
-#else
-extern long drm_ioctl(struct file *filp,
-		      unsigned int cmd, unsigned long arg);
-extern long drm_compat_ioctl(struct file *filp,
-			     unsigned int cmd, unsigned long arg);
-#endif
-extern bool drm_ioctl_flags(unsigned int nr, unsigned int *flags);
 
 				/* Device support (drm_fops.h) */
 #ifdef __NetBSD__
