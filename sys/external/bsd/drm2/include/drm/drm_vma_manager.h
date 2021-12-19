@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.h,v 1.5 2021/12/19 09:45:42 riastradh Exp $	*/
+/*	$NetBSD: drm_vma_manager.h,v 1.6 2021/12/19 09:47:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,6 +39,14 @@
 #include <sys/vmem.h>
 
 #include <linux/mm.h>
+
+#if BITS_PER_LONG == 64
+#define DRM_FILE_PAGE_OFFSET_START ((0xFFFFFFFFUL >> PAGE_SHIFT) + 1)
+#define DRM_FILE_PAGE_OFFSET_SIZE ((0xFFFFFFFFUL >> PAGE_SHIFT) * 256)
+#else
+#define DRM_FILE_PAGE_OFFSET_START ((0xFFFFFFFUL >> PAGE_SHIFT) + 1)
+#define DRM_FILE_PAGE_OFFSET_SIZE ((0xFFFFFFFUL >> PAGE_SHIFT) * 16)
+#endif
 
 struct drm_file;
 
