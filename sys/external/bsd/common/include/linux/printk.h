@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.9 2021/12/19 09:42:27 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.10 2021/12/19 10:57:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #define	pr_cont		printf	/* XXX */
 #define	pr_info		printf	/* XXX */
 #define	pr_info_once	printf	/* XXX */
+#define	pr_info_ratelimited	printf	/* XXX */
 #define	pr_warn		printf	/* XXX */
 #define	pr_warn_once	printf	/* XXX */
 #define	pr_notice	printf	/* XXX */
