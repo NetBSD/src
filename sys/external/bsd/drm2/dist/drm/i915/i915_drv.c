@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.37 2021/12/19 11:19:01 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.38 2021/12/19 11:19:09 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.37 2021/12/19 11:19:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.38 2021/12/19 11:19:09 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1971,7 +1971,9 @@ int i915_drm_resume(struct drm_device *dev)
 int i915_drm_resume_early(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = to_i915(dev);
+#ifndef __NetBSD__
 	struct pci_dev *pdev = dev_priv->drm.pdev;
+#endif
 	int ret;
 
 	/*
