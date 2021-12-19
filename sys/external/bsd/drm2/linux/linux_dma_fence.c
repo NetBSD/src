@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.31 2021/12/19 12:34:05 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.32 2021/12/19 12:34:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.31 2021/12/19 12:34:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.32 2021/12/19 12:34:16 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -723,8 +723,12 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 	int start, end;
 	long ret = 0;
 
+	KASSERTMSG(timeout >= 0, "timeout %ld", timeout);
+	KASSERTMSG(timeout <= MAX_SCHEDULE_TIMEOUT, "timeout %ld", timeout);
+
 	/* Optimistically check whether any are signalled.  */
 	for (i = 0; i < nfences; i++) {
+		KASSERT(dma_fence_referenced_p(fences[i]));
 		if (dma_fence_is_signaled(fences[i])) {
 			if (ip)
 				*ip = i;
@@ -741,10 +745,8 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 
 	/* Allocate an array of callback records.  */
 	cb = kcalloc(nfences, sizeof(cb[0]), GFP_KERNEL);
-	if (cb == NULL) {
-		ret = -ENOMEM;
-		goto out0;
-	}
+	if (cb == NULL)
+		return -ENOMEM;
 
 	/* Initialize a mutex and condvar for the common wait.  */
 	mutex_init(&common.lock, MUTEX_DEFAULT, IPL_VM);
@@ -766,7 +768,7 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 			if (ip)
 				*ip = i;
 			ret = MAX(1, timeout);
-			goto out1;
+			goto out;
 		}
 	}
 
@@ -775,7 +777,8 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 	 * callbacks to notify us when it is done.
 	 */
 	mutex_enter(&common.lock);
-	while (timeout > 0 && !common.done) {
+	while (!common.done) {
+		/* Wait for the time remaining.  */
 		start = getticks();
 		if (intr) {
 			if (timeout != MAX_SCHEDULE_TIMEOUT) {
@@ -796,11 +799,40 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 			}
 		}
 		end = getticks();
+
+		/* Deduct from time remaining.  If none left, time out.  */
+		if (timeout != MAX_SCHEDULE_TIMEOUT) {
+			timeout -= MIN(timeout,
+			    (unsigned)end - (unsigned)start);
+			if (timeout == 0)
+				ret = -EWOULDBLOCK;
+		}
+
+		/* If the wait failed, give up.  */
 		if (ret)
 			break;
-		timeout -= MIN(timeout, (unsigned)end - (unsigned)start);
 	}
 	mutex_exit(&common.lock);
+
+	/*
+	 * Massage the return code if nonzero:
+	 * - if we were interrupted, return -ERESTARTSYS;
+	 * - if we timed out, return 0.
+	 * No other failure is possible.  On success, ret=0 but we
+	 * check again below to verify anyway.
+	 */
+	if (ret) {
+		KASSERTMSG((ret == -EINTR || ret == -ERESTART ||
+			ret == -EWOULDBLOCK), "ret=%ld", ret);
+		if (ret == -EINTR || ret == -ERESTART) {
+			ret = -ERESTARTSYS;
+		} else if (ret == -EWOULDBLOCK) {
+			KASSERT(timeout != MAX_SCHEDULE_TIMEOUT);
+			ret = 0;	/* timed out */
+		}
+	}
+
+	KASSERT(ret != -ERESTART); /* would be confused with time left */
 
 	/*
 	 * Test whether any of the fences has been signalled.  If they
@@ -811,28 +843,22 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 			if (ip)
 				*ip = j;
 			ret = MAX(1, timeout);
-			goto out1;
+			goto out;
 		}
 	}
 
 	/*
-	 * Massage the return code: if we were interrupted, return
-	 * ERESTARTSYS; if cv_timedwait timed out, return 0; otherwise
-	 * return the remaining time.
+	 * If user passed MAX_SCHEDULE_TIMEOUT, we can't return 0
+	 * meaning timed out because we're supposed to wait forever.
 	 */
-	if (ret == -EINTR || ret == -ERESTART) {
-		ret = -ERESTARTSYS;
-	} else if (ret == -EWOULDBLOCK) {
-		ret = 0;	/* timed out */
-	}
-	KASSERTMSG(ret == -ERESTARTSYS || ret >= 0, "ret=%ld", ret);
+	KASSERT(timeout == MAX_SCHEDULE_TIMEOUT ? ret != 0 : 1);
 
-out1:	while (i --> 0)
+out:	while (i --> 0)
 		(void)dma_fence_remove_callback(fences[i], &cb[i].fcb);
 	cv_destroy(&common.cv);
 	mutex_destroy(&common.lock);
 	kfree(cb);
-out0:	return ret;
+	return ret;
 }
 
 /*
@@ -911,27 +937,26 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
 
 	/* Optimistically try to skip the lock if it's already signalled.  */
 	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT))
-		return (timeout ? timeout : 1);
+		return MAX(1, timeout);
 
 	/* Acquire the lock.  */
 	spin_lock(fence->lock);
 
 	/* Ensure signalling is enabled, or stop if already completed.  */
 	if (dma_fence_ensure_signal_enabled(fence) != 0) {
-		spin_unlock(fence->lock);
-		return (timeout ? timeout : 1);
+		ret = MAX(1, timeout);
+		goto out;
 	}
 
 	/* If merely polling, stop here.  */
 	if (timeout == 0) {
-		spin_unlock(fence->lock);
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
 	/* Find out what our deadline is so we can handle spurious wakeup.  */
 	if (timeout < MAX_SCHEDULE_TIMEOUT) {
 		now = getticks();
-		__insn_barrier();
 		starttime = now;
 		deadline = starttime + timeout;
 	}
@@ -944,10 +969,13 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
 		 */
 		if (timeout < MAX_SCHEDULE_TIMEOUT) {
 			now = getticks();
-			__insn_barrier();
-			if (deadline <= now)
+			if (deadline <= now) {
+				ret = -EWOULDBLOCK;
 				break;
+			}
 		}
+
+		/* Wait for the time remaining.  */
 		if (intr) {
 			if (timeout < MAX_SCHEDULE_TIMEOUT) {
 				ret = -cv_timedwait_sig(&fence->f_cv, lock,
@@ -964,43 +992,43 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
 				ret = 0;
 			}
 		}
+
 		/* If the wait failed, give up.  */
-		if (ret) {
-			if (ret == -ERESTART)
-				ret = -ERESTARTSYS;
+		if (ret)
 			break;
+	}
+
+	/*
+	 * Massage the return code if nonzero:
+	 * - if we were interrupted, return -ERESTARTSYS;
+	 * - if we timed out, return 0.
+	 * No other failure is possible.  On success, ret=0 but we
+	 * check again below to verify anyway.
+	 */
+	if (ret) {
+		KASSERTMSG((ret == -EINTR || ret == -ERESTART ||
+			ret == -EWOULDBLOCK), "ret=%ld", ret);
+		if (ret == -EINTR || ret == -ERESTART) {
+			ret = -ERESTARTSYS;
+		} else if (ret == -EWOULDBLOCK) {
+			KASSERT(timeout < MAX_SCHEDULE_TIMEOUT);
+			ret = 0;	/* timed out */
 		}
 	}
 
-	/* All done.  Release the lock.  */
+	KASSERT(ret != -ERESTART); /* would be confused with time left */
+
+	/* Check again in case it was signalled after a wait.  */
+	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT)) {
+		if (timeout < MAX_SCHEDULE_TIMEOUT)
+			ret = MAX(1, deadline - now);
+		else
+			ret = MAX_SCHEDULE_TIMEOUT;
+	}
+
+out:	/* All done.  Release the lock.  */
 	spin_unlock(fence->lock);
-
-	/* If cv_timedwait gave up, return 0 meaning timeout.  */
-	if (ret == -EWOULDBLOCK) {
-		/* Only cv_timedwait and cv_timedwait_sig can return this.  */
-		KASSERT(timeout < MAX_SCHEDULE_TIMEOUT);
-		return 0;
-	}
-
-	/* If there was a timeout and the deadline passed, return 0.  */
-	if (timeout < MAX_SCHEDULE_TIMEOUT) {
-		if (deadline <= now)
-			return 0;
-	}
-
-	/* If we were interrupted, return -ERESTARTSYS.  */
-	if (ret == -EINTR || ret == -ERESTART)
-		return -ERESTARTSYS;
-
-	/* If there was any other kind of error, fail.  */
-	if (ret)
-		return ret;
-
-	/*
-	 * Success!  Return the number of ticks left, at least 1, or 1
-	 * if no timeout.
-	 */
-	return (timeout < MAX_SCHEDULE_TIMEOUT ? MIN(deadline - now, 1) : 1);
+	return ret;
 }
 
 /*
