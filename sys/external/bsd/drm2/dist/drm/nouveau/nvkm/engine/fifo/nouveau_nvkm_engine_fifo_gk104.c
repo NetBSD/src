@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.5 2021/12/18 23:45:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.6 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.5 2021/12/18 23:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.6 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "gk104.h"
 #include "cgrp.h"
@@ -295,14 +295,14 @@ gk104_fifo_recover_work(struct work_struct *w)
 
 	nvkm_mask(device, 0x002630, runm, runm);
 
-	for (todo = engm; (engn = __ffs64(todo), 1), todo; todo &= ~BIT(engn)) {
+	for (todo = engm; todo && (engn = __ffs64(todo), 1); todo &= ~BIT(engn)) {
 		if ((engine = fifo->engine[engn].engine)) {
 			nvkm_subdev_fini(&engine->subdev, false);
 			WARN_ON(nvkm_subdev_init(&engine->subdev));
 		}
 	}
 
-	for (todo = runm; (runl = __ffs(todo), 1), todo; todo &= ~BIT(runl))
+	for (todo = runm; todo && (runl = __ffs(todo), 1); todo &= ~BIT(runl))
 		gk104_fifo_runlist_update(fifo, runl);
 
 	nvkm_wr32(device, 0x00262c, runm);
@@ -524,8 +524,8 @@ gk104_fifo_fault(struct nvkm_fifo *base, struct nvkm_fault_data *info)
 	chan = nvkm_fifo_chan_inst_locked(&fifo->base, info->inst);
 
 	nvkm_error(subdev,
-		   "fault %02x [%s] at %016llx engine %02x [%s] client %02x "
-		   "[%s%s] reason %02x [%s] on channel %d [%010llx %s]\n",
+		   "fault %02x [%s] at %016"PRIx64" engine %02x [%s] client %02x "
+		   "[%s%s] reason %02x [%s] on channel %d [%010"PRIx64" %s]\n",
 		   info->access, ea ? ea->name : "", info->addr,
 		   info->engine, ee ? ee->name : en,
 		   info->client, ct, ec ? ec->name : "",
@@ -1018,20 +1018,6 @@ gk104_fifo_init(struct nvkm_fifo *base)
 
 	if (fifo->func->pbdma->init_timeout)
 		fifo->func->pbdma->init_timeout(fifo);
-
-	/* XXX NetBSD
-	 * write pbdma timeout regs during initialization
-	 * backport of:
-	 * https://github.com/torvalds/linux/commit/79bb4b617f965736d2e1c616235302c1d0e823b2
-	 */
-	switch (device->chipset) {
-	case 0x106:	/* GK208B */
-	case 0x108:	/* GK208 */
-	case 0x117:	/* GM107 */
-		for (i = 0; i < fifo->spoon_nr; i++)
-			nvkm_wr32(device, 0x04012c + (i * 0x2000), 0x0000ffff);
-		break;
-	}
 
 	nvkm_wr32(device, 0x002100, 0xffffffff);
 	nvkm_wr32(device, 0x002140, 0x7fffffff);

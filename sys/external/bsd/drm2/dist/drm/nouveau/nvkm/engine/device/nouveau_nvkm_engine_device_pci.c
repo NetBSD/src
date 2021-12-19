@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.10 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.11 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.10 2021/12/18 23:45:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.11 2021/12/19 10:51:57 riastradh Exp $");
 
 #include <core/pci.h>
 #include "priv.h"
@@ -1571,9 +1571,8 @@ static bus_dma_tag_t
 nvkm_device_pci_dma_tag(struct nvkm_device *device)
 {
 	struct nvkm_device_pci *pdev = nvkm_device_pci(device);
-	const struct pci_attach_args *pa = &pdev->pdev->pd_pa;
 
-	return pci_dma64_available(pa) ? pa->pa_dmat64 : pa->pa_dmat;
+	return pdev->dmat;
 }
 
 static bus_space_tag_t
@@ -1634,7 +1633,10 @@ static void *
 nvkm_device_pci_dtor(struct nvkm_device *device)
 {
 	struct nvkm_device_pci *pdev = nvkm_device_pci(device);
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	if (pdev->dmat != pdev->bus_dmat)
+		bus_dmatag_destroy(pdev->dmat);
+#else
 	pci_disable_device(pdev->pdev);
 #endif
 	return pdev;
@@ -1711,7 +1713,8 @@ nvkm_device_pci_new(struct pci_dev *pci_dev, const char *cfg, const char *dbg,
 	*pdevice = &pdev->device;
 	pdev->pdev = pci_dev;
 
-	ret = nvkm_device_ctor(&nvkm_device_pci_func, quirk, &pci_dev->dev,
+	ret = nvkm_device_ctor(&nvkm_device_pci_func, quirk,
+			       pci_dev_dev(pci_dev),
 			       pci_is_pcie(pci_dev) ? NVKM_DEVICE_PCIE :
 			       pci_find_capability(pci_dev, PCI_CAP_ID_AGP) ?
 			       NVKM_DEVICE_AGP : NVKM_DEVICE_PCI,
@@ -1731,11 +1734,26 @@ nvkm_device_pci_new(struct pci_dev *pci_dev, const char *cfg, const char *dbg,
 	else
 		bits = 32;
 
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &pci_dev->pd_pa;
+	KASSERT(bits >= 32);
+	if (bits == 32 || !pci_dma64_available(pa)) {
+		pdev->dmat = pdev->bus_dmat = pa->pa_dmat;
+	} else {
+		pdev->bus_dmat = pa->pa_dmat64;
+		/* XXX error NetBSD->Linux */
+		ret = -bus_dmatag_subregion(pdev->bus_dmat, 0,
+		    DMA_BIT_MASK(bits), &pdev->dmat, BUS_DMA_WAITOK);
+		if (ret)	/* fall back to 32-bit dma */
+			pdev->dmat = pdev->bus_dmat = pa->pa_dmat;
+	}
+#else
 	ret = dma_set_mask_and_coherent(&pci_dev->dev, DMA_BIT_MASK(bits));
 	if (ret && bits != 32) {
 		dma_set_mask_and_coherent(&pci_dev->dev, DMA_BIT_MASK(32));
 		pdev->device.mmu->dma_bits = 32;
 	}
+#endif
 
 	return 0;
 }

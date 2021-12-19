@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_mem.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_mem.c,v 1.3 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_mem.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_mem.c,v 1.3 2021/12/19 10:51:56 riastradh Exp $");
 
 #include "nouveau_mem.h"
 #include "nouveau_drv.h"
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_mem.c,v 1.2 2021/12/18 23:45:32 riastradh Ex
 #include <nvif/if500d.h>
 #include <nvif/if900b.h>
 #include <nvif/if900d.h>
+
+#include <linux/nbsd-namespace.h>
 
 int
 nouveau_mem_map(struct nouveau_mem *mem,
@@ -121,8 +123,12 @@ nouveau_mem_host(struct ttm_mem_reg *reg, struct ttm_dma_tt *tt)
 		mem->comp = 0;
 	}
 
+#ifdef __NetBSD__		/* XXX prime */
+	args.dma = tt->dma_address;
+#else
 	if (tt->ttm.sg) args.sgl = tt->ttm.sg->sgl;
 	else            args.dma = tt->dma_address;
+#endif
 
 	mutex_lock(&drm->master.lock);
 	cli->base.super = true;

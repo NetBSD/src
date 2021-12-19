@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.28 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.29 2021/12/19 10:51:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.28 2021/12/19 10:32:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.29 2021/12/19 10:51:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #if defined(__arm__) || defined(__aarch64__)
@@ -44,12 +44,14 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.28 2021/12/19 10:32:59 riastradh E
 #include <sys/workqueue.h>
 #include <sys/module.h>
 
-#include <core/device.h>
-#include <core/pci.h>
-
 #ifdef FDT
 #include <dev/fdt/fdtvar.h>
 #endif
+
+#include <drm/drm_pci.h>
+
+#include <core/device.h>
+#include <core/pci.h>
 
 #include "nouveau_drv.h"
 #include "nouveau_pci.h"

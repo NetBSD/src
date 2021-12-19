@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.4 2021/12/18 23:45:42 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.5 2021/12/19 10:51:59 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.4 2021/12/18 23:45:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.5 2021/12/19 10:51:59 riastradh Exp $");
 
 #include "priv.h"
 
@@ -42,7 +42,7 @@ nvkm_timer_wait_test(struct nvkm_timer_wait *wait)
 
 	if (wait->time1 == time) {
 		if (wait->reads++ == 16) {
-			nvkm_fatal(subdev, "stalled at %016llx\n", time);
+			nvkm_fatal(subdev, "stalled at %016"PRIx64"\n", time);
 			return -ETIMEDOUT;
 		}
 	} else {

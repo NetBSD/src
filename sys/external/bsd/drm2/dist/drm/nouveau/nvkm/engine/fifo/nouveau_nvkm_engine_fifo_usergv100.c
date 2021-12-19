@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_usergv100.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_usergv100.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,15 +22,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_usergv100.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_usergv100.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "user.h"
 
 static int
+#ifdef __NetBSD__
+gv100_fifo_user_map(struct nvkm_object *object, void *argv, u32 argc,
+		    enum nvkm_object_map *type,
+		    bus_space_tag_t *tag, u64 *addr, u64 *size)
+#else
 gv100_fifo_user_map(struct nvkm_object *object, void *argv, u32 argc,
 		    enum nvkm_object_map *type, u64 *addr, u64 *size)
+#endif
 {
 	struct nvkm_device *device = object->engine->subdev.device;
+#ifdef __NetBSD__
+	*tag = device->func->resource_tag(device, 0);
+#endif
 	*addr = 0x810000 + device->func->resource_addr(device, 0);
 	*size = 0x010000;
 	*type = NVKM_OBJECT_MAP_IO;

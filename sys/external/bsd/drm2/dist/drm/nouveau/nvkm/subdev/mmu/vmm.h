@@ -1,4 +1,4 @@
-/*	$NetBSD: vmm.h,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: vmm.h,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 #ifndef __NVKM_VMM_H__
 #define __NVKM_VMM_H__
@@ -327,7 +327,7 @@ int tu102_vmm_new(struct nvkm_mmu *, bool, u64, u64, void *, u32,
 #define VMM_WO(m,o,d,c,b) nvkm_wo##b((m)->memory, (o), (d))
 #define VMM_XO(m,v,o,d,c,b,fn,f,a...) do {                                     \
 	const u32 _pteo = (o); u##b _data = (d);                               \
-	VMM_SPAM((v), "   %010llx "f, (m)->addr + _pteo, _data, ##a);          \
+	VMM_SPAM((v), "   %010"PRIx64" "f, (u64)(m)->addr + _pteo, _data, ##a);          \
 	VMM_##fn((m), (m)->base + _pteo, _data, (c), b);                       \
 } while(0)
 
@@ -335,14 +335,14 @@ int tu102_vmm_new(struct nvkm_mmu *, bool, u64, u64, void *, u32,
 #define VMM_FO032(m,v,o,d,c)                                                   \
 	VMM_XO((m),(v),(o),(d),(c), 32, FO, "%08x %08x", (c))
 
-#define VMM_WO064(m,v,o,d) VMM_XO((m),(v),(o),(d),  1, 64, WO, "%016llx")
+#define VMM_WO064(m,v,o,d) VMM_XO((m),(v),(o),(d),  1, 64, WO, "%016"PRIx64"")
 #define VMM_FO064(m,v,o,d,c)                                                   \
-	VMM_XO((m),(v),(o),(d),(c), 64, FO, "%016llx %08x", (c))
+	VMM_XO((m),(v),(o),(d),(c), 64, FO, "%016"PRIx64" %08x", (c))
 
 #define VMM_XO128(m,v,o,lo,hi,c,f,a...) do {                                   \
 	u32 _pteo = (o), _ptes = (c);                                          \
 	const u64 _addr = (m)->addr + _pteo;                                   \
-	VMM_SPAM((v), "   %010llx %016llx%016llx"f, _addr, (hi), (lo), ##a);   \
+	VMM_SPAM((v), "   %010"PRIx64" %016"PRIx64"%016"PRIx64""f, _addr, (u64)(hi), (u64)(lo), ##a);   \
 	while (_ptes--) {                                                      \
 		nvkm_wo64((m)->memory, (m)->base + _pteo + 0, (lo));           \
 		nvkm_wo64((m)->memory, (m)->base + _pteo + 8, (hi));           \

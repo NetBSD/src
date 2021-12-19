@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmmnv04.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmmnv04.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmmnv04.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmmnv04.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "vmm.h"
 
@@ -40,12 +40,14 @@ nv04_vmm_pgt_pte(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
 	}
 }
 
+#ifndef __NetBSD__
 static void
 nv04_vmm_pgt_sgl(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
 		 u32 ptei, u32 ptes, struct nvkm_vmm_map *map)
 {
 	VMM_MAP_ITER_SGL(vmm, pt, ptei, ptes, map, nv04_vmm_pgt_pte);
 }
+#endif
 
 static void
 nv04_vmm_pgt_dma(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
@@ -72,7 +74,9 @@ static const struct nvkm_vmm_desc_func
 nv04_vmm_desc_pgt = {
 	.unmap = nv04_vmm_pgt_unmap,
 	.dma = nv04_vmm_pgt_dma,
+#ifndef __NetBSD__
 	.sgl = nv04_vmm_pgt_sgl,
+#endif
 };
 
 static const struct nvkm_vmm_desc

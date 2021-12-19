@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.21 2021/12/19 10:50:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.22 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.21 2021/12/19 10:50:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.22 2021/12/19 10:51:56 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -933,7 +933,16 @@ nouveau_pmops_resume(struct device *dev)
 	return ret;
 }
 
-#ifndef __NetBSD__		/* XXX nouveau pm */
+#ifdef __NetBSD__		/* XXX nouveau pm */
+
+bool
+nouveau_pmops_runtime(void)
+{
+	return true;		/* XXX */
+}
+
+#else
+
 static int
 nouveau_pmops_freeze(struct device *dev)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_nvfw_acr.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_nvfw_acr.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_nvfw_acr.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_nvfw_acr.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
 
 #include <core/subdev.h>
 #include <nvfw/acr.h>
@@ -50,7 +50,7 @@ wpr_header_v1_dump(struct nvkm_subdev *subdev, const struct wpr_header_v1 *hdr)
 	nvkm_debug(subdev, "\tstatus        : %d\n", hdr->status);
 }
 
-void
+static void
 lsb_header_tail_dump(struct nvkm_subdev *subdev,
 			struct lsb_header_tail *hdr)
 {
@@ -112,7 +112,7 @@ flcn_acr_desc_dump(struct nvkm_subdev *subdev, struct flcn_acr_desc *hdr)
 
 	nvkm_debug(subdev, "\tucodeBlobSize: %d\n",
 		   hdr->ucode_blob_size);
-	nvkm_debug(subdev, "\tucodeBlobBase: 0x%llx\n",
+	nvkm_debug(subdev, "\tucodeBlobBase: 0x%"PRIx64"\n",
 		   hdr->ucode_blob_base);
 	nvkm_debug(subdev, "\tvprEnabled   : %d\n",
 		   hdr->vpr_desc.vpr_enabled);
@@ -157,7 +157,7 @@ flcn_acr_desc_v1_dump(struct nvkm_subdev *subdev, struct flcn_acr_desc_v1 *hdr)
 
 	nvkm_debug(subdev, "\tucodeBlobSize       : %d\n",
 		   hdr->ucode_blob_size);
-	nvkm_debug(subdev, "\tucodeBlobBase       : 0x%llx\n",
+	nvkm_debug(subdev, "\tucodeBlobBase       : 0x%"PRIx64"\n",
 		   hdr->ucode_blob_base);
 	nvkm_debug(subdev, "\tvprEnabled          : %d\n",
 		   hdr->vpr_desc.vpr_enabled);

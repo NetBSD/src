@@ -1,4 +1,4 @@
-/*	$NetBSD: gk104.h,v 1.4 2021/12/18 23:45:35 riastradh Exp $	*/
+/*	$NetBSD: gk104.h,v 1.5 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __GK104_FIFO_H__
@@ -33,7 +33,12 @@ struct gk104_fifo {
 	struct {
 		struct nvkm_memory *mem[2];
 		int next;
+#ifdef __NetBSD__
+		spinlock_t lock;
+		drm_waitqueue_t wait;
+#else
 		wait_queue_head_t wait;
+#endif
 		struct list_head cgrp;
 		struct list_head chan;
 		u32 engm;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_gk20a.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_gk20a.c,v 1.4 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014-2015, NVIDIA CORPORATION. All rights reserved.
@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gk20a.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gk20a.c,v 1.4 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "gf100.h"
 #include "ctxgf100.h"
@@ -38,7 +38,7 @@ struct gk20a_fw_av
 	u32 data;
 };
 
-int
+static int
 gk20a_gr_av_to_init(struct gf100_gr *gr, const char *path, const char *name,
 		    int ver, struct gf100_gr_pack **ppack)
 {
@@ -88,7 +88,7 @@ struct gk20a_fw_aiv
 	u32 data;
 };
 
-int
+static int
 gk20a_gr_aiv_to_init(struct gf100_gr *gr, const char *path, const char *name,
 		     int ver, struct gf100_gr_pack **ppack)
 {
@@ -131,7 +131,7 @@ end:
 	return ret;
 }
 
-int
+static int
 gk20a_gr_av_to_method(struct gf100_gr *gr, const char *path, const char *name,
 		      int ver, struct gf100_gr_pack **ppack)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_ramnv1a.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_ramnv1a.c,v 1.4 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,13 +24,16 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramnv1a.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramnv1a.c,v 1.4 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "ram.h"
 
 int
 nv1a_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
 {
+#ifdef __NetBSD__		/* XXX pci */
+	return -ENODEV;
+#else
 	struct pci_dev *bridge;
 	u32 mem, mib;
 	int domain = 0;
@@ -58,4 +61,5 @@ nv1a_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
 
 	return nvkm_ram_new_(&nv04_ram_func, fb, NVKM_RAM_TYPE_STOLEN,
 			     mib * 1024 * 1024, pram);
+#endif
 }

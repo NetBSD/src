@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_gt215.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_gt215.c,v 1.4 2021/12/19 10:51:59 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_gt215.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_gt215.c,v 1.4 2021/12/19 10:51:59 riastradh Exp $");
 
 #include "priv.h"
 
@@ -41,7 +41,7 @@ gt215_therm_fan_sense(struct nvkm_therm *therm)
 	return -ENODEV;
 }
 
-void
+static void
 gt215_therm_init(struct nvkm_therm *therm)
 {
 	struct nvkm_device *device = therm->subdev.device;

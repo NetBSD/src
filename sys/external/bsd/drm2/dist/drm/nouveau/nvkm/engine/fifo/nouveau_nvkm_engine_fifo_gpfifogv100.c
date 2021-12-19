@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gpfifogv100.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gpfifogv100.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gpfifogv100.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gpfifogv100.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "changk104.h"
 #include "cgrp.h"
@@ -237,9 +237,9 @@ gv100_fifo_gpfifo_new(struct gk104_fifo *fifo, const struct nvkm_oclass *oclass,
 
 	nvif_ioctl(parent, "create channel gpfifo size %d\n", size);
 	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(parent, "create channel gpfifo vers %d vmm %llx "
-				   "ioffset %016llx ilength %08x "
-				   "runlist %016llx priv %d\n",
+		nvif_ioctl(parent, "create channel gpfifo vers %d vmm %"PRIx64" "
+				   "ioffset %016"PRIx64" ilength %08x "
+				   "runlist %016"PRIx64" priv %d\n",
 			   args->v0.version, args->v0.vmm, args->v0.ioffset,
 			   args->v0.ilength, args->v0.runlist, args->v0.priv);
 		if (args->v0.priv && !oclass->client->super)

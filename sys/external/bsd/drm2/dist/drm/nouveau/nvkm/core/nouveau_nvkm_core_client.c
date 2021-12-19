@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.4 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.5 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.4 2021/12/18 23:45:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.5 2021/12/19 10:51:57 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/device.h>
@@ -287,6 +287,41 @@ nvkm_client = {
 	.sclass = nvkm_client_child_get,
 };
 
+#ifdef __NetBSD__
+/* sync with nouveau_nvkm_core_object.c */
+static int
+compare_object_nodes(void *cookie, const void *va, const void *vb)
+{
+	const struct nvkm_object *oa = va;
+	const struct nvkm_object *ob = vb;
+
+	if (oa->object < ob->object)
+		return -1;
+	if (oa->object > ob->object)
+		return +1;
+	return 0;
+}
+
+static int
+compare_object_key(void *cookie, const void *vo, const void *vk)
+{
+	const struct nvkm_object *o = vo;
+	const u64 *k = vk;
+
+	if (o->object < *k)
+		return -1;
+	if (o->object > *k)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t nvkm_client_objtree_ops = {
+	.rbto_compare_nodes = compare_object_nodes,
+	.rbto_compare_key = compare_object_key,
+	.rbto_node_offset = offsetof(struct nvkm_object, node),
+};
+#endif
+
 int
 nvkm_client_new(const char *name, u64 device, const char *cfg,
 		const char *dbg,
@@ -306,7 +341,6 @@ nvkm_client_new(const char *name, u64 device, const char *cfg,
 	client->debug = nvkm_dbgopt(dbg, "CLIENT");
 #ifdef __NetBSD__
 	rb_tree_init(&client->objtree, &nvkm_client_objtree_ops);
-	rb_tree_init(&client->dmatree, &nvkm_client_dmatree_ops);
 #else
 	client->objroot = RB_ROOT;
 #endif

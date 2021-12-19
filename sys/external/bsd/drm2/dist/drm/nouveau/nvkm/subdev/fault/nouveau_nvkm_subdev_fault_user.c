@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fault_user.c,v 1.2 2021/12/18 23:45:39 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fault_user.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fault_user.c,v 1.2 2021/12/18 23:45:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fault_user.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "priv.h"
 
@@ -33,12 +33,21 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fault_user.c,v 1.2 2021/12/18 23
 #include <nvif/unpack.h>
 
 static int
+#ifdef __NetBSD__
+nvkm_ufault_map(struct nvkm_object *object, void *argv, u32 argc,
+		enum nvkm_object_map *type,
+		bus_space_tag_t *tag, u64 *addr, u64 *size)
+#else
 nvkm_ufault_map(struct nvkm_object *object, void *argv, u32 argc,
 		enum nvkm_object_map *type, u64 *addr, u64 *size)
+#endif
 {
 	struct nvkm_fault_buffer *buffer = nvkm_fault_buffer(object);
 	struct nvkm_device *device = buffer->fault->subdev.device;
 	*type = NVKM_OBJECT_MAP_IO;
+#ifdef __NetBSD__
+	*tag = device->func->resource_tag(device, 3);
+#endif
 	*addr = device->func->resource_addr(device, 3) + buffer->addr;
 	*size = nvkm_memory_size(buffer->mem);
 	return 0;

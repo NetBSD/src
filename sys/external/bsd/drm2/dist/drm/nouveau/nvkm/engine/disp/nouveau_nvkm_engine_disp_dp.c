@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "dp.h"
 #include "conn.h"
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.2 2021/12/18 23:45
 #include <subdev/i2c.h>
 
 #include <nvif/event.h>
+
+#include <linux/nbsd-namespace.h>
 
 struct lt_state {
 	struct nvkm_dp *dp;

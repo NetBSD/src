@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
+/*	$NetBSD: mmu.h,v 1.4 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_MMU_H__
@@ -39,8 +39,13 @@ struct nvkm_vmm {
 	struct list_head join;
 
 	struct list_head list;
+#ifdef __NetBSD__
+	struct rb_tree free;
+	struct rb_tree root;
+#else
 	struct rb_root free;
 	struct rb_root root;
+#endif
 
 	bool bootstrapped;
 	atomic_t engref[NVKM_SUBDEV_NR];
@@ -70,7 +75,9 @@ struct nvkm_vmm_map {
 	u64 offset;
 
 	struct nvkm_mm_node *mem;
+#ifndef __NetBSD__
 	struct scatterlist *sgl;
+#endif
 	dma_addr_t *dma;
 	u64 *pfn;
 	u64 off;

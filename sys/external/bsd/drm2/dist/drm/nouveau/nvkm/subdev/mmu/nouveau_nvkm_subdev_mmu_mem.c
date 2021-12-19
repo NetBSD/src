@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.2 2021/12/18 23:45:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.2 2021/12/18 23:45:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #define nvkm_mem(p) container_of((p), struct nvkm_mem, memory)
 #include "mem.h"
@@ -32,16 +32,25 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.2 2021/12/18 23:45
 #include <nvif/if000a.h>
 #include <nvif/unpack.h>
 
+#include <linux/nbsd-namespace.h>
+
 struct nvkm_mem {
 	struct nvkm_memory memory;
 	enum nvkm_memory_target target;
 	struct nvkm_mmu *mmu;
 	u64 pages;
+#ifdef __NetBSD__
+	bus_dma_segment_t *mem;
+	int nseg;
+	bus_dmamap_t dmamap;
+	bus_addr_t *dma;
+#else
 	struct page **mem;
 	union {
 		struct scatterlist *sgl;
 		dma_addr_t *dma;
 	};
+#endif
 };
 
 static enum nvkm_memory_target
@@ -89,6 +98,15 @@ nvkm_mem_dtor(struct nvkm_memory *memory)
 {
 	struct nvkm_mem *mem = nvkm_mem(memory);
 	if (mem->mem) {
+#ifdef __NetBSD__
+		struct nvkm_device *device = mem->mmu->subdev.device;
+		bus_dma_tag_t dmat = device->func->dma_tag(device);
+		kmem_free(mem->dma,
+		    mem->dmamap->dm_nsegs * sizeof(mem->dma[0]));
+		bus_dmamap_unload(dmat, mem->dmamap);
+		bus_dmamem_free(dmat, mem->mem, mem->nseg);
+		kmem_free(mem->mem, mem->pages * sizeof(mem->mem[0]));
+#else
 		while (mem->pages--) {
 			dma_unmap_page(mem->mmu->subdev.device->dev,
 				       mem->dma[mem->pages], PAGE_SIZE,
@@ -97,6 +115,7 @@ nvkm_mem_dtor(struct nvkm_memory *memory)
 		}
 		kvfree(mem->dma);
 		kvfree(mem->mem);
+#endif
 	}
 	return mem;
 }
@@ -111,6 +130,7 @@ nvkm_mem_dma = {
 	.map = nvkm_mem_map_dma,
 };
 
+#ifndef __NetBSD__
 static int
 nvkm_mem_map_sgl(struct nvkm_memory *memory, u64 offset, struct nvkm_vmm *vmm,
 		 struct nvkm_vma *vma, void *argv, u32 argc)
@@ -133,13 +153,32 @@ nvkm_mem_sgl = {
 	.size = nvkm_mem_size,
 	.map = nvkm_mem_map_sgl,
 };
+#endif
 
 int
+#ifdef __NetBSD__
+nvkm_mem_map_host(struct nvkm_memory *memory, bus_dma_tag_t *tagp, void **pmap,
+    bus_size_t *sizep)
+#else
 nvkm_mem_map_host(struct nvkm_memory *memory, void **pmap)
+#endif
 {
 	struct nvkm_mem *mem = nvkm_mem(memory);
 	if (mem->mem) {
+#ifdef __NetBSD__
+		struct nvkm_device *device = mem->mmu->subdev.device;
+		bus_dma_tag_t dmat = device->func->dma_tag(device);
+		/* XXX errno NetBSD->Linux */
+		int ret = -bus_dmamem_map(dmat, mem->mem, mem->nseg,
+		    mem->pages << PAGE_SHIFT, pmap, BUS_DMA_WAITOK);
+		if (ret) {
+			*pmap = NULL;
+			return ret;
+		}
+		return 0;
+#else
 		*pmap = vmap(mem->mem, mem->pages, VM_MAP, PAGE_KERNEL);
+#endif
 		return *pmap ? 0 : -EFAULT;
 	}
 	return -EINVAL;
@@ -177,10 +216,21 @@ nvkm_mem_new_host(struct nvkm_mmu *mmu, int type, u8 page, u64 size,
 	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
 		if (args->v0.dma) {
 			nvkm_memory_ctor(&nvkm_mem_dma, &mem->memory);
-			mem->dma = args->v0.dma;
+			mem->dmamap = args->v0.dma;
+			mem->dma = kmem_zalloc(mem->dmamap->dm_nsegs *
+			    sizeof(mem->dma[0]), KM_SLEEP);
+			for (unsigned i = 0; i < mem->dmamap->dm_nsegs; i++) {
+				KASSERT(mem->dmamap->dm_segs[i].ds_len <=
+				    PAGE_SIZE);
+				mem->dma[i] = mem->dmamap->dm_segs[i].ds_addr;
+			}
 		} else {
+#ifdef __NetBSD__
+			return -ENODEV;
+#else
 			nvkm_memory_ctor(&nvkm_mem_sgl, &mem->memory);
 			mem->sgl = args->v0.sgl;
+#endif
 		}
 
 		if (!IS_ALIGNED(size, PAGE_SIZE))
@@ -196,6 +246,41 @@ nvkm_mem_new_host(struct nvkm_mmu *mmu, int type, u8 page, u64 size,
 	nvkm_memory_ctor(&nvkm_mem_dma, &mem->memory);
 	size = ALIGN(size, PAGE_SIZE) >> PAGE_SHIFT;
 
+#ifdef __NetBSD__
+	__USE(gfp);
+	__USE(dev);
+	struct nvkm_device *device = mem->mmu->subdev.device;
+	bus_dma_tag_t dmat = device->func->dma_tag(device);
+	mem->mem = kmem_zalloc(size * sizeof(mem->mem[0]), KM_SLEEP);
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_alloc(dmat, size << PAGE_SHIFT, PAGE_SIZE, PAGE_SIZE,
+	    mem->mem, size, &mem->nseg, BUS_DMA_WAITOK);
+	if (ret) {
+fail0:		kmem_free(mem->mem, size * sizeof(mem->mem[0]));
+		return ret;
+	}
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, size << PAGE_SHIFT, mem->nseg,
+	    PAGE_SIZE, PAGE_SIZE, BUS_DMA_WAITOK, &mem->dmamap);
+	if (ret) {
+fail1:		bus_dmamem_free(dmat, mem->mem, mem->nseg);
+		goto fail0;
+	}
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_load_raw(dmat, mem->dmamap, mem->mem, mem->nseg,
+	    size << PAGE_SHIFT, BUS_DMA_WAITOK);
+	if (ret) {
+fail2: __unused
+		bus_dmamap_destroy(dmat, mem->dmamap);
+		goto fail1;
+	}
+	mem->dma = kmem_zalloc(mem->dmamap->dm_nsegs * sizeof(mem->dma[0]),
+	    KM_SLEEP);
+	for (unsigned i = 0; i < mem->dmamap->dm_nsegs; i++) {
+		KASSERT(mem->dmamap->dm_segs[i].ds_len <= PAGE_SIZE);
+		mem->dma[i] = mem->dmamap->dm_segs[i].ds_addr;
+	}
+#else
 	if (!(mem->mem = kvmalloc_array(size, sizeof(*mem->mem), GFP_KERNEL)))
 		return -ENOMEM;
 	if (!(mem->dma = kvmalloc_array(size, sizeof(*mem->dma), GFP_KERNEL)))
@@ -221,6 +306,7 @@ nvkm_mem_new_host(struct nvkm_mmu *mmu, int type, u8 page, u64 size,
 
 		mem->mem[mem->pages] = p;
 	}
+#endif
 
 	return 0;
 }

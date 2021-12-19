@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmmgm200.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmmgm200.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmmgm200.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmmgm200.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "vmm.h"
 
@@ -43,7 +43,9 @@ gm200_vmm_spt = {
 	.sparse = gm200_vmm_pgt_sparse,
 	.mem = gf100_vmm_pgt_mem,
 	.dma = gf100_vmm_pgt_dma,
+#ifndef __NetBSD__
 	.sgl = gf100_vmm_pgt_sgl,
+#endif
 };
 
 static const struct nvkm_vmm_desc_func

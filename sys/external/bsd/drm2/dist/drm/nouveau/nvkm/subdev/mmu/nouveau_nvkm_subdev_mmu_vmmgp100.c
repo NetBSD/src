@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmmgp100.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmmgp100.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmmgp100.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmmgp100.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "vmm.h"
 
@@ -49,7 +49,12 @@ gp100_vmm_pfn_unmap(struct nvkm_vmm *vmm,
 		u64 data   = (u64)datahi << 32 | datalo;
 		if ((data & (3ULL << 1)) != 0) {
 			addr = (data >> 8) << 12;
+#ifdef __NetBSD__
+			__USE(dev);
+			__USE(addr);
+#else
 			dma_unmap_page(dev, addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
+#endif
 		}
 		ptei++;
 	}
@@ -90,6 +95,10 @@ gp100_vmm_pgt_pfn(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
 			data |= BIT_ULL(6); /* RO. */
 
 		if (!(*map->pfn & NVKM_VMM_PFN_VRAM)) {
+#ifdef __NetBSD__		/* XXX */
+			__USE(dev);
+			__USE(addr);
+#else
 			addr = *map->pfn >> NVKM_VMM_PFN_ADDR_SHIFT;
 			addr = dma_map_page(dev, pfn_to_page(addr), 0,
 					    PAGE_SIZE, DMA_BIDIRECTIONAL);
@@ -99,6 +108,7 @@ gp100_vmm_pgt_pfn(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
 				data |= BIT_ULL(3); /* VOL. */
 				data |= BIT_ULL(0); /* VALID. */
 			}
+#endif
 		} else {
 			data |= (*map->pfn & NVKM_VMM_PFN_ADDR) >> 4;
 			data |= BIT_ULL(0); /* VALID. */
@@ -124,12 +134,14 @@ gp100_vmm_pgt_pte(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
 	}
 }
 
+#ifndef __NetBSD__
 static void
 gp100_vmm_pgt_sgl(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
 		  u32 ptei, u32 ptes, struct nvkm_vmm_map *map)
 {
 	VMM_MAP_ITER_SGL(vmm, pt, ptei, ptes, map, gp100_vmm_pgt_pte);
 }
+#endif
 
 static void
 gp100_vmm_pgt_dma(struct nvkm_vmm *vmm, struct nvkm_mmu_pt *pt,
@@ -171,7 +183,9 @@ gp100_vmm_desc_spt = {
 	.sparse = gp100_vmm_pgt_sparse,
 	.mem = gp100_vmm_pgt_mem,
 	.dma = gp100_vmm_pgt_dma,
+#ifndef __NetBSD__
 	.sgl = gp100_vmm_pgt_sgl,
+#endif
 	.pfn = gp100_vmm_pgt_pfn,
 	.pfn_clear = gp100_vmm_pfn_clear,
 	.pfn_unmap = gp100_vmm_pfn_unmap,

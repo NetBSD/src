@@ -1,4 +1,4 @@
-/*	$NetBSD: object.h,v 1.9 2021/12/18 23:45:33 riastradh Exp $	*/
+/*	$NetBSD: object.h,v 1.10 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVIF_OBJECT_H__
@@ -47,6 +47,9 @@ u32  nvif_object_rd(struct nvif_object *, int, u64);
 void nvif_object_wr(struct nvif_object *, int, u64, u32);
 int  nvif_object_mthd(struct nvif_object *, u32, void *, u32);
 int  nvif_object_map_handle(struct nvif_object *, void *, u32,
+#ifdef __NetBSD__
+			    bus_space_tag_t *,
+#endif
 			    u64 *handle, u64 *length);
 void nvif_object_unmap_handle(struct nvif_object *);
 int  nvif_object_map(struct nvif_object *, void *, u32);
