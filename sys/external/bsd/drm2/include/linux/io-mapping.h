@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.6 2021/12/19 01:25:28 riastradh Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.7 2021/12/19 01:34:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,11 +48,10 @@ struct io_mapping {
 	bool			diom_mapped;
 };
 
-static inline struct io_mapping *
-bus_space_io_mapping_create_wc(bus_space_tag_t bst, bus_addr_t addr,
-    bus_size_t size)
+static inline bool
+bus_space_io_mapping_init_wc(bus_space_tag_t bst, struct io_mapping *mapping,
+    bus_addr_t addr, bus_size_t size)
 {
-	struct io_mapping *mapping;
 	bus_size_t offset;
 
 	KASSERT(PAGE_SIZE <= size);
@@ -71,11 +70,10 @@ bus_space_io_mapping_create_wc(bus_space_tag_t bst, bus_addr_t addr,
 		if (bus_space_mmap(bst, addr, offset, PROT_READ|PROT_WRITE,
 			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE)
 		    == (paddr_t)-1)
-			return NULL;
+			return false;
 	}
 
-	/* Create a mapping record.  */
-	mapping = kmem_alloc(sizeof(*mapping), KM_SLEEP);
+	/* Initialize the mapping record.  */
 	mapping->diom_bst = bst;
 	mapping->diom_addr = addr;
 	mapping->diom_size = size;
@@ -86,6 +84,31 @@ bus_space_io_mapping_create_wc(bus_space_tag_t bst, bus_addr_t addr,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	KASSERT(mapping->diom_va != 0);
 
+	return true;
+}
+
+static inline void
+io_mapping_fini(struct io_mapping *mapping)
+{
+
+	KASSERT(!mapping->diom_mapped);
+
+	uvm_km_free(kernel_map, mapping->diom_va, PAGE_SIZE, UVM_KMF_VAONLY);
+	mapping->diom_va = 0;	/* paranoia */
+}
+
+static inline struct io_mapping *
+bus_space_io_mapping_create_wc(bus_space_tag_t bst, bus_addr_t addr,
+    bus_size_t size)
+{
+	struct io_mapping *mapping;
+
+	mapping = kmem_alloc(sizeof(*mapping), KM_SLEEP);
+	if (!bus_space_io_mapping_init_wc(bst, mapping, addr, size)) {
+		kmem_free(mapping, sizeof(*mapping));
+		return NULL;
+	}
+
 	return mapping;
 }
 
@@ -93,9 +116,7 @@ static inline void
 io_mapping_free(struct io_mapping *mapping)
 {
 
-	KASSERT(!mapping->diom_mapped);
-
-	uvm_km_free(kernel_map, mapping->diom_va, PAGE_SIZE, UVM_KMF_VAONLY);
+	io_mapping_fini(mapping);
 	kmem_free(mapping, sizeof(*mapping));
 }
 
