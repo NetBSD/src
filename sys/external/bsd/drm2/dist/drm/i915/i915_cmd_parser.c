@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.26 2021/12/19 11:16:48 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.27 2021/12/19 11:17:10 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.26 2021/12/19 11:16:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.27 2021/12/19 11:17:10 riastradh Exp $");
+
+#include <linux/bitmap.h>
 
 #include "gt/intel_engine.h"
 
