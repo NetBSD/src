@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.7 2021/12/19 11:08:10 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.8 2021/12/19 11:48:42 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.7 2021/12/19 11:08:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.8 2021/12/19 11:48:42 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -415,6 +415,20 @@ void drm_vblank_disable_and_save(struct drm_device *dev, unsigned int pipe)
 
 out:
 	spin_unlock_irqrestore(&dev->vblank_time_lock, irqflags);
+}
+
+static void
+vblank_disable_locked(struct drm_vblank_crtc *vblank, struct drm_device *dev,
+    unsigned int pipe)
+{
+
+	BUG_ON(vblank != &dev->vblank[pipe]);
+	assert_spin_locked(&dev->vbl_lock);
+
+	if (atomic_read(&vblank->refcount) == 0 && vblank->enabled) {
+		DRM_DEBUG("disabling vblank on crtc %u\n", pipe);
+		drm_vblank_disable_and_save(dev, pipe);
+	}
 }
 
 static void vblank_disable_fn(struct timer_list *t)
@@ -1086,6 +1100,30 @@ int drm_crtc_vblank_get(struct drm_crtc *crtc)
 }
 EXPORT_SYMBOL(drm_crtc_vblank_get);
 
+static void drm_vblank_put_locked(struct drm_device *dev, unsigned int pipe)
+{
+	struct drm_vblank_crtc *vblank = &dev->vblank[pipe];
+
+	assert_spin_locked(&dev->vbl_lock);
+
+	if (WARN_ON(pipe >= dev->num_crtcs))
+		return;
+
+	if (WARN_ON(atomic_read(&vblank->refcount) == 0))
+		return;
+
+	/* Last user schedules interrupt disable */
+	if (atomic_dec_and_test(&vblank->refcount)) {
+		if (drm_vblank_offdelay == 0)
+			return;
+		else if (drm_vblank_offdelay < 0)
+			vblank_disable_locked(vblank, dev, pipe);
+		else if (!dev->vblank_disable_immediate)
+			mod_timer(&vblank->disable_timer,
+				  jiffies + ((drm_vblank_offdelay * HZ)/1000));
+	}
+}
+
 static void drm_vblank_put(struct drm_device *dev, unsigned int pipe)
 {
 	struct drm_vblank_crtc *vblank = &dev->vblank[pipe];
@@ -1120,6 +1158,11 @@ void drm_crtc_vblank_put(struct drm_crtc *crtc)
 	drm_vblank_put(crtc->dev, drm_crtc_index(crtc));
 }
 EXPORT_SYMBOL(drm_crtc_vblank_put);
+
+void drm_crtc_vblank_put_locked(struct drm_crtc *crtc)
+{
+	drm_vblank_put_locked(crtc->dev, drm_crtc_index(crtc));
+}
 
 /**
  * drm_wait_one_vblank - wait for one vblank
