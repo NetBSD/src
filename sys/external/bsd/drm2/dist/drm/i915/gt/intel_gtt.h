@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.11 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.12 2021/12/19 11:39:55 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -19,6 +19,7 @@
 #define __INTEL_GTT_H__
 
 #include <linux/io-mapping.h>
+#include <linux/ioport.h>
 #include <linux/highmem.h>
 #include <linux/kref.h>
 #include <linux/mm.h>
@@ -346,13 +347,7 @@ struct i915_ggtt {
 	struct i915_address_space vm;
 
 	struct io_mapping iomap;	/* Mapping to our CPU mappable region */
-#ifdef __NetBSD__
-	struct {
-		bus_addr_t start;
-	} gmadr;
-#else
 	struct resource gmadr;          /* GMADR resource */
-#endif
 	resource_size_t mappable_end;	/* End offset that we can CPU map */
 
 	/** "Graphics Stolen Memory" holds the global PTEs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.6 2021/12/19 10:28:52 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.7 2021/12/19 11:39:55 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.6 2021/12/19 10:28:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.7 2021/12/19 11:39:55 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -23,6 +23,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.6 2021/12/19 10:28:52 riastradh Exp
 #include "i915_vgpu.h"
 
 #include "intel_gtt.h"
+
+#include <linux/nbsd-namespace.h>
 
 static int
 i915_get_ggtt_vma_pages(struct i915_vma *vma);
@@ -203,23 +205,6 @@ gen8_set_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i,
         bus_space_write_4(bst, bsh, 8*i + 4, (uint32_t)(pte >> 32));
 #endif
 }
-static gen8_pte_t
-gen8_get_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i)
-{
-	CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN); /* x86 */
-	CTASSERT(sizeof(gen8_pte_t) == 8);
-#ifdef _LP64                    /* XXX How to detect bus_space_read_8?  */
-	return bus_space_read_8(bst, bsh, 8*i);
-#else
-	/*
-	 * XXX I'm not sure this case can actually happen in practice:
-	 * 32-bit gen8 chipsets?
-	 */
-	return bus_space_read_4(bst, bsh, 8*i) |
-	    ((uint64_t)bus_space_read_4(bst, bsh, 8*i + 4) << 32);
-#endif
-}
-
 #else
 static void gen8_set_pte(void __iomem *addr, gen8_pte_t pte)
 {
@@ -234,10 +219,17 @@ static void gen8_ggtt_insert_page(struct i915_address_space *vm,
 				  u32 unused)
 {
 	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
+#ifndef __NetBSD__
 	gen8_pte_t __iomem *pte =
 		(gen8_pte_t __iomem *)ggtt->gsm + offset / I915_GTT_PAGE_SIZE;
+#endif
 
+#ifdef __NetBSD__
+	gen8_set_pte(ggtt->gsmt, ggtt->gsmh, offset / I915_GTT_PAGE_SIZE,
+	    gen8_pte_encode(addr, level, 0));
+#else
 	gen8_set_pte(pte, gen8_pte_encode(addr, level, 0));
+#endif
 
 	ggtt->invalidate(ggtt);
 }
@@ -249,7 +241,7 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 {
 	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 #ifdef __NetBSD__
-	bus_dmamap_t map = vma->pages;
+	bus_dmamap_t map = vma->pages->sgl[0].sg_dmamap;
 	unsigned seg;
 	unsigned pgno;
 #else
@@ -264,10 +256,27 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 	 * not to allow the user to override access to a read only page.
 	 */
 
+#ifdef __NetBSD__
+	pgno = vma->node.start / I915_GTT_PAGE_SIZE;
+	for (seg = 0; seg < map->dm_nsegs; seg++) {
+		addr = map->dm_segs[seg].ds_addr;
+		bus_size_t len = map->dm_segs[seg].ds_len;
+		KASSERT((addr % I915_GTT_PAGE_SIZE) == 0);
+		KASSERT((len % I915_GTT_PAGE_SIZE) == 0);
+		for (;
+		     len >= I915_GTT_PAGE_SIZE;
+		     addr += I915_GTT_PAGE_SIZE, len -= I915_GTT_PAGE_SIZE) {
+			gen8_set_pte(ggtt->gsmt, ggtt->gsmh, pgno++,
+			    pte_encode | addr);
+		}
+		KASSERT(len == 0);
+	}
+#else
 	gtt_entries = (gen8_pte_t __iomem *)ggtt->gsm;
 	gtt_entries += vma->node.start / I915_GTT_PAGE_SIZE;
 	for_each_sgt_daddr(addr, sgt_iter, vma->pages)
 		gen8_set_pte(gtt_entries++, pte_encode | addr);
+#endif
 
 	/*
 	 * We want to flush the TLBs only after we're certain all the PTE
@@ -289,7 +298,7 @@ static void gen6_ggtt_insert_page(struct i915_address_space *vm,
 #endif
 
 #ifdef __NetBSD__
-	bus_space_write_4(ggtt->gsmt, ggtt->gsmh, offset >> PAGE_SHIFT,
+	bus_space_write_4(ggtt->gsmt, ggtt->gsmh, offset / I915_GTT_PAGE_SIZE,
 	    vm->pte_encode(addr, level, flags));
 #else
 	iowrite32(vm->pte_encode(addr, level, flags), pte);
@@ -312,24 +321,26 @@ static void gen6_ggtt_insert_entries(struct i915_address_space *vm,
 {
 	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 #ifdef __NetBSD__
-	bus_dmamap_t map = vma->pages;
+	bus_dmamap_t map = vma->pages->sgl[0].sg_dmamap;
 	unsigned seg;
 	unsigned pgno;
 #else
 	gen6_pte_t __iomem *entries = (gen6_pte_t __iomem *)ggtt->gsm;
 	unsigned int i = vma->node.start / I915_GTT_PAGE_SIZE;
 	struct sgt_iter iter;
-	dma_addr_t addr;
 #endif
+	dma_addr_t addr;
 
 #ifdef __NetBSD__
 	pgno = vma->node.start >> PAGE_SHIFT;
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		addr = map->dm_segs[seg].ds_addr;
 		bus_size_t len = map->dm_segs[seg].ds_len;
-		KASSERT((addr & (PAGE_SIZE - 1)) == 0);
-		KASSERT((len & (PAGE_SIZE - 1)) == 0);
-		for (; len >= PAGE_SIZE; addr += PAGE_SIZE, len -= PAGE_SIZE) {
+		KASSERT((addr % I915_GTT_PAGE_SIZE) == 0);
+		KASSERT((len % I915_GTT_PAGE_SIZE) == 0);
+		for (;
+		     len >= I915_GTT_PAGE_SIZE;
+		     addr += I915_GTT_PAGE_SIZE, len -= I915_GTT_PAGE_SIZE) {
 			/* XXX KASSERT(pgno < ...)?  */
 			CTASSERT(sizeof(gen6_pte_t) == 4);
 			bus_space_write_4(ggtt->gsmt, ggtt->gsmh,
@@ -1003,16 +1014,12 @@ static int gen8_gmch_probe(struct i915_ggtt *ggtt)
 
 	/* TODO: We're not aware of mappable constraints on gen8 yet */
 	if (!IS_DGFX(i915)) {
-#ifdef __NetBSD__
-		ggtt->gmadr.start = pci_resource_start(pdev, 2);
-		ggtt->mappable_end = pci_resource_len(pdev, 2);
-#else
 		ggtt->gmadr = pci_resource(pdev, 2);
 		ggtt->mappable_end = resource_size(&ggtt->gmadr);
-#endif
 	}
 
 #ifdef __NetBSD__
+	__USE(err);
 	ggtt->max_paddr = DMA_BIT_MASK(39);
 #else
 	err = pci_set_dma_mask(pdev, DMA_BIT_MASK(39));
@@ -1159,13 +1166,8 @@ static int gen6_gmch_probe(struct i915_ggtt *ggtt)
 	u16 snb_gmch_ctl;
 	int err;
 
-#ifdef __NetBSD__
-	ggtt->gmadr.start = pci_resource_start(pdev, 2);
-	ggtt->mappable_end = pci_resource_len(pdev, 2);
-#else
 	ggtt->gmadr = pci_resource(pdev, 2);
 	ggtt->mappable_end = resource_size(&ggtt->gmadr);
-#endif
 
 	/*
 	 * 64/512MB is the current min/max we actually know of, but this is
@@ -1177,6 +1179,7 @@ static int gen6_gmch_probe(struct i915_ggtt *ggtt)
 	}
 
 #ifdef __NetBSD__
+	__USE(err);
 	ggtt->max_paddr = DMA_BIT_MASK(40);
 #else
 	err = pci_set_dma_mask(pdev, DMA_BIT_MASK(40));
@@ -1237,21 +1240,17 @@ static int i915_gmch_probe(struct i915_ggtt *ggtt)
 
 	intel_gtt_get(&ggtt->vm.total, &gmadr_base, &ggtt->mappable_end);
 
-#ifdef __NetBSD__
-	ggtt->gmadr.start = gmadr_base;
-	/* Based on i915_drv.c, i915_driver_hw_probe.  */
-	if (INTEL_INFO(dev)->gen <= 2)
-		ggtt->max_paddr = DMA_BIT_MASK(30);
-	else if ((INTEL_INFO(dev)->gen <= 3) ||
-	    IS_BROADWATER(dev) || IS_CRESTLINE(dev))
-		ggtt->max_paddr = DMA_BIT_MASK(32);
-	else if (INTEL_INFO(dev)->gen <= 5)
-		ggtt->max_paddr = DMA_BIT_MASK(36);
-	else
-		ggtt->max_paddr = DMA_BIT_MASK(40);
-#else
 	ggtt->gmadr =
 		(struct resource)DEFINE_RES_MEM(gmadr_base, ggtt->mappable_end);
+
+#ifdef __NetBSD__
+	/* Based on i915_drv.c, i915_driver_hw_probe.  */
+	if (IS_GEN(i915, 2))
+		ggtt->max_paddr = DMA_BIT_MASK(30);
+	else if (IS_I965G(i915) || IS_I965GM(i915))
+		ggtt->max_paddr = DMA_BIT_MASK(32);
+	else
+		ggtt->max_paddr = DMA_BIT_MASK(40);
 #endif
 
 	ggtt->do_idle_maps = needs_idle_maps(i915);
@@ -1308,7 +1307,7 @@ static int ggtt_probe_hw(struct i915_ggtt *ggtt, struct intel_gt *gt)
 
 	if ((ggtt->vm.total - 1) >> 32) {
 		DRM_ERROR("We never expected a Global GTT with more than 32bits"
-			  " of address space! Found %lldM!\n",
+			  " of address space! Found %"PRId64"M!\n",
 			  ggtt->vm.total >> 20);
 		ggtt->vm.total = 1ULL << 32;
 		ggtt->mappable_end =
@@ -1317,15 +1316,15 @@ static int ggtt_probe_hw(struct i915_ggtt *ggtt, struct intel_gt *gt)
 
 	if (ggtt->mappable_end > ggtt->vm.total) {
 		DRM_ERROR("mappable aperture extends past end of GGTT,"
-			  " aperture=%pa, total=%llx\n",
+			  " aperture=%pa, total=%"PRIx64"\n",
 			  &ggtt->mappable_end, ggtt->vm.total);
 		ggtt->mappable_end = ggtt->vm.total;
 	}
 
 	/* GMADR is the PCI mmio aperture into the global GTT. */
-	DRM_DEBUG_DRIVER("GGTT size = %lluM\n", ggtt->vm.total >> 20);
-	DRM_DEBUG_DRIVER("GMADR size = %lluM\n", (u64)ggtt->mappable_end >> 20);
-	DRM_DEBUG_DRIVER("DSM size = %lluM\n",
+	DRM_DEBUG_DRIVER("GGTT size = %"PRIx64"M\n", ggtt->vm.total >> 20);
+	DRM_DEBUG_DRIVER("GMADR size = %"PRIx64"M\n", (u64)ggtt->mappable_end >> 20);
+	DRM_DEBUG_DRIVER("DSM size = %"PRIx64"M\n",
 			 (u64)resource_size(&intel_graphics_stolen_res) >> 20);
 
 	return 0;
@@ -1431,6 +1430,8 @@ void i915_gem_restore_gtt_mappings(struct drm_i915_private *i915)
 	if (INTEL_GEN(i915) >= 8)
 		setup_private_pat(ggtt->vm.gt->uncore);
 }
+
+#ifndef __NetBSD__
 
 static struct scatterlist *
 rotate_pages(struct drm_i915_gem_object *obj, unsigned int offset,
@@ -1639,6 +1640,8 @@ err_st_alloc:
 	return ERR_PTR(ret);
 }
 
+#endif	/* __NetBSD__ */
+
 static int
 i915_get_ggtt_vma_pages(struct i915_vma *vma)
 {
@@ -1660,6 +1663,7 @@ i915_get_ggtt_vma_pages(struct i915_vma *vma)
 		vma->pages = vma->obj->mm.pages;
 		return 0;
 
+#ifndef __NetBSD__
 	case I915_GGTT_VIEW_ROTATED:
 		vma->pages =
 			intel_rotate_pages(&vma->ggtt_view.rotated, vma->obj);
@@ -1673,6 +1677,7 @@ i915_get_ggtt_vma_pages(struct i915_vma *vma)
 	case I915_GGTT_VIEW_PARTIAL:
 		vma->pages = intel_partial_pages(&vma->ggtt_view, vma->obj);
 		break;
+#endif
 	}
 
 	ret = 0;
