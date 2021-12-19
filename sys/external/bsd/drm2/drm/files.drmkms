@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.61 2021/12/19 10:46:24 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.62 2021/12/19 10:46:35 riastradh Exp $
 
 version	20180827
 
@@ -98,7 +98,7 @@ file	external/bsd/drm2/dist/drm/drm_auth.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_blend.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_bridge.c	drmkms
 file	external/bsd/drm2/drm/drm_cache.c	drmkms
-#file	external/bsd/drm2/dist/drm/drm_client.c	drmkms
+file	external/bsd/drm2/drm/drm_client.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_client_modeset.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_color_mgmt.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_connector.c	drmkms
