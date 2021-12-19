@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.h,v 1.8 2021/12/19 12:25:37 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.h,v 1.9 2021/12/19 12:40:43 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -62,12 +62,12 @@ int __must_check i915_vma_move_to_active(struct i915_vma *vma,
 					 struct i915_request *rq,
 					 unsigned int flags);
 
-#ifdef __linux__
-#define __i915_vma_flags(v) ((unsigned long *)&(v)->flags.counter)
-#define __i915_vma_flags_const(v) ((const unsigned long *)&(v)->flags.counter)
-#else
+#ifdef __NetBSD__
 #define __i915_vma_flags(v) ((unsigned long *)&(v)->flags)
 #define __i915_vma_flags_const(v) ((const unsigned long *)&(v)->flags)
+#else
+#define __i915_vma_flags(v) ((unsigned long *)&(v)->flags.counter)
+#define __i915_vma_flags_const(v) ((const unsigned long *)&(v)->flags.counter)
 #endif
 
 
