@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_firmware.c,v 1.1 2021/12/19 10:50:47 riastradh Exp $	*/
+/*	$NetBSD: linux_firmware.c,v 1.2 2021/12/19 12:01:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_firmware.c,v 1.1 2021/12/19 10:50:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_firmware.c,v 1.2 2021/12/19 12:01:04 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -95,6 +95,14 @@ fail0:	KASSERT(ret);
 	kmem_free(fw, sizeof(*fw));
 	*fwp = NULL;
 	return ret;
+}
+
+int
+request_firmware_direct(const struct firmware **fwp, const char *image_name,
+    struct device *dev)
+{
+
+	return request_firmware(fwp, image_name, dev);
 }
 
 int
