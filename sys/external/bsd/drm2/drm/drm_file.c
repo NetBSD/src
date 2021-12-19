@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.c,v 1.3 2021/12/19 09:46:40 riastradh Exp $	*/
+/*	$NetBSD: drm_file.c,v 1.4 2021/12/19 09:52:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.3 2021/12/19 09:46:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.4 2021/12/19 09:52:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
 
-#include <drm/drmP.h>
+#include <linux/capability.h>
+
 #include <drm/drm_drv.h>
 #include <drm/drm_legacy.h>
 #include <drm/drm_file.h>

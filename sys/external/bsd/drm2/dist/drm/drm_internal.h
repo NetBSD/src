@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_internal.h,v 1.9 2021/12/19 01:03:22 riastradh Exp $	*/
+/*	$NetBSD: drm_internal.h,v 1.10 2021/12/19 09:52:00 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -23,6 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/kernel.h>
 #include <drm/drm_ioctl.h>
 
 #define DRM_IF_MAJOR 1

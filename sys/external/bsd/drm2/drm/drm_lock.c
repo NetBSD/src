@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.11 2021/12/19 09:49:24 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.12 2021/12/19 09:52:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,15 +46,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.11 2021/12/19 09:49:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.12 2021/12/19 09:52:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/file.h>
 #include <sys/systm.h>
 
-#include <drm/drmP.h>
-
+#include <drm/drm_print.h>
 #include "../dist/drm/drm_internal.h"
 #include "../dist/drm/drm_legacy.h"
 

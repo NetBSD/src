@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.22 2021/12/19 09:50:42 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.23 2021/12/19 09:52:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.22 2021/12/19 09:50:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.23 2021/12/19 09:52:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -45,10 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.22 2021/12/19 09:50:42 riastradh Ex
 #include <linux/mutex.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_agpsupport.h>
 #include <drm/drm_bridge.h>
 #include <drm/drm_encoder_slave.h>
+#include <drm/drm_global.h>
 #include <drm/drm_sysctl.h>
 #include <drm/drm_panel.h>
+#include <drm/drm_print.h>
 
 #include "../dist/drm/drm_crtc_internal.h"
 #include "../dist/drm/drm_internal.h"
@@ -119,7 +122,7 @@ drm_init(void)
 #endif
 
 	if (ISSET(boothowto, AB_DEBUG))
-		drm_debug = DRM_UT_CORE | DRM_UT_DRIVER | DRM_UT_KMS;
+		__drm_debug = DRM_UT_CORE | DRM_UT_DRIVER | DRM_UT_KMS;
 
 	spin_lock_init(&drm_minor_lock);
 	idr_init(&drm_minors_idr);
