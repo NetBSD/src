@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.15 2020/07/03 16:23:02 maxv Exp $	*/
+/*	$NetBSD: sched.h,v 1.16 2021/12/19 01:22:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _LINUX_SCHED_H_
 
 #include <sys/param.h>
+#include <sys/cdefs.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
@@ -44,6 +45,8 @@
 #define	TASK_COMM_LEN	MAXCOMLEN
 
 #define	MAX_SCHEDULE_TIMEOUT	(INT_MAX/2)	/* paranoia */
+
+#define	TASK_UNINTERRUPTIBLE	__BIT(0)
 
 #define	current	curproc
 
@@ -81,6 +84,14 @@ schedule_timeout_uninterruptible(long timeout)
 
 	remain = timeout - (end - start);
 	return remain > 0 ? remain : 0;
+}
+
+static inline bool
+need_resched(void)
+{
+	/* XXX kpreempt_disable */
+	/* XXX ci_want_resched */
+	return (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD);
 }
 
 static inline void
