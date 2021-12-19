@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.73 2021/12/19 10:19:58 rillig Exp $ */
+/* $NetBSD: read.c,v 1.74 2021/12/19 10:29:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.73 2021/12/19 10:19:58 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.74 2021/12/19 10:29:06 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -96,9 +96,9 @@ static	void	inperr(const char *, ...)
     __attribute__((format(printf, 1, 2), noreturn));
 static	void	setsrc(const char *);
 static	void	setfnid(int, const char *);
-static	void	funccall(pos_t *, const char *);
-static	void	decldef(pos_t *, const char *);
-static	void	usedsym(pos_t *, const char *);
+static	void	funccall(pos_t, const char *);
+static	void	decldef(pos_t, const char *);
+static	void	usedsym(pos_t, const char *);
 static	unsigned short inptype(const char *, const char **);
 static	size_t	gettlen(const char *, const char **);
 static	unsigned short findtype(const char *, size_t, int);
@@ -188,13 +188,13 @@ read_ln_line(const char *line)
 	/* process rest of this record */
 	switch (rt) {
 	case 'c':
-		funccall(&pos, cp);
+		funccall(pos, cp);
 		break;
 	case 'd':
-		decldef(&pos, cp);
+		decldef(pos, cp);
 		break;
 	case 'u':
-		usedsym(&pos, cp);
+		usedsym(pos, cp);
 		break;
 	default:
 		inperr("bad record type %c", rt);
@@ -303,7 +303,7 @@ setfnid(int fid, const char *cp)
  * Process a function call record (c-record).
  */
 static void
-funccall(pos_t *posp, const char *cp)
+funccall(pos_t pos, const char *cp)
 {
 	arginf_t *ai, **lai;
 	char	c;
@@ -313,7 +313,7 @@ funccall(pos_t *posp, const char *cp)
 	const char *name;
 
 	fcall = xalloc(sizeof(*fcall));
-	fcall->f_pos = *posp;
+	fcall->f_pos = pos;
 
 	/* read flags */
 	rused = rdisc = false;
@@ -456,7 +456,7 @@ parse_function_attribute(const char **pp, sym_t *sym, bool *used)
  * Process a declaration or definition (d-record).
  */
 static void
-decldef(pos_t *posp, const char *cp)
+decldef(pos_t pos, const char *cp)
 {
 	sym_t	*symp, sym;
 	char	*pos1, *tname;
@@ -465,7 +465,7 @@ decldef(pos_t *posp, const char *cp)
 	const char *name, *newname;
 
 	(void)memset(&sym, 0, sizeof(sym));
-	sym.s_pos = *posp;
+	sym.s_pos = pos;
 	sym.s_def = NODECL;
 
 	used = false;
@@ -553,14 +553,14 @@ decldef(pos_t *posp, const char *cp)
  * Read an u-record (emitted by lint1 if a symbol was used).
  */
 static void
-usedsym(pos_t *posp, const char *cp)
+usedsym(pos_t pos, const char *cp)
 {
 	usym_t	*usym;
 	hte_t	*hte;
 	const char *name;
 
 	usym = xalloc(sizeof(*usym));
-	usym->u_pos = *posp;
+	usym->u_pos = pos;
 
 	/* needed as delimiter between two numbers */
 	if (*cp++ != 'x')
