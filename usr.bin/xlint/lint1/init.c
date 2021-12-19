@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.220 2021/12/18 13:23:09 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.221 2021/12/19 10:17:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.220 2021/12/18 13:23:09 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.221 2021/12/19 10:17:00 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -94,10 +94,10 @@ __RCSID("$NetBSD: init.c,v 1.220 2021/12/18 13:23:09 rillig Exp $");
  *
  * C99 6.7.8p6, 6.7.8p7
  */
-struct designator {
+typedef struct designator {
 	const char	*dr_name;	/* for struct and union */
 	size_t		dr_subscript;	/* for array */
-};
+} designator;
 
 /*
  * The path from the "current object" of a brace level to the sub-object that
@@ -106,11 +106,11 @@ struct designator {
  *
  * C99 6.7.8p6, 6.7.8p7
  */
-struct designation {
-	struct designator *dn_items;
+typedef struct designation {
+	designator	*dn_items;
 	size_t		dn_len;
 	size_t		dn_cap;
-};
+} designation;
 
 /*
  * Everything that happens between a '{' and the corresponding '}' of an
@@ -118,7 +118,7 @@ struct designation {
  *
  * C99 6.7.8p17
  */
-struct brace_level {
+typedef struct brace_level {
 	/* The type of the "current object". */
 	const type_t	*bl_type;
 
@@ -129,7 +129,7 @@ struct brace_level {
 	 * TODO: use this not only for explicit designations but also for
 	 *  implicit designations, like in C90.
 	 */
-	struct designation bl_designation;
+	designation	bl_designation;
 
 	/*
 	 * The next member of the struct or union that is to be initialized,
@@ -162,7 +162,7 @@ struct brace_level {
 	bool		bl_confused:1;
 
 	struct brace_level *bl_enclosing;
-};
+} brace_level;
 
 /*
  * An ongoing initialization.
@@ -170,12 +170,12 @@ struct brace_level {
  * In most cases there is only ever a single initialization going on.  See
  * pointer_to_compound_literal in msg_171.c for an exception.
  */
-struct initialization {
+typedef struct initialization {
 	/* The symbol that is to be initialized. */
 	sym_t		*in_sym;
 
 	/* The innermost brace level. */
-	struct brace_level *in_brace_level;
+	brace_level	*in_brace_level;
 
 	/*
 	 * The maximum subscript that has ever be seen for an array of
@@ -192,7 +192,7 @@ struct initialization {
 	bool		in_err;
 
 	struct initialization *in_enclosing;
-};
+} initialization;
 
 
 static void *
@@ -395,7 +395,7 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 
 
 static const type_t *
-designator_look_up(const struct designator *dr, const type_t *tp)
+designator_look_up(const designator *dr, const type_t *tp)
 {
 	switch (tp->t_tspec) {
 	case STRUCT:
@@ -429,7 +429,7 @@ designator_look_up(const struct designator *dr, const type_t *tp)
 
 #ifdef DEBUG
 static void
-designation_debug(const struct designation *dn)
+designation_debug(const designation *dn)
 {
 	size_t i;
 
@@ -439,7 +439,7 @@ designation_debug(const struct designation *dn)
 	debug_indent();
 	debug_printf("designation: ");
 	for (i = 0; i < dn->dn_len; i++) {
-		const struct designator *dr = dn->dn_items + i;
+		const designator *dr = dn->dn_items + i;
 		if (dr->dr_name != NULL) {
 			debug_printf(".%s", dr->dr_name);
 			lint_assert(dr->dr_subscript == 0);
@@ -453,7 +453,7 @@ designation_debug(const struct designation *dn)
 #endif
 
 static void
-designation_add(struct designation *dn, const char *name, size_t subscript)
+designation_add(designation *dn, const char *name, size_t subscript)
 {
 
 	if (dn->dn_len == dn->dn_cap) {
@@ -474,7 +474,7 @@ designation_add(struct designation *dn, const char *name, size_t subscript)
  * C99 6.7.8p18
  */
 static const type_t *
-designation_look_up(const struct designation *dn, const type_t *tp)
+designation_look_up(const designation *dn, const type_t *tp)
 {
 	size_t i;
 
@@ -484,24 +484,24 @@ designation_look_up(const struct designation *dn, const type_t *tp)
 }
 
 static void
-designation_reset(struct designation *dn)
+designation_reset(designation *dn)
 {
 
 	dn->dn_len = 0;
 }
 
 static void
-designation_free(struct designation *dn)
+designation_free(designation *dn)
 {
 
 	free(dn->dn_items);
 }
 
 
-static struct brace_level *
-brace_level_new(const type_t *tp, struct brace_level *enclosing)
+static brace_level *
+brace_level_new(const type_t *tp, brace_level *enclosing)
 {
-	struct brace_level *bl;
+	brace_level *bl;
 
 	bl = xcalloc(1, sizeof(*bl));
 	bl->bl_type = tp;
@@ -513,7 +513,7 @@ brace_level_new(const type_t *tp, struct brace_level *enclosing)
 }
 
 static void
-brace_level_free(struct brace_level *bl)
+brace_level_free(brace_level *bl)
 {
 
 	designation_free(&bl->bl_designation);
@@ -522,7 +522,7 @@ brace_level_free(struct brace_level *bl)
 
 #ifdef DEBUG
 static void
-brace_level_debug(const struct brace_level *bl)
+brace_level_debug(const brace_level *bl)
 {
 
 	lint_assert(bl->bl_type != NULL);
@@ -543,7 +543,7 @@ brace_level_debug(const struct brace_level *bl)
 
 /* Return the type of the sub-object that is currently being initialized. */
 static const type_t *
-brace_level_sub_type(const struct brace_level *bl, bool is_string)
+brace_level_sub_type(const brace_level *bl, bool is_string)
 {
 
 	if (bl->bl_designation.dn_len > 0)
@@ -585,9 +585,9 @@ brace_level_sub_type(const struct brace_level *bl, bool is_string)
 
 /* C99 6.7.8p17 */
 static void
-brace_level_apply_designation(struct brace_level *bl)
+brace_level_apply_designation(brace_level *bl)
 {
-	const struct designator *dr;
+	const designator *dr;
 
 	if (bl->bl_designation.dn_len == 0)
 		return;
@@ -618,7 +618,7 @@ brace_level_apply_designation(struct brace_level *bl)
  * C99 6.7.8p17
  */
 static void
-brace_level_advance(struct brace_level *bl, size_t *max_subscript)
+brace_level_advance(brace_level *bl, size_t *max_subscript)
 {
 
 	switch (bl->bl_type->t_tspec) {
@@ -641,10 +641,10 @@ brace_level_advance(struct brace_level *bl, size_t *max_subscript)
 }
 
 
-static struct initialization *
-initialization_new(sym_t *sym, struct initialization *enclosing)
+static initialization *
+initialization_new(sym_t *sym, initialization *enclosing)
 {
-	struct initialization *in;
+	initialization *in;
 
 	in = xcalloc(1, sizeof(*in));
 	in->in_sym = sym;
@@ -654,9 +654,9 @@ initialization_new(sym_t *sym, struct initialization *enclosing)
 }
 
 static void
-initialization_free(struct initialization *in)
+initialization_free(initialization *in)
 {
-	struct brace_level *bl, *next;
+	brace_level *bl, *next;
 
 	for (bl = in->in_brace_level; bl != NULL; bl = next) {
 		next = bl->bl_enclosing;
@@ -668,10 +668,10 @@ initialization_free(struct initialization *in)
 
 #ifdef DEBUG
 static void
-initialization_debug(const struct initialization *in)
+initialization_debug(const initialization *in)
 {
 	size_t i;
-	const struct brace_level *bl;
+	const brace_level *bl;
 
 	if (in->in_brace_level == NULL) {
 		debug_step("no brace level");
@@ -695,7 +695,7 @@ initialization_debug(const struct initialization *in)
  * initialized.
  */
 static const type_t *
-initialization_sub_type(struct initialization *in, bool is_string)
+initialization_sub_type(initialization *in, bool is_string)
 {
 	const type_t *tp;
 
@@ -708,7 +708,7 @@ initialization_sub_type(struct initialization *in, bool is_string)
 }
 
 static void
-initialization_begin_brace_level(struct initialization *in)
+initialization_begin_brace_level(initialization *in)
 {
 	const type_t *tp;
 
@@ -750,7 +750,7 @@ done:
 
 /* C99 6.7.8p22 */
 static void
-initialization_set_size_of_unknown_array(struct initialization *in)
+initialization_set_size_of_unknown_array(initialization *in)
 {
 	size_t dim;
 
@@ -766,9 +766,9 @@ initialization_set_size_of_unknown_array(struct initialization *in)
 }
 
 static void
-initialization_end_brace_level(struct initialization *in)
+initialization_end_brace_level(initialization *in)
 {
-	struct brace_level *bl;
+	brace_level *bl;
 
 	debug_enter();
 
@@ -792,7 +792,7 @@ done:
 }
 
 static void
-initialization_add_designator(struct initialization *in,
+initialization_add_designator(initialization *in,
 			      const char *name, size_t subscript)
 {
 
@@ -808,7 +808,7 @@ initialization_add_designator(struct initialization *in,
  * initializer expression without braces.
  */
 static bool
-initialization_expr_using_op(struct initialization *in, tnode_t *rn)
+initialization_expr_using_op(initialization *in, tnode_t *rn)
 {
 	tnode_t *ln, *tn;
 
@@ -832,9 +832,9 @@ initialization_expr_using_op(struct initialization *in, tnode_t *rn)
 
 /* Initialize a character array or wchar_t array with a string literal. */
 static bool
-initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
+initialization_init_array_using_string(initialization *in, tnode_t *tn)
 {
-	struct brace_level *bl;
+	brace_level *bl;
 	const type_t *tp;
 	strg_t	*strg;
 
@@ -880,9 +880,9 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
  * initialization.
  */
 static void
-initialization_expr(struct initialization *in, tnode_t *tn)
+initialization_expr(initialization *in, tnode_t *tn)
 {
-	struct brace_level *bl;
+	brace_level *bl;
 	const type_t *tp;
 
 	if (in->in_err)
@@ -946,10 +946,10 @@ done:
 }
 
 
-static struct initialization *init;
+static initialization *init;
 
 
-static struct initialization *
+static initialization *
 current_init(void)
 {
 
@@ -977,7 +977,7 @@ begin_initialization(sym_t *sym)
 void
 end_initialization(void)
 {
-	struct initialization *in;
+	initialization *in;
 
 	in = init;
 	init = in->in_enclosing;
