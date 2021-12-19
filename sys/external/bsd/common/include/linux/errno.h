@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.4 2019/04/16 10:00:04 mrg Exp $	*/
+/*	$NetBSD: errno.h,v 1.5 2021/12/19 10:59:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,5 +50,6 @@
 #define	ENOTSUPP	ENOTSUP	/* XXX ???  */
 #define	EREMOTEIO	EIO	/* XXX Urk...  */
 #define	ECHRNG		ERANGE	/* XXX ??? */
+#define	EHWPOISON	EIO
 
 #endif  /* _LINUX_ERRNO_H_ */
