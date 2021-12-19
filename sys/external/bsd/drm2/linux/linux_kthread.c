@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kthread.c,v 1.3 2021/12/19 12:29:39 riastradh Exp $	*/
+/*	$NetBSD: linux_kthread.c,v 1.4 2021/12/19 12:38:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.3 2021/12/19 12:29:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.4 2021/12/19 12:38:56 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -184,13 +184,46 @@ kthread_should_stop(void)
 void
 kthread_park(struct task_struct *T)
 {
+	struct lwp *l;
 
 	mutex_enter(&T->kt_lock);
+
+	/* Caller must not ask to park if they've already asked to stop.  */
 	KASSERT(!T->kt_shouldstop);
+
+	/* Ask the thread to park.  */
 	T->kt_shouldpark = true;
+
+	/* Don't wait for ourselves -- Linux allows this semantics.  */
+	if ((l = T->kt_lwp) == curlwp)
+		goto out;
+
+	/*
+	 * If the thread is asleep for any reason, give it a spurious
+	 * wakeup.  The thread is responsible for checking
+	 * kthread_shouldpark before sleeping.  This logic is like
+	 * sleepq_timeout, but without setting LW_STIMO.
+	 */
+	lwp_lock(l);
+	if (l->l_wchan == NULL) {
+		/*
+		 * Not sleeping, so no need to wake up -- the thread
+		 * will eventually check kthread_shouldpark.
+		 */
+		lwp_unlock(l);
+	} else {
+		/*
+		 * Sleeping, so wake it up.  lwp_unsleep has the side
+		 * effect of unlocking l when we pass unlock=true.
+		 */
+		lwp_unsleep(l, /*unlock*/true);
+	}
+
+	/* Wait until the thread has issued kthread_parkme.  */
 	while (!T->kt_parked)
 		cv_wait(&T->kt_cv, &T->kt_lock);
-	mutex_exit(&T->kt_lock);
+
+out:	mutex_exit(&T->kt_lock);
 }
 
 void
