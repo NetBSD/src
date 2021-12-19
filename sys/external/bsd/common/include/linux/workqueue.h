@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.13 2018/08/27 15:06:02 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.14 2021/12/19 00:49:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ to_delayed_work(struct work_struct *work)
 extern struct workqueue_struct	*system_wq;
 extern struct workqueue_struct	*system_long_wq;
 extern struct workqueue_struct	*system_power_efficient_wq;
+extern struct workqueue_struct	*system_unbound_wq;
 
 int	linux_workqueue_init(void);
 void	linux_workqueue_fini(void);
