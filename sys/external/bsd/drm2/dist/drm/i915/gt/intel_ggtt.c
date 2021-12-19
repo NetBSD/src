@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.5 2021/12/19 10:28:31 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.5 2021/12/19 10:28:31 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -57,12 +57,25 @@ static int ggtt_init_hw(struct i915_ggtt *ggtt)
 		ggtt->vm.mm.color_adjust = i915_ggtt_color_adjust;
 
 	if (ggtt->mappable_end) {
+#ifdef __NetBSD__
+		if (!drm_io_mapping_init_wc(&i915->drm, &ggtt->iomap,
+			ggtt->gmadr.start, ggtt->mappable_end)) {
+			ggtt->vm.cleanup(&ggtt->vm);
+			return -EIO;
+		}
+		/*
+		 * Note: mappable_end is the size, not end paddr, of
+		 * the aperture.
+		 */
+		pmap_pv_track(ggtt->gmadr.start, ggtt->mappable_end);
+#else
 		if (!io_mapping_init_wc(&ggtt->iomap,
 					ggtt->gmadr.start,
 					ggtt->mappable_end)) {
 			ggtt->vm.cleanup(&ggtt->vm);
 			return -EIO;
 		}
+#endif
 
 		ggtt->mtrr = arch_phys_wc_add(ggtt->gmadr.start,
 					      ggtt->mappable_end);
@@ -807,6 +820,11 @@ static void ggtt_cleanup_hw(struct i915_ggtt *ggtt)
 	mutex_unlock(&ggtt->vm.mutex);
 	i915_address_space_fini(&ggtt->vm);
 
+#ifdef __NetBSD__
+	if (ggtt->mappable_end)
+		pmap_pv_untrack(ggtt->gmadr.start, ggtt->mappable_end);
+#endif
+
 	arch_phys_wc_del(ggtt->mtrr);
 
 	if (ggtt->iomap.size)
@@ -1217,16 +1235,16 @@ static int i915_gmch_probe(struct i915_ggtt *ggtt)
 
 #ifdef __NetBSD__
 	ggtt->gmadr.start = gmadr_base;
-	/* Based on i915_drv.c, i915_driver_init_hw.  */
+	/* Based on i915_drv.c, i915_driver_hw_probe.  */
 	if (INTEL_INFO(dev)->gen <= 2)
-		dev_priv->ggtt.max_paddr = DMA_BIT_MASK(30);
+		ggtt->max_paddr = DMA_BIT_MASK(30);
 	else if ((INTEL_INFO(dev)->gen <= 3) ||
 	    IS_BROADWATER(dev) || IS_CRESTLINE(dev))
-		dev_priv->ggtt.max_paddr = DMA_BIT_MASK(32);
+		ggtt->max_paddr = DMA_BIT_MASK(32);
 	else if (INTEL_INFO(dev)->gen <= 5)
-		dev_priv->ggtt.max_paddr = DMA_BIT_MASK(36);
+		ggtt->max_paddr = DMA_BIT_MASK(36);
 	else
-		dev_priv->ggtt.max_paddr = DMA_BIT_MASK(40);
+		ggtt->max_paddr = DMA_BIT_MASK(40);
 #else
 	ggtt->gmadr =
 		(struct resource)DEFINE_RES_MEM(gmadr_base, ggtt->mappable_end);
@@ -1273,6 +1291,16 @@ static int ggtt_probe_hw(struct i915_ggtt *ggtt, struct intel_gt *gt)
 		ret = gen8_gmch_probe(ggtt);
 	if (ret)
 		return ret;
+
+#ifdef __NetBSD__
+	ggtt->pgfl = x86_select_freelist(ggtt->max_paddr);
+	ret = drm_limit_dma_space(&i915->drm, 0, ggtt->max_paddr);
+	if (ret) {
+		DRM_ERROR("Unable to limit DMA paddr allocations: %d\n", ret);
+		i915_ggtt_driver_release(i915);
+		return ret;
+	}
+#endif
 
 	if ((ggtt->vm.total - 1) >> 32) {
 		DRM_ERROR("We never expected a Global GTT with more than 32bits"
