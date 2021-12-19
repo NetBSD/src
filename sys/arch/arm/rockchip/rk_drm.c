@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.9 2021/12/19 11:01:10 riastradh Exp $ */
+/* $NetBSD: rk_drm.c,v 1.10 2021/12/19 11:01:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.9 2021/12/19 11:01:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.10 2021/12/19 11:01:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,7 +146,7 @@ rk_drm_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_ddev = drm_dev_alloc(driver, sc->sc_dev);
-	if (sc->sc_ddev == NULL) {
+	if (IS_ERR(sc->sc_ddev)) {
 		aprint_error_dev(self, "couldn't allocate DRM device\n");
 		return;
 	}

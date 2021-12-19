@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.42 2021/12/19 10:37:09 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.43 2021/12/19 11:01:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.42 2021/12/19 10:37:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.43 2021/12/19 11:01:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.42 2021/12/19 10:37:09 riastradh Exp $
 
 #include <dev/pci/pcivar.h>
 
+#include <linux/err.h>
 #include <drm/drm_agpsupport.h>
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
@@ -74,7 +75,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 
 	/* Create a DRM device.  */
 	dev = drm_dev_alloc(driver, self);
-	if (dev == NULL) {
+	if (IS_ERR(dev)) {
 		ret = -ENOMEM;
 		goto fail0;
 	}
