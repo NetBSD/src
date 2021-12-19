@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.18 2021/12/19 11:36:25 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.19 2021/12/19 11:37:23 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.18 2021/12/19 11:36:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.19 2021/12/19 11:37:23 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -243,7 +243,12 @@ static struct dma_buf *drm_prime_lookup_buf_by_handle(struct drm_prime_file_priv
 						      uint32_t handle)
 {
 #ifdef __NetBSD__
-	return rb_tree_find_node(&prime_fpriv->handles.rbr_tree, &handle);
+	struct drm_prime_member *member;
+
+	member = rb_tree_find_node(&prime_fpriv->handles.rbr_tree, &handle);
+	if (member == NULL)
+		return NULL;
+	return member->dma_buf;
 #else
 	struct rb_node *rb;
 
