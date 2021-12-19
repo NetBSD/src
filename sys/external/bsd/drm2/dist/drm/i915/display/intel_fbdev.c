@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.3 2021/12/19 10:46:43 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.3 2021/12/19 10:46:43 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/console.h>
@@ -333,18 +333,7 @@ static void intel_fbdev_destroy(struct intel_fbdev *ifbdev)
 	 * trying to rectify all the possible error paths leading here.
 	 */
 
-#ifdef __NetBSD__
-    {
-	int ret;
-	/* XXX errno NetBSD->Linux */
-	ret = -config_detach(ifbdev->helper.fbdev, DETACH_FORCE);
-	if (ret)
-		DRM_ERROR("failed to detach intelfb: %d\n", ret);
-	ifbdev->helper.fbdev = NULL;
-    }
-#else
 	drm_fb_helper_fini(&ifbdev->helper);
-#endif
 
 	if (ifbdev->vma)
 		intel_unpin_fb_vma(ifbdev->vma, ifbdev->vma_flags);

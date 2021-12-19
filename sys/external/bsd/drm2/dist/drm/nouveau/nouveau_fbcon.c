@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.12 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.13 2021/12/19 10:46:43 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.12 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.13 2021/12/19 10:46:43 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -483,20 +483,8 @@ nouveau_fbcon_destroy(struct drm_device *dev, struct nouveau_fbdev *fbcon)
 {
 	struct nouveau_framebuffer *nouveau_fb = nouveau_framebuffer(fbcon->helper.fb);
 
-#ifdef __NetBSD__
-	if (fbcon->helper.fbdev) {
-		int ret;
-
-		/* XXX errno NetBSD->Linux */
-		ret = -config_detach(fbcon->helper.fbdev, DETACH_FORCE);
-		if (ret)
-			DRM_ERROR("failed to detach nouveaufb: %d\n", ret);
-		fbcon->helper.fbdev = NULL;
-	}
-#else
 	drm_fb_helper_unregister_fbi(&fbcon->helper);
 	drm_fb_helper_fini(&fbcon->helper);
-#endif
 
 	if (nouveau_fb && nouveau_fb->nvbo) {
 		nouveau_vma_del(&nouveau_fb->vma);
