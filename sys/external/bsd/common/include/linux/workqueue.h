@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.22 2021/12/19 11:03:49 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.23 2021/12/19 11:10:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -85,6 +85,9 @@ struct delayed_work {
 		DELAYED_WORK_RESCHEDULED,
 		DELAYED_WORK_CANCELLED,
 	}				dw_state;
+};
+
+struct rcu_work {
 };
 
 #define	WQ_FREEZABLE		__BIT(0)
