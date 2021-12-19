@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.5 2021/12/19 11:38:53 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.6 2021/12/19 11:39:32 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.5 2021/12/19 11:38:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.6 2021/12/19 11:39:32 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/console.h>
@@ -333,6 +333,7 @@ out_unlock:
 	intel_runtime_pm_put(&dev_priv->runtime_pm, wakeref);
 	return ret;
 }
+
 #ifdef __NetBSD__
 #  undef	__iomem
 #endif
