@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.16 2021/12/19 09:58:39 riastradh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.17 2021/12/19 11:14:16 riastradh Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -272,6 +272,7 @@ static inline bool i915_mmio_reg_valid(i915_reg_t reg)
 	if (__builtin_constant_p(mask) && __builtin_constant_p(value)) {   \
 		BUILD_BUG_ON_MSG((value) & ~(mask),			   \
 				 "Incorrect value for mask");		   \
+	}								   \
 	__MASKED_FIELD(mask, value); })
 #define _MASKED_BIT_ENABLE(a)	({ typeof(a) _a = (a); _MASKED_FIELD(_a, _a); })
 #define _MASKED_BIT_DISABLE(a)	(_MASKED_FIELD((a), 0))
