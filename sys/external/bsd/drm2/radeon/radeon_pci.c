@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.14 2020/01/24 11:44:27 jmcneill Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.15 2021/12/19 01:47:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.14 2020/01/24 11:44:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.15 2021/12/19 01:47:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -324,7 +324,7 @@ radeon_do_suspend(device_t self, const pmf_qual_t *qual)
 	if (dev == NULL)
 		return true;
 
-	ret = radeon_suspend_kms(dev, true, is_console);
+	ret = radeon_suspend_kms(dev, true, is_console, false);
 	if (ret)
 		return false;
 
