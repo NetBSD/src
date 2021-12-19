@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.9 2021/12/19 11:35:27 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.10 2021/12/19 12:01:12 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,13 +28,14 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.9 2021/12/19 11:35:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.10 2021/12/19 12:01:12 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
 #include <linux/module.h>
 #include <linux/console.h>
 #include <linux/slab.h>
+#include <linux/reboot.h>
 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_probe_helper.h>
@@ -912,7 +913,15 @@ int amdgpu_device_resize_fb_bar(struct amdgpu_device *adev)
 	if (amdgpu_sriov_vf(adev))
 		return 0;
 
-#ifndef __NetBSD__		/* XXX amdgpu fb resize */
+#ifdef __NetBSD__		/* XXX amdgpu fb resize */
+	__USE(space_needed);
+	__USE(rbar_size);
+	__USE(root);
+	__USE(res);
+	__USE(i);
+	__USE(cmd);
+	__USE(r);
+#else
 
 	/* Check if the root BUS has 64bit memory resources */
 	root = adev->pdev->bus;
@@ -3049,6 +3058,7 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 		DRM_INFO("PCI I/O BAR is not found.\n");
 
 	/* enable PCIE atomic ops */
+#ifndef __NetBSD__		/* XXX amdgpu pcie atomics */
 	r = pci_enable_atomic_ops_to_root(adev->pdev,
 					  PCI_EXP_DEVCAP2_ATOMIC_COMP32 |
 					  PCI_EXP_DEVCAP2_ATOMIC_COMP64);
@@ -3058,6 +3068,7 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	} else {
 		adev->have_atomics_support = true;
 	}
+#endif
 
 	amdgpu_device_get_pcie_info(adev);
 
@@ -3374,7 +3385,9 @@ void amdgpu_device_fini(struct amdgpu_device *adev)
 	amdgpu_device_doorbell_fini(adev);
 
 	amdgpu_debugfs_regs_cleanup(adev);
+#ifndef __NetBSD__		/* XXX amdgpu sysfs */
 	device_remove_file(adev->dev, &dev_attr_pcie_replay_count);
+#endif
 	if (adev->ucode_sysfs_en)
 		amdgpu_ucode_sysfs_fini(adev);
 	if (IS_ENABLED(CONFIG_PERF_EVENTS))
@@ -4213,14 +4226,14 @@ int amdgpu_device_gpu_recover(struct amdgpu_device *adev,
 	 */
 
 	if (hive && !mutex_trylock(&hive->reset_lock)) {
-		DRM_INFO("Bailing on TDR for s_job:%llx, hive: %llx as another already in progress",
+		DRM_INFO("Bailing on TDR for s_job:%"PRIx64", hive: %"PRIx64" as another already in progress",
 			  job ? job->base.id : -1, hive->hive_id);
 		return 0;
 	}
 
 	/* Start with adev pre asic reset first for soft reset check.*/
 	if (!amdgpu_device_lock_adev(adev, !hive)) {
-		DRM_INFO("Bailing on TDR for s_job:%llx, as another already in progress",
+		DRM_INFO("Bailing on TDR for s_job:%"PRIx64", as another already in progress",
 			  job ? job->base.id : -1);
 		return 0;
 	}
@@ -4400,6 +4413,7 @@ skip_sched_resume:
  */
 static void amdgpu_device_get_pcie_info(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	struct pci_dev *pdev;
 	enum pci_bus_speed speed_cap, platform_speed_cap;
 	enum pcie_link_width platform_link_width;
@@ -4523,6 +4537,7 @@ static void amdgpu_device_get_pcie_info(struct amdgpu_device *adev)
 			}
 		}
 	}
+#endif
 }
 
 int amdgpu_device_baco_enter(struct drm_device *dev)
