@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_switcheroo.h,v 1.3 2021/12/19 01:48:52 riastradh Exp $	*/
+/*	$NetBSD: vga_switcheroo.h,v 1.4 2021/12/19 12:00:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,10 @@
 #ifndef _LINUX_VGA_SWITCHEROO_H_
 #define _LINUX_VGA_SWITCHEROO_H_
 
+#include <sys/types.h>
+
 #include <sys/cdefs.h>
+#include <sys/device_if.h>
 
 #define	VGA_SWITCHEROO_CAN_SWITCH_DDC	__BIT(0)
 
@@ -40,6 +43,11 @@ static inline int
 vga_switcheroo_handler_flags(void)
 {
 	return 0;
+}
+
+static inline void
+vga_switcheroo_fini_domain_pm_ops(device_t dev)
+{
 }
 
 #endif  /* _LINUX_VGA_SWITCHEROO_H_ */
