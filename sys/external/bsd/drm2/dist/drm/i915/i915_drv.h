@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.45 2021/12/19 11:51:59 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.46 2021/12/19 11:55:24 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -1086,6 +1086,9 @@ struct drm_i915_private {
 
 	struct drm_atomic_state *modeset_restore_state;
 	struct drm_modeset_acquire_ctx reset_ctx;
+
+	spinlock_t atomic_commit_lock;
+	drm_waitqueue_t atomic_commit_wq;
 
 	struct i915_ggtt ggtt; /* VM representing the global address space */
 
