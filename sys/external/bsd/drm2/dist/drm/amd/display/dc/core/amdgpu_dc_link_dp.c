@@ -1,8 +1,8 @@
-/*	$NetBSD: amdgpu_dc_link_dp.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_link_dp.c,v 1.4 2021/12/19 10:59:36 riastradh Exp $	*/
 
 /* Copyright 2015 Advanced Micro Devices, Inc. */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link_dp.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link_dp.c,v 1.4 2021/12/19 10:59:36 riastradh Exp $");
 
 #include "dm_services.h"
 #include "dc.h"
@@ -3523,7 +3523,6 @@ bool detect_dp_sink_caps(struct dc_link *link)
 	/* TODO save sink caps in link->sink */
 }
 
-static
 enum dc_link_rate linkRateInKHzToLinkRateMultiplier(uint32_t link_rate_in_khz)
 {
 	enum dc_link_rate link_rate;

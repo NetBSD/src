@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce100_resource.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce100_resource.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce100_resource.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce100_resource.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -616,7 +616,6 @@ static const struct encoder_feature_support link_enc_feature = {
 		.flags.bits.IS_TPS3_CAPABLE = true
 };
 
-static 
 struct link_encoder *dce100_link_encoder_create(
 	const struct encoder_init_data *enc_init_data)
 {
@@ -639,7 +638,6 @@ struct link_encoder *dce100_link_encoder_create(
 	return &enc110->base;
 }
 
-static
 struct output_pixel_processor *dce100_opp_create(
 	struct dc_context *ctx,
 	uint32_t inst)
@@ -655,7 +653,6 @@ struct output_pixel_processor *dce100_opp_create(
 	return &opp->base;
 }
 
-static
 struct dce_aux *dce100_aux_engine_create(
 	struct dc_context *ctx,
 	uint32_t inst)
@@ -694,7 +691,6 @@ static const struct dce_i2c_mask i2c_masks = {
 		I2C_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(_MASK)
 };
 
-static
 struct dce_i2c_hw *dce100_i2c_hw_create(
 	struct dc_context *ctx,
 	uint32_t inst)
@@ -710,7 +706,6 @@ struct dce_i2c_hw *dce100_i2c_hw_create(
 
 	return dce_i2c_hw;
 }
-static
 struct clock_source *dce100_clock_source_create(
 	struct dc_context *ctx,
 	struct dc_bios *bios,
@@ -735,7 +730,6 @@ struct clock_source *dce100_clock_source_create(
 	return NULL;
 }
 
-static
 void dce100_clock_source_destroy(struct clock_source **clk_src)
 {
 	kfree(TO_DCE110_CLK_SRC(*clk_src));
@@ -827,7 +821,6 @@ static enum dc_status build_mapped_resource(
 	return DC_OK;
 }
 
-static
 bool dce100_validate_bandwidth(
 	struct dc  *dc,
 	struct dc_state *context,
@@ -873,7 +866,6 @@ static bool dce100_validate_surface_sets(
 	return true;
 }
 
-static
 enum dc_status dce100_validate_global(
 		struct dc  *dc,
 		struct dc_state *context)
@@ -884,7 +876,6 @@ enum dc_status dce100_validate_global(
 	return DC_OK;
 }
 
-static
 enum dc_status dce100_add_stream_to_ctx(
 		struct dc *dc,
 		struct dc_state *new_ctx,
@@ -912,7 +903,6 @@ static void dce100_destroy_resource_pool(struct resource_pool **pool)
 	*pool = NULL;
 }
 
-static
 enum dc_status dce100_validate_plane(const struct dc_plane_state *plane_state, struct dc_caps *caps)
 {
 
@@ -922,7 +912,6 @@ enum dc_status dce100_validate_plane(const struct dc_plane_state *plane_state, s
 	return DC_FAIL_SURFACE_VALIDATE;
 }
 
-static
 struct stream_encoder *dce100_find_first_free_match_stream_enc_for_link(
 		struct resource_context *res_ctx,
 		const struct resource_pool *pool,
