@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.c,v 1.5 2021/12/19 01:54:20 riastradh Exp $	*/
+/*	$NetBSD: drm_print.c,v 1.6 2021/12/19 09:50:04 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -26,14 +26,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.5 2021/12/19 01:54:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.6 2021/12/19 09:50:04 riastradh Exp $");
 
 #ifndef __NetBSD__		/* XXX ??? */
 #define DEBUG /* for pr_debug() */
 #endif
 
 #ifdef __NetBSD__
+#include <sys/param.h>
 #include <sys/stdarg.h>
+#include <sys/device.h>
 #else
 #include <stdarg.h>
 
