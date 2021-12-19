@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdep.h,v 1.4 2021/12/19 11:04:42 riastradh Exp $	*/
+/*	$NetBSD: lockdep.h,v 1.5 2021/12/19 11:05:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,11 @@
 
 #ifndef _LINUX_LOCKDEP_H_
 #define _LINUX_LOCKDEP_H_
+
+#include <sys/cdefs.h>
+#include <sys/types.h>
+
+#include <lib/libkern/libkern.h>
 
 struct mutex;
 struct spinlock;
