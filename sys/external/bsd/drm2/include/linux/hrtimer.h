@@ -1,4 +1,4 @@
-/*	$NetBSD: hrtimer.h,v 1.4 2021/12/19 11:23:51 riastradh Exp $	*/
+/*	$NetBSD: hrtimer.h,v 1.5 2021/12/19 11:36:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct hrtimer {
 enum hrtimer_mode {
 	HRTIMER_MODE_ABS,
 	HRTIMER_MODE_REL,
+	HRTIMER_MODE_REL_PINNED,
 };
 
 enum hrtimer_restart {
