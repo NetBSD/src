@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.77 2021/12/19 11:39:24 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.78 2021/12/19 11:45:01 riastradh Exp $
 
 version	20180827
 
@@ -58,7 +58,7 @@ file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_switcheroo.c	i915drmkms
 file	external/bsd/drm2/i915drm/icl_dsi.c		i915drmkms
-file	external/bsd/drm2/i915drm/intel_gtt.c		i915drmkms
+file	external/bsd/drm2/i915drm/intel_gtt_subr.c	i915drmkms
 file	external/bsd/drm2/i915drm/intelfb.c		intelfb
 file	external/bsd/drm2/i915drm/vlv_dsi.c	i915drmkms
 
@@ -157,9 +157,9 @@ file	external/bsd/drm2/dist/drm/i915/gt/intel_breadcrumbs.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/intel_context.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/intel_engine_cs.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/intel_engine_heartbeat.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gt/intel_engine_pm.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/gt/intel_engine_pm.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/intel_engine_pool.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gt/intel_engine_user.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/gt/intel_engine_user.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/intel_ggtt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/intel_gt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/intel_gt_irq.c	i915drmkms
@@ -184,7 +184,7 @@ file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_guc.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_guc_ads.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_guc_ct.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_guc_fw.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_guc_log.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_guc_log.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_guc_submission.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_huc.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_huc_fw.c	i915drmkms

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.7 2021/12/19 11:39:45 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.8 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.7 2021/12/19 11:39:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.8 2021/12/19 11:45:01 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/console.h>
@@ -590,6 +590,7 @@ void intel_fbdev_fini(struct drm_i915_private *dev_priv)
  * processing, fbdev will perform a full connector reprobe if a hotplug event
  * was received while HPD was suspended.
  */
+#ifndef __NetBSD__		/* XXX fb suspend */
 static void intel_fbdev_hpd_set_suspend(struct intel_fbdev *ifbdev, int state)
 {
 	bool send_hpd = false;
@@ -605,6 +606,7 @@ static void intel_fbdev_hpd_set_suspend(struct intel_fbdev *ifbdev, int state)
 		drm_fb_helper_hotplug_event(&ifbdev->helper);
 	}
 }
+#endif	/* __NetBSD__ */
 
 void intel_fbdev_set_suspend(struct drm_device *dev, int state, bool synchronous)
 {

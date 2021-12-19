@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gt_requests.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_gt_requests.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,8 +7,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gt_requests.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gt_requests.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
 
+#include <linux/sched/signal.h>
 #include <linux/workqueue.h>
 
 #include "i915_drv.h" /* for_each_engine() */
@@ -18,6 +19,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_gt_requests.c,v 1.2 2021/12/18 23:45:30 riastr
 #include "intel_gt_pm.h"
 #include "intel_gt_requests.h"
 #include "intel_timeline.h"
+
+#include <linux/nbsd-namespace.h>
 
 static bool retire_requests(struct intel_timeline *tl)
 {
@@ -122,6 +125,11 @@ void intel_engine_fini_retire(struct intel_engine_cs *engine)
 	GEM_BUG_ON(engine->retire);
 }
 
+static void
+null_release(struct kref *kref)
+{
+}
+
 long intel_gt_retire_requests_timeout(struct intel_gt *gt, long timeout)
 {
 	struct intel_gt_timelines *timelines = &gt->timelines;
@@ -172,7 +180,7 @@ long intel_gt_retire_requests_timeout(struct intel_gt *gt, long timeout)
 		mutex_unlock(&tl->mutex);
 
 		/* Defer the final release to after the spinlock */
-		if (refcount_dec_and_test(&tl->kref.refcount)) {
+		if (kref_put(&tl->kref, null_release)) {
 			GEM_BUG_ON(atomic_read(&tl->active_count));
 			list_add(&tl->link, &free);
 		}

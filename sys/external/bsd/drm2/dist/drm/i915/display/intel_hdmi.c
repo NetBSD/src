@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_hdmi.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_hdmi.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_hdmi.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_hdmi.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/hdmi.h>
@@ -555,7 +555,7 @@ static void hsw_read_infoframe(struct intel_encoder *encoder,
 {
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	enum transcoder cpu_transcoder = crtc_state->cpu_transcoder;
-	u32 val, *data = frame;
+	u32 val __unused, *data = frame;
 	int i;
 
 	val = I915_READ(HSW_TVIDEO_DIP_CTL(cpu_transcoder));

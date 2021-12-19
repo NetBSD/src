@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.11 2021/12/19 11:39:00 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.12 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct kref {
 static inline void
 kref_init(struct kref *kref)
 {
-	kref->kr_count = 1;
+	atomic_store_relaxed(&kref->kr_count, 1);
 }
 
 static inline void
@@ -70,7 +70,7 @@ kref_get_unless_zero(struct kref *kref)
 	unsigned count;
 
 	do {
-		count = kref->kr_count;
+		count = atomic_load_relaxed(&kref->kr_count);
 		if ((count == 0) || (count == UINT_MAX))
 			return false;
 	} while (atomic_cas_uint(&kref->kr_count, count, (count + 1)) !=
@@ -93,7 +93,7 @@ kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 #endif
 
 	do {
-		old = kref->kr_count;
+		old = atomic_load_relaxed(&kref->kr_count);
 		KASSERTMSG((count <= old), "overreleasing kref: %u - %u",
 		    old, count);
 		new = (old - count);
@@ -108,7 +108,8 @@ kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 }
 
 static inline int
-kref_put_lock(struct kref *kref, void (*release)(struct kref *), spinlock_t *interlock)
+kref_put_lock(struct kref *kref, void (*release)(struct kref *),
+    spinlock_t *interlock)
 {
 	unsigned int old, new;
 
@@ -117,7 +118,7 @@ kref_put_lock(struct kref *kref, void (*release)(struct kref *), spinlock_t *int
 #endif
 
 	do {
-		old = kref->kr_count;
+		old = atomic_load_relaxed(&kref->kr_count);
 		KASSERT(old > 0);
 		if (old == 1) {
 			spin_lock(interlock);
@@ -152,7 +153,7 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 #endif
 
 	do {
-		old = kref->kr_count;
+		old = atomic_load_relaxed(&kref->kr_count);
 		KASSERT(old > 0);
 		if (old == 1) {
 			mutex_lock(interlock);
@@ -172,11 +173,8 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 static inline unsigned
 kref_read(const struct kref *kref)
 {
-	unsigned v;
 
-	v = kref->kr_count;
-
-	return v;
+	return atomic_load_relaxed(&kref->kr_count);
 }
 
 /*
