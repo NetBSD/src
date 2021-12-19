@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.51 2021/12/19 01:56:16 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.52 2021/12/19 01:56:24 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -639,13 +639,6 @@ static __inline__ int drm_core_check_feature(struct drm_device *dev,
 					     int feature)
 {
 	return ((dev->driver->driver_features & feature) ? 1 : 0);
-}
-
-static inline int drm_device_is_unplugged(struct drm_device *dev)
-{
-	int ret = atomic_read(&dev->unplugged);
-	smp_rmb();
-	return ret;
 }
 
 static inline bool drm_is_render_client(const struct drm_file *file_priv)
