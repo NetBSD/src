@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.11 2021/12/19 01:48:30 riastradh Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.12 2021/12/19 11:00:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,6 +27,14 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * XXX WARNING: This does not actually implement interval trees -- it
+ * only implements trees of intervals.  In particular, it does not
+ * support finding all intervals that contain a given point, or that
+ * intersect with a given interval.  Another way to look at it is that
+ * this is an interval tree restricted to nonoverlapping intervals.
  */
 
 #ifndef	_LINUX_INTERVAL_TREE_H_
