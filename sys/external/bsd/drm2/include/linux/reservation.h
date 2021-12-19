@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.11 2021/12/19 01:20:30 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.12 2021/12/19 01:20:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -121,5 +121,11 @@ int	reservation_object_poll(struct reservation_object *, int,
 	    struct reservation_poll *);
 int	reservation_object_kqfilter(struct reservation_object *,
 	    struct knote *, struct reservation_poll *);
+
+static inline bool
+reservation_object_has_excl_fence(struct reservation_object *robj)
+{
+	return robj->robj_fence != NULL;
+}
 
 #endif	/* _LINUX_RESERVATION_H_ */
