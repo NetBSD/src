@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdep.h,v 1.5 2021/12/19 11:05:05 riastradh Exp $	*/
+/*	$NetBSD: lockdep.h,v 1.6 2021/12/19 11:11:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ struct spinlock;
 #define	lockdep_assert_held_once(m)	do {} while (0)
 #define	lockdep_is_held(m)		1
 #define	might_lock(m)			do {} while (0)
+#define	might_lock_nested(m,n)		do {} while (0)
 #endif
 
 #define	__lockdep_kmutex(m)						      \
