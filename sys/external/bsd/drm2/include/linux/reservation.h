@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.16 2021/12/19 01:48:03 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.17 2021/12/19 01:50:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -109,28 +109,28 @@ void	reservation_object_add_shared_fence(struct reservation_object *,
 	    struct dma_fence *);
 
 struct dma_fence *
-	reservation_object_get_excl_rcu(struct reservation_object *);
-int	reservation_object_get_fences_rcu(struct reservation_object *,
+	reservation_object_get_excl_rcu(const struct reservation_object *);
+int	reservation_object_get_fences_rcu(const struct reservation_object *,
 	    struct dma_fence **, unsigned *, struct dma_fence ***);
 
 int	reservation_object_copy_fences(struct reservation_object *,
 	    const struct reservation_object *);
 
-bool	reservation_object_test_signaled_rcu(struct reservation_object *,
+bool	reservation_object_test_signaled_rcu(const struct reservation_object *,
 	    bool);
-long	reservation_object_wait_timeout_rcu(struct reservation_object *,
+long	reservation_object_wait_timeout_rcu(const struct reservation_object *,
 	    bool, bool, unsigned long);
 
 /* NetBSD additions */
 void	reservation_poll_init(struct reservation_poll *);
 void	reservation_poll_fini(struct reservation_poll *);
-int	reservation_object_poll(struct reservation_object *, int,
+int	reservation_object_poll(const struct reservation_object *, int,
 	    struct reservation_poll *);
-int	reservation_object_kqfilter(struct reservation_object *,
+int	reservation_object_kqfilter(const struct reservation_object *,
 	    struct knote *, struct reservation_poll *);
 
 static inline bool
-reservation_object_has_excl_fence(struct reservation_object *robj)
+reservation_object_has_excl_fence(const struct reservation_object *robj)
 {
 	return robj->fence_excl != NULL;
 }
