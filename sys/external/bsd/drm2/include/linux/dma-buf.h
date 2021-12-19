@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-buf.h,v 1.11 2021/12/19 11:33:31 riastradh Exp $	*/
+/*	$NetBSD: dma-buf.h,v 1.12 2021/12/19 12:01:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ struct uvm_object;
 
 struct dma_buf_ops {
 	bool	cache_sgt_mapping;
+	bool	dynamic_mapping;
 	int	(*attach)(struct dma_buf *, struct dma_buf_attachment *);
 	void	(*detach)(struct dma_buf *, struct dma_buf_attachment *);
 	struct sg_table *
@@ -86,6 +87,7 @@ struct dma_buf_attachment {
 	void				*priv;
 	struct dma_buf			*dmabuf;
 	bus_dma_tag_t			dev; /* XXX expedient misnomer */
+	bool				dynamic_mapping;
 };
 
 struct dma_buf_export_info {
@@ -105,6 +107,7 @@ struct dma_buf_export_info {
 
 #define	dma_buf_attach		linux_dma_buf_attach
 #define	dma_buf_detach		linux_dma_buf_detach
+#define	dma_buf_dynamic_attach	linux_dma_buf_dynamic_attach
 #define	dma_buf_export		linux_dma_buf_export
 #define	dma_buf_fd		linux_dma_buf_fd
 #define	dma_buf_get		linux_dma_buf_get
@@ -124,6 +127,8 @@ void	dma_buf_put(struct dma_buf *);
 
 struct dma_buf_attachment *
 	dma_buf_attach(struct dma_buf *, bus_dma_tag_t);
+struct dma_buf_attachment *
+	dma_buf_dynamic_attach(struct dma_buf *, bus_dma_tag_t, bool);
 void	dma_buf_detach(struct dma_buf *, struct dma_buf_attachment *);
 
 struct sg_table *

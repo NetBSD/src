@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dma_buf.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dma_buf.c,v 1.3 2021/12/19 12:01:40 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dma_buf.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dma_buf.c,v 1.3 2021/12/19 12:01:40 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "amdgpu_display.h"
@@ -91,9 +91,19 @@ void amdgpu_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr)
  * Returns:
  * 0 on success or a negative error code on failure.
  */
+#ifdef __NetBSD__
+int
+amdgpu_gem_prime_mmap(struct drm_gem_object *obj, off_t *offp, size_t size,
+    int prot, int *flagsp, int *advicep, struct uvm_object **uobjp,
+    int *maxprotp)
+#else
 int amdgpu_gem_prime_mmap(struct drm_gem_object *obj,
 			  struct vm_area_struct *vma)
+#endif
 {
+#ifdef __NetBSD__		/* XXX amdgpu prime */
+	return -ENODEV;
+#else
 	struct amdgpu_bo *bo = gem_to_amdgpu_bo(obj);
 	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
 	unsigned asize = amdgpu_bo_size(bo);
@@ -106,7 +116,11 @@ int amdgpu_gem_prime_mmap(struct drm_gem_object *obj,
 		return -ENODEV;
 
 	/* Check for valid size. */
+#ifdef __NetBSD__
+	if (asize < size)
+#else
 	if (asize < vma->vm_end - vma->vm_start)
+#endif
 		return -EINVAL;
 
 	if (amdgpu_ttm_tt_get_usermm(bo->tbo.ttm) ||
@@ -124,6 +138,7 @@ int amdgpu_gem_prime_mmap(struct drm_gem_object *obj,
 	drm_vma_node_revoke(&obj->vma_node, vma->vm_file->private_data);
 
 	return ret;
+#endif
 }
 
 static int
@@ -184,8 +199,12 @@ static int amdgpu_dma_buf_attach(struct dma_buf *dmabuf,
 	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
 	int r;
 
+#ifdef __NetBSD__		/* XXX */
+	__USE(adev);
+#else
 	if (attach->dev->driver == adev->dev->driver)
 		return 0;
+#endif
 
 	r = amdgpu_bo_reserve(bo, false);
 	if (unlikely(r != 0))
@@ -223,7 +242,12 @@ static void amdgpu_dma_buf_detach(struct dma_buf *dmabuf,
 	struct amdgpu_bo *bo = gem_to_amdgpu_bo(obj);
 	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
 
+#ifdef __NetBSD__
+	__USE(adev);
+	if (bo->prime_shared_count)
+#else
 	if (attach->dev->driver != adev->dev->driver && bo->prime_shared_count)
+#endif
 		bo->prime_shared_count--;
 }
 
@@ -306,7 +330,8 @@ static void amdgpu_dma_buf_unmap(struct dma_buf_attachment *attach,
 static int amdgpu_dma_buf_begin_cpu_access(struct dma_buf *dma_buf,
 					   enum dma_data_direction direction)
 {
-	struct amdgpu_bo *bo = gem_to_amdgpu_bo(dma_buf->priv);
+	struct drm_gem_object *gem = dma_buf->priv;
+	struct amdgpu_bo *bo = gem_to_amdgpu_bo(gem);
 	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
 	struct ttm_operation_ctx ctx = { true, false };
 	u32 domain = amdgpu_display_supported_domains(adev, bo->flags);
@@ -449,7 +474,11 @@ struct drm_gem_object *amdgpu_gem_prime_import(struct drm_device *dev,
 	if (IS_ERR(obj))
 		return obj;
 
+#ifdef __NetBSD__
+	attach = dma_buf_dynamic_attach(dma_buf, dev->dmat, true);
+#else
 	attach = dma_buf_dynamic_attach(dma_buf, dev->dev, true);
+#endif
 	if (IS_ERR(attach)) {
 		drm_gem_object_put(obj);
 		return ERR_CAST(attach);
