@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_writeback.h,v 1.4 2021/12/19 01:58:11 riastradh Exp $	*/
+/*	$NetBSD: drm_writeback.h,v 1.5 2021/12/19 01:58:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,6 +56,15 @@ drm_writeback_cleanup_job(struct drm_writeback_job *job)
 
 static inline int
 drm_writeback_prepare_job(struct drm_writeback_job *job)
+{
+
+	panic("TODO");
+	return 0;
+}
+
+static inline int
+drm_writeback_set_fb(struct drm_connector_state *conn_state,
+    struct drm_framebuffer *fb)
 {
 
 	panic("TODO");
