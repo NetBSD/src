@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_device.h,v 1.5 2021/12/19 09:52:50 riastradh Exp $	*/
+/*	$NetBSD: drm_device.h,v 1.6 2021/12/19 10:29:01 riastradh Exp $	*/
 
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
@@ -388,6 +388,8 @@ struct drm_device {
 
 #ifdef __NetBSD__
 extern const struct cdevsw drm_cdevsw;
+int drm_limit_dma_space(struct drm_device *, resource_size_t, resource_size_t);
+int drm_guarantee_initialized(void);
 #endif
 
 #endif

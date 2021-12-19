@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.2 2021/12/19 10:28:52 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.3 2021/12/19 10:29:01 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -141,11 +141,6 @@ int drm_pci_set_unique(struct drm_device *dev,
 extern struct drm_dma_handle *drm_pci_alloc(struct drm_device *dev, size_t size,
 					    size_t align);
 extern void drm_pci_free(struct drm_device *dev, struct drm_dma_handle * dmah);
-
-#ifdef __NetBSD__
-int drm_limit_dma_space(struct drm_device *, resource_size_t, resource_size_t);
-int drm_guarantee_initialized(void);
-#endif
 
 /*@}*/
 
