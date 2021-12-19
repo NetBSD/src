@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.13 2021/12/19 01:22:51 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.1 2021/12/19 01:33:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
