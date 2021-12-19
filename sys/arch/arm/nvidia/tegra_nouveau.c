@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.16 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.17 2021/12/19 11:01:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.16 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.17 2021/12/19 11:01:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -221,7 +221,7 @@ tegra_nouveau_init(device_t self)
 	}
 
 	dev = drm_dev_alloc(driver, sc->sc_dev);
-	if (dev == NULL) {
+	if (IS_ERR(dev)) {
 		aprint_error_dev(self, "couldn't allocate DRM device\n");
 		return;
 	}
