@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.33 2021/12/19 11:18:26 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.34 2021/12/19 11:18:35 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.33 2021/12/19 11:18:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.34 2021/12/19 11:18:35 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1814,7 +1814,7 @@ get_suspend_mode(struct drm_i915_private *dev_priv, bool hibernate)
 	return I915_DRM_SUSPEND_MEM;
 }
 
-static int i915_drm_suspend_late(struct drm_device *dev, bool hibernation)
+int i915_drm_suspend_late(struct drm_device *dev, bool hibernation)
 {
 	struct drm_i915_private *dev_priv = to_i915(dev);
 	struct pci_dev *pdev = dev_priv->drm.pdev;
