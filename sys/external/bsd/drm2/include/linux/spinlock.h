@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.9 2021/12/19 00:54:46 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.10 2021/12/19 01:45:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -86,6 +86,12 @@ static inline void
 spin_unlock_irqrestore(spinlock_t *spinlock, unsigned long __unused flags)
 {
 	mutex_exit(&spinlock->sl_lock);
+}
+
+static inline void
+spin_lock_nested(spinlock_t *spinlock, int subclass)
+{
+	spin_lock(spinlock);
 }
 
 static inline void
