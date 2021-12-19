@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.h,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.h,v 1.3 2021/12/19 00:46:08 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -31,6 +31,7 @@
 
 #include <linux/list.h>
 #include <linux/irqreturn.h>
+#include <linux/ktime.h>
 
 #include <drm/drm_device.h>
 
@@ -42,6 +43,7 @@ struct dma_buf_attachment;
 struct drm_display_mode;
 struct drm_mode_create_dumb;
 struct drm_printer;
+struct drm_unique;
 
 /**
  * enum drm_driver_feature - feature flags
