@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.80 2021/12/19 11:49:46 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.81 2021/12/19 11:50:31 riastradh Exp $
 
 version	20180827
 
@@ -33,7 +33,7 @@ makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_SW_FENCE_CHECK_
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_HEARTBEAT_INTERVAL=2500" # milliseconds
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_STOP_TIMEOUT=100" # milliseconds
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_PREEMPT_TIMEOUT=640" # milliseconds
-makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_CAPTURE_ERROR=1"
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_CAPTURE_ERROR=0"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_SELFTEST=0"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_PM=1"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_INTEL_MEI_HDCP=0"
