@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.3 2021/12/19 10:24:52 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.4 2021/12/19 11:26:35 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.3 2021/12/19 10:24:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.4 2021/12/19 11:26:35 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -26,6 +26,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.3 2021/12/19 10:24:52 riastradh 
 #include "i915_user_extensions.h"
 #include "i915_vma.h"
 
+#ifndef __NetBSD__
 static inline bool
 __vma_matches(struct vm_area_struct *vma, struct file *filp,
 	      unsigned long addr, unsigned long size)
@@ -36,6 +37,7 @@ __vma_matches(struct vm_area_struct *vma, struct file *filp,
 	return vma->vm_start == addr &&
 	       (vma->vm_end - vma->vm_start) == PAGE_ALIGN(size);
 }
+#endif
 
 /**
  * i915_gem_mmap_ioctl - Maps the contents of an object, returning the address
@@ -94,6 +96,26 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		goto err;
 	}
 
+#ifdef __NetBSD__
+	int error;
+
+        /* Acquire a reference for uvm_map to consume.  */
+        uao_reference(obj->filp);
+        addr = (*curproc->p_emul->e_vm_default_addr)(curproc,
+            (vaddr_t)curproc->p_vmspace->vm_daddr, args->size,
+            curproc->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
+        error = uvm_map(&curproc->p_vmspace->vm_map, &addr, args->size,
+            obj->filp, args->offset, 0,
+            UVM_MAPFLAG(VM_PROT_READ|VM_PROT_WRITE,
+                VM_PROT_READ|VM_PROT_WRITE, UVM_INH_COPY, UVM_ADV_NORMAL,
+                0));
+        if (error) {
+                uao_detach(obj->filp);
+		/* XXX errno NetBSD->Linux */
+		addr = -error;
+		goto err;
+        }
+#else
 	addr = vm_mmap(obj->base.filp, 0, args->size,
 		       PROT_READ | PROT_WRITE, MAP_SHARED,
 		       args->offset);
@@ -118,6 +140,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		if (IS_ERR_VALUE(addr))
 			goto err;
 	}
+#endif
 	i915_gem_object_put(obj);
 
 	args->addr_ptr = (u64)addr;
@@ -214,6 +237,18 @@ compute_partial_view(const struct drm_i915_gem_object *obj,
 
 	return view;
 }
+
+#ifdef __NetBSD__
+
+static int
+i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
+    int npages, int centeridx, vm_prot_t access_type, int flags)
+{
+	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
+	struct ...
+}
+
+#else
 
 static vm_fault_t i915_error_to_vmf_fault(int err)
 {
@@ -407,6 +442,8 @@ err:
 	return i915_error_to_vmf_fault(ret);
 }
 
+#endif	/* __NetBSD__ */
+
 void __i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object *obj)
 {
 	struct i915_vma *vma;
@@ -469,6 +506,23 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 	struct i915_mmap_offset *mmo, *mn;
 
 	spin_lock(&obj->mmo.lock);
+#ifdef __NetBSD__
+	enum i915_mmap_type t;
+	struct vm_page *pg;
+
+	(void)mmo;
+	(void)mn;
+	for (t = 0; t < I915_MMA_NTYPES; t++) {
+		if (t == I915_MMAP_TYPE_GTT)
+			continue;
+		/*
+		 * XXX Gotta take some uvm object's lock, outside the
+		 * spin lock, probably?
+		 */
+		TAILQ_FOREACH(pg, &obj->mm.pageq, pageq.queue)
+			pmap_page_protect(pg, VM_PROT_NONE);
+	}
+#else
 	rbtree_postorder_for_each_entry_safe(mmo, mn,
 					     &obj->mmo.offsets, offset) {
 		/*
@@ -483,6 +537,7 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 				   obj->base.dev->anon_inode->i_mapping);
 		spin_lock(&obj->mmo.lock);
 	}
+#endif
 	spin_unlock(&obj->mmo.lock);
 }
 
@@ -503,6 +558,15 @@ static struct i915_mmap_offset *
 lookup_mmo(struct drm_i915_gem_object *obj,
 	   enum i915_mmap_type mmap_type)
 {
+#ifdef __NetBSD__
+	struct i915_mmap_offset *mmo;
+
+	spin_lock(&obj->mmo.lock);
+	mmo = obj->mmo.offsets[mmap_type];
+	spin_unlock(&obj->mmo.lock);
+
+	return mmo;
+#else
 	struct rb_node *rb;
 
 	spin_lock(&obj->mmo.lock);
@@ -524,11 +588,31 @@ lookup_mmo(struct drm_i915_gem_object *obj,
 	spin_unlock(&obj->mmo.lock);
 
 	return NULL;
+#endif
 }
 
 static struct i915_mmap_offset *
 insert_mmo(struct drm_i915_gem_object *obj, struct i915_mmap_offset *mmo)
 {
+#ifdef __NetBSD__
+	struct i915_mmap_offset *to_free = NULL;
+
+	spin_lock(&obj->mmo.lock);
+	if (obj->mmo.offsets[mmo->mmap_type]) {
+		drm_vma_offset_remove(obj->base.dev->vma_offset_manager,
+		    &mmo->vma_node);
+		to_free = mmo;
+		mmo = obj->mmo.offsets[mmo->mmap_type];
+	} else {
+		obj->mmo.offsets[mmo->mmap_type] = mmo;
+	}
+	spin_unlock(&obj->mmo.lock);
+
+	if (to_free)
+		kfree(to_free);
+
+	return mmo;
+#else
 	struct rb_node *rb, **p;
 
 	spin_lock(&obj->mmo.lock);
@@ -558,6 +642,7 @@ insert_mmo(struct drm_i915_gem_object *obj, struct i915_mmap_offset *mmo)
 	spin_unlock(&obj->mmo.lock);
 
 	return mmo;
+#endif
 }
 
 static struct i915_mmap_offset *
@@ -737,6 +822,17 @@ i915_gem_mmap_offset_ioctl(struct drm_device *dev, void *data,
 	return __assign_mmap_offset(file, args->handle, type, &args->offset);
 }
 
+#ifdef __NetBSD__
+
+int
+i915_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
+    int prot, struct uvm_object **uobjp, voff_t *uoffsetp, struct file *fp)
+{
+	panic("NYI");
+}
+
+#else
+
 static void vm_open(struct vm_area_struct *vma)
 {
 	struct i915_mmap_offset *mmo = vma->vm_private_data;
@@ -900,6 +996,8 @@ int i915_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 
 	return 0;
 }
+
+#endif	/* __NetBSD__ */
 
 #if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
 #include "selftests/i915_gem_mman.c"
