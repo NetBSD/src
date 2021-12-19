@@ -1,4 +1,4 @@
-/* $NetBSD: anx_dp.c,v 1.4 2021/12/19 11:01:11 riastradh Exp $ */
+/* $NetBSD: anx_dp.c,v 1.5 2021/12/19 12:43:37 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.4 2021/12/19 11:01:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.5 2021/12/19 12:43:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.4 2021/12/19 11:01:11 riastradh Exp $")
 #include <dev/audio/audio_dai.h>
 #endif
 
+#include <drm/drm_atomic_state_helper.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_dp_helper.h>
@@ -252,6 +253,9 @@ static const struct drm_connector_funcs anxdp_connector_funcs = {
 	.detect = anxdp_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = anxdp_connector_destroy,
+	.reset = drm_atomic_helper_connector_reset,
+	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
 static void
@@ -308,7 +312,7 @@ anxdp_init_aux(struct anxdp_softc * const sc)
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_DP_INT_STA,
 	    RPLY_RECEIV | AUX_ERR);
-	
+
 	pd = bus_space_read_4(sc->sc_bst, sc->sc_bsh, pd_reg);
 	pd |= pd_mask;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, pd_reg, pd);
@@ -367,8 +371,17 @@ anxdp_connector_get_modes(struct drm_connector *connector)
 	return error;
 }
 
+static struct drm_encoder *
+anxdp_connector_best_encoder(struct drm_connector *connector)
+{
+	struct anxdp_connector *anxdp_connector = to_anxdp_connector(connector);
+
+	return anxdp_connector->encoder;
+}
+
 static const struct drm_connector_helper_funcs anxdp_connector_helper_funcs = {
 	.get_modes = anxdp_connector_get_modes,
+	.best_encoder = anxdp_connector_best_encoder,
 };
 
 static int
@@ -391,7 +404,7 @@ anxdp_bridge_attach(struct drm_bridge *bridge)
 	drm_connector_helper_add(connector, &anxdp_connector_helper_funcs);
 
 	error = drm_connector_attach_encoder(connector, bridge->encoder);
-	if (error != 0)
+	if (error)
 		return error;
 
 	return drm_connector_register(connector);
@@ -416,17 +429,21 @@ anxdp_link_start(struct anxdp_softc * const sc, struct anxdp_link * const link)
 	uint8_t training[4];
 	uint8_t bw[2];
 	uint32_t val;
+	int ret;
 
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_LINK_BW_SET, drm_dp_link_rate_to_bw_code(link->rate));
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_LANE_COUNT_SET, link->num_lanes);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_LINK_BW_SET,
+	    drm_dp_link_rate_to_bw_code(link->rate));
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_LANE_COUNT_SET,
+	    link->num_lanes);
 
 	bw[0] = drm_dp_link_rate_to_bw_code(link->rate);
 	bw[1] = link->num_lanes;
 	if (link->enhanced_framing)
 		bw[1] |= DP_LANE_COUNT_ENHANCED_FRAME_EN;
-	if (drm_dp_dpcd_write(&sc->sc_dpaux, DP_LINK_BW_SET, bw, sizeof(bw)) < 0)
+	ret = drm_dp_dpcd_write(&sc->sc_dpaux, DP_LINK_BW_SET, bw, sizeof(bw));
+	if (ret < 0)
 		return;
-	
+
 	for (u_int i = 0; i < link->num_lanes; i++) {
 		val = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    ANXDP_LNx_LINK_TRAINING_CTL(i));
@@ -545,10 +562,13 @@ anxdp_train_link(struct anxdp_softc * const sc)
 {
 	struct anxdp_link link;
 	uint8_t values[3], power;
+	int ret;
 
 	anxdp_macro_reset(sc);
 
-	if (drm_dp_dpcd_read(&sc->sc_dpaux, DP_DPCD_REV, values, sizeof(values)) < 0) {
+	ret = drm_dp_dpcd_read(&sc->sc_dpaux, DP_DPCD_REV, values,
+	    sizeof(values));
+	if (ret < 0) {
 		device_printf(sc->sc_dev, "link probe failed\n");
 		return;
 	}
@@ -638,20 +658,20 @@ anxdp_bringup(struct anxdp_softc * const sc)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_PLL_FILTER_CTL_1,
 	    PD_RING_OSC | AUX_TERMINAL_CTRL_50_OHM | TX_CUR1_2X | TX_CUR_16_MA);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_TX_AMP_TUNING_CTL, 0);
-	
+
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, ANXDP_FUNC_EN_1);
 	val &= ~SW_FUNC_EN_N;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_FUNC_EN_1, val);
 
 	anxdp_analog_power_up_all(sc);
-	
+
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_COMMON_INT_STA_1,
 	    PLL_LOCK_CHG);
-	
+
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, ANXDP_DEBUG_CTL);
 	val &= ~(F_PLL_LOCK | PLL_LOCK_CTRL);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_DEBUG_CTL, val);
-	
+
 	if (anxdp_await_pll_lock(sc) != 0) {
 		device_printf(sc->sc_dev, "PLL lock timeout\n");
 	}
@@ -727,7 +747,8 @@ anxdp_bridge_post_disable(struct drm_bridge *bridge)
 
 static void
 anxdp_bridge_mode_set(struct drm_bridge *bridge,
-    const struct drm_display_mode *mode, const struct drm_display_mode *adjusted_mode)
+    const struct drm_display_mode *mode,
+    const struct drm_display_mode *adjusted_mode)
 {
 	struct anxdp_softc * const sc = bridge->driver_private;
 
@@ -917,7 +938,7 @@ anxdp_dp_aux_transfer(struct drm_dp_aux *dpaux, struct drm_dp_aux_msg *dpmsg)
 	    AUX_ADDR_15_8(dpmsg->address));
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, ANXDP_AUX_ADDR_19_16,
 	    AUX_ADDR_19_16(dpmsg->address));
-	
+
 	if (!(dpmsg->request & DP_AUX_I2C_READ)) {
 		for (i = 0; i < dpmsg->size; i++) {
 			bus_space_write_4(sc->sc_bst, sc->sc_bsh,
@@ -965,13 +986,13 @@ anxdp_dp_aux_transfer(struct drm_dp_aux *dpaux, struct drm_dp_aux_msg *dpmsg)
 		ret = -EREMOTEIO;
 		goto out;
 	}
-		
+
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, ANXDP_AUX_CH_STA);
 	if (AUX_STATUS(val) != 0) {
 		ret = -EREMOTEIO;
 		goto out;
 	}
-	
+
 	if ((dpmsg->request & DP_AUX_I2C_READ)) {
 		for (i = 0; i < dpmsg->size; i++) {
 			val = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
@@ -980,7 +1001,7 @@ anxdp_dp_aux_transfer(struct drm_dp_aux *dpaux, struct drm_dp_aux_msg *dpmsg)
 			ret++;
 		}
 	}
-	
+
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, ANXDP_AUX_RX_COMM);
 	if (val == AUX_RX_COMM_AUX_DEFER)
 		dpmsg->reply = DP_AUX_NATIVE_REPLY_DEFER;
@@ -998,21 +1019,6 @@ out:
 		anxdp_init_aux(sc);
 
 	return ret;
-}
-
-void
-anxdp_dpms(struct anxdp_softc *sc, int mode)
-{
-	switch (mode) {
-	case DRM_MODE_DPMS_ON:
-		pmf_event_inject(NULL, PMFE_DISPLAY_ON);
-		break;
-	case DRM_MODE_DPMS_STANDBY:
-	case DRM_MODE_DPMS_SUSPEND:
-	case DRM_MODE_DPMS_OFF:
-		pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
-		break;
-	}
 }
 
 int
@@ -1048,15 +1054,18 @@ anxdp_bind(struct anxdp_softc *sc, struct drm_encoder *encoder)
 {
 	int error;
 
+	sc->sc_connector.encoder = encoder;
+
 	sc->sc_bridge.driver_private = sc;
 	sc->sc_bridge.funcs = &anxdp_bridge_funcs;
-	sc->sc_bridge.encoder = encoder;
 
 	error = drm_bridge_attach(encoder, &sc->sc_bridge, NULL);
-	if (error != 0)
+	if (error)
 		return EIO;
 
-	if (sc->sc_panel != NULL && sc->sc_panel->funcs != NULL &&  sc->sc_panel->funcs->prepare != NULL)
+	if (sc->sc_panel != NULL &&
+	    sc->sc_panel->funcs != NULL &&
+	    sc->sc_panel->funcs->prepare != NULL)
 		sc->sc_panel->funcs->prepare(sc->sc_panel);
 
 	return 0;
