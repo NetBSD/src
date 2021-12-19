@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mode_config.c,v 1.3 2021/12/19 09:48:22 riastradh Exp $	*/
+/*	$NetBSD: drm_mode_config.c,v 1.4 2021/12/19 10:47:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mode_config.c,v 1.3 2021/12/19 09:48:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mode_config.c,v 1.4 2021/12/19 10:47:29 riastradh Exp $");
 
 #include <linux/uaccess.h>
 
@@ -32,9 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: drm_mode_config.c,v 1.3 2021/12/19 09:48:22 riastrad
 #include <drm/drm_file.h>
 #include <drm/drm_mode_config.h>
 #include <drm/drm_print.h>
-#ifdef __NetBSD__
-#include <drm/drm_os_netbsd.h>
-#endif
 #include <linux/dma-resv.h>
 
 #include "drm_crtc_internal.h"

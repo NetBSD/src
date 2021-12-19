@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.h,v 1.4 2021/12/19 09:54:38 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.h,v 1.5 2021/12/19 10:47:30 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -35,7 +35,6 @@
 #define _DRM_PCI_H_
 
 #include <linux/pci.h>
-#include <drm/drm_os_netbsd.h>
 
 struct drm_dma_handle;
 struct drm_device;

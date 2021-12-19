@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.h,v 1.7 2021/12/19 01:49:44 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.h,v 1.8 2021/12/19 10:47:30 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -35,9 +35,6 @@
 #ifndef _DRM_CACHE_H_
 #define _DRM_CACHE_H_
 
-#ifdef __NetBSD__
-#include <drm/drm_os_netbsd.h>
-#endif
 #include <linux/scatterlist.h>
 
 struct page;
