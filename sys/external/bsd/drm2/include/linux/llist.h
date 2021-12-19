@@ -1,4 +1,4 @@
-/*	$NetBSD: llist.h,v 1.4 2021/12/19 11:36:48 riastradh Exp $	*/
+/*	$NetBSD: llist.h,v 1.5 2021/12/19 11:39:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -109,6 +109,11 @@ llist_del_first(struct llist_head *head)
 	(_NODE == NULL ? NULL :						      \
 	    llist_entry(_NODE, __typeof__(*(ENTRY)), FIELD));		      \
 })
+
+#define	llist_for_each_safe(NODE, TMP, HEAD)				      \
+	for ((NODE) = (HEAD);						      \
+		(NODE) && ((TMP) = (NODE)->next, 1);			      \
+		(NODE) = (TMP))
 
 #define	llist_for_each_entry(ENTRY, NODE, FIELD)			      \
 	for ((ENTRY) = ((NODE) == NULL ? NULL :				      \

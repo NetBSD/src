@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.31 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.32 2021/12/19 11:39:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 
 #include <linux/kernel.h>
 #include <linux/types.h>
+
+#define	POISON_INUSE	0x5a	/* XXX */
 
 /*
  * Doubly-linked lists.  Type defined in <linux/types.h>.

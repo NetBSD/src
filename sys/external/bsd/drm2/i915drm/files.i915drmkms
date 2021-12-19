@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.76 2021/12/19 11:38:37 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.77 2021/12/19 11:39:24 riastradh Exp $
 
 version	20180827
 
@@ -13,10 +13,7 @@ attach	intelfb at intelfbbus
 # overflow is OK.
 makeoptions 	i915drmkms	"COPTS.i915drmkms"+="-fwrapv"
 
-makeoptions	intelfb		"CPPFLAGS.intelfb"+="-I$S/external/bsd/drm2/i915drm"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-I$S/external/bsd/drm2/i915drm"
-
-makeoptions	intelfb		"CPPFLAGS.intelfb"+="-I$S/external/bsd/drm2/dist/drm/i915"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-I$S/external/bsd/drm2/dist/drm/i915"
 
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_FBDEV_EMULATION=1"
@@ -49,6 +46,9 @@ makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sprite.c"+="${${ACTIVE_CC} == gcc:? -
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_ddi.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 10:? -Wno-maybe-uninitialized :} ${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}"
+
+makeoptions	intelfb		"CPPFLAGS.intelfb"+="${CPPFLAGS.i915drmkms}"
+makeoptions	intelfb		"CWARNFLAGS.intelfb"+="${CWARNFLAGS.i915drmkms}"
 
 file	external/bsd/drm2/i915drm/i915_gem_userptr.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_gemfs.c	i915drmkms

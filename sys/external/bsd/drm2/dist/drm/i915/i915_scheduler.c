@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scheduler.c,v 1.5 2021/12/19 11:37:50 riastradh Exp $	*/
+/*	$NetBSD: i915_scheduler.c,v 1.6 2021/12/19 11:39:24 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.5 2021/12/19 11:37:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.6 2021/12/19 11:39:24 riastradh Exp $");
 
 #include <linux/mutex.h>
 
@@ -116,15 +116,19 @@ static const rb_tree_ops_t i915_priolist_rb_ops = {
 	.rbto_node_offset = offsetof(struct i915_priolist, node),
 };
 
+#endif
+
 void
 i915_sched_init(struct intel_engine_execlists *execlists)
 {
 
+#ifdef __NetBSD__
 	rb_tree_init(&execlists->queue.rb_root.rbr_tree,
 	    &i915_priolist_rb_ops);
-}
-
+#else
+	execlists->queue = RB_ROOT_CACHED;
 #endif
+}
 
 struct list_head *
 i915_sched_lookup_priolist(struct intel_engine_cs *engine, int prio)
