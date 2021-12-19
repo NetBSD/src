@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_frontbuffer.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_frontbuffer.c,v 1.3 2021/12/19 12:09:43 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_frontbuffer.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_frontbuffer.c,v 1.3 2021/12/19 12:09:43 riastradh Exp $");
 
 #include "display/intel_dp.h"
 
@@ -238,6 +238,7 @@ static void frontbuffer_release(struct kref *ref)
 	spin_unlock(&to_i915(obj->base.dev)->fb_tracking.lock);
 
 	i915_gem_object_put(obj);
+	i915_active_fini(&front->write);
 	kfree_rcu(front, rcu);
 }
 
