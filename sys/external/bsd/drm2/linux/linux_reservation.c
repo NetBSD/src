@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.23 2021/12/19 01:50:25 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.24 2021/12/19 01:50:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.23 2021/12/19 01:50:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.24 2021/12/19 01:50:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -690,6 +690,154 @@ put_restart:
 
 restart:
 	rcu_read_unlock();
+	goto top;
+}
+
+/*
+ * reservation_object_copy_fences(dst, src)
+ *
+ *	Copy the exclusive fence and all the shared fences from src to
+ *	dst.
+ *
+ *	Caller must have dst locked.
+ */
+int
+reservation_object_copy_fences(struct reservation_object *dst_robj,
+    const struct reservation_object *src_robj)
+{
+	const struct reservation_object_list *src_list;
+	struct reservation_object_list *dst_list = NULL;
+	struct reservation_object_list *old_list;
+	struct dma_fence *fence = NULL;
+	struct dma_fence *old_fence;
+	uint32_t shared_count, i;
+	struct reservation_object_read_ticket read_ticket;
+	struct reservation_object_write_ticket write_ticket;
+
+	KASSERT(reservation_object_held(dst_robj));
+
+top:
+	/* Enter an RCU read section and get a read ticket.  */
+	rcu_read_lock();
+	reservation_object_read_begin(src_robj, &read_ticket);
+
+	/* Get the shared list.  */
+	src_list = src_robj->fence;
+	__insn_barrier();
+	if (src_list) {
+		/* Make sure the content of the list has been published.  */
+		membar_datadep_consumer();
+
+		/* Find out how long it is.  */
+		shared_count = src_list->shared_count;
+
+		/*
+		 * Make sure we saw a consistent snapshot of the list
+		 * pointer and length.
+		 */
+		if (!reservation_object_read_valid(src_robj, &read_ticket))
+			goto restart;
+
+		/* Allocate a new list.  */
+		dst_list = objlist_tryalloc(shared_count);
+		if (dst_list == NULL)
+			return -ENOMEM;
+
+		/* Copy over all fences that are not yet signalled.  */
+		dst_list->shared_count = 0;
+		for (i = 0; i < shared_count; i++) {
+			if ((fence = dma_fence_get_rcu(src_list->shared[i]))
+			    != NULL)
+				goto restart;
+			if (dma_fence_is_signaled(fence)) {
+				dma_fence_put(fence);
+				fence = NULL;
+				continue;
+			}
+			dst_list->shared[dst_list->shared_count++] = fence;
+			fence = NULL;
+		}
+	}
+
+	/* Get the exclusive fence.  */
+	fence = src_robj->fence_excl;
+	__insn_barrier();
+	if (fence != NULL) {
+		/* Make sure the content of the fence has been published.  */
+		membar_datadep_consumer();
+
+		/*
+		 * Make sure we saw a consistent snapshot of the fence.
+		 *
+		 * XXX I'm not actually sure this is necessary since
+		 * pointer writes are supposed to be atomic.
+		 */
+		if (!reservation_object_read_valid(src_robj, &read_ticket)) {
+			fence = NULL;
+			goto restart;
+		}
+
+		/*
+		 * If it is going away, restart.  Otherwise, acquire a
+		 * reference to it.
+		 */
+		if (!dma_fence_get_rcu(fence)) {
+			fence = NULL;
+			goto restart;
+		}
+	}
+
+	/* All done with src; exit the RCU read section.  */
+	rcu_read_unlock();
+
+	/*
+	 * We now have a snapshot of the shared and exclusive fences of
+	 * src_robj and we have acquired references to them so they
+	 * won't go away.  Transfer them over to dst_robj, releasing
+	 * references to any that were there.
+	 */
+
+	/* Get the old shared and exclusive fences, if any.  */
+	old_list = dst_robj->fence;
+	old_fence = dst_robj->fence_excl;
+
+	/* Begin an update.  */
+	reservation_object_write_begin(dst_robj, &write_ticket);
+
+	/* Replace the fences.  */
+	dst_robj->fence = dst_list;
+	dst_robj->fence_excl = fence;
+
+	/* Commit the update.  */
+	reservation_object_write_commit(dst_robj, &write_ticket);
+
+	/* Release the old exclusive fence, if any.  */
+	if (old_fence)
+		dma_fence_put(old_fence);
+
+	/* Release any old shared fences.  */
+	if (old_list) {
+		for (i = old_list->shared_count; i --> 0;)
+			dma_fence_put(old_list->shared[i]);
+	}
+
+	/* Success!  */
+	return 0;
+
+restart:
+	rcu_read_unlock();
+	if (dst_list) {
+		for (i = dst_list->shared_count; i --> 0;) {
+			dma_fence_put(dst_list->shared[i]);
+			dst_list->shared[i] = NULL;
+		}
+		objlist_free(dst_list);
+		dst_list = NULL;
+	}
+	if (fence) {
+		dma_fence_put(fence);
+		fence = NULL;
+	}
 	goto top;
 }
 
