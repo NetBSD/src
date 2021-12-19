@@ -1,4 +1,4 @@
-/*	$NetBSD: ioport.h,v 1.3 2021/12/19 01:35:04 riastradh Exp $	*/
+/*	$NetBSD: ioport.h,v 1.4 2021/12/19 01:38:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 struct resource {
 	bus_addr_t start;
-	bus_size_t size;
+	bus_addr_t end;		/* WARNING: Inclusive! */
 	const char *name;
 	unsigned int flags;
 	bus_space_tag_t r_bst;	/* This milk is not organic.  */
@@ -50,13 +50,14 @@ struct resource {
 static inline bus_size_t
 resource_size(struct resource *resource)
 {
-	return resource->size;
+	return resource->end - resource->start + 1;
 }
 
 static inline void
 release_resource(struct resource *resource)
 {
-	bus_space_free(resource->r_bst, resource->r_bsh, resource->size);
+	bus_space_free(resource->r_bst, resource->r_bsh,
+	    resource_size(resource));
 }
 
 #endif  /* _LINUX_IOPORT_H_ */
