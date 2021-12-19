@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.19 2021/12/19 11:00:28 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.20 2021/12/19 11:07:28 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.19 2021/12/19 11:00:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.20 2021/12/19 11:07:28 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -196,13 +196,13 @@ void drm_gem_private_object_init(struct drm_device *dev,
 	kref_init(&obj->refcount);
 	obj->handle_count = 0;
 	obj->size = size;
-#ifdef __NetBSD__
-	drm_vma_node_init(&obj->vma_node);
-#else
 	dma_resv_init(&obj->_resv);
 	if (!obj->resv)
 		obj->resv = &obj->_resv;
 
+#ifdef __NetBSD__
+	drm_vma_node_init(&obj->vma_node);
+#else
 	drm_vma_node_reset(&obj->vma_node);
 #endif
 }
