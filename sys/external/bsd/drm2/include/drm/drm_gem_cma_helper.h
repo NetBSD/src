@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_cma_helper.h,v 1.1 2021/12/19 10:24:33 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_cma_helper.h,v 1.2 2021/12/19 10:29:16 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __DRM_GEM_CMA_HELPER_H__
@@ -7,6 +7,8 @@
 #include <drm/drm_file.h>
 #include <drm/drm_ioctl.h>
 #include <drm/drm_gem.h>
+
+#include <sys/vmem.h>
 
 struct drm_mode_create_dumb;
 

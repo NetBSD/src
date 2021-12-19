@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_device.h,v 1.6 2021/12/19 10:29:01 riastradh Exp $	*/
+/*	$NetBSD: drm_device.h,v 1.7 2021/12/19 10:29:16 riastradh Exp $	*/
 
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
@@ -29,6 +29,7 @@ struct drm_fb_helper;
 struct pci_dev;
 struct pci_controller;
 
+typedef struct vmem vmem_t;
 
 /**
  * enum drm_switch_power - power state of drm device
