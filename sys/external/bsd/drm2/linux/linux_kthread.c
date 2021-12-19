@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kthread.c,v 1.1 2021/12/19 12:23:07 riastradh Exp $	*/
+/*	$NetBSD: linux_kthread.c,v 1.2 2021/12/19 12:24:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.1 2021/12/19 12:23:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.2 2021/12/19 12:24:19 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -171,8 +171,14 @@ kthread_stop(struct task_struct *T)
 int
 kthread_should_stop(void)
 {
+	struct task_struct *T = linux_kthread();
+	bool shouldstop;
 
-	return linux_kthread()->kt_shouldstop;
+	mutex_enter(&T->kt_lock);
+	shouldstop = T->kt_shouldstop;
+	mutex_exit(&T->kt_lock);
+
+	return shouldstop;
 }
 
 void
