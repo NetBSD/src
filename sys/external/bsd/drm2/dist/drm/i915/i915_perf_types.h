@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_perf_types.h,v 1.5 2021/12/19 11:11:51 riastradh Exp $	*/
+/*	$NetBSD: i915_perf_types.h,v 1.6 2021/12/19 11:36:57 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -82,7 +82,7 @@ struct i915_perf_stream_ops {
 	 */
 	void (*disable)(struct i915_perf_stream *stream);
 
-#ifdef notyet
+#ifndef __NetBSD__
 	/**
 	 * @poll_wait: Call poll_wait, passing a wait queue that will be woken
 	 * once there is something ready to read() for the stream
@@ -117,10 +117,17 @@ struct i915_perf_stream_ops {
 	 * -%ENOSPC or -%EFAULT, even though these may be squashed before
 	 * returning to userspace.
 	 */
+#ifdef __NetBSD__
+	int (*read)(struct i915_perf_stream *stream,
+		    struct uio *buf,
+		    kauth_cred_t count, /* XXX dummy */
+		    int offset);	/* XXX dummy */
+#else
 	int (*read)(struct i915_perf_stream *stream,
 		    char __user *buf,
 		    size_t count,
 		    size_t *offset);
+#endif
 
 	/**
 	 * @destroy: Cleanup any stream specific resources.
@@ -227,10 +234,11 @@ struct i915_perf_stream {
 	 * @poll_wq: The wait queue that hrtimer callback wakes when it
 	 * sees data ready to read in the circular OA buffer.
 	 */
-#ifdef __linux__
-	wait_queue_head_t poll_wq;
-#else
+#ifdef __NetBSD__
 	drm_waitqueue_t poll_wq;
+	struct selinfo poll_selq;
+#else
+	wait_queue_head_t poll_wq;
 #endif
 
 	/**
@@ -371,10 +379,17 @@ struct i915_oa_ops {
 	 * @read: Copy data from the circular OA buffer into a given userspace
 	 * buffer.
 	 */
+#ifdef __NetBSD__
+	int (*read)(struct i915_perf_stream *stream,
+		    struct uio *buf,
+		    kauth_cred_t count, /* XXX dummy */
+		    int offset);	/* XXX dummy */
+#else
 	int (*read)(struct i915_perf_stream *stream,
 		    char __user *buf,
 		    size_t count,
 		    size_t *offset);
+#endif
 
 	/**
 	 * @oa_hw_tail_read: read the OA tail pointer register
