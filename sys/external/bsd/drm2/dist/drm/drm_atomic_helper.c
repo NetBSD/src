@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic_helper.c,v 1.8 2021/12/19 00:55:43 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic_helper.c,v 1.9 2021/12/19 12:05:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic_helper.c,v 1.8 2021/12/19 00:55:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic_helper.c,v 1.9 2021/12/19 12:05:08 riastradh Exp $");
 
 #include <linux/dma-fence.h>
 #include <linux/ktime.h>
@@ -1466,12 +1466,13 @@ drm_atomic_helper_wait_for_vblanks(struct drm_device *dev,
 			continue;
 
 #ifdef __NetBSD__
-		spin_lock(&dev->vbl_lock);
-		DRM_SPIN_WAIT_ON(ret, &dev->vblank[i].queue, &dev->vbl_lock,
+		spin_lock(&dev->event_lock);
+		DRM_SPIN_WAIT_ON(ret, &dev->vblank[i].queue,
+		    &dev->event_lock,
 		    msecs_to_jiffies(50),
 		    (old_state->crtcs[i].last_vblank_count !=
 			drm_crtc_vblank_count(crtc)));
-		spin_unlock(&dev->vbl_lock);
+		spin_unlock(&dev->event_lock);
 #else
 		ret = wait_event_timeout(dev->vblank[i].queue,
 				old_state->crtcs[i].last_vblank_count !=
