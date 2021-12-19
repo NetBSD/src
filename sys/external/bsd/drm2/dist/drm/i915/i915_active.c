@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.7 2021/12/19 11:59:04 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.8 2021/12/19 12:11:14 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.7 2021/12/19 11:59:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.8 2021/12/19 12:11:14 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -285,6 +285,7 @@ active_instance(struct i915_active *ref, struct intel_timeline *tl)
 	prealloc = kmem_cache_alloc(global.slab_cache, GFP_KERNEL);
 	if (!prealloc)
 		return NULL;
+	memset(prealloc, 0, sizeof(*prealloc));
 
 	spin_lock_irq(&ref->tree_lock);
 	GEM_BUG_ON(i915_active_is_idle(ref));
@@ -724,6 +725,7 @@ int i915_active_acquire_preallocate_barrier(struct i915_active *ref,
 				goto unwind;
 			}
 
+			memset(node, 0, sizeof(*node));
 			RCU_INIT_POINTER(node->base.fence, NULL);
 			node->base.cb.func = node_retire;
 			node->timeline = idx;
@@ -852,16 +854,20 @@ void i915_request_add_active_barriers(struct i915_request *rq)
 		/* serialise with reuse_idle_barrier */
 		smp_store_mb(*ll_to_fence_slot(node), &rq->fence);
 #ifdef __NetBSD__
-		spin_unlock(&rq->lock);
+		/* XXX ugh bletch */
 		struct i915_active_fence *active =
 		    container_of(node, struct i915_active_fence, llist);
 		/* XXX something bad went wrong in making this code */
 		KASSERT(active->cb.func == node_retire ||
 		    active->cb.func == excl_retire ||
 		    active->cb.func == i915_active_noop);
-		(void)dma_fence_add_callback(active->fence, &active->cb,
-		    active->cb.func);
-		spin_lock(&rq->lock);
+		KASSERTMSG(active->fence == &rq->fence,
+		    "active=%p fence=%p; rq=%p fence=%p",
+		    active, active->fence, rq, &rq->fence);
+		KASSERTMSG(!active->cb.fcb_onqueue, "active=%p", active);
+		active->cb.fcb_onqueue = true;
+		TAILQ_INSERT_TAIL(&rq->fence.f_callbacks, &active->cb,
+		    fcb_entry);
 #else
 		list_add_tail((struct list_head *)node, &rq->fence.cb_list);
 #endif
@@ -917,29 +923,32 @@ __i915_active_fence_set(struct i915_active_fence *active,
 	prev = xchg(__active_fence_slot(active), fence);
 	if (prev) {
 		GEM_BUG_ON(prev == fence);
+		spin_lock_nested(prev->lock, SINGLE_DEPTH_NESTING);
 #ifdef __NetBSD__
+		/* XXX ugh bletch */
 		KASSERT(active->cb.func == node_retire ||
 		    active->cb.func == excl_retire ||
 		    active->cb.func == i915_active_noop);
-		(void)dma_fence_remove_callback(prev, &active->cb);
+		if (active->cb.fcb_onqueue) {
+			TAILQ_REMOVE(&prev->f_callbacks, &active->cb,
+			    fcb_entry);
+			active->cb.fcb_onqueue = false;
+		}
 #else
-		spin_lock_nested(prev->lock, SINGLE_DEPTH_NESTING);
 		__list_del_entry(&active->cb.node);
-		spin_unlock(prev->lock); /* serialise with prev->cb_list */
 #endif
+		spin_unlock(prev->lock); /* serialise with prev->cb_list */
 	}
 	GEM_BUG_ON(rcu_access_pointer(active->fence) != fence);
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	/* XXX ugh bletch */
+	KASSERT(!active->cb.fcb_onqueue);
+	active->cb.fcb_onqueue = true;
+	TAILQ_INSERT_TAIL(&fence->f_callbacks, &active->cb, fcb_entry);
+#else
 	list_add_tail(&active->cb.node, &fence->cb_list);
 #endif
 	spin_unlock_irqrestore(fence->lock, flags);
-
-#ifdef __NetBSD__
-	KASSERT(active->cb.func == node_retire ||
-	    active->cb.func == excl_retire ||
-	    active->cb.func == i915_active_noop);
-	dma_fence_add_callback(fence, &active->cb, active->cb.func);
-#endif
 
 	return prev;
 }
