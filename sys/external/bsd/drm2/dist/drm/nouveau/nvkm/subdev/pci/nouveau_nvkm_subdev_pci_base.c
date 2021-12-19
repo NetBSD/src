@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.10 2021/12/19 12:31:26 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.11 2021/12/19 12:43:45 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.10 2021/12/19 12:31:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.11 2021/12/19 12:43:45 riastradh Exp $");
 
 #include "priv.h"
 #include "agp.h"
@@ -276,6 +276,7 @@ nvkm_pci_new_(const struct nvkm_pci_func *func, struct nvkm_device *device,
 		break;
 	default:
 		switch (device->chipset) {
+		case 0x84:	/* G84, no mode switch with MSI */
 		case 0xaa:
 			/* reported broken, nv also disable it */
 			break;
