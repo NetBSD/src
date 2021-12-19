@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 2021/12/19 01:19:30 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.2 2021/12/19 01:19:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -94,5 +94,10 @@ typedef off_t loff_t;
 
 /* Definition copied in <linux/kernel.h> for convenience.  */
 #define	__user
+
+struct list_head {
+	struct list_head *prev;
+	struct list_head *next;
+};
 
 #endif  /* _LINUX_TYPES_H_ */

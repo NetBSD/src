@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.19 2020/02/14 04:38:48 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.20 2021/12/19 01:19:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,15 +49,11 @@
 #include <sys/queue.h>
 
 #include <linux/kernel.h>
+#include <linux/types.h>
 
 /*
- * Doubly-linked lists.
+ * Doubly-linked lists.  Type defined in <linux/types.h>.
  */
-
-struct list_head {
-	struct list_head *prev;
-	struct list_head *next;
-};
 
 #define	LIST_HEAD_INIT(name)	{ .prev = &(name), .next = &(name) }
 
