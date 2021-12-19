@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.30 2021/12/19 11:17:52 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.31 2021/12/19 11:18:00 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.30 2021/12/19 11:17:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.31 2021/12/19 11:18:00 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1690,7 +1690,9 @@ static int i915_driver_open(struct drm_device *dev, struct drm_file *file)
 static void i915_driver_lastclose(struct drm_device *dev)
 {
 	intel_fbdev_restore_mode(dev);
+#ifndef __NetBSD__		/* XXX vga */
 	vga_switcheroo_process_delayed_switch();
+#endif
 }
 
 static void i915_driver_postclose(struct drm_device *dev, struct drm_file *file)
