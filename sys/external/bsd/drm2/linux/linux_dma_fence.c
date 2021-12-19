@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.16 2021/12/19 11:20:49 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.17 2021/12/19 11:20:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.16 2021/12/19 11:20:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.17 2021/12/19 11:20:56 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -807,8 +807,10 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
 	spin_lock(fence->lock);
 
 	/* Ensure signalling is enabled, or stop if already completed.  */
-	if (dma_fence_ensure_signal_enabled(fence) != 0)
+	if (dma_fence_ensure_signal_enabled(fence) != 0) {
+		spin_unlock(fence->lock);
 		return (timeout ? timeout : 1);
+	}
 
 	/* If merely polling, stop here.  */
 	if (timeout == 0) {
