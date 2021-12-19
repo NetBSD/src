@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.13 2021/12/19 11:45:13 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.14 2021/12/19 11:45:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,17 +51,30 @@ struct rb_root_cached {
 	__p ? container_of(__p, T, F) : NULL;				      \
 })
 
+/*
+ * Several of these functions take const inputs and return non-const
+ * outputs.  That is a deliberate choice.  It would be better if these
+ * functions could be const-polymorphic -- return const if given const,
+ * return non-const if given non-const -- but C doesn't let us express
+ * that.  We are using them to adapt Linux code that is defined in
+ * terms of token-substitution macros, without types of their own,
+ * which happen to work out with both const and non-const variants.
+ * Presumably the Linux code compiles upstream and has some level of
+ * const type-checking in Linux, so this abuse of __UNCONST does not
+ * carry substantial risk over to this code here.
+ */
+
 static inline bool
-RB_EMPTY_ROOT(struct rb_root *root)
+RB_EMPTY_ROOT(const struct rb_root *root)
 {
 
-	return RB_TREE_MIN(&root->rbr_tree) == NULL;
+	return RB_TREE_MIN(__UNCONST(&root->rbr_tree)) == NULL;
 }
 
 static inline struct rb_node *
-rb_first(struct rb_root *root)
+rb_first(const struct rb_root *root)
 {
-	char *vnode = RB_TREE_MIN(&root->rbr_tree);
+	char *vnode = RB_TREE_MIN(__UNCONST(&root->rbr_tree));
 
 	if (vnode)
 		vnode += root->rbr_tree.rbt_ops->rbto_node_offset;
@@ -69,18 +82,18 @@ rb_first(struct rb_root *root)
 }
 
 static inline struct rb_node *
-rb_next2(struct rb_root *root, struct rb_node *rbnode)
+rb_next2(const struct rb_root *root, const struct rb_node *rbnode)
 {
-	char *vnode = (char *)rbnode;
+	char *vnode = (char *)__UNCONST(rbnode);
 
 	vnode -= root->rbr_tree.rbt_ops->rbto_node_offset;
-	return RB_TREE_NEXT(&root->rbr_tree, vnode);
+	return RB_TREE_NEXT(__UNCONST(&root->rbr_tree), vnode);
 }
 
 static inline struct rb_node *
-rb_last(struct rb_root *root)
+rb_last(const struct rb_root *root)
 {
-	char *vnode = RB_TREE_MAX(&root->rbr_tree);
+	char *vnode = RB_TREE_MAX(__UNCONST(&root->rbr_tree));
 
 	if (vnode)
 		vnode += root->rbr_tree.rbt_ops->rbto_node_offset;
@@ -88,7 +101,7 @@ rb_last(struct rb_root *root)
 }
 
 static inline struct rb_node *
-rb_first_cached(struct rb_root_cached *root)
+rb_first_cached(const struct rb_root_cached *root)
 {
 	return rb_first(&root->rb_root);
 }
