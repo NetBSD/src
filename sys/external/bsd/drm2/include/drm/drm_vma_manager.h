@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.h,v 1.6 2021/12/19 09:47:59 riastradh Exp $	*/
+/*	$NetBSD: drm_vma_manager.h,v 1.7 2021/12/19 11:57:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -121,6 +121,9 @@ struct drm_vma_offset_node *
 	    unsigned long, unsigned long);
 struct drm_vma_offset_node *
 	drm_vma_offset_exact_lookup(struct drm_vma_offset_manager *,
+	    unsigned long, unsigned long);
+struct drm_vma_offset_node *
+	drm_vma_offset_exact_lookup_locked(struct drm_vma_offset_manager *,
 	    unsigned long, unsigned long);
 
 int	drm_vma_node_allow(struct drm_vma_offset_node *, struct drm_file *);
