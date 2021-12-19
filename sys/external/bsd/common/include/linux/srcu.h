@@ -1,4 +1,4 @@
-/*	$NetBSD: srcu.h,v 1.1 2021/12/19 01:37:27 riastradh Exp $	*/
+/*	$NetBSD: srcu.h,v 1.2 2021/12/19 01:41:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,6 +35,13 @@
 #include <sys/types.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+
+/* namespace */
+#define	srcu_fini		linux_srcu_fini
+#define	srcu_init		linux_srcu_init
+#define	srcu_read_lock		linux_srcu_read_lock
+#define	srcu_read_unlock	linux_srcu_read_unlock
+#define	synchronize_srcu	linux_synchronize_srcu
 
 struct lwp;
 struct percpu;
