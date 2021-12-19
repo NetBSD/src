@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.31 2021/12/19 11:18:00 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.32 2021/12/19 11:18:09 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.31 2021/12/19 11:18:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.32 2021/12/19 11:18:09 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -2042,8 +2042,6 @@ int i915_drm_resume_early(struct drm_device *dev)
 	intel_power_domains_resume(dev_priv);
 
 	enable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
-
-	i915_rc6_ctx_wa_resume(dev_priv);
 
 	return ret;
 }
