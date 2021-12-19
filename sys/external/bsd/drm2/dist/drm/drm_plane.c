@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_plane.c,v 1.3 2021/12/19 01:13:44 riastradh Exp $	*/
+/*	$NetBSD: drm_plane.c,v 1.4 2021/12/19 01:13:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_plane.c,v 1.3 2021/12/19 01:13:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_plane.c,v 1.4 2021/12/19 01:13:52 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/uaccess.h>
@@ -620,7 +620,7 @@ static int __setplane_check(struct drm_plane *plane,
 	if (ret) {
 		struct drm_format_name_buf format_name;
 
-		DRM_DEBUG_KMS("Invalid pixel format %s, modifier 0x%llx\n",
+		DRM_DEBUG_KMS("Invalid pixel format %s, modifier 0x%"PRIx64"\n",
 			      drm_get_format_name(fb->format->format,
 						  &format_name),
 			      fb->modifier);
