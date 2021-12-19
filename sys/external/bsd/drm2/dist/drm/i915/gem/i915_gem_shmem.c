@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.6 2021/12/19 11:32:53 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.7 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.6 2021/12/19 11:32:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.7 2021/12/19 11:33:30 riastradh Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -282,11 +282,7 @@ put:
 
 void
 __i915_gem_object_release_shmem(struct drm_i915_gem_object *obj,
-#ifdef __NetBSD__
-				bus_dmamap_t pages,
-#else
 				struct sg_table *pages,
-#endif
 				bool needs_clflush)
 {
 	GEM_BUG_ON(obj->mm.madv == __I915_MADV_PURGED);
@@ -297,27 +293,13 @@ __i915_gem_object_release_shmem(struct drm_i915_gem_object *obj,
 	if (needs_clflush &&
 	    (obj->read_domains & I915_GEM_DOMAIN_CPU) == 0 &&
 	    !(obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_READ))
-#ifdef __NetBSD__
-		/*
-		 * XXX Should maybe use bus_dmamap_sync instead --
-		 * shouldn't really touch obj->mm here since the caller
-		 * already pulled off the pages.
-		 */
-		drm_clflush_pages(obj->mm.pagearray,
-		    obj->base.size >> PAGE_SHIFT);
-#else
 		drm_clflush_sg(pages);
-#endif
 
 	__start_cpu_write(obj);
 }
 
 static void
-#ifdef __NetBSD__
-shmem_put_pages(struct drm_i915_gem_object *obj, bus_dmamap_t map)
-#else
 shmem_put_pages(struct drm_i915_gem_object *obj, struct sg_table *pages)
-#endif
 {
 	struct sgt_iter sgt_iter;
 	struct pagevec pvec;
@@ -445,7 +427,12 @@ static void shmem_release(struct drm_i915_gem_object *obj)
 {
 	i915_gem_object_release_memory_region(obj);
 
+#ifdef __NetBSD__
+	/* XXX Who acquires the reference?  */
+	uao_detach(obj->base.filp);
+#else
 	fput(obj->base.filp);
+#endif
 }
 
 const struct drm_i915_gem_object_ops i915_gem_shmem_ops = {

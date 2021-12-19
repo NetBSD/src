@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.16 2021/12/19 01:21:22 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.17 2021/12/19 11:33:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -113,6 +113,13 @@ static inline void
 mutex_lock_nested(struct mutex *mutex, unsigned subclass __unused)
 {
 	mutex_lock(mutex);
+}
+
+static inline int
+mutex_lock_interruptible_nested(struct mutex *mutex,
+    unsigned subclass __unused)
+{
+	return mutex_lock_interruptible(mutex);
 }
 
 /*

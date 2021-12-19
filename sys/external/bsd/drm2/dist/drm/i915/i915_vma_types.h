@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma_types.h,v 1.3 2021/12/19 01:24:26 riastradh Exp $	*/
+/*	$NetBSD: i915_vma_types.h,v 1.4 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -183,13 +183,7 @@ struct i915_vma {
 	struct drm_i915_gem_object *obj;
 	struct dma_resv *resv; /** Alias of obj->resv */
 
-#ifdef __NetBSD__
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_dmamap_t pages;
-#else
 	struct sg_table *pages;
-#endif
 	void __iomem *iomap;
 	void *private; /* owned by creator */
 

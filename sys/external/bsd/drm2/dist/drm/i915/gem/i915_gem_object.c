@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object.c,v 1.3 2021/12/19 01:34:08 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -25,8 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.3 2021/12/19 01:34:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $");
 
+#include <linux/bitmap.h>
 #include <linux/sched/mm.h>
 
 #include "display/intel_frontbuffer.h"
@@ -38,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.3 2021/12/19 01:34:08 riastrad
 #include "i915_gem_object.h"
 #include "i915_globals.h"
 #include "i915_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 static struct i915_global_object {
 	struct i915_global base;
@@ -68,7 +71,11 @@ void i915_gem_object_init(struct drm_i915_gem_object *obj,
 	INIT_LIST_HEAD(&obj->lut_list);
 
 	spin_lock_init(&obj->mmo.lock);
+#ifdef __NetBSD__
+	memset(obj->mmo.offsets, 0, sizeof(obj->mmo.offsets));
+#else
 	obj->mmo.offsets = RB_ROOT;
+#endif
 
 	init_rcu_head(&obj->rcu);
 
@@ -124,8 +131,17 @@ void i915_gem_close_object(struct drm_gem_object *gem, struct drm_file *file)
 	i915_gem_object_unlock(obj);
 
 	spin_lock(&obj->mmo.lock);
+#ifdef __NetBSD__
+	__USE(mn);
+	for (enum i915_mmap_type t = 0; t < I915_MMAP_NTYPES; t++) {
+		if ((mmo = obj->mmo.offsets[t]) == NULL)
+			continue;
+		drm_vma_node_revoke(&mmo->vma_node, file);
+	}
+#else
 	rbtree_postorder_for_each_entry_safe(mmo, mn, &obj->mmo.offsets, offset)
 		drm_vma_node_revoke(&mmo->vma_node, file);
+#endif
 	spin_unlock(&obj->mmo.lock);
 
 	list_for_each_entry_safe(lut, ln, &close, obj_link) {
@@ -204,6 +220,17 @@ static void __i915_gem_free_objects(struct drm_i915_private *i915,
 
 		i915_gem_object_release_mmap(obj);
 
+#ifdef __NetBSD__
+		__USE(mn);
+		for (enum i915_mmap_type t = 0; t < I915_MMAP_NTYPES; t++) {
+			if ((mmo = obj->mmo.offsets[t]) == NULL)
+				continue;
+			drm_vma_offset_remove(obj->base.dev->vma_offset_manager,
+					      &mmo->vma_node);
+			kfree(mmo);
+		}
+		memset(obj->mmo.offsets, 0, sizeof(obj->mmo.offsets));
+#else
 		rbtree_postorder_for_each_entry_safe(mmo, mn,
 						     &obj->mmo.offsets,
 						     offset) {
@@ -212,6 +239,7 @@ static void __i915_gem_free_objects(struct drm_i915_private *i915,
 			kfree(mmo);
 		}
 		obj->mmo.offsets = RB_ROOT;
+#endif
 
 		GEM_BUG_ON(atomic_read(&obj->bind_count));
 		GEM_BUG_ON(obj->userfault_count);

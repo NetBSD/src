@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.3 2021/12/19 01:40:12 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.3 2021/12/19 01:40:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $");
 
 #include <linux/errno.h>
 #include <linux/mutex.h>
@@ -122,7 +122,9 @@ static int i915_adjust_stolen(struct drm_i915_private *i915,
 		}
 	}
 
-#ifndef __NetBSD__		/* XXX */
+#ifdef __NetBSD__		/* XXX */
+	__USE(r);
+#else
 	/*
 	 * Verify that nothing else uses this physical address. Stolen
 	 * memory should be reserved by the BIOS and hidden from the
@@ -498,68 +500,24 @@ static int i915_gem_init_stolen(struct drm_i915_private *i915)
 	return 0;
 }
 
-#ifdef __NetBSD__
-static bus_dmamap_t
-#else
 static struct sg_table *
-#endif
 i915_pages_create_for_stolen(struct drm_device *dev,
 			     resource_size_t offset, resource_size_t size)
 {
 	struct drm_i915_private *i915 = to_i915(dev);
+	struct sg_table *st;
 #ifdef __NetBSD__
 	bus_dma_tag_t dmat = i915->drm.dmat;
-	bus_dmamap_t dmamap = NULL;
-	bus_dma_segment_t *seg;
-	int nseg, i;
+	bus_dma_segment_t *seg = NULL;
+	int nseg = 0, i;
+	bool loaded = false;
 	int ret;
 #else
-	struct sg_table *st;
 	struct scatterlist *sg;
 #endif
 
 	GEM_BUG_ON(range_overflows(offset, size, resource_size(&i915->dsm)));
 
-#ifdef __NetBSD__
-	KASSERT((size % PAGE_SIZE) == 0);
-	nseg = size / PAGE_SIZE;
-	seg = kmem_alloc(nseg * sizeof(seg[0]), KM_SLEEP);
-
-	/*
-	 * x86 bus_dmamap_load_raw fails to respect the maxsegsz we
-	 * pass to bus_dmamap_create, so we have to create page-sized
-	 * segments to begin with.
-	 */
-	for (i = 0; i < nseg; i++) {
-		seg[i].ds_addr = (bus_addr_t)i915->dsm.start + offset +
-		    i*PAGE_SIZE;
-		seg[i].ds_len = PAGE_SIZE;
-	}
-
-	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamap_create(dmat, size, nseg, PAGE_SIZE, 0,
-	    BUS_DMA_WAITOK, &dmamap);
-	if (ret) {
-		DRM_ERROR("failed to create DMA map for stolen object: %d\n",
-		    ret);
-fail0:		dmamap = NULL;	/* paranoia */
-		goto out;
-	}
-
-	/* XXX errno NetBSD->Liux */
-	ret = -bus_dmamap_load_raw(dmat, dmamap, seg, nseg, size,
-	    BUS_DMA_WAITOK);
-	if (ret) {
-		DRM_ERROR("failed to load DMA map for stolen object: %d\n",
-		    ret);
-fail1: __unused
-		bus_dmamap_destroy(dmat, dmamap);
-		goto fail0;
-	}
-
-out:	kmem_free(seg, nseg*sizeof(seg[0]));
-	return ret ? ERR_PTR(ret) : dmamap;
-#else
 	/* We hide that we have no struct page backing our stolen object
 	 * by wrapping the contiguous physical allocation with a fake
 	 * dma mapping in a single scatterlist.
@@ -574,24 +532,68 @@ out:	kmem_free(seg, nseg*sizeof(seg[0]));
 		return ERR_PTR(-ENOMEM);
 	}
 
+#ifdef __NetBSD__
+	KASSERT((size % PAGE_SIZE) == 0);
+	nseg = size / PAGE_SIZE;
+	seg = kmem_alloc(nseg * sizeof(seg[0]), KM_SLEEP);
+
+	/*
+	 * XXX x86 bus_dmamap_load_raw fails to respect the maxsegsz we
+	 * pass to bus_dmamap_create, so we have to create page-sized
+	 * segments to begin with.
+	 */
+	for (i = 0; i < nseg; i++) {
+		seg[i].ds_addr = (bus_addr_t)i915->dsm.start + offset +
+		    i*PAGE_SIZE;
+		seg[i].ds_len = PAGE_SIZE;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, size, nseg, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &st->sgl->sg_dmamap);
+	if (ret) {
+		DRM_ERROR("failed to create DMA map for stolen object: %d\n",
+		    ret);
+		st->sgl->sg_dmamap = NULL;
+		goto out;
+	}
+
+	/* XXX errno NetBSD->Liux */
+	ret = -bus_dmamap_load_raw(dmat, st->sgl->sg_dmamap, seg, nseg, size,
+	    BUS_DMA_WAITOK);
+	if (ret) {
+		DRM_ERROR("failed to load DMA map for stolen object: %d\n",
+		    ret);
+		goto out;
+	}
+	loaded = true;
+
+out:	if (ret) {
+		if (loaded)
+			bus_dmamap_unload(dmat, st->sgl->sg_dmamap);
+		if (st->sgl->sg_dmamap) {
+			bus_dmamap_destroy(dmat, st->sgl->sg_dmamap);
+			st->sgl->sg_dmamap = NULL;
+		}
+		sg_free_table(st);
+		kfree(st);
+		return ERR_PTR(ret);
+	}
+#else
 	sg = st->sgl;
 	sg->offset = 0;
 	sg->length = size;
 
 	sg_dma_address(sg) = (dma_addr_t)i915->dsm.start + offset;
 	sg_dma_len(sg) = size;
+#endif
 
 	return st;
-#endif
 }
 
 static int i915_gem_object_get_pages_stolen(struct drm_i915_gem_object *obj)
 {
-#ifdef __NetBSD__
-	bus_dmamap_t pages =
-#else
 	struct sg_table *pages =
-#endif
 		i915_pages_create_for_stolen(obj->base.dev,
 					     obj->stolen->start,
 					     obj->stolen->size);
@@ -608,12 +610,12 @@ static void i915_gem_object_put_pages_stolen(struct drm_i915_gem_object *obj,
 {
 	/* Should only be called from i915_gem_object_release_stolen() */
 #ifdef __NetBSD__
-	bus_dmamap_unload(obj->base.dev->dmat, pages);
-	bus_dmamap_destroy(obj->base.dev->dmat, pages);
-#else
+	bus_dmamap_unload(obj->base.dev->dmat, pages->sgl->sg_dmamap);
+	bus_dmamap_destroy(obj->base.dev->dmat, pages->sgl->sg_dmamap);
+	pages->sgl->sg_dmamap = NULL;
+#endif
 	sg_free_table(pages);
 	kfree(pages);
-#endif
 }
 
 static void

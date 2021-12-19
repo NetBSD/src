@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object.h,v 1.4 2021/12/19 11:10:56 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object.h,v 1.5 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -37,11 +37,7 @@ i915_gem_object_create_shmem_from_data(struct drm_i915_private *i915,
 
 extern const struct drm_i915_gem_object_ops i915_gem_shmem_ops;
 void __i915_gem_object_release_shmem(struct drm_i915_gem_object *obj,
-#ifdef __NetBSD__
-				     bus_dmamap_t pages,
-#else
 				     struct sg_table *pages,
-#endif
 				     bool needs_clflush);
 
 int i915_gem_object_attach_phys(struct drm_i915_gem_object *obj, int align);
@@ -280,13 +276,8 @@ i915_gem_object_get_dma_address(struct drm_i915_gem_object *obj,
 				unsigned long n);
 
 void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
-#ifdef __NetBSD__
-				 bus_dmamap_t pages
-#else
 				 struct sg_table *pages,
-				 unsigned int sg_page_sizes
-#endif
-				 );
+				 unsigned int sg_page_sizes);
 
 int ____i915_gem_object_get_pages(struct drm_i915_gem_object *obj);
 int __i915_gem_object_get_pages(struct drm_i915_gem_object *obj);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.9 2021/12/19 10:19:53 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.10 2021/12/19 11:33:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.9 2021/12/19 10:19:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.10 2021/12/19 11:33:31 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -177,14 +177,14 @@ dma_buf_put(struct dma_buf *dmabuf)
 }
 
 struct dma_buf_attachment *
-dma_buf_attach(struct dma_buf *dmabuf, struct device *dev)
+dma_buf_attach(struct dma_buf *dmabuf, bus_dma_tag_t dmat)
 {
 	struct dma_buf_attachment *attach;
 	int ret = 0;
 
 	attach = kmem_zalloc(sizeof(*attach), KM_SLEEP);
 	attach->dmabuf = dmabuf;
-	attach->dev = dev;
+	attach->dev = dmat;
 
 	mutex_enter(&dmabuf->db_lock);
 	if (dmabuf->ops->attach)

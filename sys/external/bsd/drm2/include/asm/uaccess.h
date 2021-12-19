@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.9 2021/12/19 11:24:14 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.10 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ copy_to_user(void *user_addr, const void *kernel_addr, size_t len)
 #define	__get_user	get_user
 #define	__put_user	put_user
 
-#define	user_access_begin()	__nothing
+#define	user_access_begin(P,N)	access_ok(P,N)
 #define	user_access_end()	__nothing
 
 #define	unsafe_put_user(KERNEL_RVAL, USER_PTR, LABEL)	do {		      \

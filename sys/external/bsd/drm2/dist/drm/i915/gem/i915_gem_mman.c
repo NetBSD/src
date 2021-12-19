@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.6 2021/12/19 11:33:02 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.7 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.6 2021/12/19 11:33:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.7 2021/12/19 11:33:30 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -79,7 +79,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 
 #ifdef __NetBSD__
 	struct drm_i915_private *i915 = to_i915(obj->base.dev);
-	if (dev->quirks & QUIRK_NETBSD_VERSION_CALLED)
+	if (i915->quirks & QUIRK_NETBSD_VERSION_CALLED)
 		args->flags = 0;
 #endif
 
@@ -244,8 +244,7 @@ static int
 i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
     int npages, int centeridx, vm_prot_t access_type, int flags)
 {
-	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-	struct ...
+	panic("NYI");
 }
 
 #else
@@ -514,7 +513,7 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 
 	(void)mmo;
 	(void)mn;
-	for (t = 0; t < I915_MMA_NTYPES; t++) {
+	for (t = 0; t < I915_MMAP_NTYPES; t++) {
 		if (t == I915_MMAP_TYPE_GTT)
 			continue;
 		/*
@@ -522,7 +521,7 @@ void i915_gem_object_release_mmap_offset(struct drm_i915_gem_object *obj)
 		 * spin lock, probably?
 		 */
 		for (i = 0; i < obj->base.size >> PAGE_SHIFT; i++) {
-			page = obj->mm.pagearray[i];
+			page = obj->mm.pages->sgl->sg_pgs[i];
 			vm_page = &page->p_vmp;
 			pmap_page_protect(vm_page, VM_PROT_NONE);
 		}
@@ -669,7 +668,11 @@ mmap_offset_attach(struct drm_i915_gem_object *obj,
 
 	mmo->obj = obj;
 	mmo->mmap_type = mmap_type;
+#ifdef __NetBSD__
+	drm_vma_node_init(&mmo->vma_node);
+#else
 	drm_vma_node_reset(&mmo->vma_node);
+#endif
 
 	err = drm_vma_offset_add(obj->base.dev->vma_offset_manager,
 				 &mmo->vma_node, obj->base.size / PAGE_SIZE);
@@ -696,6 +699,7 @@ out:
 	return mmo;
 
 err:
+	drm_vma_node_destroy(&mmo->vma_node);
 	kfree(mmo);
 	return ERR_PTR(err);
 }
@@ -833,6 +837,7 @@ int
 i915_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
     int prot, struct uvm_object **uobjp, voff_t *uoffsetp, struct file *fp)
 {
+	__USE(i915_gem_fault);
 	panic("NYI");
 }
 

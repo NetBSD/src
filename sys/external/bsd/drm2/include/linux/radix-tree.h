@@ -1,4 +1,4 @@
-/*	$NetBSD: radix-tree.h,v 1.4 2021/12/19 01:35:18 riastradh Exp $	*/
+/*	$NetBSD: radix-tree.h,v 1.5 2021/12/19 11:33:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct radix_tree_root {
 };
 
 struct radix_tree_iter {
+	unsigned long index;
 };
 
 void	INIT_RADIX_TREE(struct radix_tree_root *, gfp_t);

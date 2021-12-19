@@ -1,4 +1,4 @@
-/*	$NetBSD: scatterlist.h,v 1.3 2021/12/19 10:51:24 riastradh Exp $	*/
+/*	$NetBSD: scatterlist.h,v 1.4 2021/12/19 11:33:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,44 @@
 #ifndef	_LINUX_SCATTERLIST_H_
 #define	_LINUX_SCATTERLIST_H_
 
+#include <sys/bus.h>
+
 #include <linux/mm.h>
+#include <linux/mm_types.h>
+#include <linux/gfp.h>
 #include <linux/types.h>
+
+/* namespace */
+#define	dma_map_sg			linux_dma_map_sg
+#define	dma_map_sg_attrs		linux_dma_map_sg_attrs
+#define	dma_unmap_sg			linux_dma_unmap_sg
+#define	dma_unmap_sg_attrs		linux_dma_unmap_sg_attrs
+#define	sg_alloc_table			linux_sg_alloc_table
+#define	sg_alloc_table_from_bus_dmamem	linux_sg_alloc_table_from_bus_dmamem
+#define	sg_alloc_table_from_pages	linux_sg_alloc_table_from_pages
+#define	sg_free_table			linux_sg_free_table
+
+struct page;
+
+struct sg_table {
+	struct scatterlist {
+		struct page	**sg_pgs;
+		unsigned	sg_npgs;
+		bus_dmamap_t	sg_dmamap;
+	} sgl[1];
+	unsigned	nents;
+};
+
+int sg_alloc_table(struct sg_table *, unsigned, gfp_t);
+int sg_alloc_table_from_pages(struct sg_table *, struct page **, unsigned,
+    bus_size_t, bus_size_t, gfp_t);
+int sg_alloc_table_from_bus_dmamem(struct sg_table *, bus_dma_tag_t,
+    const bus_dma_segment_t *, int, gfp_t);
+void sg_free_table(struct sg_table *);
+
+int dma_map_sg(bus_dma_tag_t, struct scatterlist *, int, int);
+int dma_map_sg_attrs(bus_dma_tag_t, struct scatterlist *, int, int, int);
+void dma_unmap_sg(bus_dma_tag_t, struct scatterlist *, int, int);
+void dma_unmap_sg_attrs(bus_dma_tag_t, struct scatterlist *, int, int, int);
 
 #endif	/* _LINUX_SCATTERLIST_H_ */

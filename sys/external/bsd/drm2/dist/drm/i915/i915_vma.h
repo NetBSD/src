@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.h,v 1.5 2021/12/19 11:12:06 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.h,v 1.6 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -62,19 +62,21 @@ int __must_check i915_vma_move_to_active(struct i915_vma *vma,
 
 #ifdef __linux__
 #define __i915_vma_flags(v) ((unsigned long *)&(v)->flags.counter)
+#define __i915_vma_flags_const(v) ((const unsigned long *)&(v)->flags.counter)
 #else
 #define __i915_vma_flags(v) ((unsigned long *)&(v)->flags)
+#define __i915_vma_flags_const(v) ((const unsigned long *)&(v)->flags)
 #endif
 
 
-static inline bool i915_vma_is_ggtt(struct i915_vma *vma)
+static inline bool i915_vma_is_ggtt(const struct i915_vma *vma)
 {
-	return test_bit(I915_VMA_GGTT_BIT, __i915_vma_flags(vma));
+	return test_bit(I915_VMA_GGTT_BIT, __i915_vma_flags_const(vma));
 }
 
-static inline bool i915_vma_has_ggtt_write(struct i915_vma *vma)
+static inline bool i915_vma_has_ggtt_write(const struct i915_vma *vma)
 {
-	return test_bit(I915_VMA_GGTT_WRITE_BIT, __i915_vma_flags(vma));
+	return test_bit(I915_VMA_GGTT_WRITE_BIT, __i915_vma_flags_const(vma));
 }
 
 static inline void i915_vma_set_ggtt_write(struct i915_vma *vma)
@@ -91,9 +93,9 @@ static inline bool i915_vma_unset_ggtt_write(struct i915_vma *vma)
 
 void i915_vma_flush_writes(struct i915_vma *vma);
 
-static inline bool i915_vma_is_map_and_fenceable(struct i915_vma *vma)
+static inline bool i915_vma_is_map_and_fenceable(const struct i915_vma *vma)
 {
-	return test_bit(I915_VMA_CAN_FENCE_BIT, __i915_vma_flags(vma));
+	return test_bit(I915_VMA_CAN_FENCE_BIT, __i915_vma_flags_const(vma));
 }
 
 static inline bool i915_vma_set_userfault(struct i915_vma *vma)
@@ -107,17 +109,17 @@ static inline void i915_vma_unset_userfault(struct i915_vma *vma)
 	return clear_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags(vma));
 }
 
-static inline bool i915_vma_has_userfault(struct i915_vma *vma)
+static inline bool i915_vma_has_userfault(const struct i915_vma *vma)
 {
-	return test_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags(vma));
+	return test_bit(I915_VMA_USERFAULT_BIT, __i915_vma_flags_const(vma));
 }
 
-static inline bool i915_vma_is_closed(struct i915_vma *vma)
+static inline bool i915_vma_is_closed(const struct i915_vma *vma)
 {
 	return !list_empty(&vma->closed_link);
 }
 
-static inline u32 i915_ggtt_offset(struct i915_vma *vma)
+static inline u32 i915_ggtt_offset(const struct i915_vma *vma)
 {
 	GEM_BUG_ON(!i915_vma_is_ggtt(vma));
 	GEM_BUG_ON(!drm_mm_node_allocated(&vma->node));
@@ -126,7 +128,7 @@ static inline u32 i915_ggtt_offset(struct i915_vma *vma)
 	return lower_32_bits(vma->node.start);
 }
 
-static inline u32 i915_ggtt_pin_bias(struct i915_vma *vma)
+static inline u32 i915_ggtt_pin_bias(const struct i915_vma *vma)
 {
 	return i915_vm_to_ggtt(vma->vm)->pin_bias;
 }
@@ -322,9 +324,7 @@ static inline struct page *i915_vma_first_page(struct i915_vma *vma)
 {
 	GEM_BUG_ON(!vma->pages);
 #ifdef __NetBSD__
-	GEM_BUG_ON(!vma->segs);
-	return container_of(PHYS_TO_VM_PAGE(vma->segs[0].ds_addr), struct page,
-	    p_vmp);
+	return vma->pages->sgl->sg_pgs[0];
 #else
 	return sg_page(vma->pages->sgl);
 #endif

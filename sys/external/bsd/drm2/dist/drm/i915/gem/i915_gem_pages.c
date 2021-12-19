@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_pages.c,v 1.4 2021/12/19 01:34:08 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_pages.c,v 1.5 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.4 2021/12/19 01:34:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.5 2021/12/19 11:33:30 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "i915_gem_object.h"
@@ -15,14 +15,14 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.4 2021/12/19 01:34:08 riastradh
 #include "i915_gem_lmem.h"
 #include "i915_gem_mman.h"
 
-void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
 #ifdef __NetBSD__
-				 bus_dmamap_t pages,
-#else
-				 struct sg_table *pages,
-				 unsigned int sg_page_sizes
+#include <sys/param.h>
+#include <uvm/uvm_extern.h>
 #endif
-				)
+
+void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
+				 struct sg_table *pages,
+				 unsigned int sg_page_sizes)
 {
 	struct drm_i915_private *i915 = to_i915(obj->base.dev);
 	unsigned long supported = INTEL_INFO(i915)->page_sizes;
@@ -55,10 +55,8 @@ void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
 		obj->mm.quirked = true;
 	}
 
-#ifndef __NetBSD__
 	GEM_BUG_ON(!sg_page_sizes);
 	obj->mm.page_sizes.phys = sg_page_sizes;
-#endif
 
 	/*
 	 * Calculate the supported page-sizes which fit into the given
@@ -172,10 +170,14 @@ static void __i915_gem_object_reset_page_iter(struct drm_i915_gem_object *obj)
 
 static void unmap_object(struct drm_i915_gem_object *obj, void *ptr)
 {
+#ifdef __NetBSD__
+	uvm_km_free(kernel_map, (vaddr_t)ptr, obj->base.size, UVM_KMF_VAONLY);
+#else
 	if (is_vmalloc_addr(ptr))
 		vunmap(ptr);
 	else
 		kunmap(kmap_to_page(ptr));
+#endif
 }
 
 struct sg_table *
@@ -248,17 +250,67 @@ unlock:
 	return err;
 }
 
+#ifndef __NetBSD__
 static inline pte_t iomap_pte(resource_size_t base,
 			      dma_addr_t offset,
 			      pgprot_t prot)
 {
 	return pte_mkspecial(pfn_pte((base + offset) >> PAGE_SHIFT, prot));
 }
+#endif
 
 /* The 'mapping' part of i915_gem_object_pin_map() below */
 static void *i915_gem_object_map(struct drm_i915_gem_object *obj,
 				 enum i915_map_type type)
 {
+#ifdef __NetBSD__
+	vaddr_t va;
+	struct page *page;
+	paddr_t pa;
+	unsigned i;
+	int kmflags = UVM_KMF_VAONLY|UVM_KMF_WAITVA;
+	int prot = VM_PROT_READ|VM_PROT_WRITE;
+	int flags = 0;
+
+	/*
+	 * XXX Be nice if we had bus_dmamem segments so we could use
+	 * bus_dmamem_map, but we don't so we can't.
+	 */
+
+	/* Verify the object is reasonable to map.  */
+	/* XXX sync with below */
+	if (!i915_gem_object_has_struct_page(obj) && type != I915_MAP_WC)
+		return NULL;
+
+	/* Incorporate mapping type into pmap flags.  */
+	switch (type) {
+	case I915_MAP_WC:
+		flags |= PMAP_WRITE_COMBINE;
+		break;
+	case I915_MAP_WB:
+	default:
+		break;
+	}
+
+	/* Allow failure if >1 page.  */
+	if (obj->base.size > PAGE_SIZE)
+		kmflags |= UVM_KMF_CANFAIL;
+
+	/* Allocate a contiguous chunk of KVA.  */
+	va = uvm_km_alloc(kernel_map, obj->base.size, PAGE_SIZE, kmflags);
+	if (va == 0)
+		return NULL;
+
+	/* Wire the KVA to the right physical addresses.  */
+	for (i = 0; i < obj->base.size >> PAGE_SHIFT; i++) {
+		page = obj->mm.pages->sgl->sg_pgs[i];
+		pa = VM_PAGE_TO_PHYS(&page->p_vmp);
+		pmap_kenter_pa(va + i*PAGE_SIZE, pa, prot, flags);
+	}
+	pmap_update(pmap_kernel());
+
+	return (void *)va;
+#else
 	unsigned long n_pte = obj->base.size >> PAGE_SHIFT;
 	struct sg_table *sgt = obj->mm.pages;
 	pte_t *stack[32], **mem;
@@ -323,6 +375,7 @@ static void *i915_gem_object_map(struct drm_i915_gem_object *obj,
 		kvfree(mem);
 
 	return area->addr;
+#endif
 }
 
 /* get, pin, and map the pages of the object into kernel space */
@@ -540,28 +593,9 @@ struct page *
 i915_gem_object_get_page(struct drm_i915_gem_object *obj, unsigned int n)
 {
 #ifdef __NetBSD__
-	struct vm_page *page;
-
-	if (obj->phys_handle) {
-		vaddr_t va = (vaddr_t)obj->phys_handle->vaddr;
-		paddr_t pa;
-		if (!pmap_extract(pmap_kernel(), va + n*PAGE_SIZE, &pa))
-			panic("i915 gem object phys-attached but not mapped:"
-			    " obj=%p pgno=%d va=%p", obj, n,
-			    obj->phys_handle->vaddr);
-		page = PHYS_TO_VM_PAGE(pa);
-	} else {
-		/*
-		 * Pages must be pinned so that we need not hold the
-		 * lock to prevent them from disappearing.
-		 */
-		KASSERT(obj->mm.pages != NULL);
-		mutex_enter(obj->base.filp->vmobjlock);
-		page = uvm_pagelookup(obj->base.filp, ptoa(n));
-		mutex_exit(obj->base.filp->vmobjlock);
-	}
-	KASSERT(page != NULL);
-	return container_of(page, struct page, p_vmp);
+	GEM_BUG_ON(!i915_gem_object_has_struct_page(obj));
+	KASSERT(n < obj->mm.pages->sgl->sg_npgs);
+	return obj->mm.pages->sgl->sg_pgs[n];
 #else
 	struct scatterlist *sg;
 	unsigned int offset;
@@ -593,13 +627,16 @@ i915_gem_object_get_dma_address_len(struct drm_i915_gem_object *obj,
 				    unsigned int *len)
 {
 #ifdef __NetBSD__
+	bus_dmamap_t map = obj->mm.pages->sgl->sg_dmamap;
 	bus_addr_t poff = (bus_addr_t)n << PAGE_SHIFT;
 	unsigned seg;
 
-	for (seg = 0; seg < obj->mm.pages->dm_nsegs; seg++) {
-		if (poff <= obj->mm.pages->dm_segs[seg].ds_len)
-			return obj->mm.pages->dm_segs[seg].ds_addr + poff;
-		poff -= obj->mm.pages->dm_segs[seg].ds_len;
+	for (seg = 0; seg < map->dm_nsegs; seg++) {
+		if (poff < map->dm_segs[seg].ds_len) {
+			*len = map->dm_segs[seg].ds_len - poff;
+			return map->dm_segs[seg].ds_addr + poff;
+		}
+		poff -= map->dm_segs[seg].ds_len;
 	}
 	KASSERT(0);
 	return 0;

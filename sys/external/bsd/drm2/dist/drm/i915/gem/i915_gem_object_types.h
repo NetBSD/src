@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object_types.h,v 1.5 2021/12/19 11:32:53 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object_types.h,v 1.6 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -214,15 +214,21 @@ struct drm_i915_gem_object {
 		struct list_head region_link;
 
 #ifdef __NetBSD__
-		struct page **pagearray;/* wired pages of normal objects */
-		struct sg_table *sg;    /* drm prime objects */
-		bus_dma_segment_t *segs;/* internal objects */
-		unsigned nsegs;
-		int rsegs;
-		bus_dmamap_t pages;     /* expedient misnomer */
-#else
-		struct sg_table *pages;
+		/* internal objects */
+		union {
+			struct {
+				bus_dma_segment_t *segs;
+				int nsegs;
+				int rsegs;
+			} internal;
+			struct {
+				bus_dma_segment_t seg;
+				void *kva;
+			} phys;
+		} u;
 #endif
+
+		struct sg_table *pages;
 		void *mapping;
 
 		struct i915_page_sizes {
