@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cik.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_cik.c,v 1.4 2021/12/19 01:47:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cik.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cik.c,v 1.4 2021/12/19 01:47:01 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -8398,7 +8398,7 @@ static int cik_startup(struct radeon_device *rdev)
 		}
 	}
 	rdev->rlc.cs_data = ci_cs_data;
-	rdev->rlc.cp_table_size = ALIGN(CP_ME_TABLE_SIZE * 5 * 4, 2048); /* CP JT */
+	rdev->rlc.cp_table_size = round_up(CP_ME_TABLE_SIZE * 5 * 4, 2048); /* CP JT */
 	rdev->rlc.cp_table_size += 64 * 1024; /* GDS */
 	r = sumo_rlc_init(rdev);
 	if (r) {
