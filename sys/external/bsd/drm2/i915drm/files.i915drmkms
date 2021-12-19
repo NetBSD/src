@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.79 2021/12/19 11:49:12 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.80 2021/12/19 11:49:46 riastradh Exp $
 
 version	20180827
 
@@ -65,6 +65,7 @@ file	external/bsd/drm2/i915drm/i915_gemfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_switcheroo.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
+file	external/bsd/drm2/i915drm/i915_trace_points.c	i915drmkms
 file	external/bsd/drm2/i915drm/icl_dsi.c		i915drmkms
 file	external/bsd/drm2/i915drm/intel_dsi_dcs_backlight.c	i915drmkms
 file	external/bsd/drm2/i915drm/intel_gtt_subr.c	i915drmkms
