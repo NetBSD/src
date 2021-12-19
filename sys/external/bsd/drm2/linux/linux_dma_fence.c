@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.22 2021/12/19 12:09:27 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.23 2021/12/19 12:09:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.22 2021/12/19 12:09:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.23 2021/12/19 12:09:51 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -306,6 +306,8 @@ dma_fence_release(struct kref *refcount)
 	struct dma_fence *fence = container_of(refcount, struct dma_fence,
 	    refcount);
 
+	KASSERTMSG(TAILQ_EMPTY(&fence->f_callbacks),
+	    "fence %p has pending callbacks", fence);
 	KASSERT(!dma_fence_referenced_p(fence));
 
 	if (fence->ops->release)
