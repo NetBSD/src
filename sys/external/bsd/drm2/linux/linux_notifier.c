@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_notifier.c,v 1.1 2021/12/19 11:39:24 riastradh Exp $	*/
+/*	$NetBSD: linux_notifier.c,v 1.2 2021/12/19 11:47:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_notifier.c,v 1.1 2021/12/19 11:39:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_notifier.c,v 1.2 2021/12/19 11:47:08 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -79,7 +79,7 @@ atomic_notifier_chain_unregister(struct atomic_notifier_head *H,
 }
 
 void
-atomic_notifier_chain_call(struct atomic_notifier_head *H,
+atomic_notifier_call_chain(struct atomic_notifier_head *H,
     unsigned long arg0, void *arg1)
 {
 	struct notifier_block *B;
