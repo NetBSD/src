@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sw_fence.h,v 1.4 2021/12/19 11:20:11 riastradh Exp $	*/
+/*	$NetBSD: i915_sw_fence.h,v 1.5 2021/12/19 11:30:45 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,10 +7,6 @@
  *
  * Copyright (C) 2016 Intel Corporation
  */
-
-#ifdef __NetBSD__
-#include_next "i915_sw_fence.h"
-#else
 
 #ifndef _I915_SW_FENCE_H_
 #define _I915_SW_FENCE_H_
@@ -123,5 +119,3 @@ i915_sw_fence_set_error_once(struct i915_sw_fence *fence, int error)
 }
 
 #endif /* _I915_SW_FENCE_H_ */
-
-#endif	/* __NetBSD__ */

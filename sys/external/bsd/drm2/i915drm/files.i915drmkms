@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.67 2021/12/19 11:27:12 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.68 2021/12/19 11:30:45 riastradh Exp $
 
 version	20180827
 
@@ -48,7 +48,6 @@ file	external/bsd/drm2/i915drm/i915_gemfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
 file	external/bsd/drm2/i915drm/i915_pci_autoconf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
-file	external/bsd/drm2/i915drm/i915_sw_fence.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/intel_gtt.c		i915drmkms
 file	external/bsd/drm2/i915drm/intelfb.c		intelfb
