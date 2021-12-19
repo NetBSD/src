@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_main.c,v 1.5 2021/12/19 12:32:45 riastradh Exp $	*/
+/*	$NetBSD: sched_main.c,v 1.6 2021/12/19 12:34:24 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.5 2021/12/19 12:32:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.6 2021/12/19 12:34:24 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/wait.h>
@@ -728,8 +728,11 @@ drm_sched_get_cleanup_job(struct drm_gpu_scheduler *sched)
  */
 static bool drm_sched_blocked(struct drm_gpu_scheduler *sched)
 {
+	assert_spin_locked(&sched->job_list_lock);
 	if (kthread_should_park()) {
+		spin_unlock(&sched->job_list_lock);
 		kthread_parkme();
+		spin_lock(&sched->job_list_lock);
 		return true;
 	}
 
