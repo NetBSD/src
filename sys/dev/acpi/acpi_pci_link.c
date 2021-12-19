@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.26 2020/01/17 17:06:32 jmcneill Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.27 2021/12/19 19:15:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.26 2020/01/17 17:06:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.27 2021/12/19 19:15:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1220,14 +1220,14 @@ acpi_AppendBufferResource(ACPI_BUFFER *buf, ACPI_RESOURCE *res)
 	 * Check the size of the buffer and expand if required.
 	 *
 	 * Required size is:
-	 *	size of existing resources before terminator + 
+	 *	size of existing resources before terminator +
 	 *	size of new resource and header +
 	 * 	size of terminator.
 	 *
 	 * Note that this loop should really only run once, unless
 	 * for some reason we are stuffing a *really* huge resource.
 	 */
-	while ((((u_int8_t *)rp - (u_int8_t *)buf->Pointer) + 
+	while ((((u_int8_t *)rp - (u_int8_t *)buf->Pointer) +
 	    res->Length + ACPI_RS_SIZE_NO_DATA +
 	    ACPI_RS_SIZE_MIN) >= buf->Length) {
 		if ((newp = ACPI_ALLOCATE(buf->Length * 2)) == NULL)
