@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.25 2021/12/19 12:04:59 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.26 2021/12/19 12:08:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.25 2021/12/19 12:04:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.26 2021/12/19 12:08:18 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -175,11 +175,11 @@ int drm_fb_helper_debug_enter_fb(struct drm_fb_helper *helper)
 			if (!mode_set->crtc->enabled)
 				continue;
 
-			funcs =	mode_set->crtc->helper_private;
-			if (funcs->mode_set_base_atomic == NULL)
+			if (drm_drv_uses_atomic_modeset(mode_set->crtc->dev))
 				continue;
 
-			if (drm_drv_uses_atomic_modeset(mode_set->crtc->dev))
+			funcs =	mode_set->crtc->helper_private;
+			if (funcs->mode_set_base_atomic == NULL)
 				continue;
 
 			funcs->mode_set_base_atomic(mode_set->crtc,
