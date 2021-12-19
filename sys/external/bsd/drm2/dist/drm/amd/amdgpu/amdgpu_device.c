@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.10 2021/12/19 12:01:12 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.11 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.10 2021/12/19 12:01:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.11 2021/12/19 12:31:45 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -2972,10 +2972,6 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	mutex_init(&adev->psp.mutex);
 	mutex_init(&adev->notifier_lock);
 
-	r = amdgpu_device_check_arguments(adev);
-	if (r)
-		return r;
-
 	spin_lock_init(&adev->mmio_idx_lock);
 	spin_lock_init(&adev->smc_idx_lock);
 	spin_lock_init(&adev->pcie_idx_lock);
@@ -2998,6 +2994,10 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 			  amdgpu_device_delay_enable_gfx_off);
 
 	INIT_WORK(&adev->xgmi_reset_work, amdgpu_device_xgmi_reset_func);
+
+	r = amdgpu_device_check_arguments(adev);
+	if (r)
+		return r;
 
 	adev->gfx.gfx_off_req_count = 1;
 	adev->pm.ac_power = power_supply_is_system_supplied() > 0 ? true : false;

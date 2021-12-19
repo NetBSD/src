@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm_hdcp.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm_hdcp.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_hdcp.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_hdcp.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $");
 
 #include "amdgpu_dm_hdcp.h"
 #include "amdgpu.h"
@@ -306,6 +306,7 @@ void hdcp_destroy(struct hdcp_workqueue *hdcp_work)
 	for (i = 0; i < hdcp_work->max_link; i++) {
 		cancel_delayed_work_sync(&hdcp_work[i].callback_dwork);
 		cancel_delayed_work_sync(&hdcp_work[i].watchdog_timer_dwork);
+		mutex_destroy(&hdcp_work[i].mutex);
 	}
 
 	kfree(hdcp_work);

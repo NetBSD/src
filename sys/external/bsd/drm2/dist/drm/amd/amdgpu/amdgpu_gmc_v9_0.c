@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gmc_v9_0.c,v 1.4 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gmc_v9_0.c,v 1.5 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc_v9_0.c,v 1.4 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc_v9_0.c,v 1.5 2021/12/19 12:31:45 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/pci.h>
@@ -1251,6 +1251,8 @@ static int gmc_v9_0_sw_fini(void *handle)
 	amdgpu_gart_table_vram_free(adev);
 	amdgpu_bo_fini(adev);
 	amdgpu_gart_fini(adev);
+
+	spin_lock_destroy(&adev->gmc.invalidate_lock);
 
 	return 0;
 }

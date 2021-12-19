@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/pci.h>
@@ -973,6 +973,12 @@ static int smu_sw_fini(void *handle)
 		pr_err("Failed to init smu_fini_power!\n");
 		return ret;
 	}
+
+	mutex_destroy(&smu->metrics_lock);
+	mutex_destroy(&smu->sensor_lock);
+	mutex_destroy(&smu->smu_baco.mutex);
+	mutex_destroy(&smu->smu_feature.mutex);
+	mutex_destroy(&smu->mutex);
 
 	return 0;
 }
