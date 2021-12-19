@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.34 2021/12/19 01:04:26 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.35 2021/12/19 01:04:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.34 2021/12/19 01:04:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.35 2021/12/19 01:04:33 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.34 2021/12/19 01:04:26 riastradh Exp $
 
 #include <drm/drmP.h>
 #include <drm/drm_legacy.h>
+
+#include "../dist/drm/drm_internal.h"
 
 struct drm_bus_irq_cookie {
 	pci_intr_handle_t *intr_handles;
