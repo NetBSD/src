@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.c,v 1.7 2021/12/19 11:55:58 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.c,v 1.8 2021/12/19 11:57:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.7 2021/12/19 11:55:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.8 2021/12/19 11:57:11 riastradh Exp $");
 
 #include <linux/sched/mm.h>
 #include <drm/drm_gem.h>
@@ -229,6 +229,8 @@ vma_create(struct drm_i915_gem_object *obj,
 		__set_bit(I915_VMA_GGTT_BIT, __i915_vma_flags(vma));
 	}
 
+	spin_lock(&obj->vma.lock);
+
 #ifdef __NetBSD__
 	__USE(rb);
 	__USE(p);
@@ -236,8 +238,6 @@ vma_create(struct drm_i915_gem_object *obj,
 	collision = rb_tree_insert_node(&obj->vma.tree.rbr_tree, vma);
 	KASSERT(collision == vma);
 #else
-	spin_lock(&obj->vma.lock);
-
 	rb = NULL;
 	p = &obj->vma.tree.rb_node;
 	while (*p) {
