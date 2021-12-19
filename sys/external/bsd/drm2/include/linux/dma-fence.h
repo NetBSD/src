@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.13 2021/12/19 12:00:48 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.14 2021/12/19 12:02:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -55,10 +55,10 @@ struct dma_fence {
 	const struct dma_fence_ops	*ops;
 	int				error;
 	ktime_t				timestamp;
+	struct rcu_head			rcu;
 
 	TAILQ_HEAD(, dma_fence_cb)	f_callbacks;
 	kcondvar_t			f_cv;
-	struct rcu_head			f_rcu;
 };
 
 #define	DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT	0

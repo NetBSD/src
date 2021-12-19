@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gtt_mgr.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gtt_mgr.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gtt_mgr.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gtt_mgr.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include "amdgpu.h"
 
@@ -39,6 +39,8 @@ struct amdgpu_gtt_node {
 	struct drm_mm_node node;
 	struct ttm_buffer_object *tbo;
 };
+
+#ifndef __NetBSD__		/* XXX amdgpu sysfs */
 
 /**
  * DOC: mem_info_gtt_total
@@ -81,6 +83,8 @@ static DEVICE_ATTR(mem_info_gtt_total, S_IRUGO,
 static DEVICE_ATTR(mem_info_gtt_used, S_IRUGO,
 	           amdgpu_mem_info_gtt_used_show, NULL);
 
+#endif
+
 /**
  * amdgpu_gtt_mgr_init - init GTT manager and DRM MM
  *
@@ -108,6 +112,9 @@ static int amdgpu_gtt_mgr_init(struct ttm_mem_type_manager *man,
 	atomic64_set(&mgr->available, p_size);
 	man->priv = mgr;
 
+#ifdef __NetBSD__		/* XXX amdgpu sysfs */
+	__USE(ret);
+#else
 	ret = device_create_file(adev->dev, &dev_attr_mem_info_gtt_total);
 	if (ret) {
 		DRM_ERROR("Failed to create device file mem_info_gtt_total\n");
@@ -118,6 +125,7 @@ static int amdgpu_gtt_mgr_init(struct ttm_mem_type_manager *man,
 		DRM_ERROR("Failed to create device file mem_info_gtt_used\n");
 		return ret;
 	}
+#endif
 
 	return 0;
 }
@@ -137,11 +145,16 @@ static int amdgpu_gtt_mgr_fini(struct ttm_mem_type_manager *man)
 	spin_lock(&mgr->lock);
 	drm_mm_takedown(&mgr->mm);
 	spin_unlock(&mgr->lock);
+	spin_lock_destroy(&mgr->lock);
 	kfree(mgr);
 	man->priv = NULL;
 
+#ifdef __NetBSD__		/* XXX amdgpu sysfs */
+	__USE(adev);
+#else
 	device_remove_file(adev->dev, &dev_attr_mem_info_gtt_total);
 	device_remove_file(adev->dev, &dev_attr_mem_info_gtt_used);
+#endif
 
 	return 0;
 }
@@ -349,7 +362,7 @@ static void amdgpu_gtt_mgr_debug(struct ttm_mem_type_manager *man,
 	drm_mm_print(&mgr->mm, printer);
 	spin_unlock(&mgr->lock);
 
-	drm_printf(printer, "man size:%llu pages, gtt available:%lld pages, usage:%lluMB\n",
+	drm_printf(printer, "man size:%"PRIu64" pages, gtt available:%"PRId64" pages, usage:%"PRIu64"MB\n",
 		   man->size, (u64)atomic64_read(&mgr->available),
 		   amdgpu_gtt_mgr_usage(man) >> 20);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu.h,v 1.6 2021/12/19 11:35:06 riastradh Exp $	*/
+/*	$NetBSD: amdgpu.h,v 1.7 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -953,7 +953,7 @@ struct amdgpu_device {
 	atomic64_t gart_pin_size;
 
 	/* soc15 register offset based on ip, instance and  segment */
-	uint32_t 		*reg_offset[MAX_HWIP][HWIP_MAX_INSTANCE];
+	const uint32_t 		*reg_offset[MAX_HWIP][HWIP_MAX_INSTANCE];
 
 	/* delayed work_func for deferring clockgating during resume */
 	struct delayed_work     delayed_init_work;

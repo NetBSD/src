@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fiji_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fiji_smumgr.c,v 1.3 2021/12/19 12:02:40 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fiji_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fiji_smumgr.c,v 1.3 2021/12/19 12:02:40 riastradh Exp $");
 
 #include "pp_debug.h"
 #include "smumgr.h"
@@ -1607,7 +1607,7 @@ static int fiji_populate_smc_uvd_level(struct pp_hwmgr *hwmgr,
 static int fiji_populate_smc_boot_level(struct pp_hwmgr *hwmgr,
 		struct SMU73_Discrete_DpmTable *table)
 {
-	int result = 0;
+	int result __unused = 0;
 	struct smu7_hwmgr *data = (struct smu7_hwmgr *)(hwmgr->backend);
 
 	table->GraphicsBootLevel = 0;

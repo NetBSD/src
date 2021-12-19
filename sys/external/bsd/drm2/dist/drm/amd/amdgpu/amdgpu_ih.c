@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ih.c,v 1.7 2021/12/19 11:26:25 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ih.c,v 1.8 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ih.c,v 1.7 2021/12/19 11:26:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ih.c,v 1.8 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 
@@ -126,7 +126,7 @@ fail3: __unused		bus_dmamem_unmap(adev->ddev->dmat, kva, size);
 		r = amdgpu_bo_create_kernel(adev, ih->ring_size, PAGE_SIZE,
 					    AMDGPU_GEM_DOMAIN_GTT,
 					    &ih->ring_obj, &ih->gpu_addr,
-					    (void **)&ih->ring);
+					    (void **)__UNVOLATILE(&ih->ring));
 		if (r) {
 			amdgpu_device_wb_free(adev, rptr_offs);
 			amdgpu_device_wb_free(adev, wptr_offs);
@@ -173,7 +173,7 @@ void amdgpu_ih_ring_fini(struct amdgpu_device *adev, struct amdgpu_ih_ring *ih)
 		ih->ring = NULL;
 	} else {
 		amdgpu_bo_free_kernel(&ih->ring_obj, &ih->gpu_addr,
-				      (void **)&ih->ring);
+				      (void **)__UNVOLATILE(&ih->ring));
 		amdgpu_device_wb_free(adev, (ih->wptr_addr - ih->gpu_addr) / 4);
 		amdgpu_device_wb_free(adev, (ih->rptr_addr - ih->gpu_addr) / 4);
 	}

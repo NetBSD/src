@@ -1,4 +1,4 @@
-/*	$NetBSD: hdcp.h,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
+/*	$NetBSD: hdcp.h,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -291,7 +291,7 @@ enum mod_hdcp_hdcp2_dp_state_id {
 typedef enum mod_hdcp_status (*mod_hdcp_action)(struct mod_hdcp *hdcp);
 uint8_t mod_hdcp_execute_and_set(
 		mod_hdcp_action func, uint8_t *flag,
-		enum mod_hdcp_status *status, struct mod_hdcp *hdcp, char *str);
+		enum mod_hdcp_status *status, struct mod_hdcp *hdcp, const char *str);
 enum mod_hdcp_status mod_hdcp_hdcp1_execution(struct mod_hdcp *hdcp,
 	struct mod_hdcp_event_context *event_ctx,
 	struct mod_hdcp_transition_input_hdcp1 *input);

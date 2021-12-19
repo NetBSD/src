@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_irq.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_irq.c,v 1.6 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.6 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/irq.h>
 #include <linux/pci.h>
@@ -253,6 +253,7 @@ int amdgpu_irq_init(struct amdgpu_device *adev)
 	adev->irq.msi_enabled = false;
 
 	if (amdgpu_msi_ok(adev)) {
+#ifndef __NetBSD__		/* XXX amdgpu msix */
 		int nvec = pci_msix_vec_count(adev->pdev);
 		unsigned int flags;
 
@@ -267,6 +268,7 @@ int amdgpu_irq_init(struct amdgpu_device *adev)
 			adev->irq.msi_enabled = true;
 			dev_dbg(adev->dev, "amdgpu: using MSI/MSI-X.\n");
 		}
+#endif
 	}
 
 	if (!amdgpu_device_has_dc_support(adev)) {
@@ -322,8 +324,10 @@ void amdgpu_irq_fini(struct amdgpu_device *adev)
 	if (adev->irq.installed) {
 		drm_irq_uninstall(adev->ddev);
 		adev->irq.installed = false;
+#ifndef __NetBSD__		/* XXX amdgpu msix */
 		if (adev->irq.msi_enabled)
 			pci_free_irq_vectors(adev->pdev);
+#endif
 		if (!amdgpu_device_has_dc_support(adev))
 			flush_work(&adev->hotplug_work);
 	}
@@ -422,7 +426,7 @@ void amdgpu_irq_dispatch(struct amdgpu_device *adev,
 	bool handled = false;
 	int r;
 
-	entry.iv_entry = (const uint32_t *)&ih->ring[ring_index];
+	entry.iv_entry = (const uint32_t *)__UNVOLATILE(&ih->ring[ring_index]);
 	amdgpu_ih_decode_iv(adev, &entry);
 
 	trace_amdgpu_iv(ih - &adev->irq.ih, &entry);
@@ -436,8 +440,10 @@ void amdgpu_irq_dispatch(struct amdgpu_device *adev,
 	} else	if (src_id >= AMDGPU_MAX_IRQ_SRC_ID) {
 		DRM_DEBUG("Invalid src_id in IV: %d\n", src_id);
 
+#ifndef __NetBSD__		/* XXX amdgpu irq */
 	} else if (adev->irq.virq[src_id]) {
 		generic_handle_irq(irq_find_mapping(adev->irq.domain, src_id));
+#endif
 
 	} else if (!adev->irq.client[client_id].sources) {
 		DRM_DEBUG("Unregistered interrupt client_id: %d src_id: %d\n",
@@ -604,6 +610,8 @@ bool amdgpu_irq_enabled(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
 	return !!atomic_read(&src->enabled_types[type]);
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu irq */
+
 /* XXX: Generic IRQ handling */
 static void amdgpu_irq_mask(struct irq_data *irqd)
 {
@@ -709,3 +717,5 @@ unsigned amdgpu_irq_create_mapping(struct amdgpu_device *adev, unsigned src_id)
 
 	return adev->irq.virq[src_id];
 }
+
+#endif

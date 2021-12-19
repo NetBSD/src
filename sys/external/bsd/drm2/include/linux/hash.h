@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.4 2021/12/19 09:48:06 riastradh Exp $	*/
+/*	$NetBSD: hash.h,v 1.5 2021/12/19 12:02:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,6 +48,12 @@ static inline uint32_t
 hash_32(uint32_t value, unsigned int bits)
 {
 	return (value * 0x61c88647) >> (32 - bits);
+}
+
+static inline uint64_t
+hash_64(uint64_t value, unsigned int bits)
+{
+	return (value * 0x61c8864680b583ebull) >> (64 - bits);
 }
 
 #endif  /* _LINUX_HASH_H_ */
