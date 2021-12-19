@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_user.c,v 1.4 2021/12/19 11:51:59 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_user.c,v 1.5 2021/12/19 11:59:11 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_user.c,v 1.4 2021/12/19 11:51:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_user.c,v 1.5 2021/12/19 11:59:11 riastradh Exp $");
 
 #include <linux/list.h>
 #include <linux/list_sort.h>
@@ -28,13 +28,13 @@ compare_engines(void *cookie, const void *va, const void *vb)
 	const struct intel_engine_cs *csa = va;
 	const struct intel_engine_cs *csb = vb;
 
-	if (csa->class < csb->class)
+	if (csa->uabi_class < csb->uabi_class)
 		return -1;
-	if (csa->class > csb->class)
+	if (csa->uabi_class > csb->uabi_class)
 		return +1;
-	if (csa->instance < csb->instance)
+	if (csa->uabi_instance < csb->uabi_instance)
 		return -1;
-	if (csa->instance > csb->instance)
+	if (csa->uabi_instance > csb->uabi_instance)
 		return +1;
 	return 0;
 }
@@ -45,13 +45,13 @@ compare_engine_key(void *cookie, const void *vn, const void *vk)
 	const struct intel_engine_cs *cs = vn;
 	const u8 *k = vk;
 
-	if (cs->class < k[0])
+	if (cs->uabi_class < k[0])
 		return -1;
-	if (cs->class > k[0])
+	if (cs->uabi_class > k[0])
 		return +1;
-	if (cs->instance < k[1])
+	if (cs->uabi_instance < k[1])
 		return -1;
-	if (cs->instance > k[1])
+	if (cs->uabi_instance > k[1])
 		return +1;
 	return 0;
 }
