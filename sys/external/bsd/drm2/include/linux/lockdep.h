@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdep.h,v 1.2 2021/12/19 01:49:14 riastradh Exp $	*/
+/*	$NetBSD: lockdep.h,v 1.3 2021/12/19 09:43:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #define	__lockdep_used			__debugused
 #define	lock_acquire_shared_recursive(l, s, t, n, i)	__nothing
-#define	lock_release(l, n, i)		__nothing
+#define	lock_release(l, n)		__nothing
 #ifdef notyet
 #define	lockdep_assert_held(m)		KDASSERT(lockdep_is_held(m))
 #define	lockdep_assert_held_once(m)	KDASSERT(lockdep_is_held(m))
