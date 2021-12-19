@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.31 2021/12/19 11:01:44 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.32 2021/12/19 11:02:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -471,6 +471,16 @@ clear_bit(unsigned int bit, volatile unsigned long *ptr)
 	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
 
 	/* no memory barrier */
+	atomic_and_ulong(&ptr[bit / units], ~(1UL << (bit % units)));
+}
+
+static inline void
+clear_bit_unlock(unsigned int bit, volatile unsigned long *ptr)
+{
+	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
+
+	/* store-release */
+	smp_mb__before_atomic();
 	atomic_and_ulong(&ptr[bit / units], ~(1UL << (bit % units)));
 }
 
