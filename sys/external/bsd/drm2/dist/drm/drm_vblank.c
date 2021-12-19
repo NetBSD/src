@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.8 2021/12/19 11:48:42 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.9 2021/12/19 11:52:16 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.8 2021/12/19 11:48:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.9 2021/12/19 11:52:16 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.8 2021/12/19 11:48:42 riastradh Exp
  * &drm_driver.max_vblank_count. In that case the vblank core only disables the
  * vblanks after a timer has expired, which can be configured through the
  * ``vblankoffdelay`` module parameter.
+ *
+ * Lock order: event_lock -> vbl_lock -> vblank_time_lock
  */
 
 /* Retry timestamp calculation up to 3 times to satisfy
@@ -1875,13 +1877,13 @@ bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe)
 
 	spin_lock_irqsave(&dev->event_lock, irqflags);
 
+	spin_lock(&dev->vbl_lock);
+
 	/* Need timestamp lock to prevent concurrent execution with
 	 * vblank enable/disable, as this would cause inconsistent
 	 * or corrupted timestamps and vblank counts.
 	 */
 	spin_lock(&dev->vblank_time_lock);
-
-	spin_lock(&dev->vbl_lock);
 
 	/* Vblank irq handling disabled. Nothing to do. */
 	if (!vblank->enabled) {
