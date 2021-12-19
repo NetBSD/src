@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.7 2018/08/27 13:44:41 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.8 2021/12/19 00:46:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -138,6 +138,17 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 	} while (atomic_cas_uint(&kref->kr_count, old, new) != old);
 
 	return 0;
+}
+
+static inline unsigned
+kref_read(const struct kref *kref)
+{
+	unsigned v;
+
+	v = kref->kr_count;
+	__insn_barrier();
+
+	return v;
 }
 
 /*
