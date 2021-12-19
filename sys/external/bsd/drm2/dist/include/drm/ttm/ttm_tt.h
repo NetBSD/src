@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.h,v 1.3 2021/12/19 09:57:09 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.h,v 1.4 2021/12/19 09:58:00 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -106,7 +106,7 @@ struct ttm_backend_func {
  */
 struct ttm_tt {
 	struct ttm_bo_device *bdev;
-	struct ttm_backend_func *func;
+	const struct ttm_backend_func *func;
 	struct page **pages;
 	uint32_t page_flags;
 	unsigned long num_pages;
