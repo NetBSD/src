@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.5 2021/12/19 11:47:16 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.6 2021/12/19 11:47:40 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -134,7 +134,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.5 2021/12/19 11:47:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.6 2021/12/19 11:47:40 riastradh Exp $");
 
 #include <linux/interrupt.h>
 
@@ -1521,7 +1521,11 @@ static void execlists_submit_ports(struct intel_engine_cs *engine)
 
 	/* we need to manually load the submit queue */
 	if (execlists->ctrl_reg)
+#ifdef __NetBSD__
+		bus_space_write_4(execlists->bst, execlists->bsh, execlists->ctrl_reg, EL_CTRL_LOAD);
+#else
 		writel(EL_CTRL_LOAD, execlists->ctrl_reg);
+#endif
 }
 
 static bool ctx_single_port_submission(const struct intel_context *ce)
