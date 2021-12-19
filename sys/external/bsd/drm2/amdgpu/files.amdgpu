@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.9 2021/12/19 00:25:34 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.10 2021/12/19 00:26:16 riastradh Exp $
 
 version	20180827
 
@@ -324,7 +324,7 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_soc15.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_sync.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_test.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_tonga_ih.c	amdgpu
-file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_trace_points.c	amdgpu
+#file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_trace_points.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ttm.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ucode.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_umc.c	amdgpu
