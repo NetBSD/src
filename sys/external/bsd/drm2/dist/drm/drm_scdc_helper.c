@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scdc_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_scdc_helper.c,v 1.3 2021/12/19 01:15:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015 NVIDIA Corporation. All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scdc_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scdc_helper.c,v 1.3 2021/12/19 01:15:07 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/delay.h>
@@ -114,7 +114,7 @@ ssize_t drm_scdc_write(struct i2c_adapter *adapter, u8 offset,
 	msg.buf = data;
 
 	memcpy(data, &offset, sizeof(offset));
-	memcpy(data + 1, buffer, size);
+	memcpy((char *)data + 1, buffer, size);
 
 	err = i2c_transfer(adapter, &msg, 1);
 
