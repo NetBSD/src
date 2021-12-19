@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_connector.h,v 1.4 2021/12/19 09:43:13 riastradh Exp $	*/
+/*	$NetBSD: drm_connector.h,v 1.5 2021/12/19 12:44:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -1316,6 +1316,9 @@ struct drm_connector {
 	 * need the CRTC driving this output, &drm_connector_state.crtc.
 	 */
 	struct drm_encoder *encoder;
+
+	/** @physical_address: HDMI physical address */
+	uint16_t physical_address;
 
 #define MAX_ELD_BYTES	128
 	/** @eld: EDID-like data, if present */
