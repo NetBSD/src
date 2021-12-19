@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object_types.h,v 1.6 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object_types.h,v 1.7 2021/12/19 12:26:55 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -78,7 +78,11 @@ struct i915_mmap_offset {
 	struct drm_i915_gem_object *obj;
 	enum i915_mmap_type mmap_type;
 
+#ifdef __NetBSD__
+	struct uvm_object uobj;
+#else
 	struct rb_node offset;
+#endif
 };
 
 struct drm_i915_gem_object {

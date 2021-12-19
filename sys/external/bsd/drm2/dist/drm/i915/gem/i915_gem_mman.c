@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.20 2021/12/19 12:13:31 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.21 2021/12/19 12:26:55 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.20 2021/12/19 12:13:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.21 2021/12/19 12:26:55 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -28,7 +28,9 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.20 2021/12/19 12:13:31 riastradh
 #include "i915_user_extensions.h"
 #include "i915_vma.h"
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+static const struct uvm_pagerops i915_mmo_gem_uvm_ops;
+#else
 static inline bool
 __vma_matches(struct vm_area_struct *vma, struct file *filp,
 	      unsigned long addr, unsigned long size)
@@ -338,8 +340,6 @@ static vm_fault_t vm_fault_cpu(struct vm_fault *vmf)
 	paddr_t paddr;
 	int i;
 
-	startpage -= drm_vma_node_start(&mmo->vma_node);
-
 	for (i = 0; i < npages; i++) {
 		if ((flags & PGO_ALLPAGES) == 0 && i != centeridx)
 			continue;
@@ -411,7 +411,6 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 #ifdef __NetBSD__
 	page_offset = (ufi->entry->offset + (vaddr - ufi->entry->start))
 	    >> PAGE_SHIFT;
-	page_offset -= drm_vma_node_start(&mmo->vma_node);
 #else
 	/* We don't use vmf->pgoff since that has the fake offset */
 	page_offset = (vmf->address - area->vm_start) >> PAGE_SHIFT;
@@ -546,14 +545,9 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
     int npages, int centeridx, vm_prot_t access_type, int flags)
 {
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-	voff_t uoffset;
-	unsigned long startpage;
-	struct drm_gem_object *gem =
-	    container_of(uobj, struct drm_gem_object, gemo_uvmobj);
-	struct drm_i915_gem_object *obj = to_intel_bo(gem);
-	struct drm_device *dev = obj->base.dev;
-	struct drm_vma_offset_node *node;
-	struct i915_mmap_offset *mmo;
+	struct i915_mmap_offset *mmo =
+	    container_of(uobj, struct i915_mmap_offset, uobj);
+	struct drm_i915_gem_object *obj = mmo->obj;
 	bool pinned = false;
 	int error;
 
@@ -573,44 +567,6 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 * invariants are implied by it.
 	 */
 	rw_exit(obj->base.filp->vmobjlock);
-
-	KASSERT(ufi->entry->start <= vaddr);
-	KASSERT((ufi->entry->offset & (PAGE_SIZE - 1)) == 0);
-	uoffset = ufi->entry->offset + (vaddr - ufi->entry->start);
-	startpage = uoffset >> PAGE_SHIFT;
-
-	/*
-	 * Look up the mmo again because we can't conveniently store it
-	 * alongside the mapping unless we create a separate uvm object
-	 * for it.  XXX Consider creating a separate uvm object as a
-	 * kind of subobject of the main object.
-	 *
-	 * We use drm_vma_offset_lookup_locked because the number of
-	 * pages we're faulting in here may be different from the
-	 * number of pages that were mapped.
-	 */
-	rcu_read_lock();
-	drm_vma_offset_lock_lookup(dev->vma_offset_manager);
-	node = drm_vma_offset_lookup_locked(dev->vma_offset_manager,
-	    startpage, npages);
-	drm_vma_offset_unlock_lookup(dev->vma_offset_manager);
-	rcu_read_unlock();
-
-	/*
-	 * The mmo had better be there -- hope we can't remove the mmo
-	 * without unmapping first!
-	 */
-	KASSERT(node);
-	KASSERTMSG((ufi->entry->offset >> PAGE_SHIFT ==
-		drm_vma_node_start(node)),
-	    /*
-	     * Always provided by i915_gem_mmap_object, but in
-	     * principle we could relax this.
-	     */
-	    "map startpage=%lx =/= node startpage=%lx",
-	    ufi->entry->offset >> PAGE_SHIFT, drm_vma_node_start(node));
-	mmo = container_of(node, struct i915_mmap_offset, vma_node);
-	KASSERT(obj == mmo->obj);
 
 	/* XXX errno Linux->NetBSD */
 	error = -i915_gem_object_pin_pages(obj);
@@ -814,6 +770,7 @@ insert_mmo(struct drm_i915_gem_object *obj, struct i915_mmap_offset *mmo)
 	if (to_free) {
 		drm_vma_offset_remove(obj->base.dev->vma_offset_manager,
 		    &to_free->vma_node);
+		uvm_obj_destroy(&to_free->uobj, /*free lock*/true);
 		drm_vma_node_destroy(&to_free->vma_node);
 		kfree(to_free);
 	}
@@ -873,6 +830,9 @@ mmap_offset_attach(struct drm_i915_gem_object *obj,
 	mmo->mmap_type = mmap_type;
 #ifdef __NetBSD__
 	drm_vma_node_init(&mmo->vma_node);
+	uvm_obj_init(&mmo->uobj, &i915_mmo_gem_uvm_ops, /*allocate lock*/false,
+	    /*nrefs*/1);
+	uvm_obj_setlock(&mmo->uobj, obj->base.filp->vmobjlock);
 #else
 	drm_vma_node_reset(&mmo->vma_node);
 #endif
@@ -902,6 +862,9 @@ out:
 	return mmo;
 
 err:
+#ifdef __NetBSD__
+	uvm_obj_destroy(&mmo->uobj, /*free lock*/true);
+#endif
 	drm_vma_node_destroy(&mmo->vma_node);
 	kfree(mmo);
 	return ERR_PTR(err);
@@ -1036,9 +999,43 @@ i915_gem_mmap_offset_ioctl(struct drm_device *dev, void *data,
 
 #ifdef __NetBSD__
 
+static int
+i915_gem_nofault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
+    struct vm_page **pps, int npages, int centeridx, vm_prot_t access_type,
+    int flags)
+{
+	panic("i915 main gem object should not be mmapped directly");
+}
+
 const struct uvm_pagerops i915_gem_uvm_ops = {
 	.pgo_reference = drm_gem_pager_reference,
 	.pgo_detach = drm_gem_pager_detach,
+	.pgo_fault = i915_gem_nofault,
+};
+
+static void
+i915_mmo_reference(struct uvm_object *uobj)
+{
+	struct i915_mmap_offset *mmo =
+	    container_of(uobj, struct i915_mmap_offset, uobj);
+	struct drm_i915_gem_object *obj = mmo->obj;
+
+	drm_gem_object_get(&obj->base);
+}
+
+static void
+i915_mmo_detach(struct uvm_object *uobj)
+{
+	struct i915_mmap_offset *mmo =
+	    container_of(uobj, struct i915_mmap_offset, uobj);
+	struct drm_i915_gem_object *obj = mmo->obj;
+
+	drm_gem_object_put_unlocked(&obj->base);
+}
+
+static const struct uvm_pagerops i915_mmo_gem_uvm_ops = {
+	.pgo_reference = i915_mmo_reference,
+	.pgo_detach = i915_mmo_detach,
 	.pgo_fault = i915_gem_fault,
 };
 
@@ -1082,8 +1079,8 @@ i915_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
 	}
 
 	/* Success!  */
-	*uobjp = &obj->base.gemo_uvmobj;
-	*uoffsetp = (voff_t)startpage << PAGE_SHIFT;
+	*uobjp = &mmo->uobj;
+	*uoffsetp = 0;
 	return 0;
 }
 
