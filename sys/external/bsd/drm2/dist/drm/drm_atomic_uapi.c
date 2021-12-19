@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic_uapi.c,v 1.3 2021/12/19 00:58:42 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic_uapi.c,v 1.4 2021/12/19 01:15:56 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.3 2021/12/19 00:58:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.4 2021/12/19 01:15:56 riastradh Exp $");
 
 #include <drm/drm_atomic_uapi.h>
 #include <drm/drm_atomic.h>
@@ -1104,7 +1104,7 @@ static int setup_out_fence(struct drm_out_fence_state *fence_state,
 
 	/* Prepare to transmit it to user.  */
 	/* XXX errno NetBSD->Linux */
-	ret = -copyout(&fence_state->fd, &fd, sizeof fd);
+	ret = -copyout(&fd, fence_state->out_fence_ptr, sizeof fd);
 	if (ret)
 		goto out;
 
