@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scheduler.c,v 1.6 2021/12/19 11:39:24 riastradh Exp $	*/
+/*	$NetBSD: i915_scheduler.c,v 1.7 2021/12/19 12:12:47 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.6 2021/12/19 11:39:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.7 2021/12/19 12:12:47 riastradh Exp $");
 
 #include <linux/mutex.h>
 
@@ -90,9 +90,9 @@ compare_priolists(void *cookie, const void *va, const void *vb)
 	const struct i915_priolist *a = va;
 	const struct i915_priolist *b = vb;
 
-	if (a->priority < b->priority)
-		return -1;
 	if (a->priority > b->priority)
+		return -1;
+	if (a->priority < b->priority)
 		return +1;
 	return 0;
 }
@@ -103,10 +103,10 @@ compare_priolist_key(void *cookie, const void *vp, const void *vk)
 	const struct i915_priolist *p = vp;
 	const int *priorityp = vk, priority = *priorityp;
 
-	if (p->priority < priority)
-		return -1;
 	if (p->priority > priority)
 		return -1;
+	if (p->priority < priority)
+		return +1;
 	return 0;
 }
 
