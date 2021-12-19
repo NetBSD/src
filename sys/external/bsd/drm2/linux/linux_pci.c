@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.19 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.20 2021/12/19 12:00:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.19 2021/12/19 11:38:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.20 2021/12/19 12:00:16 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -63,6 +63,14 @@ void *
 pci_get_drvdata(struct pci_dev *pdev)
 {
 	return pdev->pd_drvdata;
+}
+
+const char *
+pci_name(struct pci_dev *pdev)
+{
+
+	/* XXX not sure this has the right format */
+	return device_xname(pci_dev_dev(pdev));
 }
 
 void
