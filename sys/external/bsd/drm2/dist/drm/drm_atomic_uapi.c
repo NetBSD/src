@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic_uapi.c,v 1.6 2021/12/19 01:58:41 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic_uapi.c,v 1.7 2021/12/19 10:45:49 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.6 2021/12/19 01:58:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.7 2021/12/19 10:45:49 riastradh Exp $");
 
 #include <drm/drm_atomic_uapi.h>
 #include <drm/drm_atomic.h>
@@ -1114,6 +1114,7 @@ static int setup_out_fence(struct drm_out_fence_state *fence_state,
 		ret = -ENOMEM;
 		goto out;
 	}
+	fd_affix(curproc, fp, fd);
 	fp = NULL;		/* sync_file consumes */
 
 out:	if (fp != NULL) {
