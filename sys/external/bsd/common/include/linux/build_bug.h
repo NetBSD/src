@@ -1,4 +1,4 @@
-/*	$NetBSD: build_bug.h,v 1.1 2021/12/19 11:10:41 riastradh Exp $	*/
+/*	$NetBSD: build_bug.h,v 1.2 2021/12/19 11:10:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -31,17 +31,15 @@
 
 #include <lib/libkern/libkern.h>
 
-/*
- * static_assert is violated with runtime-only compiler semantics in a few
- * places. Instead of breaking the build, stop asserting these corner cases.
- */
+/* Required to be false _or_ nonconstant.  */
+#define	BUILD_BUG_ON(EXPR)						      \
+	CTASSERT(__builtin_choose_expr(__builtin_constant_p(EXPR), !(EXPR), 1))
 
-#define DRMCTASSERT(x)	CTASSERT((__builtin_choose_expr(		\
-			__builtin_constant_p(x), (x), 1)))
+/* Required to be constant _and_ true.  XXX Should take optional message.  */
+#define	static_assert(EXPR)		CTASSERT(EXPR)
 
-#define	BUILD_BUG()		do {} while (0)
-#define	BUILD_BUG_ON(CONDITION)	DRMCTASSERT(!(CONDITION))
-#define	BUILD_BUG_ON_MSG(CONDITION,MSG)	DRMCTASSERT(!(CONDITION))
+#define	BUILD_BUG()			do {} while (0)
+#define	BUILD_BUG_ON_MSG(EXPR,MSG)	BUILD_BUG_ON(EXPR)
 #define	BUILD_BUG_ON_INVALID(EXPR)	((void)sizeof((long)(EXPR)))
 
 #endif	/* _LINUX_BUILD_BUG_H_ */
