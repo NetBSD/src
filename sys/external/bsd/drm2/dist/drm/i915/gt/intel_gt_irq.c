@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gt_irq.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_gt_irq.c,v 1.3 2021/12/19 01:43:37 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gt_irq.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gt_irq.c,v 1.3 2021/12/19 01:43:37 riastradh Exp $");
 
 #include <linux/sched/clock.h>
 
@@ -45,13 +45,12 @@ static u32
 gen11_gt_engine_identity(struct intel_gt *gt,
 			 const unsigned int bank, const unsigned int bit)
 {
-	void __iomem * const regs = gt->uncore->regs;
 	u32 timeout_ts;
 	u32 ident;
 
 	lockdep_assert_held(&gt->irq_lock);
 
-	raw_reg_write(regs, GEN11_IIR_REG_SELECTOR(bank), BIT(bit));
+	raw_reg_write(gt->uncore, GEN11_IIR_REG_SELECTOR(bank), BIT(bit));
 
 	/*
 	 * NB: Specs do not specify how long to spin wait,
@@ -59,7 +58,7 @@ gen11_gt_engine_identity(struct intel_gt *gt,
 	 */
 	timeout_ts = (local_clock() >> 10) + 100;
 	do {
-		ident = raw_reg_read(regs, GEN11_INTR_IDENTITY_REG(bank));
+		ident = raw_reg_read(gt->uncore, GEN11_INTR_IDENTITY_REG(bank));
 	} while (!(ident & GEN11_INTR_DATA_VALID) &&
 		 !time_after32(local_clock() >> 10, timeout_ts));
 
@@ -69,7 +68,7 @@ gen11_gt_engine_identity(struct intel_gt *gt,
 		return 0;
 	}
 
-	raw_reg_write(regs, GEN11_INTR_IDENTITY_REG(bank),
+	raw_reg_write(gt->uncore, GEN11_INTR_IDENTITY_REG(bank),
 		      GEN11_INTR_DATA_VALID);
 
 	return ident;
@@ -130,13 +129,12 @@ gen11_gt_identity_handler(struct intel_gt *gt, const u32 identity)
 static void
 gen11_gt_bank_handler(struct intel_gt *gt, const unsigned int bank)
 {
-	void __iomem * const regs = gt->uncore->regs;
 	unsigned long intr_dw;
 	unsigned int bit;
 
 	lockdep_assert_held(&gt->irq_lock);
 
-	intr_dw = raw_reg_read(regs, GEN11_GT_INTR_DW(bank));
+	intr_dw = raw_reg_read(gt->uncore, GEN11_GT_INTR_DW(bank));
 
 	for_each_set_bit(bit, &intr_dw, 32) {
 		const u32 ident = gen11_gt_engine_identity(gt, bank, bit);
@@ -145,7 +143,7 @@ gen11_gt_bank_handler(struct intel_gt *gt, const unsigned int bank)
 	}
 
 	/* Clear must be after shared has been served for engine */
-	raw_reg_write(regs, GEN11_GT_INTR_DW(bank), intr_dw);
+	raw_reg_write(gt->uncore, GEN11_GT_INTR_DW(bank), intr_dw);
 }
 
 void gen11_gt_irq_handler(struct intel_gt *gt, const u32 master_ctl)
@@ -165,12 +163,11 @@ void gen11_gt_irq_handler(struct intel_gt *gt, const u32 master_ctl)
 bool gen11_gt_reset_one_iir(struct intel_gt *gt,
 			    const unsigned int bank, const unsigned int bit)
 {
-	void __iomem * const regs = gt->uncore->regs;
 	u32 dw;
 
 	lockdep_assert_held(&gt->irq_lock);
 
-	dw = raw_reg_read(regs, GEN11_GT_INTR_DW(bank));
+	dw = raw_reg_read(gt->uncore, GEN11_GT_INTR_DW(bank));
 	if (dw & BIT(bit)) {
 		/*
 		 * According to the BSpec, DW_IIR bits cannot be cleared without
@@ -184,7 +181,7 @@ bool gen11_gt_reset_one_iir(struct intel_gt *gt,
 		 * our bit, otherwise we are locking the register for
 		 * everybody.
 		 */
-		raw_reg_write(regs, GEN11_GT_INTR_DW(bank), BIT(bit));
+		raw_reg_write(gt->uncore, GEN11_GT_INTR_DW(bank), BIT(bit));
 
 		return true;
 	}
@@ -293,30 +290,29 @@ void gen6_gt_irq_handler(struct intel_gt *gt, u32 gt_iir)
 
 void gen8_gt_irq_ack(struct intel_gt *gt, u32 master_ctl, u32 gt_iir[4])
 {
-	void __iomem * const regs = gt->uncore->regs;
 
 	if (master_ctl & (GEN8_GT_RCS_IRQ | GEN8_GT_BCS_IRQ)) {
-		gt_iir[0] = raw_reg_read(regs, GEN8_GT_IIR(0));
+		gt_iir[0] = raw_reg_read(gt->uncore, GEN8_GT_IIR(0));
 		if (likely(gt_iir[0]))
-			raw_reg_write(regs, GEN8_GT_IIR(0), gt_iir[0]);
+			raw_reg_write(gt->uncore, GEN8_GT_IIR(0), gt_iir[0]);
 	}
 
 	if (master_ctl & (GEN8_GT_VCS0_IRQ | GEN8_GT_VCS1_IRQ)) {
-		gt_iir[1] = raw_reg_read(regs, GEN8_GT_IIR(1));
+		gt_iir[1] = raw_reg_read(gt->uncore, GEN8_GT_IIR(1));
 		if (likely(gt_iir[1]))
-			raw_reg_write(regs, GEN8_GT_IIR(1), gt_iir[1]);
+			raw_reg_write(gt->uncore, GEN8_GT_IIR(1), gt_iir[1]);
 	}
 
 	if (master_ctl & (GEN8_GT_PM_IRQ | GEN8_GT_GUC_IRQ)) {
-		gt_iir[2] = raw_reg_read(regs, GEN8_GT_IIR(2));
+		gt_iir[2] = raw_reg_read(gt->uncore, GEN8_GT_IIR(2));
 		if (likely(gt_iir[2]))
-			raw_reg_write(regs, GEN8_GT_IIR(2), gt_iir[2]);
+			raw_reg_write(gt->uncore, GEN8_GT_IIR(2), gt_iir[2]);
 	}
 
 	if (master_ctl & GEN8_GT_VECS_IRQ) {
-		gt_iir[3] = raw_reg_read(regs, GEN8_GT_IIR(3));
+		gt_iir[3] = raw_reg_read(gt->uncore, GEN8_GT_IIR(3));
 		if (likely(gt_iir[3]))
-			raw_reg_write(regs, GEN8_GT_IIR(3), gt_iir[3]);
+			raw_reg_write(gt->uncore, GEN8_GT_IIR(3), gt_iir[3]);
 	}
 }
 

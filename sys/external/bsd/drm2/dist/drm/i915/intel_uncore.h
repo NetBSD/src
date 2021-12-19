@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.h,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.h,v 1.3 2021/12/19 01:43:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -411,9 +411,18 @@ static inline int intel_uncore_write_and_verify(struct intel_uncore *uncore,
 	return (reg_val & mask) != expected_val ? -EINVAL : 0;
 }
 
+#ifdef __NetBSD__
+#define	raw_reg_read(i915, reg)						      \
+	bus_space_read_4((i915)->regs_bst, (i915)->regs_bsh,		      \
+	    i915_mmio_reg_offset(reg))
+#define	raw_reg_write(i915, reg, value)					      \
+	bus_space_write_4((i915)->regs_bst, (i915)->regs_bsh,		      \
+	    i915_mmio_reg_offset(reg), (value))
+#else
 #define raw_reg_read(base, reg) \
 	readl(base + i915_mmio_reg_offset(reg))
 #define raw_reg_write(base, reg, value) \
 	writel(value, base + i915_mmio_reg_offset(reg))
+#endif
 
 #endif /* !__INTEL_UNCORE_H__ */
