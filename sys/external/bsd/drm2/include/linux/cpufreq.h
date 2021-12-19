@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufreq.h,v 1.3 2021/12/19 11:46:30 riastradh Exp $	*/
+/*	$NetBSD: cpufreq.h,v 1.4 2021/12/19 11:52:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
 #ifndef _LINUX_CPUFREQ_H_
 #define _LINUX_CPUFREQ_H_
 
+#include <sys/cpu.h>
 #include <sys/cpufreq.h>
 #include <sys/kmem.h>
-#include <machine/cpu.h>
+
 #include <machine/cpu_counter.h>
 
 struct cpufreq_policy {
