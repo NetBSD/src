@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.5 2021/12/19 01:22:22 riastradh Exp $	*/
+/*	$NetBSD: fs.h,v 1.6 2021/12/19 10:37:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,9 @@
 
 #ifndef _LINUX_FS_H_
 #define _LINUX_FS_H_
+
+#include <sys/param.h>
+#include <sys/file.h>
 
 #include <linux/capability.h>
 #include <linux/err.h>
