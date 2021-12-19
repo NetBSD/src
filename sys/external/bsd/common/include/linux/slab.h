@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.4 2021/12/19 01:39:05 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.5 2021/12/19 11:58:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -208,9 +208,9 @@ kmem_cache_alloc(struct kmem_cache *kc, gfp_t gfp)
 	void *ptr;
 
 	if (gfp & __GFP_WAIT)
-		flags |= PR_NOWAIT;
-	else
 		flags |= PR_WAITOK;
+	else
+		flags |= PR_NOWAIT;
 
 	ptr = pool_cache_get(kc->kc_pool_cache, flags);
 	if (ptr == NULL)
