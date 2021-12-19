@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.15 2021/12/19 12:08:27 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.16 2021/12/19 12:08:36 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.15 2021/12/19 12:08:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.16 2021/12/19 12:08:36 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -338,6 +338,8 @@ static vm_fault_t vm_fault_cpu(struct vm_fault *vmf)
 	paddr_t paddr;
 	int i;
 
+	startpage -= drm_vma_node_start(&mmo->vma_node);
+
 	for (i = 0; i < npages; i++) {
 		if ((flags & PGO_ALLPAGES) == 0 && i != centeridx)
 			continue;
@@ -409,6 +411,7 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 #ifdef __NetBSD__
 	page_offset = (ufi->entry->offset + (vaddr - ufi->entry->start))
 	    >> PAGE_SHIFT;
+	page_offset -= drm_vma_node_start(&mmo->vma_node);
 #else
 	/* We don't use vmf->pgoff since that has the fake offset */
 	page_offset = (vmf->address - area->vm_start) >> PAGE_SHIFT;
@@ -566,16 +569,6 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 
 	KASSERT(ufi->entry->start <= vaddr);
 	KASSERT((ufi->entry->offset & (PAGE_SIZE - 1)) == 0);
-	KASSERT(ufi->entry->offset <= obj->base.size);
-	KASSERT((vaddr - ufi->entry->start) <=
-	    (obj->base.size - ufi->entry->offset));
-	KASSERTMSG(((size_t)npages << PAGE_SHIFT <=
-		((obj->base.size - ufi->entry->offset) -
-		    (vaddr - ufi->entry->start))),
-	    "vaddr=%jx npages=%d obj=%p size=%zu"
-	    " start=%jx offset=%jx",
-	    (uintmax_t)vaddr, npages, obj, obj->base.size,
-	    (uintmax_t)ufi->entry->start, (uintmax_t)ufi->entry->offset);
 	uoffset = ufi->entry->offset + (vaddr - ufi->entry->start);
 	startpage = uoffset >> PAGE_SHIFT;
 
@@ -601,9 +594,14 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 * without unmapping first!
 	 */
 	KASSERT(node);
-	KASSERTMSG(startpage == drm_vma_node_start(node),
-	    "map startpage=%lx, node startpage=%lx",
-	    startpage, drm_vma_node_start(node));
+	KASSERTMSG((ufi->entry->offset >> PAGE_SHIFT ==
+		drm_vma_node_start(node)),
+	    /*
+	     * Always provided by i915_gem_mmap_object, but in
+	     * principle we could relax this.
+	     */
+	    "map startpage=%lx =/= node startpage=%lx",
+	    ufi->entry->offset >> PAGE_SHIFT, drm_vma_node_start(node));
 	mmo = container_of(node, struct i915_mmap_offset, vma_node);
 	KASSERT(obj == mmo->obj);
 
@@ -1078,7 +1076,7 @@ i915_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
 
 	/* Success!  */
 	*uobjp = &obj->base.gemo_uvmobj;
-	*uoffsetp = 0;
+	*uoffsetp = (voff_t)startpage << PAGE_SHIFT;
 	return 0;
 }
 
