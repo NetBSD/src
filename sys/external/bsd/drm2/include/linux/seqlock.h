@@ -1,4 +1,4 @@
-/*	$NetBSD: seqlock.h,v 1.4 2021/12/19 01:25:50 riastradh Exp $	*/
+/*	$NetBSD: seqlock.h,v 1.5 2021/12/19 01:50:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ write_seqcount_end(struct seqcount *seqcount)
 }
 
 static inline unsigned
-__read_seqcount_begin(struct seqcount *seqcount)
+__read_seqcount_begin(const struct seqcount *seqcount)
 {
 	unsigned gen;
 
@@ -91,7 +91,7 @@ __read_seqcount_begin(struct seqcount *seqcount)
 }
 
 static inline bool
-__read_seqcount_retry(struct seqcount *seqcount, unsigned gen)
+__read_seqcount_retry(const struct seqcount *seqcount, unsigned gen)
 {
 
 	__insn_barrier();
@@ -99,7 +99,7 @@ __read_seqcount_retry(struct seqcount *seqcount, unsigned gen)
 }
 
 static inline unsigned
-read_seqcount_begin(struct seqcount *seqcount)
+read_seqcount_begin(const struct seqcount *seqcount)
 {
 	unsigned gen;
 
@@ -110,7 +110,7 @@ read_seqcount_begin(struct seqcount *seqcount)
 }
 
 static inline bool
-read_seqcount_retry(struct seqcount *seqcount, unsigned gen)
+read_seqcount_retry(const struct seqcount *seqcount, unsigned gen)
 {
 
 	membar_consumer();
@@ -118,7 +118,7 @@ read_seqcount_retry(struct seqcount *seqcount, unsigned gen)
 }
 
 static inline unsigned
-raw_read_seqcount(struct seqcount *seqcount)
+raw_read_seqcount(const struct seqcount *seqcount)
 {
 	unsigned gen;
 
@@ -178,14 +178,14 @@ write_sequnlock(struct seqlock *seqlock)
 } while (0)
 
 static inline unsigned
-read_seqbegin(struct seqlock *seqlock)
+read_seqbegin(const struct seqlock *seqlock)
 {
 
 	return read_seqcount_begin(&seqlock->sql_count);
 }
 
 static inline bool
-read_seqretry(struct seqlock *seqlock, unsigned gen)
+read_seqretry(const struct seqlock *seqlock, unsigned gen)
 {
 
 	return read_seqcount_retry(&seqlock->sql_count, gen);
