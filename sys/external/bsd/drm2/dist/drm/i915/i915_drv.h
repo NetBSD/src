@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.38 2021/12/19 11:11:42 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.39 2021/12/19 11:12:22 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2004,10 +2004,10 @@ int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 #define I915_CMD_PARSER_TRAMPOLINE_SIZE 8
 
 /* intel_device_info.c */
-static inline struct intel_device_info *
+static inline const struct intel_device_info *
 mkwrite_device_info(struct drm_i915_private *dev_priv)
 {
-	return (struct intel_device_info *)INTEL_INFO(dev_priv);
+	return (const struct intel_device_info *)INTEL_INFO(dev_priv);
 }
 
 int i915_reg_read_ioctl(struct drm_device *dev, void *data,
