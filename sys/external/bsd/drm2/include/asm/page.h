@@ -1,4 +1,4 @@
-/*	$NetBSD: page.h,v 1.2 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: page.h,v 1.3 2021/12/19 01:18:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _ASM_PAGE_H_
 #define _ASM_PAGE_H_
 
+#include <sys/bitops.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm_page.h>
@@ -54,6 +55,12 @@ static inline unsigned long
 page_to_pfn(struct page *page)
 {
 	return (page_to_phys(page) >> PAGE_SHIFT);
+}
+
+static inline size_t
+get_order(size_t n)
+{
+	return fls64((n - 1) >> PAGE_SHIFT);
 }
 
 #endif	/* _ASM_PAGE_H_ */
