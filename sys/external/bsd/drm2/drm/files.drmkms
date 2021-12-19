@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.54 2021/12/19 09:53:14 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.55 2021/12/19 10:21:09 riastradh Exp $
 
 version	20180827
 
@@ -75,6 +75,7 @@ makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_modes.c"+="-Wno-shadow"
 
+# Generated from drm2netbsd.
 #file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms	# drmkms_pci
 file	external/bsd/drm2/dist/drm/drm_atomic.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_atomic_helper.c	drmkms
@@ -84,6 +85,7 @@ file	external/bsd/drm2/dist/drm/drm_auth.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_blend.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_bridge.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_cache.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_client.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_client_modeset.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_color_mgmt.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_connector.c	drmkms
@@ -102,15 +104,17 @@ file	external/bsd/drm2/dist/drm/drm_encoder.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_fb_helper.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_file.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_flip_work.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_format_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_fourcc.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_framebuffer.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_gem.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_gem_framebuffer_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_hashtab.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_hdcp.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_ioctl.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_irq.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_kms_helper_common.c	drmkms
 file	external/bsd/drm2/drm/drm_lease.c	drmkms
-file	external/bsd/drm2/drm/drm_lock.c	drmkms
 file	external/bsd/drm2/drm/drm_memory.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_mm.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_mode_config.c	drmkms
@@ -128,8 +132,11 @@ file	external/bsd/drm2/dist/drm/drm_property.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_rect.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_scdc_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_self_refresh_helper.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_simple_kms_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_syncobj.c	drmkms
-#file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_sysfs.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_vblank.c	drmkms
-#file	external/bsd/drm2/dist/drm/drm_vma_manager.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_vm.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_vma_manager.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_writeback.c	drmkms
