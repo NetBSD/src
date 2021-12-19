@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce_link_encoder.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce_link_encoder.c,v 1.3 2021/12/19 11:23:26 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_link_encoder.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_link_encoder.c,v 1.3 2021/12/19 11:23:26 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -1234,7 +1234,7 @@ void dce110_link_encoder_update_mst_stream_allocation_table(
 	const struct link_mst_stream_allocation_table *table)
 {
 	struct dce110_link_encoder *enc110 = TO_DCE110_LINK_ENC(enc);
-	uint32_t value0 = 0;
+	uint32_t value0 __unused = 0;
 	uint32_t value1 = 0;
 	uint32_t value2 = 0;
 	uint32_t slots = 0;
