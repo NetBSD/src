@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.6 2021/12/19 11:58:09 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.7 2021/12/19 12:00:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ struct kmem_cache {
 	pool_cache_t	kc_pool_cache;
 	size_t		kc_size;
 	void		(*kc_ctor)(void *);
+	void		(*kc_dtor)(void *);
 };
 
 /* XXX These should be in <sys/pool.h>.  */
@@ -168,6 +169,15 @@ kmem_cache_ctor(void *cookie, void *ptr, int flags __unused)
 	return 0;
 }
 
+static void
+kmem_cache_dtor(void *cookie, void *ptr)
+{
+	struct kmem_cache *const kc = cookie;
+
+	if (kc->kc_dtor)
+		(*kc->kc_dtor)(ptr);
+}
+
 static inline struct kmem_cache *
 kmem_cache_create(const char *name, size_t size, size_t align,
     unsigned long flags, void (*ctor)(void *))
@@ -185,6 +195,29 @@ kmem_cache_create(const char *name, size_t size, size_t align,
 	    IPL_VM, &kmem_cache_ctor, NULL, kc);
 	kc->kc_size = size;
 	kc->kc_ctor = ctor;
+
+	return kc;
+}
+
+/* XXX extension */
+static inline struct kmem_cache *
+kmem_cache_create_dtor(const char *name, size_t size, size_t align,
+    unsigned long flags, void (*ctor)(void *), void (*dtor)(void *))
+{
+	struct pool_allocator *palloc = NULL;
+	struct kmem_cache *kc;
+
+	if (ISSET(flags, SLAB_HWCACHE_ALIGN))
+		align = roundup(MAX(1, align), CACHE_LINE_SIZE);
+	if (ISSET(flags, SLAB_TYPESAFE_BY_RCU))
+		palloc = &pool_allocator_kmem_rcu;
+
+	kc = kmem_alloc(sizeof(*kc), KM_SLEEP);
+	kc->kc_pool_cache = pool_cache_init(size, align, 0, 0, name, palloc,
+	    IPL_VM, &kmem_cache_ctor, &kmem_cache_dtor, kc);
+	kc->kc_size = size;
+	kc->kc_ctor = ctor;
+	kc->kc_dtor = dtor;
 
 	return kc;
 }
