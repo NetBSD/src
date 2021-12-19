@@ -1,4 +1,4 @@
-/*	$NetBSD: gen8_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: gen8_ppgtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -503,7 +503,7 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 
 		do {
 #ifdef __NetBSD__
-			GEM_BUG_ON((iter->map->ds_seg[iter->seg].ds_len -
+			GEM_BUG_ON((iter->map->ds_segs[iter->seg].ds_len -
 				iter->off) < page_size);
 #else
 			GEM_BUG_ON(iter->sg->length < page_size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -265,10 +265,14 @@ void clear_pages(struct i915_vma *vma)
 {
 	GEM_BUG_ON(!vma->pages);
 
+#ifdef __NetBSD__		/* XXX rotate pages */
+	GEM_BUG_ON(vma->pages != vma->obj->mm.pages);
+#else
 	if (vma->pages != vma->obj->mm.pages) {
 		sg_free_table(vma->pages);
 		kfree(vma->pages);
 	}
+#endif
 	vma->pages = NULL;
 
 	memset(&vma->page_sizes, 0, sizeof(vma->page_sizes));
@@ -283,7 +287,7 @@ static int __setup_page_dma(struct i915_address_space *vm,
 	int error;
 	int nseg = 1;
 
-	if (flags & __GFP_WAIT)
+	if (gfp & __GFP_WAIT)
 		busdmaflags |= BUS_DMA_WAITOK;
 	else
 		busdmaflags |= BUS_DMA_NOWAIT;
@@ -312,7 +316,7 @@ fail2: __unused
 	p->page = container_of(PHYS_TO_VM_PAGE(p->seg.ds_addr), struct page,
 	    p_vmp);
 
-	if (flags & __GFP_ZERO) {
+	if (gfp & __GFP_ZERO) {
 		void *va = kmap_atomic(p->page);
 		memset(va, 0, PAGE_SIZE);
 		kunmap_atomic(va);
@@ -383,6 +387,48 @@ int setup_scratch_page(struct i915_address_space *vm, gfp_t gfp)
 	gfp |= __GFP_ZERO | __GFP_RETRY_MAYFAIL;
 
 	do {
+#ifdef __NetBSD__
+		struct vm_page *vm_page;
+		void *kva;
+		int nseg;
+		int ret;
+
+		/* Allocate a scratch page.  */
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_dmamem_alloc(vm->dmat, size, size, 0,
+		    &vm->scratch_page.seg, 1, &nseg, BUS_DMA_NOWAIT);
+		if (ret)
+			goto skip;
+		KASSERT(nseg == 1);
+		KASSERT(vm->scratch_page.seg.ds_len == size);
+
+		/* Create a DMA map.  */
+		ret = -bus_dmamap_create(vm->dmat, size, 1, size, 0,
+		    BUS_DMA_NOWAIT, &vm->scratch_page.map);
+		if (ret)
+			goto free_dmamem;
+
+		/* Load the segment into the DMA map.  */
+		ret = -bus_dmamap_load_raw(vm->dmat, vm->scratch_page.map,
+		    &vm->scratch_page.seg, 1, size, BUS_DMA_NOWAIT);
+		if (ret)
+			goto destroy_dmamap;
+		KASSERT(vm->scratch_page.map->dm_nsegs == 1);
+		KASSERT(vm->scratch_page.map->dm_segs[0].ds_len == size);
+
+		/* Zero the page.  */
+		ret = -bus_dmamem_map(vm->dmat, &vm->scratch_page.seg, 1,
+		    size, &kva, BUS_DMA_NOWAIT);
+		if (ret)
+			goto unload_dmamap;
+		memset(kva, 0, size);
+		bus_dmamem_unmap(vm->dmat, kva, size);
+
+		/* XXX Is this page guaranteed to work as a huge page?  */
+		vm_page = PHYS_TO_VM_PAGE(vm->scratch_page.seg.ds_addr);
+		vm->scratch_page.page = container_of(vm_page, struct page,
+		    p_vmp);
+#else
 		unsigned int order = get_order(size);
 		struct page *page;
 		dma_addr_t addr;
@@ -405,12 +451,20 @@ int setup_scratch_page(struct i915_address_space *vm, gfp_t gfp)
 		vm->scratch[0].base.page = page;
 		vm->scratch[0].base.daddr = addr;
 		vm->scratch_order = order;
+#endif
 		return 0;
 
+#ifdef __NetBSD__
+unload_dmamap:	bus_dmamap_unload(vm->dmat, vm->scratch_page.map);
+destroy_dmamap:	bus_dmamap_destroy(vm->dmat, vm->scratch_page.map);
+		vm->scratch_page.map = NULL; /* paranoia */
+free_dmamem:	bus_dmamem_free(vm->dmat, &vm->scratch_page.seg, 1);
+#else
 unmap_page:
 		dma_unmap_page(vm->dma, addr, size, PCI_DMA_BIDIRECTIONAL);
 free_page:
 		__free_pages(page, order);
+#endif
 skip:
 		if (size == I915_GTT_PAGE_SIZE_4K)
 			return -ENOMEM;
@@ -423,11 +477,18 @@ skip:
 void cleanup_scratch_page(struct i915_address_space *vm)
 {
 	struct i915_page_dma *p = px_base(&vm->scratch[0]);
+#ifdef __NetBSD__
+	bus_dmamap_unload(vm->dmat, p->map);
+	bus_dmamap_destroy(vm->dmat, p->map);
+	vm->scratch_page.map = NULL; /* paranoia */
+	bus_dmamem_free(vm->dmat, &p->seg, 1);
+#else
 	unsigned int order = vm->scratch_order;
 
 	dma_unmap_page(vm->dma, p->daddr, BIT(order) << PAGE_SHIFT,
 		       PCI_DMA_BIDIRECTIONAL);
 	__free_pages(p->page, order);
+#endif
 }
 
 void free_scratch(struct i915_address_space *vm)

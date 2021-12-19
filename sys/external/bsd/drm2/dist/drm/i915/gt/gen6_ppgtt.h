@@ -1,4 +1,4 @@
-/*	$NetBSD: gen6_ppgtt.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: gen6_ppgtt.h,v 1.3 2021/12/19 01:35:35 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -15,7 +15,12 @@ struct gen6_ppgtt {
 
 	struct mutex flush;
 	struct i915_vma *vma;
+#ifdef __NetBSD__
+	bus_space_tag_t pd_bst;
+	bus_space_handle_t pd_bsh;
+#else
 	gen6_pte_t __iomem *pd_addr;
+#endif
 
 	atomic_t pin_count;
 	struct mutex pin_mutex;
@@ -54,6 +59,15 @@ static inline struct gen6_ppgtt *to_gen6_ppgtt(struct i915_ppgtt *base)
  * so each of the other parameters should preferably be a simple variable, or
  * at most an lvalue with no side-effects!
  */
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+#define gen6_for_each_pde(pt, pd, start, length, iter)			\
+	for (iter = gen6_pde_index(start);				\
+	     length > 0 && iter < I915_PDES &&				\
+		(pt = (pd)->page_table[iter], true);			\
+	     ({ u32 temp = round_up(start+1, 1 << GEN6_PDE_SHIFT);	\
+		    temp = min(temp - start, length);			\
+		    start += temp, length -= temp; }), ++iter)
+#else
 #define gen6_for_each_pde(pt, pd, start, length, iter)			\
 	for (iter = gen6_pde_index(start);				\
 	     length > 0 && iter < I915_PDES &&				\
@@ -61,6 +75,7 @@ static inline struct gen6_ppgtt *to_gen6_ppgtt(struct i915_ppgtt *base)
 	     ({ u32 temp = ALIGN(start+1, 1 << GEN6_PDE_SHIFT);		\
 		    temp = min(temp - start, length);			\
 		    start += temp, length -= temp; }), ++iter)
+#endif
 
 #define gen6_for_all_pdes(pt, pd, iter)					\
 	for (iter = 0;							\
