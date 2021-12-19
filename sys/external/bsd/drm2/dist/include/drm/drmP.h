@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.44 2021/12/19 00:27:25 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.45 2021/12/19 01:34:39 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -1296,6 +1296,13 @@ drm_io_mapping_create_wc(struct drm_device *dev, resource_size_t addr,
     unsigned long size)
 {
 	return bus_space_io_mapping_create_wc(dev->bst, addr, size);
+}
+
+static inline bool
+drm_io_mapping_init_wc(struct drm_device *dev, struct io_mapping *mapping,
+    resource_size_t addr, unsigned long size)
+{
+	return bus_space_io_mapping_init_wc(dev->bst, mapping, addr, size);
 }
 
 #endif	/* defined(__NetBSD__) */
