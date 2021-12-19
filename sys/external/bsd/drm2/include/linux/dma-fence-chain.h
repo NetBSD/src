@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence-chain.h,v 1.3 2021/12/19 10:47:06 riastradh Exp $	*/
+/*	$NetBSD: dma-fence-chain.h,v 1.4 2021/12/19 12:39:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -32,12 +32,18 @@
 #include <sys/types.h>
 
 #include <linux/dma-fence.h>
+#include <linux/irq_work.h>
 
 struct dma_fence_chain {
+	/* Linux API */
 	struct dma_fence	base;
 	uint64_t		prev_seqno;
 
 	spinlock_t		dfc_lock;
+	struct dma_fence	*volatile dfc_prev;
+	struct dma_fence	*dfc_fence;
+	struct dma_fence_cb	dfc_callback;
+	struct irq_work		dfc_irq_work;
 };
 
 #define	dma_fence_chain_find_seqno	linux_dma_fence_chain_find_seqno
