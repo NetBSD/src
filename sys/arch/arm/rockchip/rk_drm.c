@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.14 2021/12/19 12:28:44 riastradh Exp $ */
+/* $NetBSD: rk_drm.c,v 1.15 2021/12/19 12:43:29 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.14 2021/12/19 12:28:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.15 2021/12/19 12:43:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -409,6 +409,8 @@ rk_drm_load(struct drm_device *ddev, unsigned long flags)
 		error = ENXIO;
 		goto drmerr;
 	}
+
+	drm_mode_config_reset(ddev);
 
 	fbdev = kmem_zalloc(sizeof(*fbdev), KM_SLEEP);
 
