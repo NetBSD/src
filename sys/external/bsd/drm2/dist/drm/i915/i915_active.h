@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_active.h,v 1.3 2021/12/19 11:59:04 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -202,11 +202,7 @@ i915_active_is_idle(const struct i915_active *ref)
 	return !atomic_read(&ref->count);
 }
 
-#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM)
 void i915_active_fini(struct i915_active *ref);
-#else
-static inline void i915_active_fini(struct i915_active *ref) { }
-#endif
 
 int i915_active_acquire_preallocate_barrier(struct i915_active *ref,
 					    struct intel_engine_cs *engine);
