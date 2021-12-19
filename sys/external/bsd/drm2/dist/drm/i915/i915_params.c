@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_params.c,v 1.5 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_params.c,v 1.6 2021/12/19 01:43:51 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_params.c,v 1.5 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_params.c,v 1.6 2021/12/19 01:43:51 riastradh Exp $");
 
 #include <drm/drm_print.h>
 
@@ -203,7 +203,7 @@ static __always_inline void _print_param(struct drm_printer *p,
 	else if (!__builtin_strcmp(type, "unsigned long"))
 		drm_printf(p, "i915.%s=%lu\n", name, *(const unsigned long *)x);
 	else if (!__builtin_strcmp(type, "char *"))
-		drm_printf(p, "i915.%s=%s\n", name, *(const char **)x);
+		drm_printf(p, "i915.%s=%s\n", name, *(const char *const *)x);
 	else
 		WARN_ONCE(1, "no printer defined for param type %s (i915.%s)\n",
 			  type, name);

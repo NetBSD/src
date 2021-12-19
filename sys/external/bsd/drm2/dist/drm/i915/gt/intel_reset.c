@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_reset.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_reset.c,v 1.3 2021/12/19 01:43:50 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_reset.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_reset.c,v 1.3 2021/12/19 01:43:50 riastradh Exp $");
 
 #include <linux/sched/mm.h>
 #include <linux/stop_machine.h>
@@ -1163,15 +1163,21 @@ static void intel_gt_reset_global(struct intel_gt *gt,
 				  const char *reason)
 {
 	struct kobject *kobj = &gt->i915->drm.primary->kdev->kobj;
+#ifndef __NetBSD__		/* XXX kobject uevent...?  */
 	char *error_event[] = { I915_ERROR_UEVENT "=1", NULL };
 	char *reset_event[] = { I915_RESET_UEVENT "=1", NULL };
 	char *reset_done_event[] = { I915_ERROR_UEVENT "=0", NULL };
+#endif
 	struct intel_wedge_me w;
 
+#ifndef __NetBSD__
 	kobject_uevent_env(kobj, KOBJ_CHANGE, error_event);
+#endif
 
 	DRM_DEBUG_DRIVER("resetting chip\n");
+#ifndef __NetBSD__
 	kobject_uevent_env(kobj, KOBJ_CHANGE, reset_event);
+#endif
 
 	/* Use a watchdog to ensure that our reset completes */
 	intel_wedge_on_timeout(&w, gt, 5 * HZ) {
@@ -1185,8 +1191,10 @@ static void intel_gt_reset_global(struct intel_gt *gt,
 		intel_finish_reset(gt->i915);
 	}
 
+#ifndef __NetBSD__		/* XXX kobj uevent...?  */
 	if (!test_bit(I915_WEDGED, &gt->reset.flags))
 		kobject_uevent_env(kobj, KOBJ_CHANGE, reset_done_event);
+#endif
 }
 
 /**
@@ -1263,8 +1271,19 @@ void intel_gt_handle_error(struct intel_gt *gt,
 
 	/* Full reset needs the mutex, stop any other user trying to do so. */
 	if (test_and_set_bit(I915_RESET_BACKOFF, &gt->reset.flags)) {
+#ifdef __NetBSD__
+		int ret;
+		spin_lock(&dev_priv->gpu_error.reset_lock);
+		DRM_SPIN_WAIT_NOINTR_UNTIL(ret,
+		    &dev_priv->gpu_error.reset_queue,
+		    &dev_priv->gpu_error.reset_lock,
+		    !test_bit(I915_RESET_BACKOFF,
+			&dev_priv->gpu_error.flags));
+		spin_unlock(&dev_priv->gpu_error.reset_lock);
+#else
 		wait_event(gt->reset.queue,
 			   !test_bit(I915_RESET_BACKOFF, &gt->reset.flags));
+#endif
 		goto out; /* piggy-back on the other reset */
 	}
 
@@ -1287,7 +1306,14 @@ void intel_gt_handle_error(struct intel_gt *gt,
 				 &gt->reset.flags);
 	clear_bit_unlock(I915_RESET_BACKOFF, &gt->reset.flags);
 	smp_mb__after_atomic();
+#ifdef __NetBSD__
+	spin_lock(&dev_priv->gpu_error.reset_lock);
+	DRM_SPIN_WAKEUP_ALL(&dev_priv->gpu_error.reset_queue,
+	    &dev_priv->gpu_error.reset_lock);
+	spin_unlock(&dev_priv->gpu_error.reset_lock);
+#else
 	wake_up_all(&gt->reset.queue);
+#endif
 
 out:
 	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
