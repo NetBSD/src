@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.43 2021/12/19 01:23:01 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.44 2021/12/19 01:48:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -209,6 +209,7 @@ struct pci_dev {
 #define	pci_iounmap			linux_pci_iounmap
 #define	pci_is_pcie			linux_pci_is_pcie
 #define	pci_is_root_bus			linux_pci_is_root_bus
+#define	pci_is_thunderbolt_attached	linux_pci_is_thunderbolt_attached
 #define	pci_map_rom			linux_pci_map_rom
 #define	pci_platform_rom		linux_pci_platform_rom
 #define	pci_read_config_byte		linux_pci_read_config_byte
@@ -247,6 +248,7 @@ void *		pci_get_drvdata(struct pci_dev *);
 int		pci_find_capability(struct pci_dev *, int);
 bool		pci_is_pcie(struct pci_dev *);
 bool		pci_dma_supported(struct pci_dev *, uintmax_t);
+bool		pci_is_thunderbolt_attached(struct pci_dev *);
 
 int		pci_read_config_dword(struct pci_dev *, int, uint32_t *);
 int		pci_read_config_word(struct pci_dev *, int, uint16_t *);
