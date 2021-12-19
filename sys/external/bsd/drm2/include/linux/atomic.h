@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.23 2021/12/19 01:25:21 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.24 2021/12/19 01:33:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -160,6 +160,13 @@ atomic_or(int value, atomic_t *atomic)
 {
 	/* no membar */
 	atomic_or_uint(&atomic->a_u.au_uint, value);
+}
+
+static inline void
+atomic_andnot(int value, atomic_t *atomic)
+{
+	/* no membar */
+	atomic_and_uint(&atomic->a_u.au_uint, ~value);
 }
 
 static inline void
