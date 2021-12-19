@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_pm.c,v 1.4 2021/12/19 12:33:56 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_pm.c,v 1.5 2021/12/19 12:37:28 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_pm.c,v 1.4 2021/12/19 12:33:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_pm.c,v 1.5 2021/12/19 12:37:28 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -210,7 +210,6 @@ static bool switch_to_kernel_context(struct intel_engine_cs *engine)
 		 * until the background request retirement running every
 		 * second or two).
 		 */
-		BUILD_BUG_ON(sizeof(rq->duration) > sizeof(rq->submitq));
 		dma_fence_add_callback(&rq->fence, &rq->duration.cb, duration);
 		rq->duration.emitted = ktime_get();
 	}
