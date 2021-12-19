@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_connector.h,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: drm_connector.h,v 1.3 2021/12/19 01:02:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -1577,9 +1577,9 @@ struct drm_tile_group {
 };
 
 struct drm_tile_group *drm_mode_create_tile_group(struct drm_device *dev,
-						  char topology[8]);
+						  const char topology[8]);
 struct drm_tile_group *drm_mode_get_tile_group(struct drm_device *dev,
-					       char topology[8]);
+					       const char topology[8]);
 void drm_mode_put_tile_group(struct drm_device *dev,
 			     struct drm_tile_group *tg);
 
