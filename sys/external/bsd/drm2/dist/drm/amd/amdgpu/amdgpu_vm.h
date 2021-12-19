@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vm.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vm.h,v 1.3 2021/12/19 12:22:37 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -214,7 +214,11 @@ struct amdgpu_vm_update_params {
 	 *
 	 * DMA addresses to use for mapping
 	 */
+#ifdef __NetBSD__
+	bus_dma_segment_t *pages_addr;
+#else
 	dma_addr_t *pages_addr;
+#endif
 
 	/**
 	 * @job: job to used for hw submission
@@ -395,7 +399,11 @@ int amdgpu_vm_bo_update(struct amdgpu_device *adev,
 bool amdgpu_vm_evictable(struct amdgpu_bo *bo);
 void amdgpu_vm_bo_invalidate(struct amdgpu_device *adev,
 			     struct amdgpu_bo *bo, bool evicted);
+#ifdef __NetBSD__
+uint64_t amdgpu_vm_map_gart(const bus_dma_segment_t *pages_addr, uint64_t addr);
+#else
 uint64_t amdgpu_vm_map_gart(const dma_addr_t *pages_addr, uint64_t addr);
+#endif
 struct amdgpu_bo_va *amdgpu_vm_bo_find(struct amdgpu_vm *vm,
 				       struct amdgpu_bo *bo);
 struct amdgpu_bo_va *amdgpu_vm_bo_add(struct amdgpu_device *adev,
