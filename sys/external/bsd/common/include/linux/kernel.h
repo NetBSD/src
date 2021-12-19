@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.40 2021/12/19 10:56:30 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.41 2021/12/19 11:14:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -122,6 +122,8 @@
 #define	lower_32_bits(X)	((uint32_t) ((X) & 0xffffffffUL))
 
 #define	ARRAY_SIZE(ARRAY)	__arraycount(ARRAY)
+
+#define	__is_constexpr(x)	__builtin_constant_p(x)
 
 #define	swap(X, Y)	do						\
 {									\
