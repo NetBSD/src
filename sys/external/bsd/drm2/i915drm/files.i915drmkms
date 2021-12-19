@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.66 2021/12/19 11:20:18 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.67 2021/12/19 11:27:12 riastradh Exp $
 
 version	20180827
 
@@ -113,7 +113,7 @@ file	external/bsd/drm2/dist/drm/i915/display/vlv_dsi.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/display/vlv_dsi_pll.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_busy.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_clflush.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_client_blt.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_client_blt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_context.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_dmabuf.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_domain.c	i915drmkms
