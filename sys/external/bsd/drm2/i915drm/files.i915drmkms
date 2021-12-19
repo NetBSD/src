@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.68 2021/12/19 11:30:45 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.69 2021/12/19 11:32:17 riastradh Exp $
 
 version	20180827
 
@@ -190,7 +190,7 @@ file	external/bsd/drm2/dist/drm/i915/i915_gem_evict.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_fence_reg.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_gtt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_getparam.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_globals.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_globals.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_irq.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_memcpy.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/i915_mm.c	i915drmkms
