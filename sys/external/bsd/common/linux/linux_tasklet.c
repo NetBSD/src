@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_tasklet.c,v 1.6 2021/12/19 11:04:58 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.7 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.6 2021/12/19 11:04:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.7 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -347,6 +347,35 @@ tasklet_hi_schedule(struct tasklet_struct *tasklet)
 }
 
 /*
+ * tasklet_disable_nosync(tasklet)
+ *
+ *	Increment the disable count of tasklet, but don't wait for it
+ *	to complete -- it may remain running after this returns.
+ *
+ *	As long as the disable count is nonzero, the tasklet's function
+ *	will not run, but if already scheduled, the tasklet will remain
+ *	so and the softint will repeatedly trigger itself in a sort of
+ *	busy-wait, so this should be used only for short durations.
+ *
+ *	Load-acquire semantics.
+ */
+void
+tasklet_disable_nosync(struct tasklet_struct *tasklet)
+{
+	unsigned int disablecount __diagused;
+
+	/* Increment the disable count.  */
+	disablecount = atomic_inc_uint_nv(&tasklet->tl_disablecount);
+	KASSERT(disablecount < UINT_MAX);
+	KASSERT(disablecount != 0);
+
+	/* Pairs with membar_exit in __tasklet_enable.  */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
+}
+
+/*
  * tasklet_disable(tasklet)
  *
  *	Increment the disable count of tasklet, and if it was already
@@ -366,17 +395,9 @@ tasklet_hi_schedule(struct tasklet_struct *tasklet)
 void
 tasklet_disable(struct tasklet_struct *tasklet)
 {
-	unsigned int disablecount __diagused;
 
 	/* Increment the disable count.  */
-	disablecount = atomic_inc_uint_nv(&tasklet->tl_disablecount);
-	KASSERT(disablecount < UINT_MAX);
-	KASSERT(disablecount != 0);
-
-	/* Pairs with membar_exit in __tasklet_enable.  */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
-#endif
+	tasklet_disable_nosync(tasklet);
 
 	/* Wait for it to finish running, if it was running.  */
 	tasklet_unlock_wait(tasklet);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_globals.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_globals.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_globals.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_globals.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/workqueue.h>
@@ -19,6 +19,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_globals.c,v 1.2 2021/12/18 23:45:28 riastradh E
 #include "i915_request.h"
 #include "i915_scheduler.h"
 #include "i915_vma.h"
+
+#include <linux/nbsd-namespace.h>
 
 static LIST_HEAD(globals);
 

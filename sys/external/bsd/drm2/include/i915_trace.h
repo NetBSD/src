@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.21 2021/12/19 11:48:19 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.22 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -435,7 +435,7 @@ DEFINE_TRACE5(i915,, pipe__update__start,
     "uint32_t"/*min*/,
     "uint32_t"/*max*/);
 static inline void
-trace_i915_pipe_update_start(struct intel_crtc *crtc)
+trace_intel_pipe_update_start(struct intel_crtc *crtc)
 {
 	TRACE5(i915,, pipe__update__start,
 	    crtc->pipe,
@@ -453,7 +453,7 @@ DEFINE_TRACE5(i915,, pipe__update__vblank__evaded,
     "uint32_t"/*min*/,
     "uint32_t"/*max*/);
 static inline void
-trace_i915_pipe_update_vblank_evaded(struct intel_crtc *crtc)
+trace_intel_pipe_update_vblank_evaded(struct intel_crtc *crtc)
 {
 	TRACE5(i915,, pipe__update__vblank__evaded,
 	    crtc->pipe,
@@ -468,7 +468,7 @@ DEFINE_TRACE3(i915,, pipe__update__end,
     "uint32_t"/*frame*/,
     "int"/*scanline*/);
 static inline void
-trace_i915_pipe_update_end(struct intel_crtc *crtc, uint32_t frame,
+trace_intel_pipe_update_end(struct intel_crtc *crtc, uint32_t frame,
     int scanline)
 {
 	TRACE3(i915,, pipe__update__end,  crtc->pipe, frame, scanline);
@@ -517,7 +517,8 @@ DEFINE_TRACE3(i915,, memory_cxsr,
     "bool"/*was_enabled*/,
     "bool"/*enable*/);
 static inline void
-trace_intel_memory_cxsr(struct drm_i915_private *dev_priv, bool was_enabled, bool enable)
+trace_intel_memory_cxsr(struct drm_i915_private *dev_priv, bool was_enabled,
+    bool enable)
 {
 	TRACE3(i915,, memory_cxsr,  dev_priv, was_enabled, enable);
 }
@@ -546,8 +547,11 @@ DEFINE_TRACE4(i915,, vlv_fifo_size,
     "int"/*sprite1_start*/,
     "int"/*fifo_size*/);
 static inline void
-trace_vlv_fifo_size(struct intel_crtc *crtc, int sprite0_start, int sprite1_start, int fifo_size)
+trace_vlv_fifo_size(struct intel_crtc *crtc, int sprite0_start,
+    int sprite1_start, int fifo_size)
 {
-	TRACE4(i915,, vlv_fifo_size,  crtc, sprite0_start, sprite1_start, fifo_size);
+	TRACE4(i915,, vlv_fifo_size,  crtc, sprite0_start, sprite1_start,
+	    fifo_size);
 }
+
 #endif  /* _I915_TRACE_H_ */

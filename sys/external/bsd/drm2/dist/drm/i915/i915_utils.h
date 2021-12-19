@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_utils.h,v 1.4 2021/12/19 11:02:22 riastradh Exp $	*/
+/*	$NetBSD: i915_utils.h,v 1.5 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -30,6 +30,7 @@
 #include <linux/list.h>
 #include <linux/overflow.h>
 #include <linux/sched.h>
+#include <linux/sched/clock.h>
 #include <linux/types.h>
 #include <linux/workqueue.h>
 
@@ -299,38 +300,46 @@ wait_remaining_ms_from_jiffies(unsigned long timestamp_jiffies, int to_wait_ms)
  * check the condition before the timeout.
  */
 #ifdef __NetBSD__
-#define __wait_for(OP, COND, MS, Wmin, Wmax) ({ \
+#define __wait_for(OP, COND, US, Wmin, Wmax) ({ \
 	int ret__ = 0;							\
 	if (cold) {							\
-		int ms = (MS);						\
-		while (!(COND)) {					\
+		int ms__ = ((US) + 999)/1000;				\
+		for (;;) {						\
+			const bool expired__ = ms__-- == 0;		\
 			OP;						\
-			/* Guarantee COND check prior to timeout */	\
 			barrier();					\
-			if (--ms < 0) {					\
-				DELAY(1000);				\
-				if (!(COND))				\
-					ret__ = -ETIMEDOUT;		\
+			if (COND) {					\
+				ret__ = 0;				\
+				break;					\
+			}						\
+			if (expired__) {				\
+				ret__ = -ETIMEDOUT;			\
 				break;					\
 			}						\
 			DELAY(1000);					\
 		}							\
 	} else {							\
-		unsigned long timeout__ = jiffies + msecs_to_jiffies(MS); \
-		while (!(COND)) {					\
+		const ktime_t end__ =					\
+		    ktime_add_ns(ktime_get_raw(), 1000ll * (US));	\
+		long wait__ = (Wmin);					\
+		might_sleep();						\
+		for (;;) {						\
+			const bool expired__ =				\
+			    ktime_after(ktime_get_raw(), end__);	\
 			OP;						\
 			/* Guarantee COND check prior to timeout */	\
 			barrier();					\
-			if (time_after(jiffies, timeout__)) {		\
-				if (!(COND))				\
-					ret__ = -ETIMEDOUT;		\
+			if (COND) {					\
+				ret__ = 0;				\
 				break;					\
 			}						\
-			if ((Wmin) && drm_can_sleep()) {		\
-				msleep(Wmin); /* XXX respect Wmax */	\
-			} else {					\
-				DELAY(1000);				\
+			if (expired__) {				\
+				ret__ = -ETIMEDOUT;			\
+				break;					\
 			}						\
+			usleep_range(wait__, wait__ * 2);		\
+			if (wait__ < (Wmax))				\
+				wait__ <<= 1;				\
 		}							\
 	}								\
 	ret__;								\
@@ -466,15 +475,16 @@ static inline void add_taint_for_CI(unsigned int taint)
 void cancel_timer(struct timer_list *t);
 void set_timer_ms(struct timer_list *t, unsigned long timeout);
 
-#ifdef __linux__
+#ifdef __NetBSD__
+static inline bool
+timer_expired(const struct timer_list *t)
+{
+	return callout_expired(__UNCONST(&t->tl_callout));
+}
+#else
 static inline bool timer_expired(const struct timer_list *t)
 {
 	return READ_ONCE(t->expires) && !timer_pending(t);
-}
-#else
-static inline bool timer_expired(struct timer_list *t)
-{
-	return callout_expired(&t->tl_callout);
 }
 #endif
 

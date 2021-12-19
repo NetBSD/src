@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_psr.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_psr.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <drm/drm_atomic_helper.h>
 
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.2 2021/12/18 23:45:30 riastradh Exp 
 #include "intel_display_types.h"
 #include "intel_psr.h"
 #include "intel_sprite.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: Panel Self Refresh (PSR/SRD)
@@ -1168,7 +1170,7 @@ int intel_psr_debug_set(struct drm_i915_private *dev_priv, u64 val)
 
 	if (val & ~(I915_PSR_DEBUG_IRQ | I915_PSR_DEBUG_MODE_MASK) ||
 	    mode > I915_PSR_DEBUG_FORCE_PSR1) {
-		DRM_DEBUG_KMS("Invalid debug mask %llx\n", val);
+		DRM_DEBUG_KMS("Invalid debug mask %"PRIx64"\n", val);
 		return -EINVAL;
 	}
 

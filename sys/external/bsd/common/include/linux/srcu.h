@@ -1,4 +1,4 @@
-/*	$NetBSD: srcu.h,v 1.3 2021/12/19 11:10:09 riastradh Exp $	*/
+/*	$NetBSD: srcu.h,v 1.4 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
 #include <sys/mutex.h>
 
 /* namespace */
-#define	srcu_fini		linux_srcu_fini
-#define	srcu_init		linux_srcu_init
+#define	_init_srcu_struct	linux__init_init_srcu_struct
+#define	cleanup_srcu_struct	linux_cleanup_srcu_struct
 #define	srcu_read_lock		linux_srcu_read_lock
 #define	srcu_read_unlock	linux_srcu_read_unlock
 #define	synchronize_srcu	linux_synchronize_srcu
+#define	synchronize_srcu_expedited linux_synchronize_srcu_expedited
 
 struct lwp;
 struct percpu;
@@ -55,12 +56,15 @@ struct srcu_struct {
 	volatile unsigned	srcu_gen;
 };
 
-void	srcu_init(struct srcu_struct *, const char *);
-void	srcu_fini(struct srcu_struct *);
+#define	init_srcu_struct(S)	_init_srcu_struct(S, #S)
+
+void	_init_srcu_struct(struct srcu_struct *, const char *);
+void	cleanup_srcu_struct(struct srcu_struct *);
 
 int	srcu_read_lock(struct srcu_struct *);
 void	srcu_read_unlock(struct srcu_struct *, int);
 
 void	synchronize_srcu(struct srcu_struct *);
+void	synchronize_srcu_expedited(struct srcu_struct *);
 
 #endif	/* _LINUX_SRCU_H_ */

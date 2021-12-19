@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.13 2021/12/19 10:57:27 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.14 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -199,6 +199,7 @@ i2c_set_adapdata(struct i2c_adapter *adapter, void *data)
 }
 
 /* XXX Make the nm output a little more greppable...  */
+#define	__i2c_transfer		linux___i2c_transfer
 #define	i2c_master_recv		linux_i2c_master_recv
 #define	i2c_master_send		linux_i2c_master_send
 #define	i2c_new_device		linux_i2c_new_device
@@ -209,6 +210,7 @@ int	i2c_master_send(const struct i2c_client *, const char *, int);
 int	i2c_master_recv(const struct i2c_client *, char *, int);
 struct i2c_client *
 	i2c_new_device(struct i2c_adapter *, const struct i2c_board_info *);
+int	__i2c_transfer(struct i2c_adapter *, struct i2c_msg *, int);
 int	i2c_transfer(struct i2c_adapter *, struct i2c_msg *, int);
 void	i2c_unregister_device(struct i2c_client *);
 
