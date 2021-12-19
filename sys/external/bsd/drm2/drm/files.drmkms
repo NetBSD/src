@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.45 2021/12/19 01:03:13 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.46 2021/12/19 01:46:39 riastradh Exp $
 
 version	20180827
 
@@ -99,7 +99,7 @@ file	external/bsd/drm2/dist/drm/drm_hashtab.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_hdcp.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_ioctl.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_irq.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_kms_helper_common.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_kms_helper_common.c	drmkms
 file	external/bsd/drm2/drm/drm_lease.c	drmkms
 file	external/bsd/drm2/drm/drm_lock.c	drmkms
 file	external/bsd/drm2/drm/drm_memory.c	drmkms
