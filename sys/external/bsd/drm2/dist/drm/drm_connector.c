@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_connector.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_connector.c,v 1.3 2021/12/19 00:56:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_connector.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_connector.c,v 1.3 2021/12/19 00:56:01 riastradh Exp $");
 
 #include <drm/drm_connector.h>
 #include <drm/drm_edid.h>
@@ -256,7 +256,11 @@ int drm_connector_init(struct drm_device *dev,
 
 	INIT_LIST_HEAD(&connector->probed_modes);
 	INIT_LIST_HEAD(&connector->modes);
+#ifdef __NetBSD__
+	linux_mutex_init(&connector->mutex);
+#else
 	mutex_init(&connector->mutex);
+#endif
 	connector->edid_blob_ptr = NULL;
 	connector->tile_blob_ptr = NULL;
 	connector->status = connector_status_unknown;
@@ -469,7 +473,11 @@ void drm_connector_cleanup(struct drm_connector *connector)
 		connector->funcs->atomic_destroy_state(connector,
 						       connector->state);
 
+#ifdef __NetBSD__
+	linux_mutex_destroy(&connector->mutex);
+#else
 	mutex_destroy(&connector->mutex);
+#endif
 
 	memset(connector, 0, sizeof(*connector));
 }
@@ -659,7 +667,8 @@ __drm_connector_put_safe(struct drm_connector *conn)
 
 	lockdep_assert_held(&config->connector_list_lock);
 
-	if (!refcount_dec_and_test(&conn->base.refcount.refcount))
+	/* XXX sketchy function pointer cast */
+	if (!kref_put(&conn->base.refcount, (void (*)(struct kref *))voidop))
 		return;
 
 	llist_add(&conn->free_node, &config->connector_free_list);
@@ -2196,7 +2205,7 @@ int drm_mode_getconnector(struct drm_device *dev, void *data,
 	struct drm_mode_modeinfo u_mode;
 	struct drm_mode_modeinfo __user *mode_ptr;
 	uint32_t __user *encoder_ptr;
-	LIST_HEAD(export_list);
+	struct list_head export_list = LIST_HEAD_INIT(export_list);
 
 	if (!drm_core_check_feature(dev, DRIVER_MODESET))
 		return -EOPNOTSUPP;
