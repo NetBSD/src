@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.3 2017/09/10 22:51:48 maya Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.4 2021/12/19 00:50:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -63,11 +63,14 @@ copy_to_user(void *user_addr, const void *kernel_addr, size_t len)
 	return -copyout(kernel_addr, user_addr, len);
 }
 
-#define	get_user(KERNEL_LOC, USER_ADDR)					\
-	copy_from_user(&(KERNEL_LOC), (USER_ADDR), sizeof(KERNEL_LOC))
+#define	get_user(KERNEL_LVAL, USER_PTR)					      \
+	copy_from_user(&(KERNEL_LVAL), (USER_PTR), sizeof(*(USER_PTR)) +      \
+	    0*sizeof(&(KERNEL_LVAL) - (USER_PTR)))
 
-#define	put_user(KERNEL_LOC, USER_ADDR)					\
-	copy_to_user((USER_ADDR), &(KERNEL_LOC), sizeof(KERNEL_LOC))
+#define	put_user(KERNEL_RVAL, USER_PTR)	({				      \
+	const typeof(*(USER_PTR)) __put_user_tmp = (KERNEL_RVAL);	      \
+	copy_to_user((USER_PTR), &__put_user_tmp, sizeof(__put_user_tmp));    \
+})
 
 #if 0
 /*
