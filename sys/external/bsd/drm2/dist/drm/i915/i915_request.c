@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.3 2021/12/19 01:24:26 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.4 2021/12/19 01:51:27 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.3 2021/12/19 01:24:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.4 2021/12/19 01:51:27 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -121,6 +121,9 @@ static void i915_fence_release(struct dma_fence *fence)
 	i915_sw_fence_fini(&rq->submit);
 	i915_sw_fence_fini(&rq->semaphore);
 
+	DRM_DESTROY_WAITQUEUE(&rq->execute);
+	dma_fence_destroy(&rq->fence);
+	spin_lock_destroy(&rq->lock);
 	kmem_cache_free(global.slab_requests, rq);
 }
 
@@ -1196,10 +1199,10 @@ void i915_request_skip(struct i915_request *rq, int error)
 	 */
 	head = rq->infix;
 	if (rq->postfix < head) {
-		memset(vaddr + head, 0, rq->ring->size - head);
+		memset((char *)vaddr + head, 0, rq->ring->size - head);
 		head = 0;
 	}
-	memset(vaddr + head, 0, rq->postfix - head);
+	memset((char *)vaddr + head, 0, rq->postfix - head);
 	rq->infix = rq->postfix;
 }
 
@@ -1354,9 +1357,17 @@ void i915_request_add(struct i915_request *rq)
 	if (list_empty(&rq->sched.signalers_list))
 		attr.priority |= I915_PRIORITY_WAIT;
 
+#ifdef __NetBSD__
+	int s = splsoftserial();
+#else
 	local_bh_disable();
+#endif
 	__i915_request_queue(rq, &attr);
+#ifdef __NetBSD__
+	splx(s);
+#else
 	local_bh_enable(); /* Kick the execlists tasklet if just scheduled */
+#endif
 
 	/*
 	 * In typical scenarios, we do not expect the previous request on
