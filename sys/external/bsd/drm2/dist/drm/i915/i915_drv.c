@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.35 2021/12/19 11:18:44 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.36 2021/12/19 11:18:52 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.35 2021/12/19 11:18:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.36 2021/12/19 11:18:52 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1483,7 +1483,7 @@ i915_driver_create(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (!i915)
 		return ERR_PTR(-ENOMEM);
 
-	err = drm_dev_init(&i915->drm, &driver, &pdev->dev);
+	err = drm_dev_init(&i915->drm, &driver, device_parent(pdev->pd_dev));
 	if (err) {
 		kfree(i915);
 		return ERR_PTR(err);
