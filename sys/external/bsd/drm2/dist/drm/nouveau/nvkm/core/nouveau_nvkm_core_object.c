@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.9 2021/12/19 11:05:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.10 2021/12/19 11:06:19 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.9 2021/12/19 11:05:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.10 2021/12/19 11:06:19 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -69,7 +69,7 @@ void
 nvkm_object_remove(struct nvkm_object *object)
 {
 #ifdef __NetBSD__
-	if (!object->on_tree)
+	if (object->on_tree)
 		rb_tree_remove_node(&object->client->objtree, object);
 #else
 	if (!RB_EMPTY_NODE(&object->node))
