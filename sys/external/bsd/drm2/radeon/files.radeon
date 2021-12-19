@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.33 2021/12/19 10:21:01 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.34 2021/12/19 10:55:27 riastradh Exp $
 
 version	20180827
 
@@ -14,13 +14,16 @@ attach	radeondrmkmsfb at radeonfbbus
 # overflow is OK.
 makeoptions 	radeon	"COPTS.radeon"+="-fwrapv"
 
+makeoptions	radeon	"CPPFLAGS.radeon"+="${CPPFLAGS.drmkms}"
+makeoptions	radeondrmkmsfb	"CPPFLAGS.radeondrmkmsfb"+="${CPPFLAGS.radeon}"
+
 # Our overrides first.
-makeoptions	radeon	CPPFLAGS+="-I$S/external/bsd/drm2/include/radeon"
-makeoptions	radeon	CPPFLAGS+="-I$S/external/bsd/drm2/radeon"
+makeoptions	radeon	"CPPFLAGS.radeon"+="-I$S/external/bsd/drm2/include/radeon"
+makeoptions	radeon	"CPPFLAGS.radeon"+="-I$S/external/bsd/drm2/radeon"
 
 # Then their header files.
-makeoptions	radeon	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/amd/include"
-makeoptions	radeon	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/radeon"
+makeoptions	radeon	"CPPFLAGS.radeon"+="-I$S/external/bsd/drm2/dist/drm/amd/include"
+makeoptions	radeon	"CPPFLAGS.radeon"+="-I$S/external/bsd/drm2/dist/drm/radeon"
 
 makeoptions	radeon	"CPPFLAGS.radeon"+="-DCONFIG_AGP=1"
 

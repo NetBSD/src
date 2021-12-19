@@ -1,8 +1,8 @@
-#       $NetBSD: files.linux,v 1.4 2021/12/19 01:37:27 riastradh Exp $
+#       $NetBSD: files.linux,v 1.5 2021/12/19 10:55:27 riastradh Exp $
 
 define	linux
 
-makeoptions 	linux	CPPFLAGS+="-I$S/external/bsd/common/include"
+makeoptions 	linux	"CPPFLAGS.linux"+="-I$S/external/bsd/common/include"
 
 file	external/bsd/common/linux/linux_rcu.c		linux
 file	external/bsd/common/linux/linux_srcu.c		linux
