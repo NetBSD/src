@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.12 2021/12/19 11:01:21 riastradh Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.13 2021/12/19 12:44:14 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.12 2021/12/19 11:01:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.13 2021/12/19 12:44:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,7 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.12 2021/12/19 11:01:21 riastradh Exp
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_device.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_encoder.h>
 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
@@ -51,10 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.12 2021/12/19 11:01:21 riastradh Exp
 static int	tegra_drm_match(device_t, cfdata_t, void *);
 static void	tegra_drm_attach(device_t, device_t, void *);
 
-static int	tegra_drm_set_busid(struct drm_device *, struct drm_master *);
-
 static int	tegra_drm_load(struct drm_device *, unsigned long);
-static int	tegra_drm_unload(struct drm_device *);
+static void	tegra_drm_unload(struct drm_device *);
 
 static struct drm_driver tegra_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM,
@@ -67,8 +66,6 @@ static struct drm_driver tegra_drm_driver = {
 	.gem_uvm_ops = &drm_gem_cma_uvm_ops,
 
 	.dumb_create = drm_gem_cma_dumb_create,
-	.dumb_map_offset = drm_gem_cma_dumb_map_offset,
-	.dumb_destroy = drm_gem_dumb_destroy,
 
 	.get_vblank_counter = tegra_drm_get_vblank_counter,
 	.enable_vblank = tegra_drm_enable_vblank,
@@ -80,8 +77,6 @@ static struct drm_driver tegra_drm_driver = {
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
-
-	.set_busid = tegra_drm_set_busid,
 };
 
 CFATTACH_DECL_NEW(tegra_drm, sizeof(struct tegra_drm_softc),
@@ -211,7 +206,7 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 
 	error = -drm_dev_register(sc->sc_ddev, 0);
 	if (error) {
-		drm_dev_unref(sc->sc_ddev);
+		drm_dev_put(sc->sc_ddev);
 		aprint_error_dev(self, "couldn't register DRM device: %d\n",
 		    error);
 		return;
@@ -223,21 +218,6 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 
 	return;
 }
-
-static int
-tegra_drm_set_busid(struct drm_device *ddev, struct drm_master *master)
-{
-	const char *id = "platform:tegra:0";
-
-	master->unique = kzalloc(strlen(id) + 1, GFP_KERNEL);
-	if (master->unique == NULL)
-		return -ENOMEM;
-	strcpy(master->unique, id);
-	master->unique_len = strlen(master->unique);
-
-	return 0;
-}
-
 
 static int
 tegra_drm_load(struct drm_device *ddev, unsigned long flags)
@@ -260,10 +240,9 @@ drmerr:
 	return error;
 }
 
-static int
+static void
 tegra_drm_unload(struct drm_device *ddev)
 {
-	drm_mode_config_cleanup(ddev);
 
-	return 0;
+	drm_mode_config_cleanup(ddev);
 }

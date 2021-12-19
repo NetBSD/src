@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.9 2018/08/27 15:31:51 riastradh Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.10 2021/12/19 12:44:14 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,7 @@
 #ifndef _ARM_TEGRA_DRM_H
 #define _ARM_TEGRA_DRM_H
 
+#include <drm/drm_encoder.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_gem_cma_helper.h>
 
