@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.19 2021/12/19 01:03:22 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.20 2021/12/19 01:03:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.19 2021/12/19 01:03:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.20 2021/12/19 01:03:32 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -396,29 +396,32 @@ EXPORT_SYMBOL(drm_fb_helper_blank);
 
 static void drm_fb_helper_resume_worker(struct work_struct *work)
 {
+#ifndef __NetBSD__		/* XXX fb suspend */
 	struct drm_fb_helper *helper = container_of(work, struct drm_fb_helper,
 						    resume_work);
 
 	console_lock();
 	fb_set_suspend(helper->fbdev, 0);
 	console_unlock();
+#endif
 }
 
+#ifndef __NetBSD__		/* XXX fb dirty */
 static void drm_fb_helper_dirty_blit_real(struct drm_fb_helper *fb_helper,
 					  struct drm_clip_rect *clip)
 {
 	struct drm_framebuffer *fb = fb_helper->fb;
 	unsigned int cpp = fb->format->cpp[0];
 	size_t offset = clip->y1 * fb->pitches[0] + clip->x1 * cpp;
-	void *src = fb_helper->fbdev->screen_buffer + offset;
-	void *dst = fb_helper->buffer->vaddr + offset;
+	void *src = (char *)fb_helper->fbdev->screen_buffer + offset;
+	void *dst = (char *)fb_helper->buffer->vaddr + offset;
 	size_t len = (clip->x2 - clip->x1) * cpp;
 	unsigned int y;
 
 	for (y = clip->y1; y < clip->y2; y++) {
 		memcpy(dst, src, len);
-		src += fb->pitches[0];
-		dst += fb->pitches[0];
+		src = (char *)src + fb->pitches[0];
+		dst = (char *)dst + fb->pitches[0];
 	}
 }
 
@@ -455,6 +458,7 @@ static void drm_fb_helper_dirty_work(struct work_struct *work)
 			drm_client_buffer_vunmap(helper->buffer);
 	}
 }
+#endif	/* __NetBSD__ */
 
 /**
  * drm_fb_helper_prepare - setup a drm_fb_helper structure
@@ -469,11 +473,19 @@ void drm_fb_helper_prepare(struct drm_device *dev, struct drm_fb_helper *helper,
 			   const struct drm_fb_helper_funcs *funcs)
 {
 	INIT_LIST_HEAD(&helper->kernel_fb_list);
+#ifndef __NetBSD__		/* XXX fb dirty */
 	spin_lock_init(&helper->dirty_lock);
+#endif
 	INIT_WORK(&helper->resume_work, drm_fb_helper_resume_worker);
+#ifndef __NetBSD__		/* XXX fb dirty */
 	INIT_WORK(&helper->dirty_work, drm_fb_helper_dirty_work);
 	helper->dirty_clip.x1 = helper->dirty_clip.y1 = ~0;
+#endif
+#ifdef __NetBSD__
+	linux_mutex_init(&helper->lock);
+#else
 	mutex_init(&helper->lock);
+#endif
 	helper->funcs = funcs;
 	helper->dev = dev;
 }
@@ -659,6 +671,8 @@ static void drm_fb_helper_dirty(struct fb_info *info, u32 x, u32 y,
 	schedule_work(&helper->dirty_work);
 }
 
+#ifndef __NetBSD__		/* XXX fb deferred */
+
 /**
  * drm_fb_helper_deferred_io() - fbdev deferred_io callback function
  * @info: fb_info struct pointer
@@ -826,6 +840,7 @@ void drm_fb_helper_cfb_imageblit(struct fb_info *info,
 			    image->width, image->height);
 }
 EXPORT_SYMBOL(drm_fb_helper_cfb_imageblit);
+#endif	/* __NetBSD__ */
 
 #ifdef __NetBSD__		/* XXX fb info */
 void drm_fb_helper_set_suspend(struct drm_fb_helper *fb_helper, int state)
@@ -1340,9 +1355,7 @@ int drm_fb_helper_check_var(struct fb_var_screeninfo *var,
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_check_var);
-#endif
 
-#ifndef __NetBSD__		/* XXX fb info */
 /**
  * drm_fb_helper_set_par - implementation for &fb_ops.fb_set_par
  * @info: fbdev registered by the helper
@@ -1744,6 +1757,7 @@ static void drm_setup_crtcs_fb(struct drm_fb_helper *fb_helper)
 	}
 	mutex_unlock(&client->modeset_mutex);
 
+#ifndef __NetBSD__		/* XXX fb info */
 	drm_connector_list_iter_begin(fb_helper->dev, &conn_iter);
 	drm_client_for_each_connector_iter(connector, &conn_iter) {
 
@@ -1777,6 +1791,7 @@ static void drm_setup_crtcs_fb(struct drm_fb_helper *fb_helper)
 		 */
 		info->fbcon_rotate_hint = FB_ROTATE_UR;
 	}
+#endif
 }
 
 /* Note: Drops fb_helper->lock before returning. */
@@ -1785,7 +1800,9 @@ __drm_fb_helper_initial_config_and_unlock(struct drm_fb_helper *fb_helper,
 					  int bpp_sel)
 {
 	struct drm_device *dev = fb_helper->dev;
+#ifndef __NetBSD__		/* XXX fb info */
 	struct fb_info *info;
+#endif
 	unsigned int width, height;
 	int ret;
 
@@ -1830,6 +1847,7 @@ __drm_fb_helper_initial_config_and_unlock(struct drm_fb_helper *fb_helper,
 
 	dev_info(dev->dev, "fb%d: %s frame buffer device\n",
 		 info->node, info->fix.id);
+#endif
 
 	mutex_lock(&kernel_fb_helper_lock);
 	if (list_empty(&kernel_fb_helper_list))
@@ -1983,6 +2001,8 @@ void drm_fb_helper_output_poll_changed(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_fb_helper_output_poll_changed);
 
+#ifndef __NetBSD__		/* XXX fb info */
+
 /* @user: 1=userspace, 0=fbcon */
 static int drm_fbdev_fb_open(struct fb_info *info, int user)
 {
@@ -2070,6 +2090,7 @@ static struct fb_deferred_io drm_fbdev_defio = {
 	.deferred_io	= drm_fb_helper_deferred_io,
 };
 
+#endif	/* __NetBSD__ */
 /*
  * This function uses the client API to create a framebuffer backed by a dumb buffer.
  *
@@ -2083,7 +2104,9 @@ static int drm_fb_helper_generic_probe(struct drm_fb_helper *fb_helper,
 	struct drm_device *dev = fb_helper->dev;
 	struct drm_client_buffer *buffer;
 	struct drm_framebuffer *fb;
+#ifndef __NetBSD__		/* XXX fb info */
 	struct fb_info *fbi;
+#endif
 	u32 format;
 	void *vaddr;
 
@@ -2101,6 +2124,9 @@ static int drm_fb_helper_generic_probe(struct drm_fb_helper *fb_helper,
 	fb_helper->fb = buffer->fb;
 	fb = buffer->fb;
 
+#ifdef __NetBSD__		/* XXX fb info */
+	__USE(fb);
+#else
 	fbi = drm_fb_helper_alloc_fbi(fb_helper);
 	if (IS_ERR(fbi))
 		return PTR_ERR(fbi);
@@ -2133,6 +2159,7 @@ static int drm_fb_helper_generic_probe(struct drm_fb_helper *fb_helper,
 				page_to_phys(virt_to_page(fbi->screen_buffer));
 #endif
 	}
+#endif	/* __NetBSD__ */
 
 	return 0;
 }
@@ -2146,8 +2173,12 @@ static void drm_fbdev_client_unregister(struct drm_client_dev *client)
 	struct drm_fb_helper *fb_helper = drm_fb_helper_from_client(client);
 
 	if (fb_helper->fbdev)
+#ifndef __NetBSD__		/* XXX fb info */
+	{
 		/* drm_fbdev_fb_destroy() takes care of cleanup */
 		drm_fb_helper_unregister_fbi(fb_helper);
+	}
+#endif
 	else
 		drm_fbdev_release(fb_helper);
 }
