@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.h,v 1.3 2021/12/19 01:43:37 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.h,v 1.4 2021/12/19 11:04:05 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -109,7 +109,15 @@ struct intel_forcewake_range {
 };
 
 struct intel_uncore {
+#ifdef __NetBSD__
+#  define	__iomem
+#endif
+
 	void __iomem *regs;
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 	struct drm_i915_private *i915;
 	struct intel_runtime_pm *rpm;
