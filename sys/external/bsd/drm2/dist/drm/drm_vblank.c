@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.12 2021/12/19 12:05:08 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.13 2021/12/19 12:24:57 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.12 2021/12/19 12:05:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.13 2021/12/19 12:24:57 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -1201,20 +1201,21 @@ void drm_wait_one_vblank(struct drm_device *dev, unsigned int pipe)
 	if (WARN_ON(pipe >= dev->num_crtcs))
 		return;
 
-	ret = drm_vblank_get(dev, pipe);
-	if (WARN(ret, "vblank not available on crtc %i, ret=%i\n", pipe, ret))
-		return;
-
 	spin_lock(&dev->event_lock);
+
+	ret = drm_vblank_get_locked(dev, pipe);
+	if (WARN(ret, "vblank not available on crtc %i, ret=%i\n", pipe, ret))
+		goto out;
+
 	last = drm_vblank_count(dev, pipe);
 	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &vblank->queue, &dev->event_lock,
 	    msecs_to_jiffies(100),
 	    last != drm_vblank_count(dev, pipe));
-	spin_unlock(&dev->event_lock);
 
 	WARN(ret == 0, "vblank wait timed out on crtc %i\n", pipe);
 
-	drm_vblank_put(dev, pipe);
+	drm_vblank_put_locked(dev, pipe);
+out:	spin_unlock(&dev->event_lock);
 }
 EXPORT_SYMBOL(drm_wait_one_vblank);
 
