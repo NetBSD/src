@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.35 2021/12/19 11:04:28 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.36 2021/12/19 11:14:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -108,6 +108,18 @@ atomic_add_return(int addend, atomic_t *atomic)
 
 	smp_mb__before_atomic();
 	v = (int)atomic_add_int_nv(&atomic->a_u.au_uint, addend);
+	smp_mb__after_atomic();
+
+	return v;
+}
+
+static inline int
+atomic_sub_return(int subtrahend, atomic_t *atomic)
+{
+	int v;
+
+	smp_mb__before_atomic();
+	v = (int)atomic_add_int_nv(&atomic->a_u.au_uint, -subtrahend);
 	smp_mb__after_atomic();
 
 	return v;
