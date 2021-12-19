@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.h,v 1.2 2021/12/19 12:44:25 riastradh Exp $ */
+/* $NetBSD: ti_lcdc.h,v 1.3 2021/12/19 12:44:57 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,8 @@
 
 #ifndef _ARM_TI_TI_LCDC_H
 #define _ARM_TI_TI_LCDC_H
+
+#include <sys/workqueue.h>
 
 #include <drm/drm_encoder.h>
 #include <drm/drm_fb_helper.h>
@@ -74,6 +76,12 @@ struct tilcdc_softc {
 	struct clk		*sc_clk;
 	int			sc_phandle;
 
+	struct lwp			*sc_task_thread;
+	SIMPLEQ_HEAD(, tilcdc_drm_task)	sc_tasks;
+	struct workqueue		*sc_task_wq;
+
+	bool			sc_dev_registered;
+
 	struct tilcdc_crtc	sc_crtc;
 	struct tilcdc_encoder	sc_encoder;
 	struct tilcdc_vblank	sc_vbl;
@@ -99,6 +107,14 @@ struct tilcdcfb_attach_args {
 	uint32_t		tfa_fb_linebytes;
 };
 
+struct tilcdc_drm_task {
+	union {
+		SIMPLEQ_ENTRY(tilcdc_drm_task)	queue;
+		struct work			work;
+	}		tdt_u;
+	void		(*tdt_fn)(struct tilcdc_drm_task *);
+};
+
 #define tilcdc_private(ddev)		(ddev)->dev_private
 #define	to_tilcdc_framebuffer(x)	container_of(x, struct tilcdc_framebuffer, base)
 #define	to_tilcdc_crtc(x)		container_of(x, struct tilcdc_crtc, base)
@@ -107,5 +123,9 @@ struct tilcdcfb_attach_args {
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define	WR4(sc, reg, val)		\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+void	tilcdc_task_init(struct tilcdc_drm_task *,
+	    void (*)(struct tilcdc_drm_task *));
+void	tilcdc_task_schedule(device_t, struct tilcdc_drm_task *);
 
 #endif /* _ARM_TI_TI_LCDC_H */
