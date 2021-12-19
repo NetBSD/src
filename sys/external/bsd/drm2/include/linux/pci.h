@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.41 2021/12/19 01:21:08 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.42 2021/12/19 01:21:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ struct pci_dev {
 	bus_size_t		pd_rom_found_size;
 	void			*pd_rom_vaddr;
 	device_t		pd_dev;
-	struct drm_device	*pd_drm_dev; /* XXX Nouveau kludge!  */
+	void			*pd_drvdata;
 	struct {
 		pcireg_t		type;
 		bus_addr_t		addr;
@@ -219,6 +219,7 @@ struct pci_dev {
 #define	pci_resource_start		linux_pci_resource_start
 #define	pci_restore_state		linux_pci_restore_state
 #define	pci_save_state			linux_pci_save_state
+#define	pci_set_drvdata			linux_pci_set_drvdata
 #define	pci_set_master			linux_pci_set_master
 #define	pci_unmap_rom			linux_pci_unmap_rom
 #define	pci_write_config_byte		linux_pci_write_config_byte
@@ -239,8 +240,8 @@ bool		pci_is_root_bus(struct pci_bus *);
 int		pci_domain_nr(struct pci_bus *);
 
 device_t	pci_dev_dev(struct pci_dev *);
-struct drm_device *		/* XXX Nouveau kludge!  */
-		pci_get_drvdata(struct pci_dev *);
+void		pci_set_drvdata(struct pci_dev *, void *);
+void *		pci_get_drvdata(struct pci_dev *);
 
 int		pci_find_capability(struct pci_dev *, int);
 bool		pci_is_pcie(struct pci_dev *);
