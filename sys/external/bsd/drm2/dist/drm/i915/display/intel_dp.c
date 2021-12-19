@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.4 2021/12/19 11:38:26 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.5 2021/12/19 12:03:57 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.4 2021/12/19 11:38:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.5 2021/12/19 12:03:57 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/i2c.h>
@@ -5845,7 +5845,7 @@ intel_dp_connector_register(struct drm_connector *connector)
 
 #ifdef __NetBSD__
 	DRM_DEBUG_KMS("registering %s bus for %s\n",
-		      intel_dp->aux.name, device_xname(connector->kdev));
+		      intel_dp->aux.name, connector->name);
 #else
 	DRM_DEBUG_KMS("registering %s bus for %s\n",
 		      intel_dp->aux.name, connector->kdev->kobj.name);
