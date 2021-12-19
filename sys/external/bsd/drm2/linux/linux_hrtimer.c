@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hrtimer.c,v 1.2 2021/12/19 11:53:09 riastradh Exp $	*/
+/*	$NetBSD: linux_hrtimer.c,v 1.3 2021/12/19 11:55:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,61 +27,49 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hrtimer.c,v 1.2 2021/12/19 11:53:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hrtimer.c,v 1.3 2021/12/19 11:55:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/callout.h>
-#include <sys/kmem.h>
 
 #include <linux/hrtimer.h>
 #include <linux/ktime.h>
-
-struct hrtimer_private {
-	struct callout		ch;
-	enum hrtimer_mode	mode;
-	ktime_t			expires;
-};
 
 static void hrtimer_fire(void *);
 
 void
 hrtimer_init(struct hrtimer *hrt, clockid_t clkid, enum hrtimer_mode mode)
 {
-	struct hrtimer_private *H;
 
 	KASSERTMSG(clkid == CLOCK_MONOTONIC, "clkid %d", clkid);
 
-	H = hrt->hrt_private = kmem_zalloc(sizeof(*H), KM_SLEEP);
-
-	callout_init(&H->ch, CALLOUT_MPSAFE);
-	callout_setfunc(&H->ch, hrtimer_fire, H);
-	H->mode = mode;
+	callout_init(&hrt->hrt_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&hrt->hrt_ch, hrtimer_fire, hrt);
+	hrt->hrt_mode = mode;
 }
 
 static void
 _hrtimer_schedule(struct hrtimer *hrt)
 {
-	struct hrtimer_private *H = hrt->hrt_private;
 	int delta;
 
-	switch (H->mode) {
+	switch (hrt->hrt_mode) {
 	case HRTIMER_MODE_ABS:
 		panic("absolute hrtimer NYI");
 		break;
 	case HRTIMER_MODE_REL:
-		delta = ktime_to_ms(H->expires);
+		delta = ktime_to_ms(hrt->hrt_expires);
 		break;
 	default:
-		panic("invalid hrtimer mode %d", H->mode);
+		panic("invalid hrtimer mode %d", hrt->hrt_mode);
 	}
-	callout_schedule(&H->ch, delta);
+	callout_schedule(&hrt->hrt_ch, delta);
 }
 
 static void
 hrtimer_fire(void *cookie)
 {
 	struct hrtimer *hrt = cookie;
-	struct hrtimer_private *H = hrt->hrt_private;
 
 	switch ((*hrt->function)(hrt)) {
 	case HRTIMER_RESTART:
@@ -91,23 +79,21 @@ hrtimer_fire(void *cookie)
 		break;
 	}
 
-	callout_ack(&H->ch);
+	callout_ack(&hrt->hrt_ch);
 }
 
 void
 hrtimer_set_expires(struct hrtimer *hrt, ktime_t expires)
 {
-	struct hrtimer_private *H = hrt->hrt_private;
 
-	H->expires = expires;
+	hrt->hrt_expires = expires;
 }
 
 void
 hrtimer_add_expires_ns(struct hrtimer *hrt, uint64_t ns)
 {
-	struct hrtimer_private *H = hrt->hrt_private;
 
-	H->expires = ktime_add_ns(H->expires, ns);
+	hrt->hrt_expires = ktime_add_ns(hrt->hrt_expires, ns);
 }
 
 void
@@ -121,25 +107,23 @@ void
 hrtimer_start_range_ns(struct hrtimer *hrt, ktime_t expires, uint64_t range_ns,
     enum hrtimer_mode mode)
 {
-	struct hrtimer_private *H = hrt->hrt_private;
 
-	H->expires = expires;
+	hrt->hrt_expires = expires;
 	(void)range_ns;
-	H->mode = mode;
+	hrt->hrt_mode = mode;
 	_hrtimer_schedule(hrt);
 }
 
 int
 hrtimer_cancel(struct hrtimer *hrt)
 {
-	struct hrtimer_private *H = hrt->hrt_private;
 	bool active;
 
 	/*
 	 * Halt the callout and ascertain whether the hrtimer was
 	 * active when we invoked hrtimer_cancel.
 	 */
-	if (callout_halt(&H->ch, NULL)) {
+	if (callout_halt(&hrt->hrt_ch, NULL)) {
 		/* Callout expired, meaning it was active.  */
 		active = true;
 	} else {
@@ -149,26 +133,14 @@ hrtimer_cancel(struct hrtimer *hrt)
 		 * corresponds with whether the hrtimer was active or
 		 * not.
 		 */
-		active = callout_pending(&H->ch);
+		active = callout_pending(&hrt->hrt_ch);
 	}
 	return active;
-}
-
-void
-hrtimer_destroy(struct hrtimer *hrt)
-{
-	struct hrtimer_private *H = hrt->hrt_private;
-
-	callout_destroy(&H->ch);
-	kmem_free(H, sizeof(*H));
-
-	explicit_memset(hrt, 0, sizeof(*hrt)); /* paranoia */
 }
 
 bool
 hrtimer_active(struct hrtimer *hrt)
 {
-	struct hrtimer_private *H = hrt->hrt_private;
 
 	/*
 	 * If the callout has been scheduled, but has not yet fired,
@@ -177,16 +149,15 @@ hrtimer_active(struct hrtimer *hrt)
 	 * If the callout has fired, but has not yet reached
 	 * callout_ack, then it is invoking.
 	 */
-	return callout_pending(&H->ch) || callout_invoking(&H->ch);
+	return callout_pending(&hrt->hrt_ch) || callout_invoking(&hrt->hrt_ch);
 }
 
 uint64_t
 hrtimer_forward(struct hrtimer *hrt, ktime_t now, ktime_t period)
 {
-	struct hrtimer_private *H = hrt->hrt_private;
 	uint64_t now_ms, period_ms, expires_ms, nperiods;
 
-	KASSERT(!callout_pending(&H->ch));
+	KASSERT(!callout_pending(&hrt->hrt_ch));
 
 	/*
 	 * Can't get better than 10ms precision (or ~1ms if you set
@@ -195,7 +166,7 @@ hrtimer_forward(struct hrtimer *hrt, ktime_t now, ktime_t period)
 	 */
 	now_ms = ktime_to_ms(now);
 	period_ms = ktime_to_ms(period);
-	expires_ms = ktime_to_ms(H->expires);
+	expires_ms = ktime_to_ms(hrt->hrt_expires);
 
 	/* If it hasn't yet expired, no overruns.  */
 	if (now_ms < expires_ms)
@@ -204,7 +175,8 @@ hrtimer_forward(struct hrtimer *hrt, ktime_t now, ktime_t period)
 	/* Advance it by as many periods as it should have fired.  */
 	/* XXX fenceposts */
 	nperiods = howmany(now_ms - expires_ms, period_ms);
-	H->expires = ktime_add_ns(H->expires, 1000000*nperiods*period_ms);
+	hrt->hrt_expires = ktime_add_ns(hrt->hrt_expires,
+	    1000000*nperiods*period_ms);
 
 	return nperiods;
 }

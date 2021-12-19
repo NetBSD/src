@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fence.c,v 1.8 2021/12/19 09:59:30 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fence.c,v 1.9 2021/12/19 11:55:47 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.8 2021/12/19 09:59:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.9 2021/12/19 11:55:47 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
@@ -549,7 +549,6 @@ void amdgpu_fence_driver_fini(struct amdgpu_device *adev)
 		ring->fence_drv.fences = NULL;
 		ring->fence_drv.initialized = false;
 		spin_lock_destroy(&ring->fence_drv.lock);
-		timer_teardown(&ring->fence_drv.fallback_timer);
 	}
 }
 
