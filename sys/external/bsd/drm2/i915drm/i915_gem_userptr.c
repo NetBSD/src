@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_userptr.c,v 1.2 2021/12/19 01:24:06 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_userptr.c,v 1.3 2021/12/19 11:31:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.2 2021/12/19 01:24:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.3 2021/12/19 11:31:33 riastradh Exp $");
 
 #include "i915_drv.h"
+#include "../dist/drm/i915/gem/i915_gem_ioctls.h"
 
 int
 i915_gem_init_userptr(struct drm_i915_private *dev_priv)
