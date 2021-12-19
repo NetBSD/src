@@ -1,4 +1,4 @@
-/*	$NetBSD: ioport.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: ioport.h,v 1.3 2021/12/19 01:35:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,12 @@ struct resource {
 	bus_space_tag_t r_bst;	/* This milk is not organic.  */
 	bus_space_handle_t r_bsh;
 };
+
+static inline bus_size_t
+resource_size(struct resource *resource)
+{
+	return resource->size;
+}
 
 static inline void
 release_resource(struct resource *resource)
