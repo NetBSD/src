@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sw_fence.h,v 1.2 2021/12/19 01:23:59 riastradh Exp $	*/
+/*	$NetBSD: i915_sw_fence.h,v 1.3 2021/12/19 01:46:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -45,6 +45,10 @@ struct i915_sw_fence {
 	char dummy;
 };
 
+struct i915_sw_fence_wait {
+	char dummy;
+};
+
 enum i915_sw_fence_notify {
 	FENCE_COMPLETE,
 	FENCE_FREE,
@@ -56,11 +60,17 @@ void	i915_sw_fence_init(struct i915_sw_fence *,
 	    int (*)(struct i915_sw_fence *, enum i915_sw_fence_notify));
 void	i915_sw_fence_fini(struct i915_sw_fence *);
 
+bool	i915_sw_fence_signaled(struct i915_sw_fence *);
+
 void	i915_sw_fence_await_reservation(struct i915_sw_fence *,
 	    struct reservation_object *, const struct dma_fence_ops *, bool,
 	    unsigned long, gfp_t);
+void	i915_sw_fence_await_sw_fence(struct i915_sw_fence *,
+	    struct i915_sw_fence *, struct i915_sw_fence_wait *);
 void	i915_sw_fence_await_sw_fence_gfp(struct i915_sw_fence *,
 	    struct i915_sw_fence *, gfp_t);
+int	i915_sw_fence_await_dma_fence(struct i915_sw_fence *,
+	    struct dma_fence *, int, gfp_t);
 void	i915_sw_fence_commit(struct i915_sw_fence *);
 
 #endif	/* _I915DRM_I915_SW_FENCE_H_ */
