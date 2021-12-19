@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object.c,v 1.5 2021/12/19 11:37:41 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object.c,v 1.6 2021/12/19 11:58:41 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.5 2021/12/19 11:37:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.6 2021/12/19 11:58:41 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/sched/mm.h>
@@ -228,6 +228,7 @@ static void __i915_gem_free_objects(struct drm_i915_private *i915,
 				continue;
 			drm_vma_offset_remove(obj->base.dev->vma_offset_manager,
 					      &mmo->vma_node);
+			drm_vma_node_destroy(&mmo->vma_node);
 			kfree(mmo);
 		}
 		memset(obj->mmo.offsets, 0, sizeof(obj->mmo.offsets));
