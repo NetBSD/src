@@ -1,4 +1,4 @@
-/*	$NetBSD: llist.h,v 1.2 2021/12/19 00:54:54 riastradh Exp $	*/
+/*	$NetBSD: llist.h,v 1.3 2021/12/19 01:26:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ struct llist_head {
 };
 
 struct llist_node {
-	struct llist_node	*llh_next;
+	struct llist_node	*next;
 };
 
 static inline void
@@ -70,7 +70,7 @@ llist_add(struct llist_node *node, struct llist_head *head)
 
 	do {
 		first = head->llh_first;
-		node->llh_next = first;
+		node->next = first;
 		membar_exit();
 	} while (atomic_cas_ptr(&head->llh_first, first, node) != first);
 
@@ -96,7 +96,7 @@ llist_del_first(struct llist_head *head)
 	do {
 		first = head->llh_first;
 		membar_datadep_consumer();
-	} while (atomic_cas_ptr(&head->llh_first, first, first->llh_next)
+	} while (atomic_cas_ptr(&head->llh_first, first, first->next)
 	    != first);
 	membar_enter();
 
@@ -108,7 +108,7 @@ llist_del_first(struct llist_head *head)
 			llist_entry(NODE, typeof(*(ENTRY)), FIELD));	      \
 		(ENTRY) == NULL ? 0 :					      \
 		    (membar_datadep_consumer(),				      \
-			(TMP) = list_entry((ENTRY)->FIELD.llh_next,	      \
+			(TMP) = list_entry((ENTRY)->FIELD.next,	      \
 			    typeof(*(ENTRY)), FIELD),			      \
 			1);						      \
 		 (ENTRY) = (TMP))
