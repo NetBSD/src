@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_edid.c,v 1.9 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_edid.c,v 1.10 2021/12/19 00:56:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.9 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.10 2021/12/19 00:56:49 riastradh Exp $");
 
 #include <linux/hdmi.h>
 #include <linux/i2c.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.9 2021/12/18 23:44:57 riastradh Exp $
 
 #include <drm/drm_displayid.h>
 #include <drm/drm_drv.h>
+#include <linux/bitmap.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_encoder.h>
 #include <drm/drm_print.h>
@@ -1812,11 +1813,11 @@ static void connector_bad_edid(struct drm_connector *connector,
 		char prefix[20];
 
 		if (drm_edid_is_zero(block, EDID_LENGTH))
-			sprintf(prefix, "\t[%02x] ZERO ", i);
+			snprintf(prefix, sizeof prefix, "\t[%02x] ZERO ", i);
 		else if (!drm_edid_block_valid(block, i, false, NULL))
-			sprintf(prefix, "\t[%02x] BAD  ", i);
+			snprintf(prefix, sizeof prefix, "\t[%02x] BAD  ", i);
 		else
-			sprintf(prefix, "\t[%02x] GOOD ", i);
+			snprintf(prefix, sizeof prefix, "\t[%02x] GOOD ", i);
 
 		print_hex_dump(KERN_WARNING,
 			       prefix, DUMP_PREFIX_NONE, 16, 1,
@@ -3167,7 +3168,7 @@ static u8 *drm_find_edid_extension(const struct edid *edid, int ext_id)
 
 	/* Find CEA extension */
 	for (i = 0; i < edid->extensions; i++) {
-		edid_ext = (u8 *)edid + EDID_LENGTH * (i + 1);
+		edid_ext = (const u8 *)edid + EDID_LENGTH * (i + 1);
 		if (edid_ext[0] == ext_id)
 			break;
 	}
