@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.52 2021/12/19 01:51:02 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.53 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.52 2021/12/19 01:51:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.53 2021/12/19 11:38:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -117,10 +117,11 @@ SDT_PROBE_DEFINE1(sdt, linux, work, flush__done,
 
 static specificdata_key_t workqueue_key __read_mostly;
 
-struct workqueue_struct	*system_wq __read_mostly;
+struct workqueue_struct	*system_highpri_wq __read_mostly;
 struct workqueue_struct	*system_long_wq __read_mostly;
 struct workqueue_struct	*system_power_efficient_wq __read_mostly;
 struct workqueue_struct	*system_unbound_wq __read_mostly;
+struct workqueue_struct	*system_wq __read_mostly;
 
 static inline uintptr_t
 atomic_cas_uintptr(volatile uintptr_t *p, uintptr_t old, uintptr_t new)
@@ -142,41 +143,56 @@ linux_workqueue_init0(void)
 
 	error = lwp_specific_key_create(&workqueue_key, NULL);
 	if (error)
-		goto fail0;
+		goto out;
 
-	system_wq = alloc_ordered_workqueue("lnxsyswq", 0);
-	if (system_wq == NULL) {
+	system_highpri_wq = alloc_ordered_workqueue("lnxhipwq", 0);
+	if (system_highpri_wq == NULL) {
 		error = ENOMEM;
-		goto fail1;
+		goto out;
 	}
 
 	system_long_wq = alloc_ordered_workqueue("lnxlngwq", 0);
 	if (system_long_wq == NULL) {
 		error = ENOMEM;
-		goto fail2;
+		goto out;
 	}
 
 	system_power_efficient_wq = alloc_ordered_workqueue("lnxpwrwq", 0);
 	if (system_power_efficient_wq == NULL) {
 		error = ENOMEM;
-		goto fail3;
+		goto out;
 	}
 
 	system_unbound_wq = alloc_ordered_workqueue("lnxubdwq", 0);
 	if (system_unbound_wq == NULL) {
 		error = ENOMEM;
-		goto fail4;
+		goto out;
 	}
 
-	return 0;
+	system_wq = alloc_ordered_workqueue("lnxsyswq", 0);
+	if (system_wq == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
 
-fail5: __unused
-	destroy_workqueue(system_unbound_wq);
-fail4:	destroy_workqueue(system_power_efficient_wq);
-fail3:	destroy_workqueue(system_long_wq);
-fail2:	destroy_workqueue(system_wq);
-fail1:	lwp_specific_key_delete(workqueue_key);
-fail0:	KASSERT(error);
+	/* Success!  */
+	error = 0;
+
+out:	if (error) {
+		if (system_highpri_wq)
+			destroy_workqueue(system_highpri_wq);
+		if (system_long_wq)
+			destroy_workqueue(system_long_wq);
+		if (system_power_efficient_wq)
+			destroy_workqueue(system_power_efficient_wq);
+		if (system_unbound_wq)
+			destroy_workqueue(system_unbound_wq);
+		if (system_wq)
+			destroy_workqueue(system_wq);
+		if (workqueue_key)
+			lwp_specific_key_delete(workqueue_key);
+	}
+
 	return error;
 }
 

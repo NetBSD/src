@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_atomic_plane.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_atomic_plane.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_atomic_plane.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_atomic_plane.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $");
 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_fourcc.h>
@@ -319,7 +319,7 @@ skl_next_plane_to_commit(struct intel_atomic_state *state,
 {
 	struct intel_crtc_state *crtc_state =
 		intel_atomic_get_new_crtc_state(state, crtc);
-	struct intel_plane_state *plane_state;
+	struct intel_plane_state *plane_state __unused;
 	struct intel_plane *plane;
 	int i;
 
