@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_utils.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_utils.h,v 1.3 2021/12/19 09:59:13 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -460,10 +460,17 @@ static inline void add_taint_for_CI(unsigned int taint)
 void cancel_timer(struct timer_list *t);
 void set_timer_ms(struct timer_list *t, unsigned long timeout);
 
+#ifdef __linux__
 static inline bool timer_expired(const struct timer_list *t)
 {
 	return READ_ONCE(t->expires) && !timer_pending(t);
 }
+#else
+static inline bool timer_expired(struct timer_list *t)
+{
+	return callout_expired(&t->tl_callout);
+}
+#endif
 
 /*
  * This is a lookalike for IS_ENABLED() that takes a kconfig value,
