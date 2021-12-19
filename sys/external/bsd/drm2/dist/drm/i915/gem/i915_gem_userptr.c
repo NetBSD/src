@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_userptr.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_userptr.c,v 1.3 2021/12/19 10:28:41 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.3 2021/12/19 10:28:41 riastradh Exp $");
 
 #include <linux/mmu_context.h>
 #include <linux/mmu_notifier.h>
@@ -844,4 +844,5 @@ int i915_gem_init_userptr(struct drm_i915_private *dev_priv)
 void i915_gem_cleanup_userptr(struct drm_i915_private *dev_priv)
 {
 	destroy_workqueue(dev_priv->mm.userptr_wq);
+	mutex_destroy(&dev_priv->mm_lock);
 }
