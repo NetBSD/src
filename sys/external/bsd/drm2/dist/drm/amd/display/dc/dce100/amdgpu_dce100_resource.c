@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce100_resource.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce100_resource.c,v 1.5 2021/12/19 11:59:30 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce100_resource.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce100_resource.c,v 1.5 2021/12/19 11:59:30 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -290,7 +290,6 @@ static const struct dce110_aux_registers aux_engine_regs[] = {
 		aux_engine_regs(5)
 };
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 #define audio_regs(id)\
 [id] = {\
 	AUD_COMMON_REG_LIST(id)\
@@ -313,7 +312,6 @@ static const struct dce_audio_shift audio_shift = {
 static const struct dce_audio_mask audio_mask = {
 		AUD_COMMON_MASK_SH_LIST(_MASK)
 };
-#endif
 
 #define clk_src_regs(id)\
 [id] = {\
@@ -451,12 +449,8 @@ static void read_dce_straps(
 static struct audio *create_audio(
 		struct dc_context *ctx, unsigned int inst)
 {
-#ifdef __NetBSD__		/* XXX amdgpu audio */
-	return NULL;
-#else
 	return dce_audio_create(ctx, inst,
 			&audio_regs[inst], &audio_shift, &audio_mask);
-#endif
 }
 
 static struct timing_generator *dce100_timing_generator_create(
@@ -787,12 +781,10 @@ static void dce100_resource_destruct(struct dce110_resource_pool *pool)
 	if (pool->base.dp_clock_source != NULL)
 		dce100_clock_source_destroy(&pool->base.dp_clock_source);
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 	for (i = 0; i < pool->base.audio_count; i++)	{
 		if (pool->base.audios[i] != NULL)
 			dce_aud_destroy(&pool->base.audios[i]);
 	}
-#endif
 
 	if (pool->base.abm != NULL)
 				dce_abm_destroy(&pool->base.abm);

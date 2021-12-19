@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn10_hw_sequencer.c,v 1.3 2021/12/19 11:24:44 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn10_hw_sequencer.c,v 1.4 2021/12/19 11:59:31 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_hw_sequencer.c,v 1.3 2021/12/19 11:24:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_hw_sequencer.c,v 1.4 2021/12/19 11:59:31 riastradh Exp $");
 
 #include <linux/delay.h>
 #include "dm_services.h"
@@ -886,7 +886,6 @@ static void dcn10_reset_back_end_for_pipe(
 			dc->hwss.disable_audio_stream(pipe_ctx);
 
 		if (pipe_ctx->stream_res.audio) {
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 			/*disable az_endpoint*/
 			pipe_ctx->stream_res.audio->funcs->az_disable(pipe_ctx->stream_res.audio);
 
@@ -898,7 +897,6 @@ static void dcn10_reset_back_end_for_pipe(
 						pipe_ctx->stream_res.audio, false);
 				pipe_ctx->stream_res.audio = NULL;
 			}
-#endif	/* __NetBSD__ */
 		}
 	}
 
@@ -1335,11 +1333,9 @@ void dcn10_init_hw(struct dc *dc)
 	}
 
 	for (i = 0; i < res_pool->audio_count; i++) {
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 		struct audio *audio = res_pool->audios[i];
 
 		audio->funcs->hw_init(audio);
-#endif
 	}
 
 	if (abm != NULL) {

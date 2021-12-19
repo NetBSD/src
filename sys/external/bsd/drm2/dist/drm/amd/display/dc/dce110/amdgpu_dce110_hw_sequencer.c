@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce110_hw_sequencer.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce110_hw_sequencer.c,v 1.5 2021/12/19 11:59:30 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce110_hw_sequencer.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce110_hw_sequencer.c,v 1.5 2021/12/19 11:59:30 riastradh Exp $");
 
 #include <linux/delay.h>
 
@@ -689,13 +689,11 @@ void dce110_enable_stream(struct pipe_ctx *pipe_ctx)
 
 	tg->funcs->set_early_control(tg, early_control);
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 	/* enable audio only within mode set */
 	if (pipe_ctx->stream_res.audio != NULL) {
 		if (dc_is_dp_signal(pipe_ctx->stream->signal))
 			pipe_ctx->stream_res.stream_enc->funcs->dp_audio_enable(pipe_ctx->stream_res.stream_enc);
 	}
-#endif
 
 
 
@@ -950,7 +948,6 @@ void dce110_edp_backlight_control(
 
 void dce110_enable_audio_stream(struct pipe_ctx *pipe_ctx)
 {
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 	/* notify audio driver for audio modes of monitor */
 	struct dc *dc;
 	struct clk_mgr *clk_mgr;
@@ -984,12 +981,10 @@ void dce110_enable_audio_stream(struct pipe_ctx *pipe_ctx)
 		if (pipe_ctx->stream_res.audio)
 			pipe_ctx->stream_res.audio->enabled = true;
 	}
-#endif
 }
 
 void dce110_disable_audio_stream(struct pipe_ctx *pipe_ctx)
 {
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 	struct dc *dc;
 	struct clk_mgr *clk_mgr;
 
@@ -1024,7 +1019,6 @@ void dce110_disable_audio_stream(struct pipe_ctx *pipe_ctx)
 		 * stream->stream_engine_id);
 		 */
 	}
-#endif
 }
 
 void dce110_disable_stream(struct pipe_ctx *pipe_ctx)
@@ -1095,7 +1089,6 @@ void dce110_set_avmute(struct pipe_ctx *pipe_ctx, bool enable)
 		pipe_ctx->stream_res.stream_enc->funcs->set_avmute(pipe_ctx->stream_res.stream_enc, enable);
 }
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 static enum audio_dto_source translate_to_dto_source(enum controller_id crtc_id)
 {
 	switch (crtc_id) {
@@ -1197,7 +1190,6 @@ static void build_audio_output(
 	audio_output->pll_info.ss_percentage =
 			pipe_ctx->pll_settings.ss_percentage;
 }
-#endif
 
 static void get_surface_visual_confirm_color(const struct pipe_ctx *pipe_ctx,
 		struct tg_color *color)
@@ -1345,7 +1337,6 @@ static enum dc_status apply_single_controller_ctx_to_hw(
 		hws->funcs.disable_stream_gating(dc, pipe_ctx);
 	}
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 	if (pipe_ctx->stream_res.audio != NULL) {
 		struct audio_output audio_output;
 
@@ -1369,7 +1360,6 @@ static enum dc_status apply_single_controller_ctx_to_hw(
 				&audio_output.crtc_info,
 				&pipe_ctx->stream->audio_info);
 	}
-#endif
 
 	/*  */
 	/* Do not touch stream timing on seamless boot optimization. */
@@ -1909,7 +1899,6 @@ static void dce110_reset_hw_ctx_wrap(
 			if (!pipe_ctx->stream || !pipe_ctx->stream->dpms_off) {
 				core_link_disable_stream(pipe_ctx_old);
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 				/* free acquired resources*/
 				if (pipe_ctx_old->stream_res.audio) {
 					/*disable az_endpoint*/
@@ -1925,7 +1914,6 @@ static void dce110_reset_hw_ctx_wrap(
 						pipe_ctx_old->stream_res.audio = NULL;
 					}
 				}
-#endif
 			}
 
 			pipe_ctx_old->stream_res.tg->funcs->set_blank(pipe_ctx_old->stream_res.tg, true);
@@ -1986,7 +1974,6 @@ static void dce110_setup_audio_dto(
 		if (pipe_ctx->stream->signal != SIGNAL_TYPE_HDMI_TYPE_A)
 			continue;
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 		if (pipe_ctx->stream_res.audio != NULL) {
 			struct audio_output audio_output;
 
@@ -1999,7 +1986,6 @@ static void dce110_setup_audio_dto(
 				&audio_output.pll_info);
 			break;
 		}
-#endif
 	}
 
 	/* no HDMI audio is found, try DP audio */
@@ -2016,7 +2002,6 @@ static void dce110_setup_audio_dto(
 			if (!dc_is_dp_signal(pipe_ctx->stream->signal))
 				continue;
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 			if (pipe_ctx->stream_res.audio != NULL) {
 				struct audio_output audio_output;
 
@@ -2029,7 +2014,6 @@ static void dce110_setup_audio_dto(
 					&audio_output.pll_info);
 				break;
 			}
-#endif
 		}
 	}
 }
@@ -2421,12 +2405,10 @@ static void init_hw(struct dc *dc)
 		hwss_wait_for_blank_complete(tg);
 	}
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 	for (i = 0; i < dc->res_pool->audio_count; i++) {
 		struct audio *audio = dc->res_pool->audios[i];
 		audio->funcs->hw_init(audio);
 	}
-#endif
 
 	abm = dc->res_pool->abm;
 	if (abm != NULL) {

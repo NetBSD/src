@@ -1,4 +1,4 @@
-/*	$NetBSD: dce_audio.h,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
+/*	$NetBSD: dce_audio.h,v 1.4 2021/12/19 11:59:30 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -123,8 +123,6 @@ struct dce_audio_mask {
 
 };
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
-
 struct dce_audio {
 	struct audio base;
 	const struct dce_audio_registers *regs;
@@ -155,7 +153,5 @@ void dce_aud_wall_dto_setup(struct audio *audio,
 	enum signal_type signal,
 	const struct audio_crtc_info *crtc_info,
 	const struct audio_pll_info *pll_info);
-
-#endif
 
 #endif   /*__DAL_AUDIO_DCE_110_H__*/
