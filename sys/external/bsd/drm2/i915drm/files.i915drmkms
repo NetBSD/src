@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.50 2021/12/19 01:42:31 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.51 2021/12/19 01:42:39 riastradh Exp $
 
 version	20180827
 
@@ -28,8 +28,8 @@ makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-shadow"
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-pointer-arith"
 
-makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == gcc:? -Wno-override-init :}"
-makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.i915_pci.c"+="${${ACTIVE_CC} == gcc:? -Wno-override-init :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.i915_pci.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"
 
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sprite.c"+="${${ACTIVE_CC} == gcc:? -Wno-maybe-uninitialized :}"
 
