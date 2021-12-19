@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.65 2021/12/19 11:19:55 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.66 2021/12/19 11:20:18 riastradh Exp $
 
 version	20180827
 
@@ -182,7 +182,7 @@ file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_huc.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_huc_fw.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_uc.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/uc/intel_uc_fw.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_active.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_active.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_buddy.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_cmd_parser.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_drv.c	i915drmkms
