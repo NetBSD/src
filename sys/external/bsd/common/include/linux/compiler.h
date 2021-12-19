@@ -1,4 +1,4 @@
-/*	$NetBSD: compiler.h,v 1.3 2021/12/19 01:24:36 riastradh Exp $	*/
+/*	$NetBSD: compiler.h,v 1.4 2021/12/19 01:41:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,8 +33,25 @@
 #define	_LINUX_COMPILER_H_
 
 #include <sys/atomic.h>
+#include <sys/cdefs.h>
 
 #include <asm/barrier.h>
+
+#define	__printf	__printflike
+#define	__user
+#if __GNUC_PREREQ__(4,0)	/* not sure when but this will work */
+#define	__must_check	__attribute__((warn_unused_result))
+#else
+#define	__must_check	/* nothing */
+#endif
+#define	__always_unused	__unused
+#define	__maybe_unused	__unused
+#define	noinline	__noinline
+#define	__deprecated	/* nothing */
+
+#define	barrier()	__insn_barrier()
+#define	likely(X)	__predict_true(X)
+#define	unlikely(X)	__predict_false(X)
 
 #define	READ_ONCE(X)	({						      \
 	typeof(X) __read_once_tmp = (X);				      \

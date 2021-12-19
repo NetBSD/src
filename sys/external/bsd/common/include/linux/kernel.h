@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.37 2021/12/19 01:40:20 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.38 2021/12/19 01:41:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -64,22 +64,6 @@
 #define	IS_BUILTIN(option)	(1) /* Probably... */
 #define	IS_ENABLED(option)	(option)
 #define	IS_REACHABLE(option)	(option)
-
-#define	__printf	__printflike
-#define	__user
-#if __GNUC_PREREQ__(4,0)	/* not sure when but this will work */
-#define	__must_check	__attribute__((warn_unused_result))
-#else
-#define	__must_check	/* nothing */
-#endif
-#define	__always_unused	__unused
-#define	__maybe_unused	__unused
-#define	noinline	__noinline
-#define	__deprecated	/* nothing */
-
-#define	barrier()	__insn_barrier()
-#define	likely(X)	__predict_true(X)
-#define	unlikely(X)	__predict_false(X)
 
 #define	might_sleep	ASSERT_SLEEPABLE
 
