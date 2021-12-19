@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.6 2019/10/17 14:33:02 maya Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.7 2021/12/19 00:30:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.6 2019/10/17 14:33:02 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.7 2021/12/19 00:30:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.6 2019/10/17 14:33:02 maya Exp $
 
 #include <linux/dma-buf.h>
 #include <linux/err.h>
-#include <linux/fence.h>
 #include <linux/reservation.h>
 
 struct dma_buf_file {
