@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_fence.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: sched_fence.c,v 1.3 2021/12/19 12:23:16 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.3 2021/12/19 12:23:16 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/module.h>
@@ -35,6 +35,11 @@ __KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.2 2021/12/18 23:45:43 riastradh Ex
 #include <drm/gpu_scheduler.h>
 
 static struct kmem_cache *sched_fence_slab;
+
+#ifdef __NetBSD__		/* XXX module init/fini */
+#define	__init
+#define	__exit
+#endif
 
 static int __init drm_sched_fence_slab_init(void)
 {
@@ -185,3 +190,23 @@ module_exit(drm_sched_fence_slab_fini);
 
 MODULE_DESCRIPTION("DRM GPU scheduler");
 MODULE_LICENSE("GPL and additional rights");
+
+#ifdef __NetBSD__
+MODULE(MODULE_CLASS_MISC, drmsched, "drmsched");
+static int
+drmsched_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return drm_sched_fence_slab_init();
+	case MODULE_CMD_FINI:
+		drm_sched_fence_slab_fini();
+		return 0;
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
+	default:
+		return ENOTTY;
+	}
+}
+#endif
