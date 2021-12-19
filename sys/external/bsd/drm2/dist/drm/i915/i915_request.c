@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.7 2021/12/19 11:58:41 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.8 2021/12/19 12:00:40 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.7 2021/12/19 11:58:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.8 2021/12/19 12:00:40 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -1204,10 +1204,10 @@ void i915_request_skip(struct i915_request *rq, int error)
 	 */
 	head = rq->infix;
 	if (rq->postfix < head) {
-		memset((char *)vaddr + head, 0, rq->ring->size - head);
+		memset(vaddr + head, 0, rq->ring->size - head);
 		head = 0;
 	}
-	memset((char *)vaddr + head, 0, rq->postfix - head);
+	memset(vaddr + head, 0, rq->postfix - head);
 	rq->infix = rq->postfix;
 }
 
