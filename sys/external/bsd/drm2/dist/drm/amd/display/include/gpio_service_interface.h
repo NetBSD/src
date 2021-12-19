@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_service_interface.h,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
+/*	$NetBSD: gpio_service_interface.h,v 1.3 2021/12/19 11:22:32 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -45,7 +45,7 @@ void dal_gpio_destroy(
 
 struct gpio_service *dal_gpio_service_create(
 	enum dce_version dce_version_major,
-	enum dce_version dce_version_minor,
+	enum dce_environment dce_version_minor,
 	struct dc_context *ctx);
 
 struct gpio *dal_gpio_service_create_irq(

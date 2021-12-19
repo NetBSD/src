@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gpio_service.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gpio_service.c,v 1.3 2021/12/19 11:22:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gpio_service.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gpio_service.c,v 1.3 2021/12/19 11:22:31 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_gpio_service.c,v 1.2 2021/12/18 23:45:04 rias
 
 struct gpio_service *dal_gpio_service_create(
 	enum dce_version dce_version_major,
-	enum dce_version dce_version_minor,
+	enum dce_environment dce_version_minor,
 	struct dc_context *ctx)
 {
 	struct gpio_service *service;
