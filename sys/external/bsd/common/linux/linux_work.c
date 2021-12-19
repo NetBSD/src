@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.49 2021/12/19 01:04:05 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.50 2021/12/19 01:20:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.49 2021/12/19 01:04:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.50 2021/12/19 01:20:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -63,6 +63,7 @@ struct workqueue_struct {
 	bool			wq_dying;
 	uint64_t		wq_gen;
 	struct lwp		*wq_lwp;
+	const char		*wq_name;
 };
 
 static void __dead	linux_workqueue_thread(void *);
@@ -249,6 +250,7 @@ alloc_ordered_workqueue(const char *name, int flags)
 	wq->wq_dying = false;
 	wq->wq_gen = 0;
 	wq->wq_lwp = NULL;
+	wq->wq_name = name;
 
 	error = kthread_create(PRI_NONE,
 	    KTHREAD_MPSAFE|KTHREAD_TS|KTHREAD_MUSTJOIN, NULL,
@@ -1387,14 +1389,16 @@ flush_scheduled_work(void)
  * flush_workqueue_locked(wq)
  *
  *	Wait for all work queued on wq to complete.  This does not
- *	include delayed work.
+ *	include delayed work.  True if there was work to be flushed,
+ *	false it the queue was empty.
  *
  *	Caller must hold wq's lock.
  */
-static void
+static bool
 flush_workqueue_locked(struct workqueue_struct *wq)
 {
 	uint64_t gen;
+	bool work_queued = false;
 
 	KASSERT(mutex_owned(&wq->wq_lock));
 
@@ -1405,22 +1409,29 @@ flush_workqueue_locked(struct workqueue_struct *wq)
 	 * If there's a batch of work in progress, we must wait for the
 	 * worker thread to finish that batch.
 	 */
-	if (wq->wq_current_work != NULL)
+	if (wq->wq_current_work != NULL) {
 		gen++;
+		work_queued = true;
+	}
 
 	/*
 	 * If there's any work yet to be claimed from the queue by the
 	 * worker thread, we must wait for it to finish one more batch
 	 * too.
 	 */
-	if (!TAILQ_EMPTY(&wq->wq_queue) || !TAILQ_EMPTY(&wq->wq_dqueue))
+	if (!TAILQ_EMPTY(&wq->wq_queue) || !TAILQ_EMPTY(&wq->wq_dqueue)) {
 		gen++;
+		work_queued = true;
+	}
 
 	/* Wait until the generation number has caught up.  */
 	SDT_PROBE1(sdt, linux, work, flush__start,  wq);
 	while (wq->wq_gen < gen)
 		cv_wait(&wq->wq_cv, &wq->wq_lock);
 	SDT_PROBE1(sdt, linux, work, flush__done,  wq);
+
+	/* Return whether we had to wait for anything.  */
+	return work_queued;
 }
 
 /*
@@ -1434,7 +1445,27 @@ flush_workqueue(struct workqueue_struct *wq)
 {
 
 	mutex_enter(&wq->wq_lock);
-	flush_workqueue_locked(wq);
+	(void)flush_workqueue_locked(wq);
+	mutex_exit(&wq->wq_lock);
+}
+
+/*
+ * drain_workqueue(wq)
+ *
+ *	Repeatedly flush wq until there is no more work.
+ */
+void
+drain_workqueue(struct workqueue_struct *wq)
+{
+	unsigned ntries = 0;
+
+	mutex_enter(&wq->wq_lock);
+	while (flush_workqueue_locked(wq)) {
+		if (ntries++ == 10 || (ntries % 100) == 0)
+			printf("linux workqueue %s"
+			    ": still clogged after %u flushes",
+			    wq->wq_name, ntries);
+	}
 	mutex_exit(&wq->wq_lock);
 }
 
@@ -1532,7 +1563,7 @@ flush_delayed_work(struct delayed_work *dw)
 		 * Waiting for the whole queue to flush is overkill,
 		 * but doesn't hurt.
 		 */
-		flush_workqueue_locked(wq);
+		(void)flush_workqueue_locked(wq);
 		waited = true;
 	}
 	mutex_exit(&wq->wq_lock);
