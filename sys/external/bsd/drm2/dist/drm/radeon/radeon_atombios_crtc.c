@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_atombios_crtc.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_atombios_crtc.c,v 1.3 2021/12/19 11:08:32 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_crtc.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_crtc.c,v 1.3 2021/12/19 11:08:32 riastradh Exp $");
 
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_fb_helper.h>
@@ -1198,9 +1198,6 @@ static int dce4_crtc_do_set_base(struct drm_crtc *crtc,
 		radeon_bo_get_tiling_flags(rbo, &tiling_flags, NULL);
 		radeon_bo_unreserve(rbo);
 	}
-
-	radeon_bo_get_tiling_flags(rbo, &tiling_flags, NULL);
-	radeon_bo_unreserve(rbo);
 
 	switch (target_fb->format->format) {
 	case DRM_FORMAT_C8:
