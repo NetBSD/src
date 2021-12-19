@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kthread.c,v 1.4 2021/12/19 12:38:56 riastradh Exp $	*/
+/*	$NetBSD: linux_kthread.c,v 1.5 2021/12/19 12:42:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.4 2021/12/19 12:38:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.5 2021/12/19 12:42:14 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -150,18 +150,56 @@ kthread_run(int (*func)(void *), void *cookie, const char *name)
 	return T;
 }
 
+/*
+ * lwp_kick(l)
+ *
+ *	Cause l to wake up if it is asleep, no matter what condvar or
+ *	other wchan it's asleep on.  This logic is like sleepq_timeout,
+ *	but without setting LW_STIMO.  This is not a general-purpose
+ *	mechanism -- don't go around using this instead of condvars.
+ */
+static void
+lwp_kick(struct lwp *l)
+{
+
+	lwp_lock(l);
+	if (l->l_wchan == NULL) {
+		/* Not sleeping, so no need to wake up.  */
+		lwp_unlock(l);
+	} else {
+		/*
+		 * Sleeping, so wake it up.  lwp_unsleep has the side
+		 * effect of unlocking l when we pass unlock=true.
+		 */
+		lwp_unsleep(l, /*unlock*/true);
+	}
+}
+
 int
 kthread_stop(struct task_struct *T)
 {
+	struct lwp *l;
 	int ret;
 
+	/*
+	 * Notify the thread that it's stopping, and wake it if it's
+	 * parked.
+	 */
 	mutex_enter(&T->kt_lock);
 	T->kt_shouldpark = false;
 	T->kt_shouldstop = true;
 	cv_broadcast(&T->kt_cv);
 	mutex_exit(&T->kt_lock);
 
-	ret = kthread_join(T->kt_lwp);
+	/*
+	 * Kick the lwp in case it's waiting on anything else, and then
+	 * wait for it to complete.  It is the thread's obligation to
+	 * check kthread_shouldstop before sleeping again.
+	 */
+	l = T->kt_lwp;
+	KASSERT(l != curlwp);
+	lwp_kick(l);
+	ret = kthread_join(l);
 
 	kthread_free(T);
 
@@ -201,23 +239,9 @@ kthread_park(struct task_struct *T)
 	/*
 	 * If the thread is asleep for any reason, give it a spurious
 	 * wakeup.  The thread is responsible for checking
-	 * kthread_shouldpark before sleeping.  This logic is like
-	 * sleepq_timeout, but without setting LW_STIMO.
+	 * kthread_shouldpark before sleeping.
 	 */
-	lwp_lock(l);
-	if (l->l_wchan == NULL) {
-		/*
-		 * Not sleeping, so no need to wake up -- the thread
-		 * will eventually check kthread_shouldpark.
-		 */
-		lwp_unlock(l);
-	} else {
-		/*
-		 * Sleeping, so wake it up.  lwp_unsleep has the side
-		 * effect of unlocking l when we pass unlock=true.
-		 */
-		lwp_unsleep(l, /*unlock*/true);
-	}
+	lwp_kick(l);
 
 	/* Wait until the thread has issued kthread_parkme.  */
 	while (!T->kt_parked)
