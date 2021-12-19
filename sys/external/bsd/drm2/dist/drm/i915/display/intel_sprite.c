@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sprite.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_sprite.c,v 1.4 2021/12/19 12:04:33 riastradh Exp $	*/
 
 /*
  * Copyright © 2011 Intel Corporation
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.4 2021/12/19 12:04:33 riastradh Exp $");
 
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
@@ -121,6 +121,7 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
 		DRM_ERROR("PSR idle timed out 0x%x, atomic update may fail\n",
 			  psr_status);
 
+	spin_lock(&crtc->base.dev->event_lock);
 	spin_lock(&dev_priv->drm.vbl_lock);
 
 	crtc->debug.min_vbl = min;
@@ -162,6 +163,7 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
 	return;
 
 irq_disable:
+	spin_lock(&crtc->base.dev->event_lock);
 	spin_lock(&dev_priv->drm.vbl_lock);
 }
 
@@ -189,17 +191,18 @@ void intel_pipe_update_end(struct intel_crtc_state *new_crtc_state)
 	 * event outside of the critical section - the spinlock might spin for a
 	 * while ... */
 	if (new_crtc_state->uapi.event) {
+#ifndef __NetBSD__		/* XXX locking against self */
 		WARN_ON(drm_crtc_vblank_get(&crtc->base) != 0);
+#endif
 
-		spin_lock(&crtc->base.dev->event_lock);
 		drm_crtc_arm_vblank_event(&crtc->base,
 				          new_crtc_state->uapi.event);
-		spin_unlock(&crtc->base.dev->event_lock);
 
 		new_crtc_state->uapi.event = NULL;
 	}
 
 	spin_unlock(&dev_priv->drm.vbl_lock);
+	spin_unlock(&crtc->base.dev->event_lock);
 
 	if (intel_vgpu_active(dev_priv))
 		return;
