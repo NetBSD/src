@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.9 2021/12/19 00:46:44 riastradh Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.10 2021/12/19 01:44:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -136,17 +136,5 @@ interval_tree_iter_next(struct rb_root *root, struct interval_tree_node *node,
 
 	return next;
 }
-
-/*
- * XXX This is not actually postorder, but I can't fathom why you would
- * want postorder for an ordered tree; different insertion orders lead
- * to different traversal orders.
- */
-#define	rbtree_postorder_for_each_entry_safe(NODE, TMP, ROOT, FIELD)	      \
-	for ((NODE) = RB_TREE_MIN(&(ROOT)->rbr_tree);			      \
-		((NODE) != NULL &&					      \
-		    ((TMP) = rb_tree_iterate(&(ROOT)->rbr_tree, (NODE),	      \
-			RB_DIR_RIGHT)));				      \
-		(NODE) = (TMP))
 
 #endif	/* _LINUX_INTERVAL_TREE_H_ */
