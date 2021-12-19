@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.18 2021/12/19 00:28:20 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.19 2021/12/19 00:55:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.18 2021/12/19 00:28:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.19 2021/12/19 00:55:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.18 2021/12/19 00:28:20 riastradh Ex
 #include <drm/drm_sysctl.h>
 #include <drm/drm_panel.h>
 
+#include "../dist/drm/drm_crtc_internal.h"
 #include "../dist/drm/drm_internal.h"
 
 /*
