@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.68 2021/12/19 11:24:21 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.69 2021/12/19 11:24:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.68 2021/12/19 11:24:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.69 2021/12/19 11:24:29 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.68 2021/12/19 11:24:21 riastradh Exp 
 #include <linux/pci.h>
 #include <linux/dma-buf.h>
 #include <linux/mman.h>
+#include <linux/uaccess.h>
 
 #include "display/intel_display.h"
 #include "display/intel_frontbuffer.h"
@@ -392,6 +393,9 @@ i915_gem_shmem_pread(struct drm_i915_gem_object *obj,
 	return ret;
 }
 
+#ifdef __NetBSD__
+#define __iomem
+#endif
 static inline bool
 gtt_user_read(struct io_mapping *mapping,
 	      loff_t base, int offset,
@@ -424,6 +428,9 @@ gtt_user_read(struct io_mapping *mapping,
 	}
 	return unwritten;
 }
+#ifdef __NetBSD__
+#undef __iomem
+#endif
 
 static int
 i915_gem_gtt_pread(struct drm_i915_gem_object *obj,
@@ -793,7 +800,11 @@ i915_gem_shmem_pwrite(struct drm_i915_gem_object *obj,
 	 */
 	partial_cacheline_write = 0;
 	if (needs_clflush & CLFLUSH_BEFORE)
+#ifdef __NetBSD__
+		partial_cacheline_write = cpu_info_primary.ci_cflush_lsize - 1;
+#else
 		partial_cacheline_write = boot_cpu_data.x86_clflush_size - 1;
+#endif
 
 	user_data = u64_to_user_ptr(args->data_ptr);
 	remain = args->size;
