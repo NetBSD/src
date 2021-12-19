@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_vga.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_vga.c,v 1.3 2021/12/19 10:25:07 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_vga.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_vga.c,v 1.3 2021/12/19 10:25:07 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/vgaarb.h>
@@ -146,6 +146,7 @@ intel_vga_set_state(struct drm_i915_private *i915, bool enable_decode)
 	return 0;
 }
 
+#ifndef __NetBSD__
 static unsigned int
 intel_vga_set_decode(void *cookie, bool enable_decode)
 {
@@ -159,9 +160,11 @@ intel_vga_set_decode(void *cookie, bool enable_decode)
 	else
 		return VGA_RSRC_NORMAL_IO | VGA_RSRC_NORMAL_MEM;
 }
+#endif	/* __NetBSD__ */
 
 int intel_vga_register(struct drm_i915_private *i915)
 {
+#ifndef __NetBSD__
 	struct pci_dev *pdev = i915->drm.pdev;
 	int ret;
 
@@ -176,13 +179,16 @@ int intel_vga_register(struct drm_i915_private *i915)
 	ret = vga_client_register(pdev, i915, NULL, intel_vga_set_decode);
 	if (ret && ret != -ENODEV)
 		return ret;
+#endif
 
 	return 0;
 }
 
 void intel_vga_unregister(struct drm_i915_private *i915)
 {
+#ifndef __NetBSD__
 	struct pci_dev *pdev = i915->drm.pdev;
 
 	vga_client_register(pdev, NULL, NULL, NULL);
+#endif	/* __NetBSD__ */
 }
