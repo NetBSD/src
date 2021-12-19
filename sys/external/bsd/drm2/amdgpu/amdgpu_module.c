@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_module.c,v 1.8 2021/12/19 12:30:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_module.c,v 1.9 2021/12/19 12:30:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.8 2021/12/19 12:30:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.9 2021/12/19 12:30:40 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -80,6 +80,11 @@ amdgpu_init(void)
 	linux_mutex_init(&mgpu_info.mutex);
 	ida_init(&amdgpu_pasid_ida);
 
+	error = amdgpu_sync_init();
+	KASSERT(error == 0);
+	error = amdgpu_fence_slab_init();
+	KASSERT(error == 0);
+
 #if notyet			/* XXX amdgpu acpi */
 	amdgpu_register_atpx_handler();
 #endif
@@ -112,6 +117,8 @@ amdgpu_fini(void)
 #if notyet			/* XXX amdgpu acpi */
 	amdgpu_unregister_atpx_handler();
 #endif
+	amdgpu_fence_slab_fini();
+	amdgpu_sync_fini();
 
 	ida_destroy(&amdgpu_pasid_ida);
 	linux_mutex_destroy(&mgpu_info.mutex);
