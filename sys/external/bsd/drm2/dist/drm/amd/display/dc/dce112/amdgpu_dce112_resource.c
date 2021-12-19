@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce112_resource.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce112_resource.c,v 1.3 2021/12/19 11:22:51 riastradh Exp $	*/
 
 /*
 * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce112_resource.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce112_resource.c,v 1.3 2021/12/19 11:22:51 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -332,6 +332,8 @@ static const struct dce110_aux_registers aux_engine_regs[] = {
 		aux_engine_regs(5)
 };
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
+
 #define audio_regs(id)\
 [id] = {\
 	AUD_COMMON_REG_LIST(id)\
@@ -353,6 +355,8 @@ static const struct dce_audio_shift audio_shift = {
 static const struct dce_audio_mask audio_mask = {
 		AUD_COMMON_MASK_SH_LIST(_MASK)
 };
+
+#endif	/* __NetBSD__ */
 
 #define clk_src_regs(index, id)\
 [index] = {\
@@ -472,12 +476,14 @@ static void read_dce_straps(
 	REG_GET(DC_PINSTRAPS, DC_PINSTRAPS_AUDIO, &straps->dc_pinstraps_audio);
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 static struct audio *create_audio(
 		struct dc_context *ctx, unsigned int inst)
 {
 	return dce_audio_create(ctx, inst,
 			&audio_regs[inst], &audio_shift, &audio_mask);
 }
+#endif
 
 
 static struct timing_generator *dce112_timing_generator_create(
@@ -542,7 +548,9 @@ static struct dce_hwseq *dce112_hwseq_create(
 
 static const struct resource_create_funcs res_create_funcs = {
 	.read_dce_straps = read_dce_straps,
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 	.create_audio = create_audio,
+#endif
 	.create_stream_encoder = dce112_stream_encoder_create,
 	.create_hwseq = dce112_hwseq_create,
 };
@@ -803,7 +811,9 @@ static void dce112_resource_destruct(struct dce110_resource_pool *pool)
 
 	for (i = 0; i < pool->base.audio_count; i++)	{
 		if (pool->base.audios[i] != NULL) {
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 			dce_aud_destroy(&pool->base.audios[i]);
+#endif
 		}
 	}
 
