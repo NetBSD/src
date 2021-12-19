@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.5 2021/12/19 01:15:48 riastradh Exp $	*/
+/*	$NetBSD: file.h,v 1.6 2021/12/19 09:51:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _LINUX_FILE_H_
 #define _LINUX_FILE_H_
 
+#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
