@@ -1,4 +1,4 @@
-/*	$NetBSD: overflow.h,v 1.4 2021/12/19 11:05:40 riastradh Exp $	*/
+/*	$NetBSD: overflow.h,v 1.1 2021/12/19 12:20:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
