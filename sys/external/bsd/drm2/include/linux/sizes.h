@@ -1,4 +1,4 @@
-/*	$NetBSD: sizes.h,v 1.1 2021/12/19 00:30:11 riastradh Exp $	*/
+/*	$NetBSD: sizes.h,v 1.2 2021/12/19 11:14:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define	_LINUX_SIZES_H_
 
 #define	SZ_8K		0x00008000
+#define	SZ_64K		0x00010000
 #define	SZ_1M		0x00100000
 #define	SZ_2M		0x00200000
 
