@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.18 2021/12/19 12:32:53 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.19 2021/12/19 12:33:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.18 2021/12/19 12:32:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.19 2021/12/19 12:33:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -818,6 +818,7 @@ top:	KASSERT(fence == NULL);
 			    GFP_KERNEL);
 			if (shared == NULL)
 				return -ENOMEM;
+			goto top;
 		}
 
 		/*
