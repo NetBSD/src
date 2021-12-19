@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.27 2021/12/19 11:08:55 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.28 2021/12/19 11:36:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.27 2021/12/19 11:08:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.28 2021/12/19 11:36:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -398,7 +398,7 @@ drm_ioctl_shim(struct file *fp, unsigned long cmd, void *data)
 }
 
 static int
-drm_poll(struct file *fp __unused, int events __unused)
+drm_poll(struct file *fp, int events)
 {
 	struct drm_file *const file = fp->f_data;
 	struct drm_device *const dev = file->minor->dev;
