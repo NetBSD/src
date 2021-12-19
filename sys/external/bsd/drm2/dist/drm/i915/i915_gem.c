@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.71 2021/12/19 12:25:27 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.72 2021/12/19 12:25:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,23 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.71 2021/12/19 12:25:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.72 2021/12/19 12:25:37 riastradh Exp $");
 
 #ifdef __NetBSD__
-#if 0				/* XXX uvmhist option?  */
-#include "opt_uvmhist.h"
-#endif
-
-#include <sys/types.h>
-#include <sys/param.h>
-
-#include <uvm/uvm.h>
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_fault.h>
-#include <uvm/uvm_page.h>
-#include <uvm/uvm_pmap.h>
-#include <uvm/uvm_prot.h>
-
 #include <drm/bus_dma_hacks.h>
 #endif
 
@@ -241,7 +227,7 @@ i915_gem_create(struct drm_file *file,
 	int ret;
 
 	GEM_BUG_ON(!is_power_of_2(mr->min_page_size));
-	size = round_up(*size_p, mr->min_page_size);
+	size = ALIGN(*size_p, mr->min_page_size);
 	if (size == 0)
 		return -EINVAL;
 
@@ -269,7 +255,6 @@ i915_gem_dumb_create(struct drm_file *file,
 		     struct drm_device *dev,
 		     struct drm_mode_create_dumb *args)
 {
-
 	enum intel_memory_type mem_type;
 	int cpp = DIV_ROUND_UP(args->bpp, 8);
 	u32 format;
@@ -289,12 +274,12 @@ i915_gem_dumb_create(struct drm_file *file,
 	}
 
 	/* have to work out size/pitch and return them */
-	args->pitch = round_up(args->width * cpp, 64);
+	args->pitch = ALIGN(args->width * cpp, 64);
 
 	/* align stride to page size so that we can remap */
 	if (args->pitch > intel_plane_fb_max_stride(to_i915(dev), format,
 						    DRM_FORMAT_MOD_LINEAR))
-		args->pitch = round_up(args->pitch, 4096);
+		args->pitch = ALIGN(args->pitch, 4096);
 
 	if (args->pitch < args->width)
 		return -EINVAL;
@@ -363,7 +348,6 @@ i915_gem_shmem_pread(struct drm_i915_gem_object *obj,
 	int ret;
 
 	ret = i915_gem_object_prepare_read(obj, &needs_clflush);
-
 	if (ret)
 		return ret;
 
