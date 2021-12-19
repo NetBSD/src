@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.6 2020/01/01 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: reboot.h,v 1.7 2021/12/19 12:00:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -59,6 +59,13 @@ static inline int
 unregister_reboot_notifier(struct notifier_block *block)
 {
 	return 0;
+}
+
+static inline void
+emergency_restart(void)
+{
+
+	kern_reboot(0, NULL);
 }
 
 #endif	/* _LINUX_REBOOT_H_ */
