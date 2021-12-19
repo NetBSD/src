@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.7 2020/07/03 16:23:02 maxv Exp $	*/
+/*	$NetBSD: completion.h,v 1.8 2021/12/19 00:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -220,6 +220,43 @@ out:	mutex_exit(&completion->c_lock);
 		return 0;
 	} else if ((error == EINTR) || (error == ERESTART)) {
 		return -ERESTARTSYS;
+	} else {
+		KASSERTMSG((error == 0), "error = %d", error);
+		return ticks;
+	}
+}
+
+static inline int
+wait_for_completion_timeout(struct completion *completion, unsigned long ticks)
+{
+	/* XXX Arithmetic overflow...?  */
+	unsigned int start = hardclock_ticks, now;
+	int error;
+
+	mutex_enter(&completion->c_lock);
+
+	/* Wait until c_done is nonzero.  */
+	while (completion->c_done == 0) {
+		error = cv_timedwait(&completion->c_cv, &completion->c_lock,
+		    ticks);
+		if (error)
+			goto out;
+		now = hardclock_ticks;
+		if (ticks < (now - start)) {
+			error = EWOULDBLOCK;
+			goto out;
+		}
+		ticks -= (now - start);
+		start = now;
+	}
+
+	/* Success!  */
+	_completion_claim(completion);
+	error = 0;
+
+out:	mutex_exit(&completion->c_lock);
+	if (error == EWOULDBLOCK) {
+		return 0;
 	} else {
 		KASSERTMSG((error == 0), "error = %d", error);
 		return ticks;
