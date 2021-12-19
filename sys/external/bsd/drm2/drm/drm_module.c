@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.25 2021/12/19 10:36:21 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.26 2021/12/19 11:01:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.25 2021/12/19 10:36:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.26 2021/12/19 11:01:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -109,6 +109,9 @@ drm_init(void)
 	error = linux_guarantee_initialized();
 	if (error)
 		return error;
+
+	extern bool drm_core_init_complete;
+	drm_core_init_complete = true;
 
 	drm_agp_hooks_init();
 #if NAGP > 0
