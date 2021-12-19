@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.30 2021/12/19 10:57:12 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.31 2021/12/19 11:01:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -82,6 +82,12 @@ atomic_set(atomic_t *atomic, int value)
 {
 	/* no membar */
 	atomic->a_u.au_int = value;
+}
+
+static inline void
+atomic_set_release(atomic_t *atomic, int value)
+{
+	atomic_store_release(&atomic->a_u.au_int, value);
 }
 
 static inline void
