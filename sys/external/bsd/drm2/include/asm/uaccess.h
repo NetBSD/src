@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.5 2021/12/19 00:55:01 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.6 2021/12/19 01:39:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -71,6 +71,17 @@ copy_to_user(void *user_addr, const void *kernel_addr, size_t len)
 	const typeof(*(USER_PTR)) __put_user_tmp = (KERNEL_RVAL);	      \
 	copy_to_user((USER_PTR), &__put_user_tmp, sizeof(__put_user_tmp));    \
 })
+
+#define	__get_user	get_user
+#define	__put_user	put_user
+
+#define	user_access_begin()	__nothing
+#define	user_access_end()	__nothing
+
+#define	unsafe_put_user(KERNEL_RVAL, USER_PTR, LABEL)	do {		      \
+	if (__put_user(KERNEL_RVAL, USER_PTR))				      \
+		goto LABEL;						      \
+} while (0)
 
 static inline size_t
 clear_user(void __user *user_ptr, size_t size)
