@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_breadcrumbs.c,v 1.4 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: intel_breadcrumbs.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_breadcrumbs.c,v 1.4 2021/12/19 11:38:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_breadcrumbs.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <trace/events/dma_fence.h>
@@ -291,6 +291,9 @@ void intel_engine_reset_breadcrumbs(struct intel_engine_cs *engine)
 
 void intel_engine_fini_breadcrumbs(struct intel_engine_cs *engine)
 {
+	struct intel_breadcrumbs *b = &engine->breadcrumbs;
+
+	spin_lock_destroy(&b->irq_lock);
 }
 
 bool i915_request_enable_breadcrumb(struct i915_request *rq)

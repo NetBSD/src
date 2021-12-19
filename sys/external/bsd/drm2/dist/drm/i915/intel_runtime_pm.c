@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.11 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.12 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.11 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.12 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 
@@ -85,6 +85,11 @@ static void __print_depot_stack(depot_stack_handle_t stack,
 static void init_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm)
 {
 	spin_lock_init(&rpm->debug.lock);
+}
+
+static void fini_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm)
+{
+	spin_lock_fini(&rpm->debug.lock);
 }
 
 static noinline depot_stack_handle_t
@@ -307,6 +312,10 @@ out:
 #else
 
 static void init_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm)
+{
+}
+
+static void fini_intel_runtime_pm_wakeref(struct intel_runtime_pm *rpm)
 {
 }
 
@@ -609,6 +618,7 @@ void intel_runtime_pm_driver_release(struct intel_runtime_pm *rpm)
 	     intel_rpm_wakelock_count(count));
 
 	untrack_all_intel_runtime_pm_wakerefs(rpm);
+	fini_intel_runtime_pm_wakeref(rpm);
 }
 
 void intel_runtime_pm_init_early(struct intel_runtime_pm *rpm)

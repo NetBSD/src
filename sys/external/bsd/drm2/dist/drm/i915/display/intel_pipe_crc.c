@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pipe_crc.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_pipe_crc.c,v 1.3 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pipe_crc.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pipe_crc.c,v 1.3 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/circ_buf.h>
 #include <linux/ctype.h>
@@ -453,6 +453,17 @@ void intel_display_crc_init(struct drm_i915_private *dev_priv)
 		struct intel_pipe_crc *pipe_crc = &dev_priv->pipe_crc[pipe];
 
 		spin_lock_init(&pipe_crc->lock);
+	}
+}
+
+void intel_display_crc_init(struct drm_i915_private *dev_priv)
+{
+	enum pipe pipe;
+
+	for_each_pipe(dev_priv, pipe) {
+		struct intel_pipe_crc *pipe_crc = &dev_priv->pipe_crc[pipe];
+
+		spin_lock_destroy(&pipe_crc->lock);
 	}
 }
 

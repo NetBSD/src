@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_ct.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_ct.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_ct.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_ct.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_guc_ct.h"
@@ -191,6 +191,7 @@ void intel_guc_ct_fini(struct intel_guc_ct *ct)
 	GEM_BUG_ON(ct->enabled);
 
 	i915_vma_unpin_and_release(&ct->vma, I915_VMA_RELEASE_MAP);
+	spin_lock_destroy(&ct->requests.lock);
 }
 
 /**

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.7 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.8 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -134,7 +134,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.7 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.8 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/interrupt.h>
 
@@ -4732,6 +4732,9 @@ static void virtual_context_destroy(struct kref *kref)
 	if (ve->context.state)
 		__execlists_context_fini(&ve->context);
 	intel_context_fini(&ve->context);
+
+	intel_engine_fini_breadcrumbs(&ve->base);
+	spin_lock_destroy(&ve->base.active.lock);
 
 	kfree(ve->bonds);
 	kfree(ve);
