@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.14 2021/12/19 00:49:00 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.15 2021/12/19 01:03:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #define	schedule_work			linux_schedule_work
 #define	system_long_wq			linux_system_long_wq
 #define	system_power_efficient_wq	linux_system_power_efficient_wq
+#define	system_unbound_wq		linux_system_unbound_wq
 #define	system_wq			linux_system_wq
 #define	to_delayed_work			linux_to_delayed_work
 
