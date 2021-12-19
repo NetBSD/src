@@ -1,4 +1,4 @@
-/*	$NetBSD: hrtimer.h,v 1.3 2021/12/19 10:38:05 riastradh Exp $	*/
+/*	$NetBSD: hrtimer.h,v 1.4 2021/12/19 11:23:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,9 +32,48 @@
 #ifndef _LINUX_HRTIMER_H_
 #define _LINUX_HRTIMER_H_
 
+#include <sys/types.h>
+
+#include <sys/callout.h>
+
+#include <linux/ktime.h>
 #include <linux/timer.h>
 
 struct hrtimer {
+	enum hrtimer_restart (*function)(struct hrtimer *);
+
+	struct hrtimer_private	*hrt_private;
 };
+
+enum hrtimer_mode {
+	HRTIMER_MODE_ABS,
+	HRTIMER_MODE_REL,
+};
+
+enum hrtimer_restart {
+	HRTIMER_NORESTART,
+	HRTIMER_RESTART,
+};
+
+#define	hrtimer_active		linux_hrtimer_active
+#define	hrtimer_add_expires_ns	linux_hrtimer_add_expires_ns
+#define	hrtimer_cancel		linux_hrtimer_cancel
+#define	hrtimer_forward		linux_hrtimer_forward
+#define	hrtimer_forward_now	linux_hrtimer_forward_now
+#define	hrtimer_init		linux_hrtimer_init
+#define	hrtimer_set_expires	linux_hrtimer_set_expiresp
+#define	hrtimer_start		linux_hrtimer_start
+#define	hrtimer_start_range_ns	linux_hrtimer_start_range_ns
+
+void hrtimer_init(struct hrtimer *, clockid_t, enum hrtimer_mode);
+void hrtimer_set_expires(struct hrtimer *, ktime_t);
+void hrtimer_add_expires_ns(struct hrtimer *, uint64_t);
+void hrtimer_start(struct hrtimer *, ktime_t, enum hrtimer_mode);
+void hrtimer_start_range_ns(struct hrtimer *, ktime_t, uint64_t,
+    enum hrtimer_mode);
+int hrtimer_cancel(struct hrtimer *);
+bool hrtimer_active(struct hrtimer *);
+uint64_t hrtimer_forward(struct hrtimer *, ktime_t, ktime_t);
+uint64_t hrtimer_forward_now(struct hrtimer *, ktime_t);
 
 #endif  /* _LINUX_HRTIMER_H_ */
