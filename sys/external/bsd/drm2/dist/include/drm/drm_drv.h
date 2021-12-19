@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.h,v 1.3 2021/12/19 00:46:08 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.h,v 1.4 2021/12/19 01:56:33 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -461,6 +461,11 @@ struct drm_driver {
 	 */
 	void (*irq_uninstall) (struct drm_device *dev);
 
+#ifdef __NetBSD__
+	int (*request_irq)(struct drm_device *, int);
+	void (*free_irq)(struct drm_device *);
+#endif
+
 	/**
 	 * @master_create:
 	 *
@@ -654,8 +659,14 @@ struct drm_driver {
 	 * FIXME: There's way too much duplication going on here, and also moved
 	 * to &drm_gem_object_funcs.
 	 */
+#ifdef __NetBSD__
+	int (*gem_prime_mmap)(struct drm_gem_object *obj, off_t *offp,
+	    size_t len, int prot, int *flagsp, int *advicep,
+	    struct uvm_object **uobjp, int *maxprotp);
+#else
 	int (*gem_prime_mmap)(struct drm_gem_object *obj,
 				struct vm_area_struct *vma);
+#endif
 
 	/**
 	 * @dumb_create:
@@ -725,7 +736,13 @@ struct drm_driver {
 	 * For GEM drivers this is deprecated in favour of
 	 * &drm_gem_object_funcs.vm_ops.
 	 */
+#ifdef __NetBSD__
+	int (*mmap_object)(struct drm_device *, off_t, size_t, int,
+	    struct uvm_object **, voff_t *, struct file *);
+	const struct uvm_pagerops *gem_uvm_ops;
+#else
 	const struct vm_operations_struct *gem_vm_ops;
+#endif
 
 	/** @major: driver major number */
 	int major;
@@ -768,6 +785,10 @@ struct drm_driver {
 	 * some examples.
 	 */
 	const struct file_operations *fops;
+
+#ifdef __NetBSD__
+	int (*ioctl_override)(struct file *, unsigned long, void *);
+#endif
 
 	/* Everything below here is for legacy driver, never use! */
 	/* private: */
