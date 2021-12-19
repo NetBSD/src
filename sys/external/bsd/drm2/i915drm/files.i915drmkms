@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.60 2021/12/19 11:05:33 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.61 2021/12/19 11:13:44 riastradh Exp $
 
 version	20180827
 
@@ -13,6 +13,7 @@ attach	intelfb at intelfbbus
 # overflow is OK.
 makeoptions 	i915drmkms	"COPTS.i915drmkms"+="-fwrapv"
 
+makeoptions	intelfb		"CPPFLAGS.intelfb"+="-I$S/external/bsd/drm2/i915drm"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-I$S/external/bsd/drm2/i915drm"
 
 makeoptions	intelfb		"CPPFLAGS.intelfb"+="-I$S/external/bsd/drm2/dist/drm/i915"
