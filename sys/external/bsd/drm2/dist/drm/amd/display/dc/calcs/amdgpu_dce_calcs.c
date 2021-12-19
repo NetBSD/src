@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce_calcs.c,v 1.3 2021/12/19 11:23:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce_calcs.c,v 1.4 2021/12/19 11:23:37 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_calcs.c,v 1.3 2021/12/19 11:23:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_calcs.c,v 1.4 2021/12/19 11:23:37 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -3018,7 +3018,7 @@ static bool all_displays_in_sync(const struct pipe_ctx pipe[],
 
 bool bw_calcs(struct dc_context *ctx,
 	const struct bw_calcs_dceip *dceip,
-	const struct bw_calcs_vbios *vbios,
+	struct bw_calcs_vbios *vbios,
 	const struct pipe_ctx pipe[],
 	int pipe_count,
 	struct dce_bw_output *calcs_output)
