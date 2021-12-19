@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.1 2021/12/19 10:24:33 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.2 2021/12/19 10:28:52 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -152,27 +152,5 @@ int drm_guarantee_initialized(void);
 /* platform section */
 extern int drm_platform_init(struct drm_driver *driver, struct platform_device *platform_device);
 extern int drm_platform_set_busid(struct drm_device *d, struct drm_master *m);
-
-#ifdef __NetBSD__
-
-/* XXX This is pretty kludgerific.  */
-
-#include <linux/io-mapping.h>
-
-static inline struct io_mapping *
-drm_io_mapping_create_wc(struct drm_device *dev, resource_size_t addr,
-    unsigned long size)
-{
-	return bus_space_io_mapping_create_wc(dev->bst, addr, size);
-}
-
-static inline bool
-drm_io_mapping_init_wc(struct drm_device *dev, struct io_mapping *mapping,
-    resource_size_t addr, unsigned long size)
-{
-	return bus_space_io_mapping_init_wc(dev->bst, mapping, addr, size);
-}
-
-#endif	/* defined(__NetBSD__) */
 
 #endif
