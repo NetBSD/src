@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.3 2021/12/19 11:55:58 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.4 2021/12/19 12:22:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -55,6 +55,19 @@ fs_reclaim_acquire(gfp_t gfp)
 static inline void
 fs_reclaim_release(gfp_t gfp)
 {
+}
+
+static inline unsigned
+memalloc_nofs_save(void)
+{
+	return 0xeb13162c;
+}
+
+static inline void
+memalloc_nofs_restore(unsigned flags)
+{
+
+	KASSERT(flags == 0xeb13162c);
 }
 
 #endif	/* _LINUX_SCHED_MM_H_ */
