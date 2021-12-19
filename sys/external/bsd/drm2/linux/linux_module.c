@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.11 2021/12/19 01:22:15 riastradh Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.12 2021/12/19 11:49:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.11 2021/12/19 01:22:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.12 2021/12/19 11:49:57 riastradh Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.11 2021/12/19 01:22:15 riastradh 
 #include <linux/highmem.h>
 #include <linux/idr.h>
 #include <linux/io.h>
+#include <linux/irq_work.h>
 #include <linux/mutex.h>
 #include <linux/rcupdate.h>
 #include <linux/tasklet.h>
@@ -103,6 +104,8 @@ linux_init(void)
 		goto fail7;
 	}
 
+	linux_irq_work_init();
+
 	return 0;
 
 fail8: __unused
@@ -134,6 +137,7 @@ static void
 linux_fini(void)
 {
 
+	linux_irq_work_fini();
 	linux_wait_bit_fini();
 	linux_tasklets_fini();
 	linux_atomic64_fini();
