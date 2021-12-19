@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gemfs.c,v 1.1 2021/12/19 01:40:34 riastradh Exp $	*/
+/*	$NetBSD: i915_gemfs.c,v 1.2 2021/12/19 01:54:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,9 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gemfs.c,v 1.1 2021/12/19 01:40:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gemfs.c,v 1.2 2021/12/19 01:54:05 riastradh Exp $");
 
-#include "i915_gemfs.h"
+#include "gem/i915_gemfs.h"
 
 int
 i915_gemfs_init(struct drm_i915_private *i915)
