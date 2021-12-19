@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.18 2021/12/19 00:29:02 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.19 2021/12/19 01:03:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.18 2021/12/19 00:29:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.19 2021/12/19 01:03:22 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -87,10 +87,12 @@ MODULE_PARM_DESC(drm_leak_fbdev_smem,
 #ifdef __NetBSD__		/* XXX LIST_HEAD means something else */
 static struct list_head kernel_fb_helper_list =
     LIST_HEAD_INIT(kernel_fb_helper_list);
+#define	kernel_fb_helper_lock	drm_kernel_fb_helper_lock
+struct mutex kernel_fb_helper_lock;
 #else
 static LIST_HEAD(kernel_fb_helper_list);
-#endif
 static DEFINE_MUTEX(kernel_fb_helper_lock);
+#endif
 
 /**
  * DOC: fbdev helpers

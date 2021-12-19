@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.20 2021/12/19 00:58:31 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.21 2021/12/19 01:03:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.20 2021/12/19 00:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.21 2021/12/19 01:03:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -124,6 +124,7 @@ drm_init(void)
 	idr_init(&drm_minors_idr);
 	srcu_init(&drm_unplug_srcu, "drmunplg");
 	linux_mutex_init(&drm_global_mutex);
+	linux_mutex_init(&drm_kernel_fb_helper_lock);
 	drm_connector_ida_init();
 	drm_global_init();
 	drm_panel_init_lock();
@@ -156,6 +157,7 @@ drm_fini(void)
 	drm_panel_fini_lock();
 	drm_global_release();
 	drm_connector_ida_destroy();
+	linux_mutex_destroy(&drm_kernel_fb_helper_lock);
 	linux_mutex_destroy(&drm_global_mutex);
 	srcu_fini(&drm_unplug_srcu);
 	idr_destroy(&drm_minors_idr);
