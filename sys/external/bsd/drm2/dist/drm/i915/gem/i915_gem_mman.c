@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.17 2021/12/19 12:08:46 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.18 2021/12/19 12:09:01 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.17 2021/12/19 12:08:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.18 2021/12/19 12:09:01 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -434,6 +434,9 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 				       PIN_MAPPABLE |
 				       PIN_NONBLOCK /* NOWARN */ |
 				       PIN_NOEVICT);
+#ifdef __NetBSD__		/* XXX i915 partial views */
+	(void)compute_partial_view;
+#else
 	if (IS_ERR(vma)) {
 		/* Use a partial view if it is bigger than available space */
 		struct i915_ggtt_view view =
@@ -459,6 +462,7 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 		/* The entire mappable GGTT is pinned? Unexpected! */
 		GEM_BUG_ON(vma == ERR_PTR(-ENOSPC));
 	}
+#endif
 	if (IS_ERR(vma)) {
 		ret = PTR_ERR(vma);
 		goto err_reset;
