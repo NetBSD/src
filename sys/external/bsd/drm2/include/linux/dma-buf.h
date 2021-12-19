@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-buf.h,v 1.6 2021/12/19 01:23:09 riastradh Exp $	*/
+/*	$NetBSD: dma-buf.h,v 1.7 2021/12/19 09:50:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/bus.h>
 #include <sys/mutex.h>
 
+#include <linux/err.h>
 #include <linux/reservation.h>
 
 struct device;
