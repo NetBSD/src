@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.h,v 1.7 2021/12/19 11:50:17 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.h,v 1.8 2021/12/19 11:56:52 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -21,7 +21,7 @@ struct mutex;
 
 int i915_gem_mmap_gtt_version(void);
 #ifdef __NetBSD__
-extern const struct uvm_pagerops *const i915_gem_uvm_ops;
+extern const struct uvm_pagerops i915_gem_uvm_ops;
 int i915_gem_mmap_object(struct drm_device *, off_t, size_t, int,
     struct uvm_object **, voff_t *, struct file *);
 #else
