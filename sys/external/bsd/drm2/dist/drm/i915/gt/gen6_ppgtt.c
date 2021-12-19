@@ -1,4 +1,4 @@
-/*	$NetBSD: gen6_ppgtt.c,v 1.7 2021/12/19 12:27:25 riastradh Exp $	*/
+/*	$NetBSD: gen6_ppgtt.c,v 1.8 2021/12/19 12:27:32 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.7 2021/12/19 12:27:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.8 2021/12/19 12:27:32 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -347,23 +347,23 @@ static int pd_vma_bind(struct i915_vma *vma,
 	px_base(ppgtt->base.pd)->ggtt_offset = ggtt_offset * sizeof(gen6_pte_t);
 #ifdef __NetBSD__
     {
-	bus_size_t vm_nbytes = ggtt->vm.total;
-	bus_size_t vm_npgs = vm_nbytes >> PAGE_SHIFT;
-	bus_size_t gtt_nbytes = vm_npgs * sizeof(gen6_pte_t);
+	bus_size_t npgs = vma->size >> PAGE_SHIFT;
+	bus_size_t gtt_nbytes = npgs * sizeof(gen6_pte_t);
 	bus_size_t ggtt_offset_bytes =
 	    (bus_size_t)ggtt_offset * sizeof(gen6_pte_t);
 	int ret;
 
 	KASSERTMSG(gtt_nbytes <= ggtt->gsmsz - ggtt_offset_bytes,
-	    "oversize ggtt vm total 0x%"PRIx64" bytes 0x%"PRIx64" pgs,"
+	    "oversize ppgtt size 0x%"PRIx64" bytes 0x%"PRIx64" pgs,"
 	    " requiring 0x%"PRIx64" bytes of ptes at 0x%"PRIx64";"
-	    " gsm has 0x%"PRIx64" bytes total with only 0x%"PRIx64" for ptes",
-	    vm_nbytes, vm_npgs,
-	    gtt_nbytes, ggtt_offset_bytes,
-	    ggtt->gsmsz, ggtt->gsmsz - ggtt_offset_bytes);
+	    " gsm has 0x%"PRIx64" bytes total"
+	    " with only 0x%"PRIx64" for ptes",
+	    (uint64_t)vma->size, (uint64_t)npgs,
+	    (uint64_t)gtt_nbytes, (uint64_t)ggtt_offset_bytes,
+	    (uint64_t)ggtt->gsmsz,
+	    (uint64_t)(ggtt->gsmsz - ggtt_offset_bytes));
 	ret = -bus_space_subregion(ggtt->gsmt, ggtt->gsmh, ggtt_offset_bytes,
-	    MIN(gtt_nbytes, ggtt->gsmsz - ggtt_offset_bytes),
-	    &ppgtt->pd_bsh);
+	    gtt_nbytes, &ppgtt->pd_bsh);
 	if (ret) {
 		DRM_ERROR("Unable to subregion the GGTT: %d\n", ret);
 		return ret;
