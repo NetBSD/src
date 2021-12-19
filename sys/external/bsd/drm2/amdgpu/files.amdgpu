@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.16 2021/12/19 11:22:51 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.17 2021/12/19 11:24:37 riastradh Exp $
 
 version	20180827
 
@@ -32,6 +32,7 @@ makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/displ
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/dmub/inc"
 
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-DCONFIG_DRM_AMD_ACP"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-DCONFIG_DRM_AMD_DC_DCN"
 
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-missing-field-initializers"
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-missing-prototypes"
