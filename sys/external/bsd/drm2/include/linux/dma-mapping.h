@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-mapping.h,v 1.5 2018/08/27 06:17:40 riastradh Exp $	*/
+/*	$NetBSD: dma-mapping.h,v 1.6 2021/12/19 00:25:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,12 +34,16 @@
 
 #include <sys/bus.h>
 
+#include <machine/limits.h>
+
 typedef bus_addr_t dma_addr_t;
 
 static inline uintmax_t
 DMA_BIT_MASK(unsigned nbits)
 {
 
+	if (nbits == CHAR_BIT*sizeof(uintmax_t))
+		return ~(uintmax_t)0;
 	return ~(~(uintmax_t)0 << nbits);
 }
 
