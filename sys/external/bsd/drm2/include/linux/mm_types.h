@@ -1,4 +1,4 @@
-/*	$NetBSD: mm_types.h,v 1.5 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: mm_types.h,v 1.6 2021/12/19 10:50:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <uvm/uvm_page.h>	/* XXX don't expose this */
 
+#include <linux/completion.h>
 #include <linux/rwsem.h>
 
 struct page {
