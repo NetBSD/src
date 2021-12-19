@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.62 2021/12/19 11:13:52 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.63 2021/12/19 11:19:17 riastradh Exp $
 
 version	20180827
 
@@ -22,6 +22,7 @@ makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-I$S/external/bsd/drm2/dist/drm/i
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_FBDEV_EMULATION=1"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_DEBUG=1" # XXX
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_DEBUG_GEM=1" # XXX
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_DEBUG_RUNTIME_PM=1" # XXX
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_PREEMPT_TIMEOUT=640"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_TIMESLICE_DURATION=1"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_ALPHA_SUPPORT=0"
