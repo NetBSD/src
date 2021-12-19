@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.24 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.25 2021/12/19 11:40:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -39,9 +39,10 @@
 #include <linux/stringify.h>
 
 #define	INIT_DELAYED_WORK		linux_INIT_DELAYED_WORK
+#define	INIT_RCU_WORK			linux_INIT_RCU_WORK
 #define	INIT_WORK			linux_INIT_WORK
-#define	alloc_workqueue			linux_alloc_workqueue
 #define	alloc_ordered_workqueue		linux_alloc_ordered_workqueue
+#define	alloc_workqueue			linux_alloc_workqueue
 #define	cancel_delayed_work		linux_cancel_delayed_work
 #define	cancel_delayed_work_sync	linux_cancel_delayed_work_sync
 #define	cancel_work			linux_cancel_work
@@ -54,8 +55,9 @@
 #define	flush_scheduled_work		linux_flush_scheduled_work
 #define	flush_work			linux_flush_work
 #define	flush_workqueue			linux_flush_workqueue
-#define	queue_delayed_work		linux_queue_delayed_work
 #define	mod_delayed_work		linux_mod_delayed_work
+#define	queue_delayed_work		linux_queue_delayed_work
+#define	queue_rcu_work			linux_queue_rcu_work
 #define	queue_work			linux_queue_work
 #define	schedule_delayed_work		linux_schedule_delayed_work
 #define	schedule_work			linux_schedule_work
@@ -89,6 +91,8 @@ struct delayed_work {
 };
 
 struct rcu_work {
+	struct work_struct		work; /* Linux API name */
+	struct rcu_head			rw_rcu;
 };
 
 #define	WQ_FREEZABLE		__BIT(0)
@@ -144,6 +148,9 @@ bool	cancel_delayed_work(struct delayed_work *);
 bool	cancel_delayed_work_sync(struct delayed_work *);
 bool	flush_delayed_work(struct delayed_work *);
 bool	delayed_work_pending(const struct delayed_work *);
+
+void	INIT_RCU_WORK(struct rcu_work *, void (*fn)(struct work_struct *));
+void	queue_rcu_work(struct workqueue_struct *, struct rcu_work *);
 
 struct work_struct *
 	current_work(void);
