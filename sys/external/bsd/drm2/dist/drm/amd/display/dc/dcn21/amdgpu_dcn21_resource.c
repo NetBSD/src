@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn21_resource.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn21_resource.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $	*/
 
 /*
 * Copyright 2018 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn21_resource.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn21_resource.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -943,10 +943,12 @@ static void dcn21_resource_destruct(struct dcn21_resource_pool *pool)
 		}
 	}
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 	for (i = 0; i < pool->base.audio_count; i++) {
 		if (pool->base.audios[i])
 			dce_aud_destroy(&pool->base.audios[i]);
 	}
+#endif
 
 	for (i = 0; i < pool->base.clk_src_count; i++) {
 		if (pool->base.clock_sources[i] != NULL) {
@@ -1430,12 +1432,14 @@ static void dcn21_pp_smu_destroy(struct pp_smu_funcs **pp_smu)
 	}
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 static struct audio *dcn21_create_audio(
 		struct dc_context *ctx, unsigned int inst)
 {
 	return dce_audio_create(ctx, inst,
 			&audio_regs[inst], &audio_shift, &audio_mask);
 }
+#endif
 
 static struct dc_cap_funcs cap_funcs = {
 	.get_dcc_compression_cap = dcn20_get_dcc_compression_cap
@@ -1487,7 +1491,9 @@ static struct dce_hwseq *dcn21_hwseq_create(
 
 static const struct resource_create_funcs res_create_funcs = {
 	.read_dce_straps = read_dce_straps,
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 	.create_audio = dcn21_create_audio,
+#endif
 	.create_stream_encoder = dcn21_stream_encoder_create,
 	.create_hwseq = dcn21_hwseq_create,
 };
