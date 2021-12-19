@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.16 2021/12/19 12:26:39 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.17 2021/12/19 12:31:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.16 2021/12/19 12:26:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.17 2021/12/19 12:31:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -745,6 +745,8 @@ dma_resv_get_excl_rcu(const struct dma_resv *robj)
  *	Get a snapshot of the exclusive and shared fences of robj.  The
  *	shared fences are returned as a pointer *sharedp to an array,
  *	to be freed by the caller with kfree, of *nsharedp elements.
+ *	If fencep is null, then add the exclusive fence, if any, at the
+ *	end of the array instead.
  *
  *	Returns zero on success, negative (Linux-style) error code on
  *	failure.  On failure, *fencep, *nsharedp, and *sharedp are
@@ -771,13 +773,24 @@ top:	KASSERT(fence == NULL);
 		goto restart;
 	if (list != NULL) {
 
+		/*
+		 * Avoid arithmetic overflow with `+ 1' below.
+		 * Strictly speaking we don't need this if the caller
+		 * specified fencep or if there is no exclusive fence,
+		 * but it is simpler to not have to consider those
+		 * cases.
+		 */
+		KASSERT(shared_count <= list->shared_max);
+		if (list->shared_max == UINT_MAX)
+			return -ENOMEM;
+
 		/* Check whether we have a buffer.  */
 		if (shared == NULL) {
 			/*
 			 * We don't have a buffer yet.  Try to allocate
 			 * one without waiting.
 			 */
-			shared_alloc = list->shared_max;
+			shared_alloc = list->shared_max + 1;
 			shared = kcalloc(shared_alloc, sizeof(shared[0]),
 			    GFP_NOWAIT);
 			if (shared == NULL) {
@@ -793,13 +806,13 @@ top:	KASSERT(fence == NULL);
 					return -ENOMEM;
 				goto top;
 			}
-		} else if (shared_alloc < list->shared_max) {
+		} else if (shared_alloc < list->shared_max + 1) {
 			/*
 			 * We have a buffer but it's too small.  We're
 			 * already racing in this case, so just back
 			 * out and wait to allocate a bigger one.
 			 */
-			shared_alloc = list->shared_max;
+			shared_alloc = list->shared_max + 1;
 			rcu_read_unlock();
 			kfree(shared);
 			shared = kcalloc(shared_alloc, sizeof(shared[0]),
@@ -838,7 +851,12 @@ top:	KASSERT(fence == NULL);
 
 	/* Success!  */
 	rcu_read_unlock();
-	*fencep = fence;
+	if (fencep) {
+		*fencep = fence;
+	} else if (fence) {
+		KASSERT(shared_count < UINT_MAX);
+		shared[shared_count++] = fence;
+	}
 	*nsharedp = shared_count;
 	*sharedp = shared;
 	return 0;
