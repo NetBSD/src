@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.13 2021/12/19 01:21:37 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.14 2021/12/19 01:23:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 struct reservation_object {
 	struct ww_mutex		lock;
-	struct seqcount		count;
+	struct seqcount		seq;
 
 	struct dma_fence __rcu			*robj_fence;
 	struct reservation_object_list __rcu	*robj_list;
