@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.14 2021/12/19 01:25:58 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.15 2021/12/19 01:58:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -52,6 +52,12 @@ static inline int64_t
 ktime_to_us(ktime_t kt)
 {
 	return ktime_to_ns(kt)/1000;
+}
+
+static inline int64_t
+ktime_to_ms(ktime_t kt)
+{
+	return ktime_to_ns(kt)/1000000;
 }
 
 static inline ktime_t
@@ -165,6 +171,13 @@ ktime_us_delta(ktime_t a, ktime_t b)
 {
 	return ktime_to_us(ktime_sub(a, b));
 }
+
+static inline int64_t
+ktime_ms_delta(ktime_t a, ktime_t b)
+{
+	return ktime_to_ms(ktime_sub(a, b));
+}
+
 
 static inline bool
 time_in_range(unsigned long x, unsigned long a, unsigned long b)
