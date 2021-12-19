@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_tasklet.c,v 1.8 2021/12/19 11:57:34 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.9 2021/12/19 12:44:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2020, 2021 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.8 2021/12/19 11:57:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.9 2021/12/19 12:44:43 riastradh Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
+
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/errno.h>
