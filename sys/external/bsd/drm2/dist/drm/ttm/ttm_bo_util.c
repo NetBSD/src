@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.26 2021/12/19 11:22:08 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.27 2021/12/19 11:25:57 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.26 2021/12/19 11:22:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.27 2021/12/19 11:25:57 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -323,7 +323,7 @@ static int ttm_copy_io_page(void *dst, void *src, unsigned long page)
 #define __ttm_kunmap_atomic(__addr) kunmap_atomic(__addr)
 #else
 #define __ttm_kmap_atomic_prot(__page, __prot) vmap(&__page, 1, 0,  __prot)
-#define __ttm_kunmap_atomic(__addr) vunmap(__addr)
+#define __ttm_kunmap_atomic(__addr) vunmap(__addr, 1)
 #endif
 
 
