@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: hash.h,v 1.3 2021/12/19 01:34:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,12 @@ hash_long(unsigned long value, unsigned int bits)
 	    0x9e37fffffffc0001ull : 0x9e370001ul);
 
 	return ((value * factor) >> ((CHAR_BIT * sizeof(value)) - bits));
+}
+
+static inline uint32_t
+hash_32(uint32_t value, unsigned int bits)
+{
+	return (value * 0x61c88647) >> (32 - bits);
 }
 
 #endif  /* _LINUX_HASH_H_ */
