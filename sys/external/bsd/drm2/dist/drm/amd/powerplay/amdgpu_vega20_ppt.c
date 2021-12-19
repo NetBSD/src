@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vega20_ppt.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vega20_ppt.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega20_ppt.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega20_ppt.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/firmware.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_vega20_ppt.c,v 1.2 2021/12/18 23:45:26 riastr
 #include "nbio/nbio_7_4_sh_mask.h"
 #include "asic_reg/thm/thm_11_0_2_offset.h"
 #include "asic_reg/thm/thm_11_0_2_sh_mask.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define smnPCIE_LC_SPEED_CNTL			0x11140290
 #define smnPCIE_LC_LINK_WIDTH_CNTL		0x11140288
@@ -387,7 +389,7 @@ static int vega20_allocate_dpm_context(struct smu_context *smu)
 
 static int vega20_setup_od8_information(struct smu_context *smu)
 {
-	ATOM_Vega20_POWERPLAYTABLE *powerplay_table = NULL;
+	const ATOM_Vega20_POWERPLAYTABLE *powerplay_table = NULL;
 	struct smu_table_context *table_context = &smu->smu_table;
 	struct vega20_od8_settings *od8_settings = (struct vega20_od8_settings *)smu->od_settings;
 
@@ -463,7 +465,7 @@ static int vega20_setup_od8_information(struct smu_context *smu)
 
 static int vega20_store_powerplay_table(struct smu_context *smu)
 {
-	ATOM_Vega20_POWERPLAYTABLE *powerplay_table = NULL;
+	const ATOM_Vega20_POWERPLAYTABLE *powerplay_table = NULL;
 	struct smu_table_context *table_context = &smu->smu_table;
 
 	if (!table_context->power_play_table)
@@ -572,7 +574,7 @@ static int vega20_append_powerplay_table(struct smu_context *smu)
 
 static int vega20_check_powerplay_table(struct smu_context *smu)
 {
-	ATOM_Vega20_POWERPLAYTABLE *powerplay_table = NULL;
+	const ATOM_Vega20_POWERPLAYTABLE *powerplay_table = NULL;
 	struct smu_table_context *table_context = &smu->smu_table;
 
 	powerplay_table = table_context->power_play_table;
@@ -2843,7 +2845,7 @@ static int vega20_dpm_set_vce_enable(struct smu_context *smu, bool enable)
 
 static bool vega20_is_dpm_running(struct smu_context *smu)
 {
-	int ret = 0;
+	int ret __unused = 0;
 	uint32_t feature_mask[2];
 	unsigned long feature_enabled;
 	ret = smu_feature_get_enabled_mask(smu, feature_mask, 2);
@@ -3101,7 +3103,7 @@ static int vega20_get_thermal_temperature_range(struct smu_context *smu,
 						struct smu_temperature_range *range)
 {
 	struct smu_table_context *table_context = &smu->smu_table;
-	ATOM_Vega20_POWERPLAYTABLE *powerplay_table = table_context->power_play_table;
+	const ATOM_Vega20_POWERPLAYTABLE *powerplay_table = table_context->power_play_table;
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
 
 	if (!range || !powerplay_table)

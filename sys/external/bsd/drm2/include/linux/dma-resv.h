@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-resv.h,v 1.9 2021/12/19 10:38:14 riastradh Exp $	*/
+/*	$NetBSD: dma-resv.h,v 1.10 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ struct dma_resv_poll {
 #define	dma_resv_get_list		linux_dma_resv_get_list
 #define	dma_resv_held			linux_dma_resv_held
 #define	dma_resv_init			linux_dma_resv_init
+#define	dma_resv_is_locked		linux_dma_resv_is_locked
 #define	dma_resv_kqfilter		linux_dma_resv_kqfilter
 #define	dma_resv_lock			linux_dma_resv_lock
 #define	dma_resv_lock_interruptible	linux_dma_resv_lock_interruptible
@@ -105,6 +106,7 @@ bool	dma_resv_trylock(struct dma_resv *) __must_check;
 struct ww_acquire_ctx *
 	dma_resv_locking_ctx(struct dma_resv *);
 void	dma_resv_unlock(struct dma_resv *);
+bool	dma_resv_is_locked(struct dma_resv *);
 bool	dma_resv_held(struct dma_resv *);
 void	dma_resv_assert_held(struct dma_resv *);
 struct dma_fence *

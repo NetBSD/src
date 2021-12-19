@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_virt.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_virt.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_virt.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_virt.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -197,7 +197,7 @@ int amdgpu_virt_alloc_mm_table(struct amdgpu_device *adev)
 	}
 
 	memset((void *)adev->virt.mm_table.cpu_addr, 0, PAGE_SIZE);
-	DRM_INFO("MM table gpu addr = 0x%llx, cpu addr = %p.\n",
+	DRM_INFO("MM table gpu addr = 0x%"PRIx64", cpu addr = %p.\n",
 		 adev->virt.mm_table.gpu_addr,
 		 adev->virt.mm_table.cpu_addr);
 	return 0;
@@ -275,10 +275,12 @@ void amdgpu_virt_init_data_exchange(struct amdgpu_device *adev)
 					sizeof(amdgim_vf2pf_info));
 				AMDGPU_FW_VRAM_VF2PF_READ(adev, driver_version,
 					&str);
+#ifndef __NetBSD__		/* XXX ??? */
 #ifdef MODULE
 				if (THIS_MODULE->version != NULL)
 					strcpy(str, THIS_MODULE->version);
 				else
+#endif
 #endif
 					strcpy(str, "N/A");
 				AMDGPU_FW_VRAM_VF2PF_WRITE(adev, driver_cert,

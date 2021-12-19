@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-mapping.h,v 1.9 2021/12/19 11:33:31 riastradh Exp $	*/
+/*	$NetBSD: dma-mapping.h,v 1.10 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ DMA_BIT_MASK(unsigned nbits)
 }
 
 static inline bool
-dma_addressing_limited(device_t *dev)
+dma_addressing_limited(device_t dev)
 {
 
 	return false;

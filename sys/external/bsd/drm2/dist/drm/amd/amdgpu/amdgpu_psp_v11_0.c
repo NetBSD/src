@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_psp_v11_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_psp_v11_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -23,8 +23,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_psp_v11_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_psp_v11_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
+#include <asm/io.h>
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>
@@ -122,23 +123,23 @@ static int psp_v11_0_init_microcode(struct psp_context *psp)
 		adev->psp.sos_feature_version = le32_to_cpu(sos_hdr->ucode_feature_version);
 		adev->psp.sos_bin_size = le32_to_cpu(sos_hdr->sos_size_bytes);
 		adev->psp.sys_bin_size = le32_to_cpu(sos_hdr->sos_offset_bytes);
-		adev->psp.sys_start_addr = (uint8_t *)sos_hdr +
+		adev->psp.sys_start_addr = (const uint8_t *)sos_hdr +
 				le32_to_cpu(sos_hdr->header.ucode_array_offset_bytes);
-		adev->psp.sos_start_addr = (uint8_t *)adev->psp.sys_start_addr +
+		adev->psp.sos_start_addr = (const uint8_t *)adev->psp.sys_start_addr +
 				le32_to_cpu(sos_hdr->sos_offset_bytes);
 		if (sos_hdr->header.header_version_minor == 1) {
 			sos_hdr_v1_1 = (const struct psp_firmware_header_v1_1 *)adev->psp.sos_fw->data;
 			adev->psp.toc_bin_size = le32_to_cpu(sos_hdr_v1_1->toc_size_bytes);
-			adev->psp.toc_start_addr = (uint8_t *)adev->psp.sys_start_addr +
+			adev->psp.toc_start_addr = (const uint8_t *)adev->psp.sys_start_addr +
 					le32_to_cpu(sos_hdr_v1_1->toc_offset_bytes);
 			adev->psp.kdb_bin_size = le32_to_cpu(sos_hdr_v1_1->kdb_size_bytes);
-			adev->psp.kdb_start_addr = (uint8_t *)adev->psp.sys_start_addr +
+			adev->psp.kdb_start_addr = (const uint8_t *)adev->psp.sys_start_addr +
 					le32_to_cpu(sos_hdr_v1_1->kdb_offset_bytes);
 		}
 		if (sos_hdr->header.header_version_minor == 2) {
 			sos_hdr_v1_2 = (const struct psp_firmware_header_v1_2 *)adev->psp.sos_fw->data;
 			adev->psp.kdb_bin_size = le32_to_cpu(sos_hdr_v1_2->kdb_size_bytes);
-			adev->psp.kdb_start_addr = (uint8_t *)adev->psp.sys_start_addr +
+			adev->psp.kdb_start_addr = (const uint8_t *)adev->psp.sys_start_addr +
 						    le32_to_cpu(sos_hdr_v1_2->kdb_offset_bytes);
 		}
 		break;
@@ -162,7 +163,7 @@ static int psp_v11_0_init_microcode(struct psp_context *psp)
 	adev->psp.asd_fw_version = le32_to_cpu(asd_hdr->header.ucode_version);
 	adev->psp.asd_feature_version = le32_to_cpu(asd_hdr->ucode_feature_version);
 	adev->psp.asd_ucode_size = le32_to_cpu(asd_hdr->header.ucode_size_bytes);
-	adev->psp.asd_start_addr = (uint8_t *)asd_hdr +
+	adev->psp.asd_start_addr = (const uint8_t *)asd_hdr +
 				le32_to_cpu(asd_hdr->header.ucode_array_offset_bytes);
 
 	switch (adev->asic_type) {
@@ -183,12 +184,12 @@ static int psp_v11_0_init_microcode(struct psp_context *psp)
 			ta_hdr = (const struct ta_firmware_header_v1_0 *)adev->psp.ta_fw->data;
 			adev->psp.ta_xgmi_ucode_version = le32_to_cpu(ta_hdr->ta_xgmi_ucode_version);
 			adev->psp.ta_xgmi_ucode_size = le32_to_cpu(ta_hdr->ta_xgmi_size_bytes);
-			adev->psp.ta_xgmi_start_addr = (uint8_t *)ta_hdr +
+			adev->psp.ta_xgmi_start_addr = (const uint8_t *)ta_hdr +
 				le32_to_cpu(ta_hdr->header.ucode_array_offset_bytes);
 			adev->psp.ta_fw_version = le32_to_cpu(ta_hdr->header.ucode_version);
 			adev->psp.ta_ras_ucode_version = le32_to_cpu(ta_hdr->ta_ras_ucode_version);
 			adev->psp.ta_ras_ucode_size = le32_to_cpu(ta_hdr->ta_ras_size_bytes);
-			adev->psp.ta_ras_start_addr = (uint8_t *)adev->psp.ta_xgmi_start_addr +
+			adev->psp.ta_ras_start_addr = (const uint8_t *)adev->psp.ta_xgmi_start_addr +
 				le32_to_cpu(ta_hdr->ta_ras_offset_bytes);
 		}
 		break;
@@ -210,14 +211,14 @@ static int psp_v11_0_init_microcode(struct psp_context *psp)
 			ta_hdr = (const struct ta_firmware_header_v1_0 *)adev->psp.ta_fw->data;
 			adev->psp.ta_hdcp_ucode_version = le32_to_cpu(ta_hdr->ta_hdcp_ucode_version);
 			adev->psp.ta_hdcp_ucode_size = le32_to_cpu(ta_hdr->ta_hdcp_size_bytes);
-			adev->psp.ta_hdcp_start_addr = (uint8_t *)ta_hdr +
+			adev->psp.ta_hdcp_start_addr = (const uint8_t *)ta_hdr +
 				le32_to_cpu(ta_hdr->header.ucode_array_offset_bytes);
 
 			adev->psp.ta_fw_version = le32_to_cpu(ta_hdr->header.ucode_version);
 
 			adev->psp.ta_dtm_ucode_version = le32_to_cpu(ta_hdr->ta_dtm_ucode_version);
 			adev->psp.ta_dtm_ucode_size = le32_to_cpu(ta_hdr->ta_dtm_size_bytes);
-			adev->psp.ta_dtm_start_addr = (uint8_t *)adev->psp.ta_hdcp_start_addr +
+			adev->psp.ta_dtm_start_addr = (const uint8_t *)adev->psp.ta_hdcp_start_addr +
 				le32_to_cpu(ta_hdr->ta_dtm_offset_bytes);
 		}
 		break;
@@ -960,7 +961,7 @@ static int psp_v11_0_memory_training_init(struct psp_context *psp)
 		goto Err_out;
 	}
 
-	DRM_DEBUG("train_data_size:%llx,p2c_train_data_offset:%llx,c2p_train_data_offset:%llx.\n",
+	DRM_DEBUG("train_data_size:%"PRIx64",p2c_train_data_offset:%"PRIx64",c2p_train_data_offset:%"PRIx64".\n",
 		  ctx->train_data_size,
 		  ctx->p2c_train_data_offset,
 		  ctx->c2p_train_data_offset);
@@ -1044,7 +1045,7 @@ static int psp_v11_0_memory_training(struct psp_context *psp, uint32_t ops)
 		sz = GDDR6_MEM_TRAINING_ENCROACHED_SIZE;
 
 		if (adev->gmc.visible_vram_size < sz || !adev->mman.aper_base_kaddr) {
-			DRM_ERROR("visible_vram_size %llx or aper_base_kaddr %p is not initialized.\n",
+			DRM_ERROR("visible_vram_size %"PRIx64" or aper_base_kaddr %p is not initialized.\n",
 				  adev->gmc.visible_vram_size,
 				  adev->mman.aper_base_kaddr);
 			return -EINVAL;

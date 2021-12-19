@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vega10_powertune.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vega10_powertune.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega10_powertune.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega10_powertune.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $");
 
 #include "hwmgr.h"
 #include "vega10_hwmgr.h"
@@ -656,7 +656,7 @@ static const struct vega10_didt_config_reg   PSMSEEDCStallDelayConfig_Vega10[] =
 	{   0xFFFFFFFF  }  /* End of list */
 };
 
-static const struct vega10_didt_config_reg   PSMSEEDCThresholdConfig_Vega10[] =
+static const struct vega10_didt_config_reg   PSMSEEDCThresholdConfig_Vega10[] __unused =
 {
 /* ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  *      Offset                             Mask                                                 Shift                                                  Value
@@ -712,7 +712,7 @@ static const struct vega10_didt_config_reg   PSMSEEDCCtrlConfig_Vega10[] =
 	{   0xFFFFFFFF  }  /* End of list */
 };
 
-static const struct vega10_didt_config_reg   PSMGCEDCThresholdConfig_vega10[] =
+static const struct vega10_didt_config_reg   PSMGCEDCThresholdConfig_vega10[] __unused =
 {
 /* ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  *      Offset                             Mask                                                 Shift                                                  Value

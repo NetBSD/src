@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd_v6_0.c,v 1.5 2021/12/19 00:25:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_uvd_v6_0.c,v 1.6 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v6_0.c,v 1.5 2021/12/19 00:25:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v6_0.c,v 1.6 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 
@@ -420,7 +420,7 @@ static int uvd_v6_0_sw_init(void *handle)
 	}
 
 	ring = &adev->uvd.inst->ring;
-	snprintf(ring->name, sizeof ring->naem, "uvd");
+	snprintf(ring->name, sizeof ring->name, "uvd");
 	r = amdgpu_ring_init(adev, ring, 512, &adev->uvd.inst->irq, 0);
 	if (r)
 		return r;

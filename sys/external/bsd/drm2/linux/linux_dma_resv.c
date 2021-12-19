@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.10 2021/12/19 12:14:02 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.11 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.10 2021/12/19 12:14:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.11 2021/12/19 12:21:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -229,6 +229,18 @@ dma_resv_unlock(struct dma_resv *robj)
 {
 
 	return ww_mutex_unlock(&robj->lock);
+}
+
+/*
+ * dma_resv_is_locked(robj)
+ *
+ *	True if robj is locked.
+ */
+bool
+dma_resv_is_locked(struct dma_resv *robj)
+{
+
+	return ww_mutex_is_locked(&robj->lock);
 }
 
 /*
