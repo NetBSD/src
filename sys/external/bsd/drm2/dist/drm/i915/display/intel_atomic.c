@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_atomic.c,v 1.4 2021/12/19 11:56:08 riastradh Exp $	*/
+/*	$NetBSD: intel_atomic.c,v 1.5 2021/12/19 12:24:36 riastradh Exp $	*/
 
 /*
  * Copyright © 2015 Intel Corporation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_atomic.c,v 1.4 2021/12/19 11:56:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_atomic.c,v 1.5 2021/12/19 12:24:36 riastradh Exp $");
 
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
@@ -426,7 +426,7 @@ int intel_atomic_setup_scalers(struct drm_i915_private *dev_priv,
 		int idx;
 
 		/* skip if scaler not required */
-		if (!(scaler_state->scaler_users & (1U << i)))
+		if (!(scaler_state->scaler_users & (1 << i)))
 			continue;
 
 		if (i == SKL_CRTC_INDEX) {
