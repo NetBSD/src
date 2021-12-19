@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.9 2021/12/19 10:40:12 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.10 2021/12/19 10:50:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ struct dma_fence_cb {
 #define	dma_fence_get			linux_dma_fence_get
 #define	dma_fence_get_rcu		linux_dma_fence_get_rcu
 #define	dma_fence_get_rcu_safe		linux_dma_fence_get_rcu_safe
+#define	dma_fence_get_status		linux_dma_fence_get_status
 #define	dma_fence_get_stub		linux_dma_fence_get_stub
 #define	dma_fence_init			linux_dma_fence_init
 #define	dma_fence_is_later		linux_dma_fence_is_later
@@ -133,6 +134,7 @@ void	dma_fence_enable_sw_signaling(struct dma_fence *);
 bool	dma_fence_is_signaled(struct dma_fence *);
 bool	dma_fence_is_signaled_locked(struct dma_fence *);
 void	dma_fence_set_error(struct dma_fence *, int);
+int	dma_fence_get_status(struct dma_fence *);
 int	dma_fence_signal(struct dma_fence *);
 int	dma_fence_signal_locked(struct dma_fence *);
 long	dma_fence_default_wait(struct dma_fence *, bool, long);
