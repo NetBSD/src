@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufeature.h,v 1.8 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: cpufeature.h,v 1.9 2021/12/19 11:52:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef	_LINUX_ASM_CPUFEATURE_H_
 #define	_LINUX_ASM_CPUFEATURE_H_
 
-#include <machine/cpu.h>
+#include <sys/cpu.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 
