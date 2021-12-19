@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.24 2021/12/19 10:25:15 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.25 2021/12/19 10:28:31 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.24 2021/12/19 10:25:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.25 2021/12/19 10:28:31 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -599,6 +599,14 @@ err_gem:
 	vlv_free_s0ix_state(dev_priv);
 err_workqueues:
 	i915_workqueues_cleanup(dev_priv);
+	mutex_destroy(&dev_priv->hdcp_comp_mutex);
+	mutex_destroy(&dev_priv->pps_mutex);
+	mutex_destroy(&dev_priv->wm.wm_mutex);
+	mutex_destroy(&dev_priv->av_mutex);
+	mutex_destroy(&dev_priv->sb_lock);
+	mutex_destroy(&dev_priv->backlight_lock);
+	spin_lock_destroy(&dev_priv->gpu_error.lock);
+	spin_lock_destroy(&dev_priv->irq_lock);
 	return ret;
 }
 
@@ -617,7 +625,15 @@ static void i915_driver_late_release(struct drm_i915_private *dev_priv)
 	i915_workqueues_cleanup(dev_priv);
 
 	pm_qos_remove_request(&dev_priv->sb_qos);
+	mutex_destroy(&dev_priv->hdcp_comp_mutex);
+	mutex_destroy(&dev_priv->pps_mutex);
+	mutex_destroy(&dev_priv->wm.wm_mutex);
+	mutex_destroy(&dev_priv->av_mutex);
 	mutex_destroy(&dev_priv->sb_lock);
+	mutex_destroy(&dev_priv->sb_lock);
+	mutex_destroy(&dev_priv->backlight_lock);
+	spin_lock_destroy(&dev_priv->gpu_error.lock);
+	spin_lock_destroy(&dev_priv->irq_lock);
 }
 
 /**
@@ -1252,6 +1268,7 @@ static int i915_driver_hw_probe(struct drm_i915_private *dev_priv)
 	 */
 	dma_set_max_seg_size(&pdev->dev, UINT_MAX);
 
+#ifndef __NetBSD__		/* Handled in intel_ggtt.c.  */
 	/* overlay on gen2 is broken and can't address above 1G */
 	if (IS_GEN(dev_priv, 2)) {
 		ret = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(30));
@@ -1279,6 +1296,7 @@ static int i915_driver_hw_probe(struct drm_i915_private *dev_priv)
 			goto err_mem_regions;
 		}
 	}
+#endif
 
 	pm_qos_add_request(&dev_priv->pm_qos, PM_QOS_CPU_DMA_LATENCY,
 			   PM_QOS_DEFAULT_VALUE);
