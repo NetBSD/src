@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.41 2021/12/19 11:54:03 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.42 2021/12/19 11:54:10 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.41 2021/12/19 11:54:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.42 2021/12/19 11:54:10 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -102,10 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.41 2021/12/19 11:54:03 riastradh Exp 
 
 static struct drm_driver driver;
 
-#ifdef __NetBSD__
-/* XXX Kludge to expose this to NetBSD driver attachment goop.  */
-struct drm_driver *const i915_drm_driver = &driver;
-#endif
 struct vlv_s0ix_state {
 	/* GAM */
 	u32 wr_watermark;
