@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sw_fence.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_sw_fence.c,v 1.3 2021/12/19 11:36:08 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.3 2021/12/19 11:36:08 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/dma-fence.h>
@@ -17,6 +17,10 @@ __KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.2 2021/12/18 23:45:28 riastradh 
 #include "i915_sw_fence.h"
 #include "i915_selftest.h"
 
+#include <drm/drm_wait_netbsd.h>
+
+#include <linux/nbsd-namespace.h>
+
 #if IS_ENABLED(CONFIG_DRM_I915_DEBUG)
 #define I915_SW_FENCE_BUG_ON(expr) BUG_ON(expr)
 #else
@@ -25,7 +29,11 @@ __KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.2 2021/12/18 23:45:28 riastradh 
 
 #define I915_SW_FENCE_FLAG_ALLOC BIT(3) /* after WQ_FLAG_* for safety */
 
+#ifdef __NetBSD__		/* XXX */
+spinlock_t i915_sw_fence_lock;
+#else
 static DEFINE_SPINLOCK(i915_sw_fence_lock);
+#endif
 
 enum {
 	DEBUG_FENCE_IDLE = 0,
@@ -132,11 +140,66 @@ static int __i915_sw_fence_notify(struct i915_sw_fence *fence,
 	return fn(fence, state);
 }
 
-#ifdef CONFIG_DRM_I915_SW_FENCE_DEBUG_OBJECTS
 void i915_sw_fence_fini(struct i915_sw_fence *fence)
 {
+#ifdef CONFIG_DRM_I915_SW_FENCE_DEBUG_OBJECTS
 	debug_fence_free(fence);
+#endif
+	spin_lock_destroy(&fence->wait.lock);
+	BUG_ON(!list_empty(&fence->wait.head));
 }
+
+#ifdef __NetBSD__
+
+/* XXX whattakludge */
+
+typedef struct i915_sw_fence_queue wait_queue_head_t;
+typedef struct i915_sw_fence_waiter wait_queue_entry_t;
+
+#define	TASK_NORMAL	0
+
+struct i915_sw_fence_wq {
+	struct i915_sw_fence *fence;
+	drm_waitqueue_t wq;
+};
+
+static int
+autoremove_wake_function(struct i915_sw_fence_waiter *waiter, unsigned mode,
+    int flags, void *cookie)
+{
+	struct i915_sw_fence_wq *sfw = cookie;
+
+	/* Caller presumably already completed the fence.  */
+	DRM_SPIN_WAKEUP_ALL(&sfw->wq, &sfw->fence->wait.lock);
+
+	list_del_init(&waiter->entry);
+
+	return 0;
+}
+
+void
+i915_sw_fence_wait(struct i915_sw_fence *fence)
+{
+	struct i915_sw_fence_waiter waiter;
+	struct i915_sw_fence_wq sfw;
+	int ret;
+
+	INIT_LIST_HEAD(&waiter.entry);
+	waiter.flags = 0;
+	waiter.func = autoremove_wake_function;
+	waiter.private = &sfw;
+
+	sfw.fence = fence;
+	DRM_INIT_WAITQUEUE(&sfw.wq, "i915swf");
+
+	spin_lock(&fence->wait.lock);
+	DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &sfw.wq, &fence->wait.lock,
+	    i915_sw_fence_done(fence));
+	spin_unlock(&fence->wait.lock);
+
+	DRM_DESTROY_WAITQUEUE(&sfw.wq);
+}
+
 #endif
 
 static void __i915_sw_fence_wake_up_all(struct i915_sw_fence *fence,
@@ -147,7 +210,6 @@ static void __i915_sw_fence_wake_up_all(struct i915_sw_fence *fence,
 	unsigned long flags;
 
 	debug_fence_deactivate(fence);
-	atomic_set_release(&fence->pending, -1); /* 0 -> -1 [done] */
 
 	/*
 	 * To prevent unbounded recursion as we traverse the graph of
@@ -157,6 +219,7 @@ static void __i915_sw_fence_wake_up_all(struct i915_sw_fence *fence,
 	 */
 
 	spin_lock_irqsave_nested(&x->lock, flags, 1 + !!continuation);
+	atomic_set_release(&fence->pending, -1); /* 0 -> -1 [done] */
 	if (continuation) {
 		list_for_each_entry_safe(pos, next, &x->head, entry) {
 			if (pos->func == autoremove_wake_function)
@@ -229,7 +292,12 @@ void __i915_sw_fence_init(struct i915_sw_fence *fence,
 {
 	BUG_ON(!fn || (unsigned long)fn & ~I915_SW_FENCE_MASK);
 
+#ifdef __NetBSD__
+	spin_lock_init(&fence->wait.lock);
+	INIT_LIST_HEAD(&fence->wait.head);
+#else
 	__init_waitqueue_head(&fence->wait, name, key);
+#endif
 	fence->flags = (unsigned long)fn;
 
 	i915_sw_fence_reinit(fence);
@@ -363,7 +431,11 @@ static int __i915_sw_fence_await_sw_fence(struct i915_sw_fence *fence,
 
 	spin_lock_irqsave(&signaler->wait.lock, flags);
 	if (likely(!i915_sw_fence_done(signaler))) {
+#ifdef __NetBSD__
+		list_add(&wq->entry, &signaler->wait.head);
+#else
 		__add_wait_queue_entry_tail(&signaler->wait, wq);
+#endif
 		pending = 1;
 	} else {
 		i915_sw_fence_wake(wq, 0, signaler->error, NULL);
@@ -415,10 +487,10 @@ static void timer_i915_sw_fence_wake(struct timer_list *t)
 	if (!fence)
 		return;
 
-	pr_notice("Asynchronous wait on fence %s:%s:%llx timed out (hint:%pS)\n",
+	pr_notice("Asynchronous wait on fence %s:%s:%"PRIx64" timed out (hint:%p)\n",
 		  cb->dma->ops->get_driver_name(cb->dma),
 		  cb->dma->ops->get_timeline_name(cb->dma),
-		  cb->dma->seqno,
+		  (uint64_t)cb->dma->seqno,
 		  i915_sw_fence_debug_hint(fence));
 
 	i915_sw_fence_set_error_once(fence, -ETIMEDOUT);
