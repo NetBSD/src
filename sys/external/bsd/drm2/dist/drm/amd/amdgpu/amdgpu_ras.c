@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ras.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ras.c,v 1.4 2021/12/19 12:23:16 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ras.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ras.c,v 1.4 2021/12/19 12:23:16 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/list.h>
@@ -1006,9 +1006,12 @@ static int amdgpu_ras_sysfs_remove_feature_node(struct amdgpu_device *adev)
 	return 0;
 }
 
+#endif	/* __NetBSD__ */
+
 int amdgpu_ras_sysfs_create(struct amdgpu_device *adev,
 		struct ras_fs_if *head)
 {
+#ifndef __NetBSD__
 	struct ras_manager *obj = amdgpu_ras_find_obj(adev, &head->head);
 
 	if (!obj || obj->attr_inuse)
@@ -1037,6 +1040,7 @@ int amdgpu_ras_sysfs_create(struct amdgpu_device *adev,
 	}
 
 	obj->attr_inuse = 1;
+#endif
 
 	return 0;
 }
@@ -1044,6 +1048,7 @@ int amdgpu_ras_sysfs_create(struct amdgpu_device *adev,
 int amdgpu_ras_sysfs_remove(struct amdgpu_device *adev,
 		struct ras_common_if *head)
 {
+#ifndef __NetBSD__		/* XXX amdgpu sysfs */
 	struct ras_manager *obj = amdgpu_ras_find_obj(adev, head);
 
 	if (!obj || !obj->attr_inuse)
@@ -1054,12 +1059,14 @@ int amdgpu_ras_sysfs_remove(struct amdgpu_device *adev,
 				"ras");
 	obj->attr_inuse = 0;
 	put_obj(obj);
+#endif	/* __NetBSD__ */
 
 	return 0;
 }
 
 static int amdgpu_ras_sysfs_remove_all(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__
 	struct amdgpu_ras *con = amdgpu_ras_get_context(adev);
 	struct ras_manager *obj, *tmp;
 
@@ -1068,10 +1075,10 @@ static int amdgpu_ras_sysfs_remove_all(struct amdgpu_device *adev)
 	}
 
 	amdgpu_ras_sysfs_remove_feature_node(adev);
+#endif
 
 	return 0;
 }
-#endif	/* __NetBSD__ */
 /* sysfs end */
 
 /**
@@ -1117,9 +1124,12 @@ static void amdgpu_ras_debugfs_create_ctrl_node(struct amdgpu_device *adev)
 				&con->reboot);
 }
 
+#endif	/* __NetBSD__ */
+
 void amdgpu_ras_debugfs_create(struct amdgpu_device *adev,
 		struct ras_fs_if *head)
 {
+#ifndef __NetBSD__		/* XXX amdgpu debugfs */
 	struct amdgpu_ras *con = amdgpu_ras_get_context(adev);
 	struct ras_manager *obj = amdgpu_ras_find_obj(adev, &head->head);
 
@@ -1135,11 +1145,13 @@ void amdgpu_ras_debugfs_create(struct amdgpu_device *adev,
 	obj->ent = debugfs_create_file(obj->fs_data.debugfs_name,
 				       S_IWUGO | S_IRUGO, con->dir, obj,
 				       &amdgpu_ras_debugfs_ops);
+#endif
 }
 
 void amdgpu_ras_debugfs_remove(struct amdgpu_device *adev,
 		struct ras_common_if *head)
 {
+#ifndef __NetBSD__		/* XXX amdgpu debugfs */
 	struct ras_manager *obj = amdgpu_ras_find_obj(adev, head);
 
 	if (!obj || !obj->ent)
@@ -1148,10 +1160,12 @@ void amdgpu_ras_debugfs_remove(struct amdgpu_device *adev,
 	debugfs_remove(obj->ent);
 	obj->ent = NULL;
 	put_obj(obj);
+#endif	/* __NetBSD__ */
 }
 
 static void amdgpu_ras_debugfs_remove_all(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__
 	struct amdgpu_ras *con = amdgpu_ras_get_context(adev);
 	struct ras_manager *obj, *tmp;
 
@@ -1161,8 +1175,8 @@ static void amdgpu_ras_debugfs_remove_all(struct amdgpu_device *adev)
 
 	debugfs_remove_recursive(con->dir);
 	con->dir = NULL;
+#endif
 }
-#endif	/* __NetBSD__ */
 /* debugfs end */
 
 /* ras fs */
@@ -1179,10 +1193,8 @@ static int amdgpu_ras_fs_init(struct amdgpu_device *adev)
 
 static int amdgpu_ras_fs_fini(struct amdgpu_device *adev)
 {
-#ifndef __NetBSD__		/* XXX amdgpu debugfs sysfs */
 	amdgpu_ras_debugfs_remove_all(adev);
 	amdgpu_ras_sysfs_remove_all(adev);
-#endif
 	return 0;
 }
 /* ras fs end */

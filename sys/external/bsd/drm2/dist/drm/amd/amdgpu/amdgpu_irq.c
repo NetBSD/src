@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_irq.c,v 1.6 2021/12/19 12:02:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_irq.c,v 1.7 2021/12/19 12:23:16 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.6 2021/12/19 12:02:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.7 2021/12/19 12:23:16 riastradh Exp $");
 
 #include <linux/irq.h>
 #include <linux/pci.h>
@@ -610,7 +610,7 @@ bool amdgpu_irq_enabled(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
 	return !!atomic_read(&src->enabled_types[type]);
 }
 
-#ifndef __NetBSD__		/* XXX amdgpu irq */
+#ifndef __NetBSD__		/* XXX amdgpu irq domain */
 
 /* XXX: Generic IRQ handling */
 static void amdgpu_irq_mask(struct irq_data *irqd)
@@ -659,6 +659,8 @@ static const struct irq_domain_ops amdgpu_hw_irqdomain_ops = {
 	.map = amdgpu_irqdomain_map,
 };
 
+#endif	/* __NetBSD__ */
+
 /**
  * amdgpu_irq_add_domain - create a linear IRQ domain
  *
@@ -672,12 +674,14 @@ static const struct irq_domain_ops amdgpu_hw_irqdomain_ops = {
  */
 int amdgpu_irq_add_domain(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__		/* XXX amdgpu irq domain */
 	adev->irq.domain = irq_domain_add_linear(NULL, AMDGPU_MAX_IRQ_SRC_ID,
 						 &amdgpu_hw_irqdomain_ops, adev);
 	if (!adev->irq.domain) {
 		DRM_ERROR("GPU irq add domain failed\n");
 		return -ENODEV;
 	}
+#endif
 
 	return 0;
 }
@@ -692,10 +696,12 @@ int amdgpu_irq_add_domain(struct amdgpu_device *adev)
  */
 void amdgpu_irq_remove_domain(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__		/* XXX amdgpu irq domain */
 	if (adev->irq.domain) {
 		irq_domain_remove(adev->irq.domain);
 		adev->irq.domain = NULL;
 	}
+#endif
 }
 
 /**
@@ -713,9 +719,11 @@ void amdgpu_irq_remove_domain(struct amdgpu_device *adev)
  */
 unsigned amdgpu_irq_create_mapping(struct amdgpu_device *adev, unsigned src_id)
 {
+#ifdef __NetBSD__		/* XXX amdgpu irq domain */
+	return 0;
+#else
 	adev->irq.virq[src_id] = irq_create_mapping(adev->irq.domain, src_id);
 
 	return adev->irq.virq[src_id];
-}
-
 #endif
+}
