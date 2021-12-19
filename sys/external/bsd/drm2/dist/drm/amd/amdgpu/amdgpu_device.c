@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.14 2021/12/19 12:36:59 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.15 2021/12/19 12:41:23 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.14 2021/12/19 12:36:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.15 2021/12/19 12:41:23 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -272,8 +272,7 @@ uint32_t amdgpu_mm_rreg(struct amdgpu_device *adev, uint32_t reg,
 uint8_t amdgpu_mm_rreg8(struct amdgpu_device *adev, uint32_t offset) {
 	if (offset < adev->rmmio_size)
 #ifdef __NetBSD__
-		return bus_space_read_1(adev->rmmiot, adev->rmmioh,
-		    adev->rmmio_base + offset);
+		return bus_space_read_1(adev->rmmiot, adev->rmmioh, offset);
 #else
 		return (readb(adev->rmmio + offset));
 #endif
@@ -298,8 +297,7 @@ uint8_t amdgpu_mm_rreg8(struct amdgpu_device *adev, uint32_t offset) {
 void amdgpu_mm_wreg8(struct amdgpu_device *adev, uint32_t offset, uint8_t value) {
 	if (offset < adev->rmmio_size)
 #ifdef __NetBSD__
-		bus_space_write_1(adev->rmmiot, adev->rmmioh,
-		    adev->rmmio_base + offset, value);
+		bus_space_write_1(adev->rmmiot, adev->rmmioh, offset, value);
 #else
 		writeb(value, adev->rmmio + offset);
 #endif
