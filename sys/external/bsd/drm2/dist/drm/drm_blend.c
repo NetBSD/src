@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_blend.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_blend.c,v 1.3 2021/12/19 00:49:51 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Samsung Electronics Co.Ltd
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_blend.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_blend.c,v 1.3 2021/12/19 00:49:51 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/slab.h>
@@ -420,8 +420,8 @@ EXPORT_SYMBOL(drm_plane_create_zpos_immutable_property);
 
 static int drm_atomic_state_zpos_cmp(const void *a, const void *b)
 {
-	const struct drm_plane_state *sa = *(struct drm_plane_state **)a;
-	const struct drm_plane_state *sb = *(struct drm_plane_state **)b;
+	const struct drm_plane_state *sa = *(struct drm_plane_state *const *)a;
+	const struct drm_plane_state *sb = *(struct drm_plane_state *const *)b;
 
 	if (sa->zpos != sb->zpos)
 		return sa->zpos - sb->zpos;
