@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_internal.h,v 1.7 2021/12/19 00:57:13 riastradh Exp $	*/
+/*	$NetBSD: drm_internal.h,v 1.8 2021/12/19 00:58:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -90,6 +90,8 @@ void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpr
 struct drm_minor *drm_minor_acquire(unsigned int minor_id);
 void drm_minor_release(struct drm_minor *minor);
 #ifdef __NetBSD__
+#include <linux/srcu.h>
+extern struct srcu drm_unplug_srcu;
 extern struct spinlock drm_minor_lock;
 extern struct idr drm_minors_idr;
 #endif
