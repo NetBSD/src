@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_client.h,v 1.1 2021/12/19 10:36:32 riastradh Exp $	*/
+/*	$NetBSD: drm_client.h,v 1.2 2021/12/19 12:04:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@ void	drm_client_modeset_free(struct drm_client_dev *);
 
 #define drm_client_for_each_modeset(MODESET, CLIENT)		   \
 	KASSERT(mutex_is_locked(&(CLIENT)->modeset_mutex));	   \
+	drm_client_for_each_modeset_unlocked(MODESET, CLIENT)
+
+#define drm_client_for_each_modeset_unlocked(MODESET, CLIENT)	   \
 	for ((MODESET) = (CLIENT)->modesets; (MODESET)->crtc; (MODESET)++)
 
 #define drm_client_for_each_connector_iter(CONNECTOR, ITER)		      \
