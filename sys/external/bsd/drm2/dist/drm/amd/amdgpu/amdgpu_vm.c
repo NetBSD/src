@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vm.c,v 1.10 2021/12/19 12:31:45 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vm.c,v 1.11 2021/12/19 12:33:02 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.10 2021/12/19 12:31:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.11 2021/12/19 12:33:02 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/interval_tree_generic.h>
@@ -3120,6 +3120,8 @@ void amdgpu_vm_fini(struct amdgpu_device *adev, struct amdgpu_vm *vm)
 	struct amdgpu_bo *root;
 	int i;
 
+	FINI_KFIFO(vm->faults);
+
 	amdgpu_amdkfd_gpuvm_destroy_cb(adev, vm);
 
 	root = amdgpu_bo_ref(vm->root.base.bo);
@@ -3172,6 +3174,7 @@ void amdgpu_vm_fini(struct amdgpu_device *adev, struct amdgpu_vm *vm)
 	for (i = 0; i < AMDGPU_MAX_VMHUBS; i++)
 		amdgpu_vmid_free_reserved(adev, vm, i);
 
+	mutex_destroy(&vm->eviction_lock);
 	spin_lock_destroy(&vm->invalidated_lock);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kfifo.h,v 1.5 2021/12/19 12:21:56 riastradh Exp $	*/
+/*	$NetBSD: kfifo.h,v 1.6 2021/12/19 12:33:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,6 +66,11 @@ struct kfifo_meta {
 	_init_kfifo(&(FIFO).kf_meta, sizeof((FIFO).kf_buf));		      \
 } while (0)
 
+#define	FINI_KFIFO(FIFO) do						      \
+{									      \
+	_fini_kfifo(&(FIFO).kf_meta);					      \
+} while (0)
+
 static inline void
 _init_kfifo(struct kfifo_meta *meta, size_t nbytes)
 {
@@ -74,6 +79,13 @@ _init_kfifo(struct kfifo_meta *meta, size_t nbytes)
 	meta->kfm_head = 0;
 	meta->kfm_tail = 0;
 	meta->kfm_nbytes = nbytes;
+}
+
+static inline void
+_fini_kfifo(struct kfifo_meta *meta)
+{
+
+	mutex_destroy(&meta->kfm_lock);
 }
 
 _KFIFO_PTR_TYPE(kfifo, void);
