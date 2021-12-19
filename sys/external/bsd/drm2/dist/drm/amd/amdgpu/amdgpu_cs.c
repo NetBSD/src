@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cs.c,v 1.6 2021/12/19 10:59:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cs.c,v 1.7 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Jerome Glisse.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.6 2021/12/19 10:59:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.7 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/file.h>
 #include <linux/pagemap.h>
@@ -479,16 +479,19 @@ static int amdgpu_cs_list_validate(struct amdgpu_cs_parser *p,
 
 	list_for_each_entry(lobj, validated, tv.head) {
 		struct amdgpu_bo *bo = ttm_to_amdgpu_bo(lobj->tv.bo);
+#ifdef __NetBSD__
+		struct vmspace *usermm;
+#else
 		struct mm_struct *usermm;
+#endif
 
 		usermm = amdgpu_ttm_tt_get_usermm(bo->tbo.ttm);
-#ifdef __NetBSD__		/* XXX amdgpu userptr */
-		if (usermm)
-			return -EPERM;
+#ifdef __NetBSD__
+		if (usermm && usermm != curproc->p_vmspace)
 #else
 		if (usermm && usermm != current->mm)
-			return -EPERM;
 #endif
+			return -EPERM;
 
 		if (amdgpu_ttm_tt_is_userptr(bo->tbo.ttm) &&
 		    lobj->user_invalidated && lobj->user_pages) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gmc.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gmc.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -27,13 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gmc.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/io-64-nonatomic-lo-hi.h>
 
 #include "amdgpu.h"
 #include "amdgpu_ras.h"
 #include "amdgpu_xgmi.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * amdgpu_gmc_get_pde_for_bo - get the PDE for a BO
@@ -54,7 +56,11 @@ void amdgpu_gmc_get_pde_for_bo(struct amdgpu_bo *bo, int level,
 	switch (bo->tbo.mem.mem_type) {
 	case TTM_PL_TT:
 		ttm = container_of(bo->tbo.ttm, struct ttm_dma_tt, ttm);
+#ifdef __NetBSD__
+		*addr = ttm->dma_address->dm_segs[0].ds_addr;
+#else
 		*addr = ttm->dma_address[0];
+#endif
 		break;
 	case TTM_PL_VRAM:
 		*addr = amdgpu_bo_gpu_offset(bo);
@@ -103,7 +109,9 @@ int amdgpu_gmc_set_pte_pde(struct amdgpu_device *adev, void *cpu_pt_addr,
 				uint32_t gpu_page_idx, uint64_t addr,
 				uint64_t flags)
 {
+#ifndef __NetBSD__
 	void __iomem *ptr = (void *)cpu_pt_addr;
+#endif
 	uint64_t value;
 
 	/*
@@ -111,7 +119,12 @@ int amdgpu_gmc_set_pte_pde(struct amdgpu_device *adev, void *cpu_pt_addr,
 	*/
 	value = addr & 0x0000FFFFFFFFF000ULL;
 	value |= flags;
+#ifdef __NetBSD__
+	/* Caller must issue appropriate bus_dmamap_sync before use.  */
+	((uint64_t *)cpu_pt_addr)[gpu_page_idx] = value;
+#else
 	writeq(value, ptr + (gpu_page_idx * 8));
+#endif
 	return 0;
 }
 
@@ -127,15 +140,21 @@ uint64_t amdgpu_gmc_agp_addr(struct ttm_buffer_object *bo)
 {
 	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->bdev);
 	struct ttm_dma_tt *ttm;
+	resource_size_t addr;
 
 	if (bo->num_pages != 1 || bo->ttm->caching_state == tt_cached)
 		return AMDGPU_BO_INVALID_OFFSET;
 
 	ttm = container_of(bo->ttm, struct ttm_dma_tt, ttm);
-	if (ttm->dma_address[0] + PAGE_SIZE >= adev->gmc.agp_size)
+#ifdef __NetBSD__
+	addr = ttm->dma_address->dm_segs[0].ds_addr;
+#else
+	addr = ttm->dma_address[0];
+#endif
+	if (addr + PAGE_SIZE >= adev->gmc.agp_size)
 		return AMDGPU_BO_INVALID_OFFSET;
 
-	return adev->gmc.agp_start + ttm->dma_address[0];
+	return adev->gmc.agp_start + addr;
 }
 
 /**
@@ -162,7 +181,7 @@ void amdgpu_gmc_vram_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc,
 		mc->fb_start = mc->vram_start;
 		mc->fb_end = mc->vram_end;
 	}
-	dev_info(adev->dev, "VRAM: %lluM 0x%016llX - 0x%016llX (%lluM used)\n",
+	dev_info(adev->dev, "VRAM: %"PRIu64"M 0x%016"PRIX64" - 0x%016"PRIX64" (%"PRIu64"M used)\n",
 			mc->mc_vram_size >> 20, mc->vram_start,
 			mc->vram_end, mc->real_vram_size >> 20);
 }
@@ -206,7 +225,7 @@ void amdgpu_gmc_gart_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc)
 
 	mc->gart_start &= ~(four_gb - 1);
 	mc->gart_end = mc->gart_start + mc->gart_size - 1;
-	dev_info(adev->dev, "GART: %lluM 0x%016llX - 0x%016llX\n",
+	dev_info(adev->dev, "GART: %"PRIu64"M 0x%016"PRIX64" - 0x%016"PRIX64"\n",
 			mc->gart_size >> 20, mc->gart_start, mc->gart_end);
 }
 
@@ -254,7 +273,7 @@ void amdgpu_gmc_agp_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc)
 	}
 
 	mc->agp_end = mc->agp_start + mc->agp_size - 1;
-	dev_info(adev->dev, "AGP: %lluM 0x%016llX - 0x%016llX\n",
+	dev_info(adev->dev, "AGP: %"PRIu64"M 0x%016"PRIX64" - 0x%016"PRIX64"\n",
 			mc->agp_size >> 20, mc->agp_start, mc->agp_end);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_hw_hpd.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_hw_hpd.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_hw_hpd.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_hw_hpd.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -73,7 +73,8 @@ static enum gpio_result get_value(
 	const struct hw_gpio_pin *ptr,
 	uint32_t *value)
 {
-	struct hw_hpd *hpd = HW_HPD_FROM_BASE(ptr);
+	const struct hw_gpio *gpio = const_container_of(ptr, struct hw_gpio, base);
+	const struct hw_hpd *hpd = const_container_of(gpio, struct hw_hpd, base);
 	uint32_t hpd_delayed = 0;
 
 	/* in Interrupt mode we ask for SENSE bit */

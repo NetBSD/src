@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.11 2021/12/19 11:38:37 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.12 2021/12/19 12:02:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #define	KERN_INFO	"kern info: "
 #define	KERN_DEBUG	"kern debug: "
 #define	KERN_CONT	""
+
+#define	printk_ratelimit()	0 /* XXX */
 
 struct va_format {
 	const char	*fmt;

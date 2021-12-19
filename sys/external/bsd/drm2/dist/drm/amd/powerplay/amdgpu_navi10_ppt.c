@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_navi10_ppt.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_navi10_ppt.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_navi10_ppt.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_navi10_ppt.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/firmware.h>
@@ -44,6 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_navi10_ppt.c,v 1.2 2021/12/18 23:45:26 riastr
 #include "nbio/nbio_7_4_sh_mask.h"
 
 #include "asic_reg/mp/mp_11_0_sh_mask.h"
+
+/* XXX *@!#^@&*!#& */
+#define	sprintf(buf, fmt, ...)						      \
+	snprintf(buf, (size_t)-1, fmt, ##__VA_ARGS__)
 
 #define FEATURE_MASK(feature) (1ULL << feature)
 #define SMC_DPM_FEATURE ( \
@@ -1189,7 +1193,7 @@ static int navi10_get_current_activity_percent(struct smu_context *smu,
 
 static bool navi10_is_dpm_running(struct smu_context *smu)
 {
-	int ret = 0;
+	int ret __unused = 0;
 	uint32_t feature_mask[2];
 	unsigned long feature_enabled;
 	ret = smu_feature_get_enabled_mask(smu, feature_mask, 2);

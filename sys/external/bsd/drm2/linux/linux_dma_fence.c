@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.18 2021/12/19 12:00:48 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.19 2021/12/19 12:02:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.18 2021/12/19 12:00:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.19 2021/12/19 12:02:40 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -120,6 +120,8 @@ dma_fence_reset(struct dma_fence *fence, const struct dma_fence_ops *ops,
  *
  *	Clean up memory initialized with dma_fence_init.  This is meant
  *	to be used after a fence release callback.
+ *
+ *	XXX extension to Linux API
  */
 void
 dma_fence_destroy(struct dma_fence *fence)
@@ -134,7 +136,7 @@ dma_fence_destroy(struct dma_fence *fence)
 static void
 dma_fence_free_cb(struct rcu_head *rcu)
 {
-	struct dma_fence *fence = container_of(rcu, struct dma_fence, f_rcu);
+	struct dma_fence *fence = container_of(rcu, struct dma_fence, rcu);
 
 	KASSERT(!dma_fence_referenced_p(fence));
 
@@ -160,7 +162,7 @@ dma_fence_free(struct dma_fence *fence)
 
 	KASSERT(!dma_fence_referenced_p(fence));
 
-	call_rcu(&fence->f_rcu, &dma_fence_free_cb);
+	call_rcu(&fence->rcu, &dma_fence_free_cb);
 }
 
 /*

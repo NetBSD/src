@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_module.c,v 1.6 2021/12/19 12:01:48 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_module.c,v 1.7 2021/12/19 12:02:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.6 2021/12/19 12:01:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.7 2021/12/19 12:02:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.6 2021/12/19 12:01:48 riastradh 
 #include <drm/drm_drv.h>
 #include <drm/drm_sysctl.h>
 
+#include <linux/idr.h>
 #include <linux/mutex.h>
 
 #include "amdgpu.h"
@@ -59,6 +60,9 @@ MODULE(MODULE_CLASS_DRIVER, amdgpu, "drmkms,drmkms_pci"); /* XXX drmkms_i2c, drm
 extern struct drm_driver *const amdgpu_drm_driver;
 extern struct amdgpu_mgpu_info mgpu_info;
 
+/* XXX Kludge to replace DEFINE_IDA in amdgpu_ids.c.  */
+extern struct ida amdgpu_pasid_ida;
+
 struct drm_sysctl_def amdgpu_def = DRM_SYSCTL_INIT();
 
 static int
@@ -74,6 +78,7 @@ amdgpu_init(void)
 	amdgpu_drm_driver->driver_features |= DRIVER_MODESET;
 
 	linux_mutex_init(&mgpu_info.mutex);
+	ida_init(&amdgpu_pasid_ida);
 
 #if notyet			/* XXX amdgpu acpi */
 	amdgpu_register_atpx_handler();
@@ -108,6 +113,7 @@ amdgpu_fini(void)
 	amdgpu_unregister_atpx_handler();
 #endif
 
+	ida_destroy(&amdgpu_pasid_ida);
 	linux_mutex_destroy(&mgpu_info.mutex);
 }
 

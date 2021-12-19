@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fixpt31_32.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fixpt31_32.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fixpt31_32.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fixpt31_32.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include "dm_services.h"
 #include "include/fixed31_32.h"
@@ -51,10 +51,12 @@ static inline unsigned long long complete_integer_division_u64(
 	unsigned long long *remainder)
 {
 	unsigned long long result;
+	uint64_t r64;
 
 	ASSERT(divisor);
 
-	result = div64_u64_rem(dividend, divisor, remainder);
+	result = div64_u64_rem(dividend, divisor, &r64);
+	*remainder = r64;
 
 	return result;
 }

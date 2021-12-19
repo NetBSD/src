@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_mes_v10_1.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_mes_v10_1.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_mes_v10_1.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_mes_v10_1.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -60,7 +60,7 @@ static int mes_v10_1_resume_gang(struct amdgpu_mes *mes,
 	return 0;
 }
 
-static const struct amdgpu_mes_funcs mes_v10_1_funcs = {
+static const struct amdgpu_mes_funcs mes_v10_1_funcs __unused = {
 	.add_hw_queue = mes_v10_1_add_hw_queue,
 	.remove_hw_queue = mes_v10_1_remove_hw_queue,
 	.suspend_gang = mes_v10_1_suspend_gang,

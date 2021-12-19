@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_hw_ddc.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_hw_ddc.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_hw_ddc.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_hw_ddc.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -112,7 +112,7 @@ static enum gpio_result set_config(
 					msleep(3);
 			}
 		} else {
-			uint32_t reg2;
+			uint32_t reg2 __unused;
 			uint32_t sda_pd_dis = 0;
 			uint32_t scl_pd_dis = 0;
 

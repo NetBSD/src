@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bo_list.c,v 1.8 2021/12/19 10:59:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bo_list.c,v 1.9 2021/12/19 12:02:39 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.8 2021/12/19 10:59:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.9 2021/12/19 12:02:39 riastradh Exp $");
 
 #include <linux/uaccess.h>
 
@@ -100,7 +100,11 @@ int amdgpu_bo_list_create(struct amdgpu_device *adev, struct drm_file *filp,
 		struct amdgpu_bo_list_entry *entry;
 		struct drm_gem_object *gobj;
 		struct amdgpu_bo *bo;
+#ifdef __NetBSD__
+		struct vmspace *usermm;
+#else
 		struct mm_struct *usermm;
+#endif
 
 		gobj = drm_gem_object_lookup(filp, info[i].bo_handle);
 		if (!gobj) {
