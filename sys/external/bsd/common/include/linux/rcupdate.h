@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.2 2021/12/19 01:46:01 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.3 2021/12/19 09:48:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/atomic.h>
 #include <sys/cdefs.h>
 #include <sys/systm.h>
+
+#include <linux/bug.h>
 
 #define	__rcu
 
