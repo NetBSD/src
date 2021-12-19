@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.54 2021/12/19 11:40:05 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.55 2021/12/19 11:40:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.54 2021/12/19 11:40:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.55 2021/12/19 11:40:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -56,6 +56,7 @@ struct workqueue_struct {
 	kmutex_t		wq_lock;
 	kcondvar_t		wq_cv;
 	struct dwork_head	wq_delayed; /* delayed work scheduled */
+	struct work_head	wq_rcu;	    /* RCU work scheduled */
 	struct work_head	wq_queue;   /* work to run */
 	struct work_head	wq_dqueue;  /* delayed work to run now */
 	struct work_struct	*wq_current_work;
@@ -91,6 +92,8 @@ SDT_PROBE_DEFINE2(sdt, linux, work, release,
     "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
 SDT_PROBE_DEFINE2(sdt, linux, work, queue,
     "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, rcu,
+    "struct rcu_work *"/*work*/, "struct workqueue_struct *"/*wq*/);
 SDT_PROBE_DEFINE2(sdt, linux, work, cancel,
     "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
 SDT_PROBE_DEFINE3(sdt, linux, work, schedule,
@@ -260,6 +263,7 @@ alloc_workqueue(const char *name, int flags, unsigned max_active)
 	mutex_init(&wq->wq_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&wq->wq_cv, name);
 	TAILQ_INIT(&wq->wq_delayed);
+	TAILQ_INIT(&wq->wq_rcu);
 	TAILQ_INIT(&wq->wq_queue);
 	TAILQ_INIT(&wq->wq_dqueue);
 	wq->wq_current_work = NULL;
@@ -279,6 +283,7 @@ alloc_workqueue(const char *name, int flags, unsigned max_active)
 
 fail0:	KASSERT(TAILQ_EMPTY(&wq->wq_dqueue));
 	KASSERT(TAILQ_EMPTY(&wq->wq_queue));
+	KASSERT(TAILQ_EMPTY(&wq->wq_rcu));
 	KASSERT(TAILQ_EMPTY(&wq->wq_delayed));
 	cv_destroy(&wq->wq_cv);
 	mutex_destroy(&wq->wq_lock);
@@ -346,6 +351,12 @@ destroy_workqueue(struct workqueue_struct *wq)
 	}
 	mutex_exit(&wq->wq_lock);
 
+	/* Wait for all scheduled RCU work to complete.  */
+	mutex_enter(&wq->wq_lock);
+	while (!TAILQ_EMPTY(&wq->wq_rcu))
+		cv_wait(&wq->wq_cv, &wq->wq_lock);
+	mutex_exit(&wq->wq_lock);
+
 	/*
 	 * At this point, no new work can be put on the queue.
 	 */
@@ -364,6 +375,7 @@ destroy_workqueue(struct workqueue_struct *wq)
 	KASSERT(wq->wq_current_work == NULL);
 	KASSERT(TAILQ_EMPTY(&wq->wq_dqueue));
 	KASSERT(TAILQ_EMPTY(&wq->wq_queue));
+	KASSERT(TAILQ_EMPTY(&wq->wq_rcu));
 	KASSERT(TAILQ_EMPTY(&wq->wq_delayed));
 	cv_destroy(&wq->wq_cv);
 	mutex_destroy(&wq->wq_lock);
@@ -1612,4 +1624,54 @@ delayed_work_pending(const struct delayed_work *dw)
 {
 
 	return work_pending(&dw->work);
+}
+
+/*
+ * INIT_RCU_WORK(rw, fn)
+ *
+ *	Initialize rw for use with a workqueue to call fn in a worker
+ *	thread after an RCU grace period.  There is no corresponding
+ *	destruction operation.
+ */
+void
+INIT_RCU_WORK(struct rcu_work *rw, void (*fn)(struct work_struct *))
+{
+
+	INIT_WORK(&rw->work, fn);
+}
+
+static void
+queue_rcu_work_cb(struct rcu_head *r)
+{
+	struct rcu_work *rw = container_of(r, struct rcu_work, rw_rcu);
+	struct workqueue_struct *wq = work_queue(&rw->work);
+
+	mutex_enter(&wq->wq_lock);
+	KASSERT(work_pending(&rw->work));
+	KASSERT(work_queue(&rw->work) == wq);
+	destroy_rcu_head(&rw->rw_rcu);
+	TAILQ_REMOVE(&wq->wq_rcu, &rw->work, work_entry);
+	TAILQ_INSERT_TAIL(&wq->wq_queue, &rw->work, work_entry);
+	cv_broadcast(&wq->wq_cv);
+	SDT_PROBE2(sdt, linux, work, queue,  &rw->work, wq);
+	mutex_exit(&wq->wq_lock);
+}
+
+/*
+ * queue_rcu_work(wq, rw)
+ *
+ *	Schedule rw to run on wq after an RCU grace period.
+ */
+void
+queue_rcu_work(struct workqueue_struct *wq, struct rcu_work *rw)
+{
+
+	mutex_enter(&wq->wq_lock);
+	if (acquire_work(&rw->work, wq)) {
+		init_rcu_head(&rw->rw_rcu);
+		SDT_PROBE2(sdt, linux, work, rcu,  rw, wq);
+		TAILQ_INSERT_TAIL(&wq->wq_rcu, &rw->work, work_entry);
+		call_rcu(&rw->rw_rcu, &queue_rcu_work_cb);
+	}
+	mutex_exit(&wq->wq_lock);
 }
