@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.11 2021/12/19 09:52:17 riastradh Exp $	*/
+/*	$NetBSD: module.h,v 1.12 2021/12/19 10:47:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
+#include <linux/rbtree.h>
 #include <linux/stringify.h>
 
 #define	module_init(INIT)
