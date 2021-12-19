@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gfx_v7_0.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gfx_v7_0.c,v 1.5 2021/12/19 09:59:46 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v7_0.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v7_0.c,v 1.5 2021/12/19 09:59:46 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -4415,7 +4415,7 @@ static int gfx_v7_0_compute_ring_init(struct amdgpu_device *adev, int ring_id,
 	ring->ring_obj = NULL;
 	ring->use_doorbell = true;
 	ring->doorbell_index = adev->doorbell_index.mec_ring0 + ring_id;
-	sprintf(ring->name, "comp_%d.%d.%d", ring->me, ring->pipe, ring->queue);
+	snprintf(ring->name, sizeof ring->name, "comp_%d.%d.%d", ring->me, ring->pipe, ring->queue);
 
 	irq_type = AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE0_EOP
 		+ ((ring->me - 1) * adev->gfx.mec.num_pipe_per_mec)
