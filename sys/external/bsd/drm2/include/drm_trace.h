@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_trace.h,v 1.4 2021/12/19 09:53:21 riastradh Exp $	*/
+/*	$NetBSD: drm_trace.h,v 1.5 2021/12/19 10:37:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _DRM_TRACE_H_
 
 #include <sys/types.h>
+#include <linux/ktime.h>
 
 static inline void
 trace_drm_vblank_event_delivered(struct drm_file *fp __unused,
