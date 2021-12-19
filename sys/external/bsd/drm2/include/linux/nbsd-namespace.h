@@ -1,4 +1,4 @@
-/*	$NetBSD: nbsd-namespace.h,v 1.3 2021/12/19 09:59:22 riastradh Exp $	*/
+/*	$NetBSD: nbsd-namespace.h,v 1.4 2021/12/19 12:22:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -45,5 +45,8 @@
 
 /* Disable our historic malloc(9) compatibility macro.  */
 #undef	free
+
+/* This should not appear in NetBSD code -- we do not sprintf!  */
+#define	sprintf(BUF, FMT, ARGS...)	snprintf(BUF, SIZE_MAX, FMT, ##ARGS)
 
 #endif  /* _LINUX_NBSD_NAMESPACE_H_ */
