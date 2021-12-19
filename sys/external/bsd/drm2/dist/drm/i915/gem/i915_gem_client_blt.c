@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_client_blt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_client_blt.c,v 1.3 2021/12/19 11:26:35 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_client_blt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_client_blt.c,v 1.3 2021/12/19 11:26:35 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "gt/intel_context.h"
@@ -18,7 +18,12 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_client_blt.c,v 1.2 2021/12/18 23:45:30 rias
 struct i915_sleeve {
 	struct i915_vma *vma;
 	struct drm_i915_gem_object *obj;
+#ifdef __NetBSD__
+	struct pglist *pglist;
+	bus_dmamap_t pages;	/* XXX ??? XXX ??? */
+#else
 	struct sg_table *pages;
+#endif
 	struct i915_page_sizes page_sizes;
 };
 
@@ -171,7 +176,11 @@ static void clear_pages_worker(struct work_struct *work)
 
 	if (obj->cache_dirty) {
 		if (i915_gem_object_has_struct_page(obj))
+#ifdef __NetBSD__
+			drm_clflush_pglist(w->sleeve->pglist);
+#else
 			drm_clflush_sg(w->sleeve->pages);
+#endif
 		obj->cache_dirty = false;
 	}
 	obj->read_domains = I915_GEM_GPU_DOMAINS;
@@ -258,7 +267,27 @@ clear_pages_work_notify(struct i915_sw_fence *fence,
 	return NOTIFY_DONE;
 }
 
+#ifdef __NetBSD__
+/* XXX my kingdom for a non-tentacular link set */
+
+static spinlock_t fence_lock;
+
+void i915_gem_client_blt_init(void);
+void
+i915_gem_client_blt_init(void)
+{
+	spin_lock_init(&fence_lock);
+}
+
+void i915_gem_client_blt_fini(void);
+void
+i915_gem_client_blt_fini(void)
+{
+	spin_lock_destroy(&fence_lock);
+}
+#else
 static DEFINE_SPINLOCK(fence_lock);
+#endif
 
 /* XXX: better name please */
 int i915_gem_schedule_fill_pages_blt(struct drm_i915_gem_object *obj,

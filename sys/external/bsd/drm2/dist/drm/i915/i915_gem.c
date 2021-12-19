@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.69 2021/12/19 11:24:29 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.70 2021/12/19 11:26:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.69 2021/12/19 11:24:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.70 2021/12/19 11:26:35 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -1239,7 +1239,9 @@ void i915_gem_driver_remove(struct drm_i915_private *dev_priv)
 
 	i915_gem_suspend_late(dev_priv);
 	intel_gt_driver_remove(&dev_priv->gt);
+#ifndef __NetBSD__		/* XXX uabi_engines */
 	dev_priv->uabi_engines = RB_ROOT;
+#endif
 
 	/* Flush any outstanding unpin_work. */
 	i915_gem_drain_workqueue(dev_priv);

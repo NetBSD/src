@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.39 2021/12/19 11:19:32 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.40 2021/12/19 11:26:35 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.39 2021/12/19 11:19:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.40 2021/12/19 11:26:35 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -2847,16 +2847,6 @@ static const struct drm_ioctl_desc i915_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(I915_GEM_VM_DESTROY, i915_gem_vm_destroy_ioctl, DRM_RENDER_ALLOW),
 };
 
-#ifdef __NetBSD__
-
-static const struct uvm_pagerops i915_gem_uvm_ops = {
-	.pgo_reference = drm_gem_pager_reference,
-	.pgo_detach = drm_gem_pager_detach,
-	.pgo_fault = i915_gem_fault,
-};
-
-#endif
-
 static struct drm_driver driver = {
 	/* Don't use MTRRs here; the Xserver or userspace app should
 	 * deal with them for Intel hardware.
@@ -2875,9 +2865,8 @@ static struct drm_driver driver = {
 	.request_irq = drm_pci_request_irq,
 	.free_irq = drm_pci_free_irq,
 
-	/* XXX Not clear the `or legacy' part is important here.  */
-	.mmap_object = &drm_gem_mmap_object,
-	.gem_uvm_ops = &i915_gem_uvm_ops,
+	.mmap_object = &i915_gem_mmap_object,
+	.gem_uvm_ops = NULL,
 #endif
 
 
