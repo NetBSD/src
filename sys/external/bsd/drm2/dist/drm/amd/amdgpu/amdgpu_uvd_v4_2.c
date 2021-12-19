@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd_v4_2.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_uvd_v4_2.c,v 1.6 2021/12/19 00:25:04 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v4_2.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v4_2.c,v 1.6 2021/12/19 00:25:04 riastradh Exp $");
 
 #include <linux/firmware.h>
 
@@ -279,7 +279,7 @@ static int uvd_v4_2_start(struct amdgpu_device *adev)
 	/* enable VCPU clock */
 	WREG32(mmUVD_VCPU_CNTL,  1 << 9);
 
-	/* disable interrupt */
+	/* disable interupt */
 	WREG32_P(mmUVD_MASTINT_EN, 0, ~(1 << 1));
 
 #ifdef __BIG_ENDIAN
@@ -344,7 +344,7 @@ static int uvd_v4_2_start(struct amdgpu_device *adev)
 		return r;
 	}
 
-	/* enable interrupt */
+	/* enable interupt */
 	WREG32_P(mmUVD_MASTINT_EN, 3<<1, ~(3 << 1));
 
 	WREG32_P(mmUVD_STATUS, 0, ~(1<<2));

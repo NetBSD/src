@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.h,v 1.4 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.h,v 1.5 2021/12/19 00:25:04 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -780,7 +780,7 @@ extern void vmw_bo_bo_free(struct ttm_buffer_object *bo);
 extern int vmw_bo_init(struct vmw_private *dev_priv,
 		       struct vmw_buffer_object *vmw_bo,
 		       size_t size, struct ttm_placement *placement,
-		       bool interruptible,
+		       bool interuptable,
 		       void (*bo_free)(struct ttm_buffer_object *bo));
 extern int vmw_user_bo_verify_access(struct ttm_buffer_object *bo,
 				     struct ttm_object_file *tfile);
