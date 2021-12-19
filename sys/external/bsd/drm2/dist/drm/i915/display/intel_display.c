@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.9 2021/12/19 12:11:46 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.10 2021/12/19 12:28:55 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.9 2021/12/19 12:11:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.10 2021/12/19 12:28:55 riastradh Exp $");
 
 #include "intel_display.h"	/* for pipe_drmhack */
 
@@ -17329,6 +17329,30 @@ void intel_modeset_init_hw(struct drm_i915_private *i915)
 	i915->cdclk.logical = i915->cdclk.actual = i915->cdclk.hw;
 }
 
+static int sanitize_watermarks_add_affected(struct drm_atomic_state *state)
+{
+	struct drm_plane *plane;
+	struct drm_crtc *crtc;
+
+	drm_for_each_crtc(crtc, state->dev) {
+		struct drm_crtc_state *crtc_state;
+
+		crtc_state = drm_atomic_get_crtc_state(state, crtc);
+		if (IS_ERR(crtc_state))
+			return PTR_ERR(crtc_state);
+	}
+
+	drm_for_each_plane(plane, state->dev) {
+		struct drm_plane_state *plane_state;
+
+		plane_state = drm_atomic_get_plane_state(state, plane);
+		if (IS_ERR(plane_state))
+			return PTR_ERR(plane_state);
+	}
+
+	return 0;
+}
+
 /*
  * Calculate what we think the watermarks should be for the state we've read
  * out of the hardware and then immediately program those watermarks so that
@@ -17339,9 +17363,8 @@ void intel_modeset_init_hw(struct drm_i915_private *i915)
  * through the atomic check code to calculate new watermark values in the
  * state object.
  */
-static void sanitize_watermarks(struct drm_device *dev)
+static void sanitize_watermarks(struct drm_i915_private *dev_priv)
 {
-	struct drm_i915_private *dev_priv = to_i915(dev);
 	struct drm_atomic_state *state;
 	struct intel_atomic_state *intel_state;
 	struct intel_crtc *crtc;
@@ -17354,25 +17377,16 @@ static void sanitize_watermarks(struct drm_device *dev)
 	if (!dev_priv->display.optimize_watermarks)
 		return;
 
-	/*
-	 * We need to hold connection_mutex before calling duplicate_state so
-	 * that the connector loop is protected.
-	 */
-	drm_modeset_acquire_init(&ctx, 0);
-retry:
-	ret = drm_modeset_lock_all_ctx(dev, &ctx);
-	if (ret == -EDEADLK) {
-		drm_modeset_backoff(&ctx);
-		goto retry;
-	} else if (WARN_ON(ret)) {
-		goto fail;
-	}
-
-	state = drm_atomic_helper_duplicate_state(dev, &ctx);
-	if (WARN_ON(IS_ERR(state)))
-		goto fail;
+	state = drm_atomic_state_alloc(&dev_priv->drm);
+	if (WARN_ON(!state))
+		return;
 
 	intel_state = to_intel_atomic_state(state);
+
+	drm_modeset_acquire_init(&ctx, 0);
+
+retry:
+	state->acquire_ctx = &ctx;
 
 	/*
 	 * Hardware readout is the only time we don't want to calculate
@@ -17382,22 +17396,13 @@ retry:
 	if (!HAS_GMCH(dev_priv))
 		intel_state->skip_intermediate_wm = true;
 
-	ret = intel_atomic_check(dev, state);
-	if (ret) {
-		/*
-		 * If we fail here, it means that the hardware appears to be
-		 * programmed in a way that shouldn't be possible, given our
-		 * understanding of watermark requirements.  This might mean a
-		 * mistake in the hardware readout code or a mistake in the
-		 * watermark calculations for a given platform.  Raise a WARN
-		 * so that this is noticeable.
-		 *
-		 * If this actually happens, we'll have to just leave the
-		 * BIOS-programmed watermarks untouched and hope for the best.
-		 */
-		WARN(true, "Could not determine valid watermarks for inherited state\n");
-		goto put_state;
-	}
+	ret = sanitize_watermarks_add_affected(state);
+	if (ret)
+		goto fail;
+
+	ret = intel_atomic_check(&dev_priv->drm, state);
+	if (ret)
+		goto fail;
 
 	/* Write calculated watermark values back */
 	for_each_new_intel_crtc_in_state(intel_state, crtc, crtc_state, i) {
@@ -17407,9 +17412,28 @@ retry:
 		to_intel_crtc_state(crtc->base.state)->wm = crtc_state->wm;
 	}
 
-put_state:
-	drm_atomic_state_put(state);
 fail:
+	if (ret == -EDEADLK) {
+		drm_atomic_state_clear(state);
+		drm_modeset_backoff(&ctx);
+		goto retry;
+	}
+
+	/*
+	 * If we fail here, it means that the hardware appears to be
+	 * programmed in a way that shouldn't be possible, given our
+	 * understanding of watermark requirements.  This might mean a
+	 * mistake in the hardware readout code or a mistake in the
+	 * watermark calculations for a given platform.  Raise a WARN
+	 * so that this is noticeable.
+	 *
+	 * If this actually happens, we'll have to just leave the
+	 * BIOS-programmed watermarks untouched and hope for the best.
+	 */
+	WARN(ret, "Could not determine valid watermarks for inherited state\n");
+
+	drm_atomic_state_put(state);
+
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
 }
@@ -17650,7 +17674,7 @@ int intel_modeset_init(struct drm_i915_private *i915)
 	 * since the watermark calculation done here will use pstate->fb.
 	 */
 	if (!HAS_GMCH(i915))
-		sanitize_watermarks(dev);
+		sanitize_watermarks(i915);
 
 	/*
 	 * Force all active planes to recompute their states. So that on
