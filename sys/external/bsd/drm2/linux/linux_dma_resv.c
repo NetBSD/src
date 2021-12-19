@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.11 2021/12/19 12:21:30 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.12 2021/12/19 12:26:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.11 2021/12/19 12:21:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.12 2021/12/19 12:26:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -449,6 +449,105 @@ dma_resv_read_valid(const struct dma_resv *robj,
 }
 
 /*
+ * dma_resv_get_shared_reader(robj, listp, shared_countp, ticket)
+ *
+ *	Set *listp and *shared_countp to a snapshot of the pointer to
+ *	and length of the shared fence list of robj and return true, or
+ *	set them to NULL/0 and return false if a writer intervened so
+ *	the caller must start over.
+ *
+ *	Both *listp and *shared_countp are unconditionally initialized
+ *	on return.  They may be NULL/0 even on success, if there is no
+ *	shared list at the moment.  Does not take any fence references.
+ */
+static bool
+dma_resv_get_shared_reader(const struct dma_resv *robj,
+    const struct dma_resv_list **listp, unsigned *shared_countp,
+    struct dma_resv_read_ticket *ticket)
+{
+	struct dma_resv_list *list;
+	unsigned shared_count = 0;
+
+	/*
+	 * Get the list and, if it is present, its length.  If the list
+	 * is present, it has a valid length.  The atomic_load_consume
+	 * pairs with the membar_producer in dma_resv_write_begin.
+	 */
+	list = atomic_load_consume(&robj->fence);
+	shared_count = list ? atomic_load_relaxed(&list->shared_count) : 0;
+
+	/*
+	 * We are done reading from robj and list.  Validate our
+	 * parking ticket.  If it's invalid, do not pass go and do not
+	 * collect $200.
+	 */
+	if (!dma_resv_read_valid(robj, ticket))
+		goto fail;
+
+	/* Success!  */
+	*listp = list;
+	*shared_countp = shared_count;
+	return true;
+
+fail:	*listp = NULL;
+	*shared_countp = 0;
+	return false;
+}
+
+/*
+ * dma_resv_get_excl_reader(robj, fencep, ticket)
+ *
+ *	Set *fencep to the exclusive fence of robj and return true, or
+ *	set it to NULL and return false if either
+ *	(a) a writer intervened, or
+ *	(b) the fence is scheduled to be destroyed after this RCU grace
+ *	    period,
+ *	in either case meaning the caller must restart.
+ *
+ *	The value of *fencep is unconditionally initialized on return.
+ *	It may be NULL, if there is no exclusive fence at the moment.
+ *	If nonnull, *fencep is referenced; caller must dma_fence_put.
+ */
+static bool
+dma_resv_get_excl_reader(const struct dma_resv *robj,
+    struct dma_fence **fencep,
+    struct dma_resv_read_ticket *ticket)
+{
+	struct dma_fence *fence;
+
+	/*
+	 * Get the candidate fence pointer.  The atomic_load_consume
+	 * pairs with the membar_consumer in dma_resv_write_begin.
+	 */
+	fence = atomic_load_consume(&robj->fence_excl);
+
+	/*
+	 * The load of robj->fence_excl is atomic, but the caller may
+	 * have previously loaded the shared fence list and should
+	 * restart if its view of the entire dma_resv object is not a
+	 * consistent snapshot.
+	 */
+	if (!dma_resv_read_valid(robj, ticket))
+		goto fail;
+
+	/*
+	 * If the fence is already scheduled to away after this RCU
+	 * read section, give up.  Otherwise, take a reference so it
+	 * won't go away until after dma_fence_put.
+	 */
+	if (fence != NULL &&
+	    (fence = dma_fence_get_rcu(fence)) == NULL)
+		goto fail;
+
+	/* Success!  */
+	*fencep = fence;
+	return true;
+
+fail:	*fencep = NULL;
+	return false;
+}
+
+/*
  * dma_resv_add_excl_fence(robj, fence)
  *
  *	Empty and release all of robj's shared fences, and clear and
@@ -659,13 +758,10 @@ top:	KASSERT(fence == NULL);
 	rcu_read_lock();
 	dma_resv_read_begin(robj, &ticket);
 
-	/*
-	 * If there is a shared list, grab it.  The atomic_load_consume
-	 * here pairs with the membar_producer in dma_resv_write_begin
-	 * to ensure the content of robj->fence is initialized before
-	 * we witness the pointer.
-	 */
-	if ((list = atomic_load_consume(&robj->fence)) != NULL) {
+	/* If there is a shared list, grab it.  */
+	if (!dma_resv_get_shared_reader(robj, &list, &shared_count, &ticket))
+		goto restart;
+	if (list != NULL) {
 
 		/* Check whether we have a buffer.  */
 		if (shared == NULL) {
@@ -711,36 +807,14 @@ top:	KASSERT(fence == NULL);
 		 * it'll invalidate the read ticket and we'll start
 		 * ove, but atomic_load in a loop will pacify kcsan.
 		 */
-		shared_count = atomic_load_relaxed(&list->shared_count);
 		for (i = 0; i < shared_count; i++)
 			shared[i] = atomic_load_relaxed(&list->shared[i]);
-	} else {
-		/* No shared list: shared count is zero.  */
-		shared_count = 0;
 	}
 
 	/* If there is an exclusive fence, grab it.  */
 	KASSERT(fence == NULL);
-	fence = atomic_load_consume(&robj->fence_excl);
-
-	/*
-	 * We are done reading from robj and list.  Validate our
-	 * parking ticket.  If it's invalid, do not pass go and do not
-	 * collect $200.
-	 */
-	if (!dma_resv_read_valid(robj, &ticket)) {
-		fence = NULL;
+	if (!dma_resv_get_excl_reader(robj, &fence, &ticket))
 		goto restart;
-	}
-
-	/*
-	 * Try to get a reference to the exclusive fence, if there is
-	 * one.  If we can't, start over.
-	 */
-	if (fence) {
-		if ((fence = dma_fence_get_rcu(fence)) == NULL)
-			goto restart;
-	}
 
 	/*
 	 * Try to get a reference to all of the shared fences.
@@ -804,18 +878,10 @@ top:	KASSERT(fence == NULL);
 	dma_resv_read_begin(src_robj, &read_ticket);
 
 	/* Get the shared list.  */
-	if ((src_list = atomic_load_consume(&src_robj->fence)) != NULL) {
-
-		/* Find out how long it is.  */
-		shared_count = atomic_load_relaxed(&src_list->shared_count);
-
-		/*
-		 * Make sure we saw a consistent snapshot of the list
-		 * pointer and length.
-		 */
-		if (!dma_resv_read_valid(src_robj, &read_ticket))
-			goto restart;
-
+	if (!dma_resv_get_shared_reader(src_robj, &src_list, &shared_count,
+		&read_ticket))
+		goto restart;
+	if (src_list != NULL) {
 		/* Allocate a new list.  */
 		dst_list = objlist_tryalloc(shared_count);
 		if (dst_list == NULL)
@@ -840,28 +906,8 @@ top:	KASSERT(fence == NULL);
 
 	/* Get the exclusive fence.  */
 	KASSERT(fence == NULL);
-	if ((fence = atomic_load_consume(&src_robj->fence_excl)) != NULL) {
-
-		/*
-		 * Make sure we saw a consistent snapshot of the fence.
-		 *
-		 * XXX I'm not actually sure this is necessary since
-		 * pointer writes are supposed to be atomic.
-		 */
-		if (!dma_resv_read_valid(src_robj, &read_ticket)) {
-			fence = NULL;
-			goto restart;
-		}
-
-		/*
-		 * If it is going away, restart.  Otherwise, acquire a
-		 * reference to it.
-		 */
-		if (!dma_fence_get_rcu(fence)) {
-			fence = NULL;
-			goto restart;
-		}
-	}
+	if (!dma_resv_get_excl_reader(src_robj, &fence, &read_ticket))
+		goto restart;
 
 	/* All done with src; exit the RCU read section.  */
 	rcu_read_unlock();
@@ -939,7 +985,7 @@ dma_resv_test_signaled_rcu(const struct dma_resv *robj,
     bool shared)
 {
 	struct dma_resv_read_ticket ticket;
-	struct dma_resv_list *list;
+	const struct dma_resv_list *list;
 	struct dma_fence *fence = NULL;
 	uint32_t i, shared_count;
 	bool signaled = true;
@@ -951,18 +997,15 @@ top:	KASSERT(fence == NULL);
 	dma_resv_read_begin(robj, &ticket);
 
 	/* If shared is requested and there is a shared list, test it.  */
-	if (shared && (list = atomic_load_consume(&robj->fence)) != NULL) {
-
-		/* Find out how long it is.  */
-		shared_count = atomic_load_relaxed(&list->shared_count);
-
-		/*
-		 * Make sure we saw a consistent snapshot of the list
-		 * pointer and length.
-		 */
-		if (!dma_resv_read_valid(robj, &ticket))
+	if (shared) {
+		if (!dma_resv_get_shared_reader(robj, &list, &shared_count,
+			&ticket))
 			goto restart;
-
+	} else {
+		list = NULL;
+		shared_count = 0;
+	}
+	if (list != NULL) {
 		/*
 		 * For each fence, if it is going away, restart.
 		 * Otherwise, acquire a reference to it to test whether
@@ -984,25 +1027,10 @@ top:	KASSERT(fence == NULL);
 
 	/* If there is an exclusive fence, test it.  */
 	KASSERT(fence == NULL);
-	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) {
-
-		/*
-		 * Make sure we saw a consistent snapshot of the fence.
-		 *
-		 * XXX I'm not actually sure this is necessary since
-		 * pointer writes are supposed to be atomic.
-		 */
-		if (!dma_resv_read_valid(robj, &ticket)) {
-			fence = NULL;
-			goto restart;
-		}
-
-		/*
-		 * If it is going away, restart.  Otherwise, acquire a
-		 * reference to it to test whether it is signalled.
-		 */
-		if ((fence = dma_fence_get_rcu(fence)) == NULL)
-			goto restart;
+	if (!dma_resv_get_excl_reader(robj, &fence, &ticket))
+		goto restart;
+	if (fence != NULL) {
+		/* Test whether it is signalled.  If no, stop.  */
 		signaled &= dma_fence_is_signaled(fence);
 		dma_fence_put(fence);
 		fence = NULL;
@@ -1038,7 +1066,7 @@ dma_resv_wait_timeout_rcu(const struct dma_resv *robj,
     bool shared, bool intr, unsigned long timeout)
 {
 	struct dma_resv_read_ticket ticket;
-	struct dma_resv_list *list;
+	const struct dma_resv_list *list;
 	struct dma_fence *fence = NULL;
 	uint32_t i, shared_count;
 	long ret;
@@ -1053,18 +1081,15 @@ top:	KASSERT(fence == NULL);
 	dma_resv_read_begin(robj, &ticket);
 
 	/* If shared is requested and there is a shared list, wait on it.  */
-	if (shared && (list = atomic_load_consume(&robj->fence)) != NULL) {
-
-		/* Find out how long it is.  */
-		shared_count = list->shared_count;
-
-		/*
-		 * Make sure we saw a consistent snapshot of the list
-		 * pointer and length.
-		 */
-		if (!dma_resv_read_valid(robj, &ticket))
+	if (shared) {
+		if (!dma_resv_get_shared_reader(robj, &list, &shared_count,
+			&ticket))
 			goto restart;
-
+	} else {
+		list = NULL;
+		shared_count = 0;
+	}
+	if (list != NULL) {
 		/*
 		 * For each fence, if it is going away, restart.
 		 * Otherwise, acquire a reference to it to test whether
@@ -1085,26 +1110,10 @@ top:	KASSERT(fence == NULL);
 
 	/* If there is an exclusive fence, test it.  */
 	KASSERT(fence == NULL);
-	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) {
-
-		/*
-		 * Make sure we saw a consistent snapshot of the fence.
-		 *
-		 * XXX I'm not actually sure this is necessary since
-		 * pointer writes are supposed to be atomic.
-		 */
-		if (!dma_resv_read_valid(robj, &ticket)) {
-			fence = NULL;
-			goto restart;
-		}
-
-		/*
-		 * If it is going away, restart.  Otherwise, acquire a
-		 * reference to it to test whether it is signalled.  If
-		 * not, wait for it.
-		 */
-		if ((fence = dma_fence_get_rcu(fence)) == NULL)
-			goto restart;
+	if (!dma_resv_get_excl_reader(robj, &fence, &ticket))
+		goto restart;
+	if (fence != NULL) {
+		/* Test whether it is signalled.  If no, wait.  */
 		if (!dma_fence_is_signaled(fence))
 			goto wait;
 		dma_fence_put(fence);
@@ -1207,7 +1216,7 @@ dma_resv_do_poll(const struct dma_resv *robj, int events,
     struct dma_resv_poll *rpoll)
 {
 	struct dma_resv_read_ticket ticket;
-	struct dma_resv_list *list;
+	const struct dma_resv_list *list;
 	struct dma_fence *fence = NULL;
 	uint32_t i, shared_count;
 	int revents;
@@ -1232,19 +1241,15 @@ top:	KASSERT(fence == NULL);
 	dma_resv_read_begin(robj, &ticket);
 
 	/* If we want to wait for all fences, get the shared list.  */
-	if ((events & POLLOUT) != 0 &&
-	    (list = atomic_load_consume(&robj->fence)) != NULL) do {
-
-		/* Find out how long it is.  */
-		shared_count = list->shared_count;
-
-		/*
-		 * Make sure we saw a consistent snapshot of the list
-		 * pointer and length.
-		 */
-		if (!dma_resv_read_valid(robj, &ticket))
+	if (events & POLLOUT) {
+		if (!dma_resv_get_shared_reader(robj, &list, &shared_count,
+			&ticket))
 			goto restart;
-
+	} else {
+		list = NULL;
+		shared_count = 0;
+	}
+	if (list != NULL) do {
 		/*
 		 * For each fence, if it is going away, restart.
 		 * Otherwise, acquire a reference to it to test whether
@@ -1310,26 +1315,13 @@ top:	KASSERT(fence == NULL);
 
 	/* We always wait for at least the exclusive fence, so get it.  */
 	KASSERT(fence == NULL);
-	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) do {
-
+	if (!dma_resv_get_excl_reader(robj, &fence, &ticket))
+		goto restart;
+	if (fence != NULL) do {
 		/*
-		 * Make sure we saw a consistent snapshot of the fence.
-		 *
-		 * XXX I'm not actually sure this is necessary since
-		 * pointer writes are supposed to be atomic.
+		 * Test whether it is signalled.  If not, stop and
+		 * request a callback.
 		 */
-		if (!dma_resv_read_valid(robj, &ticket)) {
-			fence = NULL;
-			goto restart;
-		}
-
-		/*
-		 * If it is going away, restart.  Otherwise, acquire a
-		 * reference to it to test whether it is signalled.  If
-		 * not, stop and request a callback.
-		 */
-		if ((fence = dma_fence_get_rcu(fence)) == NULL)
-			goto restart;
 		if (dma_fence_is_signaled(fence)) {
 			dma_fence_put(fence);
 			fence = NULL;
