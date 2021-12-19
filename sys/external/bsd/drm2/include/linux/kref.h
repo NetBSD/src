@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.9 2021/12/19 01:46:01 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.10 2021/12/19 10:48:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 
 #include <linux/atomic.h>
+#include <linux/refcount.h>
 #include <linux/mutex.h>
 
 struct kref {
