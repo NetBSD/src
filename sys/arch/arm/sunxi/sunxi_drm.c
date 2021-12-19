@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.18 2021/12/19 11:01:21 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.19 2021/12/19 11:25:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.18 2021/12/19 11:01:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.19 2021/12/19 11:25:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -383,6 +383,7 @@ sunxi_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_si
 	fb->width = width;
 	fb->height = height;
 	fb->format = drm_format_info(DRM_FORMAT_XRGB8888);
+	fb->dev = ddev;
 
 	error = drm_framebuffer_init(ddev, fb, &sunxi_drm_framebuffer_funcs);
 	if (error != 0) {
