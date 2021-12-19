@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.2 2021/12/19 01:24:49 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.3 2021/12/19 01:33:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <uvm/uvm_extern.h>	/* For PAGE_SIZE.  */
 
 #include <linux/gfp.h>
+#include <linux/rcupdate.h>
 
 /* XXX Should use kmem, but Linux kfree doesn't take the size.  */
 
@@ -126,12 +127,32 @@ kfree(void *ptr)
 		free(ptr, M_TEMP);
 }
 
-#define	SLAB_HWCACHE_ALIGN	1
+#define	SLAB_HWCACHE_ALIGN	__BIT(0)
+#define	SLAB_RECLAIM_ACCOUNT	__BIT(1)
+#define	SLAB_TYPESAFE_BY_RCU	__BIT(2)
 
 struct kmem_cache {
 	pool_cache_t	kc_pool_cache;
 	size_t		kc_size;
 	void		(*kc_ctor)(void *);
+};
+
+/* XXX These should be in <sys/pool.h>.  */
+void *	pool_page_alloc(struct pool *, int);
+void	pool_page_free(struct pool *, void *);
+
+static void
+pool_page_free_rcu(struct pool *pp, void *v)
+{
+
+	synchronize_rcu();
+	pool_page_free(pp, v);
+}
+
+static struct pool_allocator pool_allocator_kmem_rcu = {
+	.pa_alloc = pool_page_alloc,
+	.pa_free = pool_page_free_rcu,
+	.pa_pagesz = 0,
 };
 
 static int
@@ -149,19 +170,26 @@ static inline struct kmem_cache *
 kmem_cache_create(const char *name, size_t size, size_t align,
     unsigned long flags, void (*ctor)(void *))
 {
+	struct pool_allocator *palloc = NULL;
 	struct kmem_cache *kc;
 
 	if (ISSET(flags, SLAB_HWCACHE_ALIGN))
 		align = roundup(MAX(1, align), CACHE_LINE_SIZE);
+	if (ISSET(flags, SLAB_TYPESAFE_BY_RCU))
+		palloc = &pool_allocator_kmem_rcu;
 
 	kc = kmem_alloc(sizeof(*kc), KM_SLEEP);
-	kc->kc_pool_cache = pool_cache_init(size, align, 0, 0, name, NULL,
+	kc->kc_pool_cache = pool_cache_init(size, align, 0, 0, name, palloc,
 	    IPL_NONE, &kmem_cache_ctor, NULL, kc);
 	kc->kc_size = size;
 	kc->kc_ctor = ctor;
 
 	return kc;
 }
+
+#define	KMEM_CACHE(T, F)						      \
+	kmem_cache_create(#T, sizeof(struct T), __alignof__(struct T),	      \
+	    (F), NULL)
 
 static inline void
 kmem_cache_destroy(struct kmem_cache *kc)
