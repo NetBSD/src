@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_xa.c,v 1.1 2021/12/19 11:51:07 riastradh Exp $	*/
+/*	$NetBSD: linux_xa.c,v 1.2 2021/12/19 12:05:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_xa.c,v 1.1 2021/12/19 11:51:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_xa.c,v 1.2 2021/12/19 12:05:18 riastradh Exp $");
 
 #include <sys/radixtree.h>
 
@@ -157,7 +157,7 @@ void *
 xa_find_after(struct xarray *xa, unsigned long *startp, unsigned long max,
     unsigned tagmask)
 {
-	unsigned long start = *startp;
+	unsigned long start = *startp + 1;
 	void *found;
 
 	if (start == max)
