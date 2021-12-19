@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.6 2018/08/28 08:50:46 skrll Exp $	*/
+/*	$NetBSD: printk.h,v 1.7 2021/12/19 00:48:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -54,6 +54,11 @@
 #define	KERN_INFO	"kern info: "
 #define	KERN_DEBUG	"kern debug: "
 #define	KERN_CONT	""
+
+struct va_format {
+	const char	*fmt;
+	va_list		*va;
+};
 
 #define	DUMP_PREFIX_NONE	0
 #define	DUMP_PREFIX_OFFSET	1
