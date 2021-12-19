@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kthread.c,v 1.6 2021/12/19 12:42:25 riastradh Exp $	*/
+/*	$NetBSD: linux_kthread.c,v 1.7 2021/12/19 12:42:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.6 2021/12/19 12:42:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.7 2021/12/19 12:42:32 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -275,6 +275,9 @@ kthread_parkme(void)
 {
 	struct task_struct *T = linux_kthread();
 
+	assert_spin_locked(T->kt_interlock);
+
+	spin_unlock(T->kt_interlock);
 	mutex_enter(&T->kt_lock);
 	while (T->kt_shouldpark) {
 		T->kt_parked = true;
@@ -283,4 +286,5 @@ kthread_parkme(void)
 		T->kt_parked = false;
 	}
 	mutex_exit(&T->kt_lock);
+	spin_lock(T->kt_interlock);
 }
