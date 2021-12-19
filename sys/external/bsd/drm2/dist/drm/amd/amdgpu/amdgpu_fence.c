@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fence.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fence.c,v 1.8 2021/12/19 09:59:30 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.8 2021/12/19 09:59:30 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
@@ -289,25 +289,6 @@ bool amdgpu_fence_process(struct amdgpu_ring *ring)
 
 	return true;
 }
-
-#ifdef __NetBSD__
-static int amdgpu_fence_check_signaled(struct amdgpu_fence *);
-
-static void
-amdgpu_fence_wakeup_locked(struct amdgpu_ring *ring)
-{
-	struct amdgpu_fence *fence, *next;
-
-	BUG_ON(!spin_is_locked(&ring->fence_drv.fence_lock));
-	DRM_SPIN_WAKEUP_ALL(&ring->fence_drv.fence_queue,
-	    &ring->fence_drv.fence_lock);
-	TAILQ_FOREACH_SAFE(fence, &ring->fence_drv.fence_check, fence_check,
-	    next) {
-		amdgpu_fence_check_signaled(fence);
-	}
-}
-#endif
-
 
 /**
  * amdgpu_fence_fallback - fallback for hardware interrupts
@@ -567,11 +548,8 @@ void amdgpu_fence_driver_fini(struct amdgpu_device *adev)
 		kfree(ring->fence_drv.fences);
 		ring->fence_drv.fences = NULL;
 		ring->fence_drv.initialized = false;
-#ifdef __NetBSD__
-		BUG_ON(!TAILQ_EMPTY(&ring->fence_drv.fence_check));
-		DRM_DESTROY_WAITQUEUE(&ring->fence_drv.fence_queue);
-		spin_lock_destroy(&ring->fence_drv.fence_lock);
-#endif
+		spin_lock_destroy(&ring->fence_drv.lock);
+		timer_teardown(&ring->fence_drv.fallback_timer);
 	}
 }
 
