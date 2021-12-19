@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.17 2021/12/19 11:13:06 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.18 2021/12/19 11:13:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -35,8 +35,10 @@
 #include <sys/types.h>
 #include <sys/sdt.h>
 
-#include "i915_request.h"
 #include "i915_drv.h"
+#include "i915_request.h"
+
+#include "display/intel_display_types.h"
 
 /* Must come last.  */
 #include <drm/drm_trace_netbsd.h>
@@ -170,125 +172,86 @@ trace_i915_gem_object_pwrite(struct drm_i915_gem_object *obj, off_t offset,
 }
 
 #define	I915_DEFINE_TRACE_REQ(M, F, N)					      \
-	DEFINE_TRACE7(M, F, N,						      \
-	    "int"/*devno*/,						      \
-	    "unsigned"/*hw_id*/,					      \
-	    "uint8_t"/*uabi_class*/,					      \
-	    "uint8_t"/*instance*/,					      \
-	    "unsigned"/*context*/,					      \
-	    "unsigned"/*seqno*/,					      \
-	    "unsigned"/*global*/)
+	DEFINE_TRACE6(M, F, N,						      \
+	    "uint32_t"/*devno*/,					      \
+	    "uint64_t"/*ctx*/,						      \
+	    "uint16_t"/*class*/,					      \
+	    "uint16_t"/*instance*/,					      \
+	    "uint32_t"/*seqno*/,					      \
+	    "uint32_t"/*flags*/)
 
-#define	I915_TRACE_REQ(M, F, N, R)					      \
-	TRACE7(M, F, N,							      \
+#define	I915_TRACE_REQ(M, F, N, R, FLAGS)				      \
+	TRACE6(M, F, N,							      \
 	    (R)->i915->drm.primary->index,				      \
-	    (R)->gem_context->hw_id,					      \
-	    (R)->engine->uabi_class,					      \
-	    (R)->engine->instance,					      \
 	    (R)->fence.context,						      \
+	    (R)->engine->uabi_class,					      \
+	    (R)->engine->uabi_instance,					      \
 	    (R)->fence.seqno,						      \
-	    (R)->global_seqno)
+	    (FLAGS))
 
 I915_DEFINE_TRACE_REQ(i915,, request__queue);
 static inline void
 trace_i915_request_queue(struct i915_request *request, uint32_t flags)
 {
-	__USE(flags);		/* XXX too many trace operands */
-	I915_TRACE_REQ(i915,, request__queue,  request);
+	I915_TRACE_REQ(i915,, request__queue,  request, flags);
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__add);
 static inline void
 trace_i915_request_add(struct i915_request *request)
 {
-	I915_TRACE_REQ(i915,, request__add,  request);
+	I915_TRACE_REQ(i915,, request__add,  request, 0);
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__submit);
 static inline void
 trace_i915_request_submit(struct i915_request *request)
 {
-	I915_TRACE_REQ(i915,, request__submit,  request);
+	I915_TRACE_REQ(i915,, request__submit,  request, 0);
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__execute);
 static inline void
 trace_i915_request_execute(struct i915_request *request)
 {
-	I915_TRACE_REQ(i915,, request__execute,  request);
+	I915_TRACE_REQ(i915,, request__execute,  request, 0);
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__in);
 static inline void
 trace_i915_request_in(struct i915_request *request, unsigned port)
 {
-	__USE(port);		/* XXX too many trace operands */
-	I915_TRACE_REQ(i915,, request__in,  request);
+	/* XXX prio */
+	I915_TRACE_REQ(i915,, request__in,  request, port);
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__out);
 static inline void
 trace_i915_request_out(struct i915_request *request)
 {
-	/* XXX i915_request_completed(request) */
-	I915_TRACE_REQ(i915,, request__out,  request);
+	I915_TRACE_REQ(i915,, request__out,
+	    request, i915_request_completed(request));
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__retire);
 static inline void
 trace_i915_request_retire(struct i915_request *request)
 {
-	I915_TRACE_REQ(i915,, request__retire, request);
+	I915_TRACE_REQ(i915,, request__retire, request, 0);
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__wait__begin);
 static inline void
 trace_i915_request_wait_begin(struct i915_request *request)
 {
-	I915_TRACE_REQ(i915,, request__wait__begin, request);
+	I915_TRACE_REQ(i915,, request__wait__begin, request, 0);
 }
 
 I915_DEFINE_TRACE_REQ(i915,, request__wait__end);
 static inline void
 trace_i915_request_wait_end(struct i915_request *request)
 {
-	I915_TRACE_REQ(i915,, request__wait__end, request);
-}
-
-DEFINE_TRACE5(i915,, engine__notify,
-    "int"/*devno*/,
-    "uint8_t"/*uabi_class*/,
-    "uint8_t"/*instance*/,
-    "unsigned"/*seqno*/,
-    "bool"/*waiters*/);
-static inline void
-trace_intel_engine_notify(struct intel_engine_cs *engine, bool waiters)
-{
-	TRACE5(i915,, engine__notify,
-	    engine->i915->drm.primary->index,
-	    engine->uabi_class,
-	    engine->instance,
-	    intel_engine_get_seqno(engine),
-	    waiters);
-}
-
-DEFINE_TRACE6(i915,, gem__ring__sync__to,
-    "int"/*devno*/,
-    "uint8_t"/*from_class*/,
-    "uint8_t"/*from_instance*/,
-    "uint8_t"/*to_class*/,
-    "uint8_t"/*to_instance*/,
-    "unsigned"/*seqno*/);
-static inline void
-trace_i915_gem_ring_sync_to(struct i915_request *to, struct i915_request *from)
-{
-	TRACE6(i915,, gem__ring__sync__to,
-	    from->i915->drm.primary->index,
-	    from->engine->uabi_class,
-	    from->engine->instance,
-	    to->engine->uabi_class,
-	    to->engine->instance,
-	    from->global_seqno);
+	I915_TRACE_REQ(i915,, request__wait__end, request, 0);
 }
 
 DEFINE_TRACE3(i915,, register__read,
@@ -343,34 +306,30 @@ trace_intel_gpu_freq_change(int freq)
 	TRACE1(i915,, gpu__freq__change,  freq);
 }
 
-DEFINE_TRACE4(i915,, context__create,
+DEFINE_TRACE3(i915,, context__create,
     "int"/*devno*/,
     "struct i915_gem_context *"/*ctx*/,
-    "unsigned"/*hw_id*/,
     "struct i915_address_space *"/*vm*/);
 static inline void
 trace_i915_context_create(struct i915_gem_context *ctx)
 {
-	TRACE4(i915,, context__create,
+	TRACE3(i915,, context__create,
 	    ctx->i915->drm.primary->index,
 	    ctx,
-	    ctx->hw_id,
-	    (ctx->ppgtt ? &ctx->ppgtt->vm : NULL));
+	    rcu_access_pointer(ctx->vm));
 }
 
-DEFINE_TRACE4(i915,, context__free,
+DEFINE_TRACE3(i915,, context__free,
     "int"/*devno*/,
     "struct i915_gem_context *"/*ctx*/,
-    "unsigned"/*hw_id*/,
     "struct i915_address_space *"/*vm*/);
 static inline void
 trace_i915_context_free(struct i915_gem_context *ctx)
 {
-	TRACE4(i915,, context__free,
+	TRACE3(i915,, context__free,
 	    ctx->i915->drm.primary->index,
 	    ctx,
-	    ctx->hw_id,
-	    (ctx->ppgtt ? &ctx->ppgtt->vm : NULL));
+	    rcu_access_pointer(ctx->vm));
 }
 
 DEFINE_TRACE4(i915,, page_directory_entry_alloc,
