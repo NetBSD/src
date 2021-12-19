@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.10 2021/12/19 10:48:37 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.11 2021/12/19 11:39:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <linux/atomic.h>
 #include <linux/refcount.h>
 #include <linux/mutex.h>
+#include <linux/spinlock.h>
 
 struct kref {
 	unsigned int kr_count;
@@ -102,6 +103,33 @@ kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 		(*release)(kref);
 		return 1;
 	}
+
+	return 0;
+}
+
+static inline int
+kref_put_lock(struct kref *kref, void (*release)(struct kref *), spinlock_t *interlock)
+{
+	unsigned int old, new;
+
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
+
+	do {
+		old = kref->kr_count;
+		KASSERT(old > 0);
+		if (old == 1) {
+			spin_lock(interlock);
+			if (atomic_add_int_nv(&kref->kr_count, -1) == 0) {
+				(*release)(kref);
+				return 1;
+			}
+			spin_unlock(interlock);
+			return 0;
+		}
+		new = (old - 1);
+	} while (atomic_cas_uint(&kref->kr_count, old, new) != old);
 
 	return 0;
 }
