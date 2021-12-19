@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.25 2021/12/19 10:28:31 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.26 2021/12/19 10:32:47 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.25 2021/12/19 10:28:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.26 2021/12/19 10:32:47 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -86,6 +86,17 @@ __KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.25 2021/12/19 10:28:31 riastradh Exp 
 #include "intel_csr.h"
 #include "intel_memory_region.h"
 #include "intel_pm.h"
+
+#ifdef __NetBSD__
+#ifdef notyet
+#if defined(__i386__)
+#include "pnpbios.h"
+#endif
+#if NPNPBIOS > 0
+#define CONFIG_PNP
+#endif
+#endif
+#endif
 
 static struct drm_driver driver;
 

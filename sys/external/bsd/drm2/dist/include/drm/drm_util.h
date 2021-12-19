@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_util.h,v 1.3 2021/12/19 01:56:00 riastradh Exp $	*/
+/*	$NetBSD: drm_util.h,v 1.4 2021/12/19 10:32:47 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -38,6 +38,10 @@
 #include <linux/kgdb.h>
 #include <linux/preempt.h>
 #include <linux/smp.h>
+
+#ifdef __NetBSD__
+#include <drm/drm_wait_netbsd.h>
+#endif
 
 /*
  * Use EXPORT_SYMBOL_FOR_TESTS_ONLY() for functions that shall

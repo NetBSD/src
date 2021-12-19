@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.56 2021/12/19 10:21:18 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.57 2021/12/19 10:32:47 riastradh Exp $
 
 version	20180827
 
@@ -11,8 +11,6 @@ include "external/bsd/drm2/linux/files.drmkms_linux"
 define	drmkms_i2c: drmkms_linux
 
 define	drmkms: drmkms_linux, drmkms_i2c, linux
-
-defflag		opt_drmkms.h	DRMKMS_DEBUG
 
 # This code comes from the Linux kernel, which assumes signed
 # overflow is OK.
@@ -29,14 +27,28 @@ makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/drm"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/uapi"
 
-# XXX Should probably be in a header file.  opt_drmkms.h?
 makeoptions	drmkms	CPPFLAGS+="-D__KERNEL__"
+
+ifdef i386
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86_PAT"
+elifdef amd64
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86_64"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86_PAT"
+elifdef arm
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_ARM"
+elifdef aarch64
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_AARCH64"
+endif
 
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_OVERALLOC=100"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_LOCKDEP=0"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_PCI=1"
 
 makeoptions	drmkms	"CWARNFLAGS.drmkms"+="-Wno-missing-field-initializers"
 
