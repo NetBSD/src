@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_base.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_base.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "priv.h"
 #include "chan.h"
@@ -339,6 +339,7 @@ nvkm_fifo_dtor(struct nvkm_engine *engine)
 	nvkm_event_fini(&fifo->kevent);
 	nvkm_event_fini(&fifo->cevent);
 	nvkm_event_fini(&fifo->uevent);
+	spin_lock_destroy(&fifo->lock);
 	return data;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_falcon_base.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_falcon_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_falcon_base.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_falcon_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "priv.h"
 
@@ -232,6 +232,8 @@ nvkm_falcon_del(struct nvkm_falcon **pfalcon)
 {
 	if (*pfalcon) {
 		nvkm_falcon_dtor(*pfalcon);
+		mutex_destroy(&(*pfalcon)->mutex);
+		mutex_destroy(&(*pfalcon)->dmem_mutex);
 		kfree(*pfalcon);
 		*pfalcon = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmm.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmm.c,v 1.4 2021/12/19 11:34:46 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmm.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmm.c,v 1.4 2021/12/19 11:34:46 riastradh Exp $");
 
 #define NVKM_VMM_LEVELS_MAX 5
 #include "vmm.h"
@@ -1138,6 +1138,8 @@ nvkm_vmm_dtor(struct nvkm_vmm *vmm)
 		nvkm_mmu_ptc_put(vmm->mmu, true, &vmm->pd->pt[0]);
 		nvkm_vmm_pt_del(&vmm->pd);
 	}
+
+	mutex_destroy(&vmm->mutex);
 }
 
 static int

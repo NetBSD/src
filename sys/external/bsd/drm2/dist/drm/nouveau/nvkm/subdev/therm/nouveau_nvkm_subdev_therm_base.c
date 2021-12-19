@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_base.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_base.c,v 1.4 2021/12/19 11:34:46 riastradh Exp $	*/
 
 /*
  * Copyright 2012 The Nouveau community
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_base.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_base.c,v 1.4 2021/12/19 11:34:46 riastradh Exp $");
 
 #include "priv.h"
 
@@ -414,7 +414,10 @@ static void *
 nvkm_therm_dtor(struct nvkm_subdev *subdev)
 {
 	struct nvkm_therm *therm = nvkm_therm(subdev);
+	nvkm_therm_fan_dtor(therm);
 	kfree(therm->fan);
+	spin_lock_destroy(&therm->sensor.alarm_program_lock);
+	spin_lock_destroy(&therm->lock);
 	return therm;
 }
 

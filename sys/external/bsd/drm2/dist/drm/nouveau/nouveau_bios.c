@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bios.c,v 1.5 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bios.c,v 1.6 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2005-2006 Erik Waling
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bios.c,v 1.5 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bios.c,v 1.6 2021/12/19 11:34:44 riastradh Exp $");
 
 #include "nouveau_drv.h"
 #include "nouveau_reg.h"
@@ -2132,4 +2132,8 @@ nouveau_bios_init(struct drm_device *dev)
 void
 nouveau_bios_takedown(struct drm_device *dev)
 {
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct nvbios *legacy = &drm->vbios;
+
+	spin_lock_destroy(&legacy->lock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: priv.h,v 1.3 2021/12/18 23:45:40 riastradh Exp $	*/
+/*	$NetBSD: priv.h,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_MC_PRIV_H__
@@ -19,6 +19,7 @@ struct nvkm_mc_map {
 
 struct nvkm_mc_func {
 	void (*init)(struct nvkm_mc *);
+	void *(*dtor)(struct nvkm_mc *);
 	const struct nvkm_mc_map *intr;
 	/* disable reporting of interrupts to host */
 	void (*intr_unarm)(struct nvkm_mc *);
