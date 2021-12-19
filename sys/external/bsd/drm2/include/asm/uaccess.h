@@ -1,4 +1,4 @@
-/*	$NetBSD: uaccess.h,v 1.7 2021/12/19 01:55:14 riastradh Exp $	*/
+/*	$NetBSD: uaccess.h,v 1.8 2021/12/19 01:59:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+
+#include <linux/compiler.h>
 
 /* XXX This is a cop-out.  */
 #define	VERIFY_READ	0
