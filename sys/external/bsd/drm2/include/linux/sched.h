@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.16 2021/12/19 01:22:44 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.17 2021/12/19 01:51:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -99,6 +99,16 @@ cond_resched(void)
 {
 
 	preempt_point();
+}
+
+static inline bool
+signal_pending_state(int state, struct proc *p)
+{
+
+	KASSERT(p == current);
+	if (state & TASK_UNINTERRUPTIBLE)
+		return false;
+	return sigispending(curlwp, 0);
 }
 
 #endif  /* _LINUX_SCHED_H_ */
