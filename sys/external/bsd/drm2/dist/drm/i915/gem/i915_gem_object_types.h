@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object_types.h,v 1.3 2021/12/19 01:38:51 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object_types.h,v 1.4 2021/12/19 11:27:27 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -70,6 +70,7 @@ enum i915_mmap_type {
 	I915_MMAP_TYPE_WC,
 	I915_MMAP_TYPE_WB,
 	I915_MMAP_TYPE_UC,
+	I915_MMAP_NTYPES
 };
 
 struct i915_mmap_offset {
@@ -137,7 +138,11 @@ struct drm_i915_gem_object {
 
 	struct {
 		spinlock_t lock; /* Protects access to mmo offsets */
+#ifdef __NetBSD__
+		struct i915_mmap_offset *offsets[I915_MMAP_NTYPES];
+#else
 		struct rb_root offsets;
+#endif
 	} mmo;
 
 	I915_SELFTEST_DECLARE(struct list_head st_link);
