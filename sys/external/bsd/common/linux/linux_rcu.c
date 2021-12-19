@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.5 2021/12/19 12:07:55 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.6 2021/12/19 12:40:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.5 2021/12/19 12:07:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.6 2021/12/19 12:40:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -276,6 +276,15 @@ gc_thread(void *cookie)
 		/* Finished a batch of work.  Notify rcu_barrier.  */
 		gc.gen++;
 		cv_broadcast(&gc.cv);
+
+		/*
+		 * Limit ourselves to one batch per tick, in an attempt
+		 * to make the batches larger.
+		 *
+		 * XXX We should maybe also limit the size of each
+		 * batch.
+		 */
+		(void)kpause("lxrcubat", /*intr*/false, /*timo*/1, &gc.lock);
 	}
 	KASSERT(gc.first_callback == NULL);
 	KASSERT(gc.first_kfree == NULL);
