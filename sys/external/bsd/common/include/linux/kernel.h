@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.36 2021/12/19 01:39:12 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.37 2021/12/19 01:40:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@
 #define	unlikely(X)	__predict_false(X)
 
 #define	might_sleep	ASSERT_SLEEPABLE
+
+#define	DEFINE_STATIC_KEY_FALSE(N)	bool N __unused = false
 
 /*
  * XXX Linux kludge to work around GCC uninitialized variable warning.
