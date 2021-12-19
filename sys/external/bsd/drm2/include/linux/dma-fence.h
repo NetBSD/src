@@ -1,4 +1,4 @@
-/*	$NetBSD: fence.h,v 1.16 2020/02/14 18:17:23 tnn Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.1 2021/12/19 00:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
