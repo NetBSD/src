@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.h,v 1.3 2021/12/19 00:46:23 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.h,v 1.4 2021/12/19 00:46:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Intel Corp.
@@ -29,6 +29,7 @@
 #include <linux/seqlock.h>
 #include <linux/idr.h>
 #include <linux/poll.h>
+#include <linux/timer.h>
 
 #include <drm/drm_file.h>
 #include <drm/drm_modes.h>
