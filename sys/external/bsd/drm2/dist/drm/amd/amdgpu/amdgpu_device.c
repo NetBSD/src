@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.8 2021/12/19 11:35:07 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.8 2021/12/19 11:35:07 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -119,6 +119,8 @@ const char *amdgpu_asic_name[] = {
 	"LAST",
 };
 
+#ifndef __NetBSD__		/* XXX amdgpu sysfs */
+
 /**
  * DOC: pcie_replay_count
  *
@@ -140,6 +142,8 @@ static ssize_t amdgpu_device_get_pcie_replay_count(struct device *dev,
 
 static DEVICE_ATTR(pcie_replay_count, S_IRUGO,
 		amdgpu_device_get_pcie_replay_count, NULL);
+
+#endif	/* __NetBSD__ */
 
 static void amdgpu_device_get_pcie_info(struct amdgpu_device *adev);
 
@@ -266,7 +270,12 @@ uint32_t amdgpu_mm_rreg(struct amdgpu_device *adev, uint32_t reg,
  */
 uint8_t amdgpu_mm_rreg8(struct amdgpu_device *adev, uint32_t offset) {
 	if (offset < adev->rmmio_size)
+#ifdef __NetBSD__
+		return bus_space_read_1(adev->rmmiot, adev->rmmioh,
+		    adev->rmmio_base + offset);
+#else
 		return (readb(adev->rmmio + offset));
+#endif
 	BUG();
 }
 
@@ -287,7 +296,12 @@ uint8_t amdgpu_mm_rreg8(struct amdgpu_device *adev, uint32_t offset) {
  */
 void amdgpu_mm_wreg8(struct amdgpu_device *adev, uint32_t offset, uint8_t value) {
 	if (offset < adev->rmmio_size)
+#ifdef __NetBSD__
+		bus_space_write_1(adev->rmmiot, adev->rmmioh,
+		    adev->rmmio_base + offset, value);
+#else
 		writeb(value, adev->rmmio + offset);
+#endif
 	else
 		BUG();
 }
@@ -467,7 +481,12 @@ void amdgpu_mm_wdoorbell(struct amdgpu_device *adev, u32 index, u32 v)
 u64 amdgpu_mm_rdoorbell64(struct amdgpu_device *adev, u32 index)
 {
 	if (index < adev->doorbell.num_doorbells) {
+#ifdef __NetBSD__
+		return bus_space_read_8(adev->doorbell.bst, adev->doorbell.bsh,
+		    4*index);
+#else
 		return atomic64_read((atomic64_t *)(adev->doorbell.ptr + index));
+#endif
 	} else {
 		DRM_ERROR("reading beyond doorbell aperture: 0x%08x!\n", index);
 		return 0;
@@ -487,7 +506,12 @@ u64 amdgpu_mm_rdoorbell64(struct amdgpu_device *adev, u32 index)
 void amdgpu_mm_wdoorbell64(struct amdgpu_device *adev, u32 index, u64 v)
 {
 	if (index < adev->doorbell.num_doorbells) {
+#ifdef __NetBSD__
+		bus_space_write_8(adev->doorbell.bst, adev->doorbell.bsh,
+		    4*index, v);
+#else
 		atomic64_set((atomic64_t *)(adev->doorbell.ptr + index), v);
+#endif
 	} else {
 		DRM_ERROR("writing beyond doorbell aperture: 0x%08x!\n", index);
 	}
@@ -3252,11 +3276,13 @@ fence_driver_init:
 	queue_delayed_work(system_wq, &adev->delayed_init_work,
 			   msecs_to_jiffies(AMDGPU_RESUME_MS));
 
+#ifndef __NetBSD__		/* XXX amdgpu sysfs */
 	r = device_create_file(adev->dev, &dev_attr_pcie_replay_count);
 	if (r) {
 		dev_err(adev->dev, "Could not create pcie_replay_count");
 		return r;
 	}
+#endif
 
 	if (IS_ENABLED(CONFIG_PERF_EVENTS))
 		r = amdgpu_pmu_init(adev);
