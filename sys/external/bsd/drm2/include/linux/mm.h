@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.16 2021/12/19 01:49:08 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.17 2021/12/19 01:51:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <asm/page.h>
 #include <linux/shrinker.h>
 #include <linux/slab.h>
+#include <linux/sizes.h>
 
 struct file;
 
