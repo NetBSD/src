@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.22 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: atomic.h,v 1.23 2021/12/19 01:25:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,6 +45,11 @@
 #  define	smp_mb__before_atomic()		__insn_barrier()
 #  define	smp_mb__after_atomic()		__insn_barrier()
 #endif
+
+#define	xchg(P, V)							      \
+	(sizeof(*(P)) == 4 ? atomic_swap_32((volatile uint32_t *)P, V)	      \
+	    : sizeof(*(P)) == 8 ? atomic_swap_64((volatile uint64_t *)P, V)   \
+	    : (__builtin_abort(), 0))
 
 /*
  * atomic (u)int operations
