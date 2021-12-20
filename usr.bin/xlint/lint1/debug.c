@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.5 2021/11/16 21:01:05 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.6 2021/12/20 00:10:07 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.5 2021/11/16 21:01:05 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.6 2021/12/20 00:10:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -132,6 +132,9 @@ debug_node(const tnode_t *tn)
 		debug_printf(", value %llu\n", (unsigned long long)tn->tn_val->v_quad);
 	else if (op == CON && is_integer(tn->tn_type->t_tspec))
 		debug_printf(", value %lld\n", (long long)tn->tn_val->v_quad);
+	else if (op == CON && tn->tn_type->t_tspec == BOOL)
+		debug_printf(", value %s\n",
+		    tn->tn_val->v_quad != 0 ? "true" : "false");
 	else if (op == CON)
 		debug_printf(", unknown value\n");
 	else if (op == STRING && tn->tn_string->st_tspec == CHAR)
