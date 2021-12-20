@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.222 2021/12/19 23:50:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.223 2021/12/20 19:34:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.222 2021/12/19 23:50:27 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.223 2021/12/20 19:34:01 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -985,6 +985,16 @@ end_initialization(void)
 
 	debug_indent_dec();
 	debug_step("end initialization");
+}
+
+void
+begin_designation(void)
+{
+	brace_level *bl;
+
+	bl = current_init()->in_brace_level;
+	lint_assert(bl != NULL);
+	designation_reset(&bl->bl_designation);
 }
 
 void

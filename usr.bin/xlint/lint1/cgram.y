@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.376 2021/12/18 11:37:00 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.377 2021/12/20 19:34:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.376 2021/12/18 11:37:00 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.377 2021/12/20 19:34:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1561,11 +1561,18 @@ initializer_list_item:		/* helper */
 	;
 
 designation:			/* C99 6.7.8 "Initialization" */
-	  designator_list T_ASSIGN
+	  begin_designation designator_list T_ASSIGN
 	| identifier T_COLON {
 		/* GCC style struct or union member name in initializer */
 		gnuism(315);
+		begin_designation();
 		add_designator_member($1);
+	  }
+	;
+
+begin_designation:		/* lint-specific helper */
+	  /* empty */ {
+		begin_designation();
 	  }
 	;
 
