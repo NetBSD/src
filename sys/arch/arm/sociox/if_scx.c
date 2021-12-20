@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.29 2021/12/20 02:24:33 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.30 2021/12/20 06:47:24 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.29 2021/12/20 02:24:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.30 2021/12/20 06:47:24 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -449,7 +449,6 @@ struct scx_softc {
 	bus_space_handle_t sc_eesh;	/* eeprom section handle */
 	bus_size_t sc_eesz;		/* eeprom map size */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
-	bus_dma_tag_t sc_dmat32;
 	struct ethercom sc_ethercom;	/* Ethernet common data */
 	struct mii_data sc_mii;		/* MII */
 	callout_t sc_callout;		/* PHY monitor callout */
@@ -618,6 +617,37 @@ mac_write(struct scx_softc *sc, int reg, int val)
 	(void)WAIT_FOR_CLR(sc, MACCMD, CMD_BUSY, 0);
 }
 
+static int
+get_clk_freq(int phandle, const char *clkname)
+{
+	u_int index, n, cells;
+	const u_int *p;
+	int err, len, resid;
+	unsigned int freq = 0;
+
+	err = fdtbus_get_index(phandle, "clock-names", clkname, &index);
+	if (err == -1)
+		return -1;
+	p = fdtbus_get_prop(phandle, "clocks", &len);
+	if (p == NULL)
+		return -1;
+	for (n = 0, resid = len; resid > 0; n++) {
+		const int cc_phandle =
+		    fdtbus_get_phandle_from_native(be32toh(p[0]));
+		if (of_getprop_uint32(cc_phandle, "#clock-cells", &cells))
+			return -1;
+		if (n == index) {
+			if (of_getprop_uint32(cc_phandle,
+			    "clock-frequency", &freq))
+				return -1;
+			return freq;
+		}
+		resid -= (cells + 1) * 4;
+		p += (cells + 1) * 4;
+	}
+	return -1;
+}
+
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "socionext,synquacer-netsec" },
 	DEVICE_COMPAT_EOL
@@ -647,15 +677,21 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr[2];
 	bus_size_t size[2];
 	char intrstr[128];
-	const char *phy_mode;
+	int phy_phandle;
+	bus_addr_t phy_id;
+	const char *phy_type;
+	long ref_clk;
+
+	aprint_naive("\n");
+	aprint_normal(": Gigabit Ethernet Controller\n");
 
 	if (fdtbus_get_reg(phandle, 0, addr+0, size+0) != 0
 	    || bus_space_map(faa->faa_bst, addr[0], size[0], 0, &bsh) != 0) {
-		aprint_error(": unable to map device csr\n");
+		aprint_error_dev(self, "unable to map device csr\n");
 		return;
 	}
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error(": failed to decode interrupt\n");
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		goto fail;
 	}
 	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET,
@@ -666,13 +702,9 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 	if (fdtbus_get_reg(phandle, 1, addr+1, size+1) != 0
 	    || bus_space_map(faa->faa_bst, addr[1], size[1], 0, &eebsh) != 0) {
-		aprint_error(": unable to map device eeprom\n");
+		aprint_error_dev(self, "unable to map device eeprom\n");
 		goto fail;
 	}
-
-	aprint_naive("\n");
-	/* aprint_normal(": Gigabit Ethernet Controller\n"); */
-	aprint_normal_dev(self, "interrupt on %s\n", intrstr);
 
 	sc->sc_dev = self;
 	sc->sc_st = bst;
@@ -681,13 +713,22 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_eesh = eebsh;
 	sc->sc_eesz = size[1];
 	sc->sc_dmat = faa->faa_dmat;
-	sc->sc_dmat32 = faa->faa_dmat; /* XXX */
 	sc->sc_phandle = phandle;
 
-	phy_mode = fdtbus_get_string(phandle, "phy-mode");
-	if (phy_mode == NULL)
-		aprint_error(": missing 'phy-mode' property\n");
-	sc->sc_100mii = (phy_mode  && strcmp(phy_mode, "rgmii") != 0);
+	phy_type = fdtbus_get_string(phandle, "phy-mode");
+	if (phy_type == NULL)
+		aprint_error_dev(self, "missing 'phy-mode' property\n");
+	phy_phandle = fdtbus_get_phandle(phandle, "phy-handle");	
+	if (phy_phandle == -1
+	    || fdtbus_get_reg(phy_phandle, 0, &phy_id, NULL) != 0)
+		phy_id = MII_PHY_ANY;
+	ref_clk = get_clk_freq(phandle, "phy_ref_clk");
+	if (ref_clk == -1)
+		ref_clk = 250 * 1000 * 1000;
+
+	sc->sc_100mii = (phy_type && strncmp(phy_type, "rgmii", 5) != 0);
+	sc->sc_phy_id = phy_id;
+	sc->sc_freq = ref_clk;
 
 	scx_attach_i(sc);
 	return;
@@ -718,23 +759,26 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
-	char *phy_mode;
-	ACPI_INTEGER acpi_phy, acpi_freq;
+	ACPI_INTEGER phy_type, phy_id, ref_freq;
 	ACPI_STATUS rv;
 
-aprint_normal(": Gigabit Ethernet Controller\n");
+	aprint_naive("\n");
+	aprint_normal(": Gigabit Ethernet Controller\n");
+
 	rv = acpi_resource_parse(self, handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "missing crs resources\n");
 		return;
+	}
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
 	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
-		aprint_error(": incomplete csr resources\n");
+		aprint_error_dev(self, "incomplete crs resources\n");
 		return;
 	}
 	if (bus_space_map(bst, mem->ar_base, mem->ar_length, 0, &bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
+		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
 	sc->sc_sz = mem->ar_length;
@@ -746,43 +790,39 @@ aprint_normal(": Gigabit Ethernet Controller\n");
 	}
 	mem = acpi_res_mem(&res, 1); /* EEPROM for MAC address and ucode */
 	if (mem == NULL || mem->ar_length == 0) {
-		aprint_error(": incomplete eeprom resources\n");
+		aprint_error_dev(self, "incomplete eeprom resources\n");
 		goto fail;
 	}
 	if (bus_space_map(bst, mem->ar_base, mem->ar_length, 0, &eebsh) != 0) {
-		aprint_error(": couldn't map registers\n");
+		aprint_error_dev(self, "couldn't map registers\n");
 		goto fail;
 	}
 	sc->sc_eesz = mem->ar_length;
 
-	rv = acpi_dsd_string(handle, "phy-mode", &phy_mode);
+	rv = acpi_dsd_integer(handle, "max-speed", &phy_type);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error(": missing 'phy-mode' property\n");
-		phy_mode = NULL;
+		aprint_error_dev(self, "missing 'max-speed' property\n");
+		phy_type = 1000;
 	}
-	rv = acpi_dsd_integer(handle, "phy-channel", &acpi_phy);
+	rv = acpi_dsd_integer(handle, "phy-channel", &phy_id);
 	if (ACPI_FAILURE(rv))
-		acpi_phy = 31;
+		phy_id = 7;
 	rv = acpi_dsd_integer(handle, "socionext,phy-clock-frequency",
-			&acpi_freq);
+			&ref_freq);
 	if (ACPI_FAILURE(rv))
-		acpi_freq = 999;
-
-	aprint_naive("\n");
-	/* aprint_normal(": Gigabit Ethernet Controller\n"); */
+		ref_freq = 250 * 1000 * 1000;
 
 	sc->sc_dev = self;
 	sc->sc_st = bst;
 	sc->sc_sh = bsh;
 	sc->sc_eesh = eebsh;
 	sc->sc_dmat = aa->aa_dmat64;
-	sc->sc_dmat32 = aa->aa_dmat;
 
 aprint_normal_dev(self,
-"phy mode %s, phy id %d, freq %ld\n", phy_mode, (int)acpi_phy, acpi_freq);
-	sc->sc_100mii = (phy_mode && strcmp(phy_mode, "rgmii") != 0);
-	sc->sc_phy_id = (int)acpi_phy;
-	sc->sc_freq = acpi_freq;
+"phy type %d, phy id %d, freq %ld\n", (int)phy_type, (int)phy_id, ref_freq);
+	sc->sc_100mii = (phy_type != 1000);
+	sc->sc_phy_id = (int)phy_id;
+	sc->sc_freq = ref_freq;
 aprint_normal_dev(self,
 "GMACGAR %08x\n", mac_read(sc, GMACGAR));
 
@@ -857,14 +897,14 @@ scx_attach_i(struct scx_softc *sc)
 	 * Allocate the control data structures, and create and load the
 	 * DMA map for it.
 	 */
-	error = bus_dmamem_alloc(sc->sc_dmat32,
+	error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct control_data), PAGE_SIZE, 0, &seg, 1, &nseg, 0);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
-	error = bus_dmamem_map(sc->sc_dmat32, &seg, nseg,
+	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
 	    sizeof(struct control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT);
 	if (error != 0) {
@@ -872,7 +912,7 @@ scx_attach_i(struct scx_softc *sc)
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
-	error = bus_dmamap_create(sc->sc_dmat32,
+	error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct control_data), 1,
 	    sizeof(struct control_data), 0, 0, &sc->sc_cddmamap);
 	if (error != 0) {
@@ -881,7 +921,7 @@ scx_attach_i(struct scx_softc *sc)
 		    "error = %d\n", error);
 		goto fail_2;
 	}
-	error = bus_dmamap_load(sc->sc_dmat32, sc->sc_cddmamap,
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct control_data), NULL, 0);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -890,7 +930,7 @@ scx_attach_i(struct scx_softc *sc)
 		goto fail_3;
 	}
 	for (i = 0; i < MD_TXQUEUELEN; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat32, MCLBYTES,
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    MD_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -900,7 +940,7 @@ scx_attach_i(struct scx_softc *sc)
 		}
 	}
 	for (i = 0; i < MD_NRXDESC; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat32, MCLBYTES,
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to create rx DMA map %d, error = %d\n",
@@ -1754,9 +1794,7 @@ static int
 get_mdioclk(uint32_t freq)
 {
 
-
 	freq /= 1000 * 1000;
-
 	if (freq < 35)
 		return GAR_MDIO_25_35MHZ;
 	if (freq < 60)
