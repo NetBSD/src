@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.15 2021/12/19 11:34:44 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.16 2021/12/20 20:34:58 chs Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.15 2021/12/19 11:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.16 2021/12/20 20:34:58 chs Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -420,8 +420,10 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	nfa.nfa_fb_ptr = nvbo_kmap_obj_iovirtual(nvbo);
 	nfa.nfa_fb_linebytes = mode_cmd.pitches[0];
 
+	KERNEL_LOCK(1, NULL);
 	helper->fbdev = config_found(dev->dev, &nfa, nouveau_fbcon_print,
 	    CFARGS(.iattr = "nouveaufbbus"));
+	KERNEL_UNLOCK_ONE(NULL);
 	if (helper->fbdev == NULL) {
 		goto out_unlock;
 	}
