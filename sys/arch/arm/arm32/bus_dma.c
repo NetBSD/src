@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.133 2021/08/30 22:56:26 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.134 2021/12/20 13:58:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.133 2021/08/30 22:56:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.134 2021/12/20 13:58:58 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1889,10 +1889,10 @@ int
 _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
     bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
 {
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	if (min_addr >= max_addr)
 		return EOPNOTSUPP;
 
-#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	struct arm32_dma_range *dr;
 	bool psubset = true;
 	size_t nranges = 0;
