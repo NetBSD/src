@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.88 2021/03/26 09:35:18 chs Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.89 2021/12/20 22:40:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.88 2021/03/26 09:35:18 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.89 2021/12/20 22:40:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,18 +125,19 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 
 	low = atop(low);
 	high = atop(high);
-	alignment = atop(alignment);
 
 	/*
 	 * Make sure that physseg falls within with range to be allocated from.
 	 */
-	if (high <= uvm_physseg_get_avail_start(psi) || low >= uvm_physseg_get_avail_end(psi))
+	if (high <= uvm_physseg_get_avail_start(psi) ||
+	    low >= uvm_physseg_get_avail_end(psi))
 		return 0;
 
 	/*
 	 * We start our search at the just after where the last allocation
 	 * succeeded.
 	 */
+	alignment = atop(alignment);
 	candidate = roundup2(uimax(low, uvm_physseg_get_avail_start(psi) +
 		uvm_physseg_get_start_hint(psi)), alignment);
 	limit = uimin(high, uvm_physseg_get_avail_end(psi));
@@ -527,12 +528,6 @@ uvm_pglistalloc_s_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 
 	low = atop(low);
 	high = atop(high);
-	todo = num;
-	candidate = uimax(low, uvm_physseg_get_avail_start(psi) +
-	    uvm_physseg_get_start_hint(psi));
-	limit = uimin(high, uvm_physseg_get_avail_end(psi));
-	pg = uvm_physseg_get_pg(psi, candidate - uvm_physseg_get_start(psi));
-	second_pass = false;
 
 	/*
 	 * Make sure that physseg falls within with range to be allocated from.
@@ -540,6 +535,13 @@ uvm_pglistalloc_s_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 	if (high <= uvm_physseg_get_avail_start(psi) ||
 	    low >= uvm_physseg_get_avail_end(psi))
 		return 0;
+
+	todo = num;
+	candidate = uimax(low, uvm_physseg_get_avail_start(psi) +
+	    uvm_physseg_get_start_hint(psi));
+	limit = uimin(high, uvm_physseg_get_avail_end(psi));
+	pg = uvm_physseg_get_pg(psi, candidate - uvm_physseg_get_start(psi));
+	second_pass = false;
 
 again:
 	for (;; candidate++, pg++) {
