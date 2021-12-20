@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.17 2021/12/19 12:45:04 riastradh Exp $ */
+/* $NetBSD: rk_drm.c,v 1.18 2021/12/20 00:27:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.17 2021/12/19 12:45:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.18 2021/12/20 00:27:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,10 +77,6 @@ static void	rk_drm_attach(device_t, device_t, void *);
 static void	rk_drm_init(device_t);
 static vmem_t	*rk_drm_alloc_cma_pool(struct drm_device *, size_t);
 
-static uint32_t	rk_drm_get_vblank_counter(struct drm_device *, unsigned int);
-static int	rk_drm_enable_vblank(struct drm_device *, unsigned int);
-static void	rk_drm_disable_vblank(struct drm_device *, unsigned int);
-
 static int	rk_drm_load(struct drm_device *, unsigned long);
 static void	rk_drm_unload(struct drm_device *);
 
@@ -98,10 +94,6 @@ static struct drm_driver rk_drm_driver = {
 
 	.dumb_create = drm_gem_cma_dumb_create,
 	.dumb_destroy = drm_gem_dumb_destroy,
-
-	.get_vblank_counter = rk_drm_get_vblank_counter,
-	.enable_vblank = rk_drm_enable_vblank,
-	.disable_vblank = rk_drm_disable_vblank,
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
@@ -440,7 +432,7 @@ rk_drm_load(struct drm_device *ddev, unsigned long flags)
 
 	drm_fb_helper_initial_config(&fbdev->helper, 32);
 
-	/* XXX */
+	/* XXX Delegate this to rk_vop.c?  */
 	ddev->irq_enabled = true;
 	drm_vblank_init(ddev, num_crtc);
 
@@ -452,50 +444,6 @@ drmerr:
 	drm_mode_config_cleanup(ddev);
 
 	return error;
-}
-
-static uint32_t
-rk_drm_get_vblank_counter(struct drm_device *ddev, unsigned int crtc)
-{
-	struct rk_drm_softc * const sc = rk_drm_private(ddev);
-
-	if (crtc >= __arraycount(sc->sc_vbl))
-		return 0;
-
-	if (sc->sc_vbl[crtc].get_vblank_counter == NULL)
-		return 0;
-
-	return sc->sc_vbl[crtc].get_vblank_counter(sc->sc_vbl[crtc].priv);
-}
-
-static int
-rk_drm_enable_vblank(struct drm_device *ddev, unsigned int crtc)
-{
-	struct rk_drm_softc * const sc = rk_drm_private(ddev);
-
-	if (crtc >= __arraycount(sc->sc_vbl))
-		return 0;
-
-	if (sc->sc_vbl[crtc].enable_vblank == NULL)
-		return 0;
-
-	sc->sc_vbl[crtc].enable_vblank(sc->sc_vbl[crtc].priv);
-
-	return 0;
-}
-
-static void
-rk_drm_disable_vblank(struct drm_device *ddev, unsigned int crtc)
-{
-	struct rk_drm_softc * const sc = rk_drm_private(ddev);
-
-	if (crtc >= __arraycount(sc->sc_vbl))
-		return;
-
-	if (sc->sc_vbl[crtc].disable_vblank == NULL)
-		return;
-
-	sc->sc_vbl[crtc].disable_vblank(sc->sc_vbl[crtc].priv);
 }
 
 static void
