@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.10 2021/12/19 12:28:12 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.11 2021/12/20 14:52:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.10 2021/12/19 12:28:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.11 2021/12/20 14:52:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -104,7 +104,8 @@ i915drmkms_pci_lookup(const struct pci_attach_args *pa)
 		return NULL;
 
 	const struct pci_device_id *ent = &i915_device_ids[i];
-	const struct intel_device_info *const info = (struct intel_device_info *) ent->driver_data;
+	const struct intel_device_info *const info =
+	    (struct intel_device_info *)ent->driver_data;
 
 	if (info->require_force_probe) {
 		printf("i915drmkms: preliminary hardware support disabled\n");
@@ -171,7 +172,8 @@ i915drmkms_attach_real(device_t self)
 	struct i915drmkms_softc *const sc = device_private(self);
 	struct pci_attach_args *const pa = &sc->sc_pa;
 	const struct pci_device_id *ent = i915drmkms_pci_lookup(pa);
-	const struct intel_device_info *const info = (struct intel_device_info *) ent->driver_data;
+	const struct intel_device_info *const info __diagused =
+	    (struct intel_device_info *)ent->driver_data;
 	int error;
 
 	KASSERT(info != NULL);
