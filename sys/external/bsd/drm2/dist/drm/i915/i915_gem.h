@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.h,v 1.6 2021/12/19 12:08:54 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.h,v 1.7 2021/12/20 19:54:07 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -42,7 +42,11 @@ struct drm_i915_private;
 #define GEM_SHOW_DEBUG() drm_debug_enabled(DRM_UT_DRIVER)
 
 #ifdef __NetBSD__
+#ifdef DIAGNOSTIC
 #define	GEM_BUG_ON(condition)	KASSERT(!(condition))
+#else
+#define	GEM_BUG_ON(condition)	BUILD_BUG_ON_INVALID(condition)
+#endif
 #else
 #define GEM_BUG_ON(condition) do { if (unlikely((condition))) {	\
 		GEM_TRACE_ERR("%s:%d GEM_BUG_ON(%s)\n", \
