@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.11 2021/12/20 00:27:53 riastradh Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.12 2021/12/20 20:34:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.11 2021/12/20 00:27:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.12 2021/12/20 20:34:59 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -156,7 +156,9 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	genfb_ops.genfb_enable_polling = drmfb_genfb_enable_polling;
 	genfb_ops.genfb_disable_polling = drmfb_genfb_disable_polling;
 
+	KERNEL_LOCK(1, NULL);
 	error = genfb_attach(&sc->sc_genfb, &genfb_ops);
+	KERNEL_UNLOCK_ONE(NULL);
 	if (error) {
 		aprint_error_dev(sc->sc_da.da_dev,
 		    "failed to attach genfb: %d\n", error);
