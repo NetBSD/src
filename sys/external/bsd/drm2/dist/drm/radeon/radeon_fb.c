@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fb.c,v 1.14 2021/12/19 10:46:44 riastradh Exp $	*/
+/*	$NetBSD: radeon_fb.c,v 1.15 2021/12/20 20:34:58 chs Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.14 2021/12/19 10:46:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.15 2021/12/20 20:34:58 chs Exp $");
 
 #include <linux/module.h>
 #include <linux/pci.h>
@@ -275,8 +275,10 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 	rfa.rfa_fb_ptr = rbo->kptr;
 	rfa.rfa_fb_linebytes = mode_cmd.pitches[0];
 
+	KERNEL_LOCK(1, NULL);
 	helper->fbdev = config_found(rdev->ddev->dev, &rfa, NULL,
 	    CFARGS(.iattr = "radeonfbbus"));
+	KERNEL_UNLOCK_ONE(NULL);
 	if (helper->fbdev == NULL) {
 		DRM_ERROR("failed to attach genfb\n");
 		goto out;
