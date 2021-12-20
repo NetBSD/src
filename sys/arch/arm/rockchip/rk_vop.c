@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.15 2021/12/19 12:45:27 riastradh Exp $ */
+/* $NetBSD: rk_vop.c,v 1.16 2021/12/20 00:27:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.15 2021/12/19 12:45:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.16 2021/12/20 00:27:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.15 2021/12/19 12:45:27 riastradh Exp $"
 #include <drm/drm_drv.h>
 #include <drm/drm_fourcc.h>
 #include <drm/drm_plane_helper.h>
+#include <drm/drm_vblank.h>
 
 #define	VOP_REG_CFG_DONE		0x0000
 #define	 REG_LOAD_EN			__BIT(0)
@@ -104,6 +105,26 @@ __KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.15 2021/12/19 12:45:27 riastradh Exp $"
 #define	VOP_DSP_VACT_ST_END		0x0194
 #define	 DSP_VACT_ST			__BITS(28,16)
 #define	 DSP_VACT_END			__BITS(12,0)
+#define	VOP_INTR_EN0			0x0280
+#define	VOP_INTR_CLEAR0			0x0284
+#define	VOP_INTR_STATUS0		0x0288
+#define	VOP_INTR_RAW_STATUS0		0x028c
+#define	 VOP_INTR0_DMA_FINISH		__BIT(15)
+#define	 VOP_INTR0_MMU			__BIT(14)
+#define	 VOP_INTR0_DSP_HOLD_VALID	__BIT(13)
+#define	 VOP_INTR0_FS_FIELD		__BIT(12)
+#define	 VOP_INTR0_POST_BUF_EMPTY	__BIT(11)
+#define	 VOP_INTR0_HWC_EMPTY		__BIT(10)
+#define	 VOP_INTR0_WIN3_EMPTY		__BIT(9)
+#define	 VOP_INTR0_WIN2_EMPTY		__BIT(8)
+#define	 VOP_INTR0_WIN1_EMPTY		__BIT(7)
+#define	 VOP_INTR0_WIN0_EMPTY		__BIT(6)
+#define	 VOP_INTR0_BUS_ERROR		__BIT(5)
+#define	 VOP_INTR0_LINE_FLAG1		__BIT(4)
+#define	 VOP_INTR0_LINE_FLAG0		__BIT(3)
+#define	 VOP_INTR0_ADDR_SAME		__BIT(2)
+#define	 VOP_INTR0_FS_NEW		__BIT(1)
+#define	 VOP_INTR0_FS			__BIT(0)
 
 /*
  * Polarity fields are in different locations depending on SoC and output type,
@@ -150,6 +171,11 @@ struct rk_vop_softc {
 	struct fdt_device_ports	sc_ports;
 
 	const struct rk_vop_config *sc_conf;
+
+	/* vblank */
+	void			*sc_ih;
+	kmutex_t		sc_intr_lock;
+	struct drm_pending_vblank_event *sc_event;
 };
 
 #define	to_rk_vop_crtc(x)	container_of(x, struct rk_vop_crtc, base)
@@ -159,6 +185,14 @@ struct rk_vop_softc {
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define	WR4(sc, reg, val)			\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+static void
+WR4_MASK(struct rk_vop_softc *sc, bus_size_t reg, uint16_t mask, uint16_t val)
+{
+
+	KASSERT(val == (mask & val));
+	WR4(sc, reg, ((uint32_t)mask << 16) | val);
+}
 
 struct rk_vop_config {
 	const char		*descr;
@@ -364,7 +398,7 @@ static const struct drm_plane_helper_funcs rk_vop_plane_helper_funcs = {
 };
 
 static bool
-rk_vop_format_mod_supported(struct drm_plane *plane, uint32_t format,
+rk_vop_plane_format_mod_supported(struct drm_plane *plane, uint32_t format,
     uint64_t modifier)
 {
 	return modifier == DRM_FORMAT_MOD_LINEAR;
@@ -377,11 +411,11 @@ static const struct drm_plane_funcs rk_vop_plane_funcs = {
 	.reset = drm_atomic_helper_plane_reset,
 	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
-	.format_mod_supported = rk_vop_format_mod_supported,
+	.format_mod_supported = rk_vop_plane_format_mod_supported,
 };
 
 static void
-rk_vop_dpms(struct drm_crtc *crtc, int mode)
+rk_vop_crtc_dpms(struct drm_crtc *crtc, int mode)
 {
 	struct rk_vop_crtc *mixer_crtc = to_rk_vop_crtc(crtc);
 	struct rk_vop_softc * const sc = mixer_crtc->sc;
@@ -407,7 +441,7 @@ rk_vop_dpms(struct drm_crtc *crtc, int mode)
 }
 
 static int
-rk_vop_atomic_check(struct drm_crtc *crtc, struct drm_crtc_state *state)
+rk_vop_crtc_atomic_check(struct drm_crtc *crtc, struct drm_crtc_state *state)
 {
 	bool enabled = state->plane_mask & drm_plane_mask(crtc->primary);
 
@@ -418,7 +452,7 @@ rk_vop_atomic_check(struct drm_crtc *crtc, struct drm_crtc_state *state)
 }
 
 static void
-rk_vop_atomic_enable(struct drm_crtc *crtc, struct drm_crtc_state *state)
+rk_vop_crtc_atomic_enable(struct drm_crtc *crtc, struct drm_crtc_state *state)
 {
 	struct rk_vop_crtc *mixer_crtc = to_rk_vop_crtc(crtc);
 	struct rk_vop_softc * const sc = mixer_crtc->sc;
@@ -512,24 +546,91 @@ rk_vop_atomic_enable(struct drm_crtc *crtc, struct drm_crtc_state *state)
 	val = __SHIFTIN(vsync_len, DSP_VTOTAL) |
 	      __SHIFTIN(vsync_len + vback_porch + vactive + vfront_porch, DSP_VS_END);
 	WR4(sc, VOP_DSP_VTOTAL_VS_END, val);
+
+	drm_crtc_vblank_on(crtc);
 }
 
 static void
-rk_vop_atomic_flush(struct drm_crtc *crtc, struct drm_crtc_state *state)
+rk_vop_crtc_atomic_disable(struct drm_crtc *crtc, struct drm_crtc_state *state)
+{
+	struct rk_vop_crtc *mixer_crtc = to_rk_vop_crtc(crtc);
+	struct rk_vop_softc * const sc = mixer_crtc->sc;
+	uint32_t val;
+
+	drm_crtc_vblank_off(crtc);
+
+	val = RD4(sc, VOP_SYS_CTRL);
+	val |= VOP_STANDBY_EN;
+	WR4(sc, VOP_SYS_CTRL, val);
+
+	if (crtc->state->event && !crtc->state->active) {
+		spin_lock(&crtc->dev->event_lock);
+		drm_crtc_send_vblank_event(crtc, crtc->state->event);
+		spin_unlock(&crtc->dev->event_lock);
+
+		crtc->state->event = NULL;
+	}
+}
+
+static void
+rk_vop_crtc_atomic_flush(struct drm_crtc *crtc, struct drm_crtc_state *state)
+{
+	struct rk_vop_crtc *mixer_crtc = to_rk_vop_crtc(crtc);
+	struct rk_vop_softc * const sc = mixer_crtc->sc;
+	int ret;
+
+	/* Commit settings */
+	WR4(sc, VOP_REG_CFG_DONE, REG_LOAD_EN);
+
+	/*
+	 * If caller wants a vblank event, tell the vblank interrupt
+	 * handler to send it on the next interrupt.
+	 */
+	spin_lock(&crtc->dev->event_lock);
+	if (crtc->state->event) {
+		if ((ret = drm_crtc_vblank_get_locked(crtc)) != 0)
+			aprint_error_dev(sc->sc_dev,
+			    "drm_crtc_vblank_get: %d\n", ret);
+		if (sc->sc_event) /* XXX leaky; KASSERT? */
+			aprint_error_dev(sc->sc_dev, "unfinished vblank\n");
+		sc->sc_event = crtc->state->event;
+		crtc->state->event = NULL;
+	}
+	spin_unlock(&crtc->dev->event_lock);
+}
+
+static const struct drm_crtc_helper_funcs rk_vop_crtc_helper_funcs = {
+	.dpms = rk_vop_crtc_dpms,
+	.atomic_check = rk_vop_crtc_atomic_check,
+	.atomic_enable = rk_vop_crtc_atomic_enable,
+	.atomic_disable = rk_vop_crtc_atomic_disable,
+	.atomic_flush = rk_vop_crtc_atomic_flush,
+};
+
+static int
+rk_vop_crtc_enable_vblank(struct drm_crtc *crtc)
 {
 	struct rk_vop_crtc *mixer_crtc = to_rk_vop_crtc(crtc);
 	struct rk_vop_softc * const sc = mixer_crtc->sc;
 
-	/* Commit settings */
-	WR4(sc, VOP_REG_CFG_DONE, REG_LOAD_EN);
+	mutex_spin_enter(&sc->sc_intr_lock);
+	WR4_MASK(sc, VOP_INTR_CLEAR0, VOP_INTR0_FS_NEW, VOP_INTR0_FS_NEW);
+	WR4_MASK(sc, VOP_INTR_EN0, VOP_INTR0_FS_NEW, VOP_INTR0_FS_NEW);
+	mutex_spin_exit(&sc->sc_intr_lock);
+
+	return 0;
 }
 
-static const struct drm_crtc_helper_funcs rk_vop_crtc_helper_funcs = {
-	.dpms = rk_vop_dpms,
-	.atomic_check = rk_vop_atomic_check,
-	.atomic_enable = rk_vop_atomic_enable,
-	.atomic_flush = rk_vop_atomic_flush,
-};
+static void
+rk_vop_crtc_disable_vblank(struct drm_crtc *crtc)
+{
+	struct rk_vop_crtc *mixer_crtc = to_rk_vop_crtc(crtc);
+	struct rk_vop_softc * const sc = mixer_crtc->sc;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+	WR4_MASK(sc, VOP_INTR_EN0, VOP_INTR0_FS_NEW, 0);
+	mutex_spin_exit(&sc->sc_intr_lock);
+}
 
 static const struct drm_crtc_funcs rk_vop_crtc_funcs = {
 	.set_config = drm_atomic_helper_set_config,
@@ -538,6 +639,8 @@ static const struct drm_crtc_funcs rk_vop_crtc_funcs = {
 	.reset = drm_atomic_helper_crtc_reset,
 	.atomic_duplicate_state = drm_atomic_helper_crtc_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_crtc_destroy_state,
+	.enable_vblank = rk_vop_crtc_enable_vblank,
+	.disable_vblank = rk_vop_crtc_disable_vblank,
 };
 
 static int
@@ -601,6 +704,46 @@ rk_vop_ep_get_data(device_t dev, struct fdt_endpoint *ep)
 }
 
 static int
+rk_vop_intr(void *cookie)
+{
+	struct rk_vop_softc * const sc = cookie;
+	struct drm_crtc *crtc = &sc->sc_crtc.base;
+	struct drm_device *ddev;
+	uint32_t intr;
+	int ours = 0;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+	intr = RD4(sc, VOP_INTR_STATUS0);
+	WR4_MASK(sc, VOP_INTR_CLEAR0, intr, intr);
+	mutex_spin_exit(&sc->sc_intr_lock);
+
+	ddev = rk_drm_port_device(&sc->sc_ports);
+	KASSERT(ddev);
+
+	if (intr & VOP_INTR0_FS_NEW) {
+		intr &= ~VOP_INTR0_FS_NEW;
+		ours = 1;
+
+		/* XXX defer to softint? */
+		drm_crtc_handle_vblank(&sc->sc_crtc.base);
+		spin_lock(&ddev->event_lock);
+		if (sc->sc_event) {
+			drm_crtc_send_vblank_event(crtc, sc->sc_event);
+			sc->sc_event = NULL;
+			drm_crtc_vblank_put(crtc);
+		}
+		spin_unlock(&ddev->event_lock);
+	}
+
+	if (intr) {
+		aprint_error_dev(sc->sc_dev, "unhandled interrupts: 0x%04x\n",
+		    intr);
+	}
+
+	return ours;
+}
+
+static int
 rk_vop_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
@@ -614,6 +757,7 @@ rk_vop_attach(device_t parent, device_t self, void *aux)
 	struct rk_vop_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	char intrstr[128];
 	const char * const reset_names[] = { "axi", "ahb", "dclk" };
 	const char * const clock_names[] = { "aclk_vop", "hclk_vop" };
 	struct fdtbus_reset *rst;
@@ -623,6 +767,11 @@ rk_vop_attach(device_t parent, device_t self, void *aux)
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
 
@@ -681,6 +830,16 @@ rk_vop_attach(device_t parent, device_t self, void *aux)
 	const int port_phandle = of_find_firstchild_byname(phandle, "port");
 	if (port_phandle > 0)
 		rk_drm_register_port(port_phandle, &sc->sc_ports);
+
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
+	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, &rk_vop_intr, sc, device_xname(self));
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
 
 CFATTACH_DECL_NEW(rk_vop, sizeof(struct rk_vop_softc),
