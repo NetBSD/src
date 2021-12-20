@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.426 2021/12/20 14:41:26 christos Exp $
+#	$NetBSD: bsd.README,v 1.427 2021/12/20 20:33:20 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -185,7 +185,13 @@ MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 		with -DDEBUG.
 		Default: no
 
-MKDEBUGKERNEL	Build .gdb kernels to be included with the kernel sets.
+MKDEBUGKERNEL	If "yes", force building of kernel symbol info and creation
+		of netbsd.gdb in all kernel builds, independently of the
+		settings for "makeoptions DEBUG" in the kernel config file.
+		The .gdb kernels will be included with the kernel sets.
+		Default: no
+
+MKDEBUGTOOLS	If "yes" build the tools with debugging symbols.
 		Default: no
 
 MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
@@ -276,10 +282,6 @@ MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
 MKISCSI		If "no", don't build or install iSCSI library or applications
 		(depends on libpthread.)
 		Default: yes
-
-MKKDEBUG	If "yes", force building of kernel symbol info and creation
-		of netbsd.gdb in all kernel builds, independently of the
-		settings for "makeoptions DEBUG" in the kernel config file.
 
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
@@ -509,9 +511,6 @@ MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
 MKTEGRAFIRMWARE	If "no", install the /libdata/firmware/nvidia directory,
 		which is necessary for the NVIDIA Tegra XHCI driver.
 		Default: yes on evbarm, no elsewhere.
-
-MKTOOLSDEBUG	If "yes" build the tools with debugging symbols.
-		Default: no
 
 MKTPM		If "no" then don't build the Trusted Platform Module
 		infrastructure.

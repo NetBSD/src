@@ -1,9 +1,9 @@
-#	$NetBSD: bsd.host.mk,v 1.5 2020/08/09 21:13:38 christos Exp $
+#	$NetBSD: bsd.host.mk,v 1.6 2021/12/20 20:33:20 christos Exp $
 
 .if !defined(_BSD_HOST_MK_)
 _BSD_HOST_MK_=1
 
-.if ${MKTOOLSDEBUG:Uno} == "yes"
+.if ${MKDEBUGTOOLS:Uno} == "yes"
 HOST_DBG?= -g
 .else
 HOST_DBG?= -O
