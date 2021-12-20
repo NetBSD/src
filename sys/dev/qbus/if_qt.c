@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.25 2020/01/29 05:57:21 thorpej Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.26 2021/12/20 17:12:41 rhialto Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.25 2020/01/29 05:57:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.26 2021/12/20 17:12:41 rhialto Exp $");
 
 #include "opt_inet.h"
 
@@ -162,6 +162,7 @@ struct	qt_softc {
 
 static	int qtmatch(device_t, cfdata_t, void *);
 static	void qtattach(device_t, device_t, void *);
+static	void lance_setladrf(struct ethercom *ec, uint16_t *af);
 static	void qtintr(void *);
 static	int qtinit(struct ifnet *);
 static	int qtioctl(struct ifnet *, u_long, void *);
@@ -332,6 +333,67 @@ qtturbo(struct qt_softc *sc)
 	return(1);
 }
 
+#define ETHER_CMP(a,b)	memcmp((a), (b), 6)
+
+/*
+ * Set up the logical address filter.
+ */
+void
+lance_setladrf(struct ethercom *ec, uint16_t *af)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct ether_multi *enm;
+	uint32_t crc;
+	struct ether_multistep step;
+
+	/*
+	 * Set up multicast address filter by passing all multicast addresses
+	 * through a crc generator, and then using the high order 6 bits as an
+	 * index into the 64 bit logical address filter.  The high order bit
+	 * selects the word, while the rest of the bits select the bit within
+	 * the word.
+	 */
+
+	if (ifp->if_flags & IFF_PROMISC)
+		goto allmulti;
+
+	af[0] = af[1] = af[2] = af[3] = 0x0000;
+
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (ETHER_CMP(enm->enm_addrlo, enm->enm_addrhi)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			ETHER_UNLOCK(ec);
+			goto allmulti;
+		}
+
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 6 most significant bits. */
+		crc >>= 26;
+
+		/* Set the corresponding bit in the filter. */
+		af[crc >> 4] |= 1 << (crc & 0xf);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	return;
+
+allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	af[0] = af[1] = af[2] = af[3] = 0xffff;
+}
+
 int
 qtinit(struct ifnet *ifp)
 {
@@ -388,7 +450,10 @@ qtinit(struct ifnet *ifp)
 	}
 	iniblk = &sc->sc_ib->qc_init;
 	iniblk->mode = ifp->if_flags & IFF_PROMISC ? INIT_MODE_PRO : 0;
-
+/*
+ * The multicast filter works "like LANCE".
+ */
+	lance_setladrf(&sc->is_ec, iniblk->laddr);
 
 /*
  * Now initialize the receive ring descriptors.  Because this routine can be

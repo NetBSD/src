@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qtreg.h,v 1.5 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_qtreg.h,v 1.6 2021/12/20 17:12:41 rhialto Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -207,18 +207,18 @@
 
 	struct	qt_init
 		{
-		short	mode;
-		u_char	paddr[6];	/* 48 bit physical address */
-		u_char	laddr[8];	/* 64 bit logical address filter */
-		u_short	rx_lo;		/* low 16 bits of receive ring addr */
-		u_short	rx_hi;		/* high 6 bits of receive ring addr */
-		u_short	tx_lo;		/* low 16 bits of transmit ring addr */
-		u_short	tx_hi;		/* high 6 bits of transmit ring addr */
-		u_short	options;
-		u_short	vector;
-		u_short	hit;
-		char	passwd[6];
-		char	pad[4];		/* even on 40 byte for alignment */
+		int16_t		mode;
+		u_char		paddr[6];	/* 48 bit physical address */
+		uint16_t	laddr[4];	/* 64 bit logical address filter */
+		uint16_t	rx_lo;		/* low 16 bits of receive ring addr */
+		uint16_t	rx_hi;		/* high 6 bits of receive ring addr */
+		uint16_t	tx_lo;		/* low 16 bits of transmit ring addr */
+		uint16_t	tx_hi;		/* high 6 bits of transmit ring addr */
+		uint16_t	options;
+		uint16_t	vector;
+		uint16_t	hit;
+		char		passwd[6];
+		char		pad[4];		/* even on 40 byte for alignment */
 		};
 
 #define	INIT_MODE_PRO	0x8000		/* Promiscuous mode */
