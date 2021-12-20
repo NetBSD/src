@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1271 2021/12/20 14:41:26 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1272 2021/12/20 20:33:20 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1282,6 +1282,10 @@ MKLLVMRT.i386=		yes
 MKLLVMRT.aarch64=	yes
 .endif
 
+# compat with old names
+MKDEBUGKERNEL?=${MKKDEBUG:Uno}
+MKDEBUGTOOLS?=${MKTOOLSDEBUG:Uno}
+
 #
 # MK* options which default to "no".  Note that MKZFS has a different
 # default for some platforms, see above.  Please keep alphabetically
@@ -1292,7 +1296,7 @@ _MKVARS.no= \
 	MKARZERO \
 	MKBSDGREP \
 	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCTF \
-	MKDEBUG MKDEBUGKERNEL MKDEBUGLIB MKDTB MKDTRACE \
+	MKDEBUG MKDEBUGLIB MKDTB MKDTRACE \
 	MKEXTSRC \
 	MKFIRMWARE \
 	MKGROFFHTMLDOC \

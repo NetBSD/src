@@ -264,9 +264,25 @@ CONFIGURATION
 
                  Default: "no"
 
+     MKDEBUGKERNEL
+                 Can be set to "yes" or "no".  Force generation of full-debug
+                 symbol versions of all kernels compiled.  Alongside of the
+                 netbsd kernel file, an unstripped version netbsd.gdb is
+                 created.  This is useful if a cross-gdb is built as well (see
+                 MKCROSSGDB).
+
+                 Default: "no"
+
      MKDEBUGLIB  Can be set to "yes" or "no".  Indicates whether debug
                  information (see MKDEBUG) should also be generated for all
                  libraries built.
+
+                 Default: "no"
+
+     MKDEBUGTOOLS 
+		 Can be set to "yes" or "no".  Indicates whether debug
+                 information (see MKDEBUG) should also be generated for all
+                 tools built.
 
                  Default: "no"
 
@@ -303,14 +319,6 @@ CONFIGURATION
                  compilation tools.
 
                  Default: "yes"
-
-     MKKDEBUG    Can be set to "yes" or "no".  Force generation of full-debug
-                 symbol versions of all kernels compiled.  Alongside of the
-                 netbsd kernel file, an unstripped version netbsd.gdb is
-                 created.  This is useful if a cross-gdb is built as well (see
-                 MKCROSSGDB).
-
-                 Default: "no"
 
      MKKMOD      Can be set to "yes" or "no".  Indicates whether kernel
                  modules are built and installed.

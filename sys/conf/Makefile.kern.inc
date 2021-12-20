@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.284 2021/10/27 03:06:59 ryo Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.285 2021/12/20 20:33:20 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -17,8 +17,8 @@
 #
 # all ports are expected to include bsd.own.mk for toolchain settings
 
-# Default DEBUG to -g if kernel debug info is requested by MKKDEBUG=yes
-.if defined(MKKDEBUG) && ${MKKDEBUG} == "yes"
+# Default DEBUG to -g if kernel debug info is requested by MKDEBUGKERNEL=yes
+.if defined(MKDEBUGKERNEL) && ${MKDEBUGKERNEL} == "yes"
 DEBUG?=-g
 .endif
 
