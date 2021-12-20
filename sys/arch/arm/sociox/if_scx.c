@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.28 2021/12/20 02:23:04 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.29 2021/12/20 02:24:33 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.28 2021/12/20 02:23:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.29 2021/12/20 02:24:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -482,8 +482,8 @@ struct scx_softc {
 	int sc_rxptr;			/* next ready Rx descriptor/descsoft */
 
 	krndsource_t rnd_source;	/* random source */
-#ifdef GMAC_EVENT_COUNTER
-	/* 80 event counter exist */
+#ifdef GMAC_EVENT_COUNTERS
+	/* 80 event counters exist */
 #endif
 };
 
@@ -524,11 +524,11 @@ do {									\
 	struct mbuf *__m = __rxs->rxs_mbuf;				\
 	bus_addr_t __paddr =__rxs->rxs_dmamap->dm_segs[0].ds_addr;	\
 	__m->m_data = __m->m_ext.ext_buf;				\
-	__rxd->r3 = __rxs->rxs_dmamap->dm_segs[0].ds_len;		\
+	__rxd->r3 = htole32(__rxs->rxs_dmamap->dm_segs[0].ds_len);	\
 	__rxd->r2 = htole32(BUS_ADDR_LO32(__paddr));			\
 	__rxd->r1 = htole32(BUS_ADDR_HI32(__paddr));			\
-	__rxd->r0 = R0_OWN | R0_FS | R0_LS;				\
-	if ((x) == MD_NRXDESC - 1) __rxd->r0 |= R0_EOD;			\
+	__rxd->r0 = htole32(R0_OWN | R0_FS | R0_LS);			\
+	if ((x) == MD_NRXDESC - 1) __rxd->r0 |= htole32(R0_EOD);	\
 } while (/*CONSTCOND*/0)
 
 /* memory mapped CSR register access */
@@ -1334,20 +1334,20 @@ scx_start(struct ifnet *ifp)
 			 * yet.	 That could cause a race condition.
 			 * We'll do it below.
 			 */
-			tdes->t3 = dmamap->dm_segs[seg].ds_len;
+			tdes->t3 = htole32(dmamap->dm_segs[seg].ds_len);
 			tdes->t2 = htole32(BUS_ADDR_LO32(paddr));
 			tdes->t1 = htole32(BUS_ADDR_HI32(paddr));
-			tdes->t0 = tdes0 | (tdes->t0 & T0_EOD) |
+			tdes->t0 = htole32(tdes0 | (tdes->t0 & T0_EOD) |
 					(15 << T0_TDRID) | T0_PT |
-					sc->sc_t0cotso | T0_TRS;
+					sc->sc_t0cotso | T0_TRS);
 			tdes0 = T0_OWN; /* 2nd and other segments */
 			/* NB; t0 DRID field contains zero */
 			lasttx = nexttx;
 		}
 
 		/* Write deferred 1st segment T0_OWN at the final stage */
-		sc->sc_txdescs[lasttx].t0 |= T0_LS;
-		sc->sc_txdescs[sc->sc_txnext].t0 |= (T0_FS | T0_OWN);
+		sc->sc_txdescs[lasttx].t0 |= htole32(T0_LS);
+		sc->sc_txdescs[sc->sc_txnext].t0 |= htole32(T0_FS | T0_OWN);
 		SCX_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
@@ -1468,7 +1468,7 @@ rxintr(struct scx_softc *sc)
 		SCX_CDRXSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		rxstat = sc->sc_rxdescs[i].r0;
+		rxstat = le32toh(sc->sc_rxdescs[i].r0);
 		if (rxstat & R0_OWN) /* desc is left empty */
 			break;
 
@@ -1569,16 +1569,19 @@ mii_statchg(struct ifnet *ifp)
 
 	/* decode MIISR register value */
 	miisr = mac_read(sc, GMACMIISR);
-	spd = Mbps[(miisr >> 1) & 03];
+	spd = Mbps[(miisr & MIISR_SPD) >> 1];
 #if 1
-	printf("MII link status (0x%x) %s",
-	    miisr, (miisr & 8) ? "up" : "down");
-	if (miisr & 8) {
-		printf(" spd%d", spd);
-		if (miisr & 01)
-			printf(",full-duplex");
+	static uint32_t oldmiisr = 0;
+	if (miisr != oldmiisr) {
+		printf("MII link status (0x%x) %s",
+		    miisr, (miisr & MIISR_LUP) ? "up" : "down");
+		if (miisr & MIISR_LUP) {
+			printf(" spd%d", spd);
+			if (miisr & MIISR_FDX)
+				printf(",full-duplex");
+		}
+		printf("\n");
 	}
-	printf("\n");
 #endif
 	/* Get flow control negotiation result. */
 	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
@@ -1601,7 +1604,7 @@ mii_statchg(struct ifnet *ifp)
 	/* Adjust duplexity and PAUSE flow control. */
 	mcr &= ~MCR_USEFDX;
 	fcr = mac_read(sc, GMACFCR) & ~(FCR_TFE | FCR_RFE);
-	if (miisr & 01) {
+	if (miisr & MIISR_FDX) {
 		if (sc->sc_flowflags & IFM_ETH_TXPAUSE)
 			fcr |= FCR_TFE;
 		if (sc->sc_flowflags & IFM_ETH_RXPAUSE)
@@ -1611,8 +1614,14 @@ mii_statchg(struct ifnet *ifp)
 	mac_write(sc, GMACMCR, mcr);
 	mac_write(sc, GMACFCR, fcr);
 
-printf("%ctxfe, %crxfe\n",
-     (fcr & FCR_TFE) ? '+' : '-', (fcr & FCR_RFE) ? '+' : '-');
+#if 1
+	if (miisr != oldmiisr) {
+		printf("%ctxfe, %crxfe\n",
+		    (fcr & FCR_TFE) ? '+' : '-',
+		    (fcr & FCR_RFE) ? '+' : '-');
+	}
+	oldmiisr = miisr;
+#endif
 }
 
 static void
@@ -1680,6 +1689,7 @@ phy_tick(void *arg)
 	mii_tick(mii);
 	splx(s);
 #ifdef GMAC_EVENT_COUNTERS
+	/* 80 event counters exist */
 #endif
 	callout_schedule(&sc->sc_callout, hz);
 }
