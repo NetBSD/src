@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.425 2021/12/05 07:53:57 msaitoh Exp $
+#	$NetBSD: bsd.README,v 1.426 2021/12/20 14:41:26 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -183,6 +183,9 @@ NODEBUG		Don't compile with debugging symbols during build.
 
 MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 		with -DDEBUG.
+		Default: no
+
+MKDEBUGKERNEL	Build .gdb kernels to be included with the kernel sets.
 		Default: no
 
 MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
