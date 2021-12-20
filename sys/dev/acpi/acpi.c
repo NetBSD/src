@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.293 2021/08/07 16:19:09 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.294 2021/12/20 11:17:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.293 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.294 2021/12/20 11:17:40 skrll Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -471,7 +471,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = aa->aa_dmat;
 	sc->sc_dmat64 = aa->aa_dmat64;
 
-	SIMPLEQ_INIT(&sc->ad_head);
+	SIMPLEQ_INIT(&sc->sc_head);
 
 	acpi_softc = sc;
 
@@ -635,7 +635,7 @@ acpi_childdet(device_t self, device_t child)
 	if (sc->sc_wdrt == child)
 		sc->sc_wdrt = NULL;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_device == child)
 			ad->ad_device = NULL;
@@ -730,12 +730,13 @@ acpi_config_tree(struct acpi_softc *sc)
 	(void)config_defer(sc->sc_dev, acpi_rescan_capabilities);
 }
 
+// XXXNH?
 static void
 acpi_config_dma(struct acpi_softc *sc)
 {
 	struct acpi_devnode *ad;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_device != NULL)
 			continue;
@@ -801,7 +802,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 			acpi_wakedev_init(ad);
 
 		SIMPLEQ_INIT(&ad->ad_child_head);
-		SIMPLEQ_INSERT_TAIL(&sc->ad_head, ad, ad_list);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_head, ad, ad_list);
 
 		if (ad->ad_parent != NULL) {
 
@@ -934,7 +935,7 @@ acpi_rescan_early(struct acpi_softc *sc)
 	 * We want these devices to attach regardless of
 	 * the device status and other restrictions.
 	 */
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_device != NULL)
 			continue;
@@ -972,7 +973,7 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *di;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_device != NULL)
 			continue;
@@ -1039,7 +1040,7 @@ acpi_rescan_capabilities(device_t self)
 	ACPI_HANDLE tmp;
 	ACPI_STATUS rv;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
 			continue;
@@ -1183,7 +1184,7 @@ acpi_notify_handler(ACPI_HANDLE handle, uint32_t event, void *aux)
 	 * that have registered a handler with us.
 	 * The opaque pointer is always the device_t.
 	 */
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_device == NULL)
 			continue;

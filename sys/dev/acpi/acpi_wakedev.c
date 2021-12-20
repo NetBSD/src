@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.27 2017/06/01 02:45:09 chs Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.28 2021/12/20 11:17:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.27 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.28 2021/12/20 11:17:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -292,7 +292,7 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 	 *
 	 *  3.	Execute _DSW or _PSW method.
 	 */
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_wakedev == NULL)
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.26 2021/09/15 17:33:08 thorpej Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.27 2021/12/20 11:17:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.26 2021/09/15 17:33:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.27 2021/12/20 11:17:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -657,7 +657,7 @@ acpi_match_cpu_info(struct cpu_info *ci)
 	 * In both cases the MADT entries are used
 	 * for the match (see ACPI 4.0, section 8.4).
 	 */
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		hdl = ad->ad_handle;
 

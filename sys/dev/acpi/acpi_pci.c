@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.32 2021/09/15 17:33:08 thorpej Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.33 2021/12/20 11:17:40 skrll Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.32 2021/09/15 17:33:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.33 2021/12/20 11:17:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -379,7 +379,7 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
 	if (sc == NULL)
 		return NULL;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_pciinfo != NULL &&
 		    (ad->ad_pciinfo->ap_flags & ACPI_PCI_INFO_DEVICE) &&
@@ -427,7 +427,7 @@ acpi_pciroot_find(uint16_t segment, uint16_t bus)
 	if (sc == NULL)
 		return NULL;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		if (ad->ad_pciinfo != NULL &&
 		    (ad->ad_pciinfo->ap_flags & ACPI_PCI_INFO_BRIDGE) &&

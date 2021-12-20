@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.87 2021/08/07 18:39:40 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.88 2021/12/20 11:17:40 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -176,7 +176,7 @@ struct acpi_softc {
 	struct sysmon_pswitch	 sc_smpsw_power;
 	struct sysmon_pswitch	 sc_smpsw_sleep;
 
-	SIMPLEQ_HEAD(, acpi_devnode)	ad_head;
+	SIMPLEQ_HEAD(, acpi_devnode)	sc_head;
 };
 
 /*

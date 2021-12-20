@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.19 2018/04/07 15:49:52 christos Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.20 2021/12/20 11:17:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.19 2018/04/07 15:49:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.20 2021/12/20 11:17:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -465,7 +465,7 @@ acpi_print_devnodes(struct acpi_softc *sc)
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *di;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->sc_head, ad_list) {
 
 		di = ad->ad_devinfo;
 		aprint_normal_dev(sc->sc_dev, "[%-4s] ", ad->ad_name);
