@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.722 2021/12/11 17:05:50 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.723 2021/12/20 12:56:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.722 2021/12/11 17:05:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.723 2021/12/20 12:56:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4895,7 +4895,7 @@ wm_flush_desc_rings(struct wm_softc *sc)
 	 * Remove all descriptors from the tx_ring.
 	 *
 	 * We want to clear all pending descriptors from the TX ring. Zeroing
-	 * happens when the HW reads the regs. We  assign the ring itself as
+	 * happens when the HW reads the regs. We assign the ring itself as
 	 * the data of the next descriptor. We don't care about the data we are
 	 * about to reset the HW.
 	 */
