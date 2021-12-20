@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.27 2021/12/16 11:36:25 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.28 2021/12/20 02:23:04 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.27 2021/12/16 11:36:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.28 2021/12/20 02:23:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,7 +126,7 @@ struct rdes {
 #define  RPTHDCOMP	(1U<<2)		/* log HD imcomplete condition */
 #define  RPTHDERR	(1U<<1)		/* log HD error */
 #define  DROPNOMATCH	(1U<<0)		/* drop no match frames */
-#define xINTSR		0x200		/* aggregated interrupt status report */
+#define xINTSR		0x200		/* aggregated interrupt status */
 #define  IRQ_RX		(1U<<1)		/* top level Rx interrupt */
 #define  IRQ_TX		(1U<<0)		/* top level Rx interrupt */
 #define  IRQ_UCODE	(1U<<20)	/* ucode load completed */
@@ -144,18 +144,18 @@ struct rdes {
 #define  TXI_TR_ERR	(1U<<16)	/* tx error */
 #define  TXI_TXDONE	(1U<<15)	/* tx completed */
 #define  TXI_TMREXP	(1U<<14)	/* coalesce timer expired */
-#define RXISR		0x440		/* receipt status */
+#define RXISR		0x440		/* receive status */
 #define RXIEN		0x444		/* rx interrupt enable */
 #define RXIE_SET	0x468		/* bit to set */
 #define RXIE_CLR	0x46c		/* bit to clr */
 #define  RXI_RC_ERR	(1U<<16)	/* rx error */
-#define  RXI_PKTCNT	(1U<<15)	/* rx counter has new value report */
+#define  RXI_PKTCNT	(1U<<15)	/* rx counter has new value */
 #define  RXI_TMREXP	(1U<<14)	/* coalesce timer expired */
 #define TDBA_LO		0x408		/* tdes array base addr 31:0 */
 #define TDBA_HI		0x434		/* tdes array base addr 63:32 */
 #define RDBA_LO		0x448		/* rdes array base addr 31:0 */
 #define RDBA_HI		0x474		/* rdes array base addr 63:32 */
-/* 13 pairs of special purpose desc array address registers exit */
+/* 13 pairs of special purpose desc array base address register exist */
 #define TXCONF		0x430
 #define RXCONF		0x470
 #define  DESCNF_UP	(1U<<31)	/* up-and-running */
@@ -166,8 +166,8 @@ struct rdes {
 #define RXCOLMAX	0x454		/* rx intr coalesce upper bound */
 #define TXITIMER	0x420		/* coalesce timer usec, MSB to use */
 #define RXITIMER	0x460		/* coalesce timer usec, MSB to use */
-#define TXDONECNT	0x424		/* tx completion report, auto-clear */
-#define RXDONECNT	0x458		/* rx completion report, auto-clear */
+#define TXDONECNT	0x424		/* tx completed count, auto-zero */
+#define RXDONECNT	0x458		/* rx available count, auto-zero */
 #define UCODE_H2M	0x210		/* host2media engine ucode port */
 #define UCODE_M2H	0x21c		/* media2host engine ucode port */
 #define CORESTAT	0x218		/* engine run state */
@@ -214,15 +214,18 @@ struct rdes {
 #define  MCR_IBN	(1U<<30)	/* ??? */
 #define  MCR_CST	(1U<<25)	/* strip CRC */
 #define  MCR_TC		(1U<<24)	/* keep RGMII PHY notified */
-#define  MCR_JE		(1U<<20)	/* ignore oversized >9018 condition */
+#define  MCR_WD		(1U<<23)	/* allow long >2048 tx frame */
+#define  MCR_JE		(1U<<20)	/* allow ~9018 tx jumbo frame */
 #define  MCR_IFG	(7U<<17)	/* 19:17 IFG value 0~7 */
 #define  MCR_DRCS	(1U<<16)	/* ignore (G)MII HDX Tx error */
 #define  MCR_USEMII	(1U<<15)	/* 1: RMII/MII, 0: RGMII (_PS) */
 #define  MCR_SPD100	(1U<<14)	/* force speed 100 (_FES) */
-#define  MCR_DO		(1U<<13)	/* ??? don't receive my own Tx frames */
+#define  MCR_DO		(1U<<13)	/* don't receive my own HDX Tx frames */
 #define  MCR_LOOP	(1U<<12)	/* run loop back */
 #define  MCR_USEFDX	(1U<<11)	/* force full duplex */
 #define  MCR_IPCEN	(1U<<10)	/* handle checksum */
+#define  MCR_DR		(1U<<9)		/* attempt no tx retry, send once */
+#define  MCR_LUD	(1U<<8)		/* link condition report when RGMII */
 #define  MCR_ACS	(1U<<7)		/* auto pad strip CRC */
 #define  MCR_TE		(1U<<3)		/* run Tx MAC engine, 0 to stop */
 #define  MCR_RE		(1U<<2)		/* run Rx MAC engine, 0 to stop */
@@ -258,12 +261,9 @@ struct rdes {
 /* 31:16 pause timer value, 5:4 pause timer threshold */
 #define  FCR_RFE	(1U<<2)		/* accept PAUSE to throttle Tx */
 #define  FCR_TFE	(1U<<1)		/* generate PAUSE to moderate Rx lvl */
-#define GMACVTAG	0x001c		/* VLAN tag control */
-#define GMACIMPL	0x0020		/* implementation number XX.YY */
-#define GMACLPIS	0x0030		/* ??? AXI LPI control */
-#define GMACLPIC	0x0034		/* ??? AXI LPI control */
-#define GMACISR		0x0038		/* interrupt status, clear when read */
-#define GMACIMR		0x003c		/* interrupt enable */
+#define GMACIMPL	0x0020		/* implementation id XX.YY (no use) */
+#define GMACISR		0x0038		/* interrupt status indication */
+#define GMACIMR		0x003c		/* interrupt mask to inhibit */
 #define  ISR_TS		(1U<<9)		/* time stamp operation detected */
 #define  ISR_CO		(1U<<7)		/* Rx checksum offload completed */
 #define  ISR_TX		(1U<<6)		/* Tx completed */
@@ -277,19 +277,40 @@ struct rdes {
 /* MAH bit-31: slot in use, 30: SA to match, 29:24 byte-wise don'care */
 #define GMACAMAH(i)	((i)*8+0x800)	/* supplemental MAC addr 16-31 */
 #define GMACAMAL(i)	((i)*8+0x804)	/* 31: MAC address low part */
-/* MAH bit-31: slot in use, no other bit is effective */
+/* supplimental MAH bit-31: slot in use, no other bit is effective */
 #define GMACMHTH	0x0008		/* 64bit multicast hash table 63:32 */
 #define GMACMHTL	0x000c		/* 64bit multicast hash table 31:0 */
 #define GMACMHT(i)	((i)*4+0x500)	/* 256-bit alternative mcast hash 0-7 */
+#define EMACVTAG	0x001c		/* VLAN tag control */
+#define  VTAG_HASH	(1U<<19)	/* use VLAN tag hash table */
+#define  VTAG_SVLAN	(1U<<18)	/* handle type 0x88A8 SVLAN frame */
+#define  VTAG_INV	(1U<<17)	/* run inverse match logic */
+#define  VTAG_ETV	(1U<<16)	/* use only 12bit VID field to match */
+/* 15:0 concat of PRIO+CFI+VID */
 #define GMACVHT		0x0588		/* 16-bit VLAN tag hash */
 #define GMACMIISR	0x00d8		/* resolved xMII link status */
-/* 3: link up detected, 2:1 resolved speed (0/1/2), 1: fdx detected */
+#define  MIISR_LUP	(1U<<3)		/* link up(1)/down(0) report */
+#define  MIISR_SPD	(3U<<1)		/* 2:1 speed 10(0)/100(1)/1000(2) */
+#define  MIISR_FDX	(1U<<0)		/* fdx detected */
 
-/* 0x0700 - 0734 ??? */
+#define GMACLPIS	0x0030		/* LPI control & status */
+#define  LPIS_TXA	(1U<<19)	/* complete Tx in progress and LPI */
+#define  LPIS_PLS	(1U<<17)
+#define  LPIS_EN	(1U<<16)	/* 1: enter LPI mode, 0: exit */
+#define  LPIS_TEN	(1U<<0)		/* Tx LPI report */
+#define GMACLPIC	0x0034		/* LPI timer control */
+#define  LPIC_LST	(5)		/* 16:5 ??? */
+#define  LPIC_TWT	(0)		/* 15:0 ??? */
+#define GMACTSC		0x0700		/* timestamp control */
+#define GMACSTM		0x071c		/* start time */
+#define GMACTGT		0x0720		/* target time */
+#define GMACTSS		0x0728		/* timestamp status */
+#define GMACPPS		0x072c		/* PPS control */
+#define GMACPPS0	0x0764		/* PPS0 width */
 
 #define GMACBMR		0x1000		/* DMA bus mode control */
-/* 24    4PBL 8???
- * 23    USP
+/* 24    multiply by x8 for RPBL & PBL values
+ * 23    use RPBL for Rx DMA
  * 22:17 RPBL
  * 16    fixed burst
  * 15:14 priority between Rx and Tx
@@ -298,7 +319,8 @@ struct rdes {
  *  1    rxtx ratio 21
  *  0    rxtx ratio 11
  * 13:8  PBL possible DMA burst length
- *  7    alternative des8
+ *  7    select alternative 32-byte descriptor format for new features
+ *  6:2  descriptor spacing. 0 for adjuscent
  *  0    GMAC reset op. self-clear
  */
 #define  _BMR		0x00412080	/* XXX TBD */
@@ -311,16 +333,40 @@ struct rdes {
 #define  _RDLA		0x18000		/* system RAM for GMAC rdes */
 #define  _TDLA		0x1c000		/* system RAM for GMAC tdes */
 #define GMACDSR		0x1014		/* DMA status detail report; W1C */
+#define GMACDIE		0x101c		/* DMA interrupt enable */
+#define  DMAI_LPI	(1U<<30)	/* LPI interrupt */
+#define  DMAI_TTI	(1U<<29)	/* timestamp trigger interrupt */
+#define  DMAI_GMI	(1U<<27)	/* management counter interrupt */
+#define  DMAI_GLI	(1U<<26)	/* xMII link change detected */
+#define  DMAI_EB	(23)		/* 25:23 DMA bus error detected */
+#define  DMAI_TS	(20)		/* 22:20 Tx DMA state report */
+#define  DMAI_RS	(17)		/* 29:17 Rx DMA state report */
+#define  DMAI_NIS	(1U<<16)	/* normal interrupt summary; W1C */
+#define  DMAI_AIS	(1U<<15)	/* abnormal interrupt summary; W1C */
+#define  DMAI_ERI	(1U<<14)	/* the first Rx buffer is filled */
+#define  DMAI_FBI	(1U<<13)	/* DMA bus error detected */
+#define  DMAI_ETI	(1U<<10)	/* single frame Tx completed */
+#define  DMAI_RWT	(1U<<9)		/* longer than 2048 frame received */
+#define  DMAI_RPS	(1U<<8)		/* Rx process is now stopped */
+#define  DMAI_RU	(1U<<7)		/* Rx descriptor not available */
+#define  DMAI_RI	(1U<<6)		/* frame Rx completed by !R1_DIC */
+#define  DMAI_UNF	(1U<<5)		/* Tx underflow detected */
+#define  DMAI_OVF	(1U<<4)		/* receive buffer overflow detected */
+#define  DMAI_TJT	(1U<<3)		/* longer than 2048 frame sent */
+#define  DMAI_TU	(1U<<2)		/* Tx discriptor not available */
+#define  DMAI_TPS	(1U<<1)		/* transmission is stopped */
+#define  DMAI_TI	(1U<<0)		/* frame Tx completed by T0_IC */
 #define GMACOMR		0x1018		/* DMA operation mode */
-#define  OMR_TSF	(1U<<25)	/* 1: Tx store&forword, 0: immed. */
-#define  OMR_RSF	(1U<<21)	/* 1: Rx store&forward, 0: immed. */
+#define  OMR_RSF	(1U<<25)	/* 1: Rx store&forword, 0: immed. */
+#define  OMR_TSF	(1U<<21)	/* 1: Tx store&forward, 0: immed. */
+#define  OMR_TTC	(14)		/* 16:14 Tx threshold */
 #define  OMR_ST		(1U<<13)	/* run Tx DMA engine, 0 to stop */
+#define  OMR_RFD	(11)		/* 12:11 Rx FIFO fill level */
 #define  OMR_EFC	(1U<<8)		/* transmit PAUSE to throttle Rx lvl. */
 #define  OMR_FEF	(1U<<7)		/* allow to receive error frames */
 #define  OMR_SR		(1U<<1)		/* run Rx DMA engine, 0 to stop */
-#define GMACIE		0x101c		/* interrupt enable */
 #define GMACEVCS	0x1020		/* missed frame or ovf detected */
-#define GMACRWDT	0x1024		/* receive watchdog timer count */
+#define GMACRWDT	0x1024		/* enable rx watchdog timer interrupt */
 #define GMACAXIB	0x1028		/* AXI bus mode control */
 #define GMACAXIS	0x102c		/* AXI status report */
 /* 0x1048 current tx desc address */
@@ -328,6 +374,11 @@ struct rdes {
 /* 0x1050 current tx buffer address */
 /* 0x1054 current rx buffer address */
 #define HWFEA		0x1058		/* DWC feature report */
+#define  FEA_EXDESC	(1U<<24)	/* new desc layout */
+#define  FEA_2COE	(1U<<18)	/* Rx type 2 IP checksum offload */
+#define  FEA_1COE	(1U<<17)	/* Rx type 1 IP checksum offload */
+#define  FEA_TXOE	(1U<<16)	/* Tx checksum offload */
+#define  FEA_MMC	(1U<<11)	/* RMON management block */
 
 #define GMACEVCTL	0x0100		/* event counter control */
 #define  EVC_FHP	(1U<<5)		/* full-half preset */
