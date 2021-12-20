@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.h,v 1.11 2021/12/19 12:05:09 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.h,v 1.12 2021/12/20 12:56:07 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Intel Corp.
@@ -25,6 +25,12 @@
 
 #ifndef _DRM_VBLANK_H_
 #define _DRM_VBLANK_H_
+
+#ifdef __NetBSD__
+#include <sys/types.h>
+#include <sys/file.h>
+#define	pipe	pipe_drmhack	/* see intel_display.h */
+#endif
 
 #include <linux/seqlock.h>
 #include <linux/idr.h>

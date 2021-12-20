@@ -1,4 +1,4 @@
-/*	$NetBSD: drm.h,v 1.6 2021/12/19 01:54:43 riastradh Exp $	*/
+/*	$NetBSD: drm.h,v 1.7 2021/12/20 12:56:07 riastradh Exp $	*/
 
 /**
  * \file drm.h
@@ -61,6 +61,11 @@ typedef unsigned int drm_handle_t;
 #include <sys/fcntl.h>
 
 #ifdef _KERNEL
+
+#include <sys/types.h>
+#include <sys/file.h>
+#define	pipe	pipe_drmhack	/* see intel_display.h */
+
 #include <linux/types.h>
 #include <asm/ioctl.h>
 #else
