@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.22 2021/06/02 21:35:17 riastradh Exp $	*/
+/*	$NetBSD: tpm.c,v 1.23 2021/12/20 23:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.22 2021/06/02 21:35:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.23 2021/12/20 23:05:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -650,7 +650,7 @@ tpm_rng_work(struct work *wk, void *cookie)
 	 */
 	if (rv) {
 		device_printf(sc->sc_dev, "deactivating entropy source\n");
-		rnd_detach_source(&sc->sc_rnd);
+		atomic_store_relaxed(&sc->sc_rnddisabled, true);
 		/* XXX worker thread can't workqueue_destroy its own queue */
 	}
 
@@ -666,6 +666,8 @@ tpm_rng_get(size_t nbytes, void *cookie)
 {
 	struct tpm_softc *sc = cookie;
 
+	if (atomic_load_relaxed(&sc->sc_rnddisabled))
+		return;		/* tough */
 	if (atomic_swap_uint(&sc->sc_rndpending, MIN(nbytes, UINT_MAX/NBBY))
 	    == 0)
 		workqueue_enqueue(sc->sc_rndwq, &sc->sc_rndwk, NULL);

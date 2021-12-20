@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmvar.h,v 1.9 2021/01/04 18:26:59 riastradh Exp $	*/
+/*	$NetBSD: tpmvar.h,v 1.10 2021/12/20 23:05:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ struct tpm_softc {
 	struct workqueue *sc_rndwq;
 	struct work sc_rndwk;
 	volatile unsigned sc_rndpending;
+	bool sc_rnddisabled;
 };
 
 bool tpm_suspend(device_t, const pmf_qual_t *);
