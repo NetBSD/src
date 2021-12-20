@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.723 2021/12/20 12:56:25 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.724 2021/12/20 13:19:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.723 2021/12/20 12:56:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.724 2021/12/20 13:19:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1929,10 +1929,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
-	if (pci_dma64_available(pa))
+	if (pci_dma64_available(pa)) {
+		aprint_verbose(", 64-bit DMA");
 		sc->sc_dmat = pa->pa_dmat64;
-	else
+	} else {
+		aprint_verbose(", 32-bit DMA");
 		sc->sc_dmat = pa->pa_dmat;
+	}
 
 	sc->sc_pcidevid = PCI_PRODUCT(pa->pa_id);
 	sc->sc_rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag,PCI_CLASS_REG));
