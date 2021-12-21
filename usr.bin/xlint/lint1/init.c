@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.225 2021/12/21 16:50:11 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.226 2021/12/21 21:04:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.225 2021/12/21 16:50:11 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.226 2021/12/21 21:04:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -436,7 +436,7 @@ designation_debug(const designation *dn)
 	if (dn->dn_len == 0)
 		return;
 
-	debug_indent();
+	debug_print_indent();
 	debug_printf("designation: ");
 	for (i = 0; i < dn->dn_len; i++) {
 		const designator *dr = dn->dn_items + i;
@@ -680,7 +680,7 @@ initialization_debug(const initialization *in)
 
 	i = 0;
 	for (bl = in->in_brace_level; bl != NULL; bl = bl->bl_enclosing) {
-		debug_indent();
+		debug_print_indent();
 		debug_printf("brace level %zu: ", i);
 		brace_level_debug(bl);
 		i++;
