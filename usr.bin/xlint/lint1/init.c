@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.226 2021/12/21 21:04:08 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.227 2021/12/21 21:42:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.226 2021/12/21 21:04:08 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.227 2021/12/21 21:42:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -731,7 +731,7 @@ initialization_lbrace(initialization *in)
 		warning(238);
 	}
 
-	if (tp->t_tspec == STRUCT && tp->t_str->sou_incomplete) {
+	if (is_struct_or_union(tp->t_tspec) && tp->t_str->sou_incomplete) {
 		/* initialization of incomplete type '%s' */
 		error(175, type_name(tp));
 		in->in_err = true;
@@ -990,9 +990,14 @@ end_initialization(void)
 void
 begin_designation(void)
 {
+	initialization *in;
 	brace_level *bl;
 
-	bl = current_init()->in_brace_level;
+	in = current_init();
+	if (in->in_err)
+		return;
+
+	bl = in->in_brace_level;
 	lint_assert(bl != NULL);
 	designation_reset(&bl->bl_designation);
 }
