@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.7 2021/12/17 11:06:15 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.8 2021/12/21 21:16:08 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -71,4 +71,20 @@ struct {
 } actions[1] = {
 	do_nothing,
 	do_nothing,
+};
+
+union incomplete_union u1 = {
+	/* expect+1: error: too many struct/union initializers [172] */
+	1,
+/* expect+1: error: 'u1' has incomplete type 'incomplete union incomplete_union' [31] */
+};
+
+union incomplete_union u2 = {
+	/* expect+1: error: type 'incomplete union incomplete_union' does not have member 'member' [101] */
+	.member = 1,
+/* expect+1: error: 'u2' has incomplete type 'incomplete union incomplete_union' [31] */
+};
+
+union incomplete_union {
+	int num;
 };
