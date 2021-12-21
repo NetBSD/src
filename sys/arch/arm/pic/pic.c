@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.76 2021/12/21 06:51:16 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.77 2021/12/21 07:07:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.76 2021/12/21 06:51:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.77 2021/12/21 07:07:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -83,9 +83,6 @@ struct pic_softc *pic_list[PIC_MAXPICS];
 #endif
 struct intrsource *pic_sources[PIC_MAXMAXSOURCES];
 struct intrsource *pic__iplsources[PIC_MAXMAXSOURCES];
-struct intrsource **pic_iplsource[NIPL] = {
-	[0 ... NIPL - 1] = pic__iplsources,
-};
 size_t pic_ipl_offset[NIPL + 1];
 
 static kmutex_t pic_lock;
