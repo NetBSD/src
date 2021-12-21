@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_171.c,v 1.6 2021/03/23 18:40:50 rillig Exp $	*/
+/*	$NetBSD: msg_171.c,v 1.7 2021/12/21 23:12:21 rillig Exp $	*/
 # 3 "msg_171.c"
 
 // Test for message: cannot assign to '%s' from '%s' [171]
@@ -37,6 +37,27 @@ pointer_to_compound_literal(void)
 		int y;
 	};
 	struct point *p = &(struct point){
-	    12, 5,
+		12, 5,
+	};
+
+	/*
+	 * A sizeof expression is another way to create nested
+	 * initializations.
+	 */
+	struct point p2 = {
+		(int)sizeof(struct point){
+			(int)sizeof(struct point){
+				(int)sizeof(struct point){
+					(int)sizeof(struct point){
+						0,
+						0,
+					},
+					0,
+				},
+				0,
+			},
+			0,
+		},
+		0,
 	};
 }
