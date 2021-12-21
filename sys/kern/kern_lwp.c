@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.244 2021/09/28 15:05:42 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.245 2021/12/21 19:00:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.244 2021/09/28 15:05:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.245 2021/12/21 19:00:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -262,6 +262,7 @@ struct lwplist		alllwp		__cacheline_aligned;
 
 static int		lwp_ctor(void *, void *, int);
 static void		lwp_dtor(void *, void *);
+static void		lwp_pre_dtor(void *);
 
 /* DTrace proc provider probes */
 SDT_PROVIDER_DEFINE(proc);
@@ -341,6 +342,7 @@ lwpinit(void)
 	lwpinit_specificdata();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
 	    "lwppl", NULL, IPL_NONE, lwp_ctor, lwp_dtor, NULL);
+	pool_cache_setpredestruct(lwp_cache, lwp_pre_dtor);
 
 	maxlwp = cpu_maxlwp();
 	sysctl_kern_lwp_setup();
@@ -391,23 +393,29 @@ lwp_ctor(void *arg, void *obj, int flags)
 }
 
 static void
-lwp_dtor(void *arg, void *obj)
+lwp_pre_dtor(void *arg __unused)
 {
-	lwp_t *l = obj;
-	(void)l;
-
 	/*
 	 * Provide a barrier to ensure that all mutex_oncpu() and rw_oncpu()
-	 * calls will exit before memory of LWP is returned to the pool, where
+	 * calls will exit before memory of LWPs is returned to the pool, where
 	 * KVA of LWP structure might be freed and re-used for other purposes.
 	 * Kernel preemption is disabled around mutex_oncpu() and rw_oncpu()
-	 * callers, therefore cross-call to all CPUs will do the job.  Also,
-	 * the value of l->l_cpu must be still valid at this point.
+	 * callers, therefore cross-call to all CPUs will do the job.
 	 *
 	 * XXX should use epoch based reclamation.
 	 */
-	KASSERT(l->l_cpu != NULL);
 	xc_barrier(0);
+}
+
+static void
+lwp_dtor(void *arg, void *obj)
+{
+	lwp_t *l = obj;
+
+	/*
+	 * The value of l->l_cpu must still be valid at this point.
+	 */
+	KASSERT(l->l_cpu != NULL);
 
 	/*
 	 * We can't return turnstile0 to the pool (it didn't come from it),
