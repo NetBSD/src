@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.77 2021/12/21 07:07:32 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.78 2021/12/21 07:11:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.77 2021/12/21 07:07:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.78 2021/12/21 07:11:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -754,42 +754,44 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	/*
 	 * First try to use an existing slot which is empty.
 	 */
+	bool found = false;
 	for (off = pic_ipl_offset[ipl]; off < pic_ipl_offset[ipl + 1]; off++) {
 		if (pic__iplsources[off] == NULL) {
-			is->is_iplidx = off - pic_ipl_offset[ipl];
-			pic__iplsources[off] = is;
-			goto unblock;
+			found = true;
+			break;
 		}
 	}
 
-	/*
-	 * Move up all the sources by one.
- 	 */
-	if (ipl < NIPL) {
-		off = pic_ipl_offset[ipl + 1];
-		memmove(&pic__iplsources[off + 1], &pic__iplsources[off],
-		    sizeof(pic__iplsources[0]) * (pic_ipl_offset[NIPL] - off));
+	if (!found) {
+		/*
+		* Move up all the sources by one.
+		*/
+		if (ipl < NIPL) {
+			off = pic_ipl_offset[ipl + 1];
+			memmove(&pic__iplsources[off + 1], &pic__iplsources[off],
+			    sizeof(pic__iplsources[0]) * (pic_ipl_offset[NIPL] - off));
+		}
+
+		/*
+		* Advance the offset of all IPLs higher than this.  Include an
+		* extra one as well.  Thus the number of sources per ipl is
+		* pic_ipl_offset[ipl + 1] - pic_ipl_offset[ipl].
+		*/
+		for (nipl = ipl + 1; nipl <= NIPL; nipl++)
+			pic_ipl_offset[nipl]++;
+
+		off = pic_ipl_offset[ipl + 1] - 1;
 	}
 
 	/*
-	 * Advance the offset of all IPLs higher than this.  Include an
-	 * extra one as well.  Thus the number of sources per ipl is
-	 * pic_ipl_offset[ipl + 1] - pic_ipl_offset[ipl].
+	 * Insert into the 'found' or the just made slot position at the end
+	 * of this IPL's sources.
 	 */
-	for (nipl = ipl + 1; nipl <= NIPL; nipl++)
-		pic_ipl_offset[nipl]++;
-
-	/*
-	 * Insert into the previously made position at the end of this IPL's
-	 * sources.
-	 */
-	off = pic_ipl_offset[ipl + 1] - 1;
 	is->is_iplidx = off - pic_ipl_offset[ipl];
 	pic__iplsources[off] = is;
 
 	(*pic->pic_ops->pic_establish_irq)(pic, is);
 
-unblock:
 	if (!mp_online || !is->is_mpsafe || !is->is_percpu) {
 		(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
 		    __BIT(is->is_irq & 0x1f));
