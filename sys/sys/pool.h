@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.94 2021/07/25 06:00:31 simonb Exp $	*/
+/*	$NetBSD: pool.h,v 1.95 2021/12/21 18:59:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007, 2020
@@ -265,7 +265,8 @@ struct pool_cache {
 	int		pc_ncpu;	/* number cpus set up */
 	int		(*pc_ctor)(void *, void *, int);
 	void		(*pc_dtor)(void *, void *);
-	void		*pc_arg;	/* for ctor/ctor */
+	void		(*pc_pre_dtor)(void *);
+	void		*pc_arg;	/* for ctor/dtor/pre_dtor */
 	unsigned int	pc_refcnt;	/* ref count for pagedaemon, etc */
 	void		*pc_cpus[MAXCPUS];
 
@@ -341,6 +342,7 @@ void		pool_cache_bootstrap(pool_cache_t, size_t, u_int, u_int, u_int,
 		    const char *, struct pool_allocator *, int,
 		    int (*)(void *, void *, int), void (*)(void *, void *),
 		    void *);
+void		pool_cache_setpredestruct(pool_cache_t, void (*)(void *));
 void		pool_cache_destroy(pool_cache_t);
 void		pool_cache_bootstrap_destroy(pool_cache_t);
 void		*pool_cache_get_paddr(pool_cache_t, int, paddr_t *);
