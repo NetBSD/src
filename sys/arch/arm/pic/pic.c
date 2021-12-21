@@ -1,4 +1,5 @@
-/*	$NetBSD: pic.c,v 1.75 2021/10/31 16:29:18 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.76 2021/12/21 06:51:16 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.75 2021/10/31 16:29:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.76 2021/12/21 06:51:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -83,9 +84,9 @@ struct pic_softc *pic_list[PIC_MAXPICS];
 struct intrsource *pic_sources[PIC_MAXMAXSOURCES];
 struct intrsource *pic__iplsources[PIC_MAXMAXSOURCES];
 struct intrsource **pic_iplsource[NIPL] = {
-	[0 ... NIPL-1] = pic__iplsources,
+	[0 ... NIPL - 1] = pic__iplsources,
 };
-size_t pic_ipl_offset[NIPL+1];
+size_t pic_ipl_offset[NIPL + 1];
 
 static kmutex_t pic_lock;
 static size_t pic_sourcebase;
@@ -756,7 +757,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	/*
 	 * First try to use an existing slot which is empty.
 	 */
-	for (off = pic_ipl_offset[ipl]; off < pic_ipl_offset[ipl+1]; off++) {
+	for (off = pic_ipl_offset[ipl]; off < pic_ipl_offset[ipl + 1]; off++) {
 		if (pic__iplsources[off] == NULL) {
 			is->is_iplidx = off - pic_ipl_offset[ipl];
 			pic__iplsources[off] = is;
@@ -768,15 +769,15 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	 * Move up all the sources by one.
  	 */
 	if (ipl < NIPL) {
-		off = pic_ipl_offset[ipl+1];
-		memmove(&pic__iplsources[off+1], &pic__iplsources[off],
+		off = pic_ipl_offset[ipl + 1];
+		memmove(&pic__iplsources[off + 1], &pic__iplsources[off],
 		    sizeof(pic__iplsources[0]) * (pic_ipl_offset[NIPL] - off));
 	}
 
 	/*
 	 * Advance the offset of all IPLs higher than this.  Include an
 	 * extra one as well.  Thus the number of sources per ipl is
-	 * pic_ipl_offset[ipl+1] - pic_ipl_offset[ipl].
+	 * pic_ipl_offset[ipl + 1] - pic_ipl_offset[ipl].
 	 */
 	for (nipl = ipl + 1; nipl <= NIPL; nipl++)
 		pic_ipl_offset[nipl]++;
