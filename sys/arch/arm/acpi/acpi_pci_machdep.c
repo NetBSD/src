@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.20 2021/08/08 12:09:52 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.21 2021/12/21 11:02:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.20 2021/08/08 12:09:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.21 2021/12/21 11:02:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,8 +85,6 @@ struct acpi_pci_pct {
 
 static TAILQ_HEAD(, acpi_pci_pct) acpi_pci_chipset_tags =
     TAILQ_HEAD_INITIALIZER(acpi_pci_chipset_tags);
-
-struct acpi_pci_intr;
 
 struct acpi_pci_intr {
 	struct pic_softc		pi_pic;
