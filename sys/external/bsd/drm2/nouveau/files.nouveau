@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.36 2021/12/19 10:55:37 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.37 2021/12/21 12:55:24 tnn Exp $
 
 version	20180827
 
@@ -37,6 +37,8 @@ makeoptions	nouveau	"CWARNFLAGS.nouveau"+="${${ACTIVE_CC} == clang:? -Wno-error=
 makeoptions	nouveau	"CWARNFLAGS.nouveau"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_nvkm_subdev_bios_timing.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=int-in-bool-context :}"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_nvkm_subdev_clk_gt215.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=int-in-bool-context :}"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_nvkm_subdev_instmem_base.c"+="${${ACTIVE_CC} == clang :? -Wno-unused-function :}"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_nvkm_subdev_mmu_vmmnv04.c"+="${${ACTIVE_CC} == clang :? -Wno-unused-function :}"
 
 file	external/bsd/drm2/nouveau/nouveau_module.c	nouveau
 
