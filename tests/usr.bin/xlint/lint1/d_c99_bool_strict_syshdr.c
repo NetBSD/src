@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.9 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.10 2021/12/21 16:25:14 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -9,14 +9,6 @@
  * compatible with pre-C99 code.  Therefore, the checks for system headers are
  * loosened.  In contexts where a scalar expression is compared to 0, macros
  * and functions from system headers may use int expressions as well.
- *
- * These headers are not allowed to include <stdbool.h>[references needed].
- * Doing so would inject lint's own <stdbool.h>, which defines the macros
- * false and true to other identifiers instead of the plain 0 and 1, thereby
- * allowing to see whether the code really uses true and false as identifiers.
- *
- * Since the system headers cannot include <stdbool.h>, they need to use the
- * traditional bool constants 0 and 1.
  */
 
 /* lint1-extra-flags: -T */
@@ -30,9 +22,8 @@ extern void println(const char *);
  * in the well-known 'do { ... } while (CONSTCOND 0)' loop.  The 0 in the
  * controlling expression has type INT but should be allowed nevertheless
  * since that header does not have a way to distinguish between bool and int.
- * It just follows the C99 standard, unlike the lint-provided stdbool.h, which
- * redefines 'false' to '__lint_false'.  Plus, <sys/select.h> must not include
- * <stdbool.h> itself.
+ * It just follows the C99 standard, unlike the lint-provided stdbool.h,
+ * which redefines 'false' to '__lint_false'.
  */
 void
 strict_bool_system_header_statement_macro(void)
@@ -40,17 +31,19 @@ strict_bool_system_header_statement_macro(void)
 
 	do {
 		println("nothing");
-	} while (/*CONSTCOND*/0);	/* expect: 333 */
+	} while (/*CONSTCOND*/0);
+	/* expect-1: error: controlling expression must be bool, not 'int' [333] */
 
-# 46 "d_c99_bool_strict_syshdr.c" 3 4
+# 38 "d_c99_bool_strict_syshdr.c" 3 4
 	do {
 		println("nothing");
 	} while (/*CONSTCOND*/0);	/* ok */
 
-# 51 "d_c99_bool_strict_syshdr.c"
+# 43 "d_c99_bool_strict_syshdr.c"
 	do {
 		println("nothing");
-	} while (/*CONSTCOND*/0);	/* expect: 333 */
+	} while (/*CONSTCOND*/0);
+	/* expect-1: error: controlling expression must be bool, not 'int' [333] */
 }
 
 
@@ -81,28 +74,29 @@ strict_bool_system_header_ctype(int c)
 	 * All other combinations of type are safe from truncation.
 	 */
 	_Bool system_int_assigned_to_bool =
-# 85 "d_c99_bool_strict_syshdr.c" 3 4
+# 78 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040)	/* INT */
-# 87 "d_c99_bool_strict_syshdr.c"
-	;			/* expect: 107 */
+# 80 "d_c99_bool_strict_syshdr.c"
+	;
+	/* expect-1: error: operands of 'init' have incompatible types (_Bool != int) [107] */
 
 	int system_bool_assigned_to_int =
-# 91 "d_c99_bool_strict_syshdr.c" 3 4
+# 85 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040) != 0	/* BOOL */
-# 93 "d_c99_bool_strict_syshdr.c"
+# 87 "d_c99_bool_strict_syshdr.c"
 	;
 
 	if (
-# 97 "d_c99_bool_strict_syshdr.c" 3 4
+# 91 "d_c99_bool_strict_syshdr.c" 3 4
 	    (int)((ctype_table + 1)[c] & 0x0040)	/* INT */
-# 99 "d_c99_bool_strict_syshdr.c"
+# 93 "d_c99_bool_strict_syshdr.c"
 	)
 		println("system macro returning INT");
 
 	if (
-# 104 "d_c99_bool_strict_syshdr.c" 3 4
+# 98 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((ctype_table + 1)[c] & 0x0040) != 0	/* BOOL */
-# 106 "d_c99_bool_strict_syshdr.c"
+# 100 "d_c99_bool_strict_syshdr.c"
 	)
 		println("system macro returning BOOL");
 }
@@ -111,9 +105,9 @@ static inline _Bool
 ch_isspace_sys_int(char c)
 {
 	return
-# 115 "d_c99_bool_strict_syshdr.c" 3 4
+# 109 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((ctype_table + 1)[c] & 0x0040)
-# 117 "d_c99_bool_strict_syshdr.c"
+# 111 "d_c99_bool_strict_syshdr.c"
 	    != 0;
 }
 
@@ -126,9 +120,9 @@ static inline _Bool
 ch_isspace_sys_bool(char c)
 {
 	return
-# 130 "d_c99_bool_strict_syshdr.c" 3 4
+# 124 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((ctype_table + 1)[(unsigned char)c] & 0x0040) != 0
-# 132 "d_c99_bool_strict_syshdr.c"
+# 126 "d_c99_bool_strict_syshdr.c"
 	    != 0;
 }
 
@@ -153,13 +147,14 @@ ch_isspace_sys_bool(char c)
 extern int finite(double);
 # 1 "string.h" 3 4
 extern int strcmp(const char *, const char *);
-# 157 "d_c99_bool_strict_syshdr.c"
+# 151 "d_c99_bool_strict_syshdr.c"
 
 /*ARGSUSED*/
 _Bool
 call_finite_bad(double d)
 {
-	return finite(d);	/* expect: 211 */
+	/* expect+1: error: return value type mismatch (_Bool) and (int) [211] */
+	return finite(d);
 }
 
 _Bool
@@ -172,7 +167,9 @@ call_finite_good(double d)
 _Bool
 str_equal_bad(const char *s1, const char *s2)
 {
-	return !strcmp(s1, s2);	/* expect: 330 *//* expect: 214 */
+	/* expect+2: error: operand of '!' must be bool, not 'int' [330] */
+	/* expect+1: warning: function 'str_equal_bad' expects to return value [214] */
+	return !strcmp(s1, s2);
 }
 
 _Bool
