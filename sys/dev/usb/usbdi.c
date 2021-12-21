@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.219 2021/09/07 10:44:18 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.220 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.219 2021/09/07 10:44:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.220 2021/12/21 09:51:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -503,7 +503,7 @@ usbd_alloc_buffer(struct usbd_xfer *xfer, uint32_t size)
 		usb_dma_t *dmap = &xfer->ux_dmabuf;
 
 		KASSERT((bus->ub_dmaflags & USBMALLOC_COHERENT) == 0);
-		int err = usb_allocmem(bus, size, 0, bus->ub_dmaflags, dmap);
+		int err = usb_allocmem(bus->ub_dmatag, size, 0, bus->ub_dmaflags, dmap);
 		if (err) {
 			return NULL;
 		}
@@ -537,7 +537,7 @@ usbd_free_buffer(struct usbd_xfer *xfer)
 	if (bus->ub_usedma) {
 		usb_dma_t *dmap = &xfer->ux_dmabuf;
 
-		usb_freemem(bus, dmap);
+		usb_freemem(dmap);
 		return;
 	}
 #endif

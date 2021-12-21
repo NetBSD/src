@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.307 2021/10/04 21:02:39 andvar Exp $	*/
+/*	$NetBSD: uhci.c,v 1.308 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.307 2021/10/04 21:02:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.308 2021/12/21 09:51:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -453,7 +453,7 @@ uhci_init(uhci_softc_t *sc)
 	uhci_reset(sc);
 
 	/* Allocate and initialize real frame array. */
-	int err = usb_allocmem(&sc->sc_bus,
+	int err = usb_allocmem(sc->sc_bus.ub_dmatag,
 	    UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
 	    UHCI_FRAMELIST_ALIGN, USBMALLOC_COHERENT, &sc->sc_dma);
 	if (err)
@@ -1844,7 +1844,7 @@ uhci_alloc_std(uhci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		int err = usb_allocmem(&sc->sc_bus, UHCI_STD_SIZE * UHCI_STD_CHUNK,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag, UHCI_STD_SIZE * UHCI_STD_CHUNK,
 		    UHCI_TD_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
 			return NULL;
@@ -1910,7 +1910,7 @@ uhci_alloc_sqh(uhci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		int err = usb_allocmem(&sc->sc_bus, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
 		    UHCI_QH_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
 			return NULL;
@@ -2823,7 +2823,7 @@ uhci_device_ctrl_close(struct usbd_pipe *pipe)
 	uhci_free_std_locked(sc, upipe->ctrl.setup);
 	uhci_free_std_locked(sc, upipe->ctrl.stat);
 
-	usb_freemem(&sc->sc_bus, &upipe->ctrl.reqdma);
+	usb_freemem(&upipe->ctrl.reqdma);
 }
 
 /* Abort a device interrupt request. */
@@ -3505,7 +3505,7 @@ uhci_open(struct usbd_pipe *pipe)
 				uhci_free_std(sc, upipe->ctrl.setup);
 				goto bad;
 			}
-			int err = usb_allocmem(&sc->sc_bus,
+			int err = usb_allocmem(sc->sc_bus.ub_dmatag,
 			    sizeof(usb_device_request_t), 0,
 			    USBMALLOC_COHERENT, &upipe->ctrl.reqdma);
 			if (err) {

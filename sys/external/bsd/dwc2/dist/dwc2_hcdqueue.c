@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.15 2018/08/08 07:20:44 simonb Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.16 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.15 2018/08/08 07:20:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.16 2021/12/21 09:51:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -272,7 +272,7 @@ void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	if (qh->desc_list) {
 		dwc2_hcd_qh_free_ddma(hsotg, qh);
 	} else if (qh->dw_align_buf) {
-		usb_freemem(&sc->sc_bus, &qh->dw_align_buf_usbdma);
+		usb_freemem(&qh->dw_align_buf_usbdma);
  		qh->dw_align_buf_dma = (dma_addr_t)0;
 	}
 

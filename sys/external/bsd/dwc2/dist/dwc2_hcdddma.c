@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.9 2020/04/05 20:59:38 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.10 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -40,7 +40,7 @@
  * This file contains the Descriptor DMA implementation for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.9 2020/04/05 20:59:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.10 2021/12/21 09:51:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -105,8 +105,8 @@ static int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	qh->desc_list_sz = sizeof(struct dwc2_hcd_dma_desc) *
 						dwc2_max_desc_num(qh);
 
-	err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, qh->desc_list_sz, 0,
-	    USBMALLOC_COHERENT, &qh->desc_list_usbdma);
+	err = usb_allocmem(hsotg->hsotg_sc->sc_bus.ub_dmatag,
+	    qh->desc_list_sz, 0,  USBMALLOC_COHERENT, &qh->desc_list_usbdma);
 
 	if (err)
 		return -ENOMEM;
@@ -116,7 +116,7 @@ static int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 
 	qh->n_bytes = kmem_zalloc(sizeof(u32) * dwc2_max_desc_num(qh), KM_SLEEP);
 	if (!qh->n_bytes) {
-		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->desc_list_usbdma);
+		usb_freemem(&qh->desc_list_usbdma);
 		qh->desc_list = NULL;
 		return -ENOMEM;
 	}
@@ -128,7 +128,7 @@ static void dwc2_desc_list_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 
 	if (qh->desc_list) {
-		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->desc_list_usbdma);
+		usb_freemem(&qh->desc_list_usbdma);
 		qh->desc_list = NULL;
 	}
 
@@ -146,8 +146,8 @@ static int dwc2_frame_list_alloc(struct dwc2_hsotg *hsotg, gfp_t mem_flags)
 	/* XXXNH - pool_cache_t */
 	hsotg->frame_list_sz = 4 * FRLISTEN_64_SIZE;
 	hsotg->frame_list = NULL;
-	err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, hsotg->frame_list_sz,
-	    0, USBMALLOC_COHERENT, &hsotg->frame_list_usbdma);
+	err = usb_allocmem(hsotg->hsotg_sc->sc_bus.ub_dmatag,
+	    hsotg->frame_list_sz, 0, USBMALLOC_COHERENT, &hsotg->frame_list_usbdma);
 
 	if (!err) {
 		hsotg->frame_list = KERNADDR(&hsotg->frame_list_usbdma, 0);
@@ -177,7 +177,7 @@ static void dwc2_frame_list_free(struct dwc2_hsotg *hsotg)
 
 	spin_unlock_irqrestore(&hsotg->lock, flags);
 
-	usb_freemem(&hsotg->hsotg_sc->sc_bus, &frame_list_usbdma);
+	usb_freemem(&frame_list_usbdma);
 }
 
 static void dwc2_per_sched_enable(struct dwc2_hsotg *hsotg, u32 fr_list_en)
