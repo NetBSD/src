@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.35 2021/12/19 10:55:37 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.36 2021/12/21 13:56:58 tnn Exp $
 
 version	20180827
 
@@ -34,10 +34,11 @@ makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-unused-const-variable"
 
 makeoptions	radeon	"CWARNFLAGS.radeon"+="${${ACTIVE_CC} == gcc:? -Wno-maybe-uninitialized :}"
 
-#makeoptions 	i915drmkms 	"CWARNFLAGS.radeon_cs.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
-makeoptions 	i915drmkms 	"CWARNFLAGS.radeon_evergreen_cs.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
-makeoptions 	i915drmkms 	"CWARNFLAGS.radeon_r300.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
-makeoptions 	i915drmkms 	"CWARNFLAGS.radeon_r420.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+#makeoptions 	radeon 	"CWARNFLAGS.radeon_cs.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions 	radeon 	"CWARNFLAGS.radeon_evergreen_cs.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions 	radeon 	"CWARNFLAGS.radeon_r300.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions 	radeon 	"CWARNFLAGS.radeon_r420.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions	radeon	"CWARNFLAGS.radeon_uvd.c"+="${${ACTIVE_CC} == clang:? -Wno-format :}"
 
 file	external/bsd/drm2/radeon/radeon_module.c		radeon
 file	external/bsd/drm2/radeon/radeon_pci.c			radeon
