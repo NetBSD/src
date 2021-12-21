@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.89 2021/12/20 22:40:46 skrll Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.90 2021/12/21 08:27:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.89 2021/12/20 22:40:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.90 2021/12/21 08:27:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 	 */
 	if (high <= uvm_physseg_get_avail_start(psi) ||
 	    low >= uvm_physseg_get_avail_end(psi))
-		return 0;
+		return -1;
 
 	/*
 	 * We start our search at the just after where the last allocation
@@ -456,6 +456,7 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 
 	/* Default to "lose". */
 	error = ENOMEM;
+	bool valid = false;
 
 	/*
 	 * Block all memory allocation and lock the free list.
@@ -477,8 +478,12 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 			if (uvm_physseg_get_free_list(psi) != fl)
 				continue;
 
-			num -= uvm_pglistalloc_c_ps(psi, num, low, high,
-						    alignment, boundary, rlist);
+			int done = uvm_pglistalloc_c_ps(psi, num, low, high,
+			    alignment, boundary, rlist);
+			if (done >= 0) {
+				valid = true;
+				num -= done;
+			}
 			if (num == 0) {
 #ifdef PGALLOC_VERBOSE
 				printf("pgalloc: %"PRIxMAX"-%"PRIxMAX"\n",
@@ -489,6 +494,10 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 				goto out;
 			}
 		}
+	}
+	if (!valid) {
+		uvm_pgfl_unlock();
+		return EINVAL;
 	}
 
 out:
@@ -534,7 +543,7 @@ uvm_pglistalloc_s_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 	 */
 	if (high <= uvm_physseg_get_avail_start(psi) ||
 	    low >= uvm_physseg_get_avail_end(psi))
-		return 0;
+		return -1;
 
 	todo = num;
 	candidate = uimax(low, uvm_physseg_get_avail_start(psi) +
@@ -609,6 +618,7 @@ uvm_pglistalloc_simple(int num, paddr_t low, paddr_t high,
 
 	/* Default to "lose". */
 	error = ENOMEM;
+	bool valid = false;
 
 again:
 	/*
@@ -632,13 +642,22 @@ again:
 			if (uvm_physseg_get_free_list(psi) != fl)
 				continue;
 
-			num -= uvm_pglistalloc_s_ps(psi, num, low, high, rlist);
+			int done = uvm_pglistalloc_s_ps(psi, num, low, high,
+                            rlist);
+			if (done >= 0) {
+				valid = true;
+				num -= done;
+			}
 			if (num == 0) {
 				error = 0;
 				goto out;
 			}
 		}
 
+	}
+	if (!valid) {
+		uvm_pgfl_unlock();
+		return EINVAL;
 	}
 
 out:
