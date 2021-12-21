@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.10 2021/12/19 12:20:46 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.11 2021/12/21 19:07:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -212,6 +212,12 @@ kmem_cache_dtor(void *cookie, void *ptr)
 		(*kc->kc_dtor)(ptr);
 }
 
+static void
+kmem_cache_pre_dtor(void *cookie)
+{
+	synchronize_rcu();
+}
+
 static inline struct kmem_cache *
 kmem_cache_create(const char *name, size_t size, size_t align,
     unsigned long flags, void (*ctor)(void *))
@@ -243,8 +249,10 @@ kmem_cache_create_dtor(const char *name, size_t size, size_t align,
 
 	if (ISSET(flags, SLAB_HWCACHE_ALIGN))
 		align = roundup(MAX(1, align), CACHE_LINE_SIZE);
-	if (ISSET(flags, SLAB_TYPESAFE_BY_RCU))
-		palloc = &pool_allocator_kmem_rcu;
+	/*
+	 * No need to use pool_allocator_kmem_rcu here; RCU synchronization
+	 * will be handled by the pre-destructor hook.
+	 */
 
 	kc = kmem_alloc(sizeof(*kc), KM_SLEEP);
 	kc->kc_pool_cache = pool_cache_init(size, align, 0, 0, name, palloc,
@@ -252,6 +260,10 @@ kmem_cache_create_dtor(const char *name, size_t size, size_t align,
 	kc->kc_size = size;
 	kc->kc_ctor = ctor;
 	kc->kc_dtor = dtor;
+	if (ISSET(flags, SLAB_TYPESAFE_BY_RCU)) {
+		pool_cache_setpredestruct(kc->kc_pool_cache,
+		    kmem_cache_pre_dtor);
+	}
 
 	return kc;
 }

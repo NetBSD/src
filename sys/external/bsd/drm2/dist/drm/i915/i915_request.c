@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.12 2021/12/19 12:34:34 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.13 2021/12/21 19:07:09 thorpej Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.12 2021/12/19 12:34:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.13 2021/12/21 19:07:09 thorpej Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -613,11 +613,6 @@ static void __i915_request_ctor(void *arg)
 static void __i915_request_dtor(void *arg)
 {
 	struct i915_request *rq = arg;
-
-#ifdef __NetBSD__
-	/* XXX pool cache does not guarantee this for us.  */
-	synchronize_rcu();
-#endif
 
 	dma_fence_destroy(&rq->fence);
 #ifdef __NetBSD__
