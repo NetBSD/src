@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.76 2021/01/07 13:25:51 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.77 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.76 2021/01/07 13:25:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.77 2021/12/21 09:51:22 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -403,7 +403,7 @@ dwc2_open(struct usbd_pipe *pipe)
 	switch (xfertype) {
 	case UE_CONTROL:
 		pipe->up_methods = &dwc2_device_ctrl_methods;
-		int err = usb_allocmem(&sc->sc_bus, sizeof(usb_device_request_t),
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag, sizeof(usb_device_request_t),
 		    0, USBMALLOC_COHERENT, &dpipe->req_dma);
 		if (err)
 			return USBD_NOMEM;
@@ -763,13 +763,12 @@ dwc2_device_ctrl_abort(struct usbd_xfer *xfer)
 Static void
 dwc2_device_ctrl_close(struct usbd_pipe *pipe)
 {
-	struct dwc2_softc * const sc = DWC2_PIPE2SC(pipe);
 	struct dwc2_pipe * const dpipe = DWC2_PIPE2DPIPE(pipe);
 
 	DPRINTF("pipe=%p\n", pipe);
 	dwc2_close_pipe(pipe);
 
-	usb_freemem(&sc->sc_bus, &dpipe->req_dma);
+	usb_freemem(&dpipe->req_dma);
 }
 
 Static void

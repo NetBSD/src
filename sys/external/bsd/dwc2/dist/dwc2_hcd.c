@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.25 2021/01/11 17:00:18 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.26 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.25 2021/01/11 17:00:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.26 2021/12/21 09:51:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -732,8 +732,8 @@ static int dwc2_hc_setup_align_buf(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 
 		qh->dw_align_buf = NULL;
 		qh->dw_align_buf_dma = 0;
-		err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, buf_size, 0,
-		    USBMALLOC_COHERENT, &qh->dw_align_buf_usbdma);
+		err = usb_allocmem(hsotg->hsotg_sc->sc_bus.ub_dmatag,
+		    buf_size, 0, USBMALLOC_COHERENT, &qh->dw_align_buf_usbdma);
 		if (!err) {
 			usb_dma_t *ud = &qh->dw_align_buf_usbdma;
 
@@ -2247,8 +2247,7 @@ static void dwc2_hcd_free(struct dwc2_hsotg *hsotg)
 
 	if (hsotg->core_params->dma_enable > 0) {
 		if (hsotg->status_buf) {
-			usb_freemem(&hsotg->hsotg_sc->sc_bus,
-				    &hsotg->status_buf_usbdma);
+			usb_freemem(&hsotg->status_buf_usbdma);
 			hsotg->status_buf = NULL;
 		}
 	} else {
@@ -2391,7 +2390,7 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg)
 	 */
 	hsotg->status_buf = NULL;
 	if (hsotg->core_params->dma_enable > 0) {
-		int error = usb_allocmem(&hsotg->hsotg_sc->sc_bus,
+		int error = usb_allocmem(hsotg->hsotg_sc->sc_bus.ub_dmatag,
 		    DWC2_HCD_STATUS_BUF_SIZE, 0, USBMALLOC_COHERENT,
 		    &hsotg->status_buf_usbdma);
 		if (!error) {

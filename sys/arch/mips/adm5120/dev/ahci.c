@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.27 2021/12/07 06:49:15 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.28 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.27 2021/12/07 06:49:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.28 2021/12/21 09:51:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -877,7 +877,7 @@ ahci_device_ctrl_start(struct usbd_xfer *xfer)
 		td1 = (struct admhcd_td *)KSEG1ADDR(&td_v[1]);
 		td2 = (struct admhcd_td *)KSEG1ADDR(&td_v[2]);
 		td3 = (struct admhcd_td *)KSEG1ADDR(&td_v[3]);
-		err = usb_allocmem(&sc->sc_bus,
+		err = usb_allocmem(sc->sc_bus.ub_dmatag,
 			sizeof(usb_device_request_t),
 			0, USBMALLOC_COHERENT, &reqdma);
 		if (err)
@@ -990,7 +990,7 @@ ahci_device_ctrl_start(struct usbd_xfer *xfer)
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
 
-	usb_freemem(&sc->sc_bus, &reqdma);
+	usb_freemem(&reqdma);
 
 	return USBD_NORMAL_COMPLETION;
 }

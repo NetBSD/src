@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.83 2021/12/21 09:25:17 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.84 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.83 2021/12/21 09:25:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.84 2021/12/21 09:51:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -262,10 +262,9 @@ usb_block_freemem(usb_dma_block_t *b)
 }
 
 int
-usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, u_int flags,
+usb_allocmem(bus_dma_tag_t tag, size_t size, size_t align, u_int flags,
     usb_dma_t *p)
 {
-	bus_dma_tag_t tag = bus->ub_dmatag;
 	usbd_status err;
 	struct usb_frag_dma *f;
 	usb_dma_block_t *b;
@@ -345,7 +344,7 @@ usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, u_int flags,
 }
 
 void
-usb_freemem(struct usbd_bus *bus, usb_dma_t *p)
+usb_freemem(usb_dma_t *p)
 {
 	struct usb_frag_dma *f;
 
