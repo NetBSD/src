@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.31 2021/12/21 11:07:51 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.32 2021/12/21 12:12:52 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.31 2021/12/21 11:07:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.32 2021/12/21 12:12:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,12 +163,13 @@ struct rdes {
 #define  DESCNF_CHRST	(1U<<30)	/* channel reset */
 #define  DESCNF_TMR	(1U<<4)		/* coalesce timer mode select */
 #define  DESCNF_LE	(1)		/* little endian desc format */
-#define TXCOLMAX	0x410		/* tx intr coalesce upper bound */
-#define RXCOLMAX	0x454		/* rx intr coalesce upper bound */
+#define TXSUBMIT	0x410		/* submit loaded tx frame */
+#define TXCLSCMAX	0x418		/* tx intr coalesce upper bound */
+#define RXCLSCMAX	0x458		/* rx intr coalesce upper bound */
 #define TXITIMER	0x420		/* coalesce timer usec, MSB to use */
 #define RXITIMER	0x460		/* coalesce timer usec, MSB to use */
-#define TXDONECNT	0x424		/* tx completed count, auto-zero */
-#define RXDONECNT	0x458		/* rx available count, auto-zero */
+#define TXDONECNT	0x414		/* tx completed count, auto-zero */
+#define RXDONECNT	0x454		/* rx available count, auto-zero */
 #define UCODE_H2M	0x210		/* host2media engine ucode port */
 #define UCODE_M2H	0x21c		/* media2host engine ucode port */
 #define CORESTAT	0x218		/* engine run state */
@@ -1117,8 +1118,8 @@ scx_init(struct ifnet *ifp)
 	CSR_WRITE(sc, RXIE_CLR, ~0);	/* clear Rx interrupt enable */
 	CSR_WRITE(sc, TXIE_CLR, ~0);	/* clear Tx interrupt enable */
 
-	CSR_WRITE(sc, RXCOLMAX, 8);	/* Rx coalesce upper bound */
-	CSR_WRITE(sc, TXCOLMAX, 8);	/* Tx coalesce upper bound */
+	CSR_WRITE(sc, RXCLSCMAX, 8);	/* Rx coalesce upper bound */
+	CSR_WRITE(sc, TXCLSCMAX, 8);	/* Tx coalesce upper bound */
 	CSR_WRITE(sc, RXITIMER, 500);	/* Rx co. timer usec */
 	CSR_WRITE(sc, TXITIMER, 500);	/* Tx co. timer usec */
 
@@ -1408,8 +1409,8 @@ scx_start(struct ifnet *ifp)
 		SCX_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		/* Tell DMA start transmit */
-		mac_write(sc, GMACTPD, 1);
+		/* submit one frame to xmit */
+		CSR_WRITE(sc, TXSUBMIT, 1);
 
 		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
