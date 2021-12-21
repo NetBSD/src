@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.401 2021/12/21 15:24:28 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.402 2021/12/21 15:33:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.401 2021/12/21 15:24:28 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.402 2021/12/21 15:33:20 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -260,10 +260,7 @@ build_name_call(sym_t *sym)
 	sym->s_type = derive_type(sym->s_type, FUNC);
 }
 
-/*
- * Create a node for a name (symbol table entry).
- * follow_token is the token which follows the name.
- */
+/* Create a node for a name (symbol table entry). */
 tnode_t *
 build_name(sym_t *sym, bool is_funcname)
 {
