@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.32 2021/12/21 12:12:52 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.33 2021/12/21 21:30:49 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.32 2021/12/21 12:12:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.33 2021/12/21 21:30:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,7 +163,7 @@ struct rdes {
 #define  DESCNF_CHRST	(1U<<30)	/* channel reset */
 #define  DESCNF_TMR	(1U<<4)		/* coalesce timer mode select */
 #define  DESCNF_LE	(1)		/* little endian desc format */
-#define TXSUBMIT	0x410		/* submit loaded tx frame */
+#define TXSUBMIT	0x410		/* submit frame(s) to transmit */
 #define TXCLSCMAX	0x418		/* tx intr coalesce upper bound */
 #define RXCLSCMAX	0x458		/* rx intr coalesce upper bound */
 #define TXITIMER	0x420		/* coalesce timer usec, MSB to use */
