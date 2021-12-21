@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.34 2021/01/05 18:00:21 skrll Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.35 2021/12/21 09:51:22 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -51,12 +51,12 @@ typedef struct usb_dma_block {
 #define USBMALLOC_COHERENT	__BIT(1)
 #define USBMALLOC_ZERO		__BIT(2)
 
-int		usb_allocmem(struct usbd_bus *, size_t, size_t, u_int, usb_dma_t *);
-void		usb_freemem(struct usbd_bus *, usb_dma_t *);
+int		usb_allocmem(bus_dma_tag_t, size_t, size_t, u_int, usb_dma_t *);
+void		usb_freemem(usb_dma_t *);
 void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int);
 
 bus_addr_t	usb_dmaaddr(usb_dma_t *, unsigned int);
 
-#define DMAADDR(dma, o) usb_dmaaddr((dma), (o))
+#define DMAADDR(dma, o)	usb_dmaaddr((dma), (o))
 #define KERNADDR(dma, o) \
 	((void *)((char *)(dma)->udma_block->kaddr + (dma)->udma_offs + (o)))

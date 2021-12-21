@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.317 2021/06/24 23:01:03 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.318 2021/12/21 09:51:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.317 2021/06/24 23:01:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.318 2021/12/21 09:51:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -388,7 +388,7 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	mutex_destroy(&sc->sc_intr_lock);
 
 	if (sc->sc_hcca != NULL)
-		usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
+		usb_freemem(&sc->sc_hccadma);
 	pool_cache_destroy(sc->sc_xferpool);
 	cv_destroy(&sc->sc_abort_cv);
 
@@ -409,7 +409,7 @@ ohci_alloc_sed(ohci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		int err = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag, OHCI_SED_SIZE * OHCI_SED_CHUNK,
 		    OHCI_ED_ALIGN, 0 /*!USBMALLOC_COHERENT*/, &dma);
 		if (err)
 			return NULL;
@@ -467,7 +467,7 @@ ohci_alloc_std(ohci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		int err = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag, OHCI_STD_SIZE * OHCI_STD_CHUNK,
 		   OHCI_TD_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
 			return NULL;
@@ -719,7 +719,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 		DPRINTFN(2, "allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
-		int err = usb_allocmem(&sc->sc_bus, OHCI_SITD_SIZE * OHCI_SITD_CHUNK,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag, OHCI_SITD_SIZE * OHCI_SITD_CHUNK,
 		    OHCI_ITD_ALIGN, USBMALLOC_COHERENT, &dma);
 		if (err)
 			return NULL;
@@ -826,7 +826,7 @@ ohci_init(ohci_softc_t *sc)
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
-	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE,	OHCI_HCCA_ALIGN,
+	err = usb_allocmem(sc->sc_bus.ub_dmatag, OHCI_HCCA_SIZE,	OHCI_HCCA_ALIGN,
 	    USBMALLOC_COHERENT, &sc->sc_hccadma);
 	if (err) {
 		sc->sc_hcca = NULL;
@@ -1073,7 +1073,7 @@ ohci_init(ohci_softc_t *sc)
  bad2:
 	ohci_free_sed(sc, sc->sc_ctrl_head);
  bad1:
-	usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
+	usb_freemem(&sc->sc_hccadma);
 	sc->sc_hcca = NULL;
 	return err;
 }
@@ -2140,7 +2140,7 @@ ohci_open(struct usbd_pipe *pipe)
 		switch (xfertype) {
 		case UE_CONTROL:
 			pipe->up_methods = &ohci_device_ctrl_methods;
-			int error = usb_allocmem(&sc->sc_bus,
+			int error = usb_allocmem(sc->sc_bus.ub_dmatag,
 			    sizeof(usb_device_request_t), 0,
 			    USBMALLOC_COHERENT, &opipe->ctrl.reqdma);
 			if (error)
@@ -2989,7 +2989,7 @@ ohci_device_ctrl_close(struct usbd_pipe *pipe)
 	ohci_close_pipe(pipe, sc->sc_ctrl_head);
 	ohci_free_std_locked(sc, opipe->tail.td);
 
-	usb_freemem(&sc->sc_bus, &opipe->ctrl.reqdma);
+	usb_freemem(&opipe->ctrl.reqdma);
 }
 
 /************************/

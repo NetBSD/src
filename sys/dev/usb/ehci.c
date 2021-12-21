@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.292 2021/12/21 08:49:03 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.293 2021/12/21 09:51:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.292 2021/12/21 08:49:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.293 2021/12/21 09:51:22 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -517,7 +517,8 @@ ehci_init(ehci_softc_t *sc)
 	case 2: sc->sc_flsize = 256; break;
 	case 3: return EIO;
 	}
-	err = usb_allocmem(&sc->sc_bus, sc->sc_flsize * sizeof(ehci_link_t),
+	err = usb_allocmem(sc->sc_bus.ub_dmatag,
+	    sc->sc_flsize * sizeof(ehci_link_t),
 	    EHCI_FLALIGN_ALIGN, USBMALLOC_COHERENT, &sc->sc_fldma);
 	if (err)
 		return err;
@@ -654,7 +655,7 @@ ehci_init(ehci_softc_t *sc)
 	ehci_free_sqh(sc, sc->sc_async_head);
 #endif
  bad1:
-	usb_freemem(&sc->sc_bus, &sc->sc_fldma);
+	usb_freemem(&sc->sc_fldma);
 	return err;
 }
 
@@ -1999,7 +2000,7 @@ ehci_open(struct usbd_pipe *pipe)
 
 	switch (xfertype) {
 	case UE_CONTROL:
-		err = usb_allocmem(&sc->sc_bus, sizeof(usb_device_request_t),
+		err = usb_allocmem(sc->sc_bus.ub_dmatag, sizeof(usb_device_request_t),
 		    0, USBMALLOC_COHERENT, &epipe->ctrl.reqdma);
 #ifdef EHCI_DEBUG
 		if (err)
@@ -2796,7 +2797,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 		mutex_exit(&sc->sc_lock);
 
 		usb_dma_t dma;
-		int err = usb_allocmem(&sc->sc_bus,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag,
 		    EHCI_SQH_SIZE * EHCI_SQH_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
@@ -2852,7 +2853,7 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		mutex_exit(&sc->sc_lock);
 
 		usb_dma_t dma;
-		int err = usb_allocmem(&sc->sc_bus,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag,
 		    EHCI_SQTD_SIZE * EHCI_SQTD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
@@ -3112,7 +3113,7 @@ ehci_alloc_itd(ehci_softc_t *sc)
 		mutex_exit(&sc->sc_lock);
 
 		usb_dma_t dma;
-		int err = usb_allocmem(&sc->sc_bus,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag,
 		    EHCI_ITD_SIZE * EHCI_ITD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
@@ -3166,7 +3167,7 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 		mutex_exit(&sc->sc_lock);
 
 		usb_dma_t dma;
-		int err = usb_allocmem(&sc->sc_bus,
+		int err = usb_allocmem(sc->sc_bus.ub_dmatag,
 		    EHCI_SITD_SIZE * EHCI_SITD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
@@ -3772,7 +3773,7 @@ ehci_device_ctrl_close(struct usbd_pipe *pipe)
 
 	ehci_close_pipe(pipe, sc->sc_async_head);
 
-	usb_freemem(&sc->sc_bus, &epipe->ctrl.reqdma);
+	usb_freemem(&epipe->ctrl.reqdma);
 }
 
 /*
