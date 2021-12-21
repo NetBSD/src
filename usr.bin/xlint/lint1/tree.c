@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.400 2021/12/17 00:05:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.401 2021/12/21 15:24:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.400 2021/12/17 00:05:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.401 2021/12/21 15:24:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -282,15 +282,15 @@ build_name(sym_t *sym, bool is_funcname)
 
 	n = expr_zalloc_tnode();
 	n->tn_type = sym->s_type;
-	if (sym->s_scl != CTCONST) {
+	if (sym->s_scl == CTCONST) {
+		n->tn_op = CON;
+		n->tn_val = expr_zalloc(sizeof(*n->tn_val));
+		*n->tn_val = sym->s_value;
+	} else {
 		n->tn_op = NAME;
 		n->tn_sym = sym;
 		if (sym->s_kind == FVFT && sym->s_type->t_tspec != FUNC)
 			n->tn_lvalue = true;
-	} else {
-		n->tn_op = CON;
-		n->tn_val = expr_zalloc(sizeof(*n->tn_val));
-		*n->tn_val = sym->s_value;
 	}
 
 	return n;

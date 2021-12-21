@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.55 2021/11/16 21:01:05 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.56 2021/12/21 15:24:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.55 2021/11/16 21:01:05 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.56 2021/12/21 15:24:28 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -354,6 +354,9 @@ str_endswith(const char *haystack, const char *needle)
 /*
  * Return a freshly allocated tree node that is freed at the end of the
  * current expression.
+ *
+ * The node records whether it comes from a system file, which makes strict
+ * bool mode less restrictive.
  */
 tnode_t *
 expr_zalloc_tnode(void)
