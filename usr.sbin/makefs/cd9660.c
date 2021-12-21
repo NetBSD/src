@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.57 2020/11/10 20:48:29 reinoud Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.58 2021/12/21 21:28:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.57 2020/11/10 20:48:29 reinoud Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.58 2021/12/21 21:28:31 andvar Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1011,7 +1011,7 @@ cd9660_sorted_child_insert(cd9660node *parent, cd9660node *cn_new)
 
 /*
  * Called After cd9660_sorted_child_insert
- * handles file collisions by suffixing each filname with ~n
+ * handles file collisions by suffixing each filename with ~n
  * where n represents the files respective place in the ordering
  */
 static int
