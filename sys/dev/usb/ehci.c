@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.294 2021/12/21 10:14:43 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.295 2021/12/21 10:16:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.294 2021/12/21 10:14:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.295 2021/12/21 10:16:05 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3163,7 +3163,6 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 	mutex_enter(&sc->sc_lock);
 	freesitd = LIST_FIRST(&sc->sc_freesitds);
 	if (freesitd == NULL) {
-
 		DPRINTF("allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
