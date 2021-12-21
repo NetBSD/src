@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.148 2021/12/04 00:01:24 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.149 2021/12/21 22:21:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.148 2021/12/04 00:01:24 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.149 2021/12/21 22:21:11 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -241,7 +241,7 @@ const char *const msgs[] = {
 	"illegal combination of '%s' and '%s'",			      /* 184 */
 	"cannot initialize '%s' from '%s'",			      /* 185 */
 	"bit-field initialization is illegal in traditional C",	      /* 186 */
-	"non-null byte ignored in string initializer",		      /* 187 */
+	"string literal too long (%lu) for target array (%lu)",	      /* 187 */
 	"no automatic aggregate initialization in traditional C",     /* 188 */
 	"",			/* no longer used */		      /* 189 */
 	"empty array declaration: %s",				      /* 190 */
