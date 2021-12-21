@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.46 2021/12/19 12:40:43 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.47 2021/12/21 11:44:18 tnn Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.46 2021/12/19 12:40:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.47 2021/12/21 11:44:18 tnn Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1983,7 +1983,7 @@ int i915_drm_resume_early(struct drm_device *dev)
 #ifndef __NetBSD__
 	struct pci_dev *pdev = dev_priv->drm.pdev;
 #endif
-	int ret;
+	int ret = 0;
 
 	/*
 	 * We have a resume ordering issue with the snd-hda driver also
