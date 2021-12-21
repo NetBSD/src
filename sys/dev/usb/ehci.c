@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.293 2021/12/21 09:51:22 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.294 2021/12/21 10:14:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.293 2021/12/21 09:51:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.294 2021/12/21 10:14:43 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2000,8 +2000,9 @@ ehci_open(struct usbd_pipe *pipe)
 
 	switch (xfertype) {
 	case UE_CONTROL:
-		err = usb_allocmem(sc->sc_bus.ub_dmatag, sizeof(usb_device_request_t),
-		    0, USBMALLOC_COHERENT, &epipe->ctrl.reqdma);
+		err = usb_allocmem(sc->sc_bus.ub_dmatag,
+		     sizeof(usb_device_request_t), 0, USBMALLOC_COHERENT,
+		     &epipe->ctrl.reqdma);
 #ifdef EHCI_DEBUG
 		if (err)
 			printf("ehci_open: usb_allocmem()=%d\n", err);
