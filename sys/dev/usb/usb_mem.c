@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.82 2021/12/21 09:23:41 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.83 2021/12/21 09:25:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.82 2021/12/21 09:23:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.83 2021/12/21 09:25:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -210,7 +210,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	kmem_free(b, sizeof(*b));
 	mutex_enter(&usb_blk_lock);
 
-	return USBD_NOMEM;
+	return error;
 }
 
 #if 0
