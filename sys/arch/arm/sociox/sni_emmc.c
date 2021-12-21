@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_emmc.c,v 1.9 2021/11/10 17:23:46 msaitoh Exp $	*/
+/*	$NetBSD: sni_emmc.c,v 1.10 2021/12/21 06:00:45 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.9 2021/11/10 17:23:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.10 2021/12/21 06:00:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,6 +87,10 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "fujitsu,mb86s70-sdhci-3.0" },
 	DEVICE_COMPAT_EOL
 };
+static const struct device_compatible_entry compatible[] = {
+	{ .compat = "SCX0002" },
+	DEVICE_COMPAT_EOL
+};
 
 static int
 sniemmc_fdt_match(device_t parent, struct cfdata *match, void *aux)
@@ -107,13 +111,16 @@ sniemmc_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	char intrstr[128];
 
+	aprint_naive("\n");
+	aprint_normal_dev(self, "Socionext eMMC controller\n");
+
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
 	    || bus_space_map(faa->faa_bst, addr, size, 0, &ioh) != 0) {
-		aprint_error(": unable to map device\n");
+		aprint_error_dev(self, "unable to map device\n");
 		return;
 	}
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error(": failed to decode interrupt\n");
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		goto fail;
 	}
 	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC, 0,
@@ -123,19 +130,16 @@ sniemmc_fdt_attach(device_t parent, device_t self, void *aux)
 		    intrstr);
 		goto fail;
 	}
-
-	aprint_naive("\n");
-	aprint_normal_dev(self, "Socionext eMMC controller\n");
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = faa->faa_dmat;
 	sc->sc.sc_host = sc->sc_hosts;
-	sc->sc_phandle = phandle;
 	sc->sc_iot = faa->faa_bst;
 	sc->sc_ioh = ioh;
 	sc->sc_iob = addr;
 	sc->sc_ios = size;
+	sc->sc_phandle = phandle;
 
 	config_defer(self, sniemmc_attach_i);
 	return;
@@ -147,15 +151,9 @@ sniemmc_fdt_attach(device_t parent, device_t self, void *aux)
 static int
 sniemmc_acpi_match(device_t parent, struct cfdata *match, void *aux)
 {
-	static const char * compatible[] = {
-		"SCX0002",
-		NULL
-	};
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compatible);
 }
 
 static void
@@ -163,11 +161,15 @@ sniemmc_acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct sniemmc_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
+	ACPI_HANDLE handle = aa->aa_node->ad_handle;
 	bus_space_handle_t ioh;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
+
+	aprint_naive("\n");
+	aprint_normal(": Socionext eMMC controller\n");
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
@@ -176,24 +178,20 @@ sniemmc_acpi_attach(device_t parent, device_t self, void *aux)
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
 	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
-		aprint_error(": incomplete resources\n");
+		aprint_error_dev(self, "incomplete resources\n");
 		return;
 	}
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
 	    &ioh)) {
-		aprint_error(": couldn't map registers\n");
+		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
-	sc->sc_ih = acpi_intr_establish(self,
-	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
+	sc->sc_ih = acpi_intr_establish(self, (uint64_t)handle,
 	    IPL_BIO, false, sdhc_intr, &sc->sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto fail;
 	}
-
-	aprint_naive("\n");
-	aprint_normal_dev(self, "Socionext eMMC controller\n");
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = aa->aa_dmat;
@@ -201,6 +199,7 @@ sniemmc_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = aa->aa_memt;
 	sc->sc_ioh = ioh;
 	sc->sc_ios = mem->ar_length;
+	sc->sc_phandle = 0;
 
 	config_defer(self, sniemmc_attach_i);
 
@@ -228,7 +227,8 @@ sniemmc_attach_i(device_t self)
 #endif
 	error = 0;
 	if (error) {
-		aprint_error_dev(self, "couldn't initialize host, error=%d\n",				error);
+		aprint_error_dev(self, "couldn't initialize host, error=%d\n",
+		    error);
 		goto fail;
 	}
 	return;
