@@ -1,1 +1,5 @@
 init.c(16): error: empty array declaration: empty_array_with_initializer [190]
+init.c(78): error: too many struct/union initializers [172]
+init.c(80): error: 'u1' has incomplete type 'incomplete union incomplete_union' [31]
+init.c(84): error: type 'incomplete union incomplete_union' does not have member 'member' [101]
+init.c(86): error: 'u2' has incomplete type 'incomplete union incomplete_union' [31]
