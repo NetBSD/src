@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.291 2021/12/18 14:48:14 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.292 2021/12/21 08:49:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.291 2021/12/18 14:48:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.292 2021/12/21 08:49:03 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2787,8 +2787,6 @@ Static ehci_soft_qh_t *
 ehci_alloc_sqh(ehci_softc_t *sc)
 {
 	ehci_soft_qh_t *sqh;
-	int i, offs;
-	usb_dma_t dma;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -2797,6 +2795,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 		DPRINTF("allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
+		usb_dma_t dma;
 		int err = usb_allocmem(&sc->sc_bus,
 		    EHCI_SQH_SIZE * EHCI_SQH_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
@@ -2807,12 +2806,17 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 		}
 
 		mutex_enter(&sc->sc_lock);
-		for (i = 0; i < EHCI_SQH_CHUNK; i++) {
-			offs = i * EHCI_SQH_SIZE;
+		for (size_t i = 0; i < EHCI_SQH_CHUNK; i++) {
+			const int offs = i * EHCI_SQH_SIZE;
+			const bus_addr_t baddr = DMAADDR(&dma, offs);
+
+			KASSERT(BUS_ADDR_HI32(baddr) == 0);
+
 			sqh = KERNADDR(&dma, offs);
-			sqh->physaddr = DMAADDR(&dma, offs);
+			sqh->physaddr = BUS_ADDR_LO32(baddr);
 			sqh->dma = dma;
 			sqh->offs = offs;
+
 			sqh->next = sc->sc_freeqhs;
 			sc->sc_freeqhs = sqh;
 		}
@@ -2839,8 +2843,6 @@ Static ehci_soft_qtd_t *
 ehci_alloc_sqtd(ehci_softc_t *sc)
 {
 	ehci_soft_qtd_t *sqtd = NULL;
-	int i, offs;
-	usb_dma_t dma;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -2849,6 +2851,7 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		DPRINTF("allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
+		usb_dma_t dma;
 		int err = usb_allocmem(&sc->sc_bus,
 		    EHCI_SQTD_SIZE * EHCI_SQTD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
@@ -2859,10 +2862,14 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		}
 
 		mutex_enter(&sc->sc_lock);
-		for (i = 0; i < EHCI_SQTD_CHUNK; i++) {
-			offs = i * EHCI_SQTD_SIZE;
+		for (size_t i = 0; i < EHCI_SQTD_CHUNK; i++) {
+			const int offs = i * EHCI_SQTD_SIZE;
+			const bus_addr_t baddr = DMAADDR(&dma, offs);
+
+			KASSERT(BUS_ADDR_HI32(baddr) == 0);
+
 			sqtd = KERNADDR(&dma, offs);
-			sqtd->physaddr = DMAADDR(&dma, offs);
+			sqtd->physaddr = BUS_ADDR_LO32(baddr);
 			sqtd->dma = dma;
 			sqtd->offs = offs;
 
@@ -3094,7 +3101,6 @@ Static ehci_soft_itd_t *
 ehci_alloc_itd(ehci_softc_t *sc)
 {
 	struct ehci_soft_itd *itd, *freeitd;
-	usb_dma_t dma;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -3105,6 +3111,7 @@ ehci_alloc_itd(ehci_softc_t *sc)
 		DPRINTF("allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
+		usb_dma_t dma;
 		int err = usb_allocmem(&sc->sc_bus,
 		    EHCI_ITD_SIZE * EHCI_ITD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
@@ -3115,12 +3122,17 @@ ehci_alloc_itd(ehci_softc_t *sc)
 		}
 
 		mutex_enter(&sc->sc_lock);
-		for (int i = 0; i < EHCI_ITD_CHUNK; i++) {
-			int offs = i * EHCI_ITD_SIZE;
+		for (size_t i = 0; i < EHCI_ITD_CHUNK; i++) {
+			const int offs = i * EHCI_ITD_SIZE;
+			const bus_addr_t baddr = DMAADDR(&dma, offs);
+
+			KASSERT(BUS_ADDR_HI32(baddr) == 0);
+
 			itd = KERNADDR(&dma, offs);
-			itd->physaddr = DMAADDR(&dma, offs);
+			itd->physaddr = BUS_ADDR_LO32(baddr);
 	 		itd->dma = dma;
 			itd->offs = offs;
+
 			LIST_INSERT_HEAD(&sc->sc_freeitds, itd, free_list);
 		}
 		freeitd = LIST_FIRST(&sc->sc_freeitds);
@@ -3143,17 +3155,17 @@ Static ehci_soft_sitd_t *
 ehci_alloc_sitd(ehci_softc_t *sc)
 {
 	struct ehci_soft_sitd *sitd, *freesitd;
-	int i, offs;
-	usb_dma_t dma;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	mutex_enter(&sc->sc_lock);
 	freesitd = LIST_FIRST(&sc->sc_freesitds);
 	if (freesitd == NULL) {
+
 		DPRINTF("allocating chunk", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
 
+		usb_dma_t dma;
 		int err = usb_allocmem(&sc->sc_bus,
 		    EHCI_SITD_SIZE * EHCI_SITD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
@@ -3164,12 +3176,17 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 		}
 
 		mutex_enter(&sc->sc_lock);
-		for (i = 0; i < EHCI_SITD_CHUNK; i++) {
-			offs = i * EHCI_SITD_SIZE;
+		for (size_t i = 0; i < EHCI_SITD_CHUNK; i++) {
+			const int offs = i * EHCI_SITD_SIZE;
+			const bus_addr_t baddr = DMAADDR(&dma, offs);
+
+			KASSERT(BUS_ADDR_HI32(baddr) == 0);
+
 			sitd = KERNADDR(&dma, offs);
-			sitd->physaddr = DMAADDR(&dma, offs);
+			sitd->physaddr = BUS_ADDR_LO32(baddr);
 	 		sitd->dma = dma;
 			sitd->offs = offs;
+
 			LIST_INSERT_HEAD(&sc->sc_freesitds, sitd, free_list);
 		}
 		freesitd = LIST_FIRST(&sc->sc_freesitds);
