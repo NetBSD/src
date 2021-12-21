@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.10 2021/12/19 12:25:56 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.11 2021/12/21 12:00:40 tnn Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.10 2021/12/19 12:25:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.11 2021/12/21 12:00:40 tnn Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -89,12 +89,13 @@ rebuild_st:
 	 */
 #ifdef __NetBSD__
 	mapping = obj->base.filp;
+	noreclaim = GFP_KERNEL;
 #else
 	mapping = obj->base.filp->f_mapping;
 	mapping_set_unevictable(mapping);
 	noreclaim = mapping_gfp_constraint(mapping, ~__GFP_RECLAIM);
-	noreclaim |= __GFP_NORETRY | __GFP_NOWARN;
 #endif
+	noreclaim |= __GFP_NORETRY | __GFP_NOWARN;
 
 	sg = st->sgl;
 	st->nents = 0;
