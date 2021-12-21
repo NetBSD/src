@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.11 2021/08/07 16:18:45 thorpej Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.12 2021/12/21 06:00:45 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.11 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.12 2021/12/21 06:00:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,14 +89,16 @@ CFATTACH_DECL_NEW(snigpio_acpi, sizeof(struct snigpio_softc),
  *    GPIO-K,     GPIO-L,     PEC-PD26,     PEC-PD27,
  *    PEC-PD28,   PEC-PD29,   PEC-PD30,     PEC-PD31
  *
- *    DSW3-PIN1 -- what's "varstore" really this
+ *    DSW3-PIN1 -- erase NOR "UEFI variable store" region
  *    DSW3-PIN3 -- tweek PCIe bus implementation error toggle
  *    PowerButton (PWROFF#) can be detectable.
  *
- *  96board mezzanine
- *    i2c  "/i2c@51221000"
- *    spi  "/spi@54810000"
- *    gpio "/gpio@51000000" pinA-L (10-25) down edge sensitive
+ *  DevelopmentBox has 96board mezzanine 2x 20 receptacle
+ *    gpio  "/gpio@51000000" pinA-L (10-25) down edge sensitive
+ *    i2c   "/i2c1@51221000"
+ *    spi   "/spi1@54810000"
+ *    uart0 "/uart@2a400000" pin1-4 for real S2C11 console
+ *    uart1 SCP secure co-prorcessor uart console in pin5-6
  */
 static void snigpio_attach_i(struct snigpio_softc *);
 static int snigpio_intr(void *);
@@ -104,6 +106,10 @@ static int snigpio_intr(void *);
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "socionext,synquacer-gpio" },
 	{ .compat = "fujitsu,mb86s70-gpio" },
+	DEVICE_COMPAT_EOL
+};
+static const struct device_compatible_entry compatible[] = {
+	{ .compat = "SCX0007" },
 	DEVICE_COMPAT_EOL
 };
 
@@ -127,13 +133,16 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	char intrstr[128];
 	const char *list;
 
+	aprint_naive("\n");
+	aprint_normal(": Socionext GPIO controller\n");
+
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
 	    || bus_space_map(faa->faa_bst, addr, size, 0, &ioh) != 0) {
-		aprint_error(": unable to map device\n");
+		aprint_error_dev(self, "unable to map device\n");
 		return;
 	}
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error(": failed to decode interrupt\n");
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		goto fail;
 	}
 	sc->sc_ih = fdtbus_intr_establish(phandle,
@@ -142,20 +151,18 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto fail;
 	}
-
-	aprint_naive("\n");
-	aprint_normal_dev(self, "Socionext GPIO controller\n");
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
 	list = fdtbus_get_string(phandle, "gpio-line-names");
 	if (list)
 		aprint_normal_dev(self, "%s\n", list);
 
 	sc->sc_dev = self;
-	sc->sc_phandle = phandle;
 	sc->sc_iot = faa->faa_bst;
 	sc->sc_ioh = ioh;
 	sc->sc_iob = addr;
 	sc->sc_ios = size;
+	sc->sc_phandle = phandle;
 
 	snigpio_attach_i(sc);
 
@@ -168,15 +175,9 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 static int
 snigpio_acpi_match(device_t parent, struct cfdata *match, void *aux)
 {
-	static const char * compatible[] = {
-		"SCX0007",
-		NULL
-	};
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compatible);
 }
 
 static void
@@ -192,30 +193,32 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 	char *list;
 
+	aprint_naive("\n");
+	aprint_normal(": Socionext GPIO controller\n");
+
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "missing crs resources\n");
 		return;
+	}
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
 	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
-		aprint_error(": incomplete resources\n");
+		aprint_error_dev(self, "incomplete resources\n");
 		return;
 	}
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
 	    &ioh)) {
-		aprint_error(": couldn't map registers\n");
+		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
-	sc->sc_ih = acpi_intr_establish(self,
-	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
+	sc->sc_ih = acpi_intr_establish(self, (uint64_t)handle,
 	    IPL_VM, false, snigpio_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto fail;
 	}
-
-	aprint_normal_dev(self, "Socionext GPIO controller\n");
 	rv = acpi_dsd_string(handle, "gpio-line-names", &list);
 	if (ACPI_SUCCESS(rv))
 		aprint_normal_dev(self, "%s\n", list);
@@ -224,6 +227,7 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = aa->aa_memt;
 	sc->sc_ioh = ioh;
 	sc->sc_ios = mem->ar_length;
+	sc->sc_phandle = 0;
 
 	snigpio_attach_i(sc);
 
