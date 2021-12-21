@@ -4,5 +4,5 @@ d_init_array_using_string.c(37): warning: illegal combination of 'pointer to con
 d_init_array_using_string.c(39): warning: illegal combination of 'pointer to const int' and 'pointer to char', op 'init' [124]
 d_init_array_using_string.c(63): error: cannot initialize 'array[10] of const char' from 'pointer to int' [185]
 d_init_array_using_string.c(64): error: cannot initialize 'array[10] of const int' from 'pointer to char' [185]
-d_init_array_using_string.c(73): warning: non-null byte ignored in string initializer [187]
-d_init_array_using_string.c(74): warning: non-null byte ignored in string initializer [187]
+d_init_array_using_string.c(74): warning: string literal too long (11) for target array (10) [187]
+d_init_array_using_string.c(76): warning: string literal too long (11) for target array (10) [187]
