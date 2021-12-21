@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.292 2021/08/07 16:19:16 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.293 2021/12/21 22:53:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.292 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.293 2021/12/21 22:53:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1012,6 +1012,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	locs[SCSIBUSCF_TARGET] = target;
 	locs[SCSIBUSCF_LUN] = lun;
 
+	KERNEL_LOCK(1, NULL);
 	if ((cf = config_search(sc->sc_dev, &sa,
 				CFARGS(.submatch = config_stdsubmatch,
 				       .locators = locs))) != NULL) {
@@ -1034,9 +1035,11 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		 */
 		config_attach(sc->sc_dev, cf, &sa, scsibusprint,
 		    CFARGS(.locators = locs));
+		KERNEL_UNLOCK_ONE(NULL);
 	} else {
 		scsibusprint(&sa, device_xname(sc->sc_dev));
 		aprint_normal(" not configured\n");
+		KERNEL_UNLOCK_ONE(NULL);
 		goto bad;
 	}
 
