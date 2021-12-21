@@ -1,3 +1,3 @@
-msg_187.c(11): warning: non-null byte ignored in string initializer [187]
-msg_187.c(18): warning: non-null byte ignored in string initializer [187]
-msg_187.c(25): warning: non-null byte ignored in string initializer [187]
+msg_187.c(12): warning: string literal too long (10) for target array (9) [187]
+msg_187.c(19): warning: string literal too long (4) for target array (3) [187]
+msg_187.c(22): warning: string literal too long (4) for target array (3) [187]

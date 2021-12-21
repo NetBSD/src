@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.227 2021/12/21 21:42:21 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.228 2021/12/21 22:21:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.227 2021/12/21 21:42:21 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.228 2021/12/21 22:21:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -858,8 +858,9 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 		return false;
 
 	if (!tp->t_incomplete_array && tp->t_dim < (int)strg->st_len) {
-		/* non-null byte ignored in string initializer */
-		warning(187);
+		/* string literal too long (%lu) for target array (%lu) */
+		warning(187,
+		    (unsigned long)strg->st_len, (unsigned long)tp->t_dim);
 	}
 
 	if (tp == in->in_sym->s_type && tp->t_incomplete_array) {
