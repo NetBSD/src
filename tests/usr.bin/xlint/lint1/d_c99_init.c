@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.34 2021/12/17 15:52:30 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.35 2021/12/21 16:50:11 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -33,7 +33,7 @@ struct_initialization_via_assignment(any arg)
 }
 
 
-// See init_expr, initialization_init_array_using_string.
+// See initialization_expr, initialization_init_array_from_string.
 char static_duration[] = "static duration";
 signed char static_duration_signed[] = "static duration";
 unsigned char static_duration_unsigned[] = "static duration";
