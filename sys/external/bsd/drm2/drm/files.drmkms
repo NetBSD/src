@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.71 2021/12/19 12:39:48 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.72 2021/12/21 12:55:23 tnn Exp $
 
 version	20180827
 
@@ -79,6 +79,7 @@ makeoptions 	drmkms 	"CWARNFLAGS.drm_dp_helper.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_fb_helper.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
+makeoptions	drmkms	"CWARNFLAGS.drm_mm.c"+="${${ACTIVE_CC} == clang :? -Wno-unused-function :}"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_modes.c"+="-Wno-shadow"
 
 # Legacy user-mode setting
