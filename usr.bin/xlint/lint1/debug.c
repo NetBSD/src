@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.6 2021/12/20 00:10:07 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.7 2021/12/21 21:04:08 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.6 2021/12/20 00:10:07 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.7 2021/12/21 21:04:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -59,7 +59,7 @@ debug_printf(const char *fmt, ...)
 }
 
 void
-debug_indent(void)
+debug_print_indent(void)
 {
 
 	debug_printf("%*s", 2 * debug_indentation, "");
@@ -91,7 +91,7 @@ debug_step(const char *fmt, ...)
 {
 	va_list va;
 
-	debug_indent();
+	debug_print_indent();
 	va_start(va, fmt);
 	vfprintf(stdout, fmt, va);
 	va_end(va);
@@ -116,7 +116,7 @@ debug_node(const tnode_t *tn)
 	}
 
 	op = tn->tn_op;
-	debug_indent();
+	debug_print_indent();
 	debug_printf("'%s' with type '%s'%s%s%s",
 	    op == CVT && !tn->tn_cast ? "convert" : modtab[op].m_name,
 	    type_name(tn->tn_type), tn->tn_lvalue ? ", lvalue" : "",
