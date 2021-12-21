@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.224 2021/12/21 15:15:45 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.225 2021/12/21 16:50:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.224 2021/12/21 15:15:45 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.225 2021/12/21 16:50:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -395,7 +395,7 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 
 
 static const type_t *
-designator_look_up(const designator *dr, const type_t *tp)
+designator_type(const designator *dr, const type_t *tp)
 {
 	switch (tp->t_tspec) {
 	case STRUCT:
@@ -474,12 +474,12 @@ designation_add(designation *dn, const char *name, size_t subscript)
  * C99 6.7.8p18
  */
 static const type_t *
-designation_look_up(const designation *dn, const type_t *tp)
+designation_type(const designation *dn, const type_t *tp)
 {
 	size_t i;
 
 	for (i = 0; i < dn->dn_len && tp != NULL; i++)
-		tp = designator_look_up(dn->dn_items + i, tp);
+		tp = designator_type(dn->dn_items + i, tp);
 	return tp;
 }
 
@@ -547,7 +547,7 @@ brace_level_sub_type(const brace_level *bl, bool is_string)
 {
 
 	if (bl->bl_designation.dn_len > 0)
-		return designation_look_up(&bl->bl_designation, bl->bl_type);
+		return designation_type(&bl->bl_designation, bl->bl_type);
 
 	switch (bl->bl_type->t_tspec) {
 	case STRUCT:
@@ -708,7 +708,7 @@ initialization_sub_type(initialization *in, bool is_string)
 }
 
 static void
-initialization_begin_brace_level(initialization *in)
+initialization_lbrace(initialization *in)
 {
 	const type_t *tp;
 
@@ -766,7 +766,7 @@ initialization_set_size_of_unknown_array(initialization *in)
 }
 
 static void
-initialization_end_brace_level(initialization *in)
+initialization_rbrace(initialization *in)
 {
 	brace_level *inner_bl, *outer_bl;
 
@@ -832,7 +832,7 @@ initialization_expr_using_op(initialization *in, tnode_t *rn)
 
 /* Initialize a character array or wchar_t array with a string literal. */
 static bool
-initialization_init_array_using_string(initialization *in, tnode_t *tn)
+initialization_init_array_from_string(initialization *in, tnode_t *tn)
 {
 	brace_level *bl;
 	const type_t *tp;
@@ -898,7 +898,7 @@ initialization_expr(initialization *in, tnode_t *tn)
 		goto advance;
 	if (initialization_expr_using_op(in, tn))
 		goto done;
-	if (initialization_init_array_using_string(in, tn))
+	if (initialization_init_array_from_string(in, tn))
 		goto advance;
 	if (in->in_err)
 		goto done;
@@ -1015,7 +1015,7 @@ void
 init_lbrace(void)
 {
 
-	initialization_begin_brace_level(current_init());
+	initialization_lbrace(current_init());
 }
 
 void
@@ -1029,5 +1029,5 @@ void
 init_rbrace(void)
 {
 
-	initialization_end_brace_level(current_init());
+	initialization_rbrace(current_init());
 }
