@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.223 2021/12/20 19:34:01 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.224 2021/12/21 15:15:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.223 2021/12/20 19:34:01 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.224 2021/12/21 15:15:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -348,30 +348,30 @@ check_trad_no_auto_aggregate(const sym_t *sym)
 }
 
 static void
-check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
+check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 {
 	tnode_t *ln;
-	type_t *ltp;
+	type_t *lutp;
 	tspec_t lt, rt;
 	struct memory_block *tmem;
 
-	ltp = expr_unqualified_type(tp);
+	lutp = expr_unqualified_type(ltp);
 
 	/* Create a temporary node for the left side. */
 	ln = expr_zalloc(sizeof(*ln));
 	ln->tn_op = NAME;
-	ln->tn_type = ltp;
+	ln->tn_type = lutp;
 	ln->tn_lvalue = true;
-	ln->tn_sym = sym;
+	ln->tn_sym = lsym;
 
-	tn = cconv(tn);
+	rn = cconv(rn);
 
 	lt = ln->tn_type->t_tspec;
-	rt = tn->tn_type->t_tspec;
+	rt = rn->tn_type->t_tspec;
 
 	debug_step("typeok '%s', '%s'",
-	    type_name(ln->tn_type), type_name(tn->tn_type));
-	if (!typeok(INIT, 0, ln, tn))
+	    type_name(ln->tn_type), type_name(rn->tn_type));
+	if (!typeok(INIT, 0, ln, rn))
 		return;
 
 	/*
@@ -379,7 +379,7 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 	 * expr() would free it.
 	 */
 	tmem = expr_save_memory();
-	expr(tn, true, false, true, false);
+	expr(rn, true, false, true, false);
 	expr_restore_memory(tmem);
 
 	check_bit_field_init(ln, lt, rt);
@@ -387,10 +387,10 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 	/*
 	 * XXX: Is it correct to do this conversion _after_ the typeok above?
 	 */
-	if (lt != rt || (tp->t_bitfield && tn->tn_op == CON))
-		tn = convert(INIT, 0, unconst_cast(tp), tn);
+	if (lt != rt || (ltp->t_bitfield && rn->tn_op == CON))
+		rn = convert(INIT, 0, unconst_cast(ltp), rn);
 
-	check_non_constant_initializer(tn, sym);
+	check_non_constant_initializer(rn, lsym);
 }
 
 
