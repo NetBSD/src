@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.22 2020/04/13 08:59:14 wiz Exp $
+.\"	$NetBSD: pool_cache.9,v 1.23 2021/12/21 18:59:22 thorpej Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd April 12, 2020
+.Dd December 21, 2021
 .Dt POOL_CACHE 9
 .Os
 .\" ------------------------------------------------------------
@@ -69,7 +69,8 @@
 .Nm pool_cache_invalidate ,
 .Nm pool_cache_sethiwat ,
 .Nm pool_cache_setlowat ,
-.Nm pool_cache_sethardlimit
+.Nm pool_cache_sethardlimit ,
+.Nm pool_cache_setpredestruct
 .Nd resource-pool cache manager
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
@@ -118,6 +119,10 @@
 .Ft void
 .Fn pool_cache_sethardlimit \
 "pool_cache_t pc" "int n" "const char *warnmess" "int ratecap"
+.\" ------------------------------------------------------------
+.Ft void
+.Fn pool_cache_setpredestruct \
+"pool_cache_t pc" "void (*fn)(void *)"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 These utility routines provide management of pools of fixed-sized
@@ -346,6 +351,15 @@ will be logged.
 .Fa ratecap
 represents the minimal interval (in seconds) after which another warning
 message is issued when the pool hits its hard limit again.
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.It Fn pool_cache_setpredestruct "fn"
+Sets a pre-destructor hook for the pool cache.
+This hook will be invoked
+.Pq with the same argument passed to the destructor
+before a batch of one or more objects is destructed.
+Pool cache users who rely on type-stability or use other
+forms of passive serialization may use this hook as a
+synchronization point.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_prime "pc" "n"
 Set the minimum number of total items (both free and allocated) for the backing

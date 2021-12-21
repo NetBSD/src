@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.277 2021/07/25 06:00:31 simonb Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.278 2021/12/21 18:59:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.277 2021/07/25 06:00:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.278 2021/12/21 18:59:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2119,6 +2119,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	pc->pc_partgroups = NULL;
 	pc->pc_ctor = ctor;
 	pc->pc_dtor = dtor;
+	pc->pc_pre_dtor = NULL;
 	pc->pc_arg  = arg;
 	pc->pc_refcnt = 0;
 	pc->pc_freecheck = NULL;
@@ -2161,6 +2162,19 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 
 	membar_sync();
 	pp->pr_cache = pc;
+}
+
+/*
+ * pool_cache_setpredestruct:
+ *
+ *	Set a pre-destructor hook for the specified pool cache.
+ */
+void
+pool_cache_setpredestruct(pool_cache_t pc, void (*fn)(void *))
+{
+	KASSERT(pc->pc_pre_dtor == NULL);
+	pc->pc_pre_dtor = fn;
+	membar_sync();
 }
 
 /*
@@ -2290,6 +2304,20 @@ pool_cache_reclaim(pool_cache_t pc)
 	return pool_reclaim(&pc->pc_pool);
 }
 
+static inline void
+pool_cache_pre_destruct(pool_cache_t pc)
+{
+	/*
+	 * Call the pre-destruct hook before destructing a batch
+	 * of objects.  Users of this hook can perform passive
+	 * serialization other other activities that need to be
+	 * performed once-per-batch (rather than once-per-object).
+	 */
+	if (__predict_false(pc->pc_pre_dtor != NULL)) {
+		(*pc->pc_pre_dtor)(pc->pc_arg);
+	}
+}
+
 static void
 pool_cache_destruct_object1(pool_cache_t pc, void *object)
 {
@@ -2309,6 +2337,7 @@ pool_cache_destruct_object(pool_cache_t pc, void *object)
 
 	FREECHECK_IN(&pc->pc_freecheck, object);
 
+	pool_cache_pre_destruct(pc);
 	pool_cache_destruct_object1(pc, object);
 }
 
@@ -2324,6 +2353,12 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
 	void *object;
 	pcg_t *next;
 	int i, n;
+
+	if (pcg == NULL) {
+		return 0;
+	}
+
+	pool_cache_pre_destruct(pc);
 
 	for (n = 0; pcg != NULL; pcg = next, n++) {
 		next = pcg->pcg_next;
