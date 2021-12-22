@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.33 2021/11/01 19:48:51 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.34 2021/12/22 14:49:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -99,13 +99,13 @@ typedef	struct {
 #endif
 	tspec_t	tt_signed_counterpart;
 	tspec_t	tt_unsigned_counterpart;
-	bool	tt_is_integer : 1;	/* integer type */
+	bool	tt_is_integer:1;	/* integer type */
 #ifdef IS_LINT1
-	bool	tt_is_uinteger : 1;	/* unsigned integer type */
-	bool	tt_is_floating : 1;	/* floating point type */
-	bool	tt_is_arithmetic : 1;	/* arithmetic type */
-	bool	tt_is_scalar : 1;	/* scalar type */
-	bool	tt_is_complex : 1;	/* complex type */
+	bool	tt_is_uinteger:1;	/* unsigned integer type */
+	bool	tt_is_floating:1;	/* floating point type */
+	bool	tt_is_arithmetic:1;	/* arithmetic type */
+	bool	tt_is_scalar:1;		/* scalar type */
+	bool	tt_is_complex:1;	/* complex type */
 #endif
 	const char *tt_name;		/* name of the type */
 } ttab_t;
