@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.229 2021/12/22 00:45:53 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.230 2021/12/22 14:35:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.229 2021/12/22 00:45:53 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.230 2021/12/22 14:35:23 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -976,7 +976,7 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 	if (bl != NULL)
 		brace_level_advance(bl, &in->in_max_subscript);
 
-	if (tp == in->in_sym->s_type && tp->t_incomplete_array)
+	if (tp->t_incomplete_array)
 		update_type_of_array_of_unknown_size(in->in_sym, len + 1);
 
 	return true;
@@ -998,8 +998,7 @@ initialization_expr(initialization *in, tnode_t *tn)
 	debug_enter();
 
 	bl = in->in_brace_level;
-	if (bl != NULL &&
-	    !brace_level_goto(bl, tn, &in->in_max_subscript)) {
+	if (bl != NULL && !brace_level_goto(bl, tn, &in->in_max_subscript)) {
 		in->in_err = true;
 		goto done;
 	}
