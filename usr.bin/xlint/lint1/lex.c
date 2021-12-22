@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.91 2021/12/22 14:25:35 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.92 2021/12/22 14:38:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.91 2021/12/22 14:25:35 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.92 2021/12/22 14:38:34 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -96,20 +96,20 @@ lex_unknown_character(int c)
 	error(250, c);
 }
 
-#define kwdef(name, token, scl, tspec, tqual,	c89, c99, gcc, attr, deco) \
+#define kwdef(name, token, scl, tspec, tqual,	c90, c99, gcc, attr, deco) \
 	{ \
 		name, token, scl, tspec, tqual, \
-		(c89) > 0, (c99) > 0, (gcc) > 0, (attr) > 0, \
+		(c90) > 0, (c99) > 0, (gcc) > 0, (attr) > 0, \
 		((deco) & 1) != 0, ((deco) & 2) != 0, ((deco) & 4) != 0, \
 	}
-#define kwdef_token(name, token,		c89, c99, gcc, attr, deco) \
-	kwdef(name, token, 0, 0, 0,		c89, c99, gcc, attr, deco)
-#define kwdef_sclass(name, sclass,		c89, c99, gcc, attr, deco) \
-	kwdef(name, T_SCLASS, sclass, 0, 0,	c89, c99, gcc, attr, deco)
-#define kwdef_type(name, tspec,			c89, c99, gcc, attr, deco) \
-	kwdef(name, T_TYPE, 0, tspec, 0,	c89, c99, gcc, attr, deco)
-#define kwdef_tqual(name, tqual,		c89, c99, gcc, attr, deco) \
-	kwdef(name, T_QUAL, 0, 0, tqual,	c89, c99, gcc, attr, deco)
+#define kwdef_token(name, token,		c90, c99, gcc, attr, deco) \
+	kwdef(name, token, 0, 0, 0,		c90, c99, gcc, attr, deco)
+#define kwdef_sclass(name, sclass,		c90, c99, gcc, attr, deco) \
+	kwdef(name, T_SCLASS, sclass, 0, 0,	c90, c99, gcc, attr, deco)
+#define kwdef_type(name, tspec,			c90, c99, gcc, attr, deco) \
+	kwdef(name, T_TYPE, 0, tspec, 0,	c90, c99, gcc, attr, deco)
+#define kwdef_tqual(name, tqual,		c90, c99, gcc, attr, deco) \
+	kwdef(name, T_QUAL, 0, 0, tqual,	c90, c99, gcc, attr, deco)
 #define kwdef_keyword(name, token) \
 	kwdef(name, token, 0, 0, 0,		0, 0, 0, 0, 1)
 #define kwdef_gcc_attr(name, token) \
@@ -126,7 +126,7 @@ static	struct	kwtab {
 	tspec_t	kw_tspec;	/* type spec. if kw_token
 				 * T_TYPE or T_STRUCT_OR_UNION */
 	tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
-	bool	kw_c89 : 1;	/* C89 keyword */
+	bool	kw_c90 : 1;	/* C90 keyword */
 	bool	kw_c99 : 1;	/* C99 keyword */
 	bool	kw_gcc : 1;	/* GCC keyword */
 	bool	kw_attr : 1;	/* GCC attribute, keyword */
@@ -330,7 +330,7 @@ initscan(void)
 	struct	kwtab *kw;
 
 	for (kw = kwtab; kw->kw_name != NULL; kw++) {
-		if ((kw->kw_c89 || kw->kw_c99) && tflag)
+		if ((kw->kw_c90 || kw->kw_c99) && tflag)
 			continue;
 		if (kw->kw_c99 && !(Sflag || gflag))
 			continue;
