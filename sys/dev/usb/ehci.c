@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.296 2021/12/22 21:36:40 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.297 2021/12/22 21:45:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.296 2021/12/22 21:36:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.297 2021/12/22 21:45:02 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -489,6 +489,25 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_bus.ub_usedma = true;
 	sc->sc_bus.ub_dmaflags = USBMALLOC_MULTISEG;
 
+	/*
+	 * The bus attachment code will possibly provide a 64bit DMA
+	 * tag which we now limit to the bottom 4G range as
+	 *
+	 * - that's as much as ehci can address in its QH, TD, iTD, and siTD
+	 *   structures; and
+	 * - the driver doesn't currently set EHCI_CTRLDSSEGMENT to anything
+	 *   other than 0.
+	 */
+	bus_dma_tag_t ntag;
+	sc->sc_dmatag = sc->sc_bus.ub_dmatag;
+	err = bus_dmatag_subregion(sc->sc_bus.ub_dmatag, 0, UINT32_MAX,
+	    &ntag, 0);
+	if (err == 0) {
+		sc->sc_dmatag = ntag;
+		aprint_normal_dev(sc->sc_dev, "Using DMA subregion for control"
+		    " data structures\n");
+	}
+
 	/* Reset the controller */
 	DPRINTF("resetting", 0, 0, 0, 0);
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
@@ -501,8 +520,9 @@ ehci_init(ehci_softc_t *sc)
 			break;
 	}
 	if (hcr) {
-		aprint_error("%s: reset timeout\n", device_xname(sc->sc_dev));
-		return EIO;
+		aprint_error_dev(sc->sc_dev, "reset timeout\n");
+		err = EIO;
+		goto fail1;
 	}
 	if (sc->sc_vendor_init)
 		sc->sc_vendor_init(sc);
@@ -515,13 +535,17 @@ ehci_init(ehci_softc_t *sc)
 	case 0: sc->sc_flsize = 1024; break;
 	case 1: sc->sc_flsize = 512; break;
 	case 2: sc->sc_flsize = 256; break;
-	case 3: return EIO;
+	case 3:
+		err = EIO;
+		goto fail1;
 	}
 	err = usb_allocmem(sc->sc_bus.ub_dmatag,
 	    sc->sc_flsize * sizeof(ehci_link_t),
 	    EHCI_FLALIGN_ALIGN, USBMALLOC_COHERENT, &sc->sc_fldma);
-	if (err)
-		return err;
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "failed to allocate frame list\n");
+		goto fail1;
+	}
 	DPRINTF("flsize=%jd", sc->sc_flsize, 0, 0, 0);
 	sc->sc_flist = KERNADDR(&sc->sc_fldma, 0);
 
@@ -529,7 +553,10 @@ ehci_init(ehci_softc_t *sc)
 		sc->sc_flist[i] = EHCI_NULL;
 	}
 
-	EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
+	KASSERT(BUS_ADDR_HI32(DMAADDR(&sc->sc_fldma, 0)) == 0);
+	uint32_t lo32 = BUS_ADDR_LO32(DMAADDR(&sc->sc_fldma, 0));
+
+	EOWRITE4(sc, EHCI_PERIODICLISTBASE, lo32);
 
 	sc->sc_softitds = kmem_zalloc(sc->sc_flsize * sizeof(ehci_soft_itd_t *),
 	    KM_SLEEP);
@@ -547,11 +574,12 @@ ehci_init(ehci_softc_t *sc)
 	 * Allocate the interrupt dummy QHs. These are arranged to give poll
 	 * intervals that are powers of 2 times 1ms.
 	 */
+	memset(sc->sc_islots, 0, sizeof(sc->sc_islots));
 	for (i = 0; i < EHCI_INTRQHS; i++) {
 		sqh = ehci_alloc_sqh(sc);
 		if (sqh == NULL) {
 			err = ENOMEM;
-			goto bad1;
+			goto fail2;
 		}
 		sc->sc_islots[i].sqh = sqh;
 	}
@@ -594,7 +622,7 @@ ehci_init(ehci_softc_t *sc)
 	sqh = ehci_alloc_sqh(sc);
 	if (sqh == NULL) {
 		err = ENOMEM;
-		goto bad1;
+		goto fail2;
 	}
 	/* Fill the QH */
 	sqh->qh.qh_endp =
@@ -641,7 +669,8 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (hcr) {
 		aprint_error("%s: run timeout\n", device_xname(sc->sc_dev));
-		return EIO;
+		err = EIO;
+		goto fail3;
 	}
 
 	/* Enable interrupts */
@@ -650,12 +679,25 @@ ehci_init(ehci_softc_t *sc)
 
 	return 0;
 
-#if 0
- bad2:
+fail3:
 	ehci_free_sqh(sc, sc->sc_async_head);
-#endif
- bad1:
+
+fail2:
+	for (i = 0; i < EHCI_INTRQHS; i++) {
+		sqh = sc->sc_islots[i].sqh;
+		if (sqh)
+			ehci_free_sqh(sc, sqh);
+	}
+
+	kmem_free(sc->sc_softitds, sc->sc_flsize * sizeof(ehci_soft_itd_t *));
 	usb_freemem(&sc->sc_fldma);
+
+fail1:
+	softint_disestablish(sc->sc_doorbell_si);
+	softint_disestablish(sc->sc_pcd_si);
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
+
 	return err;
 }
 
@@ -2000,6 +2042,7 @@ ehci_open(struct usbd_pipe *pipe)
 
 	switch (xfertype) {
 	case UE_CONTROL:
+		/* we can use 64bit DMA for the reqdma buffer */
 		err = usb_allocmem(sc->sc_bus.ub_dmatag,
 		    sizeof(usb_device_request_t), 0, USBMALLOC_COHERENT,
 		    &epipe->ctrl.reqdma);
@@ -2798,7 +2841,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 		mutex_exit(&sc->sc_lock);
 
 		usb_dma_t dma;
-		int err = usb_allocmem(sc->sc_bus.ub_dmatag,
+		int err = usb_allocmem(sc->sc_dmatag,
 		    EHCI_SQH_SIZE * EHCI_SQH_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
@@ -2854,7 +2897,7 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		mutex_exit(&sc->sc_lock);
 
 		usb_dma_t dma;
-		int err = usb_allocmem(sc->sc_bus.ub_dmatag,
+		int err = usb_allocmem(sc->sc_dmatag,
 		    EHCI_SQTD_SIZE * EHCI_SQTD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
@@ -3114,7 +3157,7 @@ ehci_alloc_itd(ehci_softc_t *sc)
 		mutex_exit(&sc->sc_lock);
 
 		usb_dma_t dma;
-		int err = usb_allocmem(sc->sc_bus.ub_dmatag,
+		int err = usb_allocmem(sc->sc_dmatag,
 		    EHCI_ITD_SIZE * EHCI_ITD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 

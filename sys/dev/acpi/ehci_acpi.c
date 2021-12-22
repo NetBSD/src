@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_acpi.c,v 1.7 2021/08/07 16:19:09 thorpej Exp $ */
+/* $NetBSD: ehci_acpi.c,v 1.8 2021/12/22 21:45:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.7 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.8 2021/12/22 21:45:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,7 +98,6 @@ ehci_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
-	sc->sc_bus.ub_dmatag = aa->aa_dmat;
 	sc->sc_bus.ub_revision = USBREV_2_0;
 	sc->sc_flags = EHCIF_ETTF;
 	sc->sc_vendor_init = ehci_acpi_init;
@@ -125,25 +124,41 @@ ehci_acpi_attach(device_t parent, device_t self, void *aux)
 	error = bus_space_map(sc->iot, mem->ar_base, mem->ar_length, 0, &sc->ioh);
 	if (error) {
 		aprint_error_dev(self, "couldn't map registers\n");
-		return;
+		goto done;
 	}
 
 	/* Disable interrupts */
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 	EOWRITE4(sc, EHCI_USBINTR, 0);
 
+	const uint32_t hccparams = EREAD4(sc, EHCI_HCCPARAMS);
+	if (EHCI_HCC_64BIT(hccparams)) {
+		aprint_verbose_dev(self, "64-bit DMA");
+		if (BUS_DMA_TAG_VALID(aa->aa_dmat64)) {
+			aprint_verbose("\n");
+			sc->sc_bus.ub_dmatag = aa->aa_dmat64;
+		} else {
+			aprint_verbose(" - limited\n");
+			sc->sc_bus.ub_dmatag = aa->aa_dmat;
+		}
+	} else {
+		aprint_verbose_dev(self, "32-bit DMA\n");
+		sc->sc_bus.ub_dmatag = aa->aa_dmat;
+	}
+
 	ih = acpi_intr_establish(self,
 	    (uint64_t)(uintptr_t)aa->aa_node->ad_handle,
 	    IPL_USB, true, ehci_intr, sc, device_xname(self));
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
-		return;
+		goto done;
 	}
 
 	error = ehci_init(sc);
 	if (error) {
 		aprint_error_dev(self, "init failed, error = %d\n", error);
-		return;
+		acpi_intr_disestablish(ih);
+		goto done;
 	}
 
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
