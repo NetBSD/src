@@ -3503,7 +3503,17 @@ zfs_setattr(vnode_t *vp, vattr_t *vap, int flags, cred_t *cr,
 		if (XVA_ISSET_REQ(xvap, XAT_NODUMP)) {
 			if (xoap->xoa_nodump !=
 			    ((zp->z_pflags & ZFS_NODUMP) != 0)) {
+#if 0
+				/*
+                                 * XXXSB - zfs_netbsd_setattr()
+                                 * has already checked if this
+                                 * request is authorised, and our
+                                 * secpolicy_xvattr() doesn't check
+                                 * kauth chflags.  Fix this when we
+                                 * migrate to openzfs.
+				 */
 				need_policy = TRUE;
+#endif
 			} else {
 				XVA_CLR_REQ(xvap, XAT_NODUMP);
 				XVA_SET_REQ(&tmpxvattr, XAT_NODUMP);
