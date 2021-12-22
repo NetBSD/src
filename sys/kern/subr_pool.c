@@ -1,8 +1,8 @@
-/*	$NetBSD: subr_pool.c,v 1.278 2021/12/21 18:59:22 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.279 2021/12/22 16:57:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
- *     2020 The NetBSD Foundation, Inc.
+ *     2020, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.278 2021/12/21 18:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.279 2021/12/22 16:57:28 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -142,8 +142,13 @@ static bool pool_cache_put_nocache(pool_cache_t, void *);
 #define NO_CTOR	__FPTRCAST(int (*)(void *, void *, int), nullop)
 #define NO_DTOR	__FPTRCAST(void (*)(void *, void *), nullop)
 
+#define pc_has_pser(pc) (((pc)->pc_roflags & PR_PSERIALIZE) != 0)
 #define pc_has_ctor(pc) ((pc)->pc_ctor != NO_CTOR)
 #define pc_has_dtor(pc) ((pc)->pc_dtor != NO_DTOR)
+
+#define pp_has_pser(pp) (((pp)->pr_roflags & PR_PSERIALIZE) != 0)
+
+#define pool_barrier()	xc_barrier(0)
 
 /*
  * Pool backend allocators.
@@ -478,6 +483,8 @@ pr_item_linkedlist_put(const struct pool *pp, struct pool_item_header *ph,
     void *obj)
 {
 	struct pool_item *pi = obj;
+
+	KASSERT(!pp_has_pser(pp));
 
 #ifdef POOL_CHECK_MAGIC
 	pi->pi_magic = PI_MAGIC;
@@ -840,6 +847,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	}
 	if (!cold)
 		mutex_exit(&pool_allocator_lock);
+
+	/*
+	 * PR_PSERIALIZE implies PR_NOTOUCH; freed objects must remain
+	 * valid until the the backing page is returned to the system.
+	 */
+	if (flags & PR_PSERIALIZE) {
+		flags |= PR_NOTOUCH;
+	}
 
 	if (align == 0)
 		align = ALIGN(1);
@@ -2095,6 +2110,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	pool_cache_t pc1;
 	struct cpu_info *ci;
 	struct pool *pp;
+	unsigned int ppflags = flags;
 
 	pp = &pc->pc_pool;
 	if (palloc == NULL && ipl == IPL_NONE) {
@@ -2106,22 +2122,29 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 		} else
 			palloc = &pool_allocator_nointr;
 	}
-	pool_init(pp, size, align, align_offset, flags, wchan, palloc, ipl);
 
 	if (ctor == NULL) {
 		ctor = NO_CTOR;
 	}
 	if (dtor == NULL) {
 		dtor = NO_DTOR;
+	} else {
+		/*
+		 * If we have a destructor, then the pool layer does not
+		 * need to worry about PR_PSERIALIZE.
+		 */
+		ppflags &= ~PR_PSERIALIZE;
 	}
+
+	pool_init(pp, size, align, align_offset, ppflags, wchan, palloc, ipl);
 
 	pc->pc_fullgroups = NULL;
 	pc->pc_partgroups = NULL;
 	pc->pc_ctor = ctor;
 	pc->pc_dtor = dtor;
-	pc->pc_pre_dtor = NULL;
 	pc->pc_arg  = arg;
 	pc->pc_refcnt = 0;
+	pc->pc_roflags = flags;
 	pc->pc_freecheck = NULL;
 
 	if ((flags & PR_LARGECACHE) != 0) {
@@ -2162,19 +2185,6 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 
 	membar_sync();
 	pp->pr_cache = pc;
-}
-
-/*
- * pool_cache_setpredestruct:
- *
- *	Set a pre-destructor hook for the specified pool cache.
- */
-void
-pool_cache_setpredestruct(pool_cache_t pc, void (*fn)(void *))
-{
-	KASSERT(pc->pc_pre_dtor == NULL);
-	pc->pc_pre_dtor = fn;
-	membar_sync();
 }
 
 /*
@@ -2308,13 +2318,11 @@ static inline void
 pool_cache_pre_destruct(pool_cache_t pc)
 {
 	/*
-	 * Call the pre-destruct hook before destructing a batch
-	 * of objects.  Users of this hook can perform passive
-	 * serialization other other activities that need to be
-	 * performed once-per-batch (rather than once-per-object).
+	 * Perform a passive serialization barrier before destructing
+	 * a batch of one or more objects.
 	 */
-	if (__predict_false(pc->pc_pre_dtor != NULL)) {
-		(*pc->pc_pre_dtor)(pc->pc_arg);
+	if (__predict_false(pc_has_pser(pc))) {
+		pool_barrier();
 	}
 }
 
@@ -2974,7 +2982,14 @@ pool_allocator_free(struct pool *pp, void *v)
 	struct pool_allocator *pa = pp->pr_alloc;
 
 	if (pp->pr_redzone) {
+		KASSERT(!pp_has_pser(pp));
 		kasan_mark(v, pa->pa_pagesz, pa->pa_pagesz, 0);
+	} else if (__predict_false(pp_has_pser(pp))) {
+		/*
+		 * Perform a passive serialization barrier before freeing
+		 * the pool page back to the system.
+		 */
+		pool_barrier();
 	}
 	(*pa->pa_free)(pp, v);
 }
@@ -3183,6 +3198,7 @@ pool_redzone_fill(struct pool *pp, void *p)
 {
 	if (!pp->pr_redzone)
 		return;
+	KASSERT(!pp_has_pser(pp));
 #ifdef KASAN
 	kasan_mark(p, pp->pr_reqsize, pp->pr_reqsize_with_redzone,
 	    KASAN_POOL_REDZONE);
@@ -3213,6 +3229,7 @@ pool_redzone_check(struct pool *pp, void *p)
 {
 	if (!pp->pr_redzone)
 		return;
+	KASSERT(!pp_has_pser(pp));
 #ifdef KASAN
 	kasan_mark(p, 0, pp->pr_reqsize_with_redzone, KASAN_POOL_FREED);
 #else
@@ -3245,8 +3262,12 @@ static void
 pool_cache_redzone_check(pool_cache_t pc, void *p)
 {
 #ifdef KASAN
-	/* If there is a ctor/dtor, leave the data as valid. */
-	if (__predict_false(pc_has_ctor(pc) || pc_has_dtor(pc))) {
+	/*
+	 * If there is a ctor/dtor, or if the cache objects use
+	 * passive serialization, leave the data as valid.
+	 */
+	if (__predict_false(pc_has_ctor(pc) || pc_has_dtor(pc) ||
+	    pc_has_pser(pc))) {
 		return;
 	}
 #endif

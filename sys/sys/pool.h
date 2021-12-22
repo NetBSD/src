@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.95 2021/12/21 18:59:22 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.96 2021/12/22 16:57:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007, 2020
@@ -162,6 +162,7 @@ struct pool {
 #define PR_GROWINGNOWAIT 0x4000	/* pool_grow in progress by PR_NOWAIT alloc */
 #define PR_ZERO		0x8000	/* zero data before returning */
 #define PR_USEBMAP	0x10000	/* use a bitmap to manage freed items */
+#define PR_PSERIALIZE	0x20000	/* needs pserialize sync point before free */
 
 	/*
 	 * `pr_lock' protects the pool's data structures when removing
@@ -265,9 +266,9 @@ struct pool_cache {
 	int		pc_ncpu;	/* number cpus set up */
 	int		(*pc_ctor)(void *, void *, int);
 	void		(*pc_dtor)(void *, void *);
-	void		(*pc_pre_dtor)(void *);
-	void		*pc_arg;	/* for ctor/dtor/pre_dtor */
+	void		*pc_arg;	/* for ctor/dtor */
 	unsigned int	pc_refcnt;	/* ref count for pagedaemon, etc */
+	unsigned int	pc_roflags;	/* r/o cache flags */
 	void		*pc_cpus[MAXCPUS];
 
 	/* Diagnostic aides. */
@@ -342,7 +343,6 @@ void		pool_cache_bootstrap(pool_cache_t, size_t, u_int, u_int, u_int,
 		    const char *, struct pool_allocator *, int,
 		    int (*)(void *, void *, int), void (*)(void *, void *),
 		    void *);
-void		pool_cache_setpredestruct(pool_cache_t, void (*)(void *));
 void		pool_cache_destroy(pool_cache_t);
 void		pool_cache_bootstrap_destroy(pool_cache_t);
 void		*pool_cache_get_paddr(pool_cache_t, int, paddr_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.245 2021/12/21 19:00:37 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.246 2021/12/22 16:57:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.245 2021/12/21 19:00:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.246 2021/12/22 16:57:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -262,7 +262,6 @@ struct lwplist		alllwp		__cacheline_aligned;
 
 static int		lwp_ctor(void *, void *, int);
 static void		lwp_dtor(void *, void *);
-static void		lwp_pre_dtor(void *);
 
 /* DTrace proc provider probes */
 SDT_PROVIDER_DEFINE(proc);
@@ -340,9 +339,16 @@ lwpinit(void)
 
 	LIST_INIT(&alllwp);
 	lwpinit_specificdata();
-	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
-	    "lwppl", NULL, IPL_NONE, lwp_ctor, lwp_dtor, NULL);
-	pool_cache_setpredestruct(lwp_cache, lwp_pre_dtor);
+	/*
+	 * Provide a barrier to ensure that all mutex_oncpu() and rw_oncpu()
+	 * calls will exit before memory of LWPs is returned to the pool, where
+	 * KVA of LWP structure might be freed and re-used for other purposes.
+	 * Kernel preemption is disabled around mutex_oncpu() and rw_oncpu()
+	 * callers, therefore a regular passive serialization barrier will
+	 * do the job.
+	 */
+	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0,
+	    PR_PSERIALIZE, "lwppl", NULL, IPL_NONE, lwp_ctor, lwp_dtor, NULL);
 
 	maxlwp = cpu_maxlwp();
 	sysctl_kern_lwp_setup();
@@ -390,21 +396,6 @@ lwp_ctor(void *arg, void *obj, int flags)
 		turnstile_ctor(l->l_ts);
 		return 0;
 	}
-}
-
-static void
-lwp_pre_dtor(void *arg __unused)
-{
-	/*
-	 * Provide a barrier to ensure that all mutex_oncpu() and rw_oncpu()
-	 * calls will exit before memory of LWPs is returned to the pool, where
-	 * KVA of LWP structure might be freed and re-used for other purposes.
-	 * Kernel preemption is disabled around mutex_oncpu() and rw_oncpu()
-	 * callers, therefore cross-call to all CPUs will do the job.
-	 *
-	 * XXX should use epoch based reclamation.
-	 */
-	xc_barrier(0);
 }
 
 static void
