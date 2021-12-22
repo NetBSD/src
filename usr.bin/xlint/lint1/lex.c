@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.94 2021/12/22 15:20:08 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.95 2021/12/22 15:47:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.94 2021/12/22 15:20:08 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.95 2021/12/22 15:47:42 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -945,12 +945,7 @@ get_escaped_char(int delim)
 				warning(82);
 			v = 0;
 			n = 0;
-			/*
-			 * TODO: remove the redundant EOF test once the test
-			 *  controlling_expression_with_comma_operator is
-			 *  fixed in d_c99_bool_strict_syshdr.c.
-			 */
-			while ((c = inpc()) != EOF && isxdigit(c)) {
+			while (c = inpc(), isxdigit(c)) {
 				c = isdigit(c) ?
 				    c - '0' : toupper(c) - 'A' + 10;
 				v = (v << 4) + c;
@@ -1140,12 +1135,7 @@ lex_comment(void)
 	eoc = false;
 
 	/* Skip whitespace after the start of the comment */
-	/*
-	 * TODO: remove the redundant EOF test once the test
-	 *  controlling_expression_with_comma_operator is fixed in
-	 *  d_c99_bool_strict_syshdr.c.
-	 */
-	while ((c = inpc()) != EOF && isspace(c))
+	while (c = inpc(), isspace(c))
 		continue;
 
 	/* Read the potential keyword to keywd */
