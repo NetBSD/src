@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.11 2021/12/21 19:07:09 thorpej Exp $	*/
+/*	$NetBSD: slab.h,v 1.12 2021/12/22 16:57:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -174,24 +174,6 @@ struct kmem_cache {
 	void		(*kc_dtor)(void *);
 };
 
-/* XXX These should be in <sys/pool.h>.  */
-void *	pool_page_alloc(struct pool *, int);
-void	pool_page_free(struct pool *, void *);
-
-static void
-pool_page_free_rcu(struct pool *pp, void *v)
-{
-
-	synchronize_rcu();
-	pool_page_free(pp, v);
-}
-
-static struct pool_allocator pool_allocator_kmem_rcu = {
-	.pa_alloc = pool_page_alloc,
-	.pa_free = pool_page_free_rcu,
-	.pa_pagesz = 0,
-};
-
 static int
 kmem_cache_ctor(void *cookie, void *ptr, int flags __unused)
 {
@@ -212,26 +194,20 @@ kmem_cache_dtor(void *cookie, void *ptr)
 		(*kc->kc_dtor)(ptr);
 }
 
-static void
-kmem_cache_pre_dtor(void *cookie)
-{
-	synchronize_rcu();
-}
-
 static inline struct kmem_cache *
 kmem_cache_create(const char *name, size_t size, size_t align,
     unsigned long flags, void (*ctor)(void *))
 {
-	struct pool_allocator *palloc = NULL;
 	struct kmem_cache *kc;
+	int pcflags = 0;
 
 	if (ISSET(flags, SLAB_HWCACHE_ALIGN))
 		align = roundup(MAX(1, align), CACHE_LINE_SIZE);
 	if (ISSET(flags, SLAB_TYPESAFE_BY_RCU))
-		palloc = &pool_allocator_kmem_rcu;
+		pcflags |= PR_PSERIALIZE;
 
 	kc = kmem_alloc(sizeof(*kc), KM_SLEEP);
-	kc->kc_pool_cache = pool_cache_init(size, align, 0, 0, name, palloc,
+	kc->kc_pool_cache = pool_cache_init(size, align, 0, pcflags, name, NULL,
 	    IPL_VM, &kmem_cache_ctor, NULL, kc);
 	kc->kc_size = size;
 	kc->kc_ctor = ctor;
@@ -244,26 +220,20 @@ static inline struct kmem_cache *
 kmem_cache_create_dtor(const char *name, size_t size, size_t align,
     unsigned long flags, void (*ctor)(void *), void (*dtor)(void *))
 {
-	struct pool_allocator *palloc = NULL;
 	struct kmem_cache *kc;
+	int pcflags = 0;
 
 	if (ISSET(flags, SLAB_HWCACHE_ALIGN))
 		align = roundup(MAX(1, align), CACHE_LINE_SIZE);
-	/*
-	 * No need to use pool_allocator_kmem_rcu here; RCU synchronization
-	 * will be handled by the pre-destructor hook.
-	 */
+	if (ISSET(flags, SLAB_TYPESAFE_BY_RCU))
+		pcflags |= PR_PSERIALIZE;
 
 	kc = kmem_alloc(sizeof(*kc), KM_SLEEP);
-	kc->kc_pool_cache = pool_cache_init(size, align, 0, 0, name, palloc,
+	kc->kc_pool_cache = pool_cache_init(size, align, 0, pcflags, name, NULL,
 	    IPL_VM, &kmem_cache_ctor, &kmem_cache_dtor, kc);
 	kc->kc_size = size;
 	kc->kc_ctor = ctor;
 	kc->kc_dtor = dtor;
-	if (ISSET(flags, SLAB_TYPESAFE_BY_RCU)) {
-		pool_cache_setpredestruct(kc->kc_pool_cache,
-		    kmem_cache_pre_dtor);
-	}
 
 	return kc;
 }
