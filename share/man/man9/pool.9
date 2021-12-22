@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.49 2020/04/13 08:59:14 wiz Exp $
+.\"	$NetBSD: pool.9,v 1.50 2021/12/22 17:28:17 thorpej Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,12 +98,28 @@ The offset within an item to which the
 .Fa align
 parameter applies.
 .It Fa flags
-Should be set to zero or
-.Dv PR_NOTOUCH .
+Should be set to zero,
+.Dv PR_NOTOUCH ,
+or
+.Dv PR_PSERIALIZE .
 If
 .Dv PR_NOTOUCH
 is given, free items are never used to keep internal state so that
 the pool can be used for non memory backed objects.
+If
+.Dv PR_PSERIALIZE
+is given, then the allocator guarantees that a passive serialization
+barrier equivalent to
+.Dq xc_barrier(0)
+will be performed before the object's backing store is returned to
+the system.
+.Dv PR_PSERIALIZE
+implies
+.Dv PR_NOTOUCH .
+Because of the guarantees provided by
+.Dv PR_PSERIALIZE ,
+objects muste never be freed to a pool using this option from either
+hard or soft interrupt context, as doing so may block.
 .It Fa wchan
 The
 .Sq wait channel
