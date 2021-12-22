@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.48 2020/03/15 07:56:19 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.49 2021/12/22 21:45:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -171,6 +171,7 @@ typedef struct ehci_softc {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
+	bus_dma_tag_t sc_dmatag;	/* for control data structures */
 	u_int sc_offs;			/* offset to operational regs */
 	int sc_flags;			/* misc flags */
 #define EHCIF_DROPPED_INTR_WORKAROUND	0x01

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.72 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.73 2021/12/22 21:45:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.72 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.73 2021/12/22 21:45:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,22 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
+
+	const uint32_t hccparams = EREAD4(&sc->sc, EHCI_HCCPARAMS);
+
+	if (EHCI_HCC_64BIT(hccparams)) {
+		aprint_verbose_dev(self, "64-bit DMA");
+		if (pci_dma64_available(pa)) {
+			sc->sc.sc_bus.ub_dmatag = pa->pa_dmat64;
+			aprint_verbose("\n");
+		} else {
+			aprint_verbose(" - limited\n");
+			sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
+		}
+	} else {
+		aprint_verbose_dev(self, "32-bit DMA\n");
+		sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
+	}
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
