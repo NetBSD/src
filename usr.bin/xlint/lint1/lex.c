@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.93 2021/12/22 14:49:11 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.94 2021/12/22 15:20:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.93 2021/12/22 14:49:11 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.94 2021/12/22 15:20:08 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -64,9 +64,8 @@ pos_t	curr_pos = { "", 1, 0 };
  */
 pos_t	csrc_pos = { "", 1, 0 };
 
-bool in_gcc_attribute;		/* Are we parsing a gcc attribute? */
-
-bool in_system_header = false;
+bool in_gcc_attribute;
+bool in_system_header;
 
 static	sbuf_t *allocsb(void);
 static	void	freesb(sbuf_t *);
@@ -115,11 +114,8 @@ lex_unknown_character(int c)
 #define kwdef_gcc_attr(name, token) \
 	kwdef(name, token, 0, 0, 0,		0, 0, 1, 1, 5)
 
-/*
- * Keywords.
- * During initialization they are written to the symbol table.
- */
-static	struct	kwtab {
+/* During initialization, these keywords are written to the symbol table. */
+static struct keyword {
 	const	char *kw_name;	/* keyword */
 	int	kw_token;	/* token returned by yylex() */
 	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
@@ -133,7 +129,7 @@ static	struct	kwtab {
 	bool	kw_plain:1;	/* 'name' */
 	bool	kw_leading:1;	/* '__name' */
 	bool	kw_both:1;	/* '__name__' */
-} kwtab[] = {
+} keywords[] = {
 	kwdef_gcc_attr(	"alias",	T_AT_ALIAS),
 	kwdef_keyword(	"_Alignas",	T_ALIGNAS),
 	kwdef_keyword(	"_Alignof",	T_ALIGNOF),
@@ -261,8 +257,7 @@ static	struct	kwtab {
 /* Symbol table */
 static	sym_t	*symtab[HSHSIZ1];
 
-/* free list for sbuf structures */
-static	sbuf_t	 *sbfrlst;
+static	sbuf_t	 *sbuf_free_list;
 
 /* type of next expected symbol */
 symt_t	symtyp;
@@ -291,7 +286,7 @@ symtab_remove(sym_t *sym)
 
 
 static void
-add_keyword(const struct kwtab *kw, bool leading, bool trailing)
+add_keyword(const struct keyword *kw, bool leading, bool trailing)
 {
 	sym_t *sym;
 	char buf[256];
@@ -327,9 +322,9 @@ add_keyword(const struct kwtab *kw, bool leading, bool trailing)
 void
 initscan(void)
 {
-	struct	kwtab *kw;
+	struct keyword *kw;
 
-	for (kw = kwtab; kw->kw_name != NULL; kw++) {
+	for (kw = keywords; kw->kw_name != NULL; kw++) {
 		if ((kw->kw_c90 || kw->kw_c99) && tflag)
 			continue;
 		if (kw->kw_c99 && !(Sflag || gflag))
@@ -353,8 +348,8 @@ allocsb(void)
 {
 	sbuf_t	*sb;
 
-	if ((sb = sbfrlst) != NULL) {
-		sbfrlst = sb->sb_next;
+	if ((sb = sbuf_free_list) != NULL) {
+		sbuf_free_list = sb->sb_next;
 #ifdef BLKDEBUG
 		(void)memset(sb, 0, sizeof(*sb));
 #else
@@ -375,8 +370,8 @@ freesb(sbuf_t *sb)
 {
 
 	(void)memset(sb, ZERO, sizeof(*sb));
-	sb->sb_next = sbfrlst;
-	sbfrlst = sb;
+	sb->sb_next = sbuf_free_list;
+	sbuf_free_list = sb;
 }
 
 /*
@@ -421,11 +416,9 @@ hash(const char *s)
  * If it is a keyword, the token is returned. In some cases it is described
  * more deeply by data written to yylval.
  *
- * If it is a symbol, T_NAME is returned and the pointer to a sbuf struct
- * is stored in yylval. This struct contains the name of the symbol, its
- * length and hash value. If there is already a symbol of the same name
- * and type in the symbol table, the sbuf struct also contains a pointer
- * to the symbol table entry.
+ * If it is a symbol, T_NAME is returned and the name is stored in yylval.
+ * If there is already a symbol of the same name and type in the symbol
+ * table, yylval.y_name->sb_sym points there.
  */
 extern int
 lex_name(const char *yytext, size_t yyleng)
@@ -467,7 +460,7 @@ search(sbuf_t *sb)
 {
 	unsigned int h;
 	sym_t *sym;
-	const struct kwtab *kw;
+	const struct keyword *kw;
 
 	h = hash(sb->sb_name);
 	for (sym = symtab[h]; sym != NULL; sym = sym->s_link) {
@@ -952,7 +945,12 @@ get_escaped_char(int delim)
 				warning(82);
 			v = 0;
 			n = 0;
-			while ((c = inpc()) >= 0 && isxdigit(c)) {
+			/*
+			 * TODO: remove the redundant EOF test once the test
+			 *  controlling_expression_with_comma_operator is
+			 *  fixed in d_c99_bool_strict_syshdr.c.
+			 */
+			while ((c = inpc()) != EOF && isxdigit(c)) {
 				c = isdigit(c) ?
 				    c - '0' : toupper(c) - 'A' + 10;
 				v = (v << 4) + c;
@@ -1018,19 +1016,13 @@ parse_line_directive_flags(const char *p,
 			*is_end = true;
 		if (word_end - word_start == 1 && word_start[0] == '3')
 			*is_system = true;
-		/* Flag '4' would only be interesting if lint handled C++. */
+		/* Flag '4' is only interesting for C++. */
 	}
-
-#if 0
-	if (*p != '\0') {
-		/* syntax error '%s' */
-		warning(249, "extra character(s) after directive");
-	}
-#endif
 }
 
 /*
  * Called for preprocessor directives. Currently implemented are:
+ *	# pragma [argument...]
  *	# lineno
  *	# lineno "filename"
  *	# lineno "filename" GCC-flag...
@@ -1059,7 +1051,7 @@ lex_directive(const char *yytext)
 		return;
 	}
 	ln = strtol(--cp, &eptr, 10);
-	if (cp == eptr)
+	if (eptr == cp)
 		goto error;
 	if ((c = *(cp = eptr)) != ' ' && c != '\t' && c != '\0')
 		goto error;
@@ -1148,6 +1140,11 @@ lex_comment(void)
 	eoc = false;
 
 	/* Skip whitespace after the start of the comment */
+	/*
+	 * TODO: remove the redundant EOF test once the test
+	 *  controlling_expression_with_comma_operator is fixed in
+	 *  d_c99_bool_strict_syshdr.c.
+	 */
 	while ((c = inpc()) != EOF && isspace(c))
 		continue;
 
@@ -1173,13 +1170,13 @@ lex_comment(void)
 		goto skip_rest;
 
 	/* skip whitespace after the keyword */
-	while (c != EOF && isspace(c))
+	while (isspace(c))
 		c = inpc();
 
 	/* read the argument, if the keyword accepts one and there is one */
 	l = 0;
 	if (keywtab[i].arg) {
-		while (c != EOF && isdigit(c) && l < sizeof(arg) - 1) {
+		while (isdigit(c) && l < sizeof(arg) - 1) {
 			arg[l++] = (char)c;
 			c = inpc();
 		}
@@ -1188,7 +1185,7 @@ lex_comment(void)
 	a = l != 0 ? atoi(arg) : -1;
 
 	/* skip whitespace after the argument */
-	while (c != EOF && isspace(c))
+	while (isspace(c))
 		c = inpc();
 
 	if (c != '*' || (c = inpc()) != '/') {
@@ -1237,7 +1234,7 @@ lex_slash_slash_comment(void)
 
 /*
  * Clear flags for lint comments LINTED, LONGLONG and CONSTCOND.
- * clear_warn_flags() is called after function definitions and global and
+ * clear_warn_flags is called after function definitions and global and
  * local declarations and definitions. It is also called between
  * the controlling expression and the body of control statements
  * (if, switch, for, while).
@@ -1253,7 +1250,7 @@ clear_warn_flags(void)
 
 /*
  * Strings are stored in a dynamically allocated buffer and passed
- * in yylval.y_xstrg to the parser. The parser or the routines called
+ * in yylval.y_string to the parser. The parser or the routines called
  * by the parser are responsible for freeing this buffer.
  */
 int
