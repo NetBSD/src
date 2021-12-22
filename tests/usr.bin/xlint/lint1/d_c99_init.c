@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.36 2021/12/22 00:45:53 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.37 2021/12/22 14:32:31 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -182,11 +182,11 @@ struct point points[] = {
 		 * yet since its type is still incomplete.  Lint could warn
 		 * about this, but GCC and Clang already do.
 		 *
-		 * This test case demonstrates that in
-		 * extend_if_array_of_unknown_size, setcomplete is called too
-		 * early.
+		 * Before init.c 1.179 from 2021.03.30, the type information
+		 * of 'points' was set too early, resulting in a negative
+		 * array size below.
 		 */
-		sizeof(points),
+		sizeof(int[-(int)sizeof(points)]),
 		4
 	}
 };
