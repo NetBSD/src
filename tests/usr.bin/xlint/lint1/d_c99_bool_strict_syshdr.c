@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.11 2021/12/22 15:20:08 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.12 2021/12/22 15:36:37 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -181,6 +181,12 @@ str_equal_good(const char *s1, const char *s2)
 
 int read_char(void);
 
+/*
+ * Between tree.c 1.395 from 2021-11-16 and ckbool.c 1.10 from 2021-12-22,
+ * lint wrongly complained that the controlling expression would have to be
+ * _Bool instead of int.  Since the right-hand side of the ',' operator comes
+ * from a system header, this is OK though.
+ */
 void
 controlling_expression_with_comma_operator(void)
 {
@@ -195,17 +201,5 @@ controlling_expression_with_comma_operator(void)
 	    )] & 0x0040 /* Space     */))
 # 197 "c_c99_bool_strict_syshdr.c"
 	    )
-	/* expect-1: error: controlling expression must be bool, not 'int' [333] */
 		continue;
-	/*
-	 * TODO: investigate why lint doesn't accept this call to isspace().
-	 *  It comes from a system header, therefore type 'int' should be OK.
-	 *  It is probably because the ',' of the controlling expression
-	 *  comes from the main source file, and lint assumes that the main
-	 *  operator of the controlling expression decides its outcome.  This
-	 *  assumption does not hold for the ',' operator since its result
-	 *  only depends on its right-hand operand.
-	 *
-	 *  Since tree.c 1.395 from 2021-11-16.
-	 */
 }
