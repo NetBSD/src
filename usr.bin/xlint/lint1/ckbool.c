@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.9 2021/11/16 21:01:05 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.10 2021/12/22 15:36:37 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckbool.c,v 1.9 2021/11/16 21:01:05 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.10 2021/12/22 15:36:37 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ckbool.c,v 1.9 2021/11/16 21:01:05 rillig Exp $");
  * The option -T treats _Bool as incompatible with all other scalar types.
  * See d_c99_bool_strict.c for the exact rules and for examples.
  */
+
 
 static const char *
 op_name(op_t op)
@@ -215,6 +216,8 @@ is_typeok_bool_operand(const tnode_t *tn)
 
 	lint_assert(Tflag);
 
+	while (tn->tn_op == COMMA)
+		tn = tn->tn_right;
 	tn = before_conversion(tn);
 	t = tn->tn_type->t_tspec;
 
