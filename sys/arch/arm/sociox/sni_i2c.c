@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.13 2021/12/21 06:00:45 nisimura Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.14 2021/12/22 02:32:53 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.13 2021/12/21 06:00:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.14 2021/12/22 02:32:53 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,23 +53,67 @@ __KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.13 2021/12/21 06:00:45 nisimura Exp $"
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
 
+#define BSR		0x00		/* status */
+#define  BSR_BB		(1U<<7)		/* busy */
+#define  BSR_RSC	(1U<<6)		/* repeated cycle condition */
+#define  BSR_AL		(1U<<5)		/* arbitration lost */
+#define  BSR_LRB	(1U<<4)		/* last bit received */
+#define  BSR_XFR	(1U<<3)		/* start transfer */
+#define  BSR_AAS	(1U<<2)		/* ??? address as slave */
+#define  BSR_GCA	(1U<<1)		/* ??? general call address */
+#define  BSR_FBT	(1U<<0)		/* first byte transfer detected */
+#define BCR		0x04		/* control */
+#define  BCR_BERR	(1U<<7)		/* bus error report; W0C */
+#define  BCR_BEIEN	(1U<<6)		/* enable bus error interrupt */
+#define  BCR_SCC	(1U<<5)		/* make start condition */
+#define  BCR_MSS	(1U<<4)		/* 1: xmit, 0: recv */ 
+#define  BCR_ACK	(1U<<3)		/* make acknowledge at last byte */
+#define  BCR_GCAA	(1U<<2)		/* ??? general call access ack */
+#define  BCR_IEN	(1U<<1)		/* enable interupt */
+#define  BCR_INT	(1U<<0)		/* interrupt report; W0C */
+#define CCR		0x08
+#define  CCR_FM		(1U<<6)		/* speed; 1: fast, 0: standard */
+#define  CCR_EN		(1U<<5)		/* enable clock feed */
+/* 4:0 clock rate select */
+#define ADR		0x0c		/* 6:0 my own address */
+#define DAR		0x10		/* 7:0 data port */
+#define CSR		0x14		/* 5:0 clock divisor */
+#define FSR		0x18		/* bus clock frequency */
+#define BC2R		0x1c		/* control 2 */
+#define  BC2R_SDA	(1U<<5)		/* detected SDA signal */
+#define  BC2R_SCL	(1U<<5)		/* detected SCL signal */
+#define  BC2R_SDA_L	(1U<<1)		/* make SDA signal low */
+#define  BC2R_SCL_L	(1U<<1)		/* make SCL signal low */
+
 static int sniiic_fdt_match(device_t, struct cfdata *, void *);
 static void sniiic_fdt_attach(device_t, device_t, void *);
 static int sniiic_acpi_match(device_t, struct cfdata *, void *);
 static void sniiic_acpi_attach(device_t, device_t, void *);
+
+typedef enum {
+	EXEC_IDLE	= 0,	/* sane and idle */
+	EXEC_ADDR	= 1,	/* send address bits */
+	EXEC_CMD	= 2,	/* send command bits */
+	EXEC_SEND	= 3,	/* data xmit */
+	EXEC_RECV	= 4,	/* data recv */
+	EXEC_DONE	= 5,	/* xter done */
+	EXEC_ERR	= 6,	/* recover error */
+} state_t;
 
 struct sniiic_softc {
 	device_t		sc_dev;
 	struct i2c_controller	sc_ic;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	bus_addr_t		sc_iob;
 	bus_size_t		sc_ios;
 	void			*sc_ih;
 	kmutex_t		sc_lock;
 	kmutex_t		sc_mtx;
 	kcondvar_t		sc_cv;
 	volatile bool		sc_busy;
+	state_t			sc_state;
+	u_int			sc_frequency;
+	u_int			sc_clkrate;
 	int			sc_phandle;
 };
 
@@ -90,9 +134,9 @@ static int sni_i2c_intr(void *);
 static void sni_i2c_reset(struct sniiic_softc *);
 static void sni_i2c_flush(struct sniiic_softc *);
 
-#define I2C_READ(sc, reg) \
+#define CSR_READ(sc, reg) \
     bus_space_read_4((sc)->sc_ioh,(sc)->sc_ioh,(reg))
-#define I2C_WRITE(sc, reg, val) \
+#define CSR_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_ioh,(sc)->sc_ioh,(reg),(val))
 
 static const struct device_compatible_entry compat_data[] = {
@@ -146,7 +190,6 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = faa->faa_bst;
 	sc->sc_ioh = ioh;
-	sc->sc_iob = addr;
 	sc->sc_ios = size;
 	sc->sc_phandle = phandle;
 
@@ -213,7 +256,6 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_memt;
 	sc->sc_ioh = ioh;
-	sc->sc_iob = mem->ar_base;
 	sc->sc_ios = mem->ar_length;
 	sc->sc_phandle = 0;
 
