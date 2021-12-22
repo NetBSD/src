@@ -1,24 +1,25 @@
-/*	$NetBSD: msg_179.c,v 1.3 2021/08/27 19:50:44 rillig Exp $	*/
+/*	$NetBSD: msg_179.c,v 1.4 2021/12/22 00:45:53 rillig Exp $	*/
 # 3 "msg_179.c"
 
 // Test for message: cannot initialize struct/union with no named member [179]
-/* This message is not used. */
 
 struct {
 	unsigned int :0;
 } no_named_member = {
+	/* expect-1: error: cannot initialize struct/union with no named member [179] */
 	/* no named member, therefore no initializer expression */
 };
 
 struct {
 	/* no members */
 } empty = {
+	/* expect-1: error: cannot initialize struct/union with no named member [179] */
 	/* no initializer expressions */
 };
 
 struct {
 	unsigned int: 0;
 } no_named_member_init = {
-	/* expect+1: error: too many struct/union initializers [172] */
+	/* expect-1: error: cannot initialize struct/union with no named member [179] */
 	3,
 };

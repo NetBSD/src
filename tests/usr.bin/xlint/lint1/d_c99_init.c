@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.35 2021/12/21 16:50:11 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.36 2021/12/22 00:45:53 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -24,7 +24,7 @@ int scalar_with_too_many_braces = {{ 3 }};
 int scalar_with_too_many_initializers = { 3, 5 };	/* expect: 174 */
 
 
-// See init_expr, 'handing over to ASSIGN'.
+// See initialization_expr, 'handing over to INIT'.
 void
 struct_initialization_via_assignment(any arg)
 {
@@ -427,31 +427,46 @@ union value unknown_union_member_name_second = {
 	.unknown_value = 4,	/* expect: does not have member */
 };
 
-struct point designators_with_subscript = {
+struct point subscript_designator_on_struct = {
 	[0] = 3,		/* expect: only for arrays */
-	.member[0][0].member = 4, /* expect: does not have member 'member' */
-	.x.y.z = 5,	/* intentionally not caught, see designator_look_up */
+};
+
+struct point unknown_member_on_struct = {
+	/* expect+1: error: type 'struct point' does not have member 'member' [101] */
+	.member[0][0].member = 4,
+};
+
+struct point unknown_member_on_scalar = {
+	/* expect+1: error: syntax error 'scalar type cannot use designator' [249] */
+	.x.y.z = 5,
 };
 
 struct {
 	int : 16;
-} struct_with_only_unnamed_members = {	/* expect: has no named members */
-	123,		/* expect: too many struct/union initializers */
+	/* expect+2: warning: structure has no named members [65] */
+	/* expect+1: error: cannot initialize struct/union with no named member [179] */
+} struct_with_only_unnamed_members = {
+	123,
 };
 
 union {
 	int : 16;
-} union_with_only_unnamed_members = {	/* expect: has no named members */
-	123,		/* expect: too many struct/union initializers */
+	/* expect+2: warning: union has no named members [65] */
+	/* expect+1: error: cannot initialize struct/union with no named member [179] */
+} union_with_only_unnamed_members = {
+	123,
 };
 
 int designator_for_scalar = {
 	.value = 3,		/* expect: scalar type cannot use designator */
 };
 
-struct point designator_for_scalar_in_struct = {
+struct point member_designator_for_scalar_in_struct = {
 	{ .x = 3 },		/* expect: scalar type cannot use designator */
-	{ [1] = 4 },		/* expect: scalar type cannot use designator */
+};
+struct point subscript_designator_for_scalar_in_struct = {
+	/* expect+1: error: syntax error 'designator '[...]' is only for arrays' [249] */
+	{ [1] = 4 },
 };
 
 
