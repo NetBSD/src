@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.131 2021/11/16 21:01:05 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.132 2021/12/22 14:49:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -136,7 +136,7 @@ typedef struct {
 typedef	struct {
 	unsigned int sou_size_in_bits;
 	unsigned short sou_align_in_bits;
-	bool	sou_incomplete : 1;
+	bool	sou_incomplete:1;
 	struct	sym *sou_first_member;
 	struct	sym *sou_tag;
 	struct	sym *sou_first_typedef;
@@ -146,7 +146,7 @@ typedef	struct {
  * same as above for enums
  */
 typedef	struct {
-	bool	en_incomplete : 1;
+	bool	en_incomplete:1;
 	struct	sym *en_first_enumerator;
 	struct	sym *en_tag;
 	struct	sym *en_first_typedef;
@@ -158,13 +158,13 @@ typedef	struct {
  */
 struct lint1_type {
 	tspec_t	t_tspec;	/* type specifier */
-	bool	t_incomplete_array : 1;
-	bool	t_const : 1;	/* const modifier */
-	bool	t_volatile : 1;	/* volatile modifier */
-	bool	t_proto : 1;	/* function prototype (t_args valid) */
-	bool	t_vararg : 1;	/* prototype with '...' */
-	bool	t_typedef : 1;	/* type defined with typedef */
-	bool	t_bitfield : 1;
+	bool	t_incomplete_array:1;
+	bool	t_const:1;	/* const modifier */
+	bool	t_volatile:1;	/* volatile modifier */
+	bool	t_proto:1;	/* function prototype (t_args valid) */
+	bool	t_vararg:1;	/* prototype with '...' */
+	bool	t_typedef:1;	/* type defined with typedef */
+	bool	t_bitfield:1;
 	/*
 	 * Either the type is currently an enum (having t_tspec ENUM), or
 	 * it is an integer type (typically INT) that has been implicitly
@@ -174,8 +174,8 @@ struct lint1_type {
 	 * type checks in expressions such as ((var1 & 0x0001) == var2), to
 	 * detect when var1 and var2 are from incompatible enum types.
 	 */
-	bool	t_is_enum : 1;
-	bool	t_packed : 1;
+	bool	t_is_enum:1;
+	bool	t_packed:1;
 	union {
 		int	_t_dim;		/* dimension (if ARRAY) */
 		struct_or_union	*_t_str;
@@ -183,8 +183,8 @@ struct lint1_type {
 		struct	sym *_t_args;	/* arguments (if t_proto) */
 	} t_u;
 	struct {
-		unsigned int _t_flen : 8;	/* length of bit-field */
-		unsigned int _t_foffs : 24;	/* offset of bit-field */
+		unsigned int	_t_flen:8;	/* length of bit-field */
+		unsigned int	_t_foffs:24;	/* offset of bit-field */
 	} t_b;
 	struct	lint1_type *t_subt; /* element type (if ARRAY),
 				 * return value (if FUNC),
@@ -246,16 +246,16 @@ typedef	struct sym {
 	pos_t	s_use_pos;	/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
 	const struct kwtab *s_keyword;
-	bool	s_bitfield : 1;
-	bool	s_set : 1;	/* variable set, label defined */
-	bool	s_used : 1;	/* variable/label used */
-	bool	s_arg : 1;	/* symbol is function argument */
-	bool	s_reg : 1;	/* symbol is register variable */
-	bool	s_defarg : 1;	/* undefined symbol in old style function
+	bool	s_bitfield:1;
+	bool	s_set:1;	/* variable set, label defined */
+	bool	s_used:1;	/* variable/label used */
+	bool	s_arg:1;	/* symbol is function argument */
+	bool	s_reg:1;	/* symbol is register variable */
+	bool	s_defarg:1;	/* undefined symbol in old style function
 				   definition */
-	bool	s_return_type_implicit_int : 1;
-	bool	s_osdef : 1;	/* symbol stems from old style function def. */
-	bool	s_inline : 1;	/* true if this is an inline function */
+	bool	s_return_type_implicit_int:1;
+	bool	s_osdef:1;	/* symbol stems from old style function def. */
+	bool	s_inline:1;	/* true if this is an inline function */
 	struct	sym *s_ext_sym;	/* for local declared external symbols pointer
 				   to external symbol with same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
@@ -304,15 +304,15 @@ typedef	struct sbuf {
 typedef	struct tnode {
 	op_t	tn_op;		/* operator */
 	type_t	*tn_type;	/* type */
-	bool	tn_lvalue : 1;	/* node is lvalue */
-	bool	tn_cast : 1;	/* if tn_op == CVT, it's an explicit cast */
-	bool	tn_parenthesized : 1;
-	bool	tn_sys : 1;	/* in strict bool mode, allow mixture between
+	bool	tn_lvalue:1;	/* node is lvalue */
+	bool	tn_cast:1;	/* if tn_op == CVT, it's an explicit cast */
+	bool	tn_parenthesized:1;
+	bool	tn_sys:1;	/* in strict bool mode, allow mixture between
 				 * bool and scalar, for code from system
 				 * headers that may be a mixture between
 				 * scalar types and bool
 				 */
-	bool	tn_system_dependent : 1; /* depends on sizeof or offsetof */
+	bool	tn_system_dependent:1; /* depends on sizeof or offsetof */
 	union {
 		struct {
 			struct	tnode *_tn_left;	/* (left) operand */
@@ -371,19 +371,19 @@ typedef	struct dinfo {
 	unsigned short d_sou_align_in_bits; /* alignment required for current
 				 * structure */
 	scl_t	d_ctx;		/* context of declaration */
-	bool	d_const : 1;	/* const in declaration specifiers */
-	bool	d_volatile : 1;	/* volatile in declaration specifiers */
-	bool	d_inline : 1;	/* inline in declaration specifiers */
-	bool	d_multiple_storage_classes : 1; /* reported in end_type */
-	bool	d_invalid_type_combination : 1;
-	bool	d_nonempty_decl : 1; /* if at least one tag is declared
+	bool	d_const:1;	/* const in declaration specifiers */
+	bool	d_volatile:1;	/* volatile in declaration specifiers */
+	bool	d_inline:1;	/* inline in declaration specifiers */
+	bool	d_multiple_storage_classes:1; /* reported in end_type */
+	bool	d_invalid_type_combination:1;
+	bool	d_nonempty_decl:1; /* if at least one tag is declared
 				 * ... in the current function decl. */
-	bool	d_vararg : 1;
-	bool	d_proto : 1;	/* current function decl. is prototype */
-	bool	d_notyp : 1;	/* set if no type specifier was present */
-	bool	d_asm : 1;	/* set if d_ctx == AUTO and asm() present */
-	bool	d_packed : 1;
-	bool	d_used : 1;
+	bool	d_vararg:1;
+	bool	d_proto:1;	/* current function decl. is prototype */
+	bool	d_notyp:1;	/* set if no type specifier was present */
+	bool	d_asm:1;	/* set if d_ctx == AUTO and asm() present */
+	bool	d_packed:1;
+	bool	d_used:1;
 	type_t	*d_tagtyp;	/* tag during member declaration */
 	sym_t	*d_func_args;	/* list of arguments during function def. */
 	pos_t	d_func_def_pos;	/* position of function definition */
@@ -425,21 +425,21 @@ typedef enum {
  */
 typedef struct control_statement {
 	control_statement_kind c_kind;	/* to ensure proper nesting */
-	bool	c_loop : 1;		/* 'continue' and 'break' are valid */
-	bool	c_switch : 1;		/* 'case' and 'break' are valid */
-	bool	c_break : 1;		/* the loop/switch has a reachable
+	bool	c_loop:1;		/* 'continue' and 'break' are valid */
+	bool	c_switch:1;		/* 'case' and 'break' are valid */
+	bool	c_break:1;		/* the loop/switch has a reachable
 					 * 'break' statement */
-	bool	c_continue : 1;		/* the loop has a reachable 'continue'
+	bool	c_continue:1;		/* the loop has a reachable 'continue'
 					 * statement */
-	bool	c_default : 1;		/* the switch has a 'default' label */
-	bool	c_maybe_endless : 1;	/* the controlling expression is
+	bool	c_default:1;		/* the switch has a 'default' label */
+	bool	c_maybe_endless:1;	/* the controlling expression is
 					 * always true (as in 'for (;;)' or
 					 * 'while (1)'), there may be break
 					 * statements though */
-	bool	c_always_then : 1;
-	bool	c_reached_end_of_then : 1;
-	bool	c_had_return_noval : 1;	/* had "return;" */
-	bool	c_had_return_value : 1;	/* had "return expr;" */
+	bool	c_always_then:1;
+	bool	c_reached_end_of_then:1;
+	bool	c_had_return_noval:1;	/* had "return;" */
+	bool	c_had_return_value:1;	/* had "return expr;" */
 
 	type_t	*c_switch_type;		/* type of switch expression */
 	tnode_t	*c_switch_expr;

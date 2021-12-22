@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.12 2021/09/05 11:42:32 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.13 2021/12/22 14:49:11 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -52,8 +52,8 @@ struct cover_notype_struct_declarators {
 };
 
 struct cover_notype_struct_declarator_bit_field {
-	const a: 3, : 0, b: 4;
-	const : 0;
+	const a:3, :0, b:4;
+	const:0;
 };
 
 /*
