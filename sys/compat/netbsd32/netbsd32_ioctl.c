@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.119 2021/04/14 16:26:23 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.120 2021/12/22 00:21:32 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.119 2021/04/14 16:26:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.120 2021/12/22 00:21:32 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -180,6 +180,18 @@ netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *s32p,
 }
 
 static inline void
+netbsd32_to_in_nbrinfo(struct netbsd32_in_nbrinfo *s32p, struct in_nbrinfo *p,
+    u_long cmd)
+{
+
+	memcpy(p->ifname, s32p->ifname, sizeof p->ifname);
+	memcpy(&p->addr, &s32p->addr, sizeof p->addr);
+	p->asked = s32p->asked;
+	p->state = s32p->state;
+	p->expire = s32p->expire;
+}
+
+static inline void
 netbsd32_to_in6_nbrinfo(struct netbsd32_in6_nbrinfo *s32p, struct in6_nbrinfo *p,
     u_long cmd)
 {
@@ -190,7 +202,6 @@ netbsd32_to_in6_nbrinfo(struct netbsd32_in6_nbrinfo *s32p, struct in6_nbrinfo *p
 	p->isrouter = s32p->isrouter;
 	p->state = s32p->state;
 	p->expire = s32p->expire;
-	
 }
 
 static inline void
@@ -712,6 +723,18 @@ netbsd32_from_ifmediareq(struct ifmediareq *p,
 #if 0
 	s32p->ifm_ulist = (netbsd32_intp_t)p->ifm_ulist;
 #endif
+}
+
+static inline void
+netbsd32_from_in_nbrinfo(struct in_nbrinfo *p, struct netbsd32_in_nbrinfo *s32p,
+    u_long cmd)
+{
+
+	memcpy(s32p->ifname, p->ifname, sizeof s32p->ifname);
+	memcpy(&s32p->addr, &p->addr, sizeof s32p->addr);
+	s32p->asked = p->asked;
+	s32p->state = p->state;
+	s32p->expire = p->expire;
 }
 
 static inline void
@@ -1525,6 +1548,8 @@ netbsd32_ioctl(struct lwp *l,
 	case SIOCGIFMEDIA32:
 		IOCTL_STRUCT_CONV_TO(SIOCGIFMEDIA, ifmediareq);
 
+	case SIOCGNBRINFO32:
+		IOCTL_STRUCT_CONV_TO(SIOCGNBRINFO, in_nbrinfo);
 	case SIOCGNBRINFO_IN632:
 		IOCTL_STRUCT_CONV_TO(SIOCGNBRINFO_IN6, in6_nbrinfo);
 
