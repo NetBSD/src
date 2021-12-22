@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.92 2021/12/22 14:38:34 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.93 2021/12/22 14:49:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.92 2021/12/22 14:38:34 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.93 2021/12/22 14:49:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -126,13 +126,13 @@ static	struct	kwtab {
 	tspec_t	kw_tspec;	/* type spec. if kw_token
 				 * T_TYPE or T_STRUCT_OR_UNION */
 	tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
-	bool	kw_c90 : 1;	/* C90 keyword */
-	bool	kw_c99 : 1;	/* C99 keyword */
-	bool	kw_gcc : 1;	/* GCC keyword */
-	bool	kw_attr : 1;	/* GCC attribute, keyword */
-	bool	kw_plain : 1;	/* 'name' */
-	bool	kw_leading : 1;	/* '__name' */
-	bool	kw_both : 1;	/* '__name__' */
+	bool	kw_c90:1;	/* C90 keyword */
+	bool	kw_c99:1;	/* C99 keyword */
+	bool	kw_gcc:1;	/* GCC keyword */
+	bool	kw_attr:1;	/* GCC attribute, keyword */
+	bool	kw_plain:1;	/* 'name' */
+	bool	kw_leading:1;	/* '__name' */
+	bool	kw_both:1;	/* '__name__' */
 } kwtab[] = {
 	kwdef_gcc_attr(	"alias",	T_AT_ALIAS),
 	kwdef_keyword(	"_Alignas",	T_ALIGNAS),

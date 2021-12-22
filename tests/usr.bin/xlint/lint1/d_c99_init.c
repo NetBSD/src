@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.37 2021/12/22 14:32:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.38 2021/12/22 14:49:11 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -224,7 +224,7 @@ struct geometry geometry = {
 
 struct ends_with_unnamed_bit_field {
 	int member;
-	int : 0;
+	int:0;
 } ends_with_unnamed_bit_field = {
 	12345,
 	/* expect+1: too many struct/union initializers */
@@ -442,7 +442,7 @@ struct point unknown_member_on_scalar = {
 };
 
 struct {
-	int : 16;
+	int:16;
 	/* expect+2: warning: structure has no named members [65] */
 	/* expect+1: error: cannot initialize struct/union with no named member [179] */
 } struct_with_only_unnamed_members = {
@@ -450,7 +450,7 @@ struct {
 };
 
 union {
-	int : 16;
+	int:16;
 	/* expect+2: warning: union has no named members [65] */
 	/* expect+1: error: cannot initialize struct/union with no named member [179] */
 } union_with_only_unnamed_members = {
