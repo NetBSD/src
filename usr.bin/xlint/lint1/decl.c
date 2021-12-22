@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.242 2021/11/01 19:10:07 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.243 2021/12/22 14:25:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.242 2021/11/01 19:10:07 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.243 2021/12/22 14:25:35 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -365,8 +365,8 @@ add_type(type_t *tp)
 		t = QUAD;
 		dcs->d_rank_mod = NOTSPEC;
 		if (!quadflg)
-			/* %s C does not support 'long long' */
-			c99ism(265, tflag ? "traditional" : "c89");
+			/* %s does not support 'long long' */
+			c99ism(265, tflag ? "traditional C" : "C90");
 	}
 
 	if (dcs->d_type != NULL && dcs->d_type->t_typedef) {

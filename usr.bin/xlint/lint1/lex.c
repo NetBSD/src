@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.90 2021/12/15 15:20:51 christos Exp $ */
+/* $NetBSD: lex.c,v 1.91 2021/12/22 14:25:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.90 2021/12/15 15:20:51 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.91 2021/12/22 14:25:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1228,8 +1228,8 @@ lex_slash_slash_comment(void)
 	int c;
 
 	if (!Sflag && !gflag)
-		/* %s C does not support // comments */
-		gnuism(312, tflag ? "traditional" : "ANSI");
+		/* %s does not support // comments */
+		gnuism(312, tflag ? "traditional C" : "C90");
 
 	while ((c = inpc()) != EOF && c != '\n')
 		continue;

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_312.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_312.c,v 1.3 2021/12/22 14:25:35 rillig Exp $	*/
 # 3 "msg_312.c"
 
-// Test for message: %s C does not support // comments [312]
+/* Test for message: %s does not support // comments [312] */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -tw */
+
+/* expect+1: traditional C does not support // comments [312] */
+// C99 comment

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.150 2021/12/22 00:45:53 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.151 2021/12/22 14:25:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.150 2021/12/22 00:45:53 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.151 2021/12/22 14:25:35 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -319,7 +319,7 @@ const char *const msgs[] = {
 	"\\\" inside character constants undefined in traditional C", /* 262 */
 	"\\? undefined in traditional C",			      /* 263 */
 	"\\v undefined in traditional C",			      /* 264 */
-	"%s C does not support 'long long'",			      /* 265 */
+	"%s does not support 'long long'",			      /* 265 */
 	"'long double' is illegal in traditional C",		      /* 266 */
 	"shift equal to size of object",			      /* 267 */
 	"variable declared inline: %s",				      /* 268 */
@@ -366,7 +366,7 @@ const char *const msgs[] = {
 	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'", /* 309 */
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
-	"%s C does not support // comments",			      /* 312 */
+	"%s does not support // comments",			      /* 312 */
 	"struct or union member name in initializer is a C9X feature",/* 313 */
 	"%s is not a structure or a union",			      /* 314 */
 	"GCC style struct or union member name in initializer",	      /* 315 */
