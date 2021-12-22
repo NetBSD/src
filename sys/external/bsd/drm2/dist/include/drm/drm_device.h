@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_device.h,v 1.9 2021/12/21 12:28:34 tnn Exp $	*/
+/*	$NetBSD: drm_device.h,v 1.10 2021/12/22 12:05:24 riastradh Exp $	*/
 
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
@@ -28,12 +28,6 @@ struct drm_fb_helper;
 
 struct pci_dev;
 struct pci_controller;
-
-#if defined(__NetBSD__)
-#include <sys/vmem.h>
-#else
-typedef struct vmem vmem_t;
-#endif
 
 /**
  * enum drm_switch_power - power state of drm device
@@ -297,7 +291,7 @@ struct drm_device {
 	bool dmat_subregion_p;
 	bus_addr_t dmat_subregion_min;
 	bus_addr_t dmat_subregion_max;
-	vmem_t *cma_pool;
+	struct vmem *cma_pool;
 #endif
 
 	/** @num_crtcs: Number of CRTCs on this device */
