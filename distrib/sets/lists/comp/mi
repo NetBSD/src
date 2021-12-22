@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2400 2021/12/21 18:59:22 thorpej Exp $
+#	$NetBSD: mi,v 1.2401 2021/12/22 17:28:17 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -12282,7 +12282,7 @@
 ./usr/share/man/cat9/pool_cache_sethardlimit.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_sethiwat.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_cache_setlowat.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pool_cache_setpredestruct.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pool_cache_setpredestruct.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/pool_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pool_get.0			comp-sys-catman		.cat
@@ -20475,7 +20475,7 @@
 ./usr/share/man/html9/pool_cache_sethardlimit.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_sethiwat.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pool_cache_setlowat.html	comp-sys-htmlman	html
-./usr/share/man/html9/pool_cache_setpredestruct.html	comp-sys-htmlman	html
+./usr/share/man/html9/pool_cache_setpredestruct.html	comp-obsolete	obsolete
 ./usr/share/man/html9/pool_create.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_destroy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pool_get.html		comp-sys-htmlman	html
@@ -28829,7 +28829,7 @@
 ./usr/share/man/man9/pool_cache_sethardlimit.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_sethiwat.9	comp-sys-man		.man
 ./usr/share/man/man9/pool_cache_setlowat.9	comp-sys-man		.man
-./usr/share/man/man9/pool_cache_setpredestruct.9	comp-sys-man		.man
+./usr/share/man/man9/pool_cache_setpredestruct.9	comp-obsolete	obsolete
 ./usr/share/man/man9/pool_create.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/pool_get.9			comp-sys-man		.man
