@@ -1,2 +1,2 @@
-msg_265.c(8): warning: c89 C does not support 'long long' [265]
-msg_265.c(13): warning: c89 C does not support 'long long' [265]
+msg_265.c(9): warning: C90 does not support 'long long' [265]
+msg_265.c(16): warning: C90 does not support 'long long' [265]

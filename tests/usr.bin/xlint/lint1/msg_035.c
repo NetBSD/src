@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_035.c,v 1.9 2021/05/02 21:22:09 rillig Exp $	*/
+/*	$NetBSD: msg_035.c,v 1.10 2021/12/22 14:25:35 rillig Exp $	*/
 # 3 "msg_035.c"
 
 // Test for message: illegal bit-field type '%s' [35]
@@ -9,7 +9,7 @@
 /*
  * In traditional C, only unsigned int is a portable bit-field type.
  *
- * In C89, only int, signed int and unsigned int are allowed (3.5.2.1p7).
+ * In C90, only int, signed int and unsigned int are allowed (3.5.2.1p7).
  *
  * In C99 and C11, only _Bool, signed int and unsigned int are allowed,
  * plus implementation-defined types (6.7.2.1p5).
