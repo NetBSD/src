@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.12 2021/12/22 16:57:29 thorpej Exp $	*/
+/*	$NetBSD: slab.h,v 1.13 2021/12/22 18:04:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -194,27 +194,6 @@ kmem_cache_dtor(void *cookie, void *ptr)
 		(*kc->kc_dtor)(ptr);
 }
 
-static inline struct kmem_cache *
-kmem_cache_create(const char *name, size_t size, size_t align,
-    unsigned long flags, void (*ctor)(void *))
-{
-	struct kmem_cache *kc;
-	int pcflags = 0;
-
-	if (ISSET(flags, SLAB_HWCACHE_ALIGN))
-		align = roundup(MAX(1, align), CACHE_LINE_SIZE);
-	if (ISSET(flags, SLAB_TYPESAFE_BY_RCU))
-		pcflags |= PR_PSERIALIZE;
-
-	kc = kmem_alloc(sizeof(*kc), KM_SLEEP);
-	kc->kc_pool_cache = pool_cache_init(size, align, 0, pcflags, name, NULL,
-	    IPL_VM, &kmem_cache_ctor, NULL, kc);
-	kc->kc_size = size;
-	kc->kc_ctor = ctor;
-
-	return kc;
-}
-
 /* XXX extension */
 static inline struct kmem_cache *
 kmem_cache_create_dtor(const char *name, size_t size, size_t align,
@@ -230,12 +209,20 @@ kmem_cache_create_dtor(const char *name, size_t size, size_t align,
 
 	kc = kmem_alloc(sizeof(*kc), KM_SLEEP);
 	kc->kc_pool_cache = pool_cache_init(size, align, 0, pcflags, name, NULL,
-	    IPL_VM, &kmem_cache_ctor, &kmem_cache_dtor, kc);
+	    IPL_VM, &kmem_cache_ctor, dtor != NULL ? &kmem_cache_dtor : NULL,
+	    kc);
 	kc->kc_size = size;
 	kc->kc_ctor = ctor;
 	kc->kc_dtor = dtor;
 
 	return kc;
+}
+
+static inline struct kmem_cache *
+kmem_cache_create(const char *name, size_t size, size_t align,
+    unsigned long flags, void (*ctor)(void *))
+{
+	return kmem_cache_create_dtor(name, size, align, flags, ctor, NULL);
 }
 
 #define	KMEM_CACHE(T, F)						      \
