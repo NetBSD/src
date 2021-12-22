@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.9 2021/12/21 21:42:21 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.10 2021/12/22 00:45:53 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -105,4 +105,28 @@ union incomplete_union u2 = {
 
 union incomplete_union {
 	int num;
+};
+
+
+/* expect+1: warning: cannot initialize extern declaration: extern_var [26] */
+extern int extern_var = 1;
+int defined_var = 1;
+/* expect+1: warning: static variable static_var unused [226] */
+static int static_var = 1;
+/* expect+1: error: illegal storage class [8] */
+register int register_var = 1;
+/* expect+1: error: cannot initialize typedef: typedef_var [25] */
+typedef int typedef_var = 1;
+
+
+/*
+ * In an array of unknown size that is declared using fewer braces than
+ * recommended, ensure that the array size is updated at the end of the
+ * initializer.
+ */
+struct {
+	int x;
+	int y;
+} points_of_unknown_size[] = {
+	3, 4,
 };
