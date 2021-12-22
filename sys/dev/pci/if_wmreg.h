@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.124 2021/12/22 07:19:34 skrll Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.125 2021/12/22 07:28:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1686,8 +1686,9 @@ typedef union nq_txdesc {
 #define	NQTXC_CMD_IPV_MASK		__BIT(10)
 #define	NQTXC_CMD_IP4			__SHIFTIN(1, NQTXC_CMD_IPV_MASK)
 #define	NQTXC_CMD_IP6			__SHIFTIN(0, NQTXC_CMD_IPV_MASK)
-#define	NQTXC_CMD_TCP			__BIT(11)
-#define	NQTXC_CMD_UDP			(0U << 11)
+#define	NQTXC_CMD_TP_MASK		__BIT(11)
+#define	NQTXC_CMD_TCP			__SHIFTIN(1, NQTXC_CMD_TP_MASK)
+#define	NQTXC_CMD_UDP			__SHIFTIN(0, NQTXC_CMD_TP_MASK)
 #define	NQTXC_MSSIDX_IDX_SHIFT		4	/* context index shift */
 #define	NQTXC_MSSIDX_IDX_MASK		0xf
 #define	NQTXC_MSSIDX_L4LEN_SHIFT	8	/* L4 header len shift */
