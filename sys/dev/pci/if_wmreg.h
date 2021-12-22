@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.122 2021/12/20 12:50:35 skrll Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.123 2021/12/22 07:16:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -101,28 +101,28 @@ typedef struct wiseman_rxdesc {
 } __packed wiseman_rxdesc_t;
 
 /* wrx_status bits */
-#define	WRX_ST_DD	(1U << 0)	/* descriptor done */
-#define	WRX_ST_EOP	(1U << 1)	/* end of packet */
-#define	WRX_ST_IXSM	(1U << 2)	/* ignore checksum indication */
-#define	WRX_ST_VP	(1U << 3)	/* VLAN packet */
-#define	WRX_ST_BPDU	(1U << 4)	/* ??? */
-#define	WRX_ST_TCPCS	(1U << 5)	/* TCP checksum performed */
-#define	WRX_ST_IPCS	(1U << 6)	/* IP checksum performed */
-#define	WRX_ST_PIF	(1U << 7)	/* passed in-exact filter */
+#define	WRX_ST_DD	__BIT(0)	/* descriptor done */
+#define	WRX_ST_EOP	__BIT(1)	/* end of packet */
+#define	WRX_ST_IXSM	__BIT(2)	/* ignore checksum indication */
+#define	WRX_ST_VP	__BIT(3)	/* VLAN packet */
+#define	WRX_ST_BPDU	__BIT(4)	/* ??? */
+#define	WRX_ST_TCPCS	__BIT(5)	/* TCP checksum performed */
+#define	WRX_ST_IPCS	__BIT(6)	/* IP checksum performed */
+#define	WRX_ST_PIF	__BIT(7)	/* passed in-exact filter */
 
 /* wrx_error bits */
-#define	WRX_ER_CE	(1U << 0)	/* CRC error */
-#define	WRX_ER_SE	(1U << 1)	/* symbol error */
-#define	WRX_ER_SEQ	(1U << 2)	/* sequence error */
-#define	WRX_ER_ICE	(1U << 3)	/* ??? */
-#define	WRX_ER_CXE	(1U << 4)	/* carrier extension error */
-#define	WRX_ER_TCPE	(1U << 5)	/* TCP checksum error */
-#define	WRX_ER_IPE	(1U << 6)	/* IP checksum error */
-#define	WRX_ER_RXE	(1U << 7)	/* Rx data error */
+#define	WRX_ER_CE	__BIT(0)	/* CRC error */
+#define	WRX_ER_SE	__BIT(1)	/* symbol error */
+#define	WRX_ER_SEQ	__BIT(2)	/* sequence error */
+#define	WRX_ER_ICE	__BIT(3)	/* ??? */
+#define	WRX_ER_CXE	__BIT(4)	/* carrier extension error */
+#define	WRX_ER_TCPE	__BIT(5)	/* TCP checksum error */
+#define	WRX_ER_IPE	__BIT(6)	/* IP checksum error */
+#define	WRX_ER_RXE	__BIT(7)	/* Rx data error */
 
 /* wrx_special field for VLAN packets */
 #define	WRX_VLAN_ID(x)	((x) & 0x0fff)	/* VLAN identifier */
-#define	WRX_VLAN_CFI	(1U << 12)	/* Canonical Form Indicator */
+#define	WRX_VLAN_CFI	__BIT(12)	/* Canonical Form Indicator */
 #define	WRX_VLAN_PRI(x)	(((x) >> 13) & 7)/* VLAN priority field */
 
 /* extended RX descriptor for 82574 */
@@ -348,27 +348,28 @@ typedef struct wiseman_txdesc {
 } __packed wiseman_txdesc_t;
 
 /* Commands for wtx_cmdlen */
-#define	WTX_CMD_EOP	(1U << 24)	/* end of packet */
-#define	WTX_CMD_IFCS	(1U << 25)	/* insert FCS */
-#define	WTX_CMD_RS	(1U << 27)	/* report status */
-#define	WTX_CMD_RPS	(1U << 28)	/* report packet sent */
-#define	WTX_CMD_DEXT	(1U << 29)	/* descriptor extension */
-#define	WTX_CMD_VLE	(1U << 30)	/* VLAN enable */
-#define	WTX_CMD_IDE	(1U << 31)	/* interrupt delay enable */
+#define	WTX_CMD_EOP	__BIT(24)	/* end of packet */
+#define	WTX_CMD_IFCS	__BIT(25)	/* insert FCS */
+#define	WTX_CMD_RS	__BIT(27)	/* report status */
+#define	WTX_CMD_RPS	__BIT(28)	/* report packet sent */
+#define	WTX_CMD_DEXT	__BIT(29)	/* descriptor extension */
+#define	WTX_CMD_VLE	__BIT(30)	/* VLAN enable */
+#define	WTX_CMD_IDE	__BIT(31)	/* interrupt delay enable */
 
 /* Descriptor types (if DEXT is set) */
-#define	WTX_DTYP_C	(0U << 20)	/* context */
-#define	WTX_DTYP_D	(1U << 20)	/* data */
+#define	WTX_DTYP_MASK	__BIT(20)
+#define	WTX_DTYP_C	__SHIFTIN(0, WTX_DTYP_MASK)	/* context */
+#define	WTX_DTYP_D	__SHIFTIN(1, WTX_DTYP_MASK)	/* data */
 
 /* wtx_fields status bits */
-#define	WTX_ST_DD	(1U << 0)	/* descriptor done */
-#define	WTX_ST_EC	(1U << 1)	/* excessive collisions */
-#define	WTX_ST_LC	(1U << 2)	/* late collision */
-#define	WTX_ST_TU	(1U << 3)	/* transmit underrun */
+#define	WTX_ST_DD	__BIT(0)	/* descriptor done */
+#define	WTX_ST_EC	__BIT(1)	/* excessive collisions */
+#define	WTX_ST_LC	__BIT(2)	/* late collision */
+#define	WTX_ST_TU	__BIT(3)	/* transmit underrun */
 
 /* wtx_fields option bits for IP/TCP/UDP checksum offload */
-#define	WTX_IXSM	(1U << 0)	/* IP checksum offload */
-#define	WTX_TXSM	(1U << 1)	/* TCP/UDP checksum offload */
+#define	WTX_IXSM	__BIT(0)	/* IP checksum offload */
+#define	WTX_TXSM	__BIT(1)	/* TCP/UDP checksum offload */
 
 /* Maximum payload per Tx descriptor */
 #define	WTX_MAX_LEN	4096
@@ -384,9 +385,9 @@ struct livengood_tcpip_ctxdesc {
 };
 
 /* commands for context descriptors */
-#define	WTX_TCPIP_CMD_TCP	(1U << 24)	/* 1 = TCP, 0 = UDP */
-#define	WTX_TCPIP_CMD_IP	(1U << 25)	/* 1 = IPv4, 0 = IPv6 */
-#define	WTX_TCPIP_CMD_TSE	(1U << 26)	/* segmentation context valid */
+#define	WTX_TCPIP_CMD_TCP	__BIT(24)	/* 1 = TCP, 0 = UDP */
+#define	WTX_TCPIP_CMD_IP	__BIT(25)	/* 1 = IPv4, 0 = IPv6 */
+#define	WTX_TCPIP_CMD_TSE	__BIT(26)	/* segmentation context valid */
 
 #define	WTX_TCPIP_IPCSS(x)	((x) << 0)	/* checksum start */
 #define	WTX_TCPIP_IPCSO(x)	((x) << 8)	/* checksum value offset */
@@ -417,71 +418,71 @@ struct livengood_tcpip_ctxdesc {
  * Wiseman Control/Status Registers.
  */
 #define	WMREG_CTRL	0x0000	/* Device Control Register */
-#define	CTRL_FD		(1U << 0)	/* full duplex */
-#define	CTRL_BEM	(1U << 1)	/* big-endian mode */
-#define	CTRL_PRIOR	(1U << 2)	/* 0 = receive, 1 = fair */
-#define	CTRL_GIO_M_DIS	(1U << 2)	/* disabl PCI master access */
-#define	CTRL_LRST	(1U << 3)	/* link reset */
-#define	CTRL_ASDE	(1U << 5)	/* auto speed detect enable */
-#define	CTRL_SLU	(1U << 6)	/* set link up */
-#define	CTRL_ILOS	(1U << 7)	/* invert loss of signal */
+#define	CTRL_FD		__BIT(0)	/* full duplex */
+#define	CTRL_BEM	__BIT(1)	/* big-endian mode */
+#define	CTRL_PRIOR	__BIT(2)	/* 0 = receive, 1 = fair */
+#define	CTRL_GIO_M_DIS	__BIT(2)	/* disabl PCI master access */
+#define	CTRL_LRST	__BIT(3)	/* link reset */
+#define	CTRL_ASDE	__BIT(5)	/* auto speed detect enable */
+#define	CTRL_SLU	__BIT(6)	/* set link up */
+#define	CTRL_ILOS	__BIT(7)	/* invert loss of signal */
 #define	CTRL_SPEED(x)	((x) << 8)	/* speed (Livengood) */
 #define	CTRL_SPEED_10	CTRL_SPEED(0)
 #define	CTRL_SPEED_100	CTRL_SPEED(1)
 #define	CTRL_SPEED_1000	CTRL_SPEED(2)
 #define	CTRL_SPEED_MASK	CTRL_SPEED(3)
-#define	CTRL_FRCSPD	(1U << 11)	/* force speed (Livengood) */
-#define	CTRL_FRCFDX	(1U << 12)	/* force full-duplex (Livengood) */
-#define CTRL_D_UD_EN	(1U << 13)	/* Dock/Undock enable */
-#define CTRL_D_UD_POL	(1U << 14)	/* Defined polarity of Dock/Undock indication in SDP[0] */
-#define CTRL_F_PHY_R 	(1U << 15)	/* Reset both PHY ports, through PHYRST_N pin */
-#define CTRL_EXTLINK_EN (1U << 16)	/* enable link status from external LINK_0 and LINK_1 pins */
-#define CTRL_LANPHYPC_OVERRIDE (1U << 16) /* SW control of LANPHYPC */
-#define CTRL_LANPHYPC_VALUE (1U << 17)	/* SW value of LANPHYPC */
+#define	CTRL_FRCSPD	__BIT(11)	/* force speed (Livengood) */
+#define	CTRL_FRCFDX	__BIT(12)	/* force full-duplex (Livengood) */
+#define CTRL_D_UD_EN	__BIT(13)	/* Dock/Undock enable */
+#define CTRL_D_UD_POL	__BIT(14)	/* Defined polarity of Dock/Undock indication in SDP[0] */
+#define CTRL_F_PHY_R 	__BIT(15)	/* Reset both PHY ports, through PHYRST_N pin */
+#define CTRL_EXTLINK_EN __BIT(16)	/* enable link status from external LINK_0 and LINK_1 pins */
+#define CTRL_LANPHYPC_OVERRIDE __BIT(16) /* SW control of LANPHYPC */
+#define CTRL_LANPHYPC_VALUE __BIT(17)	/* SW value of LANPHYPC */
 #define	CTRL_SWDPINS_SHIFT	18
 #define	CTRL_SWDPINS_MASK	0x0f
 #define	CTRL_SWDPIN(x)		(1U << (CTRL_SWDPINS_SHIFT + (x)))
 #define	CTRL_SWDPIO_SHIFT	22
 #define	CTRL_SWDPIO_MASK	0x0f
 #define	CTRL_SWDPIO(x)		(1U << (CTRL_SWDPIO_SHIFT + (x)))
-#define CTRL_MEHE	(1U << 19)	/* Memory Error Handling Enable(I217)*/
-#define	CTRL_RST	(1U << 26)	/* device reset */
-#define	CTRL_RFCE	(1U << 27)	/* Rx flow control enable */
-#define	CTRL_TFCE	(1U << 28)	/* Tx flow control enable */
-#define	CTRL_VME	(1U << 30)	/* VLAN Mode Enable */
-#define	CTRL_PHY_RESET	(1U << 31)	/* PHY reset (Cordova) */
+#define CTRL_MEHE	__BIT(19)	/* Memory Error Handling Enable(I217)*/
+#define	CTRL_RST	__BIT(26)	/* device reset */
+#define	CTRL_RFCE	__BIT(27)	/* Rx flow control enable */
+#define	CTRL_TFCE	__BIT(28)	/* Tx flow control enable */
+#define	CTRL_VME	__BIT(30)	/* VLAN Mode Enable */
+#define	CTRL_PHY_RESET	__BIT(31)	/* PHY reset (Cordova) */
 
 #define	WMREG_CTRL_SHADOW 0x0004	/* Device Control Register (shadow) */
 
 #define	WMREG_STATUS	0x0008	/* Device Status Register */
-#define	STATUS_FD	(1U << 0)	/* full duplex */
-#define	STATUS_LU	(1U << 1)	/* link up */
-#define	STATUS_TCKOK	(1U << 2)	/* Tx clock running */
-#define	STATUS_RBCOK	(1U << 3)	/* Rx clock running */
+#define	STATUS_FD	__BIT(0)	/* full duplex */
+#define	STATUS_LU	__BIT(1)	/* link up */
+#define	STATUS_TCKOK	__BIT(2)	/* Tx clock running */
+#define	STATUS_RBCOK	__BIT(3)	/* Rx clock running */
 #define	STATUS_FUNCID_SHIFT 2		/* 82546 function ID */
 #define	STATUS_FUNCID_MASK  3		/* ... */
-#define	STATUS_TXOFF	(1U << 4)	/* Tx paused */
-#define	STATUS_TBIMODE	(1U << 5)	/* fiber mode (Livengood) */
+#define	STATUS_TXOFF	__BIT(4)	/* Tx paused */
+#define	STATUS_TBIMODE	__BIT(5)	/* fiber mode (Livengood) */
 #define	STATUS_SPEED	__BITS(7, 6)	/* speed indication */
 #define	STATUS_SPEED_10	  0
 #define	STATUS_SPEED_100  1
 #define	STATUS_SPEED_1000 2
 #define	STATUS_ASDV(x)	((x) << 8)	/* auto speed det. val. (Livengood) */
-#define	STATUS_LAN_INIT_DONE (1U << 9)	/* Lan Init Completion by NVM */
-#define	STATUS_MTXCKOK	(1U << 10)	/* MTXD clock running */
-#define	STATUS_PHYRA	(1U << 10)	/* PHY Reset Asserted (PCH) */
-#define	STATUS_PCI66	(1U << 11)	/* 66MHz bus (Livengood) */
-#define	STATUS_BUS64	(1U << 12)	/* 64-bit bus (Livengood) */
+#define	STATUS_LAN_INIT_DONE __BIT(9)	/* Lan Init Completion by NVM */
+#define	STATUS_MTXCKOK	__BIT(10)	/* MTXD clock running */
+#define	STATUS_PHYRA	__BIT(10)	/* PHY Reset Asserted (PCH) */
+#define	STATUS_PCI66	__BIT(11)	/* 66MHz bus (Livengood) */
+#define	STATUS_BUS64	__BIT(12)	/* 64-bit bus (Livengood) */
 #define	STATUS_2P5_SKU	__BIT(12)	/* Value of the 2.5GBE SKU strap */
-#define	STATUS_PCIX_MODE (1U << 13)	/* PCIX mode (Cordova) */
+#define	STATUS_PCIX_MODE __BIT(13)	/* PCIX mode (Cordova) */
 #define	STATUS_2P5_SKU_OVER __BIT(13)	/* Value of the 2.5GBE SKU override */
 #define	STATUS_PCIXSPD(x) ((x) << 14)	/* PCIX speed indication (Cordova) */
 #define	STATUS_PCIXSPD_50_66   STATUS_PCIXSPD(0)
 #define	STATUS_PCIXSPD_66_100  STATUS_PCIXSPD(1)
 #define	STATUS_PCIXSPD_100_133 STATUS_PCIXSPD(2)
 #define	STATUS_PCIXSPD_MASK    STATUS_PCIXSPD(3)
-#define	STATUS_GIO_M_ENA (1U << 19)	/* GIO master enable */
-#define	STATUS_DEV_RST_SET (1U << 20)	/* Device Reset Set */
+#define	STATUS_GIO_M_ENA __BIT(19)	/* GIO master enable */
+#define	STATUS_DEV_RST_SET __BIT(20)	/* Device Reset Set */
 
 /* Strapping Option Register (PCH_SPT and newer) */
 #define WMREG_STRAP	0x000c
@@ -490,25 +491,25 @@ struct livengood_tcpip_ctxdesc {
 #define STRAP_SMBUSADDR	__BITS(17, 23)
 
 #define	WMREG_EECD	0x0010	/* EEPROM Control Register */
-#define	EECD_SK		(1U << 0)	/* clock */
-#define	EECD_CS		(1U << 1)	/* chip select */
-#define	EECD_DI		(1U << 2)	/* data in */
-#define	EECD_DO		(1U << 3)	/* data out */
+#define	EECD_SK		__BIT(0)	/* clock */
+#define	EECD_CS		__BIT(1)	/* chip select */
+#define	EECD_DI		__BIT(2)	/* data in */
+#define	EECD_DO		__BIT(3)	/* data out */
 #define	EECD_FWE(x)	((x) << 4)	/* flash write enable control */
 #define	EECD_FWE_DISABLED EECD_FWE(1)
 #define	EECD_FWE_ENABLED  EECD_FWE(2)
-#define	EECD_EE_REQ	(1U << 6)	/* (shared) EEPROM request */
-#define	EECD_EE_GNT	(1U << 7)	/* (shared) EEPROM grant */
-#define	EECD_EE_PRES	(1U << 8)	/* EEPROM present */
-#define	EECD_EE_SIZE	(1U << 9)	/* EEPROM size
+#define	EECD_EE_REQ	__BIT(6)	/* (shared) EEPROM request */
+#define	EECD_EE_GNT	__BIT(7)	/* (shared) EEPROM grant */
+#define	EECD_EE_PRES	__BIT(8)	/* EEPROM present */
+#define	EECD_EE_SIZE	__BIT(9)	/* EEPROM size
 					   (0 = 64 word, 1 = 256 word) */
-#define	EECD_EE_AUTORD	(1U << 9)	/* auto read done */
-#define	EECD_EE_ABITS	(1U << 10)	/* EEPROM address bits
+#define	EECD_EE_AUTORD	__BIT(9)	/* auto read done */
+#define	EECD_EE_ABITS	__BIT(10)	/* EEPROM address bits
 					   (based on type) */
 #define	EECD_EE_SIZE_EX_MASK __BITS(14,11) /* EEPROM size for new devices */
-#define	EECD_EE_TYPE	(1U << 13)	/* EEPROM type
+#define	EECD_EE_TYPE	__BIT(13)	/* EEPROM type
 					   (0 = Microwire, 1 = SPI) */
-#define EECD_SEC1VAL	(1U << 22)	/* Sector One Valid */
+#define EECD_SEC1VAL	__BIT(22)	/* Sector One Valid */
 #define EECD_SEC1VAL_VALMASK (EECD_EE_AUTORD | EECD_EE_PRES) /* Valid Mask */
 
 #define	WMREG_FEXTNVM6	0x0010	/* Future Extended NVM 6 */
@@ -537,14 +538,14 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SWDPIO(x)	(1U << (CTRL_EXT_SWDPIO_SHIFT \
 		+ ((x) == 3 ? 3 : ((x) - 4))))
 #define	CTRL_EXT_FORCE_SMBUS	__BIT(11)  /* Force SMBus mode */
-#define	CTRL_EXT_ASDCHK		(1U << 12) /* ASD check */
-#define	CTRL_EXT_EE_RST		(1U << 13) /* EEPROM reset */
-#define	CTRL_EXT_IPS		(1U << 14) /* invert power state bit 0 */
-#define	CTRL_EXT_SPD_BYPS	(1U << 15) /* speed select bypass */
-#define	CTRL_EXT_IPS1		(1U << 16) /* invert power state bit 1 */
-#define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
-#define	CTRL_EXT_SDLPE		(1U << 18) /* SerDes Low Power Enable */
-#define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dynamic Gating Enable */
+#define	CTRL_EXT_ASDCHK		__BIT(12) /* ASD check */
+#define	CTRL_EXT_EE_RST		__BIT(13) /* EEPROM reset */
+#define	CTRL_EXT_IPS		__BIT(14) /* invert power state bit 0 */
+#define	CTRL_EXT_SPD_BYPS	__BIT(15) /* speed select bypass */
+#define	CTRL_EXT_IPS1		__BIT(16) /* invert power state bit 1 */
+#define	CTRL_EXT_RO_DIS		__BIT(17) /* relaxed ordering disabled */
+#define	CTRL_EXT_SDLPE		__BIT(18) /* SerDes Low Power Enable */
+#define	CTRL_EXT_DMA_DYN_CLK	__BIT(19) /* DMA Dynamic Gating Enable */
 #define	CTRL_EXT_PHYPDEN	__BIT(20)
 #define	CTRL_EXT_LINK_MODE_MASK		0x00c00000
 #define	CTRL_EXT_LINK_MODE_GMII		0x00000000
@@ -565,19 +566,21 @@ struct livengood_tcpip_ctxdesc {
 #define	MDIC_PHY_SHIFT	21
 #define	MDIC_PHY_MASK	__BITS(25, 21)
 #define	MDIC_PHYADD(x)	((x) << 21)
-#define	MDIC_OP_WRITE	(1U << 26)
-#define	MDIC_OP_READ	(2U << 26)
-#define	MDIC_READY	(1U << 28)
-#define	MDIC_I		(1U << 29)	/* interrupt on MDI complete */
-#define	MDIC_E		(1U << 30)	/* MDI error */
-#define	MDIC_DEST	(1U << 31)	/* Destination */
+
+#define	MDIC_OP_RW_MASK	__BITS(27, 26)
+#define	MDIC_OP_WRITE	__SHIFTIN(1, MDIC_OP_RW_MASK)
+#define	MDIC_OP_READ	__SHIFTIN(2, MDIC_OP_RW_MASK)
+#define	MDIC_READY	__BIT(28)
+#define	MDIC_I		__BIT(29)	/* interrupt on MDI complete */
+#define	MDIC_E		__BIT(30)	/* MDI error */
+#define	MDIC_DEST	__BIT(31)	/* Destination */
 
 #define WMREG_SCTL	0x0024	/* SerDes Control - RW */
 /*
  * These 4 macros are also used for other 8bit control registers on the
  * 82575
  */
-#define SCTL_CTL_READY  (1U << 31)
+#define SCTL_CTL_READY  __BIT(31)
 #define SCTL_CTL_DATA_MASK 0x000000ff
 #define SCTL_CTL_ADDR_SHIFT 8
 #define SCTL_CTL_POLL_TIMEOUT 640
@@ -673,8 +676,8 @@ struct livengood_tcpip_ctxdesc {
 #define	RAL_AS(x)	((x) << 16)	/* address select */
 #define	RAL_AS_DEST	RAL_AS(0)	/* (cordova?) */
 #define	RAL_AS_SOURCE	RAL_AS(1)	/* (cordova?) */
-#define	RAL_RDR1	(1U << 30)	/* put packet in alt. rx ring */
-#define	RAL_AV		(1U << 31)	/* entry is valid */
+#define	RAL_RDR1	__BIT(30)	/* put packet in alt. rx ring */
+#define	RAL_AV		__BIT(31)	/* entry is valid */
 
 #define	WM_RAL_TABSIZE		15	/* RAL size for old devices */
 #define	WM_RAL_TABSIZE_ICH8	7	/* RAL size for ICH* and PCH* */
@@ -685,20 +688,20 @@ struct livengood_tcpip_ctxdesc {
 #define	WM_RAL_TABSIZE_I350	32	/* RAL size for I350 */
 
 #define	WMREG_ICR	0x00c0	/* Interrupt Cause Register */
-#define	ICR_TXDW	(1U << 0)	/* Tx desc written back */
-#define	ICR_TXQE	(1U << 1)	/* Tx queue empty */
-#define	ICR_LSC		(1U << 2)	/* link status change */
-#define	ICR_RXSEQ	(1U << 3)	/* receive sequence error */
-#define	ICR_RXDMT0	(1U << 4)	/* Rx ring 0 nearly empty */
-#define	ICR_RXO		(1U << 6)	/* Rx overrun */
-#define	ICR_RXT0	(1U << 7)	/* Rx ring 0 timer */
-#define	ICR_MDAC	(1U << 9)	/* MDIO access complete */
-#define	ICR_RXCFG	(1U << 10)	/* Receiving /C/ */
+#define	ICR_TXDW	__BIT(0)	/* Tx desc written back */
+#define	ICR_TXQE	__BIT(1)	/* Tx queue empty */
+#define	ICR_LSC		__BIT(2)	/* link status change */
+#define	ICR_RXSEQ	__BIT(3)	/* receive sequence error */
+#define	ICR_RXDMT0	__BIT(4)	/* Rx ring 0 nearly empty */
+#define	ICR_RXO		__BIT(6)	/* Rx overrun */
+#define	ICR_RXT0	__BIT(7)	/* Rx ring 0 timer */
+#define	ICR_MDAC	__BIT(9)	/* MDIO access complete */
+#define	ICR_RXCFG	__BIT(10)	/* Receiving /C/ */
 #define	ICR_GPI(x)	__BIT(11+(x))	/* general purpose interrupts */
 #define	ICR_RXQ(x)	__BIT(20+(x))	/* 82574: Rx queue x interrupt x=0,1 */
 #define	ICR_TXQ(x)	__BIT(22+(x))	/* 82574: Tx queue x interrupt x=0,1 */
 #define	ICR_OTHER	__BIT(24)	/* 82574: Other interrupt */
-#define	ICR_INT		(1U << 31)	/* device generated an interrupt */
+#define	ICR_INT		__BIT(31)	/* device generated an interrupt */
 
 #define WMREG_ITR	0x00c4	/* Interrupt Throttling Register */
 #define ITR_IVAL_MASK	0xffff		/* Interval mask */
@@ -763,11 +766,11 @@ struct livengood_tcpip_ctxdesc {
 #define	LTRV_NONSNOOP_REQ __BIT(31)
 
 #define	WMREG_RCTL	0x0100	/* Receive Control */
-#define	RCTL_EN		(1U << 1)	/* receiver enable */
-#define	RCTL_SBP	(1U << 2)	/* store bad packets */
-#define	RCTL_UPE	(1U << 3)	/* unicast promisc. enable */
-#define	RCTL_MPE	(1U << 4)	/* multicast promisc. enable */
-#define	RCTL_LPE	(1U << 5)	/* large packet enable */
+#define	RCTL_EN		__BIT(1)	/* receiver enable */
+#define	RCTL_SBP	__BIT(2)	/* store bad packets */
+#define	RCTL_UPE	__BIT(3)	/* unicast promisc. enable */
+#define	RCTL_MPE	__BIT(4)	/* multicast promisc. enable */
+#define	RCTL_LPE	__BIT(5)	/* large packet enable */
 #define	RCTL_LBM(x)	((x) << 6)	/* loopback mode */
 #define	RCTL_LBM_NONE	RCTL_LBM(0)
 #define	RCTL_LBM_PHY	RCTL_LBM(3)
@@ -782,7 +785,7 @@ struct livengood_tcpip_ctxdesc {
 #define RCTL_DTYP_SPH	RCTL_DTYP(1)	/* split header buffer. */
 					/* RCTL_DTYP(2) and RCTL_DTYP(3) are reserved. */
 #define	RCTL_MO		__BITS(13, 12)	/* multicast offset */
-#define	RCTL_BAM	(1U << 15)	/* broadcast accept mode */
+#define	RCTL_BAM	__BIT(15)	/* broadcast accept mode */
 #define	RCTL_RDMTS_HEX	__BIT(16)
 #define	RCTL_2k		(0 << 16)	/* 2k Rx buffers */
 #define	RCTL_1k		(1 << 16)	/* 1k Rx buffers */
@@ -791,14 +794,14 @@ struct livengood_tcpip_ctxdesc {
 #define	RCTL_BSEX_16k	(1 << 16)	/* 16k Rx buffers (BSEX) */
 #define	RCTL_BSEX_8k	(2 << 16)	/* 8k Rx buffers (BSEX) */
 #define	RCTL_BSEX_4k	(3 << 16)	/* 4k Rx buffers (BSEX) */
-#define	RCTL_DPF	(1U << 22)	/* discard pause frames */
-#define	RCTL_PMCF	(1U << 23)	/* pass MAC control frames */
-#define	RCTL_BSEX	(1U << 25)	/* buffer size extension (Livengood) */
-#define	RCTL_SECRC	(1U << 26)	/* strip Ethernet CRC */
+#define	RCTL_DPF	__BIT(22)	/* discard pause frames */
+#define	RCTL_PMCF	__BIT(23)	/* pass MAC control frames */
+#define	RCTL_BSEX	__BIT(25)	/* buffer size extension (Livengood) */
+#define	RCTL_SECRC	__BIT(26)	/* strip Ethernet CRC */
 
 #define	WMREG_OLD_RDTR0	0x0108	/* Receive Delay Timer (ring 0) */
 #define	WMREG_RDTR	0x2820
-#define	RDTR_FPD	(1U << 31)	/* flush partial descriptor */
+#define	RDTR_FPD	__BIT(31)	/* flush partial descriptor */
 
 #define WMREG_LTRC	0x01a0	/* Latency Tolerance Reportiong Control */
 
@@ -849,7 +852,7 @@ struct livengood_tcpip_ctxdesc {
 #define	RXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
 #define	RXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
 #define	RXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
-#define	RXDCTL_GRAN	(1U << 24)	/* 0 = cacheline, 1 = descriptor */
+#define	RXDCTL_GRAN	__BIT(24)	/* 0 = cacheline, 1 = descriptor */
 /* flags used starting with 82575 ... */
 #define RXDCTL_QUEUE_ENABLE  0x02000000 /* Enable specific Tx Queue */
 #define RXDCTL_SWFLSH        0x04000000 /* Rx Desc. write-back flushing */
@@ -874,34 +877,34 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_TXCW	0x0178	/* Transmit Configuration Word (TBI mode) */
 	/* See MII ANAR_X bits. */
-#define	TXCW_FD		(1U << 5)	/* Full Duplex */
-#define	TXCW_HD		(1U << 6)	/* Half Duplex */
-#define	TXCW_SYM_PAUSE	(1U << 7)	/* sym pause request */
-#define	TXCW_ASYM_PAUSE	(1U << 8)	/* asym pause request */
-#define	TXCW_TxConfig	(1U << 30)	/* Tx Config */
-#define	TXCW_ANE	(1U << 31)	/* Autonegotiate */
+#define	TXCW_FD		__BIT(5)	/* Full Duplex */
+#define	TXCW_HD		__BIT(6)	/* Half Duplex */
+#define	TXCW_SYM_PAUSE	__BIT(7)	/* sym pause request */
+#define	TXCW_ASYM_PAUSE	__BIT(8)	/* asym pause request */
+#define	TXCW_TxConfig	__BIT(30)	/* Tx Config */
+#define	TXCW_ANE	__BIT(31)	/* Autonegotiate */
 
 #define	WMREG_RXCW	0x0180	/* Receive Configuration Word (TBI mode) */
 	/* See MII ANLPAR_X bits. */
-#define	RXCW_NC		(1U << 26)	/* no carrier */
-#define	RXCW_IV		(1U << 27)	/* config invalid */
-#define	RXCW_CC		(1U << 28)	/* config change */
-#define	RXCW_C		(1U << 29)	/* /C/ reception */
-#define	RXCW_SYNCH	(1U << 30)	/* synchronized */
-#define	RXCW_ANC	(1U << 31)	/* autonegotiation complete */
+#define	RXCW_NC		__BIT(26)	/* no carrier */
+#define	RXCW_IV		__BIT(27)	/* config invalid */
+#define	RXCW_CC		__BIT(28)	/* config change */
+#define	RXCW_C		__BIT(29)	/* /C/ reception */
+#define	RXCW_SYNCH	__BIT(30)	/* synchronized */
+#define	RXCW_ANC	__BIT(31)	/* autonegotiation complete */
 
 #define	WMREG_MTA	0x0200	/* Multicast Table Array */
 #define	WMREG_CORDOVA_MTA 0x5200
 
 #define	WMREG_TCTL	0x0400	/* Transmit Control Register */
-#define	TCTL_EN		(1U << 1)	/* transmitter enable */
-#define	TCTL_PSP	(1U << 3)	/* pad short packets */
+#define	TCTL_EN		__BIT(1)	/* transmitter enable */
+#define	TCTL_PSP	__BIT(3)	/* pad short packets */
 #define	TCTL_CT(x)	(((x) & 0xff) << 4)   /* 4:11 - collision threshold */
 #define	TCTL_COLD(x)	(((x) & 0x3ff) << 12) /* 12:21 - collision distance */
-#define	TCTL_SWXOFF	(1U << 22)	/* software XOFF */
-#define	TCTL_RTLC	(1U << 24)	/* retransmit on late collision */
-#define	TCTL_NRTU	(1U << 25)	/* no retransmit on underrun */
-#define	TCTL_MULR	(1U << 28)	/* multiple request */
+#define	TCTL_SWXOFF	__BIT(22)	/* software XOFF */
+#define	TCTL_RTLC	__BIT(24)	/* retransmit on late collision */
+#define	TCTL_NRTU	__BIT(25)	/* no retransmit on underrun */
+#define	TCTL_MULR	__BIT(28)	/* multiple request */
 
 #define	TX_COLLISION_THRESHOLD		15
 #define	TX_COLLISION_DISTANCE_HDX	512
@@ -1107,7 +1110,7 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_RADV	0x282c	/* Receive Interrupt Absolute Delay Timer */
 
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
-#define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
+#define	TXDMAC_DPP	__BIT(0)	/* disable packet prefetch */
 
 #define WMREG_KABGTXD	0x3004	/* AFE and Gap Transmit Ref Data */
 #define	KABGTXD_BGSQLBIAS 0x00050000
@@ -1194,12 +1197,12 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_RXCSUM	0x5000	/* Receive Checksum register */
 #define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
-#define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
-#define	RXCSUM_TUOFL	(1U << 9)	/* TCP/UDP checksum offload */
-#define	RXCSUM_IPV6OFL	(1U << 10)	/* IPv6 checksum offload */
-#define	RXCSUM_CRCOFL	(1U << 11)	/* SCTP CRC32 checksum offload */
-#define	RXCSUM_IPPCSE	(1U << 12)	/* IP payload checksum enable */
-#define	RXCSUM_PCSD	(1U << 13)	/* packet checksum disabled */
+#define	RXCSUM_IPOFL	__BIT(8)	/* IP checksum offload */
+#define	RXCSUM_TUOFL	__BIT(9)	/* TCP/UDP checksum offload */
+#define	RXCSUM_IPV6OFL	__BIT(10)	/* IPv6 checksum offload */
+#define	RXCSUM_CRCOFL	__BIT(11)	/* SCTP CRC32 checksum offload */
+#define	RXCSUM_IPPCSE	__BIT(12)	/* IP payload checksum enable */
+#define	RXCSUM_PCSD	__BIT(13)	/* packet checksum disabled */
 
 #define WMREG_RLPML	0x5004	/* Rx Long Packet Max Length */
 
@@ -1385,8 +1388,8 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_PCH_RAICC(x)	(WMREG_CRC_OFFSET + (x) * 4)
 
 #define WMREG_EEC	0x12010
-#define EEC_FLASH_DETECTED (1U << 19)	/* FLASH */
-#define EEC_FLUPD	(1U << 23)	/* Update FLASH */
+#define EEC_FLASH_DETECTED __BIT(19)	/* FLASH */
+#define EEC_FLUPD	__BIT(23)	/* Update FLASH */
 
 #define WMREG_EEARBC_I210 0x12024
 
@@ -1442,34 +1445,34 @@ struct livengood_tcpip_ctxdesc {
 
 #define NVM_COMPAT_VALID_CHECKSUM	0x0001
 
-#define	NVM_CFG1_LVDID		(1U << 0)
-#define	NVM_CFG1_LSSID		(1U << 1)
-#define	NVM_CFG1_PME_CLOCK	(1U << 2)
-#define	NVM_CFG1_PM		(1U << 3)
-#define	NVM_CFG1_ILOS		(1U << 4)	/* Invert loss of signal */
+#define	NVM_CFG1_LVDID		__BIT(0)
+#define	NVM_CFG1_LSSID		__BIT(1)
+#define	NVM_CFG1_PME_CLOCK	__BIT(2)
+#define	NVM_CFG1_PM		__BIT(3)
+#define	NVM_CFG1_ILOS		__BIT(4)	/* Invert loss of signal */
 #define	NVM_CFG1_SWDPIO_SHIFT	5
 #define	NVM_CFG1_SWDPIO_MASK	(0xf << NVM_CFG1_SWDPIO_SHIFT)
-#define	NVM_CFG1_IPS1		(1U << 8)
-#define	NVM_CFG1_LRST		(1U << 9)
-#define	NVM_CFG1_FD		(1U << 10)
-#define	NVM_CFG1_FRCSPD		(1U << 11)
-#define	NVM_CFG1_IPS0		(1U << 12)
-#define	NVM_CFG1_64_32_BAR	(1U << 13)
+#define	NVM_CFG1_IPS1		__BIT(8)
+#define	NVM_CFG1_LRST		__BIT(9)
+#define	NVM_CFG1_FD		__BIT(10)
+#define	NVM_CFG1_FRCSPD		__BIT(11)
+#define	NVM_CFG1_IPS0		__BIT(12)
+#define	NVM_CFG1_64_32_BAR	__BIT(13)
 
-#define	NVM_CFG2_CSR_RD_SPLIT	(1U << 1)
-#define	NVM_CFG2_82544_APM_EN	(1U << 2)
-#define	NVM_CFG2_64_BIT		(1U << 3)
-#define	NVM_CFG2_MAX_READ	(1U << 4)
-#define	NVM_CFG2_DMCR_MAP	(1U << 5)
-#define	NVM_CFG2_133_CAP	(1U << 6)
-#define	NVM_CFG2_MSI_DIS	(1U << 7)
-#define	NVM_CFG2_FLASH_DIS	(1U << 8)
+#define	NVM_CFG2_CSR_RD_SPLIT	__BIT(1)
+#define	NVM_CFG2_82544_APM_EN	__BIT(2)
+#define	NVM_CFG2_64_BIT		__BIT(3)
+#define	NVM_CFG2_MAX_READ	__BIT(4)
+#define	NVM_CFG2_DMCR_MAP	__BIT(5)
+#define	NVM_CFG2_133_CAP	__BIT(6)
+#define	NVM_CFG2_MSI_DIS	__BIT(7)
+#define	NVM_CFG2_FLASH_DIS	__BIT(8)
 #define	NVM_CFG2_FLASH_SIZE(x)	(((x) & 3) >> 9)
-#define	NVM_CFG2_APM_EN		(1U << 10)
-#define	NVM_CFG2_ANE		(1U << 11)
+#define	NVM_CFG2_APM_EN		__BIT(10)
+#define	NVM_CFG2_ANE		__BIT(11)
 #define	NVM_CFG2_PAUSE(x)	(((x) & 3) >> 12)
-#define	NVM_CFG2_ASDE		(1U << 14)
-#define	NVM_CFG2_APM_PME	(1U << 15)
+#define	NVM_CFG2_ASDE		__BIT(14)
+#define	NVM_CFG2_APM_PME	__BIT(15)
 #define	NVM_CFG2_SWDPIO_SHIFT	4
 #define	NVM_CFG2_SWDPIO_MASK	(0xf << NVM_CFG2_SWDPIO_SHIFT)
 #define	NVM_CFG2_MNGM_SHIFT	13	/* Manageability Operation mode */
@@ -1651,12 +1654,12 @@ typedef union nq_txdesc {
 
 
 /* Commands for nqtxd_cmdlen and nqtxc_cmd */
-#define	NQTX_CMD_EOP	(1U << 24)	/* end of packet */
-#define	NQTX_CMD_IFCS	(1U << 25)	/* insert FCS */
-#define	NQTX_CMD_RS	(1U << 27)	/* report status */
-#define	NQTX_CMD_DEXT	(1U << 29)	/* descriptor extension */
-#define	NQTX_CMD_VLE	(1U << 30)	/* VLAN enable */
-#define	NQTX_CMD_TSE	(1U << 31)	/* TCP segmentation enable */
+#define	NQTX_CMD_EOP	__BIT(24)	/* end of packet */
+#define	NQTX_CMD_IFCS	__BIT(25)	/* insert FCS */
+#define	NQTX_CMD_RS	__BIT(27)	/* report status */
+#define	NQTX_CMD_DEXT	__BIT(29)	/* descriptor extension */
+#define	NQTX_CMD_VLE	__BIT(30)	/* VLAN enable */
+#define	NQTX_CMD_TSE	__BIT(31)	/* TCP segmentation enable */
 
 /* Descriptor types (if DEXT is set) */
 #define	NQTX_DTYP_C	(2U << 20)	/* context */
@@ -1667,8 +1670,8 @@ typedef union nq_txdesc {
 #define NQTXD_FIELDS_PAYLEN_SHIFT	14	/* payload len shift */
 #define NQTXD_FIELDS_PAYLEN_MASK	0x3ffff
 
-#define NQTXD_FIELDS_IXSM		(1U << 8) /* do IP checksum */
-#define NQTXD_FIELDS_TUXSM		(1U << 9) /* do TCP/UDP checksum */
+#define NQTXD_FIELDS_IXSM		__BIT(8) /* do IP checksum */
+#define NQTXD_FIELDS_TUXSM		__BIT(9) /* do TCP/UDP checksum */
 
 #define NQTXC_VLLEN_IPLEN_SHIFT		0	/* IP header len */
 #define NQTXC_VLLEN_IPLEN_MASK		0x1ff
@@ -1679,10 +1682,11 @@ typedef union nq_txdesc {
 
 #define NQTXC_CMD_MKRLOC_SHIFT		0	/* IP checksum offset */
 #define NQTXC_CMD_MKRLOC_MASK		0x1ff
-#define NQTXC_CMD_SNAP			(1U << 9)
-#define NQTXC_CMD_IP4			(1U << 10)
-#define NQTXC_CMD_IP6			(0U << 10)
-#define NQTXC_CMD_TCP			(1U << 11)
+#define NQTXC_CMD_SNAP			__BIT(9)
+#define NQTXC_CMD_IPV_MASK		__BIT(10)
+#define NQTXC_CMD_IP4			__SHIFTIN(1, NQTXC_CMD_IPV_MASK)
+#define NQTXC_CMD_IP6			__SHIFTIN(0, NQTXC_CMD_IPV_MASK)
+#define NQTXC_CMD_TCP			__BIT(11)
 #define NQTXC_CMD_UDP			(0U << 11)
 #define NQTXC_MSSIDX_IDX_SHIFT		4	/* context index shift */
 #define NQTXC_MSSIDX_IDX_MASK		0xf
