@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.156 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: intr.c,v 1.157 2021/12/23 02:07:21 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.156 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.157 2021/12/23 02:07:21 yamaguchi Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -609,7 +609,7 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 		iv = idt_vec_ref(&ci->ci_idtvec);
 		idtvec = idt_vec_alloc(iv, APIC_LEVEL(level), IDT_INTR_HIGH);
 	}
-	if (idtvec == 0) {
+	if (idtvec < 0) {
 		evcnt_detach(&ci->ci_isources[slot]->is_evcnt);
 		ci->ci_isources[slot]->is_evname[0] = '\0';
 		ci->ci_isources[slot] = NULL;
@@ -1799,7 +1799,7 @@ intr_deactivate_xcall(void *arg1, void *arg2)
 
 	x86_intr_calculatemasks(ci);
 
-	if (idt_vec > 0 && idt_vec_is_pcpu()) {
+	if (idt_vec_is_pcpu()) {
 		idt_vec_free(&ci->ci_idtvec, idt_vec);
 	} else  {
 		/*
@@ -1898,7 +1898,7 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 
 	old_idtvec = isp->is_idtvec;
 
-	if (isp->is_idtvec > 0 && idt_vec_is_pcpu()) {
+	if (idt_vec_is_pcpu()) {
 		new_idtvec = idt_vec_alloc(&newci->ci_idtvec,
 		    APIC_LEVEL(ih->ih_level), IDT_INTR_HIGH);
 		if (new_idtvec == 0)
