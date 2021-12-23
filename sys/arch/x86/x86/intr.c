@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.158 2021/12/23 02:10:53 yamaguchi Exp $	*/
+/*	$NetBSD: intr.c,v 1.159 2021/12/23 02:45:43 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.158 2021/12/23 02:10:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.159 2021/12/23 02:45:43 yamaguchi Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -508,7 +508,6 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 	struct cpu_info *ci, *lci;
 	struct intrsource *isp;
 	int slot = 0, idtvec, error;
-	struct idt_vec *iv;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
@@ -606,6 +605,8 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 		 * are used by a device using MSI multiple vectors must be
 		 * continuous.
 		 */
+		struct idt_vec *iv;
+
 		iv = idt_vec_ref(&ci->ci_idtvec);
 		idtvec = idt_vec_alloc(iv, APIC_LEVEL(level), IDT_INTR_HIGH);
 	}
