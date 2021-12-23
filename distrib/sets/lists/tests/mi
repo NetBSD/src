@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1179 2021/12/20 19:48:05 rillig Exp $
+# $NetBSD: mi,v 1.1180 2021/12/23 11:05:58 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5829,6 +5829,8 @@
 ./usr/tests/usr.bin/make/unit-tests/opt-var-expanded.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-var-literal.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-var-literal.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-version.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-version.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-warnings-as-errors.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-warnings-as-errors.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-where-am-i.exp				tests-usr.bin-tests	compattestfile,atf
