@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.297 2021/12/22 21:45:02 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.298 2021/12/23 11:03:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.297 2021/12/22 21:45:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.298 2021/12/23 11:03:48 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -539,7 +539,7 @@ ehci_init(ehci_softc_t *sc)
 		err = EIO;
 		goto fail1;
 	}
-	err = usb_allocmem(sc->sc_bus.ub_dmatag,
+	err = usb_allocmem(sc->sc_dmatag,
 	    sc->sc_flsize * sizeof(ehci_link_t),
 	    EHCI_FLALIGN_ALIGN, USBMALLOC_COHERENT, &sc->sc_fldma);
 	if (err) {
@@ -553,9 +553,15 @@ ehci_init(ehci_softc_t *sc)
 		sc->sc_flist[i] = EHCI_NULL;
 	}
 
-	KASSERT(BUS_ADDR_HI32(DMAADDR(&sc->sc_fldma, 0)) == 0);
-	uint32_t lo32 = BUS_ADDR_LO32(DMAADDR(&sc->sc_fldma, 0));
+	const bus_addr_t flba = DMAADDR(&sc->sc_fldma, 0);
+	const uint32_t hi32 = BUS_ADDR_HI32(flba);
+	if (hi32 != 0) {
+		aprint_error_dev(sc->sc_dev, "DMA memory segment error (%08x)\n",
+		    hi32);
+		goto fail2;
+	}
 
+	const uint32_t lo32 = BUS_ADDR_LO32(flba);
 	EOWRITE4(sc, EHCI_PERIODICLISTBASE, lo32);
 
 	sc->sc_softitds = kmem_zalloc(sc->sc_flsize * sizeof(ehci_soft_itd_t *),
@@ -579,7 +585,7 @@ ehci_init(ehci_softc_t *sc)
 		sqh = ehci_alloc_sqh(sc);
 		if (sqh == NULL) {
 			err = ENOMEM;
-			goto fail2;
+			goto fail3;
 		}
 		sc->sc_islots[i].sqh = sqh;
 	}
@@ -622,7 +628,7 @@ ehci_init(ehci_softc_t *sc)
 	sqh = ehci_alloc_sqh(sc);
 	if (sqh == NULL) {
 		err = ENOMEM;
-		goto fail2;
+		goto fail3;
 	}
 	/* Fill the QH */
 	sqh->qh.qh_endp =
@@ -670,7 +676,7 @@ ehci_init(ehci_softc_t *sc)
 	if (hcr) {
 		aprint_error("%s: run timeout\n", device_xname(sc->sc_dev));
 		err = EIO;
-		goto fail3;
+		goto fail4;
 	}
 
 	/* Enable interrupts */
@@ -679,10 +685,10 @@ ehci_init(ehci_softc_t *sc)
 
 	return 0;
 
-fail3:
+fail4:
 	ehci_free_sqh(sc, sc->sc_async_head);
 
-fail2:
+fail3:
 	for (i = 0; i < EHCI_INTRQHS; i++) {
 		sqh = sc->sc_islots[i].sqh;
 		if (sqh)
@@ -690,6 +696,8 @@ fail2:
 	}
 
 	kmem_free(sc->sc_softitds, sc->sc_flsize * sizeof(ehci_soft_itd_t *));
+
+fail2:
 	usb_freemem(&sc->sc_fldma);
 
 fail1:
@@ -3210,7 +3218,7 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 		mutex_exit(&sc->sc_lock);
 
 		usb_dma_t dma;
-		int err = usb_allocmem(sc->sc_bus.ub_dmatag,
+		int err = usb_allocmem(sc->sc_dmatag,
 		    EHCI_SITD_SIZE * EHCI_SITD_CHUNK,
 		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
 
