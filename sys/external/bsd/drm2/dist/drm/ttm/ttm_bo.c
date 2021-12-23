@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.29 2021/12/19 12:40:44 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.30 2021/12/23 17:09:25 hannken Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.29 2021/12/19 12:40:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.30 2021/12/23 17:09:25 hannken Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -1838,8 +1838,8 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 		paddr_t start, end, pa;
 
 		KASSERTMSG((bo->mem.bus.base & (PAGE_SIZE - 1)) == 0,
-		    "bo bus base addr not page-aligned: %lx",
-		    bo->mem.bus.base);
+		    "bo bus base addr not page-aligned: %" PRIx64 "",
+		    (uint64_t)bo->mem.bus.base);
 		KASSERTMSG((bo->mem.bus.offset & (PAGE_SIZE - 1)) == 0,
 		    "bo bus offset not page-aligned: %lx",
 		    bo->mem.bus.offset);
