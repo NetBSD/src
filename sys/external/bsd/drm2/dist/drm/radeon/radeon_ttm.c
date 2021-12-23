@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.23 2021/12/19 12:23:58 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.24 2021/12/23 17:09:25 hannken Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.23 2021/12/19 12:23:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.24 2021/12/23 17:09:25 hannken Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/pagemap.h>
@@ -446,8 +446,8 @@ static int radeon_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_
 			mem->bus.base = rdev->mc.agp_base;
 			mem->bus.is_iomem = !rdev->ddev->agp->cant_use_aperture;
 			KASSERTMSG((mem->bus.base & (PAGE_SIZE - 1)) == 0,
-			    "agp aperture is not page-aligned: %lx",
-			    mem->bus.base);
+			    "agp aperture is not page-aligned: %" PRIx64 "",
+			    (uint64_t)mem->bus.base);
 			KASSERT((mem->bus.offset & (PAGE_SIZE - 1)) == 0);
 		}
 #endif
@@ -485,8 +485,8 @@ static int radeon_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_
 			rdev->ddev->hose->dense_mem_base;
 #endif
 		KASSERTMSG((mem->bus.base & (PAGE_SIZE - 1)) == 0,
-		    "mc aperture is not page-aligned: %lx",
-		    mem->bus.base);
+		    "mc aperture is not page-aligned: %" PRIx64 "",
+		    (uint64_t)mem->bus.base);
 		KASSERT((mem->bus.offset & (PAGE_SIZE - 1)) == 0);
 		break;
 	default:
