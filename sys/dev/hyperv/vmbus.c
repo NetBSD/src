@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.14 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.15 2021/12/23 04:06:51 yamaguchi Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.14 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.15 2021/12/23 04:06:51 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ static int	vmbus_alloc_dma(struct vmbus_softc *);
 static void	vmbus_free_dma(struct vmbus_softc *);
 static int	vmbus_init_interrupts(struct vmbus_softc *);
 static void	vmbus_deinit_interrupts(struct vmbus_softc *);
-static void	vmbus_init_synic(void *, void *);
-static void	vmbus_deinit_synic(void *, void *);
+static void	vmbus_init_interrupts_pcpu(void *, void *);
+static void	vmbus_deinit_interrupts_pcpu(void *, void *);
 
 static int	vmbus_connect(struct vmbus_softc *);
 static int	vmbus_cmd(struct vmbus_softc *, void *, size_t, void *, size_t,
@@ -313,8 +313,11 @@ static void
 vmbus_attach_deferred(device_t self)
 {
 	struct vmbus_softc *sc = device_private(self);
+	uint64_t xc;
 
-	xc_wait(xc_broadcast(0, vmbus_init_synic, sc, NULL));
+	xc = xc_broadcast(0, vmbus_init_interrupts_pcpu,
+	    sc, NULL);
+	xc_wait(xc);
 }
 
 int
@@ -404,6 +407,7 @@ vmbus_free_dma(struct vmbus_softc *sc)
 static int
 vmbus_init_interrupts(struct vmbus_softc *sc)
 {
+	uint64_t xc;
 
 	TAILQ_INIT(&sc->sc_reqs);
 	mutex_init(&sc->sc_req_lock, MUTEX_DEFAULT, IPL_NET);
@@ -420,14 +424,15 @@ vmbus_init_interrupts(struct vmbus_softc *sc)
 	if (sc->sc_msg_sih == NULL)
 		return -1;
 
-	vmbus_init_interrupts_md(sc);
-
 	kcpuset_create(&sc->sc_intr_cpuset, true);
 	if (cold) {
 		/* Initialize other CPUs later. */
-		vmbus_init_synic(sc, NULL);
-	} else
-		xc_wait(xc_broadcast(0, vmbus_init_synic, sc, NULL));
+		vmbus_init_interrupts_pcpu(sc, NULL);
+	} else {
+		xc = xc_broadcast(0, vmbus_init_interrupts_pcpu,
+		    sc, NULL);
+		xc_wait(xc);
+	}
 	atomic_or_32(&sc->sc_flags, VMBUS_SCFLAG_SYNIC);
 
 	return 0;
@@ -436,14 +441,16 @@ vmbus_init_interrupts(struct vmbus_softc *sc)
 static void
 vmbus_deinit_interrupts(struct vmbus_softc *sc)
 {
+	uint64_t xc;
 
-	if (ISSET(sc->sc_flags, VMBUS_SCFLAG_SYNIC)) {
-		if (cold)
-			vmbus_deinit_synic(sc, NULL);
-		else
-			xc_wait(xc_broadcast(0, vmbus_deinit_synic, sc, NULL));
-		atomic_and_32(&sc->sc_flags, (uint32_t)~VMBUS_SCFLAG_SYNIC);
+	if (cold) {
+		vmbus_deinit_interrupts_pcpu(sc, NULL);
+	} else {
+		xc = xc_broadcast(0, vmbus_deinit_interrupts_pcpu,
+		    sc, NULL);
+		xc_wait(xc);
 	}
+	atomic_and_32(&sc->sc_flags, (uint32_t)~VMBUS_SCFLAG_SYNIC);
 
 	/* XXX event_tq */
 
@@ -451,12 +458,10 @@ vmbus_deinit_interrupts(struct vmbus_softc *sc)
 		softint_disestablish(sc->sc_msg_sih);
 		sc->sc_msg_sih = NULL;
 	}
-
-	vmbus_deinit_interrupts_md(sc);
 }
 
 static void
-vmbus_init_synic(void *arg1, void *arg2)
+vmbus_init_interrupts_pcpu(void *arg1, void *arg2 __unused)
 {
 	struct vmbus_softc *sc = arg1;
 	cpuid_t cpu;
@@ -467,6 +472,7 @@ vmbus_init_synic(void *arg1, void *arg2)
 	cpu = cpu_index(curcpu());
 	if (!kcpuset_isset(sc->sc_intr_cpuset, cpu)) {
 		kcpuset_atomic_set(sc->sc_intr_cpuset, cpu);
+		vmbus_init_interrupts_md(sc, cpu);
 		vmbus_init_synic_md(sc, cpu);
 	}
 
@@ -474,7 +480,7 @@ vmbus_init_synic(void *arg1, void *arg2)
 }
 
 static void
-vmbus_deinit_synic(void *arg1, void *arg2)
+vmbus_deinit_interrupts_pcpu(void *arg1, void *arg2 __unused)
 {
 	struct vmbus_softc *sc = arg1;
 	cpuid_t cpu;
@@ -484,7 +490,9 @@ vmbus_deinit_synic(void *arg1, void *arg2)
 
 	cpu = cpu_index(curcpu());
 	if (kcpuset_isset(sc->sc_intr_cpuset, cpu)) {
-		vmbus_deinit_synic_md(sc, cpu);
+		if (ISSET(sc->sc_flags, VMBUS_SCFLAG_SYNIC))
+			vmbus_deinit_synic_md(sc, cpu);
+		vmbus_deinit_interrupts_md(sc, cpu);
 		kcpuset_atomic_clear(sc->sc_intr_cpuset, cpu);
 	}
 
