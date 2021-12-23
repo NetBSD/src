@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic.c,v 1.12 2021/12/19 11:34:44 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic.c,v 1.13 2021/12/23 17:11:41 hannken Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.12 2021/12/19 11:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.13 2021/12/23 17:11:41 hannken Exp $");
 
 #include <linux/sync_file.h>
 
@@ -416,6 +416,7 @@ static int drm_atomic_connector_check(struct drm_connector *connector,
 	struct drm_writeback_job *writeback_job = state->writeback_job;
 	const struct drm_display_info *info = &connector->display_info;
 
+	crtc_state = NULL; /* GCC */
 	state->max_bpc = info->bpc ? info->bpc : 8;
 	if (connector->max_bpc_property)
 		state->max_bpc = min(state->max_bpc, state->max_requested_bpc);
