@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.157 2021/12/23 02:07:21 yamaguchi Exp $	*/
+/*	$NetBSD: intr.c,v 1.158 2021/12/23 02:10:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.157 2021/12/23 02:07:21 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.158 2021/12/23 02:10:53 yamaguchi Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1801,7 +1801,7 @@ intr_deactivate_xcall(void *arg1, void *arg2)
 
 	if (idt_vec_is_pcpu()) {
 		idt_vec_free(&ci->ci_idtvec, idt_vec);
-	} else  {
+	} else {
 		/*
 		 * Skip unsetgate(), because the same idt[] entry is
 		 * overwritten in intr_activate_xcall().
