@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervvar.h,v 1.4 2019/12/10 12:20:20 nonaka Exp $	*/
+/*	$NetBSD: hypervvar.h,v 1.5 2021/12/23 04:06:51 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -68,8 +68,8 @@ void	hyperv_intr(void);
 uint32_t hyperv_get_vcpuid(cpuid_t);
 
 struct vmbus_softc;
-void	vmbus_init_interrupts_md(struct vmbus_softc *);
-void	vmbus_deinit_interrupts_md(struct vmbus_softc *);
+void	vmbus_init_interrupts_md(struct vmbus_softc *, cpuid_t);
+void	vmbus_deinit_interrupts_md(struct vmbus_softc *, cpuid_t);
 void	vmbus_init_synic_md(struct vmbus_softc *, cpuid_t);
 void	vmbus_deinit_synic_md(struct vmbus_softc *, cpuid_t);
 
