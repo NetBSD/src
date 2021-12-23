@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.427 2021/12/20 20:33:20 christos Exp $
+#	$NetBSD: bsd.README,v 1.428 2021/12/23 20:08:07 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -635,7 +635,7 @@ LDADD.lib<lib>
 CPPFLAGS.lib<lib>
 CXXFLAGS.lib<lib>
 COPTS.<prog>
-OBJCCOPTS.<prog>
+OBJCOPTS.<prog>
 LDADD.<prog>
 CPPFLAGS.<prog>
 CXXFLAGS.<prog>	These provide a way to specify additions to the associated
