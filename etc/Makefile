@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.454 2021/12/20 20:20:35 christos Exp $
+#	$NetBSD: Makefile,v 1.455 2021/12/23 14:50:59 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -590,6 +590,7 @@ build_kernels: .PHONY
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} ${CONFIGOPTS} -s ${KERNSRCDIR} \
+	    ${MKDEBUGKERNEL == "yes" :? -DDEBUG=-g :} \
 	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
 	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} distclean
@@ -622,6 +623,9 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 				kernels="$${kernels} $${ks}"; \
 				[ -z "$${newest}" -o $${ks} \
 				    -nt "$${newest}" ] && newest=$${ks}; \
+				[ ${MKDEBUGKERNEL} = "no" -o \
+				     ! -f $${ks}.gdb ]  continue; \
+				kernels="$${kernels} $${ks}.gdb"; \
 			done; \
 		done; \
 		[ $${kern_tgz} -nt "$${newest}" ] || { \
