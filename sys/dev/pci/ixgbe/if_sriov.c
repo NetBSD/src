@@ -1,4 +1,4 @@
-/* $NetBSD: if_sriov.c,v 1.14 2021/12/10 11:39:48 msaitoh Exp $ */
+/* $NetBSD: if_sriov.c,v 1.15 2021/12/24 04:59:23 msaitoh Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -34,7 +34,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.14 2021/12/10 11:39:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.15 2021/12/24 04:59:23 msaitoh Exp $");
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
@@ -106,14 +106,14 @@ static inline void
 ixgbe_send_vf_ack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
 {
 	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_ACK);
+	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_SUCCESS);
 }
 
 static inline void
 ixgbe_send_vf_nack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
 {
 	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_NACK);
+	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_FAILURE);
 }
 
 static inline void
@@ -378,9 +378,9 @@ ixgbe_vf_reset_msg(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
 	if (ixgbe_validate_mac_addr(vf->ether_addr) == 0) {
 		ixgbe_set_rar(&adapter->hw, vf->rar_index, vf->ether_addr,
 		    vf->pool, TRUE);
-		ack = IXGBE_VT_MSGTYPE_ACK;
+		ack = IXGBE_VT_MSGTYPE_SUCCESS;
 	} else
-		ack = IXGBE_VT_MSGTYPE_NACK;
+		ack = IXGBE_VT_MSGTYPE_FAILURE;
 
 	ixgbe_vf_enable_transmit(adapter, vf);
 	ixgbe_vf_enable_receive(adapter, vf);
@@ -572,7 +572,7 @@ ixgbe_vf_get_queues(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
 		return;
 	}
 
-	resp[0] = IXGBE_VF_GET_QUEUES | IXGBE_VT_MSGTYPE_ACK |
+	resp[0] = IXGBE_VF_GET_QUEUES | IXGBE_VT_MSGTYPE_SUCCESS |
 	    IXGBE_VT_MSGTYPE_CTS;
 
 	num_queues = ixgbe_vf_queues(adapter->iov_mode);
