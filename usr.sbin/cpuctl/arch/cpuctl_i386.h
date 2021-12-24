@@ -1,4 +1,4 @@
-/*      $NetBSD: cpuctl_i386.h,v 1.2.28.1 2020/08/05 15:48:53 martin Exp $      */
+/*      $NetBSD: cpuctl_i386.h,v 1.2.28.2 2021/12/24 13:02:24 martin Exp $      */
 
 #include <machine/specialreg.h>
 #include <x86/cputypes.h>
@@ -45,6 +45,7 @@ extern int cpu_vendor;
 
 /* For x86/x86/identcpu_subr.c */
 uint64_t cpu_tsc_freq_cpuid(struct cpu_info *);
+void	cpu_dcp_cacheinfo(struct cpu_info *, uint32_t);
 
 /* Interfaces to code in i386-asm.S */
 

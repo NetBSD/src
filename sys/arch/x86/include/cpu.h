@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71.2.9 2020/08/05 16:20:08 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.71.2.10 2021/12/24 13:02:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -453,6 +453,7 @@ void	identify_hypervisor(void);
 
 /* identcpu_subr.c */
 uint64_t cpu_tsc_freq_cpuid(struct cpu_info *);
+void	cpu_dcp_cacheinfo(struct cpu_info *, uint32_t);
 
 typedef enum vm_guest {
 	VM_GUEST_NO = 0,
