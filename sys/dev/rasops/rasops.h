@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.49 2019/11/02 01:14:57 tsutsui Exp $ */
+/* 	$NetBSD: rasops.h,v 1.50 2021/12/24 18:12:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,6 +70,10 @@
  * use alpha fonts
  */ 
 #define RI_PREFER_ALPHA	0x4000
+/*
+ * Set this to prefer a wider font.
+ */
+#define RI_PREFER_WIDEFONT	0x8000
 
 struct rasops_info {
 	/* These must be filled in by the caller */

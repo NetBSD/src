@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.76 2021/11/20 08:16:30 rin Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.77 2021/12/24 18:12:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.76 2021/11/20 08:16:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.77 2021/12/24 18:12:58 jmcneill Exp $");
 
 #include "opt_wsfont.h"
 
@@ -610,10 +610,17 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 			if (font->fontwidth != width)
 				return (0);
 		} else {
-			if (font->fontwidth > width)
-				score -= 10000 + uimin(font->fontwidth - width, 9999);
-			else
+			if (font->fontwidth > width) {
+				score -= uimin(font->fontwidth - width, 9999);
+				if ((flags & WSFONT_PREFER_WIDE) == 0) {
+					score -= 10000;
+				}
+			} else {
 				score -= uimin(width - font->fontwidth, 9999);
+				if ((flags & WSFONT_PREFER_WIDE) != 0) {
+					score -= 10000;
+				}
+			}
 		}
 	}
 
