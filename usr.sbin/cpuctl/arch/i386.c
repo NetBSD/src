@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.104.2.8 2021/12/08 15:44:16 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.104.2.9 2021/12/24 12:58:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.104.2.8 2021/12/08 15:44:16 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.104.2.9 2021/12/24 12:58:14 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -178,7 +178,6 @@ static void	powernow_probe(struct cpu_info *);
 static void	intel_family_new_probe(struct cpu_info *);
 static void	via_cpu_probe(struct cpu_info *);
 /* (Cache) Info functions */
-static void	cpu_dcp_cacheinfo(struct cpu_info *, uint32_t);
 static void	intel_cpu_cacheinfo(struct cpu_info *);
 static void	amd_cpu_cacheinfo(struct cpu_info *);
 static void	via_cpu_cacheinfo(struct cpu_info *);
@@ -190,8 +189,6 @@ static void	cpu_probe_hv_features(struct cpu_info *, const char *);
 static void	cpu_probe_features(struct cpu_info *);
 static void	print_bits(const char *, const char *, const char *, uint32_t);
 static void	identifycpu_cpuids(struct cpu_info *);
-static const struct x86_cache_info *cache_info_lookup(
-    const struct x86_cache_info *, uint8_t);
 static const char *print_cache_config(struct cpu_info *, int, const char *,
     const char *);
 static const char *print_tlb_config(struct cpu_info *, int, const char *,
@@ -956,69 +953,6 @@ amd_family6_probe(struct cpu_info *ci)
 		}
 }
 
-/*
- * Get cache info from one of the following:
- *	Intel Deterministic Cache Parameter Leaf (0x04)
- *	AMD Cache Topology Information Leaf (0x8000001d)
- */
-static void
-cpu_dcp_cacheinfo(struct cpu_info *ci, uint32_t leaf)
-{
-	u_int descs[4];
-	int type, level, ways, partitions, linesize, sets, totalsize;
-	int caitype = -1;
-	int i;
-
-	for (i = 0; ; i++) {
-		x86_cpuid2(leaf, i, descs);
-		type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
-		if (type == CPUID_DCP_CACHETYPE_N)
-			break;
-		level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
-		switch (level) {
-		case 1:
-			if (type == CPUID_DCP_CACHETYPE_I)
-				caitype = CAI_ICACHE;
-			else if (type == CPUID_DCP_CACHETYPE_D)
-				caitype = CAI_DCACHE;
-			else
-				caitype = -1;
-			break;
-		case 2:
-			if (type == CPUID_DCP_CACHETYPE_U)
-				caitype = CAI_L2CACHE;
-			else
-				caitype = -1;
-			break;
-		case 3:
-			if (type == CPUID_DCP_CACHETYPE_U)
-				caitype = CAI_L3CACHE;
-			else
-				caitype = -1;
-			break;
-		default:
-			caitype = -1;
-			break;
-		}
-		if (caitype == -1) {
-			aprint_error_dev(ci->ci_dev,
-			    "error: unknown cache level&type (%d & %d)\n",
-			    level, type);
-			continue;
-		}
-		ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
-		partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
-		    + 1;
-		linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
-		    + 1;
-		sets = descs[2] + 1;
-		totalsize = ways * partitions * linesize * sets;
-		ci->ci_cinfo[caitype].cai_totalsize = totalsize;
-		ci->ci_cinfo[caitype].cai_associativity = ways;
-		ci->ci_cinfo[caitype].cai_linesize = linesize;
-	}
-}
-
 static void
 intel_cpu_cacheinfo(struct cpu_info *ci)
 {
@@ -1057,8 +991,8 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 				desc = (descs[i] >> (j * 8)) & 0xff;
 				if (desc == 0)
 					continue;
-				cai = cache_info_lookup(intel_cpuid_cache_info,
-				    desc);
+				cai = cpu_cacheinfo_lookup(
+					intel_cpuid_cache_info, desc);
 				if (cai != NULL)
 					ci->ci_cinfo[cai->cai_index] = *cai;
 				else if ((verbose != 0) && (desc != 0xff)
@@ -1141,24 +1075,35 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 			else if (type == CPUID_DATP_TCTYPE_D)
 				caitype = CAI_L2_DTLB;
 			else if (type == CPUID_DATP_TCTYPE_U) {
-				switch (pgsize) {
-				case CPUID_DATP_PGSIZE_4KB:
+				if (pgsize == CPUID_DATP_PGSIZE_4KB)
 					caitype = CAI_L2_STLB;
-					break;
-				case CPUID_DATP_PGSIZE_4KB
-				    | CPUID_DATP_PGSIZE_2MB:
+				else if (pgsize == (CPUID_DATP_PGSIZE_4KB
+					| CPUID_DATP_PGSIZE_2MB))
 					caitype = CAI_L2_STLB2;
-					break;
-				case CPUID_DATP_PGSIZE_2MB
-				    | CPUID_DATP_PGSIZE_4MB:
+				else if (pgsize == (CPUID_DATP_PGSIZE_2MB
+					| CPUID_DATP_PGSIZE_4MB))
 					caitype = CAI_L2_STLB3;
-					break;
-				default:
-					aprint_error_dev(ci->ci_dev,
-					    "error: unknown L2 STLB size (%d)\n",
+				else if ((pgsize & CPUID_DATP_PGSIZE_1GB)
+				    != 0) {
+					/* FIXME: 1GB max TLB */
+					caitype = CAI_L2_STLB3;
+					linesize = 1024 * 1024 * 1024;
+				} else if ((pgsize & CPUID_DATP_PGSIZE_4MB)
+				    != 0) {
+					/* FIXME: 4MB max TLB */
+					caitype = CAI_L2_STLB3;
+					linesize = 4 * 1024 * 1024;
+				} else if ((pgsize & CPUID_DATP_PGSIZE_2MB)
+				    != 0) {
+					/* FIXME: 2MB max TLB */
+					caitype = CAI_L2_STLB2;
+					linesize = 2 * 1024 * 1024;
+				} else {
+					aprint_error_dev(ci->ci_dev, "error: "
+					    "unknown L2 STLB size (%d)\n",
 					    pgsize);
-					caitype = CAI_DTLB;
-					break;
+					caitype = CAI_L2_STLB;
+					linesize = 4 * 1024;
 				}
 			} else
 				caitype = -1;
@@ -1190,15 +1135,19 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 		case CPUID_DATP_PGSIZE_1GB:
 			linesize = 1024 * 1024 * 1024;
 			break;
-		case CPUID_DATP_PGSIZE_2MB | CPUID_DATP_PGSIZE_4MB:
-			aprint_error_dev(ci->ci_dev,
-			    "WARINING: Currently 2M/4M info can't print correctly\n");
-			linesize = 4 * 1024 * 1024;
-			break;
 		default:
-			aprint_error_dev(ci->ci_dev,
-			    "error: Unknown size combination\n");
-			linesize = 4 * 1024;
+			if ((pgsize & CPUID_DATP_PGSIZE_1GB) != 0)
+				linesize = 1024 * 1024 * 1024; /* MAX 1G */
+			else if ((pgsize & CPUID_DATP_PGSIZE_4MB) != 0)
+				linesize = 4 * 1024 * 1024; /* MAX 4M */
+			else if ((pgsize & CPUID_DATP_PGSIZE_2MB) != 0)
+				linesize = 2 * 1024 * 1024; /* MAX 2M */
+			else
+				linesize = 4 * 1024;	/* XXX default to 4K */
+			aprint_error_dev(ci->ci_dev, "WARNING: Currently "
+			    "this info can't print correctly "
+			    "(level = %d, pgsize = %d)\n",
+			    level, pgsize);
 			break;
 		}
 		ways = __SHIFTOUT(descs[1], CPUID_DATP_WAYS);
@@ -1280,7 +1229,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L2_EBX_IUTLB_ENTRIES(descs[1]);
 	cai->cai_associativity = AMD_L2_EBX_IUTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (4 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -1291,7 +1240,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L2_EAX_IUTLB_ENTRIES(descs[0]);
 	cai->cai_associativity = AMD_L2_EAX_IUTLB_ASSOC(descs[0]);
 	cai->cai_linesize = largepagesize;
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -1302,7 +1251,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L2_EBX_DTLB_ENTRIES(descs[1]);
 	cai->cai_associativity = AMD_L2_EBX_DTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (4 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -1313,7 +1262,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L2_EAX_DTLB_ENTRIES(descs[0]);
 	cai->cai_associativity = AMD_L2_EAX_DTLB_ASSOC(descs[0]);
 	cai->cai_linesize = largepagesize;
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -1325,7 +1274,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
 	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
 
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -1339,7 +1288,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
 		cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
 
-		cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+		cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 		    cai->cai_associativity);
 		if (cp != NULL)
 			cai->cai_associativity = cp->cai_associativity;
@@ -1357,7 +1306,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L1_1GB_EAX_IUTLB_ENTRIES(descs[0]);
 	cai->cai_associativity = AMD_L1_1GB_EAX_IUTLB_ASSOC(descs[0]);
 	cai->cai_linesize = (1024 * 1024 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -1368,7 +1317,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L1_1GB_EAX_DTLB_ENTRIES(descs[0]);
 	cai->cai_associativity = AMD_L1_1GB_EAX_DTLB_ASSOC(descs[0]);
 	cai->cai_linesize = (1024 * 1024 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -1379,7 +1328,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[1]);
 	cai->cai_associativity = AMD_L2_1GB_EBX_IUTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (1024 * 1024 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -1390,7 +1339,7 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_totalsize = AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]);
 	cai->cai_associativity = AMD_L2_1GB_EBX_DUTLB_ASSOC(descs[1]);
 	cai->cai_linesize = (1024 * 1024 * 1024);
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -2353,19 +2302,6 @@ identifycpu(int fd, const char *cpuname)
 		    ucvers.intel1.ucodeversion, ucvers.intel1.platformid);
 }
 
-static const struct x86_cache_info *
-cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
-{
-	int i;
-
-	for (i = 0; cai[i].cai_desc != 0; i++) {
-		if (cai[i].cai_desc == desc)
-			return (&cai[i]);
-	}
-
-	return (NULL);
-}
-
 static const char *
 print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
     const char *sep)
@@ -2421,7 +2357,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 		aprint_verbose_dev(ci->ci_dev, "");
 	else
 		aprint_verbose("%s", sep);
-	if (name != NULL)
+	if ((name != NULL) && (sep == NULL))
 		aprint_verbose("%s ", name);
 
 	if (cai->cai_string != NULL) {
@@ -2456,18 +2392,18 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 
 	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
 	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
-		sep = print_cache_config(ci, CAI_ICACHE, "I-cache", NULL);
-		sep = print_cache_config(ci, CAI_DCACHE, "D-cache", sep);
+		sep = print_cache_config(ci, CAI_ICACHE, "I-cache:", NULL);
+		sep = print_cache_config(ci, CAI_DCACHE, "D-cache:", sep);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
 	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize != 0) {
-		sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache", NULL);
+		sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache:", NULL);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
 	if (ci->ci_cinfo[CAI_L3CACHE].cai_totalsize != 0) {
-		sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache", NULL);
+		sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache:", NULL);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
@@ -2477,61 +2413,36 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
-	if (ci->ci_cinfo[CAI_ITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
-		sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_DTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_DTLB, "DTLB", NULL);
-		sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_ITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_ITLB, "L2 ITLB", NULL);
-		sep = print_tlb_config(ci, CAI_L2_ITLB2, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_DTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_DTLB, "L2 DTLB", NULL);
-		sep = print_tlb_config(ci, CAI_L2_DTLB2, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_STLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_STLB, "L2 STLB", NULL);
-		sep = print_tlb_config(ci, CAI_L2_STLB2, NULL, sep);
-		sep = print_tlb_config(ci, CAI_L2_STLB3, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L1_1GBITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L1_1GBITLB, "L1 1GB page ITLB",
-		    NULL);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L1_1GBDTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "L1 1GB page DTLB",
-		    NULL);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_1GBITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 1GB page ITLB",
-		    NULL);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_1GBDTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 1GB page DTLB",
-		    NULL);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
+
+	sep = print_tlb_config(ci, CAI_ITLB, "ITLB:", NULL);
+	sep = print_tlb_config(ci, CAI_ITLB2, "ITLB:", sep);
+	sep = print_tlb_config(ci, CAI_L1_1GBITLB, "ITLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_DTLB, "DTLB:", NULL);
+	sep = print_tlb_config(ci, CAI_DTLB2, "DTLB:", sep);
+	sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "DTLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L2_ITLB, "L2 ITLB:", NULL);
+	sep = print_tlb_config(ci, CAI_L2_ITLB2, "L2 ITLB:", sep);
+	sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 ITLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L2_DTLB, "L2 DTLB:", NULL);
+	sep = print_tlb_config(ci, CAI_L2_DTLB2, "L2 DTLB:", sep);
+	sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 DTLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L2_STLB, "L2 STLB:", NULL);
+	sep = print_tlb_config(ci, CAI_L2_STLB2, "L2 STLB:", sep);
+	sep = print_tlb_config(ci, CAI_L2_STLB3, "L2 STLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
 }
 
 static void
