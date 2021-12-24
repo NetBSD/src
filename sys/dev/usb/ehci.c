@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.298 2021/12/23 11:03:48 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.299 2021/12/24 22:56:55 nia Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.298 2021/12/23 11:03:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.299 2021/12/24 22:56:55 nia Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4414,12 +4414,16 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 		    EHCI_SITD_SET_LEN(xfer->ux_frlengths[i]));
 
 		/* Set page0 index and offset - TP and T-offset are set below */
-		sitd->sitd.sitd_buffer[0] = htole32(DMAADDR(dma_buf, offs));
+		const bus_addr_t sba = DMAADDR(dma_buf, offs);
+		sitd->sitd.sitd_buffer[0] = htole32(BUS_ADDR_LO32(sba));
+		sitd->sitd.sitd_buffer_hi[0] = htole32(BUS_ADDR_HI32(sba));
 
 		offs += xfer->ux_frlengths[i];
 
+		const bus_addr_t eba = DMAADDR(dma_buf, offs - 1);
 		sitd->sitd.sitd_buffer[1] =
-		    htole32(EHCI_SITD_SET_BPTR(DMAADDR(dma_buf, offs - 1)));
+		    htole32(EHCI_SITD_SET_BPTR(BUS_ADDR_LO32(eba)));
+		sitd->sitd.sitd_buffer_hi[1] = htole32(BUS_ADDR_HI32(eba));
 
 		u_int huba __diagused = dev->ud_myhsport->up_parent->ud_addr;
 
