@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_mbx.h,v 1.14 2019/06/27 05:55:40 msaitoh Exp $ */
+/* $NetBSD: ixgbe_mbx.h,v 1.15 2021/12/24 04:56:34 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -40,8 +40,37 @@
 
 #include "ixgbe_type.h"
 
+struct ixgbe_mbx_operations {
+	void (*init_params)(struct ixgbe_hw *hw);
+	s32  (*read)(struct ixgbe_hw *, u32 *, u16,  u16);
+	s32  (*write)(struct ixgbe_hw *, u32 *, u16, u16);
+	s32  (*read_posted)(struct ixgbe_hw *, u32 *, u16,  u16);
+	s32  (*write_posted)(struct ixgbe_hw *, u32 *, u16, u16);
+	s32  (*check_for_msg)(struct ixgbe_hw *, u16);
+	s32  (*check_for_ack)(struct ixgbe_hw *, u16);
+	s32  (*check_for_rst)(struct ixgbe_hw *, u16);
+	s32  (*clear)(struct ixgbe_hw *hw, u16 vf_number);
+};
+
+struct ixgbe_mbx_stats {
+	struct evcnt msgs_tx;
+	struct evcnt msgs_rx;
+
+	struct evcnt acks;
+	struct evcnt reqs;
+	struct evcnt rsts;
+};
+
+struct ixgbe_mbx_info {
+	struct ixgbe_mbx_operations ops;
+	struct ixgbe_mbx_stats stats;
+	u32 timeout;
+	u32 usec_delay;
+	u32 v2p_mailbox;
+	u16 size;
+};
+
 #define IXGBE_VFMAILBOX_SIZE	16 /* 16 32 bit words - 64 bytes */
-#define IXGBE_ERR_MBX		-100
 
 #define IXGBE_VFMAILBOX		0x002FC
 #define IXGBE_VFMBMEM		0x00200
