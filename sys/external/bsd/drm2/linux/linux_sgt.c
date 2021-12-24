@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sgt.c,v 1.3 2021/12/19 12:10:42 riastradh Exp $	*/
+/*	$NetBSD: linux_sgt.c,v 1.4 2021/12/24 15:08:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sgt.c,v 1.3 2021/12/19 12:10:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sgt.c,v 1.4 2021/12/24 15:08:31 riastradh Exp $");
 
 #include <sys/bus.h>
 #include <sys/errno.h>
@@ -153,6 +153,7 @@ dma_map_sg_attrs(bus_dma_tag_t dmat, struct scatterlist *sg, int nents,
 	int ret, error = 0;
 
 	KASSERT(sg->sg_dmamap == NULL);
+	KASSERT(sg->sg_npgs);
 	KASSERT(nents >= 1);
 
 	switch (dir) {
@@ -212,6 +213,8 @@ void
 dma_unmap_sg_attrs(bus_dma_tag_t dmat, struct scatterlist *sg, int nents,
     int dir, int attrs)
 {
+
+	KASSERT(sg->sg_dmat == dmat);
 
 	bus_dmamap_unload(dmat, sg->sg_dmamap);
 	bus_dmamap_destroy(dmat, sg->sg_dmamap);
