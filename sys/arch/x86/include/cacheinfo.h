@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.22.10.4 2019/08/16 15:36:17 martin Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.22.10.5 2021/12/24 13:02:25 martin Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -222,39 +222,39 @@ __CI_TBL(CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024, NULL), \
 __CI_TBL(CAI_DTLB2,    0x05,    4, 32, 4 * 1024 * 1024, NULL), \
 __CI_TBL(CAI_ITLB2,    0x0b,    4,  4, 4 * 1024 * 1024, NULL), \
 __CI_TBL(CAI_ITLB,     0x4f, 0xff, 32,        4 * 1024, NULL), \
-__CI_TBL(CAI_ITLB,     0x50, 0xff, 64,        4 * 1024, "4K/4M: 64 entries"), \
-__CI_TBL(CAI_ITLB,     0x51, 0xff, 64,        4 * 1024, "4K/4M: 128 entries"),\
-__CI_TBL(CAI_ITLB,     0x52, 0xff, 64,        4 * 1024, "4K/4M: 256 entries"),\
-__CI_TBL(CAI_ITLB2,    0x55, 0xff, 64,        4 * 1024, "2M/4M: 7 entries"), \
+__CI_TBL(CAI_ITLB,     0x50, 0xff, 64,        4 * 1024, "64 4K/4M entries"), \
+__CI_TBL(CAI_ITLB,     0x51, 0xff, 64,        4 * 1024, "128 4K/4M entries"),\
+__CI_TBL(CAI_ITLB,     0x52, 0xff, 64,        4 * 1024, "256 4K/4M entries"),\
+__CI_TBL(CAI_ITLB2,    0x55, 0xff, 64,        4 * 1024, "7 2M/4M entries"), \
 __CI_TBL(CAI_DTLB2,    0x56,    4, 16, 4 * 1024 * 1024, NULL), \
 __CI_TBL(CAI_DTLB,     0x57,    4, 16,        4 * 1024, NULL), \
 __CI_TBL(CAI_DTLB,     0x59, 0xff, 16,        4 * 1024, NULL), \
-__CI_TBL(CAI_DTLB2,    0x5a, 0xff, 64,        4 * 1024, "2M/4M: 32 entries (L0)"), \
-__CI_TBL(CAI_DTLB,     0x5b, 0xff, 64,        4 * 1024, "4K/4M: 64 entries"), \
-__CI_TBL(CAI_DTLB,     0x5c, 0xff, 64,        4 * 1024, "4K/4M: 128 entries"),\
-__CI_TBL(CAI_DTLB,     0x5d, 0xff, 64,        4 * 1024, "4K/4M: 256 entries"),\
+__CI_TBL(CAI_DTLB2,    0x5a, 0xff, 64,        4 * 1024, "32 2M/4M entries (L0)"), \
+__CI_TBL(CAI_DTLB,     0x5b, 0xff, 64,        4 * 1024, "64 4K/4M entries"), \
+__CI_TBL(CAI_DTLB,     0x5c, 0xff, 64,        4 * 1024, "128 4K/4M entries"),\
+__CI_TBL(CAI_DTLB,     0x5d, 0xff, 64,        4 * 1024, "256 4K/4M entries"),\
 __CI_TBL(CAI_ITLB,     0x61, 0xff, 48,        4 * 1024, NULL), \
 __CI_TBL(CAI_L1_1GBDTLB,0x63,   4,  4,1024*1024 * 1024, NULL), \
 __CI_TBL(CAI_DTLB,     0x64,    4,512,        4 * 1024, NULL), \
 __CI_TBL(CAI_ITLB,     0x6a,    8, 64,        4 * 1024, NULL), \
 __CI_TBL(CAI_DTLB,     0x6b,    8,256,        4 * 1024, NULL), \
-__CI_TBL(CAI_L2_DTLB2, 0x6c,    8,128,               0, "2M/4M: 128 entries"),\
+__CI_TBL(CAI_L2_DTLB2, 0x6c,    8,128,               0, "128 2M/4M entries"),\
 __CI_TBL(CAI_L1_1GBDTLB,0x6d,0xff, 16,1024*1024 * 1024, NULL), \
-__CI_TBL(CAI_ITLB2,    0x76, 0xff,  8, 4 * 1024 * 1024, "2M/4M: 8 entries"), \
+__CI_TBL(CAI_ITLB2,    0x76, 0xff,  8, 4 * 1024 * 1024, "8 2M/4M entries"), \
 __CI_TBL(CAI_DTLB,     0xa0, 0xff, 32,        4 * 1024, NULL), \
 __CI_TBL(CAI_ITLB,     0xb0,    4,128,        4 * 1024, NULL), \
-__CI_TBL(CAI_ITLB2,    0xb1,    4, 64,               0, "8 2M/4 4M entries"), \
+__CI_TBL(CAI_ITLB2,    0xb1,    4, 64,               0, "8 2M & 4 4M entries"), \
 __CI_TBL(CAI_ITLB,     0xb2,    4, 64,        4 * 1024, NULL), \
 __CI_TBL(CAI_DTLB,     0xb3,    4,128,        4 * 1024, NULL), \
 __CI_TBL(CAI_DTLB,     0xb4,    4,256,        4 * 1024, NULL), \
 __CI_TBL(CAI_ITLB,     0xb5,    8, 64,        4 * 1024, NULL), \
 __CI_TBL(CAI_ITLB,     0xb6,    8,128,        4 * 1024, NULL), \
 __CI_TBL(CAI_DTLB,     0xba,    4, 64,        4 * 1024, NULL), \
-__CI_TBL(CAI_DTLB2,    0xc0,    4,  8,        4 * 1024, "4K/4M: 8 entries"), \
-__CI_TBL(CAI_L2_STLB2, 0xc1,    8,1024,       4 * 1024, "4K/2M: 1024 entries"), \
-__CI_TBL(CAI_DTLB2,    0xc2,    4, 16,        4 * 1024, "4K/2M: 16 entries"), \
+__CI_TBL(CAI_DTLB2,    0xc0,    4,  8,        4 * 1024, "8 4K/4M entries"), \
+__CI_TBL(CAI_L2_STLB2, 0xc1,    8,1024,       4 * 1024, "1024 4K/2M entries"), \
+__CI_TBL(CAI_DTLB2,    0xc2,    4, 16,        4 * 1024, "16 4K/2M entries"), \
 __CI_TBL(CAI_L2_STLB,  0xc3,    6,1536,       4 * 1024, NULL), \
-__CI_TBL(CAI_DTLB2,    0xc4,    4, 32,        4 * 1024, "2M/4M: 32 entries"), \
+__CI_TBL(CAI_DTLB2,    0xc4,    4, 32,        4 * 1024, "32 2M/4M entries"), \
 __CI_TBL(CAI_L2_STLB,  0xca,    4,512,        4 * 1024, NULL), \
 __CI_TBL(CAI_ICACHE,   0x06,    4,        8 * 1024, 32, NULL), \
 __CI_TBL(CAI_ICACHE,   0x08,    4,       16 * 1024, 32, NULL), \
@@ -356,5 +356,8 @@ __CI_TBL(0, 0x0e,  128, 0, 0, NULL), \
 __CI_TBL(0, 0x0f, 0xff, 0, 0, NULL), \
 __CI_TBL(0, 0x00,    0, 0, 0, NULL)  \
 }
+
+const struct x86_cache_info *cpu_cacheinfo_lookup(
+	const struct x86_cache_info *, uint8_t);
 
 #endif /* _X86_CACHEINFO_H_ */
