@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.84 2021/08/30 22:47:25 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.85 2021/12/24 18:12:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.84 2021/08/30 22:47:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.85 2021/12/24 18:12:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ static void	genfb_pollc(void *, int);
 
 static void	genfb_init_screen(void *, struct vcons_screen *, int, long *);
 static int	genfb_calc_hsize(struct genfb_softc *);
-static int	genfb_calc_cols(struct genfb_softc *);
+static int	genfb_calc_cols(struct genfb_softc *, struct rasops_info *);
 
 static int	genfb_putcmap(struct genfb_softc *, struct wsdisplay_cmap *);
 static int 	genfb_getcmap(struct genfb_softc *, struct wsdisplay_cmap *);
@@ -638,7 +638,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		break;
 	}
 
-	wantcols = genfb_calc_cols(sc);
+	wantcols = genfb_calc_cols(sc, ri);
 
 	rasops_init(ri, 0, wantcols);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
@@ -687,9 +687,13 @@ genfb_calc_hsize(struct genfb_softc *sc)
 
 /* Return the minimum number of character columns based on DPI */
 static int
-genfb_calc_cols(struct genfb_softc *sc)
+genfb_calc_cols(struct genfb_softc *sc, struct rasops_info *ri)
 {
 	const int hsize = genfb_calc_hsize(sc);
+
+	if (hsize != 0) {
+		ri->ri_flg |= RI_PREFER_WIDEFONT;
+	}
 
 	return MAX(RASOPS_DEFAULT_WIDTH, hsize / GENFB_CHAR_WIDTH_MM);
 }
