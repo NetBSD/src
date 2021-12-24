@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.93.2.4 2021/12/08 15:44:16 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.93.2.5 2021/12/24 12:58:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.93.2.4 2021/12/08 15:44:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.93.2.5 2021/12/24 12:58:14 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -93,79 +93,6 @@ static const char cpu_vendor_names[][10] = {
 	"Vortex86"
 };
 
-static const struct x86_cache_info *
-cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
-{
-	int i;
-
-	for (i = 0; cai[i].cai_desc != 0; i++) {
-		if (cai[i].cai_desc == desc)
-			return (&cai[i]);
-	}
-
-	return (NULL);
-}
-
-/*
- * Get cache info from one of the following:
- *	Intel Deterministic Cache Parameter Leaf (0x04)
- *	AMD Cache Topology Information Leaf (0x8000001d)
- */
-static void
-cpu_dcp_cacheinfo(struct cpu_info *ci, uint32_t leaf)
-{
-	u_int descs[4];
-	int type, level, ways, partitions, linesize, sets, totalsize;
-	int caitype = -1;
-	int i;
-
-	for (i = 0; ; i++) {
-		x86_cpuid2(leaf, i, descs);
-		type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
-		if (type == CPUID_DCP_CACHETYPE_N)
-			break;
-		level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
-		switch (level) {
-		case 1:
-			if (type == CPUID_DCP_CACHETYPE_I)
-				caitype = CAI_ICACHE;
-			else if (type == CPUID_DCP_CACHETYPE_D)
-				caitype = CAI_DCACHE;
-			else
-				caitype = -1;
-			break;
-		case 2:
-			if (type == CPUID_DCP_CACHETYPE_U)
-				caitype = CAI_L2CACHE;
-			else
-				caitype = -1;
-			break;
-		case 3:
-			if (type == CPUID_DCP_CACHETYPE_U)
-				caitype = CAI_L3CACHE;
-			else
-				caitype = -1;
-			break;
-		default:
-			caitype = -1;
-			break;
-		}
-		if (caitype == -1)
-			continue;
-
-		ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
-		partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
-		    + 1;
-		linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
-		    + 1;
-		sets = descs[2] + 1;
-		totalsize = ways * partitions * linesize * sets;
-		ci->ci_cinfo[caitype].cai_totalsize = totalsize;
-		ci->ci_cinfo[caitype].cai_associativity = ways;
-		ci->ci_cinfo[caitype].cai_linesize = linesize;
-	}
-}
-
 static void
 cpu_probe_intel_cache(struct cpu_info *ci)
 {
@@ -188,7 +115,7 @@ cpu_probe_intel_cache(struct cpu_info *ci)
 					desc = (descs[i] >> (j * 8)) & 0xff;
 					if (desc == 0)
 						continue;
-					cai = cache_info_lookup(
+					cai = cpu_cacheinfo_lookup(
 					    intel_cpuid_cache_info, desc);
 					if (cai != NULL) {
 						ci->ci_cinfo[cai->cai_index] =
@@ -305,7 +232,7 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
 	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
 
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
@@ -321,7 +248,7 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 	cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
 	cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
 
-	cp = cache_info_lookup(amd_cpuid_l2l3cache_assoc_info,
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
 	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
