@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_mbx.h,v 1.15 2021/12/24 04:56:34 msaitoh Exp $ */
+/* $NetBSD: ixgbe_mbx.h,v 1.16 2021/12/24 04:59:23 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -100,14 +100,17 @@ struct ixgbe_mbx_info {
 
 /* If it's a IXGBE_VF_* msg then it originates in the VF and is sent to the
  * PF.  The reverse is TRUE if it is IXGBE_PF_*.
- * Message ACK's are the value or'd with 0xF0000000
+ * Message results are the value or'd with 0xF0000000
  */
-#define IXGBE_VT_MSGTYPE_ACK	0x80000000 /* Messages below or'd with
-					    * this are the ACK */
-#define IXGBE_VT_MSGTYPE_NACK	0x40000000 /* Messages below or'd with
-					    * this are the NACK */
-#define IXGBE_VT_MSGTYPE_CTS	0x20000000 /* Indicates that VF is still
-					    * clear to send requests */
+#define IXGBE_VT_MSGTYPE_SUCCESS	0x80000000 /* Messages or'd with this
+						    * have succeeded
+						    */
+#define IXGBE_VT_MSGTYPE_FAILURE	0x40000000 /* Messages or'd with this
+						    * have failed
+						    */
+#define IXGBE_VT_MSGTYPE_CTS		0x20000000 /* Indicates that VF is still
+						    * clear to send requests
+						    */
 #define IXGBE_VT_MSGINFO_SHIFT	16
 /* bits 23:16 are used for extra info for certain messages */
 #define IXGBE_VT_MSGINFO_MASK	(0xFF << IXGBE_VT_MSGINFO_SHIFT)
