@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.59 2021/12/19 16:39:28 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.60 2021/12/24 13:00:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1124,4 +1124,18 @@ sys/dev/usb/usbdevs_data.h			(regen)
 
 	Add two additional cyperpower UPS ids to be ignored as HID devices.
 	[mrg, ticket #1395]
+
+usr.sbin/cpuctl/arch/i386.c			1.118-1.119, 1.121-1.122
+usr.sbin/cpuctl/arch/cpuctl_i386.h		1.6
+sys/arch/x86/x86/identcpu_subr.c		1.8-1.9
+sys/arch/x86/x86/identcpu.c			1.123
+sys/arch/x86/include/cacheinfo.h		1.30
+sys/arch/x86/include/cpu.h			1.132
+
+	- Fix a bug that some TLB related lines were not printed.
+	- Fix a bug that STLB is printed as DTLB.
+	- If a TLB is variable sized, print the max size instead of error
+	  message.
+	- Cosmetic changes to improve readability.
+	[msaitoh, ticket #1391]
 
