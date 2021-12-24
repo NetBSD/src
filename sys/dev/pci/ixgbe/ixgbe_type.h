@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.54 2021/12/24 05:02:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.55 2021/12/24 05:11:04 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -480,8 +480,14 @@ struct ixgbe_nvm_version {
 #define IXGBE_PFMAILBOX(_i)	(0x04B00 + (4 * (_i))) /* 64 total */
 /* 64 Mailboxes, 16 DW each */
 #define IXGBE_PFMBMEM(_i)	(0x13000 + (64 * (_i)))
+#define IXGBE_PFMBICR_INDEX(_i)	((_i) >> 4)
+#define IXGBE_PFMBICR_SHIFT(_i)	((_i) % 16)
 #define IXGBE_PFMBICR(_i)	(0x00710 + (4 * (_i))) /* 4 total */
 #define IXGBE_PFMBIMR(_i)	(0x00720 + (4 * (_i))) /* 4 total */
+#define IXGBE_PFVFLRE(_i)	((((_i) & 1) ? 0x001C0 : 0x00600))
+#define IXGBE_PFVFLREC(_i)	(0x00700 + ((_i) * 4))
+#define IXGBE_PFVFLRE_INDEX(_i)	((_i) >> 5)
+#define IXGBE_PFVFLRE_SHIFT(_i)	((_i) % 32)
 #define IXGBE_VFRE(_i)		(0x051E0 + ((_i) * 4))
 #define IXGBE_VFTE(_i)		(0x08110 + ((_i) * 4))
 #define IXGBE_VMECM(_i)		(0x08790 + ((_i) * 4))
@@ -2420,6 +2426,7 @@ enum {
 #endif /* PREBOOT_SUPPORT || QV_RELEASE*/
 
 
+
 #define IXGBE_SAN_MAC_ADDR_PTR		0x28
 #define IXGBE_NVM_MAP_VER		0x29
 #define IXGBE_OEM_NVM_IMAGE_VER		0x2A
@@ -2931,12 +2938,6 @@ enum {
 #define IXGBE_RX_DESC_SPECIAL_PRI_MASK	0xE000 /* Priority in upper 3 bits */
 #define IXGBE_RX_DESC_SPECIAL_PRI_SHIFT	0x000D /* Priority in upper 3 of 16 */
 #define IXGBE_TX_DESC_SPECIAL_PRI_SHIFT	IXGBE_RX_DESC_SPECIAL_PRI_SHIFT
-
-/* SR-IOV specific macros */
-#define IXGBE_MBVFICR_INDEX(vf_number)	(vf_number >> 4)
-#define IXGBE_MBVFICR(_i)		(0x00710 + ((_i) * 4))
-#define IXGBE_VFLRE(_i)			(((_i & 1) ? 0x001C0 : 0x00600))
-#define IXGBE_VFLREC(_i)		 (0x00700 + ((_i) * 4))
 /* Translated register #defines */
 #define IXGBE_PVFCTRL(P)	(0x00300 + (4 * (P)))
 #define IXGBE_PVFSTATUS(P)	(0x00008 + (0 * (P)))
@@ -4305,7 +4306,9 @@ struct ixgbe_hw {
 #define IXGBE_ERR_FDIR_CMD_INCOMPLETE		-38
 #define IXGBE_ERR_FW_RESP_INVALID		-39
 #define IXGBE_ERR_TOKEN_RETRY			-40
-#define IXGBE_ERR_MBX				-100
+#define IXGBE_ERR_MBX				-41
+#define IXGBE_ERR_MBX_NOMSG			-42
+#define IXGBE_ERR_TIMEOUT			-43
 
 #define IXGBE_ERR_NOT_TRUSTED			-50 /* XXX NetBSD */
 #define IXGBE_ERR_NOT_IN_PROMISC		-51 /* XXX NetBSD */
