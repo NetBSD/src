@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.52 2021/12/15 09:19:34 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.53 2021/12/24 04:56:34 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4234,36 +4234,6 @@ struct ixgbe_phy_info {
 
 #include "ixgbe_mbx.h"
 
-struct ixgbe_mbx_operations {
-	void (*init_params)(struct ixgbe_hw *hw);
-	s32  (*read)(struct ixgbe_hw *, u32 *, u16,  u16);
-	s32  (*write)(struct ixgbe_hw *, u32 *, u16, u16);
-	s32  (*read_posted)(struct ixgbe_hw *, u32 *, u16,  u16);
-	s32  (*write_posted)(struct ixgbe_hw *, u32 *, u16, u16);
-	s32  (*check_for_msg)(struct ixgbe_hw *, u16);
-	s32  (*check_for_ack)(struct ixgbe_hw *, u16);
-	s32  (*check_for_rst)(struct ixgbe_hw *, u16);
-	s32  (*clear)(struct ixgbe_hw *hw, u16 vf_number);
-};
-
-struct ixgbe_mbx_stats {
-	struct evcnt msgs_tx;
-	struct evcnt msgs_rx;
-
-	struct evcnt acks;
-	struct evcnt reqs;
-	struct evcnt rsts;
-};
-
-struct ixgbe_mbx_info {
-	struct ixgbe_mbx_operations ops;
-	struct ixgbe_mbx_stats stats;
-	u32 timeout;
-	u32 usec_delay;
-	u32 v2p_mailbox;
-	u16 size;
-};
-
 struct ixgbe_hw {
 	struct adapter *back;
 	struct ixgbe_mac_info		mac;
@@ -4335,6 +4305,7 @@ struct ixgbe_hw {
 #define IXGBE_ERR_FDIR_CMD_INCOMPLETE		-38
 #define IXGBE_ERR_FW_RESP_INVALID		-39
 #define IXGBE_ERR_TOKEN_RETRY			-40
+#define IXGBE_ERR_MBX				-100
 
 #define IXGBE_ERR_NOT_TRUSTED			-50 /* XXX NetBSD */
 #define IXGBE_ERR_NOT_IN_PROMISC		-51 /* XXX NetBSD */
