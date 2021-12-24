@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_entity.c,v 1.6 2021/12/24 15:25:03 riastradh Exp $	*/
+/*	$NetBSD: sched_entity.c,v 1.7 2021/12/24 15:26:35 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_entity.c,v 1.6 2021/12/24 15:25:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_entity.c,v 1.7 2021/12/24 15:26:35 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/slab.h>
@@ -142,7 +142,7 @@ drm_sched_entity_get_free_sched(struct drm_sched_entity *entity)
 		struct drm_gpu_scheduler *sched = entity->sched_list[i];
 
 		if (!entity->sched_list[i]->ready) {
-			DRM_WARN("sched%s is not ready, skipping", sched->name);
+			DRM_WARN("sched%s is not ready, skipping\n", sched->name);
 			continue;
 		}
 
