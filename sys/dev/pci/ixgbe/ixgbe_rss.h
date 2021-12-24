@@ -1,7 +1,7 @@
-/* $NetBSD: ixgbe_rss.h,v 1.5 2021/04/30 06:41:36 msaitoh Exp $ */
+/* $NetBSD: ixgbe_rss.h,v 1.6 2021/12/24 05:02:11 msaitoh Exp $ */
 /******************************************************************************
 
-  Copyright (c) 2001-2017, Intel Corporation
+  Copyright (c) 2001-2020, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
