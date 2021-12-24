@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.c,v 1.7 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gart.c,v 1.8 2021/12/24 11:19:55 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.7 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.8 2021/12/24 11:19:55 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/vmalloc.h>
@@ -301,7 +301,7 @@ amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t gpu_start,
 	const unsigned gpu_per_cpu = AMDGPU_GPU_PAGES_IN_CPU_PAGE;
 	const unsigned gpu_npages = (npages * gpu_per_cpu);
 	const uint64_t gpu_pgstart = (gpu_start / AMDGPU_GPU_PAGE_SIZE);
-	const uint64_t pgstart = (gpu_pgstart / gpu_per_cpu);
+	const uint64_t pgstart __diagused = (gpu_pgstart / gpu_per_cpu);
 	uint64_t pgno, gpu_pgno;
 	uint32_t flags = AMDGPU_PTE_SYSTEM;
 
@@ -479,7 +479,7 @@ amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t gpu_start,
 	const unsigned gpu_per_cpu = AMDGPU_GPU_PAGES_IN_CPU_PAGE;
 	const unsigned gpu_npages = (npages * gpu_per_cpu);
 	const uint64_t gpu_pgstart = (gpu_start / AMDGPU_GPU_PAGE_SIZE);
-	const uint64_t pgstart = (gpu_pgstart / gpu_per_cpu);
+	const uint64_t pgstart __diagused = (gpu_pgstart / gpu_per_cpu);
 	uint64_t pgno, gpu_pgno;
 
 	KASSERT(pgstart == (gpu_start / PAGE_SIZE));
