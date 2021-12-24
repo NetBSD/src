@@ -1,9 +1,9 @@
-/* $NetBSD: ixgbe_vf.c,v 1.28 2021/12/24 04:59:23 msaitoh Exp $ */
+/* $NetBSD: ixgbe_vf.c,v 1.29 2021/12/24 05:02:11 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
-  Copyright (c) 2001-2017, Intel Corporation
+  Copyright (c) 2001-2020, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_vf.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_vf.c,v 1.28 2021/12/24 04:59:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_vf.c,v 1.29 2021/12/24 05:02:11 msaitoh Exp $");
 
 #include "ixgbe_api.h"
 #include "ixgbe_type.h"
