@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.32 2021/09/27 17:03:13 christos Exp $	*/
+/*	$NetBSD: channels.c,v 1.33 2021/12/24 18:16:11 christos Exp $	*/
 /* $OpenBSD: channels.c,v 1.408 2021/09/14 11:04:21 mbuhl Exp $ */
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.32 2021/09/27 17:03:13 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.33 2021/12/24 18:16:11 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1114,38 +1114,10 @@ channel_pre_connecting(struct ssh *ssh, Channel *c,
 	FD_SET(c->sock, writeset);
 }
 
-static int
-channel_tcpwinsz(struct ssh *ssh)
-{
-	u_int32_t tcpwinsz = 0;
-	socklen_t optsz = sizeof(tcpwinsz);
-	int ret = -1;
-
-	/* if we aren't on a socket return 128KB*/
-	if(!ssh_packet_connection_is_on_socket(ssh)) 
-	    return(128*1024);
-	ret = getsockopt(ssh_packet_get_connection_in(ssh),
-			 SOL_SOCKET, SO_RCVBUF, &tcpwinsz, &optsz);
-	/* return no more than 64MB */
-	if ((ret == 0) && tcpwinsz > BUFFER_MAX_LEN_HPN)
-	    tcpwinsz = BUFFER_MAX_LEN_HPN;
-	debug2("tcpwinsz: %d for connection: %d", tcpwinsz, 
-	       ssh_packet_get_connection_in(ssh));
-	return(tcpwinsz);
-}
-
 static void
 channel_pre_open(struct ssh *ssh, Channel *c,
     fd_set *readset, fd_set *writeset)
 {
-	u_int limit = ssh_packet_get_maxsize(ssh);
-
-        /* check buffer limits */
-	if ((!c->tcpwinsz) || (c->dynamic_window > 0))
-    	    c->tcpwinsz = channel_tcpwinsz(ssh);
-	
-	limit = MIN(limit, 2 * c->tcpwinsz);
-	
 	if (c->istate == CHAN_INPUT_OPEN &&
 	    c->remote_window > 0 &&
 	    sshbuf_len(c->input) < c->remote_window &&
