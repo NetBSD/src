@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.9 2021/12/19 12:12:39 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.10 2021/12/24 00:14:03 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.9 2021/12/19 12:12:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.10 2021/12/24 00:14:03 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -300,6 +300,7 @@ active_instance(struct i915_active *ref, struct intel_timeline *tl)
 	node = rb_tree_find_node(&ref->tree.rbr_tree, &idx);
 	if (node) {
 		KASSERT(node->timeline == idx);
+		kmem_cache_free(global.slab_cache, prealloc);
 		goto out;
 	}
 #else
