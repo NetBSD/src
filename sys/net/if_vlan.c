@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.166 2021/12/06 05:50:39 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.167 2021/12/24 04:50:40 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.166 2021/12/06 05:50:39 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.167 2021/12/24 04:50:40 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1205,14 +1205,18 @@ vlan_start(struct ifnet *ifp)
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
 	struct ether_header *eh;
-	int error;
+	int error, bound;
 
+	bound = curlwp_bind();
 	mib = vlan_getref_linkmib(ifv, &psref);
-	if (mib == NULL)
+	if (mib == NULL) {
+		curlwp_bindx(bound);
 		return;
+	}
 
 	if (__predict_false(mib->ifvm_p == NULL)) {
 		vlan_putref_linkmib(mib, &psref);
+		curlwp_bindx(bound);
 		return;
 	}
 
@@ -1354,6 +1358,7 @@ vlan_start(struct ifnet *ifp)
 
 	/* Remove reference to mib before release */
 	vlan_putref_linkmib(mib, &psref);
+	curlwp_bindx(bound);
 }
 
 static int
@@ -1365,7 +1370,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
 	struct ether_header *eh;
-	int error;
+	int error, bound;
 	size_t pktlen = m->m_pkthdr.len;
 	bool mcast = (m->m_flags & M_MCAST) != 0;
 
@@ -1384,14 +1389,17 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 		return EPROTONOSUPPORT;
 	}
 
+	bound = curlwp_bind();
 	mib = vlan_getref_linkmib(ifv, &psref);
 	if (mib == NULL) {
+		curlwp_bindx(bound);
 		m_freem(m);
 		return ENETDOWN;
 	}
 
 	if (__predict_false(mib->ifvm_p == NULL)) {
 		vlan_putref_linkmib(mib, &psref);
+		curlwp_bindx(bound);
 		m_freem(m);
 		return ENETDOWN;
 	}
@@ -1500,6 +1508,8 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 out:
 	/* Remove reference to mib before release */
 	vlan_putref_linkmib(mib, &psref);
+	curlwp_bindx(bound);
+
 	return error;
 }
 
@@ -1623,13 +1633,18 @@ vlan_link_state_changed(void *xifv)
 	struct ifnet *ifp, *p;
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
+	int bound;
 
+	bound = curlwp_bind();
 	mib = vlan_getref_linkmib(ifv, &psref);
-	if (mib == NULL)
+	if (mib == NULL) {
+		curlwp_bindx(bound);
 		return;
+	}
 
 	if (mib->ifvm_p == NULL) {
 		vlan_putref_linkmib(mib, &psref);
+		curlwp_bindx(bound);
 		return;
 	}
 
@@ -1638,6 +1653,7 @@ vlan_link_state_changed(void *xifv)
 	if_link_state_change(ifp, p->if_link_state);
 
 	vlan_putref_linkmib(mib, &psref);
+	curlwp_bindx(bound);
 }
 
 /*
