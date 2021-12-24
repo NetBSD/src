@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.170 2021/12/14 05:37:44 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.171 2021/12/24 05:05:57 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.170 2021/12/14 05:37:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.171 2021/12/24 05:05:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2892,7 +2892,6 @@ ixv_set_sysctl_value(struct adapter *adapter, const char *name,
 /************************************************************************
  * ixv_print_debug_info
  *
- *   Called only when em_display_debug_stats is enabled.
  *   Provides a way to take a look at important statistics
  *   maintained by the driver and hardware.
  ************************************************************************/
