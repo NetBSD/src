@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.5 2021/12/24 15:08:09 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.5 2021/12/24 15:08:09 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/dmi.h>
@@ -952,15 +952,7 @@ int intel_opregion_setup(struct drm_i915_private *dev_priv)
 	INIT_WORK(&opregion->asle_work, asle_work);
 
 #ifdef __NetBSD__
-	opregion->bst = pdev->pd_pa.pa_memt;
-	err = -bus_space_map(opregion->bst, asls, OPREGION_SIZE,
-	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
-	    &opregion->asls_bsh);
-	if (err) {
-		DRM_DEBUG_DRIVER("Failed to map opregion: %d\n", err);
-		return err;
-	}
-	base = bus_space_vaddr(opregion->bst, opregion->asls_bsh);
+	base = AcpiOsMapMemory(asls, OPREGION_SIZE);
 #else
 	base = memremap(asls, OPREGION_SIZE, MEMREMAP_WB);
 #endif
@@ -1035,14 +1027,7 @@ int intel_opregion_setup(struct drm_i915_private *dev_priv)
 		}
 
 #ifdef __NetBSD__
-		if (bus_space_map(opregion->bst, rvda,
-			opregion->asle->rvds,
-			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
-			&opregion->rvda_bsh))
-			opregion->rvda = NULL;
-		else
-			opregion->rvda = bus_space_vaddr(opregion->bst,
-			    opregion->rvda_bsh);
+		opregion->rvda = AcpiOsMapMemory(rvda, opregion->asle->rvds);
 #else
 		opregion->rvda = memremap(rvda, opregion->asle->rvds,
 					  MEMREMAP_WB);
@@ -1058,11 +1043,8 @@ int intel_opregion_setup(struct drm_i915_private *dev_priv)
 		} else {
 			DRM_DEBUG_KMS("Invalid VBT in ACPI OpRegion (RVDA)\n");
 #ifdef __NetBSD__
-			if (opregion->rvda) {
-				bus_space_unmap(opregion->bst,
-				    opregion->rvda_bsh,
-				    opregion->asle->rvds);
-			}
+			AcpiOsUnmapMemory(opregion->rvda,
+			    opregion->asle->rvds);
 #else
 			memunmap(opregion->rvda);
 #endif
@@ -1094,7 +1076,7 @@ out:
 
 err_out:
 #ifdef __NetBSD__
-	bus_space_unmap(opregion->bst, opregion->asls_bsh, OPREGION_SIZE);
+	AcpiOsUnmapMemory(base, OPREGION_SIZE);
 #else
 	memunmap(base);
 #endif
@@ -1251,14 +1233,14 @@ void intel_opregion_unregister(struct drm_i915_private *i915)
 
 	/* just clear all opregion memory pointers now */
 #ifdef __NetBSD__
-	bus_space_unmap(opregion->bst, opregion->asls_bsh, OPREGION_SIZE);
+	size_t rvds = opregion->asle->rvds;
+	AcpiOsUnmapMemory(opregion->header, OPREGION_SIZE);
 #else
 	memunmap(opregion->header);
 #endif
 	if (opregion->rvda) {
 #ifdef __NetBSD__
-		bus_space_unmap(opregion->bst, opregion->rvda_bsh,
-		    opregion->asle->rvds);
+		AcpiOsUnmapMemory(opregion->rvda, rvds);
 #else
 		memunmap(opregion->rvda);
 #endif

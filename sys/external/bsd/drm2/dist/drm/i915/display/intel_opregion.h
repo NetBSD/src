@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.h,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.h,v 1.4 2021/12/24 15:08:09 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2017 Intel Corporation
@@ -38,17 +38,7 @@ struct opregion_acpi;
 struct opregion_swsci;
 struct opregion_asle;
 
-#ifdef __NetBSD__		/* XXX acpi iomem */
-#  include <linux/acpi_io.h>
-#  define	__iomem		__acpi_iomem
-#endif
-
 struct intel_opregion {
-#ifdef __NetBSD__
-	bus_space_tag_t bst;
-	bus_space_handle_t asls_bsh;
-	bus_space_handle_t rvda_bsh;
-#endif
 	struct opregion_header *header;
 	struct opregion_acpi *acpi;
 	struct opregion_swsci *swsci;
@@ -65,10 +55,6 @@ struct intel_opregion {
 };
 
 #define OPREGION_SIZE            (8 * 1024)
-
-#ifdef __NetBSD__		/* XXX acpi iomem */
-#  undef	__iomem
-#endif
 
 #ifdef CONFIG_ACPI
 
