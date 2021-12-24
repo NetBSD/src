@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.113 2021/12/08 15:58:11 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.114 2021/12/24 13:03:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2346,4 +2346,18 @@ usr.sbin/cpuctl/arch/i386.c			1.114-1.117
 	- Add comment.
 	- KNF. Whitespace fix.
 	[msaitoh, ticket #1720]
+
+usr.sbin/cpuctl/arch/i386.c			1.118-1.119, 1.121-1.122
+usr.sbin/cpuctl/arch/cpuctl_i386.h		1.6
+sys/arch/x86/x86/identcpu_subr.c		1.8-1.9
+sys/arch/x86/x86/identcpu.c			1.123
+sys/arch/x86/include/cacheinfo.h		1.30
+sys/arch/x86/include/cpu.h			1.132
+
+	- Fix a bug that some TLB related lines were not printed.
+	- Fix a bug that STLB is printed as DTLB.
+	- If a TLB is variable sized, print the max size instead of error
+	  message.
+	- Cosmetic changes to improve readability.
+	[msaitoh, ticket #1721]
 
