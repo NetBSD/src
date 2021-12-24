@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.172 2021/12/24 05:11:04 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.173 2021/12/24 05:13:39 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.172 2021/12/24 05:11:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.173 2021/12/24 05:13:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1087,7 +1087,8 @@ static int
 ixv_negotiate_api(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	int		mbx_api[] = { ixgbe_mbox_api_13,
+	int		mbx_api[] = { ixgbe_mbox_api_15,
+				      ixgbe_mbox_api_13,
 				      ixgbe_mbox_api_12,
 				      ixgbe_mbox_api_11,
 				      ixgbe_mbox_api_10,
@@ -1095,8 +1096,11 @@ ixv_negotiate_api(struct adapter *adapter)
 	int		i = 0;
 
 	while (mbx_api[i] != ixgbe_mbox_api_unknown) {
-		if (ixgbevf_negotiate_api_version(hw, mbx_api[i]) == 0)
+		if (ixgbevf_negotiate_api_version(hw, mbx_api[i]) == 0) {
+			if (hw->api_version >= ixgbe_mbox_api_15)
+				ixgbe_upgrade_mbx_params_vf(hw);
 			return (0);
+		}
 		i++;
 	}
 
