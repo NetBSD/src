@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.19 2021/06/16 00:21:18 riastradh Exp $ */
+/*	$NetBSD: malo.c,v 1.20 2021/12/24 21:57:49 riastradh Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.19 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.20 2021/12/24 21:57:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -419,7 +419,8 @@ malo_attach(struct malo_softc *sc)
 		ic->ic_myaddr[i] = malo_ctl_read1(sc, 0xa528 + i);
 
 	/* show our mac address */
-	aprint_normal(", address %s\n", ether_sprintf(ic->ic_myaddr));
+	aprint_normal_dev(sc->sc_dev, "address %s\n",
+	    ether_sprintf(ic->ic_myaddr));
 
 	/* attach interface */
 	if_initialize(ifp);
