@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.11 2021/12/24 15:22:20 riastradh Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.12 2021/12/24 15:25:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.11 2021/12/24 15:22:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.12 2021/12/24 15:25:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -106,21 +106,6 @@ ww_acquire_done(struct ww_acquire_ctx *ctx)
 	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
 
 	ctx->wwx_acquire_done = true;
-}
-
-static void
-ww_acquire_done_check(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
-{
-
-	/*
-	 * If caller has invoked ww_acquire_done, we must already hold
-	 * this mutex.
-	 */
-	KASSERT(mutex_owned(&mutex->wwm_lock));
-	KASSERT((!ctx->wwx_acquire_done ||
-		(mutex->wwm_state == WW_CTX && mutex->wwm_u.ctx == ctx)),
-	    "ctx %p done acquiring locks, refusing to acquire %p",
-	    ctx, mutex);
 }
 
 void
@@ -567,6 +552,8 @@ ww_mutex_lock(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 
 	KASSERTMSG((ctx->wwx_owner == curlwp),
 	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+	KASSERTMSG(!ctx->wwx_acquire_done,
+	    "ctx %p done acquiring locks, can't acquire more", ctx);
 	KASSERTMSG((ctx->wwx_acquired != ~0U),
 	    "ctx %p finished, can't be used any more", ctx);
 	KASSERTMSG((ctx->wwx_class == mutex->wwm_class),
@@ -574,7 +561,6 @@ ww_mutex_lock(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	    ctx, ctx->wwx_class, mutex, mutex->wwm_class);
 
 	mutex_enter(&mutex->wwm_lock);
-	ww_acquire_done_check(mutex, ctx);
 retry:	switch (mutex->wwm_state) {
 	case WW_UNLOCKED:
 		WW_WANTLOCK(mutex);
@@ -687,6 +673,8 @@ ww_mutex_lock_interruptible(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 
 	KASSERTMSG((ctx->wwx_owner == curlwp),
 	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+	KASSERTMSG(!ctx->wwx_acquire_done,
+	    "ctx %p done acquiring locks, can't acquire more", ctx);
 	KASSERTMSG((ctx->wwx_acquired != ~0U),
 	    "ctx %p finished, can't be used any more", ctx);
 	KASSERTMSG((ctx->wwx_class == mutex->wwm_class),
@@ -694,7 +682,6 @@ ww_mutex_lock_interruptible(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	    ctx, ctx->wwx_class, mutex, mutex->wwm_class);
 
 	mutex_enter(&mutex->wwm_lock);
-	ww_acquire_done_check(mutex, ctx);
 retry:	switch (mutex->wwm_state) {
 	case WW_UNLOCKED:
 		WW_WANTLOCK(mutex);
@@ -808,6 +795,8 @@ ww_mutex_lock_slow(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 
 	KASSERTMSG((ctx->wwx_owner == curlwp),
 	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+	KASSERTMSG(!ctx->wwx_acquire_done,
+	    "ctx %p done acquiring locks, can't acquire more", ctx);
 	KASSERTMSG((ctx->wwx_acquired != ~0U),
 	    "ctx %p finished, can't be used any more", ctx);
 	KASSERTMSG((ctx->wwx_acquired == 0),
@@ -818,7 +807,6 @@ ww_mutex_lock_slow(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	    ctx, ctx->wwx_class, mutex, mutex->wwm_class);
 
 	mutex_enter(&mutex->wwm_lock);
-	ww_acquire_done_check(mutex, ctx);
 retry:	switch (mutex->wwm_state) {
 	case WW_UNLOCKED:
 		mutex->wwm_state = WW_CTX;
@@ -886,6 +874,8 @@ ww_mutex_lock_slow_interruptible(struct ww_mutex *mutex,
 
 	KASSERTMSG((ctx->wwx_owner == curlwp),
 	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+	KASSERTMSG(!ctx->wwx_acquire_done,
+	    "ctx %p done acquiring locks, can't acquire more", ctx);
 	KASSERTMSG((ctx->wwx_acquired != ~0U),
 	    "ctx %p finished, can't be used any more", ctx);
 	KASSERTMSG((ctx->wwx_acquired == 0),
@@ -896,7 +886,6 @@ ww_mutex_lock_slow_interruptible(struct ww_mutex *mutex,
 	    ctx, ctx->wwx_class, mutex, mutex->wwm_class);
 
 	mutex_enter(&mutex->wwm_lock);
-	ww_acquire_done_check(mutex, ctx);
 retry:	switch (mutex->wwm_state) {
 	case WW_UNLOCKED:
 		mutex->wwm_state = WW_CTX;
