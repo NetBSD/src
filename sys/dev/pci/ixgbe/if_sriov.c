@@ -1,4 +1,4 @@
-/* $NetBSD: if_sriov.c,v 1.16 2021/12/24 05:01:00 msaitoh Exp $ */
+/* $NetBSD: if_sriov.c,v 1.17 2021/12/24 05:11:04 msaitoh Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -34,7 +34,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.16 2021/12/24 05:01:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.17 2021/12/24 05:11:04 msaitoh Exp $");
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
@@ -99,7 +99,7 @@ ixgbe_send_vf_msg(struct ixgbe_hw *hw, struct ixgbe_vf *vf, u32 msg)
 	if (vf->flags & IXGBE_VF_CTS)
 		msg |= IXGBE_VT_MSGTYPE_CTS;
 
-	hw->mbx.ops.write(hw, &msg, 1, vf->pool);
+	hw->mbx.ops[vf->pool].write(hw, &msg, 1, vf->pool);
 }
 
 static inline void
@@ -594,7 +594,8 @@ ixgbe_process_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf)
 
 	hw = &adapter->hw;
 
-	error = hw->mbx.ops.read(hw, msg, IXGBE_VFMAILBOX_SIZE, vf->pool);
+	error = hw->mbx.ops[vf->pool].read(hw, msg, IXGBE_VFMAILBOX_SIZE,
+	    vf->pool);
 
 	if (error != 0)
 		return;
@@ -655,16 +656,17 @@ ixgbe_handle_mbx(void *context)
 	for (i = 0; i < adapter->num_vfs; i++) {
 		vf = &adapter->vfs[i];
 
-		if (vf->flags & IXGBE_VF_ACTIVE) {
-			if (hw->mbx.ops.check_for_rst(hw, vf->pool) == 0)
-				ixgbe_process_vf_reset(adapter, vf);
+		if ((vf->flags & IXGBE_VF_ACTIVE) == 0)
+			continue;
 
-			if (hw->mbx.ops.check_for_msg(hw, vf->pool) == 0)
-				ixgbe_process_vf_msg(adapter, vf);
+		if (hw->mbx.ops[vf->pool].check_for_rst(hw, vf->pool) == 0)
+			ixgbe_process_vf_reset(adapter, vf);
 
-			if (hw->mbx.ops.check_for_ack(hw, vf->pool) == 0)
-				ixgbe_process_vf_ack(adapter, vf);
-		}
+		if (hw->mbx.ops[vf->pool].check_for_msg(hw, vf->pool) == 0)
+			ixgbe_process_vf_msg(adapter, vf);
+
+		if (hw->mbx.ops[vf->pool].check_for_ack(hw, vf->pool) == 0)
+			ixgbe_process_vf_ack(adapter, vf);
 	}
 } /* ixgbe_handle_mbx */
 
