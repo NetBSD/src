@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.11 2021/12/21 12:00:40 tnn Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.12 2021/12/24 15:07:47 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.11 2021/12/21 12:00:40 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.12 2021/12/24 15:07:47 riastradh Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -572,6 +572,11 @@ create_shmem(struct intel_memory_region *mem,
 	if (ret)
 		goto fail;
 
+#ifdef __NetBSD__
+	__USE(mapping);
+	__USE(mask);
+	uao_set_pgfl(obj->base.filp, i915->ggtt.pgfl);
+#else
 	mask = GFP_HIGHUSER | __GFP_RECLAIMABLE;
 	if (IS_I965GM(i915) || IS_I965G(i915)) {
 		/* 965gm cannot relocate objects above 4GiB. */
@@ -579,9 +584,6 @@ create_shmem(struct intel_memory_region *mem,
 		mask |= __GFP_DMA32;
 	}
 
-#ifdef __NetBSD__
-	__USE(mapping);
-#else
 	mapping = obj->base.filp->f_mapping;
 	mapping_set_gfp_mask(mapping, mask);
 	GEM_BUG_ON(!(mapping_gfp_mask(mapping) & __GFP_RECLAIM));
