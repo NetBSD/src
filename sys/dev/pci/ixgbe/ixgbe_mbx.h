@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_mbx.h,v 1.17 2021/12/24 05:02:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe_mbx.h,v 1.18 2021/12/24 05:03:37 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -187,6 +187,13 @@ enum ixgbevf_xcast_modes {
 #define IXGBE_VF_MBX_INIT_TIMEOUT	2000 /* number of retries on mailbox */
 #define IXGBE_VF_MBX_INIT_DELAY		500  /* microseconds between retries */
 
+s32 ixgbe_read_mbx(struct ixgbe_hw *, u32 *, u16, u16);
+s32 ixgbe_write_mbx(struct ixgbe_hw *, u32 *, u16, u16);
+s32 ixgbe_read_posted_mbx(struct ixgbe_hw *, u32 *, u16, u16);
+s32 ixgbe_write_posted_mbx(struct ixgbe_hw *, u32 *, u16, u16);
+s32 ixgbe_check_for_msg(struct ixgbe_hw *, u16);
+s32 ixgbe_check_for_ack(struct ixgbe_hw *, u16);
+s32 ixgbe_check_for_rst(struct ixgbe_hw *, u16);
 s32 ixgbe_clear_mbx(struct ixgbe_hw *hw, u16 vf_number);
 void ixgbe_init_mbx_ops_generic(struct ixgbe_hw *hw);
 void ixgbe_init_mbx_params_vf(struct ixgbe_hw *);
