@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.188 2021/11/27 19:55:20 ryo Exp $
+#	$NetBSD: GENERIC64,v 1.189 2021/12/24 00:24:49 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -515,6 +515,7 @@ ehci*		at acpi?		# EHCI
 motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
 ohci*		at pci?			# OHCI
+ohci*		at acpi?		# OHCI
 xhci*		at fdt?			# XHCI
 xhci*		at pci?			# XHCI
 xhci*		at acpi?		# XHCI
