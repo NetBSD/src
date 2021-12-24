@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.279 2021/12/22 16:57:28 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.280 2021/12/24 00:13:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.279 2021/12/22 16:57:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.280 2021/12/24 00:13:53 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2110,7 +2110,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	pool_cache_t pc1;
 	struct cpu_info *ci;
 	struct pool *pp;
-	unsigned int ppflags = flags;
+	unsigned int ppflags;
 
 	pp = &pc->pc_pool;
 	if (palloc == NULL && ipl == IPL_NONE) {
@@ -2123,6 +2123,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 			palloc = &pool_allocator_nointr;
 	}
 
+	ppflags = flags;
 	if (ctor == NULL) {
 		ctor = NO_CTOR;
 	}
