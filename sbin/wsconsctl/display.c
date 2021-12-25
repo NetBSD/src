@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.16 2012/03/20 18:50:31 matt Exp $ */
+/*	$NetBSD: display.c,v 1.17 2021/12/25 13:54:13 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ static struct wsdisplay_param backlight;
 static struct wsdisplay_param brightness;
 static struct wsdisplay_param contrast;
 static struct wsdisplay_scroll_data scroll_l;
+static struct wsdisplayio_edid_info edid_info;
+static uint8_t edid_buf[256];
 static int msg_default_attrs, msg_default_bg, msg_default_fg;
 static int msg_kernel_attrs, msg_kernel_bg, msg_kernel_fg;
 static int splash_enable, splash_progress;
@@ -62,6 +64,7 @@ struct field display_field_tab[] = {
     { "contrast",		&contrast.curval,   FMT_UINT,	FLG_MODIFY },
     { "scroll.fastlines",	&scroll_l.fastlines, FMT_UINT,	FLG_MODIFY },
     { "scroll.slowlines",	&scroll_l.slowlines, FMT_UINT,	FLG_MODIFY },
+    { "edid",			&edid_info, FMT_EDID,		FLG_RDONLY|FLG_NOAUTO },
     { "msg.default.attrs",	&msg_default_attrs, FMT_ATTRS,	0 },
     { "msg.default.bg",		&msg_default_bg, FMT_COLOR,	0 },
     { "msg.default.fg",		&msg_default_fg, FMT_COLOR,	0 },
@@ -142,6 +145,14 @@ display_get_values(int fd)
 		if (ioctl(fd, WSDISPLAYIO_DGSCROLL, &scroll_l) < 0) {
 			field_disable_by_value(&scroll_l.fastlines);
 			field_disable_by_value(&scroll_l.slowlines);
+		}
+	}
+
+	if (field_by_value(&edid_info)->flags & FLG_GET) {
+		edid_info.edid_data = edid_buf;
+		edid_info.buffer_size = sizeof(edid_buf);
+		if (ioctl(fd, WSDISPLAYIO_GET_EDID, &edid_info) < 0) {
+			field_disable_by_value(&edid_info);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.32 2018/11/23 06:31:57 mlelstv Exp $ */
+/*	$NetBSD: util.c,v 1.33 2021/12/25 13:54:13 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006, 2012 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/edidreg.h>
+#include <dev/videomode/edidvar.h>
 
 #include <err.h>
 #include <errno.h>
@@ -249,6 +252,8 @@ pr_field(struct field *f, const char *sep)
 	const char *p;
 	unsigned int flags;
 	int first, i, mask;
+	struct wsdisplayio_edid_info *info;
+	struct edid_info edid;
 
 	if (sep)
 		(void)printf("%s%s", f->name, sep);
@@ -317,6 +322,15 @@ pr_field(struct field *f, const char *sep)
 		}
 		if (first)
 			(void)printf("none");
+		break;
+	case FMT_EDID:
+		info = (struct wsdisplayio_edid_info *)f->valp;
+		if (edid_parse(info->edid_data, &edid))
+			(void)printf("invalid");
+		else {
+			(void)printf("\n");
+			edid_print(&edid);
+		}
 		break;
 	default:
 		errx(EXIT_FAILURE, "internal error: pr_field: no format %d",
@@ -512,3 +526,4 @@ print_kmap(struct wskbd_map_data *map)
 		}
 	}
 }
+

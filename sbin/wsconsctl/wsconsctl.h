@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.13 2018/11/23 06:31:57 mlelstv Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.14 2021/12/25 13:54:13 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2012 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ struct field {
 #define FMT_KBMAP	105		/* keyboard map */
 #define FMT_COLOR	201		/* display color */
 #define FMT_ATTRS	202		/* display attributes */
+#define FMT_EDID	203		/* edid data */
 	int format;
 #define FLG_RDONLY	0x0001		/* variable cannot be modified */
 #define FLG_WRONLY	0x0002		/* variable cannot be displayed */
