@@ -1,4 +1,4 @@
-/* $NetBSD: vesagtf.c,v 1.3 2014/03/21 22:00:00 dholland Exp $ */
+/* $NetBSD: vesagtf.c,v 1.4 2021/12/25 13:51:31 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -153,21 +153,17 @@
 #ifdef	_KERNEL
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vesagtf.c,v 1.3 2014/03/21 22:00:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesagtf.c,v 1.4 2021/12/25 13:51:31 mlelstv Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <dev/videomode/videomode.h>
-#include <dev/videomode/vesagtf.h>
 #else
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include "videomode.h"
-#include "vesagtf.h"
-
-void print_xf86_mode(struct videomode *m);
+#include <inttypes.h>
 #endif
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/vesagtf.h>
 
 #define CELL_GRAN         8     /* assumed character cell granularity        */
 
@@ -660,6 +656,7 @@ vesagtf_mode(unsigned x, unsigned y, unsigned refresh, struct videomode *vmp)
 
 /* print_xf86_mode() - print the XFree86 modeline, given mode timings. */
 
+#if 0
 #ifndef _KERNEL
 void
 print_xf86_mode (struct videomode *vmp)
@@ -699,4 +696,5 @@ main (int argc, char *argv[])
 	return 0;
     
 }
+#endif
 #endif
