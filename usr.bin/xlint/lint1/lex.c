@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.95 2021/12/22 15:47:42 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.96 2021/12/25 13:51:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.95 2021/12/22 15:47:42 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.96 2021/12/25 13:51:42 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -369,7 +369,7 @@ static void
 freesb(sbuf_t *sb)
 {
 
-	(void)memset(sb, ZERO, sizeof(*sb));
+	(void)memset(sb, INVALID_MEM_BYTE, sizeof(*sb));
 	sb->sb_next = sbuf_free_list;
 	sbuf_free_list = sb;
 }

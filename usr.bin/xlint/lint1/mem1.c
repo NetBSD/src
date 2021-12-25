@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.56 2021/12/21 15:24:28 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.57 2021/12/25 13:51:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.56 2021/12/21 15:24:28 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.57 2021/12/25 13:51:42 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -276,7 +276,8 @@ xfreeblk(memory_block **fmbp)
 		*fmbp = mb->next;
 		mb->next = frmblks;
 		frmblks = mb;
-		(void)memset(mb->start, ZERO, mb->size - mb->nfree);
+		(void)memset(mb->start, INVALID_MEM_BYTE,
+		    mb->size - mb->nfree);
 	}
 }
 

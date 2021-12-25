@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.133 2021/12/22 15:20:08 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.134 2021/12/25 13:51:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -486,9 +486,9 @@ typedef	struct err_set {
 	} while (false)
 
 #ifdef BLKDEBUG
-#define ZERO	0xa5
+#define INVALID_MEM_BYTE	0xa5
 #else
-#define	ZERO	0
+#define	INVALID_MEM_BYTE	0
 #endif
 
 extern err_set	msgset;
