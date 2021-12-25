@@ -1,14 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.30 2021/12/14 16:27:20 christos Exp $
-
-# For now, don't lint:
-# 1. postfix uses 'struct { const char *name; int value } foo[] =
-#    { "n1", v1, "n2, v2", 0 };' and this is broken (should be fixed in lint)
-# 2. uses macros with extra ; (macros should be fixed)
-# 3. lint2 is broken (should be fixed in lint2)
-# 4. use use MKLINT:=no since this might have been included too late.
-MKLINT:=no
+#	$NetBSD: Makefile.inc,v 1.31 2021/12/25 13:30:42 rillig Exp $
 
 .include <bsd.own.mk>
+
+# dist/src/util/attr.h(90)
+# dist/src/util/vstream.h(181)
+# dist/src/util/vstring.h(63)
+LINTFLAGS+=	-X 0		# empty declaration
 
 USE_FORT?= yes	# network client and server
 CWARNFLAGS.clang+=	-Wno-empty-body -Wno-format-extra-args \
