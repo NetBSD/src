@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.29 2021/12/17 13:50:10 christos Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.30 2021/12/26 15:36:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.29 2021/12/17 13:50:10 christos Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.30 2021/12/26 15:36:49 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -329,8 +329,8 @@ usage(void)
 {
 	const char *prog = getprogname();
 
-	fprintf(stderr, "Usage\t%s [-d file] [-v] [-n] name ...\n", prog);
-	fprintf(stderr, "\t%s [-d file] [-v] [-n] -w name=value ...\n",prog);
+	fprintf(stderr, "Usage:\t%s [-d file] [-v] [-n] name ...\n", prog);
+	fprintf(stderr, "\t%s [-d file] [-v] [-n] -w name=value ...\n", prog);
 	fprintf(stderr, "\t%s [-d file] [-v] [-n] -a\n", prog);
 	exit(EXIT_FAILURE);
 }
