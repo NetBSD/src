@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.27 2021/12/20 11:17:40 skrll Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.28 2021/12/26 14:34:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.27 2021/12/20 11:17:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.28 2021/12/26 14:34:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -87,6 +87,11 @@ static void		acpi_clean_node(ACPI_HANDLE, void *);
 static const char * const acpicpu_ids[] = {
 	"ACPI0007",
 	NULL
+};
+
+static const struct device_compatible_entry dtlink_compat_data[] = {
+	{ .compat = "PRP0001" },
+	DEVICE_COMPAT_EOL
 };
 
 /*
@@ -445,6 +450,9 @@ acpi_compatible_match(const struct acpi_attach_args * const aa,
 {
 	const char *strings[ACPI_COMPATSTR_MAX * sizeof(const char *)];
 	const char **cpp;
+	bool dtlink = false;
+	ACPI_STATUS ret;
+	int rv;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE) {
 		return 0;
@@ -459,23 +467,47 @@ acpi_compatible_match(const struct acpi_attach_args * const aa,
 		if (device_compatible_pmatch(strings, 1, dce) != 0) {
 			return ACPI_MATCHSCORE_HID;
 		}
+
+		if (device_compatible_pmatch(strings, 1,
+					     dtlink_compat_data) != 0) {
+			dtlink = true;
+		}
 	}
 
 	if ((ad->Valid & ACPI_VALID_CID) != 0) {
 		cpp = acpi_compatible_alloc_strarray(ad->CompatibleIdList.Ids,
 		    ad->CompatibleIdList.Count, strings);
-		int rv;
 
 		rv = device_compatible_pmatch(cpp,
 		    ad->CompatibleIdList.Count, dce);
+		if (!dtlink &&
+		    device_compatible_pmatch(cpp, ad->CompatibleIdList.Count,
+					     dtlink_compat_data) != 0) {
+			dtlink = true;
+		}
 		acpi_compatible_free_strarray(cpp, ad->CompatibleIdList.Count,
 		    strings);
 		if (rv) {
 			rv = (rv - 1) + ACPI_MATCHSCORE_CID;
-			if (rv > ACPI_MATCHSCORE_CID_MAX) {
-				rv = ACPI_MATCHSCORE_CID_MAX;
-			}
-			return rv;
+			return imin(rv, ACPI_MATCHSCORE_CID_MAX);
+		}
+	}
+
+	if (dtlink) {
+		char *compatible;
+
+		ret = acpi_dsd_string(aa->aa_node->ad_handle,
+		    "compatible", &compatible);
+		if (ACPI_FAILURE(ret)) {
+			return 0;
+		}
+
+		strings[0] = compatible;
+		rv = device_compatible_pmatch(strings, 1, dce);
+		kmem_strfree(compatible);
+		if (rv) {
+			rv = (rv - 1) + ACPI_MATCHSCORE_CID;
+			return imin(rv, ACPI_MATCHSCORE_CID_MAX);
 		}
 	}
 
