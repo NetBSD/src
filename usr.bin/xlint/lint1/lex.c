@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.96 2021/12/25 13:51:42 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.97 2021/12/26 18:16:41 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.96 2021/12/25 13:51:42 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.97 2021/12/26 18:16:41 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -197,6 +197,7 @@ static struct keyword {
 	kwdef_gcc_attr(	"noreturn",	T_AT_NORETURN),
 	kwdef_gcc_attr(	"nothrow",	T_AT_NOTHROW),
 	kwdef_gcc_attr(	"optimize",	T_AT_OPTIMIZE),
+	kwdef_gcc_attr(	"optnone",	T_AT_OPTNONE),
 	kwdef_gcc_attr(	"packed",	T_AT_PACKED),
 	kwdef_token(	"__packed",	T_PACKED,		0,0,0,0,1),
 	kwdef_gcc_attr(	"pcs",		T_AT_PCS),
