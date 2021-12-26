@@ -1,4 +1,4 @@
-/* $NetBSD: ohci_acpi.c,v 1.1 2021/12/24 00:24:49 jmcneill Exp $ */
+/* $NetBSD: ohci_acpi.c,v 1.2 2021/12/26 14:35:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_acpi.c,v 1.1 2021/12/24 00:24:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_acpi.c,v 1.2 2021/12/26 14:35:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,19 +58,30 @@ CFATTACH_DECL2_NEW(ohci_acpi, sizeof(struct ohci_softc),
 	ohci_acpi_match, ohci_acpi_attach, NULL,
 	ohci_activate, NULL, ohci_childdet);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "generic-ohci" },		/* DT link */
+	DEVICE_COMPAT_EOL
+};
+
 static int
 ohci_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
+	int match;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE) {
 		return 0;
 	}
 
-	return acpi_match_class(aa->aa_node->ad_handle,
-	    PCI_CLASS_SERIALBUS,
-	    PCI_SUBCLASS_SERIALBUS_USB,
-	    PCI_INTERFACE_OHCI);
+	match = acpi_compatible_match(aa, compat_data);
+	if (!match) {
+		match = acpi_match_class(aa->aa_node->ad_handle,
+		    PCI_CLASS_SERIALBUS,
+		    PCI_SUBCLASS_SERIALBUS_USB,
+		    PCI_INTERFACE_OHCI);
+	}
+
+	return match;
 }
 
 static void
