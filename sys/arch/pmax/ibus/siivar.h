@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.4 2011/06/04 01:31:23 tsutsui Exp $	*/
+/*	$NetBSD: siivar.h,v 1.5 2021/12/26 16:08:20 andvar Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
@@ -65,7 +65,7 @@ struct siisoftc {
 
 int	siiintr(void *sc);
 
-/* Machine-indepedent back-end attach entry point */
+/* Machine-independent back-end attach entry point */
 
 void	sii_scsi_request(struct scsipi_channel *,
 				scsipi_adapter_req_t, void *);

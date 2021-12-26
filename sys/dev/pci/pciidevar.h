@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.50 2018/04/19 21:50:09 christos Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.51 2021/12/26 16:08:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -179,7 +179,7 @@ struct pciide_product_desc {
 
 /* Flags for ide_flags */
 #define	IDE_16BIT_IOSPACE	0x0002 /* I/O space BARS ignore upper word */
-#define	IDE_SHARED_CHANNELS	0x0004 /* channels are not independant */
+#define	IDE_SHARED_CHANNELS	0x0004 /* channels are not independent */
 
 
 /* inlines for reading/writing 8-bit PCI registers */

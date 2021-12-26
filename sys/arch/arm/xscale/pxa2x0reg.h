@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.25 2021/12/05 07:56:10 msaitoh Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.26 2021/12/26 16:08:20 andvar Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
 #define PXA2X0_I2S_SIZE		0x84
 #define PXA2X0_AC97_BASE	0x40500000 /* AC '97 Controller */
 #define PXA2X0_AC97_SIZE	0x600
-#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client Contoller */
+#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client Controller */
 #define PXA250_USBDC_SIZE 	0xe04
 #define PXA270_USBDC_SIZE 	0x460
 #define PXA2X0_STUART_BASE	0x40700000 /* Standard UART */
