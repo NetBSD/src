@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm.c,v 1.5 2021/12/26 21:00:14 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
 
 /* The caprices of the preprocessor require that this be declared right here */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm.c,v 1.5 2021/12/26 21:00:14 riastradh Exp $");
 
 #define CREATE_TRACE_POINTS
 
@@ -361,7 +361,7 @@ static void dm_pflip_high_irq(void *interrupt_params)
 			drm_crtc_send_vblank_event(&amdgpu_crtc->base, e);
 
 			/* Event sent, so done with vblank for this flip */
-			drm_crtc_vblank_put(&amdgpu_crtc->base);
+			drm_crtc_vblank_put_locked(&amdgpu_crtc->base);
 		}
 	} else if (e) {
 		/* VRR active and inside front-porch: vblank count and

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.15 2021/12/19 12:36:31 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.16 2021/12/26 21:00:14 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.15 2021/12/19 12:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.16 2021/12/26 21:00:14 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -337,7 +337,7 @@ static u64 drm_vblank_count(struct drm_device *dev, unsigned int pipe)
  * This is mostly useful for hardware that can obtain the scanout position, but
  * doesn't have a hardware frame counter.
  */
-static u64 drm_crtc_accurate_vblank_count_locked(struct drm_crtc *crtc)
+u64 drm_crtc_accurate_vblank_count(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
 	unsigned int pipe = drm_crtc_index(crtc);
@@ -355,17 +355,6 @@ static u64 drm_crtc_accurate_vblank_count_locked(struct drm_crtc *crtc)
 	vblank = drm_vblank_count(dev, pipe);
 
 	spin_unlock_irqrestore(&dev->vblank_time_lock, flags);
-
-	return vblank;
-}
-
-u64 drm_crtc_accurate_vblank_count(struct drm_crtc *crtc)
-{
-	u64 vblank;
-
-	spin_lock(&crtc->dev->event_lock);
-	vblank = drm_crtc_accurate_vblank_count_locked(crtc);
-	spin_unlock(&crtc->dev->event_lock);
 
 	return vblank;
 }
@@ -972,7 +961,7 @@ void drm_crtc_arm_vblank_event(struct drm_crtc *crtc,
 	assert_spin_locked(&dev->event_lock);
 
 	e->pipe = pipe;
-	e->sequence = drm_crtc_accurate_vblank_count_locked(crtc) + 1;
+	e->sequence = drm_crtc_accurate_vblank_count(crtc) + 1;
 	list_add_tail(&e->base.link, &dev->vblank_event_list);
 }
 EXPORT_SYMBOL(drm_crtc_arm_vblank_event);
