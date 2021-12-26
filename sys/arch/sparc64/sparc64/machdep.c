@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.303 2021/09/11 10:09:55 riastradh Exp $ */
+/*	$NetBSD: machdep.c,v 1.304 2021/12/26 21:33:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.303 2021/09/11 10:09:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304 2021/12/26 21:33:48 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -573,8 +573,15 @@ cpu_reboot(int howto, char *user_boot_string)
 		       config_detach_all(boothowto) ||
 		       vfs_unmount_forceone(l))
 			;	/* do nothing */
-	} else
-		suspendsched();
+	} else {
+		int ddb = 0;
+#ifdef DDB
+		extern int db_active; /* XXX */
+		ddb = db_active;
+#endif
+		if (!ddb)
+			suspendsched();
+	}
 
 	pmf_system_shutdown(boothowto);
 
