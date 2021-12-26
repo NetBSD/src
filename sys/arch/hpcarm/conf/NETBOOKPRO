@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.32 2020/04/18 11:00:41 skrll Exp $
+#	$NetBSD: NETBOOKPRO,v 1.33 2021/12/26 16:08:20 andvar Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.32 $"
+#ident 		"GENERIC-$Revision: 1.33 $"
 
 # estimated number of users
 maxusers	32
@@ -58,7 +58,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_EI		# FFS Endian Independent support
 #options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	NFSSERVER

@@ -1,4 +1,4 @@
-#	$NetBSD: CPMBR1400,v 1.34 2021/01/21 06:51:54 nia Exp $
+#	$NetBSD: CPMBR1400,v 1.35 2021/12/26 16:08:20 andvar Exp $
 
 include 	"arch/evbmips/conf/std.rasoc"
 
@@ -85,7 +85,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	DISKLABEL_EI	# disklabel Endian Independent support
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FF snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and immutable) behave as system flags.

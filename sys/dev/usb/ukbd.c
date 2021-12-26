@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.154 2021/12/25 13:41:12 riastradh Exp $        */
+/*      $NetBSD: ukbd.c,v 1.155 2021/12/26 16:08:21 andvar Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.154 2021/12/25 13:41:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.155 2021/12/26 16:08:21 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1024,7 +1024,7 @@ ukbd_cnattach(void)
 	/*
 	 * XXX USB requires too many parts of the kernel to be running
 	 * XXX in order to work, so we can't do much for the console
-	 * XXX keyboard until autconfiguration has run its course.
+	 * XXX keyboard until autoconfiguration has run its course.
 	 */
 	ukbd_is_console = 1;
 	return 0;
