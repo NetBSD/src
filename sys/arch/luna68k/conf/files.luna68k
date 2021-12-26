@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.28 2019/02/18 01:12:23 thorpej Exp $
+#	$NetBSD: files.luna68k,v 1.29 2021/12/26 16:08:20 andvar Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -65,7 +65,7 @@ file arch/luna68k/dev/omrasops.c	fb
 attach spc at mainbus
 file arch/luna68k/dev/spc.c		spc
 
-# Machine-idependent SCSI driver.
+# Machine-independent SCSI driver.
 include "dev/scsipi/files.scsipi"
 
 # Memory Disk for boot tape

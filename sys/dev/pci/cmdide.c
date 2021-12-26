@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.46 2020/07/17 21:04:14 jdolecek Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.47 2021/12/26 16:08:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.46 2020/07/17 21:04:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.47 2021/12/26 16:08:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
 	if (channel > 0 && one_channel) {
-		/* Channels are not independant, need synchronization */
+		/* Channels are not independent, need synchronization */
 		sc->sc_wdcdev.sc_atac.atac_claim_hw = cmd064x_claim_hw;
 		sc->sc_wdcdev.sc_atac.atac_free_hw  = cmd064x_free_hw;
 		sc->sc_cmd_act_channel = CMDIDE_ACT_CHANNEL_NONE;
@@ -167,7 +167,7 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 	    "configured" : "wired",
 	    (interface & PCIIDE_INTERFACE_PCI(channel)) ?
 	    "native-PCI" : "compatibility",
-	    one_channel ? ", channel non-independant" : "");
+	    one_channel ? ", channel non-independent" : "");
 
 	/*
 	 * with a CMD PCI64x, if we get here, the first channel is enabled:

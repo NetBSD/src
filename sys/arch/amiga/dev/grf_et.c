@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.38 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: grf_et.c,v 1.39 2021/12/26 16:08:19 andvar Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.38 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.39 2021/12/26 16:08:19 andvar Exp $");
 
 #include "grfet.h"
 #include "ite.h"
@@ -1954,7 +1954,7 @@ et_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		return et_get_fbinfo(gp, data);
 	}
 
-	/* handle this command hw-independant in grf(4) */
+	/* handle this command hw-independent in grf(4) */
 	return grf_wsioctl(v, vs, cmd, data, flag, l);
 }
 

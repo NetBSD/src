@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.36 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.37 2021/12/26 16:08:19 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.36 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.37 2021/12/26 16:08:19 andvar Exp $");
 
 #include "grfcv3d.h"
 #include "ite.h"
@@ -2365,7 +2365,7 @@ cv3d_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		return cv3d_get_fbinfo(gp, data);
 	}
 
-	/* handle this command hw-independant in grf(4) */
+	/* handle this command hw-independent in grf(4) */
 	return grf_wsioctl(v, vs, cmd, data, flag, l);
 }
 
