@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.26 2021/08/25 04:13:41 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.27 2021/12/26 08:41:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -81,5 +81,7 @@ struct kmutex {
 #define	__HAVE_SIMPLE_MUTEXES		1
 
 #endif	/* __MUTEX_PRIVATE */
+
+__CTASSERT(sizeof(struct kmutex) == sizeof(uintptr_t));
 
 #endif /* _ARM_MUTEX_H_ */
