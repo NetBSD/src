@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.6 2021/12/19 11:34:44 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.7 2021/12/26 21:00:14 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.6 2021/12/19 11:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.7 2021/12/26 21:00:14 riastradh Exp $");
 
 #include "disp.h"
 #include "atom.h"
@@ -2136,9 +2136,9 @@ nv50_disp_atomic_commit_tail(struct drm_atomic_state *state)
 		if (new_crtc_state->event) {
 			unsigned long flags;
 			/* Get correct count/ts if racing with vblank irq */
+			spin_lock_irqsave(&crtc->dev->event_lock, flags);
 			if (new_crtc_state->active)
 				drm_crtc_accurate_vblank_count(crtc);
-			spin_lock_irqsave(&crtc->dev->event_lock, flags);
 			drm_crtc_send_vblank_event(crtc, new_crtc_state->event);
 			spin_unlock_irqrestore(&crtc->dev->event_lock, flags);
 
