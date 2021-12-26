@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.88 2021/12/20 11:17:40 skrll Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.89 2021/12/26 14:34:39 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -198,7 +198,9 @@ struct acpi_attach_args {
 /* ACPI driver matching scores. */
 #define	ACPI_MATCHSCORE_HID		100	/* matched _HID */
 #define	ACPI_MATCHSCORE_CID_MAX		49
-#define	ACPI_MATCHSCORE_CID		10	/* matched _CID */
+#define	ACPI_MATCHSCORE_CID		10	/* matched _CID or _DSD
+						 * "compatible"
+						 */
 #define	ACPI_MATCHSCORE_CLS		1	/* matched _CLS */
 
 /*
