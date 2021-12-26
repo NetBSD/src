@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.377 2021/12/20 19:34:01 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.378 2021/12/26 18:16:41 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.377 2021/12/20 19:34:01 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.378 2021/12/26 18:16:41 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -251,6 +251,7 @@ anonymize(sym_t *s)
 %token			T_AT_NOTHROW
 %token			T_AT_NO_INSTRUMENT_FUNCTION
 %token			T_AT_OPTIMIZE
+%token			T_AT_OPTNONE
 %token			T_AT_PACKED
 %token			T_AT_PCS
 %token			T_AT_PURE
@@ -2107,6 +2108,7 @@ gcc_attribute_spec:
 	| T_AT_NOTHROW
 	| T_AT_NO_INSTRUMENT_FUNCTION
 	| T_AT_OPTIMIZE T_LPAREN string T_RPAREN
+	| T_AT_OPTNONE
 	| T_AT_PACKED {
 		addpacked();
 	  }
