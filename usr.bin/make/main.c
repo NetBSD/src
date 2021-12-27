@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.553 2021/12/27 21:27:25 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.554 2021/12/27 22:22:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.553 2021/12/27 21:27:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.554 2021/12/27 22:22:48 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -222,9 +222,9 @@ MainParseArgDebugFile(const char *arg)
 
 	opts.debug_file = fopen(fname, mode);
 	if (opts.debug_file == NULL) {
-		fprintf(stderr, "Cannot open debug file %s\n",
+		fprintf(stderr, "Cannot open debug file \"%s\"\n",
 		    fname);
-		usage();
+		exit(2);
 	}
 	free(fname);
 }
