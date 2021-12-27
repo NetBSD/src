@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.554 2021/12/27 22:22:48 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.555 2021/12/27 22:57:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.554 2021/12/27 22:22:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.555 2021/12/27 22:57:26 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -216,8 +216,8 @@ MainParseArgDebugFile(const char *arg)
 	fname = bmake_malloc(len + 20);
 	memcpy(fname, arg, len + 1);
 
-	/* Let the filename be modified by the pid */
-	if (strcmp(fname + len - 3, ".%d") == 0)
+	/* Replace the trailing '%d' after '.%d' with the pid. */
+	if (len >= 3 && memcmp(fname + len - 3, ".%d", 3) == 0)
 		snprintf(fname + len - 2, 20, "%d", getpid());
 
 	opts.debug_file = fopen(fname, mode);
