@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.13 2021/12/21 19:07:09 thorpej Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.14 2021/12/27 13:28:52 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.13 2021/12/21 19:07:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.14 2021/12/27 13:28:52 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -1528,12 +1528,8 @@ long i915_request_wait(struct i915_request *rq,
 		       unsigned int flags,
 		       long timeout)
 {
-#ifdef __NetBSD__
-	const int state = 0;
-#else
 	const int state = flags & I915_WAIT_INTERRUPTIBLE ?
 		TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE;
-#endif
 	struct request_wait wait;
 
 	might_sleep();
