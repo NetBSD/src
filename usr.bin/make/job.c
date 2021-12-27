@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.443 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.444 2021/12/27 17:18:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.443 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.444 2021/12/27 17:18:57 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -512,7 +512,7 @@ JobDeleteTarget(GNode *gn)
 		return;
 
 	file = GNode_Path(gn);
-	if (eunlink(file) != -1)
+	if (unlink_file(file))
 		Error("*** %s removed", file);
 }
 
