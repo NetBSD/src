@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.547 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.548 2021/12/27 17:18:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.547 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.548 2021/12/27 17:18:57 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1983,23 +1983,19 @@ Finish(int errs)
 	Fatal("%d error%s", errs, errs == 1 ? "" : "s");
 }
 
-/*
- * eunlink --
- *	Remove a file carefully, avoiding directories.
- */
-int
-eunlink(const char *file)
+bool
+unlink_file(const char *file)
 {
 	struct stat st;
 
 	if (lstat(file, &st) == -1)
-		return -1;
+		return false;
 
 	if (S_ISDIR(st.st_mode)) {
 		errno = EISDIR;
-		return -1;
+		return false;
 	}
-	return unlink(file);
+	return unlink(file) == 0;
 }
 
 static void
