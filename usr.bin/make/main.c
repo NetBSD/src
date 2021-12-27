@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.549 2021/12/27 18:26:22 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.550 2021/12/27 18:54:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.549 2021/12/27 18:26:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.550 2021/12/27 18:54:19 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -178,10 +178,6 @@ explode(const char *flags)
 	return st;
 }
 
-/*
- * usage --
- *	exit with usage message
- */
 MAKE_ATTR_DEAD static void
 usage(void)
 {
@@ -503,7 +499,7 @@ MainParseArg(char c, const char *argvalue)
 		break;
 	case 'W':
 		opts.parseWarnFatal = true;
-		/* XXX: why no Var_Append? */
+		/* XXX: why no Global_Append? */
 		break;
 	case 'X':
 		opts.varNoExportEnv = true;
@@ -1075,13 +1071,13 @@ ignore_pwd:
 #endif
 
 /*
- * Find the .OBJDIR.  If MAKEOBJDIRPREFIX, or failing that,
- * MAKEOBJDIR is set in the environment, try only that value
- * and fall back to .CURDIR if it does not exist.
+ * Find the .OBJDIR.  If MAKEOBJDIRPREFIX, or failing that, MAKEOBJDIR is set
+ * in the environment, try only that value and fall back to .CURDIR if it
+ * does not exist.
  *
  * Otherwise, try _PATH_OBJDIR.MACHINE-MACHINE_ARCH, _PATH_OBJDIR.MACHINE,
- * and * finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none
- * of these paths exist, just use .CURDIR.
+ * and finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none of these
+ * paths exist, just use .CURDIR.
  */
 static void
 InitObjdir(const char *machine, const char *machine_arch)
@@ -1401,10 +1397,8 @@ main_Init(int argc, char **argv)
 	Global_Set("MAKE_VERSION", MAKE_VERSION);
 #endif
 	Global_Set(".newline", "\n");	/* handy for :@ loops */
-	/*
-	 * This is the traditional preference for makefiles.
-	 */
 #ifndef MAKEFILE_PREFERENCE_LIST
+	/* This is the traditional preference for makefiles. */
 # define MAKEFILE_PREFERENCE_LIST "makefile Makefile"
 #endif
 	Global_Set(MAKE_MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST);
@@ -1436,7 +1430,6 @@ main_Init(int argc, char **argv)
 	Global_Set(MAKEOVERRIDES, "");
 	Global_Set("MFLAGS", "");
 	Global_Set(".ALLTARGETS", "");
-	/* some makefiles need to know this */
 	Var_Set(SCOPE_CMDLINE, MAKE_LEVEL ".ENV", MAKE_LEVEL_ENV);
 
 	/* Set some other useful variables. */
@@ -1468,11 +1461,6 @@ main_Init(int argc, char **argv)
 #endif
 	Dir_Init();
 
-	/*
-	 * First snag any flags out of the MAKE environment variable.
-	 * (Note this is *not* MAKEFLAGS since /bin/make uses that and it's
-	 * in a different format).
-	 */
 #ifdef POSIX
 	{
 		char *p1 = explode(getenv("MAKEFLAGS"));
@@ -1480,13 +1468,14 @@ main_Init(int argc, char **argv)
 		free(p1);
 	}
 #else
+	/*
+	 * First snag any flags out of the MAKE environment variable.
+	 * (Note this is *not* MAKEFLAGS since /bin/make uses that and it's
+	 * in a different format).
+	 */
 	Main_ParseArgLine(getenv("MAKE"));
 #endif
 
-	/*
-	 * Find where we are (now).
-	 * We take care of PWD for the automounter below...
-	 */
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
 		(void)fprintf(stderr, "%s: getcwd: %s.\n",
 		    progname, strerror(errno));
@@ -1498,9 +1487,6 @@ main_Init(int argc, char **argv)
 	if (opts.enterFlag)
 		printf("%s: Entering directory `%s'\n", progname, curdir);
 
-	/*
-	 * Verify that cwd is sane.
-	 */
 	if (stat(curdir, &sa) == -1) {
 		(void)fprintf(stderr, "%s: %s: %s.\n",
 		    progname, curdir, strerror(errno));
@@ -1514,10 +1500,6 @@ main_Init(int argc, char **argv)
 
 	InitObjdir(machine, machine_arch);
 
-	/*
-	 * Initialize archive, target and suffix modules in preparation for
-	 * parsing the makefile(s)
-	 */
 	Arch_Init();
 	Suff_Init();
 	Trace_Init(tracefile);
@@ -1578,10 +1560,6 @@ main_PrepareMaking(void)
 
 	InitMaxJobs();
 
-	/*
-	 * Be compatible if the user did not specify -j and did not explicitly
-	 * turn compatibility on.
-	 */
 	if (!opts.compatMake && !forceJobs)
 		opts.compatMake = true;
 
@@ -1634,15 +1612,10 @@ main_CleanUp(void)
 {
 #ifdef CLEANUP
 	Lst_DoneCall(&opts.variables, free);
-	/*
-	 * Don't free the actual strings from opts.makefiles, they may be
-	 * used in GNodes.
-	 */
 	Lst_Done(&opts.makefiles);
 	Lst_DoneCall(&opts.create, free);
 #endif
 
-	/* print the graph now it's been processed if the user requested it */
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
 
@@ -1691,9 +1664,7 @@ main(int argc, char **argv)
 
 /*
  * Open and parse the given makefile, with all its side effects.
- *
- * Results:
- *	0 if ok. -1 if couldn't open file.
+ * Return -1 if the file could not be opened.
  */
 static int
 ReadMakefile(const char *fname)
@@ -1755,22 +1726,19 @@ found:
 }
 
 /*
- * Cmd_Exec --
- *	Execute the command in cmd, and return the output of that command
- *	in a string.  In the output, newlines are replaced with spaces.
+ * Execute the command in cmd, and return its output (only stdout, not
+ * stderr).  In the output, replace newlines with spaces.
  *
  * Results:
- *	A string containing the output of the command, or the empty string.
+ *	The output of the command, can be empty.
  *	*errfmt returns a format string describing the command failure,
  *	if any, using a single %s conversion specification.
- *
- * Side Effects:
- *	The string must be freed by the caller.
+ *	TODO: replace errfmt with an actual error message.
  */
 char *
 Cmd_Exec(const char *cmd, const char **errfmt)
 {
-	const char *args[4];	/* Args for invoking the shell */
+	const char *args[4];	/* Arguments for invoking the shell */
 	int pipefds[2];
 	int cpid;		/* Child PID */
 	int pid;		/* PID from wait() */
@@ -1786,17 +1754,12 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 	if (shellName == NULL)
 		Shell_Init();
-	/*
-	 * Set up arguments for shell
-	 */
+
 	args[0] = shellName;
 	args[1] = "-c";
 	args[2] = cmd;
 	args[3] = NULL;
 
-	/*
-	 * Open a pipe for fetching its output
-	 */
 	if (pipe(pipefds) == -1) {
 		*errfmt = "Couldn't create pipe for \"%s\"";
 		goto bad;
@@ -1804,18 +1767,9 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 	Var_ReexportVars();
 
-	/*
-	 * Fork
-	 */
 	switch (cpid = vfork()) {
 	case 0:
-		(void)close(pipefds[0]); /* Close input side of pipe */
-
-		/*
-		 * Duplicate the output stream to the shell's output, then
-		 * shut the extra thing down. Note we don't fetch the error
-		 * stream...why not? Why?
-		 */
+		(void)close(pipefds[0]);
 		(void)dup2(pipefds[1], 1);
 		(void)close(pipefds[1]);
 
@@ -1845,7 +1799,6 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 		(void)close(pipefds[0]); /* Close the input side of the pipe. */
 
-		/* Wait for the process to exit. */
 		while ((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
 			JobReapChild(pid, status, false);
 
@@ -1860,10 +1813,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 		else if (WEXITSTATUS(status) != 0)
 			*errfmt = "\"%s\" returned non-zero status";
 
-		/*
-		 * Convert newlines to spaces.  A final newline is just
-		 * stripped.
-		 */
+		/* Convert newlines to spaces, strip the final newline. */
 		if (res_len > 0 && res[res_len - 1] == '\n')
 			res[res_len - 1] = '\0';
 		for (cp = res; *cp != '\0'; cp++)
@@ -1879,8 +1829,9 @@ bad:
 /*
  * Print a printf-style error message.
  *
- * In default mode, this error message has no consequences, in particular it
- * does not affect the exit status.  Only in lint mode (-dL) it does.
+ * In default mode, this error message has no consequences, for compatibility
+ * reasons, in particular it does not affect the exit status.  Only in lint
+ * mode (-dL) it does.
  */
 void
 Error(const char *fmt, ...)
@@ -2014,10 +1965,7 @@ write_all(int fd, const void *data, size_t n)
 	}
 }
 
-/*
- * execDie --
- *	Print why exec failed, avoiding stdio.
- */
+/* Print why exec failed, avoiding stdio. */
 void MAKE_ATTR_DEAD
 execDie(const char *af, const char *av)
 {
