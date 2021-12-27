@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.444 2021/12/27 17:18:57 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.445 2021/12/27 18:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.444 2021/12/27 17:18:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.445 2021/12/27 18:26:22 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1668,7 +1668,7 @@ JobStart(GNode *gn, bool special)
 
 	job->special = special || gn->type & OP_SPECIAL;
 	job->ignerr = opts.ignoreErrors || gn->type & OP_IGNORE;
-	job->echo = !(opts.beSilent || gn->type & OP_SILENT);
+	job->echo = !(opts.silent || gn->type & OP_SILENT);
 
 	/*
 	 * Check the commands now so any attributes from .DEFAULT have a
@@ -1691,7 +1691,7 @@ JobStart(GNode *gn, bool special)
 			DieHorribly();
 		}
 	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
-	    (!opts.noExecute && !opts.touchFlag)) {
+	    (!opts.noExecute && !opts.touch)) {
 		/*
 		 * The above condition looks very similar to
 		 * GNode_ShouldExecute but is subtly different.  It prevents
@@ -1924,7 +1924,7 @@ again:
 			 * we add one of our own free will.
 			 */
 			if (*cp != '\0') {
-				if (!opts.beSilent)
+				if (!opts.silent)
 					SwitchOutputTo(job->node);
 #ifdef USE_META
 				if (useMeta) {
@@ -2608,7 +2608,7 @@ JobInterrupt(bool runINTERRUPT, int signo)
 
 	JobSigUnlock(&mask);
 
-	if (runINTERRUPT && !opts.touchFlag) {
+	if (runINTERRUPT && !opts.touch) {
 		interrupt = Targ_FindNode(".INTERRUPT");
 		if (interrupt != NULL) {
 			opts.ignoreErrors = false;

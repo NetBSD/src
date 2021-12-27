@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.548 2021/12/27 17:18:57 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.549 2021/12/27 18:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.548 2021/12/27 17:18:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.549 2021/12/27 18:26:22 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -546,7 +546,7 @@ MainParseArg(char c, const char *argvalue)
 		Global_Append(MAKEFLAGS, "-n");
 		break;
 	case 'q':
-		opts.queryFlag = true;
+		opts.query = true;
 		/* Kind of nonsensical, wot? */
 		Global_Append(MAKEFLAGS, "-q");
 		break;
@@ -555,11 +555,11 @@ MainParseArg(char c, const char *argvalue)
 		Global_Append(MAKEFLAGS, "-r");
 		break;
 	case 's':
-		opts.beSilent = true;
+		opts.silent = true;
 		Global_Append(MAKEFLAGS, "-s");
 		break;
 	case 't':
-		opts.touchFlag = true;
+		opts.touch = true;
 		Global_Append(MAKEFLAGS, "-t");
 		break;
 	case 'w':
@@ -930,7 +930,7 @@ runTargets(void)
 		 * (to prevent the .BEGIN from being executed should
 		 * it exist).
 		 */
-		if (!opts.queryFlag) {
+		if (!opts.query) {
 			Job_Init();
 			jobsRunning = true;
 		}
@@ -1129,10 +1129,10 @@ CmdOpts_Init(void)
 	opts.keepgoing = false;		/* Stop on error */
 	opts.noRecursiveExecute = false; /* Execute all .MAKE targets */
 	opts.noExecute = false;		/* Execute all commands */
-	opts.queryFlag = false;
+	opts.query = false;
 	opts.noBuiltins = false;	/* Read the built-in rules */
-	opts.beSilent = false;		/* Print commands as executed */
-	opts.touchFlag = false;
+	opts.silent = false;		/* Print commands as executed */
+	opts.touch = false;
 	opts.printVars = PVM_NONE;
 	Lst_Init(&opts.variables);
 	opts.parseWarnFatal = false;
