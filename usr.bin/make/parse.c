@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.586 2021/12/27 19:06:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.587 2021/12/27 21:21:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.586 2021/12/27 19:06:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.587 2021/12/27 21:21:17 rillig Exp $");
 
 /* types and constants */
 
@@ -842,7 +842,7 @@ ParseDependencySourceWait(bool isSpecial)
 }
 
 static bool
-ParseDependencySourceKeyword(const char *src, ParseSpecial specType)
+ParseDependencySourceKeyword(const char *src, ParseSpecial special)
 {
 	int keywd;
 	GNodeType op;
@@ -860,7 +860,7 @@ ParseDependencySourceKeyword(const char *src, ParseSpecial specType)
 		return true;
 	}
 	if (parseKeywords[keywd].spec == SP_WAIT) {
-		ParseDependencySourceWait(specType != SP_NOT);
+		ParseDependencySourceWait(special != SP_NOT);
 		return true;
 	}
 	return false;
@@ -916,7 +916,7 @@ ParseDependencySourceOrder(const char *src)
 
 static void
 ParseDependencySourceOther(const char *src, GNodeType tOp,
-			   ParseSpecial specType)
+			   ParseSpecial special)
 {
 	GNode *gn;
 
@@ -938,7 +938,7 @@ ParseDependencySourceOther(const char *src, GNodeType tOp,
 	if (tOp != OP_NONE)
 		gn->type |= tOp;
 	else
-		LinkToTargets(gn, specType != SP_NOT);
+		LinkToTargets(gn, special != SP_NOT);
 }
 
 /*
@@ -953,17 +953,17 @@ ParseDependencySourceOther(const char *src, GNodeType tOp,
  *	src		name of the source to handle
  */
 static void
-ParseDependencySource(GNodeType tOp, const char *src, ParseSpecial specType)
+ParseDependencySource(GNodeType tOp, const char *src, ParseSpecial special)
 {
-	if (ParseDependencySourceKeyword(src, specType))
+	if (ParseDependencySourceKeyword(src, special))
 		return;
 
-	if (specType == SP_MAIN)
+	if (special == SP_MAIN)
 		ParseDependencySourceMain(src);
-	else if (specType == SP_ORDER)
+	else if (special == SP_ORDER)
 		ParseDependencySourceOrder(src);
 	else
-		ParseDependencySourceOther(src, tOp, specType);
+		ParseDependencySourceOther(src, tOp, special);
 }
 
 /*
@@ -1060,11 +1060,11 @@ ParseDependencyTargetWord(const char **pp, const char *lstart)
  * See the tests deptgt-*.mk.
  */
 static void
-ParseDependencyTargetSpecial(ParseSpecial *inout_specType,
+ParseDependencyTargetSpecial(ParseSpecial *inout_special,
 			     const char *targetName,
 			     SearchPathList **inout_paths)
 {
-	switch (*inout_specType) {
+	switch (*inout_special) {
 	case SP_PATH:
 		if (*inout_paths == NULL)
 			*inout_paths = Lst_New();
@@ -1076,7 +1076,7 @@ ParseDependencyTargetSpecial(ParseSpecial *inout_specType,
 		 * .MAIN node.
 		 */
 		if (!Lst_IsEmpty(&opts.create))
-			*inout_specType = SP_NOT;
+			*inout_special = SP_NOT;
 		break;
 	case SP_BEGIN:
 	case SP_END:
@@ -1146,11 +1146,11 @@ ParseDependencyTargetPath(const char *suffixName,
 }
 
 /*
- * See if it's a special target and if so set specType to match it.
+ * See if it's a special target and if so set inout_special to match it.
  */
 static bool
 ParseDependencyTarget(const char *targetName,
-		      ParseSpecial *inout_specType,
+		      ParseSpecial *inout_special,
 		      GNodeType *out_tOp, SearchPathList **inout_paths)
 {
 	int keywd;
@@ -1164,20 +1164,20 @@ ParseDependencyTarget(const char *targetName,
 	 */
 	keywd = ParseFindKeyword(targetName);
 	if (keywd != -1) {
-		if (*inout_specType == SP_PATH &&
+		if (*inout_special == SP_PATH &&
 		    parseKeywords[keywd].spec != SP_PATH) {
 			Parse_Error(PARSE_FATAL, "Mismatched special targets");
 			return false;
 		}
 
-		*inout_specType = parseKeywords[keywd].spec;
+		*inout_special = parseKeywords[keywd].spec;
 		*out_tOp = parseKeywords[keywd].op;
 
-		ParseDependencyTargetSpecial(inout_specType, targetName,
+		ParseDependencyTargetSpecial(inout_special, targetName,
 		    inout_paths);
 
 	} else if (strncmp(targetName, ".PATH", 5) == 0) {
-		*inout_specType = SP_PATH;
+		*inout_special = SP_PATH;
 		if (!ParseDependencyTargetPath(targetName + 5, inout_paths))
 			return false;
 	}
@@ -1185,7 +1185,7 @@ ParseDependencyTarget(const char *targetName,
 }
 
 static void
-ParseDependencyTargetMundane(char *targetName, StringList *curTargs)
+ParseDependencyTargetMundane(char *targetName, StringList *targetNames)
 {
 	if (Dir_HasWildcards(targetName)) {
 		/*
@@ -1196,7 +1196,7 @@ ParseDependencyTargetMundane(char *targetName, StringList *curTargs)
 		 */
 		SearchPath *emptyPath = SearchPath_New();
 
-		SearchPath_Expand(emptyPath, targetName, curTargs);
+		SearchPath_Expand(emptyPath, targetName, targetNames);
 
 		SearchPath_Free(emptyPath);
 	} else {
@@ -1204,13 +1204,13 @@ ParseDependencyTargetMundane(char *targetName, StringList *curTargs)
 		 * No wildcards, but we want to avoid code duplication,
 		 * so create a list with the word on it.
 		 */
-		Lst_Append(curTargs, targetName);
+		Lst_Append(targetNames, targetName);
 	}
 
 	/* Apply the targets. */
 
-	while (!Lst_IsEmpty(curTargs)) {
-		char *targName = Lst_Dequeue(curTargs);
+	while (!Lst_IsEmpty(targetNames)) {
+		char *targName = Lst_Dequeue(targetNames);
 		GNode *gn = Suff_IsTransform(targName)
 		    ? Suff_AddTransform(targName)
 		    : Targ_GetNode(targName);
@@ -1241,9 +1241,9 @@ ParseDependencyTargetExtraWarn(char **pp, const char *lstart)
 }
 
 static void
-ParseDependencyCheckSpec(ParseSpecial specType)
+ParseDependencyCheckSpecial(ParseSpecial special)
 {
-	switch (specType) {
+	switch (special) {
 	case SP_DEFAULT:
 	case SP_STALE:
 	case SP_BEGIN:
@@ -1304,9 +1304,9 @@ ClearPaths(SearchPathList *paths)
  *	a .PATH removes all directories from the search path(s).
  */
 static void
-ParseDependencySourcesEmpty(ParseSpecial specType, SearchPathList *paths)
+ParseDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
 {
-	switch (specType) {
+	switch (special) {
 	case SP_SUFFIXES:
 		Suff_ClearSuffixes();
 		break;
@@ -1370,10 +1370,10 @@ AddToPaths(const char *dir, SearchPathList *paths)
  * and will cause make to do a new chdir to that path.
  */
 static void
-ParseDependencySourceSpecial(ParseSpecial specType, char *word,
+ParseDependencySourceSpecial(ParseSpecial special, char *word,
 			     SearchPathList *paths)
 {
-	switch (specType) {
+	switch (special) {
 	case SP_SUFFIXES:
 		Suff_AddSuffix(word, &mainNode);
 		break;
@@ -1401,10 +1401,10 @@ static bool
 ParseDependencyTargets(char **inout_cp,
 		       char **inout_line,
 		       const char *lstart,
-		       ParseSpecial *inout_specType,
+		       ParseSpecial *inout_special,
 		       GNodeType *inout_tOp,
 		       SearchPathList **inout_paths,
-		       StringList *curTargs)
+		       StringList *targetNames)
 {
 	char *cp;
 	char *tgt = *inout_line;
@@ -1461,7 +1461,7 @@ ParseDependencyTargets(char **inout_cp,
 		savec = *cp;
 		*cp = '\0';
 
-		if (!ParseDependencyTarget(tgt, inout_specType, inout_tOp,
+		if (!ParseDependencyTarget(tgt, inout_special, inout_tOp,
 		    inout_paths))
 			return false;
 
@@ -1469,9 +1469,9 @@ ParseDependencyTargets(char **inout_cp,
 		 * Have word in line. Get or create its node and stick it at
 		 * the end of the targets list
 		 */
-		if (*inout_specType == SP_NOT && *tgt != '\0')
-			ParseDependencyTargetMundane(tgt, curTargs);
-		else if (*inout_specType == SP_PATH && *tgt != '.' &&
+		if (*inout_special == SP_NOT && *tgt != '\0')
+			ParseDependencyTargetMundane(tgt, targetNames);
+		else if (*inout_special == SP_PATH && *tgt != '.' &&
 			 *tgt != '\0')
 			Parse_Error(PARSE_WARNING, "Extra target (%s) ignored",
 			    tgt);
@@ -1483,7 +1483,7 @@ ParseDependencyTargets(char **inout_cp,
 		 * If it is a special type and not .PATH, it's the only target
 		 * we allow on this line.
 		 */
-		if (*inout_specType != SP_NOT && *inout_specType != SP_PATH)
+		if (*inout_special != SP_NOT && *inout_special != SP_PATH)
 			ParseDependencyTargetExtraWarn(&cp, lstart);
 		else
 			pp_skip_whitespace(&cp);
@@ -1503,7 +1503,7 @@ ParseDependencyTargets(char **inout_cp,
 
 static void
 ParseDependencySourcesSpecial(char *start, char *end,
-			      ParseSpecial specType, SearchPathList *paths)
+			      ParseSpecial special, SearchPathList *paths)
 {
 	char savec;
 
@@ -1512,7 +1512,7 @@ ParseDependencySourcesSpecial(char *start, char *end,
 			end++;
 		savec = *end;
 		*end = '\0';
-		ParseDependencySourceSpecial(specType, start, paths);
+		ParseDependencySourceSpecial(special, start, paths);
 		*end = savec;
 		if (savec != '\0')
 			end++;
@@ -1523,7 +1523,7 @@ ParseDependencySourcesSpecial(char *start, char *end,
 
 static bool
 ParseDependencySourcesMundane(char *start, char *end,
-			      ParseSpecial specType, GNodeType tOp)
+			      ParseSpecial special, GNodeType tOp)
 {
 	while (*start != '\0') {
 		/*
@@ -1556,7 +1556,7 @@ ParseDependencySourcesMundane(char *start, char *end,
 
 			while (!Lst_IsEmpty(&sources)) {
 				GNode *gn = Lst_Dequeue(&sources);
-				ParseDependencySource(tOp, gn->name, specType);
+				ParseDependencySource(tOp, gn->name, special);
 			}
 			Lst_Done(&sources);
 			end = start;
@@ -1566,7 +1566,7 @@ ParseDependencySourcesMundane(char *start, char *end,
 				end++;
 			}
 
-			ParseDependencySource(tOp, start, specType);
+			ParseDependencySource(tOp, start, special);
 		}
 		pp_skip_whitespace(&end);
 		start = end;
@@ -1581,44 +1581,44 @@ ParseDependencySourcesMundane(char *start, char *end,
  */
 static void
 ParseDependencySources(char *line, char *cp, GNodeType tOp,
-		       ParseSpecial specType, SearchPathList **inout_paths)
+		       ParseSpecial special, SearchPathList **inout_paths)
 {
 	if (line[0] == '\0') {
-		ParseDependencySourcesEmpty(specType, *inout_paths);
-	} else if (specType == SP_MFLAGS) {
+		ParseDependencySourcesEmpty(special, *inout_paths);
+	} else if (special == SP_MFLAGS) {
 		Main_ParseArgLine(line);
 		/*
 		 * Set the initial character to a null-character so the loop
 		 * to get sources won't get anything.
 		 */
 		*line = '\0';
-	} else if (specType == SP_SHELL) {
+	} else if (special == SP_SHELL) {
 		if (!Job_ParseShell(line)) {
 			Parse_Error(PARSE_FATAL,
 			    "improper shell specification");
 			return;
 		}
 		*line = '\0';
-	} else if (specType == SP_NOTPARALLEL || specType == SP_SINGLESHELL ||
-		   specType == SP_DELETE_ON_ERROR) {
+	} else if (special == SP_NOTPARALLEL || special == SP_SINGLESHELL ||
+		   special == SP_DELETE_ON_ERROR) {
 		*line = '\0';
 	}
 
 	/* Now go for the sources. */
-	if (specType == SP_SUFFIXES || specType == SP_PATH ||
-	    specType == SP_INCLUDES || specType == SP_LIBS ||
-	    specType == SP_NULL || specType == SP_OBJDIR) {
-		ParseDependencySourcesSpecial(line, cp, specType,
+	if (special == SP_SUFFIXES || special == SP_PATH ||
+	    special == SP_INCLUDES || special == SP_LIBS ||
+	    special == SP_NULL || special == SP_OBJDIR) {
+		ParseDependencySourcesSpecial(line, cp, special,
 		    *inout_paths);
 		if (*inout_paths != NULL) {
 			Lst_Free(*inout_paths);
 			*inout_paths = NULL;
 		}
-		if (specType == SP_PATH)
+		if (special == SP_PATH)
 			Dir_SetPATH();
 	} else {
 		assert(*inout_paths == NULL);
-		if (!ParseDependencySourcesMundane(line, cp, specType, tOp))
+		if (!ParseDependencySourcesMundane(line, cp, special, tOp))
 			return;
 	}
 
@@ -1657,14 +1657,14 @@ ParseDependency(char *line)
 				 * of .PATH targets */
 	GNodeType tOp;		/* operator from special target */
 	/* target names to be found and added to the targets list */
-	StringList curTargs = LST_INIT;
+	StringList targetNames = LST_INIT;
 	char *lstart = line;
 
 	/*
 	 * In special targets, the children are linked as children of the
 	 * parent but not vice versa.
 	 */
-	ParseSpecial specType = SP_NOT;
+	ParseSpecial special = SP_NOT;
 
 	DEBUG1(PARSE, "ParseDependency(%s)\n", line);
 	tOp = OP_NONE;
@@ -1672,19 +1672,19 @@ ParseDependency(char *line)
 	paths = NULL;
 
 	/* XXX: don't use 'line' as an iterator variable */
-	if (!ParseDependencyTargets(&cp, &line, lstart, &specType, &tOp,
-	    &paths, &curTargs))
+	if (!ParseDependencyTargets(&cp, &line, lstart, &special, &tOp,
+	    &paths, &targetNames))
 		goto out;
 
 	/*
 	 * Don't need the list of target names anymore.
 	 * The targets themselves are now in the global variable 'targets'.
 	 */
-	Lst_Done(&curTargs);
-	Lst_Init(&curTargs);
+	Lst_Done(&targetNames);
+	Lst_Init(&targetNames);
 
 	if (!Lst_IsEmpty(targets))
-		ParseDependencyCheckSpec(specType);
+		ParseDependencyCheckSpecial(special);
 
 	op = ParseDependencyOp(&cp);
 	ApplyDependencyOperator(op);
@@ -1692,12 +1692,12 @@ ParseDependency(char *line)
 	pp_skip_whitespace(&cp);
 	line = cp;		/* XXX: 'line' is an inappropriate name */
 
-	ParseDependencySources(line, cp, tOp, specType, &paths);
+	ParseDependencySources(line, cp, tOp, special, &paths);
 
 out:
 	if (paths != NULL)
 		Lst_Free(paths);
-	Lst_Done(&curTargs);
+	Lst_Done(&targetNames);
 }
 
 typedef struct VarAssignParsed {
