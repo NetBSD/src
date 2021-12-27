@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.551 2021/12/27 20:59:59 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.552 2021/12/27 21:21:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.551 2021/12/27 20:59:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.552 2021/12/27 21:21:17 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1429,21 +1429,21 @@ main_Init(int argc, char **argv)
 
 	/* Set some other useful variables. */
 	{
-		char tmp[64], *ep = getenv(MAKE_LEVEL_ENV);
+		char buf[64], *ep = getenv(MAKE_LEVEL_ENV);
 
 		makelevel = ep != NULL && ep[0] != '\0' ? atoi(ep) : 0;
 		if (makelevel < 0)
 			makelevel = 0;
-		snprintf(tmp, sizeof tmp, "%d", makelevel);
-		Global_Set(MAKE_LEVEL, tmp);
-		snprintf(tmp, sizeof tmp, "%u", myPid);
-		Global_Set(".MAKE.PID", tmp);
-		snprintf(tmp, sizeof tmp, "%u", getppid());
-		Global_Set(".MAKE.PPID", tmp);
-		snprintf(tmp, sizeof tmp, "%u", getuid());
-		Global_Set(".MAKE.UID", tmp);
-		snprintf(tmp, sizeof tmp, "%u", getgid());
-		Global_Set(".MAKE.GID", tmp);
+		snprintf(buf, sizeof buf, "%d", makelevel);
+		Global_Set(MAKE_LEVEL, buf);
+		snprintf(buf, sizeof buf, "%u", myPid);
+		Global_Set(".MAKE.PID", buf);
+		snprintf(buf, sizeof buf, "%u", getppid());
+		Global_Set(".MAKE.PPID", buf);
+		snprintf(buf, sizeof buf, "%u", getuid());
+		Global_Set(".MAKE.UID", buf);
+		snprintf(buf, sizeof buf, "%u", getgid());
+		Global_Set(".MAKE.GID", buf);
 	}
 	if (makelevel > 0) {
 		char pn[1024];
