@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.14 2021/12/27 13:28:52 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.15 2021/12/27 13:29:04 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.14 2021/12/27 13:28:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.15 2021/12/27 13:29:04 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -1600,8 +1600,13 @@ long i915_request_wait(struct i915_request *rq,
 
 #ifdef __NetBSD__
 	DRM_INIT_WAITQUEUE(&wait.wq, "i915req");
+#else
+	wait.tsk = current;
+#endif
 	if (dma_fence_add_callback(&rq->fence, &wait.cb, request_wait_wake))
 		goto out;
+
+#ifdef __NetBSD__
 	spin_lock(rq->fence.lock);
 #define	C	(i915_request_completed(rq) ? 1 :			      \
 		    (spin_unlock(rq->fence.lock),			      \
@@ -1623,10 +1628,6 @@ long i915_request_wait(struct i915_request *rq,
 	spin_unlock(rq->fence.lock);
 	DRM_DESTROY_WAITQUEUE(&wait.wq);
 #else
-	wait.tsk = current;
-	if (dma_fence_add_callback(&rq->fence, &wait.cb, request_wait_wake))
-		goto out;
-
 	for (;;) {
 		set_current_state(state);
 
