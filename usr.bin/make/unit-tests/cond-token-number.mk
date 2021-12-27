@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-number.mk,v 1.5 2020/11/15 14:58:14 rillig Exp $
+# $NetBSD: cond-token-number.mk,v 1.6 2021/12/27 18:54:19 rillig Exp $
 #
 # Tests for number tokens in .if conditions.
 #
@@ -69,9 +69,18 @@
 .  error
 .endif
 
-# This is not a hexadecimal number, even though it has an x.
-# It is interpreted as a string instead, effectively meaning defined(3x4).
+# This is not a hexadecimal number, even though it has an x.  It is
+# interpreted as a string instead.  In a plain '.if', such a token evaluates
+# to true if it is non-empty.  In other '.if' directives, such a token is
+# evaluated by either FuncDefined or FuncMake.
 .if 3x4
+.else
+.  error
+.endif
+
+# Make can do radix conversion from hex to decimal.
+HEX=	dead
+.if 0x${HEX} == 57005
 .else
 .  error
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.306 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.307 2021/12/27 18:54:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.306 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.307 2021/12/27 18:54:19 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -123,8 +123,8 @@ MAKE_RCSID("$NetBSD: cond.c,v 1.306 2021/12/15 12:58:01 rillig Exp $");
  *	TOK_RPAREN	for ')'
  *
  * Other terminal symbols are evaluated using either the default function or
- * the function given in the terminal, they return either TOK_TRUE or
- * TOK_FALSE.
+ * the function given in the terminal, they return either TOK_TRUE, TOK_FALSE
+ * or TOK_ERROR.
  */
 typedef enum Token {
 	TOK_FALSE, TOK_TRUE, TOK_AND, TOK_OR, TOK_NOT,
@@ -450,12 +450,11 @@ CondParser_StringExpr(CondParser *par, const char *start,
 }
 
 /*
- * Parse a string from a variable expression or an optionally quoted
- * string.  This is called for the left-hand and right-hand sides of
- * comparisons.
+ * Parse a string from a variable expression or an optionally quoted string,
+ * on the left-hand and right-hand sides of comparisons.
  *
  * Results:
- *	Returns the string, absent any quotes, or NULL on error.
+ *	Returns the string without any enclosing quotes, or NULL on error.
  *	Sets out_quoted if the leaf was a quoted string literal.
  */
 static void
