@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.550 2021/12/27 18:54:19 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.551 2021/12/27 20:59:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.550 2021/12/27 18:54:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.551 2021/12/27 20:59:59 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -153,29 +153,24 @@ static HashTable cached_realpaths;
 static char *
 explode(const char *flags)
 {
-	size_t len;
-	char *nf, *st;
-	const char *f;
+	char *exploded, *ep;
+	const char *p;
 
 	if (flags == NULL)
 		return NULL;
 
-	for (f = flags; *f != '\0'; f++)
-		if (!ch_isalpha(*f))
-			break;
+	for (p = flags; *p != '\0'; p++)
+		if (!ch_isalpha(*p))
+			return bmake_strdup(flags);
 
-	if (*f != '\0')
-		return bmake_strdup(flags);
-
-	len = strlen(flags);
-	st = nf = bmake_malloc(len * 3 + 1);
-	while (*flags != '\0') {
-		*nf++ = '-';
-		*nf++ = *flags++;
-		*nf++ = ' ';
+	exploded = bmake_malloc((size_t)(p - flags) * 3 + 1);
+	for (p = flags, ep = exploded; *p != '\0'; p++) {
+		*ep++ = '-';
+		*ep++ = *p;
+		*ep++ = ' ';
 	}
-	*nf = '\0';
-	return st;
+	*ep = '\0';
+	return exploded;
 }
 
 MAKE_ATTR_DEAD static void
