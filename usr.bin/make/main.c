@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.552 2021/12/27 21:21:17 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.553 2021/12/27 21:27:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.552 2021/12/27 21:21:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.553 2021/12/27 21:27:25 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -131,7 +131,7 @@ static int jp_0 = -1, jp_1 = -1; /* ends of parent job pipe */
 bool doing_depend;		/* Set while reading .depend */
 static bool jobsRunning;	/* true if the jobs might be running */
 static const char *tracefile;
-static int ReadMakefile(const char *);
+static bool ReadMakefile(const char *);
 static void purge_relative_cached_realpaths(void);
 
 static bool ignorePWD;		/* if we use -C, PWD is meaningless */
@@ -1213,7 +1213,7 @@ ReadBuiltinRules(void)
 		Fatal("%s: no system rules (%s).", progname, _PATH_DEFSYSMK);
 
 	for (ln = sysMkFiles.first; ln != NULL; ln = ln->next)
-		if (ReadMakefile(ln->datum) == 0)
+		if (ReadMakefile(ln->datum))
 			break;
 
 	if (ln == NULL)
@@ -1295,13 +1295,13 @@ InitVpath(void)
 }
 
 static void
-ReadAllMakefiles(StringList *makefiles)
+ReadAllMakefiles(const StringList *makefiles)
 {
 	StringListNode *ln;
 
 	for (ln = makefiles->first; ln != NULL; ln = ln->next) {
 		const char *fname = ln->datum;
-		if (ReadMakefile(fname) != 0)
+		if (!ReadMakefile(fname))
 			Fatal("%s: cannot open %s.", progname, fname);
 	}
 }
@@ -1325,7 +1325,7 @@ ReadFirstDefaultMakefile(void)
 	(void)str2Lst_Append(&opts.makefiles, prefs);
 
 	for (ln = opts.makefiles.first; ln != NULL; ln = ln->next)
-		if (ReadMakefile(ln->datum) == 0)
+		if (ReadMakefile(ln->datum))
 			break;
 
 	free(prefs);
@@ -1659,9 +1659,9 @@ main(int argc, char **argv)
 
 /*
  * Open and parse the given makefile, with all its side effects.
- * Return -1 if the file could not be opened.
+ * Return false if the file could not be opened.
  */
-static int
+static bool
 ReadMakefile(const char *fname)
 {
 	int fd;
@@ -1703,7 +1703,7 @@ ReadMakefile(const char *fname)
 		if (name == NULL || (fd = open(name, O_RDONLY)) == -1) {
 			free(name);
 			free(path);
-			return -1;
+			return false;
 		}
 		fname = name;
 		/*
@@ -1717,7 +1717,7 @@ found:
 		Parse_File(fname, fd);
 	}
 	free(path);
-	return 0;
+	return true;
 }
 
 /*
