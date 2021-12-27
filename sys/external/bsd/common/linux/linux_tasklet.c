@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_tasklet.c,v 1.9 2021/12/19 12:44:43 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.10 2021/12/27 14:57:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2020, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.9 2021/12/19 12:44:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.10 2021/12/27 14:57:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -482,7 +482,7 @@ tasklet_kill(struct tasklet_struct *tasklet)
 }
 
 /*
- * tasklet_is_scheduled(tasklet)
+ * tasklet_is_locked(tasklet)
  *
  *	True if tasklet is currently locked.  Caller must use it only
  *	for positive assertions.
