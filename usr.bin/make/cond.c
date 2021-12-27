@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.307 2021/12/27 18:54:19 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.308 2021/12/27 21:21:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.307 2021/12/27 18:54:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.308 2021/12/27 21:21:17 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -399,7 +399,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
 		      Buffer *buf, FStr *inout_str)
 {
 	VarEvalMode emode;
-	const char *nested_p;
+	const char *p;
 	bool atStart;
 	VarParseResult parseResult;
 
@@ -407,9 +407,9 @@ CondParser_StringExpr(CondParser *par, const char *start,
 	    : doEval ? VARE_UNDEFERR
 	    : VARE_PARSE_ONLY;
 
-	nested_p = par->p;
-	atStart = nested_p == start;
-	parseResult = Var_Parse(&nested_p, SCOPE_CMDLINE, emode, inout_str);
+	p = par->p;
+	atStart = p == start;
+	parseResult = Var_Parse(&p, SCOPE_CMDLINE, emode, inout_str);
 	/* TODO: handle errors */
 	if (inout_str->str == var_Error) {
 		if (parseResult == VPR_ERR) {
@@ -433,7 +433,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
 		*inout_str = FStr_InitRefer(NULL);
 		return false;
 	}
-	par->p = nested_p;
+	par->p = p;
 
 	/*
 	 * If the '$' started the string literal (which means no quotes), and
