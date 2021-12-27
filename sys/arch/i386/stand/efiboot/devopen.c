@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.12 2021/11/18 16:18:13 manu Exp $	 */
+/*	$NetBSD: devopen.c,v 1.13 2021/12/27 12:19:27 simonb Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -288,9 +288,8 @@ neterr:
 	 * biosdisk
 	 */
 	if (strcmp(devname, "esp") == 0) {
-		const char *part_name = NULL;
 		bios2dev(boot_biosdev, boot_biossector, &devname, &unit,
-		    &partition, &part_name);
+		    &partition, NULL);
 		if (efidisk_get_efi_system_partition(boot_biosdev, &partition))
 			return ENXIO;
 	}
