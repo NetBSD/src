@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.249 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.250 2021/12/27 18:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.249 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.250 2021/12/27 18:26:22 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -1073,7 +1073,7 @@ MakeStartJobs(void)
 		gn->made = BEINGMADE;
 		if (GNode_IsOODate(gn)) {
 			DEBUG0(MAKE, "out-of-date\n");
-			if (opts.queryFlag)
+			if (opts.query)
 				return true;
 			GNode_SetLocalVars(gn);
 			Job_Make(gn);
@@ -1441,7 +1441,7 @@ Make_Run(GNodeList *targs)
 		Targ_PrintGraph(1);
 	}
 
-	if (opts.queryFlag) {
+	if (opts.query) {
 		/*
 		 * We wouldn't do any work unless we could start some jobs
 		 * in the next loop... (we won't actually start any, of
