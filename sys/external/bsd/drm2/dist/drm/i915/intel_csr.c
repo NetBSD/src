@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_csr.c,v 1.8 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: intel_csr.c,v 1.9 2021/12/27 11:06:49 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_csr.c,v 1.8 2021/12/19 11:38:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_csr.c,v 1.9 2021/12/27 11:06:49 riastradh Exp $");
 
 #include <linux/firmware.h>
 
@@ -659,8 +659,10 @@ static void csr_load_work_fn(struct work_struct *work)
 			   "Failed to load DMC firmware %s."
 			   " Disabling runtime power management.\n",
 			   csr->fw_path);
+#ifndef __NetBSD__
 		dev_notice(dev_priv->drm.dev, "DMC firmware homepage: %s",
 			   INTEL_UC_FIRMWARE_URL);
+#endif
 	}
 
 	release_firmware(fw);
