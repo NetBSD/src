@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465reg.h,v 1.2 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64465reg.h,v 1.3 2021/12/27 23:04:20 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * HD64465 power managerment and system configuration register.
+ * HD64465 power management and system configuration register.
  */
 /* System Module Standby Register */
 #define HD64465_SMSCR		0xb0000000

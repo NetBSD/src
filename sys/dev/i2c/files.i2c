@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.120 2021/12/07 17:39:54 brad Exp $
+#	$NetBSD: files.i2c,v 1.121 2021/12/27 23:04:20 andvar Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -106,7 +106,7 @@ device	lmtemp: sysmon_envsys
 attach	lmtemp at iic
 file	dev/i2c/lm75.c				lmtemp
 
-# IST-AG Humidity and Teperature sensor (P14)
+# IST-AG Humidity and Temperature sensor (P14)
 device	hythygtemp: sysmon_envsys
 attach	hythygtemp at iic
 file	dev/i2c/hytp14.c			hythygtemp
