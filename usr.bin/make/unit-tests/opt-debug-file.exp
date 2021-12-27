@@ -1,6 +1,2 @@
-Cannot open debug file opt-debug-file.debuglog/file
-usage: make [-BeikNnqrSstWwX]
-            [-C directory] [-D variable] [-d flags] [-f makefile]
-            [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]
-            [-V variable] [-v variable] [variable=value] [target ...]
+Cannot open debug file "opt-debug-file.debuglog/file"
 exit status 2
