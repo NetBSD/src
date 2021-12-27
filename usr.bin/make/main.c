@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.557 2021/12/27 23:11:55 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.558 2021/12/27 23:19:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.557 2021/12/27 23:11:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.558 2021/12/27 23:19:41 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1748,7 +1748,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 	if (pipe(pipefds) == -1) {
 		*errfmt = "Couldn't create pipe for \"%s\"";
-		goto bad;
+		return bmake_strdup("");
 	}
 
 	Var_ReexportVars();
@@ -1765,51 +1765,47 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 	case -1:
 		*errfmt = "Couldn't exec \"%s\"";
-		goto bad;
-
-	default:
-		(void)close(pipefds[1]); /* No need for the writing half */
-
-		savederr = 0;
-		Buf_Init(&buf);
-
-		do {
-			char result[BUFSIZ];
-			bytes_read = read(pipefds[0], result, sizeof result);
-			if (bytes_read > 0)
-				Buf_AddBytes(&buf, result, (size_t)bytes_read);
-		} while (bytes_read > 0 ||
-			 (bytes_read == -1 && errno == EINTR));
-		if (bytes_read == -1)
-			savederr = errno;
-
-		(void)close(pipefds[0]); /* Close the input side of the pipe. */
-
-		while ((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
-			JobReapChild(pid, status, false);
-
-		res_len = buf.len;
-		res = Buf_DoneData(&buf);
-
-		if (savederr != 0)
-			*errfmt = "Couldn't read shell's output for \"%s\"";
-
-		if (WIFSIGNALED(status))
-			*errfmt = "\"%s\" exited on a signal";
-		else if (WEXITSTATUS(status) != 0)
-			*errfmt = "\"%s\" returned non-zero status";
-
-		/* Convert newlines to spaces, strip the final newline. */
-		if (res_len > 0 && res[res_len - 1] == '\n')
-			res[res_len - 1] = '\0';
-		for (cp = res; *cp != '\0'; cp++)
-			if (*cp == '\n')
-				*cp = ' ';
-		break;
+		return bmake_strdup("");
 	}
+
+	(void)close(pipefds[1]);	/* No need for the writing half */
+
+	savederr = 0;
+	Buf_Init(&buf);
+
+	do {
+		char result[BUFSIZ];
+		bytes_read = read(pipefds[0], result, sizeof result);
+		if (bytes_read > 0)
+			Buf_AddBytes(&buf, result, (size_t)bytes_read);
+	} while (bytes_read > 0 || (bytes_read == -1 && errno == EINTR));
+	if (bytes_read == -1)
+		savederr = errno;
+
+	(void)close(pipefds[0]); /* Close the input side of the pipe. */
+
+	while ((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
+		JobReapChild(pid, status, false);
+
+	res_len = buf.len;
+	res = Buf_DoneData(&buf);
+
+	if (savederr != 0)
+		*errfmt = "Couldn't read shell's output for \"%s\"";
+
+	if (WIFSIGNALED(status))
+		*errfmt = "\"%s\" exited on a signal";
+	else if (WEXITSTATUS(status) != 0)
+		*errfmt = "\"%s\" returned non-zero status";
+
+	/* Convert newlines to spaces, strip the final newline. */
+	if (res_len > 0 && res[res_len - 1] == '\n')
+		res[res_len - 1] = '\0';
+	for (cp = res; *cp != '\0'; cp++)
+		if (*cp == '\n')
+			*cp = ' ';
+
 	return res;
-bad:
-	return bmake_strdup("");
 }
 
 /*
