@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.558 2021/12/27 23:19:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.559 2021/12/27 23:44:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.558 2021/12/27 23:19:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.559 2021/12/27 23:44:06 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1732,9 +1732,8 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	Buffer buf;		/* buffer to store the result */
 	ssize_t bytes_read;
 	char *res;		/* result */
-	size_t res_len;
 	char *cp;
-	int savederr;		/* saved errno */
+	int saved_errno;
 
 	*errfmt = NULL;
 
@@ -1770,7 +1769,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 	(void)close(pipefds[1]);	/* No need for the writing half */
 
-	savederr = 0;
+	saved_errno = 0;
 	Buf_Init(&buf);
 
 	do {
@@ -1780,30 +1779,27 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 			Buf_AddBytes(&buf, result, (size_t)bytes_read);
 	} while (bytes_read > 0 || (bytes_read == -1 && errno == EINTR));
 	if (bytes_read == -1)
-		savederr = errno;
+		saved_errno = errno;
 
 	(void)close(pipefds[0]); /* Close the input side of the pipe. */
 
 	while ((pid = waitpid(cpid, &status, 0)) != cpid && pid >= 0)
 		JobReapChild(pid, status, false);
 
-	res_len = buf.len;
+	if (Buf_EndsWith(&buf, '\n'))
+		buf.data[buf.len - 1] = '\0';
 	res = Buf_DoneData(&buf);
 
-	if (savederr != 0)
-		*errfmt = "Couldn't read shell's output for \"%s\"";
+	for (cp = res; *cp != '\0'; cp++)
+		if (*cp == '\n')
+			*cp = ' ';
 
 	if (WIFSIGNALED(status))
 		*errfmt = "\"%s\" exited on a signal";
 	else if (WEXITSTATUS(status) != 0)
 		*errfmt = "\"%s\" returned non-zero status";
-
-	/* Convert newlines to spaces, strip the final newline. */
-	if (res_len > 0 && res[res_len - 1] == '\n')
-		res[res_len - 1] = '\0';
-	for (cp = res; *cp != '\0'; cp++)
-		if (*cp == '\n')
-			*cp = ' ';
+	else if (saved_errno != 0)
+		*errfmt = "Couldn't read shell's output for \"%s\"";
 
 	return res;
 }
