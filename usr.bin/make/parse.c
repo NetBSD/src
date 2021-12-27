@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.585 2021/12/27 18:54:19 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.586 2021/12/27 19:06:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.585 2021/12/27 18:54:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.586 2021/12/27 19:06:07 rillig Exp $");
 
 /* types and constants */
 
@@ -726,8 +726,8 @@ LinkSource(GNode *pgn, GNode *cgn, bool isSpecial)
 		Lst_Append(&cgn->parents, pgn);
 
 	if (DEBUG(PARSE)) {
-		debug_printf("# %s: added child %s - %s\n",
-		    __func__, pgn->name, cgn->name);
+		debug_printf("# LinkSource: added child %s - %s\n",
+		    pgn->name, cgn->name);
 		Targ_PrintNode(pgn, 0);
 		Targ_PrintNode(cgn, 0);
 	}
@@ -900,8 +900,10 @@ ParseDependencySourceOrder(const char *src)
 		Lst_Append(&order_pred->order_succ, gn);
 		Lst_Append(&gn->order_pred, order_pred);
 		if (DEBUG(PARSE)) {
-			debug_printf("# %s: added Order dependency %s - %s\n",
-			    __func__, order_pred->name, gn->name);
+			debug_printf(
+			    "# ParseDependencySourceOrder: "
+			    "added Order dependency %s - %s\n",
+			    order_pred->name, gn->name);
 			Targ_PrintNode(order_pred, 0);
 			Targ_PrintNode(gn, 0);
 		}
@@ -2259,8 +2261,8 @@ SetFilenameVars(const char *filename, const char *dirvar, const char *filevar)
 	Global_Set(dirvar, dirname.str);
 	Global_Set(filevar, basename);
 
-	DEBUG5(PARSE, "%s: ${%s} = `%s' ${%s} = `%s'\n",
-	    __func__, dirvar, dirname.str, filevar, basename);
+	DEBUG4(PARSE, "SetFilenameVars: ${%s} = `%s' ${%s} = `%s'\n",
+	    dirvar, dirname.str, filevar, basename);
 	FStr_Done(&dirname);
 }
 
@@ -2458,7 +2460,7 @@ ParseTraditionalInclude(char *line)
 	char *file = line + (silent ? 8 : 7);
 	char *all_files;
 
-	DEBUG2(PARSE, "%s: %s\n", __func__, file);
+	DEBUG1(PARSE, "ParseTraditionalInclude: %s\n", file);
 
 	pp_skip_whitespace(&file);
 
@@ -2490,7 +2492,7 @@ ParseGmakeExport(char *line)
 	char *variable = line + 6;
 	char *value;
 
-	DEBUG2(PARSE, "%s: %s\n", __func__, variable);
+	DEBUG1(PARSE, "ParseGmakeExport: %s\n", variable);
 
 	pp_skip_whitespace(&variable);
 

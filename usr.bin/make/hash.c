@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.68 2021/12/15 12:24:13 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.69 2021/12/27 19:06:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.68 2021/12/15 12:24:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.69 2021/12/27 19:06:07 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -118,7 +118,7 @@ HashTable_Find(HashTable *t, unsigned int h, const char *key)
 	unsigned int chainlen = 0;
 
 #ifdef DEBUG_HASH_LOOKUP
-	DEBUG4(HASH, "%s: %p h=%08x key=%s\n", __func__, t, h, key);
+	DEBUG3(HASH, "HashTable_Find: %p h=%08x key=%s\n", t, h, key);
 #endif
 
 	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
@@ -152,8 +152,8 @@ HashTable_FindEntryBySubstring(HashTable *t, Substring key, unsigned int h)
 	unsigned int chainlen = 0;
 
 #ifdef DEBUG_HASH_LOOKUP
-	DEBUG5(HASH, "%s: %p h=%08x key=%.*s\n", __func__, t, h,
-	    (int)Substring_Length(key), key.start);
+	DEBUG4(HASH, "HashTable_FindEntryBySubstring: %p h=%08x key=%.*s\n",
+	    t, h, (int)Substring_Length(key), key.start);
 #endif
 
 	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
@@ -268,8 +268,8 @@ HashTable_Enlarge(HashTable *t)
 	t->bucketsSize = newSize;
 	t->bucketsMask = newMask;
 	t->buckets = newBuckets;
-	DEBUG5(HASH, "%s: %p size=%d entries=%d maxchain=%d\n",
-	    __func__, (void *)t, t->bucketsSize, t->numEntries, t->maxchain);
+	DEBUG4(HASH, "HashTable_Enlarge: %p size=%d entries=%d maxchain=%d\n",
+	    (void *)t, t->bucketsSize, t->numEntries, t->maxchain);
 	t->maxchain = 0;
 }
 
