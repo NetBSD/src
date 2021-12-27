@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-file.mk,v 1.4 2020/10/05 19:27:48 rillig Exp $
+# $NetBSD: opt-debug-file.mk,v 1.5 2021/12/27 22:04:20 rillig Exp $
 #
 # Tests for the -dF command line option, which redirects the debug log
 # to a file instead of writing it to stderr.
@@ -31,7 +31,11 @@ DEBUG_OUTPUT:=	${:!cat opt-debug-file.debuglog!}
 .  error
 .endif
 
+
+# If the debug log file cannot be opened, make prints an error message.
+.MAKEFLAGS: -dFopt-debug-file.debuglog/file
+
+# Clean up
 _!=	rm opt-debug-file.debuglog
 
 all:
-	@:;
