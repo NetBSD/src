@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.234 2021/12/27 17:18:57 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.235 2021/12/27 18:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.234 2021/12/27 17:18:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.235 2021/12/27 18:26:22 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -531,7 +531,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 	 * to tell him/her "yes".
 	 */
 	DEBUG0(MAKE, "out-of-date.\n");
-	if (opts.queryFlag)
+	if (opts.query)
 		exit(1);
 
 	/*
@@ -546,7 +546,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 	 */
 	if (opts.ignoreErrors)
 		gn->type |= OP_IGNORE;
-	if (opts.beSilent)
+	if (opts.silent)
 		gn->type |= OP_SILENT;
 
 	if (Job_CheckCommands(gn, Fatal)) {
@@ -554,7 +554,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 		 * Our commands are ok, but we still have to worry about
 		 * the -t flag.
 		 */
-		if (!opts.touchFlag || (gn->type & OP_MAKE)) {
+		if (!opts.touch || (gn->type & OP_MAKE)) {
 			curTarg = gn;
 #ifdef USE_META
 			if (useMeta && GNode_ShouldExecute(gn)) {
@@ -721,7 +721,7 @@ Compat_Run(GNodeList *targs)
 	 */
 	(void)Targ_GetEndNode();
 
-	if (!opts.queryFlag)
+	if (!opts.query)
 		MakeBeginNode();
 
 	/*

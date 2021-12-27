@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.278 2021/12/15 13:03:33 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.279 2021/12/27 18:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -718,19 +718,19 @@ typedef struct CmdOpts {
 	 * -q: if true, do not really make anything, just see if the targets
 	 * are out-of-date
 	 */
-	bool queryFlag;
+	bool query;
 
 	/* -r: raw mode, do not load the builtin rules. */
 	bool noBuiltins;
 
 	/* -s: don't echo the shell commands before executing them */
-	bool beSilent;
+	bool silent;
 
 	/*
 	 * -t: touch the targets if they are out-of-date, but don't actually
 	 * make them
 	 */
-	bool touchFlag;
+	bool touch;
 
 	/* -[Vv]: print expanded or unexpanded selected variables */
 	PrintVarsMode printVars;

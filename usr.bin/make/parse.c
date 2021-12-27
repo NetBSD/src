@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.583 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.584 2021/12/27 18:26:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.583 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.584 2021/12/27 18:26:22 rillig Exp $");
 
 /* types and constants */
 
@@ -1315,7 +1315,7 @@ ParseDependencySourcesEmpty(ParseSpecial specType, SearchPathList *paths)
 		opts.ignoreErrors = true;
 		break;
 	case SP_SILENT:
-		opts.beSilent = true;
+		opts.silent = true;
 		break;
 	case SP_PATH:
 		ClearPaths(paths);
