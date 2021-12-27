@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.22 2021/12/19 12:45:50 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.23 2021/12/27 13:28:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ struct seq_file;
 #define	MAX_SCHEDULE_TIMEOUT	(INT_MAX/2)	/* paranoia */
 
 #define	TASK_UNINTERRUPTIBLE	__BIT(0)
+#define	TASK_INTERRUPTIBLE	__BIT(1)
 
 #define	current	curproc
 
@@ -113,6 +114,7 @@ signal_pending_state(int state, struct proc *p)
 {
 
 	KASSERT(p == current);
+	KASSERT(state & (TASK_INTERRUPTIBLE|TASK_UNINTERRUPTIBLE));
 	if (state & TASK_UNINTERRUPTIBLE)
 		return false;
 	return sigispending(curlwp, 0);
