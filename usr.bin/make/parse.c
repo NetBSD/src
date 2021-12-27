@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.584 2021/12/27 18:26:22 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.585 2021/12/27 18:54:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.584 2021/12/27 18:26:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.585 2021/12/27 18:54:19 rillig Exp $");
 
 /* types and constants */
 
@@ -1631,8 +1631,7 @@ ParseDependencySources(char *line, char *cp, GNodeType tOp,
  * targets. Nodes are created as necessary.
  *
  * The operator is applied to each node in the global 'targets' list,
- * which is where the nodes found for the targets are kept, by means of
- * the ParseOp function.
+ * which is where the nodes found for the targets are kept.
  *
  * The sources are parsed in much the same way as the targets, except
  * that they are expanded using the wildcarding scheme of the C-Shell,
@@ -1640,13 +1639,10 @@ ParseDependencySources(char *line, char *cp, GNodeType tOp,
  * nodes is then linked to each of the targets as one of its children.
  *
  * Certain targets and sources such as .PHONY or .PRECIOUS are handled
- * specially. These are the ones detailed by the specType variable.
+ * specially, see ParseSpecial.
  *
- * The storing of transformation rules such as '.c.o' is also taken care of
- * here. A target is recognized as a transformation rule by calling
- * Suff_IsTransform. If it is a transformation rule, its node is gotten
- * from the suffix module via Suff_AddTransform rather than the standard
- * Targ_FindNode in the target module.
+ * Transformation rules such as '.c.o' are also handled here, see
+ * Suff_AddTransform.
  *
  * Upon return, the value of the line is unspecified.
  */
@@ -1654,7 +1650,7 @@ static void
 ParseDependency(char *line)
 {
 	char *cp;		/* our current position */
-	GNodeType op;		/* the operator on the line */
+	GNodeType op;		/* the dependency operator on the line */
 	SearchPathList *paths;	/* search paths to alter when parsing a list
 				 * of .PATH targets */
 	GNodeType tOp;		/* operator from special target */
@@ -1663,9 +1659,8 @@ ParseDependency(char *line)
 	char *lstart = line;
 
 	/*
-	 * specType contains the SPECial TYPE of the current target. It is
-	 * SP_NOT if the target is unspecial. If it *is* special, however, the
-	 * children are linked as children of the parent but not vice versa.
+	 * In special targets, the children are linked as children of the
+	 * parent but not vice versa.
 	 */
 	ParseSpecial specType = SP_NOT;
 
@@ -1674,9 +1669,6 @@ ParseDependency(char *line)
 
 	paths = NULL;
 
-	/*
-	 * First, grind through the targets.
-	 */
 	/* XXX: don't use 'line' as an iterator variable */
 	if (!ParseDependencyTargets(&cp, &line, lstart, &specType, &tOp,
 	    &paths, &curTargs))
@@ -1692,20 +1684,9 @@ ParseDependency(char *line)
 	if (!Lst_IsEmpty(targets))
 		ParseDependencyCheckSpec(specType);
 
-	/*
-	 * Apply the operator to the target. This is how we remember which
-	 * operator a target was defined with. It fails if the operator
-	 * used isn't consistent across all references.
-	 */
 	op = ParseDependencyOp(&cp);
 	ApplyDependencyOperator(op);
 
-	/*
-	 * Onward to the sources.
-	 *
-	 * LINE will now point to the first source word, if any, or the
-	 * end of the string if not.
-	 */
 	pp_skip_whitespace(&cp);
 	line = cp;		/* XXX: 'line' is an inappropriate name */
 
@@ -2327,14 +2308,14 @@ StrContainsWord(const char *str, const char *word)
 	const char *p, *end;
 
 	if (strLen < wordLen)
-		return false;	/* str is too short to contain word */
+		return false;
 
 	end = str + strLen - wordLen;
 	for (p = str; p != NULL; p = strchr(p, ' ')) {
 		if (*p == ' ')
 			p++;
 		if (p > end)
-			return false;	/* cannot contain word */
+			return false;
 
 		if (memcmp(p, word, wordLen) == 0 &&
 		    (p[wordLen] == '\0' || p[wordLen] == ' '))
