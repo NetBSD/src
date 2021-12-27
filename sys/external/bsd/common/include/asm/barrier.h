@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.11 2021/12/19 12:25:20 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.12 2021/12/27 10:41:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define	mb()	__asm __volatile ("dsb sy" ::: "memory")
 #define	wmb()	__asm __volatile ("dsb st" ::: "memory")
 #define	rmb()	__asm __volatile ("dsb ld" ::: "memory")
-#elif defined(__x86_64__)
+#elif defined(__i386__) || defined(__x86_64__)
 #include <x86/cpufunc.h>
 #define	mb()	x86_mfence()
 #define	wmb()	x86_sfence()
