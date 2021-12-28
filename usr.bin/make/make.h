@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.279 2021/12/27 18:26:22 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.280 2021/12/28 14:06:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -360,8 +360,6 @@ typedef enum GNodeType {
 	OP_DEPS_FOUND	= 1 << 24,
 	/* Node found while expanding .ALLSRC */
 	OP_MARK		= 1 << 23,
-
-	OP_NOTARGET	= OP_NOTMAIN | OP_USE | OP_EXEC | OP_TRANSFORM
 } GNodeType;
 
 typedef struct GNodeFlags {
@@ -813,6 +811,14 @@ MAKE_INLINE bool MAKE_ATTR_USE
 GNode_IsError(const GNode *gn)
 {
 	return gn->made == ERROR || gn->made == ABORTED;
+}
+
+MAKE_INLINE bool MAKE_ATTR_USE
+GNode_IsMainCandidate(const GNode *gn)
+{
+	/* XXX: What about OP_USEBEFORE? */
+	return (gn->type & (OP_NOTMAIN | OP_USE | OP_EXEC | OP_TRANSFORM)) ==
+	       0;
 }
 
 MAKE_INLINE const char * MAKE_ATTR_USE
