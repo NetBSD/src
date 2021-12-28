@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.465 2020/09/28 12:47:49 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.466 2021/12/28 13:27:32 riastradh Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.465 2020/09/28 12:47:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.466 2021/12/28 13:27:32 riastradh Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -316,6 +316,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	mutex_init(&wd->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 #ifdef WD_SOFTBADSECT
 	SLIST_INIT(&wd->sc_bslist);
+	cv_init(&wd->sc_bslist_cv, "wdbadsect");
 #endif
 	wd->atabus = adev->adev_bustype;
 	wd->inflight = 0;
@@ -586,6 +587,11 @@ wddetach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	wd_sysctl_detach(wd);
+
+#ifdef WD_SOFTBADSECT
+	KASSERT(SLIST_EMPTY(&wd->sc_bslist));
+	cv_destroy(&wd->sc_bslist_cv);
+#endif
 
 	mutex_destroy(&wd->sc_lock);
 
@@ -1279,13 +1285,13 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return 0;
 #endif
 #ifdef WD_SOFTBADSECT
-	case DIOCBSLIST :
-	{
+	case DIOCBSLIST: {
 		uint32_t count, missing, skip;
 		struct disk_badsecinfo dbsi;
-		struct disk_badsectors *dbs;
+		struct disk_badsectors *dbs, dbsbuf;
 		size_t available;
 		uint8_t *laddr;
+		int error;
 
 		dbsi = *(struct disk_badsecinfo *)addr;
 		missing = wd->sc_bscount;
@@ -1303,7 +1309,9 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		 * back to user space whilst the summary is returned via
 		 * the struct passed in via the ioctl.
 		 */
+		error = 0;
 		mutex_enter(&wd->sc_lock);
+		wd->sc_bslist_inuse++;
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next) {
 			if (skip > 0) {
 				missing--;
@@ -1313,30 +1321,57 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			if (available < sizeof(*dbs))
 				break;
 			available -= sizeof(*dbs);
-			copyout(dbs, laddr, sizeof(*dbs));
+			memset(&dbsbuf, 0, sizeof(dbsbuf));
+			dbsbuf.dbs_min = dbs->dbs_min;
+			dbsbuf.dbs_max = dbs->dbs_max;
+			dbsbuf.dbs_failedat = dbs->dbs_failedat;
+			mutex_exit(&wd->sc_lock);
+			error = copyout(&dbsbuf, laddr, sizeof(dbsbuf));
+			mutex_enter(&wd->sc_lock);
+			if (error)
+				break;
 			laddr += sizeof(*dbs);
 			missing--;
 			count++;
 		}
+		if (--wd->sc_bslist_inuse == 0)
+			cv_broadcast(&wd->sc_bslist_cv);
 		mutex_exit(&wd->sc_lock);
 		dbsi.dbsi_left = missing;
 		dbsi.dbsi_copied = count;
 		*(struct disk_badsecinfo *)addr = dbsi;
-		return 0;
+
+		/*
+		 * If we copied anything out, ignore error and return
+		 * success -- can't back it out.
+		 */
+		return count ? 0 : error;
 	}
 
-	case DIOCBSFLUSH :
+	case DIOCBSFLUSH: {
+		int error;
+
 		/* Clean out the bad sector list */
 		mutex_enter(&wd->sc_lock);
+		while (wd->sc_bslist_inuse) {
+			error = cv_wait_sig(&wd->sc_bslist_cv, &wd->sc_lock);
+			if (error) {
+				mutex_exit(&wd->sc_lock);
+				return error;
+			}
+		}
 		while (!SLIST_EMPTY(&wd->sc_bslist)) {
 			struct disk_badsectors *dbs =
 			    SLIST_FIRST(&wd->sc_bslist);
 			SLIST_REMOVE_HEAD(&wd->sc_bslist, dbs_next);
+			mutex_exit(&wd->sc_lock);
 			kmem_free(dbs, sizeof(*dbs));
+			mutex_enter(&wd->sc_lock);
 		}
 		mutex_exit(&wd->sc_lock);
 		wd->sc_bscount = 0;
 		return 0;
+	}
 #endif
 
 #ifdef notyet
