@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.3 2021/12/28 14:59:02 christos Exp $	*/
+/*	$NetBSD: grep.c,v 1.4 2021/12/28 19:22:58 christos Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -911,8 +911,11 @@ grepfile (char const *file, struct stats *stats)
     }
   else
     {
-      while ((desc = open (file, O_RDONLY)) < 0 && errno == EINTR)
+      while ((desc = open (file, O_RDONLY | O_NONBLOCK)) < 0 && errno == EINTR)
 	continue;
+
+      if (desc >= 0 && (status = fcntl (desc, F_GETFL, 0)) != -1)
+	fcntl (desc, F_SETFL,  status & ~O_NONBLOCK);
 
       if (desc < 0)
 	{
