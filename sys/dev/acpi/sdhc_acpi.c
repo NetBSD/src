@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.14 2020/02/01 20:11:24 tnn Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.15 2021/12/28 13:41:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.14 2020/02/01 20:11:24 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.15 2021/12/28 13:41:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -211,8 +211,10 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	/* Read clock frequency from device properties */
 	rv = acpi_dsd_integer(aa->aa_node->ad_handle, "clock-frequency",
 	    &clock_freq);
-	if (ACPI_SUCCESS(rv))
+	if (ACPI_SUCCESS(rv)) {
 		sc->sc.sc_clkbase = clock_freq / 1000;
+		sc->sc.sc_flags |= SDHC_FLAG_NO_CLKBASE;
+	}
 
 	if (sdhc_host_found(&sc->sc, sc->sc_memt, sc->sc_memh,
 	    sc->sc_memsize) != 0) {
