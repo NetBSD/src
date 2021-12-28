@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.588 2021/12/28 01:27:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.589 2021/12/28 14:06:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.588 2021/12/28 01:27:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.589 2021/12/28 14:06:42 rillig Exp $");
 
 /* types and constants */
 
@@ -154,8 +154,7 @@ typedef enum ParseSpecial {
 	SP_INCLUDES,	/* .INCLUDES; not mentioned in the manual page */
 	SP_INTERRUPT,	/* .INTERRUPT */
 	SP_LIBS,	/* .LIBS; not mentioned in the manual page */
-	/* .MAIN and we don't have anything user-specified to make */
-	SP_MAIN,
+	SP_MAIN,	/* .MAIN and no user-specified targets to make */
 	SP_META,	/* .META */
 	SP_MFLAGS,	/* .MFLAGS or .MAKEFLAGS */
 	SP_NOMETA,	/* .NOMETA */
@@ -187,8 +186,8 @@ typedef ListNode SearchPathListNode;
 /* result data */
 
 /*
- * The main target to create. This is the first target on the first
- * dependency line in the first makefile.
+ * The main target to create. This is the first target defined in any of the
+ * makefiles.
  */
 static GNode *mainNode;
 
@@ -981,7 +980,7 @@ FindMainTarget(void)
 
 	for (ln = targets->first; ln != NULL; ln = ln->next) {
 		GNode *gn = ln->datum;
-		if (!(gn->type & OP_NOTARGET)) {
+		if (GNode_IsMainCandidate(gn)) {
 			DEBUG1(MAKE, "Setting main node to \"%s\"\n", gn->name);
 			mainNode = gn;
 			Targ_SetMain(gn);

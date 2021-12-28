@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.360 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.361 2021/12/28 14:06:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.360 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.361 2021/12/28 14:06:42 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -741,7 +741,7 @@ UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 	char *ptr;
 
 	if (*inout_main == NULL && *inout_removedMain &&
-	    !(target->type & OP_NOTARGET)) {
+	    GNode_IsMainCandidate(target)) {
 		DEBUG1(MAKE, "Setting main node to \"%s\"\n", target->name);
 		*inout_main = target;
 		Targ_SetMain(target);
