@@ -1,4 +1,4 @@
-# $NetBSD: cond-func.mk,v 1.9 2020/11/15 14:07:53 rillig Exp $
+# $NetBSD: cond-func.mk,v 1.10 2021/12/28 22:13:56 rillig Exp $
 #
 # Tests for those parts of the functions in .if conditions that are common
 # among several functions.
@@ -102,9 +102,9 @@ ${VARNAME_UNBALANCED_BRACES}=	variable name with unbalanced braces
 .  info A plain function name is parsed as !empty(...).
 .endif
 
-# If a variable named 'defined' is actually defined and not empty, the plain
-# symbol 'defined' evaluates to true.
-defined=	non-empty
+# If a variable named 'defined' is actually defined, the bare word 'defined'
+# is interpreted as 'defined(defined)', and the condition evaluates to true.
+defined=	# defined but empty
 .if defined
 .  info A plain function name is parsed as !empty(...).
 .else
@@ -119,7 +119,7 @@ defined=	non-empty
 .  info Symbols may start with a function name.
 .endif
 
-defined-var=	non-empty
+defined-var=	# defined but empty
 .if defined-var
 .  info Symbols may start with a function name.
 .else
@@ -132,6 +132,3 @@ defined-var=	non-empty
 .else
 .  error
 .endif
-
-all:
-	@:;
