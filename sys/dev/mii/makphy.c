@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.70 2021/12/28 06:35:37 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.71 2021/12/28 06:36:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.70 2021/12/28 06:35:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.71 2021/12/28 06:36:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,8 @@ page0:
 				default:
 					break;
 				}
-			}
+			} else
+				maksc->sc_flags |= MAKPHY_F_FICO_AUTOSEL;
 			break;
 		default:
 			break;
@@ -487,14 +488,19 @@ makphy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_1000_SX;
 	} else if ((sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1011) ||
 	    (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1111)) {
-		/* Fiber/Copper auto select mode */
+		struct makphy_softc *maksc = (struct makphy_softc *)sc;
 
-		PHY_READ(sc, MAKPHY_ESSR, &essr);
-		if ((essr & ESSR_FIBER_LINK) == 0)
+		if ((maksc->sc_flags & MAKPHY_F_FICO_AUTOSEL) != 0) {
+			/* Fiber/Copper auto select mode */
+			PHY_READ(sc, MAKPHY_ESSR, &essr);
+			if ((essr & ESSR_FIBER_LINK) == 0)
+				goto copper;
+			else {
+				/* Regard as 1000BASE-SX */
+				mii->mii_media_active |= IFM_1000_SX;
+			}
+		} else
 			goto copper;
-
-		/* XXX Assume 1000BASE-SX only */
-		mii->mii_media_active |= IFM_1000_SX;
 	} else if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1112) {
 		/* Fiber/Copper auto select mode */
 
