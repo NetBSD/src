@@ -1,12 +1,12 @@
 make: "deptgt.mk" line 10: warning: Extra target ignored
 make: "deptgt.mk" line 28: Unassociated shell command ": command3		# parse error, since targets == NULL"
-ParseReadLine (34): '${:U}: empty-source'
+Parsing line 34: ${:U}: empty-source
 ParseDependency(: empty-source)
-ParseReadLine (35): '	: command for empty targets list'
-ParseReadLine (36): ': empty-source'
+Parsing line 35: 	: command for empty targets list
+Parsing line 36: : empty-source
 ParseDependency(: empty-source)
-ParseReadLine (37): '	: command for empty targets list'
-ParseReadLine (38): '.MAKEFLAGS: -d0'
+Parsing line 37: 	: command for empty targets list
+Parsing line 38: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
 make: "deptgt.mk" line 46: Unknown modifier "Z"
 make: "deptgt.mk" line 49: warning: Extra target ignored
