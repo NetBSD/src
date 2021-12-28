@@ -359,7 +359,7 @@
 #define HAVE_MKTEMP 1
 
 /* define this if you have mkversion */
-#define HAVE_MKVERSION 1
+#undef HAVE_MKVERSION
 
 /* define if you have MozNSS */
 /* #undef HAVE_MOZNSS */
