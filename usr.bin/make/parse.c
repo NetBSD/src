@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.597 2021/12/28 17:39:04 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.598 2021/12/28 17:45:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.597 2021/12/28 17:39:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.598 2021/12/28 17:45:56 rillig Exp $");
 
 /* types and constants */
 
@@ -1378,14 +1378,13 @@ ParseDependencySourceSpecial(ParseSpecial special, char *word,
 
 static bool
 ParseDependencyTargets(char **inout_cp,
-		       char **inout_line,
 		       const char *lstart,
 		       ParseSpecial *inout_special,
 		       GNodeType *inout_targetAttr,
 		       SearchPathList **inout_paths)
 {
 	char *cp;
-	char *tgt = *inout_line;
+	char *tgt = *inout_cp;
 	char savec;
 	const char *p;
 
@@ -1457,7 +1456,6 @@ ParseDependencyTargets(char **inout_cp,
 	}
 
 	*inout_cp = cp;
-	*inout_line = tgt;
 	return true;
 }
 
@@ -1618,7 +1616,6 @@ ParseDependency(char *line)
 	SearchPathList *paths;	/* search paths to alter when parsing a list
 				 * of .PATH targets */
 	GNodeType targetAttr;	/* from special sources */
-	const char *lstart = line;
 
 	/*
 	 * In special targets, the children are linked as children of the
@@ -1631,8 +1628,8 @@ ParseDependency(char *line)
 
 	paths = NULL;
 
-	/* XXX: don't use 'line' as an iterator variable */
-	if (!ParseDependencyTargets(&cp, &line, lstart, &special,
+	cp = line;
+	if (!ParseDependencyTargets(&cp, line, &special,
 	    &targetAttr, &paths))
 		goto out;
 
