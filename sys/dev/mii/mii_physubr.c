@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.96 2021/12/15 08:28:22 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.97 2021/12/28 12:00:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.96 2021/12/15 08:28:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.97 2021/12/28 12:00:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -429,8 +429,20 @@ mii_phy_down(struct mii_softc *sc)
 	KASSERT(mii_locked(sc->mii_pdata));
 
 	if (sc->mii_flags & MIIF_DOINGAUTO) {
-		sc->mii_flags &= ~MIIF_DOINGAUTO;
-		callout_stop(&sc->mii_nway_ch);
+		/*
+		 * Try to stop it.
+		 *
+		 * - If we stopped it before it expired, callout_stop
+		 *   returns 0, and it is our responsibility to clear
+		 *   MIIF_DOINGAUTO.
+		 *
+		 * - Otherwise, we're too late -- the callout has
+		 *   already begun, and we must leave MIIF_DOINGAUTO
+		 *   set so mii_phy_detach will wait for it to
+		 *   complete.
+		 */
+		if (!callout_stop(&sc->mii_nway_ch))
+			sc->mii_flags &= ~MIIF_DOINGAUTO;
 	}
 }
 
