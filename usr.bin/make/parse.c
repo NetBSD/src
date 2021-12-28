@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.599 2021/12/28 17:58:41 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.600 2021/12/28 19:01:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.599 2021/12/28 17:58:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.600 2021/12/28 19:01:36 rillig Exp $");
 
 /* types and constants */
 
@@ -1608,37 +1608,31 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 static void
 ParseDependency(char *line)
 {
-	char *cp;		/* our current position */
-	GNodeType op;		/* the dependency operator on the line */
+	char *p;
 	SearchPathList *paths;	/* search paths to alter when parsing a list
 				 * of .PATH targets */
 	GNodeType targetAttr;	/* from special sources */
-
-	/*
-	 * In special targets, the children are linked as children of the
-	 * parent but not vice versa.
-	 */
-	ParseSpecial special = SP_NOT;
+	ParseSpecial special;	/* in special targets, the children are
+				 * linked as children of the parent but not
+				 * vice versa */
 
 	DEBUG1(PARSE, "ParseDependency(%s)\n", line);
-	targetAttr = OP_NONE;
-
+	p = line;
 	paths = NULL;
+	targetAttr = OP_NONE;
+	special = SP_NOT;
 
-	cp = line;
-	if (!ParseDependencyTargets(&cp, line, &special,
-	    &targetAttr, &paths))
+	if (!ParseDependencyTargets(&p, line, &special, &targetAttr, &paths))
 		goto out;
 
 	if (!Lst_IsEmpty(targets))
 		ParseDependencyCheckSpecial(special);
 
-	op = ParseDependencyOp(&cp);
-	ApplyDependencyOperator(op);
+	ApplyDependencyOperator(ParseDependencyOp(&p));
 
-	pp_skip_whitespace(&cp);
+	pp_skip_whitespace(&p);
 
-	ParseDependencySources(cp, targetAttr, special, &paths);
+	ParseDependencySources(p, targetAttr, special, &paths);
 
 out:
 	if (paths != NULL)
