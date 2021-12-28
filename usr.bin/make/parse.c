@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.587 2021/12/27 21:21:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.588 2021/12/28 01:27:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.587 2021/12/27 21:21:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.588 2021/12/28 01:27:37 rillig Exp $");
 
 /* types and constants */
 
@@ -2307,16 +2307,15 @@ StrContainsWord(const char *str, const char *word)
 {
 	size_t strLen = strlen(str);
 	size_t wordLen = strlen(word);
-	const char *p, *end;
+	const char *p;
 
 	if (strLen < wordLen)
 		return false;
 
-	end = str + strLen - wordLen;
 	for (p = str; p != NULL; p = strchr(p, ' ')) {
 		if (*p == ' ')
 			p++;
-		if (p > end)
+		if (p > str + strLen - wordLen)
 			return false;
 
 		if (memcmp(p, word, wordLen) == 0 &&
