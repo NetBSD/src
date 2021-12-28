@@ -1,9 +1,9 @@
-ParseReadLine (15): '.ORDER: three one'
+Parsing line 15: .ORDER: three one
 ParseDependency(.ORDER: three one)
 # ParseDependencySourceOrder: added Order dependency three - one
 # three, unmade, type OP_DEPENDS|OP_PHONY|OP_HAS_COMMANDS, flags none
 # one, unmade, type OP_DEPENDS|OP_PHONY, flags none
-ParseReadLine (16): '.MAKEFLAGS: -d0'
+Parsing line 16: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
 : 'Making two out of one.'
 : 'Making three out of two.'

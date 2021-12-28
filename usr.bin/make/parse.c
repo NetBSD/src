@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.590 2021/12/28 15:03:10 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.591 2021/12/28 15:48:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.590 2021/12/28 15:03:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.591 2021/12/28 15:48:59 rillig Exp $");
 
 /* types and constants */
 
@@ -3180,7 +3180,7 @@ Parse_File(const char *name, int fd)
 
 	do {
 		while ((line = ParseReadLine()) != NULL) {
-			DEBUG2(PARSE, "ParseReadLine (%d): '%s'\n",
+			DEBUG2(PARSE, "Parsing line %d: %s\n",
 			    CurFile()->lineno, line);
 			ParseLine(line);
 		}
