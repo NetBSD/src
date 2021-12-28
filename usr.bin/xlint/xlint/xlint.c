@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.87 2021/12/14 16:22:30 christos Exp $ */
+/* $NetBSD: xlint.c,v 1.88 2021/12/28 22:59:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.87 2021/12/14 16:22:30 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.88 2021/12/28 22:59:56 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -606,7 +606,6 @@ main(int argc, char *argv[])
 		findlibs(deflibs);
 	}
 
-	(void)printf("Lint pass2:\n");
 	run_lint2();
 
 	if (oflag)
