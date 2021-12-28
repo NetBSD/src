@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.592 2021/12/28 16:11:00 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.593 2021/12/28 16:17:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.592 2021/12/28 16:11:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.593 2021/12/28 16:17:54 rillig Exp $");
 
 /* types and constants */
 
@@ -825,7 +825,7 @@ ApplyDependencyOperator(GNodeType op)
  * We give each .WAIT node a unique name (mainly for diagnostics).
  */
 static void
-ParseDependencySourceWait(bool isSpecial)
+ApplyDependencySourceWait(bool isSpecial)
 {
 	static int wait_number = 0;
 	char wait_src[16];
@@ -841,7 +841,7 @@ ParseDependencySourceWait(bool isSpecial)
 }
 
 static bool
-ParseDependencySourceKeyword(const char *src, ParseSpecial special)
+ApplyDependencySourceKeyword(const char *src, ParseSpecial special)
 {
 	int keywd;
 	GNodeType targetAttr;
@@ -859,14 +859,14 @@ ParseDependencySourceKeyword(const char *src, ParseSpecial special)
 		return true;
 	}
 	if (parseKeywords[keywd].special == SP_WAIT) {
-		ParseDependencySourceWait(special != SP_NOT);
+		ApplyDependencySourceWait(special != SP_NOT);
 		return true;
 	}
 	return false;
 }
 
 static void
-ParseDependencySourceMain(const char *src)
+ApplyDependencySourceMain(const char *src)
 {
 	/*
 	 * In a line like ".MAIN: source1 source2", add all sources to the
@@ -885,7 +885,7 @@ ParseDependencySourceMain(const char *src)
 }
 
 static void
-ParseDependencySourceOrder(const char *src)
+ApplyDependencySourceOrder(const char *src)
 {
 	GNode *gn;
 	/*
@@ -913,7 +913,7 @@ ParseDependencySourceOrder(const char *src)
 }
 
 static void
-ParseDependencySourceOther(const char *src, GNodeType targetAttr,
+ApplyDependencySourceOther(const char *src, GNodeType targetAttr,
 			   ParseSpecial special)
 {
 	GNode *gn;
@@ -947,18 +947,18 @@ ParseDependencySourceOther(const char *src, GNodeType targetAttr,
  * Otherwise, make the source a child of the targets.
  */
 static void
-ParseDependencySource(GNodeType targetAttr, const char *src,
+ApplyDependencySource(GNodeType targetAttr, const char *src,
 		      ParseSpecial special)
 {
-	if (ParseDependencySourceKeyword(src, special))
+	if (ApplyDependencySourceKeyword(src, special))
 		return;
 
 	if (special == SP_MAIN)
-		ParseDependencySourceMain(src);
+		ApplyDependencySourceMain(src);
 	else if (special == SP_ORDER)
-		ParseDependencySourceOrder(src);
+		ApplyDependencySourceOrder(src);
 	else
-		ParseDependencySourceOther(src, targetAttr, special);
+		ApplyDependencySourceOther(src, targetAttr, special);
 }
 
 /*
@@ -1552,7 +1552,7 @@ ParseDependencySourcesMundane(char *start, char *end,
 
 			while (!Lst_IsEmpty(&sources)) {
 				GNode *gn = Lst_Dequeue(&sources);
-				ParseDependencySource(targetAttr, gn->name,
+				ApplyDependencySource(targetAttr, gn->name,
 				    special);
 			}
 			Lst_Done(&sources);
@@ -1563,7 +1563,7 @@ ParseDependencySourcesMundane(char *start, char *end,
 				end++;
 			}
 
-			ParseDependencySource(targetAttr, start, special);
+			ApplyDependencySource(targetAttr, start, special);
 		}
 		pp_skip_whitespace(&end);
 		start = end;
@@ -2027,7 +2027,7 @@ MaybeSubMake(const char *cmd)
  * be that.
  */
 static void
-ParseAddCmd(GNode *gn, char *cmd)
+GNode_AddCommand(GNode *gn, char *cmd)
 {
 	/* Add to last (ie current) cohort for :: targets */
 	if ((gn->type & OP_DOUBLEDEP) && gn->cohorts.last != NULL)
@@ -2284,7 +2284,7 @@ GetActuallyIncludingFile(void)
 
 /* Set .PARSEDIR, .PARSEFILE, .INCLUDEDFROMDIR and .INCLUDEDFROMFILE. */
 static void
-ParseSetParseFile(const char *filename)
+SetParseFile(const char *filename)
 {
 	const char *including;
 
@@ -2346,7 +2346,7 @@ VarContainsWord(const char *varname, const char *word)
  * of makefiles that have been loaded.
  */
 static void
-ParseTrackInput(const char *name)
+TrackInput(const char *name)
 {
 	if (!VarContainsWord(MAKE_MAKEFILES, name))
 		Global_Append(MAKE_MAKEFILES, name);
@@ -2370,7 +2370,7 @@ Parse_PushInput(const char *name, int lineno, int fd,
 	if (fromForLoop)
 		name = CurFile()->name.str;
 	else
-		ParseTrackInput(name);
+		TrackInput(name);
 
 	DEBUG3(PARSE, "Parse_PushInput: %s %s, line %d\n",
 	    readMore == loadedfile_readMore ? "file" : ".for loop in",
@@ -2405,7 +2405,7 @@ Parse_PushInput(const char *name, int lineno, int fd,
 	curFile->buf_end = buf + len;
 
 	curFile->cond_depth = Cond_save_depth();
-	ParseSetParseFile(name);
+	SetParseFile(name);
 }
 
 /* Check if the directive is an include directive. */
@@ -2570,7 +2570,7 @@ ParseEOF(void)
 	DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
 	    curFile->name.str, curFile->lineno);
 
-	ParseSetParseFile(curFile->name.str);
+	SetParseFile(curFile->name.str);
 	return true;
 }
 
@@ -2717,13 +2717,13 @@ UnescapeBackslash(char *line, char *start)
 	*dst = '\0';
 }
 
-typedef enum GetLineMode {
+typedef enum LineKind {
 	/*
 	 * Return the next line that is neither empty nor a comment.
 	 * Backslash line continuations are folded into a single space.
 	 * A trailing comment, if any, is discarded.
 	 */
-	GLM_NONEMPTY,
+	LK_NONEMPTY,
 
 	/*
 	 * Return the next line, even if it is empty or a comment.
@@ -2732,7 +2732,7 @@ typedef enum GetLineMode {
 	 * Used in .for loops to collect the body of the loop while waiting
 	 * for the corresponding .endfor.
 	 */
-	GLM_FOR_BODY,
+	LK_FOR_BODY,
 
 	/*
 	 * Return the next line that starts with a dot.
@@ -2742,12 +2742,12 @@ typedef enum GetLineMode {
 	 * Used in .if directives to skip over irrelevant branches while
 	 * waiting for the corresponding .endif.
 	 */
-	GLM_DOT
-} GetLineMode;
+	LK_DOT
+} LineKind;
 
 /* Return the next "interesting" logical line from the current file. */
 static char *
-ParseGetLine(GetLineMode mode)
+ReadLowLevelLine(LineKind kind)
 {
 	IFile *curFile = CurFile();
 	char *line;
@@ -2764,7 +2764,7 @@ ParseGetLine(GetLineMode mode)
 		if (line_end == line || firstComment == line) {
 			if (res == PRLR_EOF)
 				return NULL;
-			if (mode != GLM_FOR_BODY)
+			if (kind != LK_FOR_BODY)
 				continue;
 		}
 
@@ -2772,10 +2772,10 @@ ParseGetLine(GetLineMode mode)
 		assert(ch_isspace(*line_end));
 		*line_end = '\0';
 
-		if (mode == GLM_FOR_BODY)
+		if (kind == LK_FOR_BODY)
 			return line;	/* Don't join the physical lines. */
 
-		if (mode == GLM_DOT && line[0] != '.')
+		if (kind == LK_DOT && line[0] != '.')
 			continue;
 		break;
 	}
@@ -2795,11 +2795,11 @@ ParseGetLine(GetLineMode mode)
 }
 
 static bool
-ParseSkippedBranches(void)
+SkipIrrelevantBranches(void)
 {
 	char *line;
 
-	while ((line = ParseGetLine(GLM_DOT)) != NULL) {
+	while ((line = ReadLowLevelLine(LK_DOT)) != NULL) {
 		if (Cond_EvalLine(line) == COND_PARSE)
 			break;
 		/*
@@ -2836,7 +2836,7 @@ ParseForLoop(const char *line)
 
 	/* Accumulate loop lines until matching .endfor */
 	do {
-		line = ParseGetLine(GLM_FOR_BODY);
+		line = ReadLowLevelLine(LK_FOR_BODY);
 		if (line == NULL) {
 			Parse_Error(PARSE_FATAL,
 			    "Unexpected end of file in .for loop");
@@ -2861,12 +2861,12 @@ ParseForLoop(const char *line)
  *	or NULL.
  */
 static char *
-ParseReadLine(void)
+ReadHighLevelLine(void)
 {
 	char *line;
 
 	for (;;) {
-		line = ParseGetLine(GLM_NONEMPTY);
+		line = ReadLowLevelLine(LK_NONEMPTY);
 		if (line == NULL)
 			return NULL;
 
@@ -2879,7 +2879,7 @@ ParseReadLine(void)
 		 */
 		switch (Cond_EvalLine(line)) {
 		case COND_SKIP:
-			if (!ParseSkippedBranches())
+			if (!SkipIrrelevantBranches())
 				return NULL;
 			continue;
 		case COND_PARSE:
@@ -2939,7 +2939,7 @@ ParseLine_ShellCommand(const char *p)
 
 		for (ln = targets->first; ln != NULL; ln = ln->next) {
 			GNode *gn = ln->datum;
-			ParseAddCmd(gn, cmd);
+			GNode_AddCommand(gn, cmd);
 		}
 #ifdef CLEANUP
 		Lst_Append(&targCmds, cmd);
@@ -3178,7 +3178,7 @@ Parse_File(const char *name, int fd)
 	CurFile()->lf = lf;
 
 	do {
-		while ((line = ParseReadLine()) != NULL) {
+		while ((line = ReadHighLevelLine()) != NULL) {
 			DEBUG2(PARSE, "Parsing line %d: %s\n",
 			    CurFile()->lineno, line);
 			ParseLine(line);
