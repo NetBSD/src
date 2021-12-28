@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.68 2020/11/04 09:15:10 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.69 2021/12/28 06:34:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.68 2020/11/04 09:15:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.69 2021/12/28 06:34:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,7 @@ makphyattach(device_t parent, device_t self, void *aux)
 	struct makphy_softc *maksc = (struct makphy_softc *)sc;
 	const char *name;
 	uint16_t reg, model;
+	int rv;
 
 	mpd = mii_phy_match(ma, makphys);
 	aprint_naive(": Media interface\n");
@@ -207,8 +208,16 @@ page0:
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
+	if (sc->mii_capabilities & BMSR_EXTSTAT) {
+		rv = PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
+		if (rv != 0) {
+			aprint_verbose_dev(self, "Failed to read EXTSR. "
+			    "Are you an emulator?. "
+			    "Regard as 1000BASE-T.\n");
+			sc->mii_extcapabilities
+			    |= EXTSR_1000TFDX | EXTSR_1000THDX;
+		}
+	}
 
 	if (((sc->mii_extcapabilities & (EXTSR_1000TFDX | EXTSR_1000THDX))
 		!= 0)
