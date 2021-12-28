@@ -130,6 +130,7 @@ extern "C" {
 #include <vm/vnode_pager.h>
 #else /* !__NetBSD__ */
 #include <sys/callout.h>
+#include <sys/kernel.h>
 #include <sys/stdarg.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -165,7 +166,7 @@ extern "C" {
 #define td_ru				l_ru
 #define UID_NOBODY			(32767)
 #define vnode_pager_setsize(vp, size)	zfs_netbsd_setsize(vp, size)
-#define zone_get_hostid(a)		0
+#define zone_get_hostid(a)		((unsigned)hostid)
 
 extern struct utsname utsname;
 
