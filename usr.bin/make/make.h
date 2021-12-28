@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.280 2021/12/28 14:06:42 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.281 2021/12/28 14:22:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -816,9 +816,8 @@ GNode_IsError(const GNode *gn)
 MAKE_INLINE bool MAKE_ATTR_USE
 GNode_IsMainCandidate(const GNode *gn)
 {
-	/* XXX: What about OP_USEBEFORE? */
-	return (gn->type & (OP_NOTMAIN | OP_USE | OP_EXEC | OP_TRANSFORM)) ==
-	       0;
+	return (gn->type & (OP_NOTMAIN | OP_USE | OP_USEBEFORE |
+			    OP_EXEC | OP_TRANSFORM)) == 0;
 }
 
 MAKE_INLINE const char * MAKE_ATTR_USE
