@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.9 2021/01/13 23:54:21 riastradh Exp $	*/
+/*	$NetBSD: random.c,v 1.10 2021/12/28 13:22:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.9 2021/01/13 23:54:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: random.c,v 1.10 2021/12/28 13:22:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -282,9 +282,8 @@ random_write(dev_t dev, struct uio *uio, int flags)
 		rnd_add_data(&user_rndsource, buf, n, privileged ? n*NBBY : 0);
 		any = true;
 
-		/* Yield if requested.  */
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt();
+		/* Now's a good time to yield if needed.  */
+		preempt_point();
 
 		/* Check for interruption.  */
 		if (__predict_false(curlwp->l_flag & LW_PENDSIG) &&
