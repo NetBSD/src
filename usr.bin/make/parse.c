@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.593 2021/12/28 16:17:54 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.594 2021/12/28 16:35:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.593 2021/12/28 16:17:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.594 2021/12/28 16:35:43 rillig Exp $");
 
 /* types and constants */
 
@@ -508,16 +508,12 @@ PrintStackTrace(void)
 
 /* Check if the current character is escaped on the current line. */
 static bool
-ParseIsEscaped(const char *line, const char *c)
+ParseIsEscaped(const char *line, const char *p)
 {
 	bool active = false;
-	for (;;) {
-		if (line == c)
-			return active;
-		if (*--c != '\\')
-			return active;
+	while (p > line && *--p == '\\')
 		active = !active;
-	}
+	return active;
 }
 
 /*
