@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.234 2021/12/28 09:16:05 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.235 2021/12/28 09:19:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.234 2021/12/28 09:16:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.235 2021/12/28 09:19:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1856,7 +1856,7 @@ pci_print_pcie_link_compliance_preset_deemphasis(pcireg_t val)
 	const char *deemphasis;
 
 	if (val >= __arraycount(pcie_link_compliance_preset_deemphasis)) {
-		printf("unknown value (0x%hhx)", val);
+		printf("unknown value (0x%x)", val);
 		return;
 	}
 
