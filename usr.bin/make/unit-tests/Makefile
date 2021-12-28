@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.291 2021/12/23 11:05:59 rillig Exp $
+# $NetBSD: Makefile,v 1.292 2021/12/28 00:56:17 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -342,6 +342,7 @@ TESTS+=		varfind
 TESTS+=		varmisc
 TESTS+=		varmod
 TESTS+=		varmod-assign
+TESTS+=		varmod-assign-shell
 TESTS+=		varmod-defined
 TESTS+=		varmod-edge
 TESTS+=		varmod-exclam-shell
