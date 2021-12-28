@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.600 2021/12/28 19:01:36 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.601 2021/12/28 19:13:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.600 2021/12/28 19:01:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.601 2021/12/28 19:13:40 rillig Exp $");
 
 /* types and constants */
 
@@ -1377,6 +1377,27 @@ ParseDependencySourceSpecial(ParseSpecial special, char *word,
 }
 
 static bool
+ApplyDependencyTarget(char *name, char *nameEnd, ParseSpecial *inout_special,
+		      GNodeType *inout_targetAttr,
+		      SearchPathList **inout_paths)
+{
+	char savec = *nameEnd;
+	*nameEnd = '\0';
+
+	if (!ParseDependencyTarget(name, inout_special,
+	    inout_targetAttr, inout_paths))
+		return false;
+
+	if (*inout_special == SP_NOT && *name != '\0')
+		ParseDependencyTargetMundane(name);
+	else if (*inout_special == SP_PATH && *name != '.' && *name != '\0')
+		Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", name);
+
+	*nameEnd = savec;
+	return true;
+}
+
+static bool
 ParseDependencyTargets(char **inout_cp,
 		       const char *lstart,
 		       ParseSpecial *inout_special,
@@ -1385,7 +1406,6 @@ ParseDependencyTargets(char **inout_cp,
 {
 	char *cp;
 	char *tgt = *inout_cp;
-	char savec;
 
 	for (;;) {
 		/* Find the end of the next word. */
@@ -1413,32 +1433,10 @@ ParseDependencyTargets(char **inout_cp,
 			return false;
 		}
 
-		/* Insert a null terminator. */
-		savec = *cp;
-		*cp = '\0';
-
-		if (!ParseDependencyTarget(tgt, inout_special,
+		if (!ApplyDependencyTarget(tgt, cp, inout_special,
 		    inout_targetAttr, inout_paths))
 			return false;
 
-		/*
-		 * Have word in line. Get or create its node and stick it at
-		 * the end of the targets list
-		 */
-		if (*inout_special == SP_NOT && *tgt != '\0')
-			ParseDependencyTargetMundane(tgt);
-		else if (*inout_special == SP_PATH && *tgt != '.' &&
-			 *tgt != '\0')
-			Parse_Error(PARSE_WARNING, "Extra target (%s) ignored",
-			    tgt);
-
-		/* Don't need the inserted null terminator any more. */
-		*cp = savec;
-
-		/*
-		 * If it is a special type and not .PATH, it's the only target
-		 * we allow on this line.
-		 */
 		if (*inout_special != SP_NOT && *inout_special != SP_PATH)
 			ParseDependencyTargetExtraWarn(&cp, lstart);
 		else
