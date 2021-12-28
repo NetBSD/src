@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.161 2021/10/10 23:28:36 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.162 2021/12/28 09:16:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1174,7 +1174,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_LCSR2_TX_MARGIN	__BITS(9, 7)   /* Transmit Margin */
 #define PCIE_LCSR2_EN_MCOMP	__BIT(10)      /* Enter Modified Compliance */
 #define PCIE_LCSR2_COMP_SOS	__BIT(11)      /* Compliance SOS */
-#define PCIE_LCSR2_COMP_DEEMP	__BITS(15, 12) /* Compliance Present/De-emph */
+#define PCIE_LCSR2_COMP_DEEMP	__BITS(15, 12) /* Compliance Preset/De-emph */
 #define PCIE_LCSR2_DEEMP_LVL	__BIT(0 + 16)  /* Current De-emphasis Level */
 #define PCIE_LCSR2_EQ_COMPL	__BIT(1 + 16)  /* Equalization Complete */
 #define PCIE_LCSR2_EQP1_SUC	__BIT(2 + 16)  /* Equaliz Phase 1 Successful */

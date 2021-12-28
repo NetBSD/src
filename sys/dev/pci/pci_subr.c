@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.233 2021/12/03 13:27:38 andvar Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.234 2021/12/28 09:16:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.233 2021/12/03 13:27:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.234 2021/12/28 09:16:05 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1833,6 +1833,41 @@ pci_print_pcie_link_deemphasis(pcireg_t val)
 	}
 }
 
+static const struct _pcie_link_compliance_preset_deemphasis {
+	const char *preshoot;
+	const char *deemphasis;
+} pcie_link_compliance_preset_deemphasis[] = {
+	{ "0.0",	"-6.0+-1.5" },	/* P0 */
+	{ "0.0",	"-3.5+-1" },	/* P1 */
+	{ "0.0",	"-4.4+-1.5" },	/* P2 */
+	{ "0.0",	"-2.5+-1" },	/* P3 */
+	{ "0.0",	"0.0" },	/* P4 */
+	{ "1.9+-1",	"0.0" },	/* P5 */
+	{ "2.5+-1",	"0.0" },	/* P6 */
+	{ "3.5+-1",	"-6.0+-1.5" },	/* P7 */
+	{ "3.5+-1",	"-3.5+-1" },	/* P8 */
+	{ "3.5+-1",	"0.0" },	/* P9 */
+	{ "0.0",	NULL }		/* P10 */
+};
+
+static void
+pci_print_pcie_link_compliance_preset_deemphasis(pcireg_t val)
+{
+	const char *deemphasis;
+
+	if (val >= __arraycount(pcie_link_compliance_preset_deemphasis)) {
+		printf("unknown value (0x%hhx)", val);
+		return;
+	}
+
+	printf("Preshoot %sdB",
+	    pcie_link_compliance_preset_deemphasis[val].preshoot);
+	deemphasis = pcie_link_compliance_preset_deemphasis[val].deemphasis;
+
+	if (deemphasis != NULL)
+		printf(", De-emphasis %sdB", deemphasis);
+}
+
 static void
 pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
@@ -2366,8 +2401,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		    PCIREG_SHIFTOUT(reg,  PCIE_LCSR2_TX_MARGIN));
 		onoff("Enter Modified Compliance", reg, PCIE_LCSR2_EN_MCOMP);
 		onoff("Compliance SOS", reg, PCIE_LCSR2_COMP_SOS);
-		printf("      Compliance Present/De-emphasis: ");
-		pci_print_pcie_link_deemphasis(
+		printf("      Compliance Preset/De-emphasis: ");
+		pci_print_pcie_link_compliance_preset_deemphasis(
 			PCIREG_SHIFTOUT(reg, PCIE_LCSR2_COMP_DEEMP));
 		printf("\n");
 
