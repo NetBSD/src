@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_getrandom.c,v 1.1 2020/08/14 00:53:16 riastradh Exp $	*/
+/*	$NetBSD: sys_getrandom.c,v 1.2 2021/12/28 13:22:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_getrandom.c,v 1.1 2020/08/14 00:53:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_getrandom.c,v 1.2 2021/12/28 13:22:43 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,9 +174,8 @@ dogetrandom(struct uio *uio, unsigned int flags)
 			break;
 		}
 
-		/* Yield if requested.  */
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt();
+		/* Now's a good time to yield if needed.  */
+		preempt_point();
 
 		/* Check for interruption after at least 256 bytes.  */
 		CTASSERT(RANDOM_BUFSIZE >= 256);

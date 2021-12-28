@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.12 2020/06/18 13:52:08 simonb Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.13 2021/12/28 13:22:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.12 2020/06/18 13:52:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.13 2021/12/28 13:22:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -262,9 +262,8 @@ octrnm_rng(size_t nbytes, void *vsc)
 		    sizeof sc->sc_sample, NBBY*sizeof(sc->sc_sample)/BPB);
 		needed -= MIN(needed, MAX(1, NBBY*sizeof(sc->sc_sample)/BPB));
 
-		/* Yield if requested.  */
-		if (__predict_false(curcpu()->ci_schedstate.spc_flags &
-			SPCF_SHOULDYIELD)) {
+		/* Now's a good time to yield if need.  */
+		if (__predict_false(preempt_needed())) {
 			mutex_exit(&sc->sc_lock);
 			preempt();
 			mutex_enter(&sc->sc_lock);
