@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.591 2021/12/28 15:48:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.592 2021/12/28 16:11:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.591 2021/12/28 15:48:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.592 2021/12/28 16:11:00 rillig Exp $");
 
 /* types and constants */
 
@@ -900,8 +900,7 @@ ParseDependencySourceOrder(const char *src)
 		Lst_Append(&gn->order_pred, order_pred);
 		if (DEBUG(PARSE)) {
 			debug_printf(
-			    "# ParseDependencySourceOrder: "
-			    "added Order dependency %s - %s\n",
+			    "# .ORDER forces '%s' to be made before '%s'\n",
 			    order_pred->name, gn->name);
 			Targ_PrintNode(order_pred, 0);
 			Targ_PrintNode(gn, 0);
