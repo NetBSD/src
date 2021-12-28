@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.55 2021/05/30 05:59:23 mlelstv Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.56 2021/12/28 00:34:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -1045,7 +1045,7 @@ biosdisk_findpartition(int biosdev, daddr_t sector,
 	printf("looking for partition device %x, sector %"PRId64"\n", biosdev, sector);
 #endif
 
-	/* default ot first partition */
+	/* default to first partition */
 	*partition = 0;
 	*part_name = NULL;
 
