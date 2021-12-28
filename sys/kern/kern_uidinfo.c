@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.12 2021/04/01 06:25:45 simonb Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.13 2021/12/28 13:28:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.12 2021/04/01 06:25:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.13 2021/12/28 13:28:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,8 @@ chgproccnt(uid_t uid, int diff)
 
 	uip = uid_find(uid);
 	proccnt = atomic_add_long_nv(&uip->ui_proccnt, diff);
-	KASSERT(proccnt >= 0);
+	KASSERTMSG(proccnt >= 0, "uid=%d diff=%d proccnt=%ld",
+	    uid, diff, proccnt);
 	return proccnt;
 }
 
@@ -254,7 +255,8 @@ chglwpcnt(uid_t uid, int diff)
 
 	uip = uid_find(uid);
 	lwpcnt = atomic_add_long_nv(&uip->ui_lwpcnt, diff);
-	KASSERT(lwpcnt >= 0);
+	KASSERTMSG(lwpcnt >= 0, "uid=%d diff=%d lwpcnt=%ld",
+	    uid, diff, lwpcnt);
 	return lwpcnt;
 }
 
@@ -270,7 +272,8 @@ chgsemcnt(uid_t uid, int diff)
 
 	uip = uid_find(uid);
 	semcnt = atomic_add_long_nv(&uip->ui_semcnt, diff);
-	KASSERT(semcnt >= 0);
+	KASSERTMSG(semcnt >= 0, "uid=%d diff=%d semcnt=%ld",
+	    uid, diff, semcnt);
 	return semcnt;
 }
 
