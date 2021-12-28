@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.2 2016/01/10 22:16:40 christos Exp $	*/
+/*	$NetBSD: grep.c,v 1.3 2021/12/28 14:59:02 christos Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -271,11 +271,15 @@ reset (int fd, char const *file, struct stats *stats)
     }
   if (directories == SKIP_DIRECTORIES && S_ISDIR (stats->stat.st_mode))
     return 0;
-#ifndef DJGPP
-  if (devices == SKIP_DEVICES && (S_ISCHR(stats->stat.st_mode) || S_ISBLK(stats->stat.st_mode) || S_ISSOCK(stats->stat.st_mode)))
-#else
-  if (devices == SKIP_DEVICES && (S_ISCHR(stats->stat.st_mode) || S_ISBLK(stats->stat.st_mode)))
+  if (devices == SKIP_DEVICES && (S_ISCHR(stats->stat.st_mode)
+  || S_ISBLK(stats->stat.st_mode)
+#ifdef S_ISSOCK
+  || S_ISSOCK(stats->stat.st_mode)
 #endif
+#ifdef S_ISFIFO
+  || S_ISFIFO(stats->stat.st_mode)
+#endif
+  ))
     return 0;
   if (S_ISREG (stats->stat.st_mode))
     {
