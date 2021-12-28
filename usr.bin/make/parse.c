@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.602 2021/12/28 19:41:01 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.603 2021/12/28 19:43:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.602 2021/12/28 19:41:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.603 2021/12/28 19:43:42 rillig Exp $");
 
 /* types and constants */
 
@@ -1190,10 +1190,10 @@ HandleDependencyTargetMundane(char *targetName)
 }
 
 static void
-ParseDependencyTargetExtraWarn(char **pp, const char *lstart)
+SkipExtraTargets(char **pp, const char *lstart)
 {
 	bool warning = false;
-	char *cp = *pp;
+	const char *cp = *pp;
 
 	while (*cp != '\0') {
 		if (!IsEscaped(lstart, cp) && (*cp == '!' || *cp == ':'))
@@ -1205,7 +1205,7 @@ ParseDependencyTargetExtraWarn(char **pp, const char *lstart)
 	if (warning)
 		Parse_Error(PARSE_WARNING, "Extra target ignored");
 
-	*pp = cp;
+	*pp += cp - *pp;
 }
 
 static void
@@ -1427,7 +1427,7 @@ ParseDependencyTargets(char **inout_cp,
 			return false;
 
 		if (*inout_special != SP_NOT && *inout_special != SP_PATH)
-			ParseDependencyTargetExtraWarn(&cp, lstart);
+			SkipExtraTargets(&cp, lstart);
 		else
 			pp_skip_whitespace(&cp);
 
