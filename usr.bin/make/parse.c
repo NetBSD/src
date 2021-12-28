@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.596 2021/12/28 17:30:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.597 2021/12/28 17:39:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.596 2021/12/28 17:30:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.597 2021/12/28 17:39:04 rillig Exp $");
 
 /* types and constants */
 
@@ -1462,12 +1462,13 @@ ParseDependencyTargets(char **inout_cp,
 }
 
 static void
-ParseDependencySourcesSpecial(char *start, char *end,
+ParseDependencySourcesSpecial(char *start,
 			      ParseSpecial special, SearchPathList *paths)
 {
 	char savec;
 
 	while (*start != '\0') {
+		char *end = start;
 		while (*end != '\0' && !ch_isspace(*end))
 			end++;
 		savec = *end;
@@ -1482,10 +1483,11 @@ ParseDependencySourcesSpecial(char *start, char *end,
 }
 
 static bool
-ParseDependencySourcesMundane(char *start, char *end,
+ParseDependencySourcesMundane(char *start,
 			      ParseSpecial special, GNodeType targetAttr)
 {
 	while (*start != '\0') {
+		char *end = start;
 		/*
 		 * The targets take real sources, so we must beware of archive
 		 * specifications (i.e. things with left parentheses in them)
@@ -1541,36 +1543,35 @@ ParseDependencySourcesMundane(char *start, char *end,
  * See the tests depsrc-*.mk.
  */
 static void
-ParseDependencySources(char *line, char *cp, GNodeType targetAttr,
+ParseDependencySources(char *p, GNodeType targetAttr,
 		       ParseSpecial special, SearchPathList **inout_paths)
 {
-	if (line[0] == '\0') {
+	if (*p == '\0') {
 		ParseDependencySourcesEmpty(special, *inout_paths);
 	} else if (special == SP_MFLAGS) {
-		Main_ParseArgLine(line);
+		Main_ParseArgLine(p);
 		/*
 		 * Set the initial character to a null-character so the loop
 		 * to get sources won't get anything.
 		 */
-		*line = '\0';
+		*p = '\0';
 	} else if (special == SP_SHELL) {
-		if (!Job_ParseShell(line)) {
+		if (!Job_ParseShell(p)) {
 			Parse_Error(PARSE_FATAL,
 			    "improper shell specification");
 			return;
 		}
-		*line = '\0';
+		*p = '\0';
 	} else if (special == SP_NOTPARALLEL || special == SP_SINGLESHELL ||
 		   special == SP_DELETE_ON_ERROR) {
-		*line = '\0';
+		*p = '\0';
 	}
 
 	/* Now go for the sources. */
 	if (special == SP_SUFFIXES || special == SP_PATH ||
 	    special == SP_INCLUDES || special == SP_LIBS ||
 	    special == SP_NULL || special == SP_OBJDIR) {
-		ParseDependencySourcesSpecial(line, cp, special,
-		    *inout_paths);
+		ParseDependencySourcesSpecial(p, special, *inout_paths);
 		if (*inout_paths != NULL) {
 			Lst_Free(*inout_paths);
 			*inout_paths = NULL;
@@ -1579,8 +1580,7 @@ ParseDependencySources(char *line, char *cp, GNodeType targetAttr,
 			Dir_SetPATH();
 	} else {
 		assert(*inout_paths == NULL);
-		if (!ParseDependencySourcesMundane(line, cp, special,
-		    targetAttr))
+		if (!ParseDependencySourcesMundane(p, special, targetAttr))
 			return;
 	}
 
@@ -1643,9 +1643,8 @@ ParseDependency(char *line)
 	ApplyDependencyOperator(op);
 
 	pp_skip_whitespace(&cp);
-	line = cp;		/* XXX: 'line' is an inappropriate name */
 
-	ParseDependencySources(line, cp, targetAttr, special, &paths);
+	ParseDependencySources(cp, targetAttr, special, &paths);
 
 out:
 	if (paths != NULL)
