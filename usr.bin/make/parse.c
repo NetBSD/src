@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.598 2021/12/28 17:45:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.599 2021/12/28 17:58:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.598 2021/12/28 17:45:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.599 2021/12/28 17:58:41 rillig Exp $");
 
 /* types and constants */
 
@@ -1010,7 +1010,7 @@ ParseErrorNoDependency(const char *lstart)
 }
 
 static void
-ParseDependencyTargetWord(const char **pp, const char *lstart)
+ParseDependencyTargetWord(char **pp, const char *lstart)
 {
 	const char *cp = *pp;
 
@@ -1042,7 +1042,7 @@ ParseDependencyTargetWord(const char **pp, const char *lstart)
 			cp++;
 	}
 
-	*pp = cp;
+	*pp += cp - *pp;
 }
 
 /*
@@ -1386,14 +1386,11 @@ ParseDependencyTargets(char **inout_cp,
 	char *cp;
 	char *tgt = *inout_cp;
 	char savec;
-	const char *p;
 
 	for (;;) {
 		/* Find the end of the next word. */
 		cp = tgt;
-		p = cp;
-		ParseDependencyTargetWord(&p, lstart);
-		cp += p - cp;
+		ParseDependencyTargetWord(&cp, lstart);
 
 		/*
 		 * If the word is followed by a left parenthesis, it's the
