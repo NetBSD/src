@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.38 2021/12/22 14:49:11 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.39 2021/12/28 22:54:08 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -81,7 +81,7 @@ int array_with_fixed_size[3] = {
 	444,			/* expect: too many array initializers */
 };
 
-// See initialization_set_set_of_unknown_array.
+// See update_type_of_array_of_unknown_size.
 int array_of_unknown_size[] = {
 	111,
 	222,
@@ -150,8 +150,11 @@ int array_with_designator[] = {
  * C99 6.7.8p11 says that the initializer of a scalar can be "optionally
  * enclosed in braces".  It does not explicitly set an upper limit on the
  * number of braces.  It also doesn't restrict the term "initializer" to only
- * mean the "outermost initializer".  Both GCC 10 and Clang 8 already warn
- * about this, so there is no extra work for lint to do.
+ * mean the "outermost initializer".  6.7.8p13 defines that a brace for a
+ * structure or union always means to descend into the type.  Both GCC 10 and
+ * Clang 8 already warn about these extra braces, nevertheless there is
+ * real-life code (the Postfix MTA) that exploits this corner case of the
+ * standard.
  */
 struct point scalar_with_several_braces = {
 	{{{3}}},
