@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.589 2021/12/28 14:06:42 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.590 2021/12/28 15:03:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.589 2021/12/28 14:06:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.590 2021/12/28 15:03:10 rillig Exp $");
 
 /* types and constants */
 
@@ -264,9 +264,9 @@ SearchPath *defSysIncPath;	/* default for sysIncPath */
  * keyword is used as a source ("0" if the keyword isn't special as a source)
  */
 static const struct {
-	const char name[17];	/* Name of keyword */
-	ParseSpecial spec;	/* Type when used as a target */
-	GNodeType op;		/* Operator when used as a source */
+	const char name[17];
+	ParseSpecial special;	/* when used as a target */
+	GNodeType targetAttr;	/* when used as a source */
 } parseKeywords[] = {
     { ".BEGIN",		SP_BEGIN,	OP_NONE },
     { ".DEFAULT",	SP_DEFAULT,	OP_NONE },
@@ -844,7 +844,7 @@ static bool
 ParseDependencySourceKeyword(const char *src, ParseSpecial special)
 {
 	int keywd;
-	GNodeType op;
+	GNodeType targetAttr;
 
 	if (*src != '.' || !ch_isupper(src[1]))
 		return false;
@@ -853,12 +853,12 @@ ParseDependencySourceKeyword(const char *src, ParseSpecial special)
 	if (keywd == -1)
 		return false;
 
-	op = parseKeywords[keywd].op;
-	if (op != OP_NONE) {
-		ApplyDependencyOperator(op);
+	targetAttr = parseKeywords[keywd].targetAttr;
+	if (targetAttr != OP_NONE) {
+		ApplyDependencyOperator(targetAttr);
 		return true;
 	}
-	if (parseKeywords[keywd].spec == SP_WAIT) {
+	if (parseKeywords[keywd].special == SP_WAIT) {
 		ParseDependencySourceWait(special != SP_NOT);
 		return true;
 	}
@@ -914,7 +914,7 @@ ParseDependencySourceOrder(const char *src)
 }
 
 static void
-ParseDependencySourceOther(const char *src, GNodeType tOp,
+ParseDependencySourceOther(const char *src, GNodeType targetAttr,
 			   ParseSpecial special)
 {
 	GNode *gn;
@@ -934,25 +934,22 @@ ParseDependencySourceOther(const char *src, GNodeType tOp,
 	gn = Targ_GetNode(src);
 	if (doing_depend)
 		RememberLocation(gn);
-	if (tOp != OP_NONE)
-		gn->type |= tOp;
+	if (targetAttr != OP_NONE)
+		gn->type |= targetAttr;
 	else
 		LinkToTargets(gn, special != SP_NOT);
 }
 
 /*
  * Given the name of a source in a dependency line, figure out if it is an
- * attribute (such as .SILENT) and apply it to the targets if it is. Else
+ * attribute (such as .SILENT) and if so, apply it to all targets. Otherwise
  * decide if there is some attribute which should be applied *to* the source
  * because of some special target (such as .PHONY) and apply it if so.
- * Otherwise, make the source a child of the targets in the list 'targets'.
- *
- * Input:
- *	tOp		operator (if any) from special targets
- *	src		name of the source to handle
+ * Otherwise, make the source a child of the targets.
  */
 static void
-ParseDependencySource(GNodeType tOp, const char *src, ParseSpecial special)
+ParseDependencySource(GNodeType targetAttr, const char *src,
+		      ParseSpecial special)
 {
 	if (ParseDependencySourceKeyword(src, special))
 		return;
@@ -962,7 +959,7 @@ ParseDependencySource(GNodeType tOp, const char *src, ParseSpecial special)
 	else if (special == SP_ORDER)
 		ParseDependencySourceOrder(src);
 	else
-		ParseDependencySourceOther(src, tOp, special);
+		ParseDependencySourceOther(src, targetAttr, special);
 }
 
 /*
@@ -1150,7 +1147,8 @@ ParseDependencyTargetPath(const char *suffixName,
 static bool
 ParseDependencyTarget(const char *targetName,
 		      ParseSpecial *inout_special,
-		      GNodeType *out_tOp, SearchPathList **inout_paths)
+		      GNodeType *inout_targetAttr,
+		      SearchPathList **inout_paths)
 {
 	int keywd;
 
@@ -1164,13 +1162,13 @@ ParseDependencyTarget(const char *targetName,
 	keywd = ParseFindKeyword(targetName);
 	if (keywd != -1) {
 		if (*inout_special == SP_PATH &&
-		    parseKeywords[keywd].spec != SP_PATH) {
+		    parseKeywords[keywd].special != SP_PATH) {
 			Parse_Error(PARSE_FATAL, "Mismatched special targets");
 			return false;
 		}
 
-		*inout_special = parseKeywords[keywd].spec;
-		*out_tOp = parseKeywords[keywd].op;
+		*inout_special = parseKeywords[keywd].special;
+		*inout_targetAttr = parseKeywords[keywd].targetAttr;
 
 		ParseDependencyTargetSpecial(inout_special, targetName,
 		    inout_paths);
@@ -1401,7 +1399,7 @@ ParseDependencyTargets(char **inout_cp,
 		       char **inout_line,
 		       const char *lstart,
 		       ParseSpecial *inout_special,
-		       GNodeType *inout_tOp,
+		       GNodeType *inout_targetAttr,
 		       SearchPathList **inout_paths,
 		       StringList *targetNames)
 {
@@ -1460,8 +1458,8 @@ ParseDependencyTargets(char **inout_cp,
 		savec = *cp;
 		*cp = '\0';
 
-		if (!ParseDependencyTarget(tgt, inout_special, inout_tOp,
-		    inout_paths))
+		if (!ParseDependencyTarget(tgt, inout_special,
+		    inout_targetAttr, inout_paths))
 			return false;
 
 		/*
@@ -1522,7 +1520,7 @@ ParseDependencySourcesSpecial(char *start, char *end,
 
 static bool
 ParseDependencySourcesMundane(char *start, char *end,
-			      ParseSpecial special, GNodeType tOp)
+			      ParseSpecial special, GNodeType targetAttr)
 {
 	while (*start != '\0') {
 		/*
@@ -1555,7 +1553,8 @@ ParseDependencySourcesMundane(char *start, char *end,
 
 			while (!Lst_IsEmpty(&sources)) {
 				GNode *gn = Lst_Dequeue(&sources);
-				ParseDependencySource(tOp, gn->name, special);
+				ParseDependencySource(targetAttr, gn->name,
+				    special);
 			}
 			Lst_Done(&sources);
 			end = start;
@@ -1565,7 +1564,7 @@ ParseDependencySourcesMundane(char *start, char *end,
 				end++;
 			}
 
-			ParseDependencySource(tOp, start, special);
+			ParseDependencySource(targetAttr, start, special);
 		}
 		pp_skip_whitespace(&end);
 		start = end;
@@ -1579,7 +1578,7 @@ ParseDependencySourcesMundane(char *start, char *end,
  * See the tests depsrc-*.mk.
  */
 static void
-ParseDependencySources(char *line, char *cp, GNodeType tOp,
+ParseDependencySources(char *line, char *cp, GNodeType targetAttr,
 		       ParseSpecial special, SearchPathList **inout_paths)
 {
 	if (line[0] == '\0') {
@@ -1617,7 +1616,8 @@ ParseDependencySources(char *line, char *cp, GNodeType tOp,
 			Dir_SetPATH();
 	} else {
 		assert(*inout_paths == NULL);
-		if (!ParseDependencySourcesMundane(line, cp, special, tOp))
+		if (!ParseDependencySourcesMundane(line, cp, special,
+		    targetAttr))
 			return;
 	}
 
@@ -1654,7 +1654,7 @@ ParseDependency(char *line)
 	GNodeType op;		/* the dependency operator on the line */
 	SearchPathList *paths;	/* search paths to alter when parsing a list
 				 * of .PATH targets */
-	GNodeType tOp;		/* operator from special target */
+	GNodeType targetAttr;	/* from special sources */
 	/* target names to be found and added to the targets list */
 	StringList targetNames = LST_INIT;
 	char *lstart = line;
@@ -1666,13 +1666,13 @@ ParseDependency(char *line)
 	ParseSpecial special = SP_NOT;
 
 	DEBUG1(PARSE, "ParseDependency(%s)\n", line);
-	tOp = OP_NONE;
+	targetAttr = OP_NONE;
 
 	paths = NULL;
 
 	/* XXX: don't use 'line' as an iterator variable */
-	if (!ParseDependencyTargets(&cp, &line, lstart, &special, &tOp,
-	    &paths, &targetNames))
+	if (!ParseDependencyTargets(&cp, &line, lstart, &special,
+	    &targetAttr, &paths, &targetNames))
 		goto out;
 
 	/*
@@ -1691,7 +1691,7 @@ ParseDependency(char *line)
 	pp_skip_whitespace(&cp);
 	line = cp;		/* XXX: 'line' is an inappropriate name */
 
-	ParseDependencySources(line, cp, tOp, special, &paths);
+	ParseDependencySources(line, cp, targetAttr, special, &paths);
 
 out:
 	if (paths != NULL)
