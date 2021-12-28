@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.69 2021/12/28 06:34:40 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.70 2021/12/28 06:35:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.69 2021/12/28 06:34:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.70 2021/12/28 06:35:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,18 @@ page0:
 		case MII_MODEL_xxMARVELL_E1011:
 		case MII_MODEL_xxMARVELL_E1111:
 			/* These devices have ESSR register */
-			PHY_READ(sc, MAKPHY_ESSR, &reg);
-			if ((reg & ESSR_AUTOSEL_DISABLE) != 0) {
+			rv = PHY_READ(sc, MAKPHY_ESSR, &reg);
+			if (rv != 0) {
+				/*
+				 * XXX Emulator (e.g qemu) may not implement
+				 * the ESSR register. If so, regard as copper
+				 * media.
+				 */
+				copperonly = true;
+				aprint_verbose_dev(self, "Failed to access "
+				    "ESSR. Are you an emulator? Regard as "
+				    "copper only media.\n");
+			} else if ((reg & ESSR_AUTOSEL_DISABLE) != 0) {
 				switch (reg & ESSR_HWCFG_MODE) {
 				case ESSR_RTBI_FIBER:
 				case ESSR_RGMII_FIBER:
