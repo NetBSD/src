@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.594 2021/12/28 16:35:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.595 2021/12/28 16:59:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.594 2021/12/28 16:35:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.595 2021/12/28 16:59:09 rillig Exp $");
 
 /* types and constants */
 
@@ -1177,32 +1177,19 @@ ParseDependencyTarget(const char *targetName,
 }
 
 static void
-ParseDependencyTargetMundane(char *targetName, StringList *targetNames)
+ParseDependencyTargetMundane(char *targetName)
 {
+	StringList targetNames = LST_INIT;
+
 	if (Dir_HasWildcards(targetName)) {
-		/*
-		 * Targets are to be sought only in the current directory,
-		 * so create an empty path for the thing. Note we need to
-		 * use Dir_Destroy in the destruction of the path as the
-		 * Dir module could have added a directory to the path...
-		 */
 		SearchPath *emptyPath = SearchPath_New();
-
-		SearchPath_Expand(emptyPath, targetName, targetNames);
-
+		SearchPath_Expand(emptyPath, targetName, &targetNames);
 		SearchPath_Free(emptyPath);
-	} else {
-		/*
-		 * No wildcards, but we want to avoid code duplication,
-		 * so create a list with the word on it.
-		 */
-		Lst_Append(targetNames, targetName);
-	}
+	} else
+		Lst_Append(&targetNames, targetName);
 
-	/* Apply the targets. */
-
-	while (!Lst_IsEmpty(targetNames)) {
-		char *targName = Lst_Dequeue(targetNames);
+	while (!Lst_IsEmpty(&targetNames)) {
+		char *targName = Lst_Dequeue(&targetNames);
 		GNode *gn = Suff_IsTransform(targName)
 		    ? Suff_AddTransform(targName)
 		    : Targ_GetNode(targName);
@@ -1395,8 +1382,7 @@ ParseDependencyTargets(char **inout_cp,
 		       const char *lstart,
 		       ParseSpecial *inout_special,
 		       GNodeType *inout_targetAttr,
-		       SearchPathList **inout_paths,
-		       StringList *targetNames)
+		       SearchPathList **inout_paths)
 {
 	char *cp;
 	char *tgt = *inout_line;
@@ -1462,7 +1448,7 @@ ParseDependencyTargets(char **inout_cp,
 		 * the end of the targets list
 		 */
 		if (*inout_special == SP_NOT && *tgt != '\0')
-			ParseDependencyTargetMundane(tgt, targetNames);
+			ParseDependencyTargetMundane(tgt);
 		else if (*inout_special == SP_PATH && *tgt != '.' &&
 			 *tgt != '\0')
 			Parse_Error(PARSE_WARNING, "Extra target (%s) ignored",
@@ -1650,9 +1636,7 @@ ParseDependency(char *line)
 	SearchPathList *paths;	/* search paths to alter when parsing a list
 				 * of .PATH targets */
 	GNodeType targetAttr;	/* from special sources */
-	/* target names to be found and added to the targets list */
-	StringList targetNames = LST_INIT;
-	char *lstart = line;
+	const char *lstart = line;
 
 	/*
 	 * In special targets, the children are linked as children of the
@@ -1667,15 +1651,8 @@ ParseDependency(char *line)
 
 	/* XXX: don't use 'line' as an iterator variable */
 	if (!ParseDependencyTargets(&cp, &line, lstart, &special,
-	    &targetAttr, &paths, &targetNames))
+	    &targetAttr, &paths))
 		goto out;
-
-	/*
-	 * Don't need the list of target names anymore.
-	 * The targets themselves are now in the global variable 'targets'.
-	 */
-	Lst_Done(&targetNames);
-	Lst_Init(&targetNames);
 
 	if (!Lst_IsEmpty(targets))
 		ParseDependencyCheckSpecial(special);
@@ -1691,7 +1668,6 @@ ParseDependency(char *line)
 out:
 	if (paths != NULL)
 		Lst_Free(paths);
-	Lst_Done(&targetNames);
 }
 
 typedef struct VarAssignParsed {
