@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.601 2021/12/28 19:13:40 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.602 2021/12/28 19:41:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.601 2021/12/28 19:13:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.602 2021/12/28 19:41:01 rillig Exp $");
 
 /* types and constants */
 
@@ -508,7 +508,7 @@ PrintStackTrace(void)
 
 /* Check if the current character is escaped on the current line. */
 static bool
-ParseIsEscaped(const char *line, const char *p)
+IsEscaped(const char *line, const char *p)
 {
 	bool active = false;
 	while (p > line && *--p == '\\')
@@ -533,7 +533,7 @@ RememberLocation(GNode *gn)
  * Return the index of the keyword, or -1 if it isn't there.
  */
 static int
-ParseFindKeyword(const char *str)
+FindKeyword(const char *str)
 {
 	int start = 0;
 	int end = sizeof parseKeywords / sizeof parseKeywords[0] - 1;
@@ -674,11 +674,11 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 
 
 /*
- * Parse and handle an .info, .warning or .error directive.
- * For an .error directive, immediately exit.
+ * Handle an .info, .warning or .error directive.  For an .error directive,
+ * exit immediately.
  */
 static void
-ParseMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
+HandleMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 {
 	char *xmsg;
 
@@ -845,7 +845,7 @@ ApplyDependencySourceKeyword(const char *src, ParseSpecial special)
 	if (*src != '.' || !ch_isupper(src[1]))
 		return false;
 
-	keywd = ParseFindKeyword(src);
+	keywd = FindKeyword(src);
 	if (keywd == -1)
 		return false;
 
@@ -869,7 +869,7 @@ ApplyDependencySourceMain(const char *src)
 	 * list of things to create, but only if the user didn't specify a
 	 * target on the command line and .MAIN occurs for the first time.
 	 *
-	 * See ParseDependencyTargetSpecial, branch SP_MAIN.
+	 * See HandleDependencyTargetSpecial, branch SP_MAIN.
 	 * See unit-tests/cond-func-make-main.mk.
 	 */
 	Lst_Append(&opts.create, bmake_strdup(src));
@@ -981,15 +981,8 @@ FindMainTarget(void)
 	}
 }
 
-/*
- * We got to the end of the line while we were still looking at targets.
- *
- * Ending a dependency line without an operator is a Bozo no-no.  As a
- * heuristic, this is also often triggered by undetected conflicts from
- * cvs/rcs merges.
- */
 static void
-ParseErrorNoDependency(const char *lstart)
+InvalidLineType(const char *lstart)
 {
 	if ((strncmp(lstart, "<<<<<<", 6) == 0) ||
 	    (strncmp(lstart, "======", 6) == 0) ||
@@ -1017,7 +1010,7 @@ ParseDependencyTargetWord(char **pp, const char *lstart)
 	while (*cp != '\0') {
 		if ((ch_isspace(*cp) || *cp == '!' || *cp == ':' ||
 		     *cp == '(') &&
-		    !ParseIsEscaped(lstart, cp))
+		    !IsEscaped(lstart, cp))
 			break;
 
 		if (*cp == '$') {
@@ -1051,9 +1044,9 @@ ParseDependencyTargetWord(char **pp, const char *lstart)
  * See the tests deptgt-*.mk.
  */
 static void
-ParseDependencyTargetSpecial(ParseSpecial *inout_special,
-			     const char *targetName,
-			     SearchPathList **inout_paths)
+HandleDependencyTargetSpecial(const char *targetName,
+			      ParseSpecial *inout_special,
+			      SearchPathList **inout_paths)
 {
 	switch (*inout_special) {
 	case SP_PATH:
@@ -1112,13 +1105,9 @@ ParseDependencyTargetSpecial(ParseSpecial *inout_special,
 	}
 }
 
-/*
- * .PATH<suffix> has to be handled specially.
- * Call on the suffix module to give us a path to modify.
- */
 static bool
-ParseDependencyTargetPath(const char *suffixName,
-			  SearchPathList **inout_paths)
+HandleDependencyTargetPath(const char *suffixName,
+			   SearchPathList **inout_paths)
 {
 	SearchPath *path;
 
@@ -1140,10 +1129,10 @@ ParseDependencyTargetPath(const char *suffixName,
  * See if it's a special target and if so set inout_special to match it.
  */
 static bool
-ParseDependencyTarget(const char *targetName,
-		      ParseSpecial *inout_special,
-		      GNodeType *inout_targetAttr,
-		      SearchPathList **inout_paths)
+HandleDependencyTarget(const char *targetName,
+		       ParseSpecial *inout_special,
+		       GNodeType *inout_targetAttr,
+		       SearchPathList **inout_paths)
 {
 	int keywd;
 
@@ -1154,7 +1143,7 @@ ParseDependencyTarget(const char *targetName,
 	 * See if the target is a special target that must have it
 	 * or its sources handled specially.
 	 */
-	keywd = ParseFindKeyword(targetName);
+	keywd = FindKeyword(targetName);
 	if (keywd != -1) {
 		if (*inout_special == SP_PATH &&
 		    parseKeywords[keywd].special != SP_PATH) {
@@ -1165,19 +1154,19 @@ ParseDependencyTarget(const char *targetName,
 		*inout_special = parseKeywords[keywd].special;
 		*inout_targetAttr = parseKeywords[keywd].targetAttr;
 
-		ParseDependencyTargetSpecial(inout_special, targetName,
+		HandleDependencyTargetSpecial(targetName, inout_special,
 		    inout_paths);
 
 	} else if (strncmp(targetName, ".PATH", 5) == 0) {
 		*inout_special = SP_PATH;
-		if (!ParseDependencyTargetPath(targetName + 5, inout_paths))
+		if (!HandleDependencyTargetPath(targetName + 5, inout_paths))
 			return false;
 	}
 	return true;
 }
 
 static void
-ParseDependencyTargetMundane(char *targetName)
+HandleDependencyTargetMundane(char *targetName)
 {
 	StringList targetNames = LST_INIT;
 
@@ -1207,9 +1196,9 @@ ParseDependencyTargetExtraWarn(char **pp, const char *lstart)
 	char *cp = *pp;
 
 	while (*cp != '\0') {
-		if (!ParseIsEscaped(lstart, cp) && (*cp == '!' || *cp == ':'))
+		if (!IsEscaped(lstart, cp) && (*cp == '!' || *cp == ':'))
 			break;
-		if (ParseIsEscaped(lstart, cp) || (*cp != ' ' && *cp != '\t'))
+		if (IsEscaped(lstart, cp) || (*cp != ' ' && *cp != '\t'))
 			warning = true;
 		cp++;
 	}
@@ -1384,12 +1373,12 @@ ApplyDependencyTarget(char *name, char *nameEnd, ParseSpecial *inout_special,
 	char savec = *nameEnd;
 	*nameEnd = '\0';
 
-	if (!ParseDependencyTarget(name, inout_special,
+	if (!HandleDependencyTarget(name, inout_special,
 	    inout_targetAttr, inout_paths))
 		return false;
 
 	if (*inout_special == SP_NOT && *name != '\0')
-		ParseDependencyTargetMundane(name);
+		HandleDependencyTargetMundane(name);
 	else if (*inout_special == SP_PATH && *name != '.' && *name != '\0')
 		Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", name);
 
@@ -1416,7 +1405,7 @@ ParseDependencyTargets(char **inout_cp,
 		 * If the word is followed by a left parenthesis, it's the
 		 * name of one or more files inside an archive.
 		 */
-		if (!ParseIsEscaped(lstart, cp) && *cp == '(') {
+		if (!IsEscaped(lstart, cp) && *cp == '(') {
 			if (!Arch_ParseArchive(&tgt, targets, SCOPE_CMDLINE)) {
 				Parse_Error(PARSE_FATAL,
 				    "Error in archive specification: \"%s\"",
@@ -1429,7 +1418,7 @@ ParseDependencyTargets(char **inout_cp,
 		}
 
 		if (*cp == '\0') {
-			ParseErrorNoDependency(lstart);
+			InvalidLineType(lstart);
 			return false;
 		}
 
@@ -1445,8 +1434,7 @@ ParseDependencyTargets(char **inout_cp,
 		tgt = cp;
 		if (*tgt == '\0')
 			break;
-		if ((*tgt == '!' || *tgt == ':') &&
-		    !ParseIsEscaped(lstart, tgt))
+		if ((*tgt == '!' || *tgt == ':') && !IsEscaped(lstart, tgt))
 			break;
 	}
 
@@ -2927,11 +2915,11 @@ ParseDirective(char *line)
 	else if (Substring_Equals(dir, "unexport-env"))
 		Var_UnExport(true, arg);
 	else if (Substring_Equals(dir, "info"))
-		ParseMessage(PARSE_INFO, "info", arg);
+		HandleMessage(PARSE_INFO, "info", arg);
 	else if (Substring_Equals(dir, "warning"))
-		ParseMessage(PARSE_WARNING, "warning", arg);
+		HandleMessage(PARSE_WARNING, "warning", arg);
 	else if (Substring_Equals(dir, "error"))
-		ParseMessage(PARSE_FATAL, "error", arg);
+		HandleMessage(PARSE_FATAL, "error", arg);
 	else
 		return false;
 	return true;
