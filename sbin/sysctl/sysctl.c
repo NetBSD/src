@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.162 2019/08/18 04:10:22 kamil Exp $ */
+/*	$NetBSD: sysctl.c,v 1.163 2021/12/28 16:06:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.162 2019/08/18 04:10:22 kamil Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.163 2021/12/28 16:06:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,6 +191,7 @@ static const struct handlespec {
 	{ "/kern/boottime",			kern_boottime, NULL, NULL },
 	{ "/kern/consdev",			kern_consdev, NULL, NULL },
 	{ "/kern/cp_time(/[0-9]+)?",		kern_cp_time, NULL, NULL },
+	{ "/kern/hashstat",			printother, NULL, "vmstat -H" },
 	{ "/kern/sysvipc_info",			printother, NULL, "ipcs" },
 	{ "/kern/cp_id(/[0-9]+)?",		kern_cp_id, NULL, NULL },
 
