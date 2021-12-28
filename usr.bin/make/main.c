@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.561 2021/12/28 01:20:24 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.562 2021/12/28 21:56:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.561 2021/12/28 01:20:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.562 2021/12/28 21:56:13 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1293,6 +1293,7 @@ ReadAllMakefiles(const StringList *makefiles)
 static void
 ReadFirstDefaultMakefile(void)
 {
+	StringList makefiles = LST_INIT;
 	StringListNode *ln;
 	char *prefs;
 
@@ -1300,18 +1301,13 @@ ReadFirstDefaultMakefile(void)
 	    SCOPE_CMDLINE, VARE_WANTRES, &prefs);
 	/* TODO: handle errors */
 
-	/*
-	 * XXX: This should use a local list instead of opts.makefiles since
-	 * these makefiles do not come from the command line.  They also have
-	 * different semantics in that only the first file that is found is
-	 * processed.  See ReadAllMakefiles.
-	 */
-	(void)str2Lst_Append(&opts.makefiles, prefs);
+	(void)str2Lst_Append(&makefiles, prefs);
 
-	for (ln = opts.makefiles.first; ln != NULL; ln = ln->next)
+	for (ln = makefiles.first; ln != NULL; ln = ln->next)
 		if (ReadMakefile(ln->datum))
 			break;
 
+	Lst_Done(&makefiles);
 	free(prefs);
 }
 
