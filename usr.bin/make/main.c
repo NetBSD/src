@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.560 2021/12/28 01:11:36 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.561 2021/12/28 01:20:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.560 2021/12/28 01:11:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.561 2021/12/28 01:20:24 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -390,12 +390,6 @@ MainParseArgJobsInternal(const char *argvalue)
 	}
 	if ((fcntl(jp_0, F_GETFD, 0) < 0) ||
 	    (fcntl(jp_1, F_GETFD, 0) < 0)) {
-#if 0
-		(void)fprintf(stderr,
-		    "%s: ###### warning -- J descriptors were closed!\n",
-		    progname);
-		exit(2);
-#endif
 		jp_0 = -1;
 		jp_1 = -1;
 		opts.compatMake = true;
@@ -558,7 +552,6 @@ MainParseArg(char c, const char *argvalue)
 		Global_Append(MAKEFLAGS, "-w");
 		break;
 	default:
-	case '?':
 		usage();
 	}
 	return true;
@@ -727,7 +720,7 @@ Main_SetObjdir(bool writable, const char *fmt, ...)
 	/* look for the directory and try to chdir there */
 	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 		if ((writable && access(path, W_OK) != 0) ||
-		    (chdir(path) != 0)) {
+		    chdir(path) != 0) {
 			(void)fprintf(stderr, "%s warning: %s: %s.\n",
 			    progname, path, strerror(errno));
 		} else {
@@ -1449,9 +1442,9 @@ main_Init(int argc, char **argv)
 
 #ifdef POSIX
 	{
-		char *p1 = explode(getenv("MAKEFLAGS"));
-		Main_ParseArgLine(p1);
-		free(p1);
+		char *makeflags = explode(getenv("MAKEFLAGS"));
+		Main_ParseArgLine(makeflags);
+		free(makeflags);
 	}
 #else
 	/*
@@ -1755,7 +1748,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	switch (cpid = vfork()) {
 	case 0:
 		(void)close(pipefds[0]);
-		(void)dup2(pipefds[1], 1);
+		(void)dup2(pipefds[1], STDOUT_FILENO);
 		(void)close(pipefds[1]);
 
 		(void)execv(shellPath, UNCONST(args));
@@ -1934,6 +1927,7 @@ write_all(int fd, const void *data, size_t n)
 
 	while (n > 0) {
 		ssize_t written = write(fd, mem, n);
+		/* XXX: Should this EAGAIN be EINTR? */
 		if (written == -1 && errno == EAGAIN)
 			continue;
 		if (written == -1)
@@ -1965,7 +1959,6 @@ execDie(const char *af, const char *av)
 	_exit(1);
 }
 
-/* purge any relative paths */
 static void
 purge_relative_cached_realpaths(void)
 {
@@ -2169,17 +2162,18 @@ mkTempFile(const char *pattern, char *tfile, size_t tfile_sz)
 		tfile = tbuf;
 		tfile_sz = sizeof tbuf;
 	}
-	if (pattern[0] == '/') {
+
+	if (pattern[0] == '/')
 		snprintf(tfile, tfile_sz, "%s", pattern);
-	} else {
+	else
 		snprintf(tfile, tfile_sz, "%s%s", tmpdir, pattern);
-	}
+
 	if ((fd = mkstemp(tfile)) < 0)
 		Punt("Could not create temporary file %s: %s", tfile,
 		    strerror(errno));
-	if (tfile == tbuf) {
+	if (tfile == tbuf)
 		unlink(tfile);	/* we just want the descriptor */
-	}
+
 	return fd;
 }
 
