@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.595 2021/12/28 16:59:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.596 2021/12/28 17:30:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.595 2021/12/28 16:59:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.596 2021/12/28 17:30:11 rillig Exp $");
 
 /* types and constants */
 
@@ -1390,11 +1390,6 @@ ParseDependencyTargets(char **inout_cp,
 	const char *p;
 
 	for (;;) {
-		/*
-		 * Here LINE points to the beginning of the next word, and
-		 * LSTART points to the actual beginning of the line.
-		 */
-
 		/* Find the end of the next word. */
 		cp = tgt;
 		p = cp;
@@ -1403,22 +1398,9 @@ ParseDependencyTargets(char **inout_cp,
 
 		/*
 		 * If the word is followed by a left parenthesis, it's the
-		 * name of an object file inside an archive (ar file).
+		 * name of one or more files inside an archive.
 		 */
 		if (!ParseIsEscaped(lstart, cp) && *cp == '(') {
-			/*
-			 * Archives must be handled specially to make sure the
-			 * OP_ARCHV flag is set in their 'type' field, for one
-			 * thing, and because things like "archive(file1.o
-			 * file2.o file3.o)" are permissible.
-			 *
-			 * Arch_ParseArchive will set 'line' to be the first
-			 * non-blank after the archive-spec. It creates/finds
-			 * nodes for the members and places them on the given
-			 * list, returning true if all went well and false if
-			 * there was an error in the specification. On error,
-			 * line should remain untouched.
-			 */
 			if (!Arch_ParseArchive(&tgt, targets, SCOPE_CMDLINE)) {
 				Parse_Error(PARSE_FATAL,
 				    "Error in archive specification: \"%s\"",
