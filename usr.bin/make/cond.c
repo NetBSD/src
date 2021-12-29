@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.309 2021/12/29 04:41:38 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.310 2021/12/29 04:50:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.309 2021/12/29 04:41:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.310 2021/12/29 04:50:56 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -982,7 +982,7 @@ CondParser_Or(CondParser *par, bool doEval)
 }
 
 static CondEvalResult
-CondParser_Eval(CondParser *par, bool *out_value)
+CondParser_Eval(CondParser *par)
 {
 	CondResult res;
 
@@ -995,8 +995,7 @@ CondParser_Eval(CondParser *par, bool *out_value)
 	if (CondParser_Token(par, false) != TOK_EOF)
 		return COND_INVALID;
 
-	*out_value = res == CR_TRUE;
-	return COND_PARSE;
+	return res;
 }
 
 /*
@@ -1011,7 +1010,7 @@ CondParser_Eval(CondParser *par, bool *out_value)
  *	*out_value	is set to the boolean value of the condition
  */
 static CondEvalResult
-CondEvalExpression(const char *cond, bool *out_value, bool plain,
+CondEvalExpression(const char *cond, bool plain,
 		   bool (*evalBare)(const char *), bool negate,
 		   bool eprint, bool leftUnquotedOK)
 {
@@ -1028,7 +1027,7 @@ CondEvalExpression(const char *cond, bool *out_value, bool plain,
 	par.curr = TOK_NONE;
 	par.printedError = false;
 
-	rval = CondParser_Eval(&par, out_value);
+	rval = CondParser_Eval(&par);
 
 	if (rval == COND_INVALID && eprint && !par.printedError)
 		Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", cond);
@@ -1041,9 +1040,9 @@ CondEvalExpression(const char *cond, bool *out_value, bool plain,
  * ${"${VAR}" == value:?yes:no}.
  */
 CondEvalResult
-Cond_EvalCondition(const char *cond, bool *out_value)
+Cond_EvalCondition(const char *cond)
 {
-	return CondEvalExpression(cond, out_value, true,
+	return CondEvalExpression(cond, true,
 	    FuncDefined, false, false, true);
 }
 
@@ -1150,7 +1149,7 @@ Cond_EvalLine(const char *line)
 	bool (*evalBare)(const char *);
 	bool negate;
 	bool isElif;
-	bool value;
+	CondResult res;
 	IfState state;
 	const char *p = line;
 
@@ -1275,8 +1274,8 @@ Cond_EvalLine(const char *line)
 	}
 
 	/* And evaluate the conditional expression */
-	if (CondEvalExpression(p, &value, plain, evalBare, negate,
-	    true, false) == COND_INVALID) {
+	res = CondEvalExpression(p, plain, evalBare, negate, true, false);
+	if (res == COND_INVALID) {
 		/*
 		 * Syntax error in conditional, error message already output.
 		 */
@@ -1286,7 +1285,7 @@ Cond_EvalLine(const char *line)
 		return COND_SKIP;
 	}
 
-	if (!value) {
+	if (res == COND_SKIP) {
 		cond_states[cond_depth] = IFS_INITIAL;
 		return COND_SKIP;
 	}

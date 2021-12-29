@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.223 2021/12/28 01:11:36 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.224 2021/12/29 04:50:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -91,7 +91,7 @@ void Compat_Run(GNodeList *);
 void Compat_Make(GNode *, GNode *);
 
 /* cond.c */
-CondEvalResult Cond_EvalCondition(const char *, bool *) MAKE_ATTR_USE;
+CondEvalResult Cond_EvalCondition(const char *) MAKE_ATTR_USE;
 CondEvalResult Cond_EvalLine(const char *) MAKE_ATTR_USE;
 void Cond_restore_depth(unsigned int);
 unsigned int Cond_save_depth(void) MAKE_ATTR_USE;
