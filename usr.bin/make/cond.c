@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.313 2021/12/29 05:16:44 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.314 2021/12/29 07:40:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.313 2021/12/29 05:16:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.314 2021/12/29 07:40:52 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -182,10 +182,14 @@ static unsigned int cond_min_depth = 0;	/* depth at makefile open */
 /* Names for ComparisonOp. */
 static const char opname[][3] = { "<", "<=", ">", ">=", "==", "!=" };
 
-static bool
-is_token(const char *str, const char *tok, unsigned char len)
+MAKE_INLINE bool
+skip_string(const char **pp, const char *str)
 {
-	return strncmp(str, tok, (size_t)len) == 0 && !ch_isalpha(str[len]);
+	size_t len = strlen(str);
+	bool ok = strncmp(*pp, str, len) == 0;
+	if (ok)
+		*pp += len;
+	return ok;
 }
 
 static Token
@@ -272,8 +276,12 @@ ParseWord(CondParser *par, const char **pp, bool doEval, const char *func,
 	cpp_skip_hspace(&p);
 
 	if (func != NULL && *p++ != ')') {
+		int len = 0;
+		while (ch_isalpha(func[len]))
+			len++;
+
 		Parse_Error(PARSE_FATAL,
-		    "Missing closing parenthesis for %s()", func);
+		    "Missing closing parenthesis for %.*s()", len, func);
 		par->printedError = true;
 		return 0;
 	}
@@ -701,9 +709,8 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 	Token tok;
 	FStr val;
 
-	if (!is_token(cp, "empty", 5))
+	if (!skip_string(&cp, "empty"))
 		return false;
-	cp += 5;
 
 	cpp_skip_whitespace(&cp);
 	if (*cp != '(')
@@ -731,37 +738,34 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 static bool
 CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 {
-	static const struct fn_def {
-		const char fn_name[9];
-		unsigned char fn_name_len;
-		bool (*fn_eval)(const char *);
-	} fns[] = {
-		{ "defined",  7, FuncDefined },
-		{ "make",     4, FuncMake },
-		{ "exists",   6, FuncExists },
-		{ "target",   6, FuncTarget },
-		{ "commands", 8, FuncCommands }
-	};
-	const struct fn_def *fn;
 	char *arg = NULL;
 	size_t arglen;
-	const char *cp = par->p;
-	const struct fn_def *last_fn = fns + sizeof fns / sizeof fns[0] - 1;
+	const char *p = par->p;
+	bool (*fn)(const char *);
+	const char *fn_name = p;
 
-	for (fn = fns; !is_token(cp, fn->fn_name, fn->fn_name_len); fn++)
-		if (fn == last_fn)
-			return false;
-
-	cp += fn->fn_name_len;
-	cpp_skip_whitespace(&cp);
-	if (*cp != '(')
+	if (skip_string(&p, "defined"))
+		fn = FuncDefined;
+	else if (skip_string(&p, "make"))
+		fn = FuncMake;
+	else if (skip_string(&p, "exists"))
+		fn = FuncExists;
+	else if (skip_string(&p, "target"))
+		fn = FuncTarget;
+	else if (skip_string(&p, "commands"))
+		fn = FuncCommands;
+	else
 		return false;
 
-	arglen = ParseWord(par, &cp, doEval, fn->fn_name, &arg);
-	*out_token = ToToken(arglen != 0 && (!doEval || fn->fn_eval(arg)));
+	cpp_skip_whitespace(&p);
+	if (*p != '(')
+		return false;
+
+	arglen = ParseWord(par, &p, doEval, fn_name, &arg);
+	*out_token = ToToken(arglen != 0 && (!doEval || fn(arg)));
 
 	free(arg);
-	par->p = cp;
+	par->p = p;
 	return true;
 }
 
@@ -1049,36 +1053,33 @@ DetermineKindOfConditional(const char **pp, bool *out_plain,
 			   bool (**out_evalBare)(const char *),
 			   bool *out_negate)
 {
-	const char *p = *pp;
+	const char *p = *pp + 2;
 
-	p += 2;
 	*out_plain = false;
 	*out_evalBare = FuncDefined;
-	*out_negate = false;
-	if (*p == 'n') {
-		p++;
-		*out_negate = true;
-	}
-	if (is_token(p, "def", 3)) {		/* .ifdef and .ifndef */
-		p += 3;
-	} else if (is_token(p, "make", 4)) {	/* .ifmake and .ifnmake */
-		p += 4;
+	*out_negate = skip_string(&p, "n");
+
+	if (skip_string(&p, "def")) {		/* .ifdef and .ifndef */
+	} else if (skip_string(&p, "make"))	/* .ifmake and .ifnmake */
 		*out_evalBare = FuncMake;
-	} else if (is_token(p, "", 0) && !*out_negate) { /* plain .if */
+	else if (!*out_negate)			/* plain .if */
 		*out_plain = true;
-	} else {
-		/*
-		 * TODO: Add error message about unknown directive,
-		 * since there is no other known directive that starts
-		 * with 'el' or 'if'.
-		 *
-		 * Example: .elifx 123
-		 */
-		return false;
-	}
+	else
+		goto unknown_directive;
+	if (ch_isalpha(*p))
+		goto unknown_directive;
 
 	*pp = p;
 	return true;
+
+unknown_directive:
+	/*
+	 * TODO: Add error message about unknown directive, since there is no
+	 * other known directive that starts with 'el' or 'if'.
+	 *
+	 * Example: .elifx 123
+	 */
+	return false;
 }
 
 /*
@@ -1183,8 +1184,7 @@ Cond_EvalLine(const char *line)
 
 		/* Quite likely this is 'else' or 'elif' */
 		p += 2;
-		if (is_token(p, "se", 2)) {	/* It is an 'else'. */
-
+		if (strncmp(p, "se", 2) == 0 && !ch_isalpha(p[2])) {
 			if (p[2] != '\0')
 				Parse_Error(PARSE_FATAL,
 				    "The .else directive "
