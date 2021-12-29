@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.990 2021/12/29 04:50:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.991 2021/12/29 05:05:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.990 2021/12/29 04:50:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.991 2021/12/29 05:05:21 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3454,7 +3454,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	VarEvalMode then_emode = VARE_PARSE_ONLY;
 	VarEvalMode else_emode = VARE_PARSE_ONLY;
 
-	CondEvalResult cond_rc = CR_TRUE;	/* just not CR_ERROR */
+	CondResult cond_rc = CR_TRUE;	/* just not CR_ERROR */
 	if (Expr_ShouldEval(expr)) {
 		cond_rc = Cond_EvalCondition(expr->name);
 		if (cond_rc == CR_TRUE)
