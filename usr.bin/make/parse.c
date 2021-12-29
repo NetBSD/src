@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.603 2021/12/28 19:43:42 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.604 2021/12/29 05:01:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.603 2021/12/28 19:43:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.604 2021/12/29 05:01:35 rillig Exp $");
 
 /* types and constants */
 
@@ -2727,7 +2727,7 @@ SkipIrrelevantBranches(void)
 	char *line;
 
 	while ((line = ReadLowLevelLine(LK_DOT)) != NULL) {
-		if (Cond_EvalLine(line) == COND_PARSE)
+		if (Cond_EvalLine(line) == CR_TRUE)
 			break;
 		/*
 		 * TODO: Check for typos in .elif directives
@@ -2805,13 +2805,13 @@ ReadHighLevelLine(void)
 		 * about it and act accordingly
 		 */
 		switch (Cond_EvalLine(line)) {
-		case COND_SKIP:
+		case CR_FALSE:	/* May also mean a syntax error. */
 			if (!SkipIrrelevantBranches())
 				return NULL;
 			continue;
-		case COND_PARSE:
+		case CR_TRUE:
 			continue;
-		case COND_INVALID:	/* Not a conditional line */
+		case CR_ERROR:	/* Not a conditional line */
 			if (ParseForLoop(line))
 				continue;
 			break;

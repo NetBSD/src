@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.310 2021/12/29 04:50:56 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.311 2021/12/29 05:01:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.310 2021/12/29 04:50:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.311 2021/12/29 05:01:35 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -990,10 +990,10 @@ CondParser_Eval(CondParser *par)
 
 	res = CondParser_Or(par, true);
 	if (res == CR_ERROR)
-		return COND_INVALID;
+		return CR_ERROR;
 
 	if (CondParser_Token(par, false) != TOK_EOF)
-		return COND_INVALID;
+		return CR_ERROR;
 
 	return res;
 }
@@ -1004,8 +1004,8 @@ CondParser_Eval(CondParser *par)
  * function(arg), comparisons and parenthetical groupings thereof.
  *
  * Results:
- *	COND_PARSE	if the condition was valid grammatically
- *	COND_INVALID	if not a valid conditional.
+ *	CR_TRUE		if the condition was valid grammatically
+ *	CR_ERROR	if not a valid conditional.
  *
  *	*out_value	is set to the boolean value of the condition
  */
@@ -1029,7 +1029,7 @@ CondEvalExpression(const char *cond, bool plain,
 
 	rval = CondParser_Eval(&par);
 
-	if (rval == COND_INVALID && eprint && !par.printedError)
+	if (rval == CR_ERROR && eprint && !par.printedError)
 		Parse_Error(PARSE_FATAL, "Malformed conditional (%s)", cond);
 
 	return rval;
@@ -1111,12 +1111,12 @@ DetermineKindOfConditional(const char **pp, bool *out_plain,
  * parenthetical groupings thereof.
  *
  * Results:
- *	COND_PARSE	to continue parsing the lines that follow the
+ *	CR_TRUE		to continue parsing the lines that follow the
  *			conditional (when <cond> evaluates to true)
- *	COND_SKIP	to skip the lines after the conditional
+ *	CR_FALSE	to skip the lines after the conditional
  *			(when <cond> evaluates to false, or when a previous
  *			branch has already been taken)
- *	COND_INVALID	if the conditional was not valid, either because of
+ *	CR_ERROR	if the conditional was not valid, either because of
  *			a syntax error or because some variable was undefined
  *			or because the condition could not be evaluated
  */
@@ -1170,13 +1170,13 @@ Cond_EvalLine(const char *line)
 
 		if (cond_depth == cond_min_depth) {
 			Parse_Error(PARSE_FATAL, "if-less endif");
-			return COND_PARSE;
+			return CR_TRUE;
 		}
 
 		/* Return state for previous conditional */
 		cond_depth--;
 		return cond_states[cond_depth] & IFS_ACTIVE
-		    ? COND_PARSE : COND_SKIP;
+		    ? CR_TRUE : CR_FALSE;
 	}
 
 	/* Parse the name of the directive, such as 'if', 'elif', 'endif'. */
@@ -1187,7 +1187,7 @@ Cond_EvalLine(const char *line)
 			 * transformation rule like '.err.txt',
 			 * therefore no error message here.
 			 */
-			return COND_INVALID;
+			return CR_ERROR;
 		}
 
 		/* Quite likely this is 'else' or 'elif' */
@@ -1201,7 +1201,7 @@ Cond_EvalLine(const char *line)
 
 			if (cond_depth == cond_min_depth) {
 				Parse_Error(PARSE_FATAL, "if-less else");
-				return COND_PARSE;
+				return CR_TRUE;
 			}
 
 			state = cond_states[cond_depth];
@@ -1215,7 +1215,7 @@ Cond_EvalLine(const char *line)
 			}
 			cond_states[cond_depth] = state;
 
-			return state & IFS_ACTIVE ? COND_PARSE : COND_SKIP;
+			return state & IFS_ACTIVE ? CR_TRUE : CR_FALSE;
 		}
 		/* Assume for now it is an elif */
 		isElif = true;
@@ -1227,27 +1227,27 @@ Cond_EvalLine(const char *line)
 		 * Unknown directive.  It might still be a transformation rule
 		 * like '.elisp.scm', therefore no error message here.
 		 */
-		return COND_INVALID;	/* Not an ifxxx or elifxxx line */
+		return CR_ERROR;	/* Not an ifxxx or elifxxx line */
 	}
 
 	if (!DetermineKindOfConditional(&p, &plain, &evalBare, &negate))
-		return COND_INVALID;
+		return CR_ERROR;
 
 	if (isElif) {
 		if (cond_depth == cond_min_depth) {
 			Parse_Error(PARSE_FATAL, "if-less elif");
-			return COND_PARSE;
+			return CR_TRUE;
 		}
 		state = cond_states[cond_depth];
 		if (state & IFS_SEEN_ELSE) {
 			Parse_Error(PARSE_WARNING, "extra elif");
 			cond_states[cond_depth] =
 			    IFS_WAS_ACTIVE | IFS_SEEN_ELSE;
-			return COND_SKIP;
+			return CR_FALSE;
 		}
 		if (state != IFS_INITIAL) {
 			cond_states[cond_depth] = IFS_WAS_ACTIVE;
-			return COND_SKIP;
+			return CR_FALSE;
 		}
 	} else {
 		/* Normal .if */
@@ -1269,28 +1269,28 @@ Cond_EvalLine(const char *line)
 			 * treat as always false.
 			 */
 			cond_states[cond_depth] = IFS_WAS_ACTIVE;
-			return COND_SKIP;
+			return CR_FALSE;
 		}
 	}
 
 	/* And evaluate the conditional expression */
 	res = CondEvalExpression(p, plain, evalBare, negate, true, false);
-	if (res == COND_INVALID) {
+	if (res == CR_ERROR) {
 		/*
 		 * Syntax error in conditional, error message already output.
 		 */
 		/* Skip everything to matching .endif */
 		/* XXX: An extra '.else' is not detected in this case. */
 		cond_states[cond_depth] = IFS_WAS_ACTIVE;
-		return COND_SKIP;
+		return CR_FALSE;
 	}
 
-	if (res == COND_SKIP) {
+	if (res == CR_FALSE) {
 		cond_states[cond_depth] = IFS_INITIAL;
-		return COND_SKIP;
+		return CR_FALSE;
 	}
 	cond_states[cond_depth] = IFS_ACTIVE;
-	return COND_PARSE;
+	return CR_TRUE;
 }
 
 void
