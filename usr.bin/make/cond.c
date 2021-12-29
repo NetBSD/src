@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.314 2021/12/29 07:40:52 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.315 2021/12/29 08:15:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.314 2021/12/29 07:40:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.315 2021/12/29 08:15:45 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -218,16 +218,16 @@ CondParser_SkipWhitespace(CondParser *par)
  *	func says whether the argument belongs to an actual function, or
  *	NULL when parsing a bare word.
  *
- * Return the length of the argument, or an ambiguous 0 on error.
+ * Return false if there was a parse error or the argument was empty.
  */
-static size_t
+static bool
 ParseWord(CondParser *par, const char **pp, bool doEval, const char *func,
 	     char **out_arg)
 {
 	const char *p = *pp;
 	Buffer argBuf;
 	int paren_depth;
-	size_t argLen;
+	bool ok;
 
 	if (func != NULL)
 		p++;		/* Skip opening '(' - verified by caller */
@@ -270,7 +270,7 @@ ParseWord(CondParser *par, const char **pp, bool doEval, const char *func,
 		p++;
 	}
 
-	argLen = argBuf.len;
+	ok = argBuf.len > 0;
 	*out_arg = Buf_DoneData(&argBuf);
 
 	cpp_skip_hspace(&p);
@@ -283,11 +283,11 @@ ParseWord(CondParser *par, const char **pp, bool doEval, const char *func,
 		Parse_Error(PARSE_FATAL,
 		    "Missing closing parenthesis for %.*s()", len, func);
 		par->printedError = true;
-		return 0;
+		return false;
 	}
 
 	*pp = p;
-	return argLen;
+	return ok;
 }
 
 /* Test whether the given variable is defined. */
@@ -739,7 +739,7 @@ static bool
 CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 {
 	char *arg = NULL;
-	size_t arglen;
+	bool ok;
 	const char *p = par->p;
 	bool (*fn)(const char *);
 	const char *fn_name = p;
@@ -761,8 +761,8 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 	if (*p != '(')
 		return false;
 
-	arglen = ParseWord(par, &p, doEval, fn_name, &arg);
-	*out_token = ToToken(arglen != 0 && (!doEval || fn(arg)));
+	ok = ParseWord(par, &p, doEval, fn_name, &arg);
+	*out_token = ToToken(ok && (!doEval || fn(arg)));
 
 	free(arg);
 	par->p = p;
