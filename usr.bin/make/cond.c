@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.311 2021/12/29 05:01:35 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.312 2021/12/29 05:05:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.311 2021/12/29 05:01:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.312 2021/12/29 05:05:21 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -981,7 +981,7 @@ CondParser_Or(CondParser *par, bool doEval)
 	return res;
 }
 
-static CondEvalResult
+static CondResult
 CondParser_Eval(CondParser *par)
 {
 	CondResult res;
@@ -1009,13 +1009,13 @@ CondParser_Eval(CondParser *par)
  *
  *	*out_value	is set to the boolean value of the condition
  */
-static CondEvalResult
+static CondResult
 CondEvalExpression(const char *cond, bool plain,
 		   bool (*evalBare)(const char *), bool negate,
 		   bool eprint, bool leftUnquotedOK)
 {
 	CondParser par;
-	CondEvalResult rval;
+	CondResult rval;
 
 	cpp_skip_hspace(&cond);
 
@@ -1039,7 +1039,7 @@ CondEvalExpression(const char *cond, bool plain,
  * Evaluate a condition in a :? modifier, such as
  * ${"${VAR}" == value:?yes:no}.
  */
-CondEvalResult
+CondResult
 Cond_EvalCondition(const char *cond)
 {
 	return CondEvalExpression(cond, true,
@@ -1120,7 +1120,7 @@ DetermineKindOfConditional(const char **pp, bool *out_plain,
  *			a syntax error or because some variable was undefined
  *			or because the condition could not be evaluated
  */
-CondEvalResult
+CondResult
 Cond_EvalLine(const char *line)
 {
 	typedef enum IfState {
