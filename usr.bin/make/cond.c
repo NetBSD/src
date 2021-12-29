@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.312 2021/12/29 05:05:21 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.313 2021/12/29 05:16:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.312 2021/12/29 05:05:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.313 2021/12/29 05:16:44 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -989,10 +989,7 @@ CondParser_Eval(CondParser *par)
 	DEBUG1(COND, "CondParser_Eval: %s\n", par->p);
 
 	res = CondParser_Or(par, true);
-	if (res == CR_ERROR)
-		return CR_ERROR;
-
-	if (CondParser_Token(par, false) != TOK_EOF)
+	if (res != CR_ERROR && CondParser_Token(par, false) != TOK_EOF)
 		return CR_ERROR;
 
 	return res;
@@ -1002,12 +999,6 @@ CondParser_Eval(CondParser *par)
  * Evaluate the condition, including any side effects from the variable
  * expressions in the condition. The condition consists of &&, ||, !,
  * function(arg), comparisons and parenthetical groupings thereof.
- *
- * Results:
- *	CR_TRUE		if the condition was valid grammatically
- *	CR_ERROR	if not a valid conditional.
- *
- *	*out_value	is set to the boolean value of the condition
  */
 static CondResult
 CondEvalExpression(const char *cond, bool plain,
@@ -1285,12 +1276,8 @@ Cond_EvalLine(const char *line)
 		return CR_FALSE;
 	}
 
-	if (res == CR_FALSE) {
-		cond_states[cond_depth] = IFS_INITIAL;
-		return CR_FALSE;
-	}
-	cond_states[cond_depth] = IFS_ACTIVE;
-	return CR_TRUE;
+	cond_states[cond_depth] = res == CR_TRUE ? IFS_ACTIVE : IFS_INITIAL;
+	return res;
 }
 
 void
