@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.359 2021/10/04 21:02:40 andvar Exp $
+#	$NetBSD: build.sh,v 1.360 2021/12/29 22:22:12 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1974,7 +1974,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.359 2021/10/04 21:02:40 andvar Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.360 2021/12/29 22:22:12 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2111,6 +2111,7 @@ buildkernel()
 	    bomb "${toolprefix}config failed for ${kernelconf}"
 	make_in_dir "${kernelbuildpath}" depend
 	make_in_dir "${kernelbuildpath}" all
+	make_in_dir "${kernelbuildpath}" debuginstall
 
 	if [ "${runcmd}" != "echo" ]; then
 		statusmsg "Kernels built from ${kernelconf}:"

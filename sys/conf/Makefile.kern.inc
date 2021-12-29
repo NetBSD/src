@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.285 2021/12/20 20:33:20 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.286 2021/12/29 22:22:13 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -18,7 +18,7 @@
 # all ports are expected to include bsd.own.mk for toolchain settings
 
 # Default DEBUG to -g if kernel debug info is requested by MKDEBUGKERNEL=yes
-.if defined(MKDEBUGKERNEL) && ${MKDEBUGKERNEL} == "yes"
+.if ${MKDEBUGKERNEL:Uno} == "yes" || ${MKDEBUG:Uno} == "yes"
 DEBUG?=-g
 .endif
 
@@ -243,16 +243,29 @@ LINKFLAGS_DEBUG?=	-X
 
 SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
 		${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@
-SYSTEM_LD_TAIL_DEBUG?=&& \
-		echo mv -f $@ $@.gdb && mv -f $@ $@.gdb && \
-		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb && \
-		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb && \
-		chmod 755 $@ $@.gdb
+
+SYSTEM_LD_TAIL_DEBUG?=&& set -x &&\
+	mv -f $@ $@.gdb && \
+	${OBJCOPY} --only-keep-debug $@.gdb $@-${KERNEL_BUILD}.debug && \
+	${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	    --add-gnu-debuglink=$@-${KERNEL_BUILD}.debug $@.gdb $@ && \
+	chmod 755 $@ $@.gdb $@-${KERNEL_BUILD}.debug
+
 LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
 
 DEBUG?=
 .if !empty(DEBUG:M-g*)
+
+# XXX: KERNEL_DIR?
+debuginstall: install-kernel-debug
+.for k in ${KERNELS}
+install-kernel-debug: ${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_BUILD}.debug
+
+${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_BUILD}.debug: ${k}-${KERNEL_BUILD}.debug
+	install -c -o root -g bin -m 444 ${.ALLSRC} ${.TARGET}
+.endfor
+
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
@@ -260,6 +273,10 @@ CTFFLAGS+=	-g
 TARGETSFX=	.gdb
 .elifndef PROF
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
+.endif
+
+.if !target(debuginstall)
+debuginstall:
 .endif
 
 SYSTEM_LD_HEAD+=	${SYSTEM_LD_HEAD_EXTRA}
