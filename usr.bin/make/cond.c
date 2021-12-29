@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.308 2021/12/27 21:21:17 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.309 2021/12/29 04:41:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.308 2021/12/27 21:21:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.309 2021/12/29 04:41:38 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -130,10 +130,6 @@ typedef enum Token {
 	TOK_FALSE, TOK_TRUE, TOK_AND, TOK_OR, TOK_NOT,
 	TOK_LPAREN, TOK_RPAREN, TOK_EOF, TOK_NONE, TOK_ERROR
 } Token;
-
-typedef enum CondResult {
-	CR_FALSE, CR_TRUE, CR_ERROR
-} CondResult;
 
 typedef enum ComparisonOp {
 	LT, LE, GT, GE, EQ, NE

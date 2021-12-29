@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.281 2021/12/28 14:22:51 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.282 2021/12/29 04:41:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -521,8 +521,11 @@ typedef enum ParseErrorLevel {
 typedef enum CondEvalResult {
 	COND_PARSE,		/* Parse the next lines */
 	COND_SKIP,		/* Skip the next lines */
-	COND_INVALID		/* Not a conditional statement */
-} CondEvalResult;
+	COND_INVALID,		/* Not a conditional statement */
+	CR_TRUE = COND_PARSE,
+	CR_FALSE = COND_SKIP,
+	CR_ERROR = COND_INVALID
+} CondEvalResult, CondResult;
 
 /* Names of the variables that are "local" to a specific target. */
 #define TARGET	"@"		/* Target of dependency */
