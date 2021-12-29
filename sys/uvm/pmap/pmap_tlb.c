@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.49 2021/10/27 06:54:15 simonb Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.50 2021/12/29 12:53:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.49 2021/10/27 06:54:15 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.50 2021/12/29 12:53:38 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -866,7 +866,6 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 	 * Mark it as used and insert the pai into the list of active asids.
 	 * There is also one less asid free in this TLB.
 	 */
-	KASSERT(ti->ti_asid_hint > KERNEL_PID);
 	pai->pai_asid = ti->ti_asid_hint++;
 #ifdef MULTIPROCESSOR
 	if (PMAP_TLB_FLUSH_ASID_ON_RESET) {
