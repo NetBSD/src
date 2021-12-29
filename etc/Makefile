@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.455 2021/12/23 14:50:59 christos Exp $
+#	$NetBSD: Makefile,v 1.456 2021/12/29 22:22:13 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -158,6 +158,7 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 	${MAKEDIRTARGET} ${NETBSDSRCDIR} include _DISTRIB=
 	${MAKEDIRTARGET} ${NETBSDSRCDIR} install _DISTRIB=
 .endif	# !INSTALL_DONE
+	${MAKEDIRTARGET} . install-debugkernels
 	${MAKEDIRTARGET} . install-etc-files
 . if ${MKX11} != "no"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/mit/xorg distribution
@@ -596,7 +597,8 @@ kern-${configfile}: .PHONY .MAKE
 	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} distclean
 .endif
 	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} depend && \
-	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} 
+	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} && \
+	${MAKE} -C ${KERNOBJDIR}/${configfile:C/.*\///} debuginstall
 .endfor	# ALL_KERNELS							# }
 .endif	# KERNELS_DONE							# }
 
@@ -692,6 +694,22 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 .endif
 .endfor
 .endfor	# KERNEL_SETS EXTRA_KERNELS					# }
+
+# install-debugkernels:
+#	Create fake kernel debug files to satisfy the sets requirements
+#	They will be later replaced with the real ones if we are building
+#	kernels. This mess is needed because checkflist runs before the
+#	kernels are built. It should really run before the sets are build.
+install-debugkernels:
+.if ${MKDEBUG:Uno} == "yes"
+.	for k in ${ALL_KERNELS}
+install-debugkernels: ${DESTDIR}${DEBUGDIR}/netbsd-${k}.debug
+		
+${DESTDIR}${DEBUGDIR}/netbsd-${k}.debug:
+	${_MKTARGET_INSTALL}
+	touch ${.TARGET}
+.	endfor
+.endif
 
 # snap_md_post --
 #	Machine dependent distribution media operations.
