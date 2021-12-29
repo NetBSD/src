@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.197 2021/09/25 21:26:03 maya Exp $
+#	$NetBSD: sets.subr,v 1.198 2021/12/29 22:22:13 christos Exp $
 #
 
 #
@@ -192,7 +192,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.197 2021/09/25 21:26:03 maya Exp $
+# 	# $NetBSD: sets.subr,v 1.198 2021/12/29 22:22:13 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -263,18 +263,33 @@ list_set_files()
 	else
 		verbose=true
 	fi
+	local CONFIGS="$( list_kernel_configs )"
 	print_set_lists "$@" | \
 	${AWK} -v obsolete=${obsolete} '
 		function addkmod(line, fname, prefix, pat, patlen) {
 			if (substr(line, 1, patlen) != pat) {
-				return;
+				return
 			}
 			for (d in kmodarchdirs) {
 				xd = prefix kmodarchdirs[d]
-				xfile = xd substr(line, patlen + 1)
-				tmp = xd substr(fname, patlen + 1)
-				list[xfile] = tmp;
+				xline = xd substr(line, patlen + 1)
+				xfname = xd substr(fname, patlen + 1)
+				list[xline] = xfname
 			}
+		}
+		function adddebugkernel(line, fname, pat, patlen) {
+			if (substr(line, 1, patlen) != pat) {
+				return 0
+			}
+			split("'"${CONFIGS}"'", configs)
+			for (d in configs) {
+				xfname = fname
+				sub("CONFIG", configs[d], xfname)
+				xline = line;
+				sub("CONFIG", configs[d], xline)
+				list[xline] = xfname
+			}
+			return 1
 		}
 		BEGIN {
 			if (obsolete)
@@ -326,6 +341,10 @@ list_set_files()
 				kmoddbprefix = "./usr/libdata/debug/stand/" 
 				kmoddbpat = kmoddbprefix ENVIRON["MACHINE"]
 				l_kmoddbpat = length(kmoddbpat)
+			}
+			if ("debug" in wanted) {
+				debugkernelname = "./usr/libdata/debug/netbsd-CONFIG.debug"
+				l_debugkernelname = length(debugkernelname);
 			}
 
 			if ("'"${TOOLCHAIN_MISSING}"'" != "yes") {
@@ -423,6 +442,8 @@ list_set_files()
 			if (obsolete && ! haveobs)
 				next
 			if (!show)
+				next
+			if (adddebugkernel($0, $1, debugkernelname, l_debugkernelname))
 				next
 
 			list[$1] = $0
@@ -645,6 +666,14 @@ print_set_lists()
 			fi
 		done
 	done | ${XARGS} ${SED} ${SUBST}
+}
+
+
+list_kernel_configs()
+{
+	(cd ${NETBSDSRCDIR}/etc
+	MAKEFLAGS= \
+	${MAKE} -m ${NETBSDSRCDIR}/share/mk -V '${ALL_KERNELS}')
 }
 
 # arch_to_cpu mach
