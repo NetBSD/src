@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.317 2021/12/30 00:22:20 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.318 2021/12/30 01:06:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.317 2021/12/30 00:22:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.318 2021/12/30 01:06:43 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -218,16 +218,15 @@ CondParser_SkipWhitespace(CondParser *par)
  *	func says whether the argument belongs to an actual function, or
  *	NULL when parsing a bare word.
  *
- * Return false if there was a parse error or the argument was empty.
+ * Return NULL if there was a parse error or the argument was empty.
  */
-static bool
-ParseWord(CondParser *par, const char **pp, bool doEval, const char *func,
-	     char **out_arg)
+static char *
+ParseWord(CondParser *par, const char **pp, bool doEval, const char *func)
 {
 	const char *p = *pp;
 	Buffer argBuf;
 	int paren_depth;
-	bool ok;
+	char *res;
 
 	if (func != NULL)
 		p++;		/* Skip opening '(' - verified by caller */
@@ -270,8 +269,7 @@ ParseWord(CondParser *par, const char **pp, bool doEval, const char *func,
 		p++;
 	}
 
-	ok = argBuf.len > 0;
-	*out_arg = Buf_DoneData(&argBuf);
+	res = Buf_DoneData(&argBuf);
 
 	cpp_skip_hspace(&p);
 
@@ -283,11 +281,17 @@ ParseWord(CondParser *par, const char **pp, bool doEval, const char *func,
 		Parse_Error(PARSE_FATAL,
 		    "Missing closing parenthesis for %.*s()", len, func);
 		par->printedError = true;
-		return false;
+		free(res);
+		return NULL;
 	}
 
 	*pp = p;
-	return ok;
+
+	if (res[0] == '\0') {
+		free(res);
+		res = NULL;
+	}
+	return res;
 }
 
 /* Test whether the given variable is defined. */
@@ -738,8 +742,7 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 static bool
 CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 {
-	char *arg = NULL;
-	bool ok;
+	char *arg;
 	const char *p = par->p;
 	bool (*fn)(const char *);
 	const char *fn_name = p;
@@ -761,10 +764,10 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 	if (*p != '(')
 		return false;
 
-	ok = ParseWord(par, &p, doEval, fn_name, &arg);
-	*out_token = ToToken(ok && doEval && fn(arg));
-
+	arg = ParseWord(par, &p, doEval, fn_name);
+	*out_token = ToToken(doEval && arg != NULL && fn(arg));
 	free(arg);
+
 	par->p = p;
 	return true;
 }
@@ -801,7 +804,9 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	 * XXX: Is it possible to have a variable expression evaluated twice
 	 *  at this point?
 	 */
-	(void)ParseWord(par, &cp, doEval, NULL, &arg);
+	arg = ParseWord(par, &cp, doEval, NULL);
+	assert(arg != NULL);
+
 	cp1 = cp;
 	cpp_skip_whitespace(&cp1);
 	if (*cp1 == '=' || *cp1 == '!' || *cp1 == '<' || *cp1 == '>')
