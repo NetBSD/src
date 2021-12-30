@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.286 2021/12/29 22:22:13 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.287 2021/12/30 03:23:05 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -263,7 +263,7 @@ debuginstall: install-kernel-debug
 install-kernel-debug: ${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_BUILD}.debug
 
 ${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_BUILD}.debug: ${k}-${KERNEL_BUILD}.debug
-	install -c -o root -g bin -m 444 ${.ALLSRC} ${.TARGET}
+	${INSTALL_FILE} -o root -g bin -m 444 ${.ALLSRC} ${.TARGET}
 .endfor
 
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
