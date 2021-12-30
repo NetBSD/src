@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.50.2.7 2020/10/08 16:47:12 martin Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.50.2.8 2021/12/30 12:28:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50.2.7 2020/10/08 16:47:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50.2.8 2021/12/30 12:28:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,16 @@ static int synaptics_fscroll_max = 14;
 static int synaptics_dz_hold = 30;
 static int synaptics_movement_enable = 1;
 static bool synaptics_aux_mid_button_scroll = TRUE;
+static int synaptics_debug = 0;
+
+#define	DPRINTF(SC, FMT, ARGS...) do					      \
+{									      \
+	if (synaptics_debug) {						      \
+		struct pms_softc *_dprintf_psc =			      \
+		    container_of((SC), struct pms_softc, u.synaptics);	      \
+		device_printf(_dprintf_psc->sc_dev, FMT, ##ARGS);	      \
+	}								      \
+} while (0)
 
 /* Sysctl nodes. */
 static int synaptics_button_boundary_nodenum;
@@ -844,6 +854,17 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 		goto err;
 
 	synaptics_aux_mid_button_scroll_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "debug",
+	    SYSCTL_DESCR("Enable debug output"),
+	    NULL, 0,
+	    &synaptics_debug,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
 	return;
 
 err:
@@ -1400,10 +1421,10 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 		sc->gesture_move_y = 0;
 		sc->gesture_start_packet = sc->total_packets[0];
 
-#ifdef DIAGNOSTIC
-		aprint_debug("Finger applied: gesture_start_x: %d gesture_start_y: %d\n",
-			sc->gesture_start_x, sc->gesture_start_y);
-#endif
+		DPRINTF(sc, "Finger applied:"
+		    " gesture_start_x: %d"
+		    " gesture_start_y: %d\n",
+		    sc->gesture_start_x, sc->gesture_start_y);
 	} else
 	if (fingers == 0 && sc->prev_fingers != 0) {
 		/*
@@ -1415,14 +1436,12 @@ synaptics_gesture_detect(struct synaptics_softc *sc,
 		 * of the fingers).
 		 */
 
-#ifdef DIAGNOSTIC
-		aprint_debug("Finger removed: gesture_len: %d (%d)\n",
-			gesture_len, synaptics_gesture_length);
-		aprint_debug("gesture_move_x: %d (%d) sp_x: %d\n",
-			sc->gesture_move_x, synaptics_gesture_move, abs(sp->sp_x));
-		aprint_debug("gesture_move_y: %d (%d) sp_y: %d\n",
-			sc->gesture_move_y, synaptics_gesture_move, abs(sp->sp_y));
-#endif
+		DPRINTF(sc, "Finger removed: gesture_len: %d (%d)\n",
+		    gesture_len, synaptics_gesture_length);
+		DPRINTF(sc, "gesture_move_x: %d (%d) sp_x: %d\n",
+		    sc->gesture_move_x, synaptics_gesture_move, abs(sp->sp_x));
+		DPRINTF(sc, "gesture_move_y: %d (%d) sp_y: %d\n",
+		    sc->gesture_move_y, synaptics_gesture_move, abs(sp->sp_y));
 
 		if (gesture_len < synaptics_gesture_length &&
 		    ((sc->gesture_move_x < synaptics_gesture_move &&
