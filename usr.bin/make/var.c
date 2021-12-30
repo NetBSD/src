@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.991 2021/12/29 05:05:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.992 2021/12/30 23:56:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.991 2021/12/29 05:05:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.992 2021/12/30 23:56:34 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3537,27 +3537,18 @@ ApplyModifier_Assign(const char **pp, ModChain *ch)
 	const char *op = mod + 1;
 
 	if (op[0] == '=')
-		goto ok;
-	if ((op[0] == '!' || op[0] == '+' || op[0] == '?') && op[1] == '=')
-		goto ok;
+		goto found_op;
+	if ((op[0] == '+' || op[0] == '?' || op[0] == '!') && op[1] == '=')
+		goto found_op;
 	return AMR_UNKNOWN;	/* "::<unrecognised>" */
 
-ok:
+found_op:
 	if (expr->name[0] == '\0') {
 		*pp = mod + 1;
 		return AMR_BAD;
 	}
 
-	switch (op[0]) {
-	case '+':
-	case '?':
-	case '!':
-		*pp = mod + 3;
-		break;
-	default:
-		*pp = mod + 2;
-		break;
-	}
+	*pp = mod + (op[0] == '+' || op[0] == '?' || op[0] == '!' ? 3 : 2);
 
 	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &buf);
 	if (res != VPR_OK)
