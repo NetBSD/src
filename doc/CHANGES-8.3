@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.114 2021/12/24 13:03:46 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.115 2021/12/30 12:41:43 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2360,4 +2360,9 @@ sys/arch/x86/include/cpu.h			1.132
 	  message.
 	- Cosmetic changes to improve readability.
 	[msaitoh, ticket #1721]
+
+sys/dev/cgd.c					1.142
+
+	cgd(4): fix detach when still in use by wedges.
+	[riastradh, ticket #1722]
 
