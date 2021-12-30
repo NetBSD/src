@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.299 2021/12/24 22:56:55 nia Exp $ */
+/*	$NetBSD: ehci.c,v 1.300 2021/12/30 04:19:23 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.299 2021/12/24 22:56:55 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.300 2021/12/30 04:19:23 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2703,7 +2703,8 @@ ehci_disown_sched_callback(ehci_softc_t *sc)
 	mutex_exit(&sc->sc_complock);
 
 	config_pending_incr(sc->sc_dev);
-	aprint_normal("delaying %s by %u seconds due to USB owner change.\n",
+	aprint_normal_dev(sc->sc_dev,
+	    "delaying %s by %u seconds due to USB owner change.\n",
 	    (boothowto & RB_ASKNAME) != 0 ? "ask root" : "single user",
 	    ehci_disown_delay_seconds);
 }
