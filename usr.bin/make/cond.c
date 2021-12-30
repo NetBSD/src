@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.318 2021/12/30 01:06:43 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.319 2021/12/30 01:30:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.318 2021/12/30 01:06:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.319 2021/12/30 01:30:33 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -208,30 +208,13 @@ CondParser_SkipWhitespace(CondParser *par)
  * Parse a single word, taking into account balanced parentheses as well as
  * embedded expressions.  Used for the argument of a built-in function as
  * well as for bare words, which are then passed to the default function.
- *
- * Arguments:
- *	*pp initially points at the '(',
- *	upon successful return it points right after the ')'.
- *
- *	*out_arg receives the argument as string.
- *
- *	func says whether the argument belongs to an actual function, or
- *	NULL when parsing a bare word.
- *
- * Return NULL if there was a parse error or the argument was empty.
  */
 static char *
-ParseWord(CondParser *par, const char **pp, bool doEval, const char *func)
+ParseWord(const char **pp, bool doEval)
 {
 	const char *p = *pp;
 	Buffer argBuf;
 	int paren_depth;
-	char *res;
-
-	if (func != NULL)
-		p++;		/* Skip opening '(' - verified by caller */
-
-	cpp_skip_hspace(&p);
 
 	Buf_InitSize(&argBuf, 16);
 
@@ -269,11 +252,25 @@ ParseWord(CondParser *par, const char **pp, bool doEval, const char *func)
 		p++;
 	}
 
-	res = Buf_DoneData(&argBuf);
+	cpp_skip_hspace(&p);
+	*pp = p;
 
+	return Buf_DoneData(&argBuf);
+}
+
+/* Parse the function argument, including the surrounding parentheses. */
+static char *
+ParseFuncArg(CondParser *par, const char **pp, bool doEval, const char *func)
+{
+	const char *p = *pp;
+	char *res;
+
+	p++;			/* Skip opening '(' - verified by caller */
+	cpp_skip_hspace(&p);
+	res = ParseWord(&p, doEval);
 	cpp_skip_hspace(&p);
 
-	if (func != NULL && *p++ != ')') {
+	if (*p++ != ')') {
 		int len = 0;
 		while (ch_isalpha(func[len]))
 			len++;
@@ -286,11 +283,6 @@ ParseWord(CondParser *par, const char **pp, bool doEval, const char *func)
 	}
 
 	*pp = p;
-
-	if (res[0] == '\0') {
-		free(res);
-		res = NULL;
-	}
 	return res;
 }
 
@@ -764,8 +756,9 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 	if (*p != '(')
 		return false;
 
-	arg = ParseWord(par, &p, doEval, fn_name);
-	*out_token = ToToken(doEval && arg != NULL && fn(arg));
+	arg = ParseFuncArg(par, &p, doEval, fn_name);
+	*out_token = ToToken(doEval &&
+	    arg != NULL && arg[0] != '\0' && fn(arg));
 	free(arg);
 
 	par->p = p;
@@ -804,11 +797,12 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	 * XXX: Is it possible to have a variable expression evaluated twice
 	 *  at this point?
 	 */
-	arg = ParseWord(par, &cp, doEval, NULL);
-	assert(arg != NULL);
+	arg = ParseWord(&cp, doEval);
+	assert(arg[0] != '\0');
 
 	cp1 = cp;
 	cpp_skip_whitespace(&cp1);
+	assert(cp1 == cp); /* TODO: remove the cpp_skip_whitespace above */
 	if (*cp1 == '=' || *cp1 == '!' || *cp1 == '<' || *cp1 == '>')
 		return CondParser_Comparison(par, doEval);
 	par->p = cp;
