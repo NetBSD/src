@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.320 2021/12/30 01:34:26 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.321 2021/12/30 02:14:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.320 2021/12/30 01:34:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.321 2021/12/30 02:14:55 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -793,8 +793,8 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	 * as an expression.
 	 */
 	/*
-	 * XXX: Is it possible to have a variable expression evaluated twice
-	 *  at this point?
+	 * XXX: In edge cases, a variable expression may be evaluated twice,
+	 *  see cond-token-plain.mk, keyword 'twice'.
 	 */
 	arg = ParseWord(&cp, doEval);
 	assert(arg[0] != '\0');
