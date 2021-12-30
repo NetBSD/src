@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.316 2021/12/29 08:23:40 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.317 2021/12/30 00:22:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.316 2021/12/29 08:23:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.317 2021/12/30 00:22:20 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -725,7 +725,7 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 		tok = TOK_ERROR;
 	else {
 		cpp_skip_whitespace(&val.str);
-		tok = val.str[0] != '\0' && doEval ? TOK_FALSE : TOK_TRUE;
+		tok = ToToken(doEval && val.str[0] == '\0');
 	}
 
 	FStr_Done(&val);
@@ -814,7 +814,7 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	 * after .if must have been taken literally, so the argument cannot
 	 * be empty - even if it contained a variable expansion.
 	 */
-	t = ToToken(!doEval || EvalBare(par, arg));
+	t = ToToken(doEval && EvalBare(par, arg));
 	free(arg);
 	return t;
 }
