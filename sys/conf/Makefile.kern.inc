@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.288 2021/12/30 03:24:50 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.289 2021/12/30 17:16:32 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -240,16 +240,17 @@ LINKFLAGS?=	${LINKFORMAT} ${LINKSCRIPT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 		${EXTRA_LINKFLAGS}
 
 LINKFLAGS_DEBUG?=	-X
+KERNEL_CONFIG?=	${KERNEL_BUILD:T}
 
 SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
 		${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@
 
 SYSTEM_LD_TAIL_DEBUG?=&& set -x &&\
 	mv -f $@ $@.gdb && \
-	${OBJCOPY} --only-keep-debug $@.gdb $@-${KERNEL_BUILD}.debug && \
+	${OBJCOPY} --only-keep-debug $@.gdb $@-${KERNEL_CONFIG}.debug && \
 	${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-	    --add-gnu-debuglink=$@-${KERNEL_BUILD}.debug $@.gdb $@ && \
-	chmod 755 $@ $@.gdb $@-${KERNEL_BUILD}.debug
+	    --add-gnu-debuglink=$@-${KERNEL_CONFIG}.debug $@.gdb $@ && \
+	chmod 755 $@ $@.gdb $@-${KERNEL_CONFIG}.debug
 
 LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
@@ -260,9 +261,9 @@ DEBUG?=
 # XXX: KERNEL_DIR?
 debuginstall: install-kernel-debug
 .for k in ${KERNELS}
-install-kernel-debug: ${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_BUILD}.debug
+install-kernel-debug: ${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_CONFIG}.debug
 
-${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_BUILD}.debug: ${k}-${KERNEL_BUILD}.debug
+${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_BUILD}.debug: ${k}-${KERNEL_CONFIG}.debug
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o root -g bin -m 444 ${.ALLSRC} ${.TARGET}
 .endfor
