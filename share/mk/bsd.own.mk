@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1272 2021/12/20 20:33:20 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1273 2021/12/30 04:57:10 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1450,12 +1450,10 @@ INSTPRIV?=	${INSTPRIV.unpriv} -N ${NETBSDSRCDIR}/etc
 .endif
 STRIPFLAG?=	
 
-.if ${NEED_OWN_INSTALL_TARGET} != "no"
 INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d
 INSTALL_FILE?=		${INSTALL} ${INSTPRIV} ${COPY} ${PRESERVE} ${RENAME}
 INSTALL_LINK?=		${INSTALL} ${INSTPRIV} ${HRDLINK} ${RENAME}
 INSTALL_SYMLINK?=	${INSTALL} ${INSTPRIV} ${SYMLINK} ${RENAME}
-.endif
 
 # for crunchide & ldd, define the OBJECT_FMTS used by a MACHINE_ARCH
 #
