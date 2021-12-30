@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.114 2017/02/27 21:25:45 jdolecek Exp $ */
+/* $NetBSD: cgd.c,v 1.114.6.1 2021/12/30 12:40:53 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114 2017/02/27 21:25:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.6.1 2021/12/30 12:40:53 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -320,11 +320,10 @@ static int
 cgd_detach(device_t self, int flags)
 {
 	int ret;
-	const int pmask = 1 << RAW_PART;
 	struct cgd_softc *sc = device_private(self);
 	struct dk_softc *dksc = &sc->sc_dksc;
 
-	if (DK_BUSY(dksc, pmask))
+	if (DK_BUSY(dksc, 0))
 		return EBUSY;
 
 	if (DK_ATTACHED(dksc) &&
