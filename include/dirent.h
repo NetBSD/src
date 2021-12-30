@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.36 2016/12/16 04:45:04 mrg Exp $	*/
+/*	$NetBSD: dirent.h,v 1.37 2021/12/30 16:20:19 nros Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -104,9 +104,14 @@ int readdir_r(DIR * __restrict, struct dirent * __restrict,
 void seekdir(DIR *, long);
 long telldir(DIR *);
 #endif /* defined(_NETBSD_SOURCE) || defined(_XOPEN_SOURCE) */
-#if defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
 DIR *fdopendir(int);
+#endif
+#endif
+#if defined(_NETBSD_SOURCE)
+#ifndef __LIBC12_SOURCE__
 DIR *__opendir2(const char *, int) __RENAME(__opendir230);
 int scandir(const char *, struct dirent ***,
     int (*)(const struct dirent *), int (*)(const struct dirent **,
