@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.290 2021/12/30 17:25:40 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.291 2021/12/30 18:53:35 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -20,6 +20,8 @@
 # Default DEBUG to -g if kernel debug info is requested by MKDEBUGKERNEL=yes
 .if ${MKDEBUGKERNEL:Uno} == "yes" || ${MKDEBUG:Uno} == "yes"
 DEBUG?=-g
+.else
+DEBUG?=
 .endif
 
 ##
@@ -255,19 +257,7 @@ SYSTEM_LD_TAIL_DEBUG?=&& set -x &&\
 LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
 
-DEBUG?=
 .if !empty(DEBUG:M-g*)
-
-# XXX: KERNEL_DIR?
-debuginstall: install-kernel-debug
-.for k in ${KERNELS}
-install-kernel-debug: ${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_CONFIG}.debug
-
-${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_CONFIG}.debug: ${k}-${KERNEL_CONFIG}.debug
-	${_MKTARGET_INSTALL}
-	${INSTALL_FILE} -o root -g bin -m 444 ${.ALLSRC} ${.TARGET}
-.endfor
-
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
@@ -277,7 +267,17 @@ TARGETSFX=	.gdb
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
-.if !target(debuginstall)
+.if ${MKDEBUG:Uno} == "yes"
+# XXX: KERNEL_DIR?
+debuginstall: install-kernel-debug
+.for k in ${KERNELS}
+install-kernel-debug: ${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_CONFIG}.debug
+
+${DESTDIR}${DEBUGDIR}/${k}-${KERNEL_CONFIG}.debug: ${k}-${KERNEL_CONFIG}.debug
+	${_MKTARGET_INSTALL}
+	${INSTALL_FILE} -o root -g bin -m 444 ${.ALLSRC} ${.TARGET}
+.endfor
+.else
 debuginstall:
 .endif
 
