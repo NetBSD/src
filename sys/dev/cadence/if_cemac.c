@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.23 2020/06/28 12:43:00 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.24 2021/12/31 14:25:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.23 2020/06/28 12:43:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.24 2021/12/31 14:25:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -759,7 +759,7 @@ cemac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 
 		if (cmd == SIOCSIFCAP) {
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {

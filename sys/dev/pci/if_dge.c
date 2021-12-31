@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.62 2021/12/05 04:32:36 msaitoh Exp $ */
+/*	$NetBSD: if_dge.c,v 1.63 2021/12/31 14:25:23 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.62 2021/12/05 04:32:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.63 2021/12/31 14:25:23 riastradh Exp $");
 
 
 
@@ -1453,7 +1453,7 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		else if ((error = ifioctl_common(ifp, cmd, data)) != ENETRESET)
 			break;
 		else if (ifp->if_flags & IFF_UP)
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		else
 			error = 0;
 		break;
@@ -1488,7 +1488,7 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 
 		if (cmd == SIOCSIFCAP)
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {

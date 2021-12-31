@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.725 2021/12/23 17:05:49 hannken Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.726 2021/12/31 14:25:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.725 2021/12/23 17:05:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.726 2021/12/31 14:25:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3675,7 +3675,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 
 		if (cmd == SIOCSIFCAP)
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
