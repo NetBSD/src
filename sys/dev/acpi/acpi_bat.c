@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.117 2021/01/29 15:20:13 thorpej Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.118 2021/12/31 14:20:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.117 2021/01/29 15:20:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.118 2021/12/31 14:20:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -235,19 +235,12 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wcapacity = 0;
 
 	sc->sc_sme = NULL;
-	sc->sc_sensor = NULL;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_condvar, device_xname(self));
 
-	(void)pmf_device_register(self, NULL, acpibat_resume);
-	(void)acpi_register_notify(sc->sc_node, acpibat_notify_handler);
-
 	sc->sc_sensor = kmem_zalloc(ACPIBAT_COUNT *
 	    sizeof(*sc->sc_sensor), KM_SLEEP);
-
-	if (sc->sc_sensor == NULL)
-		return;
 
 	config_interrupts(self, acpibat_init_envsys);
 
@@ -270,10 +263,8 @@ acpibat_detach(device_t self, int flags)
 {
 	struct acpibat_softc *sc = device_private(self);
 
+	pmf_device_deregister(self);
 	acpi_deregister_notify(sc->sc_node);
-
-	cv_destroy(&sc->sc_condvar);
-	mutex_destroy(&sc->sc_mutex);
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
@@ -282,7 +273,8 @@ acpibat_detach(device_t self, int flags)
 		kmem_free(sc->sc_sensor, ACPIBAT_COUNT *
 		    sizeof(*sc->sc_sensor));
 
-	pmf_device_deregister(self);
+	cv_destroy(&sc->sc_condvar);
+	mutex_destroy(&sc->sc_mutex);
 
 	return 0;
 }
@@ -774,11 +766,14 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_sme->sme_flags = SME_POLL_ONLY | SME_INIT_REFRESH;
 	sc->sc_sme->sme_get_limits = acpibat_get_limits;
 
+	(void)acpi_register_notify(sc->sc_node, acpibat_notify_handler);
 	acpibat_update_info(dv);
 	acpibat_update_status(dv);
 
 	if (sysmon_envsys_register(sc->sc_sme))
 		goto fail;
+
+	(void)pmf_device_register(dv, NULL, acpibat_resume);
 
 	return;
 
