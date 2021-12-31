@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.44 2021/08/09 19:24:33 andvar Exp $
+$NetBSD: TODO.smpnet,v 1.45 2021/12/31 00:57:12 riastradh Exp $
 
 MP-safe components
 ==================
@@ -261,14 +261,10 @@ avoid performance degradation by lock contentions.  Traditionally IFF_RUNNING,
 IFF_UP and IFF_OACTIVE flags of if_flags are checked on packet processing.  If
 you make a driver MP-safe you must remove such checks.
 
-IFF_ALLMULTI can be set/unset via if_mcast_op.  To protect updates of the flag,
-we had added IFNET_LOCK around if_mcast_op.  However that was not a good
-approach because if_mcast_op is typically called in the middle of a call path
-and holding IFNET_LOCK such places is problematic.  Actually a deadlock is
-observed.  Probably we should remove IFNET_LOCK and manage IFF_ALLMULTI
-somewhere other than if_flags, for example ethercom or driver itself (or a
-common driver framework once it appears).  Such a change is feasible because
-IFF_ALLMULTI is only set/unset by a driver and not accessed from any common
-components such as network protocols.
+Drivers should not touch IFF_ALLMULTI.  They are tempted to do so when updating
+hardware multicast filters on SIOCADDMULTI/SIOCDELMULTI.  Instead, they should
+use the ETHER_F_ALLMULTI bit in struct ethercom::ec_flags, under ETHER_LOCK.
+ether_ioctl takes care of presenting IFF_ALLMULTI according to the current state
+of ETHER_F_ALLMULTI when queried with SIOCGIFFLAGS.
 
 Also IFF_PROMISC is checked in ether_input and we should get rid of it somehow.
