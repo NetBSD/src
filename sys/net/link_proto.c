@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.39 2019/09/25 09:53:37 ozaki-r Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.40 2021/12/31 14:25:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.39 2019/09/25 09:53:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.40 2021/12/31 14:25:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -255,7 +255,7 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 			return error;
 		else if ((ifp->if_flags & IFF_RUNNING) != 0 &&
 		         ifp->if_init != NULL)
-			return (*ifp->if_init)(ifp);
+			return if_init(ifp);
 		else
 			return 0;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.185 2021/12/31 14:24:50 riastradh Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.186 2021/12/31 14:25:24 riastradh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.185 2021/12/31 14:24:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.186 2021/12/31 14:25:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -618,7 +618,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 			break;
 		default:
 			break;

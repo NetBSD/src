@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.66 2020/08/28 06:23:42 ozaki-r Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.67 2021/12/31 14:25:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.66 2020/08/28 06:23:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.67 2021/12/31 14:25:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -681,13 +681,13 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			if ((error = (*ifp->if_init)(ifp)) != 0)
+			if ((error = if_init(ifp)) != 0)
 				break;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
 		default:
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 			break;
 		}
 		break;

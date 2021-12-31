@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.301 2021/12/24 05:11:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.302 2021/12/31 14:25:23 riastradh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.301 2021/12/24 05:11:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.302 2021/12/31 14:25:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5770,7 +5770,7 @@ ixgbe_sysctl_dmac(SYSCTLFN_ARGS)
 
 	/* Re-initialize hardware if it's already running */
 	if (ifp->if_flags & IFF_RUNNING)
-		ifp->if_init(ifp);
+		if_init(ifp);
 
 	return (0);
 }
@@ -6103,7 +6103,7 @@ ixgbe_sysctl_eee_state(SYSCTLFN_ARGS)
 	}
 
 	/* Restart auto-neg */
-	ifp->if_init(ifp);
+	if_init(ifp);
 
 	device_printf(dev, "New EEE state: %d\n", new_eee);
 

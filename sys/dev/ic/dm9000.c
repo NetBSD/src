@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.32 2021/12/05 07:26:35 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.33 2021/12/31 14:25:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -833,7 +833,7 @@ dme_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		error = 0;
 		if (cmd == SIOCSIFCAP)
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags && IFF_RUNNING) {

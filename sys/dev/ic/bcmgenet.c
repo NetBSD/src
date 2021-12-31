@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.10 2021/08/10 15:28:44 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.11 2021/12/31 14:25:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.10 2021/08/10 15:28:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.11 2021/12/31 14:25:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -916,7 +916,7 @@ genet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 
 		if (cmd == SIOCSIFCAP)
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if ((ifp->if_flags & IFF_RUNNING) != 0) {
