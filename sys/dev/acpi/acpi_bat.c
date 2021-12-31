@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.119 2021/12/31 14:20:40 riastradh Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.120 2021/12/31 14:20:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.119 2021/12/31 14:20:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.120 2021/12/31 14:20:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -294,7 +294,8 @@ acpibat_get_sta(device_t dv)
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_STA", &val);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(dv, "failed to evaluate _STA\n");
+		aprint_error_dev(dv, "failed to evaluate _STA: %s\n",
+		    AcpiFormatException(rv));
 		return -1;
 	}
 
