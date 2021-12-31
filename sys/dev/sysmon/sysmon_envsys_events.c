@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.122 2021/12/31 11:05:41 riastradh Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.123 2021/12/31 14:30:04 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.122 2021/12/31 11:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.123 2021/12/31 14:30:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -325,8 +325,11 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 					&(edata->upropset));
 
 out:
-	if ((error == 0 || error == EEXIST) && osee == NULL)
+	if ((error == 0 || error == EEXIST) && osee == NULL) {
+		mutex_enter(&sme->sme_work_mtx);
 		LIST_INSERT_HEAD(&sme->sme_events_list, see, see_list);
+		mutex_exit(&sme->sme_work_mtx);
+	}
 
 	mutex_exit(&sme->sme_mtx);
 
@@ -373,11 +376,13 @@ sme_event_unregister_all(struct sysmon_envsys *sme)
 		}
 	}
 
+	mutex_enter(&sme->sme_work_mtx);
 	if (LIST_EMPTY(&sme->sme_events_list) &&
 	    sme->sme_callout_state == SME_CALLOUT_READY) {
 		sme_events_halt_callout(sme);
 		destroy = true;
 	}
+	mutex_exit(&sme->sme_work_mtx);
 	mutex_exit(&sme->sme_mtx);
 
 	if (destroy)
@@ -425,10 +430,12 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 
 	sme_remove_event(see, sme);
 
+	mutex_enter(&sme->sme_work_mtx);
 	if (LIST_EMPTY(&sme->sme_events_list)) {
 		sme_events_halt_callout(sme);
 		destroy = true;
 	}
+	mutex_exit(&sme->sme_work_mtx);
 	mutex_exit(&sme->sme_mtx);
 
 	if (destroy)
@@ -480,7 +487,10 @@ sme_remove_event(sme_event_t *see, struct sysmon_envsys *sme)
 
 	KASSERT(mutex_owned(&sme->sme_mtx));
 
+	mutex_enter(&sme->sme_work_mtx);
 	LIST_REMOVE(see, see_list);
+	mutex_exit(&sme->sme_work_mtx);
+
 	kmem_free(see, sizeof(*see));
 }
 
@@ -570,8 +580,12 @@ sme_events_init(struct sysmon_envsys *sme)
 
 	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sme->sme_callout, sme_events_check, sme);
+
+	mutex_enter(&sme->sme_work_mtx);
 	sme->sme_callout_state = SME_CALLOUT_READY;
 	sme_schedule_callout(sme);
+	mutex_exit(&sme->sme_work_mtx);
+
 	DPRINTF(("%s: events framework initialized for '%s'\n",
 	    __func__, sme->sme_name));
 
@@ -589,7 +603,7 @@ sme_schedule_callout(struct sysmon_envsys *sme)
 	uint64_t timo;
 
 	KASSERT(sme != NULL);
-	KASSERT(mutex_owned(&sme->sme_mtx));
+	KASSERT(mutex_owned(&sme->sme_work_mtx));
 
 	if (sme->sme_callout_state != SME_CALLOUT_READY)
 		return;
@@ -599,7 +613,6 @@ sme_schedule_callout(struct sysmon_envsys *sme)
 	else
 		timo = SME_EVTIMO;
 
-	callout_stop(&sme->sme_callout);
 	callout_schedule(&sme->sme_callout, timo);
 }
 
@@ -743,7 +756,6 @@ sme_events_check(void *arg)
 		mutex_exit(&sme->sme_work_mtx);
 		return;
 	}
-	mutex_enter(&sme->sme_mtx);
 	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
 		workqueue_enqueue(sme->sme_wq, &see->see_wk, NULL);
 		see->see_edata->flags |= ENVSYS_FNEED_REFRESH;
@@ -751,7 +763,6 @@ sme_events_check(void *arg)
 	}
 	if (!sysmon_low_power)
 		sme_schedule_callout(sme);
-	mutex_exit(&sme->sme_mtx);
 	mutex_exit(&sme->sme_work_mtx);
 }
 
@@ -779,11 +790,15 @@ sme_events_worker(struct work *wk, void *arg)
 	 * sme_envsys_refresh_sensor will not call the driver if the driver
 	 * does its own setting of the sensor value.
 	 */
+	mutex_enter(&sme->sme_work_mtx);
 	if ((edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
 		/* refresh sensor in device */
+		mutex_exit(&sme->sme_work_mtx);
 		sysmon_envsys_refresh_sensor(sme, edata);
+		mutex_enter(&sme->sme_work_mtx);
 		edata->flags &= ~ENVSYS_FNEED_REFRESH;
 	}
+	mutex_exit(&sme->sme_work_mtx);
 
 	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d type=%d state=%d units=%d "
 	    "value_cur=%d upropset=0x%04x\n", __func__, sme->sme_name, edata->desc,
