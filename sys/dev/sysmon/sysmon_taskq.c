@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.22 2021/12/31 14:22:11 riastradh Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.23 2021/12/31 14:29:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.22 2021/12/31 14:22:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.23 2021/12/31 14:29:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -280,7 +280,7 @@ tqbarrier_task(void *cookie)
 void
 sysmon_task_queue_barrier(u_int pri)
 {
-	struct sysmon_task st;
+	struct sysmon_task *st;
 	struct tqbarrier bar;
 
 	(void)RUN_ONCE(&once_tq, tq_preinit);
@@ -292,11 +292,12 @@ sysmon_task_queue_barrier(u_int pri)
 	cv_init(&bar.cv, "sysmontq");
 	bar.done = false;
 
-	st.st_func = &tqbarrier_task;
-	st.st_arg = &bar;
-	st.st_pri = pri;
+	st = malloc(sizeof(*st), M_TEMP, M_WAITOK);
+	st->st_func = &tqbarrier_task;
+	st->st_arg = &bar;
+	st->st_pri = pri;
 
-	sysmon_task_queue_sched_task(&st);
+	sysmon_task_queue_sched_task(st);
 
 	mutex_enter(&bar.lock);
 	while (!bar.done)
