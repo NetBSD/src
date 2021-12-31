@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.10 2021/09/21 15:04:27 christos Exp $	*/
+/*	$NetBSD: can.c,v 1.11 2021/12/31 14:24:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.10 2021/09/21 15:04:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.11 2021/12/31 14:24:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ can_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	default:
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		return (if_ioctl(ifp, cmd, data));
 	}
 	return (0);
 }
