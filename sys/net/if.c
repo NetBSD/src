@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.496 2021/09/30 03:51:05 yamaguchi Exp $	*/
+/*	$NetBSD: if.c,v 1.497 2021/12/31 14:24:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.496 2021/09/30 03:51:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.497 2021/12/31 14:24:26 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1622,7 +1622,7 @@ if_clone_destroy(const char *name)
 	struct ifnet *ifp;
 	struct psref psref;
 	int error;
-	int (*if_ioctl)(struct ifnet *, u_long, void *);
+	int (*if_ioctlfn)(struct ifnet *, u_long, void *);
 
 	KASSERT(mutex_owned(&if_clone_mtx));
 
@@ -1639,7 +1639,7 @@ if_clone_destroy(const char *name)
 
 	/* We have to disable ioctls here */
 	IFNET_LOCK(ifp);
-	if_ioctl = ifp->if_ioctl;
+	if_ioctlfn = ifp->if_ioctl;
 	ifp->if_ioctl = if_nullioctl;
 	IFNET_UNLOCK(ifp);
 
@@ -1654,7 +1654,7 @@ if_clone_destroy(const char *name)
 	if (error != 0) {
 		/* We have to restore if_ioctl on error */
 		IFNET_LOCK(ifp);
-		ifp->if_ioctl = if_ioctl;
+		ifp->if_ioctl = if_ioctlfn;
 		IFNET_UNLOCK(ifp);
 	}
 
@@ -2725,6 +2725,61 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	IFNET_UNLOCK(ifp);
 
 	return e;
+}
+
+/*
+ * if_ioctl(ifp, cmd, data)
+ *
+ *	Apply an ioctl command to the interface.  Returns 0 on success,
+ *	nonzero errno(3) number on failure.
+ *
+ *	May sleep.  Caller must hold ifp->if_ioctl_lock.
+ */
+int
+if_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+{
+
+	KASSERT(1 || IFNET_LOCKED(ifp));	/* XXX not yet */
+
+	return (*ifp->if_ioctl)(ifp, cmd, data);
+}
+
+/*
+ * if_init(ifp)
+ *
+ *	Prepare the hardware underlying ifp to process packets
+ *	according to its current configuration.  Returns 0 on success,
+ *	nonzero errno(3) number on failure.
+ *
+ *	May sleep.  Caller must hold ifp->if_ioctl_lock, a.k.a
+ *	IFNET_LOCK.
+ */
+int
+if_init(struct ifnet *ifp)
+{
+
+	KASSERT(1 || IFNET_LOCKED(ifp));	/* XXX not yet */
+
+	return (*ifp->if_init)(ifp);
+}
+
+/*
+ * if_stop(ifp, disable)
+ *
+ *	Stop the hardware underlying ifp from processing packets.
+ *
+ *	If disable is true, ... XXX(?)
+ *
+ *	May sleep.  Caller must hold ifp->if_ioctl_lock, a.k.a
+ *	IFNET_LOCK.
+ */
+void
+if_stop(struct ifnet *ifp, int disable)
+{
+
+	KASSERT(1 || IFNET_LOCKED(ifp));	/* XXX not yet */
+
+	(*ifp->if_stop)(ifp, disable);
 }
 
 /*
