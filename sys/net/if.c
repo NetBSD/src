@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.500 2021/12/31 14:26:19 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.501 2021/12/31 14:26:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.500 2021/12/31 14:26:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.501 2021/12/31 14:26:29 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3879,11 +3879,30 @@ if_flags_set(ifnet_t *ifp, const u_short flags)
 	return rc;
 }
 
+/*
+ * if_mcast_op(ifp, cmd, sa)
+ *
+ *	Apply a multicast command, SIOCADDMULTI/SIOCDELMULTI, to the
+ *	interface.  Returns 0 on success, nonzero errno(3) number on
+ *	failure.
+ *
+ *	May sleep.
+ *
+ *	Use this, not if_ioctl, for the multicast commands.
+ */
 int
 if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 {
 	int rc;
 	struct ifreq ifr;
+
+	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		panic("invalid ifnet multicast command: 0x%lx", cmd);
+	}
 
 	ifreq_setaddr(cmd, &ifr, sa);
 	rc = if_ioctl(ifp, cmd, &ifr);
