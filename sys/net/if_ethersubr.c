@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.309 2021/12/31 14:25:24 riastradh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.310 2021/12/31 14:26:09 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.309 2021/12/31 14:25:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.310 2021/12/31 14:26:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1454,6 +1454,8 @@ ether_ioctl_reinit(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	int error;
+
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 	case IFF_RUNNING:
