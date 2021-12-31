@@ -1,0 +1,24 @@
+# $NetBSD: ad.earmv5,v 1.1 2021/12/31 16:15:58 christos Exp $
+./usr/libdata/debug/netbsd-fxp0-ADI_BRH.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-fxp0-IQ80310.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-mvgbe0-MV2120.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-ne0-TWINTAIL.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-sd0-ADI_BRH.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-sd0-CP3100.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-sd0-IQ80310.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-sd0-IQ80321.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-sd0-TEAMASA_NPWR.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-sm0-GUMSTIX.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-smsh0-GUMSTIX.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0-ADI_BRH.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0-CP3100.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0-IQ80310.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0-IQ80321.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0-KUROBOX_PRO.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0e-MV2120.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0f-MV2120.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0g-MV2120.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wd0h-MV2120.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wm0-CP3100.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wm0-IQ80321.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/netbsd-wm0-TEAMASA_NPWR.debug	comp-sysutils-debug	debug
