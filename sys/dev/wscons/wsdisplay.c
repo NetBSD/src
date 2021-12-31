@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.162 2020/12/27 16:09:33 tsutsui Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.163 2021/12/31 14:19:57 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.162 2020/12/27 16:09:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.163 2021/12/31 14:19:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -115,10 +115,8 @@ struct wsscreen {
 
 	struct wsdisplay_softc *sc;
 
-#ifdef DIAGNOSTIC
 	/* XXX this is to support a hack in emulinput, see comment below */
 	int scr_in_ttyoutput;
-#endif
 };
 
 static struct wsscreen *wsscreen_attach(struct wsdisplay_softc *, int,
