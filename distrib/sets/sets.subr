@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.200 2021/12/31 16:14:44 christos Exp $
+#	$NetBSD: sets.subr,v 1.201 2021/12/31 17:51:14 christos Exp $
 #
 
 #
@@ -192,7 +192,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.200 2021/12/31 16:14:44 christos Exp $
+# 	# $NetBSD: sets.subr,v 1.201 2021/12/31 17:51:14 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -343,7 +343,7 @@ list_set_files()
 				l_kmoddbpat = length(kmoddbpat)
 			}
 			if ("debug" in wanted) {
-				debugkernelname = "./usr/libdata/debug/netbsd-CONFIG.debug"
+				debugkernelname = "./usr/libdata/debug/netbsd-@CONFIG@.debug"
 				l_debugkernelname = length(debugkernelname);
 			}
 
