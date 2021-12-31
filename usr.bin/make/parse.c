@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.608 2021/12/31 01:08:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.609 2021/12/31 01:34:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -86,15 +86,16 @@
  *	Parse_File	Parse a top-level makefile.  Included files are
  *			handled by IncludeFile instead.
  *
- *	Parse_IsVar	Return true if the given line is a variable
- *			assignment. Used by MainParseArgs to determine if
- *			an argument is a target or a variable assignment.
- *			Used internally for pretty much the same thing.
+ *	Parse_VarAssign
+ *			Try to parse the given line as a variable assignment.
+ *			Used by MainParseArgs to determine if an argument is
+ *			a target or a variable assignment.  Used internally
+ *			for pretty much the same thing.
  *
  *	Parse_Error	Report a parse error, a warning or an informational
  *			message.
  *
- *	Parse_MainName	Returns a list of the main target to create.
+ *	Parse_MainName	Returns a list of the single main target to create.
  */
 
 #include <sys/types.h>
@@ -109,7 +110,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.608 2021/12/31 01:08:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.609 2021/12/31 01:34:45 rillig Exp $");
 
 /* types and constants */
 
