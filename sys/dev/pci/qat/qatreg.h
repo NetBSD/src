@@ -1,4 +1,4 @@
-/*	$NetBSD: qatreg.h,v 1.1 2019/11/20 09:37:46 hikaru Exp $	*/
+/*	$NetBSD: qatreg.h,v 1.2 2021/12/31 20:22:49 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -89,7 +89,7 @@
 
 #define AE_ALL_CTX		0xff
 
-/* PCIe configuration space paramter */
+/* PCIe configuration space parameter */
 #define NO_PCI_REG			(-1)
 #define NO_REG_OFFSET			0
 
