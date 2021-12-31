@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.607 2021/12/31 00:45:21 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.608 2021/12/31 01:08:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.607 2021/12/31 00:45:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.608 2021/12/31 01:08:59 rillig Exp $");
 
 /* types and constants */
 
@@ -1672,7 +1672,7 @@ AdjustVarassignOp(const char *name, const char *nameEnd, const char *op,
 		while (op > name && ch_isspace(op[-1]))
 			op--;
 
-		if (op >= name + 3 && memcmp(op - 3, ":sh", 3) == 0) {
+		if (op - name >= 3 && memcmp(op - 3, ":sh", 3) == 0) {
 			op -= 3;
 			type = VAR_SHELL;
 		}
