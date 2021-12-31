@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.118 2021/12/31 14:20:24 riastradh Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.119 2021/12/31 14:20:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.118 2021/12/31 14:20:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.119 2021/12/31 14:20:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -248,7 +248,6 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	 * If this is ever seen, the driver should be extended.
 	 */
 	rv = AcpiGetHandle(sc->sc_node->ad_handle, "_BIX", &tmp);
-
 	if (ACPI_SUCCESS(rv))
 		aprint_verbose_dev(self, "ACPI 4.0 functionality present\n");
 }
@@ -294,7 +293,6 @@ acpibat_get_sta(device_t dv)
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_STA", &val);
-
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(dv, "failed to evaluate _STA\n");
 		return -1;
@@ -320,17 +318,14 @@ acpibat_get_object(ACPI_HANDLE hdl, const char *pth, uint32_t count)
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_struct(hdl, pth, &buf);
-
 	if (ACPI_FAILURE(rv))
 		return NULL;
 
 	obj = buf.Pointer;
-
 	if (obj->Type != ACPI_TYPE_PACKAGE) {
 		ACPI_FREE(buf.Pointer);
 		return NULL;
 	}
-
 	if (obj->Package.Count != count) {
 		ACPI_FREE(buf.Pointer);
 		return NULL;
@@ -355,21 +350,17 @@ acpibat_get_info(device_t dv)
 	uint64_t val;
 
 	obj = acpibat_get_object(hdl, "_BIF", ACPIBAT_BIF_COUNT);
-
 	if (obj == NULL) {
 		rv = AE_ERROR;
 		goto out;
 	}
 
 	elm = obj->Package.Elements;
-
 	for (i = ACPIBAT_BIF_UNIT; i < ACPIBAT_BIF_MODEL; i++) {
-
 		if (elm[i].Type != ACPI_TYPE_INTEGER) {
 			rv = AE_TYPE;
 			goto out;
 		}
-
 		if (elm[i].Integer.Value != ACPIBAT_VAL_UNKNOWN &&
 		    elm[i].Integer.Value >= INT_MAX) {
 			rv = AE_LIMIT;
@@ -445,13 +436,10 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 	int i;
 
 	for (i = ACPIBAT_BIF_OEM; i > ACPIBAT_BIF_GRANULARITY2; i--) {
-
 		if (elm[i].Type != ACPI_TYPE_STRING)
 			return;
-
 		if (elm[i].String.Pointer == NULL)
 			return;
-
 		if (elm[i].String.Pointer[0] == '\0')
 			return;
 	}
@@ -524,16 +512,13 @@ acpibat_get_status(device_t dv)
 	uint64_t val;
 
 	obj = acpibat_get_object(hdl, "_BST", ACPIBAT_BST_COUNT);
-
 	if (obj == NULL) {
 		rv = AE_ERROR;
 		goto out;
 	}
 
 	elm = obj->Package.Elements;
-
 	for (i = ACPIBAT_BST_STATE; i < ACPIBAT_BST_COUNT; i++) {
-
 		if (elm[i].Type != ACPI_TYPE_INTEGER) {
 			rv = AE_TYPE;
 			goto out;
@@ -541,7 +526,6 @@ acpibat_get_status(device_t dv)
 	}
 
 	state = elm[ACPIBAT_BST_STATE].Integer.Value;
-
 	if ((state & ACPIBAT_ST_CHARGING) != 0) {
 		/* XXX rate can be invalid */
 		rate = elm[ACPIBAT_BST_RATE].Integer.Value;
@@ -615,7 +599,6 @@ acpibat_update_info(void *arg)
 	mutex_enter(&sc->sc_mutex);
 
 	rv = acpibat_get_sta(dv);
-
 	if (rv > 0) {
 		acpibat_get_info(dv);
 
@@ -628,7 +611,6 @@ acpibat_update_info(void *arg)
 			    &sc->sc_sensor[ACPIBAT_CAPACITY]);
 	} else {
 		i = (rv < 0) ? 0 : ACPIBAT_DVOLTAGE;
-
 		while (i < ACPIBAT_COUNT) {
 			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			i++;
@@ -650,16 +632,12 @@ acpibat_update_status(void *arg)
 	mutex_enter(&sc->sc_mutex);
 
 	rv = acpibat_get_sta(dv);
-
 	if (rv > 0) {
-
 		if (sc->sc_present == 0)
 			acpibat_get_info(dv);
-
 		acpibat_get_status(dv);
 	} else {
 		i = (rv < 0) ? 0 : ACPIBAT_DVOLTAGE;
-
 		while (i < ACPIBAT_COUNT) {
 			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			i++;
@@ -685,19 +663,15 @@ acpibat_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 	device_t dv = context;
 
 	switch (notify) {
-
 	case ACPI_NOTIFY_BUS_CHECK:
 		break;
-
 	case ACPI_NOTIFY_BAT_INFO:
 	case ACPI_NOTIFY_DEVICE_CHECK:
 		(void)AcpiOsExecute(handler, acpibat_update_info, dv);
 		break;
-
 	case ACPI_NOTIFY_BAT_STATUS:
 		(void)AcpiOsExecute(handler, acpibat_update_status, dv);
 		break;
-
 	default:
 		aprint_error_dev(dv, "unknown notify: 0x%02X\n", notify);
 	}
@@ -753,7 +727,6 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_sme = sysmon_envsys_create();
 
 	for (i = 0; i < ACPIBAT_COUNT; i++) {
-
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 			&sc->sc_sensor[i]))
 			goto fail;
@@ -802,7 +775,6 @@ acpibat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	microtime(&tv);
 	timersub(&tv, &tmp, &tv);
-
 	if (timercmp(&tv, &sc->sc_last, <) != 0)
 		return;
 
@@ -810,7 +782,6 @@ acpibat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		return;
 
 	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_status, self);
-
 	if (ACPI_SUCCESS(rv))
 		cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz);
 
@@ -855,23 +826,18 @@ acpibat_modcmd(modcmd_t cmd, void *aux)
 	int rv = 0;
 
 	switch (cmd) {
-
 	case MODULE_CMD_INIT:
-
 #ifdef _MODULE
 		rv = config_init_component(cfdriver_ioconf_acpibat,
 		    cfattach_ioconf_acpibat, cfdata_ioconf_acpibat);
 #endif
 		break;
-
 	case MODULE_CMD_FINI:
-
 #ifdef _MODULE
 		rv = config_fini_component(cfdriver_ioconf_acpibat,
 		    cfattach_ioconf_acpibat, cfdata_ioconf_acpibat);
 #endif
 		break;
-
 	default:
 		rv = ENOTTY;
 	}
