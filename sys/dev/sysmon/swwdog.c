@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.22 2020/03/16 21:20:09 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.23 2021/12/31 11:05:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.22 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.23 2021/12/31 11:05:41 riastradh Exp $");
 
 /*
  *
@@ -286,8 +286,7 @@ SYSCTL_SETUP(swwdog_sysctl_setup, "swwdog sysctl")
  * Module management
  */
 
-static
-int
+static int
 swwdog_init(void *arg)
 {
 	/*
@@ -314,8 +313,7 @@ swwdog_init(void *arg)
 	return error;
 }
 
-static
-int
+static int
 swwdog_fini(void *arg)
 {
 	int error;
@@ -337,26 +335,22 @@ swwdog_fini(void *arg)
         return error;
 }
 
-static
-int
+static int
 swwdog_modcmd(modcmd_t cmd, void *arg)
 {
 	int ret;
- 
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		ret = swwdog_init(arg);
 		break;
- 
 	case MODULE_CMD_FINI:
 		ret = swwdog_fini(arg);
 		break;
- 
 	case MODULE_CMD_STAT:
 	default:
 		ret = ENOTTY;
 	}
- 
+
 	return ret;
 }
-

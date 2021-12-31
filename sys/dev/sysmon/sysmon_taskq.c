@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.20 2018/02/08 09:05:20 dholland Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.21 2021/12/31 11:05:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.20 2018/02/08 09:05:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.21 2021/12/31 11:05:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -246,26 +246,23 @@ sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 	return 0;
 }
 
-static
-int   
+static int
 sysmon_taskq_modcmd(modcmd_t cmd, void *arg)
 {
 	int ret;
- 
-	switch (cmd) { 
+
+	switch (cmd) {
 	case MODULE_CMD_INIT:
 		sysmon_task_queue_init();
 		ret = 0;
 		break;
- 
-	case MODULE_CMD_FINI: 
+	case MODULE_CMD_FINI:
 		ret = sysmon_task_queue_fini();
 		break;
- 
 	case MODULE_CMD_STAT:
-	default: 
+	default:
 		ret = ENOTTY;
 	}
- 
+
 	return ret;
 }

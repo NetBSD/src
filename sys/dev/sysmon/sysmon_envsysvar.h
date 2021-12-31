@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.47 2014/11/23 10:00:20 ozaki-r Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.48 2021/12/31 11:05:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -69,7 +69,7 @@ enum sme_descr_type {
  */
 #define SME_EVENTS_DEFTIMEOUT	30
 
-/* 
+/*
  * struct used by a sysmon envsys event.
  */
 typedef struct sme_event {
@@ -85,7 +85,7 @@ typedef struct sme_event {
 #define SEE_EVENT_WORKING	0x0001 		/* This event is busy */
 } sme_event_t;
 
-/* 
+/*
  * struct by a sysmon envsys event set by a driver.
  */
 typedef struct sme_event_drv {
@@ -101,19 +101,19 @@ struct sme_descr_entry {
 	const char 	*desc;
 };
 
-/* 
+/*
  * common stuff.
  */
 extern	kmutex_t sme_global_mtx; 	/* for the sme linked list and dict */
 extern	prop_dictionary_t sme_propd;	/* the global sensor dictionary */
 
-/* 
+/*
  * linked list for the sysmon envsys devices.
  */
 LIST_HEAD(sysmon_envsys_lh, sysmon_envsys);
 extern	struct sysmon_envsys_lh sysmon_envsys_list;
 
-/* 
+/*
  * functions to handle sysmon envsys devices.
  */
 int	sme_update_dictionary(struct sysmon_envsys *);
@@ -125,7 +125,7 @@ struct	sysmon_envsys *sysmon_envsys_find(const char *);
 void	sysmon_envsys_acquire(struct sysmon_envsys *, bool);
 void	sysmon_envsys_release(struct sysmon_envsys *, bool);
 
-/* 
+/*
  * functions to handle sysmon envsys events.
  */
 int	sme_event_register(prop_dictionary_t, envsys_data_t *,
@@ -144,7 +144,7 @@ void	sme_deliver_event(sme_event_t *);
 int	sme_update_limits(struct sysmon_envsys *, envsys_data_t *);
 void	sme_schedule_callout(struct sysmon_envsys *);
 
-/* 
+/*
  * common functions to create/update objects in a dictionary.
  */
 int	sme_sensor_upbool(prop_dictionary_t, const char *, bool);
