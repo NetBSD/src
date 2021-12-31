@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.33 2021/12/21 21:30:49 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.34 2021/12/31 14:25:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.33 2021/12/21 21:30:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.34 2021/12/31 14:25:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1201,7 +1201,7 @@ scx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		error = 0;
 		if (cmd == SIOCSIFCAP)
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {

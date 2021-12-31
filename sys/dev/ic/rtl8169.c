@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.168 2021/09/04 19:27:43 jakllsch Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.169 2021/12/31 14:25:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.168 2021/09/04 19:27:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.169 2021/12/31 14:25:22 riastradh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -2130,7 +2130,7 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 		error = 0;
 
 		if (command == SIOCSIFCAP)
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		else if (command != SIOCADDMULTI && command != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING)

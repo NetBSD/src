@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.66 2021/12/31 14:24:38 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.67 2021/12/31 14:25:24 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.66 2021/12/31 14:24:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.67 2021/12/31 14:25:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4619,7 +4619,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		    (ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 		    (IFF_UP | IFF_RUNNING)) {
 			ifp->if_flags |= IFF_UP;
-			error = ifp->if_init(ifp);
+			error = if_init(ifp);
 		}
 		return error;
 	case SIOCADDMULTI:
@@ -4673,7 +4673,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 			break;
 		default:
 			break;

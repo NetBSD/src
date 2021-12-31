@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.33 2020/12/31 02:16:14 uwe Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.34 2021/12/31 14:25:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.33 2020/12/31 02:16:14 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.34 2021/12/31 14:25:22 riastradh Exp $");
 
 #include "vlan.h"
 
@@ -1027,7 +1027,7 @@ enet_ioctl(struct ifnet *ifp, u_long command, void *data)
 		error = 0;
 		switch (command) {
 		case SIOCSIFCAP:
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 			break;
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:

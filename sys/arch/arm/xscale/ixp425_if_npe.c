@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.49 2021/12/31 14:24:38 riastradh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.50 2021/12/31 14:25:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.49 2021/12/31 14:24:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.50 2021/12/31 14:25:22 riastradh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1435,7 +1435,7 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = (*ifp->if_init)(ifp);
+			error = if_init(ifp);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			u_short diff;
 
@@ -1457,7 +1457,7 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 				 * any other flags that affect the hardware
 				 * state.
 				 */
-				error = (*ifp->if_init)(ifp);
+				error = if_init(ifp);
 			}
 		}
 		sc->sc_if_flags = ifp->if_flags;

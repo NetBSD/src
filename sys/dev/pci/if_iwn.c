@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.97 2021/09/19 11:37:01 andvar Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.98 2021/12/31 14:25:23 riastradh Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.97 2021/09/19 11:37:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.98 2021/12/31 14:25:23 riastradh Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -973,7 +973,7 @@ iwn_power(int why, void *arg)
 	s = splnet();
 	ifp = &sc->sc_ic.ic_if;
 	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp);
+		if_init(ifp);
 		if (ifp->if_flags & IFF_RUNNING)
 			ifp->if_start(ifp);
 	}

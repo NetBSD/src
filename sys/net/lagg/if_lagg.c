@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.27 2021/12/31 14:24:38 riastradh Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.28 2021/12/31 14:25:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.27 2021/12/31 14:24:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.28 2021/12/31 14:25:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -725,7 +725,7 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		case IFF_UP:
 		case IFF_UP | IFF_RUNNING:
-			error = ifp->if_init(ifp);
+			error = if_init(ifp);
 			break;
 		}
 
@@ -2115,7 +2115,7 @@ lagg_port_setsadl(struct lagg_port *lp, uint8_t *lladdr,
 		if (ifp_port->if_init != NULL) {
 			error = 0;
 			if (ISSET(ifp_port->if_flags, IFF_RUNNING))
-				error = ifp_port->if_init(ifp_port);
+				error = if_init(ifp_port);
 
 			if (error != 0) {
 				lagg_log(lp->lp_softc, LOG_WARNING,
@@ -2161,7 +2161,7 @@ lagg_port_unsetsadl(struct lagg_port *lp)
 		if (ifp_port->if_init != NULL) {
 			error = 0;
 			if (ISSET(ifp_port->if_flags, IFF_RUNNING))
-				error = ifp_port->if_init(ifp_port);
+				error = if_init(ifp_port);
 
 			if (error != 0) {
 				lagg_log(lp->lp_softc, LOG_WARNING,
@@ -2385,7 +2385,7 @@ lagg_port_setup(struct lagg_softc *sc,
 	lagg_port_syncvlan(sc, lp);
 
 	if (stopped) {
-		error = ifp_port->if_init(ifp_port);
+		error = if_init(ifp_port);
 		if (error != 0)
 			goto remove_port;
 	}
@@ -2415,7 +2415,7 @@ restore_ipv6lla:
 	KASSERT(IFNET_LOCKED(ifp_port));
 	lagg_in6_ifdetach(ifp_port);
 	if (stopped) {
-		if (ifp_port->if_init(ifp_port) != 0) {
+		if (if_init(ifp_port) != 0) {
 			lagg_log(sc, LOG_WARNING,
 			    "couldn't re-start port %s\n",
 			    ifp_port->if_xname);
@@ -2487,7 +2487,7 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 	IFNET_UNLOCK(ifp_port);
 
 	if (stopped) {
-		ifp_port->if_init(ifp_port);
+		if_init(ifp_port);
 	}
 
 	if (is_ifdetach == false) {

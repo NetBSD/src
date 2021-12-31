@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.53 2021/09/30 03:15:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.54 2021/12/31 14:25:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.53 2021/09/30 03:15:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.54 2021/12/31 14:25:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -759,7 +759,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 		memcpy(LLADDR(ifp_port->if_sadl), port->port_origlladdr,
 		    ifp_port->if_addrlen);
 		if (ifp_port->if_init != NULL) {
-			error = (*ifp_port->if_init)(ifp_port);
+			error = if_init(ifp_port);
 		}
 #else
 		union {
