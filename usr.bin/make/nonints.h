@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.225 2021/12/29 05:05:21 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.226 2021/12/31 00:01:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -143,10 +143,10 @@ void Parse_End(void);
 
 typedef enum VarAssignOp {
 	VAR_NORMAL,		/* = */
-	VAR_SUBST,		/* := */
-	VAR_SHELL,		/* != or :sh= */
 	VAR_APPEND,		/* += */
-	VAR_DEFAULT		/* ?= */
+	VAR_DEFAULT,		/* ?= */
+	VAR_SUBST,		/* := */
+	VAR_SHELL		/* != or :sh= */
 } VarAssignOp;
 
 typedef struct VarAssign {
