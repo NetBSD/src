@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.199 2021/12/30 02:30:53 christos Exp $
+#	$NetBSD: sets.subr,v 1.200 2021/12/31 16:14:44 christos Exp $
 #
 
 #
@@ -192,7 +192,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.199 2021/12/30 02:30:53 christos Exp $
+# 	# $NetBSD: sets.subr,v 1.200 2021/12/31 16:14:44 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -284,9 +284,9 @@ list_set_files()
 			split("'"${CONFIGS}"'", configs)
 			for (d in configs) {
 				xfname = fname
-				sub("CONFIG", configs[d], xfname)
+				sub("@CONFIG@", configs[d], xfname)
 				xline = line;
-				sub("CONFIG", configs[d], xline)
+				sub("@CONFIG@", configs[d], xline)
 				list[xline] = xfname
 			}
 			return 1
