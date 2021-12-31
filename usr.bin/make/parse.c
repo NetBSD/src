@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.604 2021/12/29 05:01:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.605 2021/12/31 00:18:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.604 2021/12/29 05:01:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.605 2021/12/31 00:18:06 rillig Exp $");
 
 /* types and constants */
 
@@ -1625,6 +1625,20 @@ out:
 		Lst_Free(paths);
 }
 
+typedef enum VarAssignOp {
+	VAR_NORMAL,		/* = */
+	VAR_APPEND,		/* += */
+	VAR_DEFAULT,		/* ?= */
+	VAR_SUBST,		/* := */
+	VAR_SHELL		/* != or :sh= */
+} VarAssignOp;
+
+typedef struct VarAssign {
+	char *varname;		/* unexpanded */
+	VarAssignOp op;
+	const char *value;	/* unexpanded */
+} VarAssign;
+
 typedef struct VarAssignParsed {
 	const char *nameStart;	/* unexpanded */
 	const char *nameEnd;	/* before operator adjustment */
@@ -1693,7 +1707,7 @@ AdjustVarassignOp(const VarAssignParsed *pvar, const char *value,
  *
  * Used for both lines in a file and command line arguments.
  */
-bool
+static bool
 Parse_IsVar(const char *p, VarAssign *out_var)
 {
 	VarAssignParsed pvar;
@@ -1891,7 +1905,7 @@ VarAssignSpecial(const char *name, const char *avalue)
 }
 
 /* Perform the variable assignment in the given scope. */
-void
+static void
 Parse_Var(VarAssign *var, GNode *scope)
 {
 	FStr avalue;		/* actual value (maybe expanded) */
@@ -2925,16 +2939,16 @@ ParseDirective(char *line)
 	return true;
 }
 
-static bool
-ParseVarassign(const char *line)
+bool
+Parse_VarAssign(const char *line, bool finishDependencyGroup, GNode *scope)
 {
 	VarAssign var;
 
 	if (!Parse_IsVar(line, &var))
 		return false;
-
-	FinishDependencyGroup();
-	Parse_Var(&var, SCOPE_GLOBAL);
+	if (finishDependencyGroup)
+		FinishDependencyGroup();
+	Parse_Var(&var, scope);
 	return true;
 }
 
@@ -3072,7 +3086,7 @@ ParseLine(char *line)
 	}
 #endif
 
-	if (ParseVarassign(line))
+	if (Parse_VarAssign(line, true, SCOPE_GLOBAL))
 		return;
 
 	FinishDependencyGroup();
