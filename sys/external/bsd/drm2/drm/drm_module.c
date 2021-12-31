@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.28 2021/12/19 12:43:37 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.29 2021/12/31 17:22:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.28 2021/12/19 12:43:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.29 2021/12/31 17:22:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -124,7 +124,7 @@ drm_init(void)
 #endif
 
 	if (ISSET(boothowto, AB_DEBUG))
-		__drm_debug = DRM_UT_CORE | DRM_UT_DRIVER | DRM_UT_KMS | DRM_UT_ATOMIC;
+		__drm_debug = DRM_UT_DRIVER;
 
 	spin_lock_init(&drm_minor_lock);
 	idr_init(&drm_minors_idr);
