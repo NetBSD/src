@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.155 2021/12/26 16:08:21 andvar Exp $        */
+/*      $NetBSD: ukbd.c,v 1.156 2021/12/31 14:24:06 riastradh Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.155 2021/12/26 16:08:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.156 2021/12/31 14:24:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -270,6 +270,8 @@ struct ukbd_softc {
 	struct hid_location sc_compose;
 	int sc_leds;
 	struct usb_task sc_ledtask;
+	struct callout sc_ledreset;
+	int sc_leds_set;
 	device_t sc_wskbddev;
 
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
@@ -483,11 +485,13 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_data_r = 0;
 
 	usb_init_task(&sc->sc_ledtask, ukbd_set_leds_task, sc, 0);
+	callout_init(&sc->sc_ledreset, 0);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS
 			| WSKBD_LED_COMPOSE);
-	callout_reset(&sc->sc_delay, mstohz(400), ukbd_delayed_leds_off, sc);
+	callout_reset(&sc->sc_ledreset, mstohz(400), ukbd_delayed_leds_off,
+	    sc);
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 
@@ -573,6 +577,7 @@ ukbd_detach(device_t self, int flags)
 		rv = config_detach(sc->sc_wskbddev, flags);
 
 	callout_halt(&sc->sc_delay, NULL);
+	callout_halt(&sc->sc_ledreset, NULL);
 	usb_rem_task_wait(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_ledtask,
 	    USB_TASKQ_DRIVER, NULL);
 
@@ -714,6 +719,13 @@ Static void
 ukbd_delayed_leds_off(void *addr)
 {
 	struct ukbd_softc *sc = addr;
+
+	/*
+	 * If the LEDs have already been set after attach, other than
+	 * by our initial flashing of them, leave them be.
+	 */
+	if (sc->sc_leds_set)
+		return;
 
 	ukbd_set_leds(sc, 0);
 }
@@ -879,6 +891,8 @@ ukbd_set_leds(void *v, int leds)
 
 	if (sc->sc_dying)
 		return;
+
+	sc->sc_leds_set = 1;
 
 	if (sc->sc_leds == leds)
 		return;
