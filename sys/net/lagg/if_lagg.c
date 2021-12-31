@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.26 2021/11/15 07:07:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.27 2021/12/31 14:24:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.26 2021/11/15 07:07:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.27 2021/12/31 14:24:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -721,7 +721,7 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_RUNNING:
-			ifp->if_stop(ifp, 1);
+			if_stop(ifp, 1);
 			break;
 		case IFF_UP:
 		case IFF_UP | IFF_RUNNING:
@@ -2354,7 +2354,7 @@ lagg_port_setup(struct lagg_softc *sc,
 
 	if (ISSET(ifp_port->if_flags, IFF_RUNNING) &&
 	    ifp_port->if_init != NULL) {
-		ifp_port->if_stop(ifp_port, 0);
+		if_stop(ifp_port, 0);
 		stopped = true;
 	}
 
@@ -2475,7 +2475,7 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 	IFNET_LOCK(ifp_port);
 	if (ISSET(ifp_port->if_flags, IFF_RUNNING) &&
 	    ifp_port->if_init != NULL) {
-		ifp_port->if_stop(ifp_port, 0);
+		if_stop(ifp_port, 0);
 		stopped = true;
 	}
 
