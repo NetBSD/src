@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.59 2021/12/19 12:27:39 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.60 2021/12/31 14:30:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.59 2021/12/19 12:27:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.60 2021/12/31 14:30:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -112,6 +112,8 @@ SDT_PROBE_DEFINE2(sdt, linux, work, done,
 SDT_PROBE_DEFINE1(sdt, linux, work, batch__start,
     "struct workqueue_struct *"/*wq*/);
 SDT_PROBE_DEFINE1(sdt, linux, work, batch__done,
+    "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE1(sdt, linux, work, flush__self,
     "struct workqueue_struct *"/*wq*/);
 SDT_PROBE_DEFINE1(sdt, linux, work, flush__start,
     "struct workqueue_struct *"/*wq*/);
@@ -1458,8 +1460,7 @@ flush_workqueue(struct workqueue_struct *wq)
 	struct flush_work fw;
 
 	if (lwp_getspecific(workqueue_key) == wq) {
-		aprint_debug("%s: running from workqueue %s\n", __func__,
-		    wq->wq_name);
+		SDT_PROBE1(sdt, linux, work, flush__self,  wq);
 		return;
 	}
 
