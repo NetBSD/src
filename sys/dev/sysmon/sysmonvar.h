@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.52 2021/12/31 14:30:04 riastradh Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.53 2021/12/31 14:44:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -217,6 +217,8 @@ struct sysmon_envsys {
 
 	/*
 	 * Locking/synchronization.
+	 *
+	 * Lock order: sme_global_mtx -> sme_mtx -> sme_work_mtx
 	 */
 	int sme_busy;			/* number of items on workqueue,
 					 * sme_work_mtx to read or write */
