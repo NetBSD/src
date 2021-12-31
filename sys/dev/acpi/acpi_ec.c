@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.85 2021/01/29 15:49:55 thorpej Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.86 2021/12/31 17:22:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.85 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.86 2021/12/31 17:22:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -655,6 +655,38 @@ done:
 	return AE_OK;
 }
 
+/*
+ * acpiec_space_handler(func, paddr, bitwidth, value, arg, region_arg)
+ *
+ *	Transfer bitwidth/8 bytes of data between paddr and *value:
+ *	from paddr to *value when func is ACPI_READ, and the other way
+ *	when func is ACPI_WRITE.  arg is the acpiec(4) or acpiecdt(4)
+ *	device.  region_arg is ignored (XXX why? determined by
+ *	acpiec_space_setup but never used by anything that I can see).
+ *
+ *	The caller always provides storage at *value large enough for
+ *	an ACPI_INTEGER object, i.e., a 64-bit integer.  However,
+ *	bitwidth may be larger; in this case the caller provides larger
+ *	storage at *value, e.g. 128 bits as documented in
+ *	<https://gnats.netbsd.org/55206>.
+ *
+ *	On reads, this fully initializes one ACPI_INTEGER's worth of
+ *	data at *value, even if bitwidth < 64.  The integer is
+ *	interpreted in host byte order; in other words, bytes of data
+ *	are transferred in order between paddr and (uint8_t *)value.
+ *	The transfer is not atomic; it may go byte-by-byte.
+ *
+ *	XXX This only really makes sense on little-endian systems.
+ *	E.g., thinkpad_acpi.c assumes that a single byte is transferred
+ *	in the low-order bits of the result.  A big-endian system could
+ *	read a 64-bit integer in big-endian (and it did for a while!),
+ *	but what should it do for larger reads?  Unclear!
+ *
+ *	XXX It's not clear whether the object at *value is always
+ *	_aligned_ adequately for an ACPI_INTEGER object.  Currently it
+ *	always is as long as malloc, used by AcpiOsAllocate, returns
+ *	64-bit-aligned data.
+ */
 static ACPI_STATUS
 acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
     uint32_t width, ACPI_INTEGER *value, void *arg, void *region_arg)
@@ -681,6 +713,12 @@ acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
 			if (rv != AE_OK)
 				break;
 		}
+		/*
+		 * Make sure to fully initialize at least an
+		 * ACPI_INTEGER-sized object.
+		 */
+		for (; i < sizeof(*value)*8; i += 8, ++buf)
+			*buf = 0;
 		break;
 	case ACPI_WRITE:
 		for (i = 0; i < width; i += 8, ++addr, ++buf) {
