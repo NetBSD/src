@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.605 2021/12/31 00:18:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.606 2021/12/31 00:37:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.605 2021/12/31 00:18:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.606 2021/12/31 00:37:50 rillig Exp $");
 
 /* types and constants */
 
@@ -1639,23 +1639,16 @@ typedef struct VarAssign {
 	const char *value;	/* unexpanded */
 } VarAssign;
 
-typedef struct VarAssignParsed {
-	const char *nameStart;	/* unexpanded */
-	const char *nameEnd;	/* before operator adjustment */
-	const char *eq;		/* the '=' of the assignment operator */
-} VarAssignParsed;
-
 /*
  * Determine the assignment operator and adjust the end of the variable
  * name accordingly.
  */
-static void
-AdjustVarassignOp(const VarAssignParsed *pvar, const char *value,
-		  VarAssign *out_var)
+static VarAssign
+AdjustVarassignOp(const char *name, const char *nameEnd, const char *op,
+		  const char *value)
 {
-	const char *op = pvar->eq;
-	const char *const name = pvar->nameStart;
 	VarAssignOp type;
+	VarAssign va;
 
 	if (op > name && op[-1] == '+') {
 		op--;
@@ -1686,12 +1679,10 @@ AdjustVarassignOp(const VarAssignParsed *pvar, const char *value,
 #endif
 	}
 
-	{
-		const char *nameEnd = pvar->nameEnd < op ? pvar->nameEnd : op;
-		out_var->varname = bmake_strsedup(pvar->nameStart, nameEnd);
-		out_var->op = type;
-		out_var->value = value;
-	}
+	va.varname = bmake_strsedup(name, nameEnd < op ? nameEnd : op);
+	va.op = type;
+	va.value = value;
+	return va;
 }
 
 /*
@@ -1710,7 +1701,9 @@ AdjustVarassignOp(const VarAssignParsed *pvar, const char *value,
 static bool
 Parse_IsVar(const char *p, VarAssign *out_var)
 {
-	VarAssignParsed pvar;
+	const char *nameStart;
+	const char *nameEnd;
+	const char *eq;
 	const char *firstSpace = NULL;
 	int level = 0;
 
@@ -1722,10 +1715,10 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 	 * ':sh' modifier. Of these two (nameEnd and op), the earlier one
 	 * determines the actual end of the variable name.
 	 */
-	pvar.nameStart = p;
+	nameStart = p;
 #ifdef CLEANUP
-	pvar.nameEnd = NULL;
-	pvar.eq = NULL;
+	nameEnd = NULL;
+	eq = NULL;
 #endif
 
 	/*
@@ -1759,19 +1752,19 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 		}
 #endif
 		if (ch == '=') {
-			pvar.eq = p - 1;
-			pvar.nameEnd = firstSpace != NULL ? firstSpace : p - 1;
+			eq = p - 1;
+			nameEnd = firstSpace != NULL ? firstSpace : p - 1;
 			cpp_skip_whitespace(&p);
-			AdjustVarassignOp(&pvar, p, out_var);
+			*out_var = AdjustVarassignOp(nameStart, nameEnd, eq, p);
 			return true;
 		}
 		if (*p == '=' &&
 		    (ch == '+' || ch == ':' || ch == '?' || ch == '!')) {
-			pvar.eq = p;
-			pvar.nameEnd = firstSpace != NULL ? firstSpace : p;
+			eq = p;
+			nameEnd = firstSpace != NULL ? firstSpace : p;
 			p++;
 			cpp_skip_whitespace(&p);
-			AdjustVarassignOp(&pvar, p, out_var);
+			*out_var = AdjustVarassignOp(nameStart, nameEnd, eq, p);
 			return true;
 		}
 		if (firstSpace != NULL)
