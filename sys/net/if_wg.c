@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.65 2021/08/17 17:31:13 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.66 2021/12/31 14:24:38 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.65 2021/08/17 17:31:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.66 2021/12/31 14:24:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4666,7 +4666,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.
 			 */
-			(*ifp->if_stop)(ifp, 1);
+			if_stop(ifp, 1);
 			break;
 		case IFF_UP:
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.307 2021/12/10 01:18:29 msaitoh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.308 2021/12/31 14:24:38 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.307 2021/12/10 01:18:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.308 2021/12/31 14:24:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1461,7 +1461,7 @@ ether_ioctl_reinit(struct ethercom *ec)
 		 * If interface is marked down and it is running,
 		 * then stop and disable it.
 		 */
-		(*ifp->if_stop)(ifp, 1);
+		if_stop(ifp, 1);
 		break;
 	case IFF_UP:
 		/*
