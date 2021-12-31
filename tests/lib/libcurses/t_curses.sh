@@ -9,7 +9,7 @@ h_run()
 		if [ -z "${locale}" ]; then
 			atf_fail "test ${file} failed because locale ${locale} not available"
 		else
-			# export the locale and shift the parametes by two and pass the rest
+			# export the locale and shift the parameters by two and pass the rest
 			export LC_ALL=$locale
 			shift 2
 			r_run $file $@
