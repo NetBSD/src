@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.606 2021/12/31 00:37:50 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.607 2021/12/31 00:45:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.606 2021/12/31 00:37:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.607 2021/12/31 00:45:21 rillig Exp $");
 
 /* types and constants */
 
@@ -1751,24 +1751,21 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 			continue;
 		}
 #endif
-		if (ch == '=') {
+		if (ch == '=')
 			eq = p - 1;
-			nameEnd = firstSpace != NULL ? firstSpace : p - 1;
-			cpp_skip_whitespace(&p);
-			*out_var = AdjustVarassignOp(nameStart, nameEnd, eq, p);
-			return true;
-		}
-		if (*p == '=' &&
-		    (ch == '+' || ch == ':' || ch == '?' || ch == '!')) {
+		else if (*p == '=' &&
+		    (ch == '+' || ch == ':' || ch == '?' || ch == '!'))
 			eq = p;
-			nameEnd = firstSpace != NULL ? firstSpace : p;
-			p++;
-			cpp_skip_whitespace(&p);
-			*out_var = AdjustVarassignOp(nameStart, nameEnd, eq, p);
-			return true;
-		}
-		if (firstSpace != NULL)
+		else if (firstSpace != NULL)
 			return false;
+		else
+			continue;
+
+		nameEnd = firstSpace != NULL ? firstSpace : eq;
+		p = eq + 1;
+		cpp_skip_whitespace(&p);
+		*out_var = AdjustVarassignOp(nameStart, nameEnd, eq, p);
+		return true;
 	}
 
 	return false;
