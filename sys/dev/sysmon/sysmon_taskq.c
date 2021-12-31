@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.21 2021/12/31 11:05:41 riastradh Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.22 2021/12/31 14:22:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.21 2021/12/31 11:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.22 2021/12/31 14:22:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -202,6 +202,26 @@ sysmon_task_queue_thread(void *arg)
 	kthread_exit(0);
 }
 
+static void
+sysmon_task_queue_sched_task(struct sysmon_task *st)
+{
+	struct sysmon_task *lst;
+
+	mutex_enter(&sysmon_task_queue_mtx);
+	TAILQ_FOREACH(lst, &sysmon_task_queue, st_list) {
+		if (st->st_pri > lst->st_pri) {
+			TAILQ_INSERT_BEFORE(lst, st, st_list);
+			break;
+		}
+	}
+
+	if (lst == NULL)
+		TAILQ_INSERT_TAIL(&sysmon_task_queue, st, st_list);
+
+	cv_broadcast(&sysmon_task_queue_cv);
+	mutex_exit(&sysmon_task_queue_mtx);
+}
+
 /*
  * sysmon_task_queue_sched:
  *
@@ -210,7 +230,7 @@ sysmon_task_queue_thread(void *arg)
 int
 sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 {
-	struct sysmon_task *st, *lst;
+	struct sysmon_task *st;
 
 	(void)RUN_ONCE(&once_tq, tq_preinit);
 
@@ -229,21 +249,62 @@ sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 	st->st_arg = arg;
 	st->st_pri = pri;
 
-	mutex_enter(&sysmon_task_queue_mtx);
-	TAILQ_FOREACH(lst, &sysmon_task_queue, st_list) {
-		if (st->st_pri > lst->st_pri) {
-			TAILQ_INSERT_BEFORE(lst, st, st_list);
-			break;
-		}
-	}
-
-	if (lst == NULL)
-		TAILQ_INSERT_TAIL(&sysmon_task_queue, st, st_list);
-
-	cv_broadcast(&sysmon_task_queue_cv);
-	mutex_exit(&sysmon_task_queue_mtx);
+	sysmon_task_queue_sched_task(st);
 
 	return 0;
+}
+
+struct tqbarrier {
+	kmutex_t	lock;
+	kcondvar_t	cv;
+	bool		done;
+};
+
+static void
+tqbarrier_task(void *cookie)
+{
+	struct tqbarrier *bar = cookie;
+
+	mutex_enter(&bar->lock);
+	bar->done = true;
+	cv_broadcast(&bar->cv);
+	mutex_exit(&bar->lock);
+}
+
+/*
+ * sysmon_task_queue_barrier:
+ *
+ *	Wait for the completion of all tasks at priority pri or lower
+ *	currently queued at the time of the call.
+ */
+void
+sysmon_task_queue_barrier(u_int pri)
+{
+	struct sysmon_task st;
+	struct tqbarrier bar;
+
+	(void)RUN_ONCE(&once_tq, tq_preinit);
+
+	KASSERT(sysmon_task_queue_lwp);
+	KASSERT(curlwp != sysmon_task_queue_lwp);
+
+	mutex_init(&bar.lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&bar.cv, "sysmontq");
+	bar.done = false;
+
+	st.st_func = &tqbarrier_task;
+	st.st_arg = &bar;
+	st.st_pri = pri;
+
+	sysmon_task_queue_sched_task(&st);
+
+	mutex_enter(&bar.lock);
+	while (!bar.done)
+		cv_wait(&bar.cv, &bar.lock);
+	mutex_exit(&bar.lock);
+
+	cv_destroy(&bar.cv);
+	mutex_destroy(&bar.lock);
 }
 
 static int
