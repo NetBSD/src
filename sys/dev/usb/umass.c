@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.186 2021/09/16 22:19:11 andvar Exp $	*/
+/*	$NetBSD: umass.c,v 1.187 2021/12/31 14:24:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.186 2021/09/16 22:19:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.187 2021/12/31 14:24:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -392,7 +392,6 @@ umass_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	cv_init(&sc->sc_detach_cv, "umassdet");
 
 	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
@@ -872,18 +871,6 @@ umass_detach(device_t self, int flags)
 	}
 	usbd_abort_default_pipe(sc->sc_udev);
 
-	/* Do we really need reference counting?  Perhaps in ioctl() */
-	mutex_enter(&sc->sc_lock);
-	if (--sc->sc_refcnt >= 0) {
-#ifdef DIAGNOSTIC
-		aprint_normal_dev(self, "waiting for refcnt\n");
-#endif
-		/* Wait for processes to go away. */
-		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60))
-			aprint_error_dev(self, ": didn't detach\n");
-	}
-	mutex_exit(&sc->sc_lock);
-
 	scbus = sc->bus;
 	if (scbus != NULL) {
 		if (scbus->sc_child != NULL)
@@ -925,7 +912,6 @@ umass_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_destroy(&sc->sc_lock);
-	cv_destroy(&sc->sc_detach_cv);
 
 out:	SDT_PROBE2(usb, umass, device, detach__done,  sc, rv);
 	return rv;

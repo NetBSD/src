@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.39 2018/11/13 10:30:57 mlelstv Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.40 2021/12/31 14:24:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -167,7 +167,6 @@ struct umass_softc {
 	const struct umass_wire_methods *sc_methods;
 
 	kmutex_t		sc_lock;
-	kcondvar_t		sc_detach_cv;
 
 	uint8_t			sc_wire;	/* wire protocol */
 #define	UMASS_WPROTO_UNSPEC	0
@@ -276,7 +275,6 @@ struct umass_softc {
 #endif
 
 	char			sc_dying;
-	int			sc_refcnt;
 	int			sc_sense;
 
 	struct umassbus_softc	*bus;		 /* bus dependent data */
