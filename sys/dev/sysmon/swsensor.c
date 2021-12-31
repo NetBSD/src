@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.18 2020/06/11 02:39:31 thorpej Exp $ */
+/*	$NetBSD: swsensor.c,v 1.19 2021/12/31 11:05:41 riastradh Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.18 2020/06/11 02:39:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.19 2021/12/31 11:05:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,18 +139,18 @@ swsensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
  * Sensor get/set limit routines
  */
 
-static void     
+static void
 swsensor_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
-                  sysmon_envsys_lim_t *limits, uint32_t *props)  
+                  sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 
 	*props = PROP_CRITMIN | PROP_DRIVER_LIMITS;
 	limits->sel_critmin = sw_sensor_limit;
 }
 
-static void     
+static void
 swsensor_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
-                  sysmon_envsys_lim_t *limits, uint32_t *props)  
+                  sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 
 	if (limits == NULL) {
@@ -250,7 +250,7 @@ swsensor_init(void *arg)
 			/* Sensor limit behavior
 			 *	0 - simple sensor, no hw limits
 			 *	1 - simple sensor, hw provides initial limit
-			 *	2 - complex sensor, hw provides settable 
+			 *	2 - complex sensor, hw provides settable
 			 *	    limits and does its own limit checking
 			 */
 			if (strcmp(key, "mode") == 0) {

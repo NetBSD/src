@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.68 2021/09/26 16:24:21 thorpej Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.69 2021/12/31 11:05:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.68 2021/09/26 16:24:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.69 2021/12/31 11:05:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -334,9 +334,9 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 	memset(&pev, 0, sizeof(pev));
 
 	mutex_enter(&sysmon_power_event_queue_mtx);
-	
+
 	switch (event) {
-	/* 
+	/*
 	 * Power switch events.
 	 */
 	case PSWITCH_EVENT_PRESSED:
@@ -363,7 +363,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 		break;
 	    }
 
-	/* 
+	/*
 	 * ENVSYS events.
 	 */
 	case PENVSYS_EVENT_NORMAL:
@@ -386,7 +386,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 
 		error = sysmon_power_make_dictionary(ped->dict,
 						     penvsys,
-						     event, 
+						     event,
 						     pev.pev_type);
 		if (error) {
 			mutex_exit(&sysmon_power_event_queue_mtx);
@@ -1013,7 +1013,7 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		prop_object_release(ped->dict);
 		kmem_free(ped, sizeof(*ped));
 	}
-	
+
 	switch (smpsw->smpsw_type) {
 	case PSWITCH_TYPE_POWER:
 		if (event != PSWITCH_EVENT_PRESSED) {
@@ -1112,26 +1112,22 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 	}
 }
 
-static
-int   
+static int
 sysmon_power_modcmd(modcmd_t cmd, void *arg)
 {
 	int ret;
- 
-	switch (cmd) { 
+
+	switch (cmd) {
 	case MODULE_CMD_INIT:
 		ret = sysmon_power_init();
 		break;
- 
-	case MODULE_CMD_FINI: 
+	case MODULE_CMD_FINI:
 		ret = sysmon_power_fini();
 		break;
- 
 	case MODULE_CMD_STAT:
-	default: 
+	default:
 		ret = ENOTTY;
 	}
 
 	return ret;
 }
-
