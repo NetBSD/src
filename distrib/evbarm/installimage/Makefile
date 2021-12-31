@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2021/09/08 11:20:44 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2021/12/31 16:40:59 christos Exp $
 
 .include <bsd.own.mk>
 
 INSTIMGBASE=	NetBSD-${DISTRIBVER}-evbarm-${MACHINE_ARCH}-install	# gives ${IMGBASE}.img
 
-INSTIMAGEMB?=	1600			# for all installation binaries
+INSTIMAGEMB?=	1650			# for all installation binaries
 
 .if !empty(MACHINE_ARCH:Maarch64*)
 EFIBOOT=		${WORKDIR}/usr/mdec/bootaa64.efi
