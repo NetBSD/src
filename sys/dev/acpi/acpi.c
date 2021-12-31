@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.294 2021/12/20 11:17:40 skrll Exp $	*/
+/*	$NetBSD: acpi.c,v 1.295 2021/12/31 14:22:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,13 +100,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.294 2021/12/20 11:17:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.295 2021/12/31 14:22:42 riastradh Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -1146,6 +1147,7 @@ acpi_notify_handler(ACPI_HANDLE handle, uint32_t event, void *aux)
 {
 	struct acpi_softc *sc = acpi_softc;
 	struct acpi_devnode *ad;
+	ACPI_NOTIFY_HANDLER notify;
 
 	KASSERT(sc != NULL);
 	KASSERT(aux == NULL);
@@ -1189,13 +1191,13 @@ acpi_notify_handler(ACPI_HANDLE handle, uint32_t event, void *aux)
 		if (ad->ad_device == NULL)
 			continue;
 
-		if (ad->ad_notify == NULL)
+		if ((notify = atomic_load_acquire(&ad->ad_notify)) == NULL)
 			continue;
 
 		if (ad->ad_handle != handle)
 			continue;
 
-		(*ad->ad_notify)(ad->ad_handle, event, ad->ad_device);
+		(*notify)(ad->ad_handle, event, ad->ad_device);
 
 		return;
 	}
@@ -1218,7 +1220,7 @@ acpi_register_notify(struct acpi_devnode *ad, ACPI_NOTIFY_HANDLER notify)
 	if (ad == NULL || notify == NULL)
 		goto fail;
 
-	ad->ad_notify = notify;
+	atomic_store_release(&ad->ad_notify, notify);
 
 	return true;
 
@@ -1233,7 +1235,10 @@ void
 acpi_deregister_notify(struct acpi_devnode *ad)
 {
 
-	ad->ad_notify = NULL;
+	atomic_store_relaxed(&ad->ad_notify, NULL);
+
+	/* Wait for any in-flight calls to the notifier to complete.  */
+	AcpiOsWaitEventsComplete();
 }
 
 /*
