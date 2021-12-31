@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.498 2021/12/31 14:24:50 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.499 2021/12/31 14:25:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.498 2021/12/31 14:24:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.499 2021/12/31 14:25:58 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2733,13 +2733,25 @@ ifpromisc(struct ifnet *ifp, int pswitch)
  *	Apply an ioctl command to the interface.  Returns 0 on success,
  *	nonzero errno(3) number on failure.
  *
- *	May sleep.  Caller must hold ifp->if_ioctl_lock.
+ *	For SIOCADDMULTI/SIOCDELMULTI, caller need not hold locks -- it
+ *	is the driver's responsibility to take any internal locks.
+ *	(Kernel logic should generally invoke these only through
+ *	if_mcast_op.)
+ *
+ *	For all other ioctls, caller must hold ifp->if_ioctl_lock,
+ *	a.k.a. IFNET_LOCK.  May sleep.
  */
 int
 if_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 
-	KASSERT(1 || IFNET_LOCKED(ifp));	/* XXX not yet */
+	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
+	}
 
 	return (*ifp->if_ioctl)(ifp, cmd, data);
 }
@@ -2758,7 +2770,7 @@ int
 if_init(struct ifnet *ifp)
 {
 
-	KASSERT(1 || IFNET_LOCKED(ifp));	/* XXX not yet */
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	return (*ifp->if_init)(ifp);
 }
@@ -2777,7 +2789,7 @@ void
 if_stop(struct ifnet *ifp, int disable)
 {
 
-	KASSERT(1 || IFNET_LOCKED(ifp));	/* XXX not yet */
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	(*ifp->if_stop)(ifp, disable);
 }
@@ -3864,11 +3876,6 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	int rc;
 	struct ifreq ifr;
 
-	/*
-	 * XXX NOMPSAFE - this calls if_ioctl without holding IFNET_LOCK()
-	 * in some cases - e.g. when called from vlan/netinet/netinet6 code
-	 * directly rather than via doifoictl()
-	 */
 	ifreq_setaddr(cmd, &ifr, sa);
 	rc = if_ioctl(ifp, cmd, &ifr);
 
