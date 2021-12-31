@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.28 2021/12/26 14:34:39 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.29 2021/12/31 13:15:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.28 2021/12/26 14:34:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.29 2021/12/31 13:15:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.28 2021/12/26 14:34:39 jmcneill Exp 
 ACPI_MODULE_NAME	("acpi_util")
 
 static void		acpi_clean_node(ACPI_HANDLE, void *);
+static ACPI_STATUS	acpi_dsd_property(ACPI_HANDLE, const char *,
+			    ACPI_BUFFER *, ACPI_OBJECT_TYPE, ACPI_OBJECT **);
 
 static const char * const acpicpu_ids[] = {
 	"ACPI0007",
@@ -438,6 +440,58 @@ acpi_compatible_free_strarray(const char **cpp, unsigned int count,
 	kmem_tmpbuf_free(cpp, count * sizeof(const char *), buf);
 }
 
+static int
+acpi_compatible_match_dtlink(const struct acpi_attach_args * const aa,
+    const struct device_compatible_entry * const dce)
+{
+	const char *strings[ACPI_COMPATSTR_MAX * sizeof(const char *)];
+	ACPI_HANDLE handle = aa->aa_node->ad_handle;
+	ACPI_BUFFER buf;
+	char *compatible;
+	ACPI_STATUS ret;
+	ACPI_OBJECT *obj;
+	int rv = 0, n;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+	/* Match a single string _DSD value */
+	ret = acpi_dsd_string(handle, "compatible", &compatible);
+	if (ACPI_SUCCESS(ret)) {
+		strings[0] = compatible;
+		rv = device_compatible_pmatch(strings, 1, dce);
+		kmem_strfree(compatible);
+		goto done;
+	}
+
+	/* Match from a list of strings in a _DSD value */
+	ret = acpi_dsd_property(handle, "compatible", &buf,
+	    ACPI_TYPE_PACKAGE, &obj);
+	if (ACPI_FAILURE(ret)) {
+		goto done;
+	}
+	if (obj->Package.Count == 0) {
+		goto done;
+	}
+	for (n = 0; n < imin(obj->Package.Count, ACPI_COMPATSTR_MAX); n++) {
+		if (obj->Package.Elements[n].Type != ACPI_TYPE_STRING) {
+			goto done;
+		}
+		strings[n] = obj->Package.Elements[n].String.Pointer;
+	}
+	rv = device_compatible_pmatch(strings, n, dce);
+
+done:
+	if (buf.Pointer != NULL) {
+		ACPI_FREE(buf.Pointer);
+	}
+	if (rv) {
+		rv = (rv - 1) + ACPI_MATCHSCORE_CID;
+		return imin(rv, ACPI_MATCHSCORE_CID_MAX);
+	}
+	return 0;
+}
+
 /*
  * acpi_compatible_match --
  *
@@ -451,7 +505,6 @@ acpi_compatible_match(const struct acpi_attach_args * const aa,
 	const char *strings[ACPI_COMPATSTR_MAX * sizeof(const char *)];
 	const char **cpp;
 	bool dtlink = false;
-	ACPI_STATUS ret;
 	int rv;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE) {
@@ -494,21 +547,7 @@ acpi_compatible_match(const struct acpi_attach_args * const aa,
 	}
 
 	if (dtlink) {
-		char *compatible;
-
-		ret = acpi_dsd_string(aa->aa_node->ad_handle,
-		    "compatible", &compatible);
-		if (ACPI_FAILURE(ret)) {
-			return 0;
-		}
-
-		strings[0] = compatible;
-		rv = device_compatible_pmatch(strings, 1, dce);
-		kmem_strfree(compatible);
-		if (rv) {
-			rv = (rv - 1) + ACPI_MATCHSCORE_CID;
-			return imin(rv, ACPI_MATCHSCORE_CID_MAX);
-		}
+		return acpi_compatible_match_dtlink(aa, dce);
 	}
 
 	return 0;
@@ -978,6 +1017,8 @@ acpi_dsd_string(ACPI_HANDLE handle, const char *prop, char **val)
 		ACPI_FREE(buf.Pointer);
 	return rv;
 }
+
+
 
 /*
  * Device Specific Method (_DSM) support
