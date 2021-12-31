@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.19 2017/11/12 02:59:55 christos Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.20 2021/12/31 14:22:26 riastradh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.19 2017/11/12 02:59:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.20 2021/12/31 14:22:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -101,6 +101,10 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 {
 	int pri;
 
+	/*
+	 * If you raise any priority here make sure to adjust
+	 * AcpiOsWaitEventsComplete too.
+	 */
 	switch (Type) {
 	case OSL_GPE_HANDLER:
 		pri = 10;
@@ -185,14 +189,13 @@ AcpiOsGetTimer(void)
 }
 
 /*
- *
  * AcpiOsWaitEventsComplete:
  *
- * 	Wait for all asynchronous events to complete. This implementation
- *	does nothing.
+ * 	Wait for all asynchronous events to complete.
  */
 void
 AcpiOsWaitEventsComplete(void)
 {
-	return;
+	/* Highest priority used by AcpiOsExecute.  */
+	sysmon_task_queue_barrier(10);
 }
