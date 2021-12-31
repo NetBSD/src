@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.50 2017/09/11 06:02:09 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.51 2021/12/31 11:05:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -170,7 +170,7 @@ struct sysmon_envsys {
 
 	void *sme_cookie;		/* for ENVSYS back-end */
 
-	/* 
+	/*
 	 * Function callback to receive data from device.
 	 */
 	void (*sme_refresh)(struct sysmon_envsys *, envsys_data_t *);
@@ -194,12 +194,12 @@ struct sysmon_envsys {
 
 	uint64_t sme_events_timeout;	/* the timeout used in the callout */
 
-	/* 
+	/*
 	 * linked list for the sysmon envsys devices.
 	 */
 	LIST_ENTRY(sysmon_envsys) sme_list;
 
-	/* 
+	/*
 	 * linked list for the events that a device maintains.
 	 */
 	LIST_HEAD(, sme_event) sme_events_list;

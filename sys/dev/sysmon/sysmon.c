@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.30 2019/08/26 10:05:34 nakayama Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.31 2021/12/31 11:05:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.30 2019/08/26 10:05:34 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.31 2021/12/31 11:05:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -78,7 +78,7 @@ const struct cdevsw sysmon_cdevsw = {
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
-static int	sysmon_modcmd(modcmd_t, void *); 
+static int	sysmon_modcmd(modcmd_t, void *);
 static int	sm_init_once(void);
 
 /*
@@ -364,25 +364,22 @@ sysmon_fini(void)
 	return error;
 }
 
-static
-int   
+static int
 sysmon_modcmd(modcmd_t cmd, void *arg)
 {
 	int ret;
- 
-	switch (cmd) { 
+
+	switch (cmd) {
 	case MODULE_CMD_INIT:
 		ret = sysmon_init();
 		break;
- 
-	case MODULE_CMD_FINI: 
-		ret = sysmon_fini(); 
+	case MODULE_CMD_FINI:
+		ret = sysmon_fini();
 		break;
- 
 	case MODULE_CMD_STAT:
-	default: 
+	default:
 		ret = ENOTTY;
 	}
- 
+
 	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.29 2015/12/14 01:08:47 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.30 2021/12/31 11:05:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.29 2015/12/14 01:08:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.30 2021/12/31 11:05:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -76,7 +76,7 @@ void	sysmon_wdog_critpoll(void *);
 void	sysmon_wdog_shutdown(void *);
 void	sysmon_wdog_ref(struct sysmon_wdog *);
 
-static struct sysmon_opvec sysmon_wdog_opvec = {    
+static struct sysmon_opvec sysmon_wdog_opvec = {
         sysmonopen_wdog, sysmonclose_wdog, sysmonioctl_wdog,
         NULL, NULL, NULL
 };
@@ -551,25 +551,23 @@ sysmon_wdog_shutdown(void *arg)
 			    smw->smw_name);
 	}
 }
-static
-int   
+
+static int
 sysmon_wdog_modcmd(modcmd_t cmd, void *arg)
 {
         int ret;
-  
+
         switch (cmd) {
         case MODULE_CMD_INIT:
                 ret = sysmon_wdog_init();
                 break;
- 
         case MODULE_CMD_FINI:
                 ret = sysmon_wdog_fini();
-                break; 
-   
+                break;
         case MODULE_CMD_STAT:
         default:
                 ret = ENOTTY;
         }
-  
-        return ret; 
+
+        return ret;
 }
