@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.220 2021/12/21 09:51:22 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.221 2021/12/31 12:00:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.220 2021/12/21 09:51:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.221 2021/12/31 12:00:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1243,7 +1243,7 @@ usbd_do_request_len(struct usbd_device *dev, usb_device_request_t *req,
 
 	int error = usbd_create_xfer(dev->ud_pipe0, len, 0, 0, &xfer);
 	if (error)
-		return error;
+		return USBD_NOMEM;
 
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req, data,
 	    UGETW(req->wLength), flags, NULL);
