@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.69 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.70 2021/12/31 14:24:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.69 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.70 2021/12/31 14:24:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -131,6 +131,8 @@ umass_scsi_attach(struct umass_softc *sc)
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	struct umass_scsipi_softc *scbus;
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	scbus = umass_scsipi_setup(sc);
 
 	scbus->sc_channel.chan_bustype = &scsi_bustype;
@@ -139,17 +141,9 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus->sc_channel.chan_id = scbus->sc_channel.chan_ntargets - 1;
 	DPRINTFM(UDMASS_USB, "sc %#jx: SCSI", (uintptr_t)sc, 0, 0, 0);
 
-	mutex_enter(&sc->sc_lock);
-	sc->sc_refcnt++;
-	mutex_exit(&sc->sc_lock);
 	scbus->base.sc_child =
 	    config_found(sc->sc_dev, &scbus->sc_channel, scsiprint,
 			 CFARGS(.iattr = "scsi"));
-	mutex_enter(&sc->sc_lock);
-	if (--sc->sc_refcnt < 0)
-		cv_broadcast(&sc->sc_detach_cv);
-	mutex_exit(&sc->sc_lock);
-
 
 	return 0;
 }
@@ -171,6 +165,8 @@ umass_atapi_attach(struct umass_softc *sc)
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	struct umass_scsipi_softc *scbus;
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	scbus = umass_scsipi_setup(sc);
 	scbus->sc_atapi_adapter.atapi_probe_device =  umass_atapi_probe_device;
 
@@ -181,16 +177,9 @@ umass_atapi_attach(struct umass_softc *sc)
 	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
 	DPRINTFM(UDMASS_USB, "sc %#jxp: ATAPI", (uintptr_t)sc, 0, 0, 0);
 
-	mutex_enter(&sc->sc_lock);
-	sc->sc_refcnt++;
-	mutex_exit(&sc->sc_lock);
 	scbus->base.sc_child =
 	    config_found(sc->sc_dev, &scbus->sc_channel, atapiprint,
 			 CFARGS(.iattr = "atapi"));
-	mutex_enter(&sc->sc_lock);
-	if (--sc->sc_refcnt < 0)
-		cv_broadcast(&sc->sc_detach_cv);
-	mutex_exit(&sc->sc_lock);
 
 	return 0;
 }
