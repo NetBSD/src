@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.21 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.22 2021/12/31 14:24:50 riastradh Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.21 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.22 2021/12/31 14:24:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -372,7 +372,7 @@ afmioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 	if (ifp == NULL || (ifp->if_flags & IFF_RUNNING) == 0)
 		error = ENXIO;
 	else
-		error = ifp->if_ioctl(ifp, cmd, addr);
+		error = if_ioctl(ifp, cmd, addr);
 
 	return error;
 }

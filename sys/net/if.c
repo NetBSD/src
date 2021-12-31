@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.497 2021/12/31 14:24:26 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.498 2021/12/31 14:24:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.497 2021/12/31 14:24:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.498 2021/12/31 14:24:50 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3482,7 +3482,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	KERNEL_LOCK_UNLESS_IFP_MPSAFE(ifp);
 	IFNET_LOCK(ifp);
 
-	error = (*ifp->if_ioctl)(ifp, cmd, data);
+	error = if_ioctl(ifp, cmd, data);
 	if (error != ENOTTY)
 		;
 	else if (so->so_proto == NULL)
@@ -3781,8 +3781,8 @@ if_addr_init(ifnet_t *ifp, struct ifaddr *ifa, const bool src)
 	if (ifp->if_initaddr != NULL)
 		rc = (*ifp->if_initaddr)(ifp, ifa, src);
 	else if (src ||
-	         (rc = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, ifa)) == ENOTTY)
-		rc = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ifa);
+	         (rc = if_ioctl(ifp, SIOCSIFDSTADDR, ifa)) == ENOTTY)
+		rc = if_ioctl(ifp, SIOCINITIFADDR, ifa);
 
 	return rc;
 }
@@ -3849,7 +3849,7 @@ if_flags_set(ifnet_t *ifp, const u_short flags)
 		memset(&ifr, 0, sizeof(ifr));
 
 		ifr.ifr_flags = flags & ~IFF_CANTCHANGE;
-		rc = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, &ifr);
+		rc = if_ioctl(ifp, SIOCSIFFLAGS, &ifr);
 
 		if (rc != 0 && cantflags != 0)
 			ifp->if_flags ^= cantflags;
@@ -3870,7 +3870,7 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	 * directly rather than via doifoictl()
 	 */
 	ifreq_setaddr(cmd, &ifr, sa);
-	rc = (*ifp->if_ioctl)(ifp, cmd, &ifr);
+	rc = if_ioctl(ifp, cmd, &ifr);
 
 	return rc;
 }
