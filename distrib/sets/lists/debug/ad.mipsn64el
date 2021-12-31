@@ -1,0 +1,6 @@
+./usr/libdata/debug/netbsd-msk0-XLSATX32.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-msk0-XLSATX64.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-sd0a-XLSATX32.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-sd0a-XLSATX64.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-wm0-XLSATX32.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-wm0-XLSATX64.debug	comp-sysutil-debug	debug
