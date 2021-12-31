@@ -1,4 +1,4 @@
-.\" $NetBSD: sysmon_taskq.9,v 1.8 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: sysmon_taskq.9,v 1.9 2021/12/31 14:22:10 riastradh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,8 @@
 .Fn sysmon_task_queue_fini "void"
 .Ft int
 .Fn sysmon_task_queue_sched "u_int pri" "void (*func)(void *)" "void *arg"
+.Ft void
+.Fn sysmon_task_queue_barrier "u_int pri"
 .Sh DESCRIPTION
 The machine-independent
 .Nm
@@ -67,7 +69,7 @@ All scheduled tasks are executed before the queue is halted.
 .Pp
 The
 .Fn sysmon_task_queue_sched
-enqueues
+function enqueues
 .Fa func
 to be executed at the priority
 .Fa pri .
@@ -78,6 +80,12 @@ The single argument passed to
 .Fa func
 is specified by
 .Fa arg .
+.Pp
+The
+.Fn sysmon_task_queue_barrier
+function waits for the completion of all tasks at
+.Fa pri
+or lower currently queued at the time of the call.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn sysmon_task_queue_sched

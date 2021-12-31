@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.h,v 1.4 2015/04/27 07:51:28 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_taskq.h,v 1.5 2021/12/31 14:22:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -41,5 +41,6 @@
 void	sysmon_task_queue_init(void);
 int	sysmon_task_queue_fini(void);
 int	sysmon_task_queue_sched(u_int, void (*)(void *), void *);
+void	sysmon_task_queue_barrier(u_int);
 
 #endif /* _DEV_SYSMON_SYSMON_TASKQ_H_ */
