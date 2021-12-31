@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.21 2019/03/08 08:35:58 msaitoh Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.22 2021/12/31 20:22:49 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1999 Jason R. Thorpe <thorpej@and.com>
@@ -288,7 +288,7 @@ struct scsi_send_volume_tag {
 				/*	0x0e - 0x1b	reserved */
 				/*	0x1c - 0x1f	vendor-specific */
 	u_int8_t	reserved1[2];
-	u_int8_t	length[2];	/* paremeter list length */
+	u_int8_t	length[2];	/* parameter list length */
 	u_int8_t	reserved2;
 	u_int8_t	control;
 };
