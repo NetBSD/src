@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.499 2021/12/31 14:25:58 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.500 2021/12/31 14:26:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.499 2021/12/31 14:25:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.500 2021/12/31 14:26:19 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3832,6 +3832,15 @@ if_do_dad(struct ifnet *ifp)
 	}
 }
 
+/*
+ * if_flags_set(ifp, flags)
+ *
+ *	Ask ifp to change ifp->if_flags to flags, as if with the
+ *	SIOCSIFFLAGS ioctl command.
+ *
+ *	May sleep.  Caller must hold ifp->if_ioctl_lock, a.k.a
+ *	IFNET_LOCK.
+ */
 int
 if_flags_set(ifnet_t *ifp, const u_short flags)
 {
