@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.149 2021/12/31 11:05:41 riastradh Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.150 2021/12/31 14:30:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.149 2021/12/31 11:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.150 2021/12/31 14:30:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -531,7 +531,7 @@ sysmon_envsys_create(void)
 	TAILQ_INIT(&sme->sme_sensors_list);
 	LIST_INIT(&sme->sme_events_list);
 	mutex_init(&sme->sme_mtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sme->sme_work_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sme->sme_work_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sme->sme_condvar, "sme_wait");
 
 	return sme;
@@ -655,11 +655,13 @@ sysmon_envsys_sensor_detach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (oedata->flags & ENVSYS_FHAS_ENTROPY)
 		rnd_detach_source(&oedata->rnd_src);
 	sme_event_unregister_sensor(sme, edata);
+	mutex_enter(&sme->sme_work_mtx);
 	if (LIST_EMPTY(&sme->sme_events_list)) {
 		if (sme->sme_callout_state == SME_CALLOUT_READY)
 			sme_events_halt_callout(sme);
 		destroy = true;
 	}
+	mutex_exit(&sme->sme_work_mtx);
 	TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	sme->sme_nsensors--;
 	sysmon_envsys_release(sme, true);
@@ -1324,18 +1326,12 @@ sme_remove_userprops(void)
 		/*
 		 * Restore default timeout value.
 		 */
+		mutex_enter(&sme->sme_work_mtx);
 		sme->sme_events_timeout = SME_EVENTS_DEFTIMEOUT;
-
-		/*
-		 * Note that we need to hold the sme_mtx while calling
-		 * sme_schedule_callout().  Thus to avoid dropping,
-		 * reacquiring, and dropping it again, we just tell
-		 * sme_envsys_release() that the mutex is already owned.
-		 */
-		mutex_enter(&sme->sme_mtx);
 		sme_schedule_callout(sme);
-		sysmon_envsys_release(sme, true);
-		mutex_exit(&sme->sme_mtx);
+		mutex_exit(&sme->sme_work_mtx);
+
+		sysmon_envsys_release(sme, false);
 	}
 	mutex_exit(&sme_global_mtx);
 }
@@ -1350,6 +1346,7 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 			    prop_dictionary_t dict)
 {
 	prop_dictionary_t pdict;
+	uint64_t timo;
 	const char *class;
 	int error = 0;
 
@@ -1374,15 +1371,15 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 	...
 	 *
 	 */
+	mutex_enter(&sme->sme_work_mtx);
 	if (sme->sme_events_timeout == 0) {
 		sme->sme_events_timeout = SME_EVENTS_DEFTIMEOUT;
-		mutex_enter(&sme->sme_mtx);
 		sme_schedule_callout(sme);
-		mutex_exit(&sme->sme_mtx);
 	}
+	timo = sme->sme_events_timeout;
+	mutex_exit(&sme->sme_work_mtx);
 
-	if (!prop_dictionary_set_uint64(pdict, "refresh-timeout",
-					sme->sme_events_timeout)) {
+	if (!prop_dictionary_set_uint64(pdict, "refresh-timeout", timo)) {
 		error = EINVAL;
 		goto out;
 	}
@@ -1606,6 +1603,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 {
 	envsys_data_t *edata;
 	prop_object_t array, dict, obj, obj2;
+	uint64_t timo;
 	int error = 0;
 
 	/*
@@ -1634,8 +1632,10 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	/*
 	 * Update the 'refresh-timeout' property.
 	 */
-	if (!prop_dictionary_set_uint64(obj2, "refresh-timeout",
-					sme->sme_events_timeout))
+	mutex_enter(&sme->sme_work_mtx);
+	timo = sme->sme_events_timeout;
+	mutex_exit(&sme->sme_work_mtx);
+	if (!prop_dictionary_set_uint64(obj2, "refresh-timeout", timo))
 		return EINVAL;
 
 	/*
@@ -1852,12 +1852,12 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			if (refresh_timo < 1)
 				error = EINVAL;
 			else {
-				mutex_enter(&sme->sme_mtx);
+				mutex_enter(&sme->sme_work_mtx);
 				if (sme->sme_events_timeout != refresh_timo) {
 					sme->sme_events_timeout = refresh_timo;
 					sme_schedule_callout(sme);
 				}
-				mutex_exit(&sme->sme_mtx);
+				mutex_exit(&sme->sme_work_mtx);
 			}
 		}
 		return error;

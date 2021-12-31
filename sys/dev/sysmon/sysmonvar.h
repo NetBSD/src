@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.51 2021/12/31 11:05:41 riastradh Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.52 2021/12/31 14:30:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -185,14 +185,17 @@ struct sysmon_envsys {
 			       sysmon_envsys_lim_t *, uint32_t *);
 
 	struct workqueue *sme_wq;	/* the workqueue for the events */
-	struct callout sme_callout;	/* for the events */
-	int sme_callout_state;		/* state of the event's callout */
+	struct callout sme_callout;	/* for the events
+					 * sme_work_mtx to schedule or halt */
+	int sme_callout_state;		/* state of the event's callout
+					 * sme_work_mtx to read or write */
 
 #define	SME_CALLOUT_INVALID	0x0	/* callout is not initialized */
 #define	SME_CALLOUT_READY	0x1	/* callout is ready for use */
 #define	SME_CALLOUT_HALTED	0x2	/* callout can be destroyed */
 
-	uint64_t sme_events_timeout;	/* the timeout used in the callout */
+	uint64_t sme_events_timeout;	/* the timeout used in the callout
+					 * sme_work_mtx to read or write */
 
 	/*
 	 * linked list for the sysmon envsys devices.
@@ -201,11 +204,14 @@ struct sysmon_envsys {
 
 	/*
 	 * linked list for the events that a device maintains.
+	 * - sme_work_mtx OR sme_mtx to read
+	 * - sme_work_mtx AND sme_mtx to write
 	 */
 	LIST_HEAD(, sme_event) sme_events_list;
 
 	/*
 	 * tailq for the sensors that a device maintains.
+	 * - sme_mtx to read or write
 	 */
 	TAILQ_HEAD(, envsys_data) sme_sensors_list;
 
@@ -213,8 +219,7 @@ struct sysmon_envsys {
 	 * Locking/synchronization.
 	 */
 	int sme_busy;			/* number of items on workqueue,
-					   sme_mtx or sme_work_mtx to read,
-					   both to write */
+					 * sme_work_mtx to read or write */
 	kmutex_t sme_mtx;
 	kmutex_t sme_work_mtx;
 	kcondvar_t sme_condvar;
