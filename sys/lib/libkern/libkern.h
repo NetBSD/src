@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.143 2021/05/17 08:50:36 mrg Exp $	*/
+/*	$NetBSD: libkern.h,v 1.144 2021/12/31 14:19:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -269,8 +269,14 @@ tolower(int ch)
 #define	KASSERTMSG(e, msg, ...)	/* NOTHING */
 #define	KASSERT(e)		/* NOTHING */
 #else /* !lint */
-#define	KASSERTMSG(e, msg, ...)	((void)0)
-#define	KASSERT(e)		((void)0)
+/*
+ * Make sure the expression compiles, but don't evaluate any of it.  We
+ * use sizeof to inhibit evaluation, and cast to long so the expression
+ * can be integer- or pointer-valued without bringing in other header
+ * files.
+ */
+#define	KASSERTMSG(e, msg, ...)	((void)sizeof((long)(e)))
+#define	KASSERT(e)		((void)sizeof((long)(e)))
 #endif /* !lint */
 #else /* DIAGNOSTIC */
 #define _DIAGASSERT(a)	assert(a)
