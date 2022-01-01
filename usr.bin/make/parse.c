@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.612 2022/01/01 21:19:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.613 2022/01/01 21:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.612 2022/01/01 21:19:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.613 2022/01/01 21:41:50 rillig Exp $");
 
 /* types and constants */
 
@@ -360,15 +360,6 @@ loadedfile_readMore(void *x, size_t *len)
 	return lf->buf;
 }
 
-/*
- * Read in a file.
- *
- * Until the path search logic can be moved under here instead of
- * being in the caller in another source file, we need to have the fd
- * passed in already open. Bleh.
- *
- * If the path is NULL, use stdin.
- */
 static struct loadedfile *
 loadfile(const char *path, int fd)
 {
@@ -376,11 +367,6 @@ loadfile(const char *path, int fd)
 	Buffer buf;
 	size_t bufSize;
 	struct stat st;
-
-	if (path == NULL) {
-		assert(fd == -1);
-		fd = STDIN_FILENO;
-	}
 
 	bufSize = fstat(fd, &st) == 0 && S_ISREG(st.st_mode) &&
 		  st.st_size >= 0 && st.st_size <= 0x3fffffff
@@ -411,9 +397,6 @@ loadfile(const char *path, int fd)
 
 	if (!Buf_EndsWith(&buf, '\n'))
 		Buf_AddByte(&buf, '\n');
-
-	if (path != NULL)
-		close(fd);
 
 	return loadedfile_create(buf.data, buf.len);
 }
@@ -2048,6 +2031,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 
 	/* load it */
 	lf = loadfile(fullname, fd);
+	(void)close(fd);
 
 	/* Start reading from this file next */
 	Parse_PushInput(fullname, 0, -1, loadedfile_readMore, lf);
@@ -3028,23 +3012,18 @@ ParseLine(char *line)
 /*
  * Parse a top-level makefile, incorporating its content into the global
  * dependency graph.
- *
- * Input:
- *	name		The name of the file being read
- *	fd		The open file to parse; will be closed at the end
  */
 void
 Parse_File(const char *name, int fd)
 {
-	char *line;		/* the line we're working on */
+	char *line;
 	struct loadedfile *lf;
 
-	lf = loadfile(name, fd);
+	lf = loadfile(name, fd != -1 ? fd : STDIN_FILENO);
+	if (fd != -1)
+		(void)close(fd);
 
 	assert(targets == NULL);
-
-	if (name == NULL)
-		name = "(stdin)";
 
 	Parse_PushInput(name, 0, -1, loadedfile_readMore, lf);
 	CurFile()->lf = lf;

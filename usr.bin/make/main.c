@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.564 2022/01/01 19:53:40 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.565 2022/01/01 21:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.564 2022/01/01 19:53:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.565 2022/01/01 21:41:50 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1643,7 +1643,7 @@ ReadMakefile(const char *fname)
 	char *name, *path = NULL;
 
 	if (strcmp(fname, "-") == 0) {
-		Parse_File(NULL /*stdin*/, -1);
+		Parse_File("(stdin)", -1);
 		Var_Set(SCOPE_INTERNAL, "MAKEFILE", "");
 	} else {
 		/* if we've chdir'd, rebuild the path name */
