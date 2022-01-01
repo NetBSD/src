@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbreg.h,v 1.6 2012/02/06 02:14:16 matt Exp $ */
+/* $NetBSD: tlsbreg.h,v 1.7 2022/01/01 22:01:18 andvar Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 by Matthew Jacob
@@ -222,7 +222,7 @@
  *
  *		* The "lock on first error" bit is cleared.
  *
- *	TLBER locking is intended for diagnosic purposes only, and
+ *	TLBER locking is intended for diagnostic purposes only, and
  *	not for general use.
  */
 #define TLBER_ATCE	0x00000001	/* Addr Transmit Ck Error */
