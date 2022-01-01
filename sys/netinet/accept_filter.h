@@ -1,4 +1,4 @@
-/*	$NetBSD: accept_filter.h,v 1.2 2008/08/10 14:07:41 tls Exp $	*/
+/*	$NetBSD: accept_filter.h,v 1.3 2022/01/01 13:18:43 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 /*
  * Valid accept filter list
- * Currently it is used for creting sysctl object
+ * Currently it is used for creating sysctl object
  */
 
 #define ACCF_DATA	1		/* Data ready accept filter */
