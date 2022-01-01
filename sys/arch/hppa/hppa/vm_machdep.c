@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2019/04/15 06:16:42 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.56 2022/01/01 01:03:50 macallan Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2019/04/15 06:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2022/01/01 01:03:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,8 @@ cpu_activate_pcb(struct lwp *l)
 #ifdef DIAGNOSTIC
 	vaddr_t uarea = (vaddr_t)pcb;
 	vaddr_t maxsp = uarea + USPACE;
-#endif
 	KASSERT(tf == (void *)(uarea + PAGE_SIZE));
-
+#endif
 	/*
 	 * Stash the physical address of FP regs for later perusal
 	 */
