@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.104 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.105 2022/01/01 21:07:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.104 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.105 2022/01/01 21:07:14 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.104 2021/08/07 16:19:12 thorpej Exp $"
  */
 
 /* Use doubleword transfers to/from SCSI chip.  Note: This requires
- * motherboard support.  Basicly, some motherboard chipsets are able to
+ * motherboard support.  Basically, some motherboard chipsets are able to
  * split a 32 bit I/O operation into two 16 bit I/O operations,
  * transparently to the processor.  This speeds up some things, notably long
  * data transfers.
@@ -1427,7 +1427,7 @@ out:
  * Precondition: The SCSI bus should be in the DOUT phase, with REQ asserted
  * and ACK deasserted (i.e. waiting for a data byte)
  * This new revision has been optimized (I tried) to make the common case fast,
- * and the rarer cases (as a result) somewhat more comlex
+ * and the rarer cases (as a result) somewhat more complex
  */
 static int
 aic_dataout_pio(struct aic_softc *sc, u_char *p, int n)
