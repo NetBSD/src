@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.164 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.165 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -5041,7 +5041,7 @@ Changes from NetBSD 1.4 to NetBSD 1.5:
 		[kleink 19990719]
 	find(1): added -regex and -iregex primaries which match complete
 		path names against basic regular expressions (case
-		sensitively and insensitvely, respectively).  [cgd 19990719]
+		sensitively and insensitively, respectively).  [cgd 19990719]
 	xsrc: updated to XFree86 3.3.4 [veego 19990720]
 	mt(1): added "setblk" as alias for "blocksize" and "setdensity"
 		as alias for "density". [tron 19990721]
