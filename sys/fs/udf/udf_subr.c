@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.162 2021/12/16 22:24:10 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.163 2022/01/01 08:34:35 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.162 2021/12/16 22:24:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.163 2022/01/01 08:34:35 msaitoh Exp $");
 #endif /* not lint */
 
 
@@ -2404,7 +2404,7 @@ udf_extattr_search_intern(struct udf_node *node,
 	/* looking for Ecma-167 attributes? */
 	offset = sizeof(struct extattrhdr_desc);
 
-	/* looking for either implemenation use or application use */
+	/* looking for either implementation use or application use */
 	if (sattr == 2048) {				/* [4/48.10.8] */
 		offset = udf_rw32(eahdr->impl_attr_loc);
 		if (offset == UDF_IMPL_ATTR_LOC_NOT_PRESENT)
