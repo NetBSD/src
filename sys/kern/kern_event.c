@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.138 2021/10/23 18:46:26 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.139 2022/01/01 10:54:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.138 2021/10/23 18:46:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.139 2022/01/01 10:54:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2525,7 +2525,7 @@ kqueue_close(file_t *fp)
 	 * need to fail, lest they sneak in to attach a knote after
 	 * we've already drained the list it's destined for.
 	 *
-	 * We must aquire kq_lock here to set KQ_CLOSING (to serialize
+	 * We must acquire kq_lock here to set KQ_CLOSING (to serialize
 	 * with other code paths that modify kq_count without holding
 	 * the fd_lock), but once this bit is set, it's only safe to
 	 * test it while holding the fd_lock, and holding kq_lock while
