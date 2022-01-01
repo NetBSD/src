@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm_symbol.c,v 1.7 2020/06/27 16:19:38 jdolecek Exp $	*/
+/*	$NetBSD: aicasm_symbol.c,v 1.8 2022/01/01 22:01:18 andvar Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler symbol table implementation
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm_symbol.c,v 1.7 2020/06/27 16:19:38 jdolecek Exp $");
+__RCSID("$NetBSD: aicasm_symbol.c,v 1.8 2022/01/01 22:01:18 andvar Exp $");
 
 #include <sys/types.h>
 
@@ -528,7 +528,7 @@ symtable_dump(FILE *ofile, FILE *dfile)
 		flag = R_NEXT;
 	}
 
-	/* Register dianostic functions/declarations first. */
+	/* Register diagnostic functions/declarations first. */
 	aic_print_file_prologue(ofile);
 	aic_print_reg_dump_types(ofile);
 	aic_print_file_prologue(dfile);
