@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.79 2021/10/22 14:26:04 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.80 2022/01/01 21:01:21 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.79 2021/10/22 14:26:04 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.80 2022/01/01 21:01:21 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -2322,6 +2322,7 @@ writezone(const char *const name, const char *const string, char version,
 		  thistypecnt = thischarcnt = 1;
 		}
 #define DO(field)	fwrite(tzh.field, sizeof tzh.field, (size_t) 1, fp)
+		memset(&tzh, 0, sizeof(tzh));
 		memcpy(tzh.tzh_magic, TZ_MAGIC, sizeof tzh.tzh_magic);
 		tzh.tzh_version[0] = version;
 		convert(utcnt, tzh.tzh_ttisutcnt);
