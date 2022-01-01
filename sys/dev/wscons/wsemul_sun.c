@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.33 2018/09/03 16:29:34 riastradh Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.34 2022/01/01 11:57:44 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.33 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.34 2022/01/01 11:57:44 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,9 @@ wsemul_sun_attach(int console, const struct wsscreen_descr *type,
 
 	if (console) {
 		edp = &wsemul_sun_console_emuldata;
+#ifdef DIAGNOSTIC
 		KASSERT(edp->console == 1);
+#endif
 	} else {
 		edp = malloc(sizeof *edp, M_DEVBUF, M_WAITOK);
 
