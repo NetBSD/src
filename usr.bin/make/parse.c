@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.613 2022/01/01 21:41:50 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.614 2022/01/01 21:50:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.613 2022/01/01 21:41:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.614 2022/01/01 21:50:29 rillig Exp $");
 
 /* types and constants */
 
@@ -2034,7 +2034,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 	(void)close(fd);
 
 	/* Start reading from this file next */
-	Parse_PushInput(fullname, 0, -1, loadedfile_readMore, lf);
+	Parse_PushInput(fullname, 0, loadedfile_readMore, lf);
 	CurFile()->lf = lf;
 	if (depinc)
 		doing_depend = depinc;	/* only turn it on */
@@ -2215,7 +2215,7 @@ TrackInput(const char *name)
  * The given file is added to the includes stack.
  */
 void
-Parse_PushInput(const char *name, int lineno, int fd,
+Parse_PushInput(const char *name, int lineno,
 	       ReadMoreProc readMore, void *readMoreArg)
 {
 	IFile *curFile;
@@ -2231,10 +2231,6 @@ Parse_PushInput(const char *name, int lineno, int fd,
 	DEBUG3(PARSE, "Parse_PushInput: %s %s, line %d\n",
 	    readMore == loadedfile_readMore ? "file" : ".for loop in",
 	    name, lineno);
-
-	if (fd == -1 && readMore == NULL)
-		/* sanity */
-		return;
 
 	curFile = Vector_Push(&includes);
 	curFile->name = FStr_InitOwn(bmake_strdup(name));
@@ -3025,7 +3021,7 @@ Parse_File(const char *name, int fd)
 
 	assert(targets == NULL);
 
-	Parse_PushInput(name, 0, -1, loadedfile_readMore, lf);
+	Parse_PushInput(name, 0, loadedfile_readMore, lf);
 	CurFile()->lf = lf;
 
 	do {
