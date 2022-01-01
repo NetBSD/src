@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.563 2021/12/31 00:18:06 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.564 2022/01/01 19:53:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.563 2021/12/31 00:18:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.564 2022/01/01 19:53:40 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -702,7 +702,6 @@ Main_SetObjdir(bool writable, const char *fmt, ...)
 	char *path;
 	char buf[MAXPATHLEN + 1];
 	char buf2[MAXPATHLEN + 1];
-	bool rc = false;
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -715,24 +714,23 @@ Main_SetObjdir(bool writable, const char *fmt, ...)
 	}
 
 	/* look for the directory and try to chdir there */
-	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-		if ((writable && access(path, W_OK) != 0) ||
-		    chdir(path) != 0) {
-			(void)fprintf(stderr, "%s warning: %s: %s.\n",
-			    progname, path, strerror(errno));
-		} else {
-			snprintf(objdir, sizeof objdir, "%s", path);
-			Global_Set(".OBJDIR", objdir);
-			setenv("PWD", objdir, 1);
-			Dir_InitDot();
-			purge_relative_cached_realpaths();
-			rc = true;
-			if (opts.enterFlag && strcmp(objdir, curdir) != 0)
-				enterFlagObj = true;
-		}
+	if (stat(path, &sb) != 0 || !S_ISDIR(sb.st_mode))
+		return false;
+
+	if ((writable && access(path, W_OK) != 0) || chdir(path) != 0) {
+		(void)fprintf(stderr, "%s warning: %s: %s.\n",
+		    progname, path, strerror(errno));
+		return false;
 	}
 
-	return rc;
+	snprintf(objdir, sizeof objdir, "%s", path);
+	Global_Set(".OBJDIR", objdir);
+	setenv("PWD", objdir, 1);
+	Dir_InitDot();
+	purge_relative_cached_realpaths();
+	if (opts.enterFlag && strcmp(objdir, curdir) != 0)
+		enterFlagObj = true;
+	return true;
 }
 
 static bool
