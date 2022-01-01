@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.114 2021/09/19 10:34:09 andvar Exp $	*/
+/*	$NetBSD: if_se.c,v 1.115 2022/01/01 10:32:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -49,7 +49,7 @@
  * This driver is also a bit unusual. It must look like a network
  * interface and it must also appear to be a scsi device to the scsi
  * system. Hence there are cases where there are two entry points. eg
- * sedone is to be called from the scsi subsytem and se_ifstart from
+ * sedone is to be called from the scsi subsystem and se_ifstart from
  * the network interface subsystem.  In addition, to facilitate scsi
  * commands issued by userland programs, there are open, close and
  * ioctl entry points. This allows a user program to, for example,
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.114 2021/09/19 10:34:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.115 2022/01/01 10:32:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"

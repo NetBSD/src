@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.33 2019/12/08 19:52:37 ad Exp $ */
+/*	$NetBSD: ts.c,v 1.34 2022/01/01 10:32:29 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.33 2019/12/08 19:52:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.34 2022/01/01 10:32:29 msaitoh Exp $");
 
 #undef	TSDEBUG
 
@@ -792,7 +792,7 @@ tsintr(void *arg)
 
 	case TS_TC_FCE:
 		/*
-		 * Fatal subsytem Error -- The subsytem is incapable
+		 * Fatal subsystem Error -- The subsystem is incapable
 		 * of properly performing commands, or at least its
 		 * integrity is seriously questionable. Refer to the
 		 * fatal class code field in the TSSR register for
