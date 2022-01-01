@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.15 2009/11/12 20:15:02 dyoung Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.16 2022/01/01 21:07:14 andvar Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
 /*
  * ACB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
- * with a request sense command.  Basicly, we refrain from fiddling with
+ * with a request sense command.  Basically, we refrain from fiddling with
  * the scsi_xfer struct (except do the expected updating of return values).
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.
