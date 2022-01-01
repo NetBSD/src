@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.609 2021/12/31 01:34:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.610 2022/01/01 19:44:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.609 2021/12/31 01:34:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.610 2022/01/01 19:44:05 rillig Exp $");
 
 /* types and constants */
 
@@ -1312,31 +1312,9 @@ AddToPaths(const char *dir, SearchPathList *paths)
 }
 
 /*
- * If the target was one that doesn't take files as its sources
- * but takes something like suffixes, we take each
- * space-separated word on the line as a something and deal
- * with it accordingly.
- *
- * If the target was .SUFFIXES, we take each source as a
- * suffix and add it to the list of suffixes maintained by the
- * Suff module.
- *
- * If the target was a .PATH, we add the source as a directory
- * to search on the search path.
- *
- * If it was .INCLUDES, the source is taken to be the suffix of
- * files which will be #included and whose search path should
- * be present in the .INCLUDES variable.
- *
- * If it was .LIBS, the source is taken to be the suffix of
- * files which are considered libraries and whose search path
- * should be present in the .LIBS variable.
- *
- * If it was .NULL, the source is the suffix to use when a file
- * has no valid suffix.
- *
- * If it was .OBJDIR, the source is a new definition for .OBJDIR,
- * and will cause make to do a new chdir to that path.
+ * If the target was one that doesn't take files as its sources but takes
+ * something like suffixes, we take each space-separated word on the line as
+ * a something and deal with it accordingly.
  */
 static void
 ParseDependencySourceSpecial(ParseSpecial special, char *word,
