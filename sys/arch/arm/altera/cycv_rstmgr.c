@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_rstmgr.c,v 1.4 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: cycv_rstmgr.c,v 1.5 2022/01/01 13:47:19 andvar Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_rstmgr.c,v 1.4 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_rstmgr.c,v 1.5 2022/01/01 13:47:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,7 +111,7 @@ cycv_rst_acquire(device_t dev, const void *data, size_t len) {
 
 	if (0) {
 err_decode:
-		aprint_debug_dev(dev, "couln't decode reset\n");
+		aprint_debug_dev(dev, "couldn't decode reset\n");
 	}
 	return reset;
 }
