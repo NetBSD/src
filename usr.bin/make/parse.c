@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.611 2022/01/01 21:04:15 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.612 2022/01/01 21:19:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.611 2022/01/01 21:04:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.612 2022/01/01 21:19:37 rillig Exp $");
 
 /* types and constants */
 
@@ -318,7 +318,7 @@ static const struct {
 /* file loader */
 
 struct loadedfile {
-	char *buf;		/* contents buffer */
+	char *buf;		/* contents buffer, not null-terminated */
 	size_t len;		/* length of contents */
 	bool used;		/* XXX: have we used the data yet */
 };
@@ -361,36 +361,6 @@ loadedfile_readMore(void *x, size_t *len)
 }
 
 /*
- * Try to get the size of a file.
- */
-static bool
-load_getsize(int fd, size_t *ret)
-{
-	struct stat st;
-
-	if (fstat(fd, &st) < 0)
-		return false;
-
-	if (!S_ISREG(st.st_mode))
-		return false;
-
-	/*
-	 * st_size is an off_t, which is 64 bits signed; *ret is
-	 * size_t, which might be 32 bits unsigned or 64 bits
-	 * unsigned. Rather than being elaborate, just punt on
-	 * files that are more than 1 GiB. We should never
-	 * see a makefile that size in practice.
-	 *
-	 * While we're at it reject negative sizes too, just in case.
-	 */
-	if (st.st_size < 0 || st.st_size > 0x3fffffff)
-		return false;
-
-	*ret = (size_t)st.st_size;
-	return true;
-}
-
-/*
  * Read in a file.
  *
  * Until the path search logic can be moved under here instead of
@@ -404,28 +374,20 @@ loadfile(const char *path, int fd)
 {
 	ssize_t n;
 	Buffer buf;
-	size_t filesize;
-
+	size_t bufSize;
+	struct stat st;
 
 	if (path == NULL) {
 		assert(fd == -1);
 		fd = STDIN_FILENO;
 	}
 
-	if (load_getsize(fd, &filesize)) {
-		/*
-		 * Avoid resizing the buffer later for no reason.
-		 *
-		 * At the same time leave space for adding a final '\n',
-		 * just in case it is missing in the file.
-		 */
-		filesize++;
-	} else
-		filesize = 1024;
-	Buf_InitSize(&buf, filesize);
+	bufSize = fstat(fd, &st) == 0 && S_ISREG(st.st_mode) &&
+		  st.st_size >= 0 && st.st_size <= 0x3fffffff
+	    ? (size_t)st.st_size : 1024;
+	Buf_InitSize(&buf, bufSize);
 
 	for (;;) {
-		assert(buf.len <= buf.cap);
 		if (buf.len == buf.cap) {
 			if (buf.cap > 0x1fffffff) {
 				errno = EFBIG;
@@ -462,7 +424,7 @@ PrintStackTrace(void)
 	const IFile *entries;
 	size_t i, n;
 
-	if (!(DEBUG(PARSE)))
+	if (!DEBUG(PARSE))
 		return;
 
 	entries = GetInclude(0);
