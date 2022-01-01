@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.69 2020/10/23 00:25:45 thorpej Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.70 2022/01/01 12:00:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.69 2020/10/23 00:25:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.70 2022/01/01 12:00:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -339,7 +339,7 @@ sleepq_block(int timo, bool catch_p)
 		/*
 		 * The LWP may have already been awoken if the caller
 		 * dropped the sleep queue lock between sleepq_enqueue() and
-		 * sleepq_block().  If that happends l_stat will be LSONPROC
+		 * sleepq_block().  If that happens l_stat will be LSONPROC
 		 * and mi_switch() will treat this as a preemption.  No need
 		 * to do anything special here.
 		 */
