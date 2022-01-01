@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.361 2021/12/28 14:06:42 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.362 2022/01/01 19:44:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.361 2021/12/28 14:06:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.362 2022/01/01 19:44:05 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -246,7 +246,7 @@ typedef struct CandidateSearcher {
 
 
 /* TODO: Document the difference between nullSuff and emptySuff. */
-/* The NULL suffix for this run */
+/* The NULL suffix is used when a file has no known suffix */
 static Suffix *nullSuff;
 /* The empty suffix required for POSIX single-suffix transformation rules */
 static Suffix *emptySuff;
