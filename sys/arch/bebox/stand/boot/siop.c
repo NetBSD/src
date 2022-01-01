@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.7 2019/12/27 09:41:49 msaitoh Exp $	*/
+/*	$NetBSD: siop.c,v 1.8 2022/01/01 13:47:19 andvar Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -854,7 +854,7 @@ scsi_request_sense(struct siop_adapter *adp, struct scsi_xfer *xs)
 		xs->error = XS_RESET;
 		return;
 	case EIO:
-		 /* request sense coudn't be performed */
+		 /* request sense couldn't be performed */
 		/*
 		 * XXX this isn't quite right but we don't have anything
 		 * better for now
