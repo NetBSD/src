@@ -1,4 +1,4 @@
-.\"	$NetBSD: beyond43.ms,v 1.5 2006/11/24 19:46:58 christos Exp $
+.\"	$NetBSD: beyond43.ms,v 1.6 2022/01/01 10:32:29 msaitoh Exp $
 .\"
 .\" Copyright (c) 1989 The Regents of the University of California.
 .\" All rights reserved.
@@ -141,7 +141,7 @@ knowledge of irregular disk geometries such as track-to-track skew.
 .NH 2
 Fat Fast File System
 .PP
-The 4.2 fast file sytem [McKusick84]
+The 4.2 fast file system [McKusick84]
 contained several statically sized structures,
 imposing limits on the number of cylinders per cylinder group,
 inodes per cylinder group,

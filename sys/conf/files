@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1291 2021/12/07 17:39:54 brad Exp $
+#	$NetBSD: files,v 1.1292 2022/01/01 10:32:29 msaitoh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1602,12 +1602,12 @@ include "dev/altmem/files.altmem"
 include "dev/flash/files.flash"
 
 #
-# NAND subsytem
+# NAND subsystem
 #
 include "dev/nand/files.nand"
 
 #
-# NOR subsytem
+# NOR subsystem
 #
 include "dev/nor/files.nor"
 

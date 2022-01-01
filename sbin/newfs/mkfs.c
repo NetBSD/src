@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.130 2020/08/20 15:54:11 riastradh Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.131 2022/01/01 10:32:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.130 2020/08/20 15:54:11 riastradh Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.131 2022/01/01 10:32:28 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -409,7 +409,7 @@ mkfs(const char *fsys, int fi, int fo,
 	if (ncg < MINCYLGRPS) {
 		/*
 		 * We would like to allocate MINCLYGRPS cylinder groups,
-		 * but for small file sytems (especially ones with a lot
+		 * but for small file systems (especially ones with a lot
 		 * of inodes) this is not desirable (or possible).
 		 */
 		u = sblock.fs_size / 2 / (sblock.fs_iblkno +
