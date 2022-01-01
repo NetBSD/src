@@ -1,4 +1,4 @@
-.\" $NetBSD: scmd.4,v 1.1 2021/12/07 17:39:54 brad Exp $
+.\" $NetBSD: scmd.4,v 1.2 2022/01/01 09:53:32 msaitoh Exp $
 .\"
 .\" Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 1, 2021
+.Dd January 1, 2022
 .Dt SCMD 4
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ from a single master instance.
 The secondary boards are accessed by set of view port registers
 from the main board.  The
 .Xr scmd 4
-driver and its assoicated frontends flatten the main SCMD board and all chained boards into
+driver and its associated frontends flatten the main SCMD board and all chained boards into
 a linear register space that can be opened, seeked, read from and written to like any other
 file or device without having to worry about the view port.
 .Pp
