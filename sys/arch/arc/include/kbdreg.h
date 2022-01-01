@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.4 2000/01/23 21:01:57 soda Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.5 2022/01/01 22:01:18 andvar Exp $	*/
 /*	$OpenBSD: kbdreg.h,v 1.3 1996/09/04 21:18:24 pefo Exp $	*/
 
 /*
@@ -77,7 +77,7 @@
 #define	KBR_RESEND	0xFE	/* needs resend of command */
 #define	KBR_ACK		0xFA	/* received a valid command */
 #define	KBR_OVERRUN	0x00	/* flooded */
-#define	KBR_FAILURE	0xFD	/* diagnosic failure */
+#define	KBR_FAILURE	0xFD	/* diagnostic failure */
 #define	KBR_BREAK	0xF0	/* break code prefix - sent on key release */
 #define	KBR_RSTDONE	0xAA	/* reset complete */
 #define	KBR_ECHO	0xEE	/* echo response */
