@@ -1,4 +1,4 @@
-/*	$NetBSD: ripoffline.c,v 1.6 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: ripoffline.c,v 1.7 2022/01/01 08:34:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ripoffline.c,v 1.6 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: ripoffline.c,v 1.7 2022/01/01 08:34:35 msaitoh Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -88,7 +88,7 @@ __rippedlines(const SCREEN *screen, int line)
  * __ripoffscreen --
  *	Rips lines from the screen by creating a WINDOW per ripoffline call.
  *	Although the POSIX API only allows for one line WINDOWS to be created,
- *	this implemenation allows for N lines if needed.
+ *	this implementation allows for N lines if needed.
  */
 int
 __ripoffscreen(SCREEN *screen)

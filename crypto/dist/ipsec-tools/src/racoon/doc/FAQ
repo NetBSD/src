@@ -8,7 +8,7 @@ A: [KAME]
 	See "IMPLEMENTATION" document supplied with KAME kit, or:
 	http://www.kame.net/dev/cvsweb.cgi/kame/IMPLEMENTATION
 	As we have tested/got test reports in the past, and our end and
-	the other end may have changed their implemenations, we are not sure
+	the other end may have changed their implementations, we are not sure
 	if we can interoperate with them today (we hope them to interoperate,
 	but we are not sure).
 	Also note that, IKE interoperability highly depends on configuration
