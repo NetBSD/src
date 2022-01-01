@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_arm.c,v 1.2 2013/11/11 13:52:04 jmcneill Exp $ */
+/* $NetBSD: cpu_arm.c,v 1.3 2022/01/01 21:07:14 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -29,12 +29,12 @@
 
 /*
  * Note that this machdep.c uses the `dummy' mcontext_t defined for usermode.
- * This is basicly a blob of PAGE_SIZE big. We might want to switch over to
+ * This is basically a blob of PAGE_SIZE big. We might want to switch over to
  * non-generic mcontext_t's one day, but will this break non-NetBSD hosts?
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_arm.c,v 1.2 2013/11/11 13:52:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_arm.c,v 1.3 2022/01/01 21:07:14 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

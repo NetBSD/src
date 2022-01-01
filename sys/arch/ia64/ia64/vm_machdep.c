@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2019/01/18 18:03:06 scole Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 2022/01/01 21:07:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	}
 
 	/*
-	 * create the child's kernel stack and backing store. We basicly
+	 * create the child's kernel stack and backing store. We basically
 	 * create an image of the parent's stack and backing store and
 	 * adjust where necessary.
 	 */

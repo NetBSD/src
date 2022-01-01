@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.57 2018/08/01 09:44:31 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.58 2022/01/01 21:07:14 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -29,7 +29,7 @@
 
 /*
  * Note that this machdep.c uses the `dummy' mcontext_t defined for usermode.
- * This is basicly a blob of PAGE_SIZE big. We might want to switch over to
+ * This is basically a blob of PAGE_SIZE big. We might want to switch over to
  * non-generic mcontext_t's one day, but will this break non-NetBSD hosts?
  */
 
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2018/08/01 09:44:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2022/01/01 21:07:14 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

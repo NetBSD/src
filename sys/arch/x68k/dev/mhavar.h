@@ -1,4 +1,4 @@
-/*	$NetBSD: mhavar.h,v 1.10 2012/07/29 00:08:19 matt Exp $	*/
+/*	$NetBSD: mhavar.h,v 1.11 2022/01/01 21:07:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -32,7 +32,7 @@
 /*
  * ACB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
- * with a request sense command.  Basicly, we refrain from fiddling with
+ * with a request sense command.  Basically, we refrain from fiddling with
  * the scsi_xfer struct (except do the expected updating of return values).
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.
