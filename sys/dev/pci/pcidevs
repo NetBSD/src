@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1444 2021/11/30 15:16:18 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1445 2022/01/01 10:32:29 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -225,7 +225,7 @@ vendor DIGICOM		0x10ab	Digicom
 vendor HONEYWELL	0x10ac	Honeywell IASD
 vendor SYMPHONY		0x10ad	Symphony Labs
 vendor CORNERSTONE	0x10ae	Cornerstone Technology
-vendor MICROCOMPSON	0x10af	Micro Computer Sysytems (M) SON
+vendor MICROCOMPSON	0x10af	Micro Computer Systems (M) SON
 vendor CARDEXPER	0x10b0	CardExpert Technology
 vendor CABLETRON	0x10b1	Cabletron Systems
 vendor RAYETHON		0x10b2	Raytheon

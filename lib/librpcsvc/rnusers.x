@@ -36,7 +36,7 @@
 %#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rnusers.x,v 1.15 2013/12/20 21:04:09 christos Exp $");
+%__RCSID("$NetBSD: rnusers.x,v 1.16 2022/01/01 10:32:28 msaitoh Exp $");
 %#endif /* not __lint__ */
 #endif
 
@@ -53,7 +53,7 @@
 %
 %/*
 % * This is the structure used in version 2 of the rusersd RPC service.
-% * It corresponds to the utmp structure for BSD sytems.
+% * It corresponds to the utmp structure for BSD systems.
 % */
 %struct ru_utmp {
 %	char	ut_line[8];		/* tty name */

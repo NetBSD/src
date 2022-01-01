@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_cam.h,v 1.5 2016/10/30 23:35:10 mlelstv Exp $	*/
+/*	$NetBSD: aic7xxx_cam.h,v 1.6 2022/01/01 10:32:29 msaitoh Exp $	*/
 
 /*
  * Data structures and definitions for the CAM system.
@@ -67,7 +67,7 @@ typedef enum {
 	CAM_REQ_ABORTED = XS_DRIVER_STUFFUP,	/* CCB request aborted by the host */
 	CAM_UA_ABORT,				/* Unable to abort CCB request */
 	CAM_REQ_CMP_ERR = XS_DRIVER_STUFFUP,	/* CCB request completed with an error */
-	CAM_BUSY = XS_BUSY,			/* CAM subsytem is busy */
+	CAM_BUSY = XS_BUSY,			/* CAM subsystem is busy */
 	CAM_REQ_INVALID = XS_DRIVER_STUFFUP,	/* CCB request was invalid */
 	CAM_PATH_INVALID,			/* Supplied Path ID is invalid */
 	CAM_SEL_TIMEOUT = XS_SELTIMEOUT,	/* Target Selection Timeout */
