@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.162 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.163 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -4100,7 +4100,7 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 	atari: Crazy Dots (et4000 vme) driver from Julian Coleman.
 		[leo 19980423]
 	mac68k: Added MACHINE_NEW_NONCONTIG and UVM support.  [scottr 19980424]
-	netinet: update our implemenation of RFC1323 PAWS/timestamps/wscale
+	netinet: update our implementation of RFC1323 PAWS/timestamps/wscale
 		to be compliant with the updated RFC1323.bis.
 		[thorpej 19980428]
 	netinet: add new TCP input reassembly code as a stepping stone
@@ -11704,7 +11704,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		values generically rather than as per-driver special cases.
 		[tls 20140810]
 	cprng_fast(9): Replace slow/broken mutex-protected kernel
-		_arc4random() with new cprng_fast implemenation
+		_arc4random() with new cprng_fast implementation
 		from riastradh@ using per-cpu instances of chacha8.
 		[tls 20140810]
 	OpenSSL: Update to 1.0.1i. [spz 20140810]

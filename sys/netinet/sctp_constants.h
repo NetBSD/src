@@ -1,5 +1,5 @@
 /*	$KAME: sctp_constants.h,v 1.17 2005/03/06 16:04:17 itojun Exp $	*/
-/*	$NetBSD: sctp_constants.h,v 1.2 2019/12/27 09:25:58 msaitoh Exp $ */
+/*	$NetBSD: sctp_constants.h,v 1.3 2022/01/01 08:34:35 msaitoh Exp $ */
 
 #ifndef __SCTP_CONSTANTS_H__
 #define __SCTP_CONSTANTS_H__
@@ -404,7 +404,7 @@
  * of decerning taste. However we do count them, if we get too
  * many before the association comes up.. we give up. Below is
  * the constant that dictates when we give it up...this is a
- * implemenation dependent treatment. In ours we do not ask for
+ * implementation dependent treatment. In ours we do not ask for
  * a extension of time, but just retry this many times...
  */
 #define SCTP_MAX_STALE_COOKIES_I_COLLECT 10
