@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.37 2021/12/26 16:08:19 andvar Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.38 2022/01/01 11:45:37 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.37 2021/12/26 16:08:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.38 2022/01/01 11:45:37 msaitoh Exp $");
 
 #include "grfcv3d.h"
 #include "ite.h"
@@ -345,7 +345,7 @@ static struct cfdata *cfdata;
 #define CV3D_ULCURSOR	1	/* Underlined Cursor in textmode */
 
 /*
- * Get frambuffer memory size.
+ * Get framebuffer memory size.
  * phase5 didn't provide the bit in CR36,
  * so we have to do it this way.
  * Return 0 for 2MB, 1 for 4MB
