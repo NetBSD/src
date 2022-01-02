@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.152 2022/01/01 21:50:29 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.153 2022/01/02 00:12:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.152 2022/01/01 21:50:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.153 2022/01/02 00:12:47 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -208,9 +208,9 @@ IsEndfor(const char *p)
  *	line		Line to parse
  *
  * Results:
- *      0: Not a .for statement, parse the line
+ *	0: Not a .for statement, parse the line
  *	1: We found a for loop
- *     -1: A .for statement with a bad syntax error, discard.
+ *	-1: A .for statement with a bad syntax error, discard.
  */
 int
 For_Eval(const char *line)
@@ -373,8 +373,8 @@ Buf_AddEscaped(Buffer *cmds, Substring item, char endc)
  * expression like ${i} or ${i:...} or $(i) or $(i:...) with ":Uvalue".
  */
 static void
-ForLoop_SubstVarLong(ForLoop *f, const char **pp, const char *bodyEnd,
-		     char endc, const char **inout_mark)
+ForLoop_SubstVarLong(ForLoop *f, Buffer *body, const char **pp,
+		     const char *end, char endc, const char **inout_mark)
 {
 	size_t i;
 	const char *p = *pp;
@@ -384,7 +384,7 @@ ForLoop_SubstVarLong(ForLoop *f, const char **pp, const char *bodyEnd,
 		const char *varname = forVar->name;
 		size_t varnameLen = forVar->nameLen;
 
-		if (varnameLen >= (size_t)(bodyEnd - p))
+		if (varnameLen >= (size_t)(end - p))
 			continue;
 		if (memcmp(p, varname, varnameLen) != 0)
 			continue;
@@ -397,10 +397,9 @@ ForLoop_SubstVarLong(ForLoop *f, const char **pp, const char *bodyEnd,
 		 * Found a variable match.  Skip over the variable name and
 		 * instead add ':U<value>' to the current body.
 		 */
-		Buf_AddBytesBetween(&f->curBody, *inout_mark, p);
-		Buf_AddStr(&f->curBody, ":U");
-		Buf_AddEscaped(&f->curBody,
-		    f->items.words[f->nextItem + i], endc);
+		Buf_AddBytesBetween(body, *inout_mark, p);
+		Buf_AddStr(body, ":U");
+		Buf_AddEscaped(body, f->items.words[f->nextItem + i], endc);
 
 		p += varnameLen;
 		*inout_mark = p;
@@ -414,7 +413,8 @@ ForLoop_SubstVarLong(ForLoop *f, const char **pp, const char *bodyEnd,
  * variable expressions like $i with their ${:U...} expansion.
  */
 static void
-ForLoop_SubstVarShort(ForLoop *f, const char *p, const char **inout_mark)
+ForLoop_SubstVarShort(ForLoop *f, Buffer *body,
+		      const char *p, const char **inout_mark)
 {
 	const char ch = *p;
 	const ForVar *vars;
@@ -433,13 +433,13 @@ ForLoop_SubstVarShort(ForLoop *f, const char *p, const char **inout_mark)
 	return;
 
 found:
-	Buf_AddBytesBetween(&f->curBody, *inout_mark, p);
+	Buf_AddBytesBetween(body, *inout_mark, p);
 	*inout_mark = p + 1;
 
 	/* Replace $<ch> with ${:U<value>} */
-	Buf_AddStr(&f->curBody, "{:U");
-	Buf_AddEscaped(&f->curBody, f->items.words[f->nextItem + i], '}');
-	Buf_AddByte(&f->curBody, '}');
+	Buf_AddStr(body, "{:U");
+	Buf_AddEscaped(body, f->items.words[f->nextItem + i], '}');
+	Buf_AddByte(body, '}');
 }
 
 /*
@@ -456,28 +456,28 @@ found:
  * possible to contrive a makefile where an unwanted substitution happens.
  */
 static void
-ForLoop_SubstBody(ForLoop *f)
+ForLoop_SubstBody(ForLoop *f, Buffer *body)
 {
-	const char *p, *bodyEnd;
+	const char *p, *end;
 	const char *mark;	/* where the last substitution left off */
 
-	Buf_Empty(&f->curBody);
+	Buf_Empty(body);
 
 	mark = f->body.data;
-	bodyEnd = f->body.data + f->body.len;
+	end = f->body.data + f->body.len;
 	for (p = mark; (p = strchr(p, '$')) != NULL;) {
 		if (p[1] == '{' || p[1] == '(') {
 			char endc = p[1] == '{' ? '}' : ')';
 			p += 2;
-			ForLoop_SubstVarLong(f, &p, bodyEnd, endc, &mark);
+			ForLoop_SubstVarLong(f, body, &p, end, endc, &mark);
 		} else if (p[1] != '\0') {
-			ForLoop_SubstVarShort(f, p + 1, &mark);
+			ForLoop_SubstVarShort(f, body, p + 1, &mark);
 			p += 2;
 		} else
 			break;
 	}
 
-	Buf_AddBytesBetween(&f->curBody, mark, bodyEnd);
+	Buf_AddBytesBetween(body, mark, end);
 }
 
 /*
@@ -495,7 +495,7 @@ ForReadMore(void *v_arg, size_t *out_len)
 		return NULL;
 	}
 
-	ForLoop_SubstBody(f);
+	ForLoop_SubstBody(f, &f->curBody);
 	DEBUG1(FOR, "For: loop body:\n%s", f->curBody.data);
 	f->nextItem += (unsigned int)f->vars.len;
 
