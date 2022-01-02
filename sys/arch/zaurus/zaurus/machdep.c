@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2021/08/17 22:00:31 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2022/01/02 16:40:46 christos Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2021/08/17 22:00:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2022/01/02 16:40:46 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -856,7 +856,9 @@ initarm(void *arg)
 	valloc_pages(kernelstack, UPAGES);
 
 	/* Allocate enough pages for cleaning the Mini-Data cache. */
+#ifdef DIAGNOSTIC
 	KASSERT(xscale_minidata_clean_size <= PAGE_SIZE);
+#endif
 	valloc_pages(minidataclean, 1);
 
 #ifdef KLOADER
