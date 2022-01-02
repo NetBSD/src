@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-number.mk,v 1.6 2021/12/27 18:54:19 rillig Exp $
+# $NetBSD: cond-token-number.mk,v 1.7 2022/01/02 02:57:39 rillig Exp $
 #
 # Tests for number tokens in .if conditions.
 #
@@ -78,7 +78,7 @@
 .  error
 .endif
 
-# Make can do radix conversion from hex to decimal.
+# Make can do radix conversion from hex.
 HEX=	dead
 .if 0x${HEX} == 57005
 .else

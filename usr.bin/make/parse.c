@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.618 2022/01/02 02:39:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.619 2022/01/02 02:57:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.618 2022/01/02 02:39:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.619 2022/01/02 02:57:39 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -884,8 +884,7 @@ ParseDependencyTargetWord(char **pp, const char *lstart)
 		if (*cp == '$') {
 			/*
 			 * Must be a dynamic source (would have been expanded
-			 * otherwise), so call the Var module to parse the
-			 * puppy so we can safely advance beyond it.
+			 * otherwise).
 			 *
 			 * There should be no errors in this, as they would
 			 * have been discovered in the initial Var_Subst and
@@ -1790,9 +1789,8 @@ MaybeSubMake(const char *cmd)
 		if (*p == '.')	/* Accept either ${.MAKE} or ${MAKE}. */
 			p++;
 
-		if (strncmp(p, "MAKE", 4) == 0)
-			if (p[4] == endc)
-				return true;
+		if (strncmp(p, "MAKE", 4) == 0 && p[4] == endc)
+			return true;
 	}
 	return false;
 }
