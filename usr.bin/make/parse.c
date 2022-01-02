@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.615 2022/01/02 00:07:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.616 2022/01/02 01:54:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.615 2022/01/02 00:07:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.616 2022/01/02 01:54:43 rillig Exp $");
 
 /* types and constants */
 
@@ -119,6 +119,7 @@ MAKE_RCSID("$NetBSD: parse.c,v 1.615 2022/01/02 00:07:20 rillig Exp $");
  */
 typedef struct IFile {
 	FStr name;		/* absolute or relative to the cwd */
+	/* TODO: merge with forLoop */
 	bool fromForLoop;	/* simulated .include by the .for loop */
 	int lineno;		/* current line number in file */
 	int first_lineno;	/* line number of start of text */
@@ -126,19 +127,14 @@ typedef struct IFile {
 	bool depending;	/* state of doing_depend on EOF */
 
 	/*
-	 * The buffer from which the file's content is read.  The buffer
-	 * always ends with '\n', the buffer is not null-terminated, that is,
-	 * buf_end[0] is already out of bounds.
+	 * The buffer from which the file's content or the body of the .for
+	 * loop is read.  The buffer always ends with '\n'.
 	 */
-	char *buf_freeIt;
+	Buffer buf;
 	char *buf_ptr;		/* next char to be read */
 	char *buf_end;		/* buf_end[-1] == '\n' */
 
-	/* Function to read more data, with a single opaque argument. */
-	ReadMoreProc readMore;
-	void *readMoreArg;
-
-	struct loadedfile *lf;	/* loadedfile object, if any */
+	struct ForLoop *forLoop;
 } IFile;
 
 /*
@@ -315,52 +311,8 @@ static const struct {
     { ".WAIT",		SP_WAIT,	OP_NONE },
 };
 
-/* file loader */
 
-struct loadedfile {
-	char *buf;		/* contents buffer, not null-terminated */
-	size_t len;		/* length of contents */
-	bool used;		/* XXX: have we used the data yet */
-};
-
-/* XXX: What is the lifetime of the path? Who manages the memory? */
-static struct loadedfile *
-loadedfile_create(char *buf, size_t buflen)
-{
-	struct loadedfile *lf;
-
-	lf = bmake_malloc(sizeof *lf);
-	lf->buf = buf;
-	lf->len = buflen;
-	lf->used = false;
-	return lf;
-}
-
-static void
-loadedfile_destroy(struct loadedfile *lf)
-{
-	free(lf->buf);
-	free(lf);
-}
-
-/*
- * readMore() operation for loadedfile, as needed by the weird and twisted
- * logic below. Once that's cleaned up, we can get rid of lf->used.
- */
-static char *
-loadedfile_readMore(void *x, size_t *len)
-{
-	struct loadedfile *lf = x;
-
-	if (lf->used)
-		return NULL;
-
-	lf->used = true;
-	*len = lf->len;
-	return lf->buf;
-}
-
-static struct loadedfile *
+static Buffer
 loadfile(const char *path, int fd)
 {
 	ssize_t n;
@@ -398,7 +350,7 @@ loadfile(const char *path, int fd)
 	if (!Buf_EndsWith(&buf, '\n'))
 		Buf_AddByte(&buf, '\n');
 
-	return loadedfile_create(buf.data, buf.len);
+	return buf;
 }
 
 static void
@@ -1936,7 +1888,7 @@ Parse_AddIncludeDir(const char *dir)
 static void
 IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 {
-	struct loadedfile *lf;
+	Buffer buf;
 	char *fullname;		/* full pathname of file */
 	char *newName;
 	char *slash, *incdir;
@@ -2029,13 +1981,10 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 		return;
 	}
 
-	/* load it */
-	lf = loadfile(fullname, fd);
+	buf = loadfile(fullname, fd);
 	(void)close(fd);
 
-	/* Start reading from this file next */
-	Parse_PushInput(fullname, 0, loadedfile_readMore, lf);
-	CurFile()->lf = lf;
+	Parse_PushInput(fullname, 0, buf, NULL);
 	if (depinc)
 		doing_depend = depinc;	/* only turn it on */
 	free(fullname);
@@ -2215,12 +2164,10 @@ TrackInput(const char *name)
  * The given file is added to the includes stack.
  */
 void
-Parse_PushInput(const char *name, int lineno,
-	       ReadMoreProc readMore, void *readMoreArg)
+Parse_PushInput(const char *name, int lineno, Buffer buf,
+		struct ForLoop *forLoop)
 {
 	IFile *curFile;
-	char *buf;
-	size_t len;
 	bool fromForLoop = name == NULL;
 
 	if (fromForLoop)
@@ -2229,7 +2176,7 @@ Parse_PushInput(const char *name, int lineno,
 		TrackInput(name);
 
 	DEBUG3(PARSE, "Parse_PushInput: %s %s, line %d\n",
-	    readMore == loadedfile_readMore ? "file" : ".for loop in",
+	    !fromForLoop ? "file" : ".for loop in",
 	    name, lineno);
 
 	curFile = Vector_Push(&includes);
@@ -2237,25 +2184,15 @@ Parse_PushInput(const char *name, int lineno,
 	curFile->fromForLoop = fromForLoop;
 	curFile->lineno = lineno;
 	curFile->first_lineno = lineno;
-	curFile->readMore = readMore;
-	curFile->readMoreArg = readMoreArg;
-	curFile->lf = NULL;
+	curFile->buf = buf;
 	curFile->depending = doing_depend;	/* restore this on EOF */
+	curFile->forLoop = forLoop;
 
-	assert(readMore != NULL);
+	if (forLoop != NULL && !For_NextIteration(forLoop, &curFile->buf))
+		abort();	/* see For_Run */
 
-	/* Get first block of input data */
-	buf = curFile->readMore(curFile->readMoreArg, &len);
-	if (buf == NULL) {
-		/* Was all a waste of time ... */
-		FStr_Done(&curFile->name);
-		free(curFile);
-		return;
-	}
-	curFile->buf_freeIt = buf;
-	curFile->buf_ptr = buf;
-	curFile->buf_end = buf + len;
-
+	curFile->buf_ptr = curFile->buf.data;
+	curFile->buf_end = curFile->buf.data + curFile->buf.len;
 	curFile->cond_depth = Cond_save_depth();
 	SetParseFile(name);
 }
@@ -2378,21 +2315,15 @@ ParseGmakeExport(char *line)
 static bool
 ParseEOF(void)
 {
-	char *ptr;
-	size_t len;
 	IFile *curFile = CurFile();
 
-	assert(curFile->readMore != NULL);
-
-	doing_depend = curFile->depending;	/* restore this */
-	/* get next input buffer, if any */
-	ptr = curFile->readMore(curFile->readMoreArg, &len);
-	curFile->buf_ptr = ptr;
-	curFile->buf_freeIt = ptr;
-	curFile->buf_end = ptr == NULL ? NULL : ptr + len;
-	if (ptr != NULL) {
+	doing_depend = curFile->depending;
+	if (curFile->forLoop != NULL &&
+	    For_NextIteration(curFile->forLoop, &curFile->buf)) {
+		curFile->buf_ptr = curFile->buf.data;
+		curFile->buf_end = curFile->buf.data + curFile->buf.len;
 		curFile->lineno = curFile->first_lineno;
-		return true;	/* Iterate again */
+		return true;
 	}
 
 	/*
@@ -2401,13 +2332,8 @@ ParseEOF(void)
 	 */
 	Cond_restore_depth(curFile->cond_depth);
 
-	if (curFile->lf != NULL) {
-		loadedfile_destroy(curFile->lf);
-		curFile->lf = NULL;
-	}
-
 	FStr_Done(&curFile->name);
-	free(curFile->buf_freeIt);
+	Buf_Done(&curFile->buf);
 	Vector_Pop(&includes);
 
 	if (includes.len == 0) {
@@ -2687,7 +2613,7 @@ ParseForLoop(const char *line)
 
 	firstLineno = CurFile()->lineno;
 
-	/* Accumulate loop lines until matching .endfor */
+	/* Accumulate the loop body until the matching '.endfor'. */
 	do {
 		line = ReadLowLevelLine(LK_FOR_BODY);
 		if (line == NULL) {
@@ -2697,9 +2623,8 @@ ParseForLoop(const char *line)
 		}
 	} while (For_Accum(line));
 
-	For_Run(firstLineno);	/* Stash each iteration as a new 'input file' */
-
-	return true;		/* Read next line from for-loop buffer */
+	For_Run(firstLineno);
+	return true;
 }
 
 /*
@@ -3014,16 +2939,15 @@ void
 Parse_File(const char *name, int fd)
 {
 	char *line;
-	struct loadedfile *lf;
+	Buffer buf;
 
-	lf = loadfile(name, fd != -1 ? fd : STDIN_FILENO);
+	buf = loadfile(name, fd != -1 ? fd : STDIN_FILENO);
 	if (fd != -1)
 		(void)close(fd);
 
 	assert(targets == NULL);
 
-	Parse_PushInput(name, 0, loadedfile_readMore, lf);
-	CurFile()->lf = lf;
+	Parse_PushInput(name, 0, buf, NULL);
 
 	do {
 		while ((line = ReadHighLevelLine()) != NULL) {
