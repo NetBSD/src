@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.272 2021/12/03 13:27:39 andvar Exp $	*/
+/*	$NetBSD: key.c,v 1.273 2022/01/02 20:28:53 andvar Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.272 2021/12/03 13:27:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.273 2022/01/02 20:28:53 andvar Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -6751,7 +6751,7 @@ key_acquire(const struct secasindex *saidx, const struct secpolicy *sp, int mfla
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/*
-	 * We never do anything about acquirng SA.  There is anather
+	 * We never do anything about acquiring SA.  There is another
 	 * solution that kernel blocks to send SADB_ACQUIRE message until
 	 * getting something message from IKEd.  In later case, to be
 	 * managed with ACQUIRING list.
