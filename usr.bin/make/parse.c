@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.616 2022/01/02 01:54:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.617 2022/01/02 02:16:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.616 2022/01/02 01:54:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.617 2022/01/02 02:16:12 rillig Exp $");
 
 /* types and constants */
 
@@ -119,8 +119,6 @@ MAKE_RCSID("$NetBSD: parse.c,v 1.616 2022/01/02 01:54:43 rillig Exp $");
  */
 typedef struct IFile {
 	FStr name;		/* absolute or relative to the cwd */
-	/* TODO: merge with forLoop */
-	bool fromForLoop;	/* simulated .include by the .for loop */
 	int lineno;		/* current line number in file */
 	int first_lineno;	/* line number of start of text */
 	unsigned int cond_depth; /* 'if' nesting when file opened */
@@ -385,20 +383,15 @@ PrintStackTrace(void)
 	for (i = n; i-- > 0;) {
 		const IFile *entry = entries + i;
 		const char *fname = entry->name.str;
-		bool printLineno;
 		char dirbuf[MAXPATHLEN + 1];
 
 		if (fname[0] != '/' && strcmp(fname, "(stdin)") != 0)
 			fname = realpath(fname, dirbuf);
 
-		printLineno = !entry->fromForLoop;
-		if (i + 1 < n && entries[i + 1].fromForLoop == printLineno)
-			printLineno = entry->fromForLoop;
-
-		if (printLineno)
+		if (entries[i + 1 < n ? i + 1 : i].forLoop == NULL)
 			debug_printf("\tin .include from %s:%d\n",
 			    fname, entry->lineno);
-		if (entry->fromForLoop)
+		if (entry->forLoop != NULL)
 			debug_printf("\tin .for loop from %s:%d\n",
 			    fname, entry->first_lineno);
 	}
@@ -2082,7 +2075,7 @@ GetActuallyIncludingFile(void)
 	const IFile *incs = GetInclude(0);
 
 	for (i = includes.len; i >= 2; i--)
-		if (!incs[i - 1].fromForLoop)
+		if (incs[i - 1].forLoop == NULL)
 			return incs[i - 2].name.str;
 	return NULL;
 }
@@ -2168,20 +2161,17 @@ Parse_PushInput(const char *name, int lineno, Buffer buf,
 		struct ForLoop *forLoop)
 {
 	IFile *curFile;
-	bool fromForLoop = name == NULL;
 
-	if (fromForLoop)
+	if (forLoop != NULL)
 		name = CurFile()->name.str;
 	else
 		TrackInput(name);
 
 	DEBUG3(PARSE, "Parse_PushInput: %s %s, line %d\n",
-	    !fromForLoop ? "file" : ".for loop in",
-	    name, lineno);
+	    forLoop != NULL ? ".for loop in": "file", name, lineno);
 
 	curFile = Vector_Push(&includes);
 	curFile->name = FStr_InitOwn(bmake_strdup(name));
-	curFile->fromForLoop = fromForLoop;
 	curFile->lineno = lineno;
 	curFile->first_lineno = lineno;
 	curFile->buf = buf;
