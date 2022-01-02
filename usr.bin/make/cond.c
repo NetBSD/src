@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.321 2021/12/30 02:14:55 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.322 2022/01/02 02:57:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.321 2021/12/30 02:14:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.322 2022/01/02 02:57:39 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -225,7 +225,7 @@ ParseWord(const char **pp, bool doEval)
 			break;
 		if ((ch == '&' || ch == '|') && paren_depth == 0)
 			break;
-		if (*p == '$') {
+		if (ch == '$') {
 			/*
 			 * Parse the variable expression and install it as
 			 * part of the argument if it's valid. We tell
@@ -248,7 +248,7 @@ ParseWord(const char **pp, bool doEval)
 			paren_depth++;
 		else if (ch == ')' && --paren_depth < 0)
 			break;
-		Buf_AddByte(&argBuf, *p);
+		Buf_AddByte(&argBuf, ch);
 		p++;
 	}
 
