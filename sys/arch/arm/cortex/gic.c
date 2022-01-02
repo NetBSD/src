@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.51 2021/10/21 04:47:57 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.52 2022/01/02 11:20:03 riastradh Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.51 2021/10/21 04:47:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.52 2022/01/02 11:20:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -321,10 +321,8 @@ armgic_irq_handler(void *tf)
 	struct cpu_info * const ci = curcpu();
 	struct armgic_softc * const sc = &armgic_softc;
 	const int old_ipl = ci->ci_cpl;
-#ifdef DIAGNOSTIC
 	const int old_mtx_count = ci->ci_mtx_count;
 	const int old_l_biglocks = ci->ci_curlwp->l_biglocks;
-#endif
 #ifdef DEBUG
 	size_t n = 0;
 #endif
