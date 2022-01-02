@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.456 2021/12/29 22:22:13 christos Exp $
+#	$NetBSD: Makefile,v 1.457 2022/01/02 20:09:03 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -702,6 +702,11 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 #	kernels are built. It should really run before the sets are build.
 install-debugkernels:
 .if ${MKDEBUG:Uno} == "yes"
+	@for i in $$(${NETBSDSRCDIR}/distrib/sets/makeflist debug | \
+	    ${TOOL_GREP} -E '^./usr/libdata/debug/(nfs)?netbsd-'); do \
+		echo touch ${DESTDIR}/$$i; \
+		touch ${DESTDIR}/$$i; \
+	done
 .	for k in ${ALL_KERNELS}
 install-debugkernels: ${DESTDIR}${DEBUGDIR}/netbsd-${k}.debug
 		
