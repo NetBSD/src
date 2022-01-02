@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.412 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.413 2022/01/02 20:28:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.412 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.413 2022/01/02 20:28:53 andvar Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4488,7 +4488,7 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 		if (pmap_sync_pv(pvpte, pa, 0, &oattrs, NULL)) {
 			/*
 			 * raced with a V->P operation.  wait for the other
-			 * side to finish by acquring pmap's lock.  if no
+			 * side to finish by acquiring pmap's lock.  if no
 			 * wait, updates to pp_attrs by the other side may
 			 * go unseen.
 			 */
@@ -4528,7 +4528,7 @@ startover:
 		if (pmap_sync_pv(pvpte, pa, clearbits, &oattrs, NULL)) {
 			/*
 			 * raced with a V->P operation.  wait for the other
-			 * side to finish by acquring pmap's lock.  it is
+			 * side to finish by acquiring pmap's lock.  it is
 			 * probably unmapping the page, and it will be gone
 			 * when the loop is restarted.
 			 */
