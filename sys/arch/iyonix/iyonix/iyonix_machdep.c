@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.30 2020/04/18 11:00:41 skrll Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.31 2022/01/02 16:42:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.30 2020/04/18 11:00:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.31 2022/01/02 16:42:10 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -583,7 +583,9 @@ initarm(void *arg)
 	valloc_pages(kernelstack, UPAGES);
 
 	/* Allocate enough pages for cleaning the Mini-Data cache. */
+#ifdef DIAGNOSTIC
 	KASSERT(xscale_minidata_clean_size <= PAGE_SIZE);
+#endif
 	valloc_pages(minidataclean, 1);
 
 #ifdef VERBOSE_INIT_ARM
