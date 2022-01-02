@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.431 2022/01/01 15:09:01 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.432 2022/01/02 11:20:03 riastradh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.431 2022/01/01 15:09:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.432 2022/01/02 11:20:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3747,9 +3747,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		PMAPCOUNT(kenter_remappings);
 #ifdef PMAP_CACHE_VIPT
 		opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
-#if !defined(ARM_MMU_EXTENDED) || defined(DIAGNOSTIC)
-		struct vm_page_md *omd __diagused = VM_PAGE_TO_MD(opg);
-#endif
+		struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
 		if (opg && arm_cache_prefer_mask != 0) {
 			KASSERT(opg != pg);
 			KASSERT((omd->pvh_attrs & PVF_KMPAGE) == 0);
