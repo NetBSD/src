@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.153 2022/01/02 00:12:47 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.154 2022/01/02 01:54:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.153 2022/01/02 00:12:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.154 2022/01/02 01:54:43 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -71,7 +71,6 @@ typedef struct ForLoop {
 	Buffer body;		/* Unexpanded body of the loop */
 	Vector /* of ForVar */ vars; /* Iteration variables */
 	SubstringWords items;	/* Substitution items */
-	Buffer curBody;		/* Expanded body of the current iteration */
 	unsigned int nextItem;	/* Where to continue iterating */
 } ForLoop;
 
@@ -88,7 +87,6 @@ ForLoop_New(void)
 	Buf_Init(&f->body);
 	Vector_Init(&f->vars, sizeof(ForVar));
 	SubstringWords_Init(&f->items);
-	Buf_Init(&f->curBody);
 	f->nextItem = 0;
 
 	return f;
@@ -106,7 +104,6 @@ ForLoop_Free(ForLoop *f)
 	Vector_Done(&f->vars);
 
 	SubstringWords_Free(f->items);
-	Buf_Done(&f->curBody);
 
 	free(f);
 }
@@ -484,40 +481,32 @@ ForLoop_SubstBody(ForLoop *f, Buffer *body)
  * Compute the body for the current iteration by copying the unexpanded body,
  * replacing the expressions for the iteration variables on the way.
  */
-static char *
-ForReadMore(void *v_arg, size_t *out_len)
+bool
+For_NextIteration(ForLoop *f, Buffer *body)
 {
-	ForLoop *f = v_arg;
-
 	if (f->nextItem == f->items.len) {
 		/* No more iterations */
 		ForLoop_Free(f);
-		return NULL;
+		return false;
 	}
 
-	ForLoop_SubstBody(f, &f->curBody);
-	DEBUG1(FOR, "For: loop body:\n%s", f->curBody.data);
+	ForLoop_SubstBody(f, body);
+	DEBUG1(FOR, "For: loop body:\n%s", body->data);
 	f->nextItem += (unsigned int)f->vars.len;
-
-	*out_len = f->curBody.len;
-	return f->curBody.data;
+	return true;
 }
 
 /* Run the .for loop, imitating the actions of an include file. */
 void
 For_Run(int lineno)
 {
+	Buffer buf;
 	ForLoop *f = accumFor;
 	accumFor = NULL;
 
-	if (f->items.len == 0) {
-		/*
-		 * Nothing to expand - possibly due to an earlier syntax
-		 * error.
-		 */
+	if (f->items.len > 0) {
+		Buf_Init(&buf);
+		Parse_PushInput(NULL, lineno, buf, f);
+	} else
 		ForLoop_Free(f);
-		return;
-	}
-
-	Parse_PushInput(NULL, lineno, ForReadMore, f);
 }

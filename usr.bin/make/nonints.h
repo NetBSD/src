@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.228 2022/01/01 21:50:29 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.229 2022/01/02 01:54:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -116,9 +116,11 @@ SearchPath_New(void)
 void SearchPath_Free(SearchPath *);
 
 /* for.c */
+struct ForLoop;
 int For_Eval(const char *) MAKE_ATTR_USE;
 bool For_Accum(const char *) MAKE_ATTR_USE;
 void For_Run(int);
+bool For_NextIteration(struct ForLoop *, Buffer *);
 
 /* job.c */
 void JobReapChild(pid_t, int, bool);
@@ -141,13 +143,11 @@ const char *cached_realpath(const char *, char *);
 void Parse_Init(void);
 void Parse_End(void);
 
-typedef char *(*ReadMoreProc)(void *, size_t *);
-
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 bool Parse_VarAssign(const char *, bool, GNode *) MAKE_ATTR_USE;
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
-void Parse_PushInput(const char *, int, ReadMoreProc, void *);
+void Parse_PushInput(const char *, int, Buffer, struct ForLoop *);
 void Parse_MainName(GNodeList *);
 int Parse_NumErrors(void) MAKE_ATTR_USE;
 
