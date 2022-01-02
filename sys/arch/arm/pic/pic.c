@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.78 2021/12/21 07:11:02 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.79 2022/01/02 11:17:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.78 2021/12/21 07:11:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.79 2022/01/02 11:17:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -575,9 +575,7 @@ pic_percpu_allocate(void *v0, void *v1, struct cpu_info *ci)
 	KASSERT(pcpu->pcpu_evs != NULL);
 
 #define	PCPU_NAMELEN	32
-#ifdef DIAGNOSTIC
 	const size_t namelen = strlen(pic->pic_name) + 4 + strlen(ci->ci_data.cpu_name);
-#endif
 
 	KASSERT(namelen < PCPU_NAMELEN);
 	pcpu->pcpu_name = kmem_alloc(PCPU_NAMELEN, KM_SLEEP);
