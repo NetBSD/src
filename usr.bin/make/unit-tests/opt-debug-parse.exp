@@ -1,1 +1,10 @@
+Parse_PushInput: .for loop in opt-debug-parse.mk, line 16
+SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
+Parsing line 17: .info trace with multi-line .for loop head
+make: "opt-debug-parse.mk" line 17: trace with multi-line .for loop head
+	in .include from opt-debug-parse.mk:18
+ParseEOF: returning to file opt-debug-parse.mk, line 18
+SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
+Parsing line 22: .MAKEFLAGS: -d0
+ParseDependency(.MAKEFLAGS: -d0)
 exit status 0
