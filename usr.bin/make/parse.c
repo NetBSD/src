@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.617 2022/01/02 02:16:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.618 2022/01/02 02:39:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -74,10 +74,6 @@
  * Parse_File is the main entry point and controls most of the other
  * functions in this module.
  *
- * The directories for the .include "..." directive are kept in
- * 'parseIncPath', while those for .include <...> are kept in 'sysIncPath'.
- * The targets currently being defined are kept in 'targets'.
- *
  * Interface:
  *	Parse_Init	Initialize the module
  *
@@ -110,9 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.617 2022/01/02 02:16:12 rillig Exp $");
-
-/* types and constants */
+MAKE_RCSID("$NetBSD: parse.c,v 1.618 2022/01/02 02:39:55 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -120,15 +114,12 @@ MAKE_RCSID("$NetBSD: parse.c,v 1.617 2022/01/02 02:16:12 rillig Exp $");
 typedef struct IFile {
 	FStr name;		/* absolute or relative to the cwd */
 	int lineno;		/* current line number in file */
-	int first_lineno;	/* line number of start of text */
+	int forBodyLineno;	/* start of the .for loop body, 0-based */
 	unsigned int cond_depth; /* 'if' nesting when file opened */
-	bool depending;	/* state of doing_depend on EOF */
+	bool depending;		/* state of doing_depend on EOF */
 
-	/*
-	 * The buffer from which the file's content or the body of the .for
-	 * loop is read.  The buffer always ends with '\n'.
-	 */
-	Buffer buf;
+	Buffer buf;		/* the file's content or the body of the .for
+				 * loop; always ends with '\n' */
 	char *buf_ptr;		/* next char to be read */
 	char *buf_end;		/* buf_end[-1] == '\n' */
 
@@ -178,15 +169,11 @@ typedef enum ParseSpecial {
 typedef List SearchPathList;
 typedef ListNode SearchPathListNode;
 
-/* result data */
-
 /*
  * The main target to create. This is the first target defined in any of the
  * makefiles.
  */
 static GNode *mainNode;
-
-/* eval state */
 
 /*
  * During parsing, the targets from the left-hand side of the currently
@@ -213,14 +200,8 @@ static StringList targCmds = LST_INIT;
  */
 static GNode *order_pred;
 
-/* parser state */
-
 /* number of fatal errors */
 static int parseErrors = 0;
-
-/*
- * Variables for doing includes
- */
 
 /*
  * The include chain of makefiles.  At index 0 is the top-level makefile from
@@ -231,25 +212,9 @@ static int parseErrors = 0;
  */
 static Vector /* of IFile */ includes;
 
-static IFile *
-GetInclude(size_t i)
-{
-	return Vector_Get(&includes, i);
-}
-
-/* The file that is currently being read. */
-static IFile *
-CurFile(void)
-{
-	return GetInclude(includes.len - 1);
-}
-
-/* include paths */
 SearchPath *parseIncPath;	/* directories for "..." includes */
 SearchPath *sysIncPath;		/* directories for <...> includes */
 SearchPath *defSysIncPath;	/* default for sysIncPath */
-
-/* parser tables */
 
 /*
  * The parseKeywords table is searched using binary search when deciding
@@ -310,6 +275,19 @@ static const struct {
 };
 
 
+static IFile *
+GetInclude(size_t i)
+{
+	return Vector_Get(&includes, i);
+}
+
+/* The file that is currently being read. */
+static IFile *
+CurFile(void)
+{
+	return GetInclude(includes.len - 1);
+}
+
 static Buffer
 loadfile(const char *path, int fd)
 {
@@ -367,11 +345,10 @@ PrintStackTrace(void)
 	n--;			/* This entry is already in the diagnostic. */
 
 	/*
-	 * For the IFiles with fromForLoop, lineno seems to be sorted
-	 * backwards.  This is because lineno is the number of completely
-	 * parsed lines, which for a .for loop is right after the
-	 * corresponding .endfor.  The intuitive line number comes from
-	 * first_lineno instead, which points at the start of the .for loop.
+	 * For the IFiles with forLoop, lineno is the number of completely
+	 * parsed lines, which is right after the corresponding .endfor.  The
+	 * intuitive line number comes from first_lineno instead, which
+	 * points at the start of the .for loop.
 	 *
 	 * To make the stack trace intuitive, the entry below each chain of
 	 * .for loop entries must be ignored completely since neither its
@@ -393,7 +370,7 @@ PrintStackTrace(void)
 			    fname, entry->lineno);
 		if (entry->forLoop != NULL)
 			debug_printf("\tin .for loop from %s:%d\n",
-			    fname, entry->first_lineno);
+			    fname, entry->forBodyLineno - 1 + 1);
 	}
 }
 
@@ -2173,7 +2150,7 @@ Parse_PushInput(const char *name, int lineno, Buffer buf,
 	curFile = Vector_Push(&includes);
 	curFile->name = FStr_InitOwn(bmake_strdup(name));
 	curFile->lineno = lineno;
-	curFile->first_lineno = lineno;
+	curFile->forBodyLineno = lineno;
 	curFile->buf = buf;
 	curFile->depending = doing_depend;	/* restore this on EOF */
 	curFile->forLoop = forLoop;
@@ -2312,7 +2289,7 @@ ParseEOF(void)
 	    For_NextIteration(curFile->forLoop, &curFile->buf)) {
 		curFile->buf_ptr = curFile->buf.data;
 		curFile->buf_end = curFile->buf.data + curFile->buf.len;
-		curFile->lineno = curFile->first_lineno;
+		curFile->lineno = curFile->forBodyLineno;
 		return true;
 	}
 
