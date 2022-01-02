@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.614 2022/01/01 21:50:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.615 2022/01/02 00:07:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -110,7 +110,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.614 2022/01/01 21:50:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.615 2022/01/02 00:07:20 rillig Exp $");
 
 /* types and constants */
 
@@ -2390,9 +2390,10 @@ ParseEOF(void)
 	curFile->buf_ptr = ptr;
 	curFile->buf_freeIt = ptr;
 	curFile->buf_end = ptr == NULL ? NULL : ptr + len;
-	curFile->lineno = curFile->first_lineno;
-	if (ptr != NULL)
+	if (ptr != NULL) {
+		curFile->lineno = curFile->first_lineno;
 		return true;	/* Iterate again */
+	}
 
 	/*
 	 * Ensure the makefile (or .for loop) didn't have mismatched
