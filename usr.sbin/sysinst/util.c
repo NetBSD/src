@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.62 2021/10/08 15:59:55 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.63 2022/01/03 11:44:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1353,9 +1353,12 @@ do_add_entropy(void)
 {
 	int rv;
 
+	if (entropy_needed() == 0)
+		return true;
+
 	for (;;) {
 		if (entropy_needed() == 0)
-			return true;
+			break;
 
 		msg_clear();
 		rv = 0;
@@ -1387,6 +1390,15 @@ do_add_entropy(void)
 			}
 		}
 	}
+
+	/*
+	 * Save entropy (maybe again) to give the seed file a good
+	 * entropy estimate.
+	 */
+	run_program(RUN_SILENT | RUN_CHROOT | RUN_ERROR_OK,
+	    "/etc/rc.d/random_seed stop");
+
+	return true;
 }
 #endif
 
