@@ -1,5 +1,0 @@
-# $NetBSD: ad.earmv5eb,v 1.1 2021/12/31 16:15:58 christos Exp $
-./usr/libdata/debug/netbsd-fxp0-ADI_BRH.debug	comp-sysutils-debug	debug
-./usr/libdata/debug/netbsd-sd0-ADI_BRH.debug	comp-sysutils-debug	debug
-./usr/libdata/debug/netbsd-wd0-ADI_BRH.debug	comp-sysutils-debug	debug
-./usr/libdata/debug/netbsd-wd0-KUROBOX_PRO.debug	comp-sysutils-debug	debug
