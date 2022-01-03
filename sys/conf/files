@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1292 2022/01/01 10:32:29 msaitoh Exp $
+#	$NetBSD: files,v 1.1293 2022/01/03 17:19:41 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -776,10 +776,14 @@ file	dev/ic/hme.c			hme
 device	gem: arp, ether, ifnet, mii
 file	dev/ic/gem.c			gem
 
-# Synopsis Designware GMAC core, as found on allwinner a20
+# Synopsys DesignWare GMAC core, as found on allwinner a20
 # and other SoCs
 device	awge: arp, ether, ifnet, mii
 file	dev/ic/dwc_gmac.c		awge
+
+# Synopsys DesignWare Ethernet Quality-of-Service controller
+device	eqos: arp, ether, ifnet, mii
+file	dev/ic/dwc_eqos.c		eqos
 
 # 8390-family Ethernet controllers
 #
