@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.189 2021/12/24 00:24:49 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.190 2022/01/03 17:19:41 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -259,6 +259,7 @@ pci*		at ppb?
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
 enet*		at fdt?				# IMX FEC
+eqos*		at acpi?			# DesignWare Ethernet QoS
 genet*		at acpi?			# Broadcom GENET v5
 genet*		at fdt?
 #scx*		at acpi?			# Socionext Gigabit Ethernet
@@ -292,6 +293,7 @@ inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy* 	at mii? phy ?		# Level One LXT-970 PHYs
 makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
+mcommphy*	at mii? phy ?		# Motorcomm YT8511C/YT8511H PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
 nsphyter*	at mii? phy ? 		# NS83843 PHYs
 pnaphy* 	at mii? phy ?		# generic HomePNA PHYs
