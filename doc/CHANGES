@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2854 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2855 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -460,3 +460,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	scmd: Driver and userland utility for the Sparkfun Serial Controlled
 		Motor Driver [brad 20211207]
 	acpi(4): Updated ACPICA to 20211217. [christos 20211218]
+	mcommphy(4): Add driver for Motorcomm YT8511 GbE PHY.
+		[jmcneill 20220103]
+	eqos(4): Add driver for DesignWare Ethernet Quality-of-Service
+		controller. [jmcneill 20220103]
