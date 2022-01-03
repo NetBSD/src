@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2021/12/31 04:59:16 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.21 2022/01/03 12:10:17 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -27,18 +27,12 @@ prepare_md_post:
 	    < ${.CURDIR}/boot.cfg.in > boot.cfg
 
 DISTRIBDIR!= cd ${.CURDIR}/../.. ; pwd
-SYSINSTDIR!= cd ${.CURDIR}/../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 SPEC_EXTRA=		${.CURDIR}/spec.inst
 IMGFILE_EXTRA=								\
 	${.CURDIR}/etc.ttys		etc/ttys			\
 	${.CURDIR}/etc.rc		etc/rc				\
 	${.CURDIR}/install.sh		.				\
-	${.OBJDIR}/boot.cfg		.				\
-	${SYSINSTDIR}/sysinstmsgs.de	.				\
-	${SYSINSTDIR}/sysinstmsgs.es	.				\
-	${SYSINSTDIR}/sysinstmsgs.fr	.				\
-	${SYSINSTDIR}/sysinstmsgs.pl	.				\
-	${SYSINSTDIR}/sysinst		.
+	${.OBJDIR}/boot.cfg		.
 
 .include "${NETBSDSRCDIR}/distrib/common/bootimage//Makefile.installimage"
