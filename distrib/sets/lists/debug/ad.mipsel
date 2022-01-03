@@ -1,4 +1,4 @@
-# $NetBSD: ad.mipsel,v 1.2 2022/01/02 23:10:37 christos Exp $
+# $NetBSD: ad.mipsel,v 1.3 2022/01/03 16:44:49 christos Exp $
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutils-debug	debug
 ./usr/libdata/debug/netbsd-aumac0-ALCHEMY.debug	comp-sysutils-debug	debug
 ./usr/libdata/debug/netbsd-aumac0-DBAU1500.debug	comp-sysutils-debug	debug
@@ -8,4 +8,4 @@
 ./usr/libdata/debug/netbsd-aumac0-OMSAL400.debug	comp-sysutils-debug	debug
 ./usr/libdata/debug/netbsd-reth0-CPMBR1400.debug	comp-sysutils-debug	debug
 ./usr/libdata/debug/netbsd-sd0a-CPMBR1400.debug	comp-sysutils-debug	debug
-./usr/libdata/debug/nfsnetbsd-RAMDISK.debug	comp-sysutils-debug	debug
+./usr/libdata/debug/nfsnetbsd-RAMDISK.debug	comp-sysutils-debug	debug,machine=pmax
