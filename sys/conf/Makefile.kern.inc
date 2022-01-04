@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.291 2021/12/30 18:53:35 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.292 2022/01/04 19:52:02 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -245,14 +245,15 @@ LINKFLAGS_DEBUG?=	-X
 KERNEL_CONFIG?=	${KERNEL_BUILD:T}
 
 SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c && \
-		${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@
+		${SIZE} $@ && ${SYSTEM_CTFMERGE} && chmod 755 $@ && \
+		runit() { echo $$@; $$@; }
 
-SYSTEM_LD_TAIL_DEBUG?=&& set -x &&\
-	mv -f $@ $@.gdb && \
-	${OBJCOPY} --only-keep-debug $@.gdb $@-${KERNEL_CONFIG}.debug && \
-	${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+SYSTEM_LD_TAIL_DEBUG?=&& \
+	runit mv -f $@ $@.gdb && \
+	runit ${OBJCOPY} --only-keep-debug $@.gdb $@-${KERNEL_CONFIG}.debug && \
+	runit ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
 	    --add-gnu-debuglink=$@-${KERNEL_CONFIG}.debug $@.gdb $@ && \
-	chmod 755 $@ $@.gdb $@-${KERNEL_CONFIG}.debug
+	runit chmod 755 $@ $@.gdb $@-${KERNEL_CONFIG}.debug
 
 LINKFLAGS_NORMAL?=	-S
 STRIPFLAGS?=	-g
@@ -285,9 +286,9 @@ SYSTEM_LD_HEAD+=	${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL_STAGE1=	${SYSTEM_LD_TAIL}
 SYSTEM_LD_TAIL_STAGE2=	${SYSTEM_LD_TAIL}
 .if defined(COPY_SYMTAB)
-SYSTEM_LD_TAIL_STAGE2+=	&& echo ${DBSYM} $@ && ${DBSYM} $@
+SYSTEM_LD_TAIL_STAGE2+=	&& runit ${DBSYM} $@
 .if !empty(DEBUG:M-g)
-SYSTEM_LD_TAIL_STAGE2+=	&& echo ${DBSYM} $@.gdb && ${DBSYM} $@.gdb
+SYSTEM_LD_TAIL_STAGE2+=	&& runit ${DBSYM} $@.gdb
 .endif
 .endif
 SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
