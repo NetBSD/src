@@ -1,4 +1,7 @@
-$NetBSD: CHANGES,v 1.52 2021/09/03 21:54:59 andvar Exp $
+$NetBSD: CHANGES,v 1.53 2022/01/04 06:08:14 kim Exp $
+
+changes in bozohttpd 20220104:
+	o  remove obsolete .bzdirect handling.
 
 changes in bozohttpd 20210824:
 	o  new "-m tlsversion" option to set the minimum TLS version
