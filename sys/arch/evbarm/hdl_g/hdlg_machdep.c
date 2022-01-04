@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.32 2021/11/20 08:48:55 rin Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.33 2022/01/04 10:38:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.32 2021/11/20 08:48:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.33 2022/01/04 10:38:04 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -228,9 +228,7 @@ vaddr_t
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;
-#ifdef DIAGNOSTIC
 	extern vsize_t xscale_minidata_clean_size;
-#endif
 	int loop;
 	int loop1;
 	u_int l1pagetable;
