@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.89 2021/08/24 09:47:36 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.90 2022/01/04 06:08:14 kim Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -532,14 +532,9 @@ the client did not make a ranged request.
 .Nm
 looks for a couple of special files in directories that allow certain features
 to be provided on a per-directory basis.
-In addition to the
+The
 .Pa .htpasswd
-used by HTTP basic authorization,
-if a
-.Pa .bzdirect
-file is found (contents are irrelevant)
-.Nm
-will allow direct access.
+file is used by HTTP basic authorization.
 If a
 .Pa .bzredirect
 symbolic link is found,
@@ -659,7 +654,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20210824.
+version 20220104.
 .Sh AUTHORS
 .An -nosplit
 .Nm
@@ -825,6 +820,12 @@ enhanced cgi-bin support
 .An Joerg Sonnenberger
 .Aq Mt joerg@NetBSD.org
 implemented If-Modified-Since support
+.It
+.An Kimmo Suominen
+.Aq Mt kim@NetBSD.org
+removed obsolete
+.Pa .bzdirect
+handling
 .It
 .An ISIHARA Takanori
 .Aq Mt ishit@oak.dti.ne.jp
