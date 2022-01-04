@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.75 2020/12/20 16:38:25 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.76 2022/01/04 05:39:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ struct vm_page_md;
 
 #define	PMAP_VIRTUAL_CACHE_ALIASES
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)NULL)
-#define	PMAP_TLB_NEED_SHOOTDOWN
+#define	PMAP_TLB_NEED_SHOOTDOWN		1
 #define	PMAP_TLB_FLUSH_ASID_ON_RESET	false
 #if UPAGES > 1
 #define	PMAP_TLB_WIRED_UPAGES		MIPS3_TLB_WIRED_UPAGES
