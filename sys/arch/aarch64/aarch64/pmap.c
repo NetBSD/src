@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 2021/12/10 20:36:02 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.122 2022/01/04 05:55:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2021/12/10 20:36:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2022/01/04 05:55:45 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2011,7 +2011,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		if (!l3pte_readable(pte)) {
 			PTE_ICACHE_SYNC_PAGE(pte, ptep, asid, va, l3only);
 			atomic_swap_64(ptep, pte);
-			AARCH64_TLBI_BY_ASID_VA(asid, va ,true);
+			AARCH64_TLBI_BY_ASID_VA(asid, va, true);
 		} else {
 			atomic_swap_64(ptep, pte);
 			AARCH64_TLBI_BY_ASID_VA(asid, va, l3only);
