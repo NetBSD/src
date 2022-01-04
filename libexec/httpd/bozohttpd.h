@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.70 2021/08/24 09:47:36 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.71 2022/01/04 06:08:14 kim Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -267,9 +267,6 @@ void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
  * bozo_check_special_files()
  */
 
-#ifndef DIRECT_ACCESS_FILE
-#define DIRECT_ACCESS_FILE	".bzdirect"
-#endif
 #ifndef REDIRECT_FILE
 #define REDIRECT_FILE		".bzredirect"
 #endif

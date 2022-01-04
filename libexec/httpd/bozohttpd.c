@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.137 2021/12/10 20:36:02 andvar Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.138 2022/01/04 06:08:14 kim Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -108,7 +108,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20210824"
+#define SERVER_SOFTWARE		"bozohttpd/20220104"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -177,7 +177,6 @@ struct {
 	const char *file;
 	const char *name;
 } specials[] = {
-	{ DIRECT_ACCESS_FILE, "rejected direct access request" },
 	{ REDIRECT_FILE,      "rejected redirect request" },
 	{ ABSREDIRECT_FILE,   "rejected absredirect request" },
 	{ REMAP_FILE,         "rejected remap request" },
