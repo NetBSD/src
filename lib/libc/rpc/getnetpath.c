@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.17 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.18 2022/01/04 22:10:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -36,7 +36,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetpath.c,v 1.17 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: getnetpath.c,v 1.18 2022/01/04 22:10:08 andvar Exp $");
 #endif
 #endif
 
@@ -140,7 +140,7 @@ setnetpath(void)
  * NULL and sets errno in case of an error (e.g., setnetpath was not called
  * previously).
  * getnetpath() silently ignores invalid NETPATH components.  A NETPATH
- * compnent is invalid if there is no corresponding entry in the netconfig
+ * component is invalid if there is no corresponding entry in the netconfig
  * database.
  * If the NETPATH variable is unset, getnetpath() behaves as if NETPATH
  * were set to the sequence of default or visible networks in the netconfig
