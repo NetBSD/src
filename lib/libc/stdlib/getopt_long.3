@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.20 2018/12/09 20:29:53 christos Exp $
+.\"	$NetBSD: getopt_long.3,v 1.21 2022/01/04 19:32:16 uwe Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -167,8 +167,8 @@ int daggerset;
 
 /* options descriptor */
 static struct option longopts[] = {
-	{ "buffy",	no_argument,		0, 		'b' },
-	{ "fluoride",	required_argument,	0, 	       	'f' },
+	{ "buffy",	no_argument,		NULL, 		'b' },
+	{ "fluoride",	required_argument,	NULL, 	       	'f' },
 	{ "daggerset",	no_argument,		&daggerset,	1 },
 	{ NULL,		0,			NULL, 		0 }
 };
