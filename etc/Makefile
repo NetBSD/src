@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.457 2022/01/02 20:09:03 christos Exp $
+#	$NetBSD: Makefile,v 1.458 2022/01/05 01:46:28 kre Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -626,7 +626,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 				[ -z "$${newest}" -o $${ks} \
 				    -nt "$${newest}" ] && newest=$${ks}; \
 				[ ${MKDEBUGKERNEL} = "no" -o \
-				     ! -f $${ks}.gdb ]  continue; \
+				     ! -f $${ks}.gdb ] && continue; \
 				kernels="$${kernels} $${ks}.gdb"; \
 			done; \
 		done; \
