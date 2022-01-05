@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.39 2020/05/07 19:48:58 bouyer Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.40 2022/01/05 20:21:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * Based on: x86/ipi.c
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.39 2020/05/07 19:48:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.40 2022/01/05 20:21:29 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -151,7 +151,6 @@ xen_ipi_init(void)
 	hypervisor_unmask_event(evtchn);
 }
 
-#ifdef DIAGNOSTIC
 static inline bool /* helper */
 valid_ipimask(uint32_t ipimask)
 {
@@ -166,7 +165,6 @@ valid_ipimask(uint32_t ipimask)
 	}
 
 }
-#endif
 
 int
 xen_send_ipi(struct cpu_info *ci, uint32_t ipimask)
