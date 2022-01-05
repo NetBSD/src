@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.15 2021/05/17 18:43:18 riastradh Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.16 2022/01/05 19:53:32 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.15 2021/05/17 18:43:18 riastradh Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.16 2022/01/05 19:53:32 ryo Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -303,7 +303,7 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 		.bitpos = 20, .bitwidth = 4, .name = "Atomic",
 		.info = (const char *[16]) { /* 16=4bit */
 			[0] = "No Atomic",
-			[1] = "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN"
+			[2] = "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN"
 			    "/LDUMAX/LDUMIN/CAS/CASP/SWP",
 		}
 	},
