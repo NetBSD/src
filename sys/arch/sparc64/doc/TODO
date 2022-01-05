@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.45 2021/09/23 17:51:52 palle Exp $ */
+/* $NetBSD: TODO,v 1.46 2022/01/05 16:01:54 andvar Exp $ */
 
 Things to be done:
 
@@ -18,7 +18,7 @@ sun4v:
 	     (verified by exiting sysinst and issuing a ping command)
 	   - the sysinst tool starts, disk setup is working, network configuration is working,
 	     but after the selected (minimal) sets have been downloaded and installed
-		 the 'sh MAKEDEV all' comand hangs.
+		 the 'sh MAKEDEV all' command hangs.
 	 T2000 ldom with 8 VCPU and 4GB:
 	   - crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
 	 S7 ldom with 8 VCPU and 16GB (primary ldom is Solaris 11.4 SRU33):
@@ -42,7 +42,7 @@ sun4v:
 - man pages for drivers imported from OpenBSD lke vpci, vbus, cbus, vdsk, ldc etc.
 - vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly
 - vbus.c: handle prom_getprop() memory leaks
-- locore.s: rft_user (sun4v specific manaul fill) - seems to work, but is it good enough (compared to openbsds rft_user?
+- locore.s: rft_user (sun4v specific manual fill) - seems to work, but is it good enough (compared to openbsds rft_user?
 - openfirmware interface
     bounce handlng could need rework
       - only #if __arch64__ independent for SUN4V, as OF for all ultrasparcs is
