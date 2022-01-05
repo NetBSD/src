@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.59 2021/10/26 16:58:46 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.60 2022/01/05 19:53:32 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ AARCH64REG_READ_INLINE(id_aa64isar0_el1)
 #define	 ID_AA64ISAR0_EL1_RDM_SQRDML	 1
 #define	ID_AA64ISAR0_EL1_ATOMIC		__BITS(23,20)
 #define	 ID_AA64ISAR0_EL1_ATOMIC_NONE	 0
-#define	 ID_AA64ISAR0_EL1_ATOMIC_SWP	 1
+#define	 ID_AA64ISAR0_EL1_ATOMIC_SWP	 2
 #define	ID_AA64ISAR0_EL1_CRC32		__BITS(19,16)
 #define	 ID_AA64ISAR0_EL1_CRC32_NONE	 0
 #define	 ID_AA64ISAR0_EL1_CRC32_CRC32X	 1
