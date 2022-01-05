@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.8 2021/10/17 14:12:21 jmcneill Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.9 2022/01/05 16:01:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ bootcfg_do_noop(const char *cmd, char *arg)
  * menu=Boot NetBSD:boot netbsd
  * menu=Boot into single user mode:boot netbsd -s
  * menu=:boot hd1a:netbsd -cs
- * menu=Goto boot comand line:prompt
+ * menu=Goto boot command line:prompt
  * timeout=10
  * consdev=com0
  * default=1

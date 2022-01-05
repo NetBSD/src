@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi.h,v 1.7 2018/04/19 21:50:09 christos Exp $	*/
+/*	$NetBSD: cfi.h,v 1.8 2022/01/05 16:01:54 andvar Exp $	*/
 
 #ifndef _CFI_H_
 #define _CFI_H_
@@ -33,7 +33,7 @@ struct cfi_erase_blk_info {
 struct cfi_query_data {
     /* Query info */
     uint8_t	qry[3];			/* { 'Q', 'R', 'Y' } */
-    uint16_t	id_pri;			/* primary comand set ID */
+    uint16_t	id_pri;			/* primary command set ID */
     uint16_t	addr_pri;		/* primary table addr */
     uint16_t	id_alt;			/* alternate command set ID */
     uint16_t	addr_alt;		/* alternate table addr */
