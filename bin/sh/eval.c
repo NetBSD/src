@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.187 2021/12/05 04:35:38 msaitoh Exp $	*/
+/*	$NetBSD: eval.c,v 1.188 2022/01/05 15:25:44 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.187 2021/12/05 04:35:38 msaitoh Exp $");
+__RCSID("$NetBSD: eval.c,v 1.188 2022/01/05 15:25:44 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1218,6 +1218,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	/* Execute the command. */
 	switch (cmdentry.cmdtype) {
 		volatile int saved;
+		struct funcdef * volatile savefunc;
 
 	case CMDFUNCTION:
 		VXTRACE(DBG_EVAL, ("Shell function%s:  ",vforked?" VF":""),
@@ -1233,7 +1234,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		INTOFF;
 		savelocalvars = localvars;
 		localvars = NULL;
-		reffunc(cmdentry.u.func);
+		reffunc(savefunc = cmdentry.u.func);
 		INTON;
 		if (setjmp(jmploc.loc)) {
 			if (exception == EXSHELLPROC) {
@@ -1245,7 +1246,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			}
 			if (saved)
 				popredir();
-			unreffunc(cmdentry.u.func);
+			unreffunc(savefunc);
 			poplocalvars();
 			localvars = savelocalvars;
 			funclinebase = savefuncline;
