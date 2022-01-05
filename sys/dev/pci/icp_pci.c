@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.25 2022/01/05 16:01:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.25 2022/01/05 16:01:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -510,7 +510,7 @@ icp_pci_attach(device_t parent, device_t self, void *aux)
 			goto bail_out;
 		}
 
-		/* special commnd to controller BIOS */
+		/* special command to controller BIOS */
 		bus_space_write_4(dpmemt, dpmemh, ICP_MPR_IC + ICP_S_INFO, 0);
 		bus_space_write_4(dpmemt, dpmemh,
 		    ICP_MPR_IC + ICP_S_INFO + sizeof(u_int32_t), 0);
