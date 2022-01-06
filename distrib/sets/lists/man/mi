@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1730 2021/12/07 17:39:53 brad Exp $
+# $NetBSD: mi,v 1.1731 2022/01/06 21:55:24 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1088,6 +1088,7 @@
 ./usr/share/man/cat4/envsys.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ep.0			man-sys-catman		.cat
 ./usr/share/man/cat4/epic.0			man-sys-catman		.cat
+./usr/share/man/cat4/eqos.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esh.0			man-obsolete		obsolete
 ./usr/share/man/cat4/esiop.0			man-sys-catman		.cat
@@ -1464,6 +1465,7 @@
 ./usr/share/man/cat4/mc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mca.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcclock.0			man-sys-catman		.cat
+./usr/share/man/cat4/mcommphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcp23s17gpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mcp3kadc.0			man-sys-catman		.cat
@@ -4332,6 +4334,7 @@
 ./usr/share/man/html4/envsys.html		man-sys-htmlman		html
 ./usr/share/man/html4/ep.html			man-sys-htmlman		html
 ./usr/share/man/html4/epic.html			man-sys-htmlman		html
+./usr/share/man/html4/eqos.html			man-sys-htmlman		html
 ./usr/share/man/html4/esa.html			man-sys-htmlman		html
 ./usr/share/man/html4/esh.html			man-obsolete		obsolete
 ./usr/share/man/html4/esiop.html		man-sys-htmlman		html
@@ -4670,6 +4673,7 @@
 ./usr/share/man/html4/mc.html			man-sys-htmlman		html
 ./usr/share/man/html4/mca.html			man-sys-htmlman		html
 ./usr/share/man/html4/mcclock.html		man-sys-htmlman		html
+./usr/share/man/html4/mcommphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcd.html			man-sys-htmlman		html
 ./usr/share/man/html4/mcp23s17gpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcp3kadc.html		man-sys-htmlman		html
@@ -7352,6 +7356,7 @@
 ./usr/share/man/man4/envsys.4			man-sys-man		.man
 ./usr/share/man/man4/ep.4			man-sys-man		.man
 ./usr/share/man/man4/epic.4			man-sys-man		.man
+./usr/share/man/man4/eqos.4			man-sys-man		.man
 ./usr/share/man/man4/esa.4			man-sys-man		.man
 ./usr/share/man/man4/esh.4			man-obsolete		obsolete
 ./usr/share/man/man4/esiop.4			man-sys-man		.man
@@ -7729,6 +7734,7 @@
 ./usr/share/man/man4/mc.4			man-sys-man		.man
 ./usr/share/man/man4/mca.4			man-sys-man		.man
 ./usr/share/man/man4/mcclock.4			man-sys-man		.man
+./usr/share/man/man4/mcommphy.4			man-sys-man		.man
 ./usr/share/man/man4/mcd.4			man-sys-man		.man
 ./usr/share/man/man4/mcp23s17gpio.4		man-sys-man		.man
 ./usr/share/man/man4/mcp3kadc.4			man-sys-man		.man
