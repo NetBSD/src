@@ -1661,7 +1661,7 @@ zfs_acl_ids_create(znode_t *dzp, int flag, vattr_t *vap, cred_t *cr,
 			} else {
 				acl_ids->z_fgid = zfs_fuid_create_cred(zfsvfs,
 				    ZFS_GROUP, cr, &acl_ids->z_fuidp);
-#ifdef __FreeBSD_kernel__
+#if defined(__FreeBSD_kernel__) || defined(__NetBSD__)
 				gid = acl_ids->z_fgid = dzp->z_gid;
 #else
 				gid = crgetgid(cr);
