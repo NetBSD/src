@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.71 2021/12/28 06:36:29 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.72 2022/01/06 07:39:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.71 2021/12/28 06:36:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.72 2022/01/06 07:39:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,12 @@ page0:
 			    "Regard as 1000BASE-T.\n");
 			sc->mii_extcapabilities
 			    |= EXTSR_1000TFDX | EXTSR_1000THDX;
+
+			/*
+			 * Also assume it doesn't support PSSR_LINK bit.
+			 * It's for QEMU.
+			 */
+			maksc->sc_flags |= MAKPHY_QUIRK_PSSR_LINK;
 		}
 	}
 
@@ -438,6 +444,7 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 static void
 makphy_status(struct mii_softc *sc)
 {
+	struct makphy_softc *maksc = (struct makphy_softc *)sc;
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmcr, gsr, pssr, essr;
 
@@ -449,6 +456,23 @@ makphy_status(struct mii_softc *sc)
 	PHY_READ(sc, MII_BMCR, &bmcr);
 	/* XXX FIXME: Use different page for Fiber on newer chips */
 	PHY_READ(sc, MAKPHY_PSSR, &pssr);
+
+	if ((maksc->sc_flags & MAKPHY_QUIRK_PSSR_LINK) != 0) {
+		uint16_t bmsr;
+
+		/*
+		 * QEMU e1000 driver has the PSSR register but it doesn't
+		 * support the PSSR_LINK bit well. It always returns 1.
+		 * To avoid this problem, use the BMSR_LINK bit. It's not
+		 * required to read it twice as real device because it's not
+		 * latched.
+		 */
+		PHY_READ(sc, MII_BMSR, &bmsr);
+		if (bmsr & BMSR_LINK)
+			pssr |= MAKPHY_PSSR_LINK;
+		else
+			pssr &= ~MAKPHY_PSSR_LINK;
+	}
 
 	if (pssr & MAKPHY_PSSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
@@ -488,8 +512,6 @@ makphy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_1000_SX;
 	} else if ((sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1011) ||
 	    (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1111)) {
-		struct makphy_softc *maksc = (struct makphy_softc *)sc;
-
 		if ((maksc->sc_flags & MAKPHY_F_FICO_AUTOSEL) != 0) {
 			/* Fiber/Copper auto select mode */
 			PHY_READ(sc, MAKPHY_ESSR, &essr);
