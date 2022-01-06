@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.16 2022/01/05 19:53:32 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.17 2022/01/06 08:46:43 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.16 2022/01/05 19:53:32 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.17 2022/01/06 08:46:43 ryo Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -111,119 +111,114 @@ const struct impltab implids[] = {
 	{ CPU_ID_INTEL,		"Intel Corporation"			}
 };
 
+#define FIELDNAME(_bitpos, _bitwidth, _name)	\
+	.bitpos = _bitpos,			\
+	.bitwidth = _bitwidth,			\
+	.name = _name
+
+#define FIELDINFO(_bitpos, _bitwidth, _name)	\
+	FIELDNAME(_bitpos, _bitwidth, _name),	\
+	.info = (const char *[1 << _bitwidth])
+
+
 /* ID_AA64PFR0_EL1 - AArch64 Processor Feature Register 0 */
 struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "EL0",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(0, 4, "EL0") {
 			[0] = "No EL0",
 			[1] = "AArch64",
 			[2] = "AArch64/AArch32"
 		}
 	},
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "EL1",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "EL1") {
 			[0] = "No EL1",
 			[1] = "AArch64",
 			[2] = "AArch64/AArch32"
 		}
 	},
 	{
-		.bitpos = 8, .bitwidth = 4, .name = "EL2",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(8, 4, "EL2") {
 			[0] = "No EL2",
 			[1] = "AArch64",
 			[2] = "AArch64/AArch32"
 		}
 	},
 	{
-		.bitpos = 12, .bitwidth = 4, .name = "EL3",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(12, 4, "EL3") {
 			[0] = "No EL3",
 			[1] = "AArch64",
 			[2] = "AArch64/AArch32"
 		}
 	},
 	{
-		.bitpos = 16, .bitwidth = 4, .name = "FP",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(16, 4, "FP") {
 			[0] = "Floating Point",
 			[1] = "Floating Point including half-precision support",
 			[15] = "No Floating Point"
 		}
 	},
 	{
-		.bitpos = 20, .bitwidth = 4, .name = "AdvSIMD",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(20, 4, "AdvSIMD") {
 			[0] = "Advanced SIMD",
 			[1] = "Advanced SIMD including half-precision support",
 			[15] = "No Advanced SIMD"
 		}
 	},
 	{
-		.bitpos = 24, .bitwidth = 4, .name = "GIC",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(24, 4, "GIC") {
 			[0] = "GIC CPU interface sysregs not implemented",
 			[1] = "GIC CPU interface sysregs v3.0/4.0 supported",
 			[3] = "GIC CPU interface sysregs v4.1 supported"
 		}
 	},
 	{
-		.bitpos = 28, .bitwidth = 4, .name = "RAS",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(28, 4, "RAS") {
 			[0] = "Reliability/Availability/Serviceability not supported",
 			[1] = "Reliability/Availability/Serviceability supported",
 			[2] = "Reliability/Availability/Serviceability ARMv8.4 supported",
 		},
 	},
 	{
-		.bitpos = 32, .bitwidth = 4, .name = "SVE",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(32, 4, "SVE") {
 			[0] = "Scalable Vector Extensions not implemented",
 			[1] = "Scalable Vector Extensions implemented",
 		},
 	},
 	{
-		.bitpos = 36, .bitwidth = 4, .name = "SEL2",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(36, 4, "SEL2") {
 			[0] = "Secure EL2 not implemented",
 			[1] = "Secure EL2 implemented",
 		},
 	},
 	{
-		.bitpos = 40, .bitwidth = 4, .name = "MPAM",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(40, 4, "MPAM") {
 			[0] = "Memory Partitioning and Monitoring not implemented",
 			[1] = "Memory Partitioning and Monitoring implemented",
 		},
 	},
 	{
-		.bitpos = 44, .bitwidth = 4, .name = "AMU",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(44, 4, "AMU") {
 			[0] = "Activity Monitors Extension not implemented",
 			[1] = "Activity Monitors Extension v1 ARMv8.4",
 			[2] = "Activity Monitors Extension v1 ARMv8.6",
 		},
 	},
 	{
-		.bitpos = 48, .bitwidth = 4, .name = "DIT",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(48, 4, "DIT") {
 			[0] = "No Data-Independent Timing guarantees",
 			[1] = "Data-Independent Timing guaranteed by PSTATE.DIT",
 		},
 	},
 	{
-		.bitpos = 56, .bitwidth = 4, .name = "CSV2",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(56, 4, "CSV2") {
 			[0] = "Branch prediction might be Spectred",
 			[1] = "Branch prediction maybe not Spectred",
 			[2] = "Branch prediction probably not Spectred",
 		},
 	},
 	{
-		.bitpos = 60, .bitwidth = 4, .name = "CSV3",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(60, 4, "CSV3") {
 			[0] = "Faults might be Spectred",
 			[1] = "Faults maybe not Spectred",
 			[2] = "Faults probably not Spectred",
@@ -235,31 +230,27 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 /* ID_AA64PFR1_EL1 - AArch64 Processor Feature Register 1 */
 struct fieldinfo id_aa64pfr1_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "BT",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(0, 4, "BT") {
 			[0] = "Branch Target Identification not implemented",
 			[1] = "Branch Target Identification implemented",
 		}
 	},
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "SSBS",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "SSBS") {
 			[0] = "Speculative Store Bypassing control not implemented",
 			[1] = "Speculative Store Bypassing control implemented",
 			[2] = "Speculative Store Bypassing control implemented, plus MSR/MRS"
 		}
 	},
 	{
-		.bitpos = 8, .bitwidth = 4, .name = "MTE",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(8, 4, "MTE") {
 			[0] = "Tagged Memory Extension not implemented",
 			[1] = "Tagged Memory Extension implemented, EL0 only",
 			[2] = "Tagged Memory Extension implemented"
 		}
 	},
 	{
-		.bitpos = 12, .bitwidth = 4, .name = "RAS_frac",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(12, 4, "RAS_frac") {
 			[0] = "Regular RAS",
 			[1] = "RAS plus registers",
 		}
@@ -270,97 +261,84 @@ struct fieldinfo id_aa64pfr1_fieldinfo[] = {
 /* ID_AA64ISAR0_EL1 - AArch64 Instruction Set Attribute Register 0 */
 struct fieldinfo id_aa64isar0_fieldinfo[] = {
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "AES",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "AES") {
 			[0] = "No AES",
 			[1] = "AESE/AESD/AESMC/AESIMC",
 			[2] = "AESE/AESD/AESMC/AESIMC+PMULL/PMULL2"
 		}
 	},
 	{
-		.bitpos = 8, .bitwidth = 4, .name = "SHA1",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(8, 4, "SHA1") {
 			[0] = "No SHA1",
 			[1] = "SHA1C/SHA1P/SHA1M/SHA1H/SHA1SU0/SHA1SU1"
 		}
 	},
 	{
-		.bitpos = 12, .bitwidth = 4, .name = "SHA2",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(12, 4, "SHA2") {
 			[0] = "No SHA2",
 			[1] = "SHA256H/SHA256H2/SHA256SU0/SHA256U1"
 		}
 	},
 	{
-		.bitpos = 16, .bitwidth = 4, .name = "CRC32",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(16, 4, "CRC32") {
 			[0] = "No CRC32",
 			[1] = "CRC32B/CRC32H/CRC32W/CRC32X"
 			    "/CRC32CB/CRC32CH/CRC32CW/CRC32CX"
 		}
 	},
 	{
-		.bitpos = 20, .bitwidth = 4, .name = "Atomic",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(20, 4, "Atomic") {
 			[0] = "No Atomic",
 			[2] = "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN"
 			    "/LDUMAX/LDUMIN/CAS/CASP/SWP",
 		}
 	},
 	{
-		.bitpos = 28, .bitwidth = 4, .name = "RDM",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(28, 4, "RDM") {
 			[0] = "No RDMA",
 			[1] = "SQRDMLAH/SQRDMLSH",
 		}
 	},
 	{
-		.bitpos = 32, .bitwidth = 4, .name = "SHA3",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(32, 4, "SHA3") {
 			[0] = "No SHA3",
 			[1] = "EOR3/RAX1/XAR/BCAX",
 		}
 	},
 	{
-		.bitpos = 36, .bitwidth = 4, .name = "SM3",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(36, 4, "SM3") {
 			[0] = "No SM3",
 			[1] = "SM3SS1/SM3TT1A/SM3TT1B/SM3TT2A/SM3TT2B"
 			    "/SM3PARTW1/SM3PARTW2",
 		}
 	},
 	{
-		.bitpos = 40, .bitwidth = 4, .name = "SM4",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(40, 4, "SM4") {
 			[0] = "No SM4",
 			[1] = "SM4E/SM4EKEY",
 		}
 	},
 	{
-		.bitpos = 44, .bitwidth = 4, .name = "DP",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(44, 4, "DP") {
 			[0] = "No Dot Product",
 			[1] = "UDOT/SDOT",
 		}
 	},
 	{
-		.bitpos = 48, .bitwidth = 4, .name = "FHM",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(48, 4, "FHM") {
 			[0] = "No FHM",
 			[1] = "FMLAL/FMLSL",
 		}
 	},
 	{
-		.bitpos = 52, .bitwidth = 4, .name = "TS",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(52, 4, "TS") {
 			[0] = "No TS",
 			[1] = "CFINV/RMIF/SETF16/SETF8",
 			[2] = "CFINV/RMIF/SETF16/SETF8/AXFLAG/XAFLAG",
 		}
 	},
 	{
-		.bitpos = 56, .bitwidth = 4, .name = "TLBI",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(56, 4, "TLBI") {
 			[0] = "No outer shareable and TLB range maintenance"
 			    " instructions",
 			[1] = "Outer shareable TLB maintenance instructions",
@@ -369,8 +347,7 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 		}
 	},
 	{
-		.bitpos = 60, .bitwidth = 4, .name = "RNDR",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(60, 4, "RNDR") {
 			[0] = "No RNDR/RNDRRS",
 			[1] = "RNDR/RNDRRS",
 		},
@@ -381,8 +358,7 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 /* ID_AA64MMFR0_EL1 - AArch64 Memory Model Feature Register 0 */
 struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "PARange",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(0, 4, "PARange") {
 			[0] = "32bits/4GB",
 			[1] = "36bits/64GB",
 			[2] = "40bits/1TB",
@@ -392,50 +368,43 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 		}
 	},
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "ASIDBit",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "ASIDBit") {
 			[0] = "8bits",
 			[2] = "16bits"
 		}
 	},
 	{
-		.bitpos = 8, .bitwidth = 4, .name = "BigEnd",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(8, 4, "BigEnd") {
 			[0] = "No mixed-endian",
 			[1] = "Mixed-endian"
 		}
 	},
 	{
-		.bitpos = 12, .bitwidth = 4, .name = "SNSMem",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(12, 4, "SNSMem") {
 			[0] = "No distinction B/W Secure and Non-secure Memory",
 			[1] = "Distinction B/W Secure and Non-secure Memory"
 		}
 	},
 	{
-		.bitpos = 16, .bitwidth = 4, .name = "BigEndEL0",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(16, 4, "BigEndEL0") {
 			[0] = "No mixed-endian at EL0",
 			[1] = "Mixed-endian at EL0"
 		}
 	},
 	{
-		.bitpos = 20, .bitwidth = 4, .name = "TGran16",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(20, 4, "TGran16") {
 			[0] = "No 16KB granule",
 			[1] = "16KB granule"
 		}
 	},
 	{
-		.bitpos = 24, .bitwidth = 4, .name = "TGran64",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(24, 4, "TGran64") {
 			[0] = "64KB granule",
 			[15] = "No 64KB granule"
 		}
 	},
 	{
-		.bitpos = 28, .bitwidth = 4, .name = "TGran4",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(28, 4, "TGran4") {
 			[0] = "4KB granule",
 			[15] = "No 4KB granule"
 		}
@@ -446,60 +415,52 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 /* ID_AA64MMFR1_EL1 - AArch64 Memory Model Feature Register 1 */
 struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "HAFDBS",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(0, 4, "HAFDBS") {
 			[0] = "Access and Dirty flags not supported",
 			[1] = "Access flag supported",
 			[2] = "Access and Dirty flags supported",
 		}
 	},
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "VMIDBits",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "VMIDBits") {
 			[0] = "8bits",
 			[2] = "16bits"
 		}
 	},
 	{
-		.bitpos = 8, .bitwidth = 4, .name = "VH",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(8, 4, "VH") {
 			[0] = "Virtualization Host Extensions not supported",
 			[1] = "Virtualization Host Extensions supported",
 		}
 	},
 	{
-		.bitpos = 12, .bitwidth = 4, .name = "HPDS",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(12, 4, "HPDS") {
 			[0] = "Disabling of hierarchical controls not supported",
 			[1] = "Disabling of hierarchical controls supported",
 			[2] = "Disabling of hierarchical controls supported, plus PTD"
 		}
 	},
 	{
-		.bitpos = 16, .bitwidth = 4, .name = "LO",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(16, 4, "LO") {
 			[0] = "LORegions not supported",
 			[1] = "LORegions supported"
 		}
 	},
 	{
-		.bitpos = 20, .bitwidth = 4, .name = "PAN",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(20, 4, "PAN") {
 			[0] = "PAN not supported",
 			[1] = "PAN supported",
 			[2] = "PAN supported, and instructions supported"
 		}
 	},
 	{
-		.bitpos = 24, .bitwidth = 4, .name = "SpecSEI",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(24, 4, "SpecSEI") {
 			[0] = "SError interrupt not supported",
 			[1] = "SError interrupt supported"
 		}
 	},
 	{
-		.bitpos = 28, .bitwidth = 4, .name = "XNX",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(28, 4, "XNX") {
 			[0] = "Distinction between EL0 and EL1 XN control at stage 2 not supported",
 			[1] = "Distinction between EL0 and EL1 XN control at stage 2 supported"
 		}
@@ -510,21 +471,18 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 /* ID_AA64DFR0_EL1 - AArch64 Debug Feature Register 0 */
 struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "DebugVer",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(0, 4, "DebugVer") {
 			[6] = "v8-A debug architecture"
 		}
 	},
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "TraceVer",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "TraceVer") {
 			[0] = "Trace supported",
 			[1] = "Trace not supported"
 		}
 	},
 	{
-		.bitpos = 8, .bitwidth = 4, .name = "PMUVer",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(8, 4, "PMUVer") {
 			[0] = "No Performance monitor",
 			[1] = "Performance monitor unit v3"
 		}
@@ -536,60 +494,52 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 /* MVFR0_EL1 - Media and VFP Feature Register 0 */
 struct fieldinfo mvfr0_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "SIMDreg",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(0, 4, "SIMDreg") {
 			[0] = "No SIMD",
 			[1] = "16x64-bit SIMD",
 			[2] = "32x64-bit SIMD"
 		}
 	},
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "FPSP",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "FPSP") {
 			[0] = "No VFP support single precision",
 			[1] = "VFPv2 support single precision",
 			[2] = "VFPv2/VFPv3/VFPv4 support single precision"
 		}
 	},
 	{
-		.bitpos = 8, .bitwidth = 4, .name = "FPDP",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(8, 4, "FPDP") {
 			[0] = "No VFP support double precision",
 			[1] = "VFPv2 support double precision",
 			[2] = "VFPv2/VFPv3/VFPv4 support double precision"
 		}
 	},
 	{
-		.bitpos = 12, .bitwidth = 4, .name = "FPTrap",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(12, 4, "FPTrap") {
 			[0] = "No floating point exception trapping support",
 			[1] = "VFPv2/VFPv3/VFPv4 support exception trapping"
 		}
 	},
 	{
-		.bitpos = 16, .bitwidth = 4, .name = "FPDivide",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(16, 4, "FPDivide") {
 			[0] = "VDIV not supported",
 			[1] = "VDIV supported"
 		}
 	},
 	{
-		.bitpos = 20, .bitwidth = 4, .name = "FPSqrt",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(20, 4, "FPSqrt") {
 			[0] = "VSQRT not supported",
 			[1] = "VSQRT supported"
 		}
 	},
 	{
-		.bitpos = 24, .bitwidth = 4, .name = "FPShVec",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(24, 4, "FPShVec") {
 			[0] = "Short Vectors not supported",
 			[1] = "Short Vectors supported"
 		}
 	},
 	{
-		.bitpos = 28, .bitwidth = 4, .name = "FPRound",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(28, 4, "FPRound") {
 			[0] = "Only Round to Nearest mode",
 			[1] = "All rounding modes"
 		}
@@ -600,58 +550,50 @@ struct fieldinfo mvfr0_fieldinfo[] = {
 /* MVFR1_EL1 - Media and VFP Feature Register 1 */
 struct fieldinfo mvfr1_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "FPFtZ",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(0, 4, "FPFtZ") {
 			[0] = "only the Flush-to-Zero",
 			[1] = "full Denormalized number arithmetic"
 		}
 	},
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "FPDNan",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "FPDNan") {
 			[0] = "Default NaN",
 			[1] = "Propagation of NaN"
 		}
 	},
 	{
-		.bitpos = 8, .bitwidth = 4, .name = "SIMDLS",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(8, 4, "SIMDLS") {
 			[0] = "No Advanced SIMD Load/Store",
 			[1] = "Advanced SIMD Load/Store"
 		}
 	},
 	{
-		.bitpos = 12, .bitwidth = 4, .name = "SIMDInt",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(12, 4, "SIMDInt") {
 			[0] = "No Advanced SIMD Integer",
 			[1] = "Advanced SIMD Integer"
 		}
 	},
 	{
-		.bitpos = 16, .bitwidth = 4, .name = "SIMDSP",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(16, 4, "SIMDSP") {
 			[0] = "No Advanced SIMD single precision",
 			[1] = "Advanced SIMD single precision"
 		}
 	},
 	{
-		.bitpos = 20, .bitwidth = 4, .name = "SIMDHP",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(20, 4, "SIMDHP") {
 			[0] = "No Advanced SIMD half precision",
 			[1] = "Advanced SIMD half precision"
 		}
 	},
 	{
-		.bitpos = 24, .bitwidth = 4, .name = "FPHP",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(24, 4, "FPHP") {
 			[0] = "No half precision conversion",
 			[1] = "half/single precision conversion",
 			[2] = "half/single/double precision conversion"
 		}
 	},
 	{
-		.bitpos = 28, .bitwidth = 4, .name = "SIMDFMAC",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(28, 4, "SIMDFMAC") {
 			[0] = "No Fused Multiply-Accumulate",
 			[1] = "Fused Multiply-Accumulate"
 		}
@@ -662,8 +604,7 @@ struct fieldinfo mvfr1_fieldinfo[] = {
 /* MVFR2_EL1 - Media and VFP Feature Register 2 */
 struct fieldinfo mvfr2_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "SIMDMisc",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(0, 4, "SIMDMisc") {
 			[0] = "No miscellaneous features",
 			[1] = "Conversion to Integer w/Directed Rounding modes",
 			[2] = "Conversion to Integer w/Directed Rounding modes"
@@ -674,8 +615,7 @@ struct fieldinfo mvfr2_fieldinfo[] = {
 		}
 	},
 	{
-		.bitpos = 4, .bitwidth = 4, .name = "FPMisc",
-		.info = (const char *[16]) { /* 16=4bit */
+		FIELDINFO(4, 4, "FPMisc") {
 			[0] = "No miscellaneous features",
 			[1] = "Floating point selection",
 			[2] = "Floating point selection"
@@ -703,47 +643,47 @@ const char * const clidr_cachetype[8] = { /* 8=3bit */
 
 struct fieldinfo clidr_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 3, .name = "L1",
+		FIELDNAME(0, 3, "L1"),
 		.info = clidr_cachetype
 	},
 	{
-		.bitpos = 3, .bitwidth = 3, .name = "L2",
+		FIELDNAME(3, 3, "L2"),
 		.info = clidr_cachetype
 	},
 	{
-		.bitpos = 6, .bitwidth = 3, .name = "L3",
+		FIELDNAME(6, 3, "L3"),
 		.info = clidr_cachetype
 	},
 	{
-		.bitpos = 9, .bitwidth = 3, .name = "L4",
+		FIELDNAME(9, 3, "L4"),
 		.info = clidr_cachetype
 	},
 	{
-		.bitpos = 12, .bitwidth = 3, .name = "L5",
+		FIELDNAME(12, 3, "L5"),
 		.info = clidr_cachetype
 	},
 	{
-		.bitpos = 15, .bitwidth = 3, .name = "L6",
+		FIELDNAME(15, 3, "L6"),
 		.info = clidr_cachetype
 	},
 	{
-		.bitpos = 18, .bitwidth = 3, .name = "L7",
+		FIELDNAME(18, 3, "L7"),
 		.info = clidr_cachetype
 	},
 	{
-		.bitpos = 21, .bitwidth = 3, .name = "LoUU",
+		FIELDNAME(21, 3, "LoUU"),
 		.flags = FIELDINFO_FLAGS_DEC
 	},
 	{
-		.bitpos = 24, .bitwidth = 3, .name = "LoC",
+		FIELDNAME(24, 3, "LoC"),
 		.flags = FIELDINFO_FLAGS_DEC
 	},
 	{
-		.bitpos = 27, .bitwidth = 3, .name = "LoUIS",
+		FIELDNAME(27, 3, "LoUIS"),
 		.flags = FIELDINFO_FLAGS_DEC
 	},
 	{
-		.bitpos = 30, .bitwidth = 3, .name = "ICB",
+		FIELDNAME(30, 3, "ICB"),
 		.flags = FIELDINFO_FLAGS_DEC
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -751,16 +691,15 @@ struct fieldinfo clidr_fieldinfo[] = {
 
 struct fieldinfo ctr_fieldinfo[] = {
 	{
-		.bitpos = 0, .bitwidth = 4, .name = "IminLine",
+		FIELDNAME(0, 4, "IminLine"),
 		.flags = FIELDINFO_FLAGS_DEC | FIELDINFO_FLAGS_4LOG2
 	},
 	{
-		.bitpos = 16, .bitwidth = 4, .name = "DminLine",
+		FIELDNAME(16, 4, "DminLine"),
 		.flags = FIELDINFO_FLAGS_DEC | FIELDINFO_FLAGS_4LOG2
 	},
 	{
-		.bitpos = 14, .bitwidth = 2, .name = "L1 Icache policy",
-		.info = (const char *[4]) { /* 4=2bit */
+		FIELDINFO(14, 2, "L1 Icache policy") {
 			[0] = "VMID aware PIPT (VPIPT)",
 			[1] = "ASID-tagged VIVT (AIVIVT)",
 			[2] = "VIPT",
@@ -768,19 +707,19 @@ struct fieldinfo ctr_fieldinfo[] = {
 		},
 	},
 	{
-		.bitpos = 20, .bitwidth = 4, .name = "ERG",
+		FIELDNAME(20, 4, "ERG"),
 		.flags = FIELDINFO_FLAGS_DEC | FIELDINFO_FLAGS_4LOG2
 	},
 	{
-		.bitpos = 24, .bitwidth = 4, .name = "CWG",
+		FIELDNAME(24, 4, "CWG"),
 		.flags = FIELDINFO_FLAGS_DEC | FIELDINFO_FLAGS_4LOG2
 	},
 	{
-		.bitpos = 28, .bitwidth = 1, .name = "DIC",
+		FIELDNAME(28, 1, "DIC"),
 		.flags = FIELDINFO_FLAGS_DEC
 	},
 	{
-		.bitpos = 29, .bitwidth = 1, .name = "IDC",
+		FIELDNAME(29, 1, "IDC"),
 		.flags = FIELDINFO_FLAGS_DEC
 	},
 	{ .bitwidth = 0 }	/* end of table */
