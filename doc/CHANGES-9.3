@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.62 2021/12/30 12:40:08 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.63 2022/01/06 16:12:09 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1149,4 +1149,9 @@ sys/dev/cgd.c					1.142
 
 	cgd(4): fix detach when still in use by wedges.
 	[riastradh, ticket #1398]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_acl.c 1.7
+
+	Default files to BSD group ownership in line with ffs.
+	[hauke, ticket #1400]
 
