@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.17 2014/01/16 17:22:06 christos Exp $	*/
+/*	$NetBSD: err.h,v 1.18 2022/01/06 00:16:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,17 +39,17 @@
 
 __BEGIN_DECLS
 __dead void	err(int, const char *, ...)
-		     __printflike(2, 3) __dead;
+		     __printflike(2, 3);
 __dead void	verr(int, const char *, va_list)
-		    __printflike(2, 0) __dead;
+		    __printflike(2, 0);
 __dead void	errx(int, const char *, ...)
-		     __printflike(2, 3) __dead;
+		     __printflike(2, 3);
 __dead void	verrx(int, const char *, va_list)
-		    __printflike(2, 0) __dead;
+		    __printflike(2, 0);
 __dead void	errc(int, int, const char *, ...)
-		     __printflike(3, 4) __dead;
+		     __printflike(3, 4);
 __dead void	verrc(int, int, const char *, va_list)
-		    __printflike(3, 0) __dead;
+		    __printflike(3, 0);
 void		warn(const char *, ...)
 		    __printflike(1, 2);
 void		vwarn(const char *, va_list)
