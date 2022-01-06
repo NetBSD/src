@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.18 2022/01/06 09:01:16 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.19 2022/01/06 17:59:15 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.18 2022/01/06 09:01:16 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.19 2022/01/06 17:59:15 ryo Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -384,7 +384,7 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(4, 4, "APA") {
-			[0] = "No Archtected Address Authentication algorithm",
+			[0] = "No Architected Address Authentication algorithm",
 			[1] = "QARMA with PAC",
 			[2] = "QARMA with EnhancedPAC",
 			[3] = "QARMA with EnhancedPAC2",
@@ -423,7 +423,7 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(24, 4, "GPA") {
-			[0] = "No Archtected Generic Authentication algorithm",
+			[0] = "No Architected Generic Authentication algorithm",
 			[1] = "QARMA with PACGA"
 		}
 	},
