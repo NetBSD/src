@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.19 2022/01/06 17:59:15 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.20 2022/01/06 18:00:58 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.19 2022/01/06 17:59:15 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.20 2022/01/06 18:00:58 ryo Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -1007,6 +1007,9 @@ print_fieldinfo(const char *cpuname, const char *setname,
 
 		printf("%s: %s: %s: ",
 		    cpuname, setname, fieldinfo[i].name);
+
+		if (verbose)
+			printf("0x%"PRIx64": ", v);
 
 		if (info == NULL) {
 			if (flags & FIELDINFO_FLAGS_4LOG2)
