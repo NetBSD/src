@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.17 2022/01/06 08:46:43 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.18 2022/01/06 09:01:16 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.17 2022/01/06 08:46:43 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.18 2022/01/06 09:01:16 ryo Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -244,15 +244,31 @@ struct fieldinfo id_aa64pfr1_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(8, 4, "MTE") {
-			[0] = "Tagged Memory Extension not implemented",
-			[1] = "Tagged Memory Extension implemented, EL0 only",
-			[2] = "Tagged Memory Extension implemented"
+			[0] = "Memory Tagging Extension not implemented",
+			[1] = "Instruction-only Memory Taggined Extension"
+			    " implemented",
+			[2] = "Full Memory Tagging Extension implemented",
+			[3] = "Memory Tagging Extension implemented"
+			    " with Tag Check Fault handling"
 		}
 	},
 	{
 		FIELDINFO(12, 4, "RAS_frac") {
 			[0] = "Regular RAS",
-			[1] = "RAS plus registers",
+			[1] = "RAS plus registers"
+		}
+	},
+	{
+		FIELDINFO(16, 4, "MPAM_frac") {
+			[0] = "MPAM not implemented, or v1.0",
+			[1] = "MPAM v0.1 or v1.1"
+		}
+	},
+	{
+		FIELDINFO(32, 4, "CSV2_frac") {
+			[0] = "not disclosed",
+			[1] = "SCXTNUM_ELx registers not supported",
+			[2] = "SCXTNUM_ELx registers supported"
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -276,7 +292,9 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 	{
 		FIELDINFO(12, 4, "SHA2") {
 			[0] = "No SHA2",
-			[1] = "SHA256H/SHA256H2/SHA256SU0/SHA256U1"
+			[1] = "SHA256H/SHA256H2/SHA256SU0/SHA256SU1",
+			[2] = "SHA256H/SHA256H2/SHA256SU0/SHA256SU1"
+			     "/SHA512H/SHA512H2/SHA512SU0/SHA512SU1"
 		}
 	},
 	{
@@ -355,6 +373,121 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 	{ .bitwidth = 0 }	/* end of table */
 };
 
+/* ID_AA64ISAR0_EL1 - AArch64 Instruction Set Attribute Register 0 */
+struct fieldinfo id_aa64isar1_fieldinfo[] = {
+	{
+		FIELDINFO(0, 4, "DPB") {
+			[0] = "No DC CVAP",
+			[1] = "DC CVAP",
+			[2] = "DC CVAP/DC CVADP"
+		}
+	},
+	{
+		FIELDINFO(4, 4, "APA") {
+			[0] = "No Archtected Address Authentication algorithm",
+			[1] = "QARMA with PAC",
+			[2] = "QARMA with EnhancedPAC",
+			[3] = "QARMA with EnhancedPAC2",
+			[4] = "QARMA with EnhancedPAC/PAC2",
+			[5] = "QARMA with EnhancedPAC/PAC2/FPACCombined"
+		}
+	},
+	{
+		FIELDINFO(8, 4, "API") {
+			[0] = "No Address Authentication algorithm",
+			[1] = "Address Authentication algorithm implemented",
+			[2] = "EnhancedPAC",
+			[3] = "EnhancedPAC2",
+			[4] = "EnhancedPAC2/FPAC",
+			[5] = "EnhancedPAC2/FPAC/FPACCombined"
+		}
+	},
+	{
+		FIELDINFO(12, 4, "JSCVT") {
+			[0] = "No FJCVTZS",
+			[1] = "FJCVTZS"
+		}
+	},
+	{
+		FIELDINFO(16, 4, "FCMA") {
+			[0] = "No FCMA",
+			[1] = "FCMLA/FCADD"
+		}
+	},
+	{
+		FIELDINFO(20, 4, "LRCPC") {
+			[0] = "no LRCPC",
+			[1] = "LDAPR",
+			[2] = "LDAPR/LDAPUR/STLUR"
+		}
+	},
+	{
+		FIELDINFO(24, 4, "GPA") {
+			[0] = "No Archtected Generic Authentication algorithm",
+			[1] = "QARMA with PACGA"
+		}
+	},
+	{
+		FIELDINFO(28, 4, "GPI") {
+			[0] = "No Generic Authentication algorithm",
+			[1] = "Generic Authentication algorithm implemented"
+		}
+	},
+	{
+		FIELDINFO(32, 4, "FRINTTS") {
+			[0] = "No FRINTTS",
+			[1] = "FRINT32Z/FRINT32X/FRINT64Z/FRINT64X"
+		}
+	},
+	{
+		FIELDINFO(36, 4, "SB") {
+			[0] = "No SB",
+			[1] = "SB"
+		}
+	},
+	{
+		FIELDINFO(40, 4, "SPECRES") {
+			[0] = "No SPECRES",
+			[1] = "CFP RCTX/DVP RCTX/CPP RCTX"
+		}
+	},
+	{
+		FIELDINFO(44, 4, "BF16") {
+			[0] = "No BFloat16",
+			[1] = "BFCVT/BFCVTN/BFCVTN2/BFDOT"
+			    "/BFMLALB/BFMLALT/BFMMLA"
+		}
+	},
+	{
+		FIELDINFO(48, 4, "DGH") {
+			[0] = "Data Gathering Hint not implemented",
+			[1] = "Data Gathering Hint implemented"
+		}
+	},
+	{
+		FIELDINFO(52, 4, "I8MM") {
+			[0] = "No Int8 matrix",
+			[1] = "SMMLA/SUDOT/UMMLA/USMMLA/USDOT"
+		}
+	},
+	{
+		FIELDINFO(56, 4, "XS") {
+			[0] = "No XS/nXS qualifier",
+			[1] = "XS attribute, TLBI and DSB"
+			    " with nXS qualifier supported"
+		}
+	},
+	{
+		FIELDINFO(60, 4, "LS64") {
+			[0] = "No LS64",
+			[1] = "LD64B/ST64B",
+			[2] = "LD64B/ST64B/ST64BV",
+			[3] = "LD64B/ST64B/ST64BV/ST64BV0/ACCDATA_EL1",
+		}
+	},
+	{ .bitwidth = 0 }	/* end of table */
+};
+
 /* ID_AA64MMFR0_EL1 - AArch64 Memory Model Feature Register 0 */
 struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 	{
@@ -364,7 +497,8 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[2] = "40bits/1TB",
 			[3] = "42bits/4TB",
 			[4] = "44bits/16TB",
-			[5] = "48bits/256TB"
+			[5] = "48bits/256TB",
+			[6] = "52bits/4PB"
 		}
 	},
 	{
@@ -409,6 +543,51 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[15] = "No 4KB granule"
 		}
 	},
+	{
+		FIELDINFO(32, 4, "TGran16_2") {
+			[0] = "same as TGran16",
+			[1] = "No 16KB granule at stage2",
+			[2] = "16KB granule at stage2",
+			[3] = "16KB granule at stage2/52bit"
+		}
+	},
+	{
+		FIELDINFO(36, 4, "TGran64_2") {
+			[0] = "same as TGran64",
+			[1] = "No 64KB granule at stage2",
+			[2] = "64KB granule at stage2"
+		}
+	},
+	{
+		FIELDINFO(40, 4, "TGran4_2") {
+			[0] = "same as TGran4",
+			[1] = "No 4KB granule at stage2",
+			[2] = "4KB granule at stage2"
+		}
+	},
+	{
+		FIELDINFO(44, 4, "ExS") {
+			[0] = "All Exception entries and exits are context"
+			    " synchronization events",
+			[1] = "Non-context synchronizing exception entry and"
+			    " exit are supported"
+		}
+	},
+	{
+		FIELDINFO(56, 4, "FGT") {
+			[0] = "fine-grained trap controls not implemented",
+			[1] = "fine-grained trap controls implemented"
+		}
+	},
+	{
+		FIELDINFO(60, 4, "ECV") {
+			[0] = "Enhanced Counter Virtualization not implemented",
+			[1] = "Enhanced Counter Virtualization implemented",
+			[2] = "Enhanced Counter Virtualization"
+			    " + CNTHCTL_EL2.ECV/CNTPOFF_EL2 implemented"
+		}
+	},
+
 	{ .bitwidth = 0 }	/* end of table */
 };
 
@@ -450,7 +629,9 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 		FIELDINFO(20, 4, "PAN") {
 			[0] = "PAN not supported",
 			[1] = "PAN supported",
-			[2] = "PAN supported, and instructions supported"
+			[2] = "PAN supported, and instructions supported",
+			[3] = "PAN supported, instructions supported"
+			    ", and SCTLR_EL[12].EPAN bits supported"
 		}
 	},
 	{
@@ -461,8 +642,42 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(28, 4, "XNX") {
-			[0] = "Distinction between EL0 and EL1 XN control at stage 2 not supported",
-			[1] = "Distinction between EL0 and EL1 XN control at stage 2 supported"
+			[0] = "Distinction between EL0 and EL1 XN control"
+			    " at stage2 not supported",
+			[1] = "Distinction between EL0 and EL1 XN control"
+			    " at stage2 supported"
+		}
+	},
+	{
+		FIELDINFO(32, 4, "TWED") {
+			[0] = "Configurable delayed trapping of WFE is not"
+			    " supported",
+			[1] = "Configurable delayed trapping of WFE supported"
+		}
+	},
+	{
+		FIELDINFO(36, 4, "ETS") {
+			[0] = "Enhanced Translation Synchronization not"
+			    " supported",
+			[1] = "Enhanced Translation Synchronization supported"
+		}
+	},
+	{
+		FIELDINFO(40, 4, "HCX") {
+			[0] = "HCRX_EL2 not supported",
+			[1] = "HCRX_EL2 supported"
+		}
+	},
+	{
+		FIELDINFO(44, 4, "AFP") {
+			[0] = "FPCR.{AH,FIZ,NEP} fields not supported",
+			[1] = "FPCR.{AH,FIZ,NEP} fields supported"
+		}
+	},
+	{
+		FIELDINFO(48, 4, "nTLBPA") {
+			[0] = "might include non-coherent caches",
+			[1] = "does not include non-coherent caches"
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -472,7 +687,11 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 	{
 		FIELDINFO(0, 4, "DebugVer") {
-			[6] = "v8-A debug architecture"
+			[6] = "ARMv8 debug architecture",
+			[7] = "ARMv8 debug architecture"
+			    " with Virtualization Host Extensions",
+			[8] = "ARMv8.2 debug architecture",
+			[9] = "ARMv8.4 debug architecture"
 		}
 	},
 	{
@@ -484,7 +703,44 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 	{
 		FIELDINFO(8, 4, "PMUVer") {
 			[0] = "No Performance monitor",
-			[1] = "Performance monitor unit v3"
+			[1] = "Performance monitor unit v3",
+			[4] = "Performance monitor unit v3 for ARMv8.1",
+			[5] = "Performance monitor unit v3 for ARMv8.4",
+			[6] = "Performance monitor unit v3 for ARMv8.5",
+			[7] = "Performance monitor unit v3 for ARMv8.7",
+			[15] = "implementation defined"
+		}
+	},
+	{
+		FIELDINFO(32, 4, "PMSVer") {
+			[0] = "Statistical Profiling Extension not implemented",
+			[1] = "Statistical Profiling Extension implemented",
+			[2] = "Statistical Profiling Extension and "
+			    "Event packet alignment flag implemented",
+			[3] = "Statistical Profiling Extension, "
+			    "Event packet alignment flag, and "
+			    "Branch target address packet, etc."
+		}
+	},
+	{
+		FIELDINFO(36, 4, "DoubleLock") {
+			[0] = "OS Double Lock implemented",
+			[1] = "OS Double Lock not implemented"
+		}
+	},
+	{
+		FIELDINFO(40, 4, "TraceFilt") {
+			[0] = "ARMv8.4 Self-hosted Trace Extension not "
+			    "implemented",
+			[1] = "ARMv8.4 Self-hosted Trace Extension implemented"
+		}
+	},
+	{
+		FIELDINFO(48, 4, "MTPMU") {
+			[0] = "Multi-threaded PMU extension not implemented,"
+			    " or implementation defined",
+			[1] = "Multi-threaded PMU extension implemented",
+			[15] = "Multi-threaded PMU extension not implemented"
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -582,14 +838,18 @@ struct fieldinfo mvfr1_fieldinfo[] = {
 	{
 		FIELDINFO(20, 4, "SIMDHP") {
 			[0] = "No Advanced SIMD half precision",
-			[1] = "Advanced SIMD half precision"
+			[1] = "Advanced SIMD half precision conversion",
+			[2] = "Advanced SIMD half precision conversion"
+			    " and arithmetic"
 		}
 	},
 	{
 		FIELDINFO(24, 4, "FPHP") {
 			[0] = "No half precision conversion",
 			[1] = "half/single precision conversion",
-			[2] = "half/single/double precision conversion"
+			[2] = "half/single/double precision conversion",
+			[3] = "half/single/double precision conversion, and "
+			    "half precision arithmetic"
 		}
 	},
 	{
@@ -907,6 +1167,8 @@ identifycpu(int fd, const char *cpuname)
 	identify_mpidr(cpuname, id->ac_mpidr);
 	print_fieldinfo(cpuname, "isa features 0",
 	    id_aa64isar0_fieldinfo, id->ac_aa64isar0);
+	print_fieldinfo(cpuname, "isa features 1",
+	    id_aa64isar1_fieldinfo, id->ac_aa64isar1);
 	print_fieldinfo(cpuname, "memory model 0",
 	    id_aa64mmfr0_fieldinfo, id->ac_aa64mmfr0);
 	print_fieldinfo(cpuname, "memory model 1",
