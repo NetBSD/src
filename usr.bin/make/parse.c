@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.636 2022/01/07 21:57:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.637 2022/01/07 22:08:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.636 2022/01/07 21:57:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.637 2022/01/07 22:08:09 rillig Exp $");
 
 /*
  * A file being read.
@@ -2320,8 +2320,7 @@ ParseRawLine(IncludedFile *curFile, char **out_line, char **out_line_end,
 		}
 
 		ch = *p;
-		if (ch == '\0' ||
-		    (ch == '\\' && p + 1 < buf_end && p[1] == '\0')) {
+		if (ch == '\0' || (ch == '\\' && p[1] == '\0')) {
 			Parse_Error(PARSE_FATAL, "Zero byte read from file");
 			return PRLR_ERROR;
 		}
@@ -2481,17 +2480,10 @@ ReadLowLevelLine(LineKind kind)
 		break;
 	}
 
-	/* Ignore anything after a non-escaped '#' in non-commands. */
 	if (commentLineEnd != NULL && line[0] != '\t')
 		*commentLineEnd = '\0';
-
-	/* If we didn't see a '\\' then the in-situ data is fine. */
-	if (firstBackslash == NULL)
-		return line;
-
-	/* Remove escapes from '\n' and '#' */
-	UnescapeBackslash(line, firstBackslash);
-
+	if (firstBackslash != NULL)
+		UnescapeBackslash(line, firstBackslash);
 	return line;
 }
 
