@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.41 2021/08/21 10:06:33 andvar Exp $
+# $NetBSD: postinstall.in,v 1.42 2022/01/07 01:03:02 lukem Exp $
 #
 # Copyright (c) 2002-2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2300,6 +2300,7 @@ do_x11()
 
 	failed=0
 	_etcx11="${DEST_DIR}/etc/X11"
+	_libx11=""
 	if [ ! -d "${_etcx11}" ]; then
 		msg "${_etcx11} is not a directory; skipping check"
 		return 0
@@ -2318,30 +2319,33 @@ do_x11()
 		_notfixed="${NOT_FIXED}"
 	fi
 
-	for d in \
-		    fs lbxproxy proxymngr rstart twm xdm xinit xserver xsm \
-	    ; do
-		sd="${_libx11}/${d}"
-		ld="/etc/X11/${d}"
-		td="${DEST_DIR}${ld}"
-		if [ -h "${sd}" ]; then
-			continue
-		elif [ -d "${sd}" ]; then
-			tdfiles="$(find "${td}" \! -type d)"
-			if [ -n "${tdfiles}" ]; then
-				msg "${sd} exists yet ${td} already" \
-				    "contains files${_notfixed}"
+	# check if /usr/X11R6/lib/X11 needs to migrate to /etc/X11
+	if [ -n "${_libx11}" ]; then
+		for d in \
+			    fs lbxproxy proxymngr rstart twm xdm xinit xserver xsm \
+		    ; do
+			sd="${_libx11}/${d}"
+			ld="/etc/X11/${d}"
+			td="${DEST_DIR}${ld}"
+			if [ -h "${sd}" ]; then
+				continue
+			elif [ -d "${sd}" ]; then
+				tdfiles="$(find "${td}" \! -type d)"
+				if [ -n "${tdfiles}" ]; then
+					msg "${sd} exists yet ${td} already" \
+					    "contains files${_notfixed}"
+				else
+					msg "Migrate ${sd} to ${td}${_notfixed}"
+				fi
+				failed=1
+			elif [ -e "${sd}" ]; then
+				msg "Unexpected file ${sd}${_notfixed}"
+				continue
 			else
-				msg "Migrate ${sd} to ${td}${_notfixed}"
+				continue
 			fi
-			failed=1
-		elif [ -e "${sd}" ]; then
-			msg "Unexpected file ${sd}${_notfixed}"
-			continue
-		else
-			continue
-		fi
-	done
+		done
+	fi
 
 	# check if xdm resources have been updated
 	if [ -r ${_etcx11}/xdm/Xresources ] && \
