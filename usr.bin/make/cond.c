@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.323 2022/01/07 09:02:19 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.324 2022/01/07 09:19:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,10 +95,10 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.323 2022/01/07 09:02:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.324 2022/01/07 09:19:43 rillig Exp $");
 
 /*
- * The parsing of conditional expressions is based on this grammar:
+ * Conditional expressions conform to this grammar:
  *	Or -> And ('||' And)*
  *	And -> Term ('&&' Term)*
  *	Term -> Function '(' Argument ')'
@@ -109,13 +109,13 @@ MAKE_RCSID("$NetBSD: cond.c,v 1.323 2022/01/07 09:02:19 rillig Exp $");
  *	Leaf -> "string"
  *	Leaf -> Number
  *	Leaf -> VariableExpression
- *	Leaf -> Symbol
+ *	Leaf -> BareWord
  *	Operator -> '==' | '!=' | '>' | '<' | '>=' | '<='
  *
- * 'Symbol' is an unquoted string literal to which the default function is
- * applied.
+ * BareWord is an unquoted string literal, its evaluation depends on the kind
+ * of '.if' directive.
  *
- * The tokens are scanned by CondToken, which returns:
+ * The tokens are scanned by CondParser_Token, which returns:
  *	TOK_AND		for '&&'
  *	TOK_OR		for '||'
  *	TOK_NOT		for '!'
@@ -288,9 +288,9 @@ ParseFuncArg(CondParser *par, const char **pp, bool doEval, const char *func)
 
 /* Test whether the given variable is defined. */
 static bool
-FuncDefined(const char *arg)
+FuncDefined(const char *var)
 {
-	FStr value = Var_Value(SCOPE_CMDLINE, arg);
+	FStr value = Var_Value(SCOPE_CMDLINE, var);
 	bool result = value.str != NULL;
 	FStr_Done(&value);
 	return result;
@@ -298,26 +298,26 @@ FuncDefined(const char *arg)
 
 /* See if the given target is requested to be made. */
 static bool
-FuncMake(const char *arg)
+FuncMake(const char *target)
 {
 	StringListNode *ln;
 
 	for (ln = opts.create.first; ln != NULL; ln = ln->next)
-		if (Str_Match(ln->datum, arg))
+		if (Str_Match(ln->datum, target))
 			return true;
 	return false;
 }
 
 /* See if the given file exists. */
 static bool
-FuncExists(const char *arg)
+FuncExists(const char *file)
 {
 	bool result;
 	char *path;
 
-	path = Dir_FindFile(arg, &dirSearchPath);
+	path = Dir_FindFile(file, &dirSearchPath);
 	DEBUG2(COND, "exists(%s) result is \"%s\"\n",
-	    arg, path != NULL ? path : "");
+	    file, path != NULL ? path : "");
 	result = path != NULL;
 	free(path);
 	return result;
@@ -325,9 +325,9 @@ FuncExists(const char *arg)
 
 /* See if the given node exists and is an actual target. */
 static bool
-FuncTarget(const char *arg)
+FuncTarget(const char *node)
 {
-	GNode *gn = Targ_FindNode(arg);
+	GNode *gn = Targ_FindNode(node);
 	return gn != NULL && GNode_IsTarget(gn);
 }
 
@@ -336,20 +336,16 @@ FuncTarget(const char *arg)
  * associated with it.
  */
 static bool
-FuncCommands(const char *arg)
+FuncCommands(const char *node)
 {
-	GNode *gn = Targ_FindNode(arg);
-	return gn != NULL && GNode_IsTarget(gn) && !Lst_IsEmpty(&gn->commands);
+	GNode *gn = Targ_FindNode(node);
+	return gn != NULL && GNode_IsTarget(gn) &&
+	       !Lst_IsEmpty(&gn->commands);
 }
 
 /*
- * Convert the given number into a double.
- * We try a base 10 or 16 integer conversion first, if that fails
- * then we try a floating point conversion instead.
- *
- * Results:
- *	Returns true if the conversion succeeded.
- *	Sets 'out_value' to the converted number.
+ * Convert the string into a floating-point number.  Accepted formats are
+ * base-10 integer, base-16 integer and finite floating point numbers.
  */
 static bool
 TryParseNumber(const char *str, double *out_value)
@@ -1262,11 +1258,9 @@ Cond_EvalLine(const char *line)
 	/* And evaluate the conditional expression */
 	res = CondEvalExpression(p, plain, evalBare, negate, true, false);
 	if (res == CR_ERROR) {
-		/*
-		 * Syntax error in conditional, error message already output.
-		 */
-		/* Skip everything to matching .endif */
-		/* XXX: An extra '.else' is not detected in this case. */
+		/* Syntax error, error message already output. */
+		/* Skip everything to the matching '.endif'. */
+		/* An extra '.else' is not detected in this case. */
 		cond_states[cond_depth] = IFS_WAS_ACTIVE;
 		return CR_FALSE;
 	}

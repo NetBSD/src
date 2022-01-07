@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.622 2022/01/07 08:48:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.623 2022/01/07 09:19:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.622 2022/01/07 08:48:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.623 2022/01/07 09:19:43 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -2610,10 +2610,6 @@ ReadHighLevelLine(void)
 		if (line[0] != '.')
 			return line;
 
-		/*
-		 * The line might be a conditional. Ask the conditional module
-		 * about it and act accordingly
-		 */
 		switch (Cond_EvalLine(line)) {
 		case CR_FALSE:	/* May also mean a syntax error. */
 			if (!SkipIrrelevantBranches())
