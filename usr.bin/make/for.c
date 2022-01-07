@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.157 2022/01/07 20:15:10 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.158 2022/01/07 23:13:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.157 2022/01/07 20:15:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.158 2022/01/07 23:13:50 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -191,35 +191,30 @@ IsEndfor(const char *p)
 int
 For_Eval(const char *line)
 {
-	ForLoop *f;
 	const char *p;
+	ForLoop *f;
 
 	p = line + 1;		/* skip the '.' */
 	cpp_skip_whitespace(&p);
 
-	if (!IsFor(p)) {
-		if (IsEndfor(p)) {
-			Parse_Error(PARSE_FATAL, "for-less endfor");
+	if (IsFor(p)) {
+		p += 3;
+
+		f = ForLoop_New();
+		if (!ForLoop_ParseVarnames(f, &p)) {
+			ForLoop_Free(f);
 			return -1;
 		}
-		return 0;
-	}
-	p += 3;
+		if (!ForLoop_ParseItems(f, p))
+			f->items.len = 0;	/* don't iterate */
 
-	f = ForLoop_New();
-
-	if (!ForLoop_ParseVarnames(f, &p)) {
-		ForLoop_Free(f);
+		accumFor = f;
+		return 1;
+	} else if (IsEndfor(p)) {
+		Parse_Error(PARSE_FATAL, "for-less endfor");
 		return -1;
-	}
-
-	if (!ForLoop_ParseItems(f, p)) {
-		/* Continue parsing the .for loop, but don't iterate. */
-		f->items.len = 0;
-	}
-
-	accumFor = f;
-	return 1;
+	} else
+		return 0;
 }
 
 /*
