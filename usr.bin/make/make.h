@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.285 2022/01/07 13:56:09 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.286 2022/01/07 19:24:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -818,6 +818,14 @@ GNode_IsMainCandidate(const GNode *gn)
 {
 	return (gn->type & (OP_NOTMAIN | OP_USE | OP_USEBEFORE |
 			    OP_EXEC | OP_TRANSFORM)) == 0;
+}
+
+/* Return whether the target file should be preserved on interrupt. */
+MAKE_INLINE bool MAKE_ATTR_USE
+GNode_IsPrecious(const GNode *gn)
+{
+	/* XXX: Why are '::' targets precious? */
+	return allPrecious || gn->type & (OP_PRECIOUS | OP_DOUBLEDEP);
 }
 
 MAKE_INLINE const char * MAKE_ATTR_USE
