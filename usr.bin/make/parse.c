@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.631 2022/01/07 20:50:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.632 2022/01/07 20:54:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.631 2022/01/07 20:50:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.632 2022/01/07 20:54:45 rillig Exp $");
 
 /*
  * A file being read.
@@ -1160,7 +1160,7 @@ ParseDependencySourceSpecial(ParseSpecial special, const char *word,
 {
 	switch (special) {
 	case SP_SUFFIXES:
-		Suff_AddSuffix(word, &mainNode);
+		Suff_AddSuffix(word);
 		break;
 	case SP_PATH:
 		AddToPaths(word, paths);

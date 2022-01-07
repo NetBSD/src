@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.363 2022/01/07 20:50:35 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.364 2022/01/07 20:54:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.363 2022/01/07 20:50:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.364 2022/01/07 20:54:45 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -734,16 +734,15 @@ RebuildGraph(GNode *transform, Suffix *suff)
  *	true iff a new main target has been selected.
  */
 static bool
-UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
-	     bool *inout_removedMain)
+UpdateTarget(GNode *target, Suffix *suff, bool *inout_removedMain)
 {
 	Suffix *srcSuff, *targSuff;
 	char *ptr;
 
-	if (*inout_main == NULL && *inout_removedMain &&
+	if (mainNode == NULL && *inout_removedMain &&
 	    GNode_IsMainCandidate(target)) {
 		DEBUG1(MAKE, "Setting main node to \"%s\"\n", target->name);
-		*inout_main = target;
+		mainNode = target;
 		/*
 		 * XXX: Why could it be a good idea to return true here?
 		 * The main task of this function is to turn ordinary nodes
@@ -781,12 +780,12 @@ UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
 		return false;
 
 	if (ParseTransform(target->name, &srcSuff, &targSuff)) {
-		if (*inout_main == target) {
+		if (mainNode == target) {
 			DEBUG1(MAKE,
 			    "Setting main node from \"%s\" back to null\n",
 			    target->name);
 			*inout_removedMain = true;
-			*inout_main = NULL;
+			mainNode = NULL;
 		}
 		Lst_Done(&target->children);
 		Lst_Init(&target->children);
@@ -810,14 +809,14 @@ UpdateTarget(GNode *target, GNode **inout_main, Suffix *suff,
  * suffix rules.
  */
 static void
-UpdateTargets(GNode **inout_main, Suffix *suff)
+UpdateTargets(Suffix *suff)
 {
 	bool removedMain = false;
 	GNodeListNode *ln;
 
 	for (ln = Targ_List()->first; ln != NULL; ln = ln->next) {
 		GNode *gn = ln->datum;
-		if (UpdateTarget(gn, inout_main, suff, &removedMain))
+		if (UpdateTarget(gn, suff, &removedMain))
 			break;
 	}
 }
@@ -836,7 +835,7 @@ UpdateTargets(GNode **inout_main, Suffix *suff)
  *	name		the name of the suffix to add
  */
 void
-Suff_AddSuffix(const char *name, GNode **inout_main)
+Suff_AddSuffix(const char *name)
 {
 	GNodeListNode *ln;
 
@@ -848,7 +847,7 @@ Suff_AddSuffix(const char *name, GNode **inout_main)
 	Lst_Append(&sufflist, suff);
 	DEBUG1(SUFF, "Adding suffix \"%s\"\n", suff->name);
 
-	UpdateTargets(inout_main, suff);
+	UpdateTargets(suff);
 
 	/*
 	 * Look for any existing transformations from or to this suffix.
