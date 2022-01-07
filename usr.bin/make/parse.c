@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.626 2022/01/07 09:49:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.627 2022/01/07 13:56:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,15 +106,26 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.626 2022/01/07 09:49:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.627 2022/01/07 13:56:09 rillig Exp $");
 
 /*
- * Structure for a file being read ("included file")
+ * A file being read.
  */
-typedef struct IFile {
+typedef struct IncludedFile {
 	FStr name;		/* absolute or relative to the cwd */
-	int lineno;		/* current line number in file */
-	int forBodyLineno;	/* start of the .for loop body, 0-based */
+	/* TODO: add lineno for accurate line number information */
+	int readLines;		/* the number of physical lines that have
+				 * been read from the file; for lines without
+				 * backslash continuation, it coincidentally
+				 * equals the 1-based human-readable line
+				 * number for messages */
+	/* TODO: add forHeadLineno for accurate line number information */
+	int forBodyReadLines;	/* the number of physical lines that have
+				 * been read from the file above the body of
+				 * the .for loop; in .for loops whose head
+				 * fits in a single line, it coincidentally
+				 * equals the 1-based human-readable line
+				 * number for messages */
 	unsigned int cond_depth; /* 'if' nesting when file opened */
 	bool depending;		/* state of doing_depend on EOF */
 
@@ -124,7 +135,7 @@ typedef struct IFile {
 	char *buf_end;		/* buf_end[-1] == '\n' */
 
 	struct ForLoop *forLoop;
-} IFile;
+} IncludedFile;
 
 /*
  * Tokens for target attributes
@@ -210,7 +221,7 @@ static int parseErrors = 0;
  *
  * See PrintStackTrace for how to interpret the data.
  */
-static Vector /* of IFile */ includes;
+static Vector /* of IncludedFile */ includes;
 
 SearchPath *parseIncPath;	/* directories for "..." includes */
 SearchPath *sysIncPath;		/* directories for <...> includes */
@@ -275,14 +286,14 @@ static const struct {
 };
 
 
-static IFile *
+static IncludedFile *
 GetInclude(size_t i)
 {
 	return Vector_Get(&includes, i);
 }
 
 /* The file that is currently being read. */
-static IFile *
+static IncludedFile *
 CurFile(void)
 {
 	return GetInclude(includes.len - 1);
@@ -332,7 +343,7 @@ loadfile(const char *path, int fd)
 static void
 PrintStackTrace(void)
 {
-	const IFile *entries;
+	const IncludedFile *entries;
 	size_t i, n;
 
 	if (!DEBUG(PARSE))
@@ -344,33 +355,28 @@ PrintStackTrace(void)
 		return;
 	n--;			/* This entry is already in the diagnostic. */
 
-	/*
-	 * For the IFiles with forLoop, lineno is the number of completely
-	 * parsed lines, which is right after the corresponding .endfor.  The
-	 * intuitive line number comes from first_lineno instead, which
-	 * points at the start of the .for loop.
-	 *
-	 * To make the stack trace intuitive, the entry below each chain of
-	 * .for loop entries must be ignored completely since neither its
-	 * lineno nor its first_lineno is useful.  Instead, the topmost of
-	 * each chain of .for loop entries needs to be printed twice, once
-	 * with its first_lineno and once with its lineno.
-	 */
-
 	for (i = n; i-- > 0;) {
-		const IFile *entry = entries + i;
+		const IncludedFile *entry = entries + i;
 		const char *fname = entry->name.str;
 		char dirbuf[MAXPATHLEN + 1];
 
 		if (fname[0] != '/' && strcmp(fname, "(stdin)") != 0)
 			fname = realpath(fname, dirbuf);
 
+		/*
+		 * FIXME: Using readLines is incorrect for multi-line
+		 *  .include directives.
+		 */
 		if (entries[i + 1 < n ? i + 1 : i].forLoop == NULL)
 			debug_printf("\tin .include from %s:%d\n",
-			    fname, entry->lineno);
+			    fname, entry->readLines - 1 + 1);
+		/*
+		 * FIXME: Using forBodyReadLines is incorrect for multi-line
+		 *  .for directives.
+		 */
 		if (entry->forLoop != NULL)
 			debug_printf("\tin .for loop from %s:%d\n",
-			    fname, entry->forBodyLineno - 1 + 1);
+			    fname, entry->forBodyReadLines - 1 + 1);
 	}
 }
 
@@ -391,9 +397,10 @@ IsEscaped(const char *line, const char *p)
 static void
 RememberLocation(GNode *gn)
 {
-	IFile *curFile = CurFile();
+	IncludedFile *curFile = CurFile();
 	gn->fname = Str_Intern(curFile->name.str);
-	gn->lineno = curFile->lineno;
+	/* FIXME: mismatch between lineno and readLines */
+	gn->lineno = curFile->readLines;
 }
 
 /*
@@ -516,9 +523,10 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 		fname = NULL;
 		lineno = 0;
 	} else {
-		IFile *curFile = CurFile();
+		IncludedFile *curFile = CurFile();
 		fname = curFile->name.str;
-		lineno = (size_t)curFile->lineno;
+		/* FIXME: mismatch between lineno and readLines */
+		lineno = (size_t)curFile->readLines;
 	}
 
 	va_start(ap, fmt);
@@ -2031,7 +2039,7 @@ static const char *
 GetActuallyIncludingFile(void)
 {
 	size_t i;
-	const IFile *incs = GetInclude(0);
+	const IncludedFile *incs = GetInclude(0);
 
 	for (i = includes.len; i >= 2; i--)
 		if (incs[i - 1].forLoop == NULL)
@@ -2119,7 +2127,7 @@ void
 Parse_PushInput(const char *name, int lineno, Buffer buf,
 		struct ForLoop *forLoop)
 {
-	IFile *curFile;
+	IncludedFile *curFile;
 
 	if (forLoop != NULL)
 		name = CurFile()->name.str;
@@ -2131,8 +2139,10 @@ Parse_PushInput(const char *name, int lineno, Buffer buf,
 
 	curFile = Vector_Push(&includes);
 	curFile->name = FStr_InitOwn(bmake_strdup(name));
-	curFile->lineno = lineno;
-	curFile->forBodyLineno = lineno;
+	/* FIXME: mismatch between readLines and lineno */
+	curFile->readLines = lineno;
+	/* FIXME: mismatch between readLines and lineno */
+	curFile->forBodyReadLines = lineno;
 	curFile->buf = buf;
 	curFile->depending = doing_depend;	/* restore this on EOF */
 	curFile->forLoop = forLoop;
@@ -2264,14 +2274,14 @@ ParseGmakeExport(char *line)
 static bool
 ParseEOF(void)
 {
-	IFile *curFile = CurFile();
+	IncludedFile *curFile = CurFile();
 
 	doing_depend = curFile->depending;
 	if (curFile->forLoop != NULL &&
 	    For_NextIteration(curFile->forLoop, &curFile->buf)) {
 		curFile->buf_ptr = curFile->buf.data;
 		curFile->buf_end = curFile->buf.data + curFile->buf.len;
-		curFile->lineno = curFile->forBodyLineno;
+		curFile->readLines = curFile->forBodyReadLines;
 		return true;
 	}
 
@@ -2295,8 +2305,9 @@ ParseEOF(void)
 	}
 
 	curFile = CurFile();
+	/* FIXME: mismatch between lineno and readLines */
 	DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
-	    curFile->name.str, curFile->lineno);
+	    curFile->name.str, curFile->readLines);
 
 	SetParseFile(curFile->name.str);
 	return true;
@@ -2314,7 +2325,7 @@ typedef enum ParseRawLineResult {
  * the line is not null-terminated.
  */
 static ParseRawLineResult
-ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
+ParseRawLine(IncludedFile *curFile, char **out_line, char **out_line_end,
 	     char **out_firstBackslash, char **out_firstComment)
 {
 	char *line = curFile->buf_ptr;
@@ -2325,7 +2336,7 @@ ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
 	char *firstComment = NULL;
 	ParseRawLineResult res = PRLR_LINE;
 
-	curFile->lineno++;
+	curFile->readLines++;
 
 	for (;;) {
 		char ch;
@@ -2347,7 +2358,7 @@ ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
 			if (firstBackslash == NULL)
 				firstBackslash = p;
 			if (p[1] == '\n') {
-				curFile->lineno++;
+				curFile->readLines++;
 				if (p + 2 == buf_end) {
 					line_end = p;
 					*line_end = '\n';
@@ -2477,7 +2488,7 @@ typedef enum LineKind {
 static char *
 ReadLowLevelLine(LineKind kind)
 {
-	IFile *curFile = CurFile();
+	IncludedFile *curFile = CurFile();
 	char *line;
 	char *line_end;
 	char *firstBackslash;
@@ -2560,7 +2571,8 @@ ParseForLoop(const char *line)
 	if (rval < 0)
 		return true;	/* Syntax error - error printed, ignore line */
 
-	firstLineno = CurFile()->lineno;
+	/* FIXME: mismatch between lineno and readLines */
+	firstLineno = CurFile()->readLines;
 
 	/* Accumulate the loop body until the matching '.endfor'. */
 	do {
@@ -2896,8 +2908,9 @@ Parse_File(const char *name, int fd)
 
 	do {
 		while ((line = ReadHighLevelLine()) != NULL) {
+			/* FIXME: mismatch between lineno and readLines */
 			DEBUG2(PARSE, "Parsing line %d: %s\n",
-			    CurFile()->lineno, line);
+			    CurFile()->readLines, line);
 			ParseLine(line);
 		}
 		/* Reached EOF, but it may be just EOF of an include file. */
@@ -2923,7 +2936,7 @@ Parse_Init(void)
 	parseIncPath = SearchPath_New();
 	sysIncPath = SearchPath_New();
 	defSysIncPath = SearchPath_New();
-	Vector_Init(&includes, sizeof(IFile));
+	Vector_Init(&includes, sizeof(IncludedFile));
 }
 
 /* Clean up the parsing module. */
