@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.630 2022/01/07 20:37:25 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.631 2022/01/07 20:50:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.630 2022/01/07 20:37:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.631 2022/01/07 20:50:35 rillig Exp $");
 
 /*
  * A file being read.
@@ -179,10 +179,10 @@ typedef List SearchPathList;
 typedef ListNode SearchPathListNode;
 
 /*
- * The main target to create. This is the first target defined in any of the
- * makefiles.
+ * The target to be made if no targets are specified in the command line.
+ * This is the first target defined in any of the makefiles.
  */
-static GNode *mainNode;
+GNode *mainNode;
 
 /*
  * During parsing, the targets from the left-hand side of the currently
@@ -829,7 +829,6 @@ MaybeUpdateMainTarget(void)
 		if (GNode_IsMainCandidate(gn)) {
 			DEBUG1(MAKE, "Setting main node to \"%s\"\n", gn->name);
 			mainNode = gn;
-			Targ_SetMain(gn);
 			return;
 		}
 	}
