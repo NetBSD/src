@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.619 2022/01/02 02:57:39 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.620 2022/01/07 08:20:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.619 2022/01/02 02:57:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.620 2022/01/07 08:20:00 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -297,7 +297,7 @@ loadfile(const char *path, int fd)
 	struct stat st;
 
 	bufSize = fstat(fd, &st) == 0 && S_ISREG(st.st_mode) &&
-		  st.st_size >= 0 && st.st_size <= 0x3fffffff
+		  st.st_size >= 1 && st.st_size <= 0x3fffffff
 	    ? (size_t)st.st_size : 1024;
 	Buf_InitSize(&buf, bufSize);
 

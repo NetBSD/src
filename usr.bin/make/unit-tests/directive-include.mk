@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.9 2021/12/14 01:00:04 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.10 2022/01/07 08:20:00 rillig Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -70,5 +70,16 @@ include
 # In the second case, the error message is "Could not find ", without quotes
 # or any other indicator for the empty filename at the end of the line.
 #include ${:U}
+
+
+# Since parse.c 1.612 from 2022-01-01 and before parse.c 1.620 from
+# 2022-01-07, including an empty regular file called bmake_malloc(0), which
+# may return a null pointer.  On OpenBSD, this led to a segmentation fault in
+# Buf_InitSize, which assumes that bmake_malloc never returns NULL, just like
+# all other places in the code.
+_!=		> directive-include-empty
+.include "${.CURDIR}/directive-include-empty"
+_!=		rm directive-include-empty
+
 
 all:
