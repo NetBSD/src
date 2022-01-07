@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.625 2022/01/07 09:35:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.626 2022/01/07 09:49:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.625 2022/01/07 09:35:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.626 2022/01/07 09:49:43 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -1352,7 +1352,7 @@ ParseDependencySourcesMundane(char *start,
 }
 
 /*
- * In a dependency line like 'targets: sources', parse the sources.
+ * From a dependency line like 'targets: sources', parse the sources.
  *
  * See the tests depsrc-*.mk.
  */
@@ -1364,21 +1364,17 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 		ParseDependencySourcesEmpty(special, *inout_paths);
 	} else if (special == SP_MFLAGS) {
 		Main_ParseArgLine(p);
-		/*
-		 * Set the initial character to a null-character so the loop
-		 * to get sources won't get anything.
-		 */
-		*p = '\0';
+		return;
 	} else if (special == SP_SHELL) {
 		if (!Job_ParseShell(p)) {
 			Parse_Error(PARSE_FATAL,
 			    "improper shell specification");
 			return;
 		}
-		*p = '\0';
+		return;
 	} else if (special == SP_NOTPARALLEL || special == SP_SINGLESHELL ||
 		   special == SP_DELETE_ON_ERROR) {
-		*p = '\0';
+		return;
 	}
 
 	/* Now go for the sources. */
