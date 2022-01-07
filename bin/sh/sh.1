@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.241 2021/11/21 16:23:20 kre Exp $
+.\"	$NetBSD: sh.1,v 1.242 2022/01/07 05:10:30 lukem Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd November 20, 2021
+.Dd January 7, 2022
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -2566,7 +2566,7 @@ and
 is updated, the variable
 .Ev OLDPWD
 is set to the working directory
-.Po \&\$ Ns Ev PWD Ns Pc
+.Po \&$ Ns Ev PWD Ns Pc
 as it was before the change.
 .Pp
 Some shells also support a
@@ -3156,7 +3156,7 @@ To allow a method to permit backwards compatibility with the way
 that the
 .Ic hash
 command worked before
-.Nx 10 ,
+.Nx 10.0 ,
 if both the
 .Fl e
 and
