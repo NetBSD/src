@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.52 2020/07/06 08:20:40 rin Exp $	*/
+/*	$NetBSD: asm.h,v 1.53 2022/01/07 22:59:32 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -330,17 +330,17 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 #ifndef _LP64
 
 # define ldlong		lwz	/* load "C" long */
-# define ldlongu	lwzu	/* load "C" long with udpate */
+# define ldlongu	lwzu	/* load "C" long with update */
 # define stlong		stw	/* load "C" long */
-# define stlongu	stwu	/* load "C" long with udpate */
+# define stlongu	stwu	/* load "C" long with update */
 # define ldptr		lwz	/* load "C" pointer */
-# define ldptru		lwzu	/* load "C" pointer with udpate */
+# define ldptru		lwzu	/* load "C" pointer with update */
 # define stptr		stw	/* load "C" pointer */
-# define stptru		stwu	/* load "C" pointer with udpate */
+# define stptru		stwu	/* load "C" pointer with update */
 # define ldreg		lwz	/* load PPC general register */
-# define ldregu		lwzu	/* load PPC general register with udpate */
+# define ldregu		lwzu	/* load PPC general register with update */
 # define streg		stw	/* load PPC general register */
-# define stregu		stwu	/* load PPC general register with udpate */
+# define stregu		stwu	/* load PPC general register with update */
 # define SZREG		4	/* 4 byte registers */
 # define P2SZREG	2
 
