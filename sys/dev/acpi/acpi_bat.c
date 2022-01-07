@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.120 2021/12/31 14:20:56 riastradh Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.121 2022/01/07 01:10:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.120 2021/12/31 14:20:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.121 2022/01/07 01:10:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -157,6 +157,7 @@ struct acpibat_softc {
 	int32_t			 sc_lcapacity;
 	int32_t			 sc_wcapacity;
 	int                      sc_present;
+	bool			 sc_dying;
 };
 
 static const struct device_compatible_entry compat_data[] = {
@@ -262,11 +263,28 @@ acpibat_detach(device_t self, int flags)
 {
 	struct acpibat_softc *sc = device_private(self);
 
+	/* Prevent further use of sc->sc_sme in acpibat_update_info.  */
+	mutex_enter(&sc->sc_mutex);
+	sc->sc_dying = true;
+	mutex_exit(&sc->sc_mutex);
+
+	/* Prevent further calls to acpibat_resume.  */
 	pmf_device_deregister(self);
+
+	/* Prevent further calls to acpibat_notify_handler.  */
 	acpi_deregister_notify(sc->sc_node);
 
+	/* Detach sensors and prevent further calls to acpibat_refresh. */
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
+
+	/*
+	 * Wait for calls to acpibat_update_info/status in case sysmon
+	 * envsys refreshed the sensors and queued them but they didn't
+	 * run before sysmon_envsys_unregister.  After this point, no
+	 * asynchronous access to the softc is possible.
+	 */
+	AcpiOsWaitEventsComplete();
 
 	if (sc->sc_sensor != NULL)
 		kmem_free(sc->sc_sensor, ACPIBAT_COUNT *
@@ -599,6 +617,10 @@ acpibat_update_info(void *arg)
 
 	mutex_enter(&sc->sc_mutex);
 
+	/* Don't touch sc_sme if we're detaching.  */
+	if (sc->sc_dying)
+		goto out;
+
 	rv = acpibat_get_sta(dv);
 	if (rv > 0) {
 		acpibat_get_info(dv);
@@ -619,7 +641,7 @@ acpibat_update_info(void *arg)
 	}
 
 	sc->sc_present = rv;
-
+out:
 	mutex_exit(&sc->sc_mutex);
 }
 
