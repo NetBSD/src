@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.620 2022/01/07 08:20:00 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.621 2022/01/07 08:37:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.620 2022/01/07 08:20:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.621 2022/01/07 08:37:23 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -470,17 +470,16 @@ ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 	(void)fprintf(f, "\n");
 	(void)fflush(f);
 
-	if (type == PARSE_INFO)
-		goto print_stack_trace;
-	if (type == PARSE_WARNING && !opts.parseWarnFatal)
-		goto print_stack_trace;
-	parseErrors++;
-	if (type == PARSE_WARNING && !fatal_warning_error_printed) {
-		Error("parsing warnings being treated as errors");
-		fatal_warning_error_printed = true;
+	if (type == PARSE_FATAL)
+		parseErrors++;
+	if (type == PARSE_WARNING && opts.parseWarnFatal) {
+		if (!fatal_warning_error_printed) {
+			Error("parsing warnings being treated as errors");
+			fatal_warning_error_printed = true;
+		}
+		parseErrors++;
 	}
 
-print_stack_trace:
 	PrintStackTrace();
 }
 
