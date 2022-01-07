@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.39 2020/09/17 11:56:35 roy Exp $
+#	$NetBSD: t_ndp.sh,v 1.40 2022/01/07 03:07:41 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -751,6 +751,8 @@ wait_until_stalled()
 ndp_cache_state_body()
 {
 	local macaddr=
+
+	skip_if_qemu
 
 	rump_server_start $SOCKSRC netinet6
 	rump_server_start $SOCKDST netinet6
