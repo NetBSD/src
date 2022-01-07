@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.627 2022/01/07 13:56:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.628 2022/01/07 14:03:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.627 2022/01/07 13:56:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.628 2022/01/07 14:03:55 rillig Exp $");
 
 /*
  * A file being read.
@@ -137,9 +137,7 @@ typedef struct IncludedFile {
 	struct ForLoop *forLoop;
 } IncludedFile;
 
-/*
- * Tokens for target attributes
- */
+/* Special attributes for target nodes. */
 typedef enum ParseSpecial {
 	SP_ATTRIBUTE,	/* Generic attribute */
 	SP_BEGIN,	/* .BEGIN */
@@ -207,11 +205,10 @@ static StringList targCmds = LST_INIT;
 
 /*
  * Predecessor node for handling .ORDER. Initialized to NULL when .ORDER
- * seen, then set to each successive source on the line.
+ * is seen, then set to each successive source on the line.
  */
 static GNode *order_pred;
 
-/* number of fatal errors */
 static int parseErrors = 0;
 
 /*
@@ -384,10 +381,10 @@ PrintStackTrace(void)
 static bool
 IsEscaped(const char *line, const char *p)
 {
-	bool active = false;
+	bool escaped = false;
 	while (p > line && *--p == '\\')
-		active = !active;
-	return active;
+		escaped = !escaped;
+	return escaped;
 }
 
 /*
@@ -991,9 +988,7 @@ HandleDependencyTargetPath(const char *suffixName,
 	return true;
 }
 
-/*
- * See if it's a special target and if so set inout_special to match it.
- */
+/* See if it's a special target and if so set inout_special to match it. */
 static bool
 HandleDependencyTarget(const char *targetName,
 		       ParseSpecial *inout_special,
@@ -1059,23 +1054,23 @@ static void
 SkipExtraTargets(char **pp, const char *lstart)
 {
 	bool warning = false;
-	const char *cp = *pp;
+	const char *p = *pp;
 
-	while (*cp != '\0') {
-		if (!IsEscaped(lstart, cp) && (*cp == '!' || *cp == ':'))
+	while (*p != '\0') {
+		if (!IsEscaped(lstart, p) && (*p == '!' || *p == ':'))
 			break;
-		if (IsEscaped(lstart, cp) || (*cp != ' ' && *cp != '\t'))
+		if (IsEscaped(lstart, p) || (*p != ' ' && *p != '\t'))
 			warning = true;
-		cp++;
+		p++;
 	}
 	if (warning)
 		Parse_Error(PARSE_WARNING, "Extra target ignored");
 
-	*pp += cp - *pp;
+	*pp += p - *pp;
 }
 
 static void
-ParseDependencyCheckSpecial(ParseSpecial special)
+CheckSpecialMundaneMixture(ParseSpecial special)
 {
 	switch (special) {
 	case SP_DEFAULT:
@@ -1449,7 +1444,7 @@ ParseDependency(char *line)
 		goto out;
 
 	if (!Lst_IsEmpty(targets))
-		ParseDependencyCheckSpecial(special);
+		CheckSpecialMundaneMixture(special);
 
 	ApplyDependencyOperator(ParseDependencyOp(&p));
 
