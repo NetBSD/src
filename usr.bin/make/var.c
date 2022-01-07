@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.993 2022/01/07 12:33:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.994 2022/01/07 12:37:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.993 2022/01/07 12:33:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.994 2022/01/07 12:37:27 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2594,19 +2594,21 @@ TryParseTime(const char **pp, time_t *out_time)
 	return true;
 }
 
-/* :gmtime */
+/* :gmtime and :localtime */
 static ApplyModifierResult
-ApplyModifier_Gmtime(const char **pp, ModChain *ch)
+ApplyModifier_Time(const char **pp, ModChain *ch, bool gmt)
 {
 	Expr *expr;
 	time_t t;
+	const char *args;
 
 	const char *mod = *pp;
-	if (!ModMatchEq(mod, "gmtime", ch))
+	if (!ModMatchEq(mod, gmt ? "gmtime" : "localtime", ch))
 		return AMR_UNKNOWN;
+	args = mod + (gmt ? 6 : 9);
 
-	if (mod[6] == '=') {
-		const char *p = mod + 7;
+	if (args[0] == '=') {
+		const char *p = args + 1;
 		if (!TryParseTime(&p, &t)) {
 			Parse_Error(PARSE_FATAL,
 			    "Invalid time value at \"%s\"", p);
@@ -2615,45 +2617,12 @@ ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 		*pp = p;
 	} else {
 		t = 0;
-		*pp = mod + 6;
+		*pp = args;
 	}
 
 	expr = ch->expr;
 	if (Expr_ShouldEval(expr))
-		Expr_SetValueOwn(expr,
-		    VarStrftime(Expr_Str(expr), t, true));
-
-	return AMR_OK;
-}
-
-/* :localtime */
-static ApplyModifierResult
-ApplyModifier_Localtime(const char **pp, ModChain *ch)
-{
-	Expr *expr;
-	time_t t;
-
-	const char *mod = *pp;
-	if (!ModMatchEq(mod, "localtime", ch))
-		return AMR_UNKNOWN;
-
-	if (mod[9] == '=') {
-		const char *p = mod + 10;
-		if (!TryParseTime(&p, &t)) {
-			Parse_Error(PARSE_FATAL,
-			    "Invalid time value at \"%s\"", p);
-			return AMR_CLEANUP;
-		}
-		*pp = p;
-	} else {
-		t = 0;
-		*pp = mod + 9;
-	}
-
-	expr = ch->expr;
-	if (Expr_ShouldEval(expr))
-		Expr_SetValueOwn(expr,
-		    VarStrftime(Expr_Str(expr), t, false));
+		Expr_SetValueOwn(expr, VarStrftime(Expr_Str(expr), t, gmt));
 
 	return AMR_OK;
 }
@@ -3863,7 +3832,7 @@ ApplyModifier(const char **pp, ModChain *ch)
 	case 'E':
 		return ApplyModifier_WordFunc(pp, ch, ModifyWord_Suffix);
 	case 'g':
-		return ApplyModifier_Gmtime(pp, ch);
+		return ApplyModifier_Time(pp, ch, true);
 	case 'H':
 		return ApplyModifier_WordFunc(pp, ch, ModifyWord_Head);
 	case 'h':
@@ -3871,7 +3840,7 @@ ApplyModifier(const char **pp, ModChain *ch)
 	case 'L':
 		return ApplyModifier_Literal(pp, ch);
 	case 'l':
-		return ApplyModifier_Localtime(pp, ch);
+		return ApplyModifier_Time(pp, ch, false);
 	case 'M':
 	case 'N':
 		return ApplyModifier_Match(pp, ch);
