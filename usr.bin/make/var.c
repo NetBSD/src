@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.994 2022/01/07 12:37:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.995 2022/01/07 12:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.994 2022/01/07 12:37:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.995 2022/01/07 12:44:57 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2596,13 +2596,14 @@ TryParseTime(const char **pp, time_t *out_time)
 
 /* :gmtime and :localtime */
 static ApplyModifierResult
-ApplyModifier_Time(const char **pp, ModChain *ch, bool gmt)
+ApplyModifier_Time(const char **pp, ModChain *ch)
 {
 	Expr *expr;
 	time_t t;
 	const char *args;
-
 	const char *mod = *pp;
+	bool gmt = mod[0] == 'g';
+
 	if (!ModMatchEq(mod, gmt ? "gmtime" : "localtime", ch))
 		return AMR_UNKNOWN;
 	args = mod + (gmt ? 6 : 9);
@@ -3832,15 +3833,14 @@ ApplyModifier(const char **pp, ModChain *ch)
 	case 'E':
 		return ApplyModifier_WordFunc(pp, ch, ModifyWord_Suffix);
 	case 'g':
-		return ApplyModifier_Time(pp, ch, true);
+	case 'l':
+		return ApplyModifier_Time(pp, ch);
 	case 'H':
 		return ApplyModifier_WordFunc(pp, ch, ModifyWord_Head);
 	case 'h':
 		return ApplyModifier_Hash(pp, ch);
 	case 'L':
 		return ApplyModifier_Literal(pp, ch);
-	case 'l':
-		return ApplyModifier_Time(pp, ch, false);
 	case 'M':
 	case 'N':
 		return ApplyModifier_Match(pp, ch);
