@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.624 2022/01/07 09:28:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.625 2022/01/07 09:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.624 2022/01/07 09:28:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.625 2022/01/07 09:35:11 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -1229,12 +1229,11 @@ ParseDependencyTargets(char **inout_cp,
 		       GNodeType *inout_targetAttr,
 		       SearchPathList **inout_paths)
 {
-	char *cp;
-	char *tgt = *inout_cp;
+	char *cp = *inout_cp;
 
 	for (;;) {
-		/* Find the end of the next word. */
-		cp = tgt;
+		char *tgt = cp;
+
 		ParseDependencyTargetWord(&cp, lstart);
 
 		/*
@@ -1242,14 +1241,13 @@ ParseDependencyTargets(char **inout_cp,
 		 * name of one or more files inside an archive.
 		 */
 		if (!IsEscaped(lstart, cp) && *cp == '(') {
-			if (!Arch_ParseArchive(&tgt, targets, SCOPE_CMDLINE)) {
+			cp = tgt;
+			if (!Arch_ParseArchive(&cp, targets, SCOPE_CMDLINE)) {
 				Parse_Error(PARSE_FATAL,
 				    "Error in archive specification: \"%s\"",
 				    tgt);
 				return false;
 			}
-
-			cp = tgt;
 			continue;
 		}
 
@@ -1267,10 +1265,9 @@ ParseDependencyTargets(char **inout_cp,
 		else
 			pp_skip_whitespace(&cp);
 
-		tgt = cp;
-		if (*tgt == '\0')
+		if (*cp == '\0')
 			break;
-		if ((*tgt == '!' || *tgt == ':') && !IsEscaped(lstart, tgt))
+		if ((*cp == '!' || *cp == ':') && !IsEscaped(lstart, cp))
 			break;
 	}
 
