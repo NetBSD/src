@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.322 2022/01/02 02:57:39 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.323 2022/01/07 09:02:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.322 2022/01/02 02:57:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.323 2022/01/07 09:02:19 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -776,7 +776,7 @@ static Token
 CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 {
 	Token t;
-	char *arg = NULL;
+	char *arg;
 	const char *cp;
 
 	/* Push anything numeric through the compare expression */
