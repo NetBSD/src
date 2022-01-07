@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.156 2022/01/07 20:09:58 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.157 2022/01/07 20:15:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,13 +58,13 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.156 2022/01/07 20:09:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.157 2022/01/07 20:15:10 rillig Exp $");
 
 
 typedef struct ForLoop {
-	Buffer body;		/* Unexpanded body of the loop */
 	Vector /* of 'char *' */ vars; /* Iteration variables */
 	SubstringWords items;	/* Substitution items */
+	Buffer body;		/* Unexpanded body of the loop */
 	unsigned int nextItem;	/* Where to continue iterating */
 } ForLoop;
 
@@ -77,9 +77,9 @@ ForLoop_New(void)
 {
 	ForLoop *f = bmake_malloc(sizeof *f);
 
-	Buf_Init(&f->body);
 	Vector_Init(&f->vars, sizeof(char *));
 	SubstringWords_Init(&f->items);
+	Buf_Init(&f->body);
 	f->nextItem = 0;
 
 	return f;
@@ -88,13 +88,12 @@ ForLoop_New(void)
 static void
 ForLoop_Free(ForLoop *f)
 {
-	Buf_Done(&f->body);
-
 	while (f->vars.len > 0)
 		free(*(char **)Vector_Pop(&f->vars));
 	Vector_Done(&f->vars);
 
 	SubstringWords_Free(f->items);
+	Buf_Done(&f->body);
 
 	free(f);
 }
@@ -156,7 +155,7 @@ ForLoop_ParseItems(ForLoop *f, const char *p)
 	if (f->items.len == 1 && Substring_IsEmpty(f->items.words[0]))
 		f->items.len = 0;	/* .for var in ${:U} */
 
-	if (f->items.len != 0 && f->items.len % f->vars.len != 0) {
+	if (f->items.len % f->vars.len != 0) {
 		Parse_Error(PARSE_FATAL,
 		    "Wrong number of words (%u) in .for "
 		    "substitution list with %u variables",
@@ -184,13 +183,10 @@ IsEndfor(const char *p)
  * Evaluate the for loop in the passed line. The line looks like this:
  *	.for <varname...> in <value...>
  *
- * Input:
- *	line		Line to parse
- *
  * Results:
- *	0: Not a .for statement, parse the line
- *	1: We found a for loop
- *	-1: A .for statement with a bad syntax error, discard.
+ *	0	not a .for directive
+ *	1	found a .for directive
+ *	-1	erroneous .for directive
  */
 int
 For_Eval(const char *line)
@@ -241,7 +237,7 @@ For_Accum(const char *line, int *forLevel)
 
 		if (IsEndfor(p)) {
 			DEBUG1(FOR, "For: end for %d\n", *forLevel);
-			if (--*forLevel <= 0)
+			if (--*forLevel == 0)
 				return false;
 		} else if (IsFor(p)) {
 			(*forLevel)++;
@@ -309,7 +305,7 @@ NeedsEscapes(Substring value, char endc)
  * The result is later unescaped by ApplyModifier_Defined.
  */
 static void
-Buf_AddEscaped(Buffer *cmds, Substring item, char endc)
+AddEscaped(Buffer *cmds, Substring item, char endc)
 {
 	const char *p;
 	char ch;
@@ -377,7 +373,7 @@ ForLoop_SubstVarLong(ForLoop *f, Buffer *body, const char **pp,
 		 */
 		Buf_AddBytesBetween(body, *inout_mark, start);
 		Buf_AddStr(body, ":U");
-		Buf_AddEscaped(body, f->items.words[f->nextItem + i], endc);
+		AddEscaped(body, f->items.words[f->nextItem + i], endc);
 
 		*inout_mark = p;
 		*pp = p;
@@ -415,7 +411,7 @@ found:
 
 	/* Replace $<ch> with ${:U<value>} */
 	Buf_AddStr(body, "{:U");
-	Buf_AddEscaped(body, f->items.words[f->nextItem + i], '}');
+	AddEscaped(body, f->items.words[f->nextItem + i], '}');
 	Buf_AddByte(body, '}');
 }
 
