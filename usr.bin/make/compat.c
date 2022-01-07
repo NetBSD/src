@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.235 2021/12/27 18:26:22 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.236 2022/01/07 19:24:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.235 2021/12/27 18:26:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.236 2022/01/07 19:24:27 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -109,7 +109,7 @@ static int compatSigno;
 static void
 CompatDeleteTarget(GNode *gn)
 {
-	if (gn != NULL && !Targ_Precious(gn)) {
+	if (gn != NULL && !GNode_IsPrecious(gn)) {
 		const char *file = GNode_VarTarget(gn);
 
 		if (!opts.noExecute && unlink_file(file)) {
@@ -132,7 +132,7 @@ CompatInterrupt(int signo)
 {
 	CompatDeleteTarget(curTarg);
 
-	if (curTarg != NULL && !Targ_Precious(curTarg)) {
+	if (curTarg != NULL && !GNode_IsPrecious(curTarg)) {
 		/*
 		 * Run .INTERRUPT only if hit with interrupt signal
 		 */

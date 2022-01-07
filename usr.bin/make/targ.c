@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.173 2021/11/28 19:51:06 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.174 2022/01/07 19:24:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -93,9 +93,6 @@
  *	Targ_FindList	Given a list of names, find nodes for all
  *			of them, creating them as necessary.
  *
- *	Targ_Precious	Return true if the target is precious and
- *			should not be removed if we are interrupted.
- *
  *	Targ_Propagate	Propagate information between related nodes.
  *			Should be called after the makefiles are parsed
  *			but before any action is taken.
@@ -113,7 +110,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.173 2021/11/28 19:51:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.174 2022/01/07 19:24:27 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -344,14 +341,6 @@ Targ_FindList(GNodeList *gns, StringList *names)
 		GNode *gn = Targ_GetNode(name);
 		Lst_Append(gns, gn);
 	}
-}
-
-/* See if the given target is precious. */
-bool
-Targ_Precious(const GNode *gn)
-{
-	/* XXX: Why are '::' targets precious? */
-	return allPrecious || gn->type & (OP_PRECIOUS | OP_DOUBLEDEP);
 }
 
 /*
