@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.3 2021/06/26 10:43:52 jmcneill Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.4 2022/01/07 07:25:37 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.3 2021/06/26 10:43:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.4 2022/01/07 07:25:37 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -90,12 +90,13 @@ fdt_memory_get(uint64_t *pstart, uint64_t *pend)
 	     index++) {
 		fdt_memory_add_range(cur_addr, cur_size);
 
-		/* Assume the first entry is the start of memory */
 		if (index == 0) {
 			*pstart = cur_addr;
 			*pend = cur_addr + cur_size;
 			continue;
 		}
+		if (cur_addr < *pstart)
+			*pstart = cur_addr;
 		if (cur_addr + cur_size > *pend)
 			*pend = cur_addr + cur_size;
 	}
