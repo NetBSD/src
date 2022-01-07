@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_misc.sh,v 1.24 2020/08/31 14:03:56 martin Exp $
+#	$NetBSD: t_ipsec_misc.sh,v 1.25 2022/01/07 22:59:32 andvar Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -356,7 +356,7 @@ add_test_update()
 	local _algo=$(echo $algo | sed 's/-//g')
 	local name= desc=
 
-	desc="Tests trying to udpate $_update of $proto ($algo)"
+	desc="Tests trying to update $_update of $proto ($algo)"
 	name="ipsec_update_${update}_${proto}_${_algo}"
 
 	atf_test_case ${name} cleanup
@@ -421,7 +421,7 @@ add_test_getspi_update()
 	local _algo=$(echo $algo | sed 's/-//g')
 	local name= desc=
 
-	desc="Tests trying to getspi and udpate SA of $proto ($algo)"
+	desc="Tests trying to getspi and update SA of $proto ($algo)"
 	name="ipsec_getspi_update_sa_${proto}_${_algo}"
 
 	atf_test_case ${name} cleanup
