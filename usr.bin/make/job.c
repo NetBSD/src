@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.446 2022/01/07 08:28:06 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.447 2022/01/07 19:24:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.446 2022/01/07 08:28:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.447 2022/01/07 19:24:27 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -506,7 +506,7 @@ JobDeleteTarget(GNode *gn)
 		return;
 	if (gn->type & OP_PHONY)
 		return;
-	if (Targ_Precious(gn))
+	if (GNode_IsPrecious(gn))
 		return;
 	if (opts.noExecute)
 		return;
