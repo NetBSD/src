@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.634 2022/01/07 21:04:50 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.635 2022/01/07 21:40:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.634 2022/01/07 21:04:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.635 2022/01/07 21:40:56 rillig Exp $");
 
 /*
  * A file being read.
@@ -2362,8 +2362,8 @@ ParseRawLine(IncludedFile *curFile, char **out_line, char **out_line_end,
 			line_end = p;
 	}
 
-	*out_line = line;
 	curFile->buf_ptr = p;
+	*out_line = line;
 	*out_line_end = line_end;
 	*out_firstBackslash = firstBackslash;
 	*out_firstComment = firstComment;
@@ -2392,35 +2392,24 @@ UnescapeBackslash(char *line, char *start)
 
 		ch = *src++;
 		if (ch == '\0') {
-			/* Delete '\\' at end of buffer */
+			/* Delete '\\' at the end of the buffer. */
 			dst--;
 			break;
 		}
 
-		/* Delete '\\' from before '#' on non-command lines */
-		if (ch == '#' && line[0] != '\t') {
+		/* Delete '\\' from before '#' on non-command lines. */
+		if (ch == '#' && line[0] != '\t')
 			*dst++ = ch;
-			continue;
-		}
-
-		if (ch != '\n') {
-			/* Leave '\\' in buffer for later */
+		else if (ch == '\n') {
+			pp_skip_hspace(&src);
+			*dst++ = ' ';
+		} else {
+			/* Leave '\\' in the buffer for later. */
 			*dst++ = '\\';
-			/*
-			 * Make sure we don't delete an escaped ' ' from the
-			 * line end.
-			 */
-			spaceStart = dst + 1;
 			*dst++ = ch;
-			continue;
+			/* Keep an escaped ' ' at the line end. */
+			spaceStart = dst;
 		}
-
-		/*
-		 * Escaped '\n' -- replace following whitespace with a single
-		 * ' '.
-		 */
-		pp_skip_hspace(&src);
-		*dst++ = ' ';
 	}
 
 	/* Delete any trailing spaces - eg from empty continuations */
