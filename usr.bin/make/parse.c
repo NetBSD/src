@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.623 2022/01/07 09:19:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.624 2022/01/07 09:28:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.623 2022/01/07 09:19:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.624 2022/01/07 09:28:35 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -884,14 +884,11 @@ ParseDependencyTargetWord(char **pp, const char *lstart)
 			 * have been discovered in the initial Var_Subst and
 			 * we wouldn't be here.
 			 */
-			const char *nested_p = cp;
-			FStr nested_val;
+			FStr val;
 
-			(void)Var_Parse(&nested_p, SCOPE_CMDLINE,
-			    VARE_PARSE_ONLY, &nested_val);
-			/* TODO: handle errors */
-			FStr_Done(&nested_val);
-			cp += nested_p - cp;
+			(void)Var_Parse(&cp, SCOPE_CMDLINE,
+			    VARE_PARSE_ONLY, &val);
+			FStr_Done(&val);
 		} else
 			cp++;
 	}
