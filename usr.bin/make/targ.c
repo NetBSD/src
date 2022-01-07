@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.175 2022/01/07 20:37:25 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.176 2022/01/07 20:50:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -107,7 +107,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.175 2022/01/07 20:37:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.176 2022/01/07 20:50:35 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -340,19 +340,6 @@ Targ_FindList(GNodeList *gns, StringList *names)
 	}
 }
 
-/*
- * The main target to be made; only for debugging output.
- * See mainNode in parse.c for the definitive source.
- */
-static GNode *mainTarg;
-
-/* Remember the main target to make; only used for debugging. */
-void
-Targ_SetMain(GNode *gn)
-{
-	mainTarg = gn;
-}
-
 static void
 PrintNodeNames(GNodeList *gnodes)
 {
@@ -494,7 +481,7 @@ Targ_PrintNode(GNode *gn, int pass)
 		return;
 
 	debug_printf("#\n");
-	if (gn == mainTarg)
+	if (gn == mainNode)
 		debug_printf("# *** MAIN TARGET ***\n");
 
 	if (pass >= 2) {

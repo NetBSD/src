@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.286 2022/01/07 19:24:27 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.287 2022/01/07 20:50:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -589,6 +589,7 @@ extern int makelevel;
 extern char *makeDependfile;
 /* If we replaced environ, this will be non-NULL. */
 extern char **savedEnv;
+extern GNode *mainNode;
 
 extern pid_t myPid;
 
