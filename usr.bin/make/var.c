@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.992 2021/12/30 23:56:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.993 2022/01/07 12:33:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.992 2021/12/30 23:56:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.993 2022/01/07 12:33:25 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1942,15 +1942,15 @@ VarHash(const char *str)
 }
 
 static char *
-VarStrftime(const char *fmt, bool zulu, time_t tim)
+VarStrftime(const char *fmt, time_t t, bool gmt)
 {
 	char buf[BUFSIZ];
 
-	if (tim == 0)
-		time(&tim);
+	if (t == 0)
+		time(&t);
 	if (*fmt == '\0')
 		fmt = "%c";
-	strftime(buf, sizeof buf, fmt, zulu ? gmtime(&tim) : localtime(&tim));
+	strftime(buf, sizeof buf, fmt, gmt ? gmtime(&t) : localtime(&t));
 
 	buf[sizeof buf - 1] = '\0';
 	return bmake_strdup(buf);
@@ -2599,7 +2599,7 @@ static ApplyModifierResult
 ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 {
 	Expr *expr;
-	time_t utc;
+	time_t t;
 
 	const char *mod = *pp;
 	if (!ModMatchEq(mod, "gmtime", ch))
@@ -2607,21 +2607,21 @@ ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 
 	if (mod[6] == '=') {
 		const char *p = mod + 7;
-		if (!TryParseTime(&p, &utc)) {
+		if (!TryParseTime(&p, &t)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid time value at \"%s\"", mod + 7);
+			    "Invalid time value at \"%s\"", p);
 			return AMR_CLEANUP;
 		}
 		*pp = p;
 	} else {
-		utc = 0;
+		t = 0;
 		*pp = mod + 6;
 	}
 
 	expr = ch->expr;
 	if (Expr_ShouldEval(expr))
 		Expr_SetValueOwn(expr,
-		    VarStrftime(Expr_Str(expr), true, utc));
+		    VarStrftime(Expr_Str(expr), t, true));
 
 	return AMR_OK;
 }
@@ -2631,7 +2631,7 @@ static ApplyModifierResult
 ApplyModifier_Localtime(const char **pp, ModChain *ch)
 {
 	Expr *expr;
-	time_t utc;
+	time_t t;
 
 	const char *mod = *pp;
 	if (!ModMatchEq(mod, "localtime", ch))
@@ -2639,21 +2639,21 @@ ApplyModifier_Localtime(const char **pp, ModChain *ch)
 
 	if (mod[9] == '=') {
 		const char *p = mod + 10;
-		if (!TryParseTime(&p, &utc)) {
+		if (!TryParseTime(&p, &t)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid time value at \"%s\"", mod + 10);
+			    "Invalid time value at \"%s\"", p);
 			return AMR_CLEANUP;
 		}
 		*pp = p;
 	} else {
-		utc = 0;
+		t = 0;
 		*pp = mod + 9;
 	}
 
 	expr = ch->expr;
 	if (Expr_ShouldEval(expr))
 		Expr_SetValueOwn(expr,
-		    VarStrftime(Expr_Str(expr), false, utc));
+		    VarStrftime(Expr_Str(expr), t, false));
 
 	return AMR_OK;
 }
