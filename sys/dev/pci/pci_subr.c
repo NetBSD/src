@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.237 2022/01/07 05:17:38 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.238 2022/01/07 06:57:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.237 2022/01/07 05:17:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.238 2022/01/07 06:57:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -4369,15 +4369,15 @@ pci_conf_print_pl16g_cap(const pcireg_t *regs, int extcapoff)
 }
 
 static const char * const pcie_receive_number_dp[] = {
-	"Broadcast ",
-	"(Downstream Port Receiver and all Retimer Pseudo Port Receiver",
-	"Rx(A) (Downstream Port Receiver)",
-	"Rx(B) (Retimer X or Z Upstream Pseudo Port Receiver)",
-	"Rx(C) (Retimer X or Z Downstream Pseudo Port Receiver)",
-	"Rx(D) (Retimer Y Upstream Pseudo Port Receiver)",
-	"Rx(E) (Retimer Y Downstream Pseudo Port Receiver)",
-	"Reserved",
-	"Reserved"
+	[0] = "Broadcast "
+	    "(Downstream Port Receiver and all Retimer Pseudo Port Receiver)",
+	[1] =  "Rx(A) (Downstream Port Receiver)",
+	[2] = "Rx(B) (Retimer X or Z Upstream Pseudo Port Receiver)",
+	[3] = "Rx(C) (Retimer X or Z Downstream Pseudo Port Receiver)",
+	[4] = "Rx(D) (Retimer Y Upstream Pseudo Port Receiver)",
+	[5] = "Rx(E) (Retimer Y Downstream Pseudo Port Receiver)",
+	[6] = "Reserved",
+	[7] = "Reserved"
 };
 
 static const char * const pcie_receive_number_up[] = {
