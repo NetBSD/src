@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.154 2022/01/02 01:54:43 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.155 2022/01/07 20:04:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,18 +58,12 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.154 2022/01/02 01:54:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.155 2022/01/07 20:04:49 rillig Exp $");
 
-
-/* One of the variables to the left of the "in" in a .for loop. */
-typedef struct ForVar {
-	char *name;
-	size_t nameLen;
-} ForVar;
 
 typedef struct ForLoop {
 	Buffer body;		/* Unexpanded body of the loop */
-	Vector /* of ForVar */ vars; /* Iteration variables */
+	Vector /* of 'char *' */ vars; /* Iteration variables */
 	SubstringWords items;	/* Substitution items */
 	unsigned int nextItem;	/* Where to continue iterating */
 } ForLoop;
@@ -85,7 +79,7 @@ ForLoop_New(void)
 	ForLoop *f = bmake_malloc(sizeof *f);
 
 	Buf_Init(&f->body);
-	Vector_Init(&f->vars, sizeof(ForVar));
+	Vector_Init(&f->vars, sizeof(char *));
 	SubstringWords_Init(&f->items);
 	f->nextItem = 0;
 
@@ -97,23 +91,13 @@ ForLoop_Free(ForLoop *f)
 {
 	Buf_Done(&f->body);
 
-	while (f->vars.len > 0) {
-		ForVar *var = Vector_Pop(&f->vars);
-		free(var->name);
-	}
+	while (f->vars.len > 0)
+		free(*(char **)Vector_Pop(&f->vars));
 	Vector_Done(&f->vars);
 
 	SubstringWords_Free(f->items);
 
 	free(f);
-}
-
-static void
-ForLoop_AddVar(ForLoop *f, const char *name, size_t len)
-{
-	ForVar *var = Vector_Push(&f->vars);
-	var->name = bmake_strldup(name, len);
-	var->nameLen = len;
 }
 
 static bool
@@ -142,7 +126,7 @@ ForLoop_ParseVarnames(ForLoop *f, const char **pp)
 			break;
 		}
 
-		ForLoop_AddVar(f, p, len);
+		*(char **)Vector_Push(&f->vars) = bmake_strldup(p, len);
 		p += len;
 	}
 
@@ -374,31 +358,29 @@ ForLoop_SubstVarLong(ForLoop *f, Buffer *body, const char **pp,
 		     const char *end, char endc, const char **inout_mark)
 {
 	size_t i;
-	const char *p = *pp;
+	const char *start = *pp;
+	const char **vars = Vector_Get(&f->vars, 0);
 
 	for (i = 0; i < f->vars.len; i++) {
-		const ForVar *forVar = Vector_Get(&f->vars, i);
-		const char *varname = forVar->name;
-		size_t varnameLen = forVar->nameLen;
+		const char *p = start;
+		const char *varname = vars[i];
 
-		if (varnameLen >= (size_t)(end - p))
-			continue;
-		if (memcmp(p, varname, varnameLen) != 0)
+		while (p < end && *varname != '\0' && *p == *varname)
+			p++, varname++;
+		if (*varname != '\0')
 			continue;
 		/* XXX: why test for backslash here? */
-		if (p[varnameLen] != ':' && p[varnameLen] != endc &&
-		    p[varnameLen] != '\\')
+		if (*p != ':' && *p != endc && *p != '\\')
 			continue;
 
 		/*
 		 * Found a variable match.  Skip over the variable name and
 		 * instead add ':U<value>' to the current body.
 		 */
-		Buf_AddBytesBetween(body, *inout_mark, p);
+		Buf_AddBytesBetween(body, *inout_mark, start);
 		Buf_AddStr(body, ":U");
 		Buf_AddEscaped(body, f->items.words[f->nextItem + i], endc);
 
-		p += varnameLen;
 		*inout_mark = p;
 		*pp = p;
 		return;
@@ -414,7 +396,7 @@ ForLoop_SubstVarShort(ForLoop *f, Buffer *body,
 		      const char *p, const char **inout_mark)
 {
 	const char ch = *p;
-	const ForVar *vars;
+	const char **vars;
 	size_t i;
 
 	/* Skip $$ and stupid ones. */
@@ -423,7 +405,7 @@ ForLoop_SubstVarShort(ForLoop *f, Buffer *body,
 
 	vars = Vector_Get(&f->vars, 0);
 	for (i = 0; i < f->vars.len; i++) {
-		const char *varname = vars[i].name;
+		const char *varname = vars[i];
 		if (varname[0] == ch && varname[1] == '\0')
 			goto found;
 	}
