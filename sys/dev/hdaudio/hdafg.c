@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.25 2021/12/17 17:02:40 kre Exp $ */
+/* $NetBSD: hdafg.c,v 1.26 2022/01/07 07:34:10 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.25 2021/12/17 17:02:40 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.26 2022/01/07 07:34:10 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -328,6 +328,9 @@ struct hdafg_softc {
 
 	uint16_t			sc_fixed_rate;
 	bool				sc_disable_dip;
+
+	char				sc_name[MAX_AUDIO_DEV_LEN];
+	char				sc_version[MAX_AUDIO_DEV_LEN];
 };
 
 static int	hdafg_match(device_t, cfdata_t, void *);
@@ -3660,7 +3663,6 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	struct hdafg_softc *sc = device_private(self);
 	audio_params_t defparams;
 	prop_dictionary_t args = opaque;
-	char vendor[MAX_AUDIO_DEV_LEN], product[MAX_AUDIO_DEV_LEN];
 	uint64_t fgptr = 0;
 	uint32_t astype = 0;
 	uint8_t nid = 0;
@@ -3686,10 +3688,10 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 
 	prop_dictionary_get_uint16(args, "vendor-id", &sc->sc_vendor);
 	prop_dictionary_get_uint16(args, "product-id", &sc->sc_product);
-	hdaudio_findvendor(vendor, sizeof(vendor), sc->sc_vendor);
-	hdaudio_findproduct(product, sizeof(product), sc->sc_vendor,
+	hdaudio_findvendor(sc->sc_name, sizeof(sc->sc_name), sc->sc_vendor);
+	hdaudio_findproduct(sc->sc_version, sizeof(sc->sc_version), sc->sc_vendor,
 	    sc->sc_product);
-	hda_print1(sc, ": %s %s%s\n", vendor, product,
+	hda_print1(sc, ": %s %s%s\n", sc->sc_name, sc->sc_version,
 	    sc->sc_config ? " (custom configuration)" : "");
 
 	switch (sc->sc_vendor) {
@@ -4063,10 +4065,8 @@ hdafg_getdev(void *opaque, struct audio_device *audiodev)
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdafg_softc *sc = ad->ad_sc;
 
-	hdaudio_findvendor(audiodev->name, sizeof(audiodev->name),
-	    sc->sc_vendor);
-	hdaudio_findproduct(audiodev->version, sizeof(audiodev->version),
-	    sc->sc_vendor, sc->sc_product);
+	memcpy(audiodev->name, sc->sc_name, sizeof(audiodev->name));
+	memcpy(audiodev->version, sc->sc_version, sizeof(audiodev->version));
 	snprintf(audiodev->config, sizeof(audiodev->config),
 	    "%02Xh", sc->sc_nid);
 
