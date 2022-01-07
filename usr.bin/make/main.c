@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.566 2022/01/07 20:37:25 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.567 2022/01/07 21:00:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.566 2022/01/07 20:37:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.567 2022/01/07 21:00:49 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1805,9 +1805,10 @@ Error(const char *fmt, ...)
 	if (f == stdout)
 		f = stderr;
 	(void)fflush(stdout);
+
 	for (;;) {
-		va_start(ap, fmt);
 		fprintf(f, "%s: ", progname);
+		va_start(ap, fmt);
 		(void)vfprintf(f, fmt, ap);
 		va_end(ap);
 		(void)fprintf(f, "\n");
@@ -1858,9 +1859,9 @@ Punt(const char *fmt, ...)
 {
 	va_list ap;
 
-	va_start(ap, fmt);
 	(void)fflush(stdout);
 	(void)fprintf(stderr, "%s: ", progname);
+	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
