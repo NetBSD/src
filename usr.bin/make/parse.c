@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.633 2022/01/07 21:00:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.634 2022/01/07 21:04:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.633 2022/01/07 21:00:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.634 2022/01/07 21:04:50 rillig Exp $");
 
 /*
  * A file being read.
@@ -305,14 +305,13 @@ loadfile(const char *path, int fd)
 	struct stat st;
 
 	bufSize = fstat(fd, &st) == 0 && S_ISREG(st.st_mode) &&
-		  st.st_size >= 1 && st.st_size <= 0x3fffffff
+		  st.st_size > 0 && st.st_size < 1024 * 1024 * 1024
 	    ? (size_t)st.st_size : 1024;
 	Buf_InitSize(&buf, bufSize);
 
 	for (;;) {
 		if (buf.len == buf.cap) {
-			if (buf.cap > 0x1fffffff) {
-				errno = EFBIG;
+			if (buf.cap >= 512 * 1024 * 1024) {
 				Error("%s: file too large", path);
 				exit(2); /* Not 1 so -q can distinguish error */
 			}
