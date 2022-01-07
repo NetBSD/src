@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.635 2022/01/07 21:40:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.636 2022/01/07 21:57:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.635 2022/01/07 21:40:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.636 2022/01/07 21:57:26 rillig Exp $");
 
 /*
  * A file being read.
@@ -2299,14 +2299,14 @@ typedef enum ParseRawLineResult {
  */
 static ParseRawLineResult
 ParseRawLine(IncludedFile *curFile, char **out_line, char **out_line_end,
-	     char **out_firstBackslash, char **out_firstComment)
+	     char **out_firstBackslash, char **out_commentLineEnd)
 {
 	char *line = curFile->buf_ptr;
 	char *buf_end = curFile->buf_end;
 	char *p = line;
 	char *line_end = line;
 	char *firstBackslash = NULL;
-	char *firstComment = NULL;
+	char *commentLineEnd = NULL;
 	ParseRawLineResult res = PRLR_LINE;
 
 	curFile->readLines++;
@@ -2349,9 +2349,9 @@ ParseRawLine(IncludedFile *curFile, char **out_line, char **out_line_end,
 		 * Remember the first '#' for comment stripping, unless
 		 * the previous char was '[', as in the modifier ':[#]'.
 		 */
-		if (ch == '#' && firstComment == NULL &&
+		if (ch == '#' && commentLineEnd == NULL &&
 		    !(p > line && p[-1] == '['))
-			firstComment = line_end;
+			commentLineEnd = line_end;
 
 		p++;
 		if (ch == '\n')
@@ -2366,7 +2366,7 @@ ParseRawLine(IncludedFile *curFile, char **out_line, char **out_line_end,
 	*out_line = line;
 	*out_line_end = line_end;
 	*out_firstBackslash = firstBackslash;
-	*out_firstComment = firstComment;
+	*out_commentLineEnd = commentLineEnd;
 	return res;
 }
 
@@ -2454,15 +2454,15 @@ ReadLowLevelLine(LineKind kind)
 	char *line;
 	char *line_end;
 	char *firstBackslash;
-	char *firstComment;
+	char *commentLineEnd;
 
 	for (;;) {
 		ParseRawLineResult res = ParseRawLine(curFile,
-		    &line, &line_end, &firstBackslash, &firstComment);
+		    &line, &line_end, &firstBackslash, &commentLineEnd);
 		if (res == PRLR_ERROR)
 			return NULL;
 
-		if (line_end == line || firstComment == line) {
+		if (line == line_end || line == commentLineEnd) {
 			if (res == PRLR_EOF)
 				return NULL;
 			if (kind != LK_FOR_BODY)
@@ -2482,8 +2482,8 @@ ReadLowLevelLine(LineKind kind)
 	}
 
 	/* Ignore anything after a non-escaped '#' in non-commands. */
-	if (firstComment != NULL && line[0] != '\t')
-		*firstComment = '\0';
+	if (commentLineEnd != NULL && line[0] != '\t')
+		*commentLineEnd = '\0';
 
 	/* If we didn't see a '\\' then the in-situ data is fine. */
 	if (firstBackslash == NULL)
