@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.632 2022/01/07 20:54:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.633 2022/01/07 21:00:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.632 2022/01/07 20:54:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.633 2022/01/07 21:00:49 rillig Exp $");
 
 /*
  * A file being read.
@@ -526,8 +526,8 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 		lineno = (size_t)curFile->readLines;
 	}
 
-	va_start(ap, fmt);
 	(void)fflush(stdout);
+	va_start(ap, fmt);
 	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
@@ -1612,6 +1612,7 @@ VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 	 *
 	 * TODO: Add a test that demonstrates why this code is needed,
 	 *  apart from making the debug log longer.
+	 *
 	 * XXX: The variable name is expanded up to 3 times.
 	 */
 	if (!Var_ExistsExpand(scope, name))
