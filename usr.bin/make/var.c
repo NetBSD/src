@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.995 2022/01/07 12:44:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.996 2022/01/07 20:37:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.995 2022/01/07 12:44:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.996 2022/01/07 20:37:25 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -153,7 +153,8 @@ MAKE_RCSID("$NetBSD: var.c,v 1.995 2022/01/07 12:44:57 rillig Exp $");
  * Scope variables are stored in a GNode.scope.  The only way to undefine
  * a scope variable is using the .undef directive.  In particular, it must
  * not be possible to undefine a variable during the evaluation of an
- * expression, or Var.name might point nowhere.
+ * expression, or Var.name might point nowhere.  (There is another,
+ * unintended way to undefine a scope variable, see varmod-loop-delete.mk.)
  *
  * Environment variables are short-lived.  They are returned by VarFind, and
  * after using them, they must be freed using VarFreeShortLived.
@@ -2838,7 +2839,7 @@ ParseModifier_Match(const char **pp, const ModChain *ch,
 static ApplyModifierResult
 ApplyModifier_Match(const char **pp, ModChain *ch)
 {
-	const char mod = **pp;
+	char mod = **pp;
 	char *pattern;
 
 	ParseModifier_Match(pp, ch, &pattern);
@@ -3389,9 +3390,8 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 		else
 			goto bad;
 		*pp += 3;
-	} else {
+	} else
 		goto bad;
-	}
 
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;

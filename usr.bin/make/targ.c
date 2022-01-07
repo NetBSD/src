@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.174 2022/01/07 19:24:27 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.175 2022/01/07 20:37:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -78,10 +78,8 @@
  *
  *	Targ_List	Return the list of all targets so far.
  *
- *	GNode_New	Create a new GNode for the passed target
- *			(string). The node is *not* placed in the
- *			hash table, though all its fields are
- *			initialized.
+ *	GNode_New	Create a new GNode with the given name, don't add it
+ *			to allNodes.
  *
  *	Targ_FindNode	Find the node, or return NULL.
  *
@@ -100,8 +98,7 @@
  * Debugging:
  *	Targ_PrintGraph
  *			Print out the entire graph, all variables and
- *			statistics for the directory cache. Should print
- *			something for suffixes, too, but...
+ *			statistics for the directory cache.
  */
 
 #include <time.h>
@@ -110,7 +107,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.174 2022/01/07 19:24:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.175 2022/01/07 20:37:25 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -545,7 +542,6 @@ Targ_PrintNodes(GNodeList *gnodes, int pass)
 		Targ_PrintNode(ln->datum, pass);
 }
 
-/* Print only those targets that are just a source. */
 static void
 PrintOnlySources(void)
 {

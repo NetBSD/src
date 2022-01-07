@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.629 2022/01/07 20:09:58 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.630 2022/01/07 20:37:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.629 2022/01/07 20:09:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.630 2022/01/07 20:37:25 rillig Exp $");
 
 /*
  * A file being read.
@@ -334,7 +334,7 @@ loadfile(const char *path, int fd)
 	if (!Buf_EndsWith(&buf, '\n'))
 		Buf_AddByte(&buf, '\n');
 
-	return buf;
+	return buf;		/* may not be null-terminated */
 }
 
 static void
@@ -568,11 +568,9 @@ HandleMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 }
 
 /*
- * Add the child to the parent's children.
- *
- * Additionally, add the parent to the child's parents, but only if the
- * target is not special.  An example for such a special target is .END,
- * which does not need to be informed once the child target has been made.
+ * Add the child to the parent's children, and for non-special targets, vice
+ * versa.  Special targets such as .END do not need to be informed once the
+ * child target has been made.
  */
 static void
 LinkSource(GNode *pgn, GNode *cgn, bool isSpecial)
@@ -728,17 +726,17 @@ ApplyDependencySourceKeyword(const char *src, ParseSpecial special)
 	return false;
 }
 
+/*
+ * In a line like ".MAIN: source1 source2", add all sources to the list of
+ * things to create, but only if the user didn't specify a target on the
+ * command line and .MAIN occurs for the first time.
+ *
+ * See HandleDependencyTargetSpecial, branch SP_MAIN.
+ * See unit-tests/cond-func-make-main.mk.
+ */
 static void
 ApplyDependencySourceMain(const char *src)
 {
-	/*
-	 * In a line like ".MAIN: source1 source2", add all sources to the
-	 * list of things to create, but only if the user didn't specify a
-	 * target on the command line and .MAIN occurs for the first time.
-	 *
-	 * See HandleDependencyTargetSpecial, branch SP_MAIN.
-	 * See unit-tests/cond-func-make-main.mk.
-	 */
 	Lst_Append(&opts.create, bmake_strdup(src));
 	/*
 	 * Add the name to the .TARGETS variable as well, so the user can
@@ -775,24 +773,13 @@ ApplyDependencySourceOrder(const char *src)
 	order_pred = gn;
 }
 
+/* The source is not an attribute, so find/create a node for it. */
 static void
 ApplyDependencySourceOther(const char *src, GNodeType targetAttr,
 			   ParseSpecial special)
 {
 	GNode *gn;
 
-	/*
-	 * The source is not an attribute, so find/create a node for it.
-	 * After that, apply any operator to it from a special target or
-	 * link it to its parents, as appropriate.
-	 *
-	 * In the case of a source that was the object of a '::' operator,
-	 * the attribute is applied to all of its instances (as kept in
-	 * the 'cohorts' list of the node) or all the cohorts are linked
-	 * to all the targets.
-	 */
-
-	/* Find/create the 'src' node and attach to all targets */
 	gn = Targ_GetNode(src);
 	if (doing_depend)
 		RememberLocation(gn);
@@ -830,7 +817,7 @@ ApplyDependencySource(GNodeType targetAttr, const char *src,
  * actually a real target (i.e. isn't a .USE or .EXEC rule) to be made.
  */
 static void
-FindMainTarget(void)
+MaybeUpdateMainTarget(void)
 {
 	GNodeListNode *ln;
 
@@ -849,15 +836,15 @@ FindMainTarget(void)
 }
 
 static void
-InvalidLineType(const char *lstart)
+InvalidLineType(const char *line)
 {
-	if ((strncmp(lstart, "<<<<<<", 6) == 0) ||
-	    (strncmp(lstart, "======", 6) == 0) ||
-	    (strncmp(lstart, ">>>>>>", 6) == 0))
+	if (strncmp(line, "<<<<<<", 6) == 0 ||
+	    strncmp(line, "======", 6) == 0 ||
+	    strncmp(line, ">>>>>>", 6) == 0)
 		Parse_Error(PARSE_FATAL,
 		    "Makefile appears to contain unresolved CVS/RCS/??? merge conflicts");
-	else if (lstart[0] == '.') {
-		const char *dirstart = lstart + 1;
+	else if (line[0] == '.') {
+		const char *dirstart = line + 1;
 		const char *dirend;
 		cpp_skip_whitespace(&dirstart);
 		dirend = dirstart;
@@ -1106,7 +1093,7 @@ ParseDependencyOp(char **pp)
 	if (**pp == '!')
 		return (*pp)++, OP_FORCE;
 	if ((*pp)[1] == ':')
-		return (*pp) += 2, OP_DOUBLEDEP;
+		return *pp += 2, OP_DOUBLEDEP;
 	else
 		return (*pp)++, OP_DEPENDS;
 }
@@ -1123,17 +1110,9 @@ ClearPaths(SearchPathList *paths)
 	Dir_SetPATH();
 }
 
-/*
- * Several special targets take different actions if present with no
- * sources:
- *	a .SUFFIXES line with no sources clears out all old suffixes
- *	a .PRECIOUS line makes all targets precious
- *	a .IGNORE line ignores errors for all targets
- *	a .SILENT line creates silence when making all targets
- *	a .PATH removes all directories from the search path(s).
- */
+/* Handle a "dependency" line like '.SPECIAL:' without any sources. */
 static void
-ParseDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
+HandleDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
 {
 	switch (special) {
 	case SP_SUFFIXES:
@@ -1364,7 +1343,7 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 		       ParseSpecial special, SearchPathList **inout_paths)
 {
 	if (*p == '\0') {
-		ParseDependencySourcesEmpty(special, *inout_paths);
+		HandleDependencySourcesEmpty(special, *inout_paths);
 	} else if (special == SP_MFLAGS) {
 		Main_ParseArgLine(p);
 		return;
@@ -1397,7 +1376,7 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 			return;
 	}
 
-	FindMainTarget();
+	MaybeUpdateMainTarget();
 }
 
 /*
@@ -1621,6 +1600,7 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *scope)
 	}
 }
 
+/* Perform a variable assignment that uses the operator ':='. */
 static void
 VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 		    FStr *out_avalue)
@@ -1633,6 +1613,7 @@ VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 	 *
 	 * TODO: Add a test that demonstrates why this code is needed,
 	 *  apart from making the debug log longer.
+	 * XXX: The variable name is expanded up to 3 times.
 	 */
 	if (!Var_ExistsExpand(scope, name))
 		Var_SetExpand(scope, name, "");
@@ -1645,6 +1626,7 @@ VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 	*out_avalue = FStr_InitOwn(evalue);
 }
 
+/* Perform a variable assignment that uses the operator '!='. */
 static void
 VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 		    FStr *out_avalue)
@@ -1696,6 +1678,7 @@ VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
 	else if (op == VAR_SHELL)
 		VarAssign_EvalShell(name, uvalue, scope, &avalue);
 	else {
+		/* XXX: The variable name is expanded up to 2 times. */
 		if (op == VAR_DEFAULT && Var_ExistsExpand(scope, name))
 			return false;
 
@@ -2113,11 +2096,7 @@ TrackInput(const char *name)
 }
 
 
-/*
- * Start parsing from the given source.
- *
- * The given file is added to the includes stack.
- */
+/* Parse from the given buffer, later return to the current file. */
 void
 Parse_PushInput(const char *name, int lineno, Buffer buf,
 		struct ForLoop *forLoop)
@@ -2592,9 +2571,8 @@ ParseForLoop(const char *line)
  * leaving only variable assignments, other directives, dependency lines
  * and shell commands to the caller.
  *
- * Results:
- *	A line without its newline and without any trailing whitespace,
- *	or NULL.
+ * Return a line without without trailing whitespace, or NULL for EOF.  The
+ * caller must not free the returned line.
  */
 static char *
 ReadHighLevelLine(void)
