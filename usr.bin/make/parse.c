@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.621 2022/01/07 08:37:23 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.622 2022/01/07 08:48:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.621 2022/01/07 08:37:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.622 2022/01/07 08:48:16 rillig Exp $");
 
 /*
  * Structure for a file being read ("included file")
@@ -427,15 +427,10 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 	char dirbuf[MAXPATHLEN + 1];
 	FStr dir, base;
 
-	if (*fname == '/' || strcmp(fname, "(stdin)") == 0) {
+	if (fname[0] == '/' || strcmp(fname, "(stdin)") == 0) {
 		(void)fprintf(f, "\"%s\" line %u: ", fname, (unsigned)lineno);
 		return;
 	}
-
-	/*
-	 * Find out which makefile is the culprit. We try ${.PARSEDIR} and
-	 * apply realpath(3) if not absolute.
-	 */
 
 	dir = Var_Value(SCOPE_GLOBAL, ".PARSEDIR");
 	if (dir.str == NULL)
@@ -494,7 +489,7 @@ ParseErrorInternal(const char *fname, size_t lineno,
 	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
-	if (opts.debug_file != stderr && opts.debug_file != stdout) {
+	if (opts.debug_file != stdout && opts.debug_file != stderr) {
 		va_start(ap, fmt);
 		ParseVErrorInternal(opts.debug_file, fname, lineno, type,
 		    fmt, ap);
@@ -531,7 +526,7 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
-	if (opts.debug_file != stderr && opts.debug_file != stdout) {
+	if (opts.debug_file != stdout && opts.debug_file != stderr) {
 		va_start(ap, fmt);
 		ParseVErrorInternal(opts.debug_file, fname, lineno, type,
 		    fmt, ap);
@@ -1182,7 +1177,7 @@ AddToPaths(const char *dir, SearchPathList *paths)
  * a something and deal with it accordingly.
  */
 static void
-ParseDependencySourceSpecial(ParseSpecial special, char *word,
+ParseDependencySourceSpecial(ParseSpecial special, const char *word,
 			     SearchPathList *paths)
 {
 	switch (special) {
