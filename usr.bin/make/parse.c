@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.628 2022/01/07 14:03:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.629 2022/01/07 20:09:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.628 2022/01/07 14:03:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.629 2022/01/07 20:09:58 rillig Exp $");
 
 /*
  * A file being read.
@@ -2559,6 +2559,7 @@ ParseForLoop(const char *line)
 {
 	int rval;
 	int firstLineno;
+	int forLevel;
 
 	rval = For_Eval(line);
 	if (rval == 0)
@@ -2570,6 +2571,7 @@ ParseForLoop(const char *line)
 	firstLineno = CurFile()->readLines;
 
 	/* Accumulate the loop body until the matching '.endfor'. */
+	forLevel = 1;
 	do {
 		line = ReadLowLevelLine(LK_FOR_BODY);
 		if (line == NULL) {
@@ -2577,7 +2579,7 @@ ParseForLoop(const char *line)
 			    "Unexpected end of file in .for loop");
 			break;
 		}
-	} while (For_Accum(line));
+	} while (For_Accum(line, &forLevel));
 
 	For_Run(firstLineno);
 	return true;
