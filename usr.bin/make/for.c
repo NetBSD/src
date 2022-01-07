@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.155 2022/01/07 20:04:49 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.156 2022/01/07 20:09:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.155 2022/01/07 20:04:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.156 2022/01/07 20:09:58 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -70,7 +70,6 @@ typedef struct ForLoop {
 
 
 static ForLoop *accumFor;	/* Loop being accumulated */
-static int forLevel = 0;	/* Nesting level */
 
 
 static ForLoop *
@@ -224,7 +223,6 @@ For_Eval(const char *line)
 	}
 
 	accumFor = f;
-	forLevel = 1;
 	return 1;
 }
 
@@ -233,7 +231,7 @@ For_Eval(const char *line)
  * Returns false when the matching .endfor is reached.
  */
 bool
-For_Accum(const char *line)
+For_Accum(const char *line, int *forLevel)
 {
 	const char *p = line;
 
@@ -242,12 +240,12 @@ For_Accum(const char *line)
 		cpp_skip_whitespace(&p);
 
 		if (IsEndfor(p)) {
-			DEBUG1(FOR, "For: end for %d\n", forLevel);
-			if (--forLevel <= 0)
+			DEBUG1(FOR, "For: end for %d\n", *forLevel);
+			if (--*forLevel <= 0)
 				return false;
 		} else if (IsFor(p)) {
-			forLevel++;
-			DEBUG1(FOR, "For: new loop %d\n", forLevel);
+			(*forLevel)++;
+			DEBUG1(FOR, "For: new loop %d\n", *forLevel);
 		}
 	}
 

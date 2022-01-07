@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.230 2022/01/07 19:24:27 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.231 2022/01/07 20:09:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,7 @@ void SearchPath_Free(SearchPath *);
 /* for.c */
 struct ForLoop;
 int For_Eval(const char *) MAKE_ATTR_USE;
-bool For_Accum(const char *) MAKE_ATTR_USE;
+bool For_Accum(const char *, int *) MAKE_ATTR_USE;
 void For_Run(int);
 bool For_NextIteration(struct ForLoop *, Buffer *);
 
