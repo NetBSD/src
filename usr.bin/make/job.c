@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.445 2021/12/27 18:26:22 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.446 2022/01/07 08:28:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.445 2021/12/27 18:26:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.446 2022/01/07 08:28:06 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2189,14 +2189,8 @@ Shell_Init(void)
 			free(shellErrFlag);
 			shellErrFlag = NULL;
 		}
-		if (shellErrFlag == NULL) {
-			size_t n = strlen(shell->errFlag) + 2;
-
-			shellErrFlag = bmake_malloc(n);
-			if (shellErrFlag != NULL)
-				snprintf(shellErrFlag, n, "-%s",
-				    shell->errFlag);
-		}
+		if (shellErrFlag == NULL)
+			shellErrFlag = str_concat2("-", shell->errFlag);
 	} else if (shellErrFlag != NULL) {
 		free(shellErrFlag);
 		shellErrFlag = NULL;
