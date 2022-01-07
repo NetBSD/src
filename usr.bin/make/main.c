@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.565 2022/01/01 21:41:50 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.566 2022/01/07 20:37:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.565 2022/01/01 21:41:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.566 2022/01/07 20:37:25 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1799,22 +1799,22 @@ void
 Error(const char *fmt, ...)
 {
 	va_list ap;
-	FILE *err_file;
+	FILE *f;
 
-	err_file = opts.debug_file;
-	if (err_file == stdout)
-		err_file = stderr;
+	f = opts.debug_file;
+	if (f == stdout)
+		f = stderr;
 	(void)fflush(stdout);
 	for (;;) {
 		va_start(ap, fmt);
-		fprintf(err_file, "%s: ", progname);
-		(void)vfprintf(err_file, fmt, ap);
+		fprintf(f, "%s: ", progname);
+		(void)vfprintf(f, fmt, ap);
 		va_end(ap);
-		(void)fprintf(err_file, "\n");
-		(void)fflush(err_file);
-		if (err_file == stderr)
+		(void)fprintf(f, "\n");
+		(void)fflush(f);
+		if (f == stderr)
 			break;
-		err_file = stderr;
+		f = stderr;
 	}
 	main_errors++;
 }
@@ -2093,21 +2093,21 @@ void
 Main_ExportMAKEFLAGS(bool first)
 {
 	static bool once = true;
-	const char *expr;
-	char *s;
+	char *flags;
 
 	if (once != first)
 		return;
 	once = false;
 
-	expr = "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}";
-	(void)Var_Subst(expr, SCOPE_CMDLINE, VARE_WANTRES, &s);
+	(void)Var_Subst(
+	    "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}",
+	    SCOPE_CMDLINE, VARE_WANTRES, &flags);
 	/* TODO: handle errors */
-	if (s[0] != '\0') {
+	if (flags[0] != '\0') {
 #ifdef POSIX
-		setenv("MAKEFLAGS", s, 1);
+		setenv("MAKEFLAGS", flags, 1);
 #else
-		setenv("MAKE", s, 1);
+		setenv("MAKE", flags, 1);
 #endif
 	}
 }
@@ -2121,7 +2121,7 @@ getTmpdir(void)
 	if (tmpdir != NULL)
 		return tmpdir;
 
-	/* Honor $TMPDIR but only if it is valid. Ensure it ends with '/'. */
+	/* Honor $TMPDIR if it is valid, strip a trailing '/'. */
 	(void)Var_Subst("${TMPDIR:tA:U" _PATH_TMP ":S,/$,,W}/",
 	    SCOPE_GLOBAL, VARE_WANTRES, &tmpdir);
 	/* TODO: handle errors */
