@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.11 2022/01/02 01:35:31 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.12 2022/01/08 10:22:03 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -212,3 +212,19 @@ var=	outer
 .    endif			# expect: if-less endif
 .  endfor			# no 'for-less endfor'
 .endif				# no 'if-less endif'
+
+
+# When make parses a .for loop, it assumes that there is no line break between
+# the '.' and the 'for' or 'endfor', as there is no practical reason to break
+# the line at this point.  When make scans the outer .for loop, it does not
+# recognize the inner directives as such.  When make scans the inner .for
+# loop, it recognizes the '.\n for' but does not recognize the '.\n endfor',
+# as LK_FOR_BODY preserves the backslash-newline sequences.
+.MAKEFLAGS: -df
+.for outer in o
+.\
+   for inner in i
+.\
+   endfor
+.endfor
+.MAKEFLAGS: -d0
