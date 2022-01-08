@@ -1,4 +1,4 @@
-# $NetBSD: varmod-indirect.mk,v 1.9 2021/03/15 20:00:50 rillig Exp $
+# $NetBSD: varmod-indirect.mk,v 1.10 2022/01/08 20:21:34 rillig Exp $
 #
 # Tests for indirect variable modifiers, such as in ${VAR:${M_modifiers}}.
 # These can be used for very basic purposes like converting a string to either
@@ -47,7 +47,7 @@
 # error.  Because of this parse error, this feature cannot be used reasonably
 # in practice.
 #
-# expect+1: Unknown modifier '$'
+# expect+2: Unknown modifier '$'
 #.MAKEFLAGS: -dvc
 .if ${value:L:${:UM*}S,value,replaced,} == "M*S,value,replaced,}"
 .  warning	FIXME: this expression should have resulted in a parse $\

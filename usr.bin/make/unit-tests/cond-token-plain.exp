@@ -27,7 +27,7 @@ lhs = "var&&name", rhs = "var&&name", op = !=
 CondParser_Eval: ${:Uvar}||name != "var||name"
 lhs = "var||name", rhs = "var||name", op = !=
 CondParser_Eval: bare
-make: "cond-token-plain.mk" line 106: A bare word is treated like defined(...), and the variable 'bare' is not defined.
+make: "cond-token-plain.mk" line 105: A bare word is treated like defined(...), and the variable 'bare' is not defined.
 CondParser_Eval: VAR
 make: "cond-token-plain.mk" line 111: A bare word is treated like defined(...).
 CondParser_Eval: V${:UA}R

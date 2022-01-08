@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.159 2022/01/08 17:25:19 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.160 2022/01/08 20:21:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.159 2022/01/08 17:25:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.160 2022/01/08 20:21:34 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -469,7 +469,7 @@ For_NextIteration(ForLoop *f, Buffer *body)
 
 /* Run the .for loop, imitating the actions of an include file. */
 void
-For_Run(int lineno)
+For_Run(int headLineno, int bodyReadLines)
 {
 	Buffer buf;
 	ForLoop *f = accumFor;
@@ -477,7 +477,7 @@ For_Run(int lineno)
 
 	if (f->items.len > 0) {
 		Buf_Init(&buf);
-		Parse_PushInput(NULL, lineno, buf, f);
+		Parse_PushInput(NULL, headLineno, bodyReadLines, buf, f);
 	} else
 		ForLoop_Free(f);
 }

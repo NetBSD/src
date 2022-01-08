@@ -1,6 +1,6 @@
 make: "varmod-indirect.mk" line 19: Unknown modifier "${"
 make: "varmod-indirect.mk" line 52: Unknown modifier "${"
-make: "varmod-indirect.mk" line 55: warning: FIXME: this expression should have resulted in a parse error rather than returning the unparsed portion of the expression.
+make: "varmod-indirect.mk" line 53: warning: FIXME: this expression should have resulted in a parse error rather than returning the unparsed portion of the expression.
 make: "varmod-indirect.mk" line 140: before
 make: "varmod-indirect.mk" line 140: after
 make: "varmod-indirect.mk" line 146: before

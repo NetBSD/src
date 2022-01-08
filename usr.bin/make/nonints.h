@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.233 2022/01/07 20:54:45 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.234 2022/01/08 20:21:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -119,7 +119,7 @@ void SearchPath_Free(SearchPath *);
 struct ForLoop;
 int For_Eval(const char *) MAKE_ATTR_USE;
 bool For_Accum(const char *, int *) MAKE_ATTR_USE;
-void For_Run(int);
+void For_Run(int, int);
 bool For_NextIteration(struct ForLoop *, Buffer *);
 
 /* job.c */
@@ -147,7 +147,7 @@ void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 bool Parse_VarAssign(const char *, bool, GNode *) MAKE_ATTR_USE;
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
-void Parse_PushInput(const char *, int, Buffer, struct ForLoop *);
+void Parse_PushInput(const char *, int, int, Buffer, struct ForLoop *);
 void Parse_MainName(GNodeList *);
 int Parse_NumErrors(void) MAKE_ATTR_USE;
 
