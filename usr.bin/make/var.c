@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.996 2022/01/07 20:37:25 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.997 2022/01/08 11:04:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.996 2022/01/07 20:37:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.997 2022/01/08 11:04:13 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1870,7 +1870,7 @@ VarQuote(const char *str, bool quoteDollar, LazyBuf *buf)
 			LazyBuf_AddStr(buf, newline);
 			continue;
 		}
-		if (ch_isspace(*p) || is_shell_metachar((unsigned char)*p))
+		if (ch_isspace(*p) || ch_is_shell_meta(*p))
 			LazyBuf_Add(buf, '\\');
 		LazyBuf_Add(buf, *p);
 		if (quoteDollar && *p == '$')
