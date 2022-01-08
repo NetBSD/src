@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.641 2022/01/08 22:24:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.642 2022/01/08 22:42:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.641 2022/01/08 22:24:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.642 2022/01/08 22:42:27 rillig Exp $");
 
 /*
  * A file being read.
@@ -336,9 +336,6 @@ PrintStackTrace(void)
 	const IncludedFile *entries;
 	size_t i, n;
 
-	if (!DEBUG(PARSE))
-		return;
-
 	entries = GetInclude(0);
 	n = includes.len;
 	if (n == 0)
@@ -463,7 +460,8 @@ ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 		parseErrors++;
 	}
 
-	PrintStackTrace();
+	if (DEBUG(PARSE))
+		PrintStackTrace();
 }
 
 static void
@@ -2508,16 +2506,17 @@ ParseForLoop(const char *line)
 	int bodyReadLines;
 	int forLevel;
 
-	forHeadLineno = CurFile()->lineno;
 	rval = For_Eval(line);
 	if (rval == 0)
 		return false;	/* Not a .for line */
 	if (rval < 0)
 		return true;	/* Syntax error - error printed, ignore line */
 
+	forHeadLineno = CurFile()->lineno;
+	bodyReadLines = CurFile()->readLines;
+
 	/* Accumulate the loop body until the matching '.endfor'. */
 	forLevel = 1;
-	bodyReadLines = CurFile()->readLines;
 	do {
 		line = ReadLowLevelLine(LK_FOR_BODY);
 		if (line == NULL) {
