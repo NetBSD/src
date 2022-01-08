@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.47 2022/01/08 06:58:40 lukem Exp $
+# $NetBSD: postinstall.in,v 1.48 2022/01/08 23:04:11 lukem Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2549,6 +2549,7 @@ Usage: ${PROGNAME} [-a ARCH] [-d DEST_DIR] [-m MACHINE] [-s SRC_DIR] [-x XSRC_DI
 	If no items are provided, a default set of checks or fixes is applied.
 
 	Options:
+	-?		Display this help, and exit.
 	-a ARCH		\$MACHINE_ARCH.			[${MACHINE_ARCH}]
 	-d DEST_DIR	Destination directory to check. [${DEST_DIR:-/}]
 	-m MACHINE	\$MACHINE.			[${MACHINE}]
@@ -2566,14 +2567,14 @@ Usage: ${PROGNAME} [-a ARCH] [-d DEST_DIR] [-m MACHINE] [-s SRC_DIR] [-x XSRC_DI
 							[${XSRC_DIR:-/usr/src/../xsrc}]
 
 	Supported values for OPERATION:
-	help		Display this help.
+	help		Display this help, and exit.
 	list		List available items.
 	check ITEM ...	Perform post-installation checks on ITEMs.
 	diff [-bcenpuw] ITEM ...
 			Similar to 'check' but also output difference of files,
 			using diff with the provided options.
 	fix ITEM ...	Apply fixes that 'check' determines need to be applied.
-	usage		Display this usage.
+	usage		Display this help, and exit.
 _USAGE_
 }
 
