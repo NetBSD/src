@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.156 2021/12/31 14:24:06 riastradh Exp $        */
+/*      $NetBSD: ukbd.c,v 1.157 2022/01/08 17:34:14 riastradh Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.156 2021/12/31 14:24:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.157 2022/01/08 17:34:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -490,6 +490,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS
 			| WSKBD_LED_COMPOSE);
+	sc->sc_leds_set = 0;	/* not explicitly set by wskbd yet */
 	callout_reset(&sc->sc_ledreset, mstohz(400), ukbd_delayed_leds_off,
 	    sc);
 
