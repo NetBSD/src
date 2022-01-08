@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.43 2022/01/08 06:53:58 lukem Exp $
+# $NetBSD: postinstall.in,v 1.44 2022/01/08 06:55:13 lukem Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -222,7 +222,7 @@ check_dir()
 	return 0
 }
 
-# check_ids op type file srcfile start id [...]
+# check_ids op type file srcfile start id ...
 #	Check if file of type "users" or "groups" contains the relevant IDs.
 #	Use srcfile as a reference for the expected contents.
 #	The specified "id" names should be given in numerical order,
@@ -233,7 +233,7 @@ check_dir()
 #
 check_ids()
 {
-	[ $# -ge 6 ] || err 3 "USAGE: checks_ids op type file start srcfile id [...]"
+	[ $# -ge 6 ] || err 3 "USAGE: checks_ids op type file start srcfile id ..."
 	_op="$1"
 	_type="$2"
 	_file="$3"
@@ -294,7 +294,7 @@ check_ids()
 	return 0
 }
 
-# populate_dir op onlynew src dest mode file [file ...]
+# populate_dir op onlynew src dest mode file ...
 #	Perform op ("check" or "fix") on files in src/ against dest/
 #	If op = "check" display missing or changed files, optionally with diffs.
 #	If op != "check" copies any missing or changed files.
@@ -303,7 +303,7 @@ check_ids()
 #
 populate_dir()
 {
-	[ $# -ge 5 ] || err 3 "USAGE: populate_dir op onlynew src dest mode file [...]"
+	[ $# -ge 5 ] || err 3 "USAGE: populate_dir op onlynew src dest mode file ..."
 	_op="$1"
 	_onlynew="$2"
 	_src="$3"
@@ -353,7 +353,7 @@ populate_dir()
 	return ${_cmpdir_rv}
 }
 
-# compare_dir op src dest mode file [file ...]
+# compare_dir op src dest mode file ...
 #	Perform op ("check" or "fix") on files in src/ against dest/
 #	If op = "check" display missing or changed files, optionally with diffs.
 #	If op != "check" copies any missing or changed files.
@@ -361,7 +361,7 @@ populate_dir()
 #
 compare_dir()
 {
-	[ $# -ge 4 ] || err 3 "USAGE: compare_dir op src dest mode file [...]"
+	[ $# -ge 4 ] || err 3 "USAGE: compare_dir op src dest mode file ..."
 	_op="$1"
 	_src="$2"
 	_dest="$3"
@@ -457,7 +457,7 @@ rcvar_is_enabled()
 	)
 }
 
-# find_file_in_dirlist() file message dir1 [...] --
+# find_file_in_dirlist() file message dir1 ... --
 #	Find which directory file is in, and sets ${dir} to match.
 #	Returns 0 if matched, otherwise 1 (and sets ${dir} to "").
 #
@@ -466,7 +466,7 @@ rcvar_is_enabled()
 #
 find_file_in_dirlist()
 {
-	[ $# -ge 3 ] || err 3 "USAGE: find_file_in_dirlist file msg dir1 [...]"
+	[ $# -ge 3 ] || err 3 "USAGE: find_file_in_dirlist file msg dir1 ..."
 
 	_file="$1" ; shift
 	_msg="$1" ; shift
@@ -756,12 +756,12 @@ contents_owner()
 	fi
 }
 
-# get_makevar var [var ...]
+# get_makevar var ...
 #	Retrieve the value of a user-settable system make variable
 get_makevar()
 {
 	$SOURCEMODE || err 3 "get_makevar must be used in source mode"
-	[ $# -eq 0 ] && err 3 "USAGE: get_makevar var [var ...]"
+	[ $# -eq 0 ] && err 3 "USAGE: get_makevar var ..."
 
 	for _var in "$@"; do
 		_value="$(echo '.include <bsd.own.mk>' | \
@@ -2604,14 +2604,15 @@ list()
 
 main()
 {
-	TGZLIST=		# quoted list list of tgz files
+	DIRMODE=false		# true if "-s" specified a directory
+	N_SRC_ARGS=0		# number of "-s" args in SRC_ARGLIST
+	SOURCEMODE=false	# true if "-s" specified a source directory
 	SRC_ARGLIST=		# quoted list of one or more "-s" args
 	SRC_DIR="${SRC_ARG}"	# set default value for early usage()
-	XSRC_DIR="${SRC_ARG}/../xsrc"
-	N_SRC_ARGS=0		# number of "-s" args
+	TGZLIST=		# quoted list list of tgz files
 	TGZMODE=false		# true if "-s" specifies a tgz file
-	DIRMODE=false		# true if "-s" specified a directory
-	SOURCEMODE=false	# true if "-s" specified a source directory
+	XSRC_DIR="${SRC_ARG}/../xsrc"
+	XSRC_DIR_FIX=
 
 	case "$(uname -s)" in
 	Darwin)
