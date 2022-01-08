@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_reg.h,v 1.1 2022/01/03 17:19:41 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos_reg.h,v 1.2 2022/01/08 22:24:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -71,6 +71,13 @@
 #define	GMAC_MAC_INTERRUPT_STATUS		0x00B0
 #define	GMAC_MAC_INTERRUPT_ENABLE		0x00B4
 #define	GMAC_MAC_RX_TX_STATUS			0x00B8
+#define	 GMAC_MAC_RX_TX_STATUS_RWT		(1U << 8)
+#define	 GMAC_MAC_RX_TX_STATUS_EXCOL		(1U << 5)
+#define	 GMAC_MAC_RX_TX_STATUS_LCOL		(1U << 4)
+#define	 GMAC_MAC_RX_TX_STATUS_EXDEF		(1U << 3)
+#define	 GMAC_MAC_RX_TX_STATUS_LCARR		(1U << 2)
+#define	 GMAC_MAC_RX_TX_STATUS_NCARR		(1U << 1)
+#define	 GMAC_MAC_RX_TX_STATUS_TJT		(1U << 0)
 #define	GMAC_MAC_PMT_CONTROL_STATUS		0x00C0
 #define	GMAC_MAC_RWK_PACKET_FILTER		0x00C4
 #define	GMAC_MAC_LPI_CONTROL_STATUS		0x00D0
