@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.158 2022/01/07 23:13:50 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.159 2022/01/08 17:25:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.158 2022/01/07 23:13:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.159 2022/01/08 17:25:19 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -429,7 +429,7 @@ ForLoop_SubstBody(ForLoop *f, Buffer *body)
 	const char *p, *end;
 	const char *mark;	/* where the last substitution left off */
 
-	Buf_Empty(body);
+	Buf_Clear(body);
 
 	mark = f->body.data;
 	end = f->body.data + f->body.len;
