@@ -1,6 +1,6 @@
-.\"	$NetBSD: postinstall.8,v 1.20 2018/11/21 20:13:09 martin Exp $
+.\"	$NetBSD: postinstall.8,v 1.21 2022/01/08 23:57:32 lukem Exp $
 .\"
-.\" Copyright (c) 2005-2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2005-2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 20, 2018
+.Dd January 9, 2022
 .Dt POSTINSTALL 8
 .Os
 .Sh NAME
@@ -38,10 +38,12 @@
 .Op Fl a Ar arch
 .Op Fl d Ar destdir
 .Op Fl m Ar machine
-.Op Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
+.Op Fl s Pq Ar srcdir | Ar tgzdir | Ar tgzfile
 .Op Fl x Ar xsrcdir
 .Ar operation
-.Op Ar item Op ...
+.Ar \&...
+.Nm postinstall
+.Fl \&?
 .Sh DESCRIPTION
 The
 .Nm
@@ -73,7 +75,7 @@ Defaults to
 .It Fl m Ar machine
 MACHINE.
 Defaults to machine of the host operating system.
-.It Fl s Brq Ar srcdir | Ar tgzdir | Ar tgzfile
+.It Fl s Pq Ar srcdir | Ar tgzdir | Ar tgzfile
 The location of the reference files, or the
 .Nx
 source files used to create the reference files.
@@ -130,19 +132,21 @@ Location of the X11 source files.
 This must be a directory that contains a
 .Nx
 xsrc tree.
+.It Fl \&?
+Display help to stdout, and exit.
 .El
 .Pp
 The
 .Ar operation
 argument may be one of:
 .Bl -tag -width usageXX -offset indent
-.It Cm check
+.It Cm check Ar item Ar \&...
 Perform post-installation checks on items.
-.It Cm diff Op Xr diff 1 Li options
+.It Cm diff Oo Fl Ar bcenpuw Oc Ar item Ar \&...
 Similar to
 .Cm check ,
 but also show the differences between the files.
-.It Cm fix
+.It Cm fix Ar item Ar \&...
 Apply fixes that
 .Cm check
 determines need to be applied.
@@ -160,14 +164,13 @@ See
 .Xr etcupdate 8
 for an alternative update method that is able to merge files.
 .It Cm help
-Display a short help.
+Display help to stdout, and exit.
 .It Cm list
 List available
 .Ar items ,
 showing if they are enabled or disabled by default.
 .It Cm usage
-Same as
-.Cm help .
+Display help to stdout, and exit.
 .El
 .Sh EXIT STATUS
 The
