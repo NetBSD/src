@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.160 2022/01/08 20:21:34 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.161 2022/01/08 23:52:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.160 2022/01/08 20:21:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.161 2022/01/08 23:52:26 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -96,6 +96,25 @@ ForLoop_Free(ForLoop *f)
 	Buf_Done(&f->body);
 
 	free(f);
+}
+
+char *
+ForLoop_Details(ForLoop *f)
+{
+	size_t i, n = f->vars.len;
+	const char **vars = f->vars.items;
+	const Substring *items = f->items.words + f->nextItem - n;
+	Buffer buf;
+
+	Buf_Init(&buf);
+	for (i = 0; i < n; i++) {
+		if (i > 0)
+			Buf_AddStr(&buf, ", ");
+		Buf_AddStr(&buf, vars[i]);
+		Buf_AddStr(&buf, " = ");
+		Buf_AddBytesBetween(&buf, items[i].start, items[i].end);
+	}
+	return Buf_DoneData(&buf);
 }
 
 static bool

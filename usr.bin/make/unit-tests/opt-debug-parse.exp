@@ -2,7 +2,7 @@ Parse_PushInput: .for loop in opt-debug-parse.mk, line 16
 SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
 Parsing line 20: .info trace with multi-line .for loop head
 make: "opt-debug-parse.mk" line 20: trace with multi-line .for loop head
-	in .for loop from opt-debug-parse.mk:16
+	in .for loop from opt-debug-parse.mk:16 with var = value
 	in opt-debug-parse.mk:16
 ParseEOF: returning to file opt-debug-parse.mk, line 22
 SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
@@ -12,6 +12,18 @@ SetFilenameVars: ${.PARSEDIR} = `/dev' ${.PARSEFILE} = `null'
 SetFilenameVars: ${.INCLUDEDFROMDIR} = `<curdir>' ${.INCLUDEDFROMFILE} = `opt-debug-parse.mk'
 ParseEOF: returning to file opt-debug-parse.mk, line 26
 SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
-Parsing line 27: .MAKEFLAGS: -d0
+Parse_PushInput: .for loop in opt-debug-parse.mk, line 30
+SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
+Parsing line 31: .info trace
+make: "opt-debug-parse.mk" line 31: trace
+	in .for loop from opt-debug-parse.mk:30 with a = 1, b = 2, c = 3
+	in opt-debug-parse.mk:30
+Parsing line 31: .info trace
+make: "opt-debug-parse.mk" line 31: trace
+	in .for loop from opt-debug-parse.mk:30 with a = 4, b = 5, c = 6
+	in opt-debug-parse.mk:30
+ParseEOF: returning to file opt-debug-parse.mk, line 33
+SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
+Parsing line 35: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
 exit status 0

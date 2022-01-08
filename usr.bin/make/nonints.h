@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.234 2022/01/08 20:21:34 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.235 2022/01/08 23:52:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -121,6 +121,7 @@ int For_Eval(const char *) MAKE_ATTR_USE;
 bool For_Accum(const char *, int *) MAKE_ATTR_USE;
 void For_Run(int, int);
 bool For_NextIteration(struct ForLoop *, Buffer *);
+char *ForLoop_Details(struct ForLoop *);
 
 /* job.c */
 void JobReapChild(pid_t, int, bool);

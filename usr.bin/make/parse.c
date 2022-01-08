@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.643 2022/01/08 23:41:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.644 2022/01/08 23:52:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.643 2022/01/08 23:41:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.644 2022/01/08 23:52:26 rillig Exp $");
 
 /*
  * A file being read.
@@ -353,8 +353,10 @@ PrintStackTrace(void)
 			fname = realpath(fname, dirbuf);
 
 		if (entry->forLoop != NULL) {
-			debug_printf("\tin .for loop from %s:%d\n",
-			    fname, entry->forHeadLineno);
+			char *details = ForLoop_Details(entry->forLoop);
+			debug_printf("\tin .for loop from %s:%d with %s\n",
+			    fname, entry->forHeadLineno, details);
+			free(details);
 		} else {
 			int lineno =
 			    i + 1 < n && entries[i + 1].forLoop != NULL
