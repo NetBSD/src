@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2022/01/08 01:50:54 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.21 2022/01/08 01:58:16 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,6 @@ CPPFLAGS+=	-DUFS_EXTATTR -DUFS_ACL
 
 CWARNFLAGS.clang=	-Wno-conversion
 COPTS.ffs_appleufs.c+=   ${NO_ADDR_OF_PACKED_MEMBER}
-
 
 SRCS+=	ffs_alloc.c ffs_balloc.c ffs_inode.c ffs_subr.c ffs_tables.c \
 	ffs_vfsops.c ffs_vnops.c ffs_snapshot.c ffs_extattr.c \
