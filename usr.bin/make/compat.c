@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.236 2022/01/07 19:24:27 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.237 2022/01/08 09:53:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.236 2022/01/07 19:24:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.237 2022/01/08 09:53:44 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -349,25 +349,20 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	}
 
 #ifdef USE_META
-	if (useMeta) {
+	if (useMeta)
 		meta_compat_start();
-	}
 #endif
 
 	Var_ReexportVars();
 
-	/*
-	 * Fork and execute the single command. If the fork fails, we abort.
-	 */
 	compatChild = cpid = vfork();
-	if (cpid < 0) {
+	if (cpid < 0)
 		Fatal("Could not fork");
-	}
+
 	if (cpid == 0) {
 #ifdef USE_META
-		if (useMeta) {
+		if (useMeta)
 			meta_compat_child();
-		}
 #endif
 		(void)execvp(av[0], (char *const *)UNCONST(av));
 		execDie("exec", av[0]);
@@ -381,9 +376,8 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	LstNode_SetNull(ln);
 
 #ifdef USE_META
-	if (useMeta) {
+	if (useMeta)
 		meta_compat_parent(cpid);
-	}
 #endif
 
 	/*
@@ -405,9 +399,8 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	} else if (WIFEXITED(reason)) {
 		status = WEXITSTATUS(reason);	/* exited */
 #if defined(USE_META) && defined(USE_FILEMON_ONCE)
-		if (useMeta) {
+		if (useMeta)
 			meta_cmd_finish(NULL);
-		}
 #endif
 		if (status != 0) {
 			if (DEBUG(ERROR))
@@ -423,9 +416,8 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	if (!WIFEXITED(reason) || status != 0) {
 		if (errCheck) {
 #ifdef USE_META
-			if (useMeta) {
+			if (useMeta)
 				meta_job_error(NULL, gn, false, status);
-			}
 #endif
 			gn->made = ERROR;
 			if (opts.keepgoing) {
@@ -557,9 +549,8 @@ MakeUnmade(GNode *gn, GNode *pgn)
 		if (!opts.touch || (gn->type & OP_MAKE)) {
 			curTarg = gn;
 #ifdef USE_META
-			if (useMeta && GNode_ShouldExecute(gn)) {
+			if (useMeta && GNode_ShouldExecute(gn))
 				meta_job_start(NULL, gn);
-			}
 #endif
 			RunCommands(gn);
 			curTarg = NULL;
