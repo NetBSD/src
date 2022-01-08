@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.238 2022/01/07 06:57:57 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.239 2022/01/08 12:59:34 tnn Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.238 2022/01/07 06:57:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.239 2022/01/08 12:59:34 tnn Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -4369,8 +4369,8 @@ pci_conf_print_pl16g_cap(const pcireg_t *regs, int extcapoff)
 }
 
 static const char * const pcie_receive_number_dp[] = {
-	[0] = "Broadcast "
-	    "(Downstream Port Receiver and all Retimer Pseudo Port Receiver)",
+	[0] = ("Broadcast "
+	    "(Downstream Port Receiver and all Retimer Pseudo Port Receiver)"),
 	[1] =  "Rx(A) (Downstream Port Receiver)",
 	[2] = "Rx(B) (Retimer X or Z Upstream Pseudo Port Receiver)",
 	[3] = "Rx(C) (Retimer X or Z Downstream Pseudo Port Receiver)",
