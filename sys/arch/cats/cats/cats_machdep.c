@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.92 2021/08/27 09:29:05 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.93 2022/01/08 09:02:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,9 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.92 2021/08/27 09:29:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.93 2022/01/08 09:02:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_cats.h"
 #include "opt_ddb.h"
 #include "opt_modular.h"
 
