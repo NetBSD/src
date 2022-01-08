@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.997 2022/01/08 11:04:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.998 2022/01/08 17:25:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.997 2022/01/08 11:04:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.998 2022/01/08 17:25:19 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -999,7 +999,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 			    scope->name, name, val);
 			return;
 		}
-		Buf_Empty(&v->val);
+		Buf_Clear(&v->val);
 		Buf_AddStr(&v->val, val);
 
 		DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, val);

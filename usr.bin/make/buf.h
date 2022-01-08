@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.46 2021/12/15 12:08:25 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.47 2022/01/08 17:25:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -88,6 +88,14 @@ typedef struct Buffer {
 
 void Buf_Expand(Buffer *);
 
+/* Mark the buffer as empty, so it can be filled with data again. */
+MAKE_INLINE void
+Buf_Clear(Buffer *buf)
+{
+	buf->len = 0;
+	buf->data[0] = '\0';
+}
+
 /* Buf_AddByte adds a single byte to a buffer. */
 MAKE_INLINE void
 Buf_AddByte(Buffer *buf, char byte)
@@ -112,7 +120,6 @@ void Buf_AddBytesBetween(Buffer *, const char *, const char *);
 void Buf_AddStr(Buffer *, const char *);
 void Buf_AddInt(Buffer *, int);
 void Buf_AddFlag(Buffer *, bool, const char *);
-void Buf_Empty(Buffer *);
 void Buf_Init(Buffer *);
 void Buf_InitSize(Buffer *, size_t);
 void Buf_Done(Buffer *);
