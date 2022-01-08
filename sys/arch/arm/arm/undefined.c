@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.73 2022/01/08 09:00:23 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.74 2022/01/08 09:01:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,14 +50,14 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.73 2022/01/08 09:00:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.74 2022/01/08 09:01:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
-#include <sys/kmem.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/signal.h>
