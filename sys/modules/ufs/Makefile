@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2022/01/06 20:41:30 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.7 2022/01/08 02:00:49 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,7 @@ CPPFLAGS+=	-DUFS_EXTATTR -DUFS_ACL
 CWARNFLAGS.clang=	-Wno-conversion
 
 .PATH:	${S}/ufs/ufs
-SRCS=	ufs_acl.c ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_inode.c \
+SRCS+=	ufs_acl.c ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_inode.c \
 	ufs_lookup.c ufs_quota.c ufs_quota1.c ufs_quota2.c ufs_rename.c \
 	ufs_vfsops.c ufs_vnops.c quota1_subr.c quota2_subr.c
 
