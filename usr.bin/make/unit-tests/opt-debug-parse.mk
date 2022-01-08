@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-parse.mk,v 1.2 2022/01/02 03:23:55 rillig Exp $
+# $NetBSD: opt-debug-parse.mk,v 1.3 2022/01/08 22:13:43 rillig Exp $
 #
 # Tests for the -dp command line option, which adds debug logging about
 # makefile parsing.
@@ -16,8 +16,11 @@
     value
 .info trace with multi-line .for loop head
 .endfor
-# FIXME: The .exp file says 'in .include from opt-debug-parse.mk:18', which is
+# FIXME: The .exp file says 'in .include from opt-debug-parse.mk:19', which is
 # completely wrong.  It should rather say 'in .for loop from :13'.
+
+# XXX: The debug log should return to "line 24" instead of "line 23".
+.include "/dev/null"
 
 .MAKEFLAGS: -d0
 
