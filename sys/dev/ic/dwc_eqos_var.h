@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.1 2022/01/03 17:19:41 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.2 2022/01/08 22:24:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -72,6 +72,21 @@ struct eqos_softc {
 	struct eqos_ring	sc_rx;
 
 	krndsource_t		sc_rndsource;
+
+	/* Indents indicate groups within evcnt. */
+	struct evcnt		sc_ev_intr;
+	struct evcnt		 sc_ev_rxintr;
+	struct evcnt		 sc_ev_txintr;
+	struct evcnt		 sc_ev_mac;
+	struct evcnt		 sc_ev_mtl;
+	struct evcnt		 sc_ev_status;
+	struct evcnt		  sc_ev_rwt;
+	struct evcnt		  sc_ev_excol;
+	struct evcnt		  sc_ev_lcol;
+	struct evcnt		  sc_ev_exdef;
+	struct evcnt		  sc_ev_lcarr;
+	struct evcnt		  sc_ev_ncarr;
+	struct evcnt		  sc_ev_tjt;
 };
 
 int	eqos_attach(struct eqos_softc *);
