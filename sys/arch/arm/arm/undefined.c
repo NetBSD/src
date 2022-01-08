@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.72 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.73 2022/01/08 09:00:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.72 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.73 2022/01/08 09:00:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -71,7 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.72 2021/10/31 16:23:47 skrll Exp $")
 #include <machine/pcb.h>
 #include <machine/trap.h>
 
+#ifdef VERBOSE_ARM32
 #include <arch/arm/arm/disassem.h>
+#endif
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -307,9 +309,6 @@ undefinedinstruction(trapframe_t *tf)
 	int coprocessor;
 	int user;
 	struct undefined_handler *uh;
-#ifdef VERBOSE_ARM32
-	int s;
-#endif
 
 	curcpu()->ci_und_ev.ev_count++;
 
@@ -441,7 +440,7 @@ undefinedinstruction(trapframe_t *tf)
 		ksiginfo_t ksi;
 
 #ifdef VERBOSE_ARM32
-		s = spltty();
+		int s = spltty();
 
 		if ((fault_instruction & 0x0f000010) == 0x0e000000) {
 			printf("CDP\n");
