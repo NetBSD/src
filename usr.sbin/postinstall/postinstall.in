@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.44 2022/01/08 06:55:13 lukem Exp $
+# $NetBSD: postinstall.in,v 1.45 2022/01/08 06:56:43 lukem Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2598,13 +2598,13 @@ list()
 		eval desc=\"\${desc_${i}}\"
 		printf " %-20s %s\n" "${i}" "${desc}"
 	done
-
 }
 
 
 main()
 {
 	DIRMODE=false		# true if "-s" specified a directory
+	ITEMS=			# items to check|diff|fix. [${defaultitems}]
 	N_SRC_ARGS=0		# number of "-s" args in SRC_ARGLIST
 	SOURCEMODE=false	# true if "-s" specified a source directory
 	SRC_ARGLIST=		# quoted list of one or more "-s" args
@@ -2624,6 +2624,8 @@ main()
 		;;
 	esac
 
+		# Validate options.
+		#
 	while getopts s:x:d:m:a: ch; do
 		case "${ch}" in
 		s)
@@ -2683,6 +2685,8 @@ main()
 		warn "Missing operation"
 		usage
 	fi
+	op="$1"
+	shift
 
 	if [ "$N_SRC_ARGS" -gt 1 ] && $DIRMODE; then
 		err 2 "Multiple -s args are allowed only with tgz files"
@@ -2693,6 +2697,68 @@ main()
 		SOURCEMODE=true
 		SRC_ARGLIST="-s $(shell_quote "${SRC_ARG}")"
 	fi
+
+		# Validate 'diff' first, as it becomes 'check'
+		#
+	case "${op}" in
+
+	diff)
+		op=check
+		DIFF_STYLE=n			# default style is RCS
+		OPTIND=1
+		while getopts bcenpuw ch; do
+			case "${ch}" in
+			c|e|n|u)
+				if [ "${DIFF_STYLE}" != "n" -a \
+				    "${DIFF_STYLE}" != "${ch}" ]; then
+					err 2 "diff: conflicting output style: ${ch}"
+				fi
+				DIFF_STYLE="${ch}"
+				;;
+			b|p|w)
+				DIFF_OPT="${DIFF_OPT} -${ch}"
+				;;
+			*)
+				err 2 "diff: unknown option"
+				;;
+			esac
+		done
+		shift $((${OPTIND} - 1))
+		;;
+
+	esac
+
+		# Validate operation and items.
+		#
+	case "${op}" in
+
+	check|fix)
+		ITEMS="$*"
+		: ${ITEMS:="${defaultitems}"}
+
+		# ensure that all supplied items are valid
+		#
+		for i in ${ITEMS}; do
+			eval desc=\"\${desc_${i}}\"
+			[ -n "${desc}" ] || err 2 "Unsupported ${op} '"${i}"'"
+		done
+		;;
+
+	help|usage)
+		help
+		return	# no further processing or validation
+		;;
+
+	list)
+		# processed below
+		;;
+
+	*)
+		warn "Unknown operation '"${op}"'"
+		usage
+		;;
+
+	esac
 
 	#
 	# If '-s' arg or args specified tgz files, extract them
@@ -2736,63 +2802,13 @@ main()
 
 	detect_x11
 
-	op="$1"
-	shift
-
+		# Perform operation.
+		#
 	case "${op}" in
-	diff)
-		op=check
-		DIFF_STYLE=n			# default style is RCS
-		OPTIND=1
-		while getopts bcenpuw ch; do
-			case "${ch}" in
-			c|e|n|u)
-				if [ "${DIFF_STYLE}" != "n" -a \
-				    "${DIFF_STYLE}" != "${ch}" ]; then
-					err 2 "conflicting output style: ${ch}"
-				fi
-				DIFF_STYLE="${ch}"
-				;;
-			b|p|w)
-				DIFF_OPT="${DIFF_OPT} -${ch}"
-				;;
-			*)
-				err 2 "unknown diff option"
-				;;
-			esac
-		done
-		shift $((${OPTIND} - 1))
-		;;
-	esac
-
-	case "${op}" in
-
-	usage|help)
-		help
-		;;
-
-	list)
-		echo "Source directory: ${SRC_DIR:-/}"
-		echo "Target directory: ${DEST_DIR:-/}"
-		if $TGZMODE; then
-			echo " (extracted from: ${SRC_ARG})"
-		fi
-		list
-		;;
 
 	check|fix)
-		todo="$*"
-		: ${todo:="${defaultitems}"}
+		[ -n "${ITEMS}" ] || err 2 "${op}: missing items"
 
-		# ensure that all supplied items are valid
-		#
-		for i in ${todo}; do
-			eval desc=\"\${desc_${i}}\"
-			[ -n "${desc}" ] || err 2 "Unsupported ${op} '"${i}"'"
-		done
-
-		# perform each check/fix
-		#
 		echo "Source directory: ${SRC_DIR:-/}"
 		if $TGZMODE; then
 			echo " (extracted from: ${SRC_ARG})"
@@ -2800,7 +2816,7 @@ main()
 		echo "Target directory: ${DEST_DIR:-/}"
 		items_passed=
 		items_failed=
-		for i in ${todo}; do
+		for i in ${ITEMS}; do
 			echo "${i} ${op}:"
 			( eval do_${i} ${op} )
 			if [ $? -eq 0 ]; then
@@ -2829,12 +2845,20 @@ Note that this may overwrite local changes.
 _Fix_me_
 		    fi
 		fi
+		;;
 
+	list)
+		echo "Source directory: ${SRC_DIR:-/}"
+		echo "Target directory: ${DEST_DIR:-/}"
+		if $TGZMODE; then
+			echo " (extracted from: ${SRC_ARG})"
+		fi
+		list
 		;;
 
 	*)
-		warn "Unknown operation '"${op}"'"
-		usage
+			# diff, help, usage handled during operation validation
+		err 3 "Unimplemented operation '"${op}"'"
 		;;
 
 	esac
@@ -2854,6 +2878,7 @@ DEST_DIR="/"
 : ${MACHINE_ARCH:="$( uname -p )"}# assume native build if not set
 
 DIFF_STYLE=
+DIFF_OPT=
 NOT_FIXED=" (FIX MANUALLY)"
 SCRATCHDIR="$( mkdtemp )" || err 2 "Can't create scratch directory"
 trap "/bin/rm -rf \"\${SCRATCHDIR}\" ; exit 0" 1 2 3 15	# HUP INT QUIT TERM
