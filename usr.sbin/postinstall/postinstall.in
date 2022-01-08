@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.42 2022/01/07 01:03:02 lukem Exp $
+# $NetBSD: postinstall.in,v 1.43 2022/01/08 06:53:58 lukem Exp $
 #
-# Copyright (c) 2002-2021 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -2538,10 +2538,10 @@ do_obsolete()
 #
 
 
-usage()
+help()
 {
-	cat 1>&2 << _USAGE_
-Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
+	cat << _USAGE_
+Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] operation [item ...]
 	Perform post-installation checks and/or fixes on a system's
 	configuration files.
 	If no items are provided, a default set of checks or fixes is applied.
@@ -2564,7 +2564,7 @@ Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] op 
 	-m mach		MACHINE.			[${MACHINE}]
 	-a arch		MACHINE_ARCH.			[${MACHINE_ARCH}]
 
-	Operation may be one of:
+	Supported values for operation:
 		help	Display this help.
 		list	List available items.
 		check	Perform post-installation checks on items.
@@ -2573,6 +2573,11 @@ Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] op 
 		fix	Apply fixes that 'check' determines need to be applied.
 		usage	Display this usage.
 _USAGE_
+}
+
+usage()
+{
+	help 1>&2
 	exit 2
 }
 
@@ -2673,7 +2678,10 @@ main()
 		esac
 	done
 	shift $((${OPTIND} - 1))
-	[ $# -gt 0 ] || usage
+	if [ $# -eq 0 ] ; then
+		warn "Missing operation"
+		usage
+	fi
 
 	if [ "$N_SRC_ARGS" -gt 1 ] && $DIRMODE; then
 		err 2 "Multiple -s args are allowed only with tgz files"
@@ -2759,7 +2767,7 @@ main()
 	case "${op}" in
 
 	usage|help)
-		usage
+		help
 		;;
 
 	list)
