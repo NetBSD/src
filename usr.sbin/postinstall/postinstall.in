@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.46 2022/01/08 06:57:34 lukem Exp $
+# $NetBSD: postinstall.in,v 1.47 2022/01/08 06:58:40 lukem Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2542,6 +2542,8 @@ help()
 {
 	cat << _USAGE_
 Usage: ${PROGNAME} [-a ARCH] [-d DEST_DIR] [-m MACHINE] [-s SRC_DIR] [-x XSRC_DIR] OPERATION ...
+       ${PROGNAME} -?
+
 	Perform post-installation checks and/or fixes on a system's
 	configuration files.
 	If no items are provided, a default set of checks or fixes is applied.
@@ -2567,9 +2569,9 @@ Usage: ${PROGNAME} [-a ARCH] [-d DEST_DIR] [-m MACHINE] [-s SRC_DIR] [-x XSRC_DI
 	help		Display this help.
 	list		List available items.
 	check ITEM ...	Perform post-installation checks on ITEMs.
-	diff [DIFFOPT] ITEM ...
+	diff [-bcenpuw] ITEM ...
 			Similar to 'check' but also output difference of files,
-			using diff [DIFFOPT].
+			using diff with the provided options.
 	fix ITEM ...	Apply fixes that 'check' determines need to be applied.
 	usage		Display this usage.
 _USAGE_
@@ -2626,7 +2628,7 @@ main()
 
 		# Validate options.
 		#
-	while getopts a:d:m:s:x: ch; do
+	while getopts :a:d:m:s:x: ch; do
 		case "${ch}" in
 		a)
 			MACHINE_ARCH="${OPTARG}"
@@ -2675,8 +2677,22 @@ main()
 				err 2 "Not a directory for -x option"
 			fi
 			;;
-		*)
+		"?")
+			if [ "${OPTARG}" = "?" ]; then
+				help
+				return	# no further processing or validation
+			fi
+			warn "Unknown option -${OPTARG}"
 			usage
+			;;
+
+		:)
+			warn "Missing argument for option -${OPTARG}"
+			usage
+			;;
+
+		*)
+			err 3 "Unimplemented option -${ch}"
 			;;
 		esac
 	done
@@ -2706,20 +2722,30 @@ main()
 		op=check
 		DIFF_STYLE=n			# default style is RCS
 		OPTIND=1
-		while getopts bcenpuw ch; do
+		while getopts :bcenpuw ch; do
 			case "${ch}" in
 			c|e|n|u)
 				if [ "${DIFF_STYLE}" != "n" -a \
 				    "${DIFF_STYLE}" != "${ch}" ]; then
-					err 2 "diff: conflicting output style: ${ch}"
+					warn "diff: conflicting output style: -${ch}"
+					usage
 				fi
 				DIFF_STYLE="${ch}"
 				;;
 			b|p|w)
 				DIFF_OPT="${DIFF_OPT} -${ch}"
 				;;
+			"?")
+				# NOTE: not supporting diff -?
+				warn "diff: Unknown option -${OPTARG}"
+				usage
+				;;
+			:)
+				warn "diff: Missing argument for option -${OPTARG}"
+				usage
+				;;
 			*)
-				err 2 "diff: unknown option"
+				err 3 "diff: Unimplemented option -${ch}"
 				;;
 			esac
 		done
