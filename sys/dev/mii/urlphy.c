@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.38 2020/08/24 04:49:05 msaitoh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.39 2022/01/08 17:35:05 riastradh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.38 2020/08/24 04:49:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.39 2022/01/08 17:35:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,15 @@ urlphy_attach(device_t parent, device_t self, void *aux)
 		    "ignoring this PHY, non-zero instance\n");
 		return;
 	}
+
+	mii_lock(mii);
+
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
+
+	mii_unlock(mii);
 
 	mii_phy_add_media(sc);
 }
