@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.639 2022/01/08 20:21:34 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.640 2022/01/08 21:28:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.639 2022/01/08 20:21:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.640 2022/01/08 21:28:59 rillig Exp $");
 
 /*
  * A file being read.
@@ -2428,7 +2428,10 @@ typedef enum LineKind {
 	LK_DOT
 } LineKind;
 
-/* Return the next "interesting" logical line from the current file. */
+/*
+ * Return the next "interesting" logical line from the current file.  The
+ * returned string will be freed at the end of including the file.
+ */
 static char *
 ReadLowLevelLine(LineKind kind)
 {
@@ -2475,27 +2478,26 @@ ReadLowLevelLine(LineKind kind)
 static bool
 SkipIrrelevantBranches(void)
 {
-	char *line;
+	const char *line;
 
 	while ((line = ReadLowLevelLine(LK_DOT)) != NULL) {
 		if (Cond_EvalLine(line) == CR_TRUE)
-			break;
+			return true;
 		/*
-		 * TODO: Check for typos in .elif directives
-		 * such as .elsif or .elseif.
+		 * TODO: Check for typos in .elif directives such as .elsif
+		 * or .elseif.
 		 *
-		 * This check will probably duplicate some of
-		 * the code in ParseLine.  Most of the code
-		 * there cannot apply, only ParseVarassign and
-		 * ParseDependencyLine can, and to prevent code
-		 * duplication, these would need to be called
-		 * with a flag called onlyCheckSyntax.
+		 * This check will probably duplicate some of the code in
+		 * ParseLine.  Most of the code there cannot apply, only
+		 * ParseVarassign and ParseDependencyLine can, and to prevent
+		 * code duplication, these would need to be called with a
+		 * flag called onlyCheckSyntax.
 		 *
 		 * See directive-elif.mk for details.
 		 */
 	}
 
-	return line != NULL;
+	return false;
 }
 
 static bool
