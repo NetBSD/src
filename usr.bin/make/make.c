@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.250 2021/12/27 18:26:22 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.251 2022/01/08 09:53:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.250 2021/12/27 18:26:22 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.251 2022/01/08 09:53:44 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -370,9 +370,8 @@ GNode_IsOODate(GNode *gn)
 	}
 
 #ifdef USE_META
-	if (useMeta) {
+	if (useMeta)
 		oodate = meta_oodate(gn, oodate);
-	}
 #endif
 
 	/*

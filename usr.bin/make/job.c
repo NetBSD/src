@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.447 2022/01/07 19:24:27 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.448 2022/01/08 09:53:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.447 2022/01/07 19:24:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.448 2022/01/08 09:53:44 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1446,9 +1446,8 @@ JobExec(Job *job, char **argv)
 		sigset_t tmask;
 
 #ifdef USE_META
-		if (useMeta) {
+		if (useMeta)
 			meta_job_child(job);
-		}
 #endif
 		/*
 		 * Reset all signal handlers; this is necessary because we
@@ -1528,9 +1527,8 @@ JobExec(Job *job, char **argv)
 	Trace_Log(JOBSTART, job);
 
 #ifdef USE_META
-	if (useMeta) {
+	if (useMeta)
 		meta_job_parent(job, cpid);
-	}
 #endif
 
 	/*
@@ -2136,9 +2134,8 @@ Job_CatchOutput(void)
 		 * than job->inPollfd.
 		 */
 		if (useMeta && job->inPollfd != &fds[i]) {
-			if (meta_job_event(job) <= 0) {
+			if (meta_job_event(job) <= 0)
 				fds[i].events = 0;	/* never mind */
-			}
 		}
 #endif
 		if (--nready == 0)
