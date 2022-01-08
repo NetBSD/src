@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.45 2022/01/08 06:56:43 lukem Exp $
+# $NetBSD: postinstall.in,v 1.46 2022/01/08 06:57:34 lukem Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2541,15 +2541,17 @@ do_obsolete()
 help()
 {
 	cat << _USAGE_
-Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] operation [item ...]
+Usage: ${PROGNAME} [-a ARCH] [-d DEST_DIR] [-m MACHINE] [-s SRC_DIR] [-x XSRC_DIR] OPERATION ...
 	Perform post-installation checks and/or fixes on a system's
 	configuration files.
 	If no items are provided, a default set of checks or fixes is applied.
 
 	Options:
-	-s {srcdir|tgzfile|tempdir}
-			Location of the source files.  This may be any
-			of the following:
+	-a ARCH		\$MACHINE_ARCH.			[${MACHINE_ARCH}]
+	-d DEST_DIR	Destination directory to check. [${DEST_DIR:-/}]
+	-m MACHINE	\$MACHINE.			[${MACHINE}]
+	-s SRC_DIR	Location of the source files.  This may be any of
+			the following:
 			* A directory that contains a NetBSD source tree;
 			* A distribution set file such as "etc.tgz" or
 			  "xetc.tgz".  Pass multiple -s options to specify
@@ -2557,21 +2559,19 @@ Usage: ${PROGNAME} [-s srcdir] [-x xsrcdir] [-d destdir] [-m mach] [-a arch] ope
 			* A temporary directory in which one or both of
 			  "etc.tgz" and "xetc.tgz" have been extracted.
 							[${SRC_DIR:-/usr/src}]
-	-x xsrcdir      Location of the X11 source files.  This must be
+	-x XSRC_DIR	Location of the X11 source files.  This must be
 			a directory that contains a NetBSD xsrc tree.
 							[${XSRC_DIR:-/usr/src/../xsrc}]
-	-d destdir	Destination directory to check. [${DEST_DIR:-/}]
-	-m mach		MACHINE.			[${MACHINE}]
-	-a arch		MACHINE_ARCH.			[${MACHINE_ARCH}]
 
-	Supported values for operation:
-		help	Display this help.
-		list	List available items.
-		check	Perform post-installation checks on items.
-		diff [diff(1) options ...]
-			Similar to 'check' but also output difference of files.
-		fix	Apply fixes that 'check' determines need to be applied.
-		usage	Display this usage.
+	Supported values for OPERATION:
+	help		Display this help.
+	list		List available items.
+	check ITEM ...	Perform post-installation checks on ITEMs.
+	diff [DIFFOPT] ITEM ...
+			Similar to 'check' but also output difference of files,
+			using diff [DIFFOPT].
+	fix ITEM ...	Apply fixes that 'check' determines need to be applied.
+	usage		Display this usage.
 _USAGE_
 }
 
@@ -2626,8 +2626,17 @@ main()
 
 		# Validate options.
 		#
-	while getopts s:x:d:m:a: ch; do
+	while getopts a:d:m:s:x: ch; do
 		case "${ch}" in
+		a)
+			MACHINE_ARCH="${OPTARG}"
+			;;
+		d)
+			DEST_DIR="${OPTARG}"
+			;;
+		m)
+			MACHINE="${OPTARG}"
+			;;
 		s)
 			qarg="$(shell_quote "${OPTARG}")"
 			N_SRC_ARGS=$(( $N_SRC_ARGS + 1 ))
@@ -2665,15 +2674,6 @@ main()
 			else
 				err 2 "Not a directory for -x option"
 			fi
-			;;
-		d)
-			DEST_DIR="${OPTARG}"
-			;;
-		m)
-			MACHINE="${OPTARG}"
-			;;
-		a)
-			MACHINE_ARCH="${OPTARG}"
 			;;
 		*)
 			usage
