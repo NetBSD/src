@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.637 2022/01/07 22:08:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.638 2022/01/08 09:55:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.637 2022/01/07 22:08:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.638 2022/01/08 09:55:32 rillig Exp $");
 
 /*
  * A file being read.
@@ -2376,7 +2376,7 @@ ParseRawLine(IncludedFile *curFile, char **out_line, char **out_line_end,
 static void
 UnescapeBackslash(char *line, char *start)
 {
-	char *src = start;
+	const char *src = start;
 	char *dst = start;
 	char *spaceStart = line;
 
@@ -2400,7 +2400,7 @@ UnescapeBackslash(char *line, char *start)
 		if (ch == '#' && line[0] != '\t')
 			*dst++ = ch;
 		else if (ch == '\n') {
-			pp_skip_hspace(&src);
+			cpp_skip_hspace(&src);
 			*dst++ = ' ';
 		} else {
 			/* Leave '\\' in the buffer for later. */
@@ -2551,8 +2551,8 @@ ParseForLoop(const char *line)
  * leaving only variable assignments, other directives, dependency lines
  * and shell commands to the caller.
  *
- * Return a line without without trailing whitespace, or NULL for EOF.  The
- * caller must not free the returned line.
+ * Return a line without trailing whitespace, or NULL for EOF.  The returned
+ * string will be freed at the end of including the file.
  */
 static char *
 ReadHighLevelLine(void)
