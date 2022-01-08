@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.640 2022/01/08 21:28:59 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.641 2022/01/08 22:24:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.640 2022/01/08 21:28:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.641 2022/01/08 22:24:20 rillig Exp $");
 
 /*
  * A file being read.
@@ -2263,7 +2263,7 @@ ParseEOF(void)
 
 	curFile = CurFile();
 	DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
-	    curFile->name.str, curFile->lineno);
+	    curFile->name.str, curFile->readLines + 1);
 
 	SetParseFile(curFile->name.str);
 	return true;
