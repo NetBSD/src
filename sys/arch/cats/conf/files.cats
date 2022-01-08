@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.38 2014/04/04 07:33:53 skrll Exp $
+#	$NetBSD: files.cats,v 1.39 2022/01/08 09:02:47 skrll Exp $
 #
 # CATS-specific configuration info
 #
@@ -19,6 +19,7 @@ defflag	XSERVER
 # ABLE booting ELF kernels
 defflag ABLEELF
 
+defflag opt_cats.h	FCOM_INIT_ARM
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
