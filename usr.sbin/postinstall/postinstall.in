@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.49 2022/01/08 23:07:17 lukem Exp $
+# $NetBSD: postinstall.in,v 1.50 2022/01/08 23:30:41 lukem Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2541,7 +2541,7 @@ do_obsolete()
 help()
 {
 	cat << _USAGE_
-Usage: ${PROGNAME} [-a ARCH] [-d DEST_DIR] [-m MACHINE] [-s SRC_DIR] [-x XSRC_DIR] OPERATION ...
+Usage: ${PROGNAME} [-a ARCH] [-d DEST_DIR] [-m MACHINE] [-s SRC_ARG] [-x XSRC_DIR] OPERATION ...
        ${PROGNAME} -?
 
 	Perform post-installation checks and/or fixes on a system's
@@ -2553,14 +2553,16 @@ Usage: ${PROGNAME} [-a ARCH] [-d DEST_DIR] [-m MACHINE] [-s SRC_DIR] [-x XSRC_DI
 	-a ARCH		Set \$MACHINE_ARCH to ARCH.	[${MACHINE_ARCH}]
 	-d DEST_DIR	Destination directory to check. [${DEST_DIR:-/}]
 	-m MACHINE	Set \$MACHINE to MACHINE.	[${MACHINE}]
-	-s SRC_DIR	Location of the source files.  This may be any of
+	-s SRC_ARG	Location of the source files.  This may be any of
 			the following:
-			* A directory that contains a NetBSD source tree;
-			* A distribution set file such as "etc.tgz" or
-			  "xetc.tgz".  Pass multiple -s options to specify
-			  multiple such files;
-			* A temporary directory in which one or both of
-			  "etc.tgz" and "xetc.tgz" have been extracted.
+			-s SRC_DIR	A directory that contains a NetBSD
+					source tree.
+			-s TGZ_DIR	A directory in which one or both of
+					"etc.tgz" and "xetc.tgz" have been
+					extracted.
+			-s TGZ_FILE	A distribution set file such as
+					"etc.tgz" or "xetc.tgz".
+					May be specified multipled times.
 							[${SRC_DIR:-/usr/src}]
 	-x XSRC_DIR	Location of the X11 source files.  This must be
 			a directory that contains a NetBSD xsrc tree.
