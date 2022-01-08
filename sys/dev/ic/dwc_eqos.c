@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.1 2022/01/03 17:19:41 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.2 2022/01/08 22:24:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.1 2022/01/03 17:19:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.2 2022/01/08 22:24:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.1 2022/01/03 17:19:41 jmcneill Exp $"
 #include <sys/mutex.h>
 #include <sys/callout.h>
 #include <sys/cprng.h>
+#include <sys/evcnt.h>
 
 #include <sys/rndsource.h>
 
@@ -299,7 +300,7 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 		return -1;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.buf_map[index].map,              
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.buf_map[index].map,
 	    0, sc->sc_tx.buf_map[index].map->dm_mapsize, BUS_DMASYNC_PREWRITE);    
 
 	/* stored in same index as loaded map */
@@ -876,18 +877,26 @@ eqos_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t mac_status, mtl_status, dma_status, rx_tx_status;
 
+	sc->sc_ev_intr.ev_count++;
+
 	mac_status = RD4(sc, GMAC_MAC_INTERRUPT_STATUS);
 	mac_status &= RD4(sc, GMAC_MAC_INTERRUPT_ENABLE);
 
 	if (mac_status) {
+		sc->sc_ev_mac.ev_count++;
+#ifdef DEBUG_LOUD
 		device_printf(sc->sc_dev,
 		    "GMAC_MAC_INTERRUPT_STATUS = 0x%08X\n", mac_status);
+#endif
 	}
 
 	mtl_status = RD4(sc, GMAC_MTL_INTERRUPT_STATUS);
 	if (mtl_status) {
+		sc->sc_ev_mtl.ev_count++;
+#ifdef DEBUG_LOUD
 		device_printf(sc->sc_dev,
 		    "GMAC_MTL_INTERRUPT_STATUS = 0x%08X\n", mtl_status);
+#endif
 	}
 
 	dma_status = RD4(sc, GMAC_DMA_CHAN0_STATUS);
@@ -899,24 +908,43 @@ eqos_intr(void *arg)
 	EQOS_LOCK(sc);
 	if ((dma_status & GMAC_DMA_CHAN0_STATUS_RI) != 0) {
 		eqos_rxintr(sc, 0);
-		dma_status &= ~GMAC_DMA_CHAN0_STATUS_RI;
+		sc->sc_ev_rxintr.ev_count++;
 	}
 
 	if ((dma_status & GMAC_DMA_CHAN0_STATUS_TI) != 0) {
 		eqos_txintr(sc, 0);
-		dma_status &= ~GMAC_DMA_CHAN0_STATUS_TI;
 		if_schedule_deferred_start(ifp);
+		sc->sc_ev_txintr.ev_count++;
 	}
 	EQOS_UNLOCK(sc);
 
+#ifdef DEBUG_LOUD
 	if ((mac_status | mtl_status | dma_status) == 0) {
 		device_printf(sc->sc_dev, "spurious interrupt?!\n");
 	}
+#endif
 
 	rx_tx_status = RD4(sc, GMAC_MAC_RX_TX_STATUS);
 	if (rx_tx_status) {
+		sc->sc_ev_status.ev_count++;
+		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_RWT) != 0)
+			sc->sc_ev_rwt.ev_count++;
+		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_EXCOL) != 0)
+			sc->sc_ev_excol.ev_count++;
+		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_LCOL) != 0)
+			sc->sc_ev_lcol.ev_count++;
+		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_EXDEF) != 0)
+			sc->sc_ev_exdef.ev_count++;
+		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_LCARR) != 0)
+			sc->sc_ev_lcarr.ev_count++;
+		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_NCARR) != 0)
+			sc->sc_ev_ncarr.ev_count++;
+		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_TJT) != 0)
+			sc->sc_ev_tjt.ev_count++;
+#ifdef DEBUG_LOUD
 		device_printf(sc->sc_dev, "GMAC_MAC_RX_TX_STATUS = 0x%08x\n",
 		    rx_tx_status);
+#endif
 	}
 
 	return 1;
@@ -1260,6 +1288,38 @@ eqos_attach(struct eqos_softc *sc)
 		return ENOENT;
 	}
 	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
+
+	/* Master interrupt evcnt */
+	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
+	    NULL, device_xname(sc->sc_dev), "interrupts");
+
+	/* Per-interrupt type, using main interrupt */
+	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_intr, device_xname(sc->sc_dev), "rxintr");
+	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_intr, device_xname(sc->sc_dev), "txintr");
+	evcnt_attach_dynamic(&sc->sc_ev_mac, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_intr, device_xname(sc->sc_dev), "macstatus");
+	evcnt_attach_dynamic(&sc->sc_ev_mtl, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_intr, device_xname(sc->sc_dev), "intrstatus");
+	evcnt_attach_dynamic(&sc->sc_ev_status, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_intr, device_xname(sc->sc_dev), "rxtxstatus");
+
+	/* RX/TX Status specific type, using rxtxstatus interrupt */
+	evcnt_attach_dynamic(&sc->sc_ev_rwt, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_status, device_xname(sc->sc_dev), "rwt");
+	evcnt_attach_dynamic(&sc->sc_ev_excol, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_status, device_xname(sc->sc_dev), "excol");
+	evcnt_attach_dynamic(&sc->sc_ev_lcol, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_status, device_xname(sc->sc_dev), "lcol");
+	evcnt_attach_dynamic(&sc->sc_ev_exdef, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_status, device_xname(sc->sc_dev), "exdef");
+	evcnt_attach_dynamic(&sc->sc_ev_lcarr, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_status, device_xname(sc->sc_dev), "lcarr");
+	evcnt_attach_dynamic(&sc->sc_ev_ncarr, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_status, device_xname(sc->sc_dev), "ncarr");
+	evcnt_attach_dynamic(&sc->sc_ev_tjt, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_status, device_xname(sc->sc_dev), "tjt");
 
 	/* Attach interface */
 	if_attach(ifp);
