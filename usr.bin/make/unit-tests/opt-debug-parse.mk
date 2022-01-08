@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-parse.mk,v 1.4 2022/01/08 22:24:20 rillig Exp $
+# $NetBSD: opt-debug-parse.mk,v 1.5 2022/01/08 23:41:43 rillig Exp $
 #
 # Tests for the -dp command line option, which adds debug logging about
 # makefile parsing.
@@ -7,17 +7,18 @@
 
 # TODO: Implementation
 
-# In PrintStackTrace, the line number of the .for loop is wrong.  The actual
-# line number printed is the last line before the loop body, while it should
-# rather be the line number where the .for loop starts.
+# Before parse.c 1.639 from 2022-01-08, PrintStackTrace and other diagnostics
+# printed a wrong line number, using the last line before the loop body, while
+# it should rather be the line number where the .for loop starts.
+#
+# Before parse.c 1.643 from 2022-01-08, PrintStackTrace tried to be too clever
+# by merging stack trace entries, printing confusing line numbers as a result.
 .for \
     var \
     in \
     value
 .info trace with multi-line .for loop head
 .endfor
-# FIXME: The .exp file says 'in .include from opt-debug-parse.mk:18', which is
-# completely wrong.  It should rather say 'in .for loop from :13'.
 
 # Before parse.c 1.461 from 2022-01-08, the debug log said it returned to
 # the line of the '.include' instead of the line following it.
