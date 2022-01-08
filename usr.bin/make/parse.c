@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.642 2022/01/08 22:42:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.643 2022/01/08 23:41:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.642 2022/01/08 22:42:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.643 2022/01/08 23:41:43 rillig Exp $");
 
 /*
  * A file being read.
@@ -340,7 +340,9 @@ PrintStackTrace(void)
 	n = includes.len;
 	if (n == 0)
 		return;
-	n--;			/* This entry is already in the diagnostic. */
+
+	if (entries[n - 1].forLoop == NULL)
+		n--;		/* already in the diagnostic */
 
 	for (i = n; i-- > 0;) {
 		const IncludedFile *entry = entries + i;
@@ -350,12 +352,16 @@ PrintStackTrace(void)
 		if (fname[0] != '/' && strcmp(fname, "(stdin)") != 0)
 			fname = realpath(fname, dirbuf);
 
-		if (entries[i + 1 < n ? i + 1 : i].forLoop == NULL)
-			debug_printf("\tin .include from %s:%d\n",
-			    fname, entry->lineno);
-		if (entry->forLoop != NULL)
+		if (entry->forLoop != NULL) {
 			debug_printf("\tin .for loop from %s:%d\n",
 			    fname, entry->forHeadLineno);
+		} else {
+			int lineno =
+			    i + 1 < n && entries[i + 1].forLoop != NULL
+				? entries[i + 1].forHeadLineno
+				: entry->lineno;
+			debug_printf("\tin %s:%d\n", fname, lineno);
+		}
 	}
 }
 
