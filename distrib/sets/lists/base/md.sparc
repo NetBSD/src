@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.84 2017/01/05 13:45:50 wiz Exp $
+# $NetBSD: md.sparc,v 1.85 2022/01/09 18:11:09 martin Exp $
 ./lib/libsparc_v8.so.0				base-sys-shlib		dynamicroot,pic
 ./lib/libsparc_v8.so.0.0			base-sys-shlib		dynamicroot,pic
 ./sbin/edlabel					base-obsolete	obsolete
@@ -24,3 +24,8 @@
 ./usr/sbin/ofctl				base-sysutil-bin
 ./usr/sbin/tadpolectl				base-sysutil-bin
 ./usr/sbin/zzz					base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
+

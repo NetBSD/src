@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.12 2019/01/12 16:46:25 tsutsui Exp $
+# $NetBSD: md.sgimips,v 1.13 2022/01/09 18:11:09 martin Exp $
 ./usr/mdec/aoutboot				base-sysutil-bin
 ./usr/mdec/ip12boot				base-sysutil-bin
 ./usr/mdec/ip2xboot				base-sysutil-bin
@@ -6,3 +6,8 @@
 ./usr/mdec/ip3xboot				base-sysutil-bin
 ./usr/mdec/irisboot				base-sysutil-bin
 ./usr/mdec/sgivol				base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
+

@@ -1,2 +1,7 @@
-# $NetBSD: md.mac68k,v 1.44 2014/08/06 12:15:01 martin Exp $
+# $NetBSD: md.mac68k,v 1.45 2022/01/09 18:11:09 martin Exp $
 ./usr/lkm/iwmfd.o				base-obsolete	obsolete
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
+
