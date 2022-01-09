@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.164 2022/01/09 14:06:00 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.165 2022/01/09 18:59:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.164 2022/01/09 14:06:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.165 2022/01/09 18:59:27 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -376,11 +376,8 @@ ForLoop_SubstVarLong(ForLoop *f, unsigned int firstItem, Buffer *body,
 
 	for (i = 0; i < f->vars.len; i++) {
 		const char *p = start;
-		const char *varname = vars[i];
 
-		while (*varname != '\0' && *p == *varname)
-			p++, varname++;
-		if (*varname != '\0')
+		if (!cpp_skip_string(&p, vars[i]))
 			continue;
 		/* XXX: why test for backslash here? */
 		if (*p != ':' && *p != endc && *p != '\\')
