@@ -96,11 +96,11 @@ make: "directive-for-escape.mk" line 152: newline in .for value
 "
 For: loop body:
 : ${:U" "}
-SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `directive-for-escape.mk'
+SetFilenameVars: ${.PARSEDIR} = <some-dir> ${.PARSEFILE} = `directive-for-escape.mk'
 Parsing line 153: : ${:U" "}
 ParseDependency(: " ")
 ParseEOF: returning to file directive-for-escape.mk, line 155
-SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `directive-for-escape.mk'
+SetFilenameVars: ${.PARSEDIR} = <some-dir> ${.PARSEFILE} = `directive-for-escape.mk'
 Parsing line 155: .MAKEFLAGS: -d0
 ParseDependency(.MAKEFLAGS: -d0)
 make: Fatal errors encountered -- cannot continue
