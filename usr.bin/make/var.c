@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.999 2022/01/09 16:56:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1000 2022/01/09 18:49:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.999 2022/01/09 16:56:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1000 2022/01/09 18:49:28 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2679,7 +2679,6 @@ static ApplyModifierResult
 ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
-	const char *errfmt;
 	VarParseResult res;
 	LazyBuf cmdBuf;
 	FStr cmd;
@@ -2690,14 +2689,18 @@ ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 		return AMR_CLEANUP;
 	cmd = LazyBuf_DoneGet(&cmdBuf);
 
-
-	errfmt = NULL;
-	if (Expr_ShouldEval(expr))
-		Expr_SetValueOwn(expr, Cmd_Exec(cmd.str, &errfmt));
-	else
+	if (Expr_ShouldEval(expr)) {
+		char *output, *error;
+		output = Cmd_Exec(cmd.str, &error);
+		Expr_SetValueOwn(expr, output);
+		if (error != NULL) {
+			/* XXX: why still return AMR_OK? */
+			Error("%s", error);
+			free(error);
+		}
+	} else
 		Expr_SetValueRefer(expr, "");
-	if (errfmt != NULL)
-		Error(errfmt, cmd.str);	/* XXX: why still return AMR_OK? */
+
 	FStr_Done(&cmd);
 	Expr_Define(expr);
 
@@ -3542,13 +3545,14 @@ found_op:
 	if (op[0] == '+')
 		Var_Append(scope, expr->name, val.str);
 	else if (op[0] == '!') {
-		const char *errfmt;
-		char *cmd_output = Cmd_Exec(val.str, &errfmt);
-		if (errfmt != NULL)
-			Error(errfmt, val.str);
-		else
-			Var_Set(scope, expr->name, cmd_output);
-		free(cmd_output);
+		char *output, *error;
+		output = Cmd_Exec(val.str, &error);
+		if (error != NULL) {
+			Error("%s", error);
+			free(error);
+		} else
+			Var_Set(scope, expr->name, output);
+		free(output);
 	} else if (op[0] == '?' && expr->defined == DEF_REGULAR) {
 		/* Do nothing. */
 	} else
@@ -3734,10 +3738,12 @@ ApplyModifier_SunShell(const char **pp, ModChain *ch)
 	*pp = p + 2;
 
 	if (Expr_ShouldEval(expr)) {
-		const char *errfmt;
-		char *output = Cmd_Exec(Expr_Str(expr), &errfmt);
-		if (errfmt != NULL)
-			Error(errfmt, Expr_Str(expr));
+		char *output, *error;
+		output = Cmd_Exec(Expr_Str(expr), &error);
+		if (error != NULL) {
+			Error("%s", error);
+			free(error);
+		}
 		Expr_SetValueOwn(expr, output);
 	}
 
