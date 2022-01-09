@@ -12,6 +12,7 @@ make: "directive-if.mk" line 70: Don't do this, always put a space after a direc
 make: "directive-if.mk" line 76: Don't do this, always put a space around comparison operators.
 make: "directive-if.mk" line 82: Don't do this, always put a space after a directive.
 make: "directive-if.mk" line 86: Don't do this, always put a space after a directive.
+make: "directive-if.mk" line 94: Unknown directive "ifn"
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
