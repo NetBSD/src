@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.62 2022/01/09 03:25:38 lukem Exp $
+# $NetBSD: etcupdate,v 1.63 2022/01/09 03:31:23 lukem Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,34 +80,40 @@ NEED_PWD_MKDB=false
 NEED_SERVICES_MKDB=false
 
 
-usage()
+help()
 {
-	cat << EOF >&2
+	cat << EOF
 
-Usage: ${PROG} [options]
+Usage: ${PROG} [-alv] [-d DESTDIR] [-p PAGER] [-s SRC_ARG] [-t TEMPROOT] [-w WIDTH]
+       ${PROG} -h
 
 Options:
 
-  -p pager     Which pager to use              (default: /usr/bin/more)
-  -s {srcdir|tgzfile|tempdir}                  (default: /usr/src)
-               Location of the source files.  This may be any of the
-               following:
-               * A directory that contains a NetBSD source tree;
-               * A distribution set file such as "etc.tgz" or
-                 "xetc.tgz".  Pass multiple -s options to specify
-                 multiple such files;
-               * A temporary directory in which one or both of
-                 "etc.tgz" and "xetc.tgz" have been extracted.
-  -t temproot  Where to store temporary files  (default: /tmp/temproot)
-  -d destdir   Destination directory to check. (default: /)
-  -w width     Screen width                    (default: 80)
-  -a           Automatically update unmodified files
+  -a           Automatically update unmodified files.
+  -d DESTDIR   Destination directory to check. [/]
+  -h           Display this help, and exit.
   -l           Automatically skip files with strictly local changes
-               (this option has no effect on files lacking RCS Ids)
-  -h           This help text
-  -v           Be more verbose
+               (this option has no effect on files lacking RCS Ids).
+  -p PAGER     Which pager to use              [/usr/bin/more]
+  -s SRC_ARG   Location of the source files.   [/usr/src]
+               This may be any of the following:
+                 -s SRC_DIR   A directory that contains a NetBSD
+                              source tree.
+                 -s TGZ_DIR   A directory in which one or both of
+                              "etc.tgz" and "xetc.tgz" have been extracted.
+                 -s TGZ_FILE  A distribution set file such as "etc.tgz" or
+                              "xetc.tgz".  May be specified multiple times.
+
+  -t TEMPROOT  Where to store temporary files. [/tmp/temproot]
+  -w WIDTH     Screen width.                   [80]
+  -v           Be more verbose.
 
 EOF
+}
+
+usage()
+{
+	help 1>&2
 	exit 1
 }
 
@@ -481,7 +487,8 @@ do
 		DESTDIR="${OPTARG}"
 		;;
 	h)
-		usage
+		help
+		exit 0
 		;;
 	l)
 		LOCALSKIP=true
