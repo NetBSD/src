@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.162 2022/01/09 00:33:57 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.163 2022/01/09 12:43:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.162 2022/01/09 00:33:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.163 2022/01/09 12:43:52 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -85,7 +85,7 @@ ForLoop_New(void)
 	return f;
 }
 
-static void
+void
 ForLoop_Free(ForLoop *f)
 {
 	while (f->vars.len > 0)
@@ -101,10 +101,15 @@ ForLoop_Free(ForLoop *f)
 char *
 ForLoop_Details(ForLoop *f)
 {
-	size_t i, n = f->vars.len;
-	const char **vars = f->vars.items;
-	const Substring *items = f->items.words + f->nextItem - n;
+	size_t i, n;
+	const char **vars;
+	const Substring *items;
 	Buffer buf;
+
+	n = f->vars.len;
+	vars = f->vars.items;
+	assert(f->nextItem >= n);
+	items = f->items.words + f->nextItem - n;
 
 	Buf_Init(&buf);
 	for (i = 0; i < n; i++) {
@@ -474,11 +479,8 @@ ForLoop_SubstBody(ForLoop *f, Buffer *body)
 bool
 For_NextIteration(ForLoop *f, Buffer *body)
 {
-	if (f->nextItem == f->items.len) {
-		/* No more iterations */
-		ForLoop_Free(f);
+	if (f->nextItem == f->items.len)
 		return false;
-	}
 
 	ForLoop_SubstBody(f, body);
 	DEBUG1(FOR, "For: loop body:\n%s", body->data);

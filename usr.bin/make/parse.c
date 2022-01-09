@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.646 2022/01/09 11:43:58 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.647 2022/01/09 12:43:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.646 2022/01/09 11:43:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.647 2022/01/09 12:43:52 rillig Exp $");
 
 /*
  * A file being read.
@@ -2253,6 +2253,8 @@ ParseEOF(void)
 
 	FStr_Done(&curFile->name);
 	Buf_Done(&curFile->buf);
+	if (curFile->forLoop != NULL)
+		ForLoop_Free(curFile->forLoop);
 	Vector_Pop(&includes);
 
 	if (includes.len == 0) {
