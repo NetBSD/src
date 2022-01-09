@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.44 2021/10/08 15:59:55 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.45 2022/01/09 16:39:50 martin Exp $
 #
 # Makefile for sysinst
 
@@ -242,8 +242,8 @@ sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgto
 	${HOST_SH} ${MSG_XLAT_SH} -f sysinstmsgs.fmtcnt > ${.TARGET}
 
 DPSRCS+=	sysinstmsgs.${LANG}
-# FILES+=		sysinstmsgs.${LANG}
-# FILESDIR_sysinstmsgs.${LANG}=	${CATALOGDIR}
+FILES+=		sysinstmsgs.${LANG}
+FILESDIR_sysinstmsgs.${LANG}=	${CATALOGDIR}
 .endfor
 
 .PHONY:	check-lang
