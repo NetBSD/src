@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.293 2021/12/28 01:04:03 rillig Exp $
+# $NetBSD: Makefile,v 1.294 2022/01/09 20:53:53 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -693,6 +693,9 @@ _SED_CMDS+=	-e 's,${TEST_MAKE:T:S,.,\\.,g}[][0-9]* warning,make warning,'
 _SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
 # replace anything after 'stopped in' with unit-tests
 _SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
+# Allow the test files to be placed anywhere.
+_SED_CMDS+=	-e 's,\(\.PARSEDIR}\) = `'"/[^']*'"',\1 = <some-dir>,'
+_SED_CMDS+=	-e 's,\(\.INCLUDEDFROMDIR}\) = `'"/[^']*'"',\1 = <some-dir>,'
 _SED_CMDS+=	-e 's,${TMPDIR},TMPDIR,g'
 # canonicalize ${.OBJDIR} and ${.CURDIR}
 .if ${.OBJDIR} != ${.CURDIR}
