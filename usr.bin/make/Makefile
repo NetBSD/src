@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.119 2021/12/12 10:53:37 rillig Exp $
+#	$NetBSD: Makefile,v 1.120 2022/01/09 18:49:28 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -122,11 +122,10 @@ CLEANFILES+=	*.o	# for filemon objects
 
 COPTS.arch.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.dir.c+=	${GCC_NO_FORMAT_TRUNCATION}
-COPTS.job.c+=	-Wno-format-nonliteral
+COPTS.job.c+=	-Wno-format-nonliteral	# custom shell templates
 COPTS.main.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
-COPTS.parse.c+=	-Wno-format-nonliteral
-COPTS.var.c+=	-Wno-format-nonliteral
+COPTS.var.c+=	-Wno-format-nonliteral	# strftime
 
 CPPFLAGS+=	-DMAKE_NATIVE
 

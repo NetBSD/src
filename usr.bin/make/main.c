@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.567 2022/01/07 21:00:49 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.568 2022/01/09 18:49:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.567 2022/01/07 21:00:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.568 2022/01/09 18:49:28 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1697,16 +1697,10 @@ found:
 
 /*
  * Execute the command in cmd, and return its output (only stdout, not
- * stderr).  In the output, replace newlines with spaces.
- *
- * Results:
- *	The output of the command, can be empty.
- *	*errfmt returns a format string describing the command failure,
- *	if any, using a single %s conversion specification.
- *	TODO: replace errfmt with an actual error message.
+ * stderr, possibly empty).  In the output, replace newlines with spaces.
  */
 char *
-Cmd_Exec(const char *cmd, const char **errfmt)
+Cmd_Exec(const char *cmd, char **error)
 {
 	const char *args[4];	/* Arguments for invoking the shell */
 	int pipefds[2];
@@ -1715,11 +1709,9 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	int status;		/* command exit status */
 	Buffer buf;		/* buffer to store the result */
 	ssize_t bytes_read;
-	char *res;		/* result */
+	char *output;
 	char *cp;
 	int saved_errno;
-
-	*errfmt = NULL;
 
 	if (shellName == NULL)
 		Shell_Init();
@@ -1730,8 +1722,9 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 	args[3] = NULL;
 
 	if (pipe(pipefds) == -1) {
-		*errfmt = "Couldn't create pipe for \"%s\"";
-		return bmake_strdup("");
+		*error = str_concat3(
+		    "Couldn't create pipe for \"", cmd, "\"");
+		return bmake_strdup("");;
 	}
 
 	Var_ReexportVars();
@@ -1747,7 +1740,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 		/* NOTREACHED */
 
 	case -1:
-		*errfmt = "Couldn't exec \"%s\"";
+		*error = str_concat3("Couldn't exec \"", cmd, "\"");
 		return bmake_strdup("");
 	}
 
@@ -1772,20 +1765,23 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 	if (Buf_EndsWith(&buf, '\n'))
 		buf.data[buf.len - 1] = '\0';
-	res = Buf_DoneData(&buf);
 
-	for (cp = res; *cp != '\0'; cp++)
+	output = Buf_DoneData(&buf);
+	for (cp = output; *cp != '\0'; cp++)
 		if (*cp == '\n')
 			*cp = ' ';
 
 	if (WIFSIGNALED(status))
-		*errfmt = "\"%s\" exited on a signal";
+		*error = str_concat3("\"", cmd, "\" exited on a signal");
 	else if (WEXITSTATUS(status) != 0)
-		*errfmt = "\"%s\" returned non-zero status";
+		*error = str_concat3(
+		    "\"", cmd, "\" returned non-zero status");
 	else if (saved_errno != 0)
-		*errfmt = "Couldn't read shell's output for \"%s\"";
-
-	return res;
+		*error = str_concat3(
+		    "Couldn't read shell's output for \"", cmd, "\"");
+	else
+		*error = NULL;
+	return output;
 }
 
 /*

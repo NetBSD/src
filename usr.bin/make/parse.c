@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.647 2022/01/09 12:43:52 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.648 2022/01/09 18:49:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.647 2022/01/09 12:43:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.648 2022/01/09 18:49:28 rillig Exp $");
 
 /*
  * A file being read.
@@ -1618,8 +1618,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 		    FStr *out_avalue)
 {
 	FStr cmd;
-	const char *errfmt;
-	char *cmdOut;
+	char *output, *error;
 
 	cmd = FStr_InitRefer(uvalue);
 	if (strchr(cmd.str, '$') != NULL) {
@@ -1630,12 +1629,13 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 		cmd = FStr_InitOwn(expanded);
 	}
 
-	cmdOut = Cmd_Exec(cmd.str, &errfmt);
-	Var_SetExpand(scope, name, cmdOut);
-	*out_avalue = FStr_InitOwn(cmdOut);
-
-	if (errfmt != NULL)
-		Parse_Error(PARSE_WARNING, errfmt, cmd.str);
+	output = Cmd_Exec(cmd.str, &error);
+	Var_SetExpand(scope, name, output);
+	*out_avalue = FStr_InitOwn(output);
+	if (error != NULL) {
+		Parse_Error(PARSE_WARNING, "%s", error);
+		free(error);
+	}
 
 	FStr_Done(&cmd);
 }
