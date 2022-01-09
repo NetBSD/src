@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.10 2020/03/20 17:02:16 skrll Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.11 2022/01/09 15:03:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -146,6 +146,8 @@
 #define	DWC_MMC_FIFOTH_DMA_MULTIPLE_TXN_SIZE_16	3
 #define	DWC_MMC_FIFOTH_RX_WMARK		__BITS(27,16)
 #define	DWC_MMC_FIFOTH_TX_WMARK		__BITS(11,0)
+
+#define	DWC_MMC_CDETECT_CARD_DETECT_N	__BIT(0)
 
 #define DWC_MMC_DMAC_IDMA_ON		__BIT(7)
 #define DWC_MMC_DMAC_FIX_BURST		__BIT(1)
