@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.644 2022/01/08 23:52:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.645 2022/01/09 11:28:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.644 2022/01/08 23:52:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.645 2022/01/09 11:28:04 rillig Exp $");
 
 /*
  * A file being read.
@@ -677,7 +677,7 @@ ApplyDependencyOperator(GNodeType op)
 static void
 ApplyDependencySourceWait(bool isSpecial)
 {
-	static int wait_number = 0;
+	static unsigned wait_number = 0;
 	char wait_src[16];
 	GNode *gn;
 
