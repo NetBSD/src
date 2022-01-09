@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.63 2021/11/14 08:32:07 andvar Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.64 2022/01/09 18:27:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.63 2021/11/14 08:32:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.64 2022/01/09 18:27:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -328,8 +328,7 @@ static struct uvideo_stream *	uvideo_stream_alloc(void);
 static usbd_status		uvideo_stream_init(
 	struct uvideo_stream *,
 	struct uvideo_softc *,
-	const usb_interface_descriptor_t *,
-	uint8_t);
+	const usb_interface_descriptor_t *);
 static usbd_status		uvideo_stream_init_desc(
 	struct uvideo_stream *,
 	const usb_interface_descriptor_t *,
@@ -490,7 +489,6 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	const usb_interface_descriptor_t *ifdesc;
 	struct uvideo_stream *vs;
 	usbd_status err;
-	uint8_t ifaceidx;
 
 	sc->sc_dev = self;
 
@@ -522,10 +520,7 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 
 	/* iterate through interface descriptors and initialize softc */
 	usb_desc_iter_init(sc->sc_udev, &iter);
-	for (ifaceidx = 0;
-	     (ifdesc = usb_desc_iter_next_interface(&iter)) != NULL;
-	     ++ifaceidx)
-	{
+	while ((ifdesc = usb_desc_iter_next_interface(&iter)) != NULL) {
 		if (ifdesc->bLength < USB_INTERFACE_DESCRIPTOR_SIZE) {
 			DPRINTFN(50, ("uvideo_attach: "
 				      "ignoring incorrect descriptor len=%d\n",
@@ -562,8 +557,7 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 			vs = uvideo_find_stream(sc, ifdesc->bInterfaceNumber);
 			if (vs == NULL) {
 				vs = uvideo_stream_alloc();
-				err = uvideo_stream_init(vs, sc, ifdesc,
-							 ifaceidx);
+				err = uvideo_stream_init(vs, sc, ifdesc);
 				if (err != USBD_NORMAL_COMPLETION) {
 					DPRINTF(("uvideo_attach: "
 						 "error initializing stream: "
@@ -1026,8 +1020,7 @@ uvideo_unit_free_controls(struct uvideo_unit *vu)
 static usbd_status
 uvideo_stream_init(struct uvideo_stream *vs,
 		   struct uvideo_softc *sc,
-		   const usb_interface_descriptor_t *ifdesc,
-		   uint8_t idx)
+		   const usb_interface_descriptor_t *ifdesc)
 {
 	uWord len;
 	usbd_status err;
@@ -1043,7 +1036,8 @@ uvideo_stream_init(struct uvideo_stream *vs,
 	vs->vs_current_format.priv = -1;
 	vs->vs_xfer_type = 0;
 
-	err = usbd_device2interface_handle(sc->sc_udev, idx, &vs->vs_iface);
+	err = usbd_device2interface_handle(sc->sc_udev, vs->vs_ifaceno,
+	    &vs->vs_iface);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_stream_init: "
 			 "error getting vs interface: "
