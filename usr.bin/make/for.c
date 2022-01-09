@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.161 2022/01/08 23:52:26 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.162 2022/01/09 00:33:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.161 2022/01/08 23:52:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.162 2022/01/09 00:33:57 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -363,7 +363,7 @@ AddEscaped(Buffer *cmds, Substring item, char endc)
  */
 static void
 ForLoop_SubstVarLong(ForLoop *f, Buffer *body, const char **pp,
-		     const char *end, char endc, const char **inout_mark)
+		     char endc, const char **inout_mark)
 {
 	size_t i;
 	const char *start = *pp;
@@ -373,7 +373,7 @@ ForLoop_SubstVarLong(ForLoop *f, Buffer *body, const char **pp,
 		const char *p = start;
 		const char *varname = vars[i];
 
-		while (p < end && *varname != '\0' && *p == *varname)
+		while (*varname != '\0' && *p == *varname)
 			p++, varname++;
 		if (*varname != '\0')
 			continue;
@@ -456,7 +456,7 @@ ForLoop_SubstBody(ForLoop *f, Buffer *body)
 		if (p[1] == '{' || p[1] == '(') {
 			char endc = p[1] == '{' ? '}' : ')';
 			p += 2;
-			ForLoop_SubstVarLong(f, body, &p, end, endc, &mark);
+			ForLoop_SubstVarLong(f, body, &p, endc, &mark);
 		} else if (p[1] != '\0') {
 			ForLoop_SubstVarShort(f, body, p + 1, &mark);
 			p += 2;
