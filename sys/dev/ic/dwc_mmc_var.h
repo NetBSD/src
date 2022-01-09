@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.14 2020/03/20 17:07:17 skrll Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.15 2022/01/09 15:03:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -40,6 +40,8 @@ struct dwc_mmc_softc {
 #define	DWC_MMC_F_DMA		__BIT(0)
 #define	DWC_MMC_F_USE_HOLD_REG	__BIT(1)
 #define	DWC_MMC_F_PWREN_INV	__BIT(2)
+#define	DWC_MMC_F_BROKEN_CD	__BIT(3)
+#define	DWC_MMC_F_NON_REMOVABLE	__BIT(4)
 	uint32_t sc_fifo_reg;
 	uint32_t sc_fifo_depth;
 	u_int sc_clock_freq;
