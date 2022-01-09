@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.163 2022/01/09 12:43:52 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.164 2022/01/09 14:06:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.163 2022/01/09 12:43:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.164 2022/01/09 14:06:00 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -367,8 +367,8 @@ AddEscaped(Buffer *cmds, Substring item, char endc)
  * expression like ${i} or ${i:...} or $(i) or $(i:...) with ":Uvalue".
  */
 static void
-ForLoop_SubstVarLong(ForLoop *f, Buffer *body, const char **pp,
-		     char endc, const char **inout_mark)
+ForLoop_SubstVarLong(ForLoop *f, unsigned int firstItem, Buffer *body,
+		     const char **pp, char endc, const char **inout_mark)
 {
 	size_t i;
 	const char *start = *pp;
@@ -392,7 +392,7 @@ ForLoop_SubstVarLong(ForLoop *f, Buffer *body, const char **pp,
 		 */
 		Buf_AddBytesBetween(body, *inout_mark, start);
 		Buf_AddStr(body, ":U");
-		AddEscaped(body, f->items.words[f->nextItem + i], endc);
+		AddEscaped(body, f->items.words[firstItem + i], endc);
 
 		*inout_mark = p;
 		*pp = p;
@@ -405,7 +405,7 @@ ForLoop_SubstVarLong(ForLoop *f, Buffer *body, const char **pp,
  * variable expressions like $i with their ${:U...} expansion.
  */
 static void
-ForLoop_SubstVarShort(ForLoop *f, Buffer *body,
+ForLoop_SubstVarShort(ForLoop *f, unsigned int firstItem, Buffer *body,
 		      const char *p, const char **inout_mark)
 {
 	const char ch = *p;
@@ -430,7 +430,7 @@ found:
 
 	/* Replace $<ch> with ${:U<value>} */
 	Buf_AddStr(body, "{:U");
-	AddEscaped(body, f->items.words[f->nextItem + i], '}');
+	AddEscaped(body, f->items.words[firstItem + i], '}');
 	Buf_AddByte(body, '}');
 }
 
@@ -448,7 +448,7 @@ found:
  * possible to contrive a makefile where an unwanted substitution happens.
  */
 static void
-ForLoop_SubstBody(ForLoop *f, Buffer *body)
+ForLoop_SubstBody(ForLoop *f, unsigned int firstItem, Buffer *body)
 {
 	const char *p, *end;
 	const char *mark;	/* where the last substitution left off */
@@ -461,9 +461,11 @@ ForLoop_SubstBody(ForLoop *f, Buffer *body)
 		if (p[1] == '{' || p[1] == '(') {
 			char endc = p[1] == '{' ? '}' : ')';
 			p += 2;
-			ForLoop_SubstVarLong(f, body, &p, endc, &mark);
+			ForLoop_SubstVarLong(f, firstItem, body,
+			    &p, endc, &mark);
 		} else if (p[1] != '\0') {
-			ForLoop_SubstVarShort(f, body, p + 1, &mark);
+			ForLoop_SubstVarShort(f, firstItem, body,
+			    p + 1, &mark);
 			p += 2;
 		} else
 			break;
@@ -482,9 +484,9 @@ For_NextIteration(ForLoop *f, Buffer *body)
 	if (f->nextItem == f->items.len)
 		return false;
 
-	ForLoop_SubstBody(f, body);
-	DEBUG1(FOR, "For: loop body:\n%s", body->data);
 	f->nextItem += (unsigned int)f->vars.len;
+	ForLoop_SubstBody(f, f->nextItem - (unsigned int)f->vars.len, body);
+	DEBUG1(FOR, "For: loop body:\n%s", body->data);
 	return true;
 }
 

@@ -87,6 +87,22 @@ For: loop body:
 .  info long: ${:U" "}
 make: "directive-for-escape.mk" line 138: short: " "
 make: "directive-for-escape.mk" line 139: long: " "
+For: end for 1
+For: loop body:
+For: end for 1
+Parse_PushInput: .for loop in directive-for-escape.mk, line 152
+make: "directive-for-escape.mk" line 152: newline in .for value
+	in .for loop from directive-for-escape.mk:152 with i = "
+"
+For: loop body:
+: ${:U" "}
+SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `directive-for-escape.mk'
+Parsing line 153: : ${:U" "}
+ParseDependency(: " ")
+ParseEOF: returning to file directive-for-escape.mk, line 155
+SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `directive-for-escape.mk'
+Parsing line 155: .MAKEFLAGS: -d0
+ParseDependency(.MAKEFLAGS: -d0)
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
