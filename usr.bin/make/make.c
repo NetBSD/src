@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.251 2022/01/08 09:53:44 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.252 2022/01/09 15:48:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.251 2022/01/08 09:53:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.252 2022/01/09 15:48:30 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -120,11 +120,11 @@ static GNodeList toBeMade = LST_INIT;
 void
 debug_printf(const char *fmt, ...)
 {
-	va_list args;
+	va_list ap;
 
-	va_start(args, fmt);
-	vfprintf(opts.debug_file, fmt, args);
-	va_end(args);
+	va_start(ap, fmt);
+	vfprintf(opts.debug_file, fmt, ap);
+	va_end(ap);
 }
 
 MAKE_ATTR_DEAD static void
