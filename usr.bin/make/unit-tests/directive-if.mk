@@ -1,4 +1,4 @@
-# $NetBSD: directive-if.mk,v 1.9 2020/12/19 22:33:11 rillig Exp $
+# $NetBSD: directive-if.mk,v 1.10 2022/01/09 20:21:44 rillig Exp $
 #
 # Tests for the .if directive.
 #
@@ -86,4 +86,9 @@
 .  info Don't do this, always put a space after a directive.
 .endif
 
-all:
+
+# The directives '.ifdef' and '.ifmake' can be negated by inserting an 'n'.
+# This doesn't work for a plain '.if' though.
+#
+# expect+1: Unknown directive "ifn"
+.ifn 0
