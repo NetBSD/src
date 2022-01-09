@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.12 2021/12/05 11:40:03 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.13 2022/01/09 14:06:00 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -138,5 +138,20 @@ ${closing-brace}=	<closing-brace>	# alternative interpretation
 .  info short: $i
 .  info long: ${i}
 .endfor
+
+# No error since the newline character is not actually used.
+.for i in "${.newline}"
+.endfor
+
+# Between for.c 1.161 from 2022-01-08 and before for.c 1.163 from 2022-01-09,
+# a newline character in a .for loop led to a crash since at the point where
+# the error message including the stack trace is printed, the body of the .for
+# loop is assembled, and at that point, ForLoop.nextItem had already been
+# advanced.
+.MAKEFLAGS: -dp
+.for i in "${.newline}"
+: $i
+.endfor
+.MAKEFLAGS: -d0
 
 all:
