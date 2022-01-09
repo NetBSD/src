@@ -1,6 +1,6 @@
-.\"	$NetBSD: etcupdate.8,v 1.24 2022/01/09 03:31:23 lukem Exp $
+.\"	$NetBSD: etcupdate.8,v 1.25 2022/01/09 03:33:26 lukem Exp $
 .\"
-.\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
 .Op Fl t Ar temproot
 .Op Fl w Ar width
 .Nm
-.Fl h
+.Pq Fl h | Fl \&?
 .Sh DESCRIPTION
 .Nm
 is a tool that lets the administrator update the configuration and
@@ -280,6 +280,8 @@ variable.
 This is useful for
 .Xr xterm 1
 users with wider shell windows.
+.It Fl \&?
+Prints a help text, and exit.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width IGNOREFILESXX
