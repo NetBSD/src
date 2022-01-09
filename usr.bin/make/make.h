@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.287 2022/01/07 20:50:35 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.288 2022/01/09 18:59:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -894,6 +894,17 @@ cpp_skip_hspace(const char **pp)
 {
 	while (**pp == ' ' || **pp == '\t')
 		(*pp)++;
+}
+
+MAKE_INLINE bool
+cpp_skip_string(const char **pp, const char *s)
+{
+	const char *p = *pp;
+	while (*p == *s && *s != '\0')
+		p++, s++;
+	if (*s == '\0')
+		*pp = p;
+	return *s == '\0';
 }
 
 MAKE_INLINE void
