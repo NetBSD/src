@@ -1,4 +1,4 @@
-# $NetBSD: var-op-shell.mk,v 1.4 2021/02/06 04:55:08 sjg Exp $
+# $NetBSD: var-op-shell.mk,v 1.5 2022/01/09 18:22:31 rillig Exp $
 #
 # Tests for the != variable assignment operator, which runs its right-hand
 # side through the shell.
@@ -15,7 +15,7 @@ OUTPUT!=	echo "success"'ful'
 # an empty output produced the error message "Couldn't read shell's output
 # for \"%s\"".
 #
-# The error message is still there but reserved for technical errors.
+# The error message is still in Cmd_Exec but reserved for technical errors.
 # It may be possible to trigger the error message by killing the shell after
 # reading part of its output.
 OUTPUT!=	true
@@ -24,7 +24,10 @@ OUTPUT!=	true
 .endif
 
 # The output of a shell command that failed is processed nevertheless.
-# TODO: Make this an error in lint mode.
+# Unlike the other places that run external commands (expression modifier
+# '::!=', expression modifier ':!...!'), a failed command generates only a
+# warning, not an "error".  These "errors" are ignored in default mode, for
+# compatibility, but not in lint mode (-dL).
 OUTPUT!=	echo "failed"; false
 .if ${OUTPUT} != "failed"
 .  error
