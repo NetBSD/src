@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.29 2021/12/31 13:15:00 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.30 2022/01/09 14:28:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.29 2021/12/31 13:15:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.30 2022/01/09 14:28:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -1018,6 +1018,19 @@ acpi_dsd_string(ACPI_HANDLE handle, const char *prop, char **val)
 	return rv;
 }
 
+ACPI_STATUS
+acpi_dsd_bool(ACPI_HANDLE handle, const char *prop, bool *val)
+{
+	ACPI_STATUS rv;
+	ACPI_INTEGER ival;
+
+	rv = acpi_dsd_integer(handle, prop, &ival);
+	if (ACPI_SUCCESS(rv)) {
+		*val = ival != 0;
+	}
+
+	return rv;
+}
 
 
 /*
