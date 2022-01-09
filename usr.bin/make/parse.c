@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.648 2022/01/09 18:49:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.649 2022/01/09 19:57:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.648 2022/01/09 18:49:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.649 2022/01/09 19:57:14 rillig Exp $");
 
 /*
  * A file being read.
@@ -439,7 +439,7 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 	FStr_Done(&dir);
 }
 
-static void
+static void MAKE_ATTR_PRINTFLIKE(5, 0)
 ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 		    ParseErrorLevel type, const char *fmt, va_list ap)
 {
@@ -469,7 +469,7 @@ ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 		PrintStackTrace();
 }
 
-static void
+static void MAKE_ATTR_PRINTFLIKE(4, 5)
 ParseErrorInternal(const char *fname, size_t lineno,
 		   ParseErrorLevel type, const char *fmt, ...)
 {
