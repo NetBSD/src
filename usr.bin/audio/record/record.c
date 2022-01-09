@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.55 2021/06/01 21:08:48 riastradh Exp $	*/
+/*	$NetBSD: record.c,v 1.56 2022/01/09 06:33:13 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.55 2021/06/01 21:08:48 riastradh Exp $");
+__RCSID("$NetBSD: record.c,v 1.56 2022/01/09 06:33:13 mlelstv Exp $");
 #endif
 
 
@@ -68,6 +68,7 @@ static char	*encoding_str;
 static struct track_info ti;
 static struct timeval record_time;
 static struct timeval start_time;
+static int no_time_limit = 1;
 
 static void (*conv_func) (u_char *, int);
 
@@ -75,6 +76,13 @@ static void usage (void) __dead;
 static int timeleft (struct timeval *, struct timeval *);
 static void cleanup (int) __dead;
 static void rewrite_header (void);
+static void stop (int);
+
+static void stop (int sig)
+{
+	no_time_limit = 0;
+	timerclear(&record_time);
+}
 
 int
 main(int argc, char *argv[])
@@ -82,7 +90,7 @@ main(int argc, char *argv[])
 	u_char	*buffer;
 	size_t	len, bufsize = 0;
 	ssize_t	nread;
-	int	ch, no_time_limit = 1;
+	int	ch;
 	const char *defdevice = _PATH_SOUND;
 
 	/*
@@ -284,7 +292,7 @@ main(int argc, char *argv[])
 	if (ioctl(audiofd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
 
-	signal(SIGINT, cleanup);
+	signal(SIGINT, stop);
 
 	ti.total_size = 0;
 
@@ -341,14 +349,12 @@ main(int argc, char *argv[])
 		if ((nread = read(audiofd, buffer, bufsize)) == -1)
 			err(1, "read failed");
 		if (nread == 0)
-			errx(1, "read eof");
-		if ((size_t)nread != bufsize)
-			errx(1, "invalid read");
+			break;
 		if (conv_func)
-			(*conv_func)(buffer, bufsize);
-		if ((size_t)write(ti.outfd, buffer, bufsize) != bufsize)
+			(*conv_func)(buffer, nread);
+		if (write(ti.outfd, buffer, nread) != nread)
 			err(1, "write failed");
-		ti.total_size += bufsize;
+		ti.total_size += nread;
 	}
 	cleanup(0);
 }
@@ -391,7 +397,6 @@ rewrite_header(void)
 	/* can't do this here! */
 	if (ti.outfd == STDOUT_FILENO)
 		return;
-
 	if (lseek(ti.outfd, (off_t)0, SEEK_SET) == (off_t)-1)
 		err(1, "could not seek to start of file for header rewrite");
 	write_header(&ti);
