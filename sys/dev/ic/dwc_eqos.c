@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.2 2022/01/08 22:24:53 mrg Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.3 2022/01/09 00:36:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.2 2022/01/08 22:24:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.3 2022/01/09 00:36:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -870,6 +870,49 @@ eqos_start(struct ifnet *ifp)
 	EQOS_TXUNLOCK(sc);
 }
 
+static void
+eqos_intr_mtl(struct eqos_softc *sc, uint32_t mtl_status)
+{
+	uint32_t debug_data __unused = 0, ictrl = 0;
+
+	if (mtl_status == 0)
+		return;
+
+	/* Drain the errors reported by MTL_INTERRUPT_STATUS */
+	sc->sc_ev_mtl.ev_count++;
+
+	if ((mtl_status & GMAC_MTL_INTERRUPT_STATUS_DBGIS) != 0) {
+		debug_data = RD4(sc, GMAC_MTL_FIFO_DEBUG_DATA);
+		sc->sc_ev_mtl_debugdata.ev_count++;
+	}
+	if ((mtl_status & GMAC_MTL_INTERRUPT_STATUS_Q0IS) != 0) {
+		uint32_t new_status = 0;
+
+		ictrl = RD4(sc, GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS);
+		if ((ictrl & GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_RXOVFIS) != 0) {
+			new_status |= GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_RXOVFIS;
+			sc->sc_ev_mtl_rxovfis.ev_count++;
+		}
+		if ((ictrl & GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_TXUNFIS) != 0) {
+			new_status |= GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_TXUNFIS;
+			sc->sc_ev_mtl_txovfis.ev_count++;
+		}
+		if (new_status) {
+			new_status |= (ictrl &
+			    (GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_RXOIE|
+			     GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS_TXUIE));
+			WR4(sc, GMAC_MTL_Q0_INTERRUPT_CTRL_STATUS, new_status);
+		}
+	}
+#ifdef DEBUG_LOUD
+	device_printf(sc->sc_dev,
+	    "GMAC_MTL_INTERRUPT_STATUS = 0x%08X, "
+	    "GMAC_MTL_FIFO_DEBUG_DATA = 0x%08X, "
+	    "GMAC_MTL_INTERRUPT_STATUS_Q0IS = 0x%08X\n",
+	    mtl_status, debug_data, ictrl);
+#endif
+}
+
 int
 eqos_intr(void *arg)
 {
@@ -891,13 +934,7 @@ eqos_intr(void *arg)
 	}
 
 	mtl_status = RD4(sc, GMAC_MTL_INTERRUPT_STATUS);
-	if (mtl_status) {
-		sc->sc_ev_mtl.ev_count++;
-#ifdef DEBUG_LOUD
-		device_printf(sc->sc_dev,
-		    "GMAC_MTL_INTERRUPT_STATUS = 0x%08X\n", mtl_status);
-#endif
-	}
+	eqos_intr_mtl(sc, mtl_status);
 
 	dma_status = RD4(sc, GMAC_DMA_CHAN0_STATUS);
 	dma_status &= RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
@@ -1304,6 +1341,14 @@ eqos_attach(struct eqos_softc *sc)
 	    &sc->sc_ev_intr, device_xname(sc->sc_dev), "intrstatus");
 	evcnt_attach_dynamic(&sc->sc_ev_status, EVCNT_TYPE_INTR,
 	    &sc->sc_ev_intr, device_xname(sc->sc_dev), "rxtxstatus");
+
+	/* MAC Status specific type, using macstatus interrupt */
+	evcnt_attach_dynamic(&sc->sc_ev_mtl_debugdata, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_mtl, device_xname(sc->sc_dev), "debugdata");
+	evcnt_attach_dynamic(&sc->sc_ev_mtl_rxovfis, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_mtl, device_xname(sc->sc_dev), "rxovfis");
+	evcnt_attach_dynamic(&sc->sc_ev_mtl_txovfis, EVCNT_TYPE_INTR,
+	    &sc->sc_ev_mtl, device_xname(sc->sc_dev), "txovfis");
 
 	/* RX/TX Status specific type, using rxtxstatus interrupt */
 	evcnt_attach_dynamic(&sc->sc_ev_rwt, EVCNT_TYPE_INTR,

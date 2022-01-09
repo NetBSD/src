@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_reg.h,v 1.2 2022/01/08 22:24:53 mrg Exp $ */
+/* $NetBSD: dwc_eqos_reg.h,v 1.3 2022/01/09 00:36:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -171,6 +171,8 @@
 #define	GMAC_MTL_DBG_STS			0x0C0C
 #define	GMAC_MTL_FIFO_DEBUG_DATA		0x0C10
 #define	GMAC_MTL_INTERRUPT_STATUS		0x0C20
+#define	 GMAC_MTL_INTERRUPT_STATUS_DBGIS	(1U << 17)
+#define	 GMAC_MTL_INTERRUPT_STATUS_Q0IS		(1U << 0)
 #define	GMAC_MTL_TXQ0_OPERATION_MODE		0x0D00
 #define	 GMAC_MTL_TXQ0_OPERATION_MODE_TXQEN_SHIFT	2
 #define	 GMAC_MTL_TXQ0_OPERATION_MODE_TXQEN_MASK	(0x3U << GMAC_MTL_TXQ0_OPERATION_MODE_TXQEN_SHIFT)

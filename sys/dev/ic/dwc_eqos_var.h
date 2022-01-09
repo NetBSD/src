@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.2 2022/01/08 22:24:53 mrg Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.3 2022/01/09 00:36:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -79,6 +79,9 @@ struct eqos_softc {
 	struct evcnt		 sc_ev_txintr;
 	struct evcnt		 sc_ev_mac;
 	struct evcnt		 sc_ev_mtl;
+	struct evcnt		  sc_ev_mtl_debugdata;
+	struct evcnt		  sc_ev_mtl_rxovfis;
+	struct evcnt		  sc_ev_mtl_txovfis;
 	struct evcnt		 sc_ev_status;
 	struct evcnt		  sc_ev_rwt;
 	struct evcnt		  sc_ev_excol;
