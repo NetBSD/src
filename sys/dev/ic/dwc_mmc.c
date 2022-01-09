@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.29 2022/01/09 15:03:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.29 2022/01/09 15:03:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -162,6 +162,10 @@ dwc_mmc_attach_i(device_t self)
 {
 	struct dwc_mmc_softc *sc = device_private(self);
 	struct sdmmcbus_attach_args saa;
+	bool poll_detect;
+
+	poll_detect = sc->sc_card_detect != NULL ||
+	   (sc->sc_flags & (DWC_MMC_F_BROKEN_CD|DWC_MMC_F_NON_REMOVABLE)) == 0;
 
 	if (sc->sc_pre_power_on)
 		sc->sc_pre_power_on(sc);
@@ -185,12 +189,15 @@ dwc_mmc_attach_i(device_t self)
 		       SMC_CAPS_AUTO_STOP |
 		       SMC_CAPS_DMA |
 		       SMC_CAPS_MULTI_SEG_DMA;
-	if (sc->sc_bus_width == 8)
+	if (sc->sc_bus_width == 8) {
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
-	else
+	} else {
 		saa.saa_caps |= SMC_CAPS_4BIT_MODE;
-	if (sc->sc_card_detect)
+	}
+
+	if (poll_detect) {
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
+	}
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL, CFARGS_NONE);
 }
@@ -276,11 +283,21 @@ static int
 dwc_mmc_card_detect(sdmmc_chipset_handle_t sch)
 {
 	struct dwc_mmc_softc *sc = sch;
+	int det_n;
 
-	if (!sc->sc_card_detect)
-		return 1;	/* no card detect pin, assume present */
+	if (sc->sc_card_detect != NULL) {
+		return sc->sc_card_detect(sc);
+	}
+	if ((sc->sc_flags & DWC_MMC_F_BROKEN_CD) != 0) {
+		return 1;	/* broken card detect, assume present */
+	}
+	if ((sc->sc_flags & DWC_MMC_F_NON_REMOVABLE) != 0) {
+		return 1;	/* non-removable device is always present */
+	}
 
-	return sc->sc_card_detect(sc);
+	det_n = MMC_READ(sc, DWC_MMC_CDETECT) & DWC_MMC_CDETECT_CARD_DETECT_N;
+
+	return !det_n;
 }
 
 static int
