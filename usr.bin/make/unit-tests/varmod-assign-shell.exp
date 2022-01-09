@@ -1,4 +1,4 @@
-make: "varmod-assign-shell.mk" line 25: warning: "echo output; false" returned non-zero status
+make: "varmod-assign-shell.mk" line 27: warning: "echo output; false" returned non-zero status
 make: "echo output; false" returned non-zero status
 DIRECT=output
 ASSIGNED=previous

@@ -1,9 +1,11 @@
-# $NetBSD: varmod-assign-shell.mk,v 1.2 2021/12/28 10:47:00 rillig Exp $
+# $NetBSD: varmod-assign-shell.mk,v 1.3 2022/01/09 18:22:31 rillig Exp $
 #
 # Tests for the variable modifier '::!=', which assigns the output of a shell
 # command to the variable, but only if the command exited successfully.  This
-# is different from the variable assignment operator '!=', which also assigns
-# when the shell command fails or crashes.
+# is different from the other places that capture the output of an external
+# command (variable assignment operator '!=', expression modifier ':sh',
+# expression modifier ':!...!'), which also use the output when the shell
+# command fails or crashes.
 #
 # The variable modifier '::!=' and its close relatives have been around since
 # var.c 1.45 from 2000-06-01.
