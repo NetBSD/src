@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.63 2022/01/09 03:31:23 lukem Exp $
+# $NetBSD: etcupdate,v 1.64 2022/01/09 03:33:26 lukem Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,7 +85,7 @@ help()
 	cat << EOF
 
 Usage: ${PROG} [-alv] [-d DESTDIR] [-p PAGER] [-s SRC_ARG] [-t TEMPROOT] [-w WIDTH]
-       ${PROG} -h
+       ${PROG} ( -h | -? )
 
 Options:
 
@@ -103,10 +103,10 @@ Options:
                               "etc.tgz" and "xetc.tgz" have been extracted.
                  -s TGZ_FILE  A distribution set file such as "etc.tgz" or
                               "xetc.tgz".  May be specified multiple times.
-
   -t TEMPROOT  Where to store temporary files. [/tmp/temproot]
   -w WIDTH     Screen width.                   [80]
   -v           Be more verbose.
+  -?           Display this help, and exit.
 
 EOF
 }
@@ -477,7 +477,7 @@ USERRC="${HOME}/.{PROG}rc"
 [ -r ${USERRC} ] && . ${USERRC}
 
 # Read command line arguments
-while getopts ad:hlp:s:t:vw: i
+while getopts :ad:hlp:s:t:vw: i
 do
 	case "${i}" in
 	a)
@@ -539,13 +539,31 @@ do
 	w)
 		WIDTH="${OPTARG}"
 		;;
-	*)
-		# getopts should already have printed an error message
+	"?")
+		if [ "${OPTARG}" = "?" ]; then
+			help
+			exit 0
+		fi
+		echo 1>&2 "${PROG}: Unknown option -${OPTARG}"
 		usage
-		break
+		;;
+
+	:)
+		echo 1>&2 "${PROG}: Missing argument for option -${OPTARG}"
+		usage
+		;;
+
+	*)
+		echo 1>&2 "${PROG}: Unimplemented option -${ch}"
+		exit 3
 		;;
 	esac
 done
+shift $((${OPTIND} - 1))
+if [ $# -ne 0 ] ; then
+	echo 1>&2 "${PROG}: Unknown extra arguments"
+	usage
+fi
 
 # Last minute sanity checks
 if [ "$(id -u)" -ne 0 ]; then
@@ -555,7 +573,7 @@ fi
 DESTDIR="${DESTDIR%/}" # remove trailing slash, if any.  result might be "".
 DESTDIR_BRE="$(bre_quote "${DESTDIR}")"
 if [ "${N_SRC_ARGS}" -gt 1 ] && ( ${SOURCEMODE} || ${BINARYDIRMODE} ); then
-	echo "*** ERROR: Multiple -s args are allowed only with tgz files"
+	echo 1>&2 "${PROG}: Multiple -s args are allowed only with tgz files"
 	usage
 fi
 case "${TEMPROOT}" in
