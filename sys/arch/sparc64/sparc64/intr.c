@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.70 2021/07/03 19:18:55 palle Exp $ */
+/*	$NetBSD: intr.c,v 1.71 2022/01/09 20:30:04 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.70 2021/07/03 19:18:55 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.71 2022/01/09 20:30:04 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -368,22 +368,16 @@ softint_trigger(uintptr_t machdep)
 
 uint64_t sun4v_group_interrupt_major;
 
-#if 0
-XXX notyet
-wint64_t
+int64_t
 sun4v_intr_devino_to_sysino(uint64_t devhandle, uint64_t devino, uint64_t *ino)
 {
 	if (sun4v_group_interrupt_major < 3)
 		return hv_intr_devino_to_sysino(devhandle, devino, ino);
 
-	KASSERT(INTVEC(devino) == devino);
-	*ino = devino | INTR_DEVINO;
+	*ino = devino;
 	return H_EOK;
 }
-#endif
 
-#if 0
-XXX notyet		
 int64_t
 sun4v_intr_setcookie(uint64_t devhandle, uint64_t ino, uint64_t cookie_value)
 {
@@ -392,10 +386,7 @@ sun4v_intr_setcookie(uint64_t devhandle, uint64_t ino, uint64_t cookie_value)
 	
 	return hv_vintr_setcookie(devhandle, ino, cookie_value);
 }
-#endif
 
-#if 0
-XXX notyet		
 int64_t
 sun4v_intr_setenabled(uint64_t devhandle, uint64_t ino, uint64_t intr_enabled)
 {
@@ -404,10 +395,7 @@ sun4v_intr_setenabled(uint64_t devhandle, uint64_t ino, uint64_t intr_enabled)
 
 	return hv_vintr_setenabled(devhandle, ino, intr_enabled);
 }
-#endif
 
-#if 0
-XXX notyet		
 int64_t
 sun4v_intr_setstate(uint64_t devhandle, uint64_t ino, uint64_t intr_state)
 {
@@ -416,10 +404,7 @@ sun4v_intr_setstate(uint64_t devhandle, uint64_t ino, uint64_t intr_state)
 
 	return hv_vintr_setstate(devhandle, ino, intr_state);
 }
-#endif
 
-#if 0
-XXX notyet		
 int64_t
 sun4v_intr_settarget(uint64_t devhandle, uint64_t ino, uint64_t cpuid)
 {
@@ -428,6 +413,5 @@ sun4v_intr_settarget(uint64_t devhandle, uint64_t ino, uint64_t cpuid)
 
 	return hv_vintr_settarget(devhandle, ino, cpuid);
 }
-#endif
 
 #endif
