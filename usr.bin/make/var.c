@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.998 2022/01/08 17:25:19 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.999 2022/01/09 16:56:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.998 2022/01/08 17:25:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.999 2022/01/09 16:56:08 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3539,11 +3539,9 @@ found_op:
 			VarFreeShortLived(gv);
 	}
 
-	switch (op[0]) {
-	case '+':
+	if (op[0] == '+')
 		Var_Append(scope, expr->name, val.str);
-		break;
-	case '!': {
+	else if (op[0] == '!') {
 		const char *errfmt;
 		char *cmd_output = Cmd_Exec(val.str, &errfmt);
 		if (errfmt != NULL)
@@ -3551,16 +3549,11 @@ found_op:
 		else
 			Var_Set(scope, expr->name, cmd_output);
 		free(cmd_output);
-		break;
-	}
-	case '?':
-		if (expr->defined == DEF_REGULAR)
-			break;
-		/* FALLTHROUGH */
-	default:
+	} else if (op[0] == '?' && expr->defined == DEF_REGULAR) {
+		/* Do nothing. */
+	} else
 		Var_Set(scope, expr->name, val.str);
-		break;
-	}
+
 	Expr_SetValueRefer(expr, "");
 
 done:
