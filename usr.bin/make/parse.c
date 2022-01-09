@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.645 2022/01/09 11:28:04 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.646 2022/01/09 11:43:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.645 2022/01/09 11:28:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.646 2022/01/09 11:43:58 rillig Exp $");
 
 /*
  * A file being read.
@@ -357,13 +357,10 @@ PrintStackTrace(void)
 			debug_printf("\tin .for loop from %s:%d with %s\n",
 			    fname, entry->forHeadLineno, details);
 			free(details);
-		} else {
-			int lineno =
-			    i + 1 < n && entries[i + 1].forLoop != NULL
-				? entries[i + 1].forHeadLineno
-				: entry->lineno;
-			debug_printf("\tin %s:%d\n", fname, lineno);
-		}
+		} else if (i + 1 < n && entries[i + 1].forLoop != NULL) {
+			/* entry->lineno is not a useful line number */
+		} else
+			debug_printf("\tin %s:%d\n", fname, entry->lineno);
 	}
 }
 

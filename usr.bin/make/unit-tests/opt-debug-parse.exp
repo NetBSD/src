@@ -3,7 +3,6 @@ SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
 Parsing line 20: .info trace with multi-line .for loop head
 make: "opt-debug-parse.mk" line 20: trace with multi-line .for loop head
 	in .for loop from opt-debug-parse.mk:16 with var = value
-	in opt-debug-parse.mk:16
 ParseEOF: returning to file opt-debug-parse.mk, line 22
 SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
 Parsing line 25: .include "/dev/null"
@@ -17,11 +16,9 @@ SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
 Parsing line 31: .info trace
 make: "opt-debug-parse.mk" line 31: trace
 	in .for loop from opt-debug-parse.mk:30 with a = 1, b = 2, c = 3
-	in opt-debug-parse.mk:30
 Parsing line 31: .info trace
 make: "opt-debug-parse.mk" line 31: trace
 	in .for loop from opt-debug-parse.mk:30 with a = 4, b = 5, c = 6
-	in opt-debug-parse.mk:30
 ParseEOF: returning to file opt-debug-parse.mk, line 33
 SetFilenameVars: ${.PARSEDIR} = `<curdir>' ${.PARSEFILE} = `opt-debug-parse.mk'
 Parsing line 35: .MAKEFLAGS: -d0
