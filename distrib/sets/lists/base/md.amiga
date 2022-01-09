@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.57 2021/02/25 03:42:59 rin Exp $
+# $NetBSD: md.amiga,v 1.58 2022/01/09 18:11:09 martin Exp $
 ./sbin/binpatch					base-sysutil-root
 ./usr/mdec/boot.amiga				base-sysutil-bin
 ./usr/mdec/bootxx_fd				base-sysutil-bin
@@ -19,3 +19,5 @@
 ./usr/share/keymaps/amiga/pl_us.map		base-sys-share
 ./usr/share/keymaps/amiga/sw.map		base-sys-share
 ./usr/share/keymaps/amiga/us.map		base-sys-share
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share

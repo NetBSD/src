@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.155 2020/09/12 15:25:41 jmcneill Exp $
+# $NetBSD: md.i386,v 1.156 2022/01/09 18:11:09 martin Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -112,3 +112,8 @@
 ./usr/share/pcvt/fonts/vt220l.814		base-obsolete		obsolete
 ./usr/share/pcvt/fonts/vt220l.816		base-obsolete		obsolete
 ./usr/share/pcvt/keycap.pcvt			base-obsolete		obsolete
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
+
