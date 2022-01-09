@@ -18,7 +18,7 @@
   a4techKBS8      A4Tech KBS-8
   a4_rfkb23       A4Tech Wireless Desktop RFKB-23
   airkey          Acer AirKey V
-  azonaRF2300     Azona RF2300 wireless Internet
+  azonaRF2300     Azona RF2300 Wireless Internet
   scorpius        Advance Scorpius KI
   brother         Brother Internet
   btc5113rf       BTC 5113RF Multimedia
@@ -225,7 +225,7 @@
   fi              Finnish
   fr              French
   gh              English (Ghana)
-  gn              N'Ko (azerty)
+  gn              N'Ko (AZERTY)
   ge              Georgian
   de              German
   gr              Greek
@@ -287,9 +287,10 @@
   bw              Tswana
   ph              Filipino
   md              Moldavian
-  id              Indonesian (Arab Melayu, phonetic)
+  id              Indonesian (Latin)
   jv              Indonesian (Javanese)
   my              Malay (Jawi, Arabic Keyboard)
+  custom          A user-defined custom Layout
 
 ! variant
   chr             us: Cherokee
@@ -299,6 +300,7 @@
   alt-intl        us: English (US, alt. intl.)
   colemak         us: English (Colemak)
   colemak_dh      us: English (Colemak-DH)
+  colemak_dh_iso  us: English (Colemak-DH ISO)
   dvorak          us: English (Dvorak)
   dvorak-intl     us: English (Dvorak, intl., with dead keys)
   dvorak-alt-intl us: English (Dvorak, alt. intl.)
@@ -306,6 +308,7 @@
   dvorak-r        us: English (Dvorak, right-handed)
   dvorak-classic  us: English (classic Dvorak)
   dvp             us: English (programmer Dvorak)
+  dvorak-mac      us: English (Dvorak, Macintosh)
   symbolic        us: English (US, Symbolic)
   rus             us: Russian (US, phonetic)
   mac             us: English (Macintosh)
@@ -353,7 +356,7 @@
   ben_baishakhi   in: Bangla (India, Baishakhi)
   ben_bornona     in: Bangla (India, Bornona)
   ben_gitanjali   in: Bangla (India, Gitanjali)
-  ben_inscript    in: Bangla (India, Baishakhi Inscript)
+  ben_inscript    in: Bangla (India, Baishakhi InScript)
   eeyek           in: Manipuri (Eeyek)
   guj             in: Gujarati
   guru            in: Punjabi (Gurmukhi)
@@ -362,14 +365,16 @@
   kan-kagapa      in: Kannada (KaGaPa, phonetic)
   mal             in: Malayalam
   mal_lalitha     in: Malayalam (Lalitha)
-  mal_enhanced    in: Malayalam (enhanced Inscript, with rupee)
+  mal_enhanced    in: Malayalam (enhanced InScript, with rupee)
   ori             in: Oriya
+  ori-bolnagri    in: Oriya (Bolnagri)
+  ori-wx          in: Oriya (Wx)
   olck            in: Ol Chiki
   tam_tamilnet    in: Tamil (TamilNet '99)
   tam_tamilnet_with_tam_nums in: Tamil (TamilNet '99 with Tamil numerals)
   tam_tamilnet_TAB in: Tamil (TamilNet '99, TAB encoding)
   tam_tamilnet_TSCII in: Tamil (TamilNet '99, TSCII encoding)
-  tam             in: Tamil (Inscript)
+  tam             in: Tamil (InScript)
   tel             in: Telugu
   tel-kagapa      in: Telugu (KaGaPa, phonetic)
   tel-sarala      in: Telugu (Sarala)
@@ -383,7 +388,7 @@
   mar-kagapa      in: Marathi (KaGaPa, phonetic)
   eng             in: English (India, with rupee)
   iipa            in: Indic IPA
-  marathi         in: Marathi (enhanced Inscript)
+  marathi         in: Marathi (enhanced InScript)
   alternatequotes ba: Bosnian (with guillemets)
   unicode         ba: Bosnian (with Bosnian digraphs)
   unicodeus       ba: Bosnian (US, with Bosnian digraphs)
@@ -397,9 +402,9 @@
   phonetic        bg: Bulgarian (traditional phonetic)
   bas_phonetic    bg: Bulgarian (new phonetic)
   bekl            bg: Bulgarian (enhanced)
-  azerty-deadkeys dz: Kabyle (azerty layout, dead keys)
-  qwerty-gb-deadkeys dz: Kabyle (qwerty-gb layout, dead keys)
-  qwerty-us-deadkeys dz: Kabyle (qwerty-us layout, dead keys)
+  azerty-deadkeys dz: Kabyle (AZERTY, with dead keys)
+  qwerty-gb-deadkeys dz: Kabyle (QWERTY, UK, with dead keys)
+  qwerty-us-deadkeys dz: Kabyle (QWERTY, US, with dead keys)
   ber             dz: Berber (Algeria, Tifinagh)
   ar              dz: Arabic (Algeria)
   french          ma: French (Morocco)
@@ -449,6 +454,7 @@
   mac             dk: Danish (Macintosh)
   mac_nodeadkeys  dk: Danish (Macintosh, no dead keys)
   dvorak          dk: Danish (Dvorak)
+  us              nl: Dutch (US)
   mac             nl: Dutch (Macintosh)
   std             nl: Dutch (standard)
   nodeadkeys      ee: Estonian (no dead keys)
@@ -593,7 +599,7 @@
   latinalternatequotes me: Montenegrin (Latin, with guillemets)
   nodeadkeys      mk: Macedonian (no dead keys)
   us              mt: Maltese (US)
-  alt-us          mt: Maltese (US layout with AltGr overrides)
+  alt-us          mt: Maltese (US, with AltGr overrides)
   alt-gb          mt: Maltese (UK, with AltGr overrides)
   nodeadkeys      no: Norwegian (no dead keys)
   winkeys         no: Norwegian (Windows)
@@ -699,6 +705,10 @@
   crh             tr: Crimean Tatar (Turkish Q)
   crh_f           tr: Crimean Tatar (Turkish F)
   crh_alt         tr: Crimean Tatar (Turkish Alt-Q)
+  ot              tr: Ottoman
+  otf             tr: Ottoman (F)
+  otk             tr: Old Turkic
+  otkf            tr: Old Turkic (F)
   indigenous      tw: Taiwanese (indigenous)
   saisiyat        tw: Saisiyat (Taiwan)
   phonetic        ua: Ukrainian (phonetic)
@@ -752,7 +762,7 @@
   dvorak          ph: Filipino (Dvorak, Latin)
   dvorak-bay      ph: Filipino (Dvorak, Baybayin)
   gag             md: Moldavian (Gagauz)
-  phoneticx       id: Indonesian (Arab Melayu, extended phonetic)
+  phoneticx       id: Indonesian (Arab Pegon, extended phonetic)
   phonetic        my: Malay (Jawi, phonetic)
 
 ! option
@@ -874,6 +884,7 @@
   altwin:meta_alt      Alt and Meta are on Alt
   altwin:alt_win       Alt is mapped to Win and the usual Alt
   altwin:ctrl_win      Ctrl is mapped to Win and the usual Ctrl
+  altwin:ctrl_rwin     Ctrl is mapped to Right Win and the usual Ctrl
   altwin:ctrl_alt_win  Ctrl is mapped to Alt, Alt to Win
   altwin:meta_win      Meta is mapped to Win
   altwin:left_meta_win Meta is mapped to Left Win
