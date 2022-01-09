@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.h,v 1.11 2021/02/05 17:12:43 thorpej Exp $ */
+/*	$NetBSD: acpi_util.h,v 1.12 2022/01/09 14:28:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ char		*acpi_pack_compat_list(ACPI_DEVICE_INFO *, size_t *);
 
 ACPI_STATUS	 acpi_dsd_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
 ACPI_STATUS	 acpi_dsd_string(ACPI_HANDLE, const char *, char **);
+ACPI_STATUS	 acpi_dsd_bool(ACPI_HANDLE, const char *, bool *);
 
 ACPI_STATUS	 acpi_dsm(ACPI_HANDLE, uint8_t *, ACPI_INTEGER,
 			ACPI_INTEGER, const ACPI_OBJECT *, ACPI_OBJECT **);
