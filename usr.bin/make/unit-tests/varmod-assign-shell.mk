@@ -1,4 +1,4 @@
-# $NetBSD: varmod-assign-shell.mk,v 1.3 2022/01/09 18:22:31 rillig Exp $
+# $NetBSD: varmod-assign-shell.mk,v 1.4 2022/01/10 20:32:29 rillig Exp $
 #
 # Tests for the variable modifier '::!=', which assigns the output of a shell
 # command to the variable, but only if the command exited successfully.  This
@@ -27,7 +27,9 @@ DIRECT=		previous
 DIRECT!=	echo output; false
 
 ASSIGNED=	previous
-_:=		${ASSIGNED::!=echo output; false}
+.MAKEFLAGS: -dv			# to see the actual command
+_:=		${ASSIGNED::!=echo output; ${:Ufalse}}
+.MAKEFLAGS: -d0
 
 all:
 	@echo DIRECT=${DIRECT:Q}
