@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.221 2022/01/10 22:26:14 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.222 2022/01/10 23:16:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.221 2022/01/10 22:26:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.222 2022/01/10 23:16:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1289,6 +1289,7 @@ procfs_readdir(void *v)
 	struct procfs_root_readdir_ctx ctx;
 	struct lwp *l;
 	int nfd;
+	int nc = 0;
 
 	vp = ap->a_vp;
 	pfs = VTOPFS(vp);
@@ -1356,7 +1357,7 @@ procfs_readdir(void *v)
 	case PFSfd: {
 		struct proc *p;
 		file_t *fp;
-		int lim, nc = 0;
+		int lim;
 
 		if ((error = procfs_proc_lock(vp->v_mount, pfs->pfs_pid, &p,
 					      ESRCH)) != 0)
@@ -1421,7 +1422,6 @@ procfs_readdir(void *v)
 	}
 	case PFStask: {
 		struct proc *p;
-		int nc = 0;
 
 		if ((error = procfs_proc_lock(vp->v_mount, pfs->pfs_pid, &p,
 					      ESRCH)) != 0)
@@ -1476,7 +1476,6 @@ procfs_readdir(void *v)
 
 	case PFSroot: {
 		struct proc *p;
-		int nc = 0;
 
 		if (ap->a_ncookies) {
 			/*
