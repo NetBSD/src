@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1286 2021/12/07 17:39:53 brad Exp $
+# $NetBSD: mi,v 1.1287 2022/01/10 10:02:30 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5156,10 +5156,6 @@
 ./usr/share/sushi/util/scripting/func		base-obsolete	obsolete
 ./usr/share/sysinst				base-util-share
 ./usr/share/sysinst/catalog			base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.de	base-obsolete		obsolete
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-obsolete		obsolete
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-obsolete		obsolete
-./usr/share/sysinst/catalog/sysinstmsgs.pl	base-obsolete		obsolete
 ./usr/share/tabset				base-util-share
 ./usr/share/tabset/3101				base-util-share		share
 ./usr/share/tabset/9837				base-util-share		share
