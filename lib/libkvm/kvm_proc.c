@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.95 2021/07/19 10:30:36 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.96 2022/01/10 19:51:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.95 2021/07/19 10:30:36 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.96 2022/01/10 19:51:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1057,6 +1057,7 @@ proc_verify(kvm_t *kd, u_long kernp, const struct miniproc *p)
 	    (kernproc.p_stat != SZOMB || p->p_stat == SZOMB));
 }
 
+extern struct ps_strings *__ps_strings;
 static char **
 kvm_doargv(kvm_t *kd, const struct miniproc *p, int nchr,
 	   void (*info)(struct ps_strings *, u_long *, int *))
@@ -1071,7 +1072,8 @@ kvm_doargv(kvm_t *kd, const struct miniproc *p, int nchr,
 	 */
 	if (p->p_stat == SZOMB)
 		return (NULL);
-	cnt = (int)kvm_ureadm(kd, p, kd->usrstack - sizeof(arginfo),
+	/* XXX: this is broken for ASLR: we need to read p->p_psstr instead */
+	cnt = (int)kvm_ureadm(kd, p, (u_long)(intptr_t)__ps_strings,
 	    (void *)&arginfo, sizeof(arginfo));
 	if (cnt != sizeof(arginfo))
 		return (NULL);

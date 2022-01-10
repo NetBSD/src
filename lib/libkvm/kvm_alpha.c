@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_alpha.c,v 1.27 2014/02/19 20:21:22 dsl Exp $ */
+/* $NetBSD: kvm_alpha.c,v 1.28 2022/01/10 19:51:30 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -50,7 +50,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_alpha.c,v 1.27 2014/02/19 20:21:22 dsl Exp $");
+__RCSID("$NetBSD: kvm_alpha.c,v 1.28 2022/01/10 19:51:30 christos Exp $");
 
 /*ARGSUSED*/
 void
@@ -186,7 +186,6 @@ int
 _kvm_mdopen(kvm_t *kd)
 {
 
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 

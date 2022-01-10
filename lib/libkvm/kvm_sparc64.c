@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.17 2014/02/21 18:00:09 palle Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.18 2022/01/10 19:51:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.17 2014/02/21 18:00:09 palle Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.18 2022/01/10 19:51:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -273,7 +273,6 @@ _kvm_mdopen(kvm_t *kd)
 	extern struct ps_strings *__ps_strings;
 
 	max_uva = (u_long) (__ps_strings + 1);
-	kd->usrstack = max_uva;
 	kd->max_uva  = max_uva;
 	kd->min_uva  = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_or1k.c,v 1.1 2014/09/03 19:34:26 matt Exp $	*/
+/*	$NetBSD: kvm_or1k.c,v 1.2 2022/01/10 19:51:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include <machine/kcore.h>
 #include <machine/vmparam.h>
 
-__RCSID("$NetBSD: kvm_or1k.c,v 1.1 2014/09/03 19:34:26 matt Exp $");
+__RCSID("$NetBSD: kvm_or1k.c,v 1.2 2022/01/10 19:51:30 christos Exp $");
 
 void
 _kvm_freevtop(kvm_t *kd)
@@ -118,7 +118,6 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 int
 _kvm_mdopen(kvm_t *kd)
 {
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 

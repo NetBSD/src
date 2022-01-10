@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_arm.c,v 1.6 2010/09/20 23:23:16 jym Exp $	 */
+/* $NetBSD: kvm_arm.c,v 1.7 2022/01/10 19:51:30 christos Exp $	 */
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_arm.c,v 1.6 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_arm.c,v 1.7 2022/01/10 19:51:30 christos Exp $");
 #endif				/* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -194,13 +194,11 @@ _kvm_mdopen(kvm_t * kd)
 	extern struct ps_strings *__ps_strings;
 
 #if 0				/* XXX - These vary across arm machines... */
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 #endif
 	/* This is somewhat hack-ish, but it works. */
 	max_uva = (uintptr_t) (__ps_strings + 1);
-	kd->usrstack = max_uva;
 	kd->max_uva = max_uva;
 	kd->min_uva = 0;
 

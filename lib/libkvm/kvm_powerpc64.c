@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc64.c,v 1.6 2014/08/23 02:25:23 matt Exp $	*/
+/*	$NetBSD: kvm_powerpc64.c,v 1.7 2022/01/10 19:51:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 
-__RCSID("$NetBSD: kvm_powerpc64.c,v 1.6 2014/08/23 02:25:23 matt Exp $");
+__RCSID("$NetBSD: kvm_powerpc64.c,v 1.7 2022/01/10 19:51:30 christos Exp $");
 
 void
 _kvm_freevtop(kvm_t *kd)
@@ -170,13 +170,11 @@ _kvm_mdopen(kvm_t *kd)
 	extern struct ps_strings *__ps_strings;
 
 #if 0   /* XXX - These vary across powerpc machines... */
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 #endif
 	/* This is somewhat hack-ish, but it works. */
 	max_uva = (uintptr_t) (__ps_strings + 1);
-	kd->usrstack = max_uva;
 	kd->max_uva  = max_uva;
 	kd->min_uva  = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_x86_64.c,v 1.12 2020/04/25 05:17:16 maxv Exp $	*/
+/*	$NetBSD: kvm_x86_64.c,v 1.13 2022/01/10 19:51:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_x86_64.c,v 1.12 2020/04/25 05:17:16 maxv Exp $");
+__RCSID("$NetBSD: kvm_x86_64.c,v 1.13 2022/01/10 19:51:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -269,7 +269,6 @@ int
 _kvm_mdopen(kvm_t *kd)
 {
 
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 
