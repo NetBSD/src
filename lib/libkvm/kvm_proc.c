@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.96 2022/01/10 19:51:30 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.97 2022/01/10 20:04:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.96 2022/01/10 19:51:30 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.97 2022/01/10 20:04:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,6 +118,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.96 2022/01/10 19:51:30 christos Exp $");
 struct miniproc {
 	struct	vmspace *p_vmspace;
 	char	p_stat;
+	vaddr_t p_psstrp;
 	struct	proc *p_paddr;
 	pid_t	p_pid;
 };
@@ -131,6 +132,7 @@ struct miniproc {
 		(p)->p_pid = (kp)->p_pid; \
 		(p)->p_paddr = NULL; \
 		(p)->p_vmspace = (kp)->p_vmspace; \
+		(p)->p_psstrp = (kp)->p_psstrp; \
 	} while (/*CONSTCOND*/0);
 
 #define KPTOMINI(kp, p) \
@@ -1057,7 +1059,6 @@ proc_verify(kvm_t *kd, u_long kernp, const struct miniproc *p)
 	    (kernproc.p_stat != SZOMB || p->p_stat == SZOMB));
 }
 
-extern struct ps_strings *__ps_strings;
 static char **
 kvm_doargv(kvm_t *kd, const struct miniproc *p, int nchr,
 	   void (*info)(struct ps_strings *, u_long *, int *))
@@ -1072,8 +1073,7 @@ kvm_doargv(kvm_t *kd, const struct miniproc *p, int nchr,
 	 */
 	if (p->p_stat == SZOMB)
 		return (NULL);
-	/* XXX: this is broken for ASLR: we need to read p->p_psstr instead */
-	cnt = (int)kvm_ureadm(kd, p, (u_long)(intptr_t)__ps_strings,
+	cnt = (int)kvm_ureadm(kd, p, p->p_psstrp,
 	    (void *)&arginfo, sizeof(arginfo));
 	if (cnt != sizeof(arginfo))
 		return (NULL);
