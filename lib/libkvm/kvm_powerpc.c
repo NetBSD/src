@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.13 2014/01/27 21:00:01 matt Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.14 2022/01/10 19:51:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -91,7 +91,7 @@
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 
-__RCSID("$NetBSD: kvm_powerpc.c,v 1.13 2014/01/27 21:00:01 matt Exp $");
+__RCSID("$NetBSD: kvm_powerpc.c,v 1.14 2022/01/10 19:51:30 christos Exp $");
 
 static int	_kvm_match_601bat(kvm_t *, vaddr_t, paddr_t *, int *);
 static int	_kvm_match_bat(kvm_t *, vaddr_t, paddr_t *, int *);
@@ -367,13 +367,11 @@ _kvm_mdopen(kvm_t *kd)
 	extern struct ps_strings *__ps_strings;
 
 #if 0   /* XXX - These vary across powerpc machines... */
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 #endif
 	/* This is somewhat hack-ish, but it works. */
 	max_uva = (uintptr_t) (__ps_strings + 1);
-	kd->usrstack = max_uva;
 	kd->max_uva  = max_uva;
 	kd->min_uva  = 0;
 
