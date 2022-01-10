@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2021/09/26 15:52:40 maya Exp $
+#	$NetBSD: Makefile,v 1.9 2022/01/10 01:47:49 khorben Exp $
 
 NOMAN=	# defined
 
@@ -65,7 +65,7 @@ FILES=	\
 	VERDE_ce.bin VERDE_mc.bin VERDE_mc2.bin VERDE_me.bin VERDE_pfp.bin \
 	VERDE_rlc.bin VERDE_smc.bin
 
-# radeondrmks needs these after mountroot, but before starting init.
+# radeondrmkms needs these after mountroot, but before starting init.
 FIRMWAREDIR=	/libdata/firmware
 
 .endif
