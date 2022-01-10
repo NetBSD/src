@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.220 2021/12/08 20:11:54 andvar Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.221 2022/01/10 22:26:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.220 2021/12/08 20:11:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.221 2022/01/10 22:26:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1399,10 +1399,8 @@ procfs_readdir(void *v)
 				*cookies++ = i + 1;
 			nc++;
 		}
-		if (error) {
-			ncookies = nc;
-			break;
-		}
+		if (error)
+			goto out;
 		for (; uio->uio_resid >= UIO_MX && i < nfd; i++) {
 			/* check the descriptor exists */
 			if ((fp = fd_getfile2(p, i - 2)) == NULL)
@@ -1419,9 +1417,7 @@ procfs_readdir(void *v)
 				*cookies++ = i + 1;
 			nc++;
 		}
-		ncookies = nc;
-		procfs_proc_unlock(p);
-		break;
+		goto out;
 	}
 	case PFStask: {
 		struct proc *p;
@@ -1453,10 +1449,8 @@ procfs_readdir(void *v)
 				*cookies++ = i + 1;
 			nc++;
 		}
-		if (error) {
-			ncookies = nc;
-			break;
-		}
+		if (error)
+			goto out;
 		for (; uio->uio_resid >= UIO_MX && i < nfd; i++) {
 			/* check the descriptor exists */
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFStask,
@@ -1470,9 +1464,7 @@ procfs_readdir(void *v)
 				*cookies++ = i + 1;
 			nc++;
 		}
-		ncookies = nc;
-		procfs_proc_unlock(p);
-		break;
+		goto out;
 	}
 
 	/*
@@ -1575,7 +1567,7 @@ procfs_readdir(void *v)
 			if (cookies)
 				*cookies++ = i + 1;
 		}
-
+out:
 		ncookies = nc;
 		procfs_proc_unlock(p);
 		break;
