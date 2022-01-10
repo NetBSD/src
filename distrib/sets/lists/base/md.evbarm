@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.20 2021/02/09 11:57:20 yamt Exp $
+# $NetBSD: md.evbarm,v 1.21 2022/01/10 15:31:38 martin Exp $
 ./libdata/firmware/if_bwfm/brcmfmac43143-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b0-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b4-sdio.bin	base-firmware-root	firmware
@@ -29,3 +29,7 @@
 ./libdata/firmware/if_bwfm/brcmfmac4354-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4356-sdio.bin	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4373-sdio.bin	base-firmware-root	firmware
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
