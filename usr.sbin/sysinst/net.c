@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.36 2021/01/31 22:45:46 rillig Exp $	*/
+/*	$NetBSD: net.c,v 1.37 2022/01/10 12:17:48 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,6 +79,8 @@ static char net_mask[SSTRSIZE];
 char net_namesvr[STRSIZE];
 static char net_defroute[STRSIZE];
 static char net_media[STRSIZE];
+static char net_ssid[STRSIZE];
+static char net_passphrase[STRSIZE];
 static char sl_flags[STRSIZE];
 static int net_dhcpconf;
 #define DHCPCONF_IPADDR         0x01
@@ -100,8 +102,11 @@ static char *url_encode (char *dst, const char *src, const char *ep,
 static void write_etc_hosts(FILE *f);
 
 #define DHCPCD "/sbin/dhcpcd"
+#define WPA_SUPPLICANT "/usr/sbin/wpa_supplicant"
 #include <signal.h>
+static int config_eth_medium(char *);
 static int config_dhcp(char *);
+static int config_wlan(char *);
 
 #ifdef INET6
 static int is_v6kernel (void);
@@ -562,45 +567,8 @@ again:
 		/* domain and host */
 		msg_display(MSG_netinfo);
 
-		/* ethernet medium */
-		for (;;) {
-			msg_prompt_add(MSG_net_media, net_media, net_media,
-					sizeof net_media);
-
-			/*
-			 * ifconfig does not allow media specifiers on
-			 * IFM_MANUAL interfaces.  Our UI gives no way
-			 * to set an option back
-			 * to null-string if it gets accidentally set.
-			 * Check for plausible alternatives.
-			 */
-			if (strcmp(net_media, "<default>") == 0 ||
-			    strcmp(net_media, "default") == 0 ||
-			    strcmp(net_media, "<manual>") == 0 ||
-			    strcmp(net_media, "manual") == 0 ||
-			    strcmp(net_media, "<none>") == 0 ||
-			    strcmp(net_media, "none") == 0 ||
-			    strcmp(net_media, " ") == 0) {
-				*net_media = '\0';
-			}
-
-			if (*net_media == '\0')
-				break;
-			/*
-			 * We must set the media type here - to give dhcp
-			 * a chance
-			 */
-			if (run_program(0, "/sbin/ifconfig %s media %s",
-				    net_dev, net_media) == 0)
-				break;
-			/* Failed to set - output the supported values */
-			if (collect(T_OUTPUT, &textbuf, "/sbin/ifconfig -m %s |"
-				    "while IFS=; read line;"
-				    " do [ \"$line\" = \"${line#*media}\" ] || "
-				    "echo $line;"
-				    " done", net_dev ) > 0)
-				msg_display(textbuf);
-			free(textbuf);
+		if (!config_wlan(net_dev)) {
+			config_eth_medium(net_dev);
 		}
 
 		net_dhcpconf = 0;
@@ -1092,6 +1060,10 @@ mnt_net_config(void)
 	if (net_namesvr[0] != '\0')
 		dup_file_into_target("/etc/resolv.conf");
 
+	/* Copy wpa_supplicant.conf to target. */
+	if (net_ssid[0] != '\0')
+		dup_file_into_target("/etc/wpa_supplicant.conf");
+
 	/*
 	 * bring the interface up, it will be necessary for IPv6, and
 	 * it won't make trouble with IPv4 case either
@@ -1149,10 +1121,71 @@ mnt_net_config(void)
 		add_rc_conf("dhcpcd_flags=\"-qM %s\"\n", net_dev);
         }
 
+	if (net_ssid[0] != '\0') {
+		add_rc_conf("wpa_supplicant=YES\n");
+		add_rc_conf("wpa_supplicant_flags=\"-B -s -i %s -D bsd -c /etc/wpa_supplicant.conf\"\n", net_dev);
+	}
+
 	if (ifconf)
 		fclose(ifconf);
 
 	fflush(NULL);
+}
+
+int
+config_wlan(char *inter)
+{
+	FILE *wpa_conf = NULL;
+	char wpa_cmd[256];
+
+	if (!file_mode_match(WPA_SUPPLICANT, S_IFREG))
+		return 0;
+
+	msg_prompt_add(MSG_net_ssid, net_ssid, net_ssid,
+			sizeof net_ssid);
+	if (net_ssid[0] == '\0')
+		return 0;
+
+	msg_prompt_noecho(MSG_net_passphrase, net_passphrase, net_passphrase,
+			sizeof net_passphrase);
+
+	wpa_conf = fopen("/etc/wpa_supplicant.conf", "a");
+	if (wpa_conf == NULL)
+		return 0;
+
+	scripting_fprintf(NULL,
+	    "cat <<EOF >>%s/etc/wpa_supplicant.conf\n",
+	    target_prefix());
+	scripting_fprintf(wpa_conf, "\n#\n");
+	scripting_fprintf(wpa_conf, "# Added by NetBSD sysinst\n");
+	scripting_fprintf(wpa_conf, "#\n");
+	scripting_fprintf(wpa_conf, "network={\n");
+	scripting_fprintf(wpa_conf,
+	    "\tssid=\"%s\"\n", net_ssid);
+	if (net_passphrase[0] != '\0') {
+		scripting_fprintf(wpa_conf, "\tpsk=\"%s\"\n",
+		    net_passphrase);
+	} else {
+		scripting_fprintf(wpa_conf, "\tkey_mgmt=NONE\n");
+	}
+	scripting_fprintf(wpa_conf, "}\n");
+	(void)fclose(wpa_conf);
+	scripting_fprintf(NULL, "EOF\n");
+
+	if (run_program(RUN_DISPLAY | RUN_PROGRESS,
+	    "/sbin/ifconfig %s up", inter) != 0)
+		return 0;
+
+	/*
+	 * have to use system() here to avoid the server process dying
+	 */
+	if (snprintf(wpa_cmd, sizeof(wpa_cmd),
+	    WPA_SUPPLICANT
+	    " -B -s -i %s -D bsd -c /etc/wpa_supplicant.conf", inter) < 0)
+		return 0;
+	(void)do_system(wpa_cmd);
+
+	return 1;
 }
 
 int
@@ -1173,6 +1206,54 @@ config_dhcp(char *inter)
 		dhcpautoconf = run_program(RUN_DISPLAY | RUN_PROGRESS,
 		    "%s -d -n %s", DHCPCD, inter);
 		return dhcpautoconf ? 0 : 1;
+	}
+	return 0;
+}
+
+
+int
+config_eth_medium(char *inter)
+{
+	char *textbuf = NULL;
+
+	for (;;) {
+		msg_prompt_add(MSG_net_media, net_media, net_media,
+				sizeof net_media);
+
+		/*
+		 * ifconfig does not allow media specifiers on
+		 * IFM_MANUAL interfaces.  Our UI gives no way
+		 * to set an option back
+		 * to null-string if it gets accidentally set.
+		 * Check for plausible alternatives.
+		 */
+		if (strcmp(net_media, "<default>") == 0 ||
+		    strcmp(net_media, "default") == 0 ||
+		    strcmp(net_media, "<manual>") == 0 ||
+		    strcmp(net_media, "manual") == 0 ||
+		    strcmp(net_media, "<none>") == 0 ||
+		    strcmp(net_media, "none") == 0 ||
+		    strcmp(net_media, " ") == 0) {
+			*net_media = '\0';
+		}
+
+		if (*net_media == '\0')
+			break;
+		/*
+		 * We must set the media type here - to give dhcp
+		 * a chance
+		 */
+		if (run_program(0, "/sbin/ifconfig %s media %s",
+			    net_dev, net_media) == 0)
+			break;
+		/* Failed to set - output the supported values */
+		if (collect(T_OUTPUT, &textbuf, "/sbin/ifconfig -m %s |"
+			    "while IFS=; read line;"
+			    " do [ \"$line\" = \"${line#*media}\" ] || "
+			    "echo $line;"
+			    " done", net_dev ) > 0)
+			msg_display(textbuf);
+		free(textbuf);
 	}
 	return 0;
 }
