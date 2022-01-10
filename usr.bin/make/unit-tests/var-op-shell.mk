@@ -1,4 +1,4 @@
-# $NetBSD: var-op-shell.mk,v 1.5 2022/01/09 18:22:31 rillig Exp $
+# $NetBSD: var-op-shell.mk,v 1.6 2022/01/10 20:32:29 rillig Exp $
 #
 # Tests for the != variable assignment operator, which runs its right-hand
 # side through the shell.
@@ -80,5 +80,11 @@ OUTPUT!=	echo '$$$$$$$$'
 .if ${OUTPUT} != "\$\$"
 .  error
 .endif
+
+
+# As a debugging aid, log the exact command that is run via the shell.
+.MAKEFLAGS: -dv
+OUTPUT!=	echo '$$$$$$$$'
+.MAKEFLAGS: -d0
 
 all:

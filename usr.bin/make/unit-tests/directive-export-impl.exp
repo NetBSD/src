@@ -14,6 +14,7 @@ CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<>" (eval-defined)
 Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
 Modifier part: "echo "$UT_VAR""
+Capturing the output of command "echo "$UT_VAR""
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
 Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR"
 Result of ${.MAKE.EXPORTED:O} is "UT_VAR"
@@ -37,6 +38,7 @@ CondParser_Eval: ${:!echo "\$UT_VAR"!} != "<defined>"
 Var_Parse: ${:!echo "\$UT_VAR"!} != "<defined>" (eval-defined)
 Evaluating modifier ${:!...} on value "" (eval-defined, undefined)
 Modifier part: "echo "$UT_VAR""
+Capturing the output of command "echo "$UT_VAR""
 Var_Parse: ${.MAKE.EXPORTED:O:u} (eval)
 Evaluating modifier ${.MAKE.EXPORTED:O} on value "UT_VAR"
 Result of ${.MAKE.EXPORTED:O} is "UT_VAR"
