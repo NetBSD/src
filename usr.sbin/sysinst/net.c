@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.37 2022/01/10 12:17:48 nia Exp $	*/
+/*	$NetBSD: net.c,v 1.38 2022/01/10 22:14:01 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,7 @@
 #include <net/if.h>
 #include <net/if_media.h>
 #include <netinet/in.h>
+#include <net80211/ieee80211_ioctl.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -1137,6 +1138,23 @@ config_wlan(char *inter)
 {
 	FILE *wpa_conf = NULL;
 	char wpa_cmd[256];
+	int sock;
+	struct ifreq ifr = {0};
+	struct ieee80211_nwid nwid = {0};
+
+	strlcpy(ifr.ifr_name, inter, sizeof(ifr.ifr_name));
+	ifr.ifr_data = &nwid;
+
+	sock = socket(PF_INET, SOCK_DGRAM, 0);
+	if (sock == -1)
+		return 0;
+
+	/* skip non-WLAN devices */
+	if (ioctl(sock, SIOCG80211NWID, &ifr) == -1) {
+		close(sock);
+		return 0;
+	}
+	close(sock);
 
 	if (!file_mode_match(WPA_SUPPLICANT, S_IFREG))
 		return 0;
