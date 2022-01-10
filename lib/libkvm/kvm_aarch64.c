@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_aarch64.c,v 1.10 2020/11/10 19:14:11 skrll Exp $ */
+/* $NetBSD: kvm_aarch64.c,v 1.11 2022/01/10 19:51:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #include "kvm_private.h"
 
-__RCSID("$NetBSD: kvm_aarch64.c,v 1.10 2020/11/10 19:14:11 skrll Exp $");
+__RCSID("$NetBSD: kvm_aarch64.c,v 1.11 2022/01/10 19:51:30 christos Exp $");
 
 /*ARGSUSED*/
 void
@@ -197,7 +197,6 @@ int
 _kvm_mdopen(kvm_t *kd)
 {
 
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 

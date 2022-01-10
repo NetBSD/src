@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.109 2020/05/02 14:31:13 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.110 2022/01/10 19:51:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.109 2020/05/02 14:31:13 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.110 2022/01/10 19:51:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -289,7 +289,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 
 	/*
 	 * Call the MD open hook.  This sets:
-	 *	usrstack, min_uva, max_uva
+	 *	min_uva, max_uva
 	 */
 	if (_kvm_mdopen(kd)) {
 		_kvm_err(kd, kd->program, "md init failed");

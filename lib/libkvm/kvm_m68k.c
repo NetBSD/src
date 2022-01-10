@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.19 2014/01/27 21:00:01 matt Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.20 2022/01/10 19:51:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #include "kvm_private.h"
 #include "kvm_m68k.h"
 
-__RCSID("$NetBSD: kvm_m68k.c,v 1.19 2014/01/27 21:00:01 matt Exp $");
+__RCSID("$NetBSD: kvm_m68k.c,v 1.20 2022/01/10 19:51:30 christos Exp $");
 
 struct name_ops {
 	const char *name;
@@ -157,13 +157,11 @@ _kvm_mdopen(kvm_t *kd)
 	extern struct ps_strings *__ps_strings;
 
 #if 0	/* XXX - These vary across m68k machines... */
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 #endif
 	/* This is somewhat hack-ish, but it works. */
 	max_uva = (u_long) (__ps_strings + 1);
-	kd->usrstack = max_uva;
 	kd->max_uva  = max_uva;
 	kd->min_uva  = 0;
 

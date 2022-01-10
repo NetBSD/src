@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_mips.c,v 1.22 2014/02/19 20:21:22 dsl Exp $ */
+/* $NetBSD: kvm_mips.c,v 1.23 2022/01/10 19:51:30 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_mips.c,v 1.22 2014/02/19 20:21:22 dsl Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.23 2022/01/10 19:51:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -236,7 +236,6 @@ int
 _kvm_mdopen(kvm_t *kd)
 {
 
-	kd->usrstack = USRSTACK;
 	kd->min_uva = VM_MIN_ADDRESS;
 	kd->max_uva = VM_MAXUSER_ADDRESS;
 
