@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.35 2021/09/25 08:54:31 maya Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.36 2022/01/10 12:17:48 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -625,6 +625,12 @@ message net_defroute
 
 message net_media
 {Type de réseau (média)}
+
+message net_ssid
+{Wi-Fi SSID?}
+
+message net_passphrase
+{Wi-Fi passphrase?}
 
 message netok
 {Vous avez spécifié les valeurs suivantes :

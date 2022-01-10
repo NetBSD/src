@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.34 2021/09/25 08:54:31 maya Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.35 2022/01/10 12:17:48 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -640,6 +640,12 @@ message net_defroute
 
 message net_media
 {Art der Netzwerkverbindung}
+
+message net_ssid
+{WLAN-SSID?}
+
+message net_passphrase
+{WLAN-Passwort?}
 
 message netok
 {Nachfolgend sehen Sie die aktuellen Netzwerkeinstellungen.
