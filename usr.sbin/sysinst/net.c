@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.38 2022/01/10 22:14:01 nia Exp $	*/
+/*	$NetBSD: net.c,v 1.39 2022/01/11 09:44:49 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -275,7 +275,7 @@ get_ifconfig_info(struct net_desc *devs)
 }
 
 static int
-do_ifreq(struct ifreq *ifr, unsigned long cmd)
+do_ifreq(struct ifreq *ifr, unsigned long cmd, void *data)
 {
 	int sock;
 	int rval;
@@ -285,6 +285,7 @@ do_ifreq(struct ifreq *ifr, unsigned long cmd)
 		return -1;
 
 	memset(ifr, 0, sizeof *ifr);
+	ifr->ifr_data = data;
 	strlcpy(ifr->ifr_name, net_dev, sizeof ifr->ifr_name);
 	rval = ioctl(sock, cmd, ifr);
 	close(sock);
@@ -321,10 +322,12 @@ get_ifinterface_info(void)
 	const char *media_opt;
 	const char *sep;
 
-	if (do_ifreq(&ifr, SIOCGIFADDR) == 0 && sa_in->sin_addr.s_addr != 0)
+	if (do_ifreq(&ifr, SIOCGIFADDR, NULL) == 0 &&
+	    sa_in->sin_addr.s_addr != 0)
 		strlcpy(net_ip, inet_ntoa(sa_in->sin_addr), sizeof net_ip);
 
-	if (do_ifreq(&ifr, SIOCGIFNETMASK) == 0 && sa_in->sin_addr.s_addr != 0)
+	if (do_ifreq(&ifr, SIOCGIFNETMASK, NULL) == 0 &&
+	    sa_in->sin_addr.s_addr != 0)
 		strlcpy(net_mask, inet_ntoa(sa_in->sin_addr), sizeof net_mask);
 
 	if (do_ifmreq(&ifmr, SIOCGIFMEDIA) == 0) {
@@ -1138,23 +1141,12 @@ config_wlan(char *inter)
 {
 	FILE *wpa_conf = NULL;
 	char wpa_cmd[256];
-	int sock;
 	struct ifreq ifr = {0};
 	struct ieee80211_nwid nwid = {0};
 
-	strlcpy(ifr.ifr_name, inter, sizeof(ifr.ifr_name));
-	ifr.ifr_data = &nwid;
-
-	sock = socket(PF_INET, SOCK_DGRAM, 0);
-	if (sock == -1)
-		return 0;
-
 	/* skip non-WLAN devices */
-	if (ioctl(sock, SIOCG80211NWID, &ifr) == -1) {
-		close(sock);
+	if (do_ifreq(&ifr, SIOCG80211NWID, &nwid) == -1)
 		return 0;
-	}
-	close(sock);
 
 	if (!file_mode_match(WPA_SUPPLICANT, S_IFREG))
 		return 0;
