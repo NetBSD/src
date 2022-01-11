@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_ged.c,v 1.3 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: acpi_ged.c,v 1.4 2022/01/11 10:53:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ged.c,v 1.3 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ged.c,v 1.4 2022/01/11 10:53:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,6 +87,7 @@ acpi_ged_register_event(void *priv, struct acpi_event *ev, struct acpi_irq *irq)
 		aprint_error_dev(dev, "couldn't establish interrupt (irq %d)\n", irq->ar_irq);
 		return;
 	}
+	acpi_event_set_intrcookie(ev, ih);
 }
 
 static int
