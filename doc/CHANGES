@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2856 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2857 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -465,3 +465,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	eqos(4): Add driver for DesignWare Ethernet Quality-of-Service
 		controller. [jmcneill 20220103]
 	OpenSSL: Imported 1.1.1m. [christos 20220107]
+	sysinst(8): Allow configuring IEEE 802.11 / Wi-Fi devices with
+		WPA or open networks. [nia 20220111]
