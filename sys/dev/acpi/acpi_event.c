@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_event.c,v 1.1 2018/10/22 22:29:35 jmcneill Exp $ */
+/* $NetBSD: acpi_event.c,v 1.2 2022/01/11 10:53:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_event.c,v 1.1 2018/10/22 22:29:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_event.c,v 1.2 2022/01/11 10:53:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,12 +40,14 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_event.c,v 1.1 2018/10/22 22:29:35 jmcneill Exp 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_event.h>
+#include <dev/acpi/acpi_intr.h>
 
 struct acpi_event {
 	device_t	ev_dev;
 	ACPI_HANDLE	ev_method;
 	bool		ev_method_evt;
 	UINT16		ev_data;
+	void		*ev_intrcookie;
 };
 
 struct acpi_event_gpio_context {
@@ -68,6 +70,7 @@ acpi_event_create(device_t dev, ACPI_HANDLE handle, UINT16 data, UINT8 trig, str
 	ev->ev_method = NULL;
 	ev->ev_method_evt = false;
 	ev->ev_data = data;
+	ev->ev_intrcookie = NULL;
 
 	if (data <= 255) {
 		snprintf(namebuf, sizeof(namebuf), "_%c%02X", trigchar, data);
@@ -169,13 +172,30 @@ acpi_event_invoke(void *priv)
 	}
 
 	rv = AcpiEvaluateObject(ev->ev_method, NULL, arg, NULL);
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv)) {
 		device_printf(ev->ev_dev, "failed to handle %s event: %s\n",
 		    acpi_name(ev->ev_method), AcpiFormatException(rv));
+	}
+
+	if (ev->ev_intrcookie != NULL) {
+		acpi_intr_unmask(ev->ev_intrcookie);
+	}
 }
 
 ACPI_STATUS
 acpi_event_notify(struct acpi_event *ev)
 {
+	if (ev->ev_intrcookie != NULL) {
+		acpi_intr_mask(ev->ev_intrcookie);
+	}
+
 	return AcpiOsExecute(OSL_NOTIFY_HANDLER, acpi_event_invoke, ev);
+}
+
+void
+acpi_event_set_intrcookie(struct acpi_event *ev, void *intrcookie)
+{
+	KASSERT(ev->ev_intrcookie == NULL);
+
+	ev->ev_intrcookie = intrcookie;
 }
