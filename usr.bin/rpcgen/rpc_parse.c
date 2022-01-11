@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.22 2016/01/23 02:33:09 dholland Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.23 2022/01/11 22:45:56 andvar Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.22 2016/01/23 02:33:09 dholland Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.23 2022/01/11 22:45:56 andvar Exp $");
 #endif
 #endif
 
@@ -184,7 +184,7 @@ def_program(definition *defp)
 			num_args = 1;
 			isvoid = FALSE;
 			/* type of DEF_PROGRAM in the first
-			 * get_prog_declaration and DEF_STURCT in the next
+			 * get_prog_declaration and DEF_STRUCT in the next
 			 * allows void as argument if it is the only argument */
 			get_prog_declaration(&dec, DEF_PROGRAM, num_args);
 			if (streq(dec.type, "void"))
