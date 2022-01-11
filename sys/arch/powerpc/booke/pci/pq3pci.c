@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.29 2021/08/07 16:19:02 thorpej Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.30 2022/01/11 22:45:56 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.29 2021/08/07 16:19:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.30 2022/01/11 22:45:56 andvar Exp $");
 
 #include "locators.h"
 
@@ -1690,8 +1690,8 @@ pq3pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz, int *iline)
  * This function is used by device drivers like pci_intr_map().
  *
  * "ihps" is the array of vector numbers which MSI used instead of IRQ number.
- * "count" must be powr of 2.
- * "count" can decrease if sturct intrsource cannot be allocated.
+ * "count" must be power of 2.
+ * "count" can decrease if struct intrsource cannot be allocated.
  * if count == 0, return non-zero value.
  */
 static int
