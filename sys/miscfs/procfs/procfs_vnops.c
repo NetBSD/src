@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.223 2022/01/11 11:10:46 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.224 2022/01/11 22:55:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.223 2022/01/11 11:10:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.224 2022/01/11 22:55:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1483,7 +1483,7 @@ procfs_readdir(void *v)
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 		}
-		error = 0;
+
 		/* 0 ... 3 are static entries. */
 		for (; i <= 3 && uio->uio_resid >= UIO_MX; i++) {
 			switch (i) {
@@ -1517,6 +1517,8 @@ procfs_readdir(void *v)
 			if (cookies)
 				*cookies++ = i + 1;
 		}
+		if (error)
+			break;
 		/* 4 ... are process entries. */
 		ctx.uiop = uio;
 		ctx.error = 0;
