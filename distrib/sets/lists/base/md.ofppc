@@ -1,10 +1,8 @@
-# $NetBSD: md.ofppc,v 1.15 2022/01/09 18:11:09 martin Exp $
+# $NetBSD: md.ofppc,v 1.16 2022/01/11 19:27:13 martin Exp $
 ./usr/mdec/mkbootinfo				base-sysutil-bin
 ./usr/mdec/netbsd.chrp				base-sysutil-bin
 ./usr/mdec/ofwboot				base-sysutil-bin
 ./usr/sbin/ofctl				base-sysutil-bin
 ./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
-./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
 
