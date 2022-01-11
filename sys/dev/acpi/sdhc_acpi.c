@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.15 2021/12/28 13:41:12 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.16 2022/01/11 22:32:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.15 2021/12/28 13:41:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.16 2022/01/11 22:32:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -148,6 +148,7 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
 	ACPI_INTEGER clock_freq;
+	ACPI_INTEGER caps, caps_mask;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = aa->aa_dmat;
@@ -214,6 +215,24 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	if (ACPI_SUCCESS(rv)) {
 		sc->sc.sc_clkbase = clock_freq / 1000;
 		sc->sc.sc_flags |= SDHC_FLAG_NO_CLKBASE;
+	}
+
+	/* Capability overrides */
+	caps = caps_mask = 0;
+	acpi_dsd_integer(aa->aa_node->ad_handle, "sdhci-caps-mask", &caps_mask);
+	acpi_dsd_integer(aa->aa_node->ad_handle, "sdhci-caps", &caps);
+	if (caps || caps_mask) {
+		sc->sc.sc_caps = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+		    SDHC_CAPABILITIES);
+		sc->sc.sc_caps &= ~(caps_mask & 0xffffffff);
+		sc->sc.sc_caps |= (caps & 0xffffffff);
+		if (((caps | caps_mask) >> 32) != 0) {
+			sc->sc.sc_caps2 = bus_space_read_4(sc->sc_memt,
+			    sc->sc_memh, SDHC_CAPABILITIES2);
+			sc->sc.sc_caps2 &= ~(caps_mask >> 32);
+			sc->sc.sc_caps2 |= (caps >> 32);
+		}
+		sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
 	}
 
 	if (sdhc_host_found(&sc->sc, sc->sc_memt, sc->sc_memh,
