@@ -8,5 +8,5 @@ make: Missing delimiter for modifier ':S'
 make: Missing delimiter for modifier ':S'
 CondParser_Eval: ${:!cat opt-debug-file.debuglog!:Mdelimiter:[#]} != 1
 lhs = 1.000000, rhs = 1.000000, op = !=
-Cannot open debug file "opt-debug-file.debuglog/file"
+Cannot open debug file "/nonexistent-6f21c672-a22d-4ef7/opt-debug-file.debuglog"
 exit status 2
