@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.168 2021/09/10 18:51:36 rillig Exp $	*/
+/*	$NetBSD: readline.c,v 1.169 2022/01/11 18:30:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.168 2021/09/10 18:51:36 rillig Exp $");
+__RCSID("$NetBSD: readline.c,v 1.169 2022/01/11 18:30:15 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: readline.c,v 1.168 2021/09/10 18:51:36 rillig Exp $");
 #include <limits.h>
 #include <pwd.h>
 #include <setjmp.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -136,11 +137,13 @@ int _rl_completion_prefix_display_length;
 int _rl_echoing_p;
 int history_max_entries;
 char *rl_display_prompt;
+int rl_erase_empty_line;
 
 /*
  * The current prompt string.
  */
 char *rl_prompt = NULL;
+char *rl_prompt_saved = NULL;
 /*
  * This is set to character indicating type of completion being done by
  * rl_complete_internal(); this is available for application completion
@@ -276,6 +279,21 @@ rl_set_prompt(const char *prompt)
 	}
 
 	return 0;
+}
+
+void
+rl_save_prompt(void)
+{
+	rl_prompt_saved = strdup(rl_prompt);
+}
+
+void
+rl_restore_prompt(void)
+{
+	if (!rl_prompt_saved)
+		return;
+	rl_prompt = rl_prompt_saved;
+	rl_prompt_saved = NULL;
 }
 
 /*
@@ -2281,6 +2299,41 @@ _rl_update_pos(void)
 	rl_line_buffer[rl_end] = '\0';
 }
 
+char *
+rl_copy_text(int from, int to)
+{
+	const LineInfo *li = el_line(e);
+	size_t len;
+	char * out;
+
+	if (from > to)
+		return NULL;
+
+	if (li->buffer + from > li->lastchar)
+		from = (int)(li->lastchar - li->buffer);
+
+	if (li->buffer + to > li->lastchar)
+		to = (int)(li->lastchar - li->buffer);
+
+	len = (size_t)(to - from);
+	out = el_malloc((size_t)len + 1);
+	(void)strlcpy(out, li->buffer + from , len);
+
+	return out;
+}
+
+void
+rl_replace_line(const char * text, int clear_undo __attribute__((__unused__)))
+{
+	if (!text || *text == 0)
+		return;
+
+	if (h == NULL || e == NULL)
+		rl_initialize();
+
+	el_replacestr(e, text);
+}
+
 void
 rl_get_screen_size(int *rows, int *cols)
 {
@@ -2288,6 +2341,21 @@ rl_get_screen_size(int *rows, int *cols)
 		el_get(e, EL_GETTC, "li", rows);
 	if (cols)
 		el_get(e, EL_GETTC, "co", cols);
+}
+
+#define MAX_MESSAGE 160
+void
+rl_message(const char *format, ...)
+{
+	char msg[MAX_MESSAGE];
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf(msg, sizeof(msg), format, args);
+	va_end(args);
+
+	rl_set_prompt(msg);
+	rl_redisplay();
 }
 
 void

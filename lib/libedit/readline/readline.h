@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.47 2021/08/21 12:34:59 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.48 2022/01/11 18:30:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ extern int		_rl_completion_prefix_display_length;
 extern int		_rl_echoing_p;
 extern int		history_max_entries;
 extern char		*rl_display_prompt;
+extern int		rl_erase_empty_line;
 
 /* supported functions */
 char		*readline(const char *);
@@ -180,7 +181,7 @@ int		 history_search_prefix(const char *, int);
 int		 history_search_pos(const char *, int, int);
 int		 read_history(const char *);
 int		 write_history(const char *);
-int		 history_truncate_file (const char *, int);
+int		 history_truncate_file(const char *, int);
 int		 history_expand(char *, char **);
 char	       **history_tokenize(const char *);
 const char	*get_history_event(const char *, int *, int);
@@ -215,7 +216,7 @@ int		 rl_add_defun(const char *, rl_command_func_t *, int);
 HISTORY_STATE	*history_get_history_state(void);
 void		 rl_get_screen_size(int *, int *);
 void		 rl_set_screen_size(int, int);
-char		*rl_filename_completion_function (const char *, int);
+char		*rl_filename_completion_function(const char *, int);
 int		 _rl_abort_internal(void);
 int		 _rl_qsort_string_compare(char **, char **);
 char	       **rl_completion_matches(const char *, rl_compentry_func_t *);
@@ -226,6 +227,11 @@ void		 rl_reset_after_signal(void);
 void		 rl_echo_signal_char(int);
 int		 rl_crlf(void);
 int		 rl_ding(void);
+char 		*rl_copy_text(int, int);
+void		 rl_replace_line(const char *, int);
+void 		 rl_message(const char *format, ...);
+void		 rl_save_prompt(void);
+void		 rl_restore_prompt(void);
 
 /*
  * The following are not implemented

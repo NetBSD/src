@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.58 2021/08/15 10:08:41 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.59 2022/01/11 18:30:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -179,6 +179,7 @@ void		 el_resize(EditLine *);
 const LineInfo	*el_line(EditLine *);
 int		 el_insertstr(EditLine *, const char *);
 void		 el_deletestr(EditLine *, int);
+int		 el_replacestr(EditLine *el, const char *str);
 
 
 /*
@@ -278,6 +279,7 @@ int		 el_cursor(EditLine *, int);
 const LineInfoW	*el_wline(EditLine *);
 int		 el_winsertstr(EditLine *, const wchar_t *);
 #define          el_wdeletestr  el_deletestr
+int		 el_wreplacestr(EditLine *, const wchar_t *);
 
 /*
  * ==== History ====
