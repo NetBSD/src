@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.9 2021/10/19 07:52:33 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.10 2022/01/12 08:23:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -199,8 +199,8 @@ struct lagg_softc {
  * - IFNET_LOCK(sc_if) -> LAGG_LOCK -> ETHER_LOCK(sc_if) -> a lock in
  *   struct lagg_port_softc
  * - IFNET_LOCK(sc_if) -> LAGG_LOCK -> IFNET_LOCK(lp_ifp)
+ * - IFNET_LOCK(lp_ifp) -> a lock in struct lagg_proto_softc
  * - Currently, there is no combination of following locks
- *   - IFNET_LOCK(lp_ifp) and a lock in struct lagg_proto_softc
  *   - IFNET_LOCK(lp_ifp) and ETHER_LOCK(sc_if)
  */
 #define LAGG_LOCK(_sc)		mutex_enter(&(_sc)->sc_lock)
@@ -320,6 +320,6 @@ void		lacp_protostat(struct lagg_proto_softc *,
 		    struct laggreqproto *);
 void		lacp_portstat(struct lagg_proto_softc *, struct lagg_port *,
 		    struct laggreqport *);
-void		lacp_linkstate(struct lagg_proto_softc *, struct lagg_port *);
+void		lacp_linkstate_ifnet_locked(struct lagg_proto_softc *, struct lagg_port *);
 int		lacp_ioctl(struct lagg_proto_softc *, struct laggreqproto *);
 #endif

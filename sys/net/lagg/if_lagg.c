@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.29 2022/01/12 01:21:36 riastradh Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.30 2022/01/12 08:23:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.29 2022/01/12 01:21:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.30 2022/01/12 08:23:53 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -102,7 +102,7 @@ static const struct lagg_proto lagg_protos[] = {
 		.pr_stopport = lacp_stopport,
 		.pr_protostat = lacp_protostat,
 		.pr_portstat = lacp_portstat,
-		.pr_linkstate = lacp_linkstate,
+		.pr_linkstate = lacp_linkstate_ifnet_locked,
 		.pr_ioctl = lacp_ioctl,
 	},
 	[LAGG_PROTO_FAILOVER] = {
@@ -1490,6 +1490,8 @@ lagg_proto_linkstate(struct lagg_softc *sc, struct lagg_port *lp)
 	lagg_proto pr;
 	int bound;
 
+	KASSERT(IFNET_LOCKED(lp->lp_ifp));
+
 	bound = curlwp_bind();
 	var = lagg_variant_getref(sc, &psref);
 
@@ -2692,6 +2694,8 @@ lagg_port_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		goto fallback;
 	}
 
+	KASSERT(IFNET_LOCKED(lp->lp_ifp));
+
 	switch (cmd) {
 	case SIOCSIFCAP:
 	case SIOCSIFMTU:
@@ -2817,7 +2821,10 @@ lagg_linkstate_changed(void *xifp)
 	}
 	pserialize_read_exit(s);
 
+	IFNET_LOCK(lp->lp_ifp);
 	lagg_proto_linkstate(lp->lp_softc, lp);
+	IFNET_UNLOCK(lp->lp_ifp);
+
 	lagg_port_putref(lp, &psref);
 	curlwp_bindx(bound);
 }
