@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.11 2022/01/06 12:09:42 riastradh Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.12 2022/01/12 08:23:53 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.11 2022/01/06 12:09:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.12 2022/01/12 08:23:53 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -212,8 +212,6 @@ static void	lacp_dprintf(const struct lacp_softc *,
 #define LACP_LOCK(_sc)		mutex_enter(&(_sc)->lsc_lock)
 #define LACP_UNLOCK(_sc)	mutex_exit(&(_sc)->lsc_lock)
 #define LACP_LOCKED(_sc)	mutex_owned(&(_sc)->lsc_lock)
-#define LACP_LINKSTATE(_sc, _lp)			\
-	lacp_linkstate((struct lagg_proto_softc *)(_sc), (_lp))
 #define LACP_TIMER_ARM(_lacpp, _timer, _val)		\
 	(_lacpp)->lp_timer[(_timer)] = (_val)
 #define LACP_TIMER_DISARM(_lacpp, _timer)		\
@@ -242,6 +240,7 @@ static void	lacp_dprintf(const struct lacp_softc *,
 
 static void	lacp_tick(void *);
 static void	lacp_tick_work(struct lagg_work *, void *);
+static void	lacp_linkstate(struct lagg_proto_softc *, struct lagg_port *);
 static uint32_t	lacp_ifmedia2lacpmedia(u_int);
 static void	lacp_port_disable(struct lacp_softc *, struct lacp_port *);
 static void	lacp_port_enable(struct lacp_softc *, struct lacp_port *);
@@ -673,7 +672,7 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 
 	lp->lp_proto_ctx = (void *)lacpp;
 	lp->lp_prio = ntohs(lacpp->lp_actor.lpi_portprio);
-	LACP_LINKSTATE(lsc, lp);
+	lacp_linkstate(xlsc, lp);
 
 	return 0;
 }
@@ -689,7 +688,7 @@ lacp_startport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	prio = (uint16_t)MIN(lp->lp_prio, UINT16_MAX);
 	lacpp->lp_actor.lpi_portprio = htons(prio);
 
-	LACP_LINKSTATE((struct lacp_softc *)xlsc, lp);
+	lacp_linkstate(xlsc, lp);
 }
 
 void
@@ -821,7 +820,7 @@ lacp_portstat(struct lagg_proto_softc *xlsc, struct lagg_port *lp,
 }
 
 void
-lacp_linkstate(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
+lacp_linkstate_ifnet_locked(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 {
 	struct lacp_softc *lsc;
 	struct lacp_port *lacpp;
@@ -831,6 +830,8 @@ lacp_linkstate(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	uint32_t media, old_media;
 	int error;
 
+	KASSERT(IFNET_LOCKED(lp->lp_ifp));
+
 	lsc = (struct lacp_softc *)xlsc;
 
 	ifp_port = lp->lp_ifp;
@@ -839,9 +840,7 @@ lacp_linkstate(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 
 	memset(&ifmr, 0, sizeof(ifmr));
 	ifmr.ifm_count = 0;
-	IFNET_LOCK(ifp_port);
 	error = if_ioctl(ifp_port, SIOCGIFMEDIA, (void *)&ifmr);
-	IFNET_UNLOCK(ifp_port);
 	if (error == 0) {
 		media = lacp_ifmedia2lacpmedia(ifmr.ifm_active);
 	} else if (error != ENOTTY){
@@ -2643,4 +2642,15 @@ lacp_ifmedia2lacpmedia(u_int ifmedia)
 		SET(rv, LACP_MEDIA_FDX);
 
 	return rv;
+}
+
+static void
+lacp_linkstate(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
+{
+
+	IFNET_ASSERT_UNLOCKED(lp->lp_ifp);
+
+	IFNET_LOCK(lp->lp_ifp);
+	lacp_linkstate_ifnet_locked(xlsc, lp);
+	IFNET_UNLOCK(lp->lp_ifp);
 }
