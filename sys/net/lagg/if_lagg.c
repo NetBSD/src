@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.28 2021/12/31 14:25:24 riastradh Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.29 2022/01/12 01:21:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.28 2021/12/31 14:25:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.29 2022/01/12 01:21:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2385,9 +2385,13 @@ lagg_port_setup(struct lagg_softc *sc,
 	lagg_port_syncvlan(sc, lp);
 
 	if (stopped) {
-		error = if_init(ifp_port);
-		if (error != 0)
-			goto remove_port;
+		IFNET_LOCK(ifp_port);
+		if (!ISSET(ifp_port->if_flags, IFF_RUNNING)) {
+			error = if_init(ifp_port);
+			if (error != 0)
+				goto remove_port;
+		}
+		IFNET_UNLOCK(ifp_port);
 	}
 
 	lagg_config_promisc(sc, lp);
@@ -2484,11 +2488,11 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 		ifp_port->if_ioctl = lp->lp_ioctl;
 	ifp_port->if_output = lp->lp_output;
 	lagg_teardown_mtu(sc, lp);
-	IFNET_UNLOCK(ifp_port);
 
 	if (stopped) {
 		if_init(ifp_port);
 	}
+	IFNET_UNLOCK(ifp_port);
 
 	if (is_ifdetach == false) {
 		lagg_unconfig_promisc(sc, lp);
