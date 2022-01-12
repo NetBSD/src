@@ -1,4 +1,4 @@
-# $NetBSD: md.ia64,v 1.1 2016/08/05 16:21:09 scole Exp $
+# $NetBSD: md.ia64,v 1.2 2022/01/12 15:35:51 martin Exp $
 #
 # XXX add skiload for now
 #
@@ -7,3 +7,7 @@
 ./usr/mdec/loader.efi		base-sysutil-bin
 ./usr/mdec/loader.sym		base-sysutil-bin
 ./usr/mdec/skiload		base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share
