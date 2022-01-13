@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.186 2021/12/13 01:51:12 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.187 2022/01/13 04:51:50 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -65,6 +65,9 @@ static char *metaIgnorePathsStr;	/* string storage for the list */
 #ifndef MAKE_META_IGNORE_FILTER
 #define MAKE_META_IGNORE_FILTER ".MAKE.META.IGNORE_FILTER"
 #endif
+#ifndef MAKE_META_CMP_FILTER
+#define MAKE_META_CMP_FILTER ".MAKE.META.CMP_FILTER"
+#endif
 
 bool useMeta = false;
 static bool useFilemon = false;
@@ -76,6 +79,7 @@ static bool metaVerbose = false;
 static bool metaIgnoreCMDs = false;	/* ignore CMDs in .meta files */
 static bool metaIgnorePatterns = false; /* do we need to do pattern matches */
 static bool metaIgnoreFilter = false;	/* do we have more complex filtering? */
+static bool metaCmpFilter = false;	/* do we have CMP_FILTER ? */
 static bool metaCurdirOk = false;	/* write .meta in .CURDIR Ok? */
 static bool metaSilent = false;		/* if we have a .meta be SILENT */
 
@@ -661,6 +665,11 @@ meta_mode_init(const char *make_mode)
 	metaIgnoreFilter = true;
 	FStr_Done(&value);
     }
+    value = Var_Value(SCOPE_GLOBAL, MAKE_META_CMP_FILTER);
+    if (value.str != NULL) {
+	metaCmpFilter = true;
+	FStr_Done(&value);
+    }
 }
 
 /*
@@ -1075,6 +1084,39 @@ append_if_new(StringList *list, const char *str)
 	if (strcmp(ln->datum, str) == 0)
 	    return;
     Lst_Append(list, bmake_strdup(str));
+}
+
+static char *
+meta_filter_cmd(Buffer *buf, GNode *gn, char *s)
+{
+    Buf_Clear(buf);
+    Buf_AddStr(buf, "${");
+    Buf_AddStr(buf, s);
+    Buf_AddStr(buf, ":L:${" MAKE_META_CMP_FILTER ":ts:}}");
+    Var_Subst(buf->data, gn, VARE_WANTRES, &s);
+    return s;
+}
+    
+static int
+meta_cmd_cmp(GNode *gn, char *a, char *b)
+{
+    static int once = 0;
+    static Buffer buf;
+    int rc;
+
+    rc = strcmp(a, b);
+    if (rc == 0 || !metaCmpFilter)
+	return rc;
+    if (!once) {
+	once++;
+	Buf_InitSize(&buf, BUFSIZ);
+    }
+    a = meta_filter_cmd(&buf, gn, a);
+    b = meta_filter_cmd(&buf, gn, b);
+    rc = strcmp(a, b);
+    free(a);
+    free(b);
+    return rc;
 }
 
 bool
@@ -1552,7 +1594,7 @@ meta_oodate(GNode *gn, bool oodate)
 		    if (p != NULL &&
 			!hasOODATE &&
 			!(gn->type & OP_NOMETA_CMP) &&
-			(strcmp(p, cmd) != 0)) {
+			(meta_cmd_cmp(gn, p, cmd) != 0)) {
 			DEBUG4(META, "%s: %d: a build command has changed\n%s\nvs\n%s\n",
 			       fname, lineno, p, cmd);
 			if (!metaIgnoreCMDs)

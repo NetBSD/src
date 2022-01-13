@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.300 2021/12/12 20:45:48 sjg Exp $
+.\"	$NetBSD: make.1,v 1.301 2022/01/13 04:51:50 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd December 12, 2021
+.Dd January 12, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -954,6 +954,12 @@ If a file that was generated outside of
 .Va .OBJDIR
 but within said bailiwick is missing,
 the current target is considered out-of-date.
+.It Va .MAKE.META.CMP_FILTER
+In "meta" mode, it can (very rarely!) be useful to filter command
+lines before comparison.
+This variable can be set to a set of modifiers that will be applied to
+each line of the old and new command that differ, if the filtered
+commands still differ, the target is considered out-of-date.
 .It Va .MAKE.META.CREATED
 In "meta" mode, this variable contains a list of all the meta files
 updated.
