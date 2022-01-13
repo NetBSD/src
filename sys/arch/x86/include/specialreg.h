@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.179 2022/01/13 00:21:41 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.180 2022/01/13 16:03:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -137,13 +137,14 @@
 #define XCR0_CET_U	0x00000800	/* User CET state */
 #define XCR0_CET_S	0x00001000	/* Kern CET state */
 #define XCR0_HDC	0x00002000	/* Hardware Duty Cycle state */
+#define XCR0_LBR	0x00008000	/* Last Branch Record */
 #define XCR0_HWP	0x00010000	/* Hardware P-states */
 
 #define XCR0_FLAGS1	"\20"						  \
 	"\1" "x87"	"\2" "SSE"	"\3" "AVX"	"\4" "BNDREGS"	  \
 	"\5" "BNDCSR"	"\6" "Opmask"	"\7" "ZMM_Hi256" "\10" "Hi16_ZMM" \
 	"\11" "PT"	"\12" "PKRU"			"\14" "CET_U"	  \
-	"\15" "CET_S"	"\16" "HDC"					  \
+	"\15" "CET_S"	"\16" "HDC"			"\20" "LBR"	  \
 	"\21" "HWP"
 
 /*
@@ -370,6 +371,7 @@
 #define CPUID_DSPM_HWP_FAST   __BIT(18)	/* Fast access for IA32_HWP_REQUEST */
 #define CPUID_DSPM_HW_FEEDBACK __BIT(19) /* HW_FEEDBACK*, IA32_PACKAGE_TERM* */
 #define CPUID_DSPM_HWP_IGNIDL __BIT(20)	/* Ignore Idle Logical Processor HWP */
+#define CPUID_DSPM_TD	__BIT(23)	/* Thread Director */
 
 #define CPUID_DSPM_FLAGS	"\20"					      \
 	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" 			      \
@@ -377,7 +379,7 @@
 	"\11" "HWP_NOTIFY" "\12" "HWP_ACTWIN" "\13" "HWP_EPP" "\14" "HWP_PLR" \
 			"\16" "HDC"	"\17" "TBM3"	"\20" "HWP_CAP"       \
 	"\21" "HWP_PECI" "\22" "HWP_FLEX" "\23" "HWP_FAST" "\24HW_FEEDBACK"   \
-	"\25" "HWP_IGNIDL"
+	"\25" "HWP_IGNIDL"				"\30" "TD"
 
 /*
  * Intel/AMD Digital Thermal Sensor and
@@ -385,8 +387,11 @@
  */
 #define CPUID_DSPM_HWF	__BIT(0)	/* MSR_APERF/MSR_MPERF available */
 #define CPUID_DSPM_EPB	__BIT(3)	/* Energy Performance Bias */
+#define CPUID_DSPM_NTDC	__BITS(15, 8)	/* Number of Thread Director Classes */
 
-#define CPUID_DSPM_FLAGS1	"\20" "\1" "HWF" "\4" "EPB"
+#define CPUID_DSPM_FLAGS1	"\177\20"				\
+	"b\0HWF\0"					"b\3EPB\0"	\
+	"f\10\10NTDC\0"
 
 /*
  * Intel/AMD Structured Extended Feature leaf Fn0000_0007
@@ -511,9 +516,23 @@
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP" "\40" "SSBD"
 
 /* %ecx = 1, %eax */
+#define CPUID_SEF_AVXVNNI	__BIT(4)  /* AVX version of VNNI */
 #define CPUID_SEF_AVX512_BF16	__BIT(5)
-#define CPUID_SEF1_FLAGS_A	"\20"			\
-				"\6" "AVX512_BF16"
+#define CPUID_SEF_FZLRMS	__BIT(10) /* fast zero-length REP MOVSB */
+#define CPUID_SEF_FSRSB		__BIT(11) /* fast short REP STOSB */
+#define CPUID_SEF_FSRCS		__BIT(12) /* fast short REP CMPSB, REP SCASB */
+#define CPUID_SEF_HRESET	__BIT(22) /* HREST & IA32_HRESET_ENABLE MSR */
+
+#define CPUID_SEF1_FLAGS_A	"\20"					\
+	"\5" "AVXVNNI"	"\6" "AVX512_BF16"				\
+					"\13" "FZLRMS"	"\14" "FSRSB"	\
+	"\15" "FSRCS"			"\27" "HRESET"
+/* %ecx = 1, %ebx */
+#define CPUID_SEF_PPIN		__BIT(0)  /* IA32_PPIN & IA32_PPIN_CTL MSRs */
+
+#define CPUID_SEF1_FLAGS_B	"\20"				\
+				"\1" "PPIN"
+
 /*
  * Intel CPUID Architectural Performance Monitoring Fn0000000a
  *
