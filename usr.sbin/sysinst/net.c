@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.39 2022/01/11 09:44:49 nia Exp $	*/
+/*	$NetBSD: net.c,v 1.40 2022/01/13 14:47:11 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1178,6 +1178,7 @@ config_wlan(char *inter)
 	} else {
 		scripting_fprintf(wpa_conf, "\tkey_mgmt=NONE\n");
 	}
+	scripting_fprintf(wpa_conf, "\tscan_ssid=1\n");
 	scripting_fprintf(wpa_conf, "}\n");
 	(void)fclose(wpa_conf);
 	scripting_fprintf(NULL, "EOF\n");
