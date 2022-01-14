@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.48 2022/01/11 18:30:15 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.49 2022/01/14 12:48:30 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ int		 rl_crlf(void);
 int		 rl_ding(void);
 char 		*rl_copy_text(int, int);
 void		 rl_replace_line(const char *, int);
-void 		 rl_message(const char *format, ...);
+void 		 rl_message(const char *format, ...) __printflike(1, 2);
 void		 rl_save_prompt(void);
 void		 rl_restore_prompt(void);
 
