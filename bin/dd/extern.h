@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.24 2019/10/04 08:57:38 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.25 2022/01/14 23:56:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -81,7 +81,7 @@ extern uint64_t		progress;
 extern const u_char	*ctab;
 extern const u_char	a2e_32V[], a2e_POSIX[];
 extern const u_char	e2a_32V[], e2a_POSIX[];
-extern const u_char	a2ibm_32V[], a2ibm_POSIX[];
+extern const u_char	a2ibm[];
 extern u_char		casetab[];
 extern const char	*msgfmt;
 
