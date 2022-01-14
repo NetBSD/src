@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2022/01/04 05:55:45 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2022/01/14 07:21:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2022/01/04 05:55:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2022/01/14 07:21:53 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1511,7 +1511,6 @@ pmap_create(void)
 
 	kcpuset_create(&pm->pm_active, true);
 	kcpuset_create(&pm->pm_onproc, true);
-	pm->pm_remove_all = false;
 
 	pm->pm_l0table_pa = pmap_alloc_pdp(pm, NULL, 0, true);
 	KASSERT(pm->pm_l0table_pa != POOL_PADDR_INVALID);
@@ -1531,9 +1530,8 @@ pmap_destroy(struct pmap *pm)
 	unsigned int refcnt;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist,
-	    "pm=%p, pm_l0table=%016lx, pm_remove_all=%jd, refcnt=%jd",
-	    pm, pm->pm_l0table, pm->pm_remove_all, pm->pm_refcnt);
+	UVMHIST_CALLARGS(pmaphist, "pm=%p, pm_l0table=%016lx, refcnt=%jd",
+	    pm, pm->pm_l0table, pm->pm_refcnt, 0);
 
 	if (pm == NULL)
 		return;
@@ -1541,16 +1539,12 @@ pmap_destroy(struct pmap *pm)
 	if (pm == pmap_kernel())
 		panic("cannot destroy kernel pmap");
 
-	if (pm->pm_remove_all) {
-		pmap_tlb_asid_release_all(pm);
-		pm->pm_remove_all = false;
-	}
-
 	refcnt = atomic_dec_uint_nv(&pm->pm_refcnt);
 	if (refcnt > 0)
 		return;
 
 	KASSERT(LIST_EMPTY(&pm->pm_pvlist));
+	pmap_tlb_asid_release_all(pm);
 
 	_pmap_free_pdp_all(pm, true);
 	mutex_destroy(&pm->pm_lock);
@@ -2054,41 +2048,6 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 }
 
 
-
-void
-pmap_update(pmap_t pm)
-{
-
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "pm=%#jx remove_all %jd", (uintptr_t)pm,
-	    pm->pm_remove_all, 0, 0);
-
-	kpreempt_disable();
-	/*
-	 * If pmap_remove_all was called, we deactivated ourselves and released
-	 * our ASID.  Now we have to reactivate ourselves.
-	 */
-	if (__predict_false(pm->pm_remove_all)) {
-		pm->pm_remove_all = false;
-
-		KASSERT(pm != pmap_kernel());
-
-		/* this calls tlb_set_asid which calls cpu_set_ttbr0 */
-		pmap_tlb_asid_acquire(pm, curlwp);
-
-		/* Enable translation table walks using TTBR0 */
-		uint64_t tcr = reg_tcr_el1_read();
-		reg_tcr_el1_write(tcr & ~TCR_EPD0);
-		isb();
-
-		pm->pm_activated = true;
-	}
-
-	kpreempt_enable();
-
-	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
-}
-
 bool
 pmap_remove_all(struct pmap *pm)
 {
@@ -2101,23 +2060,6 @@ pmap_remove_all(struct pmap *pm)
 	UVMHIST_CALLARGS(pmaphist, "pm=%p", pm, 0, 0, 0);
 
 	KASSERT(pm != pmap_kernel());
-
-	struct cpu_info * const ci = curcpu();
-	// This should be the last CPU with this pmap onproc
-	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(ci)));
-	if (kcpuset_isset(pm->pm_onproc, cpu_index(ci))) {
-		/* Disable translation table walks using TTBR0 */
-		uint64_t tcr = reg_tcr_el1_read();
-		reg_tcr_el1_write(tcr | TCR_EPD0);
-		isb();
-
-		pmap_tlb_asid_deactivate(pm);
-	}
-
-	KASSERT(kcpuset_iszero(pm->pm_onproc));
-
-	pmap_tlb_asid_release_all(pm);
-	pm->pm_remove_all = true;
 
 	UVMHIST_LOG(pmaphist, "pm=%p, asid=%d", pm,
 	    PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid, 0, 0);
@@ -2154,6 +2096,8 @@ pmap_remove_all(struct pmap *pm)
 
 	/* clear L0 page table page */
 	pmap_zero_page(pm->pm_l0table_pa);
+
+	aarch64_tlbi_by_asid(PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid);
 
 	/* free L1-L3 page table pages, but not L0 */
 	_pmap_free_pdp_all(pm, false);
