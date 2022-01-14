@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.h,v 1.5 2022/01/14 21:32:27 riastradh Exp $ */
+/* $NetBSD: ihidev.h,v 1.6 2022/01/14 22:25:49 riastradh Exp $ */
 /* $OpenBSD ihidev.h,v 1.4 2016/01/31 18:24:35 jcs Exp $ */
 
 /*-
@@ -106,6 +106,7 @@ struct i2c_hid_desc {
 
 #include <sys/device.h>
 #include <sys/mutex.h>
+#include <sys/workqueue.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -114,10 +115,12 @@ struct ihidev_softc {
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 	uint64_t	sc_phandle;
+	kmutex_t	sc_lock;
 
 	void *		sc_ih;
-	void *		sc_sih;
-	kmutex_t	sc_intr_lock;
+	struct workqueue *sc_wq;
+	struct work	sc_work;
+	volatile unsigned sc_work_pending;
 	int		sc_intr_type;
 
 	u_int		sc_hid_desc_addr;
