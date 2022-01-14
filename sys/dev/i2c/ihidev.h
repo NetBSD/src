@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.h,v 1.4 2020/01/09 04:04:01 thorpej Exp $ */
+/* $NetBSD: ihidev.h,v 1.5 2022/01/14 21:32:27 riastradh Exp $ */
 /* $OpenBSD ihidev.h,v 1.4 2016/01/31 18:24:35 jcs Exp $ */
 
 /*-
@@ -30,6 +30,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_DEV_I2C_IHIDEV_H_
+#define	_DEV_I2C_IHIDEV_H_
+
+/* ihidevreg.h */
+
 /*
  * HID-over-i2c driver
  *
@@ -47,6 +52,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/types.h>
 
 /* from usbdi.h: Match codes. */
 /* First five codes is for a whole device. */
@@ -92,6 +99,15 @@ struct i2c_hid_desc {
 	uint16_t wVersionID;
 	uint32_t reserved;
 } __packed;
+
+/* ihidevvar.h */
+
+#include <sys/types.h>
+
+#include <sys/device.h>
+#include <sys/mutex.h>
+
+#include <dev/i2c/i2cvar.h>
 
 struct ihidev_softc {
 	device_t	sc_dev;
@@ -160,3 +176,4 @@ int ihidev_set_report(device_t, int, int, void *, int);
 int ihidev_get_report(device_t, int, int, void *, int);
 int ihidev_report_type_conv(int);
 
+#endif	/* _DEV_I2C_IHIDEV_H_ */
