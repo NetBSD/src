@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.224 2022/01/11 22:55:54 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.225 2022/01/14 18:28:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.224 2022/01/11 22:55:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.225 2022/01/14 18:28:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -223,6 +223,7 @@ int	procfs_print(void *);
 int	procfs_pathconf(void *);
 int	procfs_getpages(void *);
 
+static uint8_t fttodt(file_t *);
 static int atoi(const char *, size_t);
 
 /*
@@ -1410,7 +1411,7 @@ procfs_readdir(void *v)
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFSfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%lld", (long long)(i - 2));
-			d.d_type = VREG;
+			d.d_type = fttodt(fp);
 			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
@@ -1747,4 +1748,32 @@ atoi(const char *b, size_t len)
 	}
 
 	return p;
+}
+
+/**
+ * convert DTYPE_XXX to corresponding DT_XXX
+ * matching what procfs_loadvnode() does.
+ */
+static uint8_t
+fttodt(file_t *fp)
+{
+	switch (fp->f_type) {
+	case DTYPE_VNODE:
+		switch (fp->f_vnode->v_type) {
+		case VREG:	return DT_REG;
+		case VDIR:	return DT_LNK;	/* symlink */
+		case VBLK:	return DT_BLK;
+		case VCHR:	return DT_CHR;
+		case VLNK:	return DT_LNK;
+		case VSOCK:	return DT_SOCK;
+		case VFIFO:	return DT_FIFO;
+		default:	return DT_UNKNOWN;
+		}
+	case DTYPE_PIPE:	return DT_FIFO;
+	case DTYPE_SOCKET:	return DT_SOCK;
+	case DTYPE_KQUEUE:	/*FALLTHROUGH*/
+	case DTYPE_MISC:	/*FALLTHROUGH*/
+	case DTYPE_SEM:		return DT_LNK;	/* symlinks */
+	default:		return DT_UNKNOWN;
+	}
 }
