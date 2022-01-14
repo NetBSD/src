@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.187 2022/01/13 04:51:50 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.188 2022/01/14 18:43:23 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1100,7 +1100,7 @@ meta_filter_cmd(Buffer *buf, GNode *gn, char *s)
 static int
 meta_cmd_cmp(GNode *gn, char *a, char *b)
 {
-    static int once = 0;
+    static bool once = false;
     static Buffer buf;
     int rc;
 
@@ -1108,8 +1108,8 @@ meta_cmd_cmp(GNode *gn, char *a, char *b)
     if (rc == 0 || !metaCmpFilter)
 	return rc;
     if (!once) {
-	once++;
-	Buf_InitSize(&buf, BUFSIZ);
+	once = true;
+	Buf_Init(&buf);
     }
     a = meta_filter_cmd(&buf, gn, a);
     b = meta_filter_cmd(&buf, gn, b);
