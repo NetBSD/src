@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.225 2022/01/14 18:28:28 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.226 2022/01/14 23:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.225 2022/01/14 18:28:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.226 2022/01/14 23:46:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -162,12 +162,12 @@ static const struct proc_target {
 	{ DT_DIR, N("fd"),	PFSfd,		NULL },
 	{ DT_DIR, N("task"),	PFStask,	procfs_validfile_linux },
 	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
-	{ DT_LNK, N("emul"),	PFSemul,	NULL },
+	{ DT_REG, N("emul"),	PFSemul,	NULL },
 	{ DT_LNK, N("root"),	PFSchroot,	NULL },
 	{ DT_REG, N("auxv"),	PFSauxv,	procfs_validauxv },
 	{ DT_REG, N("cmdline"), PFScmdline,	NULL },
 	{ DT_REG, N("environ"), PFSenviron,	NULL },
-	{ DT_REG, N("exe"),	PFSexe,		procfs_validfile },
+	{ DT_LNK, N("exe"),	PFSexe,		procfs_validfile },
 	{ DT_REG, N("file"),	PFSfile,	procfs_validfile },
 	{ DT_REG, N("fpregs"),	PFSfpregs,	procfs_validfpregs },
 	{ DT_REG, N("limit"),	PFSlimit,	NULL },
