@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2019/05/16 01:22:36 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2022/01/14 19:44:04 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,11 @@ PKGDIST=	${LIB}
 
 LIBDPLIBS+=	pci	${NETBSDSRCDIR}/lib/libpci \
 		z	${NETBSDSRCDIR}/lib/libz
+
+# do not blindly enable memory and IO access on macppc
+.if ${MACHINE} == "macppc"
+CPPFLAGS+=	-DAVOID_DEVICE_ENABLE
+.endif
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DHAVE_MTRR
