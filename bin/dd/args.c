@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.41 2021/10/09 21:31:36 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.42 2022/01/14 23:55:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.41 2021/10/09 21:31:36 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.42 2022/01/14 23:55:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -355,13 +355,13 @@ static const struct conv {
 	{ "ascii",	C_ASCII,	C_EBCDIC,	e2a_POSIX },
 	{ "block",	C_BLOCK,	C_UNBLOCK,	NULL },
 	{ "ebcdic",	C_EBCDIC,	C_ASCII,	a2e_POSIX },
-	{ "ibm",	C_EBCDIC,	C_ASCII,	a2ibm_POSIX },
+	{ "ibm",	C_EBCDIC,	C_ASCII,	a2ibm },
 	{ "lcase",	C_LCASE,	C_UCASE,	NULL },
 	{ "noerror",	C_NOERROR,	0,		NULL },
 	{ "notrunc",	C_NOTRUNC,	0,		NULL },
 	{ "oldascii",	C_ASCII,	C_EBCDIC,	e2a_32V },
 	{ "oldebcdic",	C_EBCDIC,	C_ASCII,	a2e_32V },
-	{ "oldibm",	C_EBCDIC,	C_ASCII,	a2ibm_32V },
+	{ "oldibm",	C_EBCDIC,	C_ASCII,	a2ibm },
 	{ "osync",	C_OSYNC,	C_BS,		NULL },
 	{ "sparse",	C_SPARSE,	0,		NULL },
 	{ "swab",	C_SWAB,		0,		NULL },
