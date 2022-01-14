@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.22 2022/01/14 22:26:35 riastradh Exp $ */
+/* $NetBSD: ihidev.c,v 1.23 2022/01/14 22:26:45 riastradh Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.22 2022/01/14 22:26:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.23 2022/01/14 22:26:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,6 +416,13 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		 */
 		report_len += report_id_len;
 		tmprep = kmem_zalloc(report_len, KM_NOSLEEP);
+		if (tmprep == NULL) {
+			/* XXX pool or preallocate? */
+			DPRINTF(("%s: out of memory\n",
+				device_xname(sc->sc_dev)));
+			res = ENOMEM;
+			break;
+		}
 
 		/* type 3 id 8: 22 00 38 02 23 00 */
 		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
@@ -507,6 +514,10 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		cmd[dataoff] = rreq->id;
 
 		finalcmd = kmem_zalloc(cmdlen + rreq->len, KM_NOSLEEP);
+		if (finalcmd == NULL) {
+			res = ENOMEM;
+			break;
+		}
 
 		memcpy(finalcmd, cmd, cmdlen);
 		memcpy(finalcmd + cmdlen, rreq->data, rreq->len);
