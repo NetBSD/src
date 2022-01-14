@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.101 2020/08/19 07:29:00 simonb Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.102 2022/01/14 21:59:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.101 2020/08/19 07:29:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.102 2022/01/14 21:59:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -988,11 +988,8 @@ retry:
 	 */
 
 	if (nodirty) {
-#if !defined(DEBUG)
-		if (dirtyonly) {
-			goto skip_scan;
-		}
-#endif /* !defined(DEBUG) */
+		/* We handled the dirtyonly && nodirty case above.  */
+		KASSERT(!dirtyonly);
 		flags &= ~PGO_CLEANIT;
 	}
 
@@ -1330,10 +1327,6 @@ retry:
 	    LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		vn_syncer_remove_from_worklist(vp);
 	}
-
-#if !defined(DEBUG)
-skip_scan:
-#endif /* !defined(DEBUG) */
 
 	/* Wait for output to complete. */
 	rw_exit(slock);
