@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.21 2022/01/14 22:25:49 riastradh Exp $ */
+/* $NetBSD: ihidev.c,v 1.22 2022/01/14 22:26:35 riastradh Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.21 2022/01/14 22:25:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.22 2022/01/14 22:26:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,7 +643,7 @@ ihidev_hid_desc_parse(struct ihidev_softc *sc)
 	}
 
 	sc->sc_reportlen = le16toh(sc->hid_desc.wReportDescLength);
-	sc->sc_report = kmem_zalloc(sc->sc_reportlen, KM_NOSLEEP);
+	sc->sc_report = kmem_zalloc(sc->sc_reportlen, KM_SLEEP);
 
 	if (ihidev_hid_command(sc, I2C_HID_REPORT_DESCR, 0, false)) {
 		aprint_error_dev(sc->sc_dev, "failed fetching HID report\n");
