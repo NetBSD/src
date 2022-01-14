@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.24 2022/01/14 22:28:23 riastradh Exp $ */
+/* $NetBSD: ihidev.c,v 1.25 2022/01/14 22:28:50 riastradh Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.24 2022/01/14 22:28:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.25 2022/01/14 22:28:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -889,7 +889,7 @@ ihidev_open(struct ihidev *scd)
 
 	mutex_enter(&sc->sc_lock);
 
-	if (scd->sc_state & IHIDEV_OPEN) {
+	if (scd->sc_state & IHIDEV_OPEN || sc->sc_refcnt == INT_MAX) {
 		error = EBUSY;
 		goto out;
 	}
