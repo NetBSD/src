@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.181 2022/01/14 15:45:53 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.182 2022/01/14 15:46:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -497,6 +497,7 @@
 #define CPUID_SEF_HYBRID	__BIT(15) /* Hybrid part */
 #define CPUID_SEF_TSXLDTRK	__BIT(16) /* TSX suspend load addr tracking */
 #define CPUID_SEF_PCONFIG	__BIT(18) /* Platform CONFIGuration */
+#define CPUID_SEF_ARCH_LBR	__BIT(19) /* Architectural LBR */
 #define CPUID_SEF_CET_IBT	__BIT(20) /* CET Indirect Branch Tracking */
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
@@ -510,7 +511,7 @@
 	"\5" "FSREP_MOV"						  \
 	"\11VP2INTERSECT" "\12SRBDS_CTRL" "\13MD_CLEAR"			  \
 			"\16TSX_FORCE_ABORT" "\17SERIALIZE" "\20HYBRID"	  \
-	"\21" "TSXLDTRK"		"\23" "PCONFIG"			  \
+	"\21" "TSXLDTRK"		"\23" "PCONFIG"	"\24" "ARCH_LBR"  \
 	"\25" "CET_IBT"							  \
 	"\33" "IBRS"	"\34" "STIBP"					  \
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP" "\40" "SSBD"
@@ -522,11 +523,14 @@
 #define CPUID_SEF_FSRSB		__BIT(11) /* fast short REP STOSB */
 #define CPUID_SEF_FSRCS		__BIT(12) /* fast short REP CMPSB, REP SCASB */
 #define CPUID_SEF_HRESET	__BIT(22) /* HREST & IA32_HRESET_ENABLE MSR */
+#define CPUID_SEF_LAM		__BIT(26) /* Linear Address Masking */
 
 #define CPUID_SEF1_FLAGS_A	"\20"					\
 	"\5" "AVXVNNI"	"\6" "AVX512_BF16"				\
 					"\13" "FZLRMS"	"\14" "FSRSB"	\
-	"\15" "FSRCS"			"\27" "HRESET"
+	"\15" "FSRCS"			"\27" "HRESET"			\
+	"\31" "LAM"
+
 /* %ecx = 1, %ebx */
 #define CPUID_SEF_PPIN		__BIT(0)  /* IA32_PPIN & IA32_PPIN_CTL MSRs */
 
