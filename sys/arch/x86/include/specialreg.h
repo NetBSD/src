@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.180 2022/01/13 16:03:38 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.181 2022/01/14 15:45:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
 	"\5" "TSC"	"\6" "MSR"	"\7" "PAE"	"\10" "MCE"	\
 	"\11" "CX8"	"\12" "APIC"	"\13" "B10"	"\14" "SEP"	\
 	"\15" "MTRR"	"\16" "PGE"	"\17" "MCA"	"\20" "CMOV"	\
-	"\21" "PAT"	"\22" "PSE36"	"\23" "PN"	"\24" "CLFLUSH" \
+	"\21" "PAT"	"\22" "PSE36"	"\23" "PN"	"\24" "CLFSH"	\
 	"\25" "B20"	"\26" "DS"	"\27" "ACPI"	"\30" "MMX"	\
 	"\31" "FXSR"	"\32" "SSE"	"\33" "SSE2"	"\34" "SS"	\
 	"\35" "HTT"	"\36" "TM"	"\37" "IA64"	"\40" "PBE"
