@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.23 2022/01/14 22:26:45 riastradh Exp $ */
+/* $NetBSD: ihidev.c,v 1.24 2022/01/14 22:28:23 riastradh Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.23 2022/01/14 22:26:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.24 2022/01/14 22:28:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,22 +882,31 @@ int
 ihidev_open(struct ihidev *scd)
 {
 	struct ihidev_softc *sc = scd->sc_parent;
+	int error;
 
 	DPRINTF(("%s: %s: state=%d refcnt=%d\n", sc->sc_dev.dv_xname,
 	    __func__, scd->sc_state, sc->sc_refcnt));
 
-	if (scd->sc_state & IHIDEV_OPEN)
-		return (EBUSY);
+	mutex_enter(&sc->sc_lock);
+
+	if (scd->sc_state & IHIDEV_OPEN) {
+		error = EBUSY;
+		goto out;
+	}
 
 	scd->sc_state |= IHIDEV_OPEN;
 
-	if (sc->sc_refcnt++ || sc->sc_isize == 0)
-		return (0);
+	if (sc->sc_refcnt++ || sc->sc_isize == 0) {
+		error = 0;
+		goto out;
+	}
 
 	/* power on */
 	ihidev_reset(sc, false);
+	error = 0;
 
-	return (0);
+out:	mutex_exit(&sc->sc_lock);
+	return error;
 }
 
 void
@@ -908,17 +917,22 @@ ihidev_close(struct ihidev *scd)
 	DPRINTF(("%s: %s: state=%d refcnt=%d\n", sc->sc_dev.dv_xname,
 	    __func__, scd->sc_state, sc->sc_refcnt));
 
+	mutex_enter(&sc->sc_lock);
+
+	/* XXX make this an assertion */
 	if (!(scd->sc_state & IHIDEV_OPEN))
-		return;
+		goto out;
 
 	scd->sc_state &= ~IHIDEV_OPEN;
 
 	if (--sc->sc_refcnt)
-		return;
+		goto out;
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER,
 	    &I2C_HID_POWER_OFF, false))
 		aprint_error_dev(sc->sc_dev, "failed to power down\n");
+
+out:	mutex_exit(&sc->sc_lock);
 }
 
 void
