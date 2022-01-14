@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.25 2022/01/14 22:28:50 riastradh Exp $ */
+/* $NetBSD: ihidev.c,v 1.26 2022/01/14 22:28:59 riastradh Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.25 2022/01/14 22:28:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.26 2022/01/14 22:28:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -919,10 +919,10 @@ ihidev_close(struct ihidev *scd)
 
 	mutex_enter(&sc->sc_lock);
 
-	/* XXX make this an assertion */
-	if (!(scd->sc_state & IHIDEV_OPEN))
-		goto out;
-
+	KASSERTMSG(scd->sc_state & IHIDEV_OPEN,
+	    "%s: closing %s when not open",
+	    device_xname(scd->sc_idev),
+	    device_xname(sc->sc_dev));
 	scd->sc_state &= ~IHIDEV_OPEN;
 
 	if (--sc->sc_refcnt)
