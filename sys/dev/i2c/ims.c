@@ -1,4 +1,4 @@
-/* $NetBSD: ims.c,v 1.3 2019/07/09 12:56:30 ryoon Exp $ */
+/* $NetBSD: ims.c,v 1.4 2022/01/14 22:28:42 riastradh Exp $ */
 /* $OpenBSD ims.c,v 1.1 2016/01/12 01:11:15 jcs Exp $ */
 
 /*
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ims.c,v 1.3 2019/07/09 12:56:30 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims.c,v 1.4 2022/01/14 22:28:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,10 +158,12 @@ ims_detach(device_t self, int flags)
 	return rv;
 }
 
-void 
+void
 ims_childdet(device_t self, device_t child)
 {
 	struct ims_softc *sc = device_private(self);
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	KASSERT(sc->sc_ms.hidms_wsmousedev == child);
 	sc->sc_ms.hidms_wsmousedev = NULL;
@@ -184,6 +186,8 @@ ims_enable(void *v)
 	struct ims_softc *sc = v;
 	int error;
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	if (sc->sc_enabled)
 		return EBUSY;
 
@@ -200,6 +204,8 @@ static void
 ims_disable(void *v)
 {
 	struct ims_softc *sc = v;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 #ifdef DIAGNOSTIC
 	if (!sc->sc_enabled) {
