@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlerror-false.c,v 1.2 2017/01/13 21:30:42 christos Exp $	*/
+/*	$NetBSD: t_dlerror-false.c,v 1.3 2022/01/14 07:34:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,9 +46,9 @@ ATF_TC_BODY(rtld_dlerror_false, tc)
 {
 	void *handle, *sym;
 	char *error;
-	
+
 	/*
-	 * 
+	 *
 	 * Test for dlerror() being set by a successful library open.
 	 * Requires that the rpath be set to something that does not
 	 * include libm.so.
@@ -58,7 +58,7 @@ ATF_TC_BODY(rtld_dlerror_false, tc)
 	error = dlerror();
 	ATF_CHECK(error == NULL);
 	ATF_CHECK(handle != NULL);
-	
+
 	sym = dlsym(handle, "sin");
 	error = dlerror();
 	ATF_CHECK(sym != NULL);
@@ -68,7 +68,7 @@ ATF_TC_BODY(rtld_dlerror_false, tc)
 	error = dlerror();
 
 	ATF_CHECK(error == NULL);
-	
+
 }
 
 ATF_TP_ADD_TCS(tp)
