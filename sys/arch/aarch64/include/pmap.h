@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.49 2021/10/10 07:15:25 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.50 2022/01/14 07:21:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -125,7 +125,6 @@ struct pmap {
 
 	struct pmap_asid_info pm_pai[PMAP_TLB_MAX];
 	bool pm_activated;
-	bool pm_remove_all;
 };
 
 static inline paddr_t
@@ -384,6 +383,7 @@ aarch64_mmap_flags(paddr_t mdpgno)
 #define pmap_phys_address(pa)		aarch64_ptob((pa))
 #define pmap_mmap_flags(ppn)		aarch64_mmap_flags((ppn))
 
+#define pmap_update(pmap)		((void)0)
 #define pmap_copy(dp,sp,d,l,s)		((void)0)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
