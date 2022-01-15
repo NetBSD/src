@@ -1,7 +1,8 @@
-# $NetBSD: output_sorted.ln,v 1.1 2021/08/28 19:45:18 rillig Exp $
+# $NetBSD: output_sorted.ln,v 1.2 2022/01/15 17:33:42 rillig Exp $
 #
 # Test whether the output is sorted by symbol name.
-# As of 2021-08-28, the output is sorted by hashcode, which looks random.
+# Before main2.c 1.21 from 2021-08-28, the output was sorted by hashcode,
+# which looked random.  Since then, the output is sorted by symbol name.
 
 0 s output_sorted.c
 S output_sorted.c
