@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.15 2022/01/15 22:12:35 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.16 2022/01/15 23:21:34 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -658,12 +658,27 @@ lint_annotation_NOTREACHED(void)
 }
 
 /*
- * Since at least 2002, lint does not detect a double semicolon.  See
- * cgram.y, expression_statement, T_SEMI.
+ * Since at least 2002 and before cgram.y 1.379 from 2022-01-16, lint did not
+ * detect a double semicolon.  See cgram.y, expression_statement, T_SEMI.
  */
 int
-test_empty_statement(int x)
+test_null_statement(void)
 {
-	/* TODO: expect+1: warning: statement not reachable [193] */
-	return x > 0 ? x : -x;;
+	/*
+	 * The following 2 semicolons are superfluous but lint doesn't warn
+	 * about them.  Probably it should.  A null statement as part of a
+	 * block-list has no use.
+	 */
+	;;
+
+	/*
+	 * A stand-alone null statement, on the other hand, has its purpose.
+	 * Without it, the 'for' loop would not be complete.  The NetBSD
+	 * style is to use 'continue;' instead of a simple ';'.
+	 */
+	for (int i = 0; i < 10; i++)
+		;
+
+	/* expect+1: warning: statement not reached [193] */
+	return 0;;
 }
