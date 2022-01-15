@@ -1,4 +1,4 @@
-/*	$NetBSD: memset2.c,v 1.10 2021/04/19 01:12:10 simonb Exp $	*/
+/*	$NetBSD: memset2.c,v 1.11 2022/01/15 10:38:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.10 2021/04/19 01:12:10 simonb Exp $");
+__RCSID("$NetBSD: memset2.c,v 1.11 2022/01/15 10:38:56 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ memset(void *addr, int c, size_t len)
 
 	/*
 	 * Pad out the fill byte (v) across a memword_t.
-	 * The conditional at the end prevents GCC from complaing about
+	 * The conditional at the end prevents GCC from complaining about
 	 * shift count >= width of type 
 	 */
 	fill = (unsigned char)c;
@@ -183,13 +183,13 @@ memset(void *addr, int c, size_t len)
 		/*
 		 * We want to clear <len> leading bytes in the word.
 		 * On big/little endian, these are the most/least significant
-		 * bits, respectively,  But as we want the mask of the bytes to
+		 * bits, respectively.  But as we want the mask of the bytes to
 		 * keep, we have to complement the mask.  So after we shift,
 		 * the keep_mask will only have bits set for the bytes we won't
 		 * be filling.
 		 *
 		 * But the keep_mask could already have bytes to preserve
-		 * if the amount to fill was less than the amount of traiing
+		 * if the amount to fill was less than the amount of trailing
 		 * space in the first word.
 		 */
 #if BYTE_ORDER == BIG_ENDIAN
