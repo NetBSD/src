@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.29 2021/08/21 09:59:46 andvar Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.30 2022/01/15 10:55:53 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.29 2021/08/21 09:59:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.30 2022/01/15 10:55:53 msaitoh Exp $");
 #endif /* not lint */
 
 
@@ -956,7 +956,7 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 
 	/*
 	 * Translate new mappings in lmapping to pmappings.
-	 * pmapping to contain lb_nums as used for disc adressing.
+	 * pmapping to contain lb_nums as used for disc addressing.
 	 */
 	pmapping = ump->la_pmapping;
 	sectors  = (buf->b_bcount + sector_size -1) / sector_size;
