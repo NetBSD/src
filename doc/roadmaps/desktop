@@ -1,4 +1,4 @@
-$NetBSD: desktop,v 1.5 2018/07/20 01:40:30 maya Exp $
+$NetBSD: desktop,v 1.6 2022/01/15 19:38:05 gutteridge Exp $
 
 NetBSD Desktop Roadmap
 ======================
@@ -6,8 +6,9 @@ NetBSD Desktop Roadmap
 This roadmap deals with desktop support. Note that "desktop support"
 means several quite different things:
    - issues pertaining to running the Windows-like Linux desktops
-     (e.g. GNOME, KDE, Mate, Trinity, as well as other similar things
-     like LXDE) on NetBSD in more or less their current form;
+     (e.g., GNOME, KDE, MATE, Xfce, LXQt, LXDE, DeforaOS, as well as
+     others not presently successfully packaged, like Cinnamon, Lumina,
+     and Trinity) on NetBSD in more or less their current form;
    - issues pertaining to running these systems with NetBSD
      infrastructure, for better system integration and to avoid
      depending on unpopular packages like dbus and policykit;
@@ -51,50 +52,35 @@ into one of the following three broad categories:
 
 The following elements, projects, and goals are relatively near-term:
 
- 1. Don't ship twm as the default X window manager
- 2. Making removable media work using GNOME/KDE infrastructure
- 3. Making wireless config work using GNOME/KDE infrastructure
- 4. Sane font handling
- 5. Get Eclipse running properly from pkgsrc
- 6. Better printer management
- 7. Work out a long-term plan for compositing, Wayland, and graphics
+ 1. Making removable media work using GNOME/KDE infrastructure
+ 2. Making wireless config work using GNOME/KDE infrastructure
+ 3. Sane font handling
+ 4. Get Eclipse running properly from pkgsrc
+ 5. Better printer management
+ 6. Work out a long-term plan for compositing, Wayland, and graphics
     architecture issues
 
 The following elements, projects, and goals are longer-term:
 
- 8. Publish/subscribe sockets or IPC
- 9. Better native RPC library and tools
- 10. Native removable media handling
- 11. Native wireless config
- 12. User switching and secure attention key
- 13. wscons graphics
+ 7. Publish/subscribe sockets or IPC
+ 8. Better native RPC library and tools
+ 9. Native removable media handling
+ 10. Native wireless config
+ 11. User switching and secure attention key
+ 12. wscons graphics
 
 The following elements, projects, and goals are rather blue-sky so far:
 
- 14. Something akin to ARexx
- 15. A more Unix-oriented root window/desktop basis 
- 16. Full console virtualization
+ 13. Something akin to ARexx
+ 14. A more Unix-oriented root window/desktop basis 
+ 15. Full console virtualization
 
 
 Explanations
 ============
 
 
- 1. Don't ship twm as the default X window manager
-
-It's embarrassing that in 2016 we were still shipping twm as the
-default window system config. Heck, it was embarrassing in 2006. The
-work needed to move to ctwm has been largely done (by youri) and at
-least some of it committed, but this still (as of January 2017) isn't
-enabled by default.
-
-  - As of January 2017 nobody is actively working on this.
-  - It would be silly at this point to release 8.0 without it, so
-    ideally someone will step up to get it finished and enabled.
-  - Contact: XXX please fill in
-
-
- 2. Making removable media work using GNOME/KDE infrastructure
+ 1. Making removable media work using GNOME/KDE infrastructure
 
 Ideally when you insert a USB stick it mounts automatically, like with
 GNOME and KDE on Linux. I believe this is not currently working. It
@@ -103,14 +89,14 @@ broken, but hal got deprecated and I'm not sure what is even involved.
 (XXX: someone please clarify.)
 
 
- 3. Making wireless config work using GNOME/KDE infrastructure
+ 2. Making wireless config work using GNOME/KDE infrastructure
 
 Ideally it would be possible to configure your wireless networking
 using the GNOME/KDE/etc. tools. I believe this does not work either.
 (XXX: someone please clarify.)
 
 
- 4. Sane font handling
+ 3. Sane font handling
 
 See "System-level font handling in Unix" on the wiki projects page.
 
@@ -119,7 +105,7 @@ See "System-level font handling in Unix" on the wiki projects page.
   - Contact: dholland
 
 
- 5. Get Eclipse running properly from pkgsrc
+ 4. Get Eclipse running properly from pkgsrc
 
 As of last report Eclipse was bodgily packaged (this may not be
 fixable) and didn't really work (this should be). Because Eclipse is
@@ -130,7 +116,7 @@ Java this depends on JDK stuff.
   - Contact: ? (XXX)
 
 
- 6. Better printer management
+ 5. Better printer management
 
 See "New LPR/LPD for NetBSD" on the wiki projects page.
 
@@ -139,7 +125,7 @@ See "New LPR/LPD for NetBSD" on the wiki projects page.
   - Contact: dholland
 
 
- 7. Work out a long-term plan for compositing, Wayland, and graphics
+ 6. Work out a long-term plan for compositing, Wayland, and graphics
     architecture issues
 
 Nobody seems to have a good idea of what the way forward ought to be,
@@ -151,7 +137,7 @@ and report back.
   - Contact: ? (XXX)
 
 
- 8. Publish/subscribe sockets or IPC
+ 7. Publish/subscribe sockets or IPC
 
 It's clear that even though traditionally Unix has next to no such
 facilities, a "modern" desktop system requires the ability to post
@@ -207,7 +193,7 @@ running and blacklistd isn't.
   - Contact: dholland
 
 
- 9. Better native RPC library and tools
+ 8. Better native RPC library and tools
 
 Another thing dbus doesn't do very well: it's an IPC/RPC library. In
 the long run to support existing desktops we probably need
@@ -219,7 +205,7 @@ pick or develop something of our own, and (finally) deprecate SunRPC.
   - Contact: dholland or ? (XXX)
 
 
- 10. Native removable media handling
+ 9. Native removable media handling
 
 Given publish/subscribe channels, implement proper native support for
 mounting removable media upon insertion. This should integrate with
@@ -228,13 +214,13 @@ services are running, it should work even when running on a text-only
 console.
 
 
- 11. Native wireless config
+ 10. Native wireless config
 
 Similarly, implement a native wireless config scheme. While we
 currently have wpa_cli, it lacks a certain something...
 
 
- 12. User switching and secure attention key
+ 11. User switching and secure attention key
 
 See the project page on the wiki.
 
@@ -243,7 +229,7 @@ See the project page on the wiki.
   - Contact: dholland or ? (XXX)
 
 
- 13. wscons graphics
+ 12. wscons graphics
 
 There's been talk on and off for some time about supporting cairo or
 qt-embedded or similar things directly on the console. This is
@@ -252,7 +238,7 @@ involve an X server, such as potentially phones or tablets. (See the
 "mobile" roadmap for more on that.)
 
 
- 14. Something akin to ARexx
+ 13. Something akin to ARexx
 
 We have a number of veteran Amiga users and whenever there's a
 discussion of dbus usually ARexx eventually comes up. It would be
@@ -270,7 +256,7 @@ language. :-)
   - Contact: mlelstv? (XXX)
 
 
- 15. A more Unix-oriented root window/desktop basis
+ 14. A more Unix-oriented root window/desktop basis
 
 All the existing desktops (apart from OS X, which is NextStep, but not
 all that much different either) are based on Windows. They share a
@@ -311,7 +297,7 @@ it's clearly not going to be forthcoming from the Linux desktop folks.
 publicity lever...)
 
 
- 16. Full console virtualization
+ 15. Full console virtualization
 
 The Unix notion of a login session is stuck in the 70s, where you log
 in on a glass teletype and that's all you get. The consoles of modern
@@ -333,4 +319,3 @@ log in somewhere and mount it there.
 
 Getting to this requires refactoring the way we think about logins and
 login devices, but it's high time.
-
