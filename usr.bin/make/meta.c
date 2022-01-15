@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.191 2022/01/15 19:05:23 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.192 2022/01/15 19:34:07 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -591,7 +591,6 @@ meta_mode_init(const char *make_mode)
 {
     static bool once = false;
     const char *cp;
-    FStr value;
 
     useMeta = true;
     useFilemon = true;
@@ -648,21 +647,9 @@ meta_mode_init(const char *make_mode)
     /*
      * We ignore any paths that match ${.MAKE.META.IGNORE_PATTERNS}
      */
-    value = Var_Value(SCOPE_GLOBAL, MAKE_META_IGNORE_PATTERNS);
-    if (value.str != NULL) {
-	metaIgnorePatterns = true;
-	FStr_Done(&value);
-    }
-    value = Var_Value(SCOPE_GLOBAL, MAKE_META_IGNORE_FILTER);
-    if (value.str != NULL) {
-	metaIgnoreFilter = true;
-	FStr_Done(&value);
-    }
-    value = Var_Value(SCOPE_GLOBAL, MAKE_META_CMP_FILTER);
-    if (value.str != NULL) {
-	metaCmpFilter = true;
-	FStr_Done(&value);
-    }
+    metaIgnorePatterns = Var_Exists(SCOPE_GLOBAL, MAKE_META_IGNORE_PATTERNS);
+    metaIgnoreFilter = Var_Exists(SCOPE_GLOBAL, MAKE_META_IGNORE_FILTER);
+    metaCmpFilter = Var_Exists(SCOPE_GLOBAL, MAKE_META_CMP_FILTER);
 }
 
 /*
