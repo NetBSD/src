@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.182 2022/01/14 15:46:41 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.183 2022/01/15 09:55:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -97,29 +97,29 @@
 /*
  * CR4
  */
-#define CR4_VME		0x00000001 /* virtual 8086 mode extension enable */
-#define CR4_PVI		0x00000002 /* protected mode virtual interrupt enable */
-#define CR4_TSD		0x00000004 /* restrict RDTSC instruction to cpl 0 */
-#define CR4_DE		0x00000008 /* debugging extension */
-#define CR4_PSE		0x00000010 /* large (4MB) page size enable */
-#define CR4_PAE		0x00000020 /* physical address extension enable */
-#define CR4_MCE		0x00000040 /* machine check enable */
-#define CR4_PGE		0x00000080 /* page global enable */
-#define CR4_PCE		0x00000100 /* enable RDPMC instruction for all cpls */
-#define CR4_OSFXSR	0x00000200 /* enable fxsave/fxrestor and SSE */
-#define CR4_OSXMMEXCPT	0x00000400 /* enable unmasked SSE exceptions */
-#define CR4_UMIP	0x00000800 /* user-mode instruction prevention */
+#define CR4_VME		0x00000001 /* Virtual 8086 mode extension enable */
+#define CR4_PVI		0x00000002 /* Protected mode virtual interrupt enable */
+#define CR4_TSD		0x00000004 /* Restrict RDTSC instruction to cpl 0 */
+#define CR4_DE		0x00000008 /* Debugging extension */
+#define CR4_PSE		0x00000010 /* Large (4MB) page size enable */
+#define CR4_PAE		0x00000020 /* Physical address extension enable */
+#define CR4_MCE		0x00000040 /* Machine check enable */
+#define CR4_PGE		0x00000080 /* Page global enable */
+#define CR4_PCE		0x00000100 /* Enable RDPMC instruction for all cpls */
+#define CR4_OSFXSR	0x00000200 /* Enable fxsave/fxrestor and SSE */
+#define CR4_OSXMMEXCPT	0x00000400 /* Enable unmasked SSE exceptions */
+#define CR4_UMIP	0x00000800 /* User Mode Instruction Prevention */
 #define CR4_LA57	0x00001000 /* 57-bit linear addresses */
-#define CR4_VMXE	0x00002000 /* enable VMX operations */
-#define CR4_SMXE	0x00004000 /* enable SMX operations */
-#define CR4_FSGSBASE	0x00010000 /* enable *FSBASE and *GSBASE instructions */
-#define CR4_PCIDE	0x00020000 /* enable Process Context IDentifiers */
-#define CR4_OSXSAVE	0x00040000 /* enable xsave and xrestore */
-#define CR4_SMEP	0x00100000 /* enable SMEP support */
-#define CR4_SMAP	0x00200000 /* enable SMAP support */
-#define CR4_PKE		0x00400000 /* enable Protection Keys for user pages */
-#define CR4_CET		0x00800000 /* enable CET */
-#define CR4_PKS		0x01000000 /* enable Protection Keys for kern pages */
+#define CR4_VMXE	0x00002000 /* Enable VMX operations */
+#define CR4_SMXE	0x00004000 /* Enable SMX operations */
+#define CR4_FSGSBASE	0x00010000 /* Enable *FSBASE and *GSBASE instructions */
+#define CR4_PCIDE	0x00020000 /* Enable Process Context IDentifiers */
+#define CR4_OSXSAVE	0x00040000 /* Enable xsave and xrestore */
+#define CR4_SMEP	0x00100000 /* Enable SMEP support */
+#define CR4_SMAP	0x00200000 /* Enable SMAP support */
+#define CR4_PKE		0x00400000 /* Enable Protection Keys for user pages */
+#define CR4_CET		0x00800000 /* Enable CET */
+#define CR4_PKS		0x01000000 /* Enable Protection Keys for kern pages */
 
 /*
  * Extended Control Register XCR0
@@ -172,17 +172,17 @@
 #define XSAVE_MAX_COMPONENT XSAVE_Hi16_ZMM
 
 /*
- * CPUID "features" bits
+ * "features" bits.
+ * CPUID Fn00000001
  */
-
-/* Fn00000001 %edx features */
+/* %edx */
 #define CPUID_FPU	0x00000001	/* processor has an FPU? */
 #define CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
 #define CPUID_DE	0x00000004	/* has debugging extension */
 #define CPUID_PSE	0x00000008	/* has 4MB page size extension */
 #define CPUID_TSC	0x00000010	/* has time stamp counter */
 #define CPUID_MSR	0x00000020	/* has model specific registers */
-#define CPUID_PAE	0x00000040	/* has phys address extension */
+#define CPUID_PAE	0x00000040	/* has physical address extension */
 #define CPUID_MCE	0x00000080	/* has machine check exception */
 #define CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
 #define CPUID_APIC	0x00000200	/* has enabled APIC */
@@ -193,17 +193,17 @@
 #define CPUID_CMOV	0x00008000	/* has CMOVcc instruction */
 #define CPUID_PAT	0x00010000	/* Page Attribute Table */
 #define CPUID_PSE36	0x00020000	/* 36-bit PSE */
-#define CPUID_PSN	0x00040000	/* processor serial number */
-#define CPUID_CLFSH	0x00080000	/* CLFLUSH insn supported */
+#define CPUID_PSN	0x00040000	/* Processor Serial Number */
+#define CPUID_CLFSH	0x00080000	/* CLFLUSH instruction supported */
 #define CPUID_DS	0x00200000	/* Debug Store */
 #define CPUID_ACPI	0x00400000	/* ACPI performance modulation regs */
 #define CPUID_MMX	0x00800000	/* MMX supported */
-#define CPUID_FXSR	0x01000000	/* fast FP/MMX save/restore */
-#define CPUID_SSE	0x02000000	/* streaming SIMD extensions */
-#define CPUID_SSE2	0x04000000	/* streaming SIMD extensions #2 */
-#define CPUID_SS	0x08000000	/* self-snoop */
+#define CPUID_FXSR	0x01000000	/* Fast FP/MMX Save/Restore */
+#define CPUID_SSE	0x02000000	/* Streaming SIMD Extensions */
+#define CPUID_SSE2	0x04000000	/* Streaming SIMD Extensions #2 */
+#define CPUID_SS	0x08000000	/* Self-Snoop */
 #define CPUID_HTT	0x10000000	/* Hyper-Threading Technology */
-#define CPUID_TM	0x20000000	/* thermal monitor (TCC) */
+#define CPUID_TM	0x20000000	/* Thermal Monitor (TCC) */
 #define CPUID_PBE	0x80000000	/* Pending Break Enable */
 
 #define CPUID_FLAGS1	"\20"						\
@@ -223,24 +223,21 @@
 #define CPUID_FEAT_BLACKLIST	 0
 #endif
 
-/*
- * CPUID "features" bits in Fn00000001 %ecx
- */
-
+/* %ecx */
 #define CPUID2_SSE3	0x00000001	/* Streaming SIMD Extensions 3 */
 #define CPUID2_PCLMULQDQ 0x00000002	/* PCLMULQDQ instructions */
 #define CPUID2_DTES64	0x00000004	/* 64-bit Debug Trace */
 #define CPUID2_MONITOR	0x00000008	/* MONITOR/MWAIT instructions */
 #define CPUID2_DS_CPL	0x00000010	/* CPL Qualified Debug Store */
-#define CPUID2_VMX	0x00000020	/* Virtual Machine Extensions */
-#define CPUID2_SMX	0x00000040	/* Safer Mode Extensions */
+#define CPUID2_VMX	0x00000020	/* Virtual Machine eXtensions */
+#define CPUID2_SMX	0x00000040	/* Safer Mode eXtensions */
 #define CPUID2_EST	0x00000080	/* Enhanced SpeedStep Technology */
 #define CPUID2_TM2	0x00000100	/* Thermal Monitor 2 */
 #define CPUID2_SSSE3	0x00000200	/* Supplemental SSE3 */
 #define CPUID2_CNXTID	0x00000400	/* Context ID */
 #define CPUID2_SDBG	0x00000800	/* Silicon Debug */
-#define CPUID2_FMA	0x00001000	/* has Fused Multiply Add */
-#define CPUID2_CX16	0x00002000	/* has CMPXCHG16B instruction */
+#define CPUID2_FMA	0x00001000	/* Fused Multiply Add */
+#define CPUID2_CX16	0x00002000	/* CMPXCHG16B instruction */
 #define CPUID2_XTPR	0x00004000	/* Task Priority Messages disabled? */
 #define CPUID2_PDCM	0x00008000	/* Perf/Debug Capability MSR */
 /* bit 16 unused	0x00010000 */
@@ -250,7 +247,7 @@
 #define CPUID2_SSE42	0x00100000	/* Streaming SIMD Extensions 4.2 */
 #define CPUID2_X2APIC	0x00200000	/* xAPIC Extensions */
 #define CPUID2_MOVBE	0x00400000	/* MOVBE (move after byteswap) */
-#define CPUID2_POPCNT	0x00800000	/* popcount instruction available */
+#define CPUID2_POPCNT	0x00800000	/* POPCNT instruction available */
 #define CPUID2_DEADLINE	0x01000000	/* APIC Timer supports TSC Deadline */
 #define CPUID2_AESNI	0x02000000	/* AES instructions */
 #define CPUID2_XSAVE	0x04000000	/* XSAVE instructions */
@@ -270,8 +267,7 @@
 	"\31" "DEADLINE" "\32" "AES"	"\33" "XSAVE"	"\34" "OSXSAVE"	\
 	"\35" "AVX"	"\36" "F16C"	"\37" "RDRAND"	"\40" "RAZ"
 
-/* CPUID Fn00000001 %eax */
-
+/* %eax */
 #define CPUID_TO_BASEFAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
 #define CPUID_TO_BASEMODEL(cpuid)	(((cpuid) >> 4) & 0xf)
 #define CPUID_TO_STEPPING(cpuid)	((cpuid) & 0xf)
@@ -295,15 +291,15 @@
 		&& (CPUID_TO_BASEFAMILY(cpuid) != 0x06)		\
 		? 0 : (CPUID_TO_EXTMODEL(cpuid) << 4)))
 
-/* CPUID Fn00000001 %ebx */
+/* %ebx */
 #define CPUID_BRAND_INDEX	__BITS(7,0)
 #define CPUID_CLFLUSH_SIZE	__BITS(15,8)
 #define CPUID_HTT_CORES		__BITS(23,16)
 #define CPUID_LOCAL_APIC_ID	__BITS(31,24)
 
 /*
- * Intel Deterministic Cache Parameter Leaf
- * Fn0000_0004
+ * Intel Deterministic Cache Parameter.
+ * CPUID Fn0000_0004
  */
 
 /* %eax */
@@ -323,7 +319,7 @@
 #define CPUID_DCP_PARTITIONS	__BITS(21, 12)	/* Physical line partitions */
 #define CPUID_DCP_WAYS		__BITS(31, 22)	/* Ways of associativity */
 
-/* Number of sets: %ecx */
+/* %ecx: Number of sets */
 
 /* %edx */
 #define CPUID_DCP_INVALIDATE	__BIT(0)	/* WB invalidate/invalidate */
@@ -331,8 +327,8 @@
 #define CPUID_DCP_COMPLEX	__BIT(2)	/* Complex cache indexing */
 
 /*
- * Intel/AMD MONITOR/MWAIT
- * Fn0000_0005
+ * Intel/AMD MONITOR/MWAIT.
+ * CPUID Fn0000_0005
  */
 /* %eax */
 #define CPUID_MON_MINSIZE	__BITS(15, 0)  /* Smallest monitor-line size */
@@ -349,9 +345,10 @@
 #define CPUID_MON_SUBSTATE(edx, cstate) (((edx) >> (cstate * 4)) & 0x0000000f)
 
 /*
- * Intel/AMD Digital Thermal Sensor and
- * Power Management, Fn0000_0006 - %eax.
+ * Intel/AMD Digital Thermal Sensor and Power Management.
+ * CPUID Fn0000_0006
  */
+/* %eax */
 #define CPUID_DSPM_DTS	      __BIT(0)	/* Digital Thermal Sensor */
 #define CPUID_DSPM_IDA	      __BIT(1)	/* Intel Dynamic Acceleration */
 #define CPUID_DSPM_ARAT	      __BIT(2)	/* Always Running APIC Timer */
@@ -381,10 +378,7 @@
 	"\21" "HWP_PECI" "\22" "HWP_FLEX" "\23" "HWP_FAST" "\24HW_FEEDBACK"   \
 	"\25" "HWP_IGNIDL"				"\30" "TD"
 
-/*
- * Intel/AMD Digital Thermal Sensor and
- * Power Management, Fn0000_0006 - %ecx.
- */
+/* %ecx */
 #define CPUID_DSPM_HWF	__BIT(0)	/* MSR_APERF/MSR_MPERF available */
 #define CPUID_DSPM_EPB	__BIT(3)	/* Energy Performance Bias */
 #define CPUID_DSPM_NTDC	__BITS(15, 8)	/* Number of Thread Director Classes */
@@ -394,7 +388,8 @@
 	"f\10\10NTDC\0"
 
 /*
- * Intel/AMD Structured Extended Feature leaf Fn0000_0007
+ * Intel/AMD Structured Extended Feature.
+ * CPUID Fn0000_0007
  * %ecx == 0: Subleaf 0
  *	%eax: The Maximum input value for supported subleaf.
  *	%ebx: Feature bits.
@@ -409,12 +404,12 @@
 #define CPUID_SEF_FSGSBASE    __BIT(0)  /* {RD,WR}{FS,GS}BASE */
 #define CPUID_SEF_TSC_ADJUST  __BIT(1)  /* IA32_TSC_ADJUST MSR support */
 #define CPUID_SEF_SGX	      __BIT(2)  /* Software Guard Extensions */
-#define CPUID_SEF_BMI1	      __BIT(3)  /* advanced bit manipulation ext. 1st grp */
+#define CPUID_SEF_BMI1	      __BIT(3)  /* Advanced bit manipulation ext. 1st grp */
 #define CPUID_SEF_HLE	      __BIT(4)  /* Hardware Lock Elision */
 #define CPUID_SEF_AVX2	      __BIT(5)  /* Advanced Vector Extensions 2 */
 #define CPUID_SEF_FDPEXONLY   __BIT(6)  /* x87FPU Data ptr updated only on x87exp */
 #define CPUID_SEF_SMEP	      __BIT(7)  /* Supervisor-Mode Execution Prevention */
-#define CPUID_SEF_BMI2	      __BIT(8)  /* advanced bit manipulation ext. 2nd grp */
+#define CPUID_SEF_BMI2	      __BIT(8)  /* Advanced bit manipulation ext. 2nd grp */
 #define CPUID_SEF_ERMS	      __BIT(9)  /* Enhanced REP MOVSB/STOSB */
 #define CPUID_SEF_INVPCID     __BIT(10) /* INVPCID instruction */
 #define CPUID_SEF_RTM	      __BIT(11) /* Restricted Transactional Memory */
@@ -458,13 +453,13 @@
 #define CPUID_SEF_WAITPKG	__BIT(5)  /* TPAUSE,UMONITOR,UMWAIT */
 #define CPUID_SEF_AVX512_VBMI2	__BIT(6)  /* AVX-512 Vector Byte Manipulation 2 */
 #define CPUID_SEF_CET_SS	__BIT(7)  /* CET Shadow Stack */
-#define CPUID_SEF_GFNI		__BIT(8)
-#define CPUID_SEF_VAES		__BIT(9)
-#define CPUID_SEF_VPCLMULQDQ	__BIT(10)
-#define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector neural Network Instruction */
-#define CPUID_SEF_AVX512_BITALG	__BIT(12)
+#define CPUID_SEF_GFNI		__BIT(8)  /* Galois Field instructions */
+#define CPUID_SEF_VAES		__BIT(9)  /* Vector AES instruction set */
+#define CPUID_SEF_VPCLMULQDQ	__BIT(10) /* CLMUL instruction set */
+#define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector Neural Network Instruction */
+#define CPUID_SEF_AVX512_BITALG	__BIT(12) /* BITALG instructions */
 #define CPUID_SEF_TME_EN	__BIT(13) /* Total Memory Encryption */
-#define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
+#define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14) /* Vector Population Count D/Q */
 #define CPUID_SEF_LA57		__BIT(16) /* 57bit linear addr & 5LVL paging */
 #define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
 #define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
@@ -473,7 +468,7 @@
 #define CPUID_SEF_MOVDIRI	__BIT(27) /* MOVDIRI instruction */
 #define CPUID_SEF_MOVDIR64B	__BIT(28) /* MOVDIR64B instruction */
 #define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
-#define CPUID_SEF_PKS		__BIT(31) /* Protection Keys for Kern-mode pages */
+#define CPUID_SEF_PKS		__BIT(31) /* Protection Keys for kern-mode pages */
 
 #define CPUID_SEF_FLAGS1	"\177\20"				      \
 	"b\0PREFETCHWT1\0" "b\1AVX512_VBMI\0" "b\2UMIP\0" "b\3PKU\0"	      \
@@ -486,12 +481,12 @@
 	"b\34MOVDIR64B\0"		"b\36SGXLC\0"	"b\37PKS\0"
 
 /* %ecx = 0, %edx */
-#define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
-#define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
-#define CPUID_SEF_FSREP_MOV	__BIT(4)  /* Fast Short REP MOV */
-#define CPUID_SEF_AVX512_VP2INTERSECT __BIT(8)
+#define CPUID_SEF_AVX512_4VNNIW	__BIT(2)  /* AVX512 4-reg Neural Network ins */
+#define CPUID_SEF_AVX512_4FMAPS	__BIT(3)  /* AVX512 4-reg Mult Accum Single precision */
+#define CPUID_SEF_FSREP_MOV	__BIT(4)  /* Fast Short REP MOVE */
+#define CPUID_SEF_AVX512_VP2INTERSECT __BIT(8) /* AVX512 VP2INTERSECT */
 #define CPUID_SEF_SRBDS_CTRL	__BIT(9)  /* IA32_MCU_OPT_CTRL */
-#define CPUID_SEF_MD_CLEAR	__BIT(10)
+#define CPUID_SEF_MD_CLEAR	__BIT(10) /* VERW clears CPU buffers */
 #define CPUID_SEF_TSX_FORCE_ABORT __BIT(13) /* MSR_TSX_FORCE_ABORT bit 0 */
 #define CPUID_SEF_SERIALIZE	__BIT(14) /* SERIALIZE instruction */
 #define CPUID_SEF_HYBRID	__BIT(15) /* Hybrid part */
@@ -538,7 +533,8 @@
 				"\1" "PPIN"
 
 /*
- * Intel CPUID Architectural Performance Monitoring Fn0000000a
+ * Intel CPUID Architectural Performance Monitoring.
+ * CPUID Fn0000000a
  *
  * See also src/usr.sbin/tprof/arch/tprof_x86.c
  */
@@ -575,7 +571,8 @@
 	"f\0\5FixedFunc\0" "f\5\10FFBitwidth\0" "b\17ANYTHREADDEPR\0"
 
 /*
- * Intel CPUID Extended Topology Enumeration Fn0000000b
+ * Intel CPUID Extended Topology Enumeration.
+ * CPUID Fn0000000b
  * %ecx == level number
  *	%eax: See below.
  *	%ebx: Number of logical processors at this level.
@@ -592,7 +589,8 @@
 #define CPUID_TOP_LVLTYPE_CORE	2	 	/* Core */
 
 /*
- * Intel/AMD CPUID Processor extended state Enumeration Fn0000000d
+ * Intel/AMD CPUID Processor extended state Enumeration.
+ * CPUID Fn0000000d
  *
  * %ecx == 0: supported features info:
  *	%eax: Valid bits of lower 32bits of XCR0
@@ -613,7 +611,7 @@
  *	All of %eax, %ebx, %ecx and %edx are zero for unsupported features.
  */
 
-/* %ecx=1 %eax */
+/* %ecx = 1, %eax */
 #define CPUID_PES1_XSAVEOPT	0x00000001	/* xsaveopt instruction */
 #define CPUID_PES1_XSAVEC	0x00000002	/* xsavec & compacted XRSTOR */
 #define CPUID_PES1_XGETBV	0x00000004	/* xgetbv with ECX = 1 */
@@ -623,8 +621,8 @@
 	"\1" "XSAVEOPT"	"\2" "XSAVEC"	"\3" "XGETBV"	"\4" "XSAVES"
 
 /*
- * Intel Deterministic Address Translation Parameter Leaf
- * Fn0000_0018
+ * Intel Deterministic Address Translation Parameter.
+ * CPUID Fn0000_0018
  */
 
 /* %ecx=0 %eax __BITS(31, 0): the maximum input value of supported sub-leaf */
@@ -653,7 +651,11 @@
 #define CPUID_DATP_SHAREING	__BITS(25, 14)	/* shareing */
 
 
-/* Intel Fn80000001 extended features - %edx */
+/*
+ * Intel extended features.
+ * CPUID Fn80000001
+ */
+/* %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
 #define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
 #define CPUID_PAGE1GB	0x04000000	/* 1GB Large Page Support */
@@ -664,8 +666,8 @@
 	"\14" "SYSCALL/SYSRET"	"\25" "XD"	"\33" "P1GB" \
 	"\34" "RDTSCP"	"\36" "EM64T"
 
-/* Intel Fn80000001 extended features - %ecx */
-#define CPUID_LAHF	__BIT(0)	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
+/* %ecx */
+#define CPUID_LAHF	__BIT(0)       /* LAHF/SAHF in IA-32e mode, 64bit sub*/
 		/*	__BIT(5) */	/* LZCNT. Same as AMD's CPUID_ABM */
 #define CPUID_PREFETCHW	__BIT(8)	/* PREFETCHW */
 
@@ -675,7 +677,11 @@
 	"\11" "PREFETCHW"
 
 
-/* AMD/VIA Fn80000001 extended features - %edx */
+/*
+ * AMD/VIA extended features.
+ * CPUID Fn80000001
+ */
+/* %edx */
 /*	CPUID_SYSCALL			   SYSCALL/SYSRET */
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
@@ -696,7 +702,7 @@
 	"\31" "FXSR"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP"	\
 			"\36" "LONG"	"\37" "3DNOW2"	"\40" "3DNOW"
 
-/* AMD Fn8000_0001 extended features - %ecx */
+/* %ecx (AMD) */
 /* 	CPUID_LAHF			   LAHF/SAHF instruction */
 #define CPUID_CMPLEGACY	  __BIT(1)	/* Compare Legacy */
 #define CPUID_SVM	  __BIT(2)	/* Secure Virtual Machine */
@@ -737,11 +743,12 @@
 	"\35" "L2IPERFC" "\36" "MWAITX"	"\37" "B30"	"\40" "B31"
 
 /*
- * Advanced Power Management
- * CPUID Fn8000_0007 %edx
+ * Advanced Power Management.
+ * CPUID Fn8000_0007
  *
  * Only ITSC is for both Intel and AMD. Others are only for AMD.
  */
+/* %edx */
 #define CPUID_APM_TS	   __BIT(0)	/* Temperature Sensor */
 #define CPUID_APM_FID	   __BIT(1)	/* Frequency ID control */
 #define CPUID_APM_VID	   __BIT(2)	/* Voltage ID control */
@@ -750,11 +757,11 @@
 #define CPUID_APM_STC	   __BIT(5)	/* Software thermal control (STC) */
 #define CPUID_APM_100	   __BIT(6)	/* 100MHz multiplier control */
 #define CPUID_APM_HWP	   __BIT(7)	/* HW P-State control */
-#define CPUID_APM_ITSC	   __BIT(8)	/* invariant TSC */
-#define CPUID_APM_CPB	   __BIT(9)	/* Core performance boost */
+#define CPUID_APM_ITSC	   __BIT(8)	/* Invariant TSC */
+#define CPUID_APM_CPB	   __BIT(9)	/* Core Performance Boost */
 #define CPUID_APM_EFF	   __BIT(10)	/* Effective Frequency (read-only) */
-#define CPUID_APM_PROCFI   __BIT(11)	/* Proc Feedback Interface */
-#define CPUID_APM_PROCPR   __BIT(12)	/* Proc Power Reporting  */
+#define CPUID_APM_PROCFI   __BIT(11)	/* Processor Feedback Interface */
+#define CPUID_APM_PROCPR   __BIT(12)	/* Processor Power Reporting */
 #define CPUID_APM_CONNSTBY __BIT(13)	/* Connected Standby */
 #define CPUID_APM_RAPL	   __BIT(14)	/* Running Average Power Limit */
 
@@ -765,7 +772,7 @@
 	"\15" "PROCPR"	"\16" "CONNSTBY" "\17" "RAPL"
 
 /*
- * AMD Processor Capacity Parameters and Extended Features
+ * AMD Processor Capacity Parameters and Extended Features.
  * CPUID Fn8000_0008
  * %eax: Long Mode Size Identifiers
  * %ebx: Extended Feature Identifiers
@@ -803,26 +810,31 @@
 	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"	"\24B19" \
 	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"
 
-/* AMD Fn8000_000a %eax (SVM Revision) */
+/*
+ * AMD SVM Revision and Feature.
+ * CPUID Fn8000_000a
+ */
+
+/* %eax: SVM revision */
 #define CPUID_AMD_SVM_REV		__BITS(7,0)
 
-/* AMD Fn8000_000a %edx features (SVM features) */
-#define CPUID_AMD_SVM_NP		0x00000001
-#define CPUID_AMD_SVM_LbrVirt		0x00000002
-#define CPUID_AMD_SVM_SVML		0x00000004
-#define CPUID_AMD_SVM_NRIPS		0x00000008
-#define CPUID_AMD_SVM_TSCRateCtrl	0x00000010
-#define CPUID_AMD_SVM_VMCBCleanBits	0x00000020
-#define CPUID_AMD_SVM_FlushByASID	0x00000040
-#define CPUID_AMD_SVM_DecodeAssist	0x00000080
-#define CPUID_AMD_SVM_PauseFilter	0x00000400
-#define CPUID_AMD_SVM_PFThreshold	0x00001000 /* PAUSE filter threshold */
-#define CPUID_AMD_SVM_AVIC		0x00002000 /* AMD Virtual intr. ctrl */
-#define CPUID_AMD_SVM_V_VMSAVE_VMLOAD	0x00008000 /* Virtual VM{SAVE/LOAD} */
-#define CPUID_AMD_SVM_vGIF		0x00010000 /* Virtualized GIF */
-#define CPUID_AMD_SVM_GMET		0x00020000
-#define CPUID_AMD_SVM_SPEC_CTRL		__BIT(20)
-#define CPUID_AMD_SVM_TLBICTL		__BIT(24)  /* TLB Inttercept Control */
+/* %edx: SVM features */
+#define CPUID_AMD_SVM_NP	      __BIT(0)  /* Nested Paging */
+#define CPUID_AMD_SVM_LbrVirt	      __BIT(1)  /* LBR virtualization */
+#define CPUID_AMD_SVM_SVML	      __BIT(2)  /* SVM Lock */
+#define CPUID_AMD_SVM_NRIPS	      __BIT(3)  /* NRIP Save on #VMEXIT */
+#define CPUID_AMD_SVM_TSCRateCtrl     __BIT(4)  /* MSR-based TSC rate ctrl */
+#define CPUID_AMD_SVM_VMCBCleanBits   __BIT(5)  /* VMCB Clean Bits support */
+#define CPUID_AMD_SVM_FlushByASID     __BIT(6)  /* Flush by ASID */
+#define CPUID_AMD_SVM_DecodeAssist    __BIT(7)  /* Decode Assists support */
+#define CPUID_AMD_SVM_PauseFilter     __BIT(10) /* PAUSE intercept filter */
+#define CPUID_AMD_SVM_PFThreshold     __BIT(12) /* PAUSE filter threshold */
+#define CPUID_AMD_SVM_AVIC	      __BIT(13) /* Advanced Virt. Intr. Ctrl */
+#define CPUID_AMD_SVM_V_VMSAVE_VMLOAD __BIT(15) /* Virtual VM{SAVE/LOAD} */
+#define CPUID_AMD_SVM_vGIF	      __BIT(16) /* Virtualized GIF */
+#define CPUID_AMD_SVM_GMET	      __BIT(17) /* Guest Mode Execution Trap */
+#define CPUID_AMD_SVM_SPEC_CTRL	      __BIT(20) /* SPEC_CTRL virtualization */
+#define CPUID_AMD_SVM_TLBICTL	      __BIT(24) /* TLB Intercept Control */
 
 #define CPUID_AMD_SVM_FLAGS	 "\20"					\
 	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS"	\
@@ -836,7 +848,8 @@
 	"\31" "TLBICTL"
 
 /*
- * AMD Fn8000_001d Cache Topology Information.
+ * AMD Cache Topology Information.
+ * CPUID Fn8000_001d
  * It's almost the same as Intel Deterministic Cache Parameter Leaf(0x04)
  * except the following:
  *	No Cores/package (%eax bit 31..26)
@@ -844,7 +857,8 @@
  */
 
 /*
- * AMD Fn8000_001f Encrypted Memory Capabilities.
+ * AMD Encrypted Memory Capabilities.
+ * CPUID Fn8000_001f
  * %eax: flags
  * %ebx:  5-0: Cbit Position
  *       11-6: PhysAddrReduction
@@ -874,7 +888,7 @@
 	"\21" "VTE"
 
 /*
- * Centaur Extended Feature flags
+ * Centaur Extended Feature flags.
  */
 #define CPUID_VIA_HAS_RNG	0x00000004	/* Random number generator */
 #define CPUID_VIA_DO_RNG	0x00000008
