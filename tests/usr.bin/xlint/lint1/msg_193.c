@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.14 2021/08/15 21:51:56 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.15 2022/01/15 22:12:35 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -655,4 +655,15 @@ lint_annotation_NOTREACHED(void)
 	if (1)
 		/* NOTREACHED */
 		suppressed();
+}
+
+/*
+ * Since at least 2002, lint does not detect a double semicolon.  See
+ * cgram.y, expression_statement, T_SEMI.
+ */
+int
+test_empty_statement(int x)
+{
+	/* TODO: expect+1: warning: statement not reachable [193] */
+	return x > 0 ? x : -x;;
 }
