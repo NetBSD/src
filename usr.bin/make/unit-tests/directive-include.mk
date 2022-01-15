@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.10 2022/01/07 08:20:00 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.11 2022/01/15 12:35:18 rillig Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -62,7 +62,7 @@ include /dev/null /dev/null
 include
 
 # XXX: trailing whitespace in diagnostic, missing quotes around filename
-### expect+1: Could not find
+### TODO: expect+1: Could not find
 # The following include directive behaves differently, depending on whether
 # the current file has a slash or is a relative filename.  In the first case,
 # make opens the directory of the current file and tries to read from it,

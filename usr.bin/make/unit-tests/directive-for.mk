@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.12 2022/01/08 10:22:03 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.13 2022/01/15 12:35:18 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -157,10 +157,10 @@ var=	outer
 
 
 # An empty list of variables to the left of the 'in' is a parse error.
-.for in value			# expect: no iteration variables in for
+.for in value			# expect+0: no iteration variables in for
 # XXX: The loop body is evaluated once, even with the parse error above.
-.  error			# expect: Missing argument for ".error"
-.endfor				# expect: for-less endfor
+.  error			# expect+0: Missing argument for ".error"
+.endfor				# expect+0: for-less endfor
 
 # An empty list of iteration values to the right of the 'in' is accepted.
 # Unlike in the shell, it is not a parse error.
@@ -184,7 +184,7 @@ var=	outer
 # is processed.
 .for var in value
 .  if 0
-.endfor				# expect: 1 open conditional
+.endfor				# expect+0: 1 open conditional
 
 # If there are no iteration values, the loop body is not processed, and the
 # check for mismatched conditionals is not performed.
@@ -200,8 +200,8 @@ var=	outer
 .if 0
 .  for var in value		# does not need a corresponding .endfor
 .endif
-.endfor				# expect: for-less endfor
-.endif				# expect: if-less endif
+.endfor				# expect+0: for-less endfor
+.endif				# expect+0: if-less endif
 
 
 # When a .for without the corresponding .endfor occurs in an active branch of
@@ -209,7 +209,7 @@ var=	outer
 # without looking at any other directives.
 .if 1
 .  for var in value
-.    endif			# expect: if-less endif
+.    endif			# expect+0: if-less endif
 .  endfor			# no 'for-less endfor'
 .endif				# no 'if-less endif'
 
