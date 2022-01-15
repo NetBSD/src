@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.571 2022/01/15 19:05:23 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.572 2022/01/15 19:34:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.571 2022/01/15 19:05:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.572 2022/01/15 19:34:07 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1018,17 +1018,14 @@ static void
 HandlePWD(const struct stat *curdir_st)
 {
 	char *pwd;
-	FStr prefix, makeobjdir;
+	FStr makeobjdir;
 	struct stat pwd_st;
 
 	if (ignorePWD || (pwd = getenv("PWD")) == NULL)
 		return;
 
-	prefix = Var_Value(SCOPE_CMDLINE, "MAKEOBJDIRPREFIX");
-	if (prefix.str != NULL) {
-		FStr_Done(&prefix);
+	if (Var_Exists(SCOPE_CMDLINE, "MAKEOBJDIRPREFIX"))
 		return;
-	}
 
 	makeobjdir = Var_Value(SCOPE_CMDLINE, "MAKEOBJDIR");
 	if (makeobjdir.str != NULL && strchr(makeobjdir.str, '$') != NULL)
