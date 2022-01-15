@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.8 2021/07/10 17:35:54 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.9 2022/01/15 23:21:34 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -28,6 +28,7 @@ int recover_from_rbrace;
 void
 function(void)
 {
+	/* expect+2: warning: statement not reached [193] */
 	if (0)
 		;
 	);			/* expect: syntax error ')' */
