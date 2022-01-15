@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.238 2022/01/15 18:34:41 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.239 2022/01/15 19:05:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -296,7 +296,6 @@ typedef enum VarExportMode {
 } VarExportMode;
 
 void Var_Delete(GNode *, const char *);
-void Var_DeleteExpand(GNode *, const char *);
 void Var_Undef(const char *);
 void Var_Set(GNode *, const char *, const char *);
 void Var_SetExpand(GNode *, const char *, const char *);
@@ -319,7 +318,6 @@ void Var_ExportVars(const char *);
 void Var_UnExport(bool, const char *);
 
 void Global_Set(const char *, const char *);
-void Global_SetExpand(const char *, const char *);
 void Global_Append(const char *, const char *);
 void Global_Delete(const char *);
 

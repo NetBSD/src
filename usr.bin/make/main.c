@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.570 2022/01/15 18:34:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.571 2022/01/15 19:05:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.570 2022/01/15 18:34:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.571 2022/01/15 19:05:23 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -452,7 +452,7 @@ MainParseArg(char c, const char *argvalue)
 	case 'D':
 		if (argvalue[0] == '\0')
 			return false;
-		Global_SetExpand(argvalue, "1");
+		Var_SetExpand(SCOPE_GLOBAL, argvalue, "1");
 		Global_Append(MAKEFLAGS, "-D");
 		Global_Append(MAKEFLAGS, argvalue);
 		break;
