@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.18 2022/01/15 15:54:40 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.19 2022/01/15 18:02:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.18 2022/01/15 15:54:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.19 2022/01/15 18:02:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -381,8 +381,8 @@ sdhc_acpi_rockchip_bus_clock(struct sdhc_softc *sc, int freq)
 	}
 
 	aprint_debug_dev(sc->sc_dev,
-	    "eMMC Set Card Clock DSM returned %lu Hz\n", actfreq);
-	if (actfreq == 0) {
+	    "eMMC Set Card Clock DSM returned %" PRIu64 " Hz\n", actfreq);
+	if (actfreq == 0 && freq != 0) {
 		return EINVAL;
 	}
 
