@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.209 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.210 2022/01/15 18:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.209 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.210 2022/01/15 18:34:41 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -236,12 +236,8 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 	}
 
 	spec[cp++ - spec] = '\0';
-	if (expandLib) {
-		char *expanded;
-		(void)Var_Subst(lib.str, scope, VARE_UNDEFERR, &expanded);
-		/* TODO: handle errors */
-		lib = FStr_InitOwn(expanded);
-	}
+	if (expandLib)
+		Var_Expand(&lib, scope, VARE_UNDEFERR);
 
 	for (;;) {
 		/*
@@ -317,13 +313,10 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 		 */
 		if (doSubst) {
 			char *fullName;
-			char *p, *expandedMem;
+			char *p;
 			const char *unexpandedMem = mem.str;
 
-			(void)Var_Subst(mem.str, scope, VARE_UNDEFERR,
-			    &expandedMem);
-			/* TODO: handle errors */
-			mem = FStr_InitOwn(expandedMem);
+			Var_Expand(&mem, scope, VARE_UNDEFERR);
 
 			/*
 			 * Now form an archive spec and recurse to deal with

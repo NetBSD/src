@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.569 2022/01/10 20:32:28 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.570 2022/01/15 18:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.569 2022/01/10 20:32:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.570 2022/01/15 18:34:41 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -743,14 +743,7 @@ SetVarObjdir(bool writable, const char *var, const char *suffix)
 		return false;
 	}
 
-	/* expand variable substitutions */
-	if (strchr(path.str, '$') != 0) {
-		char *expanded;
-		(void)Var_Subst(path.str, SCOPE_GLOBAL, VARE_WANTRES, &expanded);
-		/* TODO: handle errors */
-		FStr_Done(&path);
-		path = FStr_InitOwn(expanded);
-	}
+	Var_Expand(&path, SCOPE_GLOBAL, VARE_WANTRES);
 
 	(void)Main_SetObjdir(writable, "%s%s", path.str, suffix);
 
