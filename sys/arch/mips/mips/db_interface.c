@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.94 2021/05/23 23:22:55 dholland Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.95 2022/01/15 08:56:41 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.94 2021/05/23 23:22:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.95 2022/01/15 08:56:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -87,9 +87,9 @@ static void db_unwatch_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void db_mach_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 
-void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
-void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 #ifdef MIPS64_XLS
 void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
