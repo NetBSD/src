@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.50 2022/01/14 07:21:53 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.51 2022/01/15 08:14:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #define	PMAP_TLB_NEED_SHOOTDOWN		1
 #endif
 
-#define	PMAP_TLB_FLUSH_ASID_ON_RESET	(true)
+#define	PMAP_TLB_FLUSH_ASID_ON_RESET	true
 
 /* Maximum number of ASIDs. Some CPUs have less.*/
 #define	PMAP_TLB_NUM_PIDS		65536
