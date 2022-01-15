@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.39 2022/01/15 15:37:15 christos Exp $
+.\"	$NetBSD: pfil.9,v 1.40 2022/01/15 17:54:01 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -98,13 +98,13 @@ then the
 function returns
 .Dv NULL .
 Packet filters use the
-.Fn pfil_head_get 
+.Fn pfil_head_get
 function specifying the data link
 .Fa type
 and the
 .Fa key
 to look up the filtering point with which they register themselves.
-The 
+The
 .Fa key
 is unique to the filtering point.
 The data link
@@ -129,7 +129,7 @@ The head is looked up using the
 function, which takes the data link
 .Fa type
 and the
-.Fa key 
+.Fa key
 that the packet filter expects.
 Filters may provide an argument to be passed to the filter when
 invoked on a packet.
