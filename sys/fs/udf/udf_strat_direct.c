@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.14 2016/05/24 09:55:57 reinoud Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.15 2022/01/15 10:55:53 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.14 2016/05/24 09:55:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.15 2022/01/15 10:55:53 msaitoh Exp $");
 #endif /* not lint */
 
 
@@ -347,7 +347,7 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	 * Translate new mappings in lmapping to pmappings and try to
 	 * conglomerate extents to reduce the number of writes.
 	 *
-	 * pmapping to contain lb_nums as used for disc adressing.
+	 * pmapping to contain lb_nums as used for disc addressing.
 	 */
 	pmapping = ump->la_pmapping;
 	sectors  = (buf->b_bcount + sector_size -1) / sector_size;
