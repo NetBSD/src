@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.288 2022/01/09 18:59:27 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.289 2022/01/15 19:13:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -873,6 +873,8 @@ MAKE_INLINE bool MAKE_ATTR_USE
 ch_isalpha(char ch) { return isalpha((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE
 ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
+MAKE_INLINE bool MAKE_ATTR_USE
+ch_islower(char ch) { return islower((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE
 ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
 MAKE_INLINE bool MAKE_ATTR_USE
