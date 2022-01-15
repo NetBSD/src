@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.190 2022/01/15 18:34:41 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.191 2022/01/15 19:05:23 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1268,8 +1268,8 @@ meta_oodate(GNode *gn, bool oodate)
 
 			if (lastpid > 0) {
 			    /* We need to remember these. */
-			    Global_SetExpand(lcwd_vname, lcwd);
-			    Global_SetExpand(ldir_vname, latestdir);
+			    Global_Set(lcwd_vname, lcwd);
+			    Global_Set(ldir_vname, latestdir);
 			}
 			snprintf(lcwd_vname, sizeof lcwd_vname, LCWD_VNAME_FMT, pid);
 			snprintf(ldir_vname, sizeof ldir_vname, LDIR_VNAME_FMT, pid);
@@ -1302,8 +1302,8 @@ meta_oodate(GNode *gn, bool oodate)
 		/* Process according to record type. */
 		switch (buf[0]) {
 		case 'X':		/* eXit */
-		    Var_DeleteExpand(SCOPE_GLOBAL, lcwd_vname);
-		    Var_DeleteExpand(SCOPE_GLOBAL, ldir_vname);
+		    Var_Delete(SCOPE_GLOBAL, lcwd_vname);
+		    Var_Delete(SCOPE_GLOBAL, ldir_vname);
 		    lastpid = 0;	/* no need to save ldir_vname */
 		    break;
 
@@ -1315,9 +1315,9 @@ meta_oodate(GNode *gn, bool oodate)
 			child = atoi(p);
 			if (child > 0) {
 			    snprintf(cldir, sizeof cldir, LCWD_VNAME_FMT, child);
-			    Global_SetExpand(cldir, lcwd);
+			    Global_Set(cldir, lcwd);
 			    snprintf(cldir, sizeof cldir, LDIR_VNAME_FMT, child);
-			    Global_SetExpand(cldir, latestdir);
+			    Global_Set(cldir, latestdir);
 #ifdef DEBUG_META_MODE
 			    if (DEBUG(META))
 				debug_printf(
@@ -1333,8 +1333,8 @@ meta_oodate(GNode *gn, bool oodate)
 		    /* Update lcwd and latest directory. */
 		    strlcpy(latestdir, p, sizeof latestdir);
 		    strlcpy(lcwd, p, sizeof lcwd);
-		    Global_SetExpand(lcwd_vname, lcwd);
-		    Global_SetExpand(ldir_vname, lcwd);
+		    Global_Set(lcwd_vname, lcwd);
+		    Global_Set(ldir_vname, lcwd);
 #ifdef DEBUG_META_MODE
 		    DEBUG4(META, "%s: %d: cwd=%s ldir=%s\n",
 			   fname, lineno, cwd, lcwd);

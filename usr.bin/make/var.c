@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1001 2022/01/15 18:34:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1002 2022/01/15 19:05:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -103,7 +103,6 @@
  *	Var_Parse	Parse a variable expression such as ${VAR:Mpattern}.
  *
  *	Var_Delete
- *	Var_DeleteExpand
  *			Delete a variable.
  *
  *	Var_ReexportVars
@@ -140,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1001 2022/01/15 18:34:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1002 2022/01/15 19:05:23 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -519,20 +518,6 @@ Var_Delete(GNode *scope, const char *varname)
 	HashTable_DeleteEntry(&scope->vars, he);
 	Buf_Done(&v->val);
 	free(v);
-}
-
-/*
- * Remove a variable from a scope, freeing all related memory as well.
- * The variable name is expanded once.
- */
-void
-Var_DeleteExpand(GNode *scope, const char *name)
-{
-	FStr varname = FStr_InitRefer(name);
-
-	Var_Expand(&varname, SCOPE_GLOBAL, VARE_WANTRES);
-	Var_Delete(scope, varname.str);
-	FStr_Done(&varname);
 }
 
 /*
@@ -1082,12 +1067,6 @@ void
 Global_Set(const char *name, const char *value)
 {
 	Var_Set(SCOPE_GLOBAL, name, value);
-}
-
-void
-Global_SetExpand(const char *name, const char *value)
-{
-	Var_SetExpand(SCOPE_GLOBAL, name, value);
 }
 
 void
