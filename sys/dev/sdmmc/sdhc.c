@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.112 2021/11/10 16:53:28 msaitoh Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.113 2022/01/15 14:33:36 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.112 2021/11/10 16:53:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.113 2022/01/15 14:33:36 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -620,7 +620,8 @@ adma_done:
 	if (ISSET(sc->sc_flags, SDHC_FLAG_8BIT_MODE))
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
-		saa.saa_caps |= SMC_CAPS_SD_HIGHSPEED;
+		saa.saa_caps |= SMC_CAPS_SD_HIGHSPEED |
+				SMC_CAPS_MMC_HIGHSPEED;
 	if (ISSET(caps2, SDHC_SDR104_SUPP))
 		saa.saa_caps |= SMC_CAPS_UHS_SDR104 |
 				SMC_CAPS_UHS_SDR50 |
