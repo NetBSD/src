@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.185 2022/01/15 10:09:15 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.186 2022/01/15 10:59:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -730,6 +730,7 @@
 #define CPUID_PTSC	  __BIT(27)	/* PerfTsc */
 #define CPUID_L2IPERFC	  __BIT(28)	/* L2I performance counter Extension */
 #define CPUID_MWAITX	  __BIT(29)	/* MWAITX/MONITORX support */
+#define CPUID_ADDRMASKEXT __BIT(30)	/* Breakpoint Addressing Mask ext. */
 
 #define CPUID_AMD_FLAGS4	"\20"					    \
 	"\1" "LAHF"	"\2" "CMPLEGACY" "\3" "SVM"	"\4" "EAPIC"	    \
@@ -740,7 +741,7 @@
 	"\21" "FMA4"	"\22" "TCE"	"\23" "B18"	"\24" "NodeID"	    \
 	"\25" "B20"	"\26" "TBM"	"\27" "TopoExt"	"\30" "PCExtC"	    \
 	"\31" "PCExtNB"	"\32" "StrmPM"	"\33" "DBExt"	"\34" "PerfTsc"	    \
-	"\35" "L2IPERFC" "\36" "MWAITX"	"\37" "B30"	"\40" "B31"
+	"\35" "L2IPERFC" "\36" "MWAITX"	"\37" "AddrMaskExt" "\40" "B31"
 
 /*
  * Advanced Power Management.
@@ -788,22 +789,29 @@
 #define CPUID_CAPEX_MCOMMIT	   __BIT(8)  /* MCOMMIT instruction */
 #define CPUID_CAPEX_WBNOINVD	   __BIT(9)  /* WBNOINVD instruction */
 #define CPUID_CAPEX_IBPB	   __BIT(12) /* Speculation Control IBPB */
+#define CPUID_CAPEX_INT_WBINVD	   __BIT(13) /* Interruptable WB[NO]INVD */
 #define CPUID_CAPEX_IBRS	   __BIT(14) /* Speculation Control IBRS */
 #define CPUID_CAPEX_STIBP	   __BIT(15) /* Speculation Control STIBP */
 #define CPUID_CAPEX_IBRS_ALWAYSON  __BIT(16) /* IBRS always on mode */
 #define CPUID_CAPEX_STIBP_ALWAYSON __BIT(17) /* STIBP always on mode */
 #define CPUID_CAPEX_PREFER_IBRS	   __BIT(18) /* IBRS preferred */
+#define CPUID_CAPEX_IBRS_SAMEMODE  __BIT(19) /* IBRS same speculation limits */
+#define CPUID_CAPEX_EFER_LSMSLE_UN __BIT(20) /* EFER.LMSLE is unsupported */
 #define CPUID_CAPEX_SSBD	   __BIT(24) /* Speculation Control SSBD */
 #define CPUID_CAPEX_VIRT_SSBD	   __BIT(25) /* Virt Spec Control SSBD */
 #define CPUID_CAPEX_SSB_NO	   __BIT(26) /* SSBD not required */
+#define CPUID_CAPEX_PSFD	   __BIT(28) /* Predictive Store Froward Dis */
 
 #define CPUID_CAPEX_FLAGS	"\20"					   \
 	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			   \
 	"\5RDPRU"			"\7B6"				   \
 	"\11MCOMMIT"	"\12WBNOINVD"	"\13B10"			   \
-	"\15IBPB"	"\16B13"	"\17IBRS"	"\20STIBP"	   \
-	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"	"\24B19"   \
-	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"
+	"\15IBPB"	"\16INT_WBINVD"	"\17IBRS"	"\20STIBP"	   \
+	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"		   \
+							"\24IBRS_SAMEMODE" \
+	"\25EFER_LSMSLE_UN"						   \
+	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"			   \
+	"\35PSFD"
 
 /* %ecx */
 #define CPUID_CAPEX_PerfTscSize	__BITS(17,16)
@@ -833,6 +841,7 @@
 #define CPUID_AMD_SVM_V_VMSAVE_VMLOAD __BIT(15) /* Virtual VM{SAVE/LOAD} */
 #define CPUID_AMD_SVM_vGIF	      __BIT(16) /* Virtualized GIF */
 #define CPUID_AMD_SVM_GMET	      __BIT(17) /* Guest Mode Execution Trap */
+#define CPUID_AMD_SVM_SSSCHECK	      __BIT(19)  /* Shadow Stack restrictions */
 #define CPUID_AMD_SVM_SPEC_CTRL	      __BIT(20) /* SPEC_CTRL virtualization */
 #define CPUID_AMD_SVM_TLBICTL	      __BIT(24) /* TLB Intercept Control */
 
@@ -843,9 +852,10 @@
 	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11"	\
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
-	"\21" "VGIF"	"\22" "GMET"					\
+	"\21" "VGIF"	"\22" "GMET"			"\24SSSCHECK"	\
 	"\25" "SPEC_CTRL"						\
-	"\31" "TLBICTL"
+	"\31" "TLBICTL"							\
+	"\35B28"
 
 /*
  * AMD Cache Topology Information.
@@ -872,6 +882,7 @@
 #define CPUID_AMD_ENCMEM_SEVES	__BIT(3)   /* SEV Encrypted State */
 #define CPUID_AMD_ENCMEM_SEV_SNP __BIT(4)  /* Secure Nested Paging */
 #define CPUID_AMD_ENCMEM_VMPL	__BIT(5)   /* Virtual Machine Privilege Lvl */
+#define CPUID_AMD_ENCMEM_SECTSC	__BIT(8)   /* Secure TSC */
 #define CPUID_AMD_ENCMEM_HECC	__BIT(10) /* HW Enf Cache Coh across enc dom */
 #define CPUID_AMD_ENCMEM_64BH	__BIT(11)  /* 64Bit Host */
 #define CPUID_AMD_ENCMEM_RSTRINJ __BIT(12) /* Restricted Injection */
@@ -879,13 +890,15 @@
 #define CPUID_AMD_ENCMEM_DBGSWAP __BIT(14) /* Debug Swap */
 #define CPUID_AMD_ENCMEM_PREVHOSTIBS __BIT(15) /* Prevent Host IBS */
 #define CPUID_AMD_ENCMEM_VTE	__BIT(16)  /* Virtual Transparent Encryption */
+#define CPUID_AMD_ENCMEM_VMSA_REGPROT __BIT(24)  /* VmsaRegProt */
 
 #define CPUID_AMD_ENCMEM_FLAGS	 "\20"					      \
 	"\1" "SME"	"\2" "SEV"	"\3" "PageFlushMsr"	"\4" "SEV-ES" \
 	"\5" "SEV-SNP"	"\6" "VMPL"					      \
-					"\13HwEnfCacheCoh"  "\14" "64BitHost" \
+	"\11SecureTSC"			"\13HwEnfCacheCoh"  "\14" "64BitHost" \
 	"\15" "RSTRINJ"	"\16" "ALTINJ"	"\17" "DebugSwap" "\20PreventHostlbs" \
-	"\21" "VTE"
+	"\21" "VTE"							      \
+	"\31" "VmsaRegProt"
 
 /*
  * Centaur Extended Feature flags.
