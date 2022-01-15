@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.237 2022/01/09 18:49:28 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.238 2022/01/15 18:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -310,6 +310,7 @@ FStr Var_Value(GNode *, const char *) MAKE_ATTR_USE;
 const char *GNode_ValueDirect(GNode *, const char *) MAKE_ATTR_USE;
 VarParseResult Var_Parse(const char **, GNode *, VarEvalMode, FStr *);
 VarParseResult Var_Subst(const char *, GNode *, VarEvalMode, char **);
+void Var_Expand(FStr *, GNode *, VarEvalMode);
 void Var_Stats(void);
 void Var_Dump(GNode *);
 void Var_ReexportVars(void);
