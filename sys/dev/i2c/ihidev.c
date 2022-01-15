@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.26 2022/01/14 22:28:59 riastradh Exp $ */
+/* $NetBSD: ihidev.c,v 1.27 2022/01/15 06:22:30 skrll Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.26 2022/01/14 22:28:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.27 2022/01/15 06:22:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1025,7 +1025,7 @@ ihidev_acpi_get_info(struct ihidev_softc *sc)
 	if (ACPI_FAILURE(status)) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to get HidDescriptorAddress: %s\n",
-		    AcpiFormatException(status)); 
+		    AcpiFormatException(status));
 		return false;
 	}
 
