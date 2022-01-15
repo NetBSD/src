@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.13 2021/01/24 13:33:56 martin Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.14 2022/01/15 07:11:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -86,8 +86,8 @@ struct uio;
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 /* Bus read/write barrier methods. */
-#define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
-#define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+#define	BUS_SPACE_BARRIER_READ		0x01	/* force read barrier */
+#define	BUS_SPACE_BARRIER_WRITE		0x02	/* force write barrier */
 
 int	bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 		      bus_space_handle_t *);
