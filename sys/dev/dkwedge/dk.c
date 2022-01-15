@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.109 2021/10/18 11:40:56 simonb Exp $	*/
+/*	$NetBSD: dk.c,v 1.110 2022/01/15 19:34:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.109 2021/10/18 11:40:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.110 2022/01/15 19:34:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -89,11 +89,8 @@ struct dkwedge_softc {
 	kmutex_t	sc_iolock;
 	kcondvar_t	sc_dkdrn;
 	u_int		sc_iopend;	/* I/Os pending */
-	int		sc_flags;	/* flags (sc_iolock) */
 	int		sc_mode;	/* parent open mode */
 };
-
-#define	DK_F_WAIT_DRAIN		0x0001	/* waiting for I/O to drain */
 
 static void	dkstart(struct dkwedge_softc *);
 static void	dkiodone(struct buf *);
@@ -194,10 +191,8 @@ dkwedge_wait_drain(struct dkwedge_softc *sc)
 {
 
 	mutex_enter(&sc->sc_iolock);
-	while (sc->sc_iopend != 0) {
-		sc->sc_flags |= DK_F_WAIT_DRAIN;
+	while (sc->sc_iopend != 0)
 		cv_wait(&sc->sc_dkdrn, &sc->sc_iolock);
-	}
 	mutex_exit(&sc->sc_iolock);
 }
 
@@ -1341,11 +1336,8 @@ dkstart(struct dkwedge_softc *sc)
 	while ((bp = bufq_peek(sc->sc_bufq)) != NULL) {
 		if (sc->sc_state != DKW_STATE_RUNNING) {
 			(void) bufq_get(sc->sc_bufq);
-			if (sc->sc_iopend-- == 1 &&
-			    (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
-				sc->sc_flags &= ~DK_F_WAIT_DRAIN;
+			if (--sc->sc_iopend == 0)
 				cv_broadcast(&sc->sc_dkdrn);
-			}
 			mutex_exit(&sc->sc_iolock);
 			bp->b_error = ENXIO;
 			bp->b_resid = bp->b_bcount;
@@ -1430,10 +1422,8 @@ dkiodone(struct buf *bp)
 	putiobuf(bp);
 
 	mutex_enter(&sc->sc_iolock);
-	if (sc->sc_iopend-- == 1 && (sc->sc_flags & DK_F_WAIT_DRAIN) != 0) {
-		sc->sc_flags &= ~DK_F_WAIT_DRAIN;
+	if (--sc->sc_iopend == 0)
 		cv_broadcast(&sc->sc_dkdrn);
-	}
 
 	disk_unbusy(&sc->sc_dk, obp->b_bcount - obp->b_resid,
 	    obp->b_flags & B_READ);
