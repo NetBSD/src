@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.30 2022/01/09 14:28:23 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.31 2022/01/15 14:40:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.30 2022/01/09 14:28:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.31 2022/01/15 14:40:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -1114,6 +1114,38 @@ acpi_dsm(ACPI_HANDLE handle, uint8_t *uuid, ACPI_INTEGER rev,
 {
 	return acpi_dsm_typed(handle, uuid, rev, func, arg3, ACPI_TYPE_ANY,
 	    return_obj);
+}
+
+ACPI_STATUS
+acpi_dsm_query(ACPI_HANDLE handle, uint8_t *uuid, ACPI_INTEGER rev,
+    ACPI_INTEGER *ret)
+{
+	ACPI_OBJECT *obj;
+	ACPI_STATUS status;
+	uint8_t *data;
+	u_int n;
+
+	status = acpi_dsm(handle, uuid, rev, 0, NULL, &obj);
+	if (ACPI_FAILURE(status)) {
+		return status;
+	}
+
+	if (obj->Type == ACPI_TYPE_INTEGER) {
+		*ret = obj->Integer.Value;
+	} else if (obj->Type == ACPI_TYPE_BUFFER &&
+		   obj->Buffer.Length <= 8) {
+		*ret = 0;
+		data = (uint8_t *)obj->Buffer.Pointer;
+		for (n = 0; n < obj->Buffer.Length; n++) {
+			*ret |= (uint64_t)data[n] << (n * 8);
+		}
+	} else {
+		status = AE_TYPE;
+	}
+
+	ACPI_FREE(obj);
+
+	return status;
 }
 
 ACPI_STATUS
