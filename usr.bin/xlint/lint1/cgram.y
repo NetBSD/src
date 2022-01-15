@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.378 2021/12/26 18:16:41 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.379 2022/01/15 23:21:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.378 2021/12/26 18:16:41 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.379 2022/01/15 23:21:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1731,6 +1731,7 @@ expression_statement:		/* C99 6.8.3 */
 		seen_fallthrough = false;
 	  }
 	| T_SEMI {
+		check_statement_reachable();
 		seen_fallthrough = false;
 	  }
 	;
