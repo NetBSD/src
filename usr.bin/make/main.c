@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.572 2022/01/15 19:34:07 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.573 2022/01/15 22:18:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.572 2022/01/15 19:34:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.573 2022/01/15 22:18:04 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1715,7 +1715,7 @@ Cmd_Exec(const char *cmd, char **error)
 	if (pipe(pipefds) == -1) {
 		*error = str_concat3(
 		    "Couldn't create pipe for \"", cmd, "\"");
-		return bmake_strdup("");;
+		return bmake_strdup("");
 	}
 
 	Var_ReexportVars();
