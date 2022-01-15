@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.16 2021/08/03 09:25:44 rin Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.17 2022/01/15 10:55:06 msaitoh Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.16 2021/08/03 09:25:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.17 2022/01/15 10:55:06 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -275,7 +275,7 @@ read_eeprom(int len, char *buf)
 	IIC0_WRITE(IIC_MDCNTL,
 	    IIC0_READ(IIC_MDCNTL) | IIC_MDCNTL_FMDB | IIC_MDCNTL_FSDB);
 
-	/* 7-bit adressing */
+	/* 7-bit addressing */
 	IIC0_WRITE(IIC_HMADR, 0);
 	IIC0_WRITE(IIC_LMADR, I2C_EEPROM_ADDR << 1);
 
