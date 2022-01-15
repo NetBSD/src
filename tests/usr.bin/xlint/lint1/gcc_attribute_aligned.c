@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_aligned.c,v 1.1 2021/05/02 20:44:46 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_aligned.c,v 1.2 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "gcc_attribute_aligned.c"
 
 /*
@@ -39,6 +39,7 @@ struct {
 
 	unsigned int sizeof_fpacc87: sizeof(struct fpacc87) == 10 ? 1 : -1;
 
-	/* expect+1: illegal bit-field size: 255 *//*FIXME*/
+	/* FIXME: @4 2 + @4 2 + @4 2 + @4 8 + @4 8 + @2 (8 * 10) == 108 */
+	/* expect+1: illegal bit-field size: 255 */
 	unsigned int sizeof_save87: sizeof(struct save87) == 108 ? 1 : -1;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool.c,v 1.7 2021/03/30 14:25:28 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool.c,v 1.8 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_c99_bool.c"
 
 /*
@@ -12,19 +12,24 @@
 /* Below, each false statement produces "negative array dimension" [20]. */
 
 int int_0_converts_to_false[(_Bool)0 ? -1 : 1];
-int int_0_converts_to_true_[(_Bool)0 ? 1 : -1];			/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int int_0_converts_to_true_[(_Bool)0 ? 1 : -1];
 
-int int_1_converts_to_false[(_Bool)1 ? -1 : 1];			/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int int_1_converts_to_false[(_Bool)1 ? -1 : 1];
 int int_1_converts_to_true_[(_Bool)1 ? 1 : -1];
 
-int int_2_converts_to_false[(_Bool)2 ? -1 : 1];			/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int int_2_converts_to_false[(_Bool)2 ? -1 : 1];
 int int_2_converts_to_true_[(_Bool)2 ? 1 : -1];
 
-int int_256_converts_to_false[(_Bool)256 ? -1 : 1];		/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int int_256_converts_to_false[(_Bool)256 ? -1 : 1];
 int int_256_converts_to_true_[(_Bool)256 ? 1 : -1];
 
 int null_pointer_converts_to_false[(_Bool)(void *)0 ? -1 : 1];
-int null_pointer_converts_to_true_[(_Bool)(void *)0 ? 1 : -1];	/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int null_pointer_converts_to_true_[(_Bool)(void *)0 ? 1 : -1];
 
 /*
  * XXX: lint does not treat the address of a global variable as a constant
@@ -38,23 +43,29 @@ char ch;
 int nonnull_pointer_converts_to_false[(_Bool)&ch ? -1 : 1];
 int nonnull_pointer_converts_to_true_[(_Bool)&ch ? 1 : -1];
 
-int double_minus_1_0_converts_to_false[(_Bool)-1.0 ? -1 : 1];	/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int double_minus_1_0_converts_to_false[(_Bool)-1.0 ? -1 : 1];
 int double_minus_1_0_converts_to_true_[(_Bool)-1.0 ? 1 : -1];
 
-int double_minus_0_5_converts_to_false[(_Bool)-0.5 ? -1 : 1];	/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int double_minus_0_5_converts_to_false[(_Bool)-0.5 ? -1 : 1];
 int double_minus_0_5_converts_to_true_[(_Bool)-0.5 ? 1 : -1];
 
 int double_minus_0_0_converts_to_false[(_Bool)-0.0 ? -1 : 1];
-int double_minus_0_0_converts_to_true_[(_Bool)-0.0 ? 1 : -1];	/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int double_minus_0_0_converts_to_true_[(_Bool)-0.0 ? 1 : -1];
 
 int double_0_0_converts_to_false[(_Bool)0.0 ? -1 : 1];
-int double_0_0_converts_to_true_[(_Bool)0.0 ? 1 : -1];		/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int double_0_0_converts_to_true_[(_Bool)0.0 ? 1 : -1];
 
 /* The C99 rationale explains in 6.3.1.2 why (_Bool)0.5 is true. */
-int double_0_5_converts_to_false[(_Bool)0.5 ? -1 : 1];		/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int double_0_5_converts_to_false[(_Bool)0.5 ? -1 : 1];
 int double_0_5_converts_to_true_[(_Bool)0.5 ? 1 : -1];
 
-int double_1_0_converts_to_false[(_Bool)1.0 ? -1 : 1];		/* expect: 20 */
+/* expect+1: error: negative array dimension (-1) [20] */
+int double_1_0_converts_to_false[(_Bool)1.0 ? -1 : 1];
 int double_1_0_converts_to_true_[(_Bool)1.0 ? 1 : -1];
 
 _Bool

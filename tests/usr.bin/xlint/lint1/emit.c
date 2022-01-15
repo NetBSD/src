@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.9 2021/11/28 10:11:15 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.10 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -104,7 +104,8 @@ extern enum {
 
 extern int			declared_int;
 int				defined_int;
-static int			static_int;		/* expect: unused */
+/* expect+1: warning: static variable static_int unused [226] */
+static int			static_int;
 
 /*
  * Type qualifiers.
@@ -124,7 +125,8 @@ extern /* implicit int */ return_implicit_int_unknown_parameters();
 /* For function declarations, the keyword 'extern' is optional. */
 extern void extern_return_void_no_parameters(void);
 /* implicit extern */ void return_void_no_parameters(void);
-static void static_return_void_no_parameters(void);	/* expect: declared */
+/* expect+1: warning: static function static_return_void_no_parameters declared but not defined [290] */
+static void static_return_void_no_parameters(void);
 
 void taking_int(int);
 /* The 'const' parameter does not make a difference. */
@@ -143,7 +145,8 @@ void taking_varargs(const char *, ...);
  * is nevertheless recorded.  There's probably a good reason for recording
  * it.
  */
-static int static_function(void);			/* expect: declared */
+/* expect+1: warning: static function static_function declared but not defined [290] */
+static int static_function(void);
 
 void my_printf(const char *, ...);
 void my_scanf(const char *, ...);

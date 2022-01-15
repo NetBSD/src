@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.35 2021/11/20 17:27:46 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.36 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -124,29 +124,38 @@ strict_bool_constant(void)
 {
 	accept_bool(__lint_false);
 	accept_bool(__lint_true);
-	accept_bool(0);		/* expect: 334 */
-	accept_bool(1);		/* expect: 334 */
-	accept_bool(2);		/* expect: 334 */
+	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	accept_bool(0);
+	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	accept_bool(1);
+	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	accept_bool(2);
 }
 
 enum strict_bool_constant_expressions {
 	/* Ok: __lint_false is a boolean constant expression. */
-	FALSE = __lint_false ? 100 : 101,	/* expect: 161 */
+	/* expect+1: warning: constant in conditional context [161] */
+	FALSE = __lint_false ? 100 : 101,
 
 	/* Ok: __lint_true is a boolean constant expression. */
-	TRUE = __lint_true ? 100 : 101,		/* expect: 161 */
+	/* expect+1: warning: constant in conditional context [161] */
+	TRUE = __lint_true ? 100 : 101,
 
 	/* Not ok: an integer is not a boolean constant expression. */
-	INT0 = 0 ? 100 : 101,	/* expect: 331 */
+	/* expect+1: error: left operand of '?' must be bool, not 'int' [331] */
+	INT0 = 0 ? 100 : 101,
 
 	/* Not ok: an integer is not a boolean constant expression. */
-	INT1 = 1 ? 100 : 101,	/* expect: 331 */
+	/* expect+1: error: left operand of '?' must be bool, not 'int' [331] */
+	INT1 = 1 ? 100 : 101,
 
 	/* Not ok: 2 is not a boolean constant. */
-	INT2 = 2 ? 100 : 101,	/* expect: 331 */
+	/* expect+1: error: left operand of '?' must be bool, not 'int' [331] */
+	INT2 = 2 ? 100 : 101,
 
 	/* Not ok: compound integer expressions are not bool. */
-	ARITH = (2 - 2) ? 100 : 101,	/* expect: 331 */
+	/* expect+1: error: left operand of '?' must be bool, not 'int' [331] */
+	ARITH = (2 - 2) ? 100 : 101,
 
 	/*
 	 * Without strict bool mode, these two variants of an expression can
@@ -156,32 +165,48 @@ enum strict_bool_constant_expressions {
 	 * In strict bool mode, the resulting expression can be compared
 	 * against 0 to achieve the same effect (so +0 != 0 or 1 + 0 != 0).
 	 */
-	BINARY_PLUS = (1 + 0) ? 100 : 101, /* expect: 331 */
-	UNARY_PLUS = (+0) ? 100 : 101,	/* expect: 331 */
+	/* expect+1: error: left operand of '?' must be bool, not 'int' [331] */
+	BINARY_PLUS = (1 + 0) ? 100 : 101,
+	/* expect+1: error: left operand of '?' must be bool, not 'int' [331] */
+	UNARY_PLUS = (+0) ? 100 : 101,
 
 	/* The main operator '>' has return type bool. */
-	Q1 = (13 > 12) ? 100 : 101,		/* expect: 161 */
+	/* expect+1: warning: constant in conditional context [161] */
+	Q1 = (13 > 12) ? 100 : 101,
 
 	/*
 	 * The parenthesized expression has type int and thus cannot be
 	 * used as the controlling expression in the '?:' operator.
 	 */
-	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,	/* expect: 161 *//* expect: 331 */
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: error: left operand of '?' must be bool, not 'int' [331] */
+	Q2 = (13 > 12 ? 1 : 7) ? 100 : 101,
 
-	BINAND_BOOL = __lint_false & __lint_true, /* expect: 55 */
+	/* expect+1: error: integral constant expression expected [55] */
+	BINAND_BOOL = __lint_false & __lint_true,
 	BINAND_INT = 0 & 1,
 
-	BINXOR_BOOL = __lint_false ^ __lint_true, /* expect: 55 */
+	/* expect+1: error: integral constant expression expected [55] */
+	BINXOR_BOOL = __lint_false ^ __lint_true,
 	BINXOR_INT = 0 ^ 1,
 
-	BINOR_BOOL = __lint_false | __lint_true, /* expect: 55 */
+	/* expect+1: error: integral constant expression expected [55] */
+	BINOR_BOOL = __lint_false | __lint_true,
 	BINOR_INT = 0 | 1,
 
-	LOGOR_BOOL = __lint_false || __lint_true, /* expect: 161 *//* expect: 55 */
-	LOGOR_INT = 0 || 1,	/* expect: 331 *//* expect: 332 */
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: error: integral constant expression expected [55] */
+	LOGOR_BOOL = __lint_false || __lint_true,
+	/* expect+2: error: left operand of '||' must be bool, not 'int' [331] */
+	/* expect+1: error: right operand of '||' must be bool, not 'int' [332] */
+	LOGOR_INT = 0 || 1,
 
-	LOGAND_BOOL = __lint_false && __lint_true, /* expect: 161 *//* expect: 55 */
-	LOGAND_INT = 0 && 1,	/* expect: 331 *//* expect: 332 */
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: error: integral constant expression expected [55] */
+	LOGAND_BOOL = __lint_false && __lint_true,
+	/* expect+2: error: left operand of '&&' must be bool, not 'int' [331] */
+	/* expect+1: error: right operand of '&&' must be bool, not 'int' [332] */
+	LOGAND_INT = 0 && 1,
 };
 
 /*
@@ -201,14 +226,18 @@ strict_bool_bit_fields(void)
 	bool b;
 
 	b = flags.bool_flag;
-	b = flags.uint_flag;		/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != unsigned int) [107] */
+	b = flags.uint_flag;
 	flags.bool_flag = b;
-	flags.uint_flag = b;		/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (unsigned int != _Bool) [107] */
+	flags.uint_flag = b;
 
 	b = flags_ptr->bool_flag;
-	b = flags_ptr->uint_flag;	/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != unsigned int) [107] */
+	b = flags_ptr->uint_flag;
 	flags_ptr->bool_flag = b;
-	flags_ptr->uint_flag = b;	/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (unsigned int != _Bool) [107] */
+	flags_ptr->uint_flag = b;
 }
 
 void
@@ -250,37 +279,44 @@ strict_bool_conversion_return_bool(bool b)
 bool
 strict_bool_conversion_return_0(void)
 {
-	return 0;		/* expect: 211 */
+	/* expect+1: error: return value type mismatch (_Bool) and (int) [211] */
+	return 0;
 }
 
 bool
 strict_bool_conversion_return_1(void)
 {
-	return 1;		/* expect: 211 */
+	/* expect+1: error: return value type mismatch (_Bool) and (int) [211] */
+	return 1;
 }
 
 bool
 strict_bool_conversion_return_2(void)
 {
-	return 2;		/* expect: 211 */
+	/* expect+1: error: return value type mismatch (_Bool) and (int) [211] */
+	return 2;
 }
 
+/* expect+2: warning: argument 'p' unused in function 'strict_bool_conversion_return_pointer' [231] */
 bool
-strict_bool_conversion_return_pointer(const void *p) /* expect: 231 */
+strict_bool_conversion_return_pointer(const void *p)
 {
-	return p;		/* expect: 211 */
+	/* expect+1: error: return value type mismatch (_Bool) and (pointer) [211] */
+	return p;
 }
 
 char
 strict_bool_conversion_return_false_as_char(void)
 {
-	return __lint_false;	/* expect: 211 */
+	/* expect+1: error: return value type mismatch (char) and (_Bool) [211] */
+	return __lint_false;
 }
 
 char
 strict_bool_conversion_return_true_as_char(void)
 {
-	return __lint_true;	/* expect: 211 */
+	/* expect+1: error: return value type mismatch (char) and (_Bool) [211] */
+	return __lint_true;
 }
 
 
@@ -298,16 +334,23 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 	take_arguments(b, i, p);
 
 	/* Implicitly converting bool to other scalar types. */
-	take_arguments(b, b, b);	/* expect: 334 *//* expect: 334 */
+	/* expect+2: error: argument #2 expects 'int', gets passed '_Bool' [334] */
+	/* expect+1: error: argument #3 expects 'pointer', gets passed '_Bool' [334] */
+	take_arguments(b, b, b);
 
 	/* Implicitly converting int to bool (arg #1). */
-	take_arguments(i, i, i);	/* expect: 334 *//* expect: 154 */
+	/* expect+2: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+1: warning: illegal combination of pointer (pointer to const char) and integer (int), arg #3 [154] */
+	take_arguments(i, i, i);
 
 	/* Implicitly converting pointer to bool (arg #1). */
-	take_arguments(p, p, p);	/* expect: 334 *//* expect: 154 */
+	/* expect+2: error: argument #1 expects '_Bool', gets passed 'pointer' [334] */
+	/* expect+1: warning: illegal combination of integer (int) and pointer (pointer to const char), arg #2 [154] */
+	take_arguments(p, p, p);
 
 	/* Passing bool as vararg. */
-	take_arguments(b, i, p, b, i, p); /* TODO: expect: arg#4 */
+	/* TODO: maybe expect+1: arg#4 should not be bool but scalar */
+	take_arguments(b, i, p, b, i, p);
 
 	/* Passing a bool constant. */
 	take_arguments(__lint_false, i, p);
@@ -316,9 +359,12 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 	take_arguments(__lint_true, i, p);
 
 	/* Trying to pass integer constants. */
-	take_arguments(0, i, p);	/* expect: 334 */
-	take_arguments(1, i, p);	/* expect: 334 */
-	take_arguments(2, i, p);	/* expect: 334 */
+	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	take_arguments(0, i, p);
+	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	take_arguments(1, i, p);
+	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	take_arguments(2, i, p);
 }
 
 void
@@ -327,32 +373,43 @@ strict_bool_conversion_between_bool_and_int(void)
 	bool b;
 	int i;
 
-	b = 0;			/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	b = 0;
 	b = __lint_false;
-	b = 1;			/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	b = 1;
 	b = __lint_true;
 
 	i = 0;
-	i = __lint_false;	/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = __lint_false;
 	i = 1;
-	i = __lint_true;	/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = __lint_true;
 
-	i = b;			/* expect: 107 */
-	b = i;			/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = b;
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	b = i;
 }
 
+/* expect+2: warning: argument 'b' unused in function 'strict_bool_conversion_from_bool_to_scalar' [231] */
 void
-strict_bool_conversion_from_bool_to_scalar(bool b) /* expect: 231 */
+strict_bool_conversion_from_bool_to_scalar(bool b)
 {
 	int i;
 	unsigned u;
 	double d;
 	void *p;
 
-	i = b;			/* expect: 107 */
-	u = b;			/* expect: 107 */
-	d = b;			/* expect: 107 */
-	p = b;			/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = b;
+	/* expect+1: error: operands of '=' have incompatible types (unsigned int != _Bool) [107] */
+	u = b;
+	/* expect+1: error: operands of '=' have incompatible types (double != _Bool) [107] */
+	d = b;
+	/* expect+1: error: operands of '=' have incompatible types (pointer != _Bool) [107] */
+	p = b;
 }
 
 /*
@@ -364,38 +421,48 @@ strict_bool_conversion_from_bool_to_scalar(bool b) /* expect: 231 */
 void
 strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 {
-	if (__lint_false)	/* expect: 161 */
-		do_nothing();	/* expect: statement not reached */
+	/* expect+1: warning: constant in conditional context [161] */
+	if (__lint_false)
+		do_nothing();
+	/* expect-1: warning: statement not reached [193] */
 
-	if (__lint_true)	/* expect: 161 */
+	/* expect+1: warning: constant in conditional context [161] */
+	if (__lint_true)
 		do_nothing();
 
 	if (b)
 		do_nothing();
 
-	if (/*CONSTCOND*/0)	/* expect: 333 */
-		do_nothing();	/* expect: statement not reached [193] */
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (/*CONSTCOND*/0)
+		do_nothing();
+	/* expect-1: warning: statement not reached [193] */
 
-	if (/*CONSTCOND*/1)	/* expect: 333 */
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (/*CONSTCOND*/1)
 		do_nothing();
 
-	if (/*CONSTCOND*/2)	/* expect: 333 */
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (/*CONSTCOND*/2)
 		do_nothing();
 
 	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (i)			/* expect: 333 */
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (i)
 		do_nothing();
 	if (i != 0)
 		do_nothing();
 
 	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (d)			/* expect: 333 */
+	/* expect+1: error: controlling expression must be bool, not 'double' [333] */
+	if (d)
 		do_nothing();
 	if (d != 0.0)
 		do_nothing();
 
 	/* Not allowed: There is no implicit conversion from scalar to bool. */
-	if (p)			/* expect: 333 */
+	/* expect+1: error: controlling expression must be bool, not 'pointer' [333] */
+	if (p)
 		do_nothing();
 	if (p != (void *)0)
 		do_nothing();
@@ -416,15 +483,23 @@ strict_bool_operand_unary_not(void)
 
 	b = !b;
 	b = !!!b;
-	b = !__lint_false;	/* expect: 161 *//* expect: 239 */
-	b = !__lint_true;	/* expect: 161 *//* expect: 239 */
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: warning: constant argument to '!' [239] */
+	b = !__lint_false;
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: warning: constant argument to '!' [239] */
+	b = !__lint_true;
 
 	int i = 0;
 
-	i = !i;			/* expect: 330 */
-	i = !!!i;		/* expect: 330 */
-	i = !0;			/* expect: 330 */
-	i = !1;			/* expect: 330 */
+	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	i = !i;
+	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	i = !!!i;
+	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	i = !0;
+	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	i = !1;
 }
 
 void
@@ -479,13 +554,15 @@ strict_bool_operand_binary_dot_arrow(void)
 	struct bool_struct bs = { __lint_true };
 	b = bs.b;
 	bs.b = b;
-	bs.b = 0;		/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	bs.b = 0;
 
 	/* Access a struct member using the '->' operator. */
 	struct bool_struct *bsp = &bs;
 	b = bsp->b;
 	bsp->b = b;
-	bsp->b = 0;		/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	bsp->b = 0;
 }
 
 int
@@ -501,14 +578,23 @@ strict_bool_operand_binary(bool b, int i)
 	 * The right-hand sides of these assignments implicitly convert from
 	 * scalar to bool.
 	 */
-	b = !i;			/* expect: 330 */
-	b = i && i;		/* expect: 331 *//* expect: 332 */
-	b = i || i;		/* expect: 331 *//* expect: 332 */
+	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	b = !i;
+	/* expect+2: error: left operand of '&&' must be bool, not 'int' [331] */
+	/* expect+1: error: right operand of '&&' must be bool, not 'int' [332] */
+	b = i && i;
+	/* expect+2: error: left operand of '||' must be bool, not 'int' [331] */
+	/* expect+1: error: right operand of '||' must be bool, not 'int' [332] */
+	b = i || i;
 
-	b = b && 0;		/* expect: 332 */
-	b = 0 && b;		/* expect: 331 */
-	b = b || 0;		/* expect: 332 */
-	b = 0 || b;		/* expect: 331 */
+	/* expect+1: error: right operand of '&&' must be bool, not 'int' [332] */
+	b = b && 0;
+	/* expect+1: error: left operand of '&&' must be bool, not 'int' [331] */
+	b = 0 && b;
+	/* expect+1: error: right operand of '||' must be bool, not 'int' [332] */
+	b = b || 0;
+	/* expect+1: error: left operand of '||' must be bool, not 'int' [331] */
+	b = 0 || b;
 
 	return i;
 }
@@ -517,30 +603,59 @@ void
 strict_bool_operand_unary_all(bool b)
 {
 	b = !b;
-	b = ~b;			/* expect: 335 */
-	++b;			/* expect: 335 */
-	--b;			/* expect: 335 */
-	b++;			/* expect: 335 */
-	b--;			/* expect: 335 */
-	b = +b;			/* expect: 335 */
-	b = -b;			/* expect: 335 */
+	/* expect+1: error: operand of '~' must not be bool [335] */
+	b = ~b;
+	/* expect+1: error: operand of '++x' must not be bool [335] */
+	++b;
+	/* expect+1: error: operand of '--x' must not be bool [335] */
+	--b;
+	/* expect+1: error: operand of 'x++' must not be bool [335] */
+	b++;
+	/* expect+1: error: operand of 'x--' must not be bool [335] */
+	b--;
+	/* expect+1: error: operand of '+' must not be bool [335] */
+	b = +b;
+	/* expect+1: error: operand of '-' must not be bool [335] */
+	b = -b;
 }
 
 void
 strict_bool_operand_binary_all(bool b, unsigned u)
 {
-	b = b * b;		/* expect: 336 *//* expect: 337 */
-	b = b / b;		/* expect: 336 *//* expect: 337 */
-	b = b % b;		/* expect: 336 *//* expect: 337 */
-	b = b + b;		/* expect: 336 *//* expect: 337 */
-	b = b - b;		/* expect: 336 *//* expect: 337 */
-	b = b << b;		/* expect: 336 *//* expect: 337 */
-	b = b >> b;		/* expect: 336 *//* expect: 337 */
+	/* expect+2: error: left operand of '*' must not be bool [336] */
+	/* expect+1: error: right operand of '*' must not be bool [337] */
+	b = b * b;
+	/* expect+2: error: left operand of '/' must not be bool [336] */
+	/* expect+1: error: right operand of '/' must not be bool [337] */
+	b = b / b;
+	/* expect+2: error: left operand of '%' must not be bool [336] */
+	/* expect+1: error: right operand of '%' must not be bool [337] */
+	b = b % b;
+	/* expect+2: error: left operand of '+' must not be bool [336] */
+	/* expect+1: error: right operand of '+' must not be bool [337] */
+	b = b + b;
+	/* expect+2: error: left operand of '-' must not be bool [336] */
+	/* expect+1: error: right operand of '-' must not be bool [337] */
+	b = b - b;
+	/* expect+2: error: left operand of '<<' must not be bool [336] */
+	/* expect+1: error: right operand of '<<' must not be bool [337] */
+	b = b << b;
+	/* expect+2: error: left operand of '>>' must not be bool [336] */
+	/* expect+1: error: right operand of '>>' must not be bool [337] */
+	b = b >> b;
 
-	b = b < b;		/* expect: 336 *//* expect: 337 */
-	b = b <= b;		/* expect: 336 *//* expect: 337 */
-	b = b > b;		/* expect: 336 *//* expect: 337 */
-	b = b >= b;		/* expect: 336 *//* expect: 337 */
+	/* expect+2: error: left operand of '<' must not be bool [336] */
+	/* expect+1: error: right operand of '<' must not be bool [337] */
+	b = b < b;
+	/* expect+2: error: left operand of '<=' must not be bool [336] */
+	/* expect+1: error: right operand of '<=' must not be bool [337] */
+	b = b <= b;
+	/* expect+2: error: left operand of '>' must not be bool [336] */
+	/* expect+1: error: right operand of '>' must not be bool [337] */
+	b = b > b;
+	/* expect+2: error: left operand of '>=' must not be bool [336] */
+	/* expect+1: error: right operand of '>=' must not be bool [337] */
+	b = b >= b;
 	b = b == b;
 	b = b != b;
 
@@ -552,42 +667,74 @@ strict_bool_operand_binary_all(bool b, unsigned u)
 	b = b ? b : b;
 
 	b = b;
-	b *= b;			/* expect: 336 *//* expect: 337 */
-	b /= b;			/* expect: 336 *//* expect: 337 */
-	b %= b;			/* expect: 336 *//* expect: 337 */
-	b += b;			/* expect: 336 *//* expect: 337 */
-	b -= b;			/* expect: 336 *//* expect: 337 */
-	b <<= b;		/* expect: 336 *//* expect: 337 */
-	b >>= b;		/* expect: 336 *//* expect: 337 */
+	/* expect+2: error: left operand of '*=' must not be bool [336] */
+	/* expect+1: error: right operand of '*=' must not be bool [337] */
+	b *= b;
+	/* expect+2: error: left operand of '/=' must not be bool [336] */
+	/* expect+1: error: right operand of '/=' must not be bool [337] */
+	b /= b;
+	/* expect+2: error: left operand of '%=' must not be bool [336] */
+	/* expect+1: error: right operand of '%=' must not be bool [337] */
+	b %= b;
+	/* expect+2: error: left operand of '+=' must not be bool [336] */
+	/* expect+1: error: right operand of '+=' must not be bool [337] */
+	b += b;
+	/* expect+2: error: left operand of '-=' must not be bool [336] */
+	/* expect+1: error: right operand of '-=' must not be bool [337] */
+	b -= b;
+	/* expect+2: error: left operand of '<<=' must not be bool [336] */
+	/* expect+1: error: right operand of '<<=' must not be bool [337] */
+	b <<= b;
+	/* expect+2: error: left operand of '>>=' must not be bool [336] */
+	/* expect+1: error: right operand of '>>=' must not be bool [337] */
+	b >>= b;
 	b &= b;
 	b ^= b;
 	b |= b;
 
 	/* Operations with mixed types. */
-	u = b * u;		/* expect: 336 */
-	u = u * b;		/* expect: 337 */
-	u = b / u;		/* expect: 336 */
-	u = u / b;		/* expect: 337 */
-	u = b % u;		/* expect: 336 */
-	u = u % b;		/* expect: 337 */
-	u = b + u;		/* expect: 336 */
-	u = u + b;		/* expect: 337 */
-	u = b - u;		/* expect: 336 */
-	u = u - b;		/* expect: 337 */
-	u = b << u;		/* expect: 336 */
-	u = u << b;		/* expect: 337 */
-	u = b >> u;		/* expect: 336 */
-	u = u >> b;		/* expect: 337 */
+	/* expect+1: error: left operand of '*' must not be bool [336] */
+	u = b * u;
+	/* expect+1: error: right operand of '*' must not be bool [337] */
+	u = u * b;
+	/* expect+1: error: left operand of '/' must not be bool [336] */
+	u = b / u;
+	/* expect+1: error: right operand of '/' must not be bool [337] */
+	u = u / b;
+	/* expect+1: error: left operand of '%' must not be bool [336] */
+	u = b % u;
+	/* expect+1: error: right operand of '%' must not be bool [337] */
+	u = u % b;
+	/* expect+1: error: left operand of '+' must not be bool [336] */
+	u = b + u;
+	/* expect+1: error: right operand of '+' must not be bool [337] */
+	u = u + b;
+	/* expect+1: error: left operand of '-' must not be bool [336] */
+	u = b - u;
+	/* expect+1: error: right operand of '-' must not be bool [337] */
+	u = u - b;
+	/* expect+1: error: left operand of '<<' must not be bool [336] */
+	u = b << u;
+	/* expect+1: error: right operand of '<<' must not be bool [337] */
+	u = u << b;
+	/* expect+1: error: left operand of '>>' must not be bool [336] */
+	u = b >> u;
+	/* expect+1: error: right operand of '>>' must not be bool [337] */
+	u = u >> b;
 	u = b ? u : u;
-	u = b ? b : u;		/* expect: 107 */
-	u = b ? u : b;		/* expect: 107 */
+	/* expect+1: error: operands of ':' have incompatible types (_Bool != unsigned int) [107] */
+	u = b ? b : u;
+	/* expect+1: error: operands of ':' have incompatible types (unsigned int != _Bool) [107] */
+	u = b ? u : b;
 }
 
 bool
 strict_bool_operand_binary_comma(bool b, int i)
 {
-	b = (b, !b);		/* expect: 129 */
-	i = (i, i + 1);		/* expect: 129 */
+	/* expect+1: warning: expression has null effect [129] */
+	b = (b, !b);
+	/* expect+1: warning: expression has null effect [129] */
+	i = (i, i + 1);
 	return b;
 }
 
@@ -600,10 +747,14 @@ strict_bool_operand_binary_comma(bool b, int i)
 void
 strict_bool_operator_result(bool b)
 {
-	char c = b;		/* expect: 107 */
-	int i = b;		/* expect: 107 */
-	double d = b;		/* expect: 107 */
-	void *p = b;		/* expect: 107 */
+	/* expect+1: error: operands of 'init' have incompatible types (char != _Bool) [107] */
+	char c = b;
+	/* expect+1: error: operands of 'init' have incompatible types (int != _Bool) [107] */
+	int i = b;
+	/* expect+1: error: operands of 'init' have incompatible types (double != _Bool) [107] */
+	double d = b;
+	/* expect+1: error: operands of 'init' have incompatible types (pointer != _Bool) [107] */
+	void *p = b;
 
 	/* The right-hand sides of these assignments are all ok. */
 	b = !b;
@@ -620,15 +771,24 @@ strict_bool_operator_result(bool b)
 	 * The right-hand sides of these assignments are not ok, they
 	 * implicitly convert from bool to int.
 	 */
-	i = !b;			/* expect: 107 */
-	i = i == i;		/* expect: 107 */
-	i = i != i;		/* expect: 107 */
-	i = i < i;		/* expect: 107 */
-	i = i <= i;		/* expect: 107 */
-	i = i >= i;		/* expect: 107 */
-	i = i > i;		/* expect: 107 */
-	i = b && b;		/* expect: 107 */
-	i = b || b;		/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = !b;
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = i == i;
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = i != i;
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = i < i;
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = i <= i;
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = i >= i;
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = i > i;
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = b && b;
+	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	i = b || b;
 }
 
 
@@ -655,8 +815,9 @@ enum Flags {
 	FLAG28 = 1 << 28
 };
 
+/* expect+2: warning: argument 'flags' unused in function 'strict_bool_bitwise_and_enum' [231] */
 void
-strict_bool_bitwise_and_enum(enum Flags flags) /* expect: 231 */
+strict_bool_bitwise_and_enum(enum Flags flags)
 {
 	bool b;
 
@@ -666,7 +827,8 @@ strict_bool_bitwise_and_enum(enum Flags flags) /* expect: 231 */
 	 * because it would be too confusing if FLAG0 would work and all the
 	 * other flags wouldn't.
 	 */
-	b = flags & FLAG0;	/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	b = flags & FLAG0;
 
 	/*
 	 * Assuming that FLAG1 is set in flags, a _Bool variable stores this
@@ -674,14 +836,16 @@ strict_bool_bitwise_and_enum(enum Flags flags) /* expect: 231 */
 	 * it as 2, as that is the integer value of FLAG1.  Since FLAG1 fits
 	 * in a uint8_t, no truncation takes place.
 	 */
-	b = flags & FLAG1;	/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	b = flags & FLAG1;
 
 	/*
 	 * In a _Bool variable, FLAG28 is stored as 1, since it is unequal to
 	 * zero.  In a uint8_t, the stored value would be 0 since bit 28 is
 	 * out of range for a uint8_t and thus gets truncated.
 	 */
-	b = flags & FLAG28;	/* expect: 107 */
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	b = flags & FLAG28;
 }
 
 /*
@@ -720,7 +884,8 @@ query_flag_from_enum_bit_set(enum Flags flags)
 void
 strict_bool_operator_eq_bool_int(void)
 {
-	(void)(strict_bool_conversion_return_false() == 0); /* expect: 107 */
+	/* expect+1: error: operands of '==' have incompatible types (_Bool != int) [107] */
+	(void)(strict_bool_conversion_return_false() == 0);
 }
 
 void
@@ -732,7 +897,8 @@ strict_bool_assign_bit_field_then_compare(void)
 
 	struct s s = { __lint_false };
 
-	(void)((s.flag = s.flag) != __lint_false);	/* expect: 129 */
+	/* expect+1: warning: expression has null effect [129] */
+	(void)((s.flag = s.flag) != __lint_false);
 }
 
 void
@@ -744,7 +910,8 @@ bool_as_array_index(bool cond)
 	 * translates 'arr[ind]' to '*(arr + ind)' in an early stage of
 	 * parsing.
 	 */
-	println(repr[cond]);		/* expect: 337 */
+	/* expect+1: error: right operand of '+' must not be bool [337] */
+	println(repr[cond]);
 	println(cond ? "yes" : "no");
 }
 
@@ -761,7 +928,8 @@ do_while_true(void)
 {
 	do {
 
-	} while (__lint_true);	/* expect: 161 */
+	} while (__lint_true);
+	/* expect-1: warning: constant in conditional context [161] */
 }
 
 void
@@ -772,8 +940,10 @@ initialization(void)
 	} var[] = {
 	    { __lint_false },
 	    { __lint_true },
-	    { 0 },		/* expect: 107 */
-	    { 1 },		/* expect: 107 */
+	    /* expect+1: error: operands of 'init' have incompatible types (_Bool != int) [107] */
+	    { 0 },
+	    /* expect+1: error: operands of 'init' have incompatible types (_Bool != int) [107] */
+	    { 1 },
 	};
 }
 
@@ -793,10 +963,10 @@ typedef struct stdio_file {
 int ferror(FILE *);
 FILE stdio_files[3];
 FILE *stdio_stdout;
-# 797 "d_c99_bool_strict.c" 2
+# 967 "d_c99_bool_strict.c" 2
 # 1 "string.h" 1 3 4
 int strcmp(const char *, const char *);
-# 800 "d_c99_bool_strict.c" 2
+# 970 "d_c99_bool_strict.c" 2
 
 void
 controlling_expression(FILE *f, const char *a, const char *b)
@@ -830,9 +1000,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 834 "d_c99_bool_strict.c" 3 4
+# 1004 "d_c99_bool_strict.c" 3 4
 	    &stdio_files[1]
-# 836 "d_c99_bool_strict.c"
+# 1006 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -848,9 +1018,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 852 "d_c99_bool_strict.c" 3 4
+# 1022 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout
-# 854 "d_c99_bool_strict.c"
+# 1024 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -863,9 +1033,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 867 "d_c99_bool_strict.c" 3 4
+# 1037 "d_c99_bool_strict.c" 3 4
 	    (stdio_stdout)
-# 869 "d_c99_bool_strict.c"
+# 1039 "d_c99_bool_strict.c"
 	    ))
 		return;
 
@@ -889,9 +1059,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 893 "d_c99_bool_strict.c" 3 4
+# 1063 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout /* comment */
-# 895 "d_c99_bool_strict.c"
+# 1065 "d_c99_bool_strict.c"
 	    ))
 		return;
 }

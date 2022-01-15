@@ -1,1 +1,1 @@
-d_incorrect_array_size.c(5): error: negative array dimension (-1) [20]
+d_incorrect_array_size.c(6): error: negative array dimension (-1) [20]

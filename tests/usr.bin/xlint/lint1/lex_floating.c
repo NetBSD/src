@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_floating.c,v 1.1 2021/06/19 08:30:08 rillig Exp $	*/
+/*	$NetBSD: lex_floating.c,v 1.2 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "lex_floating.c"
 
 /*
@@ -25,7 +25,8 @@ test_double(void)
 {
 	// https://bugs.java.com/bugdatabase/view_bug.do?bug_id=4396272
 	sinkd(2.2250738585072012e-308);
-	sinkd(1.23x);		/* expect: syntax error 'x' */
+	/* expect+1: error: syntax error 'x' [249] */
+	sinkd(1.23x);
 }
 
 void

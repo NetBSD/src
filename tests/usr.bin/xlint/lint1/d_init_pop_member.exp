@@ -1,1 +1,1 @@
-d_init_pop_member.c(38): warning: 'st' set but not used in function 'func' [191]
+d_init_pop_member.c(39): warning: 'st' set but not used in function 'func' [191]

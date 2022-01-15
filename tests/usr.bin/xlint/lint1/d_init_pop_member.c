@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_pop_member.c,v 1.8 2021/06/20 18:11:21 rillig Exp $	*/
+/*	$NetBSD: d_init_pop_member.c,v 1.9 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_init_pop_member.c"
 
 /*
@@ -35,7 +35,8 @@ struct state {
 
 void func(void)
 {
-	struct state st = {	/* expect: set but not used */
+	/* expect+1: warning: 'st' set but not used in function 'func' [191] */
+	struct state st = {
 	    .capital.mayor.hobbies.dancing = 1,
 	    /*
 	     * Since 2015-07-28:

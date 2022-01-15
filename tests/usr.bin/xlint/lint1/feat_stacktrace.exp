@@ -1,4 +1,4 @@
-common_int_types.h(1): warning: typedef declares no type name [72]
+common_int_types.h(2): warning: typedef declares no type name [72]
 	included from /usr/include/amd64/int_types.h(7)
 	included from /usr/include/amd64/types.h(41)
 	included from /usr/include/sys/types.h(43)
