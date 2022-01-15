@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.13 2021/12/22 14:49:11 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.14 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -44,7 +44,8 @@ struct goto {
  * "is_struct_or_union(dcs->d_type->t_tspec)" at cgram.y:846
  */
 struct {
-	char;			/* expect: syntax error 'unnamed member' */
+	/* expect+1: error: syntax error 'unnamed member' [249] */
+	char;
 };
 
 struct cover_notype_struct_declarators {
@@ -76,7 +77,8 @@ struct array_of_bit_fields {
  * Before decl.c 1.188 from 2021-06-20, lint ran into a segmentation fault.
  */
 struct {
-	char a(_)0		/* expect: syntax error '0' */
+	/* expect+1: error: syntax error '0' [249] */
+	char a(_)0
 
 /*
  * Before cgram.y 1.328 from 2021-07-15, lint ran into an assertion failure

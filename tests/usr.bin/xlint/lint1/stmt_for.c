@@ -1,4 +1,4 @@
-/*	$NetBSD: stmt_for.c,v 1.1 2021/06/19 19:59:02 rillig Exp $	*/
+/*	$NetBSD: stmt_for.c,v 1.2 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "stmt_for.c"
 
 /*
@@ -10,7 +10,8 @@
 void
 test(void)
 {
-	for (0 0;		/* expect: syntax error '0' */
+	/* expect+1: error: syntax error '0' [249] */
+	for (0 0;
 }
 
 /* expect+1: cannot recover from previous errors */

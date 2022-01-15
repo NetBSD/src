@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_array_using_string.c,v 1.9 2021/12/22 14:11:14 rillig Exp $	*/
+/*	$NetBSD: d_init_array_using_string.c,v 1.10 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_init_array_using_string.c"
 
 /*
@@ -60,8 +60,10 @@ test_array_initialization_in_struct(void)
 	};
 
 	struct cs_ws type_mismatch = {
-		L"",		/* expect: warning: illegal combination of integer (char) and pointer (pointer to int) [183] */
-		"",		/* expect: warning: illegal combination of integer (char) and pointer (pointer to char) [183] */
+		/* expect+1: warning: illegal combination of integer (char) and pointer (pointer to int) [183] */
+		L"",
+		/* expect+1: warning: illegal combination of integer (char) and pointer (pointer to char) [183] */
+		"",
 	};
 
 	struct cs_ws no_terminating_null = {

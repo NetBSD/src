@@ -1,4 +1,4 @@
-/*	$NetBSD: c99_init_designator.c,v 1.1 2021/06/20 18:09:48 rillig Exp $	*/
+/*	$NetBSD: c99_init_designator.c,v 1.2 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "c99_init_designator.c"
 
 /*
@@ -21,7 +21,8 @@ struct point {
  */
 struct point origin = {
     .x = 0,
-    ->y = 0,			/* expect: syntax error '->' */
+    /* expect+1: error: syntax error '->' [249] */
+    ->y = 0,
 };
 
 /* Ensure that the parser can recover from the parse error. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: d_type_conv2.c,v 1.3 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: d_type_conv2.c,v 1.4 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_type_conv2.c"
 
 /* Flag information-losing type conversion in argument lists */
@@ -10,5 +10,6 @@ should_fail()
 {
 	double x = 2.0;
 
-	f(x);			/* expect: 259 */
+	/* expect+1: warning: argument #1 is converted from 'double' to 'float' due to prototype [259] */
+	f(x);
 }

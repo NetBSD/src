@@ -1,4 +1,4 @@
-/*	$NetBSD: d_struct_init_nested.c,v 1.6 2021/03/25 01:42:53 rillig Exp $	*/
+/*	$NetBSD: d_struct_init_nested.c,v 1.7 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_struct_init_nested.c"
 
 /*
@@ -75,6 +75,7 @@ struct Inner2 inner = {
 };
 struct Outer3Inner2 o3i2 = {
     O1C,
-    inner,			/* expect: non-constant initializer */
+    /* expect+1: error: non-constant initializer [177] */
+    inner,
     O3C
 };

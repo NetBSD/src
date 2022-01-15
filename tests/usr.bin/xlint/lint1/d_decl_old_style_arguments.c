@@ -7,9 +7,15 @@
 
 void func(int a, int b, int c);
 
-void func(num, ptr, dbl, def)	/* expect: 231 *//* expect: 231 *//* expect: 231 *//* expect: 231 */
+/* expect+4: warning: argument 'num' unused in function 'func' [231] */
+/* expect+3: warning: argument 'ptr' unused in function 'func' [231] */
+/* expect+2: warning: argument 'dbl' unused in function 'func' [231] */
+/* expect+1: warning: argument 'def' unused in function 'func' [231] */
+void func(num, ptr, dbl, def)
     int num;
     char *ptr;
     double dbl;
-{				/* expect: 32 *//* expect: 51 */
+{
+	/* expect-1: warning: argument type defaults to 'int': def [32] */
+	/* expect-2: error: parameter mismatch: 3 declared, 4 defined [51] */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: d_return_type.c,v 1.3 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: d_return_type.c,v 1.4 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_return_type.c"
 
 enum A {
@@ -12,5 +12,6 @@ enum B {
 enum A
 func(enum B arg)
 {
-	return arg;		/* expect: 211 */
+	/* expect+1: warning: return value type mismatch (enum A) and (enum B) [211] */
+	return arg;
 }

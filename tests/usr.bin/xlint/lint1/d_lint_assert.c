@@ -1,4 +1,4 @@
-/*	$NetBSD: d_lint_assert.c,v 1.4 2021/07/10 12:10:39 rillig Exp $	*/
+/*	$NetBSD: d_lint_assert.c,v 1.5 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_lint_assert.c"
 
 /*
@@ -12,7 +12,8 @@ enum {
 	// failed in check_global_variable at decl.c:3135
 	// near d_lint_assert.c:14
 	A = +++
-};				/* expect: 249 */
+};
+/* expect-1: error: syntax error '}' [249] */
 
 /*
  * Before decl.c 1.196 from 2021-07-10, lint ran into an assertion failure

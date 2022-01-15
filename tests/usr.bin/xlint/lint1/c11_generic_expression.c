@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.10 2021/08/01 21:12:31 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.11 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -69,7 +69,8 @@ classify_char(char c)
 const int *
 comma_expression(char first, double second)
 {
-	return _Generic(first, second,	/* expect: syntax error 'second' */
+	/* expect+1: error: syntax error 'second' [249] */
+	return _Generic(first, second,
 	    char: "first",
 	    double: 2.0
 	);

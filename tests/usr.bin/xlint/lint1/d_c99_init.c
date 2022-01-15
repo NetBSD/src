@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.39 2021/12/28 22:54:08 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.40 2022/01/15 14:22:03 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -21,7 +21,8 @@ typedef struct any {
 int scalar_without_braces = 3;
 int scalar_with_optional_braces = { 3 };
 int scalar_with_too_many_braces = {{ 3 }};
-int scalar_with_too_many_initializers = { 3, 5 };	/* expect: 174 */
+/* expect+1: error: too many initializers [174] */
+int scalar_with_too_many_initializers = { 3, 5 };
 
 
 // See initialization_expr, 'handing over to INIT'.
@@ -61,7 +62,8 @@ initialization_by_redundantly_braced_string(void)
 void
 initialization_with_too_many_braces(any arg)
 {
-	any local = { arg };	/* expect: 185 */
+	/* expect+1: error: cannot initialize 'pointer to const void' from 'struct any' [185] */
+	any local = { arg };
 	use(&arg);
 }
 
@@ -78,7 +80,8 @@ int array_with_fixed_size[3] = {
 	111,
 	222,
 	333,
-	444,			/* expect: too many array initializers */
+	/* expect+1: error: too many array initializers, expected 3 [173] */
+	444,
 };
 
 // See update_type_of_array_of_unknown_size.
@@ -136,13 +139,15 @@ struct point point_with_designators = {
 struct point point_with_mixed_designators = {
 	.x = 3,
 	4,
-	5,			/* expect: too many struct/union initializers */
+	/* expect+1: error: too many struct/union initializers [172] */
+	5,
 	.x = 3,
 };
 
 int array_with_designator[] = {
 	111,
-	.member = 222,		/* expect: 249 */
+	/* expect+1: error: syntax error 'designator '.member' is only for struct/union' [249] */
+	.member = 222,
 	333,
 };
 
@@ -386,7 +391,8 @@ ensure_array_type_is_not_modified_during_initialization(void)
 
 	switch (4) {
 	case sizeof(array_of_unknown_size):
-	case 0:			/* expect: duplicate case in switch: 0 */
+	/* expect+1: error: duplicate case in switch: 0 [199] */
+	case 0:
 	case 3:
 	case 4:
 	case 12:
@@ -398,21 +404,24 @@ ensure_array_type_is_not_modified_during_initialization(void)
 }
 
 struct point unknown_member_name_beginning = {
-	.r = 5,			/* expect: does not have member 'r' */
+	 /* expect+1: error: type 'struct point' does not have member 'r' [101] */
+	.r = 5,
 	.x = 4,
 	.y = 3,
 };
 
 struct point unknown_member_name_middle = {
 	.x = 4,
-	.r = 5,			/* expect: does not have member 'r' */
+	/* expect+1: error: type 'struct point' does not have member 'r' [101] */
+	.r = 5,
 	.y = 3,
 };
 
 struct point unknown_member_name_end = {
 	.x = 4,
 	.y = 3,
-	.r = 5,			/* expect: does not have member 'r' */
+	/* expect+1: error: type 'struct point' does not have member 'r' [101] */
+	.r = 5,
 };
 
 union value {
@@ -421,17 +430,20 @@ union value {
 };
 
 union value unknown_union_member_name_first = {
-	.unknown_value = 4,	/* expect: does not have member */
+	/* expect+1: error: type 'union value' does not have member 'unknown_value' [101] */
+	.unknown_value = 4,
 	.int_value = 3,
 };
 
 union value unknown_union_member_name_second = {
 	.int_value = 3,
-	.unknown_value = 4,	/* expect: does not have member */
+	/* expect+1: error: type 'union value' does not have member 'unknown_value' [101] */
+	.unknown_value = 4,
 };
 
 struct point subscript_designator_on_struct = {
-	[0] = 3,		/* expect: only for arrays */
+	/* expect+1: error: syntax error 'designator '[...]' is only for arrays' [249] */
+	[0] = 3,
 };
 
 struct point unknown_member_on_struct = {
@@ -461,11 +473,13 @@ union {
 };
 
 int designator_for_scalar = {
-	.value = 3,		/* expect: scalar type cannot use designator */
+	 /* expect+1: error: syntax error 'scalar type cannot use designator' [249] */
+	.value = 3,
 };
 
 struct point member_designator_for_scalar_in_struct = {
-	{ .x = 3 },		/* expect: scalar type cannot use designator */
+	/* expect+1: error: syntax error 'scalar type cannot use designator' [249] */
+	{ .x = 3 },
 };
 struct point subscript_designator_for_scalar_in_struct = {
 	/* expect+1: error: syntax error 'designator '[...]' is only for arrays' [249] */

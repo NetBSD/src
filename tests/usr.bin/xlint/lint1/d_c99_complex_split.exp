@@ -1,1 +1,1 @@
-d_c99_complex_split.c(82): error: operands of '|' have incompatible types (double _Complex != double _Complex) [107]
+d_c99_complex_split.c(83): error: operands of '|' have incompatible types (double _Complex != double _Complex) [107]
