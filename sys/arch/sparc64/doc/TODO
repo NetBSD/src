@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.46 2022/01/05 16:01:54 andvar Exp $ */
+/* $NetBSD: TODO,v 1.47 2022/01/15 18:45:13 palle Exp $ */
 
 Things to be done:
 
@@ -21,6 +21,7 @@ sun4v:
 		 the 'sh MAKEDEV all' command hangs.
 	 T2000 ldom with 8 VCPU and 4GB:
 	   - crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
+	   - device pci/ebus/com failes to enable interrupts (hv_intr_settarget() fails returning 6)
 	 S7 ldom with 8 VCPU and 16GB (primary ldom is Solaris 11.4 SRU33):
 	   - same status as T5 ldom
 - 64-bit kernel support
