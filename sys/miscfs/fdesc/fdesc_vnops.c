@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.138 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.139 2022/01/15 19:33:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.138 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.139 2022/01/15 19:33:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +75,7 @@ FD_STDIN, FD_STDOUT, FD_STDERR must be a sequence n, n+1, n+2
 #endif
 
 int	fdesc_lookup(void *);
-#define	fdesc_create	genfs_eopnotsupp
-#define	fdesc_mknod	genfs_eopnotsupp
 int	fdesc_open(void *);
-#define	fdesc_close	genfs_nullop
-#define	fdesc_access	genfs_nullop
 int	fdesc_getattr(void *);
 int	fdesc_setattr(void *);
 int	fdesc_read(void *);
@@ -87,32 +83,14 @@ int	fdesc_write(void *);
 int	fdesc_ioctl(void *);
 int	fdesc_poll(void *);
 int	fdesc_kqfilter(void *);
-#define	fdesc_mmap	genfs_eopnotsupp
-#define	fdesc_fcntl	genfs_fcntl
-#define	fdesc_fsync	genfs_nullop
-#define	fdesc_seek	genfs_seek
-#define	fdesc_remove	genfs_eopnotsupp
 int	fdesc_link(void *);
-#define	fdesc_rename	genfs_eopnotsupp
-#define	fdesc_mkdir	genfs_eopnotsupp
-#define	fdesc_rmdir	genfs_eopnotsupp
 int	fdesc_symlink(void *);
 int	fdesc_readdir(void *);
 int	fdesc_readlink(void *);
-#define	fdesc_abortop	genfs_abortop
 int	fdesc_inactive(void *);
 int	fdesc_reclaim(void *);
-#define	fdesc_lock	genfs_lock
-#define	fdesc_unlock	genfs_unlock
-#define	fdesc_bmap	genfs_eopnotsupp
-#define	fdesc_strategy	genfs_badop
 int	fdesc_print(void *);
 int	fdesc_pathconf(void *);
-#define	fdesc_islocked	genfs_islocked
-#define	fdesc_advlock	genfs_einval
-#define	fdesc_bwrite	genfs_eopnotsupp
-#define fdesc_revoke	genfs_revoke
-#define fdesc_putpages	genfs_null_putpages
 
 static int fdesc_attr(int, struct vattr *, kauth_cred_t);
 
@@ -121,11 +99,11 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, fdesc_lookup },		/* lookup */
-	{ &vop_create_desc, fdesc_create },		/* create */
-	{ &vop_mknod_desc, fdesc_mknod },		/* mknod */
+	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
+	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */
 	{ &vop_open_desc, fdesc_open },			/* open */
-	{ &vop_close_desc, fdesc_close },		/* close */
-	{ &vop_access_desc, fdesc_access },		/* access */
+	{ &vop_close_desc, genfs_nullop },		/* close */
+	{ &vop_access_desc, genfs_nullop },		/* access */
 	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, fdesc_getattr },		/* getattr */
 	{ &vop_setattr_desc, fdesc_setattr },		/* setattr */
@@ -134,34 +112,34 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, fdesc_ioctl },		/* ioctl */
-	{ &vop_fcntl_desc, fdesc_fcntl },		/* fcntl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, fdesc_poll },			/* poll */
 	{ &vop_kqfilter_desc, fdesc_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, fdesc_revoke },		/* revoke */
-	{ &vop_mmap_desc, fdesc_mmap },			/* mmap */
-	{ &vop_fsync_desc, fdesc_fsync },		/* fsync */
-	{ &vop_seek_desc, fdesc_seek },			/* seek */
-	{ &vop_remove_desc, fdesc_remove },		/* remove */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_eopnotsupp },		/* mmap */
+	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
+	{ &vop_seek_desc, genfs_seek },			/* seek */
+	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
 	{ &vop_link_desc, fdesc_link },			/* link */
-	{ &vop_rename_desc, fdesc_rename },		/* rename */
-	{ &vop_mkdir_desc, fdesc_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, fdesc_rmdir },		/* rmdir */
+	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
+	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
 	{ &vop_symlink_desc, fdesc_symlink },		/* symlink */
 	{ &vop_readdir_desc, fdesc_readdir },		/* readdir */
 	{ &vop_readlink_desc, fdesc_readlink },		/* readlink */
-	{ &vop_abortop_desc, fdesc_abortop },		/* abortop */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, fdesc_inactive },		/* inactive */
 	{ &vop_reclaim_desc, fdesc_reclaim },		/* reclaim */
-	{ &vop_lock_desc, fdesc_lock },			/* lock */
-	{ &vop_unlock_desc, fdesc_unlock },		/* unlock */
-	{ &vop_bmap_desc, fdesc_bmap },			/* bmap */
-	{ &vop_strategy_desc, fdesc_strategy },		/* strategy */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, genfs_eopnotsupp },		/* bmap */
+	{ &vop_strategy_desc, genfs_badop },		/* strategy */
 	{ &vop_print_desc, fdesc_print },		/* print */
-	{ &vop_islocked_desc, fdesc_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fdesc_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, fdesc_advlock },		/* advlock */
-	{ &vop_bwrite_desc, fdesc_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, fdesc_putpages },		/* putpages */
+	{ &vop_advlock_desc, genfs_einval },		/* advlock */
+	{ &vop_bwrite_desc, genfs_eopnotsupp },		/* bwrite */
+	{ &vop_putpages_desc, genfs_null_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 
