@@ -56,15 +56,29 @@ void if_enum(enum e e)			{ if (e) return; }
 
 /* C99 6.2.5p20 */
 void if_array(struct arr arr)		{ if (arr.arr) return; }
-void if_struct(struct s s)		{ if (s) return; }	/* expect: 204 *//* expect: 231 */
-void if_union(union u u)		{ if (u) return; }	/* expect: 204 *//* expect: 231 */
+/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+1: warning: argument 's' unused in function 'if_struct' [231] */
+void if_struct(struct s s)		{ if (s) return; }
+/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+1: warning: argument 'u' unused in function 'if_union' [231] */
+void if_union(union u u)		{ if (u) return; }
 void if_function(void)			{ if (if_function) return; }
 void if_pointer(void *p)		{ if (p) return; }
 
 /* C99 6.8.5 */
-void while_struct(struct s s)		{ while (s) return; }	/* expect: 204 *//* expect: 231 */
-void for_struct(struct s s)		{ for (;s;) return; }	/* expect: 204 *//* expect: 223 *//* expect: 231 */
-void do_while_struct(struct s s)	{ do { return; } while (s); } /* expect: 204 *//* expect: 231 */
+/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+1: warning: argument 's' unused in function 'while_struct' [231] */
+void while_struct(struct s s)		{ while (s) return; }
+/* expect+3: error: controlling expressions must have scalar type [204] */
+/* expect+2: warning: end-of-loop code not reached [223] */
+/* expect+1: warning: argument 's' unused in function 'for_struct' [231] */
+void for_struct(struct s s)		{ for (;s;) return; }
+/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+1: warning: argument 's' unused in function 'do_while_struct' [231] */
+void do_while_struct(struct s s)	{ do { return; } while (s); }
 
 /* C99 6.5.15 does not require a scalar type, curiously. */
-int conditional_struct(struct s s)	{ return s ? 1 : 2; }	/* expect: 170 *//* expect: 214 *//* expect: 231 */
+/* expect+3: error: first operand must have scalar type, op ? : [170] */
+/* expect+2: warning: function 'conditional_struct' expects to return value [214] */
+/* expect+1: warning: argument 's' unused in function 'conditional_struct' [231] */
+int conditional_struct(struct s s)	{ return s ? 1 : 2; }

@@ -1,1 +1,1 @@
-gcc_attribute_aligned.c(43): error: illegal bit-field size: 255 [36]
+gcc_attribute_aligned.c(44): error: illegal bit-field size: 255 [36]

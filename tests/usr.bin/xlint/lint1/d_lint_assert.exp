@@ -1,2 +1,2 @@
 d_lint_assert.c(15): error: syntax error '}' [249]
-d_lint_assert.c(22): warning: old style declaration; add 'int' [1]
+d_lint_assert.c(23): warning: old style declaration; add 'int' [1]
