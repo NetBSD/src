@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.17 2022/01/15 14:49:43 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.18 2022/01/15 15:54:40 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.17 2022/01/15 14:49:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.18 2022/01/15 15:54:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -252,12 +252,10 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 		    SDHC_CAPABILITIES);
 		sc->sc.sc_caps &= ~(caps_mask & 0xffffffff);
 		sc->sc.sc_caps |= (caps & 0xffffffff);
-		if (((caps | caps_mask) >> 32) != 0) {
-			sc->sc.sc_caps2 = bus_space_read_4(sc->sc_memt,
-			    sc->sc_memh, SDHC_CAPABILITIES2);
-			sc->sc.sc_caps2 &= ~(caps_mask >> 32);
-			sc->sc.sc_caps2 |= (caps >> 32);
-		}
+		sc->sc.sc_caps2 = bus_space_read_4(sc->sc_memt,
+		    sc->sc_memh, SDHC_CAPABILITIES2);
+		sc->sc.sc_caps2 &= ~(caps_mask >> 32);
+		sc->sc.sc_caps2 |= (caps >> 32);
 		sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
 	}
 
