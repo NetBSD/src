@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.649 2022/01/09 19:57:14 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.650 2022/01/15 18:34:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.649 2022/01/09 19:57:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.650 2022/01/15 18:34:41 rillig Exp $");
 
 /*
  * A file being read.
@@ -1621,13 +1621,7 @@ VarAssign_EvalShell(const char *name, const char *uvalue, GNode *scope,
 	char *output, *error;
 
 	cmd = FStr_InitRefer(uvalue);
-	if (strchr(cmd.str, '$') != NULL) {
-		char *expanded;
-		(void)Var_Subst(cmd.str, SCOPE_CMDLINE, VARE_UNDEFERR,
-		    &expanded);
-		/* TODO: handle errors */
-		cmd = FStr_InitOwn(expanded);
-	}
+	Var_Expand(&cmd, SCOPE_CMDLINE, VARE_UNDEFERR);
 
 	output = Cmd_Exec(cmd.str, &error);
 	Var_SetExpand(scope, name, output);
@@ -1955,13 +1949,7 @@ ParseInclude(char *directive)
 
 	*p = '\0';
 
-	if (strchr(file.str, '$') != NULL) {
-		char *xfile;
-		Var_Subst(file.str, SCOPE_CMDLINE, VARE_WANTRES, &xfile);
-		/* TODO: handle errors */
-		file = FStr_InitOwn(xfile);
-	}
-
+	Var_Expand(&file, SCOPE_CMDLINE, VARE_WANTRES);
 	IncludeFile(file.str, endc == '>', directive[0] == 'd', silent);
 	FStr_Done(&file);
 }
