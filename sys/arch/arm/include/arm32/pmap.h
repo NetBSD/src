@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.171 2021/10/16 07:04:36 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.172 2022/01/15 08:14:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #if PMAP_TLB_MAX > 1
 #define	PMAP_TLB_NEED_SHOOTDOWN		1
 #endif
-#define	PMAP_TLB_FLUSH_ASID_ON_RESET	(arm_has_tlbiasid_p)
+#define	PMAP_TLB_FLUSH_ASID_ON_RESET	arm_has_tlbiasid_p
 #define	PMAP_TLB_NUM_PIDS		256
 #define	cpu_set_tlb_info(ci, ti)        ((void)((ci)->ci_tlb_info = (ti)))
 #if PMAP_TLB_MAX > 1
