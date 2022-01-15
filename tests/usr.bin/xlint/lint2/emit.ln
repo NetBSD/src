@@ -1,4 +1,4 @@
-# $NetBSD: emit.ln,v 1.4 2021/09/04 18:34:17 rillig Exp $
+# $NetBSD: emit.ln,v 1.5 2022/01/15 17:33:42 rillig Exp $
 #
 # Test emitting a lint library file.
 
@@ -15,8 +15,8 @@ S emit.c
 106 d 0.106 t 11defined_int I
 
 # Referring to an anonymous tagged type forces the source file to be listed as
-# part of the library.  If it weren't listed, the diagnostics from lint2 were
-# not able to refer to the location where this type has been defined.
+# part of the library.  If it weren't listed, the diagnostics from lint2 would
+# not be able to refer to the location where this type has been defined.
 97 d 0.97 e 21extern_anonymous_enum eT395.0.0
 
 # Function declarations, as opposed to function definitions, are not part of a
