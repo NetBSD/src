@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.152 2022/01/16 20:25:18 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.153 2022/01/16 20:25:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.152 2022/01/16 20:25:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.153 2022/01/16 20:25:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -979,7 +979,7 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	 *     external hub ports attached to USB devices.'
 	 *
 	 * This follows the procedure in 4.15 `Suspend-Resume', 4.15.2
-	 * `Port Resume', 4.15.2.1 `Host Initiated'.
+	 * `Port Resume', 4.15.2.2 `Host Initiated'.
 	 *
 	 * XXX We should maybe batch up initiating the state
 	 * transitions, and then wait for them to complete all at once.
