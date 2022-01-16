@@ -1,4 +1,4 @@
-# $NetBSD: varname-makeflags.mk,v 1.4 2021/12/27 20:17:35 rillig Exp $
+# $NetBSD: varname-makeflags.mk,v 1.5 2022/01/16 18:16:06 sjg Exp $
 #
 # Tests for the special MAKEFLAGS variable, which is basically just a normal
 # environment variable.  It is closely related to .MAKEFLAGS but captures the
@@ -35,8 +35,8 @@ OUTPUT!=	env MAKEFLAGS=ikrs ${MAKE} -f /dev/null -v .MAKEFLAGS
 # variable MAKEFLAGS, it is no longer split.  In this example, the word
 # "d0ikrs" is treated as a target, but the option '-v' prevents any targets
 # from being built.
-OUTPUT!=	env MAKEFLAGS=d0ikrs ${MAKE} -f /dev/null -v .MAKEFLAGS
-.if ${OUTPUT} != " -V .MAKEFLAGS"
+OUTPUT!=	env MAKEFLAGS=d0ikrs ${MAKE} -r -f /dev/null -v .MAKEFLAGS
+.if ${OUTPUT} != " -r -V .MAKEFLAGS"
 .  error ${OUTPUT}
 .endif
 
