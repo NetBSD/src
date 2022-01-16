@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.28 2020/08/31 15:32:15 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.29 2022/01/16 19:04:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.28 2020/08/31 15:32:15 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.29 2022/01/16 19:04:00 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,10 +81,11 @@ static int	usesleep, rawout;
 static int	quiet, flush;
 static const char *fname;
 
+static int	eflag;
 static int	isterm;
 static struct	termios tt;
 
-__dead static void	done(void);
+__dead static void	done(int);
 __dead static void	dooutput(void);
 __dead static void	doshell(const char *);
 __dead static void	fail(void);
@@ -92,7 +93,6 @@ static void	finish(int);
 static void	scriptflush(int);
 static void	record(FILE *, char *, size_t, int);
 static void	consume(FILE *, off_t, char *, int);
-static void	childwait(void);
 __dead static void	playback(FILE *);
 
 int
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	quiet = 0;
 	flush = 0;
 	command = NULL;
-	while ((ch = getopt(argc, argv, "ac:dfpqr")) != -1)
+	while ((ch = getopt(argc, argv, "ac:defpqr")) != -1)
 		switch(ch) {
 		case 'a':
 			aflg = 1;
@@ -123,6 +123,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			usesleep = 0;
+			break;
+		case 'e':
+			eflag = 1;
 			break;
 		case 'f':
 			flush = 1;
@@ -139,7 +142,7 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "Usage: %s [-c <command>][-adfpqr] [file]\n",
+			    "Usage: %s [-c <command>][-adefpqr] [file]\n",
 			    getprogname());
 			exit(EXIT_FAILURE);
 		}
@@ -205,31 +208,29 @@ main(int argc, char *argv[])
 			record(fscript, ibuf, cc, 'i');
 		(void)write(master, ibuf, cc);
 	}
-	childwait();
-	return EXIT_SUCCESS;
-}
-
-static void
-childwait(void)
-{
-	sigset_t set;
-
-	sigemptyset(&set);
-	sigsuspend(&set);
+	finish(-1);
 }
 
 static void
 finish(int signo)
 {
-	int die, pid, status;
+	int die, pid, status, cstat;
 
 	die = 0;
-	while ((pid = wait3(&status, WNOHANG, 0)) > 0)
-		if (pid == child)
+	while ((pid = wait(&status)) > 0)
+		if (pid == child) {
+			cstat = status;
 			die = 1;
+		}
 
-	if (die)
-		done();
+	if (!die)
+		return;
+	if (!eflag)
+		done(EXIT_SUCCESS);
+	else if (WIFEXITED(cstat))
+		done(WEXITSTATUS(cstat));
+	else
+		done(128 + WTERMSIG(cstat));
 }
 
 static void
@@ -267,8 +268,7 @@ dooutput(void)
 		if (flush)
 			(void)fflush(fscript);
 	}
-	childwait();
-	exit(EXIT_SUCCESS);
+	finish(-1);
 }
 
 static void
@@ -307,11 +307,11 @@ fail(void)
 {
 
 	(void)kill(0, SIGTERM);
-	done();
+	done(EXIT_FAILURE);
 }
 
 static void
-done(void)
+done(int status)
 {
 	time_t tvec;
 
@@ -330,7 +330,7 @@ done(void)
 		if (!quiet)
 			(void)printf("Script done, output file is %s\n", fname);
 	}
-	exit(EXIT_SUCCESS);
+	exit(status);
 }
 
 static void
