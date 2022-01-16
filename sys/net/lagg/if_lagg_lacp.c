@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.12 2022/01/12 08:23:53 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.13 2022/01/16 10:45:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.12 2022/01/12 08:23:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.13 2022/01/16 10:45:17 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -2542,7 +2542,7 @@ lacp_dump_lacpdutlv(const struct lacpdu_peerinfo *pi_actor,
 		printf("actor.state=%s portno=%d portprio=0x%04x\n",
 		    str,
 		    ntohs(pi_actor->lpi_port_no),
-		    ntohs(pi_actor->lpi_port_prio));;
+		    ntohs(pi_actor->lpi_port_prio));
 	} else {
 		printf("no actor info\n");
 	}
