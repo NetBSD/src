@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool.c,v 1.8 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool.c,v 1.9 2022/01/16 08:40:31 rillig Exp $	*/
 # 3 "d_c99_bool.c"
 
 /*
@@ -36,8 +36,9 @@ int null_pointer_converts_to_true_[(_Bool)(void *)0 ? 1 : -1];
  * expression.  This goes against C99 6.6p7 but is probably not too relevant
  * in practice.
  *
- * The call to constant(tn, 0) defaults to 1, then.  This is why neither of
- * the following array declarations generates an error message.
+ * In such a case, to_int_constant(tn, false) in cgram.y:array_size_opt
+ * returns 1 for the array size.  This is why neither of the following array
+ * declarations generates an error message.
  */
 char ch;
 int nonnull_pointer_converts_to_false[(_Bool)&ch ? -1 : 1];
