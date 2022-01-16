@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.651 2022/01/15 19:13:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.652 2022/01/16 09:41:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.651 2022/01/15 19:13:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.652 2022/01/16 09:41:28 rillig Exp $");
 
 /*
  * A file being read.
@@ -1497,10 +1497,7 @@ AdjustVarassignOp(const char *name, const char *nameEnd, const char *op,
 static bool
 Parse_IsVar(const char *p, VarAssign *out_var)
 {
-	const char *nameStart;
-	const char *nameEnd;
-	const char *eq;
-	const char *firstSpace = NULL;
+	const char *nameStart, *nameEnd, *firstSpace, *eq;
 	int level = 0;
 
 	cpp_skip_hspace(&p);	/* Skip to variable name */
@@ -1508,14 +1505,12 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 	/*
 	 * During parsing, the '+' of the '+=' operator is initially parsed
 	 * as part of the variable name.  It is later corrected, as is the
-	 * ':sh' modifier. Of these two (nameEnd and op), the earlier one
+	 * ':sh' modifier. Of these two (nameEnd and eq), the earlier one
 	 * determines the actual end of the variable name.
 	 */
+
 	nameStart = p;
-#ifdef CLEANUP
-	nameEnd = NULL;
-	eq = NULL;
-#endif
+	firstSpace = NULL;
 
 	/*
 	 * Scan for one of the assignment operators outside a variable
@@ -1535,9 +1530,8 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 		if (level != 0)
 			continue;
 
-		if (ch == ' ' || ch == '\t')
-			if (firstSpace == NULL)
-				firstSpace = p - 1;
+		if ((ch == ' ' || ch == '\t') && firstSpace == NULL)
+			firstSpace = p - 1;
 		while (ch == ' ' || ch == '\t')
 			ch = *p++;
 
