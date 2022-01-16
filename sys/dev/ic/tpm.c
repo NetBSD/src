@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.23 2021/12/20 23:05:55 riastradh Exp $	*/
+/*	$NetBSD: tpm.c,v 1.24 2022/01/16 20:24:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.23 2021/12/20 23:05:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.24 2022/01/16 20:24:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -141,14 +141,91 @@ tpm12_suspend(struct tpm_softc *sc)
 		0x00, 0x00, 0x00, 0x98	/* TPM_ORD_SaveState */
 	};
 	struct tpm_header response;
+	size_t nread;
+	bool endwrite = false, endread = false;
+	int error;
 
-	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
-		return false;
-	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
-		return false;
-	if (TPM_BE32(response.code) != 0)
-		return false;
+	/*
+	 * Write the command.
+	 */
+	error = (*sc->sc_intf->start)(sc, UIO_WRITE);
+	if (error) {
+		device_printf(sc->sc_dev, "start write failed: %d", error);
+		goto out;
+	}
 
+	endwrite = true;
+
+	error = (*sc->sc_intf->write)(sc, &command, sizeof(command));
+	if (error) {
+		device_printf(sc->sc_dev, "write TPM_ORD_SaveState failed: %d",
+		    error);
+		goto out;
+	}
+
+	endwrite = false;
+
+	error = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "end write failed: %d", error);
+		goto out;
+	}
+
+	/*
+	 * Read the response -- just the header; we don't expect a
+	 * payload.
+	 */
+	error = (*sc->sc_intf->start)(sc, UIO_READ);
+	if (error) {
+		device_printf(sc->sc_dev, "start read failed: %d", error);
+		goto out;
+	}
+
+	endread = true;
+
+	error = (*sc->sc_intf->read)(sc, &response, sizeof(response), &nread,
+	    0);
+	if (error) {
+		device_printf(sc->sc_dev, "read failed: %d", error);
+		goto out;
+	}
+	if (nread != sizeof(response)) {
+		device_printf(sc->sc_dev, "short header read: %zu", nread);
+		goto out;
+	}
+
+	endread = false;
+
+	error = (*sc->sc_intf->end)(sc, UIO_READ, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "end read failed: %d", error);
+		goto out;
+	}
+
+	/*
+	 * Verify the response looks reasonable.
+	 */
+	if (TPM_BE16(response.tag) != TPM_TAG_RSP_COMMAND ||
+	    TPM_BE32(response.length) != sizeof(response) ||
+	    TPM_BE32(response.code) != 0) {
+		device_printf(sc->sc_dev,
+		    "TPM_ORD_SaveState failed: tag=0x%x length=0x%x code=0x%x",
+		    TPM_BE16(response.tag),
+		    TPM_BE32(response.length),
+		    TPM_BE32(response.code));
+		error = EIO;
+		goto out;
+	}
+
+	/* Success!  */
+	error = 0;
+
+out:	if (endwrite)
+		error = (*sc->sc_intf->end)(sc, UIO_WRITE, error);
+	if (endread)
+		error = (*sc->sc_intf->end)(sc, UIO_READ, error);
+	if (error)
+		return false;
 	return true;
 }
 
@@ -162,14 +239,91 @@ tpm20_suspend(struct tpm_softc *sc)
 		0x00, 0x01		/* TPM_SU_STATE */
 	};
 	struct tpm_header response;
+	size_t nread;
+	bool endwrite = false, endread = false;
+	int error;
 
-	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
-		return false;
-	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
-		return false;
-	if (TPM_BE32(response.code) != 0)
-		return false;
+	/*
+	 * Write the command.
+	 */
+	error = (*sc->sc_intf->start)(sc, UIO_WRITE);
+	if (error) {
+		device_printf(sc->sc_dev, "start write failed: %d", error);
+		goto out;
+	}
 
+	endwrite = true;
+
+	error = (*sc->sc_intf->write)(sc, &command, sizeof(command));
+	if (error) {
+		device_printf(sc->sc_dev, "write TPM_ORD_SaveState failed: %d",
+		    error);
+		goto out;
+	}
+
+	endwrite = false;
+
+	error = (*sc->sc_intf->end)(sc, UIO_WRITE, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "end write failed: %d", error);
+		goto out;
+	}
+
+	/*
+	 * Read the response -- just the header; we don't expect a
+	 * payload.
+	 */
+	error = (*sc->sc_intf->start)(sc, UIO_READ);
+	if (error) {
+		device_printf(sc->sc_dev, "start read failed: %d", error);
+		goto out;
+	}
+
+	endread = true;
+
+	error = (*sc->sc_intf->read)(sc, &response, sizeof(response), &nread,
+	    0);
+	if (error) {
+		device_printf(sc->sc_dev, "read failed: %d", error);
+		goto out;
+	}
+	if (nread != sizeof(response)) {
+		device_printf(sc->sc_dev, "short header read: %zu", nread);
+		goto out;
+	}
+
+	endread = false;
+
+	error = (*sc->sc_intf->end)(sc, UIO_READ, 0);
+	if (error) {
+		device_printf(sc->sc_dev, "end read failed: %d", error);
+		goto out;
+	}
+
+	/*
+	 * Verify the response looks reasonable.
+	 */
+	if (TPM_BE16(response.tag) != TPM2_ST_NO_SESSIONS ||
+	    TPM_BE32(response.length) != sizeof(response) ||
+	    TPM_BE32(response.code) != TPM2_RC_SUCCESS) {
+		device_printf(sc->sc_dev,
+		    "TPM_CC_Shutdown failed: tag=0x%x length=0x%x code=0x%x",
+		    TPM_BE16(response.tag),
+		    TPM_BE32(response.length),
+		    TPM_BE32(response.code));
+		error = EIO;
+		goto out;
+	}
+
+	/* Success!  */
+	error = 0;
+
+out:	if (endwrite)
+		error = (*sc->sc_intf->end)(sc, UIO_WRITE, error);
+	if (endread)
+		error = (*sc->sc_intf->end)(sc, UIO_READ, error);
+	if (error)
+		return false;
 	return true;
 }
 
@@ -608,21 +762,13 @@ tpm_rng_work(struct work *wk, void *cookie)
 {
 	struct tpm_softc *sc = cookie;
 	unsigned nbytes, entropybits;
-	bool busy;
 	int rv;
 
 	/* Acknowledge the request.  */
 	nbytes = atomic_swap_uint(&sc->sc_rndpending, 0);
 
-	/* Lock userland out of the tpm, or fail if it's already open.  */
+	/* Lock the tpm while we do I/O transactions with it.  */
 	mutex_enter(&sc->sc_lock);
-	busy = sc->sc_busy;
-	sc->sc_busy = true;
-	mutex_exit(&sc->sc_lock);
-	if (busy) {		/* tough */
-		aprint_debug_dev(sc->sc_dev, "%s: device in use\n", __func__);
-		return;
-	}
 
 	/*
 	 * Issue as many commands as needed to fulfill the request, but
@@ -654,10 +800,7 @@ tpm_rng_work(struct work *wk, void *cookie)
 		/* XXX worker thread can't workqueue_destroy its own queue */
 	}
 
-	/* Relinquish the tpm back to userland.  */
-	mutex_enter(&sc->sc_lock);
-	KASSERT(sc->sc_busy);
-	sc->sc_busy = false;
+	/* Relinquish the tpm.  */
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -920,46 +1063,60 @@ tpmread(dev_t dev, struct uio *uio, int flags)
 	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
 	struct tpm_header hdr;
 	uint8_t buf[TPM_BUFSIZ];
-	size_t cnt, len, n;
+	size_t cnt, len = 0/*XXXGCC*/;
+	bool end = false;
 	int rv;
 
 	if (sc == NULL)
 		return ENXIO;
 
+	mutex_enter(&sc->sc_lock);
+
 	if ((rv = (*sc->sc_intf->start)(sc, UIO_READ)))
-		return rv;
+		goto out;
+	end = true;
 
 	/* Get the header. */
 	if ((rv = (*sc->sc_intf->read)(sc, &hdr, sizeof(hdr), &cnt, 0))) {
 		goto out;
 	}
+	if (cnt != sizeof(hdr)) {
+		rv = EIO;
+		goto out;
+	}
 	len = TPM_BE32(hdr.length);
-	if (len > uio->uio_resid || len < cnt) {
+	if (len > MIN(sizeof(buf), uio->uio_resid) || len < sizeof(hdr)) {
 		rv = EIO;
 		goto out;
 	}
 
-	/* Copy out the header. */
-	if ((rv = uiomove(&hdr, cnt, uio))) {
+	/* Get the payload. */
+	len -= sizeof(hdr);
+	if ((rv = (*sc->sc_intf->read)(sc, buf, len, NULL, TPM_PARAM_SIZE))) {
 		goto out;
 	}
 
-	/* Process the rest. */
-	len -= cnt;
-	while (len > 0) {
-		n = MIN(sizeof(buf), len);
-		if ((rv = (*sc->sc_intf->read)(sc, buf, n, NULL, TPM_PARAM_SIZE))) {
-			goto out;
-		}
-		if ((rv = uiomove(buf, n, uio))) {
-			goto out;
-		}
-		len -= n;
+out:	if (end)
+		rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
+
+	mutex_exit(&sc->sc_lock);
+
+	/* If anything went wrong, stop here -- nothing to copy out. */
+	if (rv)
+		return rv;
+
+	/* Copy out the header. */
+	if ((rv = uiomove(&hdr, sizeof(hdr), uio))) {
+		return rv;
 	}
 
-out:
-	rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
-	return rv;
+	/* Copy out the payload.  */
+	if ((rv = uiomove(buf, len, uio))) {
+		return rv;
+	}
+
+	/* Success! */
+	return 0;
 }
 
 static int
@@ -967,6 +1124,7 @@ tpmwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
 	uint8_t buf[TPM_BUFSIZ];
+	bool end = false;
 	int n, rv;
 
 	if (sc == NULL)
@@ -974,17 +1132,24 @@ tpmwrite(dev_t dev, struct uio *uio, int flags)
 
 	n = MIN(sizeof(buf), uio->uio_resid);
 	if ((rv = uiomove(buf, n, uio))) {
-		goto out;
+		return rv;
 	}
+
+	mutex_enter(&sc->sc_lock);
+
 	if ((rv = (*sc->sc_intf->start)(sc, UIO_WRITE))) {
 		goto out;
 	}
+	end = true;
+
 	if ((rv = (*sc->sc_intf->write)(sc, buf, n))) {
 		goto out;
 	}
 
-	rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
-out:
+out:	if (end)
+		rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
+
+	mutex_exit(&sc->sc_lock);
 	return rv;
 }
 
