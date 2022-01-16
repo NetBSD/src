@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.151 2021/12/21 09:51:22 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.152 2022/01/16 20:25:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.151 2021/12/21 09:51:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.152 2022/01/16 20:25:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -944,7 +944,7 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 		usb_delay_ms(&sc->sc_bus, 1);
 	}
 	if (i >= XHCI_WAIT_RSS) {
-		device_printf(self, "suspend timeout, USBSTS.RSS\n");
+		device_printf(self, "resume timeout, USBSTS.RSS\n");
 		goto out;
 	}
 
