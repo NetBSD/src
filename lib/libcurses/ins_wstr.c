@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.20 2021/11/16 23:23:02 kre Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.21 2022/01/16 10:30:45 rillig Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.20 2021/11/16 23:23:02 kre Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.21 2022/01/16 10:30:45 rillig Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -174,7 +174,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 					cw = 1;
 				width -= cw;
 				scp++;
-				continue;;
+				continue;
 
 			case L'\r':
 				width = 0;
@@ -242,7 +242,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 					scp++;
 					if (lstr != slstr)
 						lstr--;
-					continue;;
+					continue;
 
 				case L'\r':
 					width = 0;
@@ -254,7 +254,6 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 
 				case L'\n':
 					goto loopdone;
-					break;
 
 				case L'\t':
 					cw = wcwidth(ws[0]);
