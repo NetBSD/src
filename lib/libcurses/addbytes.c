@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.59 2021/09/06 07:45:48 rin Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.60 2022/01/16 10:30:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.59 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.60 2022/01/16 10:30:45 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -398,7 +398,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		}
 		for (i = 0; i < wch->elements; i++) {
 			if (!(np = (nschar_t *) malloc(sizeof(nschar_t))))
-				return ERR;;
+				return ERR;
 			np->ch = wch->vals[i];
 			np->next = lp->nsp;
 			lp->nsp = np;
@@ -523,7 +523,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		for (i = 1; i < wch->elements; i++) {
 			np = malloc(sizeof(nschar_t));
 			if (!np)
-				return ERR;;
+				return ERR;
 			np->ch = wch->vals[i];
 			np->next = lp->nsp;
 			__CTRACE(__CTRACE_INPUT,
