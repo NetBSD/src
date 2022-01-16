@@ -1,4 +1,4 @@
-/* $NetBSD: t_inet_addr.c,v 1.1 2015/04/09 16:47:56 ginsbach Exp $ */
+/* $NetBSD: t_inet_addr.c,v 1.2 2022/01/16 10:38:59 rillig Exp $ */
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_inet_addr.c,v 1.1 2015/04/09 16:47:56 ginsbach Exp $");
+__RCSID("$NetBSD: t_inet_addr.c,v 1.2 2022/01/16 10:38:59 rillig Exp $");
 
 #include <arpa/inet.h>
 
@@ -57,7 +57,7 @@ ATF_TC_BODY(inet_addr_basic, tc)
 
 	for (i = 0; i < __arraycount(addrs); i++) {
 
-		(void)fprintf(stderr, "checking %s\n", addrs[i]);;
+		(void)fprintf(stderr, "checking %s\n", addrs[i]);
 
 		addr = inet_addr(addrs[i]);
 		ia.s_addr = addr;
@@ -88,7 +88,7 @@ ATF_TC_BODY(inet_addr_err, tc)
 
 	for (i = 0; i < __arraycount(addrs); i++) {
 
-		(void)fprintf(stderr, "checking %s\n", addrs[i]);;
+		(void)fprintf(stderr, "checking %s\n", addrs[i]);
 
 		addr = inet_addr(addrs[i]);
 		ia.s_addr = addr;
