@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.16 2022/01/15 23:21:34 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.17 2022/01/16 10:11:38 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -670,6 +670,27 @@ test_null_statement(void)
 	 * block-list has no use.
 	 */
 	;;
+
+	/*
+	 * If assertions are disabled with -DNDEBUG and __lint__ is defined,
+	 * NetBSD's <assert.h> defines assert(x) to nothing, leaving only
+	 * the trailing semicolon.  If there are several assertions next to
+	 * each other, without any whitespace in between (very unusual), the
+	 * GCC preprocessor generates ";;" for them, which makes them
+	 * indistinguishable from the literal ";;" from the typo above.
+	 *
+	 * (echo '#include <assert.h>'; echo 'assert(0);assert(1);') \
+	 * | gcc -DNDEBUG -E - -D__lint__
+	 *
+	 * To actually see the difference, lint would need to look at the
+	 * code before preprocessing and compare it with the preprocessed
+	 * code, which would be a lot of work.
+	 *
+	 * Apart from the above edge case, detecting extra semicolons would
+	 * be possible, but lint would have to look at the whitespace between
+	 * the tokens, and this is something that it doesn't do at all, as of
+	 * 2022-01-16.
+	 */
 
 	/*
 	 * A stand-alone null statement, on the other hand, has its purpose.
