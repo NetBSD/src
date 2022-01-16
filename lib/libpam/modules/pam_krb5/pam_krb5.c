@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.29 2020/06/12 01:20:32 fox Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.30 2022/01/16 10:52:18 rillig Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.29 2020/06/12 01:20:32 fox Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.30 2022/01/16 10:52:18 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -677,7 +677,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
 	krbret = krb5_cc_get_principal(pam_context, ccache, &princ);
 	if (krbret != 0) {
 		log_krb5(pam_context, krbret, NULL, "krb5_cc_get_principal");
-		retval = PAM_PERM_DENIED;;
+		retval = PAM_PERM_DENIED;
 		goto cleanup;
 	}
 
