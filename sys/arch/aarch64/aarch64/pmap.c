@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.124 2022/01/15 07:39:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.125 2022/01/16 10:50:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2022/01/15 07:39:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2022/01/16 10:50:02 rillig Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2022/01/15 07:39:04 skrll Exp $");
 #endif
 
 struct kern_history_ent pmaphistbuf[UVMHIST_PMAPHIST_SIZE];
-UVMHIST_DEFINE(pmaphist) = UVMHIST_INITIALIZER(pmaphist, pmaphistbuf);;
+UVMHIST_DEFINE(pmaphist) = UVMHIST_INITIALIZER(pmaphist, pmaphistbuf);
 
 static void
 pmap_hist_init(void)
