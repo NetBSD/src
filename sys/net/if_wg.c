@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.67 2021/12/31 14:25:24 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.68 2022/01/16 20:43:20 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.67 2021/12/31 14:25:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.68 2022/01/16 20:43:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -270,6 +270,9 @@ wg_dump_hash(const uint8_t *func, const uint8_t *name, const uint8_t *hash,
 #define WG_DUMP_HASH48(name, hash)	__nothing
 #define WG_DUMP_BUF(buf, size)	__nothing
 #endif /* WG_DEBUG_DUMP */
+
+/* chosen somewhat arbitrarily -- fits in signed 16 bits NUL-termintaed */
+#define	WG_MAX_PROPLEN		32766
 
 #define WG_MTU			1420
 #define WG_ALLOWEDIPS		16
@@ -4283,6 +4286,8 @@ wg_alloc_prop_buf(char **_buf, struct ifdrv *ifd)
 	char *buf;
 
 	WG_DLOG("buf=%p, len=%lu\n", ifd->ifd_data, ifd->ifd_len);
+	if (ifd->ifd_len >= WG_MAX_PROPLEN)
+		return E2BIG;
 	buf = kmem_alloc(ifd->ifd_len + 1, KM_SLEEP);
 	error = copyin(ifd->ifd_data, buf, ifd->ifd_len);
 	if (error != 0)
