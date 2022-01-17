@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.6 2008/03/29 19:15:35 tsutsui Exp $ */
+/*	$NetBSD: zsvar.h,v 1.7 2022/01/17 20:56:02 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@ struct zsdevice {
 #define	ZRING_VALUE(x)	((x) >> 8)
 #define	ZRING_MAKE(t, v)	((t) | (v) << 8)
 
-/* forard decl */
+/* forward decl */
 struct zs_softc;
 
 struct zs_chanstate {

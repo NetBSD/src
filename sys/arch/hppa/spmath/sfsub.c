@@ -1,4 +1,4 @@
-/*	$NetBSD: sfsub.c,v 1.5 2012/02/04 17:03:11 skrll Exp $	*/
+/*	$NetBSD: sfsub.c,v 1.6 2022/01/17 20:56:02 andvar Exp $	*/
 
 /*	$OpenBSD: sfsub.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfsub.c,v 1.5 2012/02/04 17:03:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfsub.c,v 1.6 2022/01/17 20:56:02 andvar Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -303,7 +303,7 @@ sgl_fsub(sgl_floating_point *leftptr, sgl_floating_point *rightptr,
 	if(Sgl_iszero_hidden(result))
 	    {
 	    /* Handle normalization */
-	    /* A straight foward algorithm would now shift the result
+	    /* A straight forward algorithm would now shift the result
 	     * and extension left until the hidden bit becomes one.  Not
 	     * all of the extension bits need participate in the shift.
 	     * Only the two most significant bits (round and guard) are
