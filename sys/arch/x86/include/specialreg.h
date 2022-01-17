@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.186 2022/01/15 10:59:40 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.187 2022/01/17 20:56:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -800,7 +800,7 @@
 #define CPUID_CAPEX_SSBD	   __BIT(24) /* Speculation Control SSBD */
 #define CPUID_CAPEX_VIRT_SSBD	   __BIT(25) /* Virt Spec Control SSBD */
 #define CPUID_CAPEX_SSB_NO	   __BIT(26) /* SSBD not required */
-#define CPUID_CAPEX_PSFD	   __BIT(28) /* Predictive Store Froward Dis */
+#define CPUID_CAPEX_PSFD	   __BIT(28) /* Predictive Store Forward Dis */
 
 #define CPUID_CAPEX_FLAGS	"\20"					   \
 	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			   \

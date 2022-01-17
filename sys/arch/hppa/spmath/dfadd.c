@@ -1,4 +1,4 @@
-/*	$NetBSD: dfadd.c,v 1.5 2012/02/04 17:03:08 skrll Exp $	*/
+/*	$NetBSD: dfadd.c,v 1.6 2022/01/17 20:56:02 andvar Exp $	*/
 
 /*	$OpenBSD: dfadd.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfadd.c,v 1.5 2012/02/04 17:03:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfadd.c,v 1.6 2022/01/17 20:56:02 andvar Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -305,7 +305,7 @@ dbl_fadd(dbl_floating_point *leftptr, dbl_floating_point *rightptr,
 	if(Dbl_iszero_hidden(resultp1))
 	    {
 	    /* Handle normalization */
-	    /* A straight foward algorithm would now shift the result
+	    /* A straight forward algorithm would now shift the result
 	     * and extension left until the hidden bit becomes one.  Not
 	     * all of the extension bits need participate in the shift.
 	     * Only the two most significant bits (round and guard) are
