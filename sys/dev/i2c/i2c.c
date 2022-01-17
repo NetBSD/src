@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.80 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.81 2022/01/17 19:34:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -37,10 +37,23 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_i2c.h"
-#endif
+
+#include "opt_fdt.h"
+#ifdef FDT
+#define	I2C_USE_FDT
+#endif /* FDT */
+
+#if defined(__aarch64__) || defined(__amd64__)
+#include "acpica.h"
+#if NACPICA > 0
+#define	I2C_USE_ACPI
+#endif /* NACPICA > 0 */
+#endif /* __aarch64__ || __amd64__ */
+
+#endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.81 2022/01/17 19:34:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80 2021/08/07 16:19:11 thorpej Exp $");
 #include <sys/module.h>
 #include <sys/once.h>
 #include <sys/mutex.h>
+
+#ifdef I2C_USE_ACPI
+#include <dev/acpi/acpivar.h>
+#endif /* I2C_USE_ACPI */
+
+#ifdef I2C_USE_FDT
+#include <dev/fdt/fdtvar.h>
+#endif /* I2C_USE_FDT */
 
 #include <dev/i2c/i2cvar.h>
 
@@ -444,6 +465,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		uint32_t cookietype;
 		const char *name;
 		struct i2c_attach_args ia;
+		devhandle_t devhandle;
 		int loc[IICCF_NLOCS];
 
 		memset(loc, 0, sizeof loc);
@@ -473,6 +495,19 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_cookietype = cookietype;
 			ia.ia_prop = dev;
 
+			devhandle_invalidate(&devhandle);
+#ifdef I2C_USE_FDT
+			if (cookietype == I2C_COOKIE_OF) {
+				devhandle = devhandle_from_of((int)cookie);
+			}
+#endif /* I2C_USE_FDT */
+#ifdef I2C_USE_ACPI
+			if (cookietype == I2C_COOKIE_ACPI) {
+				devhandle =
+				    devhandle_from_acpi((ACPI_HANDLE)cookie);
+			}
+#endif /* I2C_USE_ACPI */
+
 			buf = NULL;
 			cdata = prop_dictionary_get(dev, "compatible");
 			if (cdata)
@@ -493,7 +528,8 @@ iic_attach(device_t parent, device_t self, void *aux)
 					sc->sc_devices[addr] =
 					    config_found(self, &ia,
 					    iic_print_direct,
-					    CFARGS(.locators = loc));
+					    CFARGS(.locators = loc,
+						   .devhandle = devhandle));
 				}
 			}
 
