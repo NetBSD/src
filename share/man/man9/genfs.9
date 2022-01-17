@@ -1,4 +1,4 @@
-.\" $NetBSD: genfs.9,v 1.6 2020/08/07 20:17:59 wiz Exp $
+.\" $NetBSD: genfs.9,v 1.7 2022/01/17 19:08:06 christos Exp $
 .\"
 .\" Copyright 2012 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 7, 2020
+.Dd January 17, 2022
 .Dt GENFS 9
 .Os
 .Sh NAME
@@ -34,9 +34,6 @@
 .Nd genfs routines
 .Sh SYNOPSIS
 .In miscfs/genfs/genfs.h
-.Ft int
-.Fn genfs_can_access "vnode_t *vp" "kauth_cred_t cred" "uid_t uid" \
-"gid_t gid" "mode_t file_mode" "struct acl *acl" "accmode_t accmode"
 .Ft int
 .Fn genfs_can_chflags "vnode_t *vp" kauth_cred_t cred" "uid_t owner_uid" \
 "bool changing_sysflags"
@@ -79,9 +76,6 @@ error = kauth_authorize_vnode(..., genfs_can_foo(...));
 .Ed
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn genfs_can_access "vnode_t *vp" "kauth_cred_t cred" "uid_t uid" \
-"gid_t gid" "mode_t file_mode" "struct acl *" "accmode_t accmode"
-Implements file access checking based on traditional Unix permissions.
 .It Fn genfs_can_chflags "vnode_t *vp" "kauth_cred_t cred"
 "uid_t owner_uid" "bool changing_sysflags"
 Implements
@@ -111,6 +105,10 @@ Implements rename and delete policy from sticky directories.
 .El
 .Sh SEE ALSO
 .Xr kauth 9
+.Xr genfs_rename 9
+.Xr genfs_can_access 9
+.Xr genfs_can_access_acl_posix1e 9
+.Xr genfs_can_access_acl_nfs4 9
 .Sh AUTHORS
 .An Elad Efrat Aq Mt elad@NetBSD.org
 wrote this manual page.
