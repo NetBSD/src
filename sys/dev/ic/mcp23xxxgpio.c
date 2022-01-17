@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio.c,v 1.1 2022/01/17 16:31:23 thorpej Exp $	*/
+/*      $NetBSD: mcp23xxxgpio.c,v 1.2 2022/01/17 19:38:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio.c,v 1.1 2022/01/17 16:31:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio.c,v 1.2 2022/01/17 19:38:14 thorpej Exp $");
 
 /* 
  * Driver for Microchip serial I/O expansers:
@@ -293,7 +293,7 @@ mcpgpio_attach(struct mcpgpio_softc *sc)
 	 */
 	if (sc->sc_npins == 0) {
 		sc->sc_npins = sc->sc_variant->type == MCPGPIO_TYPE_23x08
-		? MCP23x08_GPIO_NPINS : MCP23x17_GPIO_NPINS;
+		    ? MCP23x08_GPIO_NPINS : MCP23x17_GPIO_NPINS;
 	}
 	sc->sc_gpio_pins =
 	    kmem_zalloc(sc->sc_npins * sizeof(*sc->sc_gpio_pins), KM_SLEEP);
@@ -348,7 +348,8 @@ mcpgpio_attach(struct mcpgpio_softc *sc)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = sc->sc_npins;
 
-	config_found(sc->sc_dev, &gba, gpiobus_print, CFARGS_NONE);
+	config_found(sc->sc_dev, &gba, gpiobus_print,
+	    CFARGS(.devhandle = device_handle(sc->sc_dev)));
 #else
 	aprint_normal_dev(sc->sc_dev, "no GPIO configured in kernel");
 #endif
