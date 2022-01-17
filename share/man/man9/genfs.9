@@ -1,4 +1,4 @@
-.\" $NetBSD: genfs.9,v 1.7 2022/01/17 19:08:06 christos Exp $
+.\" $NetBSD: genfs.9,v 1.8 2022/01/17 22:27:20 wiz Exp $
 .\"
 .\" Copyright 2012 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -104,11 +104,11 @@ Implements extended attributes access policy.
 Implements rename and delete policy from sticky directories.
 .El
 .Sh SEE ALSO
+.Xr genfs_can_access 9 ,
+.Xr genfs_can_access_acl_nfs4 9 ,
+.Xr genfs_can_access_acl_posix1e 9 ,
+.Xr genfs_rename 9 ,
 .Xr kauth 9
-.Xr genfs_rename 9
-.Xr genfs_can_access 9
-.Xr genfs_can_access_acl_posix1e 9
-.Xr genfs_can_access_acl_nfs4 9
 .Sh AUTHORS
 .An Elad Efrat Aq Mt elad@NetBSD.org
 wrote this manual page.
