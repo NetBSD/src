@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.461 2022/01/17 19:08:06 christos Exp $
+#       $NetBSD: Makefile,v 1.462 2022/01/17 22:47:43 christos Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -68,7 +68,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	video.9 vme.9 vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 vmem.9  \
 	wapbl.9 wdc.9 workqueue.9 \
 	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
-	xcall.9
+	xcall.9 \
+	VOP_ACLCHECK.9 VOP_GETACL.9 VOP_SETACL.9
 
 MAN+=	atomic_loadstore.9
 MLINKS+=atomic_loadstore.9 atomic_load_acquire.9 \
