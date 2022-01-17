@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.94 2020/11/23 06:24:35 rin Exp $
+#	$NetBSD: RPI,v 1.95 2022/01/17 16:31:24 thorpej Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -178,12 +178,15 @@ spi* at spibus?
 #mcp3kadc0 at spi? slave 0 flags 0
 
 # PIFace or other boards using that chip (needs gpio)
-#mcp23s17gpio0 at spi? slave 0 flags 0
-#mcp23s17gpio1 at spi? slave 0 flags 1
-#mcp23s17gpio2 at spi? slave 0 flags 2
-#mcp23s17gpio3 at spi? slave 0 flags 3
+#mcpgpio0 at spi? slave 0 flags 0
+#mcpgpio1 at spi? slave 0 flags 1
+#mcpgpio2 at spi? slave 0 flags 2
+#mcpgpio3 at spi? slave 0 flags 3
 
-# gpio support (e. g. mcp23s17gpio, bcmgpio)
+# MCP230xx GPIO on I2C.
+mcpgpio* at iic? addr ?
+
+# gpio support (e. g. mcpgpio, bcmgpio)
 gpio*		at gpiobus?
 
 # various options for wscons - we try to look as much like a standard

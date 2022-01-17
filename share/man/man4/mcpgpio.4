@@ -1,0 +1,108 @@
+.\"	$NetBSD: mcpgpio.4,v 1.1 2022/01/17 16:31:23 thorpej Exp $
+.\"
+.\"Copyright (c) 2014 Frank Kardel
+.\"All rights reserved.
+.\"
+.\"Redistribution and use in source and binary forms, with or without
+.\"modification, are permitted provided that the following conditions
+.\"are met:
+.\"1. Redistributions of source code must retain the above copyright
+.\"   notice, this list of conditions and the following disclaimer.
+.\"2. Redistributions in binary form must reproduce the above copyright
+.\"   notice, this list of conditions and the following disclaimer in the
+.\"   documentation and/or other materials provided with the distribution.
+.\"
+.\"THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS
+.\"``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\"TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\"PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\"BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\"CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\"SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\"INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\"CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\"ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\"POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 10, 2022
+.Dt MCPGPIO 4
+.Os
+.Sh NAME
+.Nm mcpgpio
+.Nd Driver for Microchip I/O Expanders on I2C and SPI bus
+.Sh SYNOPSIS
+.Ss I2C
+.Cd "mcpgpio* at iic? addr ?"
+.Cd "gpio* at gpiobus?"
+.Ss SPI
+.Cd "mcpgpio0 at spi? slave 0 flags 0"
+.Cd "mcpgpio1 at spi? slave 0 flags 1"
+.Cd "mcpgpio2 at spi? slave 0 flags 2"
+.Cd "mcpgpio3 at spi? slave 0 flags 3"
+.Cd "gpio* at gpiobus?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the following Microchip I/O Expanders:
+.Bl -tag -width "mcp23x08"
+.It MCP23008
+8-bit I/O expander, I2C interface
+.It MCP23S08
+8-bit I/O expander, SPI interface
+.It MCP23017
+16-bit I/O expander, I2C interface
+.It MCP23S17
+16-bit I/O expander, SPI interface
+.It MCP23018
+16-bit I/O expander, open-drain outputs, I2C interface
+.It MCP23S18
+16-bit I/O expander, open-drain outputs, SPI interface
+.El
+.Pp
+Access to the pins is provided by the
+.Xr gpio 4
+interface.
+.Pp
+The SPI version of these devices support multiple chips per chip select
+signal.
+On the MCP23S08 and MCP23S17, this is achieved by tying the address select
+pins to VDD or GND to select an address
+.Pq 0-3 on MCP23S08 or 0-7 on MCP23S17 .
+The MCP23S18 has a similar capability, but uses an analog voltage input
+on a single address select pin, along with an internal voltage divider
+ladder and a series of comparators to generate the 3 address bits; see
+the data sheet for details.
+The
+.Ar flags
+argument in the configuration directive for SPI attachments selects the
+hardware address of the chip instance for that driver instance.
+.Sh SEE ALSO
+.Xr gpio 4 ,
+.Xr iic 4 ,
+.Xr intro 4 ,
+.Xr spi 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 7.0 .
+It was overhauled in
+.Nx 10.0
+to support additional chip types and to add the I2C attachment.
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Frank Kardel Aq Mt kardel@NetBSD.org
+and
+.An Jason R. Thorpe Aq Mt thorpej@NetBSD.org .
+.Sh BUGS
+SPI instances of the
+.Nm
+driver do not utilize the Device Tree bindings for this device.
+.Pp
+The
+.Nm
+driver does not currently act as a GPIO provider for the platform
+device tree.
