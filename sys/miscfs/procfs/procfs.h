@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.80 2020/04/29 07:18:24 riastradh Exp $	*/
+/*	$NetBSD: procfs.h,v 1.81 2022/01/17 11:20:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -213,6 +213,14 @@ struct mount;
 
 struct proc *procfs_proc_find(struct mount *, pid_t);
 bool procfs_use_linux_compat(struct mount *);
+
+static inline bool
+procfs_proc_is_linux_compat(void)
+{
+	const char *emulname = curlwp->l_proc->p_emul->e_name;
+	return (strncmp(emulname, "linux", 5) == 0);
+}
+
 int procfs_proc_lock(struct mount *, int, struct proc **, int);
 void procfs_proc_unlock(struct proc *);
 int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype, int);
