@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.113 2022/01/15 14:33:36 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.114 2022/01/17 20:10:37 mrg Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.113 2022/01/15 14:33:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.114 2022/01/17 20:10:37 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -77,6 +77,7 @@ struct sdhc_host {
 	uint16_t intr_status;		/* soft interrupt status */
 	uint16_t intr_error_status;	/* soft error status */
 	kmutex_t intr_lock;
+	kmutex_t bus_clock_lock;
 	kcondvar_t intr_cv;
 
 	callout_t tuning_timer;
@@ -296,6 +297,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	hp->dmat = sc->sc_dmat;
 
 	mutex_init(&hp->intr_lock, MUTEX_DEFAULT, IPL_SDMMC);
+	mutex_init(&hp->bus_clock_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&hp->intr_cv, "sdhcintr");
 	callout_init(&hp->tuning_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&hp->tuning_timer, sdhc_tuning_timer, hp);
@@ -650,6 +652,7 @@ adma_done:
 err:
 	callout_destroy(&hp->tuning_timer);
 	cv_destroy(&hp->intr_cv);
+	mutex_destroy(&hp->bus_clock_lock);
 	mutex_destroy(&hp->intr_lock);
 	free(hp, M_DEVBUF);
 	sc->sc_host[--sc->sc_nhosts] = NULL;
@@ -1097,8 +1100,6 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 	int error = 0;
 	bool present __diagused;
 
-	mutex_enter(&hp->intr_lock);
-
 #ifdef DIAGNOSTIC
 	present = ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CMD_INHIBIT_MASK);
 
@@ -1110,10 +1111,14 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 #endif
 
 	if (hp->sc->sc_vendor_bus_clock) {
+		mutex_enter(&hp->bus_clock_lock);
 		error = (*hp->sc->sc_vendor_bus_clock)(hp->sc, freq);
+		mutex_exit(&hp->bus_clock_lock);
 		if (error != 0)
-			goto out;
+			return error;
 	}
+
+	mutex_enter(&hp->intr_lock);
 
 	/*
 	 * Stop SD clock before changing the frequency.
@@ -1275,11 +1280,14 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 			HCLR1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
 	}
 
+	mutex_exit(&hp->intr_lock);
+
 	if (hp->sc->sc_vendor_bus_clock_post) {
+		mutex_enter(&hp->bus_clock_lock);
 		error = (*hp->sc->sc_vendor_bus_clock_post)(hp->sc, freq);
-		if (error != 0)
-			goto out;
+		mutex_exit(&hp->bus_clock_lock);
 	}
+	return error;
 
 out:
 	mutex_exit(&hp->intr_lock);
