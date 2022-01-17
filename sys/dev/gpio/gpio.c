@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.68 2021/09/21 14:38:51 christos Exp $ */
+/* $NetBSD: gpio.c,v 1.69 2022/01/17 19:33:00 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,8 +18,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_fdt.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.68 2021/09/21 14:38:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.69 2022/01/17 19:33:00 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -41,7 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.68 2021/09/21 14:38:51 christos Exp $");
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+
 #include <dev/gpio/gpiovar.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
 
 #include "ioconf.h"
 #include "locators.h"
@@ -196,6 +205,23 @@ gpio_rescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
+static const char *
+gpio_pin_defname(struct gpio_softc *sc, int pin)
+{
+	KASSERT(pin >= 0);
+
+#ifdef FDT
+	devhandle_t devhandle = device_handle(sc->sc_dev);
+
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
+		return fdtbus_get_string_index(devhandle_to_of(devhandle),
+		    "gpio-line-names", pin);
+	}
+#endif /* FDT */
+
+	return NULL;
+}
+
 static void
 gpio_attach(device_t parent, device_t self, void *aux)
 {
@@ -214,11 +240,18 @@ gpio_attach(device_t parent, device_t self, void *aux)
 
 	/* Configure default pin names */
 	for (pin = 0; pin < sc->sc_npins; pin++) {
-		if (sc->sc_pins[pin].pin_defname[0] == '\0')
+		const char *defname;
+
+		defname = gpio_pin_defname(sc, pin);
+		if (defname == NULL &&
+		    sc->sc_pins[pin].pin_defname[0] != '\0') {
+			defname = sc->sc_pins[pin].pin_defname;
+		}
+		if (defname == NULL) {
 			continue;
+		}
 		nm = kmem_alloc(sizeof(*nm), KM_SLEEP);
-		strlcpy(nm->gp_name, sc->sc_pins[pin].pin_defname,
-		    sizeof(nm->gp_name));
+		strlcpy(nm->gp_name, defname, sizeof(nm->gp_name));
 		nm->gp_pin = pin;
 		LIST_INSERT_HEAD(&sc->sc_names, nm, gp_next);
 	}
