@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.64 2022/01/09 03:33:26 lukem Exp $
+# $NetBSD: etcupdate,v 1.65 2022/01/17 08:47:03 lukem Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -554,7 +554,7 @@ do
 		;;
 
 	*)
-		echo 1>&2 "${PROG}: Unimplemented option -${ch}"
+		echo 1>&2 "${PROG}: Unimplemented option -${i}"
 		exit 3
 		;;
 	esac
