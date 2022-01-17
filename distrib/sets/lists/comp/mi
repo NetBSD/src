@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2402 2022/01/17 19:12:01 christos Exp $
+#	$NetBSD: mi,v 1.2403 2022/01/17 22:49:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11218,6 +11218,7 @@
 ./usr/share/man/cat9/VHOLD.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_ABORTOP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ACCESS.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_ACLCHECK.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ADVLOCK.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_BALLOC.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_BLKATOFF.0		comp-obsolete		obsolete
@@ -11227,6 +11228,7 @@
 ./usr/share/man/cat9/VOP_CREATE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_FCNTL.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_FSYNC.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_GETACL.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_GETATTR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_GETEXTATTR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_GETPAGES.0		comp-sys-catman		.cat
@@ -11256,6 +11258,7 @@
 ./usr/share/man/cat9/VOP_REVOKE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_RMDIR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_SEEK.0			comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_SETACL.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_SETATTR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_SETEXTATTR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_STRATEGY.0		comp-sys-catman		.cat
@@ -19451,6 +19454,7 @@
 ./usr/share/man/html9/VHOLD.html		comp-obsolete	obsolete
 ./usr/share/man/html9/VOP_ABORTOP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_ACCESS.html		comp-sys-htmlman	html
+./usr/share/man/html9/VOP_ACLCHECK.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_ADVLOCK.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_BMAP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_BWRITE.html		comp-sys-htmlman	html
@@ -19458,6 +19462,7 @@
 ./usr/share/man/html9/VOP_CREATE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_FCNTL.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_FSYNC.html		comp-sys-htmlman	html
+./usr/share/man/html9/VOP_GETACL.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_GETATTR.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_GETEXTATTR.html	comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_GETPAGES.html		comp-sys-htmlman	html
@@ -19486,6 +19491,7 @@
 ./usr/share/man/html9/VOP_REVOKE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_RMDIR.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_SEEK.html		comp-sys-htmlman	html
+./usr/share/man/html9/VOP_SETACL.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_SETATTR.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_SETEXTATTR.html	comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_STRATEGY.html		comp-sys-htmlman	html
@@ -27773,6 +27779,7 @@
 ./usr/share/man/man9/VHOLD.9			comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_ABORTOP.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ACCESS.9		comp-sys-man		.man
+./usr/share/man/man9/VOP_ACLCHECK.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ADVLOCK.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_BALLOC.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_BLKATOFF.9		comp-obsolete		obsolete
@@ -27782,6 +27789,7 @@
 ./usr/share/man/man9/VOP_CREATE.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_FCNTL.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_FSYNC.9		comp-sys-man		.man
+./usr/share/man/man9/VOP_GETACL.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_GETATTR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_GETEXTATTR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_GETPAGES.9		comp-sys-man		.man
@@ -27811,6 +27819,7 @@
 ./usr/share/man/man9/VOP_REVOKE.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_RMDIR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_SEEK.9			comp-sys-man		.man
+./usr/share/man/man9/VOP_SETACL.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_SETATTR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_SETEXTATTR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_STRATEGY.9		comp-sys-man		.man
