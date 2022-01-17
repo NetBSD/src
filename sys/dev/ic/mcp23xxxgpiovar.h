@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpiovar.h,v 1.1 2022/01/17 16:31:23 thorpej Exp $	*/
+/*      $NetBSD: mcp23xxxgpiovar.h,v 1.2 2022/01/17 19:36:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@ struct mcpgpio_softc {
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		*sc_gpio_pins;
 	unsigned int		sc_npins;
-	int			sc_phandle;
 	uint8_t			sc_iocon; /* I/O configuration */
 
 	/* Bus-specific access functions. */

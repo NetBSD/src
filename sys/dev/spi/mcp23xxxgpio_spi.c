@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.1 2022/01/17 16:31:23 thorpej Exp $ */
+/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.2 2022/01/17 19:36:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.1 2022/01/17 16:31:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.2 2022/01/17 19:36:54 thorpej Exp $");
 
 /* 
  * Driver for Microchip serial I/O expanders:
@@ -202,7 +202,6 @@ mcpgpio_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_variant = &mcp23s17;		/* XXX */
 	sc->sc_iocon = IOCON_HAEN | IOCON_SEQOP;
 	sc->sc_npins = MCP23x17_GPIO_NPINS;
-	sc->sc_phandle = -1;
 	sc->sc_accessops = &mcpgpio_spi_accessops;
 
 	aprint_naive("\n");	
