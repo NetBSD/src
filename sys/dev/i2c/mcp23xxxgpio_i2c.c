@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio_i2c.c,v 1.1 2022/01/17 16:31:23 thorpej Exp $	*/
+/*      $NetBSD: mcp23xxxgpio_i2c.c,v 1.2 2022/01/17 19:36:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_i2c.c,v 1.1 2022/01/17 16:31:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_i2c.c,v 1.2 2022/01/17 19:36:54 thorpej Exp $");
 
 /* 
  * Driver for Microchip serial I/O expanders:
@@ -163,7 +163,6 @@ mcpgpio_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_variant = dce->data;
 	sc->sc_iocon = IOCON_SEQOP;
-	sc->sc_phandle = ia->ia_cookie;
 	sc->sc_accessops = &mcpgpio_i2c_accessops;
 
 	aprint_naive("\n");	
