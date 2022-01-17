@@ -1,4 +1,4 @@
-.\" $NetBSD: VOP_GETACL.9,v 1.1 2022/01/17 22:47:43 christos Exp $
+.\" $NetBSD: VOP_GETACL.9,v 1.2 2022/01/17 23:12:41 wiz Exp $
 .\"-
 .\" Copyright (c) 1999, 2000, 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -75,10 +75,10 @@ pointer will point to a valid ACL, then zero is returned.
 Otherwise, an appropriate error code is returned.
 .Sh ERRORS
 .Bl -tag -width Er
-.It Bq Er EINVAL
-The ACL type passed is invalid for this vnode.
 .It Bq Er EACCES
 The caller does not have the appropriate privilege.
+.It Bq Er EINVAL
+The ACL type passed is invalid for this vnode.
 .It Bq Er ENOMEM
 Sufficient memory is not available to fulfill the request.
 .It Bq Er EOPNOTSUPP
