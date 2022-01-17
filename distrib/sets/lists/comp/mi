@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2401 2021/12/22 17:28:17 thorpej Exp $
+#	$NetBSD: mi,v 1.2402 2022/01/17 19:12:01 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11268,6 +11268,7 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VREF.0			comp-obsolete		obsolete
+./usr/share/man/cat9/acl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_del.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_generic_mod_event.0	comp-sys-catman		.cat
@@ -11741,6 +11742,9 @@
 ./usr/share/man/cat9/fusword.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/fuword.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/genfs.0			comp-sys-catman		.cat
+./usr/share/man/cat9/genfs_can_access.0		comp-sys-catman		.cat
+./usr/share/man/cat9/genfs_can_access_acl_posix1e.0	comp-sys-catman		.cat
+./usr/share/man/cat9/genfs_can_access_acl_nfs4.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/genfs_rename.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getbintime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getbinuptime.0		comp-sys-catman		.cat
@@ -12696,7 +12700,7 @@
 ./usr/share/man/cat9/uvmspace_unshare.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvn_attach.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvn_findpages.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vaccess.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vaccess.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vattr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vattr_null.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vcache_get.0		comp-sys-catman		.cat
@@ -19490,6 +19494,7 @@
 ./usr/share/man/html9/VOP_WHITEOUT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_WRITE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VREF.html			comp-obsolete	obsolete
+./usr/share/man/html9/acl.html			comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_add.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_del.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_generic_mod_event.html	comp-sys-htmlman	html
@@ -19942,6 +19947,9 @@
 ./usr/share/man/html9/fusword.html		comp-obsolete		obsolete
 ./usr/share/man/html9/fuword.html		comp-obsolete		obsolete
 ./usr/share/man/html9/genfs.html		comp-sys-htmlman	html
+./usr/share/man/html9/genfs_can_access.html	comp-sys-htmlman	html
+./usr/share/man/html9/genfs_can_access_acl_posix1e.html	comp-sys-htmlman	html
+./usr/share/man/html9/genfs_can_access_acl_nfs4.html	comp-sys-htmlman	html
 ./usr/share/man/html9/genfs_rename.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbintime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbinuptime.html		comp-sys-htmlman	html
@@ -20853,7 +20861,7 @@
 ./usr/share/man/html9/uvmspace_share.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvmspace_unshare.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvn_findpages.html	comp-sys-htmlman	html
-./usr/share/man/html9/vaccess.html		comp-sys-htmlman	html
+./usr/share/man/html9/vaccess.html		comp-obsolete		obsolete
 ./usr/share/man/html9/vattr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vattr_null.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vcache_get.html		comp-sys-htmlman	html
@@ -27815,6 +27823,7 @@
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man		.man
 ./usr/share/man/man9/VREF.9			comp-obsolete		obsolete
+./usr/share/man/man9/acl.9			comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_generic_mod_event.9	comp-sys-man		.man
@@ -28288,6 +28297,9 @@
 ./usr/share/man/man9/fusword.9			comp-obsolete		obsolete
 ./usr/share/man/man9/fuword.9			comp-obsolete		obsolete
 ./usr/share/man/man9/genfs.9			comp-sys-man		.man
+./usr/share/man/man9/genfs_can_access.9		comp-sys-man		.man
+./usr/share/man/man9/genfs_can_access_acl_posix1e.9	comp-sys-man		.man
+./usr/share/man/man9/genfs_can_access_acl_nfs4.9	comp-sys-man		.man
 ./usr/share/man/man9/genfs_rename.9		comp-sys-man		.man
 ./usr/share/man/man9/getbintime.9		comp-sys-man		.man
 ./usr/share/man/man9/getbinuptime.9		comp-sys-man		.man
@@ -29243,7 +29255,7 @@
 ./usr/share/man/man9/uvmspace_unshare.9		comp-sys-man		.man
 ./usr/share/man/man9/uvn_attach.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvn_findpages.9		comp-sys-man		.man
-./usr/share/man/man9/vaccess.9			comp-sys-man		.man
+./usr/share/man/man9/vaccess.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vattr.9			comp-sys-man		.man
 ./usr/share/man/man9/vattr_null.9		comp-sys-man		.man
 ./usr/share/man/man9/vcache_get.9		comp-sys-man		.man
