@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.h,v 1.7 2020/02/01 02:57:55 riastradh Exp $  */
+/*	$NetBSD: if_ipsec.h,v 1.8 2022/01/17 20:56:03 andvar Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -61,7 +61,7 @@
 
 #define IFF_NAT_T	IFF_LINK0	/* enable NAT-T */
 #define IFF_ECN		IFF_LINK1	/* enable ECN */
-#define IFF_FWD_IPV6	IFF_LINK2	/* foward IPv6 packet */
+#define IFF_FWD_IPV6	IFF_LINK2	/* forward IPv6 packet */
 
 extern struct psref_class *iv_psref_class;
 
