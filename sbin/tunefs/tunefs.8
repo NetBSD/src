@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.47 2020/06/18 19:32:56 wiz Exp $
+.\"	$NetBSD: tunefs.8,v 1.48 2022/01/17 18:03:22 kim Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,14 +134,14 @@ running out of full sized blocks.
 For values of minfree greater than or equal to 5%,
 fragmentation is unlikely to be problematical, and
 the file system can be optimized for time.
-.It Fl p Cm enable | disable
-Turn on/off the administrative POSIX.1e ACL enable flag.
 .Pp
 .Ar optimize_preference
 can be specified as either
 .Li space
 or
 .Li time .
+.It Fl p Cm enable | disable
+Turn on/off the administrative POSIX.1e ACL enable flag.
 .It Fl q Ar quota
 enable or disable a quota.
 .Ar quota
