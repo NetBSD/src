@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.82 2019/01/01 10:06:54 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.83 2022/01/17 19:08:06 christos Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 1, 2019
+.Dd January 17, 2022
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -47,7 +47,6 @@
 .Nm vgonel ,
 .Nm vdead_check ,
 .Nm vflush ,
-.Nm vaccess ,
 .Nm bdevvp ,
 .Nm cdevvp ,
 .Nm vfinddev ,
@@ -91,8 +90,6 @@
 .Fn vdead_check "struct vnode *vp" "int flags"
 .Ft int
 .Fn vflush "struct mount *mp" "struct vnode *skipvp" "int flags"
-.Ft int
-.Fn vaccess "enum vtype type" "mode_t file_mode" "uid_t uid" "gid_t gid" "mode_t acc_mode" "kauth_cred_t cred"
 .Ft int
 .Fn bdevvp "dev_t dev" "struct vnode **vpp"
 .Ft int
@@ -674,12 +671,6 @@ is set, only flush out regular file vnodes open for writing.
 SKIPSYSTEM causes any vnodes marked
 .Dv V_SYSTEM
 to be skipped.
-.It Fn vaccess "type" "file_mode" "uid" "gid" "acc_mode" "cred"
-Do access checking by comparing the file's permissions to the caller's
-desired access type
-.Fa acc_mode
-and credentials
-.Fa cred .
 .It Fn bdevvp "dev" "vpp"
 Create a vnode for a block device.
 .Fn bdevvp

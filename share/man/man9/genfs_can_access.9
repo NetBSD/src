@@ -1,0 +1,122 @@
+.\" $NetBSD: genfs_can_access.9,v 1.1 2022/01/17 19:08:06 christos Exp $
+.\"-
+.\" Copyright (c) 2001 Robert N. M. Watson
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD: head/share/man/man9/vaccess.9 206622 2010-04-14 19:08:06Z uqs $
+.\"
+.Dd January 17, 2022
+.Dt GENFS_CAN_ACCESS 9
+.Os
+.Sh NAME
+.Nm genfs_can_access
+.Nd generate an access control decision using vnode parameters
+.Sh SYNOPSIS
+.In miscfs/genfs/genfs.h
+.Ft int
+.Fo genfs_can_access
+.Fa "vnode_t *vp"
+.Fa "kauth_cred_t cred"
+.Fa "uid_t file_uid"
+.Fa "gid_t file_gid"
+.Fa "mode_t file_mode"
+.Fa "struct acl *acl"
+.Fa "accmode_t accmode"
+.Fc
+.Sh DESCRIPTION
+This call implements the logic for the
+.Ux
+discretionary file security model
+common to many file systems in
+.Fx .
+It accepts the vnode
+.Fa vp ,
+requesting credential
+.Fa cred ,
+permissions via
+owning UID
+.Fa file_uid ,
+owning GID
+.Fa file_gid ,
+file permissions
+.Fa file_mode ,
+access ACL for the file
+.Fa acl ,
+desired access mode
+.Fa accmode ,
+.Pp
+.This call is intended to support implementations of
+.Xr VOP_ACCESS 9 ,
+which will use their own access methods to retrieve the vnode properties,
+and then invoke
+.Fn vaccess
+in order to perform the actual check.
+Implementations of
+.Xr VOP_ACCESS 9
+may choose to implement additional security mechanisms whose results will
+be composed with the return value.
+.Pp
+The algorithm used by
+.Fn genfs_can_access
+selects a component of the file permission bits based on comparing the
+passed credential, file owner, and file group.
+If the credential's effective UID matches the file owner, then the
+owner component of the permission bits is selected.
+If the UID does not match, then the credential's effective GID, followed
+by additional groups, are compared with the file group\[em]if there is
+a match, then the group component of the permission bits is selected.
+If neither the credential UID or GIDs match the passed file owner and
+group, then the other component of the permission bits is selected.
+.Pp
+Once appropriate protections are selected for the current credential,
+the requested access mode, in combination with the vnode type, will be
+compared with the discretionary rights available for the credential.
+If the rights granted by discretionary protections are insufficient,
+then super-user privilege, if available for the credential, will also be
+considered.
+.Sh RETURN VALUES
+.Fn genfs_can_access
+will return 0 on success, or a non-zero error value on failure.
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er EACCES
+Permission denied.
+An attempt was made to access a file in a way forbidden by its file access
+permissions.
+.It Bq Er EPERM
+Operation not permitted.
+An attempt was made to perform an operation limited to processes with
+appropriate privileges or to the owner of a file or other resource.
+.El
+.Sh SEE ALSO
+.Xr genfs_can_access_acl_nfs4 9 ,
+.Xr genfs_can_access_acl_posix1e 9 ,
+.Xr vnode 9 ,
+.Xr genfs 9 ,
+.Xr VOP_ACCESS 9
+.Sh AUTHORS
+This manual page and the current implementation of
+.Fn vaccess
+were written by
+.An Robert Watson .

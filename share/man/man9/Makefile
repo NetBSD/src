@@ -1,8 +1,8 @@
-#       $NetBSD: Makefile,v 1.460 2021/12/22 17:28:17 thorpej Exp $
+#       $NetBSD: Makefile,v 1.461 2022/01/17 19:08:06 christos Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	accept_filter.9 accf_data.9 accf_http.9 \
+MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	altq.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufferio.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 \
@@ -22,7 +22,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	edid.9 errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
 	file.9 fileassoc.9 filedesc.9 firmload.9 flash.9 \
 	fork1.9 fsetown.9 fstrans.9 \
-	genfs.9 genfs_rename.9 \
+	genfs.9 genfs_can_access.9 genfs_can_access_acl_nfs4.9 \
+	genfs_can_access_acl_posix1e.9 genfs_rename.9 \
 	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
@@ -1059,7 +1060,6 @@ MLINKS+=vnode.9 vref.9 \
 	vnode.9 vgonel.9 \
 	vnode.9 vdead_check.9 \
 	vnode.9 vflush.9 \
-	vnode.9 vaccess.9 \
 	vnode.9 bdevvp.9 \
 	vnode.9 cdevvp.9 \
 	vnode.9 vfinddev.9 \
