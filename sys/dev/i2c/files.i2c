@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.121 2021/12/27 23:04:20 andvar Exp $
+#	$NetBSD: files.i2c,v 1.122 2022/01/17 16:31:23 thorpej Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -203,6 +203,10 @@ device	tps65217reg: tps65217pmic
 attach	tps65217pmic at iic
 attach	tps65217reg at tps65217pmic
 file	dev/i2c/tps65217pmic.c 		tps65217pmic	needs-flag
+
+# Microchip MCP23008 / MCP23017 I/O Expander
+attach	mcpgpio at iic with mcpgpio_i2c
+file	dev/i2c/mcp23xxxgpio_i2c.c	mcpgpio_i2c
 
 # Microchip MCP980x
 device	mcp980x: sysmon_envsys

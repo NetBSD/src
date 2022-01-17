@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1731 2022/01/06 21:55:24 nia Exp $
+# $NetBSD: mi,v 1.1732 2022/01/17 16:31:23 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1471,6 +1471,7 @@
 ./usr/share/man/cat4/mcp3kadc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcp48x1dac.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mcp980x.0			man-sys-catman		.cat
+./usr/share/man/cat4/mcpgpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/md.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mfb.0			man-sys-catman		.cat
@@ -4679,6 +4680,7 @@
 ./usr/share/man/html4/mcp3kadc.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcp48x1dac.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcp980x.html		man-sys-htmlman		html
+./usr/share/man/html4/mcpgpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcx.html			man-sys-htmlman		html
 ./usr/share/man/html4/md.html			man-sys-htmlman		html
 ./usr/share/man/html4/mfb.html			man-sys-htmlman		html
@@ -7740,6 +7742,7 @@
 ./usr/share/man/man4/mcp3kadc.4			man-sys-man		.man
 ./usr/share/man/man4/mcp48x1dac.4		man-sys-man		.man
 ./usr/share/man/man4/mcp980x.4			man-sys-man		.man
+./usr/share/man/man4/mcpgpio.4			man-sys-man		.man
 ./usr/share/man/man4/mcx.4			man-sys-man		.man
 ./usr/share/man/man4/md.4			man-sys-man		.man
 ./usr/share/man/man4/mfb.4			man-sys-man		.man
