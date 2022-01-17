@@ -1,4 +1,4 @@
-.\" $NetBSD: VOP_ACLCHECK.9,v 1.1 2022/01/17 22:47:43 christos Exp $
+.\" $NetBSD: VOP_ACLCHECK.9,v 1.2 2022/01/17 23:12:41 wiz Exp $
 .\"-
 .\" Copyright (c) 1999 Robert N. M. Watson
 .\" All rights reserved.
@@ -56,7 +56,9 @@ The user credentials to use in authorizing the request.
 .Pp
 The
 .Fa cred
-pointer may be NULL to indicate that access control checks are not to be
+pointer may be
+.Dv NULL
+to indicate that access control checks are not to be
 performed, if possible.
 This cred setting might be used to allow the
 kernel to authorize ACL verification that the active process might not be
@@ -81,10 +83,10 @@ then zero is returned.
 Otherwise, an appropriate error code is returned.
 .Sh ERRORS
 .Bl -tag -width Er
-.It Bq Er EINVAL
-The ACL type passed is invalid for this vnode, or the ACL data is invalid.
 .It Bq Er EACCES
 The file or directory ACL does not permit access.
+.It Bq Er EINVAL
+The ACL type passed is invalid for this vnode, or the ACL data is invalid.
 .It Bq Er ENOMEM
 Sufficient memory is not available to fulfill the request.
 .It Bq Er EOPNOTSUPP
