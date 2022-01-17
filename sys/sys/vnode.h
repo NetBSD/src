@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.298 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.299 2022/01/17 19:12:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -576,7 +576,6 @@ struct vnode;
 void	vfs_vnode_sysinit(void);
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
-int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
 void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
