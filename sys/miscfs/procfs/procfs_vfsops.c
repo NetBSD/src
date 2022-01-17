@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.110 2020/12/28 22:36:16 riastradh Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.111 2022/01/17 11:20:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.110 2020/12/28 22:36:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.111 2022/01/17 11:20:00 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -343,7 +343,8 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 				 * We make symlinks for directories
 				 * to avoid cycles.
 				 */
-				if (vxp->v_type == VDIR)
+				if (vxp->v_type == VDIR ||
+				    procfs_proc_is_linux_compat())
 					goto symlink;
 				vp->v_type = vxp->v_type;
 				break;

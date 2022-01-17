@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.226 2022/01/14 23:46:56 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.227 2022/01/17 11:20:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.226 2022/01/14 23:46:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.227 2022/01/17 11:20:00 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1143,7 +1143,8 @@ procfs_lookup(void *v)
 		fvp = fp->f_vnode;
 
 		/* Don't show directories */
-		if (fp->f_type == DTYPE_VNODE && fvp->v_type != VDIR) {
+		if (fp->f_type == DTYPE_VNODE && fvp->v_type != VDIR &&
+		    !procfs_proc_is_linux_compat()) {
 			vref(fvp);
 			closef(fp);
 			procfs_proc_unlock(p);
@@ -1651,7 +1652,8 @@ procfs_readlink(void *v)
 		switch (fp->f_type) {
 		case DTYPE_VNODE:
 			vxp = fp->f_vnode;
-			if (vxp->v_type != VDIR) {
+			if (vxp->v_type != VDIR &&
+			    !procfs_proc_is_linux_compat()) {
 				error = EINVAL;
 				break;
 			}
