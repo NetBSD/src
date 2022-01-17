@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.721 2022/01/06 21:55:23 nia Exp $
+#	$NetBSD: Makefile,v 1.722 2022/01/17 16:31:23 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -137,7 +137,9 @@ MAN+=	dbcool.4 g760a.4 lmenv.4 lmtemp.4 mcp980x.4 mpl115a.4 sdtemp.4 \
 	smscmon.4 spdmem.4 tps65217pmic.4
 
 # machine-independent SPI devices
-MAN +=	m25p.4 mcp23s17gpio.4 mcp3kadc.4 mcp48x1dac.4 tm121temp.4
+MAN +=	m25p.4 mcpgpio.4 mcp3kadc.4 mcp48x1dac.4 tm121temp.4
+
+MLINKS+=mcpgpio.4 mcp23s17gpio.4
 
 # machine-independent SD/MMC devices
 MAN +=	sbt.4 sdhc.4 sdmmc.4
