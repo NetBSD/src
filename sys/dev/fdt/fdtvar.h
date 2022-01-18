@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.70.12.1 2021/08/09 00:30:09 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.70.12.2 2022/01/18 00:14:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,6 @@
 #include <sys/termios.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/spi/spivar.h>
 #include <dev/pwm/pwmvar.h>
 #include <dev/clk/clk.h>
 
@@ -271,7 +270,6 @@ struct fdt_dma_range {
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_i2c_controller(i2c_tag_t, int);
-int		fdtbus_register_spi_controller(struct spi_controller *, int);
 int		fdtbus_register_gpio_controller(device_t, int,
 		    const struct fdtbus_gpio_controller_func *);
 int		fdtbus_register_pinctrl_config(device_t, int,

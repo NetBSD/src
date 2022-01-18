@@ -1,4 +1,4 @@
-/*	$NetBSD: sun4i_spi.c,v 1.7.14.1 2021/08/09 00:30:07 thorpej Exp $	*/
+/*	$NetBSD: sun4i_spi.c,v 1.7.14.2 2022/01/18 00:14:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.7.14.1 2021/08/09 00:30:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.7.14.2 2022/01/18 00:14:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,8 +151,6 @@ sun4ispi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_configure = sun4ispi_configure;
 	sc->sc_spi.sct_transfer = sun4ispi_transfer;
 	(void) of_getprop_uint32(phandle, "num-cs", &sc->sc_spi.sct_nslaves);
-
-	fdtbus_register_spi_controller(&sc->sc_spi, phandle);
 
 	struct spibus_attach_args sba = {
 		.sba_controller = &sc->sc_spi,
