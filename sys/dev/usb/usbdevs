@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.770.4.10 2021/12/19 16:34:39 martin Exp $
+$NetBSD: usbdevs,v 1.770.4.11 2022/01/18 18:45:23 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2309,6 +2309,7 @@ product MSI BLUETOOTH_3		0xa97a	Bluetooth
 /* Microchip Technology products */
 product MICROCHIP PICKIT1	0x0032	PICkit(TM) 1 FLASH Starter Kit
 product MICROCHIP PICKIT2	0x0033	PICkit 2 Microcontroller Programmer
+product MICROCHIP PICKIT3	0x900a	PICkit 3 Microcontroller Programmer
 
 /* Microdia / Sonix Techonology Co., Ltd. products */
 product MICRODIA YUREX		0x1010	YUREX
