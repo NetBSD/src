@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_mbx.c,v 1.16 2021/12/24 05:11:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe_mbx.c,v 1.17 2022/01/18 09:16:38 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.c 326022 2017-11-20 19:36:21Z pfg $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_mbx.c,v 1.16 2021/12/24 05:11:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_mbx.c,v 1.17 2022/01/18 09:16:38 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_mbx.h"
@@ -721,12 +721,6 @@ void ixgbe_upgrade_mbx_params_vf(struct ixgbe_hw *hw)
 	mbx->ops[0].check_for_ack = ixgbe_check_for_ack_vf;
 	mbx->ops[0].check_for_rst = ixgbe_check_for_rst_vf;
 	mbx->ops[0].clear = NULL;
-
-	mbx->stats.msgs_tx.ev_count = 0;
-	mbx->stats.msgs_rx.ev_count = 0;
-	mbx->stats.reqs.ev_count = 0;
-	mbx->stats.acks.ev_count = 0;
-	mbx->stats.rsts.ev_count = 0;
 }
 
 static void ixgbe_clear_msg_pf(struct ixgbe_hw *hw, u16 vf_id)
