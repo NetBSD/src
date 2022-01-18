@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.61 2021/04/26 15:02:29 thorpej Exp $
+# $NetBSD: files.fdt,v 1.61.10.1 2022/01/18 00:14:20 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -80,7 +80,6 @@ file	dev/fdt/fdt_pwm.c			fdt
 file	dev/fdt/fdt_regulator.c			fdt
 file	dev/fdt/fdt_reset.c			fdt
 file	dev/fdt/fdt_rtc.c			fdt
-file	dev/fdt/fdt_spi.c			fdt
 file	dev/fdt/fdt_syscon.c			fdt
 file	dev/fdt/fdt_pinctrl.c			fdt
 
