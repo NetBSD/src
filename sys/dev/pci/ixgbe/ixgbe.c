@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.303 2022/01/17 08:45:10 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.304 2022/01/18 04:35:49 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.303 2022/01/17 08:45:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.304 2022/01/18 04:35:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1627,8 +1627,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	struct ifnet	      *ifp = adapter->ifp;
 	struct ixgbe_hw	      *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
-	u32		      missed_rx = 0, bprc, lxon, lxoff, total;
-	u64		      total_missed_rx = 0;
+	u32		      missed_rx = 0, bprc, lxon, lxoff;
+	u64		      total, total_missed_rx = 0;
 	uint64_t	      crcerrs, illerrc, rlec, ruc, rfc, roc, rjc;
 	unsigned int	      queue_counters;
 	int		      i;
