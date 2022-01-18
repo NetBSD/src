@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.770.4.11 2022/01/18 18:45:23 martin Exp $
+$NetBSD: usbdevs,v 1.770.4.12 2022/01/18 19:58:54 snj Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -822,6 +822,7 @@ product ALTEC ASC495		0xff05	ASC495 Speakers
 
 /* American Power Conversion products */
 product APC UPS			0x0002	Uninterruptible Power Supply
+product APC UPS3		0x0003	Uninterruptible Power Supply
 
 /* Ambit Microsystems products */
 product AMBIT NTL_250		0x6098	NTL 250 cable modem
