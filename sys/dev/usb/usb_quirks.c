@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.92.2.1 2021/12/19 16:38:24 martin Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.92.2.2 2022/01/18 18:48:00 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.92.2.1 2021/12/19 16:38:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.92.2.2 2022/01/18 18:48:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -197,6 +197,10 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_MGE,		USB_PRODUCT_MGE_UPS2,			ANY,
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_MICROCHIP,	USB_PRODUCT_MICROCHIP_PICKIT1,		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { USB_VENDOR_MICROCHIP,	USB_PRODUCT_MICROCHIP_PICKIT2,		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { USB_VENDOR_MICROCHIP,	USB_PRODUCT_MICROCHIP_PICKIT3,		ANY,
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_TRIPPLITE2,	ANY,					ANY,
 	{ UQ_HID_IGNORE, NULL }},
