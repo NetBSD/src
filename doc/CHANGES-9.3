@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.65 2022/01/18 18:48:53 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.66 2022/01/18 20:03:03 snj Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1171,4 +1171,16 @@ sys/dev/usb/usb_quirks.c			1.103
 
 	Add UQ_HID_IGNORE for the Microchip PICkit2 and 3 programmers.
 	[bouyer, ticket #1403]
+
+sys/dev/usb/usbdevs				1.800
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add a new APC UPS device id.
+	[martin, ticket #1404]
+
+sys/dev/usb/usb_quirks.c			1.102
+
+	Ignore new APC UPS devices when matching uhid devices.
+	[martin, ticket #1405]
 
