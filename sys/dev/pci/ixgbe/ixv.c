@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.174 2022/01/18 09:58:40 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.175 2022/01/18 10:06:59 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.174 2022/01/18 09:58:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.175 2022/01/18 10:06:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2899,6 +2899,20 @@ ixv_set_sysctl_value(struct adapter *adapter, const char *name,
 	*limit = value;
 } /* ixv_set_sysctl_value */
 
+#define PRINTQS(adapter, regname)					\
+	do {								\
+		struct ixgbe_hw	*_hw = &(adapter)->hw;			\
+		int _i;							\
+									\
+		printf("%s: %s", device_xname((adapter)->dev), #regname); \
+		for (_i = 0; _i < (adapter)->num_queues; _i++) {	\
+			printf((_i == 0) ? "\t" : " ");			\
+			printf("%08x", IXGBE_READ_REG(_hw,		\
+				IXGBE_##regname(_i)));			\
+		}							\
+		printf("\n");						\
+	} while (0)
+
 /************************************************************************
  * ixv_print_debug_info
  *
@@ -2909,41 +2923,26 @@ static void
 ixv_print_debug_info(struct adapter *adapter)
 {
 	device_t	dev = adapter->dev;
-	struct ix_queue *que = adapter->queues;
-	struct rx_ring	*rxr;
-	struct tx_ring	*txr;
-#ifdef LRO
-	struct lro_ctrl *lro;
-#endif /* LRO */
+	struct ixgbe_hw *hw = &adapter->hw;
+	int i;
 
-	for (int i = 0; i < adapter->num_queues; i++, que++) {
-		txr = que->txr;
-		rxr = que->rxr;
-#ifdef LRO
-		lro = &rxr->lro;
-#endif /* LRO */
-		device_printf(dev, "QUE(%d) IRQs Handled: %lu\n",
-		    que->msix, (long)que->irqs.ev_count);
-		device_printf(dev, "RX(%d) Packets Received: %lld\n",
-		    rxr->me, (long long)rxr->rx_packets.ev_count);
-		device_printf(dev, "RX(%d) Bytes Received: %lu\n",
-		    rxr->me, (long)rxr->rx_bytes.ev_count);
-#ifdef LRO
-		device_printf(dev, "RX(%d) LRO Queued= %ju\n",
-		    rxr->me, (uintmax_t)lro->lro_queued);
-		device_printf(dev, "RX(%d) LRO Flushed= %ju\n",
-		    rxr->me, (uintmax_t)lro->lro_flushed);
-#endif /* LRO */
-		device_printf(dev, "TX(%d) Packets Sent: %lu\n",
-		    txr->me, (long)txr->total_packets.ev_count);
-		device_printf(dev, "TX(%d) NO Desc Avail: %lu\n",
-		    txr->me, (long)txr->no_desc_avail.ev_count);
+	device_printf(dev, "queue:");
+	for (i = 0; i < adapter->num_queues; i++) {
+		printf((i == 0) ? "\t" : " ");
+		printf("%8d", i);
 	}
+	printf("\n");
+	PRINTQS(adapter, VFRDBAL);
+	PRINTQS(adapter, VFRDBAH);
+	PRINTQS(adapter, VFRDLEN);
+	PRINTQS(adapter, VFSRRCTL);
+	PRINTQS(adapter, VFRDH);
+	PRINTQS(adapter, VFRDT);
+	PRINTQS(adapter, VFRXDCTL);
 
-	device_printf(dev, "Admin IRQ Handled: %lu\n",
-	    (long)adapter->admin_irqev.ev_count);
-	device_printf(dev, "Admin work Handled: %lu\n",
-	    (long)adapter->link_workev.ev_count);
+	device_printf(dev, "EIMS:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_VTEIMS));
+	device_printf(dev, "EIAM:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_VTEIAM));
+	device_printf(dev, "EIAC:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_VTEIAC));
 } /* ixv_print_debug_info */
 
 /************************************************************************
