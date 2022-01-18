@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.64 2022/01/08 13:24:36 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.65 2022/01/18 18:48:53 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1159,4 +1159,16 @@ sys/conf/copyright				1.20
 
 	Welcome to 2022!
 	[jnemeth, ticket #1401]
+
+sys/dev/usb/usbdevs				1.801
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add the Microchip PICkit3 programmer.
+	[bouyer, ticket #1402]
+
+sys/dev/usb/usb_quirks.c			1.103
+
+	Add UQ_HID_IGNORE for the Microchip PICkit2 and 3 programmers.
+	[bouyer, ticket #1403]
 
