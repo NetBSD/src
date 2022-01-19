@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmdspi.c,v 1.1 2021/12/07 17:39:54 brad Exp $	*/
+/*	$NetBSD: scmdspi.c,v 1.2 2022/01/19 05:05:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.1 2021/12/07 17:39:54 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.2 2022/01/19 05:05:45 thorpej Exp $");
 
 /*
  * SPI driver for the Sparkfun Serial motor controller.
@@ -174,10 +174,6 @@ scmdspi_match(device_t parent, cfdata_t match, void *aux)
 		printf("Trying to match\n");
 	}
 
-	/* configure for 1MHz and SPI mode 0 according to the data sheet */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 1000000))
-		return 0;
-
 	return 1;
 }
 
@@ -186,6 +182,7 @@ scmdspi_attach(device_t parent, device_t self, void *aux)
 {
 	struct scmd_sc *sc;
 	struct spi_attach_args *sa;
+	int error;
 
 	sa = aux;
 	sc = device_private(self);
@@ -206,6 +203,14 @@ scmdspi_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_dying_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_condvar, "scmdspicv");
 	cv_init(&sc->sc_cond_dying, "scmdspidc");
+
+	/* configure for 1MHz and SPI mode 0 according to the data sheet */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 1000000);
+	if (error) {
+		aprint_error(": failed to set Mode 0 @ 1MHz, error=%d\n",
+		    error);
+		return;
+	}
 
 	/* Please note that if the pins are not set up for SPI, the attachment
 	 * will work, but it will not figure out that there are slave modules.

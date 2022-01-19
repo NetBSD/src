@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.18 2021/05/14 09:25:14 jmcneill Exp $ */
+/* $NetBSD: m25p.c,v 1.19 2022/01/19 05:05:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.18 2021/05/14 09:25:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.19 2022/01/19 05:05:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,17 +125,8 @@ static int
 m25p_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
-	int res;
 
-	res = spi_compatible_match(sa, cf, compat_data);
-	if (!res)
-		return res;
-
-	/* configure for 20MHz, which is the max for normal reads */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 20000000))
-		res = 0;
-
-	return res;
+	return spi_compatible_match(sa, cf, compat_data);
 }
 
 static void
@@ -143,11 +134,20 @@ m25p_attach(device_t parent, device_t self, void *aux)
 {
 	struct m25p_softc *sc = device_private(self);
 	struct spi_attach_args *sa = aux;
+	int error;
 
 	sc->sc_sh = sa->sa_handle;
 
 	aprint_normal("\n");
 	aprint_naive("\n");
+
+	/* configure for 20MHz, which is the max for normal reads */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 20000000);
+	if (error) {
+		aprint_error_dev(self,
+		    "failed to set Mode 0 @ 20MHz, error=%d\n", error);
+		return;
+	}
 
 	config_interrupts(self, m25p_doattach);
 }

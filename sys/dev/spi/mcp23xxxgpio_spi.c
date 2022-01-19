@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.2 2022/01/17 19:36:54 thorpej Exp $ */
+/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.3 2022/01/19 05:05:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.2 2022/01/17 19:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.3 2022/01/19 05:05:45 thorpej Exp $");
 
 /* 
  * Driver for Microchip serial I/O expanders:
@@ -175,13 +175,8 @@ static const struct mcpgpio_accessops mcpgpio_spi_accessops = {
 static int
 mcpgpio_spi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct spi_attach_args *sa = aux;
 
 	/* MCP23S17 has no way to detect it! */
-
-	/* run at 10MHz */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 10000000))
-		return 0;
 
 	return 1;
 }
@@ -206,6 +201,14 @@ mcpgpio_spi_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");	
 	aprint_normal(": %s I/O Expander\n", sc->sc_variant->name);
+
+	/* run at 10MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 10000000);
+	if (error) {
+		aprint_error_dev(self,
+		    "failed to set Mode 0 @ 10MHz, error=%d\n", error);
+		return;
+	}
 
 	/*
 	 * Before we decode the topology information, ensure each
