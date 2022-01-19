@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.295 2022/01/11 19:47:34 rillig Exp $
+# $NetBSD: Makefile,v 1.296 2022/01/19 22:10:41 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -92,6 +92,7 @@ TESTS+=		dep-colon
 TESTS+=		dep-colon-bug-cross-file
 TESTS+=		dep-double-colon
 TESTS+=		dep-double-colon-indep
+TESTS+=		dep-duplicate
 TESTS+=		dep-exclam
 TESTS+=		dep-none
 TESTS+=		dep-op-missing
