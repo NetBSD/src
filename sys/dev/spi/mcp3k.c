@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.2 2016/11/20 12:38:04 phx Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.3 2022/01/19 05:05:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -174,13 +174,8 @@ static struct mcp3kadc_model mcp3k_models[] = {
 static int
 mcp3kadc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct spi_attach_args *sa = aux;
 
 	if (strcmp(cf->cf_name, "mcp3kadc") != 0)
-		return 0;
-
-	/* configure for 1MHz */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 1000000))
 		return 0;
 
 	return 1;
@@ -193,7 +188,7 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	struct spi_attach_args *sa;
 	struct mcp3kadc_softc *sc;
 	struct mcp3kadc_model *model;
-	int ch, i;
+	int error, ch, i;
 
 	sa = aux;
 	sc = device_private(self);
@@ -208,6 +203,14 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": MCP%u %u-channel %u-bit ADC\n",
 	    (unsigned)model->name, (unsigned)model->channels,
 	    (unsigned)model->bits);
+
+	/* configure for 1MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 1000000);
+	if (error) {
+		aprint_error_dev(self,
+		    "failed to set Mode 0 @ 1MHz, error=%d\n", error);
+		return;
+	}
 
 	/* set a default Vref in mV according to the chip's ADC resolution */
 	sc->sc_vref_mv = 1 << ((model->flags & M3K_SIGNED) ?

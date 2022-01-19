@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_leds.c,v 1.7 2021/08/07 16:18:50 thorpej Exp $	*/
-/*	$NetBSD: mpcsa_leds.c,v 1.7 2021/08/07 16:18:50 thorpej Exp $	*/
+/*	$Id: mpcsa_leds.c,v 1.8 2022/01/19 05:05:45 thorpej Exp $	*/
+/*	$NetBSD: mpcsa_leds.c,v 1.8 2022/01/19 05:05:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.7 2021/08/07 16:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.8 2022/01/19 05:05:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +118,8 @@ static struct mpcsa_leds_softc *mpcsa_leds_sc;
 static int
 mpcsa_leds_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct spi_attach_args *sa = aux;
 
 	if (strcmp(match->cf_name, "mpcsa_leds"))
-		return 0;
-
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 10000000))
 		return 0;
 
 	return 2;
@@ -138,9 +134,17 @@ mpcsa_leds_attach(device_t parent, device_t self, void *aux)
 	struct gpiobus_attach_args gba;
 #endif
 	int n;
+	int error;
 
 	aprint_naive(": output buffer\n");
 	aprint_normal(": 74HC595 or compatible shift register(s)\n");
+
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 10000000);
+	if (error) {
+		aprint_error_dev(self,
+		    "failed to set Mode 0 @ 10MHz, error=%d\n", error);
+		return;
+	}
 
 	sc->sc_sh = sa->sa_handle;
 	sc->sc_pinstate = 0xffff;
