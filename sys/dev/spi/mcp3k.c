@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.3 2022/01/19 05:05:45 thorpej Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.4 2022/01/19 05:21:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -205,10 +205,8 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	    (unsigned)model->bits);
 
 	/* configure for 1MHz */
-	error = spi_configure(sa->sa_handle, SPI_MODE_0, 1000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 1000000);
 	if (error) {
-		aprint_error_dev(self,
-		    "failed to set Mode 0 @ 1MHz, error=%d\n", error);
 		return;
 	}
 

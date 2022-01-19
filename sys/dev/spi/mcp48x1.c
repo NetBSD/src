@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp48x1.c,v 1.2 2022/01/19 05:05:45 thorpej Exp $ */
+/*      $NetBSD: mcp48x1.c,v 1.3 2022/01/19 05:21:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.2 2022/01/19 05:05:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.3 2022/01/19 05:21:44 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP4801/MCP4811/MCP4821 DAC. 
@@ -139,10 +139,8 @@ mcp48x1dac_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dm = &mcp48x1_models[cf_flags]; /* flag value defines model */
 
-	error = spi_configure(sa->sa_handle, SPI_MODE_0, 20000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 20000000);
 	if (error) {
-		aprint_error_dev(self,
-		    "failed to set Mode 0 @ 20MHz, error=%d\n", error);
 		return;
 	}
 
