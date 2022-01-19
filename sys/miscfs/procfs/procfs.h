@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.81 2022/01/17 11:20:00 bouyer Exp $	*/
+/*	$NetBSD: procfs.h,v 1.82 2022/01/19 10:23:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -75,6 +75,8 @@
 #include <sys/ptrace.h>
 
 #ifdef _KERNEL
+#include <sys/proc.h>
+
 /*
  * The different types of node in a procfs filesystem
  */
