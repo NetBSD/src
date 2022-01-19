@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.11 2022/01/19 05:21:44 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.12 2022/01/19 13:33:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -141,6 +141,9 @@ SIMPLEQ_HEAD(spi_transq, spi_transfer);
 #define	SPI_F_ERROR		0x0002
 
 int spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
+			  const struct device_compatible_entry *);
+const struct device_compatible_entry *
+    spi_compatible_lookup(const struct spi_attach_args *,
 			  const struct device_compatible_entry *);
 int spi_configure(device_t, struct spi_handle *, int, int);
 int spi_transfer(struct spi_handle *, struct spi_transfer *);
