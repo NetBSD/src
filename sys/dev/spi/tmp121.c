@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.5 2011/06/20 17:31:37 pgoyette Exp $ */
+/* $NetBSD: tmp121.c,v 1.6 2022/01/19 05:05:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.5 2011/06/20 17:31:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.6 2022/01/19 05:05:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,12 +71,6 @@ CFATTACH_DECL_NEW(tmp121temp, sizeof(struct tmp121temp_softc),
 static int
 tmp121temp_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct spi_attach_args *sa = aux;
-
-	/* configure for 10MHz */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 1000000))
-		return 0;
-
 	return 1;
 }
 
@@ -85,9 +79,18 @@ tmp121temp_attach(device_t parent, device_t self, void *aux)
 {
 	struct tmp121temp_softc *sc = device_private(self);
 	struct spi_attach_args *sa = aux;
+	int error;
 
 	aprint_naive(": Temperature Sensor\n");	
 	aprint_normal(": TI TMP121 Temperature Sensor\n");
+
+	/* configure for 10MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 1000000);
+	if (error) {
+		aprint_error_dev(self,
+		    "failed to set Mode 0 @ 10MHz, error=%d\n", error);
+		return;
+	}
 
 	sc->sc_sh = sa->sa_handle;
 
