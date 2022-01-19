@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.32 2015/10/15 06:25:23 dholland Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.33 2022/01/19 01:40:05 mrg Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.32 2015/10/15 06:25:23 dholland Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.33 2022/01/19 01:40:05 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,6 +80,8 @@ static int	sbaddr = 0; /* counter for the LFS superblocks */
 static char	device[MAXPATHLEN];
 static const char *fstypes[] = { "NONE", "FFSv1", "FFSv2" };
 
+static sig_atomic_t print_info = 0;
+
 #define FSTYPE_NONE	0
 #define FSTYPE_FFSV1	1
 #define FSTYPE_FFSV2	2
@@ -108,6 +110,13 @@ static void	lfs_scan(struct sblockinfo *, int);
 /* common functions */
 static void	usage(void) __dead;
 static int	scan_disk(int, daddr_t, daddr_t, int);
+
+static void
+got_siginfo(int signo)
+{
+
+	print_info = 1;
+}
 
 static int
 ffs_checkver(struct sblockinfo *sbi)
@@ -389,7 +398,17 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 		(void)printf(
 		    "#        size    offset fstype [fsize bsize cpg/sgs]\n");
 
+	const daddr_t total = end - beg;
 	for (blk = beg; blk <= end; blk += SBPASS) {
+		if (print_info) {
+			const daddr_t done = blk - beg;
+			const int pcent = (int)((100.0 * done) / total);
+
+			fprintf(stderr, "%s: done %llu of %llu blocks (%d%%)\n", 
+				getprogname(), (unsigned long long)done,
+				(unsigned long long)total, pcent);
+			print_info = 0;
+		}
 		if (pread(fd, buf, sizeof(buf), blk * 512) == -1) {
 			if (fflag && fd >= 0)
 				(void)close(fd);
@@ -478,6 +497,8 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	signal(SIGINFO, got_siginfo);
 
 	if (fflag) {
 		struct stat stp;
