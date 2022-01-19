@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.20 2022/01/19 05:21:44 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.21 2022/01/19 09:30:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.20 2022/01/19 05:21:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.21 2022/01/19 09:30:11 martin Exp $");
 
 #include "locators.h"
 
@@ -341,6 +341,7 @@ static int
 spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	struct spi_softc *sc = device_lookup_private(&spi_cd, minor(dev));
+	device_t self = device_lookup(&spi_cd, minor(dev));
 	struct spi_handle *sh;
 	spi_ioctl_configure_t *sic;
 	spi_ioctl_transfer_t *sit;
@@ -360,7 +361,7 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			break;
 		}
 		sh = &sc->sc_slaves[sic->sic_addr];
-		error = spi_configure(sh, sic->sic_mode, sic->sic_speed);
+		error = spi_configure(self, sh, sic->sic_mode, sic->sic_speed);
 		break;
 	case SPI_IOCTL_TRANSFER:
 		sit = (spi_ioctl_transfer_t *)data;
