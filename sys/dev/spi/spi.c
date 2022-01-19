@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.21 2022/01/19 09:30:11 martin Exp $ */
+/* $NetBSD: spi.c,v 1.22 2022/01/19 12:58:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.21 2022/01/19 09:30:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.22 2022/01/19 12:58:06 thorpej Exp $");
 
 #include "locators.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.21 2022/01/19 09:30:11 martin Exp $");
 #include "locators.h"
 
 struct spi_softc {
+	device_t		sc_dev;
 	struct spi_controller	sc_controller;
 	int			sc_mode;
 	int			sc_speed;
@@ -291,6 +292,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_cv, "spictl");
 
+	sc->sc_dev = self;
 	sc->sc_controller = *sba->sba_controller;
 	sc->sc_nslaves = sba->sba_controller->sct_nslaves;
 	/* allocate slave structures */
@@ -341,7 +343,6 @@ static int
 spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	struct spi_softc *sc = device_lookup_private(&spi_cd, minor(dev));
-	device_t self = device_lookup(&spi_cd, minor(dev));
 	struct spi_handle *sh;
 	spi_ioctl_configure_t *sic;
 	spi_ioctl_transfer_t *sit;
@@ -361,7 +362,8 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			break;
 		}
 		sh = &sc->sc_slaves[sic->sic_addr];
-		error = spi_configure(self, sh, sic->sic_mode, sic->sic_speed);
+		error = spi_configure(sc->sc_dev, sh, sic->sic_mode,
+		    sic->sic_speed);
 		break;
 	case SPI_IOCTL_TRANSFER:
 		sit = (spi_ioctl_transfer_t *)data;
@@ -670,4 +672,3 @@ spi_send_recv(struct spi_handle *sh, int scnt, const uint8_t *snd,
 
 	return 0;
 }
-
