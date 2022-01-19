@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.13 2022/01/19 05:21:44 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.14 2022/01/19 13:33:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.13 2022/01/19 05:21:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.14 2022/01/19 13:33:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -120,7 +120,7 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_cookie = (void *)sc;
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN) {
 		const struct device_compatible_entry *dce =
-			device_compatible_lookup(sa->sa_compat, sa->sa_ncompat, compat_data);
+			spi_compatible_lookup(sa, compat_data);
 		if (dce)
 			flags |= (int)dce->value;
 		else
