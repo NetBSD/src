@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.19 2021/08/07 16:19:16 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.20 2022/01/19 05:21:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.19 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.20 2022/01/19 05:21:44 thorpej Exp $");
 
 #include "locators.h"
 
@@ -428,11 +428,14 @@ CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
  * returned.
  */
 int
-spi_configure(struct spi_handle *sh, int mode, int speed)
+spi_configure(device_t dev __unused, struct spi_handle *sh, int mode, int speed)
 {
 
 	sh->sh_mode = mode;
 	sh->sh_speed = speed;
+
+	/* No need to report errors; no failures. */
+
 	return 0;
 }
 

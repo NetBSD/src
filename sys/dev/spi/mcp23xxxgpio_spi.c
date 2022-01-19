@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.3 2022/01/19 05:05:45 thorpej Exp $ */
+/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.4 2022/01/19 05:21:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.3 2022/01/19 05:05:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.4 2022/01/19 05:21:44 thorpej Exp $");
 
 /* 
  * Driver for Microchip serial I/O expanders:
@@ -203,10 +203,8 @@ mcpgpio_spi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s I/O Expander\n", sc->sc_variant->name);
 
 	/* run at 10MHz */
-	error = spi_configure(sa->sa_handle, SPI_MODE_0, 10000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 10000000);
 	if (error) {
-		aprint_error_dev(self,
-		    "failed to set Mode 0 @ 10MHz, error=%d\n", error);
 		return;
 	}
 

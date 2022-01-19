@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.19 2022/01/19 05:05:45 thorpej Exp $ */
+/* $NetBSD: m25p.c,v 1.20 2022/01/19 05:21:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.19 2022/01/19 05:05:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.20 2022/01/19 05:21:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,10 +142,8 @@ m25p_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	/* configure for 20MHz, which is the max for normal reads */
-	error = spi_configure(sa->sa_handle, SPI_MODE_0, 20000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 20000000);
 	if (error) {
-		aprint_error_dev(self,
-		    "failed to set Mode 0 @ 20MHz, error=%d\n", error);
 		return;
 	}
 
