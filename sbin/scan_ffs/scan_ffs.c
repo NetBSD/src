@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.33 2022/01/19 01:40:05 mrg Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.34 2022/01/20 14:44:19 christos Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.33 2022/01/19 01:40:05 mrg Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.34 2022/01/20 14:44:19 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.33 2022/01/19 01:40:05 mrg Exp $");
 #include <string.h>
 #include <err.h>
 #include <util.h>
+#include <paths.h>
 
 #define BLK_CNT		(blk + (n / 512))
 
@@ -381,6 +382,29 @@ lfs_checkmagic(struct sblockinfo *sbinfo)
 	}
 }
 
+static void
+show_status(uintmax_t beg, uintmax_t total)
+{
+	static int ttyfd = -2;
+	char buf[2048];
+	const uintmax_t done = blk - beg;
+	const double pcent = (100.0 * done) / total;
+	int n;
+
+	if (ttyfd == -2)
+		ttyfd = open(_PATH_TTY, O_RDWR, O_CLOEXEC);
+
+	if (ttyfd == -1)
+		return;
+
+	n = snprintf(buf, sizeof(buf), "%s: done %ju of %ju blocks (%3.2f%%)\n", 
+	    getprogname(), done, total, pcent);
+
+	if (n <= 0)
+		return;
+	write(ttyfd, buf, (size_t)n);
+}
+
 static int
 scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 {
@@ -401,12 +425,8 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 	const daddr_t total = end - beg;
 	for (blk = beg; blk <= end; blk += SBPASS) {
 		if (print_info) {
-			const daddr_t done = blk - beg;
-			const int pcent = (int)((100.0 * done) / total);
+			show_status(beg, total);
 
-			fprintf(stderr, "%s: done %llu of %llu blocks (%d%%)\n", 
-				getprogname(), (unsigned long long)done,
-				(unsigned long long)total, pcent);
 			print_info = 0;
 		}
 		if (pread(fd, buf, sizeof(buf), blk * 512) == -1) {
