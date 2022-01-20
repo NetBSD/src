@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.652 2022/01/16 09:41:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.653 2022/01/20 19:24:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.652 2022/01/16 09:41:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.653 2022/01/20 19:24:53 rillig Exp $");
 
 /*
  * A file being read.
@@ -412,12 +412,12 @@ FindKeyword(const char *str)
 }
 
 static void
-PrintLocation(FILE *f, const char *fname, size_t lineno)
+PrintLocation(FILE *f, bool useVars, const char *fname, size_t lineno)
 {
 	char dirbuf[MAXPATHLEN + 1];
 	FStr dir, base;
 
-	if (fname[0] == '/' || strcmp(fname, "(stdin)") == 0) {
+	if (!useVars || fname[0] == '/' || strcmp(fname, "(stdin)") == 0) {
 		(void)fprintf(f, "\"%s\" line %u: ", fname, (unsigned)lineno);
 		return;
 	}
@@ -439,8 +439,8 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 	FStr_Done(&dir);
 }
 
-static void MAKE_ATTR_PRINTFLIKE(5, 0)
-ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
+static void MAKE_ATTR_PRINTFLIKE(6, 0)
+ParseVErrorInternal(FILE *f, bool useVars, const char *fname, size_t lineno,
 		    ParseErrorLevel type, const char *fmt, va_list ap)
 {
 	static bool fatal_warning_error_printed = false;
@@ -448,7 +448,7 @@ ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 	(void)fprintf(f, "%s: ", progname);
 
 	if (fname != NULL)
-		PrintLocation(f, fname, lineno);
+		PrintLocation(f, useVars, fname, lineno);
 	if (type == PARSE_WARNING)
 		(void)fprintf(f, "warning: ");
 	(void)vfprintf(f, fmt, ap);
@@ -477,13 +477,13 @@ ParseErrorInternal(const char *fname, size_t lineno,
 
 	(void)fflush(stdout);
 	va_start(ap, fmt);
-	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
+	ParseVErrorInternal(stderr, false, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
 	if (opts.debug_file != stdout && opts.debug_file != stderr) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(opts.debug_file, fname, lineno, type,
-		    fmt, ap);
+		ParseVErrorInternal(opts.debug_file, false, fname, lineno,
+		    type, fmt, ap);
 		va_end(ap);
 	}
 }
@@ -514,13 +514,13 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 
 	(void)fflush(stdout);
 	va_start(ap, fmt);
-	ParseVErrorInternal(stderr, fname, lineno, type, fmt, ap);
+	ParseVErrorInternal(stderr, true, fname, lineno, type, fmt, ap);
 	va_end(ap);
 
 	if (opts.debug_file != stdout && opts.debug_file != stderr) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(opts.debug_file, fname, lineno, type,
-		    fmt, ap);
+		ParseVErrorInternal(opts.debug_file, true, fname, lineno,
+		    type, fmt, ap);
 		va_end(ap);
 	}
 }
