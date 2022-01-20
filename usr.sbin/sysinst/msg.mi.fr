@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.17.2.10 2020/11/05 08:10:21 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.17.2.11 2022/01/20 11:45:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -625,6 +625,12 @@ message net_defroute
 
 message net_media
 {Type de réseau (média)}
+
+message net_ssid
+{Wi-Fi SSID?}
+
+message net_passphrase
+{Wi-Fi passphrase?}
 
 message netok
 {Vous avez spécifié les valeurs suivantes :
