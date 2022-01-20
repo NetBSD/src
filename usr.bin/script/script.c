@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.29 2022/01/16 19:04:00 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.30 2022/01/20 19:49:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.29 2022/01/16 19:04:00 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.30 2022/01/20 19:49:51 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,9 +86,9 @@ static int	isterm;
 static struct	termios tt;
 
 __dead static void	done(int);
-__dead static void	dooutput(void);
 __dead static void	doshell(const char *);
 __dead static void	fail(void);
+static void	dooutput(void);
 static void	finish(int);
 static void	scriptflush(int);
 static void	record(FILE *, char *, size_t, int);
