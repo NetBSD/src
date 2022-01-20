@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.103 2022/01/17 11:12:28 bouyer Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.104 2022/01/20 03:14:03 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.103 2022/01/17 11:12:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.104 2022/01/20 03:14:03 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -47,10 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.103 2022/01/17 11:12:28 bouyer Exp 
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbhist.h>
 #include <dev/usb/usb_quirks.h>
-
-#ifdef USB_DEBUG
-extern int usbdebug;
-#endif
 
 #define DPRINTF(FMT,A,B,C,D)    USBHIST_LOG(usbdebug,FMT,A,B,C,D)
 

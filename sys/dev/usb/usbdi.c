@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.221 2021/12/31 12:00:18 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.222 2022/01/20 03:14:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.221 2021/12/31 12:00:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.222 2022/01/20 03:14:03 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.221 2021/12/31 12:00:18 skrll Exp $");
 
 /* UTF-8 encoding stuff */
 #include <fs/unicode.h>
-
-extern int usbdebug;
 
 SDT_PROBE_DEFINE5(usb, device, pipe, open,
     "struct usbd_interface *"/*iface*/,
