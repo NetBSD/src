@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.66 2022/01/18 20:03:03 snj Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.67 2022/01/20 11:46:24 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1183,4 +1183,19 @@ sys/dev/usb/usb_quirks.c			1.102
 
 	Ignore new APC UPS devices when matching uhid devices.
 	[martin, ticket #1405]
+
+sys/dev/acpi/acpi_display.c			1.21
+
+	acpiout(4): Work around firmware that doesn't like some brightnesses.
+	[riastradh, ticket #1399]
+
+usr.sbin/sysinst/msg.mi.de			1.35
+usr.sbin/sysinst/msg.mi.en			1.37
+usr.sbin/sysinst/msg.mi.es			1.31
+usr.sbin/sysinst/msg.mi.fr			1.36
+usr.sbin/sysinst/msg.mi.pl			1.37
+usr.sbin/sysinst/net.c				1.37-1.40
+
+	sysinst(8): Add support for connecting to Wi-Fi networks.
+	[nia, ticket #1406]
 
