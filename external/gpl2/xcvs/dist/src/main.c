@@ -17,7 +17,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.7 2018/08/21 15:37:33 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2022/01/20 14:46:06 christos Exp $");
 
 #include "cvs.h"
 
@@ -509,7 +509,7 @@ show_status (int n)
 	static int ttyfd = -2;
 
 	if (ttyfd == -2)
-		ttyfd = open(_PATH_TTY, O_RDWR, O_CLOEXEC);
+		ttyfd = open(_PATH_TTY, O_RDWR | O_CLOEXEC);
 
 	if (ttyfd == -1)
 		return;
