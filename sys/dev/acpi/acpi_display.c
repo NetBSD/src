@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.16.16.2 2020/06/30 18:45:18 martin Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.16.16.3 2022/01/20 11:42:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.16.16.2 2020/06/30 18:45:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.16.16.3 2022/01/20 11:42:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1010,7 +1010,8 @@ acpidisp_out_increase_brightness_callback(void *arg)
 {
 	struct acpidisp_out_softc *osc = arg;
 	struct acpidisp_brctl *bc = osc->sc_brctl;
-	uint8_t lo, up;
+	uint8_t max, lo, up;
+	int cur;
 
 	if (bc == NULL) {
 		/* Fallback to pmf(9). */
@@ -1019,16 +1020,21 @@ acpidisp_out_increase_brightness_callback(void *arg)
 	}
 
 	mutex_enter(osc->sc_mtx);
-
-	(void)acpidisp_get_brightness(osc, &bc->bc_current);
-
-	acpidisp_array_search(bc->bc_level, bc->bc_level_count,
-	    bc->bc_current + ACPI_DISP_BRCTL_STEP, &lo, &up);
-
-	bc->bc_current = up;
-	(void)acpidisp_set_brightness(osc, bc->bc_current);
-
-	mutex_exit(osc->sc_mtx);
+	max = bc->bc_level[bc->bc_level_count - 1];
+	if (acpidisp_get_brightness(osc, &bc->bc_current))
+		goto out;
+	for (cur = bc->bc_current; (cur += ACPI_DISP_BRCTL_STEP) <= max;) {
+		acpidisp_array_search(bc->bc_level, bc->bc_level_count, cur,
+		    &lo, &up);
+		bc->bc_current = up;
+		if (acpidisp_set_brightness(osc, bc->bc_current))
+			goto out;
+		if (acpidisp_get_brightness(osc, &bc->bc_current))
+			goto out;
+		if (bc->bc_current >= cur)
+			break;
+	}
+out:	mutex_exit(osc->sc_mtx);
 }
 
 static void
@@ -1036,7 +1042,8 @@ acpidisp_out_decrease_brightness_callback(void *arg)
 {
 	struct acpidisp_out_softc *osc = arg;
 	struct acpidisp_brctl *bc = osc->sc_brctl;
-	uint8_t lo, up;
+	uint8_t min, lo, up;
+	int cur;
 
 	if (bc == NULL) {
 		/* Fallback to pmf(9). */
@@ -1045,16 +1052,21 @@ acpidisp_out_decrease_brightness_callback(void *arg)
 	}
 
 	mutex_enter(osc->sc_mtx);
-
-	(void)acpidisp_get_brightness(osc, &bc->bc_current);
-
-	acpidisp_array_search(bc->bc_level, bc->bc_level_count,
-	    bc->bc_current - ACPI_DISP_BRCTL_STEP, &lo, &up);
-
-	bc->bc_current = lo;
-	(void)acpidisp_set_brightness(osc, bc->bc_current);
-
-	mutex_exit(osc->sc_mtx);
+	min = bc->bc_level[0];
+	if (acpidisp_get_brightness(osc, &bc->bc_current))
+		goto out;
+	for (cur = bc->bc_current; (cur -= ACPI_DISP_BRCTL_STEP) >= min;) {
+		acpidisp_array_search(bc->bc_level, bc->bc_level_count, cur,
+		    &lo, &up);
+		bc->bc_current = lo;
+		if (acpidisp_set_brightness(osc, bc->bc_current))
+			goto out;
+		if (acpidisp_get_brightness(osc, &bc->bc_current))
+			goto out;
+		if (bc->bc_current <= cur)
+			break;
+	}
+out:	mutex_exit(osc->sc_mtx);
 }
 
 static void
