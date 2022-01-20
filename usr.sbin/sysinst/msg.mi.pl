@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.20.2.10 2020/11/05 08:10:21 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.20.2.11 2022/01/20 11:45:28 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -610,6 +610,12 @@ message net_defroute
 
 message net_media
 {Typ interfejsu sieciowego}
+
+message net_ssid
+{Wi-Fi SSID?}
+
+message net_passphrase
+{Wi-Fi passphrase?}
 
 message netok
 {Ponizej sa wartosci, ktore wprowadziles.
