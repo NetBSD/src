@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.10 2021/07/21 06:35:45 skrll Exp $ */
+/* $NetBSD: usbroothub.c,v 1.11 2022/01/20 03:14:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.10 2021/07/21 06:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.11 2022/01/20 03:14:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>		/* for ostype */
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.10 2021/07/21 06:35:45 skrll Exp $"
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbroothub.h>
 #include <dev/usb/usbhist.h>
-
-extern int usbdebug;
 
 /* helper functions for USB root hub emulation */
 
