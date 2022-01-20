@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.34 2022/01/20 14:44:19 christos Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.35 2022/01/20 14:45:14 christos Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.34 2022/01/20 14:44:19 christos Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.35 2022/01/20 14:45:14 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -392,7 +392,7 @@ show_status(uintmax_t beg, uintmax_t total)
 	int n;
 
 	if (ttyfd == -2)
-		ttyfd = open(_PATH_TTY, O_RDWR, O_CLOEXEC);
+		ttyfd = open(_PATH_TTY, O_RDWR | O_CLOEXEC);
 
 	if (ttyfd == -1)
 		return;
