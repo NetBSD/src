@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.27 2021/12/12 09:00:07 andvar Exp $ */
+/* $NetBSD: moused.c,v 1.28 2022/01/21 21:39:32 andvar Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.27 2021/12/12 09:00:07 andvar Exp $");
+__RCSID("$NetBSD: moused.c,v 1.28 2022/01/21 21:39:32 andvar Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -261,19 +261,19 @@ static symtab_t pnpprod[] = {
     { "PNP0F0A",	MOUSE_PROTO_MS,		MOUSE_MODEL_GENERIC },     
     /* MS PnP BallPoint serial */
     { "PNP0F0B",	MOUSE_PROTO_MS,		MOUSE_MODEL_GENERIC },     
-    /* MS serial comatible */
+    /* MS serial compatible */
     { "PNP0F0C",	MOUSE_PROTO_MS,		MOUSE_MODEL_GENERIC },     
-    /* MS InPort comatible */
+    /* MS InPort compatible */
     { "PNP0F0D",	MOUSE_PROTO_INPORT,	MOUSE_MODEL_GENERIC }, 
-    /* MS PS/2 comatible */
+    /* MS PS/2 compatible */
     { "PNP0F0E",	MOUSE_PROTO_PS2,	MOUSE_MODEL_GENERIC },    
-    /* MS BallPoint comatible */
+    /* MS BallPoint compatible */
     { "PNP0F0F",	MOUSE_PROTO_MS,		MOUSE_MODEL_GENERIC },     
 #if notyet
     /* TI QuickPort */
     { "PNP0F10",	MOUSE_PROTO_???,	MOUSE_MODEL_GENERIC },     
 #endif
-    /* MS bus comatible */
+    /* MS bus compatible */
     { "PNP0F11",	MOUSE_PROTO_BUS,	MOUSE_MODEL_GENERIC },    
     /* Logitech PS/2 */
     { "PNP0F12",	MOUSE_PROTO_PS2,	MOUSE_MODEL_GENERIC },
