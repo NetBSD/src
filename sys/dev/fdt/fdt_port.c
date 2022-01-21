@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.c,v 1.6 2020/01/01 12:46:44 jmcneill Exp $	*/
+/*	$NetBSD: fdt_port.c,v 1.7 2022/01/21 21:00:26 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.6 2020/01/01 12:46:44 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.7 2022/01/21 21:00:26 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,10 +298,10 @@ again:
 			continue;
 		if (fdtbus_get_reg(child, 0, &id, NULL) != 0) {
 			if (ports->dp_nports > 1)
-				aprint_error_dev(self,
+				aprint_debug_dev(self,
 				    "%s: missing reg property",
 				    fdtbus_get_string(child, "name"));
-			id = i;
+			id = 0;
 		}
 		ports->dp_port[i].port_id = id;
 		ports->dp_port[i].port_phandle = child;
@@ -349,10 +349,10 @@ fdt_endpoints_register(int phandle, struct fdt_port *port,
 			continue;
 		if (fdtbus_get_reg64(child, 0, &id, NULL) != 0) {
 			if (port->port_nep > 1)
-				aprint_error_dev(port->port_dp->dp_dev,
+				aprint_debug_dev(port->port_dp->dp_dev,
 				    "%s: missing reg property",
 				    fdtbus_get_string(child, "name"));
-			id = i;
+			id = 0;
 		}
 		ep = &port->port_ep[i];
 		ep->ep_id = id;
