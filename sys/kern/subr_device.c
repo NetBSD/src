@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.9 2021/09/15 17:33:08 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.10 2022/01/21 15:55:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.9 2021/09/15 17:33:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.10 2022/01/21 15:55:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,11 +57,14 @@ devhandle_is_valid(devhandle_t handle)
 	return devhandle_is_valid_internal(&handle);
 }
 
-void
-devhandle_invalidate(devhandle_t * const handlep)
+devhandle_t
+devhandle_invalid(void)
 {
-	handlep->impl = NULL;
-	handlep->uintptr = 0;
+	static const devhandle_t invalid_devhandle = {
+		.impl = NULL,
+		.uintptr = 0,
+	};
+	return invalid_devhandle;
 }
 
 devhandle_type_t
