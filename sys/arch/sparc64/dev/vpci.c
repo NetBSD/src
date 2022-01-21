@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.12 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: vpci.c,v 1.13 2022/01/21 19:14:14 thorpej Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.12 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.13 2022/01/21 19:14:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -268,7 +268,7 @@ FIXME
 	free(busranges, M_DEVBUF);
 
 	config_found(sc->sc_dev, &pba, vpci_print,
-	    CFARGS(.devhandle = prom_node_to_devhandle(sc->sc_node)));
+	    CFARGS(.devhandle = device_handle(sc->sc_dev)));
 }
 
 void
