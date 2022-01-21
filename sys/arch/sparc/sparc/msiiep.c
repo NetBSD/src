@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.52 2021/08/07 16:19:05 thorpej Exp $ */
+/*	$NetBSD: msiiep.c,v 1.53 2022/01/21 19:14:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.52 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.53 2022/01/21 19:14:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -363,7 +363,7 @@ mspcic_attach(device_t parent, device_t self, void *aux)
 	mspcic_pci_scan(sc->sc_node);
 
 	config_found(self, &pba, mspcic_print,
-	    CFARGS(.devhandle = prom_node_to_devhandle(sc->sc_node)));
+	    CFARGS(.devhandle = device_handle(self)));
 }
 
 

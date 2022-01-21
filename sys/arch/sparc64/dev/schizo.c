@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.46 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: schizo.c,v 1.47 2022/01/21 19:14:14 thorpej Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.46 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.47 2022/01/21 19:14:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -366,7 +366,7 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	}
 
 	config_found(sc->sc_dev, &pba, schizo_print,
-	    CFARGS(.devhandle = prom_node_to_devhandle(sc->sc_node)));
+	    CFARGS(.devhandle = device_handle(self)));
 }
 
 int

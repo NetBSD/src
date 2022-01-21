@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.135 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.136 2022/01/21 19:14:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.135 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.136 2022/01/21 19:14:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -685,7 +685,7 @@ found:
 	pba.pba_pc = pp->pp_pc;
 
 	config_found(self, &pba, psycho_print,
-	    CFARGS(.devhandle = prom_node_to_devhandle(sc->sc_node)));
+	    CFARGS(.devhandle = device_handle(self)));
 }
 
 static	int

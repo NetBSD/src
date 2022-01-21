@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.75 2021/12/05 04:21:31 msaitoh Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.76 2022/01/21 19:22:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.75 2021/12/05 04:21:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.76 2022/01/21 19:22:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -432,7 +432,7 @@ vmeattach_iommu(device_t parent, device_t self, void *aux)
 	       sc->sc_reg->vmebus_cr & VMEBUS_CR_IMPL);
 
 	(void)config_found(self, &vba, 0,
-	    CFARGS(.devhandle = prom_node_to_devhandle(node)));
+	    CFARGS(.devhandle = device_handle(self)));
 #endif /* SUN4M */
 }
 
