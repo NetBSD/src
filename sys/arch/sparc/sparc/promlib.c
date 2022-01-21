@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.50 2021/09/17 16:16:18 thorpej Exp $ */
+/*	$NetBSD: promlib.c,v 1.51 2022/01/21 15:55:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.50 2021/09/17 16:16:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.51 2022/01/21 15:55:36 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -99,11 +99,7 @@ static void	opf_interpret_simple(const char *);
 static devhandle_t
 null_prom_to_devhandle(int node __unused)
 {
-	devhandle_t devhandle;
-
-	devhandle_invalidate(&devhandle);
-
-	return devhandle;
+	return devhandle_invalid();
 }
 
 static int

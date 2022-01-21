@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.81 2022/01/17 19:34:31 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.82 2022/01/21 15:55:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.81 2022/01/17 19:34:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.82 2022/01/21 15:55:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_cookietype = cookietype;
 			ia.ia_prop = dev;
 
-			devhandle_invalidate(&devhandle);
+			devhandle = devhandle_invalid();
 #ifdef I2C_USE_FDT
 			if (cookietype == I2C_COOKIE_OF) {
 				devhandle = devhandle_from_of((int)cookie);

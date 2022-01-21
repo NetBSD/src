@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.163 2021/10/10 23:28:36 msaitoh Exp $	*/
+/*	$NetBSD: pci.c,v 1.164 2022/01/21 15:55:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.163 2021/10/10 23:28:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.164 2022/01/21 15:55:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -283,7 +283,7 @@ pci_bus_get_child_devhandle(struct pci_softc *sc, pcitag_t tag)
 		 * device was not found in the platform device tree.
 		 * Return an invalid handle.
 		 */
-		devhandle_invalidate(&args.devhandle);
+		return devhandle_invalid();
 	}
 
 	return args.devhandle;
