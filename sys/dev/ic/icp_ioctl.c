@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.22 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.23 2022/01/21 21:40:31 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,12 +64,12 @@
  * Based on ICP's FreeBSD "iir" driver ioctl interface, written by
  * Achim Leubner <achim.leubner@intel.com>.
  *
- * This is intended to be ABI-compatile with the ioctl interface for
+ * This is intended to be ABI-compatible with the ioctl interface for
  * other OSs.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.22 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.23 2022/01/21 21:40:31 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
