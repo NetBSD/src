@@ -1,7 +1,7 @@
-/*	$NetBSD: fuse_lowlevel.h,v 1.3 2022/01/22 08:09:39 pho Exp $	*/
+/* $NetBSD: v32.h,v 1.1 2022/01/22 08:09:40 pho Exp $ */
 
 /*
- * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,42 +28,25 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _FUSE_LOWLEVEL_H_
-#define _FUSE_LOWLEVEL_H_
+#if !defined(_FUSE_V32_H_)
+#define _FUSE_V32_H_
 
-/* <fuse_lowlevel.h> appeared on FUSE 2.4. */
+/* Compatibility header with FUSE 3.2 API. Only declarations that have
+ * differences between versions should be listed here. */
 
-#include <fuse.h>
+#if !defined(FUSE_H_)
+#  error Do not include this header directly. Include <fuse.h> instead.
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* NOTE: Changing the size and/or layout of this struct will break ABI
- * compatibility. */
-struct fuse_cmdline_opts {
-	int singlethread;
-	int foreground;
-	int debug;
-	int nodefault_fsname;
-	char *mountpoint;
-	int show_version;
-	int show_help;
-	int clone_fd;
-	unsigned int max_idle_threads;
-	int reserved[32];
-};
-
-/* Print low-level version information to stdout. Appeared on FUSE
- * 3.0. */
-void fuse_lowlevel_version(void);
-
-/* Print available options for fuse_parse_cmdline(). Appeared on FUSE
- * 3.0. */
-void fuse_cmdline_help(void);
+/* Multithreaded event loop for FUSE 3.2 */
+int fuse_loop_mt_v32(struct fuse *fuse, struct fuse_loop_config *config);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _FUSE_LOWLEVEL_H_ */
+#endif

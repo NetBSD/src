@@ -1,4 +1,4 @@
-/* $NetBSD: fuse_internal.h,v 1.4 2022/01/22 08:05:35 pho Exp $ */
+/* $NetBSD: fuse_internal.h,v 1.5 2022/01/22 08:09:39 pho Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -44,6 +44,14 @@
 extern "C" {
 #endif
 
+/* This is the private fuse structure. We can freely change its size
+ * and/or layout without worrying about ABI breakage. */
+struct fuse {
+	struct puffs_usermount	*pu;
+	int			dead;
+	struct fuse_fs		*fs; /* The base filesystem layer. */
+};
+
 enum refuse_show_help_variant {
 	REFUSE_SHOW_HELP_FULL		= 1,
 	REFUSE_SHOW_HELP_NO_HEADER	= 2,
@@ -53,6 +61,21 @@ enum refuse_show_help_variant {
 __BEGIN_HIDDEN_DECLS
 int __fuse_set_signal_handlers(struct fuse* fuse);
 int __fuse_remove_signal_handlers(struct fuse* fuse);
+struct fuse* __fuse_setup(int argc, char* argv[],
+                          const void* op, int op_version, void* user_data,
+                          struct fuse_cmdline_opts* opts);
+void __fuse_teardown(struct fuse* fuse);
+
+/* Generic implementation of fuse_new(). The exact type of "op" is
+ * determined by op_version. */
+struct fuse* __fuse_new(struct fuse_args *args, const void* op,
+                        int op_version, void* user_data);
+
+int __fuse_mount(struct fuse *fuse, const char *mountpoint);
+void __fuse_unmount(struct fuse *fuse);
+void __fuse_destroy(struct fuse *fuse);
+int __fuse_loop_mt(struct fuse *fuse, struct fuse_loop_config *config);
+int __fuse_parse_cmdline(struct fuse_args *args, struct fuse_cmdline_opts *opts);
 __END_HIDDEN_DECLS
 
 #ifdef __cplusplus

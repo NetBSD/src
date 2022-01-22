@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.33 2022/01/22 08:06:21 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.34 2022/01/22 08:09:39 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <fuse_opt.h>
 #include <refuse/buf.h>
+#include <refuse/chan.h>
 #include <refuse/legacy.h>
 #include <refuse/poll.h>
 #include <refuse/session.h>
@@ -54,8 +55,8 @@
 /* The latest version of FUSE API currently provided by ReFUSE. This
  * is an implementation detail. User code should not rely on this
  * constant. */
-#define _REFUSE_MAJOR_VERSION_	2
-#define _REFUSE_MINOR_VERSION_	6
+#define _REFUSE_MAJOR_VERSION_	3
+#define _REFUSE_MINOR_VERSION_	10
 
 #define _REFUSE_VERSION_	FUSE_MAKE_VERSION(_REFUSE_MAJOR_VERSION_, _REFUSE_MINOR_VERSION_)
 
@@ -222,71 +223,10 @@ struct fuse_args {
  */
 #define FUSE_ARGS_INIT(argc, argv) { argc, argv, 0 }
 
-
-typedef int (*fuse_fill_dir_t)(void *, const char *, const struct stat *, off_t);
-typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);
-
-/*
- * These operations shadow those in puffs_usermount, and are used
- * as a table of callbacks to make when file system requests come
- * in.
- *
- * NOTE: keep same order as fuse
- */
-struct fuse_operations {
-	int	(*getattr)(const char *, struct stat *);
-	int	(*readlink)(const char *, char *, size_t);
-	int	(*getdir)(const char *, fuse_dirh_t, fuse_dirfil_t);
-	int	(*mknod)(const char *, mode_t, dev_t);
-	int	(*mkdir)(const char *, mode_t);
-	int	(*unlink)(const char *);
-	int	(*rmdir)(const char *);
-	int	(*symlink)(const char *, const char *);
-	int	(*rename)(const char *, const char *);
-	int	(*link)(const char *, const char *);
-	int	(*chmod)(const char *, mode_t);
-	int	(*chown)(const char *, uid_t, gid_t);
-	int	(*truncate)(const char *, off_t);
-	int	(*utime)(const char *, struct utimbuf *);
-	int	(*open)(const char *, struct fuse_file_info *);
-	int	(*read)(const char *, char *, size_t, off_t, struct fuse_file_info *);
-	int	(*write)(const char *, const char *, size_t, off_t, struct fuse_file_info *);
-	int	(*statfs)(const char *, struct statvfs *);
-	int	(*flush)(const char *, struct fuse_file_info *);
-	int	(*release)(const char *, struct fuse_file_info *);
-	int	(*fsync)(const char *, int, struct fuse_file_info *);
-	int	(*setxattr)(const char *, const char *, const char *, size_t, int);
-	int	(*getxattr)(const char *, const char *, char *, size_t);
-	int	(*listxattr)(const char *, char *, size_t);
-	int	(*removexattr)(const char *, const char *);
-	int	(*opendir)(const char *, struct fuse_file_info *);
-	int	(*readdir)(const char *, void *, fuse_fill_dir_t, off_t, struct fuse_file_info *);
-	int	(*releasedir)(const char *, struct fuse_file_info *);
-	int	(*fsyncdir)(const char *, int, struct fuse_file_info *);
-	void	*(*init)(struct fuse_conn_info *);
-	void	(*destroy)(void *);
-	int	(*access)(const char *, int);
-	int	(*create)(const char *, mode_t, struct fuse_file_info *);
-	int	(*ftruncate)(const char *, off_t, struct fuse_file_info *);
-	int	(*fgetattr)(const char *, struct stat *, struct fuse_file_info *);
-	int	(*lock)(const char *, struct fuse_file_info *, int, struct flock *);
-	int	(*utimens)(const char *, const struct timespec *);
-	int	(*bmap)(const char *, size_t , uint64_t *);
-};
-
-
-struct fuse *fuse_new(struct fuse_args *,
-	const struct fuse_operations *, size_t, void *);
-
-int fuse_mount(struct fuse *, const char *);
-void fuse_unmount(struct fuse *);
-
-int fuse_main_real(int, char **, const struct fuse_operations *, size_t, void *);
 /* Functions that have existed since the beginning and have never
  * changed between API versions. */
 int fuse_loop(struct fuse *);
 void fuse_exit(struct fuse *);
-void fuse_destroy(struct fuse *);
 struct fuse_context *fuse_get_context(void);
 
 /* Print available library options. Appeared on FUSE 3.1. */
@@ -307,19 +247,6 @@ int fuse_invalidate_path(struct fuse *fuse, const char *path);
 /* Get the version number of the library. Appeared on FUSE 2.7. */
 int fuse_version(void);
 
-#if FUSE_USE_VERSION == 22
-#define fuse_unmount fuse_unmount_compat22
-#endif
-
-void fuse_unmount_compat22(const char *);
-
-#if FUSE_USE_VERSION >= 26
-#define fuse_main(argc, argv, op, user_data) \
-            fuse_main_real(argc, argv, op, sizeof(*(op)), user_data)
-#else
-#define fuse_main(argc, argv, op) \
-            fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
-#endif
 /* Get the version string of the library. Appeared on FUSE 3.0. */
 const char *fuse_pkgversion(void);
 
@@ -339,6 +266,485 @@ void fuse_stop_cleanup_thread(struct fuse *fuse);
  * "-oremember". Return the number of seconds until the next
  * cleanup. Appeared on FUSE 2.9. */
 int fuse_clean_cache(struct fuse *fuse);
+
+/* Generic implementation of fuse_main(). The exact type of "op" is
+ * determined by op_version. This is only an implementation detail:
+ * user code should never call this directly. */
+int __fuse_main(int argc, char* argv[],
+		const void* op, int op_version, void* user_data);
+
+/* NOTE: Compatibility headers are included
+ * unconditionally. Declarations in these headers all have a version
+ * postfix, and need to be aliased depending on FUSE_USE_VERSION. */
+#include <refuse/v11.h>
+#include <refuse/v21.h>
+#include <refuse/v22.h>
+#include <refuse/v23.h>
+#include <refuse/v25.h>
+#include <refuse/v26.h>
+#include <refuse/v28.h>
+#include <refuse/v29.h>
+#include <refuse/v30.h>
+#include <refuse/v32.h>
+#include <refuse/v34.h>
+#include <refuse/v35.h>
+#include <refuse/v38.h>
+
+/* NOTE: refuse/fs.h relies on some typedef's in refuse/v*.h */
+#include <refuse/fs.h>
+
+#define _MK_FUSE_OPERATIONS_(VER)	__CONCAT(fuse_operations_v,VER)
+
+/* Version specific types and functions. */
+#if defined(FUSE_USE_VERSION)
+/* ===== FUSE 1.x ===== */
+#	if FUSE_USE_VERSION < 21
+		/* Types */
+#		define _FUSE_OP_VERSION__	11 /* Implementation detail */
+#		define fuse_dirfil_t		fuse_dirfil_t_v11
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_mount		fuse_mount_v11
+#		define fuse_unmount		fuse_unmount_v11
+static __inline struct fuse *
+fuse_new(int fd, int flags, const struct fuse_operations *op) {
+    return fuse_new_v11(fd, flags, op, _FUSE_OP_VERSION__);
+}
+#		define fuse_destroy		fuse_destroy_v11
+#		define fuse_loop_mt		fuse_loop_mt_v11
+
+/* ===== FUSE 2.1 ===== */
+#	elif FUSE_USE_VERSION == 21
+		/* Types */
+#		define _FUSE_OP_VERSION__	21
+#		define fuse_dirfil_t		fuse_dirfil_t_v11
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_mount		fuse_mount_v21
+#		define fuse_unmount		fuse_unmount_v11
+static __inline struct fuse *
+fuse_new(int fd, const char *opts, const struct fuse_operations *op) {
+    return fuse_new_v21(fd, opts, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_destroy		fuse_destroy_v11
+#		define fuse_loop_mt		fuse_loop_mt_v11
+
+/* ===== FUSE 2.2 ===== */
+#	elif FUSE_USE_VERSION == 22
+		/* Types */
+#		define _FUSE_OP_VERSION__	22
+#		define fuse_dirfil_t		fuse_dirfil_t_v22
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_mount		fuse_mount_v21
+#		define fuse_unmount		fuse_unmount_v11
+static __inline struct fuse *
+fuse_new(int fd, const char *opts, const struct fuse_operations *op) {
+    return fuse_new_v21(fd, opts, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_destroy		fuse_destroy_v11
+#		define fuse_loop_mt		fuse_loop_mt_v11
+static __inline struct fuse *
+fuse_setup(int argc, char *argv[], const struct fuse_operations *op,
+	   size_t op_size __attribute__((__unused__)),
+	   char **mountpoint, int *multithreaded, int *fd) {
+    return fuse_setup_v22(argc, argv, op, _FUSE_OP_VERSION__,
+			  mountpoint, multithreaded, fd);
+}
+#		define fuse_teardown		fuse_teardown_v22
+
+/* ===== FUSE 2.3, 2.4 ===== */
+#	elif FUSE_USE_VERSION >= 23 && FUSE_USE_VERSION <= 24
+		/* Types */
+#		define _FUSE_OP_VERSION__	23
+#		define fuse_dirfil_t		fuse_dirfil_t_v22
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v23
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_mount		fuse_mount_v21
+#		define fuse_unmount		fuse_unmount_v11
+static __inline struct fuse *
+fuse_new(int fd, const char *opts, const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__))) {
+    return fuse_new_v21(fd, opts, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_destroy		fuse_destroy_v11
+#		define fuse_loop_mt		fuse_loop_mt_v11
+static __inline struct fuse *
+fuse_setup(int argc, char *argv[], const struct fuse_operations *op,
+	   size_t op_size __attribute__((__unused__)),
+	   char **mountpoint, int *multithreaded, int *fd) {
+    return fuse_setup_v22(argc, argv, op, _FUSE_OP_VERSION__,
+			  mountpoint, multithreaded, fd);
+}
+#		define fuse_teardown		fuse_teardown_v22
+
+/* ===== FUSE 2.5 ===== */
+#	elif FUSE_USE_VERSION == 25
+		/* Types */
+#		define _FUSE_OP_VERSION__	25
+#		define fuse_dirfil_t		fuse_dirfil_t_v22
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v23
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_mount		fuse_mount_v25
+#		define fuse_unmount		fuse_unmount_v11
+static __inline struct fuse *
+fuse_new(int fd, struct fuse_args *args, const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__))) {
+    return fuse_new_v25(fd, args, op, _FUSE_OP_VERSION__, NULL);
+}
+#		define fuse_destroy		fuse_destroy_v11
+#		define fuse_loop_mt		fuse_loop_mt_v11
+static __inline struct fuse *
+fuse_setup(int argc, char *argv[], const struct fuse_operations *op,
+	   size_t op_size __attribute__((__unused__)),
+	   char **mountpoint, int *multithreaded, int *fd) {
+    return fuse_setup_v22(argc, argv, op, _FUSE_OP_VERSION__,
+			  mountpoint, multithreaded, fd);
+}
+#		define fuse_teardown		fuse_teardown_v22
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v25
+
+/* ===== FUSE 2.6, 2.7 ===== */
+#	elif FUSE_USE_VERSION >= 26 && FUSE_USE_VERSION <= 27
+		/* Types */
+#		define _FUSE_OP_VERSION__	26
+#		define fuse_dirfil_t		fuse_dirfil_t_v22
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v23
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline struct fuse_fs *
+fuse_fs_new(const struct fuse_operations *op,
+	    size_t op_size __attribute__((__unused__)), void *user_data) {
+    return __fuse_fs_new(op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_fs_getattr		fuse_fs_getattr_v27
+#		define fuse_fs_rename		fuse_fs_rename_v27
+#		define fuse_fs_chmod		fuse_fs_chmod_v27
+#		define fuse_fs_chown		fuse_fs_chown_v27
+#		define fuse_fs_readdir		fuse_fs_readdir_v27
+#		define fuse_fs_truncate		fuse_fs_truncate_v27
+#		define fuse_fs_utimens		fuse_fs_utimens_v27
+#		define fuse_fs_init		fuse_fs_init_v27
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op, void* user_data) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_mount		fuse_mount_v26
+#		define fuse_unmount		fuse_unmount_v26
+static __inline struct fuse *
+fuse_new(struct fuse_chan *ch, struct fuse_args *args,
+	 const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__)), void *user_data) {
+    return fuse_new_v26(ch, args, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_destroy		fuse_destroy_v11
+#		define fuse_loop_mt		fuse_loop_mt_v11
+static __inline struct fuse *
+fuse_setup(int argc, char *argv[], const struct fuse_operations *op,
+	   size_t op_size __attribute__((__unused__)),
+	   char **mountpoint, int *multithreaded, void *user_data) {
+    return fuse_setup_v26(argc, argv, op, _FUSE_OP_VERSION__,
+			  mountpoint, multithreaded, user_data);
+}
+#		define fuse_teardown		fuse_teardown_v26
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v25
+
+/* ===== FUSE 2.8 ===== */
+#	elif FUSE_USE_VERSION == 28
+		/* Types */
+#		define _FUSE_OP_VERSION__	28
+#		define fuse_dirfil_t		fuse_dirfil_t_v22
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v23
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline struct fuse_fs *
+fuse_fs_new(const struct fuse_operations *op,
+	    size_t op_size __attribute__((__unused__)), void *user_data) {
+    return __fuse_fs_new(op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_fs_getattr		fuse_fs_getattr_v27
+#		define fuse_fs_rename		fuse_fs_rename_v27
+#		define fuse_fs_chmod		fuse_fs_chmod_v27
+#		define fuse_fs_chown		fuse_fs_chown_v27
+#		define fuse_fs_readdir		fuse_fs_readdir_v27
+#		define fuse_fs_truncate		fuse_fs_truncate_v27
+#		define fuse_fs_utimens		fuse_fs_utimens_v27
+#		define fuse_fs_ioctl		fuse_fs_ioctl_v28
+#		define fuse_fs_init		fuse_fs_init_v27
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op, void* user_data) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_mount		fuse_mount_v26
+#		define fuse_unmount		fuse_unmount_v26
+static __inline struct fuse *
+fuse_new(struct fuse_chan *ch, struct fuse_args *args,
+	 const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__)), void *user_data) {
+    return fuse_new_v26(ch, args, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_destroy		fuse_destroy_v11
+#		define fuse_loop_mt		fuse_loop_mt_v11
+static __inline struct fuse *
+fuse_setup(int argc, char *argv[], const struct fuse_operations *op,
+	   size_t op_size __attribute__((__unused__)),
+	   char **mountpoint, int *multithreaded, void *user_data) {
+    return fuse_setup_v26(argc, argv, op, _FUSE_OP_VERSION__,
+			  mountpoint, multithreaded, user_data);
+}
+#		define fuse_teardown		fuse_teardown_v26
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v25
+
+/* ===== FUSE 2.9 ===== */
+#	elif FUSE_USE_VERSION == 29
+		/* Types */
+#		define _FUSE_OP_VERSION__	29
+#		define fuse_dirfil_t		fuse_dirfil_t_v22
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v23
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline struct fuse_fs *
+fuse_fs_new(const struct fuse_operations *op,
+	    size_t op_size __attribute__((__unused__)), void *user_data) {
+    return __fuse_fs_new(op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_fs_getattr		fuse_fs_getattr_v27
+#		define fuse_fs_rename		fuse_fs_rename_v27
+#		define fuse_fs_chmod		fuse_fs_chmod_v27
+#		define fuse_fs_chown		fuse_fs_chown_v27
+#		define fuse_fs_readdir		fuse_fs_readdir_v27
+#		define fuse_fs_truncate		fuse_fs_truncate_v27
+#		define fuse_fs_utimens		fuse_fs_utimens_v27
+#		define fuse_fs_ioctl		fuse_fs_ioctl_v28
+#		define fuse_fs_init		fuse_fs_init_v27
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op, void* user_data) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_mount		fuse_mount_v26
+#		define fuse_unmount		fuse_unmount_v26
+static __inline struct fuse *
+fuse_new(struct fuse_chan *ch, struct fuse_args *args,
+	 const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__)), void *user_data) {
+    return fuse_new_v26(ch, args, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_destroy		fuse_destroy_v11
+#		define fuse_loop_mt		fuse_loop_mt_v11
+static __inline struct fuse *
+fuse_setup(int argc, char *argv[], const struct fuse_operations *op,
+	   size_t op_size __attribute__((__unused__)),
+	   char **mountpoint, int *multithreaded, void *user_data) {
+    return fuse_setup_v26(argc, argv, op, _FUSE_OP_VERSION__,
+			  mountpoint, multithreaded, user_data);
+}
+#		define fuse_teardown		fuse_teardown_v26
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v25
+
+/* ===== FUSE 3.0, 3.1 ===== */
+#	elif FUSE_USE_VERSION >= 30 && FUSE_USE_VERSION <= 31
+		/* Types */
+#		define _FUSE_OP_VERSION__	30
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v30
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline struct fuse_fs *
+fuse_fs_new(const struct fuse_operations *op,
+	    size_t op_size __attribute__((__unused__)), void *user_data) {
+    return __fuse_fs_new(op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_fs_getattr		fuse_fs_getattr_v30
+#		define fuse_fs_rename		fuse_fs_rename_v30
+#		define fuse_fs_chmod		fuse_fs_chmod_v30
+#		define fuse_fs_chown		fuse_fs_chown_v30
+#		define fuse_fs_readdir		fuse_fs_readdir_v30
+#		define fuse_fs_truncate		fuse_fs_truncate_v30
+#		define fuse_fs_utimens		fuse_fs_utimens_v30
+#		define fuse_fs_ioctl		fuse_fs_ioctl_v28
+#		define fuse_fs_init		fuse_fs_init_v30
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op, void* user_data) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_mount		fuse_mount_v30
+#		define fuse_unmount		fuse_unmount_v30
+static __inline struct fuse *
+fuse_new(struct fuse_args *args, const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__)), void *user_data) {
+    return fuse_new_v30(args, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_destroy		fuse_destroy_v30
+#		define fuse_loop_mt		fuse_loop_mt_v30
+		/* fuse_setup(3) and fuse_teardown(3) have been removed as of FUSE 3.0. */
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v30
+
+/* ===== FUSE 3.2, 3.3 ===== */
+#	elif FUSE_USE_VERSION >= 32 && FUSE_USE_VERSION <= 33
+		/* Types */
+#		define _FUSE_OP_VERSION__	30
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v30
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline struct fuse_fs *
+fuse_fs_new(const struct fuse_operations *op,
+	    size_t op_size __attribute__((__unused__)), void *user_data) {
+    return __fuse_fs_new(op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_fs_getattr		fuse_fs_getattr_v30
+#		define fuse_fs_rename		fuse_fs_rename_v30
+#		define fuse_fs_chmod		fuse_fs_chmod_v30
+#		define fuse_fs_chown		fuse_fs_chown_v30
+#		define fuse_fs_readdir		fuse_fs_readdir_v30
+#		define fuse_fs_truncate		fuse_fs_truncate_v30
+#		define fuse_fs_utimens		fuse_fs_utimens_v30
+#		define fuse_fs_ioctl		fuse_fs_ioctl_v28
+#		define fuse_fs_init		fuse_fs_init_v30
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op, void* user_data) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_mount		fuse_mount_v30
+#		define fuse_unmount		fuse_unmount_v30
+static __inline struct fuse *
+fuse_new(struct fuse_args *args, const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__)), void *user_data) {
+    return fuse_new_v30(args, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_destroy		fuse_destroy_v30
+#		define fuse_loop_mt		fuse_loop_mt_v32
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v30
+
+/* ===== FUSE 3.4 ===== */
+#	elif FUSE_USE_VERSION >= 34
+		/* Types */
+#		define _FUSE_OP_VERSION__	34
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v30
+		/* Functions */
+static __inline struct fuse_fs *
+fuse_fs_new(const struct fuse_operations *op,
+	    size_t op_size __attribute__((__unused__)), void *user_data) {
+    return __fuse_fs_new(op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_fs_getattr		fuse_fs_getattr_v30
+#		define fuse_fs_rename		fuse_fs_rename_v30
+#		define fuse_fs_chmod		fuse_fs_chmod_v30
+#		define fuse_fs_chown		fuse_fs_chown_v30
+#		define fuse_fs_readdir		fuse_fs_readdir_v30
+#		define fuse_fs_truncate		fuse_fs_truncate_v30
+#		define fuse_fs_utimens		fuse_fs_utimens_v30
+#		define fuse_fs_ioctl		fuse_fs_ioctl_v28
+#		define fuse_fs_init		fuse_fs_init_v30
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op, void* user_data) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_mount		fuse_mount_v30
+#		define fuse_unmount		fuse_unmount_v30
+static __inline struct fuse *
+fuse_new(struct fuse_args *args, const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__)), void *user_data) {
+    return fuse_new_v30(args, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_destroy		fuse_destroy_v30
+#		define fuse_loop_mt		fuse_loop_mt_v32
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v30
+
+/* ===== FUSE 3.5, 3.6, 3.7 ===== */
+#	elif FUSE_USE_VERSION >= 35 && FUSE_USE_VERSION <= 37
+		/* Types */
+#		define _FUSE_OP_VERSION__	35
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v30
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline struct fuse_fs *
+fuse_fs_new(const struct fuse_operations *op,
+	    size_t op_size __attribute__((__unused__)), void *user_data) {
+    return __fuse_fs_new(op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_fs_getattr		fuse_fs_getattr_v30
+#		define fuse_fs_rename		fuse_fs_rename_v30
+#		define fuse_fs_chmod		fuse_fs_chmod_v30
+#		define fuse_fs_chown		fuse_fs_chown_v30
+#		define fuse_fs_readdir		fuse_fs_readdir_v30
+#		define fuse_fs_truncate		fuse_fs_truncate_v30
+#		define fuse_fs_utimens		fuse_fs_utimens_v30
+#		define fuse_fs_ioctl		fuse_fs_ioctl_v35
+#		define fuse_fs_init		fuse_fs_init_v30
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op, void* user_data) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_mount		fuse_mount_v30
+#		define fuse_unmount		fuse_unmount_v30
+static __inline struct fuse *
+fuse_new(struct fuse_args *args, const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__)), void *user_data) {
+    return fuse_new_v30(args, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_destroy		fuse_destroy_v30
+#		define fuse_loop_mt		fuse_loop_mt_v32
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v30
+
+/* ===== FUSE 3.8, 3.9, 3.10 ===== */
+#	elif FUSE_USE_VERSION >= 38 && FUSE_USE_VERSION <= 310
+		/* Types */
+#		define _FUSE_OP_VERSION__	38
+#		define fuse_fill_dir_t		fuse_fill_dir_t_v30
+#		define fuse_operations		_MK_FUSE_OPERATIONS_(_FUSE_OP_VERSION__)
+		/* Functions */
+static __inline struct fuse_fs *
+fuse_fs_new(const struct fuse_operations *op,
+	    size_t op_size __attribute__((__unused__)), void *user_data) {
+    return __fuse_fs_new(op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_fs_getattr		fuse_fs_getattr_v30
+#		define fuse_fs_rename		fuse_fs_rename_v30
+#		define fuse_fs_chmod		fuse_fs_chmod_v30
+#		define fuse_fs_chown		fuse_fs_chown_v30
+#		define fuse_fs_readdir		fuse_fs_readdir_v30
+#		define fuse_fs_truncate		fuse_fs_truncate_v30
+#		define fuse_fs_utimens		fuse_fs_utimens_v30
+#		define fuse_fs_ioctl		fuse_fs_ioctl_v35
+#		define fuse_fs_init		fuse_fs_init_v30
+static __inline int
+fuse_main(int argc, char *argv[], const struct fuse_operations *op, void* user_data) {
+    return __fuse_main(argc, argv, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_mount		fuse_mount_v30
+#		define fuse_unmount		fuse_unmount_v30
+static __inline struct fuse *
+fuse_new(struct fuse_args *args, const struct fuse_operations *op,
+	 size_t op_size __attribute__((__unused__)), void *user_data) {
+    return fuse_new_v30(args, op, _FUSE_OP_VERSION__, user_data);
+}
+#		define fuse_destroy		fuse_destroy_v30
+#		define fuse_loop_mt		fuse_loop_mt_v32
+#		define fuse_parse_cmdline	fuse_parse_cmdline_v30
+
+#	endif
+#endif /* defined(FUSE_USE_VERSION) */
 
 #ifdef __cplusplus
 }
