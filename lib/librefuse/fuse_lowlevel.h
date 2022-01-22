@@ -1,4 +1,4 @@
-/*	$NetBSD: fuse_lowlevel.h,v 1.1 2016/11/20 13:26:28 pho Exp $	*/
+/*	$NetBSD: fuse_lowlevel.h,v 1.2 2022/01/22 08:03:32 pho Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -49,7 +49,12 @@ struct fuse_cmdline_opts {
 };
 
 int fuse_parse_cmdline(struct fuse_args *args, struct fuse_cmdline_opts *opts);
+/* Print low-level version information to stdout. Appeared on FUSE
+ * 3.0. */
 void fuse_lowlevel_version(void);
+
+/* Print available options for fuse_parse_cmdline(). Appeared on FUSE
+ * 3.0. */
 void fuse_cmdline_help(void);
 
 #ifdef __cplusplus

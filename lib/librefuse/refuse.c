@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.110 2022/01/22 08:02:49 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.111 2022/01/22 08:03:32 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.110 2022/01/22 08:02:49 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.111 2022/01/22 08:03:32 pho Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1414,6 +1414,20 @@ fuse_unmount_compat22(const char *mp)
 	return;
 }
 
+void
+fuse_lib_help(struct fuse_args *args __attribute__((__unused__)))
+{
+	fuse_cmdline_help();
+}
+
+int
+fuse_interrupted(void)
+{
+	/* ReFUSE doesn't support request interruption at the
+	 * moment. */
+	return 0;
+}
+
 int
 fuse_invalidate_path(struct fuse *fuse __attribute__((__unused__)),
 		     const char *path __attribute__((__unused__)))
@@ -1427,6 +1441,41 @@ int
 fuse_version(void)
 {
 	return _REFUSE_VERSION_;
+}
+
+const char *
+fuse_pkgversion(void)
+{
+	return "ReFUSE " ___STRING(_REFUSE_MAJOR_VERSION_)
+		"." ___STRING(_REFUSE_MINOR_VERSION_);
+}
+
+int
+fuse_getgroups(int size, gid_t list[])
+{
+	/* XXX: In order to implement this, we need to save a pointer
+	 * to struct puffs_cred in struct fuse upon entering a puffs
+	 * callback, and set it back to NULL upon leaving it. Then we
+	 * can use puffs_cred_getgroups(3) here. */
+	return -ENOSYS;
+}
+
+int
+fuse_start_cleanup_thread(struct fuse *fuse)
+{
+	/* XXX: ReFUSE doesn't support -oremember at the moment. */
+	return 0;
+}
+
+void
+fuse_stop_cleanup_thread(struct fuse *fuse) {
+	/* XXX: ReFUSE doesn't support -oremember at the moment. */
+}
+
+int
+fuse_clean_cache(struct fuse *fuse) {
+	/* XXX: ReFUSE doesn't support -oremember at the moment. */
+	return 3600;
 }
 
 /* This is a legacy function that has been removed from the FUSE API,
