@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.79 2022/01/22 15:10:32 skrll Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.80 2022/01/22 19:07:25 martin Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.79 2022/01/22 15:10:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.80 2022/01/22 19:07:25 martin Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -324,7 +324,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	if (pci_dma64_available(pa) && (sc->sc_flags & NFE_40BIT_ADDR) != 0) {
 		if (bus_dmatag_subregion(pa->pa_dmat64,
 					 0,
-					 __MASK(40),
+					 (bus_addr_t)__MASK(40),
 					 &sc->sc_dmat,
 					 BUS_DMA_WAITOK) != 0) {
 			aprint_error_dev(self,
