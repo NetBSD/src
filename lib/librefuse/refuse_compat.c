@@ -1,4 +1,4 @@
-/* $NetBSD: refuse_compat.c,v 1.1 2022/01/22 08:02:49 pho Exp $ */
+/* $NetBSD: refuse_compat.c,v 1.2 2022/01/22 08:09:39 pho Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,17 +31,37 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse_compat.c,v 1.1 2022/01/22 08:02:49 pho Exp $");
+__RCSID("$NetBSD: refuse_compat.c,v 1.2 2022/01/22 08:09:39 pho Exp $");
 #endif /* !lint */
 
 #include <fuse_internal.h>
+#include <string.h>
 
 /*
  * Compatibility symbols that had existed in old versions of
  * librefuse.
  */
 
+struct fuse_cmdline_opts_rev0 {
+	int singlethread;
+	int foreground;
+	int debug;
+	int nodefault_fsname;
+	char *mountpoint;
+	int show_version;
+	int show_help;
+};
+
 int fuse_daemonize_rev0(struct fuse* fuse) __RENAME(fuse_daemonize);
+int fuse_mount(struct fuse *fuse, const char *mountpoint);
+int fuse_main_real(int argc, char **argv, const struct fuse_operations_v26 *op,
+                   size_t size, void *user_data);
+struct fuse *fuse_new(struct fuse_args *args, const void *op, size_t op_size,
+                      void *user_data);
+void fuse_destroy(struct fuse* fuse);
+int fuse_parse_cmdline(struct fuse_args *args, struct fuse_cmdline_opts_rev0 *opts);
+void fuse_unmount(struct fuse* fuse);
+void fuse_unmount_compat22(const char *mountpoint);
 
 /* librefuse once had a function fuse_daemonize() with an incompatible
  * prototype with that of FUSE. We keep ABI compatibility with
@@ -57,4 +77,88 @@ __warn_references(
 int
 fuse_daemonize_rev0(struct fuse* fuse __attribute__((__unused__))) {
     return fuse_daemonize(1);
+}
+
+/* librefuse once had a function fuse_main_real() which was specific
+ * to FUSE 2.6 API. */
+__warn_references(
+    fuse_main_real,
+    "warning: reference to compatibility fuse_main_real();"
+    " include <fuse.h> for correct reference")
+int
+fuse_main_real(int argc, char **argv, const struct fuse_operations_v26 *op,
+               size_t size __attribute__((__unused__)), void *user_data) {
+    return __fuse_main(argc, argv, op, 26, user_data);
+}
+
+/* librefuse once had a function fuse_mount() for FUSE 3.0 but without
+ * a version postfix. */
+__warn_references(
+    fuse_mount,
+    "warning: reference to compatibility fuse_mount();"
+    " include <fuse.h> for correct reference")
+int
+fuse_mount(struct fuse *fuse, const char *mountpoint) {
+    return fuse_mount_v30(fuse, mountpoint);
+}
+
+/* librefuse once had a function fuse_new() for FUSE 3.0 but without a
+ * version postfix. */
+__warn_references(
+    fuse_new,
+    "warning: reference to compatibility fuse_new();"
+    " include <fuse.h> for correct reference")
+struct fuse *
+fuse_new(struct fuse_args *args, const void *op,
+         size_t op_size __attribute__((__unused__)),
+         void *user_data) {
+    return fuse_new_v30(args, op, 30, user_data);
+}
+
+/* librefuse once had a function fuse_destroy() for FUSE 3.0 but
+ * without a version postfix. */
+__warn_references(
+    fuse_new,
+    "warning: reference to compatibility fuse_destroy();"
+    " include <fuse.h> for correct reference")
+void
+fuse_destroy(struct fuse *fuse) {
+    fuse_destroy_v30(fuse);
+}
+
+/* librefuse once had a function fuse_parse_cmdline() for FUSE 3.0 but
+ * without a version postfix. It expected an old definition of struct
+ * fuse_cmdline_opts too. */
+__warn_references(
+    fuse_parse_cmdline,
+    "warning: reference to compatibility fuse_parse_cmdline();"
+    " include <fuse.h> for correct reference")
+int
+fuse_parse_cmdline(struct fuse_args *args, struct fuse_cmdline_opts_rev0 *opts) {
+    struct fuse_cmdline_opts tmp;
+
+    if (fuse_parse_cmdline_v30(args, &tmp) != 0)
+        return -1;
+
+    memcpy(opts, &tmp, sizeof(*opts));
+    return 0;
+}
+
+/* librefuse once had a function fuse_unmount() for FUSE 3.0 but
+ * without a version postfix. */
+__warn_references(
+    fuse_unmount,
+    "warning: reference to compatibility fuse_unmount();"
+    " include <fuse.h> for correct reference")
+void
+fuse_unmount(struct fuse* fuse) {
+    return fuse_unmount_v30(fuse);
+}
+
+/* librefuse once had a function fuse_unmount_compat22() which was an
+ * implementation of fuse_unmount() to be used when FUSE_USE_VERSION
+ * was set to 22 or below. The function was actually a no-op. */
+void
+fuse_unmount_compat22(const char *mountpoint) {
+    fuse_unmount_v11(mountpoint);
 }

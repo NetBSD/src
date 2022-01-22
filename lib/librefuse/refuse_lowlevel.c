@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse_lowlevel.c,v 1.3 2022/01/22 08:05:35 pho Exp $	*/
+/*	$NetBSD: refuse_lowlevel.c,v 1.4 2022/01/22 08:09:39 pho Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse_lowlevel.c,v 1.3 2022/01/22 08:05:35 pho Exp $");
+__RCSID("$NetBSD: refuse_lowlevel.c,v 1.4 2022/01/22 08:09:39 pho Exp $");
 #endif /* !lint */
 
 #include <fuse_internal.h>
@@ -121,7 +121,8 @@ static int add_default_fsname(struct fuse_args *args)
 	}
 }
 
-int fuse_parse_cmdline(struct fuse_args *args, struct fuse_cmdline_opts *opts)
+int
+__fuse_parse_cmdline(struct fuse_args *args, struct fuse_cmdline_opts *opts)
 {
 	memset(opts, 0, sizeof(*opts));
 
