@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.106 2022/01/22 07:58:32 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.107 2022/01/22 07:59:33 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.106 2022/01/22 07:58:32 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.107 2022/01/22 07:59:33 pho Exp $");
 #endif /* !lint */
 
 /* We emit a compiler warning for anyone including <fuse.h> without
@@ -1207,7 +1207,6 @@ int fuse_mount(struct fuse *fuse, const char *mountpoint)
 	struct puffs_pathobj	*po_root;
 	struct puffs_node	*pn_root;
 	struct refusenode	*rn_root;
-	struct stat		 st;
 	struct puffs_statvfs	 svfsb;
 
 	pn_root = newrn(fuse->pu);
@@ -1225,10 +1224,11 @@ int fuse_mount(struct fuse *fuse, const char *mountpoint)
 	puffs_vattr_null(&pn_root->pn_va);
 	pn_root->pn_va.va_type = VDIR;
 	pn_root->pn_va.va_mode = 0755;
-	if (fuse->op.getattr)
-		if (fuse->op.getattr(po_root->po_path, &st) == 0)
-			puffs_stat2vattr(&pn_root->pn_va, &st);
-	assert(pn_root->pn_va.va_type == VDIR);
+	/* It might be tempting to call op.getattr("/") here to
+	 * populate pn_root->pa_va, but that would mean invoking an
+	 * operation callback without initializing the filesystem. We
+	 * cannot call op.init() either, because that is supposed to
+	 * be called right before entering the main loop. */
 
 	puffs_set_prepost(fuse->pu, set_fuse_context_pid, NULL);
 
