@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2406 2022/01/22 07:54:56 pho Exp $
+#	$NetBSD: mi,v 1.2407 2022/01/22 07:56:15 pho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3093,6 +3093,7 @@
 ./usr/include/readline/history.h		comp-c-include
 ./usr/include/readline/readline.h		comp-c-include
 ./usr/include/refuse/buf.h			comp-refuse-include
+./usr/include/refuse/poll.h			comp-refuse-include
 ./usr/include/refuse/session.h			comp-refuse-include
 ./usr/include/regex.h				comp-c-include
 ./usr/include/regexp.h				comp-c-include
