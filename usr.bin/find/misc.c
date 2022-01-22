@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2006/10/11 19:51:10 apb Exp $	*/
+/*	$NetBSD: misc.c,v 1.15 2022/01/22 14:08:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.14 2006/10/11 19:51:10 apb Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2022/01/22 14:08:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: misc.c,v 1.14 2006/10/11 19:51:10 apb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
+#include <fcntl.h>
 
 #include "find.h"
 
@@ -60,9 +62,9 @@ __RCSID("$NetBSD: misc.c,v 1.14 2006/10/11 19:51:10 apb Exp $");
  *      area of memory set in store.
  */
 void
-brace_subst(char *orig, char **store, char *path, int *len)
+brace_subst(char *orig, char **store, char *path, size_t *len)
 {
-	int nlen, plen, rest;
+	size_t nlen, plen, rest;
 	char ch, *p, *ostore;
 
 	plen = strlen(path);
@@ -133,7 +135,9 @@ void
 show_path(int sig)
 {
 	extern FTSENT *g_entry;
-	int errno_bak;
+	static int ttyfd = -2;
+	char buf[2048];
+	int oerrno, n;
 
 	if (g_entry == NULL) {
 		/*
@@ -143,9 +147,20 @@ show_path(int sig)
 		return;
 	}
 
-	errno_bak = errno;
-	write(STDERR_FILENO, "find path: ", 11);
-	write(STDERR_FILENO, g_entry->fts_path, g_entry->fts_pathlen);
-	write(STDERR_FILENO, "\n", 1);
-	errno = errno_bak;
+	oerrno = errno;
+	if (ttyfd == -2)
+		ttyfd = open(_PATH_TTY, O_RDWR | O_CLOEXEC);
+
+	if (ttyfd == -1)
+		goto out;
+
+	n = snprintf_ss(buf, sizeof(buf), "%s: path %s\n", getprogname(), 
+	    g_entry->fts_path);
+
+	if (n <= 0)
+		goto out;
+
+	write(ttyfd, buf, (size_t)n);
+out:
+	errno = oerrno;
 }
