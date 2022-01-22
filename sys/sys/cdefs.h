@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.158 2021/12/14 20:12:48 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.159 2022/01/22 08:58:48 skrll Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -648,6 +648,9 @@
 #define	__BIT(__n)	\
     (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : \
     ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
+
+/* __MASK(n): first n bits all set, where __MASK(4) == 0b1111. */
+#define	__MASK(__n)	(__BIT(__n) - 1)
 
 /* Macros for min/max. */
 #define	__MIN(a,b)	((/*CONSTCOND*/(a)<=(b))?(a):(b))

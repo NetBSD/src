@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2409 2022/01/22 08:09:39 pho Exp $
+#	$NetBSD: mi,v 1.2410 2022/01/22 08:58:48 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5851,6 +5851,7 @@
 ./usr/share/man/cat3/__CONCAT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__FPTRCAST.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__KERNEL_RCSID.0		comp-c-catman		.cat
+./usr/share/man/cat3/__MASK.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__RCSID.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTIN.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTOUT.0		comp-c-catman		.cat
@@ -14198,6 +14199,7 @@
 ./usr/share/man/html3/__CONCAT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__FPTRCAST.html		comp-c-htmlman		html
 ./usr/share/man/html3/__KERNEL_RCSID.html	comp-c-htmlman		html
+./usr/share/man/html3/__MASK.html		comp-c-htmlman		html
 ./usr/share/man/html3/__RCSID.html		comp-c-htmlman		html
 ./usr/share/man/html3/__SHIFTIN.html		comp-c-htmlman		html
 ./usr/share/man/html3/__SHIFTOUT.html		comp-c-htmlman		html
@@ -22382,6 +22384,7 @@
 ./usr/share/man/man3/__CONCAT.3			comp-c-man		.man
 ./usr/share/man/man3/__FPTRCAST.3		comp-c-man		.man
 ./usr/share/man/man3/__KERNEL_RCSID.3		comp-c-man		.man
+./usr/share/man/man3/__MASK.3			comp-c-man		.man
 ./usr/share/man/man3/__RCSID.3			comp-c-man		.man
 ./usr/share/man/man3/__SHIFTIN.3		comp-c-man		.man
 ./usr/share/man/man3/__SHIFTOUT.3		comp-c-man		.man

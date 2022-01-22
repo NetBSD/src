@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.90 2020/01/13 08:25:02 kamil Exp $
+#	$NetBSD: Makefile,v 1.91 2022/01/22 08:58:48 skrll Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __FPTRCAST.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
@@ -47,6 +47,7 @@ MLINKS+=bitstring.3 bit_alloc.3 \
 	bitstring.3 bit_test.3
 MLINKS+=bits.3 __BIT.3 \
 	bits.3 __BITS.3 \
+	bits.3 __MASK.3 \
 	bits.3 __SHIFTIN.3 \
 	bits.3 __SHIFTOUT.3 \
 	bits.3 __SHIFTOUT_MASK.3
