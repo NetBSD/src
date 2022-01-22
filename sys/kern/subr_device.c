@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.10 2022/01/21 15:55:36 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.11 2022/01/22 11:58:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.10 2022/01/21 15:55:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.11 2022/01/22 11:58:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,6 +75,49 @@ devhandle_type(devhandle_t handle)
 	}
 
 	return handle.impl->type;
+}
+
+int
+devhandle_compare(devhandle_t handle1, devhandle_t handle2)
+{
+	devhandle_type_t type1 = devhandle_type(handle1);
+	devhandle_type_t type2 = devhandle_type(handle2);
+
+	if (type1 == DEVHANDLE_TYPE_INVALID) {
+		return -1;
+	}
+	if (type2 == DEVHANDLE_TYPE_INVALID) {
+		return 1;
+	}
+
+	if (type1 < type2) {
+		return -1;
+	}
+	if (type1 > type2) {
+		return 1;
+	}
+
+	/* For private handles, we also compare the impl pointers. */
+	if (type1 == DEVHANDLE_TYPE_PRIVATE) {
+		intptr_t impl1 = (intptr_t)handle1.impl;
+		intptr_t impl2 = (intptr_t)handle2.impl;
+
+		if (impl1 < impl2) {
+			return -1;
+		}
+		if (impl1 > impl2) {
+			return 1;
+		}
+	}
+
+	if (handle1.integer < handle2.integer) {
+		return -1;
+	}
+	if (handle1.integer > handle2.integer) {
+		return 1;
+	}
+
+	return 0;
 }
 
 device_call_t
