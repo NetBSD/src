@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2403 2022/01/17 22:49:43 christos Exp $
+#	$NetBSD: mi,v 1.2404 2022/01/22 07:38:45 pho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -992,6 +992,7 @@
 ./usr/include/fts.h				comp-c-include
 ./usr/include/ftw.h				comp-c-include
 ./usr/include/fuse.h				comp-refuse-include
+./usr/include/fuse_log.h			comp-refuse-include
 ./usr/include/fuse_lowlevel.h			comp-refuse-include
 ./usr/include/fuse_opt.h			comp-refuse-include
 ./usr/include/g++/ACG.h				comp-obsolete		obsolete
