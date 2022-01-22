@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.23 2020/11/21 17:46:09 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.24 2022/01/22 15:08:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 2020/11/21 17:46:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24 2022/01/22 15:08:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -559,6 +559,6 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	rv = _bus_dmamem_mmap_common(t, segs, nsegs, off, prot, flags);
 	if (rv == (bus_addr_t)-1)
 		return (-1);
-	
+
 	return (mips_btop((char *)rv));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.61 2021/12/05 03:07:16 msaitoh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.62 2022/01/22 15:08:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.61 2021/12/05 03:07:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.62 2022/01/22 15:08:11 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -488,11 +488,11 @@ _bus_dmamap_sync_r3k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		}
 
 		/*
-		 * Now at the first segment to sync; nail 
+		 * Now at the first segment to sync; nail
 		 * each segment until we have exhausted the
 		 * length.
 		 */
-		minlen = len < map->dm_segs[i].ds_len - offset ?  
+		minlen = len < map->dm_segs[i].ds_len - offset ?
 		    len : map->dm_segs[i].ds_len - offset;
 
 		addr = map->dm_segs[i].ds_addr;
@@ -736,6 +736,6 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 	rv = _bus_dmamem_mmap_common(t, segs, nsegs, off, prot, flags);
 	if (rv == (bus_addr_t)-1)
 		return (-1);
-	
+
 	return (mips_btop((char *)rv));
 }

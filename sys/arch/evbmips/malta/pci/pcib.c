@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.22 2021/08/07 16:18:51 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.23 2022/01/22 15:08:10 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.22 2021/08/07 16:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.23 2022/01/22 15:08:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,7 +426,7 @@ pcib_intr(void *v)
 		 * From YAMON source code:
 		 *
 		 * IRQ7 is used to detect spurious interrupts.
-		 * The interrupt acknowledge cycle returns IRQ7, if no 
+		 * The interrupt acknowledge cycle returns IRQ7, if no
 		 * interrupts is requested.
 		 * We can differentiate between this situation and a
 		 * "Normal" IRQ7 by reading the ISR.
