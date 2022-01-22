@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.103 2021/08/07 16:19:05 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.104 2022/01/22 11:49:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.103 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.104 2022/01/22 11:49:17 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -284,6 +284,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	 * `specials' is an array of device names that are treated
 	 * specially:
 	 */
+	devhandle_t selfh = device_handle(self);
 	node0 = OF_child(node);
 	for (node = node0; node; node = OF_peer(node)) {
 		char *name1 = prom_getpropstring(node, "name");
@@ -294,7 +295,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 			continue;
 		}
 		(void) config_found(self, &sa, sbus_print,
-		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node)));
 		sbus_destroy_attach_args(&sa);
 	}
 }

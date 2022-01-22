@@ -365,6 +365,7 @@ smu_setup_iicbus(struct smu_softc *sc)
 	int node;
 	char name[32];
 
+	devhandle_t selfh = device_handle(sc->sc_dev);
 	node = of_getnode_byname(sc->sc_node, "smu-i2c-control");
 	if (node == 0) node = sc->sc_node;
 	for (node = OF_child(node);
@@ -393,7 +394,7 @@ smu_setup_iicbus(struct smu_softc *sc)
 		ca.ca_node = node;
 		ca.ca_tag = i2c;
 		config_found(sc->sc_dev, &ca, smu_iicbus_print,
-		    CFARGS(.devhandle = devhandle_from_of(node)));
+		    CFARGS(.devhandle = devhandle_from_of(selfh, node)));
 
 		sc->sc_num_iicbus++;
 	}

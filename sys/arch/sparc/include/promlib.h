@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.26 2021/05/10 13:59:30 thorpej Exp $ */
+/*	$NetBSD: promlib.h,v 1.27 2022/01/22 11:49:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ struct promops {
 	int	(*po_finddevice)(const char *);
 
 	/* devhandle_t interface */
-	devhandle_t (*po_node_to_devhandle)(int);
+	devhandle_t (*po_node_to_devhandle)(devhandle_t, int);
 	int	(*po_devhandle_to_node)(devhandle_t);
 };
 
@@ -217,8 +217,8 @@ void	prom_boot(char *)	__attribute__((__noreturn__));
 #define prom_getproplen(node,name)	prom_proplen(node, name)
 
 /* devhandle_t interface */
-#define	prom_node_to_devhandle(n)  ((*promops.po_node_to_devhandle)(n))
-#define	prom_devhandle_to_node(dh) ((*promops.po_devhandle_to_node)(dh))
+#define	prom_node_to_devhandle(s, n) ((*promops.po_node_to_devhandle)((s), (n)))
+#define	prom_devhandle_to_node(dh)   ((*promops.po_devhandle_to_node)(dh))
 
 /* MP stuff - not currently used */
 #define prom_cpustart(m,a,c,pc)	((*promops.po_cpustart)(m,a,c,pc))

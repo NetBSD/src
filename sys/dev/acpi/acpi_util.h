@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.h,v 1.13 2022/01/15 14:40:33 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.h,v 1.14 2022/01/22 11:49:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #ifndef _SYS_DEV_ACPI_ACPI_UTIL_H
 #define _SYS_DEV_ACPI_ACPI_UTIL_H
 
-devhandle_t	devhandle_from_acpi(ACPI_HANDLE);
+devhandle_t	devhandle_from_acpi(devhandle_t, ACPI_HANDLE);
 ACPI_HANDLE	devhandle_to_acpi(devhandle_t);
 
 #define	ACPI_DEVICE_CALL_REGISTER(_n_, _c_)				\

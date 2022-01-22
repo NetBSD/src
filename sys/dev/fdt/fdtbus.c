@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.44 2021/11/07 17:12:15 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.45 2022/01/22 11:49:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.44 2021/11/07 17:12:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.45 2022/01/22 11:49:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,12 +423,15 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		 */
 		fdt_pre_attach(node);
 
+		devhandle_t nodeh = device_handle(node->n_bus);
+
 		if (quiet) {
 			node->n_dev = config_attach(node->n_bus, node->n_cf,
 			    &faa, fdtbus_print,
 			    CFARGS(.locators = locs,
 				   .devhandle =
-				       devhandle_from_of(node->n_phandle)));
+				       devhandle_from_of(nodeh,
+							 node->n_phandle)));
 		} else {
 			/*
 			 * Default pass.
@@ -439,7 +442,8 @@ fdt_scan(struct fdt_softc *sc, int pass)
 				   .iattr = "fdt",
 				   .locators = locs,
 				   .devhandle =
-				       devhandle_from_of(node->n_phandle)));
+				       devhandle_from_of(nodeh,
+							 node->n_phandle)));
 		}
 
 		if (node->n_dev != NULL)

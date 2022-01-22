@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.31 2022/01/15 14:40:22 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.32 2022/01/22 11:49:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.31 2022/01/15 14:40:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.32 2022/01/22 11:49:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -121,12 +121,18 @@ static const struct devhandle_impl acpi_devhandle_impl = {
 };
 
 devhandle_t
-devhandle_from_acpi(ACPI_HANDLE const hdl)
+devhandle_from_acpi(devhandle_t super_handle, ACPI_HANDLE const hdl)
 {
-	devhandle_t handle = {
-		.impl = &acpi_devhandle_impl,
-		.pointer = hdl,
-	};
+	devhandle_type_t super_type = devhandle_type(super_handle);
+	devhandle_t handle = { 0 };
+
+	if (super_type == DEVHANDLE_TYPE_ACPI) {
+		handle.impl = super_handle.impl;
+	} else {
+		KASSERT(super_type == DEVHANDLE_TYPE_INVALID);
+		handle.impl = &acpi_devhandle_impl;
+	}
+	handle.pointer = hdl;
 
 	return handle;
 }
@@ -154,7 +160,8 @@ acpi_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 		    !acpi_device_present(ad->ad_handle)) {
 			continue;
 		}
-		if (!args->callback(dev, devhandle_from_acpi(ad->ad_handle),
+		if (!args->callback(dev, devhandle_from_acpi(call_handle,
+							     ad->ad_handle),
 				    args->callback_arg)) {
 			break;
 		}

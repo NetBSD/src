@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.237 2021/10/04 21:02:39 andvar Exp $ */
+/*	$NetBSD: autoconf.c,v 1.238 2022/01/22 11:49:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.237 2021/10/04 21:02:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.238 2022/01/22 11:49:17 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -701,6 +701,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		aprint_normal(": %s: hostid %lx\n", machine_model, hostid);
 	aprint_naive("\n");
 
+	devhandle_t selfh = device_handle(dev);
+
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
 	 * configured before we can do the rest.  For instance, the
@@ -730,7 +732,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_node = node;
 		ma.ma_name = "cpu";
 		config_found(dev, &ma, mbprint,
-		    CFARGS(.devhandle = devhandle_from_of(ma.ma_node)));
+		    CFARGS(.devhandle = devhandle_from_of(selfh, ma.ma_node)));
 	}
 
 	node = findroot();	/* re-init root node */
@@ -814,7 +816,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		}
 #endif
 		(void) config_found(dev, (void *)&ma, mbprint,
-		    CFARGS(.devhandle = prom_node_to_devhandle(ma.ma_node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh,
+							       ma.ma_node)));
 		free(ma.ma_reg, M_DEVBUF);
 		if (ma.ma_ninterrupts)
 			free(ma.ma_interrupts, M_DEVBUF);

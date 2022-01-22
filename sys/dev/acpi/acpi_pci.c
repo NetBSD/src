@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.33 2021/12/20 11:17:40 skrll Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.34 2022/01/22 11:49:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.33 2021/12/20 11:17:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.34 2022/01/22 11:49:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -572,7 +572,7 @@ acpi_pci_bus_get_child_devhandle(device_t dev, devhandle_t call_handle, void *v)
 
 	if (ad != NULL && (hdl = ad->ad_handle) != NULL) {
 		/* Found it! */
-		args->devhandle = devhandle_from_acpi(hdl);
+		args->devhandle = devhandle_from_acpi(call_handle, hdl);
 		return 0;
 	}
 

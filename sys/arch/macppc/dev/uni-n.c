@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.11 2021/08/07 16:18:58 thorpej Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.12 2022/01/22 11:49:16 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.11 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.12 2022/01/22 11:49:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,7 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 		panic("Can't init uni-n mem tag");
 	}
 
+	devhandle_t selfh = device_handle(self);
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));
 		if (namelen < 0)
@@ -150,7 +151,7 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 		ca.ca_reg = reg;
 		ca.ca_intr = intr;
 		config_found(self, &ca, uni_n_print,
-		    CFARGS(.devhandle = devhandle_from_of(child)));
+		    CFARGS(.devhandle = devhandle_from_of(selfh, child)));
 	}
 }
 

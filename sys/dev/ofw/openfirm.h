@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.47 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.48 2022/01/22 11:49:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -107,7 +107,7 @@ int	openfirmware(void *);
 #ifdef _KERNEL
 struct device_compatible_entry;
 
-devhandle_t	devhandle_from_of(int);
+devhandle_t	devhandle_from_of(devhandle_t, int);
 int		devhandle_to_of(devhandle_t);
 
 #define	OF_DEVICE_CALL_REGISTER(_n_, _c_)				\

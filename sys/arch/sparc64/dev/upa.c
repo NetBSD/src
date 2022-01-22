@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.23 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: upa.c,v 1.24 2022/01/22 11:49:17 thorpej Exp $	*/
 /*	$OpenBSD: upa.c,v 1.8 2008/01/17 22:53:18 kettenis Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.23 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.24 2022/01/22 11:49:17 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,6 +116,7 @@ upa_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_cbt = upa_alloc_bus_tag(sc);
 
+	devhandle_t selfh = device_handle(sc->sc_dev);
 	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) {
 		char buf[32];
 		struct mainbus_attach_args map;
@@ -133,7 +134,7 @@ upa_attach(device_t parent, device_t self, void *aux)
 		map.ma_bustag = sc->sc_cbt;
 		map.ma_dmatag = ma->ma_dmatag;
 		config_found(sc->sc_dev, &map, upa_print,
-		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node)));
 	}
 }
 

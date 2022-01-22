@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.108 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.109 2022/01/22 11:49:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.108 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.109 2022/01/22 11:49:17 thorpej Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -506,7 +506,8 @@ mpacpi_pci_foundbus(struct acpi_devnode *ad)
 	}
 
 	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);
-	mpr->mpr_devhandle = devhandle_from_acpi(ad->ad_handle);
+	mpr->mpr_devhandle =
+	    devhandle_from_acpi(devhandle_invalid(), ad->ad_handle);
 	mpr->mpr_buf = buf;
 	mpr->mpr_seg = ad->ad_pciinfo->ap_segment;
 	mpr->mpr_bus = ad->ad_pciinfo->ap_downbus;

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.295 2021/12/31 14:22:42 riastradh Exp $	*/
+/*	$NetBSD: acpi.c,v 1.296 2022/01/22 11:49:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.295 2021/12/31 14:22:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.296 2022/01/22 11:49:17 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -962,7 +962,8 @@ acpi_rescan_early(struct acpi_softc *sc)
 
 		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
 		    CFARGS(.iattr = "acpinodebus",
-			   .devhandle = devhandle_from_acpi(ad->ad_handle)));
+			   .devhandle = devhandle_from_acpi(devhandle_invalid(),
+							    ad->ad_handle)));
 	}
 }
 
@@ -1029,7 +1030,8 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 
 		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
 		    CFARGS(.iattr = "acpinodebus",
-			   .devhandle = devhandle_from_acpi(ad->ad_handle)));
+			   .devhandle = devhandle_from_acpi(devhandle_invalid(),
+							    ad->ad_handle)));
 	}
 }
 
