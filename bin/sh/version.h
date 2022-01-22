@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.3 2018/12/12 12:16:42 kre Exp $	*/
+/*	$NetBSD: version.h,v 1.4 2022/01/22 22:53:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,4 +33,4 @@
  * when a new (shell only) release is to be exported.  This should not be
  * updated just because a new NetBSD release is to include this code.
  */
-#define	NETBSD_SHELL	"20181212"
+#define	NETBSD_SHELL	"20220122"
