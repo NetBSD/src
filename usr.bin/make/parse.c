@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.653 2022/01/20 19:24:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.654 2022/01/22 16:24:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.653 2022/01/20 19:24:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.654 2022/01/22 16:24:45 rillig Exp $");
 
 /*
  * A file being read.
@@ -2698,7 +2698,7 @@ FindSemicolon(char *p)
 }
 
 /*
- * dependency	-> target... op [source...] [';' command]
+ * dependency	-> [target...] op [source...] [';' command]
  * op		-> ':' | '::' | '!'
  */
 static void
@@ -2711,7 +2711,7 @@ ParseDependencyLine(char *line)
 	/*
 	 * For some reason - probably to make the parser impossible -
 	 * a ';' can be used to separate commands from dependencies.
-	 * Attempt to avoid ';' inside substitution patterns.
+	 * Attempt to skip over ';' inside substitution patterns.
 	 */
 	{
 		char *semicolon = FindSemicolon(line);
