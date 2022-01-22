@@ -1,4 +1,4 @@
-/*	$NetBSD: central.c,v 1.8 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: central.c,v 1.9 2022/01/22 11:49:17 thorpej Exp $	*/
 /*	$OpenBSD: central.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: central.c,v 1.8 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: central.c,v 1.9 2022/01/22 11:49:17 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,6 +97,7 @@ central_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
+	devhandle_t selfh = device_handle(self);
 	node0 = firstchild(sc->sc_node);
 	for (node = node0; node; node = nextsibling(node)) {
 		struct central_attach_args ca;
@@ -113,7 +114,8 @@ central_attach(device_t parent, device_t self, void *aux)
 		    &ca.ca_nreg, (void **)&ca.ca_reg);
 
 		(void)config_found(self, (void *)&ca, central_print,
-		    CFARGS(.devhandle = prom_node_to_devhandle(ca.ca_node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh,
+							       ca.ca_node)));
 
 		if (ca.ca_name != NULL)
 			free(ca.ca_name, M_DEVBUF);

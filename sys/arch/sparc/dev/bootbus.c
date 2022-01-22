@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.23 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.24 2022/01/22 11:49:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.23 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.24 2022/01/22 11:49:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -115,6 +115,7 @@ bootbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach the CPU (and possibly bootbus) child nodes. */
+	devhandle_t selfh = device_handle(self);
 	for (node = firstchild(sc->sc_node); node != 0;
 	     node = nextsibling(node)) {
 		struct bootbus_attach_args baa;
@@ -123,7 +124,7 @@ bootbus_attach(device_t parent, device_t self, void *aux)
 			panic("bootbus_attach: failed to set up attach args");
 
 		config_found(self, &baa, bootbus_print,
-		    CFARGS(.devhandle = prom_node_to_devhandle(node),
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node),
 			   .submatch = bootbus_submatch));
 
 		bootbus_destroy_attach_args(&baa);

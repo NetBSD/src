@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.34 2021/08/07 16:19:13 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.35 2022/01/22 11:49:17 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.34 2021/08/07 16:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.35 2022/01/22 11:49:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,7 @@ ofisaattach(device_t parent, device_t self, void *aux)
 	isa_dmainit(iba.iba_ic, iba.iba_iot, iba.iba_dmat, self);
 #endif
 
+	devhandle_t selfh = device_handle(self);
 	for (child = OF_child(oba->oba_phandle); child;
 	    child = OF_peer(child)) {
 		if (ofisa_ignore_child(oba->oba_phandle, child))
@@ -142,7 +143,7 @@ ofisaattach(device_t parent, device_t self, void *aux)
 		aa.ic = iba.iba_ic;
 
 		config_found(self, &aa, ofisaprint,
-		    CFARGS(.devhandle = devhandle_from_of(child)));
+		    CFARGS(.devhandle = devhandle_from_of(selfh, child)));
 	}
 }
 

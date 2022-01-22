@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.38 2021/08/07 16:19:15 thorpej Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.39 2022/01/22 11:49:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.38 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.39 2022/01/22 11:49:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,11 +207,12 @@ dmaattach_sbus(device_t parent, device_t self, void *aux)
 	lsi64854_attach(sc);
 
 	/* Attach children */
+	devhandle_t selfh = device_handle(self);
 	for (node = firstchild(sa->sa_node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sax;
 		sbus_setup_attach_args(sbsc, sbt, sc->sc_dmatag, node, &sax);
 		(void)config_found(self, (void *)&sax, dmaprint_sbus,
-		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node)));
 		sbus_destroy_attach_args(&sax);
 	}
 }

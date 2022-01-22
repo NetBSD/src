@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.100 2021/08/09 21:08:06 andvar Exp $ */
+/*	$NetBSD: iommu.c,v 1.101 2022/01/22 11:49:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.100 2021/08/09 21:08:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.101 2022/01/22 11:49:16 thorpej Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -278,6 +278,8 @@ iommu_attach(device_t parent, device_t self, void *aux)
 					IOMMU_DVMA_BASE, IOMMU_DVMA_END,
 					0, 0, EX_WAITOK);
 
+	devhandle_t selfh = device_handle(self);
+
 	/*
 	 * If we are attaching implicit iommu on JS1/OF we do not have
 	 * an iommu node to traverse, instead mainbus_attach passed us
@@ -299,7 +301,7 @@ iommu_attach(device_t parent, device_t self, void *aux)
 		ia.iom_nreg = 1;
 
 		config_found(self, (void *)&ia, iommu_print,
-		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node)));
 		return;
 	}
 
@@ -323,7 +325,7 @@ iommu_attach(device_t parent, device_t self, void *aux)
 			&ia.iom_nreg, &ia.iom_reg);
 
 		config_found(self, (void *)&ia, iommu_print,
-		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node)));
 		if (ia.iom_reg != NULL)
 			free(ia.iom_reg, M_DEVBUF);
 	}
