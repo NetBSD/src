@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.654 2022/01/22 16:24:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.655 2022/01/22 18:59:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.654 2022/01/22 16:24:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.655 2022/01/22 18:59:23 rillig Exp $");
 
 /*
  * A file being read.
@@ -548,7 +548,7 @@ HandleMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 	free(xmsg);
 
 	if (level == PARSE_FATAL) {
-		PrintOnError(NULL, NULL);
+		PrintOnError(NULL, "\n");
 		exit(1);
 	}
 }
@@ -2850,9 +2850,9 @@ Parse_File(const char *name, int fd)
 	if (parseErrors != 0) {
 		(void)fflush(stdout);
 		(void)fprintf(stderr,
-		    "%s: Fatal errors encountered -- cannot continue",
+		    "%s: Fatal errors encountered -- cannot continue\n",
 		    progname);
-		PrintOnError(NULL, NULL);
+		PrintOnError(NULL, "");
 		exit(1);
 	}
 }

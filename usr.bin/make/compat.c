@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.237 2022/01/08 09:53:44 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.238 2022/01/22 18:59:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.237 2022/01/08 09:53:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.238 2022/01/22 18:59:23 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -583,7 +583,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 	} else if (opts.keepgoing) {
 		pgn->flags.remake = false;
 	} else {
-		PrintOnError(gn, "\nStop.");
+		PrintOnError(gn, "\nStop.\n");
 		exit(1);
 	}
 	return true;
@@ -671,7 +671,7 @@ MakeBeginNode(void)
 
 	Compat_Make(gn, gn);
 	if (GNode_IsError(gn)) {
-		PrintOnError(gn, "\nStop.");
+		PrintOnError(gn, "\nStop.\n");
 		exit(1);
 	}
 }
@@ -748,7 +748,7 @@ Compat_Run(GNodeList *targs)
 			Targ_PrintGraph(2);
 		else if (DEBUG(GRAPH3))
 			Targ_PrintGraph(3);
-		PrintOnError(errorNode, "\nStop.");
+		PrintOnError(errorNode, "\nStop.\n");
 		exit(1);
 	}
 }
