@@ -1,4 +1,4 @@
-/* $NetBSD: fuse_internal.h,v 1.3 2022/01/22 08:01:12 pho Exp $ */
+/* $NetBSD: fuse_internal.h,v 1.4 2022/01/22 08:05:35 pho Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -43,6 +43,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+enum refuse_show_help_variant {
+	REFUSE_SHOW_HELP_FULL		= 1,
+	REFUSE_SHOW_HELP_NO_HEADER	= 2,
+};
 
 /* Internal functions, hidden from users */
 __BEGIN_HIDDEN_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse_lowlevel.c,v 1.2 2021/12/04 06:42:39 pho Exp $	*/
+/*	$NetBSD: refuse_lowlevel.c,v 1.3 2022/01/22 08:05:35 pho Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse_lowlevel.c,v 1.2 2021/12/04 06:42:39 pho Exp $");
+__RCSID("$NetBSD: refuse_lowlevel.c,v 1.3 2022/01/22 08:05:35 pho Exp $");
 #endif /* !lint */
 
 #include <fuse_internal.h>
@@ -45,8 +45,9 @@ __RCSID("$NetBSD: refuse_lowlevel.c,v 1.2 2021/12/04 06:42:39 pho Exp $");
 	{ t, offsetof(struct fuse_cmdline_opts, p), v }
 
 static struct fuse_opt fuse_lowlevel_opts[] = {
-	REFUSE_LOWLEVEL_OPT("-h"       , show_help       , 1),
-	REFUSE_LOWLEVEL_OPT("--help"   , show_help       , 1),
+	REFUSE_LOWLEVEL_OPT("-h"       , show_help       , REFUSE_SHOW_HELP_FULL),
+	REFUSE_LOWLEVEL_OPT("--help"   , show_help       , REFUSE_SHOW_HELP_FULL),
+	REFUSE_LOWLEVEL_OPT("-ho"      , show_help       , REFUSE_SHOW_HELP_NO_HEADER),
 	REFUSE_LOWLEVEL_OPT("-V"       , show_version    , 1),
 	REFUSE_LOWLEVEL_OPT("--version", show_version    , 1),
 	REFUSE_LOWLEVEL_OPT("-d"       , debug           , 1),
