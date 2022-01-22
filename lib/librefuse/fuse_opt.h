@@ -1,4 +1,4 @@
-/*	$NetBSD: fuse_opt.h,v 1.9 2021/12/01 14:17:50 pho Exp $	*/
+/*	$NetBSD: fuse_opt.h,v 1.10 2022/01/22 08:01:50 pho Exp $	*/
 
 /*
  * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif  
+#endif
 
 enum {
 	FUSE_OPT_KEY_OPT = -1,
@@ -43,6 +43,8 @@ enum {
 	FUSE_OPT_KEY_KEEP = -3,
 	FUSE_OPT_KEY_DISCARD = -4
 };
+
+struct fuse_args;
 
 struct fuse_opt {
 	const char	*templ;
@@ -68,6 +70,6 @@ int fuse_opt_match(const struct fuse_opt *, const char *);
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 
 #endif /* _FUSE_OPT_H_ */
