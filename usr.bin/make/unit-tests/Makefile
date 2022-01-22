@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.296 2022/01/19 22:10:41 rillig Exp $
+# $NetBSD: Makefile,v 1.297 2022/01/22 16:23:56 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -478,7 +478,6 @@ ENV.varname-vpath+=	VPATH=varname-vpath.dir:varname-vpath.dir2
 # If possible, write ".MAKEFLAGS: -dv" in the test .mk file instead of
 # settings FLAGS.test=-dv here, since that is closer to the test code.
 FLAGS.cond-func-make=		via-cmdline
-FLAGS.directive-ifmake=		first second
 FLAGS.doterror=			# none, especially not -k
 FLAGS.jobs-error-indirect=	# none, especially not -k
 FLAGS.jobs-error-nested=	# none, especially not -k
