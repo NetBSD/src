@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.104 2022/01/22 07:53:06 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.105 2022/01/22 07:57:30 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.104 2022/01/22 07:53:06 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.105 2022/01/22 07:57:30 pho Exp $");
 #endif /* !lint */
 
 /* We emit a compiler warning for anyone including <fuse.h> without
@@ -1392,7 +1392,24 @@ fuse_unmount_compat22(const char *mp)
 }
 
 int
+fuse_invalidate_path(struct fuse *fuse __attribute__((__unused__)),
+		     const char *path __attribute__((__unused__)))
+{
+    /* ReFUSE doesn't cache anything at the moment. No need to do
+     * anything. */
+    return -ENOENT;
+}
+
+int
 fuse_version(void)
 {
 	return FUSE_VERSION;
+}
+
+/* This is a legacy function that has been removed from the FUSE API,
+ * but is defined here because it needs to access refuse_opts. */
+int
+fuse_is_lib_option(const char *opt)
+{
+	return fuse_opt_match(refuse_opts, opt);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.27 2022/01/22 07:56:16 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.28 2022/01/22 07:57:30 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,6 +31,7 @@
 #define FUSE_H_	20211204
 
 #include <refuse/buf.h>
+#include <refuse/legacy.h>
 #include <refuse/poll.h>
 #include <refuse/session.h>
 #include <sys/cdefs.h>
@@ -110,7 +111,6 @@ struct fuse_args {
  */
 #define FUSE_ARGS_INIT(argc, argv) { argc, argv, 0 }
 
-typedef struct puffs_fuse_dirh *fuse_dirh_t;
 
 typedef int (*fuse_fill_dir_t)(void *, const char *, const struct stat *, off_t);
 typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);
@@ -166,6 +166,8 @@ struct fuse_operations {
 
 struct fuse *fuse_new(struct fuse_args *,
 	const struct fuse_operations *, size_t, void *);
+/* Invalidate cache for a given path. Appeared on FUSE 3.2. */
+int fuse_invalidate_path(struct fuse *fuse, const char *path);
 
 int fuse_mount(struct fuse *, const char *);
 void fuse_unmount(struct fuse *);
