@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.107 2022/01/22 07:59:33 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.108 2022/01/22 08:00:17 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.107 2022/01/22 07:59:33 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.108 2022/01/22 08:00:17 pho Exp $");
 #endif /* !lint */
 
 /* We emit a compiler warning for anyone including <fuse.h> without
@@ -855,6 +855,19 @@ puffs_fuse_node_setattr(struct puffs_usermount *pu, void *opc,
 	return fuse_setattr(fuse, pn, path, va);
 }
 
+static int
+puffs_fuse_node_pathconf(struct puffs_usermount *pu, void *opc,
+	int name, __register_t *retval)
+{
+	/* Returning EINVAL for pathconf(2) means that this filesystem
+	 * does not support an association of the given name with the
+	 * file. This is necessary because the default error code
+	 * returned by the puffs kernel module (ENOTSUPP) is not
+	 * suitable for an errno from pathconf(2), and "ls -l"
+	 * complains about it. */
+	return EINVAL;
+}
+
 /* ARGSUSED2 */
 static int
 puffs_fuse_node_open(struct puffs_usermount *pu, void *opc, int mode,
@@ -1296,6 +1309,7 @@ fuse_new(struct fuse_args *args,
         PUFFSOP_SET(pops, puffs_fuse, node, lookup);
         PUFFSOP_SET(pops, puffs_fuse, node, getattr);
         PUFFSOP_SET(pops, puffs_fuse, node, setattr);
+	PUFFSOP_SET(pops, puffs_fuse, node, pathconf);
         PUFFSOP_SET(pops, puffs_fuse, node, readdir);
         PUFFSOP_SET(pops, puffs_fuse, node, readlink);
         PUFFSOP_SET(pops, puffs_fuse, node, mknod);
