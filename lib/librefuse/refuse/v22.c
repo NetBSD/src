@@ -1,7 +1,7 @@
-/*	$NetBSD: fuse_lowlevel.h,v 1.3 2022/01/22 08:09:39 pho Exp $	*/
+/* $NetBSD: v22.c,v 1.1 2022/01/22 08:09:40 pho Exp $ */
 
 /*
- * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,42 +28,40 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _FUSE_LOWLEVEL_H_
-#define _FUSE_LOWLEVEL_H_
 
-/* <fuse_lowlevel.h> appeared on FUSE 2.4. */
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: v22.c,v 1.1 2022/01/22 08:09:40 pho Exp $");
+#endif /* !lint */
 
-#include <fuse.h>
+#include <fuse_internal.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct fuse *
+fuse_setup_v22(int argc, char *argv[], const void *op, int op_version,
+               char **mountpoint, int *multithreaded, int *fd) {
+    /*
+     * This is conceptually the part of fuse_main() before the event
+     * loop. However, FUSE 2.2 fuse_setup() takes a pointer to store a
+     * channel fd, which is supposed to be obtained by calling FUSE
+     * 2.1 fuse_mount(). The problem is that we don't really have such
+     * a thing as channel fd. Luckily for us, the only valid use of
+     * the channel fd is to pass to fuse_new(), which is a part of
+     * fuse_setup() itself. So it should be okay to just put a dummy
+     * value there.
+     */
+    struct fuse* fuse;
 
-/* NOTE: Changing the size and/or layout of this struct will break ABI
- * compatibility. */
-struct fuse_cmdline_opts {
-	int singlethread;
-	int foreground;
-	int debug;
-	int nodefault_fsname;
-	char *mountpoint;
-	int show_version;
-	int show_help;
-	int clone_fd;
-	unsigned int max_idle_threads;
-	int reserved[32];
-};
+    fuse = fuse_setup_v26(argc, argv, op, op_version, mountpoint, multithreaded, NULL);
+    if (fuse == NULL)
+        return NULL;
 
-/* Print low-level version information to stdout. Appeared on FUSE
- * 3.0. */
-void fuse_lowlevel_version(void);
-
-/* Print available options for fuse_parse_cmdline(). Appeared on FUSE
- * 3.0. */
-void fuse_cmdline_help(void);
-
-#ifdef __cplusplus
+    *fd = -1;
+    return fuse;
 }
-#endif
 
-#endif /* _FUSE_LOWLEVEL_H_ */
+void
+fuse_teardown_v22(struct fuse *fuse,
+                  int fd __attribute__((__unused__)),
+                  char *mountpoint __attribute__((__unused__))) {
+    __fuse_teardown(fuse);
+}

@@ -1,7 +1,7 @@
-/*	$NetBSD: fuse_lowlevel.h,v 1.3 2022/01/22 08:09:39 pho Exp $	*/
+/* $NetBSD: chan.h,v 1.1 2022/01/22 08:09:40 pho Exp $ */
 
 /*
- * Copyright (c) 2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,42 +28,53 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _FUSE_LOWLEVEL_H_
-#define _FUSE_LOWLEVEL_H_
+#if !defined(_FUSE_CHAN_H_)
+#define _FUSE_CHAN_H_
 
-/* <fuse_lowlevel.h> appeared on FUSE 2.4. */
+/*
+ * Fuse communication channel API, appeared on FUSE 2.4.
+ */
 
-#include <fuse.h>
+#if !defined(FUSE_H_)
+#  error Do not include this header directly. Include <fuse.h> instead.
+#endif
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <sys/cdefs.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* NOTE: Changing the size and/or layout of this struct will break ABI
- * compatibility. */
-struct fuse_cmdline_opts {
-	int singlethread;
-	int foreground;
-	int debug;
-	int nodefault_fsname;
-	char *mountpoint;
-	int show_version;
-	int show_help;
-	int clone_fd;
-	unsigned int max_idle_threads;
-	int reserved[32];
-};
+/* An opaque object representing a communication channel. */
+struct fuse_chan;
 
-/* Print low-level version information to stdout. Appeared on FUSE
- * 3.0. */
-void fuse_lowlevel_version(void);
+/* Implementation details. User code should never call these functions
+ * directly. */
+struct fuse;
+struct fuse_args;
+__BEGIN_HIDDEN_DECLS
+struct fuse_chan* fuse_chan_new(const char* mountpoint, const struct fuse_args* args);
+void              fuse_chan_destroy(struct fuse_chan* chan);
 
-/* Print available options for fuse_parse_cmdline(). Appeared on FUSE
- * 3.0. */
-void fuse_cmdline_help(void);
+int               fuse_chan_stash(struct fuse_chan* chan);
+struct fuse_chan* fuse_chan_peek(int idx);
+struct fuse_chan* fuse_chan_take(int idx);
+struct fuse_chan* fuse_chan_find(bool (*pred)(struct fuse_chan* chan, void* priv),
+                                 int* found_idx, void* priv);
+
+void              fuse_chan_set_fuse(struct fuse_chan* chan, struct fuse* fuse);
+void              fuse_chan_set_to_be_destroyed(struct fuse_chan* chan, bool is_to_be_destroyed);
+
+const char*       fuse_chan_mountpoint(const struct fuse_chan* chan);
+struct fuse_args* fuse_chan_args(struct fuse_chan* chan);
+struct fuse*      fuse_chan_fuse(struct fuse_chan* chan);
+bool              fuse_chan_is_to_be_destroyed(const struct fuse_chan* chan);
+__END_HIDDEN_DECLS
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _FUSE_LOWLEVEL_H_ */
+#endif
