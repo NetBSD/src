@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.28 2022/01/22 07:57:30 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.29 2022/01/22 08:01:12 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -40,24 +40,52 @@
 #include <sys/types.h>
 #include <utime.h>
 
-/* The latest version of FUSE API currently provided by refuse. */
-#define FUSE_MAJOR_VERSION	2
-#define FUSE_MINOR_VERSION	6
+/* This used to be (maj) * 10 + (min) until FUSE 3.10, and then
+ * changed to (maj) * 100 + (min). We can't just use the "newer"
+ * definition because filesystems in the wild still use the older one
+ * in their FUSE_USE_VERSION request. */
+#define FUSE_MAKE_VERSION(maj, min)					\
+	(((maj) > 3 || ((maj) == 3 && (min) >= 10))			\
+	? (maj) * 100 + (min)						\
+	: (maj) *  10 + (min))
 
-#define FUSE_MAKE_VERSION(maj, min)	((maj) * 10 + (min))
-#define FUSE_VERSION	FUSE_MAKE_VERSION(FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION)
+/* The latest version of FUSE API currently provided by ReFUSE. This
+ * is an implementation detail. User code should not rely on this
+ * constant. */
+#define _REFUSE_MAJOR_VERSION_	2
+#define _REFUSE_MINOR_VERSION_	6
+
+#define _REFUSE_VERSION_	FUSE_MAKE_VERSION(_REFUSE_MAJOR_VERSION_, _REFUSE_MINOR_VERSION_)
 
 /* FUSE_USE_VERSION is expected to be defined by user code to
  * determine the API to be used. Although defining this macro is
  * mandatory in the original FUSE implementation, refuse hasn't
  * required this so we only emit a warning if it's undefined. */
 #if defined(FUSE_USE_VERSION)
-#	if FUSE_USE_VERSION > FUSE_VERSION
+#	if FUSE_USE_VERSION > _REFUSE_VERSION_
 #		warning "The requested API version is higher than the latest one supported by refuse."
+#	elif FUSE_USE_VERSION < 11
+#		warning "The requested API version is lower than the oldest one supported by refuse."
 #	endif
 #else
-#	warning "User code including <fuse.h> should define FUSE_USE_VERSION before including this header. Defaulting to the latest version."
-#	define FUSE_USE_VERSION	FUSE_VERSION
+#	if !defined(_REFUSE_IMPLEMENTATION_)
+#		warning "User code including <fuse.h> should define FUSE_USE_VERSION before including this header. Defaulting to the latest version."
+#		define FUSE_USE_VERSION	_REFUSE_VERSION_
+#	endif
+#endif
+
+/* FUSE_VERSION is supposed to be the latest version of FUSE API
+ * supported by the library. However, due to the way how original FUSE
+ * is implemented, some filesystems set FUSE_USE_VERSION to some old
+ * one and then expect the actual API version exposed by the library
+ * to be something newer if FUSE_VERSION is higher than that. ReFUSE
+ * doesn't work that way, so this has to be always identical to
+ * FUSE_USE_VERSION.
+ */
+#if defined(FUSE_USE_VERSION)
+#	define FUSE_VERSION		FUSE_USE_VERSION
+#	define FUSE_MAJOR_VERSION	(FUSE_VERSION / 10)
+#	define FUSE_MINOR_VERSION	(FUSE_VERSION % 10)
 #endif
 
 #ifdef __cplusplus
