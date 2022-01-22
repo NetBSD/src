@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.105 2022/01/22 07:57:30 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.106 2022/01/22 07:58:32 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.105 2022/01/22 07:57:30 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.106 2022/01/22 07:58:32 pho Exp $");
 #endif /* !lint */
 
 /* We emit a compiler warning for anyone including <fuse.h> without
@@ -301,7 +301,7 @@ puffs_fuse_fill_dir(void *buf, const char *name,
 		dtype = DT_UNKNOWN;
 		dino = fakeino++;
 	} else {
-		dtype = puffs_vtype2dt(puffs_mode2vt(stbuf->st_mode));
+		dtype = (uint8_t)puffs_vtype2dt(puffs_mode2vt(stbuf->st_mode));
 		dino = stbuf->st_ino;
 
 		/*
@@ -571,7 +571,7 @@ puffs_fuse_node_readlink(struct puffs_usermount *pu, void *opc,
 		if (!p)
 			return EINVAL;
 
-		*linklen = p - linkname;
+		*linklen = (size_t)(p - linkname);
 	}
 
 	return -ret;
@@ -948,9 +948,9 @@ puffs_fuse_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	set_fuse_context_uid_gid(pcr);
 
 	maxread = *resid;
-	if (maxread > pn->pn_va.va_size - offset) {
+	if (maxread > (size_t)((off_t)pn->pn_va.va_size - offset)) {
 		/*LINTED*/
-		maxread = pn->pn_va.va_size - offset;
+		maxread = (size_t)((off_t)pn->pn_va.va_size - offset);
 	}
 	if (maxread == 0)
 		return 0;
@@ -959,7 +959,7 @@ puffs_fuse_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	    &rn->file_info);
 
 	if (ret > 0) {
-		*resid -= ret;
+		*resid -= (size_t)ret;
 		ret = 0;
 	}
 
@@ -987,15 +987,15 @@ puffs_fuse_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	set_fuse_context_uid_gid(pcr);
 
 	if (ioflag & PUFFS_IO_APPEND)
-		offset = pn->pn_va.va_size;
+		offset = (off_t)pn->pn_va.va_size;
 
 	ret = (*fuse->op.write)(path, (char *)buf, *resid, offset,
 	    &rn->file_info);
 
 	if (ret >= 0) {
 		if ((uint64_t)(offset + ret) > pn->pn_va.va_size)
-			pn->pn_va.va_size = offset + ret;
-		*resid -= ret;
+			pn->pn_va.va_size = (u_quad_t)(offset + ret);
+		*resid -= (size_t)ret;
 		ret = (*resid == 0) ? 0 : ENOSPC;
 	} else {
 		ret = -ret;
@@ -1062,7 +1062,7 @@ puffs_fuse_node_readdir(struct puffs_usermount *pu, void *opc,
 			break;
 
 		memcpy(dent, fromdent, _DIRENT_SIZE(fromdent));
-		*readoff += _DIRENT_SIZE(fromdent);
+		*readoff += (off_t)_DIRENT_SIZE(fromdent);
 		*reslen -= _DIRENT_SIZE(fromdent);
 
 		dent = _DIRENT_NEXT(dent);
@@ -1255,7 +1255,7 @@ fuse_new(struct fuse_args *args,
 	struct fuse_context	*fusectx;
 	struct puffs_ops	*pops;
 	struct fuse		*fuse;
-	int			puffs_flags;
+	uint32_t		puffs_flags;
 
 	/* parse refuse options */
 	if (fuse_opt_parse(args, &config, refuse_opts, NULL) == -1)

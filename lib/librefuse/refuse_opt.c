@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.22 2021/12/04 06:42:39 pho Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.23 2022/01/22 07:58:32 pho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -60,7 +60,7 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 	} else if (args->allocated == args->argc) {
 		int na = args->allocated + 10;
 
-		if (reallocarr(&args->argv, na, sizeof(*args->argv)) != 0)
+		if (reallocarr(&args->argv, (size_t)na, sizeof(*args->argv)) != 0)
 			return -1;
 
 		args->allocated = na;
@@ -125,7 +125,7 @@ fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 	} else {
 		na = args->allocated + 10;
 	}
-	if (reallocarr(&args->argv, na, sizeof(*args->argv)) != 0) {
+	if (reallocarr(&args->argv, (size_t)na, sizeof(*args->argv)) != 0) {
 		warn("fuse_opt_insert_arg");
 		return -1;
 	}
@@ -180,17 +180,17 @@ int fuse_opt_add_opt_escaped(char **opts, const char *opt)
 	return add_opt(opts, opt, true);
 }
 
-static bool match_templ(const char *templ, const char *opt, int *sep_idx)
+static bool match_templ(const char *templ, const char *opt, ssize_t *sep_idx)
 {
 	const char *sep = strpbrk(templ, "= ");
 
 	if (sep != NULL && (sep[1] == '\0' || sep[1] == '%')) {
 		const size_t cmp_len =
-			sep[0] == '=' ? sep - templ + 1 : sep - templ;
+			(size_t)(sep[0] == '=' ? sep - templ + 1 : sep - templ);
 
 		if (strlen(opt) >= cmp_len && strncmp(templ, opt, cmp_len) == 0) {
 			if (sep_idx != NULL)
-				*sep_idx = sep - templ;
+				*sep_idx = (ssize_t)(sep - templ);
 			return true;
 		}
 		else {
@@ -210,7 +210,7 @@ static bool match_templ(const char *templ, const char *opt, int *sep_idx)
 }
 
 static const struct fuse_opt *
-find_opt(const struct fuse_opt *opts, const char *opt, int *sep_idx)
+find_opt(const struct fuse_opt *opts, const char *opt, ssize_t *sep_idx)
 {
 	for (; opts != NULL && opts->templ != NULL; opts++) {
 		if (match_templ(opts->templ, opt, sep_idx))
@@ -283,7 +283,7 @@ static int next_arg(const struct fuse_args *args, int *i)
 /* Parse a single argument with a matched template. */
 static int
 parse_matched_arg(const char* arg, struct fuse_args *outargs,
-		const struct fuse_opt* opt, int sep_idx, void* data,
+		const struct fuse_opt* opt, ssize_t sep_idx, void* data,
 		fuse_opt_proc_t proc, bool is_opt)
 {
 	if (opt->offset == -1) {
@@ -317,7 +317,7 @@ parse_matched_arg(const char* arg, struct fuse_args *outargs,
 #pragma GCC diagnostic pop
 					(void)fprintf(stderr, "fuse: '%s' is not a "
 								"valid parameter for option '%.*s'\n",
-								param, sep_idx, opt->templ);
+								param, (int)sep_idx, opt->templ);
 					return -1;
 				}
 			}
@@ -336,7 +336,7 @@ parse_arg(struct fuse_args* args, int *argi, const char* arg,
 		struct fuse_args *outargs, void *data,
 		const struct fuse_opt *opts, fuse_opt_proc_t proc, bool is_opt)
 {
-	int sep_idx;
+	ssize_t sep_idx;
 	const struct fuse_opt *opt = find_opt(opts, arg, &sep_idx);
 
 	if (opt) {
@@ -357,11 +357,11 @@ parse_arg(struct fuse_args* args, int *argi, const char* arg,
 
 				/* ...but processor callbacks expect a concatenated
 				 * argument "-xfoo". */
-				if ((new_arg = malloc(sep_idx +
+				if ((new_arg = malloc((size_t)sep_idx +
 									strlen(args->argv[*argi]) + 1)) == NULL)
 					return -1;
 
-				strncpy(new_arg, arg, sep_idx); /* -x */
+				strncpy(new_arg, arg, (size_t)sep_idx); /* -x */
 				strcpy(new_arg + sep_idx, args->argv[*argi]); /* foo */
 				rv = parse_matched_arg(new_arg, outargs, opt, sep_idx,
 									data, proc, is_opt);
