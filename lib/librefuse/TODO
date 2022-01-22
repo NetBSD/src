@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.4 2016/11/16 16:11:42 pho Exp $
+	$NetBSD: TODO,v 1.5 2022/01/22 07:54:57 pho Exp $
 
 To Do
 =====
@@ -11,6 +11,7 @@ implement all sorts of compat tweaks to appease various file systems
 do proper implementations of dirfillers
 statfs - some fuse file systems want struct statfs and we only have
          statvfs available natively
+Support data buffers appeared on FUSE 2.9 (struct fuse_buf).
 
 Done
 ====
