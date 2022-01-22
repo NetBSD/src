@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.88 2022/01/22 15:10:32 skrll Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.89 2022/01/22 19:08:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.88 2022/01/22 15:10:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.89 2022/01/22 19:08:33 martin Exp $");
 
 
 #include <sys/param.h>
@@ -450,7 +450,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	if (pci_dma64_available(pa)) {
 		if (bus_dmatag_subregion(pa->pa_dmat64,
 					 0,
-					 FRAG_ADDR_MASK,
+					 (bus_addr_t)FRAG_ADDR_MASK,
 					 &sc->sc_dmat,
 					 BUS_DMA_WAITOK) != 0) {
 			aprint_error_dev(self,
