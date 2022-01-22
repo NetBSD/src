@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.117 2021/06/24 07:16:49 simonb Exp $	*/
+/*	$NetBSD: gzip.c,v 1.118 2022/01/22 14:00:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.117 2021/06/24 07:16:49 simonb Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.118 2022/01/22 14:00:45 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: gzip.c,v 1.117 2021/06/24 07:16:49 simonb Exp $");
 #include <stdarg.h>
 #include <getopt.h>
 #include <time.h>
+#include <paths.h>
 
 #ifndef PRIdOFF
 #define PRIdOFF PRId64
@@ -1708,19 +1709,39 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 static void
 check_siginfo(void)
 {
+	static int ttyfd = -2;
+	char buf[2048];
+	int n;
+
 	if (print_info == 0)
 		return;
-	if (infile) {
-		if (infile_total) {
-			int pcent = (int)((100.0 * infile_current) / infile_total);
 
-			fprintf(stderr, "%s: done %llu/%llu bytes %d%%\n",
-				infile, (unsigned long long)infile_current,
-				(unsigned long long)infile_total, pcent);
-		} else
-			fprintf(stderr, "%s: done %llu bytes\n",
-				infile, (unsigned long long)infile_current);
+	if (!infile)
+		goto out;
+
+	if (ttyfd == -2)
+		ttyfd = open(_PATH_TTY, O_RDWR | O_CLOEXEC);
+
+	if (ttyfd == -1)
+		goto out;
+
+	if (infile_total) {
+		const double pcent = (100.0 * infile_current) / infile_total;
+
+		n = snprintf(buf, sizeof(buf),
+		    "%s: %s: done %ju/%ju bytes (%3.2f%%)\n",
+		    getprogname(), infile, (uintmax_t)infile_current,
+		    (uintmax_t)infile_total, pcent);
+	} else {
+		n = snprintf(buf, sizeof(buf), "%s: %s: done %ju bytes\n",
+		    getprogname(), infile, (uintmax_t)infile_current);
 	}
+
+	if (n <= 0)
+		goto out;
+
+	write(ttyfd, buf, (size_t)n);
+out:
 	print_info = 0;
 }
 
@@ -1883,7 +1904,7 @@ handle_stdout(void)
 	uint32_t mtime;
 	int ret;
 
-	infile_set("(stdout)", 0);
+	infile_set("<stdout>", 0);
 
 	if (fflag == 0 && isatty(STDOUT_FILENO)) {
 		maybe_warnx("standard output is a terminal -- ignoring");
@@ -1898,7 +1919,7 @@ handle_stdout(void)
 	}
 
 	if (S_ISREG(sb.st_mode)) {
-		infile_set("(stdout)", sb.st_size);
+		infile_set("<stdout>", sb.st_size);
 		mtime = (uint32_t)sb.st_mtime;
 	} else {
 		systime = time(NULL);
