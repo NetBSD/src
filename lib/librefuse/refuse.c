@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.111 2022/01/22 08:03:32 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.112 2022/01/22 08:05:35 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.111 2022/01/22 08:03:32 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.112 2022/01/22 08:05:35 pho Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1157,11 +1157,17 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	}
 
 	if (opts.show_help) {
-		if (args.argv[0] != NULL && args.argv[0][0] != '\0') {
-			/* argv[0] being empty means that the application doesn't
-			 * want us to print the usage string.
-			 */
-			printf("Usage: %s [options] mountpoint\n\n", args.argv[0]);
+		switch (opts.show_help) {
+		case REFUSE_SHOW_HELP_FULL:
+			if (args.argv[0] != NULL && args.argv[0][0] != '\0') {
+				/* argv[0] being empty means that the application doesn't
+				 * want us to print the usage string.
+				 */
+				printf("Usage: %s [options] mountpoint\n\n", args.argv[0]);
+			}
+			break;
+		case REFUSE_SHOW_HELP_NO_HEADER:
+			break;
 		}
 		fuse_cmdline_help();
 		rv = 0;
