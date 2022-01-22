@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.109 2022/01/22 08:01:12 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.110 2022/01/22 08:02:49 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.109 2022/01/22 08:01:12 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.110 2022/01/22 08:02:49 pho Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1248,9 +1248,23 @@ int fuse_mount(struct fuse *fuse, const char *mountpoint)
 	return 0;
 }
 
-int fuse_daemonize(struct fuse *fuse)
+int fuse_daemonize(int foreground)
 {
-	return puffs_daemon(fuse->pu, 0, 0);
+	/* There is an impedance mismatch here: FUSE wants to
+	 * daemonize the process without any contexts but puffs wants
+	 * one. */
+	struct fuse *fuse = fuse_get_context()->fuse;
+
+	if (!fuse)
+		/* FUSE would probably allow this, but we cannot. */
+		errx(EXIT_FAILURE,
+		     "%s: librefuse doesn't allow calling"
+		     " this function before fuse_new().", __func__);
+
+	if (!foreground)
+		return puffs_daemon(fuse->pu, 0, 0);
+
+	return 0;
 }
 
 /* ARGSUSED1 */
