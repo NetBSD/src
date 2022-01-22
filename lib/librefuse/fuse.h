@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.31 2022/01/22 08:02:49 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.32 2022/01/22 08:03:32 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -195,8 +195,6 @@ struct fuse_operations {
 
 struct fuse *fuse_new(struct fuse_args *,
 	const struct fuse_operations *, size_t, void *);
-/* Invalidate cache for a given path. Appeared on FUSE 3.2. */
-int fuse_invalidate_path(struct fuse *fuse, const char *path);
 
 int fuse_mount(struct fuse *, const char *);
 void fuse_unmount(struct fuse *);
@@ -205,9 +203,12 @@ int fuse_main_real(int, char **, const struct fuse_operations *, size_t, void *)
 /* Functions that have existed since the beginning and have never
  * changed between API versions. */
 int fuse_loop(struct fuse *);
-struct fuse_context *fuse_get_context(void);
 void fuse_exit(struct fuse *);
 void fuse_destroy(struct fuse *);
+struct fuse_context *fuse_get_context(void);
+
+/* Print available library options. Appeared on FUSE 3.1. */
+void fuse_lib_help(struct fuse_args *args);
 
 /* Daemonize the calling process. Appeared on FUSE 2.6.
  *
@@ -215,6 +216,13 @@ void fuse_destroy(struct fuse *);
  * the time when FUSE_H_ < 20211204. */
 int fuse_daemonize(int foreground) __RENAME(fuse_daemonize_rev1);
 
+/* Check if a request has been interrupted. Appeared on FUSE 2.6. */
+int fuse_interrupted(void);
+
+/* Invalidate cache for a given path. Appeared on FUSE 3.2. */
+int fuse_invalidate_path(struct fuse *fuse, const char *path);
+
+/* Get the version number of the library. Appeared on FUSE 2.7. */
 int fuse_version(void);
 
 #if FUSE_USE_VERSION == 22
@@ -230,6 +238,25 @@ void fuse_unmount_compat22(const char *);
 #define fuse_main(argc, argv, op) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
 #endif
+/* Get the version string of the library. Appeared on FUSE 3.0. */
+const char *fuse_pkgversion(void);
+
+/* Get the current supplementary group IDs for the current request, or
+ * return -errno on failure. Appeared on FUSE 2.8. */
+int fuse_getgroups(int size, gid_t list[]);
+
+/* Start the cleanup thread when using option "-oremember". Appeared
+ * on FUSE 2.9. */
+int fuse_start_cleanup_thread(struct fuse *fuse);
+
+/* Stop the cleanup thread when using "-oremember". Appeared on FUSE
+ * 2.9. */
+void fuse_stop_cleanup_thread(struct fuse *fuse);
+
+/* Iterate over cache removing stale entries, used in conjunction with
+ * "-oremember". Return the number of seconds until the next
+ * cleanup. Appeared on FUSE 2.9. */
+int fuse_clean_cache(struct fuse *fuse);
 
 #ifdef __cplusplus
 }
