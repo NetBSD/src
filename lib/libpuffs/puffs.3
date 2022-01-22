@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.66 2021/12/03 17:12:17 pho Exp $
+.\"	$NetBSD: puffs.3,v 1.67 2022/01/22 07:35:26 pho Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -455,11 +455,13 @@ is called
 .It Fn puffs_daemon pu nochdir noclose
 Detach from the console like
 .Fn daemon 3 .
-This call synchronizes with
+If it is called before
+.Fn puffs_mount ,
+this call synchronizes with
 .Fn puffs_mount
 and the foreground process does not exit before the file system mount
 call has returned from the kernel.
-Since this routine internally calls fork, it has to be called
+Since this routine internally calls fork, it is highly recommended to call it
 .Em before
 .Fn puffs_mount .
 .It Fn puffs_mainloop pu flags

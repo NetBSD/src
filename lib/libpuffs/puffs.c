@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.127 2021/12/03 17:12:17 pho Exp $	*/
+/*	$NetBSD: puffs.c,v 1.128 2022/01/22 07:35:26 pho Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.127 2021/12/03 17:12:17 pho Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.128 2022/01/22 07:35:26 pho Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -440,9 +440,12 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 {
 	long int n;
 	int parent, value, fd;
+	bool is_beforemount;
 
-	if (pipe(pu->pu_dpipe) == -1)
-		return -1;
+	is_beforemount = (puffs_getstate(pu) < PUFFS_STATE_RUNNING);
+	if (is_beforemount)
+		if (pipe(pu->pu_dpipe) == -1)
+			return -1;
 
 	switch (fork()) {
 	case -1:
@@ -454,18 +457,21 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 		parent = 1;
 		break;
 	}
-	pu->pu_state |= PU_PUFFSDAEMON;
+	if (is_beforemount)
+		PU_SETSFLAG(pu, PU_PUFFSDAEMON);
 
 	if (parent) {
-		close(pu->pu_dpipe[1]);
-		n = read(pu->pu_dpipe[0], &value, sizeof(int));
-		if (n == -1)
-			err(1, "puffs_daemon");
-		if (n != sizeof(value))
-			errx(1, "puffs_daemon got %ld bytes", n);
-		if (value) {
-			errno = value;
-			err(1, "puffs_daemon");
+		if (is_beforemount) {
+			close(pu->pu_dpipe[1]);
+			n = read(pu->pu_dpipe[0], &value, sizeof(int));
+			if (n == -1)
+				err(1, "puffs_daemon");
+			if (n != sizeof(value))
+				errx(1, "puffs_daemon got %ld bytes", n);
+			if (value) {
+				errno = value;
+				err(1, "puffs_daemon");
+			}
 		}
 		exit(0);
 	} else {
@@ -489,8 +495,10 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 	}
 
  fail:
-	n = write(pu->pu_dpipe[1], &errno, sizeof(int));
-	assert(n == 4);
+	if (is_beforemount) {
+		n = write(pu->pu_dpipe[1], &errno, sizeof(int));
+		assert(n == 4);
+	}
 	return -1;
 }
 
@@ -614,7 +622,7 @@ do {									\
 	free(pu->pu_kargp);
 	pu->pu_kargp = NULL;
 
-	if (pu->pu_state & PU_PUFFSDAEMON)
+	if (PU_GETSFLAG(pu, PU_PUFFSDAEMON))
 		shutdaemon(pu, sverrno);
 
 	errno = sverrno;
@@ -706,8 +714,8 @@ puffs_init(struct puffs_ops *pops, const char *mntfromname,
 void
 puffs_cancel(struct puffs_usermount *pu, int error)
 {
-
 	assert(puffs_getstate(pu) < PUFFS_STATE_RUNNING);
+	assert(PU_GETSFLAG(pu, PU_PUFFSDAEMON));
 	shutdaemon(pu, error);
 	free(pu);
 }

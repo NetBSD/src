@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2016/01/23 21:22:46 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2022/01/22 07:35:26 pho Exp $
 #
 
 .include <bsd.own.mk>
@@ -16,7 +16,6 @@ MAN=		puffs.3 puffs_cc.3 puffs_cred.3 puffs_flush.3		\
 		puffs_framebuf.3 puffs_node.3 puffs_ops.3 puffs_path.3
 INCS=		puffs.h puffsdump.h
 INCSDIR=	/usr/include
-CPPFLAGS+=	-D_KERNTYPES
 LINTFLAGS+=-S -w
 
 .include <bsd.lib.mk>
