@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.45 2012/04/18 00:57:22 manu Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.46 2022/01/22 07:35:26 pho Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -113,6 +113,7 @@ struct puffs_usermount {
 #define PU_DONEXIT	0x2000
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
 #define PU_SETSFLAG(pu, s) (pu->pu_state |= (s))
+#define PU_GETSFLAG(pu, s) (pu->pu_state & (s))
 #define PU_CLRSFLAG(pu, s) \
     (pu->pu_state = ((pu->pu_state & ~(s)) | (pu->pu_state & PU_STATEMASK)))
 	int			pu_dpipe[2];
