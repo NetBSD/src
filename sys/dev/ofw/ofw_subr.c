@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.59 2021/09/15 17:33:08 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.60 2022/01/22 11:49:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.59 2021/09/15 17:33:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.60 2022/01/22 11:49:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -99,12 +99,18 @@ static const struct devhandle_impl of_devhandle_impl = {
 };
 
 devhandle_t
-devhandle_from_of(int phandle)
+devhandle_from_of(devhandle_t super_handle, int phandle)
 {
-	devhandle_t handle = {
-		.impl = &of_devhandle_impl,
-		.integer = phandle,
-	};
+	devhandle_type_t super_type = devhandle_type(super_handle);
+	devhandle_t handle = { 0 };
+
+	if (super_type == DEVHANDLE_TYPE_OF) {
+		handle.impl = super_handle.impl;
+	} else {
+		KASSERT(super_type == DEVHANDLE_TYPE_INVALID);
+		handle.impl = &of_devhandle_impl;
+	}
+	handle.integer = phandle;
 
 	return handle;
 }
@@ -125,7 +131,7 @@ of_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 	int child;
 
 	for (child = OF_child(phandle); child != 0; child = OF_peer(child)) {
-		if (!args->callback(dev, devhandle_from_of(child),
+		if (!args->callback(dev, devhandle_from_of(call_handle, child),
 				    args->callback_arg)) {
 			break;
 		}

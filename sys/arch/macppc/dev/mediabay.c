@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.26 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.27 2022/01/22 11:49:16 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.26 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.27 2022/01/22 11:49:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -225,6 +225,7 @@ mediabay_attach_content(struct mediabay_softc *sc)
 		printf(" done.\n");
 	}
 
+	devhandle_t selfh = device_handle(sc->sc_dev);
 	for (child = OF_child(sc->sc_node); child; child = OF_peer(child)) {
 		memset(name, 0, sizeof(name));
 		if (OF_getprop(child, "name", name, sizeof(name)) == -1)
@@ -244,7 +245,7 @@ mediabay_attach_content(struct mediabay_softc *sc)
 		ca.ca_intr = intr;
 
 		content = config_found(sc->sc_dev, &ca, mediabay_print,
-		    CFARGS(.devhandle = devhandle_from_of(child)));
+		    CFARGS(.devhandle = devhandle_from_of(selfh, child)));
 		if (content) {
 			sc->sc_content = content;
 			return;

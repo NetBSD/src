@@ -1,4 +1,4 @@
-/*	$NetBSD: fhc.c,v 1.10 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: fhc.c,v 1.11 2022/01/22 11:49:17 thorpej Exp $	*/
 /*	$OpenBSD: fhc.c,v 1.17 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.10 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.11 2022/01/22 11:49:17 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,7 @@ fhc_attach(struct fhc_softc *sc)
 	prom_getprop(sc->sc_node, "ranges", sizeof(struct fhc_range),
 	    &sc->sc_nrange, (void **)&sc->sc_range);
 
+	devhandle_t selfh = device_handle(sc->sc_dev);
 	node0 = firstchild(sc->sc_node);
 	for (node = node0; node; node = nextsibling(node)) {
 		struct fhc_attach_args fa;
@@ -117,7 +118,7 @@ fhc_attach(struct fhc_softc *sc)
 		    &fa.fa_npromvaddrs, (void **)&fa.fa_promvaddrs);
 
 		(void)config_found(sc->sc_dev, (void *)&fa, fhc_print,
-		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node)));
 
 		if (fa.fa_name != NULL)
 			free(fa.fa_name, M_DEVBUF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cbus.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: cbus.c,v 1.8 2022/01/22 11:49:17 thorpej Exp $	*/
 /*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -101,6 +101,7 @@ cbus_attach(device_t parent, device_t self, void *aux)
 	  return;
 	}
 
+	devhandle_t selfh = device_handle(self);
 	for (node = OF_child(va->va_node); node; node = OF_peer(node)) {
 		struct cbus_attach_args ca;
 		char buf[32];
@@ -122,7 +123,7 @@ cbus_attach(device_t parent, device_t self, void *aux)
 		}
 
 		config_found(self, &ca, cbus_print,
-		    CFARGS(.devhandle = devhandle_from_of(ca.ca_node)));
+		    CFARGS(.devhandle = devhandle_from_of(selfh, ca.ca_node)));
 	}
 }
 

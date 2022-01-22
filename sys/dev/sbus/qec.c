@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.53 2021/08/07 16:19:15 thorpej Exp $ */
+/*	$NetBSD: qec.c,v 1.54 2022/01/22 11:49:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.53 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.54 2022/01/22 11:49:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,12 +203,13 @@ qecattach(device_t parent, device_t self, void *aux)
 	qec_init(sc);
 
 	/* search through children */
+	devhandle_t selfh = device_handle(self);
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sax;
 		sbus_setup_attach_args(sbsc,
 				       sbt, sc->sc_dmatag, node, &sax);
 		(void)config_found(self, (void *)&sax, qecprint,
-		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node)));
 		sbus_destroy_attach_args(&sax);
 	}
 }
