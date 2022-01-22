@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.29 2016/06/13 00:04:40 pgoyette Exp $	*/
+/*	$NetBSD: extern.h,v 1.30 2022/01/22 14:08:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-void	 brace_subst(char *, char **, char *, int *);
+void	 brace_subst(char *, char **, char *, size_t *);
 PLAN	*find_create(char ***);
 int	 find_execute(PLAN *, char **);
 PLAN	*find_formplan(char **);
