@@ -1,4 +1,4 @@
-/* $NetBSD: buf.c,v 1.1 2022/01/22 07:54:57 pho Exp $ */
+/* $NetBSD: buf.c,v 1.2 2022/01/22 13:25:55 pho Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,13 +31,12 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: buf.c,v 1.1 2022/01/22 07:54:57 pho Exp $");
+__RCSID("$NetBSD: buf.c,v 1.2 2022/01/22 13:25:55 pho Exp $");
 #endif /* !lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <fuse_internal.h>
-#include <machine/vmparam.h> /* for PAGE_SIZE */
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -165,7 +164,7 @@ fuse_buf_copy_fd_to_fd(const struct fuse_buf *dst, size_t dst_off,
     ssize_t total = 0;
     struct fuse_buf tmp;
 
-    tmp.size  = PAGE_SIZE;
+    tmp.size  = (size_t)sysconf(_SC_PAGESIZE);
     tmp.flags = (enum fuse_buf_flags)0;
     tmp.mem   = malloc(tmp.size);
 
