@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.82 2022/01/22 15:10:32 skrll Exp $ */
+/* $NetBSD: if_vge.c,v 1.83 2022/01/22 19:09:21 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.82 2022/01/22 15:10:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.83 2022/01/22 19:09:21 martin Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -975,7 +975,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	if (pci_dma64_available(pa)) {
 		if (bus_dmatag_subregion(pa->pa_dmat64,
 					 0,
-					 __MASK(48),
+					 (bus_addr_t)__MASK(48),
 					 &sc->sc_dmat,
 					 BUS_DMA_WAITOK) != 0) {
 			aprint_error_dev(self,
