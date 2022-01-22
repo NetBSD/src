@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.176 2022/01/21 15:55:36 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.177 2022/01/22 11:16:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ struct devhandle {
 		void *			pointer;
 		const void *		const_pointer;
 		uintptr_t		uintptr;
-		int			integer;
+		intptr_t		integer;
 	};
 };
 typedef struct devhandle devhandle_t;
