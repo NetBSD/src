@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.6 2022/01/22 07:56:16 pho Exp $
+	$NetBSD: TODO,v 1.7 2022/01/22 07:58:32 pho Exp $
 
 To Do
 =====
@@ -18,7 +18,7 @@ Done
 ====
 statvfs
 sync
-WARNS=4
+WARNS=6
 address lint
 special directory handling in open()
 Finish off manual page
