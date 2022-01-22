@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1287 2022/01/10 10:02:30 martin Exp $
+# $NetBSD: mi,v 1.1288 2022/01/22 07:53:05 pho Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1147,6 +1147,7 @@
 ./usr/include/protocols				base-c-usr
 ./usr/include/quota				base-obsolete		obsolete
 ./usr/include/readline				base-c-usr
+./usr/include/refuse				base-refuse-usr
 ./usr/include/rpc				base-c-usr
 ./usr/include/rpcsvc				base-c-usr
 ./usr/include/rump				base-c-usr

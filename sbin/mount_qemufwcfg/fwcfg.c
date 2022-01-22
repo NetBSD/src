@@ -1,4 +1,4 @@
-/* $NetBSD: fwcfg.c,v 1.6 2021/12/04 06:42:39 pho Exp $ */
+/* $NetBSD: fwcfg.c,v 1.7 2022/01/22 07:53:06 pho Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fwcfg.c,v 1.6 2021/12/04 06:42:39 pho Exp $");
+__RCSID("$NetBSD: fwcfg.c,v 1.7 2022/01/22 07:53:06 pho Exp $");
 
 #define FUSE_USE_VERSION FUSE_MAKE_VERSION(2, 6)
 
 #include <sys/ioctl.h>
+#include <sys/param.h>
 
 #include <err.h>
 #include <errno.h>

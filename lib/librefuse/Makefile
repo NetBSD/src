@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2022/01/22 07:38:45 pho Exp $
+# $NetBSD: Makefile,v 1.14 2022/01/22 07:53:06 pho Exp $
 
 USE_FORT?=	yes	# data driven bugs?
 
@@ -13,10 +13,12 @@ FUSE_OPT_DEBUG_FLAGS=	-g -DFUSE_OPT_DEBUG
 CFLAGS+=	${FUSE_OPT_DEBUG_FLAGS}
 CPPFLAGS+=	-I${.CURDIR}
 SRCS=		refuse.c refuse_log.c refuse_lowlevel.c
-SRCS+=		refuse_opt.c
+SRCS+=		refuse_opt.c refuse_signals.c
 MAN=		refuse.3
 WARNS?=		5
 INCS=           fuse.h fuse_opt.h fuse_log.h fuse_lowlevel.h
 INCSDIR=        /usr/include
+
+.include "${.CURDIR}/refuse/Makefile.inc"
 
 .include <bsd.lib.mk>

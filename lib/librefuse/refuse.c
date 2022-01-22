@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.103 2021/12/04 06:42:39 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.104 2022/01/22 07:53:06 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.103 2021/12/04 06:42:39 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.104 2022/01/22 07:53:06 pho Exp $");
 #endif /* !lint */
 
 /* We emit a compiler warning for anyone including <fuse.h> without
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: refuse.c,v 1.103 2021/12/04 06:42:39 pho Exp $");
 #include <fuse_internal.h>
 #include <fuse_opt.h>
 #include <paths.h>
+#include <puffs.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
