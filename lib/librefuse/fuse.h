@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.30 2022/01/22 08:01:50 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.31 2022/01/22 08:02:49 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -201,13 +201,20 @@ int fuse_invalidate_path(struct fuse *fuse, const char *path);
 int fuse_mount(struct fuse *, const char *);
 void fuse_unmount(struct fuse *);
 
-int fuse_daemonize(struct fuse *);
-
 int fuse_main_real(int, char **, const struct fuse_operations *, size_t, void *);
+/* Functions that have existed since the beginning and have never
+ * changed between API versions. */
 int fuse_loop(struct fuse *);
 struct fuse_context *fuse_get_context(void);
 void fuse_exit(struct fuse *);
 void fuse_destroy(struct fuse *);
+
+/* Daemonize the calling process. Appeared on FUSE 2.6.
+ *
+ * NOTE: This function used to have a wrong prototype in librefuse at
+ * the time when FUSE_H_ < 20211204. */
+int fuse_daemonize(int foreground) __RENAME(fuse_daemonize_rev1);
+
 int fuse_version(void);
 
 #if FUSE_USE_VERSION == 22
