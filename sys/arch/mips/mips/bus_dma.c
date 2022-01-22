@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.45 2022/01/22 15:08:10 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.46 2022/01/22 15:10:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.45 2022/01/22 15:08:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46 2022/01/22 15:10:31 skrll Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -353,7 +353,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	int cookieflags;
 	void *cookiestore;
 
-	if (t->_bounce_thresh == 0 || _BUS_AVAIL_END <= t->_bounce_thresh)
+	if (t->_bounce_thresh == 0 || _BUS_AVAIL_END <= t->_bounce_thresh - 1)
 		map->_dm_bounce_thresh = 0;
 	cookieflags = 0;
 
@@ -987,10 +987,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 {
 	bus_addr_t high;
 
-	if (t->_bounce_alloc_hi != 0 && _BUS_AVAIL_END > t->_bounce_alloc_hi)
-		high = trunc_page(t->_bounce_alloc_hi);
+	if (t->_bounce_alloc_hi != 0 && _BUS_AVAIL_END > t->_bounce_alloc_hi - 1)
+		high = t->_bounce_alloc_hi - 1;
 	else
-		high = trunc_page(_BUS_AVAIL_END);
+		high = _BUS_AVAIL_END;
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, t->_bounce_alloc_lo, high);
@@ -1327,8 +1327,8 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 {
 
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
-	if ((((tag->_bounce_thresh != 0   && max_addr >= tag->_bounce_thresh)
-	      && (tag->_bounce_alloc_hi != 0 && max_addr >= tag->_bounce_alloc_hi))
+	if ((((tag->_bounce_thresh != 0  && max_addr >= tag->_bounce_thresh - 1)
+	      && (tag->_bounce_alloc_hi != 0 && max_addr >= tag->_bounce_alloc_hi - 1))
 	     || (tag->_bounce_alloc_hi == 0 && max_addr > _BUS_AVAIL_END))
 	    && (min_addr <= tag->_bounce_alloc_lo)) {
 		*newtag = tag;

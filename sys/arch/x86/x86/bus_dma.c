@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.83 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.84 2022/01/22 15:10:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.83 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.84 2022/01/22 15:10:32 skrll Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -308,7 +308,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
-	if (t->_bounce_thresh == 0 || _BUS_AVAIL_END <= t->_bounce_thresh)
+	if (t->_bounce_thresh == 0 || _BUS_AVAIL_END <= t->_bounce_thresh - 1)
 		map->_dm_bounce_thresh = 0;
 	cookieflags = 0;
 
@@ -970,10 +970,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 {
 	bus_addr_t high;
 
-	if (t->_bounce_alloc_hi != 0 && _BUS_AVAIL_END > t->_bounce_alloc_hi)
-		high = trunc_page(t->_bounce_alloc_hi);
+	if (t->_bounce_alloc_hi != 0 && _BUS_AVAIL_END > t->_bounce_alloc_hi - 1)
+		high = t->_bounce_alloc_hi - 1;
 	else
-		high = trunc_page(_BUS_AVAIL_END);
+		high = _BUS_AVAIL_END;
 
 	return (_BUS_DMAMEM_ALLOC_RANGE(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, t->_bounce_alloc_lo, high));
@@ -1278,8 +1278,8 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 		      bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
 {
 
-	if ((tag->_bounce_thresh != 0   && max_addr >= tag->_bounce_thresh) &&
-	    (tag->_bounce_alloc_hi != 0 && max_addr >= tag->_bounce_alloc_hi) &&
+	if ((tag->_bounce_thresh != 0   && max_addr >= tag->_bounce_thresh - 1) &&
+	    (tag->_bounce_alloc_hi != 0 && max_addr >= tag->_bounce_alloc_hi - 1) &&
 	    (min_addr <= tag->_bounce_alloc_lo)) {
 		*newtag = tag;
 		/* if the tag must be freed, add a reference */

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.29 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.30 2022/01/22 15:10:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.29 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.30 2022/01/22 15:10:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,7 +115,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dmat = faa->faa_dmat;
 
 #ifdef _LP64
-	error = bus_dmatag_subregion(faa->faa_dmat, 0, 0xffffffff,
+	error = bus_dmatag_subregion(faa->faa_dmat, 0, __MASK(32),
 	    &sc->sc.sc_dmat, BUS_DMA_WAITOK);
 	if (error != 0) {
 		aprint_error(": couldn't create DMA tag: %d\n", error);

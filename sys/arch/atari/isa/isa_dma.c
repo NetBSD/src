@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_dma.c,v 1.15 2021/12/17 06:28:20 skrll Exp $	*/
+/*	$NetBSD: isa_dma.c,v 1.16 2022/01/22 15:10:30 skrll Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_dma.c,v 1.15 2021/12/17 06:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_dma.c,v 1.16 2022/01/22 15:10:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,9 +614,9 @@ _isa_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment, bu
 	paddr_t high;
 
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
-		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
+		high = ISA_DMA_BOUNCE_THRESHOLD - 1;
 	else
-		high = trunc_page(avail_end);
+		high = avail_end - 1;
 
 	return (bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, high));
