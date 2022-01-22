@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.35 2021/12/05 03:07:16 msaitoh Exp $	*/
+/*	$NetBSD: bus.c,v 1.36 2022/01/22 15:08:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35 2021/12/05 03:07:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.36 2022/01/22 15:08:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,10 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 	return 0;
 }
 
-static size_t 
+static size_t
 _bus_dmamap_mapsize(int const nsegments)
-{ 
-	KASSERT(nsegments > 0); 
+{
+	KASSERT(nsegments > 0);
 	return sizeof(struct newsmips_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 }
@@ -782,6 +782,6 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	rv = _bus_dmamem_mmap_common(t, segs, nsegs, off, prot, flags);
 	if (rv == (bus_addr_t)-1)
 		return (-1);
-	
+
 	return (mips_btop((char *)rv));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.44 2021/01/07 17:28:20 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.45 2022/01/22 15:08:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.44 2021/01/07 17:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.45 2022/01/22 15:08:10 skrll Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -285,9 +285,9 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 }
 #endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
 
-static size_t 
+static size_t
 _bus_dmamap_mapsize(int const nsegments)
-{ 
+{
 	KASSERT(nsegments > 0);
 	return sizeof(struct mips_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
@@ -862,7 +862,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	for (; offset >= seg->ds_len; seg++) {
 		offset -= seg->ds_len;
 	}
-		
+
 	for (; seg < lastseg && len != 0; seg++, offset = 0, len -= minlen) {
 		/*
 		 * Now at the first segment to sync; nail each segment until we
@@ -949,7 +949,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 
 	case _BUS_DMA_BUFTYPE_MBUF:
-		m_copyback(cookie->id_origmbuf, offset, len, 
+		m_copyback(cookie->id_origmbuf, offset, len,
 		    (char *)cookie->id_bouncebuf + offset);
 		break;
 
@@ -1006,7 +1006,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags, paddr_t low, paddr_t high)
 {
 	paddr_t curaddr, lastaddr;
-	struct vm_page *m;    
+	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
 
