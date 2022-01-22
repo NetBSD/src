@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.8 2022/01/22 15:08:11 skrll Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.9 2022/01/22 15:10:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.8 2022/01/22 15:08:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.9 2022/01/22 15:10:31 skrll Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -192,7 +192,7 @@ obio_bus_init(struct obio_softc *sc)
 	/* dma space for addr < 4GB */
 	if (rcp->rc_32bit_dmat == NULL) {
 		error = bus_dmatag_subregion(rcp->rc_64bit_dmat,
-		    0, (bus_addr_t)1 << 32, &rcp->rc_32bit_dmat, 0);
+		    0, __MASK(32), &rcp->rc_32bit_dmat, 0);
 		if (error)
 			panic("%s: failed to create 32bit dma tag: %d",
 			    __func__, error);
@@ -201,7 +201,7 @@ obio_bus_init(struct obio_softc *sc)
 	/* dma space for addr < 512MB */
 	if (rcp->rc_29bit_dmat == NULL) {
 		error = bus_dmatag_subregion(rcp->rc_32bit_dmat,
-		    0, (bus_addr_t)1 << 29, &rcp->rc_29bit_dmat, 0);
+		    0, __MASK(29), &rcp->rc_29bit_dmat, 0);
 		if (error)
 			panic("%s: failed to create 29bit dma tag: %d",
 			    __func__, error);

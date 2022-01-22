@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_bounce.c,v 1.14 2021/12/17 06:28:20 skrll Exp $	*/
+/*	$NetBSD: isadma_bounce.c,v 1.15 2022/01/22 15:10:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.14 2021/12/17 06:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.15 2022/01/22 15:10:31 skrll Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -99,7 +99,7 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
 	cookieflags = 0;
-	if (_BUS_AVAIL_END > (t->_wbase + t->_bounce_alloc_hi - t->_bounce_alloc_lo)
+	if (_BUS_AVAIL_END > (t->_wbase + t->_bounce_alloc_hi - t->_bounce_alloc_lo - 1)
 	    || ((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt) {
 		cookieflags |= _BUS_DMA_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) *
@@ -499,10 +499,10 @@ isadma_bounce_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 {
 	paddr_t high;
 
-	if (_BUS_AVAIL_END > ISA_DMA_BOUNCE_THRESHOLD)
-		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
+	if (_BUS_AVAIL_END > ISA_DMA_BOUNCE_THRESHOLD - 1)
+		high = ISA_DMA_BOUNCE_THRESHOLD - 1;
 	else
-		high = trunc_page(_BUS_AVAIL_END);
+		high = _BUS_AVAIL_END;
 
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, high));

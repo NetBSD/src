@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.23 2022/01/22 15:08:10 skrll Exp $	*/
+/*	$NetBSD: pcib.c,v 1.24 2022/01/22 15:10:31 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.23 2022/01/22 15:08:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.24 2022/01/22 15:10:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ pcib_attach(device_t parent, device_t self, void *aux)
 	 * Initialize the DMA tag used for ISA DMA.
 	 */
 	error = bus_dmatag_subregion(pa->pa_dmat, MALTA_DMA_ISA_PHYSBASE,
-	    MALTA_DMA_ISA_PHYSBASE + MALTA_DMA_ISA_SIZE, &sc->sc_dmat, 0);
+	    MALTA_DMA_ISA_PHYSBASE + MALTA_DMA_ISA_SIZE - 1, &sc->sc_dmat, 0);
 	if (error)
 		panic("malta_dma_init: failed to create ISA dma tag: %d",
 		    error);

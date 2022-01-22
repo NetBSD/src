@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma_defs.h,v 1.5 2020/07/26 08:08:41 simonb Exp $ */
+/* $NetBSD: bus_dma_defs.h,v 1.6 2022/01/22 15:10:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ struct mips_bus_dmamap {
 };
 
 #ifdef _MIPS_BUS_DMA_PRIVATE
-#define	_BUS_AVAIL_END	pmap_limits.avail_end
+#define	_BUS_AVAIL_END	(pmap_limits.avail_end - 1)
 /*
  * Cookie used for bounce buffers. A pointer to one of these it stashed in
  * the DMA map.

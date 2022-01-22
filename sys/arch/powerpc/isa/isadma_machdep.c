@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.13 2021/12/17 06:28:20 skrll Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.14 2022/01/22 15:10:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.13 2021/12/17 06:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.14 2022/01/22 15:10:32 skrll Exp $");
 
 #define ISA_DMA_STATS
 
@@ -608,9 +608,9 @@ _isa_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	}
 
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
-		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
+		high = ISA_DMA_BOUNCE_THRESHOLD - 1;
 	else
-		high = trunc_page(avail_end);
+		high = avail_end - 1;
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, high));
 }

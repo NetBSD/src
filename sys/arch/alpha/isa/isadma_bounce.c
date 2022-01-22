@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.16 2021/12/17 06:28:20 skrll Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.17 2022/01/22 15:10:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.16 2021/12/17 06:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.17 2022/01/22 15:10:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -565,9 +565,9 @@ isadma_bounce_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 	paddr_t high;
 
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
-		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
+		high = ISA_DMA_BOUNCE_THRESHOLD - 1;
 	else
-		high = trunc_page(avail_end);
+		high = avail_end - 1;
 
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, high));

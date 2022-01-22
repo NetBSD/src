@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.18 2022/01/22 15:08:11 skrll Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.19 2022/01/22 15:10:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.18 2022/01/22 15:08:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.19 2022/01/22 15:10:31 skrll Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -366,7 +366,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 		 */
 		if (hbar_size < ((uint64_t)1 << 32)) {
 			error = bus_dmatag_subregion(sc->sc_32bit_dmat,
-				0, (bus_addr_t)hbar_size, &sc->sc_32bit_dmat,
+				0, (bus_addr_t)hbar_size - 1, &sc->sc_32bit_dmat,
 				BUS_DMA_NOWAIT);
 			if (error)
 				panic("%s: failed to subregion 32-bit dma tag:"
@@ -374,7 +374,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 			sc->sc_64bit_dmat = NULL;
 		} else {
 			error = bus_dmatag_subregion(sc->sc_64bit_dmat,
-				0, (bus_addr_t)hbar_size, &sc->sc_64bit_dmat,
+				0, (bus_addr_t)hbar_size - 1, &sc->sc_64bit_dmat,
 				BUS_DMA_NOWAIT);
 			if (error)
 				panic("%s: failed to subregion 64-bit dma tag:"

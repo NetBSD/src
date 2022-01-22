@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.15 2020/02/22 19:49:11 chs Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.16 2022/01/22 15:10:32 skrll Exp $	*/
 /*	NetBSD: bus.h,v 1.8 2005/03/09 19:04:46 matt Exp	*/
 
 /*-
@@ -151,7 +151,7 @@ _bus_virt_to_bus(struct pmap *pm, vaddr_t va)
  * largest physical address.
  */
 #ifndef _BUS_AVAIL_END
-#define _BUS_AVAIL_END (avail_end)
+#define _BUS_AVAIL_END (avail_end - 1)
 #endif
 
 struct x86_bus_dma_tag {
