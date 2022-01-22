@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.112 2022/01/22 08:05:35 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.113 2022/01/22 08:07:02 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.112 2022/01/22 08:05:35 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.113 2022/01/22 08:07:02 pho Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -205,6 +205,19 @@ create_context_key(void)
 #else
 	return 1;
 #endif
+}
+
+/* struct fuse_context is potentially reused among different
+ * invocations of fuse_new() / fuse_destroy() pair. Clear its content
+ * on fuse_destroy() so that no dangling pointers remain in the
+ * context. */
+static void
+clear_context(void)
+{
+	struct fuse_context	*ctx;
+
+	ctx = fuse_get_context();
+	memset(ctx, 0, sizeof(*ctx));
 }
 
 static void
@@ -1384,6 +1397,7 @@ fuse_destroy(struct fuse *fuse)
 	 * threads exist
 	 */
 
+	clear_context();
 	delete_context_key();
 	/* XXXXXX: missing stuff */
 	free(fuse);
