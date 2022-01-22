@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.29 2022/01/22 08:01:12 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.30 2022/01/22 08:01:50 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,6 +30,7 @@
 #ifndef FUSE_H_
 #define FUSE_H_	20211204
 
+#include <fuse_opt.h>
 #include <refuse/buf.h>
 #include <refuse/legacy.h>
 #include <refuse/poll.h>
@@ -226,7 +227,5 @@ void fuse_unmount_compat22(const char *);
 #ifdef __cplusplus
 }
 #endif
-
-#include <fuse_opt.h>
 
 #endif
