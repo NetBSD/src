@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.24 2021/12/04 06:42:39 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.25 2022/01/22 07:53:06 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,9 +30,11 @@
 #ifndef FUSE_H_
 #define FUSE_H_	20211204
 
+#include <refuse/session.h>
+#include <sys/cdefs.h>
+#include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
-
-#include <puffs.h>
 #include <utime.h>
 
 /* The latest version of FUSE API currently provided by refuse. */
