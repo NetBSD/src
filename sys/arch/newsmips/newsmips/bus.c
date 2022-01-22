@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.36 2022/01/22 15:08:11 skrll Exp $	*/
+/*	$NetBSD: bus.c,v 1.37 2022/01/22 15:10:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.36 2022/01/22 15:08:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.37 2022/01/22 15:10:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -711,7 +711,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags,
 	    pmap_limits.avail_start /*low*/,
-	    pmap_limits.avail_end - PAGE_SIZE /*high*/));
+	    pmap_limits.avail_end - 1 /*high*/));
 }
 
 /*

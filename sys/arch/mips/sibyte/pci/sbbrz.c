@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz.c,v 1.7 2022/01/22 15:08:11 skrll Exp $ */
+/* $NetBSD: sbbrz.c,v 1.8 2022/01/22 15:10:31 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -157,7 +157,7 @@ sbbrz_init(struct sbbrz_softc *sc)
 	t->_dmamem_ops = mips_bus_dmamem_ops;
 	t->_dmatag_ops = mips_bus_dmatag_ops;
 
-	error = bus_dmatag_subregion(t, 0, (bus_addr_t)1 << 32, &sc->sc_dmat32, 0);
+	error = bus_dmatag_subregion(t, 0, __MASK(32), &sc->sc_dmat32, 0);
 	if (error)
 		panic("%s: failed to create 32bit dma tag: %d",
 		    __func__, error);

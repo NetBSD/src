@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.349 2021/09/16 20:17:47 andvar Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.350 2022/01/22 15:10:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.349 2021/09/16 20:17:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.350 2022/01/22 15:10:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3735,9 +3735,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 		if ((sc->bge_flags & BGEF_40BIT_BUG) != 0) {
 			bus_dma_tag_t olddmatag = sc->bge_dmatag; /* save */
 
-			if (bus_dmatag_subregion(olddmatag, 0,
-				(bus_addr_t)(1ULL << 40), &(sc->bge_dmatag),
-				BUS_DMA_NOWAIT) != 0) {
+			if (bus_dmatag_subregion(olddmatag, 0, __MASK(40),
+			     &(sc->bge_dmatag), BUS_DMA_NOWAIT) != 0) {
 				aprint_error_dev(self,
 				    "WARNING: failed to restrict dma range,"
 				    " falling back to parent bus dma range\n");
