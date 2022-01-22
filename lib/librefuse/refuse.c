@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.108 2022/01/22 08:00:17 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.109 2022/01/22 08:01:12 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,13 +31,8 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.108 2022/01/22 08:00:17 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.109 2022/01/22 08:01:12 pho Exp $");
 #endif /* !lint */
-
-/* We emit a compiler warning for anyone including <fuse.h> without
- * defining FUSE_USE_VERSION. Define it here, or otherwise we'll be
- * warned too. */
-#define FUSE_USE_VERSION	FUSE_VERSION
 
 #include <sys/types.h>
 
@@ -1417,7 +1412,7 @@ fuse_invalidate_path(struct fuse *fuse __attribute__((__unused__)),
 int
 fuse_version(void)
 {
-	return FUSE_VERSION;
+	return _REFUSE_VERSION_;
 }
 
 /* This is a legacy function that has been removed from the FUSE API,
