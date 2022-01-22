@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.574 2022/01/22 16:24:45 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.575 2022/01/22 18:59:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.574 2022/01/22 16:24:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.575 2022/01/22 18:59:23 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1829,7 +1829,7 @@ Fatal(const char *fmt, ...)
 	(void)fprintf(stderr, "\n");
 	(void)fflush(stderr);
 
-	PrintOnError(NULL, NULL);
+	PrintOnError(NULL, "\n");
 
 	if (DEBUG(GRAPH2) || DEBUG(GRAPH3))
 		Targ_PrintGraph(2);
@@ -1854,7 +1854,7 @@ Punt(const char *fmt, ...)
 	(void)fprintf(stderr, "\n");
 	(void)fflush(stderr);
 
-	PrintOnError(NULL, NULL);
+	PrintOnError(NULL, "\n");
 
 	DieHorribly();
 }
@@ -2045,9 +2045,7 @@ PrintOnError(GNode *gn, const char *msg)
 	if (errorNode != NULL)
 		return;		/* we've been here! */
 
-	if (msg != NULL)
-		printf("%s", msg);
-	printf("\n%s: stopped in %s\n", progname, curdir);
+	printf("%s%s: stopped in %s\n", msg, progname, curdir);
 
 	/* we generally want to keep quiet if a sub-make died */
 	if (shouldDieQuietly(gn, -1))

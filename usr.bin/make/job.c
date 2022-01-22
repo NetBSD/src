@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.448 2022/01/08 09:53:44 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.449 2022/01/22 18:59:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.448 2022/01/08 09:53:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.449 2022/01/22 18:59:23 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1108,7 +1108,7 @@ JobFinishDoneExitedError(Job *job, int *inout_status)
 	else {
 		if (deleteOnError)
 			JobDeleteTarget(job->node);
-		PrintOnError(job->node, NULL);
+		PrintOnError(job->node, "\n");
 	}
 }
 
@@ -1685,7 +1685,7 @@ JobStart(GNode *gn, bool special)
 		 * also dead...
 		 */
 		if (!cmdsOK) {
-			PrintOnError(gn, NULL);	/* provide some clue */
+			PrintOnError(gn, "\n");	/* provide some clue */
 			DieHorribly();
 		}
 	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
@@ -1702,7 +1702,7 @@ JobStart(GNode *gn, bool special)
 		 * also dead...
 		 */
 		if (!cmdsOK) {
-			PrintOnError(gn, NULL);	/* provide some clue */
+			PrintOnError(gn, "\n");	/* provide some clue */
 			DieHorribly();
 		}
 
@@ -1986,7 +1986,7 @@ JobRun(GNode *targ)
 	Compat_Make(targ, targ);
 	/* XXX: Replace with GNode_IsError(gn) */
 	if (targ->made == ERROR) {
-		PrintOnError(targ, "\n\nStop.");
+		PrintOnError(targ, "\n\nStop.\n");
 		exit(1);
 	}
 #endif
@@ -2951,7 +2951,7 @@ Job_RunTarget(const char *target, const char *fname)
 	JobRun(gn);
 	/* XXX: Replace with GNode_IsError(gn) */
 	if (gn->made == ERROR) {
-		PrintOnError(gn, "\n\nStop.");
+		PrintOnError(gn, "\n\nStop.\n");
 		exit(1);
 	}
 	return true;
