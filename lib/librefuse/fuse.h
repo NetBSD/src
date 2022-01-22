@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.26 2022/01/22 07:54:57 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.27 2022/01/22 07:56:16 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,6 +31,7 @@
 #define FUSE_H_	20211204
 
 #include <refuse/buf.h>
+#include <refuse/poll.h>
 #include <refuse/session.h>
 #include <sys/cdefs.h>
 #include <sys/stat.h>
