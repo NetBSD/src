@@ -1,4 +1,4 @@
-/* $NetBSD: fuse_internal.h,v 1.2 2022/01/22 07:53:06 pho Exp $ */
+/* $NetBSD: fuse_internal.h,v 1.3 2022/01/22 08:01:12 pho Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 #define FUSE_INTERNAL_H
 
 /* We emit a compiler warning for anyone including <fuse.h> without
- * defining FUSE_USE_VERSION. Define it here, or otherwise we'll be
+ * defining FUSE_USE_VERSION. Exempt ourselves here, or we'll be
  * warned too. */
-#define FUSE_USE_VERSION	FUSE_VERSION
+#define _REFUSE_IMPLEMENTATION_
 
 #include <fuse.h>
 #include <fuse_lowlevel.h>
