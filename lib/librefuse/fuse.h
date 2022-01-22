@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.32 2022/01/22 08:03:32 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.33 2022/01/22 08:06:21 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,6 +30,7 @@
 #ifndef FUSE_H_
 #define FUSE_H_	20211204
 
+#include <fcntl.h>
 #include <fuse_opt.h>
 #include <refuse/buf.h>
 #include <refuse/legacy.h>
@@ -94,27 +95,36 @@ extern "C" {
 #endif
 
 struct fuse;
-struct fuse_args; /* XXXsupportme */
 
 struct fuse_file_info {
 	int32_t		flags;
-	uint32_t	fh_old;
-	int32_t		writepage;
+	uint32_t	fh_old;			/* Removed as of FUSE 3.0. */
+	int32_t		writepage:1;
 	uint32_t	direct_io:1;
 	uint32_t	keep_cache:1;
 	uint32_t	flush:1;
-	uint32_t	padding:29;
+	uint32_t	nonseekable:1;		/* Added on FUSE 2.8. */
+	uint32_t	flock_release:1;	/* Added on FUSE 2.9. */
+	uint32_t	cache_readdir:1;	/* Added on FUSE 3.5. */
+	uint32_t	padding:26;
 	uint64_t	fh;
-	uint64_t	lock_owner;
+	uint64_t	lock_owner;		/* Added on FUSE 2.6. */
+	uint32_t	poll_events;		/* Added on FUSE 3.0. */
 };
 
 struct fuse_conn_info {
-	uint32_t proto_major;
-	uint32_t proto_minor;
-	uint32_t async_read;
-	uint32_t max_write;
-	uint32_t max_readahead;
-	uint32_t reserved[27];
+	uint32_t	proto_major;
+	uint32_t	proto_minor;
+	uint32_t	async_read;		/* Removed as of FUSE 3.0. */
+	uint32_t	max_write;
+	uint32_t	max_read;		/* Added on FUSE 3.0. */
+	uint32_t	max_readahead;
+	uint32_t	capable;		/* Added on FUSE 2.8. */
+	uint32_t	want;			/* Added on FUSE 2.8. */
+	uint32_t	max_background;		/* Added on FUSE 3.0. */
+	uint32_t	congestion_threshold;	/* Added on FUSE 3.0. */
+	uint32_t	time_gran;		/* Added on FUSE 3.0. */
+	uint32_t	reserved[22];
 };
 
 /* equivalent'ish of puffs_cc */
@@ -124,6 +134,78 @@ struct fuse_context {
 	gid_t		gid;
 	pid_t		pid;
 	void		*private_data;
+	mode_t		umask;			/* Added on FUSE 2.8. */
+};
+
+/* Capability bits for fuse_conn_info.capable and
+ * fuse_conn_info.want */
+#define FUSE_CAP_ASYNC_READ		(1 << 0)
+#define FUSE_CAP_POSIX_LOCKS		(1 << 1)
+#define FUSE_CAP_ATOMIC_O_TRUNC		(1 << 3)
+#define FUSE_CAP_EXPORT_SUPPORT		(1 << 4)
+#define FUSE_CAP_BIG_WRITES		(1 << 5)	/* Removed as of FUSE 3.0. */
+#define FUSE_CAP_DONT_MASK		(1 << 6)
+#define FUSE_CAP_SPLICE_WRITE		(1 << 7)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_SPLICE_MOVE		(1 << 8)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_SPLICE_READ		(1 << 9)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_FLOCK_LOCKS		(1 << 10)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_IOCTL_DIR		(1 << 11)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_AUTO_INVAL_DATA	(1 << 12)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_READDIRPLUS		(1 << 13)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_READDIRPLUS_AUTO	(1 << 14)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_ASYNC_DIO		(1 << 15)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_WRITEBACK_CACHE	(1 << 16)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_NO_OPEN_SUPPORT	(1 << 17)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_PARALLEL_DIROPS	(1 << 18)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_POSIX_ACL		(1 << 19)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_HANDLE_KILLPRIV	(1 << 20)	/* Added on FUSE 3.0. */
+#define FUSE_CAP_CACHE_SYMLINKS		(1 << 23)	/* Added on FUSE 3.10. */
+#define FUSE_CAP_NO_OPENDIR_SUPPORT	(1 << 24)	/* Added on FUSE 3.5. */
+
+/* ioctl flags */
+#define FUSE_IOCTL_COMPAT	(1 << 0)
+#define FUSE_IOCTL_UNRESTRICTED	(1 << 1)
+#define FUSE_IOCTL_RETRY	(1 << 2)
+#define FUSE_IOCTL_DIR		(1 << 4)	/* Added on FUSE 2.9. */
+#define FUSE_IOCTL_MAX_IOV	256
+
+/* readdir() flags, appeared on FUSE 3.0. */
+enum fuse_readdir_flags {
+	FUSE_READDIR_PLUS	= (1 << 0),
+};
+enum fuse_fill_dir_flags {
+	FUSE_FILL_DIR_PLUS	= (1 << 1),
+};
+
+/* Configuration of the high-level API, appeared on FUSE 3.0. */
+struct fuse_config {
+	int		set_gid;
+	unsigned int	gid;
+	int		set_uid;
+	unsigned int	uid;
+	int		set_mode;
+	unsigned int	umask;
+	double		entry_timeout;
+	double		negative_timeout;
+	double		attr_timeout;
+	int		intr;
+	int		intr_signal;
+	int		remember;
+	int		hard_remove;
+	int		use_ino;
+	int		readdir_ino;
+	int		direct_io;
+	int		kernel_cache;
+	int		auto_cache;
+	int		ac_attr_timeout_set;
+	double		ac_attr_timeout;
+	int		nullpath_ok;
+};
+
+/* Configuration of fuse_loop_mt(), appeared on FUSE 3.2. */
+struct fuse_loop_config {
+	int		clone_fd;
+	unsigned int	max_idle_threads;
 };
 
 /**
