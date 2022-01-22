@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.573 2022/01/15 22:18:04 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.574 2022/01/22 16:24:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.573 2022/01/15 22:18:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.574 2022/01/22 16:24:45 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -920,9 +920,9 @@ runTargets(void)
 }
 
 /*
- * Set up the .TARGETS variable to contain the list of targets to be
- * created. If none specified, make the variable empty -- the parser
- * will fill the thing in with the default or .MAIN target.
+ * Set up the .TARGETS variable to contain the list of targets to be created.
+ * If none specified, make the variable empty for now, the parser will fill
+ * in the default or .MAIN target later.
  */
 static void
 InitVarTargets(void)
