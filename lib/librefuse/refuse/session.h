@@ -1,4 +1,4 @@
-/* $NetBSD: fuse_internal.h,v 1.2 2022/01/22 07:53:06 pho Exp $ */
+/* $NetBSD: session.h,v 1.1 2022/01/22 07:53:06 pho Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -28,27 +28,39 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if !defined(FUSE_INTERNAL_H)
-#define FUSE_INTERNAL_H
+#if !defined(_FUSE_SESSION_H_)
+#define _FUSE_SESSION_H_
 
-/* We emit a compiler warning for anyone including <fuse.h> without
- * defining FUSE_USE_VERSION. Define it here, or otherwise we'll be
- * warned too. */
-#define FUSE_USE_VERSION	FUSE_VERSION
+/* FUSE session API
+ */
 
-#include <fuse.h>
-#include <fuse_lowlevel.h>
-#include <sys/cdefs.h>
+#if !defined(FUSE_H_)
+#  error Do not include this header directly. Include <fuse.h> instead.
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Internal functions, hidden from users */
-__BEGIN_HIDDEN_DECLS
-int __fuse_set_signal_handlers(struct fuse* fuse);
-int __fuse_remove_signal_handlers(struct fuse* fuse);
-__END_HIDDEN_DECLS
+/* Forward declarations */
+struct fuse;
+
+/* A private structure appeared on FUSE 2.4. */
+struct fuse_session;
+
+/* Get a session from a fuse object. Appeared on FUSE 2.6. */
+struct fuse_session *fuse_get_session(struct fuse *f);
+
+/* Get the file descriptor for communicaiton with kernel. Appeared on
+ * FUSE 3.0. */
+int fuse_session_fd(struct fuse_session *se);
+
+/* Exit a session on SIGHUP, SIGTERM, and SIGINT and ignore
+ * SIGPIPE. Appeared on FUSE 2.5. */
+int fuse_set_signal_handlers(struct fuse_session *se);
+
+/* Restore default signal handlers. Appeared on FUSE 2.5. */
+void fuse_remove_signal_handlers(struct fuse_session *se);
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.240 2021/12/13 23:59:35 maya Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.241 2022/01/22 07:53:06 pho Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -326,6 +326,7 @@
 ./usr/include/prop
 ./usr/include/protocols
 ./usr/include/readline
+./usr/include/refuse
 ./usr/include/rpc
 ./usr/include/rpcsvc
 ./usr/include/rump

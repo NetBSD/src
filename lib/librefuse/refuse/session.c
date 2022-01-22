@@ -1,4 +1,4 @@
-/* $NetBSD: fuse_internal.h,v 1.2 2022/01/22 07:53:06 pho Exp $ */
+/* $NetBSD: session.c,v 1.1 2022/01/22 07:53:06 pho Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -28,30 +28,43 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#if !defined(FUSE_INTERNAL_H)
-#define FUSE_INTERNAL_H
 
-/* We emit a compiler warning for anyone including <fuse.h> without
- * defining FUSE_USE_VERSION. Define it here, or otherwise we'll be
- * warned too. */
-#define FUSE_USE_VERSION	FUSE_VERSION
-
-#include <fuse.h>
-#include <fuse_lowlevel.h>
 #include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: session.c,v 1.1 2022/01/22 07:53:06 pho Exp $");
+#endif /* !lint */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <err.h>
+#include <fuse_internal.h>
+#include <puffs.h>
 
-/* Internal functions, hidden from users */
-__BEGIN_HIDDEN_DECLS
-int __fuse_set_signal_handlers(struct fuse* fuse);
-int __fuse_remove_signal_handlers(struct fuse* fuse);
-__END_HIDDEN_DECLS
+/* The documentation for FUSE is not clear as to what "struct fuse_session" is,
+ * why it exists, or how it's different from "struct fuse". For now we leave it
+ * undefined (i.e. an incomplete type) and treat "struct fuse_session *" as
+ * being identical to "struct fuse *". */
 
-#ifdef __cplusplus
+struct fuse_session *
+fuse_get_session(struct fuse *f) {
+    return (struct fuse_session*)f;
 }
-#endif
 
-#endif
+int
+fuse_session_fd(struct fuse_session *se) {
+    struct fuse* fuse = (struct fuse*)se;
+
+    /* We don't want to expose this to users, but filesystems in the wild often
+     * wants to set FD_CLOEXEC on it. Hope they don't assume it's the real
+     * /dev/fuse, because it's actually /dev/puffs in our implementation. */
+    return puffs_getselectable(fuse->pu);
+}
+
+int
+fuse_set_signal_handlers(struct fuse_session *se) {
+    return __fuse_set_signal_handlers((struct fuse*)se);
+}
+
+void
+fuse_remove_signal_handlers(struct fuse_session *se) {
+    if (__fuse_remove_signal_handlers((struct fuse*)se) == -1)
+        warn("%s: failed to remove signal handlers", __func__);
+}
