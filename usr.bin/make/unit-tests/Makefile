@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.297 2022/01/22 16:23:56 rillig Exp $
+# $NetBSD: Makefile,v 1.298 2022/01/23 16:09:38 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -192,7 +192,6 @@ TESTS+=		directive-warning
 TESTS+=		dollar
 TESTS+=		doterror
 TESTS+=		dotwait
-TESTS+=		envfirst
 TESTS+=		error
 TESTS+=		# escape	# broken by reverting POSIX changes
 TESTS+=		export
@@ -220,7 +219,6 @@ TESTS+=		moderrs
 TESTS+=		modmatch
 TESTS+=		modmisc
 TESTS+=		modts
-TESTS+=		modword
 .if ${.MAKE.UID} > 0
 TESTS+=		objdir-writable
 .endif
