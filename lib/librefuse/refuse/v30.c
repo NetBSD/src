@@ -1,4 +1,4 @@
-/* $NetBSD: v30.c,v 1.1 2022/01/22 08:09:40 pho Exp $ */
+/* $NetBSD: v30.c,v 1.2 2022/01/23 21:07:28 rillig Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: v30.c,v 1.1 2022/01/22 08:09:40 pho Exp $");
+__RCSID("$NetBSD: v30.c,v 1.2 2022/01/23 21:07:28 rillig Exp $");
 #endif /* !lint */
 
 #include <fuse_internal.h>
@@ -54,7 +54,7 @@ fuse_new_v30(struct fuse_args *args,
 
 void
 fuse_destroy_v30(struct fuse *fuse) {
-    return __fuse_destroy(fuse);
+    __fuse_destroy(fuse);
 }
 
 int

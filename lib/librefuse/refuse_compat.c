@@ -1,4 +1,4 @@
-/* $NetBSD: refuse_compat.c,v 1.2 2022/01/22 08:09:39 pho Exp $ */
+/* $NetBSD: refuse_compat.c,v 1.3 2022/01/23 21:07:28 rillig Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse_compat.c,v 1.2 2022/01/22 08:09:39 pho Exp $");
+__RCSID("$NetBSD: refuse_compat.c,v 1.3 2022/01/23 21:07:28 rillig Exp $");
 #endif /* !lint */
 
 #include <fuse_internal.h>
@@ -152,7 +152,7 @@ __warn_references(
     " include <fuse.h> for correct reference")
 void
 fuse_unmount(struct fuse* fuse) {
-    return fuse_unmount_v30(fuse);
+    fuse_unmount_v30(fuse);
 }
 
 /* librefuse once had a function fuse_unmount_compat22() which was an
