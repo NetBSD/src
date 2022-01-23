@@ -2953,6 +2953,8 @@ Ctrl keys may be prefixed with
 .Ql C-
 or
 .Ql ^ ,
+Shift keys with
+.Ql S-
 and Alt (meta) with
 .Ql M- .
 In addition, the following special key names are accepted:
@@ -3418,11 +3420,24 @@ sessions.
 .Xc
 If enabled, the server will exit when there are no attached clients.
 .It Xo Ic extended-keys
-.Op Ic on | off
+.Op Ic on | off | always
 .Xc
-When enabled, extended keys are requested from the terminal and if supported
-are recognised by
-.Nm .
+When
+.Ic on
+or
+.Ic always ,
+the escape sequence to enable extended keys is sent to the terminal, if
+.Nm
+knows that it is supported.
+.Nm
+always recognises extended keys itself.
+If this option is
+.Ic on ,
+.Nm
+will only forward extended keys to applications when they request them; if
+.Ic always ,
+.Nm
+will always forward the keys.
 .It Xo Ic focus-events
 .Op Ic on | off
 .Xc
@@ -3501,8 +3516,8 @@ capabilities to be set instead,
 is intended for classes of functionality supported in a standard way but not
 reported by
 .Xr terminfo 5 .
-Care must be taken only to configure this with features the terminal actually
-support.
+Care must be taken to configure this only with features the terminal actually
+supports.
 .Pp
 This is an array option where each entry is a colon-separated string made up
 of a terminal type pattern (matched using
@@ -3524,6 +3539,10 @@ Supports extended keys.
 Supports focus reporting.
 .It margins
 Supports DECSLRM margins.
+.It mouse
+Supports
+.Xr xterm 1
+mouse sequences.
 .It overline
 Supports the overline SGR attribute.
 .It rectfill
@@ -6036,6 +6055,10 @@ Disable and enable focus reporting.
 These are set automatically if the
 .Em XT
 capability is present.
+.It Em \&Rect
+Tell
+.Nm
+that the terminal supports rectangle operations.
 .It Em \&Smol
 Enable the overline attribute.
 .It Em \&Smulx
@@ -6116,12 +6139,13 @@ and matching
 .Em %end
 or
 .Em %error
-have two arguments: an integer time (as seconds from epoch) and command number.
+have three arguments: an integer time (as seconds from epoch), command number and
+flags (currently not used).
 For example:
 .Bd -literal -offset indent
-%begin 1363006971 2
+%begin 1363006971 2 1
 0: ksh* (1 panes) [80x24] [layout b25f,80x24,0,0,2] @2 (active)
-%end 1363006971 2
+%end 1363006971 2 1
 .Ed
 .Pp
 The

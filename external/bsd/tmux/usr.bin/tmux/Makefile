@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2021/04/17 20:42:10 christos Exp $
+# $NetBSD: Makefile,v 1.28 2022/01/23 16:47:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -166,6 +166,7 @@ CPPFLAGS+=	\
 -DHAVE_BITSTRING_H=1 \
 -DHAVE_BSD_GETOPT=1 \
 -DHAVE_CFMAKERAW=1 \
+-DHAVE_CFMAKERAWEP=1 \
 -DHAVE_CLOCK_GETTIME=1 \
 -DHAVE_CLOSEFROM=1 \
 -DHAVE_CURSES_H=1 \
@@ -218,14 +219,14 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.2\" \
+-DPACKAGE_STRING=\"tmux\ 3.2a\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.2\" \
+-DPACKAGE_VERSION=\"3.2a\" \
 -DSTDC_HEADERS=1 \
 -DTMUX_CONF="\"/etc/tmux.conf:~/.tmux.conf:~/.config/tmux/tmux.conf\"" \
--DTMUX_VERSION='"3.2"' \
--DVERSION=\"3.2\" \
+-DTMUX_VERSION='"3.2a"' \
+-DVERSION=\"3.2a\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_NETBSD_SOURCE \

@@ -226,6 +226,8 @@ status_line_size(struct client *c)
 
 	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
 		return (0);
+	if (s == NULL)
+		return (options_get_number(global_s_options, "status"));
 	return (s->statuslines);
 }
 
@@ -1298,7 +1300,7 @@ process_key:
 	return (0);
 
 append_key:
-	if (key <= 0x1f || key >= KEYC_BASE)
+	if (key <= 0x1f || (key >= KEYC_BASE && key < KEYC_BASE_END))
 		return (0);
 	if (key <= 0x7f)
 		utf8_set(&tmp, key);
