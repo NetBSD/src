@@ -1,4 +1,4 @@
-# $NetBSD: var-class-local.mk,v 1.5 2020/11/05 18:08:39 rillig Exp $
+# $NetBSD: var-scope-local.mk,v 1.1 2022/01/23 16:25:54 rillig Exp $
 #
 # Tests for target-local variables, such as ${.TARGET} or $@.
 
@@ -28,7 +28,7 @@ all:
 
 .SUFFIXES: .c .o
 
-var-class-local.c:
+var-scope-local.c:
 	: Making ${.TARGET} out of nothing.
 
 .c.o:
@@ -38,7 +38,7 @@ var-class-local.c:
 	# See the manual page for details.
 	: Making basename "${@F}" in "${@D}" from "${<F}" in "${<D}".
 
-all: var-class-local.o
+all: var-scope-local.o
 	# The ::= modifier overwrites the .TARGET variable in the node
 	# 'all', not in the global scope.  This can be seen with the -dv
 	# option, looking for "all:@ = overwritten".

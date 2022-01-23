@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.298 2022/01/23 16:09:38 rillig Exp $
+# $NetBSD: Makefile,v 1.299 2022/01/23 16:25:54 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -320,12 +320,12 @@ TESTS+=		ternary
 TESTS+=		unexport
 TESTS+=		unexport-env
 TESTS+=		use-inference
-TESTS+=		var-class
-TESTS+=		var-class-cmdline
-TESTS+=		var-class-env
-TESTS+=		var-class-global
-TESTS+=		var-class-local
-TESTS+=		var-class-local-legacy
+TESTS+=		var-scope
+TESTS+=		var-scope-cmdline
+TESTS+=		var-scope-env
+TESTS+=		var-scope-global
+TESTS+=		var-scope-local
+TESTS+=		var-scope-local-legacy
 TESTS+=		var-eval-short
 TESTS+=		var-op
 TESTS+=		var-op-append
