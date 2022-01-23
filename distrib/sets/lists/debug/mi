@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.371 2021/12/31 16:14:44 christos Exp $
+# $NetBSD: mi,v 1.372 2022/01/23 14:35:44 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1231,6 +1231,7 @@
 ./usr/libdata/debug/usr/sbin/pkg_create.debug	comp-pkgutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pkg_delete.debug	comp-pkgutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pkg_info.debug	comp-pkgutil-debug	debug
+./usr/libdata/debug/usr/sbin/plainrsa-gen.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/postalias.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postcat.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postconf.debug	comp-postfix-debug	postfix,debug

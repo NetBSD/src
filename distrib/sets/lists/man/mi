@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1732 2022/01/17 16:31:23 thorpej Exp $
+# $NetBSD: mi,v 1.1733 2022/01/23 14:35:44 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2989,6 +2989,7 @@
 ./usr/share/man/cat8/ping.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ping6.0			man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/pipe.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/plainrsa-gen.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/playstation2/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/playstation2/makedev.0	man-obsolete		obsolete
 ./usr/share/man/cat8/pmax/MAKEDEV.0		man-obsolete		obsolete
@@ -6003,6 +6004,7 @@
 ./usr/share/man/html8/ping.html			man-netutil-htmlman	html
 ./usr/share/man/html8/ping6.html		man-netutil-htmlman	use_inet6,html
 ./usr/share/man/html8/pipe.html			man-postfix-htmlman	postfix,html
+./usr/share/man/html8/plainrsa-gen.html		man-netutil-htmlman	html
 ./usr/share/man/html8/pmax/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/postinstall.html		man-sys-htmlman		html
 ./usr/share/man/html8/postscreen.html		man-postfix-htmlman	postfix,html
@@ -9263,6 +9265,7 @@
 ./usr/share/man/man8/ping.8			man-netutil-man		.man
 ./usr/share/man/man8/ping6.8			man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/pipe.8			man-postfix-man		postfix,.man
+./usr/share/man/man8/plainrsa-gen.8		man-netutil-man		.man
 ./usr/share/man/man8/playstation2/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/playstation2/makedev.8	man-obsolete		obsolete
 ./usr/share/man/man8/pmax/MAKEDEV.8		man-obsolete		obsolete
