@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT([tmux], 3.2)
+AC_INIT([tmux], 3.2a)
 AC_PREREQ([2.60])
 
 AC_CONFIG_AUX_DIR(etc)
@@ -34,10 +34,10 @@ AC_ARG_VAR(
 # Set up convenient fuzzing defaults before initializing compiler.
 if test "x$enable_fuzzing" = xyes; then
 	AC_DEFINE(NEED_FUZZING)
-	test "x$CC" == x && CC=clang
-	test "x$FUZZING_LIBS" == x && \
+	test "x$CC" = x && CC=clang
+	test "x$FUZZING_LIBS" = x && \
 		FUZZING_LIBS="-fsanitize=fuzzer"
-	test "x$SAVED_CFLAGS" == x && \
+	test "x$SAVED_CFLAGS" = x && \
 		AM_CFLAGS="-g -fsanitize=fuzzer-no-link,address"
 fi
 
@@ -150,9 +150,18 @@ AC_REPLACE_FUNCS([ \
 	strlcpy \
 	strndup \
 	strsep \
-	strtonum \
 ])
 AC_FUNC_STRNLEN
+
+# Check if strtonum works.
+AC_MSG_CHECKING([for working strtonum])
+AC_RUN_IFELSE([AC_LANG_PROGRAM(
+         [#include <stdlib.h>],
+         [return (strtonum("0", 0, 1, NULL) == 0 ? 0 : 1);]
+	 )],
+	 [AC_DEFINE(HAVE_STRTONUM) AC_MSG_RESULT(yes)],
+	 [AC_LIBOBJ(strtonum) AC_MSG_RESULT(no)]
+)
 
 # Clang sanitizers wrap reallocarray even if it isn't available on the target
 # system. When compiled it always returns NULL and crashes the program. To
@@ -163,6 +172,7 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM(
 		[return (reallocarray(NULL, 1, 1) == NULL);]
 	)],
 	AC_MSG_RESULT(yes),
+	[AC_LIBOBJ(reallocarray) AC_MSG_RESULT([no])],
 	[AC_LIBOBJ(reallocarray) AC_MSG_RESULT([no])]
 )
 AC_MSG_CHECKING([for working recallocarray])
@@ -171,6 +181,7 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM(
 		[return (recallocarray(NULL, 1, 1, 1) == NULL);]
 	)],
 	AC_MSG_RESULT(yes),
+	[AC_LIBOBJ(recallocarray) AC_MSG_RESULT([no])],
 	[AC_LIBOBJ(recallocarray) AC_MSG_RESULT([no])]
 )
 
