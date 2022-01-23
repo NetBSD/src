@@ -1,4 +1,4 @@
-# $NetBSD: varmod-to-separator.mk,v 1.8 2022/01/23 18:00:53 rillig Exp $
+# $NetBSD: varmod-to-separator.mk,v 1.9 2022/01/23 18:59:18 rillig Exp $
 #
 # Tests for the :ts variable modifier, which joins the words of the variable
 # using an arbitrary character as word separator.
@@ -222,8 +222,29 @@ WORDS=	one two three four five six
 .  info This line is not reached.
 .endif
 
-# TODO: This modifier used to accept decimal numbers as well, in the form
-# ':ts\120'.  When has this been changed to octal, and what happens now
-# for ':ts\90' ('Z' in decimal ASCII, undefined in octal)?
 
-# TODO: :ts\x1F600
+# Since 2003.07.23.18.06.46 and before 2016.03.07.20.20.35, the modifier ':ts'
+# interpreted an "octal escape" as decimal if the first digit was not '0'.
+.if ${:Ua b:ts\61} != "a1b"	# decimal would have been "a=b"
+.  error
+.endif
+
+# Since the character escape is always interpreted as octal, let's see what
+# happens for non-octal digits.  From 2003.07.23.18.06.46 to
+# 2016.02.27.16.20.06, the result was '1E2', since 2016.03.07.20.20.35 make no
+# longer accepts this escape and complains.
+# expect: make: Bad modifier ":ts\69" for variable ""
+.if ${:Ua b:ts\69}
+.  error
+.else
+.  error
+.endif
+
+# Try whether bmake is Unicode-ready.
+# expect+2: Invalid character number at "1F60E}"
+# expect+1: Malformed conditional (${:Ua b:ts\x1F60E})
+.if ${:Ua b:ts\x1F60E}		# U+1F60E "smiling face with sunglasses"
+.  error
+.else
+.  error
+.endif

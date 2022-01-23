@@ -16,6 +16,10 @@ make: Bad modifier ":ts\X" for variable "WORDS"
 make: "varmod-to-separator.mk" line 213: Malformed conditional (${WORDS:ts\X})
 make: Bad modifier ":t\X" for variable "WORDS"
 make: "varmod-to-separator.mk" line 221: Malformed conditional (${WORDS:t\X} != "anything")
+make: Bad modifier ":ts\69" for variable ""
+make: "varmod-to-separator.mk" line 237: Malformed conditional (${:Ua b:ts\69})
+make: "varmod-to-separator.mk" line 246: Invalid character number at "1F60E}"
+make: "varmod-to-separator.mk" line 246: Malformed conditional (${:Ua b:ts\x1F60E})
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
