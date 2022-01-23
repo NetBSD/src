@@ -1,0 +1,5 @@
+: Making var-scope-local.c out of nothing.
+: Making var-scope-local.o from var-scope-local.c.
+: Making basename "var-scope-local.o" in "." from "var-scope-local.c" in ".".
+: all overwritten
+exit status 0
