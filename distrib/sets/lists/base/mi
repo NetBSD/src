@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1288 2022/01/22 07:53:05 pho Exp $
+# $NetBSD: mi,v 1.1289 2022/01/23 14:35:44 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1800,6 +1800,7 @@
 ./usr/sbin/pkg_delete				base-pkgutil-bin
 ./usr/sbin/pkg_info				base-pkgutil-bin
 ./usr/sbin/pkg_view				base-obsolete		obsolete
+./usr/sbin/plainrsa-gen			base-netutil-bin
 ./usr/sbin/portmap				base-obsolete		obsolete
 ./usr/sbin/postalias				base-postfix-bin	postfix
 ./usr/sbin/postcat				base-postfix-bin	postfix

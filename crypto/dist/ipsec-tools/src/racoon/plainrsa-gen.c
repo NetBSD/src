@@ -1,4 +1,4 @@
-/*	$NetBSD: plainrsa-gen.c,v 1.6 2011/02/11 10:07:19 tteras Exp $	*/
+/*	$NetBSD: plainrsa-gen.c,v 1.7 2022/01/23 14:35:45 christos Exp $	*/
 
 /* Id: plainrsa-gen.c,v 1.6 2005/04/21 09:08:40 monas Exp */
 /*
@@ -63,6 +63,8 @@
 
 #include "package_version.h"
 
+#define DEFAULT_PUBEXP RSA_F4
+
 void
 usage (char *argv0)
 {
@@ -72,7 +74,7 @@ usage (char *argv0)
 	fprintf(stderr, "Usage: %s [options]\n", argv0);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "  -b bits       Generate <bits> long RSA key (default=1024)\n");
-	fprintf(stderr, "  -e pubexp     Public exponent to use (default=0x3)\n");
+	fprintf(stderr, "  -e pubexp     Public exponent to use (default=%#x)\n", DEFAULT_PUBEXP);
 	fprintf(stderr, "  -f filename   Filename to store the key to (default=stdout)\n");
 	fprintf(stderr, "  -i filename   Input source for format conversion\n");
 	fprintf(stderr, "  -h            Help\n");
@@ -91,11 +93,11 @@ mix_b64_pubkey(const RSA *key)
 	long binlen, ret;
 	vchar_t *res;
 	
-	binlen = 1 + BN_num_bytes(key->e) + BN_num_bytes(key->n);
+	binlen = 1 + BN_num_bytes(RSA_get0_e(key)) + BN_num_bytes(RSA_get0_n(key));
 	binbuf = malloc(binlen);
 	memset(binbuf, 0, binlen);
-	binbuf[0] = BN_bn2bin(key->e, (unsigned char *) &binbuf[1]);
-	ret = BN_bn2bin(key->n, (unsigned char *) (&binbuf[binbuf[0] + 1]));
+	binbuf[0] = BN_bn2bin(RSA_get0_e(key), (unsigned char *) &binbuf[1]);
+	ret = BN_bn2bin(RSA_get0_n(key), (unsigned char *) (&binbuf[binbuf[0] + 1]));
 	if (1 + binbuf[0] + ret != binlen) {
 		plog(LLV_ERROR, LOCATION, NULL,
 		     "Pubkey generation failed. This is really strange...\n");
@@ -131,16 +133,16 @@ print_rsa_key(FILE *fp, const RSA *key)
 	
 	fprintf(fp, "# : PUB 0s%s\n", pubkey64->v);
 	fprintf(fp, ": RSA\t{\n");
-	fprintf(fp, "\t# RSA %d bits\n", BN_num_bits(key->n));
+	fprintf(fp, "\t# RSA %d bits\n", BN_num_bits(RSA_get0_n(key)));
 	fprintf(fp, "\t# pubkey=0s%s\n", pubkey64->v);
-	fprintf(fp, "\tModulus: 0x%s\n", lowercase(BN_bn2hex(key->n)));
-	fprintf(fp, "\tPublicExponent: 0x%s\n", lowercase(BN_bn2hex(key->e)));
-	fprintf(fp, "\tPrivateExponent: 0x%s\n", lowercase(BN_bn2hex(key->d)));
-	fprintf(fp, "\tPrime1: 0x%s\n", lowercase(BN_bn2hex(key->p)));
-	fprintf(fp, "\tPrime2: 0x%s\n", lowercase(BN_bn2hex(key->q)));
-	fprintf(fp, "\tExponent1: 0x%s\n", lowercase(BN_bn2hex(key->dmp1)));
-	fprintf(fp, "\tExponent2: 0x%s\n", lowercase(BN_bn2hex(key->dmq1)));
-	fprintf(fp, "\tCoefficient: 0x%s\n", lowercase(BN_bn2hex(key->iqmp)));
+	fprintf(fp, "\tModulus: 0x%s\n", lowercase(BN_bn2hex(RSA_get0_n(key))));
+	fprintf(fp, "\tPublicExponent: 0x%s\n", lowercase(BN_bn2hex(RSA_get0_e(key))));
+	fprintf(fp, "\tPrivateExponent: 0x%s\n", lowercase(BN_bn2hex(RSA_get0_d(key))));
+	fprintf(fp, "\tPrime1: 0x%s\n", lowercase(BN_bn2hex(RSA_get0_p(key))));
+	fprintf(fp, "\tPrime2: 0x%s\n", lowercase(BN_bn2hex(RSA_get0_q(key))));
+	fprintf(fp, "\tExponent1: 0x%s\n", lowercase(BN_bn2hex(RSA_get0_dmp1(key))));
+	fprintf(fp, "\tExponent2: 0x%s\n", lowercase(BN_bn2hex(RSA_get0_dmq1(key))));
+	fprintf(fp, "\tCoefficient: 0x%s\n", lowercase(BN_bn2hex(RSA_get0_iqmp(key))));
 	fprintf(fp, "  }\n");
 
 	vfree(pubkey64);
@@ -204,13 +206,17 @@ gen_rsa_key(FILE *fp, size_t bits, unsigned long exp)
 {
 	int ret;
 	RSA *key;
+	BIGNUM *e;
 
-	key = RSA_generate_key(bits, exp, NULL, NULL);
-	if (!key) {
+	key = RSA_new();
+	e = BN_new();
+	BN_set_word(e, exp);
+
+	if (1 != RSA_generate_key_ex(key, bits, e, NULL)) {
 		fprintf(stderr, "RSA_generate_key(): %s\n", eay_strerror());
 		return -1;
 	}
-	
+
 	ret = print_rsa_key(fp, key);
 	RSA_free(key);
 
@@ -222,7 +228,7 @@ main (int argc, char *argv[])
 {
 	FILE *fp = stdout, *fpin = NULL;
 	size_t bits = 1024;
-	unsigned int pubexp = 0x3;
+	unsigned int pubexp = DEFAULT_PUBEXP;
 	struct stat st;
 	extern char *optarg;
 	extern int optind;
@@ -232,10 +238,7 @@ main (int argc, char *argv[])
 	while ((c = getopt(argc, argv, "e:b:f:i:h")) != -1)
 		switch (c) {
 			case 'e':
-				if (strncmp(optarg, "0x", 2) == 0)
-					sscanf(optarg, "0x%x", &pubexp);
-				else
-					pubexp = atoi(optarg);
+				pubexp = (unsigned int)strtoul(optarg, NULL, 0);
 				break;
 			case 'b':
 				bits = atoi(optarg);
