@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.299 2022/01/23 16:25:54 rillig Exp $
+# $NetBSD: Makefile,v 1.300 2022/01/23 18:00:53 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -218,7 +218,6 @@ TESTS+=		meta-cmd-cmp
 TESTS+=		moderrs
 TESTS+=		modmatch
 TESTS+=		modmisc
-TESTS+=		modts
 .if ${.MAKE.UID} > 0
 TESTS+=		objdir-writable
 .endif
