@@ -109,11 +109,16 @@ struct winlink;
 #define VISUAL_ON 1
 #define VISUAL_BOTH 2
 
-/* Special key codes. */
-#define KEYC_NONE            0x00ff000000000ULL
-#define KEYC_UNKNOWN         0x00fe000000000ULL
-#define KEYC_BASE            0x0001000000000ULL
-#define KEYC_USER            0x0002000000000ULL
+/* No key or unknown key. */
+#define KEYC_NONE            0x000ff000000000ULL
+#define KEYC_UNKNOWN         0x000fe000000000ULL
+
+/*
+ * Base for special (that is, not Unicode) keys. An enum must be at most a
+ * signed int, so these are based in the highest Unicode PUA.
+ */
+#define KEYC_BASE            0x0000000010e000ULL
+#define KEYC_USER            0x0000000010f000ULL
 
 /* Key modifier bits. */
 #define KEYC_META            0x00100000000000ULL
@@ -136,8 +141,15 @@ struct winlink;
 #define KEYC_NUSER 1000
 
 /* Is this a mouse key? */
-#define KEYC_IS_MOUSE(key) (((key) & KEYC_MASK_KEY) >= KEYC_MOUSE &&	\
-    ((key) & KEYC_MASK_KEY) < KEYC_BSPACE)
+#define KEYC_IS_MOUSE(key) \
+	(((key) & KEYC_MASK_KEY) >= KEYC_MOUSE && \
+	 ((key) & KEYC_MASK_KEY) < KEYC_BSPACE)
+
+/* Is this a Unicode key? */
+#define KEYC_IS_UNICODE(key) \
+	(((key) & KEYC_MASK_KEY) > 0x7f && \
+	 (((key) & KEYC_MASK_KEY) < KEYC_BASE || \
+	  ((key) & KEYC_MASK_KEY) >= KEYC_BASE_END))
 
 /* Multiple click timeout. */
 #define KEYC_CLICK_TIMEOUT 300
@@ -159,8 +171,8 @@ struct winlink;
 	{ #s "Border", KEYC_ ## name ## _BORDER }
 
 /*
- * A single key. This can be ASCII or Unicode or one of the keys starting at
- * KEYC_BASE.
+ * A single key. This can be ASCII or Unicode or one of the keys between
+ * KEYC_BASE and KEYC_BASE_END.
  */
 typedef unsigned long long key_code;
 
@@ -253,6 +265,9 @@ enum {
 	KEYC_KP_ENTER,
 	KEYC_KP_ZERO,
 	KEYC_KP_PERIOD,
+
+	/* End of special keys. */
+	KEYC_BASE_END
 };
 
 /* Termcap codes. */
@@ -452,6 +467,7 @@ enum tty_code_code {
 	TTYC_MS,
 	TTYC_OL,
 	TTYC_OP,
+	TTYC_RECT,
 	TTYC_REV,
 	TTYC_RGB,
 	TTYC_RI,
@@ -918,13 +934,25 @@ struct window_mode_entry {
 	struct screen			*screen;
 	u_int				 prefix;
 
-	TAILQ_ENTRY (window_mode_entry)	 entry;
+	TAILQ_ENTRY(window_mode_entry)	 entry;
 };
 
 /* Offsets into pane buffer. */
 struct window_pane_offset {
 	size_t	used;
 };
+
+/* Queued pane resize. */
+struct window_pane_resize {
+	u_int				sx;
+	u_int				sy;
+
+	u_int				osx;
+	u_int				osy;
+
+	TAILQ_ENTRY(window_pane_resize)	entry;
+};
+TAILQ_HEAD(window_pane_resizes, window_pane_resize);
 
 /* Child window structure. */
 struct window_pane {
@@ -950,8 +978,8 @@ struct window_pane {
 #define PANE_REDRAW 0x1
 #define PANE_DROP 0x2
 #define PANE_FOCUSED 0x4
-#define PANE_RESIZE 0x8
-#define PANE_RESIZEFORCE 0x10
+/* 0x8 unused */
+/* 0x10 unused */
 #define PANE_FOCUSPUSH 0x20
 #define PANE_INPUTOFF 0x40
 #define PANE_CHANGED 0x80
@@ -960,7 +988,6 @@ struct window_pane {
 #define PANE_STATUSDRAWN 0x400
 #define PANE_EMPTY 0x800
 #define PANE_STYLECHANGED 0x1000
-#define PANE_RESIZENOW 0x2000
 
 	int		 argc;
 	char	       **argv;
@@ -977,8 +1004,8 @@ struct window_pane {
 	struct window_pane_offset offset;
 	size_t		 base_offset;
 
+	struct window_pane_resizes resize_queue;
 	struct event	 resize_timer;
-	struct event	 force_timer;
 
 	struct input_ctx *ictx;
 
@@ -996,7 +1023,7 @@ struct window_pane {
 	struct screen	 status_screen;
 	size_t		 status_size;
 
-	TAILQ_HEAD (, window_mode_entry) modes;
+	TAILQ_HEAD(, window_mode_entry) modes;
 
 	char		*searchstr;
 	int		 searchregex;
@@ -2755,7 +2782,7 @@ void		 window_redraw_active_switch(struct window *,
 struct window_pane *window_add_pane(struct window *, struct window_pane *,
 		     u_int, int);
 void		 window_resize(struct window *, u_int, u_int, int, int);
-void		 window_pane_send_resize(struct window_pane *, int);
+void		 window_pane_send_resize(struct window_pane *, u_int, u_int);
 int		 window_zoom(struct window_pane *);
 int		 window_unzoom(struct window *);
 int		 window_push_zoom(struct window *, int, int);
