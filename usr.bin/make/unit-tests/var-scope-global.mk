@@ -1,4 +1,4 @@
-# $NetBSD: var-class-global.mk,v 1.3 2022/01/23 16:09:38 rillig Exp $
+# $NetBSD: var-scope-global.mk,v 1.1 2022/01/23 16:25:54 rillig Exp $
 #
 # Tests for global variables, which are the most common variables.
 

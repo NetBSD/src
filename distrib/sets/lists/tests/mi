@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1183 2022/01/23 16:09:38 rillig Exp $
+# $NetBSD: mi,v 1.1184 2022/01/23 16:25:53 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5931,18 +5931,18 @@
 ./usr/tests/usr.bin/make/unit-tests/unexport.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/use-inference.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/use-inference.mk				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-cmdline.exp			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-cmdline.mk			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-env.exp				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-env.mk				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-global.exp			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-global.mk				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-local-legacy.exp			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-local-legacy.mk			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-local.exp				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class-local.mk				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class.exp				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/var-class.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-cmdline.exp			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-cmdline.mk			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-env.exp				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-env.mk				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-global.exp			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-global.mk				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-local-legacy.exp			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-local-legacy.mk			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-local.exp				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class-local.mk				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class.exp				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/var-class.mk				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/make/unit-tests/var-eval-short.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-eval-short.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-op-append.exp				tests-usr.bin-tests	compattestfile,atf
@@ -5961,6 +5961,18 @@
 ./usr/tests/usr.bin/make/unit-tests/var-op.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-recursive.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-recursive.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-cmdline.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-cmdline.mk			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-env.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-env.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-global.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-global.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-local-legacy.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-local-legacy.mk			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-local.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope-local.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-scope.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varcmd.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varcmd.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/vardebug.exp				tests-usr.bin-tests	compattestfile,atf
