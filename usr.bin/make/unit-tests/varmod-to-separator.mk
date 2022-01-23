@@ -1,4 +1,4 @@
-# $NetBSD: varmod-to-separator.mk,v 1.9 2022/01/23 18:59:18 rillig Exp $
+# $NetBSD: varmod-to-separator.mk,v 1.10 2022/01/23 21:48:59 rillig Exp $
 #
 # Tests for the :ts variable modifier, which joins the words of the variable
 # using an arbitrary character as word separator.
@@ -201,7 +201,7 @@ WORDS=	one two three four five six
 
 
 # In the :t modifier, the :t must be followed by any of A, l, s, u.
-# expect: Bad modifier ":tx" for variable "WORDS"
+# expect: make: Bad modifier ":tx" for variable "WORDS"
 .if ${WORDS:tx}
 .  error
 .else
@@ -209,7 +209,7 @@ WORDS=	one two three four five six
 .endif
 
 # The word separator must be can only be a single character.
-# expect: Bad modifier ":ts\X" for variable "WORDS"
+# expect: make: Bad modifier ":ts\X" for variable "WORDS"
 .if ${WORDS:ts\X}
 .  error
 .else
