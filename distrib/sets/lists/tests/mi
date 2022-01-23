@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1182 2022/01/19 22:10:41 rillig Exp $
+# $NetBSD: mi,v 1.1183 2022/01/23 16:09:38 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5659,8 +5659,8 @@
 ./usr/tests/usr.bin/make/unit-tests/doterror.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dotwait.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/dotwait.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/envfirst.exp				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/envfirst.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/envfirst.exp				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/envfirst.mk					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/make/unit-tests/error.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/error.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/escape.exp					tests-usr.bin-tests	compattestfile,atf
@@ -5723,8 +5723,8 @@
 ./usr/tests/usr.bin/make/unit-tests/modorder.mk					tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/modts.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modts.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/modword.exp					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/modword.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/modword.exp					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/modword.mk					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/make/unit-tests/objdir-writable.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/objdir-writable.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-backwards.exp				tests-usr.bin-tests	compattestfile,atf
