@@ -1,4 +1,4 @@
-# $NetBSD: directive-sinclude.mk,v 1.3 2022/01/23 16:09:38 rillig Exp $
+# $NetBSD: directive-sinclude.mk,v 1.4 2022/01/23 21:48:59 rillig Exp $
 #
 # Tests for the .sinclude directive, which includes another file,
 # silently skipping it if it cannot be opened.
@@ -20,4 +20,4 @@ _!=	echo 'syntax error' > directive-include-error.inc
 .sinclude "${.CURDIR}/directive-include-error.inc"
 _!=	rm directive-include-error.inc
 
-all:
+all: .PHONY
