@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.83 2022/01/22 11:49:17 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.84 2022/01/24 09:42:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.83 2022/01/22 11:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.84 2022/01/24 09:42:14 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -763,7 +763,7 @@ iic_compatible_lookup(const struct i2c_attach_args *ia,
 /*
  * iic_use_direct_match --
  *	Helper for direct-config of i2c.  Returns true if this is
- *	a direct-config situation, along with with match result.
+ *	a direct-config situation, along with match result.
  *	Returns false if the driver should use indirect-config
  *	matching logic.
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.163 2022/01/01 08:34:35 msaitoh Exp $ */
+/* $NetBSD: udf_subr.c,v 1.164 2022/01/24 09:42:14 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.163 2022/01/01 08:34:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.164 2022/01/24 09:42:14 andvar Exp $");
 #endif /* not lint */
 
 
@@ -5514,7 +5514,7 @@ udf_loadvnode(struct mount *mp, struct vnode *vp,
 	 * sure the chain is maintained.
 	 *
 	 * `needs_indirect' flags if the next location is to be filled with
-	 * with an indirect entry.
+	 * an indirect entry.
 	 */
 	udf_node->write_loc = icb_loc;
 	udf_node->needs_indirect = needs_indirect;

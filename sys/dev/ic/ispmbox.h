@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.56 2013/09/14 12:43:08 martin Exp $ */
+/* $NetBSD: ispmbox.h,v 1.57 2022/01/24 09:42:14 andvar Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -1400,7 +1400,7 @@ typedef struct {
 #define	PLOGX_FLG_IMPLICIT_LOGO_ALL	0x20	/* if with LOGO */
 #define	PLOGX_FLG_EXPLICIT_LOGO		0x40	/* if with LOGO */
 #define	PLOGX_FLG_COMMON_FEATURES	0x80	/* if with PLOGI */
-#define	PLOGX_FLG_FREE_NPHDL		0x80	/* if with with LOGO */
+#define	PLOGX_FLG_FREE_NPHDL		0x80	/* if with LOGO */
 
 #define	PLOGX_FLG_CLASS2		0x100	/* if with PLOGI */
 #define	PLOGX_FLG_FCP2_OVERRIDE		0x200	/* if with PRLOG, PRLI */

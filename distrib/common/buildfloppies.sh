@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.19 2018/09/16 21:49:18 kre Exp $
+# $NetBSD: buildfloppies.sh,v 1.20 2022/01/24 09:42:13 andvar Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,7 @@ usage()
 	cat 1>&2 << _USAGE_
 Usage: ${prog} [options] base size file [...]
 	-i instboot	eval instboot as a shell command to install a
-			bootstrap.  @IMAGE@ is replaced with with the
+			bootstrap.  @IMAGE@ is replaced with the
 			file name of the floppy image.
 	-m max		maximum number of floppies to build
 	-N etcdir	directory in which to find passwd and group files.
