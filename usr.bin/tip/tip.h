@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.35 2021/09/10 21:52:18 rillig Exp $	*/
+/*	$NetBSD: tip.h,v 1.36 2022/01/24 09:14:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -163,7 +163,7 @@ typedef
 /*
  * Escape command table definitions --
  *   lookup in this table is performed when ``escapec'' is recognized
- *   at the begining of a line (as defined by the eolmarks variable).
+ *   at the beginning of a line (as defined by the eolmarks variable).
 */
 
 typedef

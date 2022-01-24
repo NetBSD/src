@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.34 2021/12/31 14:25:22 riastradh Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.35 2022/01/24 09:14:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.34 2021/12/31 14:25:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.35 2022/01/24 09:14:37 andvar Exp $");
 
 #include "vlan.h"
 
@@ -1537,7 +1537,7 @@ enet_encap_mbufalign(struct mbuf **mp)
 					if (chiplen &&
 					    (M_TRAILINGSPACE(mt) < chiplen)) {
 						/*
-						 * move data to the begining of
+						 * move data to the beginning of
 						 * m_dat[] (aligned) to en-
 						 * large trailingspace
 						 */

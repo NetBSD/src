@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.18 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.19 2022/01/24 09:14:37 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.18 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.19 2022/01/24 09:14:37 andvar Exp $");
 
 #define PLUMIOBUSDEBUG
 
@@ -236,7 +236,7 @@ plumiobus_dump(struct plumiobus_softc *sc)
 
 	reg = PLUM_IOBUS_IOXCCNT_MASK &
 	    plum_conf_read(regt, regh, PLUM_IOBUS_IOXCCNT_REG);
-	printf(" # of wait to become from the access begining: %d clock\n",
+	printf(" # of wait to become from the access beginning: %d clock\n",
 	    reg + 1);
 	reg = plum_conf_read(regt, regh, PLUM_IOBUS_IOXACNT_REG);
 	printf(" # of wait in access clock: ");

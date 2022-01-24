@@ -1,4 +1,4 @@
-/* $NetBSD: uscsi_sense.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $	*/
+/* $NetBSD: uscsi_sense.c,v 1.2 2022/01/24 09:14:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -342,7 +342,7 @@ static const struct {
 { 0x3B, 0x07, "Failed To Sense Bottom-Of-Form" },
 { 0x3B, 0x08, "Reposition Error" },
 { 0x3B, 0x09, "Read Past End Of Medium" },
-{ 0x3B, 0x0A, "Read Past Begining Of Medium" },
+{ 0x3B, 0x0A, "Read Past Beginning Of Medium" },
 { 0x3B, 0x0B, "Position Past End Of Medium" },
 { 0x3B, 0x0C, "Position Past Beginning Of Medium" },
 { 0x3B, 0x0D, "Medium Destination Element Full" },

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sense.c,v 1.9 2011/06/22 05:18:03 mrg Exp $	*/
+/*	$NetBSD: scsi_sense.c,v 1.10 2022/01/24 09:14:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_sense.c,v 1.9 2011/06/22 05:18:03 mrg Exp $");
+__RCSID("$NetBSD: scsi_sense.c,v 1.10 2022/01/24 09:14:37 andvar Exp $");
 #endif
 
 
@@ -212,7 +212,7 @@ static const struct {
 { 0x3B, 0x07, "Failed To Sense Bottom-Of-Form" },
 { 0x3B, 0x08, "Reposition Error" },
 { 0x3B, 0x09, "Read Past End Of Medium" },
-{ 0x3B, 0x0A, "Read Past Begining Of Medium" },
+{ 0x3B, 0x0A, "Read Past Beginning Of Medium" },
 { 0x3B, 0x0B, "Position Past End Of Medium" },
 { 0x3B, 0x0C, "Position Past Beginning Of Medium" },
 { 0x3B, 0x0D, "Medium Destination Element Full" },
