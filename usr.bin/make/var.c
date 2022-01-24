@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1002 2022/01/15 19:05:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1003 2022/01/24 20:49:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1002 2022/01/15 19:05:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1003 2022/01/24 20:49:55 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4545,8 +4545,8 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	 * Before applying any modifiers, expand any nested expressions from
 	 * the variable value.
 	 */
-	if (strchr(Expr_Str(&expr), '$') != NULL &&
-	    VarEvalMode_ShouldEval(emode)) {
+	if (VarEvalMode_ShouldEval(emode) &&
+	    strchr(Expr_Str(&expr), '$') != NULL) {
 		char *expanded;
 		VarEvalMode nested_emode = emode;
 		if (opts.strict)
