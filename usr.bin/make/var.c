@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1003 2022/01/24 20:49:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1004 2022/01/24 20:54:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1003 2022/01/24 20:49:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1004 2022/01/24 20:54:54 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4626,7 +4626,7 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 	if (val.str == var_Error || val.str == varUndefined) {
 		if (!VarEvalMode_ShouldKeepUndef(emode)) {
 			p = nested_p;
-		} else if (emode == VARE_UNDEFERR || val.str == var_Error) {
+		} else if (val.str == var_Error) {
 
 			/*
 			 * XXX: This condition is wrong.  If val == var_Error,
