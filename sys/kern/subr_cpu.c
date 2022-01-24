@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.17 2021/10/04 21:02:39 andvar Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.18 2022/01/24 09:42:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.17 2021/10/04 21:02:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.18 2022/01/24 09:42:14 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -450,7 +450,7 @@ cpu_count(enum cpu_count idx, int64_t delta)
 /*
  * Fetch fresh sum total for all counts.  Expensive - don't call often.
  *
- * If poll is true, the caller is okay with with less recent values (but
+ * If poll is true, the caller is okay with less recent values (but
  * no more than 1/hz seconds old).  Where this is called very often that
  * should be the case.
  *

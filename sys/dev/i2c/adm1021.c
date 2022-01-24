@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.29 2021/06/21 03:12:54 christos Exp $ */
+/*	$NetBSD: adm1021.c,v 1.30 2022/01/24 09:42:14 andvar Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.29 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.30 2022/01/24 09:42:14 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 		/*
 		 * MAX6642 doesn't have a revision register
 		 * XXX this works only on macppc with iic at pmu because the
-		 * pmu doesn't return an error for nonexistant registers, it
+		 * pmu doesn't return an error for nonexistent registers, it
 		 * just repeats previous data
 		 */
 		if (*comp == *rev) {		
