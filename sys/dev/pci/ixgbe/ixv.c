@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.176 2022/01/19 10:30:04 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.177 2022/01/24 01:57:52 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.176 2022/01/19 10:30:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.177 2022/01/24 01:57:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2429,13 +2429,16 @@ ixv_init_stats(struct adapter *adapter)
 	(last) = current;				\
 }
 
-#define UPDATE_STAT_36(lsb, msb, last, count)		\
-{							\
-	u64 cur_lsb = IXGBE_READ_REG(hw, (lsb));	\
-	u64 cur_msb = IXGBE_READ_REG(hw, (msb));	\
-	u64 current = ((cur_msb << 32) | cur_lsb);	\
-	count.ev_count += current - last;		\
-	(last) = current;				\
+#define UPDATE_STAT_36(lsb, msb, last, count)		   	\
+{						   		\
+	u64 cur_lsb = IXGBE_READ_REG(hw, (lsb));		\
+	u64 cur_msb = IXGBE_READ_REG(hw, (msb));		\
+	u64 current = ((cur_msb << 32) | cur_lsb);		\
+	if (current < (last))					\
+		count.ev_count += current + __BIT(36) - (last);	\
+	else							\
+		count.ev_count += current - (last);		\
+	(last) = current;					\
 }
 
 /************************************************************************
