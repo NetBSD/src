@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.27 2021/09/10 21:52:17 rillig Exp $       */
+/*     $NetBSD: login_pam.c,v 1.28 2022/01/24 09:14:37 andvar Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.27 2021/09/10 21:52:17 rillig Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.28 2022/01/24 09:14:37 andvar Exp $");
 #endif /* not lint */
 
 /*
@@ -495,7 +495,7 @@ skip_auth:
 	/*
 	 * Fork because we need to call pam_closesession as root.
 	 * Make sure signals cannot kill the parent.
-	 * This has been handled in the begining of main.
+	 * This has been handled in the beginning of main.
 	 */
 
 	switch(pid = fork()) {

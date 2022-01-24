@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.7 2021/12/31 20:22:48 andvar Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.8 2022/01/24 09:14:37 andvar Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: dst_api.c,v 1.7 2021/12/31 20:22:48 andvar Exp $");
+__RCSID("$NetBSD: dst_api.c,v 1.8 2022/01/24 09:14:37 andvar Exp $");
 #endif
 
 
@@ -680,7 +680,7 @@ dst_dnskey_to_key(const char *in_name, const u_char *rdata, const int len)
 		start += 2;
 	}
 	/*
-	 * now point to the begining of the data representing the encoding
+	 * now point to the beginning of the data representing the encoding
 	 * of the key
 	 */
 	if (key_st->dk_func && key_st->dk_func->from_dns_key) {

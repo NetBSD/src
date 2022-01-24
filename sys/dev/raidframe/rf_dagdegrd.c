@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.32 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.33 2022/01/24 09:14:37 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.32 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.33 2022/01/24 09:14:37 andvar Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -798,7 +798,7 @@ rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 				count++;
 			break;
 		case 2:	/* whole stripe */
-			if (suoff)	/* leak at begining */
+			if (suoff)	/* leak at beginning */
 				count++;
 			if (suend < numDataCol)	/* leak at end */
 				count++;
@@ -882,7 +882,7 @@ rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			if (suoff > fone_start) {
 				RF_ASSERT(suend >= fone_end);
 				/* The data read starts after the mapped
-				 * access, snip off the begining */
+				 * access, snip off the beginning */
 				pda_p->numSector = suoff - fone_start;
 				pda_p->raidAddress = sosAddr + (i * secPerSU) + fone_start;
 				(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
@@ -925,7 +925,7 @@ rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 					RF_ASSERT(suend >= fone_end);
 					/* The data read starts after the
 					 * mapped access, snip off the
-					 * begining */
+					 * beginning */
 					pda_p->numSector = suoff - fone_start;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + fone_start;
 					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
@@ -950,7 +950,7 @@ rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 					RF_ASSERT(suend >= ftwo_end);
 					/* The data read starts after the
 					 * mapped access, snip off the
-					 * begining */
+					 * beginning */
 					pda_p->numSector = suoff - ftwo_start;
 					pda_p->raidAddress = sosAddr + (i * secPerSU) + ftwo_start;
 					(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);

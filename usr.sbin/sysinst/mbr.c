@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.40 2021/12/05 07:06:17 msaitoh Exp $ */
+/*	$NetBSD: mbr.c,v 1.41 2022/01/24 09:14:38 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1086,7 +1086,7 @@ mbr_change_disk_geom(struct disk_partitions *arg, int ncyl, int nhead,
 				/*
 				 * If ptn_base is a power of 2, use it.
 				 * Also use it if the first partition
-				 * already is close to the begining
+				 * already is close to the beginning
 				 * of the disk and we can't enforce
 				 * better alignment.
 				 */
