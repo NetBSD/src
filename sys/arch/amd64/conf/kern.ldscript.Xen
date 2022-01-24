@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.Xen,v 1.17 2020/05/21 09:36:24 jdolecek Exp $	*/
+/*	$NetBSD: kern.ldscript.Xen,v 1.18 2022/01/24 00:15:09 maya Exp $	*/
 
 #include "assym.h"
 
@@ -13,7 +13,7 @@ SECTIONS
 		*(.text.*)
 		*(.stub)
 		. = ALIGN(__PAGE_SIZE);
-	} =0xCC
+	} :main =0xCC
 	_etext = . ;
 	PROVIDE (etext = .) ;
 
@@ -80,5 +80,14 @@ SECTIONS
 	{
 		KEEP(*(.note.netbsd.ident));
 	}
+	.note.Xen :
+	{
+		KEEP(*(.note.Xen));
+	} :notes
 }
 
+PHDRS
+{
+	main PT_LOAD;
+	notes PT_NOTE;
+}
