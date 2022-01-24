@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1004 2022/01/24 20:54:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1005 2022/01/24 22:59:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1004 2022/01/24 20:54:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1005 2022/01/24 22:59:49 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4704,7 +4704,7 @@ Var_Subst(const char *str, GNode *scope, VarEvalMode emode, char **out_res)
 	 * Set true if an error has already been reported, to prevent a
 	 * plethora of messages when recursing
 	 */
-	/* XXX: Why is the 'static' necessary here? */
+	/* See varparse-errors.mk for why the 'static' is necessary here. */
 	static bool errorReported;
 
 	Buf_Init(&res);
