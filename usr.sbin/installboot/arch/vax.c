@@ -1,4 +1,4 @@
-/*	$NetBSD: vax.c,v 1.19 2019/05/07 04:35:31 thorpej Exp $	*/
+/*	$NetBSD: vax.c,v 1.20 2022/01/24 09:14:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: vax.c,v 1.19 2019/05/07 04:35:31 thorpej Exp $");
+__RCSID("$NetBSD: vax.c,v 1.20 2022/01/24 09:14:38 andvar Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -223,7 +223,7 @@ vax_setboot(ib_params *params)
 	    oldbb + VAX_LABELOFFSET,
 	    offsetof(struct vax_boot_block,bb_magic1) - VAX_LABELOFFSET);
 
-	/* point to bootblock at begining of bootstrap */
+	/* point to bootblock at beginning of bootstrap */
 	bb = (struct vax_boot_block*)bootstrapbuf;
 
 	/* fill in the updated boot block fields */

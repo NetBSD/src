@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.18 2019/02/03 03:19:30 mrg Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.19 2022/01/24 09:14:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vfontedpr.c,v 1.18 2019/02/03 03:19:30 mrg Exp $");
+__RCSID("$NetBSD: vfontedpr.c,v 1.19 2022/01/24 09:14:37 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -112,7 +112,7 @@ static char	pstack[PSMAX][PNAMELEN+1];	/* the procedure name stack */
 
 char	*l_acmbeg;		/* string introducing a comment */
 char	*l_acmend;		/* string ending a comment */
-char	*l_blkbeg;		/* string begining of a block */
+char	*l_blkbeg;		/* string beginning of a block */
 char	*l_blkend;		/* string ending a block */
 char    *l_chrbeg;		/* delimiter for character constant */
 char    *l_chrend;		/* delimiter for character constant */

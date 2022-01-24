@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.31 2021/12/05 08:03:06 msaitoh Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.32 2022/01/24 09:14:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.31 2021/12/05 08:03:06 msaitoh Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.32 2022/01/24 09:14:36 andvar Exp $");
 #endif
 #endif
 
@@ -652,7 +652,7 @@ clnt_dg_control(CLIENT *cl, u_int request, char *info)
 		/*
 		 * This RELIES on the information that, in the call body,
 		 * the version number field is the fifth field from the
-		 * begining of the RPC header. MUST be changed if the
+		 * beginning of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
 		*(u_int32_t *)(void *)info =
@@ -669,7 +669,7 @@ clnt_dg_control(CLIENT *cl, u_int request, char *info)
 		/*
 		 * This RELIES on the information that, in the call body,
 		 * the program number field is the fourth field from the
-		 * begining of the RPC header. MUST be changed if the
+		 * beginning of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
 		*(u_int32_t *)(void *)info =

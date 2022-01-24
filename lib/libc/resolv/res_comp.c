@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.13 2015/02/24 17:56:20 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.14 2022/01/24 09:14:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -71,7 +71,7 @@
 static const char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_comp.c,v 1.5 2005/07/28 06:51:50 marka Exp";
 #else
-__RCSID("$NetBSD: res_comp.c,v 1.13 2015/02/24 17:56:20 christos Exp $");
+__RCSID("$NetBSD: res_comp.c,v 1.14 2022/01/24 09:14:36 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,7 +105,7 @@ __weak_alias(res_dnok,__res_dnok)
 /*%
  * Expand compressed domain name 'src' to full domain name.
  *
- * \li 'msg' is a pointer to the begining of the message,
+ * \li 'msg' is a pointer to the beginning of the message,
  * \li 'eom' points to the first location after the message,
  * \li 'dst' is a pointer to a buffer of size 'dstsiz' for the result.
  * \li Return size of compressed name or -1 if there was an error.

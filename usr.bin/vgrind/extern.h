@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2016/09/03 02:24:04 sevan Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2022/01/24 09:14:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@ extern bool	x_escaped;             /* if last character was an escape */
 extern char    *x_start;               /* start of the current string */
 extern char    *l_acmbeg;              /* string introducing a comment */
 extern char    *l_acmend;              /* string ending a comment */
-extern char    *l_blkbeg;              /* string begining of a block */
+extern char    *l_blkbeg;              /* string beginning of a block */
 extern char    *l_blkend;              /* string ending a block */
 extern char    *l_chrbeg;              /* delimiter for character constant */
 extern char    *l_chrend;              /* delimiter for character constant */

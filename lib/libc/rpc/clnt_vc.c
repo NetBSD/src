@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.27 2021/08/21 23:00:30 andvar Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.28 2022/01/24 09:14:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.27 2021/08/21 23:00:30 andvar Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.28 2022/01/24 09:14:36 andvar Exp $");
 #endif
 #endif
  
@@ -616,7 +616,7 @@ clnt_vc_control(
 		/*
 		 * This RELIES on the information that, in the call body,
 		 * the version number field is the fifth field from the
-		 * begining of the RPC header. MUST be changed if the
+		 * beginning of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
 		ntohlp(info, ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT);
@@ -630,7 +630,7 @@ clnt_vc_control(
 		/*
 		 * This RELIES on the information that, in the call body,
 		 * the program number field is the fourth field from the
-		 * begining of the RPC header. MUST be changed if the
+		 * beginning of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
 		ntohlp(info, ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT);
