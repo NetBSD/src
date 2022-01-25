@@ -51,8 +51,7 @@ call OK refresh
 compare add_wch3.chk
 
 # we are now at middle of multi-col char
-# (unexpected output) [BUGGY??]
 # cursor should be at 5
-# call OK add_wch $CHAR
-# call OK refresh
-# call2 1 5 getyx STDSCR
+call OK add_wch $CHAR
+call OK refresh
+call2 1 5 getyx STDSCR

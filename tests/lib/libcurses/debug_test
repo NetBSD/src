@@ -9,6 +9,10 @@ export INCLUDE_PATH
 #
 CURSES_TRACE_FILE="/tmp/ctrace"
 SLAVE="${BASEDIR}/slave"
+#
+# Force localisation to UTF-8 to be consistent with atf runs
+#
+export LC_ALL=en_US.UTF-8
 
 usage() {
 	echo "Set up the environment to run the test frame.  Option flags:"

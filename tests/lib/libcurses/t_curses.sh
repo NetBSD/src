@@ -1,19 +1,16 @@
 h_run()
 {
+	TEST_LOCALE=en_US.UTF-8
+
 	file=$1
-	if [ -z "$2" ]; then
-		export LC_ALL=C
-		r_run $file
+	locale=`locale -a | grep -i ${TEST_LOCALE}`
+	if [ -z "${locale}" ]; then
+		atf_fail "test ${file} failed because locale ${locale} not available"
 	else
-		locale=`locale -a | grep -i $2`
-		if [ -z "${locale}" ]; then
-			atf_fail "test ${file} failed because locale ${locale} not available"
-		else
-			# export the locale and shift the parameters by two and pass the rest
-			export LC_ALL=$locale
-			shift 2
-			r_run $file $@
-		fi
+		# export the locale and shift the parameters by two and pass the rest
+		export LC_ALL=$locale
+		shift 2
+		r_run $file $@
 	fi
 }
 
@@ -234,7 +231,7 @@ addwstr_head()
 }
 addwstr_body()
 {
-    h_run addwstr en_US.UTF-8
+    h_run addwstr
 }
 
 atf_test_case waddstr
@@ -254,7 +251,7 @@ waddwstr_head()
 }
 waddwstr_body()
 {
-    h_run waddwstr en_US.UTF-8
+    h_run waddwstr
 }
 
 atf_test_case addnstr
@@ -274,7 +271,7 @@ addnwstr_head()
 }
 addnwstr_body()
 {
-    h_run addnwstr en_US.UTF-8
+    h_run addnwstr
 }
 
 atf_test_case waddnstr
@@ -294,7 +291,7 @@ waddnwstr_head()
 }
 waddnwstr_body()
 {
-    h_run waddnwstr en_US.UTF-8
+    h_run waddnwstr
 }
 
 atf_test_case mvwaddnwstr
@@ -304,7 +301,7 @@ mvwaddnwstr_head()
 }
 mvwaddnwstr_body()
 {
-    h_run mvwaddnwstr en_US.UTF-8
+    h_run mvwaddnwstr
 }
 
 atf_test_case mvaddstr
@@ -324,7 +321,7 @@ mvaddwstr_head()
 }
 mvaddwstr_body()
 {
-    h_run mvaddwstr en_US.UTF-8
+    h_run mvaddwstr
 }
 
 atf_test_case mvwaddwstr
@@ -334,7 +331,7 @@ mvwaddwstr_head()
 }
 mvwaddwstr_body()
 {
-    h_run mvwaddwstr en_US.UTF-8
+    h_run mvwaddwstr
 }
 
 atf_test_case mvwaddstr
@@ -344,7 +341,7 @@ mvwaddstr_head()
 }
 mvwaddstr_body()
 {
-    h_run mvwaddstr en_US.UTF-8
+    h_run mvwaddstr
 }
 
 atf_test_case mvaddnstr
@@ -364,7 +361,7 @@ mvaddnwstr_head()
 }
 mvaddnwstr_body()
 {
-    h_run mvaddnwstr en_US.UTF-8
+    h_run mvaddnwstr
 }
 
 atf_test_case mvwaddnstr
@@ -384,7 +381,7 @@ add_wch_head()
 }
 add_wch_body()
 {
-	h_run add_wch en_US.UTF-8
+	h_run add_wch
 }
 
 atf_test_case wadd_wch
@@ -394,7 +391,7 @@ wadd_wch_head()
 }
 wadd_wch_body()
 {
-    h_run wadd_wch en_US.UTF-8
+    h_run wadd_wch
 }
 
 ##########################################
@@ -538,7 +535,7 @@ key_name_head()
 }
 key_name_body()
 {
-    h_run key_name en_US.UTF-8
+    h_run key_name
 }
 
 atf_test_case keypad
@@ -598,7 +595,7 @@ unget_wch_head()
 }
 unget_wch_body()
 {
-    h_run unget_wch en_US.UTF-8
+    h_run unget_wch
 }
 
 atf_test_case getn_wstr
@@ -608,7 +605,7 @@ getn_wstr_head()
 }
 getn_wstr_body()
 {
-    h_run getn_wstr en_US.UTF-8
+    h_run getn_wstr
 }
 
 atf_test_case wgetn_wstr
@@ -618,7 +615,7 @@ wgetn_wstr_head()
 }
 wgetn_wstr_body()
 {
-    h_run wgetn_wstr en_US.UTF-8
+    h_run wgetn_wstr
 }
 
 atf_test_case get_wstr
@@ -628,7 +625,7 @@ get_wstr_head()
 }
 get_wstr_body()
 {
-    h_run get_wstr en_US.UTF-8
+    h_run get_wstr
 }
 
 atf_test_case wget_wstr
@@ -638,7 +635,7 @@ wget_wstr_head()
 }
 wget_wstr_body()
 {
-    h_run wget_wstr en_US.UTF-8
+    h_run wget_wstr
 }
 
 atf_test_case mvgetn_wstr
@@ -648,7 +645,7 @@ mvgetn_wstr_head()
 }
 mvgetn_wstr_body()
 {
-    h_run mvgetn_wstr en_US.UTF-8
+    h_run mvgetn_wstr
 }
 
 atf_test_case mvwgetn_wstr
@@ -658,7 +655,7 @@ mvwgetn_wstr_head()
 }
 mvwgetn_wstr_body()
 {
-    h_run mvwgetn_wstr en_US.UTF-8
+    h_run mvwgetn_wstr
 }
 
 atf_test_case mvget_wstr
@@ -668,7 +665,7 @@ mvget_wstr_head()
 }
 mvget_wstr_body()
 {
-    h_run mvget_wstr en_US.UTF-8
+    h_run mvget_wstr
 }
 
 atf_test_case mvwget_wstr
@@ -678,7 +675,7 @@ mvwget_wstr_head()
 }
 mvwget_wstr_body()
 {
-    h_run mvwget_wstr en_US.UTF-8
+    h_run mvwget_wstr
 }
 
 atf_test_case get_wch
@@ -688,7 +685,7 @@ get_wch_head()
 }
 get_wch_body()
 {
-	h_run get_wch en_US.UTF-8
+	h_run get_wch
 }
 
 ##########################################
@@ -822,7 +819,7 @@ in_wch_head()
 }
 in_wch_body()
 {
-    h_run in_wch en_US.UTF-8
+    h_run in_wch
 }
 
 atf_test_case win_wch
@@ -832,7 +829,7 @@ win_wch_head()
 }
 win_wch_body()
 {
-    h_run win_wch en_US.UTF-8
+    h_run win_wch
 }
 
 atf_test_case innwstr
@@ -842,7 +839,7 @@ innwstr_head()
 }
 innwstr_body()
 {
-    h_run innwstr en_US.UTF-8
+    h_run innwstr
 }
 
 atf_test_case winnwstr
@@ -852,7 +849,7 @@ winnwstr_head()
 }
 winnwstr_body()
 {
-    h_run winnwstr en_US.UTF-8
+    h_run winnwstr
 }
 
 atf_test_case inwstr
@@ -862,7 +859,7 @@ inwstr_head()
 }
 inwstr_body()
 {
-    h_run inwstr en_US.UTF-8
+    h_run inwstr
 }
 
 atf_test_case winwstr
@@ -872,7 +869,7 @@ winwstr_head()
 }
 winwstr_body()
 {
-    h_run winwstr en_US.UTF-8
+    h_run winwstr
 }
 
 atf_test_case mvinnwstr
@@ -882,7 +879,7 @@ mvinnwstr_head()
 }
 mvinnwstr_body()
 {
-    h_run mvinnwstr en_US.UTF-8
+    h_run mvinnwstr
 }
 
 atf_test_case mvwinnwstr
@@ -892,7 +889,7 @@ mvwinnwstr_head()
 }
 mvwinnwstr_body()
 {
-    h_run mvwinnwstr en_US.UTF-8
+    h_run mvwinnwstr
 }
 
 atf_test_case mvinwstr
@@ -902,7 +899,7 @@ mvinwstr_head()
 }
 mvinwstr_body()
 {
-    h_run mvinwstr en_US.UTF-8
+    h_run mvinwstr
 }
 
 atf_test_case mvwinwstr
@@ -912,7 +909,7 @@ mvwinwstr_head()
 }
 mvwinwstr_body()
 {
-    h_run mvwinwstr en_US.UTF-8
+    h_run mvwinwstr
 }
 
 ##########################################
@@ -966,7 +963,7 @@ ins_wch_head()
 }
 ins_wch_body()
 {
-    h_run ins_wch en_US.UTF-8
+    h_run ins_wch
 }
 
 atf_test_case wins_wch
@@ -976,7 +973,7 @@ wins_wch_head()
 }
 wins_wch_body()
 {
-    h_run wins_wch en_US.UTF-8
+    h_run wins_wch
 }
 
 atf_test_case mvins_wch
@@ -986,7 +983,7 @@ mvins_wch_head()
 }
 mvins_wch_body()
 {
-    h_run mvins_wch en_US.UTF-8
+    h_run mvins_wch
 }
 
 atf_test_case mvwins_wch
@@ -996,7 +993,7 @@ mvwins_wch_head()
 }
 mvwins_wch_body()
 {
-    h_run mvwins_wch en_US.UTF-8
+    h_run mvwins_wch
 }
 
 atf_test_case ins_nwstr
@@ -1006,7 +1003,7 @@ ins_nwstr_head()
 }
 ins_nwstr_body()
 {
-    h_run ins_nwstr en_US.UTF-8
+    h_run ins_nwstr
 }
 
 atf_test_case wins_nwstr
@@ -1016,7 +1013,7 @@ wins_nwstr_head()
 }
 wins_nwstr_body()
 {
-    h_run wins_nwstr en_US.UTF-8
+    h_run wins_nwstr
 }
 
 atf_test_case ins_wstr
@@ -1026,7 +1023,7 @@ ins_wstr_head()
 }
 ins_wstr_body()
 {
-    h_run ins_wstr en_US.UTF-8
+    h_run ins_wstr
 }
 
 atf_test_case wins_wstr
@@ -1036,7 +1033,7 @@ wins_wstr_head()
 }
 wins_wstr_body()
 {
-    h_run wins_wstr en_US.UTF-8
+    h_run wins_wstr
 }
 
 atf_test_case mvins_nwstr
@@ -1046,7 +1043,7 @@ mvins_nwstr_head()
 }
 mvins_nwstr_body()
 {
-    h_run mvins_nwstr en_US.UTF-8
+    h_run mvins_nwstr
 }
 
 atf_test_case mvwins_nwstr
@@ -1056,7 +1053,7 @@ mvwins_nwstr_head()
 }
 mvwins_nwstr_body()
 {
-    h_run mvwins_nwstr en_US.UTF-8
+    h_run mvwins_nwstr
 }
 
 atf_test_case mvins_wstr
@@ -1066,7 +1063,7 @@ mvins_wstr_head()
 }
 mvins_wstr_body()
 {
-    h_run mvins_wstr en_US.UTF-8
+    h_run mvins_wstr
 }
 
 atf_test_case mvwins_wstr
@@ -1076,7 +1073,7 @@ mvwins_wstr_head()
 }
 mvwins_wstr_body()
 {
-    h_run mvwins_wstr en_US.UTF-8
+    h_run mvwins_wstr
 }
 
 ##########################################
@@ -1164,7 +1161,7 @@ erasewchar_head()
 }
 erasewchar_body()
 {
-    h_run erasewchar en_US.UTF-8
+    h_run erasewchar
 }
 
 atf_test_case echochar
@@ -1184,7 +1181,7 @@ echo_wchar_head()
 }
 echo_wchar_body()
 {
-    h_run echo_wchar en_US.UTF-8
+    h_run echo_wchar
 }
 
 atf_test_case wecho_wchar
@@ -1194,7 +1191,7 @@ wecho_wchar_head()
 }
 wecho_wchar_body()
 {
-    h_run wecho_wchar en_US.UTF-8
+    h_run wecho_wchar
 }
 
 atf_test_case halfdelay
@@ -1234,7 +1231,7 @@ killwchar_head()
 }
 killwchar_body()
 {
-    h_run killwchar en_US.UTF-8
+    h_run killwchar
 }
 
 atf_test_case meta
@@ -1680,7 +1677,7 @@ slk_head()
 }
 slk_body()
 {
-    h_run slk en_US.UTF-8
+    h_run slk
 }
 
 ##########################################
@@ -1744,7 +1741,7 @@ hline_set_head()
 }
 hline_set_body()
 {
-    h_run hline_set en_US.UTF-8
+    h_run hline_set
 }
 
 atf_test_case whline_set
@@ -1754,7 +1751,7 @@ whline_set_head()
 }
 whline_set_body()
 {
-    h_run whline_set en_US.UTF-8
+    h_run whline_set
 }
 
 atf_test_case vline_set
@@ -1764,7 +1761,7 @@ vline_set_head()
 }
 vline_set_body()
 {
-    h_run vline_set en_US.UTF-8
+    h_run vline_set
 }
 
 atf_test_case wvline_set
@@ -1774,7 +1771,7 @@ wvline_set_head()
 }
 wvline_set_body()
 {
-    h_run wvline_set en_US.UTF-8
+    h_run wvline_set
 }
 
 ##########################################
@@ -1798,7 +1795,7 @@ pechochar_head()
 }
 pechochar_body()
 {
-    h_run pechochar en_US.UTF-8
+    h_run pechochar
 }
 
 ##########################################
@@ -1977,7 +1974,7 @@ overwrite_head()
 }
 overwrite_body()
 {
-    h_run overwrite en_US.UTF-8
+    h_run overwrite
 }
 
 atf_test_case getwin
@@ -2045,7 +2042,7 @@ box_set_head()
 }
 box_set_body()
 {
-    h_run box_set en_US.UTF-8
+    h_run box_set
 }
 
 atf_test_case wborder
@@ -2065,7 +2062,7 @@ border_set_head()
 }
 border_set_body()
 {
-    h_run border_set en_US.UTF-8
+    h_run border_set
 }
 
 atf_test_case wborder_set
@@ -2075,7 +2072,7 @@ wborder_set_head()
 }
 wborder_set_body()
 {
-    h_run wborder_set en_US.UTF-8
+    h_run wborder_set
 }
 
 ##########################################
