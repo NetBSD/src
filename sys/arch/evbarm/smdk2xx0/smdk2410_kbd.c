@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.10 2021/08/07 16:18:50 thorpej Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.11 2022/01/25 22:01:34 andvar Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.10 2021/08/07 16:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.11 2022/01/25 22:01:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.10 2021/08/07 16:18:50 thorpej Ex
  */
 
 /*
- * Commands/responce 
+ * Commands/response 
  */
 #define	KCDR_INITIALIZE	0xa0	/* Initialize request */
 #define	KCDR_INITCOMP	0xa1	/* Initialize complete */

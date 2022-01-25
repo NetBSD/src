@@ -1,4 +1,4 @@
-*	$NetBSD: x_unfl.sa,v 1.4 2001/09/16 16:34:32 wiz Exp $
+*	$NetBSD: x_unfl.sa,v 1.5 2022/01/25 22:01:34 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -41,7 +41,7 @@
 * by taking the intermediate result (which is always normalized) and 
 * shifting the mantissa right while incrementing the exponent until 
 * it is equal to the denormalized exponent for the destination 
-* format.  After denormalizatoin, the result is rounded to the 
+* format.  After denormalization, the result is rounded to the 
 * destination format.
 *		
 * Trap enabled results
