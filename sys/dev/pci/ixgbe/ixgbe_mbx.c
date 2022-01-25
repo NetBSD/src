@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_mbx.c,v 1.18 2022/01/18 09:27:46 msaitoh Exp $ */
+/* $NetBSD: ixgbe_mbx.c,v 1.19 2022/01/25 01:56:22 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,9 +36,10 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.c 326022 2017-11-20 19:36:21Z pfg $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_mbx.c,v 1.18 2022/01/18 09:27:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_mbx.c,v 1.19 2022/01/25 01:56:22 msaitoh Exp $");
 
 #include "ixgbe_type.h"
+#include "ixgbe_netbsd.h"
 #include "ixgbe_mbx.h"
 
 static s32 ixgbe_poll_for_msg(struct ixgbe_hw *hw, u16 mbx_id);
@@ -314,7 +315,7 @@ static void ixgbe_clear_msg_vf(struct ixgbe_hw *hw)
 	u32 vf_mailbox = ixgbe_read_mailbox_vf(hw);
 
 	if (vf_mailbox & IXGBE_VFMAILBOX_PFSTS) {
-		hw->mbx.stats.reqs.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.reqs, 1);
 		hw->mbx.vf_mailbox &= ~IXGBE_VFMAILBOX_PFSTS;
 	}
 }
@@ -324,7 +325,7 @@ static void ixgbe_clear_ack_vf(struct ixgbe_hw *hw)
 	u32 vf_mailbox = ixgbe_read_mailbox_vf(hw);
 
 	if (vf_mailbox & IXGBE_VFMAILBOX_PFACK) {
-		hw->mbx.stats.acks.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.acks, 1);
 		hw->mbx.vf_mailbox &= ~IXGBE_VFMAILBOX_PFACK;
 	}
 }
@@ -334,7 +335,7 @@ static void ixgbe_clear_rst_vf(struct ixgbe_hw *hw)
 	u32 vf_mailbox = ixgbe_read_mailbox_vf(hw);
 
 	if (vf_mailbox & (IXGBE_VFMAILBOX_RSTI | IXGBE_VFMAILBOX_RSTD)) {
-		hw->mbx.stats.rsts.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.rsts, 1);
 		hw->mbx.vf_mailbox &= ~(IXGBE_VFMAILBOX_RSTI |
 					IXGBE_VFMAILBOX_RSTD);
 	}
@@ -371,7 +372,7 @@ static s32 ixgbe_check_for_msg_vf(struct ixgbe_hw *hw, u16 mbx_id)
 	DEBUGFUNC("ixgbe_check_for_msg_vf");
 
 	if (!ixgbe_check_for_bit_vf(hw, IXGBE_VFMAILBOX_PFSTS)) {
-		hw->mbx.stats.reqs.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.reqs, 1);
 		return IXGBE_SUCCESS;
 	}
 
@@ -393,7 +394,7 @@ static s32 ixgbe_check_for_ack_vf(struct ixgbe_hw *hw, u16 mbx_id)
 	if (!ixgbe_check_for_bit_vf(hw, IXGBE_VFMAILBOX_PFACK)) {
 		/* TODO: should this be autocleared? */
 		ixgbe_clear_ack_vf(hw);
-		hw->mbx.stats.acks.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.acks, 1);
 		return IXGBE_SUCCESS;
 	}
 
@@ -416,7 +417,7 @@ static s32 ixgbe_check_for_rst_vf(struct ixgbe_hw *hw, u16 mbx_id)
 					  IXGBE_VFMAILBOX_RSTD)) {
 		/* TODO: should this be autocleared? */
 		ixgbe_clear_rst_vf(hw);
-		hw->mbx.stats.rsts.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.rsts, 1);
 		return IXGBE_SUCCESS;
 	}
 
@@ -531,7 +532,7 @@ static s32 ixgbe_write_mbx_vf_legacy(struct ixgbe_hw *hw, u32 *msg, u16 size,
 		IXGBE_WRITE_REG_ARRAY(hw, IXGBE_VFMBMEM, i, msg[i]);
 
 	/* update stats */
-	hw->mbx.stats.msgs_tx.ev_count++;
+	IXGBE_EVC_ADD(&hw->mbx.stats.msgs_tx, 1);
 
 	/* interrupt the PF to tell it a message has been sent */
 	IXGBE_WRITE_REG(hw, IXGBE_VFMAILBOX, IXGBE_VFMAILBOX_REQ);
@@ -573,7 +574,7 @@ static s32 ixgbe_write_mbx_vf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 		IXGBE_WRITE_REG_ARRAY(hw, IXGBE_VFMBMEM, i, msg[i]);
 
 	/* update stats */
-	hw->mbx.stats.msgs_tx.ev_count++;
+	IXGBE_EVC_ADD(&hw->mbx.stats.msgs_tx, 1);
 
 	/* interrupt the PF to tell it a message has been sent */
 	vf_mailbox = ixgbe_read_mailbox_vf(hw);
@@ -620,7 +621,7 @@ static s32 ixgbe_read_mbx_vf_legacy(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	IXGBE_WRITE_REG(hw, IXGBE_VFMAILBOX, IXGBE_VFMAILBOX_ACK);
 
 	/* update stats */
-	hw->mbx.stats.msgs_rx.ev_count++;
+	IXGBE_EVC_ADD(&hw->mbx.stats.msgs_rx, 1);
 
 	return IXGBE_SUCCESS;
 }
@@ -661,7 +662,7 @@ static s32 ixgbe_read_mbx_vf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	IXGBE_WRITE_REG(hw, IXGBE_VFMAILBOX, vf_mailbox);
 
 	/* update stats */
-	hw->mbx.stats.msgs_rx.ev_count++;
+	IXGBE_EVC_ADD(&hw->mbx.stats.msgs_rx, 1);
 
 	return IXGBE_SUCCESS;
 }
@@ -691,11 +692,11 @@ void ixgbe_init_mbx_params_vf(struct ixgbe_hw *hw)
 	mbx->ops[0].check_for_rst = ixgbe_check_for_rst_vf;
 	mbx->ops[0].clear = NULL;
 
-	mbx->stats.msgs_tx.ev_count = 0;
-	mbx->stats.msgs_rx.ev_count = 0;
-	mbx->stats.reqs.ev_count = 0;
-	mbx->stats.acks.ev_count = 0;
-	mbx->stats.rsts.ev_count = 0;
+	IXGBE_EVC_STORE(&mbx->stats.msgs_tx, 0);
+	IXGBE_EVC_STORE(&mbx->stats.msgs_rx, 0);
+	IXGBE_EVC_STORE(&mbx->stats.reqs, 0);
+	IXGBE_EVC_STORE(&mbx->stats.acks, 0);
+	IXGBE_EVC_STORE(&mbx->stats.rsts, 0);
 }
 
 /**
@@ -732,7 +733,7 @@ static void ixgbe_clear_msg_pf(struct ixgbe_hw *hw, u16 vf_id)
 	pfmbicr = IXGBE_READ_REG(hw, IXGBE_PFMBICR(index));
 
 	if (pfmbicr & (IXGBE_PFMBICR_VFREQ_VF1 << vf_shift))
-		hw->mbx.stats.reqs.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.reqs, 1);
 
 	IXGBE_WRITE_REG(hw, IXGBE_PFMBICR(index),
 			IXGBE_PFMBICR_VFREQ_VF1 << vf_shift);
@@ -747,7 +748,7 @@ static void ixgbe_clear_ack_pf(struct ixgbe_hw *hw, u16 vf_id)
 	pfmbicr = IXGBE_READ_REG(hw, IXGBE_PFMBICR(index));
 
 	if (pfmbicr & (IXGBE_PFMBICR_VFACK_VF1 << vf_shift))
-		hw->mbx.stats.acks.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.acks, 1);
 
 	IXGBE_WRITE_REG(hw, IXGBE_PFMBICR(index),
 			IXGBE_PFMBICR_VFACK_VF1 << vf_shift);
@@ -842,7 +843,7 @@ static s32 ixgbe_check_for_rst_pf(struct ixgbe_hw *hw, u16 vf_id)
 	if (vflre & (1 << vf_shift)) {
 		ret_val = IXGBE_SUCCESS;
 		IXGBE_WRITE_REG(hw, IXGBE_PFVFLREC(index), (1 << vf_shift));
-		hw->mbx.stats.rsts.ev_count++;
+		IXGBE_EVC_ADD(&hw->mbx.stats.rsts, 1);
 	}
 
 	return ret_val;
@@ -946,7 +947,7 @@ static s32 ixgbe_write_mbx_pf_legacy(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	IXGBE_WRITE_REG(hw, IXGBE_PFMAILBOX(vf_id), IXGBE_PFMAILBOX_STS);
 
 	/* update stats */
-	hw->mbx.stats.msgs_tx.ev_count++;
+	IXGBE_EVC_ADD(&hw->mbx.stats.msgs_tx, 1);
 
 	return IXGBE_SUCCESS;
 }
@@ -991,7 +992,7 @@ static s32 ixgbe_write_mbx_pf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	ixgbe_poll_for_ack(hw, vf_id);
 
 	/* update stats */
-	hw->mbx.stats.msgs_tx.ev_count++;
+	IXGBE_EVC_ADD(&hw->mbx.stats.msgs_tx, 1);
 
 out:
 	hw->mbx.ops[vf_id].release(hw, vf_id);
@@ -1032,7 +1033,7 @@ static s32 ixgbe_read_mbx_pf_legacy(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	IXGBE_WRITE_REG(hw, IXGBE_PFMAILBOX(vf_id), IXGBE_PFMAILBOX_ACK);
 
 	/* update stats */
-	hw->mbx.stats.msgs_rx.ev_count++;
+	IXGBE_EVC_ADD(&hw->mbx.stats.msgs_rx, 1);
 
 	return IXGBE_SUCCESS;
 }
@@ -1074,7 +1075,7 @@ static s32 ixgbe_read_mbx_pf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 	IXGBE_WRITE_REG(hw, IXGBE_PFMAILBOX(vf_id), pf_mailbox);
 
 	/* update stats */
-	hw->mbx.stats.msgs_rx.ev_count++;
+	IXGBE_EVC_ADD(&hw->mbx.stats.msgs_rx, 1);
 
 	return IXGBE_SUCCESS;
 }
@@ -1148,11 +1149,11 @@ void ixgbe_init_mbx_params_pf(struct ixgbe_hw *hw)
 	mbx->size = IXGBE_VFMAILBOX_SIZE;
 
 	/* Initialize counters with zeroes */
-	mbx->stats.msgs_tx.ev_count = 0;
-	mbx->stats.msgs_rx.ev_count = 0;
-	mbx->stats.reqs.ev_count = 0;
-	mbx->stats.acks.ev_count = 0;
-	mbx->stats.rsts.ev_count = 0;
+	IXGBE_EVC_STORE(&mbx->stats.msgs_tx, 0);
+	IXGBE_EVC_STORE(&mbx->stats.msgs_rx, 0);
+	IXGBE_EVC_STORE(&mbx->stats.reqs, 0);
+	IXGBE_EVC_STORE(&mbx->stats.acks, 0);
+	IXGBE_EVC_STORE(&mbx->stats.rsts, 0);
 
 	/* No matter of VF number, we initialize params for all 64 VFs. */
 	/* TODO: 1. Add a define for max VF and refactor SHARED to get rid

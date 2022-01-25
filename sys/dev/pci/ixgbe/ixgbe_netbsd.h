@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.h,v 1.14 2021/08/25 09:06:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe_netbsd.h,v 1.15 2022/01/25 01:56:22 msaitoh Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,6 +49,35 @@
 	IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_UDPv6_Tx)
 
 #define IFCAP_HWCSUM	(IFCAP_RXCSUM|IFCAP_TXCSUM)
+
+
+/* Helper macros for evcnt(9) .*/
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+#define IXGBE_EVC_LOAD(evp)				\
+	atomic_load_relaxed(&((evp)->ev_count))
+#define IXGBE_EVC_STORE(evp, val)			\
+	atomic_store_relaxed(&((evp)->ev_count), (val))
+#define IXGBE_EVC_ADD(evp, val)					\
+	atomic_store_relaxed(&((evp)->ev_count),		\
+	    atomic_load_relaxed(&((evp)->ev_count)) + (val))
+#else
+#define IXGBE_EVC_LOAD(evp)		((ev)->ev_count))
+#define IXGBE_EVC_STORE(evp, val)	((ev)->ev_count = (val))
+#define IXGBE_EVC_ADD(evp, val)		((ev)->ev_count += (val))
+#endif
+
+#define IXGBE_EVC_REGADD(hw, stats, regname, evname)			\
+	IXGBE_EVC_ADD(&(stats)->evname, IXGBE_READ_REG((hw), (regname)))
+
+/*
+ * Copy a register value to variable "evname" for later use.
+ * "evname" is also the name of the evcnt.
+ */
+#define IXGBE_EVC_REGADD2(hw, stats, regname, evname)		\
+	do {							\
+		(evname) = IXGBE_READ_REG((hw), (regname));	\
+		IXGBE_EVC_ADD(&(stats)->evname, (evname));	\
+	} while (/*CONSTCOND*/0)
 
 struct ixgbe_dma_tag {
 	bus_dma_tag_t	dt_dmat;
