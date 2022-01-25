@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.34 2021/12/31 14:25:22 riastradh Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.35 2022/01/25 10:51:36 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.34 2021/12/31 14:25:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.35 2022/01/25 10:51:36 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -546,10 +546,10 @@ static void scx_fdt_attach(device_t, device_t, void *);
 static int scx_acpi_match(device_t, cfdata_t, void *);
 static void scx_acpi_attach(device_t, device_t, void *);
 
-const CFATTACH_DECL_NEW(scx_fdt, sizeof(struct scx_softc),
+CFATTACH_DECL_NEW(scx_fdt, sizeof(struct scx_softc),
     scx_fdt_match, scx_fdt_attach, NULL, NULL);
 
-const CFATTACH_DECL_NEW(scx_acpi, sizeof(struct scx_softc),
+CFATTACH_DECL_NEW(scx_acpi, sizeof(struct scx_softc),
     scx_acpi_match, scx_acpi_attach, NULL, NULL);
 
 static void scx_attach_i(struct scx_softc *);
@@ -683,9 +683,6 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	const char *phy_type;
 	long ref_clk;
 
-	aprint_naive("\n");
-	aprint_normal(": Socionext Gigabit Ethernet controller\n");
-
 	if (fdtbus_get_reg(phandle, 0, addr+0, size+0) != 0
 	    || bus_space_map(faa->faa_bst, addr[0], size[0], 0, &bsh) != 0) {
 		aprint_error_dev(self, "unable to map device csr\n");
@@ -731,6 +728,7 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phy_id = phy_id;
 	sc->sc_freq = ref_clk;
 
+	aprint_normal("%s", device_xname(self));
 	scx_attach_i(sc);
 	return;
  fail:
@@ -762,15 +760,11 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_INTEGER phy_type, phy_id, ref_freq;
 	ACPI_STATUS rv;
 
-	aprint_naive("\n");
-	aprint_normal(": Socionext Gigabit Ethernet controller\n");
-
 	rv = acpi_resource_parse(self, handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "missing crs resources\n");
+	if (ACPI_FAILURE(rv))
 		return;
-	}
+
 	mem = acpi_res_mem(&res, 0);
 	irq = acpi_res_irq(&res, 0);
 	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
@@ -783,8 +777,8 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_sz = mem->ar_length;
-	sc->sc_ih = acpi_intr_establish(self, (uint64_t)handle, IPL_NET,
-	    NOT_MP_SAFE, scx_intr, sc, device_xname(self));
+	sc->sc_ih = acpi_intr_establish(self, (uint64_t)(uintptr_t)handle,
+	    IPL_NET, NOT_MP_SAFE, scx_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto fail;
@@ -808,7 +802,7 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 	rv = acpi_dsd_integer(handle, "phy-channel", &phy_id);
 	if (ACPI_FAILURE(rv))
-		phy_id = 7;
+		phy_id = MII_PHY_ANY;
 	rv = acpi_dsd_integer(handle, "socionext,phy-clock-frequency",
 			&ref_freq);
 	if (ACPI_FAILURE(rv))
@@ -819,15 +813,14 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sh = bsh;
 	sc->sc_eesh = eebsh;
 	sc->sc_dmat = aa->aa_dmat64;
-
-aprint_normal_dev(self,
-"phy type %d, phy id %d, freq %ld\n", (int)phy_type, (int)phy_id, ref_freq);
 	sc->sc_100mii = (phy_type != 1000);
 	sc->sc_phy_id = (int)phy_id;
 	sc->sc_freq = ref_freq;
-aprint_normal_dev(self,
-"GMACGAR %08x\n", mac_read(sc, GMACGAR));
 
+aprint_normal_dev(self,
+"phy type %d, phy id %d, freq %ld\n", (int)phy_type, (int)phy_id, ref_freq);
+
+	aprint_normal("%s", device_xname(self));
 	scx_attach_i(sc);
 
 	acpi_resource_cleanup(&res);
@@ -847,22 +840,23 @@ scx_attach_i(struct scx_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifmedia * const ifm = &mii->mii_media;
-	uint32_t which, dwimp, dwfea;
+	uint32_t which, dwfea, dwimp;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
 	uint32_t csr;
 	int i, nseg, error = 0;
 
-	which = CSR_READ(sc, HWVER);	/* Socionext version 5.00xx */
-	dwimp = mac_read(sc, GMACIMPL);	/* DWC EMAC XX.YY */
-	dwfea = mac_read(sc, HWFEA);	/* DWC feature */
-	aprint_normal_dev(sc->sc_dev,
-	    "Socionext NetSec GbE %x.%x"
-	    " (impl 0x%x, feature 0x%x)\n",
-	    which >> 16, which & 0xffff,
-	    dwimp, dwfea);
+	aprint_naive("\n");
+	aprint_normal(": Socionext Gigabit Ethernet controller\n");
 
-	/* fetch MAC address in flash. stored in big endian order */
+	which = CSR_READ(sc, HWVER);	/* Socionext version 5.00xx */
+	dwfea = mac_read(sc, HWFEA);	/* DWC feature bits */
+	dwimp = mac_read(sc, GMACIMPL);	/* DWC implementation XX.YY */
+	aprint_normal_dev(sc->sc_dev,
+	    "NetSec %x.%x (feature 0x%x imp 0x%0x)\n",
+	    which >> 16, which & 0xffff, dwfea, dwimp);
+
+	/* fetch MAC address in flash 0:7, stored in big endian order */
 	csr = EE_READ(sc, 0x00);
 	enaddr[0] = csr >> 24;
 	enaddr[1] = csr >> 16;
@@ -885,7 +879,7 @@ scx_attach_i(struct scx_softc *sc)
 
 	sc->sc_ethercom.ec_mii = mii;
 	ifmedia_init(ifm, 0, ether_mediachange, scx_ifmedia_sts);
-	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, mii, 0xffffffff, sc->sc_phy_id,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -952,8 +946,9 @@ scx_attach_i(struct scx_softc *sc)
 	}
 	sc->sc_seg = seg;
 	sc->sc_nseg = nseg;
+#if 0
 aprint_normal_dev(sc->sc_dev, "descriptor ds_addr %lx, ds_len %lx, nseg %d\n", seg.ds_addr, seg.ds_len, nseg);
-
+#endif
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
