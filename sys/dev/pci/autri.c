@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.59 2020/02/29 05:51:11 isaki Exp $	*/
+/*	$NetBSD: autri.c,v 1.60 2022/01/25 22:01:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.59 2020/02/29 05:51:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.60 2022/01/25 22:01:35 andvar Exp $");
 
 #include "midi.h"
 
@@ -287,7 +287,7 @@ autri_read_codec(void *sc_, uint8_t index, uint16_t *data)
 	/* send Read Command to AC'97 */
 	TWRITE4(sc, addr, (index & 0x7f) | cmd);
 
-	/* wait for 'Returned data is avalable' */
+	/* wait for 'Returned data is available' */
 	for (count=0; count<0xffff; count++) {
 		status = TREAD4(sc, addr);
 		if ((status & busy) == 0)

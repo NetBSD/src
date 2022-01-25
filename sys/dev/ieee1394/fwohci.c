@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.149 2021/12/05 08:17:21 msaitoh Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.150 2022/01/25 22:01:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.149 2021/12/05 08:17:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.150 2022/01/25 22:01:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1419,7 +1419,7 @@ txloop:
 	    OHCI_OUTPUT_MORE | OHCI_KEY_ST2 | hdr_len);
  	FWOHCI_DMA_WRITE(db->db.desc.addr, 0);
  	FWOHCI_DMA_WRITE(db->db.desc.res, 0);
-/* Specify bound timer of asy. responce */
+/* Specify bound timer of asy. response */
 	if (dbch->off != OHCI_ATSOFF)
  		FWOHCI_DMA_WRITE(db->db.desc.res,
 		     (OREAD(sc, OHCI_CYCLETIMER) >> 12) + (1 << 13));

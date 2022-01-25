@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.164 2022/01/24 09:42:14 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.165 2022/01/25 22:01:35 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.164 2022/01/24 09:42:14 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.165 2022/01/25 22:01:35 andvar Exp $");
 #endif /* not lint */
 
 
@@ -3827,7 +3827,7 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 #if notyet
 		/*
 		 * TODO calculate the available space and if the disc is
-		 * allmost full, write out till end-256-1 with banks, write
+		 * almost full, write out till end-256-1 with banks, write
 		 * AVDP and fill up with VATs, then close session and close
 		 * disc.
 		 */

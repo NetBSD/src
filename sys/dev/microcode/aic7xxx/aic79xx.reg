@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.14 2019/05/28 08:59:34 msaitoh Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.15 2022/01/25 22:01:34 andvar Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -2433,7 +2433,7 @@ register IOPDNCTL {
 }
 
 /*
- * Shaddow Host Address.
+ * Shadow Host Address.
  */
 register SHADDR {
 	address			0x060
