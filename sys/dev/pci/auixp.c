@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.52 2021/08/21 09:59:46 andvar Exp $ */
+/* $NetBSD: auixp.c,v 1.53 2022/01/25 22:01:35 andvar Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.52 2021/08/21 09:59:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.53 2022/01/25 22:01:35 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -716,7 +716,7 @@ auixp_update_busbusy(struct auixp_softc *sc)
  * audio is refilled by calling the intr() function when space is available
  * again.
  */
-/* XXX allmost literaly a copy of trigger-input; could be factorised XXX */
+/* XXX almost literally a copy of trigger-input; could be factorised XXX */
 static int
 auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *param)
@@ -791,7 +791,7 @@ auixp_halt_output(void *hdl)
 }
 
 
-/* XXX allmost literaly a copy of trigger-output; could be factorised XXX */
+/* XXX almost literally a copy of trigger-output; could be factorised XXX */
 static int
 auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *param)
@@ -870,8 +870,8 @@ auixp_halt_input(void *hdl)
  * IXP audio interrupt handler
  *
  * note that we return the number of bits handled; the return value is not
- * documentated but i saw it implemented in other drivers. Prolly returning a
- * value > 0 means "i've dealt with it"
+ * documented but I saw it implemented in other drivers. Prolly returning a
+ * value > 0 means "I've dealt with it"
  *
  */
 static int
