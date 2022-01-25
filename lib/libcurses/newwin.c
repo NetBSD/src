@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.63 2021/10/19 06:41:03 blymn Exp $	*/
+/*	$NetBSD: newwin.c,v 1.64 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.63 2021/10/19 06:41:03 blymn Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.64 2022/01/25 03:05:06 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -166,7 +166,7 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad,
 #else
 			sp->ch = (wchar_t)btowc((int) win->bch);
 			sp->nsp = NULL;
-			SET_WCOL(*sp, 1);
+			sp->wcols = 1;
 #endif /* HAVE_WCHAR */
 		}
 		lp->hash = __hash_line(lp->line, maxx);
@@ -351,7 +351,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 	win->battr = 0;
 #ifdef HAVE_WCHAR
 	win->bnsp = NULL;
-	SET_BGWCOL(*win, 1);
+	win->wcols = 1;
 #endif /* HAVE_WCHAR */
 	win->scr_t = 0;
 	win->scr_b = win->maxy - 1;

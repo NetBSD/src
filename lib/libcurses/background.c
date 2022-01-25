@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.27 2021/09/06 07:45:48 rin Exp $	*/
+/*	$NetBSD: background.c,v 1.28 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.27 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: background.c,v 1.28 2022/01/25 03:05:06 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -106,7 +106,7 @@ wbkgd(WINDOW *win, chtype ch)
 			/* Update/merge attributes */
 			cp->attr = win->battr | (cp->attr & __ALTCHARSET);
 #ifdef HAVE_WCHAR
-			SET_WCOL(*cp, 1);
+			cp->wcols = 1;
 #endif
 		}
 	}
@@ -215,7 +215,7 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 	if (__using_color && !( battr & __COLOR))
 		battr |= __default_color;
 	win->battr = battr;
-	SET_BGWCOL((*win), 1);
+	win->wcols = 1;
 }
 
 

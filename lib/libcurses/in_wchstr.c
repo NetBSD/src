@@ -1,4 +1,4 @@
-/*   $NetBSD: in_wchstr.c,v 1.9 2021/08/15 15:12:36 rillig Exp $ */
+/*   $NetBSD: in_wchstr.c,v 1.10 2022/01/25 03:05:06 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: in_wchstr.c,v 1.9 2021/08/15 15:12:36 rillig Exp $");
+__RCSID("$NetBSD: in_wchstr.c,v 1.10 2022/01/25 03:05:06 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -132,7 +132,7 @@ win_wchnstr(WINDOW *win, cchar_t *wchstr, int n)
 
 	start = &win->alines[win->cury]->line[win->curx];
 	x = win->curx;
-	cw = WCOL(*start);
+	cw = start->wcols;
 	if (cw < 0) {
 		start += cw;
 		x += cw;
@@ -140,7 +140,7 @@ win_wchnstr(WINDOW *win, cchar_t *wchstr, int n)
 	wcp = wchstr;
 	/* (n - 1) to leave room for the trailing 0 element */
 	while ((x < win->maxx) && ((n < 0) || ((n > 1) && (cnt < n - 1)))) {
-		cw = WCOL(*start);
+		cw = start->wcols;
 		wcp->vals[0] = start->ch;
 		wcp->attributes = start->attr;
 		wcp->elements = 1;

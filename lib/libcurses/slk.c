@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.18 2022/01/06 20:50:18 blymn Exp $	*/
+/*	$NetBSD: slk.c,v 1.19 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  */
 
 #include <sys/cdefs.h>
+#include <limits.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.18 2022/01/06 20:50:18 blymn Exp $");
+__RCSID("$NetBSD: slk.c,v 1.19 2022/01/25 03:05:06 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
