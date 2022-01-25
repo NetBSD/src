@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.304 2022/01/18 04:35:49 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.305 2022/01/25 01:56:22 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.304 2022/01/18 04:35:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.305 2022/01/25 01:56:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1627,35 +1627,27 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	struct ifnet	      *ifp = adapter->ifp;
 	struct ixgbe_hw	      *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
-	u32		      missed_rx = 0, bprc, lxon, lxoff;
+	u32		      missed_rx = 0, bprc, lxontxc, lxofftxc;
 	u64		      total, total_missed_rx = 0;
 	uint64_t	      crcerrs, illerrc, rlec, ruc, rfc, roc, rjc;
 	unsigned int	      queue_counters;
 	int		      i;
 
-#define READ_COPY_SET(hw, stats, regname, evname)		\
-	do {							\
-		(evname) = IXGBE_READ_REG((hw), regname);	\
-		(stats)->evname.ev_count += (evname);		\
-	} while (/*CONSTCOND*/0)
-	
-	READ_COPY_SET(hw, stats, IXGBE_CRCERRS, crcerrs);
-	READ_COPY_SET(hw, stats, IXGBE_ILLERRC, illerrc);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_CRCERRS, crcerrs);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_ILLERRC, illerrc);
 
-	stats->errbc.ev_count += IXGBE_READ_REG(hw, IXGBE_ERRBC);
-	stats->mspdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MSPDC);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_ERRBC, errbc);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_MSPDC, mspdc);
 	if (hw->mac.type >= ixgbe_mac_X550)
-		stats->mbsdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MBSDC);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_MBSDC, mbsdc);
 
 	/* 16 registers exist */
 	queue_counters = uimin(__arraycount(stats->qprc), adapter->num_queues);
 	for (i = 0; i < queue_counters; i++) {
-		stats->qprc[i].ev_count += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
-		stats->qptc[i].ev_count += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
-		if (hw->mac.type >= ixgbe_mac_82599EB) {
-			stats->qprdc[i].ev_count
-			    += IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
-		}
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRC(i), qprc[i]);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_QPTC(i), qptc[i]);
+		if (hw->mac.type >= ixgbe_mac_82599EB)
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_QPRDC(i), qprdc[i]);
 	}
 
 	/* 8 registers exist */
@@ -1665,120 +1657,108 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		/* MPC */
 		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
 		/* global total per queue */
-		stats->mpc[i].ev_count += mp;
+		IXGBE_EVC_ADD(&stats->mpc[i], mp);
 		/* running comprehensive total for stats display */
 		total_missed_rx += mp;
 
 		if (hw->mac.type == ixgbe_mac_82598EB)
-			stats->rnbc[i].ev_count
-			    += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_RNBC(i), rnbc[i]);
 
-		stats->pxontxc[i].ev_count
-		    += IXGBE_READ_REG(hw, IXGBE_PXONTXC(i));
-		stats->pxofftxc[i].ev_count
-		    += IXGBE_READ_REG(hw, IXGBE_PXOFFTXC(i));
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_PXONTXC(i), pxontxc[i]);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_PXOFFTXC(i), pxofftxc[i]);
 		if (hw->mac.type >= ixgbe_mac_82599EB) {
-			stats->pxonrxc[i].ev_count
-			    += IXGBE_READ_REG(hw, IXGBE_PXONRXCNT(i));
-			stats->pxoffrxc[i].ev_count
-			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXCNT(i));
-			stats->pxon2offc[i].ev_count
-			    += IXGBE_READ_REG(hw, IXGBE_PXON2OFFCNT(i));
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_PXONRXCNT(i), pxonrxc[i]);
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_PXOFFRXCNT(i), pxoffrxc[i]);
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_PXON2OFFCNT(i),
+			    pxon2offc[i]);
 		} else {
-			stats->pxonrxc[i].ev_count
-			    += IXGBE_READ_REG(hw, IXGBE_PXONRXC(i));
-			stats->pxoffrxc[i].ev_count
-			    += IXGBE_READ_REG(hw, IXGBE_PXOFFRXC(i));
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_PXONRXC(i), pxonrxc[i]);
+			IXGBE_EVC_REGADD(hw, stats, IXGBE_PXOFFRXC(i), pxoffrxc[i]);
 		}
 	}
-	stats->mpctotal.ev_count += total_missed_rx;
+	IXGBE_EVC_ADD(&stats->mpctotal, total_missed_rx);
 
 	/* Document says M[LR]FC are valid when link is up and 10Gbps */
 	if ((adapter->link_active == LINK_STATE_UP)
 	    && (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL)) {
-		stats->mlfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MLFC);
-		stats->mrfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MRFC);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_MLFC, mlfc);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_MRFC, mrfc);
 	}
-	READ_COPY_SET(hw, stats, IXGBE_RLEC, rlec);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_RLEC, rlec);
 
 	/* Hardware workaround, gprc counts missed packets */
-	stats->gprc.ev_count += IXGBE_READ_REG(hw, IXGBE_GPRC) - missed_rx;
+	IXGBE_EVC_ADD(&stats->gprc,
+	    IXGBE_READ_REG(hw, IXGBE_GPRC) - missed_rx);
 
-	lxon = IXGBE_READ_REG(hw, IXGBE_LXONTXC);
-	stats->lxontxc.ev_count += lxon;
-	lxoff = IXGBE_READ_REG(hw, IXGBE_LXOFFTXC);
-	stats->lxofftxc.ev_count += lxoff;
-	total = lxon + lxoff;
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_LXONTXC, lxontxc);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_LXOFFTXC, lxofftxc);
+	total = lxontxc + lxofftxc;
 
 	if (hw->mac.type != ixgbe_mac_82598EB) {
-		stats->gorc.ev_count += IXGBE_READ_REG(hw, IXGBE_GORCL) +
-		    ((u64)IXGBE_READ_REG(hw, IXGBE_GORCH) << 32);
-		stats->gotc.ev_count += IXGBE_READ_REG(hw, IXGBE_GOTCL) +
+		IXGBE_EVC_ADD(&stats->gorc, IXGBE_READ_REG(hw, IXGBE_GORCL) +
+		    ((u64)IXGBE_READ_REG(hw, IXGBE_GORCH) << 32));
+		IXGBE_EVC_ADD(&stats->gotc, IXGBE_READ_REG(hw, IXGBE_GOTCL) +
 		    ((u64)IXGBE_READ_REG(hw, IXGBE_GOTCH) << 32)
-		    - total * ETHER_MIN_LEN;
-		stats->tor.ev_count += IXGBE_READ_REG(hw, IXGBE_TORL) +
-		    ((u64)IXGBE_READ_REG(hw, IXGBE_TORH) << 32);
-		stats->lxonrxc.ev_count += IXGBE_READ_REG(hw, IXGBE_LXONRXCNT);
-		stats->lxoffrxc.ev_count
-		    += IXGBE_READ_REG(hw, IXGBE_LXOFFRXCNT);
+		    - total * ETHER_MIN_LEN);
+		IXGBE_EVC_ADD(&stats->tor, IXGBE_READ_REG(hw, IXGBE_TORL) +
+		    ((u64)IXGBE_READ_REG(hw, IXGBE_TORH) << 32));
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_LXONRXCNT, lxonrxc);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_LXOFFRXCNT, lxoffrxc);
 	} else {
-		stats->lxonrxc.ev_count += IXGBE_READ_REG(hw, IXGBE_LXONRXC);
-		stats->lxoffrxc.ev_count += IXGBE_READ_REG(hw, IXGBE_LXOFFRXC);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_LXONRXC, lxonrxc);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_LXOFFRXC, lxoffrxc);
 		/* 82598 only has a counter in the high register */
-		stats->gorc.ev_count += IXGBE_READ_REG(hw, IXGBE_GORCH);
-		stats->gotc.ev_count += IXGBE_READ_REG(hw, IXGBE_GOTCH)
-		    - total * ETHER_MIN_LEN;
-		stats->tor.ev_count += IXGBE_READ_REG(hw, IXGBE_TORH);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_GORCH, gorc);
+		IXGBE_EVC_ADD(&stats->gotc, IXGBE_READ_REG(hw, IXGBE_GOTCH)
+		    - total * ETHER_MIN_LEN);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_TORH, tor);
 	}
 
 	/*
 	 * Workaround: mprc hardware is incorrectly counting
 	 * broadcasts, so for now we subtract those.
 	 */
-	bprc = IXGBE_READ_REG(hw, IXGBE_BPRC);
-	stats->bprc.ev_count += bprc;
-	stats->mprc.ev_count += IXGBE_READ_REG(hw, IXGBE_MPRC)
-	    - ((hw->mac.type == ixgbe_mac_82598EB) ? bprc : 0);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_BPRC, bprc);
+	IXGBE_EVC_ADD(&stats->mprc, IXGBE_READ_REG(hw, IXGBE_MPRC)
+	    - ((hw->mac.type == ixgbe_mac_82598EB) ? bprc : 0));
 
-	stats->prc64.ev_count += IXGBE_READ_REG(hw, IXGBE_PRC64);
-	stats->prc127.ev_count += IXGBE_READ_REG(hw, IXGBE_PRC127);
-	stats->prc255.ev_count += IXGBE_READ_REG(hw, IXGBE_PRC255);
-	stats->prc511.ev_count += IXGBE_READ_REG(hw, IXGBE_PRC511);
-	stats->prc1023.ev_count += IXGBE_READ_REG(hw, IXGBE_PRC1023);
-	stats->prc1522.ev_count += IXGBE_READ_REG(hw, IXGBE_PRC1522);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PRC64, prc64);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PRC127, prc127);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PRC255, prc255);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PRC511, prc511);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PRC1023, prc1023);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PRC1522, prc1522);
 
-	stats->gptc.ev_count += IXGBE_READ_REG(hw, IXGBE_GPTC) - total;
-	stats->mptc.ev_count += IXGBE_READ_REG(hw, IXGBE_MPTC) - total;
-	stats->ptc64.ev_count += IXGBE_READ_REG(hw, IXGBE_PTC64) - total;
+	IXGBE_EVC_ADD(&stats->gptc, IXGBE_READ_REG(hw, IXGBE_GPTC) - total);
+	IXGBE_EVC_ADD(&stats->mptc, IXGBE_READ_REG(hw, IXGBE_MPTC) - total);
+	IXGBE_EVC_ADD(&stats->ptc64, IXGBE_READ_REG(hw, IXGBE_PTC64) - total);
 
-	READ_COPY_SET(hw, stats, IXGBE_RUC, ruc);
-	READ_COPY_SET(hw, stats, IXGBE_RFC, rfc);
-	READ_COPY_SET(hw, stats, IXGBE_ROC, roc);
-	READ_COPY_SET(hw, stats, IXGBE_RJC, rjc);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_RUC, ruc);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_RFC, rfc);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_ROC, roc);
+	IXGBE_EVC_REGADD2(hw, stats, IXGBE_RJC, rjc);
 
-#undef READ_COPY_SET
-
-	stats->mngprc.ev_count += IXGBE_READ_REG(hw, IXGBE_MNGPRC);
-	stats->mngpdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MNGPDC);
-	stats->mngptc.ev_count += IXGBE_READ_REG(hw, IXGBE_MNGPTC);
-	stats->tpr.ev_count += IXGBE_READ_REG(hw, IXGBE_TPR);
-	stats->tpt.ev_count += IXGBE_READ_REG(hw, IXGBE_TPT);
-	stats->ptc127.ev_count += IXGBE_READ_REG(hw, IXGBE_PTC127);
-	stats->ptc255.ev_count += IXGBE_READ_REG(hw, IXGBE_PTC255);
-	stats->ptc511.ev_count += IXGBE_READ_REG(hw, IXGBE_PTC511);
-	stats->ptc1023.ev_count += IXGBE_READ_REG(hw, IXGBE_PTC1023);
-	stats->ptc1522.ev_count += IXGBE_READ_REG(hw, IXGBE_PTC1522);
-	stats->bptc.ev_count += IXGBE_READ_REG(hw, IXGBE_BPTC);
-	stats->xec.ev_count += IXGBE_READ_REG(hw, IXGBE_XEC);
-	stats->fccrc.ev_count += IXGBE_READ_REG(hw, IXGBE_FCCRC);
-	stats->fclast.ev_count += IXGBE_READ_REG(hw, IXGBE_FCLAST);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_MNGPRC, mngprc);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_MNGPDC, mngpdc);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_MNGPTC, mngptc);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_TPR, tpr);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_TPT, tpt);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PTC127, ptc127);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PTC255, ptc255);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PTC511, ptc511);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PTC1023, ptc1023);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_PTC1522, ptc1522);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_BPTC, bptc);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_XEC, xec);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_FCCRC, fccrc);
+	IXGBE_EVC_REGADD(hw, stats, IXGBE_FCLAST, fclast);
 	/* Only read FCOE on 82599 */
 	if (hw->mac.type != ixgbe_mac_82598EB) {
-		stats->fcoerpdc.ev_count += IXGBE_READ_REG(hw, IXGBE_FCOERPDC);
-		stats->fcoeprc.ev_count += IXGBE_READ_REG(hw, IXGBE_FCOEPRC);
-		stats->fcoeptc.ev_count += IXGBE_READ_REG(hw, IXGBE_FCOEPTC);
-		stats->fcoedwrc.ev_count += IXGBE_READ_REG(hw, IXGBE_FCOEDWRC);
-		stats->fcoedwtc.ev_count += IXGBE_READ_REG(hw, IXGBE_FCOEDWTC);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_FCOERPDC, fcoerpdc);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_FCOEPRC, fcoeprc);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_FCOEPTC, fcoeptc);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_FCOEDWRC, fcoedwrc);
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_FCOEDWTC, fcoedwtc);
 	}
 
 	/*
@@ -2141,47 +2121,47 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	int i;
 
-	adapter->efbig_tx_dma_setup.ev_count = 0;
-	adapter->mbuf_defrag_failed.ev_count = 0;
-	adapter->efbig2_tx_dma_setup.ev_count = 0;
-	adapter->einval_tx_dma_setup.ev_count = 0;
-	adapter->other_tx_dma_setup.ev_count = 0;
-	adapter->eagain_tx_dma_setup.ev_count = 0;
-	adapter->enomem_tx_dma_setup.ev_count = 0;
-	adapter->tso_err.ev_count = 0;
-	adapter->watchdog_events.ev_count = 0;
-	adapter->admin_irqev.ev_count = 0;
-	adapter->link_workev.ev_count = 0;
-	adapter->mod_workev.ev_count = 0;
-	adapter->msf_workev.ev_count = 0;
-	adapter->phy_workev.ev_count = 0;
+	IXGBE_EVC_STORE(&adapter->efbig_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->mbuf_defrag_failed, 0);
+	IXGBE_EVC_STORE(&adapter->efbig2_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->einval_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->other_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->eagain_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->enomem_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->tso_err, 0);
+	IXGBE_EVC_STORE(&adapter->watchdog_events, 0);
+	IXGBE_EVC_STORE(&adapter->admin_irqev, 0);
+	IXGBE_EVC_STORE(&adapter->link_workev, 0);
+	IXGBE_EVC_STORE(&adapter->mod_workev, 0);
+	IXGBE_EVC_STORE(&adapter->msf_workev, 0);
+	IXGBE_EVC_STORE(&adapter->phy_workev, 0);
 
 	for (i = 0; i < IXGBE_TC_COUNTER_NUM; i++) {
 		if (i < __arraycount(stats->mpc)) {
-			stats->mpc[i].ev_count = 0;
+			IXGBE_EVC_STORE(&stats->mpc[i], 0);
 			if (hw->mac.type == ixgbe_mac_82598EB)
-				stats->rnbc[i].ev_count = 0;
+				IXGBE_EVC_STORE(&stats->rnbc[i], 0);
 		}
 		if (i < __arraycount(stats->pxontxc)) {
-			stats->pxontxc[i].ev_count = 0;
-			stats->pxonrxc[i].ev_count = 0;
-			stats->pxofftxc[i].ev_count = 0;
-			stats->pxoffrxc[i].ev_count = 0;
+			IXGBE_EVC_STORE(&stats->pxontxc[i], 0);
+			IXGBE_EVC_STORE(&stats->pxonrxc[i], 0);
+			IXGBE_EVC_STORE(&stats->pxofftxc[i], 0);
+			IXGBE_EVC_STORE(&stats->pxoffrxc[i], 0);
 			if (hw->mac.type >= ixgbe_mac_82599EB)
-				stats->pxon2offc[i].ev_count = 0;
+				IXGBE_EVC_STORE(&stats->pxon2offc[i], 0);
 		}
 	}
 
 	txr = adapter->tx_rings;
 	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
-		adapter->queues[i].irqs.ev_count = 0;
-		adapter->queues[i].handleq.ev_count = 0;
-		adapter->queues[i].req.ev_count = 0;
-		txr->no_desc_avail.ev_count = 0;
-		txr->total_packets.ev_count = 0;
-		txr->tso_tx.ev_count = 0;
+		IXGBE_EVC_STORE(&adapter->queues[i].irqs, 0);
+		IXGBE_EVC_STORE(&adapter->queues[i].handleq, 0);
+		IXGBE_EVC_STORE(&adapter->queues[i].req, 0);
+		IXGBE_EVC_STORE(&txr->no_desc_avail, 0);
+		IXGBE_EVC_STORE(&txr->total_packets, 0);
+		IXGBE_EVC_STORE(&txr->tso_tx, 0);
 #ifndef IXGBE_LEGACY_TX
-		txr->pcq_drops.ev_count = 0;
+		IXGBE_EVC_STORE(&txr->pcq_drops, 0);
 #endif
 		txr->q_efbig_tx_dma_setup = 0;
 		txr->q_mbuf_defrag_failed = 0;
@@ -2193,75 +2173,75 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 		txr->q_tso_err = 0;
 
 		if (i < __arraycount(stats->qprc)) {
-			stats->qprc[i].ev_count = 0;
-			stats->qptc[i].ev_count = 0;
-			stats->qbrc[i].ev_count = 0;
-			stats->qbtc[i].ev_count = 0;
+			IXGBE_EVC_STORE(&stats->qprc[i], 0);
+			IXGBE_EVC_STORE(&stats->qptc[i], 0);
+			IXGBE_EVC_STORE(&stats->qbrc[i], 0);
+			IXGBE_EVC_STORE(&stats->qbtc[i], 0);
 			if (hw->mac.type >= ixgbe_mac_82599EB)
-				stats->qprdc[i].ev_count = 0;
+				IXGBE_EVC_STORE(&stats->qprdc[i], 0);
 		}
 
-		rxr->rx_packets.ev_count = 0;
-		rxr->rx_bytes.ev_count = 0;
-		rxr->rx_copies.ev_count = 0;
-		rxr->no_mbuf.ev_count = 0;
-		rxr->rx_discarded.ev_count = 0;
+		IXGBE_EVC_STORE(&rxr->rx_packets, 0);
+		IXGBE_EVC_STORE(&rxr->rx_bytes, 0);
+		IXGBE_EVC_STORE(&rxr->rx_copies, 0);
+		IXGBE_EVC_STORE(&rxr->no_mbuf, 0);
+		IXGBE_EVC_STORE(&rxr->rx_discarded, 0);
 	}
-	stats->ipcs.ev_count = 0;
-	stats->l4cs.ev_count = 0;
-	stats->ipcs_bad.ev_count = 0;
-	stats->l4cs_bad.ev_count = 0;
-	stats->intzero.ev_count = 0;
-	stats->legint.ev_count = 0;
-	stats->crcerrs.ev_count = 0;
-	stats->illerrc.ev_count = 0;
-	stats->errbc.ev_count = 0;
-	stats->mspdc.ev_count = 0;
+	IXGBE_EVC_STORE(&stats->ipcs, 0);
+	IXGBE_EVC_STORE(&stats->l4cs, 0);
+	IXGBE_EVC_STORE(&stats->ipcs_bad, 0);
+	IXGBE_EVC_STORE(&stats->l4cs_bad, 0);
+	IXGBE_EVC_STORE(&stats->intzero, 0);
+	IXGBE_EVC_STORE(&stats->legint, 0);
+	IXGBE_EVC_STORE(&stats->crcerrs, 0);
+	IXGBE_EVC_STORE(&stats->illerrc, 0);
+	IXGBE_EVC_STORE(&stats->errbc, 0);
+	IXGBE_EVC_STORE(&stats->mspdc, 0);
 	if (hw->mac.type >= ixgbe_mac_X550)
-		stats->mbsdc.ev_count = 0;
-	stats->mpctotal.ev_count = 0;
-	stats->mlfc.ev_count = 0;
-	stats->mrfc.ev_count = 0;
-	stats->rlec.ev_count = 0;
-	stats->lxontxc.ev_count = 0;
-	stats->lxonrxc.ev_count = 0;
-	stats->lxofftxc.ev_count = 0;
-	stats->lxoffrxc.ev_count = 0;
+		IXGBE_EVC_STORE(&stats->mbsdc, 0);
+	IXGBE_EVC_STORE(&stats->mpctotal, 0);
+	IXGBE_EVC_STORE(&stats->mlfc, 0);
+	IXGBE_EVC_STORE(&stats->mrfc, 0);
+	IXGBE_EVC_STORE(&stats->rlec, 0);
+	IXGBE_EVC_STORE(&stats->lxontxc, 0);
+	IXGBE_EVC_STORE(&stats->lxonrxc, 0);
+	IXGBE_EVC_STORE(&stats->lxofftxc, 0);
+	IXGBE_EVC_STORE(&stats->lxoffrxc, 0);
 
 	/* Packet Reception Stats */
-	stats->tor.ev_count = 0;
-	stats->gorc.ev_count = 0;
-	stats->tpr.ev_count = 0;
-	stats->gprc.ev_count = 0;
-	stats->mprc.ev_count = 0;
-	stats->bprc.ev_count = 0;
-	stats->prc64.ev_count = 0;
-	stats->prc127.ev_count = 0;
-	stats->prc255.ev_count = 0;
-	stats->prc511.ev_count = 0;
-	stats->prc1023.ev_count = 0;
-	stats->prc1522.ev_count = 0;
-	stats->ruc.ev_count = 0;
-	stats->rfc.ev_count = 0;
-	stats->roc.ev_count = 0;
-	stats->rjc.ev_count = 0;
-	stats->mngprc.ev_count = 0;
-	stats->mngpdc.ev_count = 0;
-	stats->xec.ev_count = 0;
+	IXGBE_EVC_STORE(&stats->tor, 0);
+	IXGBE_EVC_STORE(&stats->gorc, 0);
+	IXGBE_EVC_STORE(&stats->tpr, 0);
+	IXGBE_EVC_STORE(&stats->gprc, 0);
+	IXGBE_EVC_STORE(&stats->mprc, 0);
+	IXGBE_EVC_STORE(&stats->bprc, 0);
+	IXGBE_EVC_STORE(&stats->prc64, 0);
+	IXGBE_EVC_STORE(&stats->prc127, 0);
+	IXGBE_EVC_STORE(&stats->prc255, 0);
+	IXGBE_EVC_STORE(&stats->prc511, 0);
+	IXGBE_EVC_STORE(&stats->prc1023, 0);
+	IXGBE_EVC_STORE(&stats->prc1522, 0);
+	IXGBE_EVC_STORE(&stats->ruc, 0);
+	IXGBE_EVC_STORE(&stats->rfc, 0);
+	IXGBE_EVC_STORE(&stats->roc, 0);
+	IXGBE_EVC_STORE(&stats->rjc, 0);
+	IXGBE_EVC_STORE(&stats->mngprc, 0);
+	IXGBE_EVC_STORE(&stats->mngpdc, 0);
+	IXGBE_EVC_STORE(&stats->xec, 0);
 
 	/* Packet Transmission Stats */
-	stats->gotc.ev_count = 0;
-	stats->tpt.ev_count = 0;
-	stats->gptc.ev_count = 0;
-	stats->bptc.ev_count = 0;
-	stats->mptc.ev_count = 0;
-	stats->mngptc.ev_count = 0;
-	stats->ptc64.ev_count = 0;
-	stats->ptc127.ev_count = 0;
-	stats->ptc255.ev_count = 0;
-	stats->ptc511.ev_count = 0;
-	stats->ptc1023.ev_count = 0;
-	stats->ptc1522.ev_count = 0;
+	IXGBE_EVC_STORE(&stats->gotc, 0);
+	IXGBE_EVC_STORE(&stats->tpt, 0);
+	IXGBE_EVC_STORE(&stats->gptc, 0);
+	IXGBE_EVC_STORE(&stats->bptc, 0);
+	IXGBE_EVC_STORE(&stats->mptc, 0);
+	IXGBE_EVC_STORE(&stats->mngptc, 0);
+	IXGBE_EVC_STORE(&stats->ptc64, 0);
+	IXGBE_EVC_STORE(&stats->ptc127, 0);
+	IXGBE_EVC_STORE(&stats->ptc255, 0);
+	IXGBE_EVC_STORE(&stats->ptc511, 0);
+	IXGBE_EVC_STORE(&stats->ptc1023, 0);
+	IXGBE_EVC_STORE(&stats->ptc1522, 0);
 }
 
 /************************************************************************
@@ -2821,7 +2801,7 @@ ixgbe_msix_que(void *arg)
 		return 0;
 
 	ixgbe_disable_queue(adapter, que->msix);
-	++que->irqs.ev_count;
+	IXGBE_EVC_ADD(&que->irqs, 1);
 
 	/*
 	 * Don't change "que->txrx_use_workqueue" from this point to avoid
@@ -3162,7 +3142,7 @@ ixgbe_msix_admin(void *arg)
 	u32		eims_orig;
 	u32		eims_disable = 0;
 
-	++adapter->admin_irqev.ev_count;
+	IXGBE_EVC_ADD(&adapter->admin_irqev, 1);
 
 	eims_orig = IXGBE_READ_REG(hw, IXGBE_EIMS);
 	/* Pause other interrupts */
@@ -4653,14 +4633,14 @@ ixgbe_handle_timer(struct work *wk, void *context)
 		v6 += txr->q_enomem_tx_dma_setup;
 		v7 += txr->q_tso_err;
 	}
-	adapter->efbig_tx_dma_setup.ev_count = v0;
-	adapter->mbuf_defrag_failed.ev_count = v1;
-	adapter->efbig2_tx_dma_setup.ev_count = v2;
-	adapter->einval_tx_dma_setup.ev_count = v3;
-	adapter->other_tx_dma_setup.ev_count = v4;
-	adapter->eagain_tx_dma_setup.ev_count = v5;
-	adapter->enomem_tx_dma_setup.ev_count = v6;
-	adapter->tso_err.ev_count = v7;
+	IXGBE_EVC_STORE(&adapter->efbig_tx_dma_setup, v0);
+	IXGBE_EVC_STORE(&adapter->mbuf_defrag_failed, v1);
+	IXGBE_EVC_STORE(&adapter->efbig2_tx_dma_setup, v2);
+	IXGBE_EVC_STORE(&adapter->einval_tx_dma_setup, v3);
+	IXGBE_EVC_STORE(&adapter->other_tx_dma_setup, v4);
+	IXGBE_EVC_STORE(&adapter->eagain_tx_dma_setup, v5);
+	IXGBE_EVC_STORE(&adapter->enomem_tx_dma_setup, v6);
+	IXGBE_EVC_STORE(&adapter->tso_err, v7);
 
 	/*
 	 * Check the TX queues status
@@ -4719,7 +4699,7 @@ ixgbe_handle_timer(struct work *wk, void *context)
 watchdog:
 	device_printf(adapter->dev, "Watchdog timeout -- resetting\n");
 	adapter->ifp->if_flags &= ~IFF_RUNNING;
-	adapter->watchdog_events.ev_count++;
+	IXGBE_EVC_ADD(&adapter->watchdog_events, 1);
 	ixgbe_init_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 } /* ixgbe_handle_timer */
@@ -4783,7 +4763,7 @@ ixgbe_handle_mod(void *context, bool int_en)
 
 	last_sfp_type = hw->phy.sfp_type;
 	last_unsupported_sfp_recovery = hw->need_unsupported_sfp_recovery;
-	++adapter->mod_workev.ev_count;
+	IXGBE_EVC_ADD(&adapter->mod_workev, 1);
 	if (adapter->hw.need_crosstalk_fix) {
 		if ((hw->mac.type != ixgbe_mac_82598EB) &&
 		    !ixgbe_sfp_cage_full(hw))
@@ -4870,7 +4850,7 @@ ixgbe_handle_msf(void *context)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	++adapter->msf_workev.ev_count;
+	IXGBE_EVC_ADD(&adapter->msf_workev, 1);
 
 	autoneg = hw->phy.autoneg_advertised;
 	if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
@@ -4891,7 +4871,7 @@ ixgbe_handle_phy(void *context)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	++adapter->phy_workev.ev_count;
+	IXGBE_EVC_ADD(&adapter->phy_workev, 1);
 	error = hw->phy.ops.handle_lasi(hw);
 	if (error == IXGBE_ERR_OVERTEMP)
 		device_printf(adapter->dev,
@@ -5293,16 +5273,16 @@ ixgbe_legacy_irq(void *arg)
 	/* Read and clear EICR */
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
 
-	adapter->stats.pf.legint.ev_count++;
+	IXGBE_EVC_ADD(&adapter->stats.pf.legint, 1);
 	if (eicr == 0) {
-		adapter->stats.pf.intzero.ev_count++;
+		IXGBE_EVC_ADD(&adapter->stats.pf.intzero, 1);
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_orig);
 		return 0;
 	}
 
 	/* Queue (0) intr */
 	if ((eicr & IXGBE_EIMC_RTX_QUEUE) != 0) {
-		++que->irqs.ev_count;
+		IXGBE_EVC_ADD(&que->irqs, 1);
 
 		/*
 		 * The same as ixgbe_msix_que() about
@@ -5318,7 +5298,7 @@ ixgbe_legacy_irq(void *arg)
 #endif
 		IXGBE_TX_UNLOCK(txr);
 
-		que->req.ev_count++;
+		IXGBE_EVC_ADD(&que->req, 1);
 		ixgbe_sched_handle_que(adapter, que);
 		/* Disable queue 0 interrupt */
 		eims_disable |= 1UL << 0;
@@ -6639,7 +6619,7 @@ ixgbe_handle_que(void *context)
 	struct ifnet	*ifp = adapter->ifp;
 	bool		more = false;
 
-	que->handleq.ev_count++;
+	IXGBE_EVC_ADD(&que->handleq, 1);
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		more = ixgbe_rxeof(que);
@@ -6657,7 +6637,7 @@ ixgbe_handle_que(void *context)
 	}
 
 	if (more) {
-		que->req.ev_count++;
+		IXGBE_EVC_ADD(&que->req, 1);
 		ixgbe_sched_handle_que(adapter, que);
 	} else if (que->res != NULL) {
 		/* MSIX: Re-enable this interrupt */
@@ -7119,7 +7099,7 @@ ixgbe_handle_link(void *context)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	++adapter->link_workev.ev_count;
+	IXGBE_EVC_ADD(&adapter->link_workev, 1);
 	ixgbe_check_link(hw, &adapter->link_speed, &adapter->link_up, 0);
 	ixgbe_update_link_status(adapter);
 
