@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.33 2021/09/07 01:23:09 rin Exp $	*/
+/*	$NetBSD: resize.c,v 1.34 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.33 2021/09/07 01:23:09 rin Exp $");
+__RCSID("$NetBSD: resize.c,v 1.34 2022/01/25 03:05:06 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -357,7 +357,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 			sp->nsp = NULL;
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
 				return ERR;
-			SET_WCOL(*sp, 1);
+			sp->wcols = 1;
 #endif /* HAVE_WCHAR */
 		}
 		lp->hash = __hash_line(lp->line, ncols);

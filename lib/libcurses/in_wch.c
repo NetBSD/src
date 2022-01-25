@@ -1,4 +1,4 @@
-/*   $NetBSD: in_wch.c,v 1.7 2019/06/09 07:40:14 blymn Exp $ */
+/*   $NetBSD: in_wch.c,v 1.8 2022/01/25 03:05:06 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: in_wch.c,v 1.7 2019/06/09 07:40:14 blymn Exp $");
+__RCSID("$NetBSD: in_wch.c,v 1.8 2022/01/25 03:05:06 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -84,7 +84,7 @@ win_wch(WINDOW *win, cchar_t *wcval)
 {
 	nschar_t *np;
 	__LDATA *lp = &win->alines[win->cury]->line[win->curx];
-	int cw = WCOL(*lp);
+	int cw = lp->wcols;
 
 	if (cw < 0)
 		lp += cw;

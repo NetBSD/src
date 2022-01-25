@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.10 2021/09/06 07:45:48 rin Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.11 2022/01/25 03:05:06 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.10 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.11 2022/01/25 03:05:06 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -163,7 +163,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	lp = &win->alines[y]->line[x];
 	lnp = win->alines[y];
 
-	cw = WCOL(*lp);
+	cw = (*lp).wcols;
 	if (cw >= 0) {
 		sx = x;
 	} else {
@@ -174,7 +174,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 					return ERR;
 				tp->attr = win->battr;
-				SET_WCOL(*tp, 1);
+				(*tp).wcols = 1;
 				np = tp->nsp;
 			}
 		} else {
@@ -211,7 +211,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 					    == ERR)
 						return ERR;
 					lp->attr = win->battr;
-					SET_WCOL(*lp, 1);
+					(*lp).wcols = 1;
 					lp++, ex++;
 				}
 				ex = win->maxx - 1;
@@ -230,7 +230,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 			}
 			lp->ch = chp->vals[0];
 			lp->attr = chp->attributes & WA_ATTRIBUTES;
-			SET_WCOL(*lp, cw);
+			(*lp).wcols = cw;
 			if (chp->elements > 1) {
 				for (i = 1; i < chp->elements; i++) {
 					np = (nschar_t *)
@@ -258,7 +258,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				}
 				lp->ch = chp->vals[0];
 				lp->attr = chp->attributes & WA_ATTRIBUTES;
-				SET_WCOL(*lp, x - ex);
+				(*lp).wcols = x - ex;
 				lp++, ex++;
 			}
 		} else {

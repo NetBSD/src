@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.19 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.20 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.19 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.20 2022/01/25 03:05:06 blymn Exp $");
 #endif				/* not lint */
 
 /*
@@ -124,7 +124,7 @@ winsdelln(WINDOW *win, int nlines)
 				lp = &win->alines[y]->line[i];
 				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
 					return ERR;
-				SET_WCOL(*lp, 1);
+				lp->wcols = 1;
 #endif /* HAVE_WCHAR */
 			}
 		for (y = last; y >= win->cury; --y)
@@ -166,7 +166,7 @@ winsdelln(WINDOW *win, int nlines)
 				win->alines[y]->line[i].ch
 					= (wchar_t)btowc((int)win->bch);
 				lp = &win->alines[y]->line[i];
-				SET_WCOL( *lp, 1 );
+				lp->wcols = 1;
 				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
 					return ERR;
 #endif /* HAVE_WCHAR */

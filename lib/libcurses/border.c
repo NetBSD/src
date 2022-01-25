@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.21 2021/10/19 06:41:03 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.22 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.21 2021/10/19 06:41:03 blymn Exp $");
+__RCSID("$NetBSD: border.c,v 1.22 2022/01/25 03:05:06 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -312,9 +312,9 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				win->alines[i]->line[j].nsp = NULL;
 			}
 			if (j)
-				SET_WCOL(win->alines[i]->line[j], -j);
+				win->alines[i]->line[j].wcols = -j;
 			else {
-				SET_WCOL(win->alines[i]->line[j], cw);
+				win->alines[i]->line[j].wcols = cw;
 				if (left.elements > 1) {
 					for (k = 1; k < left.elements; k++) {
 						np = malloc(sizeof(nschar_t));
@@ -328,20 +328,20 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				}
 			}
 		}
-		for (j = cw; WCOL(win->alines[i]->line[j]) < 0; j++) {
+		for (j = cw; win->alines[i]->line[j].wcols < 0; j++) {
 			__CTRACE(__CTRACE_INPUT,
 			    "wborder_set: clean out partial char[%d]", j);
 			win->alines[i]->line[j].ch = ( wchar_t )btowc(win->bch);
 			if (_cursesi_copy_nsp(win->bnsp,
 					      &win->alines[i]->line[j]) == ERR)
 				return ERR;
-			SET_WCOL(win->alines[i]->line[j], 1);
+			win->alines[i]->line[j].wcols = 1;
 		}
 		/* right border */
 		cw = wcwidth(right.vals[0]);
 		if (cw < 0)
 			cw = 1;
-		pcw = WCOL( win->alines[i]->line[endx - cw]);
+		pcw = win->alines[i]->line[endx - cw].wcols;
 		for ( j = endx - cw + 1; j <= endx; j++ ) {
 			win->alines[i]->line[j].ch = right.vals[0];
 			win->alines[i]->line[j].attr = right.attributes;
@@ -355,7 +355,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				win->alines[i]->line[j].nsp = NULL;
 			}
 			if (j == endx - cw + 1) {
-				SET_WCOL(win->alines[i]->line[j], cw);
+				win->alines[i]->line[j].wcols = cw;
 				if (right.elements > 1) {
 					for (k = 1; k < right.elements; k++) {
 						np = malloc(sizeof(nschar_t));
@@ -368,8 +368,8 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 					}
 				}
 			} else
-				SET_WCOL(win->alines[i]->line[j],
-					 endx - cw + 1 - j);
+				win->alines[i]->line[j].wcols =
+				    endx - cw + 1 - j;
 		}
 		if (pcw != 1) {
 			__CTRACE(__CTRACE_INPUT,
@@ -383,7 +383,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 					       &win->alines[i]->line[j]) == ERR)
 					return ERR;
 				win->alines[i]->line[j].attr = win->battr;
-				SET_WCOL(win->alines[i]->line[j], 1);
+				win->alines[i]->line[j].wcols = 1;
 			}
 		}
 	}
@@ -417,9 +417,9 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				win->alines[0]->line[i + j].nsp = NULL;
 			}
 			if (j)
-				SET_WCOL(win->alines[ 0 ]->line[ i + j ], -j);
+				win->alines[ 0 ]->line[ i + j ].wcols = -j;
 			else {
-				SET_WCOL(win->alines[ 0 ]->line[ i + j ], cw);
+				win->alines[ 0 ]->line[ i + j ].wcols = cw;
 				if ( top.elements > 1 ) {
 					for (k = 1; k < top.elements; k++) {
 						np = malloc(sizeof(nschar_t));
@@ -441,7 +441,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				      &win->alines[0]->line[i]) == ERR)
 			return ERR;
 		win->alines[0]->line[i].attr = win->battr;
-		SET_WCOL(win->alines[0]->line[i], 1);
+		win->alines[0]->line[i].wcols = 1;
 		i++;
 	}
 	/* lower border */
@@ -459,9 +459,9 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				win->alines[endy]->line[i + j].nsp = NULL;
 			}
 			if (j)
-				SET_WCOL(win->alines[endy]->line[i + j], -j);
+				win->alines[endy]->line[i + j].wcols = -j;
 			else {
-				SET_WCOL(win->alines[endy]->line[i + j], cw);
+				win->alines[endy]->line[i + j].wcols = cw;
 				if (bottom.elements > 1) {
 					for (k = 1; k < bottom.elements; k++) {
 						np = malloc(sizeof(nschar_t));
@@ -481,7 +481,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				      &win->alines[endy]->line[i]) == ERR)
 			return ERR;
 		win->alines[endy]->line[i].attr = win->battr;
-		SET_WCOL(win->alines[endy]->line[ i ], 1);
+		win->alines[endy]->line[i].wcols = 1;
 		i++;
 	}
 
@@ -501,9 +501,9 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				win->alines[0]->line[i].nsp = NULL;
 			}
 			if (i)
-				SET_WCOL(win->alines[0]->line[i], -i);
+				win->alines[0]->line[i].wcols = -i;
 			else {
-				SET_WCOL(win->alines[0]->line[i], tlcw);
+				win->alines[0]->line[i].wcols = tlcw;
 				if (topleft.elements > 1) {
 					for (k = 1; k < topleft.elements; k++)
 					{
@@ -530,7 +530,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				win->alines[0]->line[i].nsp = NULL;
 			}
 			if (i == endx - trcw + 1) {
-				SET_WCOL(win->alines[0]->line[i], trcw);
+				win->alines[0]->line[i].wcols = trcw;
 				if (topright.elements > 1) {
 					for (k = 1; k < topright.elements;k ++)
 					{
@@ -543,8 +543,8 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 					}
 				}
 			} else
-				SET_WCOL(win->alines[0]->line[i],
-					 endx - trcw + 1 - i);
+				win->alines[0]->line[i].wcols =
+				    endx - trcw + 1 - i;
 		}
 		for (i = 0; i < blcw; i++) {
 			win->alines[endy]->line[i].ch = botleft.vals[0];
@@ -559,9 +559,9 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				win->alines[endy]->line[i].nsp = NULL;
 			}
 			if (i)
-				SET_WCOL(win->alines[endy]->line[i], -i);
+				win->alines[endy]->line[i].wcols = -i;
 			else {
-				SET_WCOL(win->alines[endy]->line[i], blcw);
+				win->alines[endy]->line[i].wcols = blcw;
 				if (botleft.elements > 1) {
 					for (k = 1; k < botleft.elements; k++) {
 						np = malloc(sizeof(nschar_t));
@@ -587,7 +587,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				win->alines[endy]->line[i].nsp = NULL;
 			}
 			if (i == endx - brcw + 1) {
-				SET_WCOL(win->alines[endy]->line[i], brcw);
+				win->alines[endy]->line[i].wcols = brcw;
 				if (botright.elements > 1) {
 					for (k = 1; k < botright.elements; k++){
 						np = malloc(sizeof(nschar_t));
@@ -599,8 +599,8 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 					}
 				}
 			} else
-				SET_WCOL(win->alines[endy]->line[i],
-					 endx - brcw + 1 - i);
+				win->alines[endy]->line[i].wcols =
+				    endx - brcw + 1 - i;
 		}
 	}
 	__touchwin(win);

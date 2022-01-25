@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.27 2020/03/15 01:18:43 uwe Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.28 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.27 2020/03/15 01:18:43 uwe Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.28 2022/01/25 03:05:06 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -105,7 +105,7 @@ wclrtobot(WINDOW *win)
 #ifdef HAVE_WCHAR
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
 				return ERR;
-			SET_WCOL(*sp, 1);
+			sp->wcols = 1;
 #endif
 		}
 

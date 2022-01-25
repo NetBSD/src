@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.117 2021/12/17 03:50:18 uwe Exp $	*/
+/*	$NetBSD: refresh.c,v 1.118 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.117 2021/12/17 03:50:18 uwe Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.118 2022/01/25 03:05:06 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -316,22 +316,25 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 				vlp->line[x_off].ch = wlp->line[wx].ch;
 				/* Copy attributes  */
 				vlp->line[x_off].attr = wlp->line[wx].attr;
-				/* Check for nca conflict with colour */
-				if ((vlp->line[x_off].attr & __COLOR) &&
-				    (vlp->line[x_off].attr & screen->nca))
-					vlp->line[x_off].attr &= ~__COLOR;
+#ifdef HAVE_WCHAR
+				vlp->line[x_off].wcols = wlp->line[wx].wcols;
+#endif /* HAVE_WCHAR */
 				if (win->flags & __ISDERWIN) {
 					dwlp->line[dx_off].ch =
 						wlp->line[wx].ch;
 					dwlp->line[dx_off].attr =
 						wlp->line[wx].attr;
+#ifdef HAVE_WCHAR
+					dwlp->line[dx_off].wcols =
+						wlp->line[wx].wcols;
+#endif /* HAVE_WCHAR */
 				}
 
 #ifdef HAVE_WCHAR
 				if (wlp->line[wx].ch
 				    == (wchar_t)btowc((int) win->bch)) {
 					vlp->line[x_off].ch = win->bch;
-					SET_WCOL(vlp->line[x_off], 1);
+					vlp->line[x_off].wcols = win->wcols;
 					if (_cursesi_copy_nsp(win->bnsp,
 							      &vlp->line[x_off])
 					    == ERR)
@@ -339,7 +342,8 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 					if (win->flags & __ISDERWIN) {
 						dwlp->line[dx_off].ch =
 							win->bch;
-						SET_WCOL(dwlp->line[dx_off], 1);
+						dwlp->line[dx_off].wcols =
+						    win->wcols;
 						if (_cursesi_copy_nsp(win->bnsp,
 						     &dwlp->line[dx_off])
 						    == ERR)
@@ -602,6 +606,13 @@ doupdate(void)
 				__CTRACE(__CTRACE_REFRESH, " %x",
 				    curscr->alines[i]->line[j].attr);
 			__CTRACE(__CTRACE_REFRESH, "\n");
+#ifdef HAVE_WCHAR
+			__CTRACE(__CTRACE_REFRESH, " wcols:");
+			for (j = 0; j < curscr->maxx; j++)
+				__CTRACE(__CTRACE_REFRESH, " %d",
+				    curscr->alines[i]->line[j].wcols);
+			__CTRACE(__CTRACE_REFRESH, "\n");
+#endif /* HAVE_WCHAR */
 			__CTRACE(__CTRACE_REFRESH, "W: %d:", i);
 			__CTRACE(__CTRACE_REFRESH, " 0x%x \n",
 			    win->alines[i]->hash);
@@ -617,6 +628,11 @@ doupdate(void)
 				    win->alines[i]->line[j].attr);
 			__CTRACE(__CTRACE_REFRESH, "\n");
 #ifdef HAVE_WCHAR
+			__CTRACE(__CTRACE_REFRESH, " wcols:");
+			for (j = 0; j < win->maxx; j++)
+				__CTRACE(__CTRACE_REFRESH, " %d",
+				    win->alines[i]->line[j].wcols);
+			__CTRACE(__CTRACE_REFRESH, "\n");
 			__CTRACE(__CTRACE_REFRESH, " nsp:");
 			for (j = 0; j < curscr->maxx; j++)
 				__CTRACE(__CTRACE_REFRESH, " %p",
@@ -731,13 +747,15 @@ cleanup:
 		for (i = 0; i < curscr->maxy; i++) {
 			for (j = 0; j < curscr->maxx; j++)
 				__CTRACE(__CTRACE_REFRESH,
-				    "[%d,%d](%x,%x,%p)-(%x,%x,%p)\n",
+				    "[%d,%d](%x,%x,%d,%p)-(%x,%x,%d,%p)\n",
 				    i, j,
 				    curscr->alines[i]->line[j].ch,
 				    curscr->alines[i]->line[j].attr,
+				    curscr->alines[i]->line[j].wcols,
 				    curscr->alines[i]->line[j].nsp,
 				    _cursesi_screen->__virtscr->alines[i]->line[j].ch,
 				    _cursesi_screen->__virtscr->alines[i]->line[j].attr,
+				    _cursesi_screen->__virtscr->alines[i]->line[j].wcols,
 				    _cursesi_screen->__virtscr->alines[i]->line[j].nsp);
 		}
 	}
@@ -954,13 +972,14 @@ putch(__LDATA *nsp, __LDATA *csp, int wy, int wx)
 #ifdef HAVE_WCHAR
 		if (_cursesi_copy_nsp(nsp->nsp, csp) == ERR)
 			return ERR;
+		csp->wcols = nsp->wcols;
 #endif /* HAVE_WCHAR */
 	}
 
 #ifndef HAVE_WCHAR
 	__cputchar((int)nsp->ch);
 #else
-	if (WCOL(*nsp) <= 0)
+	if (nsp->wcols <= 0)
 		goto out;
 	__cputwchar((int)nsp->ch);
 	__CTRACE(__CTRACE_REFRESH,
@@ -995,8 +1014,8 @@ putchbr(__LDATA *nsp, __LDATA *csp, __LDATA *psp, int wy, int wx)
 
 	/* We need to insert characters. */
 #ifdef HAVE_WCHAR
-	cw = WCOL(*nsp);
-	pcw = WCOL(*psp);
+	cw = nsp->wcols;
+	pcw = psp->wcols;
 	if (cw < 1 || pcw < 1)
 		return ERR; /* Nothing to insert */
 
@@ -1056,7 +1075,7 @@ makech(int wy)
 	__LDATA *nsp, *csp, *cp, *cep, *fsp;
 	__LINE *wlp;
 	size_t	clsp, nlsp;	/* Last space in lines. */
-	int	lch, wx, chw;
+	int	lch, wx, owx, chw;
 	const char	*ce;
 	attr_t	lspc;		/* Last space colour */
 
@@ -1072,7 +1091,7 @@ makech(int wy)
 	blank.attr = 0;
 	if (_cursesi_copy_nsp(win->bnsp, &blank) == ERR)
 		return ERR;
-	SET_WCOL(blank, 1);
+	blank.wcols = win->wcols;
 #endif /* HAVE_WCHAR */
 #ifdef DEBUG
 #if HAVE_WCHAR
@@ -1087,12 +1106,12 @@ makech(int wy)
 			lp = &curscr->alines[wy]->line[x];
 			vlp = &__virtscr->alines[wy]->line[x];
 			__CTRACE(__CTRACE_REFRESH,
-			    "[%d,%d](%x,%x,%x,%x,%p)-"
-			    "(%x,%x,%x,%x,%p)\n",
-			    wy, x, lp->ch, lp->attr,
-			    win->bch, win->battr, lp->nsp,
-			    vlp->ch, vlp->attr,
-			    win->bch, win->battr, vlp->nsp);
+			    "[%d,%d](%x,%x,%d,%x,%x,%d,%p)-"
+			    "(%x,%x,%d,%x,%x,%d,%p)\n",
+			    wy, x, lp->ch, lp->attr, lp->wcols,
+			    win->bch, win->battr, win->wcols, lp->nsp,
+			    vlp->ch, vlp->attr, vlp->wcols,
+			    win->bch, win->battr, win->wcols, vlp->nsp);
 		}
 	}
 #endif /* HAVE_WCHAR */
@@ -1163,23 +1182,29 @@ makech(int wy)
 #ifndef HAVE_WCHAR
 		__CTRACE(__CTRACE_REFRESH, "makech: wx=%d,lch=%d\n", wx, lch);
 #else
-		__CTRACE(__CTRACE_REFRESH, "makech: nsp=(%x,%x,%x,%x,%p)\n",
-			nsp->ch, nsp->attr, win->bch, win->battr, nsp->nsp);
-		__CTRACE(__CTRACE_REFRESH, "makech: csp=(%x,%x,%x,%x,%p)\n",
-			csp->ch, csp->attr, win->bch, win->battr, csp->nsp);
+		__CTRACE(__CTRACE_REFRESH, "makech: nsp=(%x,%x,%d,%x,%x,%d,%p)\n",
+			nsp->ch, nsp->attr, nsp->wcols, win->bch, win->battr,
+			win->wcols, nsp->nsp);
+		__CTRACE(__CTRACE_REFRESH, "makech: csp=(%x,%x,%d,%x,%x,%d,%p)\n",
+			csp->ch, csp->attr, csp->wcols, win->bch, win->battr,
+			win->wcols, csp->nsp);
 #endif
 		if (!(wlp->flags & __ISFORCED) &&
 #ifdef HAVE_WCHAR
-		    ((nsp->attr & __WCWIDTH) != __WCWIDTH) &&
+		    ((nsp->wflags & WCA_CONTINUATION) != WCA_CONTINUATION) &&
 #endif
 		    celleq(nsp, csp))
 		{
 			if (wx <= lch) {
 				while (wx <= lch && celleq(nsp, csp)) {
+#ifdef HAVE_WCHAR
+					wx += nsp->wcols;
+#else
+					wx++;
+#endif
 					nsp++;
 					if (!_cursesi_screen->curwin)
 						++csp;
-					++wx;
 				}
 				continue;
 			}
@@ -1193,6 +1218,7 @@ makech(int wy)
 		    wx, _cursesi_screen->ly, _cursesi_screen->lx, wy, wx);
 		_cursesi_screen->ly = wy;
 		_cursesi_screen->lx = wx;
+		owx = wx;
 		while (wx <= lch &&
 		       ((wlp->flags & __ISFORCED) || !celleq(nsp, csp)))
 		{
@@ -1246,7 +1272,7 @@ makech(int wy)
 						csp->ch = ' '; /* XXX */
 #else
 						csp->ch = (wchar_t)btowc((int)' ');
-						SET_WCOL( *csp, 1 );
+						csp->wcols = 1;
 #endif /* HAVE_WCHAR */
 						assert(csp != &blank);
 						csp++;
@@ -1257,12 +1283,13 @@ makech(int wy)
 			}
 
 #ifdef HAVE_WCHAR
-			chw = WCOL(*nsp);
+			chw = nsp->wcols;
 			if (chw < 0)
 				chw = 0; /* match putch() */
 #else
 			chw = 1;
 #endif /* HAVE_WCHAR */
+			owx = wx;
 			if (wx + chw >= win->maxx &&
 			    wy == win->maxy - 1 && !_cursesi_screen->curwin)
 			{
@@ -1304,14 +1331,28 @@ makech(int wy)
 				putattr_out(nsp);
 			}
 			wx += chw;
-			nsp++;
+			nsp += chw;
 			__CTRACE(__CTRACE_REFRESH,
 			    "makech: 2: wx = %d, lx = %d\n",
 			    wx, _cursesi_screen->lx);
 		}
 		if (_cursesi_screen->lx == wx)	/* If no change. */
 			break;
-		_cursesi_screen->lx = wx;
+
+		/*
+		 * We need to work out if the cursor has been put in the
+		 * middle of a wide character so check if curx is between
+		 * where we were and where we are and we are on the right
+		 * line.  If so, move the cursor now.
+		 */
+		if ((wy == win->cury) && (wx > win->curx) &&
+		    (owx < win->curx)) {
+			_cursesi_screen->lx = win->curx;
+			domvcur(win, _cursesi_screen->ly, wx,
+			    _cursesi_screen->ly, _cursesi_screen->lx);
+		} else
+			_cursesi_screen->lx = wx;
+
 		if (_cursesi_screen->lx >= COLS && auto_right_margin)
 			_cursesi_screen->lx = COLS - 1;
 		else
@@ -1339,12 +1380,12 @@ makech(int wy)
 			lp = &curscr->alines[wy]->line[x];
 			vlp = &__virtscr->alines[wy]->line[x];
 			__CTRACE(__CTRACE_REFRESH,
-			    "[%d,%d](%x,%x,%x,%x,%p)-"
-			    "(%x,%x,%x,%x,%p)\n",
-			    wy, x, lp->ch, lp->attr,
-			    win->bch, win->battr, lp->nsp,
-			    vlp->ch, vlp->attr,
-			    win->bch, win->battr, vlp->nsp);
+			    "[%d,%d](%x,%x,%d,%x,%x,%d,%p)-"
+			    "(%x,%x,%d,%x,%x,%d,%p)\n",
+			    wy, x, lp->ch, lp->attr, lp->wcols,
+			    win->bch, win->battr, win->wcols, lp->nsp,
+			    vlp->ch, vlp->attr, vlp->wcols,
+			    win->bch, win->battr, win->wcols, vlp->nsp);
 		}
 	}
 #endif /* HAVE_WCHAR */
@@ -1556,12 +1597,12 @@ done:
 	}
 #else
 	if (buf[0].ch != (wchar_t)btowc((int)curscr->bch )) {
-		for (i = 0; i < BLANKSIZE; i++) {
+		for (i = 0; i < BLANKSIZE; i++) { /* XXXX: BLANKSIZE may not be valid if wcols > 1 */
 			buf[i].ch = (wchar_t)btowc((int)curscr->bch);
 			if (_cursesi_copy_nsp(curscr->bnsp, &buf[i]) == ERR)
 				return;
 			buf[i].attr = 0;
-			SET_WCOL(buf[i], 1);
+			buf[i].wcols = curscr->wcols;
 		}
 	}
 #endif /* HAVE_WCHAR */
