@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.21 2022/01/16 10:30:45 rillig Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.22 2022/01/25 03:05:06 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.21 2022/01/16 10:30:45 rillig Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.22 2022/01/25 03:05:06 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -280,13 +280,13 @@ loopdone:
 		start = &win->alines[y]->line[x];
 		sx = x;
 		lnp = win->alines[y];
-		pcw = WCOL(*start);
+		pcw = start->wcols;
 		if (pcw < 0) {
 			sx += pcw;
 			start += pcw;
 		}
 		__CTRACE(__CTRACE_INPUT, "wins_nwstr: start@(%d)\n", sx);
-		pcw = WCOL(*start);
+		pcw = start->wcols;
 		lnp->flags |= __ISDIRTY;
 		newx = sx + win->ch_off;
 		if (newx < *lnp->firstchp)
@@ -310,7 +310,7 @@ loopdone:
 			__CTRACE(__CTRACE_INPUT, "wins_nwstr: shift all characters by %d\n", width);
 			temp1 = &win->alines[y]->line[win->maxx - 1];
 			temp2 = temp1 - width;
-			pcw = WCOL(*(temp2 + 1));
+			pcw = (temp2 + 1)->wcols;
 			if (pcw < 0) {
 				__CTRACE(__CTRACE_INPUT,
 				    "wins_nwstr: clear from %d to EOL(%d)\n",
@@ -323,7 +323,7 @@ loopdone:
 						return ERR;
 					}
 					temp1->attr = win->battr;
-					SET_WCOL(*temp1, 1);
+					temp1->wcols = 1;
 					__CTRACE(__CTRACE_INPUT,
 					    "wins_nwstr: empty cell(%p)\n", temp1);
 					temp1--;

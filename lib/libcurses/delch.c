@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.26 2019/06/09 07:40:14 blymn Exp $	*/
+/*	$NetBSD: delch.c,v 1.27 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.26 2019/06/09 07:40:14 blymn Exp $");
+__RCSID("$NetBSD: delch.c,v 1.27 2022/01/25 03:05:06 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -111,11 +111,11 @@ wdelch(WINDOW *win)
 	end = &win->alines[win->cury]->line[win->maxx - 1];
 	sx = win->curx;
 	temp1 = &win->alines[win->cury]->line[win->curx];
-	cw = WCOL(*temp1);
+	cw = temp1->wcols;
 	if (cw < 0) {
 		temp1 += cw;
 		sx += cw;
-		cw = WCOL(*temp1);
+		cw = temp1->wcols;
 	}
 	np = temp1->nsp;
 	if (np) {
@@ -138,7 +138,7 @@ wdelch(WINDOW *win)
 		temp1->attr = 0;
 		if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
 			return ERR;
-		SET_WCOL(*temp1, 1);
+		temp1->wcols = 1;
 		temp1++;
 	}
 	__touchline(win, (int)win->cury, sx, (int)win->maxx - 1);

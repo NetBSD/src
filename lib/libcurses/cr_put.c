@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.37 2021/09/06 07:45:48 rin Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.38 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -30,11 +30,13 @@
  */
 
 #include <sys/cdefs.h>
+#include <limits.h>
+#include <stdlib.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.37 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.38 2022/01/25 03:05:06 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -188,18 +190,29 @@ fgoto(int in_refresh)
  * Otherwise just use cursor motions, hacking use of tabs and overtabbing
  * and backspace.
  *
- * XXX this needs to be revisited for wide characters since we may output
- * XXX more than one byte for a character.
  */
 
 static int plodcnt, plodflg;
+#ifdef HAVE_WCHAR
+static char s[MB_LEN_MAX];
+#endif
 
 static int
 plodput(int c)
 {
-	if (plodflg)
-		--plodcnt;
-	else
+	if (plodflg) {
+		int cw;
+
+#ifdef HAVE_WCHAR
+		cw = wctomb(s, c);
+		if (cw < 0)
+			cw = 1;
+#else
+		cw = 1;
+#endif /* HAVE_WCHAR */
+
+		plodcnt -= cw;
+	} else
 		__cputchar(c);
 	return 0;
 }
@@ -404,6 +417,21 @@ dontcr:while (outline < destline) {
 			}
 		}
 	}
+
+#ifdef HAVE_WCHAR
+	/*
+	 * If destcol is halfway through a multicolumn
+	 * wide char, we have no chance of plodding.
+	 */
+	k = outcol - destcol;
+	if (k < 0)
+		k = -k;
+	if ((k != 0) && (curscr->alines[outline]->line[outcol].wcols > k)) {
+		plodcnt = -1;
+		goto out;
+	}
+#endif /* HAVE_WCHAR */
+
 	while (outcol < destcol) {
 		/*
 		 * Move one char to the right.  We don't use nd space because
@@ -423,17 +451,17 @@ dontcr:while (outline < destline) {
 				if ((curscr->alines[outline]->line[outcol].attr
 				    & WA_ATTRIBUTES)
 				    == curscr->wattr) {
-					switch (WCOL(curscr->alines[outline]->line[outcol])) {
+					switch (curscr->alines[outline]->line[outcol].wcols) {
 					case 1:
 						__cputwchar(curscr->alines[outline]->line[outcol].ch);
 						__cursesi_putnsp(curscr->alines[outline]->line[outcol].nsp,
 								outline,
 								outcol);
 						__CTRACE(__CTRACE_OUTPUT,
-						    "plod: (%d,%d)WCOL(%d), "
+						    "plod: (%d,%d)wcols(%d), "
 						    "putwchar(%x)\n",
 						    outline, outcol,
-						    WCOL(curscr->alines[outline]->line[outcol]),
+						    curscr->alines[outline]->line[outcol].wcols,
 						    curscr->alines[outline]->line[outcol].ch);
 					/*FALLTHROUGH*/
 					case 0:

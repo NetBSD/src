@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.26 2020/07/06 22:46:50 uwe Exp $	*/
+/*	$NetBSD: insch.c,v 1.27 2022/01/25 03:05:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.26 2020/07/06 22:46:50 uwe Exp $");
+__RCSID("$NetBSD: insch.c,v 1.27 2022/01/25 03:05:06 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -116,7 +116,7 @@ winsch(WINDOW *win, chtype ch)
 #ifdef HAVE_WCHAR
 	if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
 		return ERR;
-	SET_WCOL(*temp1, 1);
+	temp1->wcols = 1;
 #endif /* HAVE_WCHAR */
 	__touchline(win, (int)win->cury, (int)win->curx, (int)win->maxx - 1);
 	if (win->cury == LINES - 1 &&
