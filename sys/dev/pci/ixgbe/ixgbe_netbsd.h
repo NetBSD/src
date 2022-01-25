@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.h,v 1.15 2022/01/25 01:56:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_netbsd.h,v 1.16 2022/01/25 03:40:29 msaitoh Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -61,9 +61,9 @@
 	atomic_store_relaxed(&((evp)->ev_count),		\
 	    atomic_load_relaxed(&((evp)->ev_count)) + (val))
 #else
-#define IXGBE_EVC_LOAD(evp)		((ev)->ev_count))
-#define IXGBE_EVC_STORE(evp, val)	((ev)->ev_count = (val))
-#define IXGBE_EVC_ADD(evp, val)		((ev)->ev_count += (val))
+#define IXGBE_EVC_LOAD(evp)		((evp)->ev_count))
+#define IXGBE_EVC_STORE(evp, val)	((evp)->ev_count = (val))
+#define IXGBE_EVC_ADD(evp, val)		((evp)->ev_count += (val))
 #endif
 
 #define IXGBE_EVC_REGADD(hw, stats, regname, evname)			\
