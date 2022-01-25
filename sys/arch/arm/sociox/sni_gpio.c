@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.12 2021/12/21 06:00:45 nisimura Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.13 2022/01/25 10:38:56 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.12 2021/12/21 06:00:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.13 2022/01/25 10:38:56 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,14 +94,13 @@ CFATTACH_DECL_NEW(snigpio_acpi, sizeof(struct snigpio_softc),
  *    PowerButton (PWROFF#) can be detectable.
  *
  *  DevelopmentBox has 96board mezzanine 2x 20 receptacle
- *    gpio  "/gpio@51000000" pinA-L (10-25) down edge sensitive
+ *    gpio  "/gpio@51000000" pinA-L (23-34) down edge sensitive
  *    i2c   "/i2c1@51221000"
  *    spi   "/spi1@54810000"
- *    uart0 "/uart@2a400000" pin1-4 for real S2C11 console
- *    uart1 SCP secure co-prorcessor uart console in pin5-6
+ *    uart0 "/uart@2a400000" pin3,5,7,9 for real S2CA11 console
+ *    uart1 SCP secure co-prorcessor uart console in pin11,13
  */
 static void snigpio_attach_i(struct snigpio_softc *);
-static int snigpio_intr(void *);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "socionext,synquacer-gpio" },
@@ -130,32 +129,12 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_addr_t addr;
 	bus_size_t size;
-	char intrstr[128];
-	const char *list;
-
-	aprint_naive("\n");
-	aprint_normal(": Socionext GPIO controller\n");
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0
 	    || bus_space_map(faa->faa_bst, addr, size, 0, &ioh) != 0) {
 		aprint_error_dev(self, "unable to map device\n");
 		return;
 	}
-	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error_dev(self, "failed to decode interrupt\n");
-		goto fail;
-	}
-	sc->sc_ih = fdtbus_intr_establish(phandle,
-			0, IPL_VM, 0, snigpio_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt\n");
-		goto fail;
-	}
-	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
-
-	list = fdtbus_get_string(phandle, "gpio-line-names");
-	if (list)
-		aprint_normal_dev(self, "%s\n", list);
 
 	sc->sc_dev = self;
 	sc->sc_iot = faa->faa_bst;
@@ -163,13 +142,11 @@ snigpio_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iob = addr;
 	sc->sc_ios = size;
 	sc->sc_phandle = phandle;
+	/* could use FDI "gpio-line-names" array via device_set_handle() */
 
 	snigpio_attach_i(sc);
 
 	return;
- fail:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-	return;	
 }
 
 static int
@@ -189,22 +166,16 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
-	struct acpi_irq *irq;
 	ACPI_STATUS rv;
 	char *list;
 
-	aprint_naive("\n");
-	aprint_normal(": Socionext GPIO controller\n");
-
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "missing crs resources\n");
+	if (ACPI_FAILURE(rv))
 		return;
-	}
+
 	mem = acpi_res_mem(&res, 0);
-	irq = acpi_res_irq(&res, 0);
-	if (mem == NULL || irq == NULL || mem->ar_length == 0) {
+	if (mem == NULL || mem->ar_length == 0) {
 		aprint_error_dev(self, "incomplete resources\n");
 		return;
 	}
@@ -213,30 +184,19 @@ snigpio_acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
-	sc->sc_ih = acpi_intr_establish(self, (uint64_t)handle,
-	    IPL_VM, false, snigpio_intr, sc, device_xname(self));
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt\n");
-		goto fail;
-	}
-	rv = acpi_dsd_string(handle, "gpio-line-names", &list);
-	if (ACPI_SUCCESS(rv))
-		aprint_normal_dev(self, "%s\n", list);
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_memt;
 	sc->sc_ioh = ioh;
 	sc->sc_ios = mem->ar_length;
 	sc->sc_phandle = 0;
+	/* UEFI provides "gpio-line-names" for us */
 
+	aprint_normal("%s", device_xname(self));
 	snigpio_attach_i(sc);
 
 	acpi_resource_cleanup(&res);
 	return;
- fail:
-	acpi_resource_cleanup(&res);
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-	return;	
 }
 
 static void
@@ -244,6 +204,9 @@ snigpio_attach_i(struct snigpio_softc *sc)
 {
 	struct gpio_chipset_tag	*gc;
 	struct gpiobus_attach_args gba;
+
+	aprint_naive("\n");
+	aprint_normal(": Socionext GPIO controller\n");
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	sc->sc_maxpins = 32;
@@ -263,10 +226,4 @@ snigpio_attach_i(struct snigpio_softc *sc)
 	gba.gba_npins = sc->sc_maxpins;
 
 	config_found(sc->sc_dev, &gba, gpiobus_print, CFARGS_NONE);
-}
-
-static int
-snigpio_intr(void *arg)
-{
-	return 1;
 }
