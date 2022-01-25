@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1445 2022/01/01 10:32:29 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1446 2022/01/25 16:06:44 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5646,6 +5646,41 @@ product INTEL EHL_GPU_32	0x4551	Elkhart Lake GPU (32EU)
 product INTEL EHL_DPTF		0x4503	Elkhart Lake DPTF
 product INTEL EHL_GNA		0x4511	Elkhart Lake GNA
 product INTEL EHL_TRACE_2	0x4529	Elkhart Lake Trace Hub (Compute Die)
+product INTEL ADL_PCIE_RP_0	0x460d	Alder Lake PCIe G5 Root Port 0 (x16)
+product INTEL ADL_XDCI		0x460e	Alder Lake USB-C Device (xDCI)
+product INTEL ADL_S_2_0_HOST	0x4610	Alder Lake (S,2+0) Host
+product INTEL ADL_DTT		0x461d	Alder Lake Dynamic Tuning Technology
+product INTEL ADL_XHCI		0x461e	Alder Lake USB-C Host (xHCI)
+product INTEL ADL_TBT_PCIE_3	0x461f	Alder Lake Thunderbolt PCIe 3
+product INTEL ADL_H_4_8_HOST	0x4621	Alder Lake (H,4+8) Host
+product INTEL ADL_H_4_4_HOST	0x4629	Alder Lake (H,4+4) Host
+product INTEL ADL_PCIE_RP_1	0x462d	Alder Lake PCIe G5 Root Port 1 (x8)
+product INTEL ADL_TBT_PCIE_2	0x462f	Alder Lake Thunderbolt PCIe 2
+product INTEL ADL_S_4_0_HOST	0x4630	Alder Lake (S,4+0) Host
+product INTEL ADL_PCIE_RP_3	0x463d	Alder Lake PCIe G4 Root Port 3 (x4)
+product INTEL ADL_TBTDMA_0	0x463e	Alder Lake Thunderbolt DMA 0
+product INTEL ADL_TBT_PCIE_1	0x463f	Alder Lake Thunderbolt PCIe 1
+product INTEL ADL_H_6_8_HOST	0x4641	Alder Lake (H,6+8) Host
+product INTEL ADL_S_6_4_HOST	0x4648	Alder Lake (S,6+4) Host
+product INTEL ADL_H_6_4_HOST	0x4649	Alder Lake (H,6+4) Host
+product INTEL ADL_PCIE_RP_2	0x464d	Alder Lake PCIe G4 Root Port 2 (x4)
+product INTEL ADL_GNA		0x464f	Alder Lake Gauss Newton Algorithm
+product INTEL ADL_S_6_0_HOST	0x4650	Alder Lake (S,6+0) Host
+product INTEL ADL_IPU		0x465d	Alder Lake Image Processing Unit
+product INTEL ADL_S_8_8_HOST	0x4660	Alder Lake (S,8+8) Host
+product INTEL ADL_S_8_4_HOST	0x4668	Alder Lake (S,8+4) Host
+product INTEL ADL_TBTDMA_1	0x466d	Alder Lake Thunderbolt DMA 1
+product INTEL ADL_TBT_PCIE_0	0x466e	Alder Lake Thunderbolt PCIe 0
+product INTEL ADL_TRACE		0x466f	Alder Lake Trace Hub (Compute Die?XXX)
+product INTEL ADL_CLSRAM	0x467d	Alder Lake Crash Log & Telemetry
+product INTEL ADL_VMD		0x467f	Alder Lake Volume Management Device
+product INTEL ADL_IGD_1		0x4680	Alder Lake Graphics (32EU)
+product INTEL ADL_IGD_2		0x4682	Alder Lake Graphics (24EU)
+product INTEL ADL_IGD_3		0x4690	Alder Lake Graphics (32EU)
+product INTEL ADL_IGD_4		0x4692	Alder Lake Graphics (24EU)
+product INTEL ADL_IGD_5		0x4693	Alder Lake Graphics (16EU)
+product INTEL ADL_IGD_6		0x46a6	Alder Lake Graphics
+product INTEL ADL_IGD_7		0x46a3	Alder Lake Graphics
 product INTEL EHL_ESPI		0x4b00	Elkhart Lake eSPI
 product INTEL EHL_P2SB		0x4b20	Elkhart Lake P2SB
 product INTEL EHL_PMC		0x4b21	Elkhart Lake PMC
@@ -6031,6 +6066,69 @@ product INTEL 82443GX		0x71a0	82443GX Host Bridge/Controller
 product INTEL 82443GX_AGP	0x71a1	82443GX AGP Interface
 product INTEL 82443GX_NOAGP	0x71a2	82443GX Host Bridge/Controller (AGP disabled)
 product INTEL I740		0x7800	i740 Graphics Accelerator
+product INTEL 6HS_Z690_ESPI	0x7a84	Z690 eSPI
+product INTEL 6HS_H670_ESPI	0x7a85	H670 eSPI
+product INTEL 6HS_B660_ESPI	0x7a86	B660 eSPI
+product INTEL 6HS_H610_ESPI	0x7a87	H610 eSPI
+product INTEL 6HS_H_P2SB	0x7aa0	600 Series PCH-H P2SB
+product INTEL 6HS_H_PMC		0x7aa1	600 Series PCH-H PMC
+product INTEL 6HS_H_SMB		0x7aa3	600 Series PCH-H SMBus
+product INTEL 6HS_H_SPI		0x7aa4	600 Series PCH-H SPI (FLASH)
+product INTEL 6HS_H_TRACE	0x7aa6	600 Series PCH-H Trace Hub
+product INTEL 6HS_H_SSRAM	0x7aa7	600 Series PCH-H Shared SRAM
+product INTEL 6HS_H_UART_0	0x7aa8	600 Series PCH-H UART 0
+product INTEL 6HS_H_UART_1	0x7aa9	600 Series PCH-H UART 1
+product INTEL 6HS_H_GSPI_0	0x7aaa	600 Series PCH-H GSPI 0
+product INTEL 6HS_H_GSPI_1	0x7aab	600 Series PCH-H GSPI 1
+product INTEL 6HS_H_PCIE_9	0x7ab0	600 Series PCH-H PCIe RP 9
+product INTEL 6HS_H_PCIE_10	0x7ab1	600 Series PCH-H PCIe RP 10
+product INTEL 6HS_H_PCIE_11	0x7ab2	600 Series PCH-H PCIe RP 11
+product INTEL 6HS_H_PCIE_12	0x7ab3	600 Series PCH-H PCIe RP 12
+product INTEL 6HS_H_PCIE_13	0x7ab4	600 Series PCH-H PCIe RP 13
+product INTEL 6HS_H_PCIE_14	0x7ab5	600 Series PCH-H PCIe RP 14
+product INTEL 6HS_H_PCIE_15	0x7ab6	600 Series PCH-H PCIe RP 15
+product INTEL 6HS_H_PCIE_16	0x7ab7	600 Series PCH-H PCIe RP 16
+product INTEL 6HS_H_PCIE_1	0x7ab8	600 Series PCH-H PCIe RP 1
+product INTEL 6HS_H_PCIE_2	0x7ab9	600 Series PCH-H PCIe RP 2
+product INTEL 6HS_H_PCIE_3	0x7aba	600 Series PCH-H PCIe RP 3
+product INTEL 6HS_H_PCIE_4	0x7abb	600 Series PCH-H PCIe RP 4
+product INTEL 6HS_H_PCIE_5	0x7abc	600 Series PCH-H PCIe RP 5
+product INTEL 6HS_H_PCIE_6	0x7abd	600 Series PCH-H PCIe RP 6
+product INTEL 6HS_H_PCIE_7	0x7abe	600 Series PCH-H PCIe RP 7
+product INTEL 6HS_H_PCIE_8	0x7abf	600 Series PCH-H PCIe RP 8
+product INTEL 6HS_H_PCIE_17	0x7ac0	600 Series PCH-H PCIe RP 17
+product INTEL 6HS_H_PCIE_18	0x7ac1	600 Series PCH-H PCIe RP 18
+product INTEL 6HS_H_PCIE_19	0x7ac2	600 Series PCH-H PCIe RP 19
+product INTEL 6HS_H_PCIE_20	0x7ac3	600 Series PCH-H PCIe RP 20
+product INTEL 6HS_H_PCIE_21	0x7ac4	600 Series PCH-H PCIe RP 21
+product INTEL 6HS_H_PCIE_22	0x7ac5	600 Series PCH-H PCIe RP 22
+product INTEL 6HS_H_PCIE_23	0x7ac6	600 Series PCH-H PCIe RP 23
+product INTEL 6HS_H_PCIE_24	0x7ac7	600 Series PCH-H PCIe RP 24
+product INTEL 6HS_H_PCIE_25	0x7ac8	600 Series PCH-H PCIe RP 25
+product INTEL 6HS_H_PCIE_26	0x7ac9	600 Series PCH-H PCIe RP 26
+product INTEL 6HS_H_PCIE_27	0x7aca	600 Series PCH-H PCIe RP 27
+product INTEL 6HS_H_PCIE_28	0x7acb	600 Series PCH-H PCIe RP 28
+product INTEL 6HS_H_I2C_0	0x7acc	600 Series PCH-H I2C 0
+product INTEL 6HS_H_I2C_1	0x7acd	600 Series PCH-H I2C 1
+product INTEL 6HS_H_I2C_2	0x7ace	600 Series PCH-H I2C 2
+product INTEL 6HS_H_I2C_3	0x7acf	600 Series PCH-H I2C 3
+product INTEL 6HS_H_HDA		0x7ad0	600 Series PCH-H HD Audio
+product INTEL 6HS_H_UART_3	0x7adc	600 Series PCH-H UART 3
+product INTEL 6HS_H_XHCI	0x7ae0	600 Series PCH-H USB 3.2 Gen 2x2 xHCI
+product INTEL 6HS_H_XDCI	0x7ae1	600 Series PCH-H USB 3.2 Gen 1x1 xDCI
+product INTEL 6HS_H_D_AHCI	0x7ae2	600 Series PCH-H SATA (AHCI)
+product INTEL 6HS_H_HECI_1	0x7ae8	600 Series PCH-H HECI 1
+product INTEL 6HS_H_HECI_2	0x7ae9	600 Series PCH-H HECI 2
+product INTEL 6HS_H_IDER	0x7aea	600 Series PCH-H IDE-R
+product INTEL 6HS_H_KT		0x7aeb	600 Series PCH-H KT
+product INTEL 6HS_H_HECI_3	0x7aec	600 Series PCH-H HECI 3
+product INTEL 6HS_H_HECI_4	0x7aed	600 Series PCH-H HECI 4
+product INTEL 6HS_H_ISH		0x7af8	600 Series PCH-H Integrated Sensor Hub
+product INTEL 6HS_H_GSPI_3	0x7af9	600 Series PCH-H GSPI 3
+product INTEL 6HS_H_GSPI_2	0x7afb	600 Series PCH-H GSPI 2
+product INTEL 6HS_H_I2C_4	0x7afc	600 Series PCH-H I2C 4
+product INTEL 6HS_H_I2C_5	0x7afd	600 Series PCH-H I2C 5
+product INTEL 6HS_H_UART_2	0x7afe	600 Series PCH-H UART 2
 product INTEL SCH_IDE		0x811a  SCH IDE Controller
 product INTEL E600_HDA		0x811b	E600 HD Audio
 product INTEL E600_PCIB_0	0x8180	E600 Virtual PCI-PCI Bridge
