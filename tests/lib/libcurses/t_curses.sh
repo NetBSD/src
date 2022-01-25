@@ -9,7 +9,7 @@ h_run()
 	else
 		# export the locale and shift the parameters by two and pass the rest
 		export LC_ALL=$locale
-		shift 2
+		shift
 		r_run $file $@
 	fi
 }
