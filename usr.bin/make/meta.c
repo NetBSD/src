@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.192 2022/01/15 19:34:07 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.193 2022/01/26 12:16:03 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -205,31 +205,16 @@ filemon_read(FILE *mfp, int fd)
  * we use this, to clean up ./ and ../
  */
 static void
-eat_dots(char *buf, size_t bufsz, int dots)
+eat_dots(char *buf, size_t bufsz, const char *eat, size_t eatlen)
 {
     char *cp;
     char *cp2;
-    const char *eat;
-    size_t eatlen;
-
-    switch (dots) {
-    case 1:
-	eat = "/./";
-	eatlen = 2;
-	break;
-    case 2:
-	eat = "/../";
-	eatlen = 3;
-	break;
-    default:
-	return;
-    }
 
     do {
 	cp = strstr(buf, eat);
 	if (cp != NULL) {
 	    cp2 = cp + eatlen;
-	    if (dots == 2 && cp > buf) {
+	    if (eatlen == 3 && cp > buf) {
 		do {
 		    cp--;
 		} while (cp > buf && *cp != '/');
@@ -284,8 +269,8 @@ meta_name(char *mname, size_t mnamelen,
 	    } else {
 		snprintf(buf, sizeof buf, "%s/%s", cwd, tname);
 	    }
-	    eat_dots(buf, sizeof buf, 1);	/* ./ */
-	    eat_dots(buf, sizeof buf, 2);	/* ../ */
+	    eat_dots(buf, sizeof buf, "/./", 2);
+	    eat_dots(buf, sizeof buf, "/../", 3);
 	    tname = buf;
 	}
     }
