@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_uart.c,v 1.9 2020/06/23 05:18:43 simonb Exp $	*/
+/*	$NetBSD: octeon_uart.c,v 1.10 2022/01/26 18:57:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.9 2020/06/23 05:18:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_uart.c,v 1.10 2022/01/26 18:57:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,6 @@ const bus_addr_t octuart_com_bases[] = {
 	MIO_UART1_BASE
 };
 const struct com_regs octuart_com_regs = {
-	.cr_nports = COM_NPORTS,
 	.cr_map = {
 		[COM_REG_RXDATA] =	MIO_UART_RBR_OFFSET,
 		[COM_REG_TXDATA] =	MIO_UART_THR_OFFSET,
@@ -117,9 +116,9 @@ octuart_iobus_attach(device_t parent, device_t self, void *aux)
 	int status;
 
 	sc_com->sc_dev = self;
-	sc_com->sc_regs = octuart_com_regs;
-	sc_com->sc_regs.cr_iot = aa->aa_bust;
-	sc_com->sc_regs.cr_iobase = aa->aa_unit->addr;
+	com_init_regs(&sc_com->sc_regs, aa->aa_bust, 0, aa->aa_unit->addr);
+	memcpy(sc_com->sc_regs.cr_map, octuart_com_regs.cr_map,
+	    sizeof(octuart_com_regs.cr_map));
 
 	sc->sc_irq = aa->aa_unit->irq;
 
@@ -183,9 +182,9 @@ octuart_com_cnattach(bus_space_tag_t bust, int portno, int speed)
 {
 	struct com_regs regs;
 
-	(void)memcpy(&regs, &octuart_com_regs, sizeof(regs));
-	regs.cr_iot = bust;
-	regs.cr_iobase = octuart_com_bases[portno];
+	com_init_regs(&regs, bust, 0, octuart_com_bases[portno]);
+	memcpy(regs.cr_map, octuart_com_regs.cr_map,
+	    sizeof(octuart_com_regs.cr_map));
 
 	return comcnattach1(
 		&regs,
