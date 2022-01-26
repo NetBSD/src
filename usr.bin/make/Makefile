@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.120 2022/01/09 18:49:28 rillig Exp $
+#	$NetBSD: Makefile,v 1.121 2022/01/26 23:00:55 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -186,6 +186,7 @@ test-coverage: .PHONY
 	@make -s clean cleandir
 	@env USE_COVERAGE=yes COPTS="-O0 -ggdb" USER_CPPFLAGS="-DCLEANUP" \
 		sh -c 'make -s all -j8 && make -s test'
+	@env USE_COVERAGE=yes make report-coverage > coverage.txt
 
 .if ${USE_COVERAGE} == "yes"
 report-coverage: .PHONY
