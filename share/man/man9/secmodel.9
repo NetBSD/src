@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.22 2017/07/03 21:28:48 wiz Exp $
+.\" $NetBSD: secmodel.9,v 1.23 2022/01/26 11:48:53 andvar Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -139,19 +139,19 @@ positive, when the error comes directly from the
 framework.
 .It
 negative, when the error comes from the evaluation callback
-implemented in the targetted security model.
+implemented in the targeted security model.
 The value is then implementation-defined.
 .El
 .Pp
 .Bl -tag -width what
 .It Fa id
-The unique identifier of the targetted
+The unique identifier of the targeted
 .Nm .
 .It Fa what
-The query that will be passed down to the targetted
+The query that will be passed down to the targeted
 .Nm .
 .It Fa arg
-The arguments passed to the evaluation routine of the targetted
+The arguments passed to the evaluation routine of the targeted
 .Nm .
 .It Fa ret
 The answer of the evaluation routine.
@@ -170,7 +170,7 @@ An invalid address or reference was passed as parameter.
 .It Bq Er EINVAL
 An invalid value was passed as parameter.
 .It Bq Er ENOENT
-The targetted
+The targeted
 .Nm
 does not exist, or it does not implement an evaluation callback.
 .El

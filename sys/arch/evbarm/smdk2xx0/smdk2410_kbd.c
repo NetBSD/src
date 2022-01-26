@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.11 2022/01/25 22:01:34 andvar Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.12 2022/01/26 11:48:53 andvar Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.11 2022/01/25 22:01:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.12 2022/01/26 11:48:53 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.11 2022/01/25 22:01:34 andvar Exp
  */
 #define	KCDR_INITIALIZE	0xa0	/* Initialize request */
 #define	KCDR_INITCOMP	0xa1	/* Initialize complete */
-#define	KCDR_HEARTBEAT	0xa2	/* Heaartbeat request/response */
+#define	KCDR_HEARTBEAT	0xa2	/* Heartbeat request/response */
 #define	KCDR_IDENTIFY	0xf2	/* Identification request/response */
 #define	KCDR_LEDSTATUS	0xa3	/* LED status request/report */
 #define	KCDR_LEDMODIFY	0xa6	/* LED mode modify */
@@ -85,9 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.11 2022/01/25 22:01:34 andvar Exp
 #define	KCDR_OUTPUT	0xa8	/* output to GPIO0 pin */
 #define	KCDR_SETWAKEUP	0xa9	/* define wake-up keys */
 
-#define	KCDR_CONTROL	0x80	/* Commands from KeyCorder to Host starts with
+#define	KCDR_CONTROL	0x80	/* Commands from KeyCoder to Host starts with
 				   this code. */
-#define	KCDR_ESC	0x1b	/* Commands from host to KeyCorder starts with
+#define	KCDR_ESC	0x1b	/* Commands from host to KeyCoder starts with
 				   this code. */
 
 /*

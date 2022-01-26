@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.137 2021/09/14 22:01:17 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.138 2022/01/26 11:48:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.137 2021/09/14 22:01:17 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.138 2022/01/26 11:48:53 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -838,7 +838,7 @@ lstarted(struct pinfo *pi, VARENT *ve, enum mode mode)
 		 * P1003.1-2004 comment in findvar()).
 		 *
 		 * XXX: The hardcoded "STARTED" string.  Better or
-		 * worse than a "<= 7" or some other arbitary number?
+		 * worse than a "<= 7" or some other arbitrary number?
 		 */
 		if (v->width > (int)sizeof("STARTED") - 1) {
 			return;

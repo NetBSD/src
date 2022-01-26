@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cmachflags,v 1.3 2020/12/15 05:48:30 martin Exp $
+#	$NetBSD: Makefile.cmachflags,v 1.4 2022/01/26 11:48:53 andvar Exp $
 
 # Set CMACHFLAGS best target the specific CPU combination, based on
 # their "options" setting.
@@ -10,7 +10,7 @@
 #   CMACHFLAGS+=    -Wa,-m68030 -Wa,-m68851
 #   .endif
 
-# Table of CPUs targetted vs gcc flags. Note: -m68020 and -m68030 are
+# Table of CPUs targeted vs gcc flags. Note: -m68020 and -m68030 are
 # ~identical, but they are both included for completeness.
 
 # 020 030 040 060 -m68020-60

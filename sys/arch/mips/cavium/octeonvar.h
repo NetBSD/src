@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.17 2020/07/28 00:35:38 simonb Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.18 2022/01/26 11:48:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 extern int	octeon_core_ver;
 #endif /* _KERNEL */
 #define	OCTEON_1		1
-#define	OCTEON_PLUS		10	/* arbitary, keep sequence for others */
+#define	OCTEON_PLUS		10	/* arbitrary, keep sequence for others */
 #define	OCTEON_2		2
 #define	OCTEON_3		3
 
