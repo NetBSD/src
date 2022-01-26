@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.300 2021/12/30 04:19:23 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.301 2022/01/26 16:49:06 macallan Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.300 2021/12/30 04:19:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.301 2022/01/26 16:49:06 macallan Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -498,7 +498,7 @@ ehci_init(ehci_softc_t *sc)
 	 * - the driver doesn't currently set EHCI_CTRLDSSEGMENT to anything
 	 *   other than 0.
 	 */
-	bus_dma_tag_t ntag;
+	bus_dma_tag_t ntag = NULL;
 	sc->sc_dmatag = sc->sc_bus.ub_dmatag;
 	err = bus_dmatag_subregion(sc->sc_bus.ub_dmatag, 0, UINT32_MAX,
 	    &ntag, 0);
