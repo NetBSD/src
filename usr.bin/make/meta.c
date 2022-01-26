@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.193 2022/01/26 12:16:03 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.194 2022/01/26 12:41:26 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -205,27 +205,25 @@ filemon_read(FILE *mfp, int fd)
  * we use this, to clean up ./ and ../
  */
 static void
-eat_dots(char *buf, size_t bufsz, const char *eat, size_t eatlen)
+eat_dots(char *buf)
 {
-    char *cp;
-    char *cp2;
+    char *p;
 
-    do {
-	cp = strstr(buf, eat);
-	if (cp != NULL) {
-	    cp2 = cp + eatlen;
-	    if (eatlen == 3 && cp > buf) {
-		do {
-		    cp--;
-		} while (cp > buf && *cp != '/');
-	    }
-	    if (*cp == '/') {
-		strlcpy(cp, cp2, bufsz - (size_t)(cp - buf));
-	    } else {
-		return;			/* can't happen? */
-	    }
+    while ((p = strstr(buf, "/./")) != NULL)
+	memmove(p, p + 2, strlen(p + 2) + 1);
+
+    while ((p = strstr(buf, "/../")) != NULL) {
+	char *p2 = p + 3;
+	if (p > buf) {
+	    do {
+		p--;
+	    } while (p > buf && *p != '/');
 	}
-    } while (cp != NULL);
+	if (*p == '/')
+	    memmove(p, p2, strlen(p2) + 1);
+	else
+	    return;		/* can't happen? */
+    }
 }
 
 static char *
@@ -269,8 +267,7 @@ meta_name(char *mname, size_t mnamelen,
 	    } else {
 		snprintf(buf, sizeof buf, "%s/%s", cwd, tname);
 	    }
-	    eat_dots(buf, sizeof buf, "/./", 2);
-	    eat_dots(buf, sizeof buf, "/../", 3);
+	    eat_dots(buf);
 	    tname = buf;
 	}
     }
