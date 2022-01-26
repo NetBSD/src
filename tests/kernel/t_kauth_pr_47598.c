@@ -27,7 +27,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2013\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.5 2021/09/19 10:34:10 andvar Exp $");
+__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.6 2022/01/26 11:48:54 andvar Exp $");
 
 #include <errno.h>
 #include <unistd.h>
@@ -117,7 +117,7 @@ ATF_TC_BODY(kauth_curtain, tc)
 	set_curtain(1);
 
 	/*
-	 * create a socket and bind it to some arbitray free port
+	 * create a socket and bind it to some arbitrary free port
 	 */
 	s = socket(PF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0);
 	ATF_REQUIRE_MSG(s != -1, "socket: %d", errno);
