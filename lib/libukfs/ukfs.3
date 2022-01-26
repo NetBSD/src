@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.17 2021/09/16 22:19:10 andvar Exp $
+.\"     $NetBSD: ukfs.3,v 1.18 2022/01/26 11:48:53 andvar Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -92,7 +92,7 @@ is used at runtime to dynamically load a library which contains a
 file system module.
 For this to succeed, the
 .Xr rump 3
-kernel and the module targetted must be compiled with compatible kernel
+kernel and the module targeted must be compiled with compatible kernel
 versions and the application must be dynamically linked.
 Additionally, since this routine does not handle dependencies, all the
 dependencies of the library must be loaded beforehand.
@@ -142,7 +142,7 @@ types, as many as fit will be returned.
 .Fn ukfs_mount
 initializes a file system image.
 The handle resulting from the operation is passed to all other routines
-and identifies the instance of the mount analoguous to what a pathname
+and identifies the instance of the mount analogous to what a pathname
 specifies in a normally mounted file system.
 The parameters are the following:
 .Bl -tag -width XXX -offset indent
@@ -152,7 +152,7 @@ Name of the file system to be used, e.g.
 .It devpath
 Path of file system image.
 It can be either a regular file, device or, if the file system does
-not support the concept of a device, an abitrary string, e.g. network
+not support the concept of a device, an arbitrary string, e.g. network
 address.
 .It mountpath
 Path where the file system is mounted to.

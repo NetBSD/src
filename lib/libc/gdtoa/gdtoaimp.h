@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.17 2019/08/07 15:37:46 riastradh Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.18 2022/01/26 11:48:53 andvar Exp $ */
 
 /****************************************************************
 
@@ -28,7 +28,7 @@ THIS SOFTWARE.
 
 ****************************************************************/
 
-/* This is a variation on dtoa.c that converts arbitary binary
+/* This is a variation on dtoa.c that converts arbitrary binary
    floating-point formats to and from decimal notation.  It uses
    double-precision arithmetic internally, so there are still
    various #ifdefs that adapt the calculations to the native

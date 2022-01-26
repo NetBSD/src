@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.535 2021/04/01 04:41:38 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.536 2022/01/26 11:48:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.535 2021/04/01 04:41:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.536 2022/01/26 11:48:54 andvar Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -488,7 +488,7 @@ main(void)
 	 * If maximum number of files is not explicitly defined in
 	 * kernel config, adjust the number so that it is somewhat
 	 * more reasonable on machines with larger memory sizes.
-	 * Arbitary numbers are 20,000 files for 16GB RAM or more
+	 * Arbitrary numbers are 20,000 files for 16GB RAM or more
 	 * and 10,000 files for 1GB RAM or more.
 	 *
 	 * XXXtodo: adjust this and other values totally dynamically
