@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1005 2022/01/24 22:59:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1006 2022/01/27 06:02:59 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1005 2022/01/24 22:59:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1006 2022/01/27 06:02:59 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -315,7 +315,8 @@ static bool save_dollars = true;
  * be simpler or more complex than the current implementation.
  *
  * Each target has its own scope, containing the 7 target-local variables
- * .TARGET, .ALLSRC, etc.  No other variables are in these scopes.
+ * .TARGET, .ALLSRC, etc.  Variables set on dependency lines also go in
+ * this scope.
  */
 
 GNode *SCOPE_CMDLINE;

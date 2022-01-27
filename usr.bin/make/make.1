@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.301 2022/01/13 04:51:50 sjg Exp $
+.\"	$NetBSD: make.1,v 1.302 2022/01/27 06:02:59 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd January 12, 2022
+.Dd January 21, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -691,10 +691,27 @@ Variables defined as part of the command line.
 Variables that are defined specific to a certain target.
 .El
 .Pp
-Local variables are all built in and their values vary magically from
-target to target.
-It is not currently possible to define new local variables.
-The seven local variables are as follows:
+Local variables can be set on a dependency line, if
+.Va .MAKE.TARGET_LOCAL_VARIABLES ,
+is not set to
+.Ql false .
+The rest of the line
+(which will already have had Global variables expanded),
+is the variable value.
+For example:
+.Bd -literal -offset indent
+COMPILER_WRAPPERS+= ccache distcc icecc
+
+${OBJS}: .MAKE.META.CMP_FILTER=${COMPILER_WRAPPERS:S,^,N,}
+.Ed
+.Pp
+Only the targets
+.Ql ${OBJS}
+will be impacted by that filter (in "meta" mode) and
+simply enabling/disabling any of the wrappers will not render all
+of those targets out-of-date.
+.Pp
+The seven built-in local variables are as follows:
 .Bl -tag -width ".ARCHIVE" -offset indent
 .It Va .ALLSRC
 The list of all sources for this target; also known as
@@ -846,6 +863,11 @@ For example:
 would produce tokens like
 .Ql ---make[1234] target ---
 making it easier to track the degree of parallelism being achieved.
+.It .MAKE.TARGET_LOCAL_VARIABLES
+If set to
+.Ql false ,
+apparent variable assignments in dependency lines are
+treated as normal sources.
 .It Ev MAKEFLAGS
 The environment variable
 .Ql Ev MAKEFLAGS
