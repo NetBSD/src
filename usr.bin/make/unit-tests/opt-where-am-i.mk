@@ -1,4 +1,4 @@
-# $NetBSD: opt-where-am-i.mk,v 1.3 2022/01/22 17:10:51 rillig Exp $
+# $NetBSD: opt-where-am-i.mk,v 1.4 2022/01/27 02:24:46 sjg Exp $
 #
 # Tests for the -w command line option, which outputs the current directory
 # at the beginning and end of running make.  This is useful when building
@@ -10,5 +10,5 @@
 
 all:
 .if ${.CURDIR} != "/"
-	@${MAKE} -r -f ${MAKEFILE:tA} -C /
+	@MAKE_OBJDIR_CHECK_WRITABLE=no ${MAKE} -r -f ${MAKEFILE:tA} -C /
 .endif
