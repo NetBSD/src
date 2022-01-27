@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.13 2022/01/09 14:06:00 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.14 2022/01/27 11:26:44 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -50,7 +50,22 @@ VALUES=		$$ $${V} $${V:=-with-modifier} $$(V) $$(V:=-with-modifier)
 # being that each '$' is written as '$$'.
 #
 # The .for loop splits ${VALUES} into 3 words, at the space characters, since
-# these are not escaped.
+# the '$$' is an ordinary character and the spaces are not escaped.
+#	Word 1 is '${UNDEF:U\$\$'
+#	Word 2 is '{{}}'
+#	Word 3 is 'end}'
+# The first iteration expands the body of the .for loop to:
+# expect: .  info ${:U\${UNDEF\:U\\$\\$}
+# The modifier ':U' unescapes the '\$' to a simple '$'.
+# The modifier ':U' unescapes the '\:' to a simple ':'.
+# The modifier ':U' unescapes the '\\' to a simple '\'.
+# The modifier ':U' resolves the expression '$\' to the word 'backslash', due
+# to the following variable definition.
+${:U\\}=	backslash
+# FIXME: There was no expression '$\' in the original text of the previous
+# line, that's a surprise in the parser.
+# The modifier ':U' unescapes the '\$' to a simple '$'.
+# expect+4: ${UNDEF:U\$
 VALUES=		$${UNDEF:U\$$\$$ {{}} end}
 # XXX: Where in the code does the '\$\$' get converted into a single '\$'?
 .for i in ${VALUES}
@@ -151,6 +166,20 @@ ${closing-brace}=	<closing-brace>	# alternative interpretation
 .MAKEFLAGS: -dp
 .for i in "${.newline}"
 : $i
+.endfor
+.MAKEFLAGS: -d0
+
+.MAKEFLAGS: -df
+.for i in \# \\\#
+# $i
+.endfor
+
+.for i in $$ $$i $$(i) $${i} $$$$ $$$$$$$$ $${:U\$$\$$}
+# $i
+.endfor
+
+.for i in ((( {{{ ))) }}}
+# $i
 .endfor
 .MAKEFLAGS: -d0
 
