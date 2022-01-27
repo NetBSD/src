@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.301 2022/01/27 02:24:46 sjg Exp $
+# $NetBSD: Makefile,v 1.302 2022/01/27 21:50:50 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -503,6 +503,7 @@ SED_CMDS.opt-chdir=		-e 's,\(nonexistent\).[1-9][0-9]*,\1,'
 SED_CMDS.opt-debug-graph1=	${STD_SED_CMDS.dg1}
 SED_CMDS.opt-debug-graph2=	${STD_SED_CMDS.dg2}
 SED_CMDS.opt-debug-graph3=	${STD_SED_CMDS.dg3}
+SED_CMDS.opt-debug-hash=	-e 's,\(numEntries\)=[1-9][0-9],\1=<entries>,'
 SED_CMDS.opt-debug-jobs=	-e 's,([0-9][0-9]*),(<pid>),'
 SED_CMDS.opt-debug-jobs+=	-e 's,pid [0-9][0-9]*,pid <pid>,'
 SED_CMDS.opt-debug-jobs+=	-e 's,Process [0-9][0-9]*,Process <pid>,'
