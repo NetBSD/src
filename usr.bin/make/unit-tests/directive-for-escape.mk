@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.14 2022/01/27 11:26:44 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.15 2022/01/27 20:15:14 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -65,7 +65,7 @@ ${:U\\}=	backslash
 # FIXME: There was no expression '$\' in the original text of the previous
 # line, that's a surprise in the parser.
 # The modifier ':U' unescapes the '\$' to a simple '$'.
-# expect+4: ${UNDEF:U\$
+# expect+4: ${UNDEF:U\backslash$
 VALUES=		$${UNDEF:U\$$\$$ {{}} end}
 # XXX: Where in the code does the '\$\$' get converted into a single '\$'?
 .for i in ${VALUES}
@@ -177,6 +177,20 @@ ${closing-brace}=	<closing-brace>	# alternative interpretation
 .for i in $$ $$i $$(i) $${i} $$$$ $$$$$$$$ $${:U\$$\$$}
 # $i
 .endfor
+
+# The expression '${.TARGET}' must be preserved as it is one of the 7 built-in
+# target-local variables.  See for.c 1.45 from 2009-01-14.
+.for i in ${.TARGET} $${.TARGET} $$${.TARGET} $$$${.TARGET}
+# $i
+.endfor
+# expect: # ${:U${.TARGET}}
+# XXX: Why does '$' result in the same text as '$$'?
+# expect: # ${:U${.TARGET}}
+# XXX: Why does the '$$' before the '${.TARGET}' lead to an escaped '}'?
+# expect: # ${:U$${.TARGET\}}
+# XXX: Why does '$' result in the same text as '$$'?
+# XXX: Why does the '$$' before the '${.TARGET}' lead to an escaped '}'?
+# expect: # ${:U$${.TARGET\}}
 
 .for i in ((( {{{ ))) }}}
 # $i
