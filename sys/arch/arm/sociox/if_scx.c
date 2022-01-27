@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.35 2022/01/25 10:51:36 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.36 2022/01/27 02:34:23 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -40,13 +40,18 @@
  * have to be loaded by device driver.
  * NetSec uses Synopsys DesignWare Core EMAC.  DWC implementation
  * register (0x20) is known to have 0x10.36 and feature register (0x1058)
- * to report XX.XX.
+ * reports 0x11056f37.
+ *  <24> exdesc
+ *  <18> receive IP type 2 checksum offload
+ *  <17> (no) receive IP type 1 checksum offload
+ *  <16> transmit checksum offload
+ *  <11> event counter (mac management counter, MMC) 
  */
 
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.35 2022/01/25 10:51:36 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.36 2022/01/27 02:34:23 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -380,12 +385,12 @@ struct rdes {
 #define  FEA_2COE	(1U<<18)	/* Rx type 2 IP checksum offload */
 #define  FEA_1COE	(1U<<17)	/* Rx type 1 IP checksum offload */
 #define  FEA_TXOE	(1U<<16)	/* Tx checksum offload */
-#define  FEA_MMC	(1U<<11)	/* RMON management block */
+#define  FEA_MMC	(1U<<11)	/* RMON event counter */
 
 #define GMACEVCTL	0x0100		/* event counter control */
 #define  EVC_FHP	(1U<<5)		/* full-half preset */
-#define  EVC_CP		(1U<<4)		/* counters preset */
-#define  EVC_MCF	(1U<<3)		/* MMC counter freeze */
+#define  EVC_CP		(1U<<4)		/* counter preset */
+#define  EVC_MCF	(1U<<3)		/* counter freeze */
 #define  EVC_ROR	(1U<<2)		/* auto-zero on counter read */
 #define  EVC_CSR	(1U<<1)		/* counter stop rollover */
 #define  EVC_CR		(1U<<0)		/* reset counters */
@@ -1025,7 +1030,8 @@ scx_reset(struct scx_softc *sc)
 	CSR_WRITE(sc, TXISR, ~0);
 	CSR_WRITE(sc, xINTAE_CLR, ~0);
 
-	mac_write(sc, GMACEVCTL, 1);
+	/* clear event counters, auto-zero after every read */
+	mac_write(sc, GMACEVCTL, EVC_CR | EVC_ROR);
 }
 
 static int
@@ -1045,7 +1051,7 @@ scx_init(struct ifnet *ifp)
 
 	/* build sane Tx */
 	memset(sc->sc_txdescs, 0, sizeof(struct tdes) * MD_NTXDESC);
-	sc->sc_txdescs[MD_NTXDESC - 1].t0 |= T0_EOD; /* tie off the ring */
+	sc->sc_txdescs[MD_NTXDESC - 1].t0 = T0_EOD; /* tie off the ring */
 	SCX_CDTXSYNC(sc, 0, MD_NTXDESC,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = MD_NTXDESC;
@@ -1071,8 +1077,7 @@ scx_init(struct ifnet *ifp)
 		else
 			SCX_INIT_RXDESC(sc, i);
 	}
-	sc->sc_rxdescs[MD_NRXDESC - 1].r0 = R0_EOD;
-	sc->sc_rxptr = 0;
+	sc->sc_rxdescs[MD_NRXDESC - 1].r0 = R0_EOD; /* tie off the ring */
 	sc->sc_rxptr = 0;
 
 	paddr = SCX_CDTXADDR(sc, 0);		/* tdes array (ring#0) */
@@ -1104,8 +1109,8 @@ scx_init(struct ifnet *ifp)
 	CSR_WRITE(sc, DESC_INIT, 01);
 	WAIT_FOR_CLR(sc, DESC_INIT, 01, 0);
 
-	CSR_WRITE(sc, GMACRDLA, _RDLA);		/* GMAC rdes store */
-	CSR_WRITE(sc, GMACTDLA, _TDLA);		/* GMAC tdes store */
+	mac_write(sc, GMACRDLA, _RDLA);		/* GMAC rdes store */
+	mac_write(sc, GMACTDLA, _TDLA);		/* GMAC tdes store */
 
 	CSR_WRITE(sc, FLOWTHR, (48<<16) | 36);	/* pause|resume threshold */
 	mac_write(sc, GMACFCR, 256 << 16);	/* 31:16 pause value */
