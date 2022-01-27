@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.169 2021/12/31 14:25:22 riastradh Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.170 2022/01/27 18:07:27 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.169 2021/12/31 14:25:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.170 2022/01/27 18:07:27 jakllsch Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -714,7 +714,6 @@ re_attach(struct rtk_softc *sc)
 			    RTKQ_CMDSTOP; /* CMDSTOP_WAIT_TXQ */
 			break;
 		default:
-			aprint_normal_dev(sc->sc_dev, "Use default quirks\n");
 			/* assume the latest features */
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
 			sc->sc_quirk |= RTKQ_NOJUMBO;
