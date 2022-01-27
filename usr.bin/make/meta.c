@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.194 2022/01/26 12:41:26 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.195 2022/01/27 06:02:59 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1060,14 +1060,14 @@ meta_filter_cmd(Buffer *buf, GNode *gn, char *s)
 }
 
 static int
-meta_cmd_cmp(GNode *gn, char *a, char *b)
+meta_cmd_cmp(GNode *gn, char *a, char *b, bool filter)
 {
     static bool once = false;
     static Buffer buf;
     int rc;
 
     rc = strcmp(a, b);
-    if (rc == 0 || !metaCmpFilter)
+    if (rc == 0 || !filter)
 	return rc;
     if (!once) {
 	once = true;
@@ -1105,6 +1105,7 @@ meta_oodate(GNode *gn, bool oodate)
     bool needOODATE = false;
     StringList missingFiles;
     bool have_filemon = false;
+    bool cmp_filter;
 
     if (oodate)
 	return oodate;		/* we're done */
@@ -1163,6 +1164,9 @@ meta_oodate(GNode *gn, bool oodate)
 
 	/* we want to track all the .meta we read */
 	Global_Append(".MAKE.META.FILES", fname);
+
+	cmp_filter = metaCmpFilter ? metaCmpFilter :
+	    Var_Exists(gn, MAKE_META_CMP_FILTER);
 
 	cmdNode = gn->commands.first;
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
@@ -1556,7 +1560,7 @@ meta_oodate(GNode *gn, bool oodate)
 		    if (p != NULL &&
 			!hasOODATE &&
 			!(gn->type & OP_NOMETA_CMP) &&
-			(meta_cmd_cmp(gn, p, cmd) != 0)) {
+			(meta_cmd_cmp(gn, p, cmd, cmp_filter) != 0)) {
 			DEBUG4(META, "%s: %d: a build command has changed\n%s\nvs\n%s\n",
 			       fname, lineno, p, cmd);
 			if (!metaIgnoreCMDs)

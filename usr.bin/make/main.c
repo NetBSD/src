@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.575 2022/01/22 18:59:23 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.576 2022/01/27 06:02:59 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.575 2022/01/22 18:59:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.576 2022/01/27 06:02:59 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -842,7 +842,7 @@ PrintVar(const char *varname, bool expandVars)
  * If set, anything that looks or smells like "No", "False", "Off", "0", etc.
  * is false, otherwise true.
  */
-static bool
+bool
 GetBooleanExpr(const char *expr, bool fallback)
 {
 	char *value;

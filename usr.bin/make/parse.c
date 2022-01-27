@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.655 2022/01/22 18:59:23 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.656 2022/01/27 06:02:59 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.655 2022/01/22 18:59:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.656 2022/01/27 06:02:59 sjg Exp $");
 
 /*
  * A file being read.
@@ -171,6 +171,24 @@ typedef enum ParseSpecial {
 
 typedef List SearchPathList;
 typedef ListNode SearchPathListNode;
+
+
+typedef enum VarAssignOp {
+	VAR_NORMAL,		/* = */
+	VAR_APPEND,		/* += */
+	VAR_DEFAULT,		/* ?= */
+	VAR_SUBST,		/* := */
+	VAR_SHELL		/* != or :sh= */
+} VarAssignOp;
+
+typedef struct VarAssign {
+	char *varname;		/* unexpanded */
+	VarAssignOp op;
+	const char *value;	/* unexpanded */
+} VarAssign;
+
+static bool Parse_IsVar(const char *, VarAssign *);
+static void Parse_Var_Keep(VarAssign *, GNode *);
 
 /*
  * The target to be made if no targets are specified in the command line.
@@ -1263,12 +1281,48 @@ ParseDependencySourcesSpecial(char *start,
 	}
 }
 
+static void
+LinkSourceVar(GNode *pgn, VarAssign *var)
+{
+	Parse_Var_Keep(var, pgn);
+}
+
+static void
+LinkVarToTargets(VarAssign *var)
+{
+	GNodeListNode *ln;
+
+	for (ln = targets->first; ln != NULL; ln = ln->next)
+		LinkSourceVar(ln->datum, var);
+	
+}
+
 static bool
 ParseDependencySourcesMundane(char *start,
 			      ParseSpecial special, GNodeType targetAttr)
 {
 	while (*start != '\0') {
 		char *end = start;
+		VarAssign var;
+
+		/*
+		 * Check for local variable assignment,
+		 * rest of the line is the value.
+		 */
+		if (Parse_IsVar(start, &var)) {
+			/*
+			 * Check if this makefile has disabled
+			 * setting local variables.
+			 */
+			bool target_vars = GetBooleanExpr("${.MAKE.TARGET_LOCAL_VARIABLES}", true);
+
+			if (target_vars)
+				LinkVarToTargets(&var);
+			free(var.varname);
+			if (target_vars)
+				return true;
+		}
+			
 		/*
 		 * The targets take real sources, so we must beware of archive
 		 * specifications (i.e. things with left parentheses in them)
@@ -1420,20 +1474,6 @@ out:
 	if (paths != NULL)
 		Lst_Free(paths);
 }
-
-typedef enum VarAssignOp {
-	VAR_NORMAL,		/* = */
-	VAR_APPEND,		/* += */
-	VAR_DEFAULT,		/* ?= */
-	VAR_SUBST,		/* := */
-	VAR_SHELL		/* != or :sh= */
-} VarAssignOp;
-
-typedef struct VarAssign {
-	char *varname;		/* unexpanded */
-	VarAssignOp op;
-	const char *value;	/* unexpanded */
-} VarAssign;
 
 /*
  * Determine the assignment operator and adjust the end of the variable
@@ -1685,7 +1725,7 @@ VarAssignSpecial(const char *name, const char *avalue)
 
 /* Perform the variable assignment in the given scope. */
 static void
-Parse_Var(VarAssign *var, GNode *scope)
+Parse_Var_Keep(VarAssign *var, GNode *scope)
 {
 	FStr avalue;		/* actual value (maybe expanded) */
 
@@ -1694,7 +1734,12 @@ Parse_Var(VarAssign *var, GNode *scope)
 		VarAssignSpecial(var->varname, avalue.str);
 		FStr_Done(&avalue);
 	}
-
+}
+	       
+static void
+Parse_Var(VarAssign *var, GNode *scope)
+{
+	Parse_Var_Keep(var, scope);
 	free(var->varname);
 }
 
