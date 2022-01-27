@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.69 2021/12/27 19:06:07 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.70 2022/01/27 10:45:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.69 2021/12/27 19:06:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.70 2022/01/27 10:45:36 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -133,18 +133,6 @@ HashTable_Find(HashTable *t, unsigned int h, const char *key)
 	return e;
 }
 
-static bool
-HashEntry_KeyEquals(const HashEntry *he, Substring key)
-{
-	const char *heKey, *p;
-
-	heKey = he->key;
-	for (p = key.start; p != key.end; p++, heKey++)
-		if (*p != *heKey || *heKey == '\0')
-			return false;
-	return *heKey == '\0';
-}
-
 static HashEntry *
 HashTable_FindEntryBySubstring(HashTable *t, Substring key, unsigned int h)
 {
@@ -158,7 +146,9 @@ HashTable_FindEntryBySubstring(HashTable *t, Substring key, unsigned int h)
 
 	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
 		chainlen++;
-		if (e->key_hash == h && HashEntry_KeyEquals(e, key))
+		if (e->key_hash == h &&
+		    strncmp(e->key, key.start, Substring_Length(key)) == 0 &&
+		    e->key[Substring_Length(key)] == '\0')
 			break;
 	}
 
