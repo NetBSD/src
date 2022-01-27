@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.332 2021/05/30 06:46:46 dholland Exp $	*/
+/*	$NetBSD: sd.c,v 1.333 2022/01/27 18:44:49 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.332 2021/05/30 06:46:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.333 2022/01/27 18:44:49 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1311,19 +1311,14 @@ static int
 sd_validate_blksize(struct scsipi_periph *periph, int len)
 {
 
-	switch (len) {
-	case 256:
-	case 512:
-	case 1024:
-	case 2048:
-	case 4096:
+	if (len >= 256 && powerof2(len) && len <= 4096) {
 		return 1;
 	}
 
 	if (periph) {
 		scsipi_printaddr(periph);
 		printf("%s sector size: 0x%x.  Defaulting to %d bytes.\n",
-		    (len ^ (1 << (ffs(len) - 1))) ?
+		    !powerof2(len) ?
 		    "preposterous" : "unsupported",
 		    len, SD_DEFAULT_BLKSIZE);
 	}
