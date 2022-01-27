@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.125 2022/01/13 16:02:44 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.126 2022/01/27 09:53:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.125 2022/01/13 16:02:44 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.126 2022/01/27 09:53:43 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2248,32 +2248,14 @@ identifycpu(int fd, const char *cpuname)
 			    CPUID_AMD_ENCMEM_FLAGS, descs[0]);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
-		int32_t bi_index;
-
-		for (bi_index = 1; bi_index <= ci->ci_max_cpuid; bi_index++) {
-			x86_cpuid(bi_index, descs);
-			switch (bi_index) {
-			case 0x0a:
-				print_bits(cpuname, "Perfmon-eax",
-				    CPUID_PERF_FLAGS0, descs[0]);
-				print_bits(cpuname, "Perfmon-ebx",
-				    CPUID_PERF_FLAGS1, descs[1]);
-				print_bits(cpuname, "Perfmon-edx",
-				    CPUID_PERF_FLAGS3, descs[3]);
-				break;
-			default:
-#if 0
-				aprint_verbose("%s: basic %08x-eax %08x\n",
-				    cpuname, bi_index, descs[0]);
-				aprint_verbose("%s: basic %08x-ebx %08x\n",
-				    cpuname, bi_index, descs[1]);
-				aprint_verbose("%s: basic %08x-ecx %08x\n",
-				    cpuname, bi_index, descs[2]);
-				aprint_verbose("%s: basic %08x-edx %08x\n",
-				    cpuname, bi_index, descs[3]);
-#endif
-				break;
-			}
+		if (ci->ci_max_cpuid >= 0x0a) {
+			x86_cpuid(0x0a, descs);
+			print_bits(cpuname, "Perfmon-eax",
+			    CPUID_PERF_FLAGS0, descs[0]);
+			print_bits(cpuname, "Perfmon-ebx",
+			    CPUID_PERF_FLAGS1, descs[1]);
+			print_bits(cpuname, "Perfmon-edx",
+			    CPUID_PERF_FLAGS3, descs[3]);
 		}
 	}
 
