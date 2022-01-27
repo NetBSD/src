@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.70 2022/01/27 10:45:36 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.71 2022/01/27 11:00:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.70 2022/01/27 10:45:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.71 2022/01/27 11:00:07 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -84,7 +84,7 @@ MAKE_RCSID("$NetBSD: hash.c,v 1.70 2022/01/27 10:45:36 rillig Exp $");
 
 /* This hash function matches Gosling's Emacs and java.lang.String. */
 static unsigned int
-Hash_String(const char *key, size_t *out_keylen)
+Hash_String(const char *key, const char **out_keyEnd)
 {
 	unsigned int h;
 	const char *p;
@@ -93,8 +93,7 @@ Hash_String(const char *key, size_t *out_keylen)
 	for (p = key; *p != '\0'; p++)
 		h = 31 * h + (unsigned char)*p;
 
-	if (out_keylen != NULL)
-		*out_keylen = (size_t)(p - key);
+	*out_keyEnd = p;
 	return h;
 }
 
@@ -112,43 +111,22 @@ Hash_Substring(Substring key)
 }
 
 static HashEntry *
-HashTable_Find(HashTable *t, unsigned int h, const char *key)
+HashTable_Find(HashTable *t, Substring key, unsigned int h)
 {
 	HashEntry *e;
 	unsigned int chainlen = 0;
+	size_t keyLen = Substring_Length(key);
 
 #ifdef DEBUG_HASH_LOOKUP
-	DEBUG3(HASH, "HashTable_Find: %p h=%08x key=%s\n", t, h, key);
-#endif
-
-	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
-		chainlen++;
-		if (e->key_hash == h && strcmp(e->key, key) == 0)
-			break;
-	}
-
-	if (chainlen > t->maxchain)
-		t->maxchain = chainlen;
-
-	return e;
-}
-
-static HashEntry *
-HashTable_FindEntryBySubstring(HashTable *t, Substring key, unsigned int h)
-{
-	HashEntry *e;
-	unsigned int chainlen = 0;
-
-#ifdef DEBUG_HASH_LOOKUP
-	DEBUG4(HASH, "HashTable_FindEntryBySubstring: %p h=%08x key=%.*s\n",
-	    t, h, (int)Substring_Length(key), key.start);
+	DEBUG4(HASH, "HashTable_Find: %p h=%08x key=%.*s\n",
+	    t, h, (int)keyLen, key.start);
 #endif
 
 	for (e = t->buckets[h & t->bucketsMask]; e != NULL; e = e->next) {
 		chainlen++;
 		if (e->key_hash == h &&
-		    strncmp(e->key, key.start, Substring_Length(key)) == 0 &&
-		    e->key[Substring_Length(key)] == '\0')
+		    strncmp(e->key, key.start, keyLen) == 0 &&
+		    e->key[keyLen] == '\0')
 			break;
 	}
 
@@ -203,8 +181,9 @@ HashTable_Done(HashTable *t)
 HashEntry *
 HashTable_FindEntry(HashTable *t, const char *key)
 {
-	unsigned int h = Hash_String(key, NULL);
-	return HashTable_Find(t, h, key);
+	const char *keyEnd;
+	unsigned int h = Hash_String(key, &keyEnd);
+	return HashTable_Find(t, Substring_Init(key, keyEnd), h);
 }
 
 /* Find the value corresponding to the key, or return NULL. */
@@ -222,7 +201,7 @@ HashTable_FindValue(HashTable *t, const char *key)
 void *
 HashTable_FindValueBySubstringHash(HashTable *t, Substring key, unsigned int h)
 {
-	HashEntry *he = HashTable_FindEntryBySubstring(t, key, h);
+	HashEntry *he = HashTable_Find(t, key, h);
 	return he != NULL ? he->value : NULL;
 }
 
@@ -270,9 +249,9 @@ HashTable_Enlarge(HashTable *t)
 HashEntry *
 HashTable_CreateEntry(HashTable *t, const char *key, bool *out_isNew)
 {
-	size_t keylen;
-	unsigned int h = Hash_String(key, &keylen);
-	HashEntry *he = HashTable_Find(t, h, key);
+	const char *keyEnd;
+	unsigned int h = Hash_String(key, &keyEnd);
+	HashEntry *he = HashTable_Find(t, Substring_Init(key, keyEnd), h);
 
 	if (he != NULL) {
 		if (out_isNew != NULL)
@@ -283,10 +262,10 @@ HashTable_CreateEntry(HashTable *t, const char *key, bool *out_isNew)
 	if (t->numEntries >= rebuildLimit * t->bucketsSize)
 		HashTable_Enlarge(t);
 
-	he = bmake_malloc(sizeof *he + keylen);
+	he = bmake_malloc(sizeof *he + (size_t)(keyEnd - key));
 	he->value = NULL;
 	he->key_hash = h;
-	memcpy(he->key, key, keylen + 1);
+	memcpy(he->key, key, (size_t)(keyEnd - key) + 1);
 
 	he->next = t->buckets[h & t->bucketsMask];
 	t->buckets[h & t->bucketsMask] = he;
