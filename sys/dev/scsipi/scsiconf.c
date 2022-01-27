@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.293 2021/12/21 22:53:21 riastradh Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.294 2022/01/27 18:37:02 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.293 2021/12/21 22:53:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.294 2022/01/27 18:37:02 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.293 2021/12/21 22:53:21 riastradh Exp
 #include <sys/scsiio.h>
 #include <sys/queue.h>
 #include <sys/atomic.h>
+#include <sys/kmem.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -370,6 +371,109 @@ scsibusdetach(device_t self, int flags)
 	return 0;
 }
 
+static int
+lun_compar(const void *a, const void *b)
+{
+	const uint16_t * const la = a, * const lb = b;
+
+	if (*la < *lb)
+		return -1;
+	if (*la > *lb)
+		return 1;
+	return 0;
+}
+
+static int
+scsi_report_luns(struct scsibus_softc *sc, int target,
+    uint16_t ** const luns, size_t *nluns)
+{
+	struct scsi_report_luns replun;
+	struct scsi_report_luns_header *rlr;
+	struct scsi_report_luns_lun *lunp;
+
+	struct scsipi_channel *chan = sc->sc_channel;
+	struct scsipi_inquiry_data inqbuf;
+	struct scsipi_periph *periph;
+	uint16_t tmp;
+
+	int error;
+	size_t i, rlrlen;
+
+	periph = scsipi_alloc_periph(M_WAITOK);
+	periph->periph_channel = chan;
+	periph->periph_switch = &scsi_probe_dev;
+
+	periph->periph_target = target;
+	periph->periph_lun = 0;
+	periph->periph_quirks = chan->chan_defquirks;
+
+	if ((error = scsipi_inquire(periph, &inqbuf,
+	    XS_CTL_DISCOVERY | XS_CTL_SILENT)))
+		goto end2;
+	periph->periph_version = inqbuf.version & SID_ANSII;
+	if (periph->periph_version < 3) {
+		error = ENOTSUP;
+		goto end2;
+	}
+
+	rlrlen = sizeof(*rlr) + sizeof(*lunp) * 1;
+
+again:
+	rlr = kmem_zalloc(rlrlen, KM_SLEEP);
+
+	replun.opcode = SCSI_REPORT_LUNS;
+	replun.selectreport = SELECTREPORT_NORMAL;
+	_lto4b(rlrlen, replun.alloclen);
+
+	error = scsipi_command(periph, (void *)&replun, sizeof(replun),
+	    (void *)rlr, rlrlen, SCSIPIRETRIES, 10000, NULL,
+	    XS_CTL_DATA_IN | XS_CTL_DISCOVERY | XS_CTL_SILENT);
+	if (error)
+		goto end;
+
+	if (sizeof(*rlr) + _4btol(rlr->length) > rlrlen &&
+	    sizeof(*rlr) + _4btol(rlr->length) <= 32) {
+	    	const size_t old_rlrlen = rlrlen;
+		rlrlen = sizeof(*rlr) + uimin(_4btol(rlr->length),
+		    16383 * sizeof(*lunp));
+		kmem_free(rlr, old_rlrlen);
+		rlr = NULL;
+		goto again;
+	}
+
+	KASSERT(nluns != NULL);
+	*nluns = (rlrlen - sizeof(*rlr)) / sizeof(*lunp);
+
+	KASSERT(luns != NULL);
+	*luns = kmem_alloc(*nluns * sizeof(**luns), KM_SLEEP);
+
+	for (i = 0; i < *nluns; i++) {
+		lunp = &((struct scsi_report_luns_lun *)&rlr[1])[i];
+		switch (lunp->lun[0] & 0xC0) {
+		default:
+			scsi_print_addr(periph);
+			printf("LUN %016"PRIx64" ignored\n", _8btol(lunp->lun));
+			(*luns)[i] = 0;
+			break;
+		case 0x40:
+			(*luns)[i] = _2btol(&lunp->lun[0]) & 0x3FFF;
+			break;
+		case 0x00:
+			(*luns)[i] = _2btol(&lunp->lun[0]) & 0x00FF;
+			break;
+		}
+	}
+
+	kheapsort(*luns, *nluns, sizeof(**luns), lun_compar, &tmp);
+
+end:
+	if (rlr)
+		kmem_free(rlr, rlrlen);
+end2:
+	scsipi_free_periph(periph);
+	return error;
+}
+
 /*
  * Probe the requested scsi bus. It must be already set up.
  * target and lun optionally narrow the search if not -1
@@ -405,11 +509,19 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 	 */
 	scsipi_adapter_ioctl(chan, SCBUSIOLLSCAN, NULL, 0, curproc);
 
+	uint16_t *luns;
+	size_t nluns;
+
 	if ((error = scsipi_adapter_addref(chan->chan_adapter)) != 0)
 		goto ret;
 	for (target = mintarget; target <= maxtarget; target++) {
 		if (target == chan->chan_id)
 			continue;
+		if (scsi_report_luns(sc, target, &luns, &nluns) == 0) {
+			for (size_t i = 0; i < nluns; i++)
+				if (luns[i] >= minlun && luns[i] <= maxlun)
+					scsi_probe_device(sc, target, luns[i]);
+		} else
 		for (lun = minlun; lun <= maxlun; lun++) {
 			/*
 			 * See if there's a device present, and configure it.
@@ -417,6 +529,12 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 			if (scsi_probe_device(sc, target, lun) == 0)
 				break;
 			/* otherwise something says we should look further */
+		}
+
+		if (luns != NULL) {
+			kmem_free(luns, sizeof(*luns) * nluns);
+			luns = NULL;
+			nluns = 0;
 		}
 
 		/*
