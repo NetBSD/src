@@ -125,6 +125,15 @@ For: loop body:
 # ${:U${:U\$\$}}
 For: end for 1
 For: loop body:
+# ${:U${.TARGET}}
+For: loop body:
+# ${:U${.TARGET}}
+For: loop body:
+# ${:U$${.TARGET\}}
+For: loop body:
+# ${:U$${.TARGET\}}
+For: end for 1
+For: loop body:
 # ${:U(((}
 For: loop body:
 # ${:U{{{}
