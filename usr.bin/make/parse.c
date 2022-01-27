@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.656 2022/01/27 06:02:59 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.657 2022/01/27 10:34:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.656 2022/01/27 06:02:59 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.657 2022/01/27 10:34:55 rillig Exp $");
 
 /*
  * A file being read.
@@ -1294,7 +1294,6 @@ LinkVarToTargets(VarAssign *var)
 
 	for (ln = targets->first; ln != NULL; ln = ln->next)
 		LinkSourceVar(ln->datum, var);
-	
 }
 
 static bool
@@ -1314,7 +1313,8 @@ ParseDependencySourcesMundane(char *start,
 			 * Check if this makefile has disabled
 			 * setting local variables.
 			 */
-			bool target_vars = GetBooleanExpr("${.MAKE.TARGET_LOCAL_VARIABLES}", true);
+			bool target_vars = GetBooleanExpr(
+			    "${.MAKE.TARGET_LOCAL_VARIABLES}", true);
 
 			if (target_vars)
 				LinkVarToTargets(&var);
@@ -1322,7 +1322,7 @@ ParseDependencySourcesMundane(char *start,
 			if (target_vars)
 				return true;
 		}
-			
+
 		/*
 		 * The targets take real sources, so we must beware of archive
 		 * specifications (i.e. things with left parentheses in them)
@@ -1735,7 +1735,7 @@ Parse_Var_Keep(VarAssign *var, GNode *scope)
 		FStr_Done(&avalue);
 	}
 }
-	       
+
 static void
 Parse_Var(VarAssign *var, GNode *scope)
 {
