@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.165 2022/01/09 18:59:27 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.166 2022/01/27 11:16:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.165 2022/01/09 18:59:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.166 2022/01/27 11:16:44 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -319,9 +319,8 @@ NeedsEscapes(Substring value, char endc)
 
 /*
  * While expanding the body of a .for loop, write the item in the ${:U...}
- * expression, escaping characters as needed.
- *
- * The result is later unescaped by ApplyModifier_Defined.
+ * expression, escaping characters as needed.  The result is later unescaped
+ * by ApplyModifier_Defined.
  */
 static void
 AddEscaped(Buffer *cmds, Substring item, char endc)
@@ -334,11 +333,7 @@ AddEscaped(Buffer *cmds, Substring item, char endc)
 		return;
 	}
 
-	/*
-	 * Escape ':', '$', '\\' and 'endc' - these will be removed later by
-	 * :U processing, see ApplyModifier_Defined.
-	 */
-	for (p = item.start; p != item.end; p++) {
+	for (p = item.start; p != item.end;) {
 		ch = *p;
 		if (ch == '$') {
 			size_t len = ExprLen(p + 1, item.end);
@@ -348,7 +343,7 @@ AddEscaped(Buffer *cmds, Substring item, char endc)
 				 * See directive-for-escape.mk, ExprLen.
 				 */
 				Buf_AddBytes(cmds, p, 1 + len);
-				p += len;
+				p += 1 + len;
 				continue;
 			}
 			Buf_AddByte(cmds, '\\');
@@ -359,6 +354,7 @@ AddEscaped(Buffer *cmds, Substring item, char endc)
 			ch = ' ';	/* prevent newline injection */
 		}
 		Buf_AddByte(cmds, ch);
+		p++;
 	}
 }
 
