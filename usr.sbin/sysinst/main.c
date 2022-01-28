@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2022/01/28 19:27:43 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2022/01/28 19:38:51 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -492,18 +492,18 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: sysinst [-D] [-f definition_file] "
-	    "[-r release] [-C bg:fg]"
+	(void)fprintf(stderr, "usage: sysinst [-C bg:fg] [-D"
 #ifndef NO_PARTMAN
-	    " [-p]"
+	    "p"
 #endif
+	    "] [-f definition_file] "
+	    "[-m message_catalog_dir]"
 	    "\n"
 	    "where:\n"
+	    "\t-C bg:fg\n\t\tuse different color scheme\n"
 	    "\t-D\n\t\trun in debug mode\n"
 	    "\t-f definition_file\n\t\toverride built-in defaults from file\n"
 	    "\t-m msg_catalog_dir\n\t\tuse translation files from msg_catalog_dir\n"
-	    "\t-r release\n\t\toverride release name\n"
-	    "\t-C bg:fg\n\t\tuse different color scheme\n"
 #ifndef NO_PARTMAN
 	    "\t-p\n\t\tonly run the partition editor, no installation\n"
 #endif
