@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.294 2022/01/27 18:37:02 jakllsch Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.295 2022/01/28 14:02:45 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.294 2022/01/27 18:37:02 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.295 2022/01/28 14:02:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -482,6 +482,8 @@ int
 scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 {
 	struct scsipi_channel *chan = sc->sc_channel;
+	uint16_t *luns;
+	size_t nluns = 0; /* XXXGCC */
 	int maxtarget, mintarget, maxlun, minlun;
 	int error;
 
@@ -508,9 +510,6 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 	 * opportunity to re-scan it before we do.
 	 */
 	scsipi_adapter_ioctl(chan, SCBUSIOLLSCAN, NULL, 0, curproc);
-
-	uint16_t *luns;
-	size_t nluns;
 
 	if ((error = scsipi_adapter_addref(chan->chan_adapter)) != 0)
 		goto ret;
