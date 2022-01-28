@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst.8,v 1.4 2022/01/28 19:28:08 martin Exp $
+.\"	$NetBSD: sysinst.8,v 1.5 2022/01/28 19:36:00 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,11 +32,10 @@
 .Nd install or upgrade a NetBSD system
 .Sh SYNOPSIS
 .Nm
-.Op Fl D
+.Op Fl Dp
+.Op Fl C Ar bg:fg
 .Op Fl f Ar definition_file
 .Op Fl m Ar message_catalog_dir
-.Op Fl C Ar bg:fg
-.Op Fl p
 .Sh DESCRIPTION
 .Nm
 is a menu-based program that may be used to install or upgrade a
@@ -47,7 +46,12 @@ is usually invoked automatically when the system is booted
 from appropriate installation media.
 .Pp
 The following options are available:
-.Bl -tag -width XfXdefinition_fileXX
+.Bl -tag -width 24n
+.It Fl C Ar bg:fg
+Use the ansi colors (see
+.In curses.h )
+bg as background (default: 4 for blue)
+and fg as foreground/text color (default: 7 for white).
 .It Fl D
 Switch on debugging.
 .It Fl f Ar definition_file
@@ -60,13 +64,11 @@ section for its format.
 .It Fl m Ar message_catalog_dir
 Search for available language files in
 .Ar message_catalog_dir .
-If this argument is missing and there are sysinstmsgs.* files in the
-current directory, those are used.
+If this argument is missing and there are
+.Pa sysinstmsgs.*
+files in the current directory, those are used.
 If no such files are found, a compiled in default catalog directory
 is used.
-.It Fl C Ar bg:fg
-Use the ansi colors (see curses.h) bg as background (default: 4 for blue)
-and fg as foreground/text color (default: 7 for white).
 .It Fl p
 Start the extended partition editor instead of the installer.
 This option is not available on some versions compiled for space limited
