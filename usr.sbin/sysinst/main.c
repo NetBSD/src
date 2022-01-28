@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2021/01/31 22:45:46 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2022/01/28 19:27:43 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,7 +91,7 @@ char dist_postfix[SSTRSIZE];
 char dist_tgz_postfix[SSTRSIZE];
 WINDOW *mainwin;
 
-static void select_language(void);
+static void select_language(const char*);
 __dead static void usage(void);
 __dead static void miscsighandler(int);
 static void ttysighandler(int);
@@ -208,6 +208,7 @@ int
 main(int argc, char **argv)
 {
 	int ch;
+	const char *msg_cat_dir = NULL;
 
 	init();
 
@@ -223,7 +224,7 @@ main(int argc, char **argv)
 	}
 
 	/* argv processing */
-	while ((ch = getopt(argc, argv, "Dr:f:C:"
+	while ((ch = getopt(argc, argv, "Dr:f:C:m:"
 #ifndef NO_PARTMAN
 	    "p"
 #endif
@@ -242,6 +243,10 @@ main(int argc, char **argv)
 		case 'C':
 			/* Define colors */
 			sscanf(optarg, "%u:%u", &clr_arg.bg, &clr_arg.fg);
+			break;
+		case 'm':
+			/* set message catalog directory */
+			msg_cat_dir = optarg;
 			break;
 #ifndef NO_PARTMAN
 		case 'p':
@@ -296,7 +301,7 @@ main(int argc, char **argv)
 	/* Ensure we have mountpoint for target filesystems */
 	mkdir(targetroot_mnt, S_IRWXU | S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
 
-	select_language();
+	select_language(msg_cat_dir);
 	get_kb_encoding();
 	init_lang();
 
@@ -326,103 +331,123 @@ set_language(menudesc *m, void *arg)
 	return 1;
 }
 
+/*
+ * Search for sysinstmsg.* files in the given dir, collect
+ * their names and return the number of files found.
+ * fnames[0] is preallocated and duplicates are ignored.
+ */
+struct found_msgs {
+	char **lang_msg, **fnames;
+	int max_lang, num_lang;
+
+};
 static void
-select_language(void)
+find_language_files(const char *path, struct found_msgs *res)
 {
 	DIR *dir;
 	struct dirent *dirent;
-	char **lang_msg, **fnames;
-	char prefix[PATH_MAX], fname[PATH_MAX];
-	int max_lang = 16, num_lang = 0;
+	char fname[PATH_MAX];
 	const char *cp;
-	menu_ent *opt = 0;
-	int lang_menu = -1;
-	int lang;
 
-#ifdef CATALOG_DIR
-	strcpy(prefix, CATALOG_DIR "/");
-	dir = opendir(CATALOG_DIR);
-	if (!dir) {
-		strcpy(prefix, "./");
-		dir = opendir(".");
-	}
-#else
-	dir = opendir(".");
-	strcpy(prefix, "./");
-#endif
+	res->num_lang = 0;
+	dir = opendir(path);
 	if (!dir)
 		return;
-
-	lang_msg = malloc(max_lang * sizeof *lang_msg);
-	fnames = malloc(max_lang * sizeof *fnames);
-	if (!lang_msg || !fnames)
-		goto done;
-
-	lang_msg[0] = strdup(msg_string(MSG_sysinst_message_language));
-	fnames[0] = 0;
-	num_lang = 1;
 
 	while ((dirent = readdir(dir)) != 0) {
 		if (memcmp(dirent->d_name, "sysinstmsgs.", 12))
 			continue;
-		strcpy(fname, prefix);
+
+		if (res->num_lang == 0)
+			res->num_lang = 1;
+		strcpy(fname, path);
+		strcat(fname, "/");
 		strcat(fname, dirent->d_name);
 		if (msg_file(fname))
 			continue;
 		cp = msg_string(MSG_sysinst_message_language);
-		if (!strcmp(cp, lang_msg[0]))
+		if (!strcmp(cp, res->lang_msg[0]))
 			continue;
-		if (num_lang == max_lang) {
+		if (res->num_lang == res->max_lang) {
 			char **new;
-			max_lang *= 2;
-			new = realloc(lang_msg, max_lang * sizeof *lang_msg);
+			res->max_lang *= 2;
+			new = realloc(res->lang_msg,
+			    res->max_lang * sizeof *res->lang_msg);
 			if (!new)
 				break;
-			lang_msg = new;
-			new = realloc(fnames, max_lang * sizeof *fnames);
+			res->lang_msg = new;
+			new = realloc(res->fnames,
+			    res->max_lang * sizeof *res->fnames);
 			if (!new)
 				break;
-			fnames = new;
+			res->fnames = new;
 		}
-		fnames[num_lang] = strdup(fname);
-		lang_msg[num_lang++] = strdup(cp);
+		res->fnames[res->num_lang] = strdup(fname);
+		res->lang_msg[res->num_lang++] = strdup(cp);
 	}
-	msg_file(0);
-	closedir(dir);
-	dir = 0;
 
-	if (num_lang == 1)
+	closedir(dir);
+}
+
+static void
+select_language(const char *msg_cat_path)
+{
+	struct found_msgs found;
+	menu_ent *opt = 0;
+	const char *cp;
+	int lang_menu = -1;
+	int lang;
+
+	found.max_lang = 16;
+	found.num_lang = 0;
+	found.lang_msg = malloc(found.max_lang * sizeof *found.lang_msg);
+	found.fnames = malloc(found.max_lang * sizeof *found.fnames);
+	if (!found.lang_msg || !found.fnames)
+		goto done;
+	found.lang_msg[0] = strdup(msg_string(MSG_sysinst_message_language));
+	found.fnames[0] = NULL;
+
+	if (msg_cat_path != NULL)
+		find_language_files(msg_cat_path, &found);
+	if (found.num_lang == 0)
+		find_language_files(".", &found);
+#ifdef CATALOG_DIR
+	if (found.num_lang == 0)
+		find_language_files(CATALOG_DIR, &found);
+#endif
+
+	msg_file(0);
+
+	if (found.num_lang <= 1)
 		goto done;
 
-	opt = calloc(num_lang, sizeof *opt);
+	opt = calloc(found.num_lang, sizeof *opt);
 	if (!opt)
 		goto done;
 
-	for (lang = 0; lang < num_lang; lang++) {
-		opt[lang].opt_name = lang_msg[lang];
+	for (lang = 0; lang < found.num_lang; lang++) {
+		opt[lang].opt_name = found.lang_msg[lang];
 		opt[lang].opt_action = set_language;
 	}
 
-	lang_menu = new_menu(NULL, opt, num_lang, -1, 12, 0, 0, MC_NOEXITOPT,
-		NULL, NULL, NULL, NULL, NULL);
+	lang_menu = new_menu(NULL, opt, found.num_lang, -1, 12, 0, 0,
+	    MC_NOEXITOPT, NULL, NULL, NULL, NULL, NULL);
 
 	if (lang_menu != -1) {
 		msg_display(MSG_hello);
-		process_menu(lang_menu, fnames);
+		process_menu(lang_menu, found.fnames);
 	}
 
     done:
-	if (dir)
-		closedir(dir);
 	if (lang_menu != -1)
 		free_menu(lang_menu);
 	free(opt);
-	while (num_lang) {
-		free(lang_msg[--num_lang]);
-		free(fnames[num_lang]);
+	for (int i = 0; i < found.num_lang; i++) {
+		free(found.lang_msg[i]);
+		free(found.fnames[i]);
 	}
-	free(lang_msg);
-	free(fnames);
+	free(found.lang_msg);
+	free(found.fnames);
 
 	/* set locale according to selected language */
 	cp = msg_string(MSG_sysinst_message_locale);
@@ -476,6 +501,7 @@ usage(void)
 	    "where:\n"
 	    "\t-D\n\t\trun in debug mode\n"
 	    "\t-f definition_file\n\t\toverride built-in defaults from file\n"
+	    "\t-m msg_catalog_dir\n\t\tuse translation files from msg_catalog_dir\n"
 	    "\t-r release\n\t\toverride release name\n"
 	    "\t-C bg:fg\n\t\tuse different color scheme\n"
 #ifndef NO_PARTMAN
