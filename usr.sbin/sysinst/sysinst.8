@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst.8,v 1.3 2020/03/06 20:07:26 maya Exp $
+.\"	$NetBSD: sysinst.8,v 1.4 2022/01/28 19:28:08 martin Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 6, 2020
+.Dd January 28, 2022
 .Dt SYSINST 8
 .Os
 .Sh NAME
@@ -34,6 +34,9 @@
 .Nm
 .Op Fl D
 .Op Fl f Ar definition_file
+.Op Fl m Ar message_catalog_dir
+.Op Fl C Ar bg:fg
+.Op Fl p
 .Sh DESCRIPTION
 .Nm
 is a menu-based program that may be used to install or upgrade a
@@ -54,6 +57,20 @@ as a file for definitions other than the defaults.
 See the
 .Sx DEFINITION FILE
 section for its format.
+.It Fl m Ar message_catalog_dir
+Search for available language files in
+.Ar message_catalog_dir .
+If this argument is missing and there are sysinstmsgs.* files in the
+current directory, those are used.
+If no such files are found, a compiled in default catalog directory
+is used.
+.It Fl C Ar bg:fg
+Use the ansi colors (see curses.h) bg as background (default: 4 for blue)
+and fg as foreground/text color (default: 7 for white).
+.It Fl p
+Start the extended partition editor instead of the installer.
+This option is not available on some versions compiled for space limited
+install media.
 .El
 .Sh DEFINITION FILE
 A definition file can be used with
@@ -106,6 +123,9 @@ files on CD-ROM installation media
 files in
 .Nx
 releases or snapshots.
+.Pp
+The default message catalog files are installed in
+.Pa /usr/share/sysinst/catalog .
 .Sh HISTORY
 A
 .Nm
