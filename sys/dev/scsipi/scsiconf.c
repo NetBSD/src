@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.295 2022/01/28 14:02:45 jakllsch Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.296 2022/01/28 18:23:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.295 2022/01/28 14:02:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.296 2022/01/28 18:23:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,6 +474,30 @@ end2:
 	return error;
 }
 
+static void
+scsi_discover_luns(struct scsibus_softc *sc, int target, int minlun, int maxlun)
+{
+	uint16_t *luns;
+	size_t nluns;
+
+	if (scsi_report_luns(sc, target, &luns, &nluns) == 0) {
+		for (size_t i = 0; i < nluns; i++)
+			if (luns[i] >= minlun && luns[i] <= maxlun)
+				scsi_probe_device(sc, target, luns[i]);
+		kmem_free(luns, sizeof(*luns) * nluns);
+		return;
+	}
+
+	for (int lun = minlun; lun <= maxlun; lun++) {
+		/*
+		 * See if there's a device present, and configure it.
+		 */
+		if (scsi_probe_device(sc, target, lun) == 0)
+			break;
+		/* otherwise something says we should look further */
+	}
+}
+
 /*
  * Probe the requested scsi bus. It must be already set up.
  * target and lun optionally narrow the search if not -1
@@ -482,8 +506,6 @@ int
 scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 {
 	struct scsipi_channel *chan = sc->sc_channel;
-	uint16_t *luns;
-	size_t nluns = 0; /* XXXGCC */
 	int maxtarget, mintarget, maxlun, minlun;
 	int error;
 
@@ -516,25 +538,8 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 	for (target = mintarget; target <= maxtarget; target++) {
 		if (target == chan->chan_id)
 			continue;
-		if (scsi_report_luns(sc, target, &luns, &nluns) == 0) {
-			for (size_t i = 0; i < nluns; i++)
-				if (luns[i] >= minlun && luns[i] <= maxlun)
-					scsi_probe_device(sc, target, luns[i]);
-		} else
-		for (lun = minlun; lun <= maxlun; lun++) {
-			/*
-			 * See if there's a device present, and configure it.
-			 */
-			if (scsi_probe_device(sc, target, lun) == 0)
-				break;
-			/* otherwise something says we should look further */
-		}
 
-		if (luns != NULL) {
-			kmem_free(luns, sizeof(*luns) * nluns);
-			luns = NULL;
-			nluns = 0;
-		}
+		scsi_discover_luns(sc, target, minlun, maxlun);
 
 		/*
 		 * Now that we've discovered all of the LUNs on this
