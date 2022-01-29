@@ -12,4 +12,8 @@ Variable V is recursive.
 	in var-recursive.mk:43
 
 make: stopped in unit-tests
+: OK
+Variable VAR is recursive.
+
+make: stopped in unit-tests
 exit status 0
