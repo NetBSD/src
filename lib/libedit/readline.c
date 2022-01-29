@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.169 2022/01/11 18:30:15 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.170 2022/01/29 20:52:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.169 2022/01/11 18:30:15 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.170 2022/01/29 20:52:45 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2149,6 +2149,7 @@ rl_callback_read_char(void)
 			wbuf = NULL;
 		(*(void (*)(const char *))rl_linefunc)(wbuf);
 	}
+	_rl_update_pos();
 }
 
 void
@@ -2176,6 +2177,7 @@ rl_redisplay(void)
 	a[0] = (char)e->el_tty.t_c[TS_IO][C_REPRINT];
 	a[1] = '\0';
 	el_push(e, a);
+	rl_forced_update_display();
 }
 
 int
@@ -2355,7 +2357,7 @@ rl_message(const char *format, ...)
 	va_end(args);
 
 	rl_set_prompt(msg);
-	rl_redisplay();
+	rl_forced_update_display();
 }
 
 void
