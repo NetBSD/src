@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.77 2022/01/29 15:32:49 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.78 2022/01/29 16:01:16 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -667,7 +667,7 @@ bool	md_pre_disklabel(struct install_partition_desc*, struct disk_partitions*);
 bool	md_post_disklabel(struct install_partition_desc*, struct disk_partitions*);
 int	md_pre_mount(struct install_partition_desc*, size_t);
 int	md_post_newfs(struct install_partition_desc*);
-int	md_post_extract(struct install_partition_desc*);
+int	md_post_extract(struct install_partition_desc*, bool upgrade);
 void	md_cleanup_install(struct install_partition_desc*);
 
  /* MD functions if user selects upgrade - in order called */

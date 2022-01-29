@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 2020/10/12 16:14:35 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.10 2022/01/29 16:01:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -208,7 +208,7 @@ md_post_newfs(struct install_partition_desc *install)
 }
 
 int
-md_post_extract(struct install_partition_desc *install)
+md_post_extract(struct install_partition_desc *install, bool upgrade)
 {
 
 	return 0;
