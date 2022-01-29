@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.126 2022/01/27 09:53:43 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.127 2022/01/29 08:20:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.126 2022/01/27 09:53:43 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.127 2022/01/29 08:20:45 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2256,6 +2256,18 @@ identifycpu(int fd, const char *cpuname)
 			    CPUID_PERF_FLAGS1, descs[1]);
 			print_bits(cpuname, "Perfmon-edx",
 			    CPUID_PERF_FLAGS3, descs[3]);
+		}
+		if (ci->ci_max_cpuid >= 0x1a) {
+			x86_cpuid(0x1a, descs);
+			if (descs[0] != 0) {
+				aprint_verbose("%s: Hybrid: Core type %02x, "
+				    "Native Model ID %07x\n",
+				    cpuname,
+				    (uint8_t)__SHIFTOUT(descs[0],
+					CPUID_HYBRID_CORETYPE),
+				    (uint32_t)__SHIFTOUT(descs[0],
+					CPUID_HYBRID_NATIVEID));
+			}
 		}
 	}
 
