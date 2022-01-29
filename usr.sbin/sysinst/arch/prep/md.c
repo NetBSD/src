@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2020/10/12 16:14:36 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.14 2022/01/29 16:01:20 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -179,7 +179,7 @@ md_post_newfs(struct install_partition_desc *install)
 }
 
 int
-md_post_extract(struct install_partition_desc *install)
+md_post_extract(struct install_partition_desc *install, bool upgrade)
 {
 	char rawdev[100], bootpart[100], bootloader[100];
 	int contype;

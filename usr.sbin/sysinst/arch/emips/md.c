@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 2020/10/12 16:14:33 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.10 2022/01/29 16:01:17 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -162,7 +162,7 @@ md_post_newfs(struct install_partition_desc *install)
  * On emips, we take this opportunity to update the boot loader.
  */
 int
-md_post_extract(struct install_partition_desc *install)
+md_post_extract(struct install_partition_desc *install, bool upgrade)
 {
 	char ldr_path[STRSIZE];
 
