@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.26.10.2 2020/08/05 17:22:46 martin Exp $	*/
+/*	$NetBSD: igphy.c,v 1.26.10.3 2022/01/29 16:56:18 martin Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.26.10.2 2020/08/05 17:22:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.26.10.3 2022/01/29 16:56:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -443,7 +443,6 @@ igphy_status(struct mii_softc *sc)
 	bmcr = PHY_READ(sc, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
-		mii->mii_media_status = 0;
 		return;
 	}
 
