@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.303 2022/01/29 07:42:10 sjg Exp $
+.\"	$NetBSD: make.1,v 1.304 2022/01/29 20:54:58 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -715,10 +715,11 @@ of those targets out-of-date.
 target local variable assignments behave differently in that;
 .Bl -tag -width Ds -offset indent
 .It Ic \&+=
-Only behaves as expected, if there is a previous
-local assignment for the same target and variable.
+Only appends to a previous local assignment
+for the same target and variable.
 .It Ic \&:=
-Is redundant since, the entire dependency line has already been expanded.
+Is redundant with respect to Global variables,
+which have already been expanded.
 .El
 .Pp
 The seven built-in local variables are as follows:
