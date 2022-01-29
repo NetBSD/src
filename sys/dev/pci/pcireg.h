@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.130.2.10 2021/12/03 19:45:13 martin Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.130.2.11 2022/01/29 17:11:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1159,7 +1159,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_LCSR2_TX_MARGIN	__BITS(9, 7)   /* Transmit Margin */
 #define PCIE_LCSR2_EN_MCOMP	__BIT(10)      /* Enter Modified Compliance */
 #define PCIE_LCSR2_COMP_SOS	__BIT(11)      /* Compliance SOS */
-#define PCIE_LCSR2_COMP_DEEMP	__BITS(15, 12) /* Compliance Present/De-emph */
+#define PCIE_LCSR2_COMP_DEEMP	__BITS(15, 12) /* Compliance Preset/De-emph */
 #define PCIE_LCSR2_DEEMP_LVL	__BIT(0 + 16)  /* Current De-emphasis Level */
 #define PCIE_LCSR2_EQ_COMPL	__BIT(1 + 16)  /* Equalization Complete */
 #define PCIE_LCSR2_EQP1_SUC	__BIT(2 + 16)  /* Equaliz Phase 1 Successful */
@@ -1536,7 +1536,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
 #define	PCI_EXTCAP_VF_RESIZBAR	0x0024	/* VF Resizable BAR */
 #define	PCI_EXTCAP_DLF		0x0025	/* Data link Feature */
-#define	PCI_EXTCAP_PYSLAY_16GT	0x0026	/* Physical Layer 16.0 GT/s */
+#define	PCI_EXTCAP_PL16G	0x0026	/* Physical Layer 16.0 GT/s */
 #define	PCI_EXTCAP_LMR		0x0027	/* Lane Margining at the Receiver */
 #define	PCI_EXTCAP_HIERARCHYID	0x0028	/* Hierarchy ID */
 #define	PCI_EXTCAP_NPEM		0x0029	/* Native PCIe Enclosure Management */
@@ -2177,6 +2177,37 @@ struct pci_rom {
  * Extended capability ID: 0x0026
  * Physical Layer 16.0 GT/s
  */
+#define	PCI_PL16G_CAP	0x04	/* Capabilities Register */
+#define	PCI_PL16G_CTL	0x08	/* Control Register */
+#define	PCI_PL16G_STAT	0x0c	/* Status Register */
+#define	PCI_PL16G_STAT_EQ_COMPL __BIT(0) /* Equalization 16.0 GT/s Complete */
+#define	PCI_PL16G_STAT_EQ_P1S	__BIT(1) /* Eq. 16.0 GT/s Phase 1 Successful */
+#define	PCI_PL16G_STAT_EQ_P2S	__BIT(2) /* Eq. 16.0 GT/s Phase 2 Successful */
+#define	PCI_PL16G_STAT_EQ_P3S	__BIT(3) /* Eq. 16.0 GT/s Phase 3 Successful */
+#define	PCI_PL16G_STAT_LEQR	__BIT(4) /* Link Eq. Request 16.0 GT/s */
+#define	PCI_PL16G_LDPMS	0x10	/* Local Data Parity Mismatch Status reg. */
+#define	PCI_PL16G_FRDPMS 0x14	/* First Retimer Data Parity Mismatch Status */
+#define	PCI_PL16G_SRDPMS 0x18  /* Second Retimer Data Parity Mismatch Status */
+  /* 0x1c reserved */
+#define	PCI_PL16G_LEC	0x20	/* Lane Equalization Control Register */
+
+/*
+ * Extended capability ID: 0x0027
+ * Lane Margining at the Receiver
+ */
+#define	PCI_LMR_PCAPSTAT 0x04	/* Port Capabilities and Status Register */
+#define	PCI_LMR_PCAP_MUDS	__BIT(0)   /* Margining uses Driver Software */
+#define	PCI_LMR_PSTAT_MR	__BIT(16)  /* Margining Ready */
+#define	PCI_LMR_PSTAT_MSR	__BIT(17)  /* Margining Software Ready */
+#define	PCI_LMR_LANECSR	0x08	/* Lane Control and Status Register */
+#define	PCI_LMR_LCTL_RNUM	__BITS(2, 0)	/* Receive Number */
+#define	PCI_LMR_LCTL_MTYPE	__BITS(5, 3)	/* Margin Type */
+#define	PCI_LMR_LCTL_UMODEL	__BIT(6)	/* Usage Model */
+#define	PCI_LMR_LCTL_MPAYLOAD	__BITS(15, 8)	/* Margin Payload */
+#define	PCI_LMR_LSTAT_RNUM	__BITS(18, 16)	/* Receive Number */
+#define	PCI_LMR_LSTAT_MTYPE	__BITS(21, 19)	/* Margin Type */
+#define	PCI_LMR_LSTAT_UMODEL	__BIT(22)	/* Usage Model */
+#define	PCI_LMR_LSTAT_MPAYLOAD	__BITS(31, 24)	/* Margin Payload */
 
 /*
  * Extended capability ID: 0x0028
