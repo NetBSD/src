@@ -1,4 +1,4 @@
-# $NetBSD: var-recursive.mk,v 1.3 2022/01/29 10:09:37 rillig Exp $
+# $NetBSD: var-recursive.mk,v 1.4 2022/01/29 10:21:26 rillig Exp $
 #
 # Tests for variable expressions that refer to themselves and thus
 # cannot be evaluated.
@@ -46,8 +46,8 @@ V=	$V
 
 # If a recursive variable is accessed in a command of a target, the makefiles
 # are not parsed anymore, so there is no location information from the
-# .includes and .for directives.  TODO: In such a case, use the target
-# definition to provide at least a hint to the location.
+# .includes and .for directives.  In such a case, use the location of the last
+# command of the target to provide at least a hint to the location.
 VAR=	${VAR}
 target:
 	: OK
