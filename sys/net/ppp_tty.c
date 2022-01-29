@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.65 2019/01/24 09:31:09 knakahara Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.65.4.1 2022/01/29 17:03:53 martin Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.65 2019/01/24 09:31:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.65.4.1 2022/01/29 17:03:53 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -181,7 +181,7 @@ static void	pppdumpframe(struct ppp_softc *sc, struct mbuf* m, int xmit);
 /*
  * Does c need to be escaped?
  */
-#define ESCAPE_P(c)	(sc->sc_asyncmap[(c) >> 5] & (1 << ((c) & 0x1F)))
+#define ESCAPE_P(c)	(sc->sc_asyncmap[(c) >> 5] & (1U << ((c) & 0x1F)))
 
 /*
  * Procedures for using an async tty interface for PPP.
@@ -1021,7 +1021,7 @@ pppinput(int c, struct tty *tp)
 	sc->sc_flags |= SC_RCV_B7_1;
     else
 	sc->sc_flags |= SC_RCV_B7_0;
-    if (paritytab[c >> 5] & (1 << (c & 0x1F)))
+    if (paritytab[c >> 5] & (1U << (c & 0x1F)))
 	sc->sc_flags |= SC_RCV_ODDP;
     else
 	sc->sc_flags |= SC_RCV_EVNP;
@@ -1102,7 +1102,7 @@ pppinput(int c, struct tty *tp)
 	return 0;
     }
 
-    if (c < 0x20 && (sc->sc_rasyncmap & (1 << c)))
+    if (c < 0x20 && (sc->sc_rasyncmap & (1U << c)))
 	return 0;
 
     s = spltty();
