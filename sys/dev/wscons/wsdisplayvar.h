@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.55 2019/01/30 11:24:48 jmcneill Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.56 2022/01/29 01:19:30 uwe Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -277,7 +277,7 @@ const struct wsscreen_descr *wsdisplay_screentype_pick(
 #    define WS_KERNEL_MONOATTR WS_DEFAULT_MONOATTR
 #  endif
 #  if !defined(WSDISPLAY_BORDER_COLOR)
-#    define WSDISPLAY_BORDER_COLOR WSCOL_BLACK
+#    define WSDISPLAY_BORDER_COLOR WS_DEFAULT_BG
 #  endif
 #endif /* _KERNEL */
 
