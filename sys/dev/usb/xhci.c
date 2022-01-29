@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.154 2022/01/25 11:17:39 msaitoh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.155 2022/01/29 21:36:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.154 2022/01/25 11:17:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.155 2022/01/29 21:36:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -154,15 +154,18 @@ static usbd_status xhci_new_device(device_t, struct usbd_bus *, int, int, int,
 static int xhci_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
     void *, int);
 
+static void xhci_pipe_async_task(void *);
+static void xhci_pipe_restart(struct usbd_pipe *);
+
 static usbd_status xhci_configure_endpoint(struct usbd_pipe *);
 //static usbd_status xhci_unconfigure_endpoint(struct usbd_pipe *);
-static usbd_status xhci_reset_endpoint(struct usbd_pipe *);
+static void xhci_reset_endpoint(struct usbd_pipe *);
 static usbd_status xhci_stop_endpoint_cmd(struct xhci_softc *,
     struct xhci_slot *, u_int, uint32_t);
 static usbd_status xhci_stop_endpoint(struct usbd_pipe *);
 
 static void xhci_host_dequeue(struct xhci_ring * const);
-static usbd_status xhci_set_dequeue(struct usbd_pipe *);
+static void xhci_set_dequeue(struct usbd_pipe *);
 
 static usbd_status xhci_do_command(struct xhci_softc * const,
     struct xhci_soft_trb * const, int);
@@ -1858,14 +1861,13 @@ xhci_unconfigure_endpoint(struct usbd_pipe *pipe)
 #endif
 
 /* 4.6.8, 6.4.3.7 */
-static usbd_status
-xhci_reset_endpoint_locked(struct usbd_pipe *pipe)
+static void
+xhci_reset_endpoint(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 	struct xhci_soft_trb trb;
-	usbd_status err;
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
@@ -1878,21 +1880,10 @@ xhci_reset_endpoint_locked(struct usbd_pipe *pipe)
 	    XHCI_TRB_3_EP_SET(dci) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_RESET_EP);
 
-	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
-
-	return err;
-}
-
-static usbd_status
-xhci_reset_endpoint(struct usbd_pipe *pipe)
-{
-	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
-
-	mutex_enter(&sc->sc_lock);
-	usbd_status ret = xhci_reset_endpoint_locked(pipe);
-	mutex_exit(&sc->sc_lock);
-
-	return ret;
+	if (xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT)) {
+		device_printf(sc->sc_dev, "%s: endpoint 0x%x: timed out\n",
+		    __func__, pipe->up_endpoint->ue_edesc->bEndpointAddress);
+	}
 }
 
 /*
@@ -1947,15 +1938,14 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
  * EPSTATE of endpoint must be ERROR or STOPPED, otherwise CONTEXT_STATE
  * error will be generated.
  */
-static usbd_status
-xhci_set_dequeue_locked(struct usbd_pipe *pipe)
+static void
+xhci_set_dequeue(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 	struct xhci_ring * const xr = xs->xs_xr[dci];
 	struct xhci_soft_trb trb;
-	usbd_status err;
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
@@ -1972,21 +1962,10 @@ xhci_set_dequeue_locked(struct usbd_pipe *pipe)
 	    XHCI_TRB_3_EP_SET(dci) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_SET_TR_DEQUEUE);
 
-	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
-
-	return err;
-}
-
-static usbd_status
-xhci_set_dequeue(struct usbd_pipe *pipe)
-{
-	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
-
-	mutex_enter(&sc->sc_lock);
-	usbd_status ret = xhci_set_dequeue_locked(pipe);
-	mutex_exit(&sc->sc_lock);
-
-	return ret;
+	if (xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT)) {
+		device_printf(sc->sc_dev, "%s: endpoint 0x%x: timed out\n",
+		    __func__, pipe->up_endpoint->ue_edesc->bEndpointAddress);
+	}
 }
 
 /*
@@ -2036,6 +2015,9 @@ xhci_open(struct usbd_pipe *pipe)
 		return USBD_NORMAL_COMPLETION;
 	}
 
+	usb_init_task(&xpipe->xp_async_task, xhci_pipe_async_task, xpipe,
+	    USB_TASKQ_MPSAFE);
+
 	switch (xfertype) {
 	case UE_CONTROL:
 		pipe->up_methods = &xhci_device_ctrl_methods;
@@ -2081,6 +2063,8 @@ xhci_open(struct usbd_pipe *pipe)
 static void
 xhci_close_pipe(struct usbd_pipe *pipe)
 {
+	struct xhci_pipe * const xp =
+	    container_of(pipe, struct xhci_pipe, xp_pipe);
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
@@ -2089,6 +2073,9 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	uint32_t *cp;
 
 	XHCIHIST_FUNC();
+
+	usb_rem_task_wait(pipe->up_dev, &xp->xp_async_task, USB_TASKQ_HC,
+	    &sc->sc_lock);
 
 	if (sc->sc_dying)
 		return;
@@ -2149,68 +2136,27 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 
 /*
  * Abort transfer.
- * Should be called with sc_lock held.
+ * Should be called with sc_lock held.  Must not drop sc_lock.
  */
 static void
 xhci_abortx(struct usbd_xfer *xfer)
 {
 	XHCIHIST_FUNC();
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
-	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
-	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 
 	XHCIHIST_CALLARGS("xfer %#jx pipe %#jx",
 	    (uintptr_t)xfer, (uintptr_t)xfer->ux_pipe, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	ASSERT_SLEEPABLE();
-
 	KASSERTMSG((xfer->ux_status == USBD_CANCELLED ||
 		xfer->ux_status == USBD_TIMEOUT),
 	    "bad abort status: %d", xfer->ux_status);
 
-	/*
-	 * If we're dying, skip the hardware action and just notify the
-	 * software that we're done.
-	 */
-	if (sc->sc_dying) {
-		DPRINTFN(4, "xfer %#jx dying %ju", (uintptr_t)xfer,
-		    xfer->ux_status, 0, 0);
-		goto dying;
-	}
+	xhci_pipe_restart(xfer->ux_pipe);
 
-	/*
-	 * HC Step 1: Stop execution of TD on the ring.
-	 */
-	switch (xhci_get_epstate(sc, xs, dci)) {
-	case XHCI_EPSTATE_HALTED:
-		(void)xhci_reset_endpoint_locked(xfer->ux_pipe);
-		break;
-	case XHCI_EPSTATE_STOPPED:
-		break;
-	default:
-		(void)xhci_stop_endpoint(xfer->ux_pipe);
-		break;
-	}
-#ifdef DIAGNOSTIC
-	uint32_t epst = xhci_get_epstate(sc, xs, dci);
-	if (epst != XHCI_EPSTATE_STOPPED)
-		DPRINTFN(4, "dci %ju not stopped %ju", dci, epst, 0, 0);
-#endif
-
-	/*
-	 * HC Step 2: Remove any vestiges of the xfer from the ring.
-	 */
-	xhci_set_dequeue_locked(xfer->ux_pipe);
-
-	/*
-	 * Final Step: Notify completion to waiting xfers.
-	 */
-dying:
 	usb_transfer_complete(xfer);
-	DPRINTFN(14, "end", 0, 0, 0, 0);
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	DPRINTFN(14, "end", 0, 0, 0, 0);
 }
 
 static void
@@ -2227,69 +2173,102 @@ xhci_host_dequeue(struct xhci_ring * const xr)
 }
 
 /*
- * Recover STALLed endpoint.
+ * Recover STALLed endpoint, or stop endpoint to abort a pipe.
  * xHCI 1.1 sect 4.10.2.1
  * Issue RESET_EP to recover halt condition and SET_TR_DEQUEUE to remove
  * all transfers on transfer ring.
  * These are done in thread context asynchronously.
  */
 static void
-xhci_clear_endpoint_stall_async_task(void *cookie)
+xhci_pipe_async_task(void *cookie)
 {
-	struct usbd_xfer * const xfer = cookie;
-	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
-	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
-	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
+	struct xhci_pipe * const xp = cookie;
+	struct usbd_pipe * const pipe = &xp->xp_pipe;
+	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
+	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
+	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 	struct xhci_ring * const tr = xs->xs_xr[dci];
+	bool restart = false;
 
 	XHCIHIST_FUNC();
-	XHCIHIST_CALLARGS("xfer %#jx slot %ju dci %ju", (uintptr_t)xfer, xs->xs_idx,
-	    dci, 0);
-
-	/*
-	 * XXXMRG: Stall task can run after slot is disabled when yanked.
-	 * This hack notices that the xs has been memset() in
-	 * xhci_disable_slot() and returns.  Both xhci_reset_endpoint()
-	 * and xhci_set_dequeue() rely upon a valid ring setup for correct
-	 * operation, and the latter will fault, as would
-	 * usb_transfer_complete() if it got that far.
-	 */
-	if (xs->xs_idx == 0) {
-		DPRINTFN(4, "ends xs_idx is 0", 0, 0, 0, 0);
-		return;
-	}
-
-	KASSERT(tr != NULL);
-
-	xhci_reset_endpoint(xfer->ux_pipe);
-	xhci_set_dequeue(xfer->ux_pipe);
+	XHCIHIST_CALLARGS("pipe %#jx slot %ju dci %ju",
+	    (uintptr_t)pipe, xs->xs_idx, dci, 0);
 
 	mutex_enter(&sc->sc_lock);
-	tr->is_halted = false;
-	usb_transfer_complete(xfer);
+
+	/*
+	 * - If the endpoint is halted, indicating a stall, reset it.
+	 * - If the endpoint is stopped, we're already good.
+	 * - Otherwise, someone wanted to abort the pipe, so stop the
+	 *   endpoint.
+	 *
+	 * In any case, clear the ring.
+	 */
+	switch (xhci_get_epstate(sc, xs, dci)) {
+	case XHCI_EPSTATE_HALTED:
+		xhci_reset_endpoint(pipe);
+		break;
+	case XHCI_EPSTATE_STOPPED:
+		break;
+	default:
+		xhci_stop_endpoint(pipe);
+		break;
+	}
+	switch (xhci_get_epstate(sc, xs, dci)) {
+	case XHCI_EPSTATE_STOPPED:
+		break;
+	case XHCI_EPSTATE_ERROR:
+		device_printf(sc->sc_dev, "endpoint 0x%x error\n",
+		    pipe->up_endpoint->ue_edesc->bEndpointAddress);
+		break;
+	default:
+		device_printf(sc->sc_dev, "endpoint 0x%x failed to stop\n",
+		    pipe->up_endpoint->ue_edesc->bEndpointAddress);
+	}
+	xhci_set_dequeue(pipe);
+
+	/*
+	 * If we halted our own queue because it stalled, mark it no
+	 * longer halted and arrange to start it up again.
+	 */
+	if (tr->is_halted) {
+		tr->is_halted = false;
+		if (!SIMPLEQ_EMPTY(&pipe->up_queue))
+			restart = true;
+	}
+
 	mutex_exit(&sc->sc_lock);
+
+	/*
+	 * If the endpoint was stalled, start issuing queued transfers
+	 * again.
+	 */
+	if (restart) {
+		/*
+		 * XXX Shouldn't touch the queue unlocked -- upm_start
+		 * should be called with the lock held instead.  The
+		 * pipe could be aborted at this point, and the xfer
+		 * freed.
+		 */
+		struct usbd_xfer *xfer = SIMPLEQ_FIRST(&pipe->up_queue);
+		(*pipe->up_methods->upm_start)(xfer);
+	}
+
 	DPRINTFN(4, "ends", 0, 0, 0, 0);
 }
 
-static usbd_status
-xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
+static void
+xhci_pipe_restart(struct usbd_pipe *pipe)
 {
-	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
-	struct xhci_pipe * const xp = (struct xhci_pipe *)xfer->ux_pipe;
+	struct xhci_pipe * const xp =
+	    container_of(pipe, struct xhci_pipe, xp_pipe);
 
 	XHCIHIST_FUNC();
-	XHCIHIST_CALLARGS("xfer %#jx", (uintptr_t)xfer, 0, 0, 0);
+	XHCIHIST_CALLARGS("pipe %#jx", (uintptr_t)pipe, 0, 0, 0);
 
-	if (sc->sc_dying) {
-		return USBD_IOERROR;
-	}
+	usb_add_task(pipe->up_dev, &xp->xp_async_task, USB_TASKQ_HC);
 
-	usb_init_task(&xp->xp_async_task,
-	    xhci_clear_endpoint_stall_async_task, xfer, USB_TASKQ_MPSAFE);
-	usb_add_task(xfer->ux_pipe->up_dev, &xp->xp_async_task, USB_TASKQ_HC);
 	DPRINTFN(4, "ends", 0, 0, 0, 0);
-
-	return USBD_NORMAL_COMPLETION;
 }
 
 /* Process roothub port status/change events and notify to uhub_intr. */
@@ -2467,32 +2446,9 @@ xhci_event_transfer(struct xhci_softc * const sc,
 	case XHCI_TRB_ERROR_BABBLE:
 		DPRINTFN(1, "ERR %ju slot %ju dci %ju", trbcode, slot, dci, 0);
 		xr->is_halted = true;
-		/*
-		 * Try to claim this xfer for completion.  If it has already
-		 * completed or aborted, drop it on the floor.
-		 */
-		if (!usbd_xfer_trycomplete(xfer))
-			return;
-
-		/*
-		 * Stalled endpoints can be recoverd by issuing
-		 * command TRB TYPE_RESET_EP on xHCI instead of
-		 * issuing request CLEAR_FEATURE UF_ENDPOINT_HALT
-		 * on the endpoint. However, this function may be
-		 * called from softint context (e.g. from umass),
-		 * in that case driver gets KASSERT in cv_timedwait
-		 * in xhci_do_command.
-		 * To avoid this, this runs reset_endpoint and
-		 * usb_transfer_complete in usb task thread
-		 * asynchronously (and then umass issues clear
-		 * UF_ENDPOINT_HALT).
-		 */
-
-		/* Override the status.  */
-		xfer->ux_status = USBD_STALLED;
-
-		xhci_clear_endpoint_stall_async(xfer);
-		return;
+		xhci_pipe_restart(xfer->ux_pipe);
+		err = USBD_STALLED;
+		break;
 	default:
 		DPRINTFN(1, "ERR %ju slot %ju dci %ju", trbcode, slot, dci, 0);
 		err = USBD_IOERROR;
@@ -4322,6 +4278,11 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	KASSERT((xfer->ux_rqflags & URQ_REQUEST) != 0);
 
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
+	if (tr->is_halted)
+		goto out;
+
 	i = 0;
 
 	/* setup phase */
@@ -4364,11 +4325,18 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	if (!polling)
 		mutex_exit(&tr->xr_lock);
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
-	xfer->ux_status = USBD_IN_PROGRESS;
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
-	usbd_xfer_schedule_timeout(xfer);
+
+out:	if (xfer->ux_status == USBD_NOT_STARTED) {
+		usbd_xfer_schedule_timeout(xfer);
+		xfer->ux_status = USBD_IN_PROGRESS;
+	} else {
+		/*
+		 * We must be coming from xhci_pipe_restart -- timeout
+		 * already set up, nothing to do.
+		 */
+	}
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
@@ -4618,6 +4586,11 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 
 	KASSERT((xfer->ux_rqflags & URQ_REQUEST) == 0);
 
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
+	if (tr->is_halted)
+		goto out;
+
 	parameter = DMAADDR(dma, 0);
 	const bool isread = usbd_xfer_isread(xfer);
 	if (len)
@@ -4650,11 +4623,18 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	if (!polling)
 		mutex_exit(&tr->xr_lock);
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
-	xfer->ux_status = USBD_IN_PROGRESS;
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
-	usbd_xfer_schedule_timeout(xfer);
+
+out:	if (xfer->ux_status == USBD_NOT_STARTED) {
+		xfer->ux_status = USBD_IN_PROGRESS;
+		usbd_xfer_schedule_timeout(xfer);
+	} else {
+		/*
+		 * We must be coming from xhci_pipe_restart -- timeout
+		 * already set up, nothing to do.
+		 */
+	}
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
@@ -4742,6 +4722,11 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
+	if (tr->is_halted)
+		goto out;
+
 	KASSERT((xfer->ux_rqflags & URQ_REQUEST) == 0);
 
 	const bool isread = usbd_xfer_isread(xfer);
@@ -4764,11 +4749,18 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	if (!polling)
 		mutex_exit(&tr->xr_lock);
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
-	xfer->ux_status = USBD_IN_PROGRESS;
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
-	usbd_xfer_schedule_timeout(xfer);
+
+out:	if (xfer->ux_status == USBD_NOT_STARTED) {
+		xfer->ux_status = USBD_IN_PROGRESS;
+		usbd_xfer_schedule_timeout(xfer);
+	} else {
+		/*
+		 * We must be coming from xhci_pipe_restart -- timeout
+		 * already set up, nothing to do.
+		 */
+	}
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
