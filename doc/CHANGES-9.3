@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.67 2022/01/20 11:46:24 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.68 2022/01/29 17:19:50 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1198,4 +1198,64 @@ usr.sbin/sysinst/net.c				1.37-1.40
 
 	sysinst(8): Add support for connecting to Wi-Fi networks.
 	[nia, ticket #1406]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.298, 1.303 via patch
+
+	Add some missing error counters to ierror.
+	[msaitoh, ticket #1407]
+
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.16-1.17 via patch
+sys/dev/pci/ixgbe/ixv.c				1.176-1.177 via patch
+
+	Make ifconfig -z ixvN clear event counter.
+	[msaitoh, ticket #1408]
+
+sys/dev/mii/igphy.c				1.37
+sys/dev/mii/ihphy.c				1.19
+sys/dev/mii/makphy.c				1.68
+
+	Fix a bug that "ifconfig xx0 media none" set LINK_STATE_UNKNOWN
+	instead of LINK_STATE_DOWN.
+	[msaitoh, ticket #1409]
+
+sys/dev/mii/makphy.c				1.67,1.69-1.72 (patch)
+sys/dev/mii/makphyvar.h				1.3-1.4 (patch)
+
+	- Add I347-AT4 support.
+	- Add three workarounds for QEMU e1000:
+	  - QEMU sets BMSR_EXTSTAT but the access to register 15 fails.
+	    Set EXTSR_1000TFDX and EXTSR_1000THDX if the access failed in the
+	    attach function. It's just a cosmetic change.
+	  - Marvell 88E1[01]11 have the Fiber/Copper auto selection feature,
+	    but QEMU doesn't implement it. If the register access failed,
+	    the media is regarded as copper only. It's just a cosmetic change.
+	  - QEMU provides the PHY specific status register at 0x11 but the
+	    link indication bit (PSSR_LINK) is always 1. It causes
+	    "virsh domif-setlink xxx yyy down" doesn't work. To avoid this
+	    problem, read the BMSR and check the BMSR_LINK bit. Add
+	    MAKPHY_QUIRK_PSSR_LINK bit for this quirk. Set it if MII_EXTSR
+	    doesn't exist because it's one of the case of QEMU.
+	- Reduce the number of access to the ESSR register. One of the reason
+	  is that the register is not implemented on QEMU. Another reason is
+	  that it's not required to access the register if the device is in
+	  the copper only mode.
+	[msaitoh, ticket #1410]
+
+sys/net/ppp_tty.c				1.68
+sys/net/ppp_tty.c				1.69
+
+	Use unsigned to avoid undefined behavior in pppasyncstart()
+	and pppinput().
+	[msaitoh, ticket #1411]
+
+sys/dev/pci/pci_subr.c				1.232-1.239 via patch
+sys/dev/pci/pcireg.h				1.62-1.63
+
+	- Decode link control2's Compliance Preset/De-emphasis more.
+	- Decode Physical Layer 16.0 GT/s extended capability.
+	- Decode Lane Margining at the Receiver extended capability.
+	- Print "reserved" instead of "unknown" when printing equalization
+	  preset. One of them is known to be the default value.
+	- Fix typo.
+	[msaitoh, ticket #1412]
 
