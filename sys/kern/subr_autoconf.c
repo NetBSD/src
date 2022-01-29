@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.291 2021/12/31 14:19:57 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.292 2022/01/29 20:35:11 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.291 2021/12/31 14:19:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.292 2022/01/29 20:35:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2939,15 +2939,6 @@ device_pmf_driver_register(device_t dev,
 	return true;
 }
 
-static const char *
-curlwp_name(void)
-{
-	if (curlwp->l_name != NULL)
-		return curlwp->l_name;
-	else
-		return curlwp->l_proc->p_comm;
-}
-
 void
 device_pmf_driver_deregister(device_t dev)
 {
@@ -2992,11 +2983,19 @@ device_pmf_driver_set_child_register(device_t dev,
 static void
 pmflock_debug(device_t dev, const char *func, int line)
 {
+#ifdef PMFLOCK_DEBUG
 	device_lock_t dvl = device_getlock(dev);
+	const char *curlwp_name;
+
+	if (curlwp->l_name != NULL)
+		curlwp_name = curlwp->l_name;
+	else
+		curlwp_name = curlwp->l_proc->p_comm;
 
 	aprint_debug_dev(dev,
 	    "%s.%d, %s dvl_nlock %d dvl_nwait %d dv_flags %x\n", func, line,
-	    curlwp_name(), dvl->dvl_nlock, dvl->dvl_nwait, dev->dv_flags);
+	    curlwp_name, dvl->dvl_nlock, dvl->dvl_nwait, dev->dv_flags);
+#endif	/* PMFLOCK_DEBUG */
 }
 
 static bool
