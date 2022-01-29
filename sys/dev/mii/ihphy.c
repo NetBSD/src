@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.14.4.2 2021/11/20 14:59:04 martin Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.14.4.3 2022/01/29 16:54:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.14.4.2 2021/11/20 14:59:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.14.4.3 2022/01/29 16:54:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,6 @@ ihphy_status(struct mii_softc *sc)
 	PHY_READ(sc, MII_BMCR, &bmcr);
 	if (bmcr & (BMCR_ISO | BMCR_PDOWN)) {
 		mii->mii_media_active |= IFM_NONE;
-		mii->mii_media_status = 0;
 		return;
 	}
 
