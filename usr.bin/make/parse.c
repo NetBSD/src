@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.659 2022/01/29 09:38:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.660 2022/01/29 10:19:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.659 2022/01/29 09:38:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.660 2022/01/29 10:19:49 rillig Exp $");
 
 /*
  * A file being read.
@@ -435,7 +435,7 @@ FindKeyword(const char *str)
 	return -1;
 }
 
-static void
+void
 PrintLocation(FILE *f, bool useVars, const char *fname, size_t lineno)
 {
 	char dirbuf[MAXPATHLEN + 1];
