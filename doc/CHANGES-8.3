@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.116 2022/01/08 13:27:31 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.117 2022/01/29 17:13:08 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2370,4 +2370,41 @@ sys/conf/copyright				1.20
 
 	Welcome to 2022!
 	[jnemeth, ticket #1723]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.298, 1.303 via patch
+
+	Add some missing error counters to ierror.
+	[msaitoh, ticket #1724]
+
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.16-1.17
+sys/dev/pci/ixgbe/ixv.c				1.176-1.177
+
+	Make ifconfig -z ixvN clear event counter.
+	[msaitoh, ticket #1725]
+
+sys/dev/mii/igphy.c				1.37
+sys/dev/mii/ihphy.c				1.19
+sys/dev/mii/makphy.c				1.68
+
+	Fix a bug that "ifconfig xx0 media none" set LINK_STATE_UNKNOWN
+	instead of LINK_STATE_DOWN.
+	[msaitoh, ticket #1726]
+
+sys/net/ppp_tty.c				1.68
+sys/net/ppp_tty.c				1.69
+
+	Use unsigned to avoid undefined behavior in pppasyncstart()
+	and pppinput().
+	[msaitoh, ticket #1727]
+
+sys/dev/pci/pci_subr.c				1.232-1.239 via patch
+sys/dev/pci/pcireg.h				1.62-1.63
+
+	- Decode link control2's Compliance Preset/De-emphasis more.
+	- Decode Physical Layer 16.0 GT/s extended capability.
+	- Decode Lane Margining at the Receiver extended capability.
+	- Print "reserved" instead of "unknown" when printing equalization
+	  preset. One of them is known to be the default value.
+	- Fix typo.
+	[msaitoh, ticket #1728]
 
