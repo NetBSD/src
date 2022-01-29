@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.60.2.2 2020/08/05 15:14:18 martin Exp $	*/
+/*	$NetBSD: makphy.c,v 1.60.2.3 2022/01/29 16:54:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60.2.2 2020/08/05 15:14:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60.2.3 2022/01/29 16:54:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,9 +434,8 @@ makphy_status(struct mii_softc *sc)
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if (bmcr & BMCR_ISO) {
+	if (bmcr & (BMCR_ISO | BMCR_PDOWN)) {
 		mii->mii_media_active |= IFM_NONE;
-		mii->mii_media_status = 0;
 		return;
 	}
 
