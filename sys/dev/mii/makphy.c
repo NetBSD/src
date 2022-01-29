@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.60.2.3 2022/01/29 16:54:42 martin Exp $	*/
+/*	$NetBSD: makphy.c,v 1.60.2.4 2022/01/29 16:59:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60.2.3 2022/01/29 16:54:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60.2.4 2022/01/29 16:59:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ static const struct mii_phydesc makphys[] = {
 	MII_PHY_DESC(xxMARVELL, E3016),
 	MII_PHY_DESC(xxMARVELL, E3082),
 	MII_PHY_DESC(xxMARVELL, PHYG65G),
+	MII_PHY_DESC(xxMARVELL, I347),
 	MII_PHY_END,
 };
 
@@ -159,6 +160,7 @@ makphyattach(device_t parent, device_t self, void *aux)
 	struct makphy_softc *maksc = (struct makphy_softc *)sc;
 	const char *name;
 	uint16_t reg, model;
+	int rv;
 
 	mpd = mii_phy_match(ma, makphys);
 	aprint_naive(": Media interface\n");
@@ -205,8 +207,22 @@ page0:
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-	if (sc->mii_capabilities & BMSR_EXTSTAT)
-		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
+	if (sc->mii_capabilities & BMSR_EXTSTAT) {
+		rv = PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
+		if (rv != 0) {
+			aprint_verbose_dev(self, "Failed to read EXTSR. "
+			    "Are you an emulator?. "
+			    "Regard as 1000BASE-T.\n");
+			sc->mii_extcapabilities
+			    |= EXTSR_1000TFDX | EXTSR_1000THDX;
+
+			/*
+			 * Also assume it doesn't support PSSR_LINK bit.
+			 * It's for QEMU.
+			 */
+			maksc->sc_flags |= MAKPHY_QUIRK_PSSR_LINK;
+		}
+	}
 
 	if (((sc->mii_extcapabilities & (EXTSR_1000TFDX | EXTSR_1000THDX))
 		!= 0)
@@ -219,8 +235,18 @@ page0:
 		case MII_MODEL_xxMARVELL_E1011:
 		case MII_MODEL_xxMARVELL_E1111:
 			/* These devices have ESSR register */
-			PHY_READ(sc, MAKPHY_ESSR, &reg);
-			if ((reg & ESSR_AUTOSEL_DISABLE) != 0) {
+			rv = PHY_READ(sc, MAKPHY_ESSR, &reg);
+			if (rv != 0) {
+				/*
+				 * XXX Emulator (e.g qemu) may not implement
+				 * the ESSR register. If so, regard as copper
+				 * media.
+				 */
+				copperonly = true;
+				aprint_verbose_dev(self, "Failed to access "
+				    "ESSR. Are you an emulator? Regard as "
+				    "copper only media.\n");
+			} else if ((reg & ESSR_AUTOSEL_DISABLE) != 0) {
 				switch (reg & ESSR_HWCFG_MODE) {
 				case ESSR_RTBI_FIBER:
 				case ESSR_RGMII_FIBER:
@@ -238,7 +264,8 @@ page0:
 				default:
 					break;
 				}
-			}
+			} else
+				maksc->sc_flags |= MAKPHY_F_FICO_AUTOSEL;
 			break;
 		default:
 			break;
@@ -418,6 +445,7 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 static void
 makphy_status(struct mii_softc *sc)
 {
+	struct makphy_softc *maksc = (struct makphy_softc *)sc;
 	struct mii_data *mii = sc->mii_pdata;
 	uint16_t bmcr, gsr, pssr, essr;
 
@@ -427,6 +455,23 @@ makphy_status(struct mii_softc *sc)
 	PHY_READ(sc, MII_BMCR, &bmcr);
 	/* XXX FIXME: Use different page for Fiber on newer chips */
 	PHY_READ(sc, MAKPHY_PSSR, &pssr);
+
+	if ((maksc->sc_flags & MAKPHY_QUIRK_PSSR_LINK) != 0) {
+		uint16_t bmsr;
+
+		/*
+		 * QEMU e1000 driver has the PSSR register but it doesn't
+		 * support the PSSR_LINK bit well. It always returns 1.
+		 * To avoid this problem, use the BMSR_LINK bit. It's not
+		 * required to read it twice as real device because it's not
+		 * latched.
+		 */
+		PHY_READ(sc, MII_BMSR, &bmsr);
+		if (bmsr & BMSR_LINK)
+			pssr |= MAKPHY_PSSR_LINK;
+		else
+			pssr &= ~MAKPHY_PSSR_LINK;
+	}
 
 	if (pssr & MAKPHY_PSSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
@@ -466,14 +511,17 @@ makphy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_1000_SX;
 	} else if ((sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1011) ||
 	    (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1111)) {
-		/* Fiber/Copper auto select mode */
-
-		PHY_READ(sc, MAKPHY_ESSR, &essr);
-		if ((essr & ESSR_FIBER_LINK) == 0)
+		if ((maksc->sc_flags & MAKPHY_F_FICO_AUTOSEL) != 0) {
+			/* Fiber/Copper auto select mode */
+			PHY_READ(sc, MAKPHY_ESSR, &essr);
+			if ((essr & ESSR_FIBER_LINK) == 0)
+				goto copper;
+			else {
+				/* Regard as 1000BASE-SX */
+				mii->mii_media_active |= IFM_1000_SX;
+			}
+		} else
 			goto copper;
-
-		/* XXX Assume 1000BASE-SX only */
-		mii->mii_media_active |= IFM_1000_SX;
 	} else if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1112) {
 		/* Fiber/Copper auto select mode */
 

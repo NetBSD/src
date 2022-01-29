@@ -1,4 +1,4 @@
-/* $NetBSD: makphyvar.h,v 1.2 2019/03/25 06:17:56 msaitoh Exp $ */
+/* $NetBSD: makphyvar.h,v 1.2.6.1 2022/01/29 16:59:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,6 +37,11 @@ struct makphy_softc {
 	uint32_t sc_flags;
 };
 
-#define MAKPHY_F_I210	__BIT(0)	/* Identify I210 (mii_model == 0) */
+#define MAKPHY_F_I210		__BIT(0) /* Identify I210 (mii_model == 0) */
+#define MAKPHY_F_FICO_AUTOSEL	__BIT(1) /* Fiber/Copper autoselect mode */
+#define MAKPHY_QUIRK_PSSR_LINK	__BIT(2) /*
+					  * For emulator which doesn't support
+					  * PSSR_LINK (e.g. QEMU).
+					  */
 
 #endif /* _MII_MAKPHYVAR_H_ */
