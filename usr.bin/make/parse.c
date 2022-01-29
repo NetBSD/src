@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.658 2022/01/29 01:07:31 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.659 2022/01/29 09:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.658 2022/01/29 01:07:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.659 2022/01/29 09:38:26 rillig Exp $");
 
 /*
  * A file being read.
@@ -348,8 +348,14 @@ loadfile(const char *path, int fd)
 	return buf;		/* may not be null-terminated */
 }
 
-static void
-PrintStackTrace(void)
+/*
+ * Print the current chain of .include and .for directives.  In Parse_Fatal
+ * or other functions that already print the location, includingInnermost
+ * would be redundant, but in other cases like Error or Fatal it needs to be
+ * included.
+ */
+void
+PrintStackTrace(bool includingInnermost)
 {
 	const IncludedFile *entries;
 	size_t i, n;
@@ -359,7 +365,7 @@ PrintStackTrace(void)
 	if (n == 0)
 		return;
 
-	if (entries[n - 1].forLoop == NULL)
+	if (!includingInnermost && entries[n - 1].forLoop == NULL)
 		n--;		/* already in the diagnostic */
 
 	for (i = n; i-- > 0;) {
@@ -484,7 +490,7 @@ ParseVErrorInternal(FILE *f, bool useVars, const char *fname, size_t lineno,
 	}
 
 	if (DEBUG(PARSE))
-		PrintStackTrace();
+		PrintStackTrace(false);
 }
 
 static void MAKE_ATTR_PRINTFLIKE(4, 5)
