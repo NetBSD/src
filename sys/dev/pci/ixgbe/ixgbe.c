@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.15 2021/11/20 15:16:53 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.16 2022/01/29 16:33:10 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.15 2021/11/20 15:16:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.16 2022/01/29 16:33:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1571,13 +1571,19 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	u32		      missed_rx = 0, bprc, lxon, lxoff, total;
 	u64		      total_missed_rx = 0;
-	uint64_t	      crcerrs, rlec;
+	uint64_t	      crcerrs, illerrc, rlec, ruc, rfc, roc, rjc;
 	unsigned int	      queue_counters;
 	int		      i;
 
-	crcerrs = IXGBE_READ_REG(hw, IXGBE_CRCERRS);
-	stats->crcerrs.ev_count += crcerrs;
-	stats->illerrc.ev_count += IXGBE_READ_REG(hw, IXGBE_ILLERRC);
+#define READ_COPY_SET(hw, stats, regname, evname)		\
+	do {							\
+		(evname) = IXGBE_READ_REG((hw), regname);	\
+		(stats)->evname.ev_count += (evname);		\
+	} while (/*CONSTCOND*/0)
+	
+	READ_COPY_SET(hw, stats, IXGBE_CRCERRS, crcerrs);
+	READ_COPY_SET(hw, stats, IXGBE_ILLERRC, illerrc);
+
 	stats->errbc.ev_count += IXGBE_READ_REG(hw, IXGBE_ERRBC);
 	stats->mspdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MSPDC);
 	if (hw->mac.type >= ixgbe_mac_X550)
@@ -1635,8 +1641,7 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		stats->mlfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MLFC);
 		stats->mrfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MRFC);
 	}
-	rlec = IXGBE_READ_REG(hw, IXGBE_RLEC);
-	stats->rlec.ev_count += rlec;
+	READ_COPY_SET(hw, stats, IXGBE_RLEC, rlec);
 
 	/* Hardware workaround, gprc counts missed packets */
 	stats->gprc.ev_count += IXGBE_READ_REG(hw, IXGBE_GPRC) - missed_rx;
@@ -1688,10 +1693,13 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	stats->mptc.ev_count += IXGBE_READ_REG(hw, IXGBE_MPTC) - total;
 	stats->ptc64.ev_count += IXGBE_READ_REG(hw, IXGBE_PTC64) - total;
 
-	stats->ruc.ev_count += IXGBE_READ_REG(hw, IXGBE_RUC);
-	stats->rfc.ev_count += IXGBE_READ_REG(hw, IXGBE_RFC);
-	stats->roc.ev_count += IXGBE_READ_REG(hw, IXGBE_ROC);
-	stats->rjc.ev_count += IXGBE_READ_REG(hw, IXGBE_RJC);
+	READ_COPY_SET(hw, stats, IXGBE_RUC, ruc);
+	READ_COPY_SET(hw, stats, IXGBE_RFC, rfc);
+	READ_COPY_SET(hw, stats, IXGBE_ROC, roc);
+	READ_COPY_SET(hw, stats, IXGBE_RJC, rjc);
+
+#undef READ_COPY_SET
+
 	stats->mngprc.ev_count += IXGBE_READ_REG(hw, IXGBE_MNGPRC);
 	stats->mngpdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MNGPDC);
 	stats->mngptc.ev_count += IXGBE_READ_REG(hw, IXGBE_MNGPTC);
@@ -1725,7 +1733,19 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 
 	/* Rx Errors */
 	ifp->if_iqdrops += total_missed_rx;
-	ifp->if_ierrors += crcerrs + rlec;
+
+	/*
+	 * Aggregate following types of errors as RX errors:
+	 * - CRC error count,
+	 * - illegal byte error count,
+	 * - length error count,
+	 * - undersized packets count,
+	 * - fragmented packets count,
+	 * - oversized packets count,
+	 * - jabber count.
+	 */
+	ifp->if_ierrors +=
+	    crcerrs + illerrc + rlec + ruc + rfc + roc + rjc;
 } /* ixgbe_update_stats_counters */
 
 /************************************************************************
