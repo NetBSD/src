@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.125.2.13 2021/11/20 15:16:53 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.125.2.14 2022/01/29 16:43:23 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.13 2021/11/20 15:16:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.14 2022/01/29 16:43:23 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -130,7 +130,6 @@ static int	ixv_register_vlan(struct adapter *, u16);
 static int	ixv_unregister_vlan(struct adapter *, u16);
 
 static void	ixv_add_device_sysctls(struct adapter *);
-static void	ixv_save_stats(struct adapter *);
 static void	ixv_init_stats(struct adapter *);
 static void	ixv_update_stats(struct adapter *);
 static void	ixv_add_stats_sysctls(struct adapter *);
@@ -538,7 +537,6 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	}
 
 	/* Do the stats setup */
-	ixv_save_stats(adapter);
 	ixv_init_stats(adapter);
 	ixv_add_stats_sysctls(adapter);
 
@@ -2338,34 +2336,11 @@ ixv_configure_ivars(struct adapter *adapter)
 
 
 /************************************************************************
- * ixv_save_stats
+ * ixv_init_stats
  *
  *   The VF stats registers never have a truly virgin
- *   starting point, so this routine tries to make an
- *   artificial one, marking ground zero on attach as
- *   it were.
- ************************************************************************/
-static void
-ixv_save_stats(struct adapter *adapter)
-{
-	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
-
-	if (stats->vfgprc.ev_count || stats->vfgptc.ev_count) {
-		stats->saved_reset_vfgprc +=
-		    stats->vfgprc.ev_count - stats->base_vfgprc;
-		stats->saved_reset_vfgptc +=
-		    stats->vfgptc.ev_count - stats->base_vfgptc;
-		stats->saved_reset_vfgorc +=
-		    stats->vfgorc.ev_count - stats->base_vfgorc;
-		stats->saved_reset_vfgotc +=
-		    stats->vfgotc.ev_count - stats->base_vfgotc;
-		stats->saved_reset_vfmprc +=
-		    stats->vfmprc.ev_count - stats->base_vfmprc;
-	}
-} /* ixv_save_stats */
-
-/************************************************************************
- * ixv_init_stats
+ *   starting point, so this routine save initial vaules to
+ *   last_<REGNAME>.
  ************************************************************************/
 static void
 ixv_init_stats(struct adapter *adapter)
@@ -2383,34 +2358,25 @@ ixv_init_stats(struct adapter *adapter)
 	    (((u64)(IXGBE_READ_REG(hw, IXGBE_VFGOTC_MSB))) << 32);
 
 	adapter->stats.vf.last_vfmprc = IXGBE_READ_REG(hw, IXGBE_VFMPRC);
-
-	adapter->stats.vf.base_vfgprc = adapter->stats.vf.last_vfgprc;
-	adapter->stats.vf.base_vfgorc = adapter->stats.vf.last_vfgorc;
-	adapter->stats.vf.base_vfgptc = adapter->stats.vf.last_vfgptc;
-	adapter->stats.vf.base_vfgotc = adapter->stats.vf.last_vfgotc;
-	adapter->stats.vf.base_vfmprc = adapter->stats.vf.last_vfmprc;
 } /* ixv_init_stats */
 
 #define UPDATE_STAT_32(reg, last, count)		\
 {							\
 	u32 current = IXGBE_READ_REG(hw, (reg));	\
-	if (current < (last))				\
-		count.ev_count += 0x100000000LL;	\
+	count.ev_count += current - last;		\
 	(last) = current;				\
-	count.ev_count &= 0xFFFFFFFF00000000LL;		\
-	count.ev_count |= current;			\
 }
 
-#define UPDATE_STAT_36(lsb, msb, last, count)		\
-{							\
-	u64 cur_lsb = IXGBE_READ_REG(hw, (lsb));	\
-	u64 cur_msb = IXGBE_READ_REG(hw, (msb));	\
-	u64 current = ((cur_msb << 32) | cur_lsb);	\
-	if (current < (last))				\
-		count.ev_count += 0x1000000000LL;	\
-	(last) = current;				\
-	count.ev_count &= 0xFFFFFFF000000000LL;		\
-	count.ev_count |= current;			\
+#define UPDATE_STAT_36(lsb, msb, last, count)		   	\
+{						   		\
+	u64 cur_lsb = IXGBE_READ_REG(hw, (lsb));		\
+	u64 cur_msb = IXGBE_READ_REG(hw, (msb));		\
+	u64 current = ((cur_msb << 32) | cur_lsb);		\
+	if (current < (last))					\
+		count.ev_count += current + __BIT(36) - (last);	\
+	else							\
+		count.ev_count += current - (last);		\
+	(last) = current;					\
 }
 
 /************************************************************************
@@ -2794,7 +2760,11 @@ ixv_clear_evcnt(struct adapter *adapter)
 	stats->ipcs_bad.ev_count = 0;
 	stats->l4cs_bad.ev_count = 0;
 
-	/* Packet Reception Stats */
+	/*
+	 * Packet Reception Stats.
+	 * Call ixv_init_stats() to save last VF counters' values.
+	 */
+	ixv_init_stats(adapter);
 	stats->vfgprc.ev_count = 0;
 	stats->vfgorc.ev_count = 0;
 	stats->vfmprc.ev_count = 0;
