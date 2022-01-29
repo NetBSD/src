@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.291 2022/01/27 06:02:59 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.292 2022/01/29 01:07:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -987,7 +987,6 @@ void Var_Undef(const char *);
 void Var_Set(GNode *, const char *, const char *);
 void Var_SetExpand(GNode *, const char *, const char *);
 void Var_SetWithFlags(GNode *, const char *, const char *, VarSetFlags);
-void Var_SetExpandWithFlags(GNode *, const char *, const char *, VarSetFlags);
 void Var_Append(GNode *, const char *, const char *);
 void Var_AppendExpand(GNode *, const char *, const char *);
 bool Var_Exists(GNode *, const char *) MAKE_ATTR_USE;
