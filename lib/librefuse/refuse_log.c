@@ -1,4 +1,4 @@
-/* $NetBSD: refuse_log.c,v 1.1 2022/01/22 07:39:22 pho Exp $ */
+/* $NetBSD: refuse_log.c,v 1.2 2022/01/29 00:03:41 tnn Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse_log.c,v 1.1 2022/01/22 07:39:22 pho Exp $");
+__RCSID("$NetBSD: refuse_log.c,v 1.2 2022/01/29 00:03:41 tnn Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: refuse_log.c,v 1.1 2022/01/22 07:39:22 pho Exp $");
 #endif
 #include <stdio.h>
 
-static void
+static void  __printflike(2, 0)
 default_log_func(enum fuse_log_level level __attribute__((__unused__)),
                  const char *fmt, va_list ap) {
     /* This function needs to be thread-safe. Calling vfprintf(3)
