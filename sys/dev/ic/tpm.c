@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.24 2022/01/16 20:24:34 riastradh Exp $	*/
+/*	$NetBSD: tpm.c,v 1.25 2022/01/29 12:27:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.24 2022/01/16 20:24:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.25 2022/01/29 12:27:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -205,14 +205,14 @@ tpm12_suspend(struct tpm_softc *sc)
 	/*
 	 * Verify the response looks reasonable.
 	 */
-	if (TPM_BE16(response.tag) != TPM_TAG_RSP_COMMAND ||
-	    TPM_BE32(response.length) != sizeof(response) ||
-	    TPM_BE32(response.code) != 0) {
+	if (be16toh(response.tag) != TPM_TAG_RSP_COMMAND ||
+	    be32toh(response.length) != sizeof(response) ||
+	    be32toh(response.code) != 0) {
 		device_printf(sc->sc_dev,
 		    "TPM_ORD_SaveState failed: tag=0x%x length=0x%x code=0x%x",
-		    TPM_BE16(response.tag),
-		    TPM_BE32(response.length),
-		    TPM_BE32(response.code));
+		    be16toh(response.tag),
+		    be32toh(response.length),
+		    be32toh(response.code));
 		error = EIO;
 		goto out;
 	}
@@ -303,14 +303,14 @@ tpm20_suspend(struct tpm_softc *sc)
 	/*
 	 * Verify the response looks reasonable.
 	 */
-	if (TPM_BE16(response.tag) != TPM2_ST_NO_SESSIONS ||
-	    TPM_BE32(response.length) != sizeof(response) ||
-	    TPM_BE32(response.code) != TPM2_RC_SUCCESS) {
+	if (be16toh(response.tag) != TPM2_ST_NO_SESSIONS ||
+	    be32toh(response.length) != sizeof(response) ||
+	    be32toh(response.code) != TPM2_RC_SUCCESS) {
 		device_printf(sc->sc_dev,
 		    "TPM_CC_Shutdown failed: tag=0x%x length=0x%x code=0x%x",
-		    TPM_BE16(response.tag),
-		    TPM_BE32(response.length),
-		    TPM_BE32(response.code));
+		    be16toh(response.tag),
+		    be32toh(response.length),
+		    be32toh(response.code));
 		error = EIO;
 		goto out;
 	}
@@ -1084,7 +1084,7 @@ tpmread(dev_t dev, struct uio *uio, int flags)
 		rv = EIO;
 		goto out;
 	}
-	len = TPM_BE32(hdr.length);
+	len = be32toh(hdr.length);
 	if (len > MIN(sizeof(buf), uio->uio_resid) || len < sizeof(hdr)) {
 		rv = EIO;
 		goto out;
