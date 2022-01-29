@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.187 2022/01/17 20:56:02 andvar Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.188 2022/01/29 08:18:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -650,6 +650,15 @@
 #define CPUID_DATP_FULLASSOC	__BIT(8)	/* Full associative */
 #define CPUID_DATP_SHAREING	__BITS(25, 14)	/* shareing */
 
+/*
+ * Intel Hybrid Information Enumeration.
+ * CPUID Fn0000_001a
+ */
+/* %eax */
+#define CPUID_HYBRID_NATIVEID	__BITS(23, 0)	/* Native model ID */
+#define CPUID_HYBRID_CORETYPE	__BITS(31, 24)	/* Core type */
+#define   CPUID_HYBRID_CORETYPE_ATOM	0x20		/* Atom */
+#define   CPUID_HYBRID_CORETYPE_CORE	0x40		/* Core */
 
 /*
  * Intel extended features.
