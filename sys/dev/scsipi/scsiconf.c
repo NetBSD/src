@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.296 2022/01/28 18:23:28 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.297 2022/01/29 11:20:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.296 2022/01/28 18:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.297 2022/01/29 11:20:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,8 +477,8 @@ end2:
 static void
 scsi_discover_luns(struct scsibus_softc *sc, int target, int minlun, int maxlun)
 {
-	uint16_t *luns;
-	size_t nluns;
+	uint16_t *luns = NULL;	/* XXX gcc */
+	size_t nluns = 0;	/* XXX gcc */
 
 	if (scsi_report_luns(sc, target, &luns, &nluns) == 0) {
 		for (size_t i = 0; i < nluns; i++)
