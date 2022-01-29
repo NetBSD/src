@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.326 2022/01/15 19:34:07 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.327 2022/01/29 01:12:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.326 2022/01/15 19:34:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.327 2022/01/29 01:12:36 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -478,7 +478,7 @@ CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
 		case '"':
 			par->p++;
 			if (quoted)
-				goto got_str;	/* skip the closing quote */
+				goto return_buf;	/* skip the closing quote */
 			Buf_AddByte(&buf, '"');
 			continue;
 		case ')':	/* see is_separator */
@@ -489,14 +489,14 @@ CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
 		case ' ':
 		case '\t':
 			if (!quoted)
-				goto got_str;
+				goto return_buf;
 			Buf_AddByte(&buf, par->p[0]);
 			par->p++;
 			continue;
 		case '$':
 			if (!CondParser_StringExpr(par,
 			    start, doEval, quoted, &buf, &str))
-				goto cleanup;
+				goto return_str;
 			continue;
 		default:
 			if (!unquotedOK && !quoted && *start != '$' &&
@@ -506,17 +506,17 @@ CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
 				 * a variable expression or a number.
 				 */
 				str = FStr_InitRefer(NULL);
-				goto cleanup;
+				goto return_str;
 			}
 			Buf_AddByte(&buf, par->p[0]);
 			par->p++;
 			continue;
 		}
 	}
-got_str:
+return_buf:
 	str = FStr_InitOwn(buf.data);
 	buf.data = NULL;
-cleanup:
+return_str:
 	Buf_Done(&buf);
 	*out_str = str;
 }
