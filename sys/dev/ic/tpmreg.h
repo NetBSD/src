@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.10 2021/11/14 21:18:30 riastradh Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.11 2022/01/29 12:27:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -36,14 +36,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/endian.h>
-
-#if (_BYTE_ORDER == _LITTLE_ENDIAN)
-#define TPM_BE16(a)	bswap16(a)
-#define TPM_BE32(a)	bswap32(a)
-#else
-#define TPM_BE16(a)	(a)
-#define TPM_BE32(a)	(a)
-#endif
 
 struct tpm_header {
 	uint16_t tag;
