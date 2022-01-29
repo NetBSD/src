@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1006 2022/01/27 06:02:59 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1007 2022/01/29 01:07:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1006 2022/01/27 06:02:59 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1007 2022/01/29 01:07:31 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1018,29 +1018,6 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		VarFreeShortLived(v);
 }
 
-/* See Var_Set for documentation. */
-void
-Var_SetExpandWithFlags(GNode *scope, const char *name, const char *val,
-		       VarSetFlags flags)
-{
-	const char *unexpanded_name = name;
-	FStr varname = FStr_InitRefer(name);
-
-	assert(val != NULL);
-
-	Var_Expand(&varname, scope, VARE_WANTRES);
-
-	if (varname.str[0] == '\0') {
-		DEBUG2(VAR,
-		    "Var_SetExpand: variable name \"%s\" expands "
-		    "to empty string, with value \"%s\" - ignored\n",
-		    unexpanded_name, val);
-	} else
-		Var_SetWithFlags(scope, varname.str, val, flags);
-
-	FStr_Done(&varname);
-}
-
 void
 Var_Set(GNode *scope, const char *name, const char *val)
 {
@@ -1061,7 +1038,22 @@ Var_Set(GNode *scope, const char *name, const char *val)
 void
 Var_SetExpand(GNode *scope, const char *name, const char *val)
 {
-	Var_SetExpandWithFlags(scope, name, val, VAR_SET_NONE);
+	const char *unexpanded_name = name;
+	FStr varname = FStr_InitRefer(name);
+
+	assert(val != NULL);
+
+	Var_Expand(&varname, scope, VARE_WANTRES);
+
+	if (varname.str[0] == '\0') {
+		DEBUG2(VAR,
+		    "Var_SetExpand: variable name \"%s\" expands "
+		    "to empty string, with value \"%s\" - ignored\n",
+		    unexpanded_name, val);
+	} else
+		Var_SetWithFlags(scope, varname.str, val, VAR_SET_NONE);
+
+	FStr_Done(&varname);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.657 2022/01/27 10:34:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.658 2022/01/29 01:07:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.657 2022/01/27 10:34:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.658 2022/01/29 01:07:31 rillig Exp $");
 
 /*
  * A file being read.
@@ -188,7 +188,7 @@ typedef struct VarAssign {
 } VarAssign;
 
 static bool Parse_IsVar(const char *, VarAssign *);
-static void Parse_Var_Keep(VarAssign *, GNode *);
+static void Parse_Var(VarAssign *, GNode *);
 
 /*
  * The target to be made if no targets are specified in the command line.
@@ -1282,18 +1282,12 @@ ParseDependencySourcesSpecial(char *start,
 }
 
 static void
-LinkSourceVar(GNode *pgn, VarAssign *var)
-{
-	Parse_Var_Keep(var, pgn);
-}
-
-static void
 LinkVarToTargets(VarAssign *var)
 {
 	GNodeListNode *ln;
 
 	for (ln = targets->first; ln != NULL; ln = ln->next)
-		LinkSourceVar(ln->datum, var);
+		Parse_Var(var, ln->datum);
 }
 
 static bool
@@ -1725,7 +1719,7 @@ VarAssignSpecial(const char *name, const char *avalue)
 
 /* Perform the variable assignment in the given scope. */
 static void
-Parse_Var_Keep(VarAssign *var, GNode *scope)
+Parse_Var(VarAssign *var, GNode *scope)
 {
 	FStr avalue;		/* actual value (maybe expanded) */
 
@@ -1734,13 +1728,6 @@ Parse_Var_Keep(VarAssign *var, GNode *scope)
 		VarAssignSpecial(var->varname, avalue.str);
 		FStr_Done(&avalue);
 	}
-}
-
-static void
-Parse_Var(VarAssign *var, GNode *scope)
-{
-	Parse_Var_Keep(var, scope);
-	free(var->varname);
 }
 
 
@@ -2718,6 +2705,7 @@ Parse_VarAssign(const char *line, bool finishDependencyGroup, GNode *scope)
 	if (finishDependencyGroup)
 		FinishDependencyGroup();
 	Parse_Var(&var, scope);
+	free(var.varname);
 	return true;
 }
 
