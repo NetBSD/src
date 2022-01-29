@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.1 2022/01/15 12:35:18 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.2 2022/01/29 00:52:53 rillig Exp $
 
 --[[
 
@@ -81,6 +81,9 @@ local function check_mk(mk_fname)
         print_error("error: %s:%d: '%s:%d+' must contain '%s'",
           mk_fname, mk_lineno, exp_fname, prev_expect_line + 1, text)
       end
+    end
+    if mk_line:match("^#%s*expect%-reset$") then
+      prev_expect_line = 0
     end
 
     ---@param text string
