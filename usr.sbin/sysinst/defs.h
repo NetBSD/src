@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.76 2021/12/05 02:52:17 msaitoh Exp $	*/
+/*	$NetBSD: defs.h,v 1.77 2022/01/29 15:32:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -927,6 +927,7 @@ int	target_dir_exists_p(const char *);
 int	target_file_exists_p(const char *);
 int	target_symlink_exists_p(const char *);
 void	unwind_mounts(void);
+void	register_post_umount_delwedge(const char *disk, const char *wedge);
 int	target_mounted(void);
 void	umount_root(void);
 
