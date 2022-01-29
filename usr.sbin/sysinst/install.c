@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.21 2021/10/08 15:59:55 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.22 2022/01/29 16:01:16 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -230,7 +230,7 @@ do_install(void)
 	    MSG_extractcomplete, MSG_abortinst) != 0)
 		goto error;
 
-	if (md_post_extract(&install) != 0)
+	if (md_post_extract(&install, false) != 0)
 		goto error;
 
 	do_configmenu(&install);

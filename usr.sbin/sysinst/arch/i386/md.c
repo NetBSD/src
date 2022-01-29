@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.33 2020/10/23 19:03:42 martin Exp $ */
+/*	$NetBSD: md.c,v 1.34 2022/01/29 16:01:18 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -233,12 +233,12 @@ md_post_disklabel(struct install_partition_desc *install,
  * Do all legacy bootblock update/setup here
  */
 static int
-md_post_newfs_bios(struct install_partition_desc *install)
+update_bios_boot(struct install_partition_desc *install, bool use_target_files)
 {
 	int ret;
 	size_t len;
 	char boot_options[1024];
-	char *bootxx_filename;
+	char *bootxx_filename, *p;
 	/*
 	 * XXX - this code retains a lot of cruft from when we went
 	 * to great pains to exclude installboot from the ramdisk
@@ -282,13 +282,22 @@ md_post_newfs_bios(struct install_partition_desc *install)
 			return 0;
 	}
 
-	ret = cp_to_target("/usr/mdec/boot", "/boot");
+	if (use_target_files)
+		ret = cp_within_target("/usr/mdec/boot", "/", 0);
+	else
+		ret = cp_to_target("/usr/mdec/boot", "/");
 	if (ret)
 		return ret;
 	if (pm && pm->no_part)
 		return 0;
 
-        bootxx_filename = bootxx_name(install);
+	p = bootxx_name(install);
+	if (p && use_target_files) {
+		bootxx_filename = strdup(target_expand(p));
+		free(p);
+	} else {
+	        bootxx_filename = p;
+	}
         if (bootxx_filename != NULL) {
 		char rdev[PATH_MAX];
 
@@ -314,6 +323,12 @@ md_post_newfs_bios(struct install_partition_desc *install)
 	return ret;
 }
 
+static int
+md_post_newfs_bios(struct install_partition_desc *install)
+{
+	return update_bios_boot(install, false);
+}
+
 /*
  * Make sure our bootloader(s) are in the proper directory in the boot
  * boot partition (or update them).
@@ -321,7 +336,7 @@ md_post_newfs_bios(struct install_partition_desc *install)
 static int
 copy_uefi_boot(const struct part_usage_info *boot)
 {
-	char dev[MAXPATHLEN], path[MAXPATHLEN];
+	char dev[MAXPATHLEN], path[MAXPATHLEN], src[MAXPATHLEN];
 	size_t i;
 	int err;
 
@@ -349,9 +364,10 @@ copy_uefi_boot(const struct part_usage_info *boot)
 	make_target_dir(path);
 
 	for (i = 0; i < __arraycount(uefi_bootloaders); i++) {
-		if (access(uefi_bootloaders[i], R_OK) != 0)
+		strcpy(src, target_expand(uefi_bootloaders[i]));
+		if (access(src, R_OK) != 0)
 			continue;
-		err = cp_to_target(uefi_bootloaders[i], path);
+		err = cp_within_target(uefi_bootloaders[i], path, 0);
 		if (err)
 			return err;
 	}
@@ -363,18 +379,58 @@ copy_uefi_boot(const struct part_usage_info *boot)
  * Find (U)EFI boot partition and install/update bootloaders
  */
 static int
-md_post_newfs_uefi(struct install_partition_desc *install)
+update_uefi_boot_code(struct install_partition_desc *install)
 {
-	size_t i;
+	size_t i, boot_part;
 
+	boot_part = ~0U;
 	for (i = 0; i < install->num; i++) {
 		if (!(install->infos[i].instflags & PUIINST_BOOT))
 			continue;
-
-		return copy_uefi_boot(&install->infos[i]);
+		boot_part = i;
+		break;
+	}
+	if (boot_part == ~0U) {
+		/*
+		 * Didn't find an explicitly marked boot partition,
+		 * check if we have any EFI System Partitions and
+		 * use the first.
+		 */
+		for (i = 0; i < install->num; i++) {
+			if (install->infos[i].type != PT_EFI_SYSTEM)
+				continue;
+			boot_part = i;
+			break;
+		}
 	}
 
+	if (boot_part < install->num)
+		return copy_uefi_boot(&install->infos[boot_part]);
+
 	return -1;	/* no EFI boot partition found */
+}
+ 
+/*
+ * Find bootloader options and update bootloader
+ */
+static int
+update_bios_boot_code(struct install_partition_desc *install)
+{
+	return update_bios_boot(install, true);
+}
+
+static int
+update_boot_code(struct install_partition_desc *install)
+{
+	return uefi_boot ?
+	    update_uefi_boot_code(install)
+	    : update_bios_boot_code(install);
+}
+
+static int
+md_post_newfs_uefi(struct install_partition_desc *install)
+{
+	return update_uefi_boot_code(install);
 }
 
 /*
@@ -391,8 +447,11 @@ md_post_newfs(struct install_partition_desc *install)
 }
 
 int
-md_post_extract(struct install_partition_desc *install)
+md_post_extract(struct install_partition_desc *install, bool upgrade)
 {
+	if (upgrade)
+		update_boot_code(install);
+
 #if defined(__amd64__)
 	if (get_kernel_set() == SET_KERNEL_2) {
 		int ret;
@@ -402,6 +461,7 @@ md_post_extract(struct install_partition_desc *install)
 			return ret;
 	}
 #endif
+
 	return 0;
 }
 
@@ -461,7 +521,6 @@ md_pre_update(struct install_partition_desc *install)
 int
 md_update(struct install_partition_desc *install)
 {
-	md_post_newfs(install);
 	return 1;
 }
 
