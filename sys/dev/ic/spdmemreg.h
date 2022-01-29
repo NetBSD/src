@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemreg.h,v 1.4 2015/12/24 14:16:18 msaitoh Exp $ */
+/* $NetBSD: spdmemreg.h,v 1.5 2022/01/29 08:14:24 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -44,6 +44,8 @@
 #define	SPDMEM_MEMTYPE_DDR4ESDRAM	0x0E
 #define	SPDMEM_MEMTYPE_LPDDR3SDRAM	0x0F
 #define	SPDMEM_MEMTYPE_LPDDR4SDRAM	0x10
+#define	SPDMEM_MEMTYPE_LPDDR4XSDRAM	0x11
+#define	SPDMEM_MEMTYPE_DDR5SDRAM	0x12
 
 #define	SPDMEM_MEMTYPE_RAMBUS		0x11
 #define	SPDMEM_MEMTYPE_DIRECTRAMBUS	0x01
