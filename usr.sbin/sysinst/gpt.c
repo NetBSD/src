@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.26 2021/07/17 19:27:22 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.27 2022/01/29 15:32:49 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1680,6 +1680,9 @@ gpt_free(struct disk_partitions *arg)
 
 	assert(parts != NULL);
 	for (p = parts->partitions; p != NULL; p = n) {
+		if (p->gp_flags & GPEF_WEDGE)
+			register_post_umount_delwedge(parts->dp.disk,
+			    p->gp_dev_name);
 		free(__UNCONST(p->last_mounted));
 		n = p->gp_next;
 		free(p);

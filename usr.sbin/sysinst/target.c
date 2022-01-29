@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.15 2021/01/31 22:45:47 rillig Exp $	*/
+/*	$NetBSD: target.c,v 1.16 2022/01/29 15:32:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.15 2021/01/31 22:45:47 rillig Exp $");
+__RCSID("$NetBSD: target.c,v 1.16 2022/01/29 15:32:49 martin Exp $");
 #endif
 
 /*
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: target.c,v 1.15 2021/01/31 22:45:47 rillig Exp $");
 
 #include <sys/param.h>			/* XXX vm_param.h always defines TRUE*/
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/stat.h>			/* stat() */
 #include <sys/mount.h>			/* statfs() */
@@ -93,7 +94,7 @@ __RCSID("$NetBSD: target.c,v 1.15 2021/01/31 22:45:47 rillig Exp $");
 #include <unistd.h>
 #include <curses.h>			/* defines TRUE, but checks  */
 #include <errno.h>
-
+#include <util.h>
 
 #include "defs.h"
 #include "md.h"
@@ -118,6 +119,13 @@ struct unwind_mount {
 	struct unwind_mount *um_prev;
 	char um_mountpoint[4];		/* Allocated longer... */
 };
+
+/* Record a wedge for later deletion after all file systems have been unmounted */
+struct umount_delwedge {
+	struct umount_delwedge *next;
+	char disk[MAXPATHLEN], wedge[MAXPATHLEN];
+};
+struct umount_delwedge *post_umount_dwlist = NULL;
 
 /* Unwind-mount stack */
 struct unwind_mount *unwind_mountlist = NULL;
@@ -519,6 +527,35 @@ target_mount(const char *opts, const char *from, const char *on)
 	return target_mount_do(opts, from, on);
 }
 
+static bool
+delete_wedge(const char *disk, const char *wedge)
+{
+	struct dkwedge_info dkw;
+	char diskpath[MAXPATHLEN];
+	int fd, error;
+
+	fd = opendisk(disk, O_RDWR, diskpath, sizeof(diskpath), 0);
+	if (fd < 0)
+		return false;
+	memset(&dkw, 0, sizeof(dkw));
+	strlcpy(dkw.dkw_devname, wedge, sizeof(dkw.dkw_devname));
+	error = ioctl(fd, DIOCDWEDGE, &dkw);
+	close(fd);
+	return error == 0;
+}
+
+void
+register_post_umount_delwedge(const char *disk, const char *wedge)
+{
+	struct umount_delwedge *dw;
+
+	dw = calloc(1, sizeof(*dw));
+	dw->next = post_umount_dwlist;
+	strlcpy(dw->disk, disk, sizeof(dw->disk));
+	strlcpy(dw->wedge, wedge, sizeof(dw->wedge));
+	post_umount_dwlist = dw;
+}
+
 /*
  * unwind the mount stack, unmounting mounted filesystems.
  * For now, ignore any errors in unmount.
@@ -529,6 +566,7 @@ void
 unwind_mounts(void)
 {
 	struct unwind_mount *m;
+	struct umount_delwedge *dw;
 	static volatile int unwind_in_progress = 0;
 
 	/* signal safety */
@@ -546,6 +584,11 @@ unwind_mounts(void)
 		run_program(0, "/sbin/umount %s%s",
 			target_prefix(), m->um_mountpoint);
 		free(m);
+	}
+	while ((dw = post_umount_dwlist) != NULL) {
+		post_umount_dwlist = dw->next;
+		delete_wedge(dw->disk, dw->wedge);
+		free(dw);
 	}
 	unwind_in_progress = 0;
 }
