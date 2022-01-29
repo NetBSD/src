@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.36 2022/01/29 08:14:24 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.37 2022/01/29 08:17:03 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.36 2022/01/29 08:14:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.37 2022/01/29 08:17:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -269,6 +269,14 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		 * it some other time.
 		 */
 		return 1;
+	} else if (spd_type == SPDMEM_MEMTYPE_DDR5SDRAM) {
+		/* XXX Need Datasheet. */
+		(sc->sc_read)(sc, 0, &val);
+		spd_len = val & 0x0f;
+		if ((unsigned int)spd_len >= __arraycount(spd_rom_sizes))
+			return 0;
+		aprint_verbose("DDR5 SPD ROM?\n");
+		return 0;
 	}
 
 	/* For unrecognized memory types, don't match at all */
