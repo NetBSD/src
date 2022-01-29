@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.14 2021/12/09 20:47:33 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.15 2022/01/29 10:44:40 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -108,6 +108,10 @@ testcase USER_CPPFLAGS="-DNO_REGEX"
 #
 testcase USER_CFLAGS="-O3"
 
+# When optimizing for small code size, GCC gets confused by the initialization
+# status of local variables in some cases.
+testcase USER_CFLAGS="-Os"
+
 testcase USER_CFLAGS="-O0 -ggdb"
 
 # The make source code is _intended_ to be compatible with C90.
@@ -142,9 +146,6 @@ testcase USER_CFLAGS="-std=c90" USER_CPPFLAGS="-Dinline= -DUSE_C99_BOOLEAN"
 # Is expected to fail with "<stdbool.h> is included in pre-C99 mode".
 testcase USER_CFLAGS="-ansi" USER_CPPFLAGS="-Dinline="
 
-# config.h does not allow overriding these features
-#testcase USER_CPPFLAGS="-UUSE_IOVEC"
-
 # Ensure that there are only side-effect-free conditions in the assert
 # macro, or at least none that affect the outcome of the tests.
 #
@@ -156,18 +157,17 @@ testcase USER_CPPFLAGS="-DNDEBUG"
 # -x and -v flags from echoing the commands from profile files.
 testcase USER_CPPFLAGS="-UMAKE_NATIVE -DHAVE_STRERROR -DHAVE_SETENV -DHAVE_VSNPRINTF"
 
-# Running the code coverage using gcov takes a long time.  Most of this
-# time is spent in gcov_read_unsigned because gcov_open sets the .gcda
-# file to unbuffered, which means that every single byte needs its own
-# system call to be read.
+# Running the code coverage using gcov took a long time on NetBSD < 10, due to
+# https://gnats.netbsd.org/55808.
 #
 # Combining USE_COVERAGE with USE_GCC10 or HAVE_LLVM does not work since
 # these fail to link with the coverage library.
 #
-# Turning the optimization off is required because of:
+# Turning the optimization off is required because gcov does not work on the
+# source code level but on the intermediate code after optimization:
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96622
 #
-#testcase USE_COVERAGE="yes" USER_CFLAGS="-O0 -ggdb"
+testcase USE_COVERAGE="yes" USER_CFLAGS="-O0 -ggdb"
 
 testcase USE_FORT="yes"
 
