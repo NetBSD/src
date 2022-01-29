@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.215.2.5 2021/12/03 19:40:38 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.215.2.6 2022/01/29 17:08:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.215.2.5 2021/12/03 19:40:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.215.2.6 2022/01/29 17:08:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1787,6 +1787,45 @@ pci_print_pcie_link_deemphasis(pcireg_t val)
 	}
 }
 
+static const struct _pcie_link_preset_preshoot_deemphasis {
+	const char *preshoot;
+	const char *deemphasis;
+} pcie_link_preset_preshoot_deemphasis[] = {
+	{ "0.0",	"-6.0+-1.5" },	/* P0 */
+	{ "0.0",	"-3.5+-1" },	/* P1 */
+	{ "0.0",	"-4.4+-1.5" },	/* P2 */
+	{ "0.0",	"-2.5+-1" },	/* P3 */
+	{ "0.0",	"0.0" },	/* P4 */
+	{ "1.9+-1",	"0.0" },	/* P5 */
+	{ "2.5+-1",	"0.0" },	/* P6 */
+	{ "3.5+-1",	"-6.0+-1.5" },	/* P7 */
+	{ "3.5+-1",	"-3.5+-1" },	/* P8 */
+	{ "3.5+-1",	"0.0" },	/* P9 */
+	{ "0.0",	NULL }		/* P10 */
+};
+
+static void
+pci_print_pcie_link_preset_preshoot_deemphasis(pcireg_t val)
+{
+	const char *deemphasis;
+
+	if (val >= __arraycount(pcie_link_preset_preshoot_deemphasis)) {
+		/*
+		 * This may be printed because the default value of some
+		 * register fields is 0b1111.
+		 */
+		printf("reserved value (0x%x)", val);
+		return;
+	}
+
+	printf("Preshoot %sdB",
+	    pcie_link_preset_preshoot_deemphasis[val].preshoot);
+	deemphasis = pcie_link_preset_preshoot_deemphasis[val].deemphasis;
+
+	if (deemphasis != NULL)
+		printf(", De-emphasis %sdB", deemphasis);
+}
+
 static void
 pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
@@ -2320,8 +2359,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		    (unsigned int)__SHIFTOUT(reg,  PCIE_LCSR2_TX_MARGIN));
 		onoff("Enter Modified Compliance", reg, PCIE_LCSR2_EN_MCOMP);
 		onoff("Compliance SOS", reg, PCIE_LCSR2_COMP_SOS);
-		printf("      Compliance Present/De-emphasis: ");
-		pci_print_pcie_link_deemphasis(
+		printf("      Compliance Preset/De-emphasis: ");
+		pci_print_pcie_link_preset_preshoot_deemphasis(
 			__SHIFTOUT(reg, PCIE_LCSR2_COMP_DEEMP));
 		printf("\n");
 
@@ -3854,7 +3893,7 @@ pci_conf_print_sec_pcie_cap(const pcireg_t *regs, int extcapoff)
 		reg = regs[o2i(pcie_capoff + PCIE_LCAP)];
 		maxlinkwidth = __SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH);
 	} else {
-		printf("error: falied to get PCIe capablity\n");
+		printf("error: failed to get PCIe capability\n");
 		return;
 	}
 	for (i = 0; i < maxlinkwidth; i++) {
@@ -4220,6 +4259,179 @@ pci_conf_print_dlf_cap(const pcireg_t *regs, int extcapoff)
 	onoff("Remote DLF supported Valid", reg, PCI_DLF_STAT_RMTVALID);
 }
 
+static void
+pci_conf_print_pl16g_cap(const pcireg_t *regs, int extcapoff)
+{
+	pcireg_t reg, lwidth;
+	int pcie_capoff;
+	unsigned int i, j;
+
+	printf("\n  Physical Layer 16.0 GT/s\n");
+	reg = regs[o2i(extcapoff + PCI_PL16G_CAP)];
+	printf("    Capability register: 0x%08x\n", reg);
+
+	reg = regs[o2i(extcapoff + PCI_PL16G_CTL)];
+	printf("    Control register: 0x%08x\n", reg);
+
+	reg = regs[o2i(extcapoff + PCI_PL16G_STAT)];
+	printf("    Status register: 0x%08x\n", reg);
+	onoff("Equalization 16.0 GT/s Complete", reg, PCI_PL16G_STAT_EQ_COMPL);
+	onoff("Equalization 16.0 GT/s Phase 1 Successful", reg,
+	    PCI_PL16G_STAT_EQ_P1S);
+	onoff("Equalization 16.0 GT/s Phase 2 Successful", reg,
+	    PCI_PL16G_STAT_EQ_P2S);
+	onoff("Equalization 16.0 GT/s Phase 3 Successful", reg,
+	    PCI_PL16G_STAT_EQ_P3S);
+
+	reg = regs[o2i(extcapoff + PCI_PL16G_LDPMS)];
+	printf("    Local Data Parity Mismatch Status register: 0x%08x\n",
+	    reg);
+
+	reg = regs[o2i(extcapoff + PCI_PL16G_FRDPMS)];
+	printf("    First Retimer Data Parity Mismatch Status register:"
+	    " 0x%08x\n", reg);
+
+	reg = regs[o2i(extcapoff + PCI_PL16G_SRDPMS)];
+	printf("    Second Retimer Data Parity Mismatch Status register:"
+	    " 0x%08x\n", reg);
+
+	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff) == 0)
+		return; /* error */
+
+	reg = regs[o2i(pcie_capoff + PCIE_LCAP)];
+	lwidth = __SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH);
+
+	for (i = 0; i < lwidth;) {
+		reg = regs[o2i(extcapoff + PCI_PL16G_LEC + i)];
+
+		for (j = 0; j < 4; j++) {
+			pcireg_t up, down;
+
+			down = reg & 0x0000000f;
+			up = (reg >> 4) & 0x0000000f;
+			printf("      Lane %d downstream: ", i);
+			pci_print_pcie_link_preset_preshoot_deemphasis(down);
+			printf("\n      Lane %d upstream:   ", i);
+			pci_print_pcie_link_preset_preshoot_deemphasis(up);
+			printf("\n");
+
+			reg >>= 8;
+			i++;
+			if (i >= lwidth)
+				break;
+		}
+	}
+}
+
+static const char * const pcie_receive_number_dp[] = {
+	[0] = ("Broadcast "
+	    "(Downstream Port Receiver and all Retimer Pseudo Port Receiver)"),
+	[1] =  "Rx(A) (Downstream Port Receiver)",
+	[2] = "Rx(B) (Retimer X or Z Upstream Pseudo Port Receiver)",
+	[3] = "Rx(C) (Retimer X or Z Downstream Pseudo Port Receiver)",
+	[4] = "Rx(D) (Retimer Y Upstream Pseudo Port Receiver)",
+	[5] = "Rx(E) (Retimer Y Downstream Pseudo Port Receiver)",
+	[6] = "Reserved",
+	[7] = "Reserved"
+};
+
+static const char * const pcie_receive_number_up[] = {
+	"Broadcast (Upstream Port Receiver)",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Rx(F) (Upstream Port Receiver)",
+	"Reserved"
+};
+
+/*
+ * Print PCI_LMR_LANECSR. This function is used for both control and status
+ * register. The reg argument in the lower 16bit has the control or status
+ * register. The encoding is the same except the receive number, so use _LCTL_
+ * macro.
+ */
+static void
+pci_conf_print_lmr_lcsr(pcireg_t reg, bool up, bool dp)
+{
+	int rnum;
+
+ 	printf("      Receive Number: ");
+	rnum = __SHIFTOUT(reg, PCI_LMR_LCTL_RNUM);
+	if (up)
+		printf("%s\n", pcie_receive_number_up[rnum]);
+	else if (dp)
+		printf("%s\n", pcie_receive_number_dp[rnum]);
+	else
+		printf("%x\n", rnum);
+
+	printf("      Margin Type: %x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_LMR_LCTL_MTYPE));
+	printf("      Usage Model: %s\n",
+	    (__SHIFTOUT(reg, PCI_LMR_LCTL_UMODEL) == 0)
+	    ? "Lane Margining at Receiver" : "Reserved Encoding");
+	printf("      Margin Payload: 0x%02x\n",
+	    (uint32_t)__SHIFTOUT(reg, PCI_LMR_LCTL_MPAYLOAD));
+}
+
+static void
+pci_conf_print_lmr_cap(const pcireg_t *regs, int extcapoff)
+{
+	pcireg_t reg, lwidth;
+	int pcie_capoff;
+	int pcie_devtype;
+	unsigned int i;
+	bool up, dp;
+
+	printf("\n  Lane Margining at the Receiver\n");
+	reg = regs[o2i(extcapoff + PCI_LMR_PCAPSTAT)];
+	printf("    Port Capability register: 0x%04x\n", reg & 0xffff);
+	onoff("Margining uses Driver Software", reg, PCI_LMR_PCAP_MUDS);
+	printf("    Port Status register: 0x%04x\n", (reg >> 16) & 0xffff);
+	onoff("Margining Ready", reg, PCI_LMR_PSTAT_MR);
+	onoff("Margining Software Ready", reg, PCI_LMR_PSTAT_MSR);
+
+	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff) == 0)
+		return; /* error */
+
+	up = dp = false;
+	reg = regs[o2i(pcie_capoff)];
+	pcie_devtype = PCIE_XCAP_TYPE(reg);
+	switch (pcie_devtype) {
+	case PCIE_XCAP_TYPE_PCIE_DEV:	/* 0x0 */
+	case PCIE_XCAP_TYPE_PCI_DEV:	/* 0x1 */
+	case PCIE_XCAP_TYPE_UP:		/* 0x5 */
+	case PCIE_XCAP_TYPE_PCIE2PCI:	/* 0x7 */
+		up = true;
+		break;
+	case PCIE_XCAP_TYPE_RP:		/* 0x4 */
+	case PCIE_XCAP_TYPE_DOWN:	/* 0x6 */
+		dp = true;
+		break;
+	default:
+		printf("neither upstream nor downstream?(%x)\n", pcie_devtype);
+		break;
+	}
+
+	reg = regs[o2i(pcie_capoff + PCIE_LCAP)];
+	lwidth = __SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH);
+
+	for (i = 0; i < lwidth; i++) {
+		pcireg_t lctl, lstat;
+
+		reg = regs[o2i(extcapoff + PCI_LMR_LANECSR + (i * 4))];
+
+		lctl = reg & 0xffff;
+		printf("    Lane %d control: 0x%04x\n", i, lctl);
+		pci_conf_print_lmr_lcsr(lctl, up, dp);
+
+		lstat = (reg >> 16) & 0xffff;
+		printf("    Lane %d status: 0x%04x\n", i, lstat);
+		pci_conf_print_lmr_lcsr(lstat, up, dp);
+	}
+}
+
 /* XXX pci_conf_print_hierarchyid_cap */
 /* XXX pci_conf_print_npem_cap */
 
@@ -4307,8 +4519,10 @@ static struct {
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
 	{ PCI_EXTCAP_DLF,	"Data link Feature", pci_conf_print_dlf_cap },
-	{ PCI_EXTCAP_PYSLAY_16GT, "Physical Layer 16.0 GT/s", NULL },
-	{ PCI_EXTCAP_LMR,	"Lane Margining at the Receiver", NULL },
+	{ PCI_EXTCAP_PL16G,	"Physical Layer 16.0 GT/s",
+	  pci_conf_print_pl16g_cap },
+	{ PCI_EXTCAP_LMR,	"Lane Margining at the Receiver",
+	  pci_conf_print_lmr_cap },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
 	{ PCI_EXTCAP_NPEM,	"Native PCIe Enclosure Management",
