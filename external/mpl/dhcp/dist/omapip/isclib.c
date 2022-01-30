@@ -1,4 +1,4 @@
-/*	$NetBSD: isclib.c,v 1.6 2021/08/19 11:50:56 christos Exp $	*/
+/*	$NetBSD: isclib.c,v 1.7 2022/01/30 19:47:04 christos Exp $	*/
 
 /*
  * Copyright(c) 2009-2019 by Internet Systems Consortium, Inc.("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.6 2021/08/19 11:50:56 christos Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.7 2022/01/30 19:47:04 christos Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
   It looks like we want/need the library but need the fdwatchcommand
@@ -220,7 +220,7 @@ dhcp_context_create(int flags,
 		result = isc_appctx_create(dhcp_gbl_ctx.mctx,
 					   &dhcp_gbl_ctx.actx);
 
-		result = isc_managers_create(dhcp_gbl_ctx.mctx, 1, 0,
+		result = isc_managers_create(dhcp_gbl_ctx.mctx, 2, 0,
 		    &dhcp_gbl_ctx.netmgr, &dhcp_gbl_ctx.taskmgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
