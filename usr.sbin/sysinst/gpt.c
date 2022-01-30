@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.27 2022/01/29 15:32:49 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.28 2022/01/30 11:58:29 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ bool	gpt_parts_check(void);	/* check for needed binaries */
 #define GUID_STR_LEN	40
 #define	GPT_PTYPE_ALLOC	32	/* initial type array allocation, should be >
 				 * gpt type -l | wc -l */
-#define	GPT_DEV_LEN	16	/* dkNN */
+#define	GPT_DEV_LEN	DISKNAMESIZE	/* dkNN */
 
 #define	GPT_PARTS_PER_SEC	4	/* a 512 byte sector holds 4 entries */
 #define	GPT_DEFAULT_MAX_PARTS	128

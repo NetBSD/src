@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.78 2022/01/29 16:01:16 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.79 2022/01/30 11:58:29 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,6 +59,7 @@ const char *getfslabelname(uint, uint);
 #define STRSIZE		255
 #define	MENUSTRSIZE	80
 #define SSTRSIZE	30
+#define	DISKNAMESIZE	24	/* max(strlen("/dev/rsd22c")) */
 
 /* these are used for different alignment defaults */
 #define	HUGE_DISK_SIZE	(daddr_t)(128 * (GIG / 512))
