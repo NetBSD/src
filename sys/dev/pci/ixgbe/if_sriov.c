@@ -1,4 +1,4 @@
-/* $NetBSD: if_sriov.c,v 1.1.4.6 2021/09/15 16:38:00 martin Exp $ */
+/* $NetBSD: if_sriov.c,v 1.1.4.7 2022/01/30 16:06:35 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -34,7 +34,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.1.4.6 2021/09/15 16:38:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.1.4.7 2022/01/30 16:06:35 martin Exp $");
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
@@ -94,26 +94,26 @@ ixgbe_align_all_queue_indices(struct adapter *adapter)
 
 /* Support functions for SR-IOV/VF management */
 static inline void
-ixgbe_send_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
+ixgbe_send_vf_msg(struct ixgbe_hw *hw, struct ixgbe_vf *vf, u32 msg)
 {
 	if (vf->flags & IXGBE_VF_CTS)
 		msg |= IXGBE_VT_MSGTYPE_CTS;
 
-	adapter->hw.mbx.ops.write(&adapter->hw, &msg, 1, vf->pool);
+	hw->mbx.ops.write(hw, &msg, 1, vf->pool);
 }
 
 static inline void
 ixgbe_send_vf_ack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
 {
 	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_ACK);
+	ixgbe_send_vf_msg(&adapter->hw, vf, msg | IXGBE_VT_MSGTYPE_SUCCESS);
 }
 
 static inline void
 ixgbe_send_vf_nack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
 {
 	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_NACK);
+	ixgbe_send_vf_msg(&adapter->hw, vf, msg | IXGBE_VT_MSGTYPE_FAILURE);
 }
 
 static inline void
@@ -209,7 +209,7 @@ ixgbe_ping_all_vfs(struct adapter *adapter)
 	for (int i = 0; i < adapter->num_vfs; i++) {
 		vf = &adapter->vfs[i];
 		if (vf->flags & IXGBE_VF_ACTIVE)
-			ixgbe_send_vf_msg(adapter, vf, IXGBE_PF_CONTROL_MSG);
+			ixgbe_send_vf_msg(&adapter->hw, vf, IXGBE_PF_CONTROL_MSG);
 	}
 } /* ixgbe_ping_all_vfs */
 
@@ -255,8 +255,9 @@ ixgbe_vf_set_default_vlan(struct adapter *adapter, struct ixgbe_vf *vf,
 
 
 static void
-ixgbe_clear_vfmbmem(struct ixgbe_hw *hw, struct ixgbe_vf *vf)
+ixgbe_clear_vfmbmem(struct adapter *adapter, struct ixgbe_vf *vf)
 {
+	struct ixgbe_hw *hw = &adapter->hw;
 	uint32_t vf_index = IXGBE_VF_INDEX(vf->pool);
 	uint16_t mbx_size = hw->mbx.size;
 	uint16_t i;
@@ -323,7 +324,7 @@ ixgbe_process_vf_reset(struct adapter *adapter, struct ixgbe_vf *vf)
 	// XXX clear multicast addresses
 
 	ixgbe_clear_rar(&adapter->hw, vf->rar_index);
-	ixgbe_clear_vfmbmem(&adapter->hw, vf);
+	ixgbe_clear_vfmbmem(adapter, vf);
 	ixgbe_toggle_txdctl(&adapter->hw, IXGBE_VF_INDEX(vf->pool));
 
 	vf->api_ver = IXGBE_API_VER_UNKNOWN;
@@ -377,9 +378,9 @@ ixgbe_vf_reset_msg(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
 	if (ixgbe_validate_mac_addr(vf->ether_addr) == 0) {
 		ixgbe_set_rar(&adapter->hw, vf->rar_index, vf->ether_addr,
 		    vf->pool, TRUE);
-		ack = IXGBE_VT_MSGTYPE_ACK;
+		ack = IXGBE_VT_MSGTYPE_SUCCESS;
 	} else
-		ack = IXGBE_VT_MSGTYPE_NACK;
+		ack = IXGBE_VT_MSGTYPE_FAILURE;
 
 	ixgbe_vf_enable_transmit(adapter, vf);
 	ixgbe_vf_enable_receive(adapter, vf);
@@ -571,7 +572,7 @@ ixgbe_vf_get_queues(struct adapter *adapter, struct ixgbe_vf *vf, uint32_t *msg)
 		return;
 	}
 
-	resp[0] = IXGBE_VF_GET_QUEUES | IXGBE_VT_MSGTYPE_ACK |
+	resp[0] = IXGBE_VF_GET_QUEUES | IXGBE_VT_MSGTYPE_SUCCESS |
 	    IXGBE_VT_MSGTYPE_CTS;
 
 	num_queues = ixgbe_vf_queues(adapter->iov_mode);
@@ -640,7 +641,7 @@ ixgbe_process_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf)
 
 /* Tasklet for handling VF -> PF mailbox messages */
 void
-ixgbe_handle_mbx(void *context, int pending)
+ixgbe_handle_mbx(void *context)
 {
 	struct adapter *adapter = context;
 	struct ixgbe_hw *hw;
@@ -713,6 +714,7 @@ ixgbe_init_iov(device_t dev, u16 num_vfs, const nvlist_t *config)
 	}
 
 	adapter->num_vfs = num_vfs;
+	ixgbe_init_mbx_params_pf(&adapter->hw);
 
 	/* set the SRIOV flag now as it's needed
 	 * by ixgbe_init_locked() */
@@ -795,7 +797,7 @@ ixgbe_init_vf(struct adapter *adapter, struct ixgbe_vf *vf)
 	ixgbe_vf_enable_transmit(adapter, vf);
 	ixgbe_vf_enable_receive(adapter, vf);
 
-	ixgbe_send_vf_msg(adapter, vf, IXGBE_PF_CONTROL_MSG);
+	ixgbe_send_vf_msg(&adapter->hw, vf, IXGBE_PF_CONTROL_MSG);
 } /* ixgbe_init_vf */
 
 void
@@ -920,9 +922,9 @@ ixgbe_add_vf(device_t dev, u16 vfnum, const nvlist_t *config)
 #else
 
 void
-ixgbe_handle_mbx(void *context, int pending)
+ixgbe_handle_mbx(void *context)
 {
-	UNREFERENCED_2PARAMETER(context, pending);
+	UNREFERENCED_1PARAMETER(context);
 } /* ixgbe_handle_mbx */
 
 inline int

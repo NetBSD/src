@@ -1,9 +1,9 @@
-/* $NetBSD: ixgbe_mbx.h,v 1.10.8.3 2019/07/22 17:53:35 martin Exp $ */
+/* $NetBSD: ixgbe_mbx.h,v 1.10.8.4 2022/01/30 16:06:35 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
-  Copyright (c) 2001-2017, Intel Corporation
+  Copyright (c) 2001-2020, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,37 @@
 
 #include "ixgbe_type.h"
 
+struct ixgbe_mbx_operations {
+	void (*init_params)(struct ixgbe_hw *hw);
+	s32  (*read)(struct ixgbe_hw *, u32 *, u16,  u16);
+	s32  (*write)(struct ixgbe_hw *, u32 *, u16, u16);
+	s32  (*read_posted)(struct ixgbe_hw *, u32 *, u16,  u16);
+	s32  (*write_posted)(struct ixgbe_hw *, u32 *, u16, u16);
+	s32  (*check_for_msg)(struct ixgbe_hw *, u16);
+	s32  (*check_for_ack)(struct ixgbe_hw *, u16);
+	s32  (*check_for_rst)(struct ixgbe_hw *, u16);
+	s32  (*clear)(struct ixgbe_hw *hw, u16 vf_number);
+};
+
+struct ixgbe_mbx_stats {
+	struct evcnt msgs_tx;
+	struct evcnt msgs_rx;
+
+	struct evcnt acks;
+	struct evcnt reqs;
+	struct evcnt rsts;
+};
+
+struct ixgbe_mbx_info {
+	struct ixgbe_mbx_operations ops;
+	struct ixgbe_mbx_stats stats;
+	u32 timeout;
+	u32 usec_delay;
+	u32 v2p_mailbox;
+	u16 size;
+};
+
 #define IXGBE_VFMAILBOX_SIZE	16 /* 16 32 bit words - 64 bytes */
-#define IXGBE_ERR_MBX		-100
 
 #define IXGBE_VFMAILBOX		0x002FC
 #define IXGBE_VFMBMEM		0x00200
@@ -71,14 +100,17 @@
 
 /* If it's a IXGBE_VF_* msg then it originates in the VF and is sent to the
  * PF.  The reverse is TRUE if it is IXGBE_PF_*.
- * Message ACK's are the value or'd with 0xF0000000
+ * Message results are the value or'd with 0xF0000000
  */
-#define IXGBE_VT_MSGTYPE_ACK	0x80000000 /* Messages below or'd with
-					    * this are the ACK */
-#define IXGBE_VT_MSGTYPE_NACK	0x40000000 /* Messages below or'd with
-					    * this are the NACK */
-#define IXGBE_VT_MSGTYPE_CTS	0x20000000 /* Indicates that VF is still
-					    * clear to send requests */
+#define IXGBE_VT_MSGTYPE_SUCCESS	0x80000000 /* Messages or'd with this
+						    * have succeeded
+						    */
+#define IXGBE_VT_MSGTYPE_FAILURE	0x40000000 /* Messages or'd with this
+						    * have failed
+						    */
+#define IXGBE_VT_MSGTYPE_CTS		0x20000000 /* Indicates that VF is still
+						    * clear to send requests
+						    */
 #define IXGBE_VT_MSGINFO_SHIFT	16
 /* bits 23:16 are used for extra info for certain messages */
 #define IXGBE_VT_MSGINFO_MASK	(0xFF << IXGBE_VT_MSGINFO_SHIFT)
@@ -155,6 +187,13 @@ enum ixgbevf_xcast_modes {
 #define IXGBE_VF_MBX_INIT_TIMEOUT	2000 /* number of retries on mailbox */
 #define IXGBE_VF_MBX_INIT_DELAY		500  /* microseconds between retries */
 
+s32 ixgbe_read_mbx(struct ixgbe_hw *, u32 *, u16, u16);
+s32 ixgbe_write_mbx(struct ixgbe_hw *, u32 *, u16, u16);
+s32 ixgbe_read_posted_mbx(struct ixgbe_hw *, u32 *, u16, u16);
+s32 ixgbe_write_posted_mbx(struct ixgbe_hw *, u32 *, u16, u16);
+s32 ixgbe_check_for_msg(struct ixgbe_hw *, u16);
+s32 ixgbe_check_for_ack(struct ixgbe_hw *, u16);
+s32 ixgbe_check_for_rst(struct ixgbe_hw *, u16);
 s32 ixgbe_clear_mbx(struct ixgbe_hw *hw, u16 vf_number);
 void ixgbe_init_mbx_ops_generic(struct ixgbe_hw *hw);
 void ixgbe_init_mbx_params_vf(struct ixgbe_hw *);
