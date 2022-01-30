@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.68 2022/01/29 17:19:50 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.69 2022/01/30 16:03:50 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1258,4 +1258,75 @@ sys/dev/pci/pcireg.h				1.62-1.63
 	  preset. One of them is known to be the default value.
 	- Fix typo.
 	[msaitoh, ticket #1412]
+
+sys/dev/pci/ixgbe/if_sriov.c			1.12-1.16
+sys/dev/pci/ixgbe/ixgbe.c			1.295-1.297, 1.300,
+						1.304 via patch
+sys/dev/pci/ixgbe/ixgbe.h			1.84
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.17-1.18
+sys/dev/pci/ixgbe/ixgbe_82598.h			1.9
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.24-1.28
+sys/dev/pci/ixgbe/ixgbe_82599.h			1.8
+sys/dev/pci/ixgbe/ixgbe_api.c			1.26-1.27
+sys/dev/pci/ixgbe/ixgbe_api.h			1.16
+sys/dev/pci/ixgbe/ixgbe_bypass.h		1.3
+sys/dev/pci/ixgbe/ixgbe_common.c		1.34-1.42
+sys/dev/pci/ixgbe/ixgbe_common.h		1.15-1.16
+sys/dev/pci/ixgbe/ixgbe_dcb.c			1.12-1.13
+sys/dev/pci/ixgbe/ixgbe_dcb.h			1.8-1.9
+sys/dev/pci/ixgbe/ixgbe_dcb_82598.c		1.10-1.12
+sys/dev/pci/ixgbe/ixgbe_dcb_82598.h		1.8
+sys/dev/pci/ixgbe/ixgbe_dcb_82599.c		1.10-1.11
+sys/dev/pci/ixgbe/ixgbe_dcb_82599.h		1.8
+sys/dev/pci/ixgbe/ixgbe_fdir.h			1.4
+sys/dev/pci/ixgbe/ixgbe_features.h		1.4
+sys/dev/pci/ixgbe/ixgbe_mbx.c			1.13-1.15
+sys/dev/pci/ixgbe/ixgbe_mbx.h			1.15-1.18
+sys/dev/pci/ixgbe/ixgbe_netmap.c		1.5
+sys/dev/pci/ixgbe/ixgbe_osdep.c			1.8
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.31
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.25-1.29
+sys/dev/pci/ixgbe/ixgbe_phy.h			1.13
+sys/dev/pci/ixgbe/ixgbe_rss.h			1.6
+sys/dev/pci/ixgbe/ixgbe_sriov.h			1.5
+sys/dev/pci/ixgbe/ixgbe_type.h			1.51-1.54
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.28-1.29
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.15
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.20-1.22
+sys/dev/pci/ixgbe/ixgbe_x540.h			1.10
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.21-1.25
+sys/dev/pci/ixgbe/ixgbe_x550.h			1.7
+sys/dev/pci/ixgbe/ixv.c				1.170, 1.174-1.175 via patch
+
+	- Add typecast for type mismatch.
+	- Fix retry count calculation of I2C read/write.
+	- Wait longer for link after fiber MAC setup.
+	- ixv(4): Use adapter->mta for the multicast array memory instead of
+	  the on-stack array.
+	- Match X550_PHY_ID correctly on X550.
+	- Print NVM image version on 82598.
+	- Use 64bit for lxon + lxoff.
+	- Don't expose garbage data of hw.ixvN.debug.
+	- Some NetBSD unrelated changes:
+	  - Fix infinite recursion on PCIe link down if VMDQ is used.
+	  - Move PF mailbox initialization from ixgbe_attach() to
+	    ixgbe_init_iov().
+	  - Add IPv6 mask for flow director.
+	  - Change error level in ixgbe_fc_autoneg().
+	  - Check host interface return status when writing NVM.
+	  - Change DCB credit parameters.
+	- Restore some mailbox related functions. Revert part of ixgbe_mbx.c
+	  rev. 1.7 and ixgbe_mbx.h rev. 1.11. No functional change.
+	- Rename IXGBE_VT_MSGTYPE_{ACK,NACK} to
+	  IXGBE_VT_MSGTYPE_{SUCCESS,FAILURE}. No functional change.
+	- Remove unused argument. Change argument.
+	- Remove unnecessary return value check.
+	- Remove debug error message.
+	- Remove dead code.
+	- Add some unused macros.
+	- Fix typo in comment.
+	- Rename some functions.
+	- Sort lines, modify comment.
+	- Whitespace fix.
+	[msaitoh, ticket #1414]
 
