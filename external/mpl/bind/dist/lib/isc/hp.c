@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.6 2022/01/30 18:54:52 christos Exp $	*/
+/*	$NetBSD: hp.c,v 1.7 2022/01/30 19:49:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -107,6 +107,9 @@ isc_hp_new(isc_mem_t *mctx, size_t max_hps, isc_hp_deletefunc_t *deletefunc) {
 
 	hp->hp = isc_mem_get(mctx, isc__hp_max_threads * sizeof(hp->hp[0]));
 	hp->rl = isc_mem_get(mctx, isc__hp_max_threads * sizeof(hp->rl[0]));
+
+	syslog(LOG_ERR, "%s: max_hps=%zu max_threads=%d", __func__, max_hps,
+	    isc__hp_max_threads);
 
 	for (int i = 0; i < isc__hp_max_threads; i++) {
 		hp->hp[i] = isc_mem_get(mctx, CLPAD * 2 * sizeof(hp->hp[i][0]));
