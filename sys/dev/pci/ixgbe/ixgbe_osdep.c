@@ -1,8 +1,8 @@
-/* $NetBSD: ixgbe_osdep.c,v 1.4.8.3 2021/09/15 16:30:50 martin Exp $ */
+/* $NetBSD: ixgbe_osdep.c,v 1.4.8.4 2022/01/30 15:58:28 martin Exp $ */
 
 /******************************************************************************
 
-  Copyright (c) 2001-2017, Intel Corporation
+  Copyright (c) 2001-2020, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_osdep.c,v 1.4.8.3 2021/09/15 16:30:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_osdep.c,v 1.4.8.4 2022/01/30 15:58:28 martin Exp $");
 
 #include "ixgbe_osdep.h"
 #include "ixgbe.h"

@@ -1,7 +1,7 @@
-/* $NetBSD: ixgbe_x550.h,v 1.5.4.1 2021/09/15 16:30:50 martin Exp $ */
+/* $NetBSD: ixgbe_x550.h,v 1.5.4.2 2022/01/30 15:58:29 martin Exp $ */
 /******************************************************************************
 
-  Copyright (c) 2001-2017, Intel Corporation
+  Copyright (c) 2001-2020, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without

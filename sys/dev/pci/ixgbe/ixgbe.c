@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.16 2022/01/29 16:33:10 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.17 2022/01/30 15:58:28 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.16 2022/01/29 16:33:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.17 2022/01/30 15:58:28 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -232,7 +232,7 @@ static void	ixgbe_add_hw_stats(struct adapter *);
 static void	ixgbe_clear_evcnt(struct adapter *);
 static int	ixgbe_set_flowcntl(struct adapter *, int);
 static int	ixgbe_set_advertise(struct adapter *, int);
-static int	ixgbe_get_advertise(struct adapter *);
+static int	ixgbe_get_default_advertise(struct adapter *);
 
 /* Sysctl handlers */
 static void	ixgbe_set_sysctl_value(struct adapter *, const char *,
@@ -721,7 +721,7 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 		/* Disable Head Writeback */
 		/*
 		 * Note: for X550 series devices, these registers are actually
-		 * prefixed with TPH_ isntead of DCA_, but the addresses and
+		 * prefixed with TPH_ instead of DCA_, but the addresses and
 		 * fields remain the same.
 		 */
 		switch (hw->mac.type) {
@@ -877,9 +877,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	}
 	aprint_normal_dev(dev, "device %s\n", str);
 
-	if (hw->mbx.ops.init_params)
-		hw->mbx.ops.init_params(hw);
-
 	hw->allow_unsupported_sfp = allow_unsupported_sfp;
 
 	/* Pick up the 82599 settings */
@@ -991,6 +988,23 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* NVM Image Version */
 	high = low = 0;
 	switch (hw->mac.type) {
+	case ixgbe_mac_82598EB:
+		/*
+		 * Print version from the dev starter version (0x29). The
+		 * location is the same as newer device's IXGBE_NVM_MAP_VER.
+		 */
+		hw->eeprom.ops.read(hw, IXGBE_NVM_MAP_VER, &nvmreg);
+		if (nvmreg == 0xffff)
+			break;
+		high = (nvmreg >> 12) & 0x0f;
+		low = (nvmreg >> 4) & 0xff;
+		id = nvmreg & 0x0f;
+		/*
+		 * The following output might not be correct. Some 82598 cards
+		 * have 0x1070 or 0x2090. 82598 spec update notes about 2.9.0.
+		 */
+		aprint_normal(" NVM Image Version %u.%u.%u,", high, low, id);
+		break;
 	case ixgbe_mac_X540:
 	case ixgbe_mac_X550EM_a:
 		hw->eeprom.ops.read(hw, IXGBE_NVM_IMAGE_VER, &nvmreg);
@@ -1206,7 +1220,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* Set an initial dmac value */
 	adapter->dmac = 0;
 	/* Set initial advertised speeds (if applicable) */
-	adapter->advertise = ixgbe_get_advertise(adapter);
+	adapter->advertise = ixgbe_get_default_advertise(adapter);
 
 	if (adapter->feat_cap & IXGBE_FEATURE_SRIOV)
 		ixgbe_define_iov_schemas(dev, &error);
@@ -1569,8 +1583,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	struct ifnet	      *ifp = adapter->ifp;
 	struct ixgbe_hw	      *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
-	u32		      missed_rx = 0, bprc, lxon, lxoff, total;
-	u64		      total_missed_rx = 0;
+	u32		      missed_rx = 0, bprc, lxon, lxoff;
+	u64		      total, total_missed_rx = 0;
 	uint64_t	      crcerrs, illerrc, rlec, ruc, rfc, roc, rjc;
 	unsigned int	      queue_counters;
 	int		      i;
@@ -5421,10 +5435,10 @@ ixgbe_sysctl_advertise(SYSCTLFN_ARGS)
  *
  *   Flags:
  *     0x00 - Default (all capable link speed)
- *     0x01 - advertise 100 Mb
- *     0x02 - advertise 1G
- *     0x04 - advertise 10G
- *     0x08 - advertise 10 Mb
+ *     0x1  - advertise 100 Mb
+ *     0x2  - advertise 1G
+ *     0x4  - advertise 10G
+ *     0x8  - advertise 10 Mb (yes, Mb)
  *     0x10 - advertise 2.5G
  *     0x20 - advertise 5G
  ************************************************************************/
@@ -5525,19 +5539,19 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 } /* ixgbe_set_advertise */
 
 /************************************************************************
- * ixgbe_get_advertise - Get current advertised speed settings
+ * ixgbe_get_default_advertise - Get default advertised speed settings
  *
  *   Formatted for sysctl usage.
  *   Flags:
- *     0x01 - advertise 100 Mb
- *     0x02 - advertise 1G
- *     0x04 - advertise 10G
- *     0x08 - advertise 10 Mb (yes, Mb)
+ *     0x1  - advertise 100 Mb
+ *     0x2  - advertise 1G
+ *     0x4  - advertise 10G
+ *     0x8  - advertise 10 Mb (yes, Mb)
  *     0x10 - advertise 2.5G
  *     0x20 - advertise 5G
  ************************************************************************/
 static int
-ixgbe_get_advertise(struct adapter *adapter)
+ixgbe_get_default_advertise(struct adapter *adapter)
 {
 	struct ixgbe_hw	 *hw = &adapter->hw;
 	int		 speed;
@@ -5558,15 +5572,15 @@ ixgbe_get_advertise(struct adapter *adapter)
 		return (0);
 
 	speed =
-	    ((link_caps & IXGBE_LINK_SPEED_10GB_FULL)  ? 0x04 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_1GB_FULL)   ? 0x02 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_100_FULL)   ? 0x01 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_10_FULL)    ? 0x08 : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_10GB_FULL)  ? 0x4  : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_5GB_FULL)   ? 0x20 : 0) |
 	    ((link_caps & IXGBE_LINK_SPEED_2_5GB_FULL) ? 0x10 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_5GB_FULL)   ? 0x20 : 0);
+	    ((link_caps & IXGBE_LINK_SPEED_1GB_FULL)   ? 0x2  : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_100_FULL)   ? 0x1  : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_10_FULL)    ? 0x8  : 0);
 
 	return speed;
-} /* ixgbe_get_advertise */
+} /* ixgbe_get_default_advertise */
 
 /************************************************************************
  * ixgbe_sysctl_dmac - Manage DMA Coalescing
