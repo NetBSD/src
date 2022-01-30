@@ -1,9 +1,9 @@
-/* $NetBSD: ixgbe_82598.h,v 1.5.8.2 2018/04/14 10:25:12 martin Exp $ */
+/* $NetBSD: ixgbe_82598.h,v 1.5.8.3 2022/01/30 16:06:35 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
-  Copyright (c) 2001-2017, Intel Corporation
+  Copyright (c) 2001-2020, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without

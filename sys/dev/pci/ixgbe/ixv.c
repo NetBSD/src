@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.56.2.34 2022/01/29 16:45:49 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.56.2.35 2022/01/30 16:06:35 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.34 2022/01/29 16:45:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.35 2022/01/30 16:06:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -547,6 +547,10 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		aprint_error_dev(dev, "ixv_setup_interface() failed!\n");
 		goto err_late;
 	}
+
+	/* Allocate multicast array memory */
+	adapter->mta = malloc(sizeof(*adapter->mta) *
+	    IXGBE_MAX_VF_MC, M_DEVBUF, M_WAITOK);
 
 	/* Do the stats setup */
 	ixv_init_stats(adapter);
@@ -1111,7 +1115,7 @@ ixv_negotiate_api(struct adapter *adapter)
 static int
 ixv_set_rxfilter(struct adapter *adapter)
 {
-	u8	mta[IXGBE_MAX_VF_MC * IXGBE_ETH_LENGTH_OF_ADDRESS];
+	struct ixgbe_mc_addr	*mta;
 	struct ifnet		*ifp = adapter->ifp;
 	struct ixgbe_hw		*hw = &adapter->hw;
 	u8			*update_ptr;
@@ -1124,6 +1128,9 @@ ixv_set_rxfilter(struct adapter *adapter)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 	IOCTL_DEBUGOUT("ixv_set_rxfilter: begin");
+
+	mta = adapter->mta;
+	bzero(mta, sizeof(*mta) * IXGBE_MAX_VF_MC);
 
 	/* 1: For PROMISC */
 	if (ifp->if_flags & IFF_PROMISC) {
@@ -1162,8 +1169,7 @@ ixv_set_rxfilter(struct adapter *adapter)
 			break;
 		}
 		bcopy(enm->enm_addrlo,
-		    &mta[mcnt * IXGBE_ETH_LENGTH_OF_ADDRESS],
-		    IXGBE_ETH_LENGTH_OF_ADDRESS);
+		    mta[mcnt].addr, IXGBE_ETH_LENGTH_OF_ADDRESS);
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -1210,8 +1216,7 @@ ixv_set_rxfilter(struct adapter *adapter)
 		    "operation to normal. error = %d\n", error);
 	}
 
-	update_ptr = mta;
-
+	update_ptr = (u8 *)mta;
 	error = adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw,
 	    update_ptr, mcnt, ixv_mc_array_itr, TRUE);
 	if (rc == 0)
@@ -1230,15 +1235,14 @@ ixv_set_rxfilter(struct adapter *adapter)
 static u8 *
 ixv_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
 {
-	u8 *addr = *update_ptr;
-	u8 *newptr;
+	struct ixgbe_mc_addr *mta;
+
+	mta = (struct ixgbe_mc_addr *)*update_ptr;
 
 	*vmdq = 0;
+	*update_ptr = (u8*)(mta + 1);
 
-	newptr = addr + IXGBE_ETH_LENGTH_OF_ADDRESS;
-	*update_ptr = newptr;
-
-	return addr;
+	return (mta->addr);
 } /* ixv_mc_array_itr */
 
 /************************************************************************
@@ -2735,10 +2739,23 @@ ixv_set_sysctl_value(struct adapter *adapter, const char *name,
 	*limit = value;
 } /* ixv_set_sysctl_value */
 
+#define PRINTQS(adapter, regname)					\
+	do {								\
+		struct ixgbe_hw	*_hw = &(adapter)->hw;			\
+		int _i;							\
+									\
+		printf("%s: %s", device_xname((adapter)->dev), #regname); \
+		for (_i = 0; _i < (adapter)->num_queues; _i++) {	\
+			printf((_i == 0) ? "\t" : " ");			\
+			printf("%08x", IXGBE_READ_REG(_hw,		\
+				IXGBE_##regname(_i)));			\
+		}							\
+		printf("\n");						\
+	} while (0)
+
 /************************************************************************
  * ixv_print_debug_info
  *
- *   Called only when em_display_debug_stats is enabled.
  *   Provides a way to take a look at important statistics
  *   maintained by the driver and hardware.
  ************************************************************************/
@@ -2746,39 +2763,26 @@ static void
 ixv_print_debug_info(struct adapter *adapter)
 {
 	device_t	dev = adapter->dev;
-	struct ix_queue *que = adapter->queues;
-	struct rx_ring	*rxr;
-	struct tx_ring	*txr;
-#ifdef LRO
-	struct lro_ctrl *lro;
-#endif /* LRO */
+	struct ixgbe_hw *hw = &adapter->hw;
+	int i;
 
-	for (int i = 0; i < adapter->num_queues; i++, que++) {
-		txr = que->txr;
-		rxr = que->rxr;
-#ifdef LRO
-		lro = &rxr->lro;
-#endif /* LRO */
-		device_printf(dev, "QUE(%d) IRQs Handled: %lu\n",
-		    que->msix, (long)que->irqs.ev_count);
-		device_printf(dev, "RX(%d) Packets Received: %lld\n",
-		    rxr->me, (long long)rxr->rx_packets.ev_count);
-		device_printf(dev, "RX(%d) Bytes Received: %lu\n",
-		    rxr->me, (long)rxr->rx_bytes.ev_count);
-#ifdef LRO
-		device_printf(dev, "RX(%d) LRO Queued= %ju\n",
-		    rxr->me, (uintmax_t)lro->lro_queued);
-		device_printf(dev, "RX(%d) LRO Flushed= %ju\n",
-		    rxr->me, (uintmax_t)lro->lro_flushed);
-#endif /* LRO */
-		device_printf(dev, "TX(%d) Packets Sent: %lu\n",
-		    txr->me, (long)txr->total_packets.ev_count);
-		device_printf(dev, "TX(%d) NO Desc Avail: %lu\n",
-		    txr->me, (long)txr->no_desc_avail.ev_count);
+	device_printf(dev, "queue:");
+	for (i = 0; i < adapter->num_queues; i++) {
+		printf((i == 0) ? "\t" : " ");
+		printf("%8d", i);
 	}
+	printf("\n");
+	PRINTQS(adapter, VFRDBAL);
+	PRINTQS(adapter, VFRDBAH);
+	PRINTQS(adapter, VFRDLEN);
+	PRINTQS(adapter, VFSRRCTL);
+	PRINTQS(adapter, VFRDH);
+	PRINTQS(adapter, VFRDT);
+	PRINTQS(adapter, VFRXDCTL);
 
-	device_printf(dev, "MBX IRQ Handled: %lu\n",
-	    (long)adapter->link_irq.ev_count);
+	device_printf(dev, "EIMS:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_VTEIMS));
+	device_printf(dev, "EIAM:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_VTEIAM));
+	device_printf(dev, "EIAC:\t%08x\n", IXGBE_READ_REG(hw, IXGBE_VTEIAC));
 } /* ixv_print_debug_info */
 
 /************************************************************************
@@ -2789,7 +2793,7 @@ ixv_sysctl_debug(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct adapter *adapter = (struct adapter *)node.sysctl_data;
-	int	       error, result;
+	int	       error, result = 0;
 
 	node.sysctl_data = &result;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));

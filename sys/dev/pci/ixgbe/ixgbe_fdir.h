@@ -1,7 +1,7 @@
-/* $NetBSD: ixgbe_fdir.h,v 1.1.4.4 2021/09/15 16:38:01 martin Exp $ */
+/* $NetBSD: ixgbe_fdir.h,v 1.1.4.5 2022/01/30 16:06:35 martin Exp $ */
 /******************************************************************************
 
-  Copyright (c) 2001-2017, Intel Corporation
+  Copyright (c) 2001-2020, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
