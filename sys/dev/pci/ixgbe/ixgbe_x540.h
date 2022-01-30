@@ -1,8 +1,8 @@
-/* $NetBSD: ixgbe_x540.h,v 1.8.8.1 2021/09/15 16:30:50 martin Exp $ */
+/* $NetBSD: ixgbe_x540.h,v 1.8.8.2 2022/01/30 15:58:29 martin Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
-  Copyright (c) 2001-2017, Intel Corporation
+  Copyright (c) 2001-2020, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
