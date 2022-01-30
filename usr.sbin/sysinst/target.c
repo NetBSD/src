@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.16 2022/01/29 15:32:49 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.17 2022/01/30 11:58:29 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.16 2022/01/29 15:32:49 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.17 2022/01/30 11:58:29 martin Exp $");
 #endif
 
 /*
@@ -123,7 +123,7 @@ struct unwind_mount {
 /* Record a wedge for later deletion after all file systems have been unmounted */
 struct umount_delwedge {
 	struct umount_delwedge *next;
-	char disk[MAXPATHLEN], wedge[MAXPATHLEN];
+	char disk[DISKNAMESIZE], wedge[DISKNAMESIZE];
 };
 struct umount_delwedge *post_umount_dwlist = NULL;
 
@@ -548,6 +548,12 @@ void
 register_post_umount_delwedge(const char *disk, const char *wedge)
 {
 	struct umount_delwedge *dw;
+
+	if (unwind_mountlist == NULL) {
+		/* we have nothing mounted, can delete it right now */
+		delete_wedge(disk, wedge);
+		return;
+	}
 
 	dw = calloc(1, sizeof(*dw));
 	dw->next = post_umount_dwlist;
