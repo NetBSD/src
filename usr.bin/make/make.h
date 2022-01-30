@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.294 2022/01/29 10:19:49 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.295 2022/01/30 13:21:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -499,7 +499,7 @@ typedef struct GNode {
 	/* Filename where the GNode got defined, unlimited lifetime */
 	const char *fname;
 	/* Line number where the GNode got defined, 1-based */
-	int lineno;
+	size_t lineno;
 } GNode;
 
 /* Error levels for diagnostics during parsing. */
