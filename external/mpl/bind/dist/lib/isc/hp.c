@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.4 2021/04/29 17:26:12 christos Exp $	*/
+/*	$NetBSD: hp.c,v 1.5 2022/01/30 13:11:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,6 +55,9 @@
 #include <isc/thread.h>
 #include <isc/util.h>
 
+#include <syslog.h>
+#include <stdlib.h>
+
 #define HP_MAX_THREADS 128
 static int isc__hp_max_threads = HP_MAX_THREADS;
 #define HP_MAX_HPS     4 /* This is named 'K' in the HP paper */
@@ -84,6 +87,8 @@ tid(void) {
 
 void
 isc_hp_init(int max_threads) {
+	syslog(LOG_ERR|LOG_CONS, "setting maxthreads to %d from %d", max_threads,
+	    isc__hp_max_threads);
 	isc__hp_max_threads = max_threads;
 	isc__hp_max_retired = max_threads * HP_MAX_HPS;
 }
@@ -175,15 +180,25 @@ isc_hp_protect_release(isc_hp_t *hp, int ihp, atomic_uintptr_t ptr) {
 
 void
 isc_hp_retire(isc_hp_t *hp, uintptr_t ptr) {
-	hp->rl[tid()]->list[hp->rl[tid()]->size++] = ptr;
-	INSIST(hp->rl[tid()]->size < isc__hp_max_retired);
+	int xtid = tid();
+	if (xtid < 0 || xtid >= isc__hp_max_threads) {
+		syslog(LOG_ERR, "bad thread id %d >= %d", xtid,
+		    isc__hp_max_threads);
+		return;
+	}
+	if (hp->rl[xtid] == NULL) {
+		syslog(LOG_ERR, "null rl for thread id %d", xtid);
+		abort();
+	}
+	hp->rl[xtid]->list[hp->rl[xtid]->size++] = ptr;
+	INSIST(hp->rl[xtid]->size < isc__hp_max_retired);
 
-	if (hp->rl[tid()]->size < HP_THRESHOLD_R) {
+	if (hp->rl[xtid]->size < HP_THRESHOLD_R) {
 		return;
 	}
 
-	for (int iret = 0; iret < hp->rl[tid()]->size; iret++) {
-		uintptr_t obj = hp->rl[tid()]->list[iret];
+	for (int iret = 0; iret < hp->rl[xtid]->size; iret++) {
+		uintptr_t obj = hp->rl[xtid]->list[iret];
 		bool can_delete = true;
 		for (int itid = 0; itid < isc__hp_max_threads && can_delete;
 		     itid++) {
@@ -196,11 +211,11 @@ isc_hp_retire(isc_hp_t *hp, uintptr_t ptr) {
 		}
 
 		if (can_delete) {
-			size_t bytes = (hp->rl[tid()]->size - iret) *
-				       sizeof(hp->rl[tid()]->list[0]);
-			memmove(&hp->rl[tid()]->list[iret],
-				&hp->rl[tid()]->list[iret + 1], bytes);
-			hp->rl[tid()]->size--;
+			size_t bytes = (hp->rl[xtid]->size - iret) *
+				       sizeof(hp->rl[xtid]->list[0]);
+			memmove(&hp->rl[xtid]->list[iret],
+				&hp->rl[xtid]->list[iret + 1], bytes);
+			hp->rl[xtid]->size--;
 			hp->deletefunc((void *)obj);
 		}
 	}
