@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.5 2022/01/30 13:11:46 christos Exp $	*/
+/*	$NetBSD: hp.c,v 1.6 2022/01/30 18:54:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,7 +87,7 @@ tid(void) {
 
 void
 isc_hp_init(int max_threads) {
-	syslog(LOG_ERR|LOG_CONS, "setting maxthreads to %d from %d", max_threads,
+	syslog(LOG_ERR, "setting maxthreads to %d from %d", max_threads,
 	    isc__hp_max_threads);
 	isc__hp_max_threads = max_threads;
 	isc__hp_max_retired = max_threads * HP_MAX_HPS;
