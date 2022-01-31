@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.17 2022/01/30 15:58:28 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.18 2022/01/31 17:36:25 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.17 2022/01/30 15:58:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.18 2022/01/31 17:36:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.17 2022/01/30 15:58:28 martin Exp 
  * Driver version
  ************************************************************************/
 static const char ixgbe_driver_version[] = "4.0.1-k";
-/* XXX NetBSD: + 3.3.10 */
+/* XXX NetBSD: + 3.3.24 */
 
 /************************************************************************
  * PCI Device ID Table
