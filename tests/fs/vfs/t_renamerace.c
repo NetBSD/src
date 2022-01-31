@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.43 2021/11/27 15:23:33 gson Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.44 2022/01/31 17:23:37 ryo Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -244,7 +244,7 @@ renamerace_cycle(const atf_tc_t *tc, const char *mp)
 	sleep(10);
 	quittingtime = 1;
 
-	alarm(1);
+	alarm(5);
 	pthread_join(pt_rmdir, NULL);
 	pthread_join(pt_rename1, NULL);
 	pthread_join(pt_rename2, NULL);
