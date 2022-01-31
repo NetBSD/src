@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x540.c,v 1.9.6.7 2022/01/30 16:06:35 martin Exp $ */
+/* $NetBSD: ixgbe_x540.c,v 1.9.6.8 2022/01/31 17:38:36 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x540.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x540.c,v 1.9.6.7 2022/01/30 16:06:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x540.c,v 1.9.6.8 2022/01/31 17:38:36 martin Exp $");
 
 #include "ixgbe_x540.h"
 #include "ixgbe_type.h"
@@ -68,6 +68,7 @@ s32 ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	struct ixgbe_phy_info *phy = &hw->phy;
 	struct ixgbe_eeprom_info *eeprom = &hw->eeprom;
 	s32 ret_val;
+	u16 i;
 
 	DEBUGFUNC("ixgbe_init_ops_X540");
 
@@ -151,7 +152,8 @@ s32 ixgbe_init_ops_X540(struct ixgbe_hw *hw)
 	mac->arc_subsystem_valid = !!(IXGBE_READ_REG(hw, IXGBE_FWSM_BY_MAC(hw))
 				     & IXGBE_FWSM_MODE_MASK);
 
-	hw->mbx.ops.init_params = ixgbe_init_mbx_params_pf;
+	for (i = 0; i < 64; i++)
+		hw->mbx.ops[i].init_params = ixgbe_init_mbx_params_pf;
 
 	/* LEDs */
 	mac->ops.blink_led_start = ixgbe_blink_led_start_X540;
