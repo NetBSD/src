@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.52 2021/11/16 16:57:15 kre Exp $	*/
+/*	$NetBSD: cd.c,v 1.53 2022/01/31 16:54:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.52 2021/11/16 16:57:15 kre Exp $");
+__RCSID("$NetBSD: cd.c,v 1.53 2022/01/31 16:54:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,6 +404,20 @@ getpwd(int noerror)
 		return;
 
 	if (first) {
+		/*
+		 * Note that this happens via the call from initpwd()
+		 * just above, which is called early from main() during
+		 * sh startup, so fetching PWD from the entry environment
+		 * (which is what getenv() does) is acceptable.   Here we
+		 * could use normal sh var lookup functions instead, as
+		 * the arriving environment has already been imported before
+		 * we get here, but it makes little difference.
+		 *
+		 * XXX What would be better perhaps would be to move all of
+		 * this into initpwd() instead of here, so we could get rid of
+		 * this "first" static - that function is only ever called once.
+		 * XXX Some other day.
+		 */
 		first = 0;
 		pwd = getenv("PWD");
 		if (is_curdir(pwd)) {
