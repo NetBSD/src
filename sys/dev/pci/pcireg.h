@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.164 2022/01/31 10:11:33 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.165 2022/01/31 10:14:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -188,6 +188,11 @@ typedef u_int8_t pci_revision_t;
 
 /* 0x01 mass storage subclasses */
 #define	PCI_SUBCLASS_MASS_STORAGE_SCSI		0x00
+#define		PCI_INTERFACE_SCSI_VND			0x00
+#define		PCI_INTERFACE_SCSI_PQI_STORAGE		0x11
+#define		PCI_INTERFACE_SCSI_PQI_CNTRL		0x12
+#define		PCI_INTERFACE_SCSI_PQI_STORAGE_CNTRL	0x13
+#define		PCI_INTERFACE_SCSI_NVME			0x21
 #define	PCI_SUBCLASS_MASS_STORAGE_IDE		0x01
 #define	PCI_SUBCLASS_MASS_STORAGE_FLOPPY	0x02
 #define	PCI_SUBCLASS_MASS_STORAGE_IPI		0x03
