@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.45 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.46 2022/01/31 22:58:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -141,7 +141,6 @@ void HashTable_Set(HashTable *, const char *, void *);
 void HashTable_DeleteEntry(HashTable *, HashEntry *);
 void HashTable_DebugStats(HashTable *, const char *);
 
-void HashIter_Init(HashIter *, HashTable *);
 HashEntry *HashIter_Next(HashIter *);
 
 MAKE_INLINE void
