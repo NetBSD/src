@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.21.4.3 2022/01/30 15:58:28 martin Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.21.4.4 2022/01/31 17:36:25 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.21.4.3 2022/01/30 15:58:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.21.4.4 2022/01/31 17:36:25 martin Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -331,6 +331,7 @@ s32 ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	struct ixgbe_phy_info *phy = &hw->phy;
 	struct ixgbe_eeprom_info *eeprom = &hw->eeprom;
 	s32 ret_val;
+	u16 i;
 
 	DEBUGFUNC("ixgbe_init_ops_82599");
 
@@ -392,7 +393,8 @@ s32 ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	mac->arc_subsystem_valid = !!(IXGBE_READ_REG(hw, IXGBE_FWSM_BY_MAC(hw))
 				      & IXGBE_FWSM_MODE_MASK);
 
-	hw->mbx.ops.init_params = ixgbe_init_mbx_params_pf;
+	for (i = 0; i < 64; i++)
+		hw->mbx.ops[i].init_params = ixgbe_init_mbx_params_pf;
 
 	/* EEPROM */
 	eeprom->ops.read = ixgbe_read_eeprom_82599;
