@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.50 2022/01/14 13:31:05 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.51 2022/01/31 14:44:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,6 +93,13 @@ typedef KEYMAP_ENTRY *Keymap;
 #define RL_READLINE_VERSION	0x0402
 #define RL_PROMPT_START_IGNORE	'\1'
 #define RL_PROMPT_END_IGNORE	'\2'
+
+#define RL_STATE_NONE		0x000000
+#define RL_STATE_DONE		0x000001
+
+#define RL_SETSTATE(x)		(rl_readline_state |= ((unsigned long) x))
+#define RL_UNSETSTATE(x)	(rl_readline_state &= ~((unsigned long) x))
+#define RL_ISSTATE(x)		(rl_readline_state & ((unsigned long) x))
 
 /* global variables used by readline enabled applications */
 #ifdef __cplusplus
