@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.43 2022/01/14 15:48:50 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.44 2022/01/31 06:54:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.43 2022/01/14 15:48:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.44 2022/01/31 06:54:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 
 	if (ci->ci_max_cpuid >= 0x07) {
 		x86_cpuid2(0x07, 1, descs);
-		procfs_getonefeatreg(descs[3], x86_features[12], p + diff,
+		procfs_getonefeatreg(descs[0], x86_features[12], p + diff,
 		    left);
 		diff = last - *left;
 	}
