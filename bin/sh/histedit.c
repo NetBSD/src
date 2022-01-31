@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.57 2021/09/14 15:04:09 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.58 2022/01/31 16:54:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.57 2021/09/14 15:04:09 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.58 2022/01/31 16:54:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,23 @@ histedit(void)
 			if (tracefile)
 				el_err = tracefile;
 #endif
+			/*
+			 * This odd piece of code doesn't affect the shell
+			 * at all, the environment modified here is the
+			 * stuff accessed via "environ" (the incoming
+			 * envoironment to the shell) which is only ever
+			 * touched at sh startup time (long before we get
+			 * here) and ignored thereafter.
+			 *
+			 * But libedit calls getenv() to discover TERM
+			 * and that searches the "environ" environment,
+			 * not the shell's internal variable data struct,
+			 * so we need to make sure that TERM in there is
+			 * correct.
+			 *
+			 * This sequence copies TERM from the shell into
+			 * the old "environ" environment.
+			 */
 			term = lookupvar("TERM");
 			if (term)
 				setenv("TERM", term, 1);
