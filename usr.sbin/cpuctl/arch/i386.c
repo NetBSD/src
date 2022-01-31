@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.13 2021/12/24 13:02:24 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.14 2022/01/31 17:52:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.13 2021/12/24 13:02:24 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.14 2022/01/31 17:52:44 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -351,11 +351,17 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x8c] = "11th gen Core (Tiger Lake)",
 				[0x8d] = "11th gen Core (Tiger Lake)",
 				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
+				[0x8f] = "future Xeon (Sapphire Rapids)",
 				[0x96] = "Atom x6000E (Elkhart Lake)",
+				[0x97] = "12th gen Core (Alder Lake)",
+				[0x9a] = "12th gen Core (Alder Lake)",
 				[0x9c] = "Pentium Silver N6xxx, Celeron N45xx, Celeron N51xx (Jasper Lake)",
 				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
 				[0xa5] = "10th gen Core (Comet Lake)",
 				[0xa6] = "10th gen Core (Comet Lake)",
+				[0xa7] = "11th gen Core (Rocket Lake)",
+				[0xa8] = "11th gen Core (Rocket Lake)",
+				[0xbf] = "12th gen Core (Alder Lake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
@@ -2164,31 +2170,25 @@ identifycpu(int fd, const char *cpuname)
 			    CPUID_AMD_ENCMEM_FLAGS, descs[0]);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
-		int32_t bi_index;
-
-		for (bi_index = 1; bi_index <= ci->ci_max_cpuid; bi_index++) {
-			x86_cpuid(bi_index, descs);
-			switch (bi_index) {
-			case 0x0a:
-				print_bits(cpuname, "Perfmon-eax",
-				    CPUID_PERF_FLAGS0, descs[0]);
-				print_bits(cpuname, "Perfmon-ebx",
-				    CPUID_PERF_FLAGS1, descs[1]);
-				print_bits(cpuname, "Perfmon-edx",
-				    CPUID_PERF_FLAGS3, descs[3]);
-				break;
-			default:
-#if 0
-				aprint_verbose("%s: basic %08x-eax %08x\n",
-				    cpuname, bi_index, descs[0]);
-				aprint_verbose("%s: basic %08x-ebx %08x\n",
-				    cpuname, bi_index, descs[1]);
-				aprint_verbose("%s: basic %08x-ecx %08x\n",
-				    cpuname, bi_index, descs[2]);
-				aprint_verbose("%s: basic %08x-edx %08x\n",
-				    cpuname, bi_index, descs[3]);
-#endif
-				break;
+		if (ci->ci_max_cpuid >= 0x0a) {
+			x86_cpuid(0x0a, descs);
+			print_bits(cpuname, "Perfmon-eax",
+			    CPUID_PERF_FLAGS0, descs[0]);
+			print_bits(cpuname, "Perfmon-ebx",
+			    CPUID_PERF_FLAGS1, descs[1]);
+			print_bits(cpuname, "Perfmon-edx",
+			    CPUID_PERF_FLAGS3, descs[3]);
+		}
+		if (ci->ci_max_cpuid >= 0x1a) {
+			x86_cpuid(0x1a, descs);
+			if (descs[0] != 0) {
+				aprint_verbose("%s: Hybrid: Core type %02x, "
+				    "Native Model ID %07x\n",
+				    cpuname,
+				    (uint8_t)__SHIFTOUT(descs[0],
+					CPUID_HYBRID_CORETYPE),
+				    (uint32_t)__SHIFTOUT(descs[0],
+					CPUID_HYBRID_NATIVEID));
 			}
 		}
 	}
