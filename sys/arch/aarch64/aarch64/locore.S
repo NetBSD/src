@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.84 2021/12/10 20:36:02 andvar Exp $	*/
+/*	$NetBSD: locore.S,v 1.85 2022/01/31 09:16:09 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.84 2021/12/10 20:36:02 andvar Exp $")
+RCSID("$NetBSD: locore.S,v 1.85 2022/01/31 09:16:09 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -179,6 +179,10 @@ vstart:
 	adrl	x0, lwp0		/* curlwp is lwp0 */
 	msr	tpidr_el1, x0
 	DPRINTREG("curlwp           = ", x0);
+
+	/* init HAFDBS if supported */
+	mov	x0, #1
+	bl	aarch64_hafdbs_init
 
 	/* init PAN if supported */
 	mov	x0, #1
@@ -544,6 +548,10 @@ mp_vstart:
 	ldr	x2, [x1, #L_PCB]	/* x2 = lwp_getpcb(idlelwp) */
 	add	x2, x2, #(UPAGES * PAGE_SIZE)
 	sub	sp, x2, #TF_SIZE	/* sp = pcb + USPACE - TF_SIZE */
+
+	/* init HAFDBS if supported */
+	mov	x0, #0
+	bl	aarch64_hafdbs_init
 
 	/* init PAN if supported */
 	mov	x0, #0

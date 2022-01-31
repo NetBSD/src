@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.63 2021/10/31 16:23:47 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.64 2022/01/31 09:16:09 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.63 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.64 2022/01/31 09:16:09 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -532,6 +532,14 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    SYSCTL_DESCR("Whether Branch Target Identification is enabled"),
 	    NULL, 0,
 	    &aarch64_bti_enabled, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_INT, "hafdbs",
+	    SYSCTL_DESCR("Whether Hardware updates to Access flag and Dirty state is enabled"),
+	    NULL, 0,
+	    &aarch64_hafdbs_enabled, 0,
 	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 

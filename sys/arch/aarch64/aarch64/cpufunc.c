@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.32 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.33 2022/01/31 09:16:09 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.32 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.33 2022/01/31 09:16:09 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,6 +50,7 @@ u_int arm_dcache_maxline;
 u_int aarch64_cache_vindexsize;
 u_int aarch64_cache_prefer_mask;
 
+int aarch64_hafdbs_enabled __read_mostly;
 int aarch64_pan_enabled __read_mostly;
 int aarch64_pac_enabled __read_mostly;
 
@@ -461,6 +462,71 @@ aarch64_setcpufuncs(struct cpu_info *ci)
 #endif
 
 	return 0;
+}
+
+void
+aarch64_hafdbs_init(int primary)
+{
+#ifdef ARMV81_HAFDBS
+	uint64_t tcr;
+	int hafdbs;
+
+	hafdbs = __SHIFTOUT(reg_id_aa64mmfr1_el1_read(),
+	    ID_AA64MMFR1_EL1_HAFDBS);
+
+	/*
+	 * hafdbs
+	 *   0:HAFDBS_NONE - no support for any hardware flags
+	 *   1:HAFDBS_A    - only hardware access flag supported
+	 *   2:HAFDBS_AD   - hardware access and modified flags supported.
+	 */
+
+	if (primary) {
+		/* CPU0 does the detection. */
+		switch (hafdbs) {
+		case ID_AA64MMFR1_EL1_HAFDBS_NONE:
+		default:
+			aarch64_hafdbs_enabled = 0;
+			break;
+		case ID_AA64MMFR1_EL1_HAFDBS_A:
+		case ID_AA64MMFR1_EL1_HAFDBS_AD:
+			aarch64_hafdbs_enabled = hafdbs;
+			break;
+		}
+	} else {
+		/*
+		 * The support status of HAFDBS on the primary CPU is different
+		 * from that of the application processor.
+		 *
+		 * XXX:
+		 *  The correct way to do this is to disable it on all cores,
+		 *  or call pmap_fault_fixup() only on the unsupported cores,
+		 *  but for now, do panic().
+		 */
+		if (aarch64_hafdbs_enabled != hafdbs)
+			panic("HAFDBS is supported (%d) on primary cpu, "
+			    "but isn't equal (%d) on secondary cpu",
+			    aarch64_hafdbs_enabled, hafdbs);
+	}
+
+	/* enable Hardware updates to Access flag and Dirty state */
+	tcr = reg_tcr_el1_read();
+	switch (hafdbs) {
+	case ID_AA64MMFR1_EL1_HAFDBS_NONE:
+	default:
+		break;
+	case ID_AA64MMFR1_EL1_HAFDBS_A:
+		/* enable only access */
+		reg_tcr_el1_write(tcr | TCR_HA);
+		isb();
+		break;
+	case ID_AA64MMFR1_EL1_HAFDBS_AD:
+		/* enable both access and dirty */
+		reg_tcr_el1_write(tcr | TCR_HD | TCR_HA);
+		isb();
+		break;
+	}
+#endif
 }
 
 void
