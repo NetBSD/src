@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.69 2022/01/30 16:03:50 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.70 2022/01/31 17:56:28 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1329,4 +1329,56 @@ sys/dev/pci/ixgbe/ixv.c				1.170, 1.174-1.175 via patch
 	- Sort lines, modify comment.
 	- Whitespace fix.
 	[msaitoh, ticket #1414]
+
+sys/dev/usb/usbnet.c				1.44 (patch)
+
+	usbnet(9): defer hardware multicast filter updates to USB task.
+	[riastradh, ticket #1415]
+
+sys/dev/pci/ixgbe/if_sriov.c			1.17
+sys/dev/pci/ixgbe/ixgbe.c			1.301
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.29
+sys/dev/pci/ixgbe/ixgbe_mbx.c			1.16
+sys/dev/pci/ixgbe/ixgbe_mbx.c			1.17
+sys/dev/pci/ixgbe/ixgbe_mbx.c			1.18
+sys/dev/pci/ixgbe/ixgbe_mbx.h			1.19
+sys/dev/pci/ixgbe/ixgbe_type.h			1.55
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.31
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.23
+sys/dev/pci/ixgbe/ixv.c				1.172
+sys/dev/pci/ixgbe/ixv.c				1.173
+
+	Add code to support mailbox API 1.5.
+	[msaitoh, ticket #1416]
+
+sys/arch/x86/include/specialreg.h		1.179-1.188 (patch)
+
+	- Add CPUID definitions of Last Branch Record, Thread Director,
+	  AVX version of VNNI, Fast short REP MOV, HRESET, PPIN, Architectural
+	  LBR, Linear Address Masking and Hybrid Information from the latest
+	  Intel SDM.
+	- Add CPUID definitions of AddrMaskExt, INT_WBINVD, IbrsSameMode,
+	  EferLmsleUnsupported, PSFD and SecureTSC from AMD APM.
+	- Print CLFSH instead of CLFLUSH because both Intel and AMD documents
+	  say so.
+	- Modify comment. Add comment. Fix typo. Use __BIT(). KNF. Sort lines.
+	  No functional change.
+	[msaitoh, ticket #1417]
+
+usr.sbin/cpuctl/arch/i386.c			1.125-1.127
+
+	- Add Alder Lake, Rocket Lake and Sapphire Rapids.
+	- Decode Intel Hybrid Information Enumeration (CPUID Fn0000_001a).
+	- Remove debug code and simplify. No functional change.
+	[msaitoh, ticket #1418]
+
+sys/arch/x86/x86/procfs_machdep.c		1.43-1.44
+
+	- The CPUID table 11 was changed from CPUID 0x0f leaf 0 %edx to a Linux
+	  mapping.
+	- The CPUID table 12 was changed from CPUID 0x0f leaf 1 %edx to CPUID
+	  0x07 leaf 1 %eax. Print avx_vnni and avx512_bf16.
+	- Print cppc, enqcmd and arch_lbr.
+	- Modify linux mapping. Not used on NetBSD.
+	[msaitoh, ticket #1419]
 
