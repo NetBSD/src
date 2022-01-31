@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.21 2020/12/11 18:03:33 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.22 2022/01/31 09:16:09 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.21 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.22 2022/01/31 09:16:09 ryo Exp $");
 
 #include "opt_compat_netbsd32.h"
+#include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 
@@ -199,9 +200,16 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	}
 
 	/* reference/modified emulation */
-	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
-		UVMHIST_LOG(pmaphist, "fixed: va=%016llx", tf->tf_far, 0, 0, 0);
-		return;
+#ifdef ARMV81_HAFDBS
+	if (aarch64_hafdbs_enabled == ID_AA64MMFR1_EL1_HAFDBS_NONE ||
+	    (aarch64_hafdbs_enabled == ID_AA64MMFR1_EL1_HAFDBS_A &&
+	    ftype == VM_PROT_WRITE))
+#endif
+	{
+		if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
+			UVMHIST_LOG(pmaphist, "fixed: va=%016llx", tf->tf_far, 0, 0, 0);
+			return;
+		}
 	}
 
 	fb = cpu_disable_onfault();

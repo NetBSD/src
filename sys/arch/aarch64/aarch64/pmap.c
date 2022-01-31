@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.126 2022/01/31 08:43:05 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.127 2022/01/31 09:16:09 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2022/01/31 08:43:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2022/01/31 09:16:09 ryo Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
@@ -1018,43 +1019,43 @@ pmap_procwr(struct proc *p, vaddr_t sva, int len)
 }
 
 static pt_entry_t
-_pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t protmask,
+_pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t refmod,
     bool user)
 {
 	vm_prot_t masked;
 	pt_entry_t xn;
 
-	masked = prot & protmask;
-	pte &= ~(LX_BLKPAG_OS_RWMASK|LX_BLKPAG_AF|LX_BLKPAG_AP);
+	masked = prot & refmod;
+	pte &= ~(LX_BLKPAG_OS_RWMASK|LX_BLKPAG_AF|LX_BLKPAG_DBM|LX_BLKPAG_AP);
 
-	/* keep prot for ref/mod emulation */
-	switch (prot & (VM_PROT_READ|VM_PROT_WRITE)) {
-	case 0:
-	default:
-		break;
-	case VM_PROT_READ:
-		pte |= LX_BLKPAG_OS_READ;
-		break;
-	case VM_PROT_WRITE:
-	case VM_PROT_READ|VM_PROT_WRITE:
-		pte |= (LX_BLKPAG_OS_READ|LX_BLKPAG_OS_WRITE);
-		break;
-	}
+	/*
+	 * keep actual prot in the pte as OS_{READ|WRITE} for ref/mod emulation,
+	 * and set the DBM bit for HAFDBS if it has write permission.
+	 */
+	pte |= LX_BLKPAG_OS_READ;	/* a valid pte can always be readable */
+	if (prot & VM_PROT_WRITE)
+		pte |= LX_BLKPAG_OS_WRITE|LX_BLKPAG_DBM;
 
 	switch (masked & (VM_PROT_READ|VM_PROT_WRITE)) {
 	case 0:
 	default:
-		/* cannot access due to No LX_BLKPAG_AF */
+		/*
+		 * it cannot be accessed because there is no AF bit,
+		 * but the AF bit will be added by fixup() or HAFDBS.
+		 */
 		pte |= LX_BLKPAG_AP_RO;
 		break;
 	case VM_PROT_READ:
-		/* actual permission of pte */
+		/*
+		 * as it is RO, it cannot be written as is,
+		 * but it may be changed to RW by fixup() or HAFDBS.
+		 */
 		pte |= LX_BLKPAG_AF;
 		pte |= LX_BLKPAG_AP_RO;
 		break;
 	case VM_PROT_WRITE:
 	case VM_PROT_READ|VM_PROT_WRITE:
-		/* actual permission of pte */
+		/* fully readable and writable */
 		pte |= LX_BLKPAG_AF;
 		pte |= LX_BLKPAG_AP_RW;
 		break;
@@ -1098,6 +1099,24 @@ _pmap_pte_adjust_cacheflags(pt_entry_t pte, u_int flags)
 	return pte;
 }
 
+#ifdef ARMV81_HAFDBS
+static inline void
+_pmap_reflect_refmod_in_pp(pt_entry_t pte, struct pmap_page *pp)
+{
+	if (!lxpde_valid(pte))
+		return;
+
+	/*
+	 * In order to retain referenced/modified information,
+	 * it should be reflected from pte in the pmap_page.
+	 */
+	if (pte & LX_BLKPAG_AF)
+		pp->pp_pv.pv_va |= VM_PROT_READ;
+	if ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW)
+		pp->pp_pv.pv_va |= VM_PROT_WRITE;
+}
+#endif
+
 static struct pv_entry *
 _pmap_remove_pv(struct pmap_page *pp, struct pmap *pm, vaddr_t va,
     pt_entry_t pte)
@@ -1110,6 +1129,11 @@ _pmap_remove_pv(struct pmap_page *pp, struct pmap *pm, vaddr_t va,
 
 	KASSERT(mutex_owned(&pm->pm_lock));	/* for pv_proc */
 	KASSERT(mutex_owned(&pp->pp_pvlock));
+
+#ifdef ARMV81_HAFDBS
+	if (aarch64_hafdbs_enabled != ID_AA64MMFR1_EL1_HAFDBS_NONE)
+		_pmap_reflect_refmod_in_pp(pte, pp);
+#endif
 
 	for (ppv = NULL, pv = &pp->pp_pv; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pm && trunc_page(pv->pv_va) == va) {
@@ -1281,19 +1305,22 @@ _pmap_protect_pv(struct pmap_page *pp, struct pv_entry *pv, vm_prot_t prot)
 
 	KASSERT(mutex_owned(&pv->pv_pmap->pm_lock));
 
-	/* get prot mask from referenced/modified */
-	mdattr = pp->pp_pv.pv_va & (VM_PROT_READ | VM_PROT_WRITE);
 	ptep = pv->pv_ptep;
 	pte = *ptep;
 
 	/* get prot mask from pte */
-	pteprot = 0;
-	if (pte & LX_BLKPAG_AF)
-		pteprot |= VM_PROT_READ;
-	if ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW)
+	pteprot = VM_PROT_READ;	/* a valid pte can always be readable */
+	if ((pte & (LX_BLKPAG_OS_WRITE|LX_BLKPAG_DBM)) != 0)
 		pteprot |= VM_PROT_WRITE;
 	if (l3pte_executable(pte, user))
 		pteprot |= VM_PROT_EXECUTE;
+
+#ifdef ARMV81_HAFDBS
+	if (aarch64_hafdbs_enabled != ID_AA64MMFR1_EL1_HAFDBS_NONE)
+		_pmap_reflect_refmod_in_pp(pte, pp);
+#endif
+	/* get prot mask from referenced/modified */
+	mdattr = pp->pp_pv.pv_va & (VM_PROT_READ | VM_PROT_WRITE);
 
 	/* new prot = prot & pteprot & mdattr */
 	pte = _pmap_pte_adjust_prot(pte, prot & pteprot, mdattr, user);
@@ -1381,6 +1408,10 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		}
 
 		if (pp != NULL) {
+#ifdef ARMV81_HAFDBS
+			if (aarch64_hafdbs_enabled != ID_AA64MMFR1_EL1_HAFDBS_NONE)
+				_pmap_reflect_refmod_in_pp(pte, pp);
+#endif
 			/* get prot mask from referenced/modified */
 			mdattr = pp->pp_pv.pv_va &
 			    (VM_PROT_READ | VM_PROT_WRITE);
@@ -1764,6 +1795,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	KASSERT_PM_ADDR(pm, va);
 	KASSERT(!IN_DIRECTMAP_ADDR(va));
+	KASSERT(prot & VM_PROT_READ);
 
 #ifdef PMAPCOUNTERS
 	PMAP_COUNT(mappings);
@@ -1845,8 +1877,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	idx = l3pte_index(va);
 	ptep = &l3[idx];	/* as PTE */
-
-	opte = atomic_swap_64(ptep, 0);
+	opte = *ptep;
 	need_sync_icache = (prot & VM_PROT_EXECUTE);
 
 	/* for lock ordering for old page and new page */
@@ -1907,6 +1938,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			if (pp != NULL)
 				pmap_pv_lock(pp);
 		}
+		opte = atomic_swap_64(ptep, 0);
 	} else {
 		if (pp != NULL)
 			pmap_pv_lock(pp);
@@ -2391,20 +2423,15 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 		goto done;
 	}
 
-	/* get prot by pmap_enter() (stored in software use bit in pte) */
-	switch (pte & (LX_BLKPAG_OS_READ|LX_BLKPAG_OS_WRITE)) {
-	case 0:
-	default:
-		pmap_prot = 0;
-		break;
-	case LX_BLKPAG_OS_READ:
-		pmap_prot = VM_PROT_READ;
-		break;
-	case LX_BLKPAG_OS_WRITE:
-	case LX_BLKPAG_OS_READ|LX_BLKPAG_OS_WRITE:
-		pmap_prot = (VM_PROT_READ|VM_PROT_WRITE);
-		break;
-	}
+	/*
+	 * Get the prot specified by pmap_enter().
+	 * A valid pte is considered a readable page.
+	 * If DBM is 1, it is considered a writable page.
+	 */
+	pmap_prot = VM_PROT_READ;
+	if ((pte & (LX_BLKPAG_OS_WRITE|LX_BLKPAG_DBM)) != 0)
+		pmap_prot |= VM_PROT_WRITE;
+
 	if (l3pte_executable(pte, pm != pmap_kernel()))
 		pmap_prot |= VM_PROT_EXECUTE;
 
@@ -2473,6 +2500,9 @@ pmap_clear_modify(struct vm_page *pg)
 	struct pmap_page * const pp = VM_PAGE_TO_PP(pg);
 	pt_entry_t *ptep, pte, opte;
 	vaddr_t va;
+#ifdef ARMV81_HAFDBS
+	bool modified;
+#endif
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "pg=%p, flags=%08x",
@@ -2493,11 +2523,17 @@ pmap_clear_modify(struct vm_page *pg)
 
 	pmap_pv_lock(pp);
 
-	if ((pp->pp_pv.pv_va & VM_PROT_WRITE) == 0) {
+	if (
+#ifdef ARMV81_HAFDBS
+	    aarch64_hafdbs_enabled != ID_AA64MMFR1_EL1_HAFDBS_AD &&
+#endif
+	    (pp->pp_pv.pv_va & VM_PROT_WRITE) == 0) {
 		pmap_pv_unlock(pp);
 		return false;
 	}
-
+#ifdef ARMV81_HAFDBS
+	modified = ((pp->pp_pv.pv_va & VM_PROT_WRITE) != 0);
+#endif
 	pp->pp_pv.pv_va &= ~(vaddr_t)VM_PROT_WRITE;
 
 	for (pv = &pp->pp_pv; pv != NULL; pv = pv->pv_next) {
@@ -2517,7 +2553,9 @@ pmap_clear_modify(struct vm_page *pg)
 			continue;
 		if ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RO)
 			continue;
-
+#ifdef ARMV81_HAFDBS
+		modified = true;
+#endif
 		/* clear write permission */
 		pte &= ~LX_BLKPAG_AP;
 		pte |= LX_BLKPAG_AP_RO;
@@ -2539,7 +2577,11 @@ pmap_clear_modify(struct vm_page *pg)
 
 	pmap_pv_unlock(pp);
 
+#ifdef ARMV81_HAFDBS
+	return modified;
+#else
 	return true;
+#endif
 }
 
 bool
@@ -2549,6 +2591,9 @@ pmap_clear_reference(struct vm_page *pg)
 	struct pmap_page * const pp = VM_PAGE_TO_PP(pg);
 	pt_entry_t *ptep, pte, opte;
 	vaddr_t va;
+#ifdef ARMV81_HAFDBS
+	bool referenced;
+#endif
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "pg=%p, pp=%p, flags=%08x",
@@ -2556,10 +2601,17 @@ pmap_clear_reference(struct vm_page *pg)
 
 	pmap_pv_lock(pp);
 
-	if ((pp->pp_pv.pv_va & VM_PROT_READ) == 0) {
+	if (
+#ifdef ARMV81_HAFDBS
+	    aarch64_hafdbs_enabled == ID_AA64MMFR1_EL1_HAFDBS_NONE &&
+#endif
+	    (pp->pp_pv.pv_va & VM_PROT_READ) == 0) {
 		pmap_pv_unlock(pp);
 		return false;
 	}
+#ifdef ARMV81_HAFDBS
+	referenced = ((pp->pp_pv.pv_va & VM_PROT_READ) != 0);
+#endif
 	pp->pp_pv.pv_va &= ~(vaddr_t)VM_PROT_READ;
 
 	PMAP_COUNT(clear_reference);
@@ -2580,7 +2632,9 @@ pmap_clear_reference(struct vm_page *pg)
 			continue;
 		if ((pte & LX_BLKPAG_AF) == 0)
 			continue;
-
+#ifdef ARMV81_HAFDBS
+		referenced = true;
+#endif
 		/* clear access permission */
 		pte &= ~LX_BLKPAG_AF;
 
@@ -2600,7 +2654,11 @@ pmap_clear_reference(struct vm_page *pg)
 
 	pmap_pv_unlock(pp);
 
+#ifdef ARMV81_HAFDBS
+	return referenced;
+#else
 	return true;
+#endif
 }
 
 bool
@@ -2608,7 +2666,38 @@ pmap_is_modified(struct vm_page *pg)
 {
 	struct pmap_page * const pp = VM_PAGE_TO_PP(pg);
 
-	return (pp->pp_pv.pv_va & VM_PROT_WRITE);
+	if (pp->pp_pv.pv_va & VM_PROT_WRITE)
+		return true;
+
+#ifdef ARMV81_HAFDBS
+	/* check hardware dirty flag on each pte */
+	if (aarch64_hafdbs_enabled == ID_AA64MMFR1_EL1_HAFDBS_AD) {
+		struct pv_entry *pv;
+		pt_entry_t *ptep, pte;
+
+		pmap_pv_lock(pp);
+		for (pv = &pp->pp_pv; pv != NULL; pv = pv->pv_next) {
+			if (pv->pv_pmap == NULL) {
+				KASSERT(pv == &pp->pp_pv);
+				continue;
+			}
+
+			ptep = pv->pv_ptep;
+			pte = *ptep;
+			if (!l3pte_valid(pte))
+				continue;
+
+			if ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW) {
+				pp->pp_pv.pv_va |= VM_PROT_WRITE;
+				pmap_pv_unlock(pp);
+				return true;
+			}
+		}
+		pmap_pv_unlock(pp);
+	}
+#endif
+
+	return false;
 }
 
 bool
@@ -2616,7 +2705,38 @@ pmap_is_referenced(struct vm_page *pg)
 {
 	struct pmap_page * const pp = VM_PAGE_TO_PP(pg);
 
-	return (pp->pp_pv.pv_va & VM_PROT_READ);
+	if (pp->pp_pv.pv_va & VM_PROT_READ)
+		return true;
+
+#ifdef ARMV81_HAFDBS
+	/* check hardware access flag on each pte */
+	if (aarch64_hafdbs_enabled != ID_AA64MMFR1_EL1_HAFDBS_NONE) {
+		struct pv_entry *pv;
+		pt_entry_t *ptep, pte;
+
+		pmap_pv_lock(pp);
+		for (pv = &pp->pp_pv; pv != NULL; pv = pv->pv_next) {
+			if (pv->pv_pmap == NULL) {
+				KASSERT(pv == &pp->pp_pv);
+				continue;
+			}
+
+			ptep = pv->pv_ptep;
+			pte = *ptep;
+			if (!l3pte_valid(pte))
+				continue;
+
+			if (pte & LX_BLKPAG_AF) {
+				pp->pp_pv.pv_va |= VM_PROT_READ;
+				pmap_pv_unlock(pp);
+				return true;
+			}
+		}
+		pmap_pv_unlock(pp);
+	}
+#endif
+
+	return false;
 }
 
 /* get pointer to kernel segment L2 or L3 table entry */

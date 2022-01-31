@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.193 2022/01/28 16:38:56 jakllsch Exp $
+#	$NetBSD: GENERIC64,v 1.194 2022/01/31 09:16:09 ryo Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -47,6 +47,9 @@ options 	INCLUDE_CONFIG_FILE
 #options 	EARLYCONS=tegra, CONSADDR=0x70006000
 #options 	EARLYCONS=thunderx, CONSADDR=0x87e024000000
 #options 	EARLYCONS=virt, CONSADDR=0x09000000
+
+# Hardware management of the Access flag and dirty state (HAFDBS).
+options 	ARMV81_HAFDBS
 
 # Privileged Access Never (PAN).
 options 	ARMV81_PAN
