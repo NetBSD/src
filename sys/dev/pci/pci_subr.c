@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.240 2022/01/31 10:11:33 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.241 2022/01/31 10:14:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.240 2022/01/31 10:11:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.241 2022/01/31 10:14:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -155,6 +155,17 @@ static const struct pci_class pci_subclass_prehistoric[] = {
  * Mass storage controller
  */
 
+/* SCSI programming interface */
+static const struct pci_class pci_interface_scsi[] = {
+	{ "vendor specifi",	PCI_INTERFACE_SCSI_VND,		NULL,	},
+	{ "PQI storage",	PCI_INTERFACE_SCSI_PQI_STORAGE,	NULL,	},
+	{ "PQI controller",	PCI_INTERFACE_SCSI_PQI_CNTRL,	NULL,	},
+	{ "PQI storage and controller",	PCI_INTERFACE_SCSI_PQI_STORAGE_CNTRL,
+	  NULL,	},
+	{ "NVME",		PCI_INTERFACE_SCSI_NVME,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
 /* ATA programming interface */
 static const struct pci_class pci_interface_ata[] = {
 	{ "with single DMA",	PCI_INTERFACE_ATA_SINGLEDMA,	NULL,	},
@@ -188,15 +199,16 @@ static const struct pci_class pci_interface_ufs[] = {
 
 /* Subclasses */
 static const struct pci_class pci_subclass_mass_storage[] = {
-	{ "SCSI",		PCI_SUBCLASS_MASS_STORAGE_SCSI,	NULL,	},
+	{ "SCSI",		PCI_SUBCLASS_MASS_STORAGE_SCSI,
+	  pci_interface_scsi },
 	{ "IDE",		PCI_SUBCLASS_MASS_STORAGE_IDE,	NULL,	},
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY, NULL, },
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,	NULL,	},
 	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,	NULL,	},
 	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,
-	  pci_interface_ata, },
+	  pci_interface_ata },
 	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,
-	  pci_interface_sata, },
+	  pci_interface_sata },
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
 	{ "Flash",		PCI_SUBCLASS_MASS_STORAGE_NVM,
 	  pci_interface_nvm,	},
@@ -310,13 +322,13 @@ static const struct pci_class pci_subclass_bridge[] = {
 	{ "EISA",		PCI_SUBCLASS_BRIDGE_EISA,	NULL,	},
 	{ "MicroChannel",	PCI_SUBCLASS_BRIDGE_MC,		NULL,	},
 	{ "PCI",		PCI_SUBCLASS_BRIDGE_PCI,
-	  pci_interface_pcibridge,	},
+	  pci_interface_pcibridge },
 	{ "PCMCIA",		PCI_SUBCLASS_BRIDGE_PCMCIA,	NULL,	},
 	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,	NULL,	},
 	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,	NULL,	},
 	{ "RACEway",		PCI_SUBCLASS_BRIDGE_RACEWAY,	NULL,	},
 	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,
-	  pci_interface_stpci,	},
+	  pci_interface_stpci, },
 	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,	NULL,	},
 	{ "advanced switching",	PCI_SUBCLASS_BRIDGE_ADVSW,
 	  pci_interface_advsw,	},
