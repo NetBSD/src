@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.170 2022/01/29 20:52:45 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.171 2022/01/31 14:44:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.170 2022/01/29 20:52:45 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.171 2022/01/31 14:44:49 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -128,7 +128,7 @@ VFunction *rl_completion_display_matches_hook = NULL;
 VFunction *rl_prep_term_function = (VFunction *)rl_prep_terminal;
 VFunction *rl_deprep_term_function = (VFunction *)rl_deprep_terminal;
 KEYMAP_ENTRY_ARRAY emacs_meta_keymap;
-unsigned long rl_readline_state;
+unsigned long rl_readline_state = RL_STATE_NONE;
 int _rl_complete_mark_directories;
 rl_icppfunc_t *rl_directory_completion_hook;
 int rl_completion_suppress_append;
@@ -310,6 +310,8 @@ rl_initialize(void)
 		el_end(e);
 	if (h != NULL)
 		history_end(h);
+
+	RL_UNSETSTATE(RL_STATE_DONE);
 
 	if (!rl_instream)
 		rl_instream = stdin;
@@ -2145,6 +2147,7 @@ rl_callback_read_char(void)
 		if (done == 2) {
 			if ((wbuf = strdup(buf)) != NULL)
 				wbuf[count] = '\0';
+			RL_SETSTATE(RL_STATE_DONE);
 		} else
 			wbuf = NULL;
 		(*(void (*)(const char *))rl_linefunc)(wbuf);
