@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.163 2022/01/01 03:27:53 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.164 2022/01/31 10:11:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1571,6 +1571,9 @@ struct pci_rom {
 #define	PCI_EXTCAP_LMR		0x0027	/* Lane Margining at the Receiver */
 #define	PCI_EXTCAP_HIERARCHYID	0x0028	/* Hierarchy ID */
 #define	PCI_EXTCAP_NPEM		0x0029	/* Native PCIe Enclosure Management */
+#define	PCI_EXTCAP_PL32G	0x002a	/* Physical Layer 32.0 GT/s */
+#define	PCI_EXTCAP_AP		0x002b	/* Alternate Protocol */
+#define	PCI_EXTCAP_SFI		0x002c	/* System Firmware Intermediary */
 
 /*
  * Extended capability ID: 0x0001

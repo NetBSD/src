@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.239 2022/01/08 12:59:34 tnn Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.240 2022/01/31 10:11:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.239 2022/01/08 12:59:34 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.240 2022/01/31 10:11:33 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -4571,6 +4571,12 @@ static struct {
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
 	{ PCI_EXTCAP_NPEM,	"Native PCIe Enclosure Management",
+	  NULL },
+	{ PCI_EXTCAP_PL32G,	"Physical Layer 32.0 GT/s",
+	  NULL },
+	{ PCI_EXTCAP_AP,	"Alternate Protocol",
+	  NULL },
+	{ PCI_EXTCAP_SFI,	"System Firmware Intermediary",
 	  NULL },
 };
 
