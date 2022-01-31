@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15.2.12 2021/12/03 19:53:32 martin Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.15.2.13 2022/01/31 17:58:04 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.12 2021/12/03 19:53:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.13 2022/01/31 17:58:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,10 +120,8 @@ static const char * const x86_features[][32] = {
 	NULL, "ibrs", "ibpb", "stibp", NULL, NULL, NULL, NULL},
 
 	{ /* (8) Linux mapping */
-	"tpr_shadow", "vnmi", "flexpriority", "ept",
-	"vpid", "npt", "lbrv", "svm_lock",
-	"nrip_save", "tsc_scale", "vmcb_clean", "flushbyasid",
-	"decodeassists", "pausefilter", "pfthreshold", "vmmcall",
+	"tpr_shadow", "vnmi", "flexpriority", "ept", "vpid", NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, "vmmcall",
 	NULL, "ept_ad", NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
@@ -141,15 +139,16 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	{ /* (11) 0x0000000f:0 edx */
-	NULL, "cqm_llc", NULL, NULL, NULL, NULL, NULL, NULL,
+	{ /* (11) Linux mapping */
+	"cqm_llc", "cqm_occup_llc", "cqm_mbm_total", "cqm_mbm_local",
+	NULL, NULL, "split_lock_detect", NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	{ /* (12) 0x0000000f:1 edx */
-	"cqm_occup_llc", "cqm_mbm_total", "cqm_mbm_local", NULL,
+	{ /* (12) Intel-defined 0x00000007:1 eax */
 	NULL, NULL, NULL, NULL,
+	"avx_vnni", "avx512_bf16", NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
@@ -158,7 +157,7 @@ static const char * const x86_features[][32] = {
 	"clzero", "irperf", "xsaveerptr", NULL, "rdpru", NULL, NULL, NULL,
 	NULL, "wbnoinvd", NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, "ppin",
-	NULL, "virt_ssbd", NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, "virt_ssbd", NULL, "cppc", NULL, NULL, NULL, NULL},
 
 	{ /* (14) 0x00000006 eax */
 	"dtherm", "ida", "arat", NULL, "pln", NULL, "pts", "hwp",
@@ -181,7 +180,8 @@ static const char * const x86_features[][32] = {
 	"gfni", "vaes", "vpclmulqdq", "avx512_vnni",
 	"avx512_bitalg", "tme", "avx512_vpopcntdq", NULL,
 	"la57", NULL, NULL, NULL, NULL, NULL, "rdpid", NULL,
-	NULL, "cldemote", NULL, "movdiri", "movdir64b", NULL, "sgx_lc", NULL},
+	NULL, "cldemote", NULL, "movdiri",
+	"movdir64b", "enqcmd", "sgx_lc", NULL},
 
 	{ /* (17) 0x80000007 ebx */
 	"overflow_recov", "succor", NULL, "smca", NULL, NULL, NULL, NULL,
@@ -192,7 +192,8 @@ static const char * const x86_features[][32] = {
 	{ /* (18) Intel 0x00000007 edx */
 	NULL, NULL, "avx512_4vnniw", "avx512_4fmaps", "fsrm", NULL, NULL, NULL,
 	"vp2intersect", NULL, "md_clear", NULL, NULL, NULL, "serialize", NULL,
-	"tsxldtrk", NULL, "pconfig", NULL, NULL, NULL, NULL, "avx512_fp16",
+	"tsxldtrk", NULL, "pconfig", "arch_lbr",
+	NULL, NULL, NULL, "avx512_fp16",
 	NULL, NULL, NULL, NULL,
 	"flush_l1d", "arch_capabilities", NULL, "ssbd"},
 
@@ -307,14 +308,11 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 		diff = last - *left;
 	}
 
-	if (ci->ci_max_cpuid >= 0x0f) {
-		x86_cpuid2(0x0f, 0, descs);
-		procfs_getonefeatreg(descs[3], x86_features[11], p + diff,
-		    left);
-		diff = last - *left;
+	/* x86_features[11] is Linux defined mapping */
 
-		x86_cpuid2(0x0f, 1, descs);
-		procfs_getonefeatreg(descs[3], x86_features[12], p + diff,
+	if (ci->ci_max_cpuid >= 0x07) {
+		x86_cpuid2(0x07, 1, descs);
+		procfs_getonefeatreg(descs[0], x86_features[12], p + diff,
 		    left);
 		diff = last - *left;
 	}
