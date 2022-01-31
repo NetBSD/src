@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.25.2.5 2020/08/28 19:36:34 martin Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.25.2.6 2022/01/31 17:30:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.25.2.5 2020/08/28 19:36:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.25.2.6 2022/01/31 17:30:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,6 +75,7 @@ struct usbnet_private {
 
 	struct ethercom		unp_ec;
 	struct mii_data		unp_mii;
+	struct usb_task		unp_mcasttask;
 	struct usb_task		unp_ticktask;
 	struct callout		unp_stat_ch;
 	struct usbd_pipe	*unp_ep[USBNET_ENDPT_MAX];
@@ -1048,10 +1049,62 @@ usbnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return uno_override_ioctl(un, ifp, cmd, data);
 
 	error = ether_ioctl(ifp, cmd, data);
-	if (error == ENETRESET)
-		error = uno_ioctl(un, ifp, cmd, data);
+	if (error == ENETRESET) {
+		switch (cmd) {
+		case SIOCADDMULTI:
+		case SIOCDELMULTI:
+			usb_add_task(un->un_udev, &unp->unp_mcasttask,
+			    USB_TASKQ_DRIVER);
+			error = 0;
+			break;
+		default:
+			error = uno_ioctl(un, ifp, cmd, data);
+		}
+	}
 
 	return error;
+}
+
+static void
+usbnet_mcast_task(void *arg)
+{
+	USBNETHIST_FUNC();
+	struct usbnet * const un = arg;
+	struct usbnet_private * const unp = un->un_pri;
+	struct ifnet * const ifp = usbnet_ifp(un);
+	bool dying;
+	struct ifreq ifr;
+
+	USBNETHIST_CALLARGSN(10, "%d: enter", unp->unp_number, 0, 0, 0);
+
+	/*
+	 * If we're detaching, we must check unp_dying _before_
+	 * touching IFNET_LOCK -- the ifnet may have been detached by
+	 * the time this task runs.  This is racy -- unp_dying may be
+	 * set immediately after we test it -- but nevertheless safe,
+	 * because usbnet_detach waits for the task to complete before
+	 * issuing if_detach, and necessary, so that we don't touch
+	 * IFNET_LOCK after if_detach.  See usbnet_detach for details.
+	 */
+	mutex_enter(&unp->unp_lock);
+	dying = unp->unp_dying;
+	mutex_exit(&unp->unp_lock);
+	if (dying)
+		return;
+
+	/*
+	 * Pass a bogus ifr with SIOCDELMULTI -- the goal is to just
+	 * notify the driver to reprogram any hardware multicast
+	 * filter, according to what's already stored in the ethercom.
+	 * None of the drivers actually examine this argument, so it
+	 * doesn't change the ABI as far as they can tell.
+	 */
+	IFNET_LOCK(ifp);
+	if (ifp->if_flags & IFF_RUNNING) {
+		memset(&ifr, 0, sizeof(ifr));
+		(void)uno_ioctl(un, ifp, SIOCDELMULTI, &ifr);
+	}
+	IFNET_UNLOCK(ifp);
 }
 
 /*
@@ -1381,6 +1434,8 @@ usbnet_attach(struct usbnet *un,
 	un->un_pri = kmem_zalloc(sizeof(*un->un_pri), KM_SLEEP);
 	struct usbnet_private * const unp = un->un_pri;
 
+	usb_init_task(&unp->unp_mcasttask, usbnet_mcast_task, un,
+	    USB_TASKQ_MPSAFE);
 	usb_init_task(&unp->unp_ticktask, usbnet_tick_task, un, USB_TASKQ_MPSAFE);
 	callout_init(&unp->unp_stat_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&unp->unp_stat_ch, usbnet_tick, un);
@@ -1518,6 +1573,8 @@ usbnet_detach(device_t self, int flags)
 	callout_halt(&unp->unp_stat_ch, NULL);
 	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
 	    NULL);
+	usb_rem_task_wait(un->un_udev, &unp->unp_mcasttask, USB_TASKQ_DRIVER,
+	    NULL);
 
 	mutex_enter(&unp->unp_lock);
 	unp->unp_refcnt--;
@@ -1545,6 +1602,40 @@ usbnet_detach(device_t self, int flags)
 		if_detach(ifp);
 	}
 	usbnet_ec(un)->ec_mii = NULL;
+
+	/*
+	 * We have already waited for the multicast task to complete.
+	 * Unfortunately, until if_detach, nothing has prevented it
+	 * from running again -- another thread might issue if_mcast_op
+	 * between the time of our first usb_rem_task_wait and the time
+	 * we actually get around to if_detach.
+	 *
+	 * Fortunately, the first usb_rem_task_wait ensures that if the
+	 * task is scheduled again, it will witness our setting of
+	 * unp_dying to true[*].  So after that point, if the task is
+	 * scheduled again, it will decline to touch IFNET_LOCK and do
+	 * nothing.  But we still need to wait for it to complete.
+	 *
+	 * It would be nice if we could write
+	 *
+	 *	if_pleasestopissuingmcastopsthanks(ifp);
+	 *	usb_rem_task_wait(..., &unp->unp_mcasttask, ...);
+	 *	if_detach(ifp);
+	 *
+	 * and then we would need only one usb_rem_task_wait.
+	 *
+	 * Unfortunately, there is no such operation available in
+	 * sys/net at the moment, and it would require a bit of
+	 * coordination with if_mcast_op and doifioctl probably under a
+	 * new lock.  So we'll use this kludge until that mechanism is
+	 * invented.
+	 *
+	 * [*] This is not exactly a documented property of the API,
+	 * but it is implied by the single lock in the task queue
+	 * serializing changes to the task state.
+	 */
+	usb_rem_task_wait(un->un_udev, &unp->unp_mcasttask, USB_TASKQ_DRIVER,
+	    NULL);
 
 	cv_destroy(&unp->unp_detachcv);
 	mutex_destroy(&unp->unp_lock);
