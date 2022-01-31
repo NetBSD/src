@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.125 2022/01/16 10:50:02 rillig Exp $	*/
+/*	$NetBSD: pmap.c,v 1.126 2022/01/31 08:43:05 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2022/01/16 10:50:02 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2022/01/31 08:43:05 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2515,6 +2515,8 @@ pmap_clear_modify(struct vm_page *pg)
  tryagain:
 		if (!l3pte_valid(pte))
 			continue;
+		if ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RO)
+			continue;
 
 		/* clear write permission */
 		pte &= ~LX_BLKPAG_AP;
@@ -2575,6 +2577,8 @@ pmap_clear_reference(struct vm_page *pg)
 		opte = pte = *ptep;
  tryagain:
 		if (!l3pte_valid(pte))
+			continue;
+		if ((pte & LX_BLKPAG_AF) == 0)
 			continue;
 
 		/* clear access permission */
