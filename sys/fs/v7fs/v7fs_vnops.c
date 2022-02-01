@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.32 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.33 2022/02/01 17:12:24 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.32 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.33 2022/02/01 17:12:24 jakllsch Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -144,7 +144,7 @@ v7fs_lookup(void *v)
 		return 0;
 	}
 
-	/* ".." and reguler file. */
+	/* ".." and regular file. */
 	if ((error = v7fs_file_lookup_by_name(fs, parent, name, &ino))) {
 		/* Not found. Tell this entry be able to allocate. */
 		if (((nameiop == CREATE) || (nameiop == RENAME)) && islastcn) {
