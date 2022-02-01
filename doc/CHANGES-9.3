@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.70 2022/01/31 17:56:28 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.71 2022/02/01 11:42:18 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1381,4 +1381,21 @@ sys/arch/x86/x86/procfs_machdep.c		1.43-1.44
 	- Print cppc, enqcmd and arch_lbr.
 	- Modify linux mapping. Not used on NetBSD.
 	[msaitoh, ticket #1419]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.264,1.269,1.272,
+						1.306 via patch
+
+	Four INTx related fixes:
+	- Fix a bug that the all interrupt sources are enabled when the
+	  interface is UP and the INTx line is shared with other devices.
+	- Fix a bug that it might incorrectly enable interrupt when
+	  IFF_RUNNING is not set.
+	- Don't process TX/RX if a queue interrupt isn't occurred.
+	- Increment legacy interrupt counter after checking INTx sharing.
+	[msaitoh, ticket #1420]
+
+sys/dev/scsipi/cd.c				1.351
+
+	PR 56109: limit the buffer size for a device capabilities requests.
+	[reinoud, ticket #1421]
 
