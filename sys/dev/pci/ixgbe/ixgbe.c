@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.305 2022/01/25 01:56:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.306 2022/02/01 04:59:16 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.305 2022/01/25 01:56:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.306 2022/02/01 04:59:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5273,12 +5273,12 @@ ixgbe_legacy_irq(void *arg)
 	/* Read and clear EICR */
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
 
-	IXGBE_EVC_ADD(&adapter->stats.pf.legint, 1);
 	if (eicr == 0) {
 		IXGBE_EVC_ADD(&adapter->stats.pf.intzero, 1);
 		IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_orig);
 		return 0;
 	}
+	IXGBE_EVC_ADD(&adapter->stats.pf.legint, 1);
 
 	/* Queue (0) intr */
 	if ((eicr & IXGBE_EIMC_RTX_QUEUE) != 0) {
