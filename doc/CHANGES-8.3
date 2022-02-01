@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.119 2022/01/31 17:59:40 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.120 2022/02/01 11:40:02 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2525,4 +2525,16 @@ sys/arch/x86/x86/procfs_machdep.c		1.43-1.44
 	- Print cppc, enqcmd and arch_lbr.
 	- Modify linux mapping. Not used on NetBSD.
 	[msaitoh, ticket #1733]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.264,1.269,1.272,
+						1.306 via patch
+
+	Four INTx related fixes:
+	- Fix a bug that the all interrupt sources are enabled when the
+	  interface is UP and the INTx line is shared with other devices.
+	- Fix a bug that it might incorrectly enable interrupt when
+	  IFF_RUNNING is not set.
+	- Don't process TX/RX if a queue interrupt isn't occurred.
+	- Increment legacy interrupt counter after checking INTx sharing.
+	[msaitoh, ticket #1734]
 
