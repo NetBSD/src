@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.241 2022/01/31 10:14:55 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.242 2022/02/01 01:28:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.241 2022/01/31 10:14:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.242 2022/02/01 01:28:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -157,7 +157,7 @@ static const struct pci_class pci_subclass_prehistoric[] = {
 
 /* SCSI programming interface */
 static const struct pci_class pci_interface_scsi[] = {
-	{ "vendor specifi",	PCI_INTERFACE_SCSI_VND,		NULL,	},
+	{ "vendor-specific",	PCI_INTERFACE_SCSI_VND,		NULL,	},
 	{ "PQI storage",	PCI_INTERFACE_SCSI_PQI_STORAGE,	NULL,	},
 	{ "PQI controller",	PCI_INTERFACE_SCSI_PQI_CNTRL,	NULL,	},
 	{ "PQI storage and controller",	PCI_INTERFACE_SCSI_PQI_STORAGE_CNTRL,
@@ -175,7 +175,7 @@ static const struct pci_class pci_interface_ata[] = {
 
 /* SATA programming interface */
 static const struct pci_class pci_interface_sata[] = {
-	{ "vendor specific",	PCI_INTERFACE_SATA_VND,		NULL,	},
+	{ "vendor-specific",	PCI_INTERFACE_SATA_VND,		NULL,	},
 	{ "AHCI 1.0",		PCI_INTERFACE_SATA_AHCI10,	NULL,	},
 	{ "Serial Storage Bus Interface", PCI_INTERFACE_SATA_SSBI, NULL, },
 	{ NULL,			0,				NULL,	},
@@ -183,7 +183,7 @@ static const struct pci_class pci_interface_sata[] = {
 
 /* Flash programming interface */
 static const struct pci_class pci_interface_nvm[] = {
-	{ "vendor specific",	PCI_INTERFACE_NVM_VND,		NULL,	},
+	{ "vendor-specific",	PCI_INTERFACE_NVM_VND,		NULL,	},
 	{ "NVMHCI 1.0",		PCI_INTERFACE_NVM_NVMHCI10,	NULL,	},
 	{ "NVMe I/O",		PCI_INTERFACE_NVM_NVME_IO,	NULL,	},
 	{ "NVMe admin",		PCI_INTERFACE_NVM_NVME_ADMIN,	NULL,	},
@@ -192,7 +192,7 @@ static const struct pci_class pci_interface_nvm[] = {
 
 /* UFS programming interface */
 static const struct pci_class pci_interface_ufs[] = {
-	{ "vendor specific",	PCI_INTERFACE_UFS_VND,		NULL,	},
+	{ "vendor-specific",	PCI_INTERFACE_UFS_VND,		NULL,	},
 	{ "UFSHCI",		PCI_INTERFACE_UFS_UFSHCI,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -264,7 +264,7 @@ static const struct pci_class pci_subclass_display[] = {
 /* HD Audio programming interface */
 static const struct pci_class pci_interface_hda[] = {
 	{ "HD Audio 1.0",	PCI_INTERFACE_HDAUDIO,		NULL,	},
-	{ "HD Audio 1.0 + vendor ext",	PCI_INTERFACE_HDAUDIO_VND, NULL, },
+	{ "HD Audio 1.0 + vendor-ext",	PCI_INTERFACE_HDAUDIO_VND, NULL, },
 	{ NULL,			0,				NULL,	},
 };
 
