@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.342.4.2 2021/02/11 12:53:28 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.342.4.3 2022/02/01 11:41:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.342.4.2 2021/02/11 12:53:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.342.4.3 2022/02/01 11:41:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2695,14 +2695,12 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	struct scsipi_get_conf_feature   *gcf;
 	struct scsipi_read_discinfo       di_cmd;
 	struct scsipi_read_discinfo_data  di __aligned(2);
-	const uint32_t buffer_size = 1024;
-	uint32_t feat_tbl_len, pos;
+	const uint32_t buffer_size = 0x200; /* XXX RPZ USB3 SCSI size issue */
+	uint32_t pos;
 	u_long   last_lba = 0;
 	uint8_t  *buffer, *fpos;
 	int feature, last_feature, features_len, feature_cur, feature_len;
 	int lsb, msb, error, flags;
-
-	feat_tbl_len = buffer_size;
 
 	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
 
@@ -2748,12 +2746,12 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		memset(&gc_cmd, 0, sizeof(gc_cmd));
 		gc_cmd.opcode = GET_CONFIGURATION;
 		_lto2b(last_feature, gc_cmd.start_at_feature);
-		_lto2b(feat_tbl_len, gc_cmd.data_len);
-		memset(gc, 0, feat_tbl_len);
+		_lto2b(buffer_size, gc_cmd.data_len);
+		memset(gc, 0, buffer_size);
 
 		error = scsipi_command(periph,
 			(void *)&gc_cmd, sizeof(gc_cmd),
-			(void *) gc,     feat_tbl_len,
+			(void *) gc,     buffer_size,
 			CDRETRIES, 30000, NULL, flags);
 		if (error) {
 			/* ieeek... break out of loop... i dunno what to do */
@@ -2761,7 +2759,7 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		}
 
 		features_len = _4btol(gc->data_len);
-		if (features_len < 4 || features_len > feat_tbl_len)
+		if (features_len < 4 || features_len > buffer_size)
 			break;
 
 		pos  = 0;
