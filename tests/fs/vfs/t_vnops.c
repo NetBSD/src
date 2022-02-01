@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.61 2021/09/16 21:29:42 andvar Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.62 2022/02/01 18:27:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -172,6 +172,45 @@ dir_simple(const atf_tc_t *tc, const char *mountpath)
 		atf_tc_fail_errno("rmdir");
 	if (rump_sys_stat(pb, &sb) != -1 || errno != ENOENT)
 		atf_tc_fail("ENOENT expected from stat");
+}
+
+static void
+do_dir_slash(const atf_tc_t *tc, const char *mountpath, const char *addend)
+{
+	char plain[MAXPATHLEN], with_slash[MAXPATHLEN];
+	struct stat sb;
+
+	USES_DIRS;
+
+	/* check we can create directories with one or more / appended */
+	snprintf(plain, sizeof(plain), "%s/dir%s", mountpath, addend);
+	snprintf(with_slash, sizeof(with_slash), "%s/dir/", mountpath);
+	if (rump_sys_mkdir(with_slash, 0777) == -1)
+		atf_tc_fail_errno("mkdir");
+	if (rump_sys_stat(plain, &sb) == -1)
+		atf_tc_fail_errno("stat new directory");
+	if (rump_sys_rmdir(plain) == -1)
+		atf_tc_fail_errno("rmdir");
+	if (rump_sys_stat(with_slash, &sb) != -1 || errno != ENOENT)
+		atf_tc_fail("ENOENT expected from stat");
+}
+
+static void
+dir_slash(const atf_tc_t *tc, const char *mountpath)
+{
+	do_dir_slash(tc, mountpath, "/");
+}
+
+static void
+dir_2slash(const atf_tc_t *tc, const char *mountpath)
+{
+	do_dir_slash(tc, mountpath, "//");
+}
+
+static void
+dir_3slash(const atf_tc_t *tc, const char *mountpath)
+{
+	do_dir_slash(tc, mountpath, "///");
 }
 
 static void
@@ -1026,6 +1065,9 @@ lstat_symlink(const atf_tc_t *tc, const char *mp)
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
+ATF_TC_FSAPPLY(dir_slash, "mkdir with appended slash");
+ATF_TC_FSAPPLY(dir_2slash, "mkdir with two slashes appended");
+ATF_TC_FSAPPLY(dir_3slash, "mkdir with three slashes appended");
 ATF_TC_FSAPPLY(dir_notempty, "non-empty directories cannot be removed");
 ATF_TC_FSAPPLY(dir_rmdirdotdot, "remove .. and try to cd out (PR kern/44657)");
 ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops "
@@ -1058,6 +1100,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(dir_simple);
 	ATF_TP_FSAPPLY(dir_notempty);
 	ATF_TP_FSAPPLY(dir_rmdirdotdot);
+	ATF_TP_FSAPPLY(dir_slash);
+	ATF_TP_FSAPPLY(dir_2slash);
+	ATF_TP_FSAPPLY(dir_3slash);
 	ATF_TP_FSAPPLY(rename_dir);
 	ATF_TP_FSAPPLY(rename_dotdot);
 	ATF_TP_FSAPPLY(rename_reg_nodir);
