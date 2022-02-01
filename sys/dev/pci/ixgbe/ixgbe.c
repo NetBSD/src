@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.18 2022/01/31 17:36:25 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.19 2022/02/01 11:35:45 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.18 2022/01/31 17:36:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.19 2022/02/01 11:35:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5115,28 +5115,34 @@ ixgbe_legacy_irq(void *arg)
 	struct ix_queue *que = arg;
 	struct adapter	*adapter = que->adapter;
 	struct ixgbe_hw	*hw = &adapter->hw;
-	struct ifnet	*ifp = adapter->ifp;
 	struct		tx_ring *txr = adapter->tx_rings;
 	bool		more = false;
 	u32		eicr, eicr_mask;
+	u32		eims_orig;
 
-	/* Silicon errata #26 on 82598 */
+	eims_orig = IXGBE_READ_REG(hw, IXGBE_EIMS);
+	/*
+	 * Silicon errata #26 on 82598. Disable all interrupts before reading
+	 * EICR.
+	 */
 	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_IRQ_CLEAR_MASK);
 
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
 
-	adapter->stats.pf.legint.ev_count++;
-	++que->irqs.ev_count;
 	if (eicr == 0) {
 		adapter->stats.pf.intzero.ev_count++;
-		if ((ifp->if_flags & IFF_UP) != 0)
-			ixgbe_enable_intr(adapter);
+		IXGBE_WRITE_REG(hw, IXGBE_EIMS, eims_orig);
 		return 0;
 	}
+	adapter->stats.pf.legint.ev_count++;
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+	/* Queue (0) intr */
+	if ((eicr & IXGBE_EIMC_RTX_QUEUE) != 0) {
+		++que->irqs.ev_count;
+
 		/*
-		 * The same as ixgbe_msix_que() about "que->txrx_use_workqueue".
+		 * The same as ixgbe_msix_que() about
+		 * "que->txrx_use_workqueue".
 		 */
 		que->txrx_use_workqueue = adapter->txrx_use_workqueue;
 
