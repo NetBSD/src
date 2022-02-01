@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.248 2021/11/27 22:16:42 rillig Exp $ */
+/* $NetBSD: vmstat.c,v 1.249 2022/02/01 09:18:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.248 2021/11/27 22:16:42 rillig Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.249 2022/02/01 09:18:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -569,7 +569,7 @@ getnlist(int todo)
 char **
 choosedrives(char **argv)
 {
-	size_t i;
+	size_t i, j, k;
 
 	/*
 	 * Choose drives to be displayed.  Priority goes to (in order) drives
@@ -591,11 +591,30 @@ choosedrives(char **argv)
 			break;
 		}
 	}
+
+	/*
+	 * Pick the most active drives.  Must read the stats once before
+	 * sorting so that there is current IO data, before selecting
+	 * just the first two drives.
+	 */
+	drvreadstats();
 	for (i = 0; i < ndrive && ndrives < 2; i++) {
-		if (drv_select[i])
-			continue;
-		drv_select[i] = 1;
-		++ndrives;
+		uint64_t high_bytes = 0, bytes;
+
+		k = ndrive;
+		for (j = 0; j < ndrive; j++) {
+			if (drv_select[j])
+				continue;
+			bytes = cur.rbytes[j] + cur.wbytes[j];
+			if (bytes > high_bytes) {
+				high_bytes = bytes;
+				k = j;
+			}
+		}
+		if (k != ndrive) {
+			drv_select[k] = 1;
+			++ndrives;
+		}
 	}
 
 	return (argv);
