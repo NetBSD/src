@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.188 2022/01/29 08:18:22 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.189 2022/02/01 05:27:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -311,7 +311,7 @@
 #define CPUID_DCP_CACHELEVEL	__BITS(7, 5)	/* Cache level (start at 1) */
 #define CPUID_DCP_SELFINITCL	__BIT(8)	/* Self initializing cachelvl*/
 #define CPUID_DCP_FULLASSOC	__BIT(9)	/* Full associative */
-#define CPUID_DCP_SHAREING	__BITS(25, 14)	/* shareing */
+#define CPUID_DCP_SHARING	__BITS(25, 14)	/* sharing */
 #define CPUID_DCP_CORE_P_PKG	__BITS(31, 26)	/* Cores/package */
 
 /* %ebx */
@@ -648,7 +648,7 @@
 #define CPUID_DATP_TCTYPE_S	5		/*   Store only TLB */
 #define CPUID_DATP_TCLEVEL	__BITS(7, 5)	/* TLB level (start at 1) */
 #define CPUID_DATP_FULLASSOC	__BIT(8)	/* Full associative */
-#define CPUID_DATP_SHAREING	__BITS(25, 14)	/* shareing */
+#define CPUID_DATP_SHARING	__BITS(25, 14)	/* sharing */
 
 /*
  * Intel Hybrid Information Enumeration.
