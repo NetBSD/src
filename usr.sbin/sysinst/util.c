@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29.2.8 2020/11/05 08:10:21 sborrill Exp $	*/
+/*	$NetBSD: util.c,v 1.29.2.9 2022/02/02 04:25:36 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2232,9 +2232,9 @@ free_usage_set(struct partition_usage_set *wanted)
 void
 free_install_desc(struct install_partition_desc *install)
 {
-#ifndef NO_CLONES
 	size_t i, j;
 
+#ifndef NO_CLONES
 	for (i = 0; i < install->num; i++) {
 		struct selected_partitions *src = install->infos[i].clone_src;
 		if (!(install->infos[i].flags & PUIFLG_CLONE_PARTS) ||
@@ -2246,6 +2246,22 @@ free_install_desc(struct install_partition_desc *install)
 				install->infos[j].clone_src = NULL; 
 	}
 #endif
+
+	for (i = 0; i < install->num; i++) {
+		struct disk_partitions * parts = install->infos[i].parts;
+
+		if (parts == NULL)
+			continue;
+
+		if (parts->pscheme->free)
+			parts->pscheme->free(parts);
+
+		/* NULL all other references to this parts */
+		for (j = i+1; j < install->num; j++)
+			if (install->infos[j].parts == parts)
+				install->infos[j].parts = NULL;
+	}
+
 	free(install->write_back);
 	free(install->infos);
 }

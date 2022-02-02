@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.12.2.4 2021/08/19 04:52:10 snj Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.12.2.5 2022/02/02 04:25:36 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -120,7 +120,7 @@ do_upgrade(void)
 	    MSG_upgrcomplete, MSG_abortupgr) != 0)
 		goto free_install;
 
-	if (md_post_extract(&install))
+	if (md_post_extract(&install, true))
 		goto free_install;
 
 	merge_X("/usr/X11R6");

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8.2.7 2021/05/12 06:53:55 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.8.2.8 2022/02/02 04:25:40 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -270,7 +270,7 @@ evbarm_extract_finalize(int update)
 }
 
 int
-md_post_extract(struct install_partition_desc *install)
+md_post_extract(struct install_partition_desc *install, bool upgrade)
 {
 
 	return 0;

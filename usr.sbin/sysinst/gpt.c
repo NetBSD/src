@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.6.2.9 2020/10/15 19:36:50 bouyer Exp $	*/
+/*	$NetBSD: gpt.c,v 1.6.2.10 2022/02/02 04:25:36 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ bool	gpt_parts_check(void);	/* check for needed binaries */
 #define GUID_STR_LEN	40
 #define	GPT_PTYPE_ALLOC	32	/* initial type array allocation, should be >
 				 * gpt type -l | wc -l */
-#define	GPT_DEV_LEN	16	/* dkNN */
+#define	GPT_DEV_LEN	DISKNAMESIZE	/* dkNN */
 
 #define	GPT_PARTS_PER_SEC	4	/* a 512 byte sector holds 4 entries */
 #define	GPT_DEFAULT_MAX_PARTS	128
@@ -1607,6 +1607,9 @@ gpt_free(struct disk_partitions *arg)
 
 	assert(parts != NULL);
 	for (p = parts->partitions; p != NULL; p = n) {
+		if (p->gp_flags & GPEF_WEDGE)
+			register_post_umount_delwedge(parts->dp.disk,
+			    p->gp_dev_name);
 		free(__UNCONST(p->last_mounted));
 		n = p->gp_next;
 		free(p);
