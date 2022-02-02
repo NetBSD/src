@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1446 2022/01/25 16:06:44 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1447 2022/02/02 15:05:28 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1047,9 +1047,9 @@ product AMD F16_CSTATE		0x1534	Family16h CPU C-state Configuration
 product AMD F16_MISC		0x1535	Family16h Miscellaneous Configuration
 product AMD F16_RC		0x1536	Family16h Root Complex
 product AMD F16_CCP		0x1537	Family16h Cryptographic Coprocessor
+product AMD F16_HB		0x1538	Family16h Host Bridge
 product AMD F16_30_RC		0x1566	Family16h Root Complex
 product AMD F16_30_IOMMU	0x1567	Family16h IOMMU
-product AMD F16_HB		0x1568	Family16h Host Bridge
 product AMD F16_30_HB		0x156b	Family16h Host Bridge
 product AMD F15_60_PF_0		0x1570	Family15h Processor Function 0
 product AMD F15_60_PF_1		0x1571	Family15h Processor Function 1
