@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.37 2022/01/29 08:17:03 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.38 2022/02/02 22:43:14 nakayama Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.37 2022/01/29 08:17:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.38 2022/02/02 22:43:14 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,9 +81,9 @@ static const char* const spdmem_basic_types[] = {
 	"unknown",
 	"DDR4E SDRAM",
 	"LPDDR3 SDRAM",
-	"LPDDR4 SDRAM"
+	"LPDDR4 SDRAM",
 	"LPDDR4X SDRAM",
-	"DDR5 SDRAM",
+	"DDR5 SDRAM"
 };
 
 static const char* const spdmem_ddr4_module_types[] = {
