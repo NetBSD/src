@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42.2.9 2021/08/19 04:52:10 snj Exp $	*/
+/*	$NetBSD: defs.h,v 1.42.2.10 2022/02/02 04:25:36 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,6 +58,7 @@ const char *getfslabelname(uint, uint);
 #define STRSIZE		255
 #define	MENUSTRSIZE	80
 #define SSTRSIZE	30
+#define	DISKNAMESIZE	24	/* max(strlen("/dev/rsd22c")) */
 
 /* these are used for different alignment defaults */
 #define	HUGE_DISK_SIZE	(daddr_t)(128 * (GIG / 512))
@@ -644,7 +645,7 @@ bool	md_pre_disklabel(struct install_partition_desc*, struct disk_partitions*);
 bool	md_post_disklabel(struct install_partition_desc*, struct disk_partitions*);
 int	md_pre_mount(struct install_partition_desc*, size_t);
 int	md_post_newfs(struct install_partition_desc*);
-int	md_post_extract(struct install_partition_desc*);
+int	md_post_extract(struct install_partition_desc*, bool upgrade);
 void	md_cleanup_install(struct install_partition_desc*);
 
  /* MD functions if user selects upgrade - in order called */
@@ -904,6 +905,7 @@ int	target_dir_exists_p(const char *);
 int	target_file_exists_p(const char *);
 int	target_symlink_exists_p(const char *);
 void	unwind_mounts(void);
+void	register_post_umount_delwedge(const char *disk, const char *wedge);
 int	target_mounted(void);
 void	umount_root(void);
 
