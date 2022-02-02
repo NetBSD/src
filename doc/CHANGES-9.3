@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.71 2022/02/01 11:42:18 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.72 2022/02/02 04:26:39 msaitoh Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1398,4 +1398,58 @@ sys/dev/scsipi/cd.c				1.351
 
 	PR 56109: limit the buffer size for a device capabilities requests.
 	[reinoud, ticket #1421]
+
+usr.sbin/sysinst/arch/acorn32/md.c		1.8
+usr.sbin/sysinst/arch/alpha/md.c		1.10
+usr.sbin/sysinst/arch/amiga/md.c		1.7
+usr.sbin/sysinst/arch/arc/md.c			1.14
+usr.sbin/sysinst/arch/atari/md.c		1.8
+usr.sbin/sysinst/arch/bebox/md.c		1.10
+usr.sbin/sysinst/arch/cats/md.c			1.6
+usr.sbin/sysinst/arch/cobalt/md.c		1.15
+usr.sbin/sysinst/arch/dummy/md.c		1.7
+usr.sbin/sysinst/arch/emips/md.c		1.10
+usr.sbin/sysinst/arch/evbarm/md.c		1.22
+usr.sbin/sysinst/arch/evbmips/md.c		1.10
+usr.sbin/sysinst/arch/evbppc/md.c		1.10
+usr.sbin/sysinst/arch/evbsh3/md.c		1.7
+usr.sbin/sysinst/arch/ews4800mips/md.c		1.8
+usr.sbin/sysinst/arch/hp300/md.c		1.12
+usr.sbin/sysinst/arch/hpcarm/md.c		1.11
+usr.sbin/sysinst/arch/hpcmips/md.c		1.10
+usr.sbin/sysinst/arch/hpcsh/md.c		1.11
+usr.sbin/sysinst/arch/hppa/md.c			1.9
+usr.sbin/sysinst/arch/i386/md.c			1.34
+usr.sbin/sysinst/arch/landisk/md.c		1.15
+usr.sbin/sysinst/arch/luna68k/md.c		1.10
+usr.sbin/sysinst/arch/mac68k/md.c		1.11
+usr.sbin/sysinst/arch/macppc/md.c		1.7
+usr.sbin/sysinst/arch/mipsco/md.c		1.9
+usr.sbin/sysinst/arch/mvme68k/md.c		1.12
+usr.sbin/sysinst/arch/news68k/md.c		1.8
+usr.sbin/sysinst/arch/newsmips/md.c		1.7
+usr.sbin/sysinst/arch/ofppc/md.c		1.13
+usr.sbin/sysinst/arch/playstation2/md.c		1.10
+usr.sbin/sysinst/arch/pmax/md.c			1.9
+usr.sbin/sysinst/arch/prep/md.c			1.14
+usr.sbin/sysinst/arch/sandpoint/md.c		1.10
+usr.sbin/sysinst/arch/sgimips/md.c		1.10
+usr.sbin/sysinst/arch/shark/md.c		1.7
+usr.sbin/sysinst/arch/sparc/md.c		1.7
+usr.sbin/sysinst/arch/sparc64/md.c		1.7
+usr.sbin/sysinst/arch/vax/md.c			1.8
+usr.sbin/sysinst/arch/x68k/md.c			1.12
+usr.sbin/sysinst/arch/zaurus/md.c		1.12
+usr.sbin/sysinst/defs.h				1.77-1.79
+usr.sbin/sysinst/gpt.c				1.27-1.28
+usr.sbin/sysinst/install.c			1.22
+usr.sbin/sysinst/main.c				1.28
+usr.sbin/sysinst/target.c			1.16-1.17
+usr.sbin/sysinst/upgrade.c			1.19
+usr.sbin/sysinst/util.c				1.64
+
+	sysinst: on x86 make sure to update the bootloader when upgrading
+	existing installations.
+	Clean up temporary wedges used during extraction/installation.
+	[martin, ticket #1422]
 
