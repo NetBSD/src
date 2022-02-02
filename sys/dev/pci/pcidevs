@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1447 2022/02/02 15:05:28 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1448 2022/02/02 15:18:21 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1007,6 +1007,22 @@ product AMD F15_30_HB		0x1424	Family15h Host Bridge
 product AMD F15_30_RP_5		0x1425	Family15h Root Port
 product AMD F15_30_RP_6		0x1426	Family15h Root Port
 product AMD F16_GPPB		0x1439	Family16h GPP Bridge
+product AMD F17_7X_DF_1		0x1440	17h/7xh Data Fabric
+product AMD F17_7X_DF_2		0x1441	17h/7xh Data Fabric
+product AMD F17_7X_DF_3		0x1442	17h/7xh Data Fabric
+product AMD F17_7X_DF_4		0x1443	17h/7xh Data Fabric
+product AMD F17_7X_DF_5		0x1444	17h/7xh Data Fabric
+product AMD F17_7X_DF_6		0x1445	17h/7xh Data Fabric
+product AMD F17_7X_DF_7		0x1446	17h/7xh Data Fabric
+product AMD F17_7X_DF_8		0x1447	17h/7xh Data Fabric
+product AMD F17_6X_DF_0		0x1448	17h/6xh Data Fabric
+product AMD F17_6X_DF_1		0x1449	17h/6xh Data Fabric
+product AMD F17_6X_DF_2		0x144a	17h/6xh Data Fabric
+product AMD F17_6X_DF_3		0x144b	17h/6xh Data Fabric
+product AMD F17_6X_DF_4		0x144c	17h/6xh Data Fabric
+product AMD F17_6X_DF_5		0x144d	17h/6xh Data Fabric
+product AMD F17_6X_DF_6		0x144e	17h/6xh Data Fabric
+product AMD F17_6X_DF_7		0x144f	17h/6xh Data Fabric
 product AMD F17_RC		0x1450	Family17h Root Complex
 product AMD F17_IOMMU		0x1451	Family17h IOMMU
 product AMD F17_PCIE_1		0x1452	Family17h PCIe
@@ -1030,8 +1046,12 @@ product AMD F17_PCIE_4		0x1470	Family17h PCIe
 product AMD F17_PCIE_5		0x1471	Family17h PCIe
 product AMD F17_7X_RC		0x1480	Family17h/7xh Root Complex
 product AMD F17_7X_IOMMU	0x1481	Family17h/7xh IOMMU
+product AMD F17_7X_HB		0x1482	17h/7xh Host Bridge
+product AMD F17_7X_PCIE_1	0x1483	17h/7xh PCIe
+product AMD F17_7X_PCIE_2	0x1484	17h/7xh PCIe
 product AMD F17_7X_RESV_SPP	0x1485	Family17h/7xh Reserved SPP
 product AMD F17_7X_CCP		0x1486	Family17h/7xh Crypto
+product AMD F17_3X_HDA		0x1487	17h/7xh HD Audio
 product AMD F17_7X_USB3		0x149c	Family17h/7xh USB 3.0 Host Controller
 product AMD F14_RC		0x1510	Family14h Root Complex
 product AMD F14_PCIE_1		0x1512	Family14h PCIe
@@ -1069,6 +1089,12 @@ product AMD F16_30_DRAM		0x1582	Family16h DRAM Configuration
 product AMD F16_30_NB		0x1583	Family16h North Bridge Configuration
 product AMD F16_30_CSTATE	0x1584	Family16h CPU C-state Configuration
 product AMD F16_30_MISC		0x1585	Family16h Miscellaneous Configuration
+product AMD F15_7X_HT		0x15b0	15h/7xh HyperTransport Configuration
+product AMD F15_7X_ADDR		0x15b1	15h/7xh Address Map Configuration
+product AMD F15_7X_DRAM		0x15b2	15h/7xh DRAM Configuration
+product AMD F15_7X_NB		0x15b3	15h/7xh North Bridge Configuration
+product AMD F15_7X_CSTATE	0x15b4	15h/7xh CPU C-state Configuration
+product AMD F15_7X_MISC		0x15b5	15h/7xh Miscellaneous Configuration
 product AMD F17_1X_RC		0x15d0	Family17h/1xh Root Complex
 product AMD F17_1X_IOMMU	0x15d1	Family17h/1xh IOMMU
 product AMD F17_1X_PCIE_1	0x15d3	Family17h/1xh PCIe
@@ -1092,13 +1118,34 @@ product AMD F15_DRAM		0x1602	Family15h DRAM Configuration
 product AMD F15_MISC		0x1603	Family15h Miscellaneous Configuration
 product AMD F15_LINK		0x1604	Family15h Link Configuration
 product AMD F15_NB		0x1605	Family15h North Bridge Configuration
+product AMD F17_6X_RC		0x1630	17h/6xh Root Complex
+product AMD F17_6X_IOMMU	0x1631	17h/6xh IOMMU
+product AMD F17_6X_HB		0x1632	17h/6xh Host Bridge
+product AMD F17_6X_PCIE_1	0x1633	17h/6xh PCIe
+product AMD F17_6X_PCIE_2	0x1634	17h/6xh PCIe
+product AMD F17_6X_PCIE_3	0x1635	17h/6xh PCIe
+product AMD F17_6X_XHCI		0x1639	17h/6xh xHCI
+product AMD F19_5X_DF_0		0x166a	19h/5xh Data Fabric
+product AMD F19_5X_DF_1		0x166b	19h/5xh Data Fabric
+product AMD F19_5X_DF_2		0x166c	19h/5xh Data Fabric
+product AMD F19_5X_DF_3		0x166d	19h/5xh Data Fabric
+product AMD F19_5X_DF_4		0x166e	19h/5xh Data Fabric
+product AMD F19_5X_DF_5		0x166f	19h/5xh Data Fabric
+product AMD F19_5X_DF_6		0x1670	19h/5xh Data Fabric
+product AMD F19_5X_DF_7		0x1671	19h/5xh Data Fabric
 product AMD F14_HT		0x1700	Family12h/14h HyperTransport Configuration
 product AMD F14_ADDR		0x1701	Family12h/14h Address Map Configuration
 product AMD F14_DRAM		0x1702	Family12h/14h DRAM Configuration
 product AMD F14_NB		0x1703	Family12h/14h North Bridge Configuration
 product AMD F14_CSTATE		0x1704	Family12h/14h CPU C-state Configuration
 product AMD F12_RC		0x1705	Family12h Root Complex
+product AMD F12_PCIE_1		0x1707	Family12h PCIe
+product AMD F12_PCIE_2		0x1708	Family12h PCIe
 product AMD F12_GPP0		0x1709	Family12h GPP0 Root Port
+product AMD F12_PCIE_4		0x170a	Family12h PCIe
+product AMD F12_PCIE_5		0x170b	Family12h PCIe
+product AMD F12_PCIE_6		0x170c	Family12h PCIe
+product AMD F12_PCIE_7		0x170d	Family12h PCIe
 product AMD F14_MISC		0x1716	Family12h/14h Misc. Configuration
 product AMD F14_HB18		0x1718	Family12h/14h Host Bridge
 product AMD F14_HB19		0x1719	Family12h/14h Host Bridge
@@ -1133,6 +1180,14 @@ product AMD 400SERIES_PCIE_1	0x43c6	400 Series PCIe
 product AMD 400SERIES_PCIE_2	0x43c7	400 Series PCIe
 product AMD 400SERIES_AHCI	0x43c8	400 Series AHCI
 product AMD 400SERIES_XHCI	0x43d0	400 Series xHCI
+product AMD 400SERIES_XHCI_2	0x43d1	400 Series xHCI
+product AMD 500SERIES_PCIE_1	0x43e9	500 Series PCIe
+product AMD 500SERIES_PCIE_2	0x43ea	500 Series PCIe
+product AMD 500SERIES_AHCI	0x43eb	500 Series AHCI
+product AMD 500SERIES_XHCI	0x43ee	500 Series xHCI
+product AMD 500SERIES_PCIE_3	0x57a3	500 Series PCIe
+product AMD 500SERIES_PCIE_4	0x57a4	500 Series PCIe
+product AMD 500SERIES_PCIE_5	0x57ad	500 Series PCIe
 product AMD SC751_SC		0x7006	AMD751 System Controller
 product AMD SC751_PPB		0x7007	AMD751 PCI-PCI Bridge
 product AMD IGR4_AGP		0x700a	AMD IGR4 AGP Bridge
@@ -1169,6 +1224,7 @@ product	AMD PCIX_APIC		0x7459	AMD8132 PCI-X IOAPIC
 product AMD PBC8111		0x7460	AMD8111 I/O Hub
 product AMD PBC8111_USB_7461	0x7461	AMD8111 7461 USB Host Controller
 product AMD PBC8111_ETHER	0x7462	AMD8111 Ethernet
+product AMD PBC8111_EHCI	0x7463	AMD8111 USB EHCI
 product AMD PBC8111_USB		0x7464	AMD8111 USB Host Controller
 product AMD PBC8111_LPC		0x7468	AMD8111 LPC Controller
 product AMD PBC8111_IDE		0x7469	AMD8111 IDE Controller
@@ -1200,6 +1256,7 @@ product AMD KERNCZ_AHCI_1	0x7901	FCH AHCI
 product AMD KERNCZ_RAID_1	0x7902	FCH RAID
 product AMD KERNCZ_RAID_2	0x7903	FCH RAID
 product AMD KERNCZ_AHCI_2	0x7904	FCH AHCI
+product AMD KERNCZ_SD		0x7906	FCH SD
 product AMD KERNCZ_EHCI		0x7908	FCH USB2
 product AMD KERNCZ_SMB		0x790b	X370/X399 SMBus Controller
 product AMD KERNCZ_LPC		0x790e	FCH LPC
