@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.333.2.1 2021/09/14 02:21:34 msaitoh Exp $
+#	$NetBSD: build.sh,v 1.333.2.2 2022/02/02 14:23:11 martin Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1062,6 +1062,7 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     sets                Create binary sets in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/sets.
                         DESTDIR should be populated beforehand.
+    distsets            Same as "distribution sets".
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
@@ -1086,7 +1087,8 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     -C cdextras    Append cdextras to CDEXTRA variable for inclusion on CD-ROM.
     -D dest        Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E             Set "expert" mode; disables various safety checks.
-                   Should not be used without expert knowledge of the build system.
+                   Should not be used without expert knowledge of the build
+                   system.
     -h             Print this help message.
     -j njob        Run up to njob jobs in parallel; see make(1) -j.
     -M obj         Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
@@ -1098,7 +1100,8 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     -N noisy       Set the noisyness (MAKEVERBOSE) level of the build:
                        0   Minimal output ("quiet")
                        1   Describe what is occurring
-                       2   Describe what is occurring and echo the actual command
+                       2   Describe what is occurring and echo the actual
+                           command
                        3   Ignore the effect of the "@" prefix in make commands
                        4   Trace shell commands using the shell's -x flag
                    [Default: 2]
@@ -1381,6 +1384,12 @@ parseoptions()
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
 			    bomb "Must supply a directory with \`install=...'"
+			;;
+
+		distsets)
+			operations="$(echo "$operations" | sed 's/distsets/distribution sets/')"
+			do_sets=true
+			op=distribution
 			;;
 
 		build|\
@@ -1944,7 +1953,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.333.2.1 2021/09/14 02:21:34 msaitoh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.333.2.2 2022/02/02 14:23:11 martin Exp $
 # with these arguments: ${_args}
 #
 
