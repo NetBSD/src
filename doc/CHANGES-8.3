@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.120 2022/02/01 11:40:02 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.121 2022/02/03 14:22:17 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2537,4 +2537,9 @@ sys/dev/pci/ixgbe/ixgbe.c			1.264,1.269,1.272,
 	- Don't process TX/RX if a queue interrupt isn't occurred.
 	- Increment legacy interrupt counter after checking INTx sharing.
 	[msaitoh, ticket #1734]
+
+xsrc/external/mit/xterm/dist/graphics_sixel.c	1.2 (via patch)
+
+	Apply upstream fix for CVE-2022-24130.
+	[mrg, ticket #1735]
 
