@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.73 2022/02/02 14:27:21 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.74 2022/02/03 14:20:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1466,4 +1466,9 @@ sys/dev/pci/ixgbe/ixv.c				1.178 via patch
 
 	Use atomic_{load,store}_relaxed() for event counters.
 	[msaitoh, ticket #1424]
+
+xsrc/external/mit/xterm/dist/graphics_sixel.c	1.2 (via patch)
+
+	Apply upstream fix for CVE-2022-24130.
+	[mrg, ticket #1425]
 
