@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.107 2021/11/06 23:11:43 christos Exp $
+# $NetBSD: rc.subr,v 1.108 2022/02/03 20:52:44 alnsn Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -194,6 +194,79 @@ mount_critical_filesystems()
 				printf >&2 "%s\n" "$_mount_output"
 			fi
 			if [ "$_mount_es" != 0 ]; then
+				_mountcrit_es="$_mount_es"
+			fi
+		fi
+	done
+	return $_mountcrit_es
+}
+
+#
+# mount_critical_filesystems_zfs
+#	Go through the list of critical ZFS mountpoints as provided in
+#	the rc.conf(5) variable $critical_filesystems_zfs, checking
+#	each one to see if it is mounted, and if it is not, mounting it.
+#	It's not an error if file systems prefixed with "OPTIONAL:"
+#	aren't zfs mountpoints.
+mount_critical_filesystems_zfs()
+{
+	eval _fslist=\$critical_filesystems_zfs
+	_tab="	"
+	_mountcrit_es=0
+	for _fs in $_fslist; do
+		_optional=false
+		case "$_fs" in
+		OPTIONAL:*)
+			_optional=true
+			_fs="${_fs#*:}"
+			;;
+		esac
+
+		_dataset=`
+			zfs list -H -o mountpoint,name |
+			while read _line ; do
+				_dataset=''
+				case "$_line" in
+				"${_fs}${_tab}"*)
+					_dataset="${_line#*${_tab}}"
+					;;
+				esac
+				if [ -n "$_dataset" ]; then
+					case "$( zfs get -H -o value canmount $_dataset )" in
+					on)
+						echo -n "$_dataset"
+						break ;;
+					*) # noauto|off - dataset isn't supposed to be mounted
+						;;
+					esac
+				fi
+			done`
+
+		if [ -z "$_dataset" ]; then
+			if $_optional; then
+				# ignore this error
+				print_rc_metadata \
+				"note:Optional file system $_fs is not present"
+			else
+				printf >&2 "%s\n" "No suitable ZFS dataset found for mountpoint $_fs"
+				_mountcrit_es=1
+			fi
+		else
+			_mount_es=
+			case "$( zfs get -H -o value mounted $_dataset )" in
+			yes)
+				_mount_es=1
+				print_rc_metadata \
+				"note:File system $_fs was already mounted"
+				;;
+			esac
+
+			if [ -z "$_mount_es" ]; then
+				zfs mount "$_dataset" >/dev/null
+				_mount_es=$?
+			fi
+
+			if [ -n "$_mount_es" ]; then
 				_mountcrit_es="$_mount_es"
 			fi
 		fi
