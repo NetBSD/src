@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.108 2022/02/03 20:52:44 alnsn Exp $
+# $NetBSD: rc.subr,v 1.109 2022/02/03 21:02:47 alnsn Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -266,7 +266,7 @@ mount_critical_filesystems_zfs()
 				_mount_es=$?
 			fi
 
-			if [ -n "$_mount_es" ]; then
+			if [ "$_mount_es" != 0 ]; then
 				_mountcrit_es="$_mount_es"
 			fi
 		fi
