@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.45 2022/01/28 20:00:52 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.46 2022/02/03 09:46:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.45 2022/01/28 20:00:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.46 2022/02/03 09:46:26 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -863,8 +863,8 @@ udf_search_free_vatloc(struct udf_mount *ump, uint32_t *lbnumres)
 		ump->vat_entries++;
 	}
 
-	/* mark entry with initialiser just in case */
-	lb_map = udf_rw32(0xffffffff);
+	/* mark entry with non free-space initialiser just in case */
+	lb_map = udf_rw32(0xfffffffe);
 	udf_vat_write(ump->vat_node, (uint8_t *) &lb_map, 4,
 		ump->vat_offset + lb_num *4);
 	ump->vat_last_free_lb = lb_num;
