@@ -55,7 +55,7 @@
 #endif
 
 #ifndef	MAXTSIZ
-#define	MAXTSIZ		(128*1024*1024)		/* maximum text size */
+#define	MAXTSIZ		(256*1024*1024)		/* maximum text size */
 #endif
 
 #ifndef	MAXDSIZ
