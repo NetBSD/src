@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2858 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2859 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -468,3 +468,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	sysinst(8): Allow configuring IEEE 802.11 / Wi-Fi devices with
 		WPA or open networks. [nia 20220111]
 	tmux(1): Imported 3.2a. [christos 20220123]
+	tools: Allow tools to use C99. [rillig 20220203]
