@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.86 2021/02/16 09:56:32 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.87 2022/02/04 15:33:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.86 2021/02/16 09:56:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.87 2022/02/04 15:33:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -846,7 +846,6 @@ err_mounted:
 		vfs_resume(mp);
 
 err_unmounted:
-	vp->v_mountedhere = NULL;
 	mutex_exit(mp->mnt_updating);
 	vfs_rele(mp);
 
