@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1008 2022/01/29 10:19:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1009 2022/02/04 23:43:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1008 2022/01/29 10:19:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1009 2022/02/04 23:43:10 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3228,8 +3228,12 @@ bad_modifier:
 	return AMR_BAD;
 }
 
-#ifndef NUM_TYPE
+#if __STDC__ >= 199901L
 # define NUM_TYPE long long
+# define PARSE_NUM_TYPE strtoll
+#else
+# define NUM_TYPE long
+# define PARSE_NUM_TYPE strtol
 #endif
 
 static NUM_TYPE
@@ -3238,7 +3242,7 @@ num_val(Substring s)
 	NUM_TYPE val;
 	char *ep;
 
-	val = strtoll(s.start, &ep, 0);
+	val = PARSE_NUM_TYPE(s.start, &ep, 0);
 	if (ep != s.start) {
 		switch (*ep) {
 		case 'K':
