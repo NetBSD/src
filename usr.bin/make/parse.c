@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.660 2022/01/29 10:19:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.661 2022/02/04 23:22:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,18 +106,18 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.660 2022/01/29 10:19:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.661 2022/02/04 23:22:19 rillig Exp $");
 
 /*
  * A file being read.
  */
 typedef struct IncludedFile {
 	FStr name;		/* absolute or relative to the cwd */
-	int lineno;		/* 1-based */
-	int readLines;		/* the number of physical lines that have
+	unsigned lineno;	/* 1-based */
+	unsigned readLines;	/* the number of physical lines that have
 				 * been read from the file */
-	int forHeadLineno;	/* 1-based */
-	int forBodyReadLines;	/* the number of physical lines that have
+	unsigned forHeadLineno;	/* 1-based */
+	unsigned forBodyReadLines; /* the number of physical lines that have
 				 * been read from the file above the body of
 				 * the .for loop */
 	unsigned int cond_depth; /* 'if' nesting when file opened */
@@ -378,13 +378,13 @@ PrintStackTrace(bool includingInnermost)
 
 		if (entry->forLoop != NULL) {
 			char *details = ForLoop_Details(entry->forLoop);
-			debug_printf("\tin .for loop from %s:%d with %s\n",
+			debug_printf("\tin .for loop from %s:%u with %s\n",
 			    fname, entry->forHeadLineno, details);
 			free(details);
 		} else if (i + 1 < n && entries[i + 1].forLoop != NULL) {
 			/* entry->lineno is not a useful line number */
 		} else
-			debug_printf("\tin %s:%d\n", fname, entry->lineno);
+			debug_printf("\tin %s:%u\n", fname, entry->lineno);
 	}
 }
 
@@ -436,13 +436,13 @@ FindKeyword(const char *str)
 }
 
 void
-PrintLocation(FILE *f, bool useVars, const char *fname, size_t lineno)
+PrintLocation(FILE *f, bool useVars, const char *fname, unsigned lineno)
 {
 	char dirbuf[MAXPATHLEN + 1];
 	FStr dir, base;
 
 	if (!useVars || fname[0] == '/' || strcmp(fname, "(stdin)") == 0) {
-		(void)fprintf(f, "\"%s\" line %u: ", fname, (unsigned)lineno);
+		(void)fprintf(f, "\"%s\" line %u: ", fname, lineno);
 		return;
 	}
 
@@ -456,15 +456,14 @@ PrintLocation(FILE *f, bool useVars, const char *fname, size_t lineno)
 	if (base.str == NULL)
 		base.str = str_basename(fname);
 
-	(void)fprintf(f, "\"%s/%s\" line %u: ",
-	    dir.str, base.str, (unsigned)lineno);
+	(void)fprintf(f, "\"%s/%s\" line %u: ", dir.str, base.str, lineno);
 
 	FStr_Done(&base);
 	FStr_Done(&dir);
 }
 
 static void MAKE_ATTR_PRINTFLIKE(6, 0)
-ParseVErrorInternal(FILE *f, bool useVars, const char *fname, size_t lineno,
+ParseVErrorInternal(FILE *f, bool useVars, const char *fname, unsigned lineno,
 		    ParseErrorLevel type, const char *fmt, va_list ap)
 {
 	static bool fatal_warning_error_printed = false;
@@ -494,7 +493,7 @@ ParseVErrorInternal(FILE *f, bool useVars, const char *fname, size_t lineno,
 }
 
 static void MAKE_ATTR_PRINTFLIKE(4, 5)
-ParseErrorInternal(const char *fname, size_t lineno,
+ParseErrorInternal(const char *fname, unsigned lineno,
 		   ParseErrorLevel type, const char *fmt, ...)
 {
 	va_list ap;
@@ -525,7 +524,7 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 {
 	va_list ap;
 	const char *fname;
-	size_t lineno;
+	unsigned lineno;
 
 	if (includes.len == 0) {
 		fname = NULL;
@@ -533,7 +532,7 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 	} else {
 		IncludedFile *curFile = CurFile();
 		fname = curFile->name.str;
-		lineno = (size_t)curFile->lineno;
+		lineno = curFile->lineno;
 	}
 
 	(void)fflush(stdout);
@@ -1802,13 +1801,13 @@ GNode_AddCommand(GNode *gn, char *cmd)
 		Lst_Append(&gn->commands, cmd);
 		Parse_Error(PARSE_WARNING,
 		    "overriding commands for target \"%s\"; "
-		    "previous commands defined at %s: %d ignored",
+		    "previous commands defined at %s: %u ignored",
 		    gn->name, gn->fname, gn->lineno);
 #else
 		Parse_Error(PARSE_WARNING,
 		    "duplicate script for target \"%s\" ignored",
 		    gn->name);
-		ParseErrorInternal(gn->fname, (size_t)gn->lineno, PARSE_WARNING,
+		ParseErrorInternal(gn->fname, gn->lineno, PARSE_WARNING,
 		    "using previous script for \"%s\" defined here",
 		    gn->name);
 #endif
@@ -2104,8 +2103,8 @@ TrackInput(const char *name)
 
 /* Parse from the given buffer, later return to the current file. */
 void
-Parse_PushInput(const char *name, int lineno, int readLines, Buffer buf,
-		struct ForLoop *forLoop)
+Parse_PushInput(const char *name, unsigned lineno, unsigned readLines,
+		Buffer buf, struct ForLoop *forLoop)
 {
 	IncludedFile *curFile;
 
@@ -2114,7 +2113,7 @@ Parse_PushInput(const char *name, int lineno, int readLines, Buffer buf,
 	else
 		TrackInput(name);
 
-	DEBUG3(PARSE, "Parse_PushInput: %s %s, line %d\n",
+	DEBUG3(PARSE, "Parse_PushInput: %s %s, line %u\n",
 	    forLoop != NULL ? ".for loop in": "file", name, lineno);
 
 	curFile = Vector_Push(&includes);
@@ -2287,7 +2286,7 @@ ParseEOF(void)
 	}
 
 	curFile = CurFile();
-	DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
+	DEBUG2(PARSE, "ParseEOF: returning to file %s, line %u\n",
 	    curFile->name.str, curFile->readLines + 1);
 
 	SetParseFile(curFile->name.str);
@@ -2529,8 +2528,8 @@ static bool
 ParseForLoop(const char *line)
 {
 	int rval;
-	int forHeadLineno;
-	int bodyReadLines;
+	unsigned forHeadLineno;
+	unsigned bodyReadLines;
 	int forLevel;
 
 	rval = For_Eval(line);
@@ -2877,7 +2876,7 @@ Parse_File(const char *name, int fd)
 
 	do {
 		while ((line = ReadHighLevelLine()) != NULL) {
-			DEBUG2(PARSE, "Parsing line %d: %s\n",
+			DEBUG2(PARSE, "Parsing line %u: %s\n",
 			    CurFile()->lineno, line);
 			ParseLine(line);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.296 2022/01/31 20:49:27 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.297 2022/02/04 23:22:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -499,7 +499,7 @@ typedef struct GNode {
 	/* Filename where the GNode got defined, unlimited lifetime */
 	const char *fname;
 	/* Line number where the GNode got defined, 1-based */
-	size_t lineno;
+	unsigned lineno;
 } GNode;
 
 /* Error levels for diagnostics during parsing. */
@@ -805,7 +805,7 @@ void SearchPath_Free(SearchPath *);
 struct ForLoop;
 int For_Eval(const char *) MAKE_ATTR_USE;
 bool For_Accum(const char *, int *) MAKE_ATTR_USE;
-void For_Run(int, int);
+void For_Run(unsigned, unsigned);
 bool For_NextIteration(struct ForLoop *, Buffer *);
 char *ForLoop_Details(struct ForLoop *);
 void ForLoop_Free(struct ForLoop *);
@@ -832,13 +832,14 @@ bool GetBooleanExpr(const char *, bool);
 void Parse_Init(void);
 void Parse_End(void);
 
-void PrintLocation(FILE *, bool, const char *, size_t);
+void PrintLocation(FILE *, bool, const char *, unsigned);
 void PrintStackTrace(bool);
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 bool Parse_VarAssign(const char *, bool, GNode *) MAKE_ATTR_USE;
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
-void Parse_PushInput(const char *, int, int, Buffer, struct ForLoop *);
+void Parse_PushInput(const char *, unsigned, unsigned, Buffer,
+		     struct ForLoop *);
 void Parse_MainName(GNodeList *);
 int Parse_NumErrors(void) MAKE_ATTR_USE;
 

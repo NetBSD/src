@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.450 2022/01/30 13:21:08 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.451 2022/02/04 23:22:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.450 2022/01/30 13:21:08 christos Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.451 2022/02/04 23:22:19 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1374,7 +1374,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	if (gn->flags.fromDepend) {
 		if (!Job_RunTarget(".STALE", gn->fname))
 			fprintf(stdout,
-			    "%s: %s, %zu: ignoring stale %s for %s\n",
+			    "%s: %s, %u: ignoring stale %s for %s\n",
 			    progname, gn->fname, gn->lineno, makeDependfile,
 			    gn->name);
 		return true;
