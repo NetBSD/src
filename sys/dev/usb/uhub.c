@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.158 2021/10/15 11:59:16 jmcneill Exp $	*/
+/*	$NetBSD: uhub.c,v 1.159 2022/02/04 23:03:38 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.158 2021/10/15 11:59:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.159 2022/02/04 23:03:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -53,12 +53,54 @@ __KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.158 2021/10/15 11:59:16 jmcneill Exp $");
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/kcov.h>
+#include <sys/sdt.h>
 
 #include <dev/usb/usb.h>
+#include <dev/usb/usb_sdt.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbhist.h>
+
+SDT_PROBE_DEFINE1(usb, hub, explore, start,
+    "struct usbd_device *"/*hub*/);
+SDT_PROBE_DEFINE1(usb, hub, explore, done,
+    "struct usbd_device *"/*hub*/);
+
+SDT_PROBE_DEFINE3(usb, hub, explore, rescan,
+    "struct usbd_device *"/*hub*/,
+    "int"/*portno*/,
+    "struct usbd_port *"/*port*/);
+SDT_PROBE_DEFINE5(usb, hub, explore, portstat,
+    "struct usbd_device *"/*hub*/,
+    "int"/*portno*/,
+    "int"/*status*/,
+    "int"/*change*/,
+    "int"/*reattach*/);
+SDT_PROBE_DEFINE3(usb, hub, explore, disconnect,
+    "struct usbd_device *"/*hub*/,
+    "int"/*portno*/,
+    "struct usbd_port *"/*port*/);
+SDT_PROBE_DEFINE5(usb, hub, explore, reset,
+    "struct usbd_device *"/*hub*/,
+    "int"/*portno*/,
+    "struct usbd_port *"/*port*/,
+    "int"/*status*/,
+    "int"/*change*/);
+SDT_PROBE_DEFINE4(usb, hub, explore, connect,
+    "struct usbd_device *"/*hub*/,
+    "int"/*portno*/,
+    "struct usbd_port *"/*port*/,
+    "int"/*speed*/);
+SDT_PROBE_DEFINE4(usb, hub, explore, connected,
+    "struct usbd_device *"/*hub*/,
+    "int"/*portno*/,
+    "struct usbd_port *"/*port*/,
+    "int"/*speed*/);
+
+SDT_PROBE_DEFINE2(usb, hub, interrupt, ,
+    "struct usbd_device *"/*hub*/,
+    "usbd_status"/*status*/);
 
 #ifdef USB_DEBUG
 #ifndef UHUB_DEBUG
@@ -510,6 +552,8 @@ uhub_explore(struct usbd_device *dev)
 	if (dev->ud_depth > USB_HUB_MAX_DEPTH)
 		return USBD_TOO_DEEP;
 
+	SDT_PROBE1(usb, hub, explore, start,  dev);
+
 	/* Process rescan if requested.  */
 	mutex_enter(&sc->sc_lock);
 	rescan = sc->sc_rescan;
@@ -517,6 +561,8 @@ uhub_explore(struct usbd_device *dev)
 	mutex_exit(&sc->sc_lock);
 	if (rescan) {
 		for (port = 1; port <= hd->bNbrPorts; port++) {
+			SDT_PROBE3(usb, hub, explore, rescan,
+			    dev, port, &dev->ud_hub->uh_ports[port - 1]);
 			subdev = dev->ud_hub->uh_ports[port - 1].up_dev;
 			if (subdev == NULL)
 				continue;
@@ -535,6 +581,8 @@ uhub_explore(struct usbd_device *dev)
 			/* just acknowledge */
 			status = UGETW(hs.wHubStatus);
 			change = UGETW(hs.wHubChange);
+			SDT_PROBE5(usb, hub, explore, portstat,
+			    dev, /*portno*/0, status, change, /*reattach*/0);
 			DPRINTF("uhub%jd s/c=%jx/%jx", device_unit(sc->sc_dev),
 			    status, change, 0);
 
@@ -570,6 +618,8 @@ uhub_explore(struct usbd_device *dev)
 			DPRINTF("uhub%jd port %jd: s/c=%jx/%jx",
 			    device_unit(sc->sc_dev), port, status, change);
 		}
+		SDT_PROBE5(usb, hub, explore, portstat,
+		    dev, port, status, change, reconnect);
 		if (!change && !reconnect) {
 			/* No status change, just do recursive explore. */
 			if (up->up_dev != NULL && up->up_dev->ud_hub != NULL)
@@ -659,6 +709,8 @@ uhub_explore(struct usbd_device *dev)
 			    device_unit(sc->sc_dev), up->up_dev->ud_addr, port,
 			    0);
 
+			SDT_PROBE3(usb, hub, explore, disconnect,
+			    dev, port, up);
 			usb_disconnect_port(up, sc->sc_dev, DETACH_FORCE);
 			usbd_clear_port_feature(dev, port,
 						UHF_C_PORT_CONNECTION);
@@ -667,6 +719,8 @@ uhub_explore(struct usbd_device *dev)
 			/* Nothing connected, just ignore it. */
 			DPRINTFN(3, "uhub%jd port %jd !CURRENT_CONNECT_STATUS",
 			    device_unit(sc->sc_dev), port, 0, 0);
+			SDT_PROBE3(usb, hub, explore, disconnect,
+			    dev, port, up);
 			usb_disconnect_port(up, sc->sc_dev, DETACH_FORCE);
 			usbd_clear_port_feature(dev, port,
 						UHF_C_PORT_CONNECTION);
@@ -701,6 +755,8 @@ uhub_explore(struct usbd_device *dev)
 		 */
 		status = UGETW(up->up_status.wPortStatus);
 		change = UGETW(up->up_status.wPortChange);
+		SDT_PROBE5(usb, hub, explore, reset,
+		    dev, port, up, status, change);
 		DPRINTF("uhub%jd port %jd after reset: s/c=%jx/%jx",
 		    device_unit(sc->sc_dev), port, status, change);
 
@@ -784,6 +840,9 @@ uhub_explore(struct usbd_device *dev)
 			    KCOV_REMOTE_VHCI_ID(dev->ud_bus->ub_busnum, port));
 		}
 
+		SDT_PROBE4(usb, hub, explore, connect,
+		    dev, port, up, speed);
+
 		/* Get device info and set its address. */
 		err = usbd_new_device(sc->sc_dev, dev->ud_bus,
 			  dev->ud_depth + 1, speed, port, up);
@@ -809,6 +868,8 @@ uhub_explore(struct usbd_device *dev)
 			    "device problem, disabling port %d\n", port);
 			usbd_clear_port_feature(dev, port, UHF_PORT_ENABLE);
 		} else {
+			SDT_PROBE4(usb, hub, explore, connected,
+			    dev, port, up, speed);
 			/* The port set up succeeded, reset error count. */
 			up->up_restartcnt = 0;
 
@@ -832,6 +893,8 @@ uhub_explore(struct usbd_device *dev)
 		config_pending_decr(sc->sc_dev);
 		sc->sc_first_explore = false;
 	}
+
+	SDT_PROBE1(usb, hub, explore, done,  dev);
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -971,6 +1034,8 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 
 	UHUBHIST_FUNC(); UHUBHIST_CALLARGS("called! uhub%jd status=%jx",
 	    device_unit(sc->sc_dev), status, 0, 0);
+
+	SDT_PROBE2(usb, hub, interrupt, ,  sc->sc_hub, status);
 
 	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
