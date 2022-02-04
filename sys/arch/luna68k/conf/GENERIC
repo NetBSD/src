@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.130 2020/09/27 13:48:52 roy Exp $
+# $NetBSD: GENERIC,v 1.131 2022/02/04 18:28:53 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.130 $"
+#ident 		"GENERIC-$Revision: 1.131 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -130,6 +130,9 @@ options 	NFS_BOOT_DHCP	# superset of BOOTP
 options 	WSEMUL_VT100
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+
 options 	FONT_OMRON12x20
 
 config		netbsd root on ? type ?
