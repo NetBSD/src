@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2017/01/24 18:04:05 christos Exp $
+#	$NetBSD: Makefile,v 1.49 2022/02/04 17:19:52 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -10,7 +10,7 @@ IMAGESIZE=		1800k
 
 MAKEFS_FLAGS+=	-f 10
 WARNS=		1
-DBG=		-Os
+DBG=		-Os -fno-unwind-tables
 
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst.en
