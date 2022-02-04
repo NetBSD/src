@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.34 2013/05/26 12:15:51 isaki Exp $
+#	$NetBSD: list,v 1.35 2022/02/04 17:21:56 tsutsui Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin sys/arch/x68k/stand
 
@@ -54,12 +54,17 @@ PROG	usr/sbin/memswitch
 
 ARGVLN	sh -sh
 
+SPECIAL	disklabel	srcdir	distrib/utils/x_disklabel
 #SPECIAL ed		srcdir	distrib/utils/x_ed
-SPECIAL gzip		srcdir	distrib/utils/x_gzip
-SPECIAL ifconfig	srcdir	distrib/utils/x_ifconfig
-SPECIAL more		srcdir	distrib/utils/more
-SPECIAL ping		srcdir	distrib/utils/x_ping
-SPECIAL route		srcdir	distrib/utils/x_route
+SPECIAL	gzip		srcdir	distrib/utils/x_gzip
+SPECIAL	fsck_ffs	srcdir	distrib/utils/x_fsck_ffs
+SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL	more		srcdir	distrib/utils/more
+SPECIAL	newfs		srcdir	distrib/utils/x_newfs
+SPECIAL	ping		srcdir	distrib/utils/x_ping
+SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	umount		srcdir	distrib/utils/x_umount
+
 SPECIAL	installboot	srcdir	sys/arch/x68k/stand/installboot
 
 # libhack.o is built by Makefile & included Makefile.inc
