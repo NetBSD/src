@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.18 2020/08/16 06:43:43 isaki Exp $
+#	$NetBSD: Makefile.xxboot,v 1.19 2022/02/04 06:16:03 isaki Exp $
 
 NOMAN=		# defined
 
@@ -35,6 +35,7 @@ SRCS+=	memcmp.S
 .include "${S}/conf/newvers_stand.mk"
 
 CFLAGS=	-Os -fomit-frame-pointer -fno-unwind-tables -Wno-attributes
+CFLAGS+= -m68020-60
 #CFLAGS+= -Wall
 CPPFLAGS+= -D_STANDALONE
 CPPFLAGS+= -DTEXTADDR="$(TEXT)" -DBOOT_TEXTADDR="$(BOOT_TEXT)"
