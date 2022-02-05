@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.514 2021/11/26 08:06:12 ryo Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.515 2022/02/05 23:10:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.514 2021/11/26 08:06:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.515 2022/02/05 23:10:20 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1038,9 +1038,10 @@ pathexec(struct proc *p, const char *resolvedname)
 
 /* XXX elsewhere */
 static int
-credexec(struct lwp *l, struct vattr *attr)
+credexec(struct lwp *l, struct execve_data *data)
 {
 	struct proc *p = l->l_proc;
+	struct vattr *attr = &data->ed_attr;
 	int error;
 
 	/*
@@ -1061,6 +1062,12 @@ credexec(struct lwp *l, struct vattr *attr)
 		 */
 		proc_crmod_enter();
 		proc_crmod_leave(NULL, NULL, true);
+		if (data->ed_argc == 0) {
+			DPRINTF((
+			    "%s: not executing set[ug]id binary with no args\n",
+			    __func__));
+			return EINVAL;
+		}
 
 		/* Make sure file descriptors 0..2 are in use. */
 		if ((error = fd_checkstd()) != 0) {
@@ -1273,7 +1280,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	p->p_flag |= PK_EXEC;
 	mutex_exit(p->p_lock);
 
-	error = credexec(l, &data->ed_attr);
+	error = credexec(l, data);
 	if (error)
 		goto exec_abort;
 
