@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.297 2022/02/04 23:22:19 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.298 2022/02/05 00:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -136,7 +136,11 @@
 #define MAKE_ATTR_USE		/* delete */
 #endif
 
+#if __STDC__ >= 199901L || defined(lint)
 #define MAKE_INLINE static inline MAKE_ATTR_UNUSED
+#else
+#define MAKE_INLINE static MAKE_ATTR_UNUSED
+#endif
 
 /* MAKE_STATIC marks a function that may or may not be inlined. */
 #if defined(lint)
@@ -359,7 +363,7 @@ typedef enum GNodeType {
 	 */
 	OP_DEPS_FOUND	= 1 << 24,
 	/* Node found while expanding .ALLSRC */
-	OP_MARK		= 1 << 23,
+	OP_MARK		= 1 << 23
 } GNodeType;
 
 typedef struct GNodeFlags {
