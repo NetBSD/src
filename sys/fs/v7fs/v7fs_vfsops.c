@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.17 2020/01/17 20:08:09 ad Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.18 2022/02/05 14:11:52 zafer Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.17 2020/01/17 20:08:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.18 2022/02/05 14:11:52 zafer Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -198,7 +198,7 @@ is_v7fs_partition(struct vnode *devvp)
 		DPRINTF("getdiskinfo=%d\n", error);
 		return error;
 	}
-	DPRINTF("ptype=%s size=%" PRIu64 "\n", dkw.dkw_ptype, dkw->dkw_size);
+	DPRINTF("ptype=%s size=%" PRIu64 "\n", dkw.dkw_ptype, dkw.dkw_size);
 
 	return strcmp(dkw.dkw_ptype, DKW_PTYPE_V7) == 0 ? 0 : EINVAL;
 }
