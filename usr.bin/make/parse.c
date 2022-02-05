@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.661 2022/02/04 23:22:19 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.662 2022/02/05 00:37:19 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.661 2022/02/04 23:22:19 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.662 2022/02/05 00:37:19 sjg Exp $");
 
 /*
  * A file being read.
@@ -1574,6 +1574,8 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 		while (ch == ' ' || ch == '\t')
 			ch = *p++;
 
+		if (ch == '\0')
+			return false;
 #ifdef SUNSHCMD
 		if (ch == ':' && p[0] == 's' && p[1] == 'h') {
 			p += 2;
