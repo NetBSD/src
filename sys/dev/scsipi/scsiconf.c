@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.297 2022/01/29 11:20:30 martin Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.298 2022/02/05 17:32:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.297 2022/01/29 11:20:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.298 2022/02/05 17:32:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,6 +398,8 @@ scsi_report_luns(struct scsibus_softc *sc, int target,
 
 	int error;
 	size_t i, rlrlen;
+
+	memset(&replun, 0, sizeof(replun));
 
 	periph = scsipi_alloc_periph(M_WAITOK);
 	periph->periph_channel = chan;
