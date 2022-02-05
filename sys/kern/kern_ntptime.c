@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.60 2018/10/29 22:02:25 christos Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.61 2022/02/05 15:29:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.60 2018/10/29 22:02:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.61 2022/02/05 15:29:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -347,7 +347,8 @@ ntp_adjtime1(struct timex *ntv)
 	if (modes & MOD_CLKA)
 		time_status &= ~STA_CLK;
 	if (modes & MOD_FREQUENCY) {
-		freq = (ntv->freq * 1000LL) >> 16;
+		freq = MIN(INT32_MAX, MAX(INT32_MIN, ntv->freq));
+		freq = (freq * (int64_t)1000) >> 16;
 		if (freq > MAXFREQ)
 			L_LINT(time_freq, MAXFREQ);
 		else if (freq < -MAXFREQ)
