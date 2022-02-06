@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.38 2021/08/21 23:00:31 andvar Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.39 2022/02/06 10:05:56 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.38 2021/08/21 23:00:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.39 2022/02/06 10:05:56 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -122,6 +122,9 @@ static int amidisplaycc_getfbinfo(struct amidisplaycc_softc *, struct wsdisplayi
 
 static int amidisplaycc_setfont(struct amidisplaycc_screen *, const char *);
 static const struct wsdisplay_font * amidisplaycc_getbuiltinfont(void);
+static void amidisplaycc_cursor_undraw(struct amidisplaycc_screen *);
+static void amidisplaycc_cursor_draw(struct amidisplaycc_screen *);
+static void amidisplaycc_cursor_xor(struct amidisplaycc_screen *, int, int);
 
 static void dprintf(const char *fmt, ...);
 
@@ -276,6 +279,7 @@ struct amidisplaycc_screen
 
 	int       cursorrow;
 	int       cursorcol;
+	int       cursordrawn;
 
 	/* Active bitplanes for each character row. */
 	int       rowmasks[MAXROWS];
@@ -499,43 +503,61 @@ void
 amidisplaycc_cursor(void *screen, int on, int row, int col)
 {
 	adccscr_t  * scr;
-	u_char     * dst;
-	int  i;
 
 	scr = screen;
 
 	if (row < 0 || col < 0 || row >= scr->nrows || col >= scr->ncols)
 		return;
 
-	/* was off, turning off again? */
-	if (!on && scr->cursorrow == -1 && scr->cursorcol == -1)
-		return;
-
-	/* was on, and turning on again? */
-	if (on && scr->cursorrow >= 0 && scr->cursorcol >= 0)
-	{
-		/* clear from old location first */
-		amidisplaycc_cursor (screen, 0, scr->cursorrow, scr->cursorcol);
-	}
-	
-	dst = scr->planes[0];
-	dst += row * scr->rowbytes;
-	dst += col;
+	amidisplaycc_cursor_undraw(scr);
 
 	if (on) {
 		scr->cursorrow = row;
 		scr->cursorcol = col;
+		amidisplaycc_cursor_draw(scr);
 	} else {
 		scr->cursorrow = -1;
 		scr->cursorcol = -1;
 	}
+}
+
+void
+amidisplaycc_cursor_undraw(struct amidisplaycc_screen * scr)
+{
+	if (scr->cursordrawn) {
+		amidisplaycc_cursor_xor(scr, scr->cursorrow, scr->cursorcol);
+		scr->cursordrawn = 0;
+	}
+}
+
+void
+amidisplaycc_cursor_draw(struct amidisplaycc_screen * scr)
+{
+	if (!scr->cursordrawn && scr->cursorrow >= 0 && scr->cursorcol >= 0) {
+		amidisplaycc_cursor_xor(scr, scr->cursorrow, scr->cursorcol);
+		scr->cursordrawn = 1;
+	}
+}
+
+void
+amidisplaycc_cursor_xor(struct amidisplaycc_screen * scr, int row, int col)
+{
+	u_char * dst;
+	int i;
+
+	KASSERT(scr);
+	KASSERT(row >= 0);
+	KASSERT(col >= 0);
+
+	dst = scr->planes[0];
+	dst += row * scr->rowbytes;
+	dst += col;
 
 	for (i = scr->fontheight ; i > 0 ; i--) {
 		*dst ^= 255;
 		dst += scr->linebytes;
 	}
 }
-
 
 int
 amidisplaycc_mapchar(void *screen, int ch, unsigned int *chp)
@@ -924,6 +946,7 @@ amidisplaycc_eraserows(void *screen, int row, int nrows, long attr)
 
 	if (row < 0 || row + nrows > scr->nrows)
 		return;
+	amidisplaycc_cursor_undraw(scr);
 
 	depth      = scr->depth;
 	widthbytes = scr->widthbytes;
@@ -958,6 +981,7 @@ amidisplaycc_eraserows(void *screen, int row, int nrows, long attr)
 		}
 		bgcolor >>= 1;
 	}
+	amidisplaycc_cursor_draw(scr);
 }
 
 
@@ -1870,7 +1894,7 @@ amidisplaycc_setfont(struct amidisplaycc_screen *scr, const char *fontname)
 
 	scr->wsfont = wsfont;
 	scr->wsfontcookie = wsfontcookie;
-	
+
 	return 0;
 }
 
