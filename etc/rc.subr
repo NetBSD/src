@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.109 2022/02/03 21:02:47 alnsn Exp $
+# $NetBSD: rc.subr,v 1.110 2022/02/06 16:23:12 alnsn Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -207,10 +207,10 @@ mount_critical_filesystems()
 #	the rc.conf(5) variable $critical_filesystems_zfs, checking
 #	each one to see if it is mounted, and if it is not, mounting it.
 #	It's not an error if file systems prefixed with "OPTIONAL:"
-#	aren't zfs mountpoints.
+#	aren't ZFS mountpoints.
 mount_critical_filesystems_zfs()
 {
-	eval _fslist=\$critical_filesystems_zfs
+	_fslist=$critical_filesystems_zfs
 	_tab="	"
 	_mountcrit_es=0
 	for _fs in $_fslist; do
@@ -222,7 +222,7 @@ mount_critical_filesystems_zfs()
 			;;
 		esac
 
-		_dataset=`
+		_dataset=$(
 			zfs list -H -o mountpoint,name |
 			while read _line ; do
 				_dataset=''
@@ -240,7 +240,7 @@ mount_critical_filesystems_zfs()
 						;;
 					esac
 				fi
-			done`
+			done)
 
 		if [ -z "$_dataset" ]; then
 			if $_optional; then
@@ -259,14 +259,13 @@ mount_critical_filesystems_zfs()
 				print_rc_metadata \
 				"note:File system $_fs was already mounted"
 				;;
-			esac
-
-			if [ -z "$_mount_es" ]; then
+			*) # no
 				zfs mount "$_dataset" >/dev/null
 				_mount_es=$?
-			fi
+				;;
+			esac
 
-			if [ "$_mount_es" != 0 ]; then
+			if [ $_mount_es -ne 0 ]; then
 				_mountcrit_es="$_mount_es"
 			fi
 		fi
