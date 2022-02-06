@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_acpi.c,v 1.1 2022/01/09 15:05:16 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_acpi.c,v 1.2 2022/02/06 15:48:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_acpi.c,v 1.1 2022/01/09 15:05:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_acpi.c,v 1.2 2022/02/06 15:48:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,6 +149,7 @@ static int
 dwcmmc_acpi_init_props(struct dwc_mmc_softc *sc, ACPI_HANDLE handle)
 {
 	ACPI_INTEGER ival;
+	bool bval;
 
 	/* Defaults */
 	sc->sc_fifo_depth = 0;
@@ -164,6 +165,16 @@ dwcmmc_acpi_init_props(struct dwc_mmc_softc *sc, ACPI_HANDLE handle)
 	}
 	if (ACPI_SUCCESS(acpi_dsd_integer(handle, "bus-width", &ival))) {
 		sc->sc_bus_width = ival;
+	}
+	bval = false;
+	acpi_dsd_bool(handle, "non-removable", &bval);
+	if (bval) {
+		sc->sc_flags |= DWC_MMC_F_NON_REMOVABLE;
+	}
+	bval = false;
+	acpi_dsd_bool(handle, "broken-cd", &bval);
+	if (bval) {
+		sc->sc_flags |= DWC_MMC_F_BROKEN_CD;
 	}
 
 	if (sc->sc_clock_freq == 0 || sc->sc_clock_freq == UINT_MAX) {
