@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.18 2021/03/24 18:19:31 skrll Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.19 2022/02/06 15:47:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.18 2021/03/24 18:19:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.19 2022/02/06 15:47:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,6 +167,12 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_cardmask = esc->sc_conf->intr_cardmask;
 	sc->sc_ciu_div = esc->sc_conf->ciu_div;
 	sc->sc_flags = esc->sc_conf->flags;
+	if (of_getprop_bool(phandle, "non-removable")) {
+		sc->sc_flags |= DWC_MMC_F_NON_REMOVABLE;
+	}
+	if (of_getprop_bool(phandle, "broken-cd")) {
+		sc->sc_flags |= DWC_MMC_F_BROKEN_CD;
+	}
 	sc->sc_pre_power_on = dwcmmc_fdt_pre_power_on;
 	sc->sc_post_power_on = dwcmmc_fdt_post_power_on;
 	sc->sc_bus_clock = dwcmmc_fdt_bus_clock;
