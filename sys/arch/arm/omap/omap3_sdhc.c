@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.30 2018/09/03 16:29:23 riastradh Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.31 2022/02/06 15:52:20 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.30 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.31 2022/02/06 15:52:20 jmcneill Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -95,6 +95,7 @@ struct mmchs_softc {
 	struct sdhc_host	*sc_hosts[1];
 	int			sc_irq;
 	void 			*sc_ih;		/* interrupt vectoring */
+	bool			sc_use_adma2;
 
 #if NEDMA > 0
 	int			sc_edmabase;
@@ -454,7 +455,7 @@ no_dma:
 	}
 	if (hwinfo & HL_HWINFO_MADMA_EN) {
 		sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
-		sc->sc.sc_flags |= SDHC_FLAG_USE_ADMA2;
+		sc->sc_use_adma2 = true;
 	}
 	aprint_normal_dev(sc->sc.sc_dev, "IP Rev 0x%08x%s",
 	    rev, hwinfo & HL_HWINFO_RETMODE ? ", Retention Mode" : "");
@@ -571,10 +572,11 @@ no_dma:
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) | SDHC_SDCLK_ENABLE);
 
-	if (sc->sc.sc_flags & SDHC_FLAG_USE_ADMA2)
+	if (sc->sc_use_adma2) {
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON,
 		    bus_space_read_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON) |
 		    CON_MNS);
+	}
 }
 
 static int

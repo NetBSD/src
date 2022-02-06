@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.114 2022/01/17 20:10:37 mrg Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.115 2022/02/06 15:52:20 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.114 2022/01/17 20:10:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.115 2022/02/06 15:52:20 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -415,8 +415,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	     ISSET(caps, SDHC_DMA_SUPPORT)))) {
 		SET(hp->flags, SHF_USE_DMA);
 
-		if (ISSET(sc->sc_flags, SDHC_FLAG_USE_ADMA2) &&
-		    ISSET(caps, SDHC_ADMA2_SUPP)) {
+		if (ISSET(caps, SDHC_ADMA2_SUPP)) {
 			SET(hp->flags, SHF_MODE_DMAEN);
 			/*
 			 * 64-bit mode was present in the 2.00 spec, removed

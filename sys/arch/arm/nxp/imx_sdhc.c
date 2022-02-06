@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_sdhc.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx_sdhc.c,v 1.7 2022/02/06 15:52:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_sdhc.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_sdhc.c,v 1.7 2022/02/06 15:52:20 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -140,7 +140,6 @@ imx_sdhc_attach(device_t parent, device_t self, void *aux)
 	    SDHC_FLAG_NO_PWR0 |
 	    SDHC_FLAG_HAVE_DVS |
 	    SDHC_FLAG_32BIT_ACCESS |
-	    SDHC_FLAG_USE_ADMA2 |
 	    SDHC_FLAG_USDHC;
 	sc->sc_sdhc.sc_flags |= conf->flags;
 
