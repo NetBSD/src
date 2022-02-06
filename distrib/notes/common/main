@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.567 2021/10/20 23:45:09 gutteridge Exp $
+.\"	$NetBSD: main,v 1.568 2022/02/06 07:37:29 nia Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -574,7 +574,8 @@ The complete list of changes can be found in the following files:
 The following features are to be removed from
 .Nx
 in the future:
-.(bullet
+.Bl -bullet -offset indent
+.It
 .Xr groff 1 .
 Man pages are now handled with
 .Xr mandoc 1 ,
@@ -582,8 +583,15 @@ and
 .Xr groff 1
 can still be found in pkgsrc as
 .Pa textproc/groff .
-.
-.bullet)
+.It
+.Xr pf 4 .
+This packet filter is obsolete and unmaintained in
+.Nx .
+It will be eventually removed due to possible long-standing
+security issues and lack of multiprocessor support.
+New installations should use
+.Xr npf 7 .
+.El
 .Ss "The NetBSD Foundation"
 .Pp
 .
