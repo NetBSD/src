@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.11 2021/11/07 17:12:45 jmcneill Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.12 2022/02/06 15:52:20 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.11 2021/11/07 17:12:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.12 2022/02/06 15:52:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,10 +397,13 @@ no_dma:
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) | SDHC_SDCLK_ENABLE);
 
-	if (sc->sc.sc_flags & SDHC_FLAG_USE_ADMA2)
+#if notyet
+	if (sc->sc_use_adma2) {
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON,
 		    bus_space_read_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON) |
 		    CON_MNS);
+	}
+#endif
 }
 
 static int
