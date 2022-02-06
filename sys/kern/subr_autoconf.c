@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.294 2022/02/06 11:56:00 martin Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.295 2022/02/06 19:29:52 tnn Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.294 2022/02/06 11:56:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.295 2022/02/06 19:29:52 tnn Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -838,8 +838,8 @@ cfdriver_get_iattr(const struct cfdriver *cd, const char *ia)
 	return 0;
 }
 
-static int
-cfdriver_iattr_count(const struct cfdriver *cd) __diagused
+static int __diagused
+cfdriver_iattr_count(const struct cfdriver *cd)
 {
 	const struct cfiattrdata * const *cpp;
 	int i;
