@@ -45,6 +45,7 @@
 #include <sys/callout.h>
 
 #include <linux/completion.h>
+#include <linux/types.h>
 #include <asm/barrier.h>
 
 /*
@@ -255,7 +256,6 @@ int fatal_signal_pending(VCHIQ_THREAD_T);
 #define PAGE_ALIGN(addr)	round_page(addr)
 
 typedef	void	irqreturn_t;
-typedef	off_t	loff_t;
 
 #define BCM2835_MBOX_CHAN_VCHIQ	3
 #define bcm_mbox_write	bcmmbox_write
