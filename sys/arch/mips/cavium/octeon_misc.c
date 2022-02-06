@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_misc.c,v 1.1 2020/06/15 07:48:12 simonb Exp $	*/
+/*	$NetBSD: octeon_misc.c,v 1.2 2022/02/06 20:20:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_misc.c,v 1.1 2020/06/15 07:48:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_misc.c,v 1.2 2022/02/06 20:20:19 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -208,7 +208,7 @@ octeon_cpu_model(mips_prid_t cpu_id)
 		tested = true;
 		break;
 	default:
-		panic("IMPL 0x%02x not implmented", MIPS_PRID_IMPL(cpu_id));
+		panic("IMPL 0x%02x not implemented", MIPS_PRID_IMPL(cpu_id));
 	}
 
 	snprintf(buf, sizeof(buf), "CN%s%s-%d%s", family, coremodel,

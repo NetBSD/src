@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_ahcisata.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx_ahcisata.c,v 1.4 2022/02/06 20:20:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ahcisata.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ahcisata.c,v 1.4 2022/02/06 20:20:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -450,7 +450,7 @@ imx_ahcisata_init(struct imx_ahcisata_softc *sc)
 	v = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SATA_CAP);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_CAP, v | SATA_CAP_SSS);
 
-	/* Ports Implmented. must set 1 */
+	/* Ports Implemented. must set 1 */
 	v = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SATA_PI);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_PI, v | SATA_PI_PI);
 

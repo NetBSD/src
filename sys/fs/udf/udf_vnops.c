@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.117 2021/10/20 03:08:17 thorpej Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.118 2022/02/06 20:20:19 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.117 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.118 2022/02/06 20:20:19 andvar Exp $");
 #endif /* not lint */
 
 
@@ -1688,7 +1688,7 @@ udf_do_symlink(struct udf_node *udf_node, char *target)
 	}
 
 	if (error) {
-		/* aparently too big */
+		/* apparently too big */
 		free(pathbuf, M_UDFTEMP);
 		return error;
 	}
