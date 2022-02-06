@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.19 2022/01/15 18:02:33 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.20 2022/02/06 15:52:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.19 2022/01/15 18:02:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.20 2022/02/06 15:52:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,7 +108,6 @@ static const struct sdhc_acpi_slot {
 	{ .hid = "RKCP0D40",		 .type = SLOT_TYPE_SD,
 					 .flags = SDHC_FLAG_32BIT_ACCESS |
 						  SDHC_FLAG_8BIT_MODE |
-						  SDHC_FLAG_USE_ADMA2 |
 						  SDHC_FLAG_SINGLE_POWER_WRITE },
 
 	/* Generic IDs last */
