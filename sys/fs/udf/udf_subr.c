@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.165 2022/01/25 22:01:35 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.166 2022/02/06 20:20:19 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.165 2022/01/25 22:01:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.166 2022/02/06 20:20:19 andvar Exp $");
 #endif /* not lint */
 
 
@@ -3427,7 +3427,7 @@ udf_read_rootdirs(struct udf_mount *ump)
 	if (error)
 		return ENOENT;
 
-	/* aparently it read in fine */
+	/* apparently it reads in fine */
 
 	/*
 	 * Try the system stream directory; not very likely in the ones we

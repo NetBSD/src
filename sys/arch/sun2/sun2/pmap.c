@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2016/12/22 14:47:59 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 2022/02/06 20:20:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2016/12/22 14:47:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2022/02/06 20:20:19 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2154,7 +2154,7 @@ pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 	/* Validate this assumption. */
 	if (pmap != current_pmap()) {
 #ifdef	PMAP_DEBUG
-		/* Aparently, this never happens. */
+		/* Apparently, this never happens. */
 		db_printf("pmap_enter_user: not curlwp\n");
 		Debugger();
 #endif

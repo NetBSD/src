@@ -1,9 +1,9 @@
-#	$NetBSD: history,v 1.7 2021/08/17 22:00:26 andvar Exp $
+#	$NetBSD: history,v 1.8 2022/02/06 20:20:19 andvar Exp $
 ---------------------------------------------------------------------------
 This document is more included as a historical reference and nostalgia :)
 rather than a still worked on list.
 ---------------------------------------------------------------------------
-(stuff before this time is aparently lost)
+(stuff before this time is apparently lost)
 
 3135	- fixed mode selection on boot
 	- page up/down, insert and delete now generate the correct codes in
@@ -32,7 +32,7 @@ rather than a still worked on list.
 	- added a routine to read the keyboard state.
 	- added a routine to set the keyboard state.
 	- added some prototypes to kbd.h
-	- implmented irq_setmasks() as an assembly function.
+	- implemented irq_setmasks() as an assembly function.
 	- added an extra disable irq mask
 	- the irq bits from IOMD reg A are cleared as soon as req A is read
 	- Debugged the plip driver. The ip packet is now word aligned when
@@ -315,7 +315,7 @@ rather than a still worked on list.
 	- More debugging code added to trace vnode bug
 	- macro added to syscall.c to handle exit from the syscall handler
 	  for special development syscalls.
-	- Vnode bug idenitfied as a corruption of the first word (v_flag)
+	- Vnode bug identified as a corruption of the first word (v_flag)
 	  of certain vnodes.
 	- Ether3 driver rewritten and debugged. Now a beta stage driver
 	- Vnode corruption traced to console code.
@@ -399,7 +399,7 @@ rather than a still worked on list.
 	- mainbus/ramdisc.c removed.
 	- generic ramdisc has now replaces to mainbus/ramdisc.
 	- fault.c reformatted
-	- new compile symbols introduced to comile in debug code for
+	- new compile symbols introduced to compile in debug code for
 	  fault correction.
 	- all remnants of the trace_debug code removed.
 	- armfpe code moved from arm32/fpe-arm/arm32 to arm32/fpe-arm/
@@ -418,7 +418,7 @@ rather than a still worked on list.
 	- updated ramdisc hooks to removed the need for a rd_match_hook()
 	  function
 	- added Oak to the list of podule manufacturers
-	- kernel now reconised Oak SCSI I cards.
+	- kernel now recognised Oak SCSI I cards.
 	- Added generic NCR5380 SCSI driver code
 	- integrating in alpha version of the oak SCSI driver
 
