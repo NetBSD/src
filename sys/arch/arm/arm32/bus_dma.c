@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.134 2021/12/20 13:58:58 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.135 2022/02/06 22:21:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.134 2021/12/20 13:58:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.135 2022/02/06 22:21:25 mrg Exp $");
 
 #include <sys/param.h>
 
@@ -71,6 +71,8 @@ static struct evcnt bus_dma_write_bounces =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "write bounces");
 static struct evcnt bus_dma_bounced_unloads =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced unloads");
+static struct evcnt bus_dma_bounced_mbuf_loads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced mbuf loads");
 static struct evcnt bus_dma_unloads =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "unloads");
 static struct evcnt bus_dma_bounced_destroys =
@@ -93,6 +95,8 @@ static struct evcnt bus_dma_sync_postreadwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postreadwrite");
 static struct evcnt bus_dma_sync_postwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postwrite");
+static struct evcnt bus_dma_inrange_fail =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "inrange check failed");
 
 static struct evcnt bus_dma_sync_coherent_prereadwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync coherent prereadwrite");
@@ -118,6 +122,7 @@ EVCNT_ATTACH_STATIC(bus_dma_unloads);
 EVCNT_ATTACH_STATIC(bus_dma_bounced_unloads);
 EVCNT_ATTACH_STATIC(bus_dma_destroys);
 EVCNT_ATTACH_STATIC(bus_dma_bounced_destroys);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_mbuf_loads);
 EVCNT_ATTACH_STATIC(bus_dma_sync_prereadwrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_preread_begin);
 EVCNT_ATTACH_STATIC(bus_dma_sync_preread);
@@ -126,6 +131,7 @@ EVCNT_ATTACH_STATIC(bus_dma_sync_prewrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_postread);
 EVCNT_ATTACH_STATIC(bus_dma_sync_postreadwrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_postwrite);
+EVCNT_ATTACH_STATIC(bus_dma_inrange_fail);
 
 EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_prereadwrite);
 EVCNT_ATTACH_STATIC(bus_dma_sync_coherent_preread);
@@ -210,8 +216,10 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		/* XXX cache last result? */
 		const struct arm32_dma_range * const dr =
 		    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, paddr);
-		if (dr == NULL)
+		if (dr == NULL) {
+			STAT_INCR(inrange_fail);
 			return EINVAL;
+		}
 
 		/*
 		 * If this region is coherent, mark the segment as coherent.
@@ -303,6 +311,15 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (error)
 			return error;
 	}
+
+	/*
+	 * Since we're trying again, clear the previous attempt.
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
+	/* _bus_dmamap_load_buffer() clears this if we're not... */
+	map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 
 	/*
 	 * Cache a pointer to the caller's buffer and load the DMA map
@@ -698,6 +715,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE)) {
 		error = _bus_dma_load_bouncebuf(t, map, m0, m0->m_pkthdr.len,
 		    _BUS_DMA_BUFTYPE_MBUF, flags);
+		STAT_INCR(bounced_mbuf_loads);
 	}
 #endif
 	return error;
