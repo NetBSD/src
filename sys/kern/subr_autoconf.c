@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.293 2022/02/05 15:17:40 martin Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.294 2022/02/06 11:56:00 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.293 2022/02/05 15:17:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.294 2022/02/06 11:56:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -838,9 +838,8 @@ cfdriver_get_iattr(const struct cfdriver *cd, const char *ia)
 	return 0;
 }
 
-#ifdef DIAGNOSTIC
 static int
-cfdriver_iattr_count(const struct cfdriver *cd)
+cfdriver_iattr_count(const struct cfdriver *cd) __diagused
 {
 	const struct cfiattrdata * const *cpp;
 	int i;
@@ -853,7 +852,6 @@ cfdriver_iattr_count(const struct cfdriver *cd)
 	}
 	return i;
 }
-#endif
 
 /*
  * Lookup an interface attribute description by name.
