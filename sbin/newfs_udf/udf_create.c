@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.30 2021/08/20 20:25:26 andvar Exp $ */
+/* $NetBSD: udf_create.c,v 1.31 2022/02/06 20:20:18 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.30 2021/08/20 20:25:26 andvar Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.31 2022/02/06 20:20:18 andvar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1561,7 +1561,7 @@ udf_encode_symlink(uint8_t **pathbufp, uint32_t *pathlenp, char *target)
 	}
 
 	if (error) {
-		/* aparently too big */
+		/* apparently too big */
 		free(pathbuf);
 		return error;
 	}
