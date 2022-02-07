@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1185 2022/01/23 18:00:53 rillig Exp $
+# $NetBSD: mi,v 1.1186 2022/02/07 22:43:50 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5917,6 +5917,8 @@
 ./usr/tests/usr.bin/make/unit-tests/suff-transform-expand.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-transform-select.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suff-transform-select.mk			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/suff-use.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/suff-use.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/suffixes.exp				tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/suffixes.mk					tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/sunshcmd.exp				tests-usr.bin-tests	compattestfile,atf
