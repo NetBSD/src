@@ -1,1 +1,1 @@
-msg_041.c(9): warning: illegal use of bit-field [41]
+msg_041.c(9): warning: bit-field in union is very unusual [41]
