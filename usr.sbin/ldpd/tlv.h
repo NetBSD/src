@@ -1,4 +1,4 @@
-/* $NetBSD: tlv.h,v 1.4 2013/07/11 18:02:03 kefren Exp $ */
+/* $NetBSD: tlv.h,v 1.5 2022/02/07 02:35:09 rillig Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -69,11 +69,7 @@ struct common_hello_tlv {
 	uint16_t       type;
 	uint16_t       length;
 	uint16_t       holdtime;
-	union {
-		/* XXX: Endianness ?! */
-		uint8_t        tr:2;
-		uint16_t       res;
-	};
+	uint16_t       res;
 }               __packed;
 
 /* Hello TLV structure */
