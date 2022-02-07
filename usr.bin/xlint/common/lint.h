@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.34 2021/12/22 14:49:11 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.35 2022/02/07 21:57:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -149,21 +149,13 @@ typedef struct lint2_type type_t;
 
 #include "externs.h"
 
-#if __STDC_VERSION__ >= 199901L
-#define INLINE_FUNC static inline
-#elif __GNUC__
-#define INLINE_FUNC static __attribute__((__unused__))
-#else
-#define INLINE_FUNC static
-#endif
-
-INLINE_FUNC bool
+static inline bool
 ch_isalnum(char ch) { return isalnum((unsigned char)ch) != 0; }
-INLINE_FUNC bool
+static inline bool
 ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
-INLINE_FUNC bool
+static inline bool
 ch_isprint(char ch) { return isprint((unsigned char)ch) != 0; }
-INLINE_FUNC bool
+static inline bool
 ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
-INLINE_FUNC bool
+static inline bool
 ch_isupper(char ch) { return isupper((unsigned char)ch) != 0; }

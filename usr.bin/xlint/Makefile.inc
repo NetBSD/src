@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2021/11/01 19:48:51 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2022/02/07 21:57:47 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -16,8 +16,6 @@ ARCHSUBDIR=	${MACHINE_CPU}
 
 CPPFLAGS+=	-I${.CURDIR}/../arch/${ARCHSUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/../common
-CWARNFLAGS.gcc+=-Wdeclaration-after-statement	# see tools/README
-CWARNFLAGS.gcc+=-std=c90			# see tools/README
 
 CLEANFILES+=	*.gcno *.gcda *.gcov
 
