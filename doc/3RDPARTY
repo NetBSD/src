@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1834 2022/02/01 12:10:04 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1835 2022/02/07 09:33:45 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1542,10 +1542,10 @@ Notes:
 Package:	GNU MP
 Version:	6.2.1
 Current Vers:	6.2.1
-Maintainer:	http://gmplib.org/mailman/listinfo/gmp-devel
-Archive Site:	http://gmplib.org/
-Home Page:	http://gmplib.org/
-Mailing List:	http://gmplib.org/mailman/listinfo/gmp-announce
+Maintainer:	https://gmplib.org/mailman/listinfo/gmp-devel
+Archive Site:	https://gmplib.org/
+Home Page:	https://gmplib.org/
+Mailing List:	https://gmplib.org/mailman/listinfo/gmp-announce
 Responsible:	mrg
 License:	LGPL3
 Location:	external/lgpl3/gmp/dist
