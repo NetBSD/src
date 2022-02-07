@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2859 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2860 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -418,6 +418,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSH: Import 8.7. [christos 20210902]
 	efiboot: Add support for specifying a banner in boot.cfg. [nia 20210907]
 	pxeboot: Add support for specifying a banner in boot.cfg. [nia 20210907]
+	pci(4): Decode more PCIe 5.x support. [mrg 20210911]
 	luna68k: Add support for keyboard LED and buzzer controls via wskbd(4).
 		[tsutsui 20210918]
 	kernel: Added native eventfd(2) and timerfd(2) implementations.
@@ -465,7 +466,10 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	eqos(4): Add driver for DesignWare Ethernet Quality-of-Service
 		controller. [jmcneill 20220103]
 	OpenSSL: Imported 1.1.1m. [christos 20220107]
+	scan_ffs(8): Add SIGINFO support. [mrg 20220119]
 	sysinst(8): Allow configuring IEEE 802.11 / Wi-Fi devices with
 		WPA or open networks. [nia 20220111]
 	tmux(1): Imported 3.2a. [christos 20220123]
+	vmstat(1): Pick better default disk for vmstat. [mrg 20220201]
 	tools: Allow tools to use C99. [rillig 20220203]
+	blkdiscard(8): Add tool to access fdiscard(2). [mrg 20220207]
