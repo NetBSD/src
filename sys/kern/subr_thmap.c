@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.8 2021/12/31 14:19:57 riastradh Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.9 2022/02/08 12:59:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -112,7 +112,7 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.8 2021/12/31 14:19:57 riastradh Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.9 2022/02/08 12:59:16 riastradh Exp $");
 
 #include <crypto/blake2/blake2s.h>
 
@@ -256,7 +256,7 @@ static const thmap_ops_t thmap_default_ops = {
  * NODE LOCKING.
  */
 
-static inline bool
+static inline bool __diagused
 node_locked_p(thmap_inode_t *node)
 {
 	return (atomic_load_relaxed(&node->state) & NODE_LOCKED) != 0;

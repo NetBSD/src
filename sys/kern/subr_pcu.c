@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.25 2022/01/01 15:10:53 christos Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.26 2022/02/08 12:59:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.25 2022/01/01 15:10:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.26 2022/02/08 12:59:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -91,7 +91,7 @@ extern const pcu_ops_t * const pcu_ops_md_defs[];
 /*
  * pcu_available_p: true if lwp is allowed to use PCU state.
  */
-static inline bool
+static inline bool __diagused
 pcu_available_p(struct lwp *l)
 {
 
