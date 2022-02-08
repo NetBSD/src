@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.171 2022/01/31 14:44:49 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.172 2022/02/08 15:05:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.171 2022/01/31 14:44:49 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.172 2022/02/08 15:05:10 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2339,6 +2339,16 @@ rl_replace_line(const char * text, int clear_undo __attribute__((__unused__)))
 	el_replacestr(e, text);
 }
 
+int
+rl_delete_text(int start, int end)
+{
+
+	if (h == NULL || e == NULL)
+		rl_initialize();
+
+	return el_deletestr1(e, start, end);
+}
+
 void
 rl_get_screen_size(int *rows, int *cols)
 {
@@ -2506,6 +2516,14 @@ int
 rl_bind_key_in_map(int key __attribute__((__unused__)),
     rl_command_func_t *fun __attribute__((__unused__)),
     Keymap k __attribute__((__unused__)))
+{
+	return 0;
+}
+
+int
+rl_set_key(const char *keyseq  __attribute__((__unused__)),
+	rl_command_func_t *function __attribute__((__unused__)),
+	Keymap k __attribute__((__unused__)))
 {
 	return 0;
 }
