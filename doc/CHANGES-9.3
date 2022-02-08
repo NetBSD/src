@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.74 2022/02/03 14:20:20 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.75 2022/02/08 14:45:57 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1471,4 +1471,11 @@ xsrc/external/mit/xterm/dist/graphics_sixel.c	1.2 (via patch)
 
 	Apply upstream fix for CVE-2022-24130.
 	[mrg, ticket #1425]
+
+sys/dev/ata/ata_recovery.c			1.3
+sys/dev/ata/ata_subr.c				1.9
+
+	PR 54790: stop xfer timeouts during recovery, all xfers will be
+	requeued anyway.
+	[jdolecek, ticket #1426]
 
