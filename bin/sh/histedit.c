@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.60 2022/02/02 01:21:34 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.61 2022/02/08 20:39:59 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.60 2022/02/02 01:21:34 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.61 2022/02/08 20:39:59 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ histedit(void)
 			 * This odd piece of code doesn't affect the shell
 			 * at all, the environment modified here is the
 			 * stuff accessed via "environ" (the incoming
-			 * envoironment to the shell) which is only ever
+			 * environment to the shell) which is only ever
 			 * touched at sh startup time (long before we get
 			 * here) and ignored thereafter.
 			 *
