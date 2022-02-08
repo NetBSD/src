@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.128 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.129 2022/02/08 08:57:11 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.128 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.129 2022/02/08 08:57:11 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1117,7 +1117,7 @@ vrevoke_suspend_next(struct mount *lastmp, struct mount *thismp)
 	if (error == 0)
 		return thismp;
 
-	KASSERT(error == EOPNOTSUPP);
+	KASSERT(error == EOPNOTSUPP || error == ENOENT);
 	return NULL;
 }
 
