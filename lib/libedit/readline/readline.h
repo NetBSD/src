@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.51 2022/01/31 14:44:49 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.52 2022/02/08 15:05:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -236,6 +236,7 @@ int		 rl_crlf(void);
 int		 rl_ding(void);
 char 		*rl_copy_text(int, int);
 void		 rl_replace_line(const char *, int);
+int		 rl_delete_text(int, int);
 void 		 rl_message(const char *format, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 void		 rl_save_prompt(void);
@@ -250,6 +251,7 @@ void		 rl_set_keymap(Keymap);
 Keymap		 rl_make_bare_keymap(void);
 int		 rl_generic_bind(int, const char *, const char *, Keymap);
 int		 rl_bind_key_in_map(int, rl_command_func_t *, Keymap);
+int		 rl_set_key(const char *, rl_command_func_t *, Keymap);
 void		 rl_cleanup_after_signal(void);
 void		 rl_free_line_state(void);
 int		 rl_set_keyboard_input_timeout(int);

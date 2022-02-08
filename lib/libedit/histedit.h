@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.59 2022/01/11 18:30:15 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.60 2022/02/08 15:05:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -180,7 +180,7 @@ const LineInfo	*el_line(EditLine *);
 int		 el_insertstr(EditLine *, const char *);
 void		 el_deletestr(EditLine *, int);
 int		 el_replacestr(EditLine *el, const char *str);
-
+int		 el_deletestr1(EditLine *el, int start, int end);
 
 /*
  * ==== History ====
