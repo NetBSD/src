@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_recovery.c,v 1.2 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: ata_recovery.c,v 1.2.8.1 2022/02/08 14:45:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_recovery.c,v 1.2 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_recovery.c,v 1.2.8.1 2022/02/08 14:45:00 martin Exp $");
 
 #include "opt_ata.h"
 
@@ -170,6 +170,9 @@ ata_recovery_resume(struct ata_channel *chp, int drive, int tfd, int flags)
 	ata_channel_lock_owned(chp);
 
 	ata_queue_hold(chp);
+
+	/* Stop the timeout callout, recovery will requeue once done */
+	callout_stop(&chp->c_timo_callout);
 
 	KASSERT(drive < chp->ch_ndrives);
 	drvp = &chp->ch_drive[drive];
