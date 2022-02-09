@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.665 2022/02/09 21:09:24 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.666 2022/02/09 21:28:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.665 2022/02/09 21:09:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.666 2022/02/09 21:28:57 rillig Exp $");
 
 /*
  * A file being read.
@@ -847,7 +847,6 @@ static void
 InvalidLineType(const char *line)
 {
 	if (strncmp(line, "<<<<<<", 6) == 0 ||
-	    strncmp(line, "======", 6) == 0 ||
 	    strncmp(line, ">>>>>>", 6) == 0)
 		Parse_Error(PARSE_FATAL,
 		    "Makefile appears to contain unresolved CVS/RCS/??? merge conflicts");

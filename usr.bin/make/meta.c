@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.197 2022/02/08 22:36:02 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.198 2022/02/09 21:28:57 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1160,8 +1160,7 @@ meta_oodate(GNode *gn, bool oodate)
 	/* we want to track all the .meta we read */
 	Global_Append(".MAKE.META.FILES", fname);
 
-	cmp_filter = metaCmpFilter ? metaCmpFilter :
-	    Var_Exists(gn, MAKE_META_CMP_FILTER);
+	cmp_filter = metaCmpFilter || Var_Exists(gn, MAKE_META_CMP_FILTER);
 
 	cmdNode = gn->commands.first;
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
