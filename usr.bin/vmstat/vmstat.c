@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.250 2022/02/09 07:34:18 mrg Exp $ */
+/* $NetBSD: vmstat.c,v 1.251 2022/02/09 07:51:45 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.250 2022/02/09 07:34:18 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.251 2022/02/09 07:51:45 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -2442,7 +2442,7 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage: %s [-CefHiLlmstUvW] [-c count] [-h hashname]\n"
-	    "\t\t[-M core] [-N system] [-d diskcount] [-u histname]\n"
+	    "\t\t[-M core] [-N system] [-n diskcount] [-u histname]\n"
 	    "[-w wait] [disks]\n",
 	    getprogname());
 	exit(1);
