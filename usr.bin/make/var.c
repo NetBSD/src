@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1010 2022/02/09 21:03:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1011 2022/02/09 21:32:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1010 2022/02/09 21:03:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1011 2022/02/09 21:32:38 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1430,10 +1430,11 @@ ModifyWord_SysVSubst(Substring word, SepBuf *buf, void *data)
 	if (Substring_IsEmpty(word))
 		return;
 
-	if (!Substring_HasPrefix(word, args->lhsPrefix))
-		goto no_match;
-	if (!Substring_HasSuffix(word, args->lhsSuffix))
-		goto no_match;
+	if (!Substring_HasPrefix(word, args->lhsPrefix) ||
+	    !Substring_HasSuffix(word, args->lhsSuffix)) {
+		SepBuf_AddSubstring(buf, word);
+		return;
+	}
 
 	rhs = FStr_InitRefer(args->rhs);
 	Var_Expand(&rhs, args->scope, VARE_WANTRES);
@@ -1449,10 +1450,6 @@ ModifyWord_SysVSubst(Substring word, SepBuf *buf, void *data)
 	SepBuf_AddStr(buf, percent != NULL ? percent + 1 : rhs.str);
 
 	FStr_Done(&rhs);
-	return;
-
-no_match:
-	SepBuf_AddSubstring(buf, word);
 }
 #endif
 
