@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.306 2022/02/09 21:09:24 rillig Exp $
+# $NetBSD: Makefile,v 1.307 2022/02/09 21:24:29 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -653,7 +653,7 @@ TMPDIR:=	/tmp/uid${.MAKE.UID}
 .endif
 # make sure it exists
 .if !exist(${TMPDIR})
-x!= echo; mkdir -p ${TMPDIR}
+_!= mkdir -p ${TMPDIR}
 .endif
 
 MAKE_TEST_ENV=	MALLOC_OPTIONS="JA"	# for jemalloc 100
