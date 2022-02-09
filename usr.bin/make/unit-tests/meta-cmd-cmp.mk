@@ -1,4 +1,4 @@
-# $NetBSD: meta-cmd-cmp.mk,v 1.4 2022/01/27 06:02:59 sjg Exp $
+# $NetBSD: meta-cmd-cmp.mk,v 1.5 2022/02/09 21:09:24 rillig Exp $
 #
 # Tests META_MODE command line comparison
 #
@@ -36,7 +36,7 @@ ${tf}.cmp2:
 	@echo FLAGS2=${FLAGS2:Uempty} > $@
 	@echo This line not compared FLAGS=${FLAGS:Uempty} ${.OODATE:MNOMETA_CMP}
 
-COMPILER_WRAPPERS+= ccache distcc icecc
+COMPILER_WRAPPERS= ccache distcc icecc
 WRAPPER?= ccache
 .ifdef WITH_CMP_FILTER
 .MAKE.META.CMP_FILTER+= ${COMPILER_WRAPPERS:S,^,N,}
@@ -49,7 +49,7 @@ ${tf}.filter: .MAKE.META.CMP_FILTER= ${COMPILER_WRAPPERS:S,^,N,}
 ${tf}.filter:
 	@echo ${WRAPPER} cc -c foo.c > $@
 
-# these do the same 
+# these do the same
 one two: .PHONY
 	@echo $@:
 	@${.MAKE} -dM -r -C ${.CURDIR} -f ${MAKEFILE} ${tests}

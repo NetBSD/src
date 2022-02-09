@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.305 2022/02/09 20:52:06 rillig Exp $
+# $NetBSD: Makefile,v 1.306 2022/02/09 21:09:24 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -665,7 +665,7 @@ LIMIT_RESOURCES?=	ulimit -v 200000
 .endif
 LIMIT_RESOURCES?=	:
 
-# Each test is run in a sub-make, to keep the tests for interfering with
+# Each test is run in a sub-make, to keep the tests from interfering with
 # each other, and because they use different environment variables and
 # command line options.
 .SUFFIXES: .mk .rawout .out

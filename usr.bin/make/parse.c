@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.664 2022/02/09 21:03:13 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.665 2022/02/09 21:09:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.664 2022/02/09 21:03:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.665 2022/02/09 21:09:24 rillig Exp $");
 
 /*
  * A file being read.
@@ -753,14 +753,15 @@ ApplyDependencySourceMain(const char *src)
 	Global_Append(".TARGETS", src);
 }
 
+/*
+ * For the sources of a .ORDER target, create predecessor/successor links
+ * between the previous source and the current one.
+ */
 static void
 ApplyDependencySourceOrder(const char *src)
 {
 	GNode *gn;
-	/*
-	 * Create proper predecessor/successor links between the previous
-	 * source and the current one.
-	 */
+
 	gn = Targ_GetNode(src);
 	if (doing_depend)
 		RememberLocation(gn);
@@ -1078,9 +1079,7 @@ CheckSpecialMundaneMixture(ParseSpecial special)
 		 * shouldn't be empty.
 		 */
 	case SP_NOT:
-		/*
-		 * Nothing special here -- targets can be empty if it wants.
-		 */
+		/* Nothing special here -- targets may be empty. */
 		break;
 	default:
 		Parse_Error(PARSE_WARNING,
@@ -1541,7 +1540,7 @@ Parse_IsVar(const char *p, VarAssign *out_var)
 	cpp_skip_hspace(&p);	/* Skip to variable name */
 
 	/*
-	 * During parsing, the '+' of the '+=' operator is initially parsed
+	 * During parsing, the '+' of the operator '+=' is initially parsed
 	 * as part of the variable name.  It is later corrected, as is the
 	 * ':sh' modifier. Of these two (nameEnd and eq), the earlier one
 	 * determines the actual end of the variable name.

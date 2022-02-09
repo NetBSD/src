@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.328 2022/02/09 21:03:13 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.329 2022/02/09 21:09:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.328 2022/02/09 21:03:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.329 2022/02/09 21:09:24 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -286,7 +286,7 @@ ParseFuncArg(CondParser *par, const char **pp, bool doEval, const char *func)
 	return res;
 }
 
-/* Test whether the given variable is defined. */
+/* See if the given variable is defined. */
 static bool
 FuncDefined(const char *var)
 {
