@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clcomsubs.c,v 1.3 2021/11/10 15:56:39 msaitoh Exp $	*/
+/*	$NetBSD: nfs_clcomsubs.c,v 1.4 2022/02/09 21:50:24 andvar Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clcomsubs.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clcomsubs.c,v 1.3 2021/11/10 15:56:39 msaitoh Exp $");
+__RCSID("$NetBSD: nfs_clcomsubs.c,v 1.4 2022/02/09 21:50:24 andvar Exp $");
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -250,7 +250,7 @@ nfscl_reqstart(struct nfsrv_descript *nd, int procnum, struct nfsmount *nmp,
 #ifndef APPLE
 /*
  * copies a uio scatter/gather list to an mbuf chain.
- * NOTE: can ony handle iovcnt == 1
+ * NOTE: can only handle iovcnt == 1
  */
 APPLESTATIC void
 nfsm_uiombuf(struct nfsrv_descript *nd, struct uio *uiop, int siz)
