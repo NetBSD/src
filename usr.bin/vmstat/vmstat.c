@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.249 2022/02/01 09:18:07 mrg Exp $ */
+/* $NetBSD: vmstat.c,v 1.250 2022/02/09 07:34:18 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.249 2022/02/01 09:18:07 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.250 2022/02/09 07:34:18 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,6 +329,8 @@ static const int vmmeter_mib[] = { CTL_VM, VM_METER };
 static const int uvmexp2_mib[] = { CTL_VM, VM_UVMEXP2 };
 static const int boottime_mib[] = { CTL_KERN, KERN_BOOTTIME };
 
+int numdisks = 2;
+
 int
 main(int argc, char *argv[])
 {
@@ -343,7 +345,7 @@ main(int argc, char *argv[])
 	reps = todo = verbose = wide = 0;
 	interval.tv_sec = 0;
 	interval.tv_nsec = 0;
-	while ((c = getopt(argc, argv, "Cc:efh:HilLM:mN:stu:UvWw:")) != -1) {
+	while ((c = getopt(argc, argv, "Cc:efh:HilLM:mN:n:stu:UvWw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
@@ -380,6 +382,9 @@ main(int argc, char *argv[])
 			break;
 		case 'N':
 			nlistf = optarg;
+			break;
+		case 'n':
+			numdisks = atoi(optarg);
 			break;
 		case 's':
 			todo |= SUMSTAT;
@@ -595,10 +600,10 @@ choosedrives(char **argv)
 	/*
 	 * Pick the most active drives.  Must read the stats once before
 	 * sorting so that there is current IO data, before selecting
-	 * just the first two drives.
+	 * just the first 'numdisks' (default 2) drives.
 	 */
 	drvreadstats();
-	for (i = 0; i < ndrive && ndrives < 2; i++) {
+	for (i = 0; i < ndrive && ndrives < numdisks; i++) {
 		uint64_t high_bytes = 0, bytes;
 
 		k = ndrive;
@@ -2436,7 +2441,9 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-CefHiLlmstUvW] [-c count] [-h hashname] [-M core] [-N system]\n"
-	    "\t\t[-u histname] [-w wait] [disks]\n", getprogname());
+	    "usage: %s [-CefHiLlmstUvW] [-c count] [-h hashname]\n"
+	    "\t\t[-M core] [-N system] [-d diskcount] [-u histname]\n"
+	    "[-w wait] [disks]\n",
+	    getprogname());
 	exit(1);
 }
