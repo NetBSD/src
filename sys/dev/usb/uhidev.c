@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.81 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.82 2022/02/09 18:09:48 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.81 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.82 2022/02/09 18:09:48 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -169,8 +169,16 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	}
 	(void)usbd_set_idle(iface, 0, 0);
 
-	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_SET_PROTO) == 0)
+#if 0
+	/*
+	 * HID 1.11 says we should do this, but the device firmware is
+	 * supposed to come up in Report Protocol after reset anyway, and
+	 * apparently explicitly requesting it confuses some devices.
+	 */
+	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_NO_SET_PROTO) == 0 &&
+	    id->bInterfaceSubClass == UISUBCLASS_BOOT)
 		(void)usbd_set_protocol(iface, 1);
+#endif
 
 	maxinpktsize = 0;
 	sc->sc_iep_addr = sc->sc_oep_addr = -1;
