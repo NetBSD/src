@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.327 2022/01/29 01:12:36 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.328 2022/02/09 21:03:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.327 2022/01/29 01:12:36 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.328 2022/02/09 21:03:13 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -293,14 +293,14 @@ FuncDefined(const char *var)
 	return Var_Exists(SCOPE_CMDLINE, var);
 }
 
-/* See if the given target is requested to be made. */
+/* See if a target matching targetPattern is requested to be made. */
 static bool
-FuncMake(const char *target)
+FuncMake(const char *targetPattern)
 {
 	StringListNode *ln;
 
 	for (ln = opts.create.first; ln != NULL; ln = ln->next)
-		if (Str_Match(ln->datum, target))
+		if (Str_Match(ln->datum, targetPattern))
 			return true;
 	return false;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.663 2022/02/07 23:24:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.664 2022/02/09 21:03:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.663 2022/02/07 23:24:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.664 2022/02/09 21:03:13 rillig Exp $");
 
 /*
  * A file being read.
@@ -464,7 +464,7 @@ PrintLocation(FILE *f, bool useVars, const char *fname, unsigned lineno)
 
 static void MAKE_ATTR_PRINTFLIKE(6, 0)
 ParseVErrorInternal(FILE *f, bool useVars, const char *fname, unsigned lineno,
-		    ParseErrorLevel type, const char *fmt, va_list ap)
+		    ParseErrorLevel level, const char *fmt, va_list ap)
 {
 	static bool fatal_warning_error_printed = false;
 
@@ -472,15 +472,15 @@ ParseVErrorInternal(FILE *f, bool useVars, const char *fname, unsigned lineno,
 
 	if (fname != NULL)
 		PrintLocation(f, useVars, fname, lineno);
-	if (type == PARSE_WARNING)
+	if (level == PARSE_WARNING)
 		(void)fprintf(f, "warning: ");
 	(void)vfprintf(f, fmt, ap);
 	(void)fprintf(f, "\n");
 	(void)fflush(f);
 
-	if (type == PARSE_FATAL)
+	if (level == PARSE_FATAL)
 		parseErrors++;
-	if (type == PARSE_WARNING && opts.parseWarnFatal) {
+	if (level == PARSE_WARNING && opts.parseWarnFatal) {
 		if (!fatal_warning_error_printed) {
 			Error("parsing warnings being treated as errors");
 			fatal_warning_error_printed = true;
@@ -494,19 +494,19 @@ ParseVErrorInternal(FILE *f, bool useVars, const char *fname, unsigned lineno,
 
 static void MAKE_ATTR_PRINTFLIKE(4, 5)
 ParseErrorInternal(const char *fname, unsigned lineno,
-		   ParseErrorLevel type, const char *fmt, ...)
+		   ParseErrorLevel level, const char *fmt, ...)
 {
 	va_list ap;
 
 	(void)fflush(stdout);
 	va_start(ap, fmt);
-	ParseVErrorInternal(stderr, false, fname, lineno, type, fmt, ap);
+	ParseVErrorInternal(stderr, false, fname, lineno, level, fmt, ap);
 	va_end(ap);
 
 	if (opts.debug_file != stdout && opts.debug_file != stderr) {
 		va_start(ap, fmt);
 		ParseVErrorInternal(opts.debug_file, false, fname, lineno,
-		    type, fmt, ap);
+		    level, fmt, ap);
 		va_end(ap);
 	}
 }
@@ -520,7 +520,7 @@ ParseErrorInternal(const char *fname, unsigned lineno,
  * Fmt is given without a trailing newline.
  */
 void
-Parse_Error(ParseErrorLevel type, const char *fmt, ...)
+Parse_Error(ParseErrorLevel level, const char *fmt, ...)
 {
 	va_list ap;
 	const char *fname;
@@ -537,13 +537,13 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 
 	(void)fflush(stdout);
 	va_start(ap, fmt);
-	ParseVErrorInternal(stderr, true, fname, lineno, type, fmt, ap);
+	ParseVErrorInternal(stderr, true, fname, lineno, level, fmt, ap);
 	va_end(ap);
 
 	if (opts.debug_file != stdout && opts.debug_file != stderr) {
 		va_start(ap, fmt);
 		ParseVErrorInternal(opts.debug_file, true, fname, lineno,
-		    type, fmt, ap);
+		    level, fmt, ap);
 		va_end(ap);
 	}
 }
