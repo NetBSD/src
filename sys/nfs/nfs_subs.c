@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.241 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.242 2022/02/09 21:50:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.241 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.242 2022/02/09 21:50:24 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -802,7 +802,7 @@ nfsm_mbuftouio(struct mbuf **mrep, struct uio *uiop, int siz, char **dpos)
 
 /*
  * copies a uio scatter/gather list to an mbuf chain.
- * NOTE: can ony handle iovcnt == 1
+ * NOTE: can only handle iovcnt == 1
  */
 int
 nfsm_uiotombuf(struct uio *uiop, struct mbuf **mq, int siz, char **bpos)
