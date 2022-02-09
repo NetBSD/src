@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.303 2022/02/07 22:43:50 rillig Exp $
+# $NetBSD: Makefile,v 1.304 2022/02/09 18:54:19 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -695,7 +695,7 @@ _SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
 # Allow the test files to be placed anywhere.
 _SED_CMDS+=	-e 's,\(\.PARSEDIR}\) = `'"/[^']*'"',\1 = <some-dir>,'
 _SED_CMDS+=	-e 's,\(\.INCLUDEDFROMDIR}\) = `'"/[^']*'"',\1 = <some-dir>,'
-_SED_CMDS+=	-e 's,${TMPDIR},TMPDIR,g'
+_SED_CMDS+=	-e 's,${TMPDIR},<tmpdir>,g'
 # canonicalize ${.OBJDIR} and ${.CURDIR}
 .if ${.OBJDIR} != ${.CURDIR}
 # yes this is inaccurate but none of the tests expect <objdir> anywhere
