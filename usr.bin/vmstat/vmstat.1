@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.25 2021/12/13 08:19:12 simonb Exp $
+.\"	$NetBSD: vmstat.1,v 1.26 2022/02/09 07:34:08 mrg Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 13, 2021
+.Dd February 1, 2022
 .Dt VMSTAT 1
 .Os
 .Sh NAME
@@ -66,6 +66,7 @@
 .Op Fl h Ar hashname
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Op Fl n Ar diskcount
 .Op Fl u Ar histname
 .Op Fl w Ar wait
 .Op Ar disks
@@ -123,6 +124,10 @@ Report on the list of the kernel memory pools and their usage.
 .It Fl N Ar system
 Extract the name list from the specified system instead of the default
 .Pa /netbsd .
+.It Fl n Ar diskcount
+Display up to
+.Ar diskcount
+disks in the standard output, instead of the default 2.
 .It Fl s
 Display the contents of the
 .Dv uvmexp
@@ -300,7 +305,8 @@ apparent which are recomputed every second.
 .Xr kernhist 9
 .Sh BUGS
 The
-.Fl c
+.Fl c ,
+.Fl n ,
 and
 .Fl w
 options are only available with the default output.
