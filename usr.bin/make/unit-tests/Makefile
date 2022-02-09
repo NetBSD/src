@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.304 2022/02/09 18:54:19 rillig Exp $
+# $NetBSD: Makefile,v 1.305 2022/02/09 20:52:06 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -688,7 +688,6 @@ LIMIT_RESOURCES?=	:
 # always pretend .MAKE was called 'make'
 _SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
 _SED_CMDS+=	-e 's,${TEST_MAKE:S,.,\\.,g},make,'
-_SED_CMDS+=	-e 's,${TEST_MAKE:T:S,.,\\.,g}[][0-9]* warning,make warning,'
 _SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
 # replace anything after 'stopped in' with unit-tests
 _SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
