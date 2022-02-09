@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1009 2022/02/04 23:43:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1010 2022/02/09 21:03:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1009 2022/02/04 23:43:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1010 2022/02/09 21:03:13 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3480,11 +3480,11 @@ found_op:
 
 	scope = expr->scope;	/* scope where v belongs */
 	if (expr->defined == DEF_REGULAR && expr->scope != SCOPE_GLOBAL) {
-		Var *gv = VarFind(expr->name, expr->scope, false);
-		if (gv == NULL)
+		Var *v = VarFind(expr->name, expr->scope, false);
+		if (v == NULL)
 			scope = SCOPE_GLOBAL;
 		else
-			VarFreeShortLived(gv);
+			VarFreeShortLived(v);
 	}
 
 	if (op[0] == '+')
