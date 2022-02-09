@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.39 2021/09/07 11:43:05 riastradh Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.40 2022/02/09 22:30:27 andvar Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.39 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.40 2022/02/09 22:30:27 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -135,7 +135,7 @@ static void stio2stios(struct emul_termio *, struct emul_termios *);
  *
  * I don't know what optimizer you used, but seeing divu's and
  * bfextu's in the m68k assembly output did not encourage me...
- * as well, gcc on the sparc definately generates much better
+ * as well, gcc on the sparc definitely generates much better
  * code with ?:.
  */
 
