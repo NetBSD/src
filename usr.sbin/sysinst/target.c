@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.17 2022/01/30 11:58:29 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.18 2022/02/10 16:11:41 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.17 2022/01/30 11:58:29 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.18 2022/02/10 16:11:41 martin Exp $");
 #endif
 
 /*
@@ -525,6 +525,33 @@ int
 target_mount(const char *opts, const char *from, const char *on)
 {
 	return target_mount_do(opts, from, on);
+}
+
+int
+target_unmount(const char *mount_point)
+{
+	struct unwind_mount *m, *prev = NULL;
+	int error;
+
+	for (m = unwind_mountlist; m != NULL; prev = m, m = m->um_prev)
+		if (strcmp(m->um_mountpoint, mount_point) == 0)
+			break;
+
+	if (m == NULL)
+		return ENOTDIR;
+
+	error = run_program(0, "/sbin/umount %s%s",
+		    target_prefix(), m->um_mountpoint);
+	if (error)
+		return error;
+
+	if (m == unwind_mountlist)
+		unwind_mountlist = m->um_prev;
+	else
+		prev->um_prev = m->um_prev;
+	free(m);
+
+	return 0;
 }
 
 static bool
