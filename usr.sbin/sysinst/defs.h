@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.79 2022/01/30 11:58:29 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.80 2022/02/10 16:11:41 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -922,6 +922,7 @@ void	dup_file_into_target(const char *);
 void	mv_within_target_or_die(const char *, const char *);
 int	cp_within_target(const char *, const char *, int);
 int	target_mount(const char *, const char *, const char *);
+int	target_unmount(const char *);
 int	target_mount_do(const char *, const char *, const char *);
 int	target_test(unsigned int, const char *);
 int	target_dir_exists_p(const char *);
