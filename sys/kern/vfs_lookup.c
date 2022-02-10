@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.230 2021/11/13 14:52:08 hannken Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.231 2022/02/10 10:59:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.230 2021/11/13 14:52:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.231 2022/02/10 10:59:12 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -940,8 +940,6 @@ lookup_crossmount(struct namei_state *state,
 	while (foundobj->v_type == VDIR &&
 	    (mp = foundobj->v_mountedhere) != NULL &&
 	    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
-		KASSERTMSG(searchdir != foundobj, "same vn %p", searchdir);
-
 		/*
 		 * Try the namecache first.  If that doesn't work, do
 		 * it the hard way.
