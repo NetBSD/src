@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.33 2020/06/14 00:30:20 uwe Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.34 2022/02/10 09:29:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.33 2020/06/14 00:30:20 uwe Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.34 2022/02/10 09:29:39 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -149,6 +149,7 @@ main(int argc, char *argv[])
 	int detach;
 	int protover;
 	int server;
+	bool cachename = false;
 
 	setprogname(argv[0]);
 
@@ -166,7 +167,7 @@ main(int argc, char *argv[])
 	protover = P9PROTO_VERSION;
 	server = P9P_SERVER_TCP;
 
-	while ((ch = getopt(argc, argv, "46co:p:su")) != -1) {
+	while ((ch = getopt(argc, argv, "46cCo:p:su")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -182,6 +183,9 @@ main(int argc, char *argv[])
 #endif
 		case 'c':
 			server = P9P_SERVER_CDEV;
+			break;
+		case 'C':
+			cachename = true;
 			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
@@ -212,6 +216,9 @@ main(int argc, char *argv[])
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		detach = 0;
 	pflags |= PUFFS_KFLAG_WTCACHE | PUFFS_KFLAG_IAONDEMAND;
+
+	if (!cachename)
+		pflags |= PUFFS_KFLAG_NOCACHE_NAME;
 
 	PUFFSOP_INIT(pops);
 
