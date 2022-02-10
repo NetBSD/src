@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.325 2021/11/10 07:08:47 plunky Exp $
+$NetBSD: acronyms.comp,v 1.326 2022/02/10 20:49:39 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1224,6 +1224,7 @@ PLC	programmable logic controller
 PLD	programmable logic device
 PLL	phase locked loop
 PLRU	pseudo LRU
+PLT	procedure linkage table
 PLTM	package level thermal management
 PM	power management
 PM	{phase,pulse} modulation
