@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.19 2021/08/07 16:19:02 thorpej Exp $	*/
+/*	$NetBSD: sbus.c,v 1.20 2022/02/11 17:30:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.19 2021/08/07 16:19:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.20 2022/02/11 17:30:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,7 +85,7 @@ STATIC int sbus_search(device_t, cfdata_t,
 		       const int *, void *);
 STATIC int sbus_print(void *, const char *);
 
-CFATTACH_DECL_NEW(sbus, sizeof (struct device),
+CFATTACH_DECL_NEW(sbus, 0,
     sbus_match, sbus_attach, NULL, NULL);
 
 extern struct cfdriver sbus_cd;

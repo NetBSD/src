@@ -1,4 +1,4 @@
-/*	$NetBSD: spd.c,v 1.15 2021/08/07 16:19:02 thorpej Exp $	*/
+/*	$NetBSD: spd.c,v 1.16 2022/02/11 17:30:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.15 2021/08/07 16:19:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.16 2022/02/11 17:30:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,7 +63,7 @@ STATIC struct {
 	const char *name;
 } __spd_table[2];
 
-CFATTACH_DECL_NEW(spd, sizeof(struct device),
+CFATTACH_DECL_NEW(spd, 0,
     spd_match, spd_attach, NULL, NULL);
 
 #ifdef DEBUG
