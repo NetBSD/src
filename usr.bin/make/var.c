@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1011 2022/02/09 21:32:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1012 2022/02/11 21:44:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1011 2022/02/09 21:32:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1012 2022/02/11 21:44:10 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -432,11 +432,6 @@ VarFindSubstring(Substring name, GNode *scope, bool elsewhere)
 		FStr envName;
 		const char *envValue;
 
-		/*
-		 * TODO: try setting an environment variable with the empty
-		 *  name, which should be technically possible, just to see
-		 *  how make reacts.  All .for loops should be broken then.
-		 */
 		envName = Substring_Str(name);
 		envValue = getenv(envName.str);
 		if (envValue != NULL)
