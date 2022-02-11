@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19 2022/02/11 17:30:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2022/02/11 17:30:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,7 +41,7 @@ static int mainbus_search(device_t, cfdata_t,
 			  const int *, void *);
 static int mainbus_print(void *, const char *);
 
-CFATTACH_DECL_NEW(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 static int
