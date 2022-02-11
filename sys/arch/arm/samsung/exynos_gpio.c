@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.32 2021/08/07 16:18:45 thorpej Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.33 2022/02/11 23:48:50 riastradh Exp $ */
 
 /*-
 * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.32 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.33 2022/02/11 23:48:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -398,7 +398,6 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 	bank->bank_sc = sc;
 	bank->bank_dev =
 	    config_found(parent->sc_dev, &gba, exynos_gpio_cfprint, CFARGS_NONE);
-	bank->bank_dev->dv_private = sc;
 
 	/* read in our initial settings */
 	bank->bank_cfg.cfg = GPIO_READ(bank, EXYNOS_GPIO_CON);
@@ -451,7 +450,14 @@ exynos_gpio_pin_lookup(const char *name)
 static void *
 exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 {
+	device_t parent = device_parent(dev);
+	struct exynos_pinctrl_softc *sc = device_private(parent);
+	const struct exynos_pinctrl_banks *epb = sc->sc_epb;
+	struct exynos_gpio_bank *bank = NULL;
 	struct exynos_gpio_pin *gpin;
+	u_int n;
+
+	KASSERT(device_is_a(parent, "exyopctl"));
 
 	if (len != 12)
 		return NULL;
@@ -460,8 +466,14 @@ exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 	const int pin = be32toh(cells[1]) & 0x0f;
 	const int actlo = be32toh(cells[2]) & 0x01;
 
-	struct exynos_gpio_softc *bank_sc = device_private(dev);
-	struct exynos_gpio_bank * const bank = bank_sc->sc_bank;
+	for (n = 0; n < epb->epb_nbanks; n++) {
+		if (epb->epb_banks[n].bank_dev == dev) {
+			bank = &epb->epb_banks[n];
+			break;
+		}
+	}
+	KASSERTMSG(bank != NULL, "no such gpio bank child of %s @ %p: %s @ %p",
+	    device_xname(parent), parent, device_xname(dev), dev);
 
 	gpin = kmem_alloc(sizeof(*gpin), KM_SLEEP);
 	gpin->pin_sc = bank->bank_sc;
