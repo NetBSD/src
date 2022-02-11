@@ -1,4 +1,4 @@
-/*	$NetBSD: vnet.c,v 1.5 2021/03/15 18:44:04 palle Exp $	*/
+/*	$NetBSD: vnet.c,v 1.6 2022/02/11 23:49:28 riastradh Exp $	*/
 /*	$OpenBSD: vnet.c,v 1.62 2020/07/10 13:26:36 patrick Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
@@ -128,7 +128,7 @@ struct vnet_soft_desc {
 };
 
 struct vnet_softc {
-	struct device	sc_dv;
+	device_t	sc_dv;
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 
@@ -247,6 +247,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	struct ldc_conn *lc;
 	struct ifnet *ifp;
 
+	sc->sc_dv = self;
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
 	sc->sc_tx_ino = ca->ca_tx_ino;
@@ -304,8 +305,10 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Each interface gets its own pool.
 	 */
-	pool_init(&sc->sc_pool, 2048, 0, 0, 0, sc->sc_dv.dv_xname, NULL, IPL_NET);
- 
+	pool_init(&sc->sc_pool, /*size*/2048, /*align*/0, /*align_offset*/0,
+	    /*flags*/0, /*wchan*/device_xname(sc->sc_dv), /*palloc*/NULL,
+	    IPL_NET);
+
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1392,7 +1395,7 @@ vnet_watchdog(struct ifnet *ifp)
 
 	struct vnet_softc *sc = ifp->if_softc;
 
-	printf("%s: watchdog timeout\n", sc->sc_dv.dv_xname);
+	printf("%s: watchdog timeout\n", device_xname(sc->sc_dv));
 }
 
 int
