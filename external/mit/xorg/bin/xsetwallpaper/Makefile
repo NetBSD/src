@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2022/02/09 11:16:45 martin Exp $
+#	$NetBSD: Makefile,v 1.5 2022/02/11 01:36:02 uwe Exp $
 
 NOMAN=		# defined
 
@@ -12,7 +12,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/sys/dev/stbi
 
 SRCPATH=        ${X11SRCDIR.local}/programs/xsetwallpaper
 
-LDADD+=		-lm -lX11 -lXpm
+LDADD+=		-lm -lX11
 DPADD+=		${LIBM} ${LIBX11}
 
 .PATH:		${X11SRCDIR.local}/programs/xsetwallpaper
