@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.30 2022/01/20 19:49:51 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.31 2022/02/11 21:15:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.30 2022/01/20 19:49:51 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.31 2022/02/11 21:15:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,6 +81,8 @@ static int	usesleep, rawout;
 static int	quiet, flush;
 static const char *fname;
 
+static volatile	sig_atomic_t die = 0;	/* exit if 1 */
+static int	cstat = EXIT_SUCCESS;	/* cmd. exit status */
 static int	eflag;
 static int	isterm;
 static struct	termios tt;
@@ -88,6 +90,7 @@ static struct	termios tt;
 __dead static void	done(int);
 __dead static void	doshell(const char *);
 __dead static void	fail(void);
+static sig_t	xsignal(int, sig_t);
 static void	dooutput(void);
 static void	finish(int);
 static void	scriptflush(int);
@@ -182,7 +185,7 @@ main(int argc, char *argv[])
 		(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
 	}
 
-	(void)signal(SIGCHLD, finish);
+	(void)xsignal(SIGCHLD, finish);
 	child = fork();
 	if (child == -1) {
 		warn("fork");
@@ -202,35 +205,49 @@ main(int argc, char *argv[])
 
 	if (!rawout)
 		(void)fclose(fscript);
-	while ((scc = read(STDIN_FILENO, ibuf, BUFSIZ)) > 0) {
+	while (!die && (scc = read(STDIN_FILENO, ibuf, BUFSIZ)) > 0) {
 		cc = (size_t)scc;
 		if (rawout)
 			record(fscript, ibuf, cc, 'i');
 		(void)write(master, ibuf, cc);
 	}
-	finish(-1);
+	done(cstat);
+}
+
+/**
+ * wrapper around sigaction() because we want POSIX semantics:
+ * no auto-restarting of interrupted slow syscalls.
+ */
+static sig_t
+xsignal(int signo, sig_t handler)
+{
+	struct sigaction sa, osa;
+
+	sa.sa_handler = handler;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	if (sigaction(signo, &sa, &osa) == -1)
+		return SIG_ERR;
+	return osa.sa_handler;
 }
 
 static void
 finish(int signo)
 {
-	int die, pid, status, cstat;
+	int pid, status;
 
-	die = 0;
 	while ((pid = wait(&status)) > 0)
 		if (pid == child) {
 			cstat = status;
 			die = 1;
 		}
 
-	if (!die)
-		return;
 	if (!eflag)
-		done(EXIT_SUCCESS);
+		cstat = EXIT_SUCCESS;
 	else if (WIFEXITED(cstat))
-		done(WEXITSTATUS(cstat));
+		cstat = WEXITSTATUS(cstat);
 	else
-		done(128 + WTERMSIG(cstat));
+		cstat = 128 + WTERMSIG(cstat);
 }
 
 static void
@@ -268,7 +285,7 @@ dooutput(void)
 		if (flush)
 			(void)fflush(fscript);
 	}
-	finish(-1);
+	done(cstat);
 }
 
 static void
