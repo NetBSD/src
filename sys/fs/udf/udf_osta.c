@@ -1,10 +1,10 @@
-/* $NetBSD: udf_osta.c,v 1.10 2013/08/05 17:02:54 joerg Exp $ */
+/* $NetBSD: udf_osta.c,v 1.11 2022/02/11 16:33:18 reinoud Exp $ */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.10 2013/08/05 17:02:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.11 2022/02/11 16:33:18 reinoud Exp $");
 
 /*
  * Various routines from the OSTA 2.01 specs.  Copyrights are included with
@@ -53,6 +53,12 @@ udf_UncompressUnicode(
 
 	/* Use UDFCompressed to store current byte being read. */
 	compID = UDFCompressed[0];
+
+	/* Translate 254/255 compID values used for deleted entries */
+	if (compID == 254)
+		compID = 8;
+	if (compID == 255)
+		compID = 16;
 
 	/* First check for valid compID. */
 	if (compID != 8 && compID != 16) {
