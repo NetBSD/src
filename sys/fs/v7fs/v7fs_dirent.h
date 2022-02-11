@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_dirent.h,v 1.1 2011/06/27 11:52:24 uch Exp $	*/
+/*	$NetBSD: v7fs_dirent.h,v 1.2 2022/02/11 10:55:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,6 +33,6 @@
 #define	_V7FS_DIRENT_H_
 __BEGIN_DECLS
 bool v7fs_dirent_endian_convert(struct v7fs_self *, struct v7fs_dirent *, int);
-void v7fs_dirent_filename(char *, const char *);
+void v7fs_dirent_filename(char *, const char *, size_t);
 __END_DECLS
 #endif /*!_V7FS_DIRENT_H_ */

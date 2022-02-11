@@ -1,4 +1,4 @@
-/*	$NetBSD: pathname.c,v 1.1 2011/06/27 11:52:58 uch Exp $	*/
+/*	$NetBSD: pathname.c,v 1.2 2022/02/11 10:55:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pathname.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
+__RCSID("$NetBSD: pathname.c,v 1.2 2022/02/11 10:55:15 hannken Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ connect_lost_and_found(struct v7fs_self *fs, v7fs_ino_t ino)
 		return FSCK_EXIT_CHECK_FAILED;
 
 	snprintf(name, sizeof(name), "%d", ino);
-	v7fs_directory_add_entry(fs, &lost_and_found, ino, name);
+	v7fs_directory_add_entry(fs, &lost_and_found, ino, name, strlen(name));
 	t = (v7fs_time_t)time(NULL);
 	lost_and_found.mtime = lost_and_found.atime = t;
 	v7fs_inode_writeback(fs, &lost_and_found);
@@ -107,7 +107,7 @@ lookup_child_subr(struct v7fs_self *fs, void *ctx, v7fs_daddr_t blk, size_t sz)
 			pwarn("entry #%d not found.", dir->inode_number);
 			if (reply("REMOVE?"))
 				v7fs_directory_remove_entry(fs, arg->parent,
-				    dir->name);
+				    dir->name, strlen(dir->name));
 		} else {
 			/* Count child dir. */
 			if (v7fs_inode_isdir(&inode))

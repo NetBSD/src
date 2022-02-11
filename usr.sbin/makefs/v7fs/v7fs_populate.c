@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_populate.c,v 1.3 2011/08/10 11:31:49 uch Exp $	*/
+/*	$NetBSD: v7fs_populate.c,v 1.4 2022/02/11 10:55:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs_populate.c,v 1.3 2011/08/10 11:31:49 uch Exp $");
+__RCSID("$NetBSD: v7fs_populate.c,v 1.4 2022/02/11 10:55:15 hannken Exp $");
 #endif	/* !__lint */
 
 #include <stdio.h>
@@ -89,8 +89,8 @@ allocate(struct v7fs_self *fs, struct v7fs_inode *parent_inode, fsnode *node,
 
 	attr_setup(node, &attr);
 	attr.device = dev;
-	if ((error = v7fs_file_allocate(fs, parent_inode, node->name, &attr,
-	    &ino))) {
+	if ((error = v7fs_file_allocate(fs, parent_inode, node->name,
+	    strlen(node->name), &attr, &ino))) {
 		errno = error;
 		warn("%s", node->name);
 		return error;
@@ -146,7 +146,7 @@ file_copy(struct v7fs_self *fs, struct v7fs_inode *parent_inode, fsnode *node,
 			goto err_exit;
 		}
 		if ((error = v7fs_file_link(fs, parent_inode, &inode,
-			    node->name))) {
+			    node->name, strlen(node->name)))) {
 			errmsg = "hard link";
 			goto err_exit;
 		}
