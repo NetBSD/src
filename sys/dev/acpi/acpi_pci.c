@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.34 2022/01/22 11:49:17 thorpej Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.35 2022/02/11 23:19:59 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.34 2022/01/22 11:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.35 2022/02/11 23:19:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -470,9 +470,6 @@ acpi_pcidev_find_dev(struct acpi_devnode *ad)
 		pr = device_parent(dv);
 
 		if (pr == NULL || device_is_a(pr, "pci") != true)
-			continue;
-
-		if (dv->dv_locators == NULL)	/* This should not happen. */
 			continue;
 
 		pci = device_private(pr);
