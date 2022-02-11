@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.329 2022/02/09 21:09:24 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.330 2022/02/11 21:18:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.329 2022/02/09 21:09:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.330 2022/02/11 21:18:09 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -663,18 +663,11 @@ CondParser_Comparison(CondParser *par, bool doEval)
 	}
 
 	CondParser_Leaf(par, doEval, true, &rhs, &rhsQuoted);
-	if (rhs.str == NULL)
-		goto done_rhs;
-
-	if (!doEval) {
-		t = TOK_FALSE;
-		goto done_rhs;
-	}
-
-	t = EvalCompare(par, lhs.str, lhsQuoted, op, rhs.str, rhsQuoted);
-
-done_rhs:
+	t = rhs.str == NULL ? TOK_ERROR
+	    : !doEval ? TOK_FALSE
+	    : EvalCompare(par, lhs.str, lhsQuoted, op, rhs.str, rhsQuoted);
 	FStr_Done(&rhs);
+
 done_lhs:
 	FStr_Done(&lhs);
 	return t;
