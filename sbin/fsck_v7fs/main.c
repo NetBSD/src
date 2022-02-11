@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2011/06/27 11:52:58 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2022/02/11 10:55:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2022/02/11 10:55:15 hannken Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -241,8 +241,8 @@ make_lost_and_found(struct v7fs_self *fs, struct v7fs_inode *p)
 	attr.ctime = attr.mtime = attr.atime = (v7fs_time_t)time(NULL);
 
 	/* If lost+found already exists, returns EEXIST */
-	if (!(error = v7fs_file_allocate
-	      (fs, &root_inode, "lost+found", &attr, &ino)))
+	if (!(error = v7fs_file_allocate(fs, &root_inode,
+	    "lost+found", strlen("lost+found"), &attr, &ino)))
 		v7fs_superblock_writeback(fs);
 
 	if (error == EEXIST)
