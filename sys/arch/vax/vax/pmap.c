@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.193 2021/10/12 08:36:28 andvar Exp $	   */
+/*	$NetBSD: pmap.c,v 1.194 2022/02/11 17:26:55 riastradh Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.193 2021/10/12 08:36:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2022/02/11 17:26:55 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -397,8 +397,7 @@ pmap_bootstrap(void)
 	ci = (struct cpu_info *) scratch;
 	lwp0.l_cpu = ci;
 	ci->ci_istack = istack;
-	memset(ci, 0, sizeof(struct cpu_info) + sizeof(struct device));
-	ci->ci_dev = (void *)(ci + 1);
+	memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
 	ci->ci_curlwp = &lwp0;
 	ci->ci_flags = CI_MASTERCPU|CI_RUNNING;
