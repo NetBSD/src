@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.32 2017/11/17 07:42:29 wiz Exp $
+.\"     $NetBSD: driver.9,v 1.33 2022/02/11 23:19:34 riastradh Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,14 +100,6 @@ struct foo_softc {
 	/* device-specific state */
 };
 .Ed
-.Pp
-The autoconfiguration framework mandates that the first member of the
-.Em softc
-structure must be the driver-independent
-.Em device_t .
-Probably its most useful aspect to the driver is that it contains the
-device-instance name
-.Em dv_xname .
 .Pp
 If a driver has character device interfaces accessed from userland, the driver
 must define the
