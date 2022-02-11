@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.36 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: getenv.c,v 1.37 2022/02/11 21:36:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.36 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.37 2022/02/11 21:36:46 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,7 @@ getenv(const char *name)
 		result = __findenvvar(name, l_name);
 		(void)__unlockenv();
 	}
-	
+
 	return result;
 }
 
@@ -107,6 +107,6 @@ getenv_r(const char *name, char *buf, size_t len)
 		}
 		(void)__unlockenv();
 	}
-	
+
 	return rv;
 }
