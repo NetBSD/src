@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.14 2019/05/28 07:41:47 msaitoh Exp $	*/
+/*	$NetBSD: emac3.c,v 1.15 2022/02/11 23:49:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.14 2019/05/28 07:41:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.15 2022/02/11 23:49:19 riastradh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -103,7 +103,7 @@ emac3_init(struct emac3_softc *sc)
 	r = _emac3_reg_read_4(EMAC3_MR1);
 
 	if (emac3_soft_reset() != 0) {
-		printf("%s: reset failed.\n", sc->dev.dv_xname);
+		printf("%s: reset failed.\n", device_xname(sc->dev));
 		return (1);
 	}
 
@@ -132,7 +132,7 @@ emac3_exit(struct emac3_softc *sc)
 		;
 
 	if (retry == 0)
-		printf("%s: still running.\n", sc->dev.dv_xname);
+		printf("%s: still running.\n", device_xname(sc->dev));
 }
 
 int
@@ -140,7 +140,7 @@ emac3_reset(struct emac3_softc *sc)
 {
 
 	if (emac3_soft_reset() != 0) {
-		printf("%s: reset failed.\n", sc->dev.dv_xname);
+		printf("%s: reset failed.\n", device_xname(sc->dev));
 		return (1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.33 2020/11/21 17:46:08 thorpej Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.34 2022/02/11 23:49:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.33 2020/11/21 17:46:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.34 2022/02/11 23:49:19 riastradh Exp $");
 
 #include "debug_playstation2.h"
 
@@ -108,7 +108,7 @@ struct smap_softc {
 	krndsource_t rnd_source;
 };
 
-#define DEVNAME		(sc->emac3.dev.dv_xname)
+#define DEVNAME		(device_xname(sc->emac3.dev))
 #define ROUND4(x)	(((x) + 3) & ~3)
 #define ROUND16(x)	(((x) + 15) & ~15)
 
@@ -147,7 +147,7 @@ void
 smap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spd_attach_args *spa = aux;
-	struct smap_softc *sc = (void *)self;
+	struct smap_softc *sc = device_private(self);
 	struct emac3_softc *emac3 = &sc->emac3;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	struct mii_data *mii = &emac3->mii;
@@ -157,6 +157,8 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 #ifdef SMAP_DEBUG
 	__sc = sc;
 #endif
+
+	sc->dev = self;
 
 	printf(": %s\n", spa->spa_product_name);
 
@@ -219,7 +221,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_statchg	= emac3_phy_statchg;
 	sc->ethercom.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
-	mii_attach(&emac3->dev, mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(emac3->dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
 	/* Choose a default media. */

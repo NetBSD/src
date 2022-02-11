@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3var.h,v 1.7 2019/01/22 03:42:26 msaitoh Exp $	*/
+/*	$NetBSD: emac3var.h,v 1.8 2022/02/11 23:49:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 struct emac3_softc {
-	struct device dev;
+	device_t dev;
 	struct mii_data mii;
 	u_int8_t eaddr[ETHER_ADDR_LEN];
 	u_int32_t mode1_reg;
