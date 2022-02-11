@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.22 2022/02/11 23:48:41 riastradh Exp $ */
 
 /*-
 * Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
@@ -34,14 +34,13 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.22 2022/02/11 23:48:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
-#include <sys/kmem.h>
 #include <sys/gpio.h>
 
 #include <dev/gpio/gpiovar.h>
@@ -93,8 +92,7 @@ exynos_pinctrl_match(device_t parent, cfdata_t cf, void *aux)
 static void
 exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 {
-	struct exynos_pinctrl_softc * const sc
-		= kmem_zalloc(sizeof(*sc), KM_SLEEP);
+	struct exynos_pinctrl_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -107,7 +105,6 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal(" pinctrl @ 0x%08x ", (uint)addr);
-	self->dv_private = sc;
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_epb = of_compatible_lookup(faa->faa_phandle, compat_data)->data;
