@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.185 2020/10/06 18:45:23 mlelstv Exp $	*/
+/*	$NetBSD: ccd.c,v 1.186 2022/02/11 23:20:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.185 2020/10/06 18:45:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.186 2022/02/11 23:20:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1447,7 +1447,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		disk_detach(&cs->sc_dkdev);
 		bufq_free(cs->sc_bufq);
 
-		/* also releases dv_lock */
+		/* also releases sc_dvlock */
 		ccdput(cs);
 
 		/* Don't break, otherwise cs is read again. */
