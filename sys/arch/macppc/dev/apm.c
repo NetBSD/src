@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.31 2021/09/26 16:36:19 thorpej Exp $	*/
+/*	$NetBSD: apm.c,v 1.32 2022/02/11 04:23:18 thorpej Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.31 2021/09/26 16:36:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.32 2022/02/11 04:23:18 thorpej Exp $");
 
 #include "apm.h"
 
@@ -49,18 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.31 2021/09/26 16:36:19 thorpej Exp $");
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mutex.h>
-#ifdef __OpenBSD__
-#include <sys/event.h>
-#endif
-#ifdef __NetBSD__
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
-#endif
 
-#ifdef __OpenBSD__
-#include <machine/conf.h>
-#endif
 #include <machine/cpu.h>
 #include <machine/apmvar.h>
 
@@ -77,9 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.31 2021/09/26 16:36:19 thorpej Exp $");
 
 struct apm_softc {
 	struct selinfo sc_rsel;
-#ifdef __OpenBSD__
-	struct klist sc_note;
-#endif
 	int    sc_flags;
 	int	event_count;
 	int	event_ptr;
@@ -93,31 +82,19 @@ struct apm_softc {
  * APM module.  This is both the APM thread itself, as well as
  * user context.
  */
-#ifdef __NetBSD__
 #define	APM_LOCK(apmsc)		mutex_enter(&(apmsc)->sc_lock)
 #define	APM_UNLOCK(apmsc)	mutex_exit(&(apmsc)->sc_lock)
-#else
-#define APM_LOCK(apmsc)
-#define APM_UNLOCK(apmsc)
-#endif
 
 int apmmatch(device_t, cfdata_t, void *);
 void apmattach(device_t, device_t, void *);
 
-#ifdef __NetBSD__
 #if 0
 static int	apm_record_event(struct apm_softc *, u_int);
-#endif
 #endif
 
 CFATTACH_DECL_NEW(apm, sizeof(struct apm_softc),
     apmmatch, apmattach, NULL, NULL);
 
-#ifdef __OpenBSD__
-struct cfdriver apm_cd = {
-	NULL, "apm", DV_DULL
-};
-#else
 extern struct cfdriver apm_cd;
 
 dev_type_open(apmopen);
@@ -140,7 +117,6 @@ const struct cdevsw apm_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = 0
 };
-#endif
 
 int	apm_evindex;
 
@@ -365,7 +341,6 @@ apmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return error;
 }
 
-#ifdef __NetBSD__
 #if 0
 /*
  * return 0 if the user will notice and handle the event,
@@ -410,7 +385,6 @@ apmpoll(dev_t dev, int events, struct lwp *l)
 
 	return (revents);
 }
-#endif
 
 static void
 filt_apmrdetach(struct knote *kn)
