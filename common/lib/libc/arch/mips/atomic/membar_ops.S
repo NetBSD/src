@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.10 2020/08/10 14:37:38 skrll Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.11 2022/02/12 17:10:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,16 +44,6 @@ LEAF(_membar_producer)
 	j	ra
 	 syncw
 END(_membar_producer)
-#endif
-
-#ifdef _KERNEL
-STRONG_ALIAS(mb_read, _membar_sync)
-#ifdef __OCTEON__
-STRONG_ALIAS(mb_write, _membar_producer)
-#else
-STRONG_ALIAS(mb_write, _membar_sync)
-#endif
-STRONG_ALIAS(mb_memory, _membar_sync)
 #endif
 
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
