@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.34 2021/11/21 08:44:28 skrll Exp $ */
+/*	$NetBSD: epcom.c,v 1.35 2022/02/12 03:24:34 riastradh Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.34 2021/11/21 08:44:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.35 2022/02/12 03:24:34 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -260,7 +260,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 	if (sc->sc_iot == kgdb_sc.sc_iot &&
 	    sc->sc_hwbase == kgdb_sc.sc_hwbase) {
 		SET(sc->sc_hwflags, COM_HW_KGDB);
-		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
+		device_printf(sc->sc_dev, "kgdb\n");
 	}
 #endif
 

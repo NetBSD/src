@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_oioc.c,v 1.5 2015/06/11 08:22:09 matt Exp $	*/
+/*	$NetBSD: if_le_oioc.c,v 1.6 2022/02/12 03:24:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.5 2015/06/11 08:22:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.6 2022/02/12 03:24:34 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -88,9 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.5 2015/06/11 08:22:09 matt Exp $");
  *		bus_space_tag ...
  *	}
  *
- * So, we can cast any three to any other three, plus sc_dev->dv_private points
- * back at the top (i.e. to le_softc, am7990_softc and lance_softc). Bloody
- * hell!
+ * So, we can cast any three to any other three, plus
+ * device_private(sc_dev) points back at the top (i.e. to le_softc,
+ * am7990_softc and lance_softc). Bloody hell!
  */
 struct le_softc {
 	struct	am7990_softc sc_am7990;		/* glue to MI code */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.37 2021/12/05 07:57:38 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.38 2022/02/12 03:24:35 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.37 2021/12/05 07:57:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.38 2022/02/12 03:24:35 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -482,7 +482,8 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	 * we assume phyaddress == MAC unit number here,
 	 * but some boards may not.
 	 */
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, sc->sc_dev->dv_unit, 0);
+	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, device_unit(sc->sc_dev),
+	    0);
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");

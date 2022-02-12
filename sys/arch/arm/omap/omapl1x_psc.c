@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_psc.c,v 1.1 2013/10/02 16:48:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_psc.c,v 1.2 2022/02/12 03:24:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ omapl1xpsc_attach(device_t parent, device_t self, void *aux)
 	sc = device_private(self);
 
 	sc->sc_iot = tipb->tipb_iot;
-	sc->sc_unit = self->dv_unit;
+	sc->sc_unit = device_unit(self);
 	sc->sc_addr = tipb->tipb_addr;
 	sc->sc_size = tipb->tipb_size;
 
