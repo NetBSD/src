@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2410 2022/01/22 08:58:48 skrll Exp $
+#	$NetBSD: mi,v 1.2411 2022/02/12 17:10:20 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11292,6 +11292,14 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VREF.0			comp-obsolete		obsolete
+./usr/share/man/cat9/__SIMPLELOCK_LOCKED_P.0		comp-sys-catman		.cat
+./usr/share/man/cat9/__SIMPLELOCK_UNLOCKED_P.0		comp-sys-catman		.cat
+./usr/share/man/cat9/__cpu_simple_lock_clear.0		comp-sys-catman		.cat
+./usr/share/man/cat9/__cpu_simple_lock_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/__cpu_simple_lock_set.0		comp-sys-catman		.cat
+./usr/share/man/cat9/__cpu_simple_lock_try.0		comp-sys-catman		.cat
+./usr/share/man/cat9/__cpu_simple_lock.0		comp-sys-catman		.cat
+./usr/share/man/cat9/__cpu_simple_unlock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/acl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_del.0		comp-sys-catman		.cat
@@ -19522,6 +19530,14 @@
 ./usr/share/man/html9/VOP_WHITEOUT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_WRITE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VREF.html			comp-obsolete	obsolete
+./usr/share/man/html9/__SIMPLELOCK_LOCKED_P.html		comp-sys-htmlman		html
+./usr/share/man/html9/__SIMPLELOCK_UNLOCKED_P.html		comp-sys-htmlman		html
+./usr/share/man/html9/__cpu_simple_lock_clear.html		comp-sys-htmlman		html
+./usr/share/man/html9/__cpu_simple_lock_init.html		comp-sys-htmlman		html
+./usr/share/man/html9/__cpu_simple_lock_set.html		comp-sys-htmlman		html
+./usr/share/man/html9/__cpu_simple_lock_try.html		comp-sys-htmlman		html
+./usr/share/man/html9/__cpu_simple_lock.html		comp-sys-htmlman		html
+./usr/share/man/html9/__cpu_simple_unlock.html		comp-sys-htmlman		html
 ./usr/share/man/html9/acl.html			comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_add.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_del.html	comp-sys-htmlman	html
@@ -27855,6 +27871,14 @@
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man		.man
 ./usr/share/man/man9/VREF.9			comp-obsolete		obsolete
+./usr/share/man/man9/__SIMPLELOCK_LOCKED_P.9		comp-sys-man		.man
+./usr/share/man/man9/__SIMPLELOCK_UNLOCKED_P.9		comp-sys-man		.man
+./usr/share/man/man9/__cpu_simple_lock_clear.9		comp-sys-man		.man
+./usr/share/man/man9/__cpu_simple_lock_init.9		comp-sys-man		.man
+./usr/share/man/man9/__cpu_simple_lock_set.9		comp-sys-man		.man
+./usr/share/man/man9/__cpu_simple_lock_try.9		comp-sys-man		.man
+./usr/share/man/man9/__cpu_simple_lock.9		comp-sys-man		.man
+./usr/share/man/man9/__cpu_simple_unlock.9		comp-sys-man		.man
 ./usr/share/man/man9/acl.9			comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
