@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.40 2021/10/01 20:13:38 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.41 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,10 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.40 2021/10/01 20:13:38 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.41 2022/02/12 14:59:32 riastradh Exp $");
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #ifndef lint
 

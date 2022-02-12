@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_compat.c,v 1.6 2017/12/08 09:59:26 kre Exp $	*/
+/*	$NetBSD: pthread_compat.c,v 1.7 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_compat.c,v 1.6 2017/12/08 09:59:26 kre Exp $");
+__RCSID("$NetBSD: pthread_compat.c,v 1.7 2022/02/12 14:59:32 riastradh Exp $");
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/param.h>
 #include <sys/syscall.h>

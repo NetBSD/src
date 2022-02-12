@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.26 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.27 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.26 2013/03/21 16:49:12 christos Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.27 2022/02/12 14:59:32 riastradh Exp $");
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 /* Functions and structures dealing with thread-specific data */
 
