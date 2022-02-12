@@ -1,4 +1,4 @@
-/*	$NetBSD: xmm7360.c,v 1.15 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: xmm7360.c,v 1.16 2022/02/12 16:21:27 thorpej Exp $	*/
 
 /*
  * Device driver for Intel XMM7360 LTE modems, eg. Fibocom L850-GL.
@@ -75,7 +75,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.15 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.16 2022/02/12 16:21:27 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -203,6 +203,11 @@ typedef struct mutex spinlock_t;
 #define XMM_KQ_ISFD_INITIALIZER		.f_flags = FILTEROP_ISFD
 #endif /* OpenBSD <= 201911 */
 
+#define	selrecord_knote(si, kn)						\
+	klist_insert(&(si)->si_note, (kn))
+#define	selremove_knote(si, kn)						\
+	klist_remove(&(si)->si_note, (kn))
+
 #endif
 
 #ifdef __NetBSD__
@@ -257,7 +262,6 @@ typedef struct kmutex spinlock_t;
 #define if_ih_remove(ifp, func, arg)	/* nothing to do */
 #define if_hardmtu			if_mtu
 #define IF_OUTPUT_CONST			const
-#define si_note				sel_klist
 #define XMM_KQ_ISFD_INITIALIZER		.f_flags = FILTEROP_ISFD
 #define tty_lock()			mutex_spin_enter(&tty_lock)
 #define tty_unlock()			mutex_spin_exit(&tty_lock)
@@ -2750,7 +2754,7 @@ filt_wwancrdetach(struct knote *kn)
 	struct queue_pair *qp = (struct queue_pair *)kn->kn_hook;
 
 	tty_lock();
-	klist_remove(&qp->selr.si_note, kn);
+	selremove_knote(&qp->selr, kn);
 	tty_unlock();
 }
 
@@ -2777,7 +2781,7 @@ filt_wwancwdetach(struct knote *kn)
 	struct queue_pair *qp = (struct queue_pair *)kn->kn_hook;
 
 	tty_lock();
-	klist_remove(&qp->selw.si_note, kn);
+	selremove_knote(&qp->selw, kn);
 	tty_unlock();
 }
 
@@ -2816,7 +2820,7 @@ wwanckqfilter(dev_t dev, struct knote *kn)
 	struct wwanc_softc *sc = device_lookup_private(&wwanc_cd, DEVUNIT(dev));
 	int func = DEVFUNC(dev);
 	struct queue_pair *qp = &sc->sc_xmm.qp[func];
-	struct klist *klist;
+	struct selinfo *si;
 
 	if (DEV_IS_TTY(func))
 		return ttkqfilter(dev, kn);
@@ -2825,11 +2829,11 @@ wwanckqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &qp->selr.si_note;
+		si = &qp->selr;
 		kn->kn_fop = &wwancread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &qp->selw.si_note;
+		si = &qp->selw;
 		kn->kn_fop = &wwancwrite_filtops;
 		break;
 	default:
@@ -2839,7 +2843,7 @@ wwanckqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (void *)qp;
 
 	tty_lock();
-	klist_insert(klist, kn);
+	selrecord_knote(si, kn);
 	tty_unlock();
 
 	return (0);
