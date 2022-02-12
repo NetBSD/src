@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sync_file.c,v 1.1 2021/12/19 10:45:50 riastradh Exp $	*/
+/*	$NetBSD: linux_sync_file.c,v 1.2 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sync_file.c,v 1.1 2021/12/19 10:45:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sync_file.c,v 1.2 2022/02/12 15:51:29 thorpej Exp $");
 
 #include <sys/event.h>
 #include <sys/fcntl.h>
@@ -136,7 +136,7 @@ sync_file_kqfilter(struct file *fp, struct knote *kn)
 		kn->kn_fop = &sync_file_filtops;
 		kn->kn_hook = sf;
 		mutex_enter(&sf->sf_lock);
-		SLIST_INSERT_HEAD(&sf->sf_selq.sel_klist, kn, kn_selnext);
+		klist_insert(&sf->sf_selq.sel_klist, kn);
 		mutex_exit(&sf->sf_lock);
 		return 0;
 	default:
@@ -150,7 +150,7 @@ filt_sync_file_detach(struct knote *kn)
 	struct sync_file *sf = kn->kn_hook;
 
 	mutex_enter(&sf->sf_lock);
-	SLIST_REMOVE(&sf->sf_selq.sel_klist, kn, knote, kn_selnext);
+	klist_remove(&sf->sf_selq.sel_klist, kn);
 	mutex_exit(&sf->sf_lock);
 }
 

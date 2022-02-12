@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.262 2020/12/24 12:14:50 nia Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.263 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.262 2020/12/24 12:14:50 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.263 2022/02/12 15:51:29 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -354,7 +354,17 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 static int
 proc_ctor(void *arg __unused, void *obj, int flags __unused)
 {
-	memset(obj, 0, sizeof(struct proc));
+	struct proc *p = obj;
+
+	memset(p, 0, sizeof(*p));
+	klist_init(&p->p_klist);
+
+	/*
+	 * There is no need for a proc_dtor() to do a klist_fini(),
+	 * since knote_proc_exit() ensures that p->p_klist is empty
+	 * when a process exits.
+	 */
+
 	return 0;
 }
 

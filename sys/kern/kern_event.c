@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.139 2022/01/01 10:54:21 msaitoh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.140 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.139 2022/01/01 10:54:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.140 2022/02/12 15:51:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -790,7 +790,7 @@ filt_procattach(struct knote *kn)
 	 */
 	kn->kn_sfflags &= ~NOTE_CHILD;
 
-	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+	klist_insert(&p->p_klist, kn);
     	mutex_exit(p->p_lock);
 
 	return 0;
@@ -828,7 +828,7 @@ filt_procdetach(struct knote *kn)
 			goto again;
 		}
 		kn->kn_status |= KN_DETACHED;
-		SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+		klist_remove(&p->p_klist, kn);
 		mutex_exit(p->p_lock);
 	}
 	mutex_spin_exit(&kq->kq_lock);
@@ -1019,7 +1019,7 @@ knote_proc_fork_track(struct proc *p1, struct proc *p2, struct knote *okn)
 		error = EACCES;
 		goto out;
 	}
-	SLIST_INSERT_HEAD(&p2->p_klist, kntrack, kn_selnext);
+	klist_insert(&p2->p_klist, kntrack);
 	mutex_exit(p2->p_lock);
 
 	KASSERT(fdp->fd_knhashmask != 0);

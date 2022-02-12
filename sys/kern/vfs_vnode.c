@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.129 2022/02/08 08:57:11 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.130 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.129 2022/02/08 08:57:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.130 2022/02/12 15:51:29 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -444,6 +444,7 @@ vnalloc_marker(struct mount *mp)
 	vp->v_mount = mp;
 	vp->v_type = VBAD;
 	vp->v_interlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	klist_init(&vp->v_klist);
 	vip->vi_state = VS_MARKER;
 
 	return vp;
@@ -461,6 +462,7 @@ vnfree_marker(vnode_t *vp)
 	KASSERT(vip->vi_state == VS_MARKER);
 	mutex_obj_free(vp->v_interlock);
 	uvm_obj_destroy(&vp->v_uobj, true);
+	klist_fini(&vp->v_klist);
 	pool_cache_put(vcache_pool, vip);
 }
 
@@ -1307,6 +1309,7 @@ vcache_alloc(void)
 	vp->v_interlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 1);
+	klist_init(&vp->v_klist);
 	cv_init(&vp->v_cv, "vnode");
 	cache_vnode_init(vp);
 
@@ -1368,6 +1371,7 @@ vcache_free(vnode_impl_t *vip)
 	mutex_obj_free(vp->v_interlock);
 	rw_destroy(&vip->vi_lock);
 	uvm_obj_destroy(&vp->v_uobj, true);
+	klist_fini(&vp->v_klist);
 	cv_destroy(&vp->v_cv);
 	cache_vnode_fini(vp);
 	pool_cache_put(vcache_pool, vip);
