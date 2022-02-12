@@ -1,4 +1,4 @@
-/*	$NetBSD: logpage.c,v 1.7 2018/04/18 10:11:44 nonaka Exp $	*/
+/*	$NetBSD: logpage.c,v 1.8 2022/02/12 23:50:14 andvar Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logpage.c,v 1.7 2018/04/18 10:11:44 nonaka Exp $");
+__RCSID("$NetBSD: logpage.c,v 1.8 2022/02/12 23:50:14 andvar Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -682,7 +682,7 @@ print_hgst_info_background_scan(void *buf, uint16_t subtype __unused,
 		return;
 	}
 	if (code != 0) {
-		printf("Expceted code 0, found code %#x\n", code);
+		printf("Expected code 0, found code %#x\n", code);
 		return;
 	}
 	pom = le32dec(walker);
@@ -1042,7 +1042,7 @@ logpage(int argc, char *argv[])
 	read_controller_data(fd, &cdata);
 
 	/*
-	 * The log page attribtues indicate whether or not the controller
+	 * The log page attributes indicate whether or not the controller
 	 * supports the SMART/Health information log page on a per
 	 * namespace basis.
 	 */
