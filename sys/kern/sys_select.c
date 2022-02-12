@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.57 2021/12/10 20:36:04 andvar Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.58 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.57 2021/12/10 20:36:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.58 2022/02/12 15:51:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,7 +675,7 @@ selrecord(lwp_t *selector, struct selinfo *sip)
 void
 selrecord_knote(struct selinfo *sip, struct knote *kn)
 {
-	SLIST_INSERT_HEAD(&sip->sel_klist, kn, kn_selnext);
+	klist_insert(&sip->sel_klist, kn);
 }
 
 /*
@@ -689,8 +689,7 @@ selrecord_knote(struct selinfo *sip, struct knote *kn)
 bool
 selremove_knote(struct selinfo *sip, struct knote *kn)
 {
-	SLIST_REMOVE(&sip->sel_klist, kn, knote, kn_selnext);
-	return SLIST_EMPTY(&sip->sel_klist);
+	return klist_remove(&sip->sel_klist, kn);
 }
 
 /*
@@ -914,6 +913,7 @@ selinit(struct selinfo *sip)
 {
 
 	memset(sip, 0, sizeof(*sip));
+	klist_init(&sip->sel_klist);
 }
 
 /*
@@ -932,6 +932,8 @@ seldestroy(struct selinfo *sip)
 	selcluster_t *sc;
 	kmutex_t *lock;
 	lwp_t *l;
+
+	klist_fini(&sip->sel_klist);
 
 	if (sip->sel_lwp == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.554 2021/11/07 13:47:50 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.555 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.554 2021/11/07 13:47:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.555 2022/02/12 15:51:29 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -168,18 +168,25 @@ const u_int nmountcompatnames = __arraycount(mountcompatnames);
 /*
  * Filter event method for EVFILT_FS.
  */
-static struct klist fs_klist = SLIST_HEAD_INITIALIZER(&fs_klist);
-kmutex_t fs_klist_lock;
+static struct klist fs_klist;
+static kmutex_t fs_klist_lock;
 
 CTASSERT((NOTE_SUBMIT & VQ_MOUNT) == 0);
 CTASSERT((NOTE_SUBMIT & VQ_UNMOUNT) == 0);
+
+void
+vfs_evfilt_fs_init(void)
+{
+	klist_init(&fs_klist);
+	mutex_init(&fs_klist_lock, MUTEX_DEFAULT, IPL_NONE);
+}
 
 static int
 filt_fsattach(struct knote *kn)
 {
 	mutex_enter(&fs_klist_lock);
 	kn->kn_flags |= EV_CLEAR;
-	SLIST_INSERT_HEAD(&fs_klist, kn, kn_selnext);
+	klist_insert(&fs_klist, kn);
 	mutex_exit(&fs_klist_lock);
 
 	return 0;
@@ -189,7 +196,7 @@ static void
 filt_fsdetach(struct knote *kn)
 {
 	mutex_enter(&fs_klist_lock);
-	SLIST_REMOVE(&fs_klist, kn, knote, kn_selnext);
+	klist_remove(&fs_klist, kn);
 	mutex_exit(&fs_klist_lock);
 }
 

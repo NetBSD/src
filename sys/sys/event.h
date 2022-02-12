@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.51 2021/10/23 01:28:33 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.52 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -333,6 +333,31 @@ int	kfilter_unregister(const char *);
 
 int	filt_seltrue(struct knote *, long);
 extern const struct filterops seltrue_filtops;
+
+static inline void
+klist_init(struct klist *list)
+{
+	SLIST_INIT(list);
+}
+
+static inline void
+klist_fini(struct klist *list)
+{
+	/* Nothing, for now. */
+}
+
+static inline void
+klist_insert(struct klist *list, struct knote *kn)
+{
+	SLIST_INSERT_HEAD(list, kn, kn_selnext);
+}
+
+static inline bool
+klist_remove(struct klist *list, struct knote *kn)
+{
+	SLIST_REMOVE(list, kn, knote, kn_selnext);
+	return SLIST_EMPTY(list);
+}
 
 #else 	/* !_KERNEL */
 
