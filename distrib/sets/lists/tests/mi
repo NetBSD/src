@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1187 2022/02/12 01:15:17 rillig Exp $
+# $NetBSD: mi,v 1.1188 2022/02/12 13:17:57 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5803,6 +5803,8 @@
 ./usr/tests/usr.bin/make/unit-tests/opt-jobs-no-action.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-jobs.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-jobs.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-keep-going-indirect.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/opt-keep-going-indirect.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-keep-going-multiple.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-keep-going-multiple.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/opt-keep-going.exp				tests-usr.bin-tests	compattestfile,atf
