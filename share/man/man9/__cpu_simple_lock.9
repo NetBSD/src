@@ -1,0 +1,217 @@
+.\"	$NetBSD: __cpu_simple_lock.9,v 1.1 2022/02/12 17:10:20 riastradh Exp $
+.\"
+.\" Copyright (c) 2022 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 12, 2022
+.Dt __CPU_SIMPLE_LOCK 9
+.Os
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh NAME
+.Nm __cpu_simple_lock
+.Nd simple spin locks
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SYNOPSIS
+.In sys/lock.h
+.\"
+.Ft void
+.Fn __cpu_simple_lock_init "__cpu_simple_lock_t *lock"
+.\"
+.Ft void
+.Fn __cpu_simple_lock "__cpu_simple_lock_t *lock"
+.Ft int
+.Fn __cpu_simple_lock_try "__cpu_simple_lock *lock"
+.Ft void
+.Fn __cpu_simple_unlock "__cpu_simple_lock_t *lock"
+.\"
+.Ft int
+.Fn __SIMPLELOCK_LOCKED_P "__cpu_simple_lock *lock"
+.\"
+.Fd "/* obsolete and for ABI compat only -- do not use */"
+.Ft void
+.Fn __cpu_simple_lock_set "__cpu_simple_Lock *lock"
+.Ft void
+.Fn __cpu_simple_lock_clear "__cpu_simple_lock *lock"
+.Ft int
+.Fn __SIMPLELOCK_UNLOCKED_P "__cpu_simple_lock *lock"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DESCRIPTION
+The
+.Nm
+functions provide a simple spin-lock facility for limited purposes that
+cannot be served by
+.Xr mutex 9 ,
+such as inside the implementation of
+.Xr mutex 9
+itself on platforms with limited atomic read/modify/write operations.
+.Pp
+.Nm
+is very limited:
+.Bl -bullet
+.It
+.Nm
+provides no debugging or diagnostic support through the
+.Dv LOCKDEBUG
+option.
+.It
+.Nm
+does not synchronize between code on a CPU and interrupt handlers
+running on that CPU \(em you must use it with
+.Xr spl 9
+for any locks that may be taken in interrupt context; failing to do so
+will likely lead to hard-to-debug deadlock.
+.It
+.Nm
+does not block preemption, so a thread holding a lock may be preempted,
+potentially requiring other callers to spin for long durations until
+the scheduler runs the holder again.
+.It
+.Nm
+does no exponential backoff to reduce memory traffic during
+contention.
+.El
+.Pp
+Unless you know what you are doing, you should use
+.Xr mutex 9
+instead.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh FUNCTIONS
+.Bl -tag -width abcd
+.It Fn __cpu_simple_lock_init lock
+Initialize
+.Fa lock
+for use with the other
+.Nm
+functions.
+.Pp
+The caller is responsible for ensuring
+.Fn __cpu_simple_lock_init
+happens before any use of the other functions.
+.Fn __cpu_simple_lock_init
+implies no particular memory ordering on its own.
+.\""""""""""""""""
+.It Fn __cpu_simple_lock lock
+Acquire
+.Fa lock ,
+waiting until it is released if currently held.
+.Pp
+Any memory operations preceding the previous
+.Fn __cpu_simple_unlock
+call that released the lock happen before any memory operations after
+the next
+.Fn __cpu_simple_lock
+call that acquires it.
+.\""""""""""""""""
+.It Fn __cpu_simple_lock_try lock
+Try to acquire
+.Fa lock ,
+without waiting if it is currently held.
+Return 1 if successful, 0 if not.
+.Pp
+Any memory operations preceding the previous
+.Fn __cpu_simple_unlock
+call that released the lock happen before any memory operations after
+the next
+.Em successful
+.Fn __cpu_simple_lock_try
+call that acquires it.
+.\""""""""""""""""
+.It Fn __cpu_simple_unlock lock
+Release
+.Fa lock .
+.Pp
+Any memory operations preceding
+.Fn __cpu_simple_unlock
+happen before the next call to
+.Fn __cpu_simple_lock ,
+or the next successful call to
+.Fn __cpu_simple_lock_try ,
+that acquires
+.Fa lock .
+.\""""""""""""""""
+.It Fn __SIMPLELOCK_LOCKED_P lock
+True if
+.Fa lock
+is currently locked, by anyone.
+.Pp
+This is normally only used for diagnostic assertions, or for loops
+around
+.Fn __cpu_simple_lock_try
+that also have higher-level functions like blocking interrupts and
+performing exponential backoff.
+.Pp
+No memory ordering is implied.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh OBSOLETE FUNCTIONS
+The following functions abuse the
+.Vt __cpu_simple_lock_t
+type to store a boolean.
+They are used inside the
+.Xr pthread 3
+library, and were included in the library ABI, so they can't be removed
+without breaking the
+.Xr pthread 3
+ABI.
+Do not use these in new code
+.Po
+except
+.Fn __SIMPLELOCK_LOCKED_P
+.Pc .
+.Bl -tag -width ".Fn __SIMPLELOCK_UNLOCKED_P lock"
+.It Fn __cpu_simple_lock_set lock
+Set
+.Fa lock
+to true.
+.It Fn __cpu_simple_lock_clear lock
+Set
+.Fa lock
+to false.
+.It Fn __SIMPLELOCK_LOCKED_P lock
+True iff
+.Fa lock
+is true.
+.It Fn __SIMPLELOCK_UNLOCKED_P lock
+True iff
+.Fa lock
+is false.
+.El
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh CODE REFERENCES
+The
+.Nm
+functions are implemented in
+.Pa sys/arch/$ARCH/include/lock.h .
+.Pp
+A machine-independent implementation, using compiler support for
+atomic and memory barrier builtins, is available in
+.Pa sys/sys/common_lock.h .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh SEE ALSO
+.Xr locking 9 ,
+.Xr mutex 9
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh HISTORY
+.Nm
+appeared a long time ago.
