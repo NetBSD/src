@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.21 2020/08/05 05:24:44 simonb Exp $	*/
+/*	$NetBSD: lock.h,v 1.22 2022/02/12 17:10:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #define	_MIPS_LOCK_H_
 
 #include <sys/param.h>
+
+#include <sys/atomic.h>
 
 static __inline int
 __SIMPLELOCK_LOCKED_P(const __cpu_simple_lock_t *__ptr)
@@ -98,63 +100,30 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 	return (v0 != 0);
 }
 
-#ifdef MIPS1
-static __inline void
-mb_read(void)
-{
-	__insn_barrier();
-}
-
-static __inline void
-mb_write(void)
-{
-	__insn_barrier();
-}
-
-static __inline void
-mb_memory(void)
-{
-	__insn_barrier();
-}
-#else	/* MIPS1*/
-static __inline void
-mb_read(void)
-{
-	__asm volatile(
-		"	.set push		\n"
-		"	.set mips2		\n"
-		"	sync			\n"
-		"	.set pop"
-		::: "memory"
-	);
-}
-
-static __inline void
-mb_write(void)
-{
-	mb_read();
-}
-
-static __inline void
-mb_memory(void)
-{
-	mb_read();
-}
-#endif	/* MIPS1 */
-
 #else	/* !_HARDKERNEL */
 
 u_int	_atomic_cas_uint(volatile u_int *, u_int, u_int);
 u_long	_atomic_cas_ulong(volatile u_long *, u_long, u_long);
 void *	_atomic_cas_ptr(volatile void *, void *, void *);
-void	mb_read(void);
-void	mb_write(void);
-void	mb_memory(void);
 
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 {
 
+	/*
+	 * Successful _atomic_cas_uint functions as a load-acquire --
+	 * on MP systems, it issues sync after the LL/SC CAS succeeds;
+	 * on non-MP systems every load is a load-acquire so it's moot.
+	 * This pairs with the membar_exit and store sequence in
+	 * __cpu_simple_unlock that functions as a store-release
+	 * operation.
+	 *
+	 * NOTE: This applies only to _atomic_cas_uint (with the
+	 * underscore), in sys/arch/mips/mips/lock_stubs_*.S.  Not true
+	 * for atomic_cas_uint (without the underscore), from
+	 * common/lib/libc/arch/mips/atomic/atomic_cas.S which does not
+	 * imply a load-acquire.  It is unclear why these disagree.
+	 */
 	return _atomic_cas_uint(lp,
 	    __SIMPLELOCK_UNLOCKED, __SIMPLELOCK_LOCKED) ==
 	    __SIMPLELOCK_UNLOCKED;
@@ -167,7 +136,6 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *lp)
 {
 
 	*lp = __SIMPLELOCK_UNLOCKED;
-	mb_memory();
 }
 
 static __inline void
@@ -184,12 +152,54 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lp)
 {
 
-#ifndef _MIPS_ARCH_OCTEONP
-	mb_memory();
-#endif
+	/*
+	 * The membar_exit and then store functions as a store-release
+	 * operation that pairs with the load-acquire operation in
+	 * successful __cpu_simple_lock_try.
+	 *
+	 * Can't use atomic_store_release here because that's not
+	 * available in userland at the moment.
+	 */
+	membar_exit();
 	*lp = __SIMPLELOCK_UNLOCKED;
+
 #ifdef _MIPS_ARCH_OCTEONP
-	mb_write();
+	/*
+	 * On Cavium's recommendation, we issue an extra SYNCW that is
+	 * not necessary for correct ordering because apparently stores
+	 * can get stuck in Octeon store buffers for hundreds of
+	 * thousands of cycles, according to the following note:
+	 *
+	 *	Programming Notes:
+	 *	[...]
+	 *	Core A (writer)
+	 *	SW R1, DATA
+	 *	LI R2, 1
+	 *	SYNCW
+	 *	SW R2, FLAG
+	 *	SYNCW
+	 *	[...]
+	 *
+	 *	The second SYNCW instruction executed by core A is not
+	 *	necessary for correctness, but has very important
+	 *	performance effects on OCTEON.  Without it, the store
+	 *	to FLAG may linger in core A's write buffer before it
+	 *	becomes visible to other cores.  (If core A is not
+	 *	performing many stores, this may add hundreds of
+	 *	thousands of cycles to the flag release time since the
+	 *	OCTEON core normally retains stores to attempt to merge
+	 *	them before sending the store on the CMB.)
+	 *	Applications should include this second SYNCW
+	 *	instruction after flag or lock releases.
+	 *
+	 * Cavium Networks OCTEON Plus CN50XX Hardware Reference
+	 * Manual, July 2008, Appendix A, p. 943.
+	 * https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/hactive/CN50XX-HRM-V0.99E.pdf
+	 *
+	 * XXX It might be prudent to put this into
+	 * atomic_store_release itself.
+	 */
+	__asm volatile("syncw" ::: "memory");
 #endif
 }
 
