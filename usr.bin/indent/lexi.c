@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.167 2021/11/28 14:29:03 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.168 2022/02/12 15:50:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.167 2021/11/28 14:29:03 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.168 2022/02/12 15:50:14 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -244,12 +244,23 @@ debug_print_buf(const char *name, const struct buffer *buf)
     }
 }
 
+static bool
+debug_full_parser_state(void)
+{
+    return true;
+}
+
 #define debug_ps_bool(name) \
         if (ps.name != prev_ps.name) \
-	    debug_println("[%c] ps." #name, ps.name ? 'x' : ' ')
+	    debug_println("[%c] -> [%c] ps." #name, \
+		prev_ps.name ? 'x' : ' ', ps.name ? 'x' : ' '); \
+	else if (debug_full_parser_state()) \
+	    debug_println("       [%c] ps." #name, ps.name ? 'x' : ' ')
 #define debug_ps_int(name) \
 	if (ps.name != prev_ps.name) \
-	    debug_println("%3d ps." #name, ps.name)
+	    debug_println("%3d -> %3d ps." #name, prev_ps.name, ps.name); \
+	else if (debug_full_parser_state()) \
+	    debug_println("       %3d ps." #name, ps.name)
 
 static void
 debug_lexi(lexer_symbol lsym)
@@ -268,7 +279,7 @@ debug_lexi(lexer_symbol lsym)
     debug_print_buf("code", &code);
     debug_print_buf("comment", &com);
 
-    debug_println("    ps.prev_token = %s", lsym_name(ps.prev_token));
+    debug_println("           ps.prev_token = %s", lsym_name(ps.prev_token));
     debug_ps_bool(next_col_1);
     debug_ps_bool(curr_col_1);
     debug_ps_bool(next_unary);
@@ -277,7 +288,7 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_int(paren_level);
     debug_ps_int(p_l_follow);
     if (ps.paren_level != prev_ps.paren_level) {
-	debug_printf("    ps.paren_indents:");
+	debug_printf("           ps.paren_indents:");
 	for (int i = 0; i < ps.paren_level; i++)
 	    debug_printf(" %d", ps.paren_indents[i]);
 	debug_println("");
@@ -497,7 +508,7 @@ lexi_alnum(void)
     if (ch_isdigit(inp_peek()) ||
 	    (inp_peek() == '.' && ch_isdigit(inp_lookahead(1)))) {
 	lex_number();
-    } else if (is_identifier_part(inp_peek())) {
+    } else if (is_identifier_start(inp_peek())) {
 	lex_word();
 
 	if (token.s[0] == 'L' && token.e - token.s == 1 &&
