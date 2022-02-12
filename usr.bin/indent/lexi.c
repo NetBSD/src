@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.168 2022/02/12 15:50:14 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.169 2022/02/12 19:56:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.168 2022/02/12 15:50:14 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.169 2022/02/12 19:56:52 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -542,6 +542,8 @@ lexi_alnum(void)
 	if (is_typename()) {
 	    is_type = true;
 	    ps.next_unary = true;
+	    if (ps.in_enum == in_enum_enum)
+		ps.in_enum = in_enum_type;
 	    goto found_typename;
 	}
 
@@ -557,8 +559,11 @@ found_typename:
 	    ps.cast_mask |= (1 << ps.p_l_follow) & ~ps.not_cast_mask;
 	}
 	if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
-	    if (kw != NULL && kw->lsym == lsym_tag)
+	    if (kw != NULL && kw->lsym == lsym_tag) {
+		if (token.s[0] == 'e' /* enum */)
+		    ps.in_enum = in_enum_enum;
 		return lsym_tag;
+	    }
 	    if (ps.p_l_follow == 0)
 		return lsym_type_outside_parentheses;
 	}
@@ -762,6 +767,11 @@ lexi(void)
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	next_unary = true;
     }
+
+    if (ps.in_enum == in_enum_enum || ps.in_enum == in_enum_type)
+	ps.in_enum = lsym == lsym_lbrace ? in_enum_brace : in_enum_no;
+    if (lsym == lsym_rbrace)
+	ps.in_enum = in_enum_no;
 
     ps.next_unary = next_unary;
 
