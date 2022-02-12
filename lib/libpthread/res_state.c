@@ -1,4 +1,4 @@
-/*	$NetBSD: res_state.c,v 1.6 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: res_state.c,v 1.7 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,8 +31,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: res_state.c,v 1.6 2008/04/28 20:23:02 martin Exp $");
+__RCSID("$NetBSD: res_state.c,v 1.7 2022/02/12 14:59:32 riastradh Exp $");
 #endif
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/types.h>
 #include <sys/queue.h>

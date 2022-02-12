@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.22 2020/05/16 22:53:37 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.23 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2009, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.22 2020/05/16 22:53:37 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.23 2022/02/12 14:59:32 riastradh Exp $");
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <errno.h>
 

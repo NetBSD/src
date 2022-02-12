@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.43 2022/02/11 21:40:58 riastradh Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.44 2022/02/12 14:59:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.43 2022/02/11 21:40:58 riastradh Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.44 2022/02/12 14:59:32 riastradh Exp $");
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>

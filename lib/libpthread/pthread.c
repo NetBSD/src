@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.179 2021/04/13 00:31:54 mrg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.180 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,9 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.179 2021/04/13 00:31:54 mrg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.180 2022/02/12 14:59:32 riastradh Exp $");
 
 #define	__EXPOSE_STACK	1
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>

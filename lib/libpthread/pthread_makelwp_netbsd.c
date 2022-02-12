@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_makelwp_netbsd.c,v 1.2 2014/12/17 01:49:08 pooka Exp $	*/
+/*	$NetBSD: pthread_makelwp_netbsd.c,v 1.3 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_makelwp_netbsd.c,v 1.2 2014/12/17 01:49:08 pooka Exp $");
+__RCSID("$NetBSD: pthread_makelwp_netbsd.c,v 1.3 2022/02/12 14:59:32 riastradh Exp $");
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/param.h>
 
