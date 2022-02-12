@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexec.c,v 1.2 2021/06/21 03:11:05 christos Exp $	*/
+/*	$NetBSD: veriexec.c,v 1.3 2022/02/12 02:40:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: veriexec.c,v 1.2 2021/06/21 03:11:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: veriexec.c,v 1.3 2022/02/12 02:40:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -43,8 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: veriexec.c,v 1.2 2021/06/21 03:11:05 christos Exp $"
 #include <sys/proc.h>
 
 #include <sys/ioctl.h>
-#include <sys/device.h>
-#define DEVPORT_DEVICE struct device
+#include <sys/device_if.h>
 
 #include <prop/proplib.h>
 
@@ -52,10 +51,6 @@ void veriexecattach(device_t, device_t, void *);
 static dev_type_open(veriexecopen);
 static dev_type_close(veriexecclose);
 static dev_type_ioctl(veriexecioctl);
-
-struct veriexec_softc {
-	DEVPORT_DEVICE veriexec_dev;
-};
 
 const struct cdevsw veriexec_cdevsw = {
 	.d_open = veriexecopen,
@@ -76,7 +71,7 @@ const struct cdevsw veriexec_cdevsw = {
 static unsigned int veriexec_dev_usage = 0;
 
 void
-veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self, void *aux)
+veriexecattach(device_t parent, device_t self, void *aux)
 {
 	veriexec_dev_usage = 0;
 }
