@@ -53,7 +53,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern uint32_t mvTclk;
 
 struct mvspi_softc {
-	struct device		sc_dev;
 	struct spi_controller	sc_spi;
 	void			*sc_ih;
 	bool			sc_interrupts;

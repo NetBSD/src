@@ -1,4 +1,4 @@
-/*	$NetBSD: qvkbd.c,v 1.5 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: qvkbd.c,v 1.6 2022/02/12 17:09:43 riastradh Exp $	*/
 
 /* Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from dzkbd.c
@@ -81,8 +81,6 @@ struct qvkbd_internal {
 struct qvkbd_internal qvkbd_console_internal;
 
 struct qvkbd_softc {
-	struct device qvkbd_dev;	/* required first: base device */
-
 	struct qvkbd_internal *sc_itl;
 
 	int sc_enabled;

@@ -97,7 +97,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.3 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.4 2022/02/12 17:09:43 riastradh Exp $");
 
 #include "locators.h"
 
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: omapl1x_tipb.c,v 1.3 2021/08/07 16:18:45 thorpej Exp
 #include <arm/omap/omap_var.h>
 
 struct tipb_softc {
-	struct device sc_dev;
 	bus_dma_tag_t sc_dmac;
 };
 
