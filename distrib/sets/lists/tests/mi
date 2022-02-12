@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1186 2022/02/07 22:43:50 rillig Exp $
+# $NetBSD: mi,v 1.1187 2022/02/12 01:15:17 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5561,6 +5561,8 @@
 ./usr/tests/usr.bin/make/unit-tests/deptgt-precious.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt-shell.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt-shell.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/deptgt-silent-jobs.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/deptgt-silent-jobs.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt-silent.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt-silent.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/deptgt-stale.exp				tests-usr.bin-tests	compattestfile,atf

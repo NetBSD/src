@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.307 2022/02/09 21:24:29 rillig Exp $
+# $NetBSD: Makefile,v 1.308 2022/02/12 01:15:18 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -146,6 +146,7 @@ TESTS+=		deptgt-phony
 TESTS+=		deptgt-precious
 TESTS+=		deptgt-shell
 TESTS+=		deptgt-silent
+TESTS+=		deptgt-silent-jobs
 TESTS+=		deptgt-stale
 TESTS+=		deptgt-suffixes
 TESTS+=		dir
