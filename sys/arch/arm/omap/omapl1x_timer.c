@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_timer.c,v 1.3 2022/02/12 03:24:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_timer.c,v 1.4 2022/02/12 17:09:43 riastradh Exp $");
 
 #include "opt_timer.h"
 
@@ -61,7 +61,6 @@ typedef struct timer_factors {
 } timer_factors_t;
 
 typedef struct omapl1xtmr_softc {
-	struct device		sc_dev;
 	uint			sc_timerno;
 	uint			sc_timer_freq;
 	bus_space_tag_t		sc_iot;
