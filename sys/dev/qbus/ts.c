@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.34 2022/01/01 10:32:29 msaitoh Exp $ */
+/*	$NetBSD: ts.c,v 1.35 2022/02/12 02:40:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.34 2022/01/01 10:32:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.35 2022/02/12 02:40:20 riastradh Exp $");
 
 #undef	TSDEBUG
 
@@ -215,7 +215,6 @@ const struct cdevsw ts_cdevsw = {
 int
 tsmatch(device_t parent, cfdata_t match, void *aux)
 {
-	struct device tsdev;
 	struct ts_softc ssc;
 	struct ts_softc *sc = &ssc;
 	struct uba_attach_args *ua = aux;
@@ -224,9 +223,7 @@ tsmatch(device_t parent, cfdata_t match, void *aux)
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_mapped = 0;
-	sc->sc_dev = &tsdev;
 	sc->sc_uh = device_private(parent);
-	strcpy(sc->sc_dev->dv_xname, "ts");
 
 	/* Try to reset the device */
 	for (i = 0; i < 3; i++) {
