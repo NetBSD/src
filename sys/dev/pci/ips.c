@@ -1,4 +1,4 @@
-/*	$NetBSD: ips.c,v 1.5 2022/02/12 02:40:39 riastradh Exp $	*/
+/*	$NetBSD: ips.c,v 1.6 2022/02/12 02:58:50 riastradh Exp $	*/
 /*	$OpenBSD: ips.c,v 1.113 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.5 2022/02/12 02:40:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.6 2022/02/12 02:58:50 riastradh Exp $");
 
 #include "bio.h"
 
@@ -822,7 +822,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 
 #if NBIO > 0
 	/* Install ioctl handler */
-	if (bio_register(&sc->sc_dev, ips_ioctl))
+	if (bio_register(sc->sc_dev, ips_ioctl))
 		device_printf(sc->sc_dev, "no ioctl support\n");
 #endif
 
@@ -1139,7 +1139,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 			}
 	}
 
-	dv = &sc->sc_dev;
+	dv = sc->sc_dev;
 	strlcpy(bv->bv_dev, device_xname(dv), sizeof(bv->bv_dev));
 	strlcpy(bv->bv_vendor, "IBM", sizeof(bv->bv_vendor));
 
