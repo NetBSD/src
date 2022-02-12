@@ -1,4 +1,4 @@
-.\" $NetBSD: ipi.9,v 1.5 2020/09/02 19:04:05 riastradh Exp $
+.\" $NetBSD: ipi.9,v 1.6 2022/02/12 01:21:11 riastradh Exp $
 .\"
 .\" Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -169,6 +169,23 @@ All synchronous IPI invocations must be completed (wait for them with the
 .Fn ipi_wait
 function) before the IPI message structure can be destroyed or new
 cross-call requests can be performed.
+.\" -----
+.Sh MEMORY ORDER
+All memory operations that happen before triggering an IPI, via
+.Fn ipi_trigger ,
+.Fn ipi_trigger_multi ,
+.Fn ipi_trigger_broadcast ,
+.Fn ipi_unicast ,
+.Fn ipi_multicast ,
+or
+.Fn ipi_broadcast ,
+also happen before any memory operations in the IPI handler function on
+the remote CPU.
+.Pp
+For synchronous IPIs, all memory operations that happen before the IPI
+handler function has returned on the remote CPU also happen before
+.Fn ipi_wait
+returns on the waiting CPU.
 .\" -----
 .Sh NOTES
 Functions being called must be lightweight.
