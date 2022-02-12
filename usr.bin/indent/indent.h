@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.107 2021/11/28 14:29:03 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.108 2022/02/12 19:56:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -309,6 +309,12 @@ extern struct parser_state {
 				 * different */
     int just_saw_decl;
     bool in_func_def_params;
+    enum {
+	in_enum_no,		/* outside any 'enum { ... }' */
+	in_enum_enum,		/* after keyword 'enum' */
+	in_enum_type,		/* after 'enum' or 'enum tag' */
+	in_enum_brace		/* between '{' and '}' */
+    } in_enum;			/* enum { . } */
     bool decl_indent_done;	/* whether the indentation for a declaration
 				 * has been added to the code buffer. */
 

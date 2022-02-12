@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_typedef.c,v 1.2 2022/02/12 13:38:29 rillig Exp $ */
+/* $NetBSD: lsym_typedef.c,v 1.3 2022/02/12 19:56:52 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -7,8 +7,10 @@
  */
 
 /*
- * Since 2019-04-04, indent places all enum constants except the first in the
- * wrong column, but only if the enum declaration follows a 'typedef'.
+ * Since 2019-04-04 and before lexi.c 1.169 from 2022-02-12, indent placed all
+ * enum constants except the first too far to the right, as if it were a
+ * statement continuation, but only if the enum declaration followed a
+ * 'typedef'.
  *
  * https://gnats.netbsd.org/55453
  */
@@ -24,11 +26,10 @@ enum {
 } E;
 #indent end
 
-/* FIXME: TC2 is indented too far. */
 #indent run -ci4 -i4
 typedef enum {
     TC1,
-	TC2
+    TC2
 } T;
 
 enum {
@@ -37,11 +38,10 @@ enum {
 }		E;
 #indent end
 
-/* FIXME: TC2 is indented too far. */
 #indent run -ci2
 typedef enum {
 	TC1,
-	  TC2
+	TC2
 } T;
 
 enum {
