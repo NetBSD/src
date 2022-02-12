@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.85 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.86 2022/02/12 03:24:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.85 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.86 2022/02/12 03:24:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,7 +568,7 @@ device_register(device_t dev, void *aux)
 	 * only for reading memory module EERPOMs and sensors.
 	 */
 	if (device_is_a(dev, "iic") &&
-	    device_is_a(dev->dv_parent, "imcsmb")) {
+	    device_is_a(device_parent(dev), "imcsmb")) {
 		static const char *imcsmb_device_permitlist[] = {
 			"spdmem",
 			"sdtemp",

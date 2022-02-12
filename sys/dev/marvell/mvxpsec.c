@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.9 2021/12/10 20:36:04 andvar Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.10 2022/02/12 03:24:36 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -1036,7 +1036,7 @@ mvxpsec_init_sram(struct mvxpsec_softc *sc)
 	vaddr_t va;
 	int window;
 
-	switch (sc->sc_dev->dv_unit) {
+	switch (device_unit(sc->sc_dev)) {
 	case 0:
 		tag = ARMADAXP_TAG_CRYPT0;
 		break;

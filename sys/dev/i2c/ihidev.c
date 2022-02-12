@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.27 2022/01/15 06:22:30 skrll Exp $ */
+/* $NetBSD: ihidev.c,v 1.28 2022/02/12 03:24:35 riastradh Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.27 2022/01/15 06:22:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.28 2022/02/12 03:24:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,8 +204,8 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 		if (isize > sc->sc_isize)
 			sc->sc_isize = isize;
 
-		DPRINTF(("%s: repid %d size %d\n", sc->sc_dev.dv_xname, repid,
-		    repsz));
+		DPRINTF(("%s: repid %d size %d\n",
+		    device_xname(sc->sc_dev), repid, repsz));
 	}
 	sc->sc_ibuf = kmem_zalloc(sc->sc_isize, KM_SLEEP);
 	if (!ihidev_intr_init(sc)) {
@@ -334,14 +334,14 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		};
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_DESCR at 0x%x\n",
-		    sc->sc_dev.dv_xname, htole16(sc->sc_hid_desc_addr)));
+		    device_xname(sc->sc_dev), htole16(sc->sc_hid_desc_addr)));
 
 		/* 20 00 */
 		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 		    &cmd, sizeof(cmd), &sc->hid_desc_buf,
 		    sizeof(struct i2c_hid_desc), flags);
 
-		DPRINTF(("%s: HID descriptor:", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: HID descriptor:", device_xname(sc->sc_dev)));
 		for (i = 0; i < sizeof(struct i2c_hid_desc); i++)
 			DPRINTF((" %.2x", sc->hid_desc_buf[i]));
 		DPRINTF(("\n"));
@@ -357,7 +357,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		};
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_RESET\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 
 		/* 22 00 00 01 */
 		res = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
@@ -385,7 +385,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		uint8_t *tmprep;
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_GET_REPORT %d "
-		    "(type %d, len %d)\n", sc->sc_dev.dv_xname, report_id,
+		    "(type %d, len %d)\n", device_xname(sc->sc_dev), report_id,
 		    rreq->type, rreq->len));
 
 		/*
@@ -431,7 +431,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		d = tmprep[0] | tmprep[1] << 8;
 		if (d != report_len) {
 			DPRINTF(("%s: response size %d != expected length %d\n",
-			    sc->sc_dev.dv_xname, d, report_len));
+			    device_xname(sc->sc_dev), d, report_len));
 		}
 
 		if (report_id_len == 2)
@@ -441,13 +441,13 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 
 		if (d != rreq->id) {
 			DPRINTF(("%s: response report id %d != %d\n",
-			    sc->sc_dev.dv_xname, d, rreq->id));
+			    device_xname(sc->sc_dev), d, rreq->id));
 			iic_release_bus(sc->sc_tag, 0);
 			kmem_free(tmprep, report_len);
 			return (1);
 		}
 
-		DPRINTF(("%s: response:", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: response:", device_xname(sc->sc_dev)));
 		for (i = 0; i < report_len; i++)
 			DPRINTF((" %.2x", tmprep[i]));
 		DPRINTF(("\n"));
@@ -475,7 +475,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		uint8_t *finalcmd;
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_SET_REPORT %d "
-		    "(type %d, len %d):", sc->sc_dev.dv_xname, report_id,
+		    "(type %d, len %d):", device_xname(sc->sc_dev), report_id,
 		    rreq->type, rreq->len));
 		for (i = 0; i < rreq->len; i++)
 			DPRINTF((" %.2x", ((uint8_t *)rreq->data)[i]));
@@ -540,7 +540,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		};
 
 		DPRINTF(("%s: HID command I2C_HID_CMD_SET_POWER(%d)\n",
-		    sc->sc_dev.dv_xname, power));
+		    device_xname(sc->sc_dev), power));
 
 		/* 22 00 00 08 */
 		res = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
@@ -555,14 +555,15 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 		};
 
 		DPRINTF(("%s: HID command I2C_HID_REPORT_DESCR at 0x%x with "
-		    "size %d\n", sc->sc_dev.dv_xname, cmd[0],
+		    "size %d\n", device_xname(sc->sc_dev), cmd[0],
 		    sc->sc_reportlen));
 
 		/* 20 00 */
 		res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 		    &cmd, sizeof(cmd), sc->sc_report, sc->sc_reportlen, flags);
 
-		DPRINTF(("%s: HID report descriptor:", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: HID report descriptor:",
+		    device_xname(sc->sc_dev)));
 		for (i = 0; i < sc->sc_reportlen; i++)
 			DPRINTF((" %.2x", sc->sc_report[i]));
 		DPRINTF(("\n"));
@@ -582,7 +583,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg, bool poll)
 static int
 ihidev_reset(struct ihidev_softc *sc, bool poll)
 {
-	DPRINTF(("%s: resetting\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: resetting\n", device_xname(sc->sc_dev)));
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER,
 	    &I2C_HID_POWER_ON, poll)) {
@@ -795,7 +796,7 @@ ihidev_work(struct work *wk, void *arg)
 	psize = sc->sc_ibuf[0] | sc->sc_ibuf[1] << 8;
 	if (!psize || psize > sc->sc_isize) {
 		DPRINTF(("%s: %s: invalid packet size (%d vs. %d)\n",
-		    sc->sc_dev.dv_xname, __func__, psize, sc->sc_isize));
+		    device_xname(sc->sc_dev), __func__, psize, sc->sc_isize));
 		goto out;
 	}
 
@@ -811,7 +812,7 @@ ihidev_work(struct work *wk, void *arg)
 		goto out;
 	}
 
-	DPRINTF(("%s: %s: hid input (rep %d):", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: %s: hid input (rep %d):", device_xname(sc->sc_dev),
 	    __func__, rep));
 	for (i = 0; i < sc->sc_isize; i++)
 		DPRINTF((" %.2x", sc->sc_ibuf[i]));
@@ -884,7 +885,7 @@ ihidev_open(struct ihidev *scd)
 	struct ihidev_softc *sc = scd->sc_parent;
 	int error;
 
-	DPRINTF(("%s: %s: state=%d refcnt=%d\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: %s: state=%d refcnt=%d\n", device_xname(sc->sc_dev),
 	    __func__, scd->sc_state, sc->sc_refcnt));
 
 	mutex_enter(&sc->sc_lock);
@@ -914,7 +915,7 @@ ihidev_close(struct ihidev *scd)
 {
 	struct ihidev_softc *sc = scd->sc_parent;
 
-	DPRINTF(("%s: %s: state=%d refcnt=%d\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: %s: state=%d refcnt=%d\n", device_xname(sc->sc_dev),
 	    __func__, scd->sc_state, sc->sc_refcnt));
 
 	mutex_enter(&sc->sc_lock);

@@ -1,4 +1,4 @@
-/* $NetBSD: tsllux.c,v 1.3 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: tsllux.c,v 1.4 2022/02/12 03:24:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsllux.c,v 1.3 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsllux.c,v 1.4 2022/02/12 03:24:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,7 @@ tsllux_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	if (self->dv_cfdata != NULL &&
-	    self->dv_cfdata->cf_flags & TSLLUX_F_CS_PACKAGE)
+	if (device_cfdata(self)->cf_flags & TSLLUX_F_CS_PACKAGE)
 		sc->sc_cs_package = true;
 
 	if (iic_acquire_bus(ia->ia_tag, 0) != 0) {

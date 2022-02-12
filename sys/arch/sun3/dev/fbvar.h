@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.13 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.14 2022/02/12 03:24:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@ struct fbdevice {
 	struct	fbtype fb_fbtype;	/* see fbio.h */
 	struct	fbdriver *fb_driver;	/* pointer to driver */
 	void *fb_private;		/* for fb driver use */
-	const char *fb_name;		/* i.e. sc_dev->dv_xname */
+	const char *fb_name;		/* i.e. device_xname(sc_dev) */
 
 	void *	fb_pixels;		/* display RAM */
 	int	fb_linebytes;		/* bytes per display line */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xmm7360.c,v 1.13 2021/10/18 08:15:00 hannken Exp $	*/
+/*	$NetBSD: xmm7360.c,v 1.14 2022/02/12 03:24:36 riastradh Exp $	*/
 
 /*
  * Device driver for Intel XMM7360 LTE modems, eg. Fibocom L850-GL.
@@ -75,7 +75,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.13 2021/10/18 08:15:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.14 2022/02/12 03:24:36 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -143,9 +143,9 @@ typedef void * wait_queue_head_t;	/* just address for tsleep() */
 #ifdef __OpenBSD__
 typedef struct mutex spinlock_t;
 #define dev_err(devp, fmt, ...)		\
-	printf("%s: " fmt, (devp)->dv_xname, ##__VA_ARGS__)
+	printf("%s: " fmt, device_xname(devp), ##__VA_ARGS__)
 #define dev_info(devp, fmt, ...)	\
-	printf("%s: " fmt, (devp)->dv_xname, ##__VA_ARGS__)
+	printf("%s: " fmt, device_xname(devp), ##__VA_ARGS__)
 #define	kzalloc(size, flags)	malloc(size, M_DEVBUF, M_WAITOK | M_ZERO)
 #define kfree(addr)		free(addr, M_DEVBUF, 0)
 #define mutex_init(lock)	mtx_init(lock, IPL_TTY)
@@ -481,7 +481,9 @@ struct queue_pair {
 	u16 page_size;
 	int tty_index;
 	int tty_needs_wake;
+#ifdef __linux__
 	struct device dev;
+#endif
 	int num;
 	int open;
 	struct mutex lock;
@@ -2220,9 +2222,9 @@ wwanc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Device initialized, can establish the interrupt now */
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_pih, IPL_NET,
-	    wwanc_intr, sc, sc->sc_dev->dv_xname);
+	    wwanc_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt\n", self->dv_xname);
+		device_printf(self, "can't establish interrupt\n");
 		return;
 	}
 
@@ -2353,8 +2355,8 @@ wwanc_activate(struct device *self, int act)
 	case DVACT_SUSPEND:
 		if (sc->sc_resume) {
 			/* Refuse to suspend if resume still ongoing */
-			printf("%s: not suspending, resume still ongoing\n",
-			    self->dv_xname);
+			device_printf(self,
+			    "not suspending, resume still ongoing\n");
 			return EBUSY;
 		}
 
@@ -2860,7 +2862,7 @@ dma_alloc_coherent(struct device *self, size_t sz, dma_addr_t *physp, int flags)
 	    BUS_DMA_WAITOK);
 	if (error) {
 		panic("%s: bus_dmamem_alloc(%lu) failed %d\n",
-		    self->dv_xname, (unsigned long)sz, error);
+		    device_xname(self), (unsigned long)sz, error);
 		/* NOTREACHED */
 	}
 
@@ -2871,7 +2873,7 @@ dma_alloc_coherent(struct device *self, size_t sz, dma_addr_t *physp, int flags)
 	    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (error) {
 		panic("%s: bus_dmamem_alloc(%lu) failed %d\n",
-		    self->dv_xname, (unsigned long)sz, error);
+		    device_xname(self), (unsigned long)sz, error);
 		/* NOTREACHED */
 	}
 
@@ -3236,7 +3238,8 @@ wwan_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_type = IFT_OTHER;
 	IFQ_SET_MAXLEN(&ifp->if_snd, xn->qp->depth);
 	IFQ_SET_READY(&ifp->if_snd);
-	bcopy(sc_if->sc_dev->dv_xname, ifp->if_xname, IFNAMSIZ);
+	CTASSERT(DEVICE_XNAME_SIZE == IFNAMSIZ);
+	bcopy(device_xname(sc_if->sc_dev), ifp->if_xname, IFNAMSIZ);
 
 	/* Call MI attach routines. */
 	if_attach(ifp);

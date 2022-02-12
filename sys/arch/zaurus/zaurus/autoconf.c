@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2021/06/21 03:05:24 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2022/02/12 03:24:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2021/06/21 03:05:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2022/02/12 03:24:35 riastradh Exp $");
 
 #include "opt_md.h"
 
@@ -226,7 +226,7 @@ device_register(device_t dev, void *aux)
 	 * limited capabilities.
 	 */
 	if (device_is_a(dev, "iic") &&
-	    device_is_a(dev->dv_parent, "ziic")) {
+	    device_is_a(device_parent(dev), "ziic")) {
 		(void)prop_dictionary_set_string_nocopy(device_properties(dev),
 		    I2C_PROP_INDIRECT_PROBE_STRATEGY, I2C_PROBE_STRATEGY_NONE);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_icu.c,v 1.7 2012/10/27 17:17:39 chs Exp $	*/
+/*	$NetBSD: imx31_icu.c,v 1.8 2022/02/12 03:24:34 riastradh Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.7 2012/10/27 17:17:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.8 2022/02/12 03:24:34 riastradh Exp $");
 
 #define _INTR_PRIVATE
  
@@ -225,7 +225,7 @@ avic_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	KASSERT(ahba->ahba_irqbase != AHBCF_IRQBASE_DEFAULT);
-	KASSERT(self->dv_unit == 0);
+	KASSERT(device_unit(self) == 0);
 
 	if (ahba->ahba_size == AHBCF_SIZE_DEFAULT)
 		ahba->ahba_size = INTC_SIZE;

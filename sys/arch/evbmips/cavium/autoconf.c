@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2020/08/17 06:23:01 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 2022/02/12 03:24:34 riastradh Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2020/08/17 06:23:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2022/02/12 03:24:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ prop_set_cnmac(device_t dev)
 		pn = prop_number_create_signed(7 - unit);
 		break;
 	case BOARD_TYPE_UBIQUITI_E300:
-		pn = prop_number_create_signed(4 + dev->dv_unit);
+		pn = prop_number_create_signed(4 + device_unit(dev));
 		break;
 	default:
 		pn = prop_number_create_signed(-1);
