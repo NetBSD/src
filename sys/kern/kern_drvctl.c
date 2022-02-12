@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.49 2021/06/16 00:19:46 riastradh Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.50 2022/02/12 03:24:36 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.49 2021/06/16 00:19:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.50 2022/02/12 03:24:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,8 @@ detachdevbyname(const char *devname)
 	 * There might be a private notification mechanism,
 	 * but better play it safe here.
 	 */
-	if (d->dv_parent && !d->dv_parent->dv_cfattach->ca_childdetached) {
+	if (device_parent(d) &&
+	    !device_cfattach(device_parent(d))->ca_childdetached) {
 		error = ENOTSUP;
 		goto out;
 	}
@@ -314,27 +315,27 @@ rescanbus(const char *busname, const char *ifattr,
 	 * must support rescan, and must have something
 	 * to attach to
 	 */
-	if (!d->dv_cfattach->ca_rescan ||
-	    !d->dv_cfdriver->cd_attrs)
+	if (!device_cfattach(d)->ca_rescan ||
+	    !device_cfdriver(d)->cd_attrs)
 		return ENODEV;
 
 	/* rescan all ifattrs if none is specified */
 	if (!ifattr) {
 		rc = 0;
-		for (ap = d->dv_cfdriver->cd_attrs; *ap; ap++) {
-			rc = (*d->dv_cfattach->ca_rescan)(d, (*ap)->ci_name,
-			    locs);
+		for (ap = device_cfdriver(d)->cd_attrs; *ap; ap++) {
+			rc = (*device_cfattach(d)->ca_rescan)(d,
+			    (*ap)->ci_name, locs);
 			if (rc)
 				break;
 		}
 	} else {
 		/* check for valid attribute passed */
-		for (ap = d->dv_cfdriver->cd_attrs; *ap; ap++)
+		for (ap = device_cfdriver(d)->cd_attrs; *ap; ap++)
 			if (!strcmp((*ap)->ci_name, ifattr))
 				break;
 		if (!*ap)
 			return EINVAL;
-		rc = (*d->dv_cfattach->ca_rescan)(d, ifattr, locs);
+		rc = (*device_cfattach(d)->ca_rescan)(d, ifattr, locs);
 	}
 
 	config_deferred(NULL);

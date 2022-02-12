@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.22 2021/08/07 16:19:17 thorpej Exp $ */
+/*	$NetBSD: vhci.c,v 1.23 2022/02/12 03:24:36 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.22 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.23 2022/02/12 03:24:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1299,7 +1299,7 @@ vhci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bus.ub_revision = USBREV_2_0;
 	sc->sc_bus.ub_hctype = USBHCTYPE_VHCI;
-	sc->sc_bus.ub_busnum = self->dv_unit;
+	sc->sc_bus.ub_busnum = device_unit(self);
 	sc->sc_bus.ub_usedma = false;
 	sc->sc_bus.ub_methods = &vhci_bus_methods;
 	sc->sc_bus.ub_pipesize = sizeof(vhci_pipe_t);

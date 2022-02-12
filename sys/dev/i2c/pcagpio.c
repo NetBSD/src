@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.11 2021/06/21 03:12:54 christos Exp $ */
+/* $NetBSD: pcagpio.c,v 1.12 2022/02/12 03:24:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.11 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.12 2022/02/12 03:24:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,9 +172,9 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 
 	out &= ~sc->sc_dir;
 	in &= sc->sc_dir;
-	
-	printdir(sc->sc_dev->dv_xname, in, sc->sc_dir, 'I');
-	printdir(sc->sc_dev->dv_xname, out, ~sc->sc_dir, 'O');
+
+	printdir(device_xname(sc->sc_dev), in, sc->sc_dir, 'I');
+	printdir(device_xname(sc->sc_dev), out, ~sc->sc_dir, 'O');
 
 	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 	callout_reset(&sc->sc_timer, hz*20, pcagpio_timeout, sc);
@@ -246,15 +246,15 @@ pcagpio_timeout(void *v)
 		o_in = sc->sc_in;
 		o_out &= ~sc->sc_dir;
 		o_in &= sc->sc_dir;
-		printdir(sc->sc_dev->dv_xname, o_in, sc->sc_dir, 'I');
-		printdir(sc->sc_dev->dv_xname, o_out, ~sc->sc_dir, 'O');
+		printdir(device_xname(sc->sc_dev), o_in, sc->sc_dir, 'I');
+		printdir(device_xname(sc->sc_dev), o_out, ~sc->sc_dir, 'O');
 		sc->sc_state = out;
 		sc->sc_dir = dir;
 		sc->sc_in = in;
 		out &= ~sc->sc_dir;
 		in &= sc->sc_dir;
-		printdir(sc->sc_dev->dv_xname, in, sc->sc_dir, 'I');
-		printdir(sc->sc_dev->dv_xname, out, ~sc->sc_dir, 'O');
+		printdir(device_xname(sc->sc_dev), in, sc->sc_dir, 'I');
+		printdir(device_xname(sc->sc_dev), out, ~sc->sc_dir, 'O');
 	}
 	callout_reset(&sc->sc_timer, hz*60, pcagpio_timeout, sc);
 }

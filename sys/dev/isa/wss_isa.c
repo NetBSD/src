@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.30 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.31 2022/02/12 03:24:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.30 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.31 2022/02/12 03:24:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ extern int	wssdebug;
 #define DPRINTF(x)
 #endif
 
-static int	wssfind(device_t, struct wss_softc *, int,
+static int	wssfind(device_t, cfdata_t, struct wss_softc *, int,
 		    struct isa_attach_args *);
 
 static void	madprobe(struct wss_softc *, int);
@@ -91,9 +91,7 @@ int
 wss_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia;
-	struct device probedev;
 	struct wss_softc probesc, *sc;
-	struct ad1848_softc *ac;
 
 	ia = aux;
 	if (ia->ia_nio < 1)
@@ -106,13 +104,9 @@ wss_isa_probe(device_t parent, cfdata_t match, void *aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return 0;
 
-	memset(&probedev, 0, sizeof probedev);
 	memset(&probesc, 0, sizeof probesc);
 	sc = &probesc;
-	ac = &sc->sc_ad1848.sc_ad1848;
-	ac->sc_dev = &probedev;
-	ac->sc_dev->dv_cfdata = match;
-	if (wssfind(parent, sc, 1, aux)) {
+	if (wssfind(parent, match, sc, 1, aux)) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
 		ad1848_isa_unmap(&sc->sc_ad1848);
 		madunmap(sc);
@@ -123,7 +117,7 @@ wss_isa_probe(device_t parent, cfdata_t match, void *aux)
 }
 
 static int
-wssfind(device_t parent, struct wss_softc *sc, int probing,
+wssfind(device_t parent, cfdata_t match, struct wss_softc *sc, int probing,
     struct isa_attach_args *ia)
 {
 	static u_char interrupt_bits[12] = {
@@ -135,7 +129,7 @@ wssfind(device_t parent, struct wss_softc *sc, int probing,
 
 	ac = &sc->sc_ad1848.sc_ad1848;
 	sc->sc_iot = ia->ia_iot;
-	if (device_cfdata(ac->sc_dev)->cf_flags & 1)
+	if (match->cf_flags & 1)
 		madprobe(sc, ia->ia_io[0].ir_addr);
 	else
 		sc->mad_chip_type = MAD_NONE;
@@ -245,7 +239,7 @@ wss_isa_attach(device_t parent, device_t self, void *aux)
 	ac = &sc->sc_ad1848.sc_ad1848;
 	ac->sc_dev = self;
 	ia = aux;
-	if (!wssfind(parent, sc, 0, ia)) {
+	if (!wssfind(parent, device_cfdata(self), sc, 0, ia)) {
 		aprint_error_dev(self, "wssfind failed\n");
 		return;
 	}
