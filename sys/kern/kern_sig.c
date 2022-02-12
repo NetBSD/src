@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.400 2021/10/27 04:45:42 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.401 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.400 2021/10/27 04:45:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.401 2022/02/12 15:51:29 thorpej Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -2660,7 +2660,7 @@ filt_sigattach(struct knote *kn)
 	kn->kn_flags |= EV_CLEAR;	/* automatically set */
 
 	mutex_enter(p->p_lock);
-	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+	klist_insert(&p->p_klist, kn);
 	mutex_exit(p->p_lock);
 
 	return 0;
@@ -2672,7 +2672,7 @@ filt_sigdetach(struct knote *kn)
 	struct proc *p = kn->kn_obj;
 
 	mutex_enter(p->p_lock);
-	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+	klist_remove(&p->p_klist, kn);
 	mutex_exit(p->p_lock);
 }
 

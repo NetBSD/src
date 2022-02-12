@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.13 2021/09/26 01:16:07 thorpej Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.14 2022/02/12 15:51:29 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.13 2021/09/26 01:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.14 2022/02/12 15:51:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -660,7 +660,7 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 		goto fail_3;
 	}
 
-	SLIST_INIT(&knotes);
+	klist_init(&knotes);
 	if (kfilter_register("CP_GPIO_EVENT", &app_fops, &app_filter_id) != 0) {
 		RALINK_DEBUG(RALINK_DEBUG_ERROR,
 			"%s: kfilter_register for CP_GPIO_EVENT failed\n",
@@ -1514,7 +1514,7 @@ gpio_event_app_user_attach(struct knote *kn)
 	}
 
 	kn->kn_flags |= EV_CLEAR;	/* automatically set */
-	SLIST_INSERT_HEAD(&knotes, kn, kn_selnext);
+	klist_insert(&knotes, kn);
 
 	return 0;
 }
@@ -1530,7 +1530,7 @@ gpio_event_app_user_detach(struct knote *kn)
 		RALINK_DEBUG(RALINK_DEBUG_ERROR, "Null kn found\n");
 		return;
 	}
-	SLIST_REMOVE(&knotes, kn, knote, kn_selnext);
+	klist_remove(&knotes, kn);
 }
 
 /*

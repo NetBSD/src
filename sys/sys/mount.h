@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.237 2021/02/04 21:07:06 jdolecek Exp $	*/
+/*	$NetBSD: mount.h,v 1.238 2022/02/12 15:51:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -450,6 +450,7 @@ int	dounmount(struct mount *, int, struct lwp *);
 int	do_sys_mount(struct lwp *, const char *, enum uio_seg, const char *,
 	    int, void *, enum uio_seg, size_t, register_t *);
 void	vfsinit(void);
+void	vfs_evfilt_fs_init(void);
 void	vfs_opv_init(const struct vnodeopv_desc * const *);
 void	vfs_opv_free(const struct vnodeopv_desc * const *);
 #ifdef DEBUG
