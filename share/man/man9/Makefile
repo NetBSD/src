@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.462 2022/01/17 22:47:43 christos Exp $
+#       $NetBSD: Makefile,v 1.463 2022/02/12 17:10:20 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -70,6 +70,15 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9 \
 	VOP_ACLCHECK.9 VOP_GETACL.9 VOP_SETACL.9
+
+MAN+=	__cpu_simple_lock.9
+MLINKS+=__cpu_simple_lock.9 __SIMPLELOCK_LOCKED_P.9 \
+	__cpu_simple_lock.9 __SIMPLELOCK_UNLOCKED_P.9 \
+	__cpu_simple_lock.9 __cpu_simple_lock_clear.9 \
+	__cpu_simple_lock.9 __cpu_simple_lock_init.9 \
+	__cpu_simple_lock.9 __cpu_simple_lock_set.9 \
+	__cpu_simple_lock.9 __cpu_simple_lock_try.9 \
+	__cpu_simple_lock.9 __cpu_simple_unlock.9
 
 MAN+=	atomic_loadstore.9
 MLINKS+=atomic_loadstore.9 atomic_load_acquire.9 \
