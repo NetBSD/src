@@ -1,4 +1,4 @@
-/*	$NetBSD: ips.c,v 1.4 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: ips.c,v 1.5 2022/02/12 02:40:39 riastradh Exp $	*/
 /*	$OpenBSD: ips.c,v 1.113 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.4 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.5 2022/02/12 02:40:39 riastradh Exp $");
 
 #include "bio.h"
 
@@ -419,7 +419,7 @@ struct dmamem {
 };
 
 struct ips_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	/* SCSI mid-layer connection. */
 	struct scsipi_adapter   sc_adapt;
@@ -634,6 +634,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	struct scsipi_channel *chan;
 	char intrbuf[PCI_INTRSTR_LEN];
 
+	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* Identify chipset */
@@ -738,7 +739,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	if (pci_intr_establish_xname(pa->pa_pc, ih, IPL_BIO, ips_intr, sc,
-	    sc->sc_dev.dv_xname) == NULL) {
+		device_xname(sc->sc_dev)) == NULL) {
 		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -748,7 +749,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 
 	/* Display adapter info */
-	printf("%s: ServeRAID", sc->sc_dev.dv_xname);
+	device_printf(sc->sc_dev, "ServeRAID");
 	type = htole16(pg5->type);
 	if (type < sizeof(ips_names) / sizeof(ips_names[0]) && ips_names[type])
 		printf(" %s", ips_names[type]);
@@ -822,7 +823,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 #if NBIO > 0
 	/* Install ioctl handler */
 	if (bio_register(&sc->sc_dev, ips_ioctl))
-		printf("%s: no ioctl support\n", sc->sc_dev.dv_xname);
+		device_printf(sc->sc_dev, "no ioctl support\n");
 #endif
 
 	return;
@@ -854,12 +855,12 @@ ips_scsi_cmd(struct ips_ccb *ccb)
 	int code;
 
 	DPRINTF(IPS_D_XFER, ("%s: ips_scsi_cmd: xs %p, target %d, "
-	    "opcode 0x%02x, flags 0x%x\n", sc->sc_dev.dv_xname, xs, target,
+	    "opcode 0x%02x, flags 0x%x\n", device_xname(sc->sc_dev), xs, target,
 	    xs->cmd->opcode, xs->xs_control));
 
 	if (target >= sc->sc_nunits || periph->periph_lun != 0) {
 		DPRINTF(IPS_D_INFO, ("%s: ips_scsi_cmd: invalid params "
-		    "target %d, lun %d\n", sc->sc_dev.dv_xname,
+		    "target %d, lun %d\n", device_xname(sc->sc_dev),
 		    target, periph->periph_lun));
 		xs->error = XS_DRIVER_STUFFUP;
 		ips_ccb_put(sc, ccb);
@@ -893,7 +894,7 @@ ips_scsi_cmd(struct ips_ccb *ccb)
 		if (blkno >= htole32(drive->seccnt) || blkno + blkcnt >
 		    htole32(drive->seccnt)) {
 			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: invalid params "
-			    "blkno %u, blkcnt %u\n", sc->sc_dev.dv_xname,
+			    "blkno %u, blkcnt %u\n", device_xname(sc->sc_dev),
 			    blkno, blkcnt));
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
@@ -912,7 +913,7 @@ ips_scsi_cmd(struct ips_ccb *ccb)
 
 		if (ips_load_xs(sc, ccb, xs)) {
 			DPRINTF(IPS_D_ERR, ("%s: ips_scsi_cmd: ips_load_xs "
-			    "failed\n", sc->sc_dev.dv_xname));
+			    "failed\n", device_xname(sc->sc_dev)));
 			xs->error = XS_DRIVER_STUFFUP;
 			ips_ccb_put(sc, ccb);
 			scsipi_done(xs);
@@ -973,7 +974,7 @@ ips_scsi_cmd(struct ips_ccb *ccb)
 		break;
 	default:
 		DPRINTF(IPS_D_INFO, ("%s: unsupported scsi command 0x%02x\n",
-		    sc->sc_dev.dv_xname, xs->cmd->opcode));
+		    device_xname(sc->sc_dev), xs->cmd->opcode));
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 
@@ -1044,7 +1045,7 @@ ips_ioctl(device_t dev, u_long cmd, void *data)
 	struct ips_softc *sc = (struct ips_softc *)dev;
 
 	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl: cmd %lu\n",
-	    sc->sc_dev.dv_xname, cmd));
+	    device_xname(sc->sc_dev), cmd));
 
 	switch (cmd) {
 	case BIOCINQ:
@@ -1066,7 +1067,7 @@ ips_ioctl_inq(struct ips_softc *sc, struct bioc_inq *bi)
 	struct ips_conf *conf = &sc->sc_info->conf;
 	int i;
 
-	strlcpy(bi->bi_dev, sc->sc_dev.dv_xname, sizeof(bi->bi_dev));
+	strlcpy(bi->bi_dev, device_xname(sc->sc_dev), sizeof(bi->bi_dev));
 	bi->bi_novol = sc->sc_nunits;
 	for (i = 0, bi->bi_nodisk = 0; i < sc->sc_nunits; i++)
 		bi->bi_nodisk += conf->ld[i].chunkcnt;
@@ -1139,12 +1140,12 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	}
 
 	dv = &sc->sc_dev;
-	strlcpy(bv->bv_dev, dv->dv_xname, sizeof(bv->bv_dev));
+	strlcpy(bv->bv_dev, device_xname(dv), sizeof(bv->bv_dev));
 	strlcpy(bv->bv_vendor, "IBM", sizeof(bv->bv_vendor));
 
 	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl_vol: vid %d, state 0x%02x, "
 	    "total %u, done %u, size %llu, level %d, nodisk %d, dev %s\n",
-	    sc->sc_dev.dv_xname, vid, ld->state, total, done, bv->bv_size,
+	    device_xname(sc->sc_dev), vid, ld->state, total, done, bv->bv_size,
 	    bv->bv_level, bv->bv_nodisk, bv->bv_dev));
 
 	return (0);
@@ -1216,7 +1217,7 @@ out:
 	}
 
 	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl_disk: vid %d, did %d, channel %d, "
-	    "target %d, size %llu, state 0x%02x\n", sc->sc_dev.dv_xname,
+	    "target %d, size %llu, state 0x%02x\n", device_xname(sc->sc_dev),
 	    vid, did, bd->bd_channel, bd->bd_target, bd->bd_size, dev->state));
 
 	return (0);
@@ -1328,7 +1329,7 @@ ips_cmd(struct ips_softc *sc, struct ips_ccb *ccb)
 
 	DPRINTF(IPS_D_XFER, ("%s: ips_cmd: id 0x%02x, flags 0x%x, xs %p, "
 	    "code 0x%02x, drive %d, sgcnt %d, lba %d, sgaddr 0x%08x, "
-	    "seccnt %d\n", sc->sc_dev.dv_xname, ccb->c_id, ccb->c_flags,
+	    "seccnt %d\n", device_xname(sc->sc_dev), ccb->c_id, ccb->c_flags,
 	    ccb->c_xfer, cmd->code, cmd->drive, cmd->sgcnt, htole32(cmd->lba),
 	    htole32(cmd->sgaddr), htole16(cmd->seccnt)));
 
@@ -1354,7 +1355,7 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 	if (ccb->c_flags & XS_CTL_NOSLEEP) {
 		/* busy-wait */
 		DPRINTF(IPS_D_XFER, ("%s: ips_poll: busy-wait\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 
 		for (timo = 10000; timo > 0; timo--) {
 			delay(100);
@@ -1370,10 +1371,11 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 		timo = tvtohz(&tv);
 
 		DPRINTF(IPS_D_XFER, ("%s: ips_poll: sleep %d hz\n",
-		    sc->sc_dev.dv_xname, timo));
+		    device_xname(sc->sc_dev), timo));
 		tsleep(ccb, PRIBIO + 1, "ipscmd", timo);
 	}
-	DPRINTF(IPS_D_XFER, ("%s: ips_poll: state %d\n", sc->sc_dev.dv_xname,
+	DPRINTF(IPS_D_XFER, ("%s: ips_poll: state %d\n",
+	    device_xname(sc->sc_dev),
 	    ccb->c_state));
 
 	if (ccb->c_state != IPS_CCB_DONE)
@@ -1393,7 +1395,7 @@ void
 ips_done(struct ips_softc *sc, struct ips_ccb *ccb)
 {
 	DPRINTF(IPS_D_XFER, ("%s: ips_done: id 0x%02x, flags 0x%x, xs %p\n",
-	    sc->sc_dev.dv_xname, ccb->c_id, ccb->c_flags, ccb->c_xfer));
+	    device_xname(sc->sc_dev), ccb->c_id, ccb->c_flags, ccb->c_xfer));
 
 	ccb->c_error = ips_error(sc, ccb);
 	ccb->c_done(sc, ccb);
@@ -1488,7 +1490,7 @@ ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 
 	DPRINTF(IPS_D_ERR, ("%s: ips_error: stat 0x%02x, estat 0x%02x, "
 	    "cmd code 0x%02x, drive %d, sgcnt %d, lba %u, seccnt %d",
-	    sc->sc_dev.dv_xname, ccb->c_stat, ccb->c_estat, cmd->code,
+	    device_xname(sc->sc_dev), ccb->c_stat, ccb->c_estat, cmd->code,
 	    cmd->drive, cmd->sgcnt, htole32(cmd->lba), htole16(cmd->seccnt)));
 	if (cmd->code == IPS_CMD_DCDB || cmd->code == IPS_CMD_DCDB_SG) {
 		int i;
@@ -1586,7 +1588,7 @@ ips_intr(void *arg)
 	u_int32_t status;
 	int id;
 
-	DPRINTF(IPS_D_XFER, ("%s: ips_intr", sc->sc_dev.dv_xname));
+	DPRINTF(IPS_D_XFER, ("%s: ips_intr", device_xname(sc->sc_dev)));
 	if (!ips_isintr(sc)) {
 		DPRINTF(IPS_D_XFER, (": not ours\n"));
 		return (0);
@@ -1596,12 +1598,12 @@ ips_intr(void *arg)
 	/* Process completed commands */
 	while ((status = ips_status(sc)) != 0xffffffff) {
 		DPRINTF(IPS_D_XFER, ("%s: ips_intr: status 0x%08x\n",
-		    sc->sc_dev.dv_xname, status));
+		    device_xname(sc->sc_dev), status));
 
 		id = IPS_STAT_ID(status);
 		if (id >= sc->sc_nccbs) {
 			DPRINTF(IPS_D_ERR, ("%s: ips_intr: invalid id %d\n",
-			    sc->sc_dev.dv_xname, id));
+			    device_xname(sc->sc_dev), id));
 			continue;
 		}
 
@@ -1609,7 +1611,7 @@ ips_intr(void *arg)
 		if (ccb->c_state != IPS_CCB_QUEUED) {
 			DPRINTF(IPS_D_ERR, ("%s: ips_intr: cmd 0x%02x not "
 			    "queued, state %d, status 0x%08x\n",
-			    sc->sc_dev.dv_xname, ccb->c_id, ccb->c_state,
+			    device_xname(sc->sc_dev), ccb->c_id, ccb->c_state,
 			    status));
 			continue;
 		}
@@ -1640,7 +1642,7 @@ ips_timeout(void *arg)
 	if (xs)
 		scsi_print_addr(xs->xs_periph);
 	else
-		printf("%s: ", sc->sc_dev.dv_xname);
+		printf("%s: ", device_xname(sc->sc_dev));
 	printf("timeout\n");
 
 	/*
@@ -1818,7 +1820,7 @@ ips_copperhead_exec(struct ips_softc *sc, struct ips_ccb *ccb)
 			break;
 	}
 	if (timeout < 0) {
-		printf("%s: semaphore timeout\n", sc->sc_dev.dv_xname);
+		device_printf(sc->sc_dev, "semaphore timeout\n");
 		return;
 	}
 
@@ -1853,7 +1855,7 @@ ips_copperhead_status(struct ips_softc *sc)
 
 	sqhead = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_SQH);
 	DPRINTF(IPS_D_XFER, ("%s: sqhead 0x%08x, sqtail 0x%08x\n",
-	    sc->sc_dev.dv_xname, sqhead, sc->sc_sqtail));
+	    device_xname(sc->sc_dev), sqhead, sc->sc_sqtail));
 
 	sqtail = sc->sc_sqtail + sizeof(u_int32_t);
 	if (sqtail == sc->sc_sqm.dm_paddr + IPS_SQSZ)
@@ -1899,7 +1901,8 @@ ips_morpheus_status(struct ips_softc *sc)
 	u_int32_t reg;
 
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OQP);
-	DPRINTF(IPS_D_XFER, ("%s: status 0x%08x\n", sc->sc_dev.dv_xname, reg));
+	DPRINTF(IPS_D_XFER, ("%s: status 0x%08x\n", device_xname(sc->sc_dev),
+	    reg));
 
 	return (reg);
 }
