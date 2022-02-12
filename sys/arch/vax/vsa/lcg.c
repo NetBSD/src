@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.8 2022/02/12 03:24:35 riastradh Exp $ */
+/*	$NetBSD: lcg.c,v 1.9 2022/02/12 17:09:43 riastradh Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.8 2022/02/12 03:24:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.9 2022/02/12 17:09:43 riastradh Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -105,7 +105,6 @@ static	int lcg_match(struct device *, struct cfdata *, void *);
 static	void lcg_attach(struct device *, struct device *, void *);
 
 struct	lcg_softc {
-	struct	device ss_dev;
 	bus_dmamap_t sc_dm;
 };
 
