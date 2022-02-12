@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.31 2021/04/03 14:56:13 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.32 2022/02/12 17:17:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,12 +69,7 @@ static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
-	__asm volatile(
-		"# BEGIN __cpu_simple_lock_init\n"
-		"	stl	$31, %0		\n"
-		"	mb			\n"
-		"	# END __cpu_simple_lock_init"
-		: "=m" (*alp));
+	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline void

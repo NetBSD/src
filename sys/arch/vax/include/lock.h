@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.32 2019/11/29 20:06:44 riastradh Exp $	*/
+/*	$NetBSD: lock.h,v 1.33 2022/02/12 17:17:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -66,17 +66,7 @@ static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *);
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *__alp)
 {
-#ifdef _HARDKERNEL
-	__asm __volatile ("movl %0,%%r1;jsb Sunlock"
-		: /* No output */
-		: "g"(__alp)
-		: "r1","cc","memory");
-#else
-	__asm __volatile ("bbcci $0,%0,1f;1:"
-		: /* No output */
-		: "m"(*__alp)
-		: "cc");
-#endif
+	*__alp = __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *);
