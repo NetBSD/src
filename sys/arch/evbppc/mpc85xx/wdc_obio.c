@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.7 2019/09/09 22:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.8 2022/02/12 02:40:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -101,7 +101,6 @@ wdc_obio_match(device_t parent, cfdata_t cf, void *aux)
 	struct generic_attach_args * const ga = aux;
 	bus_size_t size = ga->ga_size;
 	struct wdc_regs wdr;
-	struct device dev;
 	int rv = 0;
 
 	if (ga->ga_addr == OBIOCF_ADDR_DEFAULT)
@@ -112,10 +111,7 @@ wdc_obio_match(device_t parent, cfdata_t cf, void *aux)
 	/*
 	 * We need to see if a CF is attached in True-IDE mode
 	 */
-	memset(&dev, 0, sizeof(dev));
 	memset(&wdr, 0, sizeof(wdr));
-
-	dev.dv_xname[0] = '?';
 
 	if (wdc_obio_initregmap(&wdr, ga->ga_bst, ga->ga_addr, size)) {
 		wdc_init_shadow_regs(&wdr);
