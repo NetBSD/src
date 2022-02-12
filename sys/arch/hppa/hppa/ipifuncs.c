@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.5 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.6 2022/02/12 17:09:07 riastradh Exp $	*/
 /*	$OpenBSD: ipi.c,v 1.4 2011/01/14 13:20:06 jsing Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ hppa_ipi_intr(void *arg)
 
 	/* Handle an IPI. */
 	ipi_pending = atomic_swap_ulong(&ci->ci_ipi, 0);
+	membar_enter();	/* matches membar_exit in xc_send_ipi, cpu_ipi */
 
 	KASSERT(ipi_pending);
 
@@ -108,10 +109,22 @@ hppa_ipi_send(struct cpu_info *ci, u_long ipi)
 
 	atomic_or_ulong(&ci->ci_ipi, (1L << ipi));
 
-	/* Send an IPI to the specified CPU by triggering EIR{1} (irq 30). */
+	/*
+	 * Send an IPI to the specified CPU by triggering EIR{1} (irq 30).
+	 *
+	 * The `load-acquire operation' matching this store-release is
+	 * somewhere inside the silicon or firmware -- the point is
+	 * that the store to ci->ci_ipi above must happen before
+	 * writing to EIR{1}; there is conceptually some magic inside
+	 * the silicon or firmware on the target CPU that effectively
+	 * does
+	 *
+	 *	if (atomic_load_acquire(&cpu->io_eir)) {
+	 *		enter_interrupt_vector();
+	 *	}
+	 */
 	cpu = (struct iomod *)(ci->ci_hpa);
-	cpu->io_eir = 1;
-	membar_sync();
+	atomic_store_release(&cpu->io_eir, 1);
 
 	return 0;
 }
@@ -156,6 +169,7 @@ xc_send_ipi(struct cpu_info *ci)
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
 
+	membar_exit();		/* matches membar_enter in hppa_ipi_intr */
 	if (ci) {
 		/* Unicast: remote CPU. */
 		hppa_ipi_send(ci, HPPA_IPI_XCALL);
@@ -171,6 +185,7 @@ cpu_ipi(struct cpu_info *ci)
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
 
+	membar_exit();		/* matches membar_enter in hppa_ipi_intr */
 	if (ci) {
 		/* Unicast: remote CPU. */
 		hppa_ipi_send(ci, HPPA_IPI_GENERIC);
