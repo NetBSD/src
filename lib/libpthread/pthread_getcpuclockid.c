@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_getcpuclockid.c,v 1.3 2020/01/29 16:03:44 kamil Exp $	*/
+/*	$NetBSD: pthread_getcpuclockid.c,v 1.4 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,8 +30,11 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_getcpuclockid.c,v 1.3 2020/01/29 16:03:44 kamil Exp $");
+__RCSID("$NetBSD: pthread_getcpuclockid.c,v 1.4 2022/02/12 14:59:32 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/types.h>
 #include <errno.h>

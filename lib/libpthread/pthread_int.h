@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.107 2020/06/10 22:45:15 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.108 2022/02/12 14:59:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -40,9 +40,6 @@
 #include "pthread_types.h"
 #include "pthread_queue.h"
 #include "pthread_md.h"
-
-/* Need to use libc-private names for atomic operations. */
-#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/atomic.h>
 #include <sys/rbtree.h>
