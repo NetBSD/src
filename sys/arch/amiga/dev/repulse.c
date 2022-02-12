@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.23 2019/06/08 08:02:36 isaki Exp $ */
+/*	$NetBSD: repulse.c,v 1.24 2022/02/12 23:30:30 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.23 2019/06/08 08:02:36 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.24 2022/02/12 23:30:30 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -310,7 +310,7 @@ repulse_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Print a warning if the codec doesn't support hardware variable
 	 * rate audio. As the initial incarnations of the Repulse board
-	 * are AC'97 2.1, it is epxected that we'll always have VRA.
+	 * are AC'97 2.1, it is expected that we'll always have VRA.
 	 */
 	/*
 	 * XXX this should be a panic(). OTOH, audio codec speed is not
