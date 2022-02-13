@@ -1,4 +1,4 @@
-/*	$NetBSD: at91usartreg.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$NetBSD: at91usartreg.h,v 1.4 2022/02/13 00:39:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -40,7 +40,7 @@
 #define	US_RTOR		0x24U	/* 0x24: Receiver Time-out Reg	*/
 #define	US_TTGR		0x28U	/* 0x28: Transmitter Timeguard Reg */
 #define	US_FIDI		0x40U	/* 0x40: FI DI Ratio Register	*/
-#define	US_NER		0x44U	/* 0x44: Number of Errorrs Reg	*/
+#define	US_NER		0x44U	/* 0x44: Number of Errors Reg	*/
 #define	US_IF		0x4CU	/* 0x4C: IrDA Filter Register	*/
 #define	US_PDC		0x100U	/* 0x100: PDC			*/
 
