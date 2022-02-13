@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.171 2022/02/13 12:20:09 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.172 2022/02/13 12:43:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.171 2022/02/13 12:20:09 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.172 2022/02/13 12:43:26 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -267,10 +267,10 @@ ps_paren_has_changed(const struct parser_state *prev_ps)
 {
     const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
 
-    if (prev_ps->p_l_follow != ps.p_l_follow)
+    if (prev_ps->nparen != ps.nparen)
 	return true;
 
-    for (int i = 0; i < ps.p_l_follow; i++) {
+    for (int i = 0; i < ps.nparen; i++) {
 	if (curr[i].indent != prev[i].indent ||
 	    curr[i].maybe_cast != prev[i].maybe_cast ||
 	    curr[i].no_cast != prev[i].no_cast)
@@ -286,14 +286,14 @@ debug_ps_paren(const struct parser_state *prev_ps)
 	return;
 
     debug_printf("           ps.paren:");
-    for (int i = 0; i < ps.p_l_follow; i++) {
+    for (int i = 0; i < ps.nparen; i++) {
 	const paren_level_props *props = ps.paren + i;
 	const char *cast = props->no_cast ? "(no cast)"
 	    : props->maybe_cast ? "(cast)"
 	    : "";
 	debug_printf(" %s%d", cast, props->indent);
     }
-    if (ps.p_l_follow == 0)
+    if (ps.nparen == 0)
 	debug_printf(" none");
     debug_println("");
 }
@@ -321,8 +321,8 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_bool(next_unary);
     debug_ps_bool(is_function_definition);
     debug_ps_bool(want_blank);
-    debug_ps_int(paren_level);
-    debug_ps_int(p_l_follow);
+    debug_ps_int(line_start_nparen);
+    debug_ps_int(nparen);
     debug_ps_paren(&prev_ps);
 
     debug_ps_int(comment_delta);
@@ -561,7 +561,7 @@ lexi_alnum(void)
 
     ps.next_unary = ps.prev_token == lsym_tag;	/* for 'struct s *' */
 
-    if (ps.prev_token == lsym_tag && ps.p_l_follow == 0)
+    if (ps.prev_token == lsym_tag && ps.nparen == 0)
 	return lsym_type_outside_parentheses;
 
     const struct keyword *kw = bsearch(token.s, keywords,
@@ -583,10 +583,10 @@ lexi_alnum(void)
 	    return kw->lsym;
 
 found_typename:
-	if (ps.p_l_follow > 0) {
+	if (ps.nparen > 0) {
 	    /* inside parentheses: cast, param list, offsetof or sizeof */
-	    if (!ps.paren[ps.p_l_follow - 1].no_cast)
-		ps.paren[ps.p_l_follow - 1].maybe_cast = true;
+	    if (!ps.paren[ps.nparen - 1].no_cast)
+		ps.paren[ps.nparen - 1].maybe_cast = true;
 	}
 	if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
 	    if (kw != NULL && kw->lsym == lsym_tag) {
@@ -594,7 +594,7 @@ found_typename:
 		    ps.in_enum = in_enum_enum;
 		return lsym_tag;
 	    }
-	    if (ps.p_l_follow == 0)
+	    if (ps.nparen == 0)
 		return lsym_type_outside_parentheses;
 	}
     }
@@ -602,14 +602,14 @@ found_typename:
     if (inp_peek() == '(' && ps.tos <= 1 && ps.ind_level == 0 &&
 	!ps.in_func_def_params && !ps.block_init) {
 
-	if (ps.p_l_follow == 0 && probably_looking_at_definition()) {
+	if (ps.nparen == 0 && probably_looking_at_definition()) {
 	    ps.is_function_definition = true;
 	    if (ps.in_decl)
 		ps.in_func_def_params = true;
 	    return lsym_funcname;
 	}
 
-    } else if (ps.p_l_follow == 0 && probably_typename()) {
+    } else if (ps.nparen == 0 && probably_typename()) {
 	ps.next_unary = true;
 	return lsym_type_outside_parentheses;
     }
@@ -625,7 +625,7 @@ is_asterisk_unary(void)
     if (ps.prev_token == lsym_word ||
 	    ps.prev_token == lsym_rparen_or_rbracket)
 	return false;
-    return ps.in_decl && ps.p_l_follow > 0;
+    return ps.in_decl && ps.nparen > 0;
 }
 
 static void
