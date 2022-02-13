@@ -386,9 +386,6 @@ __crypt_argon2(const char *pw, const char * salt)
 
 	/* we use static buffers to avoid allocation */
 	/* and easier cleanup */
-	ctx.out = (uint8_t *)ebuf;
-	ctx.outlen = sizeof(ebuf);
-
 	ctx.out = (uint8_t *)encodebuf;
 	ctx.outlen = sizeof(encodebuf);
 
