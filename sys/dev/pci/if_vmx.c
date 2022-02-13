@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.5 2021/10/13 01:11:29 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.6 2022/02/13 19:07:38 riastradh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.5 2021/10/13 01:11:29 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.6 2022/02/13 19:07:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -341,7 +341,6 @@ struct {
 typedef enum {
 	VMXNET3_BARRIER_RD,
 	VMXNET3_BARRIER_WR,
-	VMXNET3_BARRIER_RDWR,
 } vmxnet3_barrier_t;
 
 #define JUMBO_LEN (MCLBYTES - ETHER_ALIGN)	/* XXX */
@@ -556,9 +555,6 @@ vmxnet3_barrier(struct vmxnet3_softc *sc, vmxnet3_barrier_t type)
 		break;
 	case VMXNET3_BARRIER_WR:
 		membar_producer();
-		break;
-	case VMXNET3_BARRIER_RDWR:
-		membar_sync();
 		break;
 	default:
 		panic("%s: bad barrier type %d", __func__, type);
