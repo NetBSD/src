@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.24 2021/03/05 18:10:06 thorpej Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.25 2022/02/13 12:24:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.24 2021/03/05 18:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.25 2022/02/13 12:24:24 martin Exp $");
 
 #include "adb.h"
 #include "adbkbd.h"
@@ -117,7 +117,7 @@ void ofprint(const char *blah, ...)
 #define OFPRINTF while(0) printf
 #endif
 
-static bool use_serial_console;
+bool ofwoea_use_serial_console;
 static struct consdev *selected_serial_consdev;
 
 static int (*selected_keyboard)(void);
@@ -149,12 +149,13 @@ ofwoea_cnprobe(void)
 	OFPRINTF("console type: %s\n", name);
 
 	if (strcmp(name, "serial") == 0) {
-		use_serial_console = true;
+		ofwoea_use_serial_console = true;
 #ifdef PMAC_G5
 		/* The MMU hasn't been initialized yet, use failsafe for now */
 		extern struct consdev failsafe_cons;
 		selected_serial_consdev = &failsafe_cons;
-		aprint_verbose("Early G5 console selected\n");
+		aprint_verbose("Early G5 console selected "
+		    "(keeping OF console for now)\n");
 		return;
 #endif /* PMAC_G5 */
 
@@ -388,7 +389,7 @@ ofkbd_cngetc(dev_t dev)
 void
 cninit(void)
 {
-	if (use_serial_console) {
+	if (ofwoea_use_serial_console) {
 		if (selected_serial_consdev != NULL) {
 			cn_tab = selected_serial_consdev;
 			(*cn_tab->cn_probe)(cn_tab);
