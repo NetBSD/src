@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.2 2017/09/17 00:01:08 christos Exp $ */
+/* $NetBSD: lock.h,v 1.3 2022/02/13 13:42:12 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -86,7 +86,16 @@ __cpu_simple_lock(__cpu_simple_lock_t *__ptr)
 	}
 #else
 	int tmp;
-	__asm(
+	/*
+	 * No explicit memory barrier needed around ll/sc:
+	 *
+	 * `In implementations that use a weakly-ordered memory model,
+	 *  l.swa nad l.lwa will serve as synchronization points,
+	 *  similar to lsync.'
+	 *
+	 * https://openrisc.io/or1k.html#__RefHeading__341344_552419154
+	 */
+	__asm volatile(
 		"1:"
 	"\t"	"l.lwa	%[tmp],0(%[ptr])"
 	"\n\t"	"l.sfeqi\t%[tmp],%[unlocked]"
@@ -99,7 +108,8 @@ __cpu_simple_lock(__cpu_simple_lock_t *__ptr)
 	   :	[tmp] "=&r" (tmp)
 	   :	[newval] "r" (__SIMPLELOCK_LOCKED),
 		[ptr] "r" (__ptr),
-	   	[unlocked] "n" (__SIMPLELOCK_UNLOCKED));
+		[unlocked] "n" (__SIMPLELOCK_UNLOCKED)
+	   :    "cc", "memory");
 #endif
 }
 
@@ -110,7 +120,8 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *__ptr)
 	return !__atomic_test_and_set(__ptr, __ATOMIC_ACQUIRE);
 #else
 	int oldval;
-	__asm(
+	/* No explicit memory barrier needed, as in __cpu_simple_lock.  */
+	__asm volatile(
 		"1:"
 	"\t"	"l.lwa	%[oldval],0(%[ptr])"
 	"\n\t"	"l.swa	0(%[ptr]),%[newval]"
@@ -118,7 +129,8 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *__ptr)
 	"\n\t"	"l.nop"
 	   :	[oldval] "=&r" (oldval)
 	   :	[newval] "r" (__SIMPLELOCK_LOCKED),
-		[ptr] "r" (__ptr));
+		[ptr] "r" (__ptr)
+	   :    "cc", "memory");
 	return oldval == __SIMPLELOCK_UNLOCKED;
 #endif
 }
@@ -129,6 +141,7 @@ __cpu_simple_unlock(__cpu_simple_lock_t *__ptr)
 #if 0
 	__atomic_clear(__ptr, __ATOMIC_RELEASE);
 #else
+	__asm volatile("l.msync" ::: "");
 	*__ptr = __SIMPLELOCK_UNLOCKED;
 #endif
 }
