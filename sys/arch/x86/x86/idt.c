@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.15 2021/12/23 02:07:21 yamaguchi Exp $	*/
+/*	$NetBSD: idt.c,v 1.16 2022/02/13 19:21:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.15 2021/12/23 02:07:21 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.16 2022/02/13 19:21:21 riastradh Exp $");
 
 #include "opt_pcpu_idt.h"
 
@@ -174,10 +174,14 @@ idt_vec_alloc(struct idt_vec *iv, int low, int high)
 		return -1;
 
 	for (vec = low; vec <= high; vec++) {
-		if (idt_allocmap[vec] == 0) {
-			/* idt_vec_free() can be unlocked, so membar. */
-			membar_sync();
-			idt_allocmap[vec] = 1;
+		/* pairs with atomic_store_release in idt_vec_free */
+		if (atomic_load_acquire(&idt_allocmap[vec]) == 0) {
+			/*
+			 * No ordering needed here (`relaxed') because
+			 * access to free entries is serialized by
+			 * cpu_lock or single-threaded operation.
+			 */
+			atomic_store_relaxed(&idt_allocmap[vec], 1);
 			return vec;
 		}
 	}
@@ -204,7 +208,7 @@ idt_vec_set(struct idt_vec *iv, int vec, void (*function)(void))
 	idt_descriptor_t *idt;
 	char *idt_allocmap __diagused = iv->iv_allocmap;
 
-	KASSERT(idt_allocmap[vec] == 1);
+	KASSERT(atomic_load_relaxed(&idt_allocmap[vec]) == 1);
 
 	idt = iv->iv_idt;
 	set_idtgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
@@ -220,11 +224,12 @@ idt_vec_free(struct idt_vec *iv, int vec)
 	idt_descriptor_t *idt;
 	char *idt_allocmap = iv->iv_allocmap;
 
-	KASSERT(idt_allocmap[vec] == 1);
+	KASSERT(atomic_load_relaxed(&idt_allocmap[vec]) == 1);
 
 	idt = iv->iv_idt;
 	unset_idtgate(&idt[vec]);
-	idt_allocmap[vec] = 0;
+	/* pairs with atomic_load_acquire in idt_vec_alloc */
+	atomic_store_release(&idt_allocmap[vec], 0);
 }
 
 bool
