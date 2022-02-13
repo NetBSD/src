@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.37 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.38 2022/02/13 19:03:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -359,6 +359,7 @@ map_session(session_t *sess, device_t dev)
 	struct scsipi_adapter *adapt = &sess->s_sc_adapter;
 	struct scsipi_channel *chan = &sess->s_sc_channel;
 	const quirktab_t	*tgt;
+	int found;
 
 	mutex_enter(&sess->s_lock);
 	sess->s_send_window = max(2, window_size(sess, CCBS_FOR_SCSIPI));
@@ -391,9 +392,12 @@ map_session(session_t *sess, device_t dev)
 	chan->chan_nluns = 16;
 	chan->chan_id = sess->s_id;
 
+	KERNEL_LOCK(1, NULL);
 	sess->s_child_dev = config_found(dev, chan, scsiprint, CFARGS_NONE);
+	found = (sess->s_child_dev != NULL);
+	KERNEL_UNLOCK_ONE(NULL);
 
-	return sess->s_child_dev != NULL;
+	return found;
 }
 
 
