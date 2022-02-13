@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.2 2022/02/13 11:07:48 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -26,3 +26,5 @@
 #indent end
 
 #indent run-equals-input
+
+/* See t_errors.sh, test case 'compound_literal'. */
