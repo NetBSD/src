@@ -47,7 +47,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.17 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conf.c,v 1.18 2022/02/13 19:20:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -153,8 +153,7 @@ npf_config_load(npf_t *npf, npf_config_t *nc, npf_conndb_t *conns, bool flush)
 	/*
 	 * Set the new config and release the lock.
 	 */
-	membar_sync();
-	atomic_store_relaxed(&npf->config, nc);
+	atomic_store_release(&npf->config, nc);
 	if (onc == NULL) {
 		/* Initial load, done. */
 		npf_ifmap_flush(npf);
@@ -247,7 +246,7 @@ npf_config_read_exit(npf_t *npf, int s)
 npf_ruleset_t *
 npf_config_ruleset(npf_t *npf)
 {
-	npf_config_t *config = atomic_load_relaxed(&npf->config);
+	npf_config_t *config = atomic_load_consume(&npf->config);
 	KASSERT(npf_config_locked_p(npf) || npf_ebr_incrit_p(npf->ebr));
 	return config->ruleset;
 }
@@ -255,7 +254,7 @@ npf_config_ruleset(npf_t *npf)
 npf_ruleset_t *
 npf_config_natset(npf_t *npf)
 {
-	npf_config_t *config = atomic_load_relaxed(&npf->config);
+	npf_config_t *config = atomic_load_consume(&npf->config);
 	KASSERT(npf_config_locked_p(npf) || npf_ebr_incrit_p(npf->ebr));
 	return config->nat_ruleset;
 }
@@ -263,7 +262,7 @@ npf_config_natset(npf_t *npf)
 npf_tableset_t *
 npf_config_tableset(npf_t *npf)
 {
-	npf_config_t *config = atomic_load_relaxed(&npf->config);
+	npf_config_t *config = atomic_load_consume(&npf->config);
 	KASSERT(npf_config_locked_p(npf) || npf_ebr_incrit_p(npf->ebr));
 	return config->tableset;
 }
@@ -271,7 +270,7 @@ npf_config_tableset(npf_t *npf)
 bool
 npf_default_pass(npf_t *npf)
 {
-	npf_config_t *config = atomic_load_relaxed(&npf->config);
+	npf_config_t *config = atomic_load_consume(&npf->config);
 	KASSERT(npf_config_locked_p(npf) || npf_ebr_incrit_p(npf->ebr));
 	return config->default_pass;
 }
