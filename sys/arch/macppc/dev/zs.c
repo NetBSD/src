@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.54 2021/09/11 20:28:04 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.55 2022/02/13 12:24:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.54 2021/09/11 20:28:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.55 2022/02/13 12:24:24 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.54 2021/09/11 20:28:04 andvar Exp $");
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
+#include <powerpc/ofw_cons.h>
 #include <dev/ic/z8530reg.h>
 
 #include <machine/z8530var.h>
@@ -115,11 +116,28 @@ int	zs_cons_canabort = 1;
 #else
 int	zs_cons_canabort = 0;
 #endif /* ZS_CONSOLE_ABORT*/
+#if PMAC_G5
+static void zscn_delayed_init(struct zsdevice *zsd);
+#endif
 
 /* device to which the console is attached--if serial. */
 /* Mac stuff */
 
 static int zs_get_speed(struct zs_chanstate *);
+void zscnprobe(struct consdev *cp);
+void zscninit(struct consdev *cp);
+int zscngetc(dev_t dev);
+void zscnputc(dev_t dev, int c);
+#define zscnpollc	nullcnpollc
+cons_decl(zs);
+
+struct consdev consdev_zs = {
+	zscnprobe,
+	zscninit,
+	zscngetc,
+	zscnputc,
+	zscnpollc,
+};
 
 /*
  * Even though zsparam will set up the clock multiples, etc., we
@@ -250,6 +268,12 @@ zsc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal(" irq %d,%d\n", intr[0][0], intr[1][0]);
+
+#if PMAC_G5
+	extern struct consdev failsafe_cons;
+	if (ofwoea_use_serial_console && cn_tab == &failsafe_cons)
+		zscn_delayed_init(zsd);
+#endif
 
 	/*
 	 * Initialize software state for each channel.
@@ -827,9 +851,6 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
  * XXX - Well :-P  :-)  -wrs
  ****************************************************************/
 
-#define zscnpollc	nullcnpollc
-cons_decl(zs);
-
 static int stdin, stdout;
 
 /*
@@ -968,17 +989,6 @@ zs_abort(struct zs_chanstate *cs)
 #endif
 }
 
-extern int ofccngetc(dev_t);
-extern void ofccnputc(dev_t, int);
-
-struct consdev consdev_zs = {
-	zscnprobe,
-	zscninit,
-	zscngetc,
-	zscnputc,
-	zscnpollc,
-};
-
 void
 zscnprobe(struct consdev *cp)
 {
@@ -1037,3 +1047,40 @@ zscninit(struct consdev *cp)
 		return;
 	zs_conschan = (void *)(reg[2] + zs_offset);
 }
+
+#if PMAC_G5
+/*
+ * Do a delayed (now that the device is properly mapped) init of the
+ * global zs console state, basically the equivalent of calling
+ *	zscnprobe(&consdev_zs); zscninit(&consdev_zs);
+ * but with the mapped address of the device passed in as zsd.
+ */
+static void
+zscn_delayed_init(struct zsdevice *zsd)
+{
+	int chosen, escc_ch;
+	char name[16];
+
+	if ((chosen = OF_finddevice("/chosen")) == -1)
+		return;
+
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) == -1)
+		return;
+
+	if (OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) == -1)
+		return;
+
+	if ((escc_ch = OF_instance_to_package(stdin)) == -1)
+		return;
+
+	memset(name, 0, sizeof(name));
+	if (OF_getprop(escc_ch, "name", name, sizeof(name)) == -1)
+		return;
+
+	zs_conschannel = strcmp(name, "ch-b") == 0;
+	zs_conschan = (zs_conschannel == 0) ?
+	    &zsd->zs_chan_a :
+	    &zsd->zs_chan_b;
+	cn_tab = &consdev_zs;
+}
+#endif
