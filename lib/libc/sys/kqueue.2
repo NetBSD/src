@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.57 2021/10/23 01:28:34 thorpej Exp $
+.\"	$NetBSD: kqueue.2,v 1.58 2022/02/13 16:51:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd October 22, 2021
+.Dd February 13, 2022
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -462,7 +462,7 @@ The file referenced by the descriptor was extended.
 .It Dv NOTE_LINK
 The link count on the file changed.
 .It Dv NOTE_OPEN
-The file refrenced by the descriptor was opened.
+The file referenced by the descriptor was opened.
 .It Dv NOTE_READ
 A read occurred on the file referenced by the descriptor.
 .It Dv NOTE_RENAME
