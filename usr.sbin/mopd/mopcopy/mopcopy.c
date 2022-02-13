@@ -1,4 +1,4 @@
-/*	$NetBSD: mopcopy.c,v 1.9 2020/10/29 08:50:42 martin Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.10 2022/02/13 00:30:10 andvar Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
  * can be transferred via MOP.
@@ -10,7 +10,7 @@
  * If necessary, the a.out header is stripped, and the program
  * segments are padded out. The BSS segment is zero filled.
  * A header is prepended that looks like an IHD header. In 
- * particular the Unix mahine ID is placed where mopd expects
+ * particular the Unix machine ID is placed where mopd expects
  * the image type to be (offset is IHD_W_ALIAS). If the machine
  * ID could be mistaken for a DEC image type, then the conversion 
  * is aborted. The original a.out header is copied into the front
@@ -49,7 +49,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.9 2020/10/29 08:50:42 martin Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.10 2022/02/13 00:30:10 andvar Exp $");
 #endif
 
 #include "os.h"
