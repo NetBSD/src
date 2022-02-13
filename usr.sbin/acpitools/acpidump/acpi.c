@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.53 2021/11/08 10:19:42 skrll Exp $ */
+/* $NetBSD: acpi.c,v 1.54 2022/02/13 22:20:09 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.53 2021/11/08 10:19:42 skrll Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.54 2022/02/13 22:20:09 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2115,7 +2115,7 @@ acpi_print_iort_memory_access(ACPI_IORT_MEMORY_ACCESS *memacc)
 		printf("Not coherent\n");
 		break;
 	default:
-		printf("resrved (%u)\n", memacc->CacheCoherency);
+		printf("reserved (%u)\n", memacc->CacheCoherency);
 		break;
 	}
 	printf("\t\tAllocation Hints=");
