@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.3 2022/01/09 00:36:28 mrg Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.4 2022/02/13 18:29:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.3 2022/01/09 00:36:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.4 2022/02/13 18:29:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -322,9 +322,13 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 
 	/*
 	 * Defer setting OWN bit on the first descriptor until all
-	 * descriptors have been updated.
+	 * descriptors have been updated.  The hardware will not try to
+	 * process any descriptors past the first one still owned by
+	 * software (i.e., with the OWN bit clear).
 	 */
-	membar_sync();
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.desc_map,
+	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
+	    BUS_DMASYNC_PREWRITE);
 	sc->sc_tx.desc_ring[index].tdes3 |= htole32(EQOS_TDES3_OWN);
 
 	return nsegs;
@@ -333,10 +337,13 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 static void
 eqos_setup_rxdesc(struct eqos_softc *sc, int index, bus_addr_t paddr)
 {
+
 	sc->sc_rx.desc_ring[index].tdes0 = htole32((uint32_t)paddr);
 	sc->sc_rx.desc_ring[index].tdes1 = htole32((uint32_t)(paddr >> 32));
 	sc->sc_rx.desc_ring[index].tdes2 = htole32(0);
-	membar_sync();
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx.desc_map,
+	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
+	    BUS_DMASYNC_PREWRITE);
 	sc->sc_rx.desc_ring[index].tdes3 =
 	    htole32(EQOS_TDES3_OWN | EQOS_TDES3_IOC | EQOS_TDES3_BUF1V);
 }
