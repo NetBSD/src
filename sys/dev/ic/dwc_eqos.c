@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.4 2022/02/13 18:29:00 riastradh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.5 2022/02/13 18:29:15 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.4 2022/02/13 18:29:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.5 2022/02/13 18:29:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -301,7 +301,7 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.buf_map[index].map,
-	    0, sc->sc_tx.buf_map[index].map->dm_mapsize, BUS_DMASYNC_PREWRITE);    
+	    0, sc->sc_tx.buf_map[index].map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* stored in same index as loaded map */
 	sc->sc_tx.buf_map[index].mbuf = m;
