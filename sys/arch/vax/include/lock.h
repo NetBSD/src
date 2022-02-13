@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.33 2022/02/12 17:17:53 riastradh Exp $	*/
+/*	$NetBSD: lock.h,v 1.34 2022/02/13 13:42:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -84,7 +84,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *__alp)
 	__asm __volatile ("clrl %0;bbssi $0,%1,1f;incl %0;1:"
 		: "=&r"(ret)
 		: "m"(*__alp)
-		: "cc");
+		: "cc", "memory");
 #endif
 
 	return ret;
@@ -107,7 +107,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *__alp)
 	__asm __volatile ("1:bbssi $0,%0,1b"
 		: /* No outputs */
 		: "m"(*__alp)
-		: "cc");
+		: "cc", "memory");
 #endif /* _HARDKERNEL && MULTIPROCESSOR */
 }
 
@@ -124,7 +124,7 @@ __cpu_simple_unlock(__cpu_simple_lock_t *__alp)
 	__asm __volatile ("bbcci $0,%0,1f;1:"
 		: /* No output */
 		: "m"(*__alp)
-		: "cc");
+		: "cc", "memory");
 #endif
 }
 
