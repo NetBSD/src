@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.22 2021/11/25 21:48:23 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.23 2022/02/13 11:07:48 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -495,6 +495,53 @@ EOF
 }
 
 
+atf_test_case 'compound_literal'
+compound_literal_body()
+{
+	# Test handling of compound literals (C99 6.5.2.5), as well as casts.
+
+	cat <<EOF > code.c
+void
+function(void)
+{
+	origin =
+	((int)
+	((-1)*
+	(struct point){0,0}
+	)
+	);
+}
+EOF
+
+	sed '/^#/d' <<EOF > expected.out
+void
+function(void)
+{
+	origin =
+		    ((int)
+		     ((-1) *
+		      (struct point){
+# FIXME: the '{' is part of the expression, not a separate block.
+		0, 0
+# FIXME: the '}' is part of the expression, not a separate block.
+	}
+# FIXME: the ')' must be aligned with the corresponding '('.
+	)
+		    );
+}
+EOF
+	sed '/^#/d' <<EOF > expected.err
+# FIXME: The parentheses _are_ balanced, the '}' does not end the block.
+error: code.c:9: Unbalanced parentheses
+warning: code.c:10: Extra ')'
+# FIXME: There is no line 12 in the input file.
+warning: code.c:12: Extra ')'
+EOF
+
+	atf_check -s 'exit:1' -o 'file:expected.out' -e 'file:expected.err' \
+	    "$indent" -nfc1 -ci12 code.c -st
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'option_unknown'
@@ -532,4 +579,5 @@ atf_init_test_cases()
 	atf_add_test_case 'unbalanced_parentheses_3'
 	atf_add_test_case 'search_stmt_comment_segv'
 	atf_add_test_case 'search_stmt_fits_in_one_line'
+	atf_add_test_case 'compound_literal'
 }
