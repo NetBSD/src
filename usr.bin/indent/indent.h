@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.109 2022/02/13 12:09:19 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.110 2022/02/13 12:20:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -247,6 +247,17 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 
 #define	STACKSIZE 256
 
+/* Properties of each level of parentheses or brackets. */
+typedef struct paren_level_props {
+    short indent;		/* indentation of the operand/argument,
+				 * relative to the enclosing statement; if
+				 * negative, reflected at -1 */
+    bool maybe_cast;		/* whether the parentheses may form a type
+				 * cast */
+    bool no_cast;		/* whether the parentheses definitely do not
+				 * form a type cast */
+} paren_level_props;
+
 extern struct parser_state {
     lexer_symbol prev_token;	/* the previous token, but never comment,
 				 * newline or preprocessing line */
@@ -268,16 +279,7 @@ extern struct parser_state {
     /* TODO: rename to next_line_paren_level */
     int p_l_follow;		/* how to indent the remaining lines of the
 				 * statement or initializer or declaration */
-    short paren_indents[20];	/* indentation of the operand/argument of each
-				 * level of parentheses or brackets, relative
-				 * to the enclosing statement; if negative,
-				 * reflected at -1 */
-    int cast_mask0;		/* indicates which close parentheses
-				 * potentially close off casts */
-    int not_cast_mask0;		/* indicates which close parentheses
-				 * definitely close off something else than
-				 * casts */
-
+    paren_level_props paren[20];
     int comment_delta;		/* used to set up indentation for all lines of
 				 * a boxed comment after the first one */
     int n_comment_delta;	/* remembers how many columns there were

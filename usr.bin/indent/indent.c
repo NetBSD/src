@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.240 2022/02/13 12:09:19 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.241 2022/02/13 12:20:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.240 2022/02/13 12:09:19 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.241 2022/02/13 12:20:09 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -683,9 +683,9 @@ want_blank_before_lparen(void)
 static void
 process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
 {
-    if (++ps.p_l_follow == array_length(ps.paren_indents)) {
+    if (++ps.p_l_follow == array_length(ps.paren)) {
 	diag(0, "Reached internal limit of %zu unclosed parentheses",
-	    array_length(ps.paren_indents));
+	    array_length(ps.paren));
 	ps.p_l_follow--;
     }
 
@@ -700,14 +700,14 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
     ps.want_blank = false;
     *code.e++ = token.s[0];
 
-    ps.paren_indents[ps.p_l_follow - 1] = (short)ind_add(0, code.s, code.e);
+    ps.paren[ps.p_l_follow - 1].indent = (short)ind_add(0, code.s, code.e);
     debug_println("paren_indents[%d] is now %d",
-	ps.p_l_follow - 1, ps.paren_indents[ps.p_l_follow - 1]);
+	ps.p_l_follow - 1, ps.paren[ps.p_l_follow - 1].indent);
 
     if (spaced_expr && ps.p_l_follow == 1 && opt.extra_expr_indent
-	    && ps.paren_indents[0] < 2 * opt.indent_size) {
-	ps.paren_indents[0] = (short)(2 * opt.indent_size);
-	debug_println("paren_indents[0] is now %d", ps.paren_indents[0]);
+	    && ps.paren[0].indent < 2 * opt.indent_size) {
+	ps.paren[0].indent = (short)(2 * opt.indent_size);
+	debug_println("paren_indents[0] is now %d", ps.paren[0].indent);
     }
 
     if (ps.init_or_struct && *token.s == '(' && ps.tos <= 2) {
@@ -721,19 +721,20 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
 
     /* parenthesized type following sizeof or offsetof is not a cast */
     if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof)
-	ps.not_cast_mask0 |= 1 << (ps.p_l_follow - 1);
+	ps.paren[ps.p_l_follow - 1].no_cast = true;
 }
 
 static void
 process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 {
-    if ((ps.cast_mask0 & (1 << (ps.p_l_follow - 1)) & ~ps.not_cast_mask0) != 0) {
+    if (ps.paren[ps.p_l_follow - 1].maybe_cast &&
+	!ps.paren[ps.p_l_follow - 1].no_cast) {
 	ps.next_unary = true;
-	ps.cast_mask0 &= (1 << (ps.p_l_follow - 1)) - 1;
+	ps.paren[ps.p_l_follow - 1].maybe_cast = false;
 	ps.want_blank = opt.space_after_cast;
     } else
 	ps.want_blank = true;
-    ps.not_cast_mask0 &= (1 << (ps.p_l_follow - 1)) - 1;
+    ps.paren[ps.p_l_follow - 1].no_cast = false;
 
     if (ps.p_l_follow > 0)
 	ps.p_l_follow--;
@@ -855,8 +856,6 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     *quest_level = 0;
     if (ps.prev_token == lsym_rparen_or_rbracket)
 	ps.in_func_def_params = false;
-    ps.cast_mask0 = 0;
-    ps.not_cast_mask0 = 0;
     ps.block_init = false;
     ps.block_init_level = 0;
     ps.just_saw_decl--;
