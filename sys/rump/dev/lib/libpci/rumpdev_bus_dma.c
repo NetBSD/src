@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.10 2020/11/02 18:58:06 christos Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.11 2022/02/13 19:20:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.10 2020/11/02 18:58:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.11 2022/02/13 19:20:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: rumpdev_bus_dma.c,v 1.10 2020/11/02 18:58:06 christo
 #include <sys/intr.h>
 
 #include "pci_user.h"
-
-#define	EIEIO	membar_sync()
 
 int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int);
