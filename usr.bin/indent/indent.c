@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.239 2021/11/28 14:29:03 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.240 2022/02/13 12:09:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.239 2021/11/28 14:29:03 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.240 2022/02/13 12:09:19 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -721,19 +721,19 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
 
     /* parenthesized type following sizeof or offsetof is not a cast */
     if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof)
-	ps.not_cast_mask |= 1 << ps.p_l_follow;
+	ps.not_cast_mask0 |= 1 << (ps.p_l_follow - 1);
 }
 
 static void
 process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 {
-    if ((ps.cast_mask & (1 << ps.p_l_follow) & ~ps.not_cast_mask) != 0) {
+    if ((ps.cast_mask0 & (1 << (ps.p_l_follow - 1)) & ~ps.not_cast_mask0) != 0) {
 	ps.next_unary = true;
-	ps.cast_mask &= (1 << ps.p_l_follow) - 1;
+	ps.cast_mask0 &= (1 << (ps.p_l_follow - 1)) - 1;
 	ps.want_blank = opt.space_after_cast;
     } else
 	ps.want_blank = true;
-    ps.not_cast_mask &= (1 << ps.p_l_follow) - 1;
+    ps.not_cast_mask0 &= (1 << (ps.p_l_follow - 1)) - 1;
 
     if (ps.p_l_follow > 0)
 	ps.p_l_follow--;
@@ -855,8 +855,8 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     *quest_level = 0;
     if (ps.prev_token == lsym_rparen_or_rbracket)
 	ps.in_func_def_params = false;
-    ps.cast_mask = 0;
-    ps.not_cast_mask = 0;
+    ps.cast_mask0 = 0;
+    ps.not_cast_mask0 = 0;
     ps.block_init = false;
     ps.block_init_level = 0;
     ps.just_saw_decl--;
