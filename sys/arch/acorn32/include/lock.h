@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9 2009/01/15 01:11:32 pooka Exp $	*/
+/*	$NetBSD: lock.h,v 1.10 2022/02/13 13:41:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ static __inline void __attribute__((__unused__))
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
+	__insn_barrier();
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
