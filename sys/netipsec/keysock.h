@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.12 2018/12/24 15:57:15 maxv Exp $	*/
+/*	$NetBSD: keysock.h,v 1.13 2022/02/13 22:20:08 andvar Exp $	*/
 /*	$FreeBSD: keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
@@ -54,7 +54,7 @@
 		/* space for 256 counters */
 #define	PFKEY_STAT_IN_MSGTARGET	525	/* one/all/registered */
 		/* space for 3 counters */
-#define	PFKEY_STAT_IN_NOMEM	528	/* memory alloation failure */
+#define	PFKEY_STAT_IN_NOMEM	528	/* memory allocation failure */
 #define	PFKEY_STAT_SOCKERR	529	/* # of socket related errors */
 
 #define	PFKEY_NSTATS		530

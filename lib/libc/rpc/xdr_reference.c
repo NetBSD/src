@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_reference.c,v 1.18 2013/03/11 20:19:30 tron Exp $	*/
+/*	$NetBSD: xdr_reference.c,v 1.19 2022/02/13 22:20:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_reference.c 1.11 87/08/11 SMI";
 static char *sccsid = "@(#)xdr_reference.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_reference.c,v 1.18 2013/03/11 20:19:30 tron Exp $");
+__RCSID("$NetBSD: xdr_reference.c,v 1.19 2022/02/13 22:20:08 andvar Exp $");
 #endif
 #endif
 
@@ -71,7 +71,7 @@ __weak_alias(xdr_reference,_xdr_reference)
  * referenced by a pointer inside the structure that is currently being
  * translated.  pp references a pointer to storage. If *pp is null
  * the  necessary storage is allocated.
- * size is the sizeof the referneced structure.
+ * size is the sizeof the referenced structure.
  * proc is the routine to handle the referenced structure.
  */
 bool_t
@@ -112,7 +112,7 @@ xdr_reference(XDR *xdrs, caddr_t *pp, u_int size, xdrproc_t proc)
  * xdr_pointer():
  *
  * XDR a pointer to a possibly recursive data structure. This
- * differs with xdr_reference in that it can serialize/deserialiaze
+ * differs with xdr_reference in that it can serialize/deserialize
  * trees correctly.
  *
  *  What's sent is actually a union:
