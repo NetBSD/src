@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.110 2022/02/13 12:20:09 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.111 2022/02/13 12:43:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -273,13 +273,16 @@ extern struct parser_state {
 				 * prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
 
-    int paren_level;		/* parenthesization level. used to indent
-				 * within statements, initializers and
-				 * declarations */
-    /* TODO: rename to next_line_paren_level */
-    int p_l_follow;		/* how to indent the remaining lines of the
-				 * statement or initializer or declaration */
+    int line_start_nparen;	/* the number of parentheses or brackets that
+				 * were already open at the beginning of the
+				 * current line; used to indent within
+				 * statements, initializers and declarations */
+    int nparen;			/* the number of parentheses or brackets that
+				 * are currently open; used to indent the
+				 * remaining lines of the statement,
+				 * initializer or declaration */
     paren_level_props paren[20];
+
     int comment_delta;		/* used to set up indentation for all lines of
 				 * a boxed comment after the first one */
     int n_comment_delta;	/* remembers how many columns there were
