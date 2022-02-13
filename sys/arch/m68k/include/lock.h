@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.16 2019/11/29 20:05:49 riastradh Exp $	*/
+/*	$NetBSD: lock.h,v 1.17 2022/02/13 13:41:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,9 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	__asm volatile(
 		"1:	tas	%0	\n"
 		"	jne	1b	\n"
-		: "=m" (*alp));
+		: "=m" (*alp)
+		: /* no inputs */
+		: "cc", "memory");
 }
 
 static __inline int
@@ -89,7 +91,9 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 		"	jeq	1f	\n"
 		"	moveq	#0, %1	\n"
 		"1:			\n"
-		: "=m" (*alp), "=d" (__rv));
+		: "=m" (*alp), "=d" (__rv)
+		: /* no inputs */
+		: "cc", "memory");
 
 	return (__rv);
 }
@@ -98,6 +102,7 @@ static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
+	__insn_barrier();
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
