@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.33 2019/11/29 20:06:34 riastradh Exp $ */
+/*	$NetBSD: lock.h,v 1.34 2022/02/13 13:41:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -118,6 +118,12 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 		while (*alp != __SIMPLELOCK_UNLOCKED)
 			/* spin */ ;
 	}
+
+	/*
+	 * No memory barrier needed here to make this a load-acquire
+	 * operation because LDSTUB already implies that.  See SPARCv8
+	 * Reference Manual, Appendix J.4 `Spin Locks', p. 271.
+	 */
 }
 #endif /* __CPU_SIMPLE_LOCK_NOINLINE */
 
@@ -125,6 +131,10 @@ static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 
+	/*
+	 * No memory barrier needed for LDSTUB to be a load-acquire --
+	 * see __cpu_simple_lock.
+	 */
 	return (__ldstub(alp) == __SIMPLELOCK_UNLOCKED);
 }
 
@@ -135,6 +145,9 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 	/*
 	 * Insert compiler barrier to prevent instruction re-ordering
 	 * around the lock release.
+	 *
+	 * No memory barrier needed because we run the kernel in TSO.
+	 * If we ran the kernel in PSO, this would require STBAR.
 	 */
 	__insn_barrier();
 	*alp = __SIMPLELOCK_UNLOCKED;
