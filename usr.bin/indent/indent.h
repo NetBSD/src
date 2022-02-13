@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.108 2022/02/12 19:56:52 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.109 2022/02/13 12:09:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -272,9 +272,9 @@ extern struct parser_state {
 				 * level of parentheses or brackets, relative
 				 * to the enclosing statement; if negative,
 				 * reflected at -1 */
-    int cast_mask;		/* indicates which close parentheses
+    int cast_mask0;		/* indicates which close parentheses
 				 * potentially close off casts */
-    int not_cast_mask;		/* indicates which close parentheses
+    int not_cast_mask0;		/* indicates which close parentheses
 				 * definitely close off something else than
 				 * casts */
 
