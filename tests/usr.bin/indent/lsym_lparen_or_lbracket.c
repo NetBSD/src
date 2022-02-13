@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.2 2022/02/13 11:07:48 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.3 2022/02/13 12:04:37 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -21,8 +21,26 @@
  * In an expression, '(' followed by a type name starts a cast expression.
  */
 
+// TODO: Add systematic tests for all cases.
+
 #indent input
-// TODO: add input
+void
+function(void)
+{
+	/* Type casts */
+	a = (int)b;
+	a = (struct tag)b;
+	/* TODO: The '(int)' is not a type cast, it is a prototype list. */
+	a = (int (*)(int))fn;
+
+	/* Not type casts */
+	a = sizeof(int) * 2;
+	a = sizeof(5) * 2;
+	a = offsetof(struct stat, st_mtime);
+
+	/* Grouping subexpressions */
+	a = ((((b + c)))) * d;
+}
 #indent end
 
 #indent run-equals-input
