@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.32 2022/02/12 23:03:52 rillig Exp $	*/
+/*	$NetBSD: script.c,v 1.33 2022/02/13 19:40:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.32 2022/02/12 23:03:52 rillig Exp $");
+__RCSID("$NetBSD: script.c,v 1.33 2022/02/13 19:40:14 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -231,23 +231,30 @@ xsignal(int signo, sig_t handler)
 	return osa.sa_handler;
 }
 
+static int
+getshellstatus(int status)
+{
+	if (WIFEXITED(status))
+		return WEXITSTATUS(status);
+	if (WIFSIGNALED(status))
+		return 128 + WTERMSIG(status);
+	return EXIT_FAILURE;
+}
+
 static void
 finish(int signo)
 {
 	int pid, status;
 
+	die = 0;
 	while ((pid = wait(&status)) > 0)
 		if (pid == child) {
-			cstat = status;
 			die = 1;
 		}
 
-	if (!eflag)
-		cstat = EXIT_SUCCESS;
-	else if (WIFEXITED(cstat))
-		cstat = WEXITSTATUS(cstat);
-	else
-		cstat = 128 + WTERMSIG(cstat);
+	if (!die)
+		return;
+	done(eflag ? getshellstatus(status) : EXIT_SUCCESS);
 }
 
 static void
@@ -312,8 +319,11 @@ doshell(const char *command)
 		execl(shell, shell, "-i", NULL);
 		warn("execl `%s'", shell);
 	} else {
-		if (system(command) == -1)
+		int ret = system(command);
+		if (ret == -1)
 			warn("system `%s'", command);
+		else
+			exit(eflag ? getshellstatus(ret) : EXIT_FAILURE);
 	}
 
 	fail();
