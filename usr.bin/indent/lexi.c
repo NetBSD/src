@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.170 2022/02/13 12:09:19 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.171 2022/02/13 12:20:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.170 2022/02/13 12:09:19 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.171 2022/02/13 12:20:09 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -262,6 +262,42 @@ debug_full_parser_state(void)
 	else if (debug_full_parser_state()) \
 	    debug_println("       %3d ps." #name, ps.name)
 
+static bool
+ps_paren_has_changed(const struct parser_state *prev_ps)
+{
+    const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
+
+    if (prev_ps->p_l_follow != ps.p_l_follow)
+	return true;
+
+    for (int i = 0; i < ps.p_l_follow; i++) {
+	if (curr[i].indent != prev[i].indent ||
+	    curr[i].maybe_cast != prev[i].maybe_cast ||
+	    curr[i].no_cast != prev[i].no_cast)
+	    return true;
+    }
+    return false;
+}
+
+static void
+debug_ps_paren(const struct parser_state *prev_ps)
+{
+    if (!debug_full_parser_state() && !ps_paren_has_changed(prev_ps))
+	return;
+
+    debug_printf("           ps.paren:");
+    for (int i = 0; i < ps.p_l_follow; i++) {
+	const paren_level_props *props = ps.paren + i;
+	const char *cast = props->no_cast ? "(no cast)"
+	    : props->maybe_cast ? "(cast)"
+	    : "";
+	debug_printf(" %s%d", cast, props->indent);
+    }
+    if (ps.p_l_follow == 0)
+	debug_printf(" none");
+    debug_println("");
+}
+
 static void
 debug_lexi(lexer_symbol lsym)
 {
@@ -287,14 +323,7 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_bool(want_blank);
     debug_ps_int(paren_level);
     debug_ps_int(p_l_follow);
-    if (ps.paren_level != prev_ps.paren_level) {
-	debug_printf("           ps.paren_indents:");
-	for (int i = 0; i < ps.paren_level; i++)
-	    debug_printf(" %d", ps.paren_indents[i]);
-	debug_println("");
-    }
-    debug_ps_int(cast_mask0);
-    debug_ps_int(not_cast_mask0);
+    debug_ps_paren(&prev_ps);
 
     debug_ps_int(comment_delta);
     debug_ps_int(n_comment_delta);
@@ -556,7 +585,8 @@ lexi_alnum(void)
 found_typename:
 	if (ps.p_l_follow > 0) {
 	    /* inside parentheses: cast, param list, offsetof or sizeof */
-	    ps.cast_mask0 |= (1 << (ps.p_l_follow - 1)) & ~ps.not_cast_mask0;
+	    if (!ps.paren[ps.p_l_follow - 1].no_cast)
+		ps.paren[ps.p_l_follow - 1].maybe_cast = true;
 	}
 	if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
 	    if (kw != NULL && kw->lsym == lsym_tag) {

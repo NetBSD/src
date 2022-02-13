@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.144 2022/02/12 19:56:52 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.145 2022/02/13 12:20:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.144 2022/02/12 19:56:52 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.145 2022/02/13 12:20:09 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -450,12 +450,12 @@ output_line_code(int ind)
 
     int target_ind = compute_code_indent();
     for (int i = 0; i < ps.p_l_follow; i++) {
-	if (ps.paren_indents[i] >= 0) {
-	    int paren_ind = ps.paren_indents[i];
-	    ps.paren_indents[i] = (short)(-1 - (paren_ind + target_ind));
+	if (ps.paren[i].indent >= 0) {
+	    int paren_ind = ps.paren[i].indent;
+	    ps.paren[i].indent = (short)(-1 - (paren_ind + target_ind));
 	    debug_println(
 		"setting paren_indents[%d] from %d to %d for column %d",
-		i, paren_ind, ps.paren_indents[i], target_ind + 1);
+		i, paren_ind, ps.paren[i].indent, target_ind + 1);
 	}
     }
 
@@ -575,7 +575,7 @@ output_complete_line(char line_terminator)
 
     if (ps.paren_level > 0) {
 	/* TODO: explain what negative indentation means */
-	paren_indent = -1 - ps.paren_indents[ps.paren_level - 1];
+	paren_indent = -1 - ps.paren[ps.paren_level - 1].indent;
 	debug_println("paren_indent is now %d", paren_indent);
     }
 
