@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.35 2021/12/21 09:51:22 skrll Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.36 2022/02/14 09:23:32 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_DEV_USB_USB_MEM_H_
+#define	_DEV_USB_USB_MEM_H_
+
 typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
@@ -60,3 +63,5 @@ bus_addr_t	usb_dmaaddr(usb_dma_t *, unsigned int);
 #define DMAADDR(dma, o)	usb_dmaaddr((dma), (o))
 #define KERNADDR(dma, o) \
 	((void *)((char *)(dma)->udma_block->kaddr + (dma)->udma_offs + (o)))
+
+#endif	/* _DEV_USB_USB_MEM_H_ */
