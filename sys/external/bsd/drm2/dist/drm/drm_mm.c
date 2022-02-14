@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.15 2022/02/14 13:02:31 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.16 2022/02/14 13:22:11 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.15 2022/02/14 13:02:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.16 2022/02/14 13:22:11 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
@@ -430,7 +430,14 @@ static struct drm_mm_node *best_hole(struct drm_mm *mm, u64 size)
 static struct drm_mm_node *find_hole(struct drm_mm *mm, u64 addr)
 {
 #ifdef __NetBSD__
-	return rb_tree_find_node_leq(&mm->holes_addr.rbr_tree, &addr);
+	struct drm_mm_node *node;
+
+	node = rb_tree_find_node_leq(&mm->holes_addr.rbr_tree, &addr);
+	KASSERT(node == NULL || __drm_mm_hole_node_start(node) <= addr);
+	KASSERT(node == NULL || addr <
+	    __drm_mm_hole_node_start(node) + node->hole_size);
+
+	return node;
 #else
 	struct rb_node *rb = mm->holes_addr.rb_node;
 	struct drm_mm_node *node = NULL;
