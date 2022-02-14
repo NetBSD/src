@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.30 2021/12/23 17:09:25 hannken Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.31 2022/02/14 09:25:39 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.30 2021/12/23 17:09:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.31 2022/02/14 09:25:39 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -1190,6 +1190,7 @@ static int ttm_bo_move_buffer(struct ttm_buffer_object *bo,
 
 	dma_resv_assert_held(bo->base.resv);
 
+	memset(&mem, 0, sizeof(mem));
 	mem.num_pages = bo->num_pages;
 	mem.size = mem.num_pages << PAGE_SHIFT;
 	mem.page_alignment = bo->mem.page_alignment;
