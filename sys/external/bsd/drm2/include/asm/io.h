@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.8 2021/12/19 10:59:55 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.9 2022/02/14 00:28:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,13 +36,6 @@
 #include <sys/systm.h>
 
 #include <linux/string.h>
-
-/*
- * XXX This is bollocks, and is wrong on various architectures (should
- * work for x86; who knows what else), but bus_space_barrier won't work
- * because we have no bus space tag or handle or offset or anything.
- */
-#define	mmiowb()	membar_sync()
 
 #define	memcpy_fromio(d,s,n)	memcpy((d),__UNVOLATILE(s),(n))
 #define	memcpy_toio(d,s,n)	memcpy(__UNVOLATILE(d),(s),(n))
