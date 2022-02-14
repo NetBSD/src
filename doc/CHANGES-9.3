@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.75 2022/02/08 14:45:57 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.76 2022/02/14 06:47:40 msaitoh Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1479,3 +1479,10 @@ sys/dev/ata/ata_subr.c				1.9
 	requeued anyway.
 	[jdolecek, ticket #1426]
 
+usr.sbin/sysinst/arch/i386/md.c			1.35
+usr.sbin/sysinst/defs.h				1.80
+usr.sbin/sysinst/target.c			1.18
+
+	sysinst: on x86 fix the copying of UEFI bootloaders which got
+	broken by the fixes in ticket #1422.
+	[martin, ticket #1427]
