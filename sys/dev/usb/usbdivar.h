@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.130 2021/09/07 10:44:18 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.131 2022/02/14 09:23:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -29,6 +29,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_DEV_USB_USBDIVAR_H_
+#define	_DEV_USB_USBDIVAR_H_
 
 /*
  * Discussion about locking in the USB code:
@@ -397,3 +400,5 @@ usb_addr2dindex(int addr)
 
 #define usbd_lock_pipe(p)	mutex_enter((p)->up_dev->ud_bus->ub_lock)
 #define usbd_unlock_pipe(p)	mutex_exit((p)->up_dev->ud_bus->ub_lock)
+
+#endif	/* _DEV_USB_USBDIVAR_H_ */
