@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.16 2022/02/14 13:22:11 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.17 2022/02/14 13:22:21 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.16 2022/02/14 13:22:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.17 2022/02/14 13:22:21 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
@@ -240,6 +240,13 @@ compare_hole_addrs(void *cookie, const void *va, const void *vb)
 	const u64 aa = __drm_mm_hole_node_start(a);
 	const u64 ba = __drm_mm_hole_node_start(b);
 
+	KASSERTMSG((aa == ba ||
+		aa + a->hole_size <= ba ||
+		aa >= ba + b->hole_size),
+	    "overlapping holes: [0x%"PRIx64", 0x%"PRIx64"),"
+	    " [0x%"PRIx64", 0x%"PRIx64")",
+	    aa, aa + a->hole_size,
+	    ba, ba + b->hole_size);
 	if (aa < ba)
 		return -1;
 	if (aa > ba)
@@ -256,7 +263,7 @@ compare_hole_addr_key(void *cookie, const void *vn, const void *vk)
 
 	if (a < *k)
 		return -1;
-	if (a > *k)
+	if (a + n->hole_size >= *k) /* allows range lookups */
 		return +1;
 	return 0;
 }
@@ -432,7 +439,7 @@ static struct drm_mm_node *find_hole(struct drm_mm *mm, u64 addr)
 #ifdef __NetBSD__
 	struct drm_mm_node *node;
 
-	node = rb_tree_find_node_leq(&mm->holes_addr.rbr_tree, &addr);
+	node = rb_tree_find_node(&mm->holes_addr.rbr_tree, &addr);
 	KASSERT(node == NULL || __drm_mm_hole_node_start(node) <= addr);
 	KASSERT(node == NULL || addr <
 	    __drm_mm_hole_node_start(node) + node->hole_size);
