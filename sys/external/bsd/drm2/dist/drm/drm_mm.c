@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.17 2022/02/14 13:22:21 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.18 2022/02/14 13:22:30 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.17 2022/02/14 13:22:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.18 2022/02/14 13:22:30 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
@@ -478,10 +478,18 @@ first_hole(struct drm_mm *mm,
 		return best_hole(mm, size);
 
 	case DRM_MM_INSERT_LOW:
+#ifdef __NetBSD__
+		return rb_tree_find_node_geq(&mm->holes_addr.rbr_tree, &start);
+#else
 		return find_hole(mm, start);
+#endif
 
 	case DRM_MM_INSERT_HIGH:
+#ifdef __NetBSD__
+		return rb_tree_find_node_leq(&mm->holes_addr.rbr_tree, &end);
+#else
 		return find_hole(mm, end);
+#endif
 
 	case DRM_MM_INSERT_EVICT:
 		return list_first_entry_or_null(&mm->hole_stack,
