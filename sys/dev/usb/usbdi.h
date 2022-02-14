@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.103 2021/06/13 14:48:10 riastradh Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.104 2022/02/14 09:22:30 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -33,6 +33,10 @@
 
 #ifndef _USBDI_H_
 #define _USBDI_H_
+
+#include <sys/types.h>
+
+#include <dev/usb/usb.h>
 
 struct usbd_bus;
 struct usbd_device;
