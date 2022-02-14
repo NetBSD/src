@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.15 2021/12/19 12:00:08 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.16 2022/02/14 19:13:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ rb_replace_node_cached(struct rb_node *old, struct rb_node *new,
 	for ((NODE) = RB_TREE_MIN(&(ROOT)->rbr_tree);			      \
 		((NODE) != NULL &&					      \
 		    ((TMP) = rb_tree_iterate(&(ROOT)->rbr_tree, (NODE),	      \
-			RB_DIR_RIGHT)));				      \
+			RB_DIR_RIGHT), 1));				      \
 		(NODE) = (TMP))
 
 #endif  /* _LINUX_RBTREE_H_ */
