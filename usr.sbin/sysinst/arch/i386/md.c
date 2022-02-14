@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20.2.9 2022/02/02 04:25:37 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.20.2.10 2022/02/14 06:45:34 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -334,9 +334,10 @@ md_post_newfs_bios(struct install_partition_desc *install)
  * boot partition (or update them).
  */
 static int
-copy_uefi_boot(const struct part_usage_info *boot)
+copy_uefi_boot(const struct part_usage_info *boot, bool target_is_populated)
 {
 	char dev[MAXPATHLEN], path[MAXPATHLEN], src[MAXPATHLEN];
+	const char *s;
 	size_t i;
 	int err;
 
@@ -364,13 +365,18 @@ copy_uefi_boot(const struct part_usage_info *boot)
 	make_target_dir(path);
 
 	for (i = 0; i < __arraycount(uefi_bootloaders); i++) {
-		strcpy(src, target_expand(uefi_bootloaders[i]));
+		s = uefi_bootloaders[i];
+		strcpy(src, target_is_populated ? target_expand(s) : s);
 		if (access(src, R_OK) != 0)
 			continue;
-		err = cp_within_target(uefi_bootloaders[i], path, 0);
+		err = target_is_populated ?
+		    cp_within_target(s, path, 0) :
+		    cp_to_target(s, path);
 		if (err)
 			return err;
 	}
+	if (boot->mount[0] == 0)
+		target_unmount("/mnt");
 
 	return 0;
 }
@@ -379,7 +385,8 @@ copy_uefi_boot(const struct part_usage_info *boot)
  * Find (U)EFI boot partition and install/update bootloaders
  */
 static int
-update_uefi_boot_code(struct install_partition_desc *install)
+update_uefi_boot_code(struct install_partition_desc *install,
+    bool target_is_populated)
 {
 	size_t i, boot_part;
 
@@ -405,7 +412,8 @@ update_uefi_boot_code(struct install_partition_desc *install)
 	}
 
 	if (boot_part < install->num)
-		return copy_uefi_boot(&install->infos[boot_part]);
+		return copy_uefi_boot(&install->infos[boot_part],
+		    target_is_populated);
 
 	return -1;	/* no EFI boot partition found */
 }
@@ -420,17 +428,18 @@ update_bios_boot_code(struct install_partition_desc *install)
 }
 
 static int
-update_boot_code(struct install_partition_desc *install)
+update_boot_code(struct install_partition_desc *install,
+    bool target_is_populated)
 {
 	return uefi_boot ?
-	    update_uefi_boot_code(install)
+	    update_uefi_boot_code(install, target_is_populated)
 	    : update_bios_boot_code(install);
 }
 
 static int
 md_post_newfs_uefi(struct install_partition_desc *install)
 {
-	return update_uefi_boot_code(install);
+	return update_uefi_boot_code(install, false);
 }
 
 /*
@@ -450,7 +459,7 @@ int
 md_post_extract(struct install_partition_desc *install, bool upgrade)
 {
 	if (upgrade)
-		update_boot_code(install);
+		update_boot_code(install, true);
 
 #if defined(__amd64__)
 	if (get_kernel_set() == SET_KERNEL_2) {
