@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.25 2022/02/15 13:44:47 jakllsch Exp $
+/	$NetBSD: units.lib,v 1.26 2022/02/15 16:21:35 jakllsch Exp $
 
 / primitive units
 
@@ -612,7 +612,8 @@ neutronmass		1.6606e-27 kg
 V			volt
 eV			e V
 bohrradius		hbar2-C2/8.988e9 N m2-e2-electronmass
-becquerel		1|3.7e10 curie
+becquerel		/sec
+Bq			becquerel
 fresnel			1e12 hertz
 statcoul		1|2.99792458e9 coul
 statamp			1|2.99792458e9 amp
