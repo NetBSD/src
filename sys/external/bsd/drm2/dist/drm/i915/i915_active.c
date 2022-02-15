@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.11 2022/02/14 20:37:51 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.12 2022/02/15 18:14:18 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.11 2022/02/14 20:37:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.12 2022/02/15 18:14:18 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -195,6 +195,8 @@ __active_retire(struct i915_active *ref)
 #endif
 	ref->cache = NULL;
 
+	DRM_SPIN_WAKEUP_ALL(&ref->tree_wq, &ref->tree_lock);
+
 	spin_unlock_irqrestore(&ref->tree_lock, flags);
 
 	/* After the final retire, the entire struct may be freed */
@@ -202,9 +204,6 @@ __active_retire(struct i915_active *ref)
 		ref->retire(ref);
 
 	/* ... except if you wait on it, you must manage your own references! */
-	spin_lock(&ref->tree_lock);
-	DRM_SPIN_WAKEUP_ALL(&ref->tree_wq, &ref->tree_lock);
-	spin_unlock(&ref->tree_lock);
 
 	rbtree_postorder_for_each_entry_safe(it, n, &root, node) {
 		GEM_BUG_ON(i915_active_fence_isset(&it->base));
