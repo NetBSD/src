@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10 2018/04/11 19:37:58 palle Exp $ */
+/*	$NetBSD: frame.h,v 1.11 2022/02/15 20:35:37 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,7 +125,8 @@ struct frame64 {
 
 /*
  * CC64FSZ (C Compiler 64-bit Frame SiZe) is the size of a stack frame used
- * by the compiler in 64-bit mode.  It is (16)*8; space for 8 ins, 8 outs.
+ * by the compiler in 64-bit mode (see struct frame64 above).
+ * It is 8*8 + 6*8 + 8 + 8 + 6*8 + 0*8 = 176 bytes.
  */
 #define CC64FSZ		176
 
