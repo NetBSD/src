@@ -1,4 +1,4 @@
-.\"	$NetBSD: membar_ops.3,v 1.8 2020/10/09 19:41:02 uwe Exp $
+.\"	$NetBSD: membar_ops.3,v 1.9 2022/02/15 22:46:53 riastradh Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -358,7 +358,9 @@ if the load is in an atomic read/modify/write operation.
 .El
 .Sh SEE ALSO
 .Xr atomic_ops 3 ,
-.Xr atomic_loadstore 9
+.Xr atomic_loadstore 9 ,
+.Xr bus_dma 9 ,
+.Xr bus_space 9
 .Sh HISTORY
 The
 .Nm membar_ops
