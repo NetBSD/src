@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.24 2020/04/23 09:38:17 kre Exp $
+/	$NetBSD: units.lib,v 1.25 2022/02/15 13:44:47 jakllsch Exp $
 
 / primitive units
 
@@ -271,7 +271,7 @@ denmarkkrone		.15 $
 ecuadorsucre		.000539 $
 europeeuro		0.9142 $
 greatbritainpound	britainpound
-hongkongdollar		.13  $
+hongkongdollar		.13 $
 hungaryforint		.011 $
 indiarupee		.03211 $
 indonesiarupiah		.0004782 $
@@ -292,7 +292,7 @@ polandzloty		.000059 $
 saudiarabiariyal	.26702 $
 singaporedollar		.6157 $
 slovakkoruna		.034 $
-southafricarand	        .21 $
+southafricarand		.21 $
 southkoreawon		.001 $
 swedenkrona		.13 $
 switzerlandfranc	.66 $
