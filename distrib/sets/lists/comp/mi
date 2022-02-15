@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2411 2022/02/12 17:10:20 riastradh Exp $
+#	$NetBSD: mi,v 1.2412 2022/02/15 22:46:29 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11162,6 +11162,11 @@
 ./usr/share/man/cat9/KASSERTMSG.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/KDASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KDASSERTMSG.0		comp-sys-catman		.cat
+./usr/share/man/cat9/KERNEL_LOCK.0		comp-sys-catman		.cat
+./usr/share/man/cat9/KERNEL_LOCKED_P.0		comp-sys-catman		.cat
+./usr/share/man/cat9/KERNEL_UNLOCK_ALL.0	comp-sys-catman		.cat
+./usr/share/man/cat9/KERNEL_UNLOCK_LAST.0	comp-sys-catman		.cat
+./usr/share/man/cat9/KERNEL_UNLOCK_ONE.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/KNOTE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/LWP_CACHE_CREDS.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/MALLOC.0			comp-sys-catman		.cat
@@ -19411,6 +19416,11 @@
 ./usr/share/man/html9/KASSERTMSG.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KDASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KDASSERTMSG.html		comp-sys-htmlman	html
+./usr/share/man/html9/KERNEL_LOCK.html		comp-sys-htmlman	html
+./usr/share/man/html9/KERNEL_LOCKED_P.html	comp-sys-htmlman	html
+./usr/share/man/html9/KERNEL_UNLOCK_ALL.html	comp-sys-htmlman	html
+./usr/share/man/html9/KERNEL_UNLOCK_LAST.html	comp-sys-htmlman	html
+./usr/share/man/html9/KERNEL_UNLOCK_ONE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/KNOTE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/LWP_CACHE_CREDS.html	comp-sys-htmlman	html
 ./usr/share/man/html9/MALLOC.html		comp-sys-htmlman	html
@@ -27741,6 +27751,11 @@
 ./usr/share/man/man9/KASSERTMSG.9		comp-sys-man		.man
 ./usr/share/man/man9/KDASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KDASSERTMSG.9		comp-sys-man		.man
+./usr/share/man/man9/KERNEL_LOCK.9		comp-sys-man		.man
+./usr/share/man/man9/KERNEL_LOCKED_P.9		comp-sys-man		.man
+./usr/share/man/man9/KERNEL_UNLOCK_ALL.9	comp-sys-man		.man
+./usr/share/man/man9/KERNEL_UNLOCK_LAST.9	comp-sys-man		.man
+./usr/share/man/man9/KERNEL_UNLOCK_ONE.9	comp-sys-man		.man
 ./usr/share/man/man9/KNOTE.9			comp-sys-man		.man
 ./usr/share/man/man9/LWP_CACHE_CREDS.9		comp-sys-man		.man
 ./usr/share/man/man9/MALLOC.9			comp-sys-man		.man
