@@ -1,4 +1,4 @@
-.\"	$NetBSD: KERNEL_LOCK.9,v 1.1 2022/02/15 22:46:29 riastradh Exp $
+.\"	$NetBSD: KERNEL_LOCK.9,v 1.2 2022/02/15 22:58:25 wiz Exp $
 .\"
 .\" Copyright (c) 2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -149,7 +149,7 @@ and
 .Xr mutex_exit 9
 can break kernel-locked assumptions.
 Subsystems need to be consistently converted from
-.Xr KERNEL_LOCK 9
+.Nm
 and
 .Xr spl 9
 to
@@ -237,7 +237,7 @@ which mean the same thing.
 .Sh NOTES
 Some
 .Nx
-kernel abstractions execute caller-specified funtions with the kernel
+kernel abstractions execute caller-specified functions with the kernel
 lock held by default, for compatibility with legacy code, but can be
 explicitly instructed
 .Em not
