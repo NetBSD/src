@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.21 2021/12/19 12:36:02 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.22 2022/02/15 22:51:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.21 2021/12/19 12:36:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.22 2022/02/15 22:51:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -51,6 +51,17 @@ objlist_tryalloc(uint32_t n)
 	list = kmem_alloc(offsetof(typeof(*list), shared[n]), KM_NOSLEEP);
 	if (list == NULL)
 		return NULL;
+	list->shared_max = n;
+
+	return list;
+}
+
+static struct dma_resv_list *
+objlist_alloc(uint32_t n)
+{
+	struct dma_resv_list *list;
+
+	list = kmem_alloc(offsetof(typeof(*list), shared[n]), KM_SLEEP);
 	list->shared_max = n;
 
 	return list;
@@ -346,9 +357,7 @@ dma_resv_reserve_shared(struct dma_resv *robj, unsigned int num_fences)
 
 		/* Try to double its capacity.  */
 		nalloc = n > UINT32_MAX/2 ? UINT32_MAX : 2*n;
-		prealloc = objlist_tryalloc(nalloc);
-		if (prealloc == NULL)
-			return -ENOMEM;
+		prealloc = objlist_alloc(nalloc);
 
 		/* Swap the new preallocated list and free the old one.  */
 		objlist_free(robj->robj_prealloc);
@@ -356,9 +365,8 @@ dma_resv_reserve_shared(struct dma_resv *robj, unsigned int num_fences)
 	} else {
 		/* Start with some spare.  */
 		nalloc = n > UINT32_MAX/2 ? UINT32_MAX : MAX(2*n, 4);
-		prealloc = objlist_tryalloc(nalloc);
-		if (prealloc == NULL)
-			return -ENOMEM;
+		prealloc = objlist_alloc(nalloc);
+
 		/* Save the new preallocated list.  */
 		robj->robj_prealloc = prealloc;
 	}
@@ -689,8 +697,10 @@ dma_resv_add_shared_fence(struct dma_resv *robj,
 		prealloc->shared_count = shared_count;
 
 		/* If we didn't find one, add it at the end.  */
-		if (replace == NULL)
+		if (replace == NULL) {
+			KASSERT(prealloc->shared_count < prealloc->shared_max);
 			prealloc->shared[prealloc->shared_count++] = fence;
+		}
 
 		/*
 		 * Now ready to replace the list.  Begin an update.
@@ -919,11 +929,20 @@ top:	KASSERT(fence == NULL);
 	if (!dma_resv_get_shared_reader(src_robj, &src_list, &shared_count,
 		&read_ticket))
 		goto restart;
-	if (src_list != NULL) {
-		/* Allocate a new list.  */
-		dst_list = objlist_tryalloc(shared_count);
+	if (src_list) {
+		/* Allocate a new list, if necessary.  */
 		if (dst_list == NULL)
-			return -ENOMEM;
+			dst_list = objlist_tryalloc(shared_count);
+		if (dst_list == NULL || dst_list->shared_max < shared_count) {
+			rcu_read_unlock();
+			if (dst_list) {
+				objlist_free(dst_list);
+				dst_list = NULL;
+			}
+			dst_list = objlist_alloc(shared_count);
+			dst_list->shared_count = 0; /* paranoia */
+			goto top;
+		}
 
 		/* Copy over all fences that are not yet signalled.  */
 		dst_list->shared_count = 0;
@@ -1005,8 +1024,7 @@ restart:
 			dma_fence_put(dst_list->shared[i]);
 			dst_list->shared[i] = NULL; /* paranoia */
 		}
-		objlist_free(dst_list);
-		dst_list = NULL;
+		/* reuse dst_list allocation for the next attempt */
 	}
 	goto top;
 }
