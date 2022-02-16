@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.726 2021/12/31 14:25:23 riastradh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.727 2022/02/16 03:15:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.726 2021/12/31 14:25:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.727 2022/02/16 03:15:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10571,7 +10571,6 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 				break;
 			case MII_MODEL_INTEL_I350:
 				new_phytype = WMPHY_I350;
-				break;
 				break;
 			default:
 				break;
