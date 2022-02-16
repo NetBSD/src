@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2022/01/31 09:16:09 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.128 2022/02/16 22:00:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2022/01/31 09:16:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2022/02/16 22:00:55 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1620,7 +1620,7 @@ _pmap_pdp_addref(struct pmap *pm, paddr_t pdppa, struct vm_page *pdppg_hint)
 }
 
 /*
- * decrement reference counter of the page descriptr page.
+ * decrement reference counter of the page descriptor page.
  * if reference counter is 1(=empty), pages will be freed, and return true.
  * otherwise return false.
  * kernel page, or L0 page descriptor page will be never freed.

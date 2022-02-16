@@ -1,4 +1,4 @@
-/*	$NetBSD: identify.c,v 1.7 2020/09/27 16:45:21 jdolecek Exp $	*/
+/*	$NetBSD: identify.c,v 1.8 2022/02/16 22:00:55 andvar Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: identify.c,v 1.7 2020/09/27 16:45:21 jdolecek Exp $");
+__RCSID("$NetBSD: identify.c,v 1.8 2022/02/16 22:00:55 andvar Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/identify.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -88,7 +88,7 @@ print_controller(struct nvm_identify_controller *cdata)
 	printf("Firmware Activate/Download:  %s\n",
 		(cdata->oacs & NVME_ID_CTRLR_OACS_FW) ?
 		"Supported" : "Not Supported");
-	printf("Namespace Managment:         %s\n",
+	printf("Namespace Management:         %s\n",
 		(cdata->oacs & NVME_ID_CTRLR_OACS_NS) ?
 		"Supported" : "Not Supported");
 	printf("Abort Command Limit:         %d\n", cdata->acl+1);
