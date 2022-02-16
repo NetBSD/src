@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.2 2017/06/24 05:31:03 skrll Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.3 2022/02/16 20:14:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef	_UVM_PMAP_PMAP_PVT_H_
 #define	_UVM_PMAP_PMAP_PVT_H_
 
-#include <sys/pserialize.h>
+#include <sys/types.h>
 
 struct pmap_page;
 
