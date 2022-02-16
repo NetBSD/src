@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.5 2010/10/14 06:12:54 kiyohara Exp $	*/
+/*	$NetBSD: pci.c,v 1.6 2022/02/16 23:49:26 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -92,7 +92,7 @@ enablePCI(int slot, int io, int mem, int master)
 
 	ppci = (u_char *)&PCI_slots[slot].config_addr[CMD];
 	*ppci = enable;
-	__asm volatile("eieio");
+	__asm volatile("eieio" ::: "memory");
 }
 
 void

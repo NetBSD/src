@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2020/02/24 12:20:29 rin Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2022/02/16 23:49:27 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,14 +127,13 @@ setled(uint32_t val)
 	__asm volatile ("isync");
 
 	*(volatile uint32_t *)0xFF600300 = val;
-	__asm volatile ("eieio");
+	__asm volatile ("eieio" ::: "memory");
 	__asm volatile ("isync");
 
 	/* put back to normal */
 	__asm volatile ("mtmsr %0" : : "r"(savemsr));
 	__asm volatile ("isync");
 #endif /* NOTYET */
-	
 #endif
 }
 

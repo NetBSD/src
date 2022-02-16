@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.2 2015/11/12 12:01:53 phx Exp $ */
+/*	$NetBSD: bus.c,v 1.3 2022/02/16 23:49:26 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@ bus_space_barrier(bus_space_tag_t space, bus_space_handle_t handle,
 			bus_size_t offset, bus_size_t length, int flags)
 {
 /* Only amigappc needs barrier. */
-#if defined(__powerpc__) 
-	asm volatile("eieio");	
+#if defined(__powerpc__)
+	asm volatile("eieio" ::: "memory");
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.5 2012/05/19 14:40:13 kiyohara Exp $	*/
+/*	$NetBSD: io.c,v 1.6 2022/02/16 23:49:27 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -106,10 +106,10 @@ _wbinv(uint32_t adr, uint32_t siz)
 {
 	uint32_t bnd;
 
-	asm volatile("eieio");
+	asm volatile("eieio" ::: "memory");
 	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
-		asm volatile ("dcbf 0,%0" :: "r"(adr));
-	asm volatile ("sync");
+		asm volatile("dcbf 0,%0" :: "r"(adr) : "memory");
+	asm volatile("sync" ::: "memory");
 }
 
 void
@@ -120,10 +120,10 @@ _inv(uint32_t adr, uint32_t siz)
 	off = adr & (dcache_line_size - 1);
 	adr -= off;
 	siz += off;
-	asm volatile ("eieio");
+	asm volatile("eieio" ::: "memory");
 	if (off != 0) {
 		/* wbinv() leading unaligned dcache line */
-		asm volatile ("dcbf 0,%0" :: "r"(adr));
+		asm volatile("dcbf 0,%0" :: "r"(adr) : "memory");
 		if (siz < dcache_line_size)
 			goto done;
 		adr += dcache_line_size;
@@ -133,17 +133,17 @@ _inv(uint32_t adr, uint32_t siz)
 	off = bnd & (dcache_line_size - 1);
 	if (off != 0) {
 		/* wbinv() trailing unaligned dcache line */
-		asm volatile ("dcbf 0,%0" :: "r"(bnd)); /* it's OK */
+		asm volatile("dcbf 0,%0" :: "r"(bnd) : "memory"); /* it's OK */
 		if (siz < dcache_line_size)
 			goto done;
 		siz -= off;
 	}
 	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size) {
 		/* inv() intermediate dcache lines if ever */
-		asm volatile ("dcbi 0,%0" :: "r"(adr));
+		asm volatile("dcbi 0,%0" :: "r"(adr) : "memory");
 	}
   done:
-	asm volatile ("sync");
+	asm volatile("sync" ::: "memory");
 }
 
 u_long
