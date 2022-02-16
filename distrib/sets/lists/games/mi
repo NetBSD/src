@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60 2021/01/02 03:24:01 nat Exp $
+# $NetBSD: mi,v 1.61 2022/02/16 01:26:30 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -261,6 +261,7 @@
 ./usr/share/man/cat6/tetris.0			games-games-catman	.cat
 ./usr/share/man/cat6/trek.0			games-games-catman	.cat
 ./usr/share/man/cat6/wargames.0			games-games-catman	.cat
+./usr/share/man/cat6/warp.0			games-games-catman	.cat
 ./usr/share/man/cat6/worm.0			games-games-catman	.cat
 ./usr/share/man/cat6/worms.0			games-games-catman	.cat
 ./usr/share/man/cat6/wtf.0			games-utils-catman	.cat

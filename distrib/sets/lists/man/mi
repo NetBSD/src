@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1733 2022/01/23 14:35:44 christos Exp $
+# $NetBSD: mi,v 1.1734 2022/02/16 01:26:30 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1301,6 +1301,7 @@
 ./usr/share/man/cat4/i386/omms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/opms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/pcibios.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/pcmb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/pcvt.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/pms.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/pnpbios.0		man-sys-catman		.cat
@@ -1572,9 +1573,11 @@
 ./usr/share/man/cat4/pc532/plip.0		man-obsolete		obsolete
 ./usr/share/man/cat4/pc532/scn.0		man-obsolete		obsolete
 ./usr/share/man/cat4/pcdisplay.0		man-sys-catman		.cat
+./usr/share/man/cat4/pceb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pcf8563rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pchb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pci.0			man-sys-catman		.cat
+./usr/share/man/cat4/pcib.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pciback.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pcic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pciide.0			man-sys-catman		.cat
@@ -1659,6 +1662,7 @@
 ./usr/share/man/cat4/rcons.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rdcphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/re.0			man-sys-catman		.cat
+./usr/share/man/cat4/rge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rgephy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rl.0			man-obsolete		obsolete
 ./usr/share/man/cat4/rlphy.0			man-sys-catman		.cat
