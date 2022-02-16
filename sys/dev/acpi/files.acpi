@@ -1,6 +1,4 @@
-#	$NetBSD: files.acpi,v 1.123 2022/01/09 15:05:16 jmcneill Exp $
-
-include "dev/acpi/acpica/files.acpica"
+#	$NetBSD: files.acpi,v 1.124 2022/02/16 20:14:30 riastradh Exp $
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
