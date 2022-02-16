@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpevar.h,v 1.6 2021/12/05 02:47:01 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpevar.h,v 1.7 2022/02/16 22:00:56 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -117,7 +117,7 @@ struct mvxpe_rx_ring {
 	struct mvxpe_rx_desc		*rx_descriptors;
 	bus_dmamap_t			rx_descriptors_map;
 
-	/* Managment entries for each of descritors */
+	/* Management entries for each of descriptors */
 	struct mvxpe_rx_handle {
 		struct mvxpe_rx_desc	*rxdesc_va;
 		off_t			rxdesc_off; /* from rx_descriptors[0] */
@@ -143,7 +143,7 @@ struct mvxpe_tx_ring {
 	struct mvxpe_tx_desc		*tx_descriptors;
 	bus_dmamap_t			tx_descriptors_map;
 
-	/* Managment entries for each of descritors */
+	/* Management entries for each of descriptors */
 	struct mvxpe_tx_handle {
 		struct mvxpe_tx_desc	*txdesc_va;
 		off_t			txdesc_off; /* from tx_descriptors[0] */

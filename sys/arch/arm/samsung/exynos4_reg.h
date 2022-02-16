@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos4_reg.h,v 1.15 2018/08/19 07:27:33 skrll Exp $	*/
+/*	$NetBSD: exynos4_reg.h,v 1.16 2022/02/16 22:00:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@
 #define EXYNOS4_RTC_OFFSET			0x00070000	/* Real Time Clock */
 #define EXYNOS4_KEYIF_OFFSET			0x000A0000	/* Keypad interface */
 #define EXYNOS4_HDMI_CEC_OFFSET			0x000B0000	/* HDMI Consumer Electronic Control */
-#define EXYNOS4_TMU_OFFSET			0x000C0000	/* Thermal Managment */
+#define EXYNOS4_TMU_OFFSET			0x000C0000	/* Thermal Management */
 #define EXYNOS4_SECKEY_OFFSET			0x00100000	/* XXX unknown XXX */
 #define EXYNOS4_TZPC0_OFFSET			0x00110000	/* ARM Trusted Zone Protection Controller */
 #define EXYNOS4_TZPC1_OFFSET			0x00120000

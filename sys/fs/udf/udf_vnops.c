@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.118 2022/02/06 20:20:19 andvar Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.119 2022/02/16 22:00:56 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.118 2022/02/06 20:20:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.119 2022/02/16 22:00:56 andvar Exp $");
 #endif /* not lint */
 
 
@@ -104,7 +104,7 @@ udf_inactive(void *v)
 
 	if ((refcnt == 0) && (vp->v_vflag & VV_SYSTEM)) {
 		DPRINTF(VOLUMES, ("UDF_INACTIVE deleting VV_SYSTEM\n"));
-		/* system nodes are not writen out on inactive, so flush */
+		/* system nodes are not written out on inactive, so flush */
 		udf_node->i_flags = 0;
 	}
 

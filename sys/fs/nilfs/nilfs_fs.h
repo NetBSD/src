@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_fs.h,v 1.3 2012/12/01 11:41:49 mbalmer Exp $ */
+/* $NetBSD: nilfs_fs.h,v 1.4 2022/02/16 22:00:56 andvar Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -447,7 +447,7 @@ struct nilfs_segment_summary {
 /*
  * Structure of DAT/inode file.
  *
- * A DAT file is devided into groups. The maximum number of groups is the
+ * A DAT file is divided into groups. The maximum number of groups is the
  * number of block group descriptors that fit into one block; this descriptor
  * only gives the number of free entries in the associated group.
  *

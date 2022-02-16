@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatareg.h,v 1.4 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: mvsatareg.h,v 1.5 2022/02/16 22:00:55 andvar Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -250,15 +250,15 @@
 
 /* EDMA Command Request Block (CRQB) Data */
 struct crqb {
-	uint32_t cprdbl;	/* cPRD Desriptor Table Base Low Address */
-	uint32_t cprdbh;	/* cPRD Desriptor Table Base High Address */
+	uint32_t cprdbl;	/* cPRD Descriptor Table Base Low Address */
+	uint32_t cprdbh;	/* cPRD Descriptor Table Base High Address */
 	uint16_t ctrlflg;	/* Control Flags */
 	uint16_t atacommand[11];
 } __packed __aligned(8);
 
 struct crqb_gen2e {
-	uint32_t cprdbl;	/* cPRD Desriptor Table Base Low Address */
-	uint32_t cprdbh;	/* cPRD Desriptor Table Base High Address */
+	uint32_t cprdbl;	/* cPRD Descriptor Table Base Low Address */
+	uint32_t cprdbh;	/* cPRD Descriptor Table Base High Address */
 	uint32_t ctrlflg;	/* Control Flags */
 	uint32_t drbc;		/* Data Region Byte Count */
 	uint8_t atacommand[16];

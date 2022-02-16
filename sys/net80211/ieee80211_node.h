@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.30 2018/04/19 21:50:10 christos Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.31 2022/02/16 22:00:56 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -76,7 +76,7 @@ struct ieee80211_rsnparms {
 	u_int8_t	rsn_ucastcipherset;	/* unicast cipher set */
 	u_int8_t	rsn_ucastcipher;	/* selected unicast cipher */
 	u_int8_t	rsn_ucastkeylen;	/* unicast key length */
-	u_int8_t	rsn_keymgmtset;		/* key mangement algorithms */
+	u_int8_t	rsn_keymgmtset;		/* key management algorithms */
 	u_int8_t	rsn_keymgmt;		/* selected key mgmt algo */
 	u_int16_t	rsn_caps;		/* capabilities */
 };

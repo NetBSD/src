@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.38 2022/02/12 03:24:35 riastradh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.39 2022/02/16 22:00:56 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.38 2022/02/12 03:24:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.39 2022/02/16 22:00:56 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2611,7 +2611,7 @@ mvxpe_rx_queue_add(struct mvxpe_softc *sc, int q)
 		return ENOBUFS;
 	}
 
-	/* Add the packet to descritor */
+	/* Add the packet to descriptor */
 	KASSERT(MVXPE_RX_PKTBUF(sc, q, rx->rx_cpu) == NULL);
 	MVXPE_RX_PKTBUF(sc, q, rx->rx_cpu) = chunk;
 	mvxpbm_dmamap_sync(chunk, BM_SYNC_ALL, BUS_DMASYNC_PREREAD);
