@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.372 2021/01/21 06:51:55 nia Exp $
+# $NetBSD: GENERIC,v 1.373 2022/02/16 20:14:40 riastradh Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.372 $"
+#ident 		"GENERIC-$Revision: 1.373 $"
 
 maxusers	32
 
@@ -568,3 +568,6 @@ pseudo-device   drvctl
 include "dev/veriexec.config"
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+
+# Pull in optional local configuration
+cinclude "arch/evbarm/conf/GENERIC64.local"
