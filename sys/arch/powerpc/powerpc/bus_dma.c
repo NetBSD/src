@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.52 2020/07/06 10:31:24 rin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.53 2022/02/16 23:30:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52 2020/07/06 10:31:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.53 2022/02/16 23:30:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -401,12 +401,98 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int fla
 /*
  * Like _bus_dmamap_load(), but for raw memory allocated with
  * bus_dmamem_alloc().
+ *
+ * XXX This is too much copypasta of _bus_dmamap_load_buffer.
  */
 int
-_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
+_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
+	bus_size_t sgsize, isgsize;
+	bus_size_t busaddr, curaddr, lastaddr, baddr, bmask;
+	int seg, iseg, first;
 
-	panic("_bus_dmamap_load_raw: not implemented");
+	if (size == 0)
+		return 0;
+
+	lastaddr = 0;
+	bmask = ~(map->_dm_boundary - 1);
+
+	first = 0;
+	iseg = 0;
+	busaddr = segs[iseg].ds_addr;
+	isgsize = segs[iseg].ds_len;
+	for (seg = 0; size > 0;) {
+		/*
+		 * Get the physical address for this segment.
+		 */
+		curaddr = BUS_MEM_TO_PHYS(t, busaddr);
+
+		/*
+		 * If we're beyond the bounce threshold, notify
+		 * the caller.
+		 */
+		if (map->_dm_bounce_thresh != 0 &&
+		    curaddr >= map->_dm_bounce_thresh)
+			return EINVAL;
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = PAGE_SIZE - ((u_long)curaddr & PGOFSET);
+		sgsize = MIN(sgsize, isgsize);
+		sgsize = MIN(sgsize, size);
+		sgsize = MIN(sgsize, map->dm_maxsegsz);
+
+		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
+
+		/*
+		 * Insert chunk into a segment, coalescing with
+		 * the previous segment if possible.
+		 */
+		if (first) {
+			map->dm_segs[seg].ds_addr =
+			    PHYS_TO_BUS_MEM(t, curaddr);
+			map->dm_segs[seg].ds_len = sgsize;
+			first = 0;
+		} else {
+			if (curaddr == lastaddr &&
+			    (map->dm_segs[seg].ds_len + sgsize) <=
+			     map->dm_maxsegsz &&
+			    (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (PHYS_TO_BUS_MEM(t, curaddr) & bmask)))
+				map->dm_segs[seg].ds_len += sgsize;
+			else {
+				if (++seg >= map->_dm_segcnt)
+					break;
+				map->dm_segs[seg].ds_addr =
+					PHYS_TO_BUS_MEM(t, curaddr);
+				map->dm_segs[seg].ds_len = sgsize;
+			}
+		}
+
+		lastaddr = curaddr + sgsize;
+		size -= sgsize;
+		if ((isgsize -= sgsize) == 0) {
+			iseg++;
+			KASSERT(iseg < nsegs);
+			busaddr = segs[iseg].ds_addr;
+			isgsize = segs[iseg].ds_len;
+		}
+	}
+
+	if (size > 0)
+		return EFBIG;
+
+	return 0;
 }
 
 /*
