@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 2021/03/12 04:57:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 2022/02/16 23:31:13 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -90,6 +90,7 @@ struct pmap_ops {
 	void (*pmapop_protect)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 	void (*pmapop_unwire)(pmap_t, vaddr_t);
 	void (*pmapop_page_protect)(struct vm_page *, vm_prot_t);
+	void (*pmapop_pv_protect)(paddr_t, vm_prot_t);
 	bool (*pmapop_query_bit)(struct vm_page *, int);
 	bool (*pmapop_clear_bit)(struct vm_page *, int);
 
@@ -247,11 +248,20 @@ LIST_HEAD(pvo_head, pvo_entry);
 
 #define	__HAVE_VM_PAGE_MD
 
-struct vm_page_md {
-	unsigned int mdpg_attrs; 
-	struct pvo_head mdpg_pvoh;
+struct pmap_page {
+	unsigned int pp_attrs;
+	struct pvo_head pp_pvoh;
 #ifdef MODULAR
-	uintptr_t mdpg_dummy[3];
+	uintptr_t pp_dummy[3];
+#endif
+};
+
+struct vm_page_md {
+	struct pmap_page mdpg_pp;
+#define	mdpg_attrs	mdpg_pp.pp_attrs
+#define	mdpg_pvoh	mdpg_pp.pp_pvoh
+#ifdef MODULAR
+#define	mdpg_dummy	mdpg_pp.pp_dummy
 #endif
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2021/07/19 14:49:45 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2022/02/16 23:31:13 riastradh Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2021/07/19 14:49:45 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2022/02/16 23:31:13 riastradh Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -214,6 +214,7 @@ STATIC bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
 STATIC void pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 STATIC void pmap_unwire(pmap_t, vaddr_t);
 STATIC void pmap_page_protect(struct vm_page *, vm_prot_t);
+STATIC void pmap_pv_protect(paddr_t, vm_prot_t);
 STATIC bool pmap_query_bit(struct vm_page *, int);
 STATIC bool pmap_clear_bit(struct vm_page *, int);
 
@@ -645,12 +646,16 @@ pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 {
 	struct vm_page *pg;
 	struct vm_page_md *md;
+	struct pmap_page *pp;
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (pg_p != NULL)
 		*pg_p = pg;
-	if (pg == NULL)
+	if (pg == NULL) {
+		if ((pp = pmap_pv_tracked(pa)) != NULL)
+			return &pp->pp_pvoh;
 		return NULL;
+	}
 	md = VM_PAGE_TO_MD(pg);
 	return &md->mdpg_pvoh;
 }
@@ -663,13 +668,26 @@ vm_page_to_pvoh(struct vm_page *pg)
 	return &md->mdpg_pvoh;
 }
 
+static inline void
+pmap_pp_attr_clear(struct pmap_page *pp, int ptebit)
+{
+
+	pp->pp_attrs &= ptebit;
+}
 
 static inline void
 pmap_attr_clear(struct vm_page *pg, int ptebit)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 
-	md->mdpg_attrs &= ~ptebit;
+	pmap_pp_attr_clear(&md->mdpg_pp, ptebit);
+}
+
+static inline int
+pmap_pp_attr_fetch(struct pmap_page *pp)
+{
+
+	return pp->pp_attrs;
 }
 
 static inline int
@@ -677,7 +695,7 @@ pmap_attr_fetch(struct vm_page *pg)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 
-	return md->mdpg_attrs;
+	return pmap_pp_attr_fetch(&md->mdpg_pp);
 }
 
 static inline void
@@ -2274,11 +2292,8 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	PMAP_UNLOCK();
 }
 
-/*
- * Lower the protection on the specified physical page.
- */
-void
-pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
+static void
+pmap_pp_protect(struct pmap_page *pp, paddr_t pa, vm_prot_t prot)
 {
 	struct pvo_head *pvo_head, pvol;
 	struct pvo_entry *pvo, *next_pvo;
@@ -2298,14 +2313,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	 */
 	if ((prot & VM_PROT_READ) == 0) {
 		DPRINTFN(EXEC, "[pmap_page_protect: %#" _PRIxpa ": clear-exec]\n",
-		    VM_PAGE_TO_PHYS(pg));
-		if (pmap_attr_fetch(pg) & PTE_EXEC) {
+		    pa);
+		if (pmap_pp_attr_fetch(pp) & PTE_EXEC) {
 			PMAPCOUNT(exec_uncached_page_protect);
-			pmap_attr_clear(pg, PTE_EXEC);
+			pmap_pp_attr_clear(pp, PTE_EXEC);
 		}
 	}
 
-	pvo_head = vm_page_to_pvoh(pg);
+	pvo_head = &pp->pp_pvoh;
 	for (pvo = LIST_FIRST(pvo_head); pvo != NULL; pvo = next_pvo) {
 		next_pvo = LIST_NEXT(pvo, pvo_vlink);
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
@@ -2353,6 +2368,32 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	pmap_pvo_free_list(&pvol);
 
 	PMAP_UNLOCK();
+}
+
+/*
+ * Lower the protection on the specified physical page.
+ */
+void
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
+{
+	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+
+	pmap_pp_protect(&md->mdpg_pp, VM_PAGE_TO_PHYS(pg), prot);
+}
+
+/*
+ * Lower the protection on the physical page at the specified physical
+ * address, which may not be managed and so may not have a struct
+ * vm_page.
+ */
+void
+pmap_pv_protect(paddr_t pa, vm_prot_t prot)
+{
+	struct pmap_page *pp;
+
+	if ((pp = pmap_pv_tracked(pa)) == NULL)
+		return;
+	pmap_pp_protect(pp, pa, prot);
 }
 
 /*

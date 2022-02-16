@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.12 2021/03/02 01:47:44 thorpej Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.13 2022/02/16 23:31:13 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.12 2021/03/02 01:47:44 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.13 2022/02/16 23:31:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -213,6 +213,12 @@ void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	(*pmapops->pmapop_page_protect)(pg, prot);
+}
+
+void
+pmap_pv_protect(paddr_t pa, vm_prot_t prot)
+{
+	(*pmapops->pmapop_pv_protect)(pa, prot);
 }
 
 bool
