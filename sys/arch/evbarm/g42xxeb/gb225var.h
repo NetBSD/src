@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225var.h,v 1.3 2010/03/13 11:26:42 bsh Exp $ */
+/*	$NetBSD: gb225var.h,v 1.4 2022/02/16 20:31:43 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/callout.h>
 
 /*
- * Interrupt sources for option baord CPLD.
+ * Interrupt sources for option board CPLD.
  */
 #define	OPIO_INTR_CF_INSERT	0
 #define	OPIO_INTR_PCMCIA_INSERT	1
