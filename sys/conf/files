@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1294 2022/01/17 16:33:00 thorpej Exp $
+#	$NetBSD: files,v 1.1295 2022/02/16 20:14:30 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1639,6 +1639,13 @@ include "dev/clk/files.clk"
 #
 include "dev/ofw/files.ofw"
 include "dev/fdt/files.fdt"
+
+
+## ACPI -- this should be dev/acpi/files.acpi, but that currently has
+# some MD parts.  Having this here allows conditionals on NACPICA in
+# acpica.h, at least.
+#
+include "dev/acpi/acpica/files.acpica"
 
 #
 # Name value library
