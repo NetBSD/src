@@ -1,4 +1,4 @@
-/*	$NetBSD: p5reg.h,v 1.2 2010/02/02 19:15:33 phx Exp $ */
+/*	$NetBSD: p5reg.h,v 1.3 2022/02/16 23:49:26 riastradh Exp $ */
 
 /*
  * Copyright (C) 2000 Adam Ciarcinski.
@@ -100,13 +100,13 @@
 #define P5read(reg, val)						\
 	do {								\
 		(val) = *(volatile unsigned char *)(P5BASE + (reg));	\
-		__asm volatile("eieio");					\
+		__asm volatile("eieio" ::: "memory");			\
 	} while (0);
 
 #define P5write(reg, val)						\
 	do {								\
 		*(volatile unsigned char *)(P5BASE + (reg)) = (val);	\
-		__asm volatile("eieio");					\
+		__asm volatile("eieio" ::: "memory");			\
 	} while (0);
 
 #endif /* _P5REG_H_ */

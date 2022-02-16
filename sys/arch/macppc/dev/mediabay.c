@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.27 2022/01/22 11:49:16 thorpej Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.28 2022/02/16 23:49:26 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.27 2022/01/22 11:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.28 2022/02/16 23:49:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -213,11 +213,11 @@ mediabay_attach_content(struct mediabay_softc *sc)
 		delay(50000);
 
 		out32rb(sc->sc_addr, in32rb(sc->sc_addr) | MBCR_MEDIABAY0_ENABLE);
-		__asm volatile ("eieio");
+		__asm volatile("eieio" ::: "memory");
 		delay(50000);
 
 		out32rb(sc->sc_addr, in32rb(sc->sc_addr) & ~0xf);
-		__asm volatile ("eieio");
+		__asm volatile("eieio" ::: "memory");
 		delay(50000);
 
 		tsleep(sc, PRI_NONE, "mediabay", hz*1);

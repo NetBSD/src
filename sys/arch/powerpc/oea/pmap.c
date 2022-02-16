@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2022/02/16 23:31:13 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2022/02/16 23:49:27 riastradh Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2022/02/16 23:31:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2022/02/16 23:49:27 riastradh Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -479,19 +479,19 @@ extern struct evcnt pmap_evcnt_idlezeroed_pages;
 #define	PMAPCOUNT2(ev)	((void) 0)
 #endif
 
-#define	TLBIE(va)	__asm volatile("tlbie %0" :: "r"(va))
+#define	TLBIE(va)	__asm volatile("tlbie %0" :: "r"(va) : "memory")
 
 /* XXXSL: this needs to be moved to assembler */
-#define	TLBIEL(va)	__asm __volatile("tlbie %0" :: "r"(va))
+#define	TLBIEL(va)	__asm volatile("tlbie %0" :: "r"(va) : "memory")
 
 #ifdef MD_TLBSYNC
 #define TLBSYNC()	MD_TLBSYNC()
 #else
-#define	TLBSYNC()	__asm volatile("tlbsync")
+#define	TLBSYNC()	__asm volatile("tlbsync" ::: "memory")
 #endif
-#define	SYNC()		__asm volatile("sync")
-#define	EIEIO()		__asm volatile("eieio")
-#define	DCBST(va)	__asm __volatile("dcbst 0,%0" :: "r"(va))
+#define	SYNC()		__asm volatile("sync" ::: "memory")
+#define	EIEIO()		__asm volatile("eieio" ::: "memory")
+#define	DCBST(va)	__asm volatile("dcbst 0,%0" :: "r"(va) : "memory")
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	mtmsr(psl)
 #define	MFPVR()		mfpvr()
@@ -3526,12 +3526,16 @@ pmap_bootstrap2(void)
 #endif /* PMAP_OEA || PMAP_OEA64_BRIDGE */
 
 #if defined(PMAP_OEA)
-	 __asm volatile("sync; mtsdr1 %0; isync"
-		:: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
+	__asm volatile("sync; mtsdr1 %0; isync"
+	    :
+	    : "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10))
+	    : "memory");
 #elif defined(PMAP_OEA64) || defined(PMAP_OEA64_BRIDGE)
-	__asm __volatile("sync; mtsdr1 %0; isync"
-		:: "r"((uintptr_t)pmap_pteg_table |
-		       (32 - __builtin_clz(pmap_pteg_mask >> 11))));
+	__asm volatile("sync; mtsdr1 %0; isync"
+	    :
+	    : "r"((uintptr_t)pmap_pteg_table |
+		(32 - __builtin_clz(pmap_pteg_mask >> 11)))
+	    : "memory");
 #endif
 	tlbia();
 

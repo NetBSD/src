@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.8 2015/04/13 21:18:42 riastradh Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.9 2022/02/16 23:49:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.8 2015/04/13 21:18:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.9 2022/02/16 23:49:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -99,7 +99,7 @@ in64(uint a)
 		 : "=m"(save), "=m"(*dp)
 		 : "m"(u.d)
 		);
-	__asm volatile ("eieio; sync");
+	__asm volatile("eieio; sync" ::: "memory");
 	__asm volatile("mtmsr %0" :: "r"(msr));
 	return (u.i);
 }
@@ -130,7 +130,7 @@ out64(uint a, u_int64_t v)
 		 : "=m"(save), "=m"(*dp)
 		 : "m"(u.d)
 		);
-	__asm volatile ("eieio; sync");
+	__asm volatile("eieio; sync" ::: "memory");
 	__asm volatile("mtmsr %0" :: "r"(msr));
 	splx(s);
 }
@@ -208,7 +208,7 @@ cs_io_write_multi_2(struct cs_softc *sc, bus_size_t offs,
 		v = bswap16(v);
 		u.i = (u_int64_t)v << 48;
 		__asm volatile("lfd 0,%1\nstfd 0,%0" : "=m"(*dp) : "m"(u.d) );
-		__asm volatile ("eieio; sync");
+		__asm volatile("eieio; sync" ::: "memory");
 	}
 	__asm volatile("lfd 0,%0" :: "m"(save));
 	__asm volatile("mtmsr %0" :: "r"(msr));

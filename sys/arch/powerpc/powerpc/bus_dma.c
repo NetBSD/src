@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.53 2022/02/16 23:30:52 riastradh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.54 2022/02/16 23:49:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.53 2022/02/16 23:30:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.54 2022/02/16 23:49:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -53,15 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.53 2022/02/16 23:30:52 riastradh Exp $
 #include <uvm/uvm_physseg.h>
 
 #if defined(PPC_BOOKE)
-#define	EIEIO	__asm volatile("mbar\t0")
-#define	SYNC	__asm volatile("msync")
+#define	EIEIO	__asm volatile("mbar\t0" ::: "memory")
+#define	SYNC	__asm volatile("msync" ::: "memory")
 #elif defined(PPC_IBM4XX) && !defined(PPC_IBM440)
 /* eieio is implemented as sync */
-#define	EIEIO	__asm volatile("eieio")
+#define	EIEIO	__asm volatile("eieio" ::: "memory")
 #define	SYNC	/* nothing */
 #else
-#define	EIEIO	__asm volatile("eieio")
-#define	SYNC	__asm volatile("sync")
+#define	EIEIO	__asm volatile("eieio" ::: "memory")
+#define	SYNC	__asm volatile("sync" ::: "memory")
 #endif
 
 int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
@@ -72,7 +72,7 @@ dcbst(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm volatile("dcbst 0,%0" :: "r"(pa));
+		__asm volatile("dcbst 0,%0" :: "r"(pa) : "memory");
 }
 
 static inline void
@@ -80,7 +80,7 @@ dcbi(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm volatile("dcbi 0,%0" :: "r"(pa));
+		__asm volatile("dcbi 0,%0" :: "r"(pa) : "memory");
 }
 
 static inline void
@@ -88,7 +88,7 @@ dcbf(paddr_t pa, long len, int dcache_line_size)
 {
 	paddr_t epa;
 	for (epa = pa + len; pa < epa; pa += dcache_line_size)
-		__asm volatile("dcbf 0,%0" :: "r"(pa));
+		__asm volatile("dcbf 0,%0" :: "r"(pa) : "memory");
 }
 
 /*

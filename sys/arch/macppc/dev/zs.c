@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.55 2022/02/13 12:24:24 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.56 2022/02/16 23:49:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.55 2022/02/13 12:24:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.56 2022/02/16 23:49:26 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -524,7 +524,7 @@ zs_dma_setup(struct zs_chanstate *cs, void *pa, int len)
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
-	__asm volatile("eieio");
+	__asm volatile("eieio" ::: "memory");
 
 	dbdma_start(zsc->zsc_txdmareg[ch], zsc->zsc_txdmacmd[ch]);
 }

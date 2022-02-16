@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.1 2011/07/18 17:51:17 dyoung Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.2 2022/02/16 23:49:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -141,6 +141,6 @@
         ((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 
 /* Instruction for enforcing reorder protection. */
-#define amiga_bus_reorder_protect() __asm volatile ("eieio")
+#define amiga_bus_reorder_protect() __asm volatile("eieio" ::: "memory")
 
 #endif /* _AMIGAPPC_BUS_FUNCS_H_ */
