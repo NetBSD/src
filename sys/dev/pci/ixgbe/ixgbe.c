@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.306 2022/02/01 04:59:16 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.307 2022/02/16 10:29:13 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.306 2022/02/01 04:59:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.307 2022/02/16 10:29:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1118,6 +1118,10 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	hw->eeprom.ops.read(hw, IXGBE_ETRACKID_L, &low);
 	aprint_normal(" ETrackID %08x\n", ((uint32_t)high << 16) | low);
 
+	/* Printed Board Assembly number */
+	error = ixgbe_read_pba_string(hw, buf, IXGBE_PBANUM_LENGTH);
+	aprint_normal_dev(dev, "PBA number %s\n", error ? "unknown" : buf);
+
 	if (adapter->feat_en & IXGBE_FEATURE_MSIX) {
 		error = ixgbe_allocate_msix(adapter, pa);
 		if (error) {
@@ -1137,6 +1141,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 			}
 		}
 	}
+
 	/* Recovery mode */
 	switch (adapter->hw.mac.type) {
 	case ixgbe_mac_X550:
