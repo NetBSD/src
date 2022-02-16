@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.76 2022/02/14 06:47:40 msaitoh Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.77 2022/02/16 14:37:00 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1486,3 +1486,9 @@ usr.sbin/sysinst/target.c			1.18
 	sysinst: on x86 fix the copying of UEFI bootloaders which got
 	broken by the fixes in ticket #1422.
 	[martin, ticket #1427]
+
+sys/dev/usb/uhidev.c				1.82
+
+	PR 55019: do not explicitly set the HID Report Protocol upon attach.
+	[jakllsch, ticket #1428]
+
