@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.40 2020/07/06 08:17:01 rin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.41 2022/02/16 23:31:13 riastradh Exp $	*/
 
 #ifndef _POWERPC_PMAP_H_
 #define _POWERPC_PMAP_H_
@@ -21,6 +21,8 @@
 #endif
 
 #endif /* !_MODULE */
+
+#include <uvm/pmap/pmap_pvt.h>
 
 #if !defined(_LOCORE) && (defined(MODULAR) || defined(_MODULE))
 /*
