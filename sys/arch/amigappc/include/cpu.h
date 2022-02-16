@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2011/06/20 06:35:39 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2022/02/16 23:49:26 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -70,12 +70,12 @@ int badaddr_read(void *, size_t, int *);
 /*
  * Reorder protection when accessing device registers.
  */
-#define amiga_membarrier() __asm volatile ("eieio")
+#define amiga_membarrier() __asm volatile("eieio" ::: "memory")
 
 /*
  * Finish all bus operations and flush pipelines.
  */
-#define amiga_cpu_sync() __asm volatile ("sync; isync")
+#define amiga_cpu_sync() __asm volatile("sync; isync" ::: "memory")
 
 #endif /* _KERNEL && !_MODULE */
 

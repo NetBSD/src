@@ -1,4 +1,4 @@
-/*	$NetBSD: valkyriefb.c,v 1.7 2021/08/07 16:18:58 thorpej Exp $	*/
+/*	$NetBSD: valkyriefb.c,v 1.8 2022/02/16 23:49:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.7 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.8 2022/02/16 23:49:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ static inline void
 valkyriefb_write_reg(struct valkyriefb_softc *sc, int reg, uint8_t val)
 {
 	*(sc->sc_base + VAL_REGS_OFFSET + reg) = val;
-	__asm("eieio; sync;");
+	__asm volatile("eieio; sync;" ::: "memory");
 }
 
 #ifdef VALKYRIEFB_DEBUG
@@ -177,13 +177,13 @@ valkyriefb_write_cmap(struct valkyriefb_softc *sc,
     int reg, uint8_t r, uint8_t g, uint8_t b)
 {
 	*(sc->sc_base + VAL_CMAP_OFFSET + VAL_CMAP_ADDR) = reg;
-	__asm("eieio; sync;");
+	__asm volatile("eieio; sync;" ::: "memory");
 	*(sc->sc_base + VAL_CMAP_OFFSET + VAL_CMAP_LUT) = r;
-	__asm("eieio; sync;");
+	__asm volatile("eieio; sync;" ::: "memory");
 	*(sc->sc_base + VAL_CMAP_OFFSET + VAL_CMAP_LUT) = g;
-	__asm("eieio; sync;");
+	__asm volatile("eieio; sync;" ::: "memory");
 	*(sc->sc_base + VAL_CMAP_OFFSET + VAL_CMAP_LUT) = b;
-	__asm("eieio; sync;");
+	__asm volatile("eieio; sync;" ::: "memory");
 }
 
 static int

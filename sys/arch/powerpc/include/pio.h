@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.9 2020/07/06 10:31:23 rin Exp $ */
+/*	$NetBSD: pio.h,v 1.10 2022/02/16 23:49:26 riastradh Exp $ */
 /*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
 
 /*
@@ -46,9 +46,9 @@
 
 #if defined(PPC_IBM4XX) && !defined(PPC_IBM440)
 /* eieio is implemented as sync */
-#define IO_BARRIER() __asm volatile("sync")
+#define IO_BARRIER() __asm volatile("sync" ::: "memory")
 #else
-#define IO_BARRIER() __asm volatile("eieio; sync")
+#define IO_BARRIER() __asm volatile("eieio; sync" ::: "memory")
 #endif
 
 static __inline void __outb(volatile uint8_t *a, uint8_t v);

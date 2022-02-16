@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.2 2014/04/03 23:49:47 mrg Exp $	*/
+/*	$NetBSD: pci.c,v 1.3 2022/02/16 23:49:27 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -94,7 +94,7 @@ enablePCI(int slot, int io, int mem, int master)
 
 	ppci = (u_char *)&PCI_slots[slot].config_addr[CMD];
 	*ppci = enable;
-	__asm volatile("eieio");
+	__asm volatile("eieio" ::: "memory");
 }
 
 int
@@ -146,7 +146,7 @@ unlockVideo(int slot)
 	ppci[0x12] = 0x00000;
 	ppci[0x13] = 0x00000;
 #endif
-	__asm__ volatile("eieio");
+	__asm__ volatile("eieio" ::: "memory");
 
 	outb(0x3d4, 0x11);
 	outb(0x3d5, 0x0e);   /* unlock CR0-CR7 */

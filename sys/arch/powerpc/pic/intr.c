@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.33 2021/03/23 08:07:23 skrll Exp $ */
+/*	$NetBSD: intr.c,v 1.34 2022/02/16 23:49:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2021/03/23 08:07:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2022/02/16 23:49:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2021/03/23 08:07:23 skrll Exp $");
 
 #if defined(PPC_IBM4XX) && !defined(PPC_IBM440)
 /* eieio is implemented as sync */
-#define REORDER_PROTECT() __asm volatile("sync")
+#define REORDER_PROTECT() __asm volatile("sync" ::: "memory")
 #else
-#define REORDER_PROTECT() __asm volatile("sync; eieio")
+#define REORDER_PROTECT() __asm volatile("sync; eieio" ::: "memory")
 #endif
 
 struct pic_ops *pics[MAX_PICS];

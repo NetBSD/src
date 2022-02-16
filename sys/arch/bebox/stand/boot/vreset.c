@@ -1,4 +1,4 @@
-/*	$NetBSD: vreset.c,v 1.14 2014/12/12 15:57:30 phx Exp $	*/
+/*	$NetBSD: vreset.c,v 1.15 2022/02/16 23:49:26 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -624,7 +624,7 @@ loadFont(u_char *ISA_mem)
 
 	for (i = 0;  i < sizeof(font);  i += 16) {
 		for (j = 0;  j < 16;  j++) {
-			__asm volatile("eieio");
+			__asm volatile("eieio" ::: "memory");
 			font_page[(2*i)+j] = font[i+j];
 		}
 	}
