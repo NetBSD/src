@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.12 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.13 2022/02/16 22:00:56 andvar Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -375,7 +375,7 @@ struct atu_fw {
 } UPACKED;
 
 /*
- * The header the AT76c503 puts in front of RX packets (for both managment &
+ * The header the AT76c503 puts in front of RX packets (for both management &
  * data)
  */
 struct atu_rx_hdr {

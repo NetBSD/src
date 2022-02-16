@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.21 2018/10/12 05:41:18 maxv Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.22 2022/02/16 22:00:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -35,7 +35,7 @@
  * IP reassembly.
  *
  * Additive-Increase/Multiplicative-Decrease (AIMD) strategy for IP
- * reassembly queue buffer managment.
+ * reassembly queue buffer management.
  *
  * We keep a count of total IP fragments (NB: not fragmented packets),
  * awaiting reassembly (ip_nfrags) and a limit (ip_maxfrags) on fragments.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.21 2018/10/12 05:41:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.22 2022/02/16 22:00:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

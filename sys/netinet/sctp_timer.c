@@ -1,5 +1,5 @@
 /*	$KAME: sctp_timer.c,v 1.30 2005/06/16 18:29:25 jinmei Exp $	*/
-/*	$NetBSD: sctp_timer.c,v 1.5 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: sctp_timer.c,v 1.6 2022/02/16 22:00:56 andvar Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.5 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.6 2022/02/16 22:00:56 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1069,7 +1069,7 @@ int sctp_asconf_timer(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 		}
 
 		/* PETER? FIX? How will the following code ever run? If
-		 * the max_send_times is hit, threshold managment will
+		 * the max_send_times is hit, threshold management will
 		 * blow away the association?
 		 */
 		if (asconf->snd_count > stcb->asoc.max_send_times) {
@@ -1137,7 +1137,7 @@ sctp_shutdown_timer(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
     struct sctp_nets *net)
 {
 	struct sctp_nets *alt;
-	/* first threshold managment */
+	/* first threshold management */
 	if (sctp_threshold_management(inp, stcb, net, stcb->asoc.max_send_times)) {
 		/* Assoc is over */
 		return (1);
@@ -1171,7 +1171,7 @@ int sctp_shutdownack_timer(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
     struct sctp_nets *net)
 {
 	struct sctp_nets *alt;
-	/* first threshold managment */
+	/* first threshold management */
 	if (sctp_threshold_management(inp, stcb, net, stcb->asoc.max_send_times)) {
 		/* Assoc is over */
 		return (1);
@@ -1261,7 +1261,7 @@ sctp_heartbeat_timer(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	    (TAILQ_EMPTY(&stcb->asoc.sent_queue))) {
 		sctp_audit_stream_queues_for_size(inp, stcb);
 	}
-	/* Send a new HB, this will do threshold managment, pick a new dest */
+	/* Send a new HB, this will do threshold management, pick a new dest */
 	if (sctp_send_hb(stcb, 0, NULL) < 0) {
 		return (1);
 	}

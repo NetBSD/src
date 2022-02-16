@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.184 2021/12/31 14:25:23 riastradh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.185 2022/02/16 22:00:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.184 2021/12/31 14:25:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.185 2022/02/16 22:00:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1702,7 +1702,7 @@ sipcom_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/*
-		 * The entire packet is set up.  Give the first descrptor
+		 * The entire packet is set up.  Give the first descriptor
 		 * to the chip now.
 		 */
 		sc->sc_txdescs[sc->sc_txnext].sipd_words[sc->sc_cmdsts_idx] |=

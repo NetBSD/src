@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.24 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.25 2022/02/16 22:00:56 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.24 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.25 2022/02/16 22:00:56 andvar Exp $");
 
 #include "rf_archs.h"
 
@@ -79,7 +79,7 @@ rf_RegularPEFunc(RF_DagNode_t *node)
  *  be used. The previous case is when write access at least sectors of full stripe unit.
  *  The later function is used when the write access two stripe units but with total sectors
  *  less than sectors per SU. In this case, the access of parity and 'E' are shown as disconnected
- *  areas in their stripe unit and  parity write and 'E' write are both devided into two distinct
+ *  areas in their stripe unit and  parity write and 'E' write are both divided into two distinct
  *  writes( totally four). This simple old-new write and regular old-new write happen as in RAID-5
  ************************************************************************************************/
 
@@ -168,8 +168,8 @@ rf_SimpleONEFunc(RF_DagNode_t *node)
 														 * writeDataNodes */
 		/* bxor to buffer of readDataNodes */
 		retcode = rf_bxor(node->params[5].p, node->params[1].p, length);
-		/* find out the corresponding colume in encoding matrix for
-		 * write colume to be encoded into redundant disk 'E' */
+		/* find out the corresponding column in encoding matrix for
+		 * write column to be encoded into redundant disk 'E' */
 		scol = rf_EUCol(layoutPtr, pda->raidAddress);
 		srcbuf = node->params[1].p;
 		destbuf = node->params[3].p;
@@ -233,10 +233,10 @@ rf_RegularEFunc(RF_DagNode_t *node)
  *     one stripe unit is not allowed so that the write can be dealt with like a
  *     large write.
  *  The following function is based on these assumptions. So except in the second case,
- *  it looks the same as a large write encodeing function. But this is not exactly the
+ *  it looks the same as a large write encoding function. But this is not exactly the
  *  normal way for doing a degraded write, since raidframe have to break cases of access
  *  other than the above two into smaller accesses. We may have to change
- *  DegrESubroutin in the future.
+ *  DegrESubroutine in the future.
  *******************************************************************************************/
 void
 rf_DegrESubroutine(RF_DagNode_t *node, char *ebuf)
@@ -297,10 +297,10 @@ rf_e_EncOneSect(
 				 * be Xored into all EUs in a dest sector */
 	int     numRowInEncMatix = (RF_EO_MATRIX_DIM) - 1;
 	RF_RowCol_t j, indexInDest,	/* row index of an encoding unit in
-					 * the destination colume of encoding
+					 * the destination column of encoding
 					 * matrix */
 	        indexInSrc;	/* row index of an encoding unit in the source
-				 * colume used for recovery */
+				 * column used for recovery */
 	int     bytesPerEU = bytesPerSector / numRowInEncMatix;
 
 #if RF_EO_MATRIX_DIM > 17
@@ -406,7 +406,7 @@ rf_RecoveryEFunc(RF_DagNode_t *node)
 			if (node->params[i + 1].p != node->results[0]) {
 				pda = (RF_PhysDiskAddr_t *) node->params[i].p;
 				if (i == node->numParams - 4)
-					scol = RF_EO_MATRIX_DIM - 2;	/* the colume of
+					scol = RF_EO_MATRIX_DIM - 2;	/* the column of
 									 * redundant E */
 				else
 					scol = rf_EUCol(layoutPtr, pda->raidAddress);
@@ -481,7 +481,7 @@ rf_doubleEOdecode(
 	RF_ASSERT(*((long *) dest[1]) == 0);
 	RF_ASSERT(*P == 0);
 	/* calculate the 'P' parameter, which, not parity, is the Xor of all
-	 * elements in the last two column, ie. 'E' and 'parity' colume, see
+	 * elements in the last two columns, ie. 'E' and 'parity' columns, see
 	 * the Ref. paper by Blaum, et al 1993  */
 	for (i = 0; i < numRowInEncMatix; i++)
 		for (k = 0; k < longsPerEU; k++) {
@@ -527,7 +527,7 @@ rf_doubleEOdecode(
 		dest_smaller_current = dest_smaller + row * longsPerEU;
 #endif
 		/**    Do the diagonal recovery. Initially, temp[k] = (failed 1),
-		       which is the failed data in the colume which has smaller col index. **/
+		       which is the failed data in the column which has smaller col index. **/
 		/* step 1:  ^(SUM of nonfailed in-diagonal A(rrdrow,0..m-3))         */
 		for (j = 0; j < numDataCol; j++) {
 			if (j == f1 || j == f2)
@@ -545,7 +545,7 @@ rf_doubleEOdecode(
 #endif
 			}
 		}
-		/* step 2:  ^E(erow,m-2), If erow is at the buttom row, don't
+		/* step 2:  ^E(erow,m-2), If erow is at the bottom row, don't
 		 * Xor into it  E(erow,m-2) = (principle diagonal) ^ (failed
 		 * 1) ^ (failed 2) ^ ( SUM of nonfailed in-diagonal
 		 * A(rrdrow,0..m-3) ) After this step, temp[k] = (principle
@@ -582,7 +582,7 @@ rf_doubleEOdecode(
 
 		/**          THE FOLLOWING DO THE HORIZONTAL XOR                **/
 		/* step 1:  ^(SUM of A(row,0..m-3)), ie. all nonfailed data
-		 * columes    */
+		 * columns    */
 		for (j = 0; j < numDataCol; j++) {
 			if (j == f1 || j == f2)
 				continue;
@@ -623,7 +623,7 @@ rf_doubleEOdecode(
 
 
 /***************************************************************************************
-* 	This function is called by double degragded read
+* 	This function is called by double degraded read
 * 	EO_200_CreateReadDAG
 *
 ***************************************************************************************/
@@ -685,7 +685,7 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 	/*
             the followings have three goals:
             1. determine the startSector to begin decoding and endSector to end decoding.
-            2. determine the colume numbers of the two failed disks.
+            2. determine the column numbers of the two failed disks.
             3. determine the offset and end offset of the access within each failed stripe unit.
          */
 	if (nresults == 1) {
@@ -702,7 +702,7 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 		/* find out the column of failed disk being accessed */
 		fcol[0] = rf_EUCol(layoutPtr, pda->raidAddress);
 
-		/* find out the other failed colume not accessed */
+		/* find out the other failed column not accessed */
 		sosAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
 		for (i = 0; i < numDataCol; i++) {
 			npda.raidAddress = sosAddr + (i * secPerSU);
@@ -720,7 +720,7 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 		memset(pda0->bufPtr, 0, bytesPerSector * pda0->numSector);
 		pda1 = node->results[1];
 		memset(pda1->bufPtr, 0, bytesPerSector * pda1->numSector);
-		/* determine the failed colume numbers of the two failed
+		/* determine the failed column numbers of the two failed
 		 * disks. */
 		fcol[0] = rf_EUCol(layoutPtr, pda0->raidAddress);
 		fcol[1] = rf_EUCol(layoutPtr, pda1->raidAddress);
@@ -737,7 +737,7 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 	}
 	/*
 	      assign the beginning sector and the end sector for each parameter
-	      find out the corresponding colume # for each parameter
+	      find out the corresponding column # for each parameter
         */
 	for (prm = 0; prm < ndataParam; prm++) {
 		pda = node->params[prm].p;
@@ -859,7 +859,7 @@ rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 	/* determine the startSector and endSector for decoding */
 	startSector = rf_StripeUnitOffset(layoutPtr, fpda->startSector);
 	endSector = startSector + fpda->numSector;
-	/* Assign buf[col] pointers to point to each non-failed colume  and
+	/* Assign buf[col] pointers to point to each non-failed column  and
 	 * initialize the pbuf and ebuf to point at the beginning of each
 	 * source buffers and destination buffers */
 	for (prm = 0; prm < numDataCol - 2; prm++) {
@@ -871,11 +871,11 @@ rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 	 * goes on */
 	pbuf = ppda->bufPtr;
 	ebuf = epda->bufPtr;
-	/* find out the logical colume numbers in the encoding matrix of the
-	 * two failed columes */
+	/* find out the logical column numbers in the encoding matrix of the
+	 * two failed columns */
 	fcol[0] = rf_EUCol(layoutPtr, fpda->raidAddress);
 
-	/* find out the other failed colume not accessed this time */
+	/* find out the other failed column not accessed this time */
 	sosAddr = rf_RaidAddressOfPrevStripeBoundary(layoutPtr, asmap->raidAddress);
 	for (i = 0; i < numDataCol; i++) {
 		npda.raidAddress = sosAddr + (i * secPerSU);
@@ -908,7 +908,7 @@ rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 	}
 	/* after recovery, the buffer pointed by olddata[0] is the old failed
 	 * data. With new writing data and this old data, use small write to
-	 * calculate the new redundant informations */
+	 * calculate the new redundant information */
 	/* node->params[ 0, ... PDAPerDisk * (numDataCol - 2)-1 ] are Pdas of
 	 * Rrd; params[ PDAPerDisk*(numDataCol - 2), ... PDAPerDisk*numDataCol
 	 * -1 ] are Pdas of Rp, ( Rp2 ), Re, ( Re2 ) ; params[
@@ -917,14 +917,14 @@ rf_EOWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 	 * wudNodes; For current implementation, we assume the simplest case:
 	 * asmap->numStripeUnitsAccessed == 1 and asmap->numDataFailed == 1
 	 * ie. PDAPerDisk = 1 then node->params[numDataCol] must be the new
-	 * data to be writen to the failed disk. We first bxor the new data
+	 * data to be written to the failed disk. We first bxor the new data
 	 * into the old recovered data, then do the same things as small
 	 * write. */
 
 	rf_bxor(((RF_PhysDiskAddr_t *) node->params[numDataCol].p)->bufPtr, olddata[0], numbytes);
 	/* do new 'E' calculation  */
-	/* find out the corresponding colume in encoding matrix for write
-	 * colume to be encoded into redundant disk 'E' */
+	/* find out the corresponding column in encoding matrix for write
+	 * column to be encoded into redundant disk 'E' */
 	scol = rf_EUCol(layoutPtr, fpda->raidAddress);
 	/* olddata[0] now is source buffer pointer; epda->bufPtr is the dest
 	 * buffer pointer               */

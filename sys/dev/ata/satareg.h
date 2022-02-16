@@ -1,4 +1,4 @@
-/*	$NetBSD: satareg.h,v 1.6 2020/12/27 15:15:45 jmcneill Exp $	*/
+/*	$NetBSD: satareg.h,v 1.7 2022/02/16 22:00:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #define	SStatus_SPD_mask	(0xf << 4)
 #define	SStatus_SPD_shift	4
 	/*
-	 * The IPM value indicates the current interface power managemnt
+	 * The IPM value indicates the current interface power management
 	 * state.
 	 */
 #define	SStatus_IPM_NODEV	(0x0 << 8)	/* no device connected */
