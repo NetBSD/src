@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.41 2021/03/07 08:16:58 skrll Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.42 2022/02/16 20:13:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -176,6 +176,7 @@ bool		pmap_is_referenced(struct vm_page *);
 #endif
 
 void		pmap_page_protect(struct vm_page *, vm_prot_t);
+void		pmap_pv_protect(paddr_t, vm_prot_t);
 
 #if !defined(pmap_phys_address)
 paddr_t		pmap_phys_address(paddr_t);
