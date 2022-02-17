@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.99 2022/02/16 23:31:13 riastradh Exp $
+#	$NetBSD: files.powerpc,v 1.100 2022/02/17 16:09:00 macallan Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
@@ -51,7 +51,7 @@ file	arch/powerpc/oea/pmap64.c			ppc_oea64
 file	arch/powerpc/oea/pmap64_bridge.c		ppc_oea64_bridge
 file	arch/powerpc/oea/pmap_kernel.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/powerpc/trap.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
-file	uvm/pmap/pmap_pvt.c				ppc_oea | ppc_oea601 | ppc_oea64
+file	uvm/pmap/pmap_pvt.c				ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 
 # PPC BookE (MPC85xx) Family files
 file	arch/powerpc/booke/booke_machdep.c		ppc_booke
