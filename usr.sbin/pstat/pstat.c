@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.133 2021/11/27 22:30:26 rillig Exp $	*/
+/*	$NetBSD: pstat.c,v 1.134 2022/02/17 14:39:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.133 2021/11/27 22:30:26 rillig Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.134 2022/02/17 14:39:14 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -444,7 +444,7 @@ vnode_print(struct vnode *avnode, struct vnode *vp)
 	PRWORD(ovflw, "%*lx", PTRSTRWIDTH, 0, (long)avnode);
 	PRWORD(ovflw, " %*s", 4, 1, type);
 	PRWORD(ovflw, " %*s", 6, 1, flags);
-#define   VUSECOUNT_MASK  0x7fffffff	/* XXX: kernel private */
+#define   VUSECOUNT_MASK  0x3fffffff	/* XXX: kernel private */
 	PRWORD(ovflw, " %*d", 5, 1, vp->v_usecount & VUSECOUNT_MASK);
 	PRWORD(ovflw, " %*d", 5, 1, vp->v_holdcnt);
 	PRWORD(ovflw, " %*d", 4, 1, vp->v_tag);
