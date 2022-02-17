@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_eventfd.c,v 1.8 2021/11/24 16:35:33 thorpej Exp $	*/
+/*	$NetBSD: sys_eventfd.c,v 1.9 2022/02/17 16:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.8 2021/11/24 16:35:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.9 2022/02/17 16:28:29 thorpej Exp $");
 
 /*
  * eventfd
@@ -310,6 +310,39 @@ eventfd_fop_write(file_t * const fp, off_t * const offset,
 }
 
 static int
+eventfd_ioctl(file_t * const fp, u_long const cmd, void * const data)
+{
+	struct eventfd * const efd = fp->f_eventfd;
+
+	switch (cmd) {
+	case FIONBIO:
+		return 0;
+	
+	case FIONREAD:
+		mutex_enter(&efd->efd_lock);
+		*(int *)data = efd->efd_val != 0 ? sizeof(eventfd_t) : 0;
+		mutex_exit(&efd->efd_lock);
+		return 0;
+	
+	case FIONWRITE:
+		*(int *)data = 0;
+		return 0;
+
+	case FIONSPACE:
+		/*
+		 * FIONSPACE doesn't really work for eventfd, because the
+		 * writability depends on the contents (value) being written.
+		 */
+		break;
+
+	default:
+		break;
+	}
+
+	return EPASSTHROUGH;
+}
+
+static int
 eventfd_fop_poll(file_t * const fp, int const events)
 {
 	struct eventfd * const efd = fp->f_eventfd;
@@ -521,7 +554,7 @@ static const struct fileops eventfd_fileops = {
 	.fo_name = "eventfd",
 	.fo_read = eventfd_fop_read,
 	.fo_write = eventfd_fop_write,
-	.fo_ioctl = fbadop_ioctl,
+	.fo_ioctl = eventfd_ioctl,
 	.fo_fcntl = fnullop_fcntl,
 	.fo_poll = eventfd_fop_poll,
 	.fo_stat = eventfd_fop_stat,
