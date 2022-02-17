@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.132 2022/02/17 14:39:14 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.133 2022/02/17 14:39:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.132 2022/02/17 14:39:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.133 2022/02/17 14:39:51 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -779,9 +779,11 @@ static void
 vrelel(vnode_t *vp, int flags, int lktype)
 {
 	const bool async = ((flags & VRELEL_ASYNC) != 0);
-	bool recycle, defer;
+	bool recycle, defer, objlock_held;
 	u_int use, next;
 	int error;
+
+	objlock_held = false;
 
 retry:
 	KASSERT(mutex_owned(vp->v_interlock));
@@ -804,6 +806,10 @@ retry:
 				lktype = LK_NONE;
 				VOP_UNLOCK(vp);
 				mutex_enter(vp->v_interlock);
+			}
+			if (objlock_held) {
+				objlock_held = false;
+				rw_exit(vp->v_uobj.vmobjlock);
 			}
 			if (vtryrele(vp)) {
 				mutex_exit(vp->v_interlock);
@@ -886,6 +892,29 @@ retry:
 	}
 	KASSERT(lktype == LK_EXCLUSIVE);
 
+	if ((vp->v_iflag & (VI_TEXT|VI_EXECMAP|VI_WRMAP)) != 0 ||
+	    (vp->v_vflag & VV_MAPPED) != 0) {
+		/* Take care of space accounting. */
+		if (!objlock_held) {
+			objlock_held = true;
+			if (!rw_tryenter(vp->v_uobj.vmobjlock, RW_WRITER)) {
+				mutex_exit(vp->v_interlock);
+				rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+				mutex_enter(vp->v_interlock);
+				goto retry;
+			}
+		}
+		if ((vp->v_iflag & VI_EXECMAP) != 0) {
+			cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
+		}
+		vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP);
+		vp->v_vflag &= ~VV_MAPPED;
+	}
+	if (objlock_held) {
+		objlock_held = false;
+		rw_exit(vp->v_uobj.vmobjlock);
+	}
+
 	/*
 	 * Deactivate the vnode, but preserve our reference across
 	 * the call to VOP_INACTIVE().
@@ -898,7 +927,10 @@ retry:
 	mutex_exit(vp->v_interlock);
 	recycle = false;
 	VOP_INACTIVE(vp, &recycle);
-	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+	if (!recycle) {
+		lktype = LK_NONE;
+		VOP_UNLOCK(vp);
+	}
 	mutex_enter(vp->v_interlock);
 
 	/*
@@ -916,28 +948,18 @@ retry:
 		}
 	}
 
-	/* Take care of space accounting. */
-	if ((vp->v_iflag & VI_EXECMAP) != 0) {
-		cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
-	}
-	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP);
-	vp->v_vflag &= ~VV_MAPPED;
-	rw_exit(vp->v_uobj.vmobjlock);
-
 	/*
-	 * Recycle the vnode if the file is now unused (unlinked),
-	 * otherwise just free it.
+	 * Recycle the vnode if the file is now unused (unlinked).
 	 */
 	if (recycle) {
 		VSTATE_ASSERT(vp, VS_BLOCKED);
+		KASSERT(lktype == LK_EXCLUSIVE);
 		/* vcache_reclaim drops the lock. */
 		lktype = LK_NONE;
 		vcache_reclaim(vp);
-	} else {
-		lktype = LK_NONE;
-		VOP_UNLOCK(vp);
 	}
 	KASSERT(vrefcnt(vp) > 0);
+	KASSERT(lktype == LK_NONE);
 
 out:
 	for (use = atomic_load_relaxed(&vp->v_usecount);; use = next) {
