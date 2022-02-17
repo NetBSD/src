@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.130 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.131 2022/02/17 14:38:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.130 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.131 2022/02/17 14:38:06 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -811,6 +811,20 @@ vrelel(vnode_t *vp, int flags, int lktype)
 #endif
 
 	/*
+	 * If already clean there is no need to lock, defer or
+	 * deactivate this node.
+	 */
+	if (VSTATE_GET(vp) == VS_RECLAIMED) {
+		if (lktype != LK_NONE) {
+			mutex_exit(vp->v_interlock);
+			lktype = LK_NONE;
+			VOP_UNLOCK(vp);
+			mutex_enter(vp->v_interlock);
+		}
+		goto out;
+	}
+
+	/*
 	 * First try to get the vnode locked for VOP_INACTIVE().
 	 * Defer vnode release to vdrain_thread if caller requests
 	 * it explicitly, is the pagedaemon or the lock failed.
@@ -820,8 +834,7 @@ vrelel(vnode_t *vp, int flags, int lktype)
 		defer = true;
 	} else if (lktype == LK_SHARED) {
 		/* Excellent chance of getting, if the last ref. */
-		error = vn_lock(vp, LK_UPGRADE | LK_RETRY |
-		    LK_NOWAIT);
+		error = vn_lock(vp, LK_UPGRADE | LK_RETRY | LK_NOWAIT);
 		if (error != 0) {
 			defer = true;
 		} else {
@@ -829,8 +842,7 @@ vrelel(vnode_t *vp, int flags, int lktype)
 		}
 	} else if (lktype == LK_NONE) {
 		/* Excellent chance of getting, if the last ref. */
-		error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY |
-		    LK_NOWAIT);
+		error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_NOWAIT);
 		if (error != 0) {
 			defer = true;
 		} else {
@@ -853,74 +865,69 @@ vrelel(vnode_t *vp, int flags, int lktype)
 	KASSERT(lktype == LK_EXCLUSIVE);
 
 	/*
-	 * If not clean, deactivate the vnode, but preserve
-	 * our reference across the call to VOP_INACTIVE().
+	 * Deactivate the vnode, but preserve our reference across
+	 * the call to VOP_INACTIVE().
+	 *
+	 * If VOP_INACTIVE() indicates that the file has been
+	 * deleted, then recycle the vnode.
+	 *
+	 * Note that VOP_INACTIVE() will not drop the vnode lock.
 	 */
-	if (VSTATE_GET(vp) == VS_RECLAIMED) {
-		VOP_UNLOCK(vp);
-	} else {
+	mutex_exit(vp->v_interlock);
+	recycle = false;
+	VOP_INACTIVE(vp, &recycle);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+	mutex_enter(vp->v_interlock);
+
+	for (;;) {
 		/*
-		 * If VOP_INACTIVE() indicates that the file has been
-		 * deleted, then recycle the vnode.
-		 *
-		 * Note that VOP_INACTIVE() will not drop the vnode lock.
+		 * If no longer the last reference, try to shed it. 
+		 * On success, drop the interlock last thereby
+		 * preventing the vnode being freed behind us.
 		 */
-		mutex_exit(vp->v_interlock);
-		recycle = false;
-		VOP_INACTIVE(vp, &recycle);
-		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
-		mutex_enter(vp->v_interlock);
-
-		for (;;) {
-			/*
-			 * If no longer the last reference, try to shed it. 
-			 * On success, drop the interlock last thereby
-			 * preventing the vnode being freed behind us.
-			 */
-			if (vtryrele(vp)) {
-				VOP_UNLOCK(vp);
-				rw_exit(vp->v_uobj.vmobjlock);
-				mutex_exit(vp->v_interlock);
-				return;
-			}
-			/*
-			 * Block new references then check again to see if a
-			 * new reference was acquired in the meantime.  If
-			 * it was, restore the vnode state and try again.
-			 */
-			if (recycle) {
-				VSTATE_CHANGE(vp, VS_LOADED, VS_BLOCKED);
-				if (vrefcnt(vp) != 1) {
-					VSTATE_CHANGE(vp, VS_BLOCKED,
-					    VS_LOADED);
-					continue;
-				}
-			}
-			break;
- 		}
-
-		/* Take care of space accounting. */
-		if ((vp->v_iflag & VI_EXECMAP) != 0) {
-			cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
+		if (vtryrele(vp)) {
+			VOP_UNLOCK(vp);
+			rw_exit(vp->v_uobj.vmobjlock);
+			mutex_exit(vp->v_interlock);
+			return;
 		}
-		vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP);
-		vp->v_vflag &= ~VV_MAPPED;
-		rw_exit(vp->v_uobj.vmobjlock);
-
 		/*
-		 * Recycle the vnode if the file is now unused (unlinked),
-		 * otherwise just free it.
+		 * Block new references then check again to see if a
+		 * new reference was acquired in the meantime.  If
+		 * it was, restore the vnode state and try again.
 		 */
 		if (recycle) {
-			VSTATE_ASSERT(vp, VS_BLOCKED);
-			/* vcache_reclaim drops the lock. */
-			vcache_reclaim(vp);
-		} else {
-			VOP_UNLOCK(vp);
+			VSTATE_CHANGE(vp, VS_LOADED, VS_BLOCKED);
+			if (vrefcnt(vp) != 1) {
+				VSTATE_CHANGE(vp, VS_BLOCKED, VS_LOADED);
+				continue;
+			}
 		}
-		KASSERT(vrefcnt(vp) > 0);
-	}
+		break;
+ 		}
 
+	/* Take care of space accounting. */
+	if ((vp->v_iflag & VI_EXECMAP) != 0) {
+		cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
+	}
+	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP);
+	vp->v_vflag &= ~VV_MAPPED;
+	rw_exit(vp->v_uobj.vmobjlock);
+
+	/*
+	 * Recycle the vnode if the file is now unused (unlinked),
+	 * otherwise just free it.
+	 */
+	if (recycle) {
+		VSTATE_ASSERT(vp, VS_BLOCKED);
+		/* vcache_reclaim drops the lock. */
+		vcache_reclaim(vp);
+	} else {
+		VOP_UNLOCK(vp);
+	}
+	KASSERT(vrefcnt(vp) > 0);
+
+out:
 	if ((atomic_dec_uint_nv(&vp->v_usecount) & VUSECOUNT_MASK) != 0) {
 		/* Gained another reference while being reclaimed. */
 		mutex_exit(vp->v_interlock);
