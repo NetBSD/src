@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.7 2021/11/24 16:35:33 thorpej Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.8 2022/02/17 16:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.7 2021/11/24 16:35:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.8 2022/02/17 16:28:29 thorpej Exp $");
 
 /*
  * timerfd
@@ -306,6 +306,15 @@ timerfd_fop_ioctl(file_t * const fp, unsigned long const cmd, void * const data)
 	int error = 0;
 
 	switch (cmd) {
+	case FIONBIO:
+		break;
+
+	case FIONREAD:
+		itimer_lock();
+		*(int *)data = timerfd_is_readable(tfd) ? sizeof(uint64_t) : 0;
+		itimer_unlock();
+		break;
+
 	case TFD_IOC_SET_TICKS: {
 		const uint64_t * const new_ticksp = data;
 		if (*new_ticksp > INT_MAX) {
