@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.131 2022/02/17 14:38:06 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.132 2022/02/17 14:39:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.131 2022/02/17 14:38:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.132 2022/02/17 14:39:14 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -232,9 +232,12 @@ extern struct vfsops	dead_vfsops;
 /*
  * The high bit of v_usecount is a gate for vcache_tryvget().  It's set
  * only when the vnode state is LOADED.
+ * The next bit of v_usecount is a flag for vrelel().  It's set
+ * from vcache_vget() and vcache_tryvget() whenever the operation succeeds.
  */
-#define	VUSECOUNT_MASK	0x7fffffff
+#define	VUSECOUNT_MASK	0x3fffffff
 #define	VUSECOUNT_GATE	0x80000000
+#define	VUSECOUNT_VGET	0x40000000
 
 /*
  * Return the current usecount of a vnode.
@@ -777,8 +780,10 @@ vrelel(vnode_t *vp, int flags, int lktype)
 {
 	const bool async = ((flags & VRELEL_ASYNC) != 0);
 	bool recycle, defer;
+	u_int use, next;
 	int error;
 
+retry:
 	KASSERT(mutex_owned(vp->v_interlock));
 
 	if (__predict_false(vp->v_op == dead_vnodeop_p &&
@@ -787,17 +792,34 @@ vrelel(vnode_t *vp, int flags, int lktype)
 	}
 
 	/*
-	 * If not the last reference, just drop the reference count and
-	 * unlock.  VOP_UNLOCK() is called here without a vnode reference
-	 * held, but is ok as the hold of v_interlock will stop the vnode
-	 * from disappearing.
+	 * If not the last reference, just unlock and drop the reference count.
+	 *
+	 * Otherwise make sure we pass a point in time where we hold the
+	 * last reference with VGET flag unset.
 	 */
-	if (vtryrele(vp)) {
-		if (lktype != LK_NONE) {
-			VOP_UNLOCK(vp);
+	for (use = atomic_load_relaxed(&vp->v_usecount);; use = next) {
+		if (__predict_false((use & VUSECOUNT_MASK) > 1)) {
+			if (lktype != LK_NONE) {
+				mutex_exit(vp->v_interlock);
+				lktype = LK_NONE;
+				VOP_UNLOCK(vp);
+				mutex_enter(vp->v_interlock);
+			}
+			if (vtryrele(vp)) {
+				mutex_exit(vp->v_interlock);
+				return;
+			}
+			next = atomic_load_relaxed(&vp->v_usecount);
+			continue;
 		}
-		mutex_exit(vp->v_interlock);
-		return;
+		KASSERT((use & VUSECOUNT_MASK) == 1);
+		next = use & ~VUSECOUNT_VGET;
+		if (next != use) {
+			next = atomic_cas_uint(&vp->v_usecount, use, next);
+		}
+		if (__predict_true(next == use)) {
+			break;
+		}
 	}
 	if (vrefcnt(vp) <= 0 || vp->v_writecount != 0) {
 		vnpanic(vp, "%s: bad ref count", __func__);
@@ -879,32 +901,20 @@ vrelel(vnode_t *vp, int flags, int lktype)
 	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	mutex_enter(vp->v_interlock);
 
-	for (;;) {
-		/*
-		 * If no longer the last reference, try to shed it. 
-		 * On success, drop the interlock last thereby
-		 * preventing the vnode being freed behind us.
-		 */
-		if (vtryrele(vp)) {
-			VOP_UNLOCK(vp);
-			rw_exit(vp->v_uobj.vmobjlock);
-			mutex_exit(vp->v_interlock);
-			return;
+	/*
+	 * Block new references then check again to see if a
+	 * new reference was acquired in the meantime.  If
+	 * it was, restore the vnode state and try again.
+	 */
+	if (recycle) {
+		VSTATE_CHANGE(vp, VS_LOADED, VS_BLOCKED);
+		use = atomic_load_relaxed(&vp->v_usecount);
+		if ((use & VUSECOUNT_VGET) != 0 ||
+		    (use & VUSECOUNT_MASK) != 1) {
+			VSTATE_CHANGE(vp, VS_BLOCKED, VS_LOADED);
+			goto retry;
 		}
-		/*
-		 * Block new references then check again to see if a
-		 * new reference was acquired in the meantime.  If
-		 * it was, restore the vnode state and try again.
-		 */
-		if (recycle) {
-			VSTATE_CHANGE(vp, VS_LOADED, VS_BLOCKED);
-			if (vrefcnt(vp) != 1) {
-				VSTATE_CHANGE(vp, VS_BLOCKED, VS_LOADED);
-				continue;
-			}
-		}
-		break;
- 		}
+	}
 
 	/* Take care of space accounting. */
 	if ((vp->v_iflag & VI_EXECMAP) != 0) {
@@ -921,17 +931,30 @@ vrelel(vnode_t *vp, int flags, int lktype)
 	if (recycle) {
 		VSTATE_ASSERT(vp, VS_BLOCKED);
 		/* vcache_reclaim drops the lock. */
+		lktype = LK_NONE;
 		vcache_reclaim(vp);
 	} else {
+		lktype = LK_NONE;
 		VOP_UNLOCK(vp);
 	}
 	KASSERT(vrefcnt(vp) > 0);
 
 out:
-	if ((atomic_dec_uint_nv(&vp->v_usecount) & VUSECOUNT_MASK) != 0) {
-		/* Gained another reference while being reclaimed. */
-		mutex_exit(vp->v_interlock);
-		return;
+	for (use = atomic_load_relaxed(&vp->v_usecount);; use = next) {
+		if (__predict_false((use & VUSECOUNT_VGET) != 0 &&
+		    (use & VUSECOUNT_MASK) == 1)) {
+			/* Gained and released another reference, retry. */
+			goto retry;
+		}
+		next = atomic_cas_uint(&vp->v_usecount, use, use - 1);
+		if (__predict_true(next == use)) {
+			if (__predict_false((use & VUSECOUNT_MASK) != 1)) {
+				/* Gained another reference. */
+				mutex_exit(vp->v_interlock);
+				return;
+			}
+			break;
+		}
 	}
 
 	if (VSTATE_GET(vp) == VS_RECLAIMED && vp->v_holdcnt == 0) {
@@ -1399,7 +1422,8 @@ vcache_tryvget(vnode_t *vp)
 		if (__predict_false((use & VUSECOUNT_GATE) == 0)) {
 			return EBUSY;
 		}
-		next = atomic_cas_uint(&vp->v_usecount, use, use + 1);
+		next = atomic_cas_uint(&vp->v_usecount,
+		    use, (use + 1) | VUSECOUNT_VGET);
 		if (__predict_true(next == use)) {
 			return 0;
 		}
@@ -1416,6 +1440,7 @@ vcache_tryvget(vnode_t *vp)
 int
 vcache_vget(vnode_t *vp)
 {
+	int error;
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
@@ -1433,7 +1458,8 @@ vcache_vget(vnode_t *vp)
 		return ENOENT;
 	}
 	VSTATE_ASSERT(vp, VS_LOADED);
-	atomic_inc_uint(&vp->v_usecount);
+	error = vcache_tryvget(vp);
+	KASSERT(error == 0);
 	mutex_exit(vp->v_interlock);
 
 	return 0;
