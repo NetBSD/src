@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.h,v 1.5 2021/12/19 00:25:04 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.h,v 1.6 2022/02/17 01:21:02 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -30,6 +30,7 @@
 #ifndef _VMWGFX_DRV_H_
 #define _VMWGFX_DRV_H_
 
+#include <linux/notifier.h>
 #include <linux/suspend.h>
 #include <linux/sync_file.h>
 
@@ -185,6 +186,7 @@ struct vmw_resource {
 	unsigned long pin_count;
 	const struct vmw_res_func *func;
 	struct rb_node mob_node;
+	bool mob_attached;
 	struct list_head lru_head;
 	struct list_head binding_head;
 	struct vmw_resource_dirty *dirty;
@@ -329,7 +331,9 @@ struct vmw_sg_table {
 struct vmw_piter {
 	struct page **pages;
 	const dma_addr_t *addrs;
+#ifndef __NetBSD__		/* XXX */
 	struct sg_dma_page_iter iter;
+#endif
 	unsigned long i;
 	unsigned long num_pages;
 	bool (*next)(struct vmw_piter *);
@@ -451,7 +455,13 @@ struct vmw_private {
 	struct drm_device *dev;
 	struct drm_vma_offset_manager vma_manager;
 	unsigned long vmw_chipset;
+#ifdef __NetBSD__
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_size_t iosz;
+#else
 	unsigned int io_start;
+#endif
 	uint32_t vram_start;
 	uint32_t vram_size;
 	uint32_t prim_bb_mem;
@@ -527,8 +537,8 @@ struct vmw_private {
 	 */
 
 	atomic_t marker_seq;
-	wait_queue_head_t fence_queue;
-	wait_queue_head_t fifo_queue;
+	drm_waitqueue_t fence_queue;
+	drm_waitqueue_t fifo_queue;
 	spinlock_t waiter_lock;
 	int fence_queue_waiters; /* Protected by waiter_lock */
 	int goal_queue_waiters; /* Protected by waiter_lock */
@@ -645,8 +655,15 @@ static inline void vmw_write(struct vmw_private *dev_priv,
 			     unsigned int offset, uint32_t value)
 {
 	spin_lock(&dev_priv->hw_lock);
+#ifdef __NetBSD__
+	bus_space_write_4(dev_priv->iot, dev_priv->ioh, VMWGFX_INDEX_PORT,
+	    offset);
+	bus_space_write_4(dev_priv->iot, dev_priv->ioh, VMWGFX_VALUE_PORT,
+	    value);
+#else
 	outl(offset, dev_priv->io_start + VMWGFX_INDEX_PORT);
 	outl(value, dev_priv->io_start + VMWGFX_VALUE_PORT);
+#endif
 	spin_unlock(&dev_priv->hw_lock);
 }
 
@@ -656,8 +673,15 @@ static inline uint32_t vmw_read(struct vmw_private *dev_priv,
 	u32 val;
 
 	spin_lock(&dev_priv->hw_lock);
+#ifdef __NetBSD__
+	bus_space_write_4(dev_priv->iot, dev_priv->ioh, VMWGFX_INDEX_PORT,
+	    offset);
+	val = bus_space_read_4(dev_priv->iot, dev_priv->ioh,
+	    VMWGFX_VALUE_PORT);
+#else
 	outl(offset, dev_priv->io_start + VMWGFX_INDEX_PORT);
 	val = inl(dev_priv->io_start + VMWGFX_VALUE_PORT);
+#endif
 	spin_unlock(&dev_priv->hw_lock);
 
 	return val;
@@ -742,7 +766,7 @@ int vmw_resources_clean(struct vmw_buffer_object *vbo, pgoff_t start,
  */
 static inline bool vmw_resource_mob_attached(const struct vmw_resource *res)
 {
-	return !RB_EMPTY_NODE(&res->mob_node);
+	return res->mob_attached;
 }
 
 /**
@@ -883,10 +907,13 @@ extern int vmw_present_ioctl(struct drm_device *dev, void *data,
 			     struct drm_file *file_priv);
 extern int vmw_present_readback_ioctl(struct drm_device *dev, void *data,
 				      struct drm_file *file_priv);
+#ifdef __NetBSD__
+#else
 extern __poll_t vmw_fops_poll(struct file *filp,
 				  struct poll_table_struct *wait);
 extern ssize_t vmw_fops_read(struct file *filp, char __user *buffer,
 			     size_t count, loff_t *offset);
+#endif
 
 /**
  * Fifo utilities - vmwgfx_fifo.c
@@ -927,7 +954,13 @@ extern int vmw_fifo_flush(struct vmw_private *dev_priv,
  * TTM glue - vmwgfx_ttm_glue.c
  */
 
+#ifdef __NetBSD__
+struct uvm_object;
+extern int vmw_mmap_object(struct drm_device *, off_t, size_t, vm_prot_t,
+    struct uvm_object **, voff_t, struct file *);
+#else
 extern int vmw_mmap(struct file *filp, struct vm_area_struct *vma);
+#endif
 
 extern void vmw_validation_mem_init_ttm(struct vmw_private *dev_priv,
 					size_t gran);
@@ -1430,8 +1463,17 @@ void vmw_bo_dirty_clear_res(struct vmw_resource *res);
 void vmw_bo_dirty_release(struct vmw_buffer_object *vbo);
 void vmw_bo_dirty_unmap(struct vmw_buffer_object *vbo,
 			pgoff_t start, pgoff_t end);
+#ifdef __NetBSD__
+struct uvm_fault_info;
+struct vm_page;
+int vmw_bo_vm_fault(struct uvm_fault_info *, vaddr_t, struct vm_page **,
+    int, int, vm_prot_t, int);
+int vmw_bo_vm_mkwrite(struct uvm_fault_info *, vaddr_t, struct vm_page **,
+    int, int, vm_prot_t, int);
+#else
 vm_fault_t vmw_bo_vm_fault(struct vm_fault *vmf);
 vm_fault_t vmw_bo_vm_mkwrite(struct vm_fault *vmf);
+#endif
 
 /**
  * VMW_DEBUG_KMS - Debug output for kernel mode-setting

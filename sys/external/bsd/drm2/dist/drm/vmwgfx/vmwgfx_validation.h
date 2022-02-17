@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_validation.h,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_validation.h,v 1.3 2022/02/17 01:21:02 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -216,7 +216,7 @@ vmw_validation_context_init(struct vmw_validation_context *ctx)
  */
 static inline unsigned int vmw_validation_align(unsigned int val)
 {
-	return ALIGN(val, sizeof(long));
+	return round_up(val, sizeof(long));
 }
 
 int vmw_validation_add_bo(struct vmw_validation_context *ctx,
