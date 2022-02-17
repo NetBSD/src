@@ -1,0 +1,69 @@
+#	$NetBSD: files.vmwgfx,v 1.1 2022/02/17 01:21:03 riastradh Exp $
+
+version	20180827
+
+define	vmwgfxfbbus	{ }
+device	vmwgfx: drmkms, drmkms_pci, drmkms_ttm, vmwgfxfbbus
+attach	vmwgfx at pci
+
+device	vmwgfxfb: vmwgfxfbbus, drmfb, drmfb_pci, wsemuldisplaydev
+attach	vmwgfxfb at vmwgfxfbbus
+
+# This code comes from the Linux kernel, which assumes signed
+# overflow is OK.
+makeoptions 	vmwgfx	"COPTS.vmwgfx"+="-fwrapv"
+
+makeoptions	vmwgfxfb	"CPPFLAGS.vmwgfxfb"+="${CPPFLAGS.vmwgfx}"
+
+# Our overrides first.
+makeoptions	vmwgfx	"CPPFLAGS.vmwgfx"+="-I$S/external/bsd/drm2/vmwgfx"
+
+# Then their header files.
+makeoptions	vmwgfx	"CPPFLAGS.vmwgfx"+="-I$S/external/bsd/drm2/dist/drm/vmwgfx"
+
+makeoptions	vmwgfx	"CWARNFLAGS.vmwgfx"+="-Wno-missing-field-initializers"
+
+file	external/bsd/drm2/vmwgfx/vmwgfx_module.c		vmwgfx
+file	external/bsd/drm2/vmwgfx/vmwgfx_pci.c			vmwgfx
+
+file	external/bsd/drm2/vmwgfx/vmwgfxfb.c			vmwgfxfb
+
+# Generated from vmwgfx2netbsd.  Tweaked to avoid renaming ttm_*.c to
+# vmwgfx_ttm_*.c -- do that on the next import.
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_binding.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_blit.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_bo.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_cmdbuf.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_cmdbuf_res.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_context.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_cotable.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_drv.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_execbuf.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_fb.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_fence.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_fifo.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_gmr.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_gmrid_manager.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_ioctl.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_irq.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_kms.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_ldu.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_marker.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_mob.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_msg.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_overlay.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_page_dirty.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_prime.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_resource.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_scrn.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_shader.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_simple_resource.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_so.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_stdu.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_surface.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_ttm_buffer.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_ttm_glue.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/ttm_lock.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/ttm_object.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_va.c	vmwgfx
+file	external/bsd/drm2/dist/drm/vmwgfx/vmwgfx_validation.c	vmwgfx

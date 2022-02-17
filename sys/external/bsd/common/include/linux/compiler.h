@@ -1,4 +1,4 @@
-/*	$NetBSD: compiler.h,v 1.6 2021/12/19 11:26:57 riastradh Exp $	*/
+/*	$NetBSD: compiler.h,v 1.7 2022/02/17 01:21:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #define	__maybe_unused	__unused
 #define	noinline	__noinline
 #define	__deprecated	/* nothing */
+#define	__acquire(X)	/* nothing */
+#define	__release(X)	/* nothing */
 
 #define	barrier()	__insn_barrier()
 #define	likely(X)	__predict_true(X)

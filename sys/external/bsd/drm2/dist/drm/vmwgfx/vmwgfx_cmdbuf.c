@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_cmdbuf.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_cmdbuf.c,v 1.4 2022/02/17 01:21:02 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.4 2022/02/17 01:21:02 riastradh Exp $");
 
 #include <linux/dmapool.h>
 #include <linux/pci.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: vmwgfx_cmdbuf.c,v 1.3 2021/12/18 23:45:45 riastradh 
 #include <drm/ttm/ttm_bo_api.h>
 
 #include "vmwgfx_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * Size of inline command buffers. Try to make sure that a page size is a

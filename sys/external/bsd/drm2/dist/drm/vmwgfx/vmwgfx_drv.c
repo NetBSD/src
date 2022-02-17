@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.c,v 1.4 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.c,v 1.5 2022/02/17 01:21:02 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.4 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.5 2022/02/17 01:21:02 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/dma-mapping.h>
@@ -1430,6 +1430,14 @@ static struct drm_driver driver = {
 	.patchlevel = VMWGFX_DRIVER_PATCHLEVEL
 };
 
+#ifdef __NetBSD__
+
+static const struct drm_driver *const vmwgfx_driver = &driver;
+static const struct pci_device_id *const vmwgfx_pci_ids = vmw_pci_id_list;
+static const size_t vmwgfx_n_pci_ids = __arraycount(vmw_pci_id_list);
+
+#else
+
 static struct pci_driver vmw_pci_driver = {
 	.name = VMWGFX_DRIVER_NAME,
 	.id_table = vmw_pci_id_list,
@@ -1494,6 +1502,8 @@ static void __exit vmwgfx_exit(void)
 {
 	pci_unregister_driver(&vmw_pci_driver);
 }
+
+#endif
 
 module_init(vmwgfx_init);
 module_exit(vmwgfx_exit);
