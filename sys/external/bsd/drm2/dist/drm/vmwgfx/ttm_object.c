@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_object.c,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: ttm_object.c,v 1.3 2022/02/17 01:21:02 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_object.c,v 1.2 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_object.c,v 1.3 2022/02/17 01:21:02 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_object.c,v 1.2 2021/12/18 23:45:45 riastradh Exp
 #include <linux/slab.h>
 #include <linux/atomic.h>
 #include "ttm_object.h"
+
+#include <linux/nbsd-namespace.h>
 
 struct ttm_object_file {
 	struct ttm_object_device *tdev;
@@ -586,7 +588,19 @@ void ttm_object_device_release(struct ttm_object_device **p_tdev)
  */
 static bool __must_check get_dma_buf_unless_doomed(struct dma_buf *dmabuf)
 {
+#ifdef __NetBSD__
+	/* XXX move this to linux_dma_buf.c */
+	unsigned cnt;
+
+	do {
+		cnt = atomic_load_relaxed(&dmabuf->db_refcnt);
+		if (cnt == 0)
+			return false;
+	} while (atomic_cas_uint(&dmabuf->db_refcnt, cnt, cnt + 1) != cnt);
+	return true;
+#else
 	return atomic_long_inc_not_zero(&dmabuf->file->f_count) != 0L;
+#endif
 }
 
 /**

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_resource.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_resource.c,v 1.4 2022/02/17 01:21:02 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_resource.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_resource.c,v 1.4 2022/02/17 01:21:02 riastradh Exp $");
 
 #include <drm/ttm/ttm_placement.h>
 
@@ -51,6 +51,9 @@ void vmw_resource_mob_attach(struct vmw_resource *res)
 	res->used_prio = (res->res_dirty) ? res->func->dirty_prio :
 		res->func->prio;
 
+#ifdef __NetBSD__
+	rb_tree_insert_node etc etc etc
+#else
 	while (*new) {
 		struct vmw_resource *this =
 			container_of(*new, struct vmw_resource, mob_node);
@@ -62,6 +65,8 @@ void vmw_resource_mob_attach(struct vmw_resource *res)
 
 	rb_link_node(&res->mob_node, parent, new);
 	rb_insert_color(&res->mob_node, &backup->res_tree);
+#endif
+	res->mob_attached = true;
 
 	vmw_bo_prio_add(backup, res->used_prio);
 }
@@ -76,6 +81,7 @@ void vmw_resource_mob_detach(struct vmw_resource *res)
 
 	dma_resv_assert_held(backup->base.base.resv);
 	if (vmw_resource_mob_attached(res)) {
+		res->mob_attached = false;
 		rb_erase(&res->mob_node, &backup->res_tree);
 		RB_CLEAR_NODE(&res->mob_node);
 		vmw_bo_prio_del(backup, res->used_prio);
