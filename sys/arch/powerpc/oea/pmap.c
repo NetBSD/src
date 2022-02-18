@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110 2022/02/18 18:58:15 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111 2022/02/18 19:04:52 martin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2022/02/18 18:58:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2022/02/18 19:04:52 martin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -162,6 +162,7 @@ static u_int mem_cnt, avail_cnt;
 #define pmap_protect		PMAPNAME(protect)
 #define pmap_unwire		PMAPNAME(unwire)
 #define pmap_page_protect	PMAPNAME(page_protect)
+#define	pmap_pv_protect		PMAPNAME(pv_protect)
 #define pmap_query_bit		PMAPNAME(query_bit)
 #define pmap_clear_bit		PMAPNAME(clear_bit)
 
@@ -214,7 +215,7 @@ STATIC bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
 STATIC void pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 STATIC void pmap_unwire(pmap_t, vaddr_t);
 STATIC void pmap_page_protect(struct vm_page *, vm_prot_t);
-void pmap_pv_protect(paddr_t, vm_prot_t);
+STATIC void pmap_pv_protect(paddr_t, vm_prot_t);
 STATIC bool pmap_query_bit(struct vm_page *, int);
 STATIC bool pmap_clear_bit(struct vm_page *, int);
 
@@ -258,6 +259,7 @@ const struct pmap_ops PMAPNAME(ops) = {
 	.pmapop_protect = pmap_protect,
 	.pmapop_unwire = pmap_unwire,
 	.pmapop_page_protect = pmap_page_protect,
+	.pmapop_pv_protect = pmap_pv_protect,
 	.pmapop_query_bit = pmap_query_bit,
 	.pmapop_clear_bit = pmap_clear_bit,
 	.pmapop_activate = pmap_activate,
