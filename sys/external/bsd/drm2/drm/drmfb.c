@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.13 2022/02/16 23:30:10 riastradh Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.14 2022/02/18 18:31:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.13 2022/02/16 23:30:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.14 2022/02/18 18:31:18 wiz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -93,7 +93,6 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	static const struct genfb_ops zero_genfb_ops;
 	struct genfb_ops genfb_ops = zero_genfb_ops;
 	enum { CONS_VGA, CONS_GENFB, CONS_NONE } what_was_cons;
-	device_t parent = device_parent(da->da_dev);
 	bool is_console;
 	int error;
 
@@ -115,9 +114,7 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	prop_dictionary_set_uint64(dict, "mode_callback",
 	    (uint64_t)(uintptr_t)&drmfb_genfb_mode_callback);
 
-	if (!prop_dictionary_get_bool(dict, "is_console", &is_console) &&
-	    !prop_dictionary_get_bool(device_properties(parent), "is_console",
-		&is_console)) {
+	if (!prop_dictionary_get_bool(dict, "is_console", &is_console)) {
 		/* XXX Whattakludge!  */
 #if NVGA > 0
 		if ((da->da_params->dp_is_vga_console != NULL) &&
