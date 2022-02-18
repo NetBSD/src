@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.20 2021/05/18 20:34:20 dholland Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.21 2022/02/18 06:42:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ retry:
 			s = &symtab[ELF32_R_SYM(htobe32(ra->r_info))];
 			if (s->st_shndx == ELF_SYM_UNDEFINED) {
 				fprintf(stderr, "Undefined symbol: %s\n",
-				    strtab + s->st_name);
+				    strtab + htobe32(s->st_name));
 				++undefsyms;
 			}
 			value = htobe32(ra->r_addend) + eval(s, sect_offset);
