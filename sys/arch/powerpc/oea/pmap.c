@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2022/02/16 23:49:27 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2022/02/18 18:58:15 martin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2022/02/16 23:49:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2022/02/18 18:58:15 martin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -214,7 +214,7 @@ STATIC bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
 STATIC void pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 STATIC void pmap_unwire(pmap_t, vaddr_t);
 STATIC void pmap_page_protect(struct vm_page *, vm_prot_t);
-STATIC void pmap_pv_protect(paddr_t, vm_prot_t);
+void pmap_pv_protect(paddr_t, vm_prot_t);
 STATIC bool pmap_query_bit(struct vm_page *, int);
 STATIC bool pmap_clear_bit(struct vm_page *, int);
 
