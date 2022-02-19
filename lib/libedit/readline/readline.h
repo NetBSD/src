@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.52 2022/02/08 15:05:10 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.53 2022/02/19 17:45:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -127,8 +127,8 @@ extern int		rl_completion_query_items;
 extern const char	*rl_special_prefixes;
 extern int		rl_completion_append_character;
 extern int		rl_inhibit_completion;
-extern Function		*rl_pre_input_hook;
-extern Function		*rl_startup_hook;
+extern rl_hook_func_t		*rl_pre_input_hook;
+extern rl_hook_func_t		*rl_startup_hook;
 extern char		*rl_terminal_name;
 extern int		rl_already_prompted;
 extern char		*rl_prompt;

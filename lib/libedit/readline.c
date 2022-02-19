@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.172 2022/02/08 15:05:10 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.173 2022/02/19 17:45:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.172 2022/02/08 15:05:10 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.173 2022/02/19 17:45:02 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -113,8 +113,8 @@ const char *rl_basic_quote_characters = "\"'";
 rl_compentry_func_t *rl_completion_entry_function = NULL;
 char *(*rl_completion_word_break_hook)(void) = NULL;
 rl_completion_func_t *rl_attempted_completion_function = NULL;
-Function *rl_pre_input_hook = NULL;
-Function *rl_startup1_hook = NULL;
+rl_hook_func_t *rl_pre_input_hook = NULL;
+rl_hook_func_t *rl_startup1_hook = NULL;
 int (*rl_getc_function)(FILE *) = NULL;
 char *rl_terminal_name = NULL;
 int rl_already_prompted = 0;
@@ -123,7 +123,7 @@ int rl_ignore_completion_duplicates = 0;
 int readline_echoing_p = 1;
 int _rl_print_completions_horizontally = 0;
 VFunction *rl_redisplay_function = NULL;
-Function *rl_startup_hook = NULL;
+rl_hook_func_t *rl_startup_hook = NULL;
 VFunction *rl_completion_display_matches_hook = NULL;
 VFunction *rl_prep_term_function = (VFunction *)rl_prep_terminal;
 VFunction *rl_deprep_term_function = (VFunction *)rl_deprep_terminal;
@@ -445,7 +445,7 @@ readline(const char *p)
 	if (e == NULL || h == NULL)
 		rl_initialize();
 	if (rl_startup_hook) {
-		(*rl_startup_hook)(NULL, 0);
+		(*rl_startup_hook)();
 	}
 	tty_init(e);
 
@@ -460,7 +460,7 @@ readline(const char *p)
 		goto out;
 
 	if (rl_pre_input_hook)
-		(*rl_pre_input_hook)(NULL, 0);
+		(*rl_pre_input_hook)();
 
 	if (rl_event_hook && !(e->el_flags & NO_TTY)) {
 		el_set(e, EL_GETCFN, _rl_event_read_char);
