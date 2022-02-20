@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountcritlocal,v 1.16 2020/07/22 16:50:41 martin Exp $
+# $NetBSD: mountcritlocal,v 1.17 2022/02/20 14:42:07 alnsn Exp $
 #
 
 # PROVIDE: mountcritlocal
@@ -19,8 +19,12 @@ mountcritlocal_start()
 	#	This usually includes /var.
 	#
 	mount_critical_filesystems local || return $?
+	if checkyesno zfs; then
+		mount_critical_filesystems_zfs || return $?
+	fi
 	return 0
 }
 
 load_rc_config $name
+load_rc_config_var zfs zfs
 run_rc_command "$1"
