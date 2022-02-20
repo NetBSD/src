@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.3 2021/11/01 14:33:41 hannken Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.4 2022/02/20 15:21:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.3 2021/11/01 14:33:41 hannken Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.4 2022/02/20 15:21:14 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
+#include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -608,6 +609,45 @@ ATF_TC_BODY(timerfd_restart, tc)
 
 /*****************************************************************************/
 
+ATF_TC(timerfd_fcntl);
+ATF_TC_HEAD(timerfd_fcntl, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "validates fcntl behavior");
+}
+
+ATF_TC_BODY(timerfd_fcntl, tc)
+{
+	int tfd;
+	int val;
+
+	ATF_REQUIRE((tfd = timerfd_create(CLOCK_MONOTONIC, 0)) >= 0);
+	ATF_REQUIRE((fcntl(tfd, F_GETFL) & O_NONBLOCK) == 0);
+	ATF_REQUIRE(fcntl(tfd, F_SETFL, O_NONBLOCK) == 0);
+	ATF_REQUIRE((fcntl(tfd, F_GETFL) & O_NONBLOCK) != 0);
+	ATF_REQUIRE((fcntl(tfd, F_GETFD) & FD_CLOEXEC) == 0);
+
+	/* If the timer hasn't fired, there is no readable data. */
+	ATF_REQUIRE(ioctl(tfd, FIONREAD, &val) == 0);
+	ATF_REQUIRE(val == 0);
+
+	ATF_REQUIRE_ERRNO(ENOTTY, ioctl(tfd, FIONWRITE, &val) == -1);
+	ATF_REQUIRE_ERRNO(ENOTTY, ioctl(tfd, FIONSPACE, &val) == -1);
+	(void)close(tfd);
+
+	ATF_REQUIRE((tfd = timerfd_create(CLOCK_MONOTONIC,
+					  TFD_NONBLOCK | TFD_CLOEXEC)) >= 0);
+	ATF_REQUIRE((fcntl(tfd, F_GETFL) & ~O_ACCMODE) == O_NONBLOCK);
+	ATF_REQUIRE((fcntl(tfd, F_GETFD) & FD_CLOEXEC) != 0);
+	ATF_REQUIRE(fcntl(tfd, F_SETFD, 0) == 0);
+	ATF_REQUIRE((fcntl(tfd, F_GETFD) & FD_CLOEXEC) == 0);
+	ATF_REQUIRE(fcntl(tfd, F_SETFD, FD_CLOEXEC) == 0);
+	ATF_REQUIRE((fcntl(tfd, F_GETFD) & FD_CLOEXEC) != 0);
+	(void)close(tfd);
+}
+
+/*****************************************************************************/
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, timerfd_create);
@@ -620,6 +660,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, timerfd_select_poll_kevent_immed);
 	ATF_TP_ADD_TC(tp, timerfd_select_poll_kevent_block);
 	ATF_TP_ADD_TC(tp, timerfd_restart);
+	ATF_TP_ADD_TC(tp, timerfd_fcntl);
 
 	return atf_no_error();
 }

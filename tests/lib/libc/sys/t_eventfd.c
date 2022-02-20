@@ -1,4 +1,4 @@
-/* $NetBSD: t_eventfd.c,v 1.2 2021/09/19 15:51:28 thorpej Exp $ */
+/* $NetBSD: t_eventfd.c,v 1.3 2022/02/20 15:21:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_eventfd.c,v 1.2 2021/09/19 15:51:28 thorpej Exp $");
+__RCSID("$NetBSD: t_eventfd.c,v 1.3 2022/02/20 15:21:14 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/eventfd.h>
+#include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -776,6 +777,44 @@ ATF_TC_BODY(eventfd_bufsize, tc)
 
 /*****************************************************************************/
 
+ATF_TC(eventfd_fcntl);
+ATF_TC_HEAD(eventfd_fcntl, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "validates fcntl behavior");
+}
+ATF_TC_BODY(eventfd_fcntl, tc)
+{
+	int efd;
+	int val;
+
+	ATF_REQUIRE((efd = eventfd(1, 0)) >= 0);
+	ATF_REQUIRE((fcntl(efd, F_GETFL) & O_NONBLOCK) == 0);
+	ATF_REQUIRE(fcntl(efd, F_SETFL, O_NONBLOCK) == 0);
+	ATF_REQUIRE((fcntl(efd, F_GETFL) & O_NONBLOCK) != 0);
+	ATF_REQUIRE((fcntl(efd, F_GETFD) & FD_CLOEXEC) == 0);
+
+	ATF_REQUIRE(ioctl(efd, FIONREAD, &val) == 0);
+	ATF_REQUIRE(val == sizeof(eventfd_t));
+
+	ATF_REQUIRE(ioctl(efd, FIONWRITE, &val) == 0);
+	ATF_REQUIRE(val == 0);
+
+	ATF_REQUIRE_ERRNO(ENOTTY, ioctl(efd, FIONSPACE, &val) == -1);
+	(void)close(efd);
+
+	ATF_REQUIRE((efd = eventfd(1, EFD_NONBLOCK | EFD_CLOEXEC)) >= 0);
+	ATF_REQUIRE((fcntl(efd, F_GETFL) & ~O_ACCMODE) == O_NONBLOCK);
+	ATF_REQUIRE((fcntl(efd, F_GETFD) & FD_CLOEXEC) != 0);
+	ATF_REQUIRE(fcntl(efd, F_SETFD, 0) == 0);
+	ATF_REQUIRE((fcntl(efd, F_GETFD) & FD_CLOEXEC) == 0);
+	ATF_REQUIRE(fcntl(efd, F_SETFD, FD_CLOEXEC) == 0);
+	ATF_REQUIRE((fcntl(efd, F_GETFD) & FD_CLOEXEC) != 0);
+	(void)close(efd);
+}
+
+/*****************************************************************************/
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, eventfd_normal);
@@ -785,6 +824,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, eventfd_select_poll_kevent_immed);
 	ATF_TP_ADD_TC(tp, eventfd_select_poll_kevent_block);
 	ATF_TP_ADD_TC(tp, eventfd_restart);
+	ATF_TP_ADD_TC(tp, eventfd_fcntl);
 
 	return atf_no_error();
 }
