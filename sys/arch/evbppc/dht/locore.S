@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2021/04/02 07:00:33 rin Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2022/02/20 18:56:01 christos Exp $	*/
 
 /*
  * Taken from src/sys/arch/powerpc/ibm4xx/openbios/locore.s:
@@ -120,9 +120,9 @@ __start:
 	 * Note:        Meaning of bits we need to set is undocumented.
 	 */
 	sync
-	mfccr0  %r0
+	mfspr   %r0,947 	/* mfccr0  %r0 */
 	oris    %r0,%r0,0x50000000@h
-	mtccr0  %r0
+	mtspr   947,%r0		/* mtccr0  %r0 */
 	isync
 
 	/* PPC405GP errata, item #58.
