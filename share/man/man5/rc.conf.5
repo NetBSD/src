@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.191 2022/02/20 10:49:17 alnsn Exp $
+.\"	$NetBSD: rc.conf.5,v 1.192 2022/02/20 14:43:39 alnsn Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -321,6 +321,17 @@ where the
 prefix means that it is not an error if the file system is not
 present in
 .Xr fstab 5 .
+.It Sy critical_filesystems_zfs
+A string.
+Mount non-legacy ZFS file systems right after mounting local
+file systems listed in
+.Sy critical_filesystems_local
+variable.
+An entry can be prefixed with
+.Ql "OPTIONAL:"
+which means that it is not an error if the file system is not present
+among available ZFS datasets.
+The default is ''.
 .It Sy fsck_flags
 A string.
 A file system is checked with
