@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2019/10/04 09:47:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2022/02/21 02:13:47 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -41,16 +41,19 @@ MAN=	DBE.3 DPMSCapable.3 DPMSDisable.3 DPMSEnable.3 DPMSForceLevel.3 \
 	XdbeGetVisualInfo.3 XdbeQueryExtension.3 XdbeSwapBuffers.3 Xevi.3 \
 	Xmbuf.3
 
-MLINKS=		XShape.3 XShapeQueryExtensionXShapeQueryVersion.3 \
-		XShape.3 XShapeCombineRegion.3 \
-		XShape.3 XShapeCombineRectangles.3 \
-		XShape.3 XShapeCombineMask.3 \
-		XShape.3 XShapeCombineShape.3 \
-		XShape.3 XShapeOffsetShape.3 \
-		XShape.3 XShapeQueryExtents.3 \
-		XShape.3 XShapeSelectInput.3 \
-		XShape.3 XShapeInputSelected.3 \
-		XShape.3 XShapeGetRectangles.3
+MLINKS  = #
+
+MLINKS += XShape.3 XShapeCombineMask.3
+MLINKS += XShape.3 XShapeCombineRectangles.3
+MLINKS += XShape.3 XShapeCombineRegion.3
+MLINKS += XShape.3 XShapeCombineShape.3
+MLINKS += XShape.3 XShapeGetRectangles.3
+MLINKS += XShape.3 XShapeInputSelected.3
+MLINKS += XShape.3 XShapeOffsetShape.3
+MLINKS += XShape.3 XShapeQueryExtension.3
+MLINKS += XShape.3 XShapeQueryExtents.3
+MLINKS += XShape.3 XShapeQueryVersion.3
+MLINKS += XShape.3 XShapeSelectInput.3
 
 MLINKS+=	XShm.3 XShmQueryExtension.3 \
 		XShm.3 XShmQueryVersion.3 \
