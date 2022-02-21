@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.127 2021/10/20 03:08:19 thorpej Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.128 2022/02/21 17:07:45 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.127 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.128 2022/02/21 17:07:45 hannken Exp $");
 
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -142,7 +142,7 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
 	KASSERT(vp->v_type != VLNK || ip->i_size >= ump->um_maxsymlinklen);
 	KASSERT(vp->v_type != VLNK || ump->um_maxsymlinklen != 0 ||
-	    DIP(ip, blocks) == 0);
+	    DIP(ip, blocks) != 0);
 
 	if (uio->uio_offset > ump->um_maxfilesize)
 		return EFBIG;
