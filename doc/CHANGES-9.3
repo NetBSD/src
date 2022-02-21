@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.77 2022/02/16 14:37:00 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.78 2022/02/21 17:59:04 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1491,4 +1491,10 @@ sys/dev/usb/uhidev.c				1.82
 
 	PR 55019: do not explicitly set the HID Report Protocol upon attach.
 	[jakllsch, ticket #1428]
+
+bin/sh/histedit.c				1.60
+
+	sh(1): fix "fc -e".
+	[kre, ticket #1429]
+
 
