@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.55 2019/02/10 19:21:52 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.55.2.1 2022/02/21 17:58:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.55 2019/02/10 19:21:52 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.55.2.1 2022/02/21 17:58:11 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,7 @@ histcmd(volatile int argc, char ** volatile argv)
 	      (ch = getopt(argc, argv, ":e:lnrs")) != -1)
 		switch ((char)ch) {
 		case 'e':
-			editor = optionarg;
+			editor = optarg;
 			break;
 		case 'l':
 			lflg = 1;
