@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.226 2021/08/24 00:12:32 mrg Exp $
+#	 $NetBSD: mi,v 1.227 2022/02/21 02:13:47 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1952,8 +1952,10 @@
 ./usr/X11R7/man/cat3/XShapeGetRectangles.0		xcomp-libXext-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeInputSelected.0		xcomp-libXext-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeOffsetShape.0		xcomp-libXext-catman	.cat,xorg
-./usr/X11R7/man/cat3/XShapeQueryExtensionXShapeQueryVersion.0	xcomp-libXext-catman	.cat,xorg
+./usr/X11R7/man/cat3/XShapeQueryExtension.0		xcomp-libXext-catman	.cat,xorg
+./usr/X11R7/man/cat3/XShapeQueryExtensionXShapeQueryVersion.0	xcomp-obsolete	obsolete
 ./usr/X11R7/man/cat3/XShapeQueryExtents.0		xcomp-libXext-catman	.cat,xorg
+./usr/X11R7/man/cat3/XShapeQueryVersion.0		xcomp-libXext-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeSelectInput.0		xcomp-libXext-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XShm.0				xcomp-libXext-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XShmAttach.0			xcomp-libXext-catman	.cat,xorg
@@ -2900,8 +2902,10 @@
 ./usr/X11R7/man/html3/XShapeGetRectangles.html		xcomp-libXext-htmlman	html,xorg
 ./usr/X11R7/man/html3/XShapeInputSelected.html		xcomp-libXext-htmlman	html,xorg
 ./usr/X11R7/man/html3/XShapeOffsetShape.html		xcomp-libXext-htmlman	html,xorg
-./usr/X11R7/man/html3/XShapeQueryExtensionXShapeQueryVersion.html	xcomp-libXext-htmlman	html,xorg
+./usr/X11R7/man/html3/XShapeQueryExtension.html	xcomp-libXext-htmlman	html,xorg
+./usr/X11R7/man/html3/XShapeQueryExtensionXShapeQueryVersion.html	xcomp-obsolete	obsolete
 ./usr/X11R7/man/html3/XShapeQueryExtents.html		xcomp-libXext-htmlman	html,xorg
+./usr/X11R7/man/html3/XShapeQueryVersion.html	xcomp-libXext-htmlman	html,xorg
 ./usr/X11R7/man/html3/XShapeSelectInput.html		xcomp-libXext-htmlman	html,xorg
 ./usr/X11R7/man/html3/XShm.html				xcomp-libXext-htmlman	html,xorg
 ./usr/X11R7/man/html3/XShmAttach.html			xcomp-libXext-htmlman	html,xorg
@@ -3847,8 +3851,10 @@
 ./usr/X11R7/man/man3/XShapeGetRectangles.3		xcomp-libXext-man	.man,xorg
 ./usr/X11R7/man/man3/XShapeInputSelected.3		xcomp-libXext-man	.man,xorg
 ./usr/X11R7/man/man3/XShapeOffsetShape.3		xcomp-libXext-man	.man,xorg
-./usr/X11R7/man/man3/XShapeQueryExtensionXShapeQueryVersion.3	xcomp-libXext-man	.man,xorg
+./usr/X11R7/man/man3/XShapeQueryExtension.3		xcomp-libXext-man	.man,xorg
+./usr/X11R7/man/man3/XShapeQueryExtensionXShapeQueryVersion.3	xcomp-obsolete	obsolete
 ./usr/X11R7/man/man3/XShapeQueryExtents.3		xcomp-libXext-man	.man,xorg
+./usr/X11R7/man/man3/XShapeQueryVersion.3		xcomp-libXext-man	.man,xorg
 ./usr/X11R7/man/man3/XShapeSelectInput.3		xcomp-libXext-man	.man,xorg
 ./usr/X11R7/man/man3/XShm.3				xcomp-libXext-man	.man,xorg
 ./usr/X11R7/man/man3/XShmAttach.3			xcomp-libXext-man	.man,xorg
