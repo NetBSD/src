@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.228 2022/02/22 00:05:14 uwe Exp $
+#	 $NetBSD: mi,v 1.229 2022/02/22 15:42:09 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1793,6 +1793,7 @@
 ./usr/X11R7/man/cat3/XF86MiscSetMouseSettings.0		xcomp-libXxf86misc-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XF86MiscSetSaver.0			xcomp-libXxf86misc-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VM.0				xcomp-libXxf86vm-catman	.cat,xorg
+./usr/X11R7/man/cat3/XF86VidModeAddModeLine.0		xcomp-libXxf86vm-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeDeleteModeLine.0	xcomp-libXxf86vm-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetAllModeLines.0	xcomp-libXxf86vm-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetDotClocks.0		xcomp-libXxf86vm-catman	.cat,xorg
@@ -2749,6 +2750,7 @@
 ./usr/X11R7/man/html3/XF86MiscSetMouseSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86MiscSetSaver.html		xcomp-libXxf86misc-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VM.html			xcomp-libXxf86vm-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86VidModeAddModeLine.html	xcomp-libXxf86vm-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeDeleteModeLine.html	xcomp-libXxf86vm-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeGetAllModeLines.html	xcomp-libXxf86vm-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeGetDotClocks.html	xcomp-libXxf86vm-htmlman	html,xorg
@@ -3704,6 +3706,7 @@
 ./usr/X11R7/man/man3/XF86MiscSetMouseSettings.3		xcomp-libXxf86misc-man	.man,xorg
 ./usr/X11R7/man/man3/XF86MiscSetSaver.3			xcomp-libXxf86misc-man	.man,xorg
 ./usr/X11R7/man/man3/XF86VM.3				xcomp-libXxf86vm-man	.man,xorg
+./usr/X11R7/man/man3/XF86VidModeAddModeLine.3		xcomp-libXxf86vm-man	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeDeleteModeLine.3	xcomp-libXxf86vm-man	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetAllModeLines.3	xcomp-libXxf86vm-man	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetDotClocks.3		xcomp-libXxf86vm-man	.man,xorg
