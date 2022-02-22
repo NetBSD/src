@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2013/05/31 09:33:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2022/02/22 15:42:09 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ MLINKS=	XF86VM.3 XF86VidModeQueryExtension.3 \
 	XF86VM.3 XF86VidModeSetClientVersion.3 \
 	XF86VM.3 XF86VidModeGetModeLine.3 \
 	XF86VM.3 XF86VidModeGetAllModeLines.3 \
+	XF86VM.3 XF86VidModeAddModeLine.3 \
 	XF86VM.3 XF86VidModeDeleteModeLine.3 \
 	XF86VM.3 XF86VidModeModModeLine.3 \
 	XF86VM.3 XF86VidModeValidateModeLine.3 \
