@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.227 2022/02/21 02:13:47 uwe Exp $
+#	 $NetBSD: mi,v 1.228 2022/02/22 00:05:14 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2382,22 +2382,28 @@
 ./usr/X11R7/man/cat3/XtWindowOfObject.0			xcomp-libXt-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XtWindowToWidget.0			xcomp-libXt-catman	.cat,xorg
 ./usr/X11R7/man/cat3/Xv.0				xcomp-libXv-catman	.cat,xorg
+./usr/X11R7/man/cat3/XvCreateImage.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvFreeAdaptorInfo.0		xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvFreeEncodingInfo.0		xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvGetPortAttribute.0		xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvGetStill.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvGetVideo.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvGrabPort.0			xcomp-libXv-catman	.cat,xorg
+./usr/X11R7/man/cat3/XvListImageFormats.0		xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvPortNotify.0			xcomp-libXv-catman	.cat,xorg
+./usr/X11R7/man/cat3/XvPutImage.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvPutStill.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvPutVideo.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvQueryAdaptors.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvQueryBestSize.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvQueryEncodings.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvQueryExtension.0			xcomp-libXv-catman	.cat,xorg
+./usr/X11R7/man/cat3/XvQueryPortAttributes.0		xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvSelectPortNotify.0		xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvSelectVideoNotify.0		xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvSetPortAttribute.0		xcomp-libXv-catman	.cat,xorg
+./usr/X11R7/man/cat3/XvShmCreateImage.0			xcomp-libXv-catman	.cat,xorg
+./usr/X11R7/man/cat3/XvShmPutImage.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvStopVideo.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvUngrabPort.0			xcomp-libXv-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XvVideoNotify.0			xcomp-libXv-catman	.cat,xorg
@@ -3332,22 +3338,28 @@
 ./usr/X11R7/man/html3/XtWindowOfObject.html		xcomp-libXt-htmlman	html,xorg
 ./usr/X11R7/man/html3/XtWindowToWidget.html		xcomp-libXt-htmlman	html,xorg
 ./usr/X11R7/man/html3/Xv.html				xcomp-libXv-htmlman	html,xorg
+./usr/X11R7/man/html3/XvCreateImage.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvFreeAdaptorInfo.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvFreeEncodingInfo.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvGetPortAttribute.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvGetStill.html			xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvGetVideo.html			xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvGrabPort.html			xcomp-libXv-htmlman	html,xorg
+./usr/X11R7/man/html3/XvListImageFormats.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvPortNotify.html			xcomp-libXv-htmlman	html,xorg
+./usr/X11R7/man/html3/XvPutImage.html			xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvPutStill.html			xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvPutVideo.html			xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvQueryAdaptors.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvQueryBestSize.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvQueryEncodings.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvQueryExtension.html		xcomp-libXv-htmlman	html,xorg
+./usr/X11R7/man/html3/XvQueryPortAttributes.html	xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvSelectPortNotify.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvSelectVideoNotify.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvSetPortAttribute.html		xcomp-libXv-htmlman	html,xorg
+./usr/X11R7/man/html3/XvShmCreateImage.html		xcomp-libXv-htmlman	html,xorg
+./usr/X11R7/man/html3/XvShmPutImage.html		xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvStopVideo.html			xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvUngrabPort.html			xcomp-libXv-htmlman	html,xorg
 ./usr/X11R7/man/html3/XvVideoNotify.html		xcomp-libXv-htmlman	html,xorg
@@ -4281,22 +4293,28 @@
 ./usr/X11R7/man/man3/XtWindowOfObject.3			xcomp-libXt-man	.man,xorg
 ./usr/X11R7/man/man3/XtWindowToWidget.3			xcomp-libXt-man	.man,xorg
 ./usr/X11R7/man/man3/Xv.3				xcomp-libXv-man	.man,xorg
+./usr/X11R7/man/man3/XvCreateImage.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvFreeAdaptorInfo.3		xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvFreeEncodingInfo.3		xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvGetPortAttribute.3		xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvGetStill.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvGetVideo.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvGrabPort.3			xcomp-libXv-man	.man,xorg
+./usr/X11R7/man/man3/XvListImageFormats.3		xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvPortNotify.3			xcomp-libXv-man	.man,xorg
+./usr/X11R7/man/man3/XvPutImage.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvPutStill.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvPutVideo.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvQueryAdaptors.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvQueryBestSize.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvQueryEncodings.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvQueryExtension.3			xcomp-libXv-man	.man,xorg
+./usr/X11R7/man/man3/XvQueryPortAttributes.3		xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvSelectPortNotify.3		xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvSelectVideoNotify.3		xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvSetPortAttribute.3		xcomp-libXv-man	.man,xorg
+./usr/X11R7/man/man3/XvShmCreateImage.3			xcomp-libXv-man	.man,xorg
+./usr/X11R7/man/man3/XvShmPutImage.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvStopVideo.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvUngrabPort.3			xcomp-libXv-man	.man,xorg
 ./usr/X11R7/man/man3/XvVideoNotify.3			xcomp-libXv-man	.man,xorg
