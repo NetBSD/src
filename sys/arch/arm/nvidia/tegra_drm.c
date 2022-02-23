@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.14 2021/12/19 12:44:50 riastradh Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.15 2022/02/23 07:55:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.14 2021/12/19 12:44:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.15 2022/02/23 07:55:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -170,7 +170,7 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 		ddc_phandle = fdtbus_get_phandle(hdmi_phandle,
 		    "nvidia,ddc-i2c-bus");
 		if (ddc_phandle >= 0) {
-			sc->sc_ddc = fdtbus_get_i2c_tag(ddc_phandle);
+			sc->sc_ddc = fdtbus_i2c_get_tag(ddc_phandle);
 		}
 
 		sc->sc_pin_hpd = fdtbus_gpio_acquire(hdmi_phandle,
