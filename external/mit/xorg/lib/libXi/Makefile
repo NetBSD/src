@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2022/02/22 22:49:39 uwe Exp $
+#	$NetBSD: Makefile,v 1.15 2022/02/23 00:06:49 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -83,6 +83,9 @@ COPTS.XExtInt.c+=	-Wno-error	# XXX
 COPTS.XSndExEv.c+=	-Wno-error	# XXX
 
 CWARNFLAGS.clang+=	-Wno-pointer-sign
+
+# libXi does not use __libmansuffix__ or @libmansuffix@ in its man pages
+X11EXTRAMANDEFS = -e 's,libmansuffix,3,g'
 
 # X Input v1 man pages
 MAN +=		XAllowDeviceEvents.3
