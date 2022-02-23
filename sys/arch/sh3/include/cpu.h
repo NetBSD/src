@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 2020/08/03 21:53:25 uwe Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61 2022/02/23 21:54:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
@@ -186,7 +186,7 @@ do {									\
 /*
  * Switch from P2 (uncached) back to P1 (cached).  We need to be
  * running on P2 to access cache control, memory-mapped cache and TLB
- * arrays, etc. and after touching them at least 8 instructinos are
+ * arrays, etc. and after touching them at least 8 instructions are
  * necessary before jumping to P1, so provide that padding here.
  */
 #define RUN_P1						\

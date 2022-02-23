@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.136 2022/01/21 19:14:14 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.137 2022/02/23 21:54:40 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.136 2022/01/21 19:14:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.137 2022/02/23 21:54:40 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -175,7 +175,7 @@ CFATTACH_DECL_NEW(psycho, sizeof(struct psycho_softc),
  * "sabre" is the UltraSPARC IIi onboard UPA to PCI bridge.  It manages a
  * single PCI bus and does not have a streaming buffer.  It often has an APB
  * (advanced PCI bridge) connected to it, which was designed specifically for
- * the IIi.  The APB let's the IIi handle two independednt PCI buses, and
+ * the IIi.  The APB lets the IIi handle two independent PCI buses, and
  * appears as two "simba"'s underneath the sabre.
  *
  * "psycho" and "psycho+" is a dual UPA to PCI bridge.  It sits on the UPA bus
