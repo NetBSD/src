@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.6 2016/08/16 06:24:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2022/02/23 17:28:31 mrg Exp $
 
-DRIVER=		xf86-video-ati
+DRIVER=		xf86-video-ati-kms
 DRIVER_NAME=	ati_drv
 
 SRCS=		ati.c atimodule.c
 MAN=		ati.4
+
+CPPFLAGS+=	-DHAVE_CONFIG_H
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm \
+		-I${X11SRCDIR.${DRIVER}}/../include
 
 LIBDPLIBS+=	 drm_radeon ${.CURDIR}/../../../lib/libdrm_radeon
 
