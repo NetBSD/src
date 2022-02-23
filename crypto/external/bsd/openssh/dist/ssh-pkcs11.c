@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.23 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11.c,v 1.54 2021/08/11 05:20:17 djm Exp $ */
-
+/*	$NetBSD: ssh-pkcs11.c,v 1.24 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11.c,v 1.55 2021/11/18 21:11:01 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  * Copyright (c) 2014 Pedro Martelletto. All rights reserved.
@@ -18,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.23 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.24 2022/02/23 19:07:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -606,9 +605,10 @@ pkcs11_ecdsa_wrap(struct pkcs11_provider *provider, CK_ULONG slotidx,
 	k11->slotidx = slotidx;
 	/* identify key object on smartcard */
 	k11->keyid_len = keyid_attrib->ulValueLen;
-	k11->keyid = xmalloc(k11->keyid_len);
-	memcpy(k11->keyid, keyid_attrib->pValue, k11->keyid_len);
-
+	if (k11->keyid_len > 0) {
+		k11->keyid = xmalloc(k11->keyid_len);
+		memcpy(k11->keyid, keyid_attrib->pValue, k11->keyid_len);
+	}
 	EC_KEY_set_method(ec, ec_key_method);
 	EC_KEY_set_ex_data(ec, ec_key_idx, k11);
 

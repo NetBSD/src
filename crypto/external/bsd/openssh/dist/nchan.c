@@ -1,6 +1,5 @@
-/*	$NetBSD: nchan.c,v 1.13 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: nchan.c,v 1.73 2021/05/19 01:24:05 djm Exp $ */
-
+/*	$NetBSD: nchan.c,v 1.14 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: nchan.c,v 1.74 2022/02/01 23:32:51 djm Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: nchan.c,v 1.13 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: nchan.c,v 1.14 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -84,8 +83,12 @@ static void	chan_shutdown_write(struct ssh *, Channel *);
 static void	chan_shutdown_read(struct ssh *, Channel *);
 static void	chan_shutdown_extended_read(struct ssh *, Channel *);
 
-static const char *ostates[] = { "open", "drain", "wait_ieof", "closed" };
-static const char *istates[] = { "open", "drain", "wait_oclose", "closed" };
+static const char * const ostates[] = {
+	"open", "drain", "wait_ieof", "closed",
+};
+static const char * const istates[] = {
+	"open", "drain", "wait_oclose", "closed",
+};
 
 static void
 chan_set_istate(Channel *c, u_int next)

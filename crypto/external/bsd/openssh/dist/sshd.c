@@ -1,6 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.44 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.578 2021/07/19 02:21:50 dtucker Exp $ */
-
+/*	$NetBSD: sshd.c,v 1.45 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.583 2022/02/01 07:57:32 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -45,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.44 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.45 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -60,6 +59,7 @@ __RCSID("$NetBSD: sshd.c,v 1.44 2021/09/02 11:26:18 christos Exp $");
 #include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -273,7 +273,7 @@ close_listen_socks(void)
 
 	for (i = 0; i < num_listen_socks; i++)
 		close(listen_socks[i]);
-	num_listen_socks = -1;
+	num_listen_socks = 0;
 }
 
 static void
@@ -355,12 +355,9 @@ __dead static void
 grace_alarm_handler(int sig)
 {
 	pfilter_notify(1);
-	if (use_privsep && pmonitor != NULL && pmonitor->m_pid > 0)
-		kill(pmonitor->m_pid, SIGALRM);
-
 	/*
 	 * Try to kill any processes that we have spawned, E.g. authorized
-	 * keys command helpers.
+	 * keys command helpers or privsep children.
 	 */
 	if (getpgid(0) == getpid()) {
 		ssh_signal(SIGTERM, SIG_IGN);
@@ -368,13 +365,9 @@ grace_alarm_handler(int sig)
 	}
 
 	/* Log error and exit. */
-	if (use_privsep && pmonitor != NULL && pmonitor->m_pid <= 0)
-		cleanup_exit(255); /* don't log in privsep child */
-	else {
-		sigdie("Timeout before authentication for %s port %d",
-		    ssh_remote_ipaddr(the_active_state),
-		    ssh_remote_port(the_active_state));
-	}
+	sigdie("Timeout before authentication for %s port %d",
+	    ssh_remote_ipaddr(the_active_state),
+	    ssh_remote_port(the_active_state));
 }
 
 /* Destroy the host and server keys.  They will no longer be needed. */
@@ -1111,8 +1104,8 @@ server_listen(void)
 static void
 server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 {
-	fd_set *fdset;
-	int i, j, ret, maxfd;
+	struct pollfd *pfd = NULL;
+	int i, j, ret;
 	int ostartups = -1, startups = 0, listening = 0, lameduck = 0;
 	int startup_p[2] = { -1 , -1 };
 	char c = 0;
@@ -1122,11 +1115,6 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 	sigset_t nsigset, osigset;
 
 	/* setup fd set for accept */
-	fdset = NULL;
-	maxfd = 0;
-	for (i = 0; i < num_listen_socks; i++)
-		if (listen_socks[i] > maxfd)
-			maxfd = listen_socks[i];
 	/* pipes connected to unauthenticated child sshd processes */
 	startup_pipes = xcalloc(options.max_startups, sizeof(int));
 	startup_flags = xcalloc(options.max_startups, sizeof(int));
@@ -1137,7 +1125,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 	/*
 	 * Prepare signal mask that we use to block signals that might set
 	 * received_sigterm or received_sighup, so that we are guaranteed
-	 * to immediately wake up the pselect if a signal is received after
+	 * to immediately wake up the ppoll if a signal is received after
 	 * the flag is checked.
 	 */
 	sigemptyset(&nsigset);
@@ -1145,6 +1133,9 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 	sigaddset(&nsigset, SIGCHLD);
 	sigaddset(&nsigset, SIGTERM);
 	sigaddset(&nsigset, SIGQUIT);
+
+	pfd = xcalloc(num_listen_socks + options.max_startups,
+	    sizeof(struct pollfd));
 
 	/*
 	 * Stay listening for connections until the system crashes or
@@ -1177,27 +1168,29 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 				sighup_restart();
 			}
 		}
-		free(fdset);
-		fdset = xcalloc(howmany(maxfd + 1, NFDBITS),
-		    sizeof(fd_mask));
 
-		for (i = 0; i < num_listen_socks; i++)
-			FD_SET(listen_socks[i], fdset);
-		for (i = 0; i < options.max_startups; i++)
+		for (i = 0; i < num_listen_socks; i++) {
+			pfd[i].fd = listen_socks[i];
+			pfd[i].events = POLLIN;
+		}
+		for (i = 0; i < options.max_startups; i++) {
+			pfd[num_listen_socks+i].fd = startup_pipes[i];
 			if (startup_pipes[i] != -1)
-				FD_SET(startup_pipes[i], fdset);
+				pfd[num_listen_socks+i].events = POLLIN;
+		}
 
 		/* Wait until a connection arrives or a child exits. */
-		ret = pselect(maxfd+1, fdset, NULL, NULL, NULL, &osigset);
+		ret = ppoll(pfd, num_listen_socks + options.max_startups,
+		    NULL, &osigset);
 		if (ret == -1 && errno != EINTR)
-			error("pselect: %.100s", strerror(errno));
+			error("ppoll: %.100s", strerror(errno));
 		sigprocmask(SIG_SETMASK, &osigset, NULL);
 		if (ret == -1)
 			continue;
 
 		for (i = 0; i < options.max_startups; i++) {
 			if (startup_pipes[i] == -1 ||
-			    !FD_ISSET(startup_pipes[i], fdset))
+			    !(pfd[num_listen_socks+i].revents & (POLLIN|POLLHUP)))
 				continue;
 			switch (read(startup_pipes[i], &c, sizeof(c))) {
 			case -1:
@@ -1228,7 +1221,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			}
 		}
 		for (i = 0; i < num_listen_socks; i++) {
-			if (!FD_ISSET(listen_socks[i], fdset))
+			if (!(pfd[i].revents & POLLIN))
 				continue;
 			fromlen = sizeof(from);
 			*newsock = accept(listen_socks[i],
@@ -1243,8 +1236,10 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 				continue;
 			}
 			if (unset_nonblock(*newsock) == -1 ||
-			    pipe(startup_p) == -1)
+			    pipe(startup_p) == -1) {
+				close(*newsock);
 				continue;
+			}
 			if (drop_connection(*newsock, startups, startup_p[0])) {
 				close(*newsock);
 				close(startup_p[0]);
@@ -1265,8 +1260,6 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			for (j = 0; j < options.max_startups; j++)
 				if (startup_pipes[j] == -1) {
 					startup_pipes[j] = startup_p[0];
-					if (maxfd < startup_p[0])
-						maxfd = startup_p[0];
 					startups++;
 					startup_flags[j] = 1;
 					break;
@@ -1294,6 +1287,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 					send_rexec_state(config_s[0], cfg);
 					close(config_s[0]);
 				}
+				free(pfd);
 				return;
 			}
 
@@ -1334,6 +1328,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 					(void)atomicio(vwrite, startup_pipe,
 					    __UNCONST("\0"), 1);
 				}
+				free(pfd);
 				return;
 			}
 

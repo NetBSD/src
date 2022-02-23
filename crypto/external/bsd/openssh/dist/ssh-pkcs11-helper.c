@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.21 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.25 2021/08/11 05:20:17 djm Exp $ */
-
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.22 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.26 2021/11/18 03:31:44 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -17,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.21 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.22 2022/02/23 19:07:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -377,7 +376,7 @@ main(int argc, char **argv)
 		}
 
 		/* copy stdin to iqueue */
-		if ((pfd[0].revents & (POLLIN|POLLERR)) != 0) {
+		if ((pfd[0].revents & (POLLIN|POLLHUP|POLLERR)) != 0) {
 			len = read(in, buf, sizeof buf);
 			if (len == 0) {
 				debug("read eof");

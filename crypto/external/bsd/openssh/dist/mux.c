@@ -1,6 +1,5 @@
-/*	$NetBSD: mux.c,v 1.30 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: mux.c,v 1.91 2021/07/23 04:00:59 djm Exp $ */
-
+/*	$NetBSD: mux.c,v 1.31 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.92 2022/01/11 01:26:47 djm Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -20,7 +19,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.30 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.31 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -2023,7 +2022,7 @@ mux_client_request_session(int fd)
 	} else
 		debug2("Received exit status from master %d", exitval);
 
-	if (tty_flag && options.log_level != SYSLOG_LEVEL_QUIET)
+	if (tty_flag && options.log_level >= SYSLOG_LEVEL_INFO)
 		fprintf(stderr, "Shared connection to %s closed.\r\n", host);
 
 	exit(exitval);

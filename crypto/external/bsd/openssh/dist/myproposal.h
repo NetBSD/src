@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.22 2021/09/27 17:03:13 christos Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.69 2021/08/29 23:53:10 djm Exp $ */
+/*	$NetBSD: myproposal.h,v 1.23 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.70 2021/11/10 06:29:25 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -31,6 +31,7 @@
 	"ecdh-sha2-nistp256," \
 	"ecdh-sha2-nistp384," \
 	"ecdh-sha2-nistp521," \
+	"sntrup761x25519-sha512@openssh.com," \
 	"diffie-hellman-group-exchange-sha256," \
 	"diffie-hellman-group16-sha512," \
 	"diffie-hellman-group18-sha512," \

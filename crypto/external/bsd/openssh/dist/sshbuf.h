@@ -1,6 +1,5 @@
-/*	$NetBSD: sshbuf.h,v 1.15 2020/12/04 18:42:50 christos Exp $	*/
-/*	$OpenBSD: sshbuf.h,v 1.23 2020/06/22 05:54:10 djm Exp $	*/
-
+/*	$NetBSD: sshbuf.h,v 1.16 2022/02/23 19:07:20 christos Exp $	*/
+/*	$OpenBSD: sshbuf.h,v 1.25 2022/01/22 00:43:43 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -316,6 +315,10 @@ int sshbuf_load_file(const char *, struct sshbuf **)
 int sshbuf_write_file(const char *path, struct sshbuf *buf)
     __attribute__((__nonnull__ (2)));
 
+/* Read up to maxlen bytes from a fd directly to a buffer */
+int sshbuf_read(int, struct sshbuf *, size_t, size_t *)
+    __attribute__((__nonnull__ (2)));
+
 /* Macros for decoding/encoding integers */
 #define PEEK_U64(p) \
 	(((u_int64_t)(((const u_char *)(p))[0]) << 56) | \
@@ -387,7 +390,7 @@ u_int	sshbuf_refcount(const struct sshbuf *buf);
 
 # define SSHBUF_SIZE_INIT	256		/* Initial allocation */
 # define SSHBUF_SIZE_INC	256		/* Preferred increment length */
-# define SSHBUF_PACK_MIN	8192		/* Minimim packable offset */
+# define SSHBUF_PACK_MIN	8192		/* Minimum packable offset */
 
 /* # define SSHBUF_ABORT abort */
 /* # define SSHBUF_DEBUG */
