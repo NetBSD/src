@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.41 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.42 2022/02/23 21:54:41 andvar Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.41 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.42 2022/02/23 21:54:41 andvar Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -1038,7 +1038,7 @@ bus_reset:
 					      ahc_timeout, scb);
 				ahc_unpause(ahc);
 			} else {
-				/* Go "immediatly" to the bus reset */
+				/* Go "immediately" to the bus reset */
 				/* This shouldn't happen */
 				ahc_set_recoveryscb(ahc, scb);
 				ahc_print_path(ahc, scb);

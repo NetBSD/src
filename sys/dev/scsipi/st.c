@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.242 2021/12/05 02:21:08 msaitoh Exp $ */
+/*	$NetBSD: st.c,v 1.243 2022/02/23 21:54:41 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.242 2021/12/05 02:21:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.243 2022/02/23 21:54:41 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1686,7 +1686,7 @@ st_read(struct st_softc *st, char *bf, int size, int flags)
 {
 	struct scsi_rw_tape cmd;
 
-	/* If it's a null transfer, return immediatly */
+	/* If it's a null transfer, return immediately */
 	if (size == 0)
 		return 0;
 	memset(&cmd, 0, sizeof(cmd));

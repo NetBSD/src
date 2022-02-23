@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.22 2017/06/22 16:46:53 flxd Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.23 2022/02/23 21:54:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.22 2017/06/22 16:46:53 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.23 2022/02/23 21:54:41 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -106,7 +106,7 @@ le_tc_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * TC lance boards have onboard SRAM buffers.  DMA
-	 * between the onbard RAM and main memory is not possible,
+	 * between the onboard RAM and main memory is not possible,
 	 * so  DMA setup is not required.
 	 */
 

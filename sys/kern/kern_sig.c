@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.401 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.402 2022/02/23 21:54:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.401 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.402 2022/02/23 21:54:41 andvar Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -2434,7 +2434,7 @@ proc_stop(struct proc *p, int signo)
 }
 
 /*
- * When stopping a process, we do not immediatly set sleeping LWPs stopped,
+ * When stopping a process, we do not immediately set sleeping LWPs stopped,
  * but wait for them to come to a halt at the kernel-user boundary.  This is
  * to allow LWPs to release any locks that they may hold before stopping.
  *
