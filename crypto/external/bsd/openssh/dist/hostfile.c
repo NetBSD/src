@@ -1,6 +1,5 @@
-/*	$NetBSD: hostfile.c,v 1.21 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.91 2021/07/05 01:16:46 dtucker Exp $ */
-
+/*	$NetBSD: hostfile.c,v 1.22 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.93 2022/01/06 22:02:52 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.21 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.22 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -120,7 +119,7 @@ host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 	struct ssh_hmac_ctx *ctx;
 	u_char salt[256], result[256];
 	char uu_salt[512], uu_result[512];
-	static char encoded[2048];
+	char *encoded = NULL;
 	u_int len;
 
 	len = ssh_digest_bytes(SSH_DIGEST_SHA1);
@@ -145,9 +144,8 @@ host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 	if (__b64_ntop(salt, len, uu_salt, sizeof(uu_salt)) == -1 ||
 	    __b64_ntop(result, len, uu_result, sizeof(uu_result)) == -1)
 		fatal_f("__b64_ntop failed");
-
-	snprintf(encoded, sizeof(encoded), "%s%s%c%s", HASH_MAGIC, uu_salt,
-	    HASH_DELIM, uu_result);
+	xasprintf(&encoded, "%s%s%c%s", HASH_MAGIC, uu_salt, HASH_DELIM,
+	    uu_result);
 
 	return (encoded);
 }
@@ -458,6 +456,7 @@ write_host_entry(FILE *f, const char *host, const char *ip,
 	else {
 		fprintf(f, "%s ", lhost);
 	}
+	free(hashed_host);
 	free(lhost);
 	if ((r = sshkey_write(key, f)) == 0)
 		success = 1;
@@ -639,7 +638,7 @@ hostfile_replace_entries(const char *filename, const char *host, const char *ip,
 	/* Re-add the requested keys */
 	want = HKF_MATCH_HOST | (ip == NULL ? 0 : HKF_MATCH_IP);
 	for (i = 0; i < nkeys; i++) {
-		if ((want & ctx.match_keys[i]) == want)
+		if (keys[i] == NULL || (want & ctx.match_keys[i]) == want)
 			continue;
 		if ((fp = sshkey_fingerprint(keys[i], hash_alg,
 		    SSH_FP_DEFAULT)) == NULL) {
@@ -727,8 +726,8 @@ hostfile_replace_entries(const char *filename, const char *host, const char *ip,
 static int
 match_maybe_hashed(const char *host, const char *names, int *was_hashed)
 {
-	int hashed = *names == HASH_DELIM;
-	const char *hashed_host;
+	int hashed = *names == HASH_DELIM, ret;
+	char *hashed_host = NULL;
 	size_t nlen = strlen(names);
 
 	if (was_hashed != NULL)
@@ -736,8 +735,10 @@ match_maybe_hashed(const char *host, const char *names, int *was_hashed)
 	if (hashed) {
 		if ((hashed_host = host_hash(host, names, nlen)) == NULL)
 			return -1;
-		return nlen == strlen(hashed_host) &&
-		    strncmp(hashed_host, names, nlen) == 0;
+		ret = (nlen == strlen(hashed_host) &&
+		    strncmp(hashed_host, names, nlen) == 0);
+		free(hashed_host);
+		return ret;
 	}
 	return match_hostname(host, names) == 1;
 }

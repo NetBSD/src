@@ -1,6 +1,5 @@
-/*	$NetBSD: kexgexc.c,v 1.16 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: kexgexc.c,v 1.37 2021/01/31 22:55:29 djm Exp $ */
-
+/*	$NetBSD: kexgexc.c,v 1.17 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: kexgexc.c,v 1.38 2021/12/19 22:08:06 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -27,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.16 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.17 2022/02/23 19:07:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -205,8 +204,26 @@ input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
 	    hashlen, kex->hostkey_alg, ssh->compat, NULL)) != 0)
 		goto out;
 
-	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) == 0)
-		r = kex_send_newkeys(ssh);
+	if ((r = kex_derive_keys(ssh, hash, hashlen, shared_secret)) != 0 ||
+	    (r = kex_send_newkeys(ssh)) != 0)
+		goto out;
+
+	/* save initial signature and hostkey */
+	if ((kex->flags & KEX_INITIAL) != 0) {
+		if (kex->initial_hostkey != NULL || kex->initial_sig != NULL) {
+			r = SSH_ERR_INTERNAL_ERROR;
+			goto out;
+		}
+		if ((kex->initial_sig = sshbuf_new()) == NULL) {
+			r = SSH_ERR_ALLOC_FAIL;
+			goto out;
+		}
+		if ((r = sshbuf_put(kex->initial_sig, signature, slen)) != 0)
+			goto out;
+		kex->initial_hostkey = server_host_key;
+		server_host_key = NULL;
+	}
+	/* success */
  out:
 	explicit_bzero(hash, sizeof(hash));
 	DH_free(kex->dh);

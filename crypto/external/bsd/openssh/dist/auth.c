@@ -1,6 +1,5 @@
-/*	$NetBSD: auth.c,v 1.31 2021/09/02 11:26:17 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.153 2021/07/05 00:50:25 dtucker Exp $ */
-
+/*	$NetBSD: auth.c,v 1.32 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.154 2022/02/23 11:17:10 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.31 2021/09/02 11:26:17 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.32 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -733,20 +732,28 @@ auth_debug_reset(void)
 struct passwd *
 fakepw(void)
 {
+	static int done = 0;
 	static struct passwd fake;
-	static char nouser[] = "NOUSER";
-	static char nonexist[] = "/nonexist";
+	const char hashchars[] = "./ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	    "abcdefghijklmnopqrstuvwxyz0123456789"; /* from bcrypt.c */
+	char *cp;
+
+	if (done)
+		return (&fake);
 
 	memset(&fake, 0, sizeof(fake));
-	fake.pw_name = nouser;
-	fake.pw_passwd = __UNCONST(
-	    "$2a$06$r3.juUaHZDlIbQaO2dS9FuYxL1W9M81R1Tc92PoSNmzvpEqLkLGrK");
-	fake.pw_gecos = nouser;
+	fake.pw_name = __UNCONST("NOUSER");
+	fake.pw_passwd = xstrdup("$2a$10$"
+	    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+	for (cp = fake.pw_passwd + 7; *cp != '\0'; cp++)
+		*cp = hashchars[arc4random_uniform(sizeof(hashchars) - 1)];
+	fake.pw_gecos = __UNCONST("NOUSER");
 	fake.pw_uid = (uid_t)-1;
 	fake.pw_gid = (gid_t)-1;
 	fake.pw_class = __UNCONST("");
-	fake.pw_dir = nonexist;
-	fake.pw_shell = nonexist;
+	fake.pw_dir = __UNCONST("/nonexist");
+	fake.pw_shell = __UNCONST("/nonexist");
+	done = 1;
 
 	return (&fake);
 }

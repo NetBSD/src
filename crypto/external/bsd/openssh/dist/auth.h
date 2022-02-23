@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.21 2021/03/05 17:47:15 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.101 2020/12/22 00:12:22 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.22 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.102 2021/12/19 22:12:07 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -110,7 +110,8 @@ struct Authctxt {
 
 struct Authmethod {
 	const char	*name;
-	int	(*userauth)(struct ssh *);
+	const char	*synonym;
+	int	(*userauth)(struct ssh *, const char *);
 	int	*enabled;
 };
 
