@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2861 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2862 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -474,4 +474,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tools: Allow tools to use C99. [rillig 20220203]
 	blkdiscard(8): Add tool to access fdiscard(2). [mrg 20220207]
 	expat: Import 2.4.6 (security fixes). [christos 20220223]
-
+	OpenSSH: Import 8.9. [christos 20220223]
