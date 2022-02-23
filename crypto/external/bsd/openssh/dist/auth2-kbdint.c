@@ -1,6 +1,5 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.14 2021/09/02 11:26:17 christos Exp $	*/
-/* $OpenBSD: auth2-kbdint.c,v 1.13 2021/07/02 05:11:20 dtucker Exp $ */
-
+/*	$NetBSD: auth2-kbdint.c,v 1.15 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: auth2-kbdint.c,v 1.14 2021/12/19 22:12:07 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-kbdint.c,v 1.14 2021/09/02 11:26:17 christos Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.15 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -46,7 +45,7 @@ __RCSID("$NetBSD: auth2-kbdint.c,v 1.14 2021/09/02 11:26:17 christos Exp $");
 extern ServerOptions options;
 
 static int
-userauth_kbdint(struct ssh *ssh)
+userauth_kbdint(struct ssh *ssh, const char *method)
 {
 	int r, authenticated = 0;
 	char *lang, *devs;
@@ -68,6 +67,7 @@ userauth_kbdint(struct ssh *ssh)
 
 Authmethod method_kbdint = {
 	"keyboard-interactive",
+	NULL,
 	userauth_kbdint,
 	&options.kbd_interactive_authentication
 };

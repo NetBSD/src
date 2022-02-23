@@ -1,6 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.27 2021/09/02 11:26:17 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.97 2021/07/24 01:55:19 djm Exp $ */
-
+/*	$NetBSD: auth-options.c,v 1.28 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.98 2022/02/08 08:59:12 dtucker Exp $ */
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
  *
@@ -18,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.27 2021/09/02 11:26:17 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.28 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -284,7 +283,7 @@ handle_permit(const char **optsp, int allow_bare_port,
 	}
 	cp = tmp;
 	/* validate syntax before recording it. */
-	host = hpdelim(&cp);
+	host = hpdelim2(&cp, NULL);
 	if (host == NULL || strlen(host) >= NI_MAXHOST) {
 		free(tmp);
 		free(opt);

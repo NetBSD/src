@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.h,v 1.9 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: umac.h,v 1.4 2019/06/07 14:18:48 dtucker Exp $ */
+/*	$NetBSD: umac.h,v 1.10 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: umac.h,v 1.5 2022/01/01 01:55:30 jsg Exp $ */
 /* -----------------------------------------------------------------------
  * 
  * umac.h -- C Implementation UMAC Message Authentication
@@ -60,7 +60,7 @@ struct umac_ctx *umac_new(const u_char key[]);
 
 #if 0
 int umac_reset(struct umac_ctx *ctx);
-/* Reset a umac_ctx to begin authenicating a new message */
+/* Reset a umac_ctx to begin authenticating a new message */
 #endif
 
 int umac_update(struct umac_ctx *ctx, const u_char *input, long len);

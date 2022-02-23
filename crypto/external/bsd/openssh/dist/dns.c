@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.c,v 1.21 2021/09/06 13:11:34 ryoon Exp $	*/
-/* $OpenBSD: dns.c,v 1.41 2021/07/19 03:13:28 dtucker Exp $ */
+/*	$NetBSD: dns.c,v 1.22 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: dns.c,v 1.42 2022/02/01 23:32:51 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.21 2021/09/06 13:11:34 ryoon Exp $");
+__RCSID("$NetBSD: dns.c,v 1.22 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: dns.c,v 1.21 2021/09/06 13:11:34 ryoon Exp $");
 #include "getrrsetbyname.h"
 #include "digest.h"
 
-static const char *errset_text[] = {
+static const char * const errset_text[] = {
 	"success",		/* 0 ERRSET_SUCCESS */
 	"out of memory",	/* 1 ERRSET_NOMEMORY */
 	"general failure",	/* 2 ERRSET_FAIL */

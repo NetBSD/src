@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.22 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.67 2021/07/05 01:16:46 dtucker Exp $ */
-
+/*	$NetBSD: ssh-keysign.c,v 1.23 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.70 2022/01/06 22:00:18 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.22 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.23 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -61,7 +60,7 @@ __RCSID("$NetBSD: ssh-keysign.c,v 1.22 2021/09/02 11:26:18 christos Exp $");
 extern char *__progname;
 
 static int
-valid_request(struct passwd *pw, char *host, struct sshkey **ret,
+valid_request(struct passwd *pw, char *host, struct sshkey **ret, char **pkalgp,
     u_char *data, size_t datalen)
 {
 	struct sshbuf *b;
@@ -74,15 +73,20 @@ valid_request(struct passwd *pw, char *host, struct sshkey **ret,
 
 	if (ret != NULL)
 		*ret = NULL;
+	if (pkalgp != NULL)
+		*pkalgp = NULL;
 	fail = 0;
 
 	if ((b = sshbuf_from(data, datalen)) == NULL)
 		fatal_f("sshbuf_from failed");
 
-	/* session id, currently limited to SHA1 (20 bytes) or SHA256 (32) */
+	/* session id */
 	if ((r = sshbuf_get_string(b, NULL, &len)) != 0)
 		fatal_fr(r, "parse session ID");
-	if (len != 20 && len != 32)
+	if (len != 20 && /* SHA1 */
+	    len != 32 && /* SHA256 */
+	    len != 48 && /* SHA384 */
+	    len != 64)   /* SHA512 */
 		fail++;
 
 	if ((r = sshbuf_get_u8(b, &type)) != 0)
@@ -121,8 +125,6 @@ valid_request(struct passwd *pw, char *host, struct sshkey **ret,
 		fail++;
 	} else if (key->type != pktype)
 		fail++;
-	free(pkalg);
-	free(pkblob);
 
 	/* client host name, handle trailing dot */
 	if ((r = sshbuf_get_cstring(b, &p, &len)) != 0)
@@ -153,8 +155,19 @@ valid_request(struct passwd *pw, char *host, struct sshkey **ret,
 
 	if (fail)
 		sshkey_free(key);
-	else if (ret != NULL)
-		*ret = key;
+	else {
+		if (ret != NULL) {
+			*ret = key;
+			key = NULL;
+		}
+		if (pkalgp != NULL) {
+			*pkalgp = pkalg;
+			pkalg = NULL;
+		}
+	}
+	sshkey_free(key);
+	free(pkalg);
+	free(pkblob);
 
 	return (fail ? -1 : 0);
 }
@@ -169,7 +182,7 @@ main(int argc, char **argv)
 	struct passwd *pw;
 	int r, key_fd[NUM_KEYTYPES], i, found, version = 2, fd;
 	u_char *signature, *data, rver;
-	char *host, *fp;
+	char *host, *fp, *pkalg;
 	size_t slen, dlen;
 
 #ifdef __OpenBSD__
@@ -211,6 +224,11 @@ main(int argc, char **argv)
 		fatal("ssh-keysign not enabled in %s",
 		    _PATH_HOST_CONFIG_FILE);
 
+#ifdef __OpenBSD__
+	if (pledge("stdio dns", NULL) != 0)
+		fatal("%s: pledge: %s", __progname, strerror(errno));
+#endif
+
 	for (i = found = 0; i < NUM_KEYTYPES; i++) {
 		if (key_fd[i] != -1)
 			found = 1;
@@ -221,6 +239,7 @@ main(int argc, char **argv)
 #ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
 #endif
+
 	found = 0;
 	for (i = 0; i < NUM_KEYTYPES; i++) {
 		keys[i] = NULL;
@@ -238,11 +257,6 @@ main(int argc, char **argv)
 	}
 	if (!found)
 		fatal("no hostkey found");
-
-#ifdef __OpenBSD__
-	if (pledge("stdio dns", NULL) != 0)
-		fatal("%s: pledge: %s", __progname, strerror(errno));
-#endif
 
 	if ((b = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __progname);
@@ -262,7 +276,7 @@ main(int argc, char **argv)
 
 	if ((r = sshbuf_get_string(b, &data, &dlen)) != 0)
 		fatal_r(r, "%s: buffer error", __progname);
-	if (valid_request(pw, host, &key, data, dlen) < 0)
+	if (valid_request(pw, host, &key, &pkalg, data, dlen) < 0)
 		fatal("%s: not a valid request", __progname);
 	free(host);
 
@@ -283,7 +297,7 @@ main(int argc, char **argv)
 	}
 
 	if ((r = sshkey_sign(keys[i], &signature, &slen, data, dlen,
-	    NULL, NULL, NULL, 0)) != 0)
+	    pkalg, NULL, NULL, 0)) != 0)
 		fatal_r(r, "%s: sshkey_sign failed", __progname);
 	free(data);
 

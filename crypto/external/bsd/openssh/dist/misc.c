@@ -1,6 +1,5 @@
-/*	$NetBSD: misc.c,v 1.28 2021/09/27 17:03:13 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.170 2021/09/26 14:01:03 djm Exp $ */
-
+/*	$NetBSD: misc.c,v 1.29 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.174 2022/02/11 00:43:56 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005-2020 Damien Miller.  All rights reserved.
@@ -20,7 +19,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.28 2021/09/27 17:03:13 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.29 2022/02/23 19:07:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -85,7 +84,7 @@ rtrim(char *s)
 	if ((i = strlen(s)) == 0)
 		return;
 	for (i--; i > 0; i--) {
-		if (isspace((int)s[i]))
+		if (isspace((unsigned char)s[i]))
 			s[i] = '\0';
 	}
 }
@@ -685,10 +684,16 @@ hpdelim2(char **cp, char *delim)
 	return old;
 }
 
+/* The common case: only accept colon as delimiter. */
 char *
 hpdelim(char **cp)
 {
-	return hpdelim2(cp, NULL);
+	char *r, delim = '\0';
+
+	r =  hpdelim2(cp, &delim);
+	if (delim == '/')
+		return NULL;
+	return r;
 }
 
 char *
@@ -1085,35 +1090,50 @@ freeargs(arglist *args)
 int
 tilde_expand(const char *filename, uid_t uid, char **retp)
 {
-	const char *path, *sep;
-	char user[128], *ret, *homedir;
+	char *ocopy = NULL, *copy, *s = NULL;
+	const char *path = NULL, *user = NULL;
 	struct passwd *pw;
-	u_int len, slash;
+	size_t len;
+	int ret = -1, r;
+	const char *sep, *homedir;
 
+	*retp = NULL;
 	if (*filename != '~') {
 		*retp = xstrdup(filename);
 		return 0;
 	}
-	filename++;
+	ocopy = copy = xstrdup(filename + 1);
 
-	path = strchr(filename, '/');
-	if (path != NULL && path > filename) {		/* ~user/path */
-		slash = path - filename;
-		if (slash > sizeof(user) - 1) {
-			error_f("~username too long");
-			return -1;
+	if (*copy == '\0')				/* ~ */
+		path = NULL;
+	else if (*copy == '/') {
+		copy += strspn(copy, "/");
+		if (*copy == '\0')
+			path = NULL;			/* ~/ */
+		else
+			path = copy;			/* ~/path */
+	} else {
+		user = copy;
+		if ((path = strchr(copy, '/')) != NULL) {
+			copy[path - copy] = '\0';
+			path++;
+			path += strspn(path, "/");
+			if (*path == '\0')		/* ~user/ */
+				path = NULL;
+			/* else				 ~user/path */
 		}
-		memcpy(user, filename, slash);
-		user[slash] = '\0';
+		/* else					~user */
+	}
+	if (user != NULL) {
 		if ((pw = getpwnam(user)) == NULL) {
 			error_f("No such user %s", user);
-			return -1;
+			goto out;
 		}
 		homedir = pw->pw_dir;
 	} else {
 		if ((pw = getpwuid(uid)) == NULL) {	/* ~/path */
 			error_f("No such uid %ld", (long)uid);
-			return -1;
+			goto out;
 		}
 		homedir = pw->pw_dir;
 	}
@@ -1129,13 +1149,22 @@ tilde_expand(const char *filename, uid_t uid, char **retp)
 	if (path != NULL)
 		filename = path + 1;
 
-	if (xasprintf(&ret, "%s%s%s", homedir, sep, filename) >= PATH_MAX) {
-		error_f("Path too long");
-		return -1;
+	if ((r = xasprintf(&s, "%s%s%s", homedir, sep, filename)) <= 0) {
+		error_f("xasprintf failed");
+		goto out;
 	}
-
-	*retp = ret;
-	return 0;
+	if (r >= PATH_MAX) {
+		error_f("Path too long");
+		goto out;
+	}
+	/* success */
+	ret = 0;
+	*retp = s;
+	s = NULL;
+ out:
+	free(s);
+	free(ocopy);
+	return ret;
 }
 
 char *
@@ -1594,12 +1623,12 @@ ms_subtract_diff(struct timeval *start, int *ms)
 }
 
 void
-ms_to_timeval(struct timeval *tv, int ms)
+ms_to_timespec(struct timespec *ts, int ms)
 {
 	if (ms < 0)
 		ms = 0;
-	tv->tv_sec = ms / 1000;
-	tv->tv_usec = (ms % 1000) * 1000;
+	ts->tv_sec = ms / 1000;
+	ts->tv_nsec = (ms % 1000) * 1000 * 1000;
 }
 
 void

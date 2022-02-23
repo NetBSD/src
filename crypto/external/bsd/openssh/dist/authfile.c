@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.25 2020/12/04 18:42:50 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.141 2020/06/18 23:33:38 djm Exp $ */
+/*	$NetBSD: authfile.c,v 1.26 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: authfile.c,v 1.142 2022/01/01 01:55:30 jsg Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.25 2020/12/04 18:42:50 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.26 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -365,7 +365,7 @@ sshkey_load_private_cert(int type, const char *filename, const char *passphrase,
  * Returns success if the specified "key" is listed in the file "filename",
  * SSH_ERR_KEY_NOT_FOUND: if the key is not listed or another error.
  * If "strict_type" is set then the key type must match exactly,
- * otherwise a comparison that ignores certficiate data is performed.
+ * otherwise a comparison that ignores certificate data is performed.
  * If "check_ca" is set and "key" is a certificate, then its CA key is
  * also checked and sshkey_in_file() will return success if either is found.
  */

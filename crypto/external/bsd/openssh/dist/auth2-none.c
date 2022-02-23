@@ -1,6 +1,5 @@
-/*	$NetBSD: auth2-none.c,v 1.12 2021/03/05 17:47:15 christos Exp $	*/
-/* $OpenBSD: auth2-none.c,v 1.23 2020/10/18 11:32:01 djm Exp $ */
-
+/*	$NetBSD: auth2-none.c,v 1.13 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: auth2-none.c,v 1.24 2021/12/19 22:12:07 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-none.c,v 1.12 2021/03/05 17:47:15 christos Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.13 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -54,7 +53,7 @@ extern ServerOptions options;
 static int none_enabled = 1;
 
 static int
-userauth_none(struct ssh *ssh)
+userauth_none(struct ssh *ssh, const char *method)
 {
 	int r;
 
@@ -68,6 +67,7 @@ userauth_none(struct ssh *ssh)
 
 Authmethod method_none = {
 	"none",
+	NULL,
 	userauth_none,
 	&none_enabled
 };

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-gss.c,v 1.15 2021/03/05 17:47:15 christos Exp $	*/
-/* $OpenBSD: auth2-gss.c,v 1.32 2021/01/27 10:15:08 djm Exp $ */
+/*	$NetBSD: auth2-gss.c,v 1.16 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: auth2-gss.c,v 1.33 2021/12/19 22:12:07 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-gss.c,v 1.15 2021/03/05 17:47:15 christos Exp $");
+__RCSID("$NetBSD: auth2-gss.c,v 1.16 2022/02/23 19:07:20 christos Exp $");
 
 #ifdef GSSAPI
 
@@ -61,7 +61,7 @@ static int input_gssapi_errtok(int, u_int32_t, struct ssh *);
  * how to check local user kuserok and the like)
  */
 static int
-userauth_gssapi(struct ssh *ssh)
+userauth_gssapi(struct ssh *ssh, const char *method)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	gss_OID_desc goid = {0, NULL};
@@ -330,6 +330,7 @@ input_gssapi_mic(int type, u_int32_t plen, struct ssh *ssh)
 
 Authmethod method_gssapi = {
 	"gssapi-with-mic",
+	NULL,
 	userauth_gssapi,
 	&options.gss_authentication
 };

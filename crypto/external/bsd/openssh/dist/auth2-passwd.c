@@ -1,6 +1,5 @@
-/*	$NetBSD: auth2-passwd.c,v 1.14 2021/03/05 17:47:15 christos Exp $	*/
-/* $OpenBSD: auth2-passwd.c,v 1.19 2020/10/18 11:32:01 djm Exp $ */
-
+/*	$NetBSD: auth2-passwd.c,v 1.15 2022/02/23 19:07:20 christos Exp $	*/
+/* $OpenBSD: auth2-passwd.c,v 1.20 2021/12/19 22:12:07 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-passwd.c,v 1.14 2021/03/05 17:47:15 christos Exp $");
+__RCSID("$NetBSD: auth2-passwd.c,v 1.15 2022/02/23 19:07:20 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -51,7 +50,7 @@ __RCSID("$NetBSD: auth2-passwd.c,v 1.14 2021/03/05 17:47:15 christos Exp $");
 extern ServerOptions options;
 
 static int
-userauth_passwd(struct ssh *ssh)
+userauth_passwd(struct ssh *ssh, const char *method)
 {
 	char *password;
 	int authenticated = 0, r;
@@ -74,6 +73,7 @@ userauth_passwd(struct ssh *ssh)
 
 Authmethod method_passwd = {
 	"password",
+	NULL,
 	userauth_passwd,
 	&options.password_authentication
 };

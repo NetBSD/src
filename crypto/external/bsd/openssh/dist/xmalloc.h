@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.h,v 1.14 2021/04/19 14:40:15 christos Exp $	*/
+/*	$NetBSD: xmalloc.h,v 1.15 2022/02/23 19:07:20 christos Exp $	*/
 /* $OpenBSD: xmalloc.h,v 1.20 2021/04/03 06:18:41 djm Exp $ */
 
 /*
