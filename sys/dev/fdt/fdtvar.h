@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.74 2022/01/14 07:40:52 skrll Exp $ */
+/* $NetBSD: fdtvar.h,v 1.75 2022/02/23 07:55:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -322,7 +322,7 @@ int		fdtbus_get_phandle_with_data(int, const char *, const char *,
 		    int, struct fdt_phandle_data *);
 int		fdtbus_get_phandle_from_native(int);
 
-i2c_tag_t	fdtbus_get_i2c_tag(int);
+i2c_tag_t	fdtbus_i2c_get_tag(int);
 i2c_tag_t	fdtbus_i2c_acquire(int, const char *);
 
 void *		fdtbus_intr_establish(int, u_int, int, int,
