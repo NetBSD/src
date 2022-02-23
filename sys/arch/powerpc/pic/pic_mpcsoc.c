@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_mpcsoc.c,v 1.8 2020/07/06 09:34:18 rin Exp $ */
+/*	$NetBSD: pic_mpcsoc.c,v 1.9 2022/02/23 21:54:40 andvar Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.8 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.9 2022/02/23 21:54:40 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_interrupt.h"
@@ -131,7 +131,7 @@ setup_mpcpic(void *addr)
 	openpic_write(OPENPIC_SPURIOUS_VECTOR, 0xff);
 	openpic_set_priority(0, 0);
 
-	/* clear all pending interrunts */
+	/* clear all pending interrupts */
 	for (irq = 0; irq < self->pic_numintrs; irq++) {
 		openpic_read_irq(0);
 		openpic_eoi(0);

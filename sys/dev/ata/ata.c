@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.165 2021/11/12 06:53:49 skrll Exp $	*/
+/*	$NetBSD: ata.c,v 1.166 2022/02/23 21:54:40 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.165 2021/11/12 06:53:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.166 2022/02/23 21:54:40 andvar Exp $");
 
 #include "opt_ata.h"
 
@@ -960,7 +960,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 	/*
 	 * Downgrade decision: if we get NERRS_MAX in NXFER.
 	 * We start with n_dmaerrs set to NERRS_MAX-1 so that the
-	 * first error within the first NXFER ops will immediatly trigger
+	 * first error within the first NXFER ops will immediately trigger
 	 * a downgrade.
 	 * If we got an error and n_xfers is bigger than NXFER reset counters.
 	 */

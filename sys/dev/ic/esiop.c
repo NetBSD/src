@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.59 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: esiop.c,v 1.60 2022/02/23 21:54:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.59 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.60 2022/02/23 21:54:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1398,7 +1398,7 @@ esiop_handle_qtag_reject(struct esiop_cmd *esiop_cmd)
 /*
  * handle a bus reset: reset chip, unqueue all active commands, free all
  * target struct and report lossage to upper layer.
- * As the upper layer may requeue immediatly we have to first store
+ * As the upper layer may requeue immediately we have to first store
  * all active commands in a temporary queue.
  */
 void

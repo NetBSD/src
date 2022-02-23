@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.10 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: mmu.h,v 1.11 2022/02/23 21:54:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  *				Call after exception vector was installed.
  *
  * TLB access ops.
- *	sh_tlb_invalidate_addr	invalidate TLB entris for given
+ *	sh_tlb_invalidate_addr	invalidate TLB entries for given
  *				virtual addr with ASID.
  *	sh_tlb_invalidate_asid	invalidate TLB entries for given ASID.
  *	sh_tlb_invalidate_all	invalidate all non-wired TLB entries.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.18 2021/07/26 16:45:56 thorpej Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.19 2022/02/23 21:54:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #define	HSCSIID	0x0F		/* our SCSI ID */
 #define	RSTPWR	0x10		/* reset scsi bus on power up or reset */
 /**** bit definitions for BUSDEF ****/
-#define	B0uS	0x00		/* give up bus immediatly */
+#define	B0uS	0x00		/* give up bus immediately */
 #define	B4uS	0x01		/* delay 4uSec. */
 #define	B8uS	0x02
 

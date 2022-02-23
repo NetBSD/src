@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.18 2019/01/05 08:55:58 maya Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.19 2022/02/23 21:54:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.18 2019/01/05 08:55:58 maya Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.19 2022/02/23 21:54:40 andvar Exp $");
 #endif /* not lint */
 
 /*
@@ -414,7 +414,7 @@ encrypt_send_support(void)
 	if (str_suplen) {
 		/*
 		 * If the user has requested that decryption start
-		 * immediatly, then send a "REQUEST START" before
+		 * immediately, then send a "REQUEST START" before
 		 * we negotiate the type.
 		 */
 		if (!Server && autodecrypt)

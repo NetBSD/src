@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.111 2021/11/01 05:07:16 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.112 2022/02/23 21:54:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.111 2021/11/01 05:07:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.112 2022/02/23 21:54:40 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -162,7 +162,7 @@ sh_cpu_init(int arch, int product)
 	/* Hardclock, RTC initialize. */
 	machine_clock_init();
 
-	/* ICU initiailze. */
+	/* ICU initialize. */
 	curcpu()->ci_idepth = -1;
 	intc_init();
 

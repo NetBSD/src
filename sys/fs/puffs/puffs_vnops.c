@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.224 2021/12/05 03:07:16 msaitoh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.225 2022/02/23 21:54:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.224 2021/12/05 03:07:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.225 2022/02/23 21:54:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1342,12 +1342,12 @@ puffs_vnop_inactive(void *v)
 			mutex_enter(&pmp->pmp_sopmtx);
 
 			/*
-			 * If thread has disapeared, just give up. The
+			 * If thread has disappeared, just give up. The
 			 * fs is being unmounted and the node will be 
 			 * be reclaimed anyway.
 			 *
 			 * Otherwise, we queue the request but do not
-			 * immediatly signal the thread, as the node
+			 * immediately signal the thread, as the node
 			 * has not been expired yet.
 			 */
 			if (pmp->pmp_sopthrcount == 0) {

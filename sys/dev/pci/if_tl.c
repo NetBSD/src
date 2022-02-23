@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.123 2021/09/06 20:55:08 andvar Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.124 2022/02/23 21:54:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.123 2021/09/06 20:55:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.124 2022/02/23 21:54:41 andvar Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1135,7 +1135,7 @@ tl_intr(void *v)
 		bus_dmamap_sync(sc->tl_dmatag, sc->Tx_dmamap, 0,
 		    sizeof(struct tl_Tx_list) * TL_NBUF,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-		/* if this was an EOC, ACK immediatly */
+		/* if this was an EOC, ACK immediately */
 		if (ack)
 			sc->tl_if.if_flags &= ~IFF_OACTIVE;
 		if (int_type == TL_INTR_TxEOC) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.90 2020/09/29 02:58:52 msaitoh Exp $	*/
+/*	$NetBSD: ss.c,v 1.91 2022/02/23 21:54:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.90 2020/09/29 02:58:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.91 2022/02/23 21:54:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,7 @@ ssstrategy(struct buf *bp)
 	if (bp->b_bcount > ss->sio.scan_window_size)
 		bp->b_bcount = ss->sio.scan_window_size;
 
-	/* If it's a null transfer, return immediatly */
+	/* If it's a null transfer, return immediately */
 	if (bp->b_bcount == 0)
 		goto done;
 

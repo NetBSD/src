@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.43 2021/08/08 20:54:48 nia Exp $ */
+/*  $NetBSD: perfuse.c,v 1.44 2022/02/23 21:54:40 andvar Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -708,7 +708,7 @@ perfuse_fsreq(struct puffs_usermount *pu, perfuse_msg_t *pm)
 	foh = GET_OUTHDR(ps, pm);
 
 	/*
-	 * There are some operations we may use in a  Fire and Forget wey,
+	 * There are some operations we may use in a  Fire and Forget way,
 	 * because the kernel does not await a reply, but FUSE still
 	 * sends a reply. This happens for fsyc, setattr (for metadata
 	 * associated with a fsync) and write (for VOP_PUTPAGES). Ignore
@@ -718,7 +718,7 @@ perfuse_fsreq(struct puffs_usermount *pu, perfuse_msg_t *pm)
 	case 0:
 		break;
 	case -ENOENT:
-		/* File disapeared during a FAF operation */
+		/* File disappeared during a FAF operation */
 		break;
 	case -ENOTCONN: /* FALLTHROUGH */
 	case -EAGAIN: /* FALLTHROUGH */

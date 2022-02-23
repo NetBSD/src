@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.40 2020/05/23 20:45:10 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.41 2022/02/23 21:54:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.40 2020/05/23 20:45:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.41 2022/02/23 21:54:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -243,7 +243,7 @@ turnstile_lendpri(lwp_t *cur)
 		if (cur == owner) {
 			/*
 			 * We own the lock: stop here, sleepq_block()
-			 * should wake up immediatly.
+			 * should wake up immediately.
 			 */
 			break;
 		}
