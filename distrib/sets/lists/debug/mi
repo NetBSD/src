@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.372 2022/01/23 14:35:44 christos Exp $
+# $NetBSD: mi,v 1.373 2022/02/24 03:35:33 mrg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -333,6 +333,7 @@
 ./usr/libdata/debug/sbin/bioctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/blacklistctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/sbin/blacklistd.debug	comp-obsolete		obsolete
+./usr/libdata/debug/sbin/blkdiscard.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/blocklistctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/blocklistd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/brconfig.debug		comp-netutil-debug	debug

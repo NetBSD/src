@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1289 2022/01/23 14:35:44 christos Exp $
+# $NetBSD: mi,v 1.1290 2022/02/24 03:35:32 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -347,6 +347,7 @@
 ./sbin/atactl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
 ./sbin/bioctl					base-sysutil-root
+./sbin/blkdiscard				base-sysutil-root
 ./sbin/blacklistctl				base-obsolete		obsolete
 ./sbin/blacklistd				base-obsolete		obsolete
 ./sbin/blocklistctl				base-sysutil-root
@@ -374,6 +375,7 @@
 ./sbin/dumplfs					base-obsolete		obsolete
 ./sbin/fastboot					base-sysutil-root
 ./sbin/fasthalt					base-sysutil-root
+./sbin/fdiscard					base-sysutil-root
 ./sbin/fdisk					base-sysutil-root
 ./sbin/fsck					base-sysutil-root
 ./sbin/fsck_ext2fs				base-ext2fs-root
