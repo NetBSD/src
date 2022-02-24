@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.28 2020/02/27 03:25:08 christos Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.29 2022/02/24 00:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.28 2020/02/27 03:25:08 christos Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.29 2022/02/24 00:26:26 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.28 2020/02/27 03:25:08 christos Exp $");
 #include "authfile.h"
 
 #define ssh_add_identity(auth, key, comment) \
-	ssh_add_identity_constrained(auth, key, comment, 0, 0, 0, "pam")
+    ssh_add_identity_constrained(auth, key, comment, 0, 0, 0, "pam", NULL, 00)
 
 extern char **environ;
 
