@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1734 2022/02/16 01:26:30 uwe Exp $
+# $NetBSD: mi,v 1.1735 2022/02/24 03:35:33 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2482,6 +2482,7 @@
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bebox/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bioctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/blkdiscard.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/blacklistctl.0		man-obsolete		obsolete
 ./usr/share/man/cat8/blacklistd.0		man-obsolete		obsolete
 ./usr/share/man/cat8/blocklistctl.0		man-sysutil-catman	.cat
@@ -2613,6 +2614,7 @@
 ./usr/share/man/cat8/faithd.0			man-router-catman	inet6,.cat
 ./usr/share/man/cat8/fastboot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fasthalt.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/fdiscard.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fdisk.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fingerd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fixmount.0			man-sysutil-catman	.cat
@@ -5603,6 +5605,7 @@
 ./usr/share/man/html8/bad144.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/badsect.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/bioctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/blkdiscard.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/blacklistctl.html		man-obsolete		obsolete
 ./usr/share/man/html8/blacklistd.html		man-obsolete		obsolete
 ./usr/share/man/html8/blocklistctl.html		man-sysutil-htmlman	html
@@ -5706,6 +5709,7 @@
 ./usr/share/man/html8/faithd.html		man-router-htmlman	inet6,html
 ./usr/share/man/html8/fastboot.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fasthalt.html		man-sysutil-htmlman	html
+./usr/share/man/html8/fdiscard.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fdisk.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fingerd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fixmount.html		man-sysutil-htmlman	html
@@ -8757,6 +8761,7 @@
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/bebox/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/bioctl.8			man-sysutil-man		.man
+./usr/share/man/man8/blkdiscard.8		man-sysutil-man		.man
 ./usr/share/man/man8/blacklistctl.8		man-obsolete		obsolete
 ./usr/share/man/man8/blacklistd.8		man-obsolete		obsolete
 ./usr/share/man/man8/blocklistctl.8		man-sysutil-man		.man
@@ -8888,6 +8893,7 @@
 ./usr/share/man/man8/faithd.8			man-router-man		inet6,.man
 ./usr/share/man/man8/fastboot.8			man-sysutil-man		.man
 ./usr/share/man/man8/fasthalt.8			man-sysutil-man		.man
+./usr/share/man/man8/fdiscard.8			man-sysutil-man		.man
 ./usr/share/man/man8/fdisk.8			man-sysutil-man		.man
 ./usr/share/man/man8/fingerd.8			man-sysutil-man		.man
 ./usr/share/man/man8/fixmount.8			man-sysutil-man		.man
