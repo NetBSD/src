@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.16 2019/12/30 05:37:19 uki Exp $
+# $NetBSD: md.ofppc,v 1.17 2022/02/25 17:42:59 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		xdebug-obsolete	xorg,obsolete
@@ -36,7 +36,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r600_dri.so.0.debug		xdebug-obsolete	xorg,obsolete,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeon_dri.so.0.debug		xdebug-obsolete	xorg,obsolete,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/tdfx_dri.so.0.debug		xdebug-obsolete	xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug		xdebug-xf86-video-ati-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-obsolete		obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.19.debug	xdebug-xf86-video-ati-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug		xdebug-xf86-video-chips-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug		xdebug-xf86-input-keyboard-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libati_drv.so.6.debug	xdebug-obsolete	xorg,obsolete
