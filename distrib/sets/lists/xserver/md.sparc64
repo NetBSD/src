@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.71 2020/11/10 21:47:41 kamil Exp $	x11
+# $NetBSD: md.sparc64,v 1.72 2022/02/25 17:42:59 mrg Exp $	x11
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -30,7 +30,8 @@
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		xserver-xf86-video-ati-drivers	xorg
-./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-xf86-video-ati-drivers	xorg
+./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/ati_drv.so.19		xserver-xf86-video-ati-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		xserver-xf86-video-glint-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so.1		xserver-xf86-video-glint-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		xserver-xf86-input-keyboard-drivers	xorg

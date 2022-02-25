@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.16 2019/12/30 05:36:51 uki Exp $
+# $NetBSD: md.sparc,v 1.17 2022/02/25 17:42:59 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -49,7 +49,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeon_dri.so.0.debug		xdebug-obsolete	xorg,obsolete,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ag10e_drv.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ag10e_drv.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug		xdebug-xf86-video-ati-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-obsolete		obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.19.debug	xdebug-xf86-video-ati-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-xf86-video-glint-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug		xdebug-xf86-input-keyboard-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libag10e_drv.so.0.debug	xdebug-obsolete	xorg,obsolete

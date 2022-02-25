@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.30 2021/04/27 03:09:16 mrg Exp $
+# $NetBSD: md.evbarm,v 1.31 2022/02/25 17:42:59 mrg Exp $
 ./usr/X11R7/lib/libdrm_amdgpu_g.a			xdebug-libdrm_amdgpu-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau_g.a			xdebug-libdrm_nouveau-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libvdpau_g.a				xdebug-libvdpau-debuglib	xorg,debuglib,compatx11file
@@ -30,7 +30,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r600_dri.so.0.debug	xdebug-xf86-video-radeon-debug		xorg,debug,llvmrt
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeon_dri.so.0.debug	xdebug-xf86-video-radeon-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeonsi_dri.so.0.debug	xdebug-xf86-video-radeon-debug		xorg,debug,llvmrt
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-xf86-video-ati-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-obsolete		obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.19.debug	xdebug-xf86-video-ati-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libati_drv.so.6.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
