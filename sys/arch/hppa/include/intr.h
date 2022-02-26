@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2022/02/26 03:02:25 macallan Exp $	*/
 /*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*-
@@ -92,6 +92,8 @@ struct hppa_interrupt_register {
 #define	IR_BIT_UNUSED		IR_BIT_REG(0)
 #define	IR_BIT_USED_P(x)	(((x) & IR_BIT_MASK) != IR_BIT_MASK)
 #define	IR_BIT_NESTED_P(x)	(((x) & IR_BIT_MASK) == IR_BIT_MASK)
+/* true if not used for interrupt or nested interrupt register */
+#define	IR_BIT_UNUSED_P(x)	((x) == IR_BIT_MASK)
 
 	int ir_bits;		/* mask of allocatable bit numbers */
 	int ir_rbits;		/* mask of reserved (for lasi/asp) bit numbers */
