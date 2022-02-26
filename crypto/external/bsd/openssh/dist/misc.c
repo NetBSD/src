@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.29 2022/02/23 19:07:20 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.30 2022/02/26 13:30:19 christos Exp $	*/
 /* $OpenBSD: misc.c,v 1.174 2022/02/11 00:43:56 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -19,7 +19,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.29 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.30 2022/02/26 13:30:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -742,7 +742,7 @@ int
 parse_user_host_path(const char *s, char **userp, char **hostp, char **pathp)
 {
 	char *user = NULL, *host = NULL, *path = NULL;
-	char *tmp, *sdup;
+	char *sdup, *tmp;
 	int ret = -1;
 
 	if (userp != NULL)
@@ -1094,8 +1094,7 @@ tilde_expand(const char *filename, uid_t uid, char **retp)
 	const char *path = NULL, *user = NULL;
 	struct passwd *pw;
 	size_t len;
-	int ret = -1, r;
-	const char *sep, *homedir;
+	int ret = -1, r, slash;
 
 	*retp = NULL;
 	if (*filename != '~') {
@@ -1129,27 +1128,16 @@ tilde_expand(const char *filename, uid_t uid, char **retp)
 			error_f("No such user %s", user);
 			goto out;
 		}
-		homedir = pw->pw_dir;
-	} else {
-		if ((pw = getpwuid(uid)) == NULL) {	/* ~/path */
-			error_f("No such uid %ld", (long)uid);
-			goto out;
-		}
-		homedir = pw->pw_dir;
+	} else if ((pw = getpwuid(uid)) == NULL) {
+		error_f("No such uid %ld", (long)uid);
+		goto out;
 	}
 
 	/* Make sure directory has a trailing '/' */
-	len = strlen(homedir);
-	if (len == 0 || homedir[len - 1] != '/')
-		sep = "/";
-	else
-		sep = "";
+	slash = (len = strlen(pw->pw_dir)) == 0 || pw->pw_dir[len - 1] != '/';
 
-	/* Skip leading '/' from specified path */
-	if (path != NULL)
-		filename = path + 1;
-
-	if ((r = xasprintf(&s, "%s%s%s", homedir, sep, filename)) <= 0) {
+	if ((r = xasprintf(&s, "%s%s%s", pw->pw_dir,
+	    slash ? "/" : "", path != NULL ? path : "")) <= 0) {
 		error_f("xasprintf failed");
 		goto out;
 	}
