@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.73 2021/10/10 18:16:12 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.74 2022/02/26 16:43:20 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -145,6 +145,27 @@ check_lint1()
 	fi
 }
 
+atf_test_case 'assertion_failures'
+assertion_failures_body()
+{
+	# seen in sys/external/bsd/drm2/include/linux/kref.h:73
+
+	cat <<'EOF' > input.c
+# 2 "input.c"
+void
+fn(unsigned int u)
+{
+	u = ({
+		do {} while (0);
+		u;
+	});
+}
+EOF
+
+	atf_check -s 'signal' -e 'match:lint: assertion ".*" failed' \
+	    "$lint1" -gS 'input.c' '/dev/null'
+}
+
 atf_init_test_cases()
 {
 	local src name
@@ -162,4 +183,6 @@ atf_init_test_cases()
 		}"
 		atf_add_test_case "$name"
 	done
+
+	atf_add_test_case 'assertion_failures'
 }
