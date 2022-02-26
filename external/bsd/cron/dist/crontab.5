@@ -1,4 +1,4 @@
-.\" $NetBSD: crontab.5,v 1.10 2020/04/18 19:32:19 christos Exp $
+.\" $NetBSD: crontab.5,v 1.11 2022/02/26 17:02:47 christos Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -21,7 +21,7 @@
 .\"
 .\" $OpenBSD: crontab.5,v 1.36 2018/06/13 13:27:37 jmc Exp $
 .\"
-.Dd April 17, 2020
+.Dd February 26, 2022
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -298,6 +298,12 @@ The
 .Ev CRON_WITHIN
 variable should indicate the number of seconds within a job's
 scheduled time that it should still be run.
+For example if a job is scheduled for 12:30pm and
+.Ev CRON_WITHIN
+is
+.Dv 120
+(2 minutes), then the job will not be run if the system attempts
+to start it past 12:32pm.
 On a heavily loaded system, or on a system that has just been
 .Dq woken up ,
 jobs will sometimes start later than originally intended, and by
@@ -308,7 +314,9 @@ If
 is defined but empty
 .Pq Ev CRON_WITHIN Ns = Ns \&"" ,
 or set to some non-positive value (0, a negative number, or a
-non-numeric string), it is treated as if it was unset.
+non-numeric string), it is treated as if it was unset, that is
+the job will always run, even if it is going to start at a time
+long past its scheduled time.
 .It Ev HOME
 Set from the user's
 .Pa /etc/passwd
