@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.727 2022/02/16 03:15:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.728 2022/02/26 14:53:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.727 2022/02/16 03:15:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.728 2022/02/26 14:53:05 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -471,11 +471,11 @@ struct wm_rxqueue {
 	uint32_t rxq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
 	/* RX event counters */
-	WM_Q_EVCNT_DEFINE(rxq, intr);	/* Interrupts */
-	WM_Q_EVCNT_DEFINE(rxq, defer);	/* Rx deferred processing */
+	WM_Q_EVCNT_DEFINE(rxq, intr)	/* Interrupts */
+	WM_Q_EVCNT_DEFINE(rxq, defer)	/* Rx deferred processing */
 
-	WM_Q_EVCNT_DEFINE(rxq, ipsum);	/* IP checksums checked */
-	WM_Q_EVCNT_DEFINE(rxq, tusum);	/* TCP/UDP cksums checked */
+	WM_Q_EVCNT_DEFINE(rxq, ipsum)	/* IP checksums checked */
+	WM_Q_EVCNT_DEFINE(rxq, tusum)	/* TCP/UDP cksums checked */
 #endif
 };
 
