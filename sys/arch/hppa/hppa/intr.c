@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 2021/09/07 13:24:45 andvar Exp $	*/
+/*	$NetBSD: intr.c,v 1.6 2022/02/26 03:02:25 macallan Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2021/09/07 13:24:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2022/02/26 03:02:25 macallan Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -297,7 +297,7 @@ hppa_intr_calculatemasks(struct cpu_info *ci)
 			continue;
 		mask = 0;
 		for (bit_pos = 0; bit_pos < HPPA_INTERRUPT_BITS; bit_pos++) {
-			if (IR_BIT_USED_P(ir->ir_bits_map[31 ^ bit_pos]))
+			if (!IR_BIT_UNUSED_P(ir->ir_bits_map[31 ^ bit_pos]))
 				mask |= (1 << bit_pos);
 		}
 		if (ir->ir_iscpu)
