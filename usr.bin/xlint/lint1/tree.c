@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.402 2021/12/21 15:33:20 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.403 2022/02/26 19:01:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.402 2021/12/21 15:33:20 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.403 2022/02/26 19:01:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4537,4 +4537,26 @@ check_precedence_confusion(tnode_t *tn)
 		/* precedence confusion possible: parenthesize! */
 		warning(169);
 	}
+}
+
+void
+do_statement_expr(tnode_t *tn)
+{
+	block_level--;
+	mem_block_level--;
+	/* Use the initialization code as temporary symbol storage. */
+	begin_initialization(mktempsym(dup_type(tn->tn_type)));
+	mem_block_level++;
+	block_level++;
+	/* ({ }) is a GCC extension */
+	gnuism(320);
+
+}
+
+tnode_t *
+end_statement_expr(void)
+{
+	tnode_t *tn = build_name(*current_initsym(), false);
+	end_initialization();
+	return tn;
 }

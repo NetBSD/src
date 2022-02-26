@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.379 2022/01/15 23:21:34 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.380 2022/02/26 19:01:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.379 2022/01/15 23:21:34 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.380 2022/02/26 19:01:09 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -518,16 +518,9 @@ postfix_expression:
 		end_initialization();
 	  }
 	| T_LPAREN compound_statement_lbrace gcc_statement_expr_list {
-		block_level--;
-		mem_block_level--;
-		begin_initialization(mktempsym(dup_type($3->tn_type)));
-		mem_block_level++;
-		block_level++;
-		/* ({ }) is a GCC extension */
-		gnuism(320);
+		do_statement_expr($3);
 	  } compound_statement_rbrace T_RPAREN {
-		$$ = build_name(*current_initsym(), false);
-		end_initialization();
+		$$ = end_statement_expr();
 	  }
 	;
 
