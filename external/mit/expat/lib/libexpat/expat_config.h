@@ -108,7 +108,6 @@
 /* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
-#endif
 
 /* Define to allow retrieving the byte offsets for attribute names and values.
    */
