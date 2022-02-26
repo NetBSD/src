@@ -1,4 +1,4 @@
-# $NetBSD: t_rc_d_cli.sh,v 1.4 2010/11/07 17:51:21 jmmv Exp $
+# $NetBSD: t_rc_d_cli.sh,v 1.5 2022/02/26 16:21:59 gson Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,8 +48,10 @@ default_start_no_args_body() {
 	export h_simple=YES
 	rc_helper=$(atf_get_srcdir)/h_simple
 
+	atf_expect_fail "PR bin/56506"
 	atf_check -s eq:0 -o ignore -e empty ${rc_helper} start
 	${rc_helper} forcestop
+	atf_fail "random failure did not happen this time"
 }
 
 atf_test_case default_start_with_args
@@ -77,8 +79,10 @@ default_stop_no_args_body() {
 	export h_simple=YES
 	rc_helper=$(atf_get_srcdir)/h_simple
 
+	atf_expect_fail "PR bin/56506"
 	${rc_helper} start
 	atf_check -s eq:0 -o ignore -e empty ${rc_helper} stop
+	atf_fail "random failure did not happen this time"
 }
 
 atf_test_case default_stop_with_args
@@ -108,9 +112,11 @@ default_restart_no_args_body() {
 	export h_simple=YES
 	rc_helper=$(atf_get_srcdir)/h_simple
 
+	atf_expect_fail "PR bin/56506"
 	${rc_helper} start
 	atf_check -s eq:0 -o ignore -e empty ${rc_helper} restart
 	${rc_helper} forcestop
+	atf_fail "random failure did not happen this time"
 }
 
 atf_test_case default_restart_with_args
