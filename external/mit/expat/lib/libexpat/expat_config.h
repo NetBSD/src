@@ -11,8 +11,10 @@
 /* Define to 1 if you have the `arc4random' function. */
 /* #undef HAVE_ARC4RANDOM */
 
+#ifndef TOOL_FCCACHE
 /* Define to 1 if you have the `arc4random_buf' function. */
 #define HAVE_ARC4RANDOM_BUF 1
+#endif
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
