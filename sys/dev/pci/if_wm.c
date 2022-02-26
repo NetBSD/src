@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.728 2022/02/26 14:53:05 rillig Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.729 2022/02/26 15:04:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.728 2022/02/26 14:53:05 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.729 2022/02/26 15:04:39 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10025,7 +10025,8 @@ wm_txrxintr_disable(struct wm_queue *wmq)
 	struct wm_softc *sc = wmq->wmq_txq.txq_sc;
 
 	if (__predict_false(!wm_is_using_msix(sc))) {
-		return wm_legacy_intr_disable(sc);
+		wm_legacy_intr_disable(sc);
+		return;
 	}
 
 	if (sc->sc_type == WM_T_82574)
@@ -10046,7 +10047,8 @@ wm_txrxintr_enable(struct wm_queue *wmq)
 	wm_itrs_calculate(sc, wmq);
 
 	if (__predict_false(!wm_is_using_msix(sc))) {
-		return wm_legacy_intr_enable(sc);
+		wm_legacy_intr_enable(sc);
+		return;
 	}
 
 	/*
