@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.11 2021/12/19 12:07:55 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.12 2022/02/26 15:57:22 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ vzalloc(unsigned long size)
 static inline void
 vfree(void *ptr)
 {
-	return kfree(ptr);
+	kfree(ptr);
 }
 
 #define	PAGE_KERNEL	UVM_PROT_RW
