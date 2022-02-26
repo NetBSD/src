@@ -23,8 +23,11 @@
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1
 
+/* Host build might not have getrandom */
+#ifndef TOOL_FCCACHE
 /* Define to 1 if you have the `getrandom' function. */
-/* #define HAVE_GETRANDOM 1 */
+#define HAVE_GETRANDOM 1
+#endif
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
