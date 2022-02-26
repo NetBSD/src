@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.97 2021/12/26 18:16:41 christos Exp $ */
+/* $NetBSD: lex.c,v 1.98 2022/02/26 23:07:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.97 2021/12/26 18:16:41 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.98 2022/02/26 23:07:28 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1332,6 +1332,20 @@ lex_wide_string(void)
 	return T_STRING;
 }
 
+#ifdef DEBUG
+static const char *
+symt_name(symt_t kind)
+{
+	static const char *name[] = {
+		"var-func-type",
+		"member",
+		"tag",
+		"label",
+	};
+	return name[kind];
+}
+#endif
+
 /*
  * As noted above, the scanner does not create new symbol table entries
  * for symbols it cannot find in the symbol table. This is to avoid
@@ -1366,8 +1380,7 @@ getsym(sbuf_t *sb)
 	}
 
 	if (sym != NULL) {
-		if (sym->s_kind != symtyp)
-			INTERNAL_ERROR("getsym(%d, %d)", sym->s_kind, symtyp);
+		lint_assert(sym->s_kind == symtyp);
 		symtyp = FVFT;
 		freesb(sb);
 		return sym;
@@ -1447,8 +1460,8 @@ void
 rmsym(sym_t *sym)
 {
 
-	debug_step("rmsym '%s' %d '%s'",
-	    sym->s_name, (int)sym->s_kind, type_name(sym->s_type));
+	debug_step("rmsym '%s' %s '%s'",
+	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
 	symtab_remove(sym);
 
 	/* avoid that the symbol will later be put back to the symbol table */
@@ -1466,8 +1479,8 @@ rmsyms(sym_t *syms)
 
 	for (sym = syms; sym != NULL; sym = sym->s_dlnxt) {
 		if (sym->s_block_level != -1) {
-			debug_step("rmsyms '%s' %d '%s'",
-			    sym->s_name, (int)sym->s_kind,
+			debug_step("rmsyms '%s' %s '%s'",
+			    sym->s_name, symt_name(sym->s_kind),
 			    type_name(sym->s_type));
 			symtab_remove(sym);
 			sym->s_rlink = NULL;
@@ -1482,8 +1495,8 @@ void
 inssym(int bl, sym_t *sym)
 {
 
-	debug_step("inssym '%s' %d '%s'",
-	    sym->s_name, sym->s_kind, type_name(sym->s_type));
+	debug_step("inssym '%s' %s '%s'",
+	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
 	symtab_add(sym);
 	sym->s_block_level = bl;
 	lint_assert(sym->s_link == NULL ||
@@ -1523,8 +1536,8 @@ pushdown(const sym_t *sym)
 {
 	sym_t	*nsym;
 
-	debug_step("pushdown '%s' %d '%s'",
-	    sym->s_name, (int)sym->s_kind, type_name(sym->s_type));
+	debug_step("pushdown '%s' %s '%s'",
+	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
 	nsym = getblk(sizeof(*nsym));
 	lint_assert(sym->s_block_level <= block_level);
 	nsym->s_name = sym->s_name;
