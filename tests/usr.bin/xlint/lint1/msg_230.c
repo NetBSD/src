@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230.c,v 1.10 2021/10/09 22:03:38 rillig Exp $	*/
+/*	$NetBSD: msg_230.c,v 1.11 2022/02/26 11:13:01 rillig Exp $	*/
 # 3 "msg_230.c"
 
 // Test for message: nonportable character comparison '%s %d' [230]
@@ -71,7 +71,7 @@ compare_plain_char_yoda(char c)
 }
 
 void
-compare_lt(char c)
+compare_greater(char c)
 {
 
 	/* expect+1: warning: nonportable character comparison '> -2' [230] */
