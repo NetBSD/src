@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.403 2022/02/26 19:01:09 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.404 2022/02/26 20:36:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.403 2022/02/26 19:01:09 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.404 2022/02/26 20:36:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4539,13 +4539,30 @@ check_precedence_confusion(tnode_t *tn)
 	}
 }
 
+typedef struct stmt_expr {
+	struct memory_block *se_mem;
+	sym_t *se_sym;
+	struct stmt_expr *se_enclosing;
+} stmt_expr;
+
+static stmt_expr *stmt_exprs;
+
+void
+begin_statement_expr(void)
+{
+	stmt_expr *se = xmalloc(sizeof(*se));
+	se->se_mem = expr_save_memory();
+	se->se_sym = NULL;
+	se->se_enclosing = stmt_exprs;
+	stmt_exprs = se;
+}
+
 void
 do_statement_expr(tnode_t *tn)
 {
 	block_level--;
 	mem_block_level--;
-	/* Use the initialization code as temporary symbol storage. */
-	begin_initialization(mktempsym(dup_type(tn->tn_type)));
+	stmt_exprs->se_sym = mktempsym(dup_type(tn->tn_type));
 	mem_block_level++;
 	block_level++;
 	/* ({ }) is a GCC extension */
@@ -4556,7 +4573,11 @@ do_statement_expr(tnode_t *tn)
 tnode_t *
 end_statement_expr(void)
 {
-	tnode_t *tn = build_name(*current_initsym(), false);
-	end_initialization();
+	stmt_expr *se = stmt_exprs;
+	tnode_t *tn = build_name(se->se_sym, false);
+	expr_save_memory();	/* leak */
+	expr_restore_memory(se->se_mem);
+	stmt_exprs = se->se_enclosing;
+	free(se);
 	return tn;
 }

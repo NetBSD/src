@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.380 2022/02/26 19:01:09 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.381 2022/02/26 20:36:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.380 2022/02/26 19:01:09 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.381 2022/02/26 20:36:11 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -517,8 +517,10 @@ postfix_expression:
 		$$ = build_name(*current_initsym(), false);
 		end_initialization();
 	  }
-	| T_LPAREN compound_statement_lbrace gcc_statement_expr_list {
-		do_statement_expr($3);
+	| T_LPAREN compound_statement_lbrace {
+		begin_statement_expr();
+	  } gcc_statement_expr_list {
+		do_statement_expr($4);
 	  } compound_statement_rbrace T_RPAREN {
 		$$ = end_statement_expr();
 	  }
