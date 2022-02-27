@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bios.c,v 1.5 2021/12/19 10:59:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bios.c,v 1.6 2022/02/27 14:23:24 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bios.c,v 1.5 2021/12/19 10:59:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bios.c,v 1.6 2022/02/27 14:23:24 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "atom.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_bios.c,v 1.5 2021/12/19 10:59:01 riastradh Ex
 #include <linux/acpi.h>
 
 #include <linux/nbsd-namespace.h>
+#include <linux/nbsd-namespace-acpi.h>
 
 /*
  * BIOS.
@@ -327,7 +328,11 @@ static bool amdgpu_atrm_get_bios(struct amdgpu_device *adev)
 		return false;
 
 	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != NULL) {
+#ifdef __NetBSD__
+		dhandle = (pdev->pd_ad ? pdev->pd_ad->ad_handle : NULL);
+#else
 		dhandle = ACPI_HANDLE(&pdev->dev);
+#endif
 		if (!dhandle)
 			continue;
 
@@ -340,7 +345,12 @@ static bool amdgpu_atrm_get_bios(struct amdgpu_device *adev)
 
 	if (!found) {
 		while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != NULL) {
+#ifdef __NetBSD__
+			dhandle = (pdev->pd_ad ? pdev->pd_ad->ad_handle
+			    : NULL);
+#else
 			dhandle = ACPI_HANDLE(&pdev->dev);
+#endif
 			if (!dhandle)
 				continue;
 
