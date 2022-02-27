@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.244 2022/02/07 02:44:49 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.245 2022/02/27 01:47:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.244 2022/02/07 02:44:49 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.245 2022/02/27 01:47:28 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -148,8 +148,8 @@ scl_name(scl_t scl)
 	static const char *const names[] = {
 	    "none", "extern", "static", "auto", "register", "typedef",
 	    "struct", "union", "enum", "member of struct", "member of union",
-	    "compile-time constant", "abstract", "argument",
-	    "prototype argument", "inline"
+	    "compile-time constant", "abstract",
+	    "old-style function argument", "prototype argument", "inline"
 	};
 
 	return names[scl];
@@ -498,7 +498,7 @@ tdeferr(type_t *td, tspec_t t)
  * Remember the symbol of a typedef name (2nd arg) in a struct, union
  * or enum tag if the typedef name is the first defined for this tag.
  *
- * If the tag is unnamed, the typdef name is used for identification
+ * If the tag is unnamed, the typedef name is used for identification
  * of this tag in lint2. Although it's possible that more than one typedef
  * name is defined for one tag, the first name defined should be unique
  * if the tag is unnamed.
@@ -651,7 +651,7 @@ end_declaration_level(void)
 		if ((*dcs->d_ldlsym = di->d_dlsyms) != NULL)
 			dcs->d_ldlsym = di->d_ldlsym;
 		break;
-	case ARG:
+	case OLD_STYLE_ARG:
 		/*
 		 * All symbols in dcs->d_dlsyms are introduced in old style
 		 * argument declarations (it's not clean, but possible).
@@ -751,7 +751,7 @@ dcs_adjust_storage_class(void)
 			error(8);
 			dcs->d_scl = NOSCL;
 		}
-	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PROTO_ARG) {
+	} else if (dcs->d_ctx == OLD_STYLE_ARG || dcs->d_ctx == PROTO_ARG) {
 		if (dcs->d_scl != NOSCL && dcs->d_scl != REG) {
 			/* only register valid as formal parameter storage... */
 			error(9);
@@ -1565,7 +1565,7 @@ declarator_name(sym_t *sym)
 	case PROTO_ARG:
 		sym->s_arg = true;
 		/* FALLTHROUGH */
-	case ARG:
+	case OLD_STYLE_ARG:
 		if ((sc = dcs->d_scl) == NOSCL) {
 			sc = AUTO;
 		} else {
@@ -2027,7 +2027,7 @@ declare(sym_t *decl, bool initflg, sbuf_t *renaming)
 
 	if (dcs->d_ctx == EXTERN) {
 		declare_extern(decl, initflg, renaming);
-	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PROTO_ARG) {
+	} else if (dcs->d_ctx == OLD_STYLE_ARG || dcs->d_ctx == PROTO_ARG) {
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on function arguments */
 			error(310);

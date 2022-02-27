@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.135 2022/02/07 21:57:47 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.136 2022/02/27 01:47:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -226,7 +226,7 @@ typedef enum {
 	MOU,		/* member of union */
 	CTCONST,	/* enumerator, enum constant or bool constant */
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
-	ARG,		/* argument */
+	OLD_STYLE_ARG,	/* old-style function argument declarations */
 	PROTO_ARG,	/* used in declaration stack during prototype
 			   declaration */
 	INLINE		/* only used by the parser */
@@ -342,7 +342,7 @@ struct array_size {
 };
 
 /*
- * For nested declarations a stack exists, which holds all information
+ * For nested declarations there is a stack that holds all information
  * needed for the current level. dcs points to the innermost element of this
  * stack.
  *
@@ -351,7 +351,7 @@ struct array_size {
  *	EXTERN		global declarations
  *	MOS or MOU	declarations of struct or union members
  *	CTCONST		declarations of enums or boolean constants
- *	ARG		declaration of arguments in old-style function
+ *	OLD_STYLE_ARG	declaration of arguments in old-style function
  *			definitions
  *	PROTO_ARG	declaration of arguments in function prototypes
  *	AUTO		declaration of local symbols
