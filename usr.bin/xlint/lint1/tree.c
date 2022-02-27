@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.406 2022/02/27 10:31:58 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.407 2022/02/27 10:44:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.406 2022/02/27 10:31:58 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.407 2022/02/27 10:44:45 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -379,7 +379,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 * If this struct/union has a member with the name of msym, return it.
 	 */
 	if (str != NULL) {
-		for (sym = msym; sym != NULL; sym = sym->s_link) {
+		for (sym = msym; sym != NULL; sym = sym->s_symtab_next) {
 			if (sym->s_scl != MOS && sym->s_scl != MOU)
 				continue;
 			if (sym->s_styp != str)
@@ -395,12 +395,13 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 * name and different types and/or offsets.
 	 */
 	eq = true;
-	for (csym = msym; csym != NULL; csym = csym->s_link) {
+	for (csym = msym; csym != NULL; csym = csym->s_symtab_next) {
 		if (csym->s_scl != MOS && csym->s_scl != MOU)
 			continue;
 		if (strcmp(msym->s_name, csym->s_name) != 0)
 			continue;
-		for (sym = csym->s_link; sym != NULL; sym = sym->s_link) {
+		for (sym = csym->s_symtab_next; sym != NULL;
+		    sym = sym->s_symtab_next) {
 			bool w;
 
 			if (sym->s_scl != MOS && sym->s_scl != MOU)
