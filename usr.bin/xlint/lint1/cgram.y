@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.385 2022/02/27 11:40:29 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.386 2022/02/27 19:32:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.385 2022/02/27 11:40:29 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.386 2022/02/27 19:32:51 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -292,7 +292,6 @@ anonymize(sym_t *s)
 %type	<y_sym>		identifier_sym
 %type	<y_name>	identifier
 %type	<y_string>	string
-%type	<y_string>	string2
 
 %type	<y_tnode>	primary_expression
 %type	<y_tnode>	generic_selection
@@ -405,21 +404,11 @@ identifier:
 /* see C99 6.4.5, string literals are joined by 5.1.1.2 */
 string:
 	  T_STRING
-	| T_STRING string2 {
-		$$ = cat_strings($1, $2);
-	  }
-	;
-
-/* see C99 6.4.5, string literals are joined by 5.1.1.2 */
-string2:
-	  T_STRING {
+	| string T_STRING {
 		if (tflag) {
 			/* concatenated strings are illegal in traditional C */
 			warning(219);
 		}
-		$$ = $1;
-	  }
-	| string2 T_STRING {
 		$$ = cat_strings($1, $2);
 	  }
 	;
