@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.13 2020/09/26 08:21:27 simonb Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.14 2022/02/27 19:21:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_llsc.S,v 1.13 2020/09/26 08:21:27 simonb Exp $")
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.14 2022/02/27 19:21:44 riastradh Exp $")
 
 #include "assym.h"
 
@@ -279,8 +279,8 @@ LEAF(llsc_mutex_spin_exit)
 	INT_L	t0, MTX_LOCK(a0)
 	beqz	t0, 2f
 	 nop
-	INT_S	zero, MTX_LOCK(a0)
 #endif
+	INT_S	zero, MTX_LOCK(a0)
 
 	/*
 	 * We need to grab this before the mutex count is incremented
