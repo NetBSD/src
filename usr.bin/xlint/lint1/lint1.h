@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.136 2022/02/27 01:47:28 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.137 2022/02/27 07:38:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -484,12 +484,6 @@ typedef	struct err_set {
 		if (!(cond))						\
 			assert_failed(__FILE__, __LINE__, __func__, #cond); \
 	} while (false)
-
-#ifdef BLKDEBUG
-#define INVALID_MEM_BYTE	0xa5
-#else
-#define	INVALID_MEM_BYTE	0
-#endif
 
 extern err_set	msgset;
 

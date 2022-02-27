@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.58 2022/02/27 06:55:13 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.59 2022/02/27 07:38:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.58 2022/02/27 06:55:13 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.59 2022/02/27 07:38:54 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -172,45 +172,27 @@ get_filename_id(const char *s)
 }
 
 /*
- * Memory for declarations and other things which must be available
+ * Memory for declarations and other things that must be available
  * until the end of a block (or the end of the translation unit)
  * is associated with the corresponding mem_block_level, which may be 0.
  * Because this memory is allocated in large blocks associated with
  * a given level it can be freed easily at the end of a block.
  */
-#define	ML_INC	((size_t)32)		/* Increment for length of *mblks */
-
 typedef struct memory_block {
 	void	*start;			/* beginning of memory block */
 	void	*first_free;		/* first free byte */
 	size_t	nfree;			/* # of free bytes */
-	size_t	size;			/* total size of memory block */
 	struct	memory_block *next;
 } memory_block;
 
-/*
- * Array of pointers to lists of memory blocks. mem_block_level is used as
- * index into this array.
- */
+
+static	size_t	mblk_size;	/* size of newly allocated memory blocks */
+
+/* Array of lists of memory blocks, indexed by mem_block_level. */
 static	memory_block	**mblks;
+static	size_t	nmblks;		/* number of elements in *mblks */
+#define	ML_INC	((size_t)32)	/* Increment for length of *mblks */
 
-/* number of elements in *mblks */
-static	size_t	nmblks;
-
-/* length of new allocated memory blocks */
-static	size_t	mblklen;
-
-
-static memory_block *
-xnewblk(void)
-{
-	memory_block	*mb = xmalloc(sizeof(*mb));
-
-	mb->start = xmalloc(mblklen);
-	mb->size = mblklen;
-
-	return mb;
-}
 
 /* Allocate new memory, initialized with zero. */
 static void *
@@ -218,41 +200,23 @@ xgetblk(memory_block **mbp, size_t s)
 {
 	memory_block	*mb;
 	void	*p;
-	size_t	t = 0;
-
-	/*
-	 * If the first block of the list has not enough free space,
-	 * or there is no first block, get a new block. The new block
-	 * is taken from the free list or, if there is no block on the
-	 * free list, is allocated using xnewblk().
-	 *
-	 * If a new block is allocated it is initialized with zero.
-	 * Blocks taken from the free list are zero'd in xfreeblk().
-	 */
 
 	s = WORST_ALIGN(s);
+
 	if ((mb = *mbp) == NULL || mb->nfree < s) {
-		if (s > mblklen) {
-			t = mblklen;
-			mblklen = s;
-		}
-		mb = xnewblk();
-#ifndef BLKDEBUG
-		(void)memset(mb->start, 0, mb->size);
-#endif
-		if (t > 0)
-			mblklen = t;
+		size_t block_size = s > mblk_size ? s : mblk_size;
+		mb = xmalloc(sizeof(*mb));
+		mb->start = xmalloc(block_size);
 		mb->first_free = mb->start;
-		mb->nfree = mb->size;
+		mb->nfree = block_size;
 		mb->next = *mbp;
 		*mbp = mb;
 	}
+
 	p = mb->first_free;
 	mb->first_free = (char *)mb->first_free + s;
 	mb->nfree -= s;
-#ifdef BLKDEBUG
 	(void)memset(p, 0, s);
-#endif
 	return p;
 }
 
@@ -272,7 +236,7 @@ void
 initmem(void)
 {
 
-	mblklen = mem_block_size();
+	mblk_size = mem_block_size();
 	mblks = xcalloc(nmblks = ML_INC, sizeof(*mblks));
 }
 
