@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.247 2022/02/27 10:31:58 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.248 2022/02/27 10:44:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.247 2022/02/27 10:31:58 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.248 2022/02/27 10:44:45 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1440,7 +1440,7 @@ new_style_function(sym_t *decl, sym_t *args)
 	 * Declarations of structs/unions/enums in param lists are legal,
 	 * but senseless.
 	 */
-	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_dlnxt) {
+	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_level_next) {
 		sc = sym->s_scl;
 		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG) {
 			/* dubious tag declaration: %s %s */
@@ -2776,7 +2776,7 @@ declare_external_in_block(sym_t *dsym)
 	/* look for a symbol with the same name */
 	esym = dcs->d_redeclared_symbol;
 	while (esym != NULL && esym->s_block_level != 0) {
-		while ((esym = esym->s_link) != NULL) {
+		while ((esym = esym->s_symtab_next) != NULL) {
 			if (esym->s_kind != FVFT)
 				continue;
 			if (strcmp(dsym->s_name, esym->s_name) == 0)
@@ -2984,7 +2984,7 @@ mark_as_used(sym_t *sym, bool fcall, bool szof)
 
 /*
  * Prints warnings for a list of variables and labels (concatenated
- * with s_dlnxt) if these are not used or only set.
+ * with s_level_next) if these are not used or only set.
  */
 void
 check_usage(dinfo_t *di)
@@ -2997,7 +2997,7 @@ check_usage(dinfo_t *di)
 	lwarn = LWARN_ALL;
 
 	debug_step("begin lwarn %d", lwarn);
-	for (sym = di->d_dlsyms; sym != NULL; sym = sym->s_dlnxt)
+	for (sym = di->d_dlsyms; sym != NULL; sym = sym->s_level_next)
 		check_usage_sym(di->d_asm, sym);
 	lwarn = mklwarn;
 	debug_step("end lwarn %d", lwarn);
@@ -3170,7 +3170,7 @@ check_global_symbols(void)
 	if (block_level != 0 || dcs->d_next != NULL)
 		norecover();
 
-	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_dlnxt) {
+	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level == -1)
 			continue;
 		if (sym->s_kind == FVFT) {

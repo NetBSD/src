@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.138 2022/02/27 07:50:09 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.139 2022/02/27 10:44:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -273,11 +273,13 @@ typedef	struct sym {
 		struct	sym *_s_args; /* arguments in old style function
 					 definitions */
 	} u;
-	struct	sym *s_link;	/* next symbol with same hash value */
-	struct	sym **s_rlink;	/* pointer to s_link of prev. symbol */
+	struct	sym *s_symtab_next;	/* next symbol with same hash value */
+	struct	sym **s_symtab_ref;	/* pointer to s_symtab_next of the
+					 * previous symbol */
 	struct	sym *s_next;	/* next struct/union member, enumerator,
 				   argument */
-	struct	sym *s_dlnxt;	/* next symbol declared on same level */
+	struct	sym *s_level_next;	/* next symbol declared on the same
+					 * level */
 } sym_t;
 
 #define	s_styp	u._s_st
@@ -387,8 +389,8 @@ typedef	struct dinfo {
 	sym_t	*d_func_args;	/* list of arguments during function def. */
 	pos_t	d_func_def_pos;	/* position of function definition */
 	sym_t	*d_dlsyms;	/* first symbol declared at this level */
-	sym_t	**d_ldlsym;	/* points to s_dlnxt in last symbol decl.
-				   at this level */
+	sym_t	**d_ldlsym;	/* points to s_level_next in the last symbol
+				   declaration at this level */
 	sym_t	*d_func_proto_syms; /* symbols defined in prototype */
 	struct	dinfo *d_next;	/* next level */
 } dinfo_t;

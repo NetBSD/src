@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.101 2022/02/27 08:31:26 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.102 2022/02/27 10:44:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.101 2022/02/27 08:31:26 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.102 2022/02/27 10:44:45 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -266,9 +266,9 @@ symtab_add(sym_t *sym)
 	size_t h;
 
 	h = hash(sym->s_name);
-	if ((sym->s_link = symtab[h]) != NULL)
-		symtab[h]->s_rlink = &sym->s_link;
-	sym->s_rlink = &symtab[h];
+	if ((sym->s_symtab_next = symtab[h]) != NULL)
+		symtab[h]->s_symtab_ref = &sym->s_symtab_next;
+	sym->s_symtab_ref = &symtab[h];
 	symtab[h] = sym;
 }
 
@@ -276,9 +276,9 @@ static void
 symtab_remove(sym_t *sym)
 {
 
-	if ((*sym->s_rlink = sym->s_link) != NULL)
-		sym->s_link->s_rlink = sym->s_rlink;
-	sym->s_link = NULL;
+	if ((*sym->s_symtab_ref = sym->s_symtab_next) != NULL)
+		sym->s_symtab_next->s_symtab_ref = sym->s_symtab_ref;
+	sym->s_symtab_next = NULL;
 }
 
 
@@ -426,7 +426,7 @@ search(sbuf_t *sb)
 	const struct keyword *kw;
 
 	h = hash(sb->sb_name);
-	for (sym = symtab[h]; sym != NULL; sym = sym->s_link) {
+	for (sym = symtab[h]; sym != NULL; sym = sym->s_symtab_next) {
 		if (strcmp(sym->s_name, sb->sb_name) != 0)
 			continue;
 		kw = sym->s_keyword;
@@ -1377,7 +1377,7 @@ getsym(sbuf_t *sb)
 	symtab_add(sym);
 
 	*di->d_ldlsym = sym;
-	di->d_ldlsym = &sym->s_dlnxt;
+	di->d_ldlsym = &sym->s_level_next;
 
 	free(sb);
 	return sym;
@@ -1412,7 +1412,7 @@ mktempsym(type_t *t)
 	symtab_add(sym);
 
 	*dcs->d_ldlsym = sym;
-	dcs->d_ldlsym = &sym->s_dlnxt;
+	dcs->d_ldlsym = &sym->s_level_next;
 
 	return sym;
 }
@@ -1439,13 +1439,13 @@ rmsyms(sym_t *syms)
 {
 	sym_t	*sym;
 
-	for (sym = syms; sym != NULL; sym = sym->s_dlnxt) {
+	for (sym = syms; sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level != -1) {
 			debug_step("rmsyms '%s' %s '%s'",
 			    sym->s_name, symt_name(sym->s_kind),
 			    type_name(sym->s_type));
 			symtab_remove(sym);
-			sym->s_rlink = NULL;
+			sym->s_symtab_ref = NULL;
 		}
 	}
 }
@@ -1461,8 +1461,8 @@ inssym(int bl, sym_t *sym)
 	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
 	symtab_add(sym);
 	sym->s_block_level = bl;
-	lint_assert(sym->s_link == NULL ||
-		    sym->s_block_level >= sym->s_link->s_block_level);
+	lint_assert(sym->s_symtab_next == NULL ||
+		    sym->s_block_level >= sym->s_symtab_next->s_block_level);
 }
 
 /*
@@ -1480,7 +1480,7 @@ cleanup(void)
 
 	for (i = 0; i < HSHSIZ1; i++) {
 		for (sym = symtab[i]; sym != NULL; sym = nsym) {
-			nsym = sym->s_link;
+			nsym = sym->s_symtab_next;
 			if (sym->s_block_level >= 1)
 				symtab_remove(sym);
 		}
@@ -1510,7 +1510,7 @@ pushdown(const sym_t *sym)
 	symtab_add(nsym);
 
 	*dcs->d_ldlsym = nsym;
-	dcs->d_ldlsym = &nsym->s_dlnxt;
+	dcs->d_ldlsym = &nsym->s_level_next;
 
 	return nsym;
 }
