@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.152 2022/02/07 02:44:49 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.153 2022/02/27 11:40:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.152 2022/02/07 02:44:49 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.153 2022/02/27 11:40:29 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -101,9 +101,9 @@ const char *const msgs[] = {
 	"declaration introduces new type in ANSI C: %s %s",	      /* 44 */
 	"base type is really '%s %s'",				      /* 45 */
 	"%s tag '%s' redeclared as %s",				      /* 46 */
-	"zero sized %s is a C9X feature",			      /* 47 */
+	"zero sized %s is a C99 feature",			      /* 47 */
 	"overflow in enumeration values: %s",			      /* 48 */
-	"anonymous struct/union members is a C9X feature",	      /* 49 */
+	"anonymous struct/union members is a C11 feature",	      /* 49 */
 	"a function is declared as an argument: %s",		      /* 50 */
 	"parameter mismatch: %d declared, %d defined",		      /* 51 */
 	"cannot initialize parameter: %s",			      /* 52 */
@@ -367,15 +367,15 @@ const char *const msgs[] = {
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
 	"%s does not support // comments",			      /* 312 */
-	"struct or union member name in initializer is a C9X feature",/* 313 */
+	"struct or union member name in initializer is a C99 feature",/* 313 */
 	"%s is not a structure or a union",			      /* 314 */
 	"GCC style struct or union member name in initializer",	      /* 315 */
 	"__FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension",	      /* 316 */
-	"__func__ is a C9X feature",				      /* 317 */
+	"__func__ is a C99 feature",				      /* 317 */
 	"variable array dimension is a C99/GCC extension",	      /* 318 */
-	"compound literals are a C9X/GCC extension",		      /* 319 */
+	"compound literals are a C99/GCC extension",		      /* 319 */
 	"({ }) is a GCC extension",				      /* 320 */
-	"array initializer with designators is a C9X feature",	      /* 321 */
+	"array initializer with designators is a C99 feature",	      /* 321 */
 	"zero sized array is a C99 extension",			      /* 322 */
 	"continue in 'do ... while (0)' loop",			      /* 323 */
 	"suggest cast from '%s' to '%s' on op %s to avoid overflow",  /* 324 */

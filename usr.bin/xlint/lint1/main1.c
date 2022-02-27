@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.58 2021/12/17 00:05:24 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.59 2022/02/27 11:40:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.58 2021/12/17 00:05:24 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.59 2022/02/27 11:40:29 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -106,7 +106,7 @@ bool	Tflag;
 /* Traditional C mode. */
 bool	tflag;
 
-/* Enable C9X extensions */
+/* Enable C99 extensions */
 bool	Sflag;
 
 /* Picky flag */
