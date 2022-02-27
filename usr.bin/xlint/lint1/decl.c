@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.245 2022/02/27 01:47:28 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.246 2022/02/27 08:31:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.245 2022/02/27 01:47:28 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.246 2022/02/27 08:31:26 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -176,7 +176,7 @@ dup_type(const type_t *tp)
 {
 	type_t	*ntp;
 
-	ntp = getblk(sizeof(*ntp));
+	ntp = block_zero_alloc(sizeof(*ntp));
 	*ntp = *tp;
 	return ntp;
 }
@@ -190,7 +190,7 @@ expr_dup_type(const type_t *tp)
 {
 	type_t	*ntp;
 
-	ntp = expr_zalloc(sizeof(*ntp));
+	ntp = expr_zero_alloc(sizeof(*ntp));
 	*ntp = *tp;
 	return ntp;
 }
@@ -206,7 +206,7 @@ expr_unqualified_type(const type_t *tp)
 {
 	type_t *ntp;
 
-	ntp = expr_zalloc(sizeof(*ntp));
+	ntp = expr_zero_alloc(sizeof(*ntp));
 	*ntp = *tp;
 	ntp->t_const = false;
 	ntp->t_volatile = false;
@@ -1252,7 +1252,7 @@ bitfield(sym_t *dsym, int len)
 {
 
 	if (dsym == NULL) {
-		dsym = getblk(sizeof(*dsym));
+		dsym = block_zero_alloc(sizeof(*dsym));
 		dsym->s_name = unnamed;
 		dsym->s_kind = FMEMBER;
 		dsym->s_scl = MOS;
@@ -1328,7 +1328,7 @@ add_pointer(sym_t *decl, qual_ptr *p)
 		return decl;
 
 	while (p != NULL) {
-		*tpp = tp = getblk(sizeof(*tp));
+		*tpp = tp = block_zero_alloc(sizeof(*tp));
 		tp->t_tspec = PTR;
 		tp->t_const = p->p_const;
 		tp->t_volatile = p->p_volatile;
@@ -1355,7 +1355,7 @@ add_array(sym_t *decl, bool dim, int n)
 	if (*tpp == NULL)
 	    return decl;
 
-	*tpp = tp = getblk(sizeof(*tp));
+	*tpp = tp = block_zero_alloc(sizeof(*tp));
 	tp->t_tspec = ARRAY;
 	tp->t_subt = dcs->d_type;
 	tp->t_dim = n;
@@ -1418,7 +1418,7 @@ add_function(sym_t *decl, sym_t *args)
 	if (*tpp == NULL)
 	    return decl;	/* see msg_347 */
 
-	*tpp = tp = getblk(sizeof(*tp));
+	*tpp = tp = block_zero_alloc(sizeof(*tp));
 	tp->t_tspec = FUNC;
 	tp->t_subt = dcs->d_next->d_type;
 	if ((tp->t_proto = dcs->d_proto) != false)
@@ -1669,19 +1669,19 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		}
 		if (tag->s_scl == NOSCL) {
 			tag->s_scl = scl;
-			tag->s_type = tp = getblk(sizeof(*tp));
+			tag->s_type = tp = block_zero_alloc(sizeof(*tp));
 			tp->t_packed = dcs->d_packed;
 		} else {
 			tp = tag->s_type;
 		}
 	} else {
-		tag = getblk(sizeof(*tag));
+		tag = block_zero_alloc(sizeof(*tag));
 		tag->s_name = unnamed;
 		UNIQUE_CURR_POS(tag->s_def_pos);
 		tag->s_kind = FTAG;
 		tag->s_scl = scl;
 		tag->s_block_level = -1;
-		tag->s_type = tp = getblk(sizeof(*tp));
+		tag->s_type = tp = block_zero_alloc(sizeof(*tp));
 		tp->t_packed = dcs->d_packed;
 		dcs->d_next->d_nonempty_decl = true;
 	}
@@ -1689,12 +1689,12 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	if (tp->t_tspec == NOTSPEC) {
 		tp->t_tspec = kind;
 		if (kind != ENUM) {
-			tp->t_str = getblk(sizeof(*tp->t_str));
+			tp->t_str = block_zero_alloc(sizeof(*tp->t_str));
 			tp->t_str->sou_align_in_bits = CHAR_SIZE;
 			tp->t_str->sou_tag = tag;
 		} else {
 			tp->t_is_enum = true;
-			tp->t_enum = getblk(sizeof(*tp->t_enum));
+			tp->t_enum = block_zero_alloc(sizeof(*tp->t_enum));
 			tp->t_enum->en_tag = tag;
 		}
 		setcomplete(tp, false);
@@ -1902,7 +1902,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 	if (renaming != NULL) {
 		lint_assert(dsym->s_rename == NULL);
 
-		s = getlblk(1, renaming->sb_len + 1);
+		s = level_zero_alloc(1, renaming->sb_len + 1);
 		(void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
 		dsym->s_rename = s;
 	}
@@ -2863,7 +2863,7 @@ abstract_name(void)
 
 	lint_assert(dcs->d_ctx == ABSTRACT || dcs->d_ctx == PROTO_ARG);
 
-	sym = getblk(sizeof(*sym));
+	sym = block_zero_alloc(sizeof(*sym));
 
 	sym->s_name = unnamed;
 	sym->s_def = DEF;

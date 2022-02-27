@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.382 2022/02/27 01:47:28 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.383 2022/02/27 08:31:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.382 2022/02/27 01:47:28 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.383 2022/02/27 08:31:26 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -58,7 +58,7 @@ int	block_level;
  * for these can't be freed after the declaration, but symbols must
  * be removed from the symbol table after the declaration.
  */
-int	mem_block_level;
+size_t	mem_block_level;
 
 /*
  * Save the no-warns state and restore it to avoid the problem where
@@ -477,12 +477,12 @@ generic_assoc_list:
 /* K&R ---, C90 ---, C99 ---, C11 6.5.1.1 */
 generic_association:
 	  type_name T_COLON assignment_expression {
-		$$ = getblk(sizeof(*$$));
+		$$ = block_zero_alloc(sizeof(*$$));
 		$$->ga_arg = $1;
 		$$->ga_result = $3;
 	  }
 	| T_DEFAULT T_COLON assignment_expression {
-		$$ = getblk(sizeof(*$$));
+		$$ = block_zero_alloc(sizeof(*$$));
 		$$->ga_arg = NULL;
 		$$->ga_result = $3;
 	  }
@@ -549,12 +549,12 @@ gcc_statement_expr_item:
 		$$ = NULL;
 	  }
 	| non_expr_statement {
-		$$ = expr_zalloc_tnode();
+		$$ = expr_alloc_tnode();
 		$$->tn_type = gettyp(VOID);
 	  }
 	| expression T_SEMI {
 		if ($1 == NULL) {	/* in case of syntax errors */
-			$$ = expr_zalloc_tnode();
+			$$ = expr_alloc_tnode();
 			$$->tn_type = gettyp(VOID);
 		} else {
 			/* XXX: do that only on the last name */
@@ -1692,7 +1692,7 @@ compound_statement_lbrace:
 compound_statement_rbrace:
 	  T_RBRACE {
 		end_declaration_level();
-		freeblk();
+		level_free_all(mem_block_level);
 		mem_block_level--;
 		block_level--;
 		seen_fallthrough = false;
