@@ -1,1 +1,2 @@
-msg_059.c(6): error: syntax error ':' [249]
+msg_059.c(10): error: formal parameter lacks name: param #2 [59]
+msg_059.c(10): error: formal parameter lacks name: param #3 [59]

@@ -1,1 +1,1 @@
-msg_063.c(6): error: syntax error ':' [249]
+msg_063.c(14): error: prototype does not match old-style definition [63]

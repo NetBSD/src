@@ -1,1 +1,1 @@
-msg_058.c(6): error: syntax error ':' [249]
+msg_058.c(14): error: type does not match prototype: dbl [58]
