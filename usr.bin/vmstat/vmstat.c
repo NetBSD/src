@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.251 2022/02/09 07:51:45 wiz Exp $ */
+/* $NetBSD: vmstat.c,v 1.252 2022/02/27 19:00:46 rillig Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.251 2022/02/09 07:51:45 wiz Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.252 2022/02/27 19:00:46 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,7 +329,7 @@ static const int vmmeter_mib[] = { CTL_VM, VM_METER };
 static const int uvmexp2_mib[] = { CTL_VM, VM_UVMEXP2 };
 static const int boottime_mib[] = { CTL_KERN, KERN_BOOTTIME };
 
-int numdisks = 2;
+static int numdisks = 2;
 
 int
 main(int argc, char *argv[])
