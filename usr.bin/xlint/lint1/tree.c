@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.405 2022/02/27 08:31:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.406 2022/02/27 10:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.405 2022/02/27 08:31:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.406 2022/02/27 10:31:58 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -104,7 +104,7 @@ op_name(op_t op)
 
 /* Build 'pointer to tp', 'array of tp' or 'function returning tp'. */
 type_t *
-derive_type(type_t *tp, tspec_t t)
+block_derive_type(type_t *tp, tspec_t t)
 {
 	type_t	*tp2;
 
@@ -173,7 +173,7 @@ fallback_symbol(sym_t *sym)
 			   strcmp(sym->s_name, "__PRETTY_FUNCTION__") == 0)) {
 		/* __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension */
 		gnuism(316);
-		sym->s_type = derive_type(gettyp(CHAR), PTR);
+		sym->s_type = block_derive_type(gettyp(CHAR), PTR);
 		sym->s_type->t_const = true;
 		return;
 	}
@@ -182,7 +182,7 @@ fallback_symbol(sym_t *sym)
 		if (!Sflag)
 			/* __func__ is a C9X feature */
 			warning(317);
-		sym->s_type = derive_type(gettyp(CHAR), PTR);
+		sym->s_type = block_derive_type(gettyp(CHAR), PTR);
 		sym->s_type->t_const = true;
 		return;
 	}
@@ -257,7 +257,7 @@ build_name_call(sym_t *sym)
 	}
 
 	/* XXX if tflag is set, the symbol should be exported to level 0 */
-	sym->s_type = derive_type(sym->s_type, FUNC);
+	sym->s_type = block_derive_type(sym->s_type, FUNC);
 }
 
 /* Create a node for a name (symbol table entry). */
@@ -4562,7 +4562,7 @@ do_statement_expr(tnode_t *tn)
 {
 	block_level--;
 	mem_block_level--;
-	stmt_exprs->se_sym = mktempsym(dup_type(tn->tn_type));
+	stmt_exprs->se_sym = mktempsym(block_dup_type(tn->tn_type));
 	mem_block_level++;
 	block_level++;
 	/* ({ }) is a GCC extension */
