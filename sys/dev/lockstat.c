@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.27 2020/05/23 23:42:42 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.28 2022/02/27 14:16:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2019 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.27 2020/05/23 23:42:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.28 2022/02/27 14:16:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.27 2020/05/23 23:42:42 ad Exp $");
 #include <sys/cpu.h>
 #include <sys/syslog.h>
 #include <sys/atomic.h>
+#include <sys/xcall.h>
 
 #include <dev/lockstat.h>
 
@@ -101,6 +102,7 @@ dev_type_ioctl(lockstat_ioctl);
 
 volatile u_int	lockstat_enabled;
 volatile u_int	lockstat_dev_enabled;
+__cpu_simple_lock_t lockstat_enabled_lock;
 uintptr_t	lockstat_csstart;
 uintptr_t	lockstat_csend;
 uintptr_t	lockstat_csmask;
@@ -154,6 +156,7 @@ lockstatattach(int nunits)
 	(void)nunits;
 
 	__cpu_simple_lock_init(&lockstat_lock);
+	__cpu_simple_lock_init(&lockstat_enabled_lock);
 }
 
 /*
@@ -235,10 +238,26 @@ lockstat_start(lsenable_t *le)
 	lockstat_lockstart = le->le_lockstart;
 	lockstat_lockstart = le->le_lockstart;
 	lockstat_lockend = le->le_lockend;
-	membar_sync();
+
+	/*
+	 * Ensure everything is initialized on all CPUs, by issuing a
+	 * null xcall with the side effect of a release barrier on this
+	 * CPU and an acquire barrier on all other CPUs, before they
+	 * can witness any flags set in lockstat_dev_enabled -- this
+	 * way we don't need to add any barriers in lockstat_event.
+	 */
+	xc_barrier(0);
+
+	/*
+	 * Start timing after the xcall, so we don't spuriously count
+	 * xcall communication time, but before flipping the switch, so
+	 * we don't dirty sample with locks taken in the timecounter.
+	 */
 	getnanotime(&lockstat_stime);
-	lockstat_dev_enabled = le->le_mask;
-	LOCKSTAT_ENABLED_UPDATE();
+
+	LOCKSTAT_ENABLED_UPDATE_BEGIN();
+	atomic_store_relaxed(&lockstat_dev_enabled, le->le_mask);
+	LOCKSTAT_ENABLED_UPDATE_END();
 }
 
 /*
@@ -258,13 +277,13 @@ lockstat_stop(lsdisable_t *ld)
 	KASSERT(lockstat_dev_enabled);
 
 	/*
-	 * Set enabled false, force a write barrier, and wait for other CPUs
-	 * to exit lockstat_event().
+	 * Disable and wait for other CPUs to exit lockstat_event().
 	 */
-	lockstat_dev_enabled = 0;
-	LOCKSTAT_ENABLED_UPDATE();
+	LOCKSTAT_ENABLED_UPDATE_BEGIN();
+	atomic_store_relaxed(&lockstat_dev_enabled, 0);
+	LOCKSTAT_ENABLED_UPDATE_END();
 	getnanotime(&ts);
-	tsleep(&lockstat_stop, PPAUSE, "lockstat", mstohz(10));
+	xc_barrier(0);
 
 	/*
 	 * Did we run out of buffers while tracing?
@@ -370,12 +389,14 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 #ifdef KDTRACE_HOOKS
 	uint32_t id;
 	CTASSERT((LS_NPROBES & (LS_NPROBES - 1)) == 0);
-	if ((id = lockstat_probemap[LS_COMPRESS(flags)]) != 0)
+	if ((id = atomic_load_relaxed(&lockstat_probemap[LS_COMPRESS(flags)]))
+	    != 0)
 		(*lockstat_probe_func)(id, lock, callsite, flags, count,
 		    cycles);
 #endif
 
-	if ((flags & lockstat_dev_enabled) != flags || count == 0)
+	if ((flags & atomic_load_relaxed(&lockstat_dev_enabled)) != flags ||
+	    count == 0)
 		return;
 	if (lock < lockstat_lockstart || lock > lockstat_lockend)
 		return;
@@ -487,7 +508,7 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			error = ENODEV;
 			break;
 		}
-		if (lockstat_dev_enabled) {
+		if (atomic_load_relaxed(&lockstat_dev_enabled)) {
 			error = EBUSY;
 			break;
 		}
@@ -524,7 +545,7 @@ lockstat_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		break;
 
 	case IOC_LOCKSTAT_DISABLE:
-		if (!lockstat_dev_enabled)
+		if (!atomic_load_relaxed(&lockstat_dev_enabled))
 			error = EINVAL;
 		else
 			error = lockstat_stop((lsdisable_t *)data);
