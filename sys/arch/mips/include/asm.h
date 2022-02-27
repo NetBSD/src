@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.68 2022/02/27 19:22:12 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.69 2022/02/27 19:22:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -581,7 +581,7 @@ _C_LABEL(x):
 #define	BDSYNC_PLUNGER	sync 4
 #define	SYNC_PLUNGER	sync 4
 #elif __mips >= 3 || !defined(__mips_o32)
-#define	LLSCSYNC	sync
+#define	LLSCSYNC	/* nothing */
 #define	BDSYNC		sync
 #define	BDSYNC_ACQ	sync
 #define	SYNC_ACQ	sync
