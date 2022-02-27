@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_acpi.c,v 1.7 2022/02/27 14:22:21 riastradh Exp $	*/
+/*	$NetBSD: intel_acpi.c,v 1.8 2022/02/27 14:22:42 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0
 /*
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.7 2022/02/27 14:22:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.8 2022/02/27 14:22:42 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -24,14 +24,7 @@ ACPI_MODULE_NAME("acpi_intel_brightness")
 
 #include <dev/acpi/acpi_pci.h>
 
-#define acpi_handle	ACPI_HANDLE
-#define	buffer		Buffer
-#define	count		Count
-#define	elements	Elements
-#define	integer		Integer
-#define	package		Package
-#define	pointer		Pointer
-#define	value		Value
+#include <linux/nbsd-namespace-acpi.h>
 #endif
 
 #define INTEL_DSM_REVISION_ID 1 /* For Calpella anyway... */
