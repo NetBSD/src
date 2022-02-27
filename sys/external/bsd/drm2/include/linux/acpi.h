@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.h,v 1.6 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: acpi.h,v 1.7 2022/02/27 14:22:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,6 +44,21 @@
 #include <dev/acpi/acpivar.h>
 #endif
 
+#include <linux/types.h>
 #include <linux/uuid.h>
+
+typedef ACPI_HANDLE acpi_handle;
+typedef ACPI_OBJECT_TYPE acpi_object_type;
+typedef ACPI_STATUS acpi_status;
+
+#define	acpi_evaluate_dsm	linux_acpi_evaluate_dsm
+#define	acpi_evaluate_dsm_typed	linux_acpi_evaluate_dsm_typed
+#define	acpi_check_dsm		linux_acpi_check_dsm
+
+union acpi_object *acpi_evaluate_dsm(acpi_handle, const guid_t *,
+    uint64_t, uint64_t, union acpi_object *);
+union acpi_object *acpi_evaluate_dsm_typed(acpi_handle, const guid_t *,
+    uint64_t, uint64_t, union acpi_object *, acpi_object_type);
+bool acpi_check_dsm(acpi_handle, const guid_t *, uint64_t, uint64_t);
 
 #endif  /* _LINUX_ACPI_H_ */
