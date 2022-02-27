@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.139 2022/02/27 10:44:45 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.140 2022/02/27 10:49:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -267,7 +267,6 @@ typedef	struct sym {
 	union {
 		/* XXX: what is the difference to s_type->t_str? */
 		struct_or_union	*_s_st;
-		enumeration	*_s_et;
 		tspec_t	_s_tsp;	/* type (only for keywords) */
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
 		struct	sym *_s_args; /* arguments in old style function
@@ -283,7 +282,6 @@ typedef	struct sym {
 } sym_t;
 
 #define	s_styp	u._s_st
-#define	s_etyp	u._s_et
 #define	s_tspec	u._s_tsp
 #define	s_tqual	u._s_tqu
 #define	s_args	u._s_args
