@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.212 2020/10/23 00:25:45 thorpej Exp $	*/
+/*	$NetBSD: lwp.h,v 1.213 2022/02/27 01:03:14 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -512,7 +512,7 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #define	curproc		(curlwp->l_proc)
 
 /*
- * This provide a way for <machine/cpu.h> to get l_cpu for curlwp before
+ * This provides a way for <machine/cpu.h> to get l_cpu for curlwp before
  * struct lwp is defined.
  */
 static __inline struct cpu_info *
