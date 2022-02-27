@@ -1,1 +1,2 @@
-msg_315.c(6): error: syntax error ':' [249]
+msg_315.c(12): warning: GCC style struct or union member name in initializer [315]
+msg_315.c(14): warning: GCC style struct or union member name in initializer [315]
