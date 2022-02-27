@@ -55,8 +55,10 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
+#ifndef TOOL_FCCACHE
 /* Define to 1 if you have `syscall' and `SYS_getrandom'. */
 #define HAVE_SYSCALL_GETRANDOM 1
+#endif
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
