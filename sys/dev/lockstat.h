@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.14 2016/01/24 01:01:11 christos Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.15 2022/02/27 14:16:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,9 @@
 #endif
 
 #include <sys/types.h>
+
 #include <sys/ioccom.h>
+#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 
@@ -159,7 +161,7 @@ do {									\
 #define	LOCKSTAT_TIMER(name)	uint64_t name = 0
 #define	LOCKSTAT_COUNTER(name)	uint64_t name = 0
 #define	LOCKSTAT_FLAG(name)	int name
-#define	LOCKSTAT_ENTER(name)	name = lockstat_enabled
+#define	LOCKSTAT_ENTER(name)	name = atomic_load_relaxed(&lockstat_enabled)
 #define	LOCKSTAT_EXIT(name)
 
 #define	LOCKSTAT_START_TIMER(flag, name)				\
@@ -214,13 +216,22 @@ void		lockstat_probe_stub(uint32_t, uintptr_t, uintptr_t,
 #endif
 
 #if defined(_KERNEL) && NLOCKSTAT > 0
+extern __cpu_simple_lock_t lockstat_enabled_lock;
 extern volatile u_int	lockstat_enabled;
 extern volatile u_int	lockstat_dev_enabled;
 
-#define LOCKSTAT_ENABLED_UPDATE() do { \
-	lockstat_enabled = lockstat_dev_enabled | KDTRACE_LOCKSTAT_ENABLED; \
-	membar_producer(); \
-    } while (/*CONSTCOND*/0)
+#define LOCKSTAT_ENABLED_UPDATE_BEGIN() do				    \
+{									    \
+	__cpu_simple_lock(&lockstat_enabled_lock);			    \
+} while (/*CONSTCOND*/0)
+
+#define LOCKSTAT_ENABLED_UPDATE_END() do				    \
+{									    \
+	atomic_store_relaxed(&lockstat_enabled,				    \
+	    lockstat_dev_enabled | KDTRACE_LOCKSTAT_ENABLED);		    \
+	__cpu_simple_unlock(&lockstat_enabled_lock);			    \
+} while (/*CONSTCOND*/0)
+
 #endif
 
 #endif	/* _SYS_LOCKSTAT_H_ */

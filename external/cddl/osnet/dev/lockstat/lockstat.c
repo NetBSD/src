@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.10 2019/02/12 14:31:45 rin Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.11 2022/02/27 14:16:12 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10 2019/02/12 14:31:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.11 2022/02/27 14:16:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/proc.h>
@@ -72,11 +72,13 @@ lockstat_enable(void *arg, dtrace_id_t id, void *parg)
 
 	ASSERT(!lockstat_probemap[LS_COMPRESS(probe->lsp_probe)]);
 
-	lockstat_probemap[LS_COMPRESS(probe->lsp_probe)] = id;
 	if (lockstat_dtrace_count++ == 0) {
+		LOCKSTAT_ENABLED_UPDATE_BEGIN();
 		lockstat_dtrace_enabled = LB_DTRACE;
-		LOCKSTAT_ENABLED_UPDATE();
+		LOCKSTAT_ENABLED_UPDATE_END();
 	}
+	atomic_store_relaxed(&lockstat_probemap[LS_COMPRESS(probe->lsp_probe)],
+	    id);
 
 	return 0;
 }
@@ -89,12 +91,19 @@ lockstat_disable(void *arg, dtrace_id_t id __unused, void *parg)
 
 	ASSERT(lockstat_probemap[LS_COMPRESS(probe->lsp_probe)]);
 
+	atomic_store_relaxed(&lockstat_probemap[LS_COMPRESS(probe->lsp_probe)],
+	    0);
 	if (--lockstat_dtrace_count == 0) {
+		LOCKSTAT_ENABLED_UPDATE_BEGIN();
 		lockstat_dtrace_enabled = 0;
-		LOCKSTAT_ENABLED_UPDATE();
-	}
+		LOCKSTAT_ENABLED_UPDATE_END();
 
-	lockstat_probemap[LS_COMPRESS(probe->lsp_probe)] = 0;
+		/*
+		 * Wait for all lockstat dtrace probe on all CPUs to
+		 * finish, now that they've been disabled.
+		 */
+		xc_barrier(0);
+	}
 }
 
 /*ARGSUSED*/
@@ -149,13 +158,6 @@ static dtrace_pops_t lockstat_pops = {
 	lockstat_destroy
 };
 
-static void
-lockstat_barrier_xc(void *arg0 __unused, void *arg1 __unused)
-{
-
-	membar_consumer();
-}
-
 typedef void (*dtrace_probe_func_t)(dtrace_id_t, uintptr_t, uintptr_t,
     uintptr_t, uintptr_t, uintptr_t);
 
@@ -169,8 +171,14 @@ lockstat_cas_probe(dtrace_probe_func_t old, dtrace_probe_func_t new)
 		return false;
 
 	lockstat_probe_func = new;
-	membar_producer();
-	xc_wait(xc_broadcast(0, lockstat_barrier_xc, NULL, NULL));
+
+	/*
+	 * Make sure that the probe function is initialized on all CPUs
+	 * before we enable the lockstat probe by setting
+	 * lockstat_probemap[...].
+	 */
+	xc_barrier(0);
+
 	return true;
 }
 
