@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.16 2022/02/14 19:13:04 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.17 2022/02/27 14:18:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -144,15 +144,72 @@ rb_replace_node_cached(struct rb_node *old, struct rb_node *new,
 }
 
 /*
- * XXX This is not actually postorder, but I can't fathom why you would
- * want postorder for an ordered tree; different insertion orders lead
- * to different traversal orders.
+ * This violates the abstraction of rbtree(3) for postorder traversal
+ * -- children first, then parents -- so it is safe for cleanup code
+ * that just frees all the nodes without removing them from the tree.
  */
-#define	rbtree_postorder_for_each_entry_safe(NODE, TMP, ROOT, FIELD)	      \
-	for ((NODE) = RB_TREE_MIN(&(ROOT)->rbr_tree);			      \
-		((NODE) != NULL &&					      \
-		    ((TMP) = rb_tree_iterate(&(ROOT)->rbr_tree, (NODE),	      \
-			RB_DIR_RIGHT), 1));				      \
-		(NODE) = (TMP))
+static inline struct rb_node *
+rb_first_postorder(const struct rb_root *root)
+{
+	struct rb_node *node, *child;
+
+	if ((node = root->rbr_tree.rbt_root) == NULL)
+		return NULL;
+	for (;; node = child) {
+		if ((child = node->rb_left) != NULL)
+			continue;
+		if ((child = node->rb_right) != NULL)
+			continue;
+		return node;
+	}
+}
+
+static inline struct rb_node *
+rb_next2_postorder(const struct rb_root *root, struct rb_node *node)
+{
+	struct rb_node *parent, *child;
+
+	if (node == NULL)
+		return NULL;
+
+	/*
+	 * If we're at the root, there are no more siblings and no
+	 * parent, so post-order iteration is done.
+	 */
+	if (RB_ROOT_P(&root->rbr_tree, node))
+		return NULL;
+	parent = RB_FATHER(node);	/* kinda sexist, innit */
+	KASSERT(parent != NULL);
+
+	/*
+	 * If we're the right child, we've already processed the left
+	 * child (which may be gone by now), so just return the parent.
+	 */
+	if (RB_RIGHT_P(node))
+		return parent;
+
+	/*
+	 * Otherwise, move down to the leftmost child of our right
+	 * sibling -- or return the parent if there is none.
+	 */
+	if ((node = parent->rb_right) == NULL)
+		return parent;
+	for (;; node = child) {
+		if ((child = node->rb_left) != NULL)
+			continue;
+		if ((child = node->rb_right) != NULL)
+			continue;
+		return node;
+	}
+}
+
+#define	rbtree_postorder_for_each_entry_safe(ENTRY, TMP, ROOT, FIELD)	      \
+	for ((ENTRY) = rb_entry_safe(rb_first_postorder(ROOT),		      \
+		    __typeof__(*(ENTRY)), FIELD);			      \
+		((ENTRY) != NULL &&					      \
+		    ((TMP) = rb_entry_safe(rb_next2_postorder((ROOT),	      \
+			    &(ENTRY)->FIELD), __typeof__(*(ENTRY)), FIELD),   \
+			1));						      \
+		(ENTRY) = (TMP))
 
 #endif  /* _LINUX_RBTREE_H_ */

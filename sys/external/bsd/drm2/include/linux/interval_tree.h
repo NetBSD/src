@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.12 2021/12/19 11:00:18 riastradh Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.13 2022/02/27 14:18:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <linux/rbtree.h>
 
 struct interval_tree_node {
-	struct rb_node	itn_node;
+	struct rb_node	rb;
 	unsigned long	start;	/* inclusive */
 	unsigned long	last;	/* inclusive */
 };
@@ -81,7 +81,7 @@ interval_tree_compare_key(void *cookie, const void *vn, const void *vk)
 static const rb_tree_ops_t interval_tree_ops = {
 	.rbto_compare_nodes = interval_tree_compare_nodes,
 	.rbto_compare_key = interval_tree_compare_key,
-	.rbto_node_offset = offsetof(struct interval_tree_node, itn_node),
+	.rbto_node_offset = offsetof(struct interval_tree_node, rb),
 };
 
 static inline void
