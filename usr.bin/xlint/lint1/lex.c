@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.99 2022/02/27 07:38:54 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.100 2022/02/27 07:50:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.99 2022/02/27 07:38:54 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.100 2022/02/27 07:50:09 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -67,8 +67,6 @@ pos_t	csrc_pos = { "", 1, 0 };
 bool in_gcc_attribute;
 bool in_system_header;
 
-static	sbuf_t *allocsb(void);
-static	void	freesb(sbuf_t *);
 static	int	inpc(void);
 static	unsigned int hash(const char *);
 static	sym_t *	search(sbuf_t *);
@@ -258,8 +256,6 @@ static struct keyword {
 /* Symbol table */
 static	sym_t	*symtab[HSHSIZ1];
 
-static	sbuf_t	 *sbuf_free_list;
-
 /* type of next expected symbol */
 symt_t	symtyp;
 
@@ -342,40 +338,6 @@ initscan(void)
 }
 
 /*
- * Get a free sbuf structure, if possible from the free list
- */
-static sbuf_t *
-allocsb(void)
-{
-	sbuf_t	*sb;
-
-	if ((sb = sbuf_free_list) != NULL) {
-		sbuf_free_list = sb->sb_next;
-#ifdef BLKDEBUG
-		(void)memset(sb, 0, sizeof(*sb));
-#else
-		sb->sb_next = NULL;
-#endif
-	} else {
-		sb = xmalloc(sizeof(*sb));
-		(void)memset(sb, 0, sizeof(*sb));
-	}
-	return sb;
-}
-
-/*
- * Put a sbuf structure to the free list
- */
-static void
-freesb(sbuf_t *sb)
-{
-
-	(void)memset(sb, 0xa5, sizeof(*sb));
-	sb->sb_next = sbuf_free_list;
-	sbuf_free_list = sb;
-}
-
-/*
  * Read a character and ensure that it is positive (except EOF).
  * Increment line count(s) if necessary.
  */
@@ -429,11 +391,11 @@ lex_name(const char *yytext, size_t yyleng)
 	sym_t	*sym;
 	int	tok;
 
-	sb = allocsb();
+	sb = xmalloc(sizeof(*sb));
 	sb->sb_name = yytext;
 	sb->sb_len = yyleng;
 	if ((sym = search(sb)) != NULL && sym->s_keyword != NULL) {
-		freesb(sb);
+		free(sb);
 		return keyw(sym);
 	}
 
@@ -1382,7 +1344,7 @@ getsym(sbuf_t *sb)
 	if (sym != NULL) {
 		lint_assert(sym->s_kind == symtyp);
 		symtyp = FVFT;
-		freesb(sb);
+		free(sb);
 		return sym;
 	}
 
@@ -1417,7 +1379,7 @@ getsym(sbuf_t *sb)
 	*di->d_ldlsym = sym;
 	di->d_ldlsym = &sym->s_dlnxt;
 
-	freesb(sb);
+	free(sb);
 	return sym;
 }
 
@@ -1563,7 +1525,7 @@ freeyyv(void *sp, int tok)
 {
 	if (tok == T_NAME || tok == T_TYPENAME) {
 		sbuf_t *sb = *(sbuf_t **)sp;
-		freesb(sb);
+		free(sb);
 	} else if (tok == T_CON) {
 		val_t *val = *(val_t **)sp;
 		free(val);
