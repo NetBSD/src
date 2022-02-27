@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.21 2021/12/30 14:40:06 riastradh Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.22 2022/02/27 21:21:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,19 +66,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.21 2021/12/30 14:40:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.22 2022/02/27 21:21:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/pserialize.h>
+#include <sys/pslist.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/xcall.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/acpi/acpi_display.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
@@ -384,6 +388,65 @@ static ACPI_STATUS
 		    unsigned int);
 static void	acpidisp_array_search(const uint8_t *, uint16_t, int, uint8_t *,
 		    uint8_t *);
+
+/*
+ * Display notification callbacks -- used by i915
+ */
+
+struct acpidisp_notifier {
+	void			(*adn_func)(ACPI_HANDLE, uint32_t, void *);
+	void			*adn_cookie;
+	struct pslist_entry	adn_entry;
+};
+
+static struct {
+	kmutex_t		lock;
+	struct pslist_head	list;
+} acpidisp_notifiers;
+
+struct acpidisp_notifier *
+acpidisp_register_notify(void (*func)(ACPI_HANDLE, uint32_t, void *),
+    void *cookie)
+{
+	struct acpidisp_notifier *adn;
+
+	adn = kmem_zalloc(sizeof(*adn), KM_SLEEP);
+	adn->adn_func = func;
+	adn->adn_cookie = cookie;
+	PSLIST_ENTRY_INIT(adn, adn_entry);
+
+	mutex_enter(&acpidisp_notifiers.lock);
+	PSLIST_WRITER_INSERT_HEAD(&acpidisp_notifiers.list, adn, adn_entry);
+	mutex_exit(&acpidisp_notifiers.lock);
+
+	return adn;
+}
+
+void
+acpidisp_deregister_notify(struct acpidisp_notifier *adn)
+{
+
+	mutex_enter(&acpidisp_notifiers.lock);
+	PSLIST_WRITER_REMOVE(adn, adn_entry);
+	mutex_exit(&acpidisp_notifiers.lock);
+
+	xc_barrier(0);
+	kmem_free(adn, sizeof(*adn));
+}
+
+static void
+acpidisp_notify(ACPI_HANDLE handle, uint32_t notify)
+{
+	struct acpidisp_notifier *adn;
+	int s;
+
+	s = pserialize_read_enter();
+	PSLIST_READER_FOREACH(adn, &acpidisp_notifiers.list,
+	    struct acpidisp_notifier, adn_entry) {
+		(*adn->adn_func)(handle, notify, adn->adn_cookie);
+	}
+	pserialize_read_exit(s);
+}
 
 /*
  * Autoconfiguration for the acpivga driver.
@@ -863,6 +926,8 @@ acpidisp_vga_notify_handler(ACPI_HANDLE handle, uint32_t notify,
 
 	KASSERT(callback != NULL);
 	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, callback, asc);
+
+	acpidisp_notify(handle, notify);
 }
 
 static void
@@ -2081,7 +2146,9 @@ acpivga_modcmd(modcmd_t cmd, void *aux)
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-
+		KASSERT(PSLIST_READER_FIRST(&acpidisp_notifiers.list,
+			struct acpidisp_notifier, adn_entry) == NULL);
+		mutex_init(&acpidisp_notifiers.lock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef _MODULE
 		rv = config_init_component(cfdriver_ioconf_acpivga,
 		    cfattach_ioconf_acpivga, cfdata_ioconf_acpivga);
@@ -2093,7 +2160,10 @@ acpivga_modcmd(modcmd_t cmd, void *aux)
 #ifdef _MODULE
 		rv = config_fini_component(cfdriver_ioconf_acpivga,
 		    cfattach_ioconf_acpivga, cfdata_ioconf_acpivga);
+		if (rv)
+			break;
 #endif
+		mutex_destroy(&acpidisp_notifiers.lock);
 		break;
 
 	default:
