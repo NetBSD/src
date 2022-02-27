@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.104 2021/05/05 03:54:16 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.105 2022/02/27 14:17:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104 2021/05/05 03:54:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105 2022/02/27 14:17:10 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -882,12 +882,13 @@ cpu_iccb_send(long cpu_id, const char *msg)
 
 	/*
 	 * Copy the message into the ICCB, and tell the secondary console
-	 * that it's there.
+	 * that it's there.  Ensure the buffer is initialized before we
+	 * set the rxrdy bits, as a store-release.
 	 */
 	strcpy(pcsp->pcs_iccb.iccb_rxbuf, msg);
 	pcsp->pcs_iccb.iccb_rxlen = strlen(msg);
+	membar_exit();
 	atomic_or_ulong(&hwrpb->rpb_rxrdy, cpumask);
-	membar_sync();
 
 	/* Wait for the message to be received. */
 	for (timeout = 10000; timeout != 0; timeout--) {
