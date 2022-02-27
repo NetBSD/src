@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_acpi.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_acpi.c,v 1.5 2022/02/27 14:24:26 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_acpi.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_acpi.c,v 1.5 2022/02/27 14:24:26 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -117,7 +117,7 @@ static union acpi_object *amdgpu_atif_call(struct amdgpu_atif *atif,
 	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
 		DRM_DEBUG_DRIVER("failed to evaluate ATIF got %s\n",
 				 acpi_format_exception(status));
-		kfree(buffer.pointer);
+		ACPI_FREE(buffer.pointer);
 		return NULL;
 	}
 
@@ -206,7 +206,7 @@ static int amdgpu_atif_verify_interface(struct amdgpu_atif *atif)
 	amdgpu_atif_parse_functions(&atif->functions, output.function_bits);
 
 out:
-	kfree(info);
+	ACPI_FREE(info);
 	return err;
 }
 
@@ -299,7 +299,7 @@ out:
 	DRM_DEBUG_DRIVER("Notification %s, command code = %#x\n",
 			(n->enabled ? "enabled" : "disabled"),
 			n->command_code);
-	kfree(info);
+	ACPI_FREE(info);
 	return err;
 }
 
@@ -358,7 +358,7 @@ static int amdgpu_atif_query_backlight_caps(struct amdgpu_atif *atif)
 	atif->backlight_caps.max_input_signal =
 			characteristics.max_input_signal;
 out:
-	kfree(info);
+	ACPI_FREE(info);
 	return err;
 }
 
@@ -399,7 +399,7 @@ static int amdgpu_atif_get_sbios_requests(struct amdgpu_atif *atif,
 	count = hweight32(req->pending);
 
 out:
-	kfree(info);
+	ACPI_FREE(info);
 	return count;
 }
 
@@ -530,7 +530,7 @@ static union acpi_object *amdgpu_atcs_call(acpi_handle handle, int function,
 	if (ACPI_FAILURE(status) && status != AE_NOT_FOUND) {
 		DRM_DEBUG_DRIVER("failed to evaluate ATCS got %s\n",
 				 acpi_format_exception(status));
-		kfree(buffer.pointer);
+		ACPI_FREE(buffer.pointer);
 		return NULL;
 	}
 
@@ -596,7 +596,7 @@ static int amdgpu_atcs_verify_interface(acpi_handle handle,
 	amdgpu_atcs_parse_functions(&atcs->functions, output.function_bits);
 
 out:
-	kfree(info);
+	ACPI_FREE(info);
 	return err;
 }
 
@@ -646,7 +646,7 @@ int amdgpu_acpi_pcie_notify_device_ready(struct amdgpu_device *adev)
 	if (!info)
 		return -EIO;
 
-	kfree(info);
+	ACPI_FREE(info);
 
 	return 0;
 }
@@ -708,14 +708,14 @@ int amdgpu_acpi_pcie_performance_request(struct amdgpu_device *adev,
 		size = *(u16 *) info->buffer.pointer;
 		if (size < 3) {
 			DRM_INFO("ATCS buffer is too small: %zu\n", size);
-			kfree(info);
+			ACPI_FREE(info);
 			return -EINVAL;
 		}
 		size = min(sizeof(atcs_output), size);
 
 		memcpy(&atcs_output, info->buffer.pointer, size);
 
-		kfree(info);
+		ACPI_FREE(info);
 
 		switch (atcs_output.ret_val) {
 		case ATCS_REQUEST_REFUSED:

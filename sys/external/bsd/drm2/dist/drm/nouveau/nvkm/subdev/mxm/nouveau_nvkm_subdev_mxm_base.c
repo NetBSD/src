@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mxm_base.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mxm_base.c,v 1.4 2022/02/27 14:24:27 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mxm_base.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mxm_base.c,v 1.4 2022/02/27 14:24:27 riastradh Exp $");
 
 #include "mxms.h"
 
@@ -158,7 +158,7 @@ wmi_wmmx_mxmi(struct nvkm_mxm *mxm, u8 version)
 		nvkm_debug(subdev, "WMMX MXMI returned non-integer\n");
 	}
 
-	kfree(obj);
+	ACPI_FREE(obj);
 	return version;
 }
 
@@ -195,7 +195,7 @@ mxm_shadow_wmi(struct nvkm_mxm *mxm, u8 version)
 				    obj->buffer.length, GFP_KERNEL);
 	}
 
-	kfree(obj);
+	ACPI_FREE(obj);
 	return mxm->mxms != NULL;
 }
 #endif
