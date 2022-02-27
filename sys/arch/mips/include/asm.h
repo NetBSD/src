@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.67 2022/02/27 19:22:02 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.68 2022/02/27 19:22:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -574,7 +574,7 @@ _C_LABEL(x):
 #if defined(__OCTEON__)
 				/* early cnMIPS have erratum which means 2 */
 #define	LLSCSYNC	sync 4; sync 4
-#define	BDSYNC		sync 4		/* sync 4 == syncw - sync all writes */
+#define	BDSYNC		sync
 #define	BDSYNC_ACQ	sync
 #define	SYNC_ACQ	sync
 #define	SYNC_REL	sync
