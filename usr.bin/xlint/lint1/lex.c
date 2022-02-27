@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.103 2022/02/27 18:29:14 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.104 2022/02/27 22:26:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.103 2022/02/27 18:29:14 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.104 2022/02/27 22:26:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -68,8 +68,6 @@ bool in_gcc_attribute;
 bool in_system_header;
 
 static	int	inpc(void);
-static	unsigned int hash(const char *);
-static	sym_t *	search(sbuf_t *);
 static	int	keyw(sym_t *);
 static	int	get_escaped_char(int);
 
@@ -260,16 +258,51 @@ static	sym_t	*symtab[HSHSIZ1];
 symt_t	symtyp;
 
 
+static unsigned int
+hash(const char *s)
+{
+	unsigned int v;
+	const char *p;
+
+	v = 0;
+	for (p = s; *p != '\0'; p++) {
+		v = (v << 4) + (unsigned char)*p;
+		v ^= v >> 28;
+	}
+	return v % HSHSIZ1;
+}
+
 static void
 symtab_add(sym_t *sym)
 {
-	size_t h;
+	unsigned int h;
 
 	h = hash(sym->s_name);
 	if ((sym->s_symtab_next = symtab[h]) != NULL)
 		symtab[h]->s_symtab_ref = &sym->s_symtab_next;
 	sym->s_symtab_ref = &symtab[h];
 	symtab[h] = sym;
+}
+
+static sym_t *
+symtab_search(sbuf_t *sb)
+{
+
+	unsigned int h = hash(sb->sb_name);
+	for (sym_t *sym = symtab[h]; sym != NULL; sym = sym->s_symtab_next) {
+		if (strcmp(sym->s_name, sb->sb_name) != 0)
+			continue;
+
+		const struct keyword *kw = sym->s_keyword;
+		if (kw != NULL && !kw->kw_attr)
+			return sym;
+		if (kw != NULL && in_gcc_attribute)
+			return sym;
+		if (kw == NULL && !in_gcc_attribute && sym->s_kind == symtyp)
+			return sym;
+	}
+
+	return NULL;
 }
 
 static void
@@ -281,6 +314,19 @@ symtab_remove(sym_t *sym)
 	sym->s_symtab_next = NULL;
 }
 
+static void
+symtab_remove_locals(void)
+{
+
+	for (size_t i = 0; i < HSHSIZ1; i++) {
+		for (sym_t *sym = symtab[i]; sym != NULL; ) {
+			sym_t *next = sym->s_symtab_next;
+			if (sym->s_block_level >= 1)
+				symtab_remove(sym);
+			sym = next;
+		}
+	}
+}
 
 static void
 add_keyword(const struct keyword *kw, bool leading, bool trailing)
@@ -356,20 +402,6 @@ inpc(void)
 	return c;
 }
 
-static unsigned int
-hash(const char *s)
-{
-	unsigned int v;
-	const char *p;
-
-	v = 0;
-	for (p = s; *p != '\0'; p++) {
-		v = (v << 4) + (unsigned char)*p;
-		v ^= v >> 28;
-	}
-	return v % HSHSIZ1;
-}
-
 /*
  * Lex has found a letter followed by zero or more letters or digits.
  * It looks for a symbol in the symbol table with the same name. This
@@ -394,7 +426,7 @@ lex_name(const char *yytext, size_t yyleng)
 	sb = xmalloc(sizeof(*sb));
 	sb->sb_name = yytext;
 	sb->sb_len = yyleng;
-	if ((sym = search(sb)) != NULL && sym->s_keyword != NULL) {
+	if ((sym = symtab_search(sb)) != NULL && sym->s_keyword != NULL) {
 		free(sb);
 		return keyw(sym);
 	}
@@ -416,30 +448,6 @@ lex_name(const char *yytext, size_t yyleng)
 
 	yylval.y_name = sb;
 	return tok;
-}
-
-static sym_t *
-search(sbuf_t *sb)
-{
-	unsigned int h;
-	sym_t *sym;
-	const struct keyword *kw;
-
-	h = hash(sb->sb_name);
-	for (sym = symtab[h]; sym != NULL; sym = sym->s_symtab_next) {
-		if (strcmp(sym->s_name, sb->sb_name) != 0)
-			continue;
-		kw = sym->s_keyword;
-
-		if (kw != NULL && !kw->kw_attr)
-			return sym;
-		if (kw != NULL && in_gcc_attribute)
-			return sym;
-		if (kw == NULL && !in_gcc_attribute && sym->s_kind == symtyp)
-			return sym;
-	}
-
-	return NULL;
 }
 
 static int
@@ -1338,7 +1346,7 @@ getsym(sbuf_t *sb)
 	 */
 	if (symtyp == FMEMBER || symtyp == FLABEL) {
 		if (sym == NULL || sym->s_kind == FVFT)
-			sym = search(sb);
+			sym = symtab_search(sb);
 	}
 
 	if (sym != NULL) {
@@ -1475,18 +1483,10 @@ inssym(int bl, sym_t *sym)
 void
 cleanup(void)
 {
-	sym_t	*sym, *nsym;
-	size_t	i;
 
-	for (i = 0; i < HSHSIZ1; i++) {
-		for (sym = symtab[i]; sym != NULL; sym = nsym) {
-			nsym = sym->s_symtab_next;
-			if (sym->s_block_level >= 1)
-				symtab_remove(sym);
-		}
-	}
+	symtab_remove_locals();
 
-	for (i = mem_block_level; i > 0; i--)
+	for (size_t i = mem_block_level; i > 0; i--)
 		level_free_all(i);
 }
 
