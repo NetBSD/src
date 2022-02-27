@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.127 2022/02/27 08:31:26 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.128 2022/02/27 10:44:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.127 2022/02/27 08:31:26 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.128 2022/02/27 10:44:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -235,7 +235,8 @@ funcdef(sym_t *fsym)
 	 * Put all symbols declared in the argument list back to the
 	 * symbol table.
 	 */
-	for (sym = dcs->d_func_proto_syms; sym != NULL; sym = sym->s_dlnxt) {
+	for (sym = dcs->d_func_proto_syms; sym != NULL;
+	    sym = sym->s_level_next) {
 		if (sym->s_block_level != -1) {
 			lint_assert(sym->s_block_level == 1);
 			inssym(1, sym);
