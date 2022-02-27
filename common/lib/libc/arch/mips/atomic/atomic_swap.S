@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.7 2020/08/06 10:00:21 skrll Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.8 2022/02/27 19:21:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: atomic_swap.S,v 1.7 2020/08/06 10:00:21 skrll Exp $")
+RCSID("$NetBSD: atomic_swap.S,v 1.8 2022/02/27 19:21:53 riastradh Exp $")
 
 	.text
 	.set	noreorder
@@ -54,7 +54,7 @@ LEAF(_atomic_swap_32)
  	 nop
 2:
 	j		ra
-	 SYNCW
+	 BDSYNC_PLUNGER
 END(_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_32, _atomic_swap_32)
 
@@ -69,7 +69,7 @@ LEAF(_atomic_swap_64)
  	 nop
 2:
 	j		ra
-	 SYNCW
+	 BDSYNC_PLUNGER
 END(_atomic_swap_64)
 ATOMIC_OP_ALIAS(atomic_swap_64, _atomic_swap_64)
 #endif
