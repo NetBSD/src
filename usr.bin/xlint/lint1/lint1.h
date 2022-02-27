@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.137 2022/02/27 07:38:54 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.138 2022/02/27 07:50:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -294,7 +294,6 @@ typedef	struct sbuf {
 	const	char *sb_name;		/* name of symbol */
 	size_t	sb_len;			/* length (without '\0') */
 	sym_t	*sb_sym;		/* symbol table entry */
-	struct	sbuf *sb_next;		/* for freelist */
 } sbuf_t;
 
 
