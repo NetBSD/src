@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.116 2021/09/15 17:33:08 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.117 2022/02/27 14:18:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -136,6 +136,14 @@ pcibus_attach_args_pc(struct pcibus_attach_args *pba)
 {
 	return pba->pba_pc;
 }
+
+#ifndef __HAVE_PCI_GET_SEGMENT
+static __inline u_int
+pci_get_segment(pci_chipset_tag_t pc)
+{
+	return 0;
+}
+#endif
 
 /*
  * PCI device attach arguments.
