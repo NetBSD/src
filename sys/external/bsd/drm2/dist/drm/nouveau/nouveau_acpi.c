@@ -1,8 +1,8 @@
-/*	$NetBSD: nouveau_acpi.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_acpi.c,v 1.4 2022/02/27 14:24:27 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_acpi.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_acpi.c,v 1.4 2022/02/27 14:24:27 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -417,7 +417,7 @@ static int nouveau_rom_call(acpi_handle rom_handle, uint8_t *bios,
 	obj = (union acpi_object *)buffer.pointer;
 	len = min(len, (int)obj->buffer.length);
 	memcpy(bios+offset, obj->buffer.pointer, len);
-	kfree(buffer.pointer);
+	ACPI_FREE(buffer.pointer);
 	return len;
 }
 

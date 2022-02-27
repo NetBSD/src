@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_bios.c,v 1.9 2022/02/27 14:23:16 riastradh Exp $	*/
+/*	$NetBSD: radeon_bios.c,v 1.10 2022/02/27 14:24:27 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.9 2022/02/27 14:23:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.10 2022/02/27 14:24:27 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/pci.h>
@@ -229,7 +229,7 @@ static int radeon_atrm_call(acpi_handle atrm_handle, uint8_t *bios,
 	obj = (union acpi_object *)buffer.pointer;
 	memcpy(bios+offset, obj->buffer.pointer, obj->buffer.length);
 	len = obj->buffer.length;
-	kfree(buffer.pointer);
+	ACPI_FREE(buffer.pointer);
 	return len;
 }
 
