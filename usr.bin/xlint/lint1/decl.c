@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.249 2022/02/27 11:14:42 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.250 2022/02/27 11:40:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.249 2022/02/27 11:14:42 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.250 2022/02/27 11:40:29 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1803,7 +1803,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 		sp->sou_size_in_bits = dcs->d_offset;
 
 	if (sp->sou_size_in_bits == 0) {
-		/* zero sized %s is a C9X feature */
+		/* zero sized %s is a C99 feature */
 		c99ism(47, ttab[t].tt_name);
 	}
 

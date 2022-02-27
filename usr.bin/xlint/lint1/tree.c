@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.408 2022/02/27 11:14:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.409 2022/02/27 11:40:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.408 2022/02/27 11:14:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.409 2022/02/27 11:40:29 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -180,7 +180,7 @@ fallback_symbol(sym_t *sym)
 
 	if (block_level > 0 && strcmp(sym->s_name, "__func__") == 0) {
 		if (!Sflag)
-			/* __func__ is a C9X feature */
+			/* __func__ is a C99 feature */
 			warning(317);
 		sym->s_type = block_derive_type(gettyp(CHAR), PTR);
 		sym->s_type->t_const = true;
