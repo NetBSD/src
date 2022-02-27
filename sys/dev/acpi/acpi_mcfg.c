@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.24 2021/08/07 21:19:15 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.25 2022/02/27 14:19:07 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.24 2021/08/07 21:19:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.25 2022/02/27 14:19:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -446,12 +446,7 @@ acpimcfg_get_segment(pci_chipset_tag_t pc, int bus)
 	u_int segment;
 	int i;
 
-#ifdef __HAVE_PCI_GET_SEGMENT
 	segment = pci_get_segment(pc);
-#else
-	segment = 0;
-#endif
-
 	for (i = 0; i < mcfg_nsegs; i++) {
 		seg = &mcfg_segs[i];
 		if (segment == seg->ms_segment &&
