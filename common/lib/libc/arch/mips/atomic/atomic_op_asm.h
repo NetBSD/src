@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.4 2020/08/01 09:26:49 skrll Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.5 2022/02/27 19:21:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,11 +43,5 @@
 #define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
 
 #endif /* _KERNEL */
-
-#ifdef __OCTEON__
-#define	SYNCW	syncw
-#else
-#define	SYNCW	nop
-#endif
 
 #endif /* _ATOMIC_OP_ASM_H_ */

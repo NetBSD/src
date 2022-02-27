@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.65 2021/02/18 12:28:01 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.66 2022/02/27 19:21:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -576,14 +576,29 @@ _C_LABEL(x):
 #define	LLSCSYNC	sync 4; sync 4
 #define	SYNC		sync 4		/* sync 4 == syncw - sync all writes */
 #define	BDSYNC		sync 4		/* sync 4 == syncw - sync all writes */
+#define	BDSYNC_ACQ	sync
+#define	SYNC_ACQ	sync
+#define	SYNC_REL	sync
+#define	BDSYNC_PLUNGER	sync 4
+#define	SYNC_PLUNGER	sync 4
 #elif __mips >= 3 || !defined(__mips_o32)
 #define	LLSCSYNC	sync
 #define	SYNC		sync
 #define	BDSYNC		sync
+#define	BDSYNC_ACQ	sync
+#define	SYNC_ACQ	sync
+#define	SYNC_REL	sync
+#define	BDSYNC_PLUNGER	nop
+#define	SYNC_PLUNGER	/* nothing */
 #else
 #define	LLSCSYNC	/* nothing */
 #define	SYNC		/* nothing */
 #define	BDSYNC		nop
+#define	BDSYNC_ACQ	nop
+#define	SYNC_ACQ	/* nothing */
+#define	SYNC_REL	/* nothing */
+#define	BDSYNC_PLUNGER	nop
+#define	SYNC_PLUNGER	/* nothing */
 #endif
 
 /* CPU dependent hook for cp0 load delays */
