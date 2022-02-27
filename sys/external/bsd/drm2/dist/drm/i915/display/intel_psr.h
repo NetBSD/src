@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_psr.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_psr.h,v 1.3 2022/02/27 21:23:39 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -16,7 +16,8 @@ struct drm_i915_private;
 struct intel_crtc_state;
 struct intel_dp;
 
-#define CAN_PSR(dev_priv) (HAS_PSR(dev_priv) && dev_priv->psr.sink_support)
+/* PSR is disabled on NetBSD for now until we find what's wrong with it */
+#define CAN_PSR(dev_priv) 0//(HAS_PSR(dev_priv) && dev_priv->psr.sink_support)
 void intel_psr_init_dpcd(struct intel_dp *intel_dp);
 void intel_psr_enable(struct intel_dp *intel_dp,
 		      const struct intel_crtc_state *crtc_state);
