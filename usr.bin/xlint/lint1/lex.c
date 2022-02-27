@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.104 2022/02/27 22:26:12 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.105 2022/02/27 22:46:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.104 2022/02/27 22:26:12 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.105 2022/02/27 22:46:04 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -66,30 +66,6 @@ pos_t	csrc_pos = { "", 1, 0 };
 
 bool in_gcc_attribute;
 bool in_system_header;
-
-static	int	inpc(void);
-static	int	keyw(sym_t *);
-static	int	get_escaped_char(int);
-
-void
-lex_next_line(void)
-{
-	curr_pos.p_line++;
-	curr_pos.p_uniq = 0;
-	debug_step("parsing %s:%d", curr_pos.p_file, curr_pos.p_line);
-	if (curr_pos.p_file == csrc_pos.p_file) {
-		csrc_pos.p_line++;
-		csrc_pos.p_uniq = 0;
-	}
-}
-
-void
-lex_unknown_character(int c)
-{
-
-	/* unknown character \%o */
-	error(250, c);
-}
 
 #define kwdef(name, token, scl, tspec, tqual,	c90, c99, gcc, attr, deco) \
 	{ \
@@ -258,6 +234,9 @@ static	sym_t	*symtab[HSHSIZ1];
 symt_t	symtyp;
 
 
+static	int	get_escaped_char(int);
+
+
 static unsigned int
 hash(const char *s)
 {
@@ -402,6 +381,21 @@ inpc(void)
 	return c;
 }
 
+static int
+lex_keyword(sym_t *sym)
+{
+	int	t;
+
+	if ((t = (int)sym->s_value.v_quad) == T_SCLASS) {
+		yylval.y_scl = sym->s_scl;
+	} else if (t == T_TYPE || t == T_STRUCT_OR_UNION) {
+		yylval.y_tspec = sym->s_tspec;
+	} else if (t == T_QUAL) {
+		yylval.y_tqual = sym->s_tqual;
+	}
+	return t;
+}
+
 /*
  * Lex has found a letter followed by zero or more letters or digits.
  * It looks for a symbol in the symbol table with the same name. This
@@ -428,7 +422,7 @@ lex_name(const char *yytext, size_t yyleng)
 	sb->sb_len = yyleng;
 	if ((sym = symtab_search(sb)) != NULL && sym->s_keyword != NULL) {
 		free(sb);
-		return keyw(sym);
+		return lex_keyword(sym);
 	}
 
 	sb->sb_sym = sym;
@@ -448,21 +442,6 @@ lex_name(const char *yytext, size_t yyleng)
 
 	yylval.y_name = sb;
 	return tok;
-}
-
-static int
-keyw(sym_t *sym)
-{
-	int	t;
-
-	if ((t = (int)sym->s_value.v_quad) == T_SCLASS) {
-		yylval.y_scl = sym->s_scl;
-	} else if (t == T_TYPE || t == T_STRUCT_OR_UNION) {
-		yylval.y_tspec = sym->s_tspec;
-	} else if (t == T_QUAL) {
-		yylval.y_tqual = sym->s_tqual;
-	}
-	return t;
 }
 
 /*
@@ -1300,6 +1279,26 @@ lex_wide_string(void)
 
 	yylval.y_string = strg;
 	return T_STRING;
+}
+
+void
+lex_next_line(void)
+{
+	curr_pos.p_line++;
+	curr_pos.p_uniq = 0;
+	debug_step("parsing %s:%d", curr_pos.p_file, curr_pos.p_line);
+	if (curr_pos.p_file == csrc_pos.p_file) {
+		csrc_pos.p_line++;
+		csrc_pos.p_uniq = 0;
+	}
+}
+
+void
+lex_unknown_character(int c)
+{
+
+	/* unknown character \%o */
+	error(250, c);
 }
 
 #ifdef DEBUG
