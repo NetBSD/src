@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.11 2022/02/27 14:16:12 riastradh Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.12 2022/02/27 14:16:32 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -26,18 +26,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.11 2022/02/27 14:16:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.12 2022/02/27 14:16:32 riastradh Exp $");
 
 #include <sys/types.h>
-#include <sys/proc.h>
 #include <sys/param.h>
+
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/dtrace.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
-#include <sys/atomic.h>
 
 #define NLOCKSTAT 1
 #include <dev/lockstat.h>
