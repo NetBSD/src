@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_acpi.c,v 1.4 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: intel_acpi.c,v 1.5 2022/02/27 14:19:35 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0
 /*
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.4 2021/12/19 11:38:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.5 2022/02/27 14:19:35 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -268,8 +268,9 @@ intel_dsm_vga_match(const struct pci_attach_args *pa)
 		return 0;
 
 	vga_count++;
-	struct acpi_devnode *node = acpi_pcidev_find(0 /*XXX segment*/,
-	    pa->pa_bus, pa->pa_device, pa->pa_function);
+	struct acpi_devnode *node =
+	    acpi_pcidev_find(pci_get_segment(pa->pa_pc),
+		pa->pa_bus, pa->pa_device, pa->pa_function);
 	if (node != NULL && intel_dsm_handle == NULL)
 		intel_dsm_handle = intel_dsm_pci_probe(node->ad_handle);
 	return 0;
