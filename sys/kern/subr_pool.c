@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.280 2021/12/24 00:13:53 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.281 2022/02/27 14:16:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.280 2021/12/24 00:13:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.281 2022/02/27 14:16:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1648,6 +1648,7 @@ pool_reclaim(struct pool *pp)
 {
 	struct pool_item_header *ph, *phnext;
 	struct pool_pagelist pq;
+	struct pool_cache *pc;
 	uint32_t curtime;
 	bool klock;
 	int rv;
@@ -1673,8 +1674,8 @@ pool_reclaim(struct pool *pp)
 		klock = false;
 
 	/* Reclaim items from the pool's cache (if any). */
-	if (pp->pr_cache != NULL)
-		pool_cache_invalidate(pp->pr_cache);
+	if ((pc = atomic_load_consume(&pp->pr_cache)) != NULL)
+		pool_cache_invalidate(pc);
 
 	if (mutex_tryenter(&pp->pr_lock) == 0) {
 		if (klock) {
@@ -1883,7 +1884,7 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 	if (skip_empty && pp->pr_nget == 0)
 		return;
 
-	if ((pc = pp->pr_cache) != NULL) {
+	if ((pc = atomic_load_consume(&pp->pr_cache)) != NULL) {
 		(*pr)("POOLCACHE");
 	} else {
 		(*pr)("POOL");
@@ -1895,7 +1896,6 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 		    pp->pr_wchan, pp, pp->pr_size, pp->pr_align, pp->pr_npages,
 		    pp->pr_nitems, pp->pr_nout, pp->pr_nget, pp->pr_nput,
 		    pp->pr_npagealloc, pp->pr_npagefree, pp->pr_nidle);
-		
 		return;
 	}
 
@@ -2184,8 +2184,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	if (__predict_true(!cold))
 		mutex_exit(&pool_head_lock);
 
-	membar_sync();
-	pp->pr_cache = pc;
+	atomic_store_release(&pp->pr_cache, pc);
 }
 
 /*
@@ -2224,7 +2223,7 @@ pool_cache_bootstrap_destroy(pool_cache_t pc)
 
 	/* Disassociate it from the pool. */
 	mutex_enter(&pp->pr_lock);
-	pp->pr_cache = NULL;
+	atomic_store_relaxed(&pp->pr_cache, NULL);
 	mutex_exit(&pp->pr_lock);
 
 	/* Destroy per-CPU data */
@@ -3339,6 +3338,7 @@ pool_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 
 	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
 		struct pool_item_header *ph;
+		struct pool_cache *pc;
 		uintptr_t item;
 		bool allocated = true;
 		bool incache = false;
@@ -3373,8 +3373,8 @@ pool_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 			allocated = pool_allocated(pp, ph, addr);
 		}
 found:
-		if (allocated && pp->pr_cache) {
-			pool_cache_t pc = pp->pr_cache;
+		if (allocated &&
+		    (pc = atomic_load_consume(&pp->pr_cache)) != NULL) {
 			struct pool_cache_group *pcg;
 			int i;
 
@@ -3437,9 +3437,11 @@ pool_sysctl(SYSCTLFN_ARGS)
 	memset(&data, 0, sizeof(data));
 	error = 0;
 	written = 0;
+	mutex_enter(&pool_head_lock);
 	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
 		if (written + sizeof(data) > *oldlenp)
 			break;
+		pp->pr_refcnt++;
 		strlcpy(data.pr_wchan, pp->pr_wchan, sizeof(data.pr_wchan));
 		data.pr_pagesize = pp->pr_alloc->pa_pagesz;
 		data.pr_flags = pp->pr_roflags | pp->pr_flags;
@@ -3469,9 +3471,8 @@ pool_sysctl(SYSCTLFN_ARGS)
 		data.pr_cache_nempty = 0;
 		data.pr_cache_ncontended = 0;
 		data.pr_cache_npartial = 0;
-		if (pp->pr_cache) {
+		if ((pc = atomic_load_consume(&pp->pr_cache)) != NULL) {
 			uint32_t nfull = 0;
-			pc = pp->pr_cache;
 			data.pr_cache_meta_size = pc->pc_pcgsize;
 			for (i = 0; i < pc->pc_ncpu; ++i) {
 				cc = pc->pc_cpus[i];
@@ -3492,12 +3493,19 @@ pool_sysctl(SYSCTLFN_ARGS)
 		data.pr_cache_nhit_global = data.pr_cache_nmiss_pcpu -
 		    data.pr_cache_nmiss_global;
 
+		if (pp->pr_refcnt == UINT_MAX) /* XXX possible? */
+			continue;
+		mutex_exit(&pool_head_lock);
 		error = sysctl_copyout(l, &data, oldp, sizeof(data));
+		mutex_enter(&pool_head_lock);
+		if (--pp->pr_refcnt == 0)
+			cv_broadcast(&pool_busy);
 		if (error)
 			break;
 		written += sizeof(data);
 		oldp = (char *)oldp + sizeof(data);
 	}
+	mutex_exit(&pool_head_lock);
 
 	*oldlenp = written;
 	return error;
