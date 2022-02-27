@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.106 2021/08/17 22:00:32 andvar Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.107 2022/02/27 14:24:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.106 2021/08/17 22:00:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.107 2022/02/27 14:24:11 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1095,6 +1095,10 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 	error = vmem_xalloc(vm, size, 0, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX,
 	    flags, addrp);
 out:
+	KASSERTMSG(error || addrp == NULL ||
+	    (*addrp & vm->vm_quantum_mask) == 0,
+	    "vmem %s mask=0x%jx addr=0x%jx",
+	    vm->vm_name, (uintmax_t)vm->vm_quantum_mask, (uintmax_t)*addrp);
 	KASSERT(error == 0 || (flags & VM_SLEEP) == 0);
 	return error;
 }
@@ -1285,6 +1289,10 @@ gotit:
 	if (addrp != NULL)
 		*addrp = btnew->bt_start;
 	VMEM_UNLOCK(vm);
+	KASSERTMSG(addrp == NULL ||
+	    (*addrp & vm->vm_quantum_mask) == 0,
+	    "vmem %s mask=0x%jx addr=0x%jx",
+	    vm->vm_name, (uintmax_t)vm->vm_quantum_mask, (uintmax_t)*addrp);
 	return 0;
 }
 
@@ -1297,6 +1305,9 @@ vmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 {
 
 	KASSERT(size > 0);
+	KASSERTMSG((addr & vm->vm_quantum_mask) == 0,
+	    "vmem %s mask=0x%jx addr=0x%jx",
+	    vm->vm_name, (uintmax_t)vm->vm_quantum_mask, (uintmax_t)addr);
 
 #if defined(QCACHE)
 	if (size <= vm->vm_qcache_max) {
@@ -1317,11 +1328,15 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	bt_t *bt;
 
 	KASSERT(size > 0);
+	KASSERTMSG((addr & vm->vm_quantum_mask) == 0,
+	    "vmem %s mask=0x%jx addr=0x%jx",
+	    vm->vm_name, (uintmax_t)vm->vm_quantum_mask, (uintmax_t)addr);
 
 	VMEM_LOCK(vm);
 
 	bt = bt_lookupbusy(vm, addr);
-	KASSERT(bt != NULL);
+	KASSERTMSG(bt != NULL, "vmem %s addr 0x%jx size 0x%jx",
+	    vm->vm_name, (uintmax_t)addr, (uintmax_t)size);
 	KASSERT(bt->bt_start == addr);
 	KASSERT(bt->bt_size == vmem_roundup_size(vm, size) ||
 	    bt->bt_size - vmem_roundup_size(vm, size) <= vm->vm_quantum_mask);
