@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2011/08/10 11:31:49 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2022/02/27 21:05:11 zafer Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 2011/08/10 11:31:49 uch Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2022/02/27 21:05:11 zafer Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -207,7 +207,7 @@ make_filesystem(struct v7fs_self *fs, v7fs_daddr_t volume_size,
 	int error = 0;
 	int32_t i, j;
 
-	/* Setup ilist. (ilist must be zero filled. becuase of they are free) */
+	/* Setup ilist. (ilist must be zero filled. because of they are free) */
 	VPRINTF(4, "Zero clear ilist.\n");
 	progress(&(struct progress_arg){ .label = "zero ilist", .tick =
 	    ilist_size / PROGRESS_BAR_GRANULE });
