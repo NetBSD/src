@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.18 2021/12/05 02:47:01 msaitoh Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.19 2022/02/27 11:49:28 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.18 2021/12/05 02:47:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.19 2022/02/27 11:49:28 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -288,14 +288,14 @@ gmi_write_4(uint32_t addr, uint32_t lo)
 	TRACEREG(("%s: %#08x <- %#08x\n", __func__, addr, lo));
 }
 
-static inline void
+static inline void __unused
 gmi_write_8(uint32_t addr, uint32_t lo, uint32_t hi)
 {
 	mtidcr(IDCR_HIF_ARG1, hi);
 	gmi_write_4(addr, lo);
 }
 
-static inline void
+static inline void __unused
 gmi_read_8(uint32_t addr, uint32_t *lo, uint32_t *hi)
 {
 	*lo = gmi_read_4(addr);
