@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.60 2022/02/27 08:31:26 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.61 2022/02/27 17:12:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.60 2022/02/27 08:31:26 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.61 2022/02/27 17:12:06 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ struct filename {
 };
 
 static struct filename *filenames;	/* null-terminated array */
+static int next_filename_id;
 
 /* Find the given filename, or return NULL. */
 static const struct filename *
@@ -114,14 +115,6 @@ transform_filename(const char *name, size_t len)
 	return buf;
 }
 
-static int
-next_filename_id(void)
-{
-	static int next_id = 0;
-
-	return next_id++;
-}
-
 /*
  * Return a copy of the filename s with unlimited lifetime.
  * If the filename is new, write it to the output file.
@@ -133,13 +126,9 @@ record_filename(const char *s, size_t slen)
 	struct filename *fn;
 	char *name;
 
-	if (s == NULL)
-		return NULL;
-
 	if ((existing_fn = search_filename(s, slen)) != NULL)
 		return existing_fn->fn_name;
 
-	/* Do not use strdup() because s is not NUL-terminated.*/
 	name = xmalloc(slen + 1);
 	(void)memcpy(name, s, slen);
 	name[slen] = '\0';
@@ -147,7 +136,7 @@ record_filename(const char *s, size_t slen)
 	fn = xmalloc(sizeof(*fn));
 	fn->fn_name = name;
 	fn->fn_len = slen;
-	fn->fn_id = next_filename_id();
+	fn->fn_id = next_filename_id++;
 	fn->fn_next = filenames;
 	filenames = fn;
 
