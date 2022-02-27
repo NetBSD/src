@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.296 2022/01/22 11:49:17 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.297 2022/02/27 21:22:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.296 2022/01/22 11:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.297 2022/02/27 21:22:09 riastradh Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -1222,6 +1222,11 @@ acpi_register_notify(struct acpi_devnode *ad, ACPI_NOTIFY_HANDLER notify)
 	if (ad == NULL || notify == NULL)
 		goto fail;
 
+	KASSERTMSG(ad->ad_notify == NULL,
+	    "%s: ACPI node %s already has notify handler: %p",
+	    ad->ad_device ? device_xname(ad->ad_device) : "(unknown)",
+	    ad->ad_name,
+	    ad->ad_notify);
 	atomic_store_release(&ad->ad_notify, notify);
 
 	return true;
