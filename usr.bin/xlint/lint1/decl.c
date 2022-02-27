@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.250 2022/02/27 11:40:29 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.251 2022/02/27 20:02:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.250 2022/02/27 11:40:29 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.251 2022/02/27 20:02:43 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1470,14 +1470,14 @@ old_style_function(sym_t *decl, sym_t *args)
 {
 
 	/*
-	 * Remember list of params only if this is really seams to be
-	 * a function definition.
+	 * Remember list of parameters only if this really seems to be a
+	 * function definition.
 	 */
 	if (dcs->d_next->d_ctx == EXTERN &&
 	    decl->s_type == dcs->d_next->d_type) {
 		/*
 		 * We assume that this becomes a function definition. If
-		 * we are wrong, it's corrected in check_function_definition().
+		 * we are wrong, it's corrected in check_function_definition.
 		 */
 		if (args != NULL) {
 			decl->s_osdef = true;

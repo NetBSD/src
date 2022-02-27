@@ -1,7 +1,10 @@
-/*	$NetBSD: msg_062.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_062.c,v 1.3 2022/02/27 20:02:44 rillig Exp $	*/
 # 3 "msg_062.c"
 
 // Test for message: function prototype parameters must have types [62]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+outer() {
+	/* expect+2: warning: function prototype parameters must have types [62] */
+	/* expect+1: warning: dubious static function at block level: inner [93] */
+	static int inner(a);
+}
