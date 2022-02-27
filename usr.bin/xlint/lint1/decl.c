@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.248 2022/02/27 10:44:45 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.249 2022/02/27 11:14:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.248 2022/02/27 10:44:45 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.249 2022/02/27 11:14:42 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1157,7 +1157,7 @@ declarator_1_struct_union(sym_t *dsym)
 		lint_assert(dcs->d_redeclared_symbol->s_scl == MOS ||
 		    dcs->d_redeclared_symbol->s_scl == MOU);
 
-		if (dsym->s_styp == dcs->d_redeclared_symbol->s_styp) {
+		if (dsym->s_sou_type == dcs->d_redeclared_symbol->s_sou_type) {
 			/* duplicate member name: %s */
 			error(33, dsym->s_name);
 			rmsym(dcs->d_redeclared_symbol);
@@ -1513,7 +1513,7 @@ check_function_definition(sym_t *sym, bool msg)
  * Process the name in a declarator.
  * The symbol gets one of the storage classes EXTERN, STATIC, AUTO or
  * TYPEDEF.
- * s_def and s_reg are valid after declarator_name().
+ * s_def and s_register are valid after declarator_name().
  */
 sym_t *
 declarator_name(sym_t *sym)
@@ -1534,7 +1534,7 @@ declarator_name(sym_t *sym)
 	case MOS:
 	case MOU:
 		/* Set parent */
-		sym->s_styp = dcs->d_tagtyp->t_str;
+		sym->s_sou_type = dcs->d_tagtyp->t_str;
 		sym->s_def = DEF;
 		sym->s_value.v_tspec = INT;
 		sc = dcs->d_ctx;
@@ -1568,7 +1568,7 @@ declarator_name(sym_t *sym)
 			sc = AUTO;
 		} else {
 			lint_assert(sc == REG);
-			sym->s_reg = true;
+			sym->s_register = true;
 			sc = AUTO;
 		}
 		sym->s_def = DEF;
@@ -1586,7 +1586,7 @@ declarator_name(sym_t *sym)
 		} else if (sc == AUTO || sc == STATIC || sc == TYPEDEF) {
 			sym->s_def = DEF;
 		} else if (sc == REG) {
-			sym->s_reg = true;
+			sym->s_register = true;
 			sc = AUTO;
 			sym->s_def = DEF;
 		} else {
@@ -1810,8 +1810,8 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	n = 0;
 	for (mem = fmem; mem != NULL; mem = mem->s_next) {
 		/* bind anonymous members to the structure */
-		if (mem->s_styp == NULL) {
-			mem->s_styp = sp;
+		if (mem->s_sou_type == NULL) {
+			mem->s_sou_type = sp;
 			if (mem->s_type->t_bitfield) {
 				sp->sou_size_in_bits += bitfieldsize(&mem);
 				if (mem == NULL)

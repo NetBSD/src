@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.383 2022/02/27 08:31:26 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.384 2022/02/27 11:14:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.383 2022/02/27 08:31:26 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.384 2022/02/27 11:14:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -114,7 +114,7 @@ static void
 anonymize(sym_t *s)
 {
 	for ( ; s != NULL; s = s->s_next)
-		s->s_styp = NULL;
+		s->s_sou_type = NULL;
 }
 
 #if defined(YYDEBUG) && (defined(YYBYACC) || defined(YYBISON))

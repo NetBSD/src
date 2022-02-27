@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.140 2022/02/27 10:49:15 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.141 2022/02/27 11:14:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -250,14 +250,15 @@ typedef	struct sym {
 	bool	s_set:1;	/* variable set, label defined */
 	bool	s_used:1;	/* variable/label used */
 	bool	s_arg:1;	/* symbol is function argument */
-	bool	s_reg:1;	/* symbol is register variable */
+	bool	s_register:1;	/* symbol is register variable */
 	bool	s_defarg:1;	/* undefined symbol in old style function
 				   definition */
 	bool	s_return_type_implicit_int:1;
 	bool	s_osdef:1;	/* symbol stems from old style function def. */
 	bool	s_inline:1;	/* true if this is an inline function */
-	struct	sym *s_ext_sym;	/* for local declared external symbols pointer
-				   to external symbol with same name */
+	struct	sym *s_ext_sym;	/* for locally declared external symbols, the
+				 * pointer to the external symbol with the
+				 * same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
 	scl_t	s_scl;		/* storage class */
 	int	s_block_level;	/* level of declaration, -1 if not in symbol
@@ -281,7 +282,7 @@ typedef	struct sym {
 					 * level */
 } sym_t;
 
-#define	s_styp	u._s_st
+#define	s_sou_type	u._s_st
 #define	s_tspec	u._s_tsp
 #define	s_tqual	u._s_tqu
 #define	s_args	u._s_args
