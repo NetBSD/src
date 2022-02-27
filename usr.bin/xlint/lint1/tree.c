@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.404 2022/02/26 20:36:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.405 2022/02/27 08:31:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.404 2022/02/26 20:36:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.405 2022/02/27 08:31:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -108,7 +108,7 @@ derive_type(type_t *tp, tspec_t t)
 {
 	type_t	*tp2;
 
-	tp2 = getblk(sizeof(*tp2));
+	tp2 = block_zero_alloc(sizeof(*tp2));
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -123,7 +123,7 @@ expr_derive_type(type_t *tp, tspec_t t)
 {
 	type_t	*tp2;
 
-	tp2 = expr_zalloc(sizeof(*tp2));
+	tp2 = expr_zero_alloc(sizeof(*tp2));
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -137,10 +137,10 @@ build_constant(type_t *tp, val_t *v)
 {
 	tnode_t	*n;
 
-	n = expr_zalloc_tnode();
+	n = expr_alloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = tp;
-	n->tn_val = expr_zalloc(sizeof(*n->tn_val));
+	n->tn_val = expr_zero_alloc(sizeof(*n->tn_val));
 	n->tn_val->v_tspec = tp->t_tspec;
 	n->tn_val->v_unsigned_since_c90 = v->v_unsigned_since_c90;
 	n->tn_val->v_u = v->v_u;
@@ -153,10 +153,10 @@ build_integer_constant(tspec_t t, int64_t q)
 {
 	tnode_t	*n;
 
-	n = expr_zalloc_tnode();
+	n = expr_alloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = gettyp(t);
-	n->tn_val = expr_zalloc(sizeof(*n->tn_val));
+	n->tn_val = expr_zero_alloc(sizeof(*n->tn_val));
 	n->tn_val->v_tspec = t;
 	n->tn_val->v_quad = q;
 	return n;
@@ -277,11 +277,11 @@ build_name(sym_t *sym, bool is_funcname)
 
 	lint_assert(sym->s_kind == FVFT || sym->s_kind == FMEMBER);
 
-	n = expr_zalloc_tnode();
+	n = expr_alloc_tnode();
 	n->tn_type = sym->s_type;
 	if (sym->s_scl == CTCONST) {
 		n->tn_op = CON;
-		n->tn_val = expr_zalloc(sizeof(*n->tn_val));
+		n->tn_val = expr_zero_alloc(sizeof(*n->tn_val));
 		*n->tn_val = sym->s_value;
 	} else {
 		n->tn_op = NAME;
@@ -302,9 +302,9 @@ build_string(strg_t *strg)
 
 	len = strg->st_len;
 
-	n = expr_zalloc_tnode();
+	n = expr_alloc_tnode();
 
-	tp = expr_zalloc(sizeof(*tp));
+	tp = expr_zero_alloc(sizeof(*tp));
 	tp->t_tspec = ARRAY;
 	tp->t_subt = gettyp(strg->st_tspec);
 	tp->t_dim = (int)(len + 1);
@@ -313,17 +313,17 @@ build_string(strg_t *strg)
 	n->tn_type = tp;
 	n->tn_lvalue = true;
 
-	n->tn_string = expr_zalloc(sizeof(*n->tn_string));
+	n->tn_string = expr_zero_alloc(sizeof(*n->tn_string));
 	n->tn_string->st_tspec = strg->st_tspec;
 	n->tn_string->st_len = len;
 
 	if (strg->st_tspec == CHAR) {
-		n->tn_string->st_cp = expr_zalloc(len + 1);
+		n->tn_string->st_cp = expr_zero_alloc(len + 1);
 		(void)memcpy(n->tn_string->st_cp, strg->st_cp, len + 1);
 		free(strg->st_cp);
 	} else {
 		size_t size = (len + 1) * sizeof(*n->tn_string->st_wcp);
-		n->tn_string->st_wcp = expr_zalloc(size);
+		n->tn_string->st_wcp = expr_zero_alloc(size);
 		(void)memcpy(n->tn_string->st_wcp, strg->st_wcp, size);
 		free(strg->st_wcp);
 	}
@@ -355,8 +355,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
-		msym->s_styp = expr_zalloc(sizeof(*msym->s_styp));
-		msym->s_styp->sou_tag = expr_zalloc(
+		msym->s_styp = expr_zero_alloc(sizeof(*msym->s_styp));
+		msym->s_styp->sou_tag = expr_zero_alloc(
 		    sizeof(*msym->s_styp->sou_tag));
 		msym->s_styp->sou_tag->s_name = unnamed;
 		msym->s_value.v_tspec = INT;
@@ -1834,7 +1834,7 @@ new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 	uint64_t rnum;
 #endif
 
-	ntn = expr_zalloc_tnode();
+	ntn = expr_alloc_tnode();
 
 	ntn->tn_op = op;
 	ntn->tn_type = type;
@@ -2080,7 +2080,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		check_pointer_conversion(tn, tp);
 	}
 
-	ntn = expr_zalloc_tnode();
+	ntn = expr_alloc_tnode();
 	ntn->tn_op = CVT;
 	ntn->tn_type = tp;
 	ntn->tn_cast = op == CVT;
@@ -2090,7 +2090,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		ntn->tn_left = tn;
 	} else {
 		ntn->tn_op = CON;
-		ntn->tn_val = expr_zalloc(sizeof(*ntn->tn_val));
+		ntn->tn_val = expr_zero_alloc(sizeof(*ntn->tn_val));
 		convert_constant(op, arg, ntn->tn_type, ntn->tn_val,
 		    tn->tn_val);
 	}
@@ -3609,7 +3609,7 @@ cast(tnode_t *tn, type_t *tp)
 		for (m = str->sou_first_member; m != NULL; m = m->s_next) {
 			if (eqtype(m->s_type, tn->tn_type,
 			    false, false, NULL)) {
-				tn = expr_zalloc_tnode();
+				tn = expr_alloc_tnode();
 				tn->tn_op = CVT;
 				tn->tn_type = tp;
 				tn->tn_cast = true;

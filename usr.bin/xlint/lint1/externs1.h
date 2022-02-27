@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.146 2022/02/26 20:36:11 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.147 2022/02/27 08:31:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -61,7 +61,7 @@ extern	void	norecover(void);
  * cgram.y
  */
 extern	int	block_level;
-extern	int	mem_block_level;
+extern	size_t	mem_block_level;
 extern	int	yydebug;
 
 extern	int	yyerror(const char *);
@@ -100,13 +100,12 @@ extern	const char *transform_filename(const char *, size_t);
 
 extern	void	initmem(void);
 
-extern	void	*getblk(size_t);
-extern	void	*getlblk(size_t, size_t);
-extern	void	freeblk(void);
-extern	void	freelblk(int);
+extern	void	*block_zero_alloc(size_t);
+extern	void	*level_zero_alloc(size_t, size_t);
+extern	void	level_free_all(size_t);
 
-extern	void	*expr_zalloc(size_t);
-extern	tnode_t	*expr_zalloc_tnode(void);
+extern	void	*expr_zero_alloc(size_t);
+extern	tnode_t	*expr_alloc_tnode(void);
 extern	void	expr_free_all(void);
 extern	struct	memory_block *expr_save_memory(void);
 extern	void	expr_restore_memory(struct memory_block *);
