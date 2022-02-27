@@ -1,3 +1,4 @@
 msg_219.c(10): warning: concatenated strings are illegal in traditional C [219]
 msg_219.c(11): warning: concatenated strings are illegal in traditional C [219]
 msg_219.c(12): warning: concatenated strings are illegal in traditional C [219]
+msg_219.c(17): warning: concatenated strings are illegal in traditional C [219]
