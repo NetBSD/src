@@ -1,1 +1,4 @@
-msg_047.c(6): error: syntax error ':' [249]
+msg_047.c(10): error: zero sized struct is a C99 feature [47]
+msg_047.c(16): error: zero sized array is a C99 extension [322]
+msg_047.c(16): error: zero sized array in struct is a C99 extension: dummy [39]
+msg_047.c(17): error: zero sized struct is a C99 feature [47]

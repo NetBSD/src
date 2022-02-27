@@ -1,1 +1,4 @@
-msg_319.c(6): error: syntax error ':' [249]
+msg_319.c(10): error: compound literals are a C99/GCC extension [319]
+msg_319.c(10): error: non-constant initializer [177]
+msg_319.c(18): error: compound literals are a C99/GCC extension [319]
+msg_319.c(18): error: {}-enclosed initializer required [181]
