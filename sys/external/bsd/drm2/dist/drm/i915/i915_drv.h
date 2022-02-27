@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.46 2021/12/19 11:55:24 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.47 2022/02/27 14:22:29 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -34,9 +34,7 @@
 
 #if defined(__NetBSD__)
 #ifdef _KERNEL_OPT
-#if defined(i386) || defined(amd64)
 #include "acpica.h"
-#endif	/* i386 || amd64 */
 #endif	/* _KERNEL_OPT */
 #if (NACPICA > 0)
 #define CONFIG_ACPI
