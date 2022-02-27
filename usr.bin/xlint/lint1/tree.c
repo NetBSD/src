@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.409 2022/02/27 11:40:29 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.410 2022/02/27 18:29:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.409 2022/02/27 11:40:29 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.410 2022/02/27 18:29:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -306,7 +306,7 @@ build_string(strg_t *strg)
 
 	tp = expr_zero_alloc(sizeof(*tp));
 	tp->t_tspec = ARRAY;
-	tp->t_subt = gettyp(strg->st_tspec);
+	tp->t_subt = gettyp(strg->st_char ? CHAR : WCHAR);
 	tp->t_dim = (int)(len + 1);
 
 	n->tn_op = STRING;
@@ -314,19 +314,14 @@ build_string(strg_t *strg)
 	n->tn_lvalue = true;
 
 	n->tn_string = expr_zero_alloc(sizeof(*n->tn_string));
-	n->tn_string->st_tspec = strg->st_tspec;
+	n->tn_string->st_char = strg->st_char;
 	n->tn_string->st_len = len;
 
-	if (strg->st_tspec == CHAR) {
-		n->tn_string->st_cp = expr_zero_alloc(len + 1);
-		(void)memcpy(n->tn_string->st_cp, strg->st_cp, len + 1);
-		free(strg->st_cp);
-	} else {
-		size_t size = (len + 1) * sizeof(*n->tn_string->st_wcp);
-		n->tn_string->st_wcp = expr_zero_alloc(size);
-		(void)memcpy(n->tn_string->st_wcp, strg->st_wcp, size);
-		free(strg->st_wcp);
-	}
+	size_t chsize = strg->st_char ? sizeof(char) : sizeof(wchar_t);
+	size_t size = (len + 1) * chsize;
+	n->tn_string->st_mem = expr_zero_alloc(size);
+	(void)memcpy(n->tn_string->st_mem, strg->st_mem, size);
+	free(strg->st_mem);
 	free(strg);
 
 	return n;
@@ -4444,28 +4439,21 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 strg_t *
 cat_strings(strg_t *s1, strg_t *s2)
 {
-	size_t len1, len2, sz;
 
-	if (s1->st_tspec != s2->st_tspec) {
+	if (s1->st_char != s2->st_char) {
 		/* cannot concatenate wide and regular string literals */
 		error(292);
 		return s1;
 	}
 
-	len1 = s1->st_len;
-	len2 = s2->st_len;
-
-	if (s1->st_tspec == CHAR) {
-		sz = sizeof(*s1->st_cp);
-		s1->st_cp = xrealloc(s1->st_cp, (len1 + len2 + 1) * sz);
-		memcpy(s1->st_cp + len1, s2->st_cp, (len2 + 1) * sz);
-		free(s2->st_cp);
-	} else {
-		sz = sizeof(*s1->st_wcp);
-		s1->st_wcp = xrealloc(s1->st_wcp, (len1 + len2 + 1) * sz);
-		memcpy(s1->st_wcp + len1, s2->st_wcp, (len2 + 1) * sz);
-		free(s2->st_wcp);
-	}
+	size_t len1 = s1->st_len;
+	size_t len2 = s2->st_len;
+	size_t chsize = s1->st_char ? sizeof(char) : sizeof(wchar_t);
+	size_t size1 = len1 * chsize;
+	size_t size2 = (len2 + 1) * chsize;
+	s1->st_mem = xrealloc(s1->st_mem, size1 + size2);
+	memcpy((char *)s1->st_mem + size1, s2->st_mem, size2);
+	free(s2->st_mem);
 
 	s1->st_len = len1 + len2;
 	free(s2);

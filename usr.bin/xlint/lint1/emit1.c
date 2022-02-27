@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.60 2021/11/28 10:01:36 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.61 2022/02/27 18:29:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.60 2021/11/28 10:01:36 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.61 2022/02/27 18:29:14 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -404,7 +404,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 			}
 		} else if (arg->tn_op == ADDR &&
 			   arg->tn_left->tn_op == STRING &&
-			   arg->tn_left->tn_string->st_tspec == CHAR) {
+			   arg->tn_left->tn_string->st_char) {
 			/* constant string, write all format specifiers */
 			outchar('s');
 			outint(n);
@@ -492,9 +492,8 @@ outfstrg(strg_t *strg)
 	bool	first;
 	const char *cp;
 
-	lint_assert(strg->st_tspec == CHAR);
-
-	cp = (const char *)strg->st_cp;
+	lint_assert(strg->st_char);
+	cp = strg->st_mem;
 
 	outchar('"');
 

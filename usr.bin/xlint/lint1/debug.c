@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.7 2021/12/21 21:04:08 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.8 2022/02/27 18:29:14 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.7 2021/12/21 21:04:08 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.8 2022/02/27 18:29:14 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -137,15 +137,14 @@ debug_node(const tnode_t *tn)
 		    tn->tn_val->v_quad != 0 ? "true" : "false");
 	else if (op == CON)
 		debug_printf(", unknown value\n");
-	else if (op == STRING && tn->tn_string->st_tspec == CHAR)
+	else if (op == STRING && tn->tn_string->st_char)
 		debug_printf(", length %zu, \"%s\"\n",
-		    tn->tn_string->st_len, tn->tn_string->st_cp);
-	else if (op == STRING && tn->tn_string->st_tspec == WCHAR) {
-		char *s;
-		size_t n;
-		n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
-		s = xmalloc(n);
-		(void)wcstombs(s, tn->tn_string->st_wcp, n);
+		    tn->tn_string->st_len,
+		    (const char *)tn->tn_string->st_mem);
+	else if (op == STRING) {
+		size_t n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
+		char *s = xmalloc(n);
+		(void)wcstombs(s, tn->tn_string->st_mem, n);
 		debug_printf(", length %zu, L\"%s\"",
 		    tn->tn_string->st_len, s);
 		free(s);
