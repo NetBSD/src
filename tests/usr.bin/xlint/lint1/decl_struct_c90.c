@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_c90.c,v 1.3 2021/07/15 21:00:05 rillig Exp $	*/
+/*	$NetBSD: decl_struct_c90.c,v 1.4 2022/02/27 11:40:30 rillig Exp $	*/
 # 3 "decl_struct_c90.c"
 
 /*
@@ -14,7 +14,7 @@ struct unnamed_member {
 		void *b_value;
 		void (*c_value)(void);
 	};
-	/* expect-1: warning: anonymous struct/union members is a C9X feature [49] */
+	/* expect-1: warning: anonymous struct/union members is a C11 feature [49] */
 };
 
 /*

@@ -1,4 +1,4 @@
-init_c90.c(19): warning: struct or union member name in initializer is a C9X feature [313]
-init_c90.c(19): warning: struct or union member name in initializer is a C9X feature [313]
-init_c90.c(23): warning: array initializer with designators is a C9X feature [321]
-init_c90.c(29): error: compound literals are a C9X/GCC extension [319]
+init_c90.c(19): warning: struct or union member name in initializer is a C99 feature [313]
+init_c90.c(19): warning: struct or union member name in initializer is a C99 feature [313]
+init_c90.c(23): warning: array initializer with designators is a C99 feature [321]
+init_c90.c(29): error: compound literals are a C99/GCC extension [319]

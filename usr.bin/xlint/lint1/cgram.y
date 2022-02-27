@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.384 2022/02/27 11:14:42 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.385 2022/02/27 11:40:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.384 2022/02/27 11:14:42 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.385 2022/02/27 11:40:29 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -512,7 +512,7 @@ postfix_expression:
 		cgram_declare(tmp, true, NULL);
 	  } init_lbrace initializer_list comma_opt init_rbrace {
 		if (!Sflag)
-			 /* compound literals are a C9X/GCC extension */
+			 /* compound literals are a C99/GCC extension */
 			 gnuism(319);
 		$$ = build_name(*current_initsym(), false);
 		end_initialization();
@@ -990,7 +990,7 @@ struct_declaration:		/* C99 6.7.2.1 */
 	    T_SEMI {
 		symtyp = FVFT;
 		if (!Sflag)
-			/* anonymous struct/union members is a C9X feature */
+			/* anonymous struct/union members is a C11 feature */
 			warning(49);
 		if (is_struct_or_union(dcs->d_type->t_tspec)) {
 			$$ = dcs->d_type->t_str->sou_first_member;
@@ -1581,7 +1581,7 @@ designator:			/* C99 6.7.8 "Initialization" */
 	  T_LBRACK range T_RBRACK {
 		add_designator_subscript($2);
 		if (!Sflag)
-			/* array initializer with designators is a C9X ... */
+			/* array initializer with designators is a C99 ... */
 			warning(321);
 	  }
 	| T_POINT identifier {

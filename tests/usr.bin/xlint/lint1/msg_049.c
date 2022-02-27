@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_049.c,v 1.3 2021/08/27 20:16:50 rillig Exp $	*/
+/*	$NetBSD: msg_049.c,v 1.4 2022/02/27 11:40:30 rillig Exp $	*/
 # 3 "msg_049.c"
 
-/* Test for message: anonymous struct/union members is a C9X feature [49] */
+/* Test for message: anonymous struct/union members is a C11 feature [49] */
 
 /* lint1-flags: -sw */
 
@@ -23,5 +23,5 @@ struct {
 		int int_value;
 		void *pointer_value;
 	};
-	/* expect-1: warning: anonymous struct/union members is a C9X feature [49] */
+	/* expect-1: warning: anonymous struct/union members is a C11 feature [49] */
 } s;
