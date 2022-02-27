@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.17 2022/02/27 14:18:25 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.18 2022/02/27 14:18:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -201,6 +201,27 @@ rb_next2_postorder(const struct rb_root *root, struct rb_node *node)
 			continue;
 		return node;
 	}
+}
+
+/*
+ * Extension to Linux API, which allows copying a struct rb_root object
+ * with `=' or `memcpy' and no additional relocation.
+ */
+static inline void
+rb_move(struct rb_root *to, struct rb_root *from)
+{
+	struct rb_node *root;
+
+	*to = *from;
+	memset(from, 0, sizeof(*from)); /* paranoia */
+	if ((root = to->rbr_tree.rbt_root) == NULL)
+		return;
+
+	/*
+	 * The root node's `parent' is a strict-aliasing-unsafe hack
+	 * pointing at the root of the tree.
+	 */
+	RB_SET_FATHER(root, (struct rb_node *)(void *)&to->rbr_tree.rbt_root);
 }
 
 #define	rbtree_postorder_for_each_entry_safe(ENTRY, TMP, ROOT, FIELD)	      \
