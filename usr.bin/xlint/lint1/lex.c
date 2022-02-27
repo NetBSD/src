@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.100 2022/02/27 07:50:09 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.101 2022/02/27 08:31:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.100 2022/02/27 07:50:09 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.101 2022/02/27 08:31:26 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -297,7 +297,7 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 		name = xstrdup(buf);
 	}
 
-	sym = getblk(sizeof(*sym));
+	sym = block_zero_alloc(sizeof(*sym));
 	sym->s_name = name;
 	sym->s_keyword = kw;
 	sym->s_value.v_quad = kw->kw_token;
@@ -407,7 +407,7 @@ lex_name(const char *yytext, size_t yyleng)
 		sb->sb_len = strlen(sym->s_name);
 		tok = sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
 	} else {
-		s = getblk(yyleng + 1);
+		s = block_zero_alloc(yyleng + 1);
 		(void)memcpy(s, yytext, yyleng + 1);
 		sb->sb_name = s;
 		sb->sb_len = yyleng;
@@ -1352,8 +1352,8 @@ getsym(sbuf_t *sb)
 
 	/* labels must always be allocated at level 1 (outermost block) */
 	if (symtyp == FLABEL) {
-		sym = getlblk(1, sizeof(*sym));
-		s = getlblk(1, sb->sb_len + 1);
+		sym = level_zero_alloc(1, sizeof(*sym));
+		s = level_zero_alloc(1, sb->sb_len + 1);
 		(void)memcpy(s, sb->sb_name, sb->sb_len + 1);
 		sym->s_name = s;
 		sym->s_block_level = 1;
@@ -1362,7 +1362,7 @@ getsym(sbuf_t *sb)
 			di = di->d_next;
 		lint_assert(di->d_ctx == AUTO);
 	} else {
-		sym = getblk(sizeof(*sym));
+		sym = block_zero_alloc(sizeof(*sym));
 		sym->s_name = sb->sb_name;
 		sym->s_block_level = block_level;
 		di = dcs;
@@ -1391,8 +1391,8 @@ sym_t *
 mktempsym(type_t *t)
 {
 	static int n = 0;
-	char *s = getlblk(block_level, 64);
-	sym_t *sym = getblk(sizeof(*sym));
+	char *s = level_zero_alloc(block_level, 64);
+	sym_t *sym = block_zero_alloc(sizeof(*sym));
 	scl_t scl;
 
 	(void)snprintf(s, 64, "%.8d_tmp", n++);
@@ -1476,7 +1476,7 @@ void
 cleanup(void)
 {
 	sym_t	*sym, *nsym;
-	int	i;
+	size_t	i;
 
 	for (i = 0; i < HSHSIZ1; i++) {
 		for (sym = symtab[i]; sym != NULL; sym = nsym) {
@@ -1487,7 +1487,7 @@ cleanup(void)
 	}
 
 	for (i = mem_block_level; i > 0; i--)
-		freelblk(i);
+		level_free_all(i);
 }
 
 /*
@@ -1500,7 +1500,7 @@ pushdown(const sym_t *sym)
 
 	debug_step("pushdown '%s' %s '%s'",
 	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
-	nsym = getblk(sizeof(*nsym));
+	nsym = block_zero_alloc(sizeof(*nsym));
 	lint_assert(sym->s_block_level <= block_level);
 	nsym->s_name = sym->s_name;
 	UNIQUE_CURR_POS(nsym->s_def_pos);

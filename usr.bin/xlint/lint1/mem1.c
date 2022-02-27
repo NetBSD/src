@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.59 2022/02/27 07:38:54 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.60 2022/02/27 08:31:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.59 2022/02/27 07:38:54 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.60 2022/02/27 08:31:26 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -243,7 +243,7 @@ initmem(void)
 
 /* Allocate memory associated with level l, initialized with zero. */
 void *
-getlblk(size_t l, size_t s)
+level_zero_alloc(size_t l, size_t s)
 {
 
 	while (l >= nmblks) {
@@ -254,40 +254,27 @@ getlblk(size_t l, size_t s)
 	return xgetblk(&mblks[l], s);
 }
 
-/*
- * Return allocated memory for the current mem_block_level, initialized with
- * zero.
- */
+/* Allocate memory that is freed at the end of the current block. */
 void *
-getblk(size_t s)
+block_zero_alloc(size_t s)
 {
 
-	return getlblk(mem_block_level, s);
-}
-
-/* Free all memory associated with level l. */
-void
-freelblk(int l)
-{
-
-	xfreeblk(&mblks[l]);
+	return level_zero_alloc(mem_block_level, s);
 }
 
 void
-freeblk(void)
+level_free_all(size_t level)
 {
 
-	freelblk(mem_block_level);
+	xfreeblk(&mblks[level]);
 }
+
 
 static	memory_block	*tmblk;
 
-/*
- * Return zero-initialized memory that is freed at the end of the current
- * expression.
- */
+/* Allocate memory that is freed at the end of the current expression. */
 void *
-expr_zalloc(size_t s)
+expr_zero_alloc(size_t s)
 {
 
 	return xgetblk(&tmblk, s);
@@ -311,9 +298,9 @@ str_endswith(const char *haystack, const char *needle)
  * bool mode less restrictive.
  */
 tnode_t *
-expr_zalloc_tnode(void)
+expr_alloc_tnode(void)
 {
-	tnode_t *tn = expr_zalloc(sizeof(*tn));
+	tnode_t *tn = expr_zero_alloc(sizeof(*tn));
 	/*
 	 * files named *.c that are different from the main translation unit
 	 * typically contain generated code that cannot be influenced, such

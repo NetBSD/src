@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.126 2021/11/16 21:01:05 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.127 2022/02/27 08:31:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.126 2021/11/16 21:01:05 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.127 2022/02/27 08:31:26 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1086,7 +1086,7 @@ do_return(bool sys, tnode_t *tn)
 	if (tn != NULL) {
 
 		/* Create a temporary node for the left side */
-		ln = expr_zalloc(sizeof(*ln));
+		ln = expr_zero_alloc(sizeof(*ln));
 		ln->tn_op = NAME;
 		ln->tn_type = expr_unqualified_type(funcsym->s_type->t_subt);
 		ln->tn_lvalue = true;
