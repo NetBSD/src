@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.12 2022/02/15 18:14:18 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.13 2022/02/27 14:18:42 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.12 2022/02/15 18:14:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.13 2022/02/27 14:18:42 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -187,10 +187,11 @@ __active_retire(struct i915_active *ref)
 	GEM_BUG_ON(rcu_access_pointer(ref->excl.fence));
 	debug_active_deactivate(ref);
 
-	root = ref->tree;
 #ifdef __NetBSD__
+	rb_move(&root, &ref->tree);
 	rb_tree_init(&ref->tree.rbr_tree, &active_rb_ops);
 #else
+	root = ref->tree;
 	ref->tree = RB_ROOT;
 #endif
 	ref->cache = NULL;
