@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.51 2021/12/19 12:13:16 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.52 2022/02/27 14:22:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,11 +33,7 @@
 #define _LINUX_PCI_H_
 
 #ifdef _KERNEL_OPT
-#if defined(i386) || defined(amd64) || defined(__aarch64__)
 #include "acpica.h"
-#else	/* !(i386 || amd64) */
-#define NACPICA	0
-#endif	/* i386 || amd64 */
 #endif
 
 #include <sys/types.h>

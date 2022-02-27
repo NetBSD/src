@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.h,v 1.7 2022/02/27 14:22:21 riastradh Exp $	*/
+/*	$NetBSD: acpi.h,v 1.8 2022/02/27 14:22:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,11 +33,7 @@
 #define _LINUX_ACPI_H_
 
 #ifdef _KERNEL_OPT
-#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
 #include "acpica.h"
-#else
-#define NACPICA 0
-#endif
 #endif
 
 #if NACPICA > 0
