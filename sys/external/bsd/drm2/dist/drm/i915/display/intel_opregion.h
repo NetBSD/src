@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.h,v 1.4 2021/12/24 15:08:09 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.h,v 1.5 2022/02/27 21:22:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2017 Intel Corporation
@@ -51,7 +51,11 @@ struct intel_opregion {
 	u32 vbt_size;
 	u32 *lid_state;
 	struct work_struct asle_work;
+#ifdef __NetBSD__
+	struct acpidisp_notifier *acpi_notifier;
+#else
 	struct notifier_block acpi_notifier;
+#endif
 };
 
 #define OPREGION_SIZE            (8 * 1024)
