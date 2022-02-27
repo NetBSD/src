@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.h,v 1.8 2022/02/27 14:22:29 riastradh Exp $	*/
+/*	$NetBSD: acpi.h,v 1.9 2022/02/27 14:22:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 typedef ACPI_HANDLE acpi_handle;
 typedef ACPI_OBJECT_TYPE acpi_object_type;
+typedef ACPI_SIZE acpi_size;
 typedef ACPI_STATUS acpi_status;
 
 #define	acpi_evaluate_dsm	linux_acpi_evaluate_dsm
