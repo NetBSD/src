@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.381 2022/02/26 20:36:11 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.382 2022/02/27 01:47:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.381 2022/02/26 20:36:11 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.382 2022/02/27 01:47:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1970,7 +1970,7 @@ function_definition:		/* C99 6.9.1 */
 		}
 		funcdef($1);
 		block_level++;
-		begin_declaration_level(ARG);
+		begin_declaration_level(OLD_STYLE_ARG);
 		if (lwarn == LWARN_NONE)
 			$1->s_used = true;
 	  } arg_declaration_list_opt {
