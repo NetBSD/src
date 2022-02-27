@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.35 2022/02/11 23:19:59 riastradh Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.36 2022/02/27 14:19:07 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.35 2022/02/11 23:19:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.36 2022/02/27 14:19:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -557,11 +557,7 @@ acpi_pci_bus_get_child_devhandle(device_t dev, devhandle_t call_handle, void *v)
 	int b, d, f;
 	u_int segment;
 
-#ifdef __HAVE_PCI_GET_SEGMENT
 	segment = pci_get_segment(args->pc);
-#else
-	segment = 0;
-#endif /* __HAVE_PCI_GET_SEGMENT */
 
 	pci_decompose_tag(args->pc, args->tag, &b, &d, &f);
 
