@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.231 2022/02/27 08:31:26 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.232 2022/02/27 10:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.231 2022/02/27 08:31:26 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.232 2022/02/27 10:31:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -249,7 +249,7 @@ update_type_of_array_of_unknown_size(sym_t *sym, size_t size)
 {
 	type_t *tp;
 
-	tp = dup_type(sym->s_type);
+	tp = block_dup_type(sym->s_type);
 	tp->t_dim = (int)size;
 	tp->t_incomplete_array = false;
 	sym->s_type = tp;

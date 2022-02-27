@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.147 2022/02/27 08:31:26 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.148 2022/02/27 10:31:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -168,7 +168,7 @@ extern	int	enumval;
 
 extern	void	initdecl(void);
 extern	type_t	*gettyp(tspec_t);
-extern	type_t	*dup_type(const type_t *);
+extern	type_t	*block_dup_type(const type_t *);
 extern	type_t	*expr_dup_type(const type_t *);
 extern	type_t	*expr_unqualified_type(const type_t *);
 extern	bool	is_incomplete(const type_t *);
@@ -229,7 +229,7 @@ extern	const char *scl_name(scl_t);
  * tree.c
  */
 extern	const tnode_t *before_conversion(const tnode_t *);
-extern	type_t	*derive_type(type_t *, tspec_t);
+extern	type_t	*block_derive_type(type_t *, tspec_t);
 extern	type_t	*expr_derive_type(type_t *, tspec_t);
 extern	bool	is_compiler_builtin(const char *);
 extern	tnode_t	*build_constant(type_t *, val_t *);

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.246 2022/02/27 08:31:26 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.247 2022/02/27 10:31:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.246 2022/02/27 08:31:26 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.247 2022/02/27 10:31:58 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -159,8 +159,8 @@ scl_name(scl_t scl)
 /*
  * Returns a shared type structure for arithmetic types and void.
  *
- * It's important to duplicate this structure (using dup_type() or
- * expr_dup_type()) if it is to be modified (adding qualifiers or anything
+ * It's important to duplicate this structure using block_dup_type or
+ * expr_dup_type if it is to be modified (adding qualifiers or anything
  * else).
  */
 type_t *
@@ -172,7 +172,7 @@ gettyp(tspec_t t)
 }
 
 type_t *
-dup_type(const type_t *tp)
+block_dup_type(const type_t *tp)
 {
 	type_t	*ntp;
 
@@ -181,10 +181,7 @@ dup_type(const type_t *tp)
 	return ntp;
 }
 
-/*
- * Use expr_dup_type() instead of dup_type() inside expressions (if the
- * allocated memory should be freed after the expr).
- */
+/* Duplicate a type, free the allocated memory after the expression. */
 type_t *
 expr_dup_type(const type_t *tp)
 {
@@ -451,7 +448,7 @@ tdeferr(type_t *td, tspec_t t)
 		if (!tflag)
 			/* modifying typedef with '%s'; only qualifiers... */
 			warning(5, tspec_name(t));
-		td = dup_type(gettyp(merge_signedness(t2, t)));
+		td = block_dup_type(gettyp(merge_signedness(t2, t)));
 		td->t_typedef = true;
 		return td;
 	}
@@ -459,7 +456,7 @@ tdeferr(type_t *td, tspec_t t)
 	if (t == SHORT && (t2 == INT || t2 == UINT)) {
 		/* modifying typedef with '%s'; only qualifiers allowed */
 		warning(5, "short");
-		td = dup_type(gettyp(t2 == INT ? SHORT : USHORT));
+		td = block_dup_type(gettyp(t2 == INT ? SHORT : USHORT));
 		td->t_typedef = true;
 		return td;
 	}
@@ -484,7 +481,7 @@ tdeferr(type_t *td, tspec_t t)
 		} else if (t2 == DCOMPLEX) {
 			td = gettyp(LCOMPLEX);
 		}
-		td = dup_type(td);
+		td = block_dup_type(td);
 		td->t_typedef = true;
 		return td;
 	}
@@ -864,7 +861,7 @@ end_type(void)
 	}
 
 	if (dcs->d_const || dcs->d_volatile) {
-		dcs->d_type = dup_type(dcs->d_type);
+		dcs->d_type = block_dup_type(dcs->d_type);
 		dcs->d_type->t_const |= dcs->d_const;
 		dcs->d_type->t_volatile |= dcs->d_volatile;
 	}
@@ -995,9 +992,10 @@ check_type(sym_t *sym)
 				/* function returns illegal type */
 				error(15);
 				if (t == FUNC) {
-					*tpp = derive_type(*tpp, PTR);
+					*tpp = block_derive_type(*tpp, PTR);
 				} else {
-					*tpp = derive_type((*tpp)->t_subt, PTR);
+					*tpp = block_derive_type(
+					    (*tpp)->t_subt, PTR);
 				}
 				return;
 			} else if (tp->t_const || tp->t_volatile) {
@@ -1105,7 +1103,7 @@ check_bit_field_type(sym_t *dsym,  type_t **const inout_tp, tspec_t *inout_t)
 			/* illegal bit-field type '%s' */
 			warning(35, type_name(tp));
 			sz = tp->t_flen;
-			dsym->s_type = tp = dup_type(gettyp(t = INT));
+			dsym->s_type = tp = block_dup_type(gettyp(t = INT));
 			if ((tp->t_flen = sz) > size_in_bits(t))
 				tp->t_flen = size_in_bits(t);
 			*inout_t = t;
@@ -1175,7 +1173,7 @@ declarator_1_struct_union(sym_t *dsym)
 	} else if (t == FUNC) {
 		/* function illegal in structure or union */
 		error(38);
-		dsym->s_type = tp = derive_type(tp, t = PTR);
+		dsym->s_type = tp = block_derive_type(tp, t = PTR);
 	}
 
 	/*
@@ -1259,7 +1257,7 @@ bitfield(sym_t *dsym, int len)
 		dsym->s_type = gettyp(UINT);
 		dsym->s_block_level = -1;
 	}
-	dsym->s_type = dup_type(dsym->s_type);
+	dsym->s_type = block_dup_type(dsym->s_type);
 	dsym->s_type->t_bitfield = true;
 	dsym->s_type->t_flen = len;
 	dsym->s_bitfield = true;
@@ -2014,7 +2012,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 	}
 
 	if (dsym->s_scl == TYPEDEF) {
-		dsym->s_type = dup_type(dsym->s_type);
+		dsym->s_type = block_dup_type(dsym->s_type);
 		dsym->s_type->t_typedef = true;
 		settdsym(dsym->s_type, dsym);
 	}
@@ -2370,13 +2368,13 @@ complete_type(sym_t *dsym, sym_t *ssym)
 		lint_assert(dst->t_tspec == src->t_tspec);
 		if (dst->t_tspec == ARRAY) {
 			if (dst->t_dim == 0 && src->t_dim != 0) {
-				*dstp = dst = dup_type(dst);
+				*dstp = dst = block_dup_type(dst);
 				dst->t_dim = src->t_dim;
 				setcomplete(dst, true);
 			}
 		} else if (dst->t_tspec == FUNC) {
 			if (!dst->t_proto && src->t_proto) {
-				*dstp = dst = dup_type(dst);
+				*dstp = dst = block_dup_type(dst);
 				dst->t_proto = true;
 				dst->t_args = src->t_args;
 			}
@@ -2421,12 +2419,12 @@ declare_argument(sym_t *sym, bool initflg)
 		sym->s_type = gettyp(VOID);
 
 	if ((t = sym->s_type->t_tspec) == ARRAY) {
-		sym->s_type = derive_type(sym->s_type->t_subt, PTR);
+		sym->s_type = block_derive_type(sym->s_type->t_subt, PTR);
 	} else if (t == FUNC) {
 		if (tflag)
 			/* a function is declared as an argument: %s */
 			warning(50, sym->s_name);
-		sym->s_type = derive_type(sym->s_type, PTR);
+		sym->s_type = block_derive_type(sym->s_type, PTR);
 	} else if (t == FLOAT) {
 		if (tflag)
 			sym->s_type = gettyp(DOUBLE);
@@ -2755,7 +2753,7 @@ declare_local(sym_t *dsym, bool initflg)
 	}
 
 	if (dsym->s_scl == TYPEDEF) {
-		dsym->s_type = dup_type(dsym->s_type);
+		dsym->s_type = block_dup_type(dsym->s_type);
 		dsym->s_type->t_typedef = true;
 		settdsym(dsym->s_type, dsym);
 	}
