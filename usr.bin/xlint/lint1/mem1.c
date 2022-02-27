@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.57 2021/12/25 13:51:42 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.58 2022/02/27 06:55:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.57 2021/12/25 13:51:42 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.58 2022/02/27 06:55:13 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -197,9 +197,6 @@ static	memory_block	**mblks;
 /* number of elements in *mblks */
 static	size_t	nmblks;
 
-/* free list for memory blocks */
-static	memory_block	*frmblks;
-
 /* length of new allocated memory blocks */
 static	size_t	mblklen;
 
@@ -235,20 +232,16 @@ xgetblk(memory_block **mbp, size_t s)
 
 	s = WORST_ALIGN(s);
 	if ((mb = *mbp) == NULL || mb->nfree < s) {
-		if ((mb = frmblks) == NULL || mb->size < s) {
-			if (s > mblklen) {
-				t = mblklen;
-				mblklen = s;
-			}
-			mb = xnewblk();
-#ifndef BLKDEBUG
-			(void)memset(mb->start, 0, mb->size);
-#endif
-			if (t > 0)
-				mblklen = t;
-		} else {
-			frmblks = mb->next;
+		if (s > mblklen) {
+			t = mblklen;
+			mblklen = s;
 		}
+		mb = xnewblk();
+#ifndef BLKDEBUG
+		(void)memset(mb->start, 0, mb->size);
+#endif
+		if (t > 0)
+			mblklen = t;
 		mb->first_free = mb->start;
 		mb->nfree = mb->size;
 		mb->next = *mbp;
@@ -263,10 +256,7 @@ xgetblk(memory_block **mbp, size_t s)
 	return p;
 }
 
-/*
- * Move all blocks from list *fmbp to free list. For each block, set all
- * used memory to zero.
- */
+/* Free all blocks from list *fmbp. */
 static void
 xfreeblk(memory_block **fmbp)
 {
@@ -274,10 +264,7 @@ xfreeblk(memory_block **fmbp)
 
 	while ((mb = *fmbp) != NULL) {
 		*fmbp = mb->next;
-		mb->next = frmblks;
-		frmblks = mb;
-		(void)memset(mb->start, INVALID_MEM_BYTE,
-		    mb->size - mb->nfree);
+		free(mb);
 	}
 }
 
