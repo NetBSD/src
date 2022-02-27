@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.141 2022/02/27 11:14:42 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.142 2022/02/27 18:29:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -86,16 +86,10 @@ typedef struct {
  * Strings are stored with a trailing NUL.
  */
 typedef	struct strg {
-	tspec_t	st_tspec;		/* CHAR or WCHAR */
-	size_t	st_len;			/* length without trailing NUL */
-	union {
-		unsigned char *_st_cp;
-		wchar_t *_st_wcp;
-	} st_u;
+	bool	st_char;	/* string doesn't have an 'L' prefix */
+	size_t	st_len;		/* length without trailing NUL */
+	void	*st_mem;	/* char[] for st_char, or wchar_t[] */
 } strg_t;
-
-#define st_cp	st_u._st_cp
-#define	st_wcp	st_u._st_wcp
 
 /*
  * qualifiers (only for lex/yacc interface)

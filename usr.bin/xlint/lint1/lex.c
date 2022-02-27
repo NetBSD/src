@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.102 2022/02/27 10:44:45 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.103 2022/02/27 18:29:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.102 2022/02/27 10:44:45 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.103 2022/02/27 18:29:14 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1229,9 +1229,9 @@ lex_string(void)
 		error(258);
 
 	strg = xcalloc(1, sizeof(*strg));
-	strg->st_tspec = CHAR;
+	strg->st_char = true;
 	strg->st_len = len;
-	strg->st_cp = s;
+	strg->st_mem = s;
 
 	yylval.y_string = strg;
 	return T_STRING;
@@ -1286,9 +1286,9 @@ lex_wide_string(void)
 	free(s);
 
 	strg = xcalloc(1, sizeof(*strg));
-	strg->st_tspec = WCHAR;
+	strg->st_char = false;
 	strg->st_len = wlen;
-	strg->st_wcp = ws;
+	strg->st_mem = ws;
 
 	yylval.y_string = strg;
 	return T_STRING;
@@ -1531,12 +1531,7 @@ freeyyv(void *sp, int tok)
 		free(val);
 	} else if (tok == T_STRING) {
 		strg_t *strg = *(strg_t **)sp;
-		if (strg->st_tspec == CHAR) {
-			free(strg->st_cp);
-		} else {
-			lint_assert(strg->st_tspec == WCHAR);
-			free(strg->st_wcp);
-		}
+		free(strg->st_mem);
 		free(strg);
 	}
 }
