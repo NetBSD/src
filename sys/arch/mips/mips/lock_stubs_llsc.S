@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.15 2022/02/27 19:21:53 riastradh Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.16 2022/02/27 19:22:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_llsc.S,v 1.15 2022/02/27 19:21:53 riastradh Exp $")
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.16 2022/02/27 19:22:02 riastradh Exp $")
 
 #include "assym.h"
 
@@ -207,7 +207,6 @@ STATIC_LEAF(llsc_mutex_exit)
 	SYNC_REL
 	LLSCSYNC
 	PTR_LL	t0, MTX_OWNER(a0)
-	SYNC
 1:
 	bne	t0, MIPS_CURLWP, 2f
 	 move	t2, zero
