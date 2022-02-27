@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.52 2022/02/27 14:22:29 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.53 2022/02/27 14:23:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -90,6 +90,12 @@ struct pci_device_id {
 
 #define	PCI_CLASS_DISPLAY_VGA						\
 	((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_VGA)
+CTASSERT(PCI_CLASS_DISPLAY_VGA == 0x0300);
+
+#define	PCI_CLASS_DISPLAY_OTHER						\
+	((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_MISC)
+CTASSERT(PCI_CLASS_DISPLAY_OTHER == 0x0380);
+
 #define	PCI_CLASS_BRIDGE_ISA						\
 	((PCI_CLASS_BRIDGE << 8) | PCI_SUBCLASS_BRIDGE_ISA)
 CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
