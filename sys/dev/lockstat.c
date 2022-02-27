@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.28 2022/02/27 14:16:12 riastradh Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.29 2022/02/27 14:16:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2019 The NetBSD Foundation, Inc.
@@ -41,24 +41,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.28 2022/02/27 14:16:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.29 2022/02/27 14:16:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/proc.h> 
-#include <sys/resourcevar.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/kmem.h>
+
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/lock.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/syslog.h>
-#include <sys/atomic.h>
+#include <sys/systm.h>
 #include <sys/xcall.h>
 
 #include <dev/lockstat.h>
-
-#include <machine/lock.h>
 
 #include "ioconf.h"
 
@@ -353,7 +353,7 @@ lockstat_alloc(lsenable_t *le)
 	KASSERT(lockstat_baseb == NULL);
 	lockstat_sizeb = sz;
 	lockstat_baseb = lb;
-		
+
 	return (0);
 }
 
