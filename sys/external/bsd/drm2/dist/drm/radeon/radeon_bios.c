@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_bios.c,v 1.8 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_bios.c,v 1.9 2022/02/27 14:23:16 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.8 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.9 2022/02/27 14:23:16 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/pci.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.8 2021/12/18 23:45:43 riastradh Ex
 #include "atom.h"
 #include "radeon.h"
 #include "radeon_reg.h"
+
+#include <linux/nbsd-namespace-acpi.h>
 
 /*
  * BIOS.
@@ -183,7 +185,6 @@ static bool radeon_read_platform_bios(struct radeon_device *rdev)
 #endif
 }
 
-/* XXX radeon acpi */
 #ifdef CONFIG_ACPI
 /* ATRM is used to get the BIOS on the discrete cards in
  * dual-gpu systems.
@@ -247,7 +248,11 @@ static bool radeon_atrm_get_bios(struct radeon_device *rdev)
 		return false;
 
 	while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, pdev)) != NULL) {
+#ifdef __NetBSD__
+		dhandle = (pdev->pd_ad ? pdev->pd_ad->ad_handle : NULL);
+#else
 		dhandle = ACPI_HANDLE(&pdev->dev);
+#endif
 		if (!dhandle)
 			continue;
 
@@ -260,7 +265,12 @@ static bool radeon_atrm_get_bios(struct radeon_device *rdev)
 
 	if (!found) {
 		while ((pdev = pci_get_class(PCI_CLASS_DISPLAY_OTHER << 8, pdev)) != NULL) {
+#ifdef __NetBSD__
+			dhandle = (pdev->pd_ad ? pdev->pd_ad->ad_handle
+			    : NULL);
+#else
 			dhandle = ACPI_HANDLE(&pdev->dev);
+#endif
 			if (!dhandle)
 				continue;
 
