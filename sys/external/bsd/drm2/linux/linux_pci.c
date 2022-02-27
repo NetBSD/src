@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.20 2021/12/19 12:00:16 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.21 2022/02/27 14:19:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.20 2021/12/19 12:00:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.21 2022/02/27 14:19:20 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -88,11 +88,7 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev, device_t parent,
 	pdev->pd_rom_vaddr = NULL;
 	pdev->pd_dev = dev;
 #if (NACPICA > 0)
-#ifdef __HAVE_PCI_GET_SEGMENT
 	const int seg = pci_get_segment(pa->pa_pc);
-#else
-	const int seg = 0;
-#endif
 	pdev->pd_ad = acpi_pcidev_find(seg, pa->pa_bus,
 	    pa->pa_device, pa->pa_function);
 #else
