@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.5 2021/12/24 15:08:09 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.6 2022/02/27 21:22:01 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.5 2021/12/24 15:08:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.6 2022/02/27 21:22:01 riastradh Exp $");
+
+#ifdef __NetBSD__
+#include <dev/acpi/acpi_display.h>
+#endif
 
 #include <linux/acpi.h>
 #include <linux/dmi.h>
@@ -623,27 +627,23 @@ void intel_opregion_asle_intr(struct drm_i915_private *dev_priv)
 #define ACPI_EV_DOCK           (1<<2)
 
 #ifdef __NetBSD__
-static struct intel_opregion *system_opregion;
-
 static void
-intel_opregion_video_event(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
+intel_opregion_video_event(ACPI_HANDLE hdl, uint32_t notify, void *cookie)
 {
-	device_t self = opaque;
-	struct opregion_acpi *acpi;
+	struct intel_opregion *opregion = cookie;
+	struct opregion_acpi *acpi = opregion->acpi;
 
-	DRM_DEBUG_DRIVER("notify=0x%08x\n", notify);
+	DRM_DEBUG_DRIVER("notify=0x%08x csts=0x%02x cevt=0x%02x\n", notify,
+	    acpi->csts, acpi->cevt);
 
-	if (!system_opregion)
+	/*
+	 * The firmware sets CSTS to 0x03 `Dispatched (ASL)' before
+	 * issuing any graphics notification, and won't issue
+	 * additional notifications until the graphics driver sets CSTS
+	 * to 0x00 `Success (Driver)' to acknowledge it.
+	 */
+	if (acpi->csts != 0x03)
 		return;
-
-	acpi = system_opregion->acpi;
-
-	if (notify != 0x80) {
-		aprint_error_dev(self, "unknown notify 0x%02x\n", notify);
-	} else if ((acpi->cevt & 1) == 0) {
-		aprint_error_dev(self, "bad notify\n");
-	}
-
 	acpi->csts = 0;
 }
 #else	/* !__NetBSD__ */
@@ -1147,13 +1147,9 @@ void intel_opregion_register(struct drm_i915_private *i915)
 
 	if (opregion->acpi) {
 #ifdef __NetBSD__
-		if (i915->drm.pdev->pd_ad != NULL) {
-			/* XXX gross but expedient */
-			KASSERT(system_opregion == NULL);
-			system_opregion = opregion;
-			acpi_register_notify(i915->drm.pdev->pd_ad,
-			    intel_opregion_video_event);
-		}
+		opregion->acpi_notifier =
+		    acpidisp_register_notify(intel_opregion_video_event,
+			opregion);
 #else
 		opregion->acpi_notifier.notifier_call =
 			intel_opregion_video_event;
@@ -1220,9 +1216,9 @@ void intel_opregion_unregister(struct drm_i915_private *i915)
 		return;
 
 #ifdef __NetBSD__
-	if (opregion->acpi) {
-		if (i915->drm.pdev->pd_ad != NULL)
-			acpi_deregister_notify(i915->drm.pdev->pd_ad);
+	if (opregion->acpi_notifier) {
+		acpidisp_deregister_notify(opregion->acpi_notifier);
+		opregion->acpi_notifier = NULL;
 	}
 #else
 	if (opregion->acpi_notifier.notifier_call) {

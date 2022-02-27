@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.17 2021/12/19 11:49:12 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.18 2022/02/27 21:22:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.17 2021/12/19 11:49:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.18 2022/02/27 21:22:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.17 2021/12/19 11:49:12 riastradh E
 #include "i915_globals.h"
 #include "gt/intel_rps.h"
 
-MODULE(MODULE_CLASS_DRIVER, i915drmkms, "drmkms,drmkms_pci"); /* XXX drmkms_i2c */
+MODULE(MODULE_CLASS_DRIVER, i915drmkms, "acpivga,drmkms,drmkms_pci"); /* XXX drmkms_i2c */
 
 #ifdef _MODULE
 #include "ioconf.c"
