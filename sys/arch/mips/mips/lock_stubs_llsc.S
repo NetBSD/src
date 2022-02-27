@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.16 2022/02/27 19:22:02 riastradh Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.17 2022/02/27 19:22:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_llsc.S,v 1.16 2022/02/27 19:22:02 riastradh Exp $")
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.17 2022/02/27 19:22:29 riastradh Exp $")
 
 #include "assym.h"
 
@@ -342,10 +342,10 @@ LEAF(llsc_mutex_spin_exit)
 	 nop
 #endif
 	j	 _C_LABEL(splx)
-	 nop
+	 BDSYNC_PLUNGER
 1:
 	j	ra
-	 nop
+	 BDSYNC_PLUNGER
 #if defined(DIAGNOSTIC)
 2:
 	j	_C_LABEL(mutex_vector_exit)
