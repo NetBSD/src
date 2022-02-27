@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_acpi.c,v 1.5 2022/02/27 14:19:35 riastradh Exp $	*/
+/*	$NetBSD: intel_acpi.c,v 1.6 2022/02/27 14:20:30 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0
 /*
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.5 2022/02/27 14:19:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.6 2022/02/27 14:20:30 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -181,11 +181,7 @@ static const char *intel_dsm_mux_type(u8 type)
 static void intel_dsm_platform_mux_info(acpi_handle dhandle)
 {
 	int i;
-#ifdef __NetBSD__
-	ACPI_OBJECT *pkg, *connector_count;
-#else
 	union acpi_object *pkg, *connector_count;
-#endif
 
 	pkg = acpi_evaluate_dsm_typed(dhandle, &intel_dsm_guid,
 			INTEL_DSM_REVISION_ID, INTEL_DSM_FN_PLATFORM_MUX_INFO,
@@ -199,15 +195,9 @@ static void intel_dsm_platform_mux_info(acpi_handle dhandle)
 	DRM_DEBUG_DRIVER("MUX info connectors: %lld\n",
 		  (unsigned long long)connector_count->integer.value);
 	for (i = 1; i < pkg->package.count; i++) {
-#ifdef __NetBSD__
-		ACPI_OBJECT *obj = &pkg->package.elements[i];
-		ACPI_OBJECT *connector_id = &obj->package.elements[0];
-		ACPI_OBJECT *info = &obj->package.elements[1];
-#else
 		union acpi_object *obj = &pkg->package.elements[i];
 		union acpi_object *connector_id = &obj->package.elements[0];
 		union acpi_object *info = &obj->package.elements[1];
-#endif
 		DRM_DEBUG_DRIVER("Connector id: 0x%016llx\n",
 			  (unsigned long long)connector_id->integer.value);
 		DRM_DEBUG_DRIVER("  port id: %s\n",
