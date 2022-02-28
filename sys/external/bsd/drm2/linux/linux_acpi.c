@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_acpi.c,v 1.1 2022/02/27 14:22:21 riastradh Exp $	*/
+/*	$NetBSD: linux_acpi.c,v 1.2 2022/02/28 17:15:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,9 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_acpi.c,v 1.1 2022/02/27 14:22:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_acpi.c,v 1.2 2022/02/28 17:15:30 riastradh Exp $");
+
+#include <dev/acpi/acpireg.h>
 
 #include <linux/acpi.h>
+
+#define	_COMPONENT	ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME("linux_acpi")
 
 union acpi_object *
 acpi_evaluate_dsm(acpi_handle handle, const guid_t *uuid, u64 rev, u64 func,
