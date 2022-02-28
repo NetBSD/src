@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.105 2022/02/27 22:46:04 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.106 2022/02/28 22:41:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.105 2022/02/27 22:46:04 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.106 2022/02/28 22:41:07 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -87,7 +87,7 @@ bool in_system_header;
 	kwdef(name, token, 0, 0, 0,		0, 0, 1, 1, 5)
 
 /* During initialization, these keywords are written to the symbol table. */
-static struct keyword {
+static const struct keyword {
 	const	char *kw_name;	/* keyword */
 	int	kw_token;	/* token returned by yylex() */
 	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
@@ -344,7 +344,7 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 void
 initscan(void)
 {
-	struct keyword *kw;
+	const struct keyword *kw;
 
 	for (kw = keywords; kw->kw_name != NULL; kw++) {
 		if ((kw->kw_c90 || kw->kw_c99) && tflag)
