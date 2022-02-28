@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsubs.c,v 1.5 2022/01/14 19:19:34 christos Exp $	*/
+/*	$NetBSD: nfs_clntsubs.c,v 1.6 2022/02/28 08:45:36 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.5 2022/01/14 19:19:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.6 2022/02/28 08:45:36 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -360,20 +360,9 @@ nfs_delayedtruncate(struct vnode *vp)
 		np->n_flag &= ~NTRUNCDELAYED;
 		genfs_node_wrlock(vp);
 		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
-
-		/*
-		 * This is disgusting but we can be called from VOP_UNLOCK
-		 * where the interlock is sometimes held, and we want to
-		 * make sure that it is unlocked when we call VOP_PUTPAGES
-		 * and uvm_vnp_setsize.
-		 */
-		int got = mutex_tryenter(vp->v_interlock);
-		mutex_exit(vp->v_interlock);
 		(void)VOP_PUTPAGES(vp, 0,
 		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);
-		if (!got)
-			mutex_enter(vp->v_interlock);
 		genfs_node_unlock(vp);
 	}
 }
