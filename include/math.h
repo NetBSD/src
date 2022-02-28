@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.65 2018/06/24 23:55:29 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.65.4.1 2022/02/28 16:37:34 martin Exp $	*/
 
 /*
  * ====================================================
@@ -21,6 +21,16 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 
+/*
+ * Missing for C99 support:
+ * - MATH_ERRNO
+ * - MATH_ERREXCEPT
+ * - FP_FAST_FMA
+ * - FP_FAST_FMAF
+ * - FP_FAST_FMAL
+ * - math_errhandling
+ */
+
 union __float_u {
 	unsigned char __dummy[sizeof(float)];
 	float __val;
@@ -40,7 +50,14 @@ union __long_double_u {
 					   or __long_double_u */
 #include <limits.h>			/* for INT_{MIN,MAX} */
 
-#if ((_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE))
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)) || ((_POSIX_C_SOURCE - 0) >= 200809L || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+     (__cplusplus - 0) >= 201103L || defined(_NETBSD_SOURCE))
+#define __MATH_C99_FEATURES
+#endif
+
+#ifdef __MATH_C99_FEATURES
 #  if defined(__FLT_EVAL_METHOD__) && (__FLT_EVAL_METHOD__ - 0) == 0
 typedef double double_t;
 typedef float float_t;
@@ -83,12 +100,8 @@ extern const union __double_u __infinity;
 /*
  * ISO C99
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE) || \
-    ((__STDC_VERSION__ - 0) >= 199901L) || \
-    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
-    ((_XOPEN_SOURCE  - 0) >= 600) || \
-    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(__MATH_C99_FEATURES) || \
+    (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE  - 0) >= 600
 /* 7.12#3 HUGE_VAL, HUGELF, HUGE_VALL */
 #if __GNUC_PREREQ__(3, 3)
 #define	HUGE_VALF	__builtin_huge_valf()
@@ -133,7 +146,7 @@ extern const union __float_u __nanf;
 #define	FP_ILOGB0	INT_MIN
 #define	FP_ILOGBNAN	INT_MAX
 
-#endif /* !_ANSI_SOURCE && ... */
+#endif /* C99 || _XOPEN_SOURCE >= 600 */
 
 /*
  * XOPEN/SVID
@@ -238,16 +251,18 @@ double	fabs(double);
 double	floor(double);
 double	fmod(double, double);
 
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(__MATH_C99_FEATURES) || defined(_XOPEN_SOURCE)
 double	erf(double);
 double	erfc(double);
-double	gamma(double);
 double	hypot(double, double);
+#endif
+
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	finite(double);
+double	gamma(double);
 double	j0(double);
 double	j1(double);
 double	jn(int, double);
-double	lgamma(double);
 double	y0(double);
 double	y1(double);
 double	yn(int, double);
@@ -260,12 +275,7 @@ double	scalb(double, double);
 /*
  * ISO C99
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE) || \
-    ((__STDC_VERSION__ - 0) >= 199901L) || \
-    ((_POSIX_C_SOURCE - 0) >= 200809L) || \
-    ((_XOPEN_SOURCE  - 0) >= 500) || \
-    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(__MATH_C99_FEATURES) || (_XOPEN_SOURCE - 0) >= 500
 double	acosh(double);
 double	asinh(double);
 double	atanh(double);
@@ -279,12 +289,8 @@ double	remainder(double, double);
 double	rint(double);
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE) || \
-    ((__STDC_VERSION__ - 0) >= 199901L) || \
-    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
-    ((_XOPEN_SOURCE  - 0) >= 600) || \
-    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(__MATH_C99_FEATURES) || (_XOPEN_SOURCE - 0) >= 600 || \
+    (_POSIX_C_SOURCE - 0) >= 200112L
 /* 7.12.3.1 int fpclassify(real-floating x) */
 #define	fpclassify(__x)	__fpmacro_unary_floating(fpclassify, __x)
 
@@ -331,6 +337,8 @@ long double	sinhl(long double);
 long double	tanhl(long double);
 
 /* 7.12.6 exp / log */
+double	scalbn(double, int);
+double	scalbln(double, long);
 
 float	expf(float);
 float	exp2f(float);
@@ -378,6 +386,7 @@ long double	sqrtl(long double);
 
 /* 7.12.8 error / gamma */
 
+double	lgamma(double);
 double	tgamma(double);
 float	erff(float);
 float	erfcf(float);
@@ -436,6 +445,7 @@ long double	remquol(long double, long double, int *);
 
 /* 7.12.11 manipulation */
 
+double	copysign(double, double);
 double	nan(const char *);
 double	nearbyint(double);
 double	nexttoward(double, long double);
@@ -474,11 +484,7 @@ long double fminl(long double, long double);
 
 #endif /* !_ANSI_SOURCE && ... */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    !defined(_XOPEN_SOURCE) || \
-    ((__STDC_VERSION__ - 0) >= 199901L) || \
-    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
-    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(__MATH_C99_FEATURES) || (_POSIX_C_SOURCE - 0) >= 200112L
 /* 7.12.3.3 int isinf(real-floating x) */
 #if defined(__isinf) || defined(__HAVE_INLINE___ISINF)
 #define	isinf(__x)	__isinf(__x)
@@ -503,13 +509,6 @@ int	matherr(struct exception *);
  * IEEE Test Vector
  */
 double	significand(double);
-
-/*
- * Functions callable from C, intended to support IEEE arithmetic.
- */
-double	copysign(double, double);
-double	scalbn(double, int);
-double	scalbln(double, long);
 
 /*
  * BSD math library entry points
