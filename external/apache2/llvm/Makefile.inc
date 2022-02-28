@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2021/05/30 01:56:45 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2022/02/28 16:30:10 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -50,6 +50,9 @@ LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips,amdgpu
 CXXFLAGS+=		${${ACTIVE_CC} == "clang":? ${MODULES_CXXFLAGS} :}
 
 CXXFLAGS+=	-std=c++14
+.if ${MKDEBUG:Uno} != "no"
+CXXFLAGS+=	-g1
+.endif
 CXXFLAGS+=	-fno-rtti -fno-exceptions ${${ACTIVE_CC} == "gcc" :? -fno-strict-aliasing :}
 CXXFLAGS+=	-ffunction-sections -fdata-sections
 LDFLAGS+=	-Wl,--gc-sections
