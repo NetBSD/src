@@ -1,4 +1,4 @@
-.\"	$NetBSD: seq.1,v 1.11 2021/11/01 21:28:03 andvar Exp $
+.\"	$NetBSD: seq.1,v 1.12 2022/02/28 13:49:50 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,12 +45,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility prints a sequence of numbers, one per line
-.Pq default ,
+utility prints a sequence of numbers, one per line by default,
 from
 .Ar first
-.Pq default 1 ,
-to near
+.Pq default 1
+to as near
 .Ar last
 as possible, in increments of
 .Ar incr
@@ -131,21 +130,50 @@ the default conversion is changed to
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
+Generate a sequence from 1 to 3 (inclusive) with a default increment of 1:
 .Bd -literal -offset indent
-# seq 1 3
+$ seq 1 3
 1
 2
 3
-
-# seq 3 1
+.Ed
+.Pp
+Generate a sequence from 3 to 1 (inclusive) with a default increment of -1:
+.Bd -literal -offset indent
+$ seq 3 1
 3
 2
 1
-
-# seq -w 0 .05 .1
+.Ed
+.Pp
+Generate a sequence from 0 to 0.1 (inclusive) with an increment of 0.05
+and padding with leading zeroes:
+.Bd -literal -offset indent
+$ seq -w 0 .05 .1
 0.00
 0.05
 0.10
+.Ed
+.Pp
+Generate a sequence from 1 to 3 (inclusive) with a default increment of 1,
+and a custom separator string:
+.Bd -literal -offset indent
+$ seq -s "," 1 3
+1,2,3
+.Ed
+.Pp
+Generate a sequence from 1 to 2 (inclusive) with an increment of 0.2 and
+print the results with two digits after the decimal point (using a
+.Xr printf 3
+style format):
+.Bd -literal -offset indent
+$ seq -f %.2f 1 0.2 2
+1.00
+1.20
+1.40
+1.60
+1.80
+2.00
 .Ed
 .Sh SEE ALSO
 .Xr jot 1 ,
