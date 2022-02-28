@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.133 2022/02/17 14:39:51 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.134 2022/02/28 08:44:04 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.133 2022/02/17 14:39:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.134 2022/02/28 08:44:04 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -801,15 +801,15 @@ retry:
 	 */
 	for (use = atomic_load_relaxed(&vp->v_usecount);; use = next) {
 		if (__predict_false((use & VUSECOUNT_MASK) > 1)) {
+			if (objlock_held) {
+				objlock_held = false;
+				rw_exit(vp->v_uobj.vmobjlock);
+			}
 			if (lktype != LK_NONE) {
 				mutex_exit(vp->v_interlock);
 				lktype = LK_NONE;
 				VOP_UNLOCK(vp);
 				mutex_enter(vp->v_interlock);
-			}
-			if (objlock_held) {
-				objlock_held = false;
-				rw_exit(vp->v_uobj.vmobjlock);
 			}
 			if (vtryrele(vp)) {
 				mutex_exit(vp->v_interlock);
@@ -843,6 +843,10 @@ retry:
 	 * deactivate this node.
 	 */
 	if (VSTATE_GET(vp) == VS_RECLAIMED) {
+		if (objlock_held) {
+			objlock_held = false;
+			rw_exit(vp->v_uobj.vmobjlock);
+		}
 		if (lktype != LK_NONE) {
 			mutex_exit(vp->v_interlock);
 			lktype = LK_NONE;
@@ -884,7 +888,9 @@ retry:
 		 * clean it here.  We donate it our last reference.
 		 */
 		if (lktype != LK_NONE) {
+			mutex_exit(vp->v_interlock);
 			VOP_UNLOCK(vp);
+			mutex_enter(vp->v_interlock);
 		}
 		lru_requeue(vp, &lru_list[LRU_VRELE]);
 		mutex_exit(vp->v_interlock);
