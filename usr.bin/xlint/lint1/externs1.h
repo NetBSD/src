@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.148 2022/02/27 10:31:58 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.149 2022/03/01 00:17:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -115,7 +115,12 @@ extern	void	expr_restore_memory(struct memory_block *);
  */
 
 #ifdef DEBUG
+const char *scl_name(scl_t);
+const char *symt_name(symt_t);
+const char *tqual_name(tqual_t);
 void	debug_node(const tnode_t *);
+void	debug_sym(const sym_t *);
+void	debug_symtab(void);
 void	debug_printf(const char *fmt, ...) __printflike(1, 2);
 void	debug_print_indent(void);
 void	debug_indent_inc(void);
@@ -223,7 +228,6 @@ extern	void	check_usage_sym(bool, sym_t *);
 extern	void	check_global_symbols(void);
 extern	void	print_previous_declaration(int, const sym_t *);
 extern	int	to_int_constant(tnode_t *, bool);
-extern	const char *scl_name(scl_t);
 
 /*
  * tree.c
