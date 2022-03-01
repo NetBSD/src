@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.386 2022/02/27 19:32:51 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.387 2022/03/01 00:17:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.386 2022/02/27 19:32:51 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.387 2022/03/01 00:17:12 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2162,9 +2162,6 @@ yyerror(const char *msg)
 static const char *
 cgram_to_string(int token, YYSTYPE val)
 {
-	static const char *tqual_name[] = {
-		"const", "volatile", "restrict", "_Thread_local"
-	};
 
 	switch (token) {
 	case T_INCDEC:
@@ -2181,7 +2178,7 @@ cgram_to_string(int token, YYSTYPE val)
 	case T_STRUCT_OR_UNION:
 		return tspec_name(val.y_tspec);
 	case T_QUAL:
-		return tqual_name[val.y_tqual];
+		return tqual_name(val.y_tqual);
 	case T_NAME:
 		return val.y_name->sb_name;
 	default:

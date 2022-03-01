@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.106 2022/02/28 22:41:07 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.107 2022/03/01 00:17:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.106 2022/02/28 22:41:07 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.107 2022/03/01 00:17:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -306,6 +306,71 @@ symtab_remove_locals(void)
 		}
 	}
 }
+
+#ifdef DEBUG
+static int
+sym_by_name(const void *va, const void *vb)
+{
+	const sym_t *a = *(const sym_t *const *)va;
+	const sym_t *b = *(const sym_t *const *)vb;
+
+	return strcmp(a->s_name, b->s_name);
+}
+
+struct syms {
+	const sym_t **items;
+	size_t len;
+	size_t cap;
+};
+
+static void
+syms_add(struct syms *syms, const sym_t *sym)
+{
+	while (syms->len + 1 >= syms->cap) {
+		syms->cap *= 2;
+		syms->items = xrealloc(syms->items,
+		    syms->cap * sizeof(syms->items[0]));
+	}
+	syms->items[syms->len++] = sym;
+}
+
+void
+debug_symtab(void)
+{
+	struct syms syms = { xcalloc(64, sizeof(syms.items[0])), 0, 64 };
+
+	for (int level = 0;; level++) {
+		debug_printf("symbol table level %d\n", level);
+
+		bool more = false;
+		size_t n = sizeof(symtab) / sizeof(symtab[0]);
+
+		syms.len = 0;
+		for (size_t i = 0; i < n; i++) {
+			for (sym_t *sym = symtab[i]; sym != NULL;) {
+				if (sym->s_block_level == level &&
+				    sym->s_keyword == NULL)
+					syms_add(&syms, sym);
+				if (sym->s_block_level > level)
+					more = true;
+				sym = sym->s_symtab_next;
+			}
+		}
+
+		debug_indent_inc();
+		qsort(syms.items, syms.len, sizeof(syms.items[0]),
+		    sym_by_name);
+		for (size_t i = 0; i < syms.len; i++)
+			debug_sym(syms.items[i]);
+		debug_indent_dec();
+
+		if (!more)
+			break;
+	}
+
+	free(syms.items);
+}
+#endif
 
 static void
 add_keyword(const struct keyword *kw, bool leading, bool trailing)
@@ -1300,20 +1365,6 @@ lex_unknown_character(int c)
 	/* unknown character \%o */
 	error(250, c);
 }
-
-#ifdef DEBUG
-static const char *
-symt_name(symt_t kind)
-{
-	static const char *name[] = {
-		"var-func-type",
-		"member",
-		"tag",
-		"label",
-	};
-	return name[kind];
-}
-#endif
 
 /*
  * As noted above, the scanner does not create new symbol table entries

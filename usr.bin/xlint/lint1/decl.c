@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.251 2022/02/27 20:02:43 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.252 2022/03/01 00:17:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.251 2022/02/27 20:02:43 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.252 2022/03/01 00:17:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -139,22 +139,6 @@ initdecl(void)
 	typetab[DCOMPLEX].t_tspec = DCOMPLEX;
 	typetab[LCOMPLEX].t_tspec = LCOMPLEX;
 }
-
-#ifdef DEBUG
-/* Return the name of the "storage class" in the wider sense. */
-const char *
-scl_name(scl_t scl)
-{
-	static const char *const names[] = {
-	    "none", "extern", "static", "auto", "register", "typedef",
-	    "struct", "union", "enum", "member of struct", "member of union",
-	    "compile-time constant", "abstract",
-	    "old-style function argument", "prototype argument", "inline"
-	};
-
-	return names[scl];
-}
-#endif
 
 /*
  * Returns a shared type structure for arithmetic types and void.
@@ -1946,7 +1930,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 
 		/*
 		 * If the old symbol stems from an old style function
-		 * definition, we have remembered the params in rdsmy->s_args
+		 * definition, we have remembered the params in rdsym->s_args
 		 * and compare them with the params of the prototype.
 		 */
 		if (rdsym->s_osdef && dsym->s_type->t_proto) {
