@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.107 2022/03/01 00:17:12 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.108 2022/03/01 20:00:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.107 2022/03/01 00:17:12 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.108 2022/03/01 20:00:47 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -495,13 +495,11 @@ lex_name(const char *yytext, size_t yyleng)
 	if (sym != NULL) {
 		lint_assert(block_level >= sym->s_block_level);
 		sb->sb_name = sym->s_name;
-		sb->sb_len = strlen(sym->s_name);
 		tok = sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
 	} else {
 		s = block_zero_alloc(yyleng + 1);
 		(void)memcpy(s, yytext, yyleng + 1);
 		sb->sb_name = s;
-		sb->sb_len = yyleng;
 		tok = T_NAME;
 	}
 
