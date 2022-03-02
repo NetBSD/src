@@ -1,11 +1,11 @@
-# $NetBSD: meta-cmd-cmp.mk,v 1.5 2022/02/09 21:09:24 rillig Exp $
+# $NetBSD: meta-cmd-cmp.mk,v 1.6 2022/03/02 19:32:15 sjg Exp $
 #
 # Tests META_MODE command line comparison
 #
 
 .MAIN: all
 
-.MAKE.MODE= meta verbose silent=yes curdirok=yes
+.MAKE.MODE= meta verbose silent=yes curdirok=yes nofilemon
 tf:= .${.PARSEFILE:R}
 
 .if ${.TARGETS:Nall} == ""
