@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.29 2020/06/01 13:30:52 uwe Exp $	*/
+/*	$NetBSD: node.c,v 1.30 2022/03/02 04:11:41 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.29 2020/06/01 13:30:52 uwe Exp $");
+__RCSID("$NetBSD: node.c,v 1.30 2022/03/02 04:11:41 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -274,6 +274,8 @@ puffs9p_node_open(struct puffs_usermount *pu, void *opc, int mode,
 
 	puffs_setback(pcc, PUFFS_SETBACK_INACT_N1);
 	if (pn->pn_va.va_type != VDIR) {
+		/* Always require read access for page cache */
+		mode |= FREAD;
 		if (mode & FREAD && p9n->fid_read == P9P_INVALFID) {
 			nfid = NEXTFID(p9p);
 			error = proto_cc_open(pu, p9n->fid_base, nfid,
