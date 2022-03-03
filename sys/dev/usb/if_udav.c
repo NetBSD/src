@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.80 2022/03/03 05:50:57 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.81 2022/03/03 05:51:06 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.80 2022/03/03 05:50:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.81 2022/03/03 05:51:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -69,7 +69,7 @@ static unsigned udav_uno_tx_prepare(struct usbnet *, struct mbuf *,
 				    struct usbnet_chain *);
 static void udav_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static void udav_uno_stop(struct ifnet *, int);
-static int udav_uno_ioctl(struct ifnet *, u_long, void *);
+static void udav_uno_mcast(struct ifnet *);
 static int udav_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int udav_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void udav_uno_mii_statchg(struct ifnet *);
@@ -132,7 +132,7 @@ static const struct udav_type {
 
 static const struct usbnet_ops udav_ops = {
 	.uno_stop = udav_uno_stop,
-	.uno_ioctl = udav_uno_ioctl,
+	.uno_mcast = udav_uno_mcast,
 	.uno_read_reg = udav_uno_mii_read_reg,
 	.uno_write_reg = udav_uno_mii_write_reg,
 	.uno_statchg = udav_uno_mii_statchg,
@@ -718,27 +718,18 @@ udav_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	usbnet_enqueue(un, buf, pkt_len, 0, 0, 0);
 }
 
-static int
-udav_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+static void
+udav_uno_mcast(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
 	usbnet_busy(un);
 
-	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		udav_setiff_locked(un);
-		break;
-	default:
-		break;
-	}
+	udav_setiff_locked(un);
 
 	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
-
-	return 0;
 }
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
