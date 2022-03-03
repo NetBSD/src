@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.31 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.32 2022/03/03 05:56:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -262,11 +262,8 @@ struct usbnet {
 	/*
 	 * This section should be filled in before calling
 	 * usbnet_attach_ifp().
-	 *
-	 * XXX This should be of type "uByte".  enum usbnet_ep
-	 * is the index.  Fix this in a kernel version bump.
 	 */
-	enum usbnet_ep		un_ed[USBNET_ENDPT_MAX];
+	uByte			un_ed[USBNET_ENDPT_MAX];
 
 	/* MII specific. Not used without MII. */
 	int			un_phyno;
