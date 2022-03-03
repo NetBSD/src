@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.77 2022/03/03 05:51:35 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.78 2022/03/03 05:51:44 riastradh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.77 2022/03/03 05:51:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.78 2022/03/03 05:51:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -884,7 +884,6 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	un->un_phyno = 1;
 
 	usbnet_lock_core(un);
-	usbnet_busy(un);
 	/*
 	 * Attempt to get the mac address, if an EEPROM is not attached this
 	 * will just return FF:FF:FF:FF:FF:FF, so in such cases we invent a MAC
@@ -912,7 +911,6 @@ smsc_attach(device_t parent, device_t self, void *aux)
 			un->un_eaddr[0] = (uint8_t)((mac_l) & 0xff);
 		}
 	}
-	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
 
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,

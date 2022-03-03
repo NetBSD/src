@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.79 2022/03/03 05:51:35 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.80 2022/03/03 05:51:44 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.79 2022/03/03 05:51:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.80 2022/03/03 05:51:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -368,7 +368,6 @@ axen_ax88179_init(struct usbnet *un)
 	uint8_t val;
 
 	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	/* XXX: ? */
 	axen_cmd(un, AXEN_CMD_MAC_READ, 1, AXEN_UNK_05, &val);
@@ -452,7 +451,6 @@ axen_ax88179_init(struct usbnet *un)
 	default:
 		aprint_error_dev(un->un_dev, "unknown uplink bus:0x%02x\n",
 		    val);
-		usbnet_unbusy(un);
 		usbnet_unlock_core(un);
 		return;
 	}
@@ -512,7 +510,6 @@ axen_ax88179_init(struct usbnet *un)
 	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x1F, 0x0000);
 #endif
 
-	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
 }
 
@@ -682,14 +679,11 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	/* Get station address.  */
 	usbnet_lock_core(un);
-	usbnet_busy(un);
 	if (axen_get_eaddr(un, &un->un_eaddr)) {
-		usbnet_unbusy(un);
 		usbnet_unlock_core(un);
 		printf("EEPROM checksum error\n");
 		return;
 	}
-	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
 
 	axen_ax88179_init(un);
