@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.72 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.73 2022/03/03 05:50:57 riastradh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.72 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.73 2022/03/03 05:50:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -264,6 +264,8 @@ smsc_wait_for_bits(struct usbnet *un, uint32_t reg, uint32_t bits)
 	int err, i;
 
 	for (i = 0; i < 100; i++) {
+		if (usbnet_isdying(un))
+			return ENXIO;
 		if ((err = smsc_readreg(un, reg, &val)) != 0)
 			return err;
 		if (!(val & bits))

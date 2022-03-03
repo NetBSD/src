@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.172 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.173 2022/03/03 05:50:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.172 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.173 2022/03/03 05:50:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -483,6 +483,8 @@ aue_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	aue_csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_READ);
 
 	for (i = 0; i < AUE_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return ENXIO;
 		if (aue_csr_read_1(sc, AUE_PHY_CTL) & AUE_PHYCTL_DONE)
 			break;
 	}
@@ -524,6 +526,8 @@ aue_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	aue_csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_WRITE);
 
 	for (i = 0; i < AUE_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return ENXIO;
 		if (aue_csr_read_1(sc, AUE_PHY_CTL) & AUE_PHYCTL_DONE)
 			break;
 	}
@@ -680,6 +684,8 @@ aue_reset(struct aue_softc *sc)
 	AUE_SETBIT(sc, AUE_CTL1, AUE_CTL1_RESETMAC);
 
 	for (i = 0; i < AUE_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return;
 		if (!(aue_csr_read_1(sc, AUE_CTL1) & AUE_CTL1_RESETMAC))
 			break;
 	}

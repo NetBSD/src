@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.41 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.42 2022/03/03 05:50:57 riastradh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.41 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.42 2022/03/03 05:50:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -396,6 +396,8 @@ ure_reset(struct usbnet *un)
 	ure_write_1(un, URE_PLA_CR, URE_MCU_TYPE_PLA, URE_CR_RST);
 
 	for (i = 0; i < URE_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return;
 		if (!(ure_read_1(un, URE_PLA_CR, URE_MCU_TYPE_PLA) &
 		    URE_CR_RST))
 			break;
@@ -541,6 +543,8 @@ ure_rtl8153_init(struct usbnet *un)
 	    URE_MCU_TYPE_USB | URE_BYTE_EN_SIX_BYTES, u1u2, sizeof(u1u2));
 
 	for (i = 0; i < URE_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return;
 		if (ure_read_2(un, URE_PLA_BOOT_CTRL, URE_MCU_TYPE_PLA) &
 		    URE_AUTOLOAD_DONE)
 			break;
@@ -550,6 +554,8 @@ ure_rtl8153_init(struct usbnet *un)
 		URE_PRINTF(un, "timeout waiting for chip autoload\n");
 
 	for (i = 0; i < URE_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return;
 		val = ure_ocp_reg_read(un, URE_OCP_PHY_STATUS) &
 		    URE_PHY_STAT_MASK;
 		if (val == URE_PHY_STAT_LAN_ON || val == URE_PHY_STAT_PWRDN)
@@ -748,6 +754,8 @@ ure_init_fifo(struct usbnet *un)
 	    ure_read_2(un, URE_PLA_SFF_STS_7, URE_MCU_TYPE_PLA) &
 	    ~URE_MCU_BORW_EN);
 	for (i = 0; i < URE_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return;
 		if (ure_read_1(un, URE_PLA_OOB_CTRL, URE_MCU_TYPE_PLA) &
 		    URE_LINK_LIST_READY)
 			break;
@@ -759,6 +767,8 @@ ure_init_fifo(struct usbnet *un)
 	    ure_read_2(un, URE_PLA_SFF_STS_7, URE_MCU_TYPE_PLA) |
 	    URE_RE_INIT_LL);
 	for (i = 0; i < URE_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return;
 		if (ure_read_1(un, URE_PLA_OOB_CTRL, URE_MCU_TYPE_PLA) &
 		    URE_LINK_LIST_READY)
 			break;
