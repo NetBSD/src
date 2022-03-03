@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.68 2022/03/03 05:49:58 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.69 2022/03/03 05:50:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.68 2022/03/03 05:49:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.69 2022/03/03 05:50:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -181,7 +181,7 @@ uno_override_ioctl(struct usbnet *un, struct ifnet *ifp, u_long cmd, void *data)
 static int
 uno_init(struct usbnet *un, struct ifnet *ifp)
 {
-	KASSERT(IFNET_LOCKED(ifp));
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 	return (*un->un_ops->uno_init)(ifp);
 }
 
