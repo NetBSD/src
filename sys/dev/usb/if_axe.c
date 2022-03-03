@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.134 2022/03/03 05:51:06 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.135 2022/03/03 05:51:17 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.134 2022/03/03 05:51:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.135 2022/03/03 05:51:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1315,11 +1315,7 @@ axe_init_locked(struct ifnet *ifp)
 static int
 axe_uno_init(struct ifnet *ifp)
 {
-	struct usbnet * const un = ifp->if_softc;
-
-	usbnet_busy(un);
 	int ret = axe_init_locked(ifp);
-	usbnet_unbusy(un);
 
 	return ret;
 }
