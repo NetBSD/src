@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.69 2022/03/03 05:50:05 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.70 2022/03/03 05:50:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.69 2022/03/03 05:50:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.70 2022/03/03 05:50:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -161,11 +161,15 @@ uno_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 static int
 uno_ioctl(struct usbnet *un, struct ifnet *ifp, u_long cmd, void *data)
 {
-	/*
-	 * There are cases where IFNET_LOCK will not be held when we
-	 * are called (e.g. add/delete multicast address), so we can't
-	 * assert it.
-	 */
+
+	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
+	}
+
 	if (un->un_ops->uno_ioctl)
 		return (*un->un_ops->uno_ioctl)(ifp, cmd, data);
 	return 0;
@@ -174,7 +178,15 @@ uno_ioctl(struct usbnet *un, struct ifnet *ifp, u_long cmd, void *data)
 static int
 uno_override_ioctl(struct usbnet *un, struct ifnet *ifp, u_long cmd, void *data)
 {
-	/* See above. */
+
+	switch (cmd) {
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+	default:
+		KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
+	}
+
 	return (*un->un_ops->uno_override_ioctl)(ifp, cmd, data);
 }
 
