@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.142 2022/03/03 05:53:23 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.143 2022/03/03 05:53:33 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.142 2022/03/03 05:53:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.143 2022/03/03 05:53:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1297,9 +1297,6 @@ axe_uno_init(struct ifnet *ifp)
 	DPRINTF("rxmode %#jx", rxmode, 0, 0, 0);
 
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
-
-	/* Accept multicast frame or run promisc. mode */
-	axe_uno_mcast(ifp);
 
 	return usbnet_init_rx_tx(un);
 }

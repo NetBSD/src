@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.113 2022/03/03 05:53:14 riastradh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.114 2022/03/03 05:53:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.113 2022/03/03 05:53:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.114 2022/03/03 05:53:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -620,9 +620,6 @@ kue_uno_init(struct ifnet *ifp)
 	kue_setword(un, KUE_CMD_SET_SOFS, 1);
 #endif
 	kue_setword(un, KUE_CMD_SET_URB_SIZE, 64);
-
-	/* Load the multicast filter. */
-	kue_uno_mcast(ifp);
 
 	return usbnet_init_rx_tx(un);
 }

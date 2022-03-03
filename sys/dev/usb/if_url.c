@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.88 2022/03/03 05:53:23 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.89 2022/03/03 05:53:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.88 2022/03/03 05:53:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.89 2022/03/03 05:53:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -388,9 +388,6 @@ url_uno_init(struct ifnet *ifp)
 
 	/* Init receive control register */
 	URL_SETBIT2(un, URL_RCR, URL_RCR_TAIL | URL_RCR_AD | URL_RCR_AB);
-
-	/* Accept multicast frame or run promisc. mode */
-	url_uno_mcast(ifp);
 
 	/* Enable RX and TX */
 	URL_SETBIT(un, URL_CR, URL_CR_TE | URL_CR_RE);

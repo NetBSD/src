@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.100 2022/03/03 05:53:14 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.101 2022/03/03 05:53:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.100 2022/03/03 05:53:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.101 2022/03/03 05:53:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -646,9 +646,6 @@ cue_uno_init(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_PROMISC)
 		ctl |= CUE_ETHCTL_PROMISC;
 	cue_csr_write_1(un, CUE_ETHCTL, ctl);
-
-	/* Load the multicast filter. */
-	cue_uno_mcast(ifp);
 
 	/*
 	 * Set the number of RX and TX buffers that we want

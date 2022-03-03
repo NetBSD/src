@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.181 2022/03/03 05:53:23 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.182 2022/03/03 05:53:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.181 2022/03/03 05:53:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.182 2022/03/03 05:53:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -976,9 +976,6 @@ aue_uno_init(struct ifnet *ifp)
 		AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
 
 	rv = usbnet_init_rx_tx(un);
-
-	/* Load the multicast filter. */
-	aue_uno_mcast(ifp);
 
 	/* Enable RX and TX */
 	aue_csr_write_1(sc, AUE_CTL0, AUE_CTL0_RXSTAT_APPEND | AUE_CTL0_RX_ENB);

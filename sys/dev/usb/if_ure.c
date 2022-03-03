@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.49 2022/03/03 05:53:23 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.50 2022/03/03 05:53:33 riastradh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.49 2022/03/03 05:53:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.50 2022/03/03 05:53:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -444,9 +444,6 @@ ure_uno_init(struct ifnet *ifp)
 	ure_write_2(un, URE_PLA_MISC_1, URE_MCU_TYPE_PLA,
 	    ure_read_2(un, URE_PLA_MISC_1, URE_MCU_TYPE_PLA) &
 	    ~URE_RXDY_GATED_EN);
-
-	/* Accept multicast frame or run promisc. mode. */
-	ure_uno_mcast(ifp);
 
 	return usbnet_init_rx_tx(un);
 }

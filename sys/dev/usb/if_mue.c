@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.73 2022/03/03 05:53:14 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.74 2022/03/03 05:53:33 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.73 2022/03/03 05:53:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.74 2022/03/03 05:53:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1238,9 +1238,6 @@ mue_uno_init(struct ifnet *ifp)
 
 	/* Set MAC address. */
 	mue_set_macaddr(un);
-
-	/* Load the multicast filter. */
-	mue_uno_mcast(ifp);
 
 	/* TCP/UDP checksum offload engines. */
 	mue_sethwcsum_locked(un);
