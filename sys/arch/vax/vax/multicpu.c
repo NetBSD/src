@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.36 2020/11/21 22:37:11 thorpej Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.37 2022/03/03 06:28:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.36 2020/11/21 22:37:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.37 2022/03/03 06:28:26 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,7 +87,7 @@ cpu_slavesetup(device_t self, int slotid)
 	KASSERT(device_private(self) == NULL);
 
 	ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
-	self->dv_private = ci;
+	device_set_private(self, ci);
 	ci->ci_dev = self;
 	ci->ci_slotid = slotid;
 	ci->ci_cpuid = device_unit(self);

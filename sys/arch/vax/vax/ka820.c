@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.57 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: ka820.c,v 1.58 2022/03/03 06:28:26 riastradh Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.57 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.58 2022/03/03 06:28:26 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -169,8 +169,8 @@ ka820_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	ci = curcpu();
-	self->dv_private = ci;	/* eww. but curcpu() is already too */
-				/* entrenched to change */
+	device_set_private(self, ci);	/* eww. but curcpu() is already too */
+					/* entrenched to change */
 	ci->ci_slotid = ba->ba_nodenr;
 	ci->ci_cpuid = device_unit(self);
 	ci->ci_dev = self;
