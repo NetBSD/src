@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.12 2022/03/03 06:04:31 riastradh Exp $ */
+/* $NetBSD: usbroothub.c,v 1.13 2022/03/03 06:12:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.12 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.13 2022/03/03 06:12:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>		/* for ostype */
@@ -361,6 +361,13 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 
 	USBHIST_FUNC();
 
+	/*
+	 * XXX Should really assert pipe lock, in case ever have
+	 * per-pipe locking instead of using the bus lock for all
+	 * pipes.
+	 */
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 	req = &xfer->ux_request;
 
@@ -554,9 +561,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	    (uintptr_t)xfer, buflen, actlen, err);
 
 	xfer->ux_status = err;
-	mutex_enter(bus->ub_lock);
 	usb_transfer_complete(xfer);
-	mutex_exit(bus->ub_lock);
 
 	return USBD_NORMAL_COMPLETION;
 }
