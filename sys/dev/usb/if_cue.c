@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.105 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.106 2022/03/03 05:56:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.105 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.106 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -525,7 +525,7 @@ cue_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* First level attach. */
-	usbnet_attach(un, "cuedet");
+	usbnet_attach(un);
 
 #if 0
 	/* Reset the adapter. */

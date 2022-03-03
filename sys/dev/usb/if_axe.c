@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.149 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.150 2022/03/03 05:56:28 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.149 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.150 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -925,7 +925,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for axe_cmd().  */
-	usbnet_attach(un, "axedet");
+	usbnet_attach(un);
 
 	/* We need the PHYID for init dance in some cases */
 	if (axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, &sc->axe_phyaddrs)) {

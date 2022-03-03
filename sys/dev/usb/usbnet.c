@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.89 2022/03/03 05:56:18 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.90 2022/03/03 05:56:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.89 2022/03/03 05:56:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.90 2022/03/03 05:56:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1390,8 +1390,7 @@ usbnet_empty_eaddr(struct usbnet * const un)
  */
 
 void
-usbnet_attach(struct usbnet *un,
-	      const char *detname)	/* detach cv name */
+usbnet_attach(struct usbnet *un)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
