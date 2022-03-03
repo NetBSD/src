@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.171 2020/03/18 11:33:32 kre Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.172 2022/03/03 05:50:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.171 2020/03/18 11:33:32 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.172 2022/03/03 05:50:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1000,11 +1000,9 @@ aue_uno_init(struct ifnet *ifp)
 	struct usbnet * const	un = ifp->if_softc;
 	int rv;
 
-	usbnet_lock_core(un);
 	usbnet_busy(un);
 	rv = aue_init_locked(ifp);
 	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
 
 	return rv;
 }
@@ -1012,6 +1010,7 @@ aue_uno_init(struct ifnet *ifp)
 static int
 aue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	struct usbnet * const un = ifp->if_softc;
 
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter cmd %#jx data %#jx",
@@ -1021,7 +1020,9 @@ aue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		usbnet_lock_core(un);
 		aue_uno_init(ifp);
+		usbnet_unlock_core(un);
 		break;
 	default:
 		break;

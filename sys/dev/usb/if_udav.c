@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.78 2021/04/02 09:27:44 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.79 2022/03/03 05:50:22 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.78 2021/04/02 09:27:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.79 2022/03/03 05:50:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -478,10 +478,7 @@ udav_uno_init(struct ifnet *ifp)
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	usbnet_lock_core(un);
-
 	if (usbnet_isdying(un)) {
-		usbnet_unlock_core(un);
 		return EIO;
 	}
 
@@ -522,7 +519,6 @@ udav_uno_init(struct ifnet *ifp)
 
 	if (rc != 0) {
 		usbnet_unbusy(un);
-		usbnet_unlock_core(un);
 		return rc;
 	}
 
@@ -532,7 +528,6 @@ udav_uno_init(struct ifnet *ifp)
 		rc = usbnet_init_rx_tx(un);
 
 	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
 
 	return rc;
 }
