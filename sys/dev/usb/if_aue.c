@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.184 2022/03/03 05:53:48 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.185 2022/03/03 05:54:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.184 2022/03/03 05:53:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.185 2022/03/03 05:54:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -466,8 +466,10 @@ aue_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	 */
 	if (sc->aue_vendor == USB_VENDOR_ADMTEK &&
 	    sc->aue_product == USB_PRODUCT_ADMTEK_PEGASUS) {
-		if (phy == 3)
+		if (phy == 3) {
+			*val = 0;
 			return EINVAL;
+		}
 	}
 #endif
 
@@ -475,8 +477,10 @@ aue_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	aue_csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_READ);
 
 	for (i = 0; i < AUE_TIMEOUT; i++) {
-		if (usbnet_isdying(un))
+		if (usbnet_isdying(un)) {
+			*val = 0;
 			return ENXIO;
+		}
 		if (aue_csr_read_1(sc, AUE_PHY_CTL) & AUE_PHYCTL_DONE)
 			break;
 	}
@@ -484,6 +488,7 @@ aue_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	if (i == AUE_TIMEOUT) {
 		AUEHIST_CALLARGS("aue%jd: phy=%#jx reg=%#jx read timed out",
 		    device_unit(un->un_dev), phy, reg, 0);
+		*val = 0;
 		return ETIMEDOUT;
 	}
 
