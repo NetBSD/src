@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.330 2022/02/11 21:18:09 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.331 2022/03/03 19:36:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.330 2022/02/11 21:18:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.331 2022/03/03 19:36:35 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -557,7 +557,7 @@ EvalNotEmpty(CondParser *par, const char *value, bool quoted)
 static bool
 EvalCompareNum(double lhs, ComparisonOp op, double rhs)
 {
-	DEBUG3(COND, "lhs = %f, rhs = %f, op = %.2s\n", lhs, rhs, opname[op]);
+	DEBUG3(COND, "Comparing %f %s %f\n", lhs, opname[op], rhs);
 
 	switch (op) {
 	case LT:
@@ -586,8 +586,7 @@ EvalCompareStr(CondParser *par, const char *lhs,
 		return TOK_ERROR;
 	}
 
-	DEBUG3(COND, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
-	    lhs, rhs, opname[op]);
+	DEBUG3(COND, "Comparing \"%s\" %s \"%s\"\n", lhs, opname[op], rhs);
 	return ToToken((op == EQ) == (strcmp(lhs, rhs) == 0));
 }
 
