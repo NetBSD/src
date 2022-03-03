@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.90 2022/03/03 05:56:28 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.91 2022/03/03 05:56:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.90 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.91 2022/03/03 05:56:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1130,6 +1130,9 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
 	    &unp->unp_core_lock);
 
+	/* Stop transfers. */
+	usbnet_ep_stop_pipes(un);
+
 	/*
 	 * Now that the software is quiescent, ask the driver to stop
 	 * the hardware.  The driver's uno_stop routine now has
@@ -1142,9 +1145,6 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	 */
 	if (!usbnet_isdying(un))
 		uno_stop(un, ifp, disable);
-
-	/* Stop transfers. */
-	usbnet_ep_stop_pipes(un);
 
 	/* Free RX/TX resources. */
 	usbnet_rx_list_fini(un);
