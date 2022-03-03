@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.57 2022/03/03 05:48:30 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.58 2022/03/03 05:48:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.57 2022/03/03 05:48:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.58 2022/03/03 05:48:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1289,8 +1289,19 @@ usbnet_if_init(struct ifnet *ifp)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
+	bool dying;
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
+
+	/*
+	 * Prevent anyone from bringing the interface back up once
+	 * we're detaching.
+	 */
+	mutex_enter(&un->un_pri->unp_core_lock);
+	dying = un->un_pri->unp_dying;
+	mutex_exit(&un->un_pri->unp_core_lock);
+	if (dying)
+		return EIO;
 
 	return uno_init(un, ifp);
 }
@@ -1572,10 +1583,18 @@ usbnet_detach(device_t self, int flags)
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct mii_data * const mii = usbnet_mii(un);
 
+	/*
+	 * Prevent new activity.  After we stop the interface, it
+	 * cannot be brought back up.
+	 */
 	mutex_enter(&unp->unp_core_lock);
 	unp->unp_dying = true;
 	mutex_exit(&unp->unp_core_lock);
 
+	/*
+	 * If we're still running on the network, stop and wait for all
+	 * asynchronous activity to finish.
+	 */
 	IFNET_LOCK(ifp);
 	if (ifp->if_flags & IFF_RUNNING) {
 		usbnet_if_stop(ifp, 1);
