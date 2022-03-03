@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.64 2022/01/09 18:27:23 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.65 2022/03/03 06:21:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.64 2022/01/09 18:27:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.65 2022/03/03 06:21:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -91,8 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.64 2022/01/09 18:27:23 riastradh Exp $"
 #define DPRINTFN(n,x)	do { if (uvideodebug>(n)) printf x; } while (0)
 int	uvideodebug = 20;
 #else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
+#define DPRINTF(x)	__nothing
+#define DPRINTFN(n,x)	__nothing
 #endif
 
 typedef enum {
