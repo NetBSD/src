@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.5 2021/08/07 16:18:51 thorpej Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.6 2022/03/03 06:27:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.5 2021/08/07 16:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.6 2022/03/03 06:27:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ bonito_mainbus_attach(device_t parent, device_t self, void *aux)
 	struct gdium_config * const gc = &gdium_configuration;
 	pcireg_t rev;
 
-	self->dv_private = &gc->gc_bonito;
+	device_set_private(self, &gc->gc_bonito);
 
 	/*
 	 * There is only one PCI controller on a Loongson chip.

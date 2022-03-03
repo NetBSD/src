@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.5 2021/08/07 16:18:51 thorpej Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.6 2022/03/03 06:27:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.5 2021/08/07 16:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.6 2022/03/03 06:27:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ bonito_mainbus_attach(device_t parent, device_t self, void *aux)
 	pcireg_t rev;
 	bool compatible;
 
-	self->dv_private = __UNCONST(&sys_platform->bonito_config);
+	device_set_private(self, __UNCONST(&sys_platform->bonito_config));
 
 	/*
 	 * Loongson 2F processors do not use a real Bonito64 chip but
