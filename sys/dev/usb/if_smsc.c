@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.71 2022/03/03 05:48:06 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.72 2022/03/03 05:50:22 riastradh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.71 2022/03/03 05:48:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.72 2022/03/03 05:50:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -552,11 +552,9 @@ smsc_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	usbnet_lock_core(un);
 	usbnet_busy(un);
 	int ret = smsc_init_locked(ifp);
 	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
 
 	return ret;
 }

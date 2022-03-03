@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.70 2022/03/03 05:50:12 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.71 2022/03/03 05:50:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.70 2022/03/03 05:50:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.71 2022/03/03 05:50:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1291,6 +1291,7 @@ usbnet_if_init(struct ifnet *ifp)
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
 	bool dying;
+	int error;
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
@@ -1304,7 +1305,11 @@ usbnet_if_init(struct ifnet *ifp)
 	if (dying)
 		return EIO;
 
-	return uno_init(un, ifp);
+	mutex_enter(&un->un_pri->unp_core_lock);
+	error = uno_init(un, ifp);
+	mutex_exit(&un->un_pri->unp_core_lock);
+
+	return error;
 }
 
 

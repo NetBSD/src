@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.92 2022/03/03 05:49:51 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.93 2022/03/03 05:50:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.92 2022/03/03 05:49:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.93 2022/03/03 05:50:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -673,11 +673,9 @@ cue_uno_init(struct ifnet *ifp)
 	struct usbnet * const	un = ifp->if_softc;
 	int rv;
 
-	usbnet_lock_core(un);
 	usbnet_busy(un);
 	rv = cue_init_locked(ifp);
 	usbnet_unbusy(un);
-	usbnet_unlock_core(un);
 
 	return rv;
 }

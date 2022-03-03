@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.71 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.72 2022/03/03 05:50:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.71 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.72 2022/03/03 05:50:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -257,12 +257,10 @@ upl_uno_init(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 	int rv;
 
-	usbnet_lock_core(un);
 	if (usbnet_isdying(un))
 		rv = EIO;
 	else
 		rv = usbnet_init_rx_tx(un);
-	usbnet_unlock_core(un);
 
 	return rv;
 }
