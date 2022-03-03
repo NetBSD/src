@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.64 2022/03/03 05:49:22 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.65 2022/03/03 05:49:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.64 2022/03/03 05:49:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.65 2022/03/03 05:49:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1239,22 +1239,10 @@ usbnet_tick_task(void *arg)
 	USBNETHIST_FUNC();
 	struct usbnet * const un = arg;
 	struct usbnet_private * const unp = un->un_pri;
-
-	USBNETHIST_CALLARGSN(8, "%jd: enter", unp->unp_number, 0, 0, 0);
-
-	mutex_enter(&unp->unp_core_lock);
-	if (unp->unp_stopping || unp->unp_dying) {
-		mutex_exit(&unp->unp_core_lock);
-		return;
-	}
-
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct mii_data * const mii = usbnet_mii(un);
 
-	KASSERT(ifp != NULL);	/* embedded member */
-
-	usbnet_busy(un);
-	mutex_exit(&unp->unp_core_lock);
+	USBNETHIST_CALLARGSN(8, "%jd: enter", unp->unp_number, 0, 0, 0);
 
 	mutex_enter(&unp->unp_txlock);
 	const bool timeout = unp->unp_timer != 0 && --unp->unp_timer == 0;
@@ -1275,7 +1263,6 @@ usbnet_tick_task(void *arg)
 	uno_tick(un);
 
 	mutex_enter(&unp->unp_core_lock);
-	usbnet_unbusy(un);
 	if (!unp->unp_stopping && !unp->unp_dying)
 		callout_schedule(&unp->unp_stat_ch, hz);
 	mutex_exit(&unp->unp_core_lock);
