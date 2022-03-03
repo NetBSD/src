@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.85 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.86 2022/03/03 05:53:04 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.85 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.86 2022/03/03 05:53:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,7 +74,6 @@ static int udav_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int udav_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void udav_uno_mii_statchg(struct ifnet *);
 static int udav_uno_init(struct ifnet *);
-static void udav_setiff_locked(struct usbnet *);
 static void udav_reset(struct usbnet *);
 
 static int udav_csr_read(struct usbnet *, int, void *, int);
@@ -501,7 +500,7 @@ udav_uno_init(struct ifnet *ifp)
 		UDAV_CLRBIT(un, UDAV_RCR, UDAV_RCR_ALL | UDAV_RCR_PRMSC);
 
 	/* Load the multicast filter */
-	udav_setiff_locked(un);
+	udav_uno_mcast(ifp);
 
 	/* Enable RX */
 	UDAV_SETBIT(un, UDAV_RCR, UDAV_RCR_RXEN);
@@ -576,10 +575,10 @@ udav_chip_init(struct usbnet *un)
 	(ether_crc32_le((addr), ETHER_ADDR_LEN) & ((1 << UDAV_BITS) - 1))
 
 static void
-udav_setiff_locked(struct usbnet *un)
+udav_uno_mcast(struct ifnet *ifp)
 {
+	struct usbnet * const un = ifp->if_softc;
 	struct ethercom *ec = usbnet_ec(un);
-	struct ifnet * const ifp = usbnet_ifp(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint8_t hashes[8];
@@ -709,14 +708,6 @@ udav_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	DPRINTF(("%s: Rx deliver: 0x%02x\n", device_xname(un->un_dev), pkt_len));
 
 	usbnet_enqueue(un, buf, pkt_len, 0, 0, 0);
-}
-
-static void
-udav_uno_mcast(struct ifnet *ifp)
-{
-	struct usbnet * const un = ifp->if_softc;
-
-	udav_setiff_locked(un);
 }
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
