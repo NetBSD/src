@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.67 2022/03/03 06:22:40 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.68 2022/03/03 06:22:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.67 2022/03/03 06:22:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.68 2022/03/03 06:22:53 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -210,6 +210,7 @@ struct uvideo_bulk_xfer {
 };
 
 struct uvideo_stream {
+	device_t		vs_videodev;
 	struct uvideo_softc	*vs_parent;
 	struct usbd_interface	*vs_iface;
 	uint8_t			vs_ifaceno;
@@ -236,6 +237,8 @@ struct uvideo_stream {
 	uint32_t		vs_max_payload_size;
 	uint32_t		vs_frame_interval;
 	SLIST_ENTRY(uvideo_stream) entries;
+
+	uvideo_state		vs_state;
 };
 SLIST_HEAD(uvideo_stream_list, uvideo_stream);
 
@@ -246,15 +249,10 @@ struct uvideo_softc {
         int     		sc_ifaceno;	/* interface number */
 	char			*sc_devname;
 
-	device_t		sc_videodev;
-
 	int			sc_dying;
-	uvideo_state		sc_state;
 
 	uint8_t			sc_nunits;
 	struct uvideo_unit	**sc_unit;
-
-	struct uvideo_stream	*sc_stream_in;
 
 	struct uvideo_stream_list sc_stream_list;
 
@@ -501,7 +499,6 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iface = uiaa->uiaa_iface;
 	sc->sc_ifaceno = uiaa->uiaa_ifaceno;
 	sc->sc_dying = 0;
-	sc->sc_state = UVIDEO_STATE_CLOSED;
 	SLIST_INIT(&sc->sc_stream_list);
 	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
 	    sc->sc_udev->ud_cookie.cookie);
@@ -574,8 +571,6 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 					 usbd_errstr(err), err));
 				goto bad;
 			}
-			/* TODO: for now, set (each) stream to stream_in. */
-			sc->sc_stream_in = vs;
 			break;
 		case UISUBCLASS_VIDEOCOLLECTION:
 			err = uvideo_init_collection(sc, ifdesc, &iter);
@@ -606,9 +601,11 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	sc->sc_videodev = video_attach_mi(&uvideo_hw_if, sc->sc_dev);
-	DPRINTF(("uvideo_attach: attached video driver at %p\n",
-		 sc->sc_videodev));
+	SLIST_FOREACH(vs, &sc->sc_stream_list, entries) {
+		/* XXX initialization of vs_videodev is racy */
+		vs->vs_videodev = video_attach_mi_softc(&uvideo_hw_if,
+		    sc->sc_dev, vs);
+	}
 
 	return;
 
@@ -642,21 +639,29 @@ static void
 uvideo_childdet(device_t self, device_t child)
 {
 	struct uvideo_softc *sc = device_private(self);
+	struct uvideo_stream *vs;
 
-	KASSERT(sc->sc_videodev == child);
-	sc->sc_videodev = NULL;
+	SLIST_FOREACH(vs, &sc->sc_stream_list, entries) {
+		if (child == vs->vs_videodev) {
+			vs->vs_videodev = NULL;
+			break;
+		}
+	}
+	KASSERTMSG(vs != NULL, "unknown child of %s detached: %s @ %p",
+	    device_xname(self), device_xname(child), child);
 }
 
 
 static int
 uvideo_detach(device_t self, int flags)
 {
-	struct uvideo_softc *sc;
+	struct uvideo_softc *sc = device_private(self);
 	struct uvideo_stream *vs;
-	int rv;
+	int error;
 
-	sc = device_private(self);
-	rv = 0;
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	sc->sc_dying = 1;
 
@@ -681,14 +686,11 @@ uvideo_detach(device_t self, int flags)
 	DPRINTFN(15, ("uvideo: detaching from %s\n",
 		device_xname(sc->sc_dev)));
 
-	if (sc->sc_videodev != NULL)
-		rv = config_detach(sc->sc_videodev, flags);
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	usbd_devinfo_free(sc->sc_devname);
 
-	return rv;
+	return 0;
 }
 
 /* Search the stream list for a stream matching the interface number.
@@ -1039,6 +1041,7 @@ uvideo_stream_init(struct uvideo_stream *vs,
 	vs->vs_default_format = NULL;
 	vs->vs_current_format.priv = -1;
 	vs->vs_xfer_type = 0;
+	vs->vs_state = UVIDEO_STATE_CLOSED;
 
 	err = usbd_device2interface_handle(sc->sc_udev, vs->vs_ifaceno,
 	    &vs->vs_iface);
@@ -1783,7 +1786,7 @@ uvideo_stream_recv_process(struct uvideo_stream *vs, uint8_t *buf, uint32_t len)
 	payload.frameno = hdr->bmHeaderInfo & UV_FRAME_ID;
 	payload.end_of_frame = hdr->bmHeaderInfo & UV_END_OF_FRAME;
 
-	video_submit_payload(vs->vs_parent->sc_videodev, &payload);
+	video_submit_payload(vs->vs_videodev, &payload);
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -1881,12 +1884,9 @@ uvideo_stream_recv_bulk_transfer(void *addr)
 static int
 uvideo_open(void *addr, int flags)
 {
-	struct uvideo_softc *sc;
-	struct uvideo_stream *vs;
+	struct uvideo_stream *vs = addr;
+	struct uvideo_softc *sc = vs->vs_parent;
 	struct video_format fmt;
-
-	sc = addr;
-	vs = sc->sc_stream_in;
 
 	DPRINTF(("uvideo_open: sc=%p\n", sc));
 	if (sc->sc_dying)
@@ -1901,36 +1901,36 @@ uvideo_open(void *addr, int flags)
 static void
 uvideo_close(void *addr)
 {
-	struct uvideo_softc *sc;
-
-	sc = addr;
+	struct uvideo_stream *vs = addr;
 
 	uvideo_stop_transfer(addr);
 
-	if (sc->sc_state != UVIDEO_STATE_CLOSED) {
-		sc->sc_state = UVIDEO_STATE_CLOSED;
+	if (vs->vs_state != UVIDEO_STATE_CLOSED) {
+		vs->vs_state = UVIDEO_STATE_CLOSED;
 	}
 }
 
 static const char *
 uvideo_get_devname(void *addr)
 {
-	struct uvideo_softc *sc = addr;
-	return sc->sc_devname;
+	struct uvideo_stream *vs = addr;
+
+	return vs->vs_parent->sc_devname;
 }
 
 static const char *
 uvideo_get_businfo(void *addr)
 {
-	struct uvideo_softc *sc = addr;
-	return sc->sc_businfo;
+	struct uvideo_stream *vs = addr;
+
+	return vs->vs_parent->sc_businfo;
 }
 
 static int
 uvideo_enum_format(void *addr, uint32_t index, struct video_format *format)
 {
-	struct uvideo_softc *sc = addr;
-	struct uvideo_stream *vs = sc->sc_stream_in;
+	struct uvideo_stream *vs = addr;
+	struct uvideo_softc *sc = vs->vs_parent;
 	struct uvideo_format *video_format;
 	int off;
 
@@ -1956,8 +1956,8 @@ uvideo_enum_format(void *addr, uint32_t index, struct video_format *format)
 static int
 uvideo_get_format(void *addr, struct video_format *format)
 {
-	struct uvideo_softc *sc = addr;
-	struct uvideo_stream *vs = sc->sc_stream_in;
+	struct uvideo_stream *vs = addr;
+	struct uvideo_softc *sc = vs->vs_parent;
 
 	if (sc->sc_dying)
 		return EIO;
@@ -1973,19 +1973,15 @@ uvideo_get_format(void *addr, struct video_format *format)
 static int
 uvideo_set_format(void *addr, struct video_format *format)
 {
-	struct uvideo_softc *sc;
-	struct uvideo_stream *vs;
+	struct uvideo_stream *vs = addr;
+	struct uvideo_softc *sc = vs->vs_parent;
 	struct uvideo_format *uvfmt;
 	uvideo_probe_and_commit_data_t probe, maxprobe;
 	usbd_status err;
 
-	sc = addr;
-
 	DPRINTF(("uvideo_set_format: sc=%p\n", sc));
 	if (sc->sc_dying)
 		return EIO;
-
-	vs = sc->sc_stream_in;
 
 	uvfmt =	uvideo_stream_guess_format(vs, format->pixel_format,
 					   format->width, format->height);
@@ -2090,8 +2086,7 @@ uvideo_set_format(void *addr, struct video_format *format)
 static int
 uvideo_try_format(void *addr, struct video_format *format)
 {
-	struct uvideo_softc *sc = addr;
-	struct uvideo_stream *vs = sc->sc_stream_in;
+	struct uvideo_stream *vs = addr;
 	struct uvideo_format *uvfmt;
 
 	uvfmt =	uvideo_stream_guess_format(vs, format->pixel_format,
@@ -2106,8 +2101,7 @@ uvideo_try_format(void *addr, struct video_format *format)
 static int
 uvideo_get_framerate(void *addr, struct video_fract *fract)
 {
-	struct uvideo_softc *sc = addr;
-	struct uvideo_stream *vs = sc->sc_stream_in;
+	struct uvideo_stream *vs = addr;
 
 	switch (vs->vs_frame_interval) {
 	case 41666:	/* 240 */
@@ -2149,12 +2143,9 @@ uvideo_set_framerate(void *addr, struct video_fract *fract)
 static int
 uvideo_start_transfer(void *addr)
 {
-	struct uvideo_softc *sc = addr;
-	struct uvideo_stream *vs;
+	struct uvideo_stream *vs = addr;
 	int s, err;
 
-	/* FIXME: this function should be stream specific */
-	vs = SLIST_FIRST(&sc->sc_stream_list);
 	s = splusb();
 	err = uvideo_stream_start_xfer(vs);
 	splx(s);
@@ -2165,13 +2156,11 @@ uvideo_start_transfer(void *addr)
 static int
 uvideo_stop_transfer(void *addr)
 {
-	struct uvideo_softc *sc;
+	struct uvideo_stream *vs = addr;
 	int err, s;
 
-	sc = addr;
-
 	s = splusb();
-	err = uvideo_stream_stop_xfer(sc->sc_stream_in);
+	err = uvideo_stream_stop_xfer(vs);
 	splx(s);
 
 	return err;
@@ -2181,14 +2170,13 @@ uvideo_stop_transfer(void *addr)
 static int
 uvideo_get_control_group(void *addr, struct video_control_group *group)
 {
-	struct uvideo_softc *sc;
+	struct uvideo_stream *vs = addr;
+	struct uvideo_softc *sc = vs->vs_parent;
 	usb_device_request_t req;
 	usbd_status err;
 	uint8_t control_id, ent_id, data[16];
 	uint16_t len;
 	int s;
-
-	sc = addr;
 
 	/* request setup */
 	switch (group->group_id) {
@@ -2243,14 +2231,13 @@ uvideo_get_control_group(void *addr, struct video_control_group *group)
 static int
 uvideo_set_control_group(void *addr, const struct video_control_group *group)
 {
-	struct uvideo_softc *sc;
+	struct uvideo_stream *vs = addr;
+	struct uvideo_softc *sc = vs->vs_parent;
 	usb_device_request_t req;
 	usbd_status err;
 	uint8_t control_id, ent_id, data[16]; /* long enough for all controls */
 	uint16_t len;
 	int s;
-
-	sc = addr;
 
 	switch (group->group_id) {
 	case VIDEO_CONTROL_PANTILT_RELATIVE:
