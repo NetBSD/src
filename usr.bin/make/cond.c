@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.332 2022/03/03 19:40:54 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.333 2022/03/03 19:46:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.332 2022/03/03 19:40:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.333 2022/03/03 19:46:31 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -140,7 +140,9 @@ typedef struct CondParser {
 	/*
 	 * The plain '.if ${VAR}' evaluates to true if the value of the
 	 * expression has length > 0.  The other '.if' variants delegate
-	 * to evalBare instead.
+	 * to evalBare instead, for example '.ifdef ${VAR}' is equivalent to
+	 * '.if defined(${VAR})', checking whether the variable named by the
+	 * expression '${VAR}' is defined.
 	 */
 	bool plain;
 
@@ -157,8 +159,8 @@ typedef struct CondParser {
 	 * make cannot know anymore whether the left-hand side had originally
 	 * been a variable expression or a plain word.
 	 *
-	 * In all other contexts, the left-hand side must either be a
-	 * variable expression, a quoted string or a number.
+	 * In conditional directives like '.if', the left-hand side must
+	 * either be a variable expression, a quoted string or a number.
 	 */
 	bool leftUnquotedOK;
 
