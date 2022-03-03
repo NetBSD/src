@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.84 2022/03/03 05:53:23 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.85 2022/03/03 05:53:33 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.84 2022/03/03 05:53:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.85 2022/03/03 05:53:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -902,9 +902,6 @@ axen_uno_init(struct ifnet *ifp)
 
 	/* Configure offloading engine. */
 	axen_setoe_locked(un);
-
-	/* Program promiscuous mode and multicast filters. */
-	axen_uno_mcast(ifp);
 
 	/* Enable receiver, set RX mode */
 	axen_cmd(un, AXEN_CMD_MAC_READ2, 2, AXEN_MAC_RXCTL, &wval);
