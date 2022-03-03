@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.79 2022/03/03 05:52:20 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.80 2022/03/03 05:52:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.79 2022/03/03 05:52:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.80 2022/03/03 05:52:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -987,8 +987,6 @@ usbnet_ifflags_cb(struct ethercom *ec)
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
-	mutex_enter(&unp->unp_core_lock);
-
 	const u_short changed = ifp->if_flags ^ unp->unp_if_flags;
 	if ((changed & ~(IFF_CANTCHANGE | IFF_DEBUG)) == 0) {
 		unp->unp_if_flags = ifp->if_flags;
@@ -997,8 +995,6 @@ usbnet_ifflags_cb(struct ethercom *ec)
 	} else {
 		rv = ENETRESET;
 	}
-
-	mutex_exit(&unp->unp_core_lock);
 
 	return rv;
 }
