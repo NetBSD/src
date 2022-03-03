@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.49 2022/03/03 05:47:21 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.50 2022/03/03 05:47:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.49 2022/03/03 05:47:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.50 2022/03/03 05:47:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1006,6 +1006,8 @@ usbnet_ifflags_cb(struct ethercom *ec)
 	struct usbnet_private * const unp = un->un_pri;
 	int rv = 0;
 
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
+
 	mutex_enter(&unp->unp_core_lock);
 
 	const u_short changed = ifp->if_flags ^ unp->unp_if_flags;
@@ -1163,6 +1165,8 @@ usbnet_if_stop(struct ifnet *ifp, int disable)
 	struct usbnet * const un = ifp->if_softc;
 	struct usbnet_private * const unp = un->un_pri;
 
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
+
 	mutex_enter(&unp->unp_core_lock);
 	usbnet_stop(un, ifp, disable);
 	mutex_exit(&unp->unp_core_lock);
@@ -1271,6 +1275,8 @@ usbnet_if_init(struct ifnet *ifp)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
+
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	return uno_init(un, ifp);
 }
