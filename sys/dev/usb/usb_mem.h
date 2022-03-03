@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.36 2022/02/14 09:23:32 riastradh Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.37 2022/03/03 06:09:11 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -33,6 +33,13 @@
 
 #ifndef	_DEV_USB_USB_MEM_H_
 #define	_DEV_USB_USB_MEM_H_
+
+#include <sys/types.h>
+
+#include <sys/bus.h>
+#include <sys/queue.h>
+
+#include <dev/usb/usbdivar.h>
 
 typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
