@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.42 2022/03/03 05:55:19 riastradh Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.43 2022/03/03 05:55:52 riastradh Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.42 2022/03/03 05:55:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.43 2022/03/03 05:55:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -878,7 +878,6 @@ urndis_uno_init(struct ifnet *ifp)
 	if (error)
 		return EIO;	/* XXX */
 	error = usbnet_init_rx_tx(un);
-	usbnet_set_link(un, error == 0);
 
 	return error;
 }

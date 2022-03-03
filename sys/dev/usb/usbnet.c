@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.86 2022/03/03 05:55:29 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.87 2022/03/03 05:55:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.86 2022/03/03 05:55:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.87 2022/03/03 05:55:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -903,6 +903,13 @@ out:
 		usbnet_tx_list_fini(un);
 		usbnet_ep_close_pipes(un);
 	}
+
+	/*
+	 * For devices without any media autodetection, treat success
+	 * here as an active link.
+	 */
+	if (un->un_ops->uno_statchg == NULL)
+		usbnet_set_link(un, error == 0);
 
 	usbnet_isowned_core(un);
 
