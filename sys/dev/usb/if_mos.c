@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.19 2022/03/03 05:55:29 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.20 2022/03/03 05:55:38 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.19 2022/03/03 05:55:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.20 2022/03/03 05:55:38 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -731,9 +731,6 @@ mos_uno_init(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 	u_int8_t		rxmode;
 	unsigned char		ipgs[2];
-
-	/* Cancel pending I/O */
-	mos_uno_stop(ifp, 1);
 
 	/* Reset the ethernet interface. */
 	mos_reset(un);
