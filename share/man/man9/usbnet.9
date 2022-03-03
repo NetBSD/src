@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.14 2021/12/11 19:24:19 mrg Exp $
+.\"	$NetBSD: usbnet.9,v 1.15 2022/03/03 05:57:05 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -35,8 +35,6 @@
 .Ss Functions offered by usbnet.h
 .Ft void
 .Fn usbnet_set_link "struct usbnet *un" "bool link"
-.Ft void
-.Fn usbnet_set_dying "struct usbnet *un" "bool dying"
 .Ft struct ifnet *
 .Fn usbnet_ifp "struct usbnet *un"
 .Ft struct ethercom *
@@ -52,55 +50,17 @@
 .Ft bool
 .Fn usbnet_isdying "struct usbnet *un"
 .Ft void
-.Fn usbnet_lock_core "struct usbnet *un"
-.Ft void
-.Fn usbnet_unlock_core "struct usbnet *un"
-.Ft kmutex_t *
-.Fn usbnet_mutex_core "struct usbnet *un"
-.Ft void
-.Fn usbnet_isowned_core "struct usbnet *un"
-.Ft void
-.Fn usbnet_lock_rx "struct usbnet *un"
-.Ft void
-.Fn usbnet_unlock_rx "struct usbnet *un"
-.Ft kmutex_t *
-.Fn usbnet_mutex_rx "struct usbnet *un"
-.Ft void
-.Fn usbnet_isowned_rx "struct usbnet *un"
-.Ft void
-.Fn usbnet_lock_tx "struct usbnet *un"
-.Ft void
-.Fn usbnet_unlock_tx "struct usbnet *un"
-.Ft kmutex_t *
-.Fn usbnet_mutex_tx "struct usbnet *un"
-.Ft void
-.Fn usbnet_isowned_tx "struct usbnet *un"
-.Ft int
-.Fn usbnet_init_rx_tx "struct usbnet *un" "unsigned rxflags" "unsigned txflags"
-.Ft int
-.Fn usbnet_miibus_readreg "device_t dev" "int phy" "int reg" "uint16_t *val"
-.Ft int
-.Fn usbnet_miibus_writereg "device_t dev" "int phy" "int reg" "uint16_t val"
-.Ft void
-.Fn usbnet_miibus_statchg "struct ifnet *"
-.Ft void
-.Fn usbnet_busy "struct usbnet *un"
-.Ft void
-.Fn usbnet_unbusy "struct usbnet *un"
-.Ft void
 .Fn usbnet_enqueue "struct usbnet *un" "uint8_t *buf" "size_t buflen" "int csum_flags" "uint32_t csum_data" "int mbuf_flags"
 .Ft void
 .Fn usbnet_input "struct usbnet *un" "uint8_t *buf" "size_t buflen"
 .Ft void
-.Fn usbnet_attach "struct usbnet *un" "const char *detname"
+.Fn usbnet_attach "struct usbnet *un"
 .Ft void
 .Fn usbnet_attach_ifp "struct usbnet *un" "unsigned if_flags" "unsigned if_extflags" "const struct usbnet_mii *unm"
 .Ft int
 .Fn usbnet_detach "device_t dev" "int flags"
 .Ft int
 .Fn usbnet_activate "device_t dev" "devact_t act"
-.Ft void
-.Fn usbnet_stop "struct usbnet *un" "struct ifnet *ifp" "int disable"
 .Sh DESCRIPTION
 The
 .Nm
@@ -160,42 +120,69 @@ framework itself.
 The device activate function should be set to
 .Fn usbnet_activate .
 .Pp
-To manage all Rx and Tx chains the
-.Dq uno_init
-callback of
-.Va struct usbnet_ops
-should perform any device specific initialization and then call
-.Fn usbnet_init_rx_tx
-which will allocate chains, set up and open pipes, and start the
-Rx transfers so that packets can arrived.
-These allocations and pipes can be closed and destroyed by calling
-.Fn usbnet_stop .
-Both of
-.Fn usbnet_init_rx_tx
-and
-.Fn usbnet_stop
-must be called with the
+When bringing an interface up from
+.Xr if_init 9 ,
+which happens under
+.Xr IFNET_LOCK 9 ,
 .Nm
-lock held, see
-.Fn usbnet_lock
-and
-.Fn usbnet_unlock .
+will:
+.Bl -enum
+.It
+call
+.Dq uno_init
+to initialize the hardware for sending and receiving packets,
+.It
+open the USB pipes,
+.It
+allocate Rx and Tx buffers for transfers,
+.It
+call
+.Dq uno_mcast
+to initially program the hardware multicast filter, and finally
+.It
+start the Rx transfers so packets can be received.
+.El
+.Pp
 See the
 .Sx RECEIVE AND SEND
 section for details on using the chains.
 .Pp
-The interface init, ioctl, start, and stop, routines are handled by the
-framework with callbacks for device-specific handling.
-For interface init (i.e., when bringing the interface up), the
-.Dq uno_init
-callback should perform any device specific initialization and then call
-.Fn usbnet_init_rx_tx
-to finalize Rx and Tx queue initialization.
-For interface ioctl, most of the handling is in the framework and the
-optional
+When bringing an interface down from
+.Xr if_stop 9 ,
+which happens under
+.Xr IFNET_LOCK 9 ,
+.Nm
+will:
+.Bl -enum
+.It
+abort the USB pipes,
+.It
+call
+.Dq uno_stop
+to stop the hardware from receiving packets (unless the device is
+detaching),
+.It
+free Rx and Tx buffers for transfers, and
+.It
+close the USB pipes.
+.El
+.Pp
+For interface ioctl, most of the handling is in the framework.
+While the interface is running, the optional
+.Dq uno_mcast
+callback is invoked after handling the
+.Dv SIOCADDMULTI
+and
+.Dv SIOCDELMULTI
+ioctl commands to update the hardware's multicast filter from the
+.Xr ethersubr 9
+lists.
+The optional
 .Dq uno_ioctl
-callback should be used to program special settings
-like multicast filters or offload handling.
+callback, which is invoked under
+.Xr IFNET_LOCK 9 ,
+can be used to program special settings like offload handling.
+.Pp
 If ioctl handling requires capturing device-specific ioctls then the
 .Dq uno_override_ioctl
 callback may be used instead to replace the framework's
@@ -203,26 +190,15 @@ ioctl handler completely (i.e., the replacement should call any generic
 ioctl handlers such as
 .Fn ether_ioctl
 as required.)
-For interface start, the
+For sending packets, the
 .Dq uno_tx_prepare
 callback must be used to convert
 an mbuf into a chain buffer ready for transmission.
-For interface stop, there is an optional
-.Dq uno_stop
-callback to turn off any chipset specific values if required.
 .Pp
 For devices requiring MII handling there are callbacks for reading and
 writing registers, and for status change events.
-The framework serializes MII access with the core lock, which will be
-held when calling these functions, and this lock should be used by
-internal code that also requires serialized access to registers with the
-.Fn usbnet_lock_core
-and
-.Fn usbnet_unlock_core
-functions.
-The MII callbacks handle device detach events safely; a reference count
-is taken and released around calls to the callbacks as the MII callbacks
-usually block.
+Access to all the MII functions is serialized by
+.Nm .
 .Pp
 As receive must handle the case of multiple packets in one buffer,
 the support is split between the driver and the framework.
@@ -245,101 +221,32 @@ Set the link status for this
 .Fa un
 to
 .Fa link .
-.It Fn usbnet_set_dying un dying
-Set the dying status for this
-.Fa un
-to
-.Fa dying .
 .It Fn usbnet_ifp un
 Returns pointer to this
-.Fa un's
+.Fa un Ns 's
 .Va struct ifnet .
 .It Fn usbnet_ec un
 Returns pointer to this
-.Fa un's
+.Fa un Ns 's
 .Va struct ethercom .
 .It Fn usbnet_mii un
 Returns pointer to this
-.Fa un's
+.Fa un Ns 's
 .Va struct mii_data .
 .It Fn usbnet_rndsrc un
 Returns pointer to this
-.Fa un's
+.Fa un Ns 's
 .Va krndsource_t .
 .It Fn usbnet_softc un
 Returns pointer to this
-.Fa un's
+.Fa un Ns 's
 device softc.
 .It Fn usbnet_havelink un
 Returns true if link is active.
 .It Fn usbnet_isdying un
 Returns true if device is dying (has been pulled or deactivated,
-pending detach.)
-.El
-.Pp
-Reference counting functions for
-.Fa struct usbnet :
-.Bl -tag -width 4n
-.It Fn usbnet_busy un
-Increases the reference count on the driver instance, preventing
-detach from occurring while the driver is blocked accessing the
-device.
-Must be called with the core lock held.
-.It Fn usbnet_unbusy un
-Decreases the reference count on the driver instance.
-Once the final reference has been dropped, if a detach event
-is pending, it is allowed to proceed.
-Must be called with the core lock held.
-.El
-.Pp
-Lock handling functions for
-.Fa struct usbnet :
-.Pp
-.Bl -tag -width 4n -compact
-.It Fn usbnet_lock_core un
-.It Fn usbnet_unlock_core un
-.It Fn usbnet_isowned_core un
-.It Fn usbnet_lock_rx un
-.It Fn usbnet_unlock_rx un
-.It Fn usbnet_isowned_rx un
-.It Fn usbnet_lock_tx un
-.It Fn usbnet_unlock_tx un
-.It Fn usbnet_isowned_tx un
-These groups of three functions provide methods to lock,
-unlock, and assert ownership of one of the three locks provided by
-.Nm .
-The three locks are the
-.Dq core
-lock, the
-.Dq Tx
-lock, and the
-.Dq Rx
-lock.
-.El
-.Pp
-MII access functions for
-.Fa struct usbnet :
-.Bl -tag -width 4n
-.It Fn usbnet_mii_readreg dev phy reg valp
-Read register
-.Fa reg
-on PHY number
-.Fa phy
-and return the value in
-.Fa valp .
-Called with the core lock held.
-.It Fn usbnet_mii_writereg dev phy reg val
-Write register
-.Fa reg
-on PHY number
-.Fa phy
-with
-.Fa val .
-Called with the core lock held.
-.It Fn usbnet_mii_statchg ifp
-Trigger a status change update for interface
-.Fa ifp .
-Called with the core lock held.
+pending detach).
+This should be used only to abort timeout loops early.
 .El
 .Pp
 Buffer enqueue handling for
@@ -362,7 +269,7 @@ Enqueue buffer
 .Fa buf
 for length
 .Fa buflen
-with higher layers
+with higher layers.
 .El
 .Pp
 Autoconfiguration handling for
@@ -371,13 +278,14 @@ See the
 .Sx AUTOCONFIGURATION
 section for more details about these functions.
 .Bl -tag -width 4n
-.It Fn usbnet_attach un detachname
+.It Fn usbnet_attach un
 Initial stage attach of a usb network device.
-The
-.Fa detachname
-will be used while waiting for final references to drain when detaching.
+Performs internal initialization and memory allocation only \(em
+nothing is published yet.
 .It Fn usbnet_attach_ifp un if_flags if_extflags unm
 Final stage attach of usb network device.
+Publishes the network interface to the rest of the system.
+.Pp
 If the passed in
 .Fa unm
 is
@@ -387,7 +295,7 @@ provided in the
 .Fa struct usbnet_mii
 structure, which has these members passed to
 .Fn mii_attach :
-.Bl -tag -width 4n
+.Bl -tag -width "un_mii_capmask"
 .It un_mii_flags
 Flags.
 .It un_mii_capmask
@@ -410,12 +318,15 @@ and
 will be or-ed into the interface flags and extflags.
 .It Fn usbnet_detach dev flags
 Device detach.
-Usable as actual device method.
+Stops all activity and frees memory.
+Usable as
+.Xr driver 9
+detach method.
 .It Fn usbnet_activate dev act
 Device activate (deactivate) method.
-Usable as actual device method.
-.It Fn usbnet_stop un ifp disable
-Interface stop routine.
+Usable as
+.Xr driver 9
+activate method.
 .El
 .Sh AUTOCONFIGURATION
 The framework expects the usbnet structure to have these members
@@ -440,66 +351,102 @@ Points to a
 structure which contains these members:
 .Bl -tag -width 4n
 .It Ft void Fn (*uno_stop) "struct ifnet *ifp" "int disable"
-Stop interface
+Stop hardware activity
 .Pq optional .
-Called with the core lock held and with a busy reference.
+Called under
+.Xr IFNET_LOCK 9
+when bringing the interface down, except when the device is detaching.
 .It Ft int Fn (*uno_ioctl) "struct ifnet *ifp" "u_long cmd" "void *data"
-Simple ioctl callback
+Handle driver-specific ioctls
 .Pq optional .
-May be called with the ifnet lock held.
+Called under
+.Xr IFNET_LOCK 9 .
+.It Ft void Fn (*uno_mcast) "struct ifnet *"
+Program hardware multicast filters from
+.Xr ethersubr 9
+lists
+.Pq optional .
+Called between, and not during,
+.Dq uno_init
+and
+.Dq uno_stop .
 .It Ft int Fn (*uno_override_ioctl) "struct ifnet *ifp" "u_long cmd" "void *data"
-Full ioctl callback
+Handle all ioctls, including standard ethernet ioctls normally handled
+internally by
+.Nm
 .Pq optional .
-May be called with the ifnet lock held.
+May or may not be called under
+.Xr IFNET_LOCK 9 .
 .It Ft int Fn (*uno_init) "struct ifnet *ifp"
-Initialize (bring up) interface.
+Initialize hardware activity.
 Required.
-Called with the ifnet lock held.
-Must call
-.Fn usbnet_rx_tx_init .
+Called under
+.Xr IFNET_LOCK 9
+when bringing the interface up.
 .It Ft int Fn (*uno_read_reg) "struct usbnet *un" "int phy" "int reg" "uint16_t *val"
 Read MII register.
 Required with MII.
-Called with the core lock held and with a busy reference.
+Serialized with other MII functions, and with
+.Dq uno_init
+and
+.Dq uno_stop .
 .It Ft int Fn (*uno_write_reg) "struct usbnet *un" "int phy" "int reg" "uint16_t val"
 Write MII register.
 Required with MII.
-Called with the core lock held and with a busy reference.
+Serialized with other MII functions, and with
+.Dq uno_init
+and
+.Dq uno_stop .
 .It Ft usbd_status Fn (*uno_statchg) "struct ifnet *ifp"
 Handle MII status change.
 Required with MII.
-Called with the core lock held and with a busy reference.
+Serialized with other MII functions, and with
+.Dq uno_init
+and
+.Dq uno_stop .
 .It Ft unsigned Fn (*uno_tx_prepare) "struct usbnet *un" "struct mbuf *m" "struct usbnet_chain *c"
 Prepare an mbuf for transmit.
 Required.
-Called with the Tx lock held.
+Called sequentially between, and not during,
+.Dq uno_init .
+and
+.Dq uno_stop .
 .It Ft void Fn (*uno_rx_loop) "struct usbnet *un" "struct usbnet_chain *c" "uint32_t total_len"
 Prepare one or more chain for enqueue.
 Required.
-Called with the Rx lock held.
+Called sequentially between, and not during,
+.Dq uno_init
+and
+.Dq uno_stop .
 .It Ft void Fn (*uno_intr) "struct usbnet *un" "usbd_status status"
 Process periodic interrupt
 .Pq optional .
-Called with no locks held.
+Called sequentially between, and not during,
+.Dq uno_init
+and
+.Dq uno_stop .
 .It Ft void Fn (*uno_tick) "struct usbnet *un"
 Called every second with USB task thread context
 .Pq optional .
-Called with no locks held, but a busy reference is maintained across this call.
+Called sequentially between, and not during,
+.Dq uno_init
+and
+.Dq uno_stop .
 .El
 .It un_intr
 Points to a
 .Va struct usbnet_intr
 structure which should have these members set:
 .Bl -tag -width 4n
-.It uni_intr_buf
+.It uni_buf
 If
 .Pf non- Dv NULL ,
 points to a buffer passed to
 .Fn usbd_open_pipe_intr
 in the device init callback, along with the size and interval.
-.It uni_intr_bufsz
+.It uni_bufsz
 Size of interrupt pipe buffer.
-.It uni_intr_interval
+.It uni_interval
 Frequency of the interrupt in milliseconds.
 .El
 .It un_ed
@@ -591,8 +538,6 @@ The optional
 .Fn uno_stop
 callback performs device-specific operations to shutdown the
 transmit or receive handling.
-.Fn uno_stop
-will be called with the usbnet lock held.
 .Pp
 The
 .Fn uno_init
@@ -606,7 +551,7 @@ what is typically a device-specific method.
 .Pp
 The
 .Fn uno_rx_loop
-callback converts the provided
+callback, called sequentially, converts the provided
 .Va usbnet_chain
 data and length into a series (one or more) of packets that are
 enqueued with the higher layers using either
@@ -615,15 +560,12 @@ enqueued with the higher layers using either
 .Fn usbnet_input
 for devices that use
 .Fn if_input
-(this currently relies upon the
+.
+(This currently relies upon the
 .Va struct ifnet
 having the
 .Dq _if_input
 member set as well, which is true for current consumers.)
-The Rx lock will be held during this call, see
-.Fn usbnet_lock_rx
-and
-.Fn usbnet_unlock_rx .
 .Pp
 The
 .Fn uno_tx_prepare
@@ -637,11 +579,7 @@ more than the chain buffer size, as set in the
 .Va usbnet
 .Dq un_tx_bufsz
 member.
-This callback is only called once per packet.
-The Tx lock will be held during this call, see
-.Fn usbnet_lock_tx
-and
-.Fn usbnet_unlock_tx .
+This callback is only called once per packet, sequentially.
 .Pp
 The
 .Fa struct usbnet_chain
@@ -663,6 +601,7 @@ must be provided:
 Read an MII register for a particular PHY.
 Returns standard
 .Xr errno 2 .
+Must initialize the result even on failure.
 .It uno_write_reg
 Write an MII register for a particular PHY.
 Returns standard
@@ -670,12 +609,6 @@ Returns standard
 .It uno_statchg
 Handle a status change event for this interface.
 .El
-.Pp
-The read and write callbacks are called with the core lock held.
-See
-.Fn usbnet_lock_mii
-and
-.Fn usbnet_unlock_mii .
 .Sh INTERRUPT PIPE
 The interrupt specific callback,
 .Dq uno_intr ,
@@ -735,8 +668,7 @@ interface, and task and callout structures (both these probably go
 away entirely) and all the associated watchdog handling,
 timevals, list size, buffer size and xfer flags for
 both Rx, and Tx, and interrupt notices, interface flags, device link,
-PHY number, chain data, locks including Rx, Tx, MII, and the
-base softc lock.
+PHY number, chain data, locks including Rx, Tx, and MII.
 There is a driver-only
 .Dq un_flags
 in the
@@ -798,28 +730,11 @@ The device
 routine is replaced with a simple call that turns off the
 device-specific transmitter and receiver if necessary, as the
 framework handles pipes and transfers and buffers.
-.It Device locking
-The
-.Nm
-framework provides three locks for the system: core lock,
-receive lock, and transmit lock.
-The normal locking order
-for these locks is ifnet lock -> usbnet core lock -> usbnet rxlock -> usbnet
-txlock, or, ifnet lock -> usbnet core lock.
-Also note that the core lock may be taken when the ifnet lock is not
-held.
 .It MII handling
 For devices with MII support the three normal callbacks
 .Pq read, write, and status change
 must be converted to
 .Va usbnet .
-These functions are called with the core lock is held
-.Po
-see
-.Dq Fn usbnet_isowned_core
-.Pc ,
-and with a busy reference held and do not require any checking for running,
-or up, or dying devices.
 Local
 .Dq link
 variables need to be replaced with accesses to
