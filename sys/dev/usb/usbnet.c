@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.60 2022/03/03 05:48:52 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.61 2022/03/03 05:49:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.60 2022/03/03 05:48:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.61 2022/03/03 05:49:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1669,13 +1669,14 @@ usbnet_detach(device_t self, int flags)
 	usbnet_rx_list_free(un);
 	usbnet_tx_list_free(un);
 
-	callout_destroy(&unp->unp_stat_ch);
 	rnd_detach_source(&unp->unp_rndsrc);
 
 	cv_destroy(&unp->unp_detachcv);
 	mutex_destroy(&unp->unp_core_lock);
 	mutex_destroy(&unp->unp_rxlock);
 	mutex_destroy(&unp->unp_txlock);
+
+	callout_destroy(&unp->unp_stat_ch);
 
 	pmf_device_deregister(un->un_dev);
 
