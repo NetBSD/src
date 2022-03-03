@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.86 2022/03/03 05:54:21 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.87 2022/03/03 05:54:37 riastradh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.86 2022/03/03 05:54:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.87 2022/03/03 05:54:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -539,7 +539,6 @@ smsc_reset(struct smsc_softc *sc)
 {
 	struct usbnet * const un = &sc->smsc_un;
 
-	usbnet_isowned_core(un);
 	if (usbnet_isdying(un))
 		return;
 
@@ -555,8 +554,6 @@ smsc_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	struct smsc_softc * const sc = usbnet_softc(un);
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return EIO;
@@ -590,8 +587,6 @@ smsc_chip_init(struct usbnet *un)
 	uint32_t reg_val;
 	int burst_cap;
 	int err;
-
-	usbnet_isowned_core(un);
 
 	/* Enter H/W config mode */
 	smsc_writereg(un, SMSC_HW_CFG, SMSC_HW_CFG_LRST);
@@ -739,8 +734,6 @@ smsc_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	usbnet_lock_core(un);
-
 	switch (cmd) {
 	case SIOCSIFCAP:
 		smsc_setoe_locked(un);
@@ -748,8 +741,6 @@ smsc_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	default:
 		break;
 	}
-
-	usbnet_unlock_core(un);
 
 	return 0;
 }
@@ -859,7 +850,6 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	/* Setup some of the basics */
 	un->un_phyno = 1;
 
-	usbnet_lock_core(un);
 	/*
 	 * Attempt to get the mac address, if an EEPROM is not attached this
 	 * will just return FF:FF:FF:FF:FF:FF, so in such cases we invent a MAC
@@ -887,7 +877,6 @@ smsc_attach(device_t parent, device_t self, void *aux)
 			un->un_eaddr[0] = (uint8_t)((mac_l) & 0xff);
 		}
 	}
-	usbnet_unlock_core(un);
 
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
 	    0, &unm);

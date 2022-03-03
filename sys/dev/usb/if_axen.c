@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.88 2022/03/03 05:54:21 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.89 2022/03/03 05:54:37 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.88 2022/03/03 05:54:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.89 2022/03/03 05:54:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -295,7 +295,6 @@ allmulti:
 static void
 axen_reset(struct usbnet *un)
 {
-	usbnet_isowned_core(un);
 	if (usbnet_isdying(un))
 		return;
 	/* XXX What to reset? */
@@ -366,8 +365,6 @@ axen_ax88179_init(struct usbnet *un)
 	uint16_t ctl, temp;
 	uint16_t wval;
 	uint8_t val;
-
-	usbnet_lock_core(un);
 
 	/* XXX: ? */
 	axen_cmd(un, AXEN_CMD_MAC_READ, 1, AXEN_UNK_05, &val);
@@ -451,7 +448,6 @@ axen_ax88179_init(struct usbnet *un)
 	default:
 		aprint_error_dev(un->un_dev, "unknown uplink bus:0x%02x\n",
 		    val);
-		usbnet_unlock_core(un);
 		return;
 	}
 	axen_cmd(un, AXEN_CMD_MAC_SET_RXSR, 5, AXEN_RX_BULKIN_QCTRL, &qctrl);
@@ -509,8 +505,6 @@ axen_ax88179_init(struct usbnet *un)
 	axen_uno_mii_write_reg(un, un->un_phyno, 0x01, wval | 0x0080);
 	axen_uno_mii_write_reg(un, un->un_phyno, 0x1F, 0x0000);
 #endif
-
-	usbnet_unlock_core(un);
 }
 
 static void
@@ -554,8 +548,6 @@ axen_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	usbnet_lock_core(un);
-
 	switch (cmd) {
 	case SIOCSIFCAP:
 		axen_setoe_locked(un);
@@ -563,8 +555,6 @@ axen_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	default:
 		break;
 	}
-
-	usbnet_unlock_core(un);
 
 	return 0;
 }
@@ -666,13 +656,10 @@ axen_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: phyno %d\n", device_xname(self), un->un_phyno));
 
 	/* Get station address.  */
-	usbnet_lock_core(un);
 	if (axen_get_eaddr(un, &un->un_eaddr)) {
-		usbnet_unlock_core(un);
 		printf("EEPROM checksum error\n");
 		return;
 	}
-	usbnet_unlock_core(un);
 
 	axen_ax88179_init(un);
 
@@ -888,8 +875,6 @@ axen_uno_init(struct ifnet *ifp)
 	uint16_t rxmode;
 	uint16_t wval;
 	uint8_t bval;
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return EIO;
