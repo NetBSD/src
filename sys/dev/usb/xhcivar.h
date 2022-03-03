@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.19 2021/05/23 21:12:28 riastradh Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.20 2022/03/03 06:09:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -29,7 +29,16 @@
 #ifndef _DEV_USB_XHCIVAR_H_
 #define _DEV_USB_XHCIVAR_H_
 
+#include <sys/types.h>
+
+#include <sys/condvar.h>
+#include <sys/device.h>
+#include <sys/mutex.h>
+#include <sys/pmf.h>
 #include <sys/pool.h>
+
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
 
 #define XHCI_MAX_DCI	31
 
