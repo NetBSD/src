@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.29 2021/08/07 16:19:18 thorpej Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.30 2022/03/03 06:04:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.29 2021/08/07 16:19:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.30 2022/03/03 06:04:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -401,14 +401,6 @@ rumpusb_device_ctrl_start(struct usbd_xfer *xfer)
 static usbd_status
 rumpusb_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
-	usbd_status err;
-
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
 	return rumpusb_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
@@ -540,14 +532,6 @@ rumpusb_root_intr_start(struct usbd_xfer *xfer)
 static usbd_status
 rumpusb_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
-	usbd_status err;
-
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
 	return rumpusb_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
@@ -709,8 +693,6 @@ doxfer_kth(void *arg)
 static usbd_status
 rumpusb_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
-	usbd_status err;
 
 	if (!rump_threads) {
 		/* XXX: lie about supporting async transfers */
@@ -720,20 +702,9 @@ rumpusb_device_bulk_transfer(struct usbd_xfer *xfer)
 			return USBD_IN_PROGRESS;
 		}
 
-		mutex_enter(&sc->sc_lock);
-		err = usb_insert_transfer(xfer);
-		mutex_exit(&sc->sc_lock);
-		if (err)
-			return err;
-
 		return rumpusb_device_bulk_start(
 		    SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 	} else {
-		mutex_enter(&sc->sc_lock);
-		err = usb_insert_transfer(xfer);
-		mutex_exit(&sc->sc_lock);
-		if (err)
-			return err;
 		kthread_create(PRI_NONE, 0, NULL, doxfer_kth, xfer->ux_pipe, NULL,
 		    "rusbhcxf");
 

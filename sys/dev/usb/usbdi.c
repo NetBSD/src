@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.222 2022/01/20 03:14:03 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.223 2022/03/03 06:04:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.222 2022/01/20 03:14:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.223 2022/03/03 06:04:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -114,6 +114,7 @@ SDT_PROBE_DEFINE2(usb, device, xfer, done,
 SDT_PROBE_DEFINE1(usb, device, xfer, destroy,  "struct usbd_xfer *"/*xfer*/);
 
 Static usbd_status usbd_ar_pipe(struct usbd_pipe *);
+static usbd_status usb_insert_transfer(struct usbd_xfer *);
 Static void usbd_start_next(struct usbd_pipe *);
 Static usbd_status usbd_open_pipe_ival
 	(struct usbd_interface *, uint8_t, uint8_t, struct usbd_pipe **, int);
@@ -406,7 +407,14 @@ usbd_transfer(struct usbd_xfer *xfer)
 
 	/* xfer is not valid after the transfer method unless synchronous */
 	SDT_PROBE2(usb, device, pipe, transfer__start,  pipe, xfer);
-	err = pipe->up_methods->upm_transfer(xfer);
+	do {
+		usbd_lock_pipe(pipe);
+		err = usb_insert_transfer(xfer);
+		usbd_unlock_pipe(pipe);
+		if (err)
+			break;
+		err = pipe->up_methods->upm_transfer(xfer);
+	} while (0);
 	SDT_PROBE3(usb, device, pipe, transfer__done,  pipe, xfer, err);
 
 	if (err != USBD_IN_PROGRESS && err) {
@@ -1136,7 +1144,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 }
 
 /* Called with USB lock held. */
-usbd_status
+static usbd_status
 usb_insert_transfer(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->ux_pipe;

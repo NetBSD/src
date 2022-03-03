@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.37 2021/08/07 16:19:16 thorpej Exp $	*/
+/*	$NetBSD: motg.c,v 1.38 2022/03/03 06:04:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.37 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.38 2022/03/03 06:04:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1009,20 +1009,8 @@ motg_root_intr_abort(struct usbd_xfer *xfer)
 usbd_status
 motg_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	usbd_status err;
 
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * start first
-	 */
+	/* Pipe isn't running, start first */
 	return motg_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
@@ -1279,21 +1267,8 @@ motg_setup_endpoint_rx(struct usbd_xfer *xfer)
 static usbd_status
 motg_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	usbd_status err;
 
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * so start it first.
-	 */
+	/* Pipe isn't running, so start it first.  */
 	return motg_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
@@ -1731,24 +1706,9 @@ motg_device_ctrl_done(struct usbd_xfer *xfer)
 static usbd_status
 motg_device_data_transfer(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	usbd_status err;
-
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	DPRINTF("xfer %#jx status %jd", (uintptr_t)xfer, xfer->ux_status, 0, 0);
-	err = usb_insert_transfer(xfer);
-	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * so start it first.
-	 */
+	/* Pipe isn't running, so start it first.  */
 	return motg_device_data_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 

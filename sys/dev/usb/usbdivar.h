@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.131 2022/02/14 09:23:32 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.132 2022/03/03 06:04:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
  * USB functions known to expect the lock taken include (this list is
  * probably not exhaustive):
  *    usb_transfer_complete()
- *    usb_insert_transfer()
  *    usb_start_next()
  *
  */
@@ -359,7 +358,6 @@ void		usbd_iface_pipeunref(struct usbd_interface *);
 usbd_status	usbd_fill_iface_data(struct usbd_device *, int, int);
 void		usb_free_device(struct usbd_device *);
 
-usbd_status	usb_insert_transfer(struct usbd_xfer *);
 void		usb_transfer_complete(struct usbd_xfer *);
 int		usb_disconnect_port(struct usbd_port *, device_t, int);
 

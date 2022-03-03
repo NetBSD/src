@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.108 2021/12/10 20:36:03 andvar Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.109 2022/03/03 06:04:31 riastradh Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.108 2021/12/10 20:36:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.109 2022/03/03 06:04:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -839,28 +839,13 @@ usbd_status
 slhci_transfer(struct usbd_xfer *xfer)
 {
 	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
-	struct slhci_softc *sc = SLHCI_XFER2SC(xfer);
 	usbd_status error;
 
 	DLOG(D_TRACE, "transfer type %jd xfer %#jx spipe %#jx ",
 	    SLHCI_XFER_TYPE(xfer), (uintptr_t)xfer, (uintptr_t)xfer->ux_pipe,
 	    0);
 
-	/* Insert last in queue */
-	mutex_enter(&sc->sc_lock);
-	error = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (error) {
-		if (error != USBD_IN_PROGRESS)
-			DLOG(D_ERR, "usb_insert_transfer returns %jd!", error,
-			    0,0,0);
-		return error;
-	}
-
-	/*
-	 * Pipe isn't running (otherwise error would be USBD_INPROG),
-	 * so start it first.
-	 */
+	/* Pipe isn't running, so start it first.  */
 
 	/*
 	 * Start will take the lock.
