@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.177 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.178 2022/03/03 05:52:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.177 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.178 2022/03/03 05:52:55 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1009,11 +1009,7 @@ aue_uno_mcast(struct ifnet *ifp)
 	    device_unit(((struct usbnet *)(ifp->if_softc))->un_dev),
 	    0, 0, 0);
 
-	/*
-	 * XXX I feel like this is pretty heavy-handed!  Maybe we could
-	 * make do with aue_setiff_locked instead?
-	 */
-	aue_uno_init(ifp);
+	aue_setiff_locked(ifp);
 }
 
 static void
