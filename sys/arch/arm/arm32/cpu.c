@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.152 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.153 2022/03/03 06:26:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.152 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.153 2022/03/03 06:26:05 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -128,7 +128,7 @@ cpu_attach(device_t dv, cpuid_t id)
 		cpu_info[unit] = ci;
 		if (cpu_hatched_p(unit) == false) {
 			ci->ci_dev = dv;
-			dv->dv_private = ci;
+			device_set_private(dv, ci);
 			aprint_naive(": disabled\n");
 			aprint_normal(": disabled (unresponsive)\n");
 			return;
@@ -141,7 +141,7 @@ cpu_attach(device_t dv, cpuid_t id)
 	}
 
 	ci->ci_dev = dv;
-	dv->dv_private = ci;
+	device_set_private(dv, ci);
 
 	arm_cpu_do_topology(ci);
 
