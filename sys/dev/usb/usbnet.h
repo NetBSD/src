@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.24 2022/03/03 05:51:06 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.25 2022/03/03 05:52:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -177,9 +177,6 @@ typedef void (*usbnet_intr_cb)(struct usbnet *, usbd_status);
  * explicitly to uno_override_ioctl; for all other devices, they are
  * handled inside usbnet by scheduling a task to asynchronously call
  * uno_mcast with IFNET_LOCK held.
- *
- * Busy reference counts are maintained across calls to: uno_stop,
- * uno_read_reg, uno_write_reg, uno_statchg, and uno_tick.
  */
 struct usbnet_ops {
 	usbnet_stop_cb		uno_stop;		/* C */
@@ -313,9 +310,6 @@ usbnet_isowned_core(struct usbnet *un)
 {
 	KASSERT(mutex_owned(usbnet_mutex_core(un)));
 }
-
-void	usbnet_busy(struct usbnet *);
-void	usbnet_unbusy(struct usbnet *);
 
 void	usbnet_lock_rx(struct usbnet *);
 void	usbnet_unlock_rx(struct usbnet *);
