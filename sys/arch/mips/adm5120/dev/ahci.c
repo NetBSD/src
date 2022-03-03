@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.28 2021/12/21 09:51:22 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.29 2022/03/03 06:04:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.28 2021/12/21 09:51:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.29 2022/03/03 06:04:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,22 +729,10 @@ ahci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 static usbd_status
 ahci_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
-	usbd_status error;
 
 	DPRINTF(D_TRACE, ("SLRItransfer "));
 
-	/* Insert last in queue */
-	mutex_enter(&sc->sc_lock);
-	error = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (error)
-		return error;
-
-	/*
-	 * Pipe isn't running (otherwise error would be USBD_INPROG),
-	 * start first.
-	 */
+	/* Pipe isn't running, start first.  */
 	return ahci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
@@ -827,16 +815,8 @@ ahci_root_intr_done(struct usbd_xfer *xfer)
 static usbd_status
 ahci_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
-	usbd_status error;
 
 	DPRINTF(D_TRACE, ("C"));
-
-	mutex_enter(&sc->sc_lock);
-	error = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (error)
-		return error;
 
 	return ahci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
@@ -1017,16 +997,8 @@ ahci_device_ctrl_done(struct usbd_xfer *xfer)
 static usbd_status
 ahci_device_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
-	usbd_status error;
 
 	DPRINTF(D_TRACE, ("INTRtrans "));
-
-	mutex_enter(&sc->sc_lock);
-	error = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (error)
-		return error;
 
 	return ahci_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
@@ -1161,16 +1133,8 @@ ahci_device_isoc_done(struct usbd_xfer *xfer)
 static usbd_status
 ahci_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
-	usbd_status error;
 
 	DPRINTF(D_TRACE, ("B"));
-
-	mutex_enter(&sc->sc_lock);
-	error = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (error)
-		return error;
 
 	return ahci_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }

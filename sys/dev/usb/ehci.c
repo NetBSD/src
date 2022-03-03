@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.302 2022/02/12 15:55:04 macallan Exp $ */
+/*	$NetBSD: ehci.c,v 1.303 2022/03/03 06:04:31 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.302 2022/02/12 15:55:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.303 2022/03/03 06:04:31 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2748,15 +2748,6 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 Static usbd_status
 ehci_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	usbd_status err;
-
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
 	/* Pipe isn't running, start first */
 	return ehci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
@@ -3606,15 +3597,6 @@ ehci_device_ctrl_fini(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	usbd_status err;
-
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
 	/* Pipe isn't running, start first */
 	return ehci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
@@ -3886,15 +3868,6 @@ ehci_device_bulk_fini(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	usbd_status err;
-
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
 	/* Pipe isn't running, start first */
 	return ehci_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
@@ -4099,20 +4072,8 @@ ehci_device_intr_fini(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_device_intr_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	usbd_status err;
 
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * so start it first.
-	 */
+	/* Pipe isn't running, so start it first.  */
 	return ehci_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
@@ -4351,14 +4312,6 @@ Static usbd_status
 ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 {
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	usbd_status __diagused err;
-
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-
-	KASSERT(err == USBD_NORMAL_COMPLETION);
-
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
@@ -4724,14 +4677,6 @@ Static usbd_status
 ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 {
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	usbd_status __diagused err;
-
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-
-	KASSERT(err == USBD_NORMAL_COMPLETION);
-
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	ehci_soft_itd_t *itd, *prev;

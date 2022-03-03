@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.11 2022/01/20 03:14:03 mrg Exp $ */
+/* $NetBSD: usbroothub.c,v 1.12 2022/03/03 06:04:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.11 2022/01/20 03:14:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.12 2022/03/03 06:04:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>		/* for ostype */
@@ -343,16 +343,6 @@ static const usb_hub_descriptor_t usbroothub_hubd = {
 usbd_status
 roothub_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct usbd_pipe *pipe = xfer->ux_pipe;
-	struct usbd_bus *bus = pipe->up_dev->ud_bus;
-	usbd_status err;
-
-	/* Insert last in queue. */
-	mutex_enter(bus->ub_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(bus->ub_lock);
-	if (err)
-		return err;
 
 	/* Pipe isn't running, start first */
 	return roothub_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
