@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.223 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.224 2022/03/03 06:05:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.223 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.224 2022/03/03 06:05:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -113,7 +113,7 @@ SDT_PROBE_DEFINE2(usb, device, xfer, done,
     "usbd_status"/*status*/);
 SDT_PROBE_DEFINE1(usb, device, xfer, destroy,  "struct usbd_xfer *"/*xfer*/);
 
-Static usbd_status usbd_ar_pipe(struct usbd_pipe *);
+Static void usbd_ar_pipe(struct usbd_pipe *);
 static usbd_status usb_insert_transfer(struct usbd_xfer *);
 Static void usbd_start_next(struct usbd_pipe *);
 Static usbd_status usbd_open_pipe_ival
@@ -769,23 +769,21 @@ usbd_interface2endpoint_descriptor(struct usbd_interface *iface, uint8_t index)
 
 /* Some drivers may wish to abort requests on the default pipe, *
  * but there is no mechanism for getting a handle on it.        */
-usbd_status
+void
 usbd_abort_default_pipe(struct usbd_device *device)
 {
-	return usbd_abort_pipe(device->ud_pipe0);
+	usbd_abort_pipe(device->ud_pipe0);
 }
 
-usbd_status
+void
 usbd_abort_pipe(struct usbd_pipe *pipe)
 {
-	usbd_status err;
 
 	KASSERT(pipe != NULL);
 
 	usbd_lock_pipe(pipe);
-	err = usbd_ar_pipe(pipe);
+	usbd_ar_pipe(pipe);
 	usbd_unlock_pipe(pipe);
-	return err;
 }
 
 usbd_status
@@ -966,7 +964,7 @@ usbd_get_interface(struct usbd_interface *iface, uint8_t *aiface)
 /*** Internal routines ***/
 
 /* Dequeue all pipe operations, called with bus lock held. */
-Static usbd_status
+Static void
 usbd_ar_pipe(struct usbd_pipe *pipe)
 {
 	struct usbd_xfer *xfer;
@@ -1010,7 +1008,6 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 	}
 	pipe->up_aborting = 0;
 	SDT_PROBE1(usb, device, pipe, abort__done,  pipe);
-	return USBD_NORMAL_COMPLETION;
 }
 
 /* Called with USB lock held. */
