@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.90 2022/03/03 05:55:01 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.91 2022/03/03 05:55:29 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.90 2022/03/03 05:55:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.91 2022/03/03 05:55:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -877,7 +877,7 @@ axen_uno_init(struct ifnet *ifp)
 	uint8_t bval;
 
 	/* Cancel pending I/O */
-	usbnet_stop(un, ifp, 1);
+	axen_uno_stop(ifp, 1);
 
 	/* Reset the ethernet interface. */
 	axen_reset(un);

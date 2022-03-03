@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.115 2022/03/03 05:55:01 riastradh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.116 2022/03/03 05:55:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.115 2022/03/03 05:55:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.116 2022/03/03 05:55:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -598,9 +598,6 @@ kue_uno_init(struct ifnet *ifp)
 	uint8_t			eaddr[ETHER_ADDR_LEN];
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(un->un_dev),__func__));
-
-	/* Cancel pending I/O */
-	usbnet_stop(un, ifp, 1);
 
 	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
 	/* Set MAC address */

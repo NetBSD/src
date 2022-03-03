@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.28 2022/03/03 05:54:52 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.29 2022/03/03 05:55:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -323,9 +323,6 @@ void	usbnet_attach_ifp(struct usbnet *, unsigned, unsigned,
 			  const struct usbnet_mii *);
 int	usbnet_detach(device_t, int);
 int	usbnet_activate(device_t, devact_t);
-
-/* stop backend */
-void	usbnet_stop(struct usbnet *, struct ifnet *, int);
 
 /* module hook up */
 
