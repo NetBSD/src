@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.66 2022/03/03 05:49:37 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.67 2022/03/03 05:49:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.66 2022/03/03 05:49:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.67 2022/03/03 05:49:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1578,12 +1578,17 @@ usbnet_detach(device_t self, int flags)
 	/*
 	 * If we're still running on the network, stop and wait for all
 	 * asynchronous activity to finish.
+	 *
+	 * If usbnet_attach_ifp never ran, IFNET_LOCK won't work, but
+	 * no activity is possible, so just skip this part.
 	 */
-	IFNET_LOCK(ifp);
-	if (ifp->if_flags & IFF_RUNNING) {
-		usbnet_if_stop(ifp, 1);
+	if (unp->unp_ifp_attached) {
+		IFNET_LOCK(ifp);
+		if (ifp->if_flags & IFF_RUNNING) {
+			usbnet_if_stop(ifp, 1);
+		}
+		IFNET_UNLOCK(ifp);
 	}
-	IFNET_UNLOCK(ifp);
 
 	/*
 	 * The callout and tick task can't be scheduled anew at this
