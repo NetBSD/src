@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.81 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.82 2022/03/03 05:53:14 riastradh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.81 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.82 2022/03/03 05:53:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -427,8 +427,11 @@ smsc_uno_mcast(struct ifnet *ifp)
 	if (usbnet_isdying(un))
 		return;
 
-	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
+	if (ifp->if_flags & IFF_PROMISC) {
+		ETHER_LOCK(ec);
 allmulti:
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		DPRINTF("receive all multicast enabled", 0, 0, 0, 0);
 		sc->sc_mac_csr |= SMSC_MAC_CSR_MCPAS;
 		sc->sc_mac_csr &= ~SMSC_MAC_CSR_HPFILT;
@@ -443,7 +446,6 @@ allmulti:
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -451,6 +453,7 @@ allmulti:
 		hashtbl[hash >> 5] |= 1 << (hash & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_UNLOCK(ec);
 
 	/* Debug */
@@ -463,7 +466,6 @@ allmulti:
 	/* Write the hash table and mac control registers */
 
 	//XXX should we be doing this?
-	ifp->if_flags &= ~IFF_ALLMULTI;
 	smsc_writereg(un, SMSC_HASHH, hashtbl[1]);
 	smsc_writereg(un, SMSC_HASHL, hashtbl[0]);
 	smsc_writereg(un, SMSC_MAC_CSR, sc->sc_mac_csr);

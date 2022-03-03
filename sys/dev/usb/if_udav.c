@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.86 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.87 2022/03/03 05:53:14 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.86 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.87 2022/03/03 05:53:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -598,11 +598,16 @@ udav_uno_mcast(struct ifnet *ifp)
 	}
 
 	if (ifp->if_flags & IFF_PROMISC) {
+		ETHER_LOCK(ec);
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		UDAV_SETBIT(un, UDAV_RCR, UDAV_RCR_ALL | UDAV_RCR_PRMSC);
 		return;
-	} else if (ifp->if_flags & IFF_ALLMULTI) {
+	} else if (ifp->if_flags & IFF_ALLMULTI) { /* XXX ??? Can't happen? */
+		ETHER_LOCK(ec);
 allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		UDAV_SETBIT(un, UDAV_RCR, UDAV_RCR_ALL);
 		UDAV_CLRBIT(un, UDAV_RCR, UDAV_RCR_PRMSC);
 		return;
@@ -619,7 +624,6 @@ allmulti:
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0) {
-			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -627,10 +631,10 @@ allmulti:
 		hashes[h>>3] |= 1 << (h & 0x7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_UNLOCK(ec);
 
 	/* disable all multicast */
-	ifp->if_flags &= ~IFF_ALLMULTI;
 	UDAV_CLRBIT(un, UDAV_RCR, UDAV_RCR_ALL);
 
 	/* write hash value to the register */

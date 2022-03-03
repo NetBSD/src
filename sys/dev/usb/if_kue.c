@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.112 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.113 2022/03/03 05:53:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.112 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.113 2022/03/03 05:53:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -336,8 +336,10 @@ kue_uno_mcast(struct ifnet *ifp)
 		sc->kue_rxfilt &= ~KUE_RXFILT_PROMISC;
 
 	if (ifp->if_flags & IFF_PROMISC) {
+		ETHER_LOCK(ec);
 allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		sc->kue_rxfilt |= KUE_RXFILT_ALLMULTI|KUE_RXFILT_PROMISC;
 		sc->kue_rxfilt &= ~KUE_RXFILT_MULTICAST;
 		kue_setword(un, KUE_CMD_SET_PKT_FILTER, sc->kue_rxfilt);
@@ -353,7 +355,6 @@ allmulti:
 		if (i == KUE_MCFILTCNT(sc) ||
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0) {
-			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -361,9 +362,8 @@ allmulti:
 		ETHER_NEXT_MULTI(step, enm);
 		i++;
 	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_UNLOCK(ec);
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	sc->kue_rxfilt |= KUE_RXFILT_MULTICAST;
 	kue_ctl(un, KUE_CTL_WRITE, KUE_CMD_SET_MCAST_FILTERS,
