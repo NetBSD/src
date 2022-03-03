@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.84 2022/03/03 05:54:52 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.85 2022/03/03 05:55:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.84 2022/03/03 05:54:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.85 2022/03/03 05:55:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1162,6 +1162,16 @@ usbnet_if_stop(struct ifnet *ifp, int disable)
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
+	/*
+	 * If we're already stopped, nothing to do.
+	 *
+	 * XXX This should be an assertion, but it may require some
+	 * analysis -- and possibly some tweaking -- of sys/net to
+	 * ensure.
+	 */
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
 	mutex_enter(&unp->unp_core_lock);
 	usbnet_stop(un, ifp, disable);
 	mutex_exit(&unp->unp_core_lock);
@@ -1262,6 +1272,16 @@ usbnet_if_init(struct ifnet *ifp)
 	 */
 	if (usbnet_isdying(un))
 		return EIO;
+
+	/*
+	 * If we're already running, nothing to do.
+	 *
+	 * XXX This should be an assertion, but it may require some
+	 * analysis -- and possibly some tweaking -- of sys/net to
+	 * ensure.
+	 */
+	if (ifp->if_flags & IFF_RUNNING)
+		return 0;
 
 	mutex_enter(&un->un_pri->unp_core_lock);
 	error = uno_init(un, ifp);
