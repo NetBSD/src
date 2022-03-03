@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.56 2022/03/03 05:48:22 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.57 2022/03/03 05:48:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.56 2022/03/03 05:48:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.57 2022/03/03 05:48:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -982,6 +982,9 @@ usbnet_media_upd(struct ifnet *ifp)
 
 	/* ifmedia layer ensures core_lock is held. */
 	usbnet_isowned_core(un);
+
+	/* ifmedia changes only with IFNET_LOCK held.  */
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	if (unp->unp_dying)
 		return EIO;
