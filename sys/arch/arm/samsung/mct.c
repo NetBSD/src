@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.20 2021/08/07 16:18:45 thorpej Exp $	*/
+/*	$NetBSD: mct.c,v 1.21 2022/03/03 06:26:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014-2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.20 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.21 2022/03/03 06:26:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -252,7 +252,7 @@ mct_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	self->dv_private = sc;
+	device_set_private(self, sc);
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
 	sc->sc_bst = faa->faa_bst;

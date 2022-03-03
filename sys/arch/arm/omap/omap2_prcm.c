@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_prcm.c,v 1.5 2013/06/29 20:19:54 matt Exp $	*/
+/*	$NetBSD: omap2_prcm.c,v 1.6 2022/03/03 06:26:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Adam Hoka
@@ -28,7 +28,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.5 2013/06/29 20:19:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.6 2022/03/03 06:26:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,7 +82,7 @@ prcm_attach(device_t parent, device_t self, void *aux)
 
 	KASSERT(prcm_sc.sc_dev == NULL);
 
-	self->dv_private = &prcm_sc;
+	device_set_private(self, &prcm_sc);
 	prcm_sc.sc_dev = self;
 
 	prcm_sc.sc_base = obio->obio_addr;

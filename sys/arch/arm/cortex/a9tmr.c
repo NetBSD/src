@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.21 2020/12/02 14:20:20 wiz Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.22 2022/03/03 06:26:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.21 2020/12/02 14:20:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.22 2022/03/03 06:26:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,7 +139,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal(": %s Global 64-bit Timer (%s)\n", cpu_type, freqbuf);
 
-	self->dv_private = sc;
+	device_set_private(self, sc);
 	sc->sc_dev = self;
 	sc->sc_memt = mpcaa->mpcaa_memt;
 	sc->sc_memh = mpcaa->mpcaa_memh;
