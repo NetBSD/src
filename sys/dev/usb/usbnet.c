@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.51 2022/03/03 05:47:36 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.52 2022/03/03 05:47:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.51 2022/03/03 05:47:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.52 2022/03/03 05:47:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -337,7 +337,6 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct usbnet_chain * const c = priv;
 	struct usbnet * const un = c->unc_un;
 	struct usbnet_private * const unp = un->un_pri;
-	struct ifnet * const ifp = usbnet_ifp(un);
 	uint32_t total_len;
 
 	USBNETHIST_CALLARGSN(5, "%jd: enter: status %#jx xfer %#jx",
@@ -347,7 +346,7 @@ usbnet_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (unp->unp_dying || unp->unp_stopping ||
 	    status == USBD_INVAL || status == USBD_NOT_STARTED ||
-	    status == USBD_CANCELLED || !(ifp->if_flags & IFF_RUNNING))
+	    status == USBD_CANCELLED)
 		goto out;
 
 	if (status != USBD_NORMAL_COMPLETION) {
