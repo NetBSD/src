@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.79 2022/03/03 05:55:19 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.80 2022/03/03 05:56:09 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.79 2022/03/03 05:55:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.80 2022/03/03 05:56:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1244,7 +1244,7 @@ mue_uno_init(struct ifnet *ifp)
 	/* Set MTU. */
 	mue_setmtu_locked(un);
 
-	return usbnet_init_rx_tx(un);
+	return 0;
 }
 
 static int

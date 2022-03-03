@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.87 2022/03/03 05:55:52 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.88 2022/03/03 05:56:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.87 2022/03/03 05:55:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.88 2022/03/03 05:56:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -834,7 +834,7 @@ usbnet_ep_stop_pipes(struct usbnet * const un)
 	return err;
 }
 
-int
+static int
 usbnet_init_rx_tx(struct usbnet * const un)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
@@ -1290,7 +1290,12 @@ usbnet_if_init(struct ifnet *ifp)
 
 	mutex_enter(&un->un_pri->unp_core_lock);
 	error = uno_init(un, ifp);
-	mutex_exit(&un->un_pri->unp_core_lock);
+	if (error)
+		goto out;
+	error = usbnet_init_rx_tx(un);
+	if (error)
+		goto out;
+out:	mutex_exit(&un->un_pri->unp_core_lock);
 
 	return error;
 }

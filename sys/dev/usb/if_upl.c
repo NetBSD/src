@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.74 2022/03/03 05:56:00 riastradh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.75 2022/03/03 05:56:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.74 2022/03/03 05:56:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.75 2022/03/03 05:56:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -254,9 +254,8 @@ upl_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 static int
 upl_uno_init(struct ifnet *ifp)
 {
-	struct usbnet * const un = ifp->if_softc;
 
-	return usbnet_init_rx_tx(un);
+	return 0;
 }
 
 static int
