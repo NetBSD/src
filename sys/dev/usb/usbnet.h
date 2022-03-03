@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.23 2022/03/03 05:48:14 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.24 2022/03/03 05:51:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -131,6 +131,8 @@ enum usbnet_ep {
 typedef void (*usbnet_stop_cb)(struct ifnet *, int);
 /* Interface ioctl callback. */
 typedef int (*usbnet_ioctl_cb)(struct ifnet *, u_long, void *);
+/* Reprogram multicast filters callback. */
+typedef void (*usbnet_mcast_cb)(struct ifnet *);
 /* Initialise device callback. */
 typedef int (*usbnet_init_cb)(struct ifnet *);
 
@@ -170,16 +172,20 @@ typedef void (*usbnet_intr_cb)(struct usbnet *, usbd_status);
  * Note that when CORE_LOCK is held, IFNET_LOCK may or may not also
  * be held.
  *
- * Note that the IFNET_LOCK **may not be held** for some ioctl
- * operations (add/delete multicast addresses, for example).
+ * Note that the IFNET_LOCK **may not be held** for the ioctl commands
+ * SIOCADDMULTI/SIOCDELMULTI.  These commands are only passed
+ * explicitly to uno_override_ioctl; for all other devices, they are
+ * handled inside usbnet by scheduling a task to asynchronously call
+ * uno_mcast with IFNET_LOCK held.
  *
  * Busy reference counts are maintained across calls to: uno_stop,
  * uno_read_reg, uno_write_reg, uno_statchg, and uno_tick.
  */
 struct usbnet_ops {
 	usbnet_stop_cb		uno_stop;		/* C */
-	usbnet_ioctl_cb		uno_ioctl;		/* I (maybe) */
-	usbnet_ioctl_cb		uno_override_ioctl;	/* I (maybe) */
+	usbnet_ioctl_cb		uno_ioctl;		/* I */
+	usbnet_ioctl_cb		uno_override_ioctl;	/* I (except mcast) */
+	usbnet_mcast_cb		uno_mcast;		/* I */
 	usbnet_init_cb		uno_init;		/* I */
 	usbnet_mii_read_reg_cb	uno_read_reg;		/* C */
 	usbnet_mii_write_reg_cb uno_write_reg;		/* C */

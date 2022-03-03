@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.65 2022/03/03 05:50:57 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.66 2022/03/03 05:51:06 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.65 2022/03/03 05:50:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.66 2022/03/03 05:51:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -99,6 +99,7 @@ static void	mue_reset(struct usbnet *);
 
 static void	mue_uno_stop(struct ifnet *, int);
 static int	mue_uno_ioctl(struct ifnet *, u_long, void *);
+static void	mue_uno_mcast(struct ifnet *);
 static int	mue_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int	mue_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	mue_uno_mii_statchg(struct ifnet *);
@@ -111,6 +112,7 @@ static int	mue_uno_init(struct ifnet *);
 static const struct usbnet_ops mue_ops = {
 	.uno_stop = mue_uno_stop,
 	.uno_ioctl = mue_uno_ioctl,
+	.uno_mcast = mue_uno_mcast,
 	.uno_read_reg = mue_uno_mii_read_reg,
 	.uno_write_reg = mue_uno_mii_write_reg,
 	.uno_statchg = mue_uno_mii_statchg,
@@ -1273,10 +1275,6 @@ mue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	usbnet_busy(un);
 
 	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		mue_setiff_locked(un);
-		break;
 	case SIOCSIFCAP:
 		mue_sethwcsum_locked(un);
 		break;
@@ -1291,6 +1289,20 @@ mue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	usbnet_unlock_core(un);
 
 	return 0;
+}
+
+static void
+mue_uno_mcast(struct ifnet *ifp)
+{
+	struct usbnet * const un = ifp->if_softc;
+
+	usbnet_lock_core(un);
+	usbnet_busy(un);
+
+	mue_setiff_locked(un);
+
+	usbnet_unbusy(un);
+	usbnet_unlock_core(un);
 }
 
 static void

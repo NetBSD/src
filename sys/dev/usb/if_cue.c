@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.93 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.94 2022/03/03 05:51:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.93 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.94 2022/03/03 05:51:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -141,14 +141,14 @@ CFATTACH_DECL_NEW(cue, sizeof(struct cue_softc), cue_match, cue_attach,
 static unsigned cue_uno_tx_prepare(struct usbnet *, struct mbuf *,
 				   struct usbnet_chain *);
 static void cue_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
-static int cue_uno_ioctl(struct ifnet *, u_long, void *);
+static void cue_uno_mcast(struct ifnet *);
 static void cue_uno_stop(struct ifnet *, int);
 static int cue_uno_init(struct ifnet *);
 static void cue_uno_tick(struct usbnet *);
 
 static const struct usbnet_ops cue_ops = {
 	.uno_stop = cue_uno_stop,
-	.uno_ioctl = cue_uno_ioctl,
+	.uno_mcast = cue_uno_mcast,
 	.uno_tx_prepare = cue_uno_tx_prepare,
 	.uno_rx_loop = cue_uno_rx_loop,
 	.uno_init = cue_uno_init,
@@ -680,27 +680,18 @@ cue_uno_init(struct ifnet *ifp)
 	return rv;
 }
 
-static int
-cue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+static void
+cue_uno_mcast(struct ifnet *ifp)
 {
 	struct usbnet * const	un = ifp->if_softc;
 
 	usbnet_lock_core(un);
 	usbnet_busy(un);
 
-	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		cue_setiff_locked(un);
-		break;
-	default:
-		break;
-	}
+	cue_setiff_locked(un);
 
 	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
-
-	return 0;
 }
 
 /* Stop and reset the adapter.  */

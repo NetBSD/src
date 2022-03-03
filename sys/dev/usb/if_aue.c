@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.173 2022/03/03 05:50:57 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.174 2022/03/03 05:51:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.173 2022/03/03 05:50:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.174 2022/03/03 05:51:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -240,7 +240,7 @@ CFATTACH_DECL_NEW(aue, sizeof(struct aue_softc), aue_match, aue_attach,
 static void aue_reset_pegasus_II(struct aue_softc *);
 
 static void aue_uno_stop(struct ifnet *, int);
-static int aue_uno_ioctl(struct ifnet *, u_long, void *);
+static void aue_uno_mcast(struct ifnet *);
 static int aue_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int aue_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void aue_uno_mii_statchg(struct ifnet *);
@@ -252,7 +252,7 @@ static void aue_uno_intr(struct usbnet *, usbd_status);
 
 static const struct usbnet_ops aue_ops = {
 	.uno_stop = aue_uno_stop,
-	.uno_ioctl = aue_uno_ioctl,
+	.uno_mcast = aue_uno_mcast,
 	.uno_read_reg = aue_uno_mii_read_reg,
 	.uno_write_reg = aue_uno_mii_write_reg,
 	.uno_statchg = aue_uno_mii_statchg,
@@ -1013,28 +1013,23 @@ aue_uno_init(struct ifnet *ifp)
 	return rv;
 }
 
-static int
-aue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+static void
+aue_uno_mcast(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(5, "aue%jd: enter cmd %#jx data %#jx",
+	AUEHIST_CALLARGSN(5, "aue%jd: enter",
 	    device_unit(((struct usbnet *)(ifp->if_softc))->un_dev),
-	    cmd, (uintptr_t)data, 0);
+	    0, 0, 0);
 
-	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		usbnet_lock_core(un);
-		aue_uno_init(ifp);
-		usbnet_unlock_core(un);
-		break;
-	default:
-		break;
-	}
-
-	return 0;
+	/*
+	 * XXX I feel like this is pretty heavy-handed!  Maybe we could
+	 * make do with aue_setiff_locked instead?
+	 */
+	usbnet_lock_core(un);
+	aue_uno_init(ifp);
+	usbnet_unlock_core(un);
 }
 
 static void

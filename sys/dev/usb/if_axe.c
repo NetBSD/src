@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.133 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.134 2022/03/03 05:51:06 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.133 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.134 2022/03/03 05:51:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -259,7 +259,7 @@ CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc),
 	axe_match, axe_attach, usbnet_detach, usbnet_activate);
 
 static void	axe_uno_stop(struct ifnet *, int);
-static int	axe_uno_ioctl(struct ifnet *, u_long, void *);
+static void	axe_uno_mcast(struct ifnet *);
 static int	axe_uno_init(struct ifnet *);
 static int	axe_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int	axe_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
@@ -276,7 +276,7 @@ static void	axe_ax88772b_init(struct axe_softc *);
 
 static const struct usbnet_ops axe_ops = {
 	.uno_stop = axe_uno_stop,
-	.uno_ioctl = axe_uno_ioctl,
+	.uno_mcast = axe_uno_mcast,
 	.uno_read_reg = axe_uno_mii_read_reg,
 	.uno_write_reg = axe_uno_mii_write_reg,
 	.uno_statchg = axe_uno_mii_statchg,
@@ -1324,27 +1324,18 @@ axe_uno_init(struct ifnet *ifp)
 	return ret;
 }
 
-static int
-axe_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+static void
+axe_uno_mcast(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
 	usbnet_busy(un);
 
-	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		axe_rcvfilt_locked(un);
-		break;
-	default:
-		break;
-	}
+	axe_rcvfilt_locked(un);
 
 	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
-
-	return 0;
 }
 
 static void

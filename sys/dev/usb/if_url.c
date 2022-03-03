@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.80 2022/03/03 05:50:57 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.81 2022/03/03 05:51:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.80 2022/03/03 05:50:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.81 2022/03/03 05:51:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -77,7 +77,7 @@ static unsigned	url_uno_tx_prepare(struct usbnet *, struct mbuf *,
 static void url_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static int url_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int url_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
-static int url_uno_ioctl(struct ifnet *, u_long, void *);
+static void url_uno_mcast(struct ifnet *);
 static void url_uno_stop(struct ifnet *, int);
 static void url_uno_mii_statchg(struct ifnet *);
 static int url_uno_init(struct ifnet *);
@@ -93,7 +93,7 @@ static int url_mem(struct usbnet *, int, int, void *, int);
 
 static const struct usbnet_ops url_ops = {
 	.uno_stop = url_uno_stop,
-	.uno_ioctl = url_uno_ioctl,
+	.uno_mcast = url_uno_mcast,
 	.uno_read_reg = url_uno_mii_read_reg,
 	.uno_write_reg = url_uno_mii_write_reg,
 	.uno_statchg = url_uno_mii_statchg,
@@ -559,27 +559,18 @@ static void url_intr(void)
 }
 #endif
 
-static int
-url_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+static void
+url_uno_mcast(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
 	usbnet_busy(un);
 
-	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		url_rcvfilt_locked(un);
-		break;
-	default:
-		break;
-	}
+	url_rcvfilt_locked(un);
 
 	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
-
-	return 0;
 }
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
