@@ -1,4 +1,4 @@
-# $NetBSD: test-variants.mk,v 1.1 2022/02/05 00:20:48 rillig Exp $
+# $NetBSD: test-variants.mk,v 1.2 2022/03/03 20:03:19 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -45,6 +45,16 @@ SKIP.filemon-dev=	yes
 
 TESTS+=			filemon-ktrace
 ENV.filemon-ktrace=	USE_FILEMON="ktrace"
+
+TESTS+=			filemon-none
+ENV.filemon-none=	USE_FILEMON="no"
+# The following tests only fail due to the extra variable in the debug log.
+SKIP_TESTS.filemon-none= \
+			opt-debug-graph1 \
+			opt-debug-graph2 \
+			opt-debug-graph3 \
+			suff-main-several \
+			suff-transform-debug
 
 TESTS+=			no-meta
 ENV.no-meta=		USE_META="no"
