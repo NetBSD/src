@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.89 2022/03/03 05:53:33 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.90 2022/03/03 05:54:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.89 2022/03/03 05:53:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.90 2022/03/03 05:54:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -271,8 +271,11 @@ url_mem(struct usbnet *un, int cmd, int offset, void *buf, int len)
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	if (usbnet_isdying(un))
+	if (usbnet_isdying(un)) {
+		if (cmd == URL_CMD_READMEM)
+			memset(buf, 0, len);
 		return 0;
+	}
 
 	if (cmd == URL_CMD_READMEM)
 		req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -289,6 +292,8 @@ url_mem(struct usbnet *un, int cmd, int offset, void *buf, int len)
 			 device_xname(un->un_dev),
 			 cmd == URL_CMD_READMEM ? "read" : "write",
 			 offset, err));
+		if (cmd == URL_CMD_READMEM)
+			memset(buf, 0, len);
 	}
 
 	return err;
@@ -561,6 +566,7 @@ url_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(un->un_dev), __func__, phy));
+		*val = 0;
 		return EINVAL;
 	}
 

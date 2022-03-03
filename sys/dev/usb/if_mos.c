@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.16 2022/03/03 05:53:33 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.17 2022/03/03 05:54:21 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.16 2022/03/03 05:53:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.17 2022/03/03 05:54:21 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -364,13 +364,16 @@ mos_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	    MOS_PHYSTS_PENDING);
 
 	for (i = 0; i < MOS_TIMEOUT; i++) {
-		if (usbnet_isdying(un))
+		if (usbnet_isdying(un)) {
+			*val = 0;
 			return ENXIO;
+		}
 		if (mos_reg_read_1(un, MOS_PHY_STS) & MOS_PHYSTS_READY)
 			break;
 	}
 	if (i == MOS_TIMEOUT) {
 		aprint_error_dev(un->un_dev, "read PHY failed\n");
+		*val = 0;
 		return EIO;
 	}
 

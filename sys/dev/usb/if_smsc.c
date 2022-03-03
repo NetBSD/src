@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.85 2022/03/03 05:54:03 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.86 2022/03/03 05:54:21 riastradh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.85 2022/03/03 05:54:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.86 2022/03/03 05:54:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -279,11 +279,14 @@ smsc_uno_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	uint32_t addr;
 	uint32_t data = 0;
 
-	if (un->un_phyno != phy)
+	if (un->un_phyno != phy) {
+		*val = 0;
 		return EINVAL;
+	}
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII is busy\n");
+		*val = 0;
 		return ETIMEDOUT;
 	}
 
@@ -292,6 +295,7 @@ smsc_uno_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	if (smsc_wait_for_bits(un, SMSC_MII_ADDR, SMSC_MII_BUSY) != 0) {
 		smsc_warn_printf(un, "MII read timeout\n");
+		*val = 0;
 		return ETIMEDOUT;
 	}
 

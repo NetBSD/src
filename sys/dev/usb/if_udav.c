@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.90 2022/03/03 05:53:56 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.91 2022/03/03 05:54:21 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.90 2022/03/03 05:53:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.91 2022/03/03 05:54:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -383,6 +383,7 @@ udav_csr_read(struct usbnet *un, int offset, void *buf, int len)
 	if (err) {
 		DPRINTF(("%s: %s: read failed. off=%04x, err=%d\n",
 			 device_xname(un->un_dev), __func__, offset, err));
+		memset(buf, 0, len);
 	}
 
 	return err;
@@ -731,6 +732,7 @@ udav_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 		printf("%s: %s: dying\n", device_xname(un->un_dev),
 		       __func__);
 #endif
+		*val = 0;
 		return EINVAL;
 	}
 
@@ -738,6 +740,7 @@ udav_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(un->un_dev), __func__, phy));
+		*val = 0;
 		return EINVAL;
 	}
 
