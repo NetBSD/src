@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.44 2022/03/03 05:51:17 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.45 2022/03/03 05:51:27 riastradh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.44 2022/03/03 05:51:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.45 2022/03/03 05:51:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -804,11 +804,9 @@ ure_uno_mcast(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	ure_rcvfilt_locked(un);
 
-	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
 }
 

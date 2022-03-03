@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.82 2022/03/03 05:51:17 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.83 2022/03/03 05:51:27 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.82 2022/03/03 05:51:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.83 2022/03/03 05:51:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -719,11 +719,9 @@ udav_uno_mcast(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	udav_setiff_locked(un);
 
-	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
 }
 

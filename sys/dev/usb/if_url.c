@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.82 2022/03/03 05:51:17 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.83 2022/03/03 05:51:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.82 2022/03/03 05:51:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.83 2022/03/03 05:51:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -561,11 +561,9 @@ url_uno_mcast(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	url_rcvfilt_locked(un);
 
-	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
 }
 
