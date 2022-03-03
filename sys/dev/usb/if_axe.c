@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.137 2022/03/03 05:51:44 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.138 2022/03/03 05:52:20 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.137 2022/03/03 05:51:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.138 2022/03/03 05:52:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1135,8 +1135,6 @@ axe_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	struct axe_sframe_hdr hdr, tlr;
 	size_t hdr_len = 0, tlr_len = 0;
 	int length, boundary;
-
-	usbnet_isowned_tx(un);
 
 	if (!AXE_IS_172(un)) {
 		/*
