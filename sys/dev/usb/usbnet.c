@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.81 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.82 2022/03/03 05:53:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.81 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.82 2022/03/03 05:53:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,7 @@ struct usbnet_private {
 	 *
 	 * the lock ordering is:
 	 *	ifnet lock -> unp_core_lock -> unp_rxlock -> unp_txlock
+	 *				    -> unp_mcastlock
 	 * - ifnet lock is not needed for unp_core_lock, but if ifnet lock is
 	 *   involved, it must be taken first
 	 */
@@ -66,11 +67,13 @@ struct usbnet_private {
 	kmutex_t		unp_rxlock;
 	kmutex_t		unp_txlock;
 
+	kmutex_t		unp_mcastlock;
+	bool			unp_mcastactive;
+
 	struct usbnet_cdata	unp_cdata;
 
 	struct ethercom		unp_ec;
 	struct mii_data		unp_mii;
-	struct usb_task		unp_mcasttask;
 	struct usb_task		unp_ticktask;
 	struct callout		unp_stat_ch;
 	struct usbd_pipe	*unp_ep[USBNET_ENDPT_MAX];
@@ -866,6 +869,17 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	    "%s", ifp->if_xname);
 	ifp->if_flags |= IFF_RUNNING;
 
+	/*
+	 * If the hardware has a multicast filter, program it and then
+	 * allow updates to it while we're running.
+	 */
+	if (un->un_ops->uno_mcast) {
+		mutex_enter(&unp->unp_mcastlock);
+		(*un->un_ops->uno_mcast)(ifp);
+		unp->unp_mcastactive = true;
+		mutex_exit(&unp->unp_mcastlock);
+	}
+
 	/* Start up the receive pipe(s). */
 	usbnet_rx_start_pipes(un);
 
@@ -1018,8 +1032,20 @@ usbnet_if_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		switch (cmd) {
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:
-			usb_add_task(un->un_udev, &unp->unp_mcasttask,
-			    USB_TASKQ_DRIVER);
+			/*
+			 * If there's a hardware multicast filter, and
+			 * it has been programmed by usbnet_init_rx_tx
+			 * and is active, update it now.  Otherwise,
+			 * drop the update on the floor -- it will be
+			 * observed by usbnet_init_rx_tx next time we
+			 * bring the interface up.
+			 */
+			if (un->un_ops->uno_mcast) {
+				mutex_enter(&unp->unp_mcastlock);
+				if (unp->unp_mcastactive)
+					(*un->un_ops->uno_mcast)(ifp);
+				mutex_exit(&unp->unp_mcastlock);
+			}
 			error = 0;
 			break;
 		default:
@@ -1028,45 +1054,6 @@ usbnet_if_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	return error;
-}
-
-static void
-usbnet_mcast_task(void *arg)
-{
-	USBNETHIST_FUNC();
-	struct usbnet * const un = arg;
-	struct ifnet * const ifp = usbnet_ifp(un);
-
-	USBNETHIST_CALLARGSN(10, "%jd: enter",
-	    un->un_pri->unp_number, 0, 0, 0);
-
-	/*
-	 * If we're detaching, we must check usbnet_isdying _before_
-	 * touching IFNET_LOCK -- the ifnet may have been detached by
-	 * the time this task runs.  This is racy -- unp_dying may be
-	 * set immediately after we test it -- but nevertheless safe,
-	 * because usbnet_detach waits for the task to complete before
-	 * issuing if_detach, and necessary, so that we don't touch
-	 * IFNET_LOCK after if_detach.  See usbnet_detach for details.
-	 */
-	if (usbnet_isdying(un))
-		return;
-
-	/*
-	 * If the hardware is running, ask the driver to reprogram the
-	 * multicast filter.  If the hardware is not running, the
-	 * driver is responsible for programming the multicast filter
-	 * as part of its uno_init routine to bring the hardware up.
-	 */
-	IFNET_LOCK(ifp);
-	if (ifp->if_flags & IFF_RUNNING) {
-		if (un->un_ops->uno_mcast) {
-			mutex_enter(&un->un_pri->unp_core_lock);
-			(*un->un_ops->uno_mcast)(ifp);
-			mutex_exit(&un->un_pri->unp_core_lock);
-		}
-	}
-	IFNET_UNLOCK(ifp);
 }
 
 /*
@@ -1092,6 +1079,18 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
 	    "%s", ifp->if_xname);
 	usbnet_isowned_core(un);
+
+	/*
+	 * For drivers with hardware multicast filter update callbacks:
+	 * Prevent concurrent access to the hardware registers by
+	 * multicast filter updates, which happens without IFNET_LOCK
+	 * or the usbnet core lock.
+	 */
+	if (un->un_ops->uno_mcast) {
+		mutex_enter(&unp->unp_mcastlock);
+		unp->unp_mcastactive = false;
+		mutex_exit(&unp->unp_mcastlock);
+	}
 
 	/*
 	 * Prevent new activity (rescheduling ticks, xfers, &c.) and
@@ -1387,8 +1386,6 @@ usbnet_attach(struct usbnet *un,
 	un->un_pri = kmem_zalloc(sizeof(*un->un_pri), KM_SLEEP);
 	struct usbnet_private * const unp = un->un_pri;
 
-	usb_init_task(&unp->unp_mcasttask, usbnet_mcast_task, un,
-	    USB_TASKQ_MPSAFE);
 	usb_init_task(&unp->unp_ticktask, usbnet_tick_task, un,
 	    USB_TASKQ_MPSAFE);
 	callout_init(&unp->unp_stat_ch, CALLOUT_MPSAFE);
@@ -1397,6 +1394,7 @@ usbnet_attach(struct usbnet *un,
 	mutex_init(&unp->unp_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&unp->unp_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&unp->unp_core_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&unp->unp_mcastlock, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 
 	rnd_attach_source(&unp->unp_rndsrc, device_xname(un->un_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -1539,9 +1537,6 @@ usbnet_detach(device_t self, int flags)
 	KASSERT(!callout_pending(&unp->unp_stat_ch));
 	KASSERT(!usb_task_pending(un->un_udev, &unp->unp_ticktask));
 
-	usb_rem_task_wait(un->un_udev, &unp->unp_mcasttask, USB_TASKQ_DRIVER,
-	    NULL);
-
 	if (mii) {
 		mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
 		ifmedia_fini(&mii->mii_media);
@@ -1555,45 +1550,12 @@ usbnet_detach(device_t self, int flags)
 	}
 	usbnet_ec(un)->ec_mii = NULL;
 
-	/*
-	 * We have already waited for the multicast task to complete.
-	 * Unfortunately, until if_detach, nothing has prevented it
-	 * from running again -- another thread might issue if_mcast_op
-	 * between the time of our first usb_rem_task_wait and the time
-	 * we actually get around to if_detach.
-	 *
-	 * Fortunately, the first usb_rem_task_wait ensures that if the
-	 * task is scheduled again, it will witness our setting of
-	 * unp_dying to true[*].  So after that point, if the task is
-	 * scheduled again, it will decline to touch IFNET_LOCK and do
-	 * nothing.  But we still need to wait for it to complete.
-	 *
-	 * It would be nice if we could write
-	 *
-	 *	if_pleasestopissuingmcastopsthanks(ifp);
-	 *	usb_rem_task_wait(..., &unp->unp_mcasttask, ...);
-	 *	if_detach(ifp);
-	 *
-	 * and then we would need only one usb_rem_task_wait.
-	 *
-	 * Unfortunately, there is no such operation available in
-	 * sys/net at the moment, and it would require a bit of
-	 * coordination with if_mcast_op and doifioctl probably under a
-	 * new lock.  So we'll use this kludge until that mechanism is
-	 * invented.
-	 *
-	 * [*] This is not exactly a documented property of the API,
-	 * but it is implied by the single lock in the task queue
-	 * serializing changes to the task state.
-	 */
-	usb_rem_task_wait(un->un_udev, &unp->unp_mcasttask, USB_TASKQ_DRIVER,
-	    NULL);
-
 	usbnet_rx_list_free(un);
 	usbnet_tx_list_free(un);
 
 	rnd_detach_source(&unp->unp_rndsrc);
 
+	mutex_destroy(&unp->unp_mcastlock);
 	mutex_destroy(&unp->unp_core_lock);
 	mutex_destroy(&unp->unp_rxlock);
 	mutex_destroy(&unp->unp_txlock);
