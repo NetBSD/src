@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.46 2022/03/03 05:46:58 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.47 2022/03/03 05:47:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.46 2022/03/03 05:46:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.47 2022/03/03 05:47:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1554,11 +1554,11 @@ usbnet_detach(device_t self, int flags)
 	unp->unp_dying = true;
 	mutex_exit(&unp->unp_core_lock);
 
+	IFNET_LOCK(ifp);
 	if (ifp->if_flags & IFF_RUNNING) {
-		IFNET_LOCK(ifp);
 		usbnet_if_stop(ifp, 1);
-		IFNET_UNLOCK(ifp);
 	}
+	IFNET_UNLOCK(ifp);
 
 	callout_halt(&unp->unp_stat_ch, NULL);
 	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
