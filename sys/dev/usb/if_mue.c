@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.80 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.80 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -856,7 +856,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for mue_cmd().  */
-	usbnet_attach(un, "muedet");
+	usbnet_attach(un);
 
 	un->un_phyno = 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.95 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.96 2022/03/03 05:56:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.95 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.96 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -240,7 +240,7 @@ url_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for url_mem().  */
-	usbnet_attach(un, "urldet");
+	usbnet_attach(un);
 
 	/* reset the adapter */
 	url_reset(un);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.117 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.118 2022/03/03 05:56:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.117 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.118 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -494,7 +494,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* First level attach, so kue_ctl() works. */
-	usbnet_attach(un, "kuedet");
+	usbnet_attach(un);
 
 	/* Read ethernet descriptor */
 	err = kue_ctl(un, KUE_CTL_READ, KUE_CMD_GET_ETHER_DESCRIPTOR,

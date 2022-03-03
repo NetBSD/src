@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.96 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.97 2022/03/03 05:56:28 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.96 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.97 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -236,7 +236,7 @@ udav_attach(device_t parent, device_t self, void *aux)
 	/* Not supported yet. */
 	un->un_ed[USBNET_ENDPT_INTR] = 0;
 
-	usbnet_attach(un, "udavdet");
+	usbnet_attach(un);
 
 // 	/* reset the adapter */
 // 	udav_reset(un);

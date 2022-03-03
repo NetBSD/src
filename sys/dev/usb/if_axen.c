@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.92 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.93 2022/03/03 05:56:28 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.92 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.93 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -650,7 +650,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set these up now for axen_cmd().  */
-	usbnet_attach(un, "axendet");
+	usbnet_attach(un);
 
 	un->un_phyno = AXEN_PHY_ID;
 	DPRINTF(("%s: phyno %d\n", device_xname(self), un->un_phyno));

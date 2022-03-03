@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.189 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.190 2022/03/03 05:56:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.189 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.190 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -847,7 +847,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* First level attach. */
-	usbnet_attach(un, "auedet");
+	usbnet_attach(un);
 
 	/* Reset the adapter and get station address from the EEPROM.  */
 	aue_reset(sc);

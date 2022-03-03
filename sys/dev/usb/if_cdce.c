@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.80 2022/03/03 05:56:18 riastradh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.80 2022/03/03 05:56:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.81 2022/03/03 05:56:28 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -248,7 +248,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 		un->un_eaddr[5] = (uint8_t)(device_unit(un->un_dev));
 	}
 
-	usbnet_attach(un, "cdcedet");
+	usbnet_attach(un);
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, NULL);
 }
