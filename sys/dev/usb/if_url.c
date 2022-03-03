@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.93 2022/03/03 05:55:29 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.94 2022/03/03 05:55:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.93 2022/03/03 05:55:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.94 2022/03/03 05:55:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -370,8 +370,7 @@ url_uno_init(struct ifnet *ifp)
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
-	/* Cancel pending I/O and free all TX/RX buffers */
-	url_uno_stop(ifp, 1);
+	url_reset(un);
 
 	eaddr = CLLADDR(ifp->if_sadl);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
