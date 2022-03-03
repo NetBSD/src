@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.46 2022/03/03 05:56:28 riastradh Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.47 2022/03/03 05:56:58 riastradh Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.46 2022/03/03 05:56:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.47 2022/03/03 05:56:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -71,8 +71,6 @@ static void urndis_uno_rx_loop(struct usbnet *, struct usbnet_chain *,
 			       uint32_t);
 static unsigned urndis_uno_tx_prepare(struct usbnet *, struct mbuf *,
 				      struct usbnet_chain *);
-
-static int urndis_init_un(struct ifnet *, struct usbnet *);
 
 static uint32_t urndis_ctrl_handle_init(struct usbnet *,
     const struct rndis_comp_hdr *);
@@ -855,28 +853,14 @@ urndis_watchdog(struct ifnet *ifp)
 #endif
 
 static int
-urndis_init_un(struct ifnet *ifp, struct usbnet *un)
-{
-	int 			 err;
-
-	err = urndis_ctrl_init(un);
-	if (err != RNDIS_STATUS_SUCCESS)
-		return EIO;
-
-	return err;
-}
-
-static int
 urndis_uno_init(struct ifnet *ifp)
 {
 	struct usbnet *un = ifp->if_softc;
-	int error;
 
 	KASSERT(IFNET_LOCKED(ifp));
 
-	error = urndis_init_un(ifp, un);
-	if (error)
-		return EIO;	/* XXX */
+	if (urndis_ctrl_init(un) != RNDIS_STATUS_SUCCESS)
+		return EIO;
 
 	return 0;
 }
@@ -1044,8 +1028,11 @@ urndis_attach(device_t parent, device_t self, void *aux)
 
 	usbnet_attach(un);
 
-	struct ifnet *ifp = usbnet_ifp(un);
-	urndis_init_un(ifp, un);
+	if (urndis_ctrl_init(un) != RNDIS_STATUS_SUCCESS) {
+		aprint_error("%s: unable to initialize hardware\n",
+		    DEVNAME(un));
+		return;
+	}
 
 	if (urndis_ctrl_query(un, OID_802_3_PERMANENT_ADDRESS, NULL, 0,
 	    &buf, &bufsz) != RNDIS_STATUS_SUCCESS) {
