@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.228 2022/03/03 06:09:33 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.229 2022/03/03 06:09:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.228 2022/03/03 06:09:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.229 2022/03/03 06:09:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -114,7 +114,6 @@ SDT_PROBE_DEFINE2(usb, device, xfer, done,
 SDT_PROBE_DEFINE1(usb, device, xfer, destroy,  "struct usbd_xfer *"/*xfer*/);
 
 Static void usbd_ar_pipe(struct usbd_pipe *);
-static usbd_status usb_insert_transfer(struct usbd_xfer *);
 Static void usbd_start_next(struct usbd_pipe *);
 Static usbd_status usbd_open_pipe_ival
 	(struct usbd_interface *, uint8_t, uint8_t, struct usbd_pipe **, int);
@@ -407,7 +406,16 @@ usbd_transfer(struct usbd_xfer *xfer)
 	SDT_PROBE2(usb, device, pipe, transfer__start,  pipe, xfer);
 	do {
 		usbd_lock_pipe(pipe);
-		err = usb_insert_transfer(xfer);
+#ifdef DIAGNOSTIC
+		xfer->ux_state = XFER_ONQU;
+#endif
+		SIMPLEQ_INSERT_TAIL(&pipe->up_queue, xfer, ux_next);
+		if (pipe->up_running && pipe->up_serialise) {
+			err = USBD_IN_PROGRESS;
+		} else {
+			pipe->up_running = 1;
+			err = USBD_NORMAL_COMPLETION;
+		}
 		usbd_unlock_pipe(pipe);
 		if (err)
 			break;
@@ -1150,37 +1158,6 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	}
 	if (pipe->up_running && pipe->up_serialise)
 		usbd_start_next(pipe);
-}
-
-/* Called with USB lock held. */
-static usbd_status
-usb_insert_transfer(struct usbd_xfer *xfer)
-{
-	struct usbd_pipe *pipe = xfer->ux_pipe;
-	usbd_status err;
-
-	USBHIST_FUNC(); USBHIST_CALLARGS(usbdebug,
-	    "xfer = %#jx pipe = %#jx running = %jd timeout = %jd",
-	    (uintptr_t)xfer, (uintptr_t)pipe,
-	    pipe->up_running, xfer->ux_timeout);
-
-	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
-	KASSERTMSG(xfer->ux_state == XFER_BUSY, "xfer %p state is %x", xfer,
-	    xfer->ux_state);
-
-#ifdef DIAGNOSTIC
-	xfer->ux_state = XFER_ONQU;
-#endif
-	SIMPLEQ_INSERT_TAIL(&pipe->up_queue, xfer, ux_next);
-	if (pipe->up_running && pipe->up_serialise)
-		err = USBD_IN_PROGRESS;
-	else {
-		pipe->up_running = 1;
-		err = USBD_NORMAL_COMPLETION;
-	}
-	USBHIST_LOG(usbdebug, "<- done xfer %#jx, err %jd", (uintptr_t)xfer,
-	    err, 0, 0);
-	return err;
 }
 
 /* Called with USB lock held. */
