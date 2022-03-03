@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.227 2022/03/03 06:08:50 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.228 2022/03/03 06:09:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.227 2022/03/03 06:08:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.228 2022/03/03 06:09:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -776,10 +776,26 @@ void
 usbd_abort_pipe(struct usbd_pipe *pipe)
 {
 
-	KASSERT(pipe != NULL);
+	usbd_suspend_pipe(pipe);
+	usbd_resume_pipe(pipe);
+}
+
+void
+usbd_suspend_pipe(struct usbd_pipe *pipe)
+{
 
 	usbd_lock_pipe(pipe);
 	usbd_ar_pipe(pipe);
+	usbd_unlock_pipe(pipe);
+}
+
+void
+usbd_resume_pipe(struct usbd_pipe *pipe)
+{
+
+	usbd_lock_pipe(pipe);
+	KASSERT(SIMPLEQ_EMPTY(&pipe->up_queue));
+	pipe->up_aborting = 0;
 	usbd_unlock_pipe(pipe);
 }
 
@@ -1003,7 +1019,6 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 			/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 		}
 	}
-	pipe->up_aborting = 0;
 	SDT_PROBE1(usb, device, pipe, abort__done,  pipe);
 }
 
