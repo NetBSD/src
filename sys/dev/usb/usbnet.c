@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.65 2022/03/03 05:49:29 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.66 2022/03/03 05:49:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.65 2022/03/03 05:49:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.66 2022/03/03 05:49:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1128,9 +1128,14 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 
 	usbnet_busy(un);
 
+	/*
+	 * Prevent new activity (rescheduling ticks, xfers, &c.) and
+	 * clear the watchdog timer.
+	 */
 	mutex_enter(&unp->unp_rxlock);
 	mutex_enter(&unp->unp_txlock);
 	unp->unp_stopping = true;
+	unp->unp_timer = 0;
 	mutex_exit(&unp->unp_txlock);
 	mutex_exit(&unp->unp_rxlock);
 
@@ -1151,11 +1156,6 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	 * been used by to ifmedia, mii, or ioctl callbacks.
 	 */
 	uno_stop(un, ifp, disable);
-
-	/* Clear the watchdog timer.  */
-	mutex_enter(&unp->unp_txlock);
-	unp->unp_timer = 0;
-	mutex_exit(&unp->unp_txlock);
 
 	/* Stop transfers. */
 	usbnet_ep_stop_pipes(un);
