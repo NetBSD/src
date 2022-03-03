@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.88 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.89 2022/03/03 05:56:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.88 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.89 2022/03/03 05:56:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -205,7 +205,7 @@ static int
 uno_init(struct usbnet *un, struct ifnet *ifp)
 {
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
-	return (*un->un_ops->uno_init)(ifp);
+	return un->un_ops->uno_init ? (*un->un_ops->uno_init)(ifp) : 0;
 }
 
 static int
