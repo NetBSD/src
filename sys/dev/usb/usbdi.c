@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.232 2022/03/03 06:12:49 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.233 2022/03/03 06:13:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.232 2022/03/03 06:12:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.233 2022/03/03 06:13:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -112,6 +112,22 @@ SDT_PROBE_DEFINE2(usb, device, xfer, done,
     "struct usbd_xfer *"/*xfer*/,
     "usbd_status"/*status*/);
 SDT_PROBE_DEFINE1(usb, device, xfer, destroy,  "struct usbd_xfer *"/*xfer*/);
+
+SDT_PROBE_DEFINE5(usb, device, request, start,
+    "struct usbd_device *"/*dev*/,
+    "usb_device_request_t *"/*req*/,
+    "size_t"/*len*/,
+    "int"/*flags*/,
+    "uint32_t"/*timeout*/);
+
+SDT_PROBE_DEFINE7(usb, device, request, done,
+    "struct usbd_device *"/*dev*/,
+    "usb_device_request_t *"/*req*/,
+    "size_t"/*actlen*/,
+    "int"/*flags*/,
+    "uint32_t"/*timeout*/,
+    "void *"/*data*/,
+    "usbd_status"/*status*/);
 
 Static void usbd_ar_pipe(struct usbd_pipe *);
 Static void usbd_start_next(struct usbd_pipe *);
@@ -1236,9 +1252,15 @@ usbd_do_request_len(struct usbd_device *dev, usb_device_request_t *req,
 
 	ASSERT_SLEEPABLE();
 
+	SDT_PROBE5(usb, device, request, start,
+	    dev, req, len, flags, timeout);
+
 	int error = usbd_create_xfer(dev->ud_pipe0, len, 0, 0, &xfer);
-	if (error)
+	if (error) {
+		SDT_PROBE7(usb, device, request, done,
+		    dev, req, /*actlen*/0, flags, timeout, data, USBD_NOMEM);
 		return USBD_NOMEM;
+	}
 
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req, data,
 	    UGETW(req->wLength), flags, NULL);
@@ -1262,6 +1284,9 @@ usbd_do_request_len(struct usbd_device *dev, usb_device_request_t *req,
 		*actlen = xfer->ux_actlen;
 
 	usbd_destroy_xfer(xfer);
+
+	SDT_PROBE7(usb, device, request, done,
+	    dev, req, xfer->ux_actlen, flags, timeout, data, err);
 
 	if (err) {
 		USBHIST_LOG(usbdebug, "returning err = %jd", err, 0, 0, 0);
