@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.188 2022/03/03 05:55:19 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.189 2022/03/03 05:56:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.188 2022/03/03 05:55:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.189 2022/03/03 05:56:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -972,7 +972,7 @@ aue_uno_init(struct ifnet *ifp)
 	AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_TX_ENB);
 	AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_EP3_CLR);
 
-	return usbnet_init_rx_tx(un);
+	return 0;
 }
 
 static void

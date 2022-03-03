@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.116 2022/03/03 05:55:29 riastradh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.117 2022/03/03 05:56:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.116 2022/03/03 05:55:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.117 2022/03/03 05:56:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -615,7 +615,7 @@ kue_uno_init(struct ifnet *ifp)
 #endif
 	kue_setword(un, KUE_CMD_SET_URB_SIZE, 64);
 
-	return usbnet_init_rx_tx(un);
+	return 0;
 }
 
 #ifdef _MODULE

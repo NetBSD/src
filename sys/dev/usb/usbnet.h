@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.29 2022/03/03 05:55:29 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.30 2022/03/03 05:56:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -307,10 +307,7 @@ bool usbnet_isdying(struct usbnet *);
  * usbnet_detach() frees the rx/tx chains
  *
  * Setup un_ed[] with valid end points before calling usbnet_attach().
- * Call usbnet_init_rx_tx() to initialise pipes, which will be open
- * upon success.
  */
-int	usbnet_init_rx_tx(struct usbnet * const);
 
 /* interrupt handling */
 void	usbnet_enqueue(struct usbnet * const, uint8_t *, size_t, int,
