@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.84 2022/03/03 05:51:44 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.85 2022/03/03 05:52:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.84 2022/03/03 05:51:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.85 2022/03/03 05:52:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -363,7 +363,7 @@ url_csr_write_4(struct usbnet *un, int reg, int aval)
 }
 
 static int
-url_init_locked(struct ifnet *ifp)
+url_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	const u_char *eaddr;
@@ -399,14 +399,6 @@ url_init_locked(struct ifnet *ifp)
 	URL_SETBIT(un, URL_CR, URL_CR_TE | URL_CR_RE);
 
 	return usbnet_init_rx_tx(un);
-}
-
-static int
-url_uno_init(struct ifnet *ifp)
-{
-	int ret = url_init_locked(ifp);
-
-	return ret;
 }
 
 static void

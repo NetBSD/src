@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.12 2022/03/03 05:51:27 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.13 2022/03/03 05:52:35 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.12 2022/03/03 05:51:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.13 2022/03/03 05:52:35 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -723,7 +723,7 @@ mos_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static int
-mos_init_locked(struct ifnet *ifp)
+mos_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	u_int8_t		rxmode;
@@ -757,14 +757,6 @@ mos_init_locked(struct ifnet *ifp)
 	mos_reg_write_1(un, MOS_CTL, rxmode);
 
 	return usbnet_init_rx_tx(un);
-}
-
-static int
-mos_uno_init(struct ifnet *ifp)
-{
-	int ret = mos_init_locked(ifp);
-
-	return ret;
 }
 
 static void
