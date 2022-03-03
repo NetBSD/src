@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 2015/06/24 06:19:52 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21 2022/03/03 06:26:14 riastradh Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2015/06/24 06:19:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2022/03/03 06:26:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,10 @@ cpumatch(device_t parent, cfdata_t cf, void *aux)
 static void
 cpuattach(device_t parent, device_t self, void *aux)
 {
-
 	struct cpu_info * const ci = curcpu();
 
 	ci->ci_dev = self;
-	self->dv_private = ci;
+	device_set_private(self, ci);
 
 	aprint_normal(": ");
 
