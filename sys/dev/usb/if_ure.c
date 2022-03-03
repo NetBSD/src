@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.51 2022/03/03 05:54:21 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.52 2022/03/03 05:54:37 riastradh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.51 2022/03/03 05:54:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.52 2022/03/03 05:54:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -393,8 +393,6 @@ ure_reset(struct usbnet *un)
 {
 	int i;
 
-	usbnet_isowned_core(un);
-
 	ure_write_1(un, URE_PLA_CR, URE_MCU_TYPE_PLA, URE_CR_RST);
 
 	for (i = 0; i < URE_TIMEOUT; i++) {
@@ -414,8 +412,6 @@ ure_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 	uint8_t eaddr[8];
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return EIO;
@@ -899,7 +895,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 	    (un->un_flags != 0) ? "" : "unknown ",
 	    ver);
 
-	usbnet_lock_core(un);
 	if (un->un_flags & URE_FLAG_8152)
 		ure_rtl8152_init(un);
 	else
@@ -912,7 +907,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 	else
 		ure_read_mem(un, URE_PLA_BACKUP, URE_MCU_TYPE_PLA, eaddr,
 		    sizeof(eaddr));
-	usbnet_unlock_core(un);
 	if (ETHER_IS_ZERO(eaddr)) {
 		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
 		machi = cprng_strong32() & 0xffff;

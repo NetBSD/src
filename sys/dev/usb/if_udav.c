@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.91 2022/03/03 05:54:21 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.92 2022/03/03 05:54:37 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.91 2022/03/03 05:54:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.92 2022/03/03 05:54:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -238,14 +238,11 @@ udav_attach(device_t parent, device_t self, void *aux)
 
 	usbnet_attach(un, "udavdet");
 
-	usbnet_lock_core(un);
-
 // 	/* reset the adapter */
 // 	udav_reset(un);
 
 	/* Get Ethernet Address */
 	err = udav_csr_read(un, UDAV_PAR, un->un_eaddr, ETHER_ADDR_LEN);
-	usbnet_unlock_core(un);
 	if (err) {
 		aprint_error_dev(self, "read MAC address failed\n");
 		return;
@@ -523,7 +520,6 @@ udav_uno_init(struct ifnet *ifp)
 static void
 udav_reset(struct usbnet *un)
 {
-    	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return;
@@ -536,7 +532,6 @@ udav_reset(struct usbnet *un)
 static void
 udav_chip_init(struct usbnet *un)
 {
-	usbnet_isowned_core(un);
 
 	/* Select PHY */
 #if 1

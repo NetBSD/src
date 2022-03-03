@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.144 2022/03/03 05:54:21 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.145 2022/03/03 05:54:37 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.144 2022/03/03 05:54:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.145 2022/03/03 05:54:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -513,8 +513,6 @@ static void
 axe_reset(struct usbnet *un)
 {
 
-	usbnet_isowned_core(un);
-
 	if (usbnet_isdying(un))
 		return;
 
@@ -930,10 +928,8 @@ axe_attach(device_t parent, device_t self, void *aux)
 	usbnet_attach(un, "axedet");
 
 	/* We need the PHYID for init dance in some cases */
-	usbnet_lock_core(un);
 	if (axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, &sc->axe_phyaddrs)) {
 		aprint_error_dev(self, "failed to read phyaddrs\n");
-		usbnet_unlock_core(un);
 		return;
 	}
 
@@ -963,12 +959,9 @@ axe_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (axe_cmd(sc, AXE_CMD_READ_IPG012, 0, 0, sc->axe_ipgs)) {
 			aprint_error_dev(self, "failed to read ipg\n");
-			usbnet_unlock_core(un);
 			return;
 		}
 	}
-
-	usbnet_unlock_core(un);
 
 	if (!AXE_IS_172(un))
 		usbnet_ec(un)->ec_capabilities = ETHERCAP_VLAN_MTU;
@@ -1217,8 +1210,6 @@ axe_uno_init(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 	struct axe_softc * const sc = usbnet_softc(un);
 	int rxmode;
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return EIO;
