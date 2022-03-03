@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.59 2022/03/03 05:48:45 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.60 2022/03/03 05:48:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.59 2022/03/03 05:48:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.60 2022/03/03 05:48:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1611,20 +1611,6 @@ usbnet_detach(device_t self, int flags)
 	usb_rem_task_wait(un->un_udev, &unp->unp_mcasttask, USB_TASKQ_DRIVER,
 	    NULL);
 
-	mutex_enter(&unp->unp_core_lock);
-	unp->unp_refcnt--;
-	while (unp->unp_refcnt >= 0) {
-		/* Wait for processes to go away */
-		cv_wait(&unp->unp_detachcv, &unp->unp_core_lock);
-	}
-	mutex_exit(&unp->unp_core_lock);
-
-	usbnet_rx_list_free(un);
-	usbnet_tx_list_free(un);
-
-	callout_destroy(&unp->unp_stat_ch);
-	rnd_detach_source(&unp->unp_rndsrc);
-
 	if (mii) {
 		mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
 		ifmedia_fini(&mii->mii_media);
@@ -1671,6 +1657,20 @@ usbnet_detach(device_t self, int flags)
 	 */
 	usb_rem_task_wait(un->un_udev, &unp->unp_mcasttask, USB_TASKQ_DRIVER,
 	    NULL);
+
+	mutex_enter(&unp->unp_core_lock);
+	unp->unp_refcnt--;
+	while (unp->unp_refcnt >= 0) {
+		/* Wait for processes to go away */
+		cv_wait(&unp->unp_detachcv, &unp->unp_core_lock);
+	}
+	mutex_exit(&unp->unp_core_lock);
+
+	usbnet_rx_list_free(un);
+	usbnet_tx_list_free(un);
+
+	callout_destroy(&unp->unp_stat_ch);
+	rnd_detach_source(&unp->unp_rndsrc);
 
 	cv_destroy(&unp->unp_detachcv);
 	mutex_destroy(&unp->unp_core_lock);
