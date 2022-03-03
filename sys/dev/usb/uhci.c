@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.308 2021/12/21 09:51:22 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.309 2022/03/03 06:04:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.308 2021/12/21 09:51:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.309 2022/03/03 06:04:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2258,20 +2258,8 @@ uhci_device_bulk_fini(struct usbd_xfer *xfer)
 usbd_status
 uhci_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	usbd_status err;
 
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * so start it first.
-	 */
+	/* Pipe isn't running, so start it first.  */
 	return uhci_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
@@ -2495,20 +2483,8 @@ uhci_device_ctrl_fini(struct usbd_xfer *xfer)
 usbd_status
 uhci_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	usbd_status err;
 
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * so start it first.
-	 */
+	/* Pipe isn't running, so start it first.  */
 	return uhci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
@@ -2701,20 +2677,8 @@ uhci_device_intr_fini(struct usbd_xfer *xfer)
 usbd_status
 uhci_device_intr_transfer(struct usbd_xfer *xfer)
 {
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	usbd_status err;
 
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * so start it first.
-	 */
+	/* Pipe isn't running, so start it first.  */
 	return uhci_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
@@ -2891,17 +2855,9 @@ usbd_status
 uhci_device_isoc_transfer(struct usbd_xfer *xfer)
 {
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	usbd_status err __diagused;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(5, "xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-
-	/* Put it on our queue, */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-
-	KASSERT(err == USBD_NORMAL_COMPLETION);
 
 	/* insert into schedule, */
 
@@ -3890,20 +3846,8 @@ uhci_root_intr_abort(struct usbd_xfer *xfer)
 usbd_status
 uhci_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	usbd_status err;
 
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * start first
-	 */
+	/* Pipe isn't running, start first */
 	return uhci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 

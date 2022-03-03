@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.77 2021/12/21 09:51:22 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.78 2022/03/03 06:04:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.77 2021/12/21 09:51:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.78 2022/03/03 06:04:31 riastradh Exp $");
 
 #include "opt_usb.h"
 
@@ -614,17 +614,8 @@ dwc2_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 Static usbd_status
 dwc2_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-	usbd_status err;
 
 	DPRINTF("\n");
-
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
 	/* Pipe isn't running, start first */
 	return dwc2_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
@@ -711,17 +702,8 @@ dwc2_root_intr_done(struct usbd_xfer *xfer)
 Static usbd_status
 dwc2_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-	usbd_status err;
 
 	DPRINTF("\n");
-
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
 	/* Pipe isn't running, start first */
 	return dwc2_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
@@ -788,12 +770,8 @@ dwc2_device_bulk_transfer(struct usbd_xfer *xfer)
 
 	DPRINTF("xfer=%p\n", xfer);
 
-	/* Insert last in queue. */
 	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-
-	KASSERT(err == USBD_NORMAL_COMPLETION);
-
+	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);
@@ -833,17 +811,8 @@ dwc2_device_bulk_done(struct usbd_xfer *xfer)
 Static usbd_status
 dwc2_device_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-	usbd_status err;
 
 	DPRINTF("xfer=%p\n", xfer);
-
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
 
 	/* Pipe isn't running, start first */
 	return dwc2_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
@@ -909,12 +878,8 @@ dwc2_device_isoc_transfer(struct usbd_xfer *xfer)
 
 	DPRINTF("xfer=%p\n", xfer);
 
-	/* Insert last in queue. */
 	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-
-	KASSERT(err == USBD_NORMAL_COMPLETION);
-
+	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
 	mutex_exit(&sc->sc_lock);
