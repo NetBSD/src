@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.64 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.65 2022/03/03 05:50:57 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.64 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.65 2022/03/03 05:50:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -200,6 +200,8 @@ mue_wait_for_bits(struct usbnet *un, uint32_t reg,
 	int ntries;
 
 	for (ntries = 0; ntries < 1000; ntries++) {
+		if (usbnet_isdying(un))
+			return 1;
 		val = mue_csr_read(un, reg);
 		if ((val & set) || !(val & clear))
 			return 0;
