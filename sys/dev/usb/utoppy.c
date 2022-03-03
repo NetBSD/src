@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.35 2020/03/14 02:35:34 christos Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.36 2022/03/03 06:05:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.35 2020/03/14 02:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.36 2022/03/03 06:05:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1365,7 +1365,6 @@ static int
 utoppyclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct utoppy_softc *sc;
-	usbd_status err;
 
 	sc = device_lookup_private(&utoppy_cd, UTOPPYUNIT(dev));
 
@@ -1384,14 +1383,12 @@ utoppyclose(dev_t dev, int flag, int mode, struct lwp *l)
 		(void) utoppy_cancel(sc);
 
 	if (sc->sc_out_pipe != NULL) {
-		if ((err = usbd_abort_pipe(sc->sc_out_pipe)) != 0)
-			printf("usbd_abort_pipe(OUT) returned %d\n", err);
+		usbd_abort_pipe(sc->sc_out_pipe);
 		sc->sc_out_pipe = NULL;
 	}
 
 	if (sc->sc_in_pipe != NULL) {
-		if ((err = usbd_abort_pipe(sc->sc_in_pipe)) != 0)
-			printf("usbd_abort_pipe(IN) returned %d\n", err);
+		usbd_abort_pipe(sc->sc_in_pipe);
 		sc->sc_in_pipe = NULL;
 	}
 

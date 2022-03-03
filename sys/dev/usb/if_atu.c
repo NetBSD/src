@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.73 2020/08/28 19:02:19 riastradh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.74 2022/03/03 06:05:38 riastradh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.73 2020/08/28 19:02:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.74 2022/03/03 06:05:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2235,19 +2235,11 @@ atu_stop(struct ifnet *ifp, int disable)
 
 	/* Stop transfers. */
 	if (sc->atu_ep[ATU_ENDPT_RX] != NULL) {
-		err = usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
-		if (err) {
-			DPRINTF(("%s: abort rx pipe failed: %s\n",
-			    device_xname(sc->atu_dev), usbd_errstr(err)));
-		}
+		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 	}
 
 	if (sc->atu_ep[ATU_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
-		if (err) {
-			DPRINTF(("%s: abort tx pipe failed: %s\n",
-			    device_xname(sc->atu_dev), usbd_errstr(err)));
-		}
+		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 	}
 
 	/* Free RX/TX/MGMT list resources. */

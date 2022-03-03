@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.91 2022/03/03 05:56:44 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.92 2022/03/03 06:05:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.91 2022/03/03 05:56:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.92 2022/03/03 06:05:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -817,21 +817,16 @@ usbnet_ep_open_pipes(struct usbnet * const un)
 	return USBD_NORMAL_COMPLETION;
 }
 
-static usbd_status
+static void
 usbnet_ep_stop_pipes(struct usbnet * const un)
 {
 	struct usbnet_private * const unp = un->un_pri;
-	usbd_status err = USBD_NORMAL_COMPLETION;
 
 	for (size_t i = 0; i < __arraycount(unp->unp_ep); i++) {
 		if (unp->unp_ep[i] == NULL)
 			continue;
-		usbd_status err2 = usbd_abort_pipe(unp->unp_ep[i]);
-		if (err == USBD_NORMAL_COMPLETION && err2)
-			err = err2;
+		usbd_abort_pipe(unp->unp_ep[i]);
 	}
-
-	return err;
 }
 
 static int
@@ -1208,17 +1203,13 @@ usbnet_watchdog(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 	struct usbnet_private * const unp = un->un_pri;
 	struct usbnet_cdata * const cd = un_cdata(un);
-	usbd_status err;
 
 	if_statinc(ifp, if_oerrors);
 	device_printf(un->un_dev, "watchdog timeout\n");
 
 	if (cd->uncd_tx_cnt > 0) {
 		DPRINTF("uncd_tx_cnt=%ju non zero, aborting pipe", 0, 0, 0, 0);
-		err = usbd_abort_pipe(unp->unp_ep[USBNET_ENDPT_TX]);
-		if (err)
-			device_printf(un->un_dev, "pipe abort failed: %s\n",
-			    usbd_errstr(err));
+		usbd_abort_pipe(unp->unp_ep[USBNET_ENDPT_TX]);
 		if (cd->uncd_tx_cnt != 0)
 			DPRINTF("uncd_tx_cnt now %ju", cd->uncd_tx_cnt, 0, 0, 0);
 	}

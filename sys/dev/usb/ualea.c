@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.13 2021/05/29 08:45:19 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.14 2022/03/03 06:05:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.13 2021/05/29 08:45:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.14 2022/03/03 06:05:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -161,7 +161,7 @@ ualea_detach(device_t self, int flags)
 
 	/* Cancel pending xfer.  */
 	if (sc->sc_pipe)
-		(void)usbd_abort_pipe(sc->sc_pipe);
+		usbd_abort_pipe(sc->sc_pipe);
 	KASSERT(!sc->sc_inflight);
 
 	/* All users have drained.  Tear it all down.  */
