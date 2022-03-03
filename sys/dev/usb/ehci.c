@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.304 2022/03/03 06:08:50 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.305 2022/03/03 06:12:11 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.304 2022/03/03 06:08:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.305 2022/03/03 06:12:11 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2369,6 +2369,8 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+
 	if (sc->sc_dying)
 		return -1;
 
@@ -2757,18 +2759,15 @@ Static usbd_status
 ehci_root_intr_start(struct usbd_xfer *xfer)
 {
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	const bool polling = sc->sc_bus.ub_usepolling;
+
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
 	xfer->ux_status = USBD_IN_PROGRESS;
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -3607,10 +3606,10 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	ehci_soft_qtd_t *setup, *status, *next;
 	ehci_soft_qh_t *sqh;
-	const bool polling = sc->sc_bus.ub_usepolling;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
 	if (sc->sc_dying)
@@ -3729,16 +3728,11 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	DPRINTFN(5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
-
 	/* Insert qTD in QH list - also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, setup);
 	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 #if 0
 #ifdef EHCI_DEBUG
@@ -3878,12 +3872,13 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	ehci_soft_qh_t *sqh;
 	ehci_soft_qtd_t *end;
 	int len, isread, endpt;
-	const bool polling = sc->sc_bus.ub_usepolling;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	DPRINTF("xfer=%#jx len=%jd flags=%jd", (uintptr_t)xfer, xfer->ux_length,
 	    xfer->ux_flags, 0);
+
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -3900,10 +3895,6 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 #ifdef DIAGNOSTIC
 	exfer->ex_isdone = false;
 #endif
-
-	/* Take lock here to protect nexttoggle */
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 
 	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle, &end);
 
@@ -3928,8 +3919,6 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 #if 0
 #ifdef EHCI_DEBUG
@@ -4082,12 +4071,13 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	ehci_soft_qtd_t *end;
 	ehci_soft_qh_t *sqh;
 	int len, isread, endpt;
-	const bool polling = sc->sc_bus.ub_usepolling;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	DPRINTF("xfer=%#jx len=%jd flags=%jd", (uintptr_t)xfer, xfer->ux_length,
 	    xfer->ux_flags, 0);
+
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -4104,10 +4094,6 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 #ifdef DIAGNOSTIC
 	exfer->ex_isdone = false;
 #endif
-
-	/* Take lock to protect nexttoggle */
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 
 	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle, &end);
 
@@ -4132,8 +4118,6 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 #if 0
 #ifdef EHCI_DEBUG
@@ -4325,6 +4309,8 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 	DPRINTF("xfer %#jx len %jd flags %jd", (uintptr_t)xfer, xfer->ux_length,
 	    xfer->ux_flags, 0);
 
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
@@ -4458,8 +4444,6 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 	 * more than the period frame list.
 	 */
 
-	mutex_enter(&sc->sc_lock);
-
 	/* Start inserting frames */
 	if (epipe->isoc.cur_xfers > 0) {
 		frindex = epipe->isoc.next_frame;
@@ -4522,7 +4506,6 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -4690,6 +4673,8 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 
 	DPRINTF("xfer %#jx flags %jd", (uintptr_t)xfer, xfer->ux_flags, 0, 0);
 
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
@@ -4836,8 +4821,6 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 	 * more than the period frame list.
 	 */
 
-	mutex_enter(&sc->sc_lock);
-
 	/* Start inserting frames */
 	if (epipe->isoc.cur_xfers > 0) {
 		frindex = epipe->isoc.next_frame;
@@ -4905,7 +4888,6 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
