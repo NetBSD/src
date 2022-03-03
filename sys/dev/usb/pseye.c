@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.28 2020/05/22 11:24:31 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.29 2022/03/03 06:23:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.28 2020/05/22 11:24:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.29 2022/03/03 06:23:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	sc->sc_videodev = video_attach_mi(&pseye_hw_if, self);
+	sc->sc_videodev = video_attach_mi(&pseye_hw_if, self, sc);
 	if (sc->sc_videodev == NULL) {
 		aprint_error_dev(self, "couldn't attach video layer\n");
 		sc->sc_dying = 1;
