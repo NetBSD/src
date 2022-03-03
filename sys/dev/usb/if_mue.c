@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.71 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.72 2022/03/03 05:53:04 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.71 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.72 2022/03/03 05:53:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -92,14 +92,13 @@ static int	mue_chip_init(struct usbnet *);
 static void	mue_set_macaddr(struct usbnet *);
 static int	mue_get_macaddr(struct usbnet *, prop_dictionary_t);
 static int	mue_prepare_tso(struct usbnet *, struct mbuf *);
-static void	mue_setiff_locked(struct usbnet *);
+static void	mue_uno_mcast(struct ifnet *);
 static void	mue_sethwcsum_locked(struct usbnet *);
 static void	mue_setmtu_locked(struct usbnet *);
 static void	mue_reset(struct usbnet *);
 
 static void	mue_uno_stop(struct ifnet *, int);
 static int	mue_uno_ioctl(struct ifnet *, u_long, void *);
-static void	mue_uno_mcast(struct ifnet *);
 static int	mue_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int	mue_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	mue_uno_mii_statchg(struct ifnet *);
@@ -997,10 +996,10 @@ mue_prepare_tso(struct usbnet *un, struct mbuf *m)
 }
 
 static void
-mue_setiff_locked(struct usbnet *un)
+mue_uno_mcast(struct ifnet *ifp)
 {
+	struct usbnet *un = ifp->if_softc;
 	struct ethercom *ec = usbnet_ec(un);
-	struct ifnet * const ifp = usbnet_ifp(un);
 	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1242,7 +1241,7 @@ mue_uno_init(struct ifnet *ifp)
 	mue_set_macaddr(un);
 
 	/* Load the multicast filter. */
-	mue_setiff_locked(un);
+	mue_uno_mcast(ifp);
 
 	/* TCP/UDP checksum offload engines. */
 	mue_sethwcsum_locked(un);
@@ -1274,14 +1273,6 @@ mue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	usbnet_unlock_core(un);
 
 	return 0;
-}
-
-static void
-mue_uno_mcast(struct ifnet *ifp)
-{
-	struct usbnet * const un = ifp->if_softc;
-
-	mue_setiff_locked(un);
 }
 
 static void

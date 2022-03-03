@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.86 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.87 2022/03/03 05:53:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.86 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.87 2022/03/03 05:53:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -77,11 +77,10 @@ static unsigned	url_uno_tx_prepare(struct usbnet *, struct mbuf *,
 static void url_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static int url_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int url_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
-static void url_uno_mcast(struct ifnet *);
 static void url_uno_stop(struct ifnet *, int);
 static void url_uno_mii_statchg(struct ifnet *);
 static int url_uno_init(struct ifnet *);
-static void url_rcvfilt_locked(struct usbnet *);
+static void url_uno_mcast(struct ifnet *);
 static void url_reset(struct usbnet *);
 
 static int url_csr_read_1(struct usbnet *, int);
@@ -393,7 +392,7 @@ url_uno_init(struct ifnet *ifp)
 	URL_SETBIT2(un, URL_RCR, URL_RCR_TAIL | URL_RCR_AD | URL_RCR_AB);
 
 	/* Accept multicast frame or run promisc. mode */
-	url_rcvfilt_locked(un);
+	url_uno_mcast(ifp);
 
 	/* Enable RX and TX */
 	URL_SETBIT(un, URL_CR, URL_CR_TE | URL_CR_RE);
@@ -425,9 +424,9 @@ url_reset(struct usbnet *un)
 }
 
 static void
-url_rcvfilt_locked(struct usbnet *un)
+url_uno_mcast(struct ifnet *ifp)
 {
-	struct ifnet * const ifp = usbnet_ifp(un);
+	struct usbnet * const un = ifp->if_softc;
 	struct ethercom *ec = usbnet_ec(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -544,14 +543,6 @@ static void url_intr(void)
 {
 }
 #endif
-
-static void
-url_uno_mcast(struct ifnet *ifp)
-{
-	struct usbnet * const un = ifp->if_softc;
-
-	url_rcvfilt_locked(un);
-}
 
 /* Stop the adapter and free any mbufs allocated to the RX and TX lists. */
 static void

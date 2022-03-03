@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.98 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.99 2022/03/03 05:53:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.98 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.99 2022/03/03 05:53:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -357,11 +357,11 @@ cue_crc(const char *addr)
 }
 
 static void
-cue_setiff_locked(struct usbnet *un)
+cue_uno_mcast(struct ifnet *ifp)
 {
+	struct usbnet		*un = ifp->if_softc;
 	struct cue_softc	*sc = usbnet_softc(un);
 	struct ethercom		*ec = usbnet_ec(un);
-	struct ifnet		*ifp = usbnet_ifp(un);
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	uint32_t		h, i;
@@ -648,7 +648,7 @@ cue_uno_init(struct ifnet *ifp)
 	cue_csr_write_1(un, CUE_ETHCTL, ctl);
 
 	/* Load the multicast filter. */
-	cue_setiff_locked(un);
+	cue_uno_mcast(ifp);
 
 	/*
 	 * Set the number of RX and TX buffers that we want
@@ -665,14 +665,6 @@ cue_uno_init(struct ifnet *ifp)
 	cue_csr_write_1(un, CUE_LEDCTL, CUE_LEDCTL_FOLLOW_LINK);
 
 	return usbnet_init_rx_tx(un);
-}
-
-static void
-cue_uno_mcast(struct ifnet *ifp)
-{
-	struct usbnet * const	un = ifp->if_softc;
-
-	cue_setiff_locked(un);
 }
 
 /* Stop and reset the adapter.  */

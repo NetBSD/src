@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.140 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.141 2022/03/03 05:53:04 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.140 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.141 2022/03/03 05:53:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -426,11 +426,11 @@ axe_uno_mii_statchg(struct ifnet *ifp)
 }
 
 static void
-axe_rcvfilt_locked(struct usbnet *un)
+axe_uno_mcast(struct ifnet *ifp)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();
+	struct usbnet * const un = ifp->if_softc;
 	struct axe_softc * const sc = usbnet_softc(un);
-	struct ifnet * const ifp = usbnet_ifp(un);
 	struct ethercom *ec = usbnet_ec(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1301,17 +1301,9 @@ axe_uno_init(struct ifnet *ifp)
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 
 	/* Accept multicast frame or run promisc. mode */
-	axe_rcvfilt_locked(un);
+	axe_uno_mcast(ifp);
 
 	return usbnet_init_rx_tx(un);
-}
-
-static void
-axe_uno_mcast(struct ifnet *ifp)
-{
-	struct usbnet * const un = ifp->if_softc;
-
-	axe_rcvfilt_locked(un);
 }
 
 static void
