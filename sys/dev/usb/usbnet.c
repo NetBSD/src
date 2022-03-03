@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.75 2022/03/03 05:51:06 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.76 2022/03/03 05:51:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.75 2022/03/03 05:51:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.76 2022/03/03 05:51:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -837,8 +837,6 @@ usbnet_init_rx_tx(struct usbnet * const un)
 		return EIO;
 	}
 
-	usbnet_busy(un);
-
 	/* Open RX and TX pipes. */
 	err = usbnet_ep_open_pipes(un);
 	if (err) {
@@ -879,7 +877,6 @@ out:
 		usbnet_tx_list_fini(un);
 		usbnet_ep_close_pipes(un);
 	}
-	usbnet_unbusy(un);
 
 	usbnet_isowned_core(un);
 
@@ -1126,8 +1123,6 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	    "%s", ifp->if_xname);
 	usbnet_isowned_core(un);
 
-	usbnet_busy(un);
-
 	/*
 	 * Prevent new activity (rescheduling ticks, xfers, &c.) and
 	 * clear the watchdog timer.
@@ -1176,8 +1171,6 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
 	    "%s", ifp->if_xname);
 	ifp->if_flags &= ~IFF_RUNNING;
-
-	usbnet_unbusy(un);
 }
 
 static void
