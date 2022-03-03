@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2019/04/11 14:47:06 kamil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2022/03/03 06:28:04 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2019/04/11 14:47:06 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2022/03/03 06:28:04 riastradh Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -1019,7 +1019,7 @@ e500_cpu_attach(device_t self, u_int instance)
 	if (instance > 1) {
 #if defined(MULTIPROCESSOR)
 		ci->ci_idepth = -1;
-		self->dv_private = ci;
+		device_set_private(self, ci);
 
 		ci->ci_cpuid = instance - (instance > 0);
 		ci->ci_dev = self;
@@ -1038,7 +1038,7 @@ e500_cpu_attach(device_t self, u_int instance)
 #endif
 	}
 
-	self->dv_private = ci;
+	device_set_private(self, ci);
 
 	ci->ci_cpuid = instance - (instance > 0);
 	ci->ci_dev = self;
