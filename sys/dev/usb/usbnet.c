@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.58 2022/03/03 05:48:37 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.59 2022/03/03 05:48:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.58 2022/03/03 05:48:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.59 2022/03/03 05:48:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1601,9 +1601,13 @@ usbnet_detach(device_t self, int flags)
 	}
 	IFNET_UNLOCK(ifp);
 
-	callout_halt(&unp->unp_stat_ch, NULL);
-	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
-	    NULL);
+	/*
+	 * The callout and tick task can't be scheduled anew at this
+	 * point, and usbnet_if_stop has waited for them to complete.
+	 */
+	KASSERT(!callout_pending(&unp->unp_stat_ch));
+	KASSERT(!usb_task_pending(un->un_udev, &unp->unp_ticktask));
+
 	usb_rem_task_wait(un->un_udev, &unp->unp_mcasttask, USB_TASKQ_DRIVER,
 	    NULL);
 
