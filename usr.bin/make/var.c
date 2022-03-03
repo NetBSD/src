@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1012 2022/02/11 21:44:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1013 2022/03/03 19:52:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1012 2022/02/11 21:44:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1013 2022/03/03 19:52:41 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2695,9 +2695,8 @@ ApplyModifier_Range(const char **pp, ModChain *ch)
 }
 
 /* Parse a ':M' or ':N' modifier. */
-static void
-ParseModifier_Match(const char **pp, const ModChain *ch,
-		    char **out_pattern)
+static char *
+ParseModifier_Match(const char **pp, const ModChain *ch)
 {
 	const char *mod = *pp;
 	Expr *expr = ch->expr;
@@ -2761,6 +2760,10 @@ ParseModifier_Match(const char **pp, const ModChain *ch,
 
 	if (needSubst) {
 		char *old_pattern = pattern;
+		/*
+		 * XXX: Contrary to ParseModifierPart, a dollar in a ':M' or
+		 * ':N' modifier must be escaped as '$$', not as '\$'.
+		 */
 		(void)Var_Subst(pattern, expr->scope, expr->emode, &pattern);
 		/* TODO: handle errors */
 		free(old_pattern);
@@ -2768,7 +2771,7 @@ ParseModifier_Match(const char **pp, const ModChain *ch,
 
 	DEBUG2(VAR, "Pattern for ':%c' is \"%s\"\n", mod[0], pattern);
 
-	*out_pattern = pattern;
+	return pattern;
 }
 
 /* :Mpattern or :Npattern */
@@ -2778,7 +2781,7 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 	char mod = **pp;
 	char *pattern;
 
-	ParseModifier_Match(pp, ch, &pattern);
+	pattern = ParseModifier_Match(pp, ch);
 
 	if (ModChain_ShouldEval(ch)) {
 		ModifyWordProc modifyWord =
