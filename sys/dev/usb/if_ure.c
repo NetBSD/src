@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.42 2022/03/03 05:50:57 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.43 2022/03/03 05:51:06 riastradh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.42 2022/03/03 05:50:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.43 2022/03/03 05:51:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -86,7 +86,7 @@ static void	ure_disable_teredo(struct usbnet *);
 static void	ure_init_fifo(struct usbnet *);
 
 static void	ure_uno_stop(struct ifnet *, int);
-static int	ure_uno_ioctl(struct ifnet *, u_long, void *);
+static void	ure_uno_mcast(struct ifnet *);
 static int	ure_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int	ure_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	ure_uno_miibus_statchg(struct ifnet *);
@@ -104,7 +104,7 @@ CFATTACH_DECL_NEW(ure, sizeof(struct usbnet), ure_match, ure_attach,
 
 static const struct usbnet_ops ure_ops = {
 	.uno_stop = ure_uno_stop,
-	.uno_ioctl = ure_uno_ioctl,
+	.uno_mcast = ure_uno_mcast,
 	.uno_read_reg = ure_uno_mii_read_reg,
 	.uno_write_reg = ure_uno_mii_write_reg,
 	.uno_statchg = ure_uno_miibus_statchg,
@@ -802,27 +802,18 @@ ure_init_fifo(struct usbnet *un)
 	    URE_TXFIFO_THR_NORMAL);
 }
 
-static int
-ure_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+static void
+ure_uno_mcast(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
 	usbnet_busy(un);
 
-	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ure_rcvfilt_locked(un);
-		break;
-	default:
-		break;
-	}
+	ure_rcvfilt_locked(un);
 
 	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
-
-	return 0;
 }
 
 static int

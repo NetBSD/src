@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.9 2022/03/03 05:50:57 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.10 2022/03/03 05:51:06 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.9 2022/03/03 05:50:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.10 2022/03/03 05:51:06 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -145,7 +145,7 @@ CFATTACH_DECL_NEW(mos, sizeof(struct usbnet),
 static void mos_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned mos_uno_tx_prepare(struct usbnet *, struct mbuf *,
 				   struct usbnet_chain *);
-static int mos_uno_ioctl(struct ifnet *, u_long, void *);
+static void mos_uno_mcast(struct ifnet *);
 static int mos_uno_init(struct ifnet *);
 static void mos_chip_init(struct usbnet *);
 static void mos_uno_stop(struct ifnet *ifp, int disable);
@@ -164,7 +164,7 @@ static int mos_write_mcast(struct usbnet *, uint8_t *);
 
 static const struct usbnet_ops mos_ops = {
 	.uno_stop = mos_uno_stop,
-	.uno_ioctl = mos_uno_ioctl,
+	.uno_mcast = mos_uno_mcast,
 	.uno_read_reg = mos_uno_mii_read_reg,
 	.uno_write_reg = mos_uno_mii_write_reg,
 	.uno_statchg = mos_uno_mii_statchg,
@@ -771,27 +771,18 @@ mos_uno_init(struct ifnet *ifp)
 	return ret;
 }
 
-static int
-mos_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+static void
+mos_uno_mcast(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
 	usbnet_busy(un);
 
-	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		mos_rcvfilt_locked(un);
-		break;
-	default:
-		break;
-	}
+	mos_rcvfilt_locked(un);
 
 	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
-
-	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.74 2022/03/03 05:50:47 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.75 2022/03/03 05:51:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.74 2022/03/03 05:50:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.75 2022/03/03 05:51:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,13 +162,9 @@ static int
 uno_ioctl(struct usbnet *un, struct ifnet *ifp, u_long cmd, void *data)
 {
 
-	switch (cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		break;
-	default:
-		KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
-	}
+	KASSERTMSG(cmd != SIOCADDMULTI, "%s", ifp->if_xname);
+	KASSERTMSG(cmd != SIOCDELMULTI, "%s", ifp->if_xname);
+	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
 
 	if (un->un_ops->uno_ioctl)
 		return (*un->un_ops->uno_ioctl)(ifp, cmd, data);
@@ -1076,7 +1072,6 @@ usbnet_mcast_task(void *arg)
 	USBNETHIST_FUNC();
 	struct usbnet * const un = arg;
 	struct ifnet * const ifp = usbnet_ifp(un);
-	struct ifreq ifr;
 
 	USBNETHIST_CALLARGSN(10, "%jd: enter",
 	    un->un_pri->unp_number, 0, 0, 0);
@@ -1094,16 +1089,15 @@ usbnet_mcast_task(void *arg)
 		return;
 
 	/*
-	 * Pass a bogus ifr with SIOCDELMULTI -- the goal is to just
-	 * notify the driver to reprogram any hardware multicast
-	 * filter, according to what's already stored in the ethercom.
-	 * None of the drivers actually examine this argument, so it
-	 * doesn't change the ABI as far as they can tell.
+	 * If the hardware is running, ask the driver to reprogram the
+	 * multicast filter.  If the hardware is not running, the
+	 * driver is responsible for programming the multicast filter
+	 * as part of its uno_init routine to bring the hardware up.
 	 */
 	IFNET_LOCK(ifp);
 	if (ifp->if_flags & IFF_RUNNING) {
-		memset(&ifr, 0, sizeof(ifr));
-		(void)uno_ioctl(un, ifp, SIOCDELMULTI, &ifr);
+		if (un->un_ops->uno_mcast)
+			(*un->un_ops->uno_mcast)(ifp);
 	}
 	IFNET_UNLOCK(ifp);
 }
