@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.109 2022/03/03 05:51:27 riastradh Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.110 2022/03/03 05:52:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.109 2022/03/03 05:51:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.110 2022/03/03 05:52:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -591,7 +591,7 @@ kue_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 }
 
 static int
-kue_init_locked(struct ifnet *ifp)
+kue_uno_init(struct ifnet *ifp)
 {
 	struct usbnet * const	un = ifp->if_softc;
 	struct kue_softc	*sc = usbnet_softc(un);
@@ -625,16 +625,6 @@ kue_init_locked(struct ifnet *ifp)
 	kue_setiff_locked(un);
 
 	return usbnet_init_rx_tx(un);
-}
-
-static int
-kue_uno_init(struct ifnet *ifp)
-{
-	int rv;
-
-	rv = kue_init_locked(ifp);
-
-	return rv;
 }
 
 static void
