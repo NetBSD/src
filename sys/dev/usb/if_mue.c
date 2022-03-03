@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.74 2022/03/03 05:53:33 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.75 2022/03/03 05:54:03 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.74 2022/03/03 05:53:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.75 2022/03/03 05:54:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1091,6 +1091,8 @@ mue_sethwcsum_locked(struct usbnet *un)
 	struct ifnet * const ifp = usbnet_ifp(un);
 	uint32_t reg, val;
 
+	KASSERT(IFNET_LOCKED(ifp));
+
 	reg = (un->un_flags & LAN7500) ? MUE_7500_RFE_CTL : MUE_7800_RFE_CTL;
 	val = mue_csr_read(un, reg);
 
@@ -1122,6 +1124,8 @@ mue_setmtu_locked(struct usbnet *un)
 {
 	struct ifnet * const ifp = usbnet_ifp(un);
 	uint32_t val;
+
+	KASSERT(IFNET_LOCKED(ifp));
 
 	/* Set the maximum frame size. */
 	MUE_CLRBIT(un, MUE_MAC_RX, MUE_MAC_RX_RXEN);
