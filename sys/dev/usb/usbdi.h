@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.106 2022/03/03 06:06:52 riastradh Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.107 2022/03/03 06:09:33 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -124,6 +124,9 @@ usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 
 void usbd_abort_pipe(struct usbd_pipe *);
 void usbd_abort_default_pipe(struct usbd_device *);
+
+void usbd_suspend_pipe(struct usbd_pipe *);
+void usbd_resume_pipe(struct usbd_pipe *);
 
 usbd_status usbd_clear_endpoint_stall(struct usbd_pipe *);
 void usbd_clear_endpoint_stall_async(struct usbd_pipe *);
