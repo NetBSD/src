@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.79 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.80 2022/03/03 05:50:57 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.79 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.80 2022/03/03 05:50:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -568,6 +568,8 @@ udav_chip_init(struct usbnet *un)
 	UDAV_SETBIT(un, UDAV_NCR, UDAV_NCR_RST);
 
 	for (int i = 0; i < UDAV_TX_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return;
 		if (!(udav_csr_read1(un, UDAV_NCR) & UDAV_NCR_RST))
 			break;
 		delay(10);	/* XXX */

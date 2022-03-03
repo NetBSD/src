@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.79 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.80 2022/03/03 05:50:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.79 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.80 2022/03/03 05:50:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -428,6 +428,8 @@ url_reset(struct usbnet *un)
 	URL_SETBIT(un, URL_CR, URL_CR_SOFT_RST);
 
 	for (i = 0; i < URL_TX_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return;
 		if (!(url_csr_read_1(un, URL_CR) & URL_CR_SOFT_RST))
 			break;
 		delay(10);	/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.8 2022/03/03 05:50:22 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.9 2022/03/03 05:50:57 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.8 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.9 2022/03/03 05:50:57 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -364,6 +364,8 @@ mos_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	    MOS_PHYSTS_PENDING);
 
 	for (i = 0; i < MOS_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return ENXIO;
 		if (mos_reg_read_1(un, MOS_PHY_STS) & MOS_PHYSTS_READY)
 			break;
 	}
@@ -396,6 +398,8 @@ mos_uno_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	    MOS_PHYSTS_PENDING);
 
 	for (i = 0; i < MOS_TIMEOUT; i++) {
+		if (usbnet_isdying(un))
+			return ENXIO;
 		if (mos_reg_read_1(un, MOS_PHY_STS) & MOS_PHYSTS_READY)
 			break;
 	}
