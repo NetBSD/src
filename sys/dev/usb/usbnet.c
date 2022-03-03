@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.55 2022/03/03 05:48:14 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.56 2022/03/03 05:48:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.55 2022/03/03 05:48:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.56 2022/03/03 05:48:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1132,15 +1132,28 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	mutex_exit(&unp->unp_txlock);
 	mutex_exit(&unp->unp_rxlock);
 
-	uno_stop(un, ifp, disable);
-
-	mutex_enter(&unp->unp_txlock);
-	unp->unp_timer = 0;
-	mutex_exit(&unp->unp_txlock);
-
+	/*
+	 * Stop the timer first, then the task -- if the timer was
+	 * already firing, we stop the task or wait for it complete
+	 * only after if last fired.  Setting unp_stopping prevents the
+	 * timer task from being scheduled again.
+	 */
 	callout_halt(&unp->unp_stat_ch, &unp->unp_core_lock);
 	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
 	    &unp->unp_core_lock);
+
+	/*
+	 * Now that the software is quiescent, ask the driver to stop
+	 * the hardware.  The driver's uno_stop routine now has
+	 * exclusive access to any registers that might previously have
+	 * been used by to ifmedia, mii, or ioctl callbacks.
+	 */
+	uno_stop(un, ifp, disable);
+
+	/* Clear the watchdog timer.  */
+	mutex_enter(&unp->unp_txlock);
+	unp->unp_timer = 0;
+	mutex_exit(&unp->unp_txlock);
 
 	/* Stop transfers. */
 	usbnet_ep_stop_pipes(un);
