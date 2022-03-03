@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.105 2022/03/03 06:05:38 riastradh Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.106 2022/03/03 06:06:52 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ usbd_status usbd_open_pipe_intr(struct usbd_interface *, uint8_t, uint8_t,
     struct usbd_pipe **, void *, void *, uint32_t, usbd_callback, int);
 usbd_status usbd_open_pipe(struct usbd_interface *, uint8_t, uint8_t,
      struct usbd_pipe **);
-usbd_status usbd_close_pipe(struct usbd_pipe *);
+void usbd_close_pipe(struct usbd_pipe *);
 
 usbd_status usbd_transfer(struct usbd_xfer *);
 
