@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.47 2022/03/03 05:47:06 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.48 2022/03/03 05:47:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.47 2022/03/03 05:47:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.48 2022/03/03 05:47:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,6 +80,7 @@ struct usbnet_private {
 	bool			unp_dying;
 	bool			unp_stopping;
 	bool			unp_attached;
+	bool			unp_ifp_attached;
 	bool			unp_link;
 
 	int			unp_refcnt;
@@ -1492,7 +1493,9 @@ usbnet_attach_ifp(struct usbnet *un,
 	struct ifnet * const ifp = usbnet_ifp(un);
 
 	KASSERT(unp->unp_attached);
+	KASSERT(!unp->unp_ifp_attached);
 
+	ifp->if_softc = un;
 	strlcpy(ifp->if_xname, device_xname(un->un_dev), IFNAMSIZ);
 	ifp->if_flags = if_flags;
 	ifp->if_extflags = IFEF_MPSAFE | if_extflags;
@@ -1511,6 +1514,7 @@ usbnet_attach_ifp(struct usbnet *un,
 	if (ifp->_if_input == NULL)
 		ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
+	unp->unp_ifp_attached = true;
 
 	/*
 	 * If ethernet address is all zero, skip ether_ifattach() and
@@ -1528,7 +1532,6 @@ usbnet_attach_ifp(struct usbnet *un,
 
 	/* Now ready, and attached. */
 	IFQ_SET_READY(&ifp->if_snd);
-	ifp->if_softc = un;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, un->un_udev, un->un_dev);
 
@@ -1584,7 +1587,7 @@ usbnet_detach(device_t self, int flags)
 		mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
 		ifmedia_fini(&mii->mii_media);
 	}
-	if (ifp->if_softc) {
+	if (unp->unp_ifp_attached) {
 		if (!usbnet_empty_eaddr(un))
 			ether_ifdetach(ifp);
 		else
