@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.331 2022/03/03 19:36:35 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.332 2022/03/03 19:40:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.331 2022/03/03 19:36:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.332 2022/03/03 19:40:54 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -213,10 +213,10 @@ static char *
 ParseWord(const char **pp, bool doEval)
 {
 	const char *p = *pp;
-	Buffer argBuf;
+	Buffer word;
 	int paren_depth;
 
-	Buf_InitSize(&argBuf, 16);
+	Buf_InitSize(&word, 16);
 
 	paren_depth = 0;
 	for (;;) {
@@ -240,7 +240,7 @@ ParseWord(const char **pp, bool doEval)
 			FStr nestedVal;
 			(void)Var_Parse(&p, SCOPE_CMDLINE, emode, &nestedVal);
 			/* TODO: handle errors */
-			Buf_AddStr(&argBuf, nestedVal.str);
+			Buf_AddStr(&word, nestedVal.str);
 			FStr_Done(&nestedVal);
 			continue;
 		}
@@ -248,14 +248,14 @@ ParseWord(const char **pp, bool doEval)
 			paren_depth++;
 		else if (ch == ')' && --paren_depth < 0)
 			break;
-		Buf_AddByte(&argBuf, ch);
+		Buf_AddByte(&word, ch);
 		p++;
 	}
 
 	cpp_skip_hspace(&p);
 	*pp = p;
 
-	return Buf_DoneData(&argBuf);
+	return Buf_DoneData(&word);
 }
 
 /* Parse the function argument, including the surrounding parentheses. */
