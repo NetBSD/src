@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.179 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.180 2022/03/03 05:53:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.179 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.180 2022/03/03 05:53:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -627,13 +627,13 @@ aue_uno_mcast(struct ifnet *ifp)
 	usbnet_isowned_core(un);
 
 	if (ifp->if_flags & IFF_PROMISC) {
+		ETHER_LOCK(ec);
 allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		AUE_SETBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
 		return;
 	}
-
-	AUE_CLRBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
 
 	/* now program new ones */
 	ETHER_LOCK(ec);
@@ -641,7 +641,6 @@ allmulti:
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
 		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
-			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -649,13 +648,14 @@ allmulti:
 		hashtbl[h >> 3] |= 1 << (h & 0x7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_UNLOCK(ec);
+
+	AUE_CLRBIT(sc, AUE_CTL0, AUE_CTL0_ALLMULTI);
 
 	/* write the hashtable */
 	for (i = 0; i < 8; i++)
 		aue_csr_write_1(sc, AUE_MAR0 + i, hashtbl[i]);
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 
 static void
