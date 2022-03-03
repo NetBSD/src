@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.14 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.15 2022/03/03 05:53:04 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.14 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.15 2022/03/03 05:53:04 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -458,9 +458,9 @@ mos_uno_mii_statchg(struct ifnet *ifp)
 }
 
 static void
-mos_rcvfilt_locked(struct usbnet *un)
+mos_uno_mcast(struct ifnet *ifp)
 {
-	struct ifnet		*ifp = usbnet_ifp(un);
+	struct usbnet		*un = ifp->if_softc;
 	struct ethercom		*ec = usbnet_ec(un);
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
@@ -748,7 +748,7 @@ mos_uno_init(struct ifnet *ifp)
 	mos_reg_write_1(un, MOS_IPG1, ipgs[1]);
 
 	/* Accept multicast frame or run promisc. mode */
-	mos_rcvfilt_locked(un);
+	mos_uno_mcast(ifp);
 
 	/* Enable receiver and transmitter, bridge controls speed/duplex mode */
 	rxmode = mos_reg_read_1(un, MOS_CTL);
@@ -757,14 +757,6 @@ mos_uno_init(struct ifnet *ifp)
 	mos_reg_write_1(un, MOS_CTL, rxmode);
 
 	return usbnet_init_rx_tx(un);
-}
-
-static void
-mos_uno_mcast(struct ifnet *ifp)
-{
-	struct usbnet * const un = ifp->if_softc;
-
-	mos_rcvfilt_locked(un);
 }
 
 void

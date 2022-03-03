@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.82 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.83 2022/03/03 05:53:04 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.82 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.83 2022/03/03 05:53:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -225,9 +225,9 @@ axen_uno_mii_statchg(struct ifnet *ifp)
 }
 
 static void
-axen_setiff_locked(struct usbnet *un)
+axen_uno_mcast(struct ifnet *ifp)
 {
-	struct ifnet * const ifp = usbnet_ifp(un);
+	struct usbnet * const un = ifp->if_softc;
 	struct ethercom *ec = usbnet_ec(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -569,14 +569,6 @@ axen_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return 0;
 }
 
-static void
-axen_uno_mcast(struct ifnet *ifp)
-{
-	struct usbnet * const un = ifp->if_softc;
-
-	axen_setiff_locked(un);
-}
-
 static int
 axen_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -916,7 +908,7 @@ axen_uno_init(struct ifnet *ifp)
 	axen_setoe_locked(un);
 
 	/* Program promiscuous mode and multicast filters. */
-	axen_setiff_locked(un);
+	axen_uno_mcast(ifp);
 
 	/* Enable receiver, set RX mode */
 	axen_cmd(un, AXEN_CMD_MAC_READ2, 2, AXEN_MAC_RXCTL, &wval);

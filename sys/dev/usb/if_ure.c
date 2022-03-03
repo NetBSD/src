@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.47 2022/03/03 05:52:46 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.48 2022/03/03 05:53:04 riastradh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.47 2022/03/03 05:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.48 2022/03/03 05:53:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -331,10 +331,10 @@ ure_uno_miibus_statchg(struct ifnet *ifp)
 }
 
 static void
-ure_rcvfilt_locked(struct usbnet *un)
+ure_uno_mcast(struct ifnet *ifp)
 {
+	struct usbnet *un = ifp->if_softc;
 	struct ethercom *ec = usbnet_ec(un);
-	struct ifnet *ifp = usbnet_ifp(un);
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t mchash[2] = { 0, 0 };
@@ -448,7 +448,7 @@ ure_uno_init(struct ifnet *ifp)
 	    ~URE_RXDY_GATED_EN);
 
 	/* Accept multicast frame or run promisc. mode. */
-	ure_rcvfilt_locked(un);
+	ure_uno_mcast(ifp);
 
 	return usbnet_init_rx_tx(un);
 }
@@ -788,14 +788,6 @@ ure_init_fifo(struct usbnet *un)
 	/* Configure Tx FIFO threshold. */
 	ure_write_4(un, URE_PLA_TXFIFO_CTRL, URE_MCU_TYPE_PLA,
 	    URE_TXFIFO_THR_NORMAL);
-}
-
-static void
-ure_uno_mcast(struct ifnet *ifp)
-{
-	struct usbnet * const un = ifp->if_softc;
-
-	ure_rcvfilt_locked(un);
 }
 
 static int
