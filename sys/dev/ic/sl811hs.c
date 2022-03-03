@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.109 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.110 2022/03/03 06:12:11 riastradh Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.109 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.110 2022/03/03 06:12:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -846,10 +846,6 @@ slhci_transfer(struct usbd_xfer *xfer)
 	    0);
 
 	/* Pipe isn't running, so start it first.  */
-
-	/*
-	 * Start will take the lock.
-	 */
 	error = xfer->ux_pipe->up_methods->upm_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 
 	return error;
@@ -867,7 +863,7 @@ slhci_start(struct usbd_xfer *xfer)
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	unsigned int max_packet;
 
-	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	max_packet = UGETW(ed->wMaxPacketSize);
 
@@ -989,8 +985,6 @@ slhci_start(struct usbd_xfer *xfer)
 
 	slhci_start_entry(sc, spipe);
 
-	mutex_exit(&sc->sc_lock);
-
 	return USBD_IN_PROGRESS;
 }
 
@@ -1012,13 +1006,13 @@ slhci_root_start(struct usbd_xfer *xfer)
 	DLOG(D_TRACE, "transfer type %jd start",
 	    SLHCI_XFER_TYPE(xfer), 0, 0, 0);
 
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+
 	KASSERT(spipe->ptype == PT_ROOT_INTR);
 
-	mutex_enter(&sc->sc_intr_lock);
 	KASSERT(t->rootintr == NULL);
 	t->rootintr = xfer;
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_intr_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -3200,6 +3194,8 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	uint16_t len, value, index;
 	uint8_t type;
 	int actlen = 0;
+
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
 
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);

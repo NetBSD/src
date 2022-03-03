@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.230 2022/03/03 06:09:57 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.231 2022/03/03 06:12:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.230 2022/03/03 06:09:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.231 2022/03/03 06:12:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -422,12 +422,13 @@ usbd_transfer(struct usbd_xfer *xfer)
 			pipe->up_running = 1;
 			err = USBD_NORMAL_COMPLETION;
 		}
-		usbd_unlock_pipe(pipe);
 		if (err)
 			break;
 		err = pipe->up_methods->upm_transfer(xfer);
 	} while (0);
 	SDT_PROBE3(usb, device, pipe, transfer__done,  pipe, xfer, err);
+
+	usbd_unlock_pipe(pipe);
 
 	if (err != USBD_IN_PROGRESS && err) {
 		/*
@@ -1190,12 +1191,8 @@ usbd_start_next(struct usbd_pipe *pipe)
 	if (xfer == NULL) {
 		pipe->up_running = 0;
 	} else {
-		if (!polling)
-			mutex_exit(pipe->up_dev->ud_bus->ub_lock);
 		SDT_PROBE2(usb, device, pipe, start,  pipe, xfer);
 		err = pipe->up_methods->upm_start(xfer);
-		if (!polling)
-			mutex_enter(pipe->up_dev->ud_bus->ub_lock);
 
 		if (err != USBD_IN_PROGRESS) {
 			USBHIST_LOG(usbdebug, "error = %jd", err, 0, 0, 0);

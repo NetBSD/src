@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.24 2022/03/03 06:04:31 riastradh Exp $ */
+/*	$NetBSD: vhci.c,v 1.25 2022/03/03 06:12:11 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.24 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.25 2022/03/03 06:12:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -605,7 +605,6 @@ vhci_device_ctrl_start(struct usbd_xfer *xfer)
 	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 	vhci_softc_t *sc = xfer->ux_bus->ub_hcpriv;
 	vhci_port_t *port;
-	bool polling = sc->sc_bus.ub_usepolling;
 	bool isread = (req->bmRequestType & UT_READ) != 0;
 	uint8_t addr = UE_GET_ADDR(ed->bEndpointAddress);
 	int portno, ret;
@@ -618,13 +617,12 @@ vhci_device_ctrl_start(struct usbd_xfer *xfer)
 	DPRINTF("%s: type=0x%02x, len=%d, isread=%d, portno=%d\n",
 	    __func__, req->bmRequestType, UGETW(req->wLength), isread, portno);
 
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
 	port = &sc->sc_port[portno];
-
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 
 	mutex_enter(&port->lock);
 	if (port->status & UPS_PORT_ENABLED) {
@@ -635,9 +633,6 @@ vhci_device_ctrl_start(struct usbd_xfer *xfer)
 		ret = USBD_IOERROR;
 	}
 	mutex_exit(&port->lock);
-
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 	return ret;
 }
@@ -709,20 +704,17 @@ static usbd_status
 vhci_root_intr_start(struct usbd_xfer *xfer)
 {
 	vhci_softc_t *sc = xfer->ux_bus->ub_hcpriv;
-	const bool polling = sc->sc_bus.ub_usepolling;
 
 	DPRINTF("%s: called, len=%zu\n", __func__, (size_t)xfer->ux_length);
+
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
 	xfer->ux_status = USBD_IN_PROGRESS;
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }

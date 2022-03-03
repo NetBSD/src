@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.157 2022/03/03 06:08:50 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.158 2022/03/03 06:12:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.157 2022/03/03 06:08:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.158 2022/03/03 06:12:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2186,7 +2186,6 @@ xhci_pipe_async_task(void *cookie)
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 	struct xhci_ring * const tr = xs->xs_xr[dci];
-	bool restart = false;
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("pipe %#jx slot %ju dci %ju",
@@ -2227,30 +2226,17 @@ xhci_pipe_async_task(void *cookie)
 
 	/*
 	 * If we halted our own queue because it stalled, mark it no
-	 * longer halted and arrange to start it up again.
+	 * longer halted and start issuing queued transfers again.
 	 */
 	if (tr->is_halted) {
+		struct usbd_xfer *xfer = SIMPLEQ_FIRST(&pipe->up_queue);
+
 		tr->is_halted = false;
-		if (!SIMPLEQ_EMPTY(&pipe->up_queue))
-			restart = true;
+		if (xfer)
+			(*pipe->up_methods->upm_start)(xfer);
 	}
 
 	mutex_exit(&sc->sc_lock);
-
-	/*
-	 * If the endpoint was stalled, start issuing queued transfers
-	 * again.
-	 */
-	if (restart) {
-		/*
-		 * XXX Shouldn't touch the queue unlocked -- upm_start
-		 * should be called with the lock held instead.  The
-		 * pipe could be aborted at this point, and the xfer
-		 * freed.
-		 */
-		struct usbd_xfer *xfer = SIMPLEQ_FIRST(&pipe->up_queue);
-		(*pipe->up_methods->upm_start)(xfer);
-	}
 
 	DPRINTFN(4, "ends", 0, 0, 0, 0);
 }
@@ -3870,6 +3856,8 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 
 	XHCIHIST_FUNC();
 
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+
 	if (sc->sc_dying)
 		return -1;
 
@@ -4139,20 +4127,17 @@ xhci_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
-	const bool polling = xhci_polling_p(sc);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	KASSERT(xhci_polling_p(sc) || mutex_owned(&sc->sc_lock));
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer[bn] == NULL);
 	sc->sc_intrxfer[bn] = xfer;
 	xfer->ux_status = USBD_IN_PROGRESS;
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -4250,14 +4235,14 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	    req->bmRequestType | (req->bRequest << 8), UGETW(req->wValue),
 	    UGETW(req->wIndex), UGETW(req->wLength));
 
+	KASSERT(polling || mutex_owned(&sc->sc_lock));
+
 	/* we rely on the bottom bits for extra info */
 	KASSERTMSG(((uintptr_t)xfer & 0x3) == 0x0, "xfer %zx",
 	    (uintptr_t) xfer);
 
 	KASSERT((xfer->ux_rqflags & URQ_REQUEST) != 0);
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 	if (tr->is_halted)
 		goto out;
 
@@ -4315,8 +4300,6 @@ out:	if (xfer->ux_status == USBD_NOT_STARTED) {
 		 */
 	}
 	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -4387,6 +4370,8 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("%#jx slot %ju dci %ju",
 	    (uintptr_t)xfer, xs->xs_idx, dci, 0);
+
+	KASSERT(polling || mutex_owned(&sc->sc_lock));
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -4460,13 +4445,9 @@ xhci_device_isoc_enter(struct usbd_xfer *xfer)
 	if (!polling)
 		mutex_exit(&tr->xr_lock);
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 	usbd_xfer_schedule_timeout(xfer);
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -4536,13 +4517,13 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	XHCIHIST_CALLARGS("%#jx slot %ju dci %ju",
 	    (uintptr_t)xfer, xs->xs_idx, dci, 0);
 
+	KASSERT(polling || mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
 	KASSERT((xfer->ux_rqflags & URQ_REQUEST) == 0);
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 	if (tr->is_halted)
 		goto out;
 
@@ -4590,8 +4571,6 @@ out:	if (xfer->ux_status == USBD_NOT_STARTED) {
 		 */
 	}
 	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -4661,11 +4640,11 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	XHCIHIST_CALLARGS("%#jx slot %ju dci %ju",
 	    (uintptr_t)xfer, xs->xs_idx, dci, 0);
 
+	KASSERT(polling || mutex_owned(&sc->sc_lock));
+
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	if (!polling)
-		mutex_enter(&sc->sc_lock);
 	if (tr->is_halted)
 		goto out;
 
@@ -4703,8 +4682,6 @@ out:	if (xfer->ux_status == USBD_NOT_STARTED) {
 		 */
 	}
 	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
-	if (!polling)
-		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }

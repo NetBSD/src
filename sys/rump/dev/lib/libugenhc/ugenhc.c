@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.30 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.31 2022/03/03 06:12:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.30 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.31 2022/03/03 06:12:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -227,6 +227,8 @@ rumpusb_device_ctrl_start(struct usbd_xfer *xfer)
 	int err = 0;
 	int ru_error, mightfail = 0;
 
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+
 	len = totlen = UGETW(req->wLength);
 	if (len)
 		buf = xfer->ux_buf;
@@ -391,9 +393,7 @@ rumpusb_device_ctrl_start(struct usbd_xfer *xfer)
 
  ret:
 	xfer->ux_status = err;
-	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -516,7 +516,8 @@ rumpusb_root_intr_start(struct usbd_xfer *xfer)
 	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	int error;
 
-	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+
 	sc->sc_intrxfer = xfer;
 	if (!sc->sc_rhintr) {
 		error = kthread_create(PRI_NONE, 0, NULL,
@@ -524,7 +525,6 @@ rumpusb_root_intr_start(struct usbd_xfer *xfer)
 		if (error)
 			xfer->ux_status = USBD_IOERROR;
 	}
-	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -580,6 +580,8 @@ rumpusb_device_bulk_start(struct usbd_xfer *xfer)
 	uint8_t *buf;
 	int xfererr = USBD_NORMAL_COMPLETION;
 	int shortval, i;
+
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	ed = xfer->ux_pipe->up_endpoint->ue_edesc;
 	endpt = ed->bEndpointAddress;
@@ -667,9 +669,7 @@ rumpusb_device_bulk_start(struct usbd_xfer *xfer)
 		if (done != len)
 			panic("lazy bum");
 	xfer->ux_status = xfererr;
-	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
 	return USBD_IN_PROGRESS;
 }
 
@@ -682,9 +682,7 @@ doxfer_kth(void *arg)
 	mutex_enter(&sc->sc_lock);
 	do {
 		struct usbd_xfer *xfer = SIMPLEQ_FIRST(&pipe->up_queue);
-		mutex_exit(&sc->sc_lock);
 		rumpusb_device_bulk_start(xfer);
-		mutex_enter(&sc->sc_lock);
 	} while (!SIMPLEQ_EMPTY(&pipe->up_queue));
 	mutex_exit(&sc->sc_lock);
 	kthread_exit(0);
