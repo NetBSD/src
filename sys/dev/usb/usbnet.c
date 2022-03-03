@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.48 2022/03/03 05:47:14 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.49 2022/03/03 05:47:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.48 2022/03/03 05:47:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.49 2022/03/03 05:47:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1127,7 +1127,9 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 
 	uno_stop(un, ifp, disable);
 
+	mutex_enter(&unp->unp_txlock);
 	unp->unp_timer = 0;
+	mutex_exit(&unp->unp_txlock);
 
 	callout_halt(&unp->unp_stat_ch, &unp->unp_core_lock);
 	usb_rem_task_wait(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER,
@@ -1239,7 +1241,10 @@ usbnet_tick_task(void *arg)
 	usbnet_busy(un);
 	mutex_exit(&unp->unp_core_lock);
 
-	if (unp->unp_timer != 0 && --unp->unp_timer == 0)
+	mutex_enter(&unp->unp_txlock);
+	const bool timeout = unp->unp_timer != 0 && --unp->unp_timer == 0;
+	mutex_exit(&unp->unp_txlock);
+	if (timeout)
 		usbnet_watchdog(ifp);
 
 	DPRINTFN(8, "mii %#jx ifp %#jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
