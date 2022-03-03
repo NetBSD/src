@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.73 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.74 2022/03/03 05:48:06 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.73 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.74 2022/03/03 05:48:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -559,8 +559,6 @@ axen_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	usbnet_busy(un);
 
 	switch (cmd) {
-	case SIOCSIFFLAGS:
-	case SIOCSETHERCAP:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		axen_setiff_locked(un);
