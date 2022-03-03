@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.68 2022/03/03 06:22:53 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.69 2022/03/03 06:23:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.68 2022/03/03 06:22:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.69 2022/03/03 06:23:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -603,8 +603,8 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 
 	SLIST_FOREACH(vs, &sc->sc_stream_list, entries) {
 		/* XXX initialization of vs_videodev is racy */
-		vs->vs_videodev = video_attach_mi_softc(&uvideo_hw_if,
-		    sc->sc_dev, vs);
+		vs->vs_videodev = video_attach_mi(&uvideo_hw_if, sc->sc_dev,
+		    vs);
 	}
 
 	return;
