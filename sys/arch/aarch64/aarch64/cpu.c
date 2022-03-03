@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.68 2021/11/12 06:44:46 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.69 2022/03/03 06:26:05 riastradh Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.68 2021/11/12 06:44:46 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.69 2022/03/03 06:26:05 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -128,7 +128,7 @@ cpu_attach(device_t dv, cpuid_t id)
 		cpu_info[ncpu] = ci;
 		if (cpu_hatched_p(unit) == 0) {
 			ci->ci_dev = dv;
-			dv->dv_private = ci;
+			device_set_private(dv, ci);
 			ci->ci_index = -1;
 
 			aprint_naive(": disabled\n");
@@ -143,7 +143,7 @@ cpu_attach(device_t dv, cpuid_t id)
 	}
 
 	ci->ci_dev = dv;
-	dv->dv_private = ci;
+	device_set_private(dv, ci);
 
 	ci->ci_kfpu_spl = -1;
 
