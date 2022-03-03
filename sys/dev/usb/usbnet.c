@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.85 2022/03/03 05:55:10 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.86 2022/03/03 05:55:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.85 2022/03/03 05:55:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.86 2022/03/03 05:55:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1077,11 +1077,9 @@ usbnet_if_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  *	- free RX and TX resources
  *	- close pipes
  *
- * usbnet_stop() is exported for drivers to use, expects lock held.
- *
  * usbnet_if_stop() is for the if_stop handler.
  */
-void
+static void
 usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 {
 	struct usbnet_private * const unp = un->un_pri;
