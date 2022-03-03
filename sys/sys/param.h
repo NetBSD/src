@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.706 2021/12/21 18:59:22 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.707 2022/03/03 07:31:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	999009300	/* NetBSD 9.99.93 */
+#define	__NetBSD_Version__	999009400	/* NetBSD 9.99.94 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -88,8 +88,8 @@
 
 /*
  * These macros determine if we are running in protected mode or not.
- *   _HARDKERNEL: code uses kernel namespace and runs in hw priviledged mode
- *   _SOFTKERNEL: code uses kernel namespace but runs without hw priviledges
+ *   _HARDKERNEL: code uses kernel namespace and runs in hw privileged mode
+ *   _SOFTKERNEL: code uses kernel namespace but runs without hw privileges
  */
 #if defined(_KERNEL) && !defined(_RUMPKERNEL)
 #define _HARDKERNEL
