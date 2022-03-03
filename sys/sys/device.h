@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.178 2022/01/22 11:58:15 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.179 2022/03/03 06:25:46 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -667,6 +667,7 @@ bool		device_is_enabled(device_t);
 bool		device_has_power(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);
+void		device_set_private(device_t, void *);
 prop_dictionary_t device_properties(device_t);
 void		device_set_handle(device_t, devhandle_t);
 devhandle_t	device_handle(device_t);
