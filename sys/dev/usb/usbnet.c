@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.80 2022/03/03 05:52:27 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.81 2022/03/03 05:52:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.80 2022/03/03 05:52:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.81 2022/03/03 05:52:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1060,8 +1060,11 @@ usbnet_mcast_task(void *arg)
 	 */
 	IFNET_LOCK(ifp);
 	if (ifp->if_flags & IFF_RUNNING) {
-		if (un->un_ops->uno_mcast)
+		if (un->un_ops->uno_mcast) {
+			mutex_enter(&un->un_pri->unp_core_lock);
 			(*un->un_ops->uno_mcast)(ifp);
+			mutex_exit(&un->un_pri->unp_core_lock);
+		}
 	}
 	IFNET_UNLOCK(ifp);
 }
