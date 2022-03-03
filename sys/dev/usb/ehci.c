@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.303 2022/03/03 06:04:31 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.304 2022/03/03 06:08:50 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.303 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.304 2022/03/03 06:08:50 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3388,14 +3388,10 @@ ehci_abortx(struct usbd_xfer *xfer)
 		    BUS_DMASYNC_PREREAD);
 	}
 
-	/*
-	 * Final step: Notify completion to waiting xfers.
-	 */
 dying:
 #ifdef DIAGNOSTIC
 	exfer->ex_isdone = true;
 #endif
-	usb_transfer_complete(xfer);
 	DPRINTFN(14, "end", 0, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
