@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.48 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.49 2022/03/03 05:53:23 riastradh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.48 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.49 2022/03/03 05:53:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -339,8 +339,6 @@ ure_uno_mcast(struct ifnet *ifp)
 	struct ether_multistep step;
 	uint32_t mchash[2] = { 0, 0 };
 	uint32_t h = 0, rxmode;
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return;
