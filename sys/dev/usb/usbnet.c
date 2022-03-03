@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.76 2022/03/03 05:51:56 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.77 2022/03/03 05:52:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.76 2022/03/03 05:51:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.77 2022/03/03 05:52:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -920,10 +920,7 @@ usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 		return EIO;
 	}
 
-	usbnet_busy(un);
 	err = uno_read_reg(un, phy, reg, val);
-	usbnet_unbusy(un);
-
 	if (err) {
 		USBNETHIST_CALLARGS("%jd: read PHY failed: %jd",
 		    un->un_pri->unp_number, err, 0, 0);
@@ -947,10 +944,7 @@ usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 		return EIO;
 	}
 
-	usbnet_busy(un);
 	err = uno_write_reg(un, phy, reg, val);
-	usbnet_unbusy(un);
-
 	if (err) {
 		USBNETHIST_CALLARGS("%jd: write PHY failed: %jd",
 		    un->un_pri->unp_number, err, 0, 0);
@@ -969,9 +963,7 @@ usbnet_mii_statchg(struct ifnet *ifp)
 	/* MII layer ensures core_lock is held. */
 	usbnet_isowned_core(un);
 
-	usbnet_busy(un);
 	uno_mii_statchg(un, ifp);
-	usbnet_unbusy(un);
 }
 
 static int
