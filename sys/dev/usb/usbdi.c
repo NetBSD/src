@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.225 2022/03/03 06:06:52 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.226 2022/03/03 06:07:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.225 2022/03/03 06:06:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.226 2022/03/03 06:07:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -121,7 +121,7 @@ Static usbd_status usbd_open_pipe_ival
 static void *usbd_alloc_buffer(struct usbd_xfer *, uint32_t);
 static void usbd_free_buffer(struct usbd_xfer *);
 static struct usbd_xfer *usbd_alloc_xfer(struct usbd_device *, unsigned int);
-static usbd_status usbd_free_xfer(struct usbd_xfer *);
+static void usbd_free_xfer(struct usbd_xfer *);
 static void usbd_request_async_cb(struct usbd_xfer *, void *, usbd_status);
 static void usbd_xfer_timeout(void *);
 static void usbd_xfer_timeout_task(void *);
@@ -588,7 +588,7 @@ out:
 	return xfer;
 }
 
-static usbd_status
+static void
 usbd_free_xfer(struct usbd_xfer *xfer)
 {
 	USBHIST_FUNC();
@@ -608,7 +608,6 @@ usbd_free_xfer(struct usbd_xfer *xfer)
 
 	cv_destroy(&xfer->ux_cv);
 	xfer->ux_bus->ub_methods->ubm_freex(xfer->ux_bus, xfer);
-	return USBD_NORMAL_COMPLETION;
 }
 
 int
