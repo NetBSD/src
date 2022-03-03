@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.229 2022/03/03 06:09:44 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.230 2022/03/03 06:09:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.229 2022/03/03 06:09:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.230 2022/03/03 06:09:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -368,13 +368,6 @@ usbd_transfer(struct usbd_xfer *xfer)
 #endif
 	xfer->ux_done = 0;
 
-	if (pipe->up_aborting) {
-		USBHIST_LOG(usbdebug, "<- done xfer %#jx, aborting",
-		    (uintptr_t)xfer, 0, 0, 0);
-		SDT_PROBE2(usb, device, xfer, done,  xfer, USBD_CANCELLED);
-		return USBD_CANCELLED;
-	}
-
 	KASSERT(xfer->ux_length == 0 || xfer->ux_buf != NULL);
 
 	size = xfer->ux_length;
@@ -402,10 +395,23 @@ usbd_transfer(struct usbd_xfer *xfer)
 		}
 	}
 
+	usbd_lock_pipe(pipe);
+	if (pipe->up_aborting) {
+		/*
+		 * XXX For synchronous transfers this is fine.  What to
+		 * do for asynchronous transfers?  The callback is
+		 * never run, not even with status USBD_CANCELLED.
+		 */
+		usbd_unlock_pipe(pipe);
+		USBHIST_LOG(usbdebug, "<- done xfer %#jx, aborting",
+		    (uintptr_t)xfer, 0, 0, 0);
+		SDT_PROBE2(usb, device, xfer, done,  xfer, USBD_CANCELLED);
+		return USBD_CANCELLED;
+	}
+
 	/* xfer is not valid after the transfer method unless synchronous */
 	SDT_PROBE2(usb, device, pipe, transfer__start,  pipe, xfer);
 	do {
-		usbd_lock_pipe(pipe);
 #ifdef DIAGNOSTIC
 		xfer->ux_state = XFER_ONQU;
 #endif
