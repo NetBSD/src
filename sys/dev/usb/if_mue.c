@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.62 2021/07/15 15:23:46 nisimura Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.63 2022/03/03 05:48:06 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.62 2021/07/15 15:23:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.63 2022/03/03 05:48:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1273,8 +1273,6 @@ mue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	usbnet_busy(un);
 
 	switch (cmd) {
-	case SIOCSIFFLAGS:
-	case SIOCSETHERCAP:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		mue_setiff_locked(un);
