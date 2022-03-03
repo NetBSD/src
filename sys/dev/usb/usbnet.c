@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.61 2022/03/03 05:49:00 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.62 2022/03/03 05:49:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.61 2022/03/03 05:49:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.62 2022/03/03 05:49:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1680,7 +1680,14 @@ usbnet_detach(device_t self, int flags)
 
 	pmf_device_deregister(un->un_dev);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, un->un_udev, un->un_dev);
+	/*
+	 * Notify userland that we're going away, if we arrived in the
+	 * first place.
+	 */
+	if (unp->unp_ifp_attached) {
+		usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, un->un_udev,
+		    un->un_dev);
+	}
 
 	kmem_free(unp, sizeof(*unp));
 	un->un_pri = NULL;
