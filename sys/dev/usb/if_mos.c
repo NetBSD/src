@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.21 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.22 2022/03/03 05:56:28 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.21 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.22 2022/03/03 05:56:28 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -639,7 +639,7 @@ mos_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "MCS7832\n");
 
 	/* Set these up now for register access. */
-	usbnet_attach(un, "mosdet");
+	usbnet_attach(un);
 
 	mos_chip_init(un);
 

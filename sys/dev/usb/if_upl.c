@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.76 2022/03/03 05:56:18 riastradh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.77 2022/03/03 05:56:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.76 2022/03/03 05:56:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.77 2022/03/03 05:56:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -205,7 +205,7 @@ upl_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usbnet_attach(un, "upldet");
+	usbnet_attach(un);
 
 	/* Initialize interface info.*/
 	struct ifnet *ifp = usbnet_ifp(un);
