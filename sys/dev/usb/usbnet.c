@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.73 2022/03/03 05:50:39 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.74 2022/03/03 05:50:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.73 2022/03/03 05:50:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.74 2022/03/03 05:50:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1075,12 +1075,11 @@ usbnet_mcast_task(void *arg)
 {
 	USBNETHIST_FUNC();
 	struct usbnet * const un = arg;
-	struct usbnet_private * const unp = un->un_pri;
 	struct ifnet * const ifp = usbnet_ifp(un);
-	bool dying;
 	struct ifreq ifr;
 
-	USBNETHIST_CALLARGSN(10, "%jd: enter", unp->unp_number, 0, 0, 0);
+	USBNETHIST_CALLARGSN(10, "%jd: enter",
+	    un->un_pri->unp_number, 0, 0, 0);
 
 	/*
 	 * If we're detaching, we must check usbnet_isdying _before_
@@ -1091,10 +1090,7 @@ usbnet_mcast_task(void *arg)
 	 * issuing if_detach, and necessary, so that we don't touch
 	 * IFNET_LOCK after if_detach.  See usbnet_detach for details.
 	 */
-	mutex_enter(&unp->unp_core_lock);
-	dying = usbnet_isdying(un);
-	mutex_exit(&unp->unp_core_lock);
-	if (dying)
+	if (usbnet_isdying(un))
 		return;
 
 	/*
@@ -1288,7 +1284,6 @@ usbnet_if_init(struct ifnet *ifp)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 	struct usbnet * const un = ifp->if_softc;
-	bool dying;
 	int error;
 
 	KASSERTMSG(IFNET_LOCKED(ifp), "%s", ifp->if_xname);
@@ -1297,10 +1292,7 @@ usbnet_if_init(struct ifnet *ifp)
 	 * Prevent anyone from bringing the interface back up once
 	 * we're detaching.
 	 */
-	mutex_enter(&un->un_pri->unp_core_lock);
-	dying = usbnet_isdying(un);
-	mutex_exit(&un->un_pri->unp_core_lock);
-	if (dying)
+	if (usbnet_isdying(un))
 		return EIO;
 
 	mutex_enter(&un->un_pri->unp_core_lock);
@@ -1591,9 +1583,7 @@ usbnet_detach(device_t self, int flags)
 	 * Prevent new activity.  After we stop the interface, it
 	 * cannot be brought back up.
 	 */
-	mutex_enter(&unp->unp_core_lock);
 	atomic_store_relaxed(&unp->unp_dying, true);
-	mutex_exit(&unp->unp_core_lock);
 
 	/*
 	 * If we're still running on the network, stop and wait for all
@@ -1720,9 +1710,7 @@ usbnet_activate(device_t self, devact_t act)
 	case DVACT_DEACTIVATE:
 		if_deactivate(ifp);
 
-		mutex_enter(&unp->unp_core_lock);
 		atomic_store_relaxed(&unp->unp_dying, true);
-		mutex_exit(&unp->unp_core_lock);
 
 		mutex_enter(&unp->unp_rxlock);
 		mutex_enter(&unp->unp_txlock);
