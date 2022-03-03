@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.11 2022/03/03 05:51:17 riastradh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.12 2022/03/03 05:51:27 riastradh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.11 2022/03/03 05:51:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.12 2022/03/03 05:51:27 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -773,11 +773,9 @@ mos_uno_mcast(struct ifnet *ifp)
 	struct usbnet * const un = ifp->if_softc;
 
 	usbnet_lock_core(un);
-	usbnet_busy(un);
 
 	mos_rcvfilt_locked(un);
 
-	usbnet_unbusy(un);
 	usbnet_unlock_core(un);
 }
 
