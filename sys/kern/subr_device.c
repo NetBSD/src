@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.11 2022/01/22 11:58:15 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.12 2022/03/03 06:25:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.11 2022/01/22 11:58:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.12 2022/03/03 06:25:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -276,6 +276,17 @@ device_private(device_t dev)
 	 * device_private.
 	 */
 	return dev == NULL ? NULL : dev->dv_private;
+}
+
+void
+device_set_private(device_t dev, void *private)
+{
+
+	KASSERTMSG(dev->dv_private == NULL, "device_set_private(%p, %p):"
+	    " device %s already has private set to %p",
+	    dev, private, device_xname(dev), device_private(dev));
+	KASSERT(private != NULL);
+	dev->dv_private = private;
 }
 
 prop_dictionary_t
