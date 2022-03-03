@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.40 2022/03/03 05:50:22 riastradh Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.41 2022/03/03 05:54:45 riastradh Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.40 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.41 2022/03/03 05:54:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -866,16 +866,6 @@ urndis_init_un(struct ifnet *ifp, struct usbnet *un)
 	if (err != RNDIS_STATUS_SUCCESS)
 		return EIO;
 
-	usbnet_lock_core(un);
-	if (usbnet_isdying(un))
-		err = EIO;
-	else {
-		usbnet_stop(un, ifp, 1);
-		err = usbnet_init_rx_tx(un);
-		usbnet_set_link(un, err == 0);
-	}
-	usbnet_unlock_core(un);
-
 	return err;
 }
 
@@ -887,9 +877,11 @@ urndis_uno_init(struct ifnet *ifp)
 
 	KASSERT(IFNET_LOCKED(ifp));
 
-	usbnet_unlock_core(un);
 	error = urndis_init_un(ifp, un);
-	usbnet_lock_core(un);
+	if (error)
+		return EIO;	/* XXX */
+	error = usbnet_init_rx_tx(un);
+	usbnet_set_link(un, error == 0);
 
 	return error;
 }
@@ -1064,9 +1056,6 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	    &buf, &bufsz) != RNDIS_STATUS_SUCCESS) {
 		aprint_error("%s: unable to get hardware address\n",
 		    DEVNAME(un));
-		usbnet_lock_core(un);
-		usbnet_stop(un, ifp, 1);
-		usbnet_unlock_core(un);
 		return;
 	}
 
@@ -1077,9 +1066,6 @@ urndis_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: invalid address\n", DEVNAME(un));
 		if (buf && bufsz)
 			kmem_free(buf, bufsz);
-		usbnet_lock_core(un);
-		usbnet_stop(un, ifp, 1);
-		usbnet_unlock_core(un);
 		return;
 	}
 
@@ -1090,16 +1076,8 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	if (urndis_ctrl_set(un, OID_GEN_CURRENT_PACKET_FILTER, &filter,
 	    sizeof(filter)) != RNDIS_STATUS_SUCCESS) {
 		aprint_error("%s: unable to set data filters\n", DEVNAME(un));
-		usbnet_lock_core(un);
-		usbnet_stop(un, ifp, 1);
-		usbnet_unlock_core(un);
 		return;
 	}
-
-	/* Turn off again now it has been identified. */
-	usbnet_lock_core(un);
-	usbnet_stop(un, ifp, 1);
-	usbnet_unlock_core(un);
 
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, NULL);
