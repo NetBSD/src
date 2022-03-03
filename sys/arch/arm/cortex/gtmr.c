@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.48 2021/11/13 18:30:27 jakllsch Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.49 2022/03/03 06:26:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.48 2021/11/13 18:30:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.49 2022/03/03 06:26:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,7 +139,7 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 		aprint_debug_dev(self, "enabling Allwinner A64 timer workaround\n");
 	}
 
-	self->dv_private = sc;
+	device_set_private(self, sc);
 	sc->sc_dev = self;
 
 #ifdef DIAGNOSTIC

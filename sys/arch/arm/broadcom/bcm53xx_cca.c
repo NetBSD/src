@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.4 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.5 2022/03/03 06:26:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -154,7 +154,7 @@ bcmcca_mainbus_attach(device_t parent, device_t self, void *aux)
 	struct bcmcca_softc * const sc = &bcmcca_sc;
 
 	sc->sc_dev = self;
-	self->dv_private = sc;
+	device_set_private(self, sc);
 
 	sc->sc_bst = bcm53xx_ioreg_bst;
 

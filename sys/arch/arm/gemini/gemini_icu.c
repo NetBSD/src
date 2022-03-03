@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_icu.c,v 1.6 2020/09/26 10:06:25 skrll Exp $	*/
+/*	$NetBSD: gemini_icu.c,v 1.7 2022/03/03 06:26:29 riastradh Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_icu.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -36,7 +36,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_icu.c,v 1.6 2020/09/26 10:06:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_icu.c,v 1.7 2022/03/03 06:26:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -262,7 +262,7 @@ geminiicu_attach(device_t parent, device_t self, void *aux)
 	INTC_WRITE(sc, GEMINI_ICU_IRQ_TRIGLEVEL, 0xffffffff);
 
 	sc->sc_dev = self;
-	self->dv_private = sc;
+	device_set_private(self, sc);
 
 	pic_add(&sc->sc_pic, 0);
 }
