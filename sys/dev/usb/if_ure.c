@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.50 2022/03/03 05:53:33 riastradh Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.51 2022/03/03 05:54:21 riastradh Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.50 2022/03/03 05:53:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.51 2022/03/03 05:54:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -137,6 +137,8 @@ ure_ctl(struct usbnet *un, uint8_t rw, uint16_t val, uint16_t index,
 	err = usbd_do_request(un->un_udev, &req, buf);
 	if (err) {
 		DPRINTF(("ure_ctl: error %d\n", err));
+		if (rw == URE_CTL_READ)
+			memset(buf, 0, len);
 		return -1;
 	}
 
@@ -277,8 +279,10 @@ static int
 ure_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 
-	if (un->un_phyno != phy)
+	if (un->un_phyno != phy) {
+		*val = 0;
 		return EINVAL;
+	}
 
 	/* Let the rgephy driver read the URE_PLA_PHYSTATUS register. */
 	if (reg == RTK_GMEDIASTAT) {

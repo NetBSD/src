@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.75 2022/03/03 05:54:03 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.76 2022/03/03 05:54:21 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.75 2022/03/03 05:54:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.76 2022/03/03 05:54:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -219,11 +219,14 @@ mue_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint32_t data;
 
-	if (un->un_phyno != phy)
+	if (un->un_phyno != phy) {
+		*val = 0;
 		return EINVAL;
+	}
 
 	if (MUE_WAIT_CLR(un, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(un, "not ready\n");
+		*val = 0;
 		return EBUSY;
 	}
 
@@ -233,6 +236,7 @@ mue_uno_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	if (MUE_WAIT_CLR(un, MUE_MII_ACCESS, MUE_MII_ACCESS_BUSY, 0)) {
 		MUE_PRINTF(un, "timed out\n");
+		*val = 0;
 		return ETIMEDOUT;
 	}
 
