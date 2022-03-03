@@ -1,4 +1,4 @@
-/*      $NetBSD: octeon_cpunode.c,v 1.21 2021/08/07 16:18:59 thorpej Exp $   */
+/*      $NetBSD: octeon_cpunode.c,v 1.22 2022/03/03 06:27:41 riastradh Exp $   */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.21 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.22 2022/03/03 06:27:41 riastradh Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -252,7 +252,7 @@ cpu_cpunode_attach_common(device_t self, struct cpu_info *ci)
 	struct cpu_softc * const cpu __diagused = ci->ci_softc;
 
 	ci->ci_dev = self;
-	self->dv_private = ci;
+	device_set_private(self, ci);
 
 	KASSERTMSG(cpu != NULL, "ci %p index %d", ci, cpu_index(ci));
 
