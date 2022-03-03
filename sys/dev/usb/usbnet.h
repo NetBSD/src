@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.22 2021/12/11 19:24:21 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.23 2022/03/03 05:48:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -284,7 +284,6 @@ struct usbnet {
 /* Various accessors. */
 
 void usbnet_set_link(struct usbnet *, bool);
-void usbnet_set_dying(struct usbnet *, bool);
 
 struct ifnet *usbnet_ifp(struct usbnet *);
 struct ethercom *usbnet_ec(struct usbnet *);

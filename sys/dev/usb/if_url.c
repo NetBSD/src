@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.77 2020/04/02 04:09:36 nisimura Exp $	*/
+/*	$NetBSD: if_url.c,v 1.78 2022/03/03 05:48:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.77 2020/04/02 04:09:36 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.78 2022/03/03 05:48:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -256,18 +256,12 @@ url_attach(device_t parent, device_t self, void *aux)
 	usbnet_unlock_core(un);
 	if (err) {
 		aprint_error_dev(self, "read MAC address failed\n");
-		goto bad;
+		return;
 	}
 
 	/* initialize interface information */
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
 	    0, &unm);
-
-	return;
-
- bad:
-	usbnet_set_dying(un, true);
-	return;
 }
 
 /* read/write memory */
