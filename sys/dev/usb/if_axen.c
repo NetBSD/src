@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.81 2022/03/03 05:52:35 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.82 2022/03/03 05:52:46 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.81 2022/03/03 05:52:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.82 2022/03/03 05:52:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -574,11 +574,7 @@ axen_uno_mcast(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
 
-	usbnet_lock_core(un);
-
 	axen_setiff_locked(un);
-
-	usbnet_unlock_core(un);
 }
 
 static int
