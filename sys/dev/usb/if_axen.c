@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.86 2022/03/03 05:54:03 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.87 2022/03/03 05:54:11 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.86 2022/03/03 05:54:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.87 2022/03/03 05:54:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -492,18 +492,18 @@ axen_ax88179_init(struct usbnet *un)
 #define GMII_PHY_PAGE_SEL	0x1e
 #define GMII_PHY_PAGE_SEL	0x1f
 #define GMII_PAGE_EXT		0x0007
-	usbnet_mii_writereg(un->un_dev, un->un_phyno, GMII_PHY_PAGE_SEL,
+	axen_uno_mii_write_reg(un, un->un_phyno, GMII_PHY_PAGE_SEL,
 	    GMII_PAGE_EXT);
-	usbnet_mii_writereg(un->un_dev, un->un_phyno, GMII_PHY_PAGE,
+	axen_uno_mii_write_reg(un, un->un_phyno, GMII_PHY_PAGE,
 	    0x002c);
 #endif
 
 #if 1 /* XXX: phy hack ? */
-	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x1F, 0x0005);
-	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x0C, 0x0000);
-	usbnet_mii_readreg(un->un_dev, un->un_phyno, 0x0001, &wval);
-	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x01, wval | 0x0080);
-	usbnet_mii_writereg(un->un_dev, un->un_phyno, 0x1F, 0x0000);
+	axen_uno_mii_write_reg(un, un->un_phyno, 0x1F, 0x0005);
+	axen_uno_mii_write_reg(un, un->un_phyno, 0x0C, 0x0000);
+	axen_uno_mii_read_reg(un, un->un_phyno, 0x0001, &wval);
+	axen_uno_mii_write_reg(un, un->un_phyno, 0x01, wval | 0x0080);
+	axen_uno_mii_write_reg(un, un->un_phyno, 0x1F, 0x0000);
 #endif
 
 	usbnet_unlock_core(un);
