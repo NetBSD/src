@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.52 2022/01/02 11:20:03 riastradh Exp $	*/
+/*	$NetBSD: gic.c,v 1.53 2022/03/03 06:26:28 riastradh Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.52 2022/01/02 11:20:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.53 2022/03/03 06:26:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -612,7 +612,7 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	struct mpcore_attach_args * const mpcaa = aux;
 
 	sc->sc_dev = self;
-	self->dv_private = sc;
+	device_set_private(self, sc);
 
 	sc->sc_memt = mpcaa->mpcaa_memt;	/* provided for us */
 	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, mpcaa->mpcaa_off1,

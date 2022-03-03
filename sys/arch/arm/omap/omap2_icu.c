@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_icu.c,v 1.11 2020/09/26 10:06:26 skrll Exp $	*/
+/*	$NetBSD: omap2_icu.c,v 1.12 2022/03/03 06:26:29 riastradh Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -30,7 +30,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.11 2020/09/26 10:06:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.12 2022/03/03 06:26:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -207,7 +207,7 @@ omap2icu_attach(device_t parent, device_t self, void *aux)
 	INTC_WRITE(sc, 2, INTC_MIR_SET, 0xffffffff);
 
 	sc->sc_dev = self;
-	self->dv_private = sc;
+	device_set_private(self, sc);
 
 	pic_add(&sc->sc_pic, 0);
 }
