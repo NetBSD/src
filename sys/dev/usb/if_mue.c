@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.72 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.73 2022/03/03 05:53:14 riastradh Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.72 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.73 2022/03/03 05:53:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1023,10 +1023,11 @@ mue_uno_mcast(struct ifnet *ifp)
 	/* Always accept broadcast frames. */
 	rxfilt |= MUE_RFE_CTL_BROADCAST;
 
+	ETHER_LOCK(ec);
 	if (ifp->if_flags & IFF_PROMISC) {
 		rxfilt |= MUE_RFE_CTL_UNICAST;
 allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
-		ifp->if_flags |= IFF_ALLMULTI;
+		ec->ec_flags |= ETHER_F_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			DPRINTF(un, "promisc\n");
 		else
@@ -1036,7 +1037,6 @@ allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 		pfiltbl[0][0] = MUE_ENADDR_HI(enaddr) | MUE_ADDR_FILTX_VALID;
 		pfiltbl[0][1] = MUE_ENADDR_LO(enaddr);
 		i = 1;
-		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -1044,7 +1044,6 @@ allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 				memset(pfiltbl, 0, sizeof(pfiltbl));
 				memset(hashtbl, 0, sizeof(hashtbl));
 				rxfilt &= ~MUE_RFE_CTL_MULTICAST_HASH;
-				ETHER_UNLOCK(ec);
 				goto allmulti;
 			}
 			if (i < MUE_NUM_ADDR_FILTX) {
@@ -1062,14 +1061,14 @@ allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
 			i++;
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(ec);
+		ec->ec_flags &= ~ETHER_F_ALLMULTI;
 		rxfilt |= MUE_RFE_CTL_PERFECT;
-		ifp->if_flags &= ~IFF_ALLMULTI;
 		if (rxfilt & MUE_RFE_CTL_MULTICAST_HASH)
 			DPRINTF(un, "perfect filter and hash tables\n");
 		else
 			DPRINTF(un, "perfect filter\n");
 	}
+	ETHER_UNLOCK(ec);
 
 	for (i = 0; i < MUE_NUM_ADDR_FILTX; i++) {
 		hireg = (un->un_flags & LAN7500) ?

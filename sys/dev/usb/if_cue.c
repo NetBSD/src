@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.99 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.100 2022/03/03 05:53:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.99 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.100 2022/03/03 05:53:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -370,8 +370,10 @@ cue_uno_mcast(struct ifnet *ifp)
 	    device_xname(un->un_dev), ifp->if_flags));
 
 	if (ifp->if_flags & IFF_PROMISC) {
+		ETHER_LOCK(ec);
 allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
+		ec->ec_flags |= ETHER_F_ALLMULTI;
+		ETHER_UNLOCK(ec);
 		for (i = 0; i < CUE_MCAST_TABLE_LEN; i++)
 			sc->cue_mctab[i] = 0xFF;
 		cue_mem(un, CUE_CMD_WRITESRAM, CUE_MCAST_TABLE_ADDR,
@@ -389,7 +391,6 @@ allmulti:
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo,
 		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
-			ETHER_UNLOCK(ec);
 			goto allmulti;
 		}
 
@@ -397,9 +398,8 @@ allmulti:
 		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 	ETHER_UNLOCK(ec);
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * Also include the broadcast address in the filter
