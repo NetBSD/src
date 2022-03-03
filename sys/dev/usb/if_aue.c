@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.186 2022/03/03 05:54:37 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.187 2022/03/03 05:55:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.186 2022/03/03 05:54:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.187 2022/03/03 05:55:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -953,9 +953,6 @@ aue_uno_init(struct ifnet *ifp)
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter link=%jd",
 	    device_unit(un->un_dev), usbnet_havelink(un), 0, 0);
-
-	if (usbnet_isdying(un))
-		return EIO;
 
 	/* Cancel pending I/O */
 	if (ifp->if_flags & IFF_RUNNING)

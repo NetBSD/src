@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.74 2022/03/03 05:52:20 riastradh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.75 2022/03/03 05:55:01 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.74 2022/03/03 05:52:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.75 2022/03/03 05:55:01 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -261,13 +261,9 @@ cdce_uno_init(struct ifnet *ifp)
 	struct usbnet		*un = ifp->if_softc;
 	int rv;
 
-	if (usbnet_isdying(un))
-		rv = EIO;
-	else {
-		usbnet_stop(un, ifp, 1);
-		rv = usbnet_init_rx_tx(un);
-		usbnet_set_link(un, rv == 0);
-	}
+	usbnet_stop(un, ifp, 1);
+	rv = usbnet_init_rx_tx(un);
+	usbnet_set_link(un, rv == 0);
 
 	return rv;
 }
