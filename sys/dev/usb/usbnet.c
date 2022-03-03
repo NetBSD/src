@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.63 2022/03/03 05:49:14 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.64 2022/03/03 05:49:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.63 2022/03/03 05:49:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.64 2022/03/03 05:49:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1203,10 +1203,8 @@ usbnet_tick(void *arg)
 
 	USBNETHIST_CALLARGSN(10, "%jd: enter", unp->unp_number, 0, 0, 0);
 
-	if (unp != NULL && !unp->unp_stopping && !unp->unp_dying) {
-		/* Perform periodic stuff in process context */
-		usb_add_task(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER);
-	}
+	/* Perform periodic stuff in process context */
+	usb_add_task(un->un_udev, &unp->unp_ticktask, USB_TASKQ_DRIVER);
 }
 
 static void
