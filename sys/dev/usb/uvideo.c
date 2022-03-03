@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.66 2022/03/03 06:22:03 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.67 2022/03/03 06:22:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.66 2022/03/03 06:22:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.67 2022/03/03 06:22:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -752,7 +752,7 @@ uvideo_stream_guess_format(struct uvideo_stream *vs,
 static struct uvideo_stream *
 uvideo_stream_alloc(void)
 {
-	return kmem_alloc(sizeof(struct uvideo_stream), KM_SLEEP);
+	return kmem_zalloc(sizeof(struct uvideo_stream), KM_SLEEP);
 }
 
 
@@ -1031,7 +1031,6 @@ uvideo_stream_init(struct uvideo_stream *vs,
 		vs));
 
 	SLIST_INSERT_HEAD(&sc->sc_stream_list, vs, entries);
-	memset(vs, 0, sizeof(*vs));
 	vs->vs_parent = sc;
 	vs->vs_ifaceno = ifdesc->bInterfaceNumber;
 	vs->vs_subtype = 0;
