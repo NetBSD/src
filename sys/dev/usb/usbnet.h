@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.25 2022/03/03 05:52:11 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.26 2022/03/03 05:52:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -309,24 +309,6 @@ static __inline__ void
 usbnet_isowned_core(struct usbnet *un)
 {
 	KASSERT(mutex_owned(usbnet_mutex_core(un)));
-}
-
-void	usbnet_lock_rx(struct usbnet *);
-void	usbnet_unlock_rx(struct usbnet *);
-kmutex_t *usbnet_mutex_rx(struct usbnet *);
-static __inline__ void
-usbnet_isowned_rx(struct usbnet *un)
-{
-	KASSERT(mutex_owned(usbnet_mutex_rx(un)));
-}
-
-void	usbnet_lock_tx(struct usbnet *);
-void	usbnet_unlock_tx(struct usbnet *);
-kmutex_t *usbnet_mutex_tx(struct usbnet *);
-static __inline__ void
-usbnet_isowned_tx(struct usbnet *un)
-{
-	KASSERT(mutex_owned(usbnet_mutex_tx(un)));
 }
 
 /*

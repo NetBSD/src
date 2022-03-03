@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.73 2022/03/03 05:50:22 riastradh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.74 2022/03/03 05:52:20 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.73 2022/03/03 05:50:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.74 2022/03/03 05:52:20 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -276,8 +276,6 @@ static void
 cdce_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
-
-	usbnet_isowned_rx(un);
 
 	/* Strip off CRC added by Zaurus, if present */
 	if (un->un_flags & CDCE_ZAURUS && total_len > 4)
