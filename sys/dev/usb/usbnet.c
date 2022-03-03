@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.44 2022/01/29 21:37:07 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.45 2022/03/03 05:46:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.44 2022/01/29 21:37:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.45 2022/03/03 05:46:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1322,7 +1322,7 @@ usbnet_havelink(struct usbnet *un)
 bool
 usbnet_isdying(struct usbnet *un)
 {
-	return un->un_pri == NULL || un->un_pri->unp_dying;
+	return un->un_pri->unp_dying;
 }
 
 
