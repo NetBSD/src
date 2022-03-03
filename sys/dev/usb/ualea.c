@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.14 2022/03/03 06:05:38 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.15 2022/03/03 06:06:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.14 2022/03/03 06:05:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.15 2022/03/03 06:06:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -168,7 +168,7 @@ ualea_detach(device_t self, int flags)
 	if (sc->sc_xfer)
 		usbd_destroy_xfer(sc->sc_xfer);
 	if (sc->sc_pipe)
-		(void)usbd_close_pipe(sc->sc_pipe);
+		usbd_close_pipe(sc->sc_pipe);
 	mutex_destroy(&sc->sc_lock);
 
 	return 0;
