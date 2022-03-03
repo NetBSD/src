@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.90 2022/03/03 05:54:21 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.91 2022/03/03 05:54:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.90 2022/03/03 05:54:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.91 2022/03/03 05:54:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -242,15 +242,12 @@ url_attach(device_t parent, device_t self, void *aux)
 	/* Set these up now for url_mem().  */
 	usbnet_attach(un, "urldet");
 
-	usbnet_lock_core(un);
-
 	/* reset the adapter */
 	url_reset(un);
 
 	/* Get Ethernet Address */
 	err = url_mem(un, URL_CMD_READMEM, URL_IDR0, (void *)un->un_eaddr,
 		      ETHER_ADDR_LEN);
-	usbnet_unlock_core(un);
 	if (err) {
 		aprint_error_dev(self, "read MAC address failed\n");
 		return;
@@ -372,8 +369,6 @@ url_uno_init(struct ifnet *ifp)
 	int i;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return EIO;

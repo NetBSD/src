@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.101 2022/03/03 05:53:33 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.102 2022/03/03 05:54:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.101 2022/03/03 05:53:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.102 2022/03/03 05:54:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -545,8 +545,6 @@ cue_uno_tick(struct usbnet *un)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 
-	usbnet_lock_core(un);
-
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (cue_csr_read_2(un, CUE_RX_FRAMEERR))
 		if_statinc_ref(nsr, if_ierrors);
@@ -558,8 +556,6 @@ cue_uno_tick(struct usbnet *un)
 	if_statadd_ref(nsr, if_collisions,
 	    cue_csr_read_2(un, CUE_TX_EXCESSCOLL));
 	IF_STAT_PUTREF(ifp);
-
-	usbnet_unlock_core(un);
 }
 
 static void
