@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.50 2022/03/03 05:47:28 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.51 2022/03/03 05:47:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.50 2022/03/03 05:47:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.51 2022/03/03 05:47:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -151,6 +151,8 @@ fail:
 static void
 uno_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 {
+	KASSERTMSG(!un->un_pri->unp_ifp_attached || IFNET_LOCKED(ifp),
+	    "%s", ifp->if_xname);
 	usbnet_isowned_core(un);
 	if (un->un_ops->uno_stop)
 		(*un->un_ops->uno_stop)(ifp, disable);
@@ -820,6 +822,9 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	usbd_status err;
 	int error = 0;
 
+	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
+	    "%s", ifp->if_xname);
+
 	usbnet_isowned_core(un);
 
 	if (unp->unp_dying) {
@@ -1117,6 +1122,8 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();
 
+	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
+	    "%s", ifp->if_xname);
 	usbnet_isowned_core(un);
 
 	usbnet_busy(un);
@@ -1147,13 +1154,9 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 	/* Close pipes. */
 	usbnet_ep_close_pipes(un);
 
-	/*
-	 * XXXSMP Would like to
-	 *	KASSERT(IFNET_LOCKED(ifp))
-	 * here but the locking order is:
-	 *	ifnet -> core_lock -> rxlock -> txlock
-	 * and core_lock is already held.
-	 */
+	/* Everything is quesced now. */
+	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
+	    "%s", ifp->if_xname);
 	ifp->if_flags &= ~IFF_RUNNING;
 
 	usbnet_unbusy(un);
