@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.75 2021/12/04 14:53:56 nia Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.76 2022/03/03 21:03:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.75 2021/12/04 14:53:56 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.76 2022/03/03 21:03:14 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,6 +342,12 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 
 			if ((val & SYN_CCAP_HAS_ADV_GESTURE_MODE))
 				sc->flags |= SYN_FLAG_HAS_ADV_GESTURE_MODE;
+
+			if ((val & SYN_CCAP_REPORT_MAX))
+				sc->flags |= SYN_FLAG_HAS_MAX_REPORT;
+
+			if ((val & SYN_CCAP_REPORT_MIN))
+				sc->flags |= SYN_FLAG_HAS_MIN_REPORT;
 		}
 	}
 }
@@ -362,6 +368,8 @@ static const struct {
 	{ SYN_FLAG_HAS_HORIZONTAL_SCROLL, "Horizontal scroll", },
 	{ SYN_FLAG_HAS_MULTI_FINGER_REPORT, "Multi-finger Report", },
 	{ SYN_FLAG_HAS_MULTI_FINGER, "Multi-finger", },
+	{ SYN_FLAG_HAS_MAX_REPORT, "Reports max", },
+	{ SYN_FLAG_HAS_MIN_REPORT, "Reports min", },
 };
 
 int
@@ -442,6 +450,42 @@ pms_synaptics_probe_init(void *vsc)
 			}
 		}
 		aprint_normal("\n");
+	}
+
+	if (sc->flags & SYN_FLAG_HAS_MAX_REPORT) {
+		res = synaptics_special_read(psc, SYNAPTICS_READ_MAX_COORDS,
+		    resp);
+		if (res) {
+			aprint_error_dev(psc->sc_dev,
+			    "synaptics_probe: Failed to query max coords.\n");
+		} else {
+			synaptics_edge_right = (resp[0] << 5) +
+			    ((resp[1] & 0x0f) << 1);
+			synaptics_edge_top = (resp[2] << 5) + 
+			    ((resp[1] & 0xf0) >> 3);
+
+			aprint_normal_dev(psc->sc_dev,
+			    "Probed max coordinates right: %d, top: %d\n",
+			    synaptics_edge_right, synaptics_edge_top);
+		}
+	}
+
+	if (sc->flags & SYN_FLAG_HAS_MIN_REPORT) {
+		res = synaptics_special_read(psc, SYNAPTICS_READ_MIN_COORDS,
+		    resp);
+		if (res) {
+			aprint_error_dev(psc->sc_dev,
+			    "synaptics_probe: Failed to query min coords.\n");
+		} else {
+			synaptics_edge_left = (resp[0] << 5) +
+			    ((resp[1] & 0x0f) << 1);
+			synaptics_edge_bottom = (resp[2] << 5) + 
+			    ((resp[1] & 0xf0) >> 3);
+
+			aprint_normal_dev(psc->sc_dev,
+			    "Probed min coordinates left: %d, bottom: %d\n",
+			    synaptics_edge_left, synaptics_edge_bottom);
+		}
 	}
 
 done:
@@ -1068,6 +1112,27 @@ pms_synaptics_parse(struct pms_softc *psc)
 			nsp.sp_sz = (psc->packet[3] & 0x30)
 			    + ((psc->packet[5] & 0x0e) << 1);
 
+			/*
+			 * Check if the x and y are non-zero that they
+			 * are within the bounds of the trackpad
+			 * otherwise ignore the packet.
+			 */
+			if (((nsp.sp_sx != 0) &&
+			    ((nsp.sp_sx < synaptics_edge_left) ||
+			     (nsp.sp_sx > synaptics_edge_right))) ||
+			   ((nsp.sp_sy != 0) &&
+			    ((nsp.sp_sy < synaptics_edge_bottom) ||
+			     (nsp.sp_sy > synaptics_edge_top)))) {
+				sc->gesture_type = 0;
+				sc->gesture_buttons = 0;
+				sc->total_packets--;
+				DPRINTF(20, sc,
+				    "synaptics_parse: dropping out of bounds "
+				    "packet sp_sx %d sp_sy %d\n",
+				    nsp.sp_sx, nsp.sp_sy);
+				return;
+			}
+
 			/* work out the virtual finger width */
 			v = 8 + (psc->packet[1] & 0x01) +
 				((psc->packet[2] & 0x01) << 1) +
@@ -1150,6 +1215,27 @@ pms_synaptics_parse(struct pms_softc *psc)
 
 			/* Pressure */
 			nsp.sp_z = psc->packet[2];
+		}
+
+		/*
+		 * Check if the x and y are non-zero that they
+		 * are within the bounds of the trackpad
+		 * otherwise ignore the packet.
+		 */
+		if (((nsp.sp_x != 0) &&
+		    ((nsp.sp_x < synaptics_edge_left) ||
+		     (nsp.sp_x > synaptics_edge_right))) ||
+		    ((nsp.sp_y != 0) &&
+		    ((nsp.sp_y < synaptics_edge_bottom) ||
+		     (nsp.sp_y > synaptics_edge_top)))) {
+			sc->gesture_type = 0;
+			sc->gesture_buttons = 0;
+			sc->total_packets--;
+			DPRINTF(20, sc,
+			    "synaptics_parse: dropping out of bounds packet "
+			    "sp_x %d sp_y %d\n",
+			    nsp.sp_x, nsp.sp_y);
+			return;
 		}
 
 		nsp.sp_finger_count = pms_synaptics_get_fingers(psc,

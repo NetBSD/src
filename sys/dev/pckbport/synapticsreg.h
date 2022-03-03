@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsreg.h,v 1.12 2019/06/02 08:55:00 blymn Exp $	*/
+/*	$NetBSD: synapticsreg.h,v 1.13 2022/03/03 21:03:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -45,6 +45,8 @@
 #define	SYNAPTICS_READ_MODEL_ID		0x3
 #define	SYNAPTICS_EXTENDED_QUERY	0x9
 #define	SYNAPTICS_CONTINUED_CAPABILITIES 0x0c
+#define	SYNAPTICS_READ_MAX_COORDS	0x0d
+#define	SYNAPTICS_READ_MIN_COORDS	0x0f
 #define	SYNAPTICS_WRITE_DELUXE_3	0xc8 /* 6.2.3. Deluxe mode setting sequence */
 
 /* Synaptics special commands */
