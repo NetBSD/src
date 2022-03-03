@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.102 2022/03/03 05:54:37 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.103 2022/03/03 05:55:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.102 2022/03/03 05:54:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.103 2022/03/03 05:55:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -616,9 +616,6 @@ cue_uno_init(struct ifnet *ifp)
 	const u_char		*eaddr;
 
 	DPRINTFN(10,("%s: %s: enter\n", device_xname(un->un_dev),__func__));
-
-	if (usbnet_isdying(un))
-		return ENXIO;
 
 	/* Cancel pending I/O */
 	usbnet_stop(un, ifp, 1);

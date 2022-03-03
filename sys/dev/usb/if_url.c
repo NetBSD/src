@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.91 2022/03/03 05:54:37 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.92 2022/03/03 05:55:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.91 2022/03/03 05:54:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.92 2022/03/03 05:55:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -369,9 +369,6 @@ url_uno_init(struct ifnet *ifp)
 	int i;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
-
-	if (usbnet_isdying(un))
-		return EIO;
 
 	/* Cancel pending I/O and free all TX/RX buffers */
 	usbnet_stop(un, ifp, 1);
