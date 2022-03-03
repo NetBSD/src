@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.82 2022/03/03 05:53:23 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.83 2022/03/03 05:54:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.82 2022/03/03 05:53:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.83 2022/03/03 05:54:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -899,7 +899,7 @@ out:
 
 /* MII management. */
 
-int
+static int
 usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	USBNETHIST_FUNC();
@@ -923,7 +923,7 @@ usbnet_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	return 0;
 }
 
-int
+static int
 usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	USBNETHIST_FUNC();
@@ -947,7 +947,7 @@ usbnet_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	return 0;
 }
 
-void
+static void
 usbnet_mii_statchg(struct ifnet *ifp)
 {
 	USBNETHIST_FUNC(); USBNETHIST_CALLED();

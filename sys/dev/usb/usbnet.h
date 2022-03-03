@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.26 2022/03/03 05:52:20 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.27 2022/03/03 05:54:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -325,11 +325,6 @@ usbnet_isowned_core(struct usbnet *un)
  * upon success.
  */
 int	usbnet_init_rx_tx(struct usbnet * const);
-
-/* MII. */
-int	usbnet_mii_readreg(device_t, int, int, uint16_t *);
-int	usbnet_mii_writereg(device_t, int, int, uint16_t);
-void	usbnet_mii_statchg(struct ifnet *);
 
 /* interrupt handling */
 void	usbnet_enqueue(struct usbnet * const, uint8_t *, size_t, int,
