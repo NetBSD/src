@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.62 2022/03/03 05:49:07 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.63 2022/03/03 05:49:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.62 2022/03/03 05:49:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.63 2022/03/03 05:49:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -855,10 +855,9 @@ usbnet_init_rx_tx(struct usbnet * const un)
 	}
 
 	/* Indicate we are up and running. */
-#if 0
-	/* XXX if_mcast_op() can call this without ifnet locked */
-	KASSERT(ifp->if_softc == NULL || IFNET_LOCKED(ifp));
-#endif
+	/* XXX urndis calls usbnet_init_rx_tx before usbnet_attach_ifp.  */
+	KASSERTMSG(!unp->unp_ifp_attached || IFNET_LOCKED(ifp),
+	    "%s", ifp->if_xname);
 	ifp->if_flags |= IFF_RUNNING;
 
 	/* Start up the receive pipe(s). */
