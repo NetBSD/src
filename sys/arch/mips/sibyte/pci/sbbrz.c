@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz.c,v 1.8 2022/01/22 15:10:31 skrll Exp $ */
+/* $NetBSD: sbbrz.c,v 1.9 2022/03/03 06:27:21 riastradh Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -181,7 +181,7 @@ sbbrz_attach(device_t parent, device_t self, void *aux)
 
 	/* note that we've attached the bridge; can't have two. */
 	sc->sc_dev = self;
-	self->dv_private = sc;
+	device_set_private(self, sc);
 
 	/*
          * set up the bridge's info; done once at console init time
