@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.65 2022/03/03 06:21:50 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.66 2022/03/03 06:22:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.65 2022/03/03 06:21:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.66 2022/03/03 06:22:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1025,6 +1025,11 @@ uvideo_stream_init(struct uvideo_stream *vs,
 	uWord len;
 	usbd_status err;
 
+	DPRINTF(("%s: %s ifaceno=%d vs=%p\n", __func__,
+		device_xname(sc->sc_dev),
+		ifdesc->bInterfaceNumber,
+		vs));
+
 	SLIST_INSERT_HEAD(&sc->sc_stream_list, vs, entries);
 	memset(vs, 0, sizeof(*vs));
 	vs->vs_parent = sc;
@@ -1103,6 +1108,9 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 	uint8_t xfer_type, xfer_dir;
 	uint8_t bmAttributes, bEndpointAddress;
 	int i;
+
+	DPRINTF(("%s: bInterfaceNumber=%d bAlternateSetting=%d\n", __func__,
+		ifdesc->bInterfaceNumber, ifdesc->bAlternateSetting));
 
 	/* Iterate until the next interface descriptor.  All
 	 * descriptors until then belong to this streaming
@@ -1219,6 +1227,10 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 		}
 	}
 
+	DPRINTF(("%s: bInterfaceNumber=%d bAlternateSetting=%d done\n",
+		__func__,
+		ifdesc->bInterfaceNumber, ifdesc->bAlternateSetting));
+
 	return USBD_NORMAL_COMPLETION;
 }
 
@@ -1267,10 +1279,14 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 	uint32_t frame_interval;
 	const usb_guid_t *guid;
 
+	DPRINTF(("%s: ifaceno=%d subtype=%d probelen=%d\n", __func__,
+		vs->vs_ifaceno, vs->vs_subtype, vs->vs_probelen));
+
 	pixel_format = VIDEO_FORMAT_UNDEFINED;
 
 	switch (format_desc->bDescriptorSubtype) {
 	case UDESC_VS_FORMAT_UNCOMPRESSED:
+		DPRINTF(("%s: uncompressed\n", __func__));
 		subtype = UDESC_VS_FRAME_UNCOMPRESSED;
 		default_index = GET(uvideo_vs_format_uncompressed_descriptor_t,
 				    format_desc,
@@ -1284,14 +1300,23 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			pixel_format = VIDEO_FORMAT_NV12;
 		else if (usb_guid_cmp(guid, &uvideo_guid_format_uyvy) == 0)
 			pixel_format = VIDEO_FORMAT_UYVY;
+		else {
+#ifdef UVIDEO_DEBUG
+			DPRINTF(("%s: unknown format: ", __func__));
+			usb_guid_print(guid);
+			DPRINTF(("\n"));
+#endif
+		}
 		break;
 	case UDESC_VS_FORMAT_FRAME_BASED:
+		DPRINTF(("%s: frame-based\n", __func__));
 		subtype = UDESC_VS_FRAME_FRAME_BASED;
 		default_index = GET(uvideo_format_frame_based_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
 		break;
 	case UDESC_VS_FORMAT_MJPEG:
+		DPRINTF(("%s: mjpeg\n", __func__));
 		subtype = UDESC_VS_FRAME_MJPEG;
 		default_index = GET(uvideo_vs_format_mjpeg_descriptor_t,
 				    format_desc,
