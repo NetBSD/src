@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.85 2022/03/03 05:53:33 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.86 2022/03/03 05:54:03 riastradh Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.85 2022/03/03 05:53:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.86 2022/03/03 05:54:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -516,7 +516,7 @@ axen_setoe_locked(struct usbnet *un)
 	uint64_t enabled = ifp->if_capenable;
 	uint8_t val;
 
-	usbnet_isowned_core(un);
+	KASSERT(IFNET_LOCKED(ifp));
 
 	val = AXEN_RXCOE_OFF;
 	if (enabled & IFCAP_CSUM_IPv4_Rx)
