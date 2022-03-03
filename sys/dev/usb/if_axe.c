@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.141 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.142 2022/03/03 05:53:23 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.141 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.142 2022/03/03 05:53:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -292,8 +292,6 @@ axe_cmd(struct axe_softc *sc, int cmd, int index, int val, void *buf)
 	struct usbnet * const un = &sc->axe_un;
 	usb_device_request_t req;
 	usbd_status err;
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return -1;

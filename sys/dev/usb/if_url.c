@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.87 2022/03/03 05:53:04 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.88 2022/03/03 05:53:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.87 2022/03/03 05:53:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.88 2022/03/03 05:53:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -268,8 +268,6 @@ url_mem(struct usbnet *un, int cmd, int offset, void *buf, int len)
 	usb_device_request_t req;
 	usbd_status err;
 
-	usbnet_isowned_core(un);
-
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
@@ -434,8 +432,6 @@ url_uno_mcast(struct ifnet *ifp)
 	int h = 0, rcr;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return;

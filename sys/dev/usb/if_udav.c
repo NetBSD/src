@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.87 2022/03/03 05:53:14 riastradh Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.88 2022/03/03 05:53:23 riastradh Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.87 2022/03/03 05:53:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.88 2022/03/03 05:53:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -364,7 +364,6 @@ udav_csr_read(struct usbnet *un, int offset, void *buf, int len)
 	usb_device_request_t req;
 	usbd_status err;
 
-	usbnet_isowned_core(un);
 	KASSERT(!usbnet_isdying(un));
 
 	DPRINTFN(0x200,
@@ -395,7 +394,6 @@ udav_csr_write(struct usbnet *un, int offset, void *buf, int len)
 	usb_device_request_t req;
 	usbd_status err;
 
-	usbnet_isowned_core(un);
 	KASSERT(!usbnet_isdying(un));
 
 	DPRINTFN(0x200,
@@ -424,8 +422,6 @@ udav_csr_read1(struct usbnet *un, int offset)
 {
 	uint8_t val = 0;
 
-	usbnet_isowned_core(un);
-
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(un->un_dev), __func__));
 
@@ -442,7 +438,6 @@ udav_csr_write1(struct usbnet *un, int offset, unsigned char ch)
 	usb_device_request_t req;
 	usbd_status err;
 
-	usbnet_isowned_core(un);
 	KASSERT(!usbnet_isdying(un));
 
 	DPRINTFN(0x200,
@@ -585,8 +580,6 @@ udav_uno_mcast(struct ifnet *ifp)
 	int h = 0;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev), __func__));
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.180 2022/03/03 05:53:14 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.181 2022/03/03 05:53:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.180 2022/03/03 05:53:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.181 2022/03/03 05:53:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -284,8 +284,6 @@ aue_csr_read_1(struct aue_softc *sc, int reg)
 	usbd_status		err;
 	uByte			val = 0;
 
-	usbnet_isowned_core(un);
-
 	if (usbnet_isdying(un))
 		return 0;
 
@@ -314,8 +312,6 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 	usb_device_request_t	req;
 	usbd_status		err;
 	uWord			val;
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return 0;
@@ -346,8 +342,6 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 	usbd_status		err;
 	uByte			val;
 
-	usbnet_isowned_core(un);
-
 	if (usbnet_isdying(un))
 		return 0;
 
@@ -377,8 +371,6 @@ aue_csr_write_2(struct aue_softc *sc, int reg, int aval)
 	usb_device_request_t	req;
 	usbd_status		err;
 	uWord			val;
-
-	usbnet_isowned_core(un);
 
 	if (usbnet_isdying(un))
 		return 0;
@@ -623,8 +615,6 @@ aue_uno_mcast(struct ifnet *ifp)
 
 	AUEHIST_FUNC();
 	AUEHIST_CALLARGSN(5, "aue%jd: enter", device_unit(un->un_dev), 0, 0, 0);
-
-	usbnet_isowned_core(un);
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		ETHER_LOCK(ec);
