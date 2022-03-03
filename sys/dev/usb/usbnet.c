@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.45 2022/03/03 05:46:50 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.46 2022/03/03 05:46:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.45 2022/03/03 05:46:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.46 2022/03/03 05:46:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -850,15 +850,15 @@ usbnet_init_rx_tx(struct usbnet * const un)
 		goto out;
 	}
 
-	/* Start up the receive pipe(s). */
-	usbnet_rx_start_pipes(un);
-
 	/* Indicate we are up and running. */
 #if 0
 	/* XXX if_mcast_op() can call this without ifnet locked */
 	KASSERT(ifp->if_softc == NULL || IFNET_LOCKED(ifp));
 #endif
 	ifp->if_flags |= IFF_RUNNING;
+
+	/* Start up the receive pipe(s). */
+	usbnet_rx_start_pipes(un);
 
 	callout_schedule(&unp->unp_stat_ch, hz);
 
@@ -1126,14 +1126,6 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 
 	uno_stop(un, ifp, disable);
 
-	/*
-	 * XXXSMP Would like to
-	 *	KASSERT(IFNET_LOCKED(ifp))
-	 * here but the locking order is:
-	 *	ifnet -> core_lock -> rxlock -> txlock
-	 * and core_lock is already held.
-	 */
-	ifp->if_flags &= ~IFF_RUNNING;
 	unp->unp_timer = 0;
 
 	callout_halt(&unp->unp_stat_ch, &unp->unp_core_lock);
@@ -1149,6 +1141,15 @@ usbnet_stop(struct usbnet *un, struct ifnet *ifp, int disable)
 
 	/* Close pipes. */
 	usbnet_ep_close_pipes(un);
+
+	/*
+	 * XXXSMP Would like to
+	 *	KASSERT(IFNET_LOCKED(ifp))
+	 * here but the locking order is:
+	 *	ifnet -> core_lock -> rxlock -> txlock
+	 * and core_lock is already held.
+	 */
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	usbnet_unbusy(un);
 }
