@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.319 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.320 2022/03/03 06:08:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.319 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.320 2022/03/03 06:08:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2409,12 +2409,7 @@ ohci_abortx(struct usbd_xfer *xfer)
 	usb_syncmem(&sed->dma, sed->offs + offsetof(ohci_ed_t, ed_flags),
 	    sizeof(sed->ed.ed_flags),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-	/*
-	 * Final step: Notify completion to waiting xfers.
-	 */
 dying:
-	usb_transfer_complete(xfer);
 	DPRINTFN(14, "end", 0, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));

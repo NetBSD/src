@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.226 2022/03/03 06:07:11 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.227 2022/03/03 06:08:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.226 2022/03/03 06:07:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.227 2022/03/03 06:08:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1533,11 +1533,13 @@ usbd_xfer_abort(struct usbd_xfer *xfer)
 	usbd_xfer_cancel_timeout_async(xfer);
 
 	/*
-	 * We beat everyone else.  Claim the status as cancelled and do
-	 * the bus-specific dance to abort the hardware.
+	 * We beat everyone else.  Claim the status as cancelled, do
+	 * the bus-specific dance to abort the hardware, and complete
+	 * the xfer.
 	 */
 	xfer->ux_status = USBD_CANCELLED;
 	bus->ub_methods->ubm_abortx(xfer);
+	usb_transfer_complete(xfer);
 }
 
 /*
@@ -1617,11 +1619,13 @@ usbd_xfer_timeout_task(void *cookie)
 		goto out;
 
 	/*
-	 * We beat everyone else.  Claim the status as timed out and do
-	 * the bus-specific dance to abort the hardware.
+	 * We beat everyone else.  Claim the status as timed out, do
+	 * the bus-specific dance to abort the hardware, and complete
+	 * the xfer.
 	 */
 	xfer->ux_status = USBD_TIMEOUT;
 	bus->ub_methods->ubm_abortx(xfer);
+	usb_transfer_complete(xfer);
 
 out:	/* All done -- release the lock.  */
 	mutex_exit(bus->ub_lock);

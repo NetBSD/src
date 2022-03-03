@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.309 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.310 2022/03/03 06:08:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.309 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.310 2022/03/03 06:08:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2402,15 +2402,10 @@ uhci_abortx(struct usbd_xfer *xfer)
 	 */
 	/* Hardware finishes in 1ms */
 	usb_delay_ms_locked(upipe->pipe.up_dev->ud_bus, 2, &sc->sc_lock);
-
-	/*
-	 * HC Step 3: Notify completion to waiting xfers.
-	 */
 dying:
 #ifdef DIAGNOSTIC
 	ux->ux_isdone = true;
 #endif
-	usb_transfer_complete(xfer);
 	DPRINTFN(14, "end", 0, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
