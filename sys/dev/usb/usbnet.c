@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.83 2022/03/03 05:54:28 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.84 2022/03/03 05:54:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.83 2022/03/03 05:54:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.84 2022/03/03 05:54:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -101,6 +101,18 @@ volatile unsigned usbnet_number;
 
 static void usbnet_isowned_rx(struct usbnet *);
 static void usbnet_isowned_tx(struct usbnet *);
+
+static kmutex_t *
+usbnet_mutex_core(struct usbnet *un)
+{
+	return &un->un_pri->unp_core_lock;
+}
+
+static __inline__ void
+usbnet_isowned_core(struct usbnet *un)
+{
+	KASSERT(mutex_owned(usbnet_mutex_core(un)));
+}
 
 static int usbnet_modcmd(modcmd_t, void *);
 
@@ -1311,24 +1323,6 @@ usbnet_isdying(struct usbnet *un)
 
 
 /* Locking. */
-
-void
-usbnet_lock_core(struct usbnet *un)
-{
-	mutex_enter(&un->un_pri->unp_core_lock);
-}
-
-void
-usbnet_unlock_core(struct usbnet *un)
-{
-	mutex_exit(&un->un_pri->unp_core_lock);
-}
-
-kmutex_t*
-usbnet_mutex_core(struct usbnet *un)
-{
-	return &un->un_pri->unp_core_lock;
-}
 
 static void
 usbnet_isowned_rx(struct usbnet *un)

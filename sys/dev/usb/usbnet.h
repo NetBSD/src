@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.27 2022/03/03 05:54:28 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.28 2022/03/03 05:54:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -296,20 +296,6 @@ void *usbnet_softc(struct usbnet *);
 
 bool usbnet_havelink(struct usbnet *);
 bool usbnet_isdying(struct usbnet *);
-
-
-/*
- * Locking.  Note that the isowned() are implemented here so that
- * empty-KASSERT() causes them to be elided for non-DIAG builds.
- */
-void	usbnet_lock_core(struct usbnet *);
-void	usbnet_unlock_core(struct usbnet *);
-kmutex_t *usbnet_mutex_core(struct usbnet *);
-static __inline__ void
-usbnet_isowned_core(struct usbnet *un)
-{
-	KASSERT(mutex_owned(usbnet_mutex_core(un)));
-}
 
 /*
  * Endpoint / rx/tx chain management:
