@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsvar.h,v 1.12 2021/10/21 04:49:28 blymn Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.13 2022/03/03 21:03:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -59,6 +59,8 @@ struct synaptics_softc {
 #define	SYN_FLAG_HAS_TWO_BUTTON_CLICKPAD	(1 << 10)
 #define	SYN_FLAG_HAS_EXTENDED_WMODE		(1 << 11)
 #define	SYN_FLAG_HAS_ADV_GESTURE_MODE		(1 << 12)
+#define	SYN_FLAG_HAS_MAX_REPORT			(1 << 13)
+#define	SYN_FLAG_HAS_MIN_REPORT			(1 << 14)
 
 	/* Total number of packets received */
 	u_int	total_packets;
