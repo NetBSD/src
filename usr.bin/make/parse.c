@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.666 2022/02/09 21:28:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.667 2022/03/03 19:55:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.666 2022/02/09 21:28:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.667 2022/03/03 19:55:27 rillig Exp $");
 
 /*
  * A file being read.
@@ -124,7 +124,7 @@ typedef struct IncludedFile {
 	bool depending;		/* state of doing_depend on EOF */
 
 	Buffer buf;		/* the file's content or the body of the .for
-				 * loop; always ends with '\n' */
+				 * loop; either empty or ends with '\n' */
 	char *buf_ptr;		/* next char to be read */
 	char *buf_end;		/* buf_end[-1] == '\n' */
 
