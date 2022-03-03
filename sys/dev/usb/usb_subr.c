@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.269 2021/11/06 06:44:42 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.270 2022/03/03 06:13:35 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.269 2021/11/06 06:44:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.270 2022/03/03 06:13:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1872,6 +1872,7 @@ usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 		return 0;
 	}
 
+	usbd_suspend_pipe(dev->ud_pipe0);
 	if (dev->ud_subdevlen > 0) {
 		DPRINTFN(3, "disconnect subdevs", 0, 0, 0, 0);
 		for (i = 0; i < dev->ud_subdevlen; i++) {
