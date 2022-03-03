@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.74 2022/03/03 06:05:38 riastradh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.75 2022/03/03 06:06:52 riastradh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.74 2022/03/03 06:05:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.75 2022/03/03 06:06:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2223,7 +2223,6 @@ atu_stop(struct ifnet *ifp, int disable)
 	struct atu_softc	*sc = ifp->if_softc;
 	struct ieee80211com	*ic = &sc->sc_ic;
 	struct atu_cdata	*cd;
-	usbd_status		err;
 	int s;
 
 	s = splnet();
@@ -2249,20 +2248,12 @@ atu_stop(struct ifnet *ifp, int disable)
 
 	/* Close pipes */
 	if (sc->atu_ep[ATU_ENDPT_RX] != NULL) {
-		err = usbd_close_pipe(sc->atu_ep[ATU_ENDPT_RX]);
-		if (err) {
-			DPRINTF(("%s: close rx pipe failed: %s\n",
-			    device_xname(sc->atu_dev), usbd_errstr(err)));
-		}
+		usbd_close_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 		sc->atu_ep[ATU_ENDPT_RX] = NULL;
 	}
 
 	if (sc->atu_ep[ATU_ENDPT_TX] != NULL) {
-		err = usbd_close_pipe(sc->atu_ep[ATU_ENDPT_TX]);
-		if (err) {
-			DPRINTF(("%s: close tx pipe failed: %s\n",
-			    device_xname(sc->atu_dev), usbd_errstr(err)));
-		}
+		usbd_close_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 		sc->atu_ep[ATU_ENDPT_TX] = NULL;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.25 2021/12/31 14:25:24 riastradh Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.26 2022/03/03 06:06:52 riastradh Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.25 2021/12/31 14:25:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.26 2022/03/03 06:06:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -829,24 +829,17 @@ urtw_close_pipes(struct urtw_softc *sc)
 	usbd_status error = 0;
 
 	if (sc->sc_rxpipe != NULL) {
-		error = usbd_close_pipe(sc->sc_rxpipe);
-		if (error != 0)
-			goto fail;
+		usbd_close_pipe(sc->sc_rxpipe);
 		sc->sc_rxpipe = NULL;
 	}
 	if (sc->sc_txpipe_low != NULL) {
-		error = usbd_close_pipe(sc->sc_txpipe_low);
-		if (error != 0)
-			goto fail;
+		usbd_close_pipe(sc->sc_txpipe_low);
 		sc->sc_txpipe_low = NULL;
 	}
 	if (sc->sc_txpipe_normal != NULL) {
-		error = usbd_close_pipe(sc->sc_txpipe_normal);
-		if (error != 0)
-			goto fail;
+		usbd_close_pipe(sc->sc_txpipe_normal);
 		sc->sc_txpipe_normal = NULL;
 	}
-fail:
 	return error;
 }
 

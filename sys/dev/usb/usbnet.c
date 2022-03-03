@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.92 2022/03/03 06:05:38 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.93 2022/03/03 06:06:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.92 2022/03/03 06:05:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.93 2022/03/03 06:06:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -779,10 +779,7 @@ usbnet_ep_close_pipes(struct usbnet * const un)
 	for (size_t i = 0; i < __arraycount(unp->unp_ep); i++) {
 		if (unp->unp_ep[i] == NULL)
 			continue;
-		usbd_status err = usbd_close_pipe(unp->unp_ep[i]);
-		if (err)
-			aprint_error_dev(un->un_dev, "close pipe %zu: %s\n", i,
-			    usbd_errstr(err));
+		usbd_close_pipe(unp->unp_ep[i]);
 		unp->unp_ep[i] = NULL;
 	}
 }

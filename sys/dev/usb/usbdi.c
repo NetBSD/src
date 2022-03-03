@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.224 2022/03/03 06:05:38 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.225 2022/03/03 06:06:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.224 2022/03/03 06:05:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.225 2022/03/03 06:06:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -321,7 +321,7 @@ usbd_open_pipe_intr(struct usbd_interface *iface, uint8_t address,
 	return err;
 }
 
-usbd_status
+void
 usbd_close_pipe(struct usbd_pipe *pipe)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -348,8 +348,6 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	if (pipe->up_iface)
 		usbd_iface_pipeunref(pipe->up_iface);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
-
-	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_status
