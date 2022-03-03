@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.38 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.39 2022/03/03 06:08:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.38 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.39 2022/03/03 06:08:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2222,6 +2222,5 @@ motg_abortx(struct usbd_xfer *xfer)
 		}
 	}
 dying:
-	usb_transfer_complete(xfer);
 	KASSERT(mutex_owned(&sc->sc_lock));
 }

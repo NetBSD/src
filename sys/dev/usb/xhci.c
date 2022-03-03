@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.156 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.157 2022/03/03 06:08:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.156 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.157 2022/03/03 06:08:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2153,8 +2153,6 @@ xhci_abortx(struct usbd_xfer *xfer)
 	    "bad abort status: %d", xfer->ux_status);
 
 	xhci_pipe_restart(xfer->ux_pipe);
-
-	usb_transfer_complete(xfer);
 
 	DPRINTFN(14, "end", 0, 0, 0, 0);
 }

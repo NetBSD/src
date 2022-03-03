@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.78 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.79 2022/03/03 06:08:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.78 2022/03/03 06:04:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.79 2022/03/03 06:08:50 riastradh Exp $");
 
 #include "opt_usb.h"
 
@@ -515,7 +515,7 @@ dwc2_abortx(struct usbd_xfer *xfer)
 	}
 
 	/*
-	 * HC Step 1: Handle the hardware.
+	 * Handle the hardware.
 	 */
 	err = dwc2_hcd_urb_dequeue(hsotg, dxfer->urb);
 	if (err) {
@@ -524,11 +524,6 @@ dwc2_abortx(struct usbd_xfer *xfer)
 
 dying:
 	mutex_spin_exit(&hsotg->lock);
-
-	/*
-	 * Final Step: Notify completion to waiting xfers.
-	 */
-	usb_transfer_complete(xfer);
 	KASSERT(mutex_owned(&sc->sc_lock));
 }
 
