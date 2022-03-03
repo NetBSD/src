@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.53 2022/03/03 05:47:50 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.54 2022/03/03 05:47:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.53 2022/03/03 05:47:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.54 2022/03/03 05:47:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1226,9 +1226,6 @@ usbnet_tick_task(void *arg)
 	USBNETHIST_FUNC();
 	struct usbnet * const un = arg;
 	struct usbnet_private * const unp = un->un_pri;
-
-	if (unp == NULL)
-		return;
 
 	USBNETHIST_CALLARGSN(8, "%jd: enter", unp->unp_number, 0, 0, 0);
 
