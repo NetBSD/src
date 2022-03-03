@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.104 2022/03/03 05:55:29 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.105 2022/03/03 05:56:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.104 2022/03/03 05:55:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.105 2022/03/03 05:56:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -654,7 +654,7 @@ cue_uno_init(struct ifnet *ifp)
 	/* Program the LED operation. */
 	cue_csr_write_1(un, CUE_LEDCTL, CUE_LEDCTL_FOLLOW_LINK);
 
-	return usbnet_init_rx_tx(un);
+	return 0;
 }
 
 /* Stop and reset the adapter.  */

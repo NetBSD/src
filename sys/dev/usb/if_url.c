@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.94 2022/03/03 05:55:45 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.95 2022/03/03 05:56:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.94 2022/03/03 05:55:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.95 2022/03/03 05:56:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -388,7 +388,7 @@ url_uno_init(struct ifnet *ifp)
 	/* Enable RX and TX */
 	URL_SETBIT(un, URL_CR, URL_CR_TE | URL_CR_RE);
 
-	return usbnet_init_rx_tx(un);
+	return 0;
 }
 
 static void

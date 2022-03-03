@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.148 2022/03/03 05:55:38 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.149 2022/03/03 05:56:09 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.148 2022/03/03 05:55:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.149 2022/03/03 05:56:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1286,7 +1286,7 @@ axe_uno_init(struct ifnet *ifp)
 
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 
-	return usbnet_init_rx_tx(un);
+	return 0;
 }
 
 static void
