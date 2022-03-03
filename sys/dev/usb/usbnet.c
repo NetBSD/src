@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.77 2022/03/03 05:52:03 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.78 2022/03/03 05:52:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.77 2022/03/03 05:52:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.78 2022/03/03 05:52:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,7 +56,6 @@ struct usbnet_private {
 	 *   and the MII / media data.
 	 * - unp_rxlock protects the rx path and its data
 	 * - unp_txlock protects the tx path and its data
-	 * - unp_detachcv handles detach vs open references
 	 *
 	 * the lock ordering is:
 	 *	ifnet lock -> unp_core_lock -> unp_rxlock -> unp_txlock
@@ -66,7 +65,6 @@ struct usbnet_private {
 	kmutex_t		unp_core_lock;
 	kmutex_t		unp_rxlock;
 	kmutex_t		unp_txlock;
-	kcondvar_t		unp_detachcv;
 
 	struct usbnet_cdata	unp_cdata;
 
@@ -83,7 +81,6 @@ struct usbnet_private {
 	bool			unp_ifp_attached;
 	bool			unp_link;
 
-	int			unp_refcnt;
 	int			unp_timer;
 	unsigned short		unp_if_flags;
 	unsigned		unp_number;
@@ -883,27 +880,6 @@ out:
 	return error;
 }
 
-void
-usbnet_busy(struct usbnet *un)
-{
-	struct usbnet_private * const unp = un->un_pri;
-
-	usbnet_isowned_core(un);
-
-	unp->unp_refcnt++;
-}
-
-void
-usbnet_unbusy(struct usbnet *un)
-{
-	struct usbnet_private * const unp = un->un_pri;
-
-	usbnet_isowned_core(un);
-
-	if (--unp->unp_refcnt < 0)
-		cv_broadcast(&unp->unp_detachcv);
-}
-
 /* MII management. */
 
 int
@@ -1443,7 +1419,6 @@ usbnet_attach(struct usbnet *un,
 	mutex_init(&unp->unp_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&unp->unp_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&unp->unp_core_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&unp->unp_detachcv, detname);
 
 	rnd_attach_source(&unp->unp_rndsrc, device_xname(un->un_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -1636,24 +1611,11 @@ usbnet_detach(device_t self, int flags)
 	usb_rem_task_wait(un->un_udev, &unp->unp_mcasttask, USB_TASKQ_DRIVER,
 	    NULL);
 
-	mutex_enter(&unp->unp_core_lock);
-	unp->unp_refcnt--;
-	if (unp->unp_refcnt >= 0) {
-		aprint_error_dev(un->un_dev, "%d stragglers\n",
-		    unp->unp_refcnt + 1);
-	}
-	while (unp->unp_refcnt >= 0) {
-		/* Wait for processes to go away */
-		cv_wait(&unp->unp_detachcv, &unp->unp_core_lock);
-	}
-	mutex_exit(&unp->unp_core_lock);
-
 	usbnet_rx_list_free(un);
 	usbnet_tx_list_free(un);
 
 	rnd_detach_source(&unp->unp_rndsrc);
 
-	cv_destroy(&unp->unp_detachcv);
 	mutex_destroy(&unp->unp_core_lock);
 	mutex_destroy(&unp->unp_rxlock);
 	mutex_destroy(&unp->unp_txlock);
