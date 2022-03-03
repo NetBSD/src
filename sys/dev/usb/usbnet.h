@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.32 2022/03/03 05:56:36 riastradh Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.33 2022/03/03 05:56:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -58,19 +58,12 @@
  *     cases), but provides a normal handler with callback to handle
  *     ENETRESET conditions that should be sufficient for most users
  *   - start uses usbnet transmit prepare callback (uno_tx_prepare)
- * - interface init and stop have helper functions
- *   - device specific init should use usbnet_init_rx_tx() to open pipes
- *     to the device and setup the rx/tx chains for use after any device
- *     specific setup
- *   - usbnet_stop() must be called with the un_lock held, and will
- *     call the device-specific usbnet stop callback, which enables the
- *     standard init calls stop idiom.
  * - interrupt handling:
- *   - for rx, usbnet_init_rx_tx() will enable the receive pipes and
+ *   - for rx, usbnet will enable the receive pipes and
  *     call the rx_loop callback to handle device specific processing of
  *     packets, which can use usbnet_enqueue() to provide data to the
  *     higher layers
- *   - for tx, usbnet_start (if_start) will pull entries out of the
+ *   - for tx, usbnet will pull entries out of the
  *     transmit queue and use the transmit prepare callback (uno_tx_prepare)
  *     for the given mbuf.  the usb callback will use usbnet_txeof() for
  *     the transmit completion function (internal to usbnet)
@@ -175,8 +168,7 @@ typedef void (*usbnet_intr_cb)(struct usbnet *, usbd_status);
  * Note that the IFNET_LOCK **may not be held** for the ioctl commands
  * SIOCADDMULTI/SIOCDELMULTI.  These commands are only passed
  * explicitly to uno_override_ioctl; for all other devices, they are
- * handled inside usbnet by scheduling a task to asynchronously call
- * uno_mcast with IFNET_LOCK held.
+ * handled by uno_mcast (also without IFNET_LOCK).
  */
 struct usbnet_ops {
 	usbnet_stop_cb		uno_stop;		/* C */
@@ -297,10 +289,20 @@ bool usbnet_isdying(struct usbnet *);
 /*
  * Endpoint / rx/tx chain management:
  *
- * usbnet_attach() initialises usbnet and allocates rx and tx chains
- * usbnet_init_rx_tx() open pipes, initialises the rx/tx chains for use
- * usbnet_stop() stops pipes, cleans (not frees) rx/tx chains, locked
- *               version assumes un_lock is held
+ * 1. usbnet_attach() initialises usbnet and allocates rx and tx chains
+ *
+ * 2. On if_init, usbnet:
+ *    - calls uno_init to initialize hardware
+ *    - open pipes
+ *    - initialises the rx/tx chains for use
+ *    - calls uno_mcast to program hardware multicast filter
+ *
+ * 3. On if_stop, usbnet:
+ *    - stops pipes
+ *    - calls uno_stop to stop hardware (unless we're detaching anyway)
+ *    - cleans (not frees) rx/tx chains
+ *    - closes pipes
+ *
  * usbnet_detach() frees the rx/tx chains
  *
  * Setup un_ed[] with valid end points before calling usbnet_attach().
