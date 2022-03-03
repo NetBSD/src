@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.132 2022/03/03 06:04:31 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.133 2022/03/03 06:09:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -44,16 +44,19 @@
  *	BUS METHOD		LOCK	NOTES
  *	----------------------- -------	-------------------------
  *	ubm_open		-	might want to take lock?
- *	ubm_softint		x
+ *	ubm_softint		x	may release/reacquire lock
  *	ubm_dopoll		-	might want to take lock?
  *	ubm_allocx		-
  *	ubm_freex		-
+ *	ubm_abortx		x	must not release/reacquire lock
  *	ubm_getlock 		-	Called at attach time
  *	ubm_newdev		-	Will take lock
-	ubm_rhctrl
+ *	ubm_rhctrl
  *
  *	PIPE METHOD		LOCK	NOTES
  *	----------------------- -------	-------------------------
+ *	upm_init		-
+ *	upm_fini		-
  *	upm_transfer		-
  *	upm_start		-	might want to take lock?
  *	upm_abort		x
