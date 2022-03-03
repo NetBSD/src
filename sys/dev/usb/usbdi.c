@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.231 2022/03/03 06:12:11 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.232 2022/03/03 06:12:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.231 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.232 2022/03/03 06:12:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -452,8 +452,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 	if (!(flags & USBD_SYNCHRONOUS)) {
 		USBHIST_LOG(usbdebug, "<- done xfer %#jx, not sync (err %jd)",
 		    (uintptr_t)xfer, err, 0, 0);
-		if (err != USBD_IN_PROGRESS) /* XXX Possible?  */
-			SDT_PROBE2(usb, device, xfer, done,  xfer, err);
+		KASSERTMSG(err != USBD_NORMAL_COMPLETION,
+		    "asynchronous xfer %p completed synchronously", xfer);
 		return err;
 	}
 
