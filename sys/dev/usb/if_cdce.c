@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.79 2022/03/03 05:56:09 riastradh Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.80 2022/03/03 05:56:18 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.79 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.80 2022/03/03 05:56:18 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -82,12 +82,10 @@ static void	cdce_uno_rx_loop(struct usbnet *, struct usbnet_chain *,
 				 uint32_t);
 static unsigned	cdce_uno_tx_prepare(struct usbnet *, struct mbuf *,
 				    struct usbnet_chain *);
-static int	cdce_uno_init(struct ifnet *);
 
 static const struct usbnet_ops cdce_ops = {
 	.uno_tx_prepare = cdce_uno_tx_prepare,
 	.uno_rx_loop = cdce_uno_rx_loop,
-	.uno_init = cdce_uno_init,
 };
 
 static int
@@ -253,13 +251,6 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	usbnet_attach(un, "cdcedet");
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
             0, NULL);
-}
-
-static int
-cdce_uno_init(struct ifnet *ifp)
-{
-
-	return 0;
 }
 
 static void

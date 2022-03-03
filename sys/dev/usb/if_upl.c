@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.75 2022/03/03 05:56:09 riastradh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.76 2022/03/03 05:56:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.75 2022/03/03 05:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.76 2022/03/03 05:56:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,10 +111,8 @@ static void upl_uno_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static unsigned upl_uno_tx_prepare(struct usbnet *, struct mbuf *,
 			       struct usbnet_chain *);
 static int upl_uno_ioctl(struct ifnet *, u_long, void *);
-static int upl_uno_init(struct ifnet *);
 
 static const struct usbnet_ops upl_ops = {
-	.uno_init = upl_uno_init,
 	.uno_tx_prepare = upl_uno_tx_prepare,
 	.uno_rx_loop = upl_uno_rx_loop,
 	.uno_ioctl = upl_uno_ioctl,
@@ -249,13 +247,6 @@ upl_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 		     device_xname(un->un_dev), __func__, total_len));
 
 	return total_len;
-}
-
-static int
-upl_uno_init(struct ifnet *ifp)
-{
-
-	return 0;
 }
 
 static int
