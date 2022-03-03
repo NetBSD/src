@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2011/02/20 07:56:31 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 2022/03/03 06:27:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2011/02/20 07:56:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2022/03/03 06:27:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,7 +66,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	struct cpu_info * const ci = curcpu();
 
 	ci->ci_dev = self;
-	self->dv_private = ci;
+	device_set_private(self, ci);
 
 	aprint_normal(": ");
 	cpu_identify(self);
