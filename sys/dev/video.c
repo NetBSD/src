@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.43 2021/12/08 20:50:02 andvar Exp $ */
+/* $NetBSD: video.c,v 1.44 2022/03/03 06:22:23 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.43 2021/12/08 20:50:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.44 2022/03/03 06:22:23 riastradh Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -351,7 +351,7 @@ video_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->hw_dev = parent;
 	sc->hw_if = args->hw_if;
-	sc->hw_softc = device_private(parent);
+	sc->hw_softc = args->hw_softc;
 
 	sc->sc_open = 0;
 	sc->sc_refcnt = 0;
@@ -433,6 +433,19 @@ video_attach_mi(const struct video_hw_if *hw_if, device_t parent)
 	struct video_attach_args args;
 
 	args.hw_if = hw_if;
+	args.hw_softc = device_private(parent);
+	return config_found(parent, &args, video_print,
+	    CFARGS(.iattr = "videobus"));
+}
+
+device_t
+video_attach_mi_softc(const struct video_hw_if *hw_if, device_t parent,
+    void *sc)
+{
+	struct video_attach_args args;
+
+	args.hw_if = hw_if;
+	args.hw_softc = sc;
 	return config_found(parent, &args, video_print,
 	    CFARGS(.iattr = "videobus"));
 }

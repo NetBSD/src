@@ -1,4 +1,4 @@
-/* $NetBSD: video_if.h,v 1.9 2020/05/22 11:23:51 jmcneill Exp $ */
+/* $NetBSD: video_if.h,v 1.10 2022/03/03 06:22:23 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -501,9 +501,11 @@ struct video_hw_if {
 
 struct video_attach_args {
 	const struct video_hw_if *hw_if;
+	void	*hw_softc;
 };
 
 device_t video_attach_mi(const struct video_hw_if *, device_t);
+device_t video_attach_mi_softc(const struct video_hw_if *, device_t, void *);
 void video_submit_payload(device_t, const struct video_payload *);
 
 #endif	/* _SYS_DEV_VIDEO_IF_H_ */
