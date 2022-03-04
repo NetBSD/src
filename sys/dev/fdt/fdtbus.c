@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.45 2022/01/22 11:49:17 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.46 2022/03/04 08:19:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.45 2022/01/22 11:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.46 2022/03/04 08:19:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,6 +468,8 @@ fdt_pre_attach(struct fdt_node *node)
 		aprint_debug_dev(node->n_bus,
 		    "failed to set %s config on %s: %d\n",
 		    cfgname, node->n_name, error);
+
+	fdtbus_powerdomain_enable(node->n_phandle);
 }
 
 static void
