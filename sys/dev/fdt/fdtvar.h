@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.76 2022/02/23 08:56:11 skrll Exp $ */
+/* $NetBSD: fdtvar.h,v 1.77 2022/03/04 08:19:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -157,6 +157,20 @@ struct fdtbus_iommu_func {
 };
 
 
+struct fdtbus_mbox_channel {
+	struct fdtbus_mbox_controller *mb_ctlr;
+	void *mb_priv;
+};
+
+struct fdtbus_mbox_controller_func {
+	void *	(*mc_acquire)(device_t, const void *, size_t, void (*)(void *),
+			      void *);
+	void	(*mc_release)(device_t, void *);
+	int	(*mc_recv)(device_t, void *, void *, size_t);
+	int	(*mc_send)(device_t, void *, const void *, size_t);
+};
+
+
 struct fdtbus_mmc_pwrseq;
 
 struct fdtbus_mmc_pwrseq_func {
@@ -198,6 +212,13 @@ struct fdtbus_power_controller;
 struct fdtbus_power_controller_func {
 	void 	(*reset)(device_t);
 	void	(*poweroff)(device_t);
+};
+
+
+struct fdtbus_powerdomain_controller;
+
+struct fdtbus_powerdomain_controller_func {
+	void 	(*pdc_enable)(device_t, const uint32_t *, bool);
 };
 
 
@@ -306,12 +327,16 @@ int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_iommu(device_t, int,
 		    const struct fdtbus_iommu_func *);
+int		fdtbus_register_mbox_controller(device_t, int,
+		    const struct fdtbus_mbox_controller_func *);
 int		fdtbus_register_mmc_pwrseq(device_t, int,
 		    const struct fdtbus_mmc_pwrseq_func *);
 int		fdtbus_register_pinctrl_config(device_t, int,
 		    const struct fdtbus_pinctrl_controller_func *);
 int		fdtbus_register_power_controller(device_t, int,
 		    const struct fdtbus_power_controller_func *);
+int		fdtbus_register_powerdomain_controller(device_t, int,
+		    const struct fdtbus_powerdomain_controller_func *);
 int		fdtbus_register_phy_controller(device_t, int,
 		    const struct fdtbus_phy_controller_func *);
 int		fdtbus_register_pwm_controller(device_t, int,
@@ -392,6 +417,15 @@ int		fdtbus_intr_parent(int);
 bus_dma_tag_t	fdtbus_iommu_map(int, u_int, bus_dma_tag_t);
 bus_dma_tag_t	fdtbus_iommu_map_pci(int, uint32_t, bus_dma_tag_t);
 
+struct fdtbus_mbox_channel *
+		fdtbus_mbox_get(int, const char *, void (*)(void *), void *);
+struct fdtbus_mbox_channel *
+		fdtbus_mbox_get_index(int, u_int, void (*)(void *),
+		    void *);
+int		fdtbus_mbox_send(struct fdtbus_mbox_channel *, const void *, size_t);
+int		fdtbus_mbox_recv(struct fdtbus_mbox_channel *, void *, size_t);
+void		fdtbus_mbox_put(struct fdtbus_mbox_channel *);
+
 struct fdtbus_mmc_pwrseq *
 		fdtbus_mmc_pwrseq_get(int);
 void		fdtbus_mmc_pwrseq_pre_power_on(struct fdtbus_mmc_pwrseq *);
@@ -446,6 +480,11 @@ int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
 
 void		fdtbus_power_reset(void);
 void		fdtbus_power_poweroff(void);
+
+int		fdtbus_powerdomain_enable(int);
+int		fdtbus_powerdomain_enable_index(int, int);
+int		fdtbus_powerdomain_disable(int);
+int		fdtbus_powerdomain_disable_index(int, int);
 
 struct syscon *	fdtbus_syscon_acquire(int, const char *);
 struct syscon *	fdtbus_syscon_lookup(int);
