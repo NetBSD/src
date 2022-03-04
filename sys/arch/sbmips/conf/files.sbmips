@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.17 2019/08/21 04:17:41 msaitoh Exp $
+# $NetBSD: files.sbmips,v 1.18 2022/03/04 21:12:03 andvar Exp $
 
 maxpartitions 8
 
@@ -90,7 +90,7 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 #
 # Machine-independent PCMCIA drivers
 #
-#XXXCGD can't yet becaue needs fdc include "dev/pcmcia/files.pcmcia"
+#XXXCGD can't yet because needs fdc include "dev/pcmcia/files.pcmcia"
 #
 # Machine-independent USB device support
 #
