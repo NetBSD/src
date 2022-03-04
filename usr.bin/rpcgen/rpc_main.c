@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.44 2015/09/20 16:57:13 kamil Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.45 2022/03/04 21:12:04 andvar Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.44 2015/09/20 16:57:13 kamil Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.45 2022/03/04 21:12:04 andvar Exp $");
 #endif
 #endif
 
@@ -527,7 +527,7 @@ generate_guard(const char *pathname)
 	}
 
 	/*
-	 * Can't have a '_' or '.' at the front of a symbol name, beacuse it
+	 * Can't have a '_' or '.' at the front of a symbol name, because it
 	 * will end up as "__".
 	 *
 	 * Prefix it with "RPCGEN_".
