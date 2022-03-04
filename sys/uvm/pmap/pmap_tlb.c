@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.51 2022/01/02 16:03:30 christos Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.52 2022/03/04 08:11:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.51 2022/01/02 16:03:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.52 2022/03/04 08:11:48 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -547,9 +547,6 @@ pmap_tlb_shootdown_process(void)
 {
 	struct cpu_info * const ci = curcpu();
 	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
-#ifdef DIAGNOSTIC
-	struct pmap * const pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
-#endif
 
 	KASSERT(cpu_intr_p());
 	KASSERTMSG(ci->ci_cpl >= IPL_SCHED, "%s: cpl (%d) < IPL_SCHED (%d)",
@@ -580,7 +577,6 @@ pmap_tlb_shootdown_process(void)
 			 * next called for this pmap, it will allocate a new
 			 * ASID.
 			 */
-			KASSERT(!pmap_tlb_intersecting_onproc_p(pm, ti));
 			pmap_tlb_pai_reset(ti, pai, PAI_PMAP(pai, ti));
 		}
 		break;
