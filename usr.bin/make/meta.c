@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.198 2022/02/09 21:28:57 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.199 2022/03/04 23:17:16 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -668,7 +668,7 @@ meta_job_start(Job *job, GNode *gn)
  * It does not disturb our state.
  */
 void
-meta_job_child(Job *job)
+meta_job_child(Job *job MAKE_ATTR_UNUSED)
 {
 #ifdef USE_FILEMON
     BuildMon *pbm;
@@ -693,7 +693,7 @@ meta_job_child(Job *job)
 }
 
 void
-meta_job_parent(Job *job, pid_t pid)
+meta_job_parent(Job *job MAKE_ATTR_UNUSED, pid_t pid MAKE_ATTR_UNUSED)
 {
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
@@ -710,7 +710,7 @@ meta_job_parent(Job *job, pid_t pid)
 }
 
 int
-meta_job_fd(Job *job)
+meta_job_fd(Job *job MAKE_ATTR_UNUSED)
 {
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
@@ -728,7 +728,7 @@ meta_job_fd(Job *job)
 }
 
 int
-meta_job_event(Job *job)
+meta_job_event(Job *job MAKE_ATTR_UNUSED)
 {
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
