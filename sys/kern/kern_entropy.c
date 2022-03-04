@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.33 2021/09/26 15:10:51 thorpej Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.34 2022/03/04 21:12:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.33 2021/09/26 15:10:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.34 2022/03/04 21:12:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.33 2021/09/26 15:10:51 thorpej Ex
  *	Per-CPU entropy state.  The pool is allocated separately
  *	because percpu(9) sometimes moves per-CPU objects around
  *	without zeroing them, which would lead to unwanted copies of
- *	sensitive secrets.  The evcnt is allocated separately becuase
+ *	sensitive secrets.  The evcnt is allocated separately because
  *	evcnt(9) assumes it stays put in memory.
  */
 struct entropy_cpu {
