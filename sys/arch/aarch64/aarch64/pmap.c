@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128 2022/02/16 22:00:55 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.129 2022/03/05 16:53:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2022/02/16 22:00:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2022/03/05 16:53:24 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1598,7 +1598,7 @@ _pmap_pdp_addref(struct pmap *pm, paddr_t pdppa, struct vm_page *pdppg_hint)
 {
 	struct vm_page *pg;
 
-	/* kernel L0-L3 page will be never freed */
+	/* kernel L0-L3 pages will never be freed */
 	if (pm == pmap_kernel())
 		return;
 
@@ -1632,7 +1632,7 @@ _pmap_pdp_delref(struct pmap *pm, paddr_t pdppa, bool do_free_pdp)
 	bool removed;
 	uint16_t wirecount;
 
-	/* kernel L0-L3 page will be never freed */
+	/* kernel L0-L3 pages will never be freed */
 	if (pm == pmap_kernel())
 		return false;
 
