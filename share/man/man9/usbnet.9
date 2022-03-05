@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.15 2022/03/03 05:57:05 riastradh Exp $
+.\"	$NetBSD: usbnet.9,v 1.16 2022/03/05 06:55:49 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -378,8 +378,8 @@ internally by
 May or may not be called under
 .Xr IFNET_LOCK 9 .
 .It Ft int Fn (*uno_init) "struct ifnet *ifp"
-Initialize hardware activity.
-Required.
+Initialize hardware activity
+.Pq optional .
 Called under
 .Xr IFNET_LOCK 9
 when bringing the interface up.
