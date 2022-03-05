@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.16 2022/03/05 06:55:49 riastradh Exp $
+.\"	$NetBSD: usbnet.9,v 1.17 2022/03/05 06:55:58 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -355,7 +355,8 @@ Stop hardware activity
 .Pq optional .
 Called under
 .Xr IFNET_LOCK 9
-when bringing the interface down, except when the device is detaching.
+when bringing the interface down, but skipped when the device is
+detaching.
 .It Ft int Fn (*uno_ioctl) "struct ifnet *ifp" "u_long cmd" "void *data"
 Handle driver-specific ioctls
 .Pq optional .
