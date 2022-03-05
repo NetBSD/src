@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.93 2022/03/03 06:06:52 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.94 2022/03/05 06:55:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.93 2022/03/03 06:06:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.94 2022/03/05 06:55:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1385,7 +1385,6 @@ usbnet_attach(struct usbnet *un)
 	/* Required inputs.  */
 	KASSERT(un->un_ops->uno_tx_prepare);
 	KASSERT(un->un_ops->uno_rx_loop);
-	KASSERT(un->un_ops->uno_init);
 	KASSERT(un->un_rx_bufsz);
 	KASSERT(un->un_tx_bufsz);
 	KASSERT(un->un_rx_list_cnt);
