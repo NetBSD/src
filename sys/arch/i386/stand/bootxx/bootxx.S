@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.11 2019/07/11 03:49:51 msaitoh Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.12 2022/03/06 18:35:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ boot_params:				/* space for patchable variables */
 	push	%edx
 	call	_C_LABEL(boot1)		/* C code to load /boot */
 	add	$8, %esp
+	movw	errno, %dx
 	call	prot_to_real
 	.code16
 
@@ -94,7 +95,7 @@ boot_params:				/* space for patchable variables */
 
 boot_fail:
 	push	%ax			/* error string from boot1 */
-	movw	errno, %ax
+	movw	%dx, %ax
 	aam				/* largest errno is < 100 */
 	addw	$('0' << 8) | '0', %ax	/* to ascii */
 	rorw	$8, %ax
