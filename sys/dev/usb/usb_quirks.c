@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.104 2022/01/20 03:14:03 mrg Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.105 2022/03/06 23:36:50 andvar Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.104 2022/01/20 03:14:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.105 2022/03/06 23:36:50 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -377,7 +377,7 @@ Static const struct usbd_quirk_entry {
   * 1. It corrupts its USB descriptors. The quirk is to provide hardcoded
   *    descriptors instead of getting them from the device.
   * 2. It mishandles the USB toggle bit. This causes some replies to be
-  *    filered out by the USB host controller and be reported as timed out.
+  *    filtered out by the USB host controller and be reported as timed out.
   *    NFC tool's libnfc workaround this bug by sending a dummy frame to
   *    resync the toggle bit, but in order to succeed, that operation must
   *    not be reported as failed. The quirk is therefore to pretend to 
