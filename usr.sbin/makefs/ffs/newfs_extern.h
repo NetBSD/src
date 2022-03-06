@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_extern.h,v 1.4 2015/12/21 00:58:08 christos Exp $	*/
+/*	$NetBSD: newfs_extern.h,v 1.5 2022/03/06 08:31:54 hgutch Exp $	*/
 /* From: NetBSD: extern.h,v 1.3 2000/12/01 12:03:27 simonb Exp $ */
 
 /*
@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "namespace.h"
 
 /* prototypes */
 struct fs	*ffs_mkfs(const char *, const fsinfo_t *, time_t);
