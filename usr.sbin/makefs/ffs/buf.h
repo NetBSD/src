@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.13 2018/09/03 16:29:37 riastradh Exp $	*/
+/*	$NetBSD: buf.h,v 1.14 2022/03/06 08:31:54 hgutch Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -49,6 +49,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <err.h>
+#include "namespace.h"
 
 struct componentname {
 	char *cn_nameptr;
