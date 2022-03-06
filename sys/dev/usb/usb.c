@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.198 2021/10/10 20:14:09 jmcneill Exp $	*/
+/*	$NetBSD: usb.c,v 1.199 2022/03/06 09:03:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.198 2021/10/10 20:14:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.199 2022/03/06 09:03:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -833,7 +833,7 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 			return EBUSY;
 		usb_dev_open = 1;
 		mutex_enter(&proc_lock);
-		usb_async_proc = NULL;
+		atomic_store_relaxed(&usb_async_proc, NULL);
 		mutex_exit(&proc_lock);
 		return 0;
 	}
@@ -913,7 +913,7 @@ usbclose(dev_t dev, int flag, int mode,
 
 	if (unit == USB_DEV_MINOR) {
 		mutex_enter(&proc_lock);
-		usb_async_proc = NULL;
+		atomic_store_relaxed(&usb_async_proc, NULL);
 		mutex_exit(&proc_lock);
 		usb_dev_open = 0;
 	}
@@ -937,10 +937,8 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 
 		case FIOASYNC:
 			mutex_enter(&proc_lock);
-			if (*(int *)data)
-				usb_async_proc = l->l_proc;
-			else
-				usb_async_proc = NULL;
+			atomic_store_relaxed(&usb_async_proc,
+			    *(int *)data ? l->l_proc : NULL);
 			mutex_exit(&proc_lock);
 			return 0;
 
@@ -1317,7 +1315,7 @@ usb_add_event(int type, struct usb_event *uep)
 	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
 	cv_signal(&usb_event_cv);
 	selnotify(&usb_selevent, 0, 0);
-	if (usb_async_proc != NULL) {
+	if (atomic_load_relaxed(&usb_async_proc) != NULL) {
 		kpreempt_disable();
 		softint_schedule(usb_async_sih);
 		kpreempt_enable();
@@ -1331,7 +1329,7 @@ usb_async_intr(void *cookie)
 	proc_t *proc;
 
 	mutex_enter(&proc_lock);
-	if ((proc = usb_async_proc) != NULL)
+	if ((proc = atomic_load_relaxed(&usb_async_proc)) != NULL)
 		psignal(proc, SIGIO);
 	mutex_exit(&proc_lock);
 }
