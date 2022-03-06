@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlinfo.3,v 1.6 2020/01/13 14:25:06 kamil Exp $
+.\"	$NetBSD: dlinfo.3,v 1.7 2022/03/06 23:36:01 andvar Exp $
 .\"
 .\" Copyright (c) 2003 Alexey Zelkin <phantom@FreeBSD.org>
 .\" All rights reserved.
@@ -246,7 +246,7 @@ while (map != NULL) {
 .\" info->dls_size = _info.dls_size;
 .\" info->dls_cnt = _info.dls_cnt;
 .\"
-.\" /* obtain sarch path information */
+.\" /* obtain search path information */
 .\" dlinfo(RTLD_SELF, RTLD_DI_SERINFO, (void *)info);
 .\"
 .\" path = &info->dls_serpath[0];
