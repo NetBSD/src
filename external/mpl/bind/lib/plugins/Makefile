@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2022/03/06 17:50:19 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2022/03/07 07:53:08 mrg Exp $
 
 LIBISMODULE:=	yes
+LIB=	filter-aaaa
+
 .include <bsd.init.mk>
 
 SHLIB_MAJOR=0
-LIB=	filter-aaaa
 SRCS=	filter-aaaa.c
 LIBDIR=	/usr/lib/named
 
