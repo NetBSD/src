@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.261 2021/10/25 02:10:56 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.262 2022/03/07 04:06:20 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.261 2021/10/25 02:10:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.262 2022/03/07 04:06:20 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1103,7 +1103,7 @@ sppp_attach(struct ifnet *ifp)
 	if_alloc_sadl(ifp);
 
 	/* Lets not beat about the bush, we know we're down. */
-	ifp->if_link_state = LINK_STATE_DOWN;
+	if_link_state_change(ifp, LINK_STATE_DOWN);
 
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s.wq_cp", ifp->if_xname);
 	sp->wq_cp = sppp_wq_create(sp, xnamebuf,
