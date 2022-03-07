@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1290 2022/02/24 03:35:32 mrg Exp $
+# $NetBSD: mi,v 1.1291 2022/03/07 07:07:55 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1204,6 +1204,7 @@
 ./usr/lib/lua					base-sys-usr		compatfile
 ./usr/lib/lua/5.1				base-obsolete		obsolete
 ./usr/lib/lua/5.3				base-sys-usr		compatfile
+./usr/lib/named					base-sys-usr		compatfile
 ./usr/lib/npf					base-obsolete		obsolete
 ./usr/lib/postfix				base-postfix-usr
 ./usr/lib/runemodule				base-obsolete		obsolete
@@ -1249,6 +1250,7 @@
 ./usr/libdata/debug/usr/games			base-sys-usr
 ./usr/libdata/debug/usr/lib			base-sys-usr		compatdir
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root		compatfile
+./usr/libdata/debug/usr/lib/named		base-sys-usr		compatdir
 ./usr/libdata/debug/usr/lib/npf			base-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
