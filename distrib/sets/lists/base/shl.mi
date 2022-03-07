@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.932 2022/03/06 17:54:52 christos Exp $
+# $NetBSD: shl.mi,v 1.933 2022/03/07 09:45:02 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -966,7 +966,7 @@
 ./usr/lib/lua/5.3/netpgp.so 			base-sys-shlib		compatfile
 ./usr/lib/lua/5.3/sqlite.so                    	base-sys-shlib		compatfile
 ./usr/lib/lua/5.3/syslog.so                    	base-sys-shlib		compatfile
-./usr/lib/named/filter-aaaa.so.0		base-sys-shlib		compatfile
+./usr/lib/named/filter-aaaa.so.0		base-sys-shlib
 ./usr/lib/npf/ext_log.so			base-obsolete		obsolete
 ./usr/lib/npf/ext_log.so.0			base-obsolete		obsolete
 ./usr/lib/npf/ext_log.so.0.0			base-obsolete		obsolete
