@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.88 2021/12/28 22:59:56 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.89 2022/03/08 23:24:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.88 2021/12/28 22:59:56 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.89 2022/03/08 23:24:20 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -756,7 +756,7 @@ runchild(const char *path, char *const *args, const char *crfn, int fdout)
 	case 0:
 		/* child */
 
-		/* setup the standard output if necessary */
+		/* set up the standard output if necessary */
 		if (fdout != -1) {
 			(void)dup2(fdout, STDOUT_FILENO);
 			(void)close(fdout);
