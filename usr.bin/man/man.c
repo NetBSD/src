@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.71 2022/03/08 23:09:36 rillig Exp $	*/
+/*	$NetBSD: man.c,v 1.72 2022/03/08 23:13:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.71 2022/03/08 23:09:36 rillig Exp $");
+__RCSID("$NetBSD: man.c,v 1.72 2022/03/08 23:13:05 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ __RCSID("$NetBSD: man.c,v 1.71 2022/03/08 23:09:36 rillig Exp $");
 enum inserttype {
 	INS_TAIL,
 	INS_HEAD
-} instype;
+};
 
 /*
  * manstate: structure collecting the current global state so we can
