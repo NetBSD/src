@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.166 2022/02/06 20:20:19 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.167 2022/03/08 18:30:43 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.166 2022/02/06 20:20:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.167 2022/03/08 18:30:43 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3797,10 +3797,11 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 {
 	struct vnode *devvp = ump->devvp;
 	struct mmc_op mmc_op;
+	uint32_t phys;
 	int logvol_integrity;
 	int error = 0, error1 = 0, error2 = 0;
 	int tracknr;
-	int nvats, n, nok;
+	int nvats, n, relblk, wrtrack_skew, nok;
 
 	/* already/still closed? */
 	logvol_integrity = udf_rw32(ump->logvol_integrity->integrity_type);
@@ -3821,8 +3822,17 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		DPRINTF(VOLUMES, ("writeout vat_node\n"));
 		udf_writeout_vat(ump);
 
-		/* at least two DVD packets and 3 CD-R packets */
-		nvats = 32;
+		/*
+		 * For bug-compatibility with Windows, the last VAT sector
+		 * must be a multiple of 16/32 from the start of the track.
+		 * To allow for scratches, write out at least a 32 pieces.
+		 */
+		phys = ump->data_track.track_start;
+		wrtrack_skew = phys % 32;
+
+		phys = ump->data_track.next_writable;
+		relblk = phys % 32;
+		nvats = 32 + 32 - (relblk - wrtrack_skew);
 
 #if notyet
 		/*
