@@ -1,4 +1,4 @@
-/*	$NetBSD: manconf.h,v 1.3 2006/04/10 14:39:06 chuck Exp $	*/
+/*	$NetBSD: manconf.h,v 1.4 2022/03/08 23:09:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,7 +33,7 @@
  */
 
 /*
- * manconf.h: common data structures and APIs shared across all programs 
+ * manconf.h: common data structures and APIs shared across all programs
  * that access man.conf (currently: apropos, catman, makewhatis, man, and
  * whatis).
  */
