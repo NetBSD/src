@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.63 2021/12/05 15:22:37 msaitoh Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.64 2022/03/08 20:45:56 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.63 2021/12/05 15:22:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.64 2022/03/08 20:45:56 andvar Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -404,7 +404,7 @@ ahd_flush_qoutfifo(struct ahd_softc *ahd)
 	ahd_run_qoutfifo(ahd);
 
 	/*
-	 * Flush the good status FIFO for compelted packetized commands.
+	 * Flush the good status FIFO for completed packetized commands.
 	 */
 	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
 	saved_scbptr = ahd_get_scbptr(ahd);
@@ -1837,7 +1837,7 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 		 * through any phases that occur after we release
 		 * this last ack until the LQI manager sees a
 		 * packet phase.  This implies we may have to
-		 * ignore a perfectly valid "unexected busfree"
+		 * ignore a perfectly valid "unexpected busfree"
 		 * after our "initiator detected error" message is
 		 * sent.  A busfree is the expected response after
 		 * we tell the target that its L_Q was corrupted.
@@ -6908,7 +6908,7 @@ ahd_resume(struct ahd_softc *ahd)
  * table entry for TCL.  Return the offset into
  * the SCB that contains the entry for TCL.
  * saved_scbid is dereferenced and set to the
- * scbid that should be restored once manipualtion
+ * scbid that should be restored once manipulation
  * of the TCL entry is complete.
  */
 static inline u_int
