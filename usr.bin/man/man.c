@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.69 2022/03/07 22:43:39 gutteridge Exp $	*/
+/*	$NetBSD: man.c,v 1.70 2022/03/08 23:05:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.69 2022/03/07 22:43:39 gutteridge Exp $");
+__RCSID("$NetBSD: man.c,v 1.70 2022/03/08 23:05:32 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,8 @@ static void	 jump(char **, const char *, const char *) __dead;
 static int	 manual(char *, struct manstate *, glob_t *);
 static void	 onsig(int) __dead;
 static void	 usage(void) __dead;
-static void	 addpath(struct manstate *, const char *, size_t, const char *, int);
+static void	 addpath(struct manstate *, const char *, size_t, const char *,
+		     enum inserttype);
 static const char *getclass(const char *);
 static void printmanpath(struct manstate *);
 
@@ -1018,14 +1019,14 @@ getclass(const char *machine)
 
 static void
 addpath(struct manstate *m, const char *dir, size_t len, const char *sub,
-	int ishead)
+	enum inserttype ishead)
 {
 	char buf[2 * MAXPATHLEN + 1];
 	(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,%s%s%s}",
 	     dir, (dir[len - 1] == '/') ? "" : "/", sub, m->machine,
 	     m->machclass ? "/" : "", m->machclass ? m->machclass : "",
 	     m->machclass ? "," : "");
-	if (addentry(m->mymanpath, buf, ishead) < 0)
+	if (addentry(m->mymanpath, buf, (int)ishead) < 0)
 		errx(EXIT_FAILURE, "malloc failed");
 }
 
