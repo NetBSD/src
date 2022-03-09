@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.134 2022/02/28 08:44:04 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.135 2022/03/09 08:43:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.134 2022/02/28 08:44:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.135 2022/03/09 08:43:28 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -897,6 +897,12 @@ retry:
 		return;
 	}
 	KASSERT(lktype == LK_EXCLUSIVE);
+
+	/* If the node gained another reference, retry. */
+	use = atomic_load_relaxed(&vp->v_usecount);
+	if ((use & VUSECOUNT_VGET) != 0 || (use & VUSECOUNT_MASK) != 1) {
+		goto retry;
+	}
 
 	if ((vp->v_iflag & (VI_TEXT|VI_EXECMAP|VI_WRMAP)) != 0 ||
 	    (vp->v_vflag & VV_MAPPED) != 0) {
