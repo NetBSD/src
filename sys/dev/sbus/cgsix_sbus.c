@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.30 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.31 2022/03/09 17:53:39 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.30 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.31 2022/03/09 17:53:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ cgsixattach(device_t parent, device_t self, void *aux)
 	 * we need the address of the framebuffer, no matter if we're console or
 	 * not.
 	 */
-	sc->sc_ramsize = prom_getpropint(node, "fbmapped", 1024 * 1024);
+	sc->sc_ramsize = prom_getpropint(node, "vmsize", 1) * 1024 * 1024;
 	if (sbus_bus_map(sa->sa_bustag,
 			sa->sa_slot,
 			sa->sa_offset + CGSIX_RAM_OFFSET,
