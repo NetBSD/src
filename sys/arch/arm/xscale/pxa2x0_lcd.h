@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.h,v 1.10 2011/07/01 20:32:51 dyoung Exp $ */
+/* $NetBSD: pxa2x0_lcd.h,v 1.11 2022/03/09 23:09:15 andvar Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -111,9 +111,9 @@ struct lcd_panel_geometry {
 	short pixel_clock_div;		/* pixel clock divider */
 	short ac_bias;			/* AC bias pin frequency */
 
-	short hsync_pulse_width;	/* Horizontao sync pulse width */
+	short hsync_pulse_width;	/* Horizontal sync pulse width */
 	short beg_line_wait;		/* beginning of line wait (BLW) */
-	short end_line_wait;		/* end of line pxel wait (ELW) */
+	short end_line_wait;		/* end of line wait (ELW) */
 
 	short vsync_pulse_width;	/* vertical sync pulse width */
 	short beg_frame_wait;		/* beginning of frame wait (BFW) */
