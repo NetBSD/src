@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.401 2021/09/09 23:26:37 riastradh Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.402 2022/03/09 10:04:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.401 2021/09/09 23:26:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.402 2022/03/09 10:04:06 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -631,11 +631,11 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			    candidate_root);
 		} else
 			candidate_root = dksc->sc_dev;
-		DPRINTF("%s: candidate root=%p\n", __func__, candidate_root);
-		DPRINTF("%s: booted_device=%p root_partition=%d "
-			"contains_boot=%d",
-		    __func__, booted_device, rsc->sc_r.root_partition,
-			   rf_containsboot(&rsc->sc_r, booted_device));
+		DPRINTF("%s: candidate root=%p booted_device=%p "
+			"root_partition=%d contains_boot=%d\n",
+		    __func__, candidate_root, booted_device,
+		    rsc->sc_r.root_partition,
+		    rf_containsboot(&rsc->sc_r, booted_device));
 		/* XXX the check for booted_device == NULL can probably be
 		 * dropped, now that rf_containsboot handles that case.
 		 */
