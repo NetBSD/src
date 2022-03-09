@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.158 2022/03/03 06:12:11 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.159 2022/03/09 22:17:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.158 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.159 2022/03/09 22:17:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3855,8 +3855,6 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	uint32_t v;
 
 	XHCIHIST_FUNC();
-
-	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
 
 	if (sc->sc_dying)
 		return -1;

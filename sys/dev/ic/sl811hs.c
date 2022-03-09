@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.110 2022/03/03 06:12:11 riastradh Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.111 2022/03/09 22:17:41 riastradh Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.110 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.111 2022/03/09 22:17:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -3194,8 +3194,6 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	uint16_t len, value, index;
 	uint8_t type;
 	int actlen = 0;
-
-	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
 
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
