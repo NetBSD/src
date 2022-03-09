@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.322 2022/03/09 22:17:41 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.323 2022/03/09 22:18:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.322 2022/03/09 22:17:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.323 2022/03/09 22:18:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1147,10 +1147,6 @@ ohci_resume(device_t dv, const pmf_qual_t *qual)
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling++;
-	mutex_spin_exit(&sc->sc_intr_lock);
-
 	/* Some broken BIOSes do not recover these values */
 	OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma, 0));
 	OWRITE4(sc, OHCI_CONTROL_HEAD_ED,
@@ -1172,10 +1168,6 @@ ohci_resume(device_t dv, const pmf_qual_t *qual)
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 	sc->sc_control = sc->sc_intre = 0;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling--;
-	mutex_spin_exit(&sc->sc_intr_lock);
-
 	return true;
 }
 
@@ -1184,10 +1176,6 @@ ohci_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
-
-	mutex_spin_enter(&sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling++;
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	ctl = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
 	if (sc->sc_control == 0) {
@@ -1202,10 +1190,6 @@ ohci_suspend(device_t dv, const pmf_qual_t *qual)
 	ctl |= OHCI_SET_HCFS(OHCI_HCFS_SUSPEND);
 	OWRITE4(sc, OHCI_CONTROL, ctl);
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
-
-	mutex_spin_enter(&sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling--;
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return true;
 }
