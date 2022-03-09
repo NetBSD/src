@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.321 2022/03/03 06:12:11 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.322 2022/03/09 22:17:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.321 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.322 2022/03/09 22:17:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2430,8 +2430,6 @@ ohci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	uint32_t v;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
-
-	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
 
 	if (sc->sc_dying)
 		return -1;

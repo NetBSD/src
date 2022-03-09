@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.305 2022/03/03 06:12:11 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.306 2022/03/09 22:17:41 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.305 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.306 2022/03/09 22:17:41 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1438,6 +1438,9 @@ ehci_activate(device_t self, enum devact act)
  *
  * Note that this power handler isn't to be registered directly; the
  * bus glue needs to call out to it.
+ *
+ * XXX This should be serialized with ehci_roothub_ctrl's access to the
+ * portsc registers.
  */
 bool
 ehci_suspend(device_t dv, const pmf_qual_t *qual)
@@ -2369,7 +2372,10 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+	/*
+	 * XXX This should be serialized with ehci_suspend/resume's
+	 * access to the portsc registers.
+	 */
 
 	if (sc->sc_dying)
 		return -1;
