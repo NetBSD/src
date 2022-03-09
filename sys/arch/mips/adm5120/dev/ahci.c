@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.30 2022/03/03 06:12:11 riastradh Exp $	*/
+/*	$NetBSD: ahci.c,v 1.31 2022/03/09 22:17:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.30 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.31 2022/03/09 22:17:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,8 +568,6 @@ ahci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	int status;
 
 	DPRINTF(D_TRACE, ("SLRCstart "));
-
-	KASSERT(bus->ub_polling || mutex_owned(bus->ub_lock));
 
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);

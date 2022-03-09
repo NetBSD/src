@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.40 2022/03/03 06:12:11 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.41 2022/03/09 22:17:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.40 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.41 2022/03/09 22:17:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -805,8 +805,6 @@ motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	uint32_t val;
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
-
-	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
 
 	if (sc->sc_dying)
 		return -1;

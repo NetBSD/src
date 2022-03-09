@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.134 2022/03/03 06:12:11 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.135 2022/03/09 22:17:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  *	ubm_abortx		x	must not release/reacquire lock
  *	ubm_getlock 		-	Called at attach time
  *	ubm_newdev		-	Will take lock
- *	ubm_rhctrl              x
+ *	ubm_rhctrl              -
  *
  *	PIPE METHOD		LOCK	NOTES
  *	----------------------- -------	-------------------------

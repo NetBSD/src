@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.13 2022/03/03 06:12:11 riastradh Exp $ */
+/* $NetBSD: usbroothub.c,v 1.14 2022/03/09 22:17:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.13 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.14 2022/03/09 22:17:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>		/* for ostype */
@@ -549,7 +549,19 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 		break;
 	}
 
+	/*
+	 * XXX This needs some mechanism for concurrent
+	 * roothub_ctrl_abort to wait for ubm_rhctrl to finish.  We
+	 * can't use the bus lock because many ubm_rhctrl methods do
+	 * usb_delay_ms and many bus locks are taken in softint
+	 * context, leading to deadlock in the softclock needed to wake
+	 * up usb_delay_ms.
+	 */
+	if (!bus->ub_usepolling)
+		mutex_exit(bus->ub_lock);
 	actlen = bus->ub_methods->ubm_rhctrl(bus, req, buf, buflen);
+	if (!bus->ub_usepolling)
+		mutex_enter(bus->ub_lock);
 	if (actlen < 0)
 		goto fail;
 
