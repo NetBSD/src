@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.159 2022/03/09 22:17:41 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.160 2022/03/09 22:19:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.159 2022/03/09 22:17:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.160 2022/03/09 22:19:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -696,16 +696,16 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	mutex_enter(&sc->sc_lock);
-
 	/*
 	 * Block issuance of new commands, and wait for all pending
 	 * commands to complete.
 	 */
+	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_suspender == NULL);
 	sc->sc_suspender = curlwp;
 	while (sc->sc_command_addr != 0)
 		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 
 	/*
 	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.23.2:
@@ -739,8 +739,10 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 				continue;
 
 			/* Stop endpoint.  */
+			mutex_enter(&sc->sc_lock);
 			err = xhci_stop_endpoint_cmd(sc, xs, dci,
 			    XHCI_TRB_3_SUSP_EP_BIT);
+			mutex_exit(&sc->sc_lock);
 			if (err) {
 				device_printf(self, "failed to stop endpoint"
 				    " slot %zu dci %zu err %d\n",
@@ -886,8 +888,7 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 	/* Success!  */
 	ok = true;
 
-out:	mutex_exit(&sc->sc_lock);
-	return ok;
+out:	return ok;
 }
 
 bool
@@ -901,7 +902,6 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_suspender);
 
 	/*
@@ -1079,14 +1079,16 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	}
 
 	/* Resume command issuance.  */
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_suspender);
 	sc->sc_suspender = NULL;
 	cv_broadcast(&sc->sc_cmdbusy_cv);
+	mutex_exit(&sc->sc_lock);
 
 	/* Success!  */
 	ok = true;
 
-out:	mutex_exit(&sc->sc_lock);
-	return ok;
+out:	return ok;
 }
 
 bool
