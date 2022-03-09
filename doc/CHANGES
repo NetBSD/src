@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2863 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2864 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -462,7 +462,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		Motor Driver [brad 20211207]
 	acpi(4): Updated ACPICA to 20211217. [christos 20211218]
 	udf: Fix corruption when writing to Microsoft Windows 10 formatted
-		recordables [reinoud 20211216]
+		recordables. [reinoud 20211216]
 	mcommphy(4): Add driver for Motorcomm YT8511 GbE PHY.
 		[jmcneill 20220103]
 	eqos(4): Add driver for DesignWare Ethernet Quality-of-Service
@@ -478,5 +478,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	expat: Import 2.4.6 (security fixes). [christos 20220223]
 	OpenSSH: Import 8.9. [christos 20220223]
 	udf: Be bugcompatible with Microsoft Windows 10 so it can read our
-		updated recordable media [reinoud 20220309]
+		updated recordable media. [reinoud 20220309]
+	udf: Fix locking up CD/DVD burner issue that would lockup the FS.
+		[reinoud 20220309]
 
