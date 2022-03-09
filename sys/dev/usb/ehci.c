@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.306 2022/03/09 22:17:41 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.307 2022/03/09 22:18:13 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.306 2022/03/09 22:17:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.307 2022/03/09 22:18:13 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1451,8 +1451,6 @@ ehci_suspend(device_t dv, const pmf_qual_t *qual)
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	mutex_enter(&sc->sc_lock);
-
 	for (i = 1; i <= sc->sc_noport; i++) {
 		cmd = EOREAD4(sc, EHCI_PORTSC(i)) & ~EHCI_PS_CLEAR;
 		if ((cmd & EHCI_PS_PO) == 0 && (cmd & EHCI_PS_PE) == EHCI_PS_PE)
@@ -1487,8 +1485,6 @@ ehci_suspend(device_t dv, const pmf_qual_t *qual)
 	if (hcr != EHCI_STS_HCH)
 		printf("%s: config timeout\n", device_xname(dv));
 
-	mutex_exit(&sc->sc_lock);
-
 	return true;
 }
 
@@ -1500,8 +1496,6 @@ ehci_resume(device_t dv, const pmf_qual_t *qual)
 	uint32_t cmd, hcr;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-
-	mutex_enter(&sc->sc_lock);
 
 	/* restore things in case the bios sucks */
 	EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
@@ -1547,8 +1541,6 @@ ehci_resume(device_t dv, const pmf_qual_t *qual)
 	}
 	if (hcr == EHCI_STS_HCH)
 		printf("%s: config timeout\n", device_xname(dv));
-
-	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
