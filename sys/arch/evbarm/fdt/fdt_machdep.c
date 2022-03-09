@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.87 2021/03/19 10:23:34 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.88 2022/03/09 10:06:36 mrg Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.87 2021/03/19 10:23:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.88 2022/03/09 10:06:36 mrg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -878,6 +878,9 @@ fdt_cpu_rootconf(void)
 	device_t dev;
 	deviter_t di;
 	char *ptr;
+
+	if (booted_device != NULL)
+		return;
 
 	for (dev = deviter_first(&di, 0); dev; dev = deviter_next(&di)) {
 		if (device_class(dev) != DV_DISK)
