@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.246 2021/12/22 16:57:28 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.247 2022/03/10 12:21:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.246 2021/12/22 16:57:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.247 2022/03/10 12:21:25 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1017,16 +1017,19 @@ lwp_startup(struct lwp *prev, struct lwp *new_lwp)
 	KASSERT(curcpu()->ci_mtx_count == -2);
 
 	/*
-	 * Immediately mark the previous LWP as no longer running and unlock
-	 * (to keep lock wait times short as possible).  If a zombie, don't
-	 * touch after clearing LP_RUNNING as it could be reaped by another
-	 * CPU.  Issue a memory barrier to ensure this.
+	 * Immediately mark the previous LWP as no longer running and
+	 * unlock (to keep lock wait times short as possible).  If a
+	 * zombie, don't touch after clearing LP_RUNNING as it could be
+	 * reaped by another CPU.  Use atomic_store_release to ensure
+	 * this -- matches atomic_load_acquire in lwp_free.
 	 */
 	lock = prev->l_mutex;
 	if (__predict_false(prev->l_stat == LSZOMB)) {
-		membar_sync();
+		atomic_store_release(&prev->l_pflag,
+		    prev->l_pflag & ~LP_RUNNING);
+	} else {
+		prev->l_pflag &= ~LP_RUNNING;
 	}
-	prev->l_pflag &= ~LP_RUNNING;
 	mutex_spin_exit(lock);
 
 	/* Correct spin mutex count after mi_switch(). */
@@ -1246,9 +1249,12 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	/*
 	 * In the unlikely event that the LWP is still on the CPU,
 	 * then spin until it has switched away.
+	 *
+	 * atomic_load_acquire matches atomic_store_release in
+	 * lwp_startup and mi_switch.
 	 */
-	membar_consumer();
-	while (__predict_false((l->l_pflag & LP_RUNNING) != 0)) {
+	while (__predict_false((atomic_load_acquire(&l->l_pflag) & LP_RUNNING)
+		!= 0)) {
 		SPINLOCK_BACKOFF_HOOK;
 	}
 
