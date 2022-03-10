@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.263 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.264 2022/03/10 12:21:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.263 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.264 2022/03/10 12:21:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -695,7 +695,7 @@ proc_find_lwp(proc_t *p, pid_t pid)
 	 * memory barrier for dependent loads on alpha.
 	 */
 	s = pserialize_read_enter();
-	pt = &pid_table[pid & pid_tbl_mask];
+	pt = &atomic_load_consume(&pid_table)[pid & pid_tbl_mask];
 	slot = atomic_load_consume(&pt->pt_slot);
 	if (__predict_false(!PT_IS_LWP(slot))) {
 		pserialize_read_exit(s);
@@ -753,7 +753,7 @@ proc_find_lwp_unlocked(proc_t *p, pid_t pid)
 	 * care to read the slot atomically and only once.  This issues a
 	 * memory barrier for dependent loads on alpha.
 	 */
-	pt = &pid_table[pid & pid_tbl_mask];
+	pt = &atomic_load_consume(&pid_table)[pid & pid_tbl_mask];
 	slot = atomic_load_consume(&pt->pt_slot);
 	if (__predict_false(!PT_IS_LWP(slot))) {
 		return NULL;
@@ -1003,7 +1003,7 @@ expand_pid_table(void)
 	/* Save old table size and switch tables */
 	tsz = pt_size * sizeof(struct pid_table);
 	n_pt = pid_table;
-	pid_table = new_pt;
+	atomic_store_release(&pid_table, new_pt);
 	pid_tbl_mask = new_pt_mask;
 
 	/*
