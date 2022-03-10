@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.18 2022/03/10 00:14:25 riastradh Exp $	*/
+/*	$NetBSD: gffb.c,v 1.19 2022/03/10 00:14:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.18 2022/03/10 00:14:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.19 2022/03/10 00:14:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1133,12 +1133,23 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_OK)
 		return;
 
+	/*
+	 * Use gffb_sync to wait for the engine to become idle before
+	 * we start scribbling into VRAM -- we woudn't want to stomp on
+	 * a scroll in progress or a prior glyphcache_add that hasn't
+	 * completed yet on the GPU.
+	 */
 	mutex_enter(&sc->sc_lock);
 	gffb_sync(sc);
 	sc->sc_putchar(cookie, row, col, c, attr);
-	membar_sync();
 	mutex_exit(&sc->sc_lock);
 
+	/*
+	 * If glyphcache_try asked us to, cache the newly written
+	 * character.  This will issue a gffb_bitblt which will wait
+	 * for our CPU writes to the framebuffer in VRAM to complete
+	 * before triggering GPU reads from the framebuffer in VRAM.
+	 */
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
 	}
