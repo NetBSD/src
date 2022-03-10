@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.310 2022/03/10 03:58:52 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.311 2022/03/10 04:00:32 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.310 2022/03/10 03:58:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.311 2022/03/10 04:00:32 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3218,6 +3218,7 @@ ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
 	}
 
 	if (adapter->hw.mac.type != ixgbe_mac_82598EB) {
+#ifdef IXGBE_FDIR
 		if ((adapter->feat_en & IXGBE_FEATURE_FDIR) &&
 		    (eicr & IXGBE_EICR_FLOW_DIR)) {
 			if (!atomic_cas_uint(&adapter->fdir_reinit, 0, 1)) {
@@ -3226,6 +3227,7 @@ ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
 				*eims_disable |= IXGBE_EIMS_FLOW_DIR;
 			}
 		}
+#endif
 
 		if (eicr & IXGBE_EICR_ECC) {
 			device_printf(adapter->dev,
