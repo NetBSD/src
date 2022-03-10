@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.84 2021/12/10 11:33:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.85 2022/03/10 04:14:34 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -645,6 +645,7 @@ struct adapter {
 
 	struct sysctllog	*sysctllog;
 	const struct sysctlnode *sysctltop;
+	struct timeval		lasterr_time;
 };
 
 /* Precision Time Sync (IEEE 1588) defines */

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.311 2022/03/10 04:00:32 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.312 2022/03/10 04:14:34 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.311 2022/03/10 04:00:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.312 2022/03/10 04:14:34 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -423,6 +423,9 @@ static int (*ixgbe_ring_empty)(struct ifnet *, pcq_t *);
 #define IXGBE_TASKLET_WQ_FLAGS	0
 #endif
 #define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
+
+/* Interval between reports of errors */
+static const struct timeval ixgbe_errlog_intrvl = { 60, 0 };	/* 60s */
 
 /************************************************************************
  * ixgbe_initialize_rss_mapping
@@ -3230,10 +3233,10 @@ ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
 #endif
 
 		if (eicr & IXGBE_EICR_ECC) {
-			device_printf(adapter->dev,
-			    "CRITICAL: ECC ERROR!! Please Reboot!!\n");
-			/* Disable interrupt to prevent log spam */
-			*eims_disable |= IXGBE_EICR_ECC;
+			if (ratecheck(&adapter->lasterr_time,
+			    &ixgbe_errlog_intrvl))
+				device_printf(adapter->dev,
+				    "CRITICAL: ECC ERROR!! Please Reboot!!\n");
 		}
 
 		/* Check for over temp condition */
@@ -3242,32 +3245,32 @@ ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
 			case ixgbe_mac_X550EM_a:
 				if (!(eicr & IXGBE_EICR_GPI_SDP0_X550EM_a))
 					break;
-				/* Disable interrupt to prevent log spam */
-				*eims_disable |= IXGBE_EICR_GPI_SDP0_X550EM_a;
-
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
 					break;
-				device_printf(adapter->dev,
-				    "CRITICAL: OVER TEMP!! "
-				    "PHY IS SHUT DOWN!!\n");
-				device_printf(adapter->dev,
-				    "System shutdown required!\n");
+				if (ratecheck(&adapter->lasterr_time,
+				    &ixgbe_errlog_intrvl)) {
+					device_printf(adapter->dev,
+					    "CRITICAL: OVER TEMP!! "
+					    "PHY IS SHUT DOWN!!\n");
+					device_printf(adapter->dev,
+					    "System shutdown required!\n");
+				}
 				break;
 			default:
 				if (!(eicr & IXGBE_EICR_TS))
 					break;
-				/* Disable interrupt to prevent log spam */
-				*eims_disable |= IXGBE_EIMS_TS;
-
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
 					break;
-				device_printf(adapter->dev,
-				    "CRITICAL: OVER TEMP!! "
-				    "PHY IS SHUT DOWN!!\n");
-				device_printf(adapter->dev,
-				    "System shutdown required!\n");
+				if (ratecheck(&adapter->lasterr_time,
+				    &ixgbe_errlog_intrvl)) {
+					device_printf(adapter->dev,
+					    "CRITICAL: OVER TEMP!! "
+					    "PHY IS SHUT DOWN!!\n");
+					device_printf(adapter->dev,
+					    "System shutdown required!\n");
+				}
 				break;
 			}
 		}
@@ -3281,13 +3284,8 @@ ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
 	}
 
 	/* Check for fan failure */
-	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL) {
-		retval = ixgbe_check_fan_failure(adapter, eicr, true);
-		if (retval == IXGBE_ERR_FAN_FAILURE) {
-			/* Disable interrupt to prevent log spam */
-			*eims_disable |= IXGBE_EIMS_GPI_SDP1_BY_MAC(hw);
-		}
-	}
+	if (adapter->feat_en & IXGBE_FEATURE_FAN_FAIL)
+		ixgbe_check_fan_failure(adapter, eicr, true);
 
 	/* External PHY interrupt */
 	if ((hw->phy.type == ixgbe_phy_x550em_ext_t) &&
@@ -6609,13 +6607,20 @@ ixgbe_check_fan_failure(struct adapter *adapter, u32 reg, bool in_interrupt)
 	mask = (in_interrupt) ? IXGBE_EICR_GPI_SDP1_BY_MAC(&adapter->hw) :
 	    IXGBE_ESDP_SDP1;
 
-	if (reg & mask) {
+	if ((reg & mask) == 0)
+		return IXGBE_SUCCESS;
+
+	/*
+	 * Use ratecheck() just in case interrupt occur frequently.
+	 * When EXPX9501AT's fan stopped, interrupt occurred only once,
+	 * an red LED on the board turned on and link never up until
+	 * power off.
+	 */
+	if (ratecheck(&adapter->lasterr_time, &ixgbe_errlog_intrvl))
 		device_printf(adapter->dev,
 		    "\nCRITICAL: FAN FAILURE!! REPLACE IMMEDIATELY!!\n");
-		return IXGBE_ERR_FAN_FAILURE;
-	}
 
-	return IXGBE_SUCCESS;
+	return IXGBE_ERR_FAN_FAILURE;
 } /* ixgbe_check_fan_failure */
 
 /************************************************************************
