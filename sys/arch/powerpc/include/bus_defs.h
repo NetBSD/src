@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.4 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.5 2022/03/10 00:14:16 riastradh Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -220,6 +220,9 @@ struct powerpc_bus_space {
 	const struct powerpc_bus_space_set *pbs_set;
 	const struct powerpc_bus_space_set *pbs_set_stream;
 	const struct powerpc_bus_space_copy *pbs_copy;
+
+	void (*pbs_barrier)(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_size_t, int);
 };
 
 #define _BUS_SPACE_STRIDE(t, o) \

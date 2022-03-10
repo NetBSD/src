@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.38 2020/07/06 10:31:24 rin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.39 2022/03/10 00:14:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_SPACE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.38 2020/07/06 10:31:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.39 2022/03/10 00:14:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -395,6 +395,8 @@ static void memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 static int memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
 	bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 static void memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+static void memio_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+    bus_size_t, int);
 
 static int extent_flags;
 
@@ -416,6 +418,7 @@ bus_space_init(struct powerpc_bus_space *t, const char *extent_name,
 	t->pbs_unmap = memio_unmap;
 	t->pbs_alloc = memio_alloc;
 	t->pbs_free = memio_free;
+	t->pbs_barrier = memio_barrier;
 
 	if (t->pbs_flags & _BUS_SPACE_STRIDE_MASK) {
 		t->pbs_scalar_stream = scalar_strided_ops;
@@ -762,4 +765,11 @@ memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 
 	/* memio_unmap() does all that we need to do. */
 	memio_unmap(t, bsh, size);
+}
+
+void
+memio_barrier(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
+    bus_size_t offset, int flags)
+{
+	__asm volatile("eieio" ::: "memory");
 }
