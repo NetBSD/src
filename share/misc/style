@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.63 2022/03/10 22:45:23 rillig Exp $ */
+/* $NetBSD: style,v 1.64 2022/03/10 23:39:12 rillig Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.63 2022/03/10 22:45:23 rillig Exp $");
+__RCSID("$NetBSD: style,v 1.64 2022/03/10 23:39:12 rillig Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -135,15 +135,15 @@ static void usage(void) __dead;	/* declare functions that don't return dead */
  * If they are an inline expansion of a function, the function is defined
  * all in lowercase, the macro has the same name all in uppercase.
  * If the macro is an expression, wrap the expression in parenthesis.
- * If the macro is more than a single statement, use ``do { ... } while (0)'',
- * so that a trailing semicolon works.  Right-justify the backslashes; it
- * makes it easier to read. The CONSTCOND comment is to satisfy lint(1).
+ * If the macro is more than a single statement, use ``do { ... } while (0)''
+ * or ``do { ... } while (false)'', so that a trailing semicolon works.
+ * Right-justify the backslashes; it makes it easier to read.
  */
 #define	MACRO(v, w, x, y)						\
 do {									\
 	v = (x) + (y);							\
 	w = (y) + 2;							\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define	DOUBLE(x) ((x) * 2)
 
