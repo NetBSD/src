@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.349 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.350 2022/03/10 12:21:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.349 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.350 2022/03/10 12:21:25 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -783,18 +783,23 @@ mi_switch(lwp_t *l)
 
 		/*
 		 * Immediately mark the previous LWP as no longer running
-		 * and unlock (to keep lock wait times short as possible). 
+		 * and unlock (to keep lock wait times short as possible).
 		 * We'll still be at IPL_SCHED afterwards.  If a zombie,
 		 * don't touch after clearing LP_RUNNING as it could be
 		 * reaped by another CPU.  Issue a memory barrier to ensure
 		 * this.
+		 *
+		 * atomic_store_release matches atomic_load_acquire in
+		 * lwp_free.
 		 */
 		KASSERT((prevlwp->l_pflag & LP_RUNNING) != 0);
 		lock = prevlwp->l_mutex;
 		if (__predict_false(prevlwp->l_stat == LSZOMB)) {
-			membar_sync();
+			atomic_store_release(&prevlwp->l_pflag,
+			    prevlwp->l_pflag & ~LP_RUNNING);
+		} else {
+			prevlwp->l_pflag &= ~LP_RUNNING;
 		}
-		prevlwp->l_pflag &= ~LP_RUNNING;
 		mutex_spin_exit(lock);
 
 		/*
