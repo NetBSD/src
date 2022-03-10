@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.308 2022/03/10 03:53:46 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.309 2022/03/10 03:57:33 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.308 2022/03/10 03:53:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.309 2022/03/10 03:57:33 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5194,8 +5194,9 @@ ixgbe_enable_intr(struct adapter *adapter)
 	/* With MSI-X we use auto clear */
 	if (adapter->msix_mem) {
 		/*
-		 * It's not required to set TCP_TIMER because we don't use
-		 * it.
+		 * We use auto clear for RTX_QUEUE only. Don't use other
+		 * interrupts (e.g. link interrupt). BTW, we don't use
+		 *  TCP_TIMER interrupt itself.
 		 */
 		IXGBE_WRITE_REG(hw, IXGBE_EIAC, IXGBE_EIMS_RTX_QUEUE);
 	}
