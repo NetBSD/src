@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.307 2022/02/16 10:29:13 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.308 2022/03/10 03:53:46 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.307 2022/02/16 10:29:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.308 2022/03/10 03:53:46 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5262,6 +5262,7 @@ ixgbe_legacy_irq(void *arg)
 	struct ix_queue *que = arg;
 	struct adapter	*adapter = que->adapter;
 	struct ixgbe_hw	*hw = &adapter->hw;
+	struct ifnet	*ifp = adapter->ifp;
 	struct		tx_ring *txr = adapter->tx_rings;
 	u32		eicr;
 	u32		eims_orig;
@@ -5286,7 +5287,8 @@ ixgbe_legacy_irq(void *arg)
 	IXGBE_EVC_ADD(&adapter->stats.pf.legint, 1);
 
 	/* Queue (0) intr */
-	if ((eicr & IXGBE_EIMC_RTX_QUEUE) != 0) {
+	if (((ifp->if_flags & IFF_RUNNING) != 0) &&
+	    (eicr & IXGBE_EIMC_RTX_QUEUE) != 0) {
 		IXGBE_EVC_ADD(&que->irqs, 1);
 
 		/*
