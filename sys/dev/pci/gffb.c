@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.19 2022/03/10 00:14:33 riastradh Exp $	*/
+/*	$NetBSD: gffb.c,v 1.20 2022/03/10 18:13:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.19 2022/03/10 00:14:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.20 2022/03/10 18:13:31 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1135,7 +1135,7 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	/*
 	 * Use gffb_sync to wait for the engine to become idle before
-	 * we start scribbling into VRAM -- we woudn't want to stomp on
+	 * we start scribbling into VRAM -- we wouldn't want to stomp on
 	 * a scroll in progress or a prior glyphcache_add that hasn't
 	 * completed yet on the GPU.
 	 */
