@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.62 2021/03/28 14:28:56 christos Exp $ */
+/* $NetBSD: style,v 1.63 2022/03/10 22:45:23 rillig Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.62 2021/03/28 14:28:56 christos Exp $");
+__RCSID("$NetBSD: style,v 1.63 2022/03/10 22:45:23 rillig Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -151,7 +151,7 @@ do {									\
 enum enumtype {
 	ONE,
 	TWO
-} et;
+};
 
 /*
  * Sometimes we want a macro to be conditionally defined for debugging
