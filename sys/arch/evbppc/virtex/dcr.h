@@ -1,4 +1,4 @@
-/* 	$NetBSD: dcr.h,v 1.2 2021/10/21 13:21:54 andvar Exp $ */
+/* 	$NetBSD: dcr.h,v 1.3 2022/03/10 00:14:16 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -52,6 +52,8 @@ int 	dcr_subregion(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 int 	dcr_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 void 	dcr_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	dcr_barrier(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_size_t, int);
 
 /* Bus space tag contents, one tag per DCR device. */
 #define DCR_BST_BODY(base, read, write) \
