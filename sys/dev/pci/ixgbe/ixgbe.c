@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.309 2022/03/10 03:57:33 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.310 2022/03/10 03:58:52 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.309 2022/03/10 03:57:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.310 2022/03/10 03:58:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3179,7 +3179,6 @@ static void
 ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	u32		eicr_mask;
 	u32		task_requests = 0;
 	s32		retval;
 
@@ -3190,6 +3189,8 @@ ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
 	}
 
 	if (ixgbe_is_sfp(hw)) {
+		u32 eicr_mask;
+
 		/* Pluggable optics-related interrupt */
 		if (hw->mac.type >= ixgbe_mac_X540)
 			eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
