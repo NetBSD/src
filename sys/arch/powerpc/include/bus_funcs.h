@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.1 2011/07/01 17:10:00 dyoung Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.2 2022/03/10 00:14:16 riastradh Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -485,7 +485,7 @@ void bus_space_mallocok(void);
  *
  */
 #define	bus_space_barrier(t, h, o, l, f)	\
-	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+	((*(t)->pbs_barrier)((t), (h), (o), (l), (f)))
 
 #endif	/* !__HAVE_LOCAL_BUS_SPACE */
 

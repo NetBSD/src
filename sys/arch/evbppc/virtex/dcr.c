@@ -1,4 +1,4 @@
-/* 	$NetBSD: dcr.c,v 1.2 2011/07/01 19:03:50 dyoung Exp $ */
+/* 	$NetBSD: dcr.c,v 1.3 2022/03/10 00:14:16 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcr.c,v 1.2 2011/07/01 19:03:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcr.c,v 1.3 2022/03/10 00:14:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -65,4 +65,11 @@ dcr_subregion(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t offset,
 	*bshp = bsh + offset;
 
 	return (0);
+}
+
+void
+dcr_barrier(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t size, int flags)
+{
+	/* XXX EIEIO? */
 }
