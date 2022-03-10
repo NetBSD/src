@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.17 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: gffb.c,v 1.18 2022/03/10 00:14:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.17 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.18 2022/03/10 00:14:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,10 +684,12 @@ gffb_dma_kickoff(struct gffb_softc *sc)
 
 	if (sc->sc_current != sc->sc_put) {
 		sc->sc_put = sc->sc_current;
-		membar_sync();
+		bus_space_barrier(sc->sc_memt, sc->sc_fbh, 0, 0x1000000,
+		    BUS_SPACE_BARRIER_WRITE);
 		(void)*sc->sc_fbaddr;
 		GFFB_WRITE_4(GFFB_FIFO_PUT, sc->sc_put);
-		membar_sync();
+		bus_space_barrier(sc->sc_memt, sc->sc_regh, GFFB_FIFO_PUT, 4,
+		    BUS_SPACE_BARRIER_WRITE);
 	}
 }
 
