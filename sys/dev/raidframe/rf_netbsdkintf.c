@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.402 2022/03/09 10:04:06 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.403 2022/03/11 01:59:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.402 2022/03/09 10:04:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.403 2022/03/11 01:59:33 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -157,12 +157,6 @@ int     rf_kdebug_level = 0;
 #else				/* DEBUG */
 #define db1_printf(a) { }
 #endif				/* DEBUG */
-
-#ifdef DEBUG_ROOT
-#define DPRINTF(a, ...) printf(a, __VA_ARGS__)
-#else
-#define DPRINTF(a, ...)
-#endif
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 static rf_declare_mutex2(rf_sparet_wait_mutex);
@@ -588,7 +582,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	   then we don't touch booted_device or boothowto... */
 
 	if (rootspec != NULL) {
-		DPRINTF("%s: rootspec %s\n", __func__, rootspec);
+		aprint_debug("%s: rootspec %s\n", __func__, rootspec);
 		return;
 	}
 
@@ -614,7 +608,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			snprintf(cname, sizeof(cname), "%s%c",
 			    device_xname(dksc->sc_dev), 'a');
 			candidate_root = dkwedge_find_by_wname(cname);
-			DPRINTF("%s: candidate wedge root=%s\n", __func__,
+			aprint_debug("%s: candidate wedge root=%s\n", __func__,
 			    cname);
 			if (candidate_root == NULL) {
 				/*
@@ -627,12 +621,12 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 				candidate_root = dkwedge_find_by_parent(
 				    device_xname(dksc->sc_dev), &i);
 			}
-			DPRINTF("%s: candidate wedge root=%p\n", __func__,
+			aprint_debug("%s: candidate wedge root=%p\n", __func__,
 			    candidate_root);
 		} else
 			candidate_root = dksc->sc_dev;
-		DPRINTF("%s: candidate root=%p booted_device=%p "
-			"root_partition=%d contains_boot=%d\n",
+		aprint_debug("%s: candidate root=%p booted_device=%p "
+			     "root_partition=%d contains_boot=%d\n",
 		    __func__, candidate_root, booted_device,
 		    rsc->sc_r.root_partition,
 		    rf_containsboot(&rsc->sc_r, booted_device));
@@ -645,11 +639,11 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			booted_device = candidate_root;
 			booted_method = "raidframe/single";
 			booted_partition = 0;	/* XXX assume 'a' */
-			DPRINTF("%s: set booted_device=%s(%p)\n", __func__,
+			aprint_debug("%s: set booted_device=%s(%p)\n", __func__,
 			    device_xname(booted_device), booted_device);
 		}
 	} else if (num_root > 1) {
-		DPRINTF("%s: many roots=%d, %p\n", __func__, num_root,
+		aprint_debug("%s: many roots=%d, %p\n", __func__, num_root,
 		    booted_device);
 
 		/*
