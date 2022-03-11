@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2022/03/11 13:39:01 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2022/03/11 16:24:22 christos Exp $
 
 LIBISMODULE:=	yes
 LIB=	filter-aaaa
@@ -13,7 +13,7 @@ DIST=${IDIST}/bin/plugins
 
 .PATH: ${DIST}
 
-.if ${MLIBDIR:Uno} != no && ${MKPIC} != "no"
+.if !defined(MLIBDIR) && ${MKPIC} != "no"
 .PRECIOUS: ${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 libinstall:: ${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 .else
