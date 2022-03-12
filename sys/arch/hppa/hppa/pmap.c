@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2020/08/19 07:29:00 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 2022/03/12 15:32:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2020/08/19 07:29:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2022/03/12 15:32:31 riastradh Exp $");
 
 #include "opt_cputype.h"
 
@@ -1249,8 +1249,10 @@ pmap_destroy(pmap_t pmap)
 	off_t off;
 #endif
 
+	membar_exit();
 	if (atomic_dec_uint_nv(&pmap->pm_obj.uo_refs) > 0)
 		return;
+	membar_enter();
 
 #ifdef DIAGNOSTIC
 	uvm_page_array_init(&a, &pmap->pm_obj, 0);

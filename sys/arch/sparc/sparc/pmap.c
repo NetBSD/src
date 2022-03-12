@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.375 2021/08/09 21:08:06 andvar Exp $ */
+/*	$NetBSD: pmap.c,v 1.376 2022/03/12 15:32:31 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375 2021/08/09 21:08:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.376 2022/03/12 15:32:31 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -4465,7 +4465,9 @@ pmap_destroy(struct pmap *pm)
 {
 
 	DPRINTF(PDB_DESTROY, "pmap_destroy[%d](%p)", cpu_number(), pm);
+	membar_exit();
 	if (atomic_dec_uint_nv(&pm->pm_refcount) == 0) {
+		membar_enter();
 		pmap_quiet_check(pm);
 		pool_cache_put(&pmap_cache, pm);
 	}

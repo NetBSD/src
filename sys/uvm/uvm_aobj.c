@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.153 2021/03/13 15:29:55 skrll Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.154 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.153 2021/03/13 15:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.154 2022/03/12 15:32:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -604,10 +604,16 @@ uao_detach(struct uvm_object *uobj)
 	KASSERT(uobj->uo_refs > 0);
 	UVMHIST_LOG(maphist,"  (uobj=%#jx)  ref=%jd",
 	    (uintptr_t)uobj, uobj->uo_refs, 0, 0);
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
 	if (atomic_dec_uint_nv(&uobj->uo_refs) > 0) {
 		UVMHIST_LOG(maphist, "<- done (rc>0)", 0,0,0,0);
 		return;
 	}
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
 
 	/*
 	 * Remove the aobj from the global list.

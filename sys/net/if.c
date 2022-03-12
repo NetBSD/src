@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.501 2021/12/31 14:26:29 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.502 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.501 2021/12/31 14:26:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.502 2022/03/12 15:32:32 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1819,9 +1819,15 @@ ifafree(struct ifaddr *ifa)
 	KASSERT(ifa != NULL);
 	KASSERTMSG(ifa->ifa_refcnt > 0, "ifa_refcnt=%d", ifa->ifa_refcnt);
 
-	if (atomic_dec_uint_nv(&ifa->ifa_refcnt) == 0) {
-		free(ifa, M_IFADDR);
-	}
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
+	if (atomic_dec_uint_nv(&ifa->ifa_refcnt) != 0)
+		return;
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
+	free(ifa, M_IFADDR);
 }
 
 bool

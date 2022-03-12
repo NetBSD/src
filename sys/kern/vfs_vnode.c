@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.135 2022/03/09 08:43:28 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.136 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.135 2022/03/09 08:43:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.136 2022/03/12 15:32:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -352,11 +352,15 @@ vstate_assert_change(vnode_t *vp, enum vnode_state from, enum vnode_state to,
 		vnpanic(vp, "state is %s, gate %d does not match at %s:%d\n",
 		    vstate_name(vip->vi_state), gated, func, line);
 
-	/* Open/close the gate for vcache_tryvget(). */	
-	if (to == VS_LOADED)
+	/* Open/close the gate for vcache_tryvget(). */
+	if (to == VS_LOADED) {
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_exit();
+#endif
 		atomic_or_uint(&vp->v_usecount, VUSECOUNT_GATE);
-	else
+	} else {
 		atomic_and_uint(&vp->v_usecount, ~VUSECOUNT_GATE);
+	}
 
 	vip->vi_state = to;
 	if (from == VS_LOADING)
@@ -395,10 +399,14 @@ vstate_change(vnode_t *vp, enum vnode_state from, enum vnode_state to)
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
 	/* Open/close the gate for vcache_tryvget(). */	
-	if (to == VS_LOADED)
+	if (to == VS_LOADED) {
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_exit();
+#endif
 		atomic_or_uint(&vp->v_usecount, VUSECOUNT_GATE);
-	else
+	} else {
 		atomic_and_uint(&vp->v_usecount, ~VUSECOUNT_GATE);
+	}
 
 	vip->vi_state = to;
 	if (from == VS_LOADING)
@@ -727,6 +735,9 @@ vtryrele(vnode_t *vp)
 {
 	u_int use, next;
 
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
 	for (use = atomic_load_relaxed(&vp->v_usecount);; use = next) {
 		if (__predict_false((use & VUSECOUNT_MASK) == 1)) {
 			return false;
@@ -827,6 +838,9 @@ retry:
 			break;
 		}
 	}
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
 	if (vrefcnt(vp) <= 0 || vp->v_writecount != 0) {
 		vnpanic(vp, "%s: bad ref count", __func__);
 	}
@@ -990,6 +1004,9 @@ out:
 			break;
 		}
 	}
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
 
 	if (VSTATE_GET(vp) == VS_RECLAIMED && vp->v_holdcnt == 0) {
 		/*
@@ -1459,6 +1476,9 @@ vcache_tryvget(vnode_t *vp)
 		next = atomic_cas_uint(&vp->v_usecount,
 		    use, (use + 1) | VUSECOUNT_VGET);
 		if (__predict_true(next == use)) {
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+			membar_enter();
+#endif
 			return 0;
 		}
 	}

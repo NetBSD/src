@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.432 2022/01/02 11:20:03 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.433 2022/03/12 15:32:31 riastradh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.432 2022/01/02 11:20:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.433 2022/03/12 15:32:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5275,6 +5275,7 @@ pmap_destroy(pmap_t pm)
 	/*
 	 * Drop reference count
 	 */
+	membar_exit();
 	if (atomic_dec_uint_nv(&pm->pm_refs) > 0) {
 #ifndef ARM_MMU_EXTENDED
 		if (pmap_is_current(pm)) {
@@ -5285,6 +5286,7 @@ pmap_destroy(pmap_t pm)
 #endif
 		return;
 	}
+	membar_enter();
 
 	/*
 	 * reference count is zero, free pmap resources and then free pmap.

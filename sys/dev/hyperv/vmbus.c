@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.15 2021/12/23 04:06:51 yamaguchi Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.16 2022/03/12 15:32:31 riastradh Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.15 2021/12/23 04:06:51 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.16 2022/03/12 15:32:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1452,8 +1452,10 @@ vmbus_channel_detach(struct vmbus_channel *ch)
 	KASSERTMSG(ch->ch_refs > 0, "channel%u: invalid refcnt %d",
 	    ch->ch_id, ch->ch_refs);
 
+	membar_exit();
 	refs = atomic_dec_uint_nv(&ch->ch_refs);
 	if (refs == 0) {
+		membar_enter();
 		/* Detach the target channel. */
 		vmbus_devq_enqueue(ch->ch_sc, VMBUS_DEV_TYPE_DETACH, ch);
 	}

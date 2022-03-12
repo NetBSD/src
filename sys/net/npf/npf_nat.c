@@ -67,7 +67,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.50 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.51 2022/03/12 15:32:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -279,9 +279,15 @@ npf_natpolicy_release(npf_natpolicy_t *np)
 {
 	KASSERT(atomic_load_relaxed(&np->n_refcnt) > 0);
 
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
 	if (atomic_dec_uint_nv(&np->n_refcnt) != 0) {
 		return;
 	}
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
 	KASSERT(LIST_EMPTY(&np->n_nat_list));
 	mutex_destroy(&np->n_lock);
 	kmem_free(np, sizeof(npf_natpolicy_t));

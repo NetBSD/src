@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.298 2022/02/05 17:32:59 hannken Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.299 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.298 2022/02/05 17:32:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.299 2022/03/12 15:32:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,8 +365,11 @@ scsibusdetach(device_t self, int flags)
 	cv_destroy(&chan->chan_cv_comp);
 	cv_destroy(&chan->chan_cv_thr);
 
-	if (atomic_dec_uint_nv(&chan_running(chan)) == 0)
+	membar_exit();
+	if (atomic_dec_uint_nv(&chan_running(chan)) == 0) {
+		membar_enter();
 		mutex_destroy(chan_mtx(chan));
+	}
 
 	return 0;
 }

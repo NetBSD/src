@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.10 2022/02/12 03:24:36 riastradh Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.11 2022/03/12 15:32:32 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -1552,9 +1552,12 @@ mvxpsec_session_unref(struct mvxpsec_session *mv_s)
 {
 	uint32_t refs;
 
+	membar_exit();
 	refs = atomic_dec_32_nv(&mv_s->refs);
-	if (refs == 0)
+	if (refs == 0) {
+		membar_enter();
 		pool_cache_put(mv_s->sc->sc_session_pool, mv_s);
+	}
 }
 
 /*
