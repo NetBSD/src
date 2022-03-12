@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.26 2022/03/12 15:30:42 riastradh Exp $ */
+/*	$NetBSD: vhci.c,v 1.27 2022/03/12 15:30:51 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.26 2022/03/12 15:30:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.27 2022/03/12 15:30:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -780,7 +780,7 @@ vhci_root_intr_done(struct usbd_xfer *xfer)
 
 /* -------------------------------------------------------------------------- */
 
-static int
+static void
 vhci_usb_attach(vhci_fd_t *vfd)
 {
 	vhci_softc_t *sc = vfd->softc;
@@ -819,7 +819,6 @@ vhci_usb_attach(vhci_fd_t *vfd)
 
 done:
 	mutex_exit(&sc->sc_lock);
-	return 0;
 }
 
 static void
@@ -870,7 +869,7 @@ vhci_port_flush(vhci_softc_t *sc, vhci_port_t *port)
 	}
 }
 
-static int
+static void
 vhci_usb_detach(vhci_fd_t *vfd)
 {
 	vhci_softc_t *sc = vfd->softc;
@@ -909,7 +908,6 @@ vhci_usb_detach(vhci_fd_t *vfd)
 	mutex_exit(&port->lock);
 done:
 	mutex_exit(&sc->sc_lock);
-	return 0;
 }
 
 static int
@@ -1019,11 +1017,9 @@ static int
 vhci_fd_close(file_t *fp)
 {
 	vhci_fd_t *vfd = fp->f_data;
-	int ret __diagused;
 
 	KASSERT(vfd != NULL);
-	ret = vhci_usb_detach(vfd);
-	KASSERT(ret == 0);
+	vhci_usb_detach(vfd);
 
 	kmem_free(vfd, sizeof(*vfd));
 	fp->f_data = NULL;
@@ -1198,9 +1194,11 @@ vhci_fd_ioctl(file_t *fp, u_long cmd, void *data)
 	case VHCI_IOC_SET_ADDR:
 		return vhci_set_addr(vfd, data);
 	case VHCI_IOC_USB_ATTACH:
-		return vhci_usb_attach(vfd);
+		vhci_usb_attach(vfd);
+		return 0;
 	case VHCI_IOC_USB_DETACH:
-		return vhci_usb_detach(vfd);
+		vhci_usb_detach(vfd);
+		return 0;
 	default:
 		return EINVAL;
 	}
