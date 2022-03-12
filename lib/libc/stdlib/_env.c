@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.11 2021/04/20 21:42:32 christos Exp $ */
+/*	$NetBSD: _env.c,v 1.12 2022/03/12 08:44:38 nia Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.11 2021/04/20 21:42:32 christos Exp $");
+__RCSID("$NetBSD: _env.c,v 1.12 2022/03/12 08:44:38 nia Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -296,18 +296,23 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 
 	/* Allocate a new environment array. */
 	if (environ == allocated_environ) {
-		new_environ = realloc(environ,
-		    new_size * sizeof(*new_environ));
-		if (new_environ == NULL)
+		new_environ = environ;
+		if (reallocarr(&new_environ,
+		    new_size, sizeof(*new_environ)) != 0) {
+			errno = ENOMEM;
 			return -1;
+		}
 	} else {
 		free(allocated_environ);
 		allocated_environ = NULL;
 		allocated_environ_size = 0;
 
-		new_environ = malloc(new_size * sizeof(*new_environ));
-		if (new_environ == NULL)
+		new_environ = NULL;
+		if (reallocarr(&new_environ,
+		    new_size, sizeof(*new_environ)) != 0) {
+			errno = ENOMEM;
 			return -1;
+		}
 		(void)memcpy(new_environ, environ,
 		    num_entries * sizeof(*new_environ));
 	}
