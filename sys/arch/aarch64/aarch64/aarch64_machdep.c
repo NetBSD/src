@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.64 2022/01/31 09:16:09 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.65 2022/03/12 09:16:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.64 2022/01/31 09:16:09 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.65 2022/03/12 09:16:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -674,8 +674,9 @@ cpu_startup(void)
 	consinit();
 
 #ifdef FDT
-	if (arm_fdt_platform()->ap_startup != NULL)
-		arm_fdt_platform()->ap_startup();
+	const struct arm_platform * const plat = arm_fdt_platform();
+	if (plat->ap_startup != NULL)
+		plat->ap_startup();
 #endif
 
 	/*
