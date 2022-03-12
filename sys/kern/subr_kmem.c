@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.82 2021/02/06 13:54:48 joerg Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.83 2022/03/12 16:54:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.82 2021/02/06 13:54:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.83 2022/03/12 16:54:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -258,9 +258,7 @@ kmem_intr_free(void *p, size_t requested_size)
 	pool_cache_t pc;
 
 	KASSERT(p != NULL);
-	if (__predict_false(requested_size == 0)) {
-		panic("%s: zero size with pointer %p", __func__, p);
-	}
+	KASSERT(requested_size > 0);
 
 	kasan_add_redzone(&requested_size);
 	size = kmem_roundup_size(requested_size);
