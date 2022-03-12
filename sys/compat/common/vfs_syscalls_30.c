@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.43 2021/09/07 11:43:02 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.44 2022/03/12 15:54:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.43 2021/09/07 11:43:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.44 2022/03/12 15:54:23 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -219,6 +219,7 @@ compat_30_sys_getdents(struct lwp *l,
 	int buflen, error, eofflag;
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
+	bool any = false;
 
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
@@ -285,7 +286,7 @@ again:
 		idb.d_reclen = _DIRENT_SIZE(&idb);
 		if (reclen > len || resid < idb.d_reclen) {
 			/* entry too big for buffer, so just stop */
-			outp++;
+			any = true;
 			break;
 		}
 		/*
@@ -305,10 +306,11 @@ again:
 		/* advance output past NetBSD-3.0-shaped entry */
 		outp += idb.d_reclen;
 		resid -= idb.d_reclen;
+		any = true;
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf)) {
+	if (any) {
 		if (cookiebuf)
 			free(cookiebuf, M_TEMP);
 		cookiebuf = NULL;
