@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.16 2020/01/27 17:09:17 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.17 2022/03/12 17:15:04 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.16 2020/01/27 17:09:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.17 2022/03/12 17:15:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,8 +167,7 @@ mbail:
 		break;
 	case OCIOCNCRYPTM:
 		omop = (struct ocrypt_mop *)data;
-		if ((omop->count <= 0) ||
-		    (SIZE_MAX/sizeof(struct ocrypt_n_op) <= omop->count)) {
+		if (omop->count <= 0 || omop->count > 1) {
 			error = EINVAL;
 			break;
 		}
