@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.44 2022/03/12 15:54:23 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.45 2022/03/12 20:46:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.44 2022/03/12 15:54:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.45 2022/03/12 20:46:03 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -310,7 +310,7 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (any) {
+	if (!any) {
 		if (cookiebuf)
 			free(cookiebuf, M_TEMP);
 		cookiebuf = NULL;
