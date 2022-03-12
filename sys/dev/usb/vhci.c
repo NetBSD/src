@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.25 2022/03/03 06:12:11 riastradh Exp $ */
+/*	$NetBSD: vhci.c,v 1.26 2022/03/12 15:30:42 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.25 2022/03/03 06:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.26 2022/03/12 15:30:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -787,7 +787,6 @@ vhci_usb_attach(vhci_fd_t *vfd)
 	vhci_port_t *port;
 	struct usbd_xfer *xfer;
 	u_char *p;
-	int ret = 0;
 
 	port = &sc->sc_port[vfd->port];
 
@@ -802,7 +801,6 @@ vhci_usb_attach(vhci_fd_t *vfd)
 	xfer = sc->sc_intrxfer;
 
 	if (xfer == NULL) {
-		ret = ENOBUFS;
 		goto done;
 	}
 	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
@@ -821,7 +819,7 @@ vhci_usb_attach(vhci_fd_t *vfd)
 
 done:
 	mutex_exit(&sc->sc_lock);
-	return ret;
+	return 0;
 }
 
 static void
@@ -886,8 +884,7 @@ vhci_usb_detach(vhci_fd_t *vfd)
 
 	xfer = sc->sc_intrxfer;
 	if (xfer == NULL) {
-		mutex_exit(&sc->sc_lock);
-		return ENOBUFS;
+		goto done;
 	}
 	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
@@ -910,6 +907,7 @@ vhci_usb_detach(vhci_fd_t *vfd)
 	vhci_port_flush(sc, port);
 
 	mutex_exit(&port->lock);
+done:
 	mutex_exit(&sc->sc_lock);
 	return 0;
 }
