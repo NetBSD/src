@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.21 2021/10/29 11:03:46 nia Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.22 2022/03/12 17:31:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radixsort.c,v 1.21 2021/10/29 11:03:46 nia Exp $");
+__RCSID("$NetBSD: radixsort.c,v 1.22 2022/03/12 17:31:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,10 +130,9 @@ sradixsort(const u_char **a, int n, const u_char *tab, u_int endch)
 		simplesort(a, n, 0, tr, endch);
 	else {
 		ta = NULL;
-		if (reallocarr(&ta, n, sizeof(a)) != 0) {
-			errno = ENOMEM;
-			return (-1);
-		}
+		errno = reallocarr(&ta, n, sizeof(*ta));
+		if (errno)
+			return -1;
 		r_sort_b(a, ta, n, 0, tr, endch);
 		free(ta);
 	}

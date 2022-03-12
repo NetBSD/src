@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent_r.c,v 1.7 2022/03/12 08:41:38 nia Exp $	*/
+/*	$NetBSD: getprotoent_r.c,v 1.8 2022/03/12 17:31:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getprotoent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getprotoent_r.c,v 1.7 2022/03/12 08:41:38 nia Exp $");
+__RCSID("$NetBSD: getprotoent_r.c,v 1.8 2022/03/12 17:31:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,6 +87,7 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 {
 	char *p, *cp, **q;
 	size_t i = 0;
+	int serrno;
 
 	if (pd->fp == NULL && (pd->fp = fopen(_PATH_PROTOCOLS, "re")) == NULL)
 		return NULL;
@@ -112,12 +113,10 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 		if (pd->aliases == NULL) {
 			pd->aliases = NULL;
 			pd->maxaliases = 10;
-			if (reallocarr(&pd->aliases,
-			    pd->maxaliases, sizeof(char *)) != 0) {
-				endprotoent_r(pd);
-				errno = ENOMEM;
-				return NULL;
-			}
+			errno = reallocarr(&pd->aliases,
+			    pd->maxaliases, sizeof(*pd->aliases));
+			if (errno)
+				goto bad;
 		}
 		q = pr->p_aliases = pd->aliases;
 		if (p != NULL) {
@@ -129,12 +128,10 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 				}
 				if (i == pd->maxaliases - 2) {
 					pd->maxaliases *= 2;
-					if (reallocarr(&q,
-					    pd->maxaliases, sizeof(char *)) != 0) {
-						endprotoent_r(pd);
-						errno = ENOMEM;
-						return NULL;
-					}
+					errno = reallocarr(&q,
+					    pd->maxaliases, sizeof(*q));
+					if (errno)
+						goto bad;
 					pr->p_aliases = pd->aliases = q;
 				}
 				q[i++] = cp;
@@ -147,4 +144,9 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 		q[i] = NULL;
 		return pr;
 	}
+bad:
+	serrno = errno;
+	endprotoent_r(pd);
+	errno = serrno;
+	return NULL;
 }

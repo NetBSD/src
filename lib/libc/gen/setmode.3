@@ -1,4 +1,4 @@
-.\"	$NetBSD: setmode.3,v 1.22 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: setmode.3,v 1.23 2022/03/12 17:31:39 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)setmode.3	8.2 (Berkeley) 4/28/95
 .\"
-.Dd January 4, 2009
+.Dd March 12, 2022
 .Dt SETMODE 3
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ function
 may fail and set
 .Va errno
 for any of the errors specified for the library routines
-.Xr malloc 3
+.Xr reallocarr 3
 or
 .Xr strtol 3 .
 In addition,

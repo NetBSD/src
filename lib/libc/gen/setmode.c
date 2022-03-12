@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.36 2022/03/12 08:32:02 nia Exp $	*/
+/*	$NetBSD: setmode.c,v 1.37 2022/03/12 17:31:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.36 2022/03/12 08:32:02 nia Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.37 2022/03/12 17:31:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -164,10 +164,9 @@ common:			if (set->cmd2 & CMD2_CLR) {
 		BITCMD *newset;						\
 		setlen += SET_LEN_INCR;					\
 		newset = saveset;					\
-		if (reallocarr(&newset, setlen, sizeof(BITCMD)) != 0) {	\
-			errno = ENOMEM;					\
+		errno = reallocarr(&newset, setlen, sizeof(*newset));	\
+		if (errno)						\
 			goto out;					\
-		}							\
 		set = newset + (set - saveset);				\
 		saveset = newset;					\
 		endset = newset + (setlen - 2);				\
@@ -208,10 +207,9 @@ setmode(const char *p)
 
 	setlen = SET_LEN + 2;
 	set = NULL;
-	if (reallocarr(&set, setlen, sizeof(BITCMD)) != 0) {
-		errno = ENOMEM;
-		return (NULL);
-	}
+	errno = reallocarr(&set, setlen, sizeof(*set));
+	if (errno)
+		return NULL;
 	saveset = set;
 	endset = set + (setlen - 2);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.29 2021/10/29 10:40:00 nia Exp $	*/
+/*	$NetBSD: scandir.c,v 1.30 2022/03/12 17:31:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.29 2021/10/29 10:40:00 nia Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.30 2022/03/12 17:31:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,6 +94,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 	struct dirent *d, *p, **names;
 	size_t nitems, arraysz;
 	DIR *dirp;
+	int serrno;
 
 	_DIAGASSERT(dirname != NULL);
 	_DIAGASSERT(namelist != NULL);
@@ -105,7 +106,8 @@ scandir(const char *dirname, struct dirent ***namelist,
 		goto bad;
 
 	names = NULL;
-	if (reallocarr(&names, arraysz, sizeof(*names)) != 0)
+	errno = reallocarr(&names, arraysz, sizeof(*names));
+	if (errno)
 		goto bad;
 
 	nitems = 0;
@@ -120,7 +122,8 @@ scandir(const char *dirname, struct dirent ***namelist,
 		if (nitems >= arraysz) {
 			if ((arraysz = dirsize(dirp->dd_fd, arraysz)) == 0)
 				goto bad2;
-			if (reallocarr(&names, arraysz, sizeof(*names)) != 0)
+			errno = reallocarr(&names, arraysz, sizeof(*names));
+			if (errno)
 				goto bad2;
 		}
 
@@ -146,10 +149,14 @@ scandir(const char *dirname, struct dirent ***namelist,
 	return (int)nitems;
 
 bad2:
+	serrno = errno;
 	while (nitems-- > 0)
 		free(names[nitems]);
 	free(names);
+	errno = serrno;
 bad:
+	serrno = errno;
 	(void)closedir(dirp);
+	errno = serrno;
 	return -1;
 }
