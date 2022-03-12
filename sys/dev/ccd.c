@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.186 2022/02/11 23:20:09 riastradh Exp $	*/
+/*	$NetBSD: ccd.c,v 1.187 2022/03/12 17:27:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.186 2022/02/11 23:20:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.187 2022/03/12 17:27:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1313,8 +1313,8 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = pathbuf_copyin(cpp[i], &pb);
 			if (error == 0) {
 				error = vn_bdev_openpath(pb, &vpp[i], l);
+				pathbuf_destroy(pb);
 			}
-			pathbuf_destroy(pb);
 			if (error != 0) {
 				for (j = 0; j < lookedup; ++j)
 					(void)vn_close(vpp[j], FREAD|FWRITE,
