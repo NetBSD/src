@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.244 2022/03/12 16:19:08 riastradh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.245 2022/03/12 17:23:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.244 2022/03/12 16:19:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.245 2022/03/12 17:23:32 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2136,9 +2136,8 @@ static void
 _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
-	bp = kmem_alloc(sizeof(*bp), KM_NOSLEEP);
-	if (bp == NULL)
-		panic("%s: out of memory", __func__);
+
+	bp = kmem_alloc(sizeof(*bp), KM_SLEEP);
 
 	mutex_enter(&bpf_mtx);
 	bp->bif_driverp = driverp;
