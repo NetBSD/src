@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.36 2017/07/11 19:36:38 perseant Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.37 2022/03/12 08:36:52 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.36 2017/07/11 19:36:38 perseant Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.37 2022/03/12 08:36:52 nia Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -459,9 +459,11 @@ __mbsconv(char *mbsarg, int prec, locale_t loc)
 	 * converting at most `size' bytes of the input multibyte string to
 	 * wide characters for printing.
 	 */
-	convbuf = malloc((insize + 1) * sizeof(*convbuf));
-	if (convbuf == NULL)
+	convbuf = NULL;
+	if (reallocarr(&convbuf, insize + 1, sizeof(*convbuf)) != 0) {
+		errno = ENOMEM;
 		return NULL;
+	}
 	wcp = convbuf;
 	p = mbsarg;
 	mbs = initial;
@@ -1976,12 +1978,16 @@ __grow_type_table (size_t nextarg, enum typeid **typetable, size_t *tablesize)
 	if (newsize < nextarg + 1)
 		newsize = nextarg + 1;
 	if (oldsize == STATIC_ARG_TBL_SIZE) {
-		if ((newtable = malloc(newsize * sizeof(*newtable))) == NULL)
+		newtable = NULL;
+		if (reallocarr(&newtable, newsize, sizeof(*newtable)) != 0) {
+			errno = ENOMEM;
 			return -1;
+		}
 		memcpy(newtable, oldtable, oldsize * sizeof(*newtable));
 	} else {
-		newtable = realloc(oldtable, newsize * sizeof(*newtable));
-		if (newtable == NULL) {
+		newtable = oldtable;
+		if (reallocarr(&newtable, newsize, sizeof(*newtable)) != 0) {
+			errno = ENOMEM;
 			free(oldtable);
 			return -1;
 		}
