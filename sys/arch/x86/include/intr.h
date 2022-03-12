@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.62 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.63 2022/03/12 15:50:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -145,6 +145,7 @@ struct intrhand {
 	struct	intrhand *ih_evt_next;
 #endif
 	struct cpu_info *ih_cpu;
+	char	ih_xname[INTRDEVNAMEBUF];
 };
 
 #define IMASK(ci,level) (ci)->ci_imask[(level)]
