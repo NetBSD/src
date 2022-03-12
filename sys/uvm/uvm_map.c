@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.391 2021/11/25 09:40:45 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.392 2022/03/12 15:32:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.391 2021/11/25 09:40:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.392 2022/03/12 15:32:33 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4234,8 +4234,11 @@ uvmspace_free(struct vmspace *vm)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist,"(vm=%#jx) ref=%jd", (uintptr_t)vm,
 	    vm->vm_refcnt, 0, 0);
+
+	membar_exit();
 	if (atomic_dec_uint_nv(&vm->vm_refcnt) > 0)
 		return;
+	membar_enter();
 
 	/*
 	 * at this point, there should be no other references to the map.

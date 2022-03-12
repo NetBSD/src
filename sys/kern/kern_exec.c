@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.515 2022/02/05 23:10:20 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.516 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.515 2022/02/05 23:10:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.516 2022/03/12 15:32:32 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2136,8 +2136,11 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 static void
 spawn_exec_data_release(struct spawn_exec_data *data)
 {
+
+	membar_exit();
 	if (atomic_dec_32_nv(&data->sed_refcnt) != 0)
 		return;
+	membar_enter();
 
 	cv_destroy(&data->sed_cv_child_ready);
 	mutex_destroy(&data->sed_mtx_child);

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.93 2021/08/07 16:19:16 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.94 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.93 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.94 2022/03/12 15:32:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,8 +219,11 @@ atapibusdetach(device_t self, int flags)
 	cv_destroy(&chan->chan_cv_comp);
 	cv_destroy(&chan->chan_cv_thr);
 
-	if (atomic_dec_uint_nv(&chan_running(chan)) == 0)
+	membar_exit();
+	if (atomic_dec_uint_nv(&chan_running(chan)) == 0) {
+		membar_enter();
 		mutex_destroy(chan_mtx(chan));
+	}
 
 	return 0;
 }

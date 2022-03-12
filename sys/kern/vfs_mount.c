@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.87 2022/02/04 15:33:57 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.88 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.87 2022/02/04 15:33:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.88 2022/03/12 15:32:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -283,9 +283,15 @@ void
 vfs_rele(struct mount *mp)
 {
 
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
 	if (__predict_true((int)atomic_dec_uint_nv(&mp->mnt_refcnt) > 0)) {
 		return;
 	}
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
 
 	/*
 	 * Nothing else has visibility of the mount: we can now
