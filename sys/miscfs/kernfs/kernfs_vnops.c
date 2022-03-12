@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.172 2021/07/19 01:33:53 dholland Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.173 2022/03/12 17:36:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.172 2021/07/19 01:33:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.173 2022/03/12 17:36:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_reclaim_desc, kernfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
-	{ &vop_bmap_desc, genfs_badop },		/* bmap */
+	{ &vop_bmap_desc, genfs_eopnotsupp },		/* bmap */
 	{ &vop_strategy_desc, genfs_eopnotsupp },	/* strategy */
 	{ &vop_print_desc, kernfs_print },		/* print */
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
