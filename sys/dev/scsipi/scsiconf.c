@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.299 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.300 2022/03/12 16:57:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.299 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.300 2022/03/12 16:57:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ scsi_report_luns(struct scsibus_softc *sc, int target,
 	uint16_t tmp;
 
 	int error;
-	size_t i, rlrlen;
+	size_t i, rlrlen, rlrlenmin;
 
 	memset(&replun, 0, sizeof(replun));
 
@@ -421,7 +421,7 @@ scsi_report_luns(struct scsibus_softc *sc, int target,
 		goto end2;
 	}
 
-	rlrlen = sizeof(*rlr) + sizeof(*lunp) * 1;
+	rlrlen = rlrlenmin = sizeof(*rlr) + sizeof(*lunp) * 1;
 
 again:
 	rlr = kmem_zalloc(rlrlen, KM_SLEEP);
@@ -443,6 +443,10 @@ again:
 		    16383 * sizeof(*lunp));
 		kmem_free(rlr, old_rlrlen);
 		rlr = NULL;
+		if (rlrlen < rlrlenmin) {
+			error = EIO;
+			goto end;
+		}
 		goto again;
 	}
 
