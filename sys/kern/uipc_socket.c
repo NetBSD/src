@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.300 2021/10/23 01:28:33 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.301 2022/03/12 16:06:15 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.300 2021/10/23 01:28:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.301 2022/03/12 16:06:15 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1367,7 +1367,8 @@ dontblock:
 			if (flags & MSG_PEEK) {
 				if (controlp != NULL) {
 					*controlp = m_copym(m, 0, m->m_len, M_DONTWAIT);
-					controlp = &(*controlp)->m_next;
+					controlp = (*controlp == NULL ? NULL :
+					    &(*controlp)->m_next);
 				}
 				m = m->m_next;
 			} else {
