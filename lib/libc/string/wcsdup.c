@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsdup.c,v 1.5 2021/10/29 11:03:46 nia Exp $	*/
+/*	$NetBSD: wcsdup.c,v 1.6 2022/03/12 17:31:40 christos Exp $	*/
 
 /*
  * Copyright (C) 2006 Aleksey Cheusov
@@ -14,7 +14,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-__RCSID("$NetBSD: wcsdup.c,v 1.5 2021/10/29 11:03:46 nia Exp $"); 
+__RCSID("$NetBSD: wcsdup.c,v 1.6 2022/03/12 17:31:40 christos Exp $"); 
 #endif /* LIBC_SCCS and not lint */ 
 
 #include "namespace.h"
@@ -36,10 +36,9 @@ wcsdup(const wchar_t *str)
 	len = wcslen(str) + 1;
 
 	copy = NULL;
-	if (reallocarr(&copy, len, sizeof(wchar_t)) != 0) {
-		errno = ENOMEM;
+	errno = reallocarr(&copy, len, sizeof(*copy));
+	if (errno)
 		return NULL;
-	}
 
 	return wmemcpy(copy, str, len);
 }
