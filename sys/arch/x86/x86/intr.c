@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.159 2021/12/23 02:45:43 yamaguchi Exp $	*/
+/*	$NetBSD: intr.c,v 1.160 2022/03/12 15:50:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.159 2021/12/23 02:45:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.160 2022/03/12 15:50:45 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -653,11 +653,16 @@ static int
 intr_biglock_wrapper(void *vp)
 {
 	struct intrhand *ih = vp;
+	int locks;
 	int ret;
 
 	KERNEL_LOCK(1, NULL);
 
+	locks = curcpu()->ci_biglock_count;
 	ret = (*ih->ih_realfun)(ih->ih_realarg);
+	KASSERTMSG(locks == curcpu()->ci_biglock_count,
+	    "%s @ %p slipped locks %d -> %d",
+	    ih->ih_xname, ih->ih_realfun, locks, curcpu()->ci_biglock_count);
 
 	KERNEL_UNLOCK_ONE(NULL);
 
@@ -904,6 +909,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	ih->ih_pin = pin;
 	ih->ih_cpu = ci;
 	ih->ih_slot = slot;
+	strlcpy(ih->ih_xname, xname, sizeof(ih->ih_xname));
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
 		ih->ih_fun = intr_biglock_wrapper;
