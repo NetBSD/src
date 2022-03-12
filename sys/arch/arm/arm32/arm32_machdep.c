@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.142 2021/11/13 00:13:17 jmcneill Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.143 2022/03/12 09:16:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.142 2021/11/13 00:13:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.143 2022/03/12 09:16:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -301,8 +301,9 @@ cpu_startup(void)
 	pmap_postinit();
 
 #ifdef FDT
-	if (arm_fdt_platform()->ap_startup != NULL)
-		arm_fdt_platform()->ap_startup();
+	const struct arm_platform * const plat = arm_fdt_platform();
+	if (plat->ap_startup != NULL)
+		plat->ap_startup();
 #endif
 
 	/*
