@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.50 2021/09/26 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: ustir.c,v 1.51 2022/03/12 21:15:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.50 2021/09/26 01:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.51 2022/03/12 21:15:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1144,7 +1144,7 @@ Static int ustir_ioctl(void *h, u_long cmd, void *addr, int flag, struct lwp *l)
 	int error;
 	unsigned int regnum;
 	usbd_status err;
-	uint8_t regdata;
+	uint8_t regdata = 0;
 
 	if (sc->sc_dying)
 		return EIO;
