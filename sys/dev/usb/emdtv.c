@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.15 2020/03/14 02:35:33 christos Exp $ */
+/* $NetBSD: emdtv.c,v 1.16 2022/03/12 18:31:39 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.15 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.16 2022/03/12 18:31:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,9 +326,11 @@ emdtv_read_multi_1(struct emdtv_softc *sc, uint8_t req, uint16_t index,
 	status = usbd_do_request(sc->sc_udev, &request, datap);
 	KERNEL_UNLOCK_ONE(curlwp);
 
-	if (status != USBD_NORMAL_COMPLETION)
+	if (status != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev, "couldn't read %x/%x: %s\n",
 		    req, index, usbd_errstr(status));
+		memset(datap, 0, count);
+	}
 
 	if (emdtv_debug_regs) {
 		int i;
