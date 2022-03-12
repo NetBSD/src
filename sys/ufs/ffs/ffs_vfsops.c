@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.373 2021/09/18 03:05:20 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.374 2022/03/12 15:36:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.373 2021/09/18 03:05:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.374 2022/03/12 15:36:53 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -190,7 +190,7 @@ static const struct ufs_ops ffs_ufsops = {
 };
 
 static int
-ffs_checkrange(struct mount *mp, uint32_t ino)
+ffs_checkrange(struct mount *mp, ino_t ino)
 {
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
 
