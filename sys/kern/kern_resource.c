@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.187 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.188 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.187 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.188 2022/03/12 15:32:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,9 +793,11 @@ lim_free(struct plimit *lim)
 	struct plimit *sv_lim;
 
 	do {
+		membar_exit();
 		if (atomic_dec_uint_nv(&lim->pl_refcnt) > 0) {
 			return;
 		}
+		membar_enter();
 		if (lim->pl_corename != defcorename) {
 			kmem_free(lim->pl_corename, lim->pl_cnlen);
 		}

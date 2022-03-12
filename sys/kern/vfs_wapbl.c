@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.109 2021/08/03 20:25:43 chs Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.110 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.109 2021/08/03 20:25:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.110 2022/03/12 15:32:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -2273,7 +2273,9 @@ wapbl_inodetrk_free(struct wapbl *wl)
 	/* XXX this KASSERT needs locking/mutex analysis */
 	KASSERT(wl->wl_inohashcnt == 0);
 	hashdone(wl->wl_inohash, HASH_LIST, wl->wl_inohashmask);
+	membar_exit();
 	if (atomic_dec_uint_nv(&wapbl_ino_pool_refcount) == 0) {
+		membar_enter();
 		pool_destroy(&wapbl_ino_pool);
 	}
 }

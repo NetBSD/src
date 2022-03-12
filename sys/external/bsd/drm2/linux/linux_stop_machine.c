@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_stop_machine.c,v 1.2 2021/12/19 11:22:22 riastradh Exp $	*/
+/*	$NetBSD: linux_stop_machine.c,v 1.3 2022/03/12 15:32:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_stop_machine.c,v 1.2 2021/12/19 11:22:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_stop_machine.c,v 1.3 2022/03/12 15:32:32 riastradh Exp $");
 
 #include <sys/mutex.h> /* XXX work around cycle x86/mutex.h<->x86/intr.h */
 
@@ -59,18 +59,19 @@ stop_machine_xcall(void *a, void *b)
 	s = splhigh();
 
 	/* Note that we're ready, and see whether we're the chosen one.  */
+	membar_exit();
 	if (atomic_dec_uint_nv(&S->ncpu) != 0) {
-		/* Not the chosen one.  Wait until done.  */
-		while (!S->done)
+		while (!atomic_load_acquire(&S->done))
 			SPINLOCK_BACKOFF_HOOK;
 		goto out;
 	}
+	membar_enter();
 
 	/* It's time.  Call the callback.  */
 	S->callback(S->cookie);
 
 	/* Notify everyone else that we're done.  */
-	S->done = true;
+	atomic_store_release(&S->done, true);
 
 	/* Allow activity again.  */
 out:	splx(s);

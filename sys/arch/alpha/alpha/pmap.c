@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.304 2021/12/09 21:13:18 andvar Exp $ */
+/* $NetBSD: pmap.c,v 1.305 2022/03/12 15:32:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2021/12/09 21:13:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.305 2022/03/12 15:32:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1663,6 +1663,7 @@ pmap_destroy(pmap_t pmap)
 	KASSERT(atomic_load_relaxed(&pmap->pm_count) > 0);
 	if (atomic_dec_uint_nv(&pmap->pm_count) > 0)
 		return;
+	PMAP_MP(membar_enter());
 
 	pt_entry_t *lev1map = pmap_lev1map(pmap);
 
