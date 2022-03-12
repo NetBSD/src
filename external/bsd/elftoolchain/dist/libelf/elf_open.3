@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_open.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_open.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2012 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_open.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_open.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd June 12, 2019
 .Dt ELF_OPEN 3
@@ -58,7 +58,7 @@ returns an Elf descriptor opened with mode
 for the ELF object or
 .Xr ar 1
 archive referenced by the file descriptor in argument
-.Ar fd .
+.Fa fd .
 .Pp
 The function
 .Fn elf_openmemory
@@ -67,9 +67,9 @@ returns an ELF descriptor opened with mode
 for the ELF object or
 .Xr ar 1
 archive contained in the memory area pointed to by the argument
-.Ar image .
+.Fa image .
 The argument
-.Ar sz
+.Fa sz
 specifies the size of the memory area in bytes.
 .Sh RETURN VALUES
 The function returns a pointer to a ELF descriptor if successful, or
@@ -94,22 +94,22 @@ These functions can fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 The argument
-.Ar fd
+.Fa fd
 was of an unsupported file type.
 .It Bq Er ELF_E_ARGUMENT
 The argument
-.Ar sz
+.Fa sz
 was zero, or the argument
-.Ar image
+.Fa image
 was
 .Dv NULL .
 .It Bq Er ELF_E_IO
 The file descriptor in argument
-.Ar fd
+.Fa fd
 was invalid.
 .It Bq Er ELF_E_IO
 The file descriptor in argument
-.Ar fd
+.Fa fd
 could not be read.
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was encountered.

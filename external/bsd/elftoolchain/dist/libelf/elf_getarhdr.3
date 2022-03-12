@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getarhdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_getarhdr.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getarhdr.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_getarhdr.3 3955 2022-03-12 12:24:36Z jkoshy
 .\"
 .Dd August 15, 2006
 .Dt ELF_GETARHDR 3
@@ -42,7 +42,7 @@ The
 .Fn elf_getarhdr
 function returns a pointer to an archive member header for
 a descriptor
-.Ar elf .
+.Fa elf .
 This descriptor must have been returned by a prior call to
 .Xr elf_begin 3 ,
 and must be a descriptor for a member inside an
@@ -85,12 +85,12 @@ may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for a member of an
 .Xr ar 1
 archive.

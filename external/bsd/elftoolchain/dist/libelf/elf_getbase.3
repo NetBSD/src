@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getbase.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_getbase.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008,2010 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getbase.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_getbase.3 3955 2022-03-12 12:24:36Z jkoshy
 .\"
 .Dd June 6, 2010
 .Dt ELF_GETBASE 3
@@ -42,7 +42,7 @@ Function
 .Fn elf_getbase
 returns the file offset to the first byte of the object referenced by ELF
 descriptor
-.Ar elf .
+.Fa elf .
 .Pp
 For descriptors referencing members of archives, the returned offset is
 the file offset of the member in its containing archive.
@@ -62,7 +62,7 @@ may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was
 .Dv NULL .
 .El

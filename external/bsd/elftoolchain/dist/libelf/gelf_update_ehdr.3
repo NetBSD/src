@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_update_ehdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_update_ehdr.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_update_ehdr.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_update_ehdr.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd August 27, 2006
 .Dt GELF_UPDATE_EHDR 3
@@ -60,22 +60,22 @@ Function
 .Fn gelf_update_ehdr
 updates the ELF Executable Header with the values in the
 class-independent executable header
-.Ar ehdr .
+.Fa ehdr .
 .Pp
 Function
 .Fn gelf_update_phdr
 updates the ELF Program Header structure at index
-.Ar ndx
+.Fa ndx
 with the values in the class-independent program header
-.Ar phdr .
+.Fa phdr .
 .Pp
 Function
 .Fn gelf_update_shdr
 updates the ELF Section Header structure associated with section
 descriptor
-.Ar scn
+.Fa scn
 with the values in argument
-.Ar shdr .
+.Fa shdr .
 .Sh RETURN VALUES
 These functions return a non-zero integer on success, or zero in case
 of an error.
@@ -84,33 +84,33 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Arguments
-.Ar elf ,
-.Ar ehdr ,
-.Ar phdr ,
-.Ar scn ,
+.Fa elf ,
+.Fa ehdr ,
+.Fa phdr ,
+.Fa scn ,
 or
-.Ar shdr
+.Fa shdr
 were
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF object.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 had an unsupported ELF class.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar ndx
+.Fa ndx
 exceeded the number of entries in the program header table.
 .It Bq Er ELF_E_ARGUMENT
 Section descriptor
-.Ar scn
+.Fa scn
 was not associated with an ELF descriptor.
 .It Bq Er ELF_E_MODE
 ELF descriptor
-.Ar elf
+.Fa elf
 was not opened for writing or updating.
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was detected.

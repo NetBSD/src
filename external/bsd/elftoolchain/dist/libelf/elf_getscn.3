@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getscn.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_getscn.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006-2008,2018 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getscn.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_getscn.3 3956 2022-03-12 12:39:30Z jkoshy
 .\"
 .Dd September 24, 2018
 .Dt ELF_GETSCN 3
@@ -53,26 +53,26 @@ with an ELF descriptor.
 Function
 .Fn elf_getscn
 will return a section descriptor for the section at index
-.Ar index
+.Fa index
 in the object denoted by ELF descriptor
-.Ar elf .
+.Fa elf .
 An error will be signalled if the specified section does not
 exist.
 .Pp
 Function
 .Fn elf_ndxscn
 returns the section table index associated with section descriptor
-.Ar scn .
+.Fa scn .
 .Pp
 Function
 .Fn elf_newscn
 creates a new section and appends it to the list of sections
 associated with descriptor
-.Ar elf .
+.Fa elf .
 The library will automatically increment the
 .Va e_shnum
 field of the ELF header associated with descriptor
-.Ar elf ,
+.Fa elf ,
 and will set the
 .Dv ELF_F_DIRTY
 flag on the returned section descriptor.
@@ -85,7 +85,7 @@ on the first call to
 Function
 .Fn elf_nextscn
 takes a section descriptor
-.Ar scn
+.Fa scn
 and returns a pointer to the section descriptor at the next higher
 index.
 As a consequence,
@@ -93,7 +93,7 @@ As a consequence,
 will never return a pointer to the empty section at index zero
 .Dv ( SHN_UNDEF ) .
 Argument
-.Ar scn
+.Fa scn
 is allowed to be
 .Dv NULL ,
 in which case this function will return a pointer to the section
@@ -123,31 +123,31 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Arguments
-.Ar elf
+.Fa elf
 or
-.Ar scn
+.Fa scn
 were
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar index
+.Fa index
 exceeded the current number of sections in the ELF object.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF file.
 .It Bq Er ELF_E_ARGUMENT
 Section descriptor
-.Ar scn
+.Fa scn
 was not associated with ELF descriptor
-.Ar elf .
+.Fa elf .
 .It Bq Er ELF_E_CLASS
 Descriptor
-.Ar elf
+.Fa elf
 was of an unknown ELF class.
 .It Bq Er ELF_E_SECTION
 Argument
-.Ar elf
+.Fa elf
 specified extended section numbering in the ELF header with the section header at
 index
 .Dv SHN_UNDEF

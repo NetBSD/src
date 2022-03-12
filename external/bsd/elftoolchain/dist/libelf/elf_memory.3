@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_memory.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_memory.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_memory.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_memory.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd June 28, 2006
 .Dt ELF_MEMORY 3
@@ -45,10 +45,10 @@ is used to process an ELF file or
 archive whose image is present in memory.
 .Pp
 Argument
-.Ar image
+.Fa image
 points to the start of the memory image of the file or archive.
 Argument
-.Ar size
+.Fa size
 contains the size in bytes of the memory image.
 .Pp
 The ELF descriptor is created for reading (i.e., analogous to the
@@ -95,9 +95,9 @@ can fail with the following errors:
 A
 .Dv NULL
 value was used for argument
-.Ar image
+.Fa image
 or the value of argument
-.Ar sz
+.Fa sz
 was zero.
 .It Bq Er ELF_E_HEADER
 The header of the ELF object contained an unsupported value in its
@@ -116,7 +116,7 @@ was called before a working version was set using
 .Xr elf_version 3 .
 .It Bq Er ELF_E_VERSION
 The ELF object referenced by argument
-.Ar image
+.Fa image
 was of an unsupported ELF version.
 .El
 .Sh SEE ALSO

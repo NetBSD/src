@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getsyminfo.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_getsyminfo.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getsyminfo.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_getsyminfo.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd April 22, 2019
 .Dt GELF_GETSYMINFO 3
@@ -48,13 +48,13 @@ and
 records in an ELF object.
 .Pp
 Argument
-.Ar data
+.Fa data
 is an
 .Vt Elf_Data
 descriptor associated with a section of type
 .Dv SHT_SUNW_syminfo .
 Argument
-.Ar ndx
+.Fa ndx
 is the index of the record being retrieved or updated.
 The class-independent
 .Vt GElf_Syminfo
@@ -64,27 +64,27 @@ structure is described in
 Function
 .Fn gelf_getsyminfo
 retrieves class-dependent record at index
-.Ar ndx
+.Fa ndx
 in data buffer
-.Ar data
+.Fa data
 and copies it to the destination pointed to by argument
-.Ar syminfo
+.Fa syminfo
 after translation to class-independent form.
 .Pp
 Function
 .Fn gelf_update_syminfo
 converts the class-independent record pointed to
 by argument
-.Ar syminfo
+.Fa syminfo
 to class-dependent form, and writes it to the record at index
-.Ar ndx
+.Fa ndx
 in the data buffer described by argument
-.Ar data .
+.Fa data .
 .Sh RETURN VALUES
 Function
 .Fn gelf_getsyminfo
 returns the value of argument
-.Ar syminfo
+.Fa syminfo
 if successful, or
 .Dv NULL
 in case of an error.
@@ -96,25 +96,25 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Arguments
-.Ar data
+.Fa data
 or
-.Ar syminfo
+.Fa syminfo
 were
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar ndx
+.Fa ndx
 was less than zero or larger than the number of symbols in the data
 descriptor.
 .It Bq Er ELF_E_ARGUMENT
 Data descriptor
-.Ar data
+.Fa data
 was not associated with a section containing symbol information.
 .It Bq Er ELF_E_VERSION
 The
 .Vt Elf_Data
 descriptor denoted by argument
-.Ar data
+.Fa data
 is associated with an ELF object with an unsupported version.
 .El
 .Sh SEE ALSO

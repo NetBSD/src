@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getshnum.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_getshnum.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getshnum.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_getshnum.3 3956 2022-03-12 12:39:30Z jkoshy
 .\"
 .Dd August 5, 2009
 .Dt ELF_GETSHNUM 3
@@ -46,9 +46,9 @@ instead.
 Function
 .Fn elf_getshnum
 retrieves the number of ELF sections associated with descriptor
-.Ar elf
+.Fa elf
 and stores it into the location pointed to by argument
-.Ar shnum .
+.Fa shnum .
 .Pp
 This routine allows applications to uniformly process both normal ELF
 objects, and ELF objects that use extended section numbering.
@@ -66,14 +66,14 @@ can fail with the following errors:
 A
 .Dv NULL
 value was passed in for argument
-.Ar elf .
+.Fa elf .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not for an ELF file.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 lacks an ELF Executable header.
 .El
 .Sh SEE ALSO

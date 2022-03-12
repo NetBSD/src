@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_rawfile.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_rawfile.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_rawfile.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_rawfile.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd July 3, 2006
 .Dt ELF_RAWFILE 3
@@ -41,10 +41,10 @@
 Function
 .Fn elf_rawfile
 returns the uninterpreted contents of the file referenced by ELF descriptor
-.Ar elf .
+.Fa elf .
 .Pp
 If argument
-.Ar sz
+.Fa sz
 is non-null, the function stores the file's size in bytes
 in the location to which it points.
 A value of zero is written to this location if an error is
@@ -62,12 +62,12 @@ may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was
 .Dv NULL .
 .It Bq Er ELF_E_SEQUENCE
 Argument
-.Ar elf
+.Fa elf
 was opened for writing and function
 .Fn elf_rawfile
 was invoked before

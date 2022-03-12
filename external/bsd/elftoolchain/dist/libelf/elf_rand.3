@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_rand.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_rand.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_rand.3 3639 2018-10-14 14:07:02Z jkoshy
+.\" Id: elf_rand.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd June 17, 2006
 .Dt ELF_RAND 3
@@ -41,14 +41,14 @@
 The
 .Fn elf_rand
 function causes the ELF descriptor
-.Ar archive
+.Fa archive
 to be adjusted so that the next call to
 .Xr elf_begin 3
 will provide access to the archive member at byte offset
-.Ar offset
+.Fa offset
 in the archive.
 Argument
-.Ar offset
+.Fa offset
 is the byte offset from the start of the archive to the beginning of
 the archive header for the desired member.
 .Pp
@@ -59,7 +59,7 @@ function.
 Function
 .Fn elf_rand
 returns
-.Ar offset
+.Fa offset
 if successful or zero in case of an error.
 .Sh EXAMPLES
 To process all the members of an archive use:
@@ -97,17 +97,17 @@ may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar archive
+.Fa archive
 was null.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar archive
+.Fa archive
 was not a descriptor for an
 .Xr ar 1
 archive.
 .It Bq Er ELF_E_ARCHIVE
 Argument
-.Ar offset
+.Fa offset
 did not correspond to the start of an archive member header.
 .El
 .Sh SEE ALSO

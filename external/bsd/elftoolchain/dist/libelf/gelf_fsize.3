@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_fsize.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_fsize.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_fsize.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_fsize.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd February 5, 2008
 .Dt GELF_FSIZE 3
@@ -46,9 +46,9 @@
 .Fn gelf_fsize "Elf *elf" "Elf_Type type" "size_t count" "unsigned int version"
 .Sh DESCRIPTION
 These functions return the size in bytes of the file representation of
-.Ar count
+.Fa count
 numbers of objects of ELF type
-.Ar type .
+.Fa type .
 For ELF types that are of variable length, these functions return a
 size of one byte.
 .Pp
@@ -64,7 +64,7 @@ respectively.
 Function
 .Fn gelf_fsize
 returns the size for the class of ELF descriptor
-.Ar elf .
+.Fa elf .
 .Sh RETURN VALUES
 These functions return a non-zero value in case of success, or zero in
 case of an error.
@@ -73,26 +73,26 @@ These functions may fail with:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was
 .Dv NULL
 in a call to
 .Fn gelf_fsize .
 .It Bq Er ELF_E_ARGUMENT
 ELF descriptor
-.Ar elf
+.Fa elf
 had an unknown ELF class.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar type
+.Fa type
 contained an illegal value.
 .It Bq Er ELF_E_UNIMPL
 Support for ELF type
-.Ar type
+.Fa type
 has not been implemented.
 .It Bq Er ELF_E_VERSION
 Argument
-.Ar version
+.Fa version
 is not a supported version.
 .El
 .Sh SEE ALSO

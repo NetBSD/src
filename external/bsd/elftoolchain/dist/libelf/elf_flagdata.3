@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_flagdata.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_flagdata.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006-2008,2011 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_flagdata.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_flagdata.3 3954 2022-03-12 12:07:16Z jkoshy
 .\"
 .Dd June 12, 2019
 .Dt ELF_FLAGDATA 3
@@ -60,11 +60,11 @@ These functions are used to query, set or reset flags on data
 structures associated with an ELF file.
 .Pp
 Arguments
-.Ar arhdr ,
-.Ar data ,
-.Ar elf
+.Fa arhdr ,
+.Fa data ,
+.Fa elf
 and
-.Ar scn
+.Fa scn
 denote the data structures whose flags need to be changed.
 These values should have been returned by prior calls to
 functions in the
@@ -73,12 +73,12 @@ API set:
 .Bl -bullet -compact
 .It
 Argument
-.Ar arhdr
+.Fa arhdr
 should have been returned by a prior call to
 .Xr elf_getarhdr 3 .
 .It
 Argument
-.Ar data
+.Fa data
 should have been returned by a prior call to one of
 .Xr elf_newdata 3 ,
 .Xr elf_getdata 3
@@ -86,14 +86,14 @@ or
 .Xr elf_rawdata 3 .
 .It
 Argument
-.Ar elf
+.Fa elf
 should have been allocated by a prior call to one of
 .Xr elf_begin 3
 or
 .Xr elf_memory 3 .
 .It
 Argument
-.Ar scn
+.Fa scn
 should have been returned by a prior call to one of
 .Xr elf_getscn 3 ,
 .Xr elf_newscn 3
@@ -105,21 +105,21 @@ These values are allowed to be
 to simplify error handling in application code.
 .Pp
 Argument
-.Ar cmd
+.Fa cmd
 may have the following values:
 .Bl -tag -width ELF_C_SET
 .It Dv ELF_C_CLR
 The argument
-.Ar flags
+.Fa flags
 specifies the flags to be cleared.
 .It Dv ELF_C_SET
 The argument
-.Ar flags
+.Fa flags
 specifies the flags to be set.
 .El
 .Pp
 The argument
-.Ar flags
+.Fa flags
 is allowed to have the following flags set:
 .Bl -tag -width ELF_F_ARCHIVE_SYSV
 .It Dv ELF_F_ARCHIVE
@@ -130,7 +130,7 @@ It informs the library that the application desires to create an
 .Xr ar 1
 archive.
 Argument
-.Ar elf
+.Fa elf
 should have been opened for writing using the
 .Dv ELF_C_WRITE
 command to function
@@ -160,14 +160,14 @@ Marking a given data structure as
 .Dq dirty
 affects all of its contained elements.
 Thus marking an ELF descriptor
-.Ar elf
+.Fa elf
 with
 .Fn elf_flagelf "elf" "ELF_C_SET" "ELF_F_DIRTY"
 means that the entire contents of the descriptor are
 .Dq dirty .
 .Pp
 Using a value of zero for argument
-.Ar flags
+.Fa flags
 will return the current set of flags for the data structure being
 queried.
 .Sh RETURN VALUES
@@ -188,15 +188,15 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 An unsupported value was used for the
-.Ar cmd
+.Fa cmd
 argument.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar flags
+.Fa flags
 had unsupported flags set.
 .It Bq Er ELF_E_ARGUMENT
 The argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF object.
 .It Bq Er ELF_E_MODE
 The

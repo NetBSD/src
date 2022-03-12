@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getident.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_getident.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getident.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_getident.3 3956 2022-03-12 12:39:30Z jkoshy
 .\"
 .Dd July 3, 2006
 .Dt ELF_GETIDENT 3
@@ -41,13 +41,13 @@
 Function
 .Fn elf_getident
 returns a pointer to the initial bytes of the file for descriptor
-.Ar elf .
+.Fa elf .
 .Pp
 If argument
-.Ar sz
+.Fa sz
 is non-null, the size of the identification area returned is written
 to the location pointed to by
-.Ar sz .
+.Fa sz .
 This location is set to zero on errors.
 .Sh RETURN VALUES
 Function
@@ -66,10 +66,10 @@ can fail with the following errors:
 A
 .Dv NULL
 value was passed in for argument
-.Ar elf .
+.Fa elf .
 .It Bq Er ELF_E_SEQUENCE
 ELF descriptor
-.Ar elf
+.Fa elf
 was opened for writing and function
 .Fn elf_getident
 was called before a call to

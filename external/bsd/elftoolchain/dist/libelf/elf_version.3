@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_version.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_version.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_version.3 3639 2018-10-14 14:07:02Z jkoshy
+.\" Id: elf_version.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd November 9, 2011
 .Dt ELF_VERSION 3
@@ -45,7 +45,7 @@ library, and to inform the ELF library about the application's desired
 operating version.
 .Pp
 If the argument
-.Ar version
+.Fa version
 is
 .Dv EV_NONE ,
 the
@@ -54,18 +54,18 @@ function returns the currently configured operating version for the
 ELF library.
 .Pp
 If the argument
-.Ar version
+.Fa version
 is not
 .Dv EV_NONE ,
 and if argument
-.Ar version
+.Fa version
 is supported by the ELF library, function
 .Fn elf_version
 sets the library's operating version to
-.Ar version ,
+.Fa version ,
 and returns the previous value of the operating version.
 If argument
-.Ar version
+.Fa version
 cannot be supported, then the
 .Fn elf_version
 function returns
