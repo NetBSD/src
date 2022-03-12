@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.178 2021/02/27 13:02:42 simonb Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.179 2022/03/12 17:45:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.178 2021/02/27 13:02:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.179 2022/03/12 17:45:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1396,7 +1396,11 @@ ktrace_thread(void *arg)
 		mutex_enter(&ktrace_lock);
 	}
 
-	TAILQ_REMOVE(&ktdq, ktd, ktd_list);
+	if (ktd_lookup(ktd->ktd_fp) == ktd) {
+		TAILQ_REMOVE(&ktdq, ktd, ktd_list);
+	} else {
+		/* nothing, collision in KTROP_SET */
+	}
 
 	callout_halt(&ktd->ktd_wakch, &ktrace_lock);
 	callout_destroy(&ktd->ktd_wakch);
