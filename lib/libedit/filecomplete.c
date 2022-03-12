@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.69 2021/09/26 13:45:37 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.70 2022/03/12 15:29:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.69 2021/09/26 13:45:37 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.70 2022/03/12 15:29:17 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -127,7 +127,7 @@ fn_tilde_expand(const char *txt)
 }
 
 static int
-needs_escaping(char c)
+needs_escaping(wchar_t c)
 {
 	switch (c) {
 	case '\'':
@@ -612,13 +612,13 @@ find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
 	for (;;) {
 		if (ctemp <= buffer)
 			break;
-		if (wcschr(word_break, ctemp[-1])) {
-			if (ctemp - buffer >= 2 && ctemp[-2] == '\\') {
-				ctemp -= 2;
-				continue;
-			}
-			break;
+		if (ctemp - buffer >= 2 && ctemp[-2] == '\\' &&
+		    needs_escaping(ctemp[-1])) {
+			ctemp -= 2;
+			continue;
 		}
+		if (wcschr(word_break, ctemp[-1]))
+			break;
 		if (special_prefixes && wcschr(special_prefixes, ctemp[-1]))
 			break;
 		ctemp--;
