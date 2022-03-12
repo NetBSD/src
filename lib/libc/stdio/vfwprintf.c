@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.37 2022/03/12 08:36:52 nia Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.38 2022/03/12 17:31:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.37 2022/03/12 08:36:52 nia Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.38 2022/03/12 17:31:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -460,10 +460,9 @@ __mbsconv(char *mbsarg, int prec, locale_t loc)
 	 * wide characters for printing.
 	 */
 	convbuf = NULL;
-	if (reallocarr(&convbuf, insize + 1, sizeof(*convbuf)) != 0) {
-		errno = ENOMEM;
+	errno = reallocarr(&convbuf, insize + 1, sizeof(*convbuf));
+	if (errno)
 		return NULL;
-	}
 	wcp = convbuf;
 	p = mbsarg;
 	mbs = initial;
@@ -477,7 +476,9 @@ __mbsconv(char *mbsarg, int prec, locale_t loc)
 		insize -= nconv;
 	}
 	if (nconv == (size_t)-1 || nconv == (size_t)-2) {
+		int serrno = errno;
 		free(convbuf);
+		errno = serrno;
 		return NULL;
 	}
 	*wcp = L'\0';
@@ -1979,16 +1980,17 @@ __grow_type_table (size_t nextarg, enum typeid **typetable, size_t *tablesize)
 		newsize = nextarg + 1;
 	if (oldsize == STATIC_ARG_TBL_SIZE) {
 		newtable = NULL;
-		if (reallocarr(&newtable, newsize, sizeof(*newtable)) != 0) {
-			errno = ENOMEM;
+		errno = reallocarr(&newtable, newsize, sizeof(*newtable));
+		if (errno)
 			return -1;
-		}
 		memcpy(newtable, oldtable, oldsize * sizeof(*newtable));
 	} else {
 		newtable = oldtable;
-		if (reallocarr(&newtable, newsize, sizeof(*newtable)) != 0) {
-			errno = ENOMEM;
+		errno = reallocarr(&newtable, newsize, sizeof(*newtable));
+		if (errno) {
+			int serrno = errno;
 			free(oldtable);
+			errno = serrno;
 			return -1;
 		}
 	}
