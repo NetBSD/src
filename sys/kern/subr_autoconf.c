@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.295 2022/02/06 19:29:52 tnn Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.296 2022/03/12 19:26:33 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.295 2022/02/06 19:29:52 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.296 2022/03/12 19:26:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1473,10 +1473,12 @@ config_devdelete(device_t dev)
 static int
 config_unit_nextfree(cfdriver_t cd, cfdata_t cf)
 {
-	int unit;
+	int unit = cf->cf_unit;
 
+	if (unit < 0)
+		return -1;
 	if (cf->cf_fstate == FSTATE_STAR) {
-		for (unit = cf->cf_unit; unit < cd->cd_ndevs; unit++)
+		for (; unit < cd->cd_ndevs; unit++)
 			if (cd->cd_devs[unit] == NULL)
 				break;
 		/*
@@ -1484,7 +1486,6 @@ config_unit_nextfree(cfdriver_t cd, cfdata_t cf)
 		 * or max(cd->cd_ndevs,cf->cf_unit).
 		 */
 	} else {
-		unit = cf->cf_unit;
 		if (unit < cd->cd_ndevs && cd->cd_devs[unit] != NULL)
 			unit = -1;
 	}
