@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getshdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_getshdr.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getshdr.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_getshdr.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd August 27, 2006
 .Dt GELF_GETSHDR 3
@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 These functions return a pointer to the ELF Section Header data
 structure associated with section descriptor
-.Ar scn .
+.Fa scn .
 .Pp
 Function
 .Fn elf32_getshdr
@@ -55,7 +55,7 @@ retrieves a pointer to an
 .Vt Elf32_Shdr
 structure.
 Section descriptor
-.Ar scn
+.Fa scn
 must be associated with an ELF descriptor of class
 .Dv ELFCLASS32 .
 .Pp
@@ -65,16 +65,16 @@ retrieves a pointer to an
 .Vt Elf64_Shdr
 structure.
 Section descriptor
-.Ar scn
+.Fa scn
 must be associated with an ELF descriptor of class
 .Dv ELFCLASS64 .
 .Pp
 Function
 .Fn gelf_getshdr
 copies the values in the section header associated with argument
-.Ar scn
+.Fa scn
 to the structure pointed to be argument
-.Ar dst .
+.Fa dst .
 The
 .Vt GElf_Shdr
 data structure is described in
@@ -92,7 +92,7 @@ if an error was encountered.
 Function
 .Fn gelf_getshdr
 returns argument
-.Ar dst
+.Fa dst
 if successful, or
 .Dv NULL
 if an error was encountered.
@@ -101,18 +101,18 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Arguments
-.Ar scn
+.Fa scn
 or
-.Ar shdr
+.Fa shdr
 were
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar scn
+.Fa scn
 was not associated a descriptor for an ELF object.
 .It Bq Er ELF_E_CLASS
 The ELF class associated with the section descriptor
-.Ar scn
+.Fa scn
 did not match the class expected by the API.
 .El
 .Sh SEE ALSO

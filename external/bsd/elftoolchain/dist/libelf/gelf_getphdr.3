@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getphdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_getphdr.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006-2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getphdr.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_getphdr.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd October 21, 2007
 .Dt GELF_GETPHDR 3
@@ -66,12 +66,12 @@ function.
 Function
 .Fn gelf_getphdr
 will retrieve the program header table entry at index
-.Ar index
+.Fa index
 from ELF descriptor
-.Ar elf .
+.Fa elf .
 The translated program header table entry will be written to the
 address pointed to be argument
-.Ar dst .
+.Fa dst .
 .Pp
 Applications may inform the library of modifications to a program header table entry
 by using the
@@ -92,43 +92,43 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF object.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar dst
+.Fa dst
 was
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Index
-.Ar index
+.Fa index
 was out of range.
 .It Bq Er ELF_E_CLASS
 The class of ELF descriptor
-.Ar elf
+.Fa elf
 did not match the expected class of the function being called.
 .It Bq Er ELF_E_HEADER
 ELF descriptor
-.Ar elf
+.Fa elf
 did not possess an executable header.
 .It Bq Er ELF_E_HEADER
 ELF descriptor
-.Ar elf
+.Fa elf
 had a corrupt executable header.
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was detected.
 .It Bq Er ELF_E_SECTION
 The ELF descriptor in argument
-.Ar elf
+.Fa elf
 did not adhere to the conventions used for extended numbering.
 .It Bq Er ELF_VERSION
 ELF descriptor
-.Ar elf
+.Fa elf
 was of an unsupported version.
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getarsym.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_getarsym.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getarsym.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_getarsym.3 3955 2022-03-12 12:24:36Z jkoshy
 .\"
 .Dd August 15, 2006
 .Dt ELF_GETARSYM 3
@@ -45,7 +45,7 @@ retrieves the symbol table for an
 archive, if one is available.
 .Pp
 Argument
-.Ar elf
+.Fa elf
 should be a descriptor for an
 .Xr ar 1
 archive opened using
@@ -54,7 +54,7 @@ or
 .Fn elf_memory .
 .Pp
 If the archive
-.Ar elf
+.Fa elf
 contains a symbol table with n entries, this function returns a
 pointer to an array of n+1
 .Vt Elf_Arsym
@@ -86,7 +86,7 @@ and an illegal value of ~0UL for
 .Va as_hash .
 .Pp
 If argument
-.Ar ptr
+.Fa ptr
 is non-null, the
 .Fn elf_getarsym
 function will store the number of table entries returned (including the
@@ -101,12 +101,12 @@ structures if successful, or a
 pointer if an error was encountered.
 .Pp
 If argument
-.Ar ptr
+.Fa ptr
 is non-null and there was no error, the library will store the
 number of archive symbol entries returned into the location it
 points to.
 If argument
-.Ar ptr
+.Fa ptr
 is non-null and an error was encountered, the library will
 set the location pointed to by it to zero.
 .Sh ERRORS
@@ -116,12 +116,12 @@ may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an
 .Xr ar 1
 archive.

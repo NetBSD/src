@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getehdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_getehdr.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getehdr.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_getehdr.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd December 16, 2006
 .Dt GELF_GETEHDR 3
@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 These functions retrieve the ELF object file
 header from the ELF descriptor
-.Ar elf
+.Fa elf
 and return a translated header descriptor to their callers.
 .Pp
 Functions
@@ -56,20 +56,20 @@ and
 .Fn elf64_getehdr
 return a pointer to the appropriate class-specific header descriptor
 if it exists in the file referenced by descriptor
-.Ar elf .
+.Fa elf .
 These functions return
 .Dv NULL
 if an ELF header was not found in file
-.Ar elf .
+.Fa elf .
 .Pp
 Function
 .Fn gelf_getehdr
 stores a translated copy of the header for ELF file
-.Ar elf
+.Fa elf
 into the descriptor pointed to by argument
-.Ar dst .
+.Fa dst .
 It returns argument
-.Ar dst
+.Fa dst
 if successful or
 .Dv NULL
 in case of failure.
@@ -83,37 +83,37 @@ These functions can fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 The argument
-.Ar elf
+.Fa elf
 was null.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF file.
 .It Bq Er ELF_E_ARGUMENT
 The elf class of descriptor
-.Ar elf
+.Fa elf
 was not recognized.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar dst
+.Fa dst
 was null.
 .It Bq Er ELF_E_CLASS
 The ELF class of descriptor
-.Ar elf
+.Fa elf
 did not match that of the API function being called.
 .It Bq Er ELF_E_HEADER
 ELF descriptor
-.Ar elf
+.Fa elf
 does not have an associated header.
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was detected during execution.
 .It Bq Er ELF_E_SECTION
 The ELF descriptor in argument
-.Ar elf
+.Fa elf
 did not adhere to the conventions used for extended numbering.
 .It Bq Er ELF_E_VERSION
 The ELF descriptor
-.Ar elf
+.Fa elf
 had an unsupported ELF version number.
 .El
 .Sh SEE ALSO

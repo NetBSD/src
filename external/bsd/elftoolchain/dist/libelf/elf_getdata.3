@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getdata.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_getdata.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008,2010-2011 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getdata.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_getdata.3 3955 2022-03-12 12:24:36Z jkoshy
 .\"
 .Dd April 22, 2019
 .Dt ELF_GETDATA 3
@@ -52,22 +52,22 @@ Data descriptors used by the ELF library are described in
 Function
 .Fn elf_getdata
 will return the next data descriptor associated with section descriptor
-.Ar scn .
+.Fa scn .
 The returned data descriptor will be setup to contain translated data.
 Argument
-.Ar data
+.Fa data
 may be
 .Dv NULL ,
 in which case the function returns the first data descriptor
 associated with section
-.Ar scn .
+.Fa scn .
 If argument
-.Ar data
+.Fa data
 is not
 .Dv NULL ,
 it must be a pointer to a data descriptor associated with
 section descriptor
-.Ar scn ,
+.Fa scn ,
 and function
 .Fn elf_getdata
 will return a pointer to the next data descriptor for the section,
@@ -79,7 +79,7 @@ Function
 .Fn elf_newdata
 will allocate a new data descriptor and append it to the list of data
 descriptors associated with section descriptor
-.Ar scn .
+.Fa scn .
 The new data descriptor will be initialized as follows:
 .Bl -tag -width "d_version" -compact -offset indent
 .It Va d_align
@@ -105,13 +105,13 @@ The application must set these values as appropriate before
 calling
 .Xr elf_update 3 .
 Section
-.Ar scn
+.Fa scn
 must be associated with an ELF file opened for writing.
 If the application has not requested full control of layout by
 setting the
 .Dv ELF_F_LAYOUT
 flag on descriptor
-.Ar elf ,
+.Fa elf ,
 then the data referenced by the returned descriptor will be positioned
 after the existing content of the section, honoring the file alignment
 specified in member
@@ -119,7 +119,7 @@ specified in member
 On successful completion of a call to
 .Fn elf_newdata ,
 the ELF library will mark the section
-.Ar scn
+.Fa scn
 as
 .Dq dirty .
 .Pp
@@ -127,24 +127,24 @@ Function
 .Fn elf_rawdata
 is used to step through the data descriptors associated with
 section
-.Ar scn .
+.Fa scn .
 In contrast to function
 .Fn elf_getdata ,
 this function returns untranslated data.
 If argument
-.Ar data
+.Fa data
 is
 .Dv NULL ,
 the first data descriptor associated with section
-.Ar scn
+.Fa scn
 is returned.
 If argument
-.Ar data
+.Fa data
 is not
 .Dv NULL ,
 is must be a data descriptor associated with
 section
-.Ar scn ,
+.Fa scn ,
 and function
 .Fn elf_rawdata
 will return the next data descriptor in the list, or
@@ -196,19 +196,19 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Either of the arguments
-.Ar scn
+.Fa scn
 or
-.Ar data
+.Fa data
 was
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 The data descriptor referenced by argument
-.Ar data
+.Fa data
 is not associated with section descriptor
-.Ar scn .
+.Fa scn .
 .It Bq Er ELF_E_ARGUMENT
 The section denoted by argument
-.Ar scn
+.Fa scn
 had no data associated with it.
 .It Bq Er ELF_E_DATA
 Retrieval of data from the underlying object failed.
@@ -216,28 +216,28 @@ Retrieval of data from the underlying object failed.
 An out of memory condition was detected.
 .It Bq Er ELF_E_SECTION
 Section
-.Ar scn
+.Fa scn
 had type
 .Dv SHT_NULL .
 .It Bq Er ELF_E_SECTION
 The type of the section
-.Ar scn
+.Fa scn
 was not recognized by the library.
 .It Bq Er ELF_E_SECTION
 The size of the section
-.Ar scn
+.Fa scn
 is not a multiple of the file size for its section type.
 .It Bq Er ELF_E_SECTION
 The file offset for section
-.Ar scn
+.Fa scn
 is incorrect.
 .It Bq Er ELF_E_UNIMPL
 The section type associated with section
-.Ar scn
+.Fa scn
 is not supported.
 .It Bq Er ELF_E_VERSION
 Section
-.Ar scn
+.Fa scn
 was associated with an ELF object with an unsupported
 version.
 .El

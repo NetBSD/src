@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_getsym.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_getsym.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_getsym.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_getsym.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd April 22, 2019
 .Dt GELF_GETSYM 3
@@ -48,7 +48,7 @@ and
 structures in an ELF object.
 .Pp
 Argument
-.Ar data
+.Fa data
 is an
 .Vt Elf_Data
 descriptor associated with a section of type
@@ -57,7 +57,7 @@ descriptor associated with a section of type
 or
 .Dv SHT_GNU_versym .
 Argument
-.Ar ndx
+.Fa ndx
 is the index of the symbol being retrieved or updated.
 The class-independent
 .Vt GElf_Sym
@@ -67,22 +67,22 @@ structure is described in
 Function
 .Fn gelf_getsym
 retrieves class-dependent symbol information at index
-.Ar ndx
+.Fa ndx
 in data buffer
-.Ar data
+.Fa data
 and copies it to the destination pointed to by argument
-.Ar sym
+.Fa sym
 after translation to class-independent form.
 .Pp
 Function
 .Fn gelf_update_sym
 converts the class-independent symbol information pointed to
 by argument
-.Ar sym
+.Fa sym
 to class-dependent form, and writes it to the symbol entry at index
-.Ar ndx
+.Fa ndx
 in the data buffer described by argument
-.Ar data .
+.Fa data .
 Function
 .Fn gelf_update_sym
 signals an error if any of the values in the class-independent
@@ -92,7 +92,7 @@ type.
 Function
 .Fn gelf_getsym
 returns the value of argument
-.Ar sym
+.Fa sym
 if successful, or
 .Dv NULL
 in case of an error.
@@ -104,19 +104,19 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Arguments
-.Ar data
+.Fa data
 or
-.Ar sym
+.Fa sym
 were
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar ndx
+.Fa ndx
 was less than zero or larger than the number of symbols in the data
 descriptor.
 .It Bq Er ELF_E_ARGUMENT
 Data descriptor
-.Ar data
+.Fa data
 was not associated with a section containing symbol information.
 .It Bq Er ELF_E_RANGE
 A value was not representable in the target type.
@@ -124,7 +124,7 @@ A value was not representable in the target type.
 The
 .Vt Elf_Data
 descriptor denoted by argument
-.Ar data
+.Fa data
 is associated with an ELF object with an unsupported version.
 .El
 .Sh SEE ALSO
