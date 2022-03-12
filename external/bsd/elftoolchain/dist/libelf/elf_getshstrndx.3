@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getshstrndx.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_getshstrndx.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getshstrndx.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_getshstrndx.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd July 25, 2018
 .Dt ELF_GETSHSTRNDX 3
@@ -52,14 +52,14 @@ Function
 .Fn elf_getshstrndx
 retrieves the section index of the string table containing section
 names from descriptor
-.Ar elf
+.Fa elf
 and stores it into the location pointed to by argument
-.Ar ndxptr .
+.Fa ndxptr .
 .Pp
 Function
 .Fn elf_setshstrndx
 sets the index of the section name string table to argument
-.Ar ndx .
+.Fa ndx .
 .Pp
 These routines allow applications to process both normal ELF
 objects and ELF objects that use extended section numbering uniformly.
@@ -73,18 +73,18 @@ These functions can fail with the following errors:
 A
 .Dv NULL
 value was passed in for argument
-.Ar elf .
+.Fa elf .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not for an ELF file.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 lacks an ELF Executable header.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar ndx
+.Fa ndx
 contained a value in the reserved range of section indices.
 .El
 .Sh SEE ALSO

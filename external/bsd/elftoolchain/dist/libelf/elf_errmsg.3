@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_errmsg.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_errmsg.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_errmsg.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_errmsg.3 3954 2022-03-12 12:07:16Z jkoshy
 .\"
 .Dd June 11, 2006
 .Dt ELF_ERRMSG 3
@@ -58,9 +58,9 @@ The function
 .Fn elf_errmsg
 returns a null-terminated string with a human readable
 description of the error specified in argument
-.Ar error .
+.Fa error .
 A zero value for argument
-.Ar error
+.Fa error
 retrieves the most recent error encountered by the ELF
 library.
 An argument value of -1 behaves identically, except that
@@ -78,7 +78,7 @@ Function
 .Fn elf_errmsg
 returns a pointer to library local storage for non-zero values
 of argument
-.Ar error .
+.Fa error .
 With a zero argument, the function will return a
 .Dv NULL
 pointer if no

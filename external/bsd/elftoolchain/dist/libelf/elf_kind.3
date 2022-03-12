@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_kind.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_kind.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_kind.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: elf_kind.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd June 1, 2006
 .Dt ELF_KIND 3
@@ -41,9 +41,9 @@
 The
 .Fn elf_kind
 function identifies the kind of file associated with its argument
-.Ar elf .
+.Fa elf .
 The argument
-.Ar elf
+.Fa elf
 is allowed to be
 .Dv NULL .
 .Sh RETURN VALUES
@@ -53,20 +53,20 @@ function returns one of the following values:
 .Bl -tag -width indent
 .It Dv ELF_K_AR
 The file associated with argument
-.Ar elf
+.Fa elf
 is an archive.
 .It Dv ELF_K_ELF
 The file associated with argument
-.Ar elf
+.Fa elf
 is an ELF file.
 .It Dv ELF_K_NONE
 The argument
-.Ar elf
+.Fa elf
 was
 .Dv NULL ,
 or the ELF library could not determine the type of the file
 associated with argument
-.Ar elf ,
+.Fa elf ,
 or an error occurred when processing.
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_xlatetof.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_xlatetof.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008,2018 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_xlatetof.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_xlatetof.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd October 11, 2018
 .Dt GELF_XLATETOF 3
@@ -86,7 +86,7 @@ and
 translate data from in-memory representations to file representations.
 .Pp
 Argument
-.Ar src
+.Fa src
 denotes an
 .Vt Elf_Data
 descriptor describing the source to be translated.
@@ -117,7 +117,7 @@ is supported.
 .El
 .Pp
 Argument
-.Ar dst
+.Fa dst
 describes the destination buffer.
 The following elements of the
 .Vt Elf_Data
@@ -146,7 +146,7 @@ are not permitted.
 .Pp
 On successful completion of the translation request the following
 fields of the
-.Ar dst
+.Fa dst
 descriptor would be modified:
 .Bl -hang -offset indent
 .It Va d_size
@@ -158,7 +158,7 @@ value of the source data descriptor.
 .El
 .Pp
 Argument
-.Ar file_encoding
+.Fa file_encoding
 specifies the encoding in which the file objects are represented.
 It must be one of:
 .Bl -hang -offset indent
@@ -176,10 +176,10 @@ and
 .Fn gelf_xlatetom
 select the appropriate translation scheme based on the properties of
 argument
-.Ar elf .
+.Fa elf .
 .Sh RETURN VALUES
 These functions return argument
-.Ar dst
+.Fa dst
 if successful, or
 .Dv NULL
 in case of an error.
@@ -216,17 +216,17 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 One of arguments
-.Ar src ,
-.Ar dst
+.Fa src ,
+.Fa dst
 or
-.Ar elf
+.Fa elf
 was
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Arguments
-.Ar src
+.Fa src
 and
-.Ar dst
+.Fa dst
 were equal.
 .It Bq Er ELF_E_ARGUMENT
 The desired encoding parameter was not one of
@@ -236,22 +236,22 @@ or
 .Dv ELFDATA2MSB .
 .It Bq Er ELF_E_ARGUMENT
 The
-.Ar d_type
+.Fa d_type
 field of argument
-.Ar src
+.Fa src
 specified an unsupported type.
 .It Bq Er ELF_E_DATA
 The
-.Ar src
+.Fa src
 argument specified a buffer size that was not an integral multiple of
 its underlying type.
 .It Bq Er ELF_E_DATA
 The
-.Ar dst
+.Fa dst
 argument specified a buffer size that was too small.
 .It Bq Er ELF_E_DATA
 Argument
-.Ar dst
+.Fa dst
 specified a destination buffer that overlaps with the source
 buffer.
 .It Bq Er ELF_E_DATA
@@ -262,18 +262,18 @@ The source buffer for a conversion to file had an alignment
 inappropriate for the underlying ELF type.
 .It Bq Er ELF_E_UNIMPL
 The version numbers for arguments
-.Ar dst
+.Fa dst
 and
-.Ar src
+.Fa src
 were not identical.
 .It Bq Er ELF_E_UNIMPL
 The argument
-.Ar src
+.Fa src
 requested conversion for a type which is not currently
 supported.
 .It Bq Er ELF_E_VERSION
 Argument
-.Ar src
+.Fa src
 specified an unsupported version number.
 .El
 .Sh SEE ALSO

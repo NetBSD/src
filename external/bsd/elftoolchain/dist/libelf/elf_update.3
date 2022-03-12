@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_update.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_update.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006-2011 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_update.3 3734 2019-04-22 14:10:49Z jkoshy
+.\" Id: elf_update.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd April 22, 2019
 .Dt ELF_UPDATE 3
@@ -45,11 +45,11 @@ object and optionally write out the image of the object
 to file.
 .Pp
 Argument
-.Ar elf
+.Fa elf
 should reference a valid ELF descriptor.
 .Pp
 Argument
-.Ar cmd
+.Fa cmd
 can be one of the following values:
 .Bl -tag -width "Dv ELF_C_WRITE"
 .It Dv ELF_C_NULL
@@ -61,7 +61,7 @@ flag, but will not write data to the underlying file image.
 The library will recalculate structural information and will
 also write the new image to the underlying file.
 The ELF descriptor referenced by argument
-.Ar elf
+.Fa elf
 should permit the underlying ELF object to be written or updated
 (see
 .Xr elf_begin 3 ) .
@@ -72,7 +72,7 @@ All pointers to
 and
 .Vt Elf_Data
 descriptors associated with descriptor
-.Ar elf
+.Fa elf
 should be considered invalid after a call to
 .Fn elf_update .
 .Ss Specifying Object Layout
@@ -253,27 +253,27 @@ This function may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was null.
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar cmd
+.Fa cmd
 was not recognized.
 .It Bq Er ELF_E_ARGUMENT
 The argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF object.
 .It Bq Er ELF_E_CLASS
 The
 .Va e_ident[EI_CLASS]
 field of the executable header of argument
-.Ar elf
+.Fa elf
 did not match the class of the file.
 .It Bq Er ELF_E_DATA
 An
 .Vt Elf_Data
 descriptor contained in argument
-.Ar elf
+.Fa elf
 specified an unsupported type.
 .It Bq Er ELF_E_DATA
 An
@@ -282,7 +282,7 @@ descriptor specified an alignment that was zero or was not a power of
 two.
 .It Bq Er ELF_E_HEADER
 The ELF header in argument
-.Ar elf
+.Fa elf
 requested a different byte order from the byte order already
 associated with the file.
 .It Bq Er ELF_E_IO
@@ -291,15 +291,15 @@ An I/O error was encountered.
 An
 .Vt Elf_Data
 descriptor contained in argument
-.Ar elf
+.Fa elf
 specified an alignment incompatible with its containing section.
 .It Bq Er ELF_E_LAYOUT
 Argument
-.Ar elf
+.Fa elf
 contained section descriptors that overlapped in extent.
 .It Bq Er ELF_E_LAYOUT
 Argument
-.Ar elf
+.Fa elf
 contained section descriptors that were incorrectly aligned or were
 too small for their data.
 .It Bq Er ELF_E_LAYOUT
@@ -333,7 +333,7 @@ operation was requested with an ELF descriptor that was not opened for
 writing or updating.
 .It Bq Er ELF_E_SECTION
 Argument
-.Ar elf
+.Fa elf
 contained a section with an unrecognized type.
 .It Bq Er ELF_E_SECTION
 The section header at index
@@ -345,15 +345,15 @@ An
 operation was requested after a prior call to
 .Fn elf_cntl elf ELF_C_FDDONE
 disassociated the ELF descriptor
-.Ar elf
+.Fa elf
 from its underlying file.
 .It Bq Er ELF_E_UNIMPL
 Argument
-.Ar elf
+.Fa elf
 contained a section with an unsupported ELF type.
 .It Bq Er ELF_E_VERSION
 Argument
-.Ar elf
+.Fa elf
 had an unsupported version or contained an
 .Vt Elf_Data
 descriptor with an unsupported version.

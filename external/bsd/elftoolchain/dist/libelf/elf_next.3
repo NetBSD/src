@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_next.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: elf_next.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_next.3 3698 2019-02-28 06:34:42Z jkoshy
+.\" Id: elf_next.3 3957 2022-03-12 14:11:52Z jkoshy
 .\"
 .Dd February 27, 2019
 .Dt ELF_NEXT 3
@@ -41,7 +41,7 @@
 The
 .Fn elf_next
 function causes the ELF archive descriptor corresponding to argument
-.Ar elf
+.Fa elf
 to be adjusted to provide access to the next member in
 the archive on a subsequent call to
 .Fn elf_begin .
@@ -56,7 +56,7 @@ If successful, function
 returns the value
 .Dv ELF_C_READ .
 Otherwise, if argument
-.Ar elf
+.Fa elf
 was not associated with an archive, or if it was
 .Dv NULL ,
 or if any other error occurred, the value
@@ -86,13 +86,13 @@ may fail with the following error:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not associated with a containing
 .Xr ar 1
 archive.
 .It Bq Er ELF_E_ARGUMENT
 An error was encountered while parsing the archive containing argument
-.Ar elf .
+.Fa elf .
 .El
 .Sh SEE ALSO
 .Xr elf 3 ,

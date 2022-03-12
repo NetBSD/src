@@ -1,4 +1,4 @@
-.\"	$NetBSD: gelf_newphdr.3,v 1.4 2021/03/08 20:55:06 jkoshy Exp $
+.\"	$NetBSD: gelf_newphdr.3,v 1.5 2022/03/12 21:37:55 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006-2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: gelf_newphdr.3 3928 2021-03-07 19:47:55Z jkoshy
+.\" Id: gelf_newphdr.3 3958 2022-03-12 14:31:32Z jkoshy
 .\"
 .Dd June 12, 2019
 .Dt GELF_NEWPHDR 3
@@ -58,16 +58,16 @@ Functions
 and
 .Fn elf64_newphdr
 allocate a table of
-.Ar count
+.Fa count
 .Vt Elf32_Phdr
 and
 .Vt Elf64_Phdr
 descriptors respectively,
 discarding any existing program header table
 already present in the ELF descriptor
-.Ar elf .
+.Fa elf .
 A value of zero for argument
-.Ar count
+.Fa count
 may be used to delete an existing program header table
 from an ELF descriptor.
 .Pp
@@ -78,9 +78,9 @@ will return a table of
 or
 .Vt Elf64_Phdr
 with
-.Ar count
+.Fa count
 elements depending on the ELF class of ELF descriptor
-.Ar elf .
+.Fa elf .
 .Pp
 The functions set the
 .Dv ELF_F_DIRTY
@@ -94,7 +94,7 @@ by a prior call to
 or
 .Fn elf64_getphdr
 on the same descriptor
-.Ar elf
+.Fa elf
 will no longer be valid.
 .Sh RETURN VALUES
 The functions a valid pointer if successful, or
@@ -116,22 +116,22 @@ These functions may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was
 .Dv NULL .
 .It Bq Er ELF_E_ARGUMENT
 Argument
-.Ar elf
+.Fa elf
 was not a descriptor for an ELF object.
 .It Bq Er ELF_E_CLASS
 ELF descriptor
-.Ar elf
+.Fa elf
 was of an unrecognized class.
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was detected.
 .It Bq Er ELF_E_SEQUENCE
 An executable header was not allocated for ELF descriptor
-.Ar elf
+.Fa elf
 before using these APIs.
 .El
 .Sh SEE ALSO
