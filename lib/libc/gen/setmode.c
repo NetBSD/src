@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.34 2012/06/25 22:32:43 abs Exp $	*/
+/*	$NetBSD: setmode.c,v 1.35 2022/03/12 08:28:30 nia Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.34 2012/06/25 22:32:43 abs Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.35 2022/03/12 08:28:30 nia Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -205,9 +205,11 @@ setmode(const char *p)
 	(void)sigprocmask(SIG_SETMASK, &sigoset, NULL);
 
 	setlen = SET_LEN + 2;
-	
-	if ((set = malloc((u_int)(sizeof(BITCMD) * setlen))) == NULL)
+	set = NULL;
+	if (reallocarr(&set, setlen, sizeof(BITCMD)) != 0) {
+		errno = ENOMEM;
 		return (NULL);
+	}
 	saveset = set;
 	endset = set + (setlen - 2);
 
