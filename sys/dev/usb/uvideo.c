@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.69 2022/03/03 06:23:25 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.70 2022/03/12 16:51:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.69 2022/03/03 06:23:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.70 2022/03/12 16:51:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -851,7 +851,7 @@ uvideo_unit_alloc(const uvideo_descriptor_t *desc)
 	if (desc->bDescriptorType != UDESC_CS_INTERFACE)
 		return NULL;
 
-	vu = kmem_alloc(sizeof(*vu), KM_SLEEP);
+	vu = kmem_zalloc(sizeof(*vu), KM_SLEEP);
 	err = uvideo_unit_init(vu, desc);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_unit_alloc: error initializing unit: "
@@ -874,8 +874,6 @@ uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
 	const uvideo_selector_unit_descriptor_t *selector;
 	const uvideo_processing_unit_descriptor_t *processing;
 	const uvideo_extension_unit_descriptor_t *extension;
-
-	memset(vu, 0, sizeof(*vu));
 
 	switch (desc->bDescriptorSubtype) {
 	case UDESC_INPUT_TERMINAL:
