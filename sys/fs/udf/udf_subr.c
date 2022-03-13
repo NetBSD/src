@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.146.2.1 2022/03/13 09:44:33 martin Exp $ */
+/* $NetBSD: udf_subr.c,v 1.146.2.2 2022/03/13 09:48:32 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.146.2.1 2022/03/13 09:44:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.146.2.2 2022/03/13 09:48:32 martin Exp $");
 #endif /* not lint */
 
 
@@ -2764,10 +2764,11 @@ udf_update_vat_descriptor(struct udf_mount *ump)
 	struct icb_tag *icbtag;
 	struct udf_oldvat_tail *oldvat_tl;
 	struct udf_vat *vat;
+	struct regid *regid;
 	uint64_t unique_id;
 	uint32_t lb_size;
 	uint8_t *raw_vat;
-	int filetype, error;
+	int vat_length, impl_use_len, filetype, error;
 
 	KASSERT(vat_node);
 	KASSERT(lvinfo);
@@ -2812,11 +2813,20 @@ udf_update_vat_descriptor(struct udf_mount *ump)
 			sizeof(struct udf_oldvat_tail), ump->vat_entries * 4);
 	} else {
 		/* compose the VAT2 header */
+		vat_length = sizeof(struct udf_vat);
 		vat = (struct udf_vat *) raw_vat;
-		memset(vat, 0, sizeof(struct udf_vat));
 
-		vat->header_len       = udf_rw16(152);	/* as per spec */
-		vat->impl_use_len     = udf_rw16(0);
+		error = udf_vat_read(vat_node, raw_vat, vat_length, 0);
+		if (error)
+			goto errout;
+
+		impl_use_len = udf_rw16(vat->impl_use_len);
+		vat_length += impl_use_len;
+
+		error = udf_vat_read(vat_node, raw_vat, vat_length, 0);
+		if (error)
+			goto errout;
+
 		memmove(vat->logvol_id, ump->logical_vol->logvol_id, 128);
 		vat->prev_vat         = udf_rw32(0xffffffff);
 		vat->num_files        = lvinfo->num_files;
@@ -2825,9 +2835,20 @@ udf_update_vat_descriptor(struct udf_mount *ump)
 		vat->min_udf_writever = lvinfo->min_udf_writever;
 		vat->max_udf_writever = lvinfo->max_udf_writever;
 
-		error = udf_vat_write(vat_node, raw_vat,
-			sizeof(struct udf_vat), 0);
+		if (impl_use_len >= sizeof(struct regid)) {
+			/* insert our implementation identification */
+			memset(vat->data, 0, impl_use_len);
+			regid = (struct regid *) vat->data;
+			udf_set_regid(regid, IMPL_NAME);
+			udf_add_app_regid(ump, regid);
+		} else {
+			if (impl_use_len)
+				memset(vat->data, 0, impl_use_len);
+			vat->impl_use_len = 0;
+		}
+		error = udf_vat_write(vat_node, raw_vat, vat_length, 0);
 	}
+errout:
 	free(raw_vat, M_TEMP);
 
 	return error;	/* success! */
@@ -2996,7 +3017,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 
 		/* definition */
 		vat = (struct udf_vat *) raw_vat;
-		vat_offset  = vat->header_len;
+		vat_offset  = udf_rw16(vat->header_len);
 		vat_entries = (vat_length - vat_offset)/4;
 
 		assert(lvinfo);
@@ -3100,7 +3121,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 			if (vat_node)
 				vput(vat_node->vnode);
 			vat_loc++;	/* walk forward */
-		} while (vat_loc < late_vat_loc);
+		} while (vat_loc <= late_vat_loc);
 		if (accepted_vat_node)
 			break;
 
