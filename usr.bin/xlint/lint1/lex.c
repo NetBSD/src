@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.111 2022/03/13 15:08:41 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.112 2022/03/13 15:17:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.111 2022/03/13 15:08:41 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.112 2022/03/13 15:17:08 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1447,21 +1447,21 @@ getsym(sbuf_t *sb)
  * the name illegal.
  */
 sym_t *
-mktempsym(type_t *t)
+mktempsym(type_t *tp)
 {
-	static int n = 0;
+	static unsigned n = 0;
 	char *s = level_zero_alloc(block_level, 64);
 	sym_t *sym = block_zero_alloc(sizeof(*sym));
 	scl_t scl;
 
-	(void)snprintf(s, 64, "%.8d_tmp", n++);
+	(void)snprintf(s, 64, "%.8u_tmp", n++);
 
 	scl = dcs->d_scl;
 	if (scl == NOSCL)
 		scl = block_level > 0 ? AUTO : EXTERN;
 
 	sym->s_name = s;
-	sym->s_type = t;
+	sym->s_type = tp;
 	sym->s_block_level = block_level;
 	sym->s_scl = scl;
 	sym->s_kind = FVFT;
