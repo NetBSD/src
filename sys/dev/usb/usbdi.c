@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.233 2022/03/03 06:13:23 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.234 2022/03/13 11:28:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.233 2022/03/03 06:13:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.234 2022/03/13 11:28:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1017,6 +1017,7 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 	USBHIST_CALLARGS(usbdebug, "pipe = %#jx", (uintptr_t)pipe, 0, 0, 0);
 	SDT_PROBE1(usb, device, pipe, abort__start,  pipe);
 
+	ASSERT_SLEEPABLE();
 	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
 
 #ifdef USB_DEBUG
