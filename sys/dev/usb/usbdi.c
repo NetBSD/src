@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.237 2022/03/13 11:30:13 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.238 2022/03/13 13:07:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.237 2022/03/13 11:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.238 2022/03/13 13:07:39 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1064,7 +1064,7 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 	}
 
 	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
-	KASSERTMSG(pipe->up_abortlwp == NULL, "pipe->up_abortlwp=%p",
+	KASSERTMSG(pipe->up_abortlwp == curlwp, "pipe->up_abortlwp=%p",
 	    pipe->up_abortlwp);
 	pipe->up_abortlwp = NULL;
 
