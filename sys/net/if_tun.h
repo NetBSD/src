@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.20 2017/01/26 21:13:19 skrll Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.21 2022/03/13 21:31:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -22,6 +22,16 @@
 #include <sys/ioccom.h>
 
 #ifdef _KERNEL
+
+#include <sys/types.h>
+
+#include <sys/condvar.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/select.h>
+
+#include <net/if.h>
+
 struct tun_softc {
 	struct	ifnet tun_if;		/* the interface */
 
