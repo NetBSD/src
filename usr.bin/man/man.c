@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.67.4.1 2020/04/09 11:28:32 martin Exp $	*/
+/*	$NetBSD: man.c,v 1.67.4.2 2022/03/13 09:52:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.67.4.1 2020/04/09 11:28:32 martin Exp $");
+__RCSID("$NetBSD: man.c,v 1.67.4.2 2022/03/13 09:52:20 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,11 @@ __RCSID("$NetBSD: man.c,v 1.67.4.1 2020/04/09 11:28:32 martin Exp $");
 #ifndef MAN_DEBUG
 #define MAN_DEBUG 0		/* debug path output */
 #endif
+
+enum inserttype {
+	INS_TAIL,
+	INS_HEAD
+};
 
 /*
  * manstate: structure collecting the current global state so we can 
@@ -117,7 +122,8 @@ static void	 jump(char **, const char *, const char *) __dead;
 static int	 manual(char *, struct manstate *, glob_t *);
 static void	 onsig(int) __dead;
 static void	 usage(void) __dead;
-static void	 addpath(struct manstate *, const char *, size_t, const char *);
+static void	 addpath(struct manstate *, const char *, size_t, const char *,
+		     enum inserttype);
 static const char *getclass(const char *);
 static void printmanpath(struct manstate *);
 
@@ -327,7 +333,7 @@ main(int argc, char **argv)
 			if (len < 1)
 				continue;
 			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q)
-				addpath(&m, p, len, esubd->s);
+				addpath(&m, p, len, esubd->s, INS_TAIL);
 		}
 
 	} else {
@@ -335,12 +341,12 @@ main(int argc, char **argv)
 		TAILQ_FOREACH(epath, &m.defaultpath->entrylist, q) {
 			/* handle trailing "/" magic here ... */
 		  	if (abs_section && epath->s[epath->len - 1] != '/') {
-				addpath(&m, "", 1, epath->s);
+				addpath(&m, "", 1, epath->s, INS_TAIL);
 				continue;
 			}
 
 			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q)
-				addpath(&m, epath->s, epath->len, esubd->s);
+				addpath(&m, epath->s, epath->len, esubd->s, INS_TAIL);
 		}
 
 	}
@@ -358,7 +364,7 @@ main(int argc, char **argv)
 			if (len < 1)
 				continue;
 			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q)
-				addpath(&m, p, len, esubd->s);
+				addpath(&m, p, len, esubd->s, INS_HEAD); /* Add to front */
 		}
 
 	}
@@ -1012,14 +1018,15 @@ getclass(const char *machine)
 }
 
 static void
-addpath(struct manstate *m, const char *dir, size_t len, const char *sub)
+addpath(struct manstate *m, const char *dir, size_t len, const char *sub,
+	enum inserttype ishead)
 {
 	char buf[2 * MAXPATHLEN + 1];
 	(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,%s%s%s}",
 	     dir, (dir[len - 1] == '/') ? "" : "/", sub, m->machine,
 	     m->machclass ? "/" : "", m->machclass ? m->machclass : "",
 	     m->machclass ? "," : "");
-	if (addentry(m->mymanpath, buf, 0) < 0)
+	if (addentry(m->mymanpath, buf, (int)ishead) < 0)
 		errx(EXIT_FAILURE, "malloc failed");
 }
 
