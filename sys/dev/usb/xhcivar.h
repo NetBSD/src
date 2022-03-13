@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.20 2022/03/03 06:09:03 riastradh Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.21 2022/03/13 11:30:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -96,6 +96,7 @@ struct xhci_softc {
 	struct usbd_bus sc_bus;		/* USB 3 bus */
 	struct usbd_bus sc_bus2;	/* USB 2 bus */
 
+	kmutex_t sc_rhlock;
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 
