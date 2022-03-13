@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.270 2022/03/03 06:13:35 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.271 2022/03/13 11:28:42 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.270 2022/03/03 06:13:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.271 2022/03/13 11:28:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -948,6 +948,7 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	SIMPLEQ_INIT(&p->up_queue);
 	p->up_callingxfer = NULL;
 	cv_init(&p->up_callingcv, "usbpipecb");
+	p->up_abortlwp = NULL;
 
 	err = dev->ud_bus->ub_methods->ubm_open(p);
 	if (err) {
@@ -967,6 +968,8 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	err = USBD_NORMAL_COMPLETION;
 
 out:	if (p) {
+		KASSERT(p->up_abortlwp == NULL);
+		KASSERT(p->up_callingxfer == NULL);
 		cv_destroy(&p->up_callingcv);
 		kmem_free(p, dev->ud_bus->ub_pipesize);
 	}

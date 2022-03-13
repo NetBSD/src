@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.135 2022/03/09 22:17:41 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.136 2022/03/13 11:28:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -256,6 +256,8 @@ struct usbd_pipe {
 
 	struct usbd_xfer       *up_callingxfer; /* currently in callback */
 	kcondvar_t		up_callingcv;
+
+	struct lwp	       *up_abortlwp;	/* lwp currently aborting */
 
 	/* Filled by HC driver. */
 	const struct usbd_pipe_methods

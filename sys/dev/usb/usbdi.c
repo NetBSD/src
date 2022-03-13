@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.234 2022/03/13 11:28:33 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.235 2022/03/13 11:28:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.234 2022/03/13 11:28:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.235 2022/03/13 11:28:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1020,6 +1020,16 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 	ASSERT_SLEEPABLE();
 	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
 
+	/*
+	 * Allow only one thread at a time to abort the pipe, so we
+	 * don't get confused if upm_abort drops the lock in the middle
+	 * of the abort to wait for hardware completion softints to
+	 * stop using the xfer before returning.
+	 */
+	KASSERTMSG(pipe->up_abortlwp == NULL, "pipe->up_abortlwp=%p",
+	    pipe->up_abortlwp);
+	pipe->up_abortlwp = curlwp;
+
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
 		usbd_dump_queue(pipe);
@@ -1051,6 +1061,12 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 			/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 		}
 	}
+
+	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
+	KASSERTMSG(pipe->up_abortlwp == NULL, "pipe->up_abortlwp=%p",
+	    pipe->up_abortlwp);
+	pipe->up_abortlwp = NULL;
+
 	SDT_PROBE1(usb, device, pipe, abort__done,  pipe);
 }
 
