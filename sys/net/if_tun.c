@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.167 2022/03/13 21:32:15 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.168 2022/03/13 21:32:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.167 2022/03/13 21:32:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.168 2022/03/13 21:32:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -216,7 +216,7 @@ tun_init(struct tun_softc *tp, int unit)
 {
 
 	tp->tun_unit = unit;
-	mutex_init(&tp->tun_lock, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&tp->tun_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	cv_init(&tp->tun_cv, "tunread");
 	selinit(&tp->tun_rsel);
 	selinit(&tp->tun_wsel);
