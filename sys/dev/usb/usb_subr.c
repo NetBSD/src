@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.271 2022/03/13 11:28:42 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.272 2022/03/13 11:30:12 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.271 2022/03/13 11:28:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.272 2022/03/13 11:30:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -326,7 +326,7 @@ usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
 	usb_interface_descriptor_t *idesc;
 	int curidx, lastidx, curaidx = 0;
 
-	for (curidx = lastidx = -1; p < end; ) {
+	for (curidx = lastidx = -1; end - p >= sizeof(*desc);) {
 		desc = (usb_descriptor_t *)p;
 
 		DPRINTFN(4, "idx=%jd(%jd) altidx=%jd(%jd)", ifaceidx, curidx,
@@ -336,15 +336,15 @@ usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
 
 		if (desc->bLength < USB_DESCRIPTOR_SIZE)
 			break;
-		p += desc->bLength;
-		if (p > end)
+		if (desc->bLength > end - p)
 			break;
+		p += desc->bLength;
 
 		if (desc->bDescriptorType != UDESC_INTERFACE)
 			continue;
-		idesc = (usb_interface_descriptor_t *)desc;
-		if (idesc->bLength < USB_INTERFACE_DESCRIPTOR_SIZE)
+		if (desc->bLength < USB_INTERFACE_DESCRIPTOR_SIZE)
 			break;
+		idesc = (usb_interface_descriptor_t *)desc;
 
 		if (idesc->bInterfaceNumber != lastidx) {
 			lastidx = idesc->bInterfaceNumber;
@@ -378,23 +378,23 @@ usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
 		return NULL;
 
 	curidx = -1;
-	for (p = (char *)idesc + idesc->bLength; p < end; ) {
+	for (p = (char *)idesc + idesc->bLength; end - p >= sizeof(*edesc);) {
 		desc = (usb_descriptor_t *)p;
 
 		if (desc->bLength < USB_DESCRIPTOR_SIZE)
 			break;
-		p += desc->bLength;
-		if (p > end)
+		if (desc->bLength > end - p)
 			break;
+		p += desc->bLength;
 
 		if (desc->bDescriptorType == UDESC_INTERFACE)
 			break;
 		if (desc->bDescriptorType != UDESC_ENDPOINT)
 			continue;
 
-		edesc = (usb_endpoint_descriptor_t *)desc;
-		if (edesc->bLength < USB_ENDPOINT_DESCRIPTOR_SIZE)
+		if (desc->bLength < USB_ENDPOINT_DESCRIPTOR_SIZE)
 			break;
+		edesc = (usb_endpoint_descriptor_t *)desc;
 
 		curidx++;
 		if (curidx == endptidx)
@@ -553,23 +553,26 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 
 	p = (char *)idesc + idesc->bLength;
 	end = (char *)dev->ud_cdesc + UGETW(dev->ud_cdesc->wTotalLength);
+	KASSERTMSG((char *)dev->ud_cdesc <= (char *)idesc, "cdesc=%p idesc=%p",
+	    dev->ud_cdesc, idesc);
+	KASSERTMSG((char *)idesc < end, "idesc=%p end=%p", idesc, end);
 #define ed ((usb_endpoint_descriptor_t *)p)
 	for (endpt = 0; endpt < nendpt; endpt++) {
 		DPRINTFN(10, "endpt=%jd", endpt, 0, 0, 0);
-		for (; p < end; p += ed->bLength) {
+		for (; end - p >= sizeof(*ed); p += ed->bLength) {
 			DPRINTFN(10, "p=%#jx end=%#jx len=%jd type=%jd",
 			    (uintptr_t)p, (uintptr_t)end, ed->bLength,
 			    ed->bDescriptorType);
-			if (p + ed->bLength <= end &&
-			    ed->bLength >= USB_ENDPOINT_DESCRIPTOR_SIZE &&
-			    ed->bDescriptorType == UDESC_ENDPOINT)
-				goto found;
-			if (ed->bLength == 0 ||
+			if (ed->bLength < sizeof(*ed) ||
+			    ed->bLength > end - p ||
 			    ed->bDescriptorType == UDESC_INTERFACE)
 				break;
+			if (ed->bLength >= USB_ENDPOINT_DESCRIPTOR_SIZE &&
+			    ed->bDescriptorType == UDESC_ENDPOINT)
+				goto found;
 		}
 		/* passed end, or bad desc */
-		if (p < end) {
+		if (end - p >= sizeof(*ed)) {
 			if (ed->bLength == 0) {
 				printf("%s: bad descriptor: 0 length\n",
 				    __func__);
@@ -607,6 +610,8 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 		}
 		endpoints[endpt].ue_refcnt = 0;
 		endpoints[endpt].ue_toggle = 0;
+		KASSERTMSG(end - p >= ed->bLength, "p=%p end=%p length=%u",
+		    p, end, ed->bLength);
 		p += ed->bLength;
 	}
 #undef ed
