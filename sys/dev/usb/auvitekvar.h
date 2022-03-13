@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.9 2016/04/23 10:15:31 skrll Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.10 2022/03/13 12:49:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -102,6 +102,7 @@ struct auvitek_softc {
 	device_t		sc_videodev, sc_dtvdev, sc_audiodev, sc_i2cdev;
 	struct i2c_controller	sc_i2c;
 	kmutex_t		sc_i2c_lock;
+	bool			sc_i2c_attached;
 
 	struct usbd_device     *sc_udev;
 	int			sc_uport;
