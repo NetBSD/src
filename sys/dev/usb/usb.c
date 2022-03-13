@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.199 2022/03/06 09:03:42 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.200 2022/03/13 11:28:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.199 2022/03/06 09:03:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.200 2022/03/13 11:28:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -296,6 +296,7 @@ usb_attach(device_t parent, device_t self, void *aux)
 	usbrev = sc->sc_bus->ub_revision;
 
 	cv_init(&sc->sc_bus->ub_needsexplore_cv, "usbevt");
+	cv_init(&sc->sc_bus->ub_rhxfercv, "usbrhxfer");
 	sc->sc_pmf_registered = false;
 
 	aprint_naive("\n");
@@ -1430,6 +1431,7 @@ usb_detach(device_t self, int flags)
 	usb_add_event(USB_EVENT_CTRLR_DETACH, ue);
 
 	cv_destroy(&sc->sc_bus->ub_needsexplore_cv);
+	cv_destroy(&sc->sc_bus->ub_rhxfercv);
 
 	return 0;
 }

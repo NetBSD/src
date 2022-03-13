@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.14 2022/03/09 22:17:41 riastradh Exp $ */
+/* $NetBSD: usbroothub.c,v 1.15 2022/03/13 11:28:52 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.14 2022/03/09 22:17:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.15 2022/03/13 11:28:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>		/* for ostype */
@@ -368,6 +368,9 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	 */
 	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
 
+	/* Roothub xfers are serialized through the pipe.  */
+	KASSERTMSG(bus->ub_rhxfer == NULL, "rhxfer=%p", bus->ub_rhxfer);
+
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 	req = &xfer->ux_request;
 
@@ -549,19 +552,19 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 		break;
 	}
 
-	/*
-	 * XXX This needs some mechanism for concurrent
-	 * roothub_ctrl_abort to wait for ubm_rhctrl to finish.  We
-	 * can't use the bus lock because many ubm_rhctrl methods do
-	 * usb_delay_ms and many bus locks are taken in softint
-	 * context, leading to deadlock in the softclock needed to wake
-	 * up usb_delay_ms.
-	 */
+	KASSERTMSG(bus->ub_rhxfer == NULL, "rhxfer=%p", bus->ub_rhxfer);
+	bus->ub_rhxfer = xfer;
 	if (!bus->ub_usepolling)
 		mutex_exit(bus->ub_lock);
+
 	actlen = bus->ub_methods->ubm_rhctrl(bus, req, buf, buflen);
+
 	if (!bus->ub_usepolling)
 		mutex_enter(bus->ub_lock);
+	KASSERTMSG(bus->ub_rhxfer == xfer, "rhxfer=%p", bus->ub_rhxfer);
+	bus->ub_rhxfer = NULL;
+	cv_signal(&bus->ub_rhxfercv);
+
 	if (actlen < 0)
 		goto fail;
 
@@ -582,8 +585,19 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 Static void
 roothub_ctrl_abort(struct usbd_xfer *xfer)
 {
+	struct usbd_bus *bus = xfer->ux_bus;
 
-	/* Nothing to do, all transfers are synchronous. */
+	KASSERT(mutex_owned(bus->ub_lock));
+	KASSERTMSG(bus->ub_rhxfer == xfer, "rhxfer=%p", bus->ub_rhxfer);
+
+	/*
+	 * No mechanism to abort the xfer (would have to coordinate
+	 * with the bus's ubm_rhctrl to be useful, and usually at most
+	 * there's some short bounded delays of a few tens of
+	 * milliseconds), so just wait for it to complete.
+	 */
+	while (bus->ub_rhxfer == xfer)
+		cv_wait(&bus->ub_rhxfercv, bus->ub_lock);
 }
 
 /* Close the root pipe. */
