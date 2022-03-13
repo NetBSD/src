@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.31 2021/09/21 14:55:14 christos Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.32 2022/03/13 17:52:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.31 2021/09/21 14:55:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.32 2022/03/13 17:52:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -341,8 +341,13 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 	}
 
 	if ((flags & TIMER_ABSTIME) != 0) {
-		if ((tsd.tv_sec > 0 && ts->tv_sec < LLONG_MIN + tsd.tv_sec) ||
-		    (tsd.tv_sec < 0 && ts->tv_sec > LLONG_MAX + tsd.tv_sec))
+		/*
+		 * Add one to the bound to account for possible carry
+		 * from tv_nsec in timespecsub.
+		 */
+		if (tsd.tv_sec > 0 && ts->tv_sec < LLONG_MIN + tsd.tv_sec + 1)
+			return EINVAL;
+		if (tsd.tv_sec < 0 && ts->tv_sec > LLONG_MAX + tsd.tv_sec - 1)
 			return EINVAL;
 		timespecsub(ts, &tsd, ts);
 	}
