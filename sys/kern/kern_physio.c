@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.99 2021/09/16 22:19:11 andvar Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.100 2022/03/13 18:37:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.99 2021/09/16 22:19:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.100 2022/03/13 18:37:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 				 */
 				bp->b_bcount = MIN(MAXPHYS, iovp->iov_len);
 			} else {
-				bp->b_bcount = iovp->iov_len;
+				bp->b_bcount = MIN(INT_MAX, iovp->iov_len);
 			}
 			bp->b_data = iovp->iov_base;
 
