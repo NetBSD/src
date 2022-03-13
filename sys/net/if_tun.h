@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.21 2022/03/13 21:31:58 riastradh Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.22 2022/03/13 21:32:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -41,7 +41,7 @@ struct tun_softc {
 #define	TUN_RCOLL	0x0004
 #define	TUN_IASET	0x0008
 #define	TUN_DSTADDR	0x0010
-#define	TUN_RWAIT	0x0040
+#define	TUN_UNUSED0	0x0040	/* was TUN_RWAIT */
 #define	TUN_ASYNC	0x0080
 #define	TUN_NBIO	0x0100
 #define	TUN_PREPADDR	0x0200
