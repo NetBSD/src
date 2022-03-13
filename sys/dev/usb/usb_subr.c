@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.273 2022/03/13 13:18:22 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.274 2022/03/13 20:44:06 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.273 2022/03/13 13:18:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.274 2022/03/13 20:44:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -561,10 +561,10 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 	for (endpt = 0; endpt < nendpt; endpt++) {
 		DPRINTFN(10, "endpt=%jd", endpt, 0, 0, 0);
 		for (; end - p >= sizeof(*desc); p += desc->bLength) {
+			desc = (usb_descriptor_t *)p;
 			DPRINTFN(10, "p=%#jx end=%#jx len=%jd type=%jd",
 			    (uintptr_t)p, (uintptr_t)end, desc->bLength,
 			    desc->bDescriptorType);
-			desc = (usb_descriptor_t *)p;
 			if (desc->bLength < sizeof(*desc)) {
 				printf("%s: bad descriptor: too short\n",
 				    __func__);
