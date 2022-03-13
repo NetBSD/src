@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.165 2022/03/13 21:31:47 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.166 2022/03/13 21:32:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.165 2022/03/13 21:31:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.166 2022/03/13 21:32:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -211,29 +211,73 @@ tun_find_zunit(int unit)
 	return tp;
 }
 
+static void
+tun_init(struct tun_softc *tp, int unit)
+{
+
+	tp->tun_unit = unit;
+	mutex_init(&tp->tun_lock, MUTEX_DEFAULT, IPL_NET);
+	cv_init(&tp->tun_cv, "tunread");
+	selinit(&tp->tun_rsel);
+	selinit(&tp->tun_wsel);
+
+	tp->tun_osih = softint_establish(SOFTINT_CLOCK, tun_o_softintr, tp);
+	tp->tun_isih = softint_establish(SOFTINT_CLOCK, tun_i_softintr, tp);
+}
+
+static void
+tun_fini(struct tun_softc *tp)
+{
+
+	softint_disestablish(tp->tun_isih);
+	softint_disestablish(tp->tun_osih);
+
+	seldestroy(&tp->tun_wsel);
+	seldestroy(&tp->tun_rsel);
+	mutex_destroy(&tp->tun_lock);
+	cv_destroy(&tp->tun_cv);
+}
+
+static struct tun_softc *
+tun_alloc(int unit)
+{
+	struct tun_softc *tp;
+
+	tp = kmem_zalloc(sizeof(*tp), KM_SLEEP);
+	tun_init(tp, unit);
+
+	return tp;
+}
+
+static void
+tun_recycle(struct tun_softc *tp)
+{
+
+	memset(&tp->tun_if, 0, sizeof(struct ifnet)); /* XXX ??? */
+}
+
+static void
+tun_free(struct tun_softc *tp)
+{
+
+	tun_fini(tp);
+	kmem_free(tp, sizeof(*tp));
+}
+
 static int
 tun_clone_create(struct if_clone *ifc, int unit)
 {
 	struct tun_softc *tp;
 
 	if ((tp = tun_find_zunit(unit)) == NULL) {
-		tp = kmem_zalloc(sizeof(*tp), KM_SLEEP);
-
-		tp->tun_unit = unit;
-		mutex_init(&tp->tun_lock, MUTEX_DEFAULT, IPL_NET);
-		cv_init(&tp->tun_cv, "tunread");
-		selinit(&tp->tun_rsel);
-		selinit(&tp->tun_wsel);
+		tp = tun_alloc(unit);
 	} else {
-		/* Revive tunnel instance; clear ifp part */
-		(void)memset(&tp->tun_if, 0, sizeof(struct ifnet));
+		tun_recycle(tp);
 	}
 
 	if_initname(&tp->tun_if, ifc->ifc_name, unit);
 	tunattach0(tp);
 	tp->tun_flags |= TUN_INITED;
-	tp->tun_osih = softint_establish(SOFTINT_CLOCK, tun_o_softintr, tp);
-	tp->tun_isih = softint_establish(SOFTINT_CLOCK, tun_i_softintr, tp);
 
 	mutex_enter(&tun_softc_lock);
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
@@ -301,13 +345,7 @@ tun_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 
 	if (!zombie) {
-		seldestroy(&tp->tun_rsel);
-		seldestroy(&tp->tun_wsel);
-		softint_disestablish(tp->tun_osih);
-		softint_disestablish(tp->tun_isih);
-		mutex_destroy(&tp->tun_lock);
-		cv_destroy(&tp->tun_cv);
-		kmem_free(tp, sizeof(*tp));
+		tun_free(tp);
 	}
 
 	return 0;
@@ -367,13 +405,7 @@ tunclose(dev_t dev, int flag, int mode,
 
 	if ((tp = tun_find_zunit(minor(dev))) != NULL) {
 		/* interface was "destroyed" before the close */
-		seldestroy(&tp->tun_rsel);
-		seldestroy(&tp->tun_wsel);
-		softint_disestablish(tp->tun_osih);
-		softint_disestablish(tp->tun_isih);
-		mutex_destroy(&tp->tun_lock);
-		cv_destroy(&tp->tun_cv);
-		kmem_free(tp, sizeof(*tp));
+		tun_free(tp);
 		return 0;
 	}
 
