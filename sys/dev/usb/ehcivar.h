@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.49 2021/12/22 21:45:02 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.50 2022/03/13 11:29:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -166,6 +166,7 @@ typedef struct ehci_softc {
 	kmutex_t sc_intr_lock;
 	kcondvar_t sc_doorbell;
 	void *sc_doorbell_si;
+	struct lwp *sc_doorbelllwp;
 	void *sc_pcd_si;
 	struct usbd_bus sc_bus;
 	bus_space_tag_t iot;
