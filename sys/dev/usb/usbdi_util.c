@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.84 2020/06/16 17:25:56 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.85 2022/03/13 11:30:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.84 2020/06/16 17:25:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.85 2022/03/13 11:30:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -599,10 +599,11 @@ usbd_get_hid_descriptor(struct usbd_interface *ifc)
 	p = (char *)idesc + idesc->bLength;
 	end = (char *)cdesc + UGETW(cdesc->wTotalLength);
 
-	for (; p < end; p += hd->bLength) {
+	for (; end - p >= sizeof(*hd); p += hd->bLength) {
 		hd = (usb_hid_descriptor_t *)p;
-		if (p + hd->bLength <= end &&
-		    hd->bLength >= USB_HID_DESCRIPTOR_SIZE(0) &&
+		if (hd->bLength < sizeof(*hd) || hd->bLength > end - p)
+			break;
+		if (hd->bLength >= USB_HID_DESCRIPTOR_SIZE(0) &&
 		    hd->bDescriptorType == UDESC_HID)
 			return hd;
 		if (hd->bDescriptorType == UDESC_INTERFACE)
@@ -725,7 +726,7 @@ usb_desc_iter_peek(usbd_desc_iter_t *iter)
 {
 	const usb_descriptor_t *desc;
 
-	if (iter->cur + sizeof(usb_descriptor_t) > iter->end) {
+	if (iter->end - iter->cur < sizeof(usb_descriptor_t)) {
 		if (iter->cur != iter->end)
 			printf("%s: bad descriptor\n", __func__);
 		return NULL;
@@ -735,7 +736,7 @@ usb_desc_iter_peek(usbd_desc_iter_t *iter)
 		printf("%s: descriptor length too small\n", __func__);
 		return NULL;
 	}
-	if (iter->cur + desc->bLength > iter->end) {
+	if (desc->bLength > iter->end - iter->cur) {
 		printf("%s: descriptor length too large\n", __func__);
 		return NULL;
 	}
@@ -748,6 +749,7 @@ usb_desc_iter_next(usbd_desc_iter_t *iter)
 	const usb_descriptor_t *desc = usb_desc_iter_peek(iter);
 	if (desc == NULL)
 		return NULL;
+	KASSERT(desc->bLength <= iter->end - iter->cur);
 	iter->cur += desc->bLength;
 	return desc;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.236 2022/03/13 11:29:01 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.237 2022/03/13 11:30:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.236 2022/03/13 11:29:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.237 2022/03/13 11:30:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -976,10 +976,11 @@ usbd_get_no_alts(usb_config_descriptor_t *cdesc, int ifaceno)
 	usb_interface_descriptor_t *d;
 	int n;
 
-	for (n = 0; p < end; p += d->bLength) {
+	for (n = 0; end - p >= sizeof(*d); p += d->bLength) {
 		d = (usb_interface_descriptor_t *)p;
-		if (p + d->bLength <= end &&
-		    d->bDescriptorType == UDESC_INTERFACE &&
+		if (d->bLength < sizeof(*d) || d->bLength > end - p)
+			break;
+		if (d->bDescriptorType == UDESC_INTERFACE &&
 		    d->bInterfaceNumber == ifaceno)
 			n++;
 	}
