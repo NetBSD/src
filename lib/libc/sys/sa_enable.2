@@ -1,4 +1,4 @@
-.\"     $NetBSD: sa_enable.2,v 1.4 2004/03/14 23:05:09 yamt Exp $
+.\"     $NetBSD: sa_enable.2,v 1.5 2022/03/13 17:50:54 andvar Exp $
 .\"
 .\" Copyright (c)2004 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -54,7 +54,7 @@ beforehand.
 On success,
 .Fn sa_enable
 will not return to userland in the normal way.
-It returns into the upcall hander with an
+It returns into the upcall handler with an
 .Dv SA_UPCALL_NEWPROC
 upcall.
 Otherwise, a value of \-1 is returned and

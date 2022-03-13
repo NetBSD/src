@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.261 2021/04/07 02:59:01 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.262 2022/03/13 17:50:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.261 2021/04/07 02:59:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.262 2022/03/13 17:50:55 andvar Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -347,7 +347,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			 * Since we don't block interrupts here,
 			 * this can legitimately happen if we get
 			 * a TLB miss that's serviced in an interrupt
-			 * hander that happens to randomly evict the
+			 * handler that happens to randomly evict the
 			 * TLB entry we're concerned about.
 			 */
 			printf("pmap_tlb_update_addr(%p,%#"

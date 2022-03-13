@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.20 2020/02/29 11:40:06 maxv Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.21 2022/03/13 17:50:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.20 2020/02/29 11:40:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.21 2022/03/13 17:50:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -64,7 +64,7 @@ static void l2cap_qos_htob(void *, l2cap_qos_t *);
 
 /*
  * process incoming signal packets (CID 0x0001). Can contain multiple
- * requests/responses. The signal hander should clear the command from
+ * requests/responses. The signal handler should clear the command from
  * the mbuf before returning.
  */
 void

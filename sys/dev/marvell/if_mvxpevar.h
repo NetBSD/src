@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpevar.h,v 1.7 2022/02/16 22:00:56 andvar Exp $	*/
+/*	$NetBSD: if_mvxpevar.h,v 1.8 2022/03/13 17:50:55 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -393,8 +393,8 @@ struct mvxpe_softc {
 
 	/*
 	 * sc_mtx must be held by interface functions to/from
-	 * other frameworks. interrupt hander, sysctl hander,
-	 * ioctl hander, and so on.
+	 * other frameworks. interrupt handler, sysctl handler,
+	 * ioctl handler, and so on.
 	 */
 	kmutex_t sc_mtx;
 

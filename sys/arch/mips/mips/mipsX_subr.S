@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.113 2021/02/16 06:06:58 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.114 2022/03/13 17:50:55 andvar Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.113 2021/02/16 06:06:58 simonb Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.114 2022/03/13 17:50:55 andvar Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2009,7 +2009,7 @@ END(MIPSX(kern_tlb_invalid_exception))
 #endif /* (PGSHIFT & 1) == 0 */
 
 /*
- * Mark where code entered from exception hander jumptable
+ * Mark where code entered from exception handler jumptable
  * ends, for stack traceback code.
  */
 
