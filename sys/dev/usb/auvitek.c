@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.12 2020/03/14 02:35:33 christos Exp $ */
+/* $NetBSD: auvitek.c,v 1.13 2022/03/13 12:49:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.12 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.13 2022/03/13 12:49:36 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,8 +260,20 @@ static int
 auvitek_detach(device_t self, int flags)
 {
 	struct auvitek_softc *sc = device_private(self);
+	int error;
 
 	sc->sc_dying = 1;
+
+	error = config_detach_children(self, flags);
+	if (error) {
+		/*
+		 * XXX Should ask autoconf to block open with
+		 * .d_cfdriver until we're done, instead of setting
+		 * this and then rolling it back.
+		 */
+		sc->sc_dying = 0;
+		return error;
+	}
 
 	pmf_device_deregister(self);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.9 2021/08/07 16:19:16 thorpej Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.10 2022/03/13 12:49:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.9 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.10 2022/03/13 12:49:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +98,6 @@ auvitek_dtv_attach(struct auvitek_softc *sc)
 int
 auvitek_dtv_detach(struct auvitek_softc *sc, int flags)
 {
-	if (sc->sc_dtvdev != NULL) {
-		config_detach(sc->sc_dtvdev, flags);
-		sc->sc_dtvdev = NULL;
-	}
 
 	return 0;
 }
