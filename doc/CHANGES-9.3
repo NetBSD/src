@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.79 2022/02/28 16:39:22 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.80 2022/03/13 09:53:11 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1501,4 +1501,20 @@ include/math.h					1.66
 
 	Correct C99 / C++11 feature testing.
 	[gdt, ticket #1430]
+
+sys/fs/udf/udf_strat_sequential.c		1.16
+sys/fs/udf/udf_subr.c				1.160 and 1.161 via patch, 1.167
+sys/fs/udf/udf_allocation.c			1.45
+sys/fs/udf/udf_vfsops.c				1.83
+
+	UDF file system: Fix and enhance interchange with Windows10 on
+	recordable media by being bug compatible.
+	Prevent device lockup on some drives on switching from writing to
+	reading.
+	[reinoud, ticket #1431 and #1432]
+
+usr.bin/man/man.c				1.69,1.70,1.72
+
+	man(1): fix -m option so it works as documented.
+	[gutteridge, ticket #1433]
 
