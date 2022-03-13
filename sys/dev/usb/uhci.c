@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.312 2022/03/09 22:17:41 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.313 2022/03/13 11:29:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.312 2022/03/09 22:17:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.313 2022/03/13 11:29:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -638,6 +638,7 @@ uhci_detach(struct uhci_softc *sc, int flags)
 	if (rv != 0)
 		return rv;
 
+	KASSERT(sc->sc_intr_xfer == NULL);
 	callout_halt(&sc->sc_poll_handle, NULL);
 	callout_destroy(&sc->sc_poll_handle);
 
@@ -717,15 +718,12 @@ uhci_resume(device_t dv, const pmf_qual_t *qual)
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-
 	cmd = UREAD2(sc, UHCI_CMD);
-	sc->sc_bus.ub_usepolling++;
 	UWRITE2(sc, UHCI_INTR, 0);
 	uhci_globalreset(sc);
 	uhci_reset(sc);
 	if (cmd & UHCI_CMD_RS)
-		uhci_run(sc, 0, 1);
+		uhci_run(sc, 0, 0);
 
 	/* restore saved state */
 	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0));
@@ -733,23 +731,23 @@ uhci_resume(device_t dv, const pmf_qual_t *qual)
 	UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
 
 	UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force resume */
-	usb_delay_ms_locked(&sc->sc_bus, USB_RESUME_DELAY, &sc->sc_intr_lock);
+	usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 	UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE |
 	    UHCI_INTR_RIE | UHCI_INTR_IOCE | UHCI_INTR_SPIE);
 	UHCICMD(sc, UHCI_CMD_MAXP);
-	uhci_run(sc, 1, 1); /* and start traffic again */
-	usb_delay_ms_locked(&sc->sc_bus, USB_RESUME_RECOVERY, &sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling--;
-	if (sc->sc_intr_xfer != NULL)
-		callout_schedule(&sc->sc_poll_handle, sc->sc_ival);
+	uhci_run(sc, 1, 0); /* and start traffic again */
+	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 2)
 		uhci_dumpregs(sc);
 #endif
 
+	mutex_enter(&sc->sc_lock);
 	sc->sc_suspend = PWR_RESUME;
-	mutex_spin_exit(&sc->sc_intr_lock);
+	if (sc->sc_intr_xfer != NULL)
+		callout_schedule(&sc->sc_poll_handle, sc->sc_ival);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -760,7 +758,11 @@ uhci_suspend(device_t dv, const pmf_qual_t *qual)
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_lock);
+	sc->sc_suspend = PWR_SUSPEND;
+	if (sc->sc_intr_xfer != NULL)
+		callout_halt(&sc->sc_poll_handle, &sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
 
 	cmd = UREAD2(sc, UHCI_CMD);
 
@@ -768,12 +770,8 @@ uhci_suspend(device_t dv, const pmf_qual_t *qual)
 	if (uhcidebug >= 2)
 		uhci_dumpregs(sc);
 #endif
-	sc->sc_suspend = PWR_SUSPEND;
-	if (sc->sc_intr_xfer != NULL)
-		callout_halt(&sc->sc_poll_handle, &sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling++;
 
-	uhci_run(sc, 0, 1); /* stop the controller */
+	uhci_run(sc, 0, 0); /* stop the controller */
 	cmd &= ~UHCI_CMD_RS;
 
 	/* save some state if BIOS doesn't */
@@ -783,10 +781,7 @@ uhci_suspend(device_t dv, const pmf_qual_t *qual)
 	UWRITE2(sc, UHCI_INTR, 0); /* disable intrs */
 
 	UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter suspend */
-	usb_delay_ms_locked(&sc->sc_bus, USB_RESUME_WAIT, &sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling--;
-
-	mutex_spin_exit(&sc->sc_intr_lock);
+	usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 
 	return true;
 }
@@ -3855,7 +3850,8 @@ uhci_root_intr_start(struct usbd_xfer *xfer)
 	/* XXX temporary variable needed to avoid gcc3 warning */
 	ival = xfer->ux_pipe->up_endpoint->ue_edesc->bInterval;
 	sc->sc_ival = mstohz(ival);
-	callout_schedule(&sc->sc_poll_handle, sc->sc_ival);
+	if (sc->sc_suspend == PWR_RESUME)
+		callout_schedule(&sc->sc_poll_handle, sc->sc_ival);
 	sc->sc_intr_xfer = xfer;
 	xfer->ux_status = USBD_IN_PROGRESS;
 
