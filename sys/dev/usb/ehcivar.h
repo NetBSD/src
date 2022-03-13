@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.50 2022/03/13 11:29:10 riastradh Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.51 2022/03/13 11:29:21 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -162,6 +162,7 @@ struct ehci_soft_islot {
 
 typedef struct ehci_softc {
 	device_t sc_dev;
+	kmutex_t sc_rhlock;
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 	kcondvar_t sc_doorbell;

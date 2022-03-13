@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.308 2022/03/13 11:29:10 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.309 2022/03/13 11:29:21 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.308 2022/03/13 11:29:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.309 2022/03/13 11:29:21 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -412,6 +412,7 @@ ehci_init(ehci_softc_t *sc)
 	theehci = sc;
 #endif
 
+	mutex_init(&sc->sc_rhlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_doorbell, "ehcidb");
@@ -703,6 +704,7 @@ fail2:
 fail1:
 	softint_disestablish(sc->sc_doorbell_si);
 	softint_disestablish(sc->sc_pcd_si);
+	mutex_destroy(&sc->sc_rhlock);
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 
@@ -1411,6 +1413,7 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	/* XXX destroyed in ehci_pci.c as it controls ehci_intr access */
 	softint_disestablish(sc->sc_doorbell_si);
 	softint_disestablish(sc->sc_pcd_si);
+	mutex_destroy(&sc->sc_rhlock);
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 #endif
@@ -1441,9 +1444,6 @@ ehci_activate(device_t self, enum devact act)
  *
  * Note that this power handler isn't to be registered directly; the
  * bus glue needs to call out to it.
- *
- * XXX This should be serialized with ehci_roothub_ctrl's access to the
- * portsc registers.
  */
 bool
 ehci_suspend(device_t dv, const pmf_qual_t *qual)
@@ -1453,6 +1453,8 @@ ehci_suspend(device_t dv, const pmf_qual_t *qual)
 	uint32_t cmd, hcr;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
+
+	mutex_enter(&sc->sc_rhlock);
 
 	for (i = 1; i <= sc->sc_noport; i++) {
 		cmd = EOREAD4(sc, EHCI_PORTSC(i)) & ~EHCI_PS_CLEAR;
@@ -1488,6 +1490,8 @@ ehci_suspend(device_t dv, const pmf_qual_t *qual)
 	if (hcr != EHCI_STS_HCH)
 		printf("%s: config timeout\n", device_xname(dv));
 
+	mutex_exit(&sc->sc_rhlock);
+
 	return true;
 }
 
@@ -1499,6 +1503,8 @@ ehci_resume(device_t dv, const pmf_qual_t *qual)
 	uint32_t cmd, hcr;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
+
+	mutex_enter(&sc->sc_rhlock);
 
 	/* restore things in case the bios sucks */
 	EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
@@ -1544,6 +1550,8 @@ ehci_resume(device_t dv, const pmf_qual_t *qual)
 	}
 	if (hcr == EHCI_STS_HCH)
 		printf("%s: config timeout\n", device_xname(dv));
+
+	mutex_exit(&sc->sc_rhlock);
 
 	return true;
 }
@@ -2375,8 +2383,8 @@ ehci_free_sitd_chain(ehci_softc_t *sc, struct ehci_soft_sitd *sitd)
 
 /***********/
 
-Static int
-ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+static int
+ehci_roothub_ctrl_locked(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
 	ehci_softc_t *sc = EHCI_BUS2SC(bus);
@@ -2389,10 +2397,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	/*
-	 * XXX This should be serialized with ehci_suspend/resume's
-	 * access to the portsc registers.
-	 */
+	KASSERT(mutex_owned(&sc->sc_rhlock));
 
 	if (sc->sc_dying)
 		return -1;
@@ -2665,6 +2670,20 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	DPRINTF("returning %jd", totlen, 0, 0, 0);
 
 	return totlen;
+}
+
+Static int
+ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+    void *buf, int buflen)
+{
+	struct ehci_softc *sc = EHCI_BUS2SC(bus);
+	int actlen;
+
+	mutex_enter(&sc->sc_rhlock);
+	actlen = ehci_roothub_ctrl_locked(bus, req, buf, buflen);
+	mutex_exit(&sc->sc_rhlock);
+
+	return actlen;
 }
 
 /*
