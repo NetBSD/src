@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.168 2022/03/13 21:32:27 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.169 2022/03/13 21:32:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.168 2022/03/13 21:32:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.169 2022/03/13 21:32:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -334,12 +334,10 @@ tun_clone_destroy(struct ifnet *ifp)
 		tp->tun_flags &= ~TUN_RWAIT;
 		cv_broadcast(&tp->tun_cv);
 	}
-	selnotify(&tp->tun_rsel, 0, NOTE_SUBMIT);
-
-	mutex_exit(&tp->tun_lock);
-
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
+	selnotify(&tp->tun_rsel, 0, NOTE_SUBMIT);
+	mutex_exit(&tp->tun_lock);
 
 	bpf_detach(ifp);
 	if_detach(ifp);
