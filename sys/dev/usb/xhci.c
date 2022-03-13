@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.161 2022/03/13 11:29:55 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.162 2022/03/13 11:30:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.161 2022/03/13 11:29:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.162 2022/03/13 11:30:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -709,6 +709,12 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 	mutex_exit(&sc->sc_lock);
 
 	/*
+	 * Block roothub xfers which might touch portsc registers until
+	 * we're done suspending.
+	 */
+	mutex_enter(&sc->sc_rhlock);
+
+	/*
 	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.23.2:
 	 * xHCI Power Management, p. 342
 	 * https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/extensible-host-controler-interface-usb-xhci.pdf#page=342
@@ -889,7 +895,8 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 	/* Success!  */
 	ok = true;
 
-out:	return ok;
+out:	mutex_exit(&sc->sc_rhlock);
+	return ok;
 }
 
 bool
@@ -904,6 +911,12 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	KASSERT(sc->sc_suspender);
+
+	/*
+	 * Block roothub xfers which might touch portsc registers until
+	 * we're done resuming.
+	 */
+	mutex_enter(&sc->sc_rhlock);
 
 	/*
 	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.23.2:
@@ -1089,7 +1102,8 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	/* Success!  */
 	ok = true;
 
-out:	return ok;
+out:	mutex_exit(&sc->sc_rhlock);
+	return ok;
 }
 
 bool
@@ -1591,6 +1605,7 @@ xhci_init(struct xhci_softc *sc)
 
 	cv_init(&sc->sc_command_cv, "xhcicmd");
 	cv_init(&sc->sc_cmdbusy_cv, "xhcicmdq");
+	mutex_init(&sc->sc_rhlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 
@@ -3863,7 +3878,7 @@ xhci_noop(struct usbd_pipe *pipe)
  * Process root hub request.
  */
 static int
-xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+xhci_roothub_ctrl_locked(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
 	struct xhci_softc * const sc = XHCI_BUS2SC(bus);
@@ -3874,6 +3889,8 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	uint32_t v;
 
 	XHCIHIST_FUNC();
+
+	KASSERT(mutex_owned(&sc->sc_rhlock));
 
 	if (sc->sc_dying)
 		return -1;
@@ -4125,6 +4142,20 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	}
 
 	return totlen;
+}
+
+static int
+xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+    void *buf, int buflen)
+{
+	struct xhci_softc *sc = XHCI_BUS2SC(bus);
+	int actlen;
+
+	mutex_enter(&sc->sc_rhlock);
+	actlen = xhci_roothub_ctrl_locked(bus, req, buf, buflen);
+	mutex_exit(&sc->sc_rhlock);
+
+	return actlen;
 }
 
 /* root hub interrupt */
