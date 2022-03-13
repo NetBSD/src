@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.314 2022/03/13 11:29:38 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.315 2022/03/13 11:29:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.314 2022/03/13 11:29:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.315 2022/03/13 11:29:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1786,7 +1786,6 @@ uhci_run(uhci_softc_t *sc, int run)
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
 	run = run != 0;
-	mutex_spin_enter(&sc->sc_intr_lock);
 
 	DPRINTF("setting run=%jd", run, 0, 0, 0);
 	cmd = UREAD2(sc, UHCI_CMD);
@@ -1799,14 +1798,12 @@ uhci_run(uhci_softc_t *sc, int run)
 		running = !(UREAD2(sc, UHCI_STS) & UHCI_STS_HCH);
 		/* return when we've entered the state we want */
 		if (run == running) {
-			mutex_spin_exit(&sc->sc_intr_lock);
 			DPRINTF("done cmd=%#jx sts=%#jx",
 			    UREAD2(sc, UHCI_CMD), UREAD2(sc, UHCI_STS), 0, 0);
 			return USBD_NORMAL_COMPLETION;
 		}
-		usb_delay_ms_locked(&sc->sc_bus, 1, &sc->sc_intr_lock);
+		usb_delay_ms(&sc->sc_bus, 1);
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
 	printf("%s: cannot %s\n", device_xname(sc->sc_dev),
 	       run ? "start" : "stop");
 	return USBD_IOERROR;
