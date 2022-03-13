@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.136 2022/03/13 11:28:42 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.137 2022/03/13 11:28:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -181,6 +181,8 @@ struct usbd_bus {
 	/* Filled by usb driver */
 	kmutex_t	       *ub_lock;
 	struct usbd_device     *ub_roothub;
+	struct usbd_xfer       *ub_rhxfer;	/* roothub xfer in progress */
+	kcondvar_t		ub_rhxfercv;
 	uint8_t			ub_rhaddr;	/* roothub address */
 	uint8_t			ub_rhconf;	/* roothub configuration */
 	struct usbd_device     *ub_devices[USB_TOTAL_DEVICES];
