@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.97 2022/03/13 17:50:55 andvar Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.98 2022/03/13 22:18:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: locore_mips1.S,v 1.97 2022/03/13 17:50:55 andvar Exp $")
+RCSID("$NetBSD: locore_mips1.S,v 1.98 2022/03/13 22:18:56 andvar Exp $")
 
 #include "assym.h"
 
@@ -1086,7 +1086,7 @@ END(MIPSX(tlb_mod_exception))
 #endif
 
 /*
- * Mark where code entreed from exception handler jumptable
+ * Mark where code entered from exception handler jumptable
  * ends, for stack traceback code.
  */
 
