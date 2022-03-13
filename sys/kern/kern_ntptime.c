@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.62 2022/03/13 12:30:47 riastradh Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.63 2022/03/13 12:57:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.62 2022/03/13 12:30:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.63 2022/03/13 12:57:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -383,7 +383,10 @@ ntp_adjtime1(struct timex *ntv)
 		ntv->offset = L_GINT(time_offset);
 	else
 		ntv->offset = L_GINT(time_offset) / 1000; /* XXX rounding ? */
-	ntv->freq = L_GINT((time_freq / 1000LL) << 16);
+	if (time_freq < 0)
+		ntv->freq = L_GINT(-((-time_freq / 1000LL) << 16));
+	else
+		ntv->freq = L_GINT((time_freq / 1000LL) << 16);
 	ntv->maxerror = time_maxerror;
 	ntv->esterror = time_esterror;
 	ntv->status = time_status;
