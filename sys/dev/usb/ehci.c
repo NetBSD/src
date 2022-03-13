@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.307 2022/03/09 22:18:13 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.308 2022/03/13 11:29:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.307 2022/03/09 22:18:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.308 2022/03/13 11:29:10 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -816,7 +816,10 @@ ehci_doorbell(void *addr)
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	mutex_enter(&sc->sc_lock);
-	cv_broadcast(&sc->sc_doorbell);
+	if (sc->sc_doorbelllwp == NULL)
+		DPRINTF("spurious doorbell interrupt", 0, 0, 0, 0);
+	sc->sc_doorbelllwp = NULL;
+	cv_signal(&sc->sc_doorbell);
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -2220,11 +2223,16 @@ ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
  * by asking for a Async Advance Doorbell interrupt and then we wait for
  * the interrupt.
  * To make this easier we first obtain exclusive use of the doorbell.
+ *
+ * Releases the bus lock to sleep while waiting for interrupt.
  */
 Static void
 ehci_sync_hc(ehci_softc_t *sc)
 {
-	int error __diagused;
+	unsigned delta = hz;
+	unsigned starttime = getticks();
+	unsigned endtime = starttime + delta;
+	unsigned now;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -2235,22 +2243,39 @@ ehci_sync_hc(ehci_softc_t *sc)
 		return;
 	}
 
+	/*
+	 * Wait until any concurrent ehci_sync_hc has completed so we
+	 * have exclusive access to the doorbell.
+	 */
+	while (sc->sc_doorbelllwp)
+		cv_wait(&sc->sc_doorbell, &sc->sc_lock);
+	sc->sc_doorbelllwp = curlwp;
+
 	/* ask for doorbell */
 	EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) | EHCI_CMD_IAAD);
 	DPRINTF("cmd = 0x%08jx sts = 0x%08jx",
 	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
 
-	error = cv_timedwait(&sc->sc_doorbell, &sc->sc_lock, hz); /* bell wait */
+	/*
+	 * Wait for the ehci to ring our doorbell.
+	 */
+	while (sc->sc_doorbelllwp == curlwp) {
+		now = getticks();
+		if (endtime - now > delta) {
+			sc->sc_doorbelllwp = NULL;
+			cv_signal(&sc->sc_doorbell);
+			DPRINTF("doorbell timeout", 0, 0, 0, 0);
+#ifdef DIAGNOSTIC		/* XXX DIAGNOSTIC abuse, do this differently */
+			printf("ehci_sync_hc: timed out\n");
+#endif
+			break;
+		}
+		(void)cv_timedwait(&sc->sc_doorbell, &sc->sc_lock,
+		    endtime - now);
+	}
 
 	DPRINTF("cmd = 0x%08jx sts = 0x%08jx ... done",
 	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
-#ifdef DIAGNOSTIC
-	if (error == EWOULDBLOCK) {
-		printf("ehci_sync_hc: timed out\n");
-	} else if (error) {
-		printf("ehci_sync_hc: cv_timedwait: error %d\n", error);
-	}
-#endif
 }
 
 Static void
