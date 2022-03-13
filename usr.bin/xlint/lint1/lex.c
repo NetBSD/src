@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.108 2022/03/01 20:00:47 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.109 2022/03/13 14:40:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.108 2022/03/01 20:00:47 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.109 2022/03/13 14:40:36 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1529,7 +1529,7 @@ inssym(int bl, sym_t *sym)
  * level 0.
  */
 void
-cleanup(void)
+clean_up_after_error(void)
 {
 
 	symtab_remove_locals();
