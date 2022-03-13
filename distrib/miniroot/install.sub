@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.62 2021/06/19 00:54:27 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.63 2022/03/13 14:20:24 andvar Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1298,7 +1298,7 @@ get_timezone() {
 
 	#
 	# If the zoneinfo is not on the installation medium or on the
-	# installed filesystem, set TZ to GMT and return immediatly.
+	# installed filesystem, set TZ to GMT and return immediately.
 	#
 	if [ ! -e /usr/share/zoneinfo ] && [ ! -e /mnt/usr/share/zoneinfo ]; then
 		TZ=GMT
@@ -1517,7 +1517,7 @@ mount_fs()
 		# with an error condition to tell the outer
 		# later to bail.
 		if ! mount -v -t $_fstype -o async -o $_opt $_dev $_mp ; then
-			# error message displated by mount
+			# error message displayed by mount
 			exit 1
 		fi
 	done ) < $_fstab
@@ -1570,7 +1570,7 @@ unmount_fs()
 			_devs="$1 ${_devs}"
 			_mps="$2 ${_mps}"
 		done
-		echo -n "Umounting filesystems... "
+		echo -n "Unmounting filesystems... "
 		for _mp in ${_mps}; do
 			echo -n "${_mp} "
 			umount ${_mp}
