@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.22 2021/10/30 19:44:56 thorpej Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.23 2022/03/13 17:50:55 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22 2021/10/30 19:44:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.23 2022/03/13 17:50:55 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -198,7 +198,7 @@ compat_16_sys___sigreturn14(struct lwp *l,
 	/*
 	 * The trampoline hands us the context.
 	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal hander.
+	 * program jumps out of a signal handler.
 	 */
 	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
 		return (error);
