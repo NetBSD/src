@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.170 2022/03/13 21:32:43 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.171 2022/03/13 21:42:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.170 2022/03/13 21:32:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.171 2022/03/13 21:42:39 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -887,6 +887,8 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 			goto out0;
 		}
 		error = uiomove((void *)&dst, sizeof(dst), uio);
+		if (error)
+			goto out0;
 		if (dst.sa_len > sizeof(dst)) {
 			/* Duh.. */
 			int n = dst.sa_len - sizeof(dst);
@@ -904,6 +906,8 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 			goto out0;
 		}
 		error = uiomove((void *)&family, sizeof(family), uio);
+		if (error)
+			goto out0;
 		dst.sa_family = ntohl(family);
 	} else {
 #ifdef INET
@@ -939,7 +943,8 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	/* get a header mbuf */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		return ENOBUFS;
+		error = ENOBUFS;
+		goto out0;
 	}
 	mlen = MHLEN;
 
