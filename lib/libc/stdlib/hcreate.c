@@ -1,4 +1,4 @@
-/* $NetBSD: hcreate.c,v 1.12 2022/03/12 17:31:39 christos Exp $ */
+/* $NetBSD: hcreate.c,v 1.13 2022/03/13 01:44:37 kre Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: hcreate.c,v 1.12 2022/03/12 17:31:39 christos Exp $");
+__RCSID("$NetBSD: hcreate.c,v 1.13 2022/03/13 01:44:37 kre Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(lint)
@@ -124,6 +124,7 @@ hcreate_r(size_t nel, struct hsearch_data *head)
 	/* Allocate the table. */
 	head->size = nel;
 	head->filled = 0;
+	table = NULL;
 	errno = reallocarr(&table, nel, sizeof(*table));
 	if (errno)
 		return 0;
