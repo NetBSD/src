@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.61 2022/02/05 15:29:50 riastradh Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.62 2022/03/13 12:30:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.61 2022/02/05 15:29:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.62 2022/03/13 12:30:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -365,10 +365,14 @@ ntp_adjtime1(struct timex *ntv)
 #endif /* PPS_SYNC */
 	}
 	if (modes & MOD_OFFSET) {
-		if (time_status & STA_NANO)
+		if (time_status & STA_NANO) {
 			hardupdate(ntv->offset);
-		else
-			hardupdate(ntv->offset * 1000);
+		} else {
+			long offset = ntv->offset;
+			offset = MIN(offset, MAXPHASE/1000);
+			offset = MAX(offset, -MAXPHASE/1000);
+			hardupdate(offset * 1000);
+		}
 	}
 
 	/*
