@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.313 2022/03/13 11:29:31 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.314 2022/03/13 11:29:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.313 2022/03/13 11:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.314 2022/03/13 11:29:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -166,7 +166,7 @@ typedef TAILQ_HEAD(ux_completeq, uhci_xfer) ux_completeq_t;
 Static void		uhci_globalreset(uhci_softc_t *);
 Static usbd_status	uhci_portreset(uhci_softc_t*, int);
 Static void		uhci_reset(uhci_softc_t *);
-Static usbd_status	uhci_run(uhci_softc_t *, int, int);
+Static usbd_status	uhci_run(uhci_softc_t *, int);
 Static uhci_soft_td_t  *uhci_alloc_std(uhci_softc_t *);
 Static void		uhci_free_std(uhci_softc_t *, uhci_soft_td_t *);
 Static void		uhci_free_std_locked(uhci_softc_t *, uhci_soft_td_t *);
@@ -587,7 +587,7 @@ uhci_init(uhci_softc_t *sc)
 
 	DPRINTF("Enabling...", 0, 0, 0, 0);
 
-	err = uhci_run(sc, 1, 0);		/* and here we go... */
+	err = uhci_run(sc, 1);		/* and here we go... */
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE |
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
 	return err;
@@ -723,7 +723,7 @@ uhci_resume(device_t dv, const pmf_qual_t *qual)
 	uhci_globalreset(sc);
 	uhci_reset(sc);
 	if (cmd & UHCI_CMD_RS)
-		uhci_run(sc, 0, 0);
+		uhci_run(sc, 0);
 
 	/* restore saved state */
 	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma, 0));
@@ -736,7 +736,7 @@ uhci_resume(device_t dv, const pmf_qual_t *qual)
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE |
 	    UHCI_INTR_RIE | UHCI_INTR_IOCE | UHCI_INTR_SPIE);
 	UHCICMD(sc, UHCI_CMD_MAXP);
-	uhci_run(sc, 1, 0); /* and start traffic again */
+	uhci_run(sc, 1); /* and start traffic again */
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 2)
@@ -771,7 +771,7 @@ uhci_suspend(device_t dv, const pmf_qual_t *qual)
 		uhci_dumpregs(sc);
 #endif
 
-	uhci_run(sc, 0, 0); /* stop the controller */
+	uhci_run(sc, 0); /* stop the controller */
 	cmd &= ~UHCI_CMD_RS;
 
 	/* save some state if BIOS doesn't */
@@ -1778,7 +1778,7 @@ uhci_reset(uhci_softc_t *sc)
 }
 
 usbd_status
-uhci_run(uhci_softc_t *sc, int run, int locked)
+uhci_run(uhci_softc_t *sc, int run)
 {
 	int n, running;
 	uint16_t cmd;
@@ -1786,8 +1786,7 @@ uhci_run(uhci_softc_t *sc, int run, int locked)
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
 	run = run != 0;
-	if (!locked)
-		mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	DPRINTF("setting run=%jd", run, 0, 0, 0);
 	cmd = UREAD2(sc, UHCI_CMD);
@@ -1800,16 +1799,14 @@ uhci_run(uhci_softc_t *sc, int run, int locked)
 		running = !(UREAD2(sc, UHCI_STS) & UHCI_STS_HCH);
 		/* return when we've entered the state we want */
 		if (run == running) {
-			if (!locked)
-				mutex_spin_exit(&sc->sc_intr_lock);
+			mutex_spin_exit(&sc->sc_intr_lock);
 			DPRINTF("done cmd=%#jx sts=%#jx",
 			    UREAD2(sc, UHCI_CMD), UREAD2(sc, UHCI_STS), 0, 0);
 			return USBD_NORMAL_COMPLETION;
 		}
 		usb_delay_ms_locked(&sc->sc_bus, 1, &sc->sc_intr_lock);
 	}
-	if (!locked)
-		mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	printf("%s: cannot %s\n", device_xname(sc->sc_dev),
 	       run ? "start" : "stop");
 	return USBD_IOERROR;
