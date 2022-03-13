@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpbmvar.h,v 1.3 2021/09/11 21:30:46 andvar Exp $	*/
+/*	$NetBSD: mvxpbmvar.h,v 1.4 2022/03/13 17:50:55 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -100,7 +100,7 @@ struct mvxpbm_softc {
 	size_t		sc_slotsize;		/* size of bm_slots include header */
 	uint32_t	sc_chunk_count;		/* number of chunks */
 	size_t		sc_chunk_size;		/* size of packet buffer */
-	size_t		sc_chunk_header_size;	/* size of hader + padding */ 
+	size_t		sc_chunk_header_size;	/* size of header + padding */ 
 	off_t		sc_chunk_packet_offset;	/* allocate m_leading_space */
 
 	/* for software based management */

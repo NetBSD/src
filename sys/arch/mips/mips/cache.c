@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.68 2020/08/02 06:51:47 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.69 2022/03/13 17:50:55 andvar Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.68 2020/08/02 06:51:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.69 2022/03/13 17:50:55 andvar Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -711,7 +711,7 @@ primary_cache_is_2way:
 		 * virtual alias on its 8KB or 16KB primary cache
 		 * which has only 1 or 2 bit valid PIdx in 4KB page.
 		 * Actual primary cache size is ignored wrt VCE
-		 * and virtual aliases are resolved by the VCE hander,
+		 * and virtual aliases are resolved by the VCE handler,
 		 * but it's still worth to avoid unnecessary VCE by
 		 * setting alias mask and prefer mask to 32K, though
 		 * some other possible aliases (maybe caused by KSEG0

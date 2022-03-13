@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185 2021/10/09 20:00:41 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.186 2022/03/13 17:50:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2021/10/09 20:00:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.186 2022/03/13 17:50:55 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -656,7 +656,7 @@ add_sicallback(void (*function)(void *, void *), void *rock1, void *rock2)
 	 * happen immediately, or after returning to a safe enough level.
 	 *
 	 * XXX:
-	 * According to <machine/scu.h> and lev1intr() hander in locore.s,
+	 * According to <machine/scu.h> and lev1intr() handler in locore.s,
 	 * at least _ATARIHW_ machines (ATARITT and HADES?) seem to have
 	 * some hardware support which can initiate real hardware interrupt
 	 * at ipl 1 for software interrupt. But as per <machine/mtpr.h>,
