@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.264 2022/03/10 12:21:35 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.265 2022/03/13 17:21:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.264 2022/03/10 12:21:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.265 2022/03/13 17:21:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -682,6 +682,7 @@ struct lwp *
 proc_find_lwp(proc_t *p, pid_t pid)
 {
 	struct pid_table *pt;
+	unsigned pt_mask;
 	struct lwp *l = NULL;
 	uintptr_t slot;
 	int s;
@@ -689,13 +690,22 @@ proc_find_lwp(proc_t *p, pid_t pid)
 	KASSERT(mutex_owned(p->p_lock));
 
 	/*
-	 * Look in the pid_table.  This is done unlocked inside a pserialize
-	 * read section covering pid_table's memory allocation only, so take
-	 * care to read the slot atomically and only once.  This issues a
-	 * memory barrier for dependent loads on alpha.
+	 * Look in the pid_table.  This is done unlocked inside a
+	 * pserialize read section covering pid_table's memory
+	 * allocation only, so take care to read things in the correct
+	 * order:
+	 *
+	 * 1. First read the table mask -- this only ever increases, in
+	 *    expand_pid_table, so a stale value is safely
+	 *    conservative.
+	 *
+	 * 2. Next read the pid table -- this is always set _before_
+	 *    the mask increases, so if we see a new table and stale
+	 *    mask, the mask is still valid for the table.
 	 */
 	s = pserialize_read_enter();
-	pt = &atomic_load_consume(&pid_table)[pid & pid_tbl_mask];
+	pt_mask = atomic_load_acquire(&pid_tbl_mask);
+	pt = &atomic_load_consume(&pid_table)[pid & pt_mask];
 	slot = atomic_load_consume(&pt->pt_slot);
 	if (__predict_false(!PT_IS_LWP(slot))) {
 		pserialize_read_exit(s);
@@ -742,18 +752,28 @@ struct lwp *
 proc_find_lwp_unlocked(proc_t *p, pid_t pid)
 {
 	struct pid_table *pt;
+	unsigned pt_mask;
 	struct lwp *l = NULL;
 	uintptr_t slot;
 
 	KASSERT(pserialize_in_read_section());
 
 	/*
-	 * Look in the pid_table.  This is done unlocked inside a pserialize
-	 * read section covering pid_table's memory allocation only, so take
-	 * care to read the slot atomically and only once.  This issues a
-	 * memory barrier for dependent loads on alpha.
+	 * Look in the pid_table.  This is done unlocked inside a
+	 * pserialize read section covering pid_table's memory
+	 * allocation only, so take care to read things in the correct
+	 * order:
+	 *
+	 * 1. First read the table mask -- this only ever increases, in
+	 *    expand_pid_table, so a stale value is safely
+	 *    conservative.
+	 *
+	 * 2. Next read the pid table -- this is always set _before_
+	 *    the mask increases, so if we see a new table and stale
+	 *    mask, the mask is still valid for the table.
 	 */
-	pt = &atomic_load_consume(&pid_table)[pid & pid_tbl_mask];
+	pt_mask = atomic_load_acquire(&pid_tbl_mask);
+	pt = &atomic_load_consume(&pid_table)[pid & pt_mask];
 	slot = atomic_load_consume(&pt->pt_slot);
 	if (__predict_false(!PT_IS_LWP(slot))) {
 		return NULL;
@@ -1004,7 +1024,8 @@ expand_pid_table(void)
 	tsz = pt_size * sizeof(struct pid_table);
 	n_pt = pid_table;
 	atomic_store_release(&pid_table, new_pt);
-	pid_tbl_mask = new_pt_mask;
+	KASSERT(new_pt_mask >= pid_tbl_mask);
+	atomic_store_release(&pid_tbl_mask, new_pt_mask);
 
 	/*
 	 * pid_max starts as PID_MAX (= 30000), once we have 16384
@@ -1182,6 +1203,8 @@ static void __noinline
 proc_free_pid_internal(pid_t pid, uintptr_t type __diagused)
 {
 	struct pid_table *pt;
+
+	KASSERT(mutex_owned(&proc_lock));
 
 	pt = &pid_table[pid & pid_tbl_mask];
 
