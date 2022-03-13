@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.109 2022/03/13 14:40:36 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.110 2022/03/13 14:49:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.109 2022/03/13 14:40:36 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.110 2022/03/13 14:49:18 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -326,7 +326,7 @@ struct syms {
 static void
 syms_add(struct syms *syms, const sym_t *sym)
 {
-	while (syms->len + 1 >= syms->cap) {
+	while (syms->len >= syms->cap) {
 		syms->cap *= 2;
 		syms->items = xrealloc(syms->items,
 		    syms->cap * sizeof(syms->items[0]));
