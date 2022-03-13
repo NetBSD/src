@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.164 2021/09/26 15:58:33 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.165 2022/03/13 21:31:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.164 2021/09/26 15:58:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.165 2022/03/13 21:31:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -372,6 +372,7 @@ tunclose(dev_t dev, int flag, int mode,
 		softint_disestablish(tp->tun_osih);
 		softint_disestablish(tp->tun_isih);
 		mutex_destroy(&tp->tun_lock);
+		cv_destroy(&tp->tun_cv);
 		kmem_free(tp, sizeof(*tp));
 		return 0;
 	}
