@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.73 2021/12/22 21:45:02 skrll Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.74 2022/03/13 11:29:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.73 2021/12/22 21:45:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.74 2022/03/13 11:29:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,6 +325,7 @@ ehci_pci_detach(device_t self, int flags)
 #if 1
 	/* XXX created in ehci.c */
 	if (sc->sc_init_state >= EHCI_INIT_INITED) {
+		mutex_destroy(&sc->sc.sc_rhlock);
 		mutex_destroy(&sc->sc.sc_lock);
 		mutex_destroy(&sc->sc.sc_intr_lock);
 		softint_disestablish(sc->sc.sc_doorbell_si);
