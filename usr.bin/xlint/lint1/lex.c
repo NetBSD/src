@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.112 2022/03/13 15:17:08 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.113 2022/03/13 15:20:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.112 2022/03/13 15:17:08 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.113 2022/03/13 15:20:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -775,9 +775,7 @@ lex_operator(int t, op_t o)
 	return t;
 }
 
-/*
- * Called if lex found a leading \'.
- */
+/* Called if lex found a leading "'". */
 int
 lex_character_constant(void)
 {
@@ -1368,17 +1366,16 @@ lex_unknown_character(int c)
 }
 
 /*
- * As noted above, the scanner does not create new symbol table entries
- * for symbols it cannot find in the symbol table. This is to avoid
- * putting undeclared symbols into the symbol table if a syntax error
- * occurs.
+ * The scanner does not create new symbol table entries for symbols it cannot
+ * find in the symbol table. This is to avoid putting undeclared symbols into
+ * the symbol table if a syntax error occurs.
  *
- * getsym() is called as soon as it is probably ok to put the symbol in the
+ * getsym is called as soon as it is probably ok to put the symbol in the
  * symbol table. It is still possible that symbols are put in the symbol
  * table that are not completely declared due to syntax errors. To avoid too
- * many problems in this case, symbols get type 'int' in getsym().
+ * many problems in this case, symbols get type 'int' in getsym.
  *
- * XXX calls to getsym() should be delayed until decl1*() is called.
+ * XXX calls to getsym should be delayed until declare_1_* is called.
  */
 sym_t *
 getsym(sbuf_t *sb)
@@ -1490,14 +1487,15 @@ rmsym(sym_t *sym)
 }
 
 /*
- * Remove a list of symbols declared at one level from the symbol
- * table.
+ * Remove all symbols from the symbol table that have the same level as the
+ * given symbol.
  */
 void
 rmsyms(sym_t *syms)
 {
 	sym_t	*sym;
 
+	/* Note the use of s_level_next instead of s_symtab_next. */
 	for (sym = syms; sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level != -1) {
 			debug_step("rmsyms '%s' %s '%s'",
@@ -1513,15 +1511,22 @@ rmsyms(sym_t *syms)
  * Put a symbol into the symbol table.
  */
 void
-inssym(int bl, sym_t *sym)
+inssym(int level, sym_t *sym)
 {
 
 	debug_step("inssym '%s' %s '%s'",
 	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
 	symtab_add(sym);
-	sym->s_block_level = bl;
-	lint_assert(sym->s_symtab_next == NULL ||
-		    sym->s_block_level >= sym->s_symtab_next->s_block_level);
+	sym->s_block_level = level;
+
+	/*
+	 * Placing the inner symbols to the beginning of the list ensures
+	 * that these symbols are preferred over symbols from the outer
+	 * blocks that happen to have the same name.
+	 */
+	lint_assert(sym->s_symtab_next != NULL
+	    ? sym->s_block_level >= sym->s_symtab_next->s_block_level
+	    : true);
 }
 
 /*
@@ -1541,9 +1546,7 @@ clean_up_after_error(void)
 		level_free_all(i);
 }
 
-/*
- * Create a new symbol with the name of an existing symbol.
- */
+/* Create a new symbol with the same name as an existing symbol. */
 sym_t *
 pushdown(const sym_t *sym)
 {
