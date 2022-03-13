@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.212 2022/03/12 16:46:57 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.213 2022/03/13 12:21:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.212 2022/03/12 16:46:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.213 2022/03/13 12:21:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -435,8 +435,14 @@ again:
 		if (flags & TIMER_ABSTIME) {
 			timespecsub(rqt, &rmtend, t);
 		} else {
-			timespecsub(&rmtend, &rmtstart, t);
-			timespecsub(rqt, t, t);
+			if (timespeccmp(&rmtend, &rmtstart, <))
+				timespecclear(t); /* clock wound back */
+			else
+				timespecsub(&rmtend, &rmtstart, t);
+			if (timespeccmp(rqt, t, <))
+				timespecclear(t);
+			else
+				timespecsub(rqt, t, t);
 		}
 		if (t->tv_sec < 0)
 			timespecclear(t);
