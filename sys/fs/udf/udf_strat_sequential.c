@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.15 2016/05/24 09:55:57 reinoud Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.15.22.1 2022/03/13 09:44:33 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.15 2016/05/24 09:55:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.15.22.1 2022/03/13 09:44:33 martin Exp $");
 #endif /* not lint */
 
 
@@ -549,6 +549,8 @@ udf_doshedule(struct udf_mount *ump)
 	if (new_queue != priv->cur_queue) {
 		DPRINTF(SHEDULE, ("switching from %d to %d\n",
 			priv->cur_queue, new_queue));
+		if (new_queue == UDF_SHED_READING)
+			udf_mmc_synchronise_caches(ump);
 	}
 
 	priv->cur_queue = new_queue;
