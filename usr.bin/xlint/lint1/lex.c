@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.110 2022/03/13 14:49:18 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.111 2022/03/13 15:08:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.110 2022/03/13 14:49:18 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.111 2022/03/13 15:08:41 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -339,9 +339,7 @@ debug_symtab(void)
 {
 	struct syms syms = { xcalloc(64, sizeof(syms.items[0])), 0, 64 };
 
-	for (int level = 0;; level++) {
-		debug_printf("symbol table level %d\n", level);
-
+	for (int level = -1;; level++) {
 		bool more = false;
 		size_t n = sizeof(symtab) / sizeof(symtab[0]);
 
@@ -357,12 +355,17 @@ debug_symtab(void)
 			}
 		}
 
-		debug_indent_inc();
-		qsort(syms.items, syms.len, sizeof(syms.items[0]),
-		    sym_by_name);
-		for (size_t i = 0; i < syms.len; i++)
-			debug_sym(syms.items[i]);
-		debug_indent_dec();
+		if (syms.len > 0) {
+			debug_printf("symbol table level %d\n", level);
+			debug_indent_inc();
+			qsort(syms.items, syms.len, sizeof(syms.items[0]),
+			    sym_by_name);
+			for (size_t i = 0; i < syms.len; i++)
+				debug_sym(syms.items[i]);
+			debug_indent_dec();
+
+			lint_assert(level != -1);
+		}
 
 		if (!more)
 			break;
