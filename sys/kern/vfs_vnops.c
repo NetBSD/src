@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.224 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.225 2022/03/13 13:52:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.224 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.225 2022/03/13 13:52:53 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -1117,6 +1117,8 @@ static int
 vn_seek(struct file *fp, off_t delta, int whence, off_t *newoffp,
     int flags)
 {
+	const off_t OFF_MIN = __type_min(off_t);
+	const off_t OFF_MAX = __type_max(off_t);
 	kauth_cred_t cred = fp->f_cred;
 	off_t oldoff, newoff;
 	struct vnode *vp = fp->f_vnode;
@@ -1132,13 +1134,29 @@ vn_seek(struct file *fp, off_t delta, int whence, off_t *newoffp,
 	oldoff = fp->f_offset;
 	switch (whence) {
 	case SEEK_CUR:
-		newoff = oldoff + delta; /* XXX arithmetic overflow */
+		if (delta > 0) {
+			if (oldoff > 0 && delta > OFF_MAX - oldoff) {
+				newoff = OFF_MAX;
+				break;
+			}
+		} else {
+			if (oldoff < 0 && delta < OFF_MIN - oldoff) {
+				newoff = OFF_MIN;
+				break;
+			}
+		}
+		newoff = oldoff + delta;
 		break;
 	case SEEK_END:
 		error = VOP_GETATTR(vp, &vattr, cred);
 		if (error)
 			goto out;
-		newoff = delta + vattr.va_size; /* XXX arithmetic overflow */
+		if (vattr.va_size > OFF_MAX ||
+		    delta > OFF_MAX - (off_t)vattr.va_size) {
+			newoff = OFF_MAX;
+			break;
+		}
+		newoff = delta + vattr.va_size;
 		break;
 	case SEEK_SET:
 		newoff = delta;
