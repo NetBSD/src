@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.235 2022/03/13 11:28:42 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.236 2022/03/13 11:29:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.235 2022/03/13 11:28:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.236 2022/03/13 11:29:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1506,7 +1506,11 @@ usbd_get_string0(struct usbd_device *dev, int si, char *buf, int unicode)
  *	in a host controller interrupt handler.
  *
  *	Caller must either hold the bus lock or have the bus in polling
- *	mode.
+ *	mode.  If this succeeds, caller must proceed to call
+ *	usb_complete_transfer under the bus lock or with polling
+ *	enabled -- must not release and reacquire the bus lock in the
+ *	meantime.  Failing to heed this rule may lead to catastrophe
+ *	with abort or timeout.
  */
 bool
 usbd_xfer_trycomplete(struct usbd_xfer *xfer)
