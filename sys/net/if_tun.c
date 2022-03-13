@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.169 2022/03/13 21:32:35 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.170 2022/03/13 21:32:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.169 2022/03/13 21:32:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.170 2022/03/13 21:32:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -330,10 +330,7 @@ tun_clone_destroy(struct ifnet *ifp)
 	}
 	mutex_exit(&tun_softc_lock);
 
-	if (tp->tun_flags & TUN_RWAIT) {
-		tp->tun_flags &= ~TUN_RWAIT;
-		cv_broadcast(&tp->tun_cv);
-	}
+	cv_broadcast(&tp->tun_cv);
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
 	selnotify(&tp->tun_rsel, 0, NOTE_SUBMIT);
@@ -654,15 +651,10 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	}
 
 	mutex_enter(&tp->tun_lock);
-	if (tp->tun_flags & TUN_RWAIT) {
-		tp->tun_flags &= ~TUN_RWAIT;
-		cv_broadcast(&tp->tun_cv);
-	}
+	cv_broadcast(&tp->tun_cv);
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		softint_schedule(tp->tun_isih);
-
 	selnotify(&tp->tun_rsel, 0, NOTE_SUBMIT);
-
 	mutex_exit(&tp->tun_lock);
 out:
 	if (error && m0)
@@ -823,8 +815,6 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 		goto out;
 	}
 
-	tp->tun_flags &= ~TUN_RWAIT;
-
 	do {
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0) {
@@ -832,7 +822,6 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 				error = EWOULDBLOCK;
 				goto out;
 			}
-			tp->tun_flags |= TUN_RWAIT;
 			if (cv_wait_sig(&tp->tun_cv, &tp->tun_lock)) {
 				error = EINTR;
 				goto out;
@@ -1024,10 +1013,7 @@ tunstart(struct ifnet *ifp)
 
 	mutex_enter(&tp->tun_lock);
 	if (!IF_IS_EMPTY(&ifp->if_snd)) {
-		if (tp->tun_flags & TUN_RWAIT) {
-			tp->tun_flags &= ~TUN_RWAIT;
-			cv_broadcast(&tp->tun_cv);
-		}
+		cv_broadcast(&tp->tun_cv);
 		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 			softint_schedule(tp->tun_osih);
 
