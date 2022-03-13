@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.4 2020/01/01 09:40:17 maxv Exp $	*/
+/*	$NetBSD: hid.c,v 1.5 2022/03/13 11:35:47 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.4 2020/01/01 09:40:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.5 2022/03/13 11:35:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -150,7 +150,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 	for (;;) {
 		p = s->p;
 
-		if (p + 1 > s->end)
+		if (s->end - p < 1)
 			return 0;
 		bSize = *p++;
 
@@ -172,7 +172,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		}
 
 		data = p;
-		if (p + bSize > s->end)
+		if (bSize > s->end - p)
 			return 0;
 		p += bSize;
 
