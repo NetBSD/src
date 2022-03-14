@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.12 2020/07/22 17:23:52 riastradh Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.13 2022/03/14 06:40:12 mlelstv Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -50,6 +50,7 @@ struct pool_cache;
 #define BRCM_CC_43340_CHIP_ID		43340
 #define BRCM_CC_43341_CHIP_ID		43341
 #define BRCM_CC_43362_CHIP_ID		43362
+#define BRCM_CC_43364_CHIP_ID		43364
 #define BRCM_CC_4335_CHIP_ID		0x4335
 #define BRCM_CC_4339_CHIP_ID		0x4339
 #define BRCM_CC_43430_CHIP_ID		43430
@@ -103,7 +104,9 @@ struct bwfm_firmware_selector {
 #define	BWFM_FILETYPE_UCODE	0
 #define	BWFM_FILETYPE_NVRAM	1
 #define	BWFM_FILETYPE_CLM	2
-#define	BWFM_NFILETYPES		3
+#define	BWFM_FILETYPE_TXCAP	3
+#define	BWFM_FILETYPE_CAL	4
+#define	BWFM_NFILETYPES		5
 
 struct bwfm_firmware_context {
 	/* inputs */
@@ -235,6 +238,13 @@ struct bwfm_softc {
 		struct bwfm_bss_info bss_info;
 		uint8_t padding[BWFM_BSS_INFO_BUFLEN];
 	}			sc_bss_buf;
+
+	uint8_t			*sc_clm;
+	size_t			sc_clmsize;
+	uint8_t			*sc_txcap;
+	size_t			sc_txcapsize;
+	uint8_t			*sc_cal;
+	size_t			sc_calsize;
 };
 
 void bwfm_attach(struct bwfm_softc *);
