@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_add_arange.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_add_arange.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_add_arange.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_add_arange.3 3961 2022-03-12 15:13:22Z jkoshy
 .\"
 .Dd September 18, 2011
 .Dt DWARF_ADD_ARANGE 3
@@ -61,41 +61,41 @@ Function
 adds an address range entry to a producer instance.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3
 or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar start
+.Fa start
 specifies the relocatable start address of the address range.
 .Pp
 Argument
-.Ar length
+.Fa length
 specifies the length of the address range.
 .Pp
 Argument
-.Ar symbol_index
+.Fa symbol_index
 specifies the ELF symbol index of the first symbol to be used for
 relocation.
 .Pp
 Argument
-.Ar end_symbol_index
+.Fa end_symbol_index
 specifies the ELF symbol index of the second symbol to be used for
 relocation.
 .Bl -bullet
 .It
 If argument
-.Ar end_symbol_index
+.Fa end_symbol_index
 is not 0, the
 .Dv DW_DLC_SYMBOLIC_RELOCATIONS
 flag should have been set on the DWARF producer instance.
 The address value specified by argument
-.Ar start
+.Fa start
 will be treated as an offset value from the first symbol,
 and the argument
-.Ar offset_from_end_symbol
+.Fa offset_from_end_symbol
 should hold an offset value from the second symbol.
 Application code can retrieve the relocation entries for the
 symbol pair by calling function
@@ -106,16 +106,17 @@ and the relocation entry for the second symbol will have type
 .Dv dwarf_drt_second_of_length_pair .
 .It
 If argument
-.Ar end_symbol_index
+.Fa end_symbol_index
 is 0, argument
-.Ar offset_from_end_symbol
+.Fa offset_from_end_symbol
 will be ignored and only one symbol is used for relocation.
 .El
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 Function
 .Fn dwarf_add_arange
@@ -128,17 +129,18 @@ and supports only one relocation symbol.
 On success, these functions return a non-zero value.
 In case of an error, these functions return 0 and set
 the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 These functions can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar dbg
-was NULL.
+.Fa dbg
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar end_symbol_index
+.Fa end_symbol_index
 was non-zero, but the flag
 .Dv DW_DLC_SYMBOLIC_RELOCATIONS
 was not set on the producer instance.

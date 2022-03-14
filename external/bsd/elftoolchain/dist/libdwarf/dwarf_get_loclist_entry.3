@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_loclist_entry.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_loclist_entry.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_loclist_entry.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_loclist_entry.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd July 6, 2011
 .Dt DWARF_GET_LOCLIST_ENTRY 3
@@ -54,48 +54,49 @@ retrieves a location list entry from the DWARF section
 .Dq ".debug_loc" .
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF debug context allocated using
 .Xr dwarf_init 3 .
 .Pp
 Argument
-.Ar offset
+.Fa offset
 is an offset, relative to the
 .Dq ".debug_loc"
 section, to the start of the desired location list entry.
 .Pp
 Argument
-.Ar hipc
+.Fa hipc
 should point to a location which will hold the offset, relative to the
 base address of the location list entry, of the highest program
 counter value for the entry.
 .Pp
 Argument
-.Ar lowpc
+.Fa lowpc
 should point to a location which will hold the offset, relative to the
 base address of the location list entry, of the lowest program counter
 value for the entry.
 .Pp
 Argument
-.Ar data
+.Fa data
 should point to a location which will be set to a pointer to the location
 list data.
 .Pp
 Argument
-.Ar entry_len
+.Fa entry_len
 should point to a location which will hold the length in bytes of the
 location list data returned in argument
-.Ar data .
+.Fa data .
 .Pp
 Argument
-.Ar next_entry
+.Fa next_entry
 should point to a location which will hold the offset of the next
 location list entry.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_loclist_entry
@@ -105,11 +106,11 @@ when it succeeds.
 It returns
 .Dv DW_DLV_NO_ENTRY
 if there is no location list at the specified offset
-.Ar offset .
+.Fa offset .
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To iterate through all the location list entries in the
 .Dq ".debug_loc"
@@ -138,17 +139,18 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg ,
-.Ar hipc ,
-.Ar lopc ,
-.Ar data ,
-.Ar entry_len
+.Fa dbg ,
+.Fa hipc ,
+.Fa lopc ,
+.Fa data ,
+.Fa entry_len
 or
-.Ar next_entry
-was NULL.
+.Fa next_entry
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 There is no location list at the specified offset
-.Ar offset .
+.Fa offset .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_section_bytes.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_section_bytes.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_section_bytes.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_section_bytes.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd August 26, 2011
 .Dt DWARF_GET_SECTION_BYTES 3
@@ -61,7 +61,7 @@ The total number of sections generated is returned by the function
 .Xr dwarf_transform_to_disk_form 3 .
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using the
 functions
 .Xr dwarf_producer_init 3
@@ -69,23 +69,24 @@ or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar dwarf_section
+.Fa dwarf_section
 is currently ignored.
 .Pp
 Argument
-.Ar elf_section_index
+.Fa elf_section_index
 should point to a location which will be set to the section index value
 of the returned ELF section.
 .Pp
 Argument
-.Ar length
+.Fa length
 should point to a location which will hold the length in bytes of the
 returned ELF section.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Ss Memory Management
 The memory areas used for the returned ELF section byte streams should
 be freed using the function
@@ -96,8 +97,10 @@ On success, function
 returns a pointer to a ELF section byte stream.
 In case of an error, function
 .Fn dwarf_get_section_bytes
-will return NULL and set the argument
-.Ar err .
+will return
+.Dv NULL
+and set the argument
+.Fa err .
 .Sh EXAMPLES
 To generate and retrieve ELF section byte streams, use:
 .Bd -literal -offset indent
@@ -140,11 +143,12 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg ,
-.Ar elf_section_index ,
+.Fa dbg ,
+.Fa elf_section_index ,
 or
-.Ar length
-was NULL.
+.Fa length
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 There were no more ELF sections to retrieve, or the function was
 called before a call to

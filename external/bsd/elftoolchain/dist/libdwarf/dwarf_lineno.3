@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_lineno.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_lineno.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_lineno.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_lineno.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd February 5, 2011
 .Dt DWARF_LINENO 3
@@ -94,44 +94,45 @@
 .Sh DESCRIPTION
 These functions retrieve specific line information associated with
 the line descriptor specified by argument
-.Ar ln ,
+.Fa ln ,
 and stores it in the location pointed to by argument
-.Ar ret .
+.Fa ret .
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 Function
 .Fn dwarf_lineaddr
 stores the program address corresponding to the source line specified
 in argument
-.Ar ln
+.Fa ln
 into the location pointed to by argument
-.Ar ret .
+.Fa ret .
 .Pp
 Function
 .Fn dwarf_linebeginstatement
 sets the location pointed to by argument
-.Ar ret
+.Fa ret
 to 1 if the source line specified by the line descriptor
-.Ar ln
+.Fa ln
 is the beginning of a statement, or to 0 otherwise.
 .Pp
 Function
 .Fn dwarf_lineblock
 sets the location pointed to by argument
-.Ar ret
+.Fa ret
 to 1 if the source line specified by the line descriptor
-.Ar ln
+.Fa ln
 is the beginning of a basic block, or to 0 otherwise.
 .Pp
 Function
 .Fn dwarf_lineendsequence
 sets the location pointed to by argument
-.Ar ret
+.Fa ret
 to 1 if the program address associated with the line descriptor
-.Ar ln
+.Fa ln
 is the address immediately following the end of a sequence of target
 machine instructions, or to 0 otherwise.
 .Pp
@@ -139,16 +140,16 @@ Function
 .Fn dwarf_lineno
 stores the line number of the source line associated with the line
 descriptor
-.Ar ln
+.Fa ln
 into the location pointed to by argument
-.Ar ret .
+.Fa ret .
 .Pp
 Function
 .Fn dwarf_lineoff
 stores the column number within a line associated with descriptor
-.Ar ln
+.Fa ln
 into the location pointed to by argument
-.Ar ret .
+.Fa ret .
 The retrieved column numbers are 1-based, with the value -1 indicating
 that column number information was not available.
 .Pp
@@ -156,9 +157,9 @@ Function
 .Fn dwarf_linesrc
 stores a pointer to a NUL-terminated string containing the source file
 name associated with line descriptor
-.Ar ln
+.Fa ln
 into the location pointed to by argument
-.Ar ret .
+.Fa ret .
 The full path of the source file is returned if possible.
 The memory used for the source file name string is managed by the DWARF(3)
 library and should not be directly freed by application code.
@@ -169,9 +170,9 @@ to indicate that the string should be freed.
 Function
 .Fn dwarf_line_srcfileno
 stores the index of the source file associated with the line descriptor
-.Ar ln
+.Fa ln
 in the location pointed to by argument
-.Ar ret .
+.Fa ret .
 The returned value is 1-based index into the array of source file
 names returned by
 .Xr dwarf_srcfiles 3 .
@@ -181,7 +182,7 @@ On success, these functions returns
 In case of an error, they return
 .Dv DW_DLV_ERROR
 and set the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 These functions may fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_LINE_FILE_NUM_BAD"
@@ -190,10 +191,11 @@ Either of the arguments
 .Va ln
 or
 .Va ret
-was NULL.
+was
+.Dv NULL .
 .It Bq Er DW_DLE_LINE_FILE_NUM_BAD
 The source file name associated with the line descriptor
-.Ar ln
+.Fa ln
 could not be retrieved by function
 .Fn dwarf_linesrc .
 .El

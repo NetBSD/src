@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_relocation_info.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_relocation_info.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_relocation_info.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_relocation_info.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd September 3, 2011
 .Dt DWARF_GET_RELOCATION_INFO 3
@@ -60,7 +60,7 @@ by this function may be obtained by calling function
 .Xr dwarf_get_relocation_info_count 3 .
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3 in sequence.
 or
@@ -70,30 +70,31 @@ The
 flag should have been set on the DWARF producer instance.
 .Pp
 Argument
-.Ar elf_section_index
+.Fa elf_section_index
 should point to a location which will be set to the ELF section index
 of the relocation section to which the retrieved relocation array
 belongs.
 .Pp
 Argument
-.Ar elf_section_link
+.Fa elf_section_link
 should point to a location which will be set to the section index of
 the ELF section to which the retrieved relocation array applies.
 .Pp
 Argument
-.Ar reloc_entry_count
+.Fa reloc_entry_count
 should point to a location which will be set to the total number of
 relocation entries contained in the relocation array.
 .Pp
 Argument
-.Ar reloc_buf
+.Fa reloc_buf
 should point to a location which will be set to a pointer to the
 retrieved array of relocation entries.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 The retrieved relocation entries are described using structure
 .Vt Dwarf_Relocation_Data_s ,
@@ -148,7 +149,7 @@ In case of an error, function
 returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To generate relocation entries and retrieve them, use:
 .Bd -literal -offset indent
@@ -201,13 +202,14 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg ,
-.Ar elf_section_index ,
-.Ar elf_section_link ,
-.Ar reloc_entry_count
+.Fa dbg ,
+.Fa elf_section_index ,
+.Fa elf_section_link ,
+.Fa reloc_entry_count
 or
-.Ar reloc_buf
-was NULL.
+.Fa reloc_buf
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 There were no more ELF relocation arrays to retrieve.
 .It Bq Er DW_DLE_NO_ENTRY

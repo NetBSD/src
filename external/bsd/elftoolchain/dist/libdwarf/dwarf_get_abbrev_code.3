@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_abbrev_code.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_abbrev_code.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_abbrev_code.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_abbrev_code.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd March 13, 2011
 .Dt DWARF_GET_ABBREV_CODE 3
@@ -47,17 +47,18 @@ Function
 .Fn dwarf_get_abbrev_code
 retrieves the abbreviation code for the abbreviation entry descriptor
 referenced by argument
-.Ar abbrev .
+.Fa abbrev .
 .Pp
 Argument
-.Ar ret
+.Fa ret
 should point to a location which will hold the returned
 abbreviation code.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_abbrev_code
@@ -67,7 +68,7 @@ when it succeeds.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_get_abbrev_code
@@ -75,10 +76,11 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Either of arguments
-.Ar abbrev
+.Fa abbrev
 or
-.Ar ret
-was NULL.
+.Fa ret
+was
+.Dv NULL .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_producer_set_isa.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_producer_set_isa.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Joseph Koshy
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_producer_set_isa.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_producer_set_isa.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd September 29, 2011
 .Dt DWARF_PRODUCER_SET_ISA 3
@@ -48,7 +48,7 @@ The function
 sets the instruction set architecture for a DWARF producer instance.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using one of
 the functions
 .Xr dwarf_producer_init 3
@@ -56,7 +56,7 @@ or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar isa
+.Fa isa
 specifies the desired instruction set architecture.
 Legal values for this argument are those defined by the
 .Vt "enum Dwarf_ISA"
@@ -64,9 +64,10 @@ enumeration defined in the header file
 .In libdwarf.h .
 .Pp
 If the argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 On success, the function
 .Fn dwarf_producer_set_isa
@@ -75,7 +76,7 @@ returns
 In case of an error, this function returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh COMPATIBILITY
 The
 .Fn dwarf_producer_set_isa
@@ -87,11 +88,12 @@ function can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 The argument
-.Ar dbg
-was NULL.
+.Fa dbg
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 The argument
-.Ar isa
+.Fa isa
 was invalid.
 .El
 .Sh SEE ALSO

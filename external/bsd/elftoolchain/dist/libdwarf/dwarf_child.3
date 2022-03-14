@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_child.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_child.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010,2014 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_child.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_child.3 3961 2022-03-12 15:13:22Z jkoshy
 .\"
 .Dd December 21, 2014
 .Dt DWARF_CHILD 3
@@ -92,19 +92,21 @@ opaque type.
 Function
 .Fn dwarf_child
 retrieves the child of descriptor denoted by argument
-.Ar die ,
+.Fa die ,
 and stores it in the location pointed to by argument
-.Ar ret_die .
+.Fa ret_die .
 .Pp
 Function
 .Fn dwarf_siblingof
 retrieves the sibling of the descriptor denoted by argument
-.Ar die ,
+.Fa die ,
 and stores it in the location pointed to by argument
-.Ar ret_die .
+.Fa ret_die .
 If argument
-.Ar die
-is NULL, the first debugging information entry descriptor for the
+.Fa die
+is
+.Dv NULL ,
+the first debugging information entry descriptor for the
 current compilation unit will be returned.
 This function and function
 .Fn dwarf_child
@@ -118,22 +120,22 @@ is identical to the function
 except that it can retrieve the sibling descriptor from either the
 current compilation unit or type unit.
 If argument
-.Ar is_info
+.Fa is_info
 is non-zero, the function behaves identically to function
 .Fn dwarf_siblingof .
 If argument
-.Ar is_info
+.Fa is_info
 is zero, the descriptor referred by argument
-.Ar die
+.Fa die
 should be associated with a debugging information entry in the
 type unit.
 The function will store the sibling of the descriptor in the location
 pointed to by argument
-.Ar ret_die .
+.Fa ret_die .
 If argument
-.Ar is_info
+.Fa is_info
 is zero and argument
-.Ar die
+.Fa die
 is
 .Dv NULL ,
 the first debugging information entry descriptor for the
@@ -142,13 +144,13 @@ current type unit will be returned.
 Function
 .Fn dwarf_offdie
 retrieves the debugging information entry descriptor at global offset
-.Ar offset
+.Fa offset
 in the
 .Dq .debug_info
 section of the object associated with argument
-.Ar dbg .
+.Fa dbg .
 The returned descriptor is written to the location pointed to by argument
-.Ar ret_die .
+.Fa ret_die .
 .Pp
 Function
 .Fn dwarf_offdie_b
@@ -156,15 +158,15 @@ is identical to the function
 .Fn dwarf_offdie
 except that it can retrieve the debugging information entry descriptor at
 global offset
-.Ar offset
+.Fa offset
 from either of the
 .Dq .debug_info
 and
 .Dq .debug_types
 sections of the object associated with argument
-.Ar dbg .
+.Fa dbg .
 If argument
-.Ar is_info
+.Fa is_info
 is non-zero, the function will retrieve the debugging information
 entry from the
 .Dq .debug_info
@@ -173,12 +175,12 @@ information entry from the
 .Dq .debug_types
 section.
 The returned descriptor is written to the location pointed to by argument
-.Ar ret_die .
+.Fa ret_die .
 .Ss Memory Management
 The memory area used for the
 .Vt Dwarf_Die
 descriptor returned in argument
-.Ar ret_die
+.Fa ret_die
 is allocated by the
 .Lb libdwarf .
 Application code should use function
@@ -197,8 +199,9 @@ The call succeeded.
 The requested operation failed.
 Additional information about the error encountered will be recorded in
 argument
-.Ar err ,
-if it is not NULL.
+.Fa err ,
+if it is not
+.Dv NULL .
 .It Bq Er DW_DLV_NO_ENTRY
 For functions
 .Fn dwarf_child ,
@@ -206,7 +209,7 @@ For functions
 and
 .Fn dwarf_siblingof_b ,
 the descriptor denoted by argument
-.Ar die
+.Fa die
 did not have a child or sibling.
 .Pp
 For functions
@@ -215,7 +218,7 @@ and
 .Fn dwarf_offdie_b ,
 there was no debugging information entry at the offset specified by
 argument
-.Ar offset .
+.Fa offset .
 .El
 .Sh EXAMPLES
 To retrieve the first DWARF Debugging Information Entry descriptor for
@@ -257,18 +260,19 @@ These functions may fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_DIE_NO_CU_CONTEXT"
 .It Bq Er DW_DLE_ARGUMENT
 Arguments
-.Ar dbg ,
-.Ar die
+.Fa dbg ,
+.Fa die
 or
-.Ar ret_die
-were NULL.
+.Fa ret_die
+were
+.Dv NULL .
 .It Bq Er DW_DLE_DIE_NO_CU_CONTEXT
 Argument
-.Ar dbg
+.Fa dbg
 was not associated with a compilation unit.
 .It Bq Er DW_DLE_NO_ENTRY
 The descriptor denoted by argument
-.Ar die
+.Fa die
 had no child or sibling, or there was no DWARF debugging information
 entry at the offset specified by argument
 .Va offset .

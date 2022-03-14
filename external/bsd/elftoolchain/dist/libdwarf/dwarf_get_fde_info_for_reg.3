@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_fde_info_for_reg.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_fde_info_for_reg.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_fde_info_for_reg.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_fde_info_for_reg.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd June 4, 2011
 .Dt DWARF_GET_FDE_INFO_FOR_REG 3
@@ -55,15 +55,15 @@ a given FDE descriptor, given a program counter address and rule
 column number.
 .Pp
 Argument
-.Ar fde
+.Fa fde
 should reference a valid DWARF FDE descriptor.
 .Pp
 Arugment
-.Ar table_column
+.Fa table_column
 should hold the column number of the register rule desired.
 .Pp
 Argument
-.Ar pc
+.Fa pc
 should hold the program counter address to be used to locate the
 desired register rule row.
 .Pp
@@ -71,37 +71,38 @@ On successful execution,
 .Fn dwarf_get_fde_info_for_reg
 stores information about the register rule found into the locations
 pointed to by the arguments
-.Ar offset_relevant ,
-.Ar register_num ,
-.Ar offset
+.Fa offset_relevant ,
+.Fa register_num ,
+.Fa offset
 and
-.Ar row_pc .
+.Fa row_pc .
 .Pp
 If there is an offset value associated with the register rule,
 the location pointed to by argument
-.Ar offset_relevant
+.Fa offset_relevant
 will be set to 1.
 .Pp
 Argument
-.Ar register_num
+.Fa register_num
 should point to a location which will hold the register number associated
 with the register rule.
 .Pp
 Argument
-.Ar offset
+.Fa offset
 should point to a location which will be set to the offset value
 associated with the register rule, or to 0 if the register rule
 does not have an offset value.
 .Pp
 Argument
-.Ar row_pc
+.Fa row_pc
 should point to a location which will be set to the lowest program
 counter address associated with the register rule found.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to return an error descriptor in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Ss COMPATIBILITY
 Function
 .Fn dwarf_get_fde_info_for_reg
@@ -118,7 +119,7 @@ when it succeeds.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_get_fde_info_for_reg
@@ -126,22 +127,23 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_FRAME_TABLE_COL_BAD"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar fde ,
-.Ar offset_relevant ,
-.Ar register_num ,
-.Ar offset
+.Fa fde ,
+.Fa offset_relevant ,
+.Fa register_num ,
+.Fa offset
 or
-.Ar row_pc
-was NULL.
+.Fa row_pc
+was
+.Dv NULL .
 .It Bq Er DW_DLE_FRAME_TABLE_COL_BAD
 The column number provided in argument
-.Ar table_column
+.Fa table_column
 was too large.
 .It Bq Er DW_DLE_PC_NOT_IN_FDE_RANGE
 The program counter value provided in argument
-.Ar pc
+.Fa pc
 did not fall in the range covered by argument
-.Ar fde .
+.Fa fde .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

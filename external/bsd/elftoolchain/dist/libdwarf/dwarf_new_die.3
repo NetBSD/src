@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_new_die.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_new_die.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_new_die.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_new_die.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd September 4, 2011
 .Dt DWARF_NEW_DIE 3
@@ -53,14 +53,14 @@ allocates a new DWARF debugging information entry and links it
 to another debugging information entry.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3
 or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar tag
+.Fa tag
 should specify the tag of the newly created debugging information entry.
 Valid values for this argument are those for the
 .Dv DW_TAG_ Ns *
@@ -68,36 +68,38 @@ symbols defined in
 .In libdwarf.h .
 .Pp
 Argument
-.Ar parent
+.Fa parent
 specifies the parent link of the debugging information entry.
 .Pp
 Argument
-.Ar child
+.Fa child
 specifies the first child link of the debugging information entry.
 .Pp
 Argument
-.Ar left
+.Fa left
 specifies the left sibling link of the debugging information entry.
 .Pp
 Argument
-.Ar right
+.Fa right
 specifies the right sibling link of the debugging information entry.
 .Pp
 Only one of arguments
-.Ar parent ,
-.Ar child ,
-.Ar left
+.Fa parent ,
+.Fa child ,
+.Fa left
 and
-.Ar right
-is allowed to be non-NULL.
+.Fa right
+is allowed to be
+.No non- Ns Dv NULL .
 Application code can subsequently call the function
 .Xr dwarf_die_link 3
 to change the links for the created debugging information entry.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 On success, function
 .Fn dwarf_new_die
@@ -107,7 +109,7 @@ In case of an error, function
 returns
 .Dv DW_DLV_BADADDR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To create debugging information entries and add them to the producer
 instance, use:
@@ -144,16 +146,18 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar dbg
-was NULL.
+.Fa dbg
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 More than one of the arguments
-.Ar parent ,
-.Ar child ,
-.Ar left
+.Fa parent ,
+.Fa child ,
+.Fa left
 and
-.Ar right
-were non-NULL.
+.Fa right
+were
+.No non- Ns Dv NULL .
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of the
 function.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_ranges.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_ranges.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_ranges.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_ranges.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd November 9, 2011
 .Dt DWARF_GET_RANGES 3
@@ -68,12 +68,12 @@ with each
 descriptor describing one address range entry.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF debug context allocated using
 .Xr dwarf_init 3 .
 .Pp
 Argument
-.Ar offset
+.Fa offset
 is an offset, relative to the
 .Dq ".debug_ranges"
 section, to the start of the desired list of address ranges.
@@ -82,7 +82,7 @@ The offset of an address ranges list is indicated by the
 attribute of a debugging information entry.
 .Pp
 Argument
-.Ar die
+.Fa die
 (function
 .Fn dwarf_get_ranges_a
 only) is ignored in this implementation; see the section
@@ -90,27 +90,30 @@ only) is ignored in this implementation; see the section
 below.
 .Pp
 Argument
-.Ar ranges
+.Fa ranges
 should point to a location that will be set to a pointer to an array
 of
 .Vt Dwarf_Ranges
 descriptors.
 .Pp
 Argument
-.Ar cnt
+.Fa cnt
 should point to a location that will be set to the number of entries
 returned.
 If argument
-.Ar byte_cnt
-is not NULL, it will be set to the number of bytes occupied by the
+.Fa byte_cnt
+is not
+.Dv NULL ,
+it will be set to the number of bytes occupied by the
 returned entries in the
 .Dq ".debug_ranges"
 section.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 .Vt Dwarf_Ranges
 descriptors are defined in the header file
@@ -154,7 +157,7 @@ are set to 0.
 The memory area used for the array of
 .Vt Dwarf_Ranges
 descriptors returned in argument
-.Ar ranges
+.Fa ranges
 is owned by the
 .Lb libdwarf .
 The application should not attempt to directly free this pointer.
@@ -169,11 +172,11 @@ when they succeed.
 They return
 .Dv DW_DLV_NO_ENTRY
 if there is no address range list at the specified offset
-.Ar offset .
+.Fa offset .
 In case of an error, they return
 .Dv DW_DLV_ERROR
 and set the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To retrieve the address range list associated with a debugging
 information entry, use:
@@ -230,13 +233,13 @@ Function
 is identical to
 .Fn dwarf_get_ranges ,
 except that it requires one additional argument
-.Ar die
+.Fa die
 denoting the debugging information entry associated with
 the address range list.
 In this implementation of the
 .Lb libdwarf ,
 the argument
-.Ar die
+.Fa die
 is ignored, and function
 .Fn dwarf_get_ranges_a
 is only provided for compatibility with other implementations of the
@@ -246,14 +249,15 @@ These function can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg ,
-.Ar ranges
+.Fa dbg ,
+.Fa ranges
 or
-.Ar cnt
-was NULL.
+.Fa cnt
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 There is no address range list at the specified offset
-.Ar offset .
+.Fa offset .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_fde_info_for_all_regs3.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_fde_info_for_all_regs3.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_fde_info_for_all_regs3.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_fde_info_for_all_regs3.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd June 26, 2011
 .Dt DWARF_GET_FDE_INFO_FOR_ALL_REGS3 3
@@ -51,16 +51,16 @@ retrieves a row from the register rule table associated with the given
 FDE descriptor.
 .Pp
 Argument
-.Ar fde
+.Fa fde
 should reference a valid DWARF FDE descriptor.
 .Pp
 Argument
-.Ar pc
+.Fa pc
 should hold the program counter address to be used to locate the
 desired table row.
 .Pp
 Argument
-.Ar reg_table
+.Fa reg_table
 should point to a
 .Vt Dwarf_Regtable3
 descriptor which will hold the returned table row of register rules.
@@ -134,14 +134,15 @@ field will be set to a pointer to the content of the DWARF expression block
 associated with the register rule.
 .Pp
 Argument
-.Ar row_pc
+.Fa row_pc
 should point to a location which will be set to the lowest program
 counter address associated with the table row.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_fde_info_for_all_regs3
@@ -151,7 +152,7 @@ when it succeeds.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_get_fde_info_for_all_regs3
@@ -159,16 +160,17 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_PC_NOT_IN_FDE_RANGE"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar fde ,
-.Ar reg_table
+.Fa fde ,
+.Fa reg_table
 or
-.Ar row_pc
-was NULL.
+.Fa row_pc
+was
+.Dv NULL .
 .It Bq Er DW_DLE_PC_NOT_IN_FDE_RANGE
 The program counter value provided in argument
-.Ar pc
+.Fa pc
 did not fall in the range covered by argument
-.Ar fde .
+.Fa fde .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

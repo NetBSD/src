@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: dwarf.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf.3 3929 2021-03-07 21:43:46Z jkoshy
 .\"
 .Dd December 21, 2014
 .Dt DWARF 3
@@ -144,11 +144,13 @@ Most library functions take a parameter of type
 that specifies a location to store an error descriptor in
 case of an error.
 If an error occurs during the execution on an API, and if this
-parameter is non-NULL, then an error descriptor is written to the
-location specified.
+parameter is
+.No non- Ns Dv NULL ,
+then an error descriptor is written to the location specified.
 .It
-Otherwise, if the error parameter was NULL, but if an error handler
-was defined for the debug context in use using
+Otherwise, if the error parameter was
+.Dv NULL ,
+but if an error handler was defined for the debug context in use using
 .Xr dwarf_init 3
 or
 .Xr dwarf_seterrhand 3 ,

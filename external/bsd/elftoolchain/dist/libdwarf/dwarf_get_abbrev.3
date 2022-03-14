@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_abbrev.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_abbrev.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_abbrev.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_abbrev.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd March 27, 2011
 .Dt DWARF_GET_ABBREV 3
@@ -61,44 +61,45 @@ in the DWARF(3) API to retrieve specific information about the
 abbreviation.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF debug context allocated using
 .Xr dwarf_init 3 .
 .Pp
 Argument
-.Ar offset
+.Fa offset
 should be an offset, relative to the
 .Dq ".debug_abbrev"
 section, to the start of an abbreviation entry.
 .Pp
 Argument
-.Ar ret_abbrev
+.Fa ret_abbrev
 should point to a location that will hold a pointer to the
 returned
 .Vt Dwarf_Abbrev
 descriptor.
 .Pp
 Argument
-.Ar length
+.Fa length
 should point to a location that will hold the number of bytes used
 by the abbrevation in the DWARF
 .Dq ".debug_abbrev"
 section.
 .Pp
 Argument
-.Ar attr_count
+.Fa attr_count
 should point to a location that will hold the number of
 attributes in the abbrevation.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Ss Memory Management
 The memory area used for the
 .Vt Dwarf_Abbrev
 descriptor returned in argument
-.Ar ret_abbrev
+.Fa ret_abbrev
 is allocated by the
 .Lb libdwarf .
 Application code should use function
@@ -120,11 +121,11 @@ when it succeeds.
 It returns
 .Dv DW_DLV_NO_ENTRY
 if there is no abbreviation information at offset
-.Ar offset .
+.Fa offset .
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To loop through all the abbreviation information associated with
 a DWARF debug context, use:
@@ -162,15 +163,16 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg ,
-.Ar ret_abbrev ,
-.Ar length
+.Fa dbg ,
+.Fa ret_abbrev ,
+.Fa length
 or
-.Ar attr_count
-was NULL.
+.Fa attr_count
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 There is no abbreviation information at offset
-.Ar offset .
+.Fa offset .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

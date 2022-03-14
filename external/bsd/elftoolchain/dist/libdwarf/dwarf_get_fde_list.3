@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_fde_list.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_fde_list.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_fde_list.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_fde_list.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd November 9, 2011
 .Dt DWARF_GET_FDE_LIST 3
@@ -78,45 +78,46 @@ DWARF(3) API set to retrieve the information contained in these
 descriptors.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF debug context allocated using
 .Xr dwarf_init 3 .
 .Pp
 Argument
-.Ar cie_list
+.Fa cie_list
 should point to a location that will be set to a pointer to an array
 of
 .Vt Dwarf_Cie
 descriptors.
 .Pp
 Argument
-.Ar cie_count
+.Fa cie_count
 should point to a location that will be set to the number of
 .Vt Dwarf_Cie
 descriptors returned.
 .Pp
 Argument
-.Ar fde_list
+.Fa fde_list
 should point to a location that will be set to a pointer to an array
 of
 .Vt Dwarf_Fde
 descriptors.
 .Pp
 Argument
-.Ar fde_count
+.Fa fde_count
 should point to a location that will be set to the number of
 .Vt Dwarf_Fde
 descriptors returned.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Ss Memory Management
 The memory areas used for the arrays returned in arguments
-.Ar cie_list
+.Fa cie_list
 and
-.Ar fde_list
+.Fa fde_list
 are owned by the
 .Lb libdwarf .
 Application code should not attempt to directly free these areas.
@@ -133,7 +134,7 @@ debug context.
 In case of an error, they return
 .Dv DW_DLV_ERROR
 and set the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To obtain frame information from the
 .Dq ".debug_frame"
@@ -199,7 +200,8 @@ One of the arguments
 .Va fde_list
 or
 .Va fde_count
-was NULL.
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 There is no frame information associated with the giving DWARF debug
 context.

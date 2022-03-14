@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_whatattr.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_whatattr.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010 Joseph Koshy
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_whatattr.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_whatattr.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd May 22, 2010
 .Dt DWARF_WHATATTR 3
@@ -47,13 +47,14 @@ Function
 .Fn dwarf_whatattr
 retrieves the attribute code for the DWARF attribute referenced
 by argument
-.Ar attr ,
+.Fa attr ,
 and writes it to the location pointed to by argument
-.Ar retcode .
+.Fa retcode .
 If argument
-.Ar err
-is not NULL, it will be used to return an error descriptor in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Sh RETURN VALUES
 On success, function
 .Fn dwarf_whatattr
@@ -62,7 +63,7 @@ returns
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_whatattr
@@ -73,7 +74,8 @@ Either of argument
 .Va attr
 or
 .Va retcode
-was NULL.
+was
+.Dv NULL .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

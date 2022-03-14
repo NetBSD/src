@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_add_frame_fde.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_add_frame_fde.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_add_frame_fde.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_add_frame_fde.3 3961 2022-03-12 15:13:22Z jkoshy
 .\"
 .Dd September 26, 2011
 .Dt DWARF_ADD_FRAME_FDE 3
@@ -64,78 +64,78 @@
 Function
 .Fn dwarf_add_frame_fde_b
 adds the call frame descriptor referenced by argument
-.Ar fde
+.Fa fde
 to a producer instance.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3
 or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar fde
+.Fa fde
 should reference a frame descriptor allocated using
 .Xr dwarf_new_fde 3 .
 .Pp
 Argument
-.Ar die
+.Fa die
 is ignored by this implementation of the
 .Lb libdwarf .
 .Pp
 Argument
-.Ar cie
+.Fa cie
 specifies the index of call frame common information entry for
 the frame descriptor.
 Valid indices are those returned by the function
 .Xr dwarf_add_frame_cie 3 .
 .Pp
 Argument
-.Ar symbol_index
+.Fa symbol_index
 specifies the ELF symbol index of the first symbol to be used for
 relocation.
 .Pp
 The meaning of the arguments
-.Ar virt_addr ,
-.Ar code_len
+.Fa virt_addr ,
+.Fa code_len
 and
-.Ar offset_from_end_sym
+.Fa offset_from_end_sym
 depend on the value of argument
-.Ar end_symbol_index :
+.Fa end_symbol_index :
 .Bl -bullet
 .It
 If the argument
-.Ar end_symbol_index
+.Fa end_symbol_index
 is zero, the argument
-.Ar virt_addr
+.Fa virt_addr
 specifies the relocatable address of the start of the function
 associated with the frame descriptor, the argument
-.Ar code_len
+.Fa code_len
 specifies the size in bytes of the machine instructions for this
 function, the argument
-.Ar symbol_index
+.Fa symbol_index
 specifies the ELF symbol to be used for relocating the address in
 argument
-.Ar virt_addr ,
+.Fa virt_addr ,
 and the argument
-.Ar offset_from_end_symbol
+.Fa offset_from_end_symbol
 is ignored.
 .It
 If the argument
-.Ar end_symbol_index
+.Fa end_symbol_index
 is non-zero, it specifies the ELF symbol index of the second symbol to
 be used for relocation.
 In this case, the argument
-.Ar virt_addr
+.Fa virt_addr
 specifies an offset from the relocatable symbol specified by argument
-.Ar symbol_index ,
+.Fa symbol_index ,
 the argument
-.Ar offset_from_end_symbol
+.Fa offset_from_end_symbol
 should specify an offset from the symbol named by the argument
-.Ar end_symbol_index ,
+.Fa end_symbol_index ,
 and the argument
-.Ar code_len
+.Fa code_len
 will be ignored.
 The
 .Dv DW_DLC_SYMBOLIC_RELOCATIONS
@@ -151,9 +151,10 @@ and the relocation entry for the second symbol will have type
 .El
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 Function
 .Fn dwarf_add_frame_fde
@@ -166,28 +167,29 @@ the added frame descriptor.
 In case of an error, these functions return
 .Dv DW_DLV_NOCOUNT
 and set the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 These functions can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg
+.Fa dbg
 or
-.Ar fde
-was NULL.
+.Fa fde
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 The frame descriptor referenced by argument
-.Ar fde
+.Fa fde
 did not belong to the producer instance referenced by argument
-.Ar dbg .
+.Fa dbg .
 .It Bq Er DW_DLE_ARGUMENT
 The common information entry index specified by argument
-.Ar cie
+.Fa cie
 was invalid.
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar end_symbol_index
+.Fa end_symbol_index
 was non-zero, but the flag
 .Dv DW_DLC_SYMBOLIC_RELOCATIONS
 was not set on the producer instance.

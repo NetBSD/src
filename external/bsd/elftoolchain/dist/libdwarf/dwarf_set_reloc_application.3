@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_set_reloc_application.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_set_reloc_application.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_set_reloc_application.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_set_reloc_application.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd February 11, 2015
 .Dt DWARF_SET_RELOC_APPLICATION 3
@@ -47,7 +47,7 @@ allows applications to specify how relocation information is to be
 handled by the DWARF(3) library.
 .Pp
 If the argument
-.Ar apply
+.Fa apply
 holds a non-zero value, the library will process all the relevant
 .Dq ".rel"
 and
@@ -56,7 +56,7 @@ relocation sections and will apply the relocation records found to
 their corresponding DWARF sections.
 .Pp
 If the argument
-.Ar apply
+.Fa apply
 is zero, the library will not attempt to apply any relocations.
 .Pp
 The default behaviour of the library is to process relocation records.

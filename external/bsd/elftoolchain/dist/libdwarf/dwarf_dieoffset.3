@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_dieoffset.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_dieoffset.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010,2014 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_dieoffset.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_dieoffset.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd December 21, 2014
 .Dt DWARF_DIEOFFSET 3
@@ -82,46 +82,49 @@ Function
 .Fn dwarf_die_CU_offset
 returns the offset of the debugging information entry referenced by
 argument
-.Ar die
+.Fa die
 relative to the start of its containing compilation unit.
 Argument
-.Ar ret_offset
+.Fa ret_offset
 should point to the location that is to hold the returned offset.
 If argument
-.Ar err
-is non-NULL, it will be used to return an error descriptor in case of
-an error.
+.Fa err
+is
+.No non- Ns Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Pp
 Function
 .Fn dwarf_die_CU_offset_range
 returns the section-relative offset and length of the compilation unit
 containing the debugging information entry referenced by argument
-.Ar die .
+.Fa die .
 Argument
-.Ar cu_offset
+.Fa cu_offset
 should point to a location that will hold the returned offset.
 Argument
-.Ar cu_length
+.Fa cu_length
 should point to a location that will hold the returned length of the
 compilation unit.
 If argument
-.Ar err
-is non-NULL, it will be used to return an error descriptor in case of
-an error.
+.Fa err
+is
+.No non- Ns Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Pp
 Function
 .Fn dwarf_dieoffset
 retrieves the section-relative offset of the debugging information
 entry referenced by argument
-.Ar die .
+.Fa die .
 Argument
-.Ar ret_offset
+.Fa ret_offset
 should point to a location that is to hold the returned
 section-relative offset.
 If argument
-.Ar err
-is non-NULL, it will be used to return an error descriptor in case of
-an error.
+.Fa err
+is
+.No non- Ns Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Pp
 Function
 .Fn dwarf_get_cu_die_offset_given_cu_header_offset
@@ -129,48 +132,50 @@ returns the offset for the first debugging information entry for a
 compilation unit, given an offset to the header of the compilation
 unit.
 Argument
-.Ar dbg
+.Fa dbg
 should reference a valid debugging context allocated using
 .Xr dwarf_init 3 .
 Argument
-.Ar in_cu_header_offset
+.Fa in_cu_header_offset
 contains the offset to the start of a compilation unit.
 Argument
-.Ar out_cu_die_offset
+.Fa out_cu_die_offset
 points to a location that will hold the returned offset.
 If argument
-.Ar err
-is non-NULL, it will be used to return an error descriptor in case of
-an error.
+.Fa err
+is
+.No non- Ns Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Pp
 Function
 .Fn dwarf_get_cu_die_offset_given_cu_header_offset_b
 behaves identically to the function
 .Fn dwarf_get_cu_die_offset_given_cu_header_offset
 when the argument
-.Ar is_info
+.Fa is_info
 is non-zero.
 When the argument
-.Ar is_info
+.Fa is_info
 is zero, function
 .Fn dwarf_get_cu_die_offset_given_cu_header_offset_b
 returns the offset for the first debugging information entry for a
 type unit, given an offset to the header of the type unit in argument
-.Ar in_cu_header_offset .
+.Fa in_cu_header_offset .
 Argument
-.Ar out_cu_die_offset
+.Fa out_cu_die_offset
 points to a location that will hold the returned offset.
 If the argument
-.Ar err
-is non-NULL, it will be used to return an error descriptor in case of
-an error.
+.Fa err
+is
+.No non- Ns Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Sh RETURN VALUES
 On success, these functions return
 .Dv DW_DLV_OK .
 In case of an error, these functions return
 .Dv DW_DLV_ERROR
 and set argument
-.Ar err .
+.Fa err .
 .Pp
 Function
 .Fn dwarf_get_cu_die_offset_given_cu_header_offset
@@ -179,10 +184,10 @@ and
 returns
 .Dv DW_DLV_NO_ENTRY
 and sets argument
-.Ar err
+.Fa err
 if there is no compilation or type unit located at the
 offset specified in argument
-.Ar in_cu_header_offset .
+.Fa in_cu_header_offset .
 .Sh ERRORS
 These functions may fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
@@ -195,10 +200,11 @@ One of the arguments
 .Va out_cu_die_offset
 or
 .Va ret_offset
-was NULL.
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 Argument
-.Ar in_cu_header_offset
+.Fa in_cu_header_offset
 specified an unknown offset.
 .El
 .Sh SEE ALSO

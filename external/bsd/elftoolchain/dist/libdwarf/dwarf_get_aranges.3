@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_aranges.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_aranges.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_aranges.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_aranges.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd November 9, 2011
 .Dt DWARF_GET_ARANGES 3
@@ -54,29 +54,30 @@ of type
 .Vt Dwarf_Arange ,
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF debug context allocated using
 .Xr dwarf_init 3 .
 .Pp
 Argument
-.Ar ar_list
+.Fa ar_list
 should point to a location which will be set to a pointer to an array
 of
 .Vt Dwarf_Arange
 descriptors.
 .Pp
 Argument
-.Ar ar_cnt
+.Fa ar_cnt
 should point to a location which will be set to the number of
 descriptors returned.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Ss Memory Management
 The memory area used for the array returned in argument
-.Ar ar_list
+.Fa ar_list
 is owned by
 .Lb libdwarf .
 Application code should not attempt to directly free this area.
@@ -97,7 +98,7 @@ section associated with the specified debugging context.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To loop through all the address lookup table entries, use:
 .Bd -literal -offset indent
@@ -130,14 +131,15 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg ,
-.Ar ar_list
+.Fa dbg ,
+.Fa ar_list
 or
-.Ar ar_cnt
-was NULL.
+.Fa ar_cnt
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 The debugging context
-.Ar dbg
+.Fa dbg
 did not contain a
 .Dq ".debug_aranges"
 string section.
