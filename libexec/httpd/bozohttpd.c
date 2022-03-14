@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.138 2022/01/04 06:08:14 kim Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.139 2022/03/14 05:58:36 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2520,26 +2520,26 @@ bozo_init_httpd(bozohttpd_t *httpd)
 int
 bozo_init_prefs(bozohttpd_t *httpd, bozoprefs_t *prefs)
 {
-	int rv = 0;
+	int rv = 1;
 
 	/* make sure everything is clean */
 	(void) memset(prefs, 0x0, sizeof(*prefs));
 
 	/* set up default values */
 	if (!bozo_set_pref(httpd, prefs, "server software", SERVER_SOFTWARE))
-		rv = 1;
+		rv = 0;
 	if (!bozo_set_pref(httpd, prefs, "index.html", INDEX_HTML))
-		rv = 1;
+		rv = 0;
 	if (!bozo_set_pref(httpd, prefs, "public_html", PUBLIC_HTML))
-		rv = 1;
+		rv = 0;
 	if (!bozo_set_pref(httpd, prefs, "ssl timeout", SSL_TIMEOUT))
-		rv = 1;
+		rv = 0;
 	if (!bozo_set_pref(httpd, prefs, "initial timeout", INITIAL_TIMEOUT))
-		rv = 1;
+		rv = 0;
 	if (!bozo_set_pref(httpd, prefs, "header timeout", HEADER_WAIT_TIME))
-		rv = 1;
+		rv = 0;
 	if (!bozo_set_pref(httpd, prefs, "request timeout", TOTAL_MAX_REQ_TIME))
-		rv = 1;
+		rv = 0;
 
 	return rv;
 }
