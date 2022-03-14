@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.33 2021/10/28 01:36:43 yamaguchi Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.34 2022/03/14 12:22:02 uwe Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.33 2021/10/28 01:36:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.34 2022/03/14 12:22:02 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,16 +196,23 @@ virtio_pci_match(device_t parent, cfdata_t match, void *aux)
 	pa = (struct pci_attach_args *)aux;
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_QUMRANET:
+		/* Transitional devices MUST have a PCI Revision ID of 0. */
 		if (((PCI_PRODUCT_QUMRANET_VIRTIO_1000 <=
 		      PCI_PRODUCT(pa->pa_id)) &&
 		     (PCI_PRODUCT(pa->pa_id) <=
 		      PCI_PRODUCT_QUMRANET_VIRTIO_103F)) &&
 	              PCI_REVISION(pa->pa_class) == 0)
 			return 1;
+		/*
+		 * Non-transitional devices SHOULD have a PCI Revision
+		 * ID of 1 or higher.  Drivers MUST match any PCI
+		 * Revision ID value.
+		 */
 		if (((PCI_PRODUCT_QUMRANET_VIRTIO_1040 <=
 		      PCI_PRODUCT(pa->pa_id)) &&
 		     (PCI_PRODUCT(pa->pa_id) <=
 		      PCI_PRODUCT_QUMRANET_VIRTIO_107F)) &&
+		      /* XXX: TODO */
 		      PCI_REVISION(pa->pa_class) == 1)
 			return 1;
 		break;
