@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.114 2022/03/14 11:47:33 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.115 2022/03/14 21:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.114 2022/03/14 11:47:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.115 2022/03/14 21:38:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -280,7 +280,7 @@ audio_mlog_flush(void)
 	mlog_buf[mlog_wpage][0] = '\0';
 	mlog_used = 0;
 
-	atomic_store_reease(&mlog_inuse, 0);
+	atomic_store_release(&mlog_inuse, 0);
 
 	if (mlog_buf[rpage][0] != '\0') {
 		printf("%s", mlog_buf[rpage]);
