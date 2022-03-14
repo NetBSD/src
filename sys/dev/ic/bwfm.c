@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.31 2021/06/16 00:21:18 riastradh Exp $ */
+/* $NetBSD: bwfm.c,v 1.32 2022/03/14 06:40:12 mlelstv Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -99,6 +99,8 @@ void	 bwfm_chip_sysmem_ramsize(struct bwfm_softc *, struct bwfm_core *);
 void	 bwfm_chip_tcm_ramsize(struct bwfm_softc *, struct bwfm_core *);
 void	 bwfm_chip_tcm_rambase(struct bwfm_softc *);
 
+void     bwfm_process_blob(struct bwfm_softc *, const char *, uint8_t **,
+	     size_t *);
 int	 bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *, int,
 	     int, char *, size_t *);
 int	 bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *, int,
@@ -151,6 +153,14 @@ static const struct {
 	[BWFM_FILETYPE_CLM] = {
 		.suffix = "clm_blob",
 		.description = "CLM",
+	},
+	[BWFM_FILETYPE_TXCAP] = {
+		.suffix = "txcap_blob",
+		.description = "TXCAP",
+	},
+	[BWFM_FILETYPE_CAL] = {
+		.suffix = "cal_blob",
+		.description = "CAL",
 	},
 };
 
@@ -320,6 +330,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	char fw_version[BWFM_DCMD_SMLEN];
 	uint32_t bandlist[3];
+	int nmode, vhtmode;
 	uint32_t tmp;
 	int i, j, error;
 
@@ -348,10 +359,15 @@ bwfm_attach(struct bwfm_softc *sc)
 		return;
 	}
 
+	printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(ic->ic_myaddr));
+
+	bwfm_process_blob(sc, "clmload", &sc->sc_clm, &sc->sc_clmsize);
+	bwfm_process_blob(sc, "txcapload", &sc->sc_txcap, &sc->sc_txcapsize);
+	bwfm_process_blob(sc, "calload", &sc->sc_cal, &sc->sc_calsize);
+
 	memset(fw_version, 0, sizeof(fw_version));
 	if (bwfm_fwvar_var_get_data(sc, "ver", fw_version, sizeof(fw_version)) == 0)
 		printf("%s: %s", DEVNAME(sc), fw_version);
-	printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(ic->ic_myaddr));
 
 	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_OFDM;
@@ -377,6 +393,10 @@ bwfm_attach(struct bwfm_softc *sc)
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
 
+	if (bwfm_fwvar_var_get_int(sc, "nmode", &nmode))
+		nmode = 0;
+	if (bwfm_fwvar_var_get_int(sc, "vhtmode", &vhtmode))
+		vhtmode = 0;
 	if (bwfm_fwvar_cmd_get_data(sc, BWFM_C_GET_BANDLIST, bandlist,
 	    sizeof(bandlist))) {
 		printf("%s: couldn't get supported band list\n", DEVNAME(sc));
@@ -396,6 +416,9 @@ bwfm_attach(struct bwfm_softc *sc)
 				ic->ic_channels[chan].ic_flags =
 				    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
 				    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
+				if (nmode)
+					ic->ic_channels[chan].ic_flags |=
+					    IEEE80211_CHAN_HT;
 			}
 			break;
 		case BWFM_BAND_5G:
@@ -407,7 +430,17 @@ bwfm_attach(struct bwfm_softc *sc)
 				    ieee80211_ieee2mhz(chan, IEEE80211_CHAN_5GHZ);
 				ic->ic_channels[chan].ic_flags =
 				    IEEE80211_CHAN_A;
+				if (nmode)
+					ic->ic_channels[chan].ic_flags |=
+					    IEEE80211_CHAN_HT;
+				if (vhtmode)
+					ic->ic_channels[chan].ic_flags |=
+					    IEEE80211_CHAN_VHT;
 			}
+			break;
+		default:
+			printf("%s: unsupported band 0x%x\n", DEVNAME(sc),
+			    le32toh(bandlist[i]));
 			break;
 		}
 	}
@@ -655,6 +688,8 @@ bwfm_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+
 	memset(&join, 0, sizeof(join));
 	bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_SSID, &join, sizeof(join));
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
@@ -663,8 +698,7 @@ bwfm_stop(struct ifnet *ifp, int disable)
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_INFRA, 0);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_UP, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, BWFM_PM_FAST_PS);
-
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+	bwfm_fwvar_var_set_int(sc, "mpc", 1);
 
 	if (sc->sc_bus_ops->bs_stop)
 		sc->sc_bus_ops->bs_stop(sc);
@@ -1770,6 +1804,50 @@ bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *sc, int ifidx,
 err:
 	kmem_free(dcmd, sizeof(*dcmd));
 	return ret;
+}
+
+void
+bwfm_process_blob(struct bwfm_softc *sc, const char *var, uint8_t **blob,
+    size_t *blobsize)
+{
+	struct bwfm_dload_data *data;
+	size_t off, remain, len;
+
+	if (*blob == NULL || *blobsize == 0)
+		return;
+
+	off = 0;
+	remain = *blobsize;
+	data = kmem_alloc(sizeof(*data) + BWFM_DLOAD_MAX_LEN, KM_SLEEP);
+
+	while (remain) {
+		len = uimin(remain, BWFM_DLOAD_MAX_LEN);
+
+		data->flag = htole16(BWFM_DLOAD_FLAG_HANDLER_VER_1);
+		if (off == 0)
+			data->flag |= htole16(BWFM_DLOAD_FLAG_BEGIN);
+		if (remain <= BWFM_DLOAD_MAX_LEN)
+			data->flag |= htole16(BWFM_DLOAD_FLAG_END);
+		data->type = htole16(BWFM_DLOAD_TYPE_CLM);
+		data->len = htole32(len);
+		data->crc = 0;
+		memcpy(data->data, *blob + off, len);
+
+		if (bwfm_fwvar_var_set_data(sc, var, data,
+		    sizeof(*data) + len)) {
+			printf("%s: could not load blob (%s)\n", DEVNAME(sc),
+			    var);
+			break;
+		}
+
+		off += len;
+		remain -= len;
+	}
+
+	kmem_free(data, sizeof(*data) + BWFM_DLOAD_MAX_LEN);
+	// kmem_free(*blob, *blobsize);
+	*blob = NULL;
+	*blobsize = 0;
 }
 
 /* FW Variable code */
