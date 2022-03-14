@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.113 2021/12/12 13:05:13 andvar Exp $	*/
+/*	$NetBSD: audio.c,v 1.114 2022/03/14 11:47:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.113 2021/12/12 13:05:13 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.114 2022/03/14 11:47:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -162,6 +162,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.113 2021/12/12 13:05:13 andvar Exp $");
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/module.h>
@@ -272,13 +273,14 @@ audio_mlog_flush(void)
 	/* Nothing to do if already in use ? */
 	if (atomic_swap_32(&mlog_inuse, 1) == 1)
 		return;
+	membar_enter();
 
 	int rpage = mlog_wpage;
 	mlog_wpage ^= 1;
 	mlog_buf[mlog_wpage][0] = '\0';
 	mlog_used = 0;
 
-	atomic_swap_32(&mlog_inuse, 0);
+	atomic_store_reease(&mlog_inuse, 0);
 
 	if (mlog_buf[rpage][0] != '\0') {
 		printf("%s", mlog_buf[rpage]);
@@ -308,6 +310,7 @@ audio_mlog_printf(const char *fmt, ...)
 		mlog_drop++;
 		return;
 	}
+	membar_enter();
 
 	va_start(ap, fmt);
 	len = vsnprintf(
@@ -321,7 +324,7 @@ audio_mlog_printf(const char *fmt, ...)
 		mlog_full++;
 	}
 
-	atomic_swap_32(&mlog_inuse, 0);
+	atomic_store_release(&mlog_inuse, 0);
 
 	if (mlog_sih)
 		softint_schedule(mlog_sih);
@@ -1652,7 +1655,11 @@ audio_track_waitio(struct audio_softc *sc, audio_track_t *track)
 static __inline bool
 audio_track_lock_tryenter(audio_track_t *track)
 {
-	return (atomic_cas_uint(&track->lock, 0, 1) == 0);
+
+	if (atomic_swap_uint(&track->lock, 1) != 0)
+		return false;
+	membar_enter();
+	return true;
 }
 
 /*
@@ -1661,9 +1668,10 @@ audio_track_lock_tryenter(audio_track_t *track)
 static __inline void
 audio_track_lock_enter(audio_track_t *track)
 {
+
 	/* Don't sleep here. */
 	while (audio_track_lock_tryenter(track) == false)
-		;
+		SPINLOCK_BACKOFF_HOOK;
 }
 
 /*
@@ -1672,7 +1680,8 @@ audio_track_lock_enter(audio_track_t *track)
 static __inline void
 audio_track_lock_exit(audio_track_t *track)
 {
-	atomic_swap_uint(&track->lock, 0);
+
+	atomic_store_release(&track->lock, 0);
 }
 
 
