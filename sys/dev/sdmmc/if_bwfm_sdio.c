@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.27 2021/08/08 11:11:29 jmcneill Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.28 2022/03/14 06:40:12 mlelstv Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -410,8 +410,7 @@ bwfm_sdio_attach(device_t parent, device_t self, void *aux)
 
 	core = bwfm_chip_get_core(&sc->sc_sc, BWFM_AGENT_CORE_SDIO_DEV);
 	if (core->co_rev >= 12) {
-		reg = bwfm_sdio_read_1(sc, BWFM_SDIO_FUNC1_SLEEPCSR);
-		if ((reg & BWFM_SDIO_FUNC1_SLEEPCSR_KSO) == 0) {
+		reg = bwfm_sdio_read_1(sc, BWFM_SDIO_FUNC1_SLEEPCSR); if ((reg & BWFM_SDIO_FUNC1_SLEEPCSR_KSO) == 0) {
 			reg |= BWFM_SDIO_FUNC1_SLEEPCSR_KSO;
 			bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SLEEPCSR, reg);
 		}
@@ -444,8 +443,8 @@ bwfm_sdio_attachhook(device_t self)
 	struct bwfm_sdio_softc *sc = device_private(self);
 	struct bwfm_softc *bwfm = &sc->sc_sc;
 	struct bwfm_firmware_context fwctx;
-	size_t ucsize = 0, nvlen = 0, nvsize = 0;
-	uint8_t *ucode, *nvram;
+	size_t ucsize = 0, nvlen = 0, nvsize = 0, clmsize = 0;
+	uint8_t *ucode, *nvram, *clm;
 	uint32_t reg, clk;
 
 	DPRINTF(("%s: chip 0x%08x rev %u\n", DEVNAME(sc),
@@ -461,7 +460,10 @@ bwfm_sdio_attachhook(device_t self)
 	bwfm_firmware_context_init(&fwctx,
 	    bwfm->sc_chip.ch_chip, bwfm->sc_chip.ch_chiprev,
 	    bwfm_fdt_get_model(),
-	    BWFM_FWREQ(BWFM_FILETYPE_UCODE) | BWFM_FWREQ(BWFM_FILETYPE_NVRAM));
+	    BWFM_FWREQ(BWFM_FILETYPE_UCODE)
+	    | BWFM_FWREQ(BWFM_FILETYPE_NVRAM)
+	    | BWFM_FWOPT(BWFM_FILETYPE_CLM)
+	);
 
 	if (!bwfm_firmware_open(bwfm, bwfm_sdio_fwtab, &fwctx)) {
 		/* Error message already displayed. */
@@ -472,6 +474,7 @@ bwfm_sdio_attachhook(device_t self)
 	KASSERT(ucode != NULL);
 	nvram = bwfm_firmware_data(&fwctx, BWFM_FILETYPE_NVRAM, &nvlen);
 	KASSERT(nvram != NULL);
+	clm = bwfm_firmware_data(&fwctx, BWFM_FILETYPE_CLM, &clmsize);
 
 	if (bwfm_nvram_convert(nvram, nvlen, &nvsize)) {
 		aprint_error_dev(bwfm->sc_dev,
@@ -548,6 +551,11 @@ bwfm_sdio_attachhook(device_t self)
 
 	sc->sc_sc.sc_bus_ops = &bwfm_sdio_bus_ops;
 	sc->sc_sc.sc_proto_ops = &bwfm_proto_bcdc_ops;
+
+	/* used and cleared by bwfm_attach */
+	sc->sc_sc.sc_clm = clm;
+	sc->sc_sc.sc_clmsize = clmsize;
+
 	bwfm_attach(&sc->sc_sc);
 	sc->sc_bwfm_attached = true;
 
