@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.13 2020/02/08 07:07:07 maxv Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.14 2022/03/14 12:02:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.13 2020/02/08 07:07:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.14 2022/03/14 12:02:19 riastradh Exp $");
 
 #include <sys/syscall_stats.h>
 #include <sys/syscallvar.h>
@@ -43,6 +43,19 @@ __KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.13 2020/02/08 07:07:07 maxv Exp $"
  */
 
 #define CONCAT(a,b) __CONCAT(a,b)
+
+static void
+CONCAT(SYS_SYSCALL, _biglockcheck)(struct proc *p, int code)
+{
+
+#ifdef DIAGNOSTIC
+       kpreempt_disable();     /* make curcpu() stable */
+       KASSERTMSG(curcpu()->ci_biglock_count == 0,
+           "syscall %ld of emul %s leaked %d kernel locks",
+           (long)code, p->p_emul->e_name, curcpu()->ci_biglock_count);
+       kpreempt_enable();
+#endif
+}
 
 int
 SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
@@ -73,8 +86,11 @@ SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
 	if (__predict_false(callp->sy_flags & SYCALL_INDIRECT))
 		return ENOSYS;
 
-	if (__predict_true(!p->p_trace_enabled))
-		return sy_call(callp, l, &uap->args, rval);
+	if (__predict_true(!p->p_trace_enabled)) {
+		error = sy_call(callp, l, &uap->args, rval);
+		CONCAT(SYS_SYSCALL, _biglockcheck)(p, code);
+		return error;
+	}
 
 #ifdef NETBSD32_SYSCALL
 	narg = callp->sy_narg;
@@ -87,6 +103,7 @@ SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
 		return error;
 	error = sy_call(callp, l, &uap->args, rval);
 	trace_exit(code, callp, &uap->args, rval, error);
+	CONCAT(SYS_SYSCALL, _biglockcheck)(p, code);
 	return error;
 
 	#undef TRACE_ARGS
