@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.84 2021/08/08 20:50:12 andvar Exp $	*/
+/*	$NetBSD: umidi.c,v 1.85 2022/03/14 16:14:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.84 2021/08/08 20:50:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.85 2022/03/14 16:14:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -778,6 +778,8 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 
 	fp = umidi_get_quirk_data_from_type(sc->sc_quirk,
 					    UMQ_TYPE_FIXED_EP);
+	if (fp->num_in_ep == 0 && fp->num_out_ep == 0)
+		return USBD_INVAL;
 	sc->sc_out_num_jacks = 0;
 	sc->sc_in_num_jacks = 0;
 	sc->sc_out_num_endpoints = fp->num_out_ep;
@@ -934,6 +936,8 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		sc->sc_in_num_jacks = 0;
 	}
 	sc->sc_endpoints_len = UMIDI_ENDPOINT_SIZE(sc);
+	if (sc->sc_endpoints_len == 0)
+		return USBD_INVAL;
 	sc->sc_endpoints = kmem_zalloc(sc->sc_endpoints_len, KM_SLEEP);
 	if (sc->sc_out_num_endpoints) {
 		sc->sc_out_ep = sc->sc_endpoints;
