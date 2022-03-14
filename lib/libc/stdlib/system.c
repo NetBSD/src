@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.26 2021/10/29 19:27:06 kre Exp $	*/
+/*	$NetBSD: system.c,v 1.27 2022/03/14 22:06:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.26 2021/10/29 19:27:06 kre Exp $");
+__RCSID("$NetBSD: system.c,v 1.27 2022/03/14 22:06:28 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: system.c,v 1.26 2021/10/29 19:27:06 kre Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <paths.h>
+#include <spawn.h>
 
 #include "env.h"
 
@@ -54,9 +55,12 @@ system(const char *command)
 {
 	pid_t pid;
 	struct sigaction intsa, quitsa, sa;
-	sigset_t nmask, omask;
+	sigset_t nmask, omask, sigdefault;
 	int pstat;
 	const char *argp[] = {"sh", "-c", "--", NULL, NULL};
+	posix_spawnattr_t attr;
+	int error;
+
 	argp[3] = command;
 
 	/*
@@ -88,22 +92,41 @@ system(const char *command)
 		return -1;
 	}
 
+	/*
+	 * We arrange to inherit all signal handlers from the caller by
+	 * default, except possibly SIGINT and SIGQUIT.  These we have
+	 * overridden internally for system(3) to be SIG_IGN.
+	 *
+	 * - If the caller had SIGINT or SIGQUIT at SIG_IGN, then we
+	 *   inherit them as is -- caller had SIG_IGN, child will too.
+	 *
+	 * - Otherwise, they are SIG_DFL or a signal handler, and we
+	 *   must reset them to SIG_DFL in the child, rather than
+	 *   SIG_IGN in system(3) in the parent, by including them in
+	 *   the sigdefault set.
+	 */
+	sigemptyset(&sigdefault);
+	if (intsa.sa_handler != SIG_IGN)
+		sigaddset(&sigdefault, SIGINT);
+	if (quitsa.sa_handler != SIG_IGN)
+		sigaddset(&sigdefault, SIGQUIT);
+
+	posix_spawnattr_init(&attr);
+	posix_spawnattr_setsigdefault(&attr, &sigdefault);
+	posix_spawnattr_setsigmask(&attr, &omask);
+	posix_spawnattr_setflags(&attr,
+	    POSIX_SPAWN_SETSIGDEF|POSIX_SPAWN_SETSIGMASK);
 	(void)__readlockenv();
-	switch(pid = vfork()) {
-	case -1:			/* error */
-		(void)__unlockenv();
-		sigaction(SIGINT, &intsa, NULL);
-		sigaction(SIGQUIT, &quitsa, NULL);
-		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-		return -1;
-	case 0:				/* child */
-		sigaction(SIGINT, &intsa, NULL);
-		sigaction(SIGQUIT, &quitsa, NULL);
-		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-		execve(_PATH_BSHELL, __UNCONST(argp), environ);
-		_exit(127);
-	}
+	error = posix_spawn(&pid, _PATH_BSHELL, NULL, &attr, __UNCONST(argp),
+	    environ);
 	(void)__unlockenv();
+	posix_spawnattr_destroy(&attr);
+
+	if (error) {
+		errno = error;
+		pstat = -1;
+		goto out;
+	}
 
 	while (waitpid(pid, &pstat, 0) == -1) {
 		if (errno != EINTR) {
@@ -112,7 +135,7 @@ system(const char *command)
 		}
 	}
 
-	sigaction(SIGINT, &intsa, NULL);
+out:	sigaction(SIGINT, &intsa, NULL);
 	sigaction(SIGQUIT, &quitsa, NULL);
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 
