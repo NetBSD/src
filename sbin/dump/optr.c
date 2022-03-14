@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.43 2019/03/01 16:42:11 christos Exp $	*/
+/*	$NetBSD: optr.c,v 1.44 2022/03/14 18:38:11 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.43 2019/03/01 16:42:11 christos Exp $");
+__RCSID("$NetBSD: optr.c,v 1.44 2022/03/14 18:38:11 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -344,9 +344,10 @@ allocfsent(const struct fstab *fs)
 	new->fs_file = xstrdup(fs->fs_file);
 	new->fs_type = xstrdup(fs->fs_type);
 	new->fs_spec = xmalloc(FILENAME_MAX);
-	if (getfsspecname(new->fs_spec, FILENAME_MAX, fs->fs_spec) == NULL)
-		quite(errno, "can't resolve mount point %s (%s)",
-		    fs->fs_spec, new->fs_spec);
+	if (getfsspecname(new->fs_spec, FILENAME_MAX, fs->fs_spec) == NULL) {
+		free(new);
+		return NULL;
+	}
 	new->fs_passno = fs->fs_passno;
 	new->fs_freq = fs->fs_freq;
 	return new;
@@ -384,6 +385,9 @@ getfstab(void)
 			continue;
 #endif
 		fs = allocfsent(fs);
+		if (fs == NULL)
+			continue;
+
 		pf = (struct pfstab *)xmalloc(sizeof (*pf));
 		pf->pf_fstab = fs;
 		SLIST_INSERT_HEAD(&table, pf, pf_list);
