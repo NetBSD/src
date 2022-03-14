@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_expand_frame_instructions.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_expand_frame_instructions.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_expand_frame_instructions.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_expand_frame_instructions.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd November 9, 2011
 .Dt DWARF_EXPAND_FRAME_INSTRUCTIONS 3
@@ -53,12 +53,12 @@ translates DWARF frame instruction bytes into an array of
 descriptors.
 .Pp
 Argument
-.Ar cie
+.Fa cie
 should reference the CIE descriptor associated with the instructions
 to be translated.
 .Pp
 Arugment
-.Ar instructions
+.Fa instructions
 should point to an array of frame instruction bytes, as
 returned by the functions
 .Xr dwarf_get_cie_info 3
@@ -66,29 +66,30 @@ or
 .Xr dwarf_get_fde_instr_bytes 3 .
 .Pp
 Argument
-.Ar len
+.Fa len
 should specify the number of the frame instruction bytes to be
 translated.
 .Pp
 Argument
-.Ar ret_ops
+.Fa ret_ops
 should point to a location that will be set to a pointer to
 an array of translated
 .Vt Dwarf_Frame_Op
 descriptors.
 .Pp
 Argument
-.Ar ret_opcnt
+.Fa ret_opcnt
 should point to a location that will hold the total number of the
 returned descriptors.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Ss Memory Management
 The memory area used for the descriptor array returned in argument
-.Ar ret_ops
+.Fa ret_ops
 is allocated by
 .Lb libdwarf .
 Application code should use function
@@ -105,7 +106,7 @@ when it succeeds.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To retrieve and expand the frame instructions for a given FDE
 descriptor, use:
@@ -148,15 +149,16 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar cie ,
-.Ar instructions ,
-.Ar ret_ops
+.Fa cie ,
+.Fa instructions ,
+.Fa ret_ops
 or
-.Ar ret_opcnt
-was NULL.
+.Fa ret_opcnt
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar len
+.Fa len
 was 0.
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of
@@ -164,7 +166,7 @@ this function.
 .It Bq Er DW_DLE_FRAME_INSTR_EXEC_ERROR
 An unknown instruction was found in the instruction bytes provided
 in argument
-.Ar instructions .
+.Fa instructions .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_formexprloc.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_formexprloc.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010 Joseph Koshy
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_formexprloc.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_formexprloc.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd July 25, 2010
 .Dt DWARF_FORMEXPRLOC 3
@@ -50,26 +50,27 @@ allows an application to retrieve the length and the bytes of a
 DWARF location expression.
 .Pp
 Argument
-.Ar attr
+.Fa attr
 should reference a DWARF attribute of the form
 .Dv DW_FORM_exprloc .
 Argument
-.Ar retlen
+.Fa retlen
 should point to a location that will be set to the length of the
 location expression.
 Argument
-.Ar retexpr
+.Fa retexpr
 should point to a location that will be set to a pointer to the
 content of the location expression itself.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to return an error descriptor in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Ss Memory Management
 The application should not attempt to free the memory
 area referenced by the pointer returned in argument
-.Ar retexpr .
+.Fa retexpr .
 .Sh RETURN VALUES
 Function
 .Fn dwarf_formexprloc
@@ -79,7 +80,7 @@ on success.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_formexprloc
@@ -87,14 +88,15 @@ may fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_ATTR_FORM_BAD"
 .It Bq Er DW_DLE_ARGUMENT
 One of arguments
-.Ar attr ,
-.Ar retlen
+.Fa attr ,
+.Fa retlen
 or
-.Ar retexpr
-was NULL.
+.Fa retexpr
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ATTR_FORM_BAD
 The attribute referenced by argument
-.Ar attr
+.Fa attr
 was not of form
 .Dv DW_FORM_exprloc .
 .El

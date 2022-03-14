@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_seterrarg.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_seterrarg.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: dwarf_seterrarg.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_seterrarg.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd May 01, 2010
 .Dt DWARF_SETERRARG 3
@@ -51,51 +51,61 @@ Function
 may be used to set the callback argument passed to a configured
 error handler at the time it is invoked.
 Argument
-.Ar arg
+.Fa arg
 is the callback argument being set.
 Argument
-.Ar dbg
+.Fa dbg
 can be a debug context allocated by a prior call to
 .Xr dwarf_init 3 ,
-or can be NULL to indicate that the library-wide callback argument
+or can be
+.Dv NULL
+to indicate that the library-wide callback argument
 is to be set.
 .Pp
 Function
 .Fn dwarf_seterrhand
 may be used to associate an error handler denoted by argument
-.Ar handler
+.Fa handler
 with the DWARF debug context descriptor denoted by argument
-.Ar dbg .
+.Fa dbg .
 Argument
-.Ar dbg
+.Fa dbg
 should be a debug context allocated by a prior call to
 .Xr dwarf_init 3 ,
-or may be NULL to indicate that the library-wide error handler
+or may be
+.Dv NULL
+to indicate that the library-wide error handler
 is to be set.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_seterrhand
 returns the previous error handler associated with argument
-.Ar dbg .
+.Fa dbg .
 If argument
-.Ar dbg
-is NULL, function
+.Fa dbg
+is
+.Dv NULL ,
+function
 .Fn dwarf_seterrhand
 returns the previous library-wide error handler.
 .Pp
 Function
 .Fn dwarf_seterrarg
 returns the previous callback argument associated with argument
-.Ar dbg .
+.Fa dbg .
 If argument
-.Ar dbg
-is NULL, function
+.Fa dbg
+is
+.Dv NULL ,
+function
 .Fn dwarf_seterrarg
 returns the previous library-wide callback argument.
 .Sh COMPATIBILITY
 The behavior of these functions when argument
-.Ar dbg
-is NULL is a local extension.
+.Fa dbg
+is
+.Dv NULL
+is a local extension.
 .Sh ERRORS
 These functions do not set an error code.
 .Sh SEE ALSO

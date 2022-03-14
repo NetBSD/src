@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_srclines.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_srclines.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: dwarf_srclines.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_srclines.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd November 9, 2011
 .Dt DWARF_SRCLINES 3
@@ -51,24 +51,25 @@ Line number information is returned as an array of
 descriptors.
 .Pp
 Argument
-.Ar die
+.Fa die
 should reference a DWARF debugging information entry descriptor
 with line number information, see
 .Xr dwarf 3 .
 Argument
-.Ar lines
+.Fa lines
 should point to a location that will hold a pointer to the returned array
 of
 .Vt Dwarf_Line
 descriptors.
 Argument
-.Ar nlines
+.Fa nlines
 should point to a location that will hold the number of descriptors
 returned.
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Pp
 The returned
 .Vt Dwarf_Line
@@ -78,7 +79,7 @@ API set to retrieve specific information about each source line.
 The memory area used for the array of
 .Vt Dwarf_Line
 descriptors returned in argument
-.Ar lines
+.Fa lines
 is owned by the
 .Lb libdwarf .
 The application should not attempt to free this pointer.
@@ -94,7 +95,7 @@ when it succeeds.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To obtain an array of
 .Vt Dwarf_Line
@@ -138,14 +139,15 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar die ,
-.Ar lines
+.Fa die ,
+.Fa lines
 or
-.Ar nlines
-was NULL.
+.Fa nlines
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 The compilation unit referenced by argument
-.Ar die
+.Fa die
 does not have associated line number information.
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of

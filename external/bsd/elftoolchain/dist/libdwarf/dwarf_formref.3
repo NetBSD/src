@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_formref.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_formref.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010 Joseph Koshy
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_formref.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_formref.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd June 21, 2010
 .Dt DWARF_FORMREF 3
@@ -57,14 +57,14 @@ Function
 .Fn dwarf_formref
 returns the compilation unit relative offset of the descriptor
 referenced by argument
-.Ar attr
+.Fa attr
 in the location pointed to by argument
-.Ar retoffset .
+.Fa retoffset .
 Argument
-.Ar attr
+.Fa attr
 must be a reference that is local to a compilation unit.
 Permitted forms for argument
-.Ar attr
+.Fa attr
 are
 .Dv DW_FORM_ref1 ,
 .Dv DW_FORM_ref2 ,
@@ -77,16 +77,16 @@ Function
 .Fn dwarf_global_formref
 returns the section-relative offset of the descriptor referenced by
 argument
-.Ar attr
+.Fa attr
 in the location pointed to by argument
-.Ar retoffset .
+.Fa retoffset .
 Argument
-.Ar attr
+.Fa attr
 should be a legal
 .Sy REFERENCE
 class form.
 Permitted forms for argument
-.Ar attr
+.Fa attr
 are:
 .Dv DW_FORM_ref_addr ,
 .Dv DW_FORM_ref_udata ,
@@ -101,9 +101,10 @@ The returned offset is relative to the start of the
 ELF section.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to return an error descriptor in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Sh RETURN VALUES
 These functions return
 .Dv DW_DLV_OK
@@ -111,19 +112,20 @@ on success.
 In case of an error, these functions return
 .Dv DW_DLV_ERROR
 and sets argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 These functions may fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_ATTR_FORM_BAD"
 .It Bq Er DW_DLE_ARGUMENT
 Either of arguments
-.Ar attr
+.Fa attr
 or
-.Ar retoffset
-was NULL.
+.Fa retoffset
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ATTR_FORM_BAD
 The attribute referenced by argument
-.Ar attr
+.Fa attr
 was not of a permitted kind.
 .El
 .Sh SEE ALSO

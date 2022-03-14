@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_add_AT_name.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_add_AT_name.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_add_AT_name.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_add_AT_name.3 3961 2022-03-12 15:13:22Z jkoshy
 .\"
 .Dd September 4, 2011
 .Dt DWARF_ADD_AT_NAME 3
@@ -49,24 +49,25 @@ creates a
 .Dv DW_AT_name
 attribute descriptor and attaches it to the debugging information
 entry referenced by argument
-.Ar die .
+.Fa die .
 The created attribute will have DWARF form
 .Dv DW_FORM_strp .
 .Pp
 Argument
-.Ar die
+.Fa die
 should reference a debugging information entry allocated using
 .Xr dwarf_new_die 3 .
 .Pp
 Argument
-.Ar name
+.Fa name
 should point to a NUL-terminated string which will become the value of
 the created attribute.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 On success, function
 .Fn dwarf_add_AT_name
@@ -76,7 +77,7 @@ In case of an error, function
 returns
 .Dv DW_DLV_BADADDR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_add_AT_name
@@ -84,10 +85,11 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar die
+.Fa die
 or
-.Ar name
-was NULL.
+.Fa name
+was
+.Dv NULL .
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of
 this function.

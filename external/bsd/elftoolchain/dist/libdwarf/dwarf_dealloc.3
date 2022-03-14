@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_dealloc.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_dealloc.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2009-2011 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: dwarf_dealloc.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_dealloc.3 3961 2022-03-12 15:13:22Z jkoshy
 .\"
 .Dd July 23, 2011
 .Dt DWARF_DEALLOC 3
@@ -117,23 +117,23 @@ use of
 is only necessary for a small set of DWARF types.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a valid debugging context allocated using
 .Xr dwarf_init 3 .
 .Pp
 Argument
-.Ar ptr
+.Fa ptr
 should point to an object or memory area obtained by a prior call
 to a DWARF(3) function.
 .Pp
 Argument
-.Ar type
+.Fa type
 indicates the type of object being deallocated.
 The indicated type must match that of the object being passed in
 argument
-.Ar ptr .
+.Fa ptr .
 Valid values for the
-.Ar type
+.Fa type
 argument are:
 .Bl -tag -width ".Dv DW_DLA_FRAME_BLOCK"
 .It Dv DW_DLA_ABBREV
@@ -159,7 +159,7 @@ as returned by a call to the function
 Calls to
 .Fn dwarf_dealloc
 with other values for argument
-.Ar type
+.Fa type
 are no-ops in this implementation.
 .Pp
 The functions

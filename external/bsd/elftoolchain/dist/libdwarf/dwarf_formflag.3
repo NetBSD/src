@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_formflag.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_formflag.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010 Joseph Koshy
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_formflag.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_formflag.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd June 21, 2010
 .Dt DWARF_FORMFLAG 3
@@ -46,21 +46,22 @@
 Function
 .Fn dwarf_formflag
 sets the location pointed to by argument
-.Ar ret
+.Fa ret
 to 1 if the attribute referenced by argument
-.Ar attr
+.Fa attr
 has a non-zero value, or 0 otherwise.
 The form of argument
-.Ar attr
+.Fa attr
 must be one of
 .Dv DW_FORM_flag
 or
 .Dv DW_FORM_flag_present .
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to return an error descriptor in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_formflag
@@ -70,7 +71,7 @@ on success.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_formflag
@@ -78,13 +79,14 @@ may fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_ATTR_FORM_BAD"
 .It Bq Er DW_DLE_ARGUMENT
 Either of arguments
-.Ar attr
+.Fa attr
 or
-.Ar ret
-was NULL.
+.Fa ret
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ATTR_FORM_BAD
 The attribute referenced by argument
-.Ar attr
+.Fa attr
 was not of a permitted kind.
 .El
 .Sh SEE ALSO

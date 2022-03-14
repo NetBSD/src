@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_next_cu_header.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_next_cu_header.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010,2014 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_next_cu_header.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_next_cu_header.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd December 21, 2014
 .Dt DWARF_NEXT_CU_HEADER 3
@@ -95,66 +95,66 @@ They are less general than function
 and are deprecated for use by new application code.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF debug context allocated using
 .Xr dwarf_init 3 .
 If argument
-.Ar is_info
+.Fa is_info
 is set to 1,
 the function returns information for compilation units found in the
 .Dq \&.debug_info
 section.
 If argument
-.Ar is_info
+.Fa is_info
 is set to 0,
 the function returns information for type units found in the
 .Dq \&.debug_types
 sections.
 Argument
-.Ar cu_length
+.Fa cu_length
 should point to a location that will be set to the
 length of the compilation or type unit.
 Argument
-.Ar cu_version
+.Fa cu_version
 should point to a location that will be set to the
 version number for the compilation or type unit.
 Argument
-.Ar cu_abbrev_offset
+.Fa cu_abbrev_offset
 should point to a location that will be set to the
 starting offset (in the
 .Dq .debug_abbrev
 section) of the set of debugging information entry abbreviations
 associated with this compilation or type unit.
 Argument
-.Ar cu_pointer_size
+.Fa cu_pointer_size
 should point to a location that will be set to the
 size in bytes of an address for the machine architecture of the
 underlying object being debugged.
 Argument
-.Ar cu_offset_size
+.Fa cu_offset_size
 should point to a location that will be set to the
 size in bytes for a DWARF offset in the compilation or type unit.
 Argument
-.Ar cu_extension_size
+.Fa cu_extension_size
 is only needed for processing MIPS/IRIX objects that use
 a non-standard DWARF format.
 It should point to a location that will be set to 4 for normal
 objects and to 0 for non-standard ones.
 Argument
-.Ar type_signature
+.Fa type_signature
 and
-.Ar type_offset
+.Fa type_offset
 is only needed for processing type units.
 Argument
-.Ar type_signature
+.Fa type_signature
 should point to a location that will be set to the 64-bit unique signature
 of the type described in the type unit.
 Argument
-.Ar type_offset
+.Fa type_offset
 should point to a location that will be set to the offset of the debugging
 information entry that describes the type.
 Argument
-.Ar cu_next_offset
+.Fa cu_next_offset
 should point to a location that will be set to the
 offset of the next compilation unit header in the
 .Dq \&.debug_info
@@ -163,7 +163,7 @@ or the offset of the next type unit header in the
 .Dq \&.debug_types
 section.
 Argument
-.Ar err
+.Fa err
 should point to a location that will hold an error descriptor in case
 of an error.
 .Pp
@@ -172,38 +172,40 @@ Function
 is identical to function
 .Fn dwarf_next_cu_header_c
 except that it does not provide arguments
-.Ar is_info ,
-.Ar type_signature
+.Fa is_info ,
+.Fa type_signature
 and
-.Ar type_offset .
+.Fa type_offset .
 .Pp
 Function
 .Fn dwarf_next_cu_header
 is identical to function
 .Fn dwarf_next_cu_header_b
 except that it does not provide arguments
-.Ar cu_offset_size
+.Fa cu_offset_size
 and
-.Ar cu_extension_size .
+.Fa cu_extension_size .
 .Pp
-A value of NULL may be used for any of the arguments
-.Ar cu_length ,
-.Ar cu_version ,
-.Ar cu_abbrev_offset ,
-.Ar cu_pointer_size ,
-.Ar cu_offset_size ,
-.Ar cu_extension_size ,
-.Ar type_signature ,
-.Ar type_offset ,
-.Ar cu_next_offset
+A value of
+.Dv NULL
+may be used for any of the arguments
+.Fa cu_length ,
+.Fa cu_version ,
+.Fa cu_abbrev_offset ,
+.Fa cu_pointer_size ,
+.Fa cu_offset_size ,
+.Fa cu_extension_size ,
+.Fa type_signature ,
+.Fa type_offset ,
+.Fa cu_next_offset
 and
-.Ar err
+.Fa err
 if the caller is not interested in the respective value.
 .Ss Iterating Through Compilation Units in a Debug Context
 The first call to function
 .Fn dwarf_next_cu_header_c
 for a given debug context with argument
-.Ar is_info
+.Fa is_info
 set to 1 will return information about the first
 compilation unit in the
 .Dq \&.debug_info
@@ -227,7 +229,7 @@ section found in the debug object.
 The first call to function
 .Fn dwarf_next_cu_header_c
 for the debug context with argument
-.Ar is_info
+.Fa is_info
 set to 0 will return information about the first
 type unit in that
 .Dq \&.debug_types
@@ -270,7 +272,7 @@ On success, these functions return
 In case of an error, they return
 .Dv DW_DLV_ERROR
 and set argument
-.Ar err .
+.Fa err .
 When there are no more compilation units left to traverse, they return
 .Dv DW_DLV_NO_ENTRY .
 .Sh ERRORS
@@ -279,7 +281,8 @@ These functions can fail with the following error:
 .It Bq Er DW_DLE_ARGUMENT
 Argument
 .Va dbg
-was NULL.
+was
+.Dv NULL .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

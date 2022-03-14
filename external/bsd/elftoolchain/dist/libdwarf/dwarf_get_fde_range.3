@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_fde_range.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_fde_range.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_fde_range.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_fde_range.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd May 22, 2011
 .Dt DWARF_GET_FDE_RANGE 3
@@ -54,31 +54,31 @@ Function
 retrieves range and offset information from a given FDE descriptor.
 .Pp
 Argument
-.Ar fde
+.Fa fde
 should reference a valid DWARF FDE descriptor.
 .Pp
 Argument
-.Ar low_pc
+.Fa low_pc
 should point to a location that will be set to the lowest
 program counter address covered by the FDE descriptor.
 .Pp
 Argument
-.Ar func_len
+.Fa func_len
 should point to a location that will hold the length in bytes of
 the address range covered by the FDE descriptor.
 .Pp
 Argument
-.Ar fde_bytes
+.Fa fde_bytes
 should point to a location that will be set to a pointer to the
 content of the FDE descriptor itself.
 .Pp
 Argument
-.Ar fde_byte_len
+.Fa fde_byte_len
 should point to a location that will hold the length in bytes of
 the FDE descriptor itself.
 .Pp
 Argument
-.Ar cie_offset
+.Fa cie_offset
 should point to a location that will be set to the offset, relative to
 the DWARF
 .Dq ".debug_frame"
@@ -86,7 +86,7 @@ section, of the CIE descriptor associated with the given FDE
 descriptor.
 .Pp
 Argument
-.Ar cie_index
+.Fa cie_index
 should point to a location that will hold the index of the CIE
 descriptor associated with the FDE descriptor.
 The returned value is a zero-based index into the array of CIE
@@ -96,16 +96,17 @@ or
 .Xr dwarf_get_fde_list_eh 3 .
 .Pp
 Argument
-.Ar fde_offset
+.Fa fde_offset
 should point to a location that will be set to the offset, relative to
 the DWARF
 .Dq ".debug_frame"
 section, of the FDE descriptor.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_fde_range
@@ -115,7 +116,7 @@ when it succeeds.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_get_fde_range
@@ -123,16 +124,17 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar fde ,
-.Ar low_pc ,
-.Ar func_len ,
-.Ar fde_bytes ,
-.Ar fde_byte_len ,
-.Ar cie_offset ,
-.Ar cie_index
+.Fa fde ,
+.Fa low_pc ,
+.Fa func_len ,
+.Fa fde_bytes ,
+.Fa fde_byte_len ,
+.Fa cie_offset ,
+.Fa cie_index
 or
-.Ar fde_offset
-was NULL.
+.Fa fde_offset
+was
+.Dv NULL .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_cie_info.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_cie_info.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_cie_info.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_get_cie_info.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd May 29, 2011
 .Dt DWARF_GET_CIE_INFO 3
@@ -55,57 +55,58 @@ Function
 retrieves the information associated with a given CIE descriptor.
 .Pp
 Argument
-.Ar cie
+.Fa cie
 should reference a valid DWARF CIE descriptor, such as would be
 returned by function
 .Xr dwarf_get_cie_of_fde 3 .
 .Pp
 Argument
-.Ar cie_byte_len
+.Fa cie_byte_len
 should point to a location that will hold the length in bytes of
 the CIE descriptor itself.
 .Pp
 Argument
-.Ar version
+.Fa version
 should point to a location that will hold the version number of
 the CIE descriptor.
 .Pp
 Arugment
-.Ar augmentation
+.Fa augmentation
 should point to a location that will be set to a pointer to a
 NUL-terminated string containing augmentation data encoded as UTF-8.
 .Pp
 Argument
-.Ar caf
+.Fa caf
 should point to a location that will hold the code alignment
 factor recorded in the CIE descriptor.
 .Pp
 Arugment
-.Ar daf
+.Fa daf
 should point to a location that will hold the data alignment
 factor recorded in the CIE descriptor.
 .Pp
 Argument
-.Ar ra
+.Fa ra
 should point to a location that will hold the return address
 recorded in the CIE descriptor.
 .Pp
 Argument
-.Ar init_inst
+.Fa init_inst
 should point to a location that will be set to a pointer to an array
 of bytes containing the initial instructions associated with the CIE
 descriptor.
 .Pp
 Argument
-.Ar inst_len
+.Fa inst_len
 should point to a location that will hold the length in bytes
 of the initial instructions returned in argument
-.Ar init_inst .
+.Fa init_inst .
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_cie_info
@@ -115,7 +116,7 @@ when it succeeds.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_get_cie_info
@@ -123,17 +124,18 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar cie ,
-.Ar cie_byte_len ,
-.Ar version ,
-.Ar augmentation ,
-.Ar caf ,
-.Ar daf ,
-.Ar ra ,
-.Ar init_inst
+.Fa cie ,
+.Fa cie_byte_len ,
+.Fa version ,
+.Fa augmentation ,
+.Fa caf ,
+.Fa daf ,
+.Fa ra ,
+.Fa init_inst
 or
-.Ar inst_len
-was NULL.
+.Fa inst_len
+was
+.Dv NULL .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,
