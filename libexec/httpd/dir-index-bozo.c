@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.34 2020/10/15 02:19:23 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.35 2022/03/14 05:06:59 mrg Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -141,7 +141,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		"<tbody>\r\n");
 
 	for (j = k = scandir(dirpath, &de, NULL, alphasort), deo = de;
-	    j--; de++) {
+	    j-- > 0; de++) {
 		int nostat = 0;
 		char *name = (*de)->d_name;
 		char *urlname, *htmlname;
