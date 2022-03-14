@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_str.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_str.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_str.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_str.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd April 3, 2011
 .Dt DWARF_GET_STR 3
@@ -51,32 +51,33 @@ retrieves a NUL-terminated string from the DWARF string section
 .Dq ".debug_str" .
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF debug context allocated using
 .Xr dwarf_init 3 .
 .Pp
 Argument
-.Ar offset
+.Fa offset
 should be an offset, relative to the
 .Dq ".debug_str"
 section, specifying the start of the desired string.
 .Pp
 Argument
-.Ar string
+.Fa string
 should point to a location which will hold a returned
 pointer to a NUL-terminated string.
 .Pp
 Argument
-.Ar len
+.Fa len
 should point to a location which will hold the length
 of the returned string.
 The returned length does not include the space needed for
 the NUL-terminator.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_str
@@ -89,14 +90,14 @@ if there is no
 .Dq ".debug_str"
 section associated with the specified debugging context,
 or if the provided offset
-.Ar offset
+.Fa offset
 is at the very end of
 .Dq ".debug_str"
 section.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To retrieve all the strings in the DWARF string section, use:
 .Bd -literal -offset indent
@@ -124,24 +125,25 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg ,
-.Ar string
+.Fa dbg ,
+.Fa string
 or
-.Ar len
-was NULL.
+.Fa len
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar offset
+.Fa offset
 was out of range.
 .It Bq Er DW_DLE_NO_ENTRY
 The debugging context
-.Ar dbg
+.Fa dbg
 did not contain a
 .Dq ".debug_str"
 string section.
 .It Bq Er DW_DLE_NO_ENTRY
 Argument
-.Ar offset
+.Fa offset
 was at the very end of the
 .Dq ".debug_str"
 section.

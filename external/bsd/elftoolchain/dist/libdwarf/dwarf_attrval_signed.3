@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_attrval_signed.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_attrval_signed.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_attrval_signed.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_attrval_signed.3 3961 2022-03-12 15:13:22Z jkoshy
 .\"
 .Dd December 26, 2016
 .Dt DWARF_ATTRVAL_SIGNED 3
@@ -70,39 +70,40 @@
 .Sh DESCRIPTION
 These functions search the debugging information entry referenced
 by argument
-.Ar die
+.Fa die
 for the attribute named by argument
-.Ar attr .
+.Fa attr .
 If the named attribute is found, the functions set the location
 pointed to by argument
-.Ar ret
+.Fa ret
 to the value of the attribute.
 The argument
-.Ar err ,
-if non NULL,
+.Fa err ,
+if
+.No non- Ns Dv NULL ,
 will be used to return an error descriptor in case of an error.
 .Pp
 Function
 .Fn dwarf_attrval_flag
 sets the location pointed to by argument
-.Ar ret
+.Fa ret
 to either 0 or 1. If the form of the attribute named by argument
-.Ar attr
+.Fa attr
 is
 .Dv DW_FORM_flag ,
 function
 .Fn dwarf_attrval_flag
 sets the location pointed to by argument
-.Ar ret
+.Fa ret
 to 1 if the attribute has a non-zero value, or to 0 otherwise.
 If the form of the attribute named by argument
-.Ar attr
+.Fa attr
 is
 .Dv DW_FORM_flag_present ,
 function
 .Fn dwarf_attrval_flag
 unconditionally sets the location pointed to by argument
-.Ar ret
+.Fa ret
 to 1.
 The form of the attribute must be one of
 .Dv DW_FORM_flag
@@ -112,13 +113,13 @@ or
 Function
 .Fn dwarf_attrval_signed
 stores the value for the attribute named by argument
-.Ar attr ,
+.Fa attr ,
 into the location pointed to by argument
-.Ar ret .
+.Fa ret .
 The attribute's value is treated as a signed integral quantity and is
 sign-extended as needed.
 The attribute named by the argument
-.Ar attr
+.Fa attr
 must belong to the
 .Dv CONSTANT
 class and must have one of the following forms:
@@ -132,10 +133,10 @@ or
 Function
 .Fn dwarf_attrval_string
 sets the location pointed to by argument
-.Ar ret
+.Fa ret
 to a pointer to a NUL-terminated string that is the value of the
 attribute named by argument
-.Ar attr .
+.Fa attr .
 The form of the attribute must be one of
 .Dv DW_FORM_string
 or
@@ -144,9 +145,9 @@ or
 Function
 .Fn dwarf_attrval_unsigned
 stores the value for the attribute named by argument
-.Ar attr
+.Fa attr
 into the location pointed to by argument
-.Ar ret .
+.Fa ret .
 The attribute's value is treated as an unsigned integral quantity, and
 is zero-extended as needed.
 The named attribute must belong to one of the
@@ -169,11 +170,11 @@ or
 .Dv DW_FORM_ref_udata .
 .Pp
 If the attribute named by argument
-.Ar attr
+.Fa attr
 is
 .Dv DW_AT_type
 and is not present in the debugging information entry referenced by argument
-.Ar die ,
+.Fa die ,
 and if a
 .Dv DW_AT_abstract_origin
 or
@@ -194,11 +195,11 @@ If the named attribute was not found in the specified debugging
 information entry descriptor these functions return
 .Dv DW_DLV_NO_ENTRY
 and set argument
-.Ar err .
+.Fa err .
 For other errors, these functions return
 .Dv DW_DLV_ERROR
 and set argument
-.Ar err .
+.Fa err .
 .Sh COMPATIBILITY
 These functions are extensions added by this implementation of the
 DWARF(3) API.
@@ -210,15 +211,16 @@ Either of the arguments
 .Va die
 or
 .Va ret
-was NULL.
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 Argument
-.Ar die
+.Fa die
 did not contain an attribute corresponding to the value in argument
-.Ar attr .
+.Fa attr .
 .It Bq Er DW_DLE_ATTR_FORM_BAD
 The attribute named by argument
-.Ar attr
+.Fa attr
 was not of a permitted form.
 .El
 .Sh SEE ALSO

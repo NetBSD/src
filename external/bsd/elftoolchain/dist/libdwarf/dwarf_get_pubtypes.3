@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_pubtypes.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_pubtypes.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_pubtypes.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_get_pubtypes.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd April 4, 2011
 .Dt DWARF_GET_PUBTYPES 3
@@ -88,15 +88,15 @@ Function
 .Fn dwarf_get_pubtypes
 retrieves descriptors for all the user-defined types associated with the
 DWARF debug context specified by argument
-.Ar dbg .
+.Fa dbg .
 The argument
-.Ar types
+.Fa types
 should point to a location that will be set to a pointer to an array
 of
 .Vt Dwarf_Type
 descriptors.
 The argument
-.Ar ntypes
+.Fa ntypes
 should point to a location that will be set to the number of
 descriptors returned.
 .Pp
@@ -106,9 +106,9 @@ returns the offset, relative to the
 .Dq ".debug_info"
 section, of the compilation unit that contains the debugging
 information entry associated with the argument
-.Ar type .
+.Fa type .
 Argument
-.Ar cu_offset
+.Fa cu_offset
 should point to a location that will hold the returned offset.
 .Pp
 Function
@@ -117,47 +117,47 @@ retrieves the offset, relative to the
 .Dq ".debug_info"
 section, of the debugging information entry associated with the
 argument
-.Ar type ,
+.Fa type ,
 and stores it into the location pointed to by the argument
-.Ar die_offset .
+.Fa die_offset .
 .Pp
 Function
 .Fn dwarf_pubtype_name_offsets
 retrieves the name and offsets for the debugging information entry for
 argument
-.Ar type .
+.Fa type .
 Argument
-.Ar name
+.Fa name
 should point to a location which will be set to a pointer to a
 NUL-terminated string containing the name of the associated debugging
 information entry.
 Argument
-.Ar die_offset
+.Fa die_offset
 should point to a location which will be set to the
 offset, relative to the
 .Dq ".debug_info"
 section, of the associated debugging information entry.
 Argument
-.Ar cu_die_offset
+.Fa cu_die_offset
 should point to a location which will be set to the
 offset, relative to the
 .Dq ".debug_info"
 section, of the first debugging information entry in the compilation
 unit associated with argument
-.Ar type .
+.Fa type .
 .Pp
 Function
 .Fn dwarf_pubtypename
 sets the location pointed to by argument
-.Ar name
+.Fa name
 to a pointer to a NUL-terminated string holding the name of the
 debugging information entry associated with the argument
-.Ar type .
+.Fa type .
 .Ss Memory Management
 The memory area used for the array of
 .Vt Dwarf_Type
 descriptors returned in argument
-.Ar types
+.Fa types
 by function
 .Fn dwarf_get_pubtypes
 is owned by the
@@ -168,7 +168,7 @@ Portable code should instead use the function
 to indicate that the memory area may be freed.
 .Pp
 The memory area used for the string returned in the
-.Ar name
+.Fa name
 argument to functions
 .Fn dwarf_pubtype_name_offsets
 and
@@ -181,8 +181,10 @@ be freed using the
 function.
 .Ss Error Returns
 If argument
-.Ar err
-is not NULL, these functions will use it to store error information,
+.Fa err
+is not
+.Dv NULL ,
+these functions will use it to store error information,
 in case of an error.
 .Sh RETURN VALUES
 On success, these functions returns
@@ -190,7 +192,7 @@ On success, these functions returns
 In case of an error, they return
 .Dv DW_DLV_ERROR
 and set the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To retrieve the list of file scope user-defined types and print
 their names, use:
@@ -232,10 +234,11 @@ One of the arguments
 .Va name ,
 or
 .Va ntypes
-was NULL.
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 The DWARF debugging context referenced by argument
-.Ar dbg
+.Fa dbg
 did not contain information about user-defined types.
 .El
 .Sh SEE ALSO

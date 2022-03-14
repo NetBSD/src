@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_add_file_decl.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_add_file_decl.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_add_file_decl.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_add_file_decl.3 3961 2022-03-12 15:13:22Z jkoshy
 .\"
 .Dd September 17, 2011
 .Dt DWARF_ADD_FILE_DECL 3
@@ -51,40 +51,41 @@ Function
 adds a source file entry to a producer instance.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3
 or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar name
+.Fa name
 should point to a NUL-terminated string containing the name of
 the source file.
 .Pp
 If the file name in argument
-.Ar name
+.Fa name
 is not a fully qualified pathname, argument
-.Ar dirndx
+.Fa dirndx
 should specify the index of the directory where the source file resides.
 Otherwise, argument
-.Ar dirndx
+.Fa dirndx
 should be 0.
 Valid directory indices are those returned by the function
 .Xr dwarf_add_directory_decl 3 .
 .Pp
 Argument
-.Ar mtime
+.Fa mtime
 specifies the time when the file was last modified.
 .Pp
 Argument
-.Ar size
+.Fa size
 specifies the size of the file in bytes.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 On success, function
 .Fn dwarf_add_file_decl
@@ -94,7 +95,7 @@ In case of an error, function
 returns
 .Dv DW_DLV_NOCOUNT
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_add_file_decl
@@ -102,13 +103,14 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Either arguments
-.Ar dbg
+.Fa dbg
 or
-.Ar name
-was NULL.
+.Fa name
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 The length of the NUL-teminated string pointed to by argument
-.Ar name
+.Fa name
 was 0.
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of the

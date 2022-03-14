@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_object_init.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_object_init.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Joseph Koshy
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_object_init.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_object_init.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd September 29, 2011
 .Dt DWARF_OBJECT_INIT 3
@@ -54,7 +54,7 @@ instance that uses application-supplied access methods to read file
 content.
 .Pp
 The argument
-.Ar iface
+.Fa iface
 should point to a populated
 .Vt Dwarf_Obj_Access_Interface
 structure.
@@ -65,7 +65,7 @@ structure are described in the section
 below.
 .Pp
 The argument
-.Ar errhand
+.Fa errhand
 should point to a function to be called in case of an error.
 If this argument is
 .Dv NULL
@@ -75,19 +75,19 @@ See
 for a description of the error handling schemes available.
 .Pp
 The argument
-.Ar errarg
+.Fa errarg
 will be passed to the error handler function pointed to by argument
-.Ar errhand .
+.Fa errhand .
 .Pp
 The argument
-.Ar dbg
+.Fa dbg
 should point to a memory location that will be set to a reference to
 the returned
 .Vt Dwarf_Debug
 descriptor.
 .Pp
 The argument
-.Ar err
+.Fa err
 will be used to return a
 .Vt Dwarf_Error
 descriptor in case of an error.
@@ -148,32 +148,32 @@ debugged.
 .It Ar get_section_info
 This function should return information about the section at the
 index
-.Ar ndx
+.Fa ndx
 by filling in the structure of type
 .Vt Dwarf_Obj_Access_Section
 pointed to by argument
-.Ar ret .
+.Fa ret .
 The
 .Vt Dwarf_Obj_Access_Section
 structure is described below.
 .It Ar load_section
 This function should load the section specified by argument
-.Ar ndx
+.Fa ndx
 into memory and place a pointer to the section's data into
 the location pointed to by argument
-.Ar ret_data .
+.Fa ret_data .
 .El
 .Pp
 The argument
-.Ar obj
+.Fa obj
 passed to these functions will be set to the pointer value in the
-.Ar object
+.Fa object
 field of the associated
 .Vt Dwarf_Obj_Access_Interface
 structure.
 .Pp
 The argument
-.Ar error
+.Fa error
 is used to return an error code in case of an error.
 .It Vt Dwarf_Obj_Access_Section
 This structure describes the layout of a section in the DWARF object.
@@ -203,7 +203,7 @@ function returns
 In case of an error, the function returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 The
 .Fn dwarf_object_init
@@ -211,10 +211,11 @@ function may fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_DEBUG_INFO_NULL"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar iface
+.Fa iface
 or
-.Ar dbg
-was NULL.
+.Fa dbg
+was
+.Dv NULL .
 .It Bq Er DW_DLE_DEBUG_INFO_NULL
 The underlying object did not contain debugging information.
 .It Bq Er DW_DLE_MEMORY

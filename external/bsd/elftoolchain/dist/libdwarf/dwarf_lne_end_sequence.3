@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_lne_end_sequence.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_lne_end_sequence.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_lne_end_sequence.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_lne_end_sequence.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd September 15, 2011
 .Dt DWARF_LNE_END_SEQUENCE 3
@@ -49,21 +49,22 @@ sets the address that indicates the end of a sequence of target machine
 instructions.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3
 or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar addr
+.Fa addr
 specifies an address value which is the first byte after the end of a
 instruction sequence.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 On success, function
 .Fn dwarf_lne_end_sequence
@@ -74,7 +75,7 @@ In case of an error, function
 returns
 .Dv DW_DLV_NOCOUNT
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_lne_end_sequence
@@ -82,11 +83,12 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar dbg
-was NULL.
+.Fa dbg
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 The value in argument
-.Ar addr
+.Fa addr
 overlapped an existing line information entry.
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of the

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_undef_macro.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_undef_macro.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_undef_macro.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_undef_macro.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd November 9, 2011
 .Dt DWARF_UNDEF_MACRO 3
@@ -50,28 +50,29 @@ records the removal of a macro definition in a DWARF producer
 instance.
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3
 or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar lineno
+.Fa lineno
 specifies the line number of the source line where the macro
 definition was removed.
 A value of zero indicates that the macro definition was removed before
 any source files were read.
 .Pp
 Argument
-.Ar name
+.Fa name
 should point to a NUL-terminated string containing the name
 of the macro.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 On success, function
 .Fn dwarf_undef_macro
@@ -82,7 +83,7 @@ In case of an error, function
 returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To record the fact that the macro named
 .Dv _STDIO_H_
@@ -103,10 +104,11 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Either arguments
-.Ar dbg
+.Fa dbg
 or
-.Ar name
-was NULL.
+.Fa name
+was
+.Dv NULL .
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of the
 function.

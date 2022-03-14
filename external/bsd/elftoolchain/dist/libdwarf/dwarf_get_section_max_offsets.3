@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_section_max_offsets.3,v 1.3 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_section_max_offsets.3,v 1.4 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2014 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_section_max_offsets.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_section_max_offsets.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd December 21, 2014
 .Dt DWARF_GET_SECTION_MAX_OFFSETS 3
@@ -73,7 +73,7 @@ Function
 .Fn dwarf_get_section_max_offsets_b
 retrieves the sizes of the DWARF sections in a DWARF debug context.
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF debug context allocated using
 .Xr dwarf_init 3 .
 The function stores the size of each DWARF section to the location
@@ -81,20 +81,22 @@ pointed to by the argument corresponding to the section name.
 If a DWARF section does not exist, the location pointed to by the
 argument corresponding to that section will be set to zero.
 .Pp
-A value of NULL may be used for any of the arguments
-.Ar debug_info ,
-.Ar debug_abbrev ,
-.Ar debug_line ,
-.Ar debug_loc ,
-.Ar debug_aranges ,
-.Ar debug_macinfo ,
-.Ar debug_pubnames ,
-.Ar debug_str ,
-.Ar debug_frame ,
-.Ar debug_ranges ,
-.Ar debug_pubtypes
+A value of
+.Dv NULL
+may be used for any of the arguments
+.Fa debug_info ,
+.Fa debug_abbrev ,
+.Fa debug_line ,
+.Fa debug_loc ,
+.Fa debug_aranges ,
+.Fa debug_macinfo ,
+.Fa debug_pubnames ,
+.Fa debug_str ,
+.Fa debug_frame ,
+.Fa debug_ranges ,
+.Fa debug_pubtypes
 and
-.Ar debug_types
+.Fa debug_types
 if the caller is not interested in the respective section size.
 .Pp
 Function
@@ -102,7 +104,7 @@ Function
 is identical to function
 .Fn dwarf_get_section_max_offsets_b
 except that it does not provide argument
-.Ar debug_types ,
+.Fa debug_types ,
 and thus cannot return the size of the
 .Dq \&.debug_types
 section.
@@ -110,8 +112,10 @@ section.
 On success, these functions return
 .Dv DW_DLV_OK .
 If argument
-.Ar dbg
-is NULL, they return
+.Fa dbg
+is
+.Dv NULL ,
+they return
 .Dv DW_DLV_ERROR .
 .Sh SEE ALSO
 .Xr dwarf 3 ,

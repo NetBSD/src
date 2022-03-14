@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_abbrev_entry.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_abbrev_entry.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_abbrev_entry.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_abbrev_entry.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd April 02, 2011
 .Dt DWARF_GET_ABBREV_ENTRY 3
@@ -51,38 +51,39 @@ Function
 retrieves attribute information from a DWARF abbreviation descriptor.
 .Pp
 Argument
-.Ar abbrev
+.Fa abbrev
 should be a valid abbreviation descriptor, as returned by function
 .Xr dwarf_get_abbrev 3 .
 .Pp
 Argument
-.Ar ndx
+.Fa ndx
 specifies the 0-based index of the attribute.
 The total count of the attributes contained in the abbreviation
 entry can be retrieved using the function
 .Xr dwarf_get_abbrev 3 .
 .Pp
 Argument
-.Ar code
+.Fa code
 should point to a location which will hold a returned
 attribute code.
 .Pp
 Argument
-.Ar form
+.Fa form
 should point to a location which will hold the returned
 form of the attribute.
 .Pp
 Argument
-.Ar offset
+.Fa offset
 should point to a location which will hold a returned offset, relative
 to the
 .Dq ".debug_abbrev"
 section, for the specified attribute.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to return an error descriptor in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to return an error descriptor in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_abbrev_entry
@@ -92,12 +93,12 @@ when it succeeds.
 It returns
 .Dv DW_DLV_NO_ENTRY
 if the attribute index specified by argument
-.Ar ndx
+.Fa ndx
 is out of range.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To loop through all the attribute entries contained in the
 abbreviation section, use:
@@ -145,15 +146,16 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar abbrev ,
-.Ar code ,
-.Ar form
+.Fa abbrev ,
+.Fa code ,
+.Fa form
 or
-.Ar offset
-was NULL.
+.Fa offset
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 The attribute index specified by argument
-.Ar ndx
+.Fa ndx
 was out of range.
 .El
 .Sh SEE ALSO

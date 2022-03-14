@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_highpc.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_highpc.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010,2014 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_highpc.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_highpc.3 3963 2022-03-12 16:07:32Z jkoshy
 .\"
 .Dd July 22, 2014
 .Dt DWARF_HIGHPC 3
@@ -97,7 +97,7 @@
 These convenience functions are used to retrieve DWARF attribute
 values associated with a Debugging Information Entry (DIE) descriptor
 denoted by argument
-.Ar die .
+.Fa die .
 These functions store the value of the requested attribute into the
 location pointed to by their second argument, provided that the requested
 attribute exists in the debugging information entry.
@@ -144,16 +144,18 @@ Function
 is an enhanced version of function
 .Fn dwarf_highpc .
 It sets the location specified by argument
-.Ar ret_form
+.Fa ret_form
 to the form code of the attribute
 .Dv DW_AT_high_pc ,
 and sets the location specified by argument
-.Ar ret_class
+.Fa ret_class
 to the class of that form.
-A value of NULL may be used for either of the arguments
-.Ar ret_form
+A value of
+.Dv NULL
+may be used for either of the arguments
+.Fa ret_form
 or
-.Ar ret_class
+.Fa ret_class
 if the caller is not interested in the respective value.
 .Sh RETURN VALUES
 These functions return
@@ -161,31 +163,32 @@ These functions return
 on success.
 .Pp
 If the debugging information entry descriptor denoted by argument
-.Ar die
+.Fa die
 does not contain the requested attribute, these functions return
 .Dv DW_DLV_NO_ENTRY
 and set argument
-.Ar err .
+.Fa err .
 For other errors, they return
 .Dv DW_DLV_ERROR
 and set argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 These functions can fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Arguments
-.Ar die ,
-.Ar ret_highpc ,
-.Ar ret_lowpc ,
-.Ar ret_size ,
-.Ar ret_lang
+.Fa die ,
+.Fa ret_highpc ,
+.Fa ret_lowpc ,
+.Fa ret_size ,
+.Fa ret_lang
 or
-.Ar ret_order
-were NULL.
+.Fa ret_order
+were
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 Argument
-.Ar die
+.Fa die
 had no requested attribute.
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_die_link.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_die_link.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_die_link.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_die_link.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd September 4, 2011
 .Dt DWARF_DIE_LINK 3
@@ -51,51 +51,53 @@ Function
 links debugging information entries together.
 .Pp
 Argument
-.Ar die
+.Fa die
 should specify the debugging information entry to be updated.
 .Pp
 Argument
-.Ar parent
+.Fa parent
 specifies the new parent link for the debugging information entry.
 .Pp
 Argument
-.Ar child
+.Fa child
 specifies the new first child link for the debugging information entry.
 .Pp
 Argument
-.Ar left
+.Fa left
 specifies the new left sibling link for the debugging information entry.
 .Pp
 Argument
-.Ar right
+.Fa right
 specifies the new right sibling link for the debugging information entry.
 .Pp
 Only one of arguments
-.Ar parent ,
-.Ar child ,
-.Ar left
+.Fa parent ,
+.Fa child ,
+.Fa left
 and
-.Ar right
-is allowed to be non-NULL.
+.Fa right
+is allowed to be
+.No non- Ns Dv NULL .
 Existing links to parent, child, left or right debugging information
 entries, if any, will be unlinked before the specified link is
 established.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
-of an error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 On success, function
 .Fn dwarf_die_link
 returns the debugging information entry provided in argument
-.Ar die .
+.Fa die .
 In case of an error, function
 .Fn dwarf_die_link
 returns
 .Dv DW_DLV_BADADDR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 The function
 .Fn dwarf_die_link
@@ -103,16 +105,18 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar die
-was NULL.
+.Fa die
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 More than one of the arguments
-.Ar parent ,
-.Ar child ,
-.Ar left
+.Fa parent ,
+.Fa child ,
+.Fa left
 and
-.Ar right
-were non-NULL.
+.Fa right
+were
+.No non- Ns Dv NULL .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

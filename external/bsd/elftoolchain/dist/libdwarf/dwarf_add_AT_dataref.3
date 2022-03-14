@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_add_AT_dataref.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_add_AT_dataref.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_add_AT_dataref.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_add_AT_dataref.3 3961 2022-03-12 15:13:22Z jkoshy
 .\"
 .Dd September 4, 2011
 .Dt DWARF_ADD_AT_DATAREF 3
@@ -50,7 +50,7 @@ Function
 .Fn dwarf_add_AT_dataref
 creates an attribute descriptor for a relocatable address and attaches
 it to the debugging information entry referenced by argument
-.Ar die .
+.Fa die .
 .Pp
 If flag
 .Dv DW_DLC_SIZE_64
@@ -60,33 +60,35 @@ Otherwise, the address value will be 4 bytes in size and of the DWARF form
 .Dv DW_FORM_data4 .
 .Pp
 Argument
-.Ar dbg
+.Fa dbg
 should reference a DWARF producer instance allocated using
 .Xr dwarf_producer_init 3
 or
 .Xr dwarf_producer_init_b 3 .
 .Pp
 Argument
-.Ar die
+.Fa die
 should reference a debugging information entry allocated using
 .Xr dwarf_new_die 3 .
 .Pp
 Argument
-.Ar attr
+.Fa attr
 specifies the attribute code of the created attribute descriptor.
 .Pp
 Argument
-.Ar pc_value
+.Fa pc_value
 specifies the value of the relocatable address.
 .Pp
 Argument
-.Ar sym_index
+.Fa sym_index
 specifies the ELF symbol index of the symbol to be used for
 relocation.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case
 of an error.
 .Sh RETURN VALUES
 On success, function
@@ -97,7 +99,7 @@ In case of an error, function
 returns
 .Dv DW_DLV_BADADDR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_add_AT_dataref
@@ -105,10 +107,11 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Either of the arguments
-.Ar dbg
+.Fa dbg
 or
-.Ar die
-was NULL.
+.Fa die
+was
+.Dv NULL .
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of the
 function.

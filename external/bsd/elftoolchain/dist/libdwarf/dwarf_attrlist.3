@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_attrlist.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_attrlist.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010 Kai Wang
 .\" All rights reserved.
@@ -24,9 +24,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_attrlist.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_attrlist.3 3964 2022-03-13 21:41:26Z jkoshy
 .\"
-.Dd November 9, 2011
+.Dd March 13, 2022
 .Dt DWARF_ATTRLIST 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ Function
 .Fn dwarf_attrlist
 retrieves the DWARF attribute descriptors associated with a
 debugging information entry descriptor in argument
-.Ar die .
+.Fa die .
 The descriptors are returned as an array of values of the opaque type
 .Vt Dwarf_Attribute .
 The data associated with each returned attribute descriptor may be
@@ -57,18 +57,19 @@ queried using the form query functions in the
 API set.
 .Pp
 Argument
-.Ar attrbuf
+.Fa attrbuf
 points to a location that will hold a pointer to the returned
 array of DWARF attribute descriptors.
 Argument
-.Ar attrcount
+.Fa attrcount
 points to a location that will hold the number of descriptors in
 the returned array.
 .Pp
 If argument
-.Ar err
-is non-NULL, it is used to return an error descriptor in case of an
-error.
+.Fa err
+is
+.No non- Ns Dv NULL ,
+it is used to return an error descriptor in case of an error.
 .Ss Memory Management
 In the current implementation, the memory allocated for each DWARF
 attribute descriptor and for the returned array of descriptors is
@@ -88,15 +89,15 @@ returns
 on success.
 .Pp
 If the debugging information entry descriptor denoted by argument
-.Ar die
+.Fa die
 does not contain any attribute, the function returns
 .Dv DW_DLV_NO_ENTRY
 and sets argument
-.Ar err .
+.Fa err .
 For other errors, it returns
 .Dv DW_DLV_ERROR
 and sets argument
-.Ar err .
+.Fa err .
 .Sh EXAMPLES
 To retrieve the attribute list for a DWARF debugging information
 entry use:
@@ -121,19 +122,20 @@ for (i = 0; i < dw_count; ++i) {
 .Ed
 .Sh ERRORS
 Function
-.Fn dwarf_diename
+.Fn dwarf_attrlist
 can fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Arguments
-.Ar die ,
-.Ar attrbuf ,
+.Fa die ,
+.Fa attrbuf ,
 or
-.Ar attrcount
-were NULL.
+.Fa attrcount
+were
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 Argument
-.Ar die
+.Fa die
 had no attributes.
 .It Bq Er DW_DLE_MEMORY
 An out of memory condition was encountered during the execution of the

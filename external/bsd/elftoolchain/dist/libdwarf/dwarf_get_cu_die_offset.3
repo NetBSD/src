@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_cu_die_offset.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_cu_die_offset.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_cu_die_offset.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_get_cu_die_offset.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd April 10, 2011
 .Dt DWARF_GET_CU_DIE_OFFSET 3
@@ -61,21 +61,23 @@ Function
 .Fn dwarf_get_arange_cu_header_offset
 retrieves the offset of the compilation unit header associated with
 argument
-.Ar ar ,
+.Fa ar ,
 and stores it in the location pointed to by argument
-.Ar ret .
+.Fa ret .
 .Pp
 Function
 .Fn dwarf_get_cu_die_offset
 retrieves the offset of the debugging information entry for the
 compilation unit associated with argument
-.Ar ar ,
+.Fa ar ,
 and stores it in the location pointed to by argument
-.Ar ret .
+.Fa ret .
 .Pp
 If argument
-.Ar err
-is not NULL, these functions will use it to store error information,
+.Fa err
+is not
+.Dv NULL ,
+these functions will use it to store error information,
 in case of an error.
 .Sh RETURN VALUES
 On success, these functions returns
@@ -83,20 +85,21 @@ On success, these functions returns
 In case of an error, they return
 .Dv DW_DLV_ERROR
 and set the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 These functions may fail with:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar ar
+.Fa ar
 was not a valid
 .Vt Dwarf_Arange
 descriptor.
 .It Bq Er DW_DLE_ARGUMENT
 Argument
-.Ar ret
-was NULL.
+.Fa ret
+was
+.Dv NULL .
 .El
 .Sh SEE ALSO
 .Xr dwarf 3 ,

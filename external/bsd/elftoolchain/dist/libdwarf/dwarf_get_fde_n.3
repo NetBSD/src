@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_fde_n.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_fde_n.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_fde_n.3 3640 2018-10-14 14:09:13Z jkoshy
+.\" Id: dwarf_get_fde_n.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd May 14, 2011
 .Dt DWARF_GET_FDE_N 3
@@ -49,24 +49,25 @@ Function
 retrieves an FDE descriptor from an array of FDE descriptors.
 .Pp
 Argument
-.Ar fdelist
+.Fa fdelist
 should point to an array of FDE descriptors, as returned by the functions
 .Xr dwarf_get_fde_list 3
 or
 .Xr dwarf_get_fde_list_eh 3 .
 .Pp
 Argument
-.Ar fde_index
+.Fa fde_index
 specifies the 0-based index of the desired FDE descriptor.
 .Pp
 Argument
-.Ar ret_fde
+.Fa ret_fde
 should point to a location that will hold the returned FDE descriptor.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_fde_n
@@ -76,12 +77,12 @@ when it succeeds.
 It returns
 .Dv DW_DLV_NO_ENTRY
 if the FDE descriptor index specified by argument
-.Ar fde_index
+.Fa fde_index
 is out of range.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_get_fde_n
@@ -89,13 +90,14 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 Either of the arguments
-.Ar fdelist
+.Fa fdelist
 or
-.Ar ret_fde
-was NULL.
+.Fa ret_fde
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 The FDE descriptor index specified by argument
-.Ar fde_index
+.Fa fde_index
 was out of range.
 .El
 .Sh SEE ALSO

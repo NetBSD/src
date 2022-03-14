@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_get_arange.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_get_arange.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2011 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_get_arange.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_get_arange.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd April 16, 2011
 .Dt DWARF_GET_ARANGE 3
@@ -52,32 +52,33 @@ searches an array of
 descriptors for one that covers a given address.
 .Pp
 Argument
-.Ar ar_list
+.Fa ar_list
 should point to an array of
 .Vt Dwarf_Arange
 descriptors.
 .Pp
 Argument
-.Ar ar_cnt
+.Fa ar_cnt
 specifies the number of
 .Vt Dwarf_Arange
 descriptors in the array pointed to by argument
-.Ar ar_list .
+.Fa ar_list .
 .Pp
 Argument
-.Ar addr
+.Fa addr
 specifies the address being looked up.
 .Pp
 Argument
-.Ar ret_ar
+.Fa ret_ar
 will be used to store the
 .Vt Dwarf_Arange
 descriptor that covers the given address.
 .Pp
 If argument
-.Ar err
-is not NULL, it will be used to store error information in case of an
-error.
+.Fa err
+is not
+.Dv NULL ,
+it will be used to store error information in case of an error.
 .Sh RETURN VALUES
 Function
 .Fn dwarf_get_arange
@@ -92,7 +93,7 @@ descriptor that covers the provided address.
 In case of an error, it returns
 .Dv DW_DLV_ERROR
 and sets the argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_get_arange
@@ -100,14 +101,15 @@ can fail with:
 .Bl -tag -width ".Bq Er DW_DLE_NO_ENTRY"
 .It Bq Er DW_DLE_ARGUMENT
 One of the arguments
-.Ar dbg ,
-.Ar ar_list
+.Fa dbg ,
+.Fa ar_list
 or
-.Ar ret_ar
-was NULL.
+.Fa ret_ar
+was
+.Dv NULL .
 .It Bq Er DW_DLE_ARGUMENT
 Value of argument
-.Ar ar_cnt
+.Fa ar_cnt
 equals to 0.
 .It Bq Er DW_DLE_NO_ENTRY
 A

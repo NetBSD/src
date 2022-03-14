@@ -1,4 +1,4 @@
-.\"	$NetBSD: dwarf_diename.3,v 1.4 2020/11/26 22:51:35 jkoshy Exp $
+.\"	$NetBSD: dwarf_diename.3,v 1.5 2022/03/14 20:50:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2010 Kai Wang
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" Id: dwarf_diename.3 3644 2018-10-15 19:55:01Z jkoshy
+.\" Id: dwarf_diename.3 3962 2022-03-12 15:56:10Z jkoshy
 .\"
 .Dd March 31, 2010
 .Dt DWARF_DIENAME 3
@@ -45,10 +45,10 @@ retrieves a pointer to the NUL-terminated string associated with the
 .Dv DW_AT_name
 attribute of the debugging information entry descriptor referenced by
 argument
-.Ar die .
+.Fa die .
 If the pointer was successfully retrieved, it is stored in the location
 pointed to by argument
-.Ar ret_name .
+.Fa ret_name .
 .Sh RETURN VALUES
 Function
 .Fn dwarf_diename
@@ -57,17 +57,17 @@ returns
 on success.
 .Pp
 If the debugging information entry descriptor denoted by argument
-.Ar die
+.Fa die
 does not contain a
 .Dv DW_AT_name
 attribute, the function returns
 .Dv DW_DLV_NO_ENTRY
 and sets argument
-.Ar err .
+.Fa err .
 For other errors, it returns
 .Dv DW_DLV_ERROR
 and sets argument
-.Ar err .
+.Fa err .
 .Sh ERRORS
 Function
 .Fn dwarf_diename
@@ -75,13 +75,14 @@ can fail with the following errors:
 .Bl -tag -width ".Bq Er DW_DLE_ARGUMENT"
 .It Bq Er DW_DLE_ARGUMENT
 Either of arguments
-.Ar die
+.Fa die
 or
-.Ar ret_name
-was NULL.
+.Fa ret_name
+was
+.Dv NULL .
 .It Bq Er DW_DLE_NO_ENTRY
 Argument
-.Ar die
+.Fa die
 had no
 .Dv DW_AT_name
 attribute.
