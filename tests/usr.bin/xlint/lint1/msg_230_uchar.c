@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230_uchar.c,v 1.7 2022/02/26 11:13:01 rillig Exp $	*/
+/*	$NetBSD: msg_230_uchar.c,v 1.8 2022/03/14 20:25:26 rillig Exp $	*/
 # 3 "msg_230_uchar.c"
 
 // Test for message: nonportable character comparison '%s %d' [230]
@@ -125,8 +125,10 @@ compare_with_character_literal(char ch)
 	 * interpreted using the type 'char' on the exact same platform as
 	 * where the comparison takes place.
 	 */
+	/* expect+1: warning: nonportable character comparison '== 128' [230] */
 	if (ch == '\200')
 		return;
+	/* expect+1: warning: nonportable character comparison '== 255' [230] */
 	if (ch == '\377')
 		return;
 	if (ch == '\000')
