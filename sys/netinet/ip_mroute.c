@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.164 2020/11/12 13:13:45 kardel Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.165 2022/03/15 21:39:59 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.164 2020/11/12 13:13:45 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.165 2022/03/15 21:39:59 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1846,7 +1846,7 @@ vif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 #endif
 
 	/*
-	 * Accept the packet only if the inner heaader is multicast
+	 * Accept the packet only if the inner header is multicast
 	 * and the outer header matches a tunnel-mode vif.  Order
 	 * checks in the hope that common non-matching packets will be
 	 * rejected quickly.  Assume that unicast IPv4 traffic in a
