@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.171 2022/03/13 21:42:39 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.172 2022/03/15 00:05:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.171 2022/03/13 21:42:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.172 2022/03/15 00:05:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -987,6 +987,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		error = ENXIO;
 		goto out;
 	}
+	kpreempt_disable();
 	if (__predict_false(!pktq_enqueue(pktq, top, 0))) {
 		if_statinc(ifp, if_collisions);
 		mutex_exit(&tp->tun_lock);
@@ -994,6 +995,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		m_freem(top);
 		goto out0;
 	}
+	kpreempt_enable();
 	if_statadd2(ifp, if_ipackets, 1, if_ibytes, tlen);
 out:
 	mutex_exit(&tp->tun_lock);
