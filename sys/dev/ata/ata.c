@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.149 2019/05/25 16:30:18 christos Exp $	*/
+/*	$NetBSD: ata.c,v 1.149.2.1 2022/03/15 18:00:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.149 2019/05/25 16:30:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.149.2.1 2022/03/15 18:00:26 martin Exp $");
 
 #include "opt_ata.h"
 
@@ -1584,12 +1584,14 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int arg)
 			/* NOTREACHED */
 		}
 
-		/*
-		 * Block execution of other commands while reset is scheduled
-		 * to a thread.
-		 */
-		ata_channel_freeze_locked(chp);
-		chp->ch_flags |= type;
+		if (!(chp->ch_flags & type)) {
+			/*
+			 * Block execution of other commands while
+			 * reset is scheduled to a thread.
+			 */
+			ata_channel_freeze_locked(chp);
+			chp->ch_flags |= type;
+		}
 
 		cv_signal(&chp->ch_thr_idle);
 		return;
