@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.136 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.137 2022/03/15 15:27:43 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.136 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.137 2022/03/15 15:27:43 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -914,9 +914,10 @@ retry:
 
 	/* If the node gained another reference, retry. */
 	use = atomic_load_relaxed(&vp->v_usecount);
-	if ((use & VUSECOUNT_VGET) != 0 || (use & VUSECOUNT_MASK) != 1) {
+	if ((use & VUSECOUNT_VGET) != 0) {
 		goto retry;
 	}
+	KASSERT((use & VUSECOUNT_MASK) == 1);
 
 	if ((vp->v_iflag & (VI_TEXT|VI_EXECMAP|VI_WRMAP)) != 0 ||
 	    (vp->v_vflag & VV_MAPPED) != 0) {
@@ -967,11 +968,11 @@ retry:
 	if (recycle) {
 		VSTATE_CHANGE(vp, VS_LOADED, VS_BLOCKED);
 		use = atomic_load_relaxed(&vp->v_usecount);
-		if ((use & VUSECOUNT_VGET) != 0 ||
-		    (use & VUSECOUNT_MASK) != 1) {
+		if ((use & VUSECOUNT_VGET) != 0) {
 			VSTATE_CHANGE(vp, VS_BLOCKED, VS_LOADED);
 			goto retry;
 		}
+		KASSERT((use & VUSECOUNT_MASK) == 1);
 	}
 
 	/*
