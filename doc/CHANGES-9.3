@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.80 2022/03/13 09:53:11 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.81 2022/03/15 09:59:28 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1517,4 +1517,10 @@ usr.bin/man/man.c				1.69,1.70,1.72
 
 	man(1): fix -m option so it works as documented.
 	[gutteridge, ticket #1433]
+
+usr.sbin/puffs/mount_9p/node.c			1.30,1.31
+
+	mount_9p(8): fix writing to a file opened with write-only mode,
+	check returned type from T_READ request.
+	[ozaki-r, ticket #1434]
 
