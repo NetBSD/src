@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1844 2022/03/15 18:18:27 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1845 2022/03/15 21:02:11 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1114,12 +1114,12 @@ markus is very cooperative about it):
 - adjust the DEFAULT_PKCS11_WHITELIST for ssh-agent
 
 Package:	OpenSSL
-Version:	1.0.2o/1.1.1m
+Version:	1.0.2o/1.1.1n
 Current Vers:	1.0.2zd/1.1.1n
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
-Date:		2022-01-07
+Date:		2022-03-15
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	OpenSSL and SSLeay license (both BSD-like)
