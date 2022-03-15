@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.245 2022/03/12 17:23:32 riastradh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.246 2022/03/15 13:00:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.245 2022/03/12 17:23:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.246 2022/03/15 13:00:44 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2089,9 +2089,9 @@ bpf_free_filter(struct bpf_filter *filter)
 {
 
 	KASSERT(filter != NULL);
-	KASSERT(filter->bf_insn != NULL);
 
-	kmem_free(filter->bf_insn, filter->bf_size);
+	if (filter->bf_insn != NULL)
+		kmem_free(filter->bf_insn, filter->bf_size);
 	if (filter->bf_jitcode != NULL)
 		bpf_jit_freecode(filter->bf_jitcode);
 	kmem_free(filter, sizeof(*filter));
