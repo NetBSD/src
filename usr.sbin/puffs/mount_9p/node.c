@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.21 2009/01/18 10:10:47 lukem Exp $	*/
+/*	$NetBSD: node.c,v 1.21.40.1 2022/03/15 10:00:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.21 2009/01/18 10:10:47 lukem Exp $");
+__RCSID("$NetBSD: node.c,v 1.21.40.1 2022/03/15 10:00:14 martin Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -181,6 +181,11 @@ puffs9p_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	p9pbuf_put_4(pb, *reslen); /* XXX */
 	GETRESPONSE(pb);
 
+	if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
+		rv = proto_handle_rerror(pu, pb);
+		goto out;
+	}
+
 	p9pbuf_get_4(pb, &count);
 
 	/*
@@ -266,6 +271,8 @@ puffs9p_node_open(struct puffs_usermount *pu, void *opc, int mode,
 
 	puffs_setback(pcc, PUFFS_SETBACK_INACT_N1);
 	if (pn->pn_va.va_type != VDIR) {
+		/* Always require read access for page cache */
+		mode |= FREAD;
 		if (mode & FREAD && p9n->fid_read == P9P_INVALFID) {
 			nfid = NEXTFID(p9p);
 			error = proto_cc_open(pu, p9n->fid_base, nfid,
