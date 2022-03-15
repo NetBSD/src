@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2864 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2865 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -481,4 +481,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		updated recordable media. [reinoud 20220309]
 	udf: Fix locking up CD/DVD burner issue that would lockup the FS.
 		[reinoud 20220309]
-
+	OpenSSL: Imported 1.1.1n. [christos 20220315]
