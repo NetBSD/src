@@ -1,4 +1,4 @@
-.\"	$NetBSD: setpgid.2,v 1.23 2014/09/19 16:02:58 wiz Exp $
+.\"	$NetBSD: setpgid.2,v 1.24 2022/03/16 00:50:40 dholland Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)setpgid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 18, 2003
+.Dd March 15, 2022
 .Dt SETPGID 2
 .Os
 .Sh NAME
@@ -62,6 +62,14 @@ is used instead.
 If the invoker is not the super-user, then the affected process
 must have the same effective user-id as the invoker or be a descendant
 of the invoking process.
+.Pp
+In general to set the process group of a newly forked subprocess, both
+the child and parent processes should call
+.Fn setpgid
+to ensure that the process group change takes effect in a timely
+fashion.
+One call will succeed and the other will fail, depending on process
+scheduling.
 .Sh RETURN VALUES
 .Fn setpgid
 returns 0 when the operation was successful.
