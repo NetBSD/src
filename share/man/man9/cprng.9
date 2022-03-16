@@ -1,4 +1,4 @@
-.\"	$NetBSD: cprng.9,v 1.14 2020/08/17 06:07:53 wiz Exp $
+.\"	$NetBSD: cprng.9,v 1.15 2022/03/16 23:56:33 riastradh Exp $
 .\"
 .\" Copyright (c) 2011-2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,16 +93,14 @@ the strong generator can also be created by calling
 .Pp
 The
 .Nm
-functions may be used at interrupt priority level
-.Dv IPL_VM
-or below,
+functions may be used in soft interrupt context,
 except for
 .Fn cprng_strong_create
 and
 .Fn cprng_strong_destroy
 which are allowed only at
-.Dv IPL_NONE ;
-see
+.Dv IPL_NONE
+in thread context; see
 .Xr spl 9 .
 .Pp
 The
