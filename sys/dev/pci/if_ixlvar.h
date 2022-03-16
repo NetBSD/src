@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixlvar.h,v 1.7 2020/09/08 10:05:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixlvar.h,v 1.8 2022/03/16 05:26:37 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -326,12 +326,20 @@ struct ixl_aq_switch_config_element {
 #define IXL_PHY_TYPE_25GBASE_AOC	0x23
 #define IXL_PHY_TYPE_25GBASE_ACC	0x24
 
+#define IXL_PHY_TYPE_2500BASE_T_1	0x26
+#define IXL_PHY_TYPE_5000BASE_T_1	0x27
+
+#define IXL_PHY_TYPE_2500BASE_T_2	0x30
+#define IXL_PHY_TYPE_5000BASE_T_2	0x31
+
+#define IXL_PHY_LINK_SPEED_2500MB	(1 << 0)
 #define IXL_PHY_LINK_SPEED_100MB	(1 << 1)
 #define IXL_PHY_LINK_SPEED_1000MB	(1 << 2)
 #define IXL_PHY_LINK_SPEED_10GB		(1 << 3)
 #define IXL_PHY_LINK_SPEED_40GB		(1 << 4)
 #define IXL_PHY_LINK_SPEED_20GB		(1 << 5)
 #define IXL_PHY_LINK_SPEED_25GB		(1 << 6)
+#define IXL_PHY_LINK_SPEED_5000MB	(1 << 7)
 
 #define IXL_PHY_ABILITY_PAUSE_TX	(1 << 0)
 #define IXL_PHY_ABILITY_PAUSE_RX	(1 << 1)
@@ -363,6 +371,10 @@ struct ixl_aq_phy_abilities {
 #define IXL_AQ_PHY_TYPE_EXT_25G_CR	0x02
 #define IXL_AQ_PHY_TYPE_EXT_25G_SR	0x04
 #define IXL_AQ_PHY_TYPE_EXT_25G_LR	0x08
+#define IXL_AQ_PHY_TYPE_EXT_25G_AOC	0x10
+#define IXL_AQ_PHY_TYPE_EXT_25G_ACC	0x20
+#define IXL_AQ_PHY_TYPE_EXT_2500_T	0x40
+#define IXL_AQ_PHY_TYPE_EXT_5000_T	0x80
 	uint8_t		fec_cfg_curr_mod_ext_info;
 #define IXL_AQ_ENABLE_FEC_KR		0x01
 #define IXL_AQ_ENABLE_FEC_RS		0x02
@@ -669,11 +681,13 @@ struct ixl_aq_link_status { /* this occupies the iaq_param space */
 #define IXL_AQ_LSE_IS_ENABLED		0x1 /* only set in response */
 	uint8_t		phy_type;
 	uint8_t		link_speed;
+#define IXL_AQ_LINK_SPEED_2500MB	(1 << 0)
 #define IXL_AQ_LINK_SPEED_100MB		(1 << 1)
 #define IXL_AQ_LINK_SPEED_1000MB	(1 << 2)
 #define IXL_AQ_LINK_SPEED_10GB		(1 << 3)
 #define IXL_AQ_LINK_SPEED_40GB		(1 << 4)
 #define IXL_AQ_LINK_SPEED_25GB		(1 << 6)
+#define IXL_AQ_LINK_SPEED_5000MB	(1 << 7)
 	uint8_t		link_info;
 #define IXL_AQ_LINK_UP_FUNCTION		0x01
 #define IXL_AQ_LINK_FAULT		0x02
