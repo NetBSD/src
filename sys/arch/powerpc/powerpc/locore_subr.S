@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.65 2021/03/06 08:34:58 rin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.66 2022/03/16 09:48:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -284,7 +284,7 @@ ENTRY(cpu_switchto)
 #if 1
 	addi	%r1,%r1,CALLFRAMELEN
 #else
-	ldreg	%r1,CFRAME_SP(%r1)	/* pop stack frmae */
+	ldreg	%r1,CFRAME_SP(%r1)	/* pop stack frame */
 #endif
 	ldreg	%r0,CFRAME_LR(%r1)
 	mtlr	%r0
