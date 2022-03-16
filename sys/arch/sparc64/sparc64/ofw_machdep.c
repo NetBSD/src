@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.48 2022/01/10 20:14:54 palle Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.49 2022/03/16 20:31:02 andvar Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.48 2022/01/10 20:14:54 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.49 2022/03/16 20:31:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -836,7 +836,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	 * bus format, and hunt up the parent bus to see if
 	 * we need to remap.
 	 *
-	 * The specification for interrupt mapping is borken.
+	 * The specification for interrupt mapping is broken.
 	 * You are supposed to query the interrupt parent in
 	 * the interrupt-map specification to determine the
 	 * number of address and interrupt cells, but we need
