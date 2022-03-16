@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.34 2022/03/04 21:12:03 andvar Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.35 2022/03/16 23:56:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.34 2022/03/04 21:12:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.35 2022/03/16 23:56:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -211,9 +211,6 @@ EVCNT_ATTACH_STATIC(entropy_partial_evcnt);
 static struct evcnt entropy_consolidate_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "entropy", "consolidate");
 EVCNT_ATTACH_STATIC(entropy_consolidate_evcnt);
-static struct evcnt entropy_extract_intr_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "entropy", "extract intr");
-EVCNT_ATTACH_STATIC(entropy_extract_intr_evcnt);
 static struct evcnt entropy_extract_fail_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "entropy", "extract fail");
 EVCNT_ATTACH_STATIC(entropy_extract_fail_evcnt);
@@ -1278,13 +1275,12 @@ entropy_extract(void *buf, size_t len, int flags)
 		    "can't wait for entropy until warm");
 	}
 
+	/* Refuse to operate in interrupt context.  */
+	KASSERT(!cpu_intr_p());
+
 	/* Acquire the global lock to get at the global pool.  */
 	if (E->stage >= ENTROPY_WARM)
 		mutex_enter(&E->lock);
-
-	/* Count up request for entropy in interrupt context.  */
-	if (cpu_intr_p())
-		entropy_extract_intr_evcnt.ev_count++;
 
 	/* Wait until there is enough entropy in the system.  */
 	error = 0;
