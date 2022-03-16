@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.13 2022/02/27 14:18:42 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.14 2022/03/16 23:32:52 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.13 2022/02/27 14:18:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.14 2022/03/16 23:32:52 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -301,7 +301,6 @@ active_instance(struct i915_active *ref, struct intel_timeline *tl)
 	node = rb_tree_find_node(&ref->tree.rbr_tree, &idx);
 	if (node) {
 		KASSERT(node->timeline == idx);
-		kmem_cache_free(global.slab_cache, prealloc);
 		goto out;
 	}
 #else
@@ -324,6 +323,7 @@ active_instance(struct i915_active *ref, struct intel_timeline *tl)
 #endif
 
 	node = prealloc;
+	prealloc = NULL;
 	__i915_active_fence_init(&node->base, NULL, node_retire);
 	node->ref = ref;
 	node->timeline = idx;
@@ -340,6 +340,11 @@ active_instance(struct i915_active *ref, struct intel_timeline *tl)
 out:
 	ref->cache = node;
 	spin_unlock_irq(&ref->tree_lock);
+
+#ifdef __NetBSD__
+	if (prealloc)
+		kmem_cache_free(global.slab_cache, prealloc);
+#endif
 
 	BUILD_BUG_ON(offsetof(typeof(*node), base));
 	return &node->base;
