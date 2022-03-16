@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2018/09/28 04:34:02 isaki Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2022/03/16 20:31:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -549,7 +549,7 @@ ENTRY_NOPROFILE(lev6intr)
 	.comm	_ssir,1
 ASENTRY_NOPROFILE(rei)
 #ifdef DEBUG
-	tstl	_C_LABEL(panicstr)		| have we paniced?
+	tstl	_C_LABEL(panicstr)		| have we panicked?
 	jne	Ldorte			| yes, do not make matters worse
 #endif
 	btst	#PCB_ASTB,_u+PCB_FLAGS+1| AST pending?

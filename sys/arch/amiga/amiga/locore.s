@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.159 2020/07/21 06:39:31 rin Exp $	*/
+/*	$NetBSD: locore.s,v 1.160 2022/03/16 20:31:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -705,7 +705,7 @@ ENTRY_NOPROFILE(lev7intr)
  */
 ASENTRY_NOPROFILE(rei)
 #ifdef DEBUG
-	tstl	_C_LABEL(panicstr)	| have we paniced?
+	tstl	_C_LABEL(panicstr)	| have we panicked?
 	jne	Ldorte			| yes, do not make matters worse
 #endif
 	tstl	_C_LABEL(astpending)	| AST pending?

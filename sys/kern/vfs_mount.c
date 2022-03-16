@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.88 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.89 2022/03/16 20:31:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.88 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.89 2022/03/16 20:31:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1110,7 +1110,7 @@ vfs_shutdown(void)
 	vfs_sync_all(l);
 
 	/*
-	 * If we have paniced - do not make the situation potentially
+	 * If we have panicked - do not make the situation potentially
 	 * worse by unmounting the file systems.
 	 */
 	if (panicstr != NULL) {

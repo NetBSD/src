@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 2021/03/31 09:48:15 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.29 2022/03/16 20:31:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -478,7 +478,7 @@ GLOBAL(eintrcnt)
 
 ASGLOBAL(rei)
 #ifdef	DIAGNOSTIC
-	tstl	_C_LABEL(panicstr)	| have we paniced?
+	tstl	_C_LABEL(panicstr)	| have we panicked?
 	jne	Ldorte			| yes, do not make matters worse
 #endif
 	tstl	_C_LABEL(astpending)	| AST pending?

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.186 2021/03/10 13:27:51 simonb Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.187 2022/03/16 20:31:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.186 2021/03/10 13:27:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.187 2022/03/16 20:31:02 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -106,7 +106,7 @@ extern	struct tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
-struct cpu_info *paniccpu;	/* cpu that first paniced */
+struct cpu_info *paniccpu;	/* cpu that first panicked */
 long	panicstart, panicend;	/* position in the msgbuf of the start and
 				   end of the formatted panicstr. */
 int	doing_shutdown;	/* set to indicate shutdown in progress */
@@ -224,7 +224,7 @@ vpanic(const char *fmt, va_list ap)
 		/*
 		 * Disable preemption.  If already panicing on another CPU, sit
 		 * here and spin until the system is rebooted.  Allow the CPU that
-		 * first paniced to panic again.
+		 * first panicked to panic again.
 		 */
 		kpreempt_disable();
 		ci = curcpu();
