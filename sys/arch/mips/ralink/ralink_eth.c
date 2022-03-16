@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.22 2021/08/17 22:00:30 andvar Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.23 2022/03/16 10:08:02 andvar Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.22 2021/08/17 22:00:30 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.23 2022/03/16 10:08:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1325,7 +1325,7 @@ ralink_eth_watchdog(struct ifnet *ifp)
 		sc->sc_evcnt_wd_tx.ev_count++;
 	} else {
 		RALINK_DEBUG(RALINK_DEBUG_ERROR,
-		    "%s: spurious watchog timeout\n", ifp->if_xname);
+		    "%s: spurious watchdog timeout\n", ifp->if_xname);
 		sc->sc_evcnt_wd_spurious.ev_count++;
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.50 2021/05/08 00:27:02 thorpej Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.51 2022/03/16 10:08:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.50 2021/05/08 00:27:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.51 2022/03/16 10:08:02 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -1614,7 +1614,7 @@ jme_txeof(struct jme_softc *sc)
 		sc->jme_if.if_flags &= ~IFF_OACTIVE;
 	}
 	sc->jme_tx_cons = cons;
-	/* Unarm watchog timer when there is no pending descriptors in queue. */
+	/* Unarm watchdog timer when there are no pending descriptors in queue. */
 	if (sc->jme_tx_cnt == 0)
 		ifp->if_timer = 0;
 #ifdef JMEDEBUG_TX
