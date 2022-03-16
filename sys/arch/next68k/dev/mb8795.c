@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.66 2020/01/29 05:31:10 thorpej Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.67 2022/03/16 20:31:01 andvar Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.66 2020/01/29 05:31:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.67 2022/03/16 20:31:01 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -516,7 +516,7 @@ mb8795_init(struct mb8795_softc *sc)
 		if (turbo)
 			rxmode |= MB8795_RXMODE_TEST;
 
-		/* switching mode probably borken now with turbo */
+		/* switching mode probably broken now with turbo */
 		MB_WRITE_REG(sc, MB8795_TXMODE,
 		    turbo ? MB8795_TXMODE_TURBO1 : MB8795_TXMODE_LB_DISABLE);
 		MB_WRITE_REG(sc, MB8795_RXMODE, rxmode);
@@ -718,7 +718,7 @@ mb8795_start_dma(struct mb8795_softc *sc)
 		txstat = MB_READ_REG(sc, MB8795_TXSTAT);
 		if (!turbo && !(txstat & MB8795_TXSTAT_READY)) {
 			/*
-			 * @@@ I used to panic here, but then it paniced once.
+			 * @@@ I used to panic here, but then it panicked once.
 			 * Let's see if I can just reset instead.
 			 * [ dbj 980706.1900 ]
 			 */

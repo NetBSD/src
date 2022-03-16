@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.45 2021/09/11 20:28:04 andvar Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.46 2022/03/16 20:31:01 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.45 2021/09/11 20:28:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.46 2022/03/16 20:31:01 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mpc85xx.h"
@@ -551,7 +551,7 @@ e500_splx(int ipl)
 	struct cpu_info * const ci = curcpu();
 	const int old_ipl = ci->ci_cpl;
 
-	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	/* if we panicked because of watchdog, PSL_CE will be clear.  */
 	KASSERT(wdog_barked || (mfmsr() & PSL_CE));
 
 	if (ipl == old_ipl)
@@ -590,7 +590,7 @@ e500_splraise(int ipl)
 	struct cpu_info * const ci = curcpu();
 	const int old_ipl = ci->ci_cpl;
 
-	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	/* if we panicked because of watchdog, PSL_CE will be clear.  */
 	KASSERT(wdog_barked || (mfmsr() & PSL_CE));
 
 	if (old_ipl < ipl) {
@@ -938,7 +938,7 @@ e500_extintr(struct trapframe *tf)
 	struct cpu_softc * const cpu = ci->ci_softc;
 	const int old_ipl = ci->ci_cpl;
 
-	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	/* if we panicked because of watchdog, PSL_CE will be clear.  */
 	KASSERT(wdog_barked || (mfmsr() & PSL_CE));
 
 #if 0
