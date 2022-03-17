@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1274 2022/03/17 06:20:47 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1275 2022/03/17 06:24:30 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -137,9 +137,9 @@ EXTERNAL_OPENSSL_SUBDIR=/does/not/exist
 #
 # Does the platform support ACPI?
 #
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "ia64" || \
+.if ${MACHINE} == "i386" || \
+    ${MACHINE} == "amd64" || \
+    ${MACHINE} == "ia64" || \
     !empty(MACHINE_ARCH:Maarch64*)
 HAVE_ACPI=	yes
 .else
@@ -149,9 +149,9 @@ HAVE_ACPI=	no
 #
 # Does the platform support UEFI?
 #
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "ia64" || \
+.if ${MACHINE} == "i386" || \
+    ${MACHINE} == "amd64" || \
+    ${MACHINE} == "ia64" || \
     !empty(MACHINE_ARCH:Mearmv7*) || \
     !empty(MACHINE_ARCH:Maarch64*) || \
     ${MACHINE_ARCH} == "riscv64"
@@ -1037,7 +1037,9 @@ MK${var}:=	yes
 #
 # MK* options which have variable defaults.
 #
-# aarch64eb is not yet supported.
+
+#
+# aarch64eb is not yet supported for MKCOMPAT.
 #
 .if ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "sparc64" || \
@@ -1096,8 +1098,8 @@ MKZFS?=		yes
 #
 # DTrace works on amd64, i386, aarch64, and earm*
 #
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
+.if ${MACHINE} == "i386" || \
+    ${MACHINE} == "amd64" || \
     ${MACHINE_ARCH} == "aarch64" || \
     !empty(MACHINE_ARCH:Mearm*)
 MKDTRACE?=	yes
@@ -1111,8 +1113,7 @@ MKCTF?=		yes
 .if !defined(COVERITY_TOP_CONFIG) && \
     (${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "aarch64" || \
-    ${MACHINE_ARCH} == "aarch64eb" || \
+    !empty(MACHINE_ARCH:Maarch64*) || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
@@ -1126,10 +1127,9 @@ MKPIE?=		no
 #
 # RELRO is enabled on i386, amd64, and aarch64 by default
 #
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "aarch64" || \
-    ${MACHINE_ARCH} == "aarch64eb"
+.if ${MACHINE} == "i386" || \
+    ${MACHINE} == "amd64" || \
+    !empty(MACHINE_ARCH:Maarch64*)
 MKRELRO?=	partial
 .else
 MKRELRO?=	no
@@ -1516,9 +1516,9 @@ ${var}?= no
 # Since pigz can not create .xz format files currently, disable .xz
 # format if USE_PIGZGZIP is enabled.
 .if ${USE_PIGZGZIP} == "no" && \
-		(${MACHINE} == "amd64" || \
-		 ${MACHINE} == "sparc64" || \
-		 ${MACHINE_CPU} == "aarch64")
+    (${MACHINE} == "amd64" || \
+     ${MACHINE} == "sparc64" || \
+     !empty(MACHINE_ARCH:Maarch64*))
 USE_XZ_SETS?= yes
 .else
 USE_XZ_SETS?= no
