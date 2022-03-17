@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.67 2022/03/16 20:31:01 andvar Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.68 2022/03/17 08:08:03 andvar Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.67 2022/03/16 20:31:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.68 2022/03/17 08:08:03 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -516,7 +516,7 @@ mb8795_init(struct mb8795_softc *sc)
 		if (turbo)
 			rxmode |= MB8795_RXMODE_TEST;
 
-		/* switching mode probably broken now with turbo */
+		/* switching mode probably borken now with turbo */
 		MB_WRITE_REG(sc, MB8795_TXMODE,
 		    turbo ? MB8795_TXMODE_TURBO1 : MB8795_TXMODE_LB_DISABLE);
 		MB_WRITE_REG(sc, MB8795_RXMODE, rxmode);
