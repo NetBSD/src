@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.35 2022/03/17 22:53:13 uwe Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.36 2022/03/17 23:05:01 uwe Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.35 2022/03/17 22:53:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.36 2022/03/17 23:05:01 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,21 +694,22 @@ virtio_pci_read_queue_size_10(struct virtio_softc *sc, uint16_t idx)
 }
 
 /*
- * By definition little endian only in v1.0 and 8 byters are allowed to be
- * written as two 4 byters
+ * By definition little endian only in v1.0.  NB: "MAY" in the text
+ * below refers to "independently" (i.e. the order of accesses) not
+ * "32-bit" (which is restricted by the earlier "MUST").
  *
- * This is not a general purpose function that can be used in any
- * driver. Virtio specifically allows the 8 byte bus transaction
- * to be split into two 4 byte transactions. Do not copy/use it
- * in other device drivers unless you know that the device accepts it.
+ * 4.1.3.1 Driver Requirements: PCI Device Layout
+ *
+ * For device configuration access, the driver MUST use ... 32-bit
+ * wide and aligned accesses for ... 64-bit wide fields.  For 64-bit
+ * fields, the driver MAY access each of the high and low 32-bit parts
+ * of the field independently.
  */
 static __inline void
 virtio_pci_bus_space_write_8(bus_space_tag_t iot, bus_space_handle_t ioh,
      bus_size_t offset, uint64_t value)
 {
-#if defined(__HAVE_BUS_SPACE_8)
-	bus_space_write_8(iot, ioh, offset, value);
-#elif _QUAD_HIGHWORD
+#if _QUAD_HIGHWORD
 	bus_space_write_4(iot, ioh, offset, BUS_ADDR_LO32(value));
 	bus_space_write_4(iot, ioh, offset + 4, BUS_ADDR_HI32(value));
 #else
