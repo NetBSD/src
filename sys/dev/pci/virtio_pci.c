@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.34 2022/03/14 12:22:02 uwe Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.35 2022/03/17 22:53:13 uwe Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.34 2022/03/14 12:22:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.35 2022/03/17 22:53:13 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,7 @@ virtio_pci_attach_10(device_t self, void *aux)
 		pcireg_t type;
 		if (bars[i] == 0)
 			continue;
-		reg = PCI_MAPREG_START + i * 4;
+		reg = PCI_BAR(i);
 		type = pci_mapreg_type(pc, tag, reg);
 		if (pci_mapreg_map(pa, reg, type, 0,
 				&psc->sc_bars_iot[j], &psc->sc_bars_ioh[j],
