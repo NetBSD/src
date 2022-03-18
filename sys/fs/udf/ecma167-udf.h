@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.16 2018/08/09 13:49:30 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.17 2022/03/18 16:06:18 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006, 2008, 2009, 2017, 2018
@@ -651,7 +651,7 @@ struct fileid_desc {
 	uint8_t			l_fi;	/* Length of file identifier area */
 	struct long_ad		icb;
 	uint16_t		l_iu;	/* Length of implementation use area */
-	uint8_t			data[0];
+	uint8_t			data[1];
 } __packed;
 #define	UDF_FID_SIZE	38
 #define	UDF_FILE_CHAR_VIS	(1 << 0) /* Invisible */
