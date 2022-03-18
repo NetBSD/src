@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.39 2022/03/18 23:35:19 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.40 2022/03/18 23:35:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.39 2022/03/18 23:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.40 2022/03/18 23:35:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -130,7 +130,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.39 2022/03/18 23:35:19 riastradh 
  *	evcnt(9) assumes it stays put in memory.
  */
 struct entropy_cpu {
-	struct evcnt		*ec_softint_evcnt;
+	struct entropy_cpu_evcnt {
+		struct evcnt		softint;
+		struct evcnt		intrdrop;
+		struct evcnt		intrtrunc;
+	}			*ec_evcnt;
 	struct entpool		*ec_pool;
 	unsigned		ec_pending;
 	bool			ec_locked;
@@ -466,17 +470,21 @@ static void
 entropy_init_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 {
 	struct entropy_cpu *ec = ptr;
+	const char *cpuname;
 
-	ec->ec_softint_evcnt = kmem_alloc(sizeof(*ec->ec_softint_evcnt),
-	    KM_SLEEP);
+	ec->ec_evcnt = kmem_alloc(sizeof(*ec->ec_evcnt), KM_SLEEP);
 	ec->ec_pool = kmem_zalloc(sizeof(*ec->ec_pool), KM_SLEEP);
 	ec->ec_pending = 0;
 	ec->ec_locked = false;
 
 	/* XXX ci_cpuname may not be initialized early enough.  */
-	evcnt_attach_dynamic(ec->ec_softint_evcnt, EVCNT_TYPE_MISC, NULL,
-	    ci->ci_cpuname[0] == '\0' ? "cpu0" : ci->ci_cpuname,
-	    "entropy softint");
+	cpuname = ci->ci_cpuname[0] == '\0' ? "cpu0" : ci->ci_cpuname;
+	evcnt_attach_dynamic(&ec->ec_evcnt->softint, EVCNT_TYPE_MISC, NULL,
+	    cpuname, "entropy softint");
+	evcnt_attach_dynamic(&ec->ec_evcnt->intrdrop, EVCNT_TYPE_MISC, NULL,
+	    cpuname, "entropy intrdrop");
+	evcnt_attach_dynamic(&ec->ec_evcnt->intrtrunc, EVCNT_TYPE_MISC, NULL,
+	    cpuname, "entropy intrtrunc");
 }
 
 /*
@@ -497,10 +505,12 @@ entropy_fini_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 	 */
 	explicit_memset(ec->ec_pool, 0, sizeof(*ec->ec_pool));
 
-	evcnt_detach(ec->ec_softint_evcnt);
+	evcnt_detach(&ec->ec_evcnt->intrtrunc);
+	evcnt_detach(&ec->ec_evcnt->intrdrop);
+	evcnt_detach(&ec->ec_evcnt->softint);
 
 	kmem_free(ec->ec_pool, sizeof(*ec->ec_pool));
-	kmem_free(ec->ec_softint_evcnt, sizeof(*ec->ec_softint_evcnt));
+	kmem_free(ec->ec_evcnt, sizeof(*ec->ec_evcnt));
 }
 
 /*
@@ -872,8 +882,10 @@ entropy_enter_intr(const void *buf, size_t len, unsigned nbits)
 	 * higher-priority interrupts will drop their samples.
 	 */
 	ec = percpu_getref(entropy_percpu);
-	if (ec->ec_locked)
+	if (ec->ec_locked) {
+		ec->ec_evcnt->intrdrop.ev_count++;
 		goto out0;
+	}
 	ec->ec_locked = true;
 	__insn_barrier();
 
@@ -885,6 +897,7 @@ entropy_enter_intr(const void *buf, size_t len, unsigned nbits)
 		sih = atomic_load_relaxed(&entropy_sih);
 		if (__predict_true(sih != NULL))
 			softint_schedule(sih);
+		ec->ec_evcnt->intrtrunc.ev_count++;
 		goto out1;
 	}
 	fullyused = true;
@@ -936,7 +949,7 @@ entropy_softintr(void *cookie)
 	__insn_barrier();
 
 	/* Count statistics.  */
-	ec->ec_softint_evcnt->ev_count++;
+	ec->ec_evcnt->softint.ev_count++;
 
 	/* Stir the pool if necessary.  */
 	entpool_stir(ec->ec_pool);
