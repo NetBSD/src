@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.26 2021/08/07 15:41:00 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.27 2022/03/18 23:35:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.26 2021/08/07 15:41:00 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.27 2022/03/18 23:35:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,18 +111,22 @@ struct sun8i_crypto_softc {
 
 	const struct sun8i_crypto_config *sc_cfg;
 
+	struct workqueue		*sc_wq;
+	void				*sc_ih;
+
 	kmutex_t			sc_lock;
 	struct sun8i_crypto_chan {
 		struct sun8i_crypto_task	*cc_task;
 		unsigned			cc_starttime;
 	}				sc_chan[SUN8I_CRYPTO_NCHAN];
 	struct callout			sc_timeout;
-	struct workqueue		*sc_wq;
-	struct work			sc_work;
-	void				*sc_ih;
+
+	kmutex_t			sc_intr_lock;
 	uint32_t			sc_done;
 	uint32_t			sc_esr;
+	struct work			sc_work;
 	bool				sc_work_pending;
+
 	struct sun8i_crypto_rng {
 		struct sun8i_crypto_buf		cr_buf;
 		struct sun8i_crypto_task	*cr_task;
@@ -381,7 +385,8 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	    0, 0, 0, "sun8icry", NULL, IPL_VM,
 	    &sun8i_crypto_task_ctor, &sun8i_crypto_task_dtor, sc);
 	sc->sc_cfg = of_compatible_lookup(phandle, compat_data)->data;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
 	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timeout, &sun8i_crypto_timeout, sc);
 	if (workqueue_create(&sc->sc_wq, device_xname(self),
@@ -948,34 +953,16 @@ out:	/* Done!  */
  *
  *	Timeout handler.  Schedules work in a thread to cancel all
  *	pending tasks that were started long enough ago we're bored of
- *	waiting for them, and reschedules another timeout unless the
- *	channels are all idle.
+ *	waiting for them.
  */
 static void
 sun8i_crypto_timeout(void *cookie)
 {
 	struct sun8i_crypto_softc *sc = cookie;
-	unsigned i;
 
-	mutex_enter(&sc->sc_lock);
-
-	/* Check whether there are any tasks pending.  */
-	for (i = 0; i < SUN8I_CRYPTO_NCHAN; i++) {
-		if (sc->sc_chan[i].cc_task)
-			break;
-	}
-	if (i == SUN8I_CRYPTO_NCHAN)
-		/* None pending, so nothing to do.  */
-		goto out;
-
-	/*
-	 * Schedule the worker to check for timeouts, and schedule
-	 * another timeout in case we need it.
-	 */
+	mutex_enter(&sc->sc_intr_lock);
 	sun8i_crypto_schedule_worker(sc);
-	callout_schedule(&sc->sc_timeout, SUN8I_CRYPTO_TIMEOUT);
-
-out:	mutex_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 /*
@@ -991,7 +978,7 @@ sun8i_crypto_intr(void *cookie)
 	struct sun8i_crypto_softc *sc = cookie;
 	uint32_t isr, esr;
 
-	mutex_enter(&sc->sc_lock);
+	mutex_enter(&sc->sc_intr_lock);
 
 	/*
 	 * Get and acknowledge the interrupts and error status.
@@ -1014,7 +1001,7 @@ sun8i_crypto_intr(void *cookie)
 	sc->sc_done |= __SHIFTOUT(isr, SUN8I_CRYPTO_ISR_DONE);
 	sc->sc_esr |= esr;
 
-	mutex_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_intr_lock);
 
 	return __SHIFTOUT(isr, SUN8I_CRYPTO_ISR_DONE) != 0;
 }
@@ -1029,7 +1016,7 @@ static void
 sun8i_crypto_schedule_worker(struct sun8i_crypto_softc *sc)
 {
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	/* Start the worker if necessary.  */
 	if (!sc->sc_work_pending) {
@@ -1052,41 +1039,40 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 	uint32_t done, esr, esr_chan;
 	unsigned i, now;
 	bool unblock = false;
+	bool schedtimeout = false;
 	int error;
 
 	/*
-	 * Acquire the lock.  Note: We will be releasing and
-	 * reacquiring it throughout the loop.
+	 * Under the interrupt lock, acknowledge our work and claim the
+	 * done mask and error status.
 	 */
-	mutex_enter(&sc->sc_lock);
-
-	/* Acknowledge the work.  */
+	mutex_enter(&sc->sc_intr_lock);
 	KASSERT(sc->sc_work_pending);
 	sc->sc_work_pending = false;
-
-	/*
-	 * Claim the done mask and error status once; we will be
-	 * releasing and reacquiring the lock for the callbacks, so
-	 * they may change.
-	 */
 	done = sc->sc_done;
 	esr = sc->sc_esr;
 	sc->sc_done = 0;
 	sc->sc_esr = 0;
+	mutex_exit(&sc->sc_intr_lock);
 
 	/* Check the time to determine what's timed out.  */
 	now = getticks();
 
-	/* Process the channels.  */
+	/* Under the lock, process the channels.  */
+	mutex_enter(&sc->sc_lock);
 	for (i = 0; i < SUN8I_CRYPTO_NCHAN; i++) {
 		/* Check whether the channel is done.  */
 		if (!ISSET(done, SUN8I_CRYPTO_ISR_DONE_CHAN(i))) {
 			/* Nope.  Do we have a task to time out?  */
-			if ((sc->sc_chan[i].cc_task != NULL) &&
-			    ((now - sc->sc_chan[i].cc_starttime) >=
-				SUN8I_CRYPTO_TIMEOUT))
-				unblock |= sun8i_crypto_chan_done(sc, i,
-				    ETIMEDOUT);
+			if (sc->sc_chan[i].cc_task != NULL) {
+				if (now - sc->sc_chan[i].cc_starttime >=
+				    SUN8I_CRYPTO_TIMEOUT) {
+					unblock |= sun8i_crypto_chan_done(sc,
+					    i, ETIMEDOUT);
+				} else {
+					schedtimeout = true;
+				}
+			}
 			continue;
 		}
 
@@ -1116,9 +1102,16 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 		 */
 		unblock |= sun8i_crypto_chan_done(sc, i, error);
 	}
-
-	/* All one; release the lock one last time.  */
 	mutex_exit(&sc->sc_lock);
+
+	/*
+	 * If there are tasks still pending, make sure there's a
+	 * timeout scheduled for them.  If the callout is already
+	 * pending, it will take another pass through here to time some
+	 * things out and schedule a new timeout.
+	 */
+	if (schedtimeout && !callout_pending(&sc->sc_timeout))
+		callout_schedule(&sc->sc_timeout, SUN8I_CRYPTO_TIMEOUT);
 
 	/*
 	 * If we cleared any channels, it is time to allow opencrypto
