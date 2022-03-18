@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.13 2021/12/26 16:14:34 riastradh Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.14 2022/03/18 23:33:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.13 2021/12/26 16:14:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.14 2022/03/18 23:33:41 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -1041,7 +1041,8 @@ ww_mutex_unlock(struct ww_mutex *mutex)
 	struct ww_acquire_ctx *ctx;
 
 	mutex_enter(&mutex->wwm_lock);
-	KASSERT(mutex->wwm_state != WW_UNLOCKED);
+	WW_UNLOCKED(mutex);
+	KASSERTMSG(mutex->wwm_state != WW_UNLOCKED, "mutex %p", mutex);
 	switch (mutex->wwm_state) {
 	case WW_UNLOCKED:
 		panic("unlocking unlocked wait/wound mutex: %p", mutex);
@@ -1070,7 +1071,6 @@ ww_mutex_unlock(struct ww_mutex *mutex)
 		mutex->wwm_state = WW_UNLOCKED;
 		break;
 	}
-	WW_UNLOCKED(mutex);
 	cv_broadcast(&mutex->wwm_cv);
 	mutex_exit(&mutex->wwm_lock);
 }
