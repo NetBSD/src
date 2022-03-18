@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.37 2022/03/18 23:34:56 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.38 2022/03/18 23:35:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.37 2022/03/18 23:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.38 2022/03/18 23:35:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2431,6 +2431,7 @@ rnd_init_softint(void)
 {
 
 	entropy_init_late();
+	entropy_bootrequest();
 }
 
 int
