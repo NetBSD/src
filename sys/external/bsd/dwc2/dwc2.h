@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.11 2021/12/19 11:00:47 riastradh Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.12 2022/03/18 23:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ extern int dwc2debug;
 #define	dev_vdbg(...) do { } while (0)
 #endif
 
-#define jiffies			hardclock_ticks
+#define jiffies			getticks()
 #define msecs_to_jiffies	mstohz
 
 enum usb_otg_state {
