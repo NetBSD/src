@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.36 2022/03/18 23:34:44 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.37 2022/03/18 23:34:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.36 2022/03/18 23:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.37 2022/03/18 23:34:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -396,6 +396,13 @@ entropy_init(void)
 	E->stage = ENTROPY_WARM;
 }
 
+static void
+entropy_init_late_cpu(void *a, void *b)
+{
+
+	entropy_softintr(NULL);
+}
+
 /*
  * entropy_init_late()
  *
@@ -406,6 +413,7 @@ entropy_init(void)
 static void
 entropy_init_late(void)
 {
+	void *sih;
 	int error;
 
 	KASSERT(E->stage == ENTROPY_WARM);
@@ -414,9 +422,9 @@ entropy_init_late(void)
 	 * Establish the softint at the highest softint priority level.
 	 * Must happen after CPU detection.
 	 */
-	entropy_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
+	sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
 	    &entropy_softintr, NULL);
-	if (entropy_sih == NULL)
+	if (sih == NULL)
 		panic("unable to establish entropy softint");
 
 	/*
@@ -431,10 +439,22 @@ entropy_init_late(void)
 
 	/*
 	 * Wait until the per-CPU initialization has hit all CPUs
-	 * before proceeding to mark the entropy system hot.
+	 * before proceeding to mark the entropy system hot and
+	 * enabling use of the softint.
 	 */
 	xc_barrier(XC_HIGHPRI);
 	E->stage = ENTROPY_HOT;
+	atomic_store_relaxed(&entropy_sih, sih);
+
+	/*
+	 * At this point, entering new samples from interrupt handlers
+	 * will trigger the softint to process them.  But there may be
+	 * some samples that were entered from interrupt handlers
+	 * before the softint was available.  Make sure we process
+	 * those samples on all CPUs by running the softint logic on
+	 * all CPUs.
+	 */
+	xc_wait(xc_broadcast(XC_HIGHPRI, entropy_init_late_cpu, NULL, NULL));
 }
 
 /*
@@ -651,7 +671,7 @@ entropy_account_cpu(struct entropy_cpu *ec)
 {
 	unsigned diff;
 
-	KASSERT(E->stage == ENTROPY_HOT);
+	KASSERT(E->stage >= ENTROPY_WARM);
 
 	/*
 	 * If there's no entropy needed, and entropy has been
@@ -738,8 +758,7 @@ entropy_enter_early(const void *buf, size_t len, unsigned nbits)
 {
 	bool notify = false;
 
-	if (E->stage >= ENTROPY_WARM)
-		mutex_enter(&E->lock);
+	KASSERT(E->stage == ENTROPY_COLD);
 
 	/* Enter it into the pool.  */
 	entpool_enter(&E->pool, buf, len);
@@ -758,9 +777,6 @@ entropy_enter_early(const void *buf, size_t len, unsigned nbits)
 		entropy_notify();
 		entropy_immediate_evcnt.ev_count++;
 	}
-
-	if (E->stage >= ENTROPY_WARM)
-		mutex_exit(&E->lock);
 }
 
 /*
@@ -784,7 +800,7 @@ entropy_enter(const void *buf, size_t len, unsigned nbits)
 	    "impossible entropy rate: %u bits in %zu-byte string", nbits, len);
 
 	/* If it's too early after boot, just use entropy_enter_early.  */
-	if (__predict_false(E->stage < ENTROPY_HOT)) {
+	if (__predict_false(E->stage == ENTROPY_COLD)) {
 		entropy_enter_early(buf, len, nbits);
 		return;
 	}
@@ -839,12 +855,13 @@ entropy_enter_intr(const void *buf, size_t len, unsigned nbits)
 	struct entropy_cpu *ec;
 	bool fullyused = false;
 	uint32_t pending;
+	void *sih;
 
 	KASSERTMSG(howmany(nbits, NBBY) <= len,
 	    "impossible entropy rate: %u bits in %zu-byte string", nbits, len);
 
 	/* If it's too early after boot, just use entropy_enter_early.  */
-	if (__predict_false(E->stage < ENTROPY_HOT)) {
+	if (__predict_false(E->stage == ENTROPY_COLD)) {
 		entropy_enter_early(buf, len, nbits);
 		return true;
 	}
@@ -865,7 +882,9 @@ entropy_enter_intr(const void *buf, size_t len, unsigned nbits)
 	 * truncated, schedule a softint to stir the pool and stop.
 	 */
 	if (!entpool_enter_nostir(ec->ec_pool, buf, len)) {
-		softint_schedule(entropy_sih);
+		sih = atomic_load_relaxed(&entropy_sih);
+		if (__predict_true(sih != NULL))
+			softint_schedule(sih);
 		goto out1;
 	}
 	fullyused = true;
@@ -878,8 +897,11 @@ entropy_enter_intr(const void *buf, size_t len, unsigned nbits)
 	/* Schedule a softint if we added anything and it matters.  */
 	if (__predict_false((atomic_load_relaxed(&E->needed) != 0) ||
 		atomic_load_relaxed(&entropy_depletion)) &&
-	    nbits != 0)
-		softint_schedule(entropy_sih);
+	    nbits != 0) {
+		sih = atomic_load_relaxed(&entropy_sih);
+		if (__predict_true(sih != NULL))
+			softint_schedule(sih);
+	}
 
 out1:	/* Release the per-CPU state.  */
 	KASSERT(ec->ec_locked);
@@ -1873,9 +1895,7 @@ rnd_add_data_1(struct krndsource *rs, const void *buf, uint32_t len,
 	 * contributed from this source.
 	 */
 	if (fullyused) {
-		if (E->stage < ENTROPY_HOT) {
-			if (E->stage >= ENTROPY_WARM)
-				mutex_enter(&E->lock);
+		if (__predict_false(E->stage == ENTROPY_COLD)) {
 			rs->total = add_sat(rs->total, entropybits);
 			switch (flag) {
 			case RND_FLAG_COLLECT_TIME:
@@ -1887,8 +1907,6 @@ rnd_add_data_1(struct krndsource *rs, const void *buf, uint32_t len,
 				    add_sat(rs->value_delta.insamples, 1);
 				break;
 			}
-			if (E->stage >= ENTROPY_WARM)
-				mutex_exit(&E->lock);
 		} else {
 			struct rndsource_cpu *rc = percpu_getref(rs->state);
 
