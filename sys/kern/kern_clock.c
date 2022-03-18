@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.146 2021/08/14 21:17:11 ryo Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.147 2022/03/18 23:37:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.146 2021/08/14 21:17:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.147 2022/03/18 23:37:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -163,7 +163,7 @@ clockrnd_sample(struct clockrnd *C)
 	struct cpu_info *ci = curcpu();
 
 	/* If there's nothing needed right now, stop here.  */
-	if (__predict_true(C->needed == 0))
+	if (__predict_true(atomic_load_relaxed(&C->needed) == 0))
 		return;
 
 	/*
