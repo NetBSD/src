@@ -675,19 +675,3 @@ ddi_remove_minor_node(dev_info_t *dip, char *name)
 	do_rmdirp(pn);
 	PNBUF_PUT(pn);
 }
-
-#if 0
-clock_t
-ddi_get_lbolt()
-{
-
-	return hardclock_ticks;
-}
-
-int64_t
-ddi_get_lbolt64()
-{
-
-	return hardclock_ticks;
-}
-#endif
