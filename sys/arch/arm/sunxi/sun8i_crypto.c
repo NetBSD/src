@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.28 2022/03/18 23:36:42 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.29 2022/03/18 23:36:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.28 2022/03/18 23:36:42 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.29 2022/03/18 23:36:57 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,6 +113,7 @@ struct sun8i_crypto_softc {
 
 	struct workqueue		*sc_wq;
 	void				*sc_ih;
+	bool				sc_polling;
 
 	kmutex_t			sc_lock;
 	struct sun8i_crypto_chan {
@@ -138,6 +139,8 @@ struct sun8i_crypto_softc {
 		struct sun8i_crypto_buf		cs_key;
 		struct sun8i_crypto_buf		cs_out;
 		struct sun8i_crypto_task	*cs_task;
+		bool				cs_pending;
+		bool				cs_passed;
 	}				sc_selftest;
 	struct sun8i_crypto_sysctl {
 		struct sysctllog		*cy_log;
@@ -215,6 +218,11 @@ static void	sun8i_crypto_timeout(void *);
 static int	sun8i_crypto_intr(void *);
 static void	sun8i_crypto_schedule_worker(struct sun8i_crypto_softc *);
 static void	sun8i_crypto_worker(struct work *, void *);
+
+static bool	sun8i_crypto_poll(struct sun8i_crypto_softc *, uint32_t *,
+		    uint32_t *);
+static bool	sun8i_crypto_done(struct sun8i_crypto_softc *, uint32_t,
+		    uint32_t, unsigned);
 static bool	sun8i_crypto_chan_done(struct sun8i_crypto_softc *, unsigned,
 		    int);
 
@@ -228,7 +236,7 @@ static void	sun8i_crypto_rng_get(size_t, void *);
 static void	sun8i_crypto_rng_done(struct sun8i_crypto_softc *,
 		    struct sun8i_crypto_task *, void *, int);
 
-static void	sun8i_crypto_selftest(device_t);
+static bool	sun8i_crypto_selftest(struct sun8i_crypto_softc *);
 static void	sun8i_crypto_selftest_done(struct sun8i_crypto_softc *,
 		    struct sun8i_crypto_task *, void *, int);
 
@@ -450,9 +458,13 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Crypto Engine\n");
 	aprint_debug_dev(self, ": clock freq %d\n", clk_get_rate(clk));
 
-	/* Disable and clear interrupts.  */
+	/*
+	 * Disable and clear interrupts.  Start in polling mode for
+	 * synchronous self-tests and the first RNG draw.
+	 */
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_ICR, 0);
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_ISR, 0);
+	sc->sc_polling = true;
 
 	/* Establish an interrupt handler.  */
 	sc->sc_ih = fdtbus_intr_establish_xname(phandle, 0, IPL_VM,
@@ -464,14 +476,28 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	/* Set up the RNG.  */
+	/* Perform self-tests.  If they fail, stop here.  */
+	if (!sun8i_crypto_selftest(sc))
+		return;
+
+	/*
+	 * Set up the RNG.  This will try to synchronously draw the
+	 * first sample by polling, so do this before we establish
+	 * the interrupt handler.
+	 */
 	sun8i_crypto_rng_attach(sc);
+
+	/*
+	 * Self-test has passed and first RNG draw has finished.  Use
+	 * interrupts, not polling, for all subsequent tasks.  Set this
+	 * atomically in case the interrupt handler has fired -- can't
+	 * be from us because we've kept ICR set to 0 to mask all
+	 * interrupts, but in case the interrupt vector is shared.
+	 */
+	atomic_store_relaxed(&sc->sc_polling, true);
 
 	/* Attach the sysctl.  */
 	sun8i_crypto_sysctl_attach(sc);
-
-	/* Perform self-tests.  */
-	config_interrupts(self, sun8i_crypto_selftest);
 
 	/* Register opencrypto handlers.  */
 	sun8i_crypto_register(sc);
@@ -896,11 +922,16 @@ sun8i_crypto_submit(struct sun8i_crypto_softc *sc,
 		goto out;
 	}
 
-	/* Enable interrupts for this channel.  */
-	icr = sun8i_crypto_read(sc, SUN8I_CRYPTO_ICR);
-	icr |= __SHIFTIN(SUN8I_CRYPTO_ICR_INTR_EN_CHAN(i),
-	    SUN8I_CRYPTO_ICR_INTR_EN);
-	sun8i_crypto_write(sc, SUN8I_CRYPTO_ICR, icr);
+	/*
+	 * Enable interrupts for this channel, unless we're still
+	 * polling.
+	 */
+	if (!sc->sc_polling) {
+		icr = sun8i_crypto_read(sc, SUN8I_CRYPTO_ICR);
+		icr |= __SHIFTIN(SUN8I_CRYPTO_ICR_INTR_EN_CHAN(i),
+		    SUN8I_CRYPTO_ICR_INTR_EN);
+		sun8i_crypto_write(sc, SUN8I_CRYPTO_ICR, icr);
+	}
 
 	/* Set the task descriptor queue address.  */
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_TDQ,
@@ -928,14 +959,12 @@ sun8i_crypto_submit(struct sun8i_crypto_softc *sc,
 
 	/*
 	 * Loaded up and ready to go.  Start a timer ticking if it's
-	 * not already.
+	 * not already and we're not polling.
 	 */
 	sc->sc_chan[i].cc_task = task;
 	sc->sc_chan[i].cc_starttime = getticks();
-	if (!callout_pending(&sc->sc_timeout))
+	if (!sc->sc_polling && !callout_pending(&sc->sc_timeout))
 		callout_schedule(&sc->sc_timeout, SUN8I_CRYPTO_TIMEOUT);
-
-	/* XXX Consider polling if cold to get entropy earlier.  */
 
 out:	/* Done!  */
 	if (error)
@@ -976,34 +1005,19 @@ static int
 sun8i_crypto_intr(void *cookie)
 {
 	struct sun8i_crypto_softc *sc = cookie;
-	uint32_t isr, esr;
+	uint32_t done, esr;
+
+	if (atomic_load_relaxed(&sc->sc_polling) ||
+	    !sun8i_crypto_poll(sc, &done, &esr))
+		return 0;	/* not ours */
 
 	mutex_enter(&sc->sc_intr_lock);
-
-	/*
-	 * Get and acknowledge the interrupts and error status.
-	 *
-	 * XXX Data sheet says the error status register is read-only,
-	 * but then advises writing 1 to bit x1xx (keysram access error
-	 * for AES, SUN8I_CRYPTO_ESR_KEYSRAMERR) to clear it.  What do?
-	 */
-	isr = sun8i_crypto_read(sc, SUN8I_CRYPTO_ISR);
-	esr = sun8i_crypto_read(sc, SUN8I_CRYPTO_ESR);
-	sun8i_crypto_write(sc, SUN8I_CRYPTO_ISR, isr);
-	sun8i_crypto_write(sc, SUN8I_CRYPTO_ESR, esr);
-
-	SDT_PROBE3(sdt, sun8i_crypto, engine, intr,  sc, isr, esr);
-
-	/* Start the worker if necessary.  */
 	sun8i_crypto_schedule_worker(sc);
-
-	/* Tell the worker what to do.  */
-	sc->sc_done |= __SHIFTOUT(isr, SUN8I_CRYPTO_ISR_DONE);
+	sc->sc_done |= done;
 	sc->sc_esr |= esr;
-
 	mutex_exit(&sc->sc_intr_lock);
 
-	return __SHIFTOUT(isr, SUN8I_CRYPTO_ISR_DONE) != 0;
+	return 1;
 }
 
 /*
@@ -1036,11 +1050,7 @@ static void
 sun8i_crypto_worker(struct work *wk, void *cookie)
 {
 	struct sun8i_crypto_softc *sc = cookie;
-	uint32_t done, esr, esr_chan;
-	unsigned i, now;
-	bool unblock = false;
-	bool schedtimeout = false;
-	int error;
+	uint32_t done, esr;
 
 	/*
 	 * Under the interrupt lock, acknowledge our work and claim the
@@ -1055,8 +1065,68 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 	sc->sc_esr = 0;
 	mutex_exit(&sc->sc_intr_lock);
 
-	/* Check the time to determine what's timed out.  */
-	now = getticks();
+	/*
+	 * If we cleared any channels, it is time to allow opencrypto
+	 * to issue new operations.  Asymmetric operations (which we
+	 * don't support, at the moment, but we could) and symmetric
+	 * operations (which we do) use the same task channels, so we
+	 * unblock both kinds.
+	 */
+	if (sun8i_crypto_done(sc, done, esr, getticks())) {
+		crypto_unblock(sc->sc_opencrypto.co_driverid,
+		    CRYPTO_SYMQ|CRYPTO_ASYMQ);
+	}
+}
+
+/*
+ * sun8i_crypto_poll(sc, &done, &esr)
+ *
+ *	Poll for completion.  Sets done and esr to the mask of done
+ *	channels and error channels.  Returns true if anything was
+ *	done or failed.
+ */
+static bool
+sun8i_crypto_poll(struct sun8i_crypto_softc *sc,
+    uint32_t *donep, uint32_t *esrp)
+{
+	uint32_t isr, esr;
+
+	/*
+	 * Get and acknowledge the interrupts and error status.
+	 *
+	 * XXX Data sheet says the error status register is read-only,
+	 * but then advises writing 1 to bit x1xx (keysram access error
+	 * for AES, SUN8I_CRYPTO_ESR_KEYSRAMERR) to clear it.  What do?
+	 */
+	isr = sun8i_crypto_read(sc, SUN8I_CRYPTO_ISR);
+	esr = sun8i_crypto_read(sc, SUN8I_CRYPTO_ESR);
+	sun8i_crypto_write(sc, SUN8I_CRYPTO_ISR, isr);
+	sun8i_crypto_write(sc, SUN8I_CRYPTO_ESR, esr);
+
+	SDT_PROBE3(sdt, sun8i_crypto, engine, intr,  sc, isr, esr);
+
+	*donep = __SHIFTOUT(isr, SUN8I_CRYPTO_ISR_DONE);
+	*esrp = esr;
+
+	return *donep || *esrp;
+}
+
+/*
+ * sun8i_crypto_done(sc, done, esr, now)
+ *
+ *	Invoke all task callbacks for the channels in done or esr, or
+ *	for which we gave up waiting, according to the time `now'.
+ *	Returns true if any channels completed or timed out.
+ */
+static bool
+sun8i_crypto_done(struct sun8i_crypto_softc *sc, uint32_t done, uint32_t esr,
+    unsigned now)
+{
+	uint32_t esr_chan;
+	unsigned i;
+	bool anydone = false;
+	bool schedtimeout = false;
+	int error;
 
 	/* Under the lock, process the channels.  */
 	mutex_enter(&sc->sc_lock);
@@ -1067,7 +1137,7 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 			if (sc->sc_chan[i].cc_task != NULL) {
 				if (now - sc->sc_chan[i].cc_starttime >=
 				    SUN8I_CRYPTO_TIMEOUT) {
-					unblock |= sun8i_crypto_chan_done(sc,
+					anydone |= sun8i_crypto_chan_done(sc,
 					    i, ETIMEDOUT);
 				} else {
 					schedtimeout = true;
@@ -1100,7 +1170,7 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 		 * Notify the task of completion.  May release the lock
 		 * to invoke a callback.
 		 */
-		unblock |= sun8i_crypto_chan_done(sc, i, error);
+		anydone |= sun8i_crypto_chan_done(sc, i, error);
 	}
 	mutex_exit(&sc->sc_lock);
 
@@ -1113,17 +1183,7 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 	if (schedtimeout && !callout_pending(&sc->sc_timeout))
 		callout_schedule(&sc->sc_timeout, SUN8I_CRYPTO_TIMEOUT);
 
-	/*
-	 * If we cleared any channels, it is time to allow opencrypto
-	 * to issue new operations.  Asymmetric operations (which we
-	 * don't support, at the moment, but we could) and symmetric
-	 * operations (which we do) use the same task channels, so we
-	 * unblock both kinds.
-	 */
-	if (unblock) {
-		crypto_unblock(sc->sc_opencrypto.co_driverid,
-		    CRYPTO_SYMQ|CRYPTO_ASYMQ);
-	}
+	return anydone;
 }
 
 /*
@@ -1254,6 +1314,8 @@ sun8i_crypto_rng_attach(struct sun8i_crypto_softc *sc)
 	device_t self = sc->sc_dev;
 	struct sun8i_crypto_rng *rng = &sc->sc_rng;
 	struct sun8i_crypto_task *task;
+	unsigned timo = hztoms(SUN8I_CRYPTO_TIMEOUT);
+	uint32_t done, esr;
 	int error;
 
 	/* Preallocate a buffer to reuse.  */
@@ -1292,7 +1354,20 @@ sun8i_crypto_rng_attach(struct sun8i_crypto_softc *sc)
 	    RND_TYPE_RNG,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_ESTIMATE_VALUE|RND_FLAG_HASCB);
 
-	/* Success!  */
+	/*
+	 * Poll for the first call to the RNG to complete.  If not done
+	 * after the timeout, force a timeout.
+	 */
+	for (; rng->cr_pending && timo --> 0; DELAY(1000)) {
+		if (sun8i_crypto_poll(sc, &done, &esr))
+			(void)sun8i_crypto_done(sc, done, esr, getticks());
+	}
+	if (rng->cr_pending) {
+		(void)sun8i_crypto_done(sc, 0, 0,
+		    (unsigned)getticks() + SUN8I_CRYPTO_TIMEOUT);
+		KASSERT(!rng->cr_pending);
+	}
+
 	return;
 
 fail3: __unused
@@ -1400,17 +1475,20 @@ static const uint8_t selftest_output[16] = {
 	0x88,0x4c,0xfa,0x59,0xca,0x34,0x2b,0x2e,
 };
 
-static void
-sun8i_crypto_selftest(device_t self)
+static bool
+sun8i_crypto_selftest(struct sun8i_crypto_softc *sc)
 {
 	const size_t keybytes = sizeof selftest_key;
 	const size_t nbytes = sizeof selftest_input;
-	struct sun8i_crypto_softc *sc = device_private(self);
 	struct sun8i_crypto_selftest *selftest = &sc->sc_selftest;
 	struct sun8i_crypto_task *task;
+	unsigned timo = hztoms(SUN8I_CRYPTO_TIMEOUT);
+	uint32_t done, esr;
 	int error;
 
 	CTASSERT(sizeof selftest_input == sizeof selftest_output);
+
+	selftest->cs_pending = true;
 
 	/* Allocate an input buffer.  */
 	error = sun8i_crypto_allocbuf(sc, nbytes, &selftest->cs_in,
@@ -1470,11 +1548,23 @@ sun8i_crypto_selftest(device_t self)
 	error = sun8i_crypto_submit(sc, task);
 	if (error)
 		goto fail7;
-
 	device_printf(sc->sc_dev, "AES-128 self-test initiated\n");
 
-	/* Success!  */
-	return;
+	/*
+	 * Poll for completion.  If not done after the timeout, force a
+	 * timeout.
+	 */
+	for (; selftest->cs_pending && timo --> 0; DELAY(1000)) {
+		if (sun8i_crypto_poll(sc, &done, &esr))
+			(void)sun8i_crypto_done(sc, done, esr, getticks());
+	}
+	if (selftest->cs_pending) {
+		(void)sun8i_crypto_done(sc, 0, 0,
+		    (unsigned)getticks() + SUN8I_CRYPTO_TIMEOUT);
+		KASSERT(!selftest->cs_pending);
+	}
+
+	return selftest->cs_passed;
 
 fail7:	bus_dmamap_unload(sc->sc_dmat, task->ct_dstmap);
 fail6:	bus_dmamap_unload(sc->sc_dmat, task->ct_srcmap);
@@ -1483,7 +1573,10 @@ fail4:	sun8i_crypto_task_put(sc, task);
 fail3:	sun8i_crypto_freebuf(sc, nbytes, &selftest->cs_out);
 fail2:	sun8i_crypto_freebuf(sc, keybytes, &selftest->cs_key);
 fail1:	sun8i_crypto_freebuf(sc, nbytes, &selftest->cs_in);
-fail0:	aprint_error_dev(self, "failed to run self-test, error=%d\n", error);
+fail0:	aprint_error_dev(sc->sc_dev, "failed to run self-test, error=%d\n",
+	    error);
+	selftest->cs_pending = false;
+	return false;
 }
 
 static bool
@@ -1537,7 +1630,7 @@ sun8i_crypto_selftest_done(struct sun8i_crypto_softc *sc,
 	ok &= sun8i_crypto_selftest_check(sc, "output mismatch", nbytes,
 	    selftest_output, selftest->cs_out.cb_kva);
 
-	/* XXX Disable the RNG and other stuff if this fails...  */
+	selftest->cs_passed = ok;
 	if (ok)
 		device_printf(sc->sc_dev, "AES-128 self-test passed\n");
 
@@ -1548,6 +1641,7 @@ out:	bus_dmamap_unload(sc->sc_dmat, task->ct_dstmap);
 	sun8i_crypto_freebuf(sc, nbytes, &selftest->cs_out);
 	sun8i_crypto_freebuf(sc, keybytes, &selftest->cs_key);
 	sun8i_crypto_freebuf(sc, nbytes, &selftest->cs_in);
+	selftest->cs_pending = false;
 }
 
 /*
