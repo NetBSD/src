@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.35 2022/03/16 23:56:55 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.36 2022/03/18 23:34:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.35 2022/03/16 23:56:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.36 2022/03/18 23:34:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -382,6 +382,10 @@ entropy_init(void)
 	LIST_FOREACH(rs, &E->sources, list)
 		rs->state = percpu_alloc(sizeof(struct rndsource_cpu));
 
+	/* Allocate and initialize the per-CPU state.  */
+	entropy_percpu = percpu_create(sizeof(struct entropy_cpu),
+	    entropy_init_cpu, entropy_fini_cpu, NULL);
+
 	/* Enter the boot cycle count to get started.  */
 	extra[i++] = entropy_timer();
 	KASSERT(i == __arraycount(extra));
@@ -405,10 +409,6 @@ entropy_init_late(void)
 	int error;
 
 	KASSERT(E->stage == ENTROPY_WARM);
-
-	/* Allocate and initialize the per-CPU state.  */
-	entropy_percpu = percpu_create(sizeof(struct entropy_cpu),
-	    entropy_init_cpu, entropy_fini_cpu, NULL);
 
 	/*
 	 * Establish the softint at the highest softint priority level.
@@ -453,8 +453,10 @@ entropy_init_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 	ec->ec_pending = 0;
 	ec->ec_locked = false;
 
+	/* XXX ci_cpuname may not be initialized early enough.  */
 	evcnt_attach_dynamic(ec->ec_softint_evcnt, EVCNT_TYPE_MISC, NULL,
-	    ci->ci_cpuname, "entropy softint");
+	    ci->ci_cpuname[0] == '\0' ? "cpu0" : ci->ci_cpuname,
+	    "entropy softint");
 }
 
 /*
