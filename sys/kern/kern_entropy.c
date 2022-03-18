@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.38 2022/03/18 23:35:07 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.39 2022/03/18 23:35:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.38 2022/03/18 23:35:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.39 2022/03/18 23:35:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -366,7 +366,7 @@ entropy_init(void)
 	    NULL, 0, &E->epoch, 0, CTL_CREATE, CTL_EOL);
 
 	/* Initialize the global state for multithreaded operation.  */
-	mutex_init(&E->lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&E->lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	cv_init(&E->cv, "entropy");
 	selinit(&E->selq);
 	cv_init(&E->sourcelock_cv, "entsrclock");
