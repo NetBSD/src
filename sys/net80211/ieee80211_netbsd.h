@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.23 2020/03/15 23:04:51 thorpej Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.24 2022/03/18 23:32:25 riastradh Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -235,7 +235,7 @@ struct ieee80211_michael_event {
 #define	RTM_IEEE80211_REJOIN	108	/* station re-associate (ap mode) */
 
 #ifdef _KERNEL
-#define	ticks	hardclock_ticks
+#define	ticks	getticks()
 
 void	if_printf(struct ifnet *, const char *, ...);
 void	get_random_bytes(void *, size_t);

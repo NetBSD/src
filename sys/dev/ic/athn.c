@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.25 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: athn.c,v 1.26 2022/03/18 23:32:24 riastradh Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.25 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.26 2022/03/18 23:32:24 riastradh Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -1293,7 +1293,6 @@ athn_iter_func(void *arg, struct ieee80211_node *ni)
 Static void
 athn_calib_to(void *arg)
 {
-	extern int ticks;
 	struct athn_softc *sc = arg;
 	struct athn_ops *ops = &sc->sc_ops;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1354,7 +1353,6 @@ athn_init_calib(struct athn_softc *sc, struct ieee80211_channel *curchan,
 	if (!AR_SREV_9380_10_OR_LATER(sc)) {
 		/* Do PA calibration. */
 		if (AR_SREV_9285_11_OR_LATER(sc)) {
-			extern int ticks;
 			sc->sc_pa_calib_ticks = ticks;
 			if (AR_SREV_9271(sc))
 				ar9271_pa_calib(sc);
