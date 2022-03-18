@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.21.40.1 2022/03/15 10:00:14 martin Exp $	*/
+/*	$NetBSD: node.c,v 1.21.40.2 2022/03/18 13:26:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.21.40.1 2022/03/15 10:00:14 martin Exp $");
+__RCSID("$NetBSD: node.c,v 1.21.40.2 2022/03/18 13:26:38 martin Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -182,7 +182,7 @@ puffs9p_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	GETRESPONSE(pb);
 
 	if (p9pbuf_get_type(pb) != P9PROTO_R_READ) {
-		rv = proto_handle_rerror(pu, pb);
+		rv = EPROTO;
 		goto out;
 	}
 
