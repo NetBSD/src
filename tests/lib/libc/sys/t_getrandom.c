@@ -1,4 +1,4 @@
-/*	$NetBSD: t_getrandom.c,v 1.3 2020/08/25 01:37:38 riastradh Exp $	*/
+/*	$NetBSD: t_getrandom.c,v 1.4 2022/03/18 23:35:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrandom.c,v 1.3 2020/08/25 01:37:38 riastradh Exp $");
+__RCSID("$NetBSD: t_getrandom.c,v 1.4 2022/03/18 23:35:37 riastradh Exp $");
+
+#include <sys/param.h>
 
 #include <sys/random.h>
 
@@ -89,7 +91,8 @@ ATF_TC_BODY(getrandom_default, tc)
 	if (n == -1) {
 		ATF_CHECK_EQ(errno, EINTR);
 	} else {
-		ATF_CHECK_EQ((size_t)n, sizeof buf);
+		ATF_CHECK(n >= (ssize_t)MIN(256, sizeof buf));
+		ATF_CHECK((size_t)n <= sizeof buf);
 		ATF_CHECK(memcmp(buf, zero24, 24) != 0);
 		ATF_CHECK(memcmp(buf + sizeof buf - 24, zero24, 24) != 0);
 	}
@@ -111,7 +114,8 @@ ATF_TC_BODY(getrandom_nonblock, tc)
 	if (n == -1) {
 		ATF_CHECK_EQ(errno, EAGAIN);
 	} else {
-		ATF_CHECK_EQ((size_t)n, sizeof buf);
+		ATF_CHECK(n >= (ssize_t)MIN(256, sizeof buf));
+		ATF_CHECK((size_t)n <= sizeof buf);
 		ATF_CHECK(memcmp(buf, zero24, 24) != 0);
 		ATF_CHECK(memcmp(buf + sizeof buf - 24, zero24, 24) != 0);
 	}
@@ -130,7 +134,8 @@ ATF_TC_BODY(getrandom_insecure, tc)
 	memset(buf, 0, sizeof buf);
 	n = getrandom(buf, sizeof buf, GRND_INSECURE);
 	ATF_CHECK(n != -1);
-	ATF_CHECK_EQ((size_t)n, sizeof buf);
+	ATF_CHECK(n >= (ssize_t)MIN(256, sizeof buf));
+	ATF_CHECK((size_t)n <= sizeof buf);
 	ATF_CHECK(memcmp(buf, zero24, 24) != 0);
 	ATF_CHECK(memcmp(buf + sizeof buf - 24, zero24, 24) != 0);
 }
@@ -149,7 +154,8 @@ ATF_TC_BODY(getrandom_insecure_nonblock, tc)
 	memset(buf, 0, sizeof buf);
 	n = getrandom(buf, sizeof buf, GRND_INSECURE|GRND_NONBLOCK);
 	ATF_CHECK(n != -1);
-	ATF_CHECK_EQ((size_t)n, sizeof buf);
+	ATF_CHECK(n >= (ssize_t)MIN(256, sizeof buf));
+	ATF_CHECK((size_t)n <= sizeof buf);
 	ATF_CHECK(memcmp(buf, zero24, 24) != 0);
 	ATF_CHECK(memcmp(buf + sizeof buf - 24, zero24, 24) != 0);
 }
