@@ -303,7 +303,7 @@ enum {
 #else
 #define DRM_MTRR_WC		0
 #endif
-#define jiffies			hardclock_ticks
+#define jiffies			getticks()
 
 #define DRM_MAXUNITS    128
 extern struct drm_device *drm_units[];
