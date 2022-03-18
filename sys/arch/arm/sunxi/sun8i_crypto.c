@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.27 2022/03/18 23:35:48 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.28 2022/03/18 23:36:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.27 2022/03/18 23:35:48 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.28 2022/03/18 23:36:42 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1284,14 +1284,12 @@ sun8i_crypto_rng_attach(struct sun8i_crypto_softc *sc)
 	}
 
 	/*
-	 * Attach the rndsource.  This is _not_ marked as RND_TYPE_RNG
-	 * because the output is not uniformly distributed.  The bits
-	 * are heavily weighted toward 0 or 1, at different times, and
-	 * I haven't scienced a satisfactory story out of it yet.
+	 * Attach the rndsource.  This will trigger an initial call to
+	 * it since we have RND_FLAG_HASCB.
 	 */
 	rndsource_setcb(&rng->cr_rndsource, sun8i_crypto_rng_get, sc);
 	rnd_attach_source(&rng->cr_rndsource, device_xname(self),
-	    RND_TYPE_UNKNOWN,
+	    RND_TYPE_RNG,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_ESTIMATE_VALUE|RND_FLAG_HASCB);
 
 	/* Success!  */
