@@ -1,4 +1,4 @@
-/* $NetBSD: am335x_trng.c,v 1.3 2020/04/30 03:40:52 riastradh Exp $ */
+/* $NetBSD: am335x_trng.c,v 1.4 2022/03/19 11:37:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.3 2020/04/30 03:40:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.4 2022/03/19 11:37:05 riastradh Exp $");
 
 #include "opt_omap.h"
 
@@ -99,7 +99,7 @@ trng_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 
 	prcm_module_enable(&rng_module);
 
