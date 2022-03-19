@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.14 2022/03/19 11:37:05 riastradh Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.15 2022/03/19 11:55:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.14 2022/03/19 11:37:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.15 2022/03/19 11:55:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -127,7 +127,6 @@ struct octrnm_softc {
 	uint64_t		sc_sample[RNG_FIFO_WORDS];
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_regh;
-	kmutex_t		sc_lock;
 	krndsource_t		sc_rndsrc;	/* /dev/random source */
 	unsigned		sc_rogroup;
 };
@@ -184,9 +183,6 @@ octrnm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Create a mutex to serialize access to the FIFO.  */
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
-
 	/*
 	 * Reset the core, enable the RNG engine without entropy, wait
 	 * 81 cycles for it to produce a single sample, and draw the
@@ -230,7 +226,6 @@ octrnm_rng(size_t nbytes, void *vsc)
 	unsigned i;
 
 	/* Sample the ring oscillators round-robin.  */
-	mutex_enter(&sc->sc_lock);
 	while (needed) {
 		/*
 		 * Switch to the next RO group once we drain the FIFO.
@@ -262,14 +257,9 @@ octrnm_rng(size_t nbytes, void *vsc)
 		    sizeof sc->sc_sample, NBBY*sizeof(sc->sc_sample)/BPB);
 		needed -= MIN(needed, MAX(1, NBBY*sizeof(sc->sc_sample)/BPB));
 
-		/* Now's a good time to yield if need.  */
-		if (__predict_false(preempt_needed())) {
-			mutex_exit(&sc->sc_lock);
-			preempt();
-			mutex_enter(&sc->sc_lock);
-		}
+		/* Now's a good time to yield.  */
+		preempt_point();
 	}
-	mutex_exit(&sc->sc_lock);
 
 	/* Zero the sample.  */
 	explicit_memset(sc->sc_sample, 0, sizeof sc->sc_sample);

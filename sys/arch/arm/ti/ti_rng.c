@@ -1,4 +1,4 @@
-/* $NetBSD: ti_rng.c,v 1.6 2022/03/19 11:37:05 riastradh Exp $ */
+/* $NetBSD: ti_rng.c,v 1.7 2022/03/19 11:55:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.6 2022/03/19 11:37:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.7 2022/03/19 11:55:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ struct ti_rng_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	kmutex_t sc_lock;
 	krndsource_t sc_rndsource;
 };
 
@@ -101,8 +100,6 @@ ti_rng_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
-
 	if ((RD4(sc, TRNG_CONTROL_REG) & TRNG_CONTROL_ENABLE) == 0) {
 		WR4(sc, TRNG_CONFIG_REG,
 		    __SHIFTIN(0x21, TRNG_CONFIG_MIN_REFILL) |
@@ -127,7 +124,6 @@ ti_rng_callback(size_t bytes_wanted, void *priv)
 	uint32_t buf[2];
 	u_int retry;
 
-	mutex_enter(&sc->sc_lock);
 	while (bytes_wanted) {
 		for (retry = 10; retry > 0; retry--) {
 			if (RD4(sc, TRNG_STATUS_REG) & TRNG_STATUS_READY)
@@ -144,5 +140,4 @@ ti_rng_callback(size_t bytes_wanted, void *priv)
 		bytes_wanted -= MIN(bytes_wanted, sizeof(buf));
 	}
 	explicit_memset(buf, 0, sizeof(buf));
-	mutex_exit(&sc->sc_lock);
 }
