@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.229 2020/11/21 08:10:27 mlelstv Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.230 2022/03/19 13:51:35 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.229 2020/11/21 08:10:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.230 2022/03/19 13:51:35 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -137,7 +137,9 @@ isswap(device_t dv)
 	if ((vn = opendisk(dv)) == NULL)
 		return 0;
 
+	VOP_UNLOCK(vn);
 	error = VOP_IOCTL(vn, DIOCGWEDGEINFO, &wi, FREAD, NOCRED);
+	vn_lock(vn, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(vn, FREAD, NOCRED);
 	vput(vn);
 	if (error) {
