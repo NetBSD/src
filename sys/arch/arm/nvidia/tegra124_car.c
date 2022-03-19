@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.22 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.23 2022/03/19 11:36:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.22 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.23 2022/03/19 11:36:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -708,7 +708,6 @@ struct tegra124_car_softc {
 	u_int			sc_clock_cells;
 	u_int			sc_reset_cells;
 
-	kmutex_t		sc_rndlock;
 	krndsource_t		sc_rndsource;
 };
 
@@ -917,7 +916,6 @@ tegra124_car_rnd_attach(device_t self)
 {
 	struct tegra124_car_softc * const sc = device_private(self);
 
-	mutex_init(&sc->sc_rndlock, MUTEX_DEFAULT, IPL_VM);
 	rndsource_setcb(&sc->sc_rndsource, tegra124_car_rnd_callback, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 	    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
@@ -930,7 +928,6 @@ tegra124_car_rnd_callback(size_t bytes_wanted, void *priv)
 	uint16_t buf[512];
 	uint32_t cnt;
 
-	mutex_enter(&sc->sc_rndlock);
 	while (bytes_wanted) {
 		const u_int nbytes = MIN(bytes_wanted, 1024);
 		for (cnt = 0; cnt < bytes_wanted / 2; cnt++) {
@@ -942,7 +939,6 @@ tegra124_car_rnd_callback(size_t bytes_wanted, void *priv)
 		bytes_wanted -= MIN(bytes_wanted, nbytes);
 	}
 	explicit_memset(buf, 0, sizeof(buf));
-	mutex_exit(&sc->sc_rndlock);
 }
 
 static struct tegra_clk *
