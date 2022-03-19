@@ -1,4 +1,4 @@
-/*	$NetBSD: rng200var.h,v 1.1 2019/09/01 14:44:14 mlelstv Exp $	*/
+/*	$NetBSD: rng200var.h,v 1.2 2022/03/19 11:55:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@ struct rng200_softc	{
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 
-	kmutex_t		sc_lock;
 	krndsource_t		sc_rndsource;
 	const char		*sc_name;
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: am335x_trng.c,v 1.4 2022/03/19 11:37:05 riastradh Exp $ */
+/* $NetBSD: am335x_trng.c,v 1.5 2022/03/19 11:55:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.4 2022/03/19 11:37:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.5 2022/03/19 11:55:03 riastradh Exp $");
 
 #include "opt_omap.h"
 
@@ -56,7 +56,6 @@ struct trng_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	kmutex_t sc_lock;
 	krndsource_t sc_rndsource;
 };
 
@@ -99,8 +98,6 @@ trng_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
-
 	prcm_module_enable(&rng_module);
 
 	if ((TRNG_READ(sc, TRNG_CONTROL_REG) & TRNG_CONTROL_ENABLE) == 0) {
@@ -127,7 +124,6 @@ trng_callback(size_t bytes_wanted, void *priv)
 	uint32_t buf[2];
 	u_int retry;
 
-	mutex_enter(&sc->sc_lock);
 	while (bytes_wanted) {
 		for (retry = 10; retry > 0; retry--) {
 			if (TRNG_READ(sc, TRNG_STATUS_REG) & TRNG_STATUS_READY)
@@ -144,5 +140,4 @@ trng_callback(size_t bytes_wanted, void *priv)
 		bytes_wanted -= MIN(bytes_wanted, sizeof(buf));
 	}
 	explicit_memset(buf, 0, sizeof(buf));
-	mutex_exit(&sc->sc_lock);
 }

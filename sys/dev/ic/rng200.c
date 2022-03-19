@@ -1,4 +1,4 @@
-/*	$NetBSD: rng200.c,v 1.3 2022/03/19 11:37:06 riastradh Exp $	*/
+/*	$NetBSD: rng200.c,v 1.4 2022/03/19 11:55:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@ rng200_get(size_t bytes_wanted, void *priv)
 	uint32_t w, data;
 	unsigned count;
 
-	mutex_enter(&sc->sc_lock);
 	while (bytes_wanted) {
 
 		w = READ4(sc, RNG200_STATUS);
@@ -98,14 +97,11 @@ rng200_get(size_t bytes_wanted, void *priv)
 		bytes_wanted -= MIN(bytes_wanted, sizeof(data));
 	}
 	explicit_memset(&data, 0, sizeof(data));
-	mutex_exit(&sc->sc_lock);
 }
 
 void
 rng200_attach(struct rng200_softc *sc)
 {
-
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 
 	rndsource_setcb(&sc->sc_rndsource, rng200_get, sc);
 	rnd_attach_source(&sc->sc_rndsource, sc->sc_name,
@@ -117,6 +113,5 @@ rng200_detach(struct rng200_softc *sc)
 {
 
 	rnd_detach_source(&sc->sc_rndsource);
-	mutex_destroy(&sc->sc_lock);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: amdccpvar.h,v 1.1 2018/10/19 21:09:10 jakllsch Exp $ */
+/* $NetBSD: amdccpvar.h,v 1.2 2022/03/19 11:55:03 riastradh Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -38,7 +38,6 @@ struct amdccp_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 
-	kmutex_t sc_rndlock;
 	krndsource_t sc_rndsource;
 };
 
