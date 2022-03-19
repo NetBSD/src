@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.225 2022/03/13 13:52:53 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.226 2022/03/19 13:50:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.225 2022/03/13 13:52:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.226 2022/03/19 13:50:02 hannken Exp $");
 
 #include "veriexec.h"
 
@@ -1344,13 +1344,15 @@ vn_bdev_open(dev_t dev, struct vnode **vpp, struct lwp *l)
 	if ((error = bdevvp(dev, vpp)) != 0)
 		return error;
 
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = VOP_OPEN(*vpp, FREAD | FWRITE, l->l_cred)) != 0) {
-		vrele(*vpp);
+		vput(*vpp);
 		return error;
 	}
 	mutex_enter((*vpp)->v_interlock);
 	(*vpp)->v_writecount++;
 	mutex_exit((*vpp)->v_interlock);
+	VOP_UNLOCK(*vpp);
 
 	return 0;
 }

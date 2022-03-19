@@ -1,4 +1,4 @@
-/* $NetBSD: ata_raid_subr.c,v 1.3 2017/06/25 12:29:32 maxv Exp $ */
+/* $NetBSD: ata_raid_subr.c,v 1.4 2022/03/19 13:51:01 hannken Exp $ */
 
 /*-
  * Copyright (c) 2008 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_subr.c,v 1.3 2017/06/25 12:29:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_subr.c,v 1.4 2022/03/19 13:51:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,13 +82,13 @@ ata_raid_disk_vnode_find(struct ataraid_disk_info *adi)
 		kmem_free(adv, sizeof(struct ataraid_disk_vnode));
 		return NULL;
 	}
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(vp, FREAD|FWRITE, NOCRED);
 	if (error) {
 		vput(vp);
 		kmem_free(adv, sizeof(struct ataraid_disk_vnode));
 		return NULL;
 	}
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_UNLOCK(vp);
 
 	adv->adv_adi = adi;

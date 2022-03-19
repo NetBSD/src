@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_jmicron.c,v 1.7 2018/10/22 19:38:06 jdolecek Exp $	*/
+/*	$NetBSD: ata_raid_jmicron.c,v 1.8 2022/03/19 13:51:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.7 2018/10/22 19:38:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.8 2022/03/19 13:51:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -139,6 +139,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 	if (error)
 		goto out;
 
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(vp, FREAD, NOCRED);
 	if (error) {
 		vput(vp);
