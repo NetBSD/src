@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.216 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.217 2022/03/19 13:52:45 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.216 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.217 2022/03/19 13:52:45 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,30 +423,6 @@ genfs_islocked(void *v)
 		return LK_SHARED;
 
 	return 0;
-}
-
-/*
- * Stubs to use when there is no locking to be done on the underlying object.
- */
-int
-genfs_nolock(void *v)
-{
-
-	return (0);
-}
-
-int
-genfs_nounlock(void *v)
-{
-
-	return (0);
-}
-
-int
-genfs_noislocked(void *v)
-{
-
-	return (0);
 }
 
 int
