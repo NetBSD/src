@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_rnm.c,v 1.13 2021/12/28 13:22:43 riastradh Exp $	*/
+/*	$NetBSD: octeon_rnm.c,v 1.14 2022/03/19 11:37:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.13 2021/12/28 13:22:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_rnm.c,v 1.14 2022/03/19 11:37:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -185,7 +185,7 @@ octrnm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Create a mutex to serialize access to the FIFO.  */
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 
 	/*
 	 * Reset the core, enable the RNG engine without entropy, wait

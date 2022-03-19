@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.42 2020/05/30 10:27:29 jdolecek Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.43 2022/03/19 11:37:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.42 2020/05/30 10:27:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.43 2022/03/19 11:37:06 riastradh Exp $");
 
 #include "opt_amdpm.h"
 
@@ -159,8 +159,7 @@ amdpm_attach(device_t parent, device_t self, void *aux)
 		  AMDPM_TMR, ((confreg & AMDPM_TMR32) ? ACPIPMT_32BIT : 0));
 	}
 
-	/* XXX this mutex is IPL_VM because it can be taken by rnd_getmore() */
-	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 
 	/* try to attach devices on the smbus */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI ||

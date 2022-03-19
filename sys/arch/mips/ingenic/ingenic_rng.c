@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_rng.c,v 1.5 2020/04/30 03:40:53 riastradh Exp $ */
+/*	$NetBSD: ingenic_rng.c,v 1.6 2022/03/19 11:37:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael McConville
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_rng.c,v 1.5 2020/04/30 03:40:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_rng.c,v 1.6 2022/03/19 11:37:05 riastradh Exp $");
 
 /*
  * adapted from Jared McNeill's amlogic_rng.c
@@ -94,7 +94,7 @@ ingenic_rng_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 
 	aprint_naive(": Ingenic random number generator\n");
 	aprint_normal(": Ingenic random number generator\n");
@@ -110,7 +110,7 @@ ingenic_rng_get(size_t bytes_wanted, void *priv)
 	struct ingenic_rng_softc * const sc = priv;
 	uint32_t data;
 
-	mutex_spin_enter(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 	while (bytes_wanted) {
 		data = bus_space_read_4(sc->sc_bst, sc->sc_bsh, 0);
 		delay(1);
@@ -119,5 +119,5 @@ ingenic_rng_get(size_t bytes_wanted, void *priv)
 		bytes_wanted -= MIN(bytes_wanted, sizeof(data));
 	}
 	explicit_memset(&data, 0, sizeof(data));
-	mutex_spin_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 }

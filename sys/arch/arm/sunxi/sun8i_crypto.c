@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.29 2022/03/18 23:36:57 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.30 2022/03/19 11:37:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.29 2022/03/18 23:36:57 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.30 2022/03/19 11:37:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -390,10 +390,10 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_taskpool = pool_cache_init(sizeof(struct sun8i_crypto_task),
-	    0, 0, 0, "sun8icry", NULL, IPL_VM,
+	    0, 0, 0, "sun8icry", NULL, IPL_SOFTSERIAL,
 	    &sun8i_crypto_task_ctor, &sun8i_crypto_task_dtor, sc);
 	sc->sc_cfg = of_compatible_lookup(phandle, compat_data)->data;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
 	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timeout, &sun8i_crypto_timeout, sc);
