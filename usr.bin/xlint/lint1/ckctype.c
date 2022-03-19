@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.3 2021/07/25 22:43:08 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.4 2022/03/19 14:48:31 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckctype.c,v 1.3 2021/07/25 22:43:08 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.4 2022/03/19 14:48:31 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -44,12 +44,15 @@ __RCSID("$NetBSD: ckctype.c,v 1.3 2021/07/25 22:43:08 rillig Exp $");
 #include "lint1.h"
 
 /*
- * Check that the functions from <ctype.h> are used properly.  They are
- * difficult to use when their argument comes from an expression of type
- * 'char'.  In such a case, the argument must be converted to 'unsigned char',
- * not directly to 'int'.
+ * Check that the functions from <ctype.h> are used properly.  They must not
+ * be called with an argument of type 'char'.  In such a case, the argument
+ * must be converted to 'unsigned char'.  The tricky thing is that even though
+ * the expected argument type is 'int', a 'char' argument must not be directly
+ * cast to 'int', as that would preserve negative argument values.
  *
- * https://stackoverflow.com/a/60696378
+ * See also:
+ *	ctype(3)
+ *	https://stackoverflow.com/a/60696378
  */
 
 static bool
