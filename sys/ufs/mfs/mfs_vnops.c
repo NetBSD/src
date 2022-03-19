@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.63 2021/07/18 23:57:15 dholland Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.64 2022/03/19 13:48:42 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.63 2021/07/18 23:57:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.64 2022/03/19 13:48:42 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +89,12 @@ const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_abortop_desc, genfs_badop },		/* abortop */
 	{ &vop_inactive_desc, mfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, mfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, genfs_nolock },		/* lock */
-	{ &vop_unlock_desc, genfs_nounlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, mfs_bmap },			/* bmap */
 	{ &vop_strategy_desc, mfs_strategy },		/* strategy */
 	{ &vop_print_desc, mfs_print },			/* print */
-	{ &vop_islocked_desc, genfs_noislocked },	/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, genfs_badop },		/* pathconf */
 	{ &vop_advlock_desc, genfs_badop },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
