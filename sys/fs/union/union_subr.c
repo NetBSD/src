@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.79 2020/08/18 09:44:07 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.80 2022/03/19 13:48:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.79 2020/08/18 09:44:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.80 2022/03/19 13:48:04 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,6 +567,7 @@ union_loadvnode(struct mount *mp, struct vnode *vp,
 
 	vp->v_tag = VT_UNION;
 	vp->v_op = union_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
 	vp->v_data = un;
 	un->un_vnode = vp;
 

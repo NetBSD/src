@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.82 2021/12/10 19:30:05 andvar Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.83 2022/03/19 13:48:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.82 2021/12/10 19:30:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.83 2022/03/19 13:48:04 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1709,15 +1709,6 @@ union_lock(void *v)
 		lockvp = LOCKVP(vp);
 		error = union_lock1(vp, lockvp, flags);
 		mutex_exit(&un->un_lock);
-		if (error)
-			return error;
-		if (mutex_tryenter(vp->v_interlock)) {
-			error = vdead_check(vp, VDEAD_NOWAIT);
-			mutex_exit(vp->v_interlock);
-		} else
-			error = EBUSY;
-		if (error)
-			union_unlock1(vp, lockvp);
 		return error;
 	}
 
@@ -1726,7 +1717,7 @@ union_lock(void *v)
 		lockvp = LOCKVP(vp);
 		mutex_exit(&un->un_lock);
 		error = union_lock1(vp, lockvp, flags);
-		if (error != 0)
+		if (error != 0 || (flags & (LK_DOWNGRADE | LK_UPGRADE)) != 0)
 			return error;
 		mutex_enter(&un->un_lock);
 		if (lockvp == LOCKVP(vp))
@@ -1735,14 +1726,6 @@ union_lock(void *v)
 	}
 	mutex_exit(&un->un_lock);
 
-	mutex_enter(vp->v_interlock);
-	error = vdead_check(vp, VDEAD_NOWAIT);
-	if (error) {
-		union_unlock1(vp, lockvp);
-		error = vdead_check(vp, 0);
-		KASSERT(error == ENOENT);
-	}
-	mutex_exit(vp->v_interlock);
 	return error;
 }
 
