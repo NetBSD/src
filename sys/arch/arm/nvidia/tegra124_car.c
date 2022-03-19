@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.23 2022/03/19 11:36:53 riastradh Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.24 2022/03/19 11:37:17 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.23 2022/03/19 11:36:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.24 2022/03/19 11:37:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -785,7 +785,7 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 
 	tegra124_car_init(sc);
 
-	config_interrupts(self, tegra124_car_rnd_attach);
+	tegra124_car_rnd_attach(self);
 }
 
 static void
