@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.299 2022/01/17 19:12:31 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.300 2022/03/19 13:53:32 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -202,7 +202,6 @@ typedef struct vnode vnode_t;
 #define	VV_ISTTY	0x00000004	/* vnode represents a tty */
 #define	VV_MAPPED	0x00000008	/* vnode might have user mappings */
 #define	VV_MPSAFE	0x00000010	/* file system code is MP safe */
-#define	VV_LOCKSWORK	0x00000020	/* FS supports locking discipline */
 
 /*
  * The second set are locked by vp->v_interlock.  VI_TEXT and VI_EXECMAP are
@@ -630,23 +629,6 @@ int	vn_fifo_bypass(void *);
 int	vn_bdev_open(dev_t, struct vnode **, struct lwp *);
 int	vn_bdev_openpath(struct pathbuf *pb, struct vnode **, struct lwp *);
 
-
-#ifdef DIAGNOSTIC
-static __inline bool
-vn_locked(struct vnode *_vp)
-{
-
-	return (_vp->v_vflag & VV_LOCKSWORK) == 0 ||
-	    VOP_ISLOCKED(_vp) == LK_EXCLUSIVE;
-}
-
-static __inline bool
-vn_anylocked(struct vnode *_vp)
-{
-
-	return (_vp->v_vflag & VV_LOCKSWORK) == 0 || VOP_ISLOCKED(_vp);
-}
-#endif
 
 /* initialise global vnode management */
 void	vntblinit(void);
