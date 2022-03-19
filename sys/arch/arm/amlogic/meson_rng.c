@@ -1,4 +1,4 @@
-/* $NetBSD: meson_rng.c,v 1.4 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: meson_rng.c,v 1.5 2022/03/19 11:36:43 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_rng.c,v 1.4 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_rng.c,v 1.5 2022/03/19 11:36:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,7 +49,6 @@ struct meson_rng_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 
-	kmutex_t		sc_lock;
 	krndsource_t		sc_rndsource;
 };
 
@@ -91,8 +90,6 @@ meson_rng_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
-
 	/* Core clock is optional */
 	clk = fdtbus_clock_get(phandle, "core");
 	if (clk != NULL && clk_enable(clk) != 0) {
@@ -114,7 +111,6 @@ meson_rng_get(size_t bytes_wanted, void *priv)
 	struct meson_rng_softc * const sc = priv;
 	uint32_t data;
 
-	mutex_spin_enter(&sc->sc_lock);
 	while (bytes_wanted) {
 		data = bus_space_read_4(sc->sc_bst, sc->sc_bsh, 0);
 		rnd_add_data_sync(&sc->sc_rndsource, &data, sizeof(data),
@@ -122,5 +118,4 @@ meson_rng_get(size_t bytes_wanted, void *priv)
 		bytes_wanted -= MIN(bytes_wanted, sizeof(data));
 	}
 	explicit_memset(&data, 0, sizeof(data));
-	mutex_spin_exit(&sc->sc_lock);
 }
