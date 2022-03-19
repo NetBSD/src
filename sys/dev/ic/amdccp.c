@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp.c,v 1.4 2022/03/19 11:37:06 riastradh Exp $ */
+/* $NetBSD: amdccp.c,v 1.5 2022/03/19 11:55:03 riastradh Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: amdccp.c,v 1.4 2022/03/19 11:37:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp.c,v 1.5 2022/03/19 11:55:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ void
 amdccp_common_attach(struct amdccp_softc *sc)
 {
 
-	mutex_init(&sc->sc_rndlock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	rndsource_setcb(&sc->sc_rndsource, amdccp_rnd_callback, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 	    RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
@@ -74,7 +73,6 @@ amdccp_rnd_callback(size_t bytes_wanted, void *priv)
 	uint32_t buf[128];
 	size_t cnt;
 
-	mutex_enter(&sc->sc_rndlock);
 	while (bytes_wanted) {
 		const size_t nbytes = MIN(bytes_wanted, sizeof(buf));
 		const size_t nwords = howmany(nbytes, sizeof(buf[0]));
@@ -95,5 +93,4 @@ amdccp_rnd_callback(size_t bytes_wanted, void *priv)
 		bytes_wanted -= MIN(bytes_wanted, cntby);
 	}
 	explicit_memset(buf, 0, sizeof(buf));
-	mutex_exit(&sc->sc_rndlock);
 }
