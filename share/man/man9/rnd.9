@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.29 2020/05/04 15:13:45 wiz Exp $
+.\"	$NetBSD: rnd.9,v 1.30 2022/03/19 11:54:53 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -165,6 +165,12 @@ not
 or
 .Fn rnd_add_uint32 .
 .El
+.Pp
+.Nm
+issues calls to each source's
+.Fa callback
+in serial \(em it never issues two calls to the same source's callback
+at the same time in two differen threads or on two different CPUs.
 .It Fn rnd_attach_source "rnd_source" "devname" "type" "flags"
 Makes
 .Fa rnd_source
