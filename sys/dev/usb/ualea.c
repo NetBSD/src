@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.15 2022/03/03 06:06:52 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.16 2022/03/19 11:37:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.15 2022/03/03 06:06:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.16 2022/03/19 11:37:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -104,7 +104,7 @@ ualea_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize the softc.  */
 	sc->sc_dev = self;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 
 	/* Get endpoint descriptor 0.  Make sure it's bulk-in.  */
 	ed = usbd_interface2endpoint_descriptor(uiaa->uiaa_iface, 0);

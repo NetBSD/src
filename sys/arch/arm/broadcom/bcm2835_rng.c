@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.15 2021/01/27 03:10:19 thorpej Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.16 2022/03/19 11:37:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.15 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.16 2022/03/19 11:37:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL, ctrl);
 
 	/* set up an rndsource */
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	rndsource_setcb(&sc->sc_rndsource, &bcmrng_get, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(self), RND_TYPE_RNG,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
@@ -134,7 +134,7 @@ bcmrng_get(size_t bytes_wanted, void *arg)
 	uint32_t status, cnt;
 	uint32_t buf[RNG_DATA_MAX]; /* 1k on the stack */
 
-	mutex_spin_enter(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 	while (bytes_wanted) {
 		status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_STATUS);
 		cnt = __SHIFTOUT(status, RNG_STATUS_CNT);
@@ -148,5 +148,5 @@ bcmrng_get(size_t bytes_wanted, void *arg)
 		bytes_wanted -= MIN(bytes_wanted, (cnt * 4));
 	}
 	explicit_memset(buf, 0, sizeof(buf));
-	mutex_spin_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 }

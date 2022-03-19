@@ -1,4 +1,4 @@
-/* $NetBSD: ti_rng.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_rng.c,v 1.6 2022/03/19 11:37:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.6 2022/03/19 11:37:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ ti_rng_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 
 	if ((RD4(sc, TRNG_CONTROL_REG) & TRNG_CONTROL_ENABLE) == 0) {
 		WR4(sc, TRNG_CONFIG_REG,

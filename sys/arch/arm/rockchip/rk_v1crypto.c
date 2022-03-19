@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.8 2022/03/19 11:37:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.8 2022/03/19 11:37:05 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -128,7 +128,7 @@ rk_v1crypto_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 
 	/* Get and map device registers.  */
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
