@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.29 2020/01/17 20:08:07 ad Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.30 2022/03/19 13:53:32 hannken Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.29 2020/01/17 20:08:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.30 2022/03/19 13:53:32 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,6 @@ efs_loadvnode(struct mount *mp, struct vnode *vp,
 	}
 
 	vp->v_tag = VT_EFS;
-	vp->v_vflag |= VV_LOCKSWORK;
 	vp->v_data = eip;
 	genfs_node_init(vp, &efs_genfsops);
 	uvm_vnp_setsize(vp, eip->ei_size);

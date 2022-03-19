@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.138 2022/03/19 13:52:11 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.139 2022/03/19 13:53:32 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.138 2022/03/19 13:52:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.139 2022/03/19 13:53:32 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -770,9 +770,6 @@ vput(vnode_t *vp)
 		if (vtryrele(vp)) {
 			return;
 		}
-		lktype = LK_NONE;
-	} else if ((vp->v_vflag & VV_LOCKSWORK) == 0) {
-		VOP_UNLOCK(vp);
 		lktype = LK_NONE;
 	} else {
 		lktype = VOP_ISLOCKED(vp);
@@ -1816,8 +1813,7 @@ vcache_reclaim(vnode_t *vp)
 	bool recycle, active;
 	int error;
 
-	KASSERT((vp->v_vflag & VV_LOCKSWORK) == 0 ||
-	    VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(mutex_owned(vp->v_interlock));
 	KASSERT(vrefcnt(vp) != 0);
 
@@ -1886,8 +1882,7 @@ vcache_reclaim(vnode_t *vp)
 	 * would no longer function.
 	 */
 	VOP_INACTIVE(vp, &recycle);
-	KASSERT((vp->v_vflag & VV_LOCKSWORK) == 0 ||
-	    VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	if (VOP_RECLAIM(vp)) {
 		vnpanic(vp, "%s: cannot reclaim", __func__);
 	}
@@ -1915,7 +1910,6 @@ vcache_reclaim(vnode_t *vp)
 	/* Done with purge, notify sleepers of the grim news. */
 	mutex_enter(vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
-	vp->v_vflag |= VV_LOCKSWORK;
 	VSTATE_CHANGE(vp, VS_RECLAIMING, VS_RECLAIMED);
 	vp->v_tag = VT_NON;
 	/*
@@ -1981,8 +1975,7 @@ vcache_make_anon(vnode_t *vp)
 		vnpanic(vp, "%s: cannot lock", __func__);
 	}
 	VOP_INACTIVE(vp, &recycle);
-	KASSERT((vp->v_vflag & VV_LOCKSWORK) == 0 ||
-	    VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	if (VOP_RECLAIM(vp)) {
 		vnpanic(vp, "%s: cannot reclaim", __func__);
 	}
@@ -1993,7 +1986,7 @@ vcache_make_anon(vnode_t *vp)
 	/* Done with purge, change operations vector. */
 	mutex_enter(vp->v_interlock);
 	vp->v_op = spec_vnodeop_p;
-	vp->v_vflag |= VV_MPSAFE | VV_LOCKSWORK;
+	vp->v_vflag |= VV_MPSAFE;
 	mutex_exit(vp->v_interlock);
 
 	/*

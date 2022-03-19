@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.115 2022/03/19 13:48:42 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.116 2022/03/19 13:53:33 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.115 2022/03/19 13:48:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.116 2022/03/19 13:53:33 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -208,7 +208,6 @@ mfs_mountroot(void)
 	rootvp->v_data = mfsp;
 	rootvp->v_op = mfs_vnodeop_p;
 	rootvp->v_tag = VT_MFS;
-	rootvp->v_vflag |= VV_LOCKSWORK;
 	mfsp->mfs_baseoff = mfs_rootbase;
 	mfsp->mfs_size = mfs_rootsize;
 	mfsp->mfs_vnode = rootvp;
@@ -327,7 +326,6 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	KASSERT(devvp->v_data == NULL);
 	devvp->v_op = mfs_vnodeop_p;
 	devvp->v_data = mfsp;
-	devvp->v_vflag |= VV_LOCKSWORK;
 	mfsp->mfs_baseoff = args->base;
 	mfsp->mfs_size = args->size;
 	mfsp->mfs_vnode = devvp;

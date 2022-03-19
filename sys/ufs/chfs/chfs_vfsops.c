@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.22 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.23 2022/03/19 13:53:32 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -500,7 +500,6 @@ chfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 	vp->v_tag = VT_CHFS;
 	vp->v_op = chfs_vnodeop_p;
-	vp->v_vflag |= VV_LOCKSWORK;
 	if (ino == CHFS_ROOTINO)
 		vp->v_vflag |= VV_ROOT;
 	vp->v_data = ip;

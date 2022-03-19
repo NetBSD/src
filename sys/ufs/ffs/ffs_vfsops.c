@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.374 2022/03/12 15:36:53 riastradh Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.375 2022/03/19 13:53:33 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.374 2022/03/12 15:36:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.375 2022/03/19 13:53:33 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2064,7 +2064,6 @@ ffs_init_vnode(struct ufsmount *ump, struct vnode *vp, ino_t ino)
 	/* Initialise vnode with this inode. */
 	vp->v_tag = VT_UFS;
 	vp->v_op = ffs_vnodeop_p;
-	vp->v_vflag |= VV_LOCKSWORK;
 	vp->v_data = ip;
 
 	/* Initialize genfs node. */

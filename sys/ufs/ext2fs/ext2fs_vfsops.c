@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.219 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.220 2022/03/19 13:53:33 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.219 2020/05/16 18:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.220 2022/03/19 13:53:33 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1016,7 +1016,6 @@ ext2fs_init_vnode(struct ufsmount *ump, struct vnode *vp, ino_t ino)
 	/* Initialise vnode with this inode. */
 	vp->v_tag = VT_EXT2FS;
 	vp->v_op = ext2fs_vnodeop_p;
-	vp->v_vflag |= VV_LOCKSWORK;
 	vp->v_data = ip;
 
 	/* Initialize genfs node. */

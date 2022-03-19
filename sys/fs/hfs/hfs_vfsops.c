@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.37 2020/02/28 11:27:38 kamil Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.38 2022/03/19 13:53:32 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.37 2020/02/28 11:27:38 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.38 2022/03/19 13:53:32 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -583,7 +583,6 @@ hfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 	vp->v_tag = VT_HFS;
 	vp->v_op = hfs_vnodeop_p;
-	vp->v_vflag |= VV_LOCKSWORK;
 	vp->v_data = hnode;
 	genfs_node_init(vp, &hfs_genfsops);
 
