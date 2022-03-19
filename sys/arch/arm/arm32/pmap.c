@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.433 2022/03/12 15:32:31 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.434 2022/03/19 09:54:25 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.433 2022/03/12 15:32:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.434 2022/03/19 09:54:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6229,6 +6229,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 * Initialise the kernel pmap object
 	 */
 	curcpu()->ci_pmap_cur = pm;
+	pm->pm_refs = 1;
 #ifdef ARM_MMU_EXTENDED
 	pm->pm_l1 = l1pt;
 	pm->pm_l1_pa = kernel_l1pt.pv_pa;
@@ -6242,6 +6243,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 #else
 	pm->pm_l1 = l1;
 #endif
+	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
 
 	VPRINTF("locks ");
 	/*
@@ -6250,8 +6252,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 */
 	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&kpm_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
-	pm->pm_refs = 1;
 
 	VPRINTF("l1pt ");
 	/*
