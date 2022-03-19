@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.49 2015/04/14 12:51:30 riastradh Exp $	*/
+/*	$NetBSD: rnd.h,v 1.50 2022/03/19 14:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,8 +46,6 @@ void		rnd_init(void);
 void		rnd_init_softint(void);
 void		rnd_seed(void *, size_t);
 int		rnd_system_ioctl(struct file *, u_long, void *);
-
-extern int	rnd_initial_entropy;
 
 #endif /* _KERNEL */
 
