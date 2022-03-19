@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.238 2022/03/13 13:07:39 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.239 2022/03/19 10:05:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.238 2022/03/13 13:07:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.239 2022/03/19 10:05:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -973,16 +973,24 @@ usbd_get_no_alts(usb_config_descriptor_t *cdesc, int ifaceno)
 {
 	char *p = (char *)cdesc;
 	char *end = p + UGETW(cdesc->wTotalLength);
-	usb_interface_descriptor_t *d;
+	usb_descriptor_t *desc;
+	usb_interface_descriptor_t *idesc;
 	int n;
 
-	for (n = 0; end - p >= sizeof(*d); p += d->bLength) {
-		d = (usb_interface_descriptor_t *)p;
-		if (d->bLength < sizeof(*d) || d->bLength > end - p)
+	for (n = 0; end - p >= sizeof(*desc); p += desc->bLength) {
+		desc = (usb_descriptor_t *)p;
+		if (desc->bLength < sizeof(*desc) || desc->bLength > end - p)
 			break;
-		if (d->bDescriptorType == UDESC_INTERFACE &&
-		    d->bInterfaceNumber == ifaceno)
+		if (desc->bDescriptorType != UDESC_INTERFACE)
+			continue;
+		if (desc->bLength < sizeof(*idesc))
+			break;
+		idesc = (usb_interface_descriptor_t *)desc;
+		if (idesc->bInterfaceNumber == ifaceno) {
 			n++;
+			if (n == INT_MAX)
+				break;
+		}
 	}
 	return n;
 }
