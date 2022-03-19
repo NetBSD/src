@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.40 2022/03/18 23:35:28 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.41 2022/03/19 14:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.40 2022/03/18 23:35:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.41 2022/03/19 14:35:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -192,8 +192,6 @@ struct {
 static struct percpu	*entropy_percpu __read_mostly; /* struct entropy_cpu */
 static void		*entropy_sih __read_mostly; /* softint handler */
 static struct lwp	*entropy_lwp __read_mostly; /* housekeeping thread */
-
-int rnd_initial_entropy __read_mostly; /* XXX legacy */
 
 static struct krndsource seed_rndsource __read_mostly;
 
@@ -1165,10 +1163,8 @@ entropy_notify(void)
 	 * that we're ready so operators can compare it to the timing
 	 * of other events.
 	 */
-	if (__predict_false(!rnd_initial_entropy) && E->needed == 0) {
+	if (__predict_false(E->epoch == (unsigned)-1) && E->needed == 0)
 		printf("entropy: ready\n");
-		rnd_initial_entropy = 1;
-	}
 
 	/* Set the epoch; roll over from UINTMAX-1 to 1.  */
 	if (__predict_true(!atomic_load_relaxed(&entropy_depletion)) ||
@@ -1178,6 +1174,7 @@ entropy_notify(void)
 			epoch = 1;
 		atomic_store_relaxed(&E->epoch, epoch);
 	}
+	KASSERT(E->epoch != (unsigned)-1);
 
 	/* Notify waiters.  */
 	if (E->stage >= ENTROPY_WARM) {
