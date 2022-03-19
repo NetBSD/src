@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.88 2022/03/09 10:06:36 mrg Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.89 2022/03/19 09:55:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.88 2022/03/09 10:06:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.89 2022/03/19 09:55:30 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -475,8 +475,8 @@ fdt_map_efi_runtime(const char *prop, enum arm_efirt_mem_type type)
 		const paddr_t pa = be64toh(map[0]);
 		const vaddr_t va = be64toh(map[1]);
 		const size_t sz = be64toh(map[2]);
-		VPRINTF("%s: %s %" PRIxPADDR "-%" PRIxVADDR "(%" PRIxVADDR
-		    "-%" PRIxVSIZE "\n", __func__, prop, pa, pa + sz - 1,
+		VPRINTF("%s: %s %#" PRIxPADDR "-%#" PRIxVADDR " (%#" PRIxVADDR
+		    "-%#" PRIxVSIZE ")\n", __func__, prop, pa, pa + sz - 1,
 		    va, va + sz - 1);
 		arm_efirt_md_map_range(va, pa, sz, type);
 		map += 3;
