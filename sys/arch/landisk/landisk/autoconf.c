@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2019/04/06 00:09:09 uwe Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2022/03/19 13:49:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2019/04/06 00:09:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2022/03/19 13:49:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 	 */
 	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART), &tmpvn))
 		panic("match_bootdisk: can't alloc vnode");
+	vn_lock(tmpvn, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED);
 	if (error) {
 #ifndef DEBUG
