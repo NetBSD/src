@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.89 2022/03/19 09:55:30 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.90 2022/03/19 13:51:35 hannken Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.89 2022/03/19 09:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.90 2022/03/19 13:51:35 hannken Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -774,7 +774,7 @@ fdt_detect_root_device(device_t dev)
 		if (!vp)
 			return;
 		error = vn_rdwr(UIO_READ, vp, buf, sizeof(buf), 0, UIO_SYSSPACE,
-		    0, NOCRED, &resid, NULL);
+		    IO_NODELOCKED, NOCRED, &resid, NULL);
 		VOP_CLOSE(vp, FREAD, NOCRED);
 		vput(vp);
 

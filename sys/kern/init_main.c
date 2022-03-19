@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.537 2022/03/18 23:37:06 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.538 2022/03/19 13:51:35 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.537 2022/03/18 23:37:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.538 2022/03/19 13:51:35 hannken Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -890,7 +890,9 @@ rootconf_handle_wedges(void)
 		if (vp == NULL)
 			return;
 
+		VOP_UNLOCK(vp);
 		error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		VOP_CLOSE(vp, FREAD, NOCRED);
 		vput(vp);
 		if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.86 2022/02/12 03:24:35 riastradh Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.87 2022/03/19 13:51:35 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.86 2022/02/12 03:24:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.87 2022/03/19 13:51:35 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ matchbiosdisks(void)
 		}
 
 		error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0, UIO_SYSSPACE,
-		    0, NOCRED, NULL, NULL);
+		    IO_NODELOCKED, NOCRED, NULL, NULL);
 		VOP_CLOSE(tv, FREAD, NOCRED);
 		vput(tv);
 		if (error) {
@@ -243,7 +243,7 @@ match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 	     nblks != 0; nblks--, blk++) {
 		error = vn_rdwr(UIO_READ, tmpvn, (void *) bf,
 		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
-		    0, NOCRED, NULL, NULL);
+		    IO_NODELOCKED, NOCRED, NULL, NULL);
 		if (error) {
 			if (error != EINVAL) {
 				aprint_error("%s: unable to read block %"
@@ -298,7 +298,9 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 		return 0;
 	}
 
+	VOP_UNLOCK(tmpvn);
 	error = VOP_IOCTL(tmpvn, DIOCGDINFO, &label, FREAD, NOCRED);
+	vn_lock(tmpvn, LK_EXCLUSIVE | LK_RETRY);
 	if (error) {
 		/*
 		 * XXX Can't happen -- open() would have errored out
