@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.72 2021/10/20 03:08:18 thorpej Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.73 2022/03/19 13:53:32 hannken Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -704,8 +704,8 @@ function bodynorm() {
 		printf("\ta.a_%s = %s;\n", argname[i], argname[i]);
 		if (lockdebug && lockstate[i] != -1) {
 			printf("#ifdef VNODE_LOCKDEBUG\n");
-			printf("\tislocked_%s = (%s->v_vflag & VV_LOCKSWORK) ? (VOP_ISLOCKED(%s) == LK_EXCLUSIVE) : %d;\n",
-			    argname[i], argname[i], argname[i], lockstate[i]);
+			printf("\tislocked_%s = (VOP_ISLOCKED(%s) == LK_EXCLUSIVE);\n",
+			    argname[i], argname[i]);
 			printf("\tif (islocked_%s != %d)\n", argname[i],
 			    lockstate[i]);
 			printf("\t\tpanic(\"%s: %s: locked %%d, expected %%d\", islocked_%s, %d);\n", name, argname[i], argname[i], lockstate[i]);
