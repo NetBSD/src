@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.10 2019/10/04 12:24:32 mrg Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.11 2022/03/19 13:51:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.10 2019/10/04 12:24:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.11 2022/03/19 13:51:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -158,6 +158,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	if (error)
 		goto out;
 
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(vp, FREAD, NOCRED);
 	if (error) {
 		vput(vp);

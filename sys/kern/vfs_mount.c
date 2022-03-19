@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.89 2022/03/16 20:31:02 andvar Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.90 2022/03/19 13:50:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.89 2022/03/16 20:31:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.90 2022/03/19 13:50:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1178,7 +1178,9 @@ vfs_mountroot(void)
 			panic("vfs_mountroot: rootdev not set for DV_DISK");
 	        if (bdevvp(rootdev, &rootvp))
 	                panic("vfs_mountroot: can't get vnode for rootdev");
+		vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(rootvp, FREAD, FSCRED);
+		VOP_UNLOCK(rootvp);
 		if (error) {
 			printf("vfs_mountroot: can't open root device\n");
 			return (error);
