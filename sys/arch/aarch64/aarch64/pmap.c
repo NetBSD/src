@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.130 2022/03/12 15:32:30 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.131 2022/03/19 09:53:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2022/03/12 15:32:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2022/03/19 09:53:18 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -276,7 +276,7 @@ phys_to_pp(paddr_t pa)
 #endif /* __HAVE_PMAP_PV_TRACK */
 }
 
-#define IN_RANGE(va,sta,end)	(((sta) <= (va)) && ((va) < (end)))
+#define IN_RANGE(va, sta, end)	(((sta) <= (va)) && ((va) < (end)))
 
 #define IN_DIRECTMAP_ADDR(va)	\
 	IN_RANGE((va), AARCH64_DIRECTMAP_START, AARCH64_DIRECTMAP_END)
@@ -288,31 +288,34 @@ phys_to_pp(paddr_t pa)
 #endif
 
 #ifdef DIAGNOSTIC
-#define KASSERT_PM_ADDR(pm,va)						\
-	do {								\
-		int space = aarch64_addressspace(va);			\
-		if ((pm) == pmap_kernel()) {				\
-			KASSERTMSG(space == AARCH64_ADDRSPACE_UPPER,	\
-			    "%s: kernel pm %p: va=%016lx"		\
-			    " is out of upper address space",		\
-			    __func__, (pm), (va));			\
-			KASSERTMSG(IN_RANGE((va), VM_MIN_KERNEL_ADDRESS, \
-			    VM_MAX_KERNEL_ADDRESS),			\
-			    "%s: kernel pm %p: va=%016lx"		\
-			    " is not kernel address",			\
-			    __func__, (pm), (va));			\
-		} else {						\
-			KASSERTMSG(space == AARCH64_ADDRSPACE_LOWER,	\
-			    "%s: user pm %p: va=%016lx"			\
-			    " is out of lower address space",		\
-			    __func__, (pm), (va));			\
-			KASSERTMSG(IN_RANGE((va),			\
-			    VM_MIN_ADDRESS, VM_MAX_ADDRESS),		\
-			    "%s: user pm %p: va=%016lx"			\
-			    " is not user address",			\
-			    __func__, (pm), (va));			\
-		}							\
-	} while (0 /* CONSTCOND */)
+
+#define KERNEL_ADDR_P(va)						\
+    IN_RANGE((va), VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS)
+
+#define KASSERT_PM_ADDR(pm, va)						\
+    do {								\
+	int space = aarch64_addressspace(va);				\
+	if ((pm) == pmap_kernel()) {					\
+		KASSERTMSG(space == AARCH64_ADDRSPACE_UPPER,		\
+		    "%s: kernel pm %p: va=%016lx"			\
+		    " is out of upper address space",			\
+		    __func__, (pm), (va));				\
+		KASSERTMSG(KERNEL_ADDR_P(va),				\
+		    "%s: kernel pm %p: va=%016lx"			\
+		    " is not kernel address",				\
+		    __func__, (pm), (va));				\
+	} else {							\
+		KASSERTMSG(space == AARCH64_ADDRSPACE_LOWER,		\
+		    "%s: user pm %p: va=%016lx"				\
+		    " is out of lower address space",			\
+		    __func__, (pm), (va));				\
+		KASSERTMSG(IN_RANGE((va),				\
+		    VM_MIN_ADDRESS, VM_MAX_ADDRESS),			\
+		    "%s: user pm %p: va=%016lx"				\
+		    " is not user address",				\
+		    __func__, (pm), (va));				\
+	}								\
+    } while (0 /* CONSTCOND */)
 #else /* DIAGNOSTIC */
 #define KASSERT_PM_ADDR(pm,va)
 #endif /* DIAGNOSTIC */
