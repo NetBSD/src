@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.137 2022/03/15 15:27:43 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.138 2022/03/19 13:52:11 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.137 2022/03/15 15:27:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.138 2022/03/19 13:52:11 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1993,8 +1993,7 @@ vcache_make_anon(vnode_t *vp)
 	/* Done with purge, change operations vector. */
 	mutex_enter(vp->v_interlock);
 	vp->v_op = spec_vnodeop_p;
-	vp->v_vflag |= VV_MPSAFE;
-	vp->v_vflag &= ~VV_LOCKSWORK;
+	vp->v_vflag |= VV_MPSAFE | VV_LOCKSWORK;
 	mutex_exit(vp->v_interlock);
 
 	/*
