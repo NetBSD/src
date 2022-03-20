@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.18 2022/03/20 13:13:10 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.19 2022/03/20 13:18:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.18 2022/03/20 13:13:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.19 2022/03/20 13:18:30 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -250,14 +250,18 @@ ualea_xfer_done(struct usbd_xfer *xfer, void *cookie, usbd_status status)
 	    "pktsize %"PRIu32" > %"PRIu16" (max)",
 	    pktsize, sc->sc_maxpktsize);
 
-	/* Add the data to the pool.  */
-	rnd_add_data(&sc->sc_rnd, pkt, pktsize, NBBY*pktsize);
-
 	/*
-	 * Debit what we contributed from what we need, mark the xfer
-	 * as done, and reschedule the xfer if we still need more.
+	 * Enter the data, debit what we contributed from what we need,
+	 * mark the xfer as done, and reschedule the xfer if we still
+	 * need more.
+	 *
+	 * Must enter the data under the lock so it happens atomically
+	 * with updating sc_needed -- otherwise we might hang needing
+	 * entropy and not scheduling xfer.  Must not touch pkt after
+	 * clearing sc_inflight and possibly rescheduling the xfer.
 	 */
 	mutex_enter(&sc->sc_lock);
+	rnd_add_data(&sc->sc_rnd, pkt, pktsize, NBBY*pktsize);
 	sc->sc_needed -= MIN(sc->sc_needed, pktsize);
 	sc->sc_inflight = false;
 	ualea_xfer(sc);
