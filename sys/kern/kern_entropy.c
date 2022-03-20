@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.41 2022/03/19 14:35:08 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.42 2022/03/20 00:19:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.41 2022/03/19 14:35:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.42 2022/03/20 00:19:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -678,6 +678,7 @@ static void
 entropy_account_cpu(struct entropy_cpu *ec)
 {
 	unsigned diff;
+	int s;
 
 	KASSERT(E->stage >= ENTROPY_WARM);
 
@@ -690,12 +691,9 @@ entropy_account_cpu(struct entropy_cpu *ec)
 	    __predict_true((time_uptime - E->timestamp) <= 60))
 		return;
 
-	/* If there's nothing pending, stop here.  */
-	if (ec->ec_pending == 0)
-		return;
-
 	/* Consider consolidation, under the lock.  */
 	mutex_enter(&E->lock);
+	s = splsoftserial();
 	if (E->needed != 0 && E->needed <= ec->ec_pending) {
 		/*
 		 * If we have not yet attained full entropy but we can
@@ -750,6 +748,7 @@ entropy_account_cpu(struct entropy_cpu *ec)
 			entropy_partial_evcnt.ev_count++;
 		}
 	}
+	splx(s);
 	mutex_exit(&E->lock);
 }
 
@@ -799,7 +798,8 @@ static void
 entropy_enter(const void *buf, size_t len, unsigned nbits)
 {
 	struct entropy_cpu *ec;
-	uint32_t pending;
+	unsigned pending;
+	uint64_t ncsw;
 	int s;
 
 	KASSERTMSG(!cpu_intr_p(),
@@ -821,6 +821,7 @@ entropy_enter(const void *buf, size_t len, unsigned nbits)
 	s = splsoftserial();
 	KASSERT(!ec->ec_locked);
 	ec->ec_locked = true;
+	ncsw = curlwp->l_ncsw;
 	__insn_barrier();
 
 	/* Enter into the per-CPU pool.  */
@@ -831,15 +832,17 @@ entropy_enter(const void *buf, size_t len, unsigned nbits)
 	pending += MIN(ENTROPY_CAPACITY*NBBY - pending, nbits);
 	atomic_store_relaxed(&ec->ec_pending, pending);
 
-	/* Consolidate globally if appropriate based on what we added.  */
-	entropy_account_cpu(ec);
-
 	/* Release the per-CPU state.  */
 	KASSERT(ec->ec_locked);
 	__insn_barrier();
+	KASSERT(ncsw == curlwp->l_ncsw);
 	ec->ec_locked = false;
 	splx(s);
 	percpu_putref(entropy_percpu);
+
+	/* Consolidate globally if appropriate based on what we added.  */
+	if (pending)
+		entropy_account_cpu(ec);
 }
 
 /*
@@ -935,6 +938,8 @@ static void
 entropy_softintr(void *cookie)
 {
 	struct entropy_cpu *ec;
+	unsigned pending;
+	uint64_t ncsw;
 
 	/*
 	 * Acquire the per-CPU state.  Other users can lock this only
@@ -944,6 +949,7 @@ entropy_softintr(void *cookie)
 	ec = percpu_getref(entropy_percpu);
 	KASSERT(!ec->ec_locked);
 	ec->ec_locked = true;
+	ncsw = curlwp->l_ncsw;
 	__insn_barrier();
 
 	/* Count statistics.  */
@@ -952,14 +958,19 @@ entropy_softintr(void *cookie)
 	/* Stir the pool if necessary.  */
 	entpool_stir(ec->ec_pool);
 
-	/* Consolidate globally if appropriate based on what we added.  */
-	entropy_account_cpu(ec);
+	/* Determine if there's anything pending on this CPU.  */
+	pending = ec->ec_pending;
 
 	/* Release the per-CPU state.  */
 	KASSERT(ec->ec_locked);
 	__insn_barrier();
+	KASSERT(ncsw == curlwp->l_ncsw);
 	ec->ec_locked = false;
 	percpu_putref(entropy_percpu);
+
+	/* Consolidate globally if appropriate based on what we added.  */
+	if (pending)
+		entropy_account_cpu(ec);
 }
 
 /*
@@ -1092,6 +1103,7 @@ entropy_consolidate_xc(void *vpool, void *arg2 __unused)
 	uint8_t buf[ENTPOOL_CAPACITY];
 	uint32_t extra[7];
 	unsigned i = 0;
+	uint64_t ncsw;
 	int s;
 
 	/* Grab CPU number and cycle counter to mix extra into the pool.  */
@@ -1107,6 +1119,7 @@ entropy_consolidate_xc(void *vpool, void *arg2 __unused)
 	s = splsoftserial();
 	KASSERT(!ec->ec_locked);
 	ec->ec_locked = true;
+	ncsw = curlwp->l_ncsw;
 	__insn_barrier();
 	extra[i++] = entropy_timer();
 
@@ -1118,6 +1131,7 @@ entropy_consolidate_xc(void *vpool, void *arg2 __unused)
 	/* Release the per-CPU state.  */
 	KASSERT(ec->ec_locked);
 	__insn_barrier();
+	KASSERT(ncsw == curlwp->l_ncsw);
 	ec->ec_locked = false;
 	splx(s);
 	percpu_putref(entropy_percpu);
@@ -2051,6 +2065,7 @@ entropy_reset_xc(void *arg1 __unused, void *arg2 __unused)
 {
 	uint32_t extra = entropy_timer();
 	struct entropy_cpu *ec;
+	uint64_t ncsw;
 	int s;
 
 	/*
@@ -2061,6 +2076,7 @@ entropy_reset_xc(void *arg1 __unused, void *arg2 __unused)
 	s = splsoftserial();
 	KASSERT(!ec->ec_locked);
 	ec->ec_locked = true;
+	ncsw = curlwp->l_ncsw;
 	__insn_barrier();
 
 	/* Zero the pending count and enter a cycle count for fun.  */
@@ -2070,6 +2086,7 @@ entropy_reset_xc(void *arg1 __unused, void *arg2 __unused)
 	/* Release the per-CPU state.  */
 	KASSERT(ec->ec_locked);
 	__insn_barrier();
+	KASSERT(ncsw == curlwp->l_ncsw);
 	ec->ec_locked = false;
 	splx(s);
 	percpu_putref(entropy_percpu);
