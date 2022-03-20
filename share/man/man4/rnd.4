@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.39 2021/04/06 22:12:16 riastradh Exp $
+.\"	$NetBSD: rnd.4,v 1.40 2022/03/20 18:19:57 riastradh Exp $
 .\"
 .\" Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -567,9 +567,9 @@ The
 subsystem may print the following warnings to the console likely
 indicating security issues:
 .Bl -diag -offset indent
-.It entropy: WARNING: extracting entropy too early
-Something requested extraction of entropy from the pool before it
-has ever reached full entropy in the system's estimation.
+.It WARNING: system needs entropy for security; see entropy(7)
+A process tried to draw from the entropy pool before enough inputs from
+reliable entropy sources have been entered.
 .Pp
 The entropy may be low enough that an adversary who sees the output
 could guess the state of the pool by brute force, so in this event the
@@ -579,18 +579,6 @@ This message is rate-limited to happen no more often than once per
 minute, so if you want to make sure it is gone you should consult
 .Dv kern.entropy.needed
 to confirm it is zero.
-.It entropy: WARNING: consolidating less than full entropy
-The operator triggered consolidation of entropy pending in per-CPU
-pools into the global pool when the system's estimate of the amount of
-entropy was still below the 256-bit threshold.
-.Pp
-This message can be safely ignored if the operator knows something the
-system doesn't, e.g. if the operator has flipped a coin 256 times and
-written the outcomes to
-.Pa /dev/random .
-.Pp
-This message is rate-limited to happen no more often than once per
-minute.
 .El
 .Pp
 The

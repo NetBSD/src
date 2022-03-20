@@ -1,4 +1,4 @@
-.\"	$NetBSD: entropy.7,v 1.3 2021/01/15 15:17:09 riastradh Exp $
+.\"	$NetBSD: entropy.7,v 1.4 2022/03/20 18:19:58 riastradh Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -169,14 +169,15 @@ You can manually save and load seeds with the
 tool.
 For example, you might use
 .Dl rndctl -S seed
-to save a seed from one machine, transfer it over a medium where you
-are confident there are no eavesdroppers to another machine, and load
-it with
+to save a seed from one machine, transfer it \(em over a medium where
+you are confident there are no eavesdroppers \(em to another machine,
+and load it with
 .Dl rndctl -L seed
 on the target machine; then run
 .Dl /etc/rc.d/random_seed stop
 on the target machine to ensure that the entropy will be saved for next
-boot, even if the system crashes or otherwise shuts down uncleanly.
+boot, even if the system later crashes or otherwise shuts down
+uncleanly.
 .Ic rndctl -S
 records the number of bits of entropy in the seed so that
 .Ic rndctl -L
@@ -214,6 +215,28 @@ will automatically generate ssh host keys on boot; if they were
 generated with too little entropy, then you may wish to delete them and
 create new ones before allowing anyone to log in via
 .Xr ssh 1 .
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.Sh DIAGNOSTICS
+.Nx
+may print the following warnings to the console:
+.Bl -diag -offset indent
+.It WARNING: system needs entropy for security; see entropy(7)
+Some process tried to draw use entropy from
+.Nx ,
+e.g. to generate a key for cryptography, before enough inputs from
+reliable entropy sources have been obtained.
+The entropy may be low enough that an adversary could guess keys by
+brute force.
+.Pp
+This message is rate-limited, so if you have added entropy and want to
+verify that the problem is resolved, you should consult the
+.Dv kern.entropy.needed
+.Xr sysctl 7
+variable to confirm it is zero, rather than just look for the absence
+of this message; see
+.Xr rnd 4
+for details.
+.El
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh SEE ALSO
 .Xr getrandom 2 ,
