@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.326 2022/02/10 20:49:39 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.327 2022/03/20 20:19:34 andvar Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1233,7 +1233,7 @@ PME	power management event
 PMEG	page map entry group
 PMI	performance monitoring infrastructure
 PMI	platform management interrupt
-PMIC	power management integrated circut
+PMIC	power management integrated circuit
 PMIO	port-mapped input/output
 PMT	photo-multiplier tube
 PMU	performance monitoring units
