@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.32 2021/08/09 19:57:58 andvar Exp $	*/
+/*	$NetBSD: if_types.h,v 1.33 2022/03/20 20:19:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -174,7 +174,7 @@
 #define IFT_A12MPPSWITCH	   0x82	/* Avalon Parallel Processor */
 #define IFT_TUNNEL		   0x83	/* Encapsulation interface */
 #define IFT_COFFEE		   0x84	/* coffee pot */
-#define IFT_CES			   0x85	/* Circiut Emulation Service */
+#define IFT_CES			   0x85	/* Circuit Emulation Service */
 #define IFT_ATMSUBINTERFACE	   0x86	/* (x)  ATM Sub Interface */
 #define IFT_L2VLAN		   0x87	/* Layer 2 Virtual LAN using 802.1Q */
 #define IFT_L3IPVLAN		   0x88	/* Layer 3 Virtual LAN - IP Protocol */
