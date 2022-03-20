@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.43 2022/03/20 13:17:09 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.44 2022/03/20 13:17:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.43 2022/03/20 13:17:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.44 2022/03/20 13:17:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -728,8 +728,9 @@ entropy_ready(void)
 static void
 entropy_account_cpu(struct entropy_cpu *ec)
 {
+	struct entropy_cpu_lock lock;
+	struct entropy_cpu *ec0;
 	unsigned diff;
-	int s;
 
 	KASSERT(E->stage >= ENTROPY_WARM);
 
@@ -742,9 +743,13 @@ entropy_account_cpu(struct entropy_cpu *ec)
 	    __predict_true((time_uptime - E->timestamp) <= 60))
 		return;
 
-	/* Consider consolidation, under the lock.  */
+	/*
+	 * Consider consolidation, under the global lock and with the
+	 * per-CPU state locked.
+	 */
 	mutex_enter(&E->lock);
-	s = splsoftserial();
+	ec0 = entropy_cpu_get(&lock);
+	KASSERT(ec0 == ec);
 	if (E->needed != 0 && E->needed <= ec->ec_pending) {
 		/*
 		 * If we have not yet attained full entropy but we can
@@ -799,7 +804,7 @@ entropy_account_cpu(struct entropy_cpu *ec)
 			entropy_partial_evcnt.ev_count++;
 		}
 	}
-	splx(s);
+	entropy_cpu_put(&lock, ec);
 	mutex_exit(&E->lock);
 }
 
