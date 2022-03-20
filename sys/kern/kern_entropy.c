@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.44 2022/03/20 13:17:32 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.45 2022/03/20 13:17:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.44 2022/03/20 13:17:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.45 2022/03/20 13:17:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -771,17 +771,26 @@ entropy_account_cpu(struct entropy_cpu *ec)
 		entropy_notify();
 		entropy_immediate_evcnt.ev_count++;
 	} else {
-		/* Record how much we can add to the global pool.  */
+		/* Determine how much we can add to the global pool.  */
+		KASSERTMSG(E->pending <= ENTROPY_CAPACITY*NBBY,
+		    "E->pending=%u", E->pending);
 		diff = MIN(ec->ec_pending, ENTROPY_CAPACITY*NBBY - E->pending);
-		E->pending += diff;
-		atomic_store_relaxed(&ec->ec_pending, ec->ec_pending - diff);
 
 		/*
-		 * This should have made a difference unless we were
-		 * already saturated.
+		 * This should make a difference unless we are already
+		 * saturated.
 		 */
-		KASSERT(diff || E->pending == ENTROPY_CAPACITY*NBBY);
+		KASSERTMSG(diff || E->pending == ENTROPY_CAPACITY*NBBY,
+		    "diff=%u E->pending=%u ec->ec_pending=%u cap=%u",
+		    diff, E->pending, ec->ec_pending,
+		    (unsigned)ENTROPY_CAPACITY*NBBY);
+
+		/* Add to the global, subtract from the local.  */
+		E->pending += diff;
 		KASSERT(E->pending);
+		KASSERTMSG(E->pending <= ENTROPY_CAPACITY*NBBY,
+		    "E->pending=%u", E->pending);
+		atomic_store_relaxed(&ec->ec_pending, ec->ec_pending - diff);
 
 		if (E->needed <= E->pending) {
 			/*
@@ -907,6 +916,7 @@ entropy_enter_intr(const void *buf, size_t len, unsigned nbits)
 	uint32_t pending;
 	void *sih;
 
+	KASSERT(cpu_intr_p());
 	KASSERTMSG(howmany(nbits, NBBY) <= len,
 	    "impossible entropy rate: %u bits in %zu-byte string", nbits, len);
 
