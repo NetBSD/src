@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.49 2022/03/20 14:30:56 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.50 2022/03/20 18:19:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.49 2022/03/20 14:30:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.50 2022/03/20 18:19:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1112,9 +1112,9 @@ entropy_do_consolidate(void)
 	atomic_store_relaxed(&E->needed, E->needed - diff);
 	E->pending -= diff;
 	if (__predict_false(E->needed > 0)) {
-		if (ratecheck(&lasttime, &interval) &&
-		    (boothowto & AB_DEBUG) != 0) {
-			printf("entropy: WARNING:"
+		if ((boothowto & AB_DEBUG) != 0 &&
+		    ratecheck(&lasttime, &interval)) {
+			printf("WARNING:"
 			    " consolidating less than full entropy\n");
 		}
 	}
@@ -1408,8 +1408,9 @@ entropy_extract(void *buf, size_t len, int flags)
 	 */
 	if (__predict_false(E->epoch == (unsigned)-1)) {
 		if (ratecheck(&lasttime, &interval))
-			printf("entropy: WARNING:"
-			    " extracting entropy too early\n");
+			printf("WARNING:"
+			    " system needs entropy for security;"
+			    " see entropy(7)\n");
 		atomic_store_relaxed(&E->needed, ENTROPY_CAPACITY*NBBY);
 	}
 
