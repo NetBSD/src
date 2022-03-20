@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.46 2022/03/20 13:18:11 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.47 2022/03/20 13:44:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.46 2022/03/20 13:18:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.47 2022/03/20 13:44:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1702,30 +1702,10 @@ rnd_lock_sources(void)
 }
 
 /*
- * rnd_trylock_sources()
- *
- *	Try to lock the list of sources, but if it's already locked,
- *	fail.  Caller must hold the global entropy lock.  If
- *	successful, no rndsource will go away until rnd_unlock_sources
- *	even while the caller releases the global entropy lock.
- */
-static bool
-rnd_trylock_sources(void)
-{
-
-	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
-
-	if (E->sourcelock)
-		return false;
-	E->sourcelock = curlwp;
-	return true;
-}
-
-/*
  * rnd_unlock_sources()
  *
- *	Unlock the list of sources after rnd_lock_sources or
- *	rnd_trylock_sources.  Caller must hold the global entropy lock.
+ *	Unlock the list of sources after rnd_lock_sources.  Caller must
+ *	hold the global entropy lock.
  */
 static void
 rnd_unlock_sources(void)
@@ -1768,12 +1748,11 @@ entropy_request(size_t nbytes)
 	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
 
 	/*
-	 * If there is a request in progress, let it proceed.
-	 * Otherwise, note that a request is in progress to avoid
-	 * reentry and to block rnd_detach_source until we're done.
+	 * Lock the list of entropy sources to block rnd_detach_source
+	 * until we're done, and to serialize calls to the entropy
+	 * callbacks as guaranteed to drivers.
 	 */
-	if (!rnd_trylock_sources())
-		return;
+	rnd_lock_sources();
 	entropy_request_evcnt.ev_count++;
 
 	/* Clamp to the maximum reasonable request.  */
