@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.17 2022/03/20 00:41:01 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.18 2022/03/20 13:13:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.17 2022/03/20 00:41:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.18 2022/03/20 13:13:10 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -230,39 +230,37 @@ ualea_xfer_done(struct usbd_xfer *xfer, void *cookie, usbd_status status)
 	void *pkt;
 	uint32_t pktsize;
 
-	/* Check the transfer status.  */
+	/*
+	 * If the transfer failed, give up -- forget what we need and
+	 * don't reschedule ourselves.
+	 */
 	if (status) {
 		device_printf(sc->sc_dev, "xfer failed: %s\n",
 		    usbd_errstr(status));
-		pktsize = 0;
-		goto out;
+		mutex_enter(&sc->sc_lock);
+		sc->sc_needed = 0;
+		sc->sc_inflight = false;
+		mutex_exit(&sc->sc_lock);
+		return;
 	}
 
-	/* Get and sanity-check the transferred size.  */
+	/* Get the transferred size.  */
 	usbd_get_xfer_status(xfer, NULL, &pkt, &pktsize, NULL);
-	if (pktsize > sc->sc_maxpktsize) {
-		device_printf(sc->sc_dev,
-		    "bogus packet size: %"PRIu32" > %"PRIu16" (max), ignoring"
-		    "\n",
-		    pktsize, sc->sc_maxpktsize);
-		goto out;
-	}
+	KASSERTMSG(pktsize <= sc->sc_maxpktsize,
+	    "pktsize %"PRIu32" > %"PRIu16" (max)",
+	    pktsize, sc->sc_maxpktsize);
 
 	/* Add the data to the pool.  */
 	rnd_add_data(&sc->sc_rnd, pkt, pktsize, NBBY*pktsize);
 
-out:
+	/*
+	 * Debit what we contributed from what we need, mark the xfer
+	 * as done, and reschedule the xfer if we still need more.
+	 */
 	mutex_enter(&sc->sc_lock);
-
-	/* Debit what we contributed from what we need.  */
 	sc->sc_needed -= MIN(sc->sc_needed, pktsize);
-
-	/* Mark xfer done.  */
 	sc->sc_inflight = false;
-
-	/* Reissue xfer if we still need more.  */
 	ualea_xfer(sc);
-
 	mutex_exit(&sc->sc_lock);
 }
 
