@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.30 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.31 2022/03/20 19:26:27 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.30 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.31 2022/03/20 19:26:27 andvar Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -51,7 +51,7 @@ int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
 
 /******************************************************************************
  *
- * Create and Initialiaze a dag header and termination node
+ * Create and Initialize a dag header and termination node
  *
  *****************************************************************************/
 static void

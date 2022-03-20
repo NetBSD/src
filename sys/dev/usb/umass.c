@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.187 2021/12/31 14:24:16 riastradh Exp $	*/
+/*	$NetBSD: umass.c,v 1.188 2022/03/20 19:26:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.187 2021/12/31 14:24:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.188 2022/03/20 19:26:27 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -982,7 +982,7 @@ umass_setup_transfer(struct umass_softc *sc, struct usbd_pipe *pipe,
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	/* Initialiase a USB transfer and then schedule it */
+	/* Initialise a USB transfer and then schedule it */
 
 	usbd_setup_xfer(xfer, sc, buffer, buflen, flags, sc->timeout,
 	    sc->sc_methods->wire_state);
@@ -1010,7 +1010,7 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	/* Initialiase a USB control transfer and then schedule it */
+	/* Initialise a USB control transfer and then schedule it */
 
 	usbd_setup_default_xfer(xfer, sc->sc_udev, (void *) sc, sc->timeout,
 		req, buffer, buflen, flags, sc->sc_methods->wire_state);
