@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.48 2022/03/20 14:05:41 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.49 2022/03/20 14:30:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.48 2022/03/20 14:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.49 2022/03/20 14:30:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -260,7 +260,7 @@ static int	sysctl_entropy_consolidate(SYSCTLFN_ARGS);
 static int	sysctl_entropy_gather(SYSCTLFN_ARGS);
 static void	filt_entropy_read_detach(struct knote *);
 static int	filt_entropy_read_event(struct knote *, long);
-static void	entropy_request(size_t);
+static int	entropy_request(size_t, int);
 static void	rnd_add_data_1(struct krndsource *, const void *, uint32_t,
 		    uint32_t, uint32_t);
 static unsigned	rndsource_entropybits(struct krndsource *);
@@ -648,6 +648,7 @@ entropy_seed(rndsave_t *seed)
 void
 entropy_bootrequest(void)
 {
+	int error;
 
 	KASSERT(E->stage >= ENTROPY_WARM);
 
@@ -656,7 +657,8 @@ entropy_bootrequest(void)
 	 * This is harmless overkill if the bootloader provided a seed.
 	 */
 	mutex_enter(&E->lock);
-	entropy_request(ENTROPY_CAPACITY);
+	error = entropy_request(ENTROPY_CAPACITY, ENTROPY_WAIT);
+	KASSERT(error == 0);
 	mutex_exit(&E->lock);
 }
 
@@ -1300,7 +1302,8 @@ sysctl_entropy_gather(SYSCTLFN_ARGS)
 		return error;
 	if (arg) {
 		mutex_enter(&E->lock);
-		entropy_request(ENTROPY_CAPACITY);
+		error = entropy_request(ENTROPY_CAPACITY,
+		    ENTROPY_WAIT|ENTROPY_SIG);
 		mutex_exit(&E->lock);
 	}
 
@@ -1353,7 +1356,9 @@ entropy_extract(void *buf, size_t len, int flags)
 	error = 0;
 	while (E->needed) {
 		/* Ask for more, synchronously if possible.  */
-		entropy_request(len);
+		error = entropy_request(len, flags);
+		if (error)
+			break;
 
 		/* If we got enough, we're done.  */
 		if (E->needed == 0) {
@@ -1677,24 +1682,33 @@ rnd_detach_source(struct krndsource *rs)
 }
 
 /*
- * rnd_lock_sources()
+ * rnd_lock_sources(flags)
  *
- *	Prevent changes to the list of rndsources while we iterate it.
- *	Interruptible.  Caller must hold the global entropy lock.  If
- *	successful, no rndsource will go away until rnd_unlock_sources
- *	even while the caller releases the global entropy lock.
+ *	Lock the list of entropy sources.  Caller must hold the global
+ *	entropy lock.  If successful, no rndsource will go away until
+ *	rnd_unlock_sources even while the caller releases the global
+ *	entropy lock.
+ *
+ *	If flags & ENTROPY_WAIT, wait for concurrent access to finish.
+ *	If flags & ENTROPY_SIG, allow interruption by signal.
  */
-static int
-rnd_lock_sources(void)
+static int __attribute__((warn_unused_result))
+rnd_lock_sources(int flags)
 {
 	int error;
 
 	KASSERT(mutex_owned(&E->lock));
 
 	while (E->sourcelock) {
-		error = cv_wait_sig(&E->sourcelock_cv, &E->lock);
-		if (error)
-			return error;
+		if (!ISSET(flags, ENTROPY_WAIT))
+			return EWOULDBLOCK;
+		if (ISSET(flags, ENTROPY_SIG)) {
+			error = cv_wait_sig(&E->sourcelock_cv, &E->lock);
+			if (error)
+				return error;
+		} else {
+			cv_wait(&E->sourcelock_cv, &E->lock);
+		}
 	}
 
 	E->sourcelock = curlwp;
@@ -1702,30 +1716,10 @@ rnd_lock_sources(void)
 }
 
 /*
- * rnd_trylock_sources()
- *
- *	Try to lock the list of sources, but if it's already locked,
- *	fail.  Caller must hold the global entropy lock.  If
- *	successful, no rndsource will go away until rnd_unlock_sources
- *	even while the caller releases the global entropy lock.
- */
-static bool
-rnd_trylock_sources(void)
-{
-
-	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
-
-	if (E->sourcelock)
-		return false;
-	E->sourcelock = curlwp;
-	return true;
-}
-
-/*
  * rnd_unlock_sources()
  *
- *	Unlock the list of sources after rnd_lock_sources or
- *	rnd_trylock_sources.  Caller must hold the global entropy lock.
+ *	Unlock the list of sources after rnd_lock_sources.  Caller must
+ *	hold the global entropy lock.
  */
 static void
 rnd_unlock_sources(void)
@@ -1754,26 +1748,33 @@ rnd_sources_locked(void)
 }
 
 /*
- * entropy_request(nbytes)
+ * entropy_request(nbytes, flags)
  *
  *	Request nbytes bytes of entropy from all sources in the system.
  *	OK if we overdo it.  Caller must hold the global entropy lock;
  *	will release and re-acquire it.
+ *
+ *	If flags & ENTROPY_WAIT, wait for concurrent access to finish.
+ *	If flags & ENTROPY_SIG, allow interruption by signal.
  */
-static void
-entropy_request(size_t nbytes)
+static int
+entropy_request(size_t nbytes, int flags)
 {
 	struct krndsource *rs;
+	int error;
 
 	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
+	if (flags & ENTROPY_WAIT)
+		ASSERT_SLEEPABLE();
 
 	/*
-	 * If there is a request in progress, let it proceed.
-	 * Otherwise, note that a request is in progress to avoid
-	 * reentry and to block rnd_detach_source until we're done.
+	 * Lock the list of entropy sources to block rnd_detach_source
+	 * until we're done, and to serialize calls to the entropy
+	 * callbacks as guaranteed to drivers.
 	 */
-	if (!rnd_trylock_sources())
-		return;
+	error = rnd_lock_sources(flags);
+	if (error)
+		return error;
 	entropy_request_evcnt.ev_count++;
 
 	/* Clamp to the maximum reasonable request.  */
@@ -1800,8 +1801,9 @@ entropy_request(size_t nbytes)
 			mutex_enter(&E->lock);
 	}
 
-	/* Notify rnd_detach_source that the request is done.  */
+	/* Request done; unlock the list of entropy sources.  */
 	rnd_unlock_sources();
+	return 0;
 }
 
 /*
@@ -2208,7 +2210,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * as requested, and report how many we copied out.
 		 */
 		mutex_enter(&E->lock);
-		error = rnd_lock_sources();
+		error = rnd_lock_sources(ENTROPY_WAIT|ENTROPY_SIG);
 		if (error) {
 			mutex_exit(&E->lock);
 			return error;
@@ -2244,7 +2246,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * as requested, and report how many we copied out.
 		 */
 		mutex_enter(&E->lock);
-		error = rnd_lock_sources();
+		error = rnd_lock_sources(ENTROPY_WAIT|ENTROPY_SIG);
 		if (error) {
 			mutex_exit(&E->lock);
 			return error;
@@ -2276,7 +2278,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * out; if not found, fail with ENOENT.
 		 */
 		mutex_enter(&E->lock);
-		error = rnd_lock_sources();
+		error = rnd_lock_sources(ENTROPY_WAIT|ENTROPY_SIG);
 		if (error) {
 			mutex_exit(&E->lock);
 			return error;
@@ -2307,7 +2309,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * out; if not found, fail with ENOENT.
 		 */
 		mutex_enter(&E->lock);
-		error = rnd_lock_sources();
+		error = rnd_lock_sources(ENTROPY_WAIT|ENTROPY_SIG);
 		if (error) {
 			mutex_exit(&E->lock);
 			return error;
@@ -2381,10 +2383,16 @@ entropy_ioctl(unsigned long cmd, void *data)
 		 * flags, request new samples from everyone -- either
 		 * to make up for what we just lost, or to get new
 		 * samples from what we just added.
+		 *
+		 * Failing on signal, while waiting for another process
+		 * to finish requesting entropy, is OK here even though
+		 * we have committed side effects, because this ioctl
+		 * command is idempotent, so repeating it is safe.
 		 */
 		if (request) {
 			mutex_enter(&E->lock);
-			entropy_request(ENTROPY_CAPACITY);
+			error = entropy_request(ENTROPY_CAPACITY,
+			    ENTROPY_WAIT|ENTROPY_SIG);
 			mutex_exit(&E->lock);
 		}
 		break;
