@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.42 2022/03/20 00:19:11 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.43 2022/03/20 13:17:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.42 2022/03/20 00:19:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.43 2022/03/20 13:17:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -138,6 +138,16 @@ struct entropy_cpu {
 	struct entpool		*ec_pool;
 	unsigned		ec_pending;
 	bool			ec_locked;
+};
+
+/*
+ * struct entropy_cpu_lock
+ *
+ *	State for locking the per-CPU entropy state.
+ */
+struct entropy_cpu_lock {
+	int		ecl_s;
+	uint64_t	ecl_ncsw;
 };
 
 /*
@@ -512,6 +522,47 @@ entropy_fini_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 }
 
 /*
+ * ec = entropy_cpu_get(&lock)
+ * entropy_cpu_put(&lock, ec)
+ *
+ *	Lock and unlock the per-CPU entropy state.  This only prevents
+ *	access on the same CPU -- by hard interrupts, by soft
+ *	interrupts, or by other threads.
+ *
+ *	Blocks soft interrupts and preemption altogether; doesn't block
+ *	hard interrupts, but causes samples in hard interrupts to be
+ *	dropped.
+ */
+static struct entropy_cpu *
+entropy_cpu_get(struct entropy_cpu_lock *lock)
+{
+	struct entropy_cpu *ec;
+
+	ec = percpu_getref(entropy_percpu);
+	lock->ecl_s = splsoftserial();
+	KASSERT(!ec->ec_locked);
+	ec->ec_locked = true;
+	lock->ecl_ncsw = curlwp->l_ncsw;
+	__insn_barrier();
+
+	return ec;
+}
+
+static void
+entropy_cpu_put(struct entropy_cpu_lock *lock, struct entropy_cpu *ec)
+{
+
+	KASSERT(ec == percpu_getptr_remote(entropy_percpu, curcpu()));
+	KASSERT(ec->ec_locked);
+
+	__insn_barrier();
+	KASSERT(lock->ecl_ncsw == curlwp->l_ncsw);
+	ec->ec_locked = false;
+	splx(lock->ecl_s);
+	percpu_putref(entropy_percpu);
+}
+
+/*
  * entropy_seed(seed)
  *
  *	Seed the entropy pool with seed.  Meant to be called as early
@@ -797,10 +848,9 @@ entropy_enter_early(const void *buf, size_t len, unsigned nbits)
 static void
 entropy_enter(const void *buf, size_t len, unsigned nbits)
 {
+	struct entropy_cpu_lock lock;
 	struct entropy_cpu *ec;
 	unsigned pending;
-	uint64_t ncsw;
-	int s;
 
 	KASSERTMSG(!cpu_intr_p(),
 	    "use entropy_enter_intr from interrupt context");
@@ -814,31 +864,15 @@ entropy_enter(const void *buf, size_t len, unsigned nbits)
 	}
 
 	/*
-	 * Acquire the per-CPU state, blocking soft interrupts and
-	 * causing hard interrupts to drop samples on the floor.
+	 * With the per-CPU state locked, enter into the per-CPU pool
+	 * and count up what we can add.
 	 */
-	ec = percpu_getref(entropy_percpu);
-	s = splsoftserial();
-	KASSERT(!ec->ec_locked);
-	ec->ec_locked = true;
-	ncsw = curlwp->l_ncsw;
-	__insn_barrier();
-
-	/* Enter into the per-CPU pool.  */
+	ec = entropy_cpu_get(&lock);
 	entpool_enter(ec->ec_pool, buf, len);
-
-	/* Count up what we can add.  */
 	pending = ec->ec_pending;
 	pending += MIN(ENTROPY_CAPACITY*NBBY - pending, nbits);
 	atomic_store_relaxed(&ec->ec_pending, pending);
-
-	/* Release the per-CPU state.  */
-	KASSERT(ec->ec_locked);
-	__insn_barrier();
-	KASSERT(ncsw == curlwp->l_ncsw);
-	ec->ec_locked = false;
-	splx(s);
-	percpu_putref(entropy_percpu);
+	entropy_cpu_put(&lock, ec);
 
 	/* Consolidate globally if appropriate based on what we added.  */
 	if (pending)
@@ -937,36 +971,20 @@ out0:	percpu_putref(entropy_percpu);
 static void
 entropy_softintr(void *cookie)
 {
+	struct entropy_cpu_lock lock;
 	struct entropy_cpu *ec;
 	unsigned pending;
-	uint64_t ncsw;
 
 	/*
-	 * Acquire the per-CPU state.  Other users can lock this only
-	 * while soft interrupts are blocked.  Cause hard interrupts to
-	 * drop samples on the floor.
+	 * With the per-CPU state locked, stir the pool if necessary
+	 * and determine if there's any pending entropy on this CPU to
+	 * account globally.
 	 */
-	ec = percpu_getref(entropy_percpu);
-	KASSERT(!ec->ec_locked);
-	ec->ec_locked = true;
-	ncsw = curlwp->l_ncsw;
-	__insn_barrier();
-
-	/* Count statistics.  */
+	ec = entropy_cpu_get(&lock);
 	ec->ec_evcnt->softint.ev_count++;
-
-	/* Stir the pool if necessary.  */
 	entpool_stir(ec->ec_pool);
-
-	/* Determine if there's anything pending on this CPU.  */
 	pending = ec->ec_pending;
-
-	/* Release the per-CPU state.  */
-	KASSERT(ec->ec_locked);
-	__insn_barrier();
-	KASSERT(ncsw == curlwp->l_ncsw);
-	ec->ec_locked = false;
-	percpu_putref(entropy_percpu);
+	entropy_cpu_put(&lock, ec);
 
 	/* Consolidate globally if appropriate based on what we added.  */
 	if (pending)
@@ -1099,42 +1117,26 @@ static void
 entropy_consolidate_xc(void *vpool, void *arg2 __unused)
 {
 	struct entpool *pool = vpool;
+	struct entropy_cpu_lock lock;
 	struct entropy_cpu *ec;
 	uint8_t buf[ENTPOOL_CAPACITY];
 	uint32_t extra[7];
 	unsigned i = 0;
-	uint64_t ncsw;
-	int s;
 
 	/* Grab CPU number and cycle counter to mix extra into the pool.  */
 	extra[i++] = cpu_number();
 	extra[i++] = entropy_timer();
 
 	/*
-	 * Acquire the per-CPU state, blocking soft interrupts and
-	 * discarding entropy in hard interrupts, so that we can
-	 * extract from the per-CPU pool.
+	 * With the per-CPU state locked, extract from the per-CPU pool
+	 * and count it as no longer pending.
 	 */
-	ec = percpu_getref(entropy_percpu);
-	s = splsoftserial();
-	KASSERT(!ec->ec_locked);
-	ec->ec_locked = true;
-	ncsw = curlwp->l_ncsw;
-	__insn_barrier();
+	ec = entropy_cpu_get(&lock);
 	extra[i++] = entropy_timer();
-
-	/* Extract the data and count it no longer pending.  */
 	entpool_extract(ec->ec_pool, buf, sizeof buf);
 	atomic_store_relaxed(&ec->ec_pending, 0);
 	extra[i++] = entropy_timer();
-
-	/* Release the per-CPU state.  */
-	KASSERT(ec->ec_locked);
-	__insn_barrier();
-	KASSERT(ncsw == curlwp->l_ncsw);
-	ec->ec_locked = false;
-	splx(s);
-	percpu_putref(entropy_percpu);
+	entropy_cpu_put(&lock, ec);
 	extra[i++] = entropy_timer();
 
 	/*
@@ -2064,32 +2066,17 @@ static void
 entropy_reset_xc(void *arg1 __unused, void *arg2 __unused)
 {
 	uint32_t extra = entropy_timer();
+	struct entropy_cpu_lock lock;
 	struct entropy_cpu *ec;
-	uint64_t ncsw;
-	int s;
 
 	/*
-	 * Acquire the per-CPU state, blocking soft interrupts and
-	 * causing hard interrupts to drop samples on the floor.
+	 * With the per-CPU state locked, zero the pending count and
+	 * enter a cycle count for fun.
 	 */
-	ec = percpu_getref(entropy_percpu);
-	s = splsoftserial();
-	KASSERT(!ec->ec_locked);
-	ec->ec_locked = true;
-	ncsw = curlwp->l_ncsw;
-	__insn_barrier();
-
-	/* Zero the pending count and enter a cycle count for fun.  */
+	ec = entropy_cpu_get(&lock);
 	ec->ec_pending = 0;
 	entpool_enter(ec->ec_pool, &extra, sizeof extra);
-
-	/* Release the per-CPU state.  */
-	KASSERT(ec->ec_locked);
-	__insn_barrier();
-	KASSERT(ncsw == curlwp->l_ncsw);
-	ec->ec_locked = false;
-	splx(s);
-	percpu_putref(entropy_percpu);
+	entropy_cpu_put(&lock, ec);
 }
 
 /*
