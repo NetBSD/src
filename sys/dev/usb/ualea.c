@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.16 2022/03/19 11:37:06 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.17 2022/03/20 00:41:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.16 2022/03/19 11:37:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.17 2022/03/20 00:41:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -159,6 +159,11 @@ ualea_detach(device_t self, int flags)
 	if (sc->sc_attached)
 		rnd_detach_source(&sc->sc_rnd);
 
+	/* Prevent xfer from rescheduling itself, if still pending.  */
+	mutex_enter(&sc->sc_lock);
+	sc->sc_needed = 0;
+	mutex_exit(&sc->sc_lock);
+
 	/* Cancel pending xfer.  */
 	if (sc->sc_pipe)
 		usbd_abort_pipe(sc->sc_pipe);
@@ -196,8 +201,8 @@ ualea_xfer(struct ualea_softc *sc)
 	status = usbd_transfer(sc->sc_xfer);
 	KASSERT(status != USBD_NORMAL_COMPLETION); /* asynchronous xfer */
 	if (status != USBD_IN_PROGRESS) {
-		aprint_error_dev(sc->sc_dev, "failed to issue xfer: %d\n",
-		    status);
+		device_printf(sc->sc_dev, "failed to issue xfer: %s\n",
+		    usbd_errstr(status));
 		/* We failed -- let someone else have a go.  */
 		return;
 	}
@@ -227,14 +232,16 @@ ualea_xfer_done(struct usbd_xfer *xfer, void *cookie, usbd_status status)
 
 	/* Check the transfer status.  */
 	if (status) {
-		aprint_error_dev(sc->sc_dev, "xfer failed: %d\n", status);
-		return;
+		device_printf(sc->sc_dev, "xfer failed: %s\n",
+		    usbd_errstr(status));
+		pktsize = 0;
+		goto out;
 	}
 
 	/* Get and sanity-check the transferred size.  */
 	usbd_get_xfer_status(xfer, NULL, &pkt, &pktsize, NULL);
 	if (pktsize > sc->sc_maxpktsize) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 		    "bogus packet size: %"PRIu32" > %"PRIu16" (max), ignoring"
 		    "\n",
 		    pktsize, sc->sc_maxpktsize);
