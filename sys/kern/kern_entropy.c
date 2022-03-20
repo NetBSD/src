@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.45 2022/03/20 13:17:44 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.46 2022/03/20 13:18:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.45 2022/03/20 13:17:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.46 2022/03/20 13:18:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -750,7 +750,9 @@ entropy_account_cpu(struct entropy_cpu *ec)
 	mutex_enter(&E->lock);
 	ec0 = entropy_cpu_get(&lock);
 	KASSERT(ec0 == ec);
-	if (E->needed != 0 && E->needed <= ec->ec_pending) {
+	if (ec->ec_pending == 0) {
+		/* Raced with consolidation xcall.  Nothing to do.  */
+	} else if (E->needed != 0 && E->needed <= ec->ec_pending) {
 		/*
 		 * If we have not yet attained full entropy but we can
 		 * now, do so.  This way we disseminate entropy
