@@ -1,3 +1,18 @@
+# Global Time Zone Database (global-tz)
+
+The Global Time Zone Database contains the history of how local time has changed around the world.
+It is derived from data in the [IANA Time Zone Database](https://github.com/eggert/tz).
+For many years this information could be reliably obtained from the IANA repository.
+In recent years however, the data available by default from the IANA repository has been reduced.
+This repository primarily exists to reinstate the data that has been effectively removed.
+
+For more info, please see the project home page:
+https://github.com/JodaOrg/global-tz
+
+The original README is included below.
+
+-----
+
 README for the tz distribution
 
 "Where do I set the hands of the clock?" -- Les Tremayne as The King
