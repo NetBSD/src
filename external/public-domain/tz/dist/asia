@@ -34,9 +34,6 @@
 # Byalokoz EL. New Counting of Time in Russia since July 1, 1919.
 # (See the 'europe' file for a fuller citation.)
 #
-# A reliable and entertaining source about time zones is
-# Derek Howse, Greenwich time and longitude, Philip Wilson Publishers (1997).
-#
 # The following alphabetic abbreviations appear in these tables
 # (corrections are welcome):
 #	     std  dst
@@ -153,7 +150,11 @@ Zone	Asia/Baku	3:19:24 -	LMT	1924 May  2
 			4:00	Azer	+04/+05
 
 # Bahrain
-# See Asia/Qatar.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Asia/Bahrain	3:22:20 -	LMT	1941 Jul 20  # Manamah
+			3:30	-	+0330	1944 Jan  1
+			4:00	-	+04	1972 Jun
+			3:00	-	+03
 
 # Bangladesh
 # From Alexander Krivenyshev (2009-05-13):
@@ -281,7 +282,13 @@ Zone	Asia/Yangon	6:24:47 -	LMT	1880        # or Rangoon
 			6:30	-	+0630
 
 # Cambodia
-# See Asia/Bangkok.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Asia/Phnom_Penh	6:59:40 -	LMT	1906 Jul  1
+			7:06:30	-	PLMT	1911 May  1
+			7:00	-	+07	1942 Dec 31 23:00
+			8:00	-	+08	1945 Mar 14 23:00
+			9:00	-	+09	1945 Sep  2
+			7:00	-	+07
 
 
 # China
@@ -2234,6 +2241,14 @@ Zone	Asia/Tokyo	9:18:59	-	LMT	1887 Dec 31 15:00u
 # From Paul Eggert (2013-12-11):
 # As Steffen suggested, consider the past 21-month experiment to be DST.
 
+# From Steffen Thorsen (2021-09-24):
+# The Jordanian Government announced yesterday that they will start DST
+# in February instead of March:
+# https://petra.gov.jo/Include/InnerPage.jsp?ID=37683&lang=en&name=en_news (English)
+# https://petra.gov.jo/Include/InnerPage.jsp?ID=189969&lang=ar&name=news (Arabic)
+# From the Arabic version, it seems to say it would be at midnight
+# (assume 24:00) on the last Thursday in February, starting from 2022.
+
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule	Jordan	1973	only	-	Jun	6	0:00	1:00	S
 Rule	Jordan	1973	1975	-	Oct	1	0:00	0	-
@@ -2264,8 +2279,9 @@ Rule	Jordan	2004	only	-	Oct	15	0:00s	0	-
 Rule	Jordan	2005	only	-	Sep	lastFri	0:00s	0	-
 Rule	Jordan	2006	2011	-	Oct	lastFri	0:00s	0	-
 Rule	Jordan	2013	only	-	Dec	20	0:00	0	-
-Rule	Jordan	2014	max	-	Mar	lastThu	24:00	1:00	S
+Rule	Jordan	2014	2021	-	Mar	lastThu	24:00	1:00	S
 Rule	Jordan	2014	max	-	Oct	lastFri	0:00s	0	-
+Rule	Jordan	2022	max	-	Feb	lastThu	24:00	1:00	S
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Amman	2:23:44 -	LMT	1931
 			2:00	Jordan	EE%sT
@@ -2697,10 +2713,20 @@ Zone	Asia/Pyongyang	8:23:00 -	LMT	1908 Apr  1
 ###############################################################################
 
 # Kuwait
-# See Asia/Riyadh.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Asia/Kuwait	3:11:56 -	LMT	1950
+			3:00	-	+03
 
 # Laos
-# See Asia/Bangkok.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Asia/Vientiane	6:50:24 -	LMT	1906 Jul  1
+			7:06:30	-	PLMT	1911 May  1
+			7:00	-	+07	1942 Dec 31 23:00
+			8:00	-	+08	1945 Mar 14 23:00
+			9:00	-	+09	1945 Sep  2
+			7:00	-	+07	1947 Apr  1
+			8:00	-	+08	1955 Apr 15
+			7:00	-	+07
 
 
 # Lebanon
@@ -2740,7 +2766,8 @@ Rule	NBorneo	1935	1941	-	Dec	14	0:00	0	-
 #
 # peninsular Malaysia
 # taken from Mok Ly Yng (2003-10-30)
-# http://www.math.nus.edu.sg/aslaksen/teaching/timezone.html
+# https://web.archive.org/web/20190822231045/http://www.math.nus.edu.sg/~mathelmr/teaching/timezone.html
+# This agrees with Singapore since 1905-06-01.
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone Asia/Kuala_Lumpur	6:46:46 -	LMT	1901 Jan  1
 			6:55:25	-	SMT	1905 Jun  1 # Singapore M.T.
@@ -2930,7 +2957,9 @@ Zone	Asia/Kathmandu	5:41:16 -	LMT	1920
 			5:45	-	+0545
 
 # Oman
-# See Asia/Dubai.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Asia/Muscat	3:54:24 -	LMT	1920
+			4:00	-	+04
 
 # Pakistan
 
@@ -3379,11 +3408,6 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # shall [end] on Oct 24th 2020 at 01:00AM by delaying the clock by 60 minutes.
 # http://www.palestinecabinet.gov.ps/portal/Meeting/Details/51584
 
-# From Tim Parenti (2020-10-20):
-# Predict future fall transitions at 01:00 on the Saturday preceding October's
-# last Sunday (i.e., Sat>=24).  This is consistent with our predictions since
-# 2016, although the time of the change differed slightly in 2019.
-
 # From Pierre Cashon (2020-10-20):
 # The summer time this year started on March 28 at 00:00.
 # https://wafa.ps/ar_page.aspx?id=GveQNZa872839351758aGveQNZ
@@ -3395,6 +3419,21 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # From Paul Eggert (2019-04-10):
 # For now, guess spring-ahead transitions are at 00:00 on the Saturday
 # preceding March's last Sunday (i.e., Sat>=24).
+
+# From P Chan (2021-10-18):
+# http://wafa.ps/Pages/Details/34701
+# Palestine winter time will start from midnight 2021-10-29 (Thursday-Friday).
+#
+# From Heba Hemad, Palestine Ministry of Telecom & IT (2021-10-20):
+# ... winter time will begin in Palestine from Friday 10-29, 01:00 AM
+# by 60 minutes backwards.
+#
+# From Tim Parenti (2021-10-25), per Paul Eggert (2021-10-24):
+# Guess future fall transitions at 01:00 on the Friday preceding October's
+# last Sunday (i.e., Fri>=23), as this is more consistent with recent practice.
+
+# From Heba Hamad (2022-03-10):
+# summer time will begin in Palestine from Sunday 03-27-2022, 00:00 AM.
 
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule EgyptAsia	1957	only	-	May	10	0:00	1:00	S
@@ -3430,8 +3469,10 @@ Rule Palestine	2016	2018	-	Mar	Sat>=24	1:00	1:00	S
 Rule Palestine	2016	2018	-	Oct	Sat>=24	1:00	0	-
 Rule Palestine	2019	only	-	Mar	29	0:00	1:00	S
 Rule Palestine	2019	only	-	Oct	Sat>=24	0:00	0	-
-Rule Palestine	2020	max	-	Mar	Sat>=24	0:00	1:00	S
-Rule Palestine	2020	max	-	Oct	Sat>=24	1:00	0	-
+Rule Palestine	2020	2021	-	Mar	Sat>=24	0:00	1:00	S
+Rule Palestine	2020	only	-	Oct	24	1:00	0	-
+Rule Palestine	2021	max	-	Oct	Fri>=23	1:00	0	-
+Rule Palestine	2022	max	-	Mar	Sun>=25	0:00	1:00	S
 
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct
@@ -3500,6 +3541,12 @@ Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
 # influence of the sources.  There is no current abbreviation for DST,
 # so use "PDT", the usual American style.
 
+# From P Chan (2021-05-10):
+# Here's a fairly comprehensive article in Japanese:
+# https://wiki.suikawiki.org/n/Philippine%20Time
+# From Paul Eggert (2021-05-10):
+# The info in the Japanese table has not been absorbed (yet) below.
+
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule	Phil	1936	only	-	Nov	1	0:00	1:00	D
 Rule	Phil	1937	only	-	Feb	1	0:00	0	S
@@ -3519,7 +3566,6 @@ Zone	Asia/Manila	-15:56:00 -	LMT	1844 Dec 31
 Zone	Asia/Qatar	3:26:08 -	LMT	1920     # Al Dawhah / Doha
 			4:00	-	+04	1972 Jun
 			3:00	-	+03
-Link Asia/Qatar Asia/Bahrain
 
 # Saudi Arabia
 #
@@ -3566,12 +3612,10 @@ Link Asia/Qatar Asia/Bahrain
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Riyadh	3:06:52 -	LMT	1947 Mar 14
 			3:00	-	+03
-Link Asia/Riyadh Asia/Aden	# Yemen
-Link Asia/Riyadh Asia/Kuwait
 
 # Singapore
 # taken from Mok Ly Yng (2003-10-30)
-# http://www.math.nus.edu.sg/aslaksen/teaching/timezone.html
+# https://web.archive.org/web/20190822231045/http://www.math.nus.edu.sg/~mathelmr/teaching/timezone.html
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Singapore	6:55:25 -	LMT	1901 Jan  1
 			6:55:25	-	SMT	1905 Jun  1 # Singapore M.T.
@@ -3824,8 +3868,6 @@ Zone	Asia/Dushanbe	4:35:12 -	LMT	1924 May  2
 Zone	Asia/Bangkok	6:42:04	-	LMT	1880
 			6:42:04	-	BMT	1920 Apr # Bangkok Mean Time
 			7:00	-	+07
-Link Asia/Bangkok Asia/Phnom_Penh	# Cambodia
-Link Asia/Bangkok Asia/Vientiane	# Laos
 
 # Turkmenistan
 # From Shanks & Pottenger.
@@ -3840,7 +3882,6 @@ Zone	Asia/Ashgabat	3:53:32 -	LMT	1924 May  2 # or Ashkhabad
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Dubai	3:41:12 -	LMT	1920
 			4:00	-	+04
-Link Asia/Dubai Asia/Muscat	# Oman
 
 # Uzbekistan
 # Byalokoz 1919 says Uzbekistan was 4:27:53.
@@ -3935,4 +3976,7 @@ Zone Asia/Ho_Chi_Minh	7:06:40 -	LMT	1906 Jul  1
 
 
 # Yemen
-# See Asia/Riyadh.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Asia/Aden	2:59:54	-	LMT	1950
+			3:00	-	+03
+
