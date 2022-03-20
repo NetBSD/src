@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.239 2022/03/19 10:05:52 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.240 2022/03/20 00:40:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.239 2022/03/19 10:05:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.240 2022/03/20 00:40:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1069,6 +1069,19 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 			}
 			/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 		}
+	}
+
+	/*
+	 * There may be an xfer callback already in progress which was
+	 * taken off the queue before we got to it.  We must wait for
+	 * the callback to finish before returning control to the
+	 * caller.
+	 */
+	while (pipe->up_callingxfer) {
+		USBHIST_LOG(usbdebug, "wait for callback"
+		    "pipe = %#jx xfer = %#jx",
+		    (uintptr_t)pipe, (uintptr_t)pipe->up_callingxfer, 0, 0);
+		cv_wait(&pipe->up_callingcv, pipe->up_dev->ud_bus->ub_lock);
 	}
 
 	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
