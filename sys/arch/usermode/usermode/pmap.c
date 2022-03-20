@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.116 2021/07/24 21:31:36 andvar Exp $ */
+/* $NetBSD: pmap.c,v 1.117 2022/03/20 18:56:29 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2021/07/24 21:31:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2022/03/20 18:56:29 andvar Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -328,7 +328,7 @@ pmap_bootstrap(void)
 
 	memset(pv_table, 0, pv_table_size);	/* test and clear */
 
-	thunk_printf_debug("pv_table initialiased correctly, mmap works\n");
+	thunk_printf_debug("pv_table initialised correctly, mmap works\n");
 
 	/* advance */
 	kmem_kvm_cur_start += pv_table_size;
@@ -369,7 +369,7 @@ pmap_bootstrap(void)
 
 	memset(pmap->pm_l1, 0, pm_l1_size);	/* test and clear */
 
-	thunk_printf_debug("kernel pmap l1 table initialiased correctly\n");
+	thunk_printf_debug("kernel pmap l1 table initialised correctly\n");
 
 	/* advance for l1 tables */
 	kmem_kvm_cur_start += round_page(pm_l1_size);
@@ -895,7 +895,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
 #ifdef DIAGNOSTIC
 	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS))
-		panic("pmap_do_enter: invalid va isued\n");
+		panic("pmap_do_enter: invalid va issued\n");
 #endif
 
 	/* raise interrupt level */
@@ -1121,7 +1121,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 	thunk_printf_debug("pmap_extract: extracting va %p\n", (void *) va);
 #ifdef DIAGNOSTIC
 	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS)) {
-		thunk_printf_debug("pmap_extract: invalid va isued\n");
+		thunk_printf_debug("pmap_extract: invalid va issued\n");
 		thunk_printf("%p not in [%p, %p]\n", (void *) va,
 		    (void *) VM_MIN_ADDRESS, (void *) VM_MAX_KERNEL_ADDRESS);
 		return false;
