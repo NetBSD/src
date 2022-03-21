@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.50 2022/03/20 18:19:58 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.51 2022/03/21 00:25:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.50 2022/03/20 18:19:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.51 2022/03/21 00:25:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1698,9 +1698,10 @@ rnd_lock_sources(int flags)
 {
 	int error;
 
-	KASSERT(mutex_owned(&E->lock));
+	KASSERT(E->stage == ENTROPY_COLD || mutex_owned(&E->lock));
 
 	while (E->sourcelock) {
+		KASSERT(E->stage >= ENTROPY_WARM);
 		if (!ISSET(flags, ENTROPY_WAIT))
 			return EWOULDBLOCK;
 		if (ISSET(flags, ENTROPY_SIG)) {
