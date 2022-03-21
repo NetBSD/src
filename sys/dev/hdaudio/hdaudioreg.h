@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioreg.h,v 1.3 2019/01/07 01:03:05 mrg Exp $ */
+/* $NetBSD: hdaudioreg.h,v 1.4 2022/03/21 09:12:10 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,14 +34,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-
-/*
- * High Definition Audio Audio PCI Configuration Space
- */
-#define	HDAUDIO_PCI_AZBARL	0x10
-#define	HDAUDIO_PCI_AZBARU	0x14
-#define	HDAUDIO_PCI_AZCTL	0x40
-#define	HDAUDIO_PCI_TCSEL	0x44
 
 /*
  * High Definition Audio Memory Mapped Configuration Registers

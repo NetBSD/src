@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
+/* $NetBSD: hdaudio_pci.h,v 1.2 2022/03/21 09:12:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,8 +31,20 @@
 #ifndef _HDAUDIO_PCI_H
 #define _HDAUDIO_PCI_H
 
-#define	HDAUDIO_NV_REG_SNOOP	0x4c
-#define	  HDAUDIO_NV_SNOOP_MASK		0x00ff0000
-#define	  HDAUDIO_NV_SNOOP_ENABLE	0x000f0000
+/* NVIDIA specific registers */
+#define	HDAUDIO_NV_REG_SNOOP		0x4c
+#define	  HDAUDIO_NV_SNOOP_MASK			0x00ff0000
+#define	  HDAUDIO_NV_SNOOP_ENABLE		0x000f0000
+
+/* Intel ICH specific registers */
+#define	HDAUDIO_INTEL_REG_ICH_TCSEL	0x44
+#define	 HDAUDIO_INTEL_ICH_TCSEL_MASK		__BITS(2,0)
+#define	 HDAUDIO_INTEL_ICH_TCSEL_TC0		0
+
+/* Intel 100 Series Chipset Family Platform Controller Hub (PCH) */
+#define	HDAUDIO_INTEL_REG_PCH_CGCTL	0x48
+#define	  HDAUDIO_INTEL_PCH_CGCTL_MISCBDCGE	__BIT(6)
+#define	HDAUDIO_INTEL_REG_PCH_DEVC	0x78
+#define	  HDAUDIO_INTEL_PCH_DEVC_NSNPEN		__BIT(11)
 
 #endif /* !_HDAUDIO_PCI_H */

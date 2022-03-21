@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.11 2021/10/28 09:15:35 msaitoh Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.12 2022/03/21 09:12:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.11 2021/10/28 09:15:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.12 2022/03/21 09:12:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,11 @@ struct hdaudio_pci_softc {
 	pci_intr_handle_t	*sc_pihp;
 };
 
+#define	HDAUDIO_PCI_IS_INTEL(sc)	\
+	(PCI_VENDOR(sc->sc_id) == PCI_VENDOR_INTEL)
+#define	HDAUDIO_PCI_IS_NVIDIA(sc)	\
+	(PCI_VENDOR(sc->sc_id) == PCI_VENDOR_NVIDIA)
+
 static int	hdaudio_pci_match(device_t, cfdata_t, void *);
 static void	hdaudio_pci_attach(device_t, device_t, void *);
 static int	hdaudio_pci_detach(device_t, int);
@@ -68,7 +73,7 @@ static int	hdaudio_pci_rescan(device_t, const char *, const int *);
 static void	hdaudio_pci_childdet(device_t, device_t);
 
 static int	hdaudio_pci_intr(void *);
-static void	hdaudio_pci_reinit(struct hdaudio_pci_softc *);
+static void	hdaudio_pci_init(struct hdaudio_pci_softc *);
 
 /* power management */
 static bool	hdaudio_pci_resume(device_t, const pmf_qual_t *);
@@ -139,7 +144,7 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	/* Map MMIO registers */
-	reg = HDAUDIO_PCI_AZBARL;
+	reg = PCI_BAR0;
 	maptype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, reg);
 	err = pci_mapreg_map(pa, reg, maptype, 0,
 			     &sc->sc_hdaudio.sc_memt,
@@ -174,7 +179,7 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	hdaudio_pci_reinit(sc);
+	hdaudio_pci_init(sc);
 
 	/* Attach bus-independent HD audio layer */
 	if (hdaudio_attach(self, &sc->sc_hdaudio)) {
@@ -187,15 +192,18 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 		sc->sc_hdaudio.sc_memvalid = false;
 		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG);
-		csr &= ~(PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
+		csr &= ~(PCI_COMMAND_MASTER_ENABLE |
+			 PCI_COMMAND_BACKTOBACK_ENABLE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG, csr);
 
-		if (!pmf_device_register(self, NULL, NULL))
-			aprint_error_dev(self, "couldn't establish power handler\n");
-	}
-	else if (!pmf_device_register(self, NULL, hdaudio_pci_resume))
+		if (!pmf_device_register(self, NULL, NULL)) {
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n");
+		}
+	} else if (!pmf_device_register(self, NULL, hdaudio_pci_resume)) {
 		aprint_error_dev(self, "couldn't establish power handler\n");
+	}
 }
 
 static int
@@ -252,28 +260,51 @@ hdaudio_pci_intr(void *opaque)
 	return hdaudio_intr(&sc->sc_hdaudio);
 }
 
-
 static void
-hdaudio_pci_reinit(struct hdaudio_pci_softc *sc)
+hdaudio_pci_init(struct hdaudio_pci_softc *sc)
 {
 	pcireg_t val;
 
-	/* stops playback static */
-	val = pci_conf_read(sc->sc_pc, sc->sc_tag, HDAUDIO_PCI_TCSEL);
-	val &= ~7;
-	val |= 0;
-	pci_conf_write(sc->sc_pc, sc->sc_tag, HDAUDIO_PCI_TCSEL, val);
+	if (HDAUDIO_PCI_IS_INTEL(sc)) {
+		/*
+		 * ICH: Set traffic class for input/output/buf descriptors
+		 * to TC0. For PCH without a TCSEL register, PGCTL is in
+		 * the same location and clearing these bits is harmless.
+		 */
+		val = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_INTEL_REG_ICH_TCSEL);
+		val &= ~HDAUDIO_INTEL_ICH_TCSEL_MASK;
+		val |= HDAUDIO_INTEL_ICH_TCSEL_TC0;
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_INTEL_REG_ICH_TCSEL, val);
 
-	switch (PCI_VENDOR(sc->sc_id)) {
-	case PCI_VENDOR_NVIDIA:
-		/* enable snooping */
+		/*
+		 * PCH: Disable dynamic clock gating logic. Implementations
+		 * without a CGCTL register do not appear to have anything
+		 * else in its place.
+		 */
+		val = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_INTEL_REG_PCH_CGCTL);
+		val &= ~HDAUDIO_INTEL_PCH_CGCTL_MISCBDCGE;
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_INTEL_REG_PCH_CGCTL, val);
+
+		/* ICH/PCH: Enable snooping. */
+		val = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_INTEL_REG_PCH_DEVC);
+		val &= ~HDAUDIO_INTEL_PCH_DEVC_NSNPEN;
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_INTEL_REG_PCH_DEVC, val);
+	}
+
+	if (HDAUDIO_PCI_IS_NVIDIA(sc)) {
+		/* Enable snooping. */
 		val = pci_conf_read(sc->sc_pc, sc->sc_tag,
 		    HDAUDIO_NV_REG_SNOOP);
 		val &= ~HDAUDIO_NV_SNOOP_MASK;
 		val |= HDAUDIO_NV_SNOOP_ENABLE;
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    HDAUDIO_NV_REG_SNOOP, val);
-		break;
 	}
 }
 
@@ -282,7 +313,8 @@ hdaudio_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct hdaudio_pci_softc *sc = device_private(self);
 
-	hdaudio_pci_reinit(sc);
+	hdaudio_pci_init(sc);
+
 	return hdaudio_resume(&sc->sc_hdaudio);
 }
 
