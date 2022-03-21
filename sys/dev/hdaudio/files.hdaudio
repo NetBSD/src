@@ -1,14 +1,15 @@
-# $NetBSD: files.hdaudio,v 1.5 2019/07/25 00:30:45 jmcneill Exp $
+# $NetBSD: files.hdaudio,v 1.6 2022/03/21 09:20:04 jmcneill Exp $
 
 #
 # Intel High Definition Audio (Revision 1.0)
 #
 defflag			HDAUDIOVERBOSE
-defflag opt_hdaudio.h	HDAUDIO_ENABLE_HDMI
-defflag opt_hdaudio.h	HDAUDIO_ENABLE_DISPLAYPORT
 defflag opt_hdaudio.h	HDAUDIO_DEBUG
 defflag opt_hdaudio.h	HDAFG_DEBUG
 defflag opt_hdaudio.h	HDAFG_HDMI_DEBUG
+
+obsolete defflag	HDAUDIO_ENABLE_HDMI
+obsolete defflag	HDAUDIO_ENABLE_DISPLAYPORT
 
 define	hdaudiobus	{[nid = -1]}
 device	hdaudio: hdaudiobus
