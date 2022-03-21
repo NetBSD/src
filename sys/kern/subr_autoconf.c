@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.296 2022/03/12 19:26:33 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.297 2022/03/21 22:20:32 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.296 2022/03/12 19:26:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.297 2022/03/21 22:20:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1184,6 +1184,7 @@ config_search_internal(device_t parent, void *aux,
 				mapply(&m, cf);
 		}
 	}
+	rnd_add_uint32(&rnd_autoconf_source, 0);
 	return m.match;
 }
 
@@ -1270,14 +1271,6 @@ config_found(device_t parent, void *aux, cfprint_t print,
 		aprint_normal("%s", msgs[pret]);
 	}
 
-	/*
-	 * This has the effect of mixing in a single timestamp to the
-	 * entropy pool.  Experiments indicate the estimator will almost
-	 * always attribute one bit of entropy to this sample; analysis
-	 * of device attach/detach timestamps on FreeBSD indicates 4
-	 * bits of entropy/sample so this seems appropriately conservative.
-	 */
-	rnd_add_uint32(&rnd_autoconf_source, 0);
 	return NULL;
 }
 
@@ -1771,6 +1764,7 @@ config_attach_internal(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	config_process_deferred(&deferred_config_queue, dev);
 
 	device_register_post_config(dev, aux);
+	rnd_add_uint32(&rnd_autoconf_source, 0);
 	return dev;
 }
 
