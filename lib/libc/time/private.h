@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.57 2021/10/22 14:26:04 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.58 2022/03/22 17:48:39 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -712,6 +712,12 @@ time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
 # define INITIALIZE(x)
 #endif
 
+/* Whether memory access must strictly follow the C standard.
+   If 0, it's OK to read uninitialized storage so long as the value is
+   not relied upon.  Defining it to 0 lets mktime access parts of
+   struct tm that might be uninitialized, as a heuristic when the
+   standard doesn't say what to return and when tm_gmtoff can help
+   mktime likely infer a better value.  */
 #ifndef UNINIT_TRAP
 # define UNINIT_TRAP 0
 #endif
