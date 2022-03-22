@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.12 2021/11/06 06:52:48 msaitoh Exp $ */
+/* $NetBSD: mfireg.h,v 1.13 2022/03/22 21:45:13 andvar Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -184,7 +184,7 @@
   ) / sizeof(mpi2_sge_io_union))
 
 /*
- * (Command frame size allocaed in SRB ext - Raid SCSI IO message size)
+ * (Command frame size allocated in SRB ext - Raid SCSI IO message size)
  * / size of SGL ;
  * (1280 - 256) / 16 = 64
  */
