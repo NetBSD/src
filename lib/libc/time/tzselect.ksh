@@ -3,7 +3,7 @@
 # Ask the user about the time zone, and output the resulting TZ value to stdout.
 # Interact with the user via stderr and stdin.
 #
-#	$NetBSD: tzselect.ksh,v 1.18 2018/10/19 23:05:35 christos Exp $
+#	$NetBSD: tzselect.ksh,v 1.19 2022/03/22 17:48:39 christos Exp $
 #
 PKGVERSION='(tzcode) '
 TZVERSION=see_Makefile
@@ -21,11 +21,13 @@ REPORT_BUGS_TO=tz@iana.org
 #
 #	Bash <https://www.gnu.org/software/bash/>
 #	Korn Shell <http://www.kornshell.com/>
-#	MirBSD Korn Shell <https://www.mirbsd.org/mksh.htm>
+#	MirBSD Korn Shell <http://www.mirbsd.org/mksh.htm>
 #
-# For portability to Solaris 9 /bin/sh this script avoids some POSIX
-# features and common extensions, such as $(...) (which works sometimes
-# but not others), $((...)), and $10.
+# For portability to Solaris 10 /bin/sh (supported by Oracle through
+# January 2024) this script avoids some POSIX features and common
+# extensions, such as $(...) (which works sometimes but not others),
+# $((...)), ! CMD, ${#ID}, ${ID##PAT}, ${ID%%PAT}, and $10.
+
 #
 # This script also uses several features of modern awk programs.
 # If your host lacks awk, or has an old awk that does not conform to Posix,
@@ -104,14 +106,6 @@ then
 	esac
       done || exit
     }
-
-    # Work around a bug in bash 1.14.7 and earlier, where $PS3 is sent to stdout.
-    case $BASH_VERSION in
-    [01].*)
-      case `echo 1 | (select x in x; do break; done) 2>/dev/null` in
-      ?*) PS3=
-      esac
-    esac
   '
 else
   doselect() {
@@ -188,7 +182,7 @@ done
 # If the current locale does not support UTF-8, convert data to current
 # locale's format if possible, as the shell aligns columns better that way.
 # Check the UTF-8 of U+12345 CUNEIFORM SIGN URU TIMES KI.
-! $AWK 'BEGIN { u12345 = "\360\222\215\205"; exit length(u12345) != 1 }' &&
+$AWK 'BEGIN { u12345 = "\360\222\215\205"; exit length(u12345) != 1 }' || {
     { tmp=`(mktemp -d) 2>/dev/null` || {
 	tmp=${TMPDIR-/tmp}/tzselect.$$ &&
 	(umask 77 && mkdir -- "$tmp")
@@ -199,6 +193,7 @@ done
     TZ_COUNTRY_TABLE=$tmp/iso3166.tab &&
     iconv -f UTF-8 -t //TRANSLIT <"$TZ_ZONE_TABLE" >$tmp/$zonetabtype.tab &&
     TZ_ZONE_TABLE=$tmp/$zonetabtype.tab
+}
 
 newline='
 '

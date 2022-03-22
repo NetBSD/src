@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.80 2022/01/01 21:01:21 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.81 2022/03/22 17:48:39 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.80 2022/01/01 21:01:21 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.81 2022/03/22 17:48:39 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -1001,9 +1001,10 @@ random_dirent(char const **name, char **namealloc)
   char const *src = *name;
   char *dst = *namealloc;
   static char const prefix[] = ".zic";
-  static char const alphabet[] = ("abcdefghijklmnopqrstuvwxyz"
-				  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-				  "0123456789");
+  static char const alphabet[] =
+    "abcdefghijklmnopqrstuvwxyz"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "0123456789";
   enum { prefixlen = sizeof prefix - 1, alphabetlen = sizeof alphabet - 1 };
   int suffixlen = 6;
   char const *lastslash = strrchr(src, '/');
@@ -3585,9 +3586,11 @@ mkdirs(char const *argname, bool ancestors)
 		if (mkdir(name, MKDIR_UMASK) != 0) {
 			/* Do not report an error if err == EEXIST, because
 			   some other process might have made the directory
-			   in the meantime.  */
+			   in the meantime.  Likewise for ENOSYS, because
+			   Solaris 10 mkdir fails with ENOSYS if the
+			   directory is an automounted mount point.  */
 			int err = errno;
-			if (err != EEXIST) {
+			if (err != EEXIST && err != ENOSYS) {
 				error(_("%s: Can't create directory %s: %s"),
 				      progname, name, strerror(err));
 				exit(EXIT_FAILURE);
