@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.c,v 1.17 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: svc_auth.c,v 1.18 2022/03/22 21:45:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_auth.c 1.26 89/02/07 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_auth.c,v 1.17 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: svc_auth.c,v 1.18 2022/03/22 21:45:13 andvar Exp $");
 #endif
 #endif
 
@@ -92,7 +92,7 @@ static struct authsvc *Auths = NULL;
  * set rqst->rq_xprt->verf to the appropriate response verifier;
  * sets rqst->rq_client_cred to the "cooked" form of the credentials.
  *
- * NB: rqst->rq_cxprt->verf must be pre-alloctaed;
+ * NB: rqst->rq_cxprt->verf must be pre-allocated;
  * its length is set appropriately.
  *
  * The caller still owns and is responsible for msg->u.cmb.cred and
