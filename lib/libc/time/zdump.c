@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.55 2021/10/22 16:57:14 ryoon Exp $	*/
+/*	$NetBSD: zdump.c,v 1.56 2022/03/22 17:48:39 christos Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.55 2021/10/22 16:57:14 ryoon Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.56 2022/03/22 17:48:39 christos Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -60,6 +60,21 @@ __RCSID("$NetBSD: zdump.c,v 1.55 2021/10/22 16:57:14 ryoon Exp $");
 ** occur on any practical platform.
 */
 enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
+
+#if !defined HAVE_GENERIC && defined __has_extension
+# if __has_extension(c_generic_selections)
+#  define HAVE_GENERIC 1
+# else
+#  define HAVE_GENERIC 0
+# endif
+#endif
+/* _Generic is buggy in pre-4.9 GCC.  */
+#if !defined HAVE_GENERIC && defined __GNUC__
+# define HAVE_GENERIC (4 < __GNUC__ + (9 <= __GNUC_MINOR__))
+#endif
+#ifndef HAVE_GENERIC
+# define HAVE_GENERIC (201112 <= __STDC_VERSION__)
+#endif
 
 #if HAVE_GETTEXT
 #include <locale.h>	/* for setlocale */
@@ -136,7 +151,7 @@ sumsize(size_t a, size_t b)
 {
 	size_t sum = a + b;
 	if (sum < a)
-		errx(EXIT_FAILURE, "size overflow");
+		errx(EXIT_FAILURE, _("size overflow"));
 	return sum;
 }
 
@@ -799,6 +814,7 @@ show(timezone_t tz, char *zone, time_t t, bool v)
 		gmtmp = my_gmtime_r(&t, &gmtm);
 		if (gmtmp == NULL) {
 			printf(tformat(), t);
+			printf(_(" (gmtime failed)"));
 		} else {
 			dumptime(gmtmp);
 			(void) printf(" UT");
@@ -806,8 +822,11 @@ show(timezone_t tz, char *zone, time_t t, bool v)
 		(void) printf(" = ");
 	}
 	tmp = my_localtime_rz(tz, &t, &tm);
-	dumptime(tmp);
-	if (tmp != NULL) {
+	if (tmp == NULL) {
+		printf(tformat(), t);
+		printf(_(" (localtime failed)"));
+	} else {
+		dumptime(tmp);
 		if (*abbr(tmp) != '\0')
 			(void) printf(" %s", abbr(tmp));
 		if (v) {
@@ -1120,12 +1139,29 @@ abbr(struct tm const *tmp)
 
 /*
 ** The code below can fail on certain theoretical systems;
-** it works on all known real-world systems as of 2004-12-30.
+** it works on all known real-world systems as of 2022-01-25.
 */
 
 static const char *
 tformat(void)
 {
+#if HAVE_GENERIC
+	/* C11-style _Generic is more likely to return the correct
+	   format when distinct types have the same size.  */
+	char const *fmt =
+	  _Generic(+ (time_t) 0,
+		   int: "%d", long: "%ld", long long: "%lld",
+		   unsigned: "%u", unsigned long: "%lu",
+		   unsigned long long: "%llu",
+		   default: NULL);
+	if (fmt)
+	  return fmt;
+	fmt = _Generic((time_t) 0,
+		       intmax_t: "%"PRIdMAX, uintmax_t: "%"PRIuMAX,
+		       default: NULL);
+	if (fmt)
+	  return fmt;
+#endif
 	if (0 > (time_t) -1) {		/* signed */
 		if (sizeof(time_t) == sizeof(intmax_t))
 			return "%"PRIdMAX;
@@ -1159,10 +1195,6 @@ dumptime(const struct tm *timeptr)
 	int		lead;
 	int		trail;
 
-	if (timeptr == NULL) {
-		printf("NULL");
-		return;
-	}
 	/*
 	** The packaged localtime_rz and gmtime_r never put out-of-range
 	** values in tm_wday or tm_mon, but since this code might be compiled
