@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.13 2022/03/22 21:45:13 andvar Exp $ */
+/* $NetBSD: mfireg.h,v 1.14 2022/03/23 11:08:27 andvar Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -173,7 +173,7 @@
 #define MEGASAS_MAX_SZ_CHAIN_FRAME		1024
 
 /*
- * Calculating how many SGEs allowed in a allocated main message
+ * Calculating how many SGEs allowed in an allocated main message
  * (size of the Message - Raid SCSI IO message size(except SGE))
  * / size of SGE
  * (0x100 - (0x90 - 0x10)) / 0x10 = 8
@@ -769,7 +769,7 @@ struct mfi_ctrl_props {
 	uint8_t	 		loadBalanceMode;
 	/*
 	 * 0 - use auto detect logic of backplanes like SGPIO, i2c SEP using
-	 *     h/w mechansim like GPIO pins
+	 *     h/w mechanism like GPIO pins
 	 * 1 - disable auto detect SGPIO,
 	 * 2 - disable i2c SEP auto detect
 	 * 3 - disable both auto detect
@@ -1302,7 +1302,7 @@ struct mfi_conf {
 /* ThunderBolt support */
 
 /*
- * Raid Context structure which describes MegaRAID specific IO Paramenters
+ * Raid Context structure which describes MegaRAID specific IO Parameters
  * This resides at offset 0x60 where the SGL normally starts in MPT IO Frames
  */
 typedef struct _mpi2_scsi_io_vendor_unique {
