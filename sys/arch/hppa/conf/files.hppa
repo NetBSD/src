@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.23 2020/10/21 13:31:51 christos Exp $
+#	$NetBSD: files.hppa,v 1.24 2022/03/23 17:35:41 macallan Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -158,7 +158,7 @@ device	dino { } : pcibus, gedoens
 attach	dino at gedoens
 file	arch/hppa/dev/dino.c		dino
 
-attach	com at dino with com_dino
+attach	com at gedoens with com_dino
 file	arch/hppa/dev/com_dino.c	com_dino
 
 # Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
