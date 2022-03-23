@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.51 2022/03/21 00:25:04 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.52 2022/03/23 23:18:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.51 2022/03/21 00:25:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.52 2022/03/23 23:18:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -735,6 +735,7 @@ entropy_account_cpu(struct entropy_cpu *ec)
 	unsigned diff;
 
 	KASSERT(E->stage >= ENTROPY_WARM);
+	KASSERT(curlwp->l_pflag & LP_BOUND);
 
 	/*
 	 * If there's no entropy needed, and entropy has been
@@ -869,6 +870,7 @@ entropy_enter(const void *buf, size_t len, unsigned nbits)
 	struct entropy_cpu_lock lock;
 	struct entropy_cpu *ec;
 	unsigned pending;
+	int bound;
 
 	KASSERTMSG(!cpu_intr_p(),
 	    "use entropy_enter_intr from interrupt context");
@@ -880,6 +882,14 @@ entropy_enter(const void *buf, size_t len, unsigned nbits)
 		entropy_enter_early(buf, len, nbits);
 		return;
 	}
+
+	/*
+	 * Bind ourselves to the current CPU so we don't switch CPUs
+	 * between entering data into the current CPU's pool (and
+	 * updating the pending count) and transferring it to the
+	 * global pool in entropy_account_cpu.
+	 */
+	bound = curlwp_bind();
 
 	/*
 	 * With the per-CPU state locked, enter into the per-CPU pool
@@ -895,6 +905,8 @@ entropy_enter(const void *buf, size_t len, unsigned nbits)
 	/* Consolidate globally if appropriate based on what we added.  */
 	if (pending)
 		entropy_account_cpu(ec);
+
+	curlwp_bindx(bound);
 }
 
 /*
