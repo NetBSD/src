@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.41 2022/01/24 09:14:38 andvar Exp $ */
+/*	$NetBSD: mbr.c,v 1.42 2022/03/23 13:06:06 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2046,7 +2046,7 @@ mbr_do_delete_part(const struct disk_partitions *arg, part_id id,
 		/*
 		 * If we are in an extended partition chain, unlink this MBR,
 		 * unless it is the very first one at the start of the extended
-		 * partition (we would have no previos ext mbr to fix up
+		 * partition (we would have no previous ext mbr to fix up
 		 * the chain in that case)
 		 */
 		if (marg->parts->mbr.extended == mb) {

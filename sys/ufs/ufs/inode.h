@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.78 2020/08/20 20:28:13 christos Exp $	*/
+/*	$NetBSD: inode.h,v 1.79 2022/03/23 13:06:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -52,7 +52,7 @@
  * currently stashed in the vnode between VOP_LOOKUP and directory
  * operation VOPs, which is gross.
  *
- * XXX ulr_diroff is a lookup hint from the previos call of VOP_LOOKUP.
+ * XXX ulr_diroff is a lookup hint from the previous call of VOP_LOOKUP.
  * probably it should not be here.
  */
 struct ufs_lookup_results {
