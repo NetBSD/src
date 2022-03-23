@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.25 2020/02/23 08:38:58 riastradh Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.26 2022/03/23 13:06:06 andvar Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -73,7 +73,7 @@
  * currently stashed in the vnode between VOP_LOOKUP and directory
  * operation VOPs, which is gross.
  *
- * XXX ulr_diroff is a lookup hint from the previos call of VOP_LOOKUP.
+ * XXX ulr_diroff is a lookup hint from the previous call of VOP_LOOKUP.
  * probably it should not be here.
  */
 struct ulfs_lookup_results {
