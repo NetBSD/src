@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.52 2022/03/23 23:18:17 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.53 2022/03/23 23:20:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.52 2022/03/23 23:18:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.53 2022/03/23 23:20:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,10 +93,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.52 2022/03/23 23:18:17 riastradh 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
+#include <sys/lwp.h>
 #include <sys/module_hook.h>
 #include <sys/mutex.h>
 #include <sys/percpu.h>
 #include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/rnd.h>		/* legacy kernel API */
