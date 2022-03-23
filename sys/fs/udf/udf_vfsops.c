@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.83 2021/12/16 21:39:53 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.84 2022/03/23 13:06:06 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.83 2021/12/16 21:39:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.84 2022/03/23 13:06:06 andvar Exp $");
 #endif /* not lint */
 
 
@@ -647,7 +647,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 			 * is enough space to open/close new session
 			 */
 		}
-		/* double check if we're not mounting a pervious session RW */
+		/* double check if we're not mounting a previous session RW */
 		if (args->sessionnr != 0) {
 			printf("UDF mount: updating a previous session "
 				"not yet allowed\n");

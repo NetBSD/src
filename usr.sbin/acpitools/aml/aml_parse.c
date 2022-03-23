@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_parse.c,v 1.5 2021/10/24 20:00:12 andvar Exp $	*/
+/*	$NetBSD: aml_parse.c,v 1.6 2022/03/23 13:06:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_parse.c,v 1.5 2021/10/24 20:00:12 andvar Exp $");
+__RCSID("$NetBSD: aml_parse.c,v 1.6 2022/03/23 13:06:06 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -1300,7 +1300,7 @@ aml_parse_termobj(struct aml_environ *env, int indent)
 	aml_free_objectcontent(ret);
 	if (env->stat == aml_stat_panic) {
 		/*
-		 * If previosuly parser panic , parsing next instruction is
+		 * If previously parser panic , parsing next instruction is
 		 * prohibited.
 		 */
 		return (NULL);
