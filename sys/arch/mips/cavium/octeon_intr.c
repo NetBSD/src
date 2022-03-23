@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.24 2020/08/18 07:41:41 skrll Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.25 2022/03/23 23:24:21 riastradh Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.24 2020/08/18 07:41:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.25 2022/03/23 23:24:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.24 2020/08/18 07:41:41 skrll Exp $
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/atomic.h>
+#include <sys/xcall.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -353,6 +354,14 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	ih->ih_irq = irq;
 	ih->ih_ipl = ipl;
 
+	/*
+	 * Make sure the initialization is visible on all CPUs before
+	 * we expose it in octciu_intrs.  This way we don't need to
+	 * issue any membar for a load-acquire when handling the
+	 * interrupt.
+	 */
+	xc_barrier(0);
+
 	mutex_enter(&octeon_intr_lock);
 
 	/*
@@ -361,8 +370,7 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	KASSERTMSG(octciu_intrs[irq] == NULL, "irq %d in use! (%p)",
 	    irq, octciu_intrs[irq]);
 
-	octciu_intrs[irq] = ih;
-	membar_producer();
+	atomic_store_relaxed(&octciu_intrs[irq], ih);
 
 	/*
 	 * Now enable it.
@@ -462,13 +470,15 @@ octeon_intr_disestablish(void *cookie)
 		break;
 	}
 
-	/*
-	 * Now remove it since we shouldn't get interrupts for it.
-	 */
-	octciu_intrs[irq] = NULL;
+	atomic_store_relaxed(&octciu_intrs[irq], NULL);
 
 	mutex_exit(&octeon_intr_lock);
 
+	/*
+	 * Wait until the interrupt handler is no longer running on all
+	 * CPUs before freeing ih and returning.
+	 */
+	xc_barrier(0);
 	kmem_free(ih, sizeof(*ih));
 }
 
@@ -507,7 +517,8 @@ octeon_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 			const int irq = (bank * 64) + bit;
 			hwpend[bank] &= ~__BIT(bit);
 
-			struct octeon_intrhand * const ih = octciu_intrs[irq];
+			struct octeon_intrhand * const ih =
+			    atomic_load_relaxed(&octciu_intrs[irq]);
 			cpu->cpu_intr_evs[irq].ev_count++;
 			if (__predict_true(ih != NULL)) {
 #ifdef MULTIPROCESSOR
