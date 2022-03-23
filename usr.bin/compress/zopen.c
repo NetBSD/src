@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.15 2011/08/16 13:55:01 joerg Exp $	*/
+/*	$NetBSD: zopen.c,v 1.16 2022/03/23 11:08:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.15 2011/08/16 13:55:01 joerg Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.16 2022/03/23 11:08:28 andvar Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,7 +128,7 @@ struct s_zstate {
 			code_int zs_ent;
 			code_int zs_hsize_reg;
 			int zs_hshift;
-		} w;			/* Write paramenters */
+		} w;			/* Write parameters */
 		struct {
 			char_type *zs_stackp;
 			int zs_finchar;
