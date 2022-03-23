@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.431 2021/08/09 19:57:58 andvar Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.432 2022/03/23 11:08:28 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.431 2021/08/09 19:57:58 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.432 2022/03/23 11:08:28 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2549,7 +2549,7 @@ after_listen:
 				     TCP_FACK_FASTRECOV(tp))) {
 					/*
 					 * Do the fast retransmit, and adjust
-					 * congestion control paramenters.
+					 * congestion control parameters.
 					 */
 					if (tp->t_congctl->fast_retransmit(tp, th)) {
 						/* False fast retransmit */
