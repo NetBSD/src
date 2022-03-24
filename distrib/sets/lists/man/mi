@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1735 2022/02/24 03:35:33 mrg Exp $
+# $NetBSD: mi,v 1.1736 2022/03/24 14:04:28 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7621,6 +7621,7 @@
 ./usr/share/man/man4/ifpci.4			man-obsolete		obsolete
 ./usr/share/man/man4/igmafb.4			man-sys-man		.man
 ./usr/share/man/man4/igphy.4			man-sys-man		.man
+./usr/share/man/man4/igpio.4			man-sys-man		.man
 ./usr/share/man/man4/igsfb.4			man-sys-man		.man
 ./usr/share/man/man4/iha.4			man-sys-man		.man
 ./usr/share/man/man4/ihidev.4			man-sys-man		.man
