@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.74 2022/03/24 07:57:10 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.75 2022/03/24 08:02:21 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.74 2022/03/24 07:57:10 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.75 2022/03/24 08:02:21 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -317,7 +317,6 @@ struct vioif_softc {
 
 	uint8_t			sc_mac[ETHER_ADDR_LEN];
 	struct ethercom		sc_ethercom;
-	short			sc_deferred_init_done;
 	bool			sc_link_active;
 
 	struct vioif_txqueue	*sc_txq;
@@ -352,7 +351,6 @@ struct vioif_softc {
 /* cfattach interface functions */
 static int	vioif_match(device_t, cfdata_t, void *);
 static void	vioif_attach(device_t, device_t, void *);
-static void	vioif_deferred_init(device_t);
 static int	vioif_finalize_teardown(device_t);
 
 /* ifnet interface functions */
@@ -364,6 +362,7 @@ static int	vioif_transmit(struct ifnet *, struct mbuf *);
 static void	vioif_transmit_locked(struct ifnet *, struct vioif_txqueue *);
 static int	vioif_ioctl(struct ifnet *, u_long, void *);
 static void	vioif_watchdog(struct ifnet *);
+static int	vioif_ifflags_cb(struct ethercom *);
 
 /* rx */
 static int	vioif_add_rx_mbuf(struct vioif_rxqueue *, int);
@@ -416,6 +415,7 @@ static void	vioif_enable_interrupt_vqpairs(struct vioif_softc *);
 static void	vioif_disable_interrupt_vqpairs(struct vioif_softc *);
 static int	vioif_setup_sysctl(struct vioif_softc *);
 static void	vioif_setup_stats(struct vioif_softc *);
+static int	vioif_ifflags(struct vioif_softc *);
 
 CFATTACH_DECL_NEW(vioif, sizeof(struct vioif_softc),
 		  vioif_match, vioif_attach, NULL, NULL);
@@ -1050,6 +1050,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_mac);
+	ether_set_ifflags_cb(&sc->sc_ethercom, vioif_ifflags_cb);
 
 	return;
 
@@ -1116,23 +1117,6 @@ vioif_finalize_teardown(device_t self)
 	}
 
 	return 0;
-}
-
-/* we need interrupts to make promiscuous mode off */
-static void
-vioif_deferred_init(device_t self)
-{
-	struct vioif_softc *sc = device_private(self);
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int r;
-
-	if (ifp->if_flags & IFF_PROMISC)
-		return;
-
-	r =  vioif_set_promisc(sc, false);
-	if (r != 0)
-		aprint_error_dev(self, "resetting promisc mode failed, "
-		    "error code %d\n", r);
 }
 
 static void
@@ -1218,18 +1202,12 @@ vioif_init(struct ifnet *ifp)
 
 	vioif_enable_interrupt_vqpairs(sc);
 
-	if (!sc->sc_deferred_init_done) {
-		sc->sc_deferred_init_done = 1;
-		if (sc->sc_has_ctrl)
-			vioif_deferred_init(sc->sc_dev);
-	}
-
 	vioif_update_link_status(sc);
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	vioif_rx_filter(sc);
+	r = vioif_rx_filter(sc);
 
-	return 0;
+	return r;
 }
 
 static void
@@ -1495,12 +1473,12 @@ vioif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	r = ether_ioctl(ifp, cmd, data);
-	if ((r == 0 && cmd == SIOCSIFFLAGS) ||
-	    (r == ENETRESET && (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI))) {
-		if (ifp->if_flags & IFF_RUNNING)
+	if (r == ENETRESET && (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI)) {
+		if (ifp->if_flags & IFF_RUNNING) {
 			r = vioif_rx_filter(ifp->if_softc);
-		else
+		} else {
 			r = 0;
+		}
 	}
 
 	splx(s);
@@ -2276,14 +2254,57 @@ vioif_ctrl_intr(void *arg)
 	return 1;
 }
 
+static int
+vioif_ifflags(struct vioif_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bool onoff;
+	int r;
+
+	if (!sc->sc_has_ctrl) {
+		/* no ctrl vq; always promisc and allmulti */
+		ifp->if_flags |= (IFF_PROMISC | IFF_ALLMULTI);
+		return 0;
+	}
+
+	onoff = ifp->if_flags & IFF_ALLMULTI ? true : false;
+	r = vioif_set_allmulti(sc, onoff);
+	if (r != 0) {
+		log(LOG_WARNING,
+		    "%s: couldn't %sable ALLMULTI\n",
+		    ifp->if_xname, onoff ? "en" : "dis");
+		if (onoff == false) {
+			ifp->if_flags |= IFF_ALLMULTI;
+		}
+	}
+
+	onoff = ifp->if_flags & IFF_PROMISC ? true : false;
+	r = vioif_set_promisc(sc, onoff);
+	if (r != 0) {
+		log(LOG_WARNING,
+		    "%s: couldn't %sable PROMISC\n",
+		    ifp->if_xname, onoff ? "en" : "dis");
+		if (onoff == false) {
+			ifp->if_flags |= IFF_PROMISC;
+		}
+	}
+
+	return 0;
+}
+
+static int
+vioif_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct vioif_softc *sc = ifp->if_softc;
+
+	return vioif_ifflags(sc);
+}
+
 /*
- * If IFF_PROMISC requested,  set promiscuous
  * If multicast filter small enough (<=MAXENTRIES) set rx filter
  * If large multicast filter exist use ALLMULTI
- */
-/*
  * If setting rx filter fails fall back to ALLMULTI
- * If ALLMULTI fails fall back to PROMISC
  */
 static int
 vioif_rx_filter(struct vioif_softc *sc)
@@ -2295,80 +2316,67 @@ vioif_rx_filter(struct vioif_softc *sc)
 	struct ether_multistep step;
 	struct vioif_ctrlqueue *ctrlq = &sc->sc_ctrlq;
 	int nentries;
-	int promisc = 0, allmulti = 0, rxfilter = 0;
+	bool allmulti = 0;
 	int r;
 
-	if (!sc->sc_has_ctrl) {	/* no ctrl vq; always promisc */
-		ifp->if_flags |= IFF_PROMISC;
-		return 0;
-	}
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		promisc = 1;
-		goto set;
+	if (!sc->sc_has_ctrl) {
+		goto set_ifflags;
 	}
 
 	memcpy(ctrlq->ctrlq_mac_tbl_uc->macs[0],
 	    CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 
-	nentries = -1;
+	nentries = 0;
+	allmulti = false;
+
 	ETHER_LOCK(ec);
-	ETHER_FIRST_MULTI(step, ec, enm);
-	while (nentries++, enm != NULL) {
+	for (ETHER_FIRST_MULTI(step, ec, enm); enm != NULL;
+	    ETHER_NEXT_MULTI(step, enm)) {
 		if (nentries >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
-			allmulti = 1;
-			goto set_unlock;
+			allmulti = true;
+			break;
 		}
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			allmulti = 1;
-			goto set_unlock;
+			allmulti = true;
+			break;
 		}
+
 		memcpy(ctrlq->ctrlq_mac_tbl_mc->macs[nentries],
 		    enm->enm_addrlo, ETHER_ADDR_LEN);
-		ETHER_NEXT_MULTI(step, enm);
+		nentries++;
 	}
-	rxfilter = 1;
-
-set_unlock:
 	ETHER_UNLOCK(ec);
 
-set:
 	r = vioif_set_mac_addr(sc);
 	if (r != 0) {
 		log(LOG_WARNING, "%s: couldn't set MAC address\n",
 		    ifp->if_xname);
 	}
 
-	if (rxfilter) {
+	if (!allmulti) {
 		ctrlq->ctrlq_mac_tbl_uc->nentries = virtio_rw32(vsc, 1);
 		ctrlq->ctrlq_mac_tbl_mc->nentries = virtio_rw32(vsc, nentries);
 		r = vioif_set_rx_filter(sc);
 		if (r != 0) {
-			rxfilter = 0;
-			allmulti = 1; /* fallback */
+			allmulti = true; /* fallback */
 		}
-	} else {
-		/* remove rx filter */
+	}
+
+	if (allmulti) {
 		ctrlq->ctrlq_mac_tbl_uc->nentries = virtio_rw32(vsc, 0);
 		ctrlq->ctrlq_mac_tbl_mc->nentries = virtio_rw32(vsc, 0);
 		r = vioif_set_rx_filter(sc);
-		/* what to do on failure? */
-	}
-	if (allmulti) {
-		r = vioif_set_allmulti(sc, true);
 		if (r != 0) {
-			allmulti = 0;
-			promisc = 1; /* fallback */
+			log(LOG_DEBUG, "%s: couldn't clear RX filter\n",
+			    ifp->if_xname);
+			/* what to do on failure? */
 		}
-	} else {
-		r = vioif_set_allmulti(sc, false);
-		/* what to do on failure? */
+
+		ifp->if_flags |= IFF_ALLMULTI;
 	}
-	if (promisc) {
-		r = vioif_set_promisc(sc, true);
-	} else {
-		r = vioif_set_promisc(sc, false);
-	}
+
+set_ifflags:
+	r = vioif_ifflags(sc);
 
 	return r;
 }
