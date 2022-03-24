@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1451 2022/03/24 08:44:04 yamaguchi Exp $
+$NetBSD: pcidevs,v 1.1452 2022/03/24 08:46:49 yamaguchi Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3974,6 +3974,7 @@ product INTEL 82547EI		0x1019	i82547EI Gigabit Ethernet
 product INTEL 82547EI_MOBILE    0x101a  i82547EI Mobile Gigabit Ethernet
 product INTEL 82546EB_QUAD	0x101d	i82546EB 1000baseT Ethernet
 product INTEL 82540EP_LP	0x101e	i82540EP Gigabit Ethernet
+product INTEL V710_5G_T		0x101f	V710 5000BaseT Ethernet
 product INTEL 82545GM_COPPER	0x1026	i82545GM 1000baseT Ethernet
 product INTEL 82545GM_FIBER	0x1027	i82545GM 1000baseX Ethernet
 product INTEL 82545GM_SERDES	0x1028	i82545GM Gigabit Ethernet (SERDES)
