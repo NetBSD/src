@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1295 2022/02/16 20:14:30 riastradh Exp $
+#	$NetBSD: files,v 1.1296 2022/03/24 02:24:24 manu Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1356,6 +1356,10 @@ file	dev/ic/pl061.c			plgpio
 # ARM PrimeCell PL181 (MMCI) host controller
 device	plmmc: sdmmcbus
 file	dev/ic/pl181.c			plmmc
+
+# Intel GPIO
+device	igpio: gpiobus
+file	dev/ic/igpio.c			igpio
 
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
