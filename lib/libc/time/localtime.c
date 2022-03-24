@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.128 2022/03/23 14:02:05 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.129 2022/03/24 16:15:05 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.128 2022/03/23 14:02:05 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.129 2022/03/24 16:15:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -115,6 +115,15 @@ struct lsinfo {				/* leap second information */
 #define SMALLEST(a, b)	(((a) < (b)) ? (a) : (b))
 #define BIGGEST(a, b)	(((a) > (b)) ? (a) : (b))
 
+/* This abbreviation means local time is unspecified.  */
+static char const UNSPEC[] = "-00";
+
+/* How many extra bytes are needed at the end of struct state's chars array.
+   This needs to be at least 1 for null termination in case the input
+   data isn't properly terminated, and it also needs to be big enough
+   for ttunspecified to work without crashing.  */
+enum { CHARS_EXTRA = BIGGEST(sizeof UNSPEC, 2) - 1 };
+
 #ifdef TZNAME_MAX
 #define MY_TZNAME_MAX	TZNAME_MAX
 #endif /* defined TZNAME_MAX */
@@ -133,8 +142,9 @@ struct state {
 	__time_t	ats[TZ_MAX_TIMES];
 	unsigned char	types[TZ_MAX_TIMES];
 	struct ttinfo	ttis[TZ_MAX_TYPES];
-	char		chars[/*CONSTCOND*/BIGGEST(BIGGEST(TZ_MAX_CHARS + 1,
-				sizeof gmt), (2 * (MY_TZNAME_MAX + 1)))];
+	char		chars[/*CONSTCOND*/
+			    BIGGEST(BIGGEST(TZ_MAX_CHARS + CHARS_EXTRA,
+			    sizeof gmt), (2 * (MY_TZNAME_MAX + 1)))];
 	struct lsinfo	lsis[TZ_MAX_LEAPS];
 
 	/* The time type to use for early times or if no transitions.
@@ -233,6 +243,15 @@ init_ttinfo(struct ttinfo *s, int_fast32_t utoff, bool isdst, int desigidx)
 	s->tt_desigidx = desigidx;
 	s->tt_ttisstd = false;
 	s->tt_ttisut = false;
+}
+
+/* Return true if SP's time type I does not specify local time.  */
+static bool
+ttunspecified(struct state const *sp, int i)
+{
+  char const *abbr = &sp->chars[sp->ttis[i].tt_desigidx];
+  /* memcmp is likely faster than strcmp, and is safe due to CHARS_EXTRA.  */
+  return memcmp(abbr, UNSPEC, sizeof UNSPEC) == 0;
 }
 
 static int_fast32_t
@@ -491,35 +510,45 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 	if (close(fid) < 0)
 		return errno;
 	for (stored = 4; stored <= 8; stored *= 2) {
-		int_fast32_t ttisstdcnt = detzcode(up->tzhead.tzh_ttisstdcnt);
-		int_fast32_t ttisutcnt = detzcode(up->tzhead.tzh_ttisutcnt);
-		int_fast64_t prevtr = -1;
-		int_fast32_t prevcorr = 0;
-		int_fast32_t leapcnt = detzcode(up->tzhead.tzh_leapcnt);
-		int_fast32_t timecnt = detzcode(up->tzhead.tzh_timecnt);
-		int_fast32_t typecnt = detzcode(up->tzhead.tzh_typecnt);
-		int_fast32_t charcnt = detzcode(up->tzhead.tzh_charcnt);
-		char const *p = up->buf + tzheadsize;
-		/* Although tzfile(5) currently requires typecnt to be nonzero,
-		   support future formats that may allow zero typecnt
-		   in files that have a TZ string and no transitions.  */
-		if (! (0 <= leapcnt && leapcnt < TZ_MAX_LEAPS
-		       && 0 <= typecnt && typecnt < TZ_MAX_TYPES
-		       && 0 <= timecnt && timecnt < TZ_MAX_TIMES
-		       && 0 <= charcnt && charcnt < TZ_MAX_CHARS
-		       && (ttisstdcnt == typecnt || ttisstdcnt == 0)
-		       && (ttisutcnt == typecnt || ttisutcnt == 0)))
-		  return EINVAL;
-		if ((size_t)nread
-		    < (tzheadsize		/* struct tzhead */
-		       + timecnt * stored	/* ats */
+	    char version = up->tzhead.tzh_version[0];
+	    bool skip_datablock = stored == 4 && version;
+	    int_fast32_t datablock_size;
+	    int_fast32_t ttisstdcnt = detzcode(up->tzhead.tzh_ttisstdcnt);
+	    int_fast32_t ttisutcnt = detzcode(up->tzhead.tzh_ttisutcnt);
+	    int_fast64_t prevtr = -1;
+	    int_fast32_t prevcorr = 0;
+	    int_fast32_t leapcnt = detzcode(up->tzhead.tzh_leapcnt);
+	    int_fast32_t timecnt = detzcode(up->tzhead.tzh_timecnt);
+	    int_fast32_t typecnt = detzcode(up->tzhead.tzh_typecnt);
+	    int_fast32_t charcnt = detzcode(up->tzhead.tzh_charcnt);
+	    char const *p = up->buf + tzheadsize;
+	    /* Although tzfile(5) currently requires typecnt to be nonzero,
+	       support future formats that may allow zero typecnt
+	       in files that have a TZ string and no transitions.  */
+	    if (! (0 <= leapcnt && leapcnt < TZ_MAX_LEAPS
+		   && 0 <= typecnt && typecnt < TZ_MAX_TYPES
+		   && 0 <= timecnt && timecnt < TZ_MAX_TIMES
+		   && 0 <= charcnt && charcnt < TZ_MAX_CHARS
+		   && 0 <= ttisstdcnt && ttisstdcnt < TZ_MAX_TYPES
+		   && 0 <= ttisutcnt && ttisutcnt < TZ_MAX_TYPES))
+	      return EINVAL;
+	    datablock_size
+		    = (timecnt * stored		/* ats */
 		       + timecnt		/* types */
 		       + typecnt * 6		/* ttinfos */
 		       + charcnt		/* chars */
 		       + leapcnt * (stored + 4)	/* lsinfos */
 		       + ttisstdcnt		/* ttisstds */
-		       + ttisutcnt))		/* ttisuts */
+		       + ttisutcnt);		/* ttisuts */
+	    if (nread < (ssize_t)(tzheadsize + datablock_size))
+	      return EINVAL;
+	    if (skip_datablock)
+		p += datablock_size;
+	    else {
+		if (! ((ttisstdcnt == typecnt || ttisstdcnt == 0)
+		       && (ttisutcnt == typecnt || ttisutcnt == 0)))
 		  return EINVAL;
+
 		sp->leapcnt = leapcnt;
 		sp->timecnt = timecnt;
 		sp->typecnt = typecnt;
@@ -576,7 +605,9 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 		}
 		for (i = 0; i < sp->charcnt; ++i)
 			sp->chars[i] = *p++;
-		sp->chars[i] = '\0';	/* ensure '\0' at end */
+		/* Ensure '\0'-terminated, and make it safe to call
+		   ttunspecified later.  */
+		memset(&sp->chars[i], 0, CHARS_EXTRA);
 
 		/* Read leap seconds, discarding those out of time_t range.  */
 		leapcnt = 0;
@@ -590,6 +621,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 			   or out of order.  */
 			if (tr <= prevtr)
 				return EINVAL;
+
 			/* To avoid other botches in this code, each leap second's
 			   correction must differ from the previous one's by 1
 			   second or less, except that the first correction can be
@@ -603,6 +635,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 			      return EINVAL;
 			prevtr = tr;
 			prevcorr = corr;
+
 			if (tr <= TIME_T_MAX) {
 				sp->lsis[leapcnt].ls_trans = (time_t)tr;
 				sp->lsis[leapcnt].ls_corr = corr;
@@ -635,13 +668,14 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 				ttisp->tt_ttisut = *p++;
 			}
 		}
-		/*
-		** If this is an old file, we're done.
-		*/
-		if (up->tzhead.tzh_version[0] == '\0')
-			break;
-		nread -= p - up->buf;
-		memmove(up->buf, p, (size_t)nread);
+	    }
+
+	    nread -= p - up->buf;
+	    memmove(up->buf, p, (size_t)nread);
+
+	    /* If this is an old file, we're done.  */
+	    if (!version)
+	      break;
 	}
 	if (doextend && nread > 2 &&
 		up->buf[0] == '\n' && up->buf[nread - 1] == '\n' &&
@@ -745,13 +779,13 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 	   standard-time type.  See:
 	   https://mm.icann.org/pipermail/tz/2013-May/019368.html */
 	/*
-	** If type 0 is unused in transitions,
+	** If type 0 does not specify local time, or is unused in transitions,
 	** it's the type to use for early times.
 	*/
 	for (i = 0; i < sp->timecnt; ++i)
 		if (sp->types[i] == 0)
 			break;
-	i = i < sp->timecnt ? -1 : 0;
+	i = i < sp->timecnt && ! ttunspecified(sp, 0) ? -1 : 0;
 	/*
 	** Absent the above,
 	** if there are transition times
@@ -2179,6 +2213,8 @@ again:
 						if (sp->ttis[j].tt_isdst ==
 						    sp->ttis[i].tt_isdst)
 							continue;
+						if (ttunspecified(sp, j))
+							continue;
 						off = sp->ttis[j].tt_utoff -
 						    sp->ttis[i].tt_utoff;
 						yourtm.tm_sec += off < 0 ?
@@ -2347,7 +2383,7 @@ time1(struct tm *const tmp,
 		seen[i] = false;
 	nseen = 0;
 	for (i = sp->timecnt - 1; i >= 0; --i)
-		if (!seen[sp->types[i]]) {
+		if (!seen[sp->types[i]] && !ttunspecified(sp, sp->types[i])) {
 			seen[sp->types[i]] = true;
 			types[nseen++] = sp->types[i];
 		}
