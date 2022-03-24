@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1736 2022/03/24 14:04:28 manu Exp $
+# $NetBSD: mi,v 1.1737 2022/03/24 16:33:05 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1341,6 +1341,7 @@
 ./usr/share/man/cat4/ifpci.0			man-obsolete		obsolete
 ./usr/share/man/cat4/igmafb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/igpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igsfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iha.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ihidev.0			man-sys-catman		.cat
@@ -4564,6 +4565,7 @@
 ./usr/share/man/html4/ifpci.html		man-obsolete		obsolete
 ./usr/share/man/html4/igmafb.html		man-sys-htmlman		html
 ./usr/share/man/html4/igphy.html		man-sys-htmlman		html
+./usr/share/man/html4/igpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/igsfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/iha.html			man-sys-htmlman		html
 ./usr/share/man/html4/ihidev.html		man-sys-htmlman		html
