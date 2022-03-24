@@ -1,4 +1,4 @@
-.\"	$NetBSD: popen.3,v 1.22 2021/09/11 19:58:24 rillig Exp $
+.\"	$NetBSD: popen.3,v 1.23 2022/03/24 01:55:15 gutteridge Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,7 @@ is now implemented using sockets, the
 may request a bidirectional data flow.
 The
 .Fa type
-argument is a pointer to a null-terminated string
+argument is a pointer to a nul-terminated string
 which must be
 .Ql r
 for reading,
@@ -88,7 +88,7 @@ string, the file descriptor used internally is set to be closed on
 .Pp
 The
 .Fa command
-argument is a pointer to a null-terminated string
+argument is a pointer to a nul-terminated string
 containing a shell command line.
 This command is passed to
 .Pa /bin/sh
@@ -136,7 +136,7 @@ The
 function waits for the associated process to terminate
 and returns the exit status of the command
 as returned by
-.Fn wait4 .
+.Xr wait4 2 .
 .Sh RETURN VALUES
 The
 .Fn popen
@@ -163,7 +163,7 @@ command, if
 has already been
 .Dq pclosed ,
 setting errno to
-.Dv ESRCH
+.Dv ESRCH ,
 or if
 .Xr wait4 2
 returns an error, preserving the errno returned by
@@ -174,6 +174,7 @@ returns an error, preserving the errno returned by
 .Xr fork 2 ,
 .Xr pipe 2 ,
 .Xr socketpair 2 ,
+.Xr vfork 2 ,
 .Xr wait4 2 ,
 .Xr fclose 3 ,
 .Xr fflush 3 ,
@@ -214,7 +215,7 @@ before
 .Fn popen .
 .Pp
 Failure to execute the shell
-is indistinguishable from the shell's failure to execute command,
+is indistinguishable from the shell's failure to execute the command,
 or an immediate exit of the command.
 The only hint is an exit status of 127.
 .Pp
