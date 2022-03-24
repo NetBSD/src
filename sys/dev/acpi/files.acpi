@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.124 2022/02/16 20:14:30 riastradh Exp $
+#	$NetBSD: files.acpi,v 1.125 2022/03/24 02:24:25 manu Exp $
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
@@ -299,6 +299,10 @@ file	dev/acpi/genet_acpi.c		genet_acpi
 # DesignWare Ethernet Quality-of-Service controller
 attach	eqos at acpinodebus with eqos_acpi
 file	dev/acpi/eqos_acpi.c		eqos_acpi
+
+# Intel GPIO
+attach	igpio at acpinodebus with igpio_acpi
+file	dev/acpi/igpio_acpi.c		igpio_acpi
 
 # DesignWare Mobile Storage Host Controller
 attach	dwcmmc at acpinodebus with dwcmmc_acpi
