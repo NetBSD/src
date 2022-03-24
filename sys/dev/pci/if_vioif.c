@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.72 2022/03/24 07:47:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.73 2022/03/24 07:51:14 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.72 2022/03/24 07:47:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.73 2022/03/24 07:51:14 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -745,6 +745,8 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		    sizeof(*ctrlq->ctrlq_mac_tbl_mc)
 		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES, 1,
 		    "multicast MAC address filter command");
+		if (r != 0)
+			goto err_reqs;
 	}
 
 	return 0;
