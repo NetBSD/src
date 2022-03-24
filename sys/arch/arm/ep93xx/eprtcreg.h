@@ -1,4 +1,4 @@
-/*	$NetBSD: eprtcreg.h,v 1.1 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: eprtcreg.h,v 1.2 2022/03/24 12:12:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -39,10 +39,10 @@
 #define	EP93XX_RTC_Load		0x0c	/* RTC Load Register (R/W) */
 #define	EP93XX_RTC_Ctrl		0x10	/* RTC Control Register (R/W) */
 #define	 EP93XX_RTC_MIE		(1<<0)	/* Match Interrupt Enable */
-#define	EP93XX_RTC_SWComp	0x108	/* RTC Software Compensatin (R/W) */
+#define	EP93XX_RTC_SWComp	0x108	/* RTC Software Compensation (R/W) */
 #define	 EP93XX_RTC_DEL_SHIFT	(1<<16)	/* Number of clocks to delete */
 #define	 EP93XX_RTC_DEL_MASK	0x001f0000
-#define	 EP93XX_RTC_INT_SHIFT	(1<<0)	/* Counter pre-load Interger value */
+#define	 EP93XX_RTC_INT_SHIFT	(1<<0)	/* Counter pre-load Integer value */
 #define	 EP93XX_RTC_INT_MASK	0x0000ffff
 
 #endif	/* _EPRTCREG_H_ */

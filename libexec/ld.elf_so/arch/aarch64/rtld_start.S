@@ -1,4 +1,4 @@
-/* $NetBSD: rtld_start.S,v 1.4 2019/01/18 11:59:03 skrll Exp $ */
+/* $NetBSD: rtld_start.S,v 1.5 2022/03/24 12:12:00 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: rtld_start.S,v 1.4 2019/01/18 11:59:03 skrll Exp $")
+RCSID("$NetBSD: rtld_start.S,v 1.5 2022/03/24 12:12:00 andvar Exp $")
 
 /*
  * void _rtld_start(void (*cleanup)(void), const Obj_Entry *obj,
@@ -230,7 +230,7 @@ ENTRY(_rtld_tlsdesc_dynamic)
 	 *
 	 */
 1:
-	/* Save all interger registers */
+	/* Save all integer registers */
 	stp	x29, x30, [sp, #-(8 * 16)]!
 	.cfi_adjust_cfa_offset	8 * 16
 	.cfi_rel_offset		x29, 0
