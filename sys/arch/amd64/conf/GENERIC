@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.593 2021/10/31 00:31:48 simonb Exp $
+# $NetBSD: GENERIC,v 1.594 2022/03/24 02:24:24 manu Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.593 $"
+#ident		"GENERIC-$Revision: 1.594 $"
 
 maxusers	64		# estimated number of users
 
@@ -595,6 +595,9 @@ iic*		at dwiic?
 #sdtemp* at iic? addr 0x1d
 #sdtemp* at iic? addr 0x1e
 #sdtemp* at iic? addr 0x1f
+
+# Intel GPIO
+igpio*         at acpi? 
 
 # I2C HID devices
 ihidev* at iic?
