@@ -1,4 +1,4 @@
-/* $NetBSD: igpio.c,v 1.1 2022/03/24 02:24:25 manu Exp $ */
+/* $NetBSD: igpio.c,v 1.2 2022/03/24 08:08:05 andvar Exp $ */
 
 /*
  * Copyright (c) 2021,2022 Emmanuel Dreyfus
@@ -768,7 +768,7 @@ igpio_intr(void *priv)
 			enabled = bus_space_read_4(sc->sc_bst, bsh, ie_reg);
 
 			/*
-			 * find pins for which interupt is pending
+			 * find pins for which interrupt is pending
 			 * and enabled
 			 */
 			pending = raised & enabled;

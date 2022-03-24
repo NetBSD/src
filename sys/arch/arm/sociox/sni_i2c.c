@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.14 2021/12/22 02:32:53 nisimura Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.15 2022/03/24 08:08:05 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.14 2021/12/22 02:32:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.15 2022/03/24 08:08:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.14 2021/12/22 02:32:53 nisimura Exp $"
 #define  BCR_MSS	(1U<<4)		/* 1: xmit, 0: recv */ 
 #define  BCR_ACK	(1U<<3)		/* make acknowledge at last byte */
 #define  BCR_GCAA	(1U<<2)		/* ??? general call access ack */
-#define  BCR_IEN	(1U<<1)		/* enable interupt */
+#define  BCR_IEN	(1U<<1)		/* enable interrupt */
 #define  BCR_INT	(1U<<0)		/* interrupt report; W0C */
 #define CCR		0x08
 #define  CCR_FM		(1U<<6)		/* speed; 1: fast, 0: standard */

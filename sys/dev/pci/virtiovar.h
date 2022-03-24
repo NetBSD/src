@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.23 2021/10/28 01:36:43 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.24 2022/03/24 08:08:05 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -180,7 +180,7 @@ struct virtio_softc;
 #endif
 
 
-/* interupt types, stored in virtio_softc->sc_flags */
+/* interrupt types, stored in virtio_softc->sc_flags */
 #define VIRTIO_F_INTR_MPSAFE	(1 << 0)
 #define VIRTIO_F_INTR_SOFTINT	(1 << 1)
 #define VIRTIO_F_INTR_MSIX	(1 << 2)
