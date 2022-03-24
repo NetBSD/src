@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.53 2022/03/23 23:20:52 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.54 2022/03/24 12:58:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.53 2022/03/23 23:20:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.54 2022/03/24 12:58:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -413,8 +413,20 @@ entropy_init(void)
 static void
 entropy_init_late_cpu(void *a, void *b)
 {
+	int bound;
 
+	/*
+	 * We're not necessarily in a softint lwp here (xc_broadcast
+	 * triggers softint on other CPUs, but calls directly on this
+	 * CPU), so explicitly bind to the current CPU to invoke the
+	 * softintr -- this lets us have a simpler assertion in
+	 * entropy_account_cpu.  Not necessary to avoid migration
+	 * because xc_broadcast disables kpreemption anyway, but it
+	 * doesn't hurt.
+	 */
+	bound = curlwp_bind();
 	entropy_softintr(NULL);
+	curlwp_bindx(bound);
 }
 
 /*
