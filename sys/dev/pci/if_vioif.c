@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.71 2021/10/28 01:36:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.72 2022/03/24 07:47:50 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.71 2021/10/28 01:36:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.72 2022/03/24 07:47:50 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1736,6 +1736,11 @@ static void
 vioif_rx_sched_handle(struct vioif_softc *sc, struct vioif_rxqueue *rxq)
 {
 
+	KASSERT(mutex_owned(rxq->rxq_lock));
+
+	if (rxq->rxq_stopping)
+		return;
+
 	if (rxq->rxq_workqueue)
 		vioif_work_add(sc->sc_txrx_workqueue, &rxq->rxq_work);
 	else
@@ -1852,6 +1857,11 @@ vioif_tx_handle(void *xtxq)
 static void
 vioif_tx_sched_handle(struct vioif_softc *sc, struct vioif_txqueue *txq)
 {
+
+	KASSERT(mutex_owned(txq->txq_lock));
+
+	if (txq->txq_stopping)
+		return;
 
 	if (txq->txq_workqueue)
 		vioif_work_add(sc->sc_txrx_workqueue, &txq->txq_work);
