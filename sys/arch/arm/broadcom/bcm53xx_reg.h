@@ -1,3 +1,5 @@
+/* $NetBSD: bcm53xx_reg.h,v 1.19 2022/03/24 08:08:04 andvar Exp $ */
+
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -731,7 +733,7 @@ struct gmac_txdb {
 };
 #define TXDB_FLAG_SF		__BIT(31)	// Start oF Frame
 #define TXDB_FLAG_EF		__BIT(30)	// End oF Frame
-#define TXDB_FLAG_IC		__BIT(29)	// Interrupt on Completetion
+#define TXDB_FLAG_IC		__BIT(29)	// Interrupt on Completion
 #define TXDB_FLAG_ET		__BIT(28)	// End Of Table
 
 struct gmac_rxdb {
@@ -742,7 +744,7 @@ struct gmac_rxdb {
 };
 #define RXDB_FLAG_SF		__BIT(31)	// Start oF Frame (ignored)
 #define RXDB_FLAG_EF		__BIT(30)	// End oF Frame (ignored)
-#define RXDB_FLAG_IC		__BIT(29)	// Interupt on Completetion
+#define RXDB_FLAG_IC		__BIT(29)	// Interrupt on Completion
 #define RXDB_FLAG_ET		__BIT(28)	// End Of Table
 
 #define RXSTS_FRAMELEN		__BITS(15,0)	// # of bytes (including padding)
