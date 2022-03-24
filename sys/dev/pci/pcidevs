@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1450 2022/03/16 05:20:11 yamaguchi Exp $
+$NetBSD: pcidevs,v 1.1451 2022/03/24 08:44:04 yamaguchi Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4268,7 +4268,7 @@ product INTEL I219_LM14		0x15f9	I219-LM (14) Ethernet Connection
 product INTEL I219_V14		0x15fa	I219-V (14) Ethernet Connection
 product INTEL I219_LM13		0x15fb	I219-LM (13) Ethernet Connection
 product INTEL I219_V13		0x15fc	I219-V (13) Ethernet Connection
-product INTEL X710_10G_T_2	0x15ff	X710 10GbE Ethernet
+product INTEL X710_10G_T_2	0x15ff	X710 10GBaseT Ethernet
 product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
 product INTEL CORE5G_M_GT1	0x1606	HD Graphics (GT1)
 product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
