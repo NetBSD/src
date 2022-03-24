@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.73 2022/03/24 07:51:14 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.74 2022/03/24 07:57:10 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.73 2022/03/24 07:51:14 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.74 2022/03/24 07:57:10 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.73 2022/03/24 07:51:14 yamaguchi Exp 
 #include <dev/pci/virtiovar.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
@@ -157,6 +158,7 @@ struct virtio_net_ctrl_cmd {
 
 #define VIRTIO_NET_CTRL_MAC		1
 # define VIRTIO_NET_CTRL_MAC_TABLE_SET	0
+# define  VIRTIO_NET_CTRL_MAC_ADDR_SET	1
 
 #define VIRTIO_NET_CTRL_VLAN		2
 # define VIRTIO_NET_CTRL_VLAN_ADD	0
@@ -180,6 +182,10 @@ struct virtio_net_ctrl_rx {
 struct virtio_net_ctrl_mac_tbl {
 	uint32_t nentries;
 	uint8_t macs[][ETHER_ADDR_LEN];
+} __packed;
+
+struct virtio_net_ctrl_mac_addr {
+	uint8_t mac[ETHER_ADDR_LEN];
 } __packed;
 
 struct virtio_net_ctrl_vlan {
@@ -281,6 +287,7 @@ struct vioif_ctrlqueue {
 	struct virtio_net_ctrl_rx	*ctrlq_rx;
 	struct virtio_net_ctrl_mac_tbl	*ctrlq_mac_tbl_uc;
 	struct virtio_net_ctrl_mac_tbl	*ctrlq_mac_tbl_mc;
+	struct virtio_net_ctrl_mac_addr	*ctrlq_mac_addr;
 	struct virtio_net_ctrl_mq	*ctrlq_mq;
 
 	bus_dmamap_t			ctrlq_cmd_dmamap;
@@ -288,6 +295,7 @@ struct vioif_ctrlqueue {
 	bus_dmamap_t			ctrlq_rx_dmamap;
 	bus_dmamap_t			ctrlq_tbl_uc_dmamap;
 	bus_dmamap_t			ctrlq_tbl_mc_dmamap;
+	bus_dmamap_t			ctrlq_mac_addr_dmamap;
 	bus_dmamap_t			ctrlq_mq_dmamap;
 
 	struct evcnt			ctrlq_cmd_load_failed;
@@ -399,6 +407,7 @@ static int	vioif_set_promisc(struct vioif_softc *, bool);
 static int	vioif_set_allmulti(struct vioif_softc *, bool);
 static int	vioif_set_rx_filter(struct vioif_softc *);
 static int	vioif_rx_filter(struct vioif_softc *);
+static int	vioif_set_mac_addr(struct vioif_softc *);
 static int	vioif_ctrl_intr(void *);
 static int	vioif_config_change(struct virtio_softc *);
 static void	vioif_ctl_softint(void *);
@@ -579,13 +588,15 @@ vioif_alloc_mems(struct vioif_softc *sc)
 			(rxq->rxq_vq->vq_num + txq->txq_vq->vq_num);
 	}
 	if (sc->sc_has_ctrl) {
-		allocsize += sizeof(struct virtio_net_ctrl_cmd) * 1;
-		allocsize += sizeof(struct virtio_net_ctrl_status) * 1;
-		allocsize += sizeof(struct virtio_net_ctrl_rx) * 1;
+		allocsize += sizeof(struct virtio_net_ctrl_cmd);
+		allocsize += sizeof(struct virtio_net_ctrl_status);
+		allocsize += sizeof(struct virtio_net_ctrl_rx);
 		allocsize += sizeof(struct virtio_net_ctrl_mac_tbl)
-		    + sizeof(struct virtio_net_ctrl_mac_tbl)
+		    + ETHER_ADDR_LEN;
+		allocsize += sizeof(struct virtio_net_ctrl_mac_tbl)
 		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES;
-		allocsize += sizeof(struct virtio_net_ctrl_mq) * 1;
+		allocsize += sizeof(struct virtio_net_ctrl_mac_addr);
+		allocsize += sizeof(struct virtio_net_ctrl_mq);
 	}
 	r = bus_dmamem_alloc(virtio_dmat(vsc), allocsize, 0, 0,
 	    &sc->sc_hdr_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
@@ -624,10 +635,13 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		ctrlq->ctrlq_rx = vioif_assign_mem(&p,
 		    sizeof(*ctrlq->ctrlq_rx));
 		ctrlq->ctrlq_mac_tbl_uc = vioif_assign_mem(&p,
-		    sizeof(*ctrlq->ctrlq_mac_tbl_uc));
+		    sizeof(*ctrlq->ctrlq_mac_tbl_uc)
+		    + ETHER_ADDR_LEN);
 		ctrlq->ctrlq_mac_tbl_mc = vioif_assign_mem(&p,
 		    sizeof(*ctrlq->ctrlq_mac_tbl_mc)
 		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES);
+		ctrlq->ctrlq_mac_addr = vioif_assign_mem(&p,
+		    sizeof(*ctrlq->ctrlq_mac_addr));
 		ctrlq->ctrlq_mq = vioif_assign_mem(&p, sizeof(*ctrlq->ctrlq_mq));
 	}
 
@@ -735,7 +749,8 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		/* control vq MAC filter table for unicast */
 		/* do not load now since its length is variable */
 		r = vioif_dmamap_create(sc, &ctrlq->ctrlq_tbl_uc_dmamap,
-		    sizeof(*ctrlq->ctrlq_mac_tbl_uc) + 0, 1,
+		    sizeof(*ctrlq->ctrlq_mac_tbl_uc)
+		    + ETHER_ADDR_LEN, 1,
 		    "unicast MAC address filter command");
 		if (r != 0)
 			goto err_reqs;
@@ -745,6 +760,15 @@ vioif_alloc_mems(struct vioif_softc *sc)
 		    sizeof(*ctrlq->ctrlq_mac_tbl_mc)
 		    + ETHER_ADDR_LEN * VIRTIO_NET_CTRL_MAC_MAXENTRIES, 1,
 		    "multicast MAC address filter command");
+		if (r != 0)
+			goto err_reqs;
+
+		/* control vq MAC address set command */
+		r = vioif_dmamap_create_load(sc,
+		    &ctrlq->ctrlq_mac_addr_dmamap,
+		    ctrlq->ctrlq_mac_addr,
+		    sizeof(*ctrlq->ctrlq_mac_addr), 1,
+		    BUS_DMA_WRITE, "mac addr set command");
 		if (r != 0)
 			goto err_reqs;
 	}
@@ -757,6 +781,7 @@ err_reqs:
 	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_rx_dmamap);
 	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_status_dmamap);
 	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_cmd_dmamap);
+	vioif_dmamap_destroy(sc, &ctrlq->ctrlq_mac_addr_dmamap);
 	for (qid = 0; qid < sc->sc_max_nvq_pairs; qid++) {
 		rxq = &sc->sc_rxq[qid];
 		txq = &sc->sc_txq[qid];
@@ -2169,6 +2194,35 @@ out:
 }
 
 static int
+vioif_set_mac_addr(struct vioif_softc *sc)
+{
+	struct virtio_net_ctrl_mac_addr *ma =
+	    sc->sc_ctrlq.ctrlq_mac_addr;
+	struct vioif_ctrl_cmdspec specs[1];
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int nspecs = __arraycount(specs);
+	int r;
+
+	if (!sc->sc_has_ctrl)
+		return ENOTSUP;
+
+	vioif_ctrl_acquire(sc);
+
+	memcpy(ma->mac, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+	specs[0].dmamap = sc->sc_ctrlq.ctrlq_mac_addr_dmamap;
+	specs[0].buf = ma;
+	specs[0].bufsize = sizeof(*ma);
+
+	r = vioif_ctrl_send_command(sc,
+	    VIRTIO_NET_CTRL_MAC, VIRTIO_NET_CTRL_MAC_ADDR_SET,
+	    specs, nspecs);
+
+	vioif_ctrl_release(sc);
+
+	return r;
+}
+
+static int
 vioif_ctrl_mq_vq_pairs_set(struct vioif_softc *sc, int nvq_pairs)
 {
 	struct virtio_net_ctrl_mq *mq = sc->sc_ctrlq.ctrlq_mq;
@@ -2254,6 +2308,9 @@ vioif_rx_filter(struct vioif_softc *sc)
 		goto set;
 	}
 
+	memcpy(ctrlq->ctrlq_mac_tbl_uc->macs[0],
+	    CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+
 	nentries = -1;
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
@@ -2276,8 +2333,14 @@ set_unlock:
 	ETHER_UNLOCK(ec);
 
 set:
+	r = vioif_set_mac_addr(sc);
+	if (r != 0) {
+		log(LOG_WARNING, "%s: couldn't set MAC address\n",
+		    ifp->if_xname);
+	}
+
 	if (rxfilter) {
-		ctrlq->ctrlq_mac_tbl_uc->nentries = virtio_rw32(vsc, 0);
+		ctrlq->ctrlq_mac_tbl_uc->nentries = virtio_rw32(vsc, 1);
 		ctrlq->ctrlq_mac_tbl_mc->nentries = virtio_rw32(vsc, nentries);
 		r = vioif_set_rx_filter(sc);
 		if (r != 0) {
