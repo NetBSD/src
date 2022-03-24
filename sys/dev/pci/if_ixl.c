@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.78 2022/03/16 05:26:37 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.79 2022/03/24 08:54:16 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.78 2022/03/16 05:26:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.79 2022/03/24 08:54:16 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -970,6 +970,7 @@ static const struct ixl_product ixl_products[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X722_I_SFP },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_10G_SFP },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_10G_BP },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_V710_5G_T},
 	/* required last entry */
 	{0, 0}
 };
