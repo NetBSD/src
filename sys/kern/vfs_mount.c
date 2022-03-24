@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.90 2022/03/19 13:50:28 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.91 2022/03/24 12:59:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.90 2022/03/19 13:50:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.91 2022/03/24 12:59:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1246,7 +1246,9 @@ vfs_mountroot(void)
 
 done:
 	if (error && device_class(root_device) == DV_DISK) {
+		vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
 		VOP_CLOSE(rootvp, FREAD, FSCRED);
+		VOP_UNLOCK(rootvp);
 		vrele(rootvp);
 	}
 	if (error == 0) {
