@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.c,v 1.6 2013/11/24 14:49:00 martin Exp $	*/
+/*	$NetBSD: n_cbrt.c,v 1.7 2022/03/24 12:12:00 andvar Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)cbrt.c	8.1 (Berkeley) 6/4/93";
  *
  * Warning: this code is semi machine dependent; the ordering of words in
  * a floating point number must be known in advance. I assume that the
- * long interger at the address of a floating point number will be the
+ * long integer at the address of a floating point number will be the
  * leading 32 bits of that floating point number (i.e., sign, exponent,
  * and the 20 most significant bits).
  * On a National machine, it has different ordering; therefore, this code
