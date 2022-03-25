@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.18 2021/10/06 10:13:19 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.19 2022/03/25 21:23:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -131,3 +131,7 @@ char *gettrailer(char *);
 void docommand(char *);
 char awaitkey(int, int);
 __dead void bootprompt(void);
+
+/* userconf.c */
+void userconf_add(const char *);
+void userconf_foreach(void (*)(const char *));

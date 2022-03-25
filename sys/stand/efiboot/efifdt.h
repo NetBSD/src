@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.h,v 1.11 2021/10/06 10:13:19 jmcneill Exp $ */
+/* $NetBSD: efifdt.h,v 1.12 2022/03/25 21:23:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -44,6 +44,7 @@ void efi_fdt_initrd(u_long, u_long);
 void efi_fdt_rndseed(u_long, u_long);
 void efi_fdt_efirng(u_long, u_long);
 void efi_fdt_module(const char *, u_long, u_long);
+void efi_fdt_userconf(void);
 void efi_fdt_init(u_long, u_long);
 void efi_fdt_fini(void);
 void efi_fdt_system_table(void);
