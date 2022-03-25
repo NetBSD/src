@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.68 2022/01/16 20:43:20 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.69 2022/03/25 08:57:50 hannken Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.68 2022/01/16 20:43:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.69 2022/03/25 08:57:50 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1707,6 +1707,10 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 	wgs->wgs_state = WGS_STATE_INIT_ACTIVE;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
+	if (sizeof(*wgmi) > MHLEN) {
+		m_clget(m, M_WAIT);
+		CTASSERT(sizeof(*wgmi) <= MCLBYTES);
+	}
 	m->m_pkthdr.len = m->m_len = sizeof(*wgmi);
 	wgmi = mtod(m, struct wg_msg_init *);
 	wg_fill_msg_init(wg, wgp, wgs, wgmi);
@@ -2056,6 +2060,10 @@ wg_send_handshake_msg_resp(struct wg_softc *wg, struct wg_peer *wgp,
 	KASSERT(wgs->wgs_state == WGS_STATE_INIT_PASSIVE);
 
 	m = m_gethdr(M_WAIT, MT_DATA);
+	if (sizeof(*wgmr) > MHLEN) {
+		m_clget(m, M_WAIT);
+		CTASSERT(sizeof(*wgmr) <= MCLBYTES);
+	}
 	m->m_pkthdr.len = m->m_len = sizeof(*wgmr);
 	wgmr = mtod(m, struct wg_msg_resp *);
 	wg_fill_msg_resp(wg, wgp, wgs, wgmr, wgmi);
@@ -2154,6 +2162,10 @@ wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
 	KASSERT(mutex_owned(wgp->wgp_lock));
 
 	m = m_gethdr(M_WAIT, MT_DATA);
+	if (sizeof(*wgmc) > MHLEN) {
+		m_clget(m, M_WAIT);
+		CTASSERT(sizeof(*wgmc) <= MCLBYTES);
+	}
 	m->m_pkthdr.len = m->m_len = sizeof(*wgmc);
 	wgmc = mtod(m, struct wg_msg_cookie *);
 	wg_fill_msg_cookie(wg, wgp, wgmc, sender, mac1, src);
