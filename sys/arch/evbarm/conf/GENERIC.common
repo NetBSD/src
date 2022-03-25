@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.47 2021/06/26 09:29:14 nia Exp $
+#	$NetBSD: GENERIC.common,v 1.48 2022/03/25 21:24:20 jmcneill Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -95,7 +95,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	MIIVERBOSE		# Verbose MII autoconfuration messages
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Wedge support
