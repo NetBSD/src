@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.300 2022/03/19 13:53:32 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.301 2022/03/25 08:56:36 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -221,8 +221,8 @@ typedef struct vnode vnode_t;
 #define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
 
 #define	VNODE_FLAGBITS \
-    "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
-    "\13WRMAP\14PAGES\17ONWORKLST\18DEADCHECK\31DIROP"
+    "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\11TEXT\12EXECMAP" \
+    "\13WRMAP\14PAGES\17ONWORKLST\20DEADCHECK\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
