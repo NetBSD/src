@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.667 2022/03/03 19:55:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.668 2022/03/25 21:16:04 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.667 2022/03/03 19:55:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.668 2022/03/25 21:16:04 sjg Exp $");
 
 /*
  * A file being read.
@@ -1115,6 +1115,121 @@ ClearPaths(SearchPathList *paths)
 	Dir_SetPATH();
 }
 
+/*
+ * Handle one of the .[-ds]include directives by remembering the current file
+ * and pushing the included file on the stack.  After the included file has
+ * finished, parsing continues with the including file; see Parse_PushInput
+ * and ParseEOF.
+ *
+ * System includes are looked up in sysIncPath, any other includes are looked
+ * up in the parsedir and then in the directories specified by the -I command
+ * line options.
+ */
+static void
+IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
+{
+	Buffer buf;
+	char *fullname;		/* full pathname of file */
+	char *newName;
+	char *slash, *incdir;
+	int fd;
+	int i;
+
+	fullname = file[0] == '/' ? bmake_strdup(file) : NULL;
+
+	if (fullname == NULL && !isSystem) {
+		/*
+		 * Include files contained in double-quotes are first searched
+		 * relative to the including file's location. We don't want to
+		 * cd there, of course, so we just tack on the old file's
+		 * leading path components and call Dir_FindFile to see if
+		 * we can locate the file.
+		 */
+
+		incdir = bmake_strdup(CurFile()->name.str);
+		slash = strrchr(incdir, '/');
+		if (slash != NULL) {
+			*slash = '\0';
+			/*
+			 * Now do lexical processing of leading "../" on the
+			 * filename.
+			 */
+			for (i = 0; strncmp(file + i, "../", 3) == 0; i += 3) {
+				slash = strrchr(incdir + 1, '/');
+				if (slash == NULL || strcmp(slash, "/..") == 0)
+					break;
+				*slash = '\0';
+			}
+			newName = str_concat3(incdir, "/", file + i);
+			fullname = Dir_FindFile(newName, parseIncPath);
+			if (fullname == NULL)
+				fullname = Dir_FindFile(newName,
+				    &dirSearchPath);
+			free(newName);
+		}
+		free(incdir);
+
+		if (fullname == NULL) {
+			/*
+			 * Makefile wasn't found in same directory as included
+			 * makefile.
+			 *
+			 * Search for it first on the -I search path, then on
+			 * the .PATH search path, if not found in a -I
+			 * directory. If we have a suffix-specific path, we
+			 * should use that.
+			 */
+			const char *suff;
+			SearchPath *suffPath = NULL;
+
+			if ((suff = strrchr(file, '.')) != NULL) {
+				suffPath = Suff_GetPath(suff);
+				if (suffPath != NULL)
+					fullname = Dir_FindFile(file, suffPath);
+			}
+			if (fullname == NULL) {
+				fullname = Dir_FindFile(file, parseIncPath);
+				if (fullname == NULL)
+					fullname = Dir_FindFile(file,
+					    &dirSearchPath);
+			}
+		}
+	}
+
+	/* Looking for a system file or file still not found */
+	if (fullname == NULL) {
+		/*
+		 * Look for it on the system path
+		 */
+		SearchPath *path = Lst_IsEmpty(&sysIncPath->dirs)
+		    ? defSysIncPath : sysIncPath;
+		fullname = Dir_FindFile(file, path);
+	}
+
+	if (fullname == NULL) {
+		if (!silent)
+			Parse_Error(PARSE_FATAL, "Could not find %s", file);
+		return;
+	}
+
+	/* Actually open the file... */
+	fd = open(fullname, O_RDONLY);
+	if (fd == -1) {
+		if (!silent)
+			Parse_Error(PARSE_FATAL, "Cannot open %s", fullname);
+		free(fullname);
+		return;
+	}
+
+	buf = loadfile(fullname, fd);
+	(void)close(fd);
+
+	Parse_PushInput(fullname, 1, 0, buf, NULL);
+	if (depinc)
+		doing_depend = depinc;	/* only turn it on */
+	free(fullname);
+}
+
 /* Handle a "dependency" line like '.SPECIAL:' without any sources. */
 static void
 HandleDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
@@ -1138,6 +1253,23 @@ HandleDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
 #ifdef POSIX
 	case SP_POSIX:
 		Global_Set("%POSIX", "1003.2");
+		{
+			static bool first_posix = true;
+
+			/*
+			 * Since .POSIX: should be the first
+			 * operative line in a makefile,
+			 * if '-r' flag is used, no default rules have
+			 * been read yet, in which case 'posix.mk' can
+			 * be a substiute for 'sys.mk'.
+			 * If '-r' is not used, then 'posix.mk' acts
+			 * as an extension of 'sys.mk'.
+			 */
+			if (first_posix) {
+				first_posix = false;
+				IncludeFile("posix.mk", true, false, true);
+			}
+		}
 		break;
 #endif
 	default:
@@ -1823,120 +1955,6 @@ Parse_AddIncludeDir(const char *dir)
 	(void)SearchPath_Add(parseIncPath, dir);
 }
 
-/*
- * Handle one of the .[-ds]include directives by remembering the current file
- * and pushing the included file on the stack.  After the included file has
- * finished, parsing continues with the including file; see Parse_PushInput
- * and ParseEOF.
- *
- * System includes are looked up in sysIncPath, any other includes are looked
- * up in the parsedir and then in the directories specified by the -I command
- * line options.
- */
-static void
-IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
-{
-	Buffer buf;
-	char *fullname;		/* full pathname of file */
-	char *newName;
-	char *slash, *incdir;
-	int fd;
-	int i;
-
-	fullname = file[0] == '/' ? bmake_strdup(file) : NULL;
-
-	if (fullname == NULL && !isSystem) {
-		/*
-		 * Include files contained in double-quotes are first searched
-		 * relative to the including file's location. We don't want to
-		 * cd there, of course, so we just tack on the old file's
-		 * leading path components and call Dir_FindFile to see if
-		 * we can locate the file.
-		 */
-
-		incdir = bmake_strdup(CurFile()->name.str);
-		slash = strrchr(incdir, '/');
-		if (slash != NULL) {
-			*slash = '\0';
-			/*
-			 * Now do lexical processing of leading "../" on the
-			 * filename.
-			 */
-			for (i = 0; strncmp(file + i, "../", 3) == 0; i += 3) {
-				slash = strrchr(incdir + 1, '/');
-				if (slash == NULL || strcmp(slash, "/..") == 0)
-					break;
-				*slash = '\0';
-			}
-			newName = str_concat3(incdir, "/", file + i);
-			fullname = Dir_FindFile(newName, parseIncPath);
-			if (fullname == NULL)
-				fullname = Dir_FindFile(newName,
-				    &dirSearchPath);
-			free(newName);
-		}
-		free(incdir);
-
-		if (fullname == NULL) {
-			/*
-			 * Makefile wasn't found in same directory as included
-			 * makefile.
-			 *
-			 * Search for it first on the -I search path, then on
-			 * the .PATH search path, if not found in a -I
-			 * directory. If we have a suffix-specific path, we
-			 * should use that.
-			 */
-			const char *suff;
-			SearchPath *suffPath = NULL;
-
-			if ((suff = strrchr(file, '.')) != NULL) {
-				suffPath = Suff_GetPath(suff);
-				if (suffPath != NULL)
-					fullname = Dir_FindFile(file, suffPath);
-			}
-			if (fullname == NULL) {
-				fullname = Dir_FindFile(file, parseIncPath);
-				if (fullname == NULL)
-					fullname = Dir_FindFile(file,
-					    &dirSearchPath);
-			}
-		}
-	}
-
-	/* Looking for a system file or file still not found */
-	if (fullname == NULL) {
-		/*
-		 * Look for it on the system path
-		 */
-		SearchPath *path = Lst_IsEmpty(&sysIncPath->dirs)
-		    ? defSysIncPath : sysIncPath;
-		fullname = Dir_FindFile(file, path);
-	}
-
-	if (fullname == NULL) {
-		if (!silent)
-			Parse_Error(PARSE_FATAL, "Could not find %s", file);
-		return;
-	}
-
-	/* Actually open the file... */
-	fd = open(fullname, O_RDONLY);
-	if (fd == -1) {
-		if (!silent)
-			Parse_Error(PARSE_FATAL, "Cannot open %s", fullname);
-		free(fullname);
-		return;
-	}
-
-	buf = loadfile(fullname, fd);
-	(void)close(fd);
-
-	Parse_PushInput(fullname, 1, 0, buf, NULL);
-	if (depinc)
-		doing_depend = depinc;	/* only turn it on */
-	free(fullname);
-}
 
 /*
  * Parse a directive like '.include' or '.-include'.
