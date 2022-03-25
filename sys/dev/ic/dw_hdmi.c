@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.9 2021/12/19 11:01:11 riastradh Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.10 2022/03/25 23:16:04 tnn Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.9 2021/12/19 11:01:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.10 2022/03/25 23:16:04 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.9 2021/12/19 11:01:11 riastradh Exp $"
 
 #include <dev/audio/audio_dai.h>
 
+#include <drm/drm_atomic_state_helper.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_drv.h>
@@ -570,6 +571,9 @@ static const struct drm_connector_funcs dwhdmi_connector_funcs = {
 	.detect = dwhdmi_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = dwhdmi_connector_destroy,
+	.reset = drm_atomic_helper_connector_reset,
+	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
 static int
