@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.63 2022/03/04 08:19:06 skrll Exp $
+# $NetBSD: files.fdt,v 1.64 2022/03/25 21:23:51 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -12,6 +12,8 @@ define	fdt { [pass = 10] } : clk, pwm
 device	simplebus: fdt
 attach	simplebus at fdt
 file	dev/fdt/fdtbus.c			fdt
+
+file	dev/fdt/fdt_userconf.c			fdt & userconf
 
 device	fregulator
 attach	fregulator at fdt
