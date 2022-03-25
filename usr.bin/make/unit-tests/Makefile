@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.309 2022/02/12 13:17:57 rillig Exp $
+# $NetBSD: Makefile,v 1.310 2022/03/25 22:38:39 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -485,9 +485,8 @@ FLAGS.jobs-error-nested-make=	# none, especially not -k
 FLAGS.varname-empty=		-dv '$${:U}=cmdline-u' '=cmdline-plain'
 
 # Some tests need extra postprocessing.
-SED_CMDS.dir=		${:D remove output from -DCLEANUP mode }
-SED_CMDS.dir+=		-e '/^OpenDirs_Done:/d'
-SED_CMDS.dir+=		-e '/^CachedDir /d'
+SED_CMDS.deptgt-phony=	${STD_SED_CMDS.dd}
+SED_CMDS.dir=		${STD_SED_CMDS.dd}
 SED_CMDS.export=	-e '/^[^=_A-Za-z0-9]*=/d'
 SED_CMDS.export-all=	${SED_CMDS.export}
 SED_CMDS.export-env=	${SED_CMDS.export}
@@ -551,6 +550,11 @@ unexport-env.rawout: export.mk
 # End of the configuration section.
 
 # Some standard sed commands, to be used in the SED_CMDS above.
+
+# In tests that use the debugging option -dd, ignore debugging output that is
+# only logged in -DCLEANUP mode.
+STD_SED_CMDS.dd=		-e '/^OpenDirs_Done:/d'
+STD_SED_CMDS.dd+=		-e '/^CachedDir /d'
 
 # Omit details such as process IDs from the output of the -dg1 option.
 STD_SED_CMDS.dg1=	-e 's,${.CURDIR}$$,<curdir>,'
