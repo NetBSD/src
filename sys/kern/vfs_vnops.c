@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.226 2022/03/19 13:50:02 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.227 2022/03/25 08:57:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.226 2022/03/19 13:50:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.227 2022/03/25 08:57:15 hannken Exp $");
 
 #include "veriexec.h"
 
@@ -1192,9 +1192,7 @@ vn_lock(struct vnode *vp, int flags)
 	struct lwp *l;
 	int error;
 
-#if 0
-	KASSERT(vrefcnt(vp) > 0 || (vp->v_iflag & VI_ONWORKLST) != 0);
-#endif
+	KASSERT(vrefcnt(vp) > 0);
 	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
 	    LK_UPGRADE|LK_DOWNGRADE)) == 0);
 	KASSERT((flags & LK_NOWAIT) != 0 || !mutex_owned(vp->v_interlock));
@@ -1210,13 +1208,23 @@ vn_lock(struct vnode *vp, int flags)
 	l->l_rwcallsite = (uintptr_t)__builtin_return_address(0);	
 
 	error = VOP_LOCK(vp, flags);
-	if ((flags & LK_RETRY) != 0 && error == ENOENT)
-		error = VOP_LOCK(vp, flags);
 
 	l->l_rwcallsite = 0;
 
-	KASSERT((flags & LK_RETRY) == 0 || (flags & LK_NOWAIT) != 0 ||
-	    error == 0);
+	switch (flags & (LK_RETRY | LK_NOWAIT)) {
+	case 0:
+		KASSERT(error == 0 || error == ENOENT);
+		break;
+	case LK_RETRY:
+		KASSERT(error == 0);
+		break;
+	case LK_NOWAIT:
+		KASSERT(error == 0 || error == EBUSY || error == ENOENT);
+		break;
+	case LK_RETRY | LK_NOWAIT:
+		KASSERT(error == 0 || error == EBUSY);
+		break;
+	}
 
 	return error;
 }
