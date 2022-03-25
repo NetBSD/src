@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.42 2021/11/04 07:28:34 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.43 2022/03/25 21:23:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -114,6 +114,7 @@ void	command_mem(char *);
 void	command_menu(char *);
 void	command_reset(char *);
 void	command_setup(char *);
+void	command_userconf(char *);
 void	command_version(char *);
 void	command_quit(char *);
 
@@ -141,6 +142,7 @@ const struct boot_command commands[] = {
 	{ "reboot",	command_reset,		"reboot|reset" },
 	{ "reset",	command_reset,		NULL },
 	{ "setup",	command_setup,		"setup" },
+	{ "userconf",	command_userconf,	"userconf <command>" },
 	{ "version",	command_version,	"version" },
 	{ "ver",	command_version,	NULL },
 	{ "help",	command_help,		"help|?" },
@@ -448,6 +450,12 @@ command_setup(char *arg)
 	}
 
 	efi_reboot();
+}
+
+void
+command_userconf(char *arg)
+{
+	userconf_add(arg);
 }
 
 int

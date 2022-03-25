@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.25 2021/10/17 14:12:54 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.26 2022/03/25 21:23:00 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -22,7 +22,7 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 .PATH: ${EFIDIR}/gnuefi
 SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
 SOURCES+=	boot.c bootmenu.c conf.c console.c dev_net.c devopen.c exec.c \
-		module.c panic.c prompt.c
+		module.c panic.c prompt.c userconf.c
 SOURCES+=	efiboot.c efichar.c efidev.c efigetsecs.c \
 		efifile.c efiblock.c efinet.c efipxe.c efirng.c \
 		efiwatchdog.c efigop.c smbios.c

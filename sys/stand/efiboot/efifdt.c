@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.33 2021/11/06 19:44:22 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.34 2022/03/25 21:23:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -442,6 +442,20 @@ efi_fdt_bootargs(const char *bootargs)
 	}
 }
 
+static void
+efi_fdt_userconf_addprop(const char *cmd)
+{
+	const int chosen = efi_fdt_chosen();
+
+	fdt_appendprop_string(fdt_data, chosen, "netbsd,userconf", cmd);
+}
+
+void
+efi_fdt_userconf(void)
+{
+	userconf_foreach(efi_fdt_userconf_addprop);
+}
+
 void
 efi_fdt_initrd(u_long initrd_addr, u_long initrd_size)
 {
@@ -615,6 +629,7 @@ arch_prepare_boot(const char *fname, const char *args, u_long *marks)
 		efi_fdt_rndseed(rndseed_addr, rndseed_size);
 		efi_fdt_efirng(efirng_addr, efirng_size);
 		efi_fdt_bootargs(args);
+		efi_fdt_userconf();
 		efi_fdt_system_table();
 		efi_fdt_gop();
 		efi_fdt_memory_map();
