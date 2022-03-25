@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.132 2022/03/25 19:25:23 rillig Exp $	*/
+/*	$NetBSD: localtime.c,v 1.133 2022/03/25 19:34:04 rillig Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.132 2022/03/25 19:25:23 rillig Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.133 2022/03/25 19:34:04 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1555,11 +1555,8 @@ tzalloc(char const *name)
       errno = err;
       return NULL;
     }
-  }
-#if !HAVE_MALLOC_ERRNO
-  } else
+  } else if (!HAVE_MALLOC_ERRNO)
     errno = ENOMEM;
-#endif
   return sp;
 }
 
