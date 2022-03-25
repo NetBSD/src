@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.131 2022/03/25 19:00:15 rillig Exp $	*/
+/*	$NetBSD: localtime.c,v 1.132 2022/03/25 19:25:23 rillig Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.131 2022/03/25 19:00:15 rillig Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.132 2022/03/25 19:25:23 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -336,7 +336,7 @@ tzgetgmtoff(const timezone_t sp, int isdst)
 }
 
 static void
-update_tzname_etc(const struct state *sp, const struct ttinfo *ttisp)
+update_tzname_etc(struct state const *sp, struct ttinfo const *ttisp)
 {
 #if HAVE_TZNAME
   tzname[ttisp->tt_isdst] = __UNCONST(&sp->chars[ttisp->tt_desigidx]);
@@ -348,7 +348,7 @@ update_tzname_etc(const struct state *sp, const struct ttinfo *ttisp)
 #if ALTZONE
   if (ttisp->tt_isdst)
     altzone = - ttisp->tt_utoff;
-#endif /* ALTZONE */
+#endif
 }
 
 static void
@@ -488,7 +488,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 		/* Set doaccess if NAME contains a ".." file name
 		   component, as such a name could read a file outside
 		   the TZDIR virtual subtree.  */
-		for (dot = name; (dot = strchr(dot, '.')) != NULL; dot++)
+		for (dot = name; (dot = strchr(dot, '.')); dot++)
 		  if ((dot == name || dot[-1] == '/') && dot[1] == '.'
 		      && (dot[2] == '/' || !dot[2])) {
 		    doaccess = true;
@@ -1280,7 +1280,7 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 			} while (atlo < janfirst
 				 && EPOCH_YEAR - YEARSPERREPEAT / 2 < yearbeg);
 
-			for (;;) {
+			while (true) {
 			  int_fast32_t yearsecs
 			    = year_lengths[isleap(yearbeg)] * SECSPERDAY;
 			  int yearbeg1 = yearbeg;
@@ -1487,7 +1487,8 @@ tzsetlcl(char const *name)
 {
   struct state *sp = __lclptr;
   int lcl = name ? strlen(name) < sizeof lcl_TZname : -1;
-  if (lcl < 0 ? lcl_is_set < 0
+  if (lcl < 0
+      ? lcl_is_set < 0
       : 0 < lcl_is_set && strcmp(lcl_TZname, name) == 0)
     return;
 
@@ -1544,7 +1545,7 @@ gmtcheck(void)
 #if NETBSD_INSPIRED
 
 timezone_t
-tzalloc(const char *name)
+tzalloc(char const *name)
 {
   timezone_t sp = malloc(sizeof *sp);
   if (sp) {
@@ -1723,7 +1724,7 @@ localtime_r(const time_t * __restrict timep, struct tm *tmp)
 */
 
 static struct tm *
-gmtsub(struct state const *sp, const time_t *timep, int_fast32_t offset,
+gmtsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
        struct tm *tmp)
 {
 	register struct tm *	result;
@@ -1820,6 +1821,7 @@ time(time_t *p)
 ** Return the number of leap years through the end of the given year
 ** where, to make the math easy, the answer for year zero is defined as zero.
 */
+
 static time_t
 leaps_thru_end_of_nonneg(time_t y)
 {
@@ -1827,7 +1829,7 @@ leaps_thru_end_of_nonneg(time_t y)
 }
 
 static time_t
-leaps_thru_end_of(const time_t y)
+leaps_thru_end_of(time_t y)
 {
   return (y < 0
 	  ? -1 - leaps_thru_end_of_nonneg(-1 - y)
@@ -2091,7 +2093,7 @@ time2sub(struct tm *const tmp,
 	register time_t			lo;
 	register time_t			hi;
 #ifdef NO_ERROR_IN_DST_GAP
-	time_t			ilo;
+	time_t				ilo;
 #endif
 	int_fast32_t			y;
 	time_t				newt;
@@ -2495,12 +2497,19 @@ leapcorr(struct state const *sp, time_t t)
 
 /* NETBSD_INSPIRED_EXTERN functions are exported to callers if
    NETBSD_INSPIRED is defined, and are private otherwise.  */
-#if NETBSD_INSPIRED
-# define NETBSD_INSPIRED_EXTERN
-#else
-# define NETBSD_INSPIRED_EXTERN static
-#endif
+# if NETBSD_INSPIRED
+#  define NETBSD_INSPIRED_EXTERN
+# else
+#  define NETBSD_INSPIRED_EXTERN static
+# endif
 
+/*
+** IEEE Std 1003.1 (POSIX) says that 536457599
+** shall correspond to "Wed Dec 31 23:59:59 UTC 1986", which
+** is not the case if we are accounting for leap seconds.
+** So, we provide the following conversion routines for use
+** when exchanging timestamps with POSIX conforming systems.
+*/
 
 NETBSD_INSPIRED_EXTERN time_t
 time2posix_z(timezone_t sp, time_t t)
@@ -2525,14 +2534,6 @@ time2posix(time_t t)
 */
 
 #ifdef STD_INSPIRED
-
-/*
-** IEEE Std 1003.1 (POSIX) says that 536457599
-** shall correspond to "Wed Dec 31 23:59:59 UTC 1986", which
-** is not the case if we are accounting for leap seconds.
-** So, we provide the following conversion routines for use
-** when exchanging timestamps with POSIX conforming systems.
-*/
 
 NETBSD_INSPIRED_EXTERN time_t
 posix2time_z(timezone_t sp, time_t t)
