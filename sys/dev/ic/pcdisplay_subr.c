@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.35 2010/10/19 22:27:19 jmcneill Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.36 2022/03/25 12:24:44 uwe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.35 2010/10/19 22:27:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.36 2022/03/25 12:24:44 uwe Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -306,7 +306,7 @@ pcdisplay_getwschar(struct pcdisplayscreen *scr, struct wsdisplay_char *wschar)
 
 	off = wschar->row * scr->type->ncols + wschar->col;
 	if (off >= scr->type->ncols * scr->type->nrows)
-		return -1;
+		return EINVAL;
 
 	if (scr->active)
 		chardata = bus_space_read_2(scr->hdl->ph_memt,
@@ -336,7 +336,7 @@ pcdisplay_putwschar(struct pcdisplayscreen *scr, struct wsdisplay_char *wschar)
 
 	off = wschar->row * scr->type->ncols + wschar->col;
 	if (off >= (scr->type->ncols * scr->type->nrows))
-		return -1;
+		return EINVAL;
 
 	attrbyte = wschar->background & 0x07;
 	if (wschar->flags & WSDISPLAY_CHAR_BLINK) attrbyte |= 0x08;
