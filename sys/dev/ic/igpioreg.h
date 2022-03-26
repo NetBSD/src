@@ -1,4 +1,4 @@
-/* $NetBSD: igpioreg.h,v 1.1 2022/03/24 02:24:25 manu Exp $ */
+/* $NetBSD: igpioreg.h,v 1.2 2022/03/26 19:35:35 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021 Emmanuel Dreyfus
@@ -201,7 +201,7 @@ struct igpio_bank_setup igpio_bank_setup[] = {
         { "INTC3001",    1, 168, 236, 0x200, 0x230 },
 
 	/* Geminilake */
-	{ "INT3453",     0,   0,  34, 0x100, 0x110 }, 
+	{ "INT3453",     0,   0,  34, 0x100, 0x110 },
 
 #ifdef notyet
 	/*
@@ -211,7 +211,7 @@ struct igpio_bank_setup igpio_bank_setup[] = {
 	{ "apollolake-pinctrl", 0,   0,   0, 0x100, 0x110 },
 	{ "broxton-pinctrl",    0,   0,   0, 0x100, 0x110 },
 	{ "INT34D1",     0,   0,    0, 0x100, 0x110 },
-	{ "INT3452",     0,   0,    0, 0x100, 0x110 }, 
+	{ "INT3452",     0,   0,    0, 0x100, 0x110 },
 
 	/* Cherryview */
 	{ "INT33FF",     0,   0,    0, 0x000, 0x000 },
@@ -229,23 +229,23 @@ struct igpio_pin_group igpio_pin_group[] = {
 	{ "INT3451",    1,  24,  "B" },
 	{ "INT3451",    0,  48,  "C" },
 	{ "INT3451",    1,  72,  "D" },
-	{ "INT3451",    2,  96,  "E" },      
+	{ "INT3451",    2,  96,  "E" },
 	{ "INT3451",    3, 109,  "F" },
 	{ "INT3451",    4, 133,  "G" },
-	{ "INT3451",    5, 157,  "H" },      
-	{ "INT3451",    0, 181,  "I" },      
-                
+	{ "INT3451",    5, 157,  "H" },
+	{ "INT3451",    0, 181,  "I" },
+
 	/* Sunrisepoint-H */
 	{ "INT345D",    0,   0,  "A" },
 	{ "INT345D",    1,  24,  "B" },
 	{ "INT345D",    0,  48,  "C" },
 	{ "INT345D",    1,  72,  "D" },
-	{ "INT345D",    2,  96,  "E" },      
+	{ "INT345D",    2,  96,  "E" },
 	{ "INT345D",    3, 109,  "F" },
 	{ "INT345D",    4, 133,  "G" },
-	{ "INT345D",    5, 157,  "H" },      
-	{ "INT345D",    0, 181,  "I" },      
-                
+	{ "INT345D",    5, 157,  "H" },
+	{ "INT345D",    0, 181,  "I" },
+
 
 	/* Baytrail */
 	{ "INT33B2",    0, 101,  "A" },
@@ -470,7 +470,7 @@ struct igpio_pin_group igpio_pin_group[] = {
 	{ "INTC3001",  3,  226,  "EMMC" },
 
 	/* Geminilake */
-	{ "INT3453",     0,   34,  "" }, 
+	{ "INT3453",     0,   34,  "" },
 
 #ifdef notyet
 	/*
@@ -480,7 +480,7 @@ struct igpio_pin_group igpio_pin_group[] = {
 	{ "apollolake-pinctrl", 0,   0,   "" },
 	{ "broxton-pinctrl",    0,   0,   "" },
 	{ "INT34D1",     0,   0,   "" },
-	{ "INT3452",     0,   0,   "" }, 
+	{ "INT3452",     0,   0,   "" },
 
 	/* Cherryview */
 	{ "INT33FF",     0,   0,   "" },
@@ -490,4 +490,3 @@ struct igpio_pin_group igpio_pin_group[] = {
 };
 
 #endif /* _IGPIOREG_H */
-

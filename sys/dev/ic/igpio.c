@@ -1,4 +1,4 @@
-/* $NetBSD: igpio.c,v 1.2 2022/03/24 08:08:05 andvar Exp $ */
+/* $NetBSD: igpio.c,v 1.3 2022/03/26 19:35:35 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021,2022 Emmanuel Dreyfus
@@ -75,11 +75,11 @@ igpio_padcfg0_print(uint32_t val, int idx)
 	char *buf = (idx % 2) ? &buf0[0] : &buf1[0];
 	size_t len = sizeof(buf0) - 1;
 	size_t wr = 0;
-	uint32_t unknown_bits = 
+	uint32_t unknown_bits =
 	    __BITS(3,7)|__BITS(14,16)|__BITS(21,22)|__BITS(27,31);
 	int b;
 
-	rxev = 
+	rxev =
 	    (val & IGPIO_PADCFG0_RXEVCFG_MASK) >> IGPIO_PADCFG0_RXEVCFG_SHIFT;
 	wr += snprintf(buf + wr, len - wr, "rxev ");
 	switch (rxev) {
@@ -122,7 +122,7 @@ igpio_padcfg0_print(uint32_t val, int idx)
 			wr += snprintf(buf + wr, len - wr, " nmi");
 	}
 
-	pmode = 
+	pmode =
 	    (val & IGPIO_PADCFG0_PMODE_MASK) >> IGPIO_PADCFG0_PMODE_SHIFT;
 	switch (pmode) {
 	case IGPIO_PADCFG0_PMODE_GPIO:
@@ -208,7 +208,7 @@ igpio_hexdump(struct igpio_softc *sc, int n)
 	size_t len = MIN(sc->sc_length[n], 2048);
 
 	printf("bar %d\n", n);
-	for (j = 0; j < len; j += 16) {	
+	for (j = 0; j < len; j += 16) {
 		printf("%04x ", j);
 		for (i = 0; i < 16 && i + j < len; i++) {
 			v = bus_space_read_1(sc->sc_bst, sc->sc_bsh[n], i + j);
@@ -227,7 +227,7 @@ igpio_attach(struct igpio_softc *sc)
 	struct gpiobus_attach_args gba;
 	int success = 0;
 
-	sc->sc_banks = 
+	sc->sc_banks =
 	    kmem_zalloc(sizeof(*sc->sc_banks) * sc->sc_nbar, KM_SLEEP);
 
 	sc->sc_npins = 0;
@@ -310,7 +310,7 @@ igpio_attach(struct igpio_softc *sc)
 			printf("Missing BAR %d\n", i);
 			goto out;
 		}
-	
+
 		ibs = ib->ib_setup;
 
 		DPRINTF(("setup[%d] = "
@@ -319,7 +319,7 @@ igpio_attach(struct igpio_softc *sc)
 
 		npins = 1 + ibs->ibs_last_pin - ibs->ibs_first_pin;
 
-		ib->ib_intr = 
+		ib->ib_intr =
 	    	    kmem_zalloc(sizeof(*ib->ib_intr) * npins, KM_SLEEP);
 
 		sc->sc_npins += npins;
@@ -330,14 +330,14 @@ igpio_attach(struct igpio_softc *sc)
 		goto out;
 	}
 
-	sc->sc_pins = 
+	sc->sc_pins =
 	    kmem_zalloc(sizeof(*sc->sc_pins) * sc->sc_npins, KM_SLEEP);
 
 	for (j = 0; j < sc->sc_npins; j++) {
 		sc->sc_pins[j].pin_num = j;
 		sc->sc_pins[j].pin_caps =
 		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT | GPIO_PIN_INOUT |
-		    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN | GPIO_PIN_INVIN; 
+		    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN | GPIO_PIN_INVIN;
 		sc->sc_pins[j].pin_intrcaps =
 		    GPIO_INTR_POS_EDGE | GPIO_INTR_NEG_EDGE |
 		    GPIO_INTR_DOUBLE_EDGE | GPIO_INTR_HIGH_LEVEL |
@@ -366,7 +366,7 @@ igpio_attach(struct igpio_softc *sc)
 out:
 	if (!success)
 		igpio_detach(sc);
-	
+
 	return;
 }
 
@@ -385,7 +385,7 @@ igpio_detach(struct igpio_softc *sc)
 			ib->ib_intr = NULL;
 		}
 	}
-		
+
 	if (sc->sc_pins != NULL) {
 		kmem_free(sc->sc_pins, sizeof(*sc->sc_pins) * sc->sc_npins);
 		sc->sc_pins = NULL;
@@ -403,7 +403,7 @@ static bus_addr_t
 igpio_pincfg(struct igpio_bank *ib, int pin, int reg)
 {
 	int nregs = (ib->ib_cap & IGPIO_PINCTRL_FEATURE_DEBOUNCE) ? 4 : 2;
-	bus_addr_t pincfg; 
+	bus_addr_t pincfg;
 
 	pincfg = ib->ib_padbar + reg + (pin * nregs * 4);
 #if 0
@@ -450,10 +450,10 @@ igpio_groupcfg(struct igpio_bank *ib, int pin)
 	if ((ipg = igpio_find_group(ib, pin)) == NULL)
 		return (bus_addr_t)NULL;
 
-	groupcfg = ib->ib_padbar 
-		 + (ipg->ipg_groupno * 4) 
+	groupcfg = ib->ib_padbar
+		 + (ipg->ipg_groupno * 4)
 		 + (pin - ipg->ipg_first_pin) / 2;
-	
+
 	DPRINTF(("%s: barno %d, pin = %d, found group %d \"%s\", cfg %p\n", \
 	    __func__, ibs->ibs_barno, pin, ipg->ipg_groupno,		    \
 	    ipg->ipg_name, (void *)groupcfg));
@@ -477,10 +477,10 @@ igpio_pin_read(void *priv, int pin)
 	mutex_enter(&ib->ib_mtx);
 
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh[ib->ib_barno], cfg0);
-	DPRINTF(("%s: bar %d pin %d val #%x (%s)\n", __func__, 
+	DPRINTF(("%s: bar %d pin %d val #%x (%s)\n", __func__,
 	    ib->ib_barno, pin, val, igpio_padcfg0_print(val, 0)));
 
-	if (val & IGPIO_PADCFG0_GPIOTXDIS) 
+	if (val & IGPIO_PADCFG0_GPIOTXDIS)
 		val = (val & IGPIO_PADCFG0_GPIORXSTATE) ? 1 : 0;
 	else
 		val = (val & IGPIO_PADCFG0_GPIOTXSTATE) ? 1 : 0;
@@ -584,7 +584,7 @@ igpio_pin_ctl(void *priv, int pin, int flags)
 	}
 
 	DPRINTF(("%s: bar %d pin %d flags #%x val0 #%x (%s) -> #%x (%s), "
-	    "val1 #%x -> #%x\n", __func__, ib->ib_barno, pin, flags, 
+	    "val1 #%x -> #%x\n", __func__, ib->ib_barno, pin, flags,
 	    val0, igpio_padcfg0_print(val0, 0),
 	    newval0, igpio_padcfg0_print(newval0, 1),
 	    val1, newval1));
@@ -635,19 +635,19 @@ igpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 	newval &= ~IGPIO_PADCFG0_RXEVCFG_LEVEL;
 	newval &= ~IGPIO_PADCFG0_RXEVCFG_DISABLED;
 
-	switch (irqmode & GPIO_INTR_EDGE_MASK) { 
+	switch (irqmode & GPIO_INTR_EDGE_MASK) {
 	case GPIO_INTR_DOUBLE_EDGE:
 		newval |= IGPIO_PADCFG0_RXEVCFG_EDGE_BOTH;
 		break;
 	case GPIO_INTR_NEG_EDGE:
                 newval |= IGPIO_PADCFG0_RXEVCFG_EDGE;
-                newval |= IGPIO_PADCFG0_RXINV; 
+                newval |= IGPIO_PADCFG0_RXINV;
 		break;
 	case GPIO_INTR_POS_EDGE:
 		newval |= IGPIO_PADCFG0_RXEVCFG_EDGE;
 		break;
 	default:
-		switch (irqmode & GPIO_INTR_LEVEL_MASK) { 
+		switch (irqmode & GPIO_INTR_LEVEL_MASK) {
 		case GPIO_INTR_HIGH_LEVEL:
 			newval |= IGPIO_PADCFG0_RXEVCFG_LEVEL;
 			break;
@@ -665,7 +665,7 @@ igpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 
 	DPRINTF(("%s: bar %d pin %d val #%x (%s) -> #%x (%s)\n",
 	    __func__, ib->ib_barno, pin,
-	    val, igpio_padcfg0_print(val, 0), 
+	    val, igpio_padcfg0_print(val, 0),
 	    newval, igpio_padcfg0_print(newval, 1)));
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh[ib->ib_barno], cfg0, newval);
@@ -706,7 +706,7 @@ igpio_intr_disestablish(void *priv, void *ih)
 
 	DPRINTF(("%s: bar %d pin %d val #%x (%s) -> #%x (%s)\n", \
 	    __func__, ib->ib_barno, pin,
-	    val, igpio_padcfg0_print(val, 0), 
+	    val, igpio_padcfg0_print(val, 0),
 	    newval, igpio_padcfg0_print(newval, 1)));
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh[ib->ib_barno], cfg0, newval);
@@ -772,7 +772,7 @@ igpio_intr(void *priv)
 			 * and enabled
 			 */
 			pending = raised & enabled;
-			
+
 			for (b = 0; b < 32; b++) {
 				int pin;
 				int (*func)(void *);
