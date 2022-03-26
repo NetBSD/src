@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1014 2022/03/26 12:44:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1015 2022/03/26 13:32:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1014 2022/03/26 12:44:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1015 2022/03/26 13:32:31 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4016,9 +4016,9 @@ cleanup:
 	/*
 	 * TODO: Use p + strlen(p) instead, to stop parsing immediately.
 	 *
-	 * In the unit tests, this generates a few unterminated strings in the
-	 * shell commands though.  Instead of producing these unfinished
-	 * strings, commands with evaluation errors should not be run at all.
+	 * In the unit tests, this generates a few shell commands with
+	 * unbalanced quotes.  Instead of producing these incomplete strings,
+	 * commands with evaluation errors should not be run at all.
 	 *
 	 * To make that happen, Var_Subst must report the actual errors
 	 * instead of returning VPR_OK unconditionally.
@@ -4028,8 +4028,8 @@ cleanup:
 }
 
 /*
- * Only 4 of the 7 local variables are treated specially as they are the only
- * ones that will be set when dynamic sources are expanded.
+ * Only 4 of the 7 built-in local variables are treated specially as they are
+ * the only ones that will be set when dynamic sources are expanded.
  */
 static bool
 VarnameIsDynamic(Substring varname)
