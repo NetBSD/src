@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_core_wait.h,v 1.4 2021/07/24 08:39:54 rin Exp $	*/
+/*	$NetBSD: t_ptrace_core_wait.h,v 1.5 2022/03/26 16:22:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 	    "without signal to be sent\n");
 
 #if defined(__aarch64__) || defined(__arm__) || defined(__powerpc__) || \
-    defined(__sh3__)
+    defined(__sh3__) || defined(sparc)
 	/*
 	 * For these archs, program counter is not automatically incremented
 	 * by a trap instruction. We cannot increment PC in the trap handler,
