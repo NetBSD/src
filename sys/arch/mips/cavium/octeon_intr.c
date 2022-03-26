@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.25 2022/03/23 23:24:21 riastradh Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.26 2022/03/26 19:38:00 riastradh Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.25 2022/03/23 23:24:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.26 2022/03/26 19:38:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -354,14 +354,6 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	ih->ih_irq = irq;
 	ih->ih_ipl = ipl;
 
-	/*
-	 * Make sure the initialization is visible on all CPUs before
-	 * we expose it in octciu_intrs.  This way we don't need to
-	 * issue any membar for a load-acquire when handling the
-	 * interrupt.
-	 */
-	xc_barrier(0);
-
 	mutex_enter(&octeon_intr_lock);
 
 	/*
@@ -370,7 +362,7 @@ octeon_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	KASSERTMSG(octciu_intrs[irq] == NULL, "irq %d in use! (%p)",
 	    irq, octciu_intrs[irq]);
 
-	atomic_store_relaxed(&octciu_intrs[irq], ih);
+	atomic_store_release(&octciu_intrs[irq], ih);
 
 	/*
 	 * Now enable it.
@@ -518,7 +510,7 @@ octeon_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 			hwpend[bank] &= ~__BIT(bit);
 
 			struct octeon_intrhand * const ih =
-			    atomic_load_relaxed(&octciu_intrs[irq]);
+			    atomic_load_consume(&octciu_intrs[irq]);
 			cpu->cpu_intr_evs[irq].ev_count++;
 			if (__predict_true(ih != NULL)) {
 #ifdef MULTIPROCESSOR
