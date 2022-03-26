@@ -1,4 +1,4 @@
-Global:delete .SUFFIXES (not found)
+Global: delete .SUFFIXES (not found)
 Global: .MAKEFLAGS =  -r -k -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0
 Global: .SUFFIXES = set ignored (read-only)
@@ -32,7 +32,7 @@ ModifyWord_Loop: in "1", replace ".SUFFIXES" with "${.SUFFIXES}" to ".c .o .1 .e
 Command: .SUFFIXES = 2 ignored (read-only)
 Var_Parse: ${.SUFFIXES} (eval-defined)
 ModifyWord_Loop: in "2", replace ".SUFFIXES" with "${.SUFFIXES}" to ".c .o .1 .err .tar.gz"
-Command:delete .SUFFIXES (not found)
+Command: delete .SUFFIXES (not found)
 Result of ${1 2:@.SUFFIXES@${.SUFFIXES}@} is ".c .o .1 .err .tar.gz .c .o .1 .err .tar.gz" (eval-defined, defined)
 Global: .MAKEFLAGS =  -r -k -d v -d 0 -d v -d 0 -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0 -d v -d 0 -d v -d 0

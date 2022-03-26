@@ -1,4 +1,4 @@
-Global:delete DOLLAR (not found)
+Global: delete DOLLAR (not found)
 Command: DOLLAR = $$$$
 Global: .MAKEOVERRIDES =  VAR DOLLAR
 CondParser_Eval: ${DOLLAR} != "\$\$"
