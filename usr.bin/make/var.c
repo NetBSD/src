@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1017 2022/03/26 14:17:46 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1018 2022/03/26 14:34:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1017 2022/03/26 14:17:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1018 2022/03/26 14:34:07 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -471,6 +471,16 @@ VarFreeShortLived(Var *v)
 	free(v);
 }
 
+static const char *
+ValueDescription(const char *value)
+{
+	if (value[0] == '\0')
+		return "# (empty)";
+	if (ch_isspace(value[strlen(value)-1]))
+		return "# (ends with space)";
+	return "";
+}
+
 /* Add a new variable of the given name and value to the given scope. */
 static Var *
 VarAdd(const char *name, const char *value, GNode *scope, VarSetFlags flags)
@@ -479,7 +489,8 @@ VarAdd(const char *name, const char *value, GNode *scope, VarSetFlags flags)
 	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), value,
 	    false, false, (flags & VAR_SET_READONLY) != 0);
 	HashEntry_Set(he, v);
-	DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, value);
+	DEBUG4(VAR, "%s: %s = %s%s\n",
+	    scope->name, name, value, ValueDescription(value));
 	return v;
 }
 
@@ -979,7 +990,8 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		Buf_Clear(&v->val);
 		Buf_AddStr(&v->val, val);
 
-		DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, val);
+		DEBUG4(VAR, "%s: %s = %s%s\n",
+		    scope->name, name, val, ValueDescription(val));
 		if (v->exported)
 			ExportVar(name, VEM_PLAIN);
 	}
@@ -4782,7 +4794,8 @@ Var_Dump(GNode *scope)
 	for (i = 0; i < vec.len; i++) {
 		const char *varname = varnames[i];
 		Var *var = HashTable_FindValue(&scope->vars, varname);
-		debug_printf("%-16s = %s\n", varname, var->val.data);
+		debug_printf("%-16s = %s%s\n", varname,
+		    var->val.data, ValueDescription(var->val.data));
 	}
 
 	Vector_Done(&vec);

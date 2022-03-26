@@ -1,5 +1,5 @@
 Parsing line 10: ORIG_SHELL:=	${.SHELL}
-Global: ORIG_SHELL = 
+Global: ORIG_SHELL = # (empty)
 Var_Parse: ${.SHELL} (eval-keep-dollar-and-undefined)
 Global: delete .SHELL (not found)
 Command: .SHELL = (details omitted)

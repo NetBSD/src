@@ -1,5 +1,5 @@
 Global: delete FROM_CMDLINE (not found)
-Command: FROM_CMDLINE = 
+Command: FROM_CMDLINE = # (empty)
 Global: .MAKEOVERRIDES =  FROM_CMDLINE
 Global: VAR = added
 Global: VAR = overwritten
