@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.36 2021/08/17 22:00:27 andvar Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.37 2022/03/26 17:15:18 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.36 2021/08/17 22:00:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.37 2022/03/26 17:15:18 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -930,7 +930,7 @@ display_hires_view(view_t *v)
 			int     d = 0;
 
 			/* XXX anyone know the equality properties of
-			 * intermixed logial AND's */
+			 * intermixed logical AND's */
 			/* XXX and arithmetic operators? */
 			while (((ddfstart & 0xfffc) + ddfwidth - d) > 0xd8) {
 				d++;
