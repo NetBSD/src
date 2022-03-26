@@ -1,4 +1,4 @@
-/* $NetBSD: igpio.c,v 1.3 2022/03/26 19:35:35 riastradh Exp $ */
+/* $NetBSD: igpio.c,v 1.4 2022/03/26 19:35:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021,2022 Emmanuel Dreyfus
@@ -724,7 +724,7 @@ igpio_intr_str(void *priv, int pin, int irqmode,
     char *buf, size_t buflen)
 {
 	struct igpio_softc *sc = priv;
-	const char *name = sc->sc_dev->dv_xname;
+	const char *name = device_xname(sc->sc_dev);
 	int rv;
 
 	rv = snprintf(buf, buflen, "%s pin %d", name, pin);
