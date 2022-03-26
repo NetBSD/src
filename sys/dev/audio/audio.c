@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.117 2022/03/26 06:36:06 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.118 2022/03/26 06:41:12 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.117 2022/03/26 06:36:06 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.118 2022/03/26 06:41:12 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4912,11 +4912,8 @@ audio_track_record(audio_track_t *track)
 	KASSERT(track);
 	KASSERT(track->lock);
 
-	/* Number of frames to process */
-	count = auring_get_contig_used(track->input);
-	count = uimin(count, track->mixer->frames_per_block);
-	if (count == 0) {
-		TRACET(4, track, "count == 0");
+	if (auring_get_contig_used(track->input) == 0) {
+		TRACET(4, track, "input->used == 0");
 		return;
 	}
 
