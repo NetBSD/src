@@ -3,13 +3,13 @@ Global: .MAKEFLAGS =  -r -k -d v -d
 Global: .MAKEFLAGS =  -r -k -d v -d 0
 Global: .SUFFIXES = set ignored (read-only)
 Global: .SUFFIXES = append ignored (read-only)
-Global: _ = 
+Global: _ = # (empty)
 Var_Parse: ${.SUFFIXES::=assign} (eval-keep-dollar-and-undefined)
 Evaluating modifier ${.SUFFIXES::...} on value ".c .o .1 .err .tar.gz" (eval-keep-dollar-and-undefined, regular)
 Modifier part: "assign"
 Global: .SUFFIXES = assign ignored (read-only)
 Result of ${.SUFFIXES::=assign} is "" (eval-keep-dollar-and-undefined, regular)
-Global: _ = 
+Global: _ = # (empty)
 Var_Parse: ${preserve:L:_=.SUFFIXES} (eval-keep-dollar-and-undefined)
 Evaluating modifier ${preserve:L} on value "" (eval-keep-dollar-and-undefined, undefined)
 Result of ${preserve:L} is "preserve" (eval-keep-dollar-and-undefined, defined)
