@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.306 2022/03/25 21:16:04 sjg Exp $
+.\"	$NetBSD: make.1,v 1.307 2022/03/26 15:39:58 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2301,6 +2301,13 @@ is encountered, the makefile
 .Ql posix.mk
 will be included if possible,
 to provide POSIX compatible default rules.
+If
+.Nm
+is run with the
+.Fl r
+flag, then only
+.Ql posix.mk
+will contribute to the default rules.
 .It Ic .PRECIOUS
 Apply the
 .Ic .PRECIOUS
