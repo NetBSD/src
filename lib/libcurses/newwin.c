@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.64 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: newwin.c,v 1.65 2022/03/26 16:03:02 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.64 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.65 2022/03/26 16:03:02 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -275,7 +275,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		free(win);
 		return NULL;
 	}
-	if ((win->lspace = malloc(nlines * sizeof(__LINE))) == NULL) {
+	if ((win->lspace = calloc(nlines, sizeof(__LINE))) == NULL) {
 		free(win->alines);
 		free(win);
 		return NULL;
@@ -288,7 +288,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		 * Allocate window space in one chunk.
 		 */
 		if ((win->wspace =
-			malloc(ncols * nlines * sizeof(__LDATA))) == NULL) {
+			calloc(ncols * nlines, sizeof(__LDATA))) == NULL) {
 			free(win->lspace);
 			free(win->alines);
 			free(win);
