@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1016 2022/03/26 14:02:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1017 2022/03/26 14:17:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1016 2022/03/26 14:02:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1017 2022/03/26 14:17:46 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -494,11 +494,12 @@ Var_Delete(GNode *scope, const char *varname)
 	Var *v;
 
 	if (he == NULL) {
-		DEBUG2(VAR, "%s:delete %s (not found)\n", scope->name, varname);
+		DEBUG2(VAR, "%s: delete %s (not found)\n",
+		    scope->name, varname);
 		return;
 	}
 
-	DEBUG2(VAR, "%s:delete %s\n", scope->name, varname);
+	DEBUG2(VAR, "%s: delete %s\n", scope->name, varname);
 	v = he->value;
 	if (v->inUse) {
 		Parse_Error(PARSE_FATAL,
@@ -506,10 +507,12 @@ Var_Delete(GNode *scope, const char *varname)
 		    v->name.str);
 		return;
 	}
+
 	if (v->exported)
 		unsetenv(v->name.str);
 	if (strcmp(v->name.str, MAKE_EXPORTED) == 0)
 		var_exportedVars = VAR_EXPORTED_NONE;
+
 	assert(v->name.freeIt == NULL);
 	HashTable_DeleteEntry(&scope->vars, he);
 	Buf_Done(&v->val);
