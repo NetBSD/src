@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.116 2022/03/26 06:27:32 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.117 2022/03/26 06:36:06 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.116 2022/03/26 06:27:32 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.117 2022/03/26 06:36:06 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5919,10 +5919,10 @@ audio_rmixer_process(struct audio_softc *sc)
 			    input->head, input->used, input->capacity);
 			auring_take(input, drops);
 		}
-		KASSERTMSG(input->used % mixer->frames_per_block == 0,
-		    "input->used=%d mixer->frames_per_block=%d",
-		    input->used, mixer->frames_per_block);
 
+		KASSERTMSG(auring_tail(input) % mixer->frames_per_block == 0,
+		    "inputtail=%d mixer->frames_per_block=%d",
+		    auring_tail(input), mixer->frames_per_block);
 		memcpy(auring_tailptr_aint(input),
 		    auring_headptr_aint(mixersrc),
 		    bytes);
