@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.118 2022/03/26 06:41:12 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.119 2022/03/26 06:43:36 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.118 2022/03/26 06:41:12 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.119 2022/03/26 06:43:36 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2767,7 +2767,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 			audio_track_record(track);
 		}
 
-		/* uiomove from usrbuf as much as possible. */
+		/* uiomove from usrbuf as many bytes as possible. */
 		bytes = uimin(usrbuf->used, uio->uio_resid);
 		while (bytes > 0) {
 			int head = usrbuf->head;
@@ -2896,7 +2896,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 
 		audio_track_lock_enter(track);
 
-		/* uiomove to usrbuf as much as possible. */
+		/* uiomove to usrbuf as many bytes as possible. */
 		bytes = uimin(track->usrbuf_usedhigh - usrbuf->used,
 		    uio->uio_resid);
 		while (bytes > 0) {
@@ -2919,7 +2919,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 			bytes -= len;
 		}
 
-		/* Convert them as much as possible. */
+		/* Convert them as many blocks as possible. */
 		while (usrbuf->used >= track->usrbuf_blksize &&
 		    outbuf->used < outbuf->capacity) {
 			audio_track_play(track);
@@ -5905,7 +5905,10 @@ audio_rmixer_process(struct audio_softc *sc)
 			continue;
 		}
 
-		/* If the track buffer is full, discard the oldest one? */
+		/*
+		 * If the track buffer has less than one block of free space,
+		 * make one block free.
+		 */
 		input = track->input;
 		if (input->capacity - input->used < mixer->frames_per_block) {
 			int drops = mixer->frames_per_block -
