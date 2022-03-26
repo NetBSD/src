@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.310 2022/03/25 22:38:39 rillig Exp $
+# $NetBSD: Makefile,v 1.311 2022/03/26 12:44:57 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -467,6 +467,7 @@ TESTS:= ${TESTS:${BROKEN_TESTS:S,^,N,:ts:}}
 # Additional environment variables for some of the tests.
 # The base environment is -i PATH="$PATH".
 ENV.depsrc-optional+=   TZ=UTC
+ENV.directive-undef=	ENV_VAR=env-value
 ENV.envfirst=		FROM_ENV=value-from-env
 ENV.varmisc=		FROM_ENV=env
 ENV.varmisc+=		FROM_ENV_BEFORE=env

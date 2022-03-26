@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1013 2022/03/03 19:52:41 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1014 2022/03/26 12:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1013 2022/03/03 19:52:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1014 2022/03/26 12:44:57 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1088,20 +1088,14 @@ Var_Append(GNode *scope, const char *name, const char *val)
 		DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, v->val.data);
 
 		if (v->fromEnvironment) {
-			/*
-			 * The variable originally came from the environment.
-			 * Install it in the global scope (we could place it
-			 * in the environment, but then we should provide a
-			 * way to export other variables...)
-			 */
-			v->fromEnvironment = false;
+			/* See VarAdd. */
+			HashEntry *he =
+			    HashTable_CreateEntry(&scope->vars, name, NULL);
+			HashEntry_Set(he, v);
+			FStr_Done(&v->name);
+			v->name = FStr_InitRefer(/* aliased to */ he->key);
 			v->shortLived = false;
-			/*
-			 * This is the only place where a variable is
-			 * created in a scope, where v->name does not alias
-			 * scope->vars->key.
-			 */
-			HashTable_Set(&scope->vars, name, v);
+			v->fromEnvironment = false;
 		}
 	}
 }

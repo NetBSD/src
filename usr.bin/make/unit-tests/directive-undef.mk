@@ -1,4 +1,4 @@
-# $NetBSD: directive-undef.mk,v 1.11 2022/03/25 23:03:47 rillig Exp $
+# $NetBSD: directive-undef.mk,v 1.12 2022/03/26 12:44:57 rillig Exp $
 #
 # Tests for the .undef directive.
 #
@@ -128,6 +128,18 @@ INDIRECT=	in-${DIRECT}
 .if ${INDIRECT:Uundefined} != "undefined"
 .  error
 .endif
+
+
+# Since var.c 1.570 from 2020-10-06 and before var.c 1.1014 from 2022-03-26,
+# make ran into an assertion failure when trying to undefine a variable that
+# was based on an environment variable.
+.if ${ENV_VAR} != "env-value"	# see ./Makefile, ENV.directive-undef
+.  error
+.endif
+ENV_VAR+=	appended	# moves the short-lived variable to the
+				# global scope
+.undef ENV_VAR			# removes the variable from both the global
+				# scope and from the environment
 
 
 all:
