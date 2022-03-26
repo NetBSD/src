@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.119 2022/03/26 06:43:36 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.120 2022/03/26 06:49:27 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,6 +60,49 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+/*
+ * Terminology: "sample", "channel", "frame", "block", "track":
+ *
+ *  channel       frame
+ *   |           ........
+ *   v           :      :                                    \
+ *        +------:------:------:-  -+------+ : +------+-..   |
+ *  #0(L) |sample|sample|sample| .. |sample| : |sample|      |
+ *        +------:------:------:-  -+------+ : +------+-..   |
+ *  #1(R) |sample|sample|sample| .. |sample| : |sample|      |
+ *        +------:------:------:-  -+------+ : +------+-..   | track
+ *   :           :      :                    :               |
+ *        +------:------:------:-  -+------+ : +------+-..   |
+ *        |sample|sample|sample| .. |sample| : |sample|      |
+ *        +------:------:------:-  -+------+ : +------+-..   |
+ *               :      :                                    /
+ *               ........
+ *
+ *        \--------------------------------/   \--------..
+ *                     block
+ *
+ * - A "frame" is the minimum unit in the time axis direction, and consists
+ *   of samples for the number of channels.
+ * - A "block" is basic length of processing.  The audio layer basically
+ *   handles audio data stream block by block, asks underlying hardware to
+ *   process them block by block, and then the hardware raises interrupt by
+ *   each block.
+ * - A "track" is single completed audio stream.
+ *
+ * For example, the hardware block is assumed to be 10 msec, and your audio
+ * track consists of 2.1(=3) channels 44.1kHz 16bit PCM,
+ *
+ * "channel" = 3
+ * "sample" = 2 [bytes]
+ * "frame" = 2 [bytes/sample] * 3 [channels] = 6 [bytes]
+ * "block" = 44100 [Hz] * (10/1000) [seconds] * 6 [bytes/frame] = 2646 [bytes]
+ *
+ * The terminologies shown here are only for this MI audio layer.  Note that
+ * different terminologies may be used in each manufacturer's datasheet, and
+ * each MD driver may follow it.  For example, what we call a "block" is
+ * called a "frame" in sys/dev/pci/yds.c.
  */
 
 /*
@@ -138,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.119 2022/03/26 06:43:36 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.120 2022/03/26 06:49:27 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
