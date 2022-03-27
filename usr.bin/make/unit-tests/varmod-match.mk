@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.7 2022/03/03 20:20:23 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.8 2022/03/27 18:39:01 rillig Exp $
 #
 # Tests for the :M variable modifier, which filters words that match the
 # given pattern.
@@ -119,8 +119,8 @@ ${:U*}=		asterisk
 .endif
 
 #	[^a-c67]
-#		matches a single character, except for 'a', 'b', 'c', '8' or
-#		'9'
+#		matches a single character, except for 'a', 'b', 'c', '6' or
+#		'7'
 .if ${ A B C a b c d 5 6 7 8 [a-c] [a] :L:M[^a-c67]} != "A B C d 5 8"
 .  error
 .endif

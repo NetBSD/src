@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1018 2022/03/26 14:34:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1019 2022/03/27 18:39:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1018 2022/03/26 14:34:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1019 2022/03/27 18:39:01 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -476,7 +476,7 @@ ValueDescription(const char *value)
 {
 	if (value[0] == '\0')
 		return "# (empty)";
-	if (ch_isspace(value[strlen(value)-1]))
+	if (ch_isspace(value[strlen(value) - 1]))
 		return "# (ends with space)";
 	return "";
 }
@@ -3221,7 +3221,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 	/* Normal case: select the words described by first and last. */
 	Expr_SetValueOwn(expr,
 	    VarSelectWords(Expr_Str(expr), first, last,
-	        ch->sep, ch->oneBigWord));
+		ch->sep, ch->oneBigWord));
 
 ok:
 	FStr_Done(&festr);
