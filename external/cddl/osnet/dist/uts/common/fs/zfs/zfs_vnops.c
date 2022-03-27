@@ -5794,10 +5794,19 @@ zfs_netbsd_link(void *v)
 	nm = PNBUF_GET();
 	(void)strlcpy(nm, cnp->cn_nameptr, cnp->cn_namelen + 1);
 
-	vn_lock(vp, LK_EXCLUSIVE);
+	if ((error = vn_lock(vp, LK_EXCLUSIVE)) != 0) {
+		/* XXX: No ABORTOP? */
+		PNBUF_PUT(nm);
+		return error;
+	}
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error)
+		goto out;
 	error = zfs_link(dvp, vp, nm, cnp->cn_cred,
 	    NULL, 0);
 
+out:
 	PNBUF_PUT(nm);
 	VOP_UNLOCK(vp, 0);
 	return error;
