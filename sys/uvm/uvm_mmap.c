@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.176 2021/07/21 06:35:45 skrll Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.177 2022/03/27 20:18:05 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.176 2021/07/21 06:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.177 2022/03/27 20:18:05 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -302,6 +302,9 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 #endif /* PAX_ASLR */
 
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
+		return EINVAL;
+
+	if (size == 0 && (flags & MAP_ANON) == 0)
 		return EINVAL;
 
 	/*
