@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.41 2020/02/21 00:26:22 joerg Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.42 2022/03/27 16:23:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.41 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.42 2022/03/27 16:23:08 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -258,7 +258,6 @@ sysvipc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
     void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	mode_t mask;
-	int ismember = 0;
 	struct ipc_perm *perm;
 	int mode;
 	enum kauth_system_req req;
@@ -290,10 +289,8 @@ sysvipc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		return ((perm->mode & mask) == mask ? KAUTH_RESULT_ALLOW : KAUTH_RESULT_DEFER /* EACCES */);
 	}
 
-	if (kauth_cred_getegid(cred) == perm->gid ||
-	    (kauth_cred_ismember_gid(cred, perm->gid, &ismember) == 0 && ismember) ||
-	    kauth_cred_getegid(cred) == perm->cgid ||
-	    (kauth_cred_ismember_gid(cred, perm->cgid, &ismember) == 0 && ismember)) {
+	if (kauth_cred_groupmember(cred, perm->gid) == 0 ||
+	    kauth_cred_groupmember(cred, perm->cgid) == 0) {
 		if (mode & IPC_R)
 			mask |= S_IRGRP;
 		if (mode & IPC_W)
