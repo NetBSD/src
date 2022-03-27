@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.119 2022/02/16 22:00:56 andvar Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.120 2022/03/27 16:24:58 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.119 2022/02/16 22:00:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.120 2022/03/27 16:24:58 christos Exp $");
 #endif /* not lint */
 
 
@@ -1559,18 +1559,21 @@ udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	udf_node = VTOI(vp);
 
 	error = VOP_GETATTR(vp, &vap, FSCRED);
-	if (error) {
-		VOP_UNLOCK(vp);
-		return error;
-	}
+	if (error)
+		goto out;
 
 	/* check link count overflow */
 	if (vap.va_nlink >= (1<<16)-1) {	/* uint16_t */
-		VOP_UNLOCK(vp);
-		return EMLINK;
+		error = EMLINK;
+		goto out;
 	}
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error)
+		goto out;
 
 	error = udf_dir_attach(dir_node->ump, dir_node, udf_node, &vap, cnp);
+out:
 	if (error)
 		VOP_UNLOCK(vp);
 	return error;

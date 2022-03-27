@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.47 2021/12/07 21:37:37 andvar Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.48 2022/03/27 16:24:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1081,32 +1081,36 @@ chfs_link(void *v)
 	struct componentname *cnp = ((struct vop_link_v2_args *) v)->a_cnp;
 
 	struct chfs_inode *ip, *parent;
-	int error = 0;
+	int error, abrt = 1;
 
 	if (vp->v_type == VDIR) {
-		VOP_ABORTOP(dvp, cnp);
 		error = EISDIR;
 		goto out;
 	}
 	if (dvp->v_mount != vp->v_mount) {
-		VOP_ABORTOP(dvp, cnp);
 		error = EXDEV;
 		goto out;
 	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
-		VOP_ABORTOP(dvp, cnp);
+	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE)))
 		goto out;
-	}
+
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error)
+		goto out;
 
 	parent = VTOI(dvp);
 	ip = VTOI(vp);
 
+	abrt = 0;
 	error = chfs_do_link(ip,
 	    parent, cnp->cn_nameptr, cnp->cn_namelen, ip->ch_type);
 
 	if (dvp != vp)
 		VOP_UNLOCK(vp);
 out:
+	if (abrt)
+		VOP_ABORTOP(dvp, cnp);
 	return error;
 }
 
