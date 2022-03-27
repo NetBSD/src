@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.136 2021/10/20 03:08:19 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.137 2022/03/27 16:24:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.136 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.137 2022/03/27 16:24:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -580,7 +580,7 @@ ext2fs_link(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
 	struct inode *ip;
-	int error;
+	int error, abrt = 1;
 	struct ufs_lookup_results *ulr;
 
 	KASSERT(dvp != vp);
@@ -592,23 +592,24 @@ ext2fs_link(void *v)
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	error = vn_lock(vp, LK_EXCLUSIVE);
-	if (error) {
-		VOP_ABORTOP(dvp, cnp);
+	if (error)
 		goto out2;
-	}
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error)
+		goto out1;
 	ip = VTOI(vp);
 	if ((nlink_t)ip->i_e2fs_nlink >= EXT2FS_LINK_MAX) {
-		VOP_ABORTOP(dvp, cnp);
 		error = EMLINK;
 		goto out1;
 	}
 	if (ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) {
-		VOP_ABORTOP(dvp, cnp);
 		error = EPERM;
 		goto out1;
 	}
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
+	abrt = 0;
 	error = ext2fs_update(vp, NULL, NULL, UPDATE_WAIT);
 	if (!error)
 		error = ext2fs_direnter(ip, dvp, ulr, cnp);
@@ -619,6 +620,8 @@ ext2fs_link(void *v)
 out1:
 	VOP_UNLOCK(vp);
 out2:
+	if (abrt)
+		VOP_ABORTOP(dvp, cnp);
 	return error;
 }
 

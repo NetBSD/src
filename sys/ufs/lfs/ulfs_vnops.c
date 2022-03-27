@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.55 2021/10/20 03:08:19 thorpej Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.56 2022/03/27 16:24:59 christos Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.55 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.56 2022/03/27 16:24:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -561,7 +561,7 @@ ulfs_link(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
 	struct inode *ip;
-	int error;
+	int error, abrt = 1;
 	struct ulfs_lookup_results *ulr;
 
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
@@ -573,26 +573,26 @@ ulfs_link(void *v)
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	error = vn_lock(vp, LK_EXCLUSIVE);
-	if (error) {
-		VOP_ABORTOP(dvp, cnp);
+	if (error)
 		goto out2;
-	}
 	if (vp->v_mount != dvp->v_mount) {
 		error = ENOENT;
-		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
 	ip = VTOI(vp);
 	if ((nlink_t)ip->i_nlink >= LINK_MAX) {
-		VOP_ABORTOP(dvp, cnp);
 		error = EMLINK;
 		goto out1;
 	}
 	if (ip->i_flags & (IMMUTABLE | APPEND)) {
-		VOP_ABORTOP(dvp, cnp);
 		error = EPERM;
 		goto out1;
 	}
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error)
+		goto out1;
+	abrt = 0;
 	ip->i_nlink++;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_state |= IN_CHANGE;
@@ -608,6 +608,8 @@ ulfs_link(void *v)
 	}
  out1:
 	VOP_UNLOCK(vp);
+	if (abrt)
+		VOP_ABORTOP(dvp, cnp);
  out2:
 	return (error);
 }
