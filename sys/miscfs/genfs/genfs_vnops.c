@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.218 2022/03/27 16:23:08 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.219 2022/03/27 17:10:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.218 2022/03/27 16:23:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.219 2022/03/27 17:10:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,20 @@ genfs_einval(void *v)
 {
 
 	return (EINVAL);
+}
+
+int
+genfs_erofs_link(void *v)
+{
+	/* also for symlink */
+	struct vop_link_v2_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	return EROFS;
 }
 
 /*

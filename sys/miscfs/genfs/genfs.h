@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.38 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: genfs.h,v 1.39 2022/03/27 17:10:55 christos Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -18,6 +18,8 @@ int	genfs_enoioctl(void *);
 int	genfs_enoextops(void *);
 int	genfs_einval(void *);
 int	genfs_eopnotsupp(void *);
+int	genfs_erofs_link(void *);
+#define	genfs_erofs_symlink genfs_erofs_link
 int	genfs_ebadf(void *);
 int	genfs_nolock(void *);
 int	genfs_noislocked(void *);
