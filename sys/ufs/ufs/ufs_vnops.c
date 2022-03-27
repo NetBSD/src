@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.261 2021/11/26 17:35:12 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.262 2022/03/27 16:24:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.261 2021/11/26 17:35:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.262 2022/03/27 16:24:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -893,7 +893,7 @@ ufs_link(void *v)
 	struct mount *mp = dvp->v_mount;
 	struct inode *ip;
 	struct direct *newdir;
-	int error;
+	int error, abrt = 1;
 	struct ufs_lookup_results *ulr;
 
 	KASSERT(dvp != vp);
@@ -905,29 +905,32 @@ ufs_link(void *v)
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	error = vn_lock(vp, LK_EXCLUSIVE);
-	if (error) {
-		VOP_ABORTOP(dvp, cnp);
+	if (error)
 		goto out2;
-	}
+
 	ip = VTOI(vp);
 	if ((nlink_t)ip->i_nlink >= LINK_MAX) {
-		VOP_ABORTOP(dvp, cnp);
 		error = EMLINK;
 		goto out1;
 	}
 	if (ip->i_flags & (IMMUTABLE | APPEND)) {
-		VOP_ABORTOP(dvp, cnp);
 		error = EPERM;
 		goto out1;
 	}
-	error = UFS_WAPBL_BEGIN(mp);
-	if (error) {
-		VOP_ABORTOP(dvp, cnp);
+
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error)
 		goto out1;
-	}
+
+	error = UFS_WAPBL_BEGIN(mp);
+	if (error)
+		goto out1;
+
 	ip->i_nlink++;
 	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
+	abrt = 0;
 	error = UFS_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
@@ -945,6 +948,8 @@ ufs_link(void *v)
  out1:
 	VOP_UNLOCK(vp);
  out2:
+	if (abrt)
+		VOP_ABORTOP(dvp, cnp);
 	return (error);
 }
 

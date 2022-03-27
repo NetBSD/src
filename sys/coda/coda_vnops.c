@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.117 2021/12/05 08:10:39 msaitoh Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.118 2022/03/27 16:24:58 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.117 2021/12/05 08:10:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.118 2022/03/27 16:24:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1198,6 +1198,10 @@ coda_link(void *v)
 	error = EFAULT;		/* XXX better value */
 	goto exit;
     }
+    error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	dvp, 0);
+    if (error)
+	    goto exit;
     error = venus_link(vtomi(vp), &cp->c_fid, &dcp->c_fid, nm, len, cred, l);
     VOP_UNLOCK(vp);
 

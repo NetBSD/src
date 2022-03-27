@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.321 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.322 2022/03/27 16:24:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.321 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.322 2022/03/27 16:24:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2008,6 +2008,13 @@ nfs_link(void *v)
 
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error != 0) {
+		VOP_ABORTOP(dvp, cnp);
+		return error;
+	}
+
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error) {
 		VOP_ABORTOP(dvp, cnp);
 		return error;
 	}
