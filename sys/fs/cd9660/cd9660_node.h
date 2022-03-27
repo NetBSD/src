@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.17 2021/07/18 23:57:13 dholland Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.18 2022/03/27 17:10:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -104,8 +104,6 @@ int	cd9660_readdir(void *);
 int	cd9660_readlink(void *);
 int	cd9660_inactive(void *);
 int	cd9660_reclaim(void *);
-int	cd9660_link(void *);
-int	cd9660_symlink(void *);
 int	cd9660_bmap(void *);
 int	cd9660_lock(void *);
 int	cd9660_unlock(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.227 2022/01/17 11:20:00 bouyer Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.228 2022/03/27 17:10:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.227 2022/01/17 11:20:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.228 2022/03/27 17:10:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -213,8 +213,6 @@ int	procfs_close(void *);
 int	procfs_access(void *);
 int	procfs_getattr(void *);
 int	procfs_setattr(void *);
-int	procfs_link(void *);
-int	procfs_symlink(void *);
 int	procfs_readdir(void *);
 int	procfs_readlink(void *);
 int	procfs_inactive(void *);
@@ -254,11 +252,11 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
 	{ &vop_seek_desc, genfs_nullop },		/* seek */
 	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
-	{ &vop_link_desc, procfs_link },		/* link */
+	{ &vop_link_desc, genfs_erofs_link },		/* link */
 	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
 	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
 	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
-	{ &vop_symlink_desc, procfs_symlink },		/* symlink */
+	{ &vop_symlink_desc, genfs_erofs_symlink },	/* symlink */
 	{ &vop_readdir_desc, procfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, procfs_readlink },	/* readlink */
 	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
@@ -499,34 +497,6 @@ procfs_print(void *v)
 	printf("tag VT_PROCFS, type %d, pid %d, mode %x, flags %lx\n",
 	    pfs->pfs_type, pfs->pfs_pid, pfs->pfs_mode, pfs->pfs_flags);
 	return 0;
-}
-
-int
-procfs_link(void *v)
-{
-	struct vop_link_v2_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	return (EROFS);
-}
-
-int
-procfs_symlink(void *v)
-{
-	struct vop_symlink_v3_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-		char *a_target;
-	} */ *ap = v;
-
-	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	return (EROFS);
 }
 
 /*

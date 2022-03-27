@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.7 2021/07/18 23:57:14 dholland Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.8 2022/03/27 17:10:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -119,8 +119,6 @@ int	filecore_readdir(void *);
 int	filecore_readlink(void *);
 int	filecore_inactive(void *);
 int	filecore_reclaim(void *);
-int	filecore_link(void *);
-int	filecore_symlink(void *);
 int	filecore_bmap(void *);
 int	filecore_strategy(void *);
 int	filecore_print(void *);

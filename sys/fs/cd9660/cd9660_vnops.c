@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.61 2021/07/19 01:30:24 dholland Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.62 2022/03/27 17:10:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.61 2021/07/19 01:30:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.62 2022/03/27 17:10:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,34 +662,6 @@ cd9660_readlink(void *v)
 	return (0);
 }
 
-int
-cd9660_link(void *v)
-{
-	struct vop_link_v2_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	return (EROFS);
-}
-
-int
-cd9660_symlink(void *v)
-{
-	struct vop_symlink_v3_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-		char *a_target;
-	} */ *ap = v;
-
-	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	return (EROFS);
-}
-
 /*
  * Calculate the logical to physical mapping if not done already,
  * then call the device strategy routine.
@@ -856,11 +828,11 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
 	{ &vop_seek_desc, genfs_seek },			/* seek */
 	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
-	{ &vop_link_desc, cd9660_link },		/* link */
+	{ &vop_link_desc, genfs_erofs_link },		/* link */
 	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
 	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
 	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
-	{ &vop_symlink_desc, cd9660_symlink },		/* symlink */
+	{ &vop_symlink_desc, genfs_erofs_symlink },	/* symlink */
 	{ &vop_readdir_desc, cd9660_readdir },		/* readdir */
 	{ &vop_readlink_desc, cd9660_readlink },	/* readlink */
 	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
