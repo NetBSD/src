@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.217 2022/03/19 13:52:45 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.218 2022/03/27 16:23:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.217 2022/03/19 13:52:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.218 2022/03/27 16:23:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,18 +663,6 @@ genfs_node_wrlocked(struct vnode *vp)
 	return rw_write_held(&gp->g_glock);
 }
 
-static int
-groupmember(gid_t gid, kauth_cred_t cred)
-{
-	int ismember;
-	int error = kauth_cred_ismember_gid(cred, gid, &ismember);
-	if (error)
-		return error;
-	if (kauth_cred_getegid(cred) == gid || ismember)
-		return 0;
-	return -1;
-}
-
 /*
  * Common filesystem object access control check routine.  Accepts a
  * vnode, cred, uid, gid, mode, acl, requested access mode.
@@ -712,7 +700,7 @@ genfs_can_access(vnode_t *vp, kauth_cred_t cred, uid_t file_uid, gid_t file_gid,
 
 	/* Otherwise, check the groups (first match) */
 	/* Otherwise, check the groups. */
-	error = groupmember(file_gid, cred);
+	error = kauth_cred_groupmember(cred, file_gid);
 	if (error > 0)
 		return error;
 	if (error == 0) {
@@ -864,7 +852,7 @@ genfs_can_access_acl_posix1e(vnode_t *vp, kauth_cred_t cred, uid_t file_uid,
 		struct acl_entry *ae = &acl->acl_entry[i];
 		switch (ae->ae_tag) {
 		case ACL_GROUP_OBJ:
-			error = groupmember(file_gid, cred);
+			error = kauth_cred_groupmember(cred, file_gid);
 			if (error > 0)
 				return error;
 			if (error)
@@ -885,7 +873,7 @@ genfs_can_access_acl_posix1e(vnode_t *vp, kauth_cred_t cred, uid_t file_uid,
 			break;
 
 		case ACL_GROUP:
-			error = groupmember(ae->ae_id, cred);
+			error = kauth_cred_groupmember(cred, ae->ae_id);
 			if (error > 0)
 				return error;
 			if (error)
@@ -919,7 +907,7 @@ genfs_can_access_acl_posix1e(vnode_t *vp, kauth_cred_t cred, uid_t file_uid,
 			struct acl_entry *ae = &acl->acl_entry[i];
 			switch (ae->ae_tag) {
 			case ACL_GROUP_OBJ:
-				error = groupmember(file_gid, cred);
+				error = kauth_cred_groupmember(cred, file_gid);
 				if (error > 0)
 					return error;
 				if (error)
@@ -935,7 +923,7 @@ genfs_can_access_acl_posix1e(vnode_t *vp, kauth_cred_t cred, uid_t file_uid,
 				goto out;
 
 			case ACL_GROUP:
-				error = groupmember(ae->ae_id, cred);
+				error = kauth_cred_groupmember(cred, ae->ae_id);
 				if (error > 0)
 					return error;
 				if (error)
@@ -1053,14 +1041,14 @@ _acl_denies(const struct acl *aclp, int access_mask, kauth_cred_t cred,
 				continue;
 			break;
 		case ACL_GROUP_OBJ:
-			error = groupmember(file_gid, cred);
+			error = kauth_cred_groupmember(cred, file_gid);
 			if (error > 0)
 				return error;
 			if (error != 0)
 				continue;
 			break;
 		case ACL_GROUP:
-			error = groupmember(ae->ae_id, cred);
+			error = kauth_cred_groupmember(cred, ae->ae_id);
 			if (error > 0)
 				return error;
 			if (error != 0)

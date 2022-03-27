@@ -566,7 +566,6 @@ unionfs_close_abort:
 static int
 unionfs_check_corrected_access(u_short mode, struct vattr *va, kauth_cred_t cred)
 {
-	int		result;
 	int		error;
 	uid_t		uid;	/* upper side vnode's uid */
 	gid_t		gid;	/* upper side vnode's gid */
@@ -590,10 +589,7 @@ unionfs_check_corrected_access(u_short mode, struct vattr *va, kauth_cred_t cred
 	}
 
 	/* check group */
-	error = kauth_cred_ismember_gid(cred, gid, &result);
-	if (error != 0)
-		return error;
-	if (result) {
+	if (kauth_cred_groupmember(cred, gid) == 0) {
 		if (mode & VEXEC)
 			mask |= S_IXGRP;
 		if (mode & VREAD)
