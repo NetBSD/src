@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.12 2020/03/16 21:20:12 pgoyette Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.13 2022/03/27 16:28:35 christos Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.12 2020/03/16 21:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.13 2022/03/27 16:28:35 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,12 +49,14 @@ MODULE(MODULE_CLASS_SECMODEL, extensions, NULL);
 static int dovfsusermount;
 static int curtain;
 static int user_set_cpu_affinity;
+static int hardlink_check_uid;
+static int hardlink_check_gid;
 
 #ifdef PT_SETDBREGS
 int user_set_dbregs;
 #endif
 
-static kauth_listener_t l_system, l_process, l_network;
+static kauth_listener_t l_system, l_process, l_network, l_vnode;
 
 static secmodel_t extensions_sm;
 
@@ -72,6 +74,8 @@ static int secmodel_extensions_system_cb(kauth_cred_t, kauth_action_t,
 static int secmodel_extensions_process_cb(kauth_cred_t, kauth_action_t,
     void *, void *, void *, void *, void *);
 static int secmodel_extensions_network_cb(kauth_cred_t, kauth_action_t,
+    void *, void *, void *, void *, void *);
+static int secmodel_extensions_vnode_cb(kauth_cred_t, kauth_action_t,
     void *, void *, void *, void *, void *);
 
 SYSCTL_SETUP(sysctl_security_extensions_setup,
@@ -149,6 +153,25 @@ SYSCTL_SETUP(sysctl_security_extensions_setup,
 		       &user_set_dbregs, 0,
 		       CTL_CREATE, CTL_EOL);
 #endif
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "hardlink_check_uid",
+		       SYSCTL_DESCR("Whether unprivileged users can hardlink "\
+			    "to files they don't own"),
+		       sysctl_extensions_user_handler, 0,
+		       &hardlink_check_uid, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "hardlink_check_gid",
+		       SYSCTL_DESCR("Whether unprivileged users can hardlink "\
+			    "to files they that they are not in their " \
+			    "group membership"),
+		       sysctl_extensions_user_handler, 0,
+		       &hardlink_check_gid, 0,
+		       CTL_CREATE, CTL_EOL);
 
 	/* Compatibility: vfs.generic.usermount */
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -280,6 +303,8 @@ secmodel_extensions_start(void)
 	    secmodel_extensions_process_cb, NULL);
 	l_network = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    secmodel_extensions_network_cb, NULL);
+	l_vnode = kauth_listen_scope(KAUTH_SCOPE_VNODE,
+	    secmodel_extensions_vnode_cb, NULL);
 }
 
 static void
@@ -289,6 +314,7 @@ secmodel_extensions_stop(void)
 	kauth_unlisten_scope(l_system);
 	kauth_unlisten_scope(l_process);
 	kauth_unlisten_scope(l_network);
+	kauth_unlisten_scope(l_vnode);
 }
 
 static int
@@ -502,4 +528,34 @@ secmodel_extensions_network_cb(kauth_cred_t cred, kauth_action_t action,
 	}
 
 	return (result);
+}
+
+static int
+secmodel_extensions_vnode_cb(kauth_cred_t cred, kauth_action_t action,
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int error, isroot;
+	struct vattr va;
+
+	if ((action & KAUTH_VNODE_ADD_LINK) == 0)
+		return KAUTH_RESULT_DEFER;
+
+	error = VOP_GETATTR((vnode_t *)arg0, &va, cred);
+	if (error)
+		goto checkroot;
+
+	if (hardlink_check_uid && kauth_cred_geteuid(cred) != va.va_uid)
+		goto checkroot;
+
+	if (hardlink_check_gid && kauth_cred_groupmember(cred, va.va_gid) != 0)
+		goto checkroot;
+
+	return KAUTH_RESULT_DEFER;
+checkroot:
+	error = secmodel_eval("org.netbsd.secmodel.suser", "is-root",
+	    cred, &isroot);
+	if (error || !isroot)
+		return KAUTH_RESULT_DENY;
+
+	return KAUTH_RESULT_DEFER;
 }
