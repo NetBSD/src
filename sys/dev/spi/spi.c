@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.23 2022/01/19 13:33:11 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.24 2022/03/28 11:09:24 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.23 2022/01/19 13:33:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.24 2022/03/28 11:09:24 mlelstv Exp $");
 
 #include "locators.h"
 
@@ -380,7 +380,7 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			break;
 		}
 		if ((sit->sit_send && sit->sit_sendlen == 0)
-		    || (sit->sit_recv && sit->sit_recv == 0)) {
+		    || (sit->sit_recv && sit->sit_recvlen == 0)) {
 			error = EINVAL;
 			break;
 		}
