@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.156 2022/03/28 12:33:50 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.157 2022/03/28 12:34:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -280,6 +280,7 @@ devmajor_t devsw_name2blk(const char *, char *, size_t);
 devmajor_t devsw_name2chr(const char *, char *, size_t);
 dev_t devsw_chr2blk(dev_t);
 dev_t devsw_blk2chr(dev_t);
+int dev_minor_unit(dev_t);
 
 void mm_init(void);
 #endif /* _KERNEL */
