@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.95 2019/01/27 02:08:50 pgoyette Exp $	*/
+/*	$NetBSD: tty.h,v 1.96 2022/03/28 12:39:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -207,6 +207,8 @@ struct tty {
 #define	TS_KERN_ONLY	0x10000		/* Device is accessible by kernel
 					 * only, deny all userland access */
 
+#define	TS_CANCEL	0x20000		/* I/O cancelled pending close. */
+
 /* Character type information. */
 #define	ORDINARY	0
 #define	CONTROL		1
@@ -281,6 +283,7 @@ void	 ttwakeup(struct tty *);
 int	 ttwrite(struct tty *, struct uio *, int);
 void	 ttychars(struct tty *);
 int	 ttycheckoutq(struct tty *, int);
+void	 ttycancel(struct tty *);
 int	 ttyclose(struct tty *);
 void	 ttyflush(struct tty *, int);
 void	 ttygetinfo(struct tty *, int, char *, size_t);
