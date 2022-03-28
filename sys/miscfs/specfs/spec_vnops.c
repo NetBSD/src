@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.194 2022/03/28 12:35:35 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.195 2022/03/28 12:35:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.194 2022/03/28 12:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.195 2022/03/28 12:35:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -402,6 +402,8 @@ spec_node_revoke(vnode_t *vp)
 	specnode_t *sn;
 	specdev_t *sd;
 
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	sn = vp->v_specnode;
 	sd = sn->sn_dev;
 
@@ -552,11 +554,8 @@ spec_open(void *v)
 
 	/*
 	 * Acquire an open reference -- as long as we hold onto it, and
-	 * the vnode isn't revoked, it can't be closed.
-	 *
-	 * But first check whether it has been revoked -- if so, we
-	 * can't acquire more open references and we must fail
-	 * immediately with EBADF.
+	 * the vnode isn't revoked, it can't be closed, and the vnode
+	 * can't be revoked until we release the vnode lock.
 	 */
 	mutex_enter(&device_lock);
 	switch (vp->v_type) {
@@ -565,10 +564,7 @@ spec_open(void *v)
 		 * Character devices can accept opens from multiple
 		 * vnodes.
 		 */
-		if (sn->sn_gone) {
-			error = EBADF;
-			break;
-		}
+		KASSERT(!sn->sn_gone);
 		sd->sd_opencnt++;
 		sn->sn_opencnt++;
 		break;
@@ -581,10 +577,7 @@ spec_open(void *v)
 		 * Treat zero opencnt with non-NULL mountpoint as open.
 		 * This may happen after forced detach of a mounted device.
 		 */
-		if (sn->sn_gone) {
-			error = EBADF;
-			break;
-		}
+		KASSERT(!sn->sn_gone);
 		if (sd->sd_opencnt != 0 || sd->sd_mountpoint != NULL) {
 			error = EBUSY;
 			break;
