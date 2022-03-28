@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.60 2022/03/03 06:27:41 riastradh Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.61 2022/03/28 12:38:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.60 2022/03/03 06:27:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.61 2022/03/28 12:38:58 riastradh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.60 2022/03/03 06:27:41 riastradh Exp 
 #include <sys/bitops.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <sys/idle.h>
 #include <sys/intr.h>
 #include <sys/ipi.h>

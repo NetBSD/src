@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.47 2021/07/01 22:08:13 blymn Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.48 2022/03/28 12:38:59 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.47 2021/07/01 22:08:13 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.48 2022/03/28 12:38:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.47 2021/07/01 22:08:13 blymn Exp $");
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>
 #include <sys/pmf.h>
 #include <sys/queue.h>
 #include <sys/sched.h>

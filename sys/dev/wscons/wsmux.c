@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.65 2021/11/10 16:57:39 msaitoh Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.66 2022/03/28 12:38:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.65 2021/11/10 16:57:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.66 2022/03/28 12:38:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.65 2021/11/10 16:57:39 msaitoh Exp $");
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 
 #include "opt_wsdisplay_compat.h"
 

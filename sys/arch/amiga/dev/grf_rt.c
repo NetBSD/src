@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.60 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.61 2022/03/28 12:38:57 riastradh Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.60 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.61 2022/03/28 12:38:57 riastradh Exp $");
 
 #include "grfrt.h"
 #include "ite.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.60 2021/08/07 16:18:41 thorpej Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.63 2022/01/01 11:45:37 msaitoh Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.64 2022/03/28 12:38:57 riastradh Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.63 2022/01/01 11:45:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.64 2022/03/28 12:38:57 riastradh Exp $");
 
 #include "grfcv.h"
 #include "ite.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.63 2022/01/01 11:45:37 msaitoh Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>

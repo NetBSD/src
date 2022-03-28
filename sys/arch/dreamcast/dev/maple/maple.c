@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.55 2021/08/07 16:18:48 thorpej Exp $	*/
+/*	$NetBSD: maple.c,v 1.56 2022/03/28 12:38:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.55 2021/08/07 16:18:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.56 2022/03/28 12:38:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>

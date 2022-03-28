@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.43 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.44 2022/03/28 12:38:57 riastradh Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.43 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.44 2022/03/28 12:38:57 riastradh Exp $");
 
 #include "grfcc.h"
 #include "ite.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.43 2021/08/07 16:18:41 thorpej Exp $");
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <machine/cpu.h>

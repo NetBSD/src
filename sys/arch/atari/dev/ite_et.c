@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.34 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.35 2022/03/28 12:38:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.34 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.35 2022/03/28 12:38:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.34 2021/08/07 16:18:46 thorpej Exp $");
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <dev/cons.h>
 
 #include <machine/cpu.h>

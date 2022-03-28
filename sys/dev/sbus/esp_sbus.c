@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.56 2021/02/23 07:13:53 mrg Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.57 2022/03/28 12:38:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.56 2021/02/23 07:13:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.57 2022/03/28 12:38:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <sys/buf.h>
 #include <sys/malloc.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.300 2022/03/28 12:38:24 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.301 2022/03/28 12:38:59 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.300 2022/03/28 12:38:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.301 2022/03/28 12:38:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.300 2022/03/28 12:38:24 riastrad
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>

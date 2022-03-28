@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.11 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.12 2022/03/28 12:38:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
