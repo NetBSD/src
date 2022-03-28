@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.196 2022/03/28 12:35:52 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.197 2022/03/28 12:36:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.196 2022/03/28 12:35:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.197 2022/03/28 12:36:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -581,6 +581,7 @@ spec_open(void *v)
 			error = EBUSY;
 			break;
 		}
+		KASSERTMSG(sn->sn_opencnt == 0, "%u", sn->sn_opencnt);
 		sn->sn_opencnt = 1;
 		sd->sd_opencnt = 1;
 		sd->sd_bdevvp = vp;
