@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.19 2021/08/07 16:18:57 thorpej Exp $ */
+/* $Id: pbms.c,v 1.20 2022/03/28 12:43:12 riastradh Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -307,7 +307,8 @@ pbms_match(device_t parent, cfdata_t match, void *aux)
 	 * we expect. 
 	 */
 	if (uha->uiaa->uiaa_proto == UIPROTO_MOUSE &&
-	    (udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
+	    ((udd = usbd_get_device_descriptor(uha->uiaa->uiaa_device))
+		!= NULL)) {
 		vendor = UGETW(udd->idVendor);
 		product = UGETW(udd->idProduct);
 		for (i = 0; i < PBMS_NUM_DEVICES; i++) {
@@ -329,6 +330,7 @@ pbms_attach(device_t parent, device_t self, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	struct pbms_dev *pd;
 	struct pbms_softc *sc = device_private(self);
+	struct usbd_device *udev;
 	usb_device_descriptor_t *udd;
 	int i;
 	uint16_t vendor, product;
@@ -341,7 +343,8 @@ pbms_attach(device_t parent, device_t self, void *aux)
 	sc->sc_datalen = PBMS_DATA_LEN;
 
 	/* Fill in device-specific parameters. */
-	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
+	udev = uha->uiaa->uiaa_udevice;
+	if ((udd = usbd_get_device_descriptor(udev)) != NULL) {
 		product = UGETW(udd->idProduct);
 		vendor = UGETW(udd->idVendor);
 		for (i = 0; i < PBMS_NUM_DEVICES; i++) {

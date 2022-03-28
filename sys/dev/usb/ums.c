@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.101 2021/10/01 21:14:06 macallan Exp $	*/
+/*	$NetBSD: ums.c,v 1.102 2022/03/28 12:43:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.101 2021/10/01 21:14:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.102 2022/03/28 12:43:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -76,6 +76,7 @@ int	umsdebug = 0;
 
 struct ums_softc {
 	struct uhidev sc_hdev;
+	struct usbd_device *sc_udev;
 	struct hidms sc_ms;
 
 	bool	sc_alwayson;
@@ -149,8 +150,9 @@ ums_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = ums_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_udev = uha->uiaa->uiaa_device;
 
-	quirks = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
+	quirks = usbd_get_quirks(sc->sc_udev)->uq_flags;
 	if (quirks & UQ_MS_REVZ)
 		sc->sc_ms.flags |= HIDMS_REVZ;
 	if (quirks & UQ_SPUR_BUT_UP)

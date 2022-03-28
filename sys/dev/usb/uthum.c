@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.21 2021/06/13 09:28:23 mlelstv Exp $   */
+/*	$NetBSD: uthum.c,v 1.22 2022/03/28 12:43:12 riastradh Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.21 2021/06/13 09:28:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.22 2022/03/28 12:43:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -130,7 +130,7 @@ uthum_attach(device_t parent, device_t self, void *aux)
 {
 	struct uthum_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
-	struct usbd_device *dev = uha->parent->sc_udev;
+	struct usbd_device *dev = uha->uiaa->uiaa_device;
 	int size, repid;
 	void *desc;
 

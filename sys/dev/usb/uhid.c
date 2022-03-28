@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.121 2022/03/28 12:42:54 riastradh Exp $	*/
+/*	$NetBSD: uhid.c,v 1.122 2022/03/28 12:43:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.121 2022/03/28 12:42:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.122 2022/03/28 12:43:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -86,6 +86,7 @@ int	uhiddebug = 0;
 
 struct uhid_softc {
 	struct uhidev sc_hdev;
+	struct usbd_device *sc_udev;
 
 	kmutex_t sc_lock;
 	kcondvar_t sc_cv;
@@ -180,6 +181,8 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+
+	sc->sc_udev = uha->uiaa->uiaa_device;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
@@ -655,16 +658,16 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	case USB_GET_DEVICE_DESC:
 		*(usb_device_descriptor_t *)addr =
-			*usbd_get_device_descriptor(sc->sc_hdev.sc_parent->sc_udev);
+			*usbd_get_device_descriptor(sc->sc_udev);
 		break;
 
 	case USB_GET_DEVICEINFO:
-		usbd_fill_deviceinfo(sc->sc_hdev.sc_parent->sc_udev,
+		usbd_fill_deviceinfo(sc->sc_udev,
 				     (struct usb_device_info *)addr, 0);
 		break;
 	case USB_GET_DEVICEINFO_OLD:
 		MODULE_HOOK_CALL(usb_subr_fill_30_hook,
-                    (sc->sc_hdev.sc_parent->sc_udev,
+                    (sc->sc_udev,
 		      (struct usb_device_info_old *)addr, 0,
                       usbd_devinfo_vp, usbd_printBCD),
                     enosys(), err);
@@ -674,7 +677,7 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case USB_GET_STRING_DESC:
 	    {
 		struct usb_string_desc *si = (struct usb_string_desc *)addr;
-		err = usbd_get_string_desc(sc->sc_hdev.sc_parent->sc_udev,
+		err = usbd_get_string_desc(sc->sc_udev,
 			si->usd_string_index,
 			si->usd_language_id, &si->usd_desc, &size);
 		if (err)
