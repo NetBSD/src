@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.283 2021/07/24 21:31:36 andvar Exp $	*/
+/*	$NetBSD: vnd.c,v 1.284 2022/03/28 11:16:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.283 2021/07/24 21:31:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.284 2022/03/28 11:16:59 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1226,41 +1226,27 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return EBADF;
 	}
 
-	/* Must be initialized for these... */
 	switch (cmd) {
-	case VNDIOCCLR:
-	case VNDIOCCLR50:
-	case DIOCGDINFO:
-	case DIOCSDINFO:
-	case DIOCWDINFO:
-	case DIOCGPARTINFO:
-	case DIOCKLABEL:
-	case DIOCWLABEL:
-	case DIOCGDEFLABEL:
-	case DIOCGCACHE:
-	case DIOCGSTRATEGY:
-	case DIOCCACHESYNC:
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-	case ODIOCSDINFO:
-	case ODIOCWDINFO:
-	case ODIOCGDEFLABEL:
-#endif
+	case VNDIOCSET50:
+	case VNDIOCSET:
+		/* Must not be initialized */
+		if (vnd->sc_flags & VNF_INITED)
+			return EBUSY;
+		break;
+	default:
+		/* Must be initialized */
 		if ((vnd->sc_flags & VNF_INITED) == 0)
 			return ENXIO;
+		break;
 	}
 
 	error = disk_ioctl(&vnd->sc_dkdev, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-
 	switch (cmd) {
 	case VNDIOCSET50:
 	case VNDIOCSET:
-		if (vnd->sc_flags & VNF_INITED)
-			return EBUSY;
-
 		if ((error = vndlock(vnd)) != 0)
 			return error;
 
