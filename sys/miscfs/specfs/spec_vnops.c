@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.202 2022/03/28 12:36:51 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.203 2022/03/28 12:37:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.202 2022/03/28 12:36:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.203 2022/03/28 12:37:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -498,6 +498,11 @@ spec_node_lookup_by_mount(struct mount *mp, vnode_t **vpp)
 
 /*
  * Get the file system mounted on this block device.
+ *
+ * XXX Caller should hold the vnode lock -- shared or exclusive -- so
+ * that this can't changed, and the vnode can't be revoked while we
+ * examine it.  But not all callers do, and they're scattered through a
+ * lot of file systems, so we can't assert this yet.
  */
 struct mount *
 spec_node_getmountedfs(vnode_t *devvp)
@@ -512,23 +517,51 @@ spec_node_getmountedfs(vnode_t *devvp)
 
 /*
  * Set the file system mounted on this block device.
+ *
+ * XXX Caller should hold the vnode lock exclusively so this can't be
+ * changed or assumed by spec_node_getmountedfs while we change it, and
+ * the vnode can't be revoked while we handle it.  But not all callers
+ * do, and they're scattered through a lot of file systems, so we can't
+ * assert this yet.  Instead, for now, we'll take an I/O reference so
+ * at least the ioctl doesn't race with revoke/detach.
+ *
+ * If you do change this to assert an exclusive vnode lock, you must
+ * also do vdead_check before trying bdev_ioctl, because the vnode may
+ * have been revoked by the time the caller locked it, and this is
+ * _not_ a vop -- calls to spec_node_setmountedfs don't go through
+ * v_op, so revoking the vnode doesn't prevent further calls.
+ *
+ * XXX Caller should additionally have the vnode open, at least if mp
+ * is nonnull, but I'm not sure all callers do that -- need to audit.
+ * Currently udf closes the vnode before clearing the mount.
  */
 void
 spec_node_setmountedfs(vnode_t *devvp, struct mount *mp)
 {
 	struct dkwedge_info dkw;
+	struct specnode *sn;
+	dev_t dev;
+	int error;
 
 	KASSERT(devvp->v_type == VBLK);
-	KASSERT(devvp->v_specnode->sn_dev->sd_mountpoint == NULL || mp == NULL);
-	devvp->v_specnode->sn_dev->sd_mountpoint = mp;
-	if (mp == NULL)
+
+	error = spec_io_enter(devvp, &sn, &dev);
+	if (error)
 		return;
 
-	if (bdev_ioctl(devvp->v_rdev, DIOCGWEDGEINFO, &dkw, FREAD, curlwp) != 0)
-		return;
+	KASSERT(sn->sn_dev->sd_mountpoint == NULL || mp == NULL);
+	sn->sn_dev->sd_mountpoint = mp;
+	if (mp == NULL)
+		goto out;
+
+	error = bdev_ioctl(dev, DIOCGWEDGEINFO, &dkw, FREAD, curlwp);
+	if (error)
+		goto out;
 
 	strlcpy(mp->mnt_stat.f_mntfromlabel, dkw.dkw_wname,
 	    sizeof(mp->mnt_stat.f_mntfromlabel));
+
+out:	spec_io_exit(devvp, sn);
 }
 
 /*
