@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.188 2022/03/28 12:34:42 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.189 2022/03/28 12:34:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.188 2022/03/28 12:34:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.189 2022/03/28 12:34:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -546,13 +546,12 @@ spec_open(void *v)
 		req = KAUTH_REQ_DEVICE_RAWIO_SPEC_READ;
 		break;
 	}
+	error = kauth_authorize_device_spec(ap->a_cred, req, vp);
+	if (error != 0)
+		return (error);
 
 	switch (vp->v_type) {
 	case VCHR:
-		error = kauth_authorize_device_spec(ap->a_cred, req, vp);
-		if (error != 0)
-			return (error);
-
 		/*
 		 * Character devices can accept opens from multiple
 		 * vnodes.
@@ -595,10 +594,6 @@ spec_open(void *v)
 		break;
 
 	case VBLK:
-		error = kauth_authorize_device_spec(ap->a_cred, req, vp);
-		if (error != 0)
-			return (error);
-
 		/*
 		 * For block devices, permit only one open.  The buffer
 		 * cache cannot remain self-consistent with multiple
