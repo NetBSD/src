@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.491 2021/10/16 07:12:01 simonb Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.492 2022/03/28 12:37:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.491 2021/10/16 07:12:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.492 2022/03/28 12:37:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -495,7 +495,7 @@ int
 vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 {
 
-	return (spec_node_lookup_by_dev(type, dev, vpp) == 0);
+	return (spec_node_lookup_by_dev(type, dev, VDEAD_NOWAIT, vpp) == 0);
 }
 
 /*
@@ -511,7 +511,12 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 
 	for (mn = minl; mn <= minh; mn++) {
 		dev = makedev(maj, mn);
-		while (spec_node_lookup_by_dev(type, dev, &vp) == 0) {
+		/*
+		 * Passing 0 as flags, instead of VDEAD_NOWAIT, means
+		 * spec_node_lookup_by_dev will wait for vnodes it
+		 * finds concurrently being revoked before returning.
+		 */
+		while (spec_node_lookup_by_dev(type, dev, 0, &vp) == 0) {
 			VOP_REVOKE(vp, REVOKEALL);
 			vrele(vp);
 		}
