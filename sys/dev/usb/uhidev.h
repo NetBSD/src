@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.21 2020/11/29 22:54:51 riastradh Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.22 2022/03/28 12:42:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ void uhidev_stop(struct uhidev *);
 void uhidev_close(struct uhidev *);
 usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_get_report(struct uhidev *, int, void *, int);
-usbd_status uhidev_write(struct uhidev_softc *, void *, int);
+usbd_status uhidev_write(struct uhidev *, void *, int);
 
 #define	UHIDEV_OSIZE	64
 
