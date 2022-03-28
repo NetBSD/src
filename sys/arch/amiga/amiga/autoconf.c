@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.120 2021/08/07 16:18:41 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.121 2022/03/28 12:38:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.120 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.121 2022/03/28 12:38:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.120 2021/08/07 16:18:41 thorpej Exp $
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/proc.h>

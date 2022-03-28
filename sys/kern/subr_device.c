@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.12 2022/03/03 06:25:46 riastradh Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.13 2022/03/28 12:38:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.12 2022/03/03 06:25:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.13 2022/03/28 12:38:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>
 #include <sys/systm.h>
 
 #include <sys/device_calls.h>

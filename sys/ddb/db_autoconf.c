@@ -1,4 +1,4 @@
-/*	$NetBSD: db_autoconf.c,v 1.2 2018/03/05 07:47:21 mlelstv Exp $	*/
+/*	$NetBSD: db_autoconf.c,v 1.3 2022/03/28 12:38:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_autoconf.c,v 1.2 2018/03/05 07:47:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_autoconf.c,v 1.3 2022/03/28 12:38:58 riastradh Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_autoconf.c,v 1.2 2018/03/05 07:47:21 mlelstv Exp 
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/device_impl.h>
 
 #include <ddb/ddb.h>
 
