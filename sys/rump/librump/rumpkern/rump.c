@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.354 2022/03/28 12:38:59 riastradh Exp $	*/
+/*	$NetBSD: rump.c,v 1.355 2022/03/28 20:49:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.354 2022/03/28 12:38:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.355 2022/03/28 20:49:32 christos Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -84,8 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.354 2022/03/28 12:38:59 riastradh Exp $")
 #include <rump-sys/vfs.h>
 
 #include <rump/rumpuser.h>
-
-#include <secmodel/suser/suser.h>
 
 #include <prop/proplib.h>
 
