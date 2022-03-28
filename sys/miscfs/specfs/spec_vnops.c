@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.187 2022/03/28 12:34:34 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.188 2022/03/28 12:34:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.187 2022/03/28 12:34:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.188 2022/03/28 12:34:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -525,7 +525,10 @@ spec_open(void *v)
 	sd = sn->sn_dev;
 	name = NULL;
 	gen = 0;
-	
+
+	KASSERTMSG(vp->v_type == VBLK || vp->v_type == VCHR, "type=%d",
+	    vp->v_type);
+
 	/*
 	 * Don't allow open if fs is mounted -nodev.
 	 */
@@ -644,15 +647,8 @@ spec_open(void *v)
 
 		break;
 
-	case VNON:
-	case VLNK:
-	case VDIR:
-	case VREG:
-	case VBAD:
-	case VFIFO:
-	case VSOCK:
 	default:
-		return 0;
+		panic("invalid specfs vnode type: %d", vp->v_type);
 	}
 
 	mutex_enter(&device_lock);
