@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.139 2022/03/19 13:53:32 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.140 2022/03/28 12:37:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.139 2022/03/19 13:53:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.140 2022/03/28 12:37:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1231,7 +1231,8 @@ vrevoke(vnode_t *vp)
 		type = vp->v_type;
 		mutex_exit(vp->v_interlock);
 
-		while (spec_node_lookup_by_dev(type, dev, &vq) == 0) {
+		while (spec_node_lookup_by_dev(type, dev, VDEAD_NOWAIT, &vq)
+		    == 0) {
 			mp = vrevoke_suspend_next(mp, vq->v_mount);
 			vgone(vq);
 		}

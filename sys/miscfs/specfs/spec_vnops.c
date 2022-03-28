@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.207 2022/03/28 12:37:35 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.208 2022/03/28 12:37:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.207 2022/03/28 12:37:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.208 2022/03/28 12:37:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -424,18 +424,35 @@ spec_node_init(vnode_t *vp, dev_t rdev)
  * Lookup a vnode by device number and return it referenced.
  */
 int
-spec_node_lookup_by_dev(enum vtype type, dev_t dev, vnode_t **vpp)
+spec_node_lookup_by_dev(enum vtype type, dev_t dev, int flags, vnode_t **vpp)
 {
 	int error;
 	vnode_t *vp;
 
-	mutex_enter(&device_lock);
+top:	mutex_enter(&device_lock);
 	for (vp = specfs_hash[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
 		if (type == vp->v_type && dev == vp->v_rdev) {
 			mutex_enter(vp->v_interlock);
 			/* If clean or being cleaned, then ignore it. */
 			if (vdead_check(vp, VDEAD_NOWAIT) == 0)
 				break;
+			if ((flags & VDEAD_NOWAIT) == 0) {
+				mutex_exit(&device_lock);
+				/*
+				 * It may be being revoked as we speak,
+				 * and the caller wants to wait until
+				 * all revocation has completed.  Let
+				 * vcache_vget wait for it to finish
+				 * dying; as a side effect, vcache_vget
+				 * releases vp->v_interlock.  Note that
+				 * vcache_vget cannot succeed at this
+				 * point because vdead_check already
+				 * failed.
+				 */
+				error = vcache_vget(vp);
+				KASSERT(error);
+				goto top;
+			}
 			mutex_exit(vp->v_interlock);
 		}
 	}

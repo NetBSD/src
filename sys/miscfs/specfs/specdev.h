@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.50 2022/03/28 12:37:09 riastradh Exp $	*/
+/*	$NetBSD: specdev.h,v 1.51 2022/03/28 12:37:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ typedef struct specdev {
  */
 void	spec_node_init(vnode_t *, dev_t);
 void	spec_node_destroy(vnode_t *);
-int	spec_node_lookup_by_dev(enum vtype, dev_t, vnode_t **);
+int	spec_node_lookup_by_dev(enum vtype, dev_t, int, vnode_t **);
 int	spec_node_lookup_by_mount(struct mount *, vnode_t **);
 struct mount *spec_node_getmountedfs(vnode_t *);
 void	spec_node_setmountedfs(vnode_t *, struct mount *);
