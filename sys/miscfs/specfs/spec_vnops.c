@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.204 2022/03/28 12:37:09 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.205 2022/03/28 12:37:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.204 2022/03/28 12:37:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.205 2022/03/28 12:37:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -597,6 +597,16 @@ spec_node_revoke(vnode_t *vp)
 		mutex_enter(&device_lock);
 		KASSERT(sn->sn_opencnt == 0);
 	}
+
+	/*
+	 * We may have revoked the vnode in this thread while another
+	 * thread was in the middle of spec_close, in the window when
+	 * spec_close releases the vnode lock to call .d_close for the
+	 * last close.  In that case, wait for the concurrent
+	 * spec_close to complete.
+	 */
+	while (sd->sd_closing)
+		cv_wait(&specfs_iocv, &device_lock);
 	mutex_exit(&device_lock);
 }
 
