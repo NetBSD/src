@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.26 2021/01/27 22:42:53 macallan Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.27 2022/03/28 11:21:40 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -167,6 +167,7 @@ struct genfb_softc {
 };
 
 void	genfb_cnattach(void);
+int	genfb_cndetach(void);
 void	genfb_disable(void);
 int	genfb_is_console(void);
 int	genfb_is_enabled(void);
