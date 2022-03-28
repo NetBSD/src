@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.198 2022/03/28 12:36:09 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.199 2022/03/28 12:36:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.198 2022/03/28 12:36:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.199 2022/03/28 12:36:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -945,17 +945,7 @@ spec_fdiscard(void *v)
 	dev_t dev;
 
 	vp = ap->a_vp;
-	dev = NODEV;
-
-	mutex_enter(vp->v_interlock);
-	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode != NULL) {
-		dev = vp->v_rdev;
-	}
-	mutex_exit(vp->v_interlock);
-
-	if (dev == NODEV) {
-		return ENXIO;
-	}
+	dev = vp->v_rdev;
 
 	switch (vp->v_type) {
 	    case VCHR:
