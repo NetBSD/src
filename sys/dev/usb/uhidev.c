@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.90 2022/03/28 12:44:17 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.91 2022/03/28 12:44:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.90 2022/03/28 12:44:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.91 2022/03/28 12:44:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -110,7 +110,6 @@ struct uhidev_softc {
 	int sc_refcnt;
 	int sc_writereportid;
 	int sc_stopreportid;
-	u_char sc_dying;
 
 	/*
 	 * - Read under sc_lock, provided sc_refcnt > 0.
@@ -146,10 +145,9 @@ static int uhidev_match(device_t, cfdata_t, void *);
 static void uhidev_attach(device_t, device_t, void *);
 static void uhidev_childdet(device_t, device_t);
 static int uhidev_detach(device_t, int);
-static int uhidev_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
-    uhidev_attach, uhidev_detach, uhidev_activate, NULL, uhidev_childdet);
+    uhidev_attach, uhidev_detach, NULL, NULL, uhidev_childdet);
 
 static int
 uhidev_match(device_t parent, cfdata_t match, void *aux)
@@ -203,7 +201,6 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	sc->sc_refcnt = 0;
 	sc->sc_writereportid = -1;
 	sc->sc_stopreportid = -1;
-	sc->sc_dying = false;
 
 	id = usbd_get_interface_descriptor(iface);
 
@@ -244,7 +241,6 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		if (ed == NULL) {
 			aprint_error_dev(self,
 			    "could not read endpoint descriptor\n");
-			sc->sc_dying = 1;
 			return;
 		}
 
@@ -275,7 +271,6 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (sc->sc_iep_addr == -1) {
 		aprint_error_dev(self, "no input interrupt endpoint\n");
-		sc->sc_dying = 1;
 		return;
 	}
 
@@ -336,7 +331,6 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	}
 	if (err) {
 		aprint_error_dev(self, "no report descriptor\n");
-		sc->sc_dying = 1;
 		return;
 	}
 
@@ -479,20 +473,6 @@ uhidevprint(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-static int
-uhidev_activate(device_t self, enum devact act)
-{
-	struct uhidev_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
 static void
 uhidev_childdet(device_t self, device_t child)
 {
@@ -523,26 +503,17 @@ uhidev_detach(device_t self, int flags)
 
 	DPRINTF(("uhidev_detach: sc=%p flags=%d\n", sc, flags));
 
-	/* Notify that we are going away.  */
-	mutex_enter(&sc->sc_lock);
-	sc->sc_dying = 1;
-	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_lock);
-
 	/*
 	 * Try to detach all our children.  If anything fails, bail.
 	 * Failure can happen if this is from drvctl -d; of course, if
 	 * this is a USB device being yanked, flags will have
 	 * DETACH_FORCE and the children will not have the option of
-	 * refusing detachment.
+	 * refusing detachment.  If they do detach, the pipes can no
+	 * longer be in use.
 	 */
 	rv = config_detach_children(self, flags);
-	if (rv) {
-		mutex_enter(&sc->sc_lock);
-		sc->sc_dying = 0;
-		mutex_exit(&sc->sc_lock);
+	if (rv)
 		return rv;
-	}
 
 	KASSERTMSG(sc->sc_refcnt == 0,
 	    "%s: %d refs remain", device_xname(sc->sc_dev), sc->sc_refcnt);
@@ -650,8 +621,6 @@ uhidev_config_enter(struct uhidev_softc *sc)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	for (;;) {
-		if (sc->sc_dying)
-			return ENXIO;
 		if (sc->sc_configlock == NULL)
 			break;
 		error = cv_wait_sig(&sc->sc_cv, &sc->sc_lock);
@@ -699,10 +668,6 @@ uhidev_open_pipes(struct uhidev_softc *sc)
 	int error;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-
-	/* If the device is dying, refuse.  */
-	if (sc->sc_dying)
-		return ENXIO;
 
 	/*
 	 * If the pipes are already open, just increment the reference
@@ -1122,10 +1087,6 @@ uhidev_write(struct uhidev *scd, void *data, int len)
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_refcnt);
 	for (;;) {
-		if (sc->sc_dying) {
-			err = USBD_IOERROR;
-			goto out;
-		}
 		if (scd->sc_state & UHIDEV_STOPPED) {
 			err = USBD_CANCELLED;
 			goto out;
@@ -1210,10 +1171,6 @@ uhidev_write_async(struct uhidev *scd, void *data, int len, int flags,
 
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_refcnt);
-	if (sc->sc_dying) {
-		err = USBD_IOERROR;
-		goto out;
-	}
 	if (scd->sc_state & UHIDEV_STOPPED) {
 		err = USBD_CANCELLED;
 		goto out;
