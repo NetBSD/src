@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.133 2021/05/17 08:50:36 mrg Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.134 2022/03/28 12:33:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.133 2021/05/17 08:50:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.134 2022/03/28 12:33:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -727,4 +727,11 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 	 */
 	if (odisk_info)
 		prop_object_release(odisk_info);
+}
+
+int
+disklabel_dev_unit(dev_t dev)
+{
+
+	return DISKUNIT(dev);
 }
