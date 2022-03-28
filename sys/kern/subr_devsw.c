@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.39 2022/03/28 12:33:22 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.40 2022/03/28 12:33:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.39 2022/03/28 12:33:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.40 2022/03/28 12:33:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -85,6 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.39 2022/03/28 12:33:22 riastradh Ex
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/sdt.h>
+#include <sys/atomic.h>
+#include <sys/localcount.h>
+#include <sys/pserialize.h>
+#include <sys/xcall.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -97,11 +101,20 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.39 2022/03/28 12:33:22 riastradh Ex
 #define	CDEVSW_SIZE	(sizeof(struct cdevsw *))
 #define	DEVSWCONV_SIZE	(sizeof(struct devsw_conv))
 
+struct devswref {
+	struct localcount	*dr_lc;
+};
+
+/* XXX bdevsw, cdevsw, max_bdevsws, and max_cdevsws should be volatile */
 extern const struct bdevsw **bdevsw, *bdevsw0[];
 extern const struct cdevsw **cdevsw, *cdevsw0[];
 extern struct devsw_conv *devsw_conv, devsw_conv0[];
 extern const int sys_bdevsws, sys_cdevsws;
 extern int max_bdevsws, max_cdevsws, max_devsw_convs;
+
+static struct devswref *cdevswref;
+static struct devswref *bdevswref;
+static kcondvar_t devsw_cv;
 
 static int bdevsw_attach(const struct bdevsw *, devmajor_t *);
 static int cdevsw_attach(const struct cdevsw *, devmajor_t *);
@@ -118,6 +131,8 @@ devsw_init(void)
 	KASSERT(sys_bdevsws < MAXDEVSW - 1);
 	KASSERT(sys_cdevsws < MAXDEVSW - 1);
 	mutex_init(&device_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	cv_init(&devsw_cv, "devsw");
 }
 
 int
@@ -158,15 +173,13 @@ devsw_attach(const char *devname,
 			error = EEXIST;
 			goto fail;
 		}
-
-		if (bdev != NULL)
-			bdevsw[*bmajor] = bdev;
-		cdevsw[*cmajor] = cdev;
-
-		mutex_exit(&device_lock);
-		return (0);
+		break;
 	}
 
+	/*
+	 * XXX This should allocate what it needs up front so we never
+	 * need to flail around trying to unwind.
+	 */
 	error = bdevsw_attach(bdev, bmajor);
 	if (error != 0) 
 		goto fail;
@@ -175,6 +188,13 @@ devsw_attach(const char *devname,
 		devsw_detach_locked(bdev, NULL);
 		goto fail;
 	}
+
+	/*
+	 * If we already found a conv, we're done.  Otherwise, find an
+	 * empty slot or extend the table.
+	 */
+	if (i == max_devsw_convs)
+		goto fail;
 
 	for (i = 0 ; i < max_devsw_convs ; i++) {
 		if (devsw_conv[i].d_name == NULL)
@@ -224,7 +244,9 @@ devsw_attach(const char *devname,
 static int
 bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 {
-	const struct bdevsw **newptr;
+	const struct bdevsw **newbdevsw = NULL;
+	struct devswref *newbdevswref = NULL;
+	struct localcount *lc;
 	devmajor_t bmajor;
 	int i;
 
@@ -253,20 +275,34 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 		return (ENOMEM);
 	}
 
+	if (bdevswref == NULL) {
+		newbdevswref = kmem_zalloc(MAXDEVSW * sizeof(newbdevswref[0]),
+		    KM_NOSLEEP);
+		if (newbdevswref == NULL)
+			return ENOMEM;
+		atomic_store_release(&bdevswref, newbdevswref);
+	}
+
 	if (*devmajor >= max_bdevsws) {
 		KASSERT(bdevsw == bdevsw0);
-		newptr = kmem_zalloc(MAXDEVSW * BDEVSW_SIZE, KM_NOSLEEP);
-		if (newptr == NULL)
-			return (ENOMEM);
-		memcpy(newptr, bdevsw, max_bdevsws * BDEVSW_SIZE);
-		bdevsw = newptr;
-		max_bdevsws = MAXDEVSW;
+		newbdevsw = kmem_zalloc(MAXDEVSW * sizeof(newbdevsw[0]),
+		    KM_NOSLEEP);
+		if (newbdevsw == NULL)
+			return ENOMEM;
+		memcpy(newbdevsw, bdevsw, max_bdevsws * sizeof(bdevsw[0]));
+		atomic_store_release(&bdevsw, newbdevsw);
+		atomic_store_release(&max_bdevsws, MAXDEVSW);
 	}
 
 	if (bdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
-	bdevsw[*devmajor] = devsw;
+	KASSERT(bdevswref[*devmajor].dr_lc == NULL);
+	lc = kmem_zalloc(sizeof(*lc), KM_SLEEP);
+	localcount_init(lc);
+	bdevswref[*devmajor].dr_lc = lc;
+
+	atomic_store_release(&bdevsw[*devmajor], devsw);
 
 	return (0);
 }
@@ -274,7 +310,9 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 static int
 cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 {
-	const struct cdevsw **newptr;
+	const struct cdevsw **newcdevsw = NULL;
+	struct devswref *newcdevswref = NULL;
+	struct localcount *lc;
 	devmajor_t cmajor;
 	int i;
 
@@ -300,20 +338,34 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 		return (ENOMEM);
 	}
 
+	if (cdevswref == NULL) {
+		newcdevswref = kmem_zalloc(MAXDEVSW * sizeof(newcdevswref[0]),
+		    KM_NOSLEEP);
+		if (newcdevswref == NULL)
+			return ENOMEM;
+		atomic_store_release(&cdevswref, newcdevswref);
+	}
+
 	if (*devmajor >= max_cdevsws) {
 		KASSERT(cdevsw == cdevsw0);
-		newptr = kmem_zalloc(MAXDEVSW * CDEVSW_SIZE, KM_NOSLEEP);
-		if (newptr == NULL)
-			return (ENOMEM);
-		memcpy(newptr, cdevsw, max_cdevsws * CDEVSW_SIZE);
-		cdevsw = newptr;
-		max_cdevsws = MAXDEVSW;
+		newcdevsw = kmem_zalloc(MAXDEVSW * sizeof(newcdevsw[0]),
+		    KM_NOSLEEP);
+		if (newcdevsw == NULL)
+			return ENOMEM;
+		memcpy(newcdevsw, cdevsw, max_cdevsws * sizeof(cdevsw[0]));
+		atomic_store_release(&cdevsw, newcdevsw);
+		atomic_store_release(&max_cdevsws, MAXDEVSW);
 	}
 
 	if (cdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
-	cdevsw[*devmajor] = devsw;
+	KASSERT(cdevswref[*devmajor].dr_lc == NULL);
+	lc = kmem_zalloc(sizeof(*lc), KM_SLEEP);
+	localcount_init(lc);
+	cdevswref[*devmajor].dr_lc = lc;
+
+	atomic_store_release(&cdevsw[*devmajor], devsw);
 
 	return (0);
 }
@@ -321,25 +373,67 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 static void
 devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
-	int i;
+	int bi, ci = -1/*XXXGCC*/;
 
 	KASSERT(mutex_owned(&device_lock));
 
+	/* Prevent new references.  */
 	if (bdev != NULL) {
-		for (i = 0 ; i < max_bdevsws ; i++) {
-			if (bdevsw[i] != bdev)
+		for (bi = 0; bi < max_bdevsws; bi++) {
+			if (bdevsw[bi] != bdev)
 				continue;
-			bdevsw[i] = NULL;
+			atomic_store_relaxed(&bdevsw[bi], NULL);
 			break;
 		}
+		KASSERT(bi < max_bdevsws);
 	}
 	if (cdev != NULL) {
-		for (i = 0 ; i < max_cdevsws ; i++) {
-			if (cdevsw[i] != cdev)
+		for (ci = 0; ci < max_cdevsws; ci++) {
+			if (cdevsw[ci] != cdev)
 				continue;
-			cdevsw[i] = NULL;
+			atomic_store_relaxed(&cdevsw[ci], NULL);
 			break;
 		}
+		KASSERT(ci < max_cdevsws);
+	}
+
+	if (bdev == NULL && cdev == NULL) /* XXX possible? */
+		return;
+
+	/*
+	 * Wait for all bdevsw_lookup_acquire, cdevsw_lookup_acquire
+	 * calls to notice that the devsw is gone.
+	 *
+	 * XXX Despite the use of the pserialize_read_enter/exit API
+	 * elsewhere in this file, we use xc_barrier here instead of
+	 * pserialize_perform -- because devsw_init is too early for
+	 * pserialize_create.  Either pserialize_create should be made
+	 * to work earlier, or it should be nixed altogether.  Until
+	 * that is fixed, xc_barrier will serve the same purpose.
+	 */
+	xc_barrier(0);
+
+	/*
+	 * Wait for all references to drain.  It is the caller's
+	 * responsibility to ensure that at this point, there are no
+	 * extant open instances and all new d_open calls will fail.
+	 *
+	 * Note that localcount_drain may release and reacquire
+	 * device_lock.
+	 */
+	if (bdev != NULL) {
+		localcount_drain(bdevswref[bi].dr_lc,
+		    &devsw_cv, &device_lock);
+		localcount_fini(bdevswref[bi].dr_lc);
+		kmem_free(bdevswref[bi].dr_lc, sizeof(*bdevswref[bi].dr_lc));
+		bdevswref[bi].dr_lc = NULL;
+	}
+	if (cdev != NULL) {
+		localcount_drain(cdevswref[ci].dr_lc,
+		    &devsw_cv, &device_lock);
+		localcount_fini(cdevswref[ci].dr_lc);
+		kmem_free(cdevswref[ci].dr_lc, sizeof(*cdevswref[ci].dr_lc));
+		cdevswref[ci].dr_lc = NULL;
 	}
 }
 
@@ -365,10 +459,59 @@ bdevsw_lookup(dev_t dev)
 	if (dev == NODEV)
 		return (NULL);
 	bmajor = major(dev);
-	if (bmajor < 0 || bmajor >= max_bdevsws)
+	if (bmajor < 0 || bmajor >= atomic_load_relaxed(&max_bdevsws))
 		return (NULL);
 
-	return (bdevsw[bmajor]);
+	return atomic_load_consume(&bdevsw)[bmajor];
+}
+
+static const struct bdevsw *
+bdevsw_lookup_acquire(dev_t dev, struct localcount **lcp)
+{
+	devmajor_t bmajor;
+	const struct bdevsw *bdev = NULL, *const *curbdevsw;
+	struct devswref *curbdevswref;
+	int s;
+
+	if (dev == NODEV)
+		return NULL;
+	bmajor = major(dev);
+	if (bmajor < 0)
+		return NULL;
+
+	s = pserialize_read_enter();
+
+	/*
+	 * max_bdevsws never goes down, so it is safe to rely on this
+	 * condition without any locking for the array access below.
+	 * Test sys_bdevsws first so we can avoid the memory barrier in
+	 * that case.
+	 */
+	if (bmajor >= sys_bdevsws &&
+	    bmajor >= atomic_load_acquire(&max_bdevsws))
+		goto out;
+	curbdevsw = atomic_load_consume(&bdevsw);
+	if ((bdev = atomic_load_consume(&curbdevsw[bmajor])) == NULL)
+		goto out;
+
+	curbdevswref = atomic_load_consume(&bdevswref);
+	if (curbdevswref == NULL) {
+		*lcp = NULL;
+	} else if ((*lcp = curbdevswref[bmajor].dr_lc) != NULL) {
+		localcount_acquire(*lcp);
+	}
+out:
+	pserialize_read_exit(s);
+	return bdev;
+}
+
+static void
+bdevsw_release(const struct bdevsw *bdev, struct localcount *lc)
+{
+
+	if (lc == NULL)
+		return;
+	localcount_release(lc, &devsw_cv, &device_lock);
 }
 
 /*
@@ -384,10 +527,59 @@ cdevsw_lookup(dev_t dev)
 	if (dev == NODEV)
 		return (NULL);
 	cmajor = major(dev);
-	if (cmajor < 0 || cmajor >= max_cdevsws)
+	if (cmajor < 0 || cmajor >= atomic_load_relaxed(&max_cdevsws))
 		return (NULL);
 
-	return (cdevsw[cmajor]);
+	return atomic_load_consume(&cdevsw)[cmajor];
+}
+
+static const struct cdevsw *
+cdevsw_lookup_acquire(dev_t dev, struct localcount **lcp)
+{
+	devmajor_t cmajor;
+	const struct cdevsw *cdev = NULL, *const *curcdevsw;
+	struct devswref *curcdevswref;
+	int s;
+
+	if (dev == NODEV)
+		return NULL;
+	cmajor = major(dev);
+	if (cmajor < 0)
+		return NULL;
+
+	s = pserialize_read_enter();
+
+	/*
+	 * max_cdevsws never goes down, so it is safe to rely on this
+	 * condition without any locking for the array access below.
+	 * Test sys_cdevsws first so we can avoid the memory barrier in
+	 * that case.
+	 */
+	if (cmajor >= sys_cdevsws &&
+	    cmajor >= atomic_load_acquire(&max_cdevsws))
+		goto out;
+	curcdevsw = atomic_load_consume(&cdevsw);
+	if ((cdev = atomic_load_consume(&curcdevsw[cmajor])) == NULL)
+		goto out;
+
+	curcdevswref = atomic_load_consume(&cdevswref);
+	if (curcdevswref == NULL) {
+		*lcp = NULL;
+	} else if ((*lcp = curcdevswref[cmajor].dr_lc) != NULL) {
+		localcount_acquire(*lcp);
+	}
+out:
+	pserialize_read_exit(s);
+	return cdev;
+}
+
+static void
+cdevsw_release(const struct cdevsw *cdev, struct localcount *lc)
+{
+
+	if (lc == NULL)
+		return;
+	localcount_release(lc, &devsw_cv, &device_lock);
 }
 
 /*
@@ -399,10 +591,13 @@ cdevsw_lookup(dev_t dev)
 devmajor_t
 bdevsw_lookup_major(const struct bdevsw *bdev)
 {
-	devmajor_t bmajor;
+	const struct bdevsw *const *curbdevsw;
+	devmajor_t bmajor, bmax;
 
-	for (bmajor = 0 ; bmajor < max_bdevsws ; bmajor++) {
-		if (bdevsw[bmajor] == bdev)
+	bmax = atomic_load_acquire(&max_bdevsws);
+	curbdevsw = atomic_load_consume(&bdevsw);
+	for (bmajor = 0; bmajor < bmax; bmajor++) {
+		if (atomic_load_relaxed(&curbdevsw[bmajor]) == bdev)
 			return (bmajor);
 	}
 
@@ -418,10 +613,13 @@ bdevsw_lookup_major(const struct bdevsw *bdev)
 devmajor_t
 cdevsw_lookup_major(const struct cdevsw *cdev)
 {
-	devmajor_t cmajor;
+	const struct cdevsw *const *curcdevsw;
+	devmajor_t cmajor, cmax;
 
-	for (cmajor = 0 ; cmajor < max_cdevsws ; cmajor++) {
-		if (cdevsw[cmajor] == cdev)
+	cmax = atomic_load_acquire(&max_cdevsws);
+	curcdevsw = atomic_load_consume(&cdevsw);
+	for (cmajor = 0; cmajor < cmax; cmajor++) {
+		if (atomic_load_relaxed(&curcdevsw[cmajor]) == cdev)
 			return (cmajor);
 	}
 
@@ -696,21 +894,18 @@ int
 bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 {
 	const struct bdevsw *d;
+	struct localcount *lc;
 	int rv, mpflag;
 
-	/*
-	 * For open we need to lock, in order to synchronize
-	 * with attach/detach.
-	 */
-	mutex_enter(&device_lock);
-	d = bdevsw_lookup(dev);
-	mutex_exit(&device_lock);
+	d = bdevsw_lookup_acquire(dev, &lc);
 	if (d == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_open)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+
+	bdevsw_release(d, lc);
 
 	return rv;
 }
@@ -854,21 +1049,18 @@ int
 cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 {
 	const struct cdevsw *d;
+	struct localcount *lc;
 	int rv, mpflag;
 
-	/*
-	 * For open we need to lock, in order to synchronize
-	 * with attach/detach.
-	 */
-	mutex_enter(&device_lock);
-	d = cdevsw_lookup(dev);
-	mutex_exit(&device_lock);
+	d = cdevsw_lookup_acquire(dev, &lc);
 	if (d == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_open)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+
+	cdevsw_release(d, lc);
 
 	return rv;
 }
