@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.91 2022/03/24 12:59:56 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.92 2022/03/28 12:37:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.91 2022/03/24 12:59:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.92 2022/03/28 12:37:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1376,7 +1376,8 @@ vfs_mountedon(vnode_t *vp)
 		return ENOTBLK;
 	if (spec_node_getmountedfs(vp) != NULL)
 		return EBUSY;
-	if (spec_node_lookup_by_dev(vp->v_type, vp->v_rdev, &vq) == 0) {
+	if (spec_node_lookup_by_dev(vp->v_type, vp->v_rdev, VDEAD_NOWAIT, &vq)
+	    == 0) {
 		if (spec_node_getmountedfs(vq) != NULL)
 			error = EBUSY;
 		vrele(vq);

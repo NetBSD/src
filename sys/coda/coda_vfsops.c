@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.89 2020/11/20 10:08:47 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.90 2022/03/28 12:37:46 riastradh Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.89 2020/11/20 10:08:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.90 2022/03/28 12:37:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -636,7 +636,7 @@ struct mount *devtomp(dev_t dev)
     struct mount *mp;
     struct vnode *vp;
 
-    if (spec_node_lookup_by_dev(VBLK, dev, &vp) == 0) {
+    if (spec_node_lookup_by_dev(VBLK, dev, VDEAD_NOWAIT, &vp) == 0) {
 	mp = spec_node_getmountedfs(vp);
 	vrele(vp);
     } else {
