@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2020/03/02 11:09:13 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2022/03/28 20:51:04 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,6 +6,7 @@
 TESTSDIR=	${TESTSBASE}/fs/vfs
 WARNS=		4
 
+TESTS_C+=	t_link
 TESTS_C+=	t_full
 TESTS_C+=	t_io
 TESTS_C+=	t_renamerace
@@ -18,6 +19,12 @@ TESTS_C+=	t_mtime_otrunc
 TESTS_C+=	t_mtime_write
 TESTS_C+=	t_vfsops
 TESTS_C+=	t_vnops
+
+
+.PATH: ${NETBSDSRCDIR}/lib/libc/gen
+CPPFLAGS.sysctlbyname.c += -DRUMP_ACTION
+CPPFLAGS.sysctlgetmibinfo.c += -DRUMP_ACTION
+SRCS.t_link+= sysctlbyname.c sysctlgetmibinfo.c t_link.c
 
 LDADD+=-lrumpnet_shmif -lrumpnet -lrumpnet_net -lrumpnet_netinet# TCP/IP
 LDADD+=-lrumpfs_nfs						# NFS
