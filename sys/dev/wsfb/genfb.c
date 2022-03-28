@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.85 2021/12/24 18:12:58 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.86 2022/03/28 11:21:40 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.85 2021/12/24 18:12:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.86 2022/03/28 11:21:40 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -833,6 +833,17 @@ void
 genfb_cnattach(void)
 {
 	genfb_cnattach_called = 1;
+}
+
+int
+genfb_cndetach(void)
+{
+
+	if (genfb_cnattach_called) {
+		genfb_cnattach_called = 0;
+		return 1;
+	}
+	return 0;
 }
 
 void
