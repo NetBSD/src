@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.23 2022/03/28 12:43:03 riastradh Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.24 2022/03/28 12:43:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,46 +34,6 @@
 #define	_DEV_USB_UHIDEV_H_
 
 #include <sys/rndsource.h>
-
-struct uhidev_softc {
-	device_t sc_dev;		/* base device */
-	struct usbd_device *sc_udev;
-	struct usbd_interface *sc_iface;	/* interface */
-	int sc_iep_addr;
-	int sc_oep_addr;
-	u_int sc_isize;
-
-	int sc_repdesc_size;
-	void *sc_repdesc;
-
-	u_int sc_nrepid;
-	device_t *sc_subdevs;
-
-	kmutex_t sc_lock;
-	kcondvar_t sc_cv;
-
-	/* Read/written under sc_lock.  */
-	struct lwp *sc_writelock;
-	struct lwp *sc_configlock;
-	int sc_refcnt;
-	int sc_writereportid;
-	u_char sc_dying;
-
-	/*
-	 * - Read under sc_lock, provided sc_refcnt > 0.
-	 * - Written under sc_configlock only when transitioning to and
-	 *   from sc_refcnt = 0.
-	 */
-	u_char *sc_ibuf;
-	struct usbd_pipe *sc_ipipe;	/* input interrupt pipe */
-	struct usbd_pipe *sc_opipe;	/* output interrupt pipe */
-	struct usbd_xfer *sc_oxfer;	/* write request */
-	usbd_callback sc_writecallback;	/* async write request callback */
-	void *sc_writecookie;
-
-	u_int sc_flags;
-#define UHIDEV_F_XB1	0x0001	/* Xbox 1 controller */
-};
 
 struct uhidev {
 	device_t sc_dev;		/* base device */
