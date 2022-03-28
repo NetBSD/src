@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.159 2022/03/28 12:38:33 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.160 2022/03/28 12:39:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -70,6 +70,7 @@ struct vnode;
  */
 struct bdevsw {
 	int		(*d_open)(dev_t, int, int, struct lwp *);
+	int		(*d_cancel)(dev_t, int, int, struct lwp *);
 	int		(*d_close)(dev_t, int, int, struct lwp *);
 	void		(*d_strategy)(struct buf *);
 	int		(*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
@@ -86,6 +87,7 @@ struct bdevsw {
  */
 struct cdevsw {
 	int		(*d_open)(dev_t, int, int, struct lwp *);
+	int		(*d_cancel)(dev_t, int, int, struct lwp *);
 	int		(*d_close)(dev_t, int, int, struct lwp *);
 	int		(*d_read)(dev_t, struct uio *, int);
 	int		(*d_write)(dev_t, struct uio *, int);
@@ -115,6 +117,7 @@ devmajor_t bdevsw_lookup_major(const struct bdevsw *);
 devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 
 #define	dev_type_open(n)	int n (dev_t, int, int, struct lwp *)
+#define	dev_type_cancel(n)	int n (dev_t, int, int, struct lwp *)
 #define	dev_type_close(n)	int n (dev_t, int, int, struct lwp *)
 #define	dev_type_read(n)	int n (dev_t, struct uio *, int)
 #define	dev_type_write(n)	int n (dev_t, struct uio *, int)
@@ -165,6 +168,7 @@ paddr_t	nommap(dev_t, off_t, int);
 /* device access wrappers. */
 
 dev_type_open(bdev_open);
+dev_type_cancel(bdev_cancel);
 dev_type_close(bdev_close);
 dev_type_strategy(bdev_strategy);
 dev_type_ioctl(bdev_ioctl);
@@ -175,6 +179,7 @@ dev_type_discard(bdev_discard);
 void	bdev_detached(dev_t);
 
 dev_type_open(cdev_open);
+dev_type_cancel(cdev_cancel);
 dev_type_close(cdev_close);
 dev_type_read(cdev_read);
 dev_type_write(cdev_write);

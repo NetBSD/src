@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.43 2022/03/28 12:38:33 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.44 2022/03/28 12:39:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.43 2022/03/28 12:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.44 2022/03/28 12:39:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -934,6 +934,24 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 }
 
 int
+bdev_cancel(dev_t dev, int flag, int devtype, struct lwp *l)
+{
+	const struct bdevsw *d;
+	int rv, mpflag;
+
+	if ((d = bdevsw_lookup(dev)) == NULL)
+		return ENXIO;
+	if (d->d_cancel == NULL)
+		return ENODEV;
+
+	DEV_LOCK(d);
+	rv = (*d->d_cancel)(dev, flag, devtype, l);
+	DEV_UNLOCK(d);
+
+	return rv;
+}
+
+int
 bdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 {
 	const struct bdevsw *d;
@@ -1124,6 +1142,24 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	}
 
 	cdevsw_release(d, lc);
+
+	return rv;
+}
+
+int
+cdev_cancel(dev_t dev, int flag, int devtype, struct lwp *l)
+{
+	const struct cdevsw *d;
+	int rv, mpflag;
+
+	if ((d = cdevsw_lookup(dev)) == NULL)
+		return ENXIO;
+	if (d->d_cancel == NULL)
+		return ENODEV;
+
+	DEV_LOCK(d);
+	rv = (*d->d_cancel)(dev, flag, devtype, l);
+	DEV_UNLOCK(d);
 
 	return rv;
 }
