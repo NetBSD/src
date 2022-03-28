@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.62 2021/05/07 09:54:43 hannken Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.63 2022/03/28 10:38:00 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -562,14 +562,15 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 	{
 		off_t *valp = data;
 		uint64_t numsec;
+		unsigned secsize;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
 
 		aprint_debug("DIOCGMEDIASIZE ioctl called\n");
 
-		dm_table_disksize(&dmv->table_head, &numsec, NULL);
-		*valp = numsec;
+		dm_table_disksize(&dmv->table_head, &numsec, &secsize);
+		*valp = (off_t) secsize * numsec;
 
 		dm_dev_unbusy(dmv);
 		break;
