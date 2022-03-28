@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.190 2022/03/28 12:34:59 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.191 2022/03/28 12:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.190 2022/03/28 12:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.191 2022/03/28 12:35:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -557,12 +557,6 @@ spec_open(void *v)
 	 * But first check whether it has been revoked -- if so, we
 	 * can't acquire more open references and we must fail
 	 * immediately with EBADF.
-	 *
-	 * XXX This races with revoke: once we release the vnode lock,
-	 * the vnode may be revoked, and the .d_close callback run, at
-	 * the same time as we're calling .d_open here.  Drivers
-	 * shouldn't have to contemplate this scenario; .d_open and
-	 * .d_close should be prevented from running concurrently.
 	 */
 	switch (vp->v_type) {
 	case VCHR:
