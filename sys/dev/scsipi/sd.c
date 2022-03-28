@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.333 2022/01/27 18:44:49 jakllsch Exp $	*/
+/*	$NetBSD: sd.c,v 1.334 2022/03/28 12:39:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.333 2022/01/27 18:44:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.334 2022/03/28 12:39:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -167,6 +167,8 @@ const struct bdevsw sd_bdevsw = {
 	.d_dump = sddump,
 	.d_psize = sdsize,
 	.d_discard = nodiscard,
+	.d_cfdriver = &sd_cd,
+	.d_devtounit = disklabel_dev_unit,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -182,6 +184,8 @@ const struct cdevsw sd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+	.d_cfdriver = &sd_cd,
+	.d_devtounit = disklabel_dev_unit,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
