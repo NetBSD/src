@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.49 2021/10/02 20:52:09 skrll Exp $ */
+/* $NetBSD: gicv3.c,v 1.50 2022/03/28 19:59:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.49 2021/10/02 20:52:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.50 2022/03/28 19:59:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,9 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.49 2021/10/02 20:52:09 skrll Exp $");
 #endif
 
 #define	PICTOSOFTC(pic)	\
-	((void *)((uintptr_t)(pic) - offsetof(struct gicv3_softc, sc_pic)))
+	container_of(pic, struct gicv3_softc, sc_pic)
 #define	LPITOSOFTC(lpi) \
-	((void *)((uintptr_t)(lpi) - offsetof(struct gicv3_softc, sc_lpi)))
+	container_of(lpi, struct gicv3_softc, sc_lpi)
 
 #define	IPL_TO_PRIORITY(sc, ipl)	(((0xff - (ipl)) << (sc)->sc_priority_shift) & 0xff)
 #define	IPL_TO_PMR(sc, ipl)		(((0xff - (ipl)) << (sc)->sc_pmr_shift) & 0xff)
