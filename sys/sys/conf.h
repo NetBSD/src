@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.154 2019/10/08 12:49:56 uwe Exp $	*/
+/*	$NetBSD: conf.h,v 1.155 2022/03/28 12:33:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -104,7 +104,7 @@ extern kmutex_t device_lock;
 
 int devsw_attach(const char *, const struct bdevsw *, devmajor_t *,
 		 const struct cdevsw *, devmajor_t *);
-int devsw_detach(const struct bdevsw *, const struct cdevsw *);
+void devsw_detach(const struct bdevsw *, const struct cdevsw *);
 const struct bdevsw *bdevsw_lookup(dev_t);
 const struct cdevsw *cdevsw_lookup(dev_t);
 devmajor_t bdevsw_lookup_major(const struct bdevsw *);

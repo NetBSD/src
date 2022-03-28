@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.403 2022/03/11 01:59:33 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.404 2022/03/28 12:33:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: cd.c 1.6 90/11/28$
+ * from: Utah $Hdr$
  *
  *      @(#)cd.c        8.2 (Berkeley) 11/16/93
  */
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.403 2022/03/11 01:59:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.404 2022/03/28 12:33:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -4082,16 +4082,7 @@ raid_modcmd_fini(void)
 		return error;
 	}
 #endif
-	error = devsw_detach(&raid_bdevsw, &raid_cdevsw);
-	if (error != 0) {
-		aprint_error("%s: cannot detach devsw\n",__func__);
-#ifdef _MODULE
-		config_cfdriver_attach(&raid_cd);
-#endif
-		config_cfattach_attach(raid_cd.cd_name, &raid_ca);
-		mutex_exit(&raid_lock);
-		return error;
-	}
+	devsw_detach(&raid_bdevsw, &raid_cdevsw);
 	rf_BootRaidframe(false);
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 	rf_destroy_mutex2(rf_sparet_wait_mutex);

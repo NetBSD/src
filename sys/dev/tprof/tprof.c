@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.16 2021/11/01 17:03:53 skrll Exp $	*/
+/*	$NetBSD: tprof.c,v 1.17 2022/03/28 12:33:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.16 2021/11/01 17:03:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.17 2022/03/28 12:33:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,13 +768,7 @@ tprof_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 #if defined(_MODULE)
-		{
-			int error;
-			error = devsw_detach(NULL, &tprof_cdevsw);
-			if (error) {
-				return error;
-			}
-		}
+		devsw_detach(NULL, &tprof_cdevsw);
 #endif /* defined(_MODULE) */
 		tprof_driver_fini();
 		return 0;

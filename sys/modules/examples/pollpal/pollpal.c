@@ -1,4 +1,4 @@
-/*	$NetBSD: pollpal.c,v 1.3 2020/05/01 21:42:34 christos Exp $	*/ 
+/*	$NetBSD: pollpal.c,v 1.4 2022/03/28 12:33:22 riastradh Exp $	*/ 
 
 /*-
 * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pollpal.c,v 1.3 2020/05/01 21:42:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pollpal.c,v 1.4 2022/03/28 12:33:22 riastradh Exp $");
 
 #include <sys/module.h>
 #include <sys/param.h>
@@ -311,7 +311,8 @@ pollpal_modcmd(modcmd_t cmd, void *arg __unused)
 	case MODULE_CMD_FINI:
 		if (pollpal_nopen != 0)
 			return EBUSY;
-		return devsw_detach(NULL, &pollpal_cdevsw);
+		devsw_detach(NULL, &pollpal_cdevsw);
+		return 0;
 	default:
 		return ENOTTY;
 	} 

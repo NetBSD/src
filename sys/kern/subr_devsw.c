@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.38 2017/11/07 18:35:57 christos Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.39 2022/03/28 12:33:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.38 2017/11/07 18:35:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.39 2022/03/28 12:33:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -343,14 +343,13 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 	}
 }
 
-int
+void
 devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
 
 	mutex_enter(&device_lock);
 	devsw_detach_locked(bdev, cdev);
 	mutex_exit(&device_lock);
-	return 0;
 }
 
 /*

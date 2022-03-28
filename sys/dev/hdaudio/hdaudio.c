@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.16 2021/08/07 16:19:11 thorpej Exp $ */
+/* $NetBSD: hdaudio.c,v 1.17 2022/03/28 12:33:21 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.16 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.17 2022/03/28 12:33:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1636,11 +1636,7 @@ hdaudio_modcmd(modcmd_t cmd, void *opaque)
 		error = config_cfdriver_detach(&hdaudio_cd);
 		if (error)
 			break;
-		error = devsw_detach(NULL, &hdaudio_cdevsw);
-		if (error) {
-			config_cfdriver_attach(&hdaudio_cd);
-			break;
-		}
+		devsw_detach(NULL, &hdaudio_cdevsw);
 #endif
 		break;
 	default:

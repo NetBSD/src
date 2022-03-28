@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.38 2020/02/21 00:26:22 joerg Exp $ */
+/*      $NetBSD: clockctl.c,v 1.39 2022/03/28 12:33:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.38 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.39 2022/03/28 12:33:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -182,14 +182,12 @@ clockctl_modcmd(modcmd_t cmd, void *data)
 			return EBUSY;
 		}
 #ifdef _MODULE
-		error = devsw_detach(NULL, &clockctl_cdevsw);
+		devsw_detach(NULL, &clockctl_cdevsw);
 #endif
 		mutex_exit(&clockctl_mtx);
 
-		if (error == 0) {
-			kauth_unlisten_scope(clockctl_listener);
-			mutex_destroy(&clockctl_mtx);
-		}
+		kauth_unlisten_scope(clockctl_listener);
+		mutex_destroy(&clockctl_mtx);
 		break;
 
 	default:

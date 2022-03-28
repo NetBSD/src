@@ -1,4 +1,4 @@
-.\"	$NetBSD: devsw_attach.9,v 1.3 2017/04/30 12:30:00 pgoyette Exp $
+.\"	$NetBSD: devsw_attach.9,v 1.4 2022/03/28 12:33:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 30, 2017
+.Dd January 11, 2022
 .Dt DEVSW 9
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@
 .Fa "const struct cdevsw *cdev"
 .Fa "devmajor_t *cmajor"
 .Fc
-.Ft int
+.Ft void
 .Fo devsw_detach
 .Fa "const struct bdevsw *bdev"
 .Fa "const struct cdevsw *cdev"
@@ -130,6 +130,11 @@ and
 structures.
 .Fn devsw_detach
 should be called before a loaded device driver is unloaded.
+The caller must ensure that there are no open instances of the device,
+and that the device's
+.Fn d_open
+function will fail, before calling.
+Fn devsw_detach .
 .Pp
 The
 .Fn bdevsw_lookup
@@ -155,10 +160,8 @@ or
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn devsw_attach
-and
-.Fn devsw_detach
-return 0.
-Otherwise they return an error value.
+returns 0.
+Otherwise it returns an error value.
 .Pp
 In case of failure,
 .Fn bdevsw_lookup

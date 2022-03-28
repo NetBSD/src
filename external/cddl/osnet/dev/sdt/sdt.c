@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.20 2019/03/09 18:53:52 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.21 2022/03/28 12:33:20 riastradh Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/proc.h>
@@ -562,7 +562,8 @@ dtrace_sdt_modcmd(modcmd_t cmd, void *data)
 		error = sdt_unload();
 		if (error != 0)
 			return error;
-		return devsw_detach(NULL, &sdt_cdevsw);
+		devsw_detach(NULL, &sdt_cdevsw);
+		return 0;
 	case MODULE_CMD_AUTOUNLOAD:
 		return EBUSY;
 	default:
