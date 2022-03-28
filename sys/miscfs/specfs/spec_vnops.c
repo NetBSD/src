@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.191 2022/03/28 12:35:08 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.192 2022/03/28 12:35:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.191 2022/03/28 12:35:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.192 2022/03/28 12:35:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -558,20 +558,19 @@ spec_open(void *v)
 	 * can't acquire more open references and we must fail
 	 * immediately with EBADF.
 	 */
+	mutex_enter(&device_lock);
 	switch (vp->v_type) {
 	case VCHR:
 		/*
 		 * Character devices can accept opens from multiple
 		 * vnodes.
 		 */
-		mutex_enter(&device_lock);
 		if (sn->sn_gone) {
-			mutex_exit(&device_lock);
-			return (EBADF);
+			error = EBADF;
+			break;
 		}
 		sd->sd_opencnt++;
 		sn->sn_opencnt++;
-		mutex_exit(&device_lock);
 		break;
 	case VBLK:
 		/*
@@ -582,23 +581,24 @@ spec_open(void *v)
 		 * Treat zero opencnt with non-NULL mountpoint as open.
 		 * This may happen after forced detach of a mounted device.
 		 */
-		mutex_enter(&device_lock);
 		if (sn->sn_gone) {
-			mutex_exit(&device_lock);
-			return (EBADF);
+			error = EBADF;
+			break;
 		}
 		if (sd->sd_opencnt != 0 || sd->sd_mountpoint != NULL) {
-			mutex_exit(&device_lock);
-			return EBUSY;
+			error = EBUSY;
+			break;
 		}
 		sn->sn_opencnt = 1;
 		sd->sd_opencnt = 1;
 		sd->sd_bdevvp = vp;
-		mutex_exit(&device_lock);
 		break;
 	default:
 		panic("invalid specfs vnode type: %d", vp->v_type);
 	}
+	mutex_exit(&device_lock);
+	if (error)
+		return error;
 
 	/*
 	 * Set VV_ISTTY if this is a tty cdev.
