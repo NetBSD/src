@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.52 2022/03/28 12:42:54 riastradh Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.53 2022/03/28 12:43:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.52 2022/03/28 12:42:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.53 2022/03/28 12:43:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -592,11 +592,9 @@ ucycomstart(struct tty *tp)
 	}
 #endif
 	DPRINTFN(4,("ucycomstart: %d chars\n", len));
-	usbd_setup_xfer(sc->sc_hdev.sc_parent->sc_oxfer, sc, sc->sc_obuf,
-	    sc->sc_olen, 0, USBD_NO_TIMEOUT, ucycomwritecb);
-
 	/* What can we do on error? */
-	err = usbd_transfer(sc->sc_hdev.sc_parent->sc_oxfer);
+	err = uhidev_write_async(&sc->sc_hdev, sc->sc_obuf, sc->sc_olen, 0,
+	    USBD_NO_TIMEOUT, ucycomwritecb, sc);
 
 #ifdef UCYCOM_DEBUG
 	if (err != USBD_IN_PROGRESS)
@@ -621,7 +619,6 @@ ucycomwritecb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 	if (status) {
 		DPRINTF(("ucycomwritecb: status=%d\n", status));
-		usbd_clear_endpoint_stall(sc->sc_hdev.sc_parent->sc_opipe);
 		/* XXX we should restart after some delay. */
 		goto error;
 	}
