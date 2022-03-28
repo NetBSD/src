@@ -1,4 +1,4 @@
-/* $NetBSD: apple_intc.c,v 1.6 2021/11/26 19:39:58 skrll Exp $ */
+/* $NetBSD: apple_intc.c,v 1.7 2022/03/28 19:59:26 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.6 2021/11/26 19:39:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.7 2022/03/28 19:59:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,10 +112,8 @@ struct apple_intc_softc {
 
 static struct apple_intc_softc *intc_softc;
 
-#define	PICTOSOFTC(pic)	\
-	((void *)((uintptr_t)(pic) - offsetof(struct apple_intc_softc, sc_pic)))
-#define	PICTOPERCPU(pic) \
-	((void *)((uintptr_t)(pic) - offsetof(struct apple_intc_percpu, pc_pic)))
+#define	PICTOSOFTC(pic) container_of(pic, struct apple_intc_softc, sc_pic)
+#define	PICTOPERCPU(pic) container_of(pic, struct apple_intc_percpu, pc_pic)
 
 #define AIC_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
