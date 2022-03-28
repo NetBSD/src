@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.192 2022/03/28 12:35:17 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.193 2022/03/28 12:35:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.192 2022/03/28 12:35:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.193 2022/03/28 12:35:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -632,9 +632,9 @@ spec_open(void *v)
 	 * calling .d_open, so release it now and reacquire it when
 	 * done.
 	 */
+	VOP_UNLOCK(vp);
 	switch (vp->v_type) {
 	case VCHR:
-		VOP_UNLOCK(vp);
 		do {
 			const struct cdevsw *cdev;
 
@@ -657,12 +657,9 @@ spec_open(void *v)
 			/* Try to autoload device module */
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
 		} while (gen != module_gen);
-
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
 	case VBLK:
-		VOP_UNLOCK(vp);
 		do {
 			const struct bdevsw *bdev;
 
@@ -685,13 +682,12 @@ spec_open(void *v)
                         /* Try to autoload device module */
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
 		} while (gen != module_gen);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-
 		break;
 
 	default:
 		__unreachable();
 	}
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
 	 * If it has been revoked since we released the vnode lock and
