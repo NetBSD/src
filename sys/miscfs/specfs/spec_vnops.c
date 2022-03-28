@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.185 2022/03/28 12:34:17 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.186 2022/03/28 12:34:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.185 2022/03/28 12:34:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.186 2022/03/28 12:34:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -84,6 +84,14 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.185 2022/03/28 12:34:17 riastradh E
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+/*
+ * Lock order:
+ *
+ *	vnode lock
+ *	-> device_lock
+ *	-> struct vnode::v_interlock
+ */
 
 /* symbolic sleep message strings for devices */
 const char	devopn[] = "devopn";
