@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.28 2022/03/28 12:43:12 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.29 2022/03/28 12:44:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.28 2022/03/28 12:43:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.29 2022/03/28 12:44:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -301,7 +301,7 @@ static void geyser34_initialize(struct uatp_softc *);
 static int geyser34_finalize(struct uatp_softc *);
 static void geyser34_deferred_reset(struct uatp_softc *);
 static void geyser34_reset_task(void *);
-static void uatp_intr(struct uhidev *, void *, unsigned int);
+static void uatp_intr(void *, void *, unsigned int);
 static bool base_sample_softc_flag(const struct uatp_softc *, const uint8_t *);
 static bool base_sample_input_flag(const struct uatp_softc *, const uint8_t *);
 static void read_sample_1(uint8_t *, uint8_t *, const uint8_t *);
@@ -486,7 +486,8 @@ static const struct uatp_knobs default_knobs = {
 };
 
 struct uatp_softc {
-	struct uhidev sc_hdev;		/* uhidev(9) parent.  */
+	device_t sc_dev;
+	struct uhidev *sc_hdev;		/* uhidev(9) parent.  */
 	struct usbd_device *sc_udev;	/* USB device.  */
 	device_t sc_wsmousedev;		/* Attached wsmouse device.  */
 	const struct uatp_parameters *sc_parameters;
@@ -691,7 +692,7 @@ find_uatp_descriptor(const struct uhidev_attach_arg *uha)
 static device_t
 uatp_dev(const struct uatp_softc *sc)
 {
-	return sc->sc_hdev.sc_dev;
+	return sc->sc_dev;
 }
 
 static uint8_t *
@@ -931,12 +932,8 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	int report_size, input_size;
 	struct wsmousedev_attach_args a;
 
-	/* Set up uhidev state.  (Why doesn't uhidev do most of this?)  */
-	sc->sc_hdev.sc_dev = self;
-	sc->sc_hdev.sc_intr = uatp_intr;
-	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_hdev.sc_report_id = uha->reportid;
-
+	sc->sc_dev = self;
+	sc->sc_hdev = uha->parent;
 	sc->sc_udev = uha->uiaa->uiaa_device;
 
 	/* Identify ourselves to dmesg.  */
@@ -948,7 +945,7 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	    "vendor 0x%04x, product 0x%04x, report id %d\n",
 	    (unsigned int)uha->uiaa->uiaa_vendor,
 	    (unsigned int)uha->uiaa->uiaa_product,
-	    (int)uha->reportid);
+	    uha->reportid);
 
 	uhidev_get_report_desc(uha->parent, &report_descriptor, &report_size);
 	input_size = hid_report_size(report_descriptor, report_size, hid_input,
@@ -1251,8 +1248,8 @@ uatp_enable(void *v)
 	tap_enable(sc);
 	uatp_clear_position(sc);
 
-	DPRINTF(sc, UATP_DEBUG_MISC, ("uhidev_open(%p)\n", &sc->sc_hdev));
-	return uhidev_open(&sc->sc_hdev);
+	DPRINTF(sc, UATP_DEBUG_MISC, ("uhidev_open(%p)\n", sc->sc_hdev));
+	return uhidev_open(sc->sc_hdev, &uatp_intr, sc);
 }
 
 static void
@@ -1270,8 +1267,8 @@ uatp_disable(void *v)
 	tap_disable(sc);
 	sc->sc_status &=~ UATP_ENABLED;
 
-	DPRINTF(sc, UATP_DEBUG_MISC, ("uhidev_close(%p)\n", &sc->sc_hdev));
-	uhidev_close(&sc->sc_hdev);
+	DPRINTF(sc, UATP_DEBUG_MISC, ("uhidev_close(%p)\n", sc->sc_hdev));
+	uhidev_close(sc->sc_hdev);
 }
 
 static int
@@ -1399,15 +1396,15 @@ geyser34_reset_task(void *arg)
 /* Interrupt handler */
 
 static void
-uatp_intr(struct uhidev *addr, void *ibuf, unsigned int len)
+uatp_intr(void *cookie, void *ibuf, unsigned int len)
 {
-	struct uatp_softc *sc = (struct uatp_softc *)addr;
+	struct uatp_softc *sc = cookie;
 	uint8_t *input;
 	int dx, dy, dz, dw;
 	uint32_t buttons;
 
 	DPRINTF(sc, UATP_DEBUG_INTR, ("softc %p, ibuf %p, len %u\n",
-	    addr, ibuf, len));
+	    sc, ibuf, len));
 
 	/*
 	 * Some devices break packets up into chunks, so we accumulate

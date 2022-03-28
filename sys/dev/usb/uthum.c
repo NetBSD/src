@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.22 2022/03/28 12:43:12 riastradh Exp $   */
+/*	$NetBSD: uthum.c,v 1.23 2022/03/28 12:44:17 riastradh Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.22 2022/03/28 12:43:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.23 2022/03/28 12:44:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,7 +74,8 @@ static const uint8_t cmd_end[8] =
 #define UTHUM_TYPE_TEMPER	2
 
 struct uthum_softc {
-	struct uhidev		 sc_hdev;
+	device_t		 sc_dev;
+	struct uhidev *		 sc_hdev;
 	struct usbd_device *	 sc_udev;
 	u_char			 sc_dying;
 	uint16_t		 sc_flag;
@@ -109,7 +110,6 @@ static int uthum_temper_temp(uint8_t, uint8_t);
 static int uthum_sht1x_temp(uint8_t, uint8_t);
 static int uthum_sht1x_rh(unsigned int, int);
 
-static void uthum_intr(struct uhidev *, void *, u_int);
 static void uthum_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 
@@ -134,11 +134,9 @@ uthum_attach(device_t parent, device_t self, void *aux)
 	int size, repid;
 	void *desc;
 
+	sc->sc_dev = self;
+	sc->sc_hdev = uha->parent;
 	sc->sc_udev = dev;
-	sc->sc_hdev.sc_dev = self;
-	sc->sc_hdev.sc_intr = uthum_intr;
-	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_hdev.sc_report_id = uha->reportid;
 	sc->sc_num_sensors = 0;
 
 	aprint_normal("\n");
@@ -149,8 +147,7 @@ uthum_attach(device_t parent, device_t self, void *aux)
 	sc->sc_olen = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_flen = hid_report_size(desc, size, hid_feature, repid);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_hdev.sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	if (sc->sc_flen < 32) {
 		/* not sensor interface, just attach */
@@ -230,8 +227,7 @@ uthum_detach(device_t self, int flags)
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    sc->sc_hdev.sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }
@@ -247,12 +243,6 @@ uthum_activate(device_t self, enum devact act)
 		break;
 	}
 	return 0;
-}
-
-static void
-uthum_intr(struct uhidev *addr, void *ibuf, u_int len)
-{
-	/* do nothing */
 }
 
 static int
@@ -272,24 +262,24 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 	/* issue query */
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	memcpy(cmdbuf, cmd_start, sizeof(cmd_start));
-	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
+	if (uhidev_set_report(sc->sc_hdev, UHID_OUTPUT_REPORT,
 	    cmdbuf, olen))
 		return EIO;
 
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	cmdbuf[0] = target_cmd;
-	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
+	if (uhidev_set_report(sc->sc_hdev, UHID_OUTPUT_REPORT,
 	    cmdbuf, olen))
 		return EIO;
 
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	for (i = 0; i < 7; i++) {
-		if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
+		if (uhidev_set_report(sc->sc_hdev, UHID_OUTPUT_REPORT,
 		    cmdbuf, olen))
 			return EIO;
 	}
 	memcpy(cmdbuf, cmd_end, sizeof(cmd_end));
-	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
+	if (uhidev_set_report(sc->sc_hdev, UHID_OUTPUT_REPORT,
 	    cmdbuf, olen))
 		return EIO;
 
@@ -299,7 +289,7 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 
 	/* get answer */
 	flen = uimin(sc->sc_flen, sizeof(report));
-	if (uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
+	if (uhidev_get_report(sc->sc_hdev, UHID_FEATURE_REPORT,
 	    report, flen))
 		return EIO;
 	memcpy(buf, report, len);
