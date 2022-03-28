@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.120 2022/03/28 12:42:45 riastradh Exp $	*/
+/*	$NetBSD: uhid.c,v 1.121 2022/03/28 12:42:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.120 2022/03/28 12:42:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.121 2022/03/28 12:42:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -495,8 +495,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 #endif
 	if (!error) {
 		if (sc->sc_raw)
-			err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf,
-			    size);
+			err = uhidev_write(&sc->sc_hdev, sc->sc_obuf, size);
 		else
 			err = uhidev_set_report(&sc->sc_hdev,
 			    UHID_OUTPUT_REPORT, sc->sc_obuf, size);

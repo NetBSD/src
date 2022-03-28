@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.82 2022/02/09 18:09:48 jakllsch Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.83 2022/03/28 12:42:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.82 2022/02/09 18:09:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.83 2022/03/28 12:42:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -909,7 +909,7 @@ uhidev_stop(struct uhidev *scd)
 		abort = true;
 	mutex_exit(&sc->sc_lock);
 
-	if (abort && sc->sc_opipe)
+	if (abort && sc->sc_opipe) /* XXX sc_opipe might go away */
 		usbd_abort_pipe(sc->sc_opipe);
 }
 
@@ -969,8 +969,9 @@ uhidev_get_report(struct uhidev *scd, int type, void *data, int len)
 }
 
 usbd_status
-uhidev_write(struct uhidev_softc *sc, void *data, int len)
+uhidev_write(struct uhidev *scd, void *data, int len)
 {
+	struct uhidev_softc *sc = scd->sc_parent;
 	usbd_status err;
 
 	DPRINTF(("uhidev_write: data=%p, len=%d\n", data, len));
@@ -993,6 +994,7 @@ uhidev_write(struct uhidev_softc *sc, void *data, int len)
 		}
 	}
 	sc->sc_writelock = curlwp;
+	sc->sc_writereportid = scd->sc_report_id;
 	mutex_exit(&sc->sc_lock);
 
 #ifdef UHIDEV_DEBUG
@@ -1014,6 +1016,10 @@ uhidev_write(struct uhidev_softc *sc, void *data, int len)
 	KASSERT(sc->sc_refcnt);
 	KASSERTMSG(sc->sc_writelock == curlwp, "%s: migrated from %p to %p",
 	    device_xname(sc->sc_dev), curlwp, sc->sc_writelock);
+	KASSERTMSG(sc->sc_writereportid == scd->sc_report_id,
+	    "%s: changed write report ids from %d to %d",
+	    device_xname(sc->sc_dev), scd->sc_report_id, sc->sc_writereportid);
+	sc->sc_writereportid = -1;
 	sc->sc_writelock = NULL;
 	cv_broadcast(&sc->sc_cv);
 out:	mutex_exit(&sc->sc_lock);
