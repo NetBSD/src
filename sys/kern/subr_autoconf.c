@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.299 2022/03/28 12:38:15 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.300 2022/03/28 12:38:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.299 2022/03/28 12:38:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.300 2022/03/28 12:38:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2023,6 +2023,11 @@ config_detach(device_t dev, int flags)
 	alldevs_nwrite++;
 	mutex_exit(&alldevs_lock);
 
+	/*
+	 * Call the driver's .ca_detach function, unless it has none or
+	 * we are skipping it because it's unforced shutdown time and
+	 * the driver didn't ask to detach on shutdown.
+	 */
 	if (!detachall &&
 	    (flags & (DETACH_SHUTDOWN|DETACH_FORCE)) == DETACH_SHUTDOWN &&
 	    (dev->dv_flags & DVF_DETACH_SHUTDOWN) == 0) {
@@ -2035,30 +2040,38 @@ config_detach(device_t dev, int flags)
 	/*
 	 * If it was not possible to detach the device, then we either
 	 * panic() (for the forced but failed case), or return an error.
-	 *
-	 * If it was possible to detach the device, ensure that the
-	 * device is deactivated.
 	 */
-	if (rv == 0) {
-		config_detach_commit(dev);
-		dev->dv_flags &= ~DVF_ACTIVE; /* XXXSMP */
-	} else if ((flags & DETACH_FORCE) == 0) {
+	if (rv) {
 		/*
-		 * Detach failed -- likely EBUSY.  Driver must not have
-		 * called config_detach_commit.
+		 * Detach failed -- likely EOPNOTSUPP or EBUSY.  Driver
+		 * must not have called config_detach_commit.
 		 */
 		KASSERTMSG(!dev->dv_detached,
 		    "%s committed to detaching and then backed out",
 		    device_xname(dev));
+		if (flags & DETACH_FORCE) {
+			panic("config_detach: forced detach of %s failed (%d)",
+			    device_xname(dev), rv);
+		}
 		goto out;
-	} else {
-		panic("config_detach: forced detach of %s failed (%d)",
-		    device_xname(dev), rv);
 	}
 
 	/*
 	 * The device has now been successfully detached.
 	 */
+
+	/*
+	 * If .ca_detach didn't commit to detach, then do that for it.
+	 * This wakes any pending device_lookup_acquire calls so they
+	 * will fail.
+	 */
+	config_detach_commit(dev);
+
+	/*
+	 * If it was possible to detach the device, ensure that the
+	 * device is deactivated.
+	 */
+	dev->dv_flags &= ~DVF_ACTIVE; /* XXXSMP */
 
 	/*
 	 * Wait for all device_lookup_acquire references -- mostly, for
