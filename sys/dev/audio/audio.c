@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.120 2022/03/26 06:49:27 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.121 2022/03/28 12:39:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.120 2022/03/26 06:49:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.121 2022/03/28 12:39:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -567,7 +567,6 @@ static int audio_exlock_mutex_enter(struct audio_softc *);
 static void audio_exlock_mutex_exit(struct audio_softc *);
 static int audio_exlock_enter(struct audio_softc *);
 static void audio_exlock_exit(struct audio_softc *);
-static void audio_sc_acquire_foropen(struct audio_softc *, struct psref *);
 static struct audio_softc *audio_sc_acquire_fromfile(audio_file_t *,
 	struct psref *);
 static void audio_sc_release(struct audio_softc *, struct psref *);
@@ -766,6 +765,13 @@ audio_volume_to_outer(u_int v)
 static dev_type_open(audioopen);
 /* XXXMRG use more dev_type_xxx */
 
+static int
+audiounit(dev_t dev)
+{
+
+	return AUDIOUNIT(dev);
+}
+
 const struct cdevsw audio_cdevsw = {
 	.d_open = audioopen,
 	.d_close = noclose,
@@ -778,6 +784,8 @@ const struct cdevsw audio_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+	.d_cfdriver = &audio_cd,
+	.d_devtounit = audiounit,
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
@@ -1590,31 +1598,6 @@ audio_exlock_exit(struct audio_softc *sc)
 }
 
 /*
- * Increment reference counter for this sc.
- * This is intended to be used for open.
- */
-void
-audio_sc_acquire_foropen(struct audio_softc *sc, struct psref *refp)
-{
-	int s;
-
-	/* Block audiodetach while we acquire a reference */
-	s = pserialize_read_enter();
-
-	/*
-	 * We don't examine sc_dying here.  However, all open methods
-	 * call audio_exlock_enter() right after this, so we can examine
-	 * sc_dying in it.
-	 */
-
-	/* Acquire a reference */
-	psref_acquire(refp, &sc->sc_psref, audio_psref_class);
-
-	/* Now sc won't go away until we drop the reference count */
-	pserialize_read_exit(s);
-}
-
-/*
  * Get sc from file, and increment reference counter for this sc.
  * This is intended to be used for methods other than open.
  * If successful, returns sc.  Otherwise returns NULL.
@@ -1732,21 +1715,20 @@ static int
 audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	struct audio_softc *sc;
-	struct psref sc_ref;
-	int bound;
 	int error;
 
-	/* Find the device */
+	/*
+	 * Find the device.  Because we wired the cdevsw to the audio
+	 * autoconf instance, the system ensures it will not go away
+	 * until after we return.
+	 */
 	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL || sc->hw_if == NULL)
 		return ENXIO;
 
-	bound = curlwp_bind();
-	audio_sc_acquire_foropen(sc, &sc_ref);
-
 	error = audio_exlock_enter(sc);
 	if (error)
-		goto done;
+		return error;
 
 	device_active(sc->sc_dev, DVA_SYSTEM);
 	switch (AUDIODEV(dev)) {
@@ -1766,9 +1748,6 @@ audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	}
 	audio_exlock_exit(sc);
 
-done:
-	audio_sc_release(sc, &sc_ref);
-	curlwp_bindx(bound);
 	return error;
 }
 
@@ -2150,30 +2129,42 @@ done:
 int
 audiobellopen(dev_t dev, audio_file_t **filep)
 {
+	device_t audiodev = NULL;
 	struct audio_softc *sc;
-	struct psref sc_ref;
-	int bound;
+	bool exlock = false;
 	int error;
 
-	/* Find the device */
-	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
-	if (sc == NULL || sc->hw_if == NULL)
-		return ENXIO;
+	/*
+	 * Find the autoconf instance and make sure it doesn't go away
+	 * while we are opening it.
+	 */
+	audiodev = device_lookup_acquire(&audio_cd, AUDIOUNIT(dev));
+	if (audiodev == NULL) {
+		error = ENXIO;
+		goto out;
+	}
 
-	bound = curlwp_bind();
-	audio_sc_acquire_foropen(sc, &sc_ref);
+	/* If attach failed, it's hopeless -- give up.  */
+	sc = device_private(audiodev);
+	if (sc->hw_if == NULL) {
+		error = ENXIO;
+		goto out;
+	}
 
+	/* Take the exclusive configuration lock.  */
 	error = audio_exlock_enter(sc);
 	if (error)
-		goto done;
+		goto out;
+	exlock = true;
 
+	/* Open the audio device.  */
 	device_active(sc->sc_dev, DVA_SYSTEM);
 	error = audio_open(dev, sc, FWRITE, 0, curlwp, filep);
 
-	audio_exlock_exit(sc);
-done:
-	audio_sc_release(sc, &sc_ref);
-	curlwp_bindx(bound);
+out:	if (exlock)
+		audio_exlock_exit(sc);
+	if (audiodev)
+		device_release(audiodev);
 	return error;
 }
 
