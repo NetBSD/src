@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.298 2022/03/28 12:33:41 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.299 2022/03/28 12:38:15 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.298 2022/03/28 12:33:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.299 2022/03/28 12:38:15 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2039,10 +2039,17 @@ config_detach(device_t dev, int flags)
 	 * If it was possible to detach the device, ensure that the
 	 * device is deactivated.
 	 */
-	if (rv == 0)
-		dev->dv_flags &= ~DVF_ACTIVE;
-	else if ((flags & DETACH_FORCE) == 0) {
-		/* Detach failed -- likely EBUSY.  */
+	if (rv == 0) {
+		config_detach_commit(dev);
+		dev->dv_flags &= ~DVF_ACTIVE; /* XXXSMP */
+	} else if ((flags & DETACH_FORCE) == 0) {
+		/*
+		 * Detach failed -- likely EBUSY.  Driver must not have
+		 * called config_detach_commit.
+		 */
+		KASSERTMSG(!dev->dv_detached,
+		    "%s committed to detaching and then backed out",
+		    device_xname(dev));
 		goto out;
 	} else {
 		panic("config_detach: forced detach of %s failed (%d)",
@@ -2059,7 +2066,8 @@ config_detach(device_t dev, int flags)
 	 * responsibility of .ca_detach to ensure anything with open
 	 * references will be interrupted and release them promptly,
 	 * not block indefinitely.  All new attempts to acquire
-	 * references will block until dv_detaching clears.
+	 * references will fail, as config_detach_commit has arranged
+	 * by now.
 	 */
 	mutex_enter(&config_misc_lock);
 	localcount_drain(dev->dv_localcount,
@@ -2131,6 +2139,30 @@ out:
 	KERNEL_UNLOCK_ONE(NULL);
 
 	return rv;
+}
+
+/*
+ * config_detach_commit(dev)
+ *
+ *	Issued by a driver's .ca_detach routine to notify anyone
+ *	waiting in device_lookup_acquire that the driver is committed
+ *	to detaching the device, which allows device_lookup_acquire to
+ *	wake up and fail immediately.
+ *
+ *	Safe to call multiple times -- idempotent.  Must be called
+ *	during config_detach_enter/exit.  Safe to use with
+ *	device_lookup because the device is not actually removed from
+ *	the table until after config_detach_exit.
+ */
+void
+config_detach_commit(device_t dev)
+{
+
+	mutex_enter(&config_misc_lock);
+	KASSERT(dev->dv_detaching == curlwp);
+	dev->dv_detached = true;
+	cv_broadcast(&config_misc_cv);
+	mutex_exit(&config_misc_lock);
 }
 
 int
@@ -2640,7 +2672,8 @@ device_lookup_acquire(cfdriver_t cd, int unit)
 	mutex_enter(&alldevs_lock);
 retry:	if (unit < 0 || unit >= cd->cd_ndevs ||
 	    (dv = cd->cd_devs[unit]) == NULL ||
-	    dv->dv_del_gen != 0) {
+	    dv->dv_del_gen != 0 ||
+	    dv->dv_detached) {
 		dv = NULL;
 	} else {
 		/*
