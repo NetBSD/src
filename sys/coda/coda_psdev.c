@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.60 2021/09/26 01:16:08 thorpej Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.61 2022/03/28 12:33:20 riastradh Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.60 2021/09/26 01:16:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.61 2022/03/28 12:33:20 riastradh Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -758,7 +758,7 @@ vcoda_modcmd(modcmd_t cmd, void *arg)
 				if (VC_OPEN(vcp))
 					return EBUSY;
 			}
-			return devsw_detach(NULL, &vcoda_cdevsw);
+			devsw_detach(NULL, &vcoda_cdevsw);
 		}
 #endif
 		break;

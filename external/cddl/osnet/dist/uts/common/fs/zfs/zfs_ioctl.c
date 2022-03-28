@@ -7231,7 +7231,7 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			return error;
 
-		(void) devsw_detach(&zfs_bdevsw, &zfs_cdevsw);
+		devsw_detach(&zfs_bdevsw, &zfs_cdevsw);
 
 attacherr:
 		zfs_sysctl_fini();

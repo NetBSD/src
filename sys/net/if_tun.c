@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.172 2022/03/15 00:05:17 riastradh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.173 2022/03/28 12:33:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.172 2022/03/15 00:05:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.173 2022/03/28 12:33:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -142,17 +142,10 @@ tuninit(void)
 static int
 tundetach(void)
 {
-#ifdef _MODULE
-	int error;
-#endif
 
 	if_clone_detach(&tun_cloner);
 #ifdef _MODULE
-	error = devsw_detach(NULL, &tun_cdevsw);
-	if (error != 0) {
-		if_clone_attach(&tun_cloner);
-		return error;
-	}
+	devsw_detach(NULL, &tun_cdevsw);
 #endif
 
 	if (!LIST_EMPTY(&tun_softc_list) || !LIST_EMPTY(&tunz_softc_list)) {

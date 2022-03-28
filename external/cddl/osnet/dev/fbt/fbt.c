@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.27 2019/07/16 07:26:00 hannken Exp $	*/
+/*	$NetBSD: fbt.c,v 1.28 2022/03/28 12:33:20 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1329,7 +1329,8 @@ dtrace_fbt_modcmd(modcmd_t cmd, void *data)
 		error = fbt_unload();
 		if (error != 0)
 			return error;
-		return devsw_detach(NULL, &fbt_cdevsw);
+		devsw_detach(NULL, &fbt_cdevsw);
+		return 0;
 	case MODULE_CMD_AUTOUNLOAD:
 		return EBUSY;
 	default:
