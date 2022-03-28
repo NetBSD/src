@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.27 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: uatp.c,v 1.28 2022/03/28 12:43:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.27 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.28 2022/03/28 12:43:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -486,7 +486,8 @@ static const struct uatp_knobs default_knobs = {
 };
 
 struct uatp_softc {
-	struct uhidev sc_hdev;		/* USB parent.  */
+	struct uhidev sc_hdev;		/* uhidev(9) parent.  */
+	struct usbd_device *sc_udev;	/* USB device.  */
 	device_t sc_wsmousedev;		/* Attached wsmouse device.  */
 	const struct uatp_parameters *sc_parameters;
 	struct uatp_knobs sc_knobs;
@@ -936,6 +937,8 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
+	sc->sc_udev = uha->uiaa->uiaa_device;
+
 	/* Identify ourselves to dmesg.  */
 	uatp_descriptor = find_uatp_descriptor(uha);
 	KASSERT(uatp_descriptor != NULL);
@@ -1296,7 +1299,7 @@ uatp_ioctl(void *v, unsigned long cmd, void *data, int flag, struct lwp *p)
 static void
 geyser34_enable_raw_mode(struct uatp_softc *sc)
 {
-	struct usbd_device *udev = sc->sc_hdev.sc_parent->sc_udev;
+	struct usbd_device *udev = sc->sc_udev;
 	usb_device_request_t req;
 	usbd_status status;
 	uint8_t report[GEYSER34_MODE_PACKET_SIZE];
@@ -1368,8 +1371,8 @@ geyser34_finalize(struct uatp_softc *sc)
 {
 
 	DPRINTF(sc, UATP_DEBUG_MISC, ("finalizing\n"));
-	usb_rem_task_wait(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_reset_task,
-	    USB_TASKQ_DRIVER, NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_reset_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	return 0;
 }
@@ -1379,8 +1382,7 @@ geyser34_deferred_reset(struct uatp_softc *sc)
 {
 
 	DPRINTF(sc, UATP_DEBUG_RESET, ("deferring reset\n"));
-	usb_add_task(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_reset_task,
-	    USB_TASKQ_DRIVER);
+	usb_add_task(sc->sc_udev, &sc->sc_reset_task, USB_TASKQ_DRIVER);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.157 2022/01/08 17:34:14 riastradh Exp $        */
+/*      $NetBSD: ukbd.c,v 1.158 2022/03/28 12:43:12 riastradh Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.157 2022/01/08 17:34:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.158 2022/03/28 12:43:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -236,6 +236,8 @@ Static const uint8_t ukbd_trtab[256] = {
 
 struct ukbd_softc {
 	struct uhidev sc_hdev;
+	struct usbd_device *sc_udev;
+	struct usbd_interface *sc_iface;
 
 	struct ukbd_data sc_ndata;
 	struct ukbd_data sc_odata;
@@ -410,6 +412,8 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = ukbd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_udev = uha->uiaa->uiaa_device;
+	sc->sc_iface = uha->uiaa->uiaa_iface;
 	sc->sc_flags = 0;
 
 	aprint_naive("\n");
@@ -427,7 +431,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Quirks */
-	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
+	qflags = usbd_get_quirks(sc->sc_udev)->uq_flags;
 	if (qflags & UQ_SPUR_BUT_UP)
 		sc->sc_flags |= FLAG_DEBOUNCE;
 	if (qflags & UQ_APPLE_ISO)
@@ -579,7 +583,7 @@ ukbd_detach(device_t self, int flags)
 
 	callout_halt(&sc->sc_delay, NULL);
 	callout_halt(&sc->sc_ledreset, NULL);
-	usb_rem_task_wait(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_ledtask,
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_ledtask,
 	    USB_TASKQ_DRIVER, NULL);
 
 	/* The console keyboard does not get a disable call, so check pipe. */
@@ -885,7 +889,7 @@ void
 ukbd_set_leds(void *v, int leds)
 {
 	struct ukbd_softc *sc = v;
-	struct usbd_device *udev = sc->sc_hdev.sc_parent->sc_udev;
+	struct usbd_device *udev = sc->sc_udev;
 
 	DPRINTF(("%s: sc=%p leds=%d, sc_leds=%d\n", __func__,
 		 sc, leds, sc->sc_leds));
@@ -995,7 +999,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	DPRINTFN(0,("%s: enter\n", __func__));
 	sc->sc_flags |= FLAG_POLLING;
 	if (sc->sc_npollchar <= 0)
-		usbd_dopoll(sc->sc_hdev.sc_parent->sc_iface);
+		usbd_dopoll(sc->sc_iface);
 	sc->sc_flags &= ~FLAG_POLLING;
 	if (sc->sc_npollchar > 0) {
 		c = sc->sc_pollchars[0];
@@ -1021,7 +1025,8 @@ ukbd_cnpollc(void *v, int on)
 
 	DPRINTFN(2,("%s: sc=%p on=%d\n", __func__, v, on));
 
-	usbd_interface2device_handle(sc->sc_hdev.sc_parent->sc_iface, &dev);
+	/* XXX Can this just use sc->sc_udev, or am I mistaken?  */
+	usbd_interface2device_handle(sc->sc_iface, &dev);
 	if (on) {
 		sc->sc_spl = splusb();
 		pollenter++;
