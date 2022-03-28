@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.26 2022/03/28 12:44:17 riastradh Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.27 2022/03/28 12:44:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,5 +54,6 @@ usbd_status uhidev_write_async(struct uhidev *, void *, int, int, int,
     usbd_callback, void *);
 
 #define	UHIDEV_OSIZE	64
+#define	UHIDEV_MAXREPID	255
 
 #endif	/* _DEV_USB_UHIDEV_H_ */
