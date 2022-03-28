@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.53 2022/03/28 12:43:03 riastradh Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.54 2022/03/28 12:43:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.53 2022/03/28 12:43:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.54 2022/03/28 12:43:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -118,7 +118,9 @@ int	ucycomdebug = 20;
 
 struct ucycom_softc {
 	struct uhidev		sc_hdev;
+	struct usbd_device	*sc_udev;
 
+	struct usb_task		sc_task;
 	struct tty		*sc_tty;
 
 	enum {
@@ -172,6 +174,7 @@ const struct cdevsw ucycom_cdevsw = {
 
 Static int ucycomparam(struct tty *, struct termios *);
 Static void ucycomstart(struct tty *);
+Static void ucycomstarttask(void *);
 Static void ucycomwritecb(struct usbd_xfer *, void *, usbd_status);
 Static void ucycom_intr(struct uhidev *, void *, u_int);
 Static int ucycom_configure(struct ucycom_softc *, uint32_t, uint8_t);
@@ -223,6 +226,7 @@ ucycom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = ucycom_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_udev = uha->uiaa->uiaa_device;
 	sc->sc_init_state = UCYCOM_INIT_NONE;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
@@ -236,6 +240,9 @@ ucycom_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	sc->sc_msr = sc->sc_mcr = 0;
+
+	/* not MP-safe */
+	usb_init_task(&sc->sc_task, ucycomstarttask, sc, 0);
 
 	/* set up tty */
 	sc->sc_tty = tty_alloc();
@@ -286,6 +293,8 @@ ucycom_detach(device_t self, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | UCYCOMDIALOUT_MASK, mn | UCYCOMDIALOUT_MASK, VCHR);
 	vdevgone(maj, mn | UCYCOMCALLUNIT_MASK, mn | UCYCOMCALLUNIT_MASK, VCHR);
+
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 
 	/* Detach and free the tty. */
 	if (tp != NULL) {
@@ -482,6 +491,8 @@ ucycomstart(struct tty *tp)
 	u_char *data;
 	int cnt, len, s;
 
+	KASSERT(mutex_owned(&tty_lock));
+
 	if (sc->sc_dying)
 		return;
 
@@ -592,6 +603,19 @@ ucycomstart(struct tty *tp)
 	}
 #endif
 	DPRINTFN(4,("ucycomstart: %d chars\n", len));
+	usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
+	return;
+
+out:
+	splx(s);
+}
+
+Static void
+ucycomstarttask(void *cookie)
+{
+	struct ucycom_softc *sc = cookie;
+	usbd_status err;
+
 	/* What can we do on error? */
 	err = uhidev_write_async(&sc->sc_hdev, sc->sc_obuf, sc->sc_olen, 0,
 	    USBD_NO_TIMEOUT, ucycomwritecb, sc);
@@ -599,11 +623,9 @@ ucycomstart(struct tty *tp)
 #ifdef UCYCOM_DEBUG
 	if (err != USBD_IN_PROGRESS)
 		DPRINTF(("ucycomstart: err=%s\n", usbd_errstr(err)));
+#else
+	__USE(err);
 #endif
-	return;
-
-out:
-	splx(s);
 }
 
 Static void
