@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.208 2022/03/28 12:37:46 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.209 2022/03/28 12:37:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.208 2022/03/28 12:37:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.209 2022/03/28 12:37:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -591,6 +591,7 @@ spec_node_revoke(vnode_t *vp)
 {
 	specnode_t *sn;
 	specdev_t *sd;
+	struct vnode **vpp;
 
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
@@ -603,10 +604,10 @@ spec_node_revoke(vnode_t *vp)
 
 	mutex_enter(&device_lock);
 	KASSERT(sn->sn_opencnt <= sd->sd_opencnt);
+	sn->sn_gone = true;
 	if (sn->sn_opencnt != 0) {
 		sd->sd_opencnt -= (sn->sn_opencnt - 1);
 		sn->sn_opencnt = 1;
-		sn->sn_gone = true;
 		mutex_exit(&device_lock);
 
 		VOP_CLOSE(vp, FNONBLOCK, NOCRED);
@@ -624,6 +625,22 @@ spec_node_revoke(vnode_t *vp)
 	 */
 	while (sd->sd_closing)
 		cv_wait(&specfs_iocv, &device_lock);
+
+	/*
+	 * Remove from the hash so lookups stop returning this
+	 * specnode.  We will dissociate it from the specdev -- and
+	 * possibly free the specdev -- in spec_node_destroy.
+	 */
+	KASSERT(sn->sn_gone);
+	KASSERT(sn->sn_opencnt == 0);
+	for (vpp = &specfs_hash[SPECHASH(vp->v_rdev)];;
+	     vpp = &(*vpp)->v_specnext) {
+		if (*vpp == vp) {
+			*vpp = vp->v_specnext;
+			vp->v_specnext = NULL;
+			break;
+		}
+	}
 	mutex_exit(&device_lock);
 }
 
@@ -636,7 +653,6 @@ spec_node_destroy(vnode_t *vp)
 {
 	specnode_t *sn;
 	specdev_t *sd;
-	vnode_t **vpp, *vp2;
 	int refcnt;
 
 	sn = vp->v_specnode;
@@ -647,22 +663,6 @@ spec_node_destroy(vnode_t *vp)
 	KASSERT(sn->sn_opencnt == 0);
 
 	mutex_enter(&device_lock);
-	/* Remove from the hash and destroy the node. */
-	vpp = &specfs_hash[SPECHASH(vp->v_rdev)];
-	for (vp2 = *vpp;; vp2 = vp2->v_specnext) {
-		if (vp2 == NULL) {
-			panic("spec_node_destroy: corrupt hash");
-		}
-		if (vp2 == vp) {
-			KASSERT(vp == *vpp);
-			*vpp = vp->v_specnext;
-			break;
-		}
-		if (vp2->v_specnext == vp) {
-			vp2->v_specnext = vp->v_specnext;
-			break;
-		}
-	}
 	sn = vp->v_specnode;
 	vp->v_specnode = NULL;
 	refcnt = sd->sd_refcnt--;
