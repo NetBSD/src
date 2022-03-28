@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.193 2022/03/28 12:35:26 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.194 2022/03/28 12:35:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.193 2022/03/28 12:35:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.194 2022/03/28 12:35:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -732,15 +732,27 @@ spec_open(void *v)
 	}
 	mutex_exit(&device_lock);
 
-	if (cdev_type(dev) != D_DISK || error != 0)
+	/* If anything went wrong, we're done.  */
+	if (error)
 		return error;
 
-	
-	ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
-	error = (*ioctl)(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, curlwp);
-	if (error == 0)
-		uvm_vnp_setsize(vp, (voff_t)pi.pi_secsize * pi.pi_size);
+	/*
+	 * For disk devices, automagically set the vnode size to the
+	 * partition size, if we can.  This applies to block devices
+	 * and character devices alike -- every block device must have
+	 * a corresponding character device.  And if the module is
+	 * loaded it will remain loaded until we're done here (it is
+	 * forbidden to devsw_detach until closed).  So it is safe to
+	 * query cdev_type unconditionally here.
+	 */
+	if (cdev_type(dev) == D_DISK) {
+		ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
+		if ((*ioctl)(dev, DIOCGPARTINFO, &pi, FREAD, curlwp) == 0)
+			uvm_vnp_setsize(vp,
+			    (voff_t)pi.pi_secsize * pi.pi_size);
+	}
 
+	/* Success!  */
 	return 0;
 }
 
