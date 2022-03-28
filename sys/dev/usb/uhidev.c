@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.91 2022/03/28 12:44:28 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.92 2022/03/28 12:44:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.91 2022/03/28 12:44:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.92 2022/03/28 12:44:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -458,7 +458,7 @@ uhidev_maxrepid(void *buf, int len)
 		if ((int)h.report_ID > maxid)
 			maxid = h.report_ID;
 	hid_end_parse(d);
-	return maxid;
+	return MIN(maxid, UHIDEV_MAXREPID);
 }
 
 static int
@@ -671,11 +671,11 @@ uhidev_open_pipes(struct uhidev_softc *sc)
 
 	/*
 	 * If the pipes are already open, just increment the reference
-	 * count, or fail if it would overflow.
+	 * count.  The reference count is limited by the number of
+	 * report ids, so this can't overflow.
 	 */
 	if (sc->sc_refcnt) {
-		if (sc->sc_refcnt == INT_MAX)
-			return EBUSY;
+		KASSERT(sc->sc_refcnt < UHIDEV_MAXREPID);
 		sc->sc_refcnt++;
 		return 0;
 	}
@@ -700,12 +700,9 @@ uhidev_open_pipes(struct uhidev_softc *sc)
 	if (error)
 		goto out;
 	if (sc->sc_refcnt) {
-		if (sc->sc_refcnt == INT_MAX) {
-			error = EBUSY;
-		} else {
-			sc->sc_refcnt++;
-			error = 0;
-		}
+		KASSERT(sc->sc_refcnt < UHIDEV_MAXREPID);
+		sc->sc_refcnt++;
+		error = 0;
 		goto out0;
 	}
 	mutex_exit(&sc->sc_lock);
