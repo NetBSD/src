@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.199 2022/03/28 12:36:18 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.200 2022/03/28 12:36:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.199 2022/03/28 12:36:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.200 2022/03/28 12:36:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1203,6 +1203,8 @@ spec_reclaim(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+
+	KASSERT(vp->v_specnode->sn_opencnt == 0);
 
 	VOP_UNLOCK(vp);
 
