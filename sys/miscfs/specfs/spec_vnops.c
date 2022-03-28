@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.195 2022/03/28 12:35:44 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.196 2022/03/28 12:35:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.195 2022/03/28 12:35:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.196 2022/03/28 12:35:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -558,13 +558,13 @@ spec_open(void *v)
 	 * can't be revoked until we release the vnode lock.
 	 */
 	mutex_enter(&device_lock);
+	KASSERT(!sn->sn_gone);
 	switch (vp->v_type) {
 	case VCHR:
 		/*
 		 * Character devices can accept opens from multiple
 		 * vnodes.
 		 */
-		KASSERT(!sn->sn_gone);
 		sd->sd_opencnt++;
 		sn->sn_opencnt++;
 		break;
@@ -577,7 +577,6 @@ spec_open(void *v)
 		 * Treat zero opencnt with non-NULL mountpoint as open.
 		 * This may happen after forced detach of a mounted device.
 		 */
-		KASSERT(!sn->sn_gone);
 		if (sd->sd_opencnt != 0 || sd->sd_mountpoint != NULL) {
 			error = EBUSY;
 			break;
