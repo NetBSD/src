@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.30 2022/03/28 12:44:54 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.31 2022/03/28 12:45:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.30 2022/03/28 12:44:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.31 2022/03/28 12:45:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -489,6 +489,7 @@ struct uatp_softc {
 	device_t sc_dev;
 	struct uhidev *sc_hdev;		/* uhidev(9) parent.  */
 	struct usbd_device *sc_udev;	/* USB device.  */
+	struct usbd_interface *sc_iface0; /* Geyser 3/4 reset interface.  */
 	device_t sc_wsmousedev;		/* Attached wsmouse device.  */
 	const struct uatp_parameters *sc_parameters;
 	struct uatp_knobs sc_knobs;
@@ -1295,19 +1296,12 @@ uatp_ioctl(void *v, unsigned long cmd, void *data, int flag, struct lwp *p)
 static void
 geyser34_enable_raw_mode(struct uatp_softc *sc)
 {
-	struct usbd_device *udev = sc->sc_udev;
-	usb_device_request_t req;
-	usbd_status status;
 	uint8_t report[GEYSER34_MODE_PACKET_SIZE];
-
-	req.bmRequestType = UT_READ_CLASS_INTERFACE;
-	req.bRequest = UR_GET_REPORT;
-	USETW2(req.wValue, UHID_FEATURE_REPORT, GEYSER34_MODE_REPORT_ID);
-	USETW(req.wIndex, GEYSER34_MODE_INTERFACE);
-	USETW(req.wLength, GEYSER34_MODE_PACKET_SIZE);
+	usbd_status status;
 
 	DPRINTF(sc, UATP_DEBUG_RESET, ("get feature report\n"));
-	status = usbd_do_request(udev, &req, report);
+	status = usbd_get_report(sc->sc_iface0, UHID_FEATURE_REPORT,
+	    GEYSER34_MODE_REPORT_ID, report, sizeof(report));
 	if (status != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(uatp_dev(sc),
 		    "error reading feature report: %s\n", usbd_errstr(status));
@@ -1333,14 +1327,9 @@ geyser34_enable_raw_mode(struct uatp_softc *sc)
 
 	report[0] = GEYSER34_RAW_MODE;
 
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = UR_SET_REPORT;
-	USETW2(req.wValue, UHID_FEATURE_REPORT, GEYSER34_MODE_REPORT_ID);
-	USETW(req.wIndex, GEYSER34_MODE_INTERFACE);
-	USETW(req.wLength, GEYSER34_MODE_PACKET_SIZE);
-
 	DPRINTF(sc, UATP_DEBUG_RESET, ("set feature report\n"));
-	status = usbd_do_request(udev, &req, report);
+	status = usbd_set_report(sc->sc_iface0, UHID_FEATURE_REPORT,
+	    GEYSER34_MODE_REPORT_ID, report, sizeof(report));
 	if (status != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(uatp_dev(sc),
 		    "error writing feature report: %s\n", usbd_errstr(status));
@@ -1356,8 +1345,11 @@ geyser34_enable_raw_mode(struct uatp_softc *sc)
 static void
 geyser34_initialize(struct uatp_softc *sc)
 {
+	usbd_status err __diagused;
 
 	DPRINTF(sc, UATP_DEBUG_MISC, ("initializing\n"));
+	err = usbd_device2interface_handle(sc->sc_udev, 0, &sc->sc_iface0);
+	KASSERT(err == 0);	/* always an interface 0 if attached */
 	geyser34_enable_raw_mode(sc);
 	usb_init_task(&sc->sc_reset_task, &geyser34_reset_task, sc, 0);
 }
