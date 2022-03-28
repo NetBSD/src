@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.157 2022/03/28 12:34:08 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.158 2022/03/28 12:34:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@ struct vnode;
 #define	D_TYPEMASK	0x00ff
 #define	D_MPSAFE	0x0100
 #define	D_NEGOFFSAFE	0x0200
-#define	D_MCLOSE	0x0400
+#define	D_UNUSED0	0x0400	/* was D_MCLOSE */
 
 /*
  * Block device switch table
