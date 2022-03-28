@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.92 2022/03/28 12:44:37 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.93 2022/03/28 12:44:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.92 2022/03/28 12:44:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.93 2022/03/28 12:44:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1083,6 +1083,7 @@ uhidev_write(struct uhidev *scd, void *data, int len)
 
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_refcnt);
+	KASSERT(scd->sc_state & UHIDEV_OPEN);
 	for (;;) {
 		if (scd->sc_state & UHIDEV_STOPPED) {
 			err = USBD_CANCELLED;
@@ -1116,6 +1117,7 @@ uhidev_write(struct uhidev *scd, void *data, int len)
 
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_refcnt);
+	KASSERT(scd->sc_state & UHIDEV_OPEN);
 	KASSERTMSG(sc->sc_writelock == curlwp, "%s: migrated from %p to %p",
 	    device_xname(sc->sc_dev), curlwp, sc->sc_writelock);
 	KASSERTMSG(sc->sc_writereportid == scd->sc_report_id,
@@ -1168,6 +1170,7 @@ uhidev_write_async(struct uhidev *scd, void *data, int len, int flags,
 
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_refcnt);
+	KASSERT(scd->sc_state & UHIDEV_OPEN);
 	if (scd->sc_state & UHIDEV_STOPPED) {
 		err = USBD_CANCELLED;
 		goto out;
