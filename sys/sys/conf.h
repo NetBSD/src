@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.160 2022/03/28 12:39:10 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.161 2022/03/28 12:39:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -116,22 +116,37 @@ const struct cdevsw *cdevsw_lookup(dev_t);
 devmajor_t bdevsw_lookup_major(const struct bdevsw *);
 devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 
-#define	dev_type_open(n)	int n (dev_t, int, int, struct lwp *)
-#define	dev_type_cancel(n)	int n (dev_t, int, int, struct lwp *)
-#define	dev_type_close(n)	int n (dev_t, int, int, struct lwp *)
-#define	dev_type_read(n)	int n (dev_t, struct uio *, int)
-#define	dev_type_write(n)	int n (dev_t, struct uio *, int)
-#define	dev_type_ioctl(n) \
-		int n (dev_t, u_long, void *, int, struct lwp *)
-#define	dev_type_stop(n)	void n (struct tty *, int)
-#define	dev_type_tty(n)		struct tty * n (dev_t)
-#define	dev_type_poll(n)	int n (dev_t, int, struct lwp *)
-#define	dev_type_mmap(n)	paddr_t n (dev_t, off_t, int)
-#define	dev_type_strategy(n)	void n (struct buf *)
-#define	dev_type_dump(n)	int n (dev_t, daddr_t, void *, size_t)
-#define	dev_type_size(n)	int n (dev_t)
-#define	dev_type_kqfilter(n)	int n (dev_t, struct knote *)
-#define dev_type_discard(n)	int n (dev_t, off_t, off_t)
+typedef int dev_open_t(dev_t, int, int, struct lwp *);
+typedef int dev_cancel_t(dev_t, int, int, struct lwp *);
+typedef int dev_close_t(dev_t, int, int, struct lwp *);
+typedef int dev_read_t(dev_t, struct uio *, int);
+typedef int dev_write_t(dev_t, struct uio *, int);
+typedef int dev_ioctl_t(dev_t, u_long, void *, int, struct lwp *);
+typedef void dev_stop_t(struct tty *, int);
+typedef struct tty *dev_tty_t(dev_t);
+typedef int dev_poll_t(dev_t, int, struct lwp *);
+typedef paddr_t dev_mmap_t(dev_t, off_t, int);
+typedef void dev_strategy_t(struct buf *);
+typedef int dev_dump_t(dev_t, daddr_t, void *, size_t);
+typedef int dev_size_t(dev_t);
+typedef int dev_kqfilter_t(dev_t, struct knote *);
+typedef int dev_discard_t(dev_t, off_t, off_t);
+
+#define	dev_type_open(n)	dev_open_t n
+#define	dev_type_cancel(n)	dev_cancel_t n
+#define	dev_type_close(n)	dev_close_t n
+#define	dev_type_read(n)	dev_read_t n
+#define	dev_type_write(n)	dev_write_t n
+#define	dev_type_ioctl(n)	dev_ioctl_t n
+#define	dev_type_stop(n)	dev_stop_t n
+#define	dev_type_tty(n)		dev_tty_t n
+#define	dev_type_poll(n)	dev_poll_t n
+#define	dev_type_mmap(n)	dev_mmap_t n
+#define	dev_type_strategy(n)	dev_strategy_t n
+#define	dev_type_dump(n)	dev_dump_t n
+#define	dev_type_size(n)	dev_size_t n
+#define	dev_type_kqfilter(n)	dev_kqfilter_t n
+#define dev_type_discard(n)	dev_discard_t n
 
 int devenodev(dev_t, ...);
 int deveopnotsupp(dev_t, ...);
@@ -140,30 +155,30 @@ int ttyenodev(struct tty *, ...);
 void ttyvenodev(struct tty *, ...);
 void ttyvnullop(struct tty *, ...);
 
-#define	noopen		((dev_type_open((*)))devenodev)
-#define	noclose		((dev_type_close((*)))devenodev)
-#define	noread		((dev_type_read((*)))devenodev)
-#define	nowrite		((dev_type_write((*)))devenodev)
-#define	noioctl		((dev_type_ioctl((*)))devenodev)
-#define	nostop		((dev_type_stop((*)))ttyvenodev)
+#define	noopen		((dev_open_t *)devenodev)
+#define	noclose		((dev_close_t *)devenodev)
+#define	noread		((dev_read_t *)devenodev)
+#define	nowrite		((dev_write_t *)devenodev)
+#define	noioctl		((dev_ioctl_t *)devenodev)
+#define	nostop		((dev_stop_t *)ttyvenodev)
 #define	notty		NULL
 #define	nopoll		seltrue
 paddr_t	nommap(dev_t, off_t, int);
-#define	nodump		((dev_type_dump((*)))devenodev)
+#define	nodump		((dev_dump_t *)devenodev)
 #define	nosize		NULL
 #define	nokqfilter	seltrue_kqfilter
-#define	nodiscard	((dev_type_discard((*)))devenodev)
+#define	nodiscard	((dev_discard_t *)devenodev)
 
-#define	nullopen	((dev_type_open((*)))devnullop)
-#define	nullclose	((dev_type_close((*)))devnullop)
-#define	nullread	((dev_type_read((*)))devnullop)
-#define	nullwrite	((dev_type_write((*)))devnullop)
-#define	nullioctl	((dev_type_ioctl((*)))devnullop)
-#define	nullstop	((dev_type_stop((*)))ttyvnullop)
-#define	nullpoll	((dev_type_poll((*)))devnullop)
-#define	nulldump	((dev_type_dump((*)))devnullop)
-#define	nullkqfilter	((dev_type_kqfilter((*)))deveopnotsupp)
-#define	nulldiscard	((dev_type_discard((*)))devnullop)
+#define	nullopen	((dev_open_t *)devnullop)
+#define	nullclose	((dev_close_t *)devnullop)
+#define	nullread	((dev_read_t *)devnullop)
+#define	nullwrite	((dev_write_t *)devnullop)
+#define	nullioctl	((dev_ioctl_t *)devnullop)
+#define	nullstop	((dev_stop_t *)ttyvnullop)
+#define	nullpoll	((dev_poll_t *)devnullop)
+#define	nulldump	((dev_dump_t *)devnullop)
+#define	nullkqfilter	((dev_kqfilter_t *)deveopnotsupp)
+#define	nulldiscard	((dev_discard_t *)devnullop)
 
 /* device access wrappers. */
 
