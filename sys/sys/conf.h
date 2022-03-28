@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.158 2022/03/28 12:34:17 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.159 2022/03/28 12:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -172,6 +172,8 @@ dev_type_dump(bdev_dump);
 dev_type_size(bdev_size);
 dev_type_discard(bdev_discard);
 
+void	bdev_detached(dev_t);
+
 dev_type_open(cdev_open);
 dev_type_close(cdev_close);
 dev_type_read(cdev_read);
@@ -183,6 +185,8 @@ dev_type_poll(cdev_poll);
 dev_type_mmap(cdev_mmap);
 dev_type_kqfilter(cdev_kqfilter);
 dev_type_discard(cdev_discard);
+
+void	cdev_detached(dev_t);
 
 int	cdev_type(dev_t);
 int	cdev_flags(dev_t);
