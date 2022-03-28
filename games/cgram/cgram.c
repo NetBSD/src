@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.26 2021/10/29 11:45:39 nia Exp $ */
+/* $NetBSD: cgram.c,v 1.27 2022/03/28 20:00:29 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.26 2021/10/29 11:45:39 nia Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.27 2022/03/28 20:00:29 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -46,12 +46,6 @@ __RCSID("$NetBSD: cgram.c,v 1.26 2021/10/29 11:45:39 nia Exp $");
 
 #include "pathnames.h"
 
-
-static bool
-ch_isspace(char ch)
-{
-	return isspace((unsigned char)ch) != 0;
-}
 
 static bool
 ch_islower(char ch)
@@ -451,20 +445,20 @@ go_right(void)
 static void
 go_to_prev_word(void)
 {
-	while (can_go_left() && ch_isspace(char_left_of_cursor()))
+	while (can_go_left() && !ch_isalpha(char_left_of_cursor()))
 		go_left();
 
-	while (can_go_left() && !ch_isspace(char_left_of_cursor()))
+	while (can_go_left() && ch_isalpha(char_left_of_cursor()))
 		go_left();
 }
 
 static void
 go_to_next_word(void)
 {
-	while (can_go_right() && !ch_isspace(char_at_cursor()))
+	while (can_go_right() && ch_isalpha(char_at_cursor()))
 		go_right();
 
-	while (can_go_right() && ch_isspace(char_at_cursor()))
+	while (can_go_right() && !ch_isalpha(char_at_cursor()))
 		go_right();
 }
 
