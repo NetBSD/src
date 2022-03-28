@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.40 2022/03/28 12:33:32 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.41 2022/03/28 12:33:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.40 2022/03/28 12:33:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.41 2022/03/28 12:33:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.40 2022/03/28 12:33:32 riastradh Ex
 #include <sys/localcount.h>
 #include <sys/pserialize.h>
 #include <sys/xcall.h>
+#include <sys/device.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -895,15 +896,37 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 {
 	const struct bdevsw *d;
 	struct localcount *lc;
-	int rv, mpflag;
+	device_t dv = NULL/*XXXGCC*/;
+	int unit, rv, mpflag;
 
 	d = bdevsw_lookup_acquire(dev, &lc);
 	if (d == NULL)
 		return ENXIO;
 
+	if (d->d_devtounit) {
+		/*
+		 * If the device node corresponds to an autoconf device
+		 * instance, acquire a reference to it so that during
+		 * d_open, device_lookup is stable.
+		 *
+		 * XXX This should also arrange to instantiate cloning
+		 * pseudo-devices if appropriate, but that requires
+		 * reviewing them all to find and verify a common
+		 * pattern.
+		 */
+		if ((unit = (*d->d_devtounit)(dev)) == -1)
+			return ENXIO;
+		if ((dv = device_lookup_acquire(d->d_cfdriver, unit)) == NULL)
+			return ENXIO;
+	}
+
 	DEV_LOCK(d);
 	rv = (*d->d_open)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+
+	if (d->d_devtounit) {
+		device_release(dv);
+	}
 
 	bdevsw_release(d, lc);
 
@@ -1050,15 +1073,37 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 {
 	const struct cdevsw *d;
 	struct localcount *lc;
-	int rv, mpflag;
+	device_t dv = NULL/*XXXGCC*/;
+	int unit, rv, mpflag;
 
 	d = cdevsw_lookup_acquire(dev, &lc);
 	if (d == NULL)
 		return ENXIO;
 
+	if (d->d_devtounit) {
+		/*
+		 * If the device node corresponds to an autoconf device
+		 * instance, acquire a reference to it so that during
+		 * d_open, device_lookup is stable.
+		 *
+		 * XXX This should also arrange to instantiate cloning
+		 * pseudo-devices if appropriate, but that requires
+		 * reviewing them all to find and verify a common
+		 * pattern.
+		 */
+		if ((unit = (*d->d_devtounit)(dev)) == -1)
+			return ENXIO;
+		if ((dv = device_lookup_acquire(d->d_cfdriver, unit)) == NULL)
+			return ENXIO;
+	}
+
 	DEV_LOCK(d);
 	rv = (*d->d_open)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+
+	if (d->d_devtounit) {
+		device_release(dv);
+	}
 
 	cdevsw_release(d, lc);
 

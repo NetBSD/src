@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.155 2022/03/28 12:33:22 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.156 2022/03/28 12:33:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -76,6 +76,8 @@ struct bdevsw {
 	int		(*d_dump)(dev_t, daddr_t, void *, size_t);
 	int		(*d_psize)(dev_t);
 	int		(*d_discard)(dev_t, off_t, off_t);
+	int		(*d_devtounit)(dev_t);
+	struct cfdriver	*d_cfdriver;
 	int		d_flag;
 };
 
@@ -94,6 +96,8 @@ struct cdevsw {
 	paddr_t		(*d_mmap)(dev_t, off_t, int);
 	int		(*d_kqfilter)(dev_t, struct knote *);
 	int		(*d_discard)(dev_t, off_t, off_t);
+	int		(*d_devtounit)(dev_t);
+	struct cfdriver	*d_cfdriver;
 	int		d_flag;
 };
 
