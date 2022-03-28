@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.209 2022/03/28 12:37:56 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.210 2022/03/28 12:39:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.209 2022/03/28 12:37:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.210 2022/03/28 12:39:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1687,6 +1687,22 @@ spec_close(void *v)
 	 */
 	if (!(flags & FNONBLOCK))
 		VOP_UNLOCK(vp);
+
+	/*
+	 * If we can cancel all outstanding I/O, then wait for it to
+	 * drain before we call .d_close.  Drivers that split up
+	 * .d_cancel and .d_close this way need not have any internal
+	 * mechanism for waiting in .d_close for I/O to drain.
+	 */
+	if (vp->v_type == VBLK)
+		error = bdev_cancel(dev, flags, mode, curlwp);
+	else
+		error = cdev_cancel(dev, flags, mode, curlwp);
+	if (error == 0)
+		spec_io_drain(sd);
+	else
+		KASSERTMSG(error == ENODEV, "cancel dev=0x%lx failed with %d",
+		    (unsigned long)dev, error);
 
 	if (vp->v_type == VBLK)
 		error = bdev_close(dev, flags, mode, curlwp);
