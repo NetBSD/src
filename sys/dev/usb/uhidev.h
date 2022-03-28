@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.22 2022/03/28 12:42:54 riastradh Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.23 2022/03/28 12:43:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ struct uhidev_softc {
 	struct usbd_pipe *sc_ipipe;	/* input interrupt pipe */
 	struct usbd_pipe *sc_opipe;	/* output interrupt pipe */
 	struct usbd_xfer *sc_oxfer;	/* write request */
+	usbd_callback sc_writecallback;	/* async write request callback */
+	void *sc_writecookie;
 
 	u_int sc_flags;
 #define UHIDEV_F_XB1	0x0001	/* Xbox 1 controller */
@@ -98,6 +100,8 @@ void uhidev_close(struct uhidev *);
 usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_get_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_write(struct uhidev *, void *, int);
+usbd_status uhidev_write_async(struct uhidev *, void *, int, int, int,
+    usbd_callback, void *);
 
 #define	UHIDEV_OSIZE	64
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.83 2022/03/28 12:42:54 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.84 2022/03/28 12:43:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.83 2022/03/28 12:42:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.84 2022/03/28 12:43:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1022,6 +1022,77 @@ uhidev_write(struct uhidev *scd, void *data, int len)
 	sc->sc_writereportid = -1;
 	sc->sc_writelock = NULL;
 	cv_broadcast(&sc->sc_cv);
+out:	mutex_exit(&sc->sc_lock);
+	return err;
+}
+
+static void
+uhidev_write_callback(struct usbd_xfer *xfer, void *cookie, usbd_status err)
+{
+	struct uhidev_softc *sc = cookie;
+	usbd_callback writecallback;
+	void *writecookie;
+
+	if (err) {
+		if (err != USBD_CANCELLED)
+			usbd_clear_endpoint_stall_async(sc->sc_opipe);
+	}
+
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_writelock == (void *)1);
+	writecallback = sc->sc_writecallback;
+	writecookie = sc->sc_writecookie;
+	sc->sc_writereportid = -1;
+	sc->sc_writelock = NULL;
+	sc->sc_writecallback = NULL;
+	sc->sc_writecookie = NULL;
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_lock);
+
+	(*writecallback)(xfer, writecookie, err);
+}
+
+usbd_status
+uhidev_write_async(struct uhidev *scd, void *data, int len, int flags,
+    int timo, usbd_callback writecallback, void *writecookie)
+{
+	struct uhidev_softc *sc = scd->sc_parent;
+	usbd_status err;
+
+	DPRINTF(("%s: data=%p, len=%d\n", __func__, data, len));
+
+	if (sc->sc_opipe == NULL)
+		return USBD_INVAL;
+
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_refcnt);
+	if (sc->sc_dying) {
+		err = USBD_IOERROR;
+		goto out;
+	}
+	if (sc->sc_writelock != NULL) {
+		err = USBD_IN_USE;
+		goto out;
+	}
+	sc->sc_writelock = (void *)1; /* XXX no lwp to attribute async xfer */
+	sc->sc_writereportid = scd->sc_report_id;
+	sc->sc_writecallback = writecallback;
+	sc->sc_writecookie = writecookie;
+	usbd_setup_xfer(sc->sc_oxfer, sc, data, len, flags, timo,
+	    uhidev_write_callback);
+	err = usbd_transfer(sc->sc_oxfer);
+	switch (err) {
+	case USBD_IN_PROGRESS:
+		break;
+	case USBD_NORMAL_COMPLETION:
+		panic("unexpected normal completion of async xfer under lock");
+	default:		/* error */
+		sc->sc_writelock = NULL;
+		sc->sc_writereportid = -1;
+		sc->sc_writecallback = NULL;
+		sc->sc_writecookie = NULL;
+		cv_broadcast(&sc->sc_cv);
+	}
 out:	mutex_exit(&sc->sc_lock);
 	return err;
 }
