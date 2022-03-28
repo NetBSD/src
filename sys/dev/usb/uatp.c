@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.29 2022/03/28 12:44:17 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.30 2022/03/28 12:44:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.29 2022/03/28 12:44:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.30 2022/03/28 12:44:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -298,7 +298,7 @@ static void uatp_disable(void *);
 static int uatp_ioctl(void *, unsigned long, void *, int, struct lwp *);
 static void geyser34_enable_raw_mode(struct uatp_softc *);
 static void geyser34_initialize(struct uatp_softc *);
-static int geyser34_finalize(struct uatp_softc *);
+static void geyser34_finalize(struct uatp_softc *);
 static void geyser34_deferred_reset(struct uatp_softc *);
 static void geyser34_reset_task(void *);
 static void uatp_intr(void *, void *, unsigned int);
@@ -553,8 +553,8 @@ struct uatp_parameters {
 	/* Device-specific initialization routine.  May be null.  */
 	void (*initialize)(struct uatp_softc *);
 
-	/* Device-specific finalization routine.  May be null.  May fail.  */
-	int (*finalize)(struct uatp_softc *);
+	/* Device-specific finalization routine.  May be null.  */
+	void (*finalize)(struct uatp_softc *);
 
 	/* Tests whether this is a base sample.  Second argument is
 	 * input_size bytes long.  */
@@ -1182,19 +1182,18 @@ static int
 uatp_detach(device_t self, int flags)
 {
 	struct uatp_softc *sc = device_private(self);
+	int error;
 
 	DPRINTF(sc, UATP_DEBUG_MISC, ("detaching with flags %d\n", flags));
 
-        if (sc->sc_status & UATP_ENABLED) {
-		aprint_error_dev(uatp_dev(sc), "can't detach while enabled\n");
-		return EBUSY;
-        }
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
-	if (sc->sc_parameters->finalize) {
-		int error = sc->sc_parameters->finalize(sc);
-		if (error != 0)
-			return error;
-	}
+	KASSERT((sc->sc_status & UATP_ENABLED) == 0);
+
+	if (sc->sc_parameters->finalize)
+		sc->sc_parameters->finalize(sc);
 
 	pmf_device_deregister(self);
 
@@ -1203,7 +1202,7 @@ uatp_detach(device_t self, int flags)
 
 	tap_finalize(sc);
 
-	return config_detach_children(self, flags);
+	return 0;
 }
 
 static int
@@ -1363,15 +1362,13 @@ geyser34_initialize(struct uatp_softc *sc)
 	usb_init_task(&sc->sc_reset_task, &geyser34_reset_task, sc, 0);
 }
 
-static int
+static void
 geyser34_finalize(struct uatp_softc *sc)
 {
 
 	DPRINTF(sc, UATP_DEBUG_MISC, ("finalizing\n"));
 	usb_rem_task_wait(sc->sc_udev, &sc->sc_reset_task, USB_TASKQ_DRIVER,
 	    NULL);
-
-	return 0;
 }
 
 static void
