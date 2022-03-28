@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.24 2022/03/28 12:43:22 riastradh Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.25 2022/03/28 12:43:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,12 @@
 #ifndef	_DEV_USB_UHIDEV_H_
 #define	_DEV_USB_UHIDEV_H_
 
+#include <sys/device.h>
 #include <sys/rndsource.h>
+
+#include <dev/usb/usbdi.h>
+
+struct uhidev_softc;
 
 struct uhidev {
 	device_t sc_dev;		/* base device */
@@ -41,6 +46,7 @@ struct uhidev {
 	uByte sc_report_id;
 	uint8_t sc_state;	/* read/written under sc_parent->sc_lock */
 #define	UHIDEV_OPEN	0x01	/* device is open */
+#define	UHIDEV_STOPPED	0x02	/* xfers are stopped */
 	int sc_in_rep_size;
 	void (*sc_intr)(struct uhidev *, void *, u_int);
 	krndsource_t     rnd_source;
