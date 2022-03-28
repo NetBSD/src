@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.299 2021/12/05 07:44:53 msaitoh Exp $	*/
+/*	$NetBSD: tty.c,v 1.300 2022/03/28 12:39:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.299 2021/12/05 07:44:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.300 2022/03/28 12:39:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -417,6 +417,21 @@ ttylopen(dev_t device, struct tty *tp)
 	if (tp->t_qsize != tty_qsize)
 		tty_set_qsize(tp, tty_qsize);
 	return (0);
+}
+
+/*
+ * Interrupt any pending I/O and make it fail.  Used before close to
+ * interrupt pending open/read/write/&c. and make it fail promptly.
+ */
+void
+ttycancel(struct tty *tp)
+{
+
+	mutex_spin_enter(&tty_lock);
+	tp->t_state |= TS_CANCEL;
+	cv_broadcast(&tp->t_outcv);
+	cv_broadcast(&tp->t_rawcv);
+	mutex_spin_exit(&tty_lock);
 }
 
 /*
@@ -2750,7 +2765,9 @@ ttysleep(struct tty *tp, kcondvar_t *cv, bool catch_p, int timo)
 	KASSERT(mutex_owned(&tty_lock));
 
 	gen = tp->t_gen;
-	if (cv == NULL)
+	if (ISSET(tp->t_state, TS_CANCEL))
+		error = ERESTART;
+	else if (cv == NULL)
 		error = kpause("ttypause", catch_p, timo, &tty_lock);
 	else if (catch_p)
 		error = cv_timedwait_sig(cv, &tty_lock, timo);
