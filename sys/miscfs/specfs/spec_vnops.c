@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.184 2022/03/19 13:52:11 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.185 2022/03/28 12:34:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.184 2022/03/19 13:52:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.185 2022/03/28 12:34:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1276,7 +1276,7 @@ spec_close(void *v)
 		sd->sd_bdevvp = NULL;
 	mutex_exit(&device_lock);
 
-	if (count != 0 && (vp->v_type != VCHR || !(cdev_flags(dev) & D_MCLOSE)))
+	if (count != 0)
 		return 0;
 
 	/*
