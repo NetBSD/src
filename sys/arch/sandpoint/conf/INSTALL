@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.9 2014/08/10 17:58:51 joerg Exp $
+#	$NetBSD: INSTALL,v 1.10 2022/03/28 12:48:44 martin Exp $
 #
 # GENERIC install kernel for SandPoint NAS
 #
@@ -7,7 +7,7 @@ include "arch/sandpoint/conf/GENERIC"
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on RAM disk
-options 	MEMORY_DISK_ROOT_SIZE=4600	# 2300KB
+options 	MEMORY_DISK_ROOT_SIZE=4800	# 2400KB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 pseudo-device	md		
