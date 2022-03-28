@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.206 2022/03/28 12:37:26 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.207 2022/03/28 12:37:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.206 2022/03/28 12:37:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.207 2022/03/28 12:37:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -944,6 +944,8 @@ spec_open(void *v)
 		KASSERT(sn->sn_opencnt == 1);
 		needclose = true;
 	} else {
+		KASSERT(sd->sd_opencnt);
+		KASSERT(sn->sn_opencnt);
 		sd->sd_opencnt--;
 		sn->sn_opencnt--;
 		if (vp->v_type == VBLK)
@@ -1643,6 +1645,8 @@ spec_close(void *v)
 	 * between open and close can use fd_clone.
 	 */
 	mutex_enter(&device_lock);
+	KASSERT(sn->sn_opencnt);
+	KASSERT(sd->sd_opencnt);
 	sn->sn_opencnt--;
 	count = --sd->sd_opencnt;
 	if (vp->v_type == VBLK) {
