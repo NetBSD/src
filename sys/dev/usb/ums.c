@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.102 2022/03/28 12:43:12 riastradh Exp $	*/
+/*	$NetBSD: ums.c,v 1.103 2022/03/28 12:44:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.102 2022/03/28 12:43:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.103 2022/03/28 12:44:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -75,7 +75,7 @@ int	umsdebug = 0;
 #define UMSUNIT(s)	(minor(s))
 
 struct ums_softc {
-	struct uhidev sc_hdev;
+	struct uhidev *sc_hdev;
 	struct usbd_device *sc_udev;
 	struct hidms sc_ms;
 
@@ -85,7 +85,7 @@ struct ums_softc {
 	char	sc_dying;
 };
 
-Static void ums_intr(struct uhidev *, void *, u_int);
+Static void ums_intr(void *, void *, u_int);
 
 Static int	ums_enable(void *);
 Static void	ums_disable(void *);
@@ -146,10 +146,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 
-	sc->sc_hdev.sc_dev = self;
-	sc->sc_hdev.sc_intr = ums_intr;
-	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_hdev = uha->parent;
 	sc->sc_udev = uha->uiaa->uiaa_device;
 
 	quirks = usbd_get_quirks(sc->sc_udev)->uq_flags;
@@ -218,7 +215,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 			while (hid_get_item(d, &item)) {
 				if (item.kind != hid_input
 				    || HID_GET_USAGE_PAGE(item.usage) != HUP_GENERIC_DESKTOP
-				    || item.report_ID != sc->sc_hdev.sc_report_id)
+				    || item.report_ID != uha->reportid)
 					continue;
 				if (HID_GET_USAGE(item.usage) == HUG_X) {
 					sc->sc_ms.sc_calibcoords.minx = item.logical_minimum;
@@ -238,7 +235,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	hidms_attach(self, &sc->sc_ms, &ums_accessops);
 
 	if (sc->sc_alwayson) {
-		error = uhidev_open(&sc->sc_hdev);
+		error = uhidev_open(sc->sc_hdev, &ums_intr, sc);
 		if (error != 0) {
 			aprint_error_dev(self,
 			    "WARNING: couldn't open always-on device\n");
@@ -279,7 +276,7 @@ ums_detach(device_t self, int flags)
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
 
 	if (sc->sc_alwayson)
-		uhidev_close(&sc->sc_hdev);
+		uhidev_close(sc->sc_hdev);
 
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
 	if (sc->sc_ms.hidms_wsmousedev != NULL)
@@ -291,9 +288,9 @@ ums_detach(device_t self, int flags)
 }
 
 Static void
-ums_intr(struct uhidev *addr, void *ibuf, u_int len)
+ums_intr(void *cookie, void *ibuf, u_int len)
 {
-	struct ums_softc *sc = (struct ums_softc *)addr;
+	struct ums_softc *sc = cookie;
 
 	if (sc->sc_enabled)
 		hidms_intr(&sc->sc_ms, ibuf, len);
@@ -317,7 +314,7 @@ ums_enable(void *v)
 	sc->sc_ms.hidms_buttons = 0;
 
 	if (!sc->sc_alwayson) {
-		error = uhidev_open(&sc->sc_hdev);
+		error = uhidev_open(sc->sc_hdev, &ums_intr, sc);
 		if (error)
 			sc->sc_enabled = 0;
 	}
@@ -341,7 +338,7 @@ ums_disable(void *v)
 	if (sc->sc_enabled) {
 		sc->sc_enabled = 0;
 		if (!sc->sc_alwayson)
-			uhidev_close(&sc->sc_hdev);
+			uhidev_close(sc->sc_hdev);
 	}
 }
 

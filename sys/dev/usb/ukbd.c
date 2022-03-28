@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.158 2022/03/28 12:43:12 riastradh Exp $        */
+/*      $NetBSD: ukbd.c,v 1.159 2022/03/28 12:44:17 riastradh Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.158 2022/03/28 12:43:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.159 2022/03/28 12:44:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -235,9 +235,11 @@ Static const uint8_t ukbd_trtab[256] = {
 #define KEY_ERROR 0x01
 
 struct ukbd_softc {
-	struct uhidev sc_hdev;
+	device_t sc_dev;
+	struct uhidev *sc_hdev;
 	struct usbd_device *sc_udev;
 	struct usbd_interface *sc_iface;
+	int sc_report_id;
 
 	struct ukbd_data sc_ndata;
 	struct ukbd_data sc_odata;
@@ -340,7 +342,7 @@ const struct wskbd_consops ukbd_consops = {
 
 Static const char *ukbd_parse_desc(struct ukbd_softc *);
 
-Static void	ukbd_intr(struct uhidev *, void *, u_int);
+Static void	ukbd_intr(void *, void *, u_int);
 Static void	ukbd_decode(struct ukbd_softc *, struct ukbd_data *);
 Static void	ukbd_delayed_decode(void *);
 
@@ -408,12 +410,11 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	const char *parseerr;
 	struct wskbddev_attach_args a;
 
-	sc->sc_hdev.sc_dev = self;
-	sc->sc_hdev.sc_intr = ukbd_intr;
-	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_dev = self;
+	sc->sc_hdev = uha->parent;
 	sc->sc_udev = uha->uiaa->uiaa_device;
 	sc->sc_iface = uha->uiaa->uiaa_iface;
+	sc->sc_report_id = uha->reportid;
 	sc->sc_flags = 0;
 
 	aprint_naive("\n");
@@ -514,7 +515,7 @@ ukbd_enable(void *v, int on)
 	/* Should only be called to change state */
 	if ((sc->sc_flags & FLAG_ENABLED) != 0 && on != 0) {
 #ifdef DIAGNOSTIC
-		aprint_error_dev(sc->sc_hdev.sc_dev, "bad call on=%d\n", on);
+		aprint_error_dev(sc->sc_dev, "bad call on=%d\n", on);
 #endif
 		return EBUSY;
 	}
@@ -522,10 +523,10 @@ ukbd_enable(void *v, int on)
 	DPRINTF(("%s: sc=%p on=%d\n", __func__, sc, on));
 	if (on) {
 		sc->sc_flags |= FLAG_ENABLED;
-		return uhidev_open(&sc->sc_hdev);
+		return uhidev_open(sc->sc_hdev, &ukbd_intr, sc);
 	} else {
 		sc->sc_flags &= ~FLAG_ENABLED;
-		uhidev_close(&sc->sc_hdev);
+		uhidev_close(sc->sc_hdev);
 		return 0;
 	}
 }
@@ -573,7 +574,7 @@ ukbd_detach(device_t self, int flags)
 		 * XXX console, if there are any other keyboards.
 		 */
 		printf("%s: was console keyboard\n",
-		       device_xname(sc->sc_hdev.sc_dev));
+		       device_xname(sc->sc_dev));
 		wskbd_cndetach();
 		ukbd_is_console = 1;
 	}
@@ -587,8 +588,8 @@ ukbd_detach(device_t self, int flags)
 	    USB_TASKQ_DRIVER, NULL);
 
 	/* The console keyboard does not get a disable call, so check pipe. */
-	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
-		uhidev_close(&sc->sc_hdev);
+	if (sc->sc_flags & FLAG_ENABLED)
+		uhidev_close(sc->sc_hdev);
 
 	return rv;
 }
@@ -608,8 +609,7 @@ ukbd_translate_keycodes(struct ukbd_softc *sc, struct ukbd_data *ud,
 			for (tp = tab; tp->from; tp++)
 				if (tp->from == i) {
 					if (tp->to & IS_PMF) {
-						pmf_event_inject(
-						    sc->sc_hdev.sc_dev,
+						pmf_event_inject(sc->sc_dev,
 						    tp->to & 0xff);
 					} else
 						setbit(ud->keys, tp->to);
@@ -641,9 +641,9 @@ ukbd_translate_modifier(struct ukbd_softc *sc, uint16_t key)
 }
 
 void
-ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
+ukbd_intr(void *cookie, void *ibuf, u_int len)
 {
-	struct ukbd_softc *sc = (struct ukbd_softc *)addr;
+	struct ukbd_softc *sc = cookie;
 	struct ukbd_data *ud = &sc->sc_ndata;
 	int i;
 
@@ -768,7 +768,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	 */
 	if (ukbdtrace) {
 		struct ukbdtraceinfo *p = &ukbdtracedata[ukbdtraceindex];
-		p->unit = device_unit(sc->sc_hdev.sc_dev);
+		p->unit = device_unit(sc->sc_dev);
 		microtime(&p->tv);
 		p->ud = *ud;
 		if (++ukbdtraceindex >= UKBDTRACESIZE)
@@ -923,7 +923,7 @@ ukbd_set_leds_task(void *v)
 	if ((leds & WSKBD_LED_CAPS) && sc->sc_capsloc.size == 1)
 		res |= 1 << sc->sc_capsloc.pos;
 
-	uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT, &res, 1);
+	uhidev_set_report(sc->sc_hdev, UHID_OUTPUT_REPORT, &res, 1);
 }
 
 #if defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT)
@@ -1059,7 +1059,7 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 	void *desc;
 	int ikey;
 
-	uhidev_get_report_desc(sc->sc_hdev.sc_parent, &desc, &size);
+	uhidev_get_report_desc(sc->sc_hdev, &desc, &size);
 	ikey = 0;
 	sc->sc_nkeycode = 0;
 	d = hid_start_parse(desc, size, hid_input);
@@ -1077,7 +1077,7 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 
 		if (h.kind != hid_input || (h.flags & HIO_CONST) ||
 		    HID_GET_USAGE_PAGE(h.usage) != HUP_KEYBOARD ||
-		    h.report_ID != sc->sc_hdev.sc_report_id)
+		    h.report_ID != sc->sc_report_id)
 			continue;
 		DPRINTF(("%s: ikey=%d usage=%#x flags=%#x pos=%d size=%d "
 		    "cnt=%d\n", __func__, ikey, h.usage, h.flags, h.loc.pos,
@@ -1120,13 +1120,13 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 	hid_end_parse(d);
 
 	hid_locate(desc, size, HID_USAGE2(HUP_LEDS, HUD_LED_NUM_LOCK),
-		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_numloc, NULL);
+	    sc->sc_report_id, hid_output, &sc->sc_numloc, NULL);
 	hid_locate(desc, size, HID_USAGE2(HUP_LEDS, HUD_LED_CAPS_LOCK),
-		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_capsloc, NULL);
+	    sc->sc_report_id, hid_output, &sc->sc_capsloc, NULL);
 	hid_locate(desc, size, HID_USAGE2(HUP_LEDS, HUD_LED_SCROLL_LOCK),
-		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_scroloc, NULL);
+	    sc->sc_report_id, hid_output, &sc->sc_scroloc, NULL);
 	hid_locate(desc, size, HID_USAGE2(HUP_LEDS, HUD_LED_COMPOSE),
-		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_compose, NULL);
+	    sc->sc_report_id, hid_output, &sc->sc_compose, NULL);
 
 	return NULL;
 }

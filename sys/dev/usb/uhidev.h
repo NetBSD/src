@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.25 2022/03/28 12:43:39 riastradh Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.26 2022/03/28 12:44:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,34 +33,18 @@
 #ifndef	_DEV_USB_UHIDEV_H_
 #define	_DEV_USB_UHIDEV_H_
 
-#include <sys/device.h>
-#include <sys/rndsource.h>
-
 #include <dev/usb/usbdi.h>
 
-struct uhidev_softc;
-
-struct uhidev {
-	device_t sc_dev;		/* base device */
-	struct uhidev_softc *sc_parent;
-	uByte sc_report_id;
-	uint8_t sc_state;	/* read/written under sc_parent->sc_lock */
-#define	UHIDEV_OPEN	0x01	/* device is open */
-#define	UHIDEV_STOPPED	0x02	/* xfers are stopped */
-	int sc_in_rep_size;
-	void (*sc_intr)(struct uhidev *, void *, u_int);
-	krndsource_t     rnd_source;
-};
+struct uhidev;
 
 struct uhidev_attach_arg {
 	struct usbif_attach_arg *uiaa;
-	struct uhidev_softc *parent;
+	struct uhidev *parent;
 	int reportid;
-	int reportsize;
 };
 
-void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
-int uhidev_open(struct uhidev *);
+void uhidev_get_report_desc(struct uhidev *, void **, int *);
+int uhidev_open(struct uhidev *, void (*)(void *, void *, unsigned), void *);
 void uhidev_stop(struct uhidev *);
 void uhidev_close(struct uhidev *);
 usbd_status uhidev_set_report(struct uhidev *, int, void *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.14 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: uts.c,v 1.15 2022/03/28 12:44:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.14 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.15 2022/03/28 12:44:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -72,7 +72,8 @@ int	utsdebug = 0;
 
 
 struct uts_softc {
-	struct uhidev sc_hdev;
+	device_t sc_dev;
+	struct uhidev *sc_hdev;
 
 	struct hid_location sc_loc_x, sc_loc_y, sc_loc_z;
 	struct hid_location sc_loc_btn;
@@ -92,7 +93,7 @@ struct uts_softc {
 
 #define TSCREEN_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 
-Static void	uts_intr(struct uhidev *, void *, u_int);
+Static void	uts_intr(void *, void *, u_int);
 
 Static int	uts_enable(void *);
 Static void	uts_disable(void *);
@@ -146,10 +147,8 @@ uts_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	sc->sc_hdev.sc_dev = self;
-	sc->sc_hdev.sc_intr = uts_intr;
-	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_dev = self;
+	sc->sc_hdev = uha->parent;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 
@@ -159,7 +158,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 	/* requires HID usage Generic_Desktop:X */
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
 		uha->reportid, hid_input, &sc->sc_loc_x, &flags)) {
-		aprint_error_dev(sc->sc_hdev.sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "touchscreen has no X report\n");
 		return;
 	}
@@ -170,7 +169,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 	case HIO_RELATIVE:
 		break;
 	default:
-		aprint_error_dev(sc->sc_hdev.sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "X report 0x%04x not supported\n", flags);
 		return;
 	}
@@ -178,7 +177,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 	/* requires HID usage Generic_Desktop:Y */
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
 		uha->reportid, hid_input, &sc->sc_loc_y, &flags)) {
-		aprint_error_dev(sc->sc_hdev.sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "touchscreen has no Y report\n");
 		return;
 	}
@@ -189,15 +188,15 @@ uts_attach(device_t parent, device_t self, void *aux)
 	case HIO_RELATIVE:
 		break;
 	default:
-		aprint_error_dev(sc->sc_hdev.sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "Y report 0x%04x not supported\n", flags);
 		return;
 	}
 
 	/* requires HID usage Digitizer:Tip_Switch */
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS, HUD_TIP_SWITCH),
-	    uha->reportid, hid_input, &sc->sc_loc_btn, 0)) {
-		aprint_error_dev(sc->sc_hdev.sc_dev,
+		uha->reportid, hid_input, &sc->sc_loc_btn, 0)) {
+		aprint_error_dev(sc->sc_dev,
 		    "touchscreen has no tip switch report\n");
 		return;
 	}
@@ -211,10 +210,10 @@ uts_attach(device_t parent, device_t self, void *aux)
 			 * ELAN touchscreens error out here but still return
 			 * valid data
 			 */
-			aprint_debug_dev(sc->sc_hdev.sc_dev,
+			aprint_debug_dev(sc->sc_dev,
 			    "ELAN touchscreen found, working around bug.\n");
 		} else {
-			aprint_error_dev(sc->sc_hdev.sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "touchscreen has no range report\n");
 			return;
 		}
@@ -247,7 +246,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 		while (hid_get_item(d, &item)) {
 			if (item.kind != hid_input
 			    || HID_GET_USAGE_PAGE(item.usage) != HUP_GENERIC_DESKTOP
-			    || item.report_ID != sc->sc_hdev.sc_report_id)
+			    || item.report_ID != uha->reportid)
 				continue;
 			if (HID_GET_USAGE(item.usage) == HUG_X) {
 				sc->sc_calibcoords.minx = item.logical_minimum;
@@ -322,7 +321,7 @@ uts_enable(void *v)
 	sc->sc_enabled = 1;
 	sc->sc_buttons = 0;
 
-	return uhidev_open(&sc->sc_hdev);
+	return uhidev_open(sc->sc_hdev, &uts_intr, sc);
 }
 
 Static void
@@ -339,7 +338,7 @@ uts_disable(void *v)
 #endif
 
 	sc->sc_enabled = 0;
-	uhidev_close(&sc->sc_hdev);
+	uhidev_close(sc->sc_hdev);
 }
 
 Static int
@@ -363,9 +362,9 @@ uts_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 Static void
-uts_intr(struct uhidev *addr, void *ibuf, u_int len)
+uts_intr(void *cookie, void *ibuf, u_int len)
 {
-	struct uts_softc *sc = (struct uts_softc *)addr;
+	struct uts_softc *sc = cookie;
 	int dx, dy, dz;
 	uint32_t buttons = 0;
 	int flags, s;
