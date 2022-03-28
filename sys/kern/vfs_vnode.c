@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.140 2022/03/28 12:37:46 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.141 2022/03/28 12:37:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.140 2022/03/28 12:37:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.141 2022/03/28 12:37:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1811,14 +1811,13 @@ vcache_reclaim(vnode_t *vp)
 	uint32_t hash;
 	uint8_t temp_buf[64], *temp_key;
 	size_t temp_key_len;
-	bool recycle, active;
+	bool recycle;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(mutex_owned(vp->v_interlock));
 	KASSERT(vrefcnt(vp) != 0);
 
-	active = (vrefcnt(vp) > 1);
 	temp_key_len = vip->vi_key.vk_key_len;
 	/*
 	 * Prevent the vnode from being recycled or brought into use
@@ -1861,8 +1860,6 @@ vcache_reclaim(vnode_t *vp)
 
 	/*
 	 * Clean out any cached data associated with the vnode.
-	 * If purging an active vnode, it must be closed and
-	 * deactivated before being reclaimed.
 	 */
 	error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
 	if (error != 0) {
@@ -1872,7 +1869,7 @@ vcache_reclaim(vnode_t *vp)
 	}
 	KASSERTMSG((error == 0), "vinvalbuf failed: %d", error);
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-	if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
+	if (vp->v_type == VBLK || vp->v_type == VCHR) {
 		 spec_node_revoke(vp);
 	}
 
