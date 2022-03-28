@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.203 2022/03/28 12:37:01 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.204 2022/03/28 12:37:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.203 2022/03/28 12:37:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.204 2022/03/28 12:37:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -397,6 +397,7 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 		sd->sd_bdevvp = NULL;
 		sd->sd_iocnt = 0;
 		sd->sd_opened = false;
+		sd->sd_closing = false;
 		sn->sn_dev = sd;
 		sd = NULL;
 	} else {
@@ -734,8 +735,17 @@ spec_open(void *v)
 	case VCHR:
 		/*
 		 * Character devices can accept opens from multiple
-		 * vnodes.
+		 * vnodes.  But first, wait for any close to finish.
+		 * Wait under the vnode lock so we don't have to worry
+		 * about the vnode being revoked while we wait.
 		 */
+		while (sd->sd_closing) {
+			error = cv_wait_sig(&specfs_iocv, &device_lock);
+			if (error)
+				break;
+		}
+		if (error)
+			break;
 		sd->sd_opencnt++;
 		sn->sn_opencnt++;
 		break;
@@ -1605,8 +1615,10 @@ spec_close(void *v)
 		    count + 1);
 		sd->sd_bdevvp = NULL;
 	}
-	if (count == 0)
+	if (count == 0) {
 		sd->sd_opened = false;
+		sd->sd_closing = true;
+	}
 	mutex_exit(&device_lock);
 
 	if (count != 0)
@@ -1630,6 +1642,18 @@ spec_close(void *v)
 	 * point, no bdev/cdev_* can be active for this specdev.
 	 */
 	spec_io_drain(sd);
+
+	/*
+	 * Wake any spec_open calls waiting for close to finish -- do
+	 * this before reacquiring the vnode lock, because spec_open
+	 * holds the vnode lock while waiting, so doing this after
+	 * reacquiring the lock would deadlock.
+	 */
+	mutex_enter(&device_lock);
+	KASSERT(sd->sd_closing);
+	sd->sd_closing = false;
+	cv_broadcast(&specfs_iocv);
+	mutex_exit(&device_lock);
 
 	if (!(flags & FNONBLOCK))
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

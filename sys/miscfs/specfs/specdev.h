@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.49 2022/03/28 12:36:51 riastradh Exp $	*/
+/*	$NetBSD: specdev.h,v 1.50 2022/03/28 12:37:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ typedef struct specdev {
 	dev_t		sd_rdev;
 	volatile u_int	sd_iocnt;	/* # bdev/cdev_* operations active */
 	bool		sd_opened;	/* true if successfully opened */
+	bool		sd_closing;	/* true when bdev/cdev_close ongoing */
 } specdev_t;
 
 /*
