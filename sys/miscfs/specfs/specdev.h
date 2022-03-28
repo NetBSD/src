@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.46 2021/07/18 23:57:15 dholland Exp $	*/
+/*	$NetBSD: specdev.h,v 1.47 2022/03/28 12:36:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 typedef struct specnode {
 	vnode_t		*sn_next;
 	struct specdev	*sn_dev;
-	u_int		sn_opencnt;
+	u_int		sn_opencnt;	/* # of opens, share of sd_opencnt */
 	dev_t		sn_rdev;
 	bool		sn_gone;
 } specnode_t;
@@ -75,8 +75,8 @@ typedef struct specdev {
 	struct mount	*sd_mountpoint;
 	struct lockf	*sd_lockf;
 	vnode_t		*sd_bdevvp;
-	u_int		sd_opencnt;
-	u_int		sd_refcnt;
+	u_int		sd_opencnt;	/* # of opens; close when ->0 */
+	u_int		sd_refcnt;	/* # of specnodes referencing this */
 	dev_t		sd_rdev;
 } specdev_t;
 
