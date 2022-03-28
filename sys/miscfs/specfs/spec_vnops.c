@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.189 2022/03/28 12:34:51 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.190 2022/03/28 12:34:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.189 2022/03/28 12:34:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.190 2022/03/28 12:34:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -550,6 +550,20 @@ spec_open(void *v)
 	if (error != 0)
 		return (error);
 
+	/*
+	 * Acquire an open reference -- as long as we hold onto it, and
+	 * the vnode isn't revoked, it can't be closed.
+	 *
+	 * But first check whether it has been revoked -- if so, we
+	 * can't acquire more open references and we must fail
+	 * immediately with EBADF.
+	 *
+	 * XXX This races with revoke: once we release the vnode lock,
+	 * the vnode may be revoked, and the .d_close callback run, at
+	 * the same time as we're calling .d_open here.  Drivers
+	 * shouldn't have to contemplate this scenario; .d_open and
+	 * .d_close should be prevented from running concurrently.
+	 */
 	switch (vp->v_type) {
 	case VCHR:
 		/*
@@ -564,8 +578,68 @@ spec_open(void *v)
 		sd->sd_opencnt++;
 		sn->sn_opencnt++;
 		mutex_exit(&device_lock);
+		break;
+	case VBLK:
+		/*
+		 * For block devices, permit only one open.  The buffer
+		 * cache cannot remain self-consistent with multiple
+		 * vnodes holding a block device open.
+		 *
+		 * Treat zero opencnt with non-NULL mountpoint as open.
+		 * This may happen after forced detach of a mounted device.
+		 */
+		mutex_enter(&device_lock);
+		if (sn->sn_gone) {
+			mutex_exit(&device_lock);
+			return (EBADF);
+		}
+		if (sd->sd_opencnt != 0 || sd->sd_mountpoint != NULL) {
+			mutex_exit(&device_lock);
+			return EBUSY;
+		}
+		sn->sn_opencnt = 1;
+		sd->sd_opencnt = 1;
+		sd->sd_bdevvp = vp;
+		mutex_exit(&device_lock);
+		break;
+	default:
+		panic("invalid specfs vnode type: %d", vp->v_type);
+	}
+
+	/*
+	 * Set VV_ISTTY if this is a tty cdev.
+	 *
+	 * XXX This does the wrong thing if the module has to be
+	 * autoloaded.  We should maybe set this after autoloading
+	 * modules and calling .d_open successfully, except (a) we need
+	 * the vnode lock to touch it, and (b) once we acquire the
+	 * vnode lock again, the vnode may have been revoked, and
+	 * deadfs's dead_read needs VV_ISTTY to be already set in order
+	 * to return the right answer.  So this needs some additional
+	 * synchronization to be made to work correctly with tty driver
+	 * module autoload.  For now, let's just hope it doesn't cause
+	 * too much trouble for a tty from an autoloaded driver module
+	 * to fail with EIO instead of returning EOF.
+	 */
+	if (vp->v_type == VCHR) {
 		if (cdev_type(dev) == D_TTY)
 			vp->v_vflag |= VV_ISTTY;
+	}
+
+	/*
+	 * Open the device.  If .d_open returns ENXIO (device not
+	 * configured), the driver may not be loaded, so try
+	 * autoloading a module and then try .d_open again if anything
+	 * got loaded.
+	 *
+	 * Because opening the device may block indefinitely, e.g. when
+	 * opening a tty, and loading a module may cross into many
+	 * other subsystems, we must not hold the vnode lock while
+	 * calling .d_open, so release it now and reacquire it when
+	 * done.
+	 */
+	switch (vp->v_type) {
+	case VCHR:
 		VOP_UNLOCK(vp);
 		do {
 			const struct cdevsw *cdev;
@@ -594,27 +668,6 @@ spec_open(void *v)
 		break;
 
 	case VBLK:
-		/*
-		 * For block devices, permit only one open.  The buffer
-		 * cache cannot remain self-consistent with multiple
-		 * vnodes holding a block device open.
-		 *
-		 * Treat zero opencnt with non-NULL mountpoint as open.
-		 * This may happen after forced detach of a mounted device.
-		 */
-		mutex_enter(&device_lock);
-		if (sn->sn_gone) {
-			mutex_exit(&device_lock);
-			return (EBADF);
-		}
-		if (sd->sd_opencnt != 0 || sd->sd_mountpoint != NULL) {
-			mutex_exit(&device_lock);
-			return EBUSY;
-		}
-		sn->sn_opencnt = 1;
-		sd->sd_opencnt = 1;
-		sd->sd_bdevvp = vp;
-		mutex_exit(&device_lock);
 		VOP_UNLOCK(vp);
 		do {
 			const struct bdevsw *bdev;
@@ -643,9 +696,39 @@ spec_open(void *v)
 		break;
 
 	default:
-		panic("invalid specfs vnode type: %d", vp->v_type);
+		__unreachable();
 	}
 
+	/*
+	 * If it has been revoked since we released the vnode lock and
+	 * reacquired it, then spec_node_revoke has closed it, and we
+	 * must fail with EBADF.
+	 *
+	 * Otherwise, if opening it failed, back out and release the
+	 * open reference.
+	 *
+	 * XXX This is wrong -- we might release the last open
+	 * reference here, but we don't close the device.  If only this
+	 * thread's call to open failed, that's fine, but we might
+	 * have:
+	 *
+	 *	Thread 1		Thread 2
+	 *	VOP_OPEN
+	 *	  ...
+	 *	  .d_open -> 0 (success)
+	 *	  acquire vnode lock
+	 *	  do stuff		VOP_OPEN
+	 *	  release vnode lock	...
+	 *				  .d_open -> EBUSY
+	 *	VOP_CLOSE
+	 *	  acquire vnode lock
+	 *	  --sd_opencnt != 0
+	 *	  => no .d_close
+	 *	  release vnode lock
+	 *				  acquire vnode lock
+	 *				  --sd_opencnt == 0
+	 *				  but no .d_close (***)
+	 */
 	mutex_enter(&device_lock);
 	if (sn->sn_gone) {
 		if (error == 0)
