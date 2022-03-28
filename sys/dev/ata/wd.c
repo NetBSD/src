@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.466 2021/12/28 13:27:32 riastradh Exp $ */
+/*	$NetBSD: wd.c,v 1.467 2022/03/28 12:39:37 riastradh Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.466 2021/12/28 13:27:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.467 2022/03/28 12:39:37 riastradh Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -152,6 +152,8 @@ const struct bdevsw wd_bdevsw = {
 	.d_dump = wddump,
 	.d_psize = wdsize,
 	.d_discard = wddiscard,
+	.d_cfdriver = &wd_cd,
+	.d_devtounit = disklabel_dev_unit,
 	.d_flag = D_DISK
 };
 
@@ -167,6 +169,8 @@ const struct cdevsw wd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = wddiscard,
+	.d_cfdriver = &wd_cd,
+	.d_devtounit = disklabel_dev_unit,
 	.d_flag = D_DISK
 };
 
