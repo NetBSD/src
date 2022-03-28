@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.201 2022/03/28 12:36:42 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.202 2022/03/28 12:36:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.201 2022/03/28 12:36:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.202 2022/03/28 12:36:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.201 2022/03/28 12:36:42 riastradh E
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 #include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -173,6 +174,7 @@ const struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };
 
 static kauth_listener_t rawio_listener;
+static struct kcondvar specfs_iocv;
 
 /* Returns true if vnode is /dev/mem or /dev/kmem. */
 bool
@@ -218,6 +220,141 @@ spec_init(void)
 
 	rawio_listener = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    rawio_listener_cb, NULL);
+	cv_init(&specfs_iocv, "specio");
+}
+
+/*
+ * spec_io_enter(vp, &sn, &dev)
+ *
+ *	Enter an operation that may not hold vp's vnode lock or an
+ *	fstrans on vp's mount.  Until spec_io_exit, the vnode will not
+ *	be revoked.
+ *
+ *	On success, set sn to the specnode pointer and dev to the dev_t
+ *	number and return zero.  Caller must later call spec_io_exit
+ *	when done.
+ *
+ *	On failure, return ENXIO -- the device has been revoked and no
+ *	longer exists.
+ */
+static int
+spec_io_enter(struct vnode *vp, struct specnode **snp, dev_t *devp)
+{
+	dev_t dev;
+	struct specnode *sn;
+	unsigned iocnt;
+	int error = 0;
+
+	mutex_enter(vp->v_interlock);
+
+	/*
+	 * Extract all the info we need from the vnode, unless the
+	 * vnode has already been reclaimed.  This can happen if the
+	 * underlying device has been removed and all the device nodes
+	 * for it have been revoked.  The caller may not hold a vnode
+	 * lock or fstrans to prevent this from happening before it has
+	 * had an opportunity to notice the vnode is dead.
+	 */
+	if (vdead_check(vp, VDEAD_NOWAIT) != 0 ||
+	    (sn = vp->v_specnode) == NULL ||
+	    (dev = vp->v_rdev) == NODEV) {
+		error = ENXIO;
+		goto out;
+	}
+
+	/*
+	 * Notify spec_close that we are doing an I/O operation which
+	 * may not be not bracketed by fstrans(9) and thus is not
+	 * blocked by vfs suspension.
+	 *
+	 * We could hold this reference with psref(9) instead, but we
+	 * already have to take the interlock for vdead_check, so
+	 * there's not much more cost here to another atomic operation.
+	 */
+	do {
+		iocnt = atomic_load_relaxed(&sn->sn_dev->sd_iocnt);
+		if (__predict_false(iocnt == UINT_MAX)) {
+			/*
+			 * The I/O count is limited by the number of
+			 * LWPs (which will never overflow this) --
+			 * unless one driver uses another driver via
+			 * specfs, which is rather unusual, but which
+			 * could happen via pud(4) userspace drivers.
+			 * We could use a 64-bit count, but can't use
+			 * atomics for that on all platforms.
+			 * (Probably better to switch to psref or
+			 * localcount instead.)
+			 */
+			error = EBUSY;
+			goto out;
+		}
+	} while (atomic_cas_uint(&sn->sn_dev->sd_iocnt, iocnt, iocnt + 1)
+	    != iocnt);
+
+	/* Success!  */
+	*snp = sn;
+	*devp = dev;
+	error = 0;
+
+out:	mutex_exit(vp->v_interlock);
+	return error;
+}
+
+/*
+ * spec_io_exit(vp, sn)
+ *
+ *	Exit an operation entered with a successful spec_io_enter --
+ *	allow concurrent spec_node_revoke to proceed.  The argument sn
+ *	must match the struct specnode pointer returned by spec_io_exit
+ *	for vp.
+ */
+static void
+spec_io_exit(struct vnode *vp, struct specnode *sn)
+{
+	struct specdev *sd = sn->sn_dev;
+	unsigned iocnt;
+
+	KASSERT(vp->v_specnode == sn);
+
+	/*
+	 * We are done.  Notify spec_close if appropriate.  The
+	 * transition of 1 -> 0 must happen under device_lock so
+	 * spec_close doesn't miss a wakeup.
+	 */
+	do {
+		iocnt = atomic_load_relaxed(&sd->sd_iocnt);
+		KASSERT(iocnt > 0);
+		if (iocnt == 1) {
+			mutex_enter(&device_lock);
+			if (atomic_dec_uint_nv(&sd->sd_iocnt) == 0)
+				cv_broadcast(&specfs_iocv);
+			mutex_exit(&device_lock);
+			break;
+		}
+	} while (atomic_cas_uint(&sd->sd_iocnt, iocnt, iocnt - 1) != iocnt);
+}
+
+/*
+ * spec_io_drain(sd)
+ *
+ *	Wait for all existing spec_io_enter/exit sections to complete.
+ *	Caller must ensure spec_io_enter will fail at this point.
+ */
+static void
+spec_io_drain(struct specdev *sd)
+{
+
+	/*
+	 * I/O at the same time as closing is unlikely -- it often
+	 * indicates an application bug.
+	 */
+	if (__predict_true(atomic_load_relaxed(&sd->sd_iocnt) == 0))
+		return;
+
+	mutex_enter(&device_lock);
+	while (atomic_load_relaxed(&sd->sd_iocnt) > 0)
+		cv_wait(&specfs_iocv, &device_lock);
+	mutex_exit(&device_lock);
 }
 
 /*
@@ -258,6 +395,7 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 		sd->sd_refcnt = 1;
 		sd->sd_opencnt = 0;
 		sd->sd_bdevvp = NULL;
+		sd->sd_iocnt = 0;
 		sd->sd_opened = false;
 		sn->sn_dev = sd;
 		sd = NULL;
@@ -472,6 +610,7 @@ spec_node_destroy(vnode_t *vp)
 
 	/* If the device is no longer in use, destroy our record. */
 	if (refcnt == 1) {
+		KASSERT(sd->sd_iocnt == 0);
 		KASSERT(sd->sd_opencnt == 0);
 		KASSERT(sd->sd_bdevvp == NULL);
 		kmem_free(sd, sizeof(*sd));
@@ -509,29 +648,26 @@ spec_open(void *v)
 		int  a_mode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	struct lwp *l;
-	struct vnode *vp;
+	struct lwp *l = curlwp;
+	struct vnode *vp = ap->a_vp;
 	dev_t dev;
 	int error;
 	enum kauth_device_req req;
 	specnode_t *sn;
 	specdev_t *sd;
 	spec_ioctl_t ioctl;
-	u_int gen;
-	const char *name;
+	u_int gen = 0;
+	const char *name = NULL;
 	bool needclose = false;
 	struct partinfo pi;
-	
-	l = curlwp;
-	vp = ap->a_vp;
+
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	KASSERTMSG(vp->v_type == VBLK || vp->v_type == VCHR, "type=%d",
+	    vp->v_type);
+
 	dev = vp->v_rdev;
 	sn = vp->v_specnode;
 	sd = sn->sn_dev;
-	name = NULL;
-	gen = 0;
-
-	KASSERTMSG(vp->v_type == VBLK || vp->v_type == VCHR, "type=%d",
-	    vp->v_type);
 
 	/*
 	 * Don't allow open if fs is mounted -nodev.
@@ -797,6 +933,8 @@ spec_read(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
  	struct lwp *l = curlwp;
+	struct specnode *sn;
+	dev_t dev;
 	struct buf *bp;
 	daddr_t bn;
 	int bsize, bscale;
@@ -819,9 +957,27 @@ spec_read(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
+		/*
+		 * Release the lock while we sleep -- possibly
+		 * indefinitely, if this is, e.g., a tty -- in
+		 * cdev_read, so we don't hold up everything else that
+		 * might want access to the vnode.
+		 *
+		 * But before we issue the read, take an I/O reference
+		 * to the specnode so close will know when we're done
+		 * reading.  Note that the moment we release the lock,
+		 * the vnode's identity may change; hence spec_io_enter
+		 * may fail, and the caller may have a dead vnode on
+		 * their hands, if the file system on which vp lived
+		 * has been unmounted.
+		 */
 		VOP_UNLOCK(vp);
-		error = cdev_read(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_SHARED | LK_RETRY);
+		error = spec_io_enter(vp, &sn, &dev);
+		if (error)
+			goto out;
+		error = cdev_read(dev, uio, ap->a_ioflag);
+		spec_io_exit(vp, sn);
+out:		vn_lock(vp, LK_SHARED | LK_RETRY);
 		return (error);
 
 	case VBLK:
@@ -898,6 +1054,8 @@ spec_write(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
 	struct lwp *l = curlwp;
+	struct specnode *sn;
+	dev_t dev;
 	struct buf *bp;
 	daddr_t bn;
 	int bsize, bscale;
@@ -913,9 +1071,27 @@ spec_write(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
+		/*
+		 * Release the lock while we sleep -- possibly
+		 * indefinitely, if this is, e.g., a tty -- in
+		 * cdev_write, so we don't hold up everything else that
+		 * might want access to the vnode.
+		 *
+		 * But before we issue the write, take an I/O reference
+		 * to the specnode so close will know when we're done
+		 * writing.  Note that the moment we release the lock,
+		 * the vnode's identity may change; hence spec_io_enter
+		 * may fail, and the caller may have a dead vnode on
+		 * their hands, if the file system on which vp lived
+		 * has been unmounted.
+		 */
 		VOP_UNLOCK(vp);
-		error = cdev_write(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		error = spec_io_enter(vp, &sn, &dev);
+		if (error)
+			goto out;
+		error = cdev_write(dev, uio, ap->a_ioflag);
+		spec_io_exit(vp, sn);
+out:		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
 	case VBLK:
@@ -973,10 +1149,11 @@ spec_fdiscard(void *v)
 		off_t a_pos;
 		off_t a_len;
 	} */ *ap = v;
-	struct vnode *vp;
+	struct vnode *vp = ap->a_vp;
 	dev_t dev;
 
-	vp = ap->a_vp;
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	dev = vp->v_rdev;
 
 	switch (vp->v_type) {
@@ -1006,40 +1183,32 @@ spec_ioctl(void *v)
 		int  a_fflag;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	struct vnode *vp;
+	struct vnode *vp = ap->a_vp;
+	struct specnode *sn;
 	dev_t dev;
+	int error;
 
-	/*
-	 * Extract all the info we need from the vnode, taking care to
-	 * avoid a race with VOP_REVOKE().
-	 */
-
-	vp = ap->a_vp;
-	dev = NODEV;
-	mutex_enter(vp->v_interlock);
-	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode) {
-		dev = vp->v_rdev;
-	}
-	mutex_exit(vp->v_interlock);
-	if (dev == NODEV) {
-		return ENXIO;
-	}
+	error = spec_io_enter(vp, &sn, &dev);
+	if (error)
+		return error;
 
 	switch (vp->v_type) {
-
 	case VCHR:
-		return cdev_ioctl(dev, ap->a_command, ap->a_data,
+		error = cdev_ioctl(dev, ap->a_command, ap->a_data,
 		    ap->a_fflag, curlwp);
-
+		break;
 	case VBLK:
 		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
-		return bdev_ioctl(dev, ap->a_command, ap->a_data,
+		error = bdev_ioctl(dev, ap->a_command, ap->a_data,
 		   ap->a_fflag, curlwp);
-
+		break;
 	default:
 		panic("spec_ioctl");
 		/* NOTREACHED */
 	}
+
+	spec_io_exit(vp, sn);
+	return error;
 }
 
 /* ARGSUSED */
@@ -1050,33 +1219,25 @@ spec_poll(void *v)
 		struct vnode *a_vp;
 		int a_events;
 	} */ *ap = v;
-	struct vnode *vp;
+	struct vnode *vp = ap->a_vp;
+	struct specnode *sn;
 	dev_t dev;
+	int revents;
 
-	/*
-	 * Extract all the info we need from the vnode, taking care to
-	 * avoid a race with VOP_REVOKE().
-	 */
-
-	vp = ap->a_vp;
-	dev = NODEV;
-	mutex_enter(vp->v_interlock);
-	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode) {
-		dev = vp->v_rdev;
-	}
-	mutex_exit(vp->v_interlock);
-	if (dev == NODEV) {
+	if (spec_io_enter(vp, &sn, &dev) != 0)
 		return POLLERR;
-	}
 
 	switch (vp->v_type) {
-
 	case VCHR:
-		return cdev_poll(dev, ap->a_events, curlwp);
-
+		revents = cdev_poll(dev, ap->a_events, curlwp);
+		break;
 	default:
-		return (genfs_poll(v));
+		revents = genfs_poll(v);
+		break;
 	}
+
+	spec_io_exit(vp, sn);
+	return revents;
 }
 
 /* ARGSUSED */
@@ -1087,20 +1248,30 @@ spec_kqfilter(void *v)
 		struct vnode	*a_vp;
 		struct proc	*a_kn;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct specnode *sn;
 	dev_t dev;
+	int error;
 
-	switch (ap->a_vp->v_type) {
+	error = spec_io_enter(vp, &sn, &dev);
+	if (error)
+		return error;
 
+	switch (vp->v_type) {
 	case VCHR:
-		dev = ap->a_vp->v_rdev;
-		return cdev_kqfilter(dev, ap->a_kn);
+		error = cdev_kqfilter(dev, ap->a_kn);
+		break;
 	default:
 		/*
 		 * Block devices don't support kqfilter, and refuse it
 		 * for any other files (like those vflush()ed) too.
 		 */
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		break;
 	}
+
+	spec_io_exit(vp, sn);
+	return error;
 }
 
 /*
@@ -1115,11 +1286,19 @@ spec_mmap(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct specnode *sn;
+	dev_t dev;
+	int error;
 
 	KASSERT(vp->v_type == VBLK);
-	if (bdev_type(vp->v_rdev) != D_DISK)
-		return EINVAL;
 
+	error = spec_io_enter(vp, &sn, &dev);
+	if (error)
+		return error;
+
+	error = bdev_type(dev) == D_DISK ? 0 : EINVAL;
+
+	spec_io_exit(vp, sn);
 	return 0;
 }
 
@@ -1164,27 +1343,14 @@ spec_strategy(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
+	struct specnode *sn = NULL;
 	dev_t dev;
 	int error;
 
-	dev = NODEV;
-
-	/*
-	 * Extract all the info we need from the vnode, taking care to
-	 * avoid a race with VOP_REVOKE().
-	 */
-
-	mutex_enter(vp->v_interlock);
-	if (vdead_check(vp, VDEAD_NOWAIT) == 0 && vp->v_specnode != NULL) {
-		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
-		dev = vp->v_rdev;
-	}
-	mutex_exit(vp->v_interlock);
-
-	if (dev == NODEV) {
-		error = ENXIO;
+	error = spec_io_enter(vp, &sn, &dev);
+	if (error)
 		goto out;
-	}
+
 	bp->b_dev = dev;
 
 	if (!(bp->b_flags & B_READ)) {
@@ -1204,13 +1370,15 @@ spec_strategy(void *v)
 	}
 	bdev_strategy(bp);
 
-	return 0;
+	error = 0;
 
-out:
-	bp->b_error = error;
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
-
+out:	if (sn)
+		spec_io_exit(vp, sn);
+	if (error) {
+		bp->b_error = error;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
 	return error;
 }
 
@@ -1281,14 +1449,17 @@ spec_close(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct session *sess;
-	dev_t dev = vp->v_rdev;
+	dev_t dev;
 	int flags = ap->a_fflag;
 	int mode, error, count;
 	specnode_t *sn;
 	specdev_t *sd;
 
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	mutex_enter(vp->v_interlock);
 	sn = vp->v_specnode;
+	dev = vp->v_rdev;
 	sd = sn->sn_dev;
 	/*
 	 * If we're going away soon, make this non-blocking.
@@ -1420,6 +1591,12 @@ spec_close(void *v)
 		error = bdev_close(dev, flags, mode, curlwp);
 	else
 		error = cdev_close(dev, flags, mode, curlwp);
+
+	/*
+	 * Wait for all other devsw operations to drain.  After this
+	 * point, no bdev/cdev_* can be active for this specdev.
+	 */
+	spec_io_drain(sd);
 
 	if (!(flags & FNONBLOCK))
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
