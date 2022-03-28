@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.51 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.52 2022/03/28 12:42:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.51 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.52 2022/03/28 12:42:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1105,7 +1105,7 @@ ucycom_set_status(struct ucycom_softc *sc)
 	memset(sc->sc_obuf, 0, sc->sc_olen);
 	sc->sc_obuf[0] = sc->sc_mcr;
 
-	err = uhidev_write(sc->sc_hdev.sc_parent, sc->sc_obuf, sc->sc_olen);
+	err = uhidev_write(&sc->sc_hdev, sc->sc_obuf, sc->sc_olen);
 	if (err) {
 		DPRINTF(("ucycom_set_status: err=%d\n", err));
 	}
