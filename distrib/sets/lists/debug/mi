@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.373 2022/02/24 03:35:33 mrg Exp $
+# $NetBSD: mi,v 1.374 2022/03/28 20:52:17 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1712,6 +1712,7 @@
 ./usr/libdata/debug/usr/tests/fs/union/t_pr.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/vfs/t_full.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/vfs/t_io.debug			tests-fs-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/fs/vfs/t_link.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/vfs/t_mtime_otrunc.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/vfs/t_mtime_write.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/vfs/t_renamerace.debug			tests-fs-debug		debug,atf,rump
