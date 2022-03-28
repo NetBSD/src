@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.492 2022/03/28 12:37:46 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.493 2022/03/28 12:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.492 2022/03/28 12:37:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.493 2022/03/28 12:38:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -511,6 +511,20 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 
 	for (mn = minl; mn <= minh; mn++) {
 		dev = makedev(maj, mn);
+		/*
+		 * Notify anyone trying to get at this device that it
+		 * has been detached, and then revoke it.
+		 */
+		switch (type) {
+		case VBLK:
+			bdev_detached(dev);
+			break;
+		case VCHR:
+			cdev_detached(dev);
+			break;
+		default:
+			panic("invalid specnode type: %d", type);
+		}
 		/*
 		 * Passing 0 as flags, instead of VDEAD_NOWAIT, means
 		 * spec_node_lookup_by_dev will wait for vnodes it

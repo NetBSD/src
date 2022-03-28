@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.42 2022/03/28 12:34:08 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.43 2022/03/28 12:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.42 2022/03/28 12:34:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.43 2022/03/28 12:38:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -1068,6 +1068,24 @@ bdev_discard(dev_t dev, off_t pos, off_t len)
 	return rv;
 }
 
+void
+bdev_detached(dev_t dev)
+{
+	const struct bdevsw *d;
+	device_t dv;
+	int unit;
+
+	if ((d = bdevsw_lookup(dev)) == NULL)
+		return;
+	if (d->d_devtounit == NULL)
+		return;
+	if ((unit = (*d->d_devtounit)(dev)) == -1)
+		return;
+	if ((dv = device_lookup(d->d_cfdriver, unit)) == NULL)
+		return;
+	config_detach_commit(dv);
+}
+
 int
 cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 {
@@ -1286,6 +1304,24 @@ cdev_type(dev_t dev)
 	if ((d = cdevsw_lookup(dev)) == NULL)
 		return D_OTHER;
 	return d->d_flag & D_TYPEMASK;
+}
+
+void
+cdev_detached(dev_t dev)
+{
+	const struct cdevsw *d;
+	device_t dv;
+	int unit;
+
+	if ((d = cdevsw_lookup(dev)) == NULL)
+		return;
+	if (d->d_devtounit == NULL)
+		return;
+	if ((unit = (*d->d_devtounit)(dev)) == -1)
+		return;
+	if ((dv = device_lookup(d->d_cfdriver, unit)) == NULL)
+		return;
+	config_detach_commit(dv);
 }
 
 /*
