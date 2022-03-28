@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.85 2022/03/28 12:43:22 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.86 2022/03/28 12:43:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.85 2022/03/28 12:43:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.86 2022/03/28 12:43:39 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -96,6 +96,7 @@ struct uhidev_softc {
 	struct lwp *sc_configlock;
 	int sc_refcnt;
 	int sc_writereportid;
+	int sc_stopreportid;
 	u_char sc_dying;
 
 	/*
@@ -187,6 +188,10 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_cv, "uhidev");
 	sc->sc_writelock = NULL;
 	sc->sc_configlock = NULL;
+	sc->sc_refcnt = 0;
+	sc->sc_writereportid = -1;
+	sc->sc_stopreportid = -1;
+	sc->sc_dying = false;
 
 	id = usbd_get_interface_descriptor(iface);
 
@@ -938,21 +943,72 @@ fail0:	mutex_exit(&sc->sc_lock);
 	return error;
 }
 
+/*
+ * uhidev_stop(scd)
+ *
+ *	Make all current and future output reports or xfers by scd to
+ *	the output pipe to fail.  Caller must then ensure no more will
+ *	be submitted and then call uhidev_close.
+ *
+ *	Side effect: If uhidev_write was in progress for this scd,
+ *	blocks all other uhidev_writes until uhidev_close on this scd.
+ *
+ *	May sleep but only for a short duration to wait for USB
+ *	transfer completion callbacks to run.
+ */
 void
 uhidev_stop(struct uhidev *scd)
 {
 	struct uhidev_softc *sc = scd->sc_parent;
-	bool abort = false;
 
 	mutex_enter(&sc->sc_lock);
-	if (sc->sc_writereportid == scd->sc_report_id)
-		abort = true;
+
+	/* Prevent further writes on this report from starting.  */
+	scd->sc_state |= UHIDEV_STOPPED;
+
+	/* If there's no output pipe at all, nothing to do.  */
+	if (sc->sc_opipe == NULL)
+		goto out;
+
+	/*
+	 * If there's no write on this report in progress, nothing to
+	 * do -- any subsequent attempts will be prevented by
+	 * UHIDEV_STOPPED.
+	 */
+	if (sc->sc_writereportid != scd->sc_report_id)
+		goto out;
+
+	/*
+	 * Caller must wait for uhidev_open to succeed before calling
+	 * uhidev_write, and must wait for all uhidev_writes to return
+	 * before calling uhidev_close, so neither on can be in flight
+	 * right now.
+	 *
+	 * Suspend the pipe, but hold up uhidev_write from any report
+	 * until we confirm this one has finished.  We will resume the
+	 * pipe only after all uhidev_writes on this report have
+	 * finished -- when the caller calls uhidev_close.
+	 */
+	KASSERTMSG(sc->sc_stopreportid == -1, "%d", sc->sc_stopreportid);
+	sc->sc_stopreportid = scd->sc_report_id;
 	mutex_exit(&sc->sc_lock);
 
-	if (abort && sc->sc_opipe) /* XXX sc_opipe might go away */
-		usbd_abort_pipe(sc->sc_opipe);
+	usbd_suspend_pipe(sc->sc_opipe);
+
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_stopreportid == scd->sc_report_id);
+	sc->sc_stopreportid = scd->sc_report_id;
+	cv_broadcast(&sc->sc_cv);
+out:	mutex_exit(&sc->sc_lock);
 }
 
+/*
+ * uhidev_close(scd)
+ *
+ *	Close a uhidev previously opened with uhidev_open.  If writes
+ *	had been stopped with uhidev_stop, allow writes at other report
+ *	ids again.
+ */
 void
 uhidev_close(struct uhidev *scd)
 {
@@ -970,11 +1026,35 @@ uhidev_close(struct uhidev *scd)
 	KASSERTMSG(scd->sc_state & UHIDEV_OPEN,
 	    "%s: report id %d: unpaired close",
 	    device_xname(sc->sc_dev), scd->sc_report_id);
+
+	/*
+	 * If the caller had issued uhidev_stop to interrupt a write
+	 * for this report, then resume the pipe now that no further
+	 * uhidev_write on the same report is possible, and wake anyone
+	 * trying to write on other reports.
+	 */
+	if (sc->sc_stopreportid == scd->sc_report_id) {
+		KASSERT(scd->sc_state & UHIDEV_STOPPED);
+		mutex_exit(&sc->sc_lock);
+
+		usbd_resume_pipe(sc->sc_opipe);
+
+		mutex_enter(&sc->sc_lock);
+		KASSERT(sc->sc_stopreportid == scd->sc_report_id);
+		KASSERT(scd->sc_state & UHIDEV_STOPPED);
+		sc->sc_stopreportid = -1;
+		cv_broadcast(&sc->sc_cv);
+	}
+
+	/*
+	 * Close our reference to the pipes, and mark our report as no
+	 * longer open.  If it was stopped, clear that too -- drivers
+	 * are forbidden from issuing writes after uhidev_close anyway.
+	 */
+	KASSERT(scd->sc_state & UHIDEV_OPEN);
 	uhidev_close_pipes(sc);
-	KASSERTMSG(scd->sc_state & UHIDEV_OPEN,
-	    "%s: report id %d: closed while closing",
-	    device_xname(sc->sc_dev), scd->sc_report_id);
-	scd->sc_state &= ~UHIDEV_OPEN;
+	KASSERT(scd->sc_state & UHIDEV_OPEN);
+	scd->sc_state &= ~(UHIDEV_OPEN | UHIDEV_STOPPED);
 
 	mutex_exit(&sc->sc_lock);
 }
@@ -1026,7 +1106,11 @@ uhidev_write(struct uhidev *scd, void *data, int len)
 			err = USBD_IOERROR;
 			goto out;
 		}
-		if (sc->sc_writelock == NULL)
+		if (scd->sc_state & UHIDEV_STOPPED) {
+			err = USBD_CANCELLED;
+			goto out;
+		}
+		if (sc->sc_writelock == NULL && sc->sc_stopreportid == -1)
 			break;
 		if (cv_wait_sig(&sc->sc_cv, &sc->sc_lock)) {
 			err = USBD_INTERRUPTED;
@@ -1110,7 +1194,11 @@ uhidev_write_async(struct uhidev *scd, void *data, int len, int flags,
 		err = USBD_IOERROR;
 		goto out;
 	}
-	if (sc->sc_writelock != NULL) {
+	if (scd->sc_state & UHIDEV_STOPPED) {
+		err = USBD_CANCELLED;
+		goto out;
+	}
+	if (sc->sc_writelock != NULL || sc->sc_stopreportid != -1) {
 		err = USBD_IN_USE;
 		goto out;
 	}
