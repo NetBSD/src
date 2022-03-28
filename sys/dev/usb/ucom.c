@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.129 2021/06/24 08:20:42 riastradh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.130 2022/03/28 12:42:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.129 2021/06/24 08:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.130 2022/03/28 12:42:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -180,11 +180,10 @@ struct ucom_softc {
 	    UCOM_DEAD,
 	    UCOM_ATTACHED,
 	    UCOM_OPENING,
-	    UCOM_CLOSING,
 	    UCOM_OPEN
 	}			sc_state;
-	int			sc_refcnt;
-	bool			sc_dying;	/* disconnecting */
+	bool			sc_closing;	/* software is closing */
+	bool			sc_dying;	/* hardware is gone */
 
 	struct pps_state	sc_pps_state;	/* pps state */
 
@@ -192,10 +191,12 @@ struct ucom_softc {
 
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_statecv;
-	kcondvar_t		sc_detachcv;
+
+	struct timeval		sc_hup_time;
 };
 
 dev_type_open(ucomopen);
+dev_type_cancel(ucomcancel);
 dev_type_close(ucomclose);
 dev_type_read(ucomread);
 dev_type_write(ucomwrite);
@@ -206,6 +207,7 @@ dev_type_poll(ucompoll);
 
 const struct cdevsw ucom_cdevsw = {
 	.d_open = ucomopen,
+	.d_cancel = ucomcancel,
 	.d_close = ucomclose,
 	.d_read = ucomread,
 	.d_write = ucomwrite,
@@ -216,16 +218,16 @@ const struct cdevsw ucom_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
 	.d_discard = nodiscard,
+	.d_cfdriver = &ucom_cd,
+	.d_devtounit = dev_minor_unit,
 	.d_flag = D_TTY | D_MPSAFE
 };
 
-static void	ucom_cleanup(struct ucom_softc *);
+static void	ucom_cleanup(struct ucom_softc *, int);
 static int	ucomparam(struct tty *, struct termios *);
 static int	ucomhwiflow(struct tty *, int);
 static void	ucomstart(struct tty *);
 static void	ucom_shutdown(struct ucom_softc *);
-static int	ucom_do_ioctl(struct ucom_softc *, u_long, void *,
-			      int, struct lwp *);
 static void	ucom_dtr(struct ucom_softc *, int);
 static void	ucom_rts(struct ucom_softc *, int);
 static void	ucom_break(struct ucom_softc *, int);
@@ -288,14 +290,13 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mcr = 0;
 	sc->sc_tx_stopped = 0;
 	sc->sc_swflags = 0;
-	sc->sc_refcnt = 0;
+	sc->sc_closing = false;
 	sc->sc_dying = false;
 	sc->sc_state = UCOM_DEAD;
 
 	sc->sc_si = softint_establish(SOFTINT_USB, ucom_softintr, sc);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&sc->sc_statecv, "ucomstate");
-	cv_init(&sc->sc_detachcv, "ucomdtch");
 
 	SIMPLEQ_INIT(&sc->sc_ibuff_empty);
 	SIMPLEQ_INIT(&sc->sc_ibuff_full);
@@ -366,7 +367,6 @@ ucom_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_state = UCOM_ATTACHED;
-
 	return;
 
 fail_2:
@@ -375,8 +375,8 @@ fail_2:
 		if (ub->ub_xfer)
 			usbd_destroy_xfer(ub->ub_xfer);
 	}
-
 	usbd_close_pipe(sc->sc_bulkout_pipe);
+	sc->sc_bulkout_pipe = NULL;
 
 fail_1:
 	for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
@@ -385,11 +385,10 @@ fail_1:
 			usbd_destroy_xfer(ub->ub_xfer);
 	}
 	usbd_close_pipe(sc->sc_bulkin_pipe);
+	sc->sc_bulkin_pipe = NULL;
 
 fail_0:
 	aprint_error_dev(self, "attach failed, error=%d\n", error);
-
-	return;
 }
 
 int
@@ -406,48 +405,20 @@ ucom_detach(device_t self, int flags)
 	    (uintptr_t)tp, 0);
 	DPRINTF("... pipe=%jd,%jd", sc->sc_bulkin_no, sc->sc_bulkout_no, 0, 0);
 
+	/* Prevent new opens from hanging.  */
 	mutex_enter(&sc->sc_lock);
 	sc->sc_dying = true;
 	mutex_exit(&sc->sc_lock);
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	/* tty is now off.  */
+	if (tp != NULL) {
+		mutex_spin_enter(&tty_lock);
+		CLR(tp->t_state, TS_CARR_ON);
+		CLR(tp->t_cflag, CLOCAL | MDMBUF);
+		mutex_spin_exit(&tty_lock);
 	}
-	if (sc->sc_bulkout_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
-	}
-
-	mutex_enter(&sc->sc_lock);
-
-	/* wait for open/close to finish */
-	while (sc->sc_state == UCOM_OPENING || sc->sc_state == UCOM_CLOSING) {
-		int error = cv_wait_sig(&sc->sc_statecv, &sc->sc_lock);
-
-		if (error) {
-			mutex_exit(&sc->sc_lock);
-			return error;
-		}
-	}
-
-	sc->sc_refcnt--;
-	while (sc->sc_refcnt >= 0) {
-		/* Wake up anyone waiting */
-		if (tp != NULL) {
-			mutex_spin_enter(&tty_lock);
-			CLR(tp->t_state, TS_CARR_ON);
-			CLR(tp->t_cflag, CLOCAL | MDMBUF);
-			ttyflush(tp, FREAD|FWRITE);
-			mutex_spin_exit(&tty_lock);
-		}
-		/* Wait for processes to go away. */
-		if (cv_timedwait(&sc->sc_detachcv, &sc->sc_lock, hz * 60))
-			aprint_error_dev(self, ": didn't detach\n");
-	}
-
-	softint_disestablish(sc->sc_si);
-	mutex_exit(&sc->sc_lock);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&ucom_cdevsw);
@@ -458,6 +429,8 @@ ucom_detach(device_t self, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | UCOMDIALOUT_MASK, mn | UCOMDIALOUT_MASK, VCHR);
 	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
+
+	softint_disestablish(sc->sc_si);
 
 	/* Detach and free the tty. */
 	if (tp != NULL) {
@@ -491,7 +464,6 @@ ucom_detach(device_t self, int flags)
 
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_statecv);
-	cv_destroy(&sc->sc_detachcv);
 
 	return 0;
 }
@@ -509,11 +481,23 @@ ucom_shutdown(struct ucom_softc *sc)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		ucom_dtr(sc, 0);
-		/* XXX will only timeout */
-		(void) kpause(ttclos, false, hz, NULL);
+		mutex_enter(&sc->sc_lock);
+		microuptime(&sc->sc_hup_time);
+		sc->sc_hup_time.tv_sec++;
+		mutex_exit(&sc->sc_lock);
 	}
 }
 
+/*
+ * ucomopen(dev, flag, mode, l)
+ *
+ *	Called when anyone tries to open /dev/ttyU? for an existing
+ *	ucom? instance that has completed attach.  The attach may have
+ *	failed, though, or there may be concurrent detach or close in
+ *	progress, so fail if attach failed (no sc_tty) or detach has
+ *	begun (sc_dying), or wait if there's a concurrent close in
+ *	progress before reopening.
+ */
 int
 ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -523,14 +507,11 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	if (sc == NULL)
-		return ENXIO;
-
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_dying) {
 		DPRINTF("... dying", 0, 0, 0, 0);
 		mutex_exit(&sc->sc_lock);
-		return EIO;
+		return ENXIO;
 	}
 
 	if (!device_is_active(sc->sc_dev)) {
@@ -539,6 +520,11 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	struct tty *tp = sc->sc_tty;
+	if (tp == NULL) {
+		DPRINTF("... not attached", 0, 0, 0, 0);
+		mutex_exit(&sc->sc_lock);
+		return ENXIO;
+	}
 
 	DPRINTF("unit=%jd, tp=%#jx", unit, (uintptr_t)tp, 0, 0);
 
@@ -548,40 +534,64 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	/*
+	 * If the previous use had set DTR on close, wait up to one
+	 * second for the other side to notice we hung up.  After
+	 * sleeping, the tty may have been revoked, so restart the
+	 * whole operation.
+	 *
+	 * XXX The wchan is not ttclose but maybe should be.
+	 */
+	if (timerisset(&sc->sc_hup_time)) {
+		struct timeval now, delta;
+		int ms, ticks;
+
+		microuptime(&now);
+		if (timercmp(&now, &sc->sc_hup_time, <)) {
+			timersub(&sc->sc_hup_time, &now, &delta);
+			ms = MIN(INT_MAX - 1000, delta.tv_sec*1000);
+			ms += howmany(delta.tv_usec, 1000);
+			ticks = MAX(1, MIN(INT_MAX, mstohz(ms)));
+			error = cv_timedwait_sig(&sc->sc_statecv, &sc->sc_lock,
+			    ticks);
+			mutex_exit(&sc->sc_lock);
+			return error ? error : ERESTART;
+		}
+	}
+
+	/*
 	 * Wait while the device is initialized by the
 	 * first opener or cleaned up by the last closer.
 	 */
-	while (sc->sc_state == UCOM_OPENING || sc->sc_state == UCOM_CLOSING) {
-		error = cv_wait_sig(&sc->sc_statecv, &sc->sc_lock);
-
-		if (sc->sc_dying)
-			error = EIO;
-
-		if (error) {
-			mutex_exit(&sc->sc_lock);
-			return error;
-		}
-	}
 	enum ucom_state state = sc->sc_state;
-
+	if (state == UCOM_OPENING || sc->sc_closing) {
+		if (flag & FNONBLOCK)
+			error = EWOULDBLOCK;
+		else
+			error = cv_wait_sig(&sc->sc_statecv, &sc->sc_lock);
+		mutex_exit(&sc->sc_lock);
+		return error ? error : ERESTART;
+	}
 	KASSERTMSG(state == UCOM_OPEN || state == UCOM_ATTACHED,
 	    "state is %d", state);
 
-	bool cleanup = false;
-	/* If this is the first open then perform the initialisation */
-	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
-		KASSERT(state == UCOM_ATTACHED);
-		tp->t_dev = dev;
-		cleanup = true;
-		sc->sc_state = UCOM_OPENING;
+	/*
+	 * If this is the first open, then make sure the pipes are
+	 * running and perform any initialization needed.
+	 */
+	bool firstopen = (state == UCOM_ATTACHED);
+	if (firstopen) {
+		KASSERT(!ISSET(tp->t_state, TS_ISOPEN));
+		KASSERT(tp->t_wopen == 0);
 
+		tp->t_dev = dev;
+		sc->sc_state = UCOM_OPENING;
 		mutex_exit(&sc->sc_lock);
+
 		if (sc->sc_methods->ucom_open != NULL) {
 			error = sc->sc_methods->ucom_open(sc->sc_parent,
 			    sc->sc_portno);
-			if (error) {
-				goto fail_2;
-			}
+			if (error)
+				goto bad;
 		}
 
 		ucom_status_change(sc);
@@ -628,12 +638,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ucom_rts(sc, 1);
 
 		mutex_enter(&sc->sc_lock);
-		if (sc->sc_dying) {
-			DPRINTF("... dying", 0, 0, 0, 0);
-			error = EIO;
-			goto fail_1;
-		}
-
 		sc->sc_rx_unblock = 0;
 		sc->sc_rx_stopped = 0;
 		sc->sc_tx_stopped = 0;
@@ -643,12 +647,10 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 			error = ucomsubmitread(sc, ub);
 			if (error) {
 		    		mutex_exit(&sc->sc_lock);
-				goto fail_2;
+				goto bad;
 			}
 		}
 	}
-	sc->sc_state = UCOM_OPEN;
-	cv_signal(&sc->sc_statecv);
 	mutex_exit(&sc->sc_lock);
 
 	DPRINTF("unit=%jd, tp=%#jx dialout %jd nonblock %jd", unit,
@@ -661,30 +663,93 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (error)
 		goto bad;
 
+	/*
+	 * Success!  If this was the first open, notify waiters that
+	 * the tty is open for business.
+	 */
+	if (firstopen) {
+		mutex_enter(&sc->sc_lock);
+		KASSERT(sc->sc_state == UCOM_OPENING);
+		sc->sc_state = UCOM_OPEN;
+		cv_broadcast(&sc->sc_statecv);
+		mutex_exit(&sc->sc_lock);
+	}
 	return 0;
 
 bad:
-	cleanup = !ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0;
+	/*
+	 * Failure!  If this was the first open, hang up, abort pipes,
+	 * and notify waiters that we're not opening after all.
+	 */
+	if (firstopen) {
+		ucom_cleanup(sc, flag);
 
-fail_2:
-	if (cleanup) {
-		/*
-		 * We failed to open the device, and nobody else had
-		 * it opened.  Clean up the state as appropriate.
-		 */
-		ucom_cleanup(sc);
+		mutex_enter(&sc->sc_lock);
+		KASSERT(sc->sc_state == UCOM_OPENING);
+		sc->sc_state = UCOM_ATTACHED;
+		cv_broadcast(&sc->sc_statecv);
+		mutex_exit(&sc->sc_lock);
 	}
-
-	mutex_enter(&sc->sc_lock);
-
-fail_1:
-	sc->sc_state = state;
-	cv_signal(&sc->sc_statecv);
-	mutex_exit(&sc->sc_lock);
-
 	return error;
 }
 
+/*
+ * ucomcancel(dev, flag, mode, l)
+ *
+ *	Called on revoke or last close.  Must interrupt any pending I/O
+ *	operations and make them fail promptly; once they have all
+ *	finished (except possibly new opens), ucomclose will be called.
+ *	We set sc_closing to block new opens until ucomclose runs.
+ */
+int
+ucomcancel(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	const int unit = UCOMUNIT(dev);
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, unit);
+
+	UCOMHIST_FUNC(); UCOMHIST_CALLED();
+
+	DPRINTF("unit=%jd", UCOMUNIT(dev), 0, 0, 0);
+
+	/*
+	 * This can run at any time before ucomclose on any device
+	 * node, even if never attached or if attach failed, so we may
+	 * not have a softc or a tty.
+	 */
+	if (sc == NULL)
+		return 0;
+	struct tty *tp = sc->sc_tty;
+	if (tp == NULL)
+		return 0;
+
+	/*
+	 * Mark the device closing so opens block until we're done
+	 * closing.  Wake them up so they start over at the top -- if
+	 * we're closing because we're detaching, they need to wake up
+	 * and notice it's time to fail.
+	 */
+	mutex_enter(&sc->sc_lock);
+	sc->sc_closing = true;
+	cv_broadcast(&sc->sc_statecv);
+	mutex_exit(&sc->sc_lock);
+
+	/*
+	 * Cancel any pending tty I/O operations, causing them to wake
+	 * up and fail promptly, and preventing any new ones from
+	 * starting to wait until we have finished closing.
+	 */
+	ttycancel(tp);
+
+	return 0;
+}
+
+/*
+ * ucomclose(dev, flag, mode, l)
+ *
+ *	Called after ucomcancel, when all prior operations on the /dev
+ *	node have completed.  Only new opens may be in progress at this
+ *	point, but they will block until sc_closing is set to false.
+ */
 int
 ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -696,64 +761,54 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF("unit=%jd", UCOMUNIT(dev), 0, 0, 0);
 
+	/*
+	 * This can run at any time after ucomcancel on any device
+	 * node, even if never attached or if attach failed, so we may
+	 * not have a softc or a tty.
+	 */
 	if (sc == NULL)
 		return 0;
+	struct tty *tp = sc->sc_tty;
+	if (tp == NULL)
+		return 0;
 
-	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		mutex_exit(&sc->sc_lock);
-		return ENXIO;
+	/*
+	 * Close the tty, causing anyone waiting for it to wake, and
+	 * hang up the phone.
+	 */
+	ucom_cleanup(sc, flag);
+
+	/*
+	 * ttyclose should have cleared TS_ISOPEN and interrupted all
+	 * pending opens, which should have completed by now.
+	 */
+	mutex_spin_enter(&tty_lock);
+	KASSERT(!ISSET(tp->t_state, TS_ISOPEN));
+	KASSERT(tp->t_wopen == 0);
+	mutex_spin_exit(&tty_lock);
+
+	/*
+	 * Close any device-specific state.
+	 */
+	if (sc->sc_methods->ucom_close != NULL) {
+		sc->sc_methods->ucom_close(sc->sc_parent,
+		    sc->sc_portno);
 	}
 
 	/*
-	 * Wait until any opens/closes have finished
+	 * We're now closed.  Can reopen after this point, so resume
+	 * transfers, mark us no longer closing, and notify anyone
+	 * waiting in open.  The state may be OPEN or ATTACHED at this
+	 * point -- OPEN if the device was already open when we closed
+	 * it, ATTACHED if we interrupted it in the process of opening.
 	 */
-	while (sc->sc_state == UCOM_OPENING || sc->sc_state == UCOM_CLOSING) {
-		error = cv_wait_sig(&sc->sc_statecv, &sc->sc_lock);
-
-		if (sc->sc_dying)
-			error = EIO;
-
-		if (error) {
-			mutex_exit(&sc->sc_lock);
-			return error;
-		}
-	}
-
-	struct tty *tp = sc->sc_tty;
-
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		KASSERT(sc->sc_state == UCOM_ATTACHED);
-		mutex_exit(&sc->sc_lock);
-		return 0;
-	}
-
-	KASSERT(sc->sc_state == UCOM_OPEN);
-	sc->sc_state = UCOM_CLOSING;
-	mutex_exit(&sc->sc_lock);
-
-	(*tp->t_linesw->l_close)(tp, flag);
-	ttyclose(tp);
-
-	/* state when we're done - default to open */
-	enum ucom_state state = UCOM_OPEN;
-	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
-		/*
-		 * Although we got a last close, the device may still be in
-		 * use; e.g. if this was the dialout node, and there are still
-		 * processes waiting for carrier on the non-dialout node.
-		 */
-		ucom_cleanup(sc);
-		if (sc->sc_methods->ucom_close != NULL)
-			sc->sc_methods->ucom_close(sc->sc_parent,
-			    sc->sc_portno);
-		state = UCOM_ATTACHED;
-	}
-
 	mutex_enter(&sc->sc_lock);
-	sc->sc_state = state;
-	cv_signal(&sc->sc_statecv);
+	KASSERTMSG(sc->sc_state == UCOM_ATTACHED || sc->sc_state == UCOM_OPEN,
+	    "%s sc=%p state=%d", device_xname(sc->sc_dev), sc, sc->sc_state);
+	KASSERT(sc->sc_closing);
+	sc->sc_state = UCOM_ATTACHED;
+	sc->sc_closing = false;
+	cv_broadcast(&sc->sc_statecv);
 	mutex_exit(&sc->sc_lock);
 
 	return error;
@@ -764,34 +819,11 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 {
 	const int unit = UCOMUNIT(dev);
 	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
-	int error;
+	struct tty *tp = sc->sc_tty;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	if (sc == NULL)
-		return EIO;
-
-	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		mutex_exit(&sc->sc_lock);
-		return EIO;
-	}
-
-	struct tty *tp = sc->sc_tty;
-
-	sc->sc_refcnt++;
-	mutex_exit(&sc->sc_lock);
-
-	error = ((*tp->t_linesw->l_read)(tp, uio, flag));
-
-	mutex_enter(&sc->sc_lock);
-	if (--sc->sc_refcnt < 0)
-		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
-	mutex_exit(&sc->sc_lock);
-
-	return error;
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
@@ -799,34 +831,11 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 {
 	const int unit = UCOMUNIT(dev);
 	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
-	int error;
+	struct tty *tp = sc->sc_tty;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	if (sc == NULL)
-		return EIO;
-
-	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		mutex_exit(&sc->sc_lock);
-		return EIO;
-	}
-
-	struct tty *tp = sc->sc_tty;
-
-	sc->sc_refcnt++;
-	mutex_exit(&sc->sc_lock);
-
-	error = ((*tp->t_linesw->l_write)(tp, uio, flag));
-
-	mutex_enter(&sc->sc_lock);
-	if (--sc->sc_refcnt < 0)
-		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
-	mutex_exit(&sc->sc_lock);
-
-	return error;
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
@@ -834,32 +843,11 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 {
 	const int unit = UCOMUNIT(dev);
 	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
+	struct tty *tp = sc->sc_tty;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	if (sc == NULL)
-		return POLLHUP;
-
-	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		mutex_exit(&sc->sc_lock);
-		return POLLHUP;
-	}
-	struct tty *tp = sc->sc_tty;
-
-	sc->sc_refcnt++;
-	mutex_exit(&sc->sc_lock);
-
-	int revents = ((*tp->t_linesw->l_poll)(tp, events, l));
-
-	mutex_enter(&sc->sc_lock);
-	if (--sc->sc_refcnt < 0)
-		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
-	mutex_exit(&sc->sc_lock);
-
-	return revents;
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 struct tty *
@@ -868,7 +856,7 @@ ucomtty(dev_t dev)
 	const int unit = UCOMUNIT(dev);
 	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 
-	return sc != NULL ? sc->sc_tty : NULL;
+	return sc->sc_tty;
 }
 
 int
@@ -876,38 +864,6 @@ ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	const int unit = UCOMUNIT(dev);
 	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
-	int error;
-
-	UCOMHIST_FUNC(); UCOMHIST_CALLED();
-
-	if (sc == NULL)
-		return EIO;
-
-	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		mutex_exit(&sc->sc_lock);
-		return EIO;
-	}
-
-	sc->sc_refcnt++;
-	mutex_exit(&sc->sc_lock);
-
-	error = ucom_do_ioctl(sc, cmd, data, flag, l);
-
-	mutex_enter(&sc->sc_lock);
-	if (--sc->sc_refcnt < 0)
-		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(dev), sc->sc_refcnt, 0, 0);
-	mutex_exit(&sc->sc_lock);
-
-	return error;
-}
-
-static int
-ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data, int flag,
-    struct lwp *l)
-{
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -1147,20 +1103,9 @@ ucomparam(struct tty *tp, struct termios *t)
 	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
 	int error = 0;
 
+	/* XXX should take tty lock around touching tp */
+
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
-
-	if (sc == NULL)
-		return EIO;
-
-	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		mutex_exit(&sc->sc_lock);
-		return EIO;
-	}
-
-	sc->sc_refcnt++;
-	mutex_exit(&sc->sc_lock);
 
 	/* Check requested parameters. */
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed) {
@@ -1221,14 +1166,6 @@ XXX what if the hardware is not open
 	}
 #endif
 out:
-	mutex_enter(&sc->sc_lock);
-	if (--sc->sc_refcnt < 0)
-		cv_broadcast(&sc->sc_detachcv);
-	DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(tp->t_dev), sc->sc_refcnt,
-	    0, 0);
-
-	mutex_exit(&sc->sc_lock);
-
 	return error;
 }
 
@@ -1240,9 +1177,6 @@ ucomhwiflow(struct tty *tp, int block)
 	int old;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
-
-	if (sc == NULL)
-		return 0;
 
 	KASSERT(&sc->sc_lock);
 	KASSERT(mutex_owned(&tty_lock));
@@ -1270,16 +1204,6 @@ ucomstart(struct tty *tp)
 	int cnt;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
-
-	if (sc == NULL)
-		return;
-
-	KASSERT(&sc->sc_lock);
-	KASSERT(mutex_owned(&tty_lock));
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		return;
-	}
 
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
@@ -1387,7 +1311,7 @@ ucom_write_status(struct ucom_softc *sc, struct ucom_buffer *ub,
 		mutex_spin_exit(&tty_lock);
 
 		if (err != USBD_CANCELLED && err != USBD_IOERROR &&
-		    !sc->sc_dying) {
+		    !sc->sc_closing) {
 			if ((ub = SIMPLEQ_FIRST(&sc->sc_obuff_full)) != NULL)
 				ucom_submit_write(sc, ub);
 
@@ -1428,15 +1352,9 @@ ucom_softintr(void *arg)
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
 	struct ucom_softc *sc = arg;
+	struct tty *tp = sc->sc_tty;
 
 	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
-		mutex_exit(&sc->sc_lock);
-		return;
-	}
-
-	struct tty *tp = sc->sc_tty;
 	mutex_enter(&tty_lock);
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		mutex_exit(&tty_lock);
@@ -1483,11 +1401,7 @@ ucom_read_complete(struct ucom_softc *sc)
 
 		if (ub->ub_index == ub->ub_len) {
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_full, ub_link);
-
-			sc->sc_refcnt--;
-			/* increments sc_refcnt */
 			ucomsubmitread(sc, ub);
-
 			ub = SIMPLEQ_FIRST(&sc->sc_ibuff_full);
 		}
 	}
@@ -1511,8 +1425,6 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 		return EIO;
 	}
 
-	sc->sc_refcnt++;
-
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ibuff_empty, ub, ub_link);
 
 	return 0;
@@ -1522,6 +1434,7 @@ static void
 ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
+	struct tty *tp = sc->sc_tty;
 	struct ucom_buffer *ub;
 	uint32_t cc;
 	u_char *cp;
@@ -1530,15 +1443,13 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 	mutex_enter(&sc->sc_lock);
 
-	struct tty *tp = sc->sc_tty;
-
 	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
-	    sc->sc_dying) {
+	    sc->sc_closing) {
 
-		DPRINTF("... done (status %jd dying %jd)", status, sc->sc_dying,
-		    0, 0);
+		DPRINTF("... done (status %jd closing %jd)",
+		    status, sc->sc_closing, 0, 0);
 
-		if (status == USBD_IOERROR || sc->sc_dying) {
+		if (status == USBD_IOERROR || sc->sc_closing) {
 			/* Send something to wake upper layer */
 			(tp->t_linesw->l_rint)('\n', tp);
 			mutex_spin_enter(&tty_lock);	/* XXX */
@@ -1546,12 +1457,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 			mutex_spin_exit(&tty_lock);	/* XXX */
 		}
 
-		if (--sc->sc_refcnt < 0)
-			cv_broadcast(&sc->sc_detachcv);
-		DPRINTF("unit=%jd refcnt %jd", UCOMUNIT(tp->t_dev),
-		    sc->sc_refcnt, 0, 0);
 		mutex_exit(&sc->sc_lock);
-
 		return;
 	}
 
@@ -1567,8 +1473,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 		}
 
 		DPRINTF("... done (status %jd)", status, 0, 0, 0);
-		sc->sc_refcnt--;
-		/* re-adds ub to sc_ibuff_empty and increments sc_refcnt */
+		/* re-adds ub to sc_ibuff_empty */
 		ucomsubmitread(sc, ub);
 		mutex_exit(&sc->sc_lock);
 		return;
@@ -1588,8 +1493,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 	if (sc->sc_state != UCOM_OPEN) {
 		/* Go around again - we're not quite ready */
-		sc->sc_refcnt--;
-		/* re-adds ub to sc_ibuff_empty and increments sc_refcnt */
+		/* re-adds ub to sc_ibuff_empty */
 		ucomsubmitread(sc, ub);
 		mutex_exit(&sc->sc_lock);
 		DPRINTF("... done (not open)", 0, 0, 0, 0);
@@ -1607,16 +1511,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 	ub->ub_len = cc;
 
 	mutex_enter(&sc->sc_lock);
-	if (sc->sc_dying) {
-		if (--sc->sc_refcnt < 0)
-			cv_broadcast(&sc->sc_detachcv);
-		mutex_exit(&sc->sc_lock);
-		DPRINTF("... dying", 0, 0, 0, 0);
-		return;
-	}
-
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ibuff_full, ub, ub_link);
-
 	ucom_read_complete(sc);
 	mutex_exit(&sc->sc_lock);
 
@@ -1624,33 +1519,34 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 }
 
 static void
-ucom_cleanup(struct ucom_softc *sc)
+ucom_cleanup(struct ucom_softc *sc, int flag)
 {
+	struct tty *tp = sc->sc_tty;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("aborting pipes", 0, 0, 0, 0);
+	DPRINTF("closing pipes", 0, 0, 0, 0);
 
-	mutex_enter(&sc->sc_lock);
+	/*
+	 * Close the tty and interrupt any pending opens waiting for
+	 * carrier so they restart or give up.  This may flush data.
+	 */
+	(*tp->t_linesw->l_close)(tp, flag);
+	ttyclose(tp);
 
-	/* If we're dying then the detach routine will abort our pipes, etc */
-	if (sc->sc_dying) {
-		DPRINTF("... dying", 0, 0, 0, 0);
+	/*
+	 * Interrupt any pending xfers and cause them to fail promptly.
+	 * New xfers will only be submitted under the lock after
+	 * sc_closing is cleared.
+	 */
+	usbd_abort_pipe(sc->sc_bulkin_pipe);
+	usbd_abort_pipe(sc->sc_bulkout_pipe);
 
-		mutex_exit(&sc->sc_lock);
-		return;
-	}
-
-	mutex_exit(&sc->sc_lock);
-
+	/*
+	 * Hang up the phone and start the timer before we can make a
+	 * call again, if necessary.
+	 */
 	ucom_shutdown(sc);
-
-	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
-	}
-	if (sc->sc_bulkout_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
-	}
 }
 
 #endif /* NUCOM > 0 */
