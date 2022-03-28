@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.205 2022/03/28 12:37:18 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.206 2022/03/28 12:37:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.205 2022/03/28 12:37:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.206 2022/03/28 12:37:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -694,10 +694,10 @@ spec_open(void *v)
 	} */ *ap = v;
 	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
-	dev_t dev;
+	dev_t dev, dev1;
 	int error;
 	enum kauth_device_req req;
-	specnode_t *sn;
+	specnode_t *sn, *sn1;
 	specdev_t *sd;
 	spec_ioctl_t ioctl;
 	u_int gen = 0;
@@ -805,18 +805,34 @@ spec_open(void *v)
 	}
 
 	/*
-	 * Open the device.  If .d_open returns ENXIO (device not
-	 * configured), the driver may not be loaded, so try
-	 * autoloading a module and then try .d_open again if anything
-	 * got loaded.
-	 *
 	 * Because opening the device may block indefinitely, e.g. when
 	 * opening a tty, and loading a module may cross into many
 	 * other subsystems, we must not hold the vnode lock while
 	 * calling .d_open, so release it now and reacquire it when
 	 * done.
+	 *
+	 * Take an I/O reference so that any concurrent spec_close via
+	 * spec_node_revoke will wait for us to finish calling .d_open.
+	 * The vnode can't be dead at this point because we have it
+	 * locked.  Note that if revoked, the driver must interrupt
+	 * .d_open before spec_close starts waiting for I/O to drain so
+	 * this doesn't deadlock.
 	 */
 	VOP_UNLOCK(vp);
+	error = spec_io_enter(vp, &sn1, &dev1);
+	if (error) {
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		return error;
+	}
+	KASSERT(sn1 == sn);
+	KASSERT(dev1 == dev);
+
+	/*
+	 * Open the device.  If .d_open returns ENXIO (device not
+	 * configured), the driver may not be loaded, so try
+	 * autoloading a module and then try .d_open again if anything
+	 * got loaded.
+	 */
 	switch (vp->v_type) {
 	case VCHR:
 		do {
@@ -871,7 +887,16 @@ spec_open(void *v)
 	default:
 		__unreachable();
 	}
+
+	/*
+	 * Release the I/O reference now that we have called .d_open,
+	 * and reacquire the vnode lock.  At this point, the device may
+	 * have been revoked, so we must tread carefully.  However, sn
+	 * and sd remain valid pointers until we drop our reference.
+	 */
+	spec_io_exit(vp, sn);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	KASSERT(vp->v_specnode == sn);
 
 	/*
 	 * If it has been revoked since we released the vnode lock and
