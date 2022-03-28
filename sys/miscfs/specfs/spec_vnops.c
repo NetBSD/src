@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.200 2022/03/28 12:36:26 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.201 2022/03/28 12:36:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.200 2022/03/28 12:36:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.201 2022/03/28 12:36:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -258,6 +258,7 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 		sd->sd_refcnt = 1;
 		sd->sd_opencnt = 0;
 		sd->sd_bdevvp = NULL;
+		sd->sd_opened = false;
 		sn->sn_dev = sd;
 		sd = NULL;
 	} else {
@@ -518,6 +519,7 @@ spec_open(void *v)
 	spec_ioctl_t ioctl;
 	u_int gen;
 	const char *name;
+	bool needclose = false;
 	struct partinfo pi;
 	
 	l = curlwp;
@@ -688,12 +690,9 @@ spec_open(void *v)
 	 * must fail with EBADF.
 	 *
 	 * Otherwise, if opening it failed, back out and release the
-	 * open reference.
-	 *
-	 * XXX This is wrong -- we might release the last open
-	 * reference here, but we don't close the device.  If only this
-	 * thread's call to open failed, that's fine, but we might
-	 * have:
+	 * open reference.  If it was ever successfully opened and we
+	 * got the last reference this way, it's now our job to close
+	 * it.  This might happen in the following scenario:
 	 *
 	 *	Thread 1		Thread 2
 	 *	VOP_OPEN
@@ -710,20 +709,53 @@ spec_open(void *v)
 	 *	  release vnode lock
 	 *				  acquire vnode lock
 	 *				  --sd_opencnt == 0
-	 *				  but no .d_close (***)
+	 *
+	 * We can't resolve this by making spec_close wait for .d_open
+	 * to complete before examining sd_opencnt, because .d_open can
+	 * hang indefinitely, e.g. for a tty.
 	 */
 	mutex_enter(&device_lock);
 	if (sn->sn_gone) {
 		if (error == 0)
 			error = EBADF;
-	} else if (error != 0) {
+	} else if (error == 0) {
+		sd->sd_opened = true;
+	} else if (sd->sd_opencnt == 1 && sd->sd_opened) {
+		/*
+		 * We're the last reference to a _previous_ open even
+		 * though this one failed, so we have to close it.
+		 * Don't decrement the reference count here --
+		 * spec_close will do that.
+		 */
+		KASSERT(sn->sn_opencnt == 1);
+		needclose = true;
+	} else {
 		sd->sd_opencnt--;
 		sn->sn_opencnt--;
 		if (vp->v_type == VBLK)
 			sd->sd_bdevvp = NULL;
-
 	}
 	mutex_exit(&device_lock);
+
+	/*
+	 * If this open failed, but the device was previously opened,
+	 * and another thread concurrently closed the vnode while we
+	 * were in the middle of reopening it, the other thread will
+	 * see sd_opencnt > 0 and thus decide not to call .d_close --
+	 * it is now our responsibility to do so.
+	 *
+	 * XXX The flags passed to VOP_CLOSE here are wrong, but
+	 * drivers can't rely on FREAD|FWRITE anyway -- e.g., consider
+	 * a device opened by thread 0 with O_READ, then opened by
+	 * thread 1 with O_WRITE, then closed by thread 0, and finally
+	 * closed by thread 1; the last .d_close call will have FWRITE
+	 * but not FREAD.  We should just eliminate the FREAD/FWRITE
+	 * parameter to .d_close altogether.
+	 */
+	if (needclose) {
+		KASSERT(error);
+		VOP_CLOSE(vp, FNONBLOCK, NOCRED);
+	}
 
 	/* If anything went wrong, we're done.  */
 	if (error)
@@ -1341,6 +1373,25 @@ spec_close(void *v)
 	 * device.  For block devices, the open reference count must be
 	 * 1 at this point.  If the device's open reference count goes
 	 * to zero, we're the last one out so get the lights.
+	 *
+	 * We may find --sd->sd_opencnt gives zero, and yet
+	 * sd->sd_opened is false.  This happens if the vnode is
+	 * revoked at the same time as it is being opened, which can
+	 * happen when opening a tty blocks indefinitely.  In that
+	 * case, we still must call close -- it is the job of close to
+	 * interrupt the open.  Either way, the device will be no
+	 * longer opened, so we have to clear sd->sd_opened; subsequent
+	 * opens will have responsibility for issuing close.
+	 *
+	 * This has the side effect that the sequence of opens might
+	 * happen out of order -- we might end up doing open, open,
+	 * close, close, instead of open, close, open, close.  This is
+	 * unavoidable with the current devsw API, where open is
+	 * allowed to block and close must be able to run concurrently
+	 * to interrupt it.  It is the driver's responsibility to
+	 * ensure that close is idempotent so that this works.  Drivers
+	 * requiring per-open state and exact 1:1 correspondence
+	 * between open and close can use fd_clone.
 	 */
 	mutex_enter(&device_lock);
 	sn->sn_opencnt--;
@@ -1350,6 +1401,8 @@ spec_close(void *v)
 		    count + 1);
 		sd->sd_bdevvp = NULL;
 	}
+	if (count == 0)
+		sd->sd_opened = false;
 	mutex_exit(&device_lock);
 
 	if (count != 0)
