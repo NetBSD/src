@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.13 2022/03/27 16:28:35 christos Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.14 2022/03/28 19:08:43 rillig Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.13 2022/03/27 16:28:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.14 2022/03/28 19:08:43 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,7 +167,7 @@ SYSCTL_SETUP(sysctl_security_extensions_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "hardlink_check_gid",
 		       SYSCTL_DESCR("Whether unprivileged users can hardlink "\
-			    "to files they that they are not in their " \
+			    "to files that are not in their " \
 			    "group membership"),
 		       sysctl_extensions_user_handler, 0,
 		       &hardlink_check_gid, 0,
