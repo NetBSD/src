@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.87 2022/03/28 12:43:48 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.88 2022/03/28 12:43:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.87 2022/03/28 12:43:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.88 2022/03/28 12:43:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -919,27 +919,25 @@ uhidev_open(struct uhidev *scd)
 	/* Mark the report id open.  This is an exclusive lock.  */
 	if (scd->sc_state & UHIDEV_OPEN) {
 		error = EBUSY;
-		goto fail0;
+		goto out;
 	}
 	scd->sc_state |= UHIDEV_OPEN;
 
 	/* Open the pipes which are shared by all report ids.  */
 	error = uhidev_open_pipes(sc);
 	if (error)
-		goto fail1;
-
-	mutex_exit(&sc->sc_lock);
+		goto out;
 
 	/* Success!  */
-	return 0;
+	error = 0;
 
-fail2: __unused
-	uhidev_close_pipes(sc);
-fail1:	KASSERTMSG(scd->sc_state & UHIDEV_OPEN,
-	    "%s: report id %d: closed while opening",
-	    device_xname(sc->sc_dev), scd->sc_report_id);
-	scd->sc_state &= ~UHIDEV_OPEN;
-fail0:	mutex_exit(&sc->sc_lock);
+out:	if (error) {
+		KASSERTMSG(scd->sc_state & UHIDEV_OPEN,
+		    "%s: report id %d: closed while opening",
+		    device_xname(sc->sc_dev), scd->sc_report_id);
+		scd->sc_state &= ~UHIDEV_OPEN;
+	}
+	mutex_exit(&sc->sc_lock);
 	return error;
 }
 
