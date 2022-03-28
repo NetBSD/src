@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.187 2020/08/27 14:11:57 riastradh Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.188 2022/03/28 20:49:52 christos Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -20,6 +20,7 @@ MAN=		rump.3 rump_lwproc.3
 	${RUMPTOP}/../crypto/cprng_fast				\
 	${RUMPTOP}/../crypto/nist_hash_drbg			\
 	${RUMPTOP}/../secmodel					\
+	${RUMPTOP}/../secmodel/extensions			\
 	${RUMPTOP}/../secmodel/suser				\
 	${RUMPTOP}/../compat/common
 
@@ -145,6 +146,7 @@ SRCS+=	uvm_page_array.c uvm_page_status.c
 # 4.4BSD secmodel.  selection is hardcoded for now
 SRCS+=	secmodel.c
 SRCS+=	secmodel_suser.c
+SRCS+=	secmodel_extensions.c
 
 # the funny bit.  this doesn't really belong here, but helps with the
 # needs of kern_descrip.c.  And since it's a fully dynamic interface,
