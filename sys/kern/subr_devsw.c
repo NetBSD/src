@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.44 2022/03/28 12:39:10 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.45 2022/03/28 12:41:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Overview
  *
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.44 2022/03/28 12:39:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.45 2022/03/28 12:41:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -146,11 +146,11 @@ devsw_attach(const char *devname,
 	int error, i;
 
 	if (devname == NULL || cdev == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	mutex_enter(&device_lock);
 
-	for (i = 0 ; i < max_devsw_convs ; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		conv = &devsw_conv[i];
 		if (conv->d_name == NULL || strcmp(devname, conv->d_name) != 0)
 			continue;
@@ -162,17 +162,17 @@ devsw_attach(const char *devname,
 
 		if (*bmajor != conv->d_bmajor || *cmajor != conv->d_cmajor) {
 			error = EINVAL;
-			goto fail;
+			goto out;
 		}
 		if ((*bmajor >= 0 && bdev == NULL) || *cmajor < 0) {
 			error = EINVAL;
-			goto fail;
+			goto out;
 		}
 
 		if ((*bmajor >= 0 && bdevsw[*bmajor] != NULL) ||
 		    cdevsw[*cmajor] != NULL) {
 			error = EEXIST;
-			goto fail;
+			goto out;
 		}
 		break;
 	}
@@ -182,12 +182,12 @@ devsw_attach(const char *devname,
 	 * need to flail around trying to unwind.
 	 */
 	error = bdevsw_attach(bdev, bmajor);
-	if (error != 0) 
-		goto fail;
+	if (error != 0)
+		goto out;
 	error = cdevsw_attach(cdev, cmajor);
 	if (error != 0) {
 		devsw_detach_locked(bdev, NULL);
-		goto fail;
+		goto out;
 	}
 
 	/*
@@ -195,9 +195,9 @@ devsw_attach(const char *devname,
 	 * empty slot or extend the table.
 	 */
 	if (i == max_devsw_convs)
-		goto fail;
+		goto out;
 
-	for (i = 0 ; i < max_devsw_convs ; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_name == NULL)
 			break;
 	}
@@ -212,7 +212,7 @@ devsw_attach(const char *devname,
 		if (newptr == NULL) {
 			devsw_detach_locked(bdev, cdev);
 			error = ENOMEM;
-			goto fail;
+			goto out;
 		}
 		newptr[old_convs].d_name = NULL;
 		newptr[old_convs].d_bmajor = -1;
@@ -228,18 +228,16 @@ devsw_attach(const char *devname,
 	if (name == NULL) {
 		devsw_detach_locked(bdev, cdev);
 		error = ENOMEM;
-		goto fail;
+		goto out;
 	}
 
 	devsw_conv[i].d_name = name;
 	devsw_conv[i].d_bmajor = *bmajor;
 	devsw_conv[i].d_cmajor = *cmajor;
-
+	error = 0;
+out:
 	mutex_exit(&device_lock);
-	return (0);
- fail:
-	mutex_exit(&device_lock);
-	return (error);
+	return error;
 }
 
 static int
@@ -254,13 +252,13 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	KASSERT(mutex_owned(&device_lock));
 
 	if (devsw == NULL)
-		return (0);
+		return 0;
 
 	if (*devmajor < 0) {
-		for (bmajor = sys_bdevsws ; bmajor < max_bdevsws ; bmajor++) {
+		for (bmajor = sys_bdevsws; bmajor < max_bdevsws; bmajor++) {
 			if (bdevsw[bmajor] != NULL)
 				continue;
-			for (i = 0 ; i < max_devsw_convs ; i++) {
+			for (i = 0; i < max_devsw_convs; i++) {
 				if (devsw_conv[i].d_bmajor == bmajor)
 					break;
 			}
@@ -272,8 +270,8 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (*devmajor >= MAXDEVSW) {
-		printf("%s: block majors exhausted", __func__);
-		return (ENOMEM);
+		printf("%s: block majors exhausted\n", __func__);
+		return ENOMEM;
 	}
 
 	if (bdevswref == NULL) {
@@ -296,7 +294,7 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (bdevsw[*devmajor] != NULL)
-		return (EEXIST);
+		return EEXIST;
 
 	KASSERT(bdevswref[*devmajor].dr_lc == NULL);
 	lc = kmem_zalloc(sizeof(*lc), KM_SLEEP);
@@ -305,7 +303,7 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 
 	atomic_store_release(&bdevsw[*devmajor], devsw);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -320,10 +318,10 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	KASSERT(mutex_owned(&device_lock));
 
 	if (*devmajor < 0) {
-		for (cmajor = sys_cdevsws ; cmajor < max_cdevsws ; cmajor++) {
+		for (cmajor = sys_cdevsws; cmajor < max_cdevsws; cmajor++) {
 			if (cdevsw[cmajor] != NULL)
 				continue;
-			for (i = 0 ; i < max_devsw_convs ; i++) {
+			for (i = 0; i < max_devsw_convs; i++) {
 				if (devsw_conv[i].d_cmajor == cmajor)
 					break;
 			}
@@ -335,8 +333,8 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (*devmajor >= MAXDEVSW) {
-		printf("%s: character majors exhausted", __func__);
-		return (ENOMEM);
+		printf("%s: character majors exhausted\n", __func__);
+		return ENOMEM;
 	}
 
 	if (cdevswref == NULL) {
@@ -359,7 +357,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (cdevsw[*devmajor] != NULL)
-		return (EEXIST);
+		return EEXIST;
 
 	KASSERT(cdevswref[*devmajor].dr_lc == NULL);
 	lc = kmem_zalloc(sizeof(*lc), KM_SLEEP);
@@ -368,7 +366,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 
 	atomic_store_release(&cdevsw[*devmajor], devsw);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -458,10 +456,10 @@ bdevsw_lookup(dev_t dev)
 	devmajor_t bmajor;
 
 	if (dev == NODEV)
-		return (NULL);
+		return NULL;
 	bmajor = major(dev);
 	if (bmajor < 0 || bmajor >= atomic_load_relaxed(&max_bdevsws))
-		return (NULL);
+		return NULL;
 
 	return atomic_load_consume(&bdevsw)[bmajor];
 }
@@ -526,10 +524,10 @@ cdevsw_lookup(dev_t dev)
 	devmajor_t cmajor;
 
 	if (dev == NODEV)
-		return (NULL);
+		return NULL;
 	cmajor = major(dev);
 	if (cmajor < 0 || cmajor >= atomic_load_relaxed(&max_cdevsws))
-		return (NULL);
+		return NULL;
 
 	return atomic_load_consume(&cdevsw)[cmajor];
 }
@@ -599,10 +597,10 @@ bdevsw_lookup_major(const struct bdevsw *bdev)
 	curbdevsw = atomic_load_consume(&bdevsw);
 	for (bmajor = 0; bmajor < bmax; bmajor++) {
 		if (atomic_load_relaxed(&curbdevsw[bmajor]) == bdev)
-			return (bmajor);
+			return bmajor;
 	}
 
-	return (NODEVMAJOR);
+	return NODEVMAJOR;
 }
 
 /*
@@ -621,10 +619,10 @@ cdevsw_lookup_major(const struct cdevsw *cdev)
 	curcdevsw = atomic_load_consume(&cdevsw);
 	for (cmajor = 0; cmajor < cmax; cmajor++) {
 		if (atomic_load_relaxed(&curcdevsw[cmajor]) == cdev)
-			return (cmajor);
+			return cmajor;
 	}
 
-	return (NODEVMAJOR);
+	return NODEVMAJOR;
 }
 
 /*
@@ -646,9 +644,9 @@ devsw_blk2name(devmajor_t bmajor)
 	mutex_enter(&device_lock);
 	if (bmajor < 0 || bmajor >= max_bdevsws || bdevsw[bmajor] == NULL) {
 		mutex_exit(&device_lock);
-		return (NULL);
+		return NULL;
 	}
-	for (i = 0 ; i < max_devsw_convs; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_bmajor == bmajor) {
 			cmajor = devsw_conv[i].d_cmajor;
 			break;
@@ -658,7 +656,7 @@ devsw_blk2name(devmajor_t bmajor)
 		name = devsw_conv[i].d_name;
 	mutex_exit(&device_lock);
 
-	return (name);
+	return name;
 }
 
 /*
@@ -673,17 +671,17 @@ cdevsw_getname(devmajor_t major)
 	name = NULL;
 
 	if (major < 0)
-		return (NULL);
-  
+		return NULL;
+
 	mutex_enter(&device_lock);
-	for (i = 0 ; i < max_devsw_convs; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_cmajor == major) {
 			name = devsw_conv[i].d_name;
 			break;
 		}
 	}
 	mutex_exit(&device_lock);
-	return (name);
+	return name;
 }
 
 /*
@@ -698,17 +696,17 @@ bdevsw_getname(devmajor_t major)
 	name = NULL;
 
 	if (major < 0)
-		return (NULL);
-  
+		return NULL;
+
 	mutex_enter(&device_lock);
-	for (i = 0 ; i < max_devsw_convs; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_bmajor == major) {
 			name = devsw_conv[i].d_name;
 			break;
 		}
 	}
 	mutex_exit(&device_lock);
-	return (name);
+	return name;
 }
 
 /*
@@ -725,10 +723,10 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 	int i;
 
 	if (name == NULL)
-		return (NODEVMAJOR);
+		return NODEVMAJOR;
 
 	mutex_enter(&device_lock);
-	for (i = 0 ; i < max_devsw_convs ; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		size_t len;
 
 		conv = &devsw_conv[i];
@@ -737,7 +735,7 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 		len = strlen(conv->d_name);
 		if (strncmp(conv->d_name, name, len) != 0)
 			continue;
-		if (*(name +len) && !isdigit(*(name + len)))
+		if (name[len] != '\0' && !isdigit((unsigned char)name[len]))
 			continue;
 		bmajor = conv->d_bmajor;
 		if (bmajor < 0 || bmajor >= max_bdevsws ||
@@ -746,17 +744,17 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
-				printf("%s: too short buffer", __func__);
+				printf("%s: too short buffer\n", __func__);
 #endif /* DEVSW_DEBUG */
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';
 		}
 		mutex_exit(&device_lock);
-		return (bmajor);
+		return bmajor;
 	}
 
 	mutex_exit(&device_lock);
-	return (NODEVMAJOR);
+	return NODEVMAJOR;
 }
 
 /*
@@ -773,10 +771,10 @@ devsw_name2chr(const char *name, char *devname, size_t devnamelen)
 	int i;
 
 	if (name == NULL)
-		return (NODEVMAJOR);
+		return NODEVMAJOR;
 
 	mutex_enter(&device_lock);
-	for (i = 0 ; i < max_devsw_convs ; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		size_t len;
 
 		conv = &devsw_conv[i];
@@ -785,7 +783,7 @@ devsw_name2chr(const char *name, char *devname, size_t devnamelen)
 		len = strlen(conv->d_name);
 		if (strncmp(conv->d_name, name, len) != 0)
 			continue;
-		if (*(name +len) && !isdigit(*(name + len)))
+		if (name[len] != '\0' && !isdigit((unsigned char)name[len]))
 			continue;
 		cmajor = conv->d_cmajor;
 		if (cmajor < 0 || cmajor >= max_cdevsws ||
@@ -800,11 +798,11 @@ devsw_name2chr(const char *name, char *devname, size_t devnamelen)
 			devname[devnamelen - 1] = '\0';
 		}
 		mutex_exit(&device_lock);
-		return (cmajor);
+		return cmajor;
 	}
 
 	mutex_exit(&device_lock);
-	return (NODEVMAJOR);
+	return NODEVMAJOR;
 }
 
 /*
@@ -827,9 +825,9 @@ devsw_chr2blk(dev_t cdev)
 	mutex_enter(&device_lock);
 	if (cmajor < 0 || cmajor >= max_cdevsws || cdevsw[cmajor] == NULL) {
 		mutex_exit(&device_lock);
-		return (NODEV);
+		return NODEV;
 	}
-	for (i = 0 ; i < max_devsw_convs ; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_cmajor == cmajor) {
 			bmajor = devsw_conv[i].d_bmajor;
 			break;
@@ -839,7 +837,7 @@ devsw_chr2blk(dev_t cdev)
 		rv = makedev(bmajor, minor(cdev));
 	mutex_exit(&device_lock);
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -862,9 +860,9 @@ devsw_blk2chr(dev_t bdev)
 	mutex_enter(&device_lock);
 	if (bmajor < 0 || bmajor >= max_bdevsws || bdevsw[bmajor] == NULL) {
 		mutex_exit(&device_lock);
-		return (NODEV);
+		return NODEV;
 	}
-	for (i = 0 ; i < max_devsw_convs ; i++) {
+	for (i = 0; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_bmajor == bmajor) {
 			cmajor = devsw_conv[i].d_cmajor;
 			break;
@@ -874,7 +872,7 @@ devsw_blk2chr(dev_t bdev)
 		rv = makedev(cmajor, minor(bdev));
 	mutex_exit(&device_lock);
 
-	return (rv);
+	return rv;
 }
 
 /*
