@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.124 2021/09/26 15:58:33 thorpej Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.125 2022/03/28 12:33:22 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.124 2021/09/26 15:58:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.125 2022/03/28 12:33:22 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -256,9 +256,7 @@ tapdetach(void)
 
 	if_clone_detach(&tap_cloners);
 #ifdef _MODULE
-	error = devsw_detach(NULL, &tap_cdevsw);
-	if (error != 0)
-		goto out2;
+	devsw_detach(NULL, &tap_cdevsw);
 #endif
 
 	if (tap_count != 0) {
@@ -277,7 +275,6 @@ tapdetach(void)
  out1:
 #ifdef _MODULE
 	devsw_attach("tap", NULL, &tap_bmajor, &tap_cdevsw, &tap_cmajor);
- out2:
 #endif
 	if_clone_attach(&tap_cloners);
 

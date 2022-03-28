@@ -33,7 +33,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.11 2020/04/26 17:00:31 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.12 2022/03/28 12:33:22 riastradh Exp $");
 
 
 #include "autofs.h"
@@ -496,9 +496,7 @@ autofs_modcmd(modcmd_t cmd, void *arg)
 		}
 		mutex_exit(&autofs_softc->sc_lock);
 
-		error = devsw_detach(NULL, &autofs_cdevsw);
-		if (error)
-			break;
+		devsw_detach(NULL, &autofs_cdevsw);
 #endif
 		error = vfs_detach(&autofs_vfsops);
 		if (error)

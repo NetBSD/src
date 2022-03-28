@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.31 2021/12/31 11:05:41 riastradh Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.32 2022/03/28 12:33:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.31 2021/12/31 11:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.32 2022/03/28 12:33:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -356,7 +356,7 @@ sysmon_fini(void)
 	if (error == 0) {
 		mutex_enter(&sysmon_minor_mtx);
 		sm_is_attached = false;
-		error = devsw_detach(NULL, &sysmon_cdevsw);
+		devsw_detach(NULL, &sysmon_cdevsw);
 		mutex_exit(&sysmon_minor_mtx);
 	}
 #endif

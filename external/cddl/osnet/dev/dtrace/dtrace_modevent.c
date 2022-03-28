@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_modevent.c,v 1.6 2018/05/28 21:05:03 chs Exp $	*/
+/*	$NetBSD: dtrace_modevent.c,v 1.7 2022/03/28 12:33:20 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -42,9 +42,7 @@ dtrace_modcmd(modcmd_t cmd, void *data)
 		return error;
 
 	case MODULE_CMD_FINI:
-		error = devsw_detach(NULL, &dtrace_cdevsw);
-		if (error != 0)
-			return error;
+		devsw_detach(NULL, &dtrace_cdevsw);
 
 		error = dtrace_unload();
 		if (error != 0) {

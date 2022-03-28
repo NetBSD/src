@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.50 2022/02/12 03:24:36 riastradh Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.51 2022/03/28 12:33:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.50 2022/02/12 03:24:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.51 2022/03/28 12:33:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -666,15 +666,10 @@ drvctl_modcmd(modcmd_t cmd, void *arg)
 		devmon_insert_vec = saved_insert_vec;
 		saved_insert_vec = NULL;
 #ifdef _MODULE
-		error = devsw_detach(NULL, &drvctl_cdevsw);
-		if (error != 0) {
-			saved_insert_vec = devmon_insert_vec;
-			devmon_insert_vec = devmon_insert;
-		}
+		devsw_detach(NULL, &drvctl_cdevsw);
 #endif
 		mutex_exit(&drvctl_lock);
-		if (error == 0)
-			drvctl_fini();
+		drvctl_fini();
 
 		break;
 	default:

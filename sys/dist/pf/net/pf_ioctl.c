@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.57 2020/02/21 00:26:22 joerg Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.58 2022/03/28 12:33:21 riastradh Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.57 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.58 2022/03/28 12:33:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3459,7 +3459,8 @@ pf_modcmd(modcmd_t cmd, void *opaque)
 		} else {
 			pfdetach();
 			pflogdetach();
-			return devsw_detach(NULL, &pf_cdevsw);
+			devsw_detach(NULL, &pf_cdevsw);
+			return 0;
 		}
 	default:
 		return ENOTTY;

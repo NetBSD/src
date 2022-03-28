@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.76 2022/03/12 17:07:10 riastradh Exp $ */
+/* $NetBSD: pad.c,v 1.77 2022/03/28 12:33:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.76 2022/03/12 17:07:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.77 2022/03/28 12:33:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -777,9 +777,7 @@ pad_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = devsw_detach(NULL, &pad_cdevsw);
-		if (error)
-			break;
+		devsw_detach(NULL, &pad_cdevsw);
 
 		error = config_fini_component(cfdriver_ioconf_pad,
 		    pad_cfattach, cfdata_ioconf_pad);
