@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.186 2022/03/28 12:34:25 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.187 2022/03/28 12:34:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.186 2022/03/28 12:34:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.187 2022/03/28 12:34:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -617,6 +617,7 @@ spec_open(void *v)
 		sd->sd_opencnt = 1;
 		sd->sd_bdevvp = vp;
 		mutex_exit(&device_lock);
+		VOP_UNLOCK(vp);
 		do {
 			const struct bdevsw *bdev;
 
@@ -636,13 +637,10 @@ spec_open(void *v)
 			if ((name = bdevsw_getname(major(dev))) == NULL)
 				break;
 
-			VOP_UNLOCK(vp);
-
                         /* Try to autoload device module */
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
-			
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		} while (gen != module_gen);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 		break;
 
