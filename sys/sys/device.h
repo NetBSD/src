@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.179 2022/03/03 06:25:46 riastradh Exp $ */
+/* $NetBSD: device.h,v 1.180 2022/03/28 12:33:41 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -274,10 +274,12 @@ struct device {
 	void		*dv_private;	/* this device's private storage */
 	int		*dv_locators;	/* our actual locators (optional) */
 	prop_dictionary_t dv_properties;/* properties dictionary */
+	struct localcount *dv_localcount;/* reference count */
 
 	int		dv_pending;	/* config_pending count */
 	TAILQ_ENTRY(device) dv_pending_list;
 
+	struct lwp	*dv_attaching;	/* thread not yet finished in attach */
 	struct lwp	*dv_detaching;	/* detach lock (config_misc_lock/cv) */
 
 	size_t		dv_activity_count;
@@ -651,6 +653,10 @@ void	null_childdetached(device_t, device_t);
 
 device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);
+
+device_t	device_lookup_acquire(cfdriver_t, int);
+void		device_release(device_t);
+
 void		device_register(device_t, void *);
 void		device_register_post_config(device_t, void *);
 
