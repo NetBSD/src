@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.89 2022/03/28 12:44:06 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.90 2022/03/28 12:44:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.89 2022/03/28 12:44:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.90 2022/03/28 12:44:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -88,7 +88,18 @@ struct uhidev_softc {
 	void *sc_repdesc;
 
 	u_int sc_nrepid;
-	device_t *sc_subdevs;
+	struct uhidev {
+		struct uhidev_softc *sc_parent;
+		device_t	sc_dev;
+		void		(*sc_intr)(void *, void *, u_int);
+		void		*sc_cookie;
+		krndsource_t	sc_rndsource;
+		int		sc_in_rep_size;
+		uint8_t		sc_report_id;
+		uint8_t		sc_state;
+#define	UHIDEV_OPEN	0x01	/* device is open */
+#define	UHIDEV_STOPPED	0x02	/* xfers are stopped */
+	} *sc_subdevs;
 
 	kmutex_t sc_lock;
 	kcondvar_t sc_cv;
@@ -169,7 +180,6 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct uhidev_attach_arg uha;
 	device_t dev;
-	struct uhidev *csc;
 	int maxinpktsize, size, nrepid, repid, repsz;
 	int *repsizes;
 	int i;
@@ -405,40 +415,35 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTF(("uhidev_attach: isize=%d\n", sc->sc_isize));
 
-	uha.parent = sc;
 	for (repid = 0; repid < nrepid; repid++) {
+		struct uhidev *scd = &sc->sc_subdevs[repid];
+
+		scd->sc_parent = sc;
+		scd->sc_report_id = repid;
+		scd->sc_in_rep_size = repsizes[repid];
+
 		DPRINTF(("uhidev_match: try repid=%d\n", repid));
 		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
 		    hid_report_size(desc, size, hid_output, repid) == 0 &&
 		    hid_report_size(desc, size, hid_feature, repid) == 0) {
 			;	/* already NULL in sc->sc_subdevs[repid] */
 		} else {
+			uha.parent = scd;
 			uha.reportid = repid;
 			locs[UHIDBUSCF_REPORTID] = repid;
 
 			dev = config_found(self, &uha, uhidevprint,
 			    CFARGS(.submatch = config_stdsubmatch,
 				   .locators = locs));
-			sc->sc_subdevs[repid] = dev;
-			if (dev != NULL) {
-				csc = device_private(dev);
-				csc->sc_in_rep_size = repsizes[repid];
-#ifdef DIAGNOSTIC
-				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
-					 repid, dev));
-				if (csc->sc_intr == NULL) {
-					kmem_free(repsizes,
-					    nrepid * sizeof(*repsizes));
-					aprint_error_dev(self,
-					    "sc_intr == NULL\n");
-					return;
-				}
-#endif
-				rnd_attach_source(&csc->rnd_source,
-						  device_xname(dev),
-						  RND_TYPE_TTY,
-						  RND_FLAG_DEFAULT);
-			}
+			sc->sc_subdevs[repid].sc_dev = dev;
+			if (dev == NULL)
+				continue;
+			/*
+			 * XXXSMP -- could be detached in the middle of
+			 * sleeping for allocation in rnd_attach_source
+			 */
+			rnd_attach_source(&scd->sc_rndsource,
+			    device_xname(dev), RND_TYPE_TTY, RND_FLAG_DEFAULT);
 		}
 	}
 	kmem_free(repsizes, nrepid * sizeof(*repsizes));
@@ -495,19 +500,26 @@ uhidev_childdet(device_t self, device_t child)
 	struct uhidev_softc *sc = device_private(self);
 
 	for (i = 0; i < sc->sc_nrepid; i++) {
-		if (sc->sc_subdevs[i] == child)
+		if (sc->sc_subdevs[i].sc_dev == child)
 			break;
 	}
 	KASSERT(i < sc->sc_nrepid);
-	sc->sc_subdevs[i] = NULL;
+	sc->sc_subdevs[i].sc_dev = NULL;
+	/*
+	 * XXXSMP -- could be reattached in the middle of sleeping for
+	 * lock on sources to delete this in rnd_attach_source
+	 *
+	 * (Actually this can't happen right now because there's no
+	 * rescan method, but if there were, it could.)
+	 */
+	rnd_detach_source(&sc->sc_subdevs[i].sc_rndsource);
 }
 
 static int
 uhidev_detach(device_t self, int flags)
 {
 	struct uhidev_softc *sc = device_private(self);
-	int i, rv;
-	struct uhidev *csc;
+	int rv;
 
 	DPRINTF(("uhidev_detach: sc=%p flags=%d\n", sc, flags));
 
@@ -524,28 +536,12 @@ uhidev_detach(device_t self, int flags)
 	 * DETACH_FORCE and the children will not have the option of
 	 * refusing detachment.
 	 */
-	for (i = 0; i < sc->sc_nrepid; i++) {
-		if (sc->sc_subdevs[i] == NULL)
-			continue;
-		/*
-		 * XXX rnd_detach_source should go in uhidev_childdet,
-		 * but the struct krndsource lives in the child's
-		 * softc, which is gone by the time of childdet.  The
-		 * parent uhidev_softc should be changed to allocate
-		 * the struct krndsource, not the child.
-		 */
-		csc = device_private(sc->sc_subdevs[i]);
-		rnd_detach_source(&csc->rnd_source);
-		rv = config_detach(sc->sc_subdevs[i], flags);
-		if (rv) {
-			rnd_attach_source(&csc->rnd_source,
-			    device_xname(sc->sc_dev),
-			    RND_TYPE_TTY, RND_FLAG_DEFAULT);
-			mutex_enter(&sc->sc_lock);
-			sc->sc_dying = 0;
-			mutex_exit(&sc->sc_lock);
-			return rv;
-		}
+	rv = config_detach_children(self, flags);
+	if (rv) {
+		mutex_enter(&sc->sc_lock);
+		sc->sc_dying = 0;
+		mutex_exit(&sc->sc_lock);
+		return rv;
 	}
 
 	KASSERTMSG(sc->sc_refcnt == 0,
@@ -579,7 +575,6 @@ static void
 uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhidev_softc *sc = addr;
-	device_t cdev;
 	struct uhidev *scd;
 	u_char *p;
 	u_int rep;
@@ -618,12 +613,9 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		printf("uhidev_intr: bad repid %d\n", rep);
 		return;
 	}
-	cdev = sc->sc_subdevs[rep];
-	if (!cdev)
-		return;
-	scd = device_private(cdev);
+	scd = &sc->sc_subdevs[rep];
 	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=%#x\n",
-		    rep, scd, scd ? scd->sc_state : 0));
+		    rep, scd, scd->sc_state));
 	if (!(atomic_load_acquire(&scd->sc_state) & UHIDEV_OPEN))
 		return;
 #ifdef UHIDEV_DEBUG
@@ -637,13 +629,15 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 			device_xname(sc->sc_dev)));
 		return;
 	}
-	rnd_add_uint32(&scd->rnd_source, (uintptr_t)(sc->sc_ibuf));
-	scd->sc_intr(scd, p, cc);
+	rnd_add_uint32(&scd->sc_rndsource, (uintptr_t)(sc->sc_ibuf));
+	scd->sc_intr(scd->sc_cookie, p, cc);
 }
 
 void
-uhidev_get_report_desc(struct uhidev_softc *sc, void **desc, int *size)
+uhidev_get_report_desc(struct uhidev *scd, void **desc, int *size)
 {
+	struct uhidev_softc *sc = scd->sc_parent;
+
 	*desc = sc->sc_repdesc;
 	*size = sc->sc_repdesc_size;
 }
@@ -904,7 +898,8 @@ uhidev_close_pipes(struct uhidev_softc *sc)
 }
 
 int
-uhidev_open(struct uhidev *scd)
+uhidev_open(struct uhidev *scd, void (*intr)(void *, void *, u_int),
+    void *cookie)
 {
 	struct uhidev_softc *sc = scd->sc_parent;
 	int error;
@@ -923,6 +918,8 @@ uhidev_open(struct uhidev *scd)
 		error = EBUSY;
 		goto out;
 	}
+	scd->sc_intr = intr;
+	scd->sc_cookie = cookie;
 	atomic_store_release(&scd->sc_state, scd->sc_state | UHIDEV_OPEN);
 
 	/* Open the pipes which are shared by all report ids.  */
@@ -1067,9 +1064,19 @@ uhidev_close(struct uhidev *scd)
 	 * We must drop the lock while doing this, because
 	 * uhidev_write_callback takes the lock in softint context and
 	 * it could deadlock with the xcall softint.
+	 *
+	 * It is safe to drop the lock now before zeroing sc_intr and
+	 * sc_cookie because the driver is obligated not to reopen
+	 * until after uhidev_close returns.
 	 */
 	mutex_exit(&sc->sc_lock);
 	xc_barrier(XC_HIGHPRI);
+	mutex_enter(&sc->sc_lock);
+	KASSERT((scd->sc_state & UHIDEV_OPEN) == 0);
+	scd->sc_intr = NULL;
+	scd->sc_cookie = NULL;
+
+	mutex_exit(&sc->sc_lock);
 }
 
 usbd_status

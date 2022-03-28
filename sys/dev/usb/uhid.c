@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.122 2022/03/28 12:43:12 riastradh Exp $	*/
+/*	$NetBSD: uhid.c,v 1.123 2022/03/28 12:44:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.122 2022/03/28 12:43:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.123 2022/03/28 12:44:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -85,8 +85,10 @@ int	uhiddebug = 0;
 #endif
 
 struct uhid_softc {
-	struct uhidev sc_hdev;
+	device_t sc_dev;
+	struct uhidev *sc_hdev;
 	struct usbd_device *sc_udev;
+	uint8_t sc_report_id;
 
 	kmutex_t sc_lock;
 	kcondvar_t sc_cv;
@@ -144,7 +146,7 @@ const struct cdevsw uhid_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-static void uhid_intr(struct uhidev *, void *, u_int);
+static void uhid_intr(void *, void *, u_int);
 
 static int	uhid_match(device_t, cfdata_t, void *);
 static void	uhid_attach(device_t, device_t, void *);
@@ -176,13 +178,12 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	int size, repid;
 	void *desc;
 
-	sc->sc_hdev.sc_dev = self;
-	selinit(&sc->sc_rsel);
-	sc->sc_hdev.sc_intr = uhid_intr;
-	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_hdev.sc_report_id = uha->reportid;
-
+	sc->sc_dev = self;
+	sc->sc_hdev = uha->parent;
 	sc->sc_udev = uha->uiaa->uiaa_device;
+	sc->sc_report_id = uha->reportid;
+
+	selinit(&sc->sc_rsel);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
@@ -232,9 +233,9 @@ uhid_detach(device_t self, int flags)
 }
 
 static void
-uhid_intr(struct uhidev *addr, void *data, u_int len)
+uhid_intr(void *cookie, void *data, u_int len)
 {
-	struct uhid_softc *sc = (struct uhid_softc *)addr;
+	struct uhid_softc *sc = cookie;
 
 #ifdef UHID_DEBUG
 	if (uhiddebug > 5) {
@@ -306,7 +307,7 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 	mutex_exit(&proc_lock);
 
 	/* Open the uhidev -- after this point we can get interrupts.  */
-	error = uhidev_open(&sc->sc_hdev);
+	error = uhidev_open(sc->sc_hdev, &uhid_intr, sc);
 	if (error)
 		goto fail1;
 
@@ -354,7 +355,7 @@ uhidcancel(dev_t dev, int flag, int mode, struct lwp *l)
 	cv_broadcast(&sc->sc_cv);
 	mutex_exit(&sc->sc_lock);
 
-	uhidev_stop(&sc->sc_hdev);
+	uhidev_stop(sc->sc_hdev);
 
 	return 0;
 }
@@ -379,7 +380,7 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 	mutex_exit(&sc->sc_lock);
 
 	/* Prevent further interrupts.  */
-	uhidev_close(&sc->sc_hdev);
+	uhidev_close(sc->sc_hdev);
 
 	/* Hang up all select/poll.  */
 	selnotify(&sc->sc_rsel, POLLHUP, 0);
@@ -422,10 +423,10 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	DPRINTFN(1, ("uhidread\n"));
 	if (atomic_load_relaxed(&sc->sc_state) & UHID_IMMED) {
 		DPRINTFN(1, ("uhidread immed\n"));
-		extra = sc->sc_hdev.sc_report_id != 0;
+		extra = sc->sc_report_id != 0;
 		if (sc->sc_isize + extra > sizeof(buffer))
 			return ENOBUFS;
-		err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
+		err = uhidev_get_report(sc->sc_hdev, UHID_INPUT_REPORT,
 					buffer, sc->sc_isize + extra);
 		if (err)
 			return EIO;
@@ -489,7 +490,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 	if (uhiddebug > 5) {
 		uint32_t i;
 
-		DPRINTF(("%s: outdata[%d] =", device_xname(sc->sc_hdev.sc_dev),
+		DPRINTF(("%s: outdata[%d] =", device_xname(sc->sc_dev),
 		    error));
 		for (i = 0; i < size; i++)
 			DPRINTF((" %02x", sc->sc_obuf[i]));
@@ -498,13 +499,13 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 #endif
 	if (!error) {
 		if (sc->sc_raw)
-			err = uhidev_write(&sc->sc_hdev, sc->sc_obuf, size);
+			err = uhidev_write(sc->sc_hdev, sc->sc_obuf, size);
 		else
-			err = uhidev_set_report(&sc->sc_hdev,
+			err = uhidev_set_report(sc->sc_hdev,
 			    UHID_OUTPUT_REPORT, sc->sc_obuf, size);
 		if (err) {
 			DPRINTF(("%s: err = %d\n",
-			    device_xname(sc->sc_hdev.sc_dev), err));
+			    device_xname(sc->sc_dev), err));
 			error = EIO;
 		}
 	}
@@ -581,7 +582,7 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		break;
 
 	case USB_GET_REPORT_DESC:
-		uhidev_get_report_desc(sc->sc_hdev.sc_parent, &desc, &size);
+		uhidev_get_report_desc(sc->sc_hdev, &desc, &size);
 		rd = (struct usb_ctl_report_desc *)addr;
 		size = uimin(size, sizeof(rd->ucrd_data));
 		rd->ucrd_size = size;
@@ -590,10 +591,10 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	case USB_SET_IMMED:
 		if (*(int *)addr) {
-			extra = sc->sc_hdev.sc_report_id != 0;
+			extra = sc->sc_report_id != 0;
 			if (sc->sc_isize + extra > sizeof(buffer))
 				return ENOBUFS;
-			err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
+			err = uhidev_get_report(sc->sc_hdev, UHID_INPUT_REPORT,
 						buffer, sc->sc_isize + extra);
 			if (err)
 				return EOPNOTSUPP;
@@ -618,10 +619,10 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		default:
 			return EINVAL;
 		}
-		extra = sc->sc_hdev.sc_report_id != 0;
+		extra = sc->sc_report_id != 0;
 		if (size + extra > sizeof(re->ucr_data))
 			return ENOBUFS;
-		err = uhidev_get_report(&sc->sc_hdev, re->ucr_report,
+		err = uhidev_get_report(sc->sc_hdev, re->ucr_report,
 		    re->ucr_data, size + extra);
 		if (extra)
 			memmove(re->ucr_data, re->ucr_data+1, size);
@@ -646,14 +647,14 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 		if (size > sizeof(re->ucr_data))
 			return ENOBUFS;
-		err = uhidev_set_report(&sc->sc_hdev, re->ucr_report,
+		err = uhidev_set_report(sc->sc_hdev, re->ucr_report,
 		    re->ucr_data, size);
 		if (err)
 			return EIO;
 		break;
 
 	case USB_GET_REPORT_ID:
-		*(int *)addr = sc->sc_hdev.sc_report_id;
+		*(int *)addr = sc->sc_report_id;
 		break;
 
 	case USB_GET_DEVICE_DESC:
