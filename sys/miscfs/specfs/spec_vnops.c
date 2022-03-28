@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.197 2022/03/28 12:36:00 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.198 2022/03/28 12:36:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.197 2022/03/28 12:36:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.198 2022/03/28 12:36:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1344,11 +1344,20 @@ spec_close(void *v)
 		panic("spec_close: not special");
 	}
 
+	/*
+	 * Decrement the open reference count of this node and the
+	 * device.  For block devices, the open reference count must be
+	 * 1 at this point.  If the device's open reference count goes
+	 * to zero, we're the last one out so get the lights.
+	 */
 	mutex_enter(&device_lock);
 	sn->sn_opencnt--;
 	count = --sd->sd_opencnt;
-	if (vp->v_type == VBLK)
+	if (vp->v_type == VBLK) {
+		KASSERTMSG(count == 0, "block device with %u opens",
+		    count + 1);
 		sd->sd_bdevvp = NULL;
+	}
 	mutex_exit(&device_lock);
 
 	if (count != 0)
