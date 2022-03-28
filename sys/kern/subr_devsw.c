@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.41 2022/03/28 12:33:50 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.42 2022/03/28 12:34:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.41 2022/03/28 12:33:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.42 2022/03/28 12:34:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -1298,4 +1298,19 @@ nommap(dev_t dev, off_t off, int prot)
 {
 
 	return (paddr_t)-1;
+}
+
+/*
+ * dev_minor_unit(dev)
+ *
+ *	Returns minor(dev) as an int.  Intended for use with struct
+ *	bdevsw, cdevsw::d_devtounit for drivers whose /dev nodes are
+ *	implemented by reference to an autoconf instance with the minor
+ *	number.
+ */
+int
+dev_minor_unit(dev_t dev)
+{
+
+	return minor(dev);
 }
