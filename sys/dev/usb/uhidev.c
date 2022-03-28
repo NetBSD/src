@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.88 2022/03/28 12:43:58 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.89 2022/03/28 12:44:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.88 2022/03/28 12:43:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.89 2022/03/28 12:44:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.88 2022/03/28 12:43:58 riastradh Exp $"
 #include <sys/param.h>
 #include <sys/types.h>
 
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -53,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.88 2022/03/28 12:43:58 riastradh Exp $"
 #include <sys/rndsource.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/xcall.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -622,7 +624,7 @@ uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	scd = device_private(cdev);
 	DPRINTFN(5,("uhidev_intr: rep=%d, scd=%p state=%#x\n",
 		    rep, scd, scd ? scd->sc_state : 0));
-	if (!(scd->sc_state & UHIDEV_OPEN))
+	if (!(atomic_load_acquire(&scd->sc_state) & UHIDEV_OPEN))
 		return;
 #ifdef UHIDEV_DEBUG
 	if (scd->sc_in_rep_size != cc) {
@@ -921,7 +923,7 @@ uhidev_open(struct uhidev *scd)
 		error = EBUSY;
 		goto out;
 	}
-	scd->sc_state |= UHIDEV_OPEN;
+	atomic_store_release(&scd->sc_state, scd->sc_state | UHIDEV_OPEN);
 
 	/* Open the pipes which are shared by all report ids.  */
 	error = uhidev_open_pipes(sc);
@@ -935,7 +937,8 @@ out:	if (error) {
 		KASSERTMSG(scd->sc_state & UHIDEV_OPEN,
 		    "%s: report id %d: closed while opening",
 		    device_xname(sc->sc_dev), scd->sc_report_id);
-		scd->sc_state &= ~UHIDEV_OPEN;
+		atomic_store_relaxed(&scd->sc_state,
+		    scd->sc_state & ~UHIDEV_OPEN);
 	}
 	mutex_exit(&sc->sc_lock);
 	return error;
@@ -962,7 +965,7 @@ uhidev_stop(struct uhidev *scd)
 	mutex_enter(&sc->sc_lock);
 
 	/* Prevent further writes on this report from starting.  */
-	scd->sc_state |= UHIDEV_STOPPED;
+	atomic_store_relaxed(&scd->sc_state, scd->sc_state | UHIDEV_STOPPED);
 
 	/* If there's no output pipe at all, nothing to do.  */
 	if (sc->sc_opipe == NULL)
@@ -1052,9 +1055,21 @@ uhidev_close(struct uhidev *scd)
 	KASSERT(scd->sc_state & UHIDEV_OPEN);
 	uhidev_close_pipes(sc);
 	KASSERT(scd->sc_state & UHIDEV_OPEN);
-	scd->sc_state &= ~(UHIDEV_OPEN | UHIDEV_STOPPED);
+	atomic_store_relaxed(&scd->sc_state,
+	    scd->sc_state & ~(UHIDEV_OPEN | UHIDEV_STOPPED));
 
+	/*
+	 * Make sure the next uhidev_intr (which runs in softint, like
+	 * XC_HIGHPRI) notices that UHIDEV_OPEN is cleared, and wait
+	 * for any current one to finish, in case the pipe is still
+	 * open for other report ids.
+	 *
+	 * We must drop the lock while doing this, because
+	 * uhidev_write_callback takes the lock in softint context and
+	 * it could deadlock with the xcall softint.
+	 */
 	mutex_exit(&sc->sc_lock);
+	xc_barrier(XC_HIGHPRI);
 }
 
 usbd_status
