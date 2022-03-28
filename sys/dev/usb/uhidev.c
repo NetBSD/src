@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.86 2022/03/28 12:43:39 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.87 2022/03/28 12:43:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.86 2022/03/28 12:43:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.87 2022/03/28 12:43:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -124,10 +124,10 @@ int	uhidevdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-Static void uhidev_intr(struct usbd_xfer *, void *, usbd_status);
+static void uhidev_intr(struct usbd_xfer *, void *, usbd_status);
 
-Static int uhidev_maxrepid(void *, int);
-Static int uhidevprint(void *, const char *);
+static int uhidev_maxrepid(void *, int);
+static int uhidevprint(void *, const char *);
 
 static int uhidev_match(device_t, cfdata_t, void *);
 static void uhidev_attach(device_t, device_t, void *);
@@ -444,7 +444,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uhidev_maxrepid(void *buf, int len)
 {
 	struct hid_data *d;
@@ -460,7 +460,7 @@ uhidev_maxrepid(void *buf, int len)
 	return maxid;
 }
 
-int
+static int
 uhidevprint(void *aux, const char *pnp)
 {
 	struct uhidev_attach_arg *uha = aux;
@@ -573,7 +573,7 @@ uhidev_detach(device_t self, int flags)
 	return rv;
 }
 
-void
+static void
 uhidev_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 {
 	struct uhidev_softc *sc = addr;
@@ -731,8 +731,8 @@ uhidev_open_pipes(struct uhidev_softc *sc)
 		return 0;
 
 	/*
-	 * Lock the configuration and release sc_lock we may sleep to
-	 * allocate.  If someone else got in first, we're done;
+	 * Lock the configuration and release sc_lock -- we may sleep
+	 * to allocate.  If someone else got in first, we're done;
 	 * otherwise open the pipes.
 	 */
 	error = uhidev_config_enter(sc);
