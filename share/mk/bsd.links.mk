@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.34 2009/04/10 16:16:12 apb Exp $
+#	$NetBSD: bsd.links.mk,v 1.35 2022/03/29 22:48:04 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -33,7 +33,7 @@ linksinstall::	realinstall
 	 while test $$# -ge 2; do \
 		l=$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
-		if  ttarg=`${TOOL_STAT} -qf '%Y' $$t` && \
+		if  ttarg=$$(${TOOL_STAT} -qf '%Y' $$t) && \
 		    [ "$$l" = "$$ttarg" ]; then \
 			continue ; \
 		fi ; \
@@ -67,7 +67,7 @@ configlinksinstall::	configfilesinstall
 	 while test $$# -ge 2; do \
 		l=$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
-		if  ttarg=`${TOOL_STAT} -qf '%Y' $$t` && \
+		if  ttarg=$$(${TOOL_STAT} -qf '%Y' $$t) && \
 		    [ "$$l" = "$$ttarg" ]; then \
 			continue ; \
 		fi ; \

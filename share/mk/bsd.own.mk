@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1275 2022/03/17 06:24:30 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1276 2022/03/29 22:48:04 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -238,7 +238,7 @@ PRINTOBJDIR=	echo /error/bsd.own.mk/PRINTOBJDIR # avoid infinite recursion
 #
 .if !defined(_SRC_TOP_)			# {
 _SRC_TOP_!= cd "${.CURDIR}"; while :; do \
-		here=`pwd`; \
+		here=$$(pwd); \
 		[ -f build.sh  ] && [ -d tools ] && { echo $$here; break; }; \
 		case $$here in /) echo ""; break;; esac; \
 		cd ..; done

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.52 2018/05/19 14:11:30 christos Exp $
+#	$NetBSD: bsd.obj.mk,v 1.53 2022/03/29 22:48:04 christos Exp $
 
 .if !defined(_BSD_OBJ_MK_)
 _BSD_OBJ_MK_=1
@@ -70,7 +70,7 @@ __need_objdir_target=yes
 
 obj:
 	@cd "${__curdir}"; \
-	here=`${PAWD}`/; subdir=$${here#${BSDSRCDIR}/}; \
+	here=$$(${PAWD})/; subdir=$${here#${BSDSRCDIR}/}; \
 	if [ "$$here" != "$$subdir" ]; then \
 		if [ ! -d ${__usrobjdir} ]; then \
 			echo "BSDOBJDIR ${__usrobjdir} does not exist, bailing..."; \
@@ -79,7 +79,7 @@ obj:
 		subdir=$${subdir%/}; \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf}; \
 		if  [ -x ${TOOL_STAT} ] && \
-		    ttarg=`${TOOL_STAT} -qf '%Y' $${here}${__objdir}` && \
+		    ttarg=$$(${TOOL_STAT} -qf '%Y' $${here}${__objdir}) && \
 		    [ "$$dest" = "$$ttarg" ]; then \
 			: ; \
 		else \

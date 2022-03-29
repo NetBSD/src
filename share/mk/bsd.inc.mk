@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.33 2018/12/26 22:57:22 christos Exp $
+#	$NetBSD: bsd.inc.mk,v 1.34 2022/03/29 22:48:04 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -45,7 +45,7 @@ inclinkinstall:	.PHONY
 	 while test $$# -ge 2; do \
 		l=$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
-		if  ttarg=`${TOOL_STAT} -qf '%Y' $$t` && \
+		if  ttarg=$$(${TOOL_STAT} -qf '%Y' $$t) && \
 		    [ "$$l" = "$$ttarg" ]; then \
 			continue ; \
 		fi ; \
