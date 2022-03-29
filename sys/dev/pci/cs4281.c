@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.57 2021/02/03 14:44:32 isaki Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.58 2022/03/29 09:16:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.57 2021/02/03 14:44:32 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.58 2022/03/29 09:16:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,7 +613,7 @@ cs4281_suspend(device_t dv, const pmf_qual_t *qual)
 	struct cs428x_softc *sc = device_private(dv);
 
 	mutex_enter(&sc->sc_lock);
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* save current playback status */
 	if (sc->sc_prun) {
