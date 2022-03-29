@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1847 2022/03/22 17:49:30 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1848 2022/03/29 22:09:58 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1446,7 +1446,7 @@ See /usr/src/external/bsd/wpa/NetBSD-upgrade for update instructions.
 
 Package:	zlib
 Version:	1.2.10
-Current Vers:	1.2.11
+Current Vers:	1.2.12
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.zlib.net/
 Home Page:	http://www.zlib.net/
