@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.74 2021/09/26 01:16:08 thorpej Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.75 2022/03/29 09:19:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.74 2021/09/26 01:16:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.75 2022/03/29 09:19:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -414,7 +414,7 @@ seq_timeout(void *addr)
 
 	mutex_enter(&sc->lock);
 	if (sc->timeout == 0) {
-		mutex_spin_exit(&sc->lock);
+		mutex_exit(&sc->lock);
 		return;
 	}
 	sc->timeout = 0;
