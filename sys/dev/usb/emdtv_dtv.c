@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.16 2021/08/07 16:19:16 thorpej Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.17 2022/03/29 09:08:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.16 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.17 2022/03/29 09:08:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,12 +142,8 @@ emdtv_dtv_free_xfers(struct emdtv_softc *sc)
 void
 emdtv_dtv_detach(struct emdtv_softc *sc, int flags)
 {
-	sc->sc_streaming = false;
 
-	if (sc->sc_dtvdev != NULL) {
-		config_detach(sc->sc_dtvdev, flags);
-		sc->sc_dtvdev = NULL;
-	}
+	sc->sc_streaming = false;
 
 	if (sc->sc_xc3028)
 		xc3028_close(sc->sc_xc3028);
