@@ -1,4 +1,4 @@
-/*	$NetBSD: t_link.c,v 1.1 2022/03/28 20:51:04 christos Exp $	*/
+/*	$NetBSD: t_link.c,v 1.2 2022/03/29 22:30:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ hardlink(const atf_tc_t *tc, const char *mp, uid_t u1, uid_t u2,
 	if (rump_sys_setuid(u2) == -1)
 		atf_tc_fail_errno("setuid");
         if (rump_sys_link(name, link) == -1) {
-		if (allowed)
+		if (errno != EOPNOTSUPP && allowed)
 			atf_tc_fail_errno("link");
 	} else {
 		if (!allowed)
