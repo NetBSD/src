@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.388 2021/11/28 15:47:33 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.389 2022/03/29 22:48:04 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -534,7 +534,7 @@ _INSTRANLIB=${empty(PRESERVE):?-a "${RANLIB} -t":}
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	@rm -f ${.TARGET}
-	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+	${AR} ${_ARFL} ${.TARGET} $$(NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT})
 .endif
 
 .if !target(__archiveinstall)
@@ -552,7 +552,7 @@ __archivesymlinkpic: .USE
 __buildstdlib: .USE
 	@echo building standard ${.TARGET:T:S/.o//:S/lib//} library
 	@rm -f ${.TARGET}
-	@${LINK.c:S/-nostdinc//} -nostdlib ${LDFLAGS} -Wno-unused-command-line-argument -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
+	@${LINK.c:S/-nostdinc//} -nostdlib ${LDFLAGS} -Wno-unused-command-line-argument -r -o ${.TARGET} $$(NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT})
 .endif
 
 .if !target(__buildproflib)
@@ -560,7 +560,7 @@ __buildproflib: .USE
 	@echo building profiled ${.TARGET:T:S/.o//:S/lib//} library
 	${_MKTARGET_BUILD}
 	@rm -f ${.TARGET}
-	@${LINK.c:S/-nostdinc//} -nostdlib ${LDFLAGS} -r -o ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*po} | ${TSORT}`
+	@${LINK.c:S/-nostdinc//} -nostdlib ${LDFLAGS} -r -o ${.TARGET} $$(NM=${NM} ${LORDER} ${.ALLSRC:M*po} | ${TSORT})
 .endif
 
 DPSRCS+=	${_YLSRCS}

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.76 2021/03/29 05:22:49 simonb Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.77 2022/03/29 22:48:04 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -149,8 +149,8 @@ ${KMOD}_tmp.o: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${LD} -r -o tmp.o ${OBJS}
 	${LD} -r \
-		`${OBJDUMP} --syms --reloc tmp.o | \
-			${TOOL_AWK} -f ${ARCHDIR}/kmodwrap.awk` \
+		$$(${OBJDUMP} --syms --reloc tmp.o | \
+			${TOOL_AWK} -f ${ARCHDIR}/kmodwrap.awk) \
 		 -o ${.TARGET} tmp.o
 
 ${KMOD}_tramp.S: ${KMOD}_tmp.o ${ARCHDIR}/kmodtramp.awk ${ASM_H}
@@ -166,7 +166,7 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${LD} -r -Map=${.TARGET}.map \
 	    -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${OBJCOPY} \
-		`${NM} tmp.o | ${TOOL_AWK} -f ${ARCHDIR}/kmodhide.awk` \
+		$$(${NM} tmp.o | ${TOOL_AWK} -f ${ARCHDIR}/kmodhide.awk) \
 		tmp.o ${.TARGET} && \
 	rm tmp.o
 .else
