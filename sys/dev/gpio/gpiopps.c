@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopps.c,v 1.2 2018/06/01 13:42:14 thorpej Exp $ */
+/* $NetBSD: gpiopps.c,v 1.3 2022/03/29 22:10:42 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2016 Brad Spencer <brad@anduin.eldar.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiopps.c,v 1.2 2018/06/01 13:42:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiopps.c,v 1.3 2022/03/29 22:10:42 pgoyette Exp $");
 
 /*
  * GPIO interface to the pps subsystem for ntp support.
@@ -492,7 +492,7 @@ gpioppsioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	return (error);
 }
 
-MODULE(MODULE_CLASS_DRIVER, gpiopps, NULL);
+MODULE(MODULE_CLASS_DRIVER, gpiopps, "gpio");
 
 #ifdef _MODULE
 #include "ioconf.c"
