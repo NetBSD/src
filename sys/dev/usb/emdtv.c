@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.16 2022/03/12 18:31:39 riastradh Exp $ */
+/* $NetBSD: emdtv.c,v 1.17 2022/03/29 09:08:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.16 2022/03/12 18:31:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.17 2022/03/29 09:08:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,13 @@ emdtv_detach(device_t self, int flags)
 {
 	struct emdtv_softc *sc = device_private(self);
 	usbd_status status;
+	int error;
 
 	sc->sc_dying = true;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	emdtv_ir_detach(sc, flags);
 	emdtv_dtv_detach(sc, flags);
