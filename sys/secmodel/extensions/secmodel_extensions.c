@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.14 2022/03/28 19:08:43 rillig Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.15 2022/03/29 22:29:29 christos Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.14 2022/03/28 19:08:43 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.15 2022/03/29 22:29:29 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -534,7 +534,8 @@ static int
 secmodel_extensions_vnode_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
-	int error, isroot;
+	int error;
+	bool isroot;
 	struct vattr va;
 
 	if ((action & KAUTH_VNODE_ADD_LINK) == 0)
