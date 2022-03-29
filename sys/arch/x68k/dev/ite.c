@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.64 2018/09/03 16:29:28 riastradh Exp $	*/
+/*	$NetBSD: ite.c,v 1.65 2022/03/29 06:56:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.65 2022/03/29 06:56:51 riastradh Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.64 2018/09/03 16:29:28 riastradh Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/device_impl.h>	/* XXX autoconf abuse */
 
 #include <machine/cpu.h>
 #include <machine/kbio.h>
