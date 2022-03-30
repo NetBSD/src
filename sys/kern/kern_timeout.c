@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.66 2020/06/27 01:26:32 rin Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.67 2022/03/30 10:34:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.66 2020/06/27 01:26:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.67 2022/03/30 10:34:14 riastradh Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -740,7 +740,7 @@ callout_softclock(void *v)
 	struct callout_cpu *cc;
 	void (*func)(void *);
 	void *arg;
-	int mpsafe, count, ticks, delta;
+	int mpsafe, count, ticks, delta, locks;
 	lwp_t *l;
 
 	l = curlwp;
@@ -776,6 +776,7 @@ callout_softclock(void *v)
 		cc->cc_active = c;
 
 		mutex_spin_exit(cc->cc_lock);
+		locks = curcpu()->ci_biglock_count;
 		KASSERT(func != NULL);
 		if (__predict_false(!mpsafe)) {
 			KERNEL_LOCK(1, NULL);
@@ -783,6 +784,9 @@ callout_softclock(void *v)
 			KERNEL_UNLOCK_ONE(NULL);
 		} else
 			(*func)(arg);
+		KASSERTMSG(locks == curcpu()->ci_biglock_count,
+		    "callout %p func %p slipped %d->%d biglocks",
+		    c, func, locks, curcpu()->ci_biglock_count);
 		mutex_spin_enter(cc->cc_lock);
 
 		/*
