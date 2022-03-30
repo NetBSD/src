@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.68 2022/03/30 14:54:29 riastradh Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.69 2022/03/30 17:02:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.68 2022/03/30 14:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.69 2022/03/30 17:02:02 riastradh Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -783,6 +783,9 @@ callout_softclock(void *v)
 			KERNEL_UNLOCK_ONE(NULL);
 		} else
 			(*func)(arg);
+		KASSERTMSG(l->l_blcnt == 0,
+		    "callout %p func %p leaked %d biglocks",
+		    c, func, l->l_blcnt);
 		mutex_spin_enter(cc->cc_lock);
 
 		/*
