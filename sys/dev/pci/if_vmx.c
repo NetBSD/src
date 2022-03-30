@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.6 2022/02/13 19:07:38 riastradh Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.7 2022/03/30 02:45:14 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.6 2022/02/13 19:07:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.7 2022/03/30 02:45:14 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2714,6 +2714,7 @@ vmxnet3_stop_rendezvous(struct vmxnet3_softc *sc)
 {
 	struct vmxnet3_rxqueue *rxq;
 	struct vmxnet3_txqueue *txq;
+	struct vmxnet3_queue *vmxq;
 	int i;
 
 	for (i = 0; i < sc->vmx_nrxqueues; i++) {
@@ -2725,6 +2726,10 @@ vmxnet3_stop_rendezvous(struct vmxnet3_softc *sc)
 		txq = &sc->vmx_queue[i].vxq_txqueue;
 		VMXNET3_TXQ_LOCK(txq);
 		VMXNET3_TXQ_UNLOCK(txq);
+	}
+	for (i = 0; i < sc->vmx_nrxqueues; i++) {
+		vmxq = &sc->vmx_queue[i];
+		workqueue_wait(sc->vmx_queue_wq, &vmxq->vxq_wq_cookie);
 	}
 }
 
