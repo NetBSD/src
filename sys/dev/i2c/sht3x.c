@@ -1,5 +1,5 @@
 
-/*	$NetBSD: sht3x.c,v 1.4 2021/11/14 18:36:13 brad Exp $	*/
+/*	$NetBSD: sht3x.c,v 1.5 2022/03/30 00:06:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.4 2021/11/14 18:36:13 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.5 2022/03/30 00:06:50 pgoyette Exp $");
 
 /*
   Driver for the Sensirion SHT30/SHT31/SHT35
@@ -2096,7 +2096,7 @@ sht3x_activate(device_t self, enum devact act)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, sht3xtemp, "i2cexec,sysmon_envsys");
+MODULE(MODULE_CLASS_DRIVER, sht3xtemp, "iic,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"
