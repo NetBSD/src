@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.67 2021/12/05 04:56:40 msaitoh Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.68 2022/03/30 10:34:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.67 2021/12/05 04:56:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.68 2022/03/30 10:34:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -536,6 +536,7 @@ softint_execute(lwp_t *l, int s)
 {
 	softint_t *si = l->l_private;
 	softhand_t *sh;
+	int locks;
 
 	KASSERT(si->si_lwp == curlwp);
 	KASSERT(si->si_cpu == curcpu());
@@ -560,6 +561,9 @@ softint_execute(lwp_t *l, int s)
 		sh->sh_flags ^= SOFTINT_PENDING;
 		splx(s);
 
+		/* Record the kernel lock depth for diagnostics.  */
+		locks = curcpu()->ci_biglock_count;
+
 		/* Run the handler. */
 		if (__predict_true((sh->sh_flags & SOFTINT_MPSAFE) != 0)) {
 			(*sh->sh_func)(sh->sh_arg);
@@ -576,6 +580,10 @@ softint_execute(lwp_t *l, int s)
 		/* Diagnostic: check that psrefs have not leaked. */
 		KASSERTMSG(l->l_psrefs == 0, "%s: l_psrefs=%d, sh_func=%p\n",
 		    __func__, l->l_psrefs, sh->sh_func);
+		/* Diagnostic: check that biglocks have not leaked. */
+		KASSERTMSG(locks == curcpu()->ci_biglock_count,
+		    "%s: sh_func=%p slipped %d->%d biglocks",
+		    __func__, sh->sh_func, locks, curcpu()->ci_biglock_count);
 
 		(void)splhigh();
 	}
