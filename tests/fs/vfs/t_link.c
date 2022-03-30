@@ -1,8 +1,11 @@
-/*	$NetBSD: t_link.c,v 1.3 2022/03/30 13:43:42 christos Exp $	*/
+/*	$NetBSD: t_link.c,v 1.4 2022/03/30 14:24:50 christos Exp $	*/
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2022 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
