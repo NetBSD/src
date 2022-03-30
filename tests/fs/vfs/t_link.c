@@ -1,4 +1,4 @@
-/*	$NetBSD: t_link.c,v 1.4 2022/03/30 14:24:50 christos Exp $	*/
+/*	$NetBSD: t_link.c,v 1.5 2022/03/30 16:35:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -53,10 +53,6 @@
 	if (FSTYPE_PUFFS(tc) || FSTYPE_P2K_FFS(tc))			\
 	    atf_tc_skip("userlevel pass not supported, "		\
 		"since sysctl might not be set in underlying system")
-#define USES_OWNCHECK							\
-	if (FSTYPE_ZFS(tc))						\
-	    atf_tc_skip("zfs not supported since it has its "		\
-		"own rules for hardlinks")
 
 
 static void
@@ -69,7 +65,6 @@ hardlink(const atf_tc_t *tc, const char *mp, uid_t u1, uid_t u2,
 
 	USES_OWNER;
 	USES_USERLEVEL;
-	USES_OWNCHECK;
 
 	FSTEST_ENTER();
 
