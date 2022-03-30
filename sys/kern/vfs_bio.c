@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.301 2021/07/25 06:06:40 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.302 2022/03/30 10:34:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.301 2021/07/25 06:06:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.302 2022/03/30 10:34:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1673,6 +1673,7 @@ static void
 biodone2(buf_t *bp)
 {
 	void (*callout)(buf_t *);
+	int locks;
 
 	SDT_PROBE1(io, kernel, ,done, bp);
 
@@ -1699,7 +1700,11 @@ biodone2(buf_t *bp)
 		KASSERT(!cv_has_waiters(&bp->b_done));
 		bp->b_iodone = NULL;
 		mutex_exit(bp->b_objlock);
+		locks = curcpu()->ci_biglock_count;
 		(*callout)(bp);
+		KASSERTMSG(locks == curcpu()->ci_biglock_count,
+		    "buf %p b_iodone %p slipped %d->%d biglocks",
+		    bp, callout, locks, curcpu()->ci_biglock_count);
 	} else if (ISSET(bp->b_flags, B_ASYNC)) {
 		/* If async, release. */
 		BIOHIST_LOG(biohist, "async", 0, 0, 0, 0);
