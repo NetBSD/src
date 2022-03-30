@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.69 2022/03/30 14:54:29 riastradh Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.70 2022/03/30 17:02:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.69 2022/03/30 14:54:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.70 2022/03/30 17:02:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -576,6 +576,10 @@ softint_execute(lwp_t *l, int s)
 		/* Diagnostic: check that psrefs have not leaked. */
 		KASSERTMSG(l->l_psrefs == 0, "%s: l_psrefs=%d, sh_func=%p\n",
 		    __func__, l->l_psrefs, sh->sh_func);
+		/* Diagnostic: check that biglocks have not leaked. */
+		KASSERTMSG(l->l_blcnt == 0,
+		    "%s: sh_func=%p leaked %d biglocks",
+		    __func__, sh->sh_func, curlwp->l_blcnt);
 
 		(void)splhigh();
 	}
