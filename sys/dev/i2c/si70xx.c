@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.10 2021/11/12 15:12:11 brad Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.11 2022/03/30 00:06:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.10 2021/11/12 15:12:11 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.11 2022/03/30 00:06:50 pgoyette Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021, HTU21D and SHT21
@@ -1027,7 +1027,7 @@ si70xx_detach(device_t self, int flags)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, si70xxtemp, "i2cexec,sysmon_envsys");
+MODULE(MODULE_CLASS_DRIVER, si70xxtemp, "iic,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

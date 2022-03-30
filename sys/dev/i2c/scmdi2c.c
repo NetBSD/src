@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmdi2c.c,v 1.1 2021/12/07 17:39:54 brad Exp $	*/
+/*	$NetBSD: scmdi2c.c,v 1.2 2022/03/30 00:06:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmdi2c.c,v 1.1 2021/12/07 17:39:54 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmdi2c.c,v 1.2 2022/03/30 00:06:50 pgoyette Exp $");
 
 /*
  * I2C driver for the Sparkfun Serial motor controller.
@@ -233,7 +233,7 @@ scmdi2c_activate(device_t self, enum devact act)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, scmdi2c, "i2cexec,scmd");
+MODULE(MODULE_CLASS_DRIVER, scmdi2c, "iic,scmd");
 
 #ifdef _MODULE
 /* Like other drivers, we do this because the scmd common

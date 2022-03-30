@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.14 2021/06/15 04:39:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.15 2022/03/30 00:06:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ sysctl_hytp14_interval(SYSCTLFN_ARGS)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, hythygtemp, "i2cexec,sysmon_envsys");
+MODULE(MODULE_CLASS_DRIVER, hythygtemp, "iic,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

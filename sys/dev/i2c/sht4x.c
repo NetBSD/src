@@ -1,4 +1,4 @@
-/*	$NetBSD: sht4x.c,v 1.2 2021/10/29 23:23:33 brad Exp $	*/
+/*	$NetBSD: sht4x.c,v 1.3 2022/03/30 00:06:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sht4x.c,v 1.2 2021/10/29 23:23:33 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sht4x.c,v 1.3 2022/03/30 00:06:50 pgoyette Exp $");
 
 /*
   Driver for the Sensirion SHT40/SHT41/SHT45
@@ -855,7 +855,7 @@ sht4x_detach(device_t self, int flags)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, sht4xtemp, "i2cexec,sysmon_envsys");
+MODULE(MODULE_CLASS_DRIVER, sht4xtemp, "iic,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"
