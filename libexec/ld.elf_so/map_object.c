@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.61 2020/03/04 01:21:17 thorpej Exp $	 */
+/*	$NetBSD: map_object.c,v 1.62 2022/03/30 08:26:45 hannken Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.61 2020/03/04 01:21:17 thorpej Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.62 2022/03/30 08:26:45 hannken Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -371,11 +371,13 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	}
 
 	/* Overlay the bss segment onto the proper region. */
-	if (mmap(mapbase + data_vlimit - base_vaddr, base_vlimit - data_vlimit,
-	    data_flags, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) ==
-	    MAP_FAILED) {
-		_rtld_error("mmap of bss failed: %s", xstrerror(errno));
-		goto bad;
+	if (base_vlimit > data_vlimit) {
+		if (mmap(mapbase + data_vlimit - base_vaddr,
+		    base_vlimit - data_vlimit, data_flags,
+		    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) == MAP_FAILED) {
+			_rtld_error("mmap of bss failed: %s", xstrerror(errno));
+			goto bad;
+		}
 	}
 
 	/* Unmap the gap between the text and data. */
