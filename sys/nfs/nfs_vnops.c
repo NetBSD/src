@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.322 2022/03/27 16:24:58 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.323 2022/03/30 10:52:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.322 2022/03/27 16:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.323 2022/03/30 10:52:59 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2004,21 +2004,18 @@ nfs_link(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
-	int error = 0;
+	int error = 0, abrt = 1;
 
 	error = vn_lock(vp, LK_EXCLUSIVE);
-	if (error != 0) {
-		VOP_ABORTOP(dvp, cnp);
-		return error;
-	}
+	if (error != 0)
+		goto out;
 
 	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
 	    dvp, 0);
-	if (error) {
-		VOP_ABORTOP(dvp, cnp);
-		return error;
-	}
+	if (error)
+		goto out1;
 
+	abrt = 0;
 	/*
 	 * Push all writes to the server, so that the attribute cache
 	 * doesn't get "out of sync" with the server.
@@ -2032,7 +2029,11 @@ nfs_link(void *v)
 	if (error == 0) {
 		cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 	}
+out1:
 	VOP_UNLOCK(vp);
+out:
+	if (abrt)
+		VOP_ABORTOP(dvp, cnp);
 	return (error);
 }
 
