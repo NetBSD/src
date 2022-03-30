@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.120 2022/03/27 16:24:58 christos Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.121 2022/03/30 13:23:59 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.120 2022/03/27 16:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.121 2022/03/30 13:23:59 christos Exp $");
 #endif /* not lint */
 
 
@@ -1542,43 +1542,6 @@ udf_mkdir(void *v)
 
 /* --------------------------------------------------------------------- */
 
-static int
-udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
-{
-	struct udf_node *udf_node, *dir_node;
-	struct vattr vap;
-	int error;
-
-	DPRINTF(CALL, ("udf_link called\n"));
-	KASSERT(dvp != vp);
-	KASSERT(vp->v_type != VDIR);
-	KASSERT(dvp->v_mount == vp->v_mount);
-
-	/* get attributes */
-	dir_node = VTOI(dvp);
-	udf_node = VTOI(vp);
-
-	error = VOP_GETATTR(vp, &vap, FSCRED);
-	if (error)
-		goto out;
-
-	/* check link count overflow */
-	if (vap.va_nlink >= (1<<16)-1) {	/* uint16_t */
-		error = EMLINK;
-		goto out;
-	}
-	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
-	    dvp, 0);
-	if (error)
-		goto out;
-
-	error = udf_dir_attach(dir_node->ump, dir_node, udf_node, &vap, cnp);
-out:
-	if (error)
-		VOP_UNLOCK(vp);
-	return error;
-}
-
 int
 udf_link(void *v)
 {
@@ -1590,12 +1553,44 @@ udf_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp  = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	int error;
+	struct udf_node *udf_node, *dir_node;
+	struct vattr vap;
+	int error, abrt = 1;
 
-	error = udf_do_link(dvp, vp, cnp);
+	DPRINTF(CALL, ("udf_link called\n"));
+	KASSERT(dvp != vp);
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
+
+	/* get attributes */
+	dir_node = VTOI(dvp);
+	udf_node = VTOI(vp);
+
+	if ((error = vn_lock(vp, LK_EXCLUSIVE))) {
+		DPRINTF("lock failed. %p\n", vp);
+		goto out;
+	}
+
+	error = VOP_GETATTR(vp, &vap, FSCRED);
 	if (error)
-		VOP_ABORTOP(dvp, cnp);
+		goto out1;
 
+	/* check link count overflow */
+	if (vap.va_nlink >= (1<<16)-1) {	/* uint16_t */
+		error = EMLINK;
+		goto out1;
+	}
+	error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_ADD_LINK, vp,
+	    dvp, 0);
+	if (error)
+		goto out1;
+	abrt = 0;
+	error = udf_dir_attach(dir_node->ump, dir_node, udf_node, &vap, cnp);
+out1:
+	VOP_UNLOCK(vp);
+out:
+	if (abrt)
+		VOP_ABORTOP(dvp, cnp);
 	return error;
 }
 
