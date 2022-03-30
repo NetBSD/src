@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.35 2022/03/27 16:24:58 christos Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.36 2022/03/30 12:45:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.35 2022/03/27 16:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.36 2022/03/30 12:45:58 christos Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -762,8 +762,8 @@ v7fs_link(void *v)
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 
-	VOP_UNLOCK(vp);
 unlock:
+	VOP_UNLOCK(vp);
 	if (abrt)
 		VOP_ABORTOP(dvp, cnp);
 	return error;
