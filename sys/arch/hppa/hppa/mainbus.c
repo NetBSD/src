@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2022/03/30 22:34:48 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2021/08/07 16:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2022/03/30 22:34:48 macallan Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1412,16 +1412,22 @@ mbattach(device_t parent, device_t self, void *aux)
 #if NLCD > 0
 	memset(&nca, 0, sizeof(nca));
 	err = pdcproc_chassis_info(&pdc_chassis_info, &nca.ca_pcl);
-	if (!err && nca.ca_pcl.enabled) {
-		nca.ca_name = "lcd";
-		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
-		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
-		nca.ca_dp.dp_mod = -1;
-		nca.ca_irq = HPPACF_IRQ_UNDEF;
-		nca.ca_iot = &hppa_bustag;
-		nca.ca_hpa = nca.ca_pcl.cmd_addr;
+	if (!err) {
+		if (nca.ca_pcl.enabled) {
+			nca.ca_name = "lcd";
+			nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
+			nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
+			nca.ca_dp.dp_mod = -1;
+			nca.ca_irq = HPPACF_IRQ_UNDEF;
+			nca.ca_iot = &hppa_bustag;
+			nca.ca_hpa = nca.ca_pcl.cmd_addr;
 
-		config_found(self, &nca, mbprint, CFARGS_NONE);
+			config_found(self, &nca, mbprint, CFARGS_NONE);
+		} else if (nca.ca_pcl.model == 2) {
+			bus_space_map(&hppa_bustag, nca.ca_pcl.cmd_addr,
+		  	  4, 0, (bus_space_handle_t *)&machine_ledaddr);
+		  	machine_ledword = 1;
+		}
 	}
 #endif
 
