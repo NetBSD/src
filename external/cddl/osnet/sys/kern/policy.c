@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.9 2020/08/28 16:13:48 hannken Exp $	*/
+/*	$NetBSD: policy.c,v 1.10 2022/03/30 16:34:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -144,7 +144,8 @@ int
 secpolicy_basic_link(vnode_t *vp, cred_t *cred)
 {
 
-	return kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
+	return kauth_authorize_vnode(cred, KAUTH_VNODE_ADD_LINK, vp, 
+	    /* XXX dvp, currently unused */ NULL, 0);
 }
 
 int
