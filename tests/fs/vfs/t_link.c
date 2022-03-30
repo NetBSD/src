@@ -1,4 +1,4 @@
-/*	$NetBSD: t_link.c,v 1.2 2022/03/29 22:30:07 christos Exp $	*/
+/*	$NetBSD: t_link.c,v 1.3 2022/03/30 13:43:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -43,9 +43,17 @@
 #include "../common/h_fsmacros.h"
 #include "h_macros.h"
 
-#define USES_OWNER							 \
-	if (FSTYPE_MSDOS(tc))						 \
+#define USES_OWNER							\
+	if (FSTYPE_MSDOS(tc))						\
 	    atf_tc_skip("owner not supported by file system")
+#define USES_USERLEVEL							\
+	if (FSTYPE_PUFFS(tc) || FSTYPE_P2K_FFS(tc))			\
+	    atf_tc_skip("userlevel pass not supported, "		\
+		"since sysctl might not be set in underlying system")
+#define USES_OWNCHECK							\
+	if (FSTYPE_ZFS(tc))						\
+	    atf_tc_skip("zfs not supported since it has its "		\
+		"own rules for hardlinks")
 
 
 static void
@@ -57,6 +65,8 @@ hardlink(const atf_tc_t *tc, const char *mp, uid_t u1, uid_t u2,
 	int one = 1, fd;
 
 	USES_OWNER;
+	USES_USERLEVEL;
+	USES_OWNCHECK;
 
 	FSTEST_ENTER();
 
