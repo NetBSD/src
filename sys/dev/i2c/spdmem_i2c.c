@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.25 2021/12/06 16:24:57 msaitoh Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.26 2022/03/30 00:06:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.25 2021/12/06 16:24:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.26 2022/03/30 00:06:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -292,7 +292,7 @@ spdmem_i2c_read(struct spdmem_softc *softc, uint16_t addr, uint8_t *val)
 	return rv;
 }
 
-MODULE(MODULE_CLASS_DRIVER, spdmem, "i2cexec");
+MODULE(MODULE_CLASS_DRIVER, spdmem, "iic");
 
 #ifdef _MODULE
 #include "ioconf.c"

@@ -1,4 +1,4 @@
-/*	$NetBSD: sgp40.c,v 1.2 2021/10/20 17:52:44 christos Exp $	*/
+/*	$NetBSD: sgp40.c,v 1.3 2022/03/30 00:06:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.2 2021/10/20 17:52:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.3 2022/03/30 00:06:50 pgoyette Exp $");
 
 /*
   Driver for the Sensirion SGP40 MOx gas sensor for air quality
@@ -800,7 +800,7 @@ sgp40_detach(device_t self, int flags)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, sgp40mox, "i2cexec,sysmon_envsys");
+MODULE(MODULE_CLASS_DRIVER, sgp40mox, "iic,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"
