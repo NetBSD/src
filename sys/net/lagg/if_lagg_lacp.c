@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.14 2022/03/31 01:36:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.15 2022/03/31 01:40:34 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.14 2022/03/31 01:36:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.15 2022/03/31 01:40:34 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -499,6 +499,7 @@ lacp_attach(struct lagg_softc *sc, struct lagg_proto_softc **lscp)
 
 destroy_lock:
 	mutex_destroy(&lsc->lsc_lock);
+	kmem_free(lsc, sizeof(*lsc));
 
 	return error;
 }
