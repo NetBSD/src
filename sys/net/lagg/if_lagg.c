@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.30 2022/01/12 08:23:53 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.31 2022/03/31 01:39:09 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.30 2022/01/12 08:23:53 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.31 2022/03/31 01:39:09 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -215,7 +215,7 @@ static enum lagg_iftypes
 #ifdef LAGG_DEBUG
 #define LAGG_DPRINTF(_sc, _fmt, _args...)	do {	\
 	printf("%s: " _fmt, (_sc) != NULL ?		\
-	sc->sc_if.if_xname : "lagg", ##_args);		\
+	(_sc)->sc_if.if_xname : "lagg", ##_args);		\
 } while (0)
 #else
 #define LAGG_DPRINTF(_sc, _fmt, _args...)	__nothing
