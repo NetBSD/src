@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.11 2022/03/31 02:00:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.12 2022/03/31 03:10:59 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -77,7 +77,6 @@ struct lagg_port {
 
 	u_char			 lp_iftype;
 	uint8_t			 lp_lladdr[ETHER_ADDR_LEN];
-	unsigned short		 lp_ifflags;
 	int			 lp_eccapenable;
 	uint64_t		 lp_ifcapenable;
 	uint64_t		 lp_mtu;
