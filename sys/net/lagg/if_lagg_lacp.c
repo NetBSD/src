@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.15 2022/03/31 01:40:34 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.16 2022/03/31 01:59:05 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.15 2022/03/31 01:40:34 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.16 2022/03/31 01:59:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -428,6 +428,9 @@ tlv_parse(void *vp, size_t len, struct tlv *list)
 		th = (struct tlvhdr *)(p + l);
 
 		if (th->tlv_type == TLV_TYPE_TERMINATE)
+			break;
+
+		if (th->tlv_length <= 0)
 			break;
 
 		for (i = 0; list[i].tlv_t != TLV_TYPE_TERMINATE; i++) {
