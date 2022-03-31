@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.3 2022/03/31 02:07:26 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.4 2022/03/31 03:05:41 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.3 2022/03/31 02:07:26 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.4 2022/03/31 03:05:41 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -470,16 +470,19 @@ lagg_fail_portstat(struct lagg_proto_softc *psc, struct lagg_port *lp,
 	pport = lp->lp_proto_ctx;
 
 	if (pport->lpp_active) {
-		SET(resp->rp_flags, LAGG_PORT_ACTIVE);
-		if (fovr->fo_rx_all) {
-			SET(resp->rp_flags, LAGG_PORT_COLLECTING);
-		}
-
 		lp0 = lagg_link_active(psc, NULL, &psref);
 		if (lp0 == lp) {
 			SET(resp->rp_flags,
-			    LAGG_PORT_COLLECTING | LAGG_PORT_DISTRIBUTING);
+			    (LAGG_PORT_ACTIVE |
+			    LAGG_PORT_COLLECTING |
+			    LAGG_PORT_DISTRIBUTING));
+		} else {
+			if (fovr->fo_rx_all) {
+				SET(resp->rp_flags,
+				    LAGG_PORT_COLLECTING);
+			}
 		}
+
 		if (lp0 != NULL)
 			lagg_port_putref(lp0, &psref);
 	}
