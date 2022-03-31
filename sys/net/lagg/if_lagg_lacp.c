@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.17 2022/03/31 02:00:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.18 2022/03/31 02:04:50 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.17 2022/03/31 02:00:27 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.18 2022/03/31 02:04:50 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.17 2022/03/31 02:00:27 yamaguchi 
 
 #include <sys/evcnt.h>
 #include <sys/kmem.h>
+#include <sys/pcq.h>
 #include <sys/pslist.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
@@ -163,13 +164,18 @@ struct lacp_softc {
 				 lsc_aggregators;
 	struct workqueue	*lsc_workq;
 	struct lagg_work	 lsc_work_tick;
+	struct lagg_work	 lsc_work_rcvdu;
 	callout_t		 lsc_tick;
+	pcq_t			*lsc_du_q;
 
 	char			 lsc_evgroup[32];
 	struct evcnt		 lsc_mgethdr_failed;
 	struct evcnt		 lsc_mpullup_failed;
 	struct evcnt		 lsc_badlacpdu;
 	struct evcnt		 lsc_badmarkerdu;
+	struct evcnt		 lsc_norcvif;
+	struct evcnt		 lsc_nolaggport;
+	struct evcnt		 lsc_duq_nospc;
 
 	bool			 lsc_optimistic;
 	bool			 lsc_stop_lacpdu;
@@ -277,6 +283,7 @@ static void	lacp_sm_ptx_timer(struct lacp_softc *, struct lacp_port *);
 static void	lacp_sm_ptx_schedule(struct lacp_port *);
 static void	lacp_sm_ptx_update_timeout(struct lacp_port *, uint8_t);
 
+static void	lacp_rcvdu_work(struct lagg_work *, void *);
 static void	lacp_marker_work(struct lagg_work *, void *);
 static void	lacp_dump_lacpdutlv(const struct lacpdu_peerinfo *,
 		    const struct lacpdu_peerinfo *,
@@ -463,6 +470,12 @@ lacp_attach(struct lagg_softc *sc, struct lagg_proto_softc **lscp)
 	if (lsc == NULL)
 		return ENOMEM;
 
+	lsc->lsc_du_q = pcq_create(LACP_RCVDU_LIMIT, KM_NOSLEEP);
+	if (lsc->lsc_du_q == NULL) {
+		error = ENOMEM;
+		goto free_lsc;
+	}
+
 	mutex_init(&lsc->lsc_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	lsc->lsc_softc = sc;
 	lsc->lsc_key = htons(if_get_index(&sc->sc_if));
@@ -473,6 +486,8 @@ lacp_attach(struct lagg_softc *sc, struct lagg_proto_softc **lscp)
 	TAILQ_INIT(&lsc->lsc_aggregators);
 
 	lagg_work_set(&lsc->lsc_work_tick, lacp_tick_work, lsc);
+	lagg_work_set(&lsc->lsc_work_rcvdu, lacp_rcvdu_work, lsc);
+
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s.lacp",
 	    sc->sc_if.if_xname);
 	lsc->lsc_workq = lagg_workq_create(xnamebuf,
@@ -494,14 +509,18 @@ lacp_attach(struct lagg_softc *sc, struct lagg_proto_softc **lscp)
 	lacp_evcnt_attach(lsc, &lsc->lsc_mpullup_failed, "m_pullup failed");
 	lacp_evcnt_attach(lsc, &lsc->lsc_badlacpdu, "Bad LACPDU recieved");
 	lacp_evcnt_attach(lsc, &lsc->lsc_badmarkerdu, "Bad MarkerDU recieved");
+	lacp_evcnt_attach(lsc, &lsc->lsc_norcvif, "No received interface");
+	lacp_evcnt_attach(lsc, &lsc->lsc_nolaggport, "No lagg context");
+	lacp_evcnt_attach(lsc, &lsc->lsc_duq_nospc, "No space left on queues");
 
 	if_link_state_change(&sc->sc_if, LINK_STATE_DOWN);
 
 	*lscp = (struct lagg_proto_softc *)lsc;
 	return 0;
-
 destroy_lock:
 	mutex_destroy(&lsc->lsc_lock);
+	pcq_destroy(lsc->lsc_du_q);
+free_lsc:
 	kmem_free(lsc, sizeof(*lsc));
 
 	return error;
@@ -519,13 +538,18 @@ lacp_detach(struct lagg_proto_softc *xlsc)
 
 	lacp_down(xlsc);
 
+	lagg_workq_wait(lsc->lsc_workq, &lsc->lsc_work_rcvdu);
 	evcnt_detach(&lsc->lsc_mgethdr_failed);
 	evcnt_detach(&lsc->lsc_mpullup_failed);
 	evcnt_detach(&lsc->lsc_badlacpdu);
 	evcnt_detach(&lsc->lsc_badmarkerdu);
+	evcnt_detach(&lsc->lsc_norcvif);
+	evcnt_detach(&lsc->lsc_nolaggport);
+	evcnt_detach(&lsc->lsc_duq_nospc);
 	lagg_workq_destroy(lsc->lsc_workq);
 	pserialize_destroy(lsc->lsc_psz);
 	mutex_destroy(&lsc->lsc_lock);
+	pcq_destroy(lsc->lsc_du_q);
 	kmem_free(lsc, sizeof(*lsc));
 }
 
@@ -1223,12 +1247,17 @@ lacp_input(struct lagg_proto_softc *xlsc, struct lagg_port *lp, struct mbuf *m)
 
 		m_copydata(m, sizeof(struct ether_header),
 		    sizeof(subtype), &subtype);
+
 		switch (subtype) {
 		case SLOWPROTOCOLS_SUBTYPE_LACP:
-			(void)lacp_pdu_input(lsc, lacpp, m);
-			return NULL;
 		case SLOWPROTOCOLS_SUBTYPE_MARKER:
-			(void)lacp_marker_input(lsc, lacpp, m);
+			if (pcq_put(lsc->lsc_du_q, (void *)m)) {
+				lagg_workq_add(lsc->lsc_workq,
+				    &lsc->lsc_work_rcvdu);
+			} else {
+				m_freem(m);
+				lsc->lsc_duq_nospc.ev_count++;
+			}
 			return NULL;
 		}
 	}
@@ -1240,6 +1269,62 @@ lacp_input(struct lagg_proto_softc *xlsc, struct lagg_port *lp, struct mbuf *m)
 	}
 
 	return m;
+}
+
+static void
+lacp_rcvdu_work(struct lagg_work *lw __unused, void *xlsc)
+{
+	struct lacp_softc *lsc = (struct lacp_softc *)xlsc;
+	struct ifnet *ifp;
+	struct psref psref_lp;
+	struct lagg_port *lp;
+	struct mbuf *m;
+	uint8_t subtype;
+	int bound, s;
+
+	bound = curlwp_bind();
+
+	for (;;) {
+		m = pcq_get(lsc->lsc_du_q);
+		if (m == NULL)
+			break;
+
+		ifp = m_get_rcvif(m, &s);
+		if (ifp == NULL) {
+			m_freem(m);
+			lsc->lsc_norcvif.ev_count++;
+			continue;
+		}
+
+		lp = atomic_load_consume(&ifp->if_lagg);
+		if (lp == NULL) {
+			m_put_rcvif(ifp, &s);
+			m_freem(m);
+			lsc->lsc_norcvif.ev_count++;
+			continue;
+		}
+
+		lagg_port_getref(lp, &psref_lp);
+		m_put_rcvif(ifp, &s);
+
+		m_copydata(m, sizeof(struct ether_header),
+		    sizeof(subtype), &subtype);
+
+		switch (subtype) {
+		case SLOWPROTOCOLS_SUBTYPE_LACP:
+			(void)lacp_pdu_input(lsc,
+			    lp->lp_proto_ctx, m);
+			break;
+		case SLOWPROTOCOLS_SUBTYPE_MARKER:
+			(void)lacp_marker_input(lsc,
+			    lp->lp_proto_ctx, m);
+			break;
+		}
+
+		lagg_port_putref(lp, &psref_lp);
+	}
+
+	curlwp_bindx(bound);
 }
 
 static bool
@@ -1262,7 +1347,7 @@ lacp_port_need_to_tell(struct lacp_port *lacpp)
 		return false;
 
 	if (ppsratecheck(&lacpp->lp_last_lacpdu, &lacpp->lp_lacpdu_sent,
-	    (3 / LACP_FAST_PERIODIC_TIME)) == 0)
+	    (LACP_SENDDU_PPS / LACP_FAST_PERIODIC_TIME)) == 0)
 		return false;
 
 	return true;
