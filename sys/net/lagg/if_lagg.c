@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.41 2022/03/31 03:12:31 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.42 2022/03/31 03:15:15 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.41 2022/03/31 03:12:31 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.42 2022/03/31 03:15:15 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -242,15 +242,6 @@ lagg_sizeof_softc(enum lagg_iftypes ift)
 	}
 
 	return s;
-}
-
-static bool
-lagg_debug_enable(struct lagg_softc *sc)
-{
-	if (__predict_false(ISSET(sc->sc_if.if_flags, IFF_DEBUG)))
-		return true;
-
-	return false;
 }
 
 static void
@@ -743,7 +734,7 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = lagg_lp_ioctl(lp, cmd, (void *)ifr);
 
 			if (error != 0) {
-				lagg_log(sc, LOG_ERR,
+				LAGG_LOG(sc, LOG_ERR,
 				    "failed to change MTU to %d on port %s, "
 				    "reverting all ports to original "
 				    "MTU(%" PRIu64 ")\n",
@@ -798,65 +789,65 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static int
 lagg_setup_sysctls(struct lagg_softc *sc)
 {
-	struct sysctllog **log;
+	struct sysctllog **slog;
 	const struct sysctlnode **rnode, *hashnode;
 	const char *ifname;
 	int error;
 
-	log = &sc->sc_sysctllog;
+	slog = &sc->sc_sysctllog;
 	rnode = &sc->sc_sysctlnode;
 	ifname = sc->sc_if.if_xname;
 
-	error = sysctl_createv(log, 0, NULL, rnode,
+	error = sysctl_createv(slog, 0, NULL, rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, ifname,
 	    SYSCTL_DESCR("lagg information and settings"),
 	    NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL);
 	if (error != 0)
 		goto done;
 
-	error = sysctl_createv(log, 0, rnode, &hashnode,
+	error = sysctl_createv(slog, 0, rnode, &hashnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hash",
 	    SYSCTL_DESCR("hash calculation settings"),
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 	if (error != 0)
 		goto done;
 
-	error = sysctl_createv(log, 0, &hashnode, NULL,
+	error = sysctl_createv(slog, 0, &hashnode, NULL,
 	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "macaddr",
 	    SYSCTL_DESCR("use src/dst mac addresses"),
 	    NULL, 0, &sc->sc_hash_mac, 0, CTL_CREATE, CTL_EOL);
 	if (error != 0)
 		goto done;
 
-	error = sysctl_createv(log, 0, &hashnode, NULL,
+	error = sysctl_createv(slog, 0, &hashnode, NULL,
 	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "ipaddr",
 	    SYSCTL_DESCR("use src/dst IPv4 addresses"),
 	    NULL, 0, &sc->sc_hash_ipaddr, 0, CTL_CREATE, CTL_EOL);
 	if (error != 0)
 		goto done;
 
-	error = sysctl_createv(log, 0, &hashnode, NULL,
+	error = sysctl_createv(slog, 0, &hashnode, NULL,
 	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "ip6addr",
 	    SYSCTL_DESCR("use src/dst IPv6 addresses"),
 	    NULL, 0, &sc->sc_hash_ip6addr, 0, CTL_CREATE, CTL_EOL);
 	if (error != 0)
 		goto done;
 
-	error = sysctl_createv(log, 0, &hashnode, NULL,
+	error = sysctl_createv(slog, 0, &hashnode, NULL,
 	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "tcp",
 	    SYSCTL_DESCR("use TCP src/dst port"),
 	    NULL, 0, &sc->sc_hash_tcp, 0, CTL_CREATE, CTL_EOL);
 	if (error != 0)
 		goto done;
 
-	error = sysctl_createv(log, 0, &hashnode, NULL,
+	error = sysctl_createv(slog, 0, &hashnode, NULL,
 	   CTLFLAG_READWRITE, CTLTYPE_BOOL, "udp",
 	   SYSCTL_DESCR("use UDP src/dst port"),
 	   NULL, 0, &sc->sc_hash_udp, 0, CTL_CREATE, CTL_EOL);
 done:
 	if (error != 0) {
-		lagg_log(sc, LOG_ERR, "unable to create sysctl node\n");
-		sysctl_teardown(log);
+		LAGG_LOG(sc, LOG_ERR, "unable to create sysctl node\n");
+		sysctl_teardown(slog);
 	}
 
 	return error;
@@ -1243,7 +1234,7 @@ lagg_vlan_cb(struct ethercom *ec, uint16_t vtag, bool set)
 	LAGG_PORTS_FOREACH(sc, lp) {
 		error = lagg_port_vlan_cb(lp, lvt, set);
 		if (error != 0) {
-			lagg_log(sc, LOG_WARNING,
+			LAGG_LOG(sc, LOG_WARNING,
 			    "%s failed to configure vlan on %d\n",
 			    lp->lp_ifp->if_xname, error);
 		}
@@ -1763,7 +1754,7 @@ lagg_port_vlan(struct lagg_softc *sc, struct lagg_port *lp,
 	TAILQ_FOREACH(lvt, &sc->sc_vtags, lvt_entry) {
 		error = lagg_port_vlan_cb(lp, lvt, set);
 		if (error != 0) {
-			lagg_log(sc, LOG_WARNING,
+			LAGG_LOG(sc, LOG_WARNING,
 			    "%s failed to configure vlan on %d\n",
 			    lp->lp_ifp->if_xname, error);
 		}
@@ -1817,9 +1808,9 @@ lagg_sync_ifcaps(struct lagg_softc *sc)
 		error = lagg_setifcaps(lp, ifp->if_capenable);
 
 		if (error != 0) {
-			lagg_log(sc, LOG_WARNING,
+			LAGG_LOG(sc, LOG_WARNING,
 			    "failed to update capabilities "
-			    "of %s, error=%d",
+			    "of %s, error=%d\n",
 			    lp->lp_ifp->if_xname, error);
 		}
 	}
@@ -1865,9 +1856,9 @@ lagg_sync_ethcaps(struct lagg_softc *sc)
 
 		error = lagg_setethcaps(lp, ec->ec_capenable);
 		if (error != 0) {
-			lagg_log(sc, LOG_WARNING,
+			LAGG_LOG(sc, LOG_WARNING,
 			    "failed to update ether "
-			    "capabilities"" of %s, error=%d",
+			    "capabilities"" of %s, error=%d\n",
 			    lp->lp_ifp->if_xname, error);
 		}
 
@@ -1914,8 +1905,8 @@ lagg_ifcap_update(struct lagg_softc *sc)
 	}
 
 	if (pena != ena) {
-		lagg_log(sc, LOG_DEBUG, "couldn't set "
-		    "capabilities 0x%08"PRIx64, pena);
+		LAGG_LOG(sc, LOG_DEBUG, "couldn't set "
+		    "capabilities 0x%08"PRIx64"\n", pena);
 	}
 
 	ifp = &sc->sc_if;
@@ -1925,8 +1916,8 @@ lagg_ifcap_update(struct lagg_softc *sc)
 		ifp->if_capabilities = cap;
 		ifp->if_capenable = ena;
 
-		lagg_log(sc, LOG_DEBUG,"capabilities "
-		    "0x%08"PRIx64" enabled 0x%08"PRIx64,
+		LAGG_LOG(sc, LOG_DEBUG,"capabilities "
+		    "0x%08"PRIx64" enabled 0x%08"PRIx64"\n",
 		    cap, ena);
 	}
 }
@@ -1989,8 +1980,8 @@ lagg_ethercap_update(struct lagg_softc *sc)
 	}
 
 	if (pena != ena) {
-		lagg_log(sc, LOG_DEBUG, "couldn't set "
-		    "ether capabilities 0x%08x", pena);
+		LAGG_LOG(sc, LOG_DEBUG, "couldn't set "
+		    "ether capabilities 0x%08x\n", pena);
 	}
 
 	ec = (struct ethercom *)&sc->sc_if;
@@ -2000,9 +1991,9 @@ lagg_ethercap_update(struct lagg_softc *sc)
 		ec->ec_capabilities = cap;
 		ec->ec_capenable = ena;
 
-		lagg_log(sc, LOG_DEBUG,
+		LAGG_LOG(sc, LOG_DEBUG,
 		    "ether capabilities 0x%08x"
-		    " enabled 0x%08x", cap, ena);
+		    " enabled 0x%08x\n", cap, ena);
 	}
 }
 
@@ -2077,7 +2068,7 @@ lagg_teardown_mtu(struct lagg_softc *sc, struct lagg_port *lp)
 		ifr.ifr_mtu = lp->lp_mtu;
 		error = lp->lp_ioctl(ifp_port, SIOCSIFMTU, (void *)&ifr);
 		if (error != 0) {
-			lagg_log(sc, LOG_WARNING,
+			LAGG_LOG(sc, LOG_WARNING,
 			    "failed to reset MTU %d to %s\n",
 			    ifr.ifr_mtu, ifp_port->if_xname);
 		}
@@ -2116,7 +2107,7 @@ lagg_port_setsadl(struct lagg_port *lp, uint8_t *lladdr,
 				error = if_init(ifp_port);
 
 			if (error != 0) {
-				lagg_log(lp->lp_softc, LOG_WARNING,
+				LAGG_LOG(lp->lp_softc, LOG_WARNING,
 				    "%s failed to if_init() on %d\n",
 				    ifp_port->if_xname, error);
 			}
@@ -2158,7 +2149,7 @@ lagg_port_unsetsadl(struct lagg_port *lp)
 				error = if_init(ifp_port);
 
 			if (error != 0) {
-				lagg_log(lp->lp_softc, LOG_WARNING,
+				LAGG_LOG(lp->lp_softc, LOG_WARNING,
 				    "%s failed to if_init() on %d\n",
 				    ifp_port->if_xname, error);
 			}
@@ -2409,7 +2400,7 @@ restore_ipv6lla:
 	lagg_in6_ifdetach(ifp_port);
 	if (stopped) {
 		if (if_init(ifp_port) != 0) {
-			lagg_log(sc, LOG_WARNING,
+			LAGG_LOG(sc, LOG_WARNING,
 			    "couldn't re-start port %s\n",
 			    ifp_port->if_xname);
 		}
@@ -2667,7 +2658,7 @@ lagg_config_promisc(struct lagg_softc *sc, struct lagg_port *lp)
 	if (error == 0) {
 		lp->lp_promisc = promisc;
 	} else {
-		lagg_log(sc, LOG_WARNING,
+		LAGG_LOG(sc, LOG_WARNING,
 		    "couldn't %s promisc on %s\n",
 		    promisc ? "set" : "unset",
 		    ifp_port->if_xname);
@@ -2693,7 +2684,7 @@ lagg_unconfig_promisc(struct lagg_softc *sc, struct lagg_port *lp)
 	}
 
 	if (error != 0) {
-		lagg_log(sc, LOG_WARNING,
+		LAGG_LOG(sc, LOG_WARNING,
 		    "couldn't unset promisc on %s\n",
 		    ifp_port->if_xname);
 	}
@@ -2858,20 +2849,6 @@ lagg_port_putref(struct lagg_port *lp, struct psref *psref)
 {
 
 	psref_release(psref, &lp->lp_psref, lagg_port_psref_class);
-}
-
-void
-lagg_log(struct lagg_softc *sc, int lvl, const char *fmt, ...)
-{
-	va_list ap;
-
-	if (lvl == LOG_DEBUG && !lagg_debug_enable(sc))
-		return;
-
-	log(lvl, "%s: ", sc->sc_if.if_xname);
-	va_start(ap, fmt);
-	vlog(lvl, fmt, ap);
-	va_end(ap);
 }
 
 static void
