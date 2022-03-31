@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.124 2022/03/29 06:59:19 riastradh Exp $	*/
+/*	$NetBSD: uhid.c,v 1.125 2022/03/31 17:43:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.124 2022/03/29 06:59:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.125 2022/03/31 17:43:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -753,7 +753,6 @@ static int
 uhidkqfilter(dev_t dev, struct knote *kn)
 {
 	struct uhid_softc *sc = device_lookup_private(&uhid_cd, UHIDUNIT(dev));
-	int error = 0;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -762,16 +761,13 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 		mutex_enter(&sc->sc_lock);
 		selrecord_knote(&sc->sc_rsel, kn);
 		mutex_exit(&sc->sc_lock);
-		break;
+		return 0;
 
 	case EVFILT_WRITE:
 		kn->kn_fop = &seltrue_filtops;
-		break;
+		return 0;
 
 	default:
-		error = EINVAL;
-		break;
+		return EINVAL;
 	}
-
-	return error;
 }
