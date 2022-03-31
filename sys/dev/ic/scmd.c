@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmd.c,v 1.1 2021/12/07 17:39:54 brad Exp $	*/
+/*	$NetBSD: scmd.c,v 1.2 2022/03/31 19:30:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmd.c,v 1.1 2021/12/07 17:39:54 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmd.c,v 1.2 2022/03/31 19:30:16 pgoyette Exp $");
 
 /*
  * Common driver for the Sparkfun Serial motor controller.
@@ -592,30 +592,30 @@ scmd_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_scmd,
-		    cfattach_ioconf_scmd, cfdata_ioconf_scmd);
-		if (error)
-			aprint_error("%s: unable to init component: %d\n",
-			    scmd_cd.cd_name, error);
-
 		error = devsw_attach("scmd", NULL, &bmaj,
 		    &scmd_cdevsw, &cmaj);
 		if (error) {
 			aprint_error("%s: unable to attach devsw: %d\n",
 			    scmd_cd.cd_name, error);
-			config_fini_component(cfdriver_ioconf_scmd,
-			    cfattach_ioconf_scmd, cfdata_ioconf_scmd);
+			return error;
 		}
 
+		error = config_init_component(cfdriver_ioconf_scmd,
+		    cfattach_ioconf_scmd, cfdata_ioconf_scmd);
+		if (error) {
+			aprint_error("%s: unable to init component: %d\n",
+			    scmd_cd.cd_name, error);
+			devsw_detach(NULL, &scmd_cdevsw);
+		}
 		return error;
 #else
 		return 0;
 #endif
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &scmd_cdevsw);
 		error = config_fini_component(cfdriver_ioconf_scmd,
 		    cfattach_ioconf_scmd, cfdata_ioconf_scmd);
+		devsw_detach(NULL, &scmd_cdevsw);
 
 		return error;
 #else

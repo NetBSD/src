@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.111 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: fss.c,v 1.112 2022/03/31 19:30:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.111 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.112 2022/03/31 19:30:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1387,44 +1387,42 @@ fss_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 		mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
 		cv_init(&fss_device_cv, "snapwait");
-		error = config_cfdriver_attach(&fss_cd);
+
+		error = devsw_attach(fss_cd.cd_name,
+		    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
 		if (error) {
 			mutex_destroy(&fss_device_lock);
 			break;
 		}
+
+		error = config_cfdriver_attach(&fss_cd);
+		if (error) {
+			devsw_detach(&fss_bdevsw, &fss_cdevsw);
+			mutex_destroy(&fss_device_lock);
+			break;
+		}
+
 		error = config_cfattach_attach(fss_cd.cd_name, &fss_ca);
 		if (error) {
 			config_cfdriver_detach(&fss_cd);
+			devsw_detach(&fss_bdevsw, &fss_cdevsw);
 			mutex_destroy(&fss_device_lock);
 			break;
 		}
-		error = devsw_attach(fss_cd.cd_name,
-		    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
 
-		if (error) {
-			config_cfattach_detach(fss_cd.cd_name, &fss_ca);
-			config_cfdriver_detach(&fss_cd);
-			mutex_destroy(&fss_device_lock);
-			break;
-		}
 		break;
 
 	case MODULE_CMD_FINI:
-		devsw_detach(&fss_bdevsw, &fss_cdevsw);
 		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
 		if (error) {
-			devsw_attach(fss_cd.cd_name, &fss_bdevsw, &fss_bmajor,
-			    &fss_cdevsw, &fss_cmajor);
 			break;
 		}
 		error = config_cfdriver_detach(&fss_cd);
 		if (error) {
-			devsw_attach(fss_cd.cd_name,
-			    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
-			devsw_attach(fss_cd.cd_name, &fss_bdevsw, &fss_bmajor,
-			    &fss_cdevsw, &fss_cmajor);
+			config_cfattach_attach(fss_cd.cd_name, &fss_ca);
 			break;
 		}
+		devsw_detach(&fss_bdevsw, &fss_cdevsw);
 		cv_destroy(&fss_device_cv);
 		mutex_destroy(&fss_device_lock);
 		break;

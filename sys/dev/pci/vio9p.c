@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.4 2021/09/26 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.5 2022/03/31 19:30:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.4 2021/09/26 01:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.5 2022/03/31 19:30:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -625,14 +625,15 @@ vio9p_modcmd(modcmd_t cmd, void *opaque)
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = config_init_component(cfdriver_ioconf_vio9p,
-		    cfattach_ioconf_vio9p, cfdata_ioconf_vio9p);
 		devsw_attach(vio9p_cd.cd_name, NULL, &bmajor,
 		    &vio9p_cdevsw, &cmajor);
+		error = config_init_component(cfdriver_ioconf_vio9p,
+		    cfattach_ioconf_vio9p, cfdata_ioconf_vio9p);
 		break;
 	case MODULE_CMD_FINI:
 		error = config_fini_component(cfdriver_ioconf_vio9p,
 		    cfattach_ioconf_vio9p, cfdata_ioconf_vio9p);
+		devsw_detach(NULL, &vio9p_cdevsw);
 		break;
 	default:
 		error = ENOTTY;

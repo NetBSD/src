@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.95 2021/09/26 01:16:08 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.96 2022/03/31 19:30:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.95 2021/09/26 01:16:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.96 2022/03/31 19:30:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -1929,12 +1929,10 @@ midi_modcmd(modcmd_t cmd, void *arg)
 		}
 		break;
 	case MODULE_CMD_FINI:
-		devsw_detach(NULL, &midi_cdevsw);
 		error = config_fini_component(cfdriver_ioconf_midi,
 		   cfattach_ioconf_midi, cfdata_ioconf_midi);
-		if (error)
-			devsw_attach(midi_cd.cd_name, NULL, &midi_bmajor,
-			    &midi_cdevsw, &midi_cmajor);
+		if (error == 0)
+			devsw_detach(NULL, &midi_cdevsw);
 		break;
 	default:
 		error = ENOTTY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.27 2021/08/08 22:26:32 rin Exp $ */
+/*	$NetBSD: lua.c,v 1.28 2022/03/31 19:30:17 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -860,14 +860,25 @@ lua_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_cfdriver_attach(&lua_cd);
-		if (error)
+		error = devsw_attach(lua_cd.cd_name, NULL, &bmajor,
+		    &lua_cdevsw, &cmajor);
+		if (error) {
+			aprint_error("%s: unable to register devsw\n",
+			    lua_cd.cd_name);
 			return error;
+		}
+
+		error = config_cfdriver_attach(&lua_cd);
+		if (error) {
+			devsw_detach(NULL, &lua_cdevsw);
+			return error;
+		}
 
 		error = config_cfattach_attach(lua_cd.cd_name,
 		    &lua_ca);
 		if (error) {
 			config_cfdriver_detach(&lua_cd);
+			devsw_detach(NULL, &lua_cdevsw);
 			aprint_error("%s: unable to register cfattach\n",
 			    lua_cd.cd_name);
 			return error;
@@ -877,17 +888,9 @@ lua_modcmd(modcmd_t cmd, void *opaque)
 			config_cfattach_detach(lua_cd.cd_name,
 			    &lua_ca);
 			config_cfdriver_detach(&lua_cd);
+			devsw_detach(NULL, &lua_cdevsw);
 			aprint_error("%s: unable to register cfdata\n",
 			    lua_cd.cd_name);
-			return error;
-		}
-		error = devsw_attach(lua_cd.cd_name, NULL, &bmajor,
-		    &lua_cdevsw, &cmajor);
-		if (error) {
-			aprint_error("%s: unable to register devsw\n",
-			    lua_cd.cd_name);
-			config_cfattach_detach(lua_cd.cd_name, &lua_ca);
-			config_cfdriver_detach(&lua_cd);
 			return error;
 		}
 		config_attach_pseudo(lua_cfdata);

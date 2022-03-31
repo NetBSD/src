@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.22 2022/02/12 03:24:36 riastradh Exp $	*/
+/*	$NetBSD: spkr.c,v 1.23 2022/03/31 19:30:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.22 2022/02/12 03:24:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.23 2022/03/31 19:30:15 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -633,12 +633,10 @@ spkr_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &spkr_cdevsw);
 		error = config_fini_component(cfdriver_ioconf_spkr,
 		    cfattach_ioconf_spkr, cfdata_ioconf_spkr);
-		if (error)
-			devsw_attach(spkr_cd.cd_name, NULL, &bmajor,
-			    &spkr_cdevsw, &cmajor);
+		if (error == 0)
+			devsw_detach(NULL, &spkr_cdevsw);
 #endif
 		break;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.69 2022/01/17 19:33:00 thorpej Exp $ */
+/* $NetBSD: gpio.c,v 1.70 2022/03/31 19:30:16 pgoyette Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.69 2022/01/17 19:33:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.70 2022/03/31 19:30:16 pgoyette Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -1184,20 +1184,20 @@ gpio_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_gpio,
-		    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
-		if (error) {
-			aprint_error("%s: unable to init component\n",
-			    gpio_cd.cd_name);
-			return error;
-		}
 		error = devsw_attach(gpio_cd.cd_name, NULL, &bmajor,
 		    &gpio_cdevsw, &cmajor);
 		if (error) {
 			aprint_error("%s: unable to register devsw\n",
 			    gpio_cd.cd_name);
-			return config_fini_component(cfdriver_ioconf_gpio,
-			    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
+			return error;
+		}
+		error = config_init_component(cfdriver_ioconf_gpio,
+		    cfattach_ioconf_gpio, cfdata_ioconf_gpio);
+		if (error) {
+			aprint_error("%s: unable to init component\n",
+			    gpio_cd.cd_name);
+			devsw_detach(NULL, &gpio_cdevsw);
+			return error;
 		}
 #endif
 		return 0;

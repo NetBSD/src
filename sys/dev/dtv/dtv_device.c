@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.13 2021/07/24 07:48:38 skrll Exp $ */
+/* $NetBSD: dtv_device.c,v 1.14 2022/03/31 19:30:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.13 2021/07/24 07:48:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.14 2022/03/31 19:30:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -176,23 +176,26 @@ dtv_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
+		error = devsw_attach("dtv", NULL, &bmaj, &dtv_cdevsw, &cmaj);
+		if (error)
+			return error;
+
 		error = config_init_component(cfdriver_ioconf_dtv,
 		    cfattach_ioconf_dtv, cfdata_ioconf_dtv);
 		if (error)
-			return error;
-		error = devsw_attach("dtv", NULL, &bmaj, &dtv_cdevsw, &cmaj);
-		if (error)
-			config_fini_component(cfdriver_ioconf_dtv,
-			    cfattach_ioconf_dtv, cfdata_ioconf_dtv);
+			devsw_detach(NULL, &dtv_cdevsw);
 		return error;
 #else
 		return 0;
 #endif
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &dtv_cdevsw);
-		return config_fini_component(cfdriver_ioconf_dtv,
+		error = config_fini_component(cfdriver_ioconf_dtv,
 		    cfattach_ioconf_dtv, cfdata_ioconf_dtv);
+		if (error == 0)
+			devsw_detach(NULL, &dtv_cdevsw);
+
+		return error;
 #else
 		return 0;
 #endif

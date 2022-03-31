@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.284 2022/03/28 11:16:59 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.285 2022/03/31 19:30:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.284 2022/03/28 11:16:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.285 2022/03/31 19:30:15 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -2141,34 +2141,32 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_cfdriver_attach(&vnd_cd);
-		if (error)
-			break;
-
-		error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
-	        if (error) {
-			config_cfdriver_detach(&vnd_cd);
-#ifdef DIAGNOSTIC
-			aprint_error("%s: unable to register cfattach for \n"
-			    "%s, error %d", __func__, vnd_cd.cd_name, error);
-#endif
-			break;
-		}
-
                 /*
                  * Attach the {b,c}devsw's
                  */
 		error = devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
 		    &vnd_cdevsw, &vnd_cmajor);
-                /*
-                 * If devsw_attach fails, remove from autoconf database
-                 */
 		if (error) {
-			config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
-			config_cfdriver_detach(&vnd_cd);
 #ifdef DIAGNOSTIC
                         aprint_error("%s: unable to attach %s devsw, "
                             "error %d", __func__, vnd_cd.cd_name, error);
+#endif
+			break;
+		}
+
+		error = config_cfdriver_attach(&vnd_cd);
+		if (error) {
+			devsw_detach(&vnd_bdevsw, &vnd_cdevsw);
+			break;
+		}
+
+		error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
+	        if (error) {
+			config_cfdriver_detach(&vnd_cd);
+			devsw_detach(&vnd_bdevsw, &vnd_cdevsw);
+#ifdef DIAGNOSTIC
+			aprint_error("%s: unable to register cfattach for \n"
+			    "%s, error %d", __func__, vnd_cd.cd_name, error);
 #endif
 			break;
 		}
@@ -2178,17 +2176,10 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
                 /*
-                 * Remove {b,c}devsw's
-                 */
-		devsw_detach(&vnd_bdevsw, &vnd_cdevsw);
-
-                /*
-                 * Now remove device from autoconf database
+                 * Remove device from autoconf database
                  */
 		error = config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
                 if (error) { 
-                        (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
-                            &vnd_cdevsw, &vnd_cmajor);
 #ifdef DIAGNOSTIC
                         aprint_error("%s: failed to detach %s cfattach, "
                             "error %d\n", __func__, vnd_cd.cd_name, error);
@@ -2198,14 +2189,17 @@ vnd_modcmd(modcmd_t cmd, void *arg)
                 error = config_cfdriver_detach(&vnd_cd);
                 if (error) {
                         (void)config_cfattach_attach(vnd_cd.cd_name, &vnd_ca); 
-                        (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
-                            &vnd_cdevsw, &vnd_cmajor);
 #ifdef DIAGNOSTIC
                         aprint_error("%s: failed to detach %s cfdriver, "
                             "error %d\n", __func__, vnd_cd.cd_name, error);
                         break;
 #endif
                 }
+                /*
+                 * Remove {b,c}devsw's
+                 */
+		devsw_detach(&vnd_bdevsw, &vnd_cdevsw);
+
 #endif
 		break;
 

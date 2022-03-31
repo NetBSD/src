@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.32 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: cir.c,v 1.33 2022/03/31 19:30:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.32 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.33 2022/03/31 19:30:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,21 +288,20 @@ cir_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
+		error = devsw_attach("cir", NULL, &bmaj, &cir_cdevsw, &cmaj);
+		if (error)
+			return error;
 		error = config_init_component(cfdriver_ioconf_cir,
 		    cfattach_ioconf_cir, cfdata_ioconf_cir);
 		if (error)
-			return error;
-		error = devsw_attach("cir", NULL, &bmaj, &cir_cdevsw, &cmaj);
-		if (error)
-			config_fini_component(cfdriver_ioconf_cir,
-			    cfattach_ioconf_cir, cfdata_ioconf_cir);
+			devsw_detach(NULL, &cir_cdevsw);
 #endif
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &cir_cdevsw);
 		return config_fini_component(cfdriver_ioconf_cir,
 		    cfattach_ioconf_cir, cfdata_ioconf_cir);
+		devsw_detach(NULL, &cir_cdevsw);
 #endif
 		return error;
 	default:

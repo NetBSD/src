@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_at_virtio.c,v 1.4 2017/05/10 06:22:15 sevan Exp $	*/
+/*	$NetBSD: ld_at_virtio.c,v 1.5 2022/03/31 19:30:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.4 2017/05/10 06:22:15 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.5 2022/03/31 19:30:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,7 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: ld_at_virtio.c,v 1.4 2017/05/10 06:22:15 sevan Exp $
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
+	extern const struct bdevsw ld_bdevsw;
+	extern const struct cdevsw ld_cdevsw;
+	devmajor_t bmaj = -1, cmaj = -1;
+	int error;
 
+	if ((error = devsw_attach("ld", &ld_bdevsw, &bmaj,
+	    &ld_cdevsw, &cmaj)) != 0)
+		panic("cannot attach ld: %d", error);
+        
 	config_init_component(cfdriver_ioconf_ld_virtio,
 	    cfattach_ioconf_ld_virtio, cfdata_ioconf_ld_virtio);
 }
@@ -55,15 +63,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
  */
 RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 {
-	extern const struct bdevsw ld_bdevsw;
-	extern const struct cdevsw ld_cdevsw;
-	devmajor_t bmaj = -1, cmaj = -1;
 	int error, i;
 
-	if ((error = devsw_attach("ld", &ld_bdevsw, &bmaj,
-	    &ld_cdevsw, &cmaj)) != 0)
-		panic("cannot attach ld: %d", error);
-        
 	for (i = 0; i < 10; i++) {
 		char bbase[] = "/dev/ldX";
 		char rbase[] = "/dev/rldX";

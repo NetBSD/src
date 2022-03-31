@@ -1,5 +1,5 @@
 
-/*	$NetBSD: sht3x.c,v 1.5 2022/03/30 00:06:50 pgoyette Exp $	*/
+/*	$NetBSD: sht3x.c,v 1.6 2022/03/31 19:30:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.5 2022/03/30 00:06:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.6 2022/03/31 19:30:16 pgoyette Exp $");
 
 /*
   Driver for the Sensirion SHT30/SHT31/SHT35
@@ -2113,19 +2113,20 @@ sht3xtemp_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_sht3xtemp,
-		    cfattach_ioconf_sht3xtemp, cfdata_ioconf_sht3xtemp);
-		if (error)
-			aprint_error("%s: unable to init component\n",
-			    sht3xtemp_cd.cd_name);
-
 		error = devsw_attach("sht3xtemp", NULL, &bmaj,
 		    &sht3x_cdevsw, &cmaj);
 		if (error) {
 			aprint_error("%s: unable to attach devsw\n",
 			    sht3xtemp_cd.cd_name);
-			config_fini_component(cfdriver_ioconf_sht3xtemp,
-			    cfattach_ioconf_sht3xtemp, cfdata_ioconf_sht3xtemp);
+			return error;
+		}
+
+		error = config_init_component(cfdriver_ioconf_sht3xtemp,
+		    cfattach_ioconf_sht3xtemp, cfdata_ioconf_sht3xtemp);
+		if (error) {
+			aprint_error("%s: unable to init component\n",
+			    sht3xtemp_cd.cd_name);
+			devsw_detach(NULL, &sht3x_cdevsw);
 		}
 		return error;
 #else
@@ -2133,9 +2134,10 @@ sht3xtemp_modcmd(modcmd_t cmd, void *opaque)
 #endif
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &sht3x_cdevsw);
-		return config_fini_component(cfdriver_ioconf_sht3xtemp,
+		error = config_fini_component(cfdriver_ioconf_sht3xtemp,
 		      cfattach_ioconf_sht3xtemp, cfdata_ioconf_sht3xtemp);
+		devsw_detach(NULL, &sht3x_cdevsw);
+		return error;
 #else
 		return 0;
 #endif
