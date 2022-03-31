@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.31 2022/03/31 01:39:09 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.32 2022/03/31 01:42:40 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.31 2022/03/31 01:39:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.32 2022/03/31 01:42:40 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1371,16 +1371,10 @@ lagg_proto_updown(struct lagg_softc *sc, bool is_up)
 
 	pr = var->lv_proto;
 
-	if (is_up) {
-		if (lagg_protos[pr].pr_up != NULL)
-			error = lagg_protos[pr].pr_up(var->lv_psc);
-		else
-			error = 0;
-	} else {
-		if (lagg_protos[pr].pr_down != NULL)
-			lagg_protos[pr].pr_down(var->lv_psc);
-		else
-			error = 0;
+	if (is_up && lagg_protos[pr].pr_up != NULL) {
+		error = lagg_protos[pr].pr_up(var->lv_psc);
+	} else if (!is_up && lagg_protos[pr].pr_down != NULL) {
+		lagg_protos[pr].pr_down(var->lv_psc);
 	}
 
 	lagg_variant_putref(var, &psref);
@@ -1423,35 +1417,43 @@ lagg_proto_portctrl(struct lagg_softc *sc, struct lagg_port *lp,
 
 	pr = var->lv_proto;
 
-	error = EPROTONOSUPPORT;
 	switch (ctrl) {
 	case LAGG_PORTCTRL_ALLOC:
-		if (lagg_protos[pr].pr_allocport != NULL)
-			error = lagg_protos[pr].pr_allocport(var->lv_psc, lp);
+		if (lagg_protos[pr].pr_allocport == NULL) {
+			goto nosupport;
+		}
+		error = lagg_protos[pr].pr_allocport(var->lv_psc, lp);
 		break;
 	case LAGG_PORTCTRL_FREE:
-		if (lagg_protos[pr].pr_freeport != NULL) {
-			lagg_protos[pr].pr_freeport(var->lv_psc, lp);
-			error = 0;
+		if (lagg_protos[pr].pr_freeport == NULL) {
+			goto nosupport;
 		}
+		lagg_protos[pr].pr_freeport(var->lv_psc, lp);
 		break;
 	case LAGG_PORTCTRL_START:
-		if (lagg_protos[pr].pr_startport != NULL) {
-			lagg_protos[pr].pr_startport(var->lv_psc, lp);
-			error = 0;
+		if (lagg_protos[pr].pr_startport == NULL) {
+			goto nosupport;
 		}
+		lagg_protos[pr].pr_startport(var->lv_psc, lp);
 		break;
 	case LAGG_PORTCTRL_STOP:
-		if (lagg_protos[pr].pr_stopport != NULL) {
-			lagg_protos[pr].pr_stopport(var->lv_psc, lp);
-			error = 0;
+		if (lagg_protos[pr].pr_stopport == NULL) {
+			goto nosupport;
 		}
+		lagg_protos[pr].pr_stopport(var->lv_psc, lp);
 		break;
+	default:
+		goto nosupport;
 	}
 
 	lagg_variant_putref(var, &psref);
 	curlwp_bindx(bound);
 	return error;
+
+nosupport:
+	lagg_variant_putref(var, &psref);
+	curlwp_bindx(bound);
+	return EPROTONOSUPPORT;
 }
 
 static int
