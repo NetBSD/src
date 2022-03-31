@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.36 2022/03/31 01:53:22 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.37 2022/03/31 01:57:13 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.36 2022/03/31 01:53:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.37 2022/03/31 01:57:13 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1094,7 +1094,6 @@ lagg_proto_input(struct lagg_softc *sc, struct lagg_port *lp, struct mbuf *m)
 		return NULL;
 	}
 
-	bpf_mtap((struct ifnet *)&sc->sc_if, m, BPF_D_IN);
 	pr = var->lv_proto;
 
 	if (lagg_protos[pr].pr_input != NULL) {
