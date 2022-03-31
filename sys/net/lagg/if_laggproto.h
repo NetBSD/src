@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.13 2022/03/31 03:12:31 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.14 2022/03/31 03:15:15 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -260,8 +260,24 @@ lagg_portactive(struct lagg_port *lp)
 	return false;
 }
 
-void		lagg_log(struct lagg_softc *, int, const char *, ...)
-		    __printflike(3, 4);
+static inline bool
+lagg_debug_enable(struct lagg_softc *sc)
+{
+	if (__predict_false(ISSET(sc->sc_if.if_flags, IFF_DEBUG)))
+		return true;
+
+	return false;
+}
+
+#define LAGG_LOG(_sc, _lvl, _fmt, _arg...) do {		\
+	if ((_lvl) == LOG_DEBUG && 			\
+	    !lagg_debug_enable(_sc))			\
+		break;					\
+							\
+	log((_lvl), "%s: ", (_sc)->sc_if.if_xname);	\
+	addlog((_fmt), ##_arg);				\
+} while(0)
+
 void		lagg_port_getref(struct lagg_port *, struct psref *);
 void		lagg_port_putref(struct lagg_port *, struct psref *);
 void		lagg_enqueue(struct lagg_softc *,
