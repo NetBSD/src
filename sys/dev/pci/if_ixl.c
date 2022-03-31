@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.79 2022/03/24 08:54:16 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.80 2022/03/31 06:20:14 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.79 2022/03/24 08:54:16 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.80 2022/03/31 06:20:14 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2156,29 +2156,6 @@ ixl_iff(struct ixl_softc *sc)
 }
 
 static void
-ixl_stop_rendezvous(struct ixl_softc *sc)
-{
-	struct ixl_tx_ring *txr;
-	struct ixl_rx_ring *rxr;
-	unsigned int i;
-
-	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
-		txr = sc->sc_qps[i].qp_txr;
-		rxr = sc->sc_qps[i].qp_rxr;
-
-		mutex_enter(&txr->txr_lock);
-		mutex_exit(&txr->txr_lock);
-
-		mutex_enter(&rxr->rxr_lock);
-		mutex_exit(&rxr->rxr_lock);
-
-		sc->sc_qps[i].qp_workqueue = false;
-		workqueue_wait(sc->sc_workq_txrx,
-		    &sc->sc_qps[i].qp_work);
-	}
-}
-
-static void
 ixl_stop_locked(struct ixl_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -2247,7 +2224,11 @@ ixl_stop_locked(struct ixl_softc *sc)
 		mutex_exit(&rxr->rxr_lock);
 	}
 
-	ixl_stop_rendezvous(sc);
+	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
+		sc->sc_qps[i].qp_workqueue = false;
+		workqueue_wait(sc->sc_workq_txrx,
+		    &sc->sc_qps[i].qp_work);
+	}
 
 	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
 		txr = sc->sc_qps[i].qp_txr;
