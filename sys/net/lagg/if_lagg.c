@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.34 2022/03/31 01:46:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.35 2022/03/31 01:49:02 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.34 2022/03/31 01:46:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.35 2022/03/31 01:49:02 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2414,6 +2414,7 @@ remove_port:
 	pserialize_perform(sc->sc_psz);
 	lagg_port_purgemulti(sc, lp);
 	lagg_port_purgevlan(sc, lp);
+	lagg_proto_freeport(sc, lp);
 
 teardown_lladdr:
 	IFNET_LOCK(ifp_port);
