@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.6 2021/11/08 06:24:11 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.7 2022/03/31 03:09:03 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -736,39 +736,31 @@ lagg_lacp_vlan()
 		setup_l2tp_ipv4tunnel
 	fi
 
-	export RUMP_SERVER=$SOCK_HOST0
-	$atf_ifconfig lagg0 create
-	$atf_ifconfig lagg0 laggproto lacp laggport $iface0
-	$atf_ifconfig $iface0 up
-	$atf_ifconfig lagg0 up
+	for sock in $SOCK_HOST0 $SOCK_HOST1; do
+		export RUMP_SERVER=$sock
+		$atf_ifconfig lagg0 create
+		$atf_ifconfig lagg0 laggproto lacp laggport $iface0
 
-	export RUMP_SERVER=$SOCK_HOST1
-	$atf_ifconfig lagg0 create
-	$atf_ifconfig lagg0 laggproto lacp laggport $iface0
-	$atf_ifconfig $iface0 up
-	$atf_ifconfig lagg0 up
+		$atf_ifconfig vlan0 create
+		$atf_ifconfig vlan0 vlan 10 vlanif lagg0
+		$atf_ifconfig vlan1 create
+		$atf_ifconfig vlan1 vlan 11 vlanif lagg0
+
+		$atf_ifconfig $iface0 up
+		$atf_ifconfig lagg0 up
+	done
 
 	export RUMP_SERVER=$SOCK_HOST0
 	wait_for_distributing lagg0
-
-	$atf_ifconfig vlan0 create
-	$atf_ifconfig vlan0 vlan 10 vlanif lagg0
 	$atf_ifconfig vlan0 $af $host0addr0/$pfx
 	$atf_ifconfig vlan0 up
-
-	$atf_ifconfig vlan1 create
-	$atf_ifconfig vlan1 vlan 11 vlanif lagg0
 	$atf_ifconfig vlan1 $af $host0addr1/$pfx
 	$atf_ifconfig vlan1 up
 
 	export RUMP_SERVER=$SOCK_HOST1
-	$atf_ifconfig vlan0 create
-	$atf_ifconfig vlan0 vlan 10 vlanif lagg0
+	wait_for_distributing lagg0
 	$atf_ifconfig vlan0 $af $host1addr0/$pfx
 	$atf_ifconfig vlan0 up
-
-	$atf_ifconfig vlan1 create
-	$atf_ifconfig vlan1 vlan 11 vlanif lagg0
 	$atf_ifconfig vlan1 $af $host1addr1/$pfx
 	$atf_ifconfig vlan1 up
 
