@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.h,v 1.3 2021/11/30 01:17:02 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.h,v 1.4 2022/03/31 02:04:50 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -41,6 +41,8 @@
 #define LACP_MAX_PORTS		16
 #define LACP_SYSTEM_PRIO	0x8000U
 #define LACP_PORT_PRIO		LAGG_PORT_PRIO
+#define LACP_SENDDU_PPS		3
+#define LACP_RCVDU_LIMIT	(LACP_SENDDU_PPS * LACP_MAX_PORTS)
 
 #define LACP_PARTNER_ADMIN_OPTIMISTIC	(LACP_STATE_SYNC | \
 					LACP_STATE_AGGREGATION | \
