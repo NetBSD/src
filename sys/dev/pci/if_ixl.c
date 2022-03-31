@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.81 2022/03/31 06:21:41 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.82 2022/03/31 06:23:18 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.81 2022/03/31 06:21:41 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.82 2022/03/31 06:23:18 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1455,12 +1455,17 @@ ixl_detach(device_t self, int flags)
 
 	ixl_stop(ifp, 1);
 
-	ixl_disable_other_intr(sc);
-	ixl_intr_barrier();
-
 	callout_halt(&sc->sc_stats_callout, NULL);
 	ixl_work_wait(sc->sc_workq, &sc->sc_stats_task);
 
+	/* detach the I/F before stop adminq due to callbacks */
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+	ifmedia_fini(&sc->sc_media);
+	if_percpuq_destroy(sc->sc_ipq);
+
+	ixl_disable_other_intr(sc);
+	ixl_intr_barrier();
 	ixl_work_wait(sc->sc_workq, &sc->sc_arq_task);
 	ixl_work_wait(sc->sc_workq, &sc->sc_link_state_task);
 
@@ -1473,11 +1478,6 @@ ixl_detach(device_t self, int flags)
 		workqueue_destroy(sc->sc_workq_txrx);
 		sc->sc_workq_txrx = NULL;
 	}
-
-	if_percpuq_destroy(sc->sc_ipq);
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-	ifmedia_fini(&sc->sc_media);
 
 	ixl_teardown_interrupts(sc);
 	ixl_teardown_stats(sc);
