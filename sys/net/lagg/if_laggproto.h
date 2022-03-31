@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.14 2022/03/31 03:15:15 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.15 2022/03/31 07:59:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -280,7 +280,7 @@ lagg_debug_enable(struct lagg_softc *sc)
 
 void		lagg_port_getref(struct lagg_port *, struct psref *);
 void		lagg_port_putref(struct lagg_port *, struct psref *);
-void		lagg_enqueue(struct lagg_softc *,
+void		lagg_output(struct lagg_softc *,
 		    struct lagg_port *, struct mbuf *);
 uint32_t	lagg_hashmbuf(struct lagg_softc *, struct mbuf *);
 

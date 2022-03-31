@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.20 2022/03/31 03:15:15 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.21 2022/03/31 07:59:05 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.20 2022/03/31 03:15:15 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.21 2022/03/31 07:59:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -647,7 +647,7 @@ lacp_transmit(struct lagg_proto_softc *xlsc, struct mbuf *m)
 		return ENOENT;
 	}
 
-	lagg_enqueue(lsc->lsc_softc, lp, m);
+	lagg_output(lsc->lsc_softc, lp, m);
 	lagg_port_putref(lp, &psref);
 
 	return 0;
