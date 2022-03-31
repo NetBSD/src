@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.35 2022/03/31 01:49:02 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.36 2022/03/31 01:53:22 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.35 2022/03/31 01:49:02 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.36 2022/03/31 01:53:22 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2652,7 +2652,7 @@ lagg_get_stats(struct lagg_softc *sc, struct lagg_req *resp,
 	curlwp_bindx(bound);
 
 	if (resp->lrq_nports > nports) {
-		return ENOMEM;
+		return ENOBUFS;
 	}
 	return 0;
 }
