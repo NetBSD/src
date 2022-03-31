@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.13 2022/01/16 10:45:17 rillig Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.14 2022/03/31 01:36:47 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.13 2022/01/16 10:45:17 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.14 2022/03/31 01:36:47 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -867,7 +867,9 @@ lacp_linkstate_ifnet_locked(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 		}
 
 		if (ISSET(media, LACP_MEDIA_ETHER) &&
+#ifndef LACP_NOFDX
 		    ISSET(media, LACP_MEDIA_FDX) &&
+#endif
 		    ifp_port->if_link_state != LINK_STATE_DOWN &&
 		    ISSET(ifp_port->if_flags, IFF_RUNNING)) {
 			lacp_port_enable(lsc, lacpp);
