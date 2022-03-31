@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.38 2022/03/31 02:00:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.39 2022/03/31 03:07:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.38 2022/03/31 02:00:27 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.39 2022/03/31 03:07:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1949,11 +1949,17 @@ lagg_ethercap_update(struct lagg_softc *sc)
 	ena = ~0;
 	cap = ~0;
 	LAGG_PORTS_FOREACH(sc, lp) {
-		if (lp->lp_iftype == IFT_ETHER) {
+		switch (lp->lp_iftype) {
+		case IFT_ETHER:
 			ec = (struct ethercom *)lp->lp_ifp;
 			ena &= ec->ec_capenable;
 			cap &= ec->ec_capabilities;
-		} else {
+			break;
+		case IFT_L2TP:
+			ena &= (ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU);
+			cap &= (ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU);
+			break;
+		default:
 			ena = 0;
 			cap = 0;
 		}
