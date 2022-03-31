@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.18 2022/03/31 02:04:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.19 2022/03/31 03:04:04 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.18 2022/03/31 02:04:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.19 2022/03/31 03:04:04 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -947,8 +947,14 @@ lacp_ioctl(struct lagg_proto_softc *xlsc, struct laggreqproto *lreq)
 			lsc->lsc_dump_du = set;
 		if (ISSET(rplacp->flags, LAGGREQLACP_STOPDU))
 			lsc->lsc_stop_lacpdu = set;
-		if (ISSET(rplacp->flags, LAGGREQLACP_MULTILS))
+
+		if (ISSET(rplacp->flags, LAGGREQLACP_MULTILS) &&
+		    lsc->lsc_multi_linkspeed != set) {
 			lsc->lsc_multi_linkspeed = set;
+			TAILQ_FOREACH(la, &lsc->lsc_aggregators, la_q) {
+				lacp_selected_update(lsc, la);
+			}
+		}
 
 		LACP_UNLOCK(lsc);
 		break;
