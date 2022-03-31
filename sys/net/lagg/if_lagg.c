@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.33 2022/03/31 01:43:48 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.34 2022/03/31 01:46:25 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.33 2022/03/31 01:43:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.34 2022/03/31 01:46:25 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2352,7 +2352,6 @@ lagg_port_setup(struct lagg_softc *sc,
 
 	ifp_port->if_type = if_type;
 	ifp_port->if_ioctl = lagg_port_ioctl;
-	ifp_port->if_output = lagg_port_output;
 
 	iftype_changed = (lp->lp_iftype != ifp_port->if_type);
 
@@ -2388,15 +2387,16 @@ lagg_port_setup(struct lagg_softc *sc,
 	lagg_port_syncmulti(sc, lp);
 	lagg_port_syncvlan(sc, lp);
 
+	IFNET_LOCK(ifp_port);
+	ifp_port->if_output = lagg_port_output;
 	if (stopped) {
-		IFNET_LOCK(ifp_port);
 		if (!ISSET(ifp_port->if_flags, IFF_RUNNING)) {
 			error = if_init(ifp_port);
 			if (error != 0)
 				goto remove_port;
 		}
-		IFNET_UNLOCK(ifp_port);
 	}
+	IFNET_UNLOCK(ifp_port);
 
 	lagg_config_promisc(sc, lp);
 	lagg_proto_startport(sc, lp);
@@ -2407,6 +2407,9 @@ lagg_port_setup(struct lagg_softc *sc,
 remove_port:
 	SIMPLEQ_REMOVE(&sc->sc_ports, lp, lagg_port, lp_entry);
 	sc->sc_nports--;
+	IFNET_LOCK(ifp_port);
+	ifp_port->if_output = lp->lp_output;
+	IFNET_UNLOCK(ifp_port);
 	atomic_store_release(&ifp_port->if_lagg, NULL);
 	pserialize_perform(sc->sc_psz);
 	lagg_port_purgemulti(sc, lp);
@@ -2432,7 +2435,6 @@ restore_ipv6lla:
 	ifp_port->if_type = lp->lp_iftype;
 	if (ifp_port->if_ioctl == lagg_port_ioctl)
 		ifp_port->if_ioctl = lp->lp_ioctl;
-	ifp_port->if_output = lp->lp_output;
 
 	IFNET_UNLOCK(ifp_port);
 
@@ -2465,6 +2467,17 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 		return;
 	}
 
+	lagg_proto_stopport(sc, lp);
+
+	IFNET_LOCK(ifp_port);
+	if (ISSET(ifp_port->if_flags, IFF_RUNNING) &&
+	    ifp_port->if_init != NULL) {
+		if_stop(ifp_port, 0);
+		stopped = true;
+	}
+	ifp_port->if_output = lp->lp_output;
+	IFNET_UNLOCK(ifp_port);
+
 	SIMPLEQ_REMOVE(&sc->sc_ports, lp, lagg_port, lp_entry);
 	sc->sc_nports--;
 	atomic_store_release(&ifp_port->if_lagg, NULL);
@@ -2473,7 +2486,6 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 	if_linkstate_change_disestablish(ifp_port,
 	    lp->lp_linkstate_hook, NULL);
 
-	lagg_proto_stopport(sc, lp);
 	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
 
 	lagg_port_purgemulti(sc, lp);
@@ -2481,16 +2493,9 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 	lagg_teardown_lladdr(sc, lp);
 
 	IFNET_LOCK(ifp_port);
-	if (ISSET(ifp_port->if_flags, IFF_RUNNING) &&
-	    ifp_port->if_init != NULL) {
-		if_stop(ifp_port, 0);
-		stopped = true;
-	}
-
 	ifp_port->if_type = lp->lp_iftype;
 	if (ifp_port->if_ioctl == lagg_port_ioctl)
 		ifp_port->if_ioctl = lp->lp_ioctl;
-	ifp_port->if_output = lp->lp_output;
 	lagg_teardown_mtu(sc, lp);
 
 	if (stopped) {
