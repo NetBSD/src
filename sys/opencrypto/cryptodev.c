@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.106 2020/06/30 04:14:55 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.107 2022/03/31 19:30:17 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.106 2020/06/30 04:14:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.107 2022/03/31 19:30:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2199,7 +2199,6 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 {
 	int error = 0;
 #ifdef _MODULE
-	int error2;
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 #endif
 
@@ -2207,14 +2206,24 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
 
+		error = devsw_attach(crypto_cd.cd_name, NULL, &bmajor,
+		    &crypto_cdevsw, &cmajor);
+		if (error) {
+			aprint_error("%s: unable to register devsw, error %d\n",
+				crypto_cd.cd_name, error);
+			return error;
+		}
+
 		error = config_cfdriver_attach(&crypto_cd);
 		if (error) {
+			devsw_detach(NULL, &crypto_cdevsw);
 			return error;
 		}
 
 		error = config_cfattach_attach(crypto_cd.cd_name, &crypto_ca);
 		if (error) {
 			config_cfdriver_detach(&crypto_cd);
+			devsw_detach(NULL, &crypto_cdevsw);
 			aprint_error("%s: unable to register cfattach\n",
 				crypto_cd.cd_name);
 
@@ -2225,23 +2234,9 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 		if (error) {
 			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
 			config_cfdriver_detach(&crypto_cd);
+			devsw_detach(NULL, &crypto_cdevsw);
 			aprint_error("%s: unable to register cfdata\n",
 				crypto_cd.cd_name);
-
-			return error;
-		}
-
-		error = devsw_attach(crypto_cd.cd_name, NULL, &bmajor,
-		    &crypto_cdevsw, &cmajor);
-		if (error) {
-			error2 = config_cfdata_detach(crypto_cfdata);
-			if (error2) {
-				return error2;
-			}
-			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
-			config_cfdriver_detach(&crypto_cd);
-			aprint_error("%s: unable to register devsw, error %d\n",
-				crypto_cd.cd_name, error);
 
 			return error;
 		}

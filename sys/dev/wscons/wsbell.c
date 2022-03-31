@@ -1,4 +1,4 @@
-/* $NetBSD: wsbell.c,v 1.13 2020/12/27 16:09:33 tsutsui Exp $ */
+/* $NetBSD: wsbell.c,v 1.14 2022/03/31 19:30:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.13 2020/12/27 16:09:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsbell.c,v 1.14 2022/03/31 19:30:17 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -504,12 +504,10 @@ wsbell_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &wsbell_cdevsw);
 		error = config_fini_component(cfdriver_ioconf_wsbell,
 		    cfattach_ioconf_wsbell, cfdata_ioconf_wsbell);
-		if (error)
-			devsw_attach("wsbell", NULL, &wsbell_bmajor,
-			    &wsbell_cdevsw, &wsbell_cmajor);
+		if (error == 0)
+			devsw_detach(NULL, &wsbell_cdevsw);
 #endif
 		break;
 

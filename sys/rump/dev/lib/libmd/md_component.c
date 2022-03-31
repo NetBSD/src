@@ -1,4 +1,4 @@
-/*	$NetBSD: md_component.c,v 1.2 2016/01/26 23:12:15 pooka Exp $	*/
+/*	$NetBSD: md_component.c,v 1.3 2022/03/31 19:30:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_component.c,v 1.2 2016/01/26 23:12:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_component.c,v 1.3 2022/03/31 19:30:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -49,13 +49,13 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	devmajor_t bmaj, cmaj;
 	int error;
 
-	config_init_component(cfdriver_ioconf_md,
-	    cfattach_ioconf_md, cfdata_ioconf_md);
-
 	bmaj = cmaj = NODEVMAJOR;
 	if ((error = devsw_attach("md", &md_bdevsw, &bmaj,
 	    &md_cdevsw, &cmaj)) != 0)
 		panic("md devsw attach failed: %d", error);
+
+	config_init_component(cfdriver_ioconf_md,
+	    cfattach_ioconf_md, cfdata_ioconf_md);
 
         if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/md0", 'a',
             bmaj, 0, 7)) != 0)

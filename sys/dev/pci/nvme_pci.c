@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.31 2021/10/10 07:50:53 skrll Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.32 2022/03/31 19:30:16 pgoyette Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.31 2021/10/10 07:50:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.32 2022/03/31 19:30:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,12 +501,6 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = config_init_component(cfdriver_ioconf_nvme_pci,
-		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
-		if (error)
-			break;
-
-		bmajor = cmajor = NODEVMAJOR;
 		error = devsw_attach(nvme_cd.cd_name, NULL, &bmajor,
 		    &nvme_cdevsw, &cmajor);
 		if (error) {
@@ -514,12 +508,18 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 			    nvme_cd.cd_name);
 			/* do not abort, just /dev/nvme* will not work */
 		}
+		error = config_init_component(cfdriver_ioconf_nvme_pci,
+		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
+		if (error) {
+			devsw_detach(NULL, &nvme_cdevsw);
+			break;
+		}
+		bmajor = cmajor = NODEVMAJOR;
 		break;
 	case MODULE_CMD_FINI:
-		devsw_detach(NULL, &nvme_cdevsw);
-
 		error = config_fini_component(cfdriver_ioconf_nvme_pci,
 		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
+		devsw_detach(NULL, &nvme_cdevsw);
 		break;
 	default:
 		break;
