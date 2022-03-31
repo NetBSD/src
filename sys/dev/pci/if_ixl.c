@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.80 2022/03/31 06:20:14 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.81 2022/03/31 06:21:41 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.80 2022/03/31 06:20:14 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.81 2022/03/31 06:21:41 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.80 2022/03/31 06:20:14 yamaguchi Exp $"
 #include <sys/pcq.h>
 #include <sys/syslog.h>
 #include <sys/workqueue.h>
+#include <sys/xcall.h>
 
 #include <sys/bus.h>
 
@@ -989,6 +990,14 @@ ixl_lookup(const struct pci_attach_args *pa)
 	return NULL;
 }
 
+static void
+ixl_intr_barrier(void)
+{
+
+	/* wait for finish of all handler */
+	xc_barrier(0);
+}
+
 static int
 ixl_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -1447,13 +1456,10 @@ ixl_detach(device_t self, int flags)
 	ixl_stop(ifp, 1);
 
 	ixl_disable_other_intr(sc);
+	ixl_intr_barrier();
 
 	callout_halt(&sc->sc_stats_callout, NULL);
 	ixl_work_wait(sc->sc_workq, &sc->sc_stats_task);
-
-	/* wait for ATQ handler */
-	mutex_enter(&sc->sc_atq_lock);
-	mutex_exit(&sc->sc_atq_lock);
 
 	ixl_work_wait(sc->sc_workq, &sc->sc_arq_task);
 	ixl_work_wait(sc->sc_workq, &sc->sc_link_state_task);
