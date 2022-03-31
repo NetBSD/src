@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.7 2022/03/31 03:09:03 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.8 2022/03/31 03:26:33 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -353,6 +353,90 @@ lagg_ipv6lla_body()
 
 lagg_ipv6lla_cleanup()
 {
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case lagg_mtu cleanup
+lagg_mtu_head()
+{
+	atf_set "descr" "tests for MTU"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_mtu_body()
+{
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
+	local mtu_1st=1450
+	local mtu_big=1460
+	local mtu_small=1440
+
+	rump_server_start $SOCK_HOST0 lagg
+
+	export RUMP_SERVER=$SOCK_HOST0
+	rump_server_add_iface $SOCK_HOST0 shmif0 $BUS0
+	rump_server_add_iface $SOCK_HOST0 shmif1 $BUS1
+	rump_server_add_iface $SOCK_HOST0 shmif2 $BUS2
+	$atf_ifconfig lagg0 create
+	$atf_ifconfig lagg0 laggproto lacp
+
+	$atf_ifconfig shmif0 mtu $mtu_1st
+	$atf_ifconfig shmif1 mtu $mtu_big
+	$atf_ifconfig shmif2 mtu $mtu_small
+
+	atf_check -s exit:0 -o match:"mtu *1500" rump.ifconfig lagg0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:"mtu *$mtu_big" rump.ifconfig shmif1
+	atf_check -s exit:0 -o match:"mtu *$mtu_small" rump.ifconfig shmif2
+
+	# copy MTU from 1st port
+	$atf_ifconfig lagg0 laggport shmif0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig lagg0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig shmif0
+
+	# copy MTU to added port
+	$atf_ifconfig lagg0 laggport shmif1
+	$atf_ifconfig lagg0 laggport shmif2
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig lagg0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig shmif1
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig shmif2
+
+	# reset MTU after detaching from lagg0
+	$atf_ifconfig lagg0 -laggport shmif2
+	atf_check -s exit:0 -o match:"mtu *$mtu_small" rump.ifconfig shmif2
+
+	# change MTU of lagg0
+	$atf_ifconfig lagg0 mtu 1500
+	atf_check -s exit:0 -o match:"mtu *1500" rump.ifconfig lagg0
+	atf_check -s exit:0 -o match:"mtu *1500" rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:"mtu *1500" rump.ifconfig shmif1
+
+	# reset MTU after detching from lagg0
+	$atf_ifconfig lagg0 -laggport shmif0
+	$atf_ifconfig lagg0 -laggport shmif1
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:"mtu *$mtu_big" rump.ifconfig shmif1
+
+	# MTU should not be changed
+	atf_check -s exit:0 -o match:"mtu *1500" rump.ifconfig lagg0
+
+	# copy MTU from 1st port even when MTU of lagg0 is changhed
+	$atf_ifconfig lagg0 mtu 1400
+	atf_check -s exit:0 -o match:"mtu *1400" rump.ifconfig lagg0
+	$atf_ifconfig lagg0 laggport shmif0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig lagg0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig shmif0
+
+	# MTU of lagg0 need not reset
+	$atf_ifconfig lagg0 -laggport shmif0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig lagg0
+	atf_check -s exit:0 -o match:"mtu *$mtu_1st" rump.ifconfig shmif0
+}
+
+lagg_mtu_cleanup()
+{
+
 	$DEBUG && dump
 	cleanup
 }
@@ -1376,6 +1460,7 @@ atf_init_test_cases()
 	atf_add_test_case lagg_ifconfig
 	atf_add_test_case lagg_macaddr
 	atf_add_test_case lagg_ipv6lla
+	atf_add_test_case lagg_mtu
 	atf_add_test_case lagg_lacp_basic
 	atf_add_test_case lagg_lacp_ipv4
 	atf_add_test_case lagg_lacp_ipv6
