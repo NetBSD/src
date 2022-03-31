@@ -1,4 +1,4 @@
-/*	$NetBSD: lagg.c,v 1.2 2021/06/21 03:14:40 christos Exp $	*/
+/*	$NetBSD: lagg.c,v 1.3 2022/03/31 01:53:22 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: lagg.c,v 1.2 2021/06/21 03:14:40 christos Exp $");
+__RCSID("$NetBSD: lagg.c,v 1.3 2022/03/31 01:53:22 yamaguchi Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -269,7 +269,7 @@ getlagg(prop_dictionary_t env)
 		if (indirect_ioctl(env, SIOCGLAGG, req) == 0)
 			goto done;
 
-		if (errno != ENOMEM)
+		if (errno != ENOBUFS)
 			break;
 		nports = req->lrq_nports + 3; /* 3: additional space */
 	}
