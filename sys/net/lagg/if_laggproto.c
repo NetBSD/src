@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.2 2021/05/24 13:43:21 thorpej Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.3 2022/03/31 02:07:26 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.2 2021/05/24 13:43:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.3 2022/03/31 02:07:26 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -324,8 +324,8 @@ lagg_common_stopport(struct lagg_proto_softc *psc, struct lagg_port *lp)
 	lagg_proto_remove_port(psc, pport);
 
 	if (pport->lpp_active) {
-		if (psc->psc_nactports > 0)
-			psc->psc_nactports--;
+		KASSERT(psc->psc_nactports > 0);
+		psc->psc_nactports--;
 
 		if (psc->psc_nactports == 0) {
 			ifp = &psc->psc_softc->sc_if;
@@ -355,8 +355,8 @@ lagg_common_linkstate(struct lagg_proto_softc *psc, struct lagg_port *lp)
 		if (psc->psc_nactports == 1)
 			if_link_state_change(ifp, LINK_STATE_UP);
 	} else {
-		if (psc->psc_nactports > 0)
-			psc->psc_nactports--;
+		KASSERT(psc->psc_nactports > 0);
+		psc->psc_nactports--;
 
 		if (psc->psc_nactports == 0)
 			if_link_state_change(ifp, LINK_STATE_DOWN);
