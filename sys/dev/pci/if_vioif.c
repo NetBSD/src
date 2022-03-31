@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.76 2022/03/29 01:57:51 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.77 2022/03/31 06:17:34 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.76 2022/03/29 01:57:51 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.77 2022/03/31 06:17:34 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1211,34 +1211,6 @@ vioif_init(struct ifnet *ifp)
 }
 
 static void
-vioif_stop_rendezvous(struct vioif_softc *sc)
-{
-	struct vioif_txqueue *txq;
-	struct vioif_rxqueue *rxq;
-	int i;
-
-	/*
-	 * stop all packet processing:
-	 * 1. acquire a lock for queue to wait
-	 *    for finish of interrupt handler
-	 * 2. stop workqueue for packet processing
-	 */
-
-	for (i =0; i < sc->sc_act_nvq_pairs; i++) {
-		txq = &sc->sc_txq[i];
-		rxq = &sc->sc_rxq[i];
-
-		mutex_enter(rxq->rxq_lock);
-		mutex_exit(rxq->rxq_lock);
-		vioif_work_wait(sc->sc_txrx_workqueue, &rxq->rxq_work);
-
-		mutex_enter(txq->txq_lock);
-		mutex_exit(txq->txq_lock);
-		vioif_work_wait(sc->sc_txrx_workqueue, &txq->txq_work);
-	}
-}
-
-static void
 vioif_stop(struct ifnet *ifp, int disable)
 {
 	struct vioif_softc *sc = ifp->if_softc;
@@ -1248,30 +1220,33 @@ vioif_stop(struct ifnet *ifp, int disable)
 	struct vioif_ctrlqueue *ctrlq = &sc->sc_ctrlq;
 	int i;
 
-	/* Take the locks to ensure that ongoing TX/RX finish */
-	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
+	/* disable interrupts */
+	vioif_disable_interrupt_vqpairs(sc);
+	if (sc->sc_has_ctrl)
+		virtio_stop_vq_intr(vsc, ctrlq->ctrlq_vq);
+
+	/*
+	 * stop all packet processing:
+	 * 1. stop interrupt handlers by rxq_stopping and txq_stopping
+	 * 2. wait for stoping workqueue for packet processing
+	 */
+	for (i =0; i < sc->sc_act_nvq_pairs; i++) {
 		txq = &sc->sc_txq[i];
 		rxq = &sc->sc_rxq[i];
 
 		mutex_enter(rxq->rxq_lock);
 		rxq->rxq_stopping = true;
 		mutex_exit(rxq->rxq_lock);
+		vioif_work_wait(sc->sc_txrx_workqueue, &rxq->rxq_work);
 
 		mutex_enter(txq->txq_lock);
 		txq->txq_stopping = true;
 		mutex_exit(txq->txq_lock);
+		vioif_work_wait(sc->sc_txrx_workqueue, &txq->txq_work);
 	}
-
-	/* disable interrupts */
-	vioif_disable_interrupt_vqpairs(sc);
-
-	if (sc->sc_has_ctrl)
-		virtio_stop_vq_intr(vsc, ctrlq->ctrlq_vq);
 
 	/* only way to stop I/O and DMA is resetting... */
 	virtio_reset(vsc);
-
-	vioif_stop_rendezvous(sc);
 
 	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
 		vioif_rx_queue_clear(&sc->sc_rxq[i]);
