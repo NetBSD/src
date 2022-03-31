@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.12 2022/03/31 03:10:59 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.13 2022/03/31 03:12:31 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -282,7 +282,6 @@ void		lagg_common_linkstate(struct lagg_proto_softc *,
 
 int		lagg_none_attach(struct lagg_softc *,
 		    struct lagg_proto_softc **);
-int		lagg_none_up(struct lagg_proto_softc *);
 
 int		lagg_fail_attach(struct lagg_softc *,
 		    struct lagg_proto_softc **);

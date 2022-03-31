@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.4 2022/03/31 03:05:41 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.5 2022/03/31 03:12:31 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.4 2022/03/31 03:05:41 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.5 2022/03/31 03:12:31 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -378,13 +378,6 @@ lagg_none_attach(struct lagg_softc *sc, struct lagg_proto_softc **pscp)
 
 	*pscp = NULL;
 	return 0;
-}
-
-int
-lagg_none_up(struct lagg_proto_softc *psc __unused)
-{
-
-	return EBUSY;
 }
 
 int
