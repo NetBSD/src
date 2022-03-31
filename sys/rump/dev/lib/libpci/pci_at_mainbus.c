@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_at_mainbus.c,v 1.10 2021/08/07 16:19:18 thorpej Exp $	*/
+/*	$NetBSD: pci_at_mainbus.c,v 1.11 2022/03/31 19:30:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.10 2021/08/07 16:19:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.11 2022/03/31 19:30:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,15 +51,15 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	devmajor_t cmaj, bmaj;
 	int error;
 
-	config_init_component(cfdriver_ioconf_pci,
-	    cfattach_ioconf_pci, cfdata_ioconf_pci);
-
 	bmaj = cmaj = -1;
 	if ((error = devsw_attach("pci", NULL, &bmaj,
 	    &pci_cdevsw, &cmaj)) != 0) {
 		printf("pci: devsw_attach failed: %d\n", error);
 		return;
 	}
+
+	config_init_component(cfdriver_ioconf_pci,
+	    cfattach_ioconf_pci, cfdata_ioconf_pci);
 
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/pci", '0',
 	    cmaj, 0, 4)) != 0)

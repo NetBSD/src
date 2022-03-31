@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.121 2022/03/28 12:39:57 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.122 2022/03/31 19:30:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.121 2022/03/28 12:39:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.122 2022/03/31 19:30:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -9070,14 +9070,13 @@ audio_modcmd(modcmd_t cmd, void *arg)
 		break;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &audio_cdevsw);
 		error = config_fini_component(cfdriver_ioconf_audio,
 		   cfattach_ioconf_audio, cfdata_ioconf_audio);
-		if (error)
-			devsw_attach(audio_cd.cd_name, NULL, &audio_bmajor,
-			    &audio_cdevsw, &audio_cmajor);
+		if (error == 0)
+			devsw_detach(NULL, &audio_cdevsw);
 #endif
-		psref_class_destroy(audio_psref_class);
+		if (error == 0)
+			psref_class_destroy(audio_psref_class);
 		break;
 	default:
 		error = ENOTTY;

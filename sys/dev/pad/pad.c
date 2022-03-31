@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.77 2022/03/28 12:33:21 riastradh Exp $ */
+/* $NetBSD: pad.c,v 1.78 2022/03/31 19:30:16 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.77 2022/03/28 12:33:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.78 2022/03/31 19:30:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -758,34 +758,27 @@ pad_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		pad_cfattach[1] = cfattach_ioconf_pad[0];
-		error = config_init_component(cfdriver_ioconf_pad,
-		    pad_cfattach, cfdata_ioconf_pad);
+		error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
+			    &pad_cdevsw, &cmajor);
 		if (error)
 			break;
 
-		error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
-			    &pad_cdevsw, &cmajor);
+		pad_cfattach[1] = cfattach_ioconf_pad[0];
+		error = config_init_component(cfdriver_ioconf_pad,
+		    pad_cfattach, cfdata_ioconf_pad);
 		if (error) {
-			config_fini_component(cfdriver_ioconf_pad,
-			    pad_cfattach, cfdata_ioconf_pad);
+			devsw_detach(NULL, &pad_cdevsw);
 			break;
 		}
-
 #endif
 		break;
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		devsw_detach(NULL, &pad_cdevsw);
-
 		error = config_fini_component(cfdriver_ioconf_pad,
 		    pad_cfattach, cfdata_ioconf_pad);
-		if (error) {
-			devsw_attach(pad_cd.cd_name, NULL, &bmajor,
-			    &pad_cdevsw, &cmajor);
-			break;
-		}
+		if (error == 0)
+			devsw_detach(NULL, &pad_cdevsw);
 #endif
 		break;
 

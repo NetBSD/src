@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.75 2022/03/29 09:19:56 riastradh Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.76 2022/03/31 19:30:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.75 2022/03/29 09:19:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.76 2022/03/31 19:30:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -1715,13 +1715,10 @@ sequencer_modcmd(modcmd_t cmd, void *arg)
 		}
 		break;
 	case MODULE_CMD_FINI:
-		devsw_detach(NULL, &sequencer_cdevsw);
 		error = config_fini_component(cfdriver_ioconf_sequencer,
 		   cfattach_ioconf_sequencer, cfdata_ioconf_sequencer);
-		if (error)
-			devsw_attach(sequencer_cd.cd_name,
-			    NULL, &sequencer_bmajor,
-			    &sequencer_cdevsw, &sequencer_cmajor);
+		if (error == 0)
+			devsw_detach(NULL, &sequencer_cdevsw);
 		break;
 	default:
 		error = ENOTTY;

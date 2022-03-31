@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.63 2022/03/28 10:38:00 mlelstv Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.64 2022/03/31 19:30:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -170,26 +170,28 @@ dm_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = config_cfdriver_attach(&dm_cd);
+		error = devsw_attach(dm_cd.cd_name, &dm_bdevsw, &bmajor,
+		    &dm_cdevsw, &cmajor);
+		if (error == EEXIST)
+			error = 0;
 		if (error)
 			break;
 
+		error = config_cfdriver_attach(&dm_cd);
+		if (error) {
+			devsw_detach(&dm_bdevsw, &dm_cdevsw);
+			return error;
+		}
+
 		error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
 		if (error) {
+			config_cfdriver_detach(&dm_cd);
+			devsw_detach(&dm_bdevsw, &dm_cdevsw);
 			aprint_error("%s: unable to register cfattach\n",
 			    dm_cd.cd_name);
 			return error;
 		}
 
-		error = devsw_attach(dm_cd.cd_name, &dm_bdevsw, &bmajor,
-		    &dm_cdevsw, &cmajor);
-		if (error == EEXIST)
-			error = 0;
-		if (error) {
-			config_cfattach_detach(dm_cd.cd_name, &dm_ca);
-			config_cfdriver_detach(&dm_cd);
-			break;
-		}
 		dm_doinit();
 		break;
 	case MODULE_CMD_FINI:
@@ -208,6 +210,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
 			break;
 
 		config_cfdriver_detach(&dm_cd);
+		config_cfattach_detach(dm_cd.cd_name, &dm_ca);
 
 		devsw_detach(&dm_bdevsw, &dm_cdevsw);
 		break;
