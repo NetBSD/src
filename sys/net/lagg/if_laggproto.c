@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.c,v 1.5 2022/03/31 03:12:31 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.c,v 1.6 2022/03/31 07:59:05 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.5 2022/03/31 03:12:31 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_laggproto.c,v 1.6 2022/03/31 07:59:05 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -412,7 +412,7 @@ lagg_fail_transmit(struct lagg_proto_softc *psc, struct mbuf *m)
 		return ENOENT;
 	}
 
-	lagg_enqueue(psc->psc_softc, lp, m);
+	lagg_output(psc->psc_softc, lp, m);
 	lagg_port_putref(lp, &psref);
 	return 0;
 }
@@ -613,7 +613,7 @@ lagg_lb_transmit(struct lagg_proto_softc *psc, struct mbuf *m)
 		return ENOENT;
 	}
 
-	lagg_enqueue(psc->psc_softc, lp, m);
+	lagg_output(psc->psc_softc, lp, m);
 	lagg_port_putref(lp, &psref);
 
 	return 0;
