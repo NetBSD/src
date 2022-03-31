@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.10 2022/01/12 08:23:53 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.11 2022/03/31 02:00:27 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_NET_LAGG_IF_LAGGPROTO_H_
+#ifndef _NET_LAGG_IF_LAGGPROTO_H_
 #define _NET_LAGG_IF_LAGGPROTO_H_
 
 struct lagg_softc;
@@ -208,9 +208,9 @@ struct lagg_softc {
 #define LAGG_LOCKED(_sc)	mutex_owned(&(_sc)->sc_lock)
 #define LAGG_CLLADDR(_sc)	CLLADDR((_sc)->sc_if.if_sadl)
 
-#define	LAGG_PORTS_FOREACH(_sc, _lp)	\
+#define LAGG_PORTS_FOREACH(_sc, _lp)	\
     SIMPLEQ_FOREACH((_lp), &(_sc)->sc_ports, lp_entry)
-#define	LAGG_PORTS_FIRST(_sc)	SIMPLEQ_FIRST(&(_sc)->sc_ports)
+#define LAGG_PORTS_FIRST(_sc)	SIMPLEQ_FIRST(&(_sc)->sc_ports)
 #define LAGG_PORTS_EMPTY(_sc)	SIMPLEQ_EMPTY(&(_sc)->sc_ports)
 #define LAGG_PORT_IOCTL(_lp, _cmd, _data)	\
 	(_lp)->lp_ioctl == NULL ? ENOTTY :	\

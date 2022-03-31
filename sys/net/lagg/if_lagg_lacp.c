@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.16 2022/03/31 01:59:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.17 2022/03/31 02:00:27 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.16 2022/03/31 01:59:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.17 2022/03/31 02:00:27 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -2105,9 +2105,8 @@ lacp_set_mux(struct lacp_softc *lsc, struct lacp_port *lacpp,
 	sc = lacpp->lp_laggport->lp_softc;
 	ifp = &sc->sc_if;
 
-	if (lacpp->lp_mux_state == new_state) {
+	if (lacpp->lp_mux_state == new_state)
 		return -1;
-	}
 
 	switch (new_state) {
 	case LACP_MUX_DETACHED:
@@ -2304,7 +2303,6 @@ lacp_select(struct lacp_softc *lsc, struct lacp_port *lacpp)
 	struct lacp_aggregator_systemid *sid;
 	struct lacp_port *lacpp0;
 	char buf[LACP_SYSTEMIDSTR_LEN] __LACPDEBUGUSED;
-	bool insert_after;
 
 	if (lacpp->lp_aggregator != NULL)
 		return;
@@ -2346,25 +2344,20 @@ lacp_select(struct lacp_softc *lsc, struct lacp_port *lacpp)
 	lacpp->lp_aggregator = la;
 	lacpp->lp_selected = LACP_STANDBY;
 
-	insert_after = false;
-
 	LIST_FOREACH(lacpp0, &la->la_ports, lp_entry_la) {
-		if (lacp_port_priority_max(lacpp0, lacpp) == lacpp)
+		if (lacp_port_priority_max(lacpp0, lacpp) == lacpp) {
+			LIST_INSERT_BEFORE(lacpp0, lacpp, lp_entry_la);
 			break;
+		}
 
 		if (LIST_NEXT(lacpp0, lp_entry_la) == NULL) {
-			insert_after = true;
+			LIST_INSERT_AFTER(lacpp0, lacpp, lp_entry_la);
 			break;
 		}
 	}
 
-	if (lacpp0 == NULL) {
+	if (lacpp0 == NULL)
 		LIST_INSERT_HEAD(&la->la_ports, lacpp, lp_entry_la);
-	} else if (insert_after) {
-		LIST_INSERT_AFTER(lacpp0, lacpp, lp_entry_la);
-	} else {
-		LIST_INSERT_BEFORE(lacpp0, lacpp, lp_entry_la);
-	}
 
 	lacp_selected_update(lsc, la);
 }
@@ -2405,9 +2398,8 @@ lacp_unselect(struct lacp_softc *lsc, struct lacp_port *lacpp)
 		TAILQ_REMOVE(&lsc->lsc_aggregators, la, la_q);
 		kmem_free(la, sizeof(*la));
 
-		if (remove_actaggr) {
+		if (remove_actaggr)
 			lacp_select_active_aggregator(lsc);
-		}
 	} else {
 		lacp_selected_update(lsc, la);
 	}
@@ -2590,7 +2582,6 @@ lacp_dump_markertlv(const struct markerdu_info *mi_info,
 		    ntohs(mi_res->mi_rq_port),
 		    ether_sprintf(mi_res->mi_rq_system),
 		    ntohl(mi_res->mi_rq_xid));
-
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.37 2022/03/31 01:57:13 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.38 2022/03/31 02:00:27 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.37 2022/03/31 01:57:13 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.38 2022/03/31 02:00:27 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -283,9 +283,8 @@ lagg_in6_ifdetach(struct ifnet *ifp)
 
 #ifdef INET6
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
-	if (in6_present) {
+	if (in6_present)
 		in6_ifdetach(ifp);
-	}
 	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 #endif
 }
@@ -761,9 +760,8 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* set every port back to the original MTU */
 			ifr->ifr_mtu = ifp->if_mtu;
 			LAGG_PORTS_FOREACH(sc, lp) {
-				if (lp->lp_ioctl != NULL) {
+				if (lp->lp_ioctl != NULL)
 					lagg_lp_ioctl(lp, cmd, (void *)ifr);
-				}
 			}
 		}
 		LAGG_UNLOCK(sc);
@@ -907,17 +905,16 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 } while(0)
 
 	eh = lagg_m_extract(m, 0, sizeof(*eh), &buf);
-	if (eh == NULL) {
+	if (eh == NULL)
 		goto out;
-	}
+
 	off = ETHER_HDR_LEN;
 	etype = ntohs(eh->ether_type);
 
 	if (etype == ETHERTYPE_VLAN) {
 		evl = lagg_m_extract(m, 0, sizeof(*evl), &buf);
-		if (evl == NULL) {
+		if (evl == NULL)
 			goto out;
-		}
 
 		vlantag = ntohs(evl->evl_tag);
 		etype = ntohs(evl->evl_proto);
@@ -937,9 +934,8 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	switch (etype) {
 	case ETHERTYPE_IP:
 		ip = lagg_m_extract(m, off, sizeof(*ip), &buf);
-		if (ip == NULL) {
+		if (ip == NULL)
 			goto out;
-		}
 
 		if (sc->sc_hash_ipaddr) {
 			LAGG_HASH_ADD(&hash_src, ip->ip_src);
@@ -951,9 +947,8 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 		break;
 	case ETHERTYPE_IPV6:
 		ip6 = lagg_m_extract(m, off, sizeof(*ip6), &buf);
-		if (ip6 == NULL) {
+		if (ip6 == NULL)
 			goto out;
-		}
 
 		if (sc->sc_hash_ip6addr) {
 			LAGG_HASH_ADD(&hash_src, ip6->ip6_src);
@@ -972,9 +967,8 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	switch (proto) {
 	case IPPROTO_TCP:
 		th = lagg_m_extract(m, off, sizeof(*th), &buf);
-		if (th == NULL) {
+		if (th == NULL)
 			goto out;
-		}
 
 		if (sc->sc_hash_tcp) {
 			LAGG_HASH_ADD(&hash_src, th->th_sport);
@@ -983,9 +977,8 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 		break;
 	case IPPROTO_UDP:
 		uh = lagg_m_extract(m, off, sizeof(*uh), &buf);
-		if (uh == NULL) {
+		if (uh == NULL)
 			goto out;
-		}
 
 		if (sc->sc_hash_udp) {
 			LAGG_HASH_ADD(&hash_src, uh->uh_sport);
@@ -1149,9 +1142,8 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 	}
 
 	if (pfil_run_hooks(ifp_port->if_pfil, &m,
-	    ifp_port, PFIL_IN) != 0) {
+	    ifp_port, PFIL_IN) != 0)
 		goto out;
-	}
 
 	m = lagg_proto_input(lp->lp_softc, lp, m);
 	if (m != NULL) {
@@ -2036,9 +2028,8 @@ lagg_setup_mtu(struct lagg_softc *sc, struct lagg_port *lp)
 		ifr.ifr_mtu = sc->sc_if.if_mtu;
 	}
 
-	if (sc->sc_if.if_mtu != (uint64_t)ifr.ifr_mtu) {
+	if (sc->sc_if.if_mtu != (uint64_t)ifr.ifr_mtu)
 		sc->sc_if.if_mtu = ifr.ifr_mtu;
-	}
 
 	if (lp->lp_mtu != (uint64_t)ifr.ifr_mtu) {
 		if (lp->lp_ioctl == NULL) {
@@ -2072,9 +2063,8 @@ lagg_teardown_mtu(struct lagg_softc *sc, struct lagg_port *lp)
 	ifp_port = lp->lp_ifp;
 	KASSERT(IFNET_LOCKED(ifp_port));
 
-	if (SIMPLEQ_EMPTY(&sc->sc_ports)) {
+	if (SIMPLEQ_EMPTY(&sc->sc_ports))
 		sc->sc_if.if_mtu = 0;
-	}
 
 	if (ifp_port->if_mtu != lp->lp_mtu) {
 		memset(&ifr, 0, sizeof(ifr));
@@ -2198,9 +2188,8 @@ lagg_setup_lladdr(struct lagg_softc *sc, struct lagg_port *lp)
 
 	KASSERT(LAGG_LOCKED(sc));
 
-	if (lagg_lladdr_equal(sc->sc_lladdr, sc->sc_lladdr_rand)) {
+	if (lagg_lladdr_equal(sc->sc_lladdr, sc->sc_lladdr_rand))
 		lagg_lladdr_cpy(sc->sc_lladdr, lp->lp_lladdr);
-	}
 }
 
 static void
@@ -2305,9 +2294,8 @@ lagg_port_setup(struct lagg_softc *sc,
 		return EINVAL;
 	}
 
-	if (sc->sc_nports > LAGG_MAX_PORTS) {
+	if (sc->sc_nports > LAGG_MAX_PORTS)
 		return ENOSPC;
-	}
 
 	if (ifp_port->if_lagg != NULL) {
 		lp = (struct lagg_port *)ifp_port->if_lagg;
@@ -2364,13 +2352,12 @@ lagg_port_setup(struct lagg_softc *sc,
 	lagg_in6_ifdetach(ifp_port);
 
 	error = lagg_setup_mtu(sc, lp);
-	if (error != 0) {
+	if (error != 0)
 		goto restore_ipv6lla;
-	}
 
-	if (lp->lp_iftype == IFT_ETHER) {
+	if (lp->lp_iftype == IFT_ETHER)
 		lagg_setup_lladdr(sc, lp);
-	}
+
 	lagg_port_setsadl(lp, sc->sc_lladdr, iftype_changed);
 
 	IFNET_UNLOCK(ifp_port);
@@ -2419,9 +2406,8 @@ teardown_lladdr:
 	IFNET_LOCK(ifp_port);
 	lagg_teardown_mtu(sc, lp);
 	lagg_port_unsetsadl(lp);
-	if (lp->lp_iftype == IFT_ETHER) {
+	if (lp->lp_iftype == IFT_ETHER)
 		lagg_teardown_lladdr(sc, lp);
-	}
 restore_ipv6lla:
 	KASSERT(IFNET_LOCKED(ifp_port));
 	lagg_in6_ifdetach(ifp_port);
@@ -2498,9 +2484,8 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 		ifp_port->if_ioctl = lp->lp_ioctl;
 	lagg_teardown_mtu(sc, lp);
 
-	if (stopped) {
+	if (stopped)
 		if_init(ifp_port);
-	}
 	IFNET_UNLOCK(ifp_port);
 
 	if (is_ifdetach == false) {
@@ -2719,9 +2704,8 @@ lagg_port_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = LAGG_PORT_IOCTL(lp, cmd, data);
 		ifflags ^= ifp->if_flags;
 
-		if ((ifflags & (IFF_UP | IFF_RUNNING)) != 0) {
+		if ((ifflags & (IFF_UP | IFF_RUNNING)) != 0)
 			lagg_proto_linkstate(sc, lp);
-		}
 		break;
 	default:
 		goto fallback;
