@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.40 2022/03/31 03:10:59 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.41 2022/03/31 03:12:31 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.40 2022/03/31 03:10:59 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.41 2022/03/31 03:12:31 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -86,7 +86,6 @@ static const struct lagg_proto lagg_protos[] = {
 	[LAGG_PROTO_NONE] = {
 		.pr_num = LAGG_PROTO_NONE,
 		.pr_attach = lagg_none_attach,
-		.pr_up = lagg_none_up,
 	},
 	[LAGG_PROTO_LACP] = {
 		.pr_num = LAGG_PROTO_LACP,
