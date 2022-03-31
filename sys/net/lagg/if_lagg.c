@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.42 2022/03/31 03:15:15 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.43 2022/03/31 03:21:33 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.42 2022/03/31 03:15:15 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.43 2022/03/31 03:21:33 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -730,6 +730,7 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCSIFMTU:
 		LAGG_LOCK(sc);
+		/* set the MTU to each port */
 		LAGG_PORTS_FOREACH(sc, lp) {
 			error = lagg_lp_ioctl(lp, cmd, (void *)ifr);
 
@@ -744,10 +745,12 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 		}
 
-		if (error == 0) {
-			ifp->if_mtu = ifr->ifr_mtu;
-		} else {
-			/* set every port back to the original MTU */
+		/* set the MTU to the lagg interface */
+		if (error == 0)
+			error = ether_ioctl(ifp, cmd, data);
+
+		if (error != 0) {
+			/* undo the changed MTU */
 			ifr->ifr_mtu = ifp->if_mtu;
 			LAGG_PORTS_FOREACH(sc, lp) {
 				if (lp->lp_ioctl != NULL)
@@ -2008,11 +2011,13 @@ lagg_capabilities_update(struct lagg_softc *sc)
 static int
 lagg_setup_mtu(struct lagg_softc *sc, struct lagg_port *lp)
 {
-	struct ifnet *ifp_port;
+	struct ifnet *ifp, *ifp_port;
 	struct ifreq ifr;
 	int error;
 
+	ifp = &sc->sc_if;
 	ifp_port = lp->lp_ifp;
+
 	KASSERT(IFNET_LOCKED(ifp_port));
 
 	error = 0;
@@ -2020,30 +2025,35 @@ lagg_setup_mtu(struct lagg_softc *sc, struct lagg_port *lp)
 
 	if (SIMPLEQ_EMPTY(&sc->sc_ports)) {
 		ifr.ifr_mtu = lp->lp_mtu;
+
+		if (ifp->if_mtu != (uint64_t)ifr.ifr_mtu) {
+			KASSERT(IFNET_LOCKED(ifp));
+			error = ether_ioctl(ifp, SIOCSIFMTU, &ifr);
+		}
 	} else {
 		ifr.ifr_mtu = sc->sc_if.if_mtu;
+
+		if (lp->lp_mtu != (uint64_t)ifr.ifr_mtu) {
+			if (lp->lp_ioctl == NULL) {
+				LAGG_DPRINTF(sc,
+				    "cannot change MTU for %s\n",
+				    ifp_port->if_xname);
+				return EINVAL;
+			}
+
+			strlcpy(ifr.ifr_name, ifp_port->if_xname,
+			    sizeof(ifr.ifr_name));
+			error = lp->lp_ioctl(ifp_port,
+			    SIOCSIFMTU, (void *)&ifr);
+			if (error != 0) {
+				LAGG_DPRINTF(sc,
+				    "invalid MTU %d for %s\n",
+				    ifr.ifr_mtu, ifp_port->if_xname);
+			}
+		}
 	}
 
-	if (sc->sc_if.if_mtu != (uint64_t)ifr.ifr_mtu)
-		sc->sc_if.if_mtu = ifr.ifr_mtu;
-
-	if (lp->lp_mtu != (uint64_t)ifr.ifr_mtu) {
-		if (lp->lp_ioctl == NULL) {
-			LAGG_DPRINTF(sc, "cannot change MTU for %s\n",
-			    ifp_port->if_xname);
-			return EINVAL;
-		}
-
-		strlcpy(ifr.ifr_name, ifp_port->if_xname, sizeof(ifr.ifr_name));
-		error = lp->lp_ioctl(ifp_port, SIOCSIFMTU, (void *)&ifr);
-		if (error != 0) {
-			LAGG_DPRINTF(sc, "invalid MTU %d for %s\n",
-			    ifr.ifr_mtu, ifp_port->if_xname);
-			return error;
-		}
-	}
-
-	return 0;
+	return error;
 }
 
 static void
@@ -2058,9 +2068,6 @@ lagg_teardown_mtu(struct lagg_softc *sc, struct lagg_port *lp)
 
 	ifp_port = lp->lp_ifp;
 	KASSERT(IFNET_LOCKED(ifp_port));
-
-	if (SIMPLEQ_EMPTY(&sc->sc_ports))
-		sc->sc_if.if_mtu = 0;
 
 	if (ifp_port->if_mtu != lp->lp_mtu) {
 		memset(&ifr, 0, sizeof(ifr));
@@ -2338,6 +2345,8 @@ lagg_port_setup(struct lagg_softc *sc,
 	/* to delete ipv6 link local address */
 	lagg_in6_ifdetach(ifp_port);
 
+	lagg_capabilities_update(sc);
+
 	error = lagg_setup_mtu(sc, lp);
 	if (error != 0)
 		goto restore_ipv6lla;
@@ -2373,7 +2382,6 @@ lagg_port_setup(struct lagg_softc *sc,
 
 	lagg_config_promisc(sc, lp);
 	lagg_proto_startport(sc, lp);
-	lagg_capabilities_update(sc);
 
 	return 0;
 
