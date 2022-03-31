@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.39 2022/03/31 03:07:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.40 2022/03/31 03:10:59 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.39 2022/03/31 03:07:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.40 2022/03/31 03:10:59 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -181,7 +181,7 @@ static int	lagg_delport_all(struct lagg_softc *);
 static int	lagg_port_ioctl(struct ifnet *, u_long, void *);
 static int	lagg_port_output(struct ifnet *, struct mbuf *,
 		    const struct sockaddr *, const struct rtentry *);
-static int	lagg_config_promisc(struct lagg_softc *, struct lagg_port *);
+static void	lagg_config_promisc(struct lagg_softc *, struct lagg_port *);
 static void	lagg_unconfig_promisc(struct lagg_softc *, struct lagg_port *);
 static struct lagg_variant *
 		lagg_variant_getref(struct lagg_softc *, struct psref *);
@@ -2130,10 +2130,6 @@ lagg_port_setsadl(struct lagg_port *lp, uint8_t *lladdr,
 		break;
 	default:
 		if_alloc_sadl(ifp_port);
-		if (lp->lp_promisc == false) {
-			ifpromisc_locked(ifp_port, 1);
-			lp->lp_promisc = true;
-		}
 		break;
 	}
 }
@@ -2179,11 +2175,6 @@ lagg_port_unsetsadl(struct lagg_port *lp)
 		/* reset if_type before if_alloc_sadl */
 		ifp_port->if_type = lp->lp_iftype;
 		if_alloc_sadl(ifp_port);
-
-		if (lp->lp_promisc == true) {
-			ifpromisc_locked(ifp_port, 0);
-			lp->lp_promisc = false;
-		}
 		break;
 	}
 }
@@ -2647,39 +2638,65 @@ lagg_get_stats(struct lagg_softc *sc, struct lagg_req *resp,
 	return 0;
 }
 
-static int
+static void
 lagg_config_promisc(struct lagg_softc *sc, struct lagg_port *lp)
 {
-	struct ifnet *ifp;
-	uint64_t chg_flags;
+	struct ifnet *ifp, *ifp_port;
 	int error;
+	bool promisc;
 
-	error = 0;
+	KASSERT(LAGG_LOCKED(sc));
+
 	ifp = &sc->sc_if;
-	chg_flags = ifp->if_flags ^ lp->lp_ifflags;
+	ifp_port = lp->lp_ifp;
 
-	if (ISSET(chg_flags, IFF_PROMISC)) {
-		error = ifpromisc(lp->lp_ifp,
-		    ISSET(ifp->if_flags, IFF_PROMISC) ? 1 : 0);
-		if (error == 0) {
-			lp->lp_ifflags ^= IFF_PROMISC;
-		}
+	if (lp->lp_iftype == IFT_ETHER) {
+		promisc = ISSET(ifp->if_flags, IFF_PROMISC) ?
+		    true : false;
+	} else {
+		promisc = true;
 	}
 
-	return error;
+	if (lp->lp_promisc == promisc)
+		return;
+
+	error = ifpromisc(ifp_port, promisc ? 1 : 0);
+	if (error == ENETRESET) {
+		error = ifp_port->if_init(ifp_port);
+	}
+
+	if (error == 0) {
+		lp->lp_promisc = promisc;
+	} else {
+		lagg_log(sc, LOG_WARNING,
+		    "couldn't %s promisc on %s\n",
+		    promisc ? "set" : "unset",
+		    ifp_port->if_xname);
+	}
 }
 
 static void
 lagg_unconfig_promisc(struct lagg_softc *sc, struct lagg_port *lp)
 {
+	struct ifnet *ifp_port;
 	int error;
 
-	if (ISSET(lp->lp_ifflags, IFF_PROMISC)) {
-		error = ifpromisc(lp->lp_ifp, 0);
-		if (error != 0) {
-			lagg_log(sc, LOG_DEBUG,
-			    "couldn't unset promiscuous mode");
-		}
+	KASSERT(LAGG_LOCKED(sc));
+
+	ifp_port = lp->lp_ifp;
+
+	if (lp->lp_promisc == false)
+		return;
+
+	error = ifpromisc(ifp_port, 0);
+	if (error == ENETRESET) {
+		error = ifp_port->if_init(ifp_port);
+	}
+
+	if (error != 0) {
+		lagg_log(sc, LOG_WARNING,
+		    "couldn't unset promisc on %s\n",
+		    ifp_port->if_xname);
 	}
 }
 
