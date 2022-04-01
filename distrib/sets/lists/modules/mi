@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.150 2021/12/07 17:39:53 brad Exp $
+# $NetBSD: mi,v 1.151 2022/04/01 15:49:11 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -189,6 +189,8 @@
 ./@MODULEDIR@/i2c_bitbang/i2c_bitbang.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/i2cexec				modules-base-kernel	kmod
 ./@MODULEDIR@/i2cexec/i2cexec.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/i2c_subr				modules-base-kernel	kmod
+./@MODULEDIR@/i2c_subr/i2c_subr.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_agr				modules-base-kernel	kmod
 ./@MODULEDIR@/if_agr/if_agr.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_aue				modules-base-kernel	kmod
