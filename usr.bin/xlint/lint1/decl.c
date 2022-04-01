@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.256 2022/04/01 22:07:23 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.257 2022/04/01 22:28:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.256 2022/04/01 22:07:23 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.257 2022/04/01 22:28:21 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1399,6 +1399,8 @@ add_function(sym_t *decl, sym_t *args)
 	 * Returning decl leads to the wrong function types in msg_347.
 	 */
 	tpp = &decl->s_type;
+	if (*tpp == NULL)
+		decl->s_type = dcs->d_next->d_type;
 	while (*tpp != NULL && *tpp != dcs->d_next->d_type)
 		/*
 		 * XXX: accessing INT->t_subt feels strange, even though it

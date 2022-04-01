@@ -1,4 +1,4 @@
-/*	$NetBSD: d_pr_22119.c,v 1.3 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: d_pr_22119.c,v 1.4 2022/04/01 22:28:21 rillig Exp $	*/
 # 3 "d_pr_22119.c"
 
 /*
@@ -15,5 +15,7 @@ func1(void)
 
 	/* expect+1: error: 'p' undefined [99] */
 	f1 = (void (*)(void))p;
+	/* expect+2: error: function returns illegal type 'function(void) returning pointer to void' [15] */
+	/* expect+1: error: invalid cast from 'int' to 'function() returning pointer to function(void) returning pointer to void' [147] */
 	f1 = (void *()(void))p;		/* crash before 2021-02-28 */
 }

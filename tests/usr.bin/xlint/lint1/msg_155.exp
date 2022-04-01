@@ -3,7 +3,7 @@ msg_155.c(28): warning: passing 'struct incompatible' to incompatible 'pointer t
 msg_155.c(32): warning: passing 'struct incompatible' to incompatible 'pointer to pointer to int', arg #1 [155]
 msg_155.c(35): warning: passing 'struct incompatible' to incompatible 'pointer to array[3] of int', arg #1 [155]
 msg_155.c(38): warning: passing 'struct incompatible' to incompatible 'pointer to array[unknown_size] of int', arg #1 [155]
-msg_155.c(42): error: function 'c99_6_7_6_example_f' implicitly declared to return int [215]
+msg_155.c(42): warning: passing 'struct incompatible' to incompatible 'pointer to function() returning pointer to int', arg #1 [155]
 msg_155.c(45): warning: passing 'struct incompatible' to incompatible 'pointer to function(void) returning int', arg #1 [155]
 msg_155.c(48): warning: passing 'struct incompatible' to incompatible 'pointer to const pointer to function(unsigned int, ...) returning int', arg #1 [155]
 msg_155.c(69): warning: passing 'enum Day' to incompatible 'struct incompatible', arg #1 [155]
