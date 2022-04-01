@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.9 2019/10/18 00:54:48 manu Exp $   */
+/*     $NetBSD: efi.h,v 1.10 2022/04/01 06:49:17 skrll Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -233,7 +233,7 @@ struct efi_bs {
        efi_status      (*bs_calculatecrc32)(void *, uintn, uint32_t *);
        efi_status      (*bs_copymem)(void *, void *, uintn);
        efi_status      (*bs_setmem)(void *, uintn, uint8_t);
-       efi_status      (*bs_createeventex)(uint32_t, efi_tpl, 
+       efi_status      (*bs_createeventex)(uint32_t, efi_tpl,
 	   efi_event_notify, void *, struct uuid, efi_event *);
 };
 
