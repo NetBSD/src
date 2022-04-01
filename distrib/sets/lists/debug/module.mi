@@ -1,9 +1,11 @@
-# $NetBSD: module.mi,v 1.17 2022/04/01 15:49:11 pgoyette Exp $
+# $NetBSD: module.mi,v 1.18 2022/04/01 21:09:24 pgoyette Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_httpready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_httpready/accf_httpready.kmod.debug	modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/adiantum			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/adiantum/adiantum.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/adosfs				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/adosfs/adosfs.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/aio				modules-base-kernel	kmod,debug

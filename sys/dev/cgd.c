@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.144 2022/04/01 00:21:19 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.145 2022/04/01 21:09:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.144 2022/04/01 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.145 2022/04/01 21:09:24 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1723,7 +1723,7 @@ cgd_selftest(void)
 	aprint_debug("cgd: self-tests passed\n");
 }
 
-MODULE(MODULE_CLASS_DRIVER, cgd, "blowfish,des,dk_subr,bufq_fcfs");
+MODULE(MODULE_CLASS_DRIVER, cgd, "adiantum,blowfish,des,dk_subr,bufq_fcfs");
 
 #ifdef _MODULE
 CFDRIVER_DECL(cgd, DV_DISK, NULL);
