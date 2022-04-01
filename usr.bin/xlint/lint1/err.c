@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.154 2022/04/01 22:07:23 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.155 2022/04/01 23:16:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.154 2022/04/01 22:07:23 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.155 2022/04/01 23:16:31 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -198,7 +198,7 @@ const char *const msgs[] = {
 	"integer overflow detected, op '%s'",			      /* 141 */
 	"floating point overflow detected, op %s",		      /* 142 */
 	"cannot take size/alignment of incomplete type",	      /* 143 */
-	"cannot take size/alignment of function",		      /* 144 */
+	"cannot take size/alignment of function type '%s'",	      /* 144 */
 	"cannot take size/alignment of bit-field",		      /* 145 */
 	"cannot take size/alignment of void",			      /* 146 */
 	"invalid cast from '%s' to '%s'",			      /* 147 */

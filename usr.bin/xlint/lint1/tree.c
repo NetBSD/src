@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.413 2022/04/01 22:28:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.414 2022/04/01 23:16:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.413 2022/04/01 22:28:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.414 2022/04/01 23:16:32 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3488,8 +3488,8 @@ type_size_in_bits(const type_t *tp)
 	}
 	switch (tp->t_tspec) {
 	case FUNC:
-		/* cannot take size/alignment of function */
-		error(144);
+		/* cannot take size/alignment of function type '%s' */
+		error(144, type_name(tp));
 		elsz = 1;
 		break;
 	case STRUCT:
@@ -3535,8 +3535,8 @@ build_alignof(const type_t *tp)
 		break;
 
 	case FUNC:
-		/* cannot take size/alignment of function */
-		error(144);
+		/* cannot take size/alignment of function type '%s' */
+		error(144, type_name(tp));
 		return 0;
 
 	case STRUCT:

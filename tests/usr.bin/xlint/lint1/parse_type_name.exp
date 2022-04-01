@@ -1,4 +1,4 @@
-parse_type_name.c(52): error: cannot take size/alignment of function [144]
+parse_type_name.c(52): error: cannot take size/alignment of function type 'function(int) returning int' [144]
 parse_type_name.c(72): error: null dimension [17]
 parse_type_name.c(76): error: null dimension [17]
 parse_type_name.c(118): error: syntax error 'goto' [249]
