@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.10 2022/02/13 19:20:33 riastradh Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.11 2022/04/01 00:16:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -112,7 +112,7 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.10 2022/02/13 19:20:33 riastradh Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.11 2022/04/01 00:16:40 riastradh Exp $");
 
 #include <crypto/blake2/blake2s.h>
 
@@ -515,7 +515,7 @@ get_leaf(const thmap_t *thmap, thmap_inode_t *parent, unsigned slot)
  * => Implies release operation on success.
  * => Implies no ordering on failure.
  */
-static inline bool
+static inline int
 root_try_put(thmap_t *thmap, const thmap_query_t *query, thmap_leaf_t *leaf)
 {
 	thmap_ptr_t expected;
@@ -530,7 +530,7 @@ root_try_put(thmap_t *thmap, const thmap_query_t *query, thmap_leaf_t *leaf)
 	 * this changes from null.
 	 */
 	if (atomic_load_relaxed(&thmap->root[i])) {
-		return false;
+		return EEXIST;
 	}
 
 	/*
@@ -539,13 +539,16 @@ root_try_put(thmap_t *thmap, const thmap_query_t *query, thmap_leaf_t *leaf)
 	 * release it to readers.
 	 */
 	node = node_create(thmap, NULL);
+	if (__predict_false(node == NULL)) {
+		return ENOMEM;
+	}
 	slot = hashval_getl0slot(thmap, query, leaf);
 	node_insert(node, slot, THMAP_GETOFF(thmap, leaf) | THMAP_LEAF_BIT);
 	nptr = THMAP_GETOFF(thmap, node);
 again:
 	if (atomic_load_relaxed(&thmap->root[i])) {
 		thmap->ops->free(nptr, THMAP_INODE_LEN);
-		return false;
+		return EEXIST;
 	}
 	/* Release to subsequent consume in find_edge_node(). */
 	expected = THMAP_NULL;
@@ -553,7 +556,7 @@ again:
 	    nptr, memory_order_release, memory_order_relaxed)) {
 		goto again;
 	}
-	return true;
+	return 0;
 }
 
 /*
@@ -703,9 +706,16 @@ retry:
 	/*
 	 * Try to insert into the root first, if its slot is empty.
 	 */
-	if (root_try_put(thmap, &query, leaf)) {
+	switch (root_try_put(thmap, &query, leaf)) {
+	case 0:
 		/* Success: the leaf was inserted; no locking involved. */
 		return val;
+	case EEXIST:
+		break;
+	case ENOMEM:
+		return NULL;
+	default:
+		__unreachable();
 	}
 
 	/*
