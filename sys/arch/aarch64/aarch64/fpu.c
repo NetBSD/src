@@ -1,4 +1,4 @@
-/* $NetBSD: fpu.c,v 1.11 2020/12/11 18:03:33 skrll Exp $ */
+/* $NetBSD: fpu.c,v 1.12 2022/04/01 19:57:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.11 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fpu.c,v 1.12 2022/04/01 19:57:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/cpu.h>
+#include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/lwp.h>
 #include <sys/evcnt.h>
@@ -213,7 +214,7 @@ fpu_kern_enter(void)
 	 */
 	s = splvm();
 	ci = curcpu();
-	KASSERTMSG(ci->ci_cpl <= IPL_VM, "cpl=%d", ci->ci_cpl);
+	KASSERTMSG(ci->ci_cpl <= IPL_VM || cold, "cpl=%d", ci->ci_cpl);
 	KASSERT(ci->ci_kfpu_spl == -1);
 	ci->ci_kfpu_spl = s;
 
@@ -241,7 +242,7 @@ fpu_kern_leave(void)
 
 	ci = curcpu();
 
-	KASSERT(ci->ci_cpl == IPL_VM);
+	KASSERT(ci->ci_cpl == IPL_VM || cold);
 	KASSERT(ci->ci_kfpu_spl != -1);
 
 	/*

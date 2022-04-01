@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.202 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.203 2022/04/01 19:57:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.202 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.203 2022/04/01 19:57:22 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -175,6 +175,7 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
+	.ci_kfpu_spl = -1,
 };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
