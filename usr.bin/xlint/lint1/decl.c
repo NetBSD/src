@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.255 2022/04/01 20:38:37 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.256 2022/04/01 22:07:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.255 2022/04/01 20:38:37 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.256 2022/04/01 22:07:23 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -973,8 +973,8 @@ check_type(sym_t *sym)
 		}
 		if (to == FUNC) {
 			if (t == FUNC || t == ARRAY) {
-				/* function returns illegal type */
-				error(15);
+				/* function returns illegal type '%s' */
+				error(15, type_name(tp));
 				if (t == FUNC) {
 					*tpp = block_derive_type(*tpp, PTR);
 				} else {

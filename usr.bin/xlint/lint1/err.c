@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.153 2022/02/27 11:40:29 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.154 2022/04/01 22:07:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.153 2022/02/27 11:40:29 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.154 2022/04/01 22:07:23 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ const char *const msgs[] = {
 	"compiler takes size of function",			      /* 12 */
 	"incomplete enum type: %s",				      /* 13 */
 	"compiler takes alignment of function",			      /* 14 */
-	"function returns illegal type",			      /* 15 */
+	"function returns illegal type '%s'",			      /* 15 */
 	"array of function is illegal",				      /* 16 */
 	"null dimension",					      /* 17 */
 	"illegal use of 'void'",				      /* 18 */
