@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.253 2022/03/13 14:40:36 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.254 2022/04/01 20:29:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.253 2022/03/13 14:40:36 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.254 2022/04/01 20:29:37 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -988,7 +988,7 @@ check_type(sym_t *sym)
 					warning(228);
 				}
 			}
-		} if (to == ARRAY) {
+		} else if (to == ARRAY) {
 			if (t == FUNC) {
 				/* array of function is illegal */
 				error(16);
@@ -1054,7 +1054,7 @@ check_type(sym_t *sym)
  * implementation-defined type".
  */
 static void
-check_bit_field_type(sym_t *dsym,  type_t **const inout_tp, tspec_t *inout_t)
+check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 {
 	type_t *tp = *inout_tp;
 	tspec_t t = *inout_t;
@@ -1335,7 +1335,7 @@ add_array(sym_t *decl, bool dim, int n)
 	while (*tpp != NULL && *tpp != dcs->d_type)
 		tpp = &(*tpp)->t_subt;
 	if (*tpp == NULL)
-	    return decl;
+		return decl;
 
 	*tpp = tp = block_zero_alloc(sizeof(*tp));
 	tp->t_tspec = ARRAY;
@@ -1398,7 +1398,7 @@ add_function(sym_t *decl, sym_t *args)
 		 */
 		tpp = &(*tpp)->t_subt;
 	if (*tpp == NULL)
-	    return decl;	/* see msg_347 */
+		return decl;	/* see msg_347 */
 
 	*tpp = tp = block_zero_alloc(sizeof(*tp));
 	tp->t_tspec = FUNC;
@@ -2170,7 +2170,8 @@ eqtype(const type_t *tp1, const type_t *tp2,
 				t = INT;
 			} else if (t == USHORT) {
 				/* CONSTCOND */
-				t = TARG_INT_MAX < TARG_USHRT_MAX || tflag ? UINT : INT;
+				t = TARG_INT_MAX < TARG_USHRT_MAX || tflag
+				    ? UINT : INT;
 			}
 		}
 
@@ -2320,7 +2321,7 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 		n++;
 	}
 
- end:
+end:
 	if (msg)
 		/* old style definition */
 		print_previous_declaration(300, rdsym);
