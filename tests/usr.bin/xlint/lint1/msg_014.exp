@@ -1,2 +1,2 @@
-msg_014.c(9): error: cannot take size/alignment of function [144]
+msg_014.c(9): error: cannot take size/alignment of function type 'function(void) returning void' [144]
 msg_014.c(11): error: syntax error ':' [249]
