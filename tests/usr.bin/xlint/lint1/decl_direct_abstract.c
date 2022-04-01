@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_direct_abstract.c,v 1.4 2021/09/14 19:08:40 rillig Exp $	*/
+/*	$NetBSD: decl_direct_abstract.c,v 1.5 2022/04/01 22:28:21 rillig Exp $	*/
 # 3 "decl_direct_abstract.c"
 
 /*
@@ -54,8 +54,8 @@ double type_of_c99_6_7_6_example_c = c99_6_7_6_example_c;
 double type_of_c99_6_7_6_example_d = c99_6_7_6_example_d;
 /* expect+1: 'pointer to function(pointer to array[unknown_size] of int) returning void' */
 double type_of_c99_6_7_6_example_e = c99_6_7_6_example_e;
-/* FIXME: see msg_155.c, msg_347.c */
-/* expect+1: 'pointer to function(void) returning void' */
+/* Wrong type before decl.c 1.256 from 2022-04-01. */
+/* expect+1: 'pointer to function(pointer to function() returning pointer to int) returning void' */
 double type_of_c99_6_7_6_example_f = c99_6_7_6_example_f;
 /* expect+1: 'pointer to function(pointer to function(void) returning int) returning void' */
 double type_of_c99_6_7_6_example_g = c99_6_7_6_example_g;
@@ -76,3 +76,13 @@ void int_array_array(int[][7]);
 void int_array_3_array(int[3][7]);
 /* supported since cgram.y 1.363 from 2021-09-14 */
 void int_array_ast_array(int[*][7]);
+
+/* expect+1: error: cannot take size/alignment of function [144] */
+unsigned long size_unspecified_args = sizeof(int());
+/* FIXME: Must be 'of function', not 'of void'. */
+/* expect+1: error: cannot take size/alignment of void [146] */
+unsigned long size_prototype_void = sizeof(int(void));
+/* TODO: error: cannot take size/alignment of function [144] */
+unsigned long size_prototype_unnamed = sizeof(int(double));
+/* TODO: error: cannot take size/alignment of function [144] */
+unsigned long size_prototype_named = sizeof(int(double dbl));
