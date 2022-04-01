@@ -1,6 +1,6 @@
-# $NetBSD: msg_016.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: msg_016.ln,v 1.2 2022/04/01 01:00:39 rillig Exp $
 #
 # Test data for message 16 of lint2:
-#	s: too many args for format  	%s
+#	%s: too many args for format  	%s
 #
 # TODO: add actual test data
