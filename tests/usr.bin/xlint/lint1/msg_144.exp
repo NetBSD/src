@@ -1,1 +1,1 @@
-msg_144.c(9): error: cannot take size/alignment of function [144]
+msg_144.c(10): error: cannot take size/alignment of function type 'function(void) returning unsigned long' [144]
