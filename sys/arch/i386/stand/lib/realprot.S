@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.11 2013/12/24 19:00:56 jakllsch Exp $	*/
+/*	$NetBSD: realprot.S,v 1.12 2022/04/01 19:02:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ ENTRY(real_to_prot)
  *
  * It is speculated that the CPU is prefetching and decoding branch
  * targets and not invalidating this buffer on the long jump.
- * Further investication indicates that the caching of return addresses
+ * Further investigation indicates that the caching of return addresses
  * is most likely the problem.
  *
  * Previous versions just used some extra call/ret and a few NOPs, these
@@ -229,7 +229,7 @@ ENTRY(prot_to_real)
 	.code16
 	movl	%cr0, %eax
 	and 	$~CR0_PE, %eax
-	movl	%eax, %cr0		/* Disable potected mode */
+	movl	%eax, %cr0		/* Disable protected mode */
 
 	/* Jump far indirect to load real mode %cs */
 	ljmp	*%cs:toreal
