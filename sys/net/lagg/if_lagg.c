@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.44 2022/03/31 07:59:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.45 2022/04/01 07:26:51 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.44 2022/03/31 07:59:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.45 2022/04/01 07:26:51 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -133,7 +133,7 @@ static const struct lagg_proto lagg_protos[] = {
 	},
 };
 
-static int	lagg_chg_sadl(struct ifnet *, uint8_t *, size_t);
+static int	lagg_chg_sadl(struct ifnet *, const uint8_t *, size_t);
 static struct mbuf *
 		lagg_input_ethernet(struct ifnet *, struct mbuf *);
 static int	lagg_clone_create(struct if_clone *, int);
@@ -195,10 +195,10 @@ static void	lagg_port_teardown(struct lagg_softc *, struct lagg_port *,
 		    bool);
 static void	lagg_port_syncvlan(struct lagg_softc *, struct lagg_port *);
 static void	lagg_port_purgevlan(struct lagg_softc *, struct lagg_port *);
-static void	lagg_lladdr_update(struct lagg_softc *);
 static void	lagg_capabilities_update(struct lagg_softc *);
 static void	lagg_sync_ifcaps(struct lagg_softc *);
 static void	lagg_sync_ethcaps(struct lagg_softc *);
+static void	lagg_sync_sadl(struct lagg_softc *);
 
 static struct if_clone	 lagg_cloner =
     IF_CLONE_INITIALIZER("lagg", lagg_clone_create, lagg_clone_destroy);
@@ -212,11 +212,13 @@ static enum lagg_iftypes
 		 lagg_iftype = LAGG_IF_TYPE_ETHERNET;
 
 #ifdef LAGG_DEBUG
+#define __LAGGDEBUGUSED
 #define LAGG_DPRINTF(_sc, _fmt, _args...)	do {	\
 	printf("%s: " _fmt, (_sc) != NULL ?		\
 	(_sc)->sc_if.if_xname : "lagg", ##_args);		\
 } while (0)
 #else
+#define __LAGGDEBUGUSED				__unused
 #define LAGG_DPRINTF(_sc, _fmt, _args...)	__nothing
 #endif
 
@@ -413,7 +415,7 @@ lagg_clone_create(struct if_clone *ifc, int unit)
 		sc->sc_lladdr_rand[0] |= 0x02; /* set G/L bit */
 		lagg_lladdr_cpy(sc->sc_lladdr, sc->sc_lladdr_rand);
 		ether_set_vlan_cb((struct ethercom *)ifp, lagg_vlan_cb);
-		ether_ifattach(ifp, sc->sc_lladdr);
+		ether_ifattach(ifp, sc->sc_lladdr_rand);
 		break;
 	default:
 		panic("unknown if type");
@@ -500,7 +502,7 @@ lagg_init_locked(struct lagg_softc *sc)
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		lagg_stop_locked(sc);
 
-	lagg_lladdr_update(sc);
+	lagg_sync_sadl(sc);
 
 	SET(ifp->if_flags, IFF_RUNNING);
 
@@ -2009,85 +2011,42 @@ lagg_capabilities_update(struct lagg_softc *sc)
 }
 
 static int
-lagg_setup_mtu(struct lagg_softc *sc, struct lagg_port *lp)
+lagg_setmtu(struct ifnet *ifp, uint64_t mtu)
 {
-	struct ifnet *ifp, *ifp_port;
+	struct lagg_softc *sc __LAGGDEBUGUSED;
+	struct lagg_port *lp;
 	struct ifreq ifr;
 	int error;
 
-	ifp = &sc->sc_if;
-	ifp_port = lp->lp_ifp;
+	KASSERT(IFNET_LOCKED(ifp));
 
-	KASSERT(IFNET_LOCKED(ifp_port));
-
-	error = 0;
 	memset(&ifr, 0, sizeof(ifr));
+	ifr.ifr_mtu = mtu;
+	lp = ifp->if_lagg;
 
-	if (SIMPLEQ_EMPTY(&sc->sc_ports)) {
-		ifr.ifr_mtu = lp->lp_mtu;
-
-		if (ifp->if_mtu != (uint64_t)ifr.ifr_mtu) {
-			KASSERT(IFNET_LOCKED(ifp));
-			error = ether_ioctl(ifp, SIOCSIFMTU, &ifr);
-		}
+	if (lp != NULL) {
+		/* ioctl for port interface */
+		error = lp->lp_ioctl(ifp, SIOCSIFMTU, &ifr);
+		sc = lp->lp_softc;
 	} else {
-		ifr.ifr_mtu = sc->sc_if.if_mtu;
+		/* ioctl for lagg interface */
+		error = ether_ioctl(ifp, SIOCSIFMTU, &ifr);
+		sc = ifp->if_softc;
+	}
 
-		if (lp->lp_mtu != (uint64_t)ifr.ifr_mtu) {
-			if (lp->lp_ioctl == NULL) {
-				LAGG_DPRINTF(sc,
-				    "cannot change MTU for %s\n",
-				    ifp_port->if_xname);
-				return EINVAL;
-			}
-
-			strlcpy(ifr.ifr_name, ifp_port->if_xname,
-			    sizeof(ifr.ifr_name));
-			error = lp->lp_ioctl(ifp_port,
-			    SIOCSIFMTU, (void *)&ifr);
-			if (error != 0) {
-				LAGG_DPRINTF(sc,
-				    "invalid MTU %d for %s\n",
-				    ifr.ifr_mtu, ifp_port->if_xname);
-			}
-		}
+	if (error != 0) {
+		LAGG_DPRINTF(sc,
+		    "couldn't change MTU for %s\n",
+		    ifp->if_xname);
 	}
 
 	return error;
 }
 
 static void
-lagg_teardown_mtu(struct lagg_softc *sc, struct lagg_port *lp)
+lagg_port_setsadl(struct lagg_port *lp, const uint8_t *lladdr)
 {
 	struct ifnet *ifp_port;
-	struct ifreq ifr;
-	int error;
-
-	if (lp->lp_ioctl == NULL)
-		return;
-
-	ifp_port = lp->lp_ifp;
-	KASSERT(IFNET_LOCKED(ifp_port));
-
-	if (ifp_port->if_mtu != lp->lp_mtu) {
-		memset(&ifr, 0, sizeof(ifr));
-		strlcpy(ifr.ifr_name, ifp_port->if_xname, sizeof(ifr.ifr_name));
-		ifr.ifr_mtu = lp->lp_mtu;
-		error = lp->lp_ioctl(ifp_port, SIOCSIFMTU, (void *)&ifr);
-		if (error != 0) {
-			LAGG_LOG(sc, LOG_WARNING,
-			    "failed to reset MTU %d to %s\n",
-			    ifr.ifr_mtu, ifp_port->if_xname);
-		}
-	}
-}
-
-static void
-lagg_port_setsadl(struct lagg_port *lp, uint8_t *lladdr,
-    bool iftype_changed)
-{
-	struct ifnet *ifp_port;
-	bool lladdr_changed;
 	int error;
 
 	ifp_port = lp->lp_ifp;
@@ -2097,12 +2056,12 @@ lagg_port_setsadl(struct lagg_port *lp, uint8_t *lladdr,
 
 	switch (lp->lp_iftype) {
 	case IFT_ETHER:
-		lladdr_changed = lagg_lladdr_equal(lladdr,
-		    CLLADDR(ifp_port->if_sadl)) ? false : true;
-
-		if (lladdr_changed == false &&
-		    iftype_changed == false) {
-			break;
+		if (lladdr == NULL) {
+			lladdr = lp->lp_lladdr;
+		} else {
+			if (lagg_lladdr_equal(lladdr,
+			    CLLADDR(ifp_port->if_sadl)))
+				break;
 		}
 
 		lagg_chg_sadl(ifp_port,
@@ -2118,11 +2077,6 @@ lagg_port_setsadl(struct lagg_port *lp, uint8_t *lladdr,
 				    "%s failed to if_init() on %d\n",
 				    ifp_port->if_xname, error);
 			}
-		} else {
-			if (lp->lp_promisc == false) {
-				ifpromisc_locked(ifp_port, 1);
-				lp->lp_promisc = true;
-			}
 		}
 		break;
 	default:
@@ -2132,156 +2086,64 @@ lagg_port_setsadl(struct lagg_port *lp, uint8_t *lladdr,
 }
 
 static void
-lagg_port_unsetsadl(struct lagg_port *lp)
-{
-	struct ifnet *ifp_port;
-	int error;
-
-	ifp_port = lp->lp_ifp;
-
-	KASSERT(LAGG_LOCKED(lp->lp_softc));
-	KASSERT(IFNET_LOCKED(ifp_port));
-
-	switch (lp->lp_iftype) {
-	case IFT_ETHER:
-		/* reset if_type before changing ifp->if_sadl */
-		ifp_port->if_type = lp->lp_iftype;
-
-		lagg_chg_sadl(ifp_port,
-		    lp->lp_lladdr, ETHER_ADDR_LEN);
-
-		if (ifp_port->if_init != NULL) {
-			error = 0;
-			if (ISSET(ifp_port->if_flags, IFF_RUNNING))
-				error = if_init(ifp_port);
-
-			if (error != 0) {
-				LAGG_LOG(lp->lp_softc, LOG_WARNING,
-				    "%s failed to if_init() on %d\n",
-				    ifp_port->if_xname, error);
-			}
-		} else {
-			if (lp->lp_promisc == true) {
-				ifpromisc_locked(ifp_port, 0);
-				lp->lp_promisc = false;
-			}
-		}
-		break;
-
-	default:
-		/* reset if_type before if_alloc_sadl */
-		ifp_port->if_type = lp->lp_iftype;
-		if_alloc_sadl(ifp_port);
-		break;
-	}
-}
-
-static void
-lagg_setup_lladdr(struct lagg_softc *sc, struct lagg_port *lp)
-{
-
-	KASSERT(LAGG_LOCKED(sc));
-
-	if (lagg_lladdr_equal(sc->sc_lladdr, sc->sc_lladdr_rand))
-		lagg_lladdr_cpy(sc->sc_lladdr, lp->lp_lladdr);
-}
-
-static void
-lagg_teardown_lladdr(struct lagg_softc *sc, struct lagg_port *lp)
-{
-	struct lagg_port *lp0;
-	uint8_t *lladdr_next;
-
-	KASSERT(LAGG_LOCKED(sc));
-
-	if (lagg_lladdr_equal(sc->sc_lladdr,
-	    lp->lp_lladdr) == false) {
-		return;
-	}
-
-	lladdr_next = sc->sc_lladdr_rand;
-
-	LAGG_PORTS_FOREACH(sc, lp0) {
-		if (lp0->lp_iftype == IFT_ETHER) {
-			lladdr_next = lp0->lp_lladdr;
-			break;
-		}
-	}
-
-	lagg_lladdr_cpy(sc->sc_lladdr, lladdr_next);
-}
-
-static void
-lagg_lladdr_update(struct lagg_softc *sc)
+lagg_if_setsadl(struct lagg_softc *sc, uint8_t *lladdr)
 {
 	struct ifnet *ifp;
-	struct lagg_port *lp;
-	const uint8_t *lladdr;
+
+	KASSERT(LAGG_LOCKED(sc));
 
 	ifp = &sc->sc_if;
 
-	KASSERT(LAGG_LOCKED(sc));
-	KASSERT(IFNET_LOCKED(ifp));
-	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
-
-	lladdr = CLLADDR(ifp->if_sadl);
-
-	if (lagg_lladdr_equal(sc->sc_lladdr, lladdr))
+	if (lagg_lladdr_equal(CLLADDR(ifp->if_sadl), lladdr))
 		return;
 
-	lagg_lladdr_cpy(sc->sc_lladdr, lladdr);
-
-	LAGG_PORTS_FOREACH(sc, lp) {
-		IFNET_LOCK(lp->lp_ifp);
-		lagg_port_setsadl(lp, sc->sc_lladdr, false);
-		IFNET_UNLOCK(lp->lp_ifp);
-	}
-}
-
-static void
-lagg_sadl_update(struct lagg_softc *sc, uint8_t *lladdr_prev)
-{
-	struct ifnet *ifp;
-	struct lagg_port *lp;
-	const uint8_t *lladdr;
-
-	ifp = &sc->sc_if;
-
-	KASSERT(LAGG_LOCKED(sc));
-	KASSERT(IFNET_LOCKED(ifp));
-
-	lladdr = CLLADDR(ifp->if_sadl);
-
-	if (lagg_lladdr_equal(sc->sc_lladdr, lladdr))
-		return;
-
-	if (lagg_lladdr_equal(lladdr_prev, lladdr) == false)
-		return;
-
-	lagg_chg_sadl(ifp, sc->sc_lladdr, ETHER_ADDR_LEN);
-
-	LAGG_PORTS_FOREACH(sc, lp) {
-		IFNET_LOCK(lp->lp_ifp);
-		lagg_port_setsadl(lp, sc->sc_lladdr, false);
-		IFNET_UNLOCK(lp->lp_ifp);
-	}
+	lagg_chg_sadl(ifp, lladdr, ETHER_ADDR_LEN);
 
 	LAGG_UNLOCK(sc);
 	lagg_in6_ifdetach(ifp);
 	lagg_in6_ifattach(ifp);
 	LAGG_LOCK(sc);
+
+	lagg_sync_sadl(sc);
+}
+
+static void
+lagg_sync_sadl(struct lagg_softc *sc)
+{
+	struct ifnet *ifp;
+	struct lagg_port *lp;
+	const uint8_t *lla;
+
+	ifp = &sc->sc_if;
+	KASSERT(IFNET_LOCKED(ifp));
+
+	lla = CLLADDR(ifp->if_sadl);
+	if (lagg_lladdr_equal(lla, sc->sc_lladdr))
+		return;
+
+	lagg_lladdr_cpy(sc->sc_lladdr, lla);
+
+	LAGG_PORTS_FOREACH(sc, lp) {
+		IFNET_LOCK(lp->lp_ifp);
+		lagg_port_setsadl(lp, lla);
+		IFNET_UNLOCK(lp->lp_ifp);
+	}
 }
 
 static int
 lagg_port_setup(struct lagg_softc *sc,
     struct lagg_port *lp, struct ifnet *ifp_port)
 {
+	struct ifnet *ifp;
 	u_char if_type;
 	int error;
-	bool stopped, iftype_changed;
+	bool stopped, is_1st_port;
 
 	KASSERT(LAGG_LOCKED(sc));
 	IFNET_ASSERT_UNLOCKED(ifp_port);
+
+	ifp = &sc->sc_if;
+	is_1st_port = SIMPLEQ_EMPTY(&sc->sc_ports);
 
 	if (&sc->sc_if == ifp_port) {
 		LAGG_DPRINTF(sc, "cannot add a lagg to itself as a port\n");
@@ -2318,6 +2180,17 @@ lagg_port_setup(struct lagg_softc *sc,
 	psref_target_init(&lp->lp_psref, lagg_port_psref_class);
 
 	IFNET_LOCK(ifp_port);
+	/* stop packet processing */
+	if (ISSET(ifp_port->if_flags, IFF_RUNNING) &&
+	    ifp_port->if_init != NULL) {
+		if_stop(ifp_port, 0);
+		stopped = true;
+	}
+
+	/* to delete ipv6 link local address */
+	lagg_in6_ifdetach(ifp_port);
+
+	/* backup members */
 	lp->lp_iftype = ifp_port->if_type;
 	lp->lp_ioctl = ifp_port->if_ioctl;
 	lp->lp_output = ifp_port->if_output;
@@ -2331,81 +2204,85 @@ lagg_port_setup(struct lagg_softc *sc,
 		lp->lp_eccapenable = ec->ec_capenable;
 	}
 
+	/* change callbacks and others */
+	atomic_store_release(&ifp_port->if_lagg, (void *)lp);
 	ifp_port->if_type = if_type;
 	ifp_port->if_ioctl = lagg_port_ioctl;
-
-	iftype_changed = (lp->lp_iftype != ifp_port->if_type);
-
-	if (ISSET(ifp_port->if_flags, IFF_RUNNING) &&
-	    ifp_port->if_init != NULL) {
-		if_stop(ifp_port, 0);
-		stopped = true;
+	ifp_port->if_output = lagg_port_output;
+	if (is_1st_port) {
+		if (lp->lp_iftype != ifp_port->if_type)
+			lagg_port_setsadl(lp, NULL);
+	} else {
+		lagg_port_setsadl(lp, CLLADDR(ifp->if_sadl));
+		error = lagg_setmtu(ifp_port, ifp->if_mtu);
+		if (error != 0)
+			goto restore_sadl;
 	}
-
-	/* to delete ipv6 link local address */
-	lagg_in6_ifdetach(ifp_port);
-
-	lagg_capabilities_update(sc);
-
-	error = lagg_setup_mtu(sc, lp);
-	if (error != 0)
-		goto restore_ipv6lla;
-
-	if (lp->lp_iftype == IFT_ETHER)
-		lagg_setup_lladdr(sc, lp);
-
-	lagg_port_setsadl(lp, sc->sc_lladdr, iftype_changed);
-
-	IFNET_UNLOCK(ifp_port);
 
 	error = lagg_proto_allocport(sc, lp);
 	if (error != 0)
-		goto teardown_lladdr;
+		goto restore_mtu;
 
-	atomic_store_release(&ifp_port->if_lagg, (void *)lp);
+	/* restart packet processing */
+	if (stopped) {
+		error = if_init(ifp_port);
+		if (error != 0)
+			goto free_port;
+	}
+
+	/* setup of ifp_port is complete */
+	IFNET_UNLOCK(ifp_port);
+
+	if (is_1st_port) {
+		error = lagg_setmtu(ifp, lp->lp_mtu);
+		if (error != 0)
+			goto restore_ifp_port;
+		if (lp->lp_iftype == IFT_ETHER &&
+		    lagg_lladdr_equal(sc->sc_lladdr_rand,
+		    CLLADDR(ifp->if_sadl))) {
+			lagg_if_setsadl(sc, lp->lp_lladdr);
+		}
+	}
+
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ports, lp, lp_entry);
 	sc->sc_nports++;
 
+	lagg_capabilities_update(sc);
 	lagg_port_syncmulti(sc, lp);
 	lagg_port_syncvlan(sc, lp);
-
-	IFNET_LOCK(ifp_port);
-	ifp_port->if_output = lagg_port_output;
-	if (stopped) {
-		if (!ISSET(ifp_port->if_flags, IFF_RUNNING)) {
-			error = if_init(ifp_port);
-			if (error != 0)
-				goto remove_port;
-		}
-	}
-	IFNET_UNLOCK(ifp_port);
-
 	lagg_config_promisc(sc, lp);
+
 	lagg_proto_startport(sc, lp);
 
 	return 0;
 
-remove_port:
-	SIMPLEQ_REMOVE(&sc->sc_ports, lp, lagg_port, lp_entry);
-	sc->sc_nports--;
+restore_ifp_port:
 	IFNET_LOCK(ifp_port);
-	ifp_port->if_output = lp->lp_output;
-	IFNET_UNLOCK(ifp_port);
-	atomic_store_release(&ifp_port->if_lagg, NULL);
-	pserialize_perform(sc->sc_psz);
-	lagg_port_purgemulti(sc, lp);
-	lagg_port_purgevlan(sc, lp);
-	lagg_proto_freeport(sc, lp);
-
-teardown_lladdr:
-	IFNET_LOCK(ifp_port);
-	lagg_teardown_mtu(sc, lp);
-	lagg_port_unsetsadl(lp);
-	if (lp->lp_iftype == IFT_ETHER)
-		lagg_teardown_lladdr(sc, lp);
-restore_ipv6lla:
+	if (stopped) {
+		if_stop(ifp_port, 0);
+	}
+free_port:
 	KASSERT(IFNET_LOCKED(ifp_port));
-	lagg_in6_ifdetach(ifp_port);
+	lagg_proto_freeport(sc, lp);
+restore_mtu:
+	KASSERT(IFNET_LOCKED(ifp_port));
+	if (ifp_port->if_mtu != lp->lp_mtu)
+		lagg_setmtu(ifp_port, lp->lp_mtu);
+restore_sadl:
+	KASSERT(IFNET_LOCKED(ifp_port));
+
+	/* restore if_type before changing sadl */
+	if_type = ifp_port->if_type;
+	ifp_port->if_type = lp->lp_iftype;
+
+	if (!SIMPLEQ_EMPTY(&sc->sc_ports)) {
+		lagg_port_setsadl(lp, lp->lp_lladdr);
+	} else {
+		if (ifp_port->if_type != if_type)
+		lagg_port_setsadl(lp, NULL);
+	}
+
+	lagg_in6_ifattach(ifp_port);
 	if (stopped) {
 		if (if_init(ifp_port) != 0) {
 			LAGG_LOG(sc, LOG_WARNING,
@@ -2413,10 +2290,10 @@ restore_ipv6lla:
 			    ifp_port->if_xname);
 		}
 	}
-	ifp_port->if_type = lp->lp_iftype;
-	if (ifp_port->if_ioctl == lagg_port_ioctl)
-		ifp_port->if_ioctl = lp->lp_ioctl;
 
+	ifp_port->if_ioctl = lp->lp_ioctl;
+	ifp_port->if_output = lp->lp_output;
+	atomic_store_release(&ifp_port->if_lagg, NULL);
 	IFNET_UNLOCK(ifp_port);
 
 	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
@@ -2432,13 +2309,16 @@ static void
 lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
     bool is_ifdetach)
 {
-	struct ifnet *ifp_port;
-	bool stopped;
+	struct ifnet *ifp, *ifp_port;
+	bool stopped, is_1st_port, iftype_changed;
 
 	KASSERT(LAGG_LOCKED(sc));
 
+	ifp = &sc->sc_if;
 	ifp_port = lp->lp_ifp;
 	stopped = false;
+	is_1st_port =
+	    SIMPLEQ_FIRST(&sc->sc_ports) == lp ? true : false;
 
 	ether_ifdetachhook_disestablish(ifp_port,
 	    lp->lp_ifdetach_hook, &sc->sc_lock);
@@ -2448,56 +2328,92 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 		return;
 	}
 
-	lagg_proto_stopport(sc, lp);
-
-	IFNET_LOCK(ifp_port);
-	if (ISSET(ifp_port->if_flags, IFF_RUNNING) &&
-	    ifp_port->if_init != NULL) {
-		if_stop(ifp_port, 0);
-		stopped = true;
-	}
-	ifp_port->if_output = lp->lp_output;
-	IFNET_UNLOCK(ifp_port);
-
-	SIMPLEQ_REMOVE(&sc->sc_ports, lp, lagg_port, lp_entry);
-	sc->sc_nports--;
-	atomic_store_release(&ifp_port->if_lagg, NULL);
-	pserialize_perform(sc->sc_psz);
-
 	if_linkstate_change_disestablish(ifp_port,
 	    lp->lp_linkstate_hook, NULL);
 
-	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
+	lagg_proto_stopport(sc, lp);
 
 	lagg_port_purgemulti(sc, lp);
 	lagg_port_purgevlan(sc, lp);
-	lagg_teardown_lladdr(sc, lp);
-
-	IFNET_LOCK(ifp_port);
-	ifp_port->if_type = lp->lp_iftype;
-	if (ifp_port->if_ioctl == lagg_port_ioctl)
-		ifp_port->if_ioctl = lp->lp_ioctl;
-	lagg_teardown_mtu(sc, lp);
-
-	if (stopped)
-		if_init(ifp_port);
-	IFNET_UNLOCK(ifp_port);
-
 	if (is_ifdetach == false) {
 		lagg_unconfig_promisc(sc, lp);
 		lagg_setifcaps(lp, lp->lp_ifcapenable);
 		if (lp->lp_iftype == IFT_ETHER)
 			lagg_setethcaps(lp, lp->lp_eccapenable);
-
-		IFNET_LOCK(ifp_port);
-		lagg_port_unsetsadl(lp);
-		lagg_in6_ifattach(ifp_port);
-		IFNET_UNLOCK(ifp_port);
 	}
 
-	lagg_capabilities_update(sc);
+	SIMPLEQ_REMOVE(&sc->sc_ports, lp, lagg_port, lp_entry);
+	sc->sc_nports--;
+
+	if (is_1st_port) {
+		if (lp->lp_iftype == IFT_ETHER &&
+		    lagg_lladdr_equal(lp->lp_lladdr,
+		    CLLADDR(ifp->if_sadl))) {
+			struct lagg_port *lp0;
+			uint8_t *lla;
+
+			lp0 = SIMPLEQ_FIRST(&sc->sc_ports);
+			if (lp0 != NULL &&
+			    lp0->lp_iftype == IFT_ETHER) {
+				lla = lp0->lp_lladdr;
+			} else {
+				lla = sc->sc_lladdr_rand;
+			}
+
+			lagg_if_setsadl(sc, lla);
+		}
+	}
+
+	IFNET_LOCK(ifp_port);
+	/* stop packet processing */
+	if (ISSET(ifp_port->if_flags, IFF_RUNNING) &&
+	    ifp_port->if_init != NULL) {
+		if_stop(ifp_port, 0);
+		stopped = true;
+	}
 
 	lagg_proto_freeport(sc, lp);
+
+	/* change if_type before set sadl */
+	iftype_changed = ifp_port->if_type != lp->lp_iftype ?
+	    true : false;
+	ifp_port->if_type = lp->lp_iftype;
+
+	if (is_ifdetach == false) {
+		if (iftype_changed &&
+		    lagg_lladdr_equal(CLLADDR(ifp_port->if_sadl),
+		    lp->lp_lladdr)) {
+			lagg_port_setsadl(lp, NULL);
+		}
+		lagg_port_setsadl(lp, lp->lp_lladdr);
+		lagg_in6_ifattach(ifp_port);
+		(void)lagg_setmtu(ifp_port, lp->lp_mtu);
+	}
+
+	ifp_port->if_output = lp->lp_output;
+	if (ifp_port->if_ioctl == lagg_port_ioctl)
+		ifp_port->if_ioctl = lp->lp_ioctl;
+	atomic_store_release(&ifp_port->if_lagg, NULL);
+	pserialize_perform(sc->sc_psz);
+
+	/* to assign ipv6 link local address */
+	if (is_ifdetach == false) {
+		lagg_in6_ifattach(ifp_port);
+	}
+
+	/* restart packet processing */
+	if (stopped) {
+		int error;
+		error = if_init(ifp_port);
+		if (error != 0) {
+			LAGG_LOG(sc, LOG_WARNING,
+			    "%s failed to if_init() on %d\n",
+			    ifp_port->if_xname, error);
+		}
+	}
+	IFNET_UNLOCK(ifp_port);
+
+	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
 	kmem_free(lp, sizeof(*lp));
 }
 
@@ -2505,17 +2421,13 @@ static int
 lagg_addport(struct lagg_softc *sc, struct ifnet *ifp_port)
 {
 	struct lagg_port *lp;
-	uint8_t lladdr[ETHER_ADDR_LEN];
 	int error;
 
 	lp = kmem_zalloc(sizeof(*lp), KM_SLEEP);
 	lp->lp_ifp = ifp_port;
 
 	LAGG_LOCK(sc);
-	lagg_lladdr_cpy(lladdr, sc->sc_lladdr);
 	error = lagg_port_setup(sc, lp, ifp_port);
-	if (error == 0)
-		lagg_sadl_update(sc, lladdr);
 	LAGG_UNLOCK(sc);
 
 	if (error != 0)
@@ -2528,7 +2440,6 @@ static int
 lagg_delport(struct lagg_softc *sc, struct ifnet *ifp_port)
 {
 	struct lagg_port *lp;
-	uint8_t lladdr[ETHER_ADDR_LEN];
 	int error;
 
 	KASSERT(IFNET_LOCKED(&sc->sc_if));
@@ -2546,9 +2457,7 @@ lagg_delport(struct lagg_softc *sc, struct ifnet *ifp_port)
 		goto out;
 	}
 
-	lagg_lladdr_cpy(lladdr, sc->sc_lladdr);
 	lagg_port_teardown(sc, lp, false);
-	lagg_sadl_update(sc, lladdr);
 
 out:
 	LAGG_UNLOCK(sc);
@@ -2560,7 +2469,6 @@ static int
 lagg_delport_all(struct lagg_softc *sc)
 {
 	struct lagg_port *lp;
-	uint8_t lladdr[ETHER_ADDR_LEN];
 	int error;
 
 	KASSERT(IFNET_LOCKED(&sc->sc_if));
@@ -2568,7 +2476,6 @@ lagg_delport_all(struct lagg_softc *sc)
 	error = 0;
 
 	LAGG_LOCK(sc);
-	lagg_lladdr_cpy(lladdr, sc->sc_lladdr);
 	while ((lp = LAGG_PORTS_FIRST(sc)) != NULL) {
 		if (lp->lp_ifdetaching) {
 			error = EBUSY;
@@ -2578,7 +2485,6 @@ lagg_delport_all(struct lagg_softc *sc)
 		lagg_port_teardown(sc, lp, false);
 	}
 
-	lagg_sadl_update(sc, lladdr);
 	LAGG_UNLOCK(sc);
 
 	return error;
@@ -2772,7 +2678,6 @@ lagg_ifdetach(void *xifp_port)
 	struct ifnet *ifp_port = xifp_port;
 	struct lagg_port *lp;
 	struct lagg_softc *sc;
-	uint8_t lladdr[ETHER_ADDR_LEN];
 	int s;
 
 	IFNET_ASSERT_UNLOCKED(ifp_port);
@@ -2810,9 +2715,7 @@ lagg_ifdetach(void *xifp_port)
 	LAGG_LOCK(sc);
 	lp = ifp_port->if_lagg;
 	if (lp != NULL) {
-		lagg_lladdr_cpy(lladdr, sc->sc_lladdr);
 		lagg_port_teardown(sc, lp, true);
-		lagg_sadl_update(sc, lladdr);
 	}
 	LAGG_UNLOCK(sc);
 	IFNET_UNLOCK(&sc->sc_if);
@@ -2915,7 +2818,7 @@ lagg_workq_wait(struct workqueue *wq, struct lagg_work *lw)
 }
 
 static int
-lagg_chg_sadl(struct ifnet *ifp, uint8_t *lla, size_t lla_len)
+lagg_chg_sadl(struct ifnet *ifp, const uint8_t *lla, size_t lla_len)
 {
 	struct psref psref_cur, psref_next;
 	struct ifaddr *ifa_cur, *ifa_next, *ifa_lla;
