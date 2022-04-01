@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.16 2021/12/07 17:39:53 brad Exp $
+# $NetBSD: module.mi,v 1.17 2022/04/01 15:49:11 pgoyette Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -166,6 +166,8 @@
 ./usr/libdata/debug/@MODULEDIR@/i2c_bitbang/i2c_bitbang.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/i2cexec				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/i2cexec/i2cexec.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/i2c_subr				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/i2c_subr/i2c_subr.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_agr				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_agr/if_agr.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_aue				modules-base-kernel	kmod,debug

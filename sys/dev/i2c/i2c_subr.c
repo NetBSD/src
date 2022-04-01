@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_subr.c,v 1.1 2011/10/03 22:27:23 jmcneill Exp $	*/
+/*	$NetBSD: i2c_subr.c,v 1.2 2022/04/01 15:49:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,12 +36,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_subr.c,v 1.1 2011/10/03 22:27:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_subr.c,v 1.2 2022/04/01 15:49:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <dev/i2c/i2cvar.h>
+
+MODULE(MODULE_CLASS_EXEC, i2c_subr, NULL);
+
+static int
+i2c_subr_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
 
 int
 iicbus_print(void *aux, const char *pnp)
