@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.151 2022/04/01 15:49:11 pgoyette Exp $
+# $NetBSD: mi,v 1.152 2022/04/01 21:09:24 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11,6 +11,8 @@
 ./@MODULEDIR@/accf_httpready/accf_httpready.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/adosfs				modules-base-kernel	kmod
 ./@MODULEDIR@/adosfs/adosfs.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/adiantum				modules-base-kernel	kmod
+./@MODULEDIR@/adiantum/adiantum.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/aio				modules-base-kernel	kmod
 ./@MODULEDIR@/aio/aio.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/am2315temp			modules-base-kernel	kmod

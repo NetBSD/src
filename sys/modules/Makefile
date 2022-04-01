@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.263 2022/04/01 15:49:11 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.264 2022/04/01 21:09:24 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,7 @@ SUBDIR+=	compat_crypto_50
 SUBDIR+=	accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
+SUBDIR+=	adiantum
 SUBDIR+=	aio
 SUBDIR+=	audio
 SUBDIR+=	autofs
