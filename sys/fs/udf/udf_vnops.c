@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.121 2022/03/30 13:23:59 christos Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.122 2022/04/01 08:26:27 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.121 2022/03/30 13:23:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.122 2022/04/01 08:26:27 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1567,7 +1567,7 @@ udf_link(void *v)
 	udf_node = VTOI(vp);
 
 	if ((error = vn_lock(vp, LK_EXCLUSIVE))) {
-		DPRINTF("lock failed. %p\n", vp);
+		DPRINTF(LOCKING, ("exclusive lock failed for vnode %p\n", vp));
 		goto out;
 	}
 
