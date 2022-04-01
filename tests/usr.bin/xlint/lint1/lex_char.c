@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_char.c,v 1.4 2021/06/29 07:28:01 rillig Exp $	*/
+/*	$NetBSD: lex_char.c,v 1.5 2022/04/01 21:12:42 rillig Exp $	*/
 # 3 "lex_char.c"
 
 /*
@@ -60,8 +60,10 @@ test(void)
 }
 
 /*
- * Even though backslash-newline is not supported by C99, lint accepts it
- * in any mode, even for traditional C.
+ * The sequence backslash-newline is handled in an early stage of
+ * translation (C90 5.1.1.2 item 2, C99 5.1.1.2 item 2, C11 5.1.1.2 item 2),
+ * which allows it in character literals as well.  This doesn't typically
+ * occur in practice though.
  */
 char ch = '\
 \
