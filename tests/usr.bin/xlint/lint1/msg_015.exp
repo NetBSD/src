@@ -1,1 +1,1 @@
-msg_015.c(9): error: function returns illegal type [15]
+msg_015.c(9): error: function returns illegal type 'array[5] of int' [15]
