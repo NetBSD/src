@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsvar.h,v 1.13 2022/03/03 21:03:14 blymn Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.14 2022/04/01 06:31:29 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -72,6 +72,8 @@ struct synaptics_softc {
 			    ((sc)->total_packets - (c)) : \
 			     ((c) - (sc)->total_packets))
 
+	int	num_buttons;  /* number of external buttons */
+	uint8_t	button_mask;
 	int	up_down;
 	int	prev_fingers;
 

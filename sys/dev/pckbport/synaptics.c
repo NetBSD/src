@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.76 2022/03/03 21:03:14 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.77 2022/04/01 06:31:29 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.76 2022/03/03 21:03:14 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.77 2022/04/01 06:31:29 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,12 @@ static int synaptics_edge_bottom = SYNAPTICS_EDGE_BOTTOM;
 static int synaptics_edge_motion_delta = 32;
 static u_int synaptics_finger_high = SYNAPTICS_FINGER_LIGHT + 5;
 static u_int synaptics_finger_low = SYNAPTICS_FINGER_LIGHT - 10;
-static int synaptics_button_boundary = SYNAPTICS_EDGE_BOTTOM + 720;
-static int synaptics_button2 = SYNAPTICS_EDGE_LEFT + (SYNAPTICS_EDGE_RIGHT - SYNAPTICS_EDGE_LEFT) / 3;
-static int synaptics_button3 = SYNAPTICS_EDGE_LEFT + 2 * (SYNAPTICS_EDGE_RIGHT - SYNAPTICS_EDGE_LEFT) / 3;
+static int synaptics_horiz_pct = 0;
+static int synaptics_vert_pct = 0;
+static int synaptics_button_pct = 30;
+static int synaptics_button_boundary;
+static int synaptics_button2;
+static int synaptics_button3;
 static int synaptics_two_fingers_emul = 0;
 static int synaptics_scale_x = 16;
 static int synaptics_scale_y = 16;
@@ -163,6 +166,23 @@ static int synaptics_movement_threshold_nodenum;
 static int synaptics_movement_enable_nodenum;
 static int synaptics_button_region_movement_nodenum;
 static int synaptics_aux_mid_button_scroll_nodenum;
+static int synaptics_horiz_pct_nodenum;
+static int synaptics_vert_pct_nodenum;
+static int synaptics_button_pct_nodenum;
+
+/*
+ * copy of edges so we can recalculate edge limit if there is 
+ * vertical scroll region
+ */
+static int synaptics_actual_edge_right;
+static int synaptics_actual_edge_bottom;
+
+static int synaptics_old_vert_pct = 0;
+static int synaptics_old_horiz_pct = 0;
+static int synaptics_old_button_pct = 0;
+static int synaptics_old_button_boundary = SYNAPTICS_EDGE_BOTTOM;
+static int synaptics_old_horiz_edge = SYNAPTICS_EDGE_BOTTOM;
+static int synaptics_old_vert_edge = SYNAPTICS_EDGE_RIGHT;
 
 /*
  * This holds the processed packet data, it is global because multiple
@@ -232,6 +252,84 @@ synaptics_special_write(struct pms_softc *psc, u_char command, u_char arg)
 }
 
 static void
+pms_synaptics_set_boundaries(void)
+{
+	if (synaptics_vert_pct != synaptics_old_vert_pct ) {
+		synaptics_edge_right -= ((unsigned long) synaptics_vert_pct *
+		    (synaptics_actual_edge_right - synaptics_edge_left)) / 100;
+		synaptics_old_vert_pct = synaptics_vert_pct;
+		synaptics_old_vert_edge = synaptics_edge_right;
+	}
+
+	if (synaptics_edge_right != synaptics_old_vert_edge) {
+		if (synaptics_edge_right >= synaptics_actual_edge_right) {
+			synaptics_vert_pct = 0;
+			synaptics_edge_right = synaptics_actual_edge_right;
+		} else {
+			synaptics_vert_pct = 100 -
+			    ((unsigned long) 100 * synaptics_edge_right) /
+			    (synaptics_actual_edge_right - synaptics_edge_left);
+		}
+		synaptics_old_vert_edge = synaptics_edge_right;
+	}
+
+	if (synaptics_horiz_pct != synaptics_old_horiz_pct ) {
+		synaptics_edge_bottom = synaptics_actual_edge_bottom +
+		    ((unsigned long) synaptics_horiz_pct *
+		    (synaptics_edge_top - synaptics_actual_edge_bottom)) / 100;
+		synaptics_old_horiz_pct = synaptics_horiz_pct;
+		synaptics_old_horiz_edge = synaptics_edge_bottom;
+	}
+
+	if (synaptics_edge_bottom != synaptics_old_horiz_edge) {
+		if (synaptics_edge_bottom <= synaptics_actual_edge_bottom) {
+			synaptics_vert_pct = 0;
+			synaptics_edge_bottom = synaptics_actual_edge_bottom;
+		} else {
+			synaptics_horiz_pct = 100 -
+			    ((unsigned long) 100 * synaptics_edge_bottom) /
+			    (synaptics_edge_top - synaptics_actual_edge_bottom);
+		}
+		synaptics_old_horiz_edge = synaptics_edge_bottom;
+	}
+
+	if (synaptics_button_pct != synaptics_old_button_pct) {
+		synaptics_button_boundary = synaptics_edge_bottom + 
+		    ((unsigned long) synaptics_button_pct * 
+		    (synaptics_edge_top - synaptics_edge_bottom)) / 100;
+		synaptics_old_button_pct = synaptics_button_pct;
+		synaptics_old_button_boundary = synaptics_button_boundary;
+	}
+
+	if (synaptics_button_boundary != synaptics_old_button_boundary) {
+		if (synaptics_button_boundary <= synaptics_edge_bottom) {
+			synaptics_button_pct = 0;
+			synaptics_button_boundary = synaptics_edge_bottom;
+		} else {
+			synaptics_button_pct = 100 -
+			    ((unsigned long) 100 * synaptics_button_boundary) /
+			    (synaptics_edge_top - synaptics_edge_bottom);
+		}
+		synaptics_old_button_boundary = synaptics_button_boundary;
+	}
+
+	/*
+	 * recalculate the button boundary yet again just in case the
+	 * bottom edge changed above.
+	 */
+	synaptics_button_boundary = synaptics_edge_bottom + 
+	    ((unsigned long) synaptics_button_pct * 
+	    (synaptics_edge_top - synaptics_edge_bottom)) / 100;
+	synaptics_old_button_boundary = synaptics_button_boundary;
+
+	synaptics_button2 = synaptics_edge_left +
+	    (synaptics_edge_right - synaptics_edge_left) / 3;
+	synaptics_button3 = synaptics_edge_left +
+	    2 * (synaptics_edge_right - synaptics_edge_left) / 3;
+
+}
+
+static void
 pms_synaptics_probe_extended(struct pms_softc *psc)
 {
 	struct synaptics_softc *sc = &psc->u.synaptics;
@@ -258,14 +356,19 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 	{
 		res = synaptics_special_read(psc, SYNAPTICS_EXTENDED_QUERY, resp);
 		if (res == 0) {
-			int buttons = (resp[1] >> 4);
+			sc->num_buttons = (resp[1] >> 4);
+			if (sc->num_buttons > 0)
+				sc->button_mask = sc->button_mask <<
+				    ((sc->num_buttons + 1) >> 1);
+
 			aprint_debug_dev(psc->sc_dev,
-			    "%s: Extended Buttons: %d.\n", __func__, buttons);
+			    "%s: Extended Buttons: %d.\n", __func__,
+			    sc->num_buttons);
 
 			aprint_debug_dev(psc->sc_dev, "%s: Extended "
 			    "Capabilities: 0x%02x 0x%02x 0x%02x.\n", __func__,
 			    resp[0], resp[1], resp[2]);
-			if (buttons >= 2) {
+			if (sc->num_buttons >= 2) {
 				/* Yes. */
 				sc->flags |= SYN_FLAG_HAS_UP_DOWN_BUTTONS;
 			}
@@ -405,6 +508,10 @@ pms_synaptics_probe_init(void *vsc)
 	}
 
 	sc->flags = 0;
+	sc->num_buttons = 0;
+	sc->button_mask = 0xff;
+
+	pms_synaptics_set_boundaries();
 
 	/* Check for minimum version and print a nice message. */
 	ver_major = resp[2] & 0x0f;
@@ -464,6 +571,16 @@ pms_synaptics_probe_init(void *vsc)
 			synaptics_edge_top = (resp[2] << 5) + 
 			    ((resp[1] & 0xf0) >> 3);
 
+			synaptics_actual_edge_right = synaptics_edge_right;
+
+			/*
+			 * If we have vertical scroll then steal 10%
+			 * for that region.
+			 */
+			if (sc->flags & SYN_FLAG_HAS_VERTICAL_SCROLL)
+				synaptics_edge_right -=
+				    synaptics_edge_right / 10;
+
 			aprint_normal_dev(psc->sc_dev,
 			    "Probed max coordinates right: %d, top: %d\n",
 			    synaptics_edge_right, synaptics_edge_top);
@@ -482,11 +599,22 @@ pms_synaptics_probe_init(void *vsc)
 			synaptics_edge_bottom = (resp[2] << 5) + 
 			    ((resp[1] & 0xf0) >> 3);
 
+			synaptics_actual_edge_bottom = synaptics_edge_bottom;
+
+			/*
+			 * If we have horizontal scroll then steal 10%
+			 * for that region.
+			 */
+			if (sc->flags & SYN_FLAG_HAS_HORIZONTAL_SCROLL)
+				synaptics_horiz_pct = 10;
+
 			aprint_normal_dev(psc->sc_dev,
 			    "Probed min coordinates left: %d, bottom: %d\n",
 			    synaptics_edge_left, synaptics_edge_bottom);
 		}
 	}
+
+	pms_synaptics_set_boundaries();
 
 done:
 	pms_sysctl_synaptics(&clog);
@@ -889,6 +1017,42 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "vert_scroll_percent",
+	    SYSCTL_DESCR("Percent of trackpad width to reserve for vertical scroll region"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_vert_pct,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_vert_pct_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "horizontal_scroll_percent",
+	    SYSCTL_DESCR("Percent of trackpad height to reserve for scroll region"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_horiz_pct,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_horiz_pct_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "button_region_percent",
+	    SYSCTL_DESCR("Percent of trackpad height to reserve for button region"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_button_pct,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_button_pct_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "debug",
 	    SYSCTL_DESCR("Enable debug output"),
 	    NULL, 0,
@@ -966,13 +1130,13 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_button_boundary_nodenum) {
-		if (t < 0 || t < SYNAPTICS_EDGE_BOTTOM ||
-		    t > SYNAPTICS_EDGE_TOP)
+		if (t < 0 || t < synaptics_edge_bottom ||
+		    t > synaptics_edge_top)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_button2_nodenum ||
 	    node.sysctl_num == synaptics_button3_nodenum) {
-		if (t < SYNAPTICS_EDGE_LEFT || t > SYNAPTICS_EDGE_RIGHT)
+		if (t < synaptics_edge_left || t > synaptics_edge_right)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_movement_enable_nodenum) {
@@ -987,9 +1151,23 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 		if (t < 0 || t > 1)
 			return (EINVAL);
 	} else
+	if (node.sysctl_num == synaptics_vert_pct_nodenum) {
+		if (t < 0 || t > 100)
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_horiz_pct_nodenum) {
+		if (t < 0 || t > 100)
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_button_pct_nodenum) {
+		if (t < 0 || t > 100)
+			return (EINVAL);
+	} else
 		return (EINVAL);
 
 	*(int *)rnode->sysctl_data = t;
+
+	pms_synaptics_set_boundaries();
 
 	return (0);
 }
@@ -1074,6 +1252,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	struct synaptics_packet nsp;
 	char new_buttons, ew_mode;
+	uint8_t btn_mask, packet4, packet5;
 	unsigned v, primary_finger, secondary_finger;
 	int ext_left = -1, ext_right = -1, ext_middle = -1,
 	    ext_up = -1, ext_down = -1;
@@ -1170,6 +1349,25 @@ pms_synaptics_parse(struct pms_softc *psc)
 		nsp.sp_primary = 1;
 
 		/*
+		 * If the trackpad has external buttons and one of
+		 * those buttons is pressed then the lower bits of
+		 * x and y are "stolen" for button status. We can tell
+		 * this has happened by doing an xor of the two right
+		 * button status bits residing in byte 0 and 3, if the
+		 * result is non-zero then there is an external button
+		 * report and the position bytes need to be masked.
+		 */
+		btn_mask = 0xff;
+		if ((sc->num_buttons > 0) &&
+		    ((psc->packet[0] & PMS_RBUTMASK) ^
+		     (psc->packet[3] & PMS_RBUTMASK))) {
+			btn_mask = sc->button_mask;
+		}
+
+		packet4 = psc->packet[4] & btn_mask;
+		packet5 = psc->packet[5] & btn_mask;
+
+		/*
 		 * If SYN_FLAG_HAS_MULTI_FINGER is set then check
 		 * sp_w is below SYNAPTICS_WIDTH_FINGER_MIN, if it is
 		 * then this will be the finger count.
@@ -1178,20 +1376,22 @@ pms_synaptics_parse(struct pms_softc *psc)
 		 * just punt with one finger, if this really is a palm
 		 * then it will be caught later.
 		 */
-		if (sc->flags & SYN_FLAG_HAS_MULTI_FINGER) {
+		if ((sc->flags & SYN_FLAG_HAS_MULTI_FINGER) &&
+		    ((nsp.sp_w == SYNAPTICS_WIDTH_TWO_FINGERS) ||
+		     (nsp.sp_w == SYNAPTICS_WIDTH_THREE_OR_MORE))) {
 			/*
 			 * To make life interesting if there are
 			 * two or more fingers on the touchpad then
 			 * the coordinate reporting changes and an extra
 			 * "virtual" finger width is reported.
 			 */
-			nsp.sp_x = (psc->packet[4] & 0xfc) +
-				((psc->packet[4] & 0x02) << 1) +
+			nsp.sp_x = (packet4 & 0xfc) +
+				((packet4 & 0x02) << 1) +
 				((psc->packet[1] & 0x0f) << 8) +
 				((psc->packet[3] & 0x10) << 8);
 
-			nsp.sp_y = (psc->packet[5] & 0xfc) +
-				((psc->packet[5] & 0x02) << 1) +
+			nsp.sp_y = (packet5 & 0xfc) +
+				((packet5 & 0x02) << 1) +
 				((psc->packet[1] & 0xf0) << 4) +
 				((psc->packet[3] & 0x20) << 7);
 
@@ -1199,17 +1399,17 @@ pms_synaptics_parse(struct pms_softc *psc)
 			nsp.sp_z = psc->packet[2] & 0xfe;
 
 			/* derive the virtual finger width */
-			v = 8 + ((psc->packet[4] & 0x02) >> 1) +
-				(psc->packet[5] & 0x02) +
+			v = 8 + ((packet4 & 0x02) >> 1) +
+				(packet5 & 0x02) +
 				((psc->packet[2] & 0x01) << 2);
 
 		} else {
 			/* Absolute X/Y coordinates of finger */
-			nsp.sp_x = psc->packet[4] +
+			nsp.sp_x = packet4 +
 				((psc->packet[1] & 0x0f) << 8) +
 				((psc->packet[3] & 0x10) << 8);
 
-			nsp.sp_y = psc->packet[5] +
+			nsp.sp_y = packet5 +
 				((psc->packet[1] & 0xf0) << 4) +
 				((psc->packet[3] & 0x20) << 7);
 
