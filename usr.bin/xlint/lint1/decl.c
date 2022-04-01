@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.254 2022/04/01 20:29:37 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.255 2022/04/01 20:38:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.254 2022/04/01 20:29:37 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.255 2022/04/01 20:38:37 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1306,8 +1306,11 @@ add_pointer(sym_t *decl, qual_ptr *p)
 	tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
 		tpp = &(*tpp)->t_subt;
-	if (*tpp == NULL)
+	if (*tpp == NULL) {
+		debug_step("add_pointer: unchanged '%s'",
+		    type_name(decl->s_type));
 		return decl;
+	}
 
 	while (p != NULL) {
 		*tpp = tp = block_zero_alloc(sizeof(*tp));
@@ -1319,6 +1322,7 @@ add_pointer(sym_t *decl, qual_ptr *p)
 		free(p);
 		p = next;
 	}
+	debug_step("add_pointer: '%s'", type_name(decl->s_type));
 	return decl;
 }
 
@@ -1334,8 +1338,11 @@ add_array(sym_t *decl, bool dim, int n)
 	tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
 		tpp = &(*tpp)->t_subt;
-	if (*tpp == NULL)
+	if (*tpp == NULL) {
+		debug_step("add_array: unchanged '%s'",
+		    type_name(decl->s_type));
 		return decl;
+	}
 
 	*tpp = tp = block_zero_alloc(sizeof(*tp));
 	tp->t_tspec = ARRAY;
@@ -1353,6 +1360,7 @@ add_array(sym_t *decl, bool dim, int n)
 		setcomplete(tp, false);
 	}
 
+	debug_step("add_array: '%s'", type_name(decl->s_type));
 	return decl;
 }
 
@@ -1397,8 +1405,11 @@ add_function(sym_t *decl, sym_t *args)
 		 * may even be guaranteed to be NULL.
 		 */
 		tpp = &(*tpp)->t_subt;
-	if (*tpp == NULL)
+	if (*tpp == NULL) {
+		debug_step("add_function: unchanged '%s'",
+		    type_name(decl->s_type));
 		return decl;	/* see msg_347 */
+	}
 
 	*tpp = tp = block_zero_alloc(sizeof(*tp));
 	tp->t_tspec = FUNC;
@@ -1407,6 +1418,7 @@ add_function(sym_t *decl, sym_t *args)
 		tp->t_args = args;
 	tp->t_vararg = dcs->d_vararg;
 
+	debug_step("add_function: '%s'", type_name(decl->s_type));
 	return decl;
 }
 
