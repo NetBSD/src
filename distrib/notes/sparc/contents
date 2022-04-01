@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.27 2020/08/07 00:43:51 snj Exp $
+.\"	$NetBSD: contents,v 1.28 2022/04/01 21:53:35 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,10 +108,6 @@ see below.
 .		It Pa bootfs/
 .
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
-.
-.		It Pa floppy/
-.
-\*M boot and installation floppies; see below.
 .
 .		It Pa miniroot/
 .

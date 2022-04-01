@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.60 2021/12/08 12:54:15 uwe Exp $
+.\"	$NetBSD: install,v 1.61 2022/04/01 21:53:35 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,8 +39,6 @@ image copied to your local disk's swap partition or a scratch drive.
 If your Sparc is hooked up in a network, you may configure another
 .Ul
 machine as a netboot server for your Sparc.
-Alternatively, there is a pair
-of floppy images that will boot your system and run the installer.
 .Pp
 For more information on the commands and variables available in
 the OpenBoot PROM (present in all sun4c and sun4m machines), go to
@@ -175,112 +173,6 @@ Boot the installer by typing the appropriate command at the PROM prompt:
 .Pp
 After the initial probe messages you'll be asked to start the
 install or upgrade procedure.
-Proceed to the section
-.Sx Running the installation scripts.
-below.
-.
-.Ss2 Installing NetBSD by using the bootable floppies
-.
-The
-.Nx
-install floppies only work on the sun4c and sun4m machines.
-Making the install floppies is fairly straightforward.
-.Pp
-.Nx
-and SunOS use the same commands.
-First, get two 1.44 MB floppy disks and format them either using the
-.Xr fdformat 8
-command or a PC.
-.Pp
-.(disp
-.No # Ic "fdformat"
-.disp)
-.Pp
-Be sure that the `fdformat' command completes successfully before proceeding;
-on
-.Nx
-success is a string of all
-.Sq Li V 's ,
-and on
-.Tn SunOS
-success is a string of
-.Sq Li \&. 's .
-.Pp
-Next, transfer the two floppy images
-.Pq Pa installation/floppy/disk1.gz No and Pa installation/floppy/disk2
-to the disks you just formatted.
-You can do this step from
-.Nx ,
-.Tn SunOS ,
-or a
-.Tn Windows
-machine using
-.Nm rawrite.exe
-(available in the
-.Nx Ns / Ns i386
-distribution).
-Insert the first floppy and run the following commands:
-.Pp
-.(disp
-.No # Ic "gunzip disk1.gz"
-.No # Ic "dd if=disk1 of=/dev/rfd0a bs=36k"
-.No # Ic "eject floppy"
-.disp)
-.Pp
-Insert the second floppy and run the following commands:
-.Pp
-.(disp
-.No # Ic "dd if=disk2 of=/dev/rfd0a bs=36k"
-.No # Ic "eject floppy"
-.disp)
-.Pp
-Note that disk2 may be a symlink to .\*[setsuffix] file; do not uncompress it,
-just follow the instructions above, verbatim.
-After writing the two floppies,
-be sure to label them so you can later identify them.
-.Pp
-Insert the floppy made from
-.Pa disk1
-into your Sparc.
-From the OpenBoot prompt, boot the floppy with the following command:
-.Pp
-.(tag OpenBoot\ PROM\ 2\ (alternate) -offset indent -compact
-.It OpenBoot PROM 1
-.(disp
-.No ok Ic "boot fd(,,1)"
-.disp)
-.It OpenBoot PROM 1 (alternate)
-.(disp
-.No ok Ic "boot /fd"
-.disp)
-.It OpenBoot PROM 2
-.(disp
-.No ok Ic "boot floppy"
-.disp)
-.tag)
-.Pp
-After the initial probe messages you'll be asked to insert the floppy
-labeled
-.Dq NetBSD disk2 .
-If the floppy is not automatically ejected, you can either use a
-straightened paperclip to eject the disk or do the following:
-.Pp
-Press the
-.Key STOP
-key (sometimes called the
-.Key L1
-key, found on the left side of your keyboard) and the
-.Key a
-key, which will halt your system and give you a PROM prompt.
-.(disp
-.No ok Ic "eject"
-.No ok Ic "go"
-.disp)
-.Pp
-Now, insert the floppy labeled
-.Li disk2 .
-After the installation tools have been loaded,
-you'll be asked to start the install or upgrade procedure.
 Proceed to the section
 .Sx Running the installation scripts.
 below.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.568 2022/02/06 07:37:29 nia Exp $
+.\"	$NetBSD: main,v 1.569 2022/04/01 21:53:35 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,10 +206,8 @@ If you have a CD-R, you can fetch the CD image,
 .\}
 .if \n[sparc] \{\
 Fetch a CD image,
-.Pa NetBSD-\*V-sparc.iso
-or the floppy disk images,
-.Pa sparc/install/floppy/disk1.gz No and Pa sparc/install/floppy/disk2 .
-You need either the pair of floppies or the CD to boot your system.
+.Pa NetBSD-\*V-sparc.iso .
+You need the CD to boot your system.
 .\}
 .if \n[sparc64] \{\
 This is either a CD image
@@ -234,7 +232,7 @@ When you boot the install
 .if \n[amd64] image or CD-ROM,
 .if \n[i386] image, CD-ROM or floppies,
 .if \n[macppc] kernel from floppies, hard drive, or CD-ROM,
-.if \n[sparc] floppies or CD-ROM,
+.if \n[sparc] CD-ROM,
 .if \n[sparc64] CD-ROM or installation kernel,
 the installation program
 can fetch these files for you (using, e.g., ftp)
@@ -312,8 +310,6 @@ If you are using the CD image, burn it now.
 .It
 Make sure your sparc's CD-ROM drive is bootable.
 Burn the CD.
-Otherwise, write the floppy images directly to a pair of floppies
-(after uncompressing disk1.gz).
 .\}
 .if \n[sparc64] \{\
 .It
@@ -444,13 +440,6 @@ your model):
 .Dq Ic boot sd(,30,) ,
 or
 .Dq Ic boot cdrom .
-.Pp
-The command to boot from floppy is either
-.Dq Ic boot fd(,,1)
-or
-.Dq Ic boot floppy .
-The installer will prompt you to insert the second floppy when it is ready
-for it.
 .\}
 .if \n[sparc64] \{\
 The command to boot from CD is:
