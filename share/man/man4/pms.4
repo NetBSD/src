@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.40 2021/10/21 07:33:13 wiz Exp $
+.\" $NetBSD: pms.4,v 1.41 2022/04/01 06:32:10 blymn Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -182,11 +182,27 @@ fingers that are located in the button emulation region defined by
 If set to 0 (the default) finger movements will not be reported.
 If set to 1 finger movements will be reported.
 .It Dv hw.synaptics.button_boundary
-Sets the top edge of the button emulation region on a clickpad.
+.It Dv hw.synaptics.button_region_percent
+These two items are interrelated in that setting one will affect
+the value of the other.
 Since a clickpad only reports left clicks this region is used to emulate
 two or three buttons by detecting the finger location and reporting
 either a button 2 or button 3 click if the click occurs within
 the region bounded by button_boundary and the bottom of the clickpad.
+.Va hw.synaptics.button_boundary
+sets the top edge of the button emulation region on a clickpad and
+the percentage that represents this value is calculated and stored
+in
+.Va hw.synaptics.button_region_percent
+Conversely, if
+.Va hw.synaptics.button_region_percent
+is set then the equivalent value for
+.Va hw.synaptics.button_boundary
+is calculated and stored.
+Using a percentage allows the button region for trackpads that are able
+to report their maximum and minimum values to be reliably set to
+occupy a defined portion of the trackpad area instead of the user having
+to tweak an arbitrary number.
 .It Dv hw.synaptics.button3_edge
 This defines the left hand edge of the button 3 region.
 If a click occurs in the region bounded by button_boundary, button3_edge
@@ -203,33 +219,23 @@ event.
 For completeness, the region between the left hand side of the clickpad,
 button2_edge and button_boundary will be reported as a button1 event
 as will any clicks that occur outside the button emulation region.
-.It Dv hw.synaptics.finger_scroll-min
-The minimum finger width at which the driver will start reporting
-vertical movements as Z axis events.
-Effectively, this emulates a mouse scroll wheel by the user using two
-fingers together on the click pad.
-The default value is 5, this value cannot be less than 5 due to the way
-the clickpad reports finger width.
-.It Dv hw.synaptics.finger_scroll-max
-The maximum finger width at which the driver will report finger
-movement as Z axis events.
-The default value is 12 and cannot be greater than 14.
-.It Dv hw.synaptics.finger_scroll-hysteresis
-This defines the number of packets to continue with the Z axis emulation.
-Due to the nature of the clickpad maintaining constant contact can be
-difficult.
-This hysteresis value prevents the driver flipping between two finger
-scroll and normal mouse movement erratically.
-Each time a valid finger scroll width is detected the packet count is
-reset.
-If this variable is set too high then mouse movements will be interpreted
-as Z-axis events after the two finger scoll has finished.
-If the variable is set too low then there will be mouse movements observed
-during the two finger scroll.
 .It Dv hw.synaptics.aux_mid_button_scroll
 This causes Y-axis movement on the "passthrough device" (e.g. the TrackPoint
 on ThinkPads) to result in scrolling events instead of Y-axis movement when
 the middle button is held.
+.It Dv hw.synaptics.vert_scroll_percent
+Reserve this percentage of the trackpad for a vertical scroll region.
+This will reduce
+.Va hw.synaptics.edge_right
+by this percentage.
+.It Dv hw.synaptics.horizontal_scroll_percent
+Reserve this percentage of the trackpad for a horizontal scroll region.
+This will reduce
+.Va hw.synaptics.edge_bottom
+by this percentage.
+The 
+.Va hw.synaptics.button_boundary
+will be recalculated as a result of the change.
 .El
 .Pp
 The following
