@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.411 2022/03/13 15:26:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.412 2022/04/01 01:06:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.411 2022/03/13 15:26:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.412 2022/04/01 01:06:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3473,6 +3473,7 @@ type_size_in_bits(const type_t *tp)
 
 	elem = 1;
 	flex = false;
+	lint_assert(tp != NULL);
 	while (tp->t_tspec == ARRAY) {
 		flex = true;	/* allow c99 flex arrays [] [0] */
 		elem *= tp->t_dim;
