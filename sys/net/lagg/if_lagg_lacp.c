@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.21 2022/03/31 07:59:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.22 2022/04/01 07:26:51 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.21 2022/03/31 07:59:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.22 2022/04/01 07:26:51 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -667,11 +667,10 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	sc = lsc->lsc_softc;
 
 	KASSERT(LAGG_LOCKED(sc));
+	KASSERT(IFNET_LOCKED(lp->lp_ifp));
 
-	IFNET_LOCK(lp->lp_ifp);
 	lacp_mcastaddr(&ifr, lp->lp_ifp->if_xname);
 	error = lp->lp_ioctl(lp->lp_ifp, SIOCADDMULTI, (void *)&ifr);
-	IFNET_UNLOCK(lp->lp_ifp);
 
 	switch (error) {
 	case 0:
@@ -700,7 +699,6 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 
 	lp->lp_proto_ctx = (void *)lacpp;
 	lp->lp_prio = ntohs(lacpp->lp_actor.lpi_portprio);
-	lacp_linkstate(xlsc, lp);
 
 	return 0;
 }
@@ -751,6 +749,7 @@ lacp_freeport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	lacpp = lp->lp_proto_ctx;
 
 	KASSERT(LAGG_LOCKED(lsc->lsc_softc));
+	KASSERT(IFNET_LOCKED(lp->lp_ifp));
 
 	lagg_workq_wait(lsc->lsc_workq, &lacpp->lp_work_smtx);
 	lagg_workq_wait(lsc->lsc_workq, &lacpp->lp_work_marker);
@@ -758,9 +757,7 @@ lacp_freeport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	if (lacpp->lp_added_multi) {
 		lacp_mcastaddr(&ifr, LACP_PORT_XNAME(lacpp));
 
-		IFNET_LOCK(lp->lp_ifp);
 		(void)lp->lp_ioctl(lp->lp_ifp, SIOCDELMULTI, (void *)&ifr);
-		IFNET_UNLOCK(lp->lp_ifp);
 	}
 
 	lp->lp_proto_ctx = NULL;
