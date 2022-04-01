@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.2 2021/10/10 14:52:30 jmcneill Exp $ */
+/* $NetBSD: efi.c,v 1.3 2022/04/01 06:51:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.2 2021/10/10 14:52:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.3 2022/04/01 06:51:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.2 2021/10/10 14:52:30 jmcneill Exp $");
 
 #include "ioconf.h"
 
-/* 
+/*
  * Maximum length of an EFI variable name. The UEFI spec doesn't specify a
  * constraint, but we want to limit the size to act as a guard rail against
  * allocating too much kernel memory.
