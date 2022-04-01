@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.76 2021/10/31 16:23:48 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.77 2022/04/01 19:57:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,12 +32,13 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.76 2021/10/31 16:23:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.77 2022/04/01 19:57:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
@@ -694,7 +695,7 @@ fpu_kern_enter(void)
 	 */
 	s = splvm();
 	ci = curcpu();
-	KASSERTMSG(ci->ci_cpl <= IPL_VM, "cpl=%d", ci->ci_cpl);
+	KASSERTMSG(ci->ci_cpl <= IPL_VM || cold, "cpl=%d", ci->ci_cpl);
 	KASSERT(ci->ci_kfpu_spl == -1);
 	ci->ci_kfpu_spl = s;
 
@@ -720,7 +721,7 @@ fpu_kern_leave(void)
 		return;
 	}
 
-	KASSERT(ci->ci_cpl == IPL_VM);
+	KASSERT(ci->ci_cpl == IPL_VM || cold);
 	KASSERT(ci->ci_kfpu_spl != -1);
 
 	/*
