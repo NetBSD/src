@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.263 2022/04/02 18:15:43 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.264 2022/04/02 20:12:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.263 2022/04/02 18:15:43 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.264 2022/04/02 20:12:45 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1612,6 +1612,9 @@ declarator_name(sym_t *sym)
 			lint_assert(sc == EXTERN);
 			sym->s_def = DECL;
 		}
+		break;
+	case ABSTRACT:		/* try to continue after syntax errors */
+		sc = NOSCL;
 		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);

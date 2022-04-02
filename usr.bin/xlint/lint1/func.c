@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.129 2022/04/02 14:28:30 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.130 2022/04/02 20:12:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.129 2022/04/02 14:28:30 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.130 2022/04/02 20:12:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1161,6 +1161,8 @@ global_clean_up_decl(bool silent)
 	 * fine.  See test gcc_attribute.c, function_with_unknown_attribute.
 	 */
 	in_gcc_attribute = false;
+	while (dcs->d_enclosing != NULL)
+		end_declaration_level();
 }
 
 /*

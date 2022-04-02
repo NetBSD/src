@@ -1,1 +1,5 @@
-msg_022.c(6): error: syntax error ':' [249]
+msg_022.c(11): error: syntax error 'f' [249]
+msg_022.c(15): warning: empty declaration [0]
+msg_022.c(22): error: syntax error 'param1' [249]
+msg_022.c(26): warning: empty declaration [0]
+msg_022.c(29): error: syntax error ':' [249]

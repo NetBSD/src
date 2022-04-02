@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.155 2022/04/01 23:16:31 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.156 2022/04/02 20:12:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.155 2022/04/01 23:16:31 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.156 2022/04/02 20:12:46 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -596,6 +596,7 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 	    "lint: assertion \"%s\" failed in %s at %s:%d near %s:%d\n",
 	    cond, func, file, line, fn, curr_pos.p_line);
 	print_stack_trace();
+	(void)fflush(stdout);
 	abort();
 }
 
