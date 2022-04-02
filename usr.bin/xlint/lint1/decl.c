@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.266 2022/04/02 22:15:57 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.267 2022/04/02 22:38:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.266 2022/04/02 22:15:57 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.267 2022/04/02 22:38:45 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@ static	bool	eqargs(const type_t *, const type_t *, bool *);
 static	bool	mnoarg(const type_t *, bool *);
 static	bool	check_old_style_definition(sym_t *, sym_t *);
 static	bool	check_prototype_declaration(sym_t *, sym_t *);
-static	sym_t	*new_style_function(sym_t *, sym_t *);
+static	sym_t	*new_style_function(sym_t *);
 static	void	old_style_function(sym_t *, sym_t *);
 static	void	declare_external_in_block(sym_t *);
 static	bool	check_init(sym_t *);
@@ -1396,7 +1396,7 @@ add_function(sym_t *decl, sym_t *args)
 		if (tflag)
 			/* function prototypes are illegal in traditional C */
 			warning(270);
-		args = new_style_function(decl, args);
+		args = new_style_function(args);
 	} else {
 		old_style_function(decl, args);
 	}
@@ -1445,12 +1445,8 @@ add_function(sym_t *decl, sym_t *args)
 	return decl;
 }
 
-/*
- * Called for new style function declarations.
- */
-/* ARGSUSED */
 static sym_t *
-new_style_function(sym_t *decl, sym_t *args)
+new_style_function(sym_t *args)
 {
 	sym_t	*arg, *sym;
 	scl_t	sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.232 2022/02/27 10:31:58 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.233 2022/04/02 22:38:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.232 2022/02/27 10:31:58 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.233 2022/04/02 22:38:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -568,7 +568,7 @@ brace_level_advance(brace_level *bl, size_t *max_subscript)
 	tp = designation_parent_type(dn, bl->bl_type);
 
 	if (bl->bl_designation.dn_len == 0)
-		designation_descend(dn, bl->bl_type);
+		(void)designation_descend(dn, bl->bl_type);
 	dr = designation_last(dn);
 	/* TODO: try to switch on dr->dr_kind instead */
 	switch (tp->t_tspec) {
@@ -792,7 +792,7 @@ initialization_lbrace(initialization *in)
 
 	if (outer_bl != NULL && outer_bl->bl_designation.dn_len == 0) {
 		designation *dn = &outer_bl->bl_designation;
-		designation_descend(dn, outer_bl->bl_type);
+		(void)designation_descend(dn, outer_bl->bl_type);
 		tp = designation_type(dn, outer_bl->bl_type);
 	}
 
@@ -972,7 +972,7 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 
 	bl = in->in_brace_level;
 	if (bl != NULL && bl->bl_designation.dn_len == 0)
-		designation_descend(&bl->bl_designation, bl->bl_type);
+		(void)designation_descend(&bl->bl_designation, bl->bl_type);
 	if (bl != NULL)
 		brace_level_advance(bl, &in->in_max_subscript);
 
