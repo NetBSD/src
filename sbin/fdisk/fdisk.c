@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.160 2021/11/03 14:30:04 nia Exp $ */
+/*	$NetBSD: fdisk.c,v 1.161 2022/04/02 19:15:09 mlelstv Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.160 2021/11/03 14:30:04 nia Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.161 2022/04/02 19:15:09 mlelstv Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2551,6 +2551,9 @@ read_disk(daddr_t sector, void *buf)
 	if (*rfd == -1)
 		errx(1, "read_disk(); fd == -1");
 
+	if (secsize <= 0)
+		errx(1, "read_disk(); secsize invalid");
+
 	off_t offs = sector * (off_t)secsize;
 	off_t mod = offs & (secsize - 1);
 	off_t rnd = offs & ~(secsize - 1);
@@ -2558,8 +2561,8 @@ read_disk(daddr_t sector, void *buf)
 	if (lseek(*rfd, rnd, SEEK_SET) == (off_t)-1)
 		return -1;
 
-	if (secsize == 512)
-		return read(*rfd, buf, 512);
+	if (secsize <= 512)
+		return read(*rfd, buf, secsize);
 
 	if ((nr = read(*rfd, iobuf, secsize)) != secsize)
 		return nr;
