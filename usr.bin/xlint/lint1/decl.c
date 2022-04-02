@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.262 2022/04/02 17:28:06 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.263 2022/04/02 18:15:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.262 2022/04/02 17:28:06 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.263 2022/04/02 18:15:43 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1270,6 +1270,17 @@ merge_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
 	return p1;
 }
 
+static type_t *
+block_derive_pointer(type_t *stp, bool is_const, bool is_volatile)
+{
+	type_t *tp;
+
+	tp = block_derive_type(stp, PTR);
+	tp->t_const = is_const;
+	tp->t_volatile = is_volatile;
+	return tp;
+}
+
 /*
  * The following 3 functions extend the type of a declarator with
  * pointer, function and array types.
@@ -1281,7 +1292,7 @@ merge_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
 sym_t *
 add_pointer(sym_t *decl, qual_ptr *p)
 {
-	type_t **tpp, *tp;
+	type_t **tpp;
 	qual_ptr *next;
 
 	debug_dinfo(dcs);
@@ -1296,14 +1307,10 @@ add_pointer(sym_t *decl, qual_ptr *p)
 	}
 
 	while (p != NULL) {
-		tp = block_zero_alloc(sizeof(*tp));
-		tp->t_tspec = PTR;
-		tp->t_const = p->p_const;
-		tp->t_volatile = p->p_volatile;
-		tp->t_subt = dcs->d_type;
+		*tpp = block_derive_pointer(dcs->d_type,
+		    p->p_const, p->p_volatile);
 
-		*tpp = tp;
-		tpp = &tp->t_subt;
+		tpp = &(*tpp)->t_subt;
 
 		next = p->p_next;
 		free(p);
@@ -1313,6 +1320,26 @@ add_pointer(sym_t *decl, qual_ptr *p)
 	return decl;
 }
 
+static type_t *
+block_derive_array(type_t *stp, bool dim, int len)
+{
+	type_t *tp;
+
+	tp = block_derive_type(stp, ARRAY);
+	tp->t_dim = len;
+
+	if (len < 0) {
+		/* negative array dimension (%d) */
+		error(20, len);
+	} else if (len == 0 && dim) {
+		/* zero sized array is a C99 extension */
+		c99ism(322);
+	} else if (len == 0 && !dim)
+		tp->t_incomplete_array = true;
+
+	return tp;
+}
+
 /*
  * If a dimension was specified, dim is true, otherwise false
  * n is the specified dimension
@@ -1320,7 +1347,7 @@ add_pointer(sym_t *decl, qual_ptr *p)
 sym_t *
 add_array(sym_t *decl, bool dim, int n)
 {
-	type_t	**tpp, *tp;
+	type_t	**tpp;
 
 	debug_dinfo(dcs);
 
@@ -1333,30 +1360,29 @@ add_array(sym_t *decl, bool dim, int n)
 		return decl;
 	}
 
-	*tpp = tp = block_zero_alloc(sizeof(*tp));
-	tp->t_tspec = ARRAY;
-	tp->t_subt = dcs->d_type;
-	tp->t_dim = n;
-
-	if (n < 0) {
-		/* negative array dimension (%d) */
-		error(20, n);
-		n = 0;
-	} else if (n == 0 && dim) {
-		/* zero sized array is a C99 extension */
-		c99ism(322);
-	} else if (n == 0 && !dim) {
-		tp->t_incomplete_array = true;
-	}
+	*tpp = block_derive_array(dcs->d_type, dim, n);
 
 	debug_step("add_array: '%s'", type_name(decl->s_type));
 	return decl;
 }
 
+static type_t *
+block_derive_function(type_t *ret, bool proto, sym_t *args, bool vararg)
+{
+	type_t *tp;
+
+	tp = block_derive_type(ret, FUNC);
+	tp->t_proto = proto;
+	if (proto)
+		tp->t_args = args;
+	tp->t_vararg = vararg;
+	return tp;
+}
+
 sym_t *
 add_function(sym_t *decl, sym_t *args)
 {
-	type_t	**tpp, *tp;
+	type_t	**tpp;
 
 	debug_enter();
 	debug_dinfo(dcs);
@@ -1411,13 +1437,8 @@ add_function(sym_t *decl, sym_t *args)
 		return decl;	/* see msg_347 */
 	}
 
-	*tpp = tp = block_zero_alloc(sizeof(*tp));
-	tp->t_tspec = FUNC;
-	tp->t_subt = dcs->d_enclosing->d_type;
-	tp->t_proto = dcs->d_proto;
-	if (tp->t_proto)
-		tp->t_args = args;
-	tp->t_vararg = dcs->d_vararg;
+	*tpp = block_derive_function(dcs->d_enclosing->d_type,
+	    dcs->d_proto, args, dcs->d_vararg);
 
 	debug_step("add_function: '%s'", type_name(decl->s_type));
 	debug_leave();
