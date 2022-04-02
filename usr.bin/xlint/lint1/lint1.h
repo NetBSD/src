@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.143 2022/04/02 14:28:30 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.144 2022/04/02 22:15:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,21 +35,6 @@
 #include "lint.h"
 #include "err-msgs.h"
 #include "op.h"
-
-/*
- * XXX - Super conservative so that works for most systems, but we should
- * not depend on the host settings but the target settings in determining
- * the alignment. The only valid use for this is in mem1.c; uses in decl.c
- * are bogus.
- */
-#ifndef WORST_ALIGN
-#ifdef _LP64
-# define AVAL	15
-#else
-# define AVAL	7
-#endif
-#define WORST_ALIGN(x) (((x) + AVAL) & ~AVAL)
-#endif
 
 #define LWARN_BAD	(-3)
 #define LWARN_ALL	(-2)
