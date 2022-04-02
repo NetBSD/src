@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.258 2022/04/02 12:24:54 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.259 2022/04/02 14:28:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.258 2022/04/02 12:24:54 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.259 2022/04/02 14:28:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -599,7 +599,7 @@ begin_declaration_level(scl_t sc)
 
 	/* put a new element on the declaration stack */
 	di = xcalloc(1, sizeof(*di));
-	di->d_next = dcs;
+	di->d_enclosing = dcs;
 	dcs = di;
 	di->d_ctx = sc;
 	di->d_ldlsym = &di->d_dlsyms;
@@ -616,9 +616,9 @@ end_declaration_level(void)
 
 	debug_step("%s(%p %s)", __func__, dcs, scl_name(dcs->d_ctx));
 
-	lint_assert(dcs->d_next != NULL);
+	lint_assert(dcs->d_enclosing != NULL);
 	di = dcs;
-	dcs = di->d_next;
+	dcs = di->d_enclosing;
 	switch (di->d_ctx) {
 	case MOS:
 	case MOU:
@@ -696,7 +696,7 @@ setasm(void)
 {
 	dinfo_t	*di;
 
-	for (di = dcs; di != NULL; di = di->d_next)
+	for (di = dcs; di != NULL; di = di->d_enclosing)
 		di->d_asm = true;
 }
 
@@ -1393,17 +1393,17 @@ add_function(sym_t *decl, sym_t *args)
 	/*
 	 * The symbols are removed from the symbol table by
 	 * end_declaration_level after add_function. To be able to restore
-	 * them if this is a function definition, a pointer to the list of all
-	 * symbols is stored in dcs->d_next->d_func_proto_syms. Also a list of
-	 * the arguments (concatenated by s_next) is stored in
-	 * dcs->d_next->d_func_args. (dcs->d_next must be used because *dcs is
-	 * the declaration stack element created for the list of params and is
-	 * removed after add_function.)
+	 * them if this is a function definition, a pointer to the list of
+	 * all symbols is stored in dcs->d_enclosing->d_func_proto_syms. Also
+	 * a list of the arguments (concatenated by s_next) is stored in
+	 * dcs->d_enclosing->d_func_args. (dcs->d_enclosing must be used
+	 * because *dcs is the declaration stack element created for the list
+	 * of params and is removed after add_function.)
 	 */
-	if (dcs->d_next->d_ctx == EXTERN &&
-	    decl->s_type == dcs->d_next->d_type) {
-		dcs->d_next->d_func_proto_syms = dcs->d_dlsyms;
-		dcs->d_next->d_func_args = args;
+	if (dcs->d_enclosing->d_ctx == EXTERN &&
+	    decl->s_type == dcs->d_enclosing->d_type) {
+		dcs->d_enclosing->d_func_proto_syms = dcs->d_dlsyms;
+		dcs->d_enclosing->d_func_args = args;
 	}
 
 	/*
@@ -1412,8 +1412,8 @@ add_function(sym_t *decl, sym_t *args)
 	 */
 	tpp = &decl->s_type;
 	if (*tpp == NULL)
-		decl->s_type = dcs->d_next->d_type;
-	while (*tpp != NULL && *tpp != dcs->d_next->d_type)
+		decl->s_type = dcs->d_enclosing->d_type;
+	while (*tpp != NULL && *tpp != dcs->d_enclosing->d_type)
 		/*
 		 * XXX: accessing INT->t_subt feels strange, even though it
 		 * may even be guaranteed to be NULL.
@@ -1428,7 +1428,7 @@ add_function(sym_t *decl, sym_t *args)
 
 	*tpp = tp = block_zero_alloc(sizeof(*tp));
 	tp->t_tspec = FUNC;
-	tp->t_subt = dcs->d_next->d_type;
+	tp->t_subt = dcs->d_enclosing->d_type;
 	if ((tp->t_proto = dcs->d_proto) != false)
 		tp->t_args = args;
 	tp->t_vararg = dcs->d_vararg;
@@ -1485,8 +1485,8 @@ old_style_function(sym_t *decl, sym_t *args)
 	 * Remember list of parameters only if this really seems to be a
 	 * function definition.
 	 */
-	if (dcs->d_next->d_ctx == EXTERN &&
-	    decl->s_type == dcs->d_next->d_type) {
+	if (dcs->d_enclosing->d_ctx == EXTERN &&
+	    decl->s_type == dcs->d_enclosing->d_type) {
 		/*
 		 * We assume that this becomes a function definition. If
 		 * we are wrong, it's corrected in check_function_definition.
@@ -1670,7 +1670,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 			tag = newtag(tag, scl, decl, semi);
 		} else {
 			/* a new tag, no empty declaration */
-			dcs->d_next->d_nonempty_decl = true;
+			dcs->d_enclosing->d_nonempty_decl = true;
 			if (scl == ENUM_TAG && !decl) {
 				if (!tflag && (sflag || pflag))
 					/* forward reference to enum type */
@@ -1693,7 +1693,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		tag->s_block_level = -1;
 		tag->s_type = tp = block_zero_alloc(sizeof(*tp));
 		tp->t_packed = dcs->d_packed;
-		dcs->d_next->d_nonempty_decl = true;
+		dcs->d_enclosing->d_nonempty_decl = true;
 	}
 
 	if (tp->t_tspec == NOTSPEC) {
@@ -1735,14 +1735,14 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 				warning(45, storage_class_name(tag->s_scl),
 				    tag->s_name);
 			}
-			dcs->d_next->d_nonempty_decl = true;
+			dcs->d_enclosing->d_nonempty_decl = true;
 		} else if (decl) {
 			/* "struct a { ... } " */
 			if (hflag)
 				/* redefinition hides earlier one: %s */
 				warning(43, tag->s_name);
 			tag = pushdown(tag);
-			dcs->d_next->d_nonempty_decl = true;
+			dcs->d_enclosing->d_nonempty_decl = true;
 		} else if (tag->s_scl != scl) {
 			/* base type is really '%s %s' */
 			warning(45, storage_class_name(tag->s_scl),
@@ -1753,7 +1753,7 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 				    tag->s_name);
 			}
 			tag = pushdown(tag);
-			dcs->d_next->d_nonempty_decl = true;
+			dcs->d_enclosing->d_nonempty_decl = true;
 		}
 	} else {
 		if (tag->s_scl != scl ||
@@ -1763,9 +1763,9 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			    tag->s_name, storage_class_name(scl));
 			print_previous_declaration(-1, tag);
 			tag = pushdown(tag);
-			dcs->d_next->d_nonempty_decl = true;
+			dcs->d_enclosing->d_nonempty_decl = true;
 		} else if (semi || decl) {
-			dcs->d_next->d_nonempty_decl = true;
+			dcs->d_enclosing->d_nonempty_decl = true;
 		}
 	}
 	return tag;
@@ -2908,7 +2908,7 @@ void
 global_clean_up(void)
 {
 
-	while (dcs->d_next != NULL)
+	while (dcs->d_enclosing != NULL)
 		end_declaration_level();
 
 	clean_up_after_error();
@@ -3180,7 +3180,7 @@ check_global_symbols(void)
 {
 	sym_t	*sym;
 
-	if (block_level != 0 || dcs->d_next != NULL)
+	if (block_level != 0 || dcs->d_enclosing != NULL)
 		norecover();
 
 	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_level_next) {

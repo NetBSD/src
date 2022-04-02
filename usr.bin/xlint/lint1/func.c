@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.128 2022/02/27 10:44:45 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.129 2022/04/02 14:28:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.128 2022/02/27 10:44:45 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.129 2022/04/02 14:28:30 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -415,14 +415,14 @@ funcend(void)
 	}
 
 	/* clean up after syntax errors, see test stmt_for.c. */
-	while (dcs->d_next != NULL)
-		dcs = dcs->d_next;
+	while (dcs->d_enclosing != NULL)
+		dcs = dcs->d_enclosing;
 
 	/*
 	 * remove all symbols declared during argument declaration from
 	 * the symbol table
 	 */
-	lint_assert(dcs->d_next == NULL);
+	lint_assert(dcs->d_enclosing == NULL);
 	lint_assert(dcs->d_ctx == EXTERN);
 	rmsyms(dcs->d_func_proto_syms);
 

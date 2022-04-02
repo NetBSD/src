@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.10 2022/04/02 12:24:54 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.11 2022/04/02 14:28:30 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.10 2022/04/02 12:24:54 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.11 2022/04/02 14:28:30 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -363,9 +363,9 @@ debug_dinfo(const dinfo_t *d) // NOLINT(misc-no-recursion)
 		debug_sym("func_proto_sym(", sym, ")");
 	debug_printf("\n");
 
-	if (d->d_next != NULL) {
+	if (d->d_enclosing != NULL) {
 		debug_indent_inc();
-		debug_dinfo(d->d_next);
+		debug_dinfo(d->d_enclosing);
 		debug_indent_dec();
 	}
 }
