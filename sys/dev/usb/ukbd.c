@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.159 2022/03/28 12:44:17 riastradh Exp $        */
+/*      $NetBSD: ukbd.c,v 1.160 2022/04/02 19:19:12 mlelstv Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.159 2022/03/28 12:44:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.160 2022/04/02 19:19:12 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -259,6 +259,7 @@ struct ukbd_softc {
 #define FLAG_GDIUM_FN		0x0020
 #define FLAG_FN_PRESSED		0x0100	/* FN key is held down */
 #define FLAG_FN_ALT		0x0200	/* Last Alt key was FN-Alt = AltGr */
+#define FLAG_NO_CONSOLE		0x0400	/* Don't attach as console */
 
 	int sc_console_keyboard;	/* we are the console keyboard */
 
@@ -375,6 +376,22 @@ const struct wskbd_mapdata ukbd_keymapdata = {
 #endif
 };
 
+static const struct ukbd_type {
+	struct usb_devno	dev;
+	int			flags;
+} ukbd_devs[] = {
+#define UKBD_DEV(v, p, f) \
+	{ { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, (f) }
+#ifdef GDIUM_KEYBOARD_HACK
+	UKBD_DEV(CYPRESS, LPRDK, FLAG_GDIUM_FN),
+#endif
+	UKBD_DEV(YUBICO, YUBIKEY4MODE1, FLAG_NO_CONSOLE),
+	UKBD_DEV(YUBICO, YUBIKEY4MODE2, FLAG_NO_CONSOLE),
+	UKBD_DEV(YUBICO, YUBIKEY4MODE6, FLAG_NO_CONSOLE)
+};
+#define ukbd_lookup(v, p) \
+	((const struct ukbd_type *)usb_lookup(ukbd_devs, v, p))
+
 static int ukbd_match(device_t, cfdata_t, void *);
 static void ukbd_attach(device_t, device_t, void *);
 static int ukbd_detach(device_t, int);
@@ -409,6 +426,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	uint32_t qflags;
 	const char *parseerr;
 	struct wskbddev_attach_args a;
+	const struct ukbd_type *ukt;
 
 	sc->sc_dev = self;
 	sc->sc_hdev = uha->parent;
@@ -438,11 +456,10 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	if (qflags & UQ_APPLE_ISO)
 		sc->sc_flags |= FLAG_APPLE_FIX_ISO;
 
-#ifdef GDIUM_KEYBOARD_HACK
-	if (uha->uiaa->uiaa_vendor == USB_VENDOR_CYPRESS &&
-	    uha->uiaa->uiaa_product == USB_PRODUCT_CYPRESS_LPRDK)
-		sc->sc_flags = FLAG_GDIUM_FN;
-#endif
+	/* Other Quirks */
+	ukt = ukbd_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product);
+	if (ukt)
+		sc->sc_flags |= ukt->flags;
 
 #ifdef USBVERBOSE
 	aprint_normal(": %d Variable keys, %d Array codes", sc->sc_nkeyloc,
@@ -456,15 +473,17 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 #endif
 	aprint_normal("\n");
 
-	/*
-	 * Remember if we're the console keyboard.
-	 *
-	 * XXX This always picks the first keyboard on the
-	 * first USB bus, but what else can we really do?
-	 */
-	if ((sc->sc_console_keyboard = ukbd_is_console) != 0) {
-		/* Don't let any other keyboard have it. */
-		ukbd_is_console = 0;
+	if ((sc->sc_flags & FLAG_NO_CONSOLE) == 0) {
+		/*
+		 * Remember if we're the console keyboard.
+		 *
+		 * XXX This always picks the first keyboard on the
+		 * first USB bus, but what else can we really do?
+		 */
+		if ((sc->sc_console_keyboard = ukbd_is_console) != 0) {
+			/* Don't let any other keyboard have it. */
+			ukbd_is_console = 0;
+		}
 	}
 
 	if (sc->sc_console_keyboard) {
@@ -1064,8 +1083,8 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 	sc->sc_nkeycode = 0;
 	d = hid_start_parse(desc, size, hid_input);
 	while (hid_get_item(d, &h)) {
-		/*printf("ukbd: id=%d kind=%d usage=%#x flags=%#x pos=%d size=%d cnt=%d\n",
-		  h.report_ID, h.kind, h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count);*/
+		printf("ukbd: id=%d kind=%d usage=%#x flags=%#x pos=%d size=%d cnt=%d\n",
+		  h.report_ID, h.kind, h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count);
 
 		/* Check for special Apple notebook FN key */
 		if (HID_GET_USAGE_PAGE(h.usage) == 0x00ff &&
