@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.260 2022/04/02 14:35:47 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.261 2022/04/02 16:27:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.260 2022/04/02 14:35:47 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.261 2022/04/02 16:27:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1315,11 +1315,15 @@ add_pointer(sym_t *decl, qual_ptr *p)
 	}
 
 	while (p != NULL) {
-		*tpp = tp = block_zero_alloc(sizeof(*tp));
+		tp = block_zero_alloc(sizeof(*tp));
 		tp->t_tspec = PTR;
 		tp->t_const = p->p_const;
 		tp->t_volatile = p->p_volatile;
-		*(tpp = &tp->t_subt) = dcs->d_type;
+		tp->t_subt = dcs->d_type;
+
+		*tpp = tp;
+		tpp = &tp->t_subt;
+
 		next = p->p_next;
 		free(p);
 		p = next;
@@ -1429,11 +1433,12 @@ add_function(sym_t *decl, sym_t *args)
 	*tpp = tp = block_zero_alloc(sizeof(*tp));
 	tp->t_tspec = FUNC;
 	tp->t_subt = dcs->d_enclosing->d_type;
-	if ((tp->t_proto = dcs->d_proto) != false)
+	tp->t_proto = dcs->d_proto;
+	if (tp->t_proto)
 		tp->t_args = args;
 	tp->t_vararg = dcs->d_vararg;
 
-	debug_step("add_function: '%s'", type_name(tp));
+	debug_step("add_function: '%s'", type_name(decl->s_type));
 	debug_leave();
 	return decl;
 }
