@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.131 2022/03/19 09:53:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.132 2022/04/02 11:16:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2022/03/19 09:53:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2022/04/02 11:16:06 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
+#include "opt_efi.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_pmap.h"
@@ -198,8 +199,16 @@ static int _pmap_get_pdp(struct pmap *, vaddr_t, bool, int, paddr_t *,
     struct vm_page **);
 
 static struct pmap kernel_pmap __cacheline_aligned;
+static struct pmap efirt_pmap __cacheline_aligned;
 
 struct pmap * const kernel_pmap_ptr = &kernel_pmap;
+
+pmap_t
+pmap_efirt(void)
+{
+	return &efirt_pmap;
+}
+
 static vaddr_t pmap_maxkvaddr;
 
 vaddr_t virtual_avail, virtual_end;
@@ -281,6 +290,9 @@ phys_to_pp(paddr_t pa)
 #define IN_DIRECTMAP_ADDR(va)	\
 	IN_RANGE((va), AARCH64_DIRECTMAP_START, AARCH64_DIRECTMAP_END)
 
+#define	PMAP_EFIVA_P(va) \
+     IN_RANGE((va), EFI_RUNTIME_VA, EFI_RUNTIME_VA + EFI_RUNTIME_SIZE)
+
 #ifdef MODULAR
 #define IN_MODULE_VA(va)	IN_RANGE((va), module_start, module_end)
 #else
@@ -290,7 +302,8 @@ phys_to_pp(paddr_t pa)
 #ifdef DIAGNOSTIC
 
 #define KERNEL_ADDR_P(va)						\
-    IN_RANGE((va), VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS)
+    (IN_RANGE((va), VM_MIN_KERNEL_ADDRESS,  VM_MAX_KERNEL_ADDRESS) ||	\
+     PMAP_EFIVA_P(va))
 
 #define KASSERT_PM_ADDR(pm, va)						\
     do {								\
@@ -492,6 +505,28 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 
 	CTASSERT(sizeof(kpm->pm_stats.wired_count) == sizeof(long));
 	CTASSERT(sizeof(kpm->pm_stats.resident_count) == sizeof(long));
+
+#if defined(EFI_RUNTIME)
+	memset(&efirt_pmap, 0, sizeof(efirt_pmap));
+	struct pmap * const efipm = &efirt_pmap;
+	struct pmap_asid_info * const efipai = PMAP_PAI(efipm, cpu_tlb_info(ci));
+
+	efipai->pai_asid = KERNEL_PID;
+	efipm->pm_refcnt = 1;
+
+	vaddr_t efi_l0va = uvm_pageboot_alloc(Ln_TABLE_SIZE);
+	KASSERT((efi_l0va & PAGE_MASK) == 0);
+
+	efipm->pm_l0table = (pd_entry_t *)efi_l0va;
+	memset(efipm->pm_l0table, 0, Ln_TABLE_SIZE);
+
+	efipm->pm_l0table_pa = AARCH64_KVA_TO_PA(efi_l0va);
+
+	efipm->pm_activated = false;
+	LIST_INIT(&efipm->pm_vmlist);
+	LIST_INIT(&efipm->pm_pvlist);	/* not used for efi pmap */
+	mutex_init(&efipm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
+#endif
 }
 
 #ifdef MULTIPROCESSOR
@@ -1456,6 +1491,33 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	pm_unlock(pm);
 }
 
+#if defined(EFI_RUNTIME)
+void
+pmap_activate_efirt(void)
+{
+	kpreempt_disable();
+
+	struct cpu_info *ci = curcpu();
+	struct pmap *pm = &efirt_pmap;
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, " (pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
+
+	ci->ci_pmap_asid_cur = pai->pai_asid;
+	UVMHIST_LOG(pmaphist, "setting asid to %#jx", pai->pai_asid,
+	    0, 0, 0);
+	tlb_set_asid(pai->pai_asid, pm);
+
+	/* Re-enable translation table walks using TTBR0 */
+	uint64_t tcr = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr & ~TCR_EPD0);
+	isb();
+	pm->pm_activated = true;
+
+	PMAP_COUNT(activate);
+}
+#endif
 
 void
 pmap_activate(struct lwp *l)
@@ -1491,6 +1553,32 @@ pmap_activate(struct lwp *l)
 
 	PMAP_COUNT(activate);
 }
+
+#if defined(EFI_RUNTIME)
+void
+pmap_deactivate_efirt(void)
+{
+	struct cpu_info * const ci = curcpu();
+	struct pmap * const pm = &efirt_pmap;
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+
+	/* Disable translation table walks using TTBR0 */
+	uint64_t tcr = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr | TCR_EPD0);
+	isb();
+
+	UVMHIST_LOG(pmaphist, "setting asid to %#jx", KERNEL_PID,
+	    0, 0, 0);
+
+	ci->ci_pmap_asid_cur = KERNEL_PID;
+        tlb_set_asid(KERNEL_PID, pmap_kernel());
+
+	pm->pm_activated = false;
+
+	PMAP_COUNT(deactivate);
+}
+#endif
 
 void
 pmap_deactivate(struct lwp *l)
@@ -1607,6 +1695,12 @@ _pmap_pdp_addref(struct pmap *pm, paddr_t pdppa, struct vm_page *pdppg_hint)
 	if (pm == pmap_kernel())
 		return;
 
+#if defined(EFI_RUNTIME)
+	/* EFI runtme L0-L3 pages will never be freed */
+	if (pm == pmap_efirt())
+		return;
+#endif
+
 	KASSERT(mutex_owned(&pm->pm_lock));
 
 	/* no need for L0 page */
@@ -1640,6 +1734,12 @@ _pmap_pdp_delref(struct pmap *pm, paddr_t pdppa, bool do_free_pdp)
 	/* kernel L0-L3 pages will never be freed */
 	if (pm == pmap_kernel())
 		return false;
+
+#if defined(EFI_RUNTIME)
+	/* EFI runtme L0-L3 pages will never be freed */
+	if (pm == pmap_efirt())
+		return false;
+#endif
 
 	KASSERT(mutex_owned(&pm->pm_lock));
 
@@ -1722,7 +1822,8 @@ _pmap_get_pdp(struct pmap *pm, vaddr_t va, bool kenter, int flags,
 	idx = l0pde_index(va);
 	pde = l0[idx];
 	if (!l0pde_valid(pde)) {
-		KASSERT(!kenter || IN_MODULE_VA(va));
+		KASSERTMSG(!kenter || IN_MODULE_VA(va) || PMAP_EFIVA_P(va),
+		    "%s va %" PRIxVADDR, kenter ? "kernel" : "user", va);
 		/* no need to increment L0 occupancy. L0 page never freed */
 		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L1 pdp */
 		if (pdppa == POOL_PADDR_INVALID) {
@@ -1739,7 +1840,8 @@ _pmap_get_pdp(struct pmap *pm, vaddr_t va, bool kenter, int flags,
 	idx = l1pde_index(va);
 	pde = l1[idx];
 	if (!l1pde_valid(pde)) {
-		KASSERT(!kenter || IN_MODULE_VA(va));
+		KASSERTMSG(!kenter || IN_MODULE_VA(va) || PMAP_EFIVA_P(va),
+		    "%s va %" PRIxVADDR, kenter ? "kernel" : "user", va);
 		pdppa0 = pdppa;
 		pdppg0 = pdppg;
 		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L2 pdp */
@@ -1758,7 +1860,8 @@ _pmap_get_pdp(struct pmap *pm, vaddr_t va, bool kenter, int flags,
 	idx = l2pde_index(va);
 	pde = l2[idx];
 	if (!l2pde_valid(pde)) {
-		KASSERT(!kenter || IN_MODULE_VA(va));
+		KASSERTMSG(!kenter || IN_MODULE_VA(va) || PMAP_EFIVA_P(va),
+		    "%s va %" PRIxVADDR, kenter ? "kernel" : "user", va);
 		pdppa0 = pdppa;
 		pdppg0 = pdppg;
 		pdppa = pmap_alloc_pdp(pm, &pdppg, flags, false);  /* L3 pdp */
@@ -1790,7 +1893,13 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	uint32_t mdattr;
 	unsigned int idx;
 	int error = 0;
-	const bool user = (pm != pmap_kernel());
+#if defined(EFI_RUNTIME)
+	const bool efirt_p = pm == pmap_efirt();
+#else
+	const bool efirt_p = false;
+#endif
+	const bool kernel_p = pm == pmap_kernel();
+	const bool user = !kernel_p && !efirt_p;
 	bool need_sync_icache, need_enter_pv;
 
 	UVMHIST_FUNC(__func__);
@@ -2005,7 +2114,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	attr = L3_PAGE | (kenter ? 0 : LX_BLKPAG_NG);
 	attr = _pmap_pte_adjust_prot(attr, prot, mdattr, user);
 	attr = _pmap_pte_adjust_cacheflags(attr, flags);
-	if (VM_MAXUSER_ADDRESS > va)
+	if (VM_MAXUSER_ADDRESS > va && !efirt_p)
 		attr |= LX_BLKPAG_APUSER;
 	if (flags & PMAP_WIRED)
 		attr |= LX_BLKPAG_OS_WIRED;

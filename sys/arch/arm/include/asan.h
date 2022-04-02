@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.7 2021/01/27 08:40:32 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.8 2022/04/02 11:16:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_efi.h"
 
 #include <sys/atomic.h>
 #include <sys/ksyms.h>

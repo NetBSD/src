@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43 2020/08/28 13:36:52 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.44 2022/04/02 11:16:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,7 +40,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: locore.S,v 1.43 2020/08/28 13:36:52 skrll Exp $")
+	RCSID("$NetBSD: locore.S,v 1.44 2022/04/02 11:16:07 skrll Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -200,6 +200,18 @@ ENTRY_NP(cpu_reset)
 	.word	_C_LABEL(cpu_reset_address_paddr)
 END(cpu_reset)
 #endif	/* OFW */
+
+
+/*
+ * int cpu_set_onfault(struct faultbuf *fb)
+ */
+ENTRY_NP(cpu_set_onfault)
+	GET_CURPCB(r1)
+	str	r0, [r1, #PCB_ONFAULT]
+	stmia	r0, {r4-r14}
+	mov	r0, #0
+	RET
+END(cpu_set_onfault)
 
 /*
  * setjump + longjmp

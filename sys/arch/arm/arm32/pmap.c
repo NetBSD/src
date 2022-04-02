@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.434 2022/03/19 09:54:25 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.435 2022/04/02 11:16:07 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -184,6 +184,7 @@
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
+#include "opt_efi.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
@@ -192,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.434 2022/03/19 09:54:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.435 2022/04/02 11:16:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -225,6 +226,12 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.434 2022/03/19 09:54:25 skrll Exp $");
 #define VPRINTF(...)	__nothing
 #endif
 
+#if defined(EFI_RUNTIME)
+#if !defined(ARM_MMU_EXTENDED)
+#error EFI_RUNTIME is only supported with ARM_MMU_EXTENDED
+#endif
+#endif
+
 /*
  * pmap_kernel() points here
  */
@@ -238,6 +245,17 @@ static struct pmap	kernel_pmap_store = {
 struct pmap * const	kernel_pmap_ptr = &kernel_pmap_store;
 #undef pmap_kernel
 #define pmap_kernel()	(&kernel_pmap_store)
+
+#if defined(EFI_RUNTIME)
+static struct pmap	efirt_pmap;
+
+struct pmap *
+pmap_efirt(void)
+{
+	return &efirt_pmap;
+}
+#endif
+
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 int			arm_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
 #endif
@@ -760,6 +778,9 @@ pv_addrqh_t pmap_boot_freeq = SLIST_HEAD_INITIALIZER(&pmap_boot_freeq);
 pv_addr_t kernelpages;
 pv_addr_t kernel_l1pt;
 pv_addr_t systempage;
+#if defined(EFI_RUNTIME)
+pv_addr_t efirt_l1pt;
+#endif
 
 #ifdef PMAP_CACHE_VIPT
 #define PMAP_VALIDATE_MD_PAGE(md)	\
@@ -3075,7 +3096,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct vm_page *pg, *opg;
 	u_int nflags;
 	u_int oflags;
-	const bool kpm_p = (pm == pmap_kernel());
+	const bool kpm_p = pm == pmap_kernel();
+#if defined(EFI_RUNTIME)
+	const bool efirt_p = pm == pmap_efirt();
+#else
+	const bool efirt_p = false;
+#endif
 #ifdef ARM_HAS_VBAR
 	const bool vector_page_p = false;
 #else
@@ -3298,6 +3324,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (prot & VM_PROT_WRITE)
 			npte = l2pte_set_writable(npte);
 
+		if (efirt_p) {
+			if (prot & VM_PROT_EXECUTE) {
+				npte &= ~L2_XS_XN;	/* and executable */
+			}
+		}
+
 		/*
 		 * Make sure the vector table is mapped cacheable
 		 */
@@ -3357,6 +3389,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * If exec protection was requested but the page hasn't been synced,
 	 * sync it now and allow execution from it.
 	 */
+
 	if ((nflags & PVF_EXEC) && (npte & L2_XS_XN)) {
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 		npte &= ~L2_XS_XN;
@@ -4948,6 +4981,53 @@ pmap_md_pdetab_deactivate(pmap_t pm)
 }
 #endif
 
+
+#if defined(EFI_RUNTIME)
+void
+pmap_activate_efirt(void)
+{
+	kpreempt_disable();
+
+	struct cpu_info * const ci = curcpu();
+	struct pmap * const pm = &efirt_pmap;
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, " (pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
+
+	PMAPCOUNT(activations);
+
+	/*
+	 * Assume that TTBR1 has only global mappings and TTBR0 only
+	 * has non-global mappings.  To prevent speculation from doing
+	 * evil things we disable translation table walks using TTBR0
+	 * before setting the CONTEXTIDR (ASID) or new TTBR0 value.
+	 * Once both are set, table walks are reenabled.
+	 */
+	const uint32_t old_ttbcr = armreg_ttbcr_read();
+	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
+	isb();
+
+	armreg_contextidr_write(pai->pai_asid);
+	armreg_ttbr_write(pm->pm_l1_pa |
+	    (ci->ci_mpidr ? TTBR_MPATTR : TTBR_UPATTR));
+	/*
+	 * Now we can reenable tablewalks since the CONTEXTIDR and TTRB0
+	 * have been updated.
+	 */
+	isb();
+
+	armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
+
+	ci->ci_pmap_asid_cur = pai->pai_asid;
+	ci->ci_pmap_cur = pm;
+
+	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
+}
+
+#endif
+
+
 void
 pmap_activate(struct lwp *l)
 {
@@ -5106,6 +5186,7 @@ pmap_activate(struct lwp *l)
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
+
 void
 pmap_deactivate(struct lwp *l)
 {
@@ -5130,6 +5211,35 @@ pmap_deactivate(struct lwp *l)
 #endif
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
+
+
+#if defined(EFI_RUNTIME)
+void
+pmap_deactivate_efirt(void)
+{
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
+	struct cpu_info * const ci = curcpu();
+
+	/*
+	 * Disable translation table walks from TTBR0 while no pmap has been
+	 * activated.
+	 */
+	const uint32_t old_ttbcr = armreg_ttbcr_read();
+	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
+	isb();
+
+	armreg_contextidr_write(KERNEL_PID);
+	isb();
+
+	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
+	    ci->ci_pmap_asid_cur);
+	kpreempt_enable();
+
+	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
+}
+#endif
+
 
 void
 pmap_update(pmap_t pm)
@@ -6245,6 +6355,27 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 #endif
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
 
+
+#if defined(EFI_RUNTIME)
+	VPRINTF("efirt ");
+	memset(&efirt_pmap, 0, sizeof(efirt_pmap));
+	struct pmap * const efipm = &efirt_pmap;
+	struct pmap_asid_info * const efipai = PMAP_PAI(efipm, cpu_tlb_info(curcpu()));
+
+	efipai->pai_asid = KERNEL_PID;
+	efipm->pm_refs = 1;
+	efipm->pm_stats.wired_count = 0;
+	efipm->pm_stats.resident_count = 1;
+	efipm->pm_l1 = (pd_entry_t *)efirt_l1pt.pv_va;
+	efipm->pm_l1_pa = efirt_l1pt.pv_pa;
+	// Needed?
+#ifdef MULTIPROCESSOR
+	kcpuset_create(&efipm->pm_active, true);
+	kcpuset_create(&efipm->pm_onproc, true);
+#endif
+	mutex_init(&efipm->pm_lock, MUTEX_DEFAULT, IPL_VM);
+#endif
+
 	VPRINTF("locks ");
 	/*
 	 * pmap_kenter_pa() and pmap_kremove() may be called from interrupt
@@ -6338,6 +6469,13 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 		printf("pmap_bootstrap: WARNING! wrong cache mode for "
 		    "primary L1 @ 0x%lx\n", kernel_l1pt.pv_va);
 	}
+#if defined(EFI_RUNTIME)
+	if (pmap_set_pt_cache_mode(l1pt, efirt_l1pt.pv_va,
+		    L1_TABLE_SIZE / L2_S_SIZE)) {
+		printf("pmap_bootstrap: WARNING! wrong cache mode for "
+		    "EFI RT L1 @ 0x%lx\n", efirt_l1pt.pv_va);
+	}
+#endif
 
 #ifdef PMAP_CACHE_VIVT
 	cpu_dcache_wbinv_all();

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.106 2022/03/21 09:20:04 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.107 2022/04/02 11:16:07 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -108,6 +108,10 @@ makeoptions 	DEBUG="-g"	# compile full symbol table
 makeoptions 	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
+
+# EFI runtime support
+options 	EFI_RUNTIME
+#pseudo-device	efi		# /dev/efi
 
 # Device tree support
 armfdt0		at root
