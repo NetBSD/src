@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.415 2022/04/02 12:24:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.416 2022/04/02 14:28:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.415 2022/04/02 12:24:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.416 2022/04/02 14:28:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4028,7 +4028,7 @@ check_expr_side_effect(const tnode_t *ln, bool szof)
 		 * compound statements we are in. If not, we don't
 		 * print a warning.
 		 */
-		for (di = dcs; di != NULL; di = di->d_next) {
+		for (di = dcs; di != NULL; di = di->d_enclosing) {
 			if (di->d_asm)
 				break;
 		}

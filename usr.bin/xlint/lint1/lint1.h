@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.142 2022/02/27 18:29:14 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.143 2022/04/02 14:28:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -385,7 +385,7 @@ typedef	struct dinfo {
 	sym_t	**d_ldlsym;	/* points to s_level_next in the last symbol
 				   declaration at this level */
 	sym_t	*d_func_proto_syms; /* symbols defined in prototype */
-	struct	dinfo *d_next;	/* next level */
+	struct dinfo *d_enclosing; /* the enclosing declaration level */
 } dinfo_t;
 
 /* One level of pointer indirection in declarators, including qualifiers. */

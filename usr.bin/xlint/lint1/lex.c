@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.114 2022/04/02 12:24:55 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.115 2022/04/02 14:28:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.114 2022/04/02 12:24:55 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.115 2022/04/02 14:28:30 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1414,8 +1414,9 @@ getsym(sbuf_t *sb)
 		sym->s_name = s;
 		sym->s_block_level = 1;
 		di = dcs;
-		while (di->d_next != NULL && di->d_next->d_next != NULL)
-			di = di->d_next;
+		while (di->d_enclosing != NULL &&
+		    di->d_enclosing->d_enclosing != NULL)
+			di = di->d_enclosing;
 		lint_assert(di->d_ctx == AUTO);
 	} else {
 		sym = block_zero_alloc(sizeof(*sym));
