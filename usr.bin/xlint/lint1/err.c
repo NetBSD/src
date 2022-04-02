@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.156 2022/04/02 20:12:46 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.157 2022/04/02 21:47:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.156 2022/04/02 20:12:46 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.157 2022/04/02 21:47:04 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ const char *const msgs[] = {
 	"bit-field initializer out of range",			      /* 11 */
 	"compiler takes size of function",			      /* 12 */
 	"incomplete enum type: %s",				      /* 13 */
-	"compiler takes alignment of function",			      /* 14 */
+	"",							      /* 14 */
 	"function returns illegal type '%s'",			      /* 15 */
 	"array of function is illegal",				      /* 16 */
 	"null dimension",					      /* 17 */

@@ -1,2 +1,4 @@
-msg_014.c(9): error: cannot take size/alignment of function type 'function(void) returning void' [144]
-msg_014.c(11): error: syntax error ':' [249]
+msg_014.c(10): error: cannot take size/alignment of function type 'function(void) returning void' [144]
+msg_014.c(14): warning: illegal bit-field type 'function(void) returning void' [35]
+msg_014.c(16): error: function illegal in structure or union [38]
+msg_014.c(21): error: array of function is illegal [16]
