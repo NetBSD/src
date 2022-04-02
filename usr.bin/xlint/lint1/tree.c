@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.414 2022/04/01 23:16:32 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.415 2022/04/02 12:24:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.414 2022/04/01 23:16:32 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.415 2022/04/02 12:24:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3441,6 +3441,7 @@ build_sizeof(const type_t *tp)
 	unsigned int size_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
 	tnode_t *tn = build_integer_constant(SIZEOF_TSPEC, size_in_bytes);
 	tn->tn_system_dependent = true;
+	debug_step("build_sizeof '%s' = %u", type_name(tp), size_in_bytes);
 	return tn;
 }
 

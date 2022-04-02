@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.9 2022/03/01 00:17:12 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.10 2022/04/02 12:24:54 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.9 2022/03/01 00:17:12 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.10 2022/04/02 12:24:54 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -55,7 +55,7 @@ debug_printf(const char *fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	vfprintf(stdout, fmt, va);
+	(void)vfprintf(stdout, fmt, va);
 	va_end(va);
 }
 
@@ -94,7 +94,7 @@ debug_step(const char *fmt, ...)
 
 	debug_print_indent();
 	va_start(va, fmt);
-	vfprintf(stdout, fmt, va);
+	(void)vfprintf(stdout, fmt, va);
 	va_end(va);
 	printf("\n");
 }
@@ -107,7 +107,7 @@ void
 }
 
 void
-debug_node(const tnode_t *tn)
+debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 {
 	op_t op;
 
@@ -236,11 +236,11 @@ debug_word(bool flag, const char *name)
 }
 
 void
-debug_sym(const sym_t *sym)
+debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 {
 
 	debug_print_indent();
-	debug_printf("%s", sym->s_name);
+	debug_printf("%s%s", prefix, sym->s_name);
 	if (sym->s_type != NULL)
 		debug_printf(" type='%s'", type_name(sym->s_type));
 	if (sym->s_rename != NULL)
@@ -294,7 +294,79 @@ debug_sym(const sym_t *sym)
 
 	debug_word(sym->s_osdef && sym->s_args != NULL, "old-style-args");
 
-	debug_printf("\n");
+	debug_printf("%s", suffix);
 }
 
+void
+debug_dinfo(const dinfo_t *d) // NOLINT(misc-no-recursion)
+{
+
+	debug_print_indent();
+	debug_printf("dinfo: %s", scl_name(d->d_ctx));
+	if (d->d_scl != NOSCL)
+		debug_printf(" %s", scl_name(d->d_scl));
+	if (d->d_type != NULL) {
+		debug_printf(" '%s'", type_name(d->d_type));
+	} else {
+		if (d->d_abstract_type != NOTSPEC)
+			debug_printf(" %s", tspec_name(d->d_abstract_type));
+		if (d->d_complex_mod != NOTSPEC)
+			debug_printf(" %s", tspec_name(d->d_complex_mod));
+		if (d->d_sign_mod != NOTSPEC)
+			debug_printf(" %s", tspec_name(d->d_sign_mod));
+		if (d->d_rank_mod != NOTSPEC)
+			debug_printf(" %s", tspec_name(d->d_rank_mod));
+	}
+	if (d->d_redeclared_symbol != NULL)
+		debug_sym(" redeclared=(", d->d_redeclared_symbol, ")");
+	if (d->d_offset != 0)
+		debug_printf(" offset=%u", d->d_offset);
+	if (d->d_sou_align_in_bits != 0)
+		debug_printf(" align=%u", (unsigned)d->d_sou_align_in_bits);
+
+	if (d->d_const)
+		debug_printf(" const");
+	if (d->d_volatile)
+		debug_printf(" volatile");
+	if (d->d_inline)
+		debug_printf(" inline");
+	if (d->d_multiple_storage_classes)
+		debug_printf(" multiple_storage_classes");
+	if (d->d_invalid_type_combination)
+		debug_printf(" invalid_type_combination");
+	if (d->d_nonempty_decl)
+		debug_printf(" nonempty_decl");
+	if (d->d_vararg)
+		debug_printf(" vararg");
+	if (d->d_proto)
+		debug_printf(" prototype");
+	if (d->d_notyp)
+		debug_printf(" no_type_specifier");
+	if (d->d_asm)
+		debug_printf(" asm");
+	if (d->d_packed)
+		debug_printf(" packed");
+	if (d->d_used)
+		debug_printf(" used");
+
+	if (d->d_tagtyp != NULL)
+		debug_printf(" tagtyp='%s'", type_name(d->d_tagtyp));
+	for (const sym_t *arg = d->d_func_args;
+	     arg != NULL; arg = arg->s_next)
+		debug_sym(" arg(", arg, ")");
+	if (d->d_func_def_pos.p_file != NULL)
+		debug_printf(" func_def_pos=%s:%d:%d",
+		    d->d_func_def_pos.p_file, d->d_func_def_pos.p_line,
+		    d->d_func_def_pos.p_uniq);
+	for (const sym_t *sym = d->d_func_proto_syms;
+	     sym != NULL; sym = sym->s_next)
+		debug_sym("func_proto_sym(", sym, ")");
+	debug_printf("\n");
+
+	if (d->d_next != NULL) {
+		debug_indent_inc();
+		debug_dinfo(d->d_next);
+		debug_indent_dec();
+	}
+}
 #endif
