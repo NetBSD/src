@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.18 2021/03/21 07:32:44 skrll Exp $ */
+/* $NetBSD: vmparam.h,v 1.19 2022/04/02 11:16:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  *   0xffff_0000_0000_0000  -   64T  direct mapping
  *   0xffff_4000_0000_0000  -   32T  (KASAN SHADOW MAP)
  *   0xffff_6000_0000_0000  -   32T  (not used)
- *   0xffff_8000_0000_0000  -    1G  EFI_RUNTIME
+ *   0xffff_8000_0000_0000  -    1G  (EFI_RUNTIME - legacy)
  *   0xffff_8000_4000_0000  -   64T  (not used)
  *   0xffff_c000_0000_0000  -   64T  KERNEL VM Space (including text/data/bss)
  *  (0xffff_c000_4000_0000     -1GB) KERNEL VM start of KVM
@@ -141,6 +141,13 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffffffe00000L)
 
 /*
+ * Reserved space for EFI runtime services (legacy)
+ */
+#define	EFI_RUNTIME_VA		0xffff800000000000L
+#define	EFI_RUNTIME_SIZE	0x0000000040000000L
+
+
+/*
  * last 254MB of kernel vm area (0xfffffffff0000000-0xffffffffffe00000)
  * may be used for devmap.  see aarch64/pmap.c:pmap_devmap_*
  */
@@ -149,11 +156,6 @@
 
 #define VM_KERNEL_VM_BASE	(0xffffc00040000000L)
 #define VM_KERNEL_VM_SIZE	(VM_KERNEL_IO_ADDRESS - VM_KERNEL_VM_BASE)
-/*
- * Reserved space for EFI runtime services
- */
-#define	EFI_RUNTIME_VA		0xffff800000000000L
-#define	EFI_RUNTIME_SIZE	0x0000000040000000L
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define USRIOSIZE		(PAGE_SIZE / 8)

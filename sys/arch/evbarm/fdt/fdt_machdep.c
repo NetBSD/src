@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.90 2022/03/19 13:51:35 hannken Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.91 2022/04/02 11:16:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.90 2022/03/19 13:51:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.91 2022/04/02 11:16:07 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -613,12 +613,6 @@ initarm(void *arg)
 	VPRINTF("%s: fdt_build_bootconfig\n", __func__);
 	fdt_build_bootconfig(memory_start, memory_end);
 
-#ifdef EFI_RUNTIME
-	fdt_map_efi_runtime("netbsd,uefi-runtime-code", ARM_EFIRT_MEM_CODE);
-	fdt_map_efi_runtime("netbsd,uefi-runtime-data", ARM_EFIRT_MEM_DATA);
-	fdt_map_efi_runtime("netbsd,uefi-runtime-mmio", ARM_EFIRT_MEM_MMIO);
-#endif
-
 	/* Perform PT build and VM init */
 	cpu_kernel_vm_init(memory_start, memory_size);
 
@@ -722,6 +716,11 @@ consinit(void)
 void
 cpu_startup_hook(void)
 {
+#ifdef EFI_RUNTIME
+	fdt_map_efi_runtime("netbsd,uefi-runtime-code", ARM_EFIRT_MEM_CODE);
+	fdt_map_efi_runtime("netbsd,uefi-runtime-data", ARM_EFIRT_MEM_DATA);
+	fdt_map_efi_runtime("netbsd,uefi-runtime-mmio", ARM_EFIRT_MEM_MMIO);
+#endif
 
 	fdtbus_intr_init();
 
