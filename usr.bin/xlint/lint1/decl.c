@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.264 2022/04/02 20:12:45 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.265 2022/04/02 21:47:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.264 2022/04/02 20:12:45 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.265 2022/04/02 21:47:04 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -888,13 +888,10 @@ alignment_in_bits(const type_t *tp)
 	while (tp->t_tspec == ARRAY)
 		tp = tp->t_subt;
 
-	if ((t = tp->t_tspec) == STRUCT || t == UNION) {
+	if (is_struct_or_union(t = tp->t_tspec)) {
 		a = tp->t_str->sou_align_in_bits;
-	} else if (t == FUNC) {
-		/* compiler takes alignment of function */
-		error(14);
-		a = WORST_ALIGN(1) * CHAR_SIZE;
 	} else {
+		lint_assert(t != FUNC);
 		if ((a = size_in_bits(t)) == 0) {
 			a = CHAR_SIZE;
 		} else if (a > WORST_ALIGN(1) * CHAR_SIZE) {
