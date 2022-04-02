@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.151 2022/04/02 12:24:55 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.152 2022/04/02 17:28:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -181,7 +181,6 @@ extern	type_t	*block_dup_type(const type_t *);
 extern	type_t	*expr_dup_type(const type_t *);
 extern	type_t	*expr_unqualified_type(const type_t *);
 extern	bool	is_incomplete(const type_t *);
-extern	void	setcomplete(type_t *, bool);
 extern	void	add_storage_class(scl_t);
 extern	void	add_type(type_t *);
 extern	void	add_qualifier(tqual_t);

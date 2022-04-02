@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.261 2022/04/02 16:27:03 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.262 2022/04/02 17:28:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.261 2022/04/02 16:27:03 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.262 2022/04/02 17:28:06 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -222,25 +222,6 @@ is_incomplete(const type_t *tp)
 		return tp->t_enum->en_incomplete;
 	}
 	return false;
-}
-
-/*
- * Mark an array, struct, union or enum type as complete or incomplete.
- */
-void
-setcomplete(type_t *tp, bool complete)
-{
-	tspec_t	t;
-
-	lint_assert(tp != NULL);
-	if ((t = tp->t_tspec) == ARRAY) {
-		tp->t_incomplete_array = !complete;
-	} else if (t == STRUCT || t == UNION) {
-		tp->t_str->sou_incomplete = !complete;
-	} else {
-		lint_assert(t == ENUM);
-		tp->t_enum->en_incomplete = !complete;
-	}
 }
 
 /*
@@ -1365,7 +1346,7 @@ add_array(sym_t *decl, bool dim, int n)
 		/* zero sized array is a C99 extension */
 		c99ism(322);
 	} else if (n == 0 && !dim) {
-		setcomplete(tp, false);
+		tp->t_incomplete_array = true;
 	}
 
 	debug_step("add_array: '%s'", type_name(decl->s_type));
@@ -1707,12 +1688,13 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 			tp->t_str = block_zero_alloc(sizeof(*tp->t_str));
 			tp->t_str->sou_align_in_bits = CHAR_SIZE;
 			tp->t_str->sou_tag = tag;
+			tp->t_str->sou_incomplete = true;
 		} else {
 			tp->t_is_enum = true;
 			tp->t_enum = block_zero_alloc(sizeof(*tp->t_enum));
 			tp->t_enum->en_tag = tag;
+			tp->t_enum->en_incomplete = true;
 		}
-		setcomplete(tp, false);
 	}
 	return tp;
 }
@@ -1807,7 +1789,10 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	if (tp == NULL)		/* in case of syntax errors */
 		return gettyp(INT);
 
-	setcomplete(tp, true);
+	if (tp->t_tspec == ENUM)
+		tp->t_enum->en_incomplete = false;
+	else
+		tp->t_str->sou_incomplete = false;
 
 	t = tp->t_tspec;
 	align((u_int)dcs->d_sou_align_in_bits, 0);
@@ -1852,7 +1837,7 @@ type_t *
 complete_tag_enum(type_t *tp, sym_t *fmem)
 {
 
-	setcomplete(tp, true);
+	tp->t_enum->en_incomplete = false;
 	tp->t_enum->en_first_enumerator = fmem;
 	return tp;
 }
@@ -2388,7 +2373,7 @@ complete_type(sym_t *dsym, sym_t *ssym)
 			if (dst->t_dim == 0 && src->t_dim != 0) {
 				*dstp = dst = block_dup_type(dst);
 				dst->t_dim = src->t_dim;
-				setcomplete(dst, true);
+				dst->t_incomplete_array = false;
 			}
 		} else if (dst->t_tspec == FUNC) {
 			if (!dst->t_proto && src->t_proto) {
