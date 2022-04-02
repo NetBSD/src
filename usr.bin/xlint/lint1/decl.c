@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.257 2022/04/01 22:28:21 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.258 2022/04/02 12:24:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.257 2022/04/01 22:28:21 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.258 2022/04/02 12:24:54 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1303,6 +1303,8 @@ add_pointer(sym_t *decl, qual_ptr *p)
 	type_t **tpp, *tp;
 	qual_ptr *next;
 
+	debug_dinfo(dcs);
+
 	tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
 		tpp = &(*tpp)->t_subt;
@@ -1334,6 +1336,8 @@ sym_t *
 add_array(sym_t *decl, bool dim, int n)
 {
 	type_t	**tpp, *tp;
+
+	debug_dinfo(dcs);
 
 	tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
@@ -1368,6 +1372,14 @@ sym_t *
 add_function(sym_t *decl, sym_t *args)
 {
 	type_t	**tpp, *tp;
+
+	debug_enter();
+	debug_dinfo(dcs);
+	debug_sym("decl: ", decl, "\n");
+#ifdef DEBUG
+	for (const sym_t *arg = args; arg != NULL; arg = arg->s_next)
+		debug_sym("arg: ", arg, "\n");
+#endif
 
 	if (dcs->d_proto) {
 		if (tflag)
@@ -1410,6 +1422,7 @@ add_function(sym_t *decl, sym_t *args)
 	if (*tpp == NULL) {
 		debug_step("add_function: unchanged '%s'",
 		    type_name(decl->s_type));
+		debug_leave();
 		return decl;	/* see msg_347 */
 	}
 
@@ -1420,7 +1433,8 @@ add_function(sym_t *decl, sym_t *args)
 		tp->t_args = args;
 	tp->t_vararg = dcs->d_vararg;
 
-	debug_step("add_function: '%s'", type_name(decl->s_type));
+	debug_step("add_function: '%s'", type_name(tp));
+	debug_leave();
 	return decl;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.113 2022/03/13 15:20:50 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.114 2022/04/02 12:24:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.113 2022/03/13 15:20:50 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.114 2022/04/02 12:24:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -361,7 +361,7 @@ debug_symtab(void)
 			qsort(syms.items, syms.len, sizeof(syms.items[0]),
 			    sym_by_name);
 			for (size_t i = 0; i < syms.len; i++)
-				debug_sym(syms.items[i]);
+				debug_sym("", syms.items[i], "\n");
 			debug_indent_dec();
 
 			lint_assert(level != -1);
