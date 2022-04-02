@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.51 2022/01/15 08:14:37 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.52 2022/04/02 11:16:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -387,6 +387,11 @@ aarch64_mmap_flags(paddr_t mdpgno)
 #define pmap_copy(dp,sp,d,l,s)		((void)0)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+
+struct pmap *
+	pmap_efirt(void);
+void	pmap_activate_efirt(void);
+void	pmap_deactivate_efirt(void);
 
 void	pmap_procwr(struct proc *, vaddr_t, int);
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);

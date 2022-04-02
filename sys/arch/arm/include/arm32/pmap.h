@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.172 2022/01/15 08:14:37 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.173 2022/04/02 11:16:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -286,6 +286,9 @@ extern pv_addr_t undstack;
 extern pv_addr_t idlestack;
 extern pv_addr_t systempage;
 extern pv_addr_t kernel_l1pt;
+#if defined(EFI_RUNTIME)
+extern pv_addr_t efirt_l1pt;
+#endif
 
 #ifdef ARM_MMU_EXTENDED
 extern bool arm_has_tlbiasid_p;	/* also in <arm/locore.h> */
@@ -386,6 +389,8 @@ void	pmap_prefer(vaddr_t, vaddr_t *, int);
 
 #ifdef ARM_MMU_EXTENDED
 int	pmap_maxproc_set(int);
+struct pmap *
+	pmap_efirt(void);
 #endif
 
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
@@ -397,6 +402,11 @@ void	pmap_boot_pageadd(pv_addr_t *);
 vaddr_t	pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 #endif
 void	pmap_bootstrap(vaddr_t, vaddr_t);
+
+struct pmap *
+	pmap_efirt(void);
+void	pmap_activate_efirt(void);
+void	pmap_deactivate_efirt(void);
 
 void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);

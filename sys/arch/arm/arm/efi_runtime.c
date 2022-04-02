@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.c,v 1.6 2021/10/10 13:03:09 jmcneill Exp $ */
+/* $NetBSD: efi_runtime.c,v 1.7 2022/04/02 11:16:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.6 2021/10/10 13:03:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.7 2022/04/02 11:16:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -54,11 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.6 2021/10/10 13:03:09 jmcneill Exp
 #define	EFI_DEVICE_ERROR	EFIERR(7)
 
 static kmutex_t efi_lock;
-
-static struct efi_rt *RT = NULL;
+static struct efi_rt *RT;
+static struct efi_rt efi_rtcopy;
 
 #if NEFI > 0 && BYTE_ORDER == LITTLE_ENDIAN
-static const struct efi_ops arm_efi_ops = {
+static struct efi_ops arm_efi_ops = {
 	.efi_gettime	= arm_efirt_gettime,
 	.efi_settime	= arm_efirt_settime,
 	.efi_getvar	= arm_efirt_getvar,
@@ -95,10 +95,19 @@ arm_efirt_init(paddr_t efi_system_table)
 		return EINVAL;
 	}
 
-	RT = ST->st_rt;
+	struct efi_rt *rt = ST->st_rt;
 	mutex_init(&efi_lock, MUTEX_DEFAULT, IPL_HIGH);
 
+	pmap_activate_efirt();
+
+	memcpy(&efi_rtcopy, rt, sizeof(efi_rtcopy));
+	RT = &efi_rtcopy;
+
+	pmap_deactivate_efirt();
+
+#if NEFI > 0
 	efi_register_ops(&arm_efi_ops);
+#endif
 
 	return 0;
 #else

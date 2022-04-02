@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.68 2021/03/21 09:00:55 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.69 2022/04/02 11:16:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,11 +123,12 @@
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
+#include "opt_efi.h"
 #include "opt_fdt.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.68 2021/03/21 09:00:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.69 2022/04/02 11:16:07 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -168,6 +169,12 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.68 2021/03/21 09:00:55 skrll Exp
 #if defined(__HAVE_GENERIC_START)
 #if defined(KERNEL_BASE_VOFFSET)
 #error KERNEL_BASE_VOFFSET should not be defined with __HAVE_GENERIC_START
+#endif
+#endif
+
+#if defined(EFI_RUNTIME)
+#if !defined(ARM_MMU_EXTENDED)
+#error EFI_RUNTIME is only supported with ARM_MMU_EXTENDED
 #endif
 #endif
 
@@ -389,6 +396,11 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 		valloc_pages(bmi, &kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE,
 		    VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &kernel_l1pt);
+#if defined(EFI_RUNTIME)
+		valloc_pages(bmi, &efirt_l1pt, L1_TABLE_SIZE / PAGE_SIZE,
+		    VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE, true);
+		add_pages(bmi, &efirt_l1pt);
+#endif
 	}
 
 	while (nbytes > free_pv->pv_size) {
@@ -544,6 +556,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	kernel_l1pt.pv_pa = 0;
 	kernel_l1pt.pv_va = 0;
 
+#if defined(EFI_RUNTIME)
+	efirt_l1pt.pv_pa = 0;
+	efirt_l1pt.pv_va = 0;
+#endif
 	/*
 	 * Allocate the L2 pages, but if we get to a page that is aligned for
 	 * an L1 page table, we will allocate the pages for it first and then
@@ -972,6 +988,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    kernel_l1pt.pv_pa, kernel_l1pt.pv_pa + L1_TABLE_SIZE - 1,
 	    kernel_l1pt.pv_va, kernel_l1pt.pv_va + L1_TABLE_SIZE - 1,
 	    L1_TABLE_SIZE / PAGE_SIZE);
+#if defined(EFI_RUNTIME)
+	VPRINTF(mem_fmt, "EFI L1 page directory",
+	    efirt_l1pt.pv_pa, efirt_l1pt.pv_pa + L1_TABLE_SIZE - 1,
+	    efirt_l1pt.pv_va, efirt_l1pt.pv_va + L1_TABLE_SIZE - 1,
+	    L1_TABLE_SIZE / PAGE_SIZE);
+#endif
 	VPRINTF(mem_fmt, "ABT stack (CPU 0)",
 	    abtstack.pv_pa, abtstack.pv_pa + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
 	    abtstack.pv_va, abtstack.pv_va + (ABT_STACK_SIZE * PAGE_SIZE) - 1,

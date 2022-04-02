@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.165 2021/08/06 19:38:53 jmcneill Exp $
+#	$NetBSD: files.arm,v 1.166 2022/04/02 11:16:07 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -208,8 +208,13 @@ file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/syscall.c
+file	arch/arm/arm/trap.c
 file	arch/arm/arm/undefined.c
 file	arch/arm/arm/vectors.S			arm32
+
+# EFI runtime (machdep)
+file	arch/arm/arm/efi_machdep.c		efi_runtime
+
 
 # files common to arm32 implementations
 file	arch/arm/arm32/arm32_machdep.c		arm32
