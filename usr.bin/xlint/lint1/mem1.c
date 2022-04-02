@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.61 2022/02/27 17:12:06 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.62 2022/04/02 22:15:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.61 2022/02/27 17:12:06 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.62 2022/04/02 22:15:57 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -190,7 +190,8 @@ xgetblk(memory_block **mbp, size_t s)
 	memory_block	*mb;
 	void	*p;
 
-	s = WORST_ALIGN(s);
+	size_t worst_align = 2 * sizeof(long) - 1;
+	s = (s + worst_align) & ~worst_align;
 
 	if ((mb = *mbp) == NULL || mb->nfree < s) {
 		size_t block_size = s > mblk_size ? s : mblk_size;

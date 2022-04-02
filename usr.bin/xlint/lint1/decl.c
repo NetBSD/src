@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.265 2022/04/02 21:47:04 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.266 2022/04/02 22:15:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.265 2022/04/02 21:47:04 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.266 2022/04/02 22:15:57 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -885,6 +885,9 @@ alignment_in_bits(const type_t *tp)
 	unsigned int a;
 	tspec_t t;
 
+	/* Super conservative so that it works for most systems. */
+	unsigned int worst_align_in_bits = 2 * LONG_SIZE;
+
 	while (tp->t_tspec == ARRAY)
 		tp = tp->t_subt;
 
@@ -894,12 +897,12 @@ alignment_in_bits(const type_t *tp)
 		lint_assert(t != FUNC);
 		if ((a = size_in_bits(t)) == 0) {
 			a = CHAR_SIZE;
-		} else if (a > WORST_ALIGN(1) * CHAR_SIZE) {
-			a = WORST_ALIGN(1) * CHAR_SIZE;
+		} else if (a > worst_align_in_bits) {
+			a = worst_align_in_bits;
 		}
 	}
 	lint_assert(a >= CHAR_SIZE);
-	lint_assert(a <= WORST_ALIGN(1) * CHAR_SIZE);
+	lint_assert(a <= worst_align_in_bits);
 	return a;
 }
 
