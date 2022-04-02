@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.416 2022/04/02 14:28:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.417 2022/04/02 22:38:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.416 2022/04/02 14:28:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.417 2022/04/02 22:38:45 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4156,7 +4156,6 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 	return true;
 }
 
-/* ARGSUSED */
 void
 check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 		bool eqwarn, bool fcall, bool retval_discarded, bool szof)
@@ -4560,7 +4559,7 @@ end_statement_expr(void)
 {
 	stmt_expr *se = stmt_exprs;
 	tnode_t *tn = build_name(se->se_sym, false);
-	expr_save_memory();	/* leak */
+	(void)expr_save_memory();	/* leak */
 	expr_restore_memory(se->se_mem);
 	stmt_exprs = se->se_enclosing;
 	free(se);
