@@ -1,11 +1,11 @@
-/*	$NetBSD: support.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* support.c
 
    Subroutines providing general support for objects. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: support.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -313,7 +313,7 @@ isc_result_t omapi_set_value (omapi_object_t *h,
 	omapi_object_t *outer;
 	isc_result_t status;
 
-#if defined (DEBUG)
+#if defined (DEBUG_PROTOCOL)
 	if (!value) {
 		log_info ("omapi_set_value (%.*s, NULL)",
 			  (int)name -> len, name -> value);
@@ -348,7 +348,7 @@ isc_result_t omapi_set_value (omapi_object_t *h,
 							  id, name, value);
 	else
 		status = ISC_R_NOTFOUND;
-#if defined (DEBUG)
+#if defined (DEBUG_PROTOCOL)
 	log_info (" ==> %s", isc_result_totext (status));
 #endif
 	return status;
@@ -750,18 +750,18 @@ isc_result_t omapi_make_object_value (omapi_value_t **vp,
 				      const char *file, int line)
 {
 	isc_result_t status;
-	
+
 	status = omapi_value_new (vp, file, line);
 	if (status != ISC_R_SUCCESS)
 		return status;
-	
+
 	status = omapi_data_string_reference (&(*vp) -> name,
                                               name, file, line);
 	if (status != ISC_R_SUCCESS) {
 		omapi_value_dereference (vp, file, line);
 		return status;
 	}
-	
+
 	if (value) {
 		status = omapi_typed_data_new (file, line, &(*vp) -> value,
 					       omapi_datatype_object, value);
@@ -770,7 +770,7 @@ isc_result_t omapi_make_object_value (omapi_value_t **vp,
 			return status;
 		}
 	}
-	
+
 	return ISC_R_SUCCESS;
 }
 

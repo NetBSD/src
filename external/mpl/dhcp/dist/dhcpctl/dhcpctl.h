@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpctl.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: dhcpctl.h,v 1.1.1.2 2022/04/03 01:08:36 christos Exp $	*/
 
 /* Id: dhcpctl.h,v 1.18 2009/11/24 02:06:56 sar Exp 
 
    Subroutines providing general support for objects. */
 
 /*
- * Copyright (c) 2004,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -64,7 +64,16 @@ extern omapi_object_type_t *dhcpctl_remote_type;
 dhcpctl_status dhcpctl_initialize (void);
 dhcpctl_status dhcpctl_connect (dhcpctl_handle *,
 				const char *, int, dhcpctl_handle);
+
+dhcpctl_status dhcpctl_timed_connect (dhcpctl_handle *, const char *,
+				      int, dhcpctl_handle, struct timeval *);
+
 dhcpctl_status dhcpctl_wait_for_completion (dhcpctl_handle, dhcpctl_status *);
+
+dhcpctl_status dhcpctl_timed_wait_for_completion (dhcpctl_handle h,
+                                                  dhcpctl_status *s,
+                                                  struct timeval *t);
+
 dhcpctl_status dhcpctl_get_value (dhcpctl_data_string *,
 				  dhcpctl_handle, const char *);
 dhcpctl_status dhcpctl_get_boolean (int *, dhcpctl_handle, const char *);
@@ -89,7 +98,7 @@ isc_result_t dhcpctl_callback_set_value  (omapi_object_t *, omapi_object_t *,
 					  omapi_typed_data_t *);
 isc_result_t dhcpctl_callback_get_value (omapi_object_t *, omapi_object_t *,
 					 omapi_data_string_t *,
-					 omapi_value_t **); 
+					 omapi_value_t **);
 isc_result_t dhcpctl_callback_destroy (omapi_object_t *, const char *, int);
 isc_result_t dhcpctl_callback_signal_handler (omapi_object_t *,
 					      const char *, va_list);
@@ -109,7 +118,7 @@ isc_result_t dhcpctl_remote_set_value  (omapi_object_t *, omapi_object_t *,
 					omapi_typed_data_t *);
 isc_result_t dhcpctl_remote_get_value (omapi_object_t *, omapi_object_t *,
 				       omapi_data_string_t *,
-				       omapi_value_t **); 
+				       omapi_value_t **);
 isc_result_t dhcpctl_remote_destroy (omapi_object_t *, const char *, int);
 isc_result_t dhcpctl_remote_signal_handler (omapi_object_t *,
 					    const char *, va_list);
@@ -118,4 +127,7 @@ isc_result_t dhcpctl_remote_stuff_values (omapi_object_t *,
 					  omapi_object_t *);
 isc_result_t dhcpctl_data_string_dereference (dhcpctl_data_string *,
 					      const char *, int);
+
+dhcpctl_status dhcpctl_disconnect (dhcpctl_handle *, int);
+
 #endif /* _DHCPCTL_H_ */

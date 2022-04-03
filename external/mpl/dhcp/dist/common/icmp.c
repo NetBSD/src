@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: icmp.c,v 1.1.1.2 2022/04/03 01:08:46 christos Exp $	*/
 
 /* dhcp.c
 
@@ -6,7 +6,7 @@
    responses. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -22,15 +22,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: icmp.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: icmp.c,v 1.1.1.2 2022/04/03 01:08:46 christos Exp $");
 
 #include "dhcpd.h"
 #include "netinet/ip.h"
@@ -90,7 +90,7 @@ void icmp_startup (routep, handler)
 		proto = getprotobyname ("icmp");
 		if (proto)
 			protocol = proto -> p_proto;
-		
+
 		/* Get a raw socket for the ICMP protocol. */
 		icmp_state -> socket = socket (AF_INET, SOCK_RAW, protocol);
 		if (icmp_state -> socket < 0) {

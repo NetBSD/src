@@ -1,11 +1,11 @@
-/*	$NetBSD: resolv.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: resolv.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* resolv.c
 
    Parser for /etc/resolv.conf file. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resolv.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: resolv.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -184,7 +184,7 @@ struct name_server *first_name_server ()
 		}
 		if (st.st_mtime > rcdate) {
 			rcdate = cur_time + 1;
-			
+
 			read_resolv_conf (rcdate);
 		}
 	}

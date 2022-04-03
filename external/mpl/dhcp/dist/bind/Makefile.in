@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2019  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2022  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -59,7 +59,7 @@ bind1:
                  ./configure ${bindconfig} > ${binddir}/configure.log); \
 	fi
 
-atf:
+atf: bind1
 # Build and copy the ATF support if not yet installed.
 	@if test -d ./atf ; then                      \
 		echo ATF support already installed ;  \
@@ -70,7 +70,8 @@ atf:
 		 cp -rp atf ${binddir}) ;             \
 	fi
 
-bind2:
+@BIND_ATF_TRUE@bind2: atf
+bind2: bind1
 # Build and install the libraries
 # No need to do anything if we already have something installed.
 	@if test -d ${binddir}/lib ; then                                 \
@@ -116,5 +117,6 @@ uninstall-bind: all
 
 # Include the following so that this Makefile is happy when the parent
 # tries to use them.
+install-exec:
 
 check distdir distclean dvi installcheck:

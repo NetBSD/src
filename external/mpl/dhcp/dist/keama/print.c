@@ -1,7 +1,7 @@
-/*	$NetBSD: print.c,v 1.1.1.1 2020/08/03 21:09:08 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.2 2022/04/03 01:08:42 christos Exp $	*/
 
 /*
- * Copyright (c) 2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,15 +16,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.1.1.1 2020/08/03 21:09:08 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.1.1.2 2022/04/03 01:08:42 christos Exp $");
 
 #include "keama.h"
 
@@ -49,7 +49,7 @@ print_expression(struct element *expr, isc_boolean_t *lose)
 		return print_numeric_expression(expr, lose);
 	if (expr->type == ELEMENT_STRING)
 		return print_data_expression(expr, lose);
-		
+
 	if (is_boolean_expression(expr))
 		return print_boolean_expression(expr, lose);
 	if (is_numeric_expression(expr))
@@ -826,7 +826,7 @@ print_data_expression(struct element *expr, isc_boolean_t *lose)
 		struct element *width;
 		struct element *separator;
 		struct element *buffer;
-		
+
 		appendString(result, "binary-to-ascii(");
 		arg = mapGet(expr, "binary-to-ascii");
 		if ((arg == NULL) || (arg->type != ELEMENT_MAP)) {
@@ -882,7 +882,7 @@ print_data_expression(struct element *expr, isc_boolean_t *lose)
 		struct element *arg;
 		struct element *width;
 		struct element *buffer;
-		
+
 		appendString(result, "reverse(");
 		arg = mapGet(expr, "reverse");
 		if ((arg == NULL) || (arg->type != ELEMENT_MAP)) {
@@ -991,7 +991,7 @@ print_data_expression(struct element *expr, isc_boolean_t *lose)
 		struct element *arg;
 		struct element *relay;
 		struct element *option;
-		
+
 
 		appendString(result, "v6relay(");
 		arg = mapGet(expr, "v6relay");

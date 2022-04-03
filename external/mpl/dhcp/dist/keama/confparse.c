@@ -1,7 +1,7 @@
-/*	$NetBSD: confparse.c,v 1.1.1.1 2020/08/03 21:09:08 christos Exp $	*/
+/*	$NetBSD: confparse.c,v 1.1.1.2 2022/04/03 01:08:42 christos Exp $	*/
 
 /*
- * Copyright (c) 2017, 2019 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,15 +16,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: confparse.c,v 1.1.1.1 2020/08/03 21:09:08 christos Exp $");
+__RCSID("$NetBSD: confparse.c,v 1.1.1.2 2022/04/03 01:08:42 christos Exp $");
 
 /* From server/confpars.c */
 
@@ -612,7 +612,7 @@ parse_statement(struct parse *cfile, int type, isc_boolean_t declaration)
 		read_conf_file(cfile, val, type);
 		parse_semi(cfile);
 		return 1;
-		
+
 	case HOST:
 		skip_token(&val, NULL, cfile);
 		if (type != HOST_DECL && type != CLASS_DECL)
@@ -929,7 +929,7 @@ parse_statement(struct parse *cfile, int type, isc_boolean_t declaration)
 		failover_once = ISC_FALSE;
 		skip_to_semi(cfile);
 		break;
-			
+
 	case SERVER_DUID:
 		if (local_family != AF_INET6)
 			goto unknown;
@@ -971,7 +971,7 @@ parse_statement(struct parse *cfile, int type, isc_boolean_t declaration)
 		}
 		if (mapSize(et) == 0)
 			return declaration;
-		
+
 		et->skip = ISC_TRUE;
 		cfile->issue_counter++;
 		mapSet(cfile->stack[cfile->stack_top], et, "statement");
@@ -981,12 +981,12 @@ parse_statement(struct parse *cfile, int type, isc_boolean_t declaration)
 }
 
 /*!
- * 
+ *
  * \brief Parse allow and deny statements
  *
  * This function handles the common processing code for permit and deny
  * statements in the parse_pool_statement and parse_pool6_statement functions.
- * 
+ *
  * The allow or deny token should already be consumed, this function expects
  * one of the following:
  *   known-clients;
@@ -1024,7 +1024,7 @@ get_permit(struct parse *cfile, struct element *permit_head)
 		negative = ISC_TRUE;
 		alias = makeString(-1, "unknown clients");
 		break;
-				
+
 	case KNOWN_CLIENTS:
 		need_clients = ISC_FALSE;
 		permit = CLASS_KNOWN;
@@ -1042,7 +1042,7 @@ get_permit(struct parse *cfile, struct element *permit_head)
 		permit = CLASS_KNOWN;
 		alias = makeString(-1, "known clients");
 		break;
-				
+
 	case AUTHENTICATED:
 		permit = CLASS_ALL;
 		alias = makeString(-1, "authenticated clients");
@@ -1051,7 +1051,7 @@ get_permit(struct parse *cfile, struct element *permit_head)
 		comment = createComment("/// [un]authenticated-clients is "
 					"not supported by ISC DHCP and Kea");
 		break;
-				
+
 	case UNAUTHENTICATED:
 		permit = CLASS_ALL;
 		alias = makeString(-1, "unauthenticated clients");
@@ -1062,7 +1062,7 @@ get_permit(struct parse *cfile, struct element *permit_head)
 		permit = CLASS_ALL;
 		alias = makeString(-1, "all clients");
 		break;
-				
+
 	case DYNAMIC:
 		/* bootp is not supported by Kea so the dynamic bootp
 		 * client set is the empty set. */
@@ -1197,7 +1197,7 @@ parse_pool_statement(struct parse *cfile, int type)
 			skip_token(&val, NULL, cfile);
 			get_permit(cfile, prohibit);
 			break;
-			
+
 		case RBRACE:
 			skip_token(&val, NULL, cfile);
 			done = ISC_TRUE;
@@ -1417,7 +1417,7 @@ parse_host_declaration(struct parse *cfile)
 			host_id = makeString(-1, val);
 			appendString(host_id, " ");
 			if (token == V6RELOPT) {
-				token = next_token(&val, NULL, cfile); 
+				token = next_token(&val, NULL, cfile);
 
 				if (token != NUMBER)
 					parse_error(cfile,
@@ -1433,7 +1433,7 @@ parse_host_declaration(struct parse *cfile)
 				if (relays > MAX_V6RELAY_HOPS)
 					relays = MAX_V6RELAY_HOPS + 1;
 			} else if (token != OPTION)
-				parse_error(cfile, 
+				parse_error(cfile,
 					    "host-identifier must be an option"
 					    " or v6relopt");
 			known = ISC_FALSE;
@@ -1576,7 +1576,7 @@ static void add_host_reservation_identifiers(struct parse *, const char *);
  * in fact:
  * (CLASS) NAME(STRING) LBRACE ... RBRACE
  * (SUBCLASS) SUPER(STRING) DATA/HASH(STRING | <hexa>) [BRACE ... RBRACE]
- * 
+ *
  * class "name" { MATCH IF <boolean-expr> }: direct: belong when true
  * class "name" { MATCH <data-expr> }: indirect: use subclasses
  * class "name" { MATCH <data-expr> SPAWN WITH <data-expr> }: indirect:
@@ -1605,7 +1605,7 @@ parse_class_declaration(struct parse *cfile, int type)
 	isc_boolean_t lose = ISC_FALSE;
 	isc_boolean_t matchedonce = ISC_FALSE;
 	isc_boolean_t submatchedonce = ISC_FALSE;
-	
+
 	token = next_token(&val, NULL, cfile);
 	if (token != STRING)
 		parse_error(cfile, "Expecting class name");
@@ -1713,7 +1713,7 @@ parse_class_declaration(struct parse *cfile, int type)
 			}
 		}
 	}
-			
+
 	/* Note the class declaration in the enclosing group */
 	if (group_classes != classes) {
 		struct element *gc;
@@ -2541,12 +2541,12 @@ parse_group_declaration(struct parse *cfile)
 	token = peek_token(&val, NULL, cfile);
 	if (is_identifier(token) || token == STRING) {
 		skip_token(&val, NULL, cfile);
-		
+
 		name = makeString(-1, val);
 		if (!name)
 			parse_error(cfile, "no memory for group decl name %s",
 				    val);
-	}		
+	}
 
 	parse_lbrace(cfile);
 
@@ -3213,7 +3213,7 @@ parse_address_range(struct parse *cfile, int type, size_t where)
 			       | ip-address6 SLASH number SEMI
 			       | ip-address6 [SLASH number] TEMPORARY SEMI */
 
-void 
+void
 parse_address_range6(struct parse *cfile, int type, size_t where)
 {
 	struct string *low, *high, *range;
@@ -3239,7 +3239,7 @@ parse_address_range6(struct parse *cfile, int type, size_t where)
 	range = allocString();
 	concatString(range, low);
 
-	/* 
+	/*
 	 * See if we we're using range or CIDR notation or TEMPORARY
 	 */
 	token = peek_token(&val, NULL, cfile);
@@ -3265,7 +3265,7 @@ parse_address_range6(struct parse *cfile, int type, size_t where)
 			appendString(range, " ");
 			appendString(range, val);
 			skip_token(NULL, NULL, cfile);
-		}			
+		}
 	} else if (token == TEMPORARY) {
 		/*
 		 * temporary (RFC 4941)
@@ -3276,7 +3276,7 @@ parse_address_range6(struct parse *cfile, int type, size_t where)
 		skip_token(NULL, NULL, cfile);
 	} else {
 		/*
-		 * No '/', so we are looking for the end address of 
+		 * No '/', so we are looking for the end address of
 		 * the IPv6 pool.
 		 */
 		high = parse_ip6_addr_txt(cfile);
@@ -3334,7 +3334,7 @@ parse_address_range6(struct parse *cfile, int type, size_t where)
 
 /* prefix6-declaration :== ip-address6 ip-address6 SLASH number SEMI */
 
-void 
+void
 parse_prefix6(struct parse *cfile, int type, size_t where)
 {
 	struct string *lo, *hi;
@@ -3533,7 +3533,7 @@ parse_pool6_statement(struct parse *cfile, int type)
 			skip_token(NULL, NULL, cfile);
 			get_permit(cfile, prohibit);
 			break;
-			
+
 		case RBRACE:
 			skip_token(&val, NULL, cfile);
 			done = ISC_TRUE;
@@ -3791,7 +3791,7 @@ parse_allow_deny(struct parse *cfile, int flag)
  * server-duid ll ethernet|ieee802|fddi 00:16:6F:49:7D:9B;
  * server-duid en 2495 "enterprise-specific-identifier-1234";
  */
-void 
+void
 parse_server_duid_conf(struct parse *cfile) {
 	enum dhcp_token token;
 	const char *val;
@@ -3814,7 +3814,7 @@ parse_server_duid_conf(struct parse *cfile) {
 	 */
 	token = next_token(&val, NULL, cfile);
 
-	/* 
+	/*
 	 * Enterprise is the easiest - enterprise number and raw data
 	 * are required.
 	 */
@@ -3842,7 +3842,7 @@ parse_server_duid_conf(struct parse *cfile) {
 		mapSet(duid, item, "identifier");
 	}
 
-	/* 
+	/*
 	 * Next easiest is the link-layer DUID. It consists only of
 	 * the LL directive, or optionally the specific value to use.
 	 *
@@ -3883,7 +3883,7 @@ parse_server_duid_conf(struct parse *cfile) {
 		}
 	}
 
-	/* 
+	/*
 	 * Finally the link-layer DUID plus time. It consists only of
 	 * the LLT directive, or optionally the specific value to use.
 	 *
@@ -3937,7 +3937,7 @@ parse_server_duid_conf(struct parse *cfile) {
 	 *
 	 * In this case, they have to put in the complete value.
 	 *
-	 * This also works for existing DUID types of course. 
+	 * This also works for existing DUID types of course.
 	 */
 	else if (token == NUMBER) {
 		item = createString(makeString(-1, val));

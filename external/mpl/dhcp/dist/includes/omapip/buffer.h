@@ -1,11 +1,11 @@
-/*	$NetBSD: buffer.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* buffer.h
 
    Definitions for the object management API protocol buffering... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -54,7 +54,7 @@ typedef struct _omapi_buffer {
 	u_int16_t head, tail;		/* Buffers are organized in a ring. */
 	char buf [OMAPI_BUF_SIZE];	/* The actual buffer is included in
 					   the buffer data structure. */
-} omapi_buffer_t;	
+} omapi_buffer_t;
 
 #define BUFFER_BYTES_FREE(x)	\
 	((x) -> tail > (x) -> head \
@@ -76,4 +76,3 @@ isc_result_t omapi_connection_get_uint32 (omapi_object_t *, u_int32_t *);
 isc_result_t omapi_connection_put_uint32 (omapi_object_t *, u_int32_t);
 isc_result_t omapi_connection_get_uint16 (omapi_object_t *, u_int16_t *);
 isc_result_t omapi_connection_put_uint16 (omapi_object_t *, u_int32_t);
-

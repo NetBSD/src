@@ -1,11 +1,11 @@
-/*	$NetBSD: omshell.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: omshell.c,v 1.1.1.2 2022/04/03 01:08:36 christos Exp $	*/
 
 /* omshell.c
 
    Examine and modify omapi objects. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: omshell.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: omshell.c,v 1.1.1.2 2022/04/03 01:08:36 christos Exp $");
 
 #include "config.h"
 
@@ -86,7 +86,7 @@ static void check (isc_result_t status, const char *func) {
 	}
 }
 
-int 
+int
 main(int argc, char **argv) {
 	isc_result_t status, waitstatus;
 	dhcpctl_handle connection;
@@ -137,7 +137,7 @@ main(int argc, char **argv) {
 		dhcpctl_remote_object_t *r = (dhcpctl_remote_object_t *)oh;
 		omapi_generic_object_t *g =
 			(omapi_generic_object_t *)(r -> inner);
-		
+
 		printf ("obj: ");
 
 		if (r -> rtype -> type != omapi_datatype_string) {
@@ -147,16 +147,16 @@ main(int argc, char **argv) {
 				(int)(r -> rtype -> u . buffer . len),
 				r -> rtype -> u . buffer . value);
 		}
-		
+
 		for (i = 0; i < g -> nvalues; i++) {
 		    omapi_value_t *v = g -> values [i];
-			
+
 		    if (!g -> values [i])
 			    continue;
 
 		    printf ("%.*s = ", (int)v -> name -> len,
 			    v -> name -> value);
-			
+
 		    if (!v -> value) {
 			printf ("<null>\n");
 			continue;
@@ -166,20 +166,20 @@ main(int argc, char **argv) {
 			    printf ("%d\n",
 				    v -> value -> u . integer);
 			    break;
-			 
+
 			  case omapi_datatype_string:
 			    printf ("\"%.*s\"\n",
 				    (int) v -> value -> u.buffer.len,
 				    v -> value -> u.buffer.value);
 			    break;
-				
+
 			  case omapi_datatype_data:
 			    print_hex_or_string(v->value->u.buffer.len,
 						v->value->u.buffer.value,
 						sizeof(hex_buf), hex_buf);
 			    printf("%s\n", hex_buf);
 			    break;
-			    
+
 			  case omapi_datatype_object:
 			    printf ("<obj>\n");
 			    break;
@@ -194,18 +194,18 @@ main(int argc, char **argv) {
 
 	    status = new_parse (&cfile, -1, buf, strlen(buf), "<STDIN>", 1);
 	    check(status, "new_parse()");
-	    
+
 	    token = next_token (&val, (unsigned *)0, cfile);
 	    switch (token) {
 		  default:
 		    parse_warn (cfile, "unknown token: %s", val);
 		    skip_to_semi (cfile);
 		    break;
-		    
+
 		  case END_OF_FILE:
 		  case ENDOFLINE: /* EOL: */
 		    break;
-		    
+
 		  case TOKEN_HELP:
 	          case QUESTIONMARK: /* '?': */
 		    printf ("Commands:\n");
@@ -213,6 +213,7 @@ main(int argc, char **argv) {
 		    printf ("  server <server address>\n");
 		    printf ("  key <key name> <key value>\n");
 		    printf ("  connect\n");
+		    printf ("  disconnect\n");
 		    printf ("  new <object-type>\n");
 		    printf ("  set <name> = <value>\n");
 		    printf ("  create\n");
@@ -223,7 +224,7 @@ main(int argc, char **argv) {
 		    printf ("  remove\n");
 		    skip_to_semi (cfile);
 		    break;
-		    
+
 		  case PORT:
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    if (is_identifier (token)) {
@@ -432,19 +433,41 @@ main(int argc, char **argv) {
 		    connected = 1;
 		    break;
 
+		  case DISCONNECT:
+		    token = next_token (&val, (unsigned *)0, cfile);
+		    if (token != END_OF_FILE && token != EOL) {
+			    printf ("usage: disconnect\n");
+			    skip_to_semi (cfile);
+			    break;
+		    }
+
+		    if (!connected || !connection) {
+			fprintf (stderr, "not connected\n");
+			break;
+		    }
+
+		    status = dhcpctl_disconnect (&connection, 0);
+		    if (status != ISC_R_SUCCESS) {
+			    fprintf (stderr, "dhcpctl_disconnect: %s\n",
+				     isc_result_totext (status));
+			    break;
+		    }
+		    connected = 0;
+		    break;
+
 		  case TOKEN_NEW:
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    if ((!is_identifier (token) && token != STRING)) {
 			    printf ("usage: new <object-type>\n");
 			    break;
 		    }
-		    
+
 		    if (oh) {
 			    printf ("an object is already open.\n");
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (!connected) {
 			    printf ("not connected.\n");
 			    skip_to_semi (cfile);
@@ -457,7 +480,7 @@ main(int argc, char **argv) {
 				    isc_result_totext (status));
 			    break;
 		    }
-		    
+
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    if (token != END_OF_FILE && token != EOL) {
 			    printf ("usage: new <object-type>\n");
@@ -486,7 +509,7 @@ main(int argc, char **argv) {
 			    break;
 		    }
 		    omapi_object_dereference (&oh, MDL);
-		    
+
 		    break;
 
 		  case TOKEN_SET:
@@ -498,13 +521,13 @@ main(int argc, char **argv) {
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (oh == NULL) {
 			    printf ("no open object.\n");
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (!connected) {
 			    printf ("not connected.\n");
 			    skip_to_semi (cfile);
@@ -517,7 +540,7 @@ main(int argc, char **argv) {
 		    s1[0] = 0;
 		    strncat (s1, val, sizeof(s1)-strlen(s1)-1);
 #endif
-		    
+
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    if (token != EQUAL)
 			    goto set_usage;
@@ -528,7 +551,7 @@ main(int argc, char **argv) {
 			    dhcpctl_set_string_value (oh, val, s1);
 			    token = next_token (&val, (unsigned *)0, cfile);
 			    break;
-			    
+
 			  case NUMBER:
 			    strcpy (buf, val);
 			    token = peek_token (&val, (unsigned *)0, cfile);
@@ -566,7 +589,7 @@ main(int argc, char **argv) {
 			    token = next_token (&val, (unsigned *)0, cfile);
 			  badnum:
 			    break;
-			    
+
 			  case NUMBER_OR_NAME:
 			    strcpy (buf, val);
 			  cshl:
@@ -592,11 +615,11 @@ main(int argc, char **argv) {
 			    printf ("invalid value.\n");
 			    skip_to_semi (cfile);
 		    }
-		    
+
 		    if (token != END_OF_FILE && token != EOL)
 			    goto set_usage;
 		    break;
-		    
+
 		  case UNSET:
 		    token = next_token (&val, (unsigned *)0, cfile);
 
@@ -606,13 +629,13 @@ main(int argc, char **argv) {
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (!oh) {
 			    printf ("no open object.\n");
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (!connected) {
 			    printf ("not connected.\n");
 			    skip_to_semi (cfile);
@@ -625,7 +648,7 @@ main(int argc, char **argv) {
 		    s1[0] = 0;
 		    strncat (s1, val, sizeof(s1)-strlen(s1)-1);
 #endif
-		    
+
 		    token = next_token (&val, (unsigned *)0, cfile);
 		    if (token != END_OF_FILE && token != EOL)
 			    goto unset_usage;
@@ -633,7 +656,7 @@ main(int argc, char **argv) {
 		    dhcpctl_set_null_value (oh, s1);
 		    break;
 
-			    
+
 		  case TOKEN_CREATE:
 		  case TOKEN_OPEN:
 		    i = token;
@@ -643,7 +666,7 @@ main(int argc, char **argv) {
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (!connected) {
 			    printf ("not connected.\n");
 			    skip_to_semi (cfile);
@@ -660,7 +683,7 @@ main(int argc, char **argv) {
 			    i = DHCPCTL_CREATE | DHCPCTL_EXCL;
 		    else
 			    i = 0;
-		    
+
 		    status = dhcpctl_open_object (oh, connection, i);
 		    if (status == ISC_R_SUCCESS)
 			    status = dhcpctl_wait_for_completion
@@ -672,7 +695,7 @@ main(int argc, char **argv) {
 				    isc_result_totext (status));
 			    break;
 		    }
-		    
+
 		    break;
 
 		  case UPDATE:
@@ -682,7 +705,7 @@ main(int argc, char **argv) {
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (!connected) {
 			    printf ("not connected.\n");
 			    skip_to_semi (cfile);
@@ -706,7 +729,7 @@ main(int argc, char **argv) {
 				    isc_result_totext (status));
 			    break;
 		    }
-		    
+
 		    break;
 
 		  case REMOVE:
@@ -716,7 +739,7 @@ main(int argc, char **argv) {
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (!connected) {
 			    printf ("not connected.\n");
 			    break;
@@ -748,7 +771,7 @@ main(int argc, char **argv) {
 			    skip_to_semi (cfile);
 			    break;
 		    }
-		    
+
 		    if (!connected) {
 			    printf ("not connected.\n");
 			    break;
@@ -770,7 +793,7 @@ main(int argc, char **argv) {
 				    isc_result_totext (status));
 			    break;
 		    }
-		    
+
 		    break;
 	    }
 	    end_parse (&cfile);

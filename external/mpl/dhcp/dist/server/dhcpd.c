@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpd.c,v 1.1.1.3 2021/05/26 22:48:48 christos Exp $	*/
+/*	$NetBSD: dhcpd.c,v 1.1.1.4 2022/04/03 01:08:44 christos Exp $	*/
 
 /* dhcpd.c
 
    DHCP Server Daemon. */
 
 /*
- * Copyright (c) 2004-2021 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2022 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,18 +21,18 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.1.1.3 2021/05/26 22:48:48 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.1.1.4 2022/04/03 01:08:44 christos Exp $");
 
 static const char copyright[] =
-"Copyright 2004-2021 Internet Systems Consortium.";
+"Copyright 2004-2022 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Systems Consortium DHCP Server";
 static const char url [] =
@@ -200,16 +200,16 @@ static void omapi_listener_start (void *foo)
  * the description of the command line.  The arguments provide
  * a way for the caller to request more specific information about
  * the error be printed as well.  Mostly this will be that some
- * comamnd doesn't include its argument.
+ * command doesn't include its argument.
  *
  * \param sfmt - The basic string and format for the specific error
- * \param sarg - Generally the offending argument from the comamnd line.
+ * \param sarg - Generally the offending argument from the command line.
  *
  * \return Nothing
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpd.c,v 1.1.1.3 2021/05/26 22:48:48 christos Exp $");
+__RCSID("$NetBSD: dhcpd.c,v 1.1.1.4 2022/04/03 01:08:44 christos Exp $");
 static char use_noarg[] = "No argument for command: %s ";
 
 static void

@@ -1,11 +1,11 @@
-/*	$NetBSD: bpf.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.1.1.2 2022/04/03 01:08:46 christos Exp $	*/
 
 /* bpf.c
 
    BPF socket interface code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf.c,v 1.1.1.1 2018/04/07 22:34:25 christos Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.1.1.2 2022/04/03 01:08:46 christos Exp $");
 
 #include "dhcpd.h"
 #if defined (USE_BPF_SEND) || defined (USE_BPF_RECEIVE)	\
@@ -525,7 +525,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 		   physical layer that supports this, but WTH), skip this
 		   packet. */
 		if (offset < 0) {
-			interface->rbuf_offset = 
+			interface->rbuf_offset =
 				BPF_WORDALIGN(interface->rbuf_offset +
 					      hdr.bh_caplen);
 			continue;
@@ -540,7 +540,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
-			interface->rbuf_offset = 
+			interface->rbuf_offset =
 				BPF_WORDALIGN(interface->rbuf_offset +
 					      hdr.bh_caplen);
 			continue;
@@ -619,7 +619,7 @@ get_hw_addr(const char *name, struct hardware *hw) {
 	 */
 	sa = NULL;
 	for (p=ifa; (p != NULL) && (sa == NULL); p = p->ifa_next) {
-		if ((p->ifa_addr->sa_family == AF_LINK) && 
+		if ((p->ifa_addr->sa_family == AF_LINK) &&
 		    !strcmp(p->ifa_name, name)) {
 		    	sa = (struct sockaddr_dl *)p->ifa_addr;
 		}

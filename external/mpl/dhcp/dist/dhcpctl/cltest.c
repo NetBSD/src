@@ -1,11 +1,11 @@
-/*	$NetBSD: cltest.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: cltest.c,v 1.1.1.2 2022/04/03 01:08:36 christos Exp $	*/
 
 /* cltest.c
 
    Example program that uses the dhcpctl library. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2000-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cltest.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: cltest.c,v 1.1.1.2 2022/04/03 01:08:36 christos Exp $");
 
 #include "config.h"
 
@@ -104,7 +104,7 @@ int main (argc, argv)
 	int mode = undefined;
 	const char *interface = 0;
 	const char *action;
-	
+
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv[i], "-u")) {
 			mode = up;

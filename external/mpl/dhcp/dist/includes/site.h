@@ -1,4 +1,4 @@
-/*	$NetBSD: site.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: site.h,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* Site-specific definitions.
 
@@ -376,3 +376,4 @@
 #define RFC7341_OPTIONS
 #define RFC7618_OPTIONS
 #define RFC7710_OPTIONS
+#define RFC8925_OPTIONS

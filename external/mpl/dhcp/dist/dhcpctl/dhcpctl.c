@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpctl.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: dhcpctl.c,v 1.1.1.2 2022/04/03 01:08:36 christos Exp $	*/
 
 /* dhcpctl.c
 
    Subroutines providing general support for objects. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,19 +21,22 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpctl.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: dhcpctl.c,v 1.1.1.2 2022/04/03 01:08:36 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
 #include "dhcpctl.h"
+#include <sys/time.h>
+
+/* #define DEBUG_DHCPCTL  1 */
 
 omapi_object_type_t *dhcpctl_callback_type;
 omapi_object_type_t *dhcpctl_remote_type;
@@ -91,7 +94,7 @@ dhcpctl_status dhcpctl_initialize ()
    synchronous
    returns nonzero status code if it didn't connect, zero otherwise
    stores connection handle through connection, which can be used
-   for subsequent access to the specified server. 
+   for subsequent access to the specified server.
    server_name is the name of the server, and port is the TCP
    port on which it is listening.
    authinfo is the handle to an object containing authentication
@@ -102,6 +105,9 @@ dhcpctl_status dhcpctl_connect (dhcpctl_handle *connection,
 				dhcpctl_handle authinfo)
 {
 	isc_result_t status;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_connect(%s:%d)", server_name, port);
+#endif
 
 	status = omapi_generic_new (connection, MDL);
 	if (status != ISC_R_SUCCESS) {
@@ -110,19 +116,88 @@ dhcpctl_status dhcpctl_connect (dhcpctl_handle *connection,
 
 	status = omapi_protocol_connect (*connection, server_name,
 					 (unsigned)port, authinfo);
-	if (status == ISC_R_SUCCESS)
+	if (status == ISC_R_SUCCESS) {
+#ifdef DEBUG_DHCPCTL
+		log_debug("dhcpctl_connect success");
+#endif
 		return status;
+	}
+
 	if (status != DHCP_R_INCOMPLETE) {
 		omapi_object_dereference (connection, MDL);
+#ifdef DEBUG_DHCPCTL
+		log_debug("dhcpctl_connect failed:%s",
+			  isc_result_totext (status));
+#endif
 		return status;
 	}
 
 	status = omapi_wait_for_completion (*connection, 0);
 	if (status != ISC_R_SUCCESS) {
 		omapi_object_dereference (connection, MDL);
+#ifdef DEBUG_DHCPCTL
+		log_debug("dhcpctl_connect, wait failed:%s",
+			  isc_result_totext (status));
+#endif
 		return status;
 	}
 
+#ifdef DEBUG_DHCPCTL
+		log_debug("dhcpctl_connect success");
+#endif
+	return status;
+}
+
+/* dhcpctl_timed_connect
+
+   synchronous
+   returns nonzero status code if it didn't connect, zero otherwise
+   stores connection handle through connection, which can be used
+   for subsequent access to the specified server.
+   server_name is the name of the server, and port is the TCP
+   port on which it is listening.
+   authinfo is the handle to an object containing authentication
+   information.
+   How long the function waits for the connection to complete is
+   dictated by the value of the parameter, t. If the value is nul,
+   it will wait indefinitely. Otherwise it will wait for the amount
+   of time specified by t (tv_sec:tv_usec). Values of zero for both
+   fields are valid but not recommended. */
+dhcpctl_status dhcpctl_timed_connect (dhcpctl_handle *connection,
+				      const char *server_name, int port,
+				      dhcpctl_handle authinfo,
+				      struct timeval *t)
+{
+	isc_result_t status;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_timed_connect(%s:%d)", server_name, port);
+#endif
+	status = omapi_generic_new (connection, MDL);
+	if (status != ISC_R_SUCCESS) {
+		return status;
+	}
+
+	status = omapi_protocol_connect (*connection, server_name,
+					 (unsigned)port, authinfo);
+
+	if (status == ISC_R_SUCCESS) {
+		return status;
+	}
+
+	if (status == DHCP_R_INCOMPLETE) {
+		isc_result_t wait_status = ISC_R_SUCCESS;
+
+		/* Wait for it to complete */
+		status = dhcpctl_timed_wait_for_completion(*connection,
+							   &wait_status, t);
+		if (status == ISC_R_SUCCESS) {
+			status = wait_status;
+		}
+	}
+
+	if (status != ISC_R_SUCCESS) {
+		omapi_object_dereference (connection, MDL);
+	}
 	return status;
 }
 
@@ -142,20 +217,81 @@ dhcpctl_status dhcpctl_connect (dhcpctl_handle *connection,
 dhcpctl_status dhcpctl_wait_for_completion (dhcpctl_handle h,
 					    dhcpctl_status *s)
 {
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_wait_for_completion");
+#endif
 	isc_result_t status;
 	status = omapi_wait_for_completion (h, 0);
-	if (status != ISC_R_SUCCESS)
+	if (status != ISC_R_SUCCESS) {
 		return status;
+	}
 	if (h -> type == dhcpctl_remote_type)
 		*s = ((dhcpctl_remote_object_t *)h) -> waitstatus;
+
 	return ISC_R_SUCCESS;
 }
+
+/* dhcpctl_timed_wait_for_completion
+
+   synchronous
+   returns zero if the callback completes, a nonzero status if
+   there was some problem relating to the wait operation.   The
+   status of the queued request will be stored through s, and
+   will also be either zero for success or nonzero for some kind
+   of failure.  How long the function waits for a response is
+   dictated by the value of the parameter, t. If the value is nul,
+   it will wait indefinitely or until the connection is lost.
+   Otherwise it will wait for the amount of time specified by t
+  (tv_sec:tv_usec). Values of zero for both fields are valid
+   but not recommended.  The result of the request as processed on the
+   server is returned via the parameter, s.  This performs the same
+   function as dhcpctl_set_callback and the subsequent callback,
+   for programs that want to do inline execution instead of using
+   callbacks. */
+
+dhcpctl_status dhcpctl_timed_wait_for_completion (dhcpctl_handle h,
+						  dhcpctl_status *s,
+						  struct timeval *t)
+{
+	isc_result_t status;
+	struct timeval adjusted_t;
+
+#ifdef DEBUG_DHCPCTL
+        if (t) {
+		log_debug ("dhcpctl_timed_wait_for_completion"
+			   "(%u.%u secs.usecs)",
+                           (unsigned int)(t->tv_sec),
+                           (unsigned int)(t->tv_usec));
+        } else {
+                log_debug ("dhcpctl_timed_wait_for_completion(no timeout)");
+        }
+#endif
+
+	if (t) {
+		struct timeval now;
+		gettimeofday (&now, (struct timezone *)0);
+		adjusted_t.tv_sec = now.tv_sec + t->tv_sec;
+		adjusted_t.tv_usec = now.tv_usec + t->tv_usec;
+	}
+
+	status = omapi_wait_for_completion (h, (t ? &adjusted_t : 0));
+	if (status != ISC_R_SUCCESS) {
+		return status;
+	}
+
+	if (h->type == dhcpctl_remote_type) {
+		*s = ((dhcpctl_remote_object_t *)h)->waitstatus;
+	}
+
+	return ISC_R_SUCCESS;
+}
+
 
 /* dhcpctl_get_value
 
    synchronous
    returns zero if the call succeeded, a nonzero status code if
-   it didn't. 
+   it didn't.
    result is the address of an empty data string (initialized
    with bzero or cleared with data_string_forget).   On
    successful completion, the addressed data string will contain
@@ -173,6 +309,9 @@ dhcpctl_status dhcpctl_get_value (dhcpctl_data_string *result,
 	omapi_value_t *tv = (omapi_value_t *)0;
 	unsigned len;
 	int ip;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_get_value(%s)", value_name);
+#endif
 
 	status = omapi_get_value_str (h, (omapi_object_t *)0, value_name, &tv);
 	if (status != ISC_R_SUCCESS)
@@ -237,7 +376,11 @@ dhcpctl_status dhcpctl_get_boolean (int *result,
 	isc_result_t status;
 	dhcpctl_data_string data = (dhcpctl_data_string)0;
 	int rv;
-	
+
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_get_boolean(%s)", value_name);
+#endif
+
 	status = dhcpctl_get_value (&data, h, value_name);
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -263,6 +406,9 @@ dhcpctl_status dhcpctl_set_value (dhcpctl_handle h, dhcpctl_data_string value,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_set_value(%s)", value_name);
+#endif
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -296,6 +442,9 @@ dhcpctl_status dhcpctl_set_string_value (dhcpctl_handle h, const char *value,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_set_string_value(%s)", value_name);
+#endif
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -329,6 +478,9 @@ dhcpctl_status dhcpctl_set_data_value (dhcpctl_handle h,
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
 	unsigned ll;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_set_data_value(%s)", value_name);
+#endif
 
 	ll = strlen (value_name);
 	status = omapi_data_string_new (&name, ll, MDL);
@@ -360,6 +512,9 @@ dhcpctl_status dhcpctl_set_null_value (dhcpctl_handle h,
 	isc_result_t status;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
 	unsigned ll;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_set_null_value(%s)", value_name);
+#endif
 
 	ll = strlen (value_name);
 	status = omapi_data_string_new (&name, ll, MDL);
@@ -384,6 +539,9 @@ dhcpctl_status dhcpctl_set_boolean_value (dhcpctl_handle h, int value,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_set_boolean_value(%s)", value_name);
+#endif
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -413,6 +571,9 @@ dhcpctl_status dhcpctl_set_int_value (dhcpctl_handle h, int value,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *name = (omapi_data_string_t *)0;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_set_int_value(%s)", value_name);
+#endif
 
 	status = omapi_data_string_new (&name, strlen (value_name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -443,6 +604,9 @@ dhcpctl_status dhcpctl_object_update (dhcpctl_handle connection,
 	isc_result_t status;
 	omapi_object_t *message = (omapi_object_t *)0;
 	dhcpctl_remote_object_t *ro;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_object_update");
+#endif
 
 	if (h -> type != dhcpctl_remote_type)
 		return DHCP_R_INVALIDARG;
@@ -492,6 +656,9 @@ dhcpctl_status dhcpctl_object_refresh (dhcpctl_handle connection,
 	isc_result_t status;
 	omapi_object_t *message = (omapi_object_t *)0;
 	dhcpctl_remote_object_t *ro;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_object_refresh");
+#endif
 
 	if (h -> type != dhcpctl_remote_type)
 		return DHCP_R_INVALIDARG;
@@ -545,6 +712,9 @@ dhcpctl_status dhcpctl_object_remove (dhcpctl_handle connection,
 	isc_result_t status;
 	omapi_object_t *message = (omapi_object_t *)0;
 	dhcpctl_remote_object_t *ro;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_object_remove");
+#endif
 
 	if (h -> type != dhcpctl_remote_type)
 		return DHCP_R_INVALIDARG;
@@ -587,5 +757,40 @@ dhcpctl_status dhcpctl_object_remove (dhcpctl_handle connection,
 isc_result_t dhcpctl_data_string_dereference (dhcpctl_data_string *vp,
 					      const char *file, int line)
 {
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_data_string_dereference");
+#endif
 	return omapi_data_string_dereference (vp, file, line);
 }
+
+dhcpctl_status dhcpctl_disconnect (dhcpctl_handle *connection,
+				   int force)
+{
+	isc_result_t status;
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_disconnect()");
+#endif
+	if (!connection || !((*connection)->outer) ||
+	    !((*connection)->outer->type) ||
+	     ((*connection)->outer->type != omapi_type_protocol) ||
+	     !((*connection)->outer->outer)) {
+		log_debug("dhcpctl_disconnect detected invalid arg");
+                return DHCP_R_INVALIDARG;
+	}
+
+	status = omapi_disconnect ((*connection)->outer->outer, force);
+	if (status == ISC_R_SUCCESS) {
+#ifdef DEBUG_DHCPCTL
+		log_debug("dhcpctl_disconnect success");
+#endif
+		omapi_object_dereference (connection, MDL);
+		return status;
+	}
+
+#ifdef DEBUG_DHCPCTL
+	log_debug("dhcpctl_disconnect failed:%s",
+		   isc_result_totext (status));
+#endif
+	return status;
+}
+

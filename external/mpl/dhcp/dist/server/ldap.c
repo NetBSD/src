@@ -1,11 +1,11 @@
-/*	$NetBSD: ldap.c,v 1.1.1.2 2020/08/03 21:09:08 christos Exp $	*/
+/*	$NetBSD: ldap.c,v 1.1.1.3 2022/04/03 01:08:44 christos Exp $	*/
 
 /* ldap.c
 
    Routines for reading the configuration from LDAP */
 
 /*
- * Copyright (c) 2010-2019 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2010-2022 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2003-2006 Ntelos, Inc.
  * All rights reserved.
  *
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldap.c,v 1.1.1.2 2020/08/03 21:09:08 christos Exp $");
+__RCSID("$NetBSD: ldap.c,v 1.1.1.3 2022/04/03 01:08:44 christos Exp $");
 
 
 #include "dhcpd.h"
@@ -1381,13 +1381,13 @@ ldap_start (void)
                                                              SV_LDAP_GSSAPI_PRINCIPAL);
 
       if (ldap_gssapi_principal == NULL) {
-          log_error("ldap_gssapi_principal is not set,"
+          log_info("ldap-gssapi-principal is not set,"
                    "GSSAPI Authentication for LDAP will not be used");
       } else {        
         ldap_gssapi_keytab = _do_lookup_dhcp_string_option (options,
                                                           SV_LDAP_GSSAPI_KEYTAB);
         if (ldap_gssapi_keytab == NULL) {
-          log_fatal("ldap_gssapi_keytab must be specified");
+          log_fatal("ldap-gssapi-keytab must be specified");
         } 
 
       	running = strdup(ldap_gssapi_principal);

@@ -1,11 +1,11 @@
-/*	$NetBSD: message.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* message.c
 
    Subroutines for dealing with message objects. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: message.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: message.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -163,7 +163,7 @@ isc_result_t omapi_message_set_value (omapi_object_t *h,
 		if (status == ISC_R_SUCCESS)
 			return status;
 	}
-			  
+
 	return ISC_R_NOTFOUND;
 }
 
@@ -237,7 +237,7 @@ isc_result_t omapi_message_signal_handler (omapi_object_t *h,
 	if (h -> type != omapi_type_message)
 		return DHCP_R_INVALIDARG;
 	m = (omapi_message_object_t *)h;
-	
+
 	if (!strcmp (name, "status")) {
 		if (m -> notify_object &&
 		    m -> notify_object -> type -> signal_handler)
@@ -276,7 +276,7 @@ isc_result_t omapi_message_register (omapi_object_t *mo)
 	if (mo -> type != omapi_type_message)
 		return DHCP_R_INVALIDARG;
 	m = (omapi_message_object_t *)mo;
-	
+
 	/* Already registered? */
 	if (m -> prev || m -> next || omapi_registered_messages == m)
 		return DHCP_R_INVALIDARG;
@@ -305,7 +305,7 @@ isc_result_t omapi_message_unregister (omapi_object_t *mo)
 	if (mo -> type != omapi_type_message)
 		return DHCP_R_INVALIDARG;
 	m = (omapi_message_object_t *)mo;
-	
+
 	/* Not registered? */
 	if (!m -> prev && omapi_registered_messages != m)
 		return DHCP_R_INVALIDARG;
@@ -555,7 +555,7 @@ omapi_message_process_internal (omapi_object_t *mo, omapi_object_t *po)
 				(po, message -> id_object,
 				 ISC_R_NOTFOUND, message -> id,
 				 "no object matches specification");
-		}			
+		}
 
 		/* If we found an object, we're supposed to be creating an
 		   object, and we're not supposed to have found an object,
@@ -627,7 +627,7 @@ omapi_message_process_internal (omapi_object_t *mo, omapi_object_t *po)
 					 "can't select authenticator");
 			}
 		}
-		
+
 		/* Now send the new contents of the object back in
 		   response. */
 		goto send;
@@ -641,7 +641,7 @@ omapi_message_process_internal (omapi_object_t *mo, omapi_object_t *po)
 				 status, message -> id,
 				 "no matching handle");
 		}
-	      send:		
+	      send:
 		status = omapi_protocol_send_update (po, message -> id_object,
 						     message -> id, object);
 		omapi_object_dereference (&object, MDL);
@@ -671,7 +671,7 @@ omapi_message_process_internal (omapi_object_t *mo, omapi_object_t *po)
 					 status, message -> id,
 					 "cannot update authenticator");
 			}
-			
+
 			status = omapi_protocol_add_auth (po, object,
 							  message -> h);
 		} else {

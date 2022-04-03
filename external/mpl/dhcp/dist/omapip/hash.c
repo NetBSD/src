@@ -1,11 +1,11 @@
-/*	$NetBSD: hash.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* hash.c
 
    Routines for manipulating hash tables... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.1.1.1 2018/04/07 22:34:27 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -154,7 +154,7 @@ void relinquish_hash_bucket_hunks ()
 		if (!n)
 			p = &c -> next;
 	}
-		
+
 	for (c = hash_bucket_hunks; c; c = n) {
 		n = c -> next;
 		if (c -> len != 126) {
@@ -305,7 +305,7 @@ do_id_hash(const void *name, unsigned len, unsigned size)
 	 * The switch handles our starting conditions, then we hash the
 	 * remaining bytes in groups of 3
 	 */
-	   
+
 	switch (len % 3) {
 	case 0:
 		break;
@@ -391,7 +391,7 @@ hash_report(struct hash_table *table)
 	    maxlen > 2147483647)
 		return (unsigned char *) "Report out of range for display.";
 
-	sprintf((char *)retbuf, 
+	sprintf((char *)retbuf,
 		"Contents/Size (%%): %u/%u (%u%%). Min/max: %u/%u",
 		contents, table->hash_count, pct, minlen, maxlen);
 
@@ -541,7 +541,7 @@ int casecmp (const void *v1, const void *v2, size_t len)
 	size_t i;
 	const unsigned char *s = v1;
 	const unsigned char *t = v2;
-	
+
 	for (i = 0; i < len; i++)
 	{
 		int c1, c2;

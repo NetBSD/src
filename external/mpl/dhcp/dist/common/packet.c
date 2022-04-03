@@ -1,11 +1,11 @@
-/*	$NetBSD: packet.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* packet.c
 
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -66,7 +66,7 @@ u_int32_t checksum (buf, nbytes, sum)
 		/* Add carry. */
 		if (sum > 0xFFFF)
 			sum -= 0xFFFF;
-	}	
+	}
 
 	/* If there's a single byte left over, checksum it, too.   Network
 	   byte order is big-endian, so the remaining byte is the high byte. */
@@ -79,7 +79,7 @@ u_int32_t checksum (buf, nbytes, sum)
 		if (sum > 0xFFFF)
 			sum -= 0xFFFF;
 	}
-	
+
 	return sum;
 }
 
@@ -96,7 +96,7 @@ u_int32_t wrapsum (sum)
 #ifdef DEBUG_CHECKSUM_VERBOSE
 	log_debug ("sum = %x", sum);
 #endif
-	
+
 #ifdef DEBUG_CHECKSUM
 	log_debug ("wrapsum returns %x", htons (sum));
 #endif
@@ -161,10 +161,10 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	ip.ip_sum = 0;
 	ip.ip_src.s_addr = from;
 	ip.ip_dst.s_addr = to;
-	
+
 	/* Checksum the IP header... */
 	ip.ip_sum = wrapsum (checksum ((unsigned char *)&ip, sizeof ip, 0));
-	
+
 	/* Copy the ip header into the buffer... */
 	memcpy (&buf [*bufix], &ip, sizeof ip);
 	*bufix += sizeof ip;
@@ -186,7 +186,7 @@ void assemble_udp_ip_header (interface, buf, bufix,
 
 	udp.uh_sum =
 		wrapsum (checksum ((unsigned char *)&udp, sizeof udp,
-				   checksum (data, len, 
+				   checksum (data, len,
 					     checksum ((unsigned char *)
 						       &ip.ip_src,
 						       2 * sizeof ip.ip_src,

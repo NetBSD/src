@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* inet.c
 
@@ -6,7 +6,7 @@
    way... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -22,15 +22,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inet.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: inet.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -106,7 +106,7 @@ struct iaddr ip_addr (subnet, mask, host_address)
 		} else
 			rv.iabuf [i + j] = habuf [i];
 	}
-		
+
 	return rv;
 }
 
@@ -179,7 +179,7 @@ int addr_eq (addr1, addr2)
 	return memcmp (addr1.iabuf, addr2.iabuf, addr1.len) == 0;
 }
 
-/* addr_match 
+/* addr_match
  *
  * compares an IP address against a network/mask combination
  * by ANDing the IP with the mask and seeing whether the result
@@ -194,7 +194,7 @@ addr_match(addr, match)
 
 	if (addr->len != match->addr.len)
 		return 0;
-	
+
 	for (i = 0 ; i < addr->len ; i++) {
 		if ((addr->iabuf[i] & match->mask.iabuf[i]) !=
 							match->addr.iabuf[i])
@@ -203,7 +203,7 @@ addr_match(addr, match)
 	return 1;
 }
 
-/* 
+/*
  * Compares the addresses a1 and a2.
  *
  * If a1 < a2, returns -1.
@@ -239,7 +239,7 @@ addr_cmp(const struct iaddr *a1, const struct iaddr *a2) {
  *
  * WARNING: if a1 and a2 differ in length, returns 0.
  */
-int 
+int
 addr_or(struct iaddr *result, const struct iaddr *a1, const struct iaddr *a2) {
 	int i;
 	int all_zero;
@@ -268,7 +268,7 @@ addr_or(struct iaddr *result, const struct iaddr *a1, const struct iaddr *a2) {
  *
  * WARNING: if a1 and a2 differ in length, returns 0.
  */
-int 
+int
 addr_and(struct iaddr *result, const struct iaddr *a1, const struct iaddr *a2) {
 	int i;
 	int all_zero;
@@ -328,7 +328,7 @@ is_cidr_mask_valid(const struct iaddr *addr, int bits) {
 	zero_bits = (addr->len * 8) - bits;
 	zero_bytes = zero_bits / 8;
 
-	/* 
+	/*
 	 * Check to make sure the low-order bytes are zero.
 	 */
 	for (i=1; i<=zero_bytes; i++) {
@@ -337,11 +337,11 @@ is_cidr_mask_valid(const struct iaddr *addr, int bits) {
 		}
 	}
 
-	/* 
-	 * Look to see if any bits not in right-hand bytes are 
-	 * non-zero, by making a byte that has these bits set to zero 
-	 * comparing to the original byte. If these two values are 
-	 * equal, then the right-hand bits are zero, and we are 
+	/*
+	 * Look to see if any bits not in right-hand bytes are
+	 * non-zero, by making a byte that has these bits set to zero
+	 * comparing to the original byte. If these two values are
+	 * equal, then the right-hand bits are zero, and we are
 	 * happy.
 	 */
 	shift_bits = zero_bits % 8;
@@ -355,14 +355,14 @@ is_cidr_mask_valid(const struct iaddr *addr, int bits) {
  *
  * Converts a range of IP addresses to a set of CIDR networks.
  *
- * Examples: 
+ * Examples:
  *  192.168.0.0 - 192.168.0.255 = 192.168.0.0/24
  *  10.0.0.0 - 10.0.1.127 = 10.0.0.0/24, 10.0.1.0/25
  *  255.255.255.32 - 255.255.255.255 = 255.255.255.32/27, 255.255.255.64/26,
  *  				       255.255.255.128/25
  */
-isc_result_t 
-range2cidr(struct iaddrcidrnetlist **result, 
+isc_result_t
+range2cidr(struct iaddrcidrnetlist **result,
 	   const struct iaddr *lo, const struct iaddr *hi) {
 	struct iaddr addr;
 	struct iaddr mask;
@@ -400,30 +400,30 @@ range2cidr(struct iaddrcidrnetlist **result,
 	 * Start at the low end, and keep trying larger networks
 	 * until we get one that is too big (explained below).
 	 *
-	 * We keep a "mask", which is the ones-complement of a 
+	 * We keep a "mask", which is the ones-complement of a
 	 * normal netmask. So, a /23 has a netmask of 255.255.254.0,
 	 * and a mask of 0.0.1.255.
 	 *
-	 * We know when a network is too big when we bitwise-AND the 
-	 * mask with the starting address and we get a non-zero 
+	 * We know when a network is too big when we bitwise-AND the
+	 * mask with the starting address and we get a non-zero
 	 * result, like this:
 	 *
 	 *    addr: 192.168.1.0, mask: 0.0.1.255
 	 *    bitwise-AND: 0.0.1.0
-	 * 
+	 *
 	 * A network is also too big if the bitwise-OR of the mask
 	 * with the starting address is larger than the end address,
 	 * like this:
 	 *
 	 *    start: 192.168.1.0, mask: 0.0.1.255, end: 192.168.0.255
-	 *    bitwise-OR: 192.168.1.255 
+	 *    bitwise-OR: 192.168.1.255
 	 *
 	 * -------------------
-	 * Once we have found a network that is too big, we add the 
+	 * Once we have found a network that is too big, we add the
 	 * appropriate CIDR network to our list of found networks.
 	 *
 	 * We then use the next IP address as our low address, and
-	 * begin the process of searching for a network that is 
+	 * begin the process of searching for a network that is
 	 * too big again, starting with an empty mask.
 	 */
 	addr = *lo;
@@ -440,12 +440,12 @@ range2cidr(struct iaddrcidrnetlist **result,
 			mask.iabuf[ofs] |= val;
 		}
 
-		/* 
+		/*
 		 * See if we're too big, and save this network if so.
 		 */
 		addr_or(&end_addr, &addr, &mask);
 		if ((ofs < 0) ||
-		    (addr_cmp(&end_addr, hi) > 0) || 
+		    (addr_cmp(&end_addr, hi) > 0) ||
 		    addr_and(&dummy, &addr, &mask)) {
 		    	/*
 			 * Add a new prefix to our list.
@@ -464,8 +464,8 @@ range2cidr(struct iaddrcidrnetlist **result,
 			net->next = *result;
 			*result = net;
 
-		    	/* 
-			 * Figure out our new starting address, 
+		    	/*
+			 * Figure out our new starting address,
 			 * by adding (1 << bit) to our previous
 			 * starting address.
 			 */
@@ -539,7 +539,7 @@ piaddr(const struct iaddr addr) {
 	}
 	if (addr.len == 4) {
 		return inet_ntop(AF_INET, addr.iabuf, pbuf, sizeof(pbuf));
-	} 
+	}
 	if (addr.len == 16) {
 		return inet_ntop(AF_INET6, addr.iabuf, pbuf, sizeof(pbuf));
 	}
@@ -615,7 +615,7 @@ validate_port(char *port) {
 
 	errno = 0;
 	local_port = strtol(port, &endptr, 10);
-	
+
 	if ((*endptr != '\0') || (errno == ERANGE) || (errno == EINVAL))
 		log_fatal ("Invalid port number specification: %s", port);
 
@@ -641,7 +641,7 @@ validate_port_pair(char *port) {
 
 	errno = 0;
 	local_port = strtol(port, &endptr, 10);
-	
+
 	if ((*endptr != '\0') || (errno == ERANGE) || (errno == EINVAL))
 		log_fatal ("Invalid port pair specification: %s", port);
 

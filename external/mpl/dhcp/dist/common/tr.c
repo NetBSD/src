@@ -1,4 +1,4 @@
-/*	$NetBSD: tr.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: tr.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* tr.c
 
@@ -6,7 +6,7 @@
    Contributed in May of 1999 by Andrew Chittenden */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -22,14 +22,14 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tr.c,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $");
+__RCSID("$NetBSD: tr.c,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -157,7 +157,7 @@ ssize_t decode_tr_header (interface, buf, bufix, from)
                         && llc->protid[1] == 0
                         && llc->protid[2] == 0) {
                 /* say there is source routing information present */
-                trh->saddr[0] |= TR_RII;	
+                trh->saddr[0] |= TR_RII;
         }
 
 	if (trh->saddr[0] & TR_RII)
@@ -204,7 +204,7 @@ static int insert_source_routing (trh, interface)
 	/* single route broadcasts as per rfc 1042 */
 	if (memcmp(trh->daddr, tr_broadcast,TR_ALEN) == 0) {
 		trh->saddr[0] |= TR_RII;
-		trh->rcf = ((sizeof(trh->rcf)) << 8) & TR_RCF_LEN_MASK;  
+		trh->rcf = ((sizeof(trh->rcf)) << 8) & TR_RCF_LEN_MASK;
                 trh->rcf |= (TR_RCF_FRAME2K | TR_RCF_LIMITED_BROADCAST);
 		trh->rcf = htons(trh->rcf);
 	} else {
@@ -219,7 +219,7 @@ static int insert_source_routing (trh, interface)
                         if ((rover->rcf & TR_RCF_LEN_MASK) >> 8) {
                                 u_int16_t rcf = rover->rcf;
 				memcpy(trh->rseg,rover->rseg,sizeof(trh->rseg));
-				rcf ^= TR_RCF_DIR_BIT;	
+				rcf ^= TR_RCF_DIR_BIT;
 				rcf &= ~TR_RCF_BROADCAST_MASK;
                                 trh->rcf = htons(rcf);
 				trh->saddr[0] |= TR_RII;
@@ -229,7 +229,7 @@ static int insert_source_routing (trh, interface)
                         /* we don't have any routing information so send a
                          * limited broadcast */
                         trh->saddr[0] |= TR_RII;
-                        trh->rcf = ((sizeof(trh->rcf)) << 8) & TR_RCF_LEN_MASK;  
+                        trh->rcf = ((sizeof(trh->rcf)) << 8) & TR_RCF_LEN_MASK;
                         trh->rcf |= (TR_RCF_FRAME2K | TR_RCF_LIMITED_BROADCAST);
                         trh->rcf = htons(trh->rcf);
 		}

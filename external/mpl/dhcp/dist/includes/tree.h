@@ -1,11 +1,11 @@
-/*	$NetBSD: tree.h,v 1.1.1.1 2018/04/07 22:34:26 christos Exp $	*/
+/*	$NetBSD: tree.h,v 1.1.1.2 2022/04/03 01:08:45 christos Exp $	*/
 
 /* tree.h
 
    Definitions for address trees... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -49,7 +49,7 @@ struct enumeration {
 	const char *name;
 	unsigned width;
 	struct enumeration_value *values;
-};	
+};
 
 /* Tree node types... */
 #define TREE_CONCAT		1
@@ -71,7 +71,7 @@ struct buffer {
    XXX ephemeral by default and be made a persistent reference explicitly. */
 /* XXX on the other hand, it seems to work pretty nicely, so maybe the
    XXX above comment is meshuggenah. */
-/* XXX I think the above comment tries to say this: 
+/* XXX I think the above comment tries to say this:
    XXX    http://tinyurl.com/2tjqre */
 
 /* A string of data bytes, possibly accompanied by a larger buffer. */
@@ -283,7 +283,7 @@ struct expression {
 	} data;
 	int flags;
 #	define EXPR_EPHEMERAL	1
-};		
+};
 
 /* DNS host entry structure... */
 struct dns_host_entry {
