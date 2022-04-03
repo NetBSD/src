@@ -1,11 +1,11 @@
-/*	$NetBSD: buffer.c,v 1.4 2019/01/27 01:51:50 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.5 2022/04/03 01:10:59 christos Exp $	*/
 
 /* buffer.c
 
    Buffer access functions for the object management protocol... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.4 2019/01/27 01:51:50 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.5 2022/04/03 01:10:59 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -151,7 +151,7 @@ static isc_result_t omapi_connection_reader_trace (omapi_object_t *h,
 	int read_status;
 	omapi_connection_object_t *c;
 	unsigned bytes_to_read;
-	
+
 	if (!h || h -> type != omapi_type_connection)
 		return DHCP_R_INVALIDARG;
 	c = (omapi_connection_object_t *)h;
@@ -426,7 +426,7 @@ isc_result_t omapi_connection_copyout (unsigned char *buf,
 			buffer -> head = first_byte + bytes_this_copy - 1;
 			c -> in_bytes -= bytes_this_copy;
 		}
-			
+
 		if (!BYTES_IN_BUFFER (buffer))
 			buffer = buffer -> next;
 	}
@@ -521,14 +521,14 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 				isc_result_t status;
 				trace_iov_t iov [2];
 				int32_t connect_index;
-				
+
 				connect_index = htonl (c -> index);
-				
+
 				iov [0].buf = (char *)&connect_index;
 				iov [0].len = sizeof connect_index;
 				iov [1].buf = &buffer -> buf [buffer -> tail];
 				iov [1].len = bytes_written;
-				
+
 				status = (trace_write_packet_iov
 					  (trace_connection_input, 2, iov,
 					   MDL));
@@ -550,11 +550,11 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 			if (bytes_written != bytes_this_write)
 				return ISC_R_INPROGRESS;
 		}
-			
+
 		if (!BYTES_IN_BUFFER (buffer))
 			buffer = buffer -> next;
 	}
-		
+
 	/* Get rid of any output buffers we emptied. */
 	buffer = (omapi_buffer_t *)0;
 	while (c -> outbufs &&
@@ -603,7 +603,7 @@ isc_result_t omapi_connection_put_uint32 (omapi_object_t *c,
 	u_int32_t inbuf;
 
 	inbuf = htonl (value);
-	
+
 	return omapi_connection_copyin (c, (unsigned char *)&inbuf,
 					sizeof inbuf);
 }
@@ -629,7 +629,7 @@ isc_result_t omapi_connection_put_uint16 (omapi_object_t *c,
 	u_int16_t inbuf;
 
 	inbuf = htons (value);
-	
+
 	return omapi_connection_copyin (c, (unsigned char *)&inbuf,
 					sizeof inbuf);
 }
@@ -745,4 +745,3 @@ isc_result_t omapi_connection_put_named_uint32 (omapi_object_t *c,
 	status = omapi_connection_put_uint32(c, value);
 	return (status);
 }
-

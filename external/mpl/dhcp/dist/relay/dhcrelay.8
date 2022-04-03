@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcrelay.8,v 1.2 2018/04/07 22:37:30 christos Exp $
+.\"	$NetBSD: dhcrelay.8,v 1.3 2022/04/03 01:10:59 christos Exp $
 .\"
 .\"	dhcrelay.8
 .\"
-.\" Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1997-2003 by Internet Software Consortium
 .\"
 .\" This Source Code Form is subject to the terms of the Mozilla Public
@@ -18,8 +18,8 @@
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"   Internet Systems Consortium, Inc.
-.\"   950 Charter Street
-.\"   Redwood City, CA 94063
+.\"   PO Box 360
+.\"   Newmarket, NH 03857 USA
 .\"   <info@isc.org>
 .\"   https://www.isc.org/
 .\"
@@ -80,7 +80,7 @@ dhcrelay - Dynamic Host Configuration Protocol Relay Agent
 [
 .B ...
 .B -i
-.I interfaceN 
+.I interfaceN
 ]
 ]
 [
@@ -104,6 +104,10 @@ dhcrelay - Dynamic Host Configuration Protocol Relay Agent
 [
 .B -U
 .I interface
+]
+[
+.B -g
+.I ipaddr
 ]
 .I server0
 [
@@ -144,7 +148,7 @@ dhcrelay - Dynamic Host Configuration Protocol Relay Agent
 .I lowerN
 ]
 .B -u
-.I upper0 
+.I upper0
 [
 .B ...
 .B -u
@@ -235,6 +239,12 @@ Drop packets from upstream servers if they contain Relay Agent
 Information options that indicate they were generated in response to
 a query that came via a different relay agent.  If this option is not
 specified, such packets will be relayed anyway.
+.TP
+-g \fIipaddr\fR
+When a package gets sent back to the client, replace the gateway's IP
+address (giaddr) with the given \fIipaddr\fR. This can be used as a
+workaround for bogus clients like Solaris 11 grub, which use the giaddr
+instead of the announced router (3) to setup its default route.
 .TP
 -i \fIifname\fR
 Listen for DHCPv4/BOOTP traffic on interface \fIifname\fR.  Multiple

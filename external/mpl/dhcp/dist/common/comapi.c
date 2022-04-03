@@ -1,11 +1,11 @@
-/*	$NetBSD: comapi.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: comapi.c,v 1.3 2022/04/03 01:10:58 christos Exp $	*/
 
 /* omapi.c
 
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 2004-2017 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: comapi.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: comapi.c,v 1.3 2022/04/03 01:10:58 christos Exp $");
 
 /* Many, many thanks to Brian Murrell and BCtel for this code - BCtel
    provided the funding that resulted in this code and the entire
@@ -64,7 +64,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_control_destroy,
 					     dhcp_control_signal_handler,
 					     dhcp_control_stuff_values,
-					     dhcp_control_lookup, 
+					     dhcp_control_lookup,
 					     dhcp_control_create,
 					     dhcp_control_remove, 0, 0, 0,
 					     sizeof (dhcp_control_object_t),
@@ -85,7 +85,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_group_destroy,
 					     dhcp_group_signal_handler,
 					     dhcp_group_stuff_values,
-					     dhcp_group_lookup, 
+					     dhcp_group_lookup,
 					     dhcp_group_create,
 					     dhcp_group_remove, 0, 0, 0,
 					     sizeof (struct group_object), 0,
@@ -101,7 +101,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_subnet_destroy,
 					     dhcp_subnet_signal_handler,
 					     dhcp_subnet_stuff_values,
-					     dhcp_subnet_lookup, 
+					     dhcp_subnet_lookup,
 					     dhcp_subnet_create,
 					     dhcp_subnet_remove, 0, 0, 0,
 					     sizeof (struct subnet), 0,
@@ -118,7 +118,7 @@ void dhcp_common_objects_setup ()
 		 dhcp_shared_network_destroy,
 		 dhcp_shared_network_signal_handler,
 		 dhcp_shared_network_stuff_values,
-		 dhcp_shared_network_lookup, 
+		 dhcp_shared_network_lookup,
 		 dhcp_shared_network_create,
 		 dhcp_shared_network_remove, 0, 0, 0,
 		 sizeof (struct shared_network), 0, RC_MISC);
@@ -141,7 +141,7 @@ isc_result_t dhcp_group_set_value  (omapi_object_t *h,
 		return DHCP_R_INVALIDARG;
 	group = (struct group_object *)h;
 
-	/* XXX For now, we can only set these values on new group objects. 
+	/* XXX For now, we can only set these values on new group objects.
 	   XXX Soon, we need to be able to update group objects. */
 	if (!omapi_ds_strcmp (name, "name")) {
 		if (group -> name)
@@ -198,7 +198,7 @@ isc_result_t dhcp_group_set_value  (omapi_object_t *h,
 		if (status == ISC_R_SUCCESS || status == DHCP_R_UNCHANGED)
 			return status;
 	}
-			  
+
 	return ISC_R_NOTFOUND;
 }
 
@@ -467,7 +467,7 @@ isc_result_t dhcp_control_set_value  (omapi_object_t *h,
 		if (status == ISC_R_SUCCESS || status == DHCP_R_UNCHANGED)
 			return status;
 	}
-			  
+
 	return ISC_R_NOTFOUND;
 }
 
@@ -910,4 +910,3 @@ isc_result_t dhcp_shared_network_remove (omapi_object_t *lp,
 {
 	return ISC_R_NOTIMPLEMENTED;
 }
-

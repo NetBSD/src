@@ -1,11 +1,11 @@
-/*	$NetBSD: client_tables.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: client_tables.c,v 1.3 2022/04/03 01:10:57 christos Exp $	*/
 
 /* client_tables.c
 
    Tables of information only used by client... */
 
 /*
- * Copyright (c) 2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,15 +20,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client_tables.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: client_tables.c,v 1.3 2022/04/03 01:10:57 christos Exp $");
 
 #include "dhcpd.h"
 

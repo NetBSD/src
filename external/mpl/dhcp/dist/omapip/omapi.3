@@ -1,9 +1,8 @@
-.\"	$NetBSD: omapi.3,v 1.2 2018/04/07 22:37:30 christos Exp $
+.\"	$NetBSD: omapi.3,v 1.3 2022/04/03 01:10:59 christos Exp $
 .\"
 .\"	omapi.3
 .\"
-.\" Copyright (c) 2009-2010,2014 by Internet Systems Consortium, Inc. ("ISC")
-.\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2000-2003 by Internet Software Consortium
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -19,8 +18,8 @@
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"   Internet Systems Consortium, Inc.
-.\"   950 Charter Street
-.\"   Redwood City, CA 94063
+.\"   PO Box 360
+.\"   Newmarket, NH 03857 USA
 .\"   <info@isc.org>
 .\"   https://www.isc.org/
 .\"
@@ -51,7 +50,7 @@ act as surrogates for the real objects in the server. For example a
 client will create a handle for a lease object, and will request the
 server to fill the lease handle's state. The client application can
 then pull details such as the lease expiration time from the lease
-handle. 
+handle.
 .PP
 Modifications can be made to the server state by creating handles to
 new objects, or by modifying attributes of handles to existing
@@ -60,8 +59,8 @@ the changes made.
 .SH USAGE
 .PP
 The client application must always call dhcpctl_initialize() before
-making calls to any other dhcpctl functions. This initializes 
-various internal data structures. 
+making calls to any other dhcpctl functions. This initializes
+various internal data structures.
 .PP
 To create the connection to the server the client must use
 dhcpctl_connect() function. As well as making the physical connection
@@ -196,7 +195,7 @@ Get the attribute named ``ends'' from the lease handle. This is a
 will expire.
 .PP
 .nf
-	
+
 			memcpy(&thetime, value->value, value->len);
 			dhcpctl_data_string_dereference(&value, MDL);
 
@@ -215,7 +214,7 @@ the connection the user must call dhcpctl_new_authenticator.
 		const char *algorithm = "hmac-md5";
 		const char *secret = "a-shared-secret";
 
-		dhcpctl_new_authenticator (&authenticator, 
+		dhcpctl_new_authenticator (&authenticator,
                                            keyname,
                                            algorithm,
                                            secret,
@@ -248,4 +247,3 @@ dhcpctl(3), omshell(1), dhcpd(8), dhclient(8), dhcpd.conf(5), dhclient.conf(5).
 is maintained by ISC.  To learn more about Internet Systems Consortium,
 see
 .B https://www.isc.org
-

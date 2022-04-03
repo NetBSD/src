@@ -1,11 +1,11 @@
-/*	$NetBSD: db.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.3 2022/04/03 01:10:59 christos Exp $	*/
 
 /* db.c
 
    Persistent database management routines for DHCPD... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: db.c,v 1.3 2022/04/03 01:10:59 christos Exp $");
 
 #include "dhcpd.h"
 #include <ctype.h>

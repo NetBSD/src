@@ -1,11 +1,11 @@
-/*	$NetBSD: socket.c,v 1.4 2020/08/03 21:10:56 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.5 2022/04/03 01:10:58 christos Exp $	*/
 
 /* socket.c
 
    BSD socket interface code... */
 
 /*
- * Copyright (c) 2004-2020 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,21 +21,21 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: socket.c,v 1.4 2020/08/03 21:10:56 christos Exp $");
+__RCSID("$NetBSD: socket.c,v 1.5 2022/04/03 01:10:58 christos Exp $");
 
 /* SO_BINDTODEVICE support added by Elliot Poger (poger@leland.stanford.edu).
  * This sockopt allows a socket to be bound to a particular interface,
  * thus enabling the use of DHCPD on a multihomed host.
  * If SO_BINDTODEVICE is defined in your system header files, the use of
- * this sockopt will be automatically enabled. 
+ * this sockopt will be automatically enabled.
  * I have implemented it under Linux; other systems should be doable also.
  */
 
@@ -155,15 +155,15 @@ if_register_socket(struct interface_info *info, int family,
 	once = 1;
 #endif
 
-	/* 
+	/*
 	 * Set up the address we're going to bind to, depending on the
-	 * address family. 
-	 */ 
+	 * address family.
+	 */
 	memset(&name, 0, sizeof(name));
 	switch (family) {
 #ifdef DHCPv6
 	case AF_INET6:
-		addr6 = (struct sockaddr_in6 *)&name; 
+		addr6 = (struct sockaddr_in6 *)&name;
 		addr6->sin6_family = AF_INET6;
 		addr6->sin6_port = *libdhcp_callbacks.local_port;
 #if defined(RELAY_PORT)
@@ -199,7 +199,7 @@ if_register_socket(struct interface_info *info, int family,
 
 	case AF_INET:
 	default:
-		addr = (struct sockaddr_in *)&name; 
+		addr = (struct sockaddr_in *)&name;
 		addr->sin_family = AF_INET;
 		addr->sin_port = relay_port ? relay_port : *libdhcp_callbacks.local_port;
 		memcpy(&addr->sin_addr,
@@ -301,7 +301,7 @@ if_register_socket(struct interface_info *info, int family,
 	 */
 	if (family == AF_INET) {
 		int on = 1;
-		if (setsockopt(sock, IPPROTO_IP, IP_RECVPKTINFO, 
+		if (setsockopt(sock, IPPROTO_IP, IP_RECVPKTINFO,
 		               &on, sizeof(on)) != 0) {
 			log_fatal("Can't set IP_RECVPTKINFO on dhcp socket for"
 				  " %s: %m", info->name);
@@ -311,7 +311,7 @@ if_register_socket(struct interface_info *info, int family,
 
 #ifdef DHCPv6
 	/*
-	 * If we turn on IPV6_PKTINFO, we will be able to receive 
+	 * If we turn on IPV6_PKTINFO, we will be able to receive
 	 * additional information, such as the destination IP address.
 	 * We need this to spot unicast packets.
 	 */
@@ -319,14 +319,14 @@ if_register_socket(struct interface_info *info, int family,
 		int on = 1;
 #ifdef IPV6_RECVPKTINFO
 		/* RFC3542 */
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, 
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
 		               &on, sizeof(on)) != 0) {
 			log_fatal("setsockopt: IPV6_RECVPKTINFO for %s: %m",
 				  info->name);
 		}
 #else
 		/* RFC2292 */
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, 
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO,
 		               &on, sizeof(on)) != 0) {
 			log_fatal("setsockopt: IPV6_PKTINFO for %s: %m",
 				  info->name);
@@ -416,7 +416,7 @@ void if_register_receive (info)
 				  MDL);
 		}
 	}
-		
+
 	info->rfdesc = global_v4_socket;
 	global_v4_socket_references++;
 #else
@@ -467,7 +467,7 @@ void if_deregister_receive (info)
 #endif /* USE_SOCKET_RECEIVE */
 
 
-#ifdef DHCPv6 
+#ifdef DHCPv6
 /*
  * This function joins the interface to DHCPv6 multicast groups so we will
  * receive multicast messages.
@@ -479,11 +479,11 @@ if_register_multicast(struct interface_info *info) {
 
 	if (inet_pton(AF_INET6, All_DHCP_Relay_Agents_and_Servers,
 		      &mreq.ipv6mr_multiaddr) <= 0) {
-		log_fatal("inet_pton: unable to convert '%s'", 
+		log_fatal("inet_pton: unable to convert '%s'",
 			  All_DHCP_Relay_Agents_and_Servers);
 	}
 	mreq.ipv6mr_interface = if_nametoindex(info->name);
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, 
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 		       &mreq, sizeof(mreq)) < 0) {
 		log_fatal("setsockopt: IPV6_JOIN_GROUP for %s: %m",
 			  info->name);
@@ -499,11 +499,11 @@ if_register_multicast(struct interface_info *info) {
 	if ((info->flags & INTERFACE_STREAMS) == 0) {
 		if (inet_pton(AF_INET6, All_DHCP_Servers,
 			      &mreq.ipv6mr_multiaddr) <= 0) {
-			log_fatal("inet_pton: unable to convert '%s'", 
+			log_fatal("inet_pton: unable to convert '%s'",
 				  All_DHCP_Servers);
 		}
 		mreq.ipv6mr_interface = if_nametoindex(info->name);
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, 
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 			       &mreq, sizeof(mreq)) < 0) {
 			log_fatal("setsockopt: IPV6_JOIN_GROUP for %s: %m",
 				  info->name);
@@ -550,7 +550,7 @@ if_register6(struct interface_info *info, int do_multicast) {
 			log_info("Bound to *:%d", (int) ntohs(*libdhcp_callbacks.local_port));
 		}
 	}
-		
+
 	info->rfdesc = global_v6_socket;
 	info->wfdesc = global_v6_socket;
 	global_v6_socket_references++;
@@ -587,7 +587,7 @@ if_register6(struct interface_info *info, int do_multicast) {
 	if (!quiet_interface_discovery) {
 		if (info->shared_network != NULL) {
 			log_info("Listening on Socket/%d/%s/%s",
-				 global_v6_socket, info->name, 
+				 global_v6_socket, info->name,
 				 info->shared_network->name);
 			log_info("Sending on   Socket/%d/%s/%s",
 				 global_v6_socket, info->name,
@@ -615,7 +615,7 @@ if_register_linklocal6(struct interface_info *info) {
 	if (global_v6_socket >= 0) {
 		log_fatal("Impossible condition at %s:%d", MDL);
 	}
-		
+
 	no_global_v6_socket = 1;
 
 	/* get the (?) link-local address */
@@ -643,7 +643,7 @@ if_register_linklocal6(struct interface_info *info) {
 	if (!quiet_interface_discovery) {
 		if (info->shared_network != NULL) {
 			log_info("Listening on Socket/%d/%s/%s",
-				 global_v6_socket, info->name, 
+				 global_v6_socket, info->name,
 				 info->shared_network->name);
 			log_info("Sending on   Socket/%d/%s/%s",
 				 global_v6_socket, info->name,
@@ -655,7 +655,7 @@ if_register_linklocal6(struct interface_info *info) {
 	}
 }
 
-void 
+void
 if_deregister6(struct interface_info *info) {
 	/* client case */
 	if (no_global_v6_socket) {
@@ -739,7 +739,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 			pktinfo.ipi_ifindex = interface->ifp->ifr_index;
 			if (setsockopt(interface->wfdesc, IPPROTO_IP,
 				       IP_PKTINFO, (char *)&pktinfo,
-				       sizeof(pktinfo)) < 0) 
+				       sizeof(pktinfo)) < 0)
 				log_fatal("setsockopt: IP_PKTINFO for %s: %m",
 					  (char*)(interface->ifp));
 		}
@@ -766,7 +766,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 
 #ifdef DHCPv6
 /*
- * Solaris 9 is missing the CMSG_LEN and CMSG_SPACE macros, so we will 
+ * Solaris 9 is missing the CMSG_LEN and CMSG_SPACE macros, so we will
  * synthesize them (based on the BIND 9 technique).
  */
 
@@ -836,16 +836,16 @@ allocate_cmsg_cbuf(void) {
 #endif /* DHCPv6, IP_PKTINFO ... */
 
 #ifdef DHCPv6
-/* 
- * For both send_packet6() and receive_packet6() we need to use the 
+/*
+ * For both send_packet6() and receive_packet6() we need to use the
  * sendmsg()/recvmsg() functions rather than the simpler send()/recv()
  * functions.
  *
  * In the case of send_packet6(), we need to do this in order to insure
- * that the reply packet leaves on the same interface that it arrived 
- * on. 
+ * that the reply packet leaves on the same interface that it arrived
+ * on.
  *
- * In the case of receive_packet6(), we need to do this in order to 
+ * In the case of receive_packet6(), we need to do this in order to
  * get the IP address the packet was sent to. This is used to identify
  * whether a packet is multicast or unicast.
  *
@@ -903,8 +903,8 @@ ssize_t send_packet6(struct interface_info *interface,
 		dst.sin6_scope_id = ifindex;
 
 	/*
-	 * Set the data buffer we're sending. (Using this wacky 
-	 * "scatter-gather" stuff... we only have a single chunk 
+	 * Set the data buffer we're sending. (Using this wacky
+	 * "scatter-gather" stuff... we only have a single chunk
 	 * of data to send, so we declare a single vector entry.)
 	 */
 	v.iov_base = (char *)raw;
@@ -914,11 +914,11 @@ ssize_t send_packet6(struct interface_info *interface,
 
 	/*
 	 * Setting the interface is a bit more involved.
-	 * 
-	 * We have to create a "control message", and set that to 
+	 *
+	 * We have to create a "control message", and set that to
 	 * define the IPv6 packet information. We could set the
 	 * source address if we wanted, but we can safely let the
-	 * kernel decide what that should be. 
+	 * kernel decide what that should be.
 	 */
 	m.msg_control = control_buf;
 	m.msg_controllen = control_buf_len;
@@ -998,7 +998,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	m.msg_namelen = sizeof(*from);
 
 	/*
-	 * Set the data buffer we're receiving. (Using this wacky 
+	 * Set the data buffer we're receiving. (Using this wacky
 	 * "scatter-gather" stuff... but we that doesn't really make
 	 * sense for us, so we use a single vector entry.)
 	 */
@@ -1010,8 +1010,8 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	/*
 	 * Getting the interface is a bit more involved.
 	 *
-	 * We set up some space for a "control message". We have 
-	 * previously asked the kernel to give us packet 
+	 * We set up some space for a "control message". We have
+	 * previously asked the kernel to give us packet
 	 * information (when we initialized the interface), so we
 	 * should get the interface index from that.
 	 */
@@ -1023,19 +1023,19 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	if (result >= 0) {
 		/*
 		 * If we did read successfully, then we need to loop
-		 * through the control messages we received and 
+		 * through the control messages we received and
 		 * find the one with our inteface index.
 		 */
 		cmsg = CMSG_FIRSTHDR(&m);
 		while (cmsg != NULL) {
-			if ((cmsg->cmsg_level == IPPROTO_IP) && 
+			if ((cmsg->cmsg_level == IPPROTO_IP) &&
 			    (cmsg->cmsg_type == IP_PKTINFO)) {
 				pktinfo = (struct in_pktinfo *)CMSG_DATA(cmsg);
 				ifindex = pktinfo->ipi_ifindex;
 				/*
-				 * We pass the ifindex back to the caller 
+				 * We pass the ifindex back to the caller
 				 * using the unused hfrom parameter avoiding
-				 * interface changes between sockets and 
+				 * interface changes between sockets and
 				 * the discover code.
 				 */
 				memcpy(hfrom->hbuf, &ifindex, sizeof(ifindex));
@@ -1067,9 +1067,9 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 #endif /* USE_SOCKET_RECEIVE */
 
 #ifdef DHCPv6
-ssize_t 
-receive_packet6(struct interface_info *interface, 
-		unsigned char *buf, size_t len, 
+ssize_t
+receive_packet6(struct interface_info *interface,
+		unsigned char *buf, size_t len,
 		struct sockaddr_in6 *from, struct in6_addr *to_addr,
 		unsigned int *if_idx)
 {
@@ -1105,7 +1105,7 @@ receive_packet6(struct interface_info *interface,
 	m.msg_namelen = sizeof(*from);
 
 	/*
-	 * Set the data buffer we're receiving. (Using this wacky 
+	 * Set the data buffer we're receiving. (Using this wacky
 	 * "scatter-gather" stuff... but we that doesn't really make
 	 * sense for us, so we use a single vector entry.)
 	 */
@@ -1117,8 +1117,8 @@ receive_packet6(struct interface_info *interface,
 	/*
 	 * Getting the interface is a bit more involved.
 	 *
-	 * We set up some space for a "control message". We have 
-	 * previously asked the kernel to give us packet 
+	 * We set up some space for a "control message". We have
+	 * previously asked the kernel to give us packet
 	 * information (when we initialized the interface), so we
 	 * should get the destination address from that.
 	 */
@@ -1130,12 +1130,12 @@ receive_packet6(struct interface_info *interface,
 	if (result >= 0) {
 		/*
 		 * If we did read successfully, then we need to loop
-		 * through the control messages we received and 
+		 * through the control messages we received and
 		 * find the one with our destination address.
 		 */
 		cmsg = CMSG_FIRSTHDR(&m);
 		while (cmsg != NULL) {
-			if ((cmsg->cmsg_level == IPPROTO_IPV6) && 
+			if ((cmsg->cmsg_level == IPPROTO_IPV6) &&
 			    (cmsg->cmsg_type == IPV6_PKTINFO)) {
 				pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 				*to_addr = pktinfo->ipi6_addr;
@@ -1235,7 +1235,7 @@ void maybe_setup_fallback ()
 		      (fbi -> shared_network ? "/" : ""),
 		      (fbi -> shared_network ?
 		       fbi -> shared_network -> name : ""));
-	
+
 		status = omapi_register_io_object ((omapi_object_t *)fbi,
 						   if_readsocket, 0,
 						   fallback_discard, 0, 0);

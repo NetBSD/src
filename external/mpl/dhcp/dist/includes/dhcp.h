@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcp.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: dhcp.h,v 1.3 2022/04/03 01:10:58 christos Exp $	*/
 
 /* dhcp.h
 
    Protocol structures... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -158,6 +158,7 @@ struct dhcp_packet {
 #define DHO_AUTHENTICATE			90  /* RFC3118, was 210 */
 #define DHO_CLIENT_LAST_TRANSACTION_TIME	91
 #define DHO_ASSOCIATED_IP			92
+#define DHO_V6_ONLY_PREFERRED			108 /* RFC8925 */
 #define DHO_SUBNET_SELECTION			118 /* RFC3011! */
 #define DHO_DOMAIN_SEARCH			119 /* RFC3397 */
 #define DHO_VIVCO_SUBOPTIONS			124
@@ -203,4 +204,3 @@ struct dhcp_packet {
 #define VENDOR_ISC_SUBOPTIONS		2495
 
 #endif /* DHCP_H */
-

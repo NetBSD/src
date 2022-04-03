@@ -1,11 +1,11 @@
-/*	$NetBSD: tables.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.4 2022/04/03 01:10:58 christos Exp $	*/
 
 /* tables.c
 
    Tables of information... */
 
 /*
- * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tables.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.4 2022/04/03 01:10:58 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -91,7 +91,7 @@ HASH_FUNCTIONS (option_code, const unsigned *, struct option,
        named enumeration.   Named enumerations are tracked in parse.c.
    d - Domain name (e.g., FOO or FOO.BAR) no quotes,
        on-wire format is RFC 1035.
-   D - Domain list (e.g., "example.com eng.example.com") quoted, 
+   D - Domain list (e.g., "example.com eng.example.com") quoted,
        on-wire format is RFC 1035.
    c - When following a 'D' atom, enables compression pointers.
    Z - Zero-length option
@@ -213,6 +213,9 @@ static struct option dhcp_options[] = {
 #if defined(RFC4833_OPTIONS)
 	{ "pcode", "t",				&dhcp_universe, 100, 1 },
 	{ "tcode", "t",				&dhcp_universe, 101, 1 },
+#endif
+#if defined(RFC8925_OPTIONS)
+	{ "v6-only-preferred", "L",		&dhcp_universe, 108, 1 },
 #endif
 	{ "netinfo-server-address", "Ia",	&dhcp_universe, 112, 1 },
 	{ "netinfo-server-tag", "t",		&dhcp_universe, 113, 1 },

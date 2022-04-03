@@ -1,11 +1,11 @@
-/*	$NetBSD: omapi.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: omapi.c,v 1.3 2022/04/03 01:11:00 christos Exp $	*/
 
 /* omapi.c
 
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: omapi.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: omapi.c,v 1.3 2022/04/03 01:11:00 christos Exp $");
 
 /* Many, many thanks to Brian Murrell and BCtel for this code - BCtel
    provided the funding that resulted in this code and the entire
@@ -1306,7 +1306,7 @@ isc_result_t dhcp_host_stuff_values (omapi_object_t *c,
 
 		status = omapi_connection_copyin (c,
 						  ip_addrs.data, ip_addrs.len);
-		if (status != ISC_R_SUCCESS) { 
+		if (status != ISC_R_SUCCESS) {
 			data_string_forget (&ip_addrs, MDL);
 			return status;
 		}
@@ -1749,7 +1749,7 @@ isc_result_t dhcp_pool_stuff_values (omapi_object_t *c,
 	if (status != ISC_R_SUCCESS)
 		return (status);
 
-	status = omapi_connection_put_named_uint32(c, "backup-leases", 
+	status = omapi_connection_put_named_uint32(c, "backup-leases",
 						   ((u_int32_t)
 						    pool->backup_leases));
 	if (status != ISC_R_SUCCESS)
