@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.c,v 1.7 2022/04/02 11:16:06 skrll Exp $ */
+/* $NetBSD: efi_runtime.c,v 1.8 2022/04/03 09:49:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.7 2022/04/02 11:16:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.8 2022/04/03 09:49:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -55,7 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.7 2022/04/02 11:16:06 skrll Exp $"
 
 static kmutex_t efi_lock;
 static struct efi_rt *RT;
+#if BYTE_ORDER == LITTLE_ENDIAN
 static struct efi_rt efi_rtcopy;
+#endif
 
 #if NEFI > 0 && BYTE_ORDER == LITTLE_ENDIAN
 static struct efi_ops arm_efi_ops = {
