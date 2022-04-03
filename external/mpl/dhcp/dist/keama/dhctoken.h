@@ -1,11 +1,11 @@
-/*	$NetBSD: dhctoken.h,v 1.2 2020/08/03 21:10:57 christos Exp $	*/
+/*	$NetBSD: dhctoken.h,v 1.3 2022/04/03 01:10:59 christos Exp $	*/
 
 /* dhctoken.h
 
    Tokens for config file lexer and parser. */
 
 /*
- * Copyright (c) 2004-2016 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *

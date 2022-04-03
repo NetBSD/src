@@ -1,11 +1,11 @@
-/*	$NetBSD: remote.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: remote.c,v 1.3 2022/04/03 01:10:58 christos Exp $	*/
 
 /* remote.c
 
    The dhcpctl remote object. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: remote.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: remote.c,v 1.3 2022/04/03 01:10:58 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -169,7 +169,7 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
    flags include:
      DHCPCTL_CREATE - if the object doesn't exist, create it
      DHCPCTL_UPDATE - update the object on the server using the
-     		      attached parameters 
+     		      attached parameters
      DHCPCTL_EXCL - error if the object exists and DHCPCTL_CREATE
      		      was also specified */
 
@@ -286,7 +286,7 @@ isc_result_t dhcpctl_remote_get_value (omapi_object_t *h,
 {
 	if (h -> type != dhcpctl_remote_type)
 		return DHCP_R_INVALIDARG;
-	
+
 	if (h -> inner && h -> inner -> type -> get_value)
 		return (*(h -> inner -> type -> get_value))
 			(h -> inner, id, name, value);
@@ -357,4 +357,3 @@ isc_result_t dhcpctl_remote_stuff_values (omapi_object_t *c,
 								p -> inner);
 	return ISC_R_SUCCESS;
 }
-

@@ -1,11 +1,11 @@
-/*	$NetBSD: leasechain.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: leasechain.c,v 1.3 2022/04/03 01:10:59 christos Exp $	*/
 
 /* leasechain.c
 
    Additional support for in-memory database support */
 
 /*
- * Copyright (c) 2015-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2015-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,22 +20,22 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: leasechain.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: leasechain.c,v 1.3 2022/04/03 01:10:59 christos Exp $");
 
 /*! \file server\leasechaing.c
  *
  * \page leasechain structures overview
  *
  * A brief description of the leasechain structures
- * 
+ *
  * This file provides additional data structures for a leasecain to
  * provide faster access to leases on the queues associated with a pool
  * than a linear walk.  Each pool has a set of queues: active, free, backup,
@@ -60,11 +60,11 @@ __RCSID("$NetBSD: leasechain.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
  *                          |  next |->|  next |->NULL
  *                   NULL<- | prev  |<-| prev  |
  *                          +-------+  +-------+
- * 
+ *
  * The linked list is maintained in an ordered state.  Inserting an entry is
  * accomplished by doing a binary search on the array to find the proper place
  * in the list and then updating the pointers in the linked list to include the
- * new entry.  The entry is added into the array by copying the remainder of 
+ * new entry.  The entry is added into the array by copying the remainder of
  * the array to provide space for the new entry.
  * Removing an entry is the reverse.
  * The arrays for the queues will be pre-allocated but not all of them will be
@@ -147,7 +147,7 @@ lc_get_next(struct leasechain *lc, struct lease *lp) {
  * Given a potential range of the array to insert the lease into this routine
  * will recursively examine the range to find the proper place in which to
  * insert the lease.
- * 
+ *
  * \param lc The leasechain to add the lease to
  * \param lp The lease to insert
  * \param min The minium index of the potential range for insertion
@@ -155,7 +155,7 @@ lc_get_next(struct leasechain *lc, struct lease *lp) {
  *
  * \return The index of the array entry to insert the lease
  */
-size_t 
+size_t
 lc_binary_search_insert_point(struct leasechain *lc,
 			      struct lease *lp,
 			      size_t min, size_t max)
@@ -173,7 +173,7 @@ lc_binary_search_insert_point(struct leasechain *lc,
 		return (lc_binary_search_insert_point(lc, lp,
 						      min, mid_index - 1));
 	} else  if ((lc->list[mid_index]->sort_time < lp->sort_time) ||
-		    ((lc->list[mid_index]->sort_time == lp->sort_time) && 
+		    ((lc->list[mid_index]->sort_time == lp->sort_time) &&
 		     (lc->list[mid_index]->sort_tiebreaker < lp->sort_tiebreaker))) {
 		if (mid_index == max) {
 			/* insert in mid_index + 1 as sort_time is smaller */
@@ -194,7 +194,7 @@ lc_binary_search_insert_point(struct leasechain *lc,
  *
  * Given a potential range of the array to search this routine
  * will recursively examine the range to find the proper lease
- * 
+ *
  * \param lc The leasechain to check
  * \param lp The lease to find
  * \param min The minium index of the search range
@@ -225,13 +225,13 @@ lc_binary_search_lease(struct leasechain *lc,
 		if (mid_index == min) {
 			/* lease not found */
 			return (SIZE_MAX);
-		} 
+		}
 		/* try the lower half of the list */
 		return (lc_binary_search_lease(lc, lp, min, mid_index - 1));
 	} else if ((lc->list[mid_index]->sort_time < lp->sort_time) ||
 		   ((lc->list[mid_index]->sort_time == lp->sort_time) &&
 		    (lc->list[mid_index]->sort_tiebreaker < lp->sort_tiebreaker))) {
-		/* try the upper half of the list */	  
+		/* try the upper half of the list */
 		return (lc_binary_search_lease(lc, lp, mid_index + 1, max));
 	}
 
@@ -258,7 +258,7 @@ lc_binary_search_lease(struct leasechain *lc,
 
 			/* Are we done with this range? */
 			if ((i == min) ||
-			    ((lc->list[i]->sort_time != lp->sort_time) || 
+			    ((lc->list[i]->sort_time != lp->sort_time) ||
 			     ((lc->list[i]->sort_time == lp->sort_time) &&
 			      (lc->list[i]->sort_tiebreaker != lp->sort_tiebreaker)))) {
 				break;
@@ -268,7 +268,7 @@ lc_binary_search_lease(struct leasechain *lc,
 
 	/* Check out entries above the mid_index */
 	if (mid_index < max) {
-		/* We will break out of the loop if we either go past the 
+		/* We will break out of the loop if we either go past the
 	         * canddiates or hit the end of the range when i == max.
 		 */
 		for (i = mid_index + 1; i <= max; i++) {
@@ -309,7 +309,7 @@ lc_grow_chain(struct leasechain *lc) {
 	void *p;
 	size_t temp_size;
 
-	if (lc->growth == 0) 
+	if (lc->growth == 0)
 		temp_size = lc->total + LC_GROWTH_DELTA;
 	else
 		temp_size = lc->total + lc->growth;
@@ -371,7 +371,7 @@ lc_link_lcp(struct leasechain *lc, struct lease *lp, size_t n) {
 			sizeof(struct lease *) * (lc->nelem-n));
 	}
 
-	/* clean any stale pointer info from this position before calling 
+	/* clean any stale pointer info from this position before calling
 	 * lease_reference as it won't work if pointer is not NULL
 	 */
 	lc->list[n] = NULL;
@@ -385,7 +385,7 @@ lc_link_lcp(struct leasechain *lc, struct lease *lp, size_t n) {
 }
 
 /*!
- * 
+ *
  * \brief Insert the lease at the specified position in both the lease chain
  * and the linked list
  *
@@ -457,7 +457,7 @@ lc_check_lc_sort_order(struct leasechain *lc) {
 	log_debug("LC check sort %s:%d", MDL);
 	for (i = 0; i < lc->nelem; i++ ) {
 		if ((lc->list[i]->sort_time < t)  ||
-		    ((lc->list[i]->sort_time == t) && 
+		    ((lc->list[i]->sort_time == t) &&
 		     (lc->list[i]->tiebreaker < tiebreaker))) {
 			if (i > 0) {
 				print_lease(lc->list[i-1]);
@@ -481,7 +481,7 @@ lc_check_lc_sort_order(struct leasechain *lc) {
  * The sort_time is set by the caller while the sort_tiebreaker is set here
  * The value doesn't much matter as long as it prvoides a way to have different
  * values in most of the leases.
- * 
+ *
  * When choosing a value for tiebreak we choose:
  *  0 for the first lease in the queue
  *  0 if the lease is going to the end of the queue with a sort_time greater
@@ -493,7 +493,7 @@ lc_check_lc_sort_order(struct leasechain *lc) {
  * During startup when we can take advantage of the fact that leases may already
  * be sorted and so check the end of the list to see if we can simply add the
  * lease to the end.
- * 
+ *
  * \param lc The leasechain in which to insert the lease
  * \param lp The lease to insert
  *

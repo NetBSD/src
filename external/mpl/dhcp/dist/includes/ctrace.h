@@ -1,11 +1,11 @@
-/*	$NetBSD: ctrace.h,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: ctrace.h,v 1.3 2022/04/03 01:10:58 christos Exp $	*/
 
 /* trace.h
 
    Definitions for dhcp tracing facility... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -63,7 +63,7 @@ void trace_inpacket_stop (trace_type_t *);
 void trace_outpacket_input (trace_type_t *, unsigned, char *);
 void trace_outpacket_stop (trace_type_t *);
 ssize_t trace_packet_send (struct interface_info *,
-			   struct packet *, struct dhcp_packet *, size_t, 
+			   struct packet *, struct dhcp_packet *, size_t,
 			   struct in_addr,
 			   struct sockaddr_in *, struct hardware *);
 void trace_icmp_input_input (trace_type_t *, unsigned, char *);

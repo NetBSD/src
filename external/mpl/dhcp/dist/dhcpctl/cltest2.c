@@ -1,4 +1,4 @@
-/*	$NetBSD: cltest2.c,v 1.1.1.1 2022/04/03 01:08:36 christos Exp $	*/
+/*	$NetBSD: cltest2.c,v 1.2 2022/04/03 01:10:58 christos Exp $	*/
 
 /* cltest2.c
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cltest2.c,v 1.1.1.1 2022/04/03 01:08:36 christos Exp $");
+__RCSID("$NetBSD: cltest2.c,v 1.2 2022/04/03 01:10:58 christos Exp $");
 
 #include "config.h"
 

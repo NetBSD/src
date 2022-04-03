@@ -1,8 +1,8 @@
-.\"	$NetBSD: dhcpd.8,v 1.2 2018/04/07 22:37:30 christos Exp $
+.\"	$NetBSD: dhcpd.8,v 1.3 2022/04/03 01:10:59 christos Exp $
 .\"
 .\"	dhcpd.8
 .\"
-.\" Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1996-2003 by Internet Software Consortium
 .\"
 .\" This Source Code Form is subject to the terms of the Mozilla Public
@@ -18,8 +18,8 @@
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"   Internet Systems Consortium, Inc.
-.\"   950 Charter Street
-.\"   Redwood City, CA 94063
+.\"   PO Box 360
+.\"   Newmarket, NH 03857 USA
 .\"   <info@isc.org>
 .\"   https://www.isc.org/
 .\"
@@ -56,7 +56,7 @@ dhcpd - Dynamic Host Configuration Protocol Server
 ]
 [
 .B -4
-| 
+|
 .B -6
 ]
 [
@@ -129,7 +129,7 @@ enters them into the dhcpd.conf(5) file.
 There are two versions of the DHCP protocol DHCPv4 and DHCPv6.  At
 startup the server  may be started for one or the other via the
 .B -4
-or 
+or
 .B -6
 arguments.
 .PP
@@ -222,7 +222,7 @@ to ::1 \fIport\fR and \fIport + 1\fR. Both servers must
 be launched using the same \fIport\fR argument.
 .TP
 .BI \-p \ port
-The UDP port number on which 
+The UDP port number on which
 .B dhcpd
 should listen.  If unspecified
 .B dhcpd
@@ -230,7 +230,7 @@ uses the default port of 67.  This is mostly useful for debugging
 purposes.
 .TP
 .BI \-s \ address
-Specify an address or host name to which 
+Specify an address or host name to which
 .B dhcpd
 should send replies rather than the broadcast address (255.255.255.255).
 This option is only supported in IPv4.
@@ -239,8 +239,8 @@ This option is only supported in IPv4.
 Force
 .B dhcpd
 to run as a foreground process instead of as a daemon in the background.
-This is useful when running 
-.B dhcpd 
+This is useful when running
+.B dhcpd
 under a debugger, or when running it
 out of inittab on System V systems.
 .TP
@@ -248,14 +248,14 @@ out of inittab on System V systems.
 Send log messages to the standard error descriptor.
 This can be useful for debugging, and also at sites where a
 complete log of all dhcp activity must be kept but syslogd is not
-reliable or otherwise cannot be used.  Normally, 
+reliable or otherwise cannot be used.  Normally,
 .B dhcpd
 will log all
 output using the \fBsyslog(3)\fR function with the log facility set to
 LOG_DAEMON.  Note that \fB\-d\fR implies \fB\-f\fR (the daemon will
 not fork itself into the background).
 .TP
-.BI \-q 
+.BI \-q
 Be quiet at startup.  This suppresses the printing of the entire
 copyright message during startup.  This might be desirable when
 starting
@@ -321,7 +321,7 @@ lease file.
 Print version number and exit.
 .PP
 .I Modifying default file locations:
-The following options can be used to modify the locations 
+The following options can be used to modify the locations
 .B dhcpd
 uses for its files.  Because of the importance of using the same
 lease database at all times when running dhcpd in production, these
@@ -692,7 +692,7 @@ dhcpd.conf file.
 .PP
 Named groups currently can only be associated with
 hosts - this allows one set of statements to be efficiently attached
-to more than one host declaration.  
+to more than one host declaration.
 .PP
 Groups have the following attributes:
 .PP

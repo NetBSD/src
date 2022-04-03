@@ -1,7 +1,7 @@
-/*	$NetBSD: relay_unittests.c,v 1.3 2021/05/26 22:52:32 christos Exp $	*/
+/*	$NetBSD: relay_unittests.c,v 1.4 2022/04/03 01:10:59 christos Exp $	*/
 
 /*
- * Copyright (c) 2019-2020 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,15 +16,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: relay_unittests.c,v 1.3 2021/05/26 22:52:32 christos Exp $");
+__RCSID("$NetBSD: relay_unittests.c,v 1.4 2022/04/03 01:10:59 christos Exp $");
 
 #include "config.h"
 #include <atf-c.h>
@@ -405,35 +405,32 @@ ATF_TC_BODY(add_relay_agent_options_test, tc) {
     }
 }
 
+ATF_TC(gwaddr_override_test);
+
+ATF_TC_HEAD(gwaddr_override_test, tc) {
+    atf_tc_set_md_var(tc, "descr", "tests that gateway addr (giaddr) field can be overridden");
+}
+
+extern isc_boolean_t use_fake_gw;
+extern struct in_addr gw;
+
+/* This basic test checks if the new gwaddr override (-g) option is disabled by default */
+ATF_TC_BODY(gwaddr_override_test, tc) {
+
+    if (use_fake_gw == ISC_TRUE) {
+        atf_tc_fail("the gwaddr override should be disabled by default");
+    }
+    char txt[16] = {0};
+    inet_ntop(AF_INET, &gw, txt, sizeof(txt));
+    if (strncmp(txt, "0.0.0.0", 8) != 0) {
+        atf_tc_fail("the default gwaddr override value should be 0.0.0.0, but is %s", txt);
+    }
+}
+
 ATF_TP_ADD_TCS(tp) {
     ATF_TP_ADD_TC(tp, strip_relay_agent_options_test);
     ATF_TP_ADD_TC(tp, add_relay_agent_options_test);
+    ATF_TP_ADD_TC(tp, gwaddr_override_test);
 
     return (atf_no_error());
-}
-
-/* Below are dummy function definitions to satisfy "required" symbols */
-isc_result_t find_class (struct class **c, const char *s,
-                         const char *file, int line) {
-	return 0;
-}
-
-int check_collection (struct packet *packet, struct lease *lease,
-                      struct collection *collection) {
-	return 0;
-}
-
-void classify (struct packet *packet, struct class *class){}
-void bootp(struct packet *packet){}
-void dhcp(struct packet *packet){}
-void dhcpv6(struct packet *packet){}
-
-int parse_allow_deny (struct option_cache **oc, struct parse *cfile,
-                      int flag) {
-    return 0;
-}
-
-isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
-                                     control_object_state_t newstate) {
-    return (ISC_R_SUCCESS);
 }

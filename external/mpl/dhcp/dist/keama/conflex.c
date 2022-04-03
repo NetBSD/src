@@ -1,7 +1,7 @@
-/*	$NetBSD: conflex.c,v 1.2 2020/08/03 21:10:57 christos Exp $	*/
+/*	$NetBSD: conflex.c,v 1.3 2022/04/03 01:10:59 christos Exp $	*/
 
 /*
- * Copyright (c) 2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,15 +16,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conflex.c,v 1.2 2020/08/03 21:10:57 christos Exp $");
+__RCSID("$NetBSD: conflex.c,v 1.3 2022/04/03 01:10:59 christos Exp $");
 
 /* From common/conflex.c */
 
@@ -191,7 +191,7 @@ get_char(struct parse *cfile)
 
 	if (!cfile->ugflag) {
 		if (c == EOL) {
-			if (cfile->cur_line == cfile->line1) {	
+			if (cfile->cur_line == cfile->line1) {
 				cfile->cur_line = cfile->line2;
 				cfile->prev_line = cfile->line1;
 			} else {
@@ -229,11 +229,11 @@ unget_char(struct parse *cfile, int c) {
 /*
  * GENERAL NOTE ABOUT TOKENS
  *
- * We normally only want non-whitespace tokens. There are some 
+ * We normally only want non-whitespace tokens. There are some
  * circumstances where we *do* want to see whitespace (for example
  * when parsing IPv6 addresses).
  *
- * Generally we use the next_token() function to read tokens. This 
+ * Generally we use the next_token() function to read tokens. This
  * in turn calls get_next_token, which does *not* return tokens for
  * whitespace. Rather, it skips these.
  *
@@ -259,7 +259,7 @@ get_raw_token(struct parse *cfile) {
 		p = cfile->lpos;
 
 		c = get_char(cfile);
-		if (!((c == '\n') && cfile->eol_token) && 
+		if (!((c == '\n') && cfile->eol_token) &&
 		    isascii(c) && isspace(c)) {
 		    	ttok = read_whitespace(c, cfile);
 			break;
@@ -306,12 +306,12 @@ get_raw_token(struct parse *cfile) {
  * The get_next_token() function consumes the next token and
  * returns it to the caller.
  *
- * Since the code is almost the same for "normal" and "raw" 
+ * Since the code is almost the same for "normal" and "raw"
  * input, we pass a flag to alter the way it works.
  */
 
-static enum dhcp_token 
-get_next_token(const char **rval, unsigned *rlen, 
+static enum dhcp_token
+get_next_token(const char **rval, unsigned *rlen,
 	       struct parse *cfile, isc_boolean_t raw) {
 	int rv;
 
@@ -333,7 +333,7 @@ get_next_token(const char **rval, unsigned *rlen,
 			cfile->token_line = cfile->cur_line;
 		}
 	}
-	
+
 	if (rval)
 		*rval = cfile->tval;
 	if (rlen)
@@ -344,10 +344,10 @@ get_next_token(const char **rval, unsigned *rlen,
 /*
  * Get the next token from cfile and return it.
  *
- * If rval is non-NULL, set the pointer it contains to 
+ * If rval is non-NULL, set the pointer it contains to
  * the contents of the token.
  *
- * If rlen is non-NULL, set the integer it contains to 
+ * If rlen is non-NULL, set the integer it contains to
  * the length of the token.
  */
 
@@ -372,8 +372,8 @@ next_raw_token(const char **rval, unsigned *rlen, struct parse *cfile) {
  * The do_peek_token() function checks the next token without
  * consuming it, and returns it to the caller.
  *
- * Since the code is almost the same for "normal" and "raw" 
- * input, we pass a flag to alter the way it works. (See the 
+ * Since the code is almost the same for "normal" and "raw"
+ * input, we pass a flag to alter the way it works. (See the
  * warning in the GENERAL NOTES ABOUT TOKENS above though.)
  */
 
@@ -410,15 +410,15 @@ do_peek_token(const char **rval, unsigned int *rlen,
 
 
 /*
- * Get the next token from cfile and return it, leaving it for a 
+ * Get the next token from cfile and return it, leaving it for a
  * subsequent call to next_token().
  *
  * Note that it WILL consume whitespace tokens.
  *
- * If rval is non-NULL, set the pointer it contains to 
+ * If rval is non-NULL, set the pointer it contains to
  * the contents of the token.
  *
- * If rlen is non-NULL, set the integer it contains to 
+ * If rlen is non-NULL, set the integer it contains to
  * the length of the token.
  */
 
@@ -489,7 +489,7 @@ read_whitespace(int c, struct parse *cfile) {
 		c = get_char(cfile);
 		if (c == EOF)
 			return END_OF_FILE;
-	} while (!((c == '\n') && cfile->eol_token) && 
+	} while (!((c == '\n') && cfile->eol_token) &&
 		 isascii(c) && isspace(c));
 
 	/*
@@ -653,7 +653,7 @@ read_number(int c, struct parse *cfile)
 			goto end_read;
 
 		default:
-			parse_error(cfile, 
+			parse_error(cfile,
 				    "read_number(): impossible case");
 		}
 
@@ -941,7 +941,7 @@ intern(char *atom, enum dhcp_token dfv) {
 		}
 		break;
 	case 'e':
-		if (isascii(atom [1]) && 
+		if (isascii(atom [1]) &&
 		    tolower((unsigned char)atom[1]) == 'x') {
 			if (!strcasecmp(atom + 2, "tract-int"))
 				return EXTRACT_INT;
@@ -1040,15 +1040,15 @@ intern(char *atom, enum dhcp_token dfv) {
 		}
 		break;
 	case 'i':
-	      	if (!strcasecmp(atom+1, "a-na")) 
+	      	if (!strcasecmp(atom+1, "a-na"))
 			return IA_NA;
-	      	if (!strcasecmp(atom+1, "a-ta")) 
+	      	if (!strcasecmp(atom+1, "a-ta"))
 			return IA_TA;
-	      	if (!strcasecmp(atom+1, "a-pd")) 
+	      	if (!strcasecmp(atom+1, "a-pd"))
 			return IA_PD;
-	      	if (!strcasecmp(atom+1, "aaddr")) 
+	      	if (!strcasecmp(atom+1, "aaddr"))
 			return IAADDR;
-	      	if (!strcasecmp(atom+1, "aprefix")) 
+	      	if (!strcasecmp(atom+1, "aprefix"))
 			return IAPREFIX;
 		if (!strcasecmp(atom + 1, "nclude"))
 			return INCLUDE;
@@ -1337,11 +1337,11 @@ intern(char *atom, enum dhcp_token dfv) {
 	case 's':
 		if (!strcasecmp(atom + 1, "cript"))
 			return SCRIPT;
-		if (isascii(atom[1]) && 
+		if (isascii(atom[1]) &&
 		    tolower((unsigned char)atom[1]) == 'e') {
 			if (!strcasecmp(atom + 2, "arch"))
 				return SEARCH;
-			if (isascii(atom[2]) && 
+			if (isascii(atom[2]) &&
 			    tolower((unsigned char)atom[2]) == 'c') {
 				if (!strncasecmp(atom + 3, "ond", 3)) {
                                         if (!strcasecmp(atom + 6, "ary"))
@@ -1371,7 +1371,7 @@ intern(char *atom, enum dhcp_token dfv) {
                                                 return TOKEN_SERVER;
 					if (atom[6] == '-') {
 						if (!strcasecmp(atom + 7,
-								"duid")) 
+								"duid"))
 							return SERVER_DUID;
                                                 if (!strcasecmp(atom + 7,
 								"name"))
@@ -1391,7 +1391,7 @@ intern(char *atom, enum dhcp_token dfv) {
                                 return TOKEN_SET;
 			break;
 		}
-		if (isascii(atom[1]) && 
+		if (isascii(atom[1]) &&
 		    tolower((unsigned char)atom[1]) == 'h') {
                         if (!strcasecmp(atom + 2, "ared-network"))
                                 return SHARED_NETWORK;
@@ -1399,7 +1399,7 @@ intern(char *atom, enum dhcp_token dfv) {
                                 return SHUTDOWN;
 			break;
 		}
-		if (isascii(atom[1]) && 
+		if (isascii(atom[1]) &&
 		    tolower((unsigned char)atom[1]) == 'i') {
                         if (!strcasecmp(atom + 2, "addr"))
                                 return SIADDR;
@@ -1409,9 +1409,9 @@ intern(char *atom, enum dhcp_token dfv) {
                                 return SIZE;
 			break;
 		}
-		if (isascii(atom[1]) && 
+		if (isascii(atom[1]) &&
 		    tolower((unsigned char)atom[1]) == 'p') {
-			if (isascii(atom[2]) && 
+			if (isascii(atom[2]) &&
 			    tolower((unsigned char)atom[2]) == 'a') {
                                 if (!strcasecmp(atom + 3, "ce"))
                                         return SPACE;
@@ -1423,9 +1423,9 @@ intern(char *atom, enum dhcp_token dfv) {
                                 return SPLIT;
 			break;
 		}
-		if (isascii(atom[1]) && 
+		if (isascii(atom[1]) &&
 		    tolower((unsigned char)atom[1]) == 't') {
-			if (isascii(atom[2]) && 
+			if (isascii(atom[2]) &&
 			    tolower((unsigned char)atom[2]) == 'a') {
 				if (!strncasecmp(atom + 3, "rt", 2)) {
                                          if (!strcasecmp(atom + 5, "s"))
@@ -1458,7 +1458,7 @@ intern(char *atom, enum dhcp_token dfv) {
                                 return SUBSTRING;
                         break;
                 }
-		if (isascii(atom[1]) && 
+		if (isascii(atom[1]) &&
 		    tolower((unsigned char)atom[1]) == 'u') {
                         if (!strcasecmp(atom + 2, "ffix"))
                                 return SUFFIX;
@@ -1552,4 +1552,3 @@ intern(char *atom, enum dhcp_token dfv) {
 	}
 	return dfv;
 }
-

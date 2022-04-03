@@ -1,7 +1,7 @@
-/*	$NetBSD: hash_unittest.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: hash_unittest.c,v 1.3 2022/04/03 01:11:00 christos Exp $	*/
 
 /*
- * Copyright (c) 2012-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,15 +16,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_unittest.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: hash_unittest.c,v 1.3 2022/04/03 01:11:00 christos Exp $");
 
 #include "config.h"
 #include <atf-c.h>
@@ -541,7 +541,7 @@ ATF_TC_BODY(lease_hash_basic_3hosts, tc) {
    the code from using an improper client id earlier and restoring
    the hash code to its previous state.  As we may choose to
    redo the hash code again this test hasn't been deleted.
-*/   
+*/
 /* this test is a direct reproduction of 29851 issue */
 ATF_TC(uid_hash_rt29851);
 

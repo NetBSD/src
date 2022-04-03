@@ -1,11 +1,11 @@
-/*	$NetBSD: dispatch.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.3 2022/04/03 01:10:58 christos Exp $	*/
 
 /* dispatch.c
 
    Network input dispatcher... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dispatch.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.3 2022/04/03 01:10:58 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -103,7 +103,7 @@ struct timeval *process_outstanding_timeouts (struct timeval *tvp)
  * to the timer and use that.  The complications arise in trying to ensure
  * that all of the corner cases are covered.  The last one is potentially
  * more painful and requires more investigation.
- * 
+ *
  * The plan is continue with the older DHCP calls and timer list.  The
  * calls will continue to manipulate the list but will also pass a
  * timer to the ISC timer code for the actual dispatch.  Later, if desired,
@@ -273,7 +273,7 @@ void add_timeout (when, where, what, ref, unref)
 
 	sec  = when->tv_sec - cur_tv.tv_sec;
 	usec = when->tv_usec - cur_tv.tv_usec;
-	
+
 	if ((when->tv_usec != 0) && (usec < 0)) {
 		sec--;
 		usec += USEC_MAX;
@@ -294,7 +294,7 @@ void add_timeout (when, where, what, ref, unref)
 		usec = USEC_MAX - 1;
 	}
 
-	/* 
+	/*
 	 * This is necessary for the tracing code but we put it
 	 * here in case we want to compare timing information
 	 * for some reason, like debugging.

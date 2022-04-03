@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcrelay.c,v 1.5 2021/05/26 22:52:32 christos Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.6 2022/04/03 01:10:59 christos Exp $	*/
 
 /* dhcrelay.c
 
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright(c) 2004-2021 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(c) 2004-2022 by Internet Systems Consortium, Inc.("ISC")
  * Copyright(c) 1997-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.5 2021/05/26 22:52:32 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.6 2022/04/03 01:10:59 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -100,8 +100,8 @@ enum { forward_and_append,	/* Forward and append our own relay option. */
        forward_untouched,	/* Forward without changes. */
        discard } agent_relay_mode = forward_and_replace;
 
-u_int16_t local_port = 0;
-u_int16_t remote_port = 0;
+extern u_int16_t local_port;
+extern u_int16_t remote_port;
 
 /* Relay agent server list. */
 struct server_list {
@@ -110,6 +110,8 @@ struct server_list {
 } *servers;
 
 struct interface_info *uplink = NULL;
+isc_boolean_t use_fake_gw = ISC_FALSE;
+struct in_addr gw = {0};
 
 #ifdef DHCPv6
 struct stream_list {
@@ -169,7 +171,7 @@ extern int strip_relay_agent_options(struct interface_info *,
 static void request_v4_interface(const char* name, int flags);
 
 static const char copyright[] =
-"Copyright 2004-2021 Internet Systems Consortium.";
+"Copyright 2004-2022 Internet Systems Consortium.";
 static const char arr[] = "All rights reserved.";
 static const char message[] =
 "Internet Systems Consortium DHCP Relay Agent";
@@ -189,7 +191,7 @@ char *progname;
 "                     [-i interface0 [ ... -i interfaceN]\n" \
 "                     [-iu interface0 [ ... -iu interfaceN]\n" \
 "                     [-id interface0 [ ... -id interfaceN]\n" \
-"                     [-U interface]\n" \
+"                     [-U interface] [-g <ip-address>]\n" \
 "                     server0 [ ... serverN]\n\n" \
 "       %s -6   [-d] [-q] [-I] [-c <hops>]\n" \
 "                     [-p <port> | -rp <relay-port>]\n" \
@@ -209,7 +211,7 @@ char *progname;
 "                     [-i interface0 [ ... -i interfaceN]\n" \
 "                     [-iu interface0 [ ... -iu interfaceN]\n" \
 "                     [-id interface0 [ ... -id interfaceN]\n" \
-"                     [-U interface]\n" \
+"                     [-U interface] [-g <ip-address>]\n" \
 "                     server0 [ ... serverN]\n\n" \
 "       %s -6   [-d] [-q] [-I] [-c <hops>] [-p <port>]\n" \
 "                     [-pf <pid-file>] [--no-pid]\n" \
@@ -230,7 +232,7 @@ char *progname;
 "                [-i interface0 [ ... -i interfaceN]\n" \
 "                [-iu interface0 [ ... -iu interfaceN]\n" \
 "                [-id interface0 [ ... -id interfaceN]\n" \
-"                [-U interface]\n" \
+"                [-U interface] [-g <ip-address>]\n" \
 "                server0 [ ... serverN]\n\n" \
 "       %s {--version|--help|-h}"
 #else
@@ -241,7 +243,7 @@ char *progname;
 "                [-i interface0 [ ... -i interfaceN]\n" \
 "                [-iu interface0 [ ... -iu interfaceN]\n" \
 "                [-id interface0 [ ... -id interfaceN]\n" \
-"                [-U interface]\n" \
+"                [-U interface] [-g <ip-address>]\n" \
 "                server0 [ ... serverN]\n\n" \
 "       %s {--version|--help|-h}"
 #endif
@@ -255,16 +257,16 @@ char *progname;
  * the description of the command line.  The arguments provide
  * a way for the caller to request more specific information about
  * the error be printed as well.  Mostly this will be that some
- * comamnd doesn't include its argument.
+ * command doesn't include its argument.
  *
  * \param sfmt - The basic string and format for the specific error
- * \param sarg - Generally the offending argument from the comamnd line.
+ * \param sarg - Generally the offending argument from the command line.
  *
  * \return Nothing
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.5 2021/05/26 22:52:32 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.6 2022/04/03 01:10:59 christos Exp $");
 static const char use_noarg[] = "No argument for command: %s";
 #ifdef RELAY_PORT
 static const char use_port_defined[] = "Port already set, %s inappropriate";
@@ -572,6 +574,21 @@ main(int argc, char **argv) {
 			/* Turn on -a, in case they don't do so explicitly */
 			add_agent_options = 1;
 			add_rfc3527_suboption = 1;
+		} else if (!strcmp(argv[i], "-g")) {
+			if (++i == argc)
+				usage(use_noarg, argv[i-1]);
+#ifdef DHCPv6
+			if (local_family_set && (local_family == AF_INET6)) {
+				usage(use_v4command, argv[i]);
+			}
+			local_family_set = 1;
+			local_family = AF_INET;
+#endif
+			if (inet_pton(AF_INET, argv[i], &gw) <= 0) {
+				usage("Invalid gateway address '%s'", argv[i]);
+			} else {
+				use_fake_gw = ISC_TRUE;
+			}
 		} else if (!strcmp(argv[i], "-D")) {
 #ifdef DHCPv6
 			if (local_family_set && (local_family == AF_INET6)) {
@@ -910,6 +927,7 @@ do_relay4(struct interface_info *ip, struct dhcp_packet *packet,
 			return;
 		}
 
+		log_debug("BOOTREPLY giaddr: %s\n", inet_ntoa(packet->giaddr));
 		if (!(packet->flags & htons(BOOTP_BROADCAST)) &&
 			can_unicast_without_arp(out)) {
 			to.sin_addr = packet->yiaddr;
@@ -946,6 +964,10 @@ do_relay4(struct interface_info *ip, struct dhcp_packet *packet,
 			      inet_ntoa(packet->giaddr));
 			++bogus_giaddr_drops;
 			return;
+		}
+
+		if (use_fake_gw) {
+			packet->giaddr = gw;
 		}
 
 		if (send_packet(out, NULL, packet, length, out->addresses[0],
@@ -1465,9 +1487,8 @@ add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 	return (length);
 }
 
-#ifndef UNIT_TEST
-
 #ifdef DHCPv6
+#ifndef UNIT_TEST
 /*
  * Parse a downstream argument: [address%]interface[#index].
  */
@@ -2052,12 +2073,14 @@ process_down6(struct packet *packet) {
 	if (if_id.data != NULL)
 		data_string_forget(&if_id, MDL);
 }
+#endif /* UNIT_TEST */
 
 /*
  * Called by the dispatch packet handler with a decoded packet.
  */
 void
 dhcpv6(struct packet *packet) {
+#ifndef UNIT_TEST
 	struct stream_list *dp;
 
 	/* Try all relay-replies downwards. */
@@ -2080,8 +2103,9 @@ dhcpv6(struct packet *packet) {
 
 	log_info("Can't process packet from interface '%s'.",
 		 packet->interface->name);
+#endif /* UNIT_TEST */
 }
-#endif
+#endif /* DHCPv6 */
 
 /* Stub routines needed for linking with DHCP libraries. */
 void
@@ -2179,4 +2203,3 @@ void request_v4_interface(const char* name, int flags) {
         interface_snorf(tmp, (INTERFACE_REQUESTED | flags));
         interface_dereference(&tmp, MDL);
 }
-#endif /* UNIT_TEST */

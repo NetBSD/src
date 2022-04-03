@@ -1,11 +1,11 @@
-/*	$NetBSD: tree.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.3 2022/04/03 01:10:58 christos Exp $	*/
 
 /* tree.c
 
    Routines for manipulating parse trees... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,15 +21,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tree.c,v 1.2 2018/04/07 22:37:29 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.3 2022/04/03 01:10:58 christos Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -47,14 +47,14 @@ static int do_host_lookup (struct data_string *, struct dns_host_entry *);
 #define DS_SPRINTF_SIZE 128
 
 /*
- * If we are using a data_string structure to hold a NUL-terminated 
- * ASCII string, this function can be used to append a printf-formatted 
+ * If we are using a data_string structure to hold a NUL-terminated
+ * ASCII string, this function can be used to append a printf-formatted
  * string to the end of it. The data_string structure will be resized to
  * be big enough to hold the new string.
  *
  * If the append works, then 1 is returned.
  *
- * If it is not possible to allocate a buffer big enough to hold the 
+ * If it is not possible to allocate a buffer big enough to hold the
  * new value, then the old data_string is unchanged, and 0 is returned.
  */
 int
@@ -86,7 +86,7 @@ data_string_sprintfa(struct data_string *ds, const char *fmt, ...) {
 	cur_strlen = strlen((char *)ds->data);
 	max = ds->len - cur_strlen;
 
-	/* 
+	/*
 	 * Use vsnprintf(), which won't write past our space, but will
 	 * tell us how much space it wants.
 	 */
@@ -99,7 +99,7 @@ data_string_sprintfa(struct data_string *ds, const char *fmt, ...) {
 	 * If our buffer is not big enough, we need a new buffer.
 	 */
 	if (vsnprintf_ret >= max) {
-		/* 
+		/*
 		 * Figure out a size big enough.
 		 */
 		new_len = ds->len * 2;
@@ -107,13 +107,13 @@ data_string_sprintfa(struct data_string *ds, const char *fmt, ...) {
 			new_len *= 2;
 		}
 
-		/* 
+		/*
 		 * Create a new buffer and fill it.
 		 */
 		tmp_buffer = NULL;
 		if (!buffer_allocate(&tmp_buffer, new_len, MDL)) {
-			/* 
-			 * If we can't create a big enough buffer, 
+			/*
+			 * If we can't create a big enough buffer,
 			 * we should remove any truncated output that we had.
 			 */
 			*((char *)ds->data+cur_strlen) = '\0';
@@ -245,7 +245,7 @@ int make_const_data (struct expression **expr, const unsigned char *data,
 				&nt -> data.const_data.buffer -> data [0];
 			memcpy (nt -> data.const_data.buffer -> data,
 				data, len + terminated);
-		} else 
+		} else
 			nt -> data.const_data.data = data;
 		nt -> data.const_data.terminated = terminated;
 	} else
@@ -287,13 +287,13 @@ int make_concat (expr, left, right)
 		expression_reference (expr, left, MDL);
 		return 1;
 	}
-			
+
 	/* Otherwise, allocate a new node to concatenate the two. */
 	if (!expression_allocate (expr, MDL)) {
 		log_error ("No memory for concatenation expression node.");
 		return 0;
 	}
-		
+
 	(*expr) -> op = expr_concat;
 	expression_reference (&(*expr) -> data.concat [0], left, MDL);
 	expression_reference (&(*expr) -> data.concat [1], right, MDL);
@@ -309,7 +309,7 @@ int make_encapsulation (expr, name)
 		log_error ("No memory for encapsulation expression node.");
 		return 0;
 	}
-		
+
 	(*expr) -> op = expr_encapsulate;
 	data_string_copy (&(*expr) -> data.encapsulate, name, MDL);
 	return 1;
@@ -385,7 +385,7 @@ int make_let (result, name)
 {
 	if (!(executable_statement_allocate (result, MDL)))
 		return 0;
-	
+
 	(*result) -> op = let_statement;
 	(*result) -> data.let.name = dmalloc (strlen (name) + 1, MDL);
 	if (!(*result) -> data.let.name) {
@@ -395,7 +395,7 @@ int make_let (result, name)
 	strcpy ((*result) -> data.let.name, name);
 	return 1;
 }
-		
+
 static int do_host_lookup (result, dns)
 	struct data_string *result;
 	struct dns_host_entry *dns;
@@ -462,7 +462,7 @@ static int do_host_lookup (result, dns)
 	/* Count the number of addresses we got... */
 	for (count = 0; h -> h_addr_list [count]; count++)
 		;
-	
+
 	/* Dereference the old data, if any. */
 	data_string_forget (&dns -> data, MDL);
 
@@ -1576,8 +1576,8 @@ int evaluate_data_expression (result, packet, lease, client_state,
 					       result -> data, 20));
 #endif
 		return s0;
-			
-		
+
+
 	      case expr_encode_int16:
 		s0 = evaluate_numeric_expression (&len, packet, lease,
 						  client_state,
@@ -1999,7 +1999,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 				memchr (packet -> raw -> sname, 0,
 					sizeof packet -> raw -> sname);
 			if (!fn)
-				fn = ((char *)packet -> raw -> sname + 
+				fn = ((char *)packet -> raw -> sname +
 				      sizeof packet -> raw -> sname);
 			result -> len = fn - &packet -> raw -> sname [0];
 			if (buffer_allocate (&result -> buffer,
@@ -2085,7 +2085,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 
 		/* no number or an obviously invalid number */
 		if ((s0 == 0) ||
-		    ((len > 0) && 
+		    ((len > 0) &&
 		     ((packet == NULL) ||
 		      (packet->dhcpv6_container_packet == NULL)))) {
 #if defined (DEBUG_EXPRESSIONS)
@@ -2098,7 +2098,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 		i = len;
 		relay_packet = packet;
 		relay_options = in_options;
-		while ((i != 0) && 
+		while ((i != 0) &&
 		       (relay_packet->dhcpv6_container_packet != NULL)) {
 			relay_packet = relay_packet->dhcpv6_container_packet;
 			relay_options = relay_packet->options;
@@ -2229,7 +2229,7 @@ int evaluate_data_expression (result, packet, lease, client_state,
 
 	log_error ("Bogus opcode in evaluate_data_expression: %d", expr -> op);
 	return 0;
-}	
+}
 
 int evaluate_numeric_expression (result, packet, lease, client_state,
 				 in_options, cfg_options, scope, expr)
@@ -2382,7 +2382,7 @@ int evaluate_numeric_expression (result, packet, lease, client_state,
 			  (long unsigned)cur_time, *result);
 #endif
 		return (1);
- 
+
 	      case expr_variable_reference:
 		if (scope && *scope) {
 		    binding = find_binding (*scope, expr -> data.variable);
@@ -2798,7 +2798,7 @@ int evaluate_boolean_expression_result (ignorep, packet, lease, client_state,
 	/* So that we can be called with option_lookup as an argument. */
 	if (!expr)
 		return 0;
-	
+
 	if (!evaluate_boolean_expression (&result, packet, lease, client_state,
 					  in_options, cfg_options,
 					  scope, expr))
@@ -2811,7 +2811,7 @@ int evaluate_boolean_expression_result (ignorep, packet, lease, client_state,
 		*ignorep = 0;
 	return result;
 }
-		
+
 
 /* Dereference an expression node, and if the reference count goes to zero,
    dereference any data it refers to, and then free it. */
@@ -3323,7 +3323,7 @@ int write_expression (file, expr, col, indent, firstp)
 	      case expr_none:
 		col = token_print_indent (file, col, indent, "", "", "null");
 		break;
-		
+
 	      case expr_check:
 		col = token_print_indent (file, col, indent, "", "", "check");
 		col = token_print_indent_concat (file, col, indent,
@@ -3488,7 +3488,7 @@ int write_expression (file, expr, col, indent, firstp)
 		if (expr -> data.option -> universe != &dhcp_universe) {
 			col = token_print_indent (file, col, indent,
 						  " ", "",
-						  (expr -> data.option -> 
+						  (expr -> data.option ->
 						   universe -> name));
 			col = token_print_indent (file, col, indent, "", "",
 						  ".");
@@ -3500,7 +3500,7 @@ int write_expression (file, expr, col, indent, firstp)
 		}
 		break;
 
-	      case expr_hardware:	
+	      case expr_hardware:
 		col = token_print_indent (file, col, indent, "", "",
 					  "hardware");
 		break;
@@ -3946,7 +3946,7 @@ int data_subexpression_length (int *rv,
 		else
 			*rv = lrhs;
 		return 1;
-			
+
 	      case expr_v6relay:
 		clhs = data_subexpression_length (&llhs,
 						  expr -> data.v6relay.relay);
@@ -4153,11 +4153,11 @@ int unset (struct binding_scope *scope, const char *name)
 /*!
  * \brief Adds two Dc-formatted lists into a single Dc-formatted list
  *
- * Given two data_strings containing compressed lists, it constructs a 
+ * Given two data_strings containing compressed lists, it constructs a
  * third data_string containing a single compressed list:
  *
  * 1. Decompressing the first list into a buffer
- * 2. Decompressing the second list onto the end of the buffer 
+ * 2. Decompressing the second list onto the end of the buffer
  * 3. Compressing the buffer into the result
  *
  * If either list is empty, the result will be the equal to the compressed
@@ -4166,17 +4166,17 @@ int unset (struct binding_scope *scope, const char *name)
  *
  * It relies on two functions to decompress and compress:
  *
- *  - MRns_name_uncompress_list() - produces a null-terminated string of 
+ *  - MRns_name_uncompress_list() - produces a null-terminated string of
  *  comma-separated domain-names from a buffer containing  "Dc" formatted
  *  data
  *
  *  - MRns_name_compress_list() - produces a buffer containing "Dc" formatted
  *  data from a null-terminated string containing comma-separated domain-names
- * 
+ *
  * \param result data_string which will contain the combined list
  * in Dc format
- * \param list1 data_string containing first Dc formatted list 
- * \param list2 data_string containing second Dc formatted list 
+ * \param list1 data_string containing first Dc formatted list
+ * \param list2 data_string containing second Dc formatted list
  * \return 0 if there is an error, the length of the new list when successful
  */
 int concat_dclists (struct data_string* result,
