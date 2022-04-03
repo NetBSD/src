@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.12 2021/07/25 22:03:42 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.13 2022/04/03 10:05:23 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -170,3 +170,11 @@ static
 cover_func_declarator(void)
 {
 }
+
+/*
+ * Before decl.c 1.268 from 2022-04-03, lint ran into an assertion failure for
+ * "elsz > 0" in 'length'.
+ */
+/* expect+2: error: syntax error 'goto' [249] */
+/* expect+1: warning: empty array declaration: void_array_error [190] */
+void void_array_error[] goto;
