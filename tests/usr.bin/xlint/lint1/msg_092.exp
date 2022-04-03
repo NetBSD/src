@@ -1,1 +1,2 @@
-msg_092.c(6): error: syntax error ':' [249]
+msg_092.c(19): warning: dubious static function at block level: random [93]
+msg_092.c(19): warning: inconsistent redeclaration of static: random [92]
