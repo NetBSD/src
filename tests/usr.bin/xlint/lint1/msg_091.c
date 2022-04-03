@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_091.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_091.c,v 1.3 2022/04/03 09:34:45 rillig Exp $	*/
 # 3 "msg_091.c"
 
-// Test for message: declaration hides parameter: %s [91]
+/* Test for message: declaration hides parameter: %s [91] */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -htw */
+
+add(a, b)
+	int a, b;
+{
+	/* expect+1: warning: declaration hides parameter: a [91] */
+	int a;
+
+	/* expect+1: warning: a may be used before set [158] */
+	return a + b;
+}

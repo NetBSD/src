@@ -1,1 +1,1 @@
-msg_099.c(10): error: 'undefined_variable' undefined [99]
+msg_099.c(11): error: 'undefined_variable' undefined [99]

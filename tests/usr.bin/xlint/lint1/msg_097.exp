@@ -1,4 +1,4 @@
-msg_097.c(13): warning: suffix U is illegal in traditional C [97]
-msg_097.c(14): warning: suffix U is illegal in traditional C [97]
+msg_097.c(15): warning: suffix U is illegal in traditional C [97]
 msg_097.c(17): warning: suffix U is illegal in traditional C [97]
-msg_097.c(20): warning: suffix U is illegal in traditional C [97]
+msg_097.c(21): warning: suffix U is illegal in traditional C [97]
+msg_097.c(25): warning: suffix U is illegal in traditional C [97]

@@ -1,1 +1,2 @@
-msg_091.c(6): error: syntax error ':' [249]
+msg_091.c(12): warning: declaration hides parameter: a [91]
+msg_091.c(15): warning: a may be used before set [158]
