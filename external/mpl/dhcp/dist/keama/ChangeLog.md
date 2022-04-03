@@ -1,3 +1,8 @@
+*4 [build] fdupont
+
+   Fixed build by gcc10.
+   (Gitlab #116)
+
 * 3 [doc] fdupont
 
    New documentation including this file.
@@ -14,5 +19,6 @@
 
 LEGEND
 * [bug]   Bug fix.
+* [build] Build change.
 * [doc]   Update to documentation.
 * [func]  New feature.

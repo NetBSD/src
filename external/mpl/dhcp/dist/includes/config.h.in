@@ -46,9 +46,6 @@
 /* Define to 1 to use the Berkeley Packet Filter interface code. */
 #undef HAVE_BPF
 
-/* Define to 1 if you have the /dev/random or other configured file. */
-#undef HAVE_DEV_RANDOM
-
 /* Define to 1 to use DLPI interface code. */
 #undef HAVE_DLPI
 
@@ -120,6 +117,9 @@
 
 /* Define to the string for a noreturn attribute. */
 #undef ISC_DHCP_NORETURN
+
+/* Define if you have the /dev/random or other configured file. */
+#undef ISC_PATH_RANDOMDEV
 
 /* Define to 1 if the system has 'struct if_laddrconf'. */
 #undef ISC_PLATFORM_HAVEIF_LADDRCONF

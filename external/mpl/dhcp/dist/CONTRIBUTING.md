@@ -7,6 +7,12 @@ We do not require a contributors agreement. By submitting a patch or merge reque
 you are agreeing that your code will be covered by the primary license for the project.
 ISC DHCP is currently licensed under the MPL2.0 license.
 
+**NOTE**: The client (dhclient) and relay (dhcrelay) component maintenance is coming to an end.
+The 4.4.3 release is the last one that included those components and they are now considered EOL.
+The 4.5.0 release will feature server (dhcpd) only. You may still submit bugs for a client or
+relay, but those will be kept for informational purposes only. There will not be any action
+taken by ISC team on those.
+
 Here's are the steps in contributing a patch:
 
 1. **create account** on [gitlab](https://gitlab.isc.org)
@@ -193,4 +199,4 @@ Outstanding, select a small number of them and move them to whatever the current
 that in mind if you plan to submit a patch and forget about it. We may accept it eventually, but
 it's a much, much faster process if you participate in it.
 
-#### Thank you for contributing your time and expertise to the ISC DHCP Project.
+**Thank you for contributing your time and expertise to the ISC DHCP Project.**
