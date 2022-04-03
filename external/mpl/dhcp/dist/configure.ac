@@ -1,4 +1,4 @@
-AC_INIT([DHCP],[4.4.2-P1],[dhcp-users@isc.org])
+AC_INIT([DHCP],[4.4.3],[dhcp-users@isc.org])
 
 
 # we specify "foreign" to avoid having to have the GNU mandated files,
@@ -170,7 +170,7 @@ if test "$enable_dhcpv4o6" = "yes"; then
 	if test "$enable_dhcpv6" = "no"; then
 		AC_MSG_ERROR([dhcpv4o6 requires dhcpv6])
 	fi
-	AC_DEFINE([DHCP4o6], [1], 
+	AC_DEFINE([DHCP4o6], [1],
 		  [Define to 1 to include DHCPv4 over DHCPv6 support.])
 else
     # so we can report below
@@ -629,7 +629,7 @@ if test "$have_nanosleep" = "rt"; then
 	LIBS="-lrt $LIBS"
 fi
 
-# check for /dev/random (declares HAVE_DEV_RANDOM)
+# check for /dev/random (declares ISC_PATH_RANDOMDEV)
 AC_MSG_CHECKING(for random device)
 AC_ARG_WITH(randomdev,
 	AS_HELP_STRING([--with-randomdev=PATH],[Path for random device
@@ -653,8 +653,8 @@ else
 	else
 		AC_MSG_RESULT($use_randomdev)
 		AC_CHECK_FILE($use_randomdev,
-		    AC_DEFINE([HAVE_DEV_RANDOM], [1], 
-			[Define to 1 if you have the /dev/random or other configured file.]),
+		    AC_DEFINE_UNQUOTED([ISC_PATH_RANDOMDEV], ["$use_randomdev"],
+			[Define if you have the /dev/random or other configured file.]),
 		    AC_MSG_ERROR(cannot find $use_randomdev))
 	fi
 	BINDCONFIG="$BINDCONFIG --with-randomdev=$use_randomdev"
@@ -806,7 +806,7 @@ no)
 	BINDLIBIRSDIR="$BINDDIR/lib"
 	BINDLIBDNSDIR="$BINDDIR/lib"
 	BINDLIBISCCFGDIR="$BINDDIR/lib"
-	BINDLIBISCDIR="$BINDDIR/lib"	
+	BINDLIBISCDIR="$BINDDIR/lib"
 	DISTCHECK_LIBBIND_CONFIGURE_FLAG="--with-libbind=$use_libbind"
 	;;
 esac

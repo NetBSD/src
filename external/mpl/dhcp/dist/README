@@ -1,6 +1,6 @@
 	      Internet Systems Consortium DHCP Distribution
-			     Version 4.4.2-P1
-			       26 May 2021
+			     Version 4.4.3
+			     9 March 2022
 
 			      README FILE
 
@@ -62,13 +62,15 @@ documented in the dhclient-script man page.   The format of the DHCP
 client lease database is documented in the dhclient.leases man page.
 The source for all these man pages is in the client/ subdirectory in
 the distribution.   In addition, the dhcp-options man page should be
-referred to for information about DHCP options.
+referred to for information about DHCP options. The client component
+is End-of-Life and will not be part of future releases.
 
 DHCP relay agent documentation is in the dhcrelay man page, the source
-for which is distributed in the relay/ subdirectory.
+for which is distributed in the relay/ subdirectory. The relay component
+is End-of-Life and will not be part of future releases.
 
 KEA Migration Assistant documentation, including how to build, install
-and use it, is including in the keama directory.
+and use it, is included in the keama/ directory.
 
 To read installed manual pages, use the man command.  Type "man page"
 where page is the name of the manual page.   This will only work if
@@ -90,6 +92,12 @@ will not be correct for your operating system until after you iterate
 'make install' (so if you're reading a manpage out of the source
 directory, it may not have up-to-date information).
 
+				RELEASE STATUS
+
+Version 4.4.3 is a maintenance release of the DHCP client, relay and
+server. It is the final release for the client and relay components,
+which have reached end-of-life and will no longer be maintained.
+
 		    BUILDING THE DHCP DISTRIBUTION
 
 			     UNPACKING IT
@@ -97,12 +105,12 @@ directory, it may not have up-to-date information).
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	gunzip dhcp-4.4.2-P1.tar.gz
-	tar xvf dhcp-4.4.2-P1.tar
+	gunzip dhcp-4.4.3.tar.gz
+	tar xvf dhcp-4.4.3.tar
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-4.4.2-P1 subdirectory that you've just created and
+Now, cd to the dhcp-4.4.3 subdirectory that you've just created and
 configure the source tree by typing:
 
 	./configure
@@ -348,7 +356,7 @@ more information, consult the vconfig man pages.
 			       ATF
 
 Please see the file DHCP/doc/devel/atf.dox for a description of building
-and using these tools.  
+and using these tools.
 
 The optional unit tests use ATF (Automated Testing Framework) including
 the atf-run and atf-report tools. ATF deprecated these tools in
@@ -384,7 +392,7 @@ the dhcp-users or dhcp-announce mailing lists.
 WHERE TO SEND FEATURE REQUESTS: We like to hear your feedback.  We may
 not respond to it all the time, but we do read it.  If ISC DHCP doesn't
 work well for you, or you have an idea that would improve it for your
-use, please create an issue at https://gitlab.isc.org/isc-projects/dhcp/issues.  
+use, please create an issue at https://gitlab.isc.org/isc-projects/dhcp/issues.
 This is also an excellent place to send patches that add new features.
 
 WHERE TO REPORT BUGS: If you want the act of sending in a bug report
@@ -393,17 +401,20 @@ software, you are asking for help.  Your bug report is helpful to us,
 but fundamentally you are making a support request, so please use the
 addresses described in the previous paragraphs.  If you are _sure_ that
 your problem is a bug, and not user error, or if your bug report
-includes a patch, you can submit it to our ticketing system at 
-https://gitlab.isc.org/isc-projects/dhcp/issues.  If you have not received 
+includes a patch, you can submit it to our ticketing system at
+https://gitlab.isc.org/isc-projects/dhcp/issues.  If you have not received
 a notice that the ticket has been resolved, then we're still working on it.
+Notice that this is the final release that features client and relay
+components. Reporting bugs in them makes limited sense. The ISC team
+will not be fixing any issues related to client or relay. They may be
+useful for other users to document some problems or perhaps discuss
+and share workarounds.
 
 PLEASE DO NOT REPORT BUGS IN OLD SOFTWARE RELEASES!  Fetch the latest
 release and see if the bug is still in that version of the software,
-and if it is still present, _then_ report it.  ISC release versions 
-always have three numbers, for example: 1.2.3.  The 'major release' is 
-1 here, the 'minor release' is 2, and the 'maintenance release' is 3.  
-ISC will accept bug reports against the most recent two major.minor
-releases: for example, 1.0.0 and 0.9.0, but not 0.8.* or prior.
+and if it is still present, _then_ report it.  ISC release versions
+always have three numbers, for example: 1.2.3.  The 'major release' is
+1 here, the 'minor release' is 2, and the 'maintenance release' is 3.
 
 PLEASE take a moment to determine where the ISC DHCP distribution
 that you're using came from.  ISC DHCP is sometimes heavily modified
@@ -483,7 +494,8 @@ agent. DHCP 3 was released in October 2001 and included DHCP failover
 support, OMAPI, Dynamic DNS, conditional behaviour, client classing,
 and more. Version 3 of the DHCP server was funded by Nominum, Inc.
 The 4.0 release in December 2007 introduced DHCPv6 protocol support
-for the server and client.
+for the server and client. The client and relay components reached
+their End-of-Life in January 2022.
 
 This product includes cryptographic software written
 by Eric Young (eay@cryptsoft.com).

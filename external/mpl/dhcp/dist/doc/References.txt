@@ -17,7 +17,7 @@ Abstract
 
 Copyright Notice
 
-   Copyright (c) 2006-2017 by Internet Systems Consortium,
+   Copyright (C) 2006-2022 Internet Systems Consortium,
    Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
@@ -1102,8 +1102,8 @@ Authors' Addresses
 
    David W. Hankins
    Internet Systems Consortium, Inc.
-   950 Charter Street
-   Redwood City, CA  94063
+   PO Box 360
+   Newmarket, NH 03857 USA
 
 
 
@@ -1122,11 +1122,8 @@ Hankins & Mrugalski                                            [Page 20]
 
    Tomasz Mrugalski
    Internet Systems Consortium, Inc.
-   950 Charter Street
-   Redwood City, CA  94063
-
-   Phone: +1 650 423 1345
-   Email: Tomasz_Mrugalski@isc.org
+   PO Box 360
+   Newmarket, NH 03857 USA
 
 
 

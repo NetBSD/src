@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 
-# Copyright (c) 2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2007-2022 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,8 @@
 # OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 #   Internet Systems Consortium, Inc.
-#   950 Charter Street
-#   Redwood City, CA 94063
+#   PO Box 360
+#   Newmarket, NH 03857 USA
 #   <info@isc.org>
 #   https://www.isc.org/
 
@@ -90,12 +90,12 @@ $HOP_COUNT_LIMIT = 32;
 @EXPORT = qw( $MSG_SOLICIT $MSG_ADVERTISE $MSG_REQUEST $MSG_CONFIRM
 	      $MSG_RENEW $MSG_REBIND $MSG_REPLY $MSG_RELEASE $MSG_DECLINE
 	      $MSG_RECONFIGURE $MSG_INFORMATION_REQUEST $MSG_RELAY_FORW
-	      $MSG_RELAY_REPL 
+	      $MSG_RELAY_REPL
 	      $OPT_CLIENTID $OPT_SERVERID $OPT_IA_NA $OPT_IA_TA $OPT_IAADDR
 	      $OPT_ORO $OPT_PREFERENCE $OPT_ELAPSED_TIME $OPT_RELAY_MSG
 	      $OPT_AUTH $OPT_UNICAST $OPT_STATUS_CODE $OPT_RAPID_COMMIT
-	      $OPT_USER_CLASS $OPT_VENDOR_CLASS $OPT_VENDOR_OPTS 
-	      $OPT_INTERFACE_ID $OPT_RECONF_MSG $OPT_RECONF_ACCEPT 
+	      $OPT_USER_CLASS $OPT_VENDOR_CLASS $OPT_VENDOR_OPTS
+	      $OPT_INTERFACE_ID $OPT_RECONF_MSG $OPT_RECONF_ACCEPT
 	      $SOL_MAX_DELAY $SOL_TIMEOUT $SOL_MAX_RT $REQ_TIMEOUT
 	      $REQ_MAX_RT $REQ_MAX_RC $CNF_MAX_DELAY $CNF_MAX_RT
 	      $CNF_MAX_RD $REN_TIMEOUT $REN_MAX_RT $REB_TIMEOUT $REB_MAX_RT
@@ -164,7 +164,7 @@ my %docsis_type_num = (
 	CL_OPTION_DOCSIS_VERS => 38,
 );
 my %docsis_num_type = reverse(%docsis_type_num);
-	
+
 use strict;
 use English;
 use POSIX;
@@ -188,7 +188,7 @@ sub mac_addr {
 		}
 	}
 	my @mac_addrs;
-	foreach my $line (split(/\n/, `arp -an 2>/dev/null`)) { 
+	foreach my $line (split(/\n/, `arp -an 2>/dev/null`)) {
 		my @parts = split(/\s+/, $line);
 		my $ip = $parts[1];
 		my $mac = $parts[-1];
@@ -225,7 +225,7 @@ sub duid {
 
 	if (($type == 1) || ($type == 3)) {
 		my $mac_addr = mac_addr_binary();
-		if ($type == 1) { 
+		if ($type == 1) {
 			my $time = pack("N", dhcpv6_time());
 			return "\x00\x01\x00\x01${time}${mac_addr}";
 		} else {
@@ -251,7 +251,7 @@ sub new {
 	if (defined $trans_id) {
 		$this->{trans_id} = $trans_id;
 	} else {
-		$this->{trans_id} = chr(rand(256)) . 
+		$this->{trans_id} = chr(rand(256)) .
 			chr(rand(256)) . chr(rand(256));
 	}
 	$this->{options} = [ ];
@@ -336,7 +336,7 @@ sub print_docsis_option {
 		my $num_servers = length($data) / 16;
 		for (my $i=0; $i<$num_servers; $i++) {
 			my $srv = inet_ntop(AF_INET6, substr($data, $i*16, 16));
-			print "$indent  TFTP server ", ($i+1), ": "; 
+			print "$indent  TFTP server ", ($i+1), ": ";
 			print uc($srv), "\n";
 		}
 	} elsif ($docsis_num_type{$num} eq "CL_OPTION_CONFIG_FILE_NAME") {
@@ -345,7 +345,7 @@ sub print_docsis_option {
 		my $num_servers = length($data) / 16;
 		for (my $i=0; $i<$num_servers; $i++) {
 			my $srv = inet_ntop(AF_INET6, substr($data, $i*16, 16));
-			print "$indent  syslog server ", ($i+1), ": "; 
+			print "$indent  syslog server ", ($i+1), ": ";
 			print uc($srv), "\n";
 		}
 	}
@@ -369,7 +369,7 @@ sub print_option {
 			}
 			print "\n";
 		}
-	} elsif (($num == $dhcp_client::OPT_CLIENTID) || 
+	} elsif (($num == $dhcp_client::OPT_CLIENTID) ||
 		 ($num == $dhcp_client::OPT_SERVERID)) {
 		print $indent, "  ";
 		if (length($data) > 0) {
@@ -380,7 +380,7 @@ sub print_option {
 		}
 		print "\n";
 	} elsif ($num == $dhcp_client::OPT_IA_NA) {
-		printf "${indent}  IAID: 0x\%08X\n", 
+		printf "${indent}  IAID: 0x\%08X\n",
 			unpack("N", substr($data, 0, 4));
 		printf "${indent}  T1: \%d\n", unpack("N", substr($data, 4, 4));
 		printf "${indent}  T2: \%d\n", unpack("N", substr($data, 8, 4));
@@ -391,7 +391,7 @@ sub print_option {
 			}
 		}
 	} elsif ($num == $dhcp_client::OPT_IAADDR) {
-		printf "${indent}  IPv6 address: \%s\n", 
+		printf "${indent}  IPv6 address: \%s\n",
 			uc(inet_ntop(AF_INET6, substr($data, 0, 16)));
 		printf "${indent}  Preferred lifetime: \%d\n",
 			unpack("N", substr($data, 16, 4));
@@ -422,10 +422,10 @@ sub print_option {
 		}
 		print "\n";
 		print "${indent}  Message: \"$msg\"\n";
-	} 
+	}
 }
 
-# XXX: we aren't careful about packet boundaries and values... 
+# XXX: we aren't careful about packet boundaries and values...
 #       DO NOT RUN ON PRODUCTION SYSTEMS!!!
 sub decode {
 	my ($packet, $print) = @_;
@@ -451,4 +451,3 @@ sub decode {
 
 	return $msg;
 }
-
