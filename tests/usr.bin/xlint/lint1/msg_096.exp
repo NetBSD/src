@@ -1,3 +1,1 @@
-msg_096.c(21): error: cannot dereference non-pointer type [96]
-msg_096.c(21): warning: function 'unary_asterisk' expects to return value [214]
-msg_096.c(19): warning: argument 'i' unused in function 'unary_asterisk' [231]
+msg_096.c(24): error: cannot dereference non-pointer type [96]

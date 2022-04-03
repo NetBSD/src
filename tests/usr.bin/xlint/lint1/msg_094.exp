@@ -1,2 +1,2 @@
-msg_094.c(7): error: illegal storage class [8]
-msg_094.c(9): error: function has illegal storage class: register_example [94]
+msg_094.c(8): error: illegal storage class [8]
+msg_094.c(11): error: function has illegal storage class: register_example [94]

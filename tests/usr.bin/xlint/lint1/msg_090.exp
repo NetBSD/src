@@ -1,1 +1,1 @@
-msg_090.c(6): error: syntax error ':' [249]
+msg_090.c(12): warning: inconsistent redeclaration of extern: random_number [90]
