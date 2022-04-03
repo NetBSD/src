@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.267 2022/04/02 22:38:45 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.268 2022/04/03 10:05:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.267 2022/04/02 22:38:45 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.268 2022/04/03 10:05:22 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -873,6 +873,14 @@ length(const type_t *tp, const char *name)
 		/* FALLTHROUGH */
 	default:
 		elsz = size_in_bits(tp->t_tspec);
+		/*
+		 * Workaround until the type parser (see add_function,
+		 * add_array, add_pointer) does not construct the invalid
+		 * intermediate declaration 'void b[4]' for the legitimate
+		 * declaration 'void *b[4]'.
+		 */
+		if (sytxerr > 0 && elsz == 0)
+			elsz = CHAR_SIZE;
 		lint_assert(elsz > 0);
 		break;
 	}
@@ -1328,6 +1336,23 @@ block_derive_array(type_t *stp, bool dim, int len)
 	tp = block_derive_type(stp, ARRAY);
 	tp->t_dim = len;
 
+#if 0
+	/*
+	 * As of 2022-04-03, the implementation of the type parser (see
+	 * add_function, add_array, add_pointer) is strange.  When it sees
+	 * the type 'void *b[4]', it first creates 'void b[4]' and only later
+	 * inserts the '*' in the middle of the type.  Once created, a type
+	 * should not be modified anymore.
+	 *
+	 * Since the intermediate type would be an array of void, but the
+	 * final type is valid, this check cannot be enabled yet.
+	 */
+	if (stp->t_tspec == VOID) {
+		/* array of incomplete type */
+		error(301);
+		tp->t_subt = gettyp(CHAR);
+	}
+#endif
 	if (len < 0) {
 		/* negative array dimension (%d) */
 		error(20, len);

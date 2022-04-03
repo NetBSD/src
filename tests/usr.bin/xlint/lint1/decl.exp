@@ -11,5 +11,7 @@ decl.c(72): warning: converting 'pointer to pointer to char' to incompatible 'po
 decl.c(80): error: syntax error '"' [249]
 decl.c(163): error: syntax error 'int' [249]
 decl.c(166): error: syntax error 'int' [249]
+decl.c(180): error: syntax error 'goto' [249]
 decl.c(114): warning: static function unused unused [236]
 decl.c(170): warning: static function cover_func_declarator unused [236]
+decl.c(180): warning: empty array declaration: void_array_error [190]
