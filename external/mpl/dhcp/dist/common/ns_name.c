@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_name.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.4 2022/04/03 01:10:58 christos Exp $	*/
 
 /*
- * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -17,14 +17,14 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   http://www.isc.org/
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ns_name.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.4 2022/04/03 01:10:58 christos Exp $");
 
 #include <sys/types.h>
 
@@ -499,7 +499,7 @@ cleanup:
 			*lpp = NULL;
 		errno = EMSGSIZE;
 		return (-1);
-	} 
+	}
 	return (dstp - dst);
 }
 
@@ -517,7 +517,7 @@ MRns_name_uncompress(const u_char *msg, const u_char *eom, const u_char *src,
 {
 	u_char tmp[NS_MAXCDNAME];
 	int n;
-	
+
 	if ((n = MRns_name_unpack(msg, eom, src, tmp, sizeof tmp)) == -1)
 		return (-1);
 	if (MRns_name_ntop(tmp, dst, dstsiz) == -1)

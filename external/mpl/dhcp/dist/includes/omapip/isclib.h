@@ -1,11 +1,11 @@
-/*	$NetBSD: isclib.h,v 1.4 2021/08/19 11:50:56 christos Exp $	*/
+/*	$NetBSD: isclib.h,v 1.5 2022/04/03 01:10:59 christos Exp $	*/
 
 /* isclib.h
 
    connections to the isc and dns libraries */
 
 /*
- * Copyright (c) 2009-2019 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,8 +20,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   http://www.isc.org/
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.2 2018/04/07 22:37:30 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.3 2022/04/03 01:10:59 christos Exp $	*/
 
 /* alloc.c
 
@@ -6,7 +6,7 @@
    protocol... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -22,15 +22,15 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alloc.c,v 1.2 2018/04/07 22:37:30 christos Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.3 2022/04/03 01:10:59 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -146,7 +146,7 @@ dmalloc(size_t size, const char *file, int line) {
 	return bar;
 }
 
-void 
+void
 dfree(void *ptr, const char *file, int line) {
 	if (!ptr) {
 		log_error ("dfree %s(%d): free on null pointer.", file, line);
@@ -213,7 +213,7 @@ dfree(void *ptr, const char *file, int line) {
 /* For allocation functions that keep their own free lists, we want to
    account for the reuse of the memory. */
 
-void 
+void
 dmalloc_reuse(void *foo, const char *file, int line, int justref) {
 	struct dmalloc_preamble *dp;
 
@@ -338,7 +338,7 @@ void dmalloc_dump_outstanding ()
 			if (!inhistory)
 #endif
 				log_info ("  %s(%d): %ld",
-					  dp -> file, dp -> line, 
+					  dp -> file, dp -> line,
 					  (long) dp -> size);
 		}
 #endif
@@ -540,11 +540,11 @@ isc_result_t omapi_object_allocate (omapi_object_t **o,
 			tsize = (*type -> sizer) (size);
 		else
 			tsize = type -> size;
-		
+
 		/* Sanity check. */
 		if (tsize < sizeof (omapi_object_t))
 			return DHCP_R_INVALIDARG;
-		
+
 		foo = dmalloc (tsize, file, line);
 		if (!foo)
 			return ISC_R_NOMEMORY;
@@ -615,7 +615,7 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	if ((*h) -> refcnt <= 0) {
 #if defined (POINTER_DEBUG)
 		log_error ("%s(%d): dereference of pointer with refcnt of zero!",
@@ -629,7 +629,7 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	/* See if this object's inner object refers to it, but don't
 	   count this as a reference if we're being asked to free the
 	   reference from the inner object. */
@@ -700,7 +700,7 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 				rc_register (file, line, h, hp,
 					     0, 1, hp -> type -> rc_flag);
 			if (handle_reference) {
-				if (omapi_handle_clear(hp->handle) != 
+				if (omapi_handle_clear(hp->handle) !=
 				    ISC_R_SUCCESS) {
 					log_debug("Attempt to clear null "
 						  "handle pointer");
@@ -734,7 +734,7 @@ isc_result_t omapi_buffer_new (omapi_buffer_t **h,
 {
 	omapi_buffer_t *t;
 	isc_result_t status;
-	
+
 	t = (omapi_buffer_t *)dmalloc (sizeof *t, file, line);
 	if (!t)
 		return ISC_R_NOMEMORY;
@@ -782,7 +782,7 @@ isc_result_t omapi_buffer_dereference (omapi_buffer_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	if ((*h) -> refcnt <= 0) {
 #if defined (POINTER_DEBUG)
 		log_error ("%s(%d): dereference of pointer with refcnt of zero!",
@@ -917,7 +917,7 @@ isc_result_t omapi_typed_data_dereference (omapi_typed_data_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	if ((*h) -> refcnt <= 0) {
 #if defined (POINTER_DEBUG)
 		log_error ("%s(%d): dereference of pointer with refcnt of zero!",
@@ -931,7 +931,7 @@ isc_result_t omapi_typed_data_dereference (omapi_typed_data_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	--((*h) -> refcnt);
 	rc_register (file, line, h, *h, (*h) -> refcnt, 1, RC_MISC);
 	if ((*h) -> refcnt <= 0 ) {
@@ -1004,7 +1004,7 @@ isc_result_t omapi_data_string_dereference (omapi_data_string_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	if ((*h) -> refcnt <= 0) {
 #if defined (POINTER_DEBUG)
 		log_error ("%s(%d): dereference of pointer with refcnt of zero!",
@@ -1076,7 +1076,7 @@ isc_result_t omapi_value_dereference (omapi_value_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	if ((*h) -> refcnt <= 0) {
 #if defined (POINTER_DEBUG)
 		log_error ("%s(%d): dereference of pointer with refcnt of zero!",
@@ -1090,7 +1090,7 @@ isc_result_t omapi_value_dereference (omapi_value_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	--((*h) -> refcnt);
 	rc_register (file, line, h, *h, (*h) -> refcnt, 1, RC_MISC);
 	if ((*h) -> refcnt == 0) {
@@ -1158,7 +1158,7 @@ isc_result_t omapi_addr_list_dereference (omapi_addr_list_t **h,
 		return DHCP_R_INVALIDARG;
 #endif
 	}
-	
+
 	if ((*h) -> refcnt <= 0) {
 #if defined (POINTER_DEBUG)
 		log_error ("%s(%d): dereference of pointer with zero refcnt!",
@@ -1181,4 +1181,3 @@ isc_result_t omapi_addr_list_dereference (omapi_addr_list_t **h,
 	*h = 0;
 	return ISC_R_SUCCESS;
 }
-

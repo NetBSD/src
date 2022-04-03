@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb6.c,v 1.5 2020/08/03 21:10:57 christos Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.6 2022/04/03 01:11:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.5 2020/08/03 21:10:57 christos Exp $");
+__RCSID("$NetBSD: mdb6.c,v 1.6 2022/04/03 01:11:00 christos Exp $");
 
 
 /*!
@@ -1939,7 +1939,7 @@ create_prefix6(struct ipv6_pool *pool, struct iasubopt **pref,
 		}
 		new_ds.data = new_ds.buffer->data;
 		memcpy(new_ds.buffer->data, ds.data, ds.len);
-		memcpy(new_ds.buffer->data + ds.len, &tmp, sizeof(tmp));
+		memcpy(&new_ds.buffer->data[0] + ds.len, &tmp, sizeof(tmp));
 		data_string_forget(&ds, MDL);
 		data_string_copy(&ds, &new_ds, MDL);
 		data_string_forget(&new_ds, MDL);

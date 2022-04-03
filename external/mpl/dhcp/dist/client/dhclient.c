@@ -1,11 +1,11 @@
-/*	$NetBSD: dhclient.c,v 1.4 2021/05/26 22:52:31 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.5 2022/04/03 01:10:57 christos Exp $	*/
 
 /* dhclient.c
 
    DHCP Client. */
 
 /*
- * Copyright (c) 2004-2021 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2022 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,8 +21,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.4 2021/05/26 22:52:31 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.5 2022/04/03 01:10:57 christos Exp $");
 
 #include "dhcpd.h"
 #include <isc/util.h>
@@ -84,14 +84,15 @@ int decline_wait_time = 10; /* Default to 10 secs per, RFC 2131, 3.1.5 */
 #define ASSERT_STATE(state_is, state_shouldbe) {}
 
 #ifndef UNIT_TEST
-static const char copyright[] = "Copyright 2004-2021 Internet Systems Consortium.";
+static const char copyright[] = "Copyright 2004-2022 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Systems Consortium DHCP Client";
 static const char url [] = "For info, please visit https://www.isc.org/software/dhcp/";
 #endif /* UNIT_TEST */
 
-u_int16_t local_port = 0;
-u_int16_t remote_port = 0;
+extern u_int16_t local_port;
+extern u_int16_t remote_port;
+
 #if defined(DHCPv6) && defined(DHCP4o6)
 int dhcp4o6_state = -1; /* -1 = stopped, 0 = polling, 1 = started */
 #endif
@@ -232,16 +233,16 @@ add_interfaces(char **ifaces, int nifaces)
  * the description of the command line.  The arguments provide
  * a way for the caller to request more specific information about
  * the error be printed as well.  Mostly this will be that some
- * comamnd doesn't include its argument.
+ * command doesn't include its argument.
  *
  * \param sfmt - The basic string and format for the specific error
- * \param sarg - Generally the offending argument from the comamnd line.
+ * \param sarg - Generally the offending argument from the command line.
  *
  * \return Nothing
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.4 2021/05/26 22:52:31 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.5 2022/04/03 01:10:57 christos Exp $");
 
 #if defined(DHCPv6) && defined(DHCP4o6)
 static void dhcp4o6_poll(void *dummy);
@@ -634,7 +635,7 @@ main(int argc, char **argv) {
 		} else if (argv[i][0] == '-') {
 			usage("Unknown command: %s", argv[i]);
 		} else if (interfaces_requested < 0) {
-			usage("No interfaces comamnd -n and "
+			usage("No interfaces command -n and "
 			      " requested interface %s", argv[i]);
 		} else {
 		    ifaces[interfaces_requested++] = argv[i];
@@ -890,21 +891,36 @@ main(int argc, char **argv) {
 			    ? DISCOVER_REQUESTED
 			    : DISCOVER_RUNNING);
 
-	/* Make up a seed for the random number generator from current
-	   time plus the sum of the last four bytes of each
-	   interface's hardware address interpreted as an integer.
-	   Not much entropy, but we're booting, so we're not likely to
-	   find anything better. */
+	/* PLEASE PREFER the random device: not all systems use random
+	 * process identifiers so the alternative can be predictable. */
 	seed = 0;
-	for (ip = interfaces; ip; ip = ip->next) {
-		int junk;
-		memcpy(&junk,
-		       &ip->hw_address.hbuf[ip->hw_address.hlen -
-					    sizeof seed], sizeof seed);
-		seed += junk;
+	size_t nrnd = 0;
+#ifdef ISC_PATH_RANDOMDEV
+	FILE *frnd = fopen(ISC_PATH_RANDOMDEV, "r");
+	if (frnd) {
+		nrnd = fread(&seed, sizeof(seed), 1, frnd);
+		fclose(frnd);
 	}
-	srandom(seed + cur_time + (unsigned)getpid());
+#endif
+	/* Please leave the compiler to emit a warning about a constant
+	 * condition in the if test. */
+	if (!nrnd) {
+		/* Make up a seed for the random number generator from current
+		   time plus the sum of the last four bytes of each
+		   interface's hardware address interpreted as an integer.
+		   Not much entropy, but we're booting, so we're not likely to
+		   find anything better. */
 
+		for (ip = interfaces; ip; ip = ip->next) {
+			int junk;
+			memcpy(&junk,
+			       &ip->hw_address.hbuf[ip->hw_address.hlen -
+						    sizeof seed], sizeof seed);
+			seed += junk;
+		}
+		seed += cur_time + (unsigned)getpid();
+	}
+	srandom(seed);
 
 	/*
 	 * Establish a default DUID.  We always do so for v6 and
@@ -1230,7 +1246,7 @@ int find_subnet (struct subnet **sp,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.4 2021/05/26 22:52:31 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.5 2022/04/03 01:10:57 christos Exp $");
 
 void state_reboot (cpp)
 	void *cpp;
@@ -1304,6 +1320,105 @@ void state_init (cpp)
 	/* Add an immediate timeout to cause the first DHCPDISCOVER packet
 	   to go out. */
 	send_discover (client);
+}
+
+/* check_v6only is called by dhcpoffer and dhcpack. It checks if a
+ * requested v6-only-preferred option is present and returned the
+ * V6ONLY_WAIT delay to suspend DHCPv4. */
+
+uint32_t check_v6only(packet, client)
+	struct packet *packet;
+	struct client_state *client;
+{
+	int i;
+	struct option **req;
+	isc_boolean_t found = ISC_FALSE;
+	struct option_cache *oc;
+	struct data_string data;
+	uint32_t v6only_wait = 0;
+
+	/* Check if the v6-only-preferred was requested. */
+	req = client->config->requested_options;
+
+	if (req == NULL)
+		return 0;
+
+	for (i = 0 ; req[i] != NULL ; i++) {
+		if ((req[i]->universe == &dhcp_universe) &&
+		    (req[i]->code == DHO_V6_ONLY_PREFERRED)) {
+			found = ISC_TRUE;
+			break;
+		}
+	}
+
+	if (found == ISC_FALSE)
+		return 0;
+
+	/* Get the V6ONLY_WAIT timer. */
+	oc = lookup_option(&dhcp_universe, packet->options,
+			   DHO_V6_ONLY_PREFERRED);
+	if (!oc)
+		return 0;
+
+	memset(&data, 0, sizeof(data));
+
+	if (evaluate_option_cache(&data, packet, (struct lease *)0, client,
+				  packet->options, (struct option_state *)0,
+				  &global_scope, oc, MDL)) {
+		if (data.len == 4) {
+			v6only_wait = getULong(data.data);
+			if (v6only_wait < MIN_V6ONLY_WAIT)
+				v6only_wait = MIN_V6ONLY_WAIT;
+		}
+		data_string_forget(&data, MDL);
+	}
+
+	return (v6only_wait);
+}
+
+/* finish_v6only is called when the V6ONLY_WAIT timer expired. */
+
+void finish_v6only(cpp)
+	void *cpp;
+{
+	struct client_state *client = cpp;
+
+	cancel_timeout(finish_v6only, client);
+	client->state = S_INIT;
+	state_init(cpp);
+}
+
+/*
+ * start_v6only is called when a requested v6-only-preferred option was
+ * returned by the server. */
+
+void start_v6only(client, v6only_wait)
+	struct client_state *client;
+	uint32_t v6only_wait;
+{
+	struct timeval tv;
+
+	/* Enter V6ONLY state. */
+
+	client->state = S_V6ONLY;
+
+	/* Run the client script. */
+	script_init(client, "V6ONLY", NULL);
+	if (client->active) {
+		script_write_params(client, "old_", client->active);
+		destroy_client_lease(client->active);
+		client->active = NULL;
+	}
+	script_write_requested(client);
+	client_envadd(client, "", "v6-only-preferred", "%lu",
+		      (long unsigned)v6only_wait);
+	script_go(client);
+
+	/* Trigger finish_v6only after V6ONLY_WAIT seconds. */
+	tv.tv_sec = cur_tv.tv_sec + v6only_wait;
+	tv.tv_usec = cur_tv.tv_usec;
+
+	add_timeout(&tv, finish_v6only, client, 0, 0);
 }
 
 /*
@@ -1421,6 +1536,7 @@ void dhcpack (packet)
 {
 	struct interface_info *ip = packet -> interface;
 	struct client_state *client;
+	uint32_t v6only_wait;
 	struct client_lease *lease;
 	struct option_cache *oc;
 	struct data_string ds;
@@ -1447,6 +1563,16 @@ void dhcpack (packet)
 	log_info ("DHCPACK of %s from %s",
 		  inet_ntoa(packet->raw->yiaddr),
 		  piaddr (packet->client_addr));
+
+	/* Check v6only first. */
+	v6only_wait = check_v6only(packet, client);
+	if (v6only_wait > 0) {
+		log_info("v6 only preferred for %lu seconds.",
+			 (long unsigned)v6only_wait);
+		cancel_timeout(send_request, client);
+		start_v6only(client, v6only_wait);
+		return;
+	}
 
 	lease = packet_to_lease (packet, client);
 	if (!lease) {
@@ -1601,9 +1727,12 @@ void bind_lease (client)
 		script_write_params(client, "alias_", client->alias);
 
 	/* If the BOUND/RENEW code detects another machine using the
-	   offered address, it exits nonzero.  We need to send a
-	   DHCPDECLINE and toss the lease. */
-	if (script_go(client)) {
+	   offered address, then per our man page it should exit with
+       a non-zero status, to which we send a DHCPDECLINE and toss
+       the lease. A return value of less than zero indicates
+       the script crashed (e.g. segfault) which script_go will log
+       but we will ignore here. */
+	if (script_go(client) > 0)  {
 		make_decline(client, client->new);
 		send_decline(client);
 		destroy_client_lease(client->new);
@@ -1726,6 +1855,7 @@ void state_stop (cpp)
 	cancel_timeout(send_discover, client);
 	cancel_timeout(send_request, client);
 	cancel_timeout(state_bound, client);
+	cancel_timeout(finish_v6only, client);
 
 	/* If we have an address, unconfigure it. */
 	if (client->active) {
@@ -2085,6 +2215,7 @@ void dhcpoffer (packet)
 {
 	struct interface_info *ip = packet -> interface;
 	struct client_state *client;
+	uint32_t v6only_wait;
 	struct client_lease *lease, *lp;
 	struct option **req;
 	int i;
@@ -2111,6 +2242,16 @@ void dhcpoffer (packet)
 	sprintf (obuf, "%s of %s from %s", name,
 		 inet_ntoa(packet->raw->yiaddr),
 		 piaddr(packet->client_addr));
+
+	/* Check v6only first. */
+	v6only_wait = check_v6only(packet, client);
+	if (v6only_wait > 0) {
+		log_info("%s: v6 only preferred for %lu.", obuf,
+			 (long unsigned)v6only_wait);
+		cancel_timeout(send_discover, client);
+		start_v6only(client, v6only_wait);
+		return;
+	}
 
 	/* If this lease doesn't supply the minimum required DHCPv4 parameters,
 	 * ignore it.
@@ -3321,12 +3462,12 @@ make_client_options(struct client_state *client, struct client_lease *lease,
 			hw_idx = 0;
 			hw_len = client->interface->hw_address.hlen;
 		}
-		memcpy(&client_identifier.buffer->data + 5 - hw_len,
+		memcpy(client_identifier.buffer->data + 5 - hw_len,
 		       client->interface->hw_address.hbuf + hw_idx,
 		       hw_len);
 
 		/* Add the default duid */
-		memcpy(&client_identifier.buffer->data+(1+4),
+		memcpy(client_identifier.buffer->data + (1 + 4),
 		       default_duid.data, default_duid.len);
 
 		/* And save the option */
@@ -4497,8 +4638,14 @@ int script_go(struct client_state *client)
 	}
 	dfree (envp, MDL);
 	gettimeofday(&cur_tv, NULL);
-	return (WIFEXITED (wstatus) ?
-		WEXITSTATUS (wstatus) : -WTERMSIG (wstatus));
+
+    if (!WIFEXITED(wstatus)) {
+        int sigval = WTERMSIG(wstatus);
+        log_error ("script_go script: %s was terminated by signal %d", scriptName, sigval);
+        return  (-sigval);
+    }
+
+    return (WEXITSTATUS(wstatus));
 }
 
 void client_envadd (struct client_state *client,
@@ -4685,6 +4832,7 @@ void client_location_changed ()
 			      case S_REBINDING:
 			      case S_STOPPED:
 			      case S_DECLINING:
+			      case S_V6ONLY:
 				break;
 			}
 			client -> state = S_INIT;
@@ -4763,6 +4911,7 @@ void do_release(client)
 	cancel_timeout (state_init, client);
 	cancel_timeout (send_request, client);
 	cancel_timeout (state_reboot, client);
+	cancel_timeout (finish_v6only, client);
 	client -> state = S_STOPPED;
 
 #if defined(DHCPv6) && defined(DHCP4o6)
