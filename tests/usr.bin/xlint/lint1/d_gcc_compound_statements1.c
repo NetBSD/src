@@ -1,4 +1,4 @@
-/*	$NetBSD: d_gcc_compound_statements1.c,v 1.7 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: d_gcc_compound_statements1.c,v 1.8 2022/04/03 00:39:32 rillig Exp $	*/
 # 3 "d_gcc_compound_statements1.c"
 
 /* GCC compound statement with expression */
@@ -35,5 +35,18 @@ function(void)
 	({
 		/* expect+1: error: type 'int' does not have member 'e' [101] */
 		0->e;
+	});
+}
+
+void
+crash(void)
+{
+	/*
+	 * Before tree.c 1.418 from 2022-04-03, lint dereferenced a null
+	 * pointer in do_statement_expr.
+	 */
+	({
+		/* expect+1: error: syntax error ';' [249] */
+		;
 	});
 }

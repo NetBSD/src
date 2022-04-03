@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.417 2022/04/02 22:38:45 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.418 2022/04/03 00:39:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.417 2022/04/02 22:38:45 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.418 2022/04/03 00:39:32 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4546,18 +4546,21 @@ do_statement_expr(tnode_t *tn)
 {
 	block_level--;
 	mem_block_level--;
-	stmt_exprs->se_sym = mktempsym(block_dup_type(tn->tn_type));
+	stmt_exprs->se_sym = tn != NULL
+	    ? mktempsym(block_dup_type(tn->tn_type))
+	    : NULL;		/* after a syntax error */
 	mem_block_level++;
 	block_level++;
 	/* ({ }) is a GCC extension */
 	gnuism(320);
-
 }
 
 tnode_t *
 end_statement_expr(void)
 {
 	stmt_expr *se = stmt_exprs;
+	if (se->se_sym == NULL)
+		return NULL;	/* after a syntax error */
 	tnode_t *tn = build_name(se->se_sym, false);
 	(void)expr_save_memory();	/* leak */
 	expr_restore_memory(se->se_mem);
