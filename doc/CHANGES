@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2867 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2868 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -485,3 +485,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata: updated to 2022a (using the 2022agtz fork to restore data
 		from previously merged zones) [kre 20220320] 
 	tzcode: Updated to 2022a. [christos 20220322]
+	dhcp: Import version 4.4.3. [christos 20220402]
