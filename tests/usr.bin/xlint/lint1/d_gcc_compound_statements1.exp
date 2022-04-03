@@ -1,3 +1,4 @@
 d_gcc_compound_statements1.c(24): error: syntax error 'return outside function' [249]
 d_gcc_compound_statements1.c(25): error: cannot initialize 'int' from 'void' [185]
 d_gcc_compound_statements1.c(37): error: type 'int' does not have member 'e' [101]
+d_gcc_compound_statements1.c(50): error: syntax error ';' [249]
