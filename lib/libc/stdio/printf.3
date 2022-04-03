@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.70 2021/09/23 12:17:57 wiz Exp $
+.\"	$NetBSD: printf.3,v 1.71 2022/04/03 14:17:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 19, 2015
+.Dd April 3, 2022
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -141,11 +141,11 @@ floating point formats, positional arguments, and wide characters.
 .Fn asprintf
 and
 .Fn vasprintf
-return a pointer to a buffer sufficiently large to hold the
-string in the
-.Fa ret
-argument.
-This pointer should be passed to
+set the
+.Fa ret 
+argument to a pointer containing the formatted string.
+This pointer
+points to a newly allocated buffer and should be passed to
 .Xr free 3
 to release the allocated storage when it is no longer needed.
 If sufficient space cannot be allocated, these functions
