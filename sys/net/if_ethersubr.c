@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.310 2021/12/31 14:26:09 riastradh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.311 2022/04/04 06:10:00 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.310 2021/12/31 14:26:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.311 2022/04/04 06:10:00 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -125,8 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.310 2021/12/31 14:26:09 riastradh
 #include <net/agr/if_agrvar.h>
 #endif
 
-#include <net/lagg/if_laggvar.h>
-
 #if NBRIDGE > 0
 #include <net/if_bridgevar.h>
 #endif
@@ -184,9 +182,6 @@ const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
 #define senderr(e) { error = (e); goto bad;}
 
 static pktq_rps_hash_func_t ether_pktq_rps_hash_p;
-
-/* if_lagg(4) support */
-struct mbuf *(*lagg_input_ethernet_p)(struct ifnet *, struct mbuf *);
 
 static int ether_output(struct ifnet *, struct mbuf *,
     const struct sockaddr *, const struct rtentry *);
@@ -657,9 +652,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	size_t ehlen;
 	static int earlypkts;
 	int isr = 0;
-#if NAGR > 0
-	void *agrprivate;
-#endif
 
 	KASSERT(!cpu_intr_p());
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
@@ -764,26 +756,13 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 #if NAGR > 0
-	if (ifp->if_type != IFT_IEEE8023ADLAG) {
-		agrprivate = ifp->if_lagg;
-	} else {
-		agrprivate = NULL;
-	}
-	if (agrprivate != NULL &&
+	if (ifp->if_lagg != NULL &&
 	    __predict_true(etype != ETHERTYPE_SLOWPROTOCOLS)) {
 		m->m_flags &= ~M_PROMISC;
 		agr_input(ifp, m);
 		return;
 	}
 #endif
-
-	/* Handle input from a lagg(4) port */
-	if (ifp->if_type == IFT_IEEE8023ADLAG) {
-		KASSERT(lagg_input_ethernet_p != NULL);
-		m = (*lagg_input_ethernet_p)(ifp, m);
-		if (m == NULL)
-			return;
-	}
 
 	/*
 	 * If VLANs are configured on the interface, check to
@@ -859,14 +838,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		switch (subtype) {
 #if NAGR > 0
 		case SLOWPROTOCOLS_SUBTYPE_LACP:
-			if (agrprivate != NULL) {
+			if (ifp->if_lagg != NULL) {
 				ieee8023ad_lacp_input(ifp, m);
 				return;
 			}
 			break;
 
 		case SLOWPROTOCOLS_SUBTYPE_MARKER:
-			if (agrprivate != NULL) {
+			if (ifp->if_lagg != NULL) {
 				ieee8023ad_marker_input(ifp, m);
 				return;
 			}
