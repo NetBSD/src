@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.45 2022/04/01 07:26:51 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.46 2022/04/04 06:10:00 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.45 2022/04/01 07:26:51 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.46 2022/04/04 06:10:00 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.45 2022/04/01 07:26:51 yamaguchi Exp $
 #endif
 
 #include <net/lagg/if_lagg.h>
-#include <net/lagg/if_laggvar.h>
 #include <net/lagg/if_laggproto.h>
 
 #include "ioconf.h"
@@ -134,8 +133,7 @@ static const struct lagg_proto lagg_protos[] = {
 };
 
 static int	lagg_chg_sadl(struct ifnet *, const uint8_t *, size_t);
-static struct mbuf *
-		lagg_input_ethernet(struct ifnet *, struct mbuf *);
+static void	lagg_input_ethernet(struct ifnet *, struct mbuf *);
 static int	lagg_clone_create(struct if_clone *, int);
 static int	lagg_clone_destroy(struct ifnet *);
 static int	lagg_init(struct ifnet *);
@@ -338,7 +336,6 @@ lagginit(void)
 			lagg_protos[i].pr_init();
 	}
 
-	lagg_input_ethernet_p = lagg_input_ethernet;
 	if_clone_attach(&lagg_cloner);
 }
 
@@ -351,7 +348,6 @@ laggdetach(void)
 		return EBUSY;
 
 	if_clone_detach(&lagg_cloner);
-	lagg_input_ethernet_p = NULL;
 
 	for (i = 0; i < LAGG_PROTO_MAX; i++) {
 		if (lagg_protos[i].pr_fini != NULL)
@@ -1096,12 +1092,13 @@ lagg_proto_input(struct lagg_softc *sc, struct lagg_port *lp, struct mbuf *m)
 	return m;
 }
 
-static struct mbuf *
+static void
 lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct psref psref;
 	struct lagg_port *lp;
+	struct ether_header *eh;
 	int s;
 
 	/* sanity check */
@@ -1110,7 +1107,9 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 	if (lp == NULL) {
 		/* This interface is not a member of lagg */
 		pserialize_read_exit(s);
-		return m;
+		m_freem(m);
+		if_statinc(ifp_port, if_ierrors);
+		return;
 	}
 	lagg_port_getref(lp, &psref);
 	pserialize_read_exit(s);
@@ -1121,20 +1120,37 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 	 * Drop promiscuously received packets
 	 * if we are not in promiscuous mode.
 	 */
-	if ((m->m_flags & (M_BCAST | M_MCAST)) == 0 &&
-	    (ifp_port->if_flags & IFF_PROMISC) != 0 &&
-	    (ifp->if_flags & IFF_PROMISC) == 0) {
-		struct ether_header *eh;
 
-		eh = mtod(m, struct ether_header *);
-		if (memcmp(CLLADDR(ifp->if_sadl),
-		    eh->ether_dhost, ETHER_ADDR_LEN) != 0) {
-			m_freem(m);
-			m = NULL;
+	if (__predict_false(m->m_len < sizeof(*eh))) {
+		if ((m = m_pullup(m, sizeof(*eh))) == NULL) {
 			if_statinc(ifp, if_ierrors);
 			goto out;
 		}
 	}
+
+	eh = mtod(m, struct ether_header *);
+
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+		/*
+		 * If this is not a simplex interface, drop the packet
+		 * if it came from us.
+		 */
+		if ((ifp->if_flags & IFF_SIMPLEX) == 0 &&
+		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_shost,
+		    ETHER_ADDR_LEN) == 0) {
+			goto drop;
+		}
+
+		if_statinc(ifp_port, if_imcasts);
+	} else {
+		if ((ifp->if_flags & IFF_PROMISC) == 0 &&
+		    (ifp_port->if_flags & IFF_PROMISC) != 0 &&
+		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
+		    ETHER_ADDR_LEN) != 0)
+			goto drop;
+	}
+
+	if_statadd(ifp_port, if_ibytes, m->m_pkthdr.len);
 
 	if (pfil_run_hooks(ifp_port->if_pfil, &m,
 	    ifp_port, PFIL_IN) != 0)
@@ -1145,13 +1161,17 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 		m_set_rcvif(m, ifp);
 		m->m_flags &= ~M_PROMISC;
 		if_input(ifp, m);
-		m = NULL;
 	}
 
 out:
 	lagg_port_putref(lp, &psref);
+	return;
 
-	return m;
+drop:
+	lagg_port_putref(lp, &psref);
+	m_freem(m);
+	if_statinc(ifp_port, if_iqdrops);
+	return;
 }
 
 static int
@@ -2193,6 +2213,7 @@ lagg_port_setup(struct lagg_softc *sc,
 	/* backup members */
 	lp->lp_iftype = ifp_port->if_type;
 	lp->lp_ioctl = ifp_port->if_ioctl;
+	lp->lp_input = ifp_port->_if_input;
 	lp->lp_output = ifp_port->if_output;
 	lp->lp_ifcapenable = ifp_port->if_capenable;
 	lp->lp_mtu = ifp_port->if_mtu;
@@ -2208,6 +2229,7 @@ lagg_port_setup(struct lagg_softc *sc,
 	atomic_store_release(&ifp_port->if_lagg, (void *)lp);
 	ifp_port->if_type = if_type;
 	ifp_port->if_ioctl = lagg_port_ioctl;
+	ifp_port->_if_input = lagg_input_ethernet;
 	ifp_port->if_output = lagg_port_output;
 	if (is_1st_port) {
 		if (lp->lp_iftype != ifp_port->if_type)
@@ -2292,6 +2314,7 @@ restore_sadl:
 	}
 
 	ifp_port->if_ioctl = lp->lp_ioctl;
+	ifp_port->_if_input = lp->lp_input;
 	ifp_port->if_output = lp->lp_output;
 	atomic_store_release(&ifp_port->if_lagg, NULL);
 	IFNET_UNLOCK(ifp_port);
@@ -2390,6 +2413,7 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 		(void)lagg_setmtu(ifp_port, lp->lp_mtu);
 	}
 
+	ifp_port->_if_input = lp->lp_input;
 	ifp_port->if_output = lp->lp_output;
 	if (ifp_port->if_ioctl == lagg_port_ioctl)
 		ifp_port->if_ioctl = lp->lp_ioctl;
