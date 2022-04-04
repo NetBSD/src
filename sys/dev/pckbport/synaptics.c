@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.77 2022/04/01 06:31:29 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.78 2022/04/04 07:04:20 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.77 2022/04/01 06:31:29 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.78 2022/04/04 07:04:20 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,8 @@ static void
 pms_synaptics_set_boundaries(void)
 {
 	if (synaptics_vert_pct != synaptics_old_vert_pct ) {
-		synaptics_edge_right -= ((unsigned long) synaptics_vert_pct *
+		synaptics_edge_right = synaptics_actual_edge_right -
+		    ((unsigned long) synaptics_vert_pct *
 		    (synaptics_actual_edge_right - synaptics_edge_left)) / 100;
 		synaptics_old_vert_pct = synaptics_vert_pct;
 		synaptics_old_vert_edge = synaptics_edge_right;
@@ -270,6 +271,7 @@ pms_synaptics_set_boundaries(void)
 			    ((unsigned long) 100 * synaptics_edge_right) /
 			    (synaptics_actual_edge_right - synaptics_edge_left);
 		}
+		synaptics_old_vert_pct = synaptics_vert_pct;
 		synaptics_old_vert_edge = synaptics_edge_right;
 	}
 
