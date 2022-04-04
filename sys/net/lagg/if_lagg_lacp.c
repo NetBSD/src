@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.23 2022/04/04 06:10:00 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.24 2022/04/04 06:12:27 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.23 2022/04/04 06:10:00 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.24 2022/04/04 06:12:27 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -1383,6 +1383,7 @@ lacp_lacpdu_mbuf(struct lacp_softc *lsc, struct lacp_port *lacpp)
 	}
 
 	m->m_pkthdr.len = m->m_len = sizeof(*du);
+	m_reset_rcvif(m);
 
 	du = mtod(m, struct lacpdu *);
 	memset(du, 0, sizeof(*du));
@@ -2542,6 +2543,7 @@ lacp_markerdu_mbuf(struct lacp_softc *lsc, struct lacp_port *lacpp)
 	}
 
 	m->m_pkthdr.len = m->m_len = sizeof(*mdu);
+	m_reset_rcvif(m);
 
 	mdu = mtod(m, struct markerdu *);
 
