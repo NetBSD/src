@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.13 2020/10/14 13:37:14 roy Exp $");
+__RCSID("$NetBSD: media.c,v 1.14 2022/04/04 19:33:44 andvar Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -38,7 +38,7 @@ static int unsetmediaopt(prop_dictionary_t, prop_dictionary_t);
 /*
  * Media stuff.  Whenever a media command is first performed, the
  * currently select media is grabbed for this interface.  If `media'
- * is given, the current media word is modifed.  `mediaopt' commands
+ * is given, the current media word is modified.  `mediaopt' commands
  * only modify the set and clear words.  They then operate on the
  * current media word later.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.39 2022/02/16 22:00:56 andvar Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.40 2022/04/04 19:33:45 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.39 2022/02/16 22:00:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.40 2022/04/04 19:33:45 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1448,7 +1448,7 @@ mvxpe_rxtxth_intr(void *arg)
 
 	DPRINTIFNET(ifp, 2, "PRXTXTIC: %#x\n", ic);
 
-	/* ack maintance interrupt first */
+	/* ack maintenance interrupt first */
 	if (ic & MVXPE_PRXTXTI_PTXERRORSUMMARY) {
 		DPRINTIFNET(ifp, 1, "PRXTXTIC: +PTXERRORSUMMARY\n");
 		MVXPE_EVCNT_INCR(&sc->sc_ev.ev_rxtxth_txerr);

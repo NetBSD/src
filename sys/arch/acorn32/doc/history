@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.8 2022/02/06 20:20:19 andvar Exp $
+#	$NetBSD: history,v 1.9 2022/04/04 19:33:44 andvar Exp $
 ---------------------------------------------------------------------------
 This document is more included as a historical reference and nostalgia :)
 rather than a still worked on list.
@@ -272,7 +272,7 @@ rather than a still worked on list.
 24/12/95
 	- removed redundant physconinit() call in initarm().
 	- updated comments in machdep.c
-	- added support for mulitple swap devices to be specified at boot
+	- added support for multiple swap devices to be specified at boot
 	  time
 	- changed debugging output in userret()
 	- added extra debugging

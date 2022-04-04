@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpevar.h,v 1.8 2022/03/13 17:50:55 andvar Exp $	*/
+/*	$NetBSD: if_mvxpevar.h,v 1.9 2022/04/04 19:33:45 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -433,7 +433,7 @@ struct mvxpe_softc {
 	struct mvxpbm_softc *sc_bm;
 
 	/*
-	 * Maintance clock
+	 * Maintenance clock
 	 */
 	callout_t sc_tick_ch;		/* tick callout */
 

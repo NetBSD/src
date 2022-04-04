@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer2_disk.h,v 1.3 2021/01/10 12:38:40 tkusumi Exp $      */
+/*        $NetBSD: hammer2_disk.h,v 1.4 2022/04/04 19:33:46 andvar Exp $      */
 
 /*
  * Copyright (c) 2011-2019 The DragonFly Project.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer2_disk.h,v 1.3 2021/01/10 12:38:40 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer2_disk.h,v 1.4 2022/04/04 19:33:46 andvar Exp $");
 
 #ifndef _VFS_HAMMER2_DISK_H_
 #define _VFS_HAMMER2_DISK_H_
@@ -434,7 +434,7 @@ typedef uint64_t hammer2_key_t;
 typedef uint32_t hammer2_crc32_t;
 
 /*
- * Miscellanious ranges (all are unsigned).
+ * Miscellaneous ranges (all are unsigned).
  */
 #define HAMMER2_TID_MIN		1ULL
 #define HAMMER2_TID_MAX		0xFFFFFFFFFFFFFFFFULL

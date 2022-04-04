@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.31 2017/10/20 07:06:06 jdolecek Exp $	*/
+/*	$NetBSD: simide.c,v 1.32 2022/04/04 19:33:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.31 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.32 2022/04/04 19:33:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ simide_attach(device_t parent, device_t self, void *aux)
 	 * cookie.
 	 *
 	 * Also while we are at it replace the default
-	 * read/write mulitple short functions with
+	 * read/write multiple short functions with
 	 * optimised versions
 	 */
 

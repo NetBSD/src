@@ -1,4 +1,4 @@
-/* $NetBSD: t_getitimer.c,v 1.3 2019/07/13 12:44:02 gson Exp $ */
+/* $NetBSD: t_getitimer.c,v 1.4 2022/04/04 19:33:46 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getitimer.c,v 1.3 2019/07/13 12:44:02 gson Exp $");
+__RCSID("$NetBSD: t_getitimer.c,v 1.4 2022/04/04 19:33:46 andvar Exp $");
 
 #include <sys/time.h>
 
@@ -86,7 +86,7 @@ ATF_TC_BODY(getitimer_empty, tc)
 	return;
 
 fail:
-	atf_tc_fail("getitimer(2) modfied the timer before it was armed");
+	atf_tc_fail("getitimer(2) modified the timer before it was armed");
 }
 
 ATF_TC(getitimer_err);

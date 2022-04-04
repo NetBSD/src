@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.40 2015/10/11 23:58:16 mrg Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.41 2022/04/04 19:33:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2015 Matthew R. Green
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.40 2015/10/11 23:58:16 mrg Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.41 2022/04/04 19:33:44 andvar Exp $");
 #endif
 
 
@@ -299,7 +299,7 @@ main(int argc, char *argv[])
 	if ((command == CMD_c) && pflag == 0)
 		usage();
 
-	/* -f and -o are mutualy exclusive */
+	/* -f and -o are mutually exclusive */
 	if (fflag && oflag)
 		usage();
 		
