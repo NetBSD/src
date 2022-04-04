@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.22 2022/04/01 07:26:51 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.23 2022/04/04 06:10:00 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.22 2022/04/01 07:26:51 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.23 2022/04/04 06:10:00 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -1012,9 +1012,6 @@ lacp_pdu_input(struct lacp_softc *lsc, struct lacp_port *lacpp, struct mbuf *m)
 	if (m->m_pkthdr.len != sizeof(*du))
 		goto bad;
 
-	if ((m->m_flags & M_MCAST) == 0)
-		goto bad;
-
 	if (m->m_len < (int)sizeof(*du)) {
 		m = m_pullup(m, sizeof(*du));
 		if (m == NULL) {
@@ -1091,7 +1088,8 @@ lacp_marker_reply(struct lacp_softc *lsc, struct lacp_port *lacpp,
 	mdu = mtod(m_info, struct markerdu *);
 
 	mdu->mdu_tlv_info.tlv_type = MARKER_TYPE_RESPONSE;
-	/* ether_dhost is already equals to multicast address */
+	/* ether_dhost is already ethermulticastaddr_slowprotocols */
+	m_info->m_flags |= M_MCAST;
 	memcpy(mdu->mdu_eh.ether_shost,
 	    CLLADDR(ifp_port->if_sadl), ETHER_ADDR_LEN);
 
@@ -1176,9 +1174,6 @@ lacp_marker_input(struct lacp_softc *lsc, struct lacp_port *lacpp,
 	};
 
 	if (m->m_pkthdr.len != sizeof(*mdu))
-		goto bad;
-
-	if ((m->m_flags & M_MCAST) == 0)
 		goto bad;
 
 	if (m->m_len < (int)sizeof(*mdu)) {
