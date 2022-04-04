@@ -30,7 +30,7 @@
 #include <machine/asm.h>
 #include <sys/errno.h>
 
-RCSID("$NetBSD: n_scalbn.S,v 1.5 2014/02/03 21:22:21 martin Exp $")
+RCSID("$NetBSD: n_scalbn.S,v 1.6 2022/04/04 19:33:44 andvar Exp $")
 
 WEAK_ALIAS(scalbn,_scalbn)
 WEAK_ALIAS(scalbnl,_scalbnl)
@@ -73,7 +73,7 @@ ENTRY(_scalbn, 0)
 
 underflow:
 	clrq	%r0			/* return 0.0 */
-	jr	copysign		/* or mabye -0.0 */
+	jr	copysign		/* or maybe -0.0 */
 overflow:
 	pushl	$ERANGE			/* overflow */
 	calls	$1, _C_LABEL(infnan)	/* possibly signal */

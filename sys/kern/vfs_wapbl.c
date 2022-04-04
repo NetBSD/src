@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.110 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.111 2022/04/04 19:33:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.110 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.111 2022/04/04 19:33:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -571,7 +571,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	 *   PAGE_SIZE it is required to be a multiple of PAGE_SIZE
 	 *   (i.e. 1<<PAGE_SHIFT)
 	 * - Since the log device has to be written in units of
-	 *   1<<wl_log_dev_bshift it is required to be a mulitple of
+	 *   1<<wl_log_dev_bshift it is required to be a multiple of
 	 *   1<<wl_log_dev_bshift.
 	 * - Since filesystem will provide data in units of 1<<wl_fs_dev_bshift,
 	 *   it is convenient to be a multiple of 1<<wl_fs_dev_bshift.

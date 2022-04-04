@@ -2,7 +2,7 @@
 1.1:	PCI autoconf for multiple NIC device drivers
 1.2:	Synology-DS support, Marvell-Yukon driver, fixed aligned alloc
 1.3:	allow to have boot options, brdsetup.c cleanup to make brdtype
-	maintainance more confortable
+	maintenance more confortable
 1.4:	load kernels from local disk
 1.5:	altboot is the new name as this is capable of handling net & dsk.
 1.6:	build altboot.img to fake a Linux kernel module, supports bootargs

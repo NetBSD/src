@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2021/05/02 12:50:43 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2022/04/04 19:33:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 2021/05/02 12:50:43 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2022/04/04 19:33:44 andvar Exp $");
 #endif
 #endif				/* not lint */
 
@@ -311,7 +311,7 @@ main(int argc __unused, char **argv)
 		/* move as long as it's someone's turn */
 		while (cturn == 1 || cturn == -1) {
 
-			/* board maintainence */
+			/* board maintenance */
 			if (tflag)
 				refresh();	/* fix board */
 			else

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.58 2022/03/27 17:10:55 christos Exp $	*/
+/*	$NetBSD: advnops.c,v 1.59 2022/04/04 19:33:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.58 2022/03/27 17:10:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.59 2022/04/04 19:33:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ adosfs_getattr(void *v)
 		vap->va_nlink = 1 + (ap->linkto != 0);
 		/*
 		 * round up to nearest blocks add number of file list
-		 * blocks needed and mutiply by number of bytes per block.
+		 * blocks needed and multiply by number of bytes per block.
 		 */
 		fblks = howmany(ap->fsize, amp->dbsize);
 		fblks += howmany(fblks, ANODENDATBLKENT(ap));

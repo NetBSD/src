@@ -1619,7 +1619,7 @@ untouchwin_body()
 atf_test_case wtouchln
 wtouchln_head()
 {
-    atf_set "descr" "Tests touching of mulitple lines in window"
+    atf_set "descr" "Tests touching of multiple lines in window"
 }
 wtouchln_body()
 {

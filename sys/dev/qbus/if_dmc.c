@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.28 2020/02/05 08:35:10 skrll Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.29 2022/04/04 19:33:45 andvar Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.28 2020/02/05 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.29 2022/04/04 19:33:45 andvar Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -390,7 +390,7 @@ dmcinit(struct ifnet *ifp)
 		/* use DDCMP mode in full duplex */
 		dmcload(sc, DMC_CNTLI, 0, 0);
 	else if (ui->cf_flags == 1)
-		/* use MAINTENENCE mode */
+		/* use MAINTENANCE mode */
 		dmcload(sc, DMC_CNTLI, 0, DMC_MAINT );
 	else if (ui->cf_flags == 2)
 		/* use DDCMP half duplex as primary station */

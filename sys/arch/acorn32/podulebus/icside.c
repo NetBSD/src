@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.34 2017/10/20 07:06:06 jdolecek Exp $	*/
+/*	$NetBSD: icside.c,v 1.35 2022/04/04 19:33:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.34 2017/10/20 07:06:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.35 2022/04/04 19:33:44 andvar Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -244,7 +244,7 @@ icside_attach(device_t parent, device_t self, void *aux)
 	 * cookie.
 	 *
 	 * Also while we are at it replace the default
-	 * read/write mulitple short functions with
+	 * read/write multiple short functions with
 	 * optimised versions
 	 */
 
