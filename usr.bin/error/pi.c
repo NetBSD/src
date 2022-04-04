@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.19 2016/06/30 15:34:30 dholland Exp $	*/
+/*	$NetBSD: pi.c,v 1.20 2022/04/04 19:33:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.19 2016/06/30 15:34:30 dholland Exp $");
+__RCSID("$NetBSD: pi.c,v 1.20 2022/04/04 19:33:46 andvar Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -160,7 +160,7 @@ static boolean structured, multiple;
 static char *pi_Endmatched[] = {"End", "matched"};
 static char *pi_Inserted[] = {"Inserted", "keyword", "end", "matching"};
 
-static char *pi_multiple[] = {"Mutiply", "defined", "label", "in", "case,", "line"};
+static char *pi_multiple[] = {"Multiply", "defined", "label", "in", "case,", "line"};
 static char *pi_structured[] = {"is", "into", "a", "structured", "statement"};
 
 static char *pi_und1[] = {"undefined", "on", "line"};
@@ -173,7 +173,7 @@ DECL_STRINGS_2(static, pi_Endmatched, "End", "matched");
 DECL_STRINGS_4(static, pi_Inserted, "Inserted", "keyword", "end", "matching");
 
 DECL_STRINGS_6(static, pi_multiple,
-	       "Mutiply", "defined", "label", "in", "case,", "line");
+	       "Multiply", "defined", "label", "in", "case,", "line");
 DECL_STRINGS_5(static, pi_structured,
 	       "is", "into", "a", "structured", "statement");
 

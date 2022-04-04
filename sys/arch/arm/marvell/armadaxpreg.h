@@ -335,7 +335,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ARMADAXP_L2_CFU			0x228
 #define ARMADAXP_L2_SYNC		0x700
 #define ARMADAXP_L2_STATUS		0x704
-/* Cache maintance operations */
+/* Cache maintenance operations */
 #define ARMADAXP_L2_RANGE_BASE		0x720
 #define ARMADAXP_L2_INV_PHYS		0x770
 #define ARMADAXP_L2_INV_RANGE		0x774
