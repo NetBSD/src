@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.157 2022/04/02 21:47:04 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.158 2022/04/05 23:13:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.157 2022/04/02 21:47:04 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.158 2022/04/05 23:13:56 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -94,7 +94,7 @@ const char *const msgs[] = {
 	"zero size bit-field",					      /* 37 */
 	"function illegal in structure or union",		      /* 38 */
 	"zero sized array in struct is a C99 extension: %s",	      /* 39 */
-	"unknown size: %s",					      /* 40 */
+	"",			/* never used */		      /* 40 */
 	"bit-field in union is very unusual",			      /* 41 */
 	"forward reference to enum type",			      /* 42 */
 	"redefinition hides earlier one: %s",			      /* 43 */
