@@ -1,1 +1,3 @@
-msg_032.c(6): error: syntax error ':' [249]
+msg_032.c(10): warning: argument type defaults to 'int': a [32]
+msg_032.c(10): warning: argument type defaults to 'int': b [32]
+msg_032.c(10): warning: argument type defaults to 'int': c [32]

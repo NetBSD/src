@@ -1,3 +1,4 @@
 msg_018.c(7): error: void type for 'x' [19]
 msg_018.c(10): error: cannot take size/alignment of void [146]
-msg_018.c(12): error: syntax error ':' [249]
+msg_018.c(14): error: illegal use of 'void' [18]
+msg_018.c(14): warning: empty array declaration: void_array [190]

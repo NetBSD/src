@@ -1,1 +1,2 @@
-msg_039.c(6): error: syntax error ':' [249]
+msg_039.c(11): warning: zero sized array is a C99 extension [322]
+msg_039.c(11): warning: zero sized array in struct is a C99 extension: member [39]

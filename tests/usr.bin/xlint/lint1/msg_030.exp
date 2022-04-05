@@ -1,1 +1,3 @@
-msg_030.c(6): error: syntax error ':' [249]
+msg_030.c(10): warning: redeclaration of a; ANSI C requires static [30]
+msg_030.c(14): warning: redeclaration of b; ANSI C requires static [30]
+msg_030.c(18): warning: redeclaration of c; ANSI C requires static [30]
