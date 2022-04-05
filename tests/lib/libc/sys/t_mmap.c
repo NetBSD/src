@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.15 2022/04/05 13:09:54 gson Exp $ */
+/* $NetBSD: t_mmap.c,v 1.16 2022/04/05 15:59:22 gson Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.15 2022/04/05 13:09:54 gson Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.16 2022/04/05 15:59:22 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -215,7 +215,7 @@ ATF_TC_HEAD(mmap_err, tc)
 
 ATF_TC_BODY(mmap_err, tc)
 {
-	size_t addr = SIZE_MAX;
+	void *addr = (void *)-1;
 	void *map;
 
 	errno = 0;
@@ -225,7 +225,7 @@ ATF_TC_BODY(mmap_err, tc)
 	ATF_REQUIRE(errno == EBADF);
 
 	errno = 0;
-	map = mmap(&addr, page, PROT_READ, MAP_FIXED|MAP_PRIVATE, -1, 0);
+	map = mmap(addr, page, PROT_READ, MAP_FIXED|MAP_PRIVATE, -1, 0);
 
 	ATF_REQUIRE(map == MAP_FAILED);
 	ATF_REQUIRE_MSG(errno == EINVAL, "errno %d != EINVAL", errno);
