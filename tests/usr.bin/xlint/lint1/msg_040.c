@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_040.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_040.c,v 1.3 2022/04/05 23:09:19 rillig Exp $	*/
 # 3 "msg_040.c"
 
 // Test for message: unknown size: %s [40]
+/* This message is not used. */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -Sw */
+
+int var;

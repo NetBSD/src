@@ -1,1 +1,1 @@
-msg_026.c(6): error: syntax error ':' [249]
+msg_026.c(7): warning: cannot initialize extern declaration: used [26]
