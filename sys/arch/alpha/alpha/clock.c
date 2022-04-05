@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.46 2020/10/10 03:05:04 thorpej Exp $ */
+/* $NetBSD: clock.c,v 1.47 2022/04/05 04:33:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46 2020/10/10 03:05:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2022/04/05 04:33:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -110,7 +110,7 @@ cpu_initclocks(void)
 	 * Initialize PCC timecounter, unless we're running in Qemu
 	 * (we will use a different timecounter in that case).
 	 */
-	if (! alpha_is_qemu) {
+	if (!alpha_is_qemu) {
 		const uint64_t pcc_freq = cpu_frequency(curcpu());
 		cc_init(NULL, pcc_freq, "PCC", PCC_QUAL);
 		alpha_use_cctr = 1;
