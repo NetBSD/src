@@ -1,4 +1,4 @@
-/* $NetBSD: apple_wdog.c,v 1.2 2021/09/06 14:03:17 jmcneill Exp $ */
+/* $NetBSD: apple_wdog.c,v 1.3 2022/04/05 05:04:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_wdog.c,v 1.2 2021/09/06 14:03:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_wdog.c,v 1.3 2022/04/05 05:04:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: apple_wdog.c,v 1.2 2021/09/06 14:03:17 jmcneill Exp 
 #define	 WDOG_SYS_CTL_ENABLE	__BIT(2)
 
 static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "apple,wdt" },
 	{ .compat = "apple,reboot-v0" },
 	DEVICE_COMPAT_EOL
 };
