@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.18 2013/12/09 09:35:16 wiz Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.19 2022/04/06 22:47:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ ENTRY(mutex_spin_enter, 0)
 	mfpr	$PR_IPL, %r2			/* get current IPL */
 	movzbl	MTX_IPL(%r0), %r3
 	cmpl	%r3, %r2			/* does mutex have > IPL? */
-	bleq	1f				/*   no, leave IPL alone */ 
+	bleq	1f				/*   no, leave IPL alone */
 	mtpr	%r3, $PR_IPL			/*   yes, raise IPL */
 1:	mfpr	$PR_SSP, %r4			/* get curlwp */
 	movl	L_CPU(%r4),%r4			/* get cpu_info */
@@ -137,7 +137,7 @@ ENTRY(mutex_spin_exit, 0)
 	incl	CI_MTX_COUNT(%r4)		/* incr mtx count */
 	bneq	1f				/* still held? */
 	mtpr	%r2, $PR_IPL			/*   no, restore saved ipl */
-1:	ret	
+1:	ret
 
 #if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
 2:	callg	(%ap), _C_LABEL(mutex_vector_exit)	/* slow path */

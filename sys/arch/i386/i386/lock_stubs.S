@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.35 2020/05/01 09:40:47 maxv Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.36 2022/04/06 22:47:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -31,11 +31,11 @@
 
 /*
  * Where possible we make each routine fit into an assumed 64-byte cache
- * line.  Please check alignment with 'objdump -d' after making changes. 
+ * line.  Please check alignment with 'objdump -d' after making changes.
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.35 2020/05/01 09:40:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.36 2022/04/06 22:47:57 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -354,7 +354,7 @@ ENTRY(__cpu_simple_lock_try)
 	LOCK(7)
 	cmpxchgb %ah, (%edx)
 	movl	$0, %eax
-	setz	%al	
+	setz	%al
 	RET(8)
 END(__cpu_simple_lock_try)
 

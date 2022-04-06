@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.1 2011/01/17 07:40:21 skrll Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.2 2022/04/06 22:47:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -31,7 +31,7 @@
 
 #include "atomic_op_asm.h"
 
-RCSID("$NetBSD: membar_ops.S,v 1.1 2011/01/17 07:40:21 skrll Exp $")
+RCSID("$NetBSD: membar_ops.S,v 1.2 2022/04/06 22:47:56 riastradh Exp $")
 
 	.text
 
