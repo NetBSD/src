@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.135 2022/02/24 03:35:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.136 2022/04/06 14:20:07 reinoud Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -22,7 +22,7 @@ SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs resize_ffs
 SUBDIR+= newfs_lfs fsck_lfs dump_lfs resize_lfs
 SUBDIR+= newfs_msdos fsck_msdos
 SUBDIR+= newfs_sysvbfs
-SUBDIR+= newfs_udf
+SUBDIR+= newfs_udf fsck_udf
 SUBDIR+= newfs_v7fs fsck_v7fs
 SUBDIR+= mount_ados
 SUBDIR+= mount_autofs

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1292 2022/03/07 09:45:02 mrg Exp $
+# $NetBSD: mi,v 1.1293 2022/04/06 14:20:07 reinoud Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -382,6 +382,7 @@
 ./sbin/fsck_ffs					base-sysutil-root
 ./sbin/fsck_lfs					base-sysutil-root
 ./sbin/fsck_msdos				base-sysutil-root
+./sbin/fsck_udf					base-sysutil-root
 ./sbin/fsck_v7fs				base-sysutil-root
 ./sbin/fsdb					base-sysutil-root
 ./sbin/fsirand					base-sysutil-root
