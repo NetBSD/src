@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.19 2021/05/23 11:49:45 riastradh Exp $ */
+/* $NetBSD: xhcireg.h,v 1.20 2022/04/06 21:51:29 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -105,7 +105,7 @@
 #define	 XHCI_HCC2_CMC(x)	__SHIFTOUT((x), __BIT(1))	/* CEC MaxExLatTooLg */
 #define	 XHCI_HCC2_FSC(x)	__SHIFTOUT((x), __BIT(2))	/* Foce Save Context */
 #define	 XHCI_HCC2_CTC(x)	__SHIFTOUT((x), __BIT(3))	/* Compliance Transc */
-#define	 XHCI_HCC2_LEC(x)	__SHIFTOUT((x), __BIT(4))	/* Large ESIT Paylod */
+#define	 XHCI_HCC2_LEC(x)	__SHIFTOUT((x), __BIT(4))	/* Large ESIT Payload */
 #define	 XHCI_HCC2_CIC(x)	__SHIFTOUT((x), __BIT(5))	/* Configuration Inf */
 #define	 XHCI_HCC2_ETC(x)	__SHIFTOUT((x), __BIT(6))	/* Extended TBC */
 #define	 XHCI_HCC2_ETC_TSC(x)	__SHIFTOUT((x), __BIT(7))	/* ExtTBC TRB Status */
@@ -648,6 +648,13 @@ struct xhci_trb {
 #define XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_MASK	__BITS(16, 31)
 #define XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_SET(x)    __SHIFTIN((x), XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_MASK)
 #define XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_GET(x)    __SHIFTOUT((x), XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_MASK)
+#define XHCI_EPCTX_MEP_FS_INTR			64U
+#define XHCI_EPCTX_MEP_FS_ISOC			(1*1024U)
+#define XHCI_EPCTX_MEP_HS_INTR			(3*1024U)
+#define XHCI_EPCTX_MEP_HS_ISOC			(3*1024U)
+#define XHCI_EPCTX_MEP_SS_INTR			(3*1024U)
+#define XHCI_EPCTX_MEP_SS_ISOC			(48*1024U)
+#define XHCI_EPCTX_MEP_SS_ISOC_LEC		(16*1024*1024U - 1)
 
 
 #define XHCI_INCTX_NON_CTRL_MASK        0xFFFFFFFCU

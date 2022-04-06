@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.101 2021/10/21 20:18:16 jnemeth Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.102 2022/04/06 21:51:29 mlelstv Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.101 2021/10/21 20:18:16 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.102 2022/04/06 21:51:29 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2623,7 +2623,8 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				struct usbd_pipe *pipe = sc->tx_pipe[pidx];
 				usbd_clear_endpoint_stall_async(pipe);
 			}
-			device_printf(sc->sc_dev, "device timeout\n");
+			device_printf(sc->sc_dev, "device error %s\n",
+			              usbd_errstr(status));
 			if_statinc(ifp, if_oerrors);
 		}
 		splx(s);

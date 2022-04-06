@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.275 2022/03/19 20:50:32 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.276 2022/04/06 21:51:29 mlelstv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.275 2022/03/19 20:50:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.276 2022/04/06 21:51:29 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -247,8 +247,11 @@ usb_delay_ms_locked(struct usbd_bus *bus, u_int ms, kmutex_t *lock)
 	/* Wait at least two clock ticks so we know the time has passed. */
 	if (bus->ub_usepolling || cold)
 		delay((ms+1) * 1000);
-	else
+	else {
+int timeo = (ms*hz+999)/1000 + 1;
+if (timeo > hz/2) printf("usb_delay_ms_locked(%p) %d ticks\n",lock,timeo);
 		kpause("usbdly", false, (ms*hz+999)/1000 + 1, lock);
+	}
 }
 
 void
@@ -458,8 +461,16 @@ usbd_iface_exlock(struct usbd_interface *iface)
 {
 
 	mutex_enter(iface->ui_dev->ud_bus->ub_lock);
+#if 1
+if (iface->ui_busy != 0) {
+	printf("%s: addr %d not idle, busy = %"PRId64"\n",
+		device_xname(iface->ui_dev->ud_bus->ub_usbctl),
+		iface->ui_dev->ud_addr, iface->ui_busy);
+}
+#else
 	KASSERTMSG(iface->ui_busy == 0, "interface is not idle,"
 	    " busy=%"PRId64, iface->ui_busy);
+#endif
 	iface->ui_busy = -1;
 	mutex_exit(iface->ui_dev->ud_bus->ub_lock);
 }

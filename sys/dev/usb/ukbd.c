@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.160 2022/04/02 19:19:12 mlelstv Exp $        */
+/*      $NetBSD: ukbd.c,v 1.161 2022/04/06 21:51:29 mlelstv Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.160 2022/04/02 19:19:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.161 2022/04/06 21:51:29 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1083,9 +1083,6 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 	sc->sc_nkeycode = 0;
 	d = hid_start_parse(desc, size, hid_input);
 	while (hid_get_item(d, &h)) {
-		printf("ukbd: id=%d kind=%d usage=%#x flags=%#x pos=%d size=%d cnt=%d\n",
-		  h.report_ID, h.kind, h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count);
-
 		/* Check for special Apple notebook FN key */
 		if (HID_GET_USAGE_PAGE(h.usage) == 0x00ff &&
 		    HID_GET_USAGE(h.usage) == 0x0003 &&

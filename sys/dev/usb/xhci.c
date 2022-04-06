@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.162 2022/03/13 11:30:04 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.163 2022/04/06 21:51:29 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.162 2022/03/13 11:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.163 2022/04/06 21:51:29 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -192,7 +192,7 @@ static void xhci_setup_ctx(struct usbd_pipe *);
 static void xhci_setup_route(struct usbd_pipe *, uint32_t *);
 static void xhci_setup_tthub(struct usbd_pipe *, uint32_t *);
 static void xhci_setup_maxburst(struct usbd_pipe *, uint32_t *);
-static uint32_t xhci_bival2ival(uint32_t, uint32_t);
+static uint32_t xhci_bival2ival(uint32_t, uint32_t, uint32_t);
 
 static void xhci_noop(struct usbd_pipe *);
 
@@ -2440,8 +2440,6 @@ xhci_event_transfer(struct xhci_softc * const sc,
 			xfer->ux_frlengths[xx->xx_isoc_done] -=
 			    XHCI_TRB_2_REM_GET(trb_2);
 			xfer->ux_actlen += xfer->ux_frlengths[xx->xx_isoc_done];
-			if (++xx->xx_isoc_done < xfer->ux_nframes)
-				return;
 		} else
 		if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0) {
 			if (xfer->ux_actlen == 0)
@@ -2471,6 +2469,22 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		DPRINTFN(1, "ERR %ju slot %ju dci %ju", trbcode, slot, dci, 0);
 		err = USBD_IOERROR;
 		break;
+	}
+
+	if (xfertype == UE_ISOCHRONOUS) {
+		switch (trbcode) {
+		case XHCI_TRB_ERROR_SHORT_PKT:
+		case XHCI_TRB_ERROR_SUCCESS:
+			break;
+		case XHCI_TRB_ERROR_MISSED_SERVICE:
+		case XHCI_TRB_ERROR_RING_UNDERRUN:
+		case XHCI_TRB_ERROR_RING_OVERRUN:
+		default:
+			xfer->ux_frlengths[xx->xx_isoc_done] = 0;
+			break;
+		}
+		if (++xx->xx_isoc_done < xfer->ux_nframes)
+			return;
 	}
 
 	/*
@@ -3479,9 +3493,7 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	const u_int dci = xhci_ep_get_dci(ed);
 	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 	uint32_t *cp;
-	uint16_t mps = UGETW(ed->wMaxPacketSize);
 	uint8_t speed = dev->ud_speed;
-	uint8_t ival = ed->bInterval;
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("pipe %#jx: slot %ju dci %ju speed %ju",
@@ -3526,43 +3538,16 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	if (xfertype != UE_ISOCHRONOUS)
 		cp[1] |= XHCI_EPCTX_1_CERR_SET(3);
 
-	if (xfertype == UE_CONTROL)
-		cp[4] = XHCI_EPCTX_4_AVG_TRB_LEN_SET(8); /* 6.2.3 */
-	else if (USB_IS_SS(speed))
-		cp[4] = XHCI_EPCTX_4_AVG_TRB_LEN_SET(mps);
-	else
-		cp[4] = XHCI_EPCTX_4_AVG_TRB_LEN_SET(UE_GET_SIZE(mps));
-
 	xhci_setup_maxburst(pipe, cp);
 
-	switch (xfertype) {
-	case UE_CONTROL:
-		break;
-	case UE_BULK:
-		/* XXX Set MaxPStreams, HID, and LSA if streams enabled */
-		break;
-	case UE_INTERRUPT:
-		if (pipe->up_interval != USBD_DEFAULT_INTERVAL)
-			ival = pipe->up_interval;
-
-		ival = xhci_bival2ival(ival, speed);
-		cp[0] |= XHCI_EPCTX_0_IVAL_SET(ival);
-		break;
-	case UE_ISOCHRONOUS:
-		if (pipe->up_interval != USBD_DEFAULT_INTERVAL)
-			ival = pipe->up_interval;
-
-		/* xHCI 6.2.3.6 Table 65, USB 2.0 9.6.6 */
-		if (speed == USB_SPEED_FULL)
-			ival += 3; /* 1ms -> 125us */
-		ival--;
-		cp[0] |= XHCI_EPCTX_0_IVAL_SET(ival);
-		break;
-	default:
-		break;
-	}
-	DPRINTFN(4, "setting ival %ju MaxBurst %#jx",
-	    XHCI_EPCTX_0_IVAL_GET(cp[0]), XHCI_EPCTX_1_MAXB_GET(cp[1]), 0, 0);
+	DPRINTFN(4, "setting on dci %ju ival %ju mult %ju mps %#jx",
+	    dci, XHCI_EPCTX_0_IVAL_GET(cp[0]), XHCI_EPCTX_0_MULT_GET(cp[0]),
+	    XHCI_EPCTX_1_MAXP_SIZE_GET(cp[1]));
+	DPRINTFN(4, " maxburst %ju mep %#jx atl %#jx",
+	    XHCI_EPCTX_1_MAXB_GET(cp[1]),
+	    (XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_GET(cp[0]) << 16) +
+	    XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_GET(cp[4]),
+	    XHCI_EPCTX_4_AVG_TRB_LEN_GET(cp[4]), 0);
 
 	/* rewind TR dequeue pointer in xHC */
 	/* can't use xhci_ep_get_dci() yet? */
@@ -3747,29 +3732,24 @@ xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 	    XHCI_SCTX_2_TT_PORT_NUM_SET(ttportnum);
 }
 
-/* set up params for periodic endpoint */
-static void
-xhci_setup_maxburst(struct usbd_pipe *pipe, uint32_t *cp)
+static const usb_endpoint_ss_comp_descriptor_t *
+xhci_get_essc_desc(struct usbd_pipe *pipe)
 {
-	struct xhci_pipe * const xpipe = (struct xhci_pipe *)pipe;
 	struct usbd_device *dev = pipe->up_dev;
 	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
-	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
-	usbd_desc_iter_t iter;
 	const usb_cdc_descriptor_t *cdcd;
-	uint32_t maxb = 0;
-	uint16_t mps = UGETW(ed->wMaxPacketSize);
-	uint8_t speed = dev->ud_speed;
-	uint8_t mult = 0;
+	usbd_desc_iter_t iter;
 	uint8_t ep;
 
 	/* config desc is NULL when opening ep0 */
 	if (dev == NULL || dev->ud_cdesc == NULL)
-		goto no_cdcd;
+		return NULL;
+
 	cdcd = (const usb_cdc_descriptor_t *)usb_find_desc(dev,
 	    UDESC_INTERFACE, USBD_CDCSUBTYPE_ANY);
 	if (cdcd == NULL)
-		goto no_cdcd;
+		return NULL;
+
 	usb_desc_iter_init(dev, &iter);
 	iter.cur = (const void *)cdcd;
 
@@ -3791,61 +3771,153 @@ xhci_setup_maxburst(struct usbd_pipe *pipe, uint32_t *cp)
 		}
 	}
 	if (cdcd != NULL && cdcd->bDescriptorType == UDESC_ENDPOINT_SS_COMP) {
-		const usb_endpoint_ss_comp_descriptor_t * esscd =
-		    (const usb_endpoint_ss_comp_descriptor_t *)cdcd;
-		maxb = esscd->bMaxBurst;
-		mult = UE_GET_SS_ISO_MULT(esscd->bmAttributes);
+		return (const usb_endpoint_ss_comp_descriptor_t *)cdcd;
 	}
+	return NULL;
+}
 
- no_cdcd:
-	/* 6.2.3.4,  4.8.2.4 */
-	if (USB_IS_SS(speed)) {
-		/* USB 3.1  9.6.6 */
-		cp[1] |= XHCI_EPCTX_1_MAXP_SIZE_SET(mps);
-		/* USB 3.1  9.6.7 */
-		cp[1] |= XHCI_EPCTX_1_MAXB_SET(maxb);
-#ifdef notyet
-		if (xfertype == UE_ISOCHRONOUS) {
-		}
-		if (XHCI_HCC2_LEC(sc->sc_hcc2) != 0) {
-			/* use ESIT */
-			cp[4] |= XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_SET(x);
-			cp[0] |= XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_SET(x);
+/* set up params for periodic endpoint */
+static void
+xhci_setup_maxburst(struct usbd_pipe *pipe, uint32_t *cp)
+{
+	struct xhci_pipe * const xpipe = (struct xhci_pipe *)pipe;
+	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
+	struct usbd_device * const dev = pipe->up_dev;
+	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
+	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
+	uint16_t mps = UGETW(ed->wMaxPacketSize);
+	uint8_t speed = dev->ud_speed;
+	uint32_t maxb, mep, atl;
+	uint8_t ival, mult;
 
-			/* XXX if LEC = 1, set ESIT instead */
-			cp[0] |= XHCI_EPCTX_0_MULT_SET(0);
+	const usb_endpoint_ss_comp_descriptor_t * esscd =
+	    xhci_get_essc_desc(pipe);
+
+	/* USB 2.0  9.6.6, xHCI 4.8.2.4, 6.2.3.2 - 6.2.3.8 */
+	switch (xfertype) {
+	case UE_ISOCHRONOUS:
+	case UE_INTERRUPT:
+		if (USB_IS_SS(speed)) {
+			maxb = esscd ? esscd->bMaxBurst : UE_GET_TRANS(mps);
+			mep = esscd ? UGETW(esscd->wBytesPerInterval) :
+			    UE_GET_SIZE(mps) * (maxb + 1);
+			if (esscd && xfertype == UE_ISOCHRONOUS &&
+			    XHCI_HCC2_LEC(sc->sc_hcc2) == 0) {
+				mult = UE_GET_SS_ISO_MULT(esscd->bmAttributes);
+				mult = (mult > 2) ? 2 : mult;
+			} else
+				mult = 0;
+
 		} else {
-			/* use ival */
+			switch (speed) {
+			case USB_SPEED_HIGH:
+				maxb = UE_GET_TRANS(mps);
+				mep = UE_GET_SIZE(mps) * (maxb + 1);
+				break;
+			case USB_SPEED_FULL:
+				maxb = 0;
+				mep = UE_GET_SIZE(mps);
+				break;
+			default:
+				maxb = 0;
+				mep = 0;
+				break;
+			}
+			mult = 0;
 		}
-#endif
-	} else {
-		/* USB 2.0  9.6.6 */
-		cp[1] |= XHCI_EPCTX_1_MAXP_SIZE_SET(UE_GET_SIZE(mps));
+		mps = UE_GET_SIZE(mps);
 
-		/* 6.2.3.4 */
-		if (speed == USB_SPEED_HIGH &&
-		   (xfertype == UE_ISOCHRONOUS || xfertype == UE_INTERRUPT)) {
-			maxb = UE_GET_TRANS(mps);
-		} else {
-			/* LS/FS or HS CTRL or HS BULK */
+		if (pipe->up_interval == USBD_DEFAULT_INTERVAL)
+			ival = ed->bInterval;
+		else
+			ival = pipe->up_interval;
+
+		ival = xhci_bival2ival(ival, speed, xfertype);
+		atl = mep;
+		break;
+	case UE_CONTROL:
+	case UE_BULK:
+	default:
+		if (USB_IS_SS(speed)) {
+			maxb = esscd ? esscd->bMaxBurst : 0;
+		} else
 			maxb = 0;
-		}
-		cp[1] |= XHCI_EPCTX_1_MAXB_SET(maxb);
+
+		mps = UE_GET_SIZE(mps);
+		mep = 0;
+		mult = 0;
+		ival = 0;
+		if (xfertype == UE_CONTROL)
+			atl = 8;		/* 6.2.3 */
+		else
+			atl = mps;
+		break;
 	}
+
+	switch (speed) {
+	case USB_SPEED_LOW:
+		break;
+	case USB_SPEED_FULL:
+		if (xfertype == UE_INTERRUPT)
+			if (mep > XHCI_EPCTX_MEP_FS_INTR)
+				mep = XHCI_EPCTX_MEP_FS_INTR;
+		if (xfertype == UE_ISOCHRONOUS)
+			if (mep > XHCI_EPCTX_MEP_FS_ISOC)
+				mep = XHCI_EPCTX_MEP_FS_ISOC;
+		break;
+	case USB_SPEED_HIGH:
+		if (xfertype == UE_INTERRUPT)
+			if (mep > XHCI_EPCTX_MEP_HS_INTR)
+				mep = XHCI_EPCTX_MEP_HS_INTR;
+		if (xfertype == UE_ISOCHRONOUS)
+			if (mep > XHCI_EPCTX_MEP_HS_ISOC)
+				mep = XHCI_EPCTX_MEP_HS_ISOC;
+		break;
+	case USB_SPEED_SUPER:
+	case USB_SPEED_SUPER_PLUS:
+	default:
+		if (xfertype == UE_INTERRUPT)
+			if (mep > XHCI_EPCTX_MEP_SS_INTR)
+				mep = XHCI_EPCTX_MEP_SS_INTR;
+		if (xfertype == UE_ISOCHRONOUS) {
+			if (speed == USB_SPEED_SUPER ||
+			    XHCI_HCC2_LEC(sc->sc_hcc2) == 0) {
+				if (mep > XHCI_EPCTX_MEP_SS_ISOC)
+					mep = XHCI_EPCTX_MEP_SS_ISOC;
+			} else {
+				if (mep > XHCI_EPCTX_MEP_SS_ISOC_LEC)
+					mep = XHCI_EPCTX_MEP_SS_ISOC_LEC;
+			}
+		}
+		break;
+	}
+
 	xpipe->xp_maxb = maxb + 1;
 	xpipe->xp_mult = mult + 1;
+
+	cp[0] |= XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_SET(mep >> 16);
+	cp[0] |= XHCI_EPCTX_0_IVAL_SET(ival);
+	cp[0] |= XHCI_EPCTX_0_MULT_SET(mult);
+	cp[1] |= XHCI_EPCTX_1_MAXP_SIZE_SET(mps);
+	cp[1] |= XHCI_EPCTX_1_MAXB_SET(maxb);
+	cp[4] |= XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_SET(mep & 0xffff);
+	cp[4] |= XHCI_EPCTX_4_AVG_TRB_LEN_SET(atl);
 }
 
 /*
- * Convert endpoint bInterval value to endpoint context interval value
- * for Interrupt pipe.
+ * Convert usbdi bInterval value to xhci endpoint context interval value
+ * for periodic pipe.
  * xHCI 6.2.3.6 Table 65, USB 2.0 9.6.6
  */
 static uint32_t
-xhci_bival2ival(uint32_t ival, uint32_t speed)
+xhci_bival2ival(uint32_t ival, uint32_t speed, uint32_t xfertype)
 {
-	if (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) {
-		int i;
+	if (xfertype != UE_INTERRUPT && xfertype != UE_ISOCHRONOUS)
+		return 0;
+
+	if (xfertype == UE_INTERRUPT &&
+	    (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL)) {
+		u_int i;
 
 		/*
 		 * round ival down to "the nearest base 2 multiple of
@@ -3858,9 +3930,22 @@ xhci_bival2ival(uint32_t ival, uint32_t speed)
 				break;
 		}
 		ival = i;
+
+		/* 3 - 10 */
+		ival = (ival < 3) ? 3 : ival;
+	} else if (speed == USB_SPEED_FULL) {
+		/* FS isoc */
+		ival += 3;			/* 1ms -> 125us */
+		ival--;				/* Interval = bInterval-1 */
+		/* 3 - 18 */
+		ival = (ival > 18) ? 18 : ival;
+		ival = (ival < 3) ? 3 : ival;
 	} else {
-		/* Interval = bInterval-1 for SS/HS */
-		ival--;
+		/* SS/HS intr/isoc */
+		if (ival > 0)
+			ival--;			/* Interval = bInterval-1 */
+		/* 0 - 15 */
+		ival = (ival > 15) ? 15 : ival;
 	}
 
 	return ival;

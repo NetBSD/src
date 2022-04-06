@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.70 2022/03/12 16:51:10 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.71 2022/04/06 21:51:29 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.70 2022/03/12 16:51:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.71 2022/04/06 21:51:29 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1696,7 +1696,7 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 		}
 
 		/* Give it some time to settle */
-		usbd_delay_ms(vs->vs_parent->sc_udev, 1000);
+		usbd_delay_ms(vs->vs_parent->sc_udev, 20);
 
 		/* Set to zero bandwidth alternate interface zero */
 		err = usbd_set_interface(vs->vs_iface, 0);
@@ -2142,11 +2142,11 @@ static int
 uvideo_start_transfer(void *addr)
 {
 	struct uvideo_stream *vs = addr;
-	int s, err;
+	int /*s, */err;
 
-	s = splusb();
+	// s = splusb();
 	err = uvideo_stream_start_xfer(vs);
-	splx(s);
+	// splx(s);
 
 	return err;
 }
@@ -2155,11 +2155,11 @@ static int
 uvideo_stop_transfer(void *addr)
 {
 	struct uvideo_stream *vs = addr;
-	int err, s;
+	int err/* , s*/;
 
-	s = splusb();
+	// s = splusb();
 	err = uvideo_stream_stop_xfer(vs);
-	splx(s);
+	// splx(s);
 
 	return err;
 }
@@ -2174,7 +2174,7 @@ uvideo_get_control_group(void *addr, struct video_control_group *group)
 	usbd_status err;
 	uint8_t control_id, ent_id, data[16];
 	uint16_t len;
-	int s;
+	// int s;
 
 	/* request setup */
 	switch (group->group_id) {
@@ -2204,9 +2204,9 @@ uvideo_get_control_group(void *addr, struct video_control_group *group)
 	USETW(req.wIndex, (ent_id << 8) | sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	s = splusb();
+	// s = splusb();
 	err = usbd_do_request(sc->sc_udev, &req, data);
-	splx(s);
+	// splx(s);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_set_control: error %s (%d)\n",
 			 usbd_errstr(err), err));
@@ -2235,7 +2235,7 @@ uvideo_set_control_group(void *addr, const struct video_control_group *group)
 	usbd_status err;
 	uint8_t control_id, ent_id, data[16]; /* long enough for all controls */
 	uint16_t len;
-	int s;
+	// int s;
 
 	switch (group->group_id) {
 	case VIDEO_CONTROL_PANTILT_RELATIVE:
@@ -2296,9 +2296,9 @@ uvideo_set_control_group(void *addr, const struct video_control_group *group)
 	USETW(req.wIndex, (ent_id << 8) | sc->sc_ifaceno);
 	USETW(req.wLength, len);
 
-	s = splusb();
+	// s = splusb();
 	err = usbd_do_request(sc->sc_udev, &req, data);
-	splx(s);
+	// splx(s);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_set_control: error %s (%d)\n",
 			 usbd_errstr(err), err));
