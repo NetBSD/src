@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.61 2021/12/05 08:18:18 msaitoh Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.62 2022/04/06 03:23:38 gutteridge Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.61 2021/12/05 08:18:18 msaitoh Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.62 2022/04/06 03:23:38 gutteridge Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -351,6 +351,13 @@ main(int argc, char *argv[])
 		manconf = MANCONF;
 	}
 
+	/* Call man -p to get the list of man page dirs */
+	if ((file = popen(command, "r")) == NULL) {
+		free(command);
+		err(EXIT_FAILURE, "popen failed");
+	}
+	free(command);
+
 	if (mflags.recreate) {
 		char *dbp = get_dbpath(manconf);
 		/* No error here, it will fail in init_db in the same call */
@@ -377,14 +384,6 @@ main(int argc, char *argv[])
 		close_db(db);
 		exit(EXIT_FAILURE);
 	}
-
-
-	/* Call man -p to get the list of man page dirs */
-	if ((file = popen(command, "r")) == NULL) {
-		close_db(db);
-		err(EXIT_FAILURE, "fopen failed");
-	}
-	free(command);
 
 	/* Begin the transaction for indexing the pages	*/
 	sqlite3_exec(db, "BEGIN", NULL, NULL, &errmsg);
