@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ktm.c,v 1.4 2021/08/07 16:19:09 thorpej Exp $	*/
+/*	$NetBSD: adb_ktm.c,v 1.5 2022/04/06 17:37:31 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.4 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.5 2022/04/06 17:37:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -363,9 +363,9 @@ ktm_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
-	return (0);
+	return 0;
 }
 
 static void
