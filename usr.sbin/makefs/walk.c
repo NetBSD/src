@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.30 2021/04/03 14:10:56 simonb Exp $	*/
+/*	$NetBSD: walk.c,v 1.31 2022/04/06 13:44:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.30 2021/04/03 14:10:56 simonb Exp $");
+__RCSID("$NetBSD: walk.c,v 1.31 2022/04/06 13:44:25 wiz Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -277,7 +277,7 @@ create_fsnode(const char *root, const char *path, const char *name,
 /*
  * free_fsnodes --
  *	Removes node from tree and frees it and all of
- *   its decendents.
+ *   its descendents.
  */
 void
 free_fsnodes(fsnode *node)
