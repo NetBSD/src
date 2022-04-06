@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.160 2022/04/06 21:51:29 mlelstv Exp $	*/
+/*	$NetBSD: uhub.c,v 1.161 2022/04/06 22:01:45 mlelstv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.160 2022/04/06 21:51:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.161 2022/04/06 22:01:45 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -563,29 +563,9 @@ uhub_explore(struct usbd_device *dev)
 		for (port = 1; port <= hd->bNbrPorts; port++) {
 			SDT_PROBE3(usb, hub, explore, rescan,
 			    dev, port, &dev->ud_hub->uh_ports[port - 1]);
-			up = &dev->ud_hub->uh_ports[port - 1];
-			subdev = up->up_dev;
+			subdev = dev->ud_hub->uh_ports[port - 1].up_dev;
 			if (subdev == NULL)
 				continue;
-
-			err = usbd_get_port_status(subdev, port, &up->up_status);
-			if (err) {
-				DPRINTF("uhub%jd get port stat failed, err %jd",
-				device_unit(sc->sc_dev), err, 0, 0);
-				continue;
-			}
-
-			change = UGETW(up->up_status.wPortChange);
-			if ((change & UPS_C_PORT_ENABLED) == 0) {
-				if (usbd_reset_port(subdev, port, &up->up_status)) {
-					device_printf(sc->sc_dev,
-					"port %d reset failed\n", port);
-					continue;
-				}
-				device_printf(sc->sc_dev,
-				    "port %d reset succeeded\n", port);
-			}
-
 			usbd_reattach_device(sc->sc_dev, subdev, port, NULL);
 		}
 	}
@@ -884,7 +864,7 @@ uhub_explore(struct usbd_device *dev)
 			 * some other serious problem.  Since we cannot leave
 			 * at 0 we have to disable the port instead.
 			 */
-			device_printf(sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "device problem, disabling port %d\n", port);
 			usbd_clear_port_feature(dev, port, UHF_PORT_ENABLE);
 		} else {

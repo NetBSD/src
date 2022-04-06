@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscreg.h,v 1.7 2022/04/06 21:51:29 mlelstv Exp $	*/
+/*	$NetBSD: if_smscreg.h,v 1.8 2022/04/06 22:01:45 mlelstv Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -244,7 +244,7 @@
 #define SMSC_UR_GET_STATS	0xA2
 
 #define SMSC_RX_LIST_CNT	1
-#define SMSC_TX_LIST_CNT	2
+#define SMSC_TX_LIST_CNT	1
 
 #define	SMSC_CONFIG_INDEX	1	/* config number 1 */
 #define	SMSC_IFACE_IDX		0
