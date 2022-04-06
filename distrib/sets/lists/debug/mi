@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.374 2022/03/28 20:52:17 christos Exp $
+# $NetBSD: mi,v 1.375 2022/04/06 14:28:44 reinoud Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -360,6 +360,7 @@
 ./usr/libdata/debug/sbin/fsck_ffs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_lfs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_msdos.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/fsck_udf.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_v7fs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsdb.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsirand.debug		comp-sysutil-debug	debug
