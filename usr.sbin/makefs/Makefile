@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2019/10/13 07:28:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.38 2022/04/06 22:25:00 hauke Exp $
 #
 
 WARNS?=	5
@@ -29,8 +29,8 @@ CPPFLAGS+=	-I${.CURDIR} -I${MKNODSRC} -I${MTREESRC} -DMAKEFS
 .include "${.CURDIR}/udf/Makefile.inc"
 
 .if !defined(HOSTPROG)
-DPADD+= ${LIBUTIL}
-LDADD+= -lutil
+DPADD+= ${LIBUTIL} ${LIBM}
+LDADD+= -lutil -lm
 
 COPTS.cd9660.c+=		${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_FORMAT_TRUNCATION}
 COPTS.cd9660_conversion.c+=	${GCC_NO_FORMAT_TRUNCATION}
