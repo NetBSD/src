@@ -1,7 +1,7 @@
-/* $NetBSD: udf.c,v 1.22 2021/08/21 09:59:46 andvar Exp $ */
+/* $NetBSD: udf.c,v 1.23 2022/04/06 13:29:15 reinoud Exp $ */
 
 /*
- * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
+ * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.22 2021/08/21 09:59:46 andvar Exp $");
+__RCSID("$NetBSD: udf.c,v 1.23 2022/04/06 13:29:15 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: udf.c,v 1.22 2021/08/21 09:59:46 andvar Exp $");
 #include <err.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <math.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -58,221 +59,44 @@ __RCSID("$NetBSD: udf.c,v 1.22 2021/08/21 09:59:46 andvar Exp $");
 #endif
 
 #include "makefs.h"
-#include "udf_create.h"
-#include "udf_write.h"
+#include "udf_core.h"
 #include "newfs_udf.h"
 
-#undef APP_NAME
-#define APP_NAME "*NetBSD makefs"
+/* identification */
+#define IMPL_NAME		"*NetBSD makefs 10.0"
+#define APP_VERSION_MAIN	0
+#define APP_VERSION_SUB		5
 
 /*
  * Note: due to the setup of the newfs code, the current state of the program
  * and its options are held in a few global variables. The FS specific parts
- * are in a global `context' structure.
+ * are in global `context' and 'layout' structures.
  */
 
 /* global variables describing disc and format requests */
-int	 fd;				/* device: file descriptor */
-char	*dev;				/* device: name		   */
-struct mmc_discinfo mmc_discinfo;	/* device: disc info	   */
-
-char	*format_str;			/* format: string representation */
-int	 format_flags;			/* format: attribute flags	 */
-int	 media_accesstype;		/* derived from current mmc cap  */
-int	 check_surface;			/* for rewritables               */
-int	 imagefile_secsize;		/* for files			 */
-
-int	 display_progressbar;
-
-int	 wrtrack_skew;
-float	 meta_fract = (float) UDF_META_PERC / 100.0;
-
-int	 mmc_profile;			/* emulated profile */
 int	 req_enable, req_disable;
 
 
 /* --------------------------------------------------------------------- */
 
-int
-udf_write_sector(void *sector, uint64_t location)
-{
-	uint64_t wpos;
-	ssize_t ret;
-
-	wpos = (uint64_t) location * context.sector_size;
-	ret = pwrite(fd, sector, context.sector_size, wpos);
-	if (ret == -1)
-		return errno;
-	if (ret < (int) context.sector_size)
-		return EIO;
-	return 0;
-}
-
-
-/* not implemented for files */
-int
-udf_surface_check(void)
-{
-	return 0;
-}
-
-
-/*
- * mmc_discinfo and mmc_trackinfo readers modified from origional in udf main
- * code in sys/fs/udf/
- */
-
-#ifdef DEBUG
-static void
-udf_dump_discinfo(struct mmc_discinfo *di)
-{
-	char bits[128];
-
-	printf("Device/media info  :\n");
-	printf("\tMMC profile        0x%02x\n", di->mmc_profile);
-	printf("\tderived class      %d\n", di->mmc_class);
-	printf("\tsector size        %d\n", di->sector_size);
-	printf("\tdisc state         %d\n", di->disc_state);
-	printf("\tlast ses state     %d\n", di->last_session_state);
-	printf("\tbg format state    %d\n", di->bg_format_state);
-	printf("\tfrst track         %d\n", di->first_track);
-	printf("\tfst on last ses    %d\n", di->first_track_last_session);
-	printf("\tlst on last ses    %d\n", di->last_track_last_session);
-	printf("\tlink block penalty %d\n", di->link_block_penalty);
-	snprintb(bits, sizeof(bits), MMC_DFLAGS_FLAGBITS,
-			(uint64_t) di->disc_flags);
-	printf("\tdisc flags         %s\n", bits);
-	printf("\tdisc id            %x\n", di->disc_id);
-	printf("\tdisc barcode       %"PRIx64"\n", di->disc_barcode);
-
-	printf("\tnum sessions       %d\n", di->num_sessions);
-	printf("\tnum tracks         %d\n", di->num_tracks);
-
-	snprintb(bits, sizeof(bits), MMC_CAP_FLAGBITS, di->mmc_cur);
-	printf("\tcapabilities cur   %s\n", bits);
-	snprintb(bits, sizeof(bits), MMC_CAP_FLAGBITS, di->mmc_cap);
-	printf("\tcapabilities cap   %s\n", bits);
-	printf("\n");
-	printf("\tlast_possible_lba  %d\n", di->last_possible_lba);
-	printf("\n");
-}
-#else
-#define udf_dump_discinfo(a);
-#endif
-
-/* --------------------------------------------------------------------- */
-
 static int
-udf_emulate_discinfo(fsinfo_t *fsopts, struct mmc_discinfo *di,
-		int mmc_emuprofile)
+udf_readonly_format(void)
 {
-	off_t sectors;
-
-	memset(di, 0, sizeof(*di));
-
-	/* file support */
-	if ((mmc_emuprofile != 0x01) && (fsopts->sectorsize != 2048))
-		warnx("cd/dvd/bd sectorsize is not set to default 2048");
-
-	sectors = fsopts->size / fsopts->sectorsize;
-
-	/* commons */
-	di->mmc_profile		= mmc_emuprofile;
-	di->disc_state		= MMC_STATE_CLOSED;
-	di->last_session_state	= MMC_STATE_CLOSED;
-	di->bg_format_state	= MMC_BGFSTATE_COMPLETED;
-	di->link_block_penalty	= 0;
-
-	di->disc_flags = MMC_DFLAGS_UNRESTRICTED;
-
-	di->last_possible_lba = sectors - 1;
-	di->sector_size       = fsopts->sectorsize;
-
-	di->num_sessions = 1;
-	di->num_tracks   = 1;
-
-	di->first_track  = 1;
-	di->first_track_last_session = di->last_track_last_session = 1;
-
-	di->mmc_cur = MMC_CAP_RECORDABLE | MMC_CAP_ZEROLINKBLK;
-	switch (mmc_emuprofile) {
+	/*
+	 * we choose the emulated profile to determine this since the media
+	 * might be different from the format we create. Say creating a CDROM
+	 * on a CD-R media.
+	 */
+	switch (emul_mmc_profile) {
 	case 0x00:	/* unknown, treat as CDROM */
 	case 0x08:	/* CDROM */
 	case 0x10:	/* DVDROM */
 	case 0x40:	/* BDROM */
-		req_enable |= FORMAT_READONLY;
-		/* FALLTHROUGH */
-	case 0x01:	/* disc */
-		/* set up a disc info profile for partitions/files */
-		di->mmc_class	= MMC_CLASS_DISC;
-		di->mmc_cur    |= MMC_CAP_REWRITABLE | MMC_CAP_HW_DEFECTFREE;
-		break;
-	case 0x09:	/* CD-R */
-		di->mmc_class	= MMC_CLASS_CD;
-		di->mmc_cur    |= MMC_CAP_SEQUENTIAL;
-		di->disc_state  = MMC_STATE_EMPTY;
-		break;
-	case 0x0a:	/* CD-RW + CD-MRW (regretably) */
-		di->mmc_class	= MMC_CLASS_CD;
-		di->mmc_cur    |= MMC_CAP_REWRITABLE;
-		break;
-	case 0x13:	/* DVD-RW */
-		di->mmc_class	= MMC_CLASS_DVD;
-		di->mmc_cur    |= MMC_CAP_REWRITABLE;
-		break;
-	case 0x11:	/* DVD-R */
-	case 0x14:	/* DVD-RW sequential */
-	case 0x1b:	/* DVD+R */
-	case 0x2b:	/* DVD+R DL */
-	case 0x51:	/* HD DVD-R */
-		di->mmc_class	= MMC_CLASS_DVD;
-		di->mmc_cur    |= MMC_CAP_SEQUENTIAL;
-		di->disc_state  = MMC_STATE_EMPTY;
-		break;
-	case 0x41:	/* BD-R */
-		di->mmc_class   = MMC_CLASS_BD;
-		di->mmc_cur    |= MMC_CAP_SEQUENTIAL | MMC_CAP_HW_DEFECTFREE;
-		di->disc_state  = MMC_STATE_EMPTY;
-		break;
-	case 0x43:	/* BD-RE */
-		di->mmc_class   = MMC_CLASS_BD;
-		di->mmc_cur    |= MMC_CAP_REWRITABLE | MMC_CAP_HW_DEFECTFREE;
-		break;
-	default:
-		err(EINVAL, "makefs_udf: unknown or unimplemented device type");
-		return EINVAL;
+		return true;
 	}
-	di->mmc_cap    = di->mmc_cur;
-
-	udf_dump_discinfo(di);
-	return 0;
+	return false;
 }
 
-
-int
-udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti)
-{
-	/* discs partition support */
-	if (ti->tracknr != 1)
-		return EIO;
-
-	/* create fake ti */
-	ti->sessionnr  = 1;
-
-	ti->track_mode = 0;	/* XXX */
-	ti->data_mode  = 0;	/* XXX */
-	ti->flags = MMC_TRACKINFO_LRA_VALID | MMC_TRACKINFO_NWA_VALID;
-
-	ti->track_start    = 0;
-	ti->packet_size    = 32;	/* take sensible default */
-
-	ti->track_size    = di->last_possible_lba;
-	ti->next_writable = di->last_possible_lba;
-	ti->last_recorded = ti->next_writable;
-	ti->free_blocks   = 0;
-
-	return 0;
-}
 
 #define OPT_STR(letter, name, desc)  \
 	{ letter, name, NULL, OPT_STRBUF, 0, 0, desc }
@@ -299,32 +123,38 @@ udf_prep_opts(fsinfo_t *fsopts)
 		OPT_NUM('t', "tz", gmtoff, -24, 24, "timezone"),
 		OPT_STR('v', "minver", "minimum UDF version in either "
 			"``0x201'' or ``2.01'' format"),
-#if notyet
 		OPT_STR('V', "maxver", "maximum UDF version in either "
 			"``0x201'' or ``2.01'' format"),
-#endif
+		OPT_NUM('p', "metaperc", meta_perc, 1, 99,
+			"minimum free metadata percentage"),
+		OPT_BOOL('c', "checksurface", check_surface,
+			"perform crude surface check on rewritable media"),
+		OPT_BOOL('F', "forceformat", create_new_session,
+			"force file system contruction on non-empty recordable media"),
 		{ .name = NULL }
 	};
 
 	/* initialise */
-	format_str    = strdup("");
-	req_enable    = req_disable = 0;
-	format_flags  = FORMAT_INVALID;
+	req_enable = req_disable = 0;
 	fsopts->sectorsize = 512;	/* minimum allowed sector size */
 
 	srandom((unsigned long) time(NULL));
 
-	mmc_profile = 0x01;		/* 'disc'/file */
-
 	udf_init_create_context();
-	context.app_name         = "*NetBSD makefs";
+	context.app_name         = "*NetBSD UDF";
 	context.app_version_main = APP_VERSION_MAIN;
 	context.app_version_sub  = APP_VERSION_SUB;
 	context.impl_name        = IMPL_NAME;
 
 	/* minimum and maximum UDF versions we advise */
 	context.min_udf = 0x102;
-	context.max_udf = 0x201;	/* 0x250 and 0x260 are not ready */
+	context.max_udf = 0x250;	/* 0x260 is not ready */
+
+	/* defaults for disc/files */
+	emul_mmc_profile  =  -1;	/* invalid->no emulation	*/
+	emul_packetsize   =   1;	/* reasonable default		*/
+	emul_sectorsize   = 512;	/* minimum allowed sector size	*/
+	emul_size	  =   0;	/* empty			*/
 
 	/* use user's time zone as default */
 #ifdef HAVE_STRUCT_TM_TM_GMTOFF
@@ -352,8 +182,6 @@ udf_cleanup_opts(fsinfo_t *fsopts)
 
 
 /* ----- included from newfs_udf.c ------ */
-/* ----- */
-
 
 #define CDRSIZE    ((uint64_t)   700*1024*1024)	/* small approx */
 #define CDRWSIZE   ((uint64_t)   576*1024*1024)	/* small approx */
@@ -366,7 +194,7 @@ int
 udf_parse_opts(const char *option, fsinfo_t *fsopts)
 {
 	option_t *udf_options = fsopts->fs_options;
-	uint64_t stdsize;
+	uint64_t stdsize, maxsize;
 	uint32_t set_sectorsize;
 	char buffer[1024], *buf, *colon;
 	int i;
@@ -385,44 +213,47 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 
 	set_sectorsize = 0;
 	stdsize = 0;
+	maxsize = 0;
 
 	buf = buffer;
 	switch (udf_options[i].letter) {
 	case 'T':
 		if (strcmp(buf, "cdrom") == 0) {
-			mmc_profile = 0x00;
+			emul_mmc_profile = 0x00;
+			maxsize = CDRSIZE;
 		} else if (strcmp(buf, "dvdrom") == 0) {
-			mmc_profile = 0x10;
+			emul_mmc_profile = 0x10;
+			maxsize = DVDRSIZE;
 		} else if (strcmp(buf, "bdrom") == 0) {
-			mmc_profile = 0x40;
+			emul_mmc_profile = 0x40;
+			maxsize = BDRSIZE;
 		} else if (strcmp(buf, "dvdram") == 0) {
-			mmc_profile = 0x12;
+			emul_mmc_profile = 0x12;
 			stdsize = DVDRAMSIZE;
 		} else if (strcmp(buf, "bdre") == 0) {
-			mmc_profile = 0x43;
+			emul_mmc_profile = 0x43;
 			stdsize = BDRESIZE;
 		} else if (strcmp(buf, "disk") == 0) {
-			mmc_profile = 0x01;
+			emul_mmc_profile = 0x01;
 		} else if (strcmp(buf, "cdr") == 0) {
-			mmc_profile = 0x09;
+			emul_mmc_profile = 0x09;
 			stdsize = CDRSIZE;
 		} else if (strcmp(buf, "dvdr") == 0) {
-			mmc_profile = 0x1b;
+			emul_mmc_profile = 0x1b;
 			stdsize = DVDRSIZE;
 		} else if (strcmp(buf, "bdr") == 0) {
-			mmc_profile = 0x41;
+			emul_mmc_profile = 0x41;
 			stdsize = BDRSIZE;
 		} else if (strcmp(buf, "cdrw") == 0) {
-			mmc_profile = 0x0a;
+			emul_mmc_profile = 0x0a;
 			stdsize = CDRWSIZE;
 		} else if (strcmp(buf, "dvdrw") == 0) {
-			mmc_profile = 0x13;
+			emul_mmc_profile = 0x1a;
 			stdsize = DVDRWSIZE;
 		} else {
-			errx(EINVAL, "Unknown or unimplemented disc format");
-			return 0;
+			errx(1, "unknown or unimplemented disc format");
 		}
-		if (mmc_profile != 0x01)
+		if (emul_mmc_profile != 0x01)
 			set_sectorsize = 2048;
 		break;
 	case 'L':
@@ -439,30 +270,46 @@ udf_parse_opts(const char *option, fsinfo_t *fsopts)
 		}
 		if (context.primary_name)
 			free(context.primary_name);
-		if ((strstr(buf, ":"))) {
-			errx(EINVAL, "primary name can't have ':' in its name");
-			return 0;
-		}
+		if ((strstr(buf, ":")))
+			errx(1, "primary name can't have ':' in its name");
 		context.primary_name = strdup(buf);
 		break;
 	case 'v':
 		context.min_udf = a_udf_version(buf, "min_udf");
-		if (context.min_udf > 0x201) {
-			errx(EINVAL, "maximum supported version is UDF 2.01");
-			return 0;
-		}
+		if (context.min_udf > 0x250)
+			errx(1, "maximum supported version is UDF 2.50");
 		if (context.min_udf > context.max_udf)
 			context.max_udf = context.min_udf;
+		break;
+	case 'V':
+		context.max_udf = a_udf_version(buf, "min_udf");
+		if (context.max_udf > 0x250)
+			errx(1, "maximum supported version is UDF 2.50");
+		if (context.min_udf > context.max_udf)
+			context.min_udf = context.max_udf;
 		break;
 	}
 	if (set_sectorsize)
 		fsopts->sectorsize = set_sectorsize;
-	if (stdsize)
-		fsopts->size = stdsize;
+	if (stdsize) {
+		if (fsopts->maxsize > 0)
+			stdsize = MIN(stdsize, (uint64_t) fsopts->maxsize);
+		if (fsopts->minsize > 0)
+			stdsize = MAX(stdsize, (uint64_t) fsopts->minsize);
+		fsopts->size = fsopts->minsize = fsopts->maxsize = stdsize;
+	}
+	if (maxsize) {
+		if (fsopts->maxsize > 0)
+			maxsize = MIN(maxsize, (uint64_t) fsopts->maxsize);
+		if (fsopts->minsize > 0)
+			maxsize = MAX(maxsize, (uint64_t) fsopts->minsize);
+		fsopts->maxsize = maxsize;
+	}
 	return 1;
 }
 
-/* --------------------------------------------------------------------- */
+/* -
+ * -------------------------------------------------------------------- */
 
 struct udf_stats {
 	uint32_t nfiles;
@@ -487,7 +334,7 @@ udf_inc_link(union dscrptr *dscr)
 		efe       = &dscr->efe;
 		efe->link_cnt = udf_rw16(udf_rw16(efe->link_cnt) + 1);
 	} else {
-		errx(1, "Bad tag passed to udf_inc_link");
+		errx(1, "bad tag passed to udf_inc_link");
 	}
 }
 
@@ -505,7 +352,7 @@ udf_set_link_cnt(union dscrptr *dscr, int num)
 		efe       = &dscr->efe;
 		efe->link_cnt = udf_rw16(num);
 	} else {
-		errx(1, "Bad tag passed to udf_set_link_cnt");
+		errx(1, "bad tag passed to udf_set_link_cnt");
 	}
 }
 
@@ -554,6 +401,7 @@ udf_prepare_fids(struct long_ad *dir_icb, struct long_ad *dirdata_icb,
 	}
 }
 
+
 static int
 udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 {
@@ -584,9 +432,14 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 		inf_len   = udf_rw64(efe->inf_len);
 		obj_size  = udf_rw64(efe->obj_size);
 	} else {
-		errx(1, "Bad tag passed to udf_file_inject_blob");
+		errx(1, "bad tag passed to udf_file_inject_blob");
 	}
 	crclen = udf_rw16(dscr->tag.desc_crc_len);
+
+	/* check if we can go internal */
+	if ((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) !=
+			UDF_ICB_INTERN_ALLOC)
+		return 1;
 
 	/* check if it will fit internally */
 	if (udf_datablocks(size)) {
@@ -595,9 +448,9 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	}
 
 	/* going internal */
-	assert(l_ad == 0);
 	assert((udf_rw16(icb->flags) & UDF_ICB_TAG_FLAGS_ALLOC_MASK) ==
 			UDF_ICB_INTERN_ALLOC);
+	assert(l_ad == 0);
 
 	pos = data + l_ea + l_ad;
 	memcpy(pos, blob, size);
@@ -644,8 +497,8 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	const int short_len = sizeof(struct short_ad);
 	const int long_len  = sizeof(struct long_ad);
 	const int sector_size = context.sector_size;
-	const int use_shorts = (context.data_part == context.metadata_part);
 	uint64_t max_len = UDF_ROUNDDOWN(UDF_EXT_MAXLEN, sector_size);
+	int use_shorts;
 
 	fe  = NULL;
 	efe = NULL;
@@ -668,9 +521,12 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 		obj_size    = udf_rw64(efe->obj_size);
 		logblks_rec = udf_rw64(efe->logblks_rec);
 	} else {
-		errx(1, "Bad tag passed to udf_file_append_blob");
+		errx(1, "bad tag passed to udf_file_append_blob");
 	}
 	crclen = udf_rw16(dscr->tag.desc_crc_len);
+
+	/* we use shorts if referring inside the metadata partition */
+	use_shorts = (udf_rw16(piece->loc.part_num) == context.metadata_part);
 
 	pos = data + l_ea;
 	cur_alloc = udf_rw16(icb->flags);
@@ -713,7 +569,6 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 
 	merge_len = MIN(piece_len, rest_len);
 	last_end  = last_lb_num + (last_len / sector_size);
-
 	if ((piece_lb_num == last_end) && (last_part_num == piece_part_num)) {
 		/* we can merge */
 		last_len  += merge_len;
@@ -774,11 +629,8 @@ udf_append_file_contents(union dscrptr *dscr, struct long_ad *data_icb,
 {
 	struct long_ad icb;
 	uint32_t location;
-	uint64_t phys;
 	uint16_t vpart;
-	uint8_t *bpos;
-	int cnt, sects;
-	int error;
+	int sectors;
 
 	if (udf_file_inject_blob(dscr, fdata, flen) == 0)
 		return 0;
@@ -793,15 +645,9 @@ udf_append_file_contents(union dscrptr *dscr, struct long_ad *data_icb,
 	/* write out data piece */
 	vpart    = udf_rw16(data_icb->loc.part_num);
 	location = udf_rw32(data_icb->loc.lb_num);
-	sects    = udf_datablocks(flen);
-	for (cnt = 0; cnt < sects; cnt++) {
-		bpos = fdata + cnt*context.sector_size;
-		phys = context.vtop_offset[vpart] + location + cnt;
-		error = udf_write_sector(bpos, phys);
-		if (error)
-			return error;
-	}
-	return 0;
+	sectors  = udf_datablocks(flen);
+
+	return udf_write_virt(fdata, location, vpart, sectors);
 }
 
 
@@ -870,7 +716,7 @@ udf_estimate_walk(fsinfo_t *fsopts,
 		case S_IFCHR:
 		case S_IFBLK:
 			/* not supported yet */
-			continue;
+			break;
 		case S_IFDIR:
 			if (strcmp(cur->name, ".") == 0)
 				continue;
@@ -880,9 +726,9 @@ udf_estimate_walk(fsinfo_t *fsopts,
 			/* create dummy FID to see how long name will become */
 			memset(&dummy_ref, 0, sizeof(dummy_ref));
 			udf_create_fid(ddoff, fid, cur->name, 0, &dummy_ref);
-
 			nentries++;
 			ddoff += udf_fidsize(fid);
+			break;
 		}
 	}
 	sz = ddoff;
@@ -902,11 +748,6 @@ udf_estimate_walk(fsinfo_t *fsopts,
 		default:
 			/* what kind of nodes? */
 			break;
-		case S_IFCHR:
-		case S_IFBLK:
-			/* not supported yet */
-			// stats->nfiles++;
-			break;
 		case S_IFDIR:
 			if (strcmp(cur->name, ".") == 0)
 				continue;
@@ -917,6 +758,11 @@ udf_estimate_walk(fsinfo_t *fsopts,
 			strncpy(&mydir[1], cur->name, MAXPATHLEN - pathlen);
 			udf_estimate_walk(fsopts, cur->child, dir, stats);
 			mydir[0] = '\0';
+			break;
+		case S_IFCHR:
+		case S_IFBLK:
+			/* not supported yet */
+			// stats->nfiles++;
 			break;
 		case S_IFREG:
 			fnode = cur->inode;
@@ -964,8 +810,9 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 	fsinode *fnode;
 	off_t sz, chunk, rd;
 	uint8_t *data;
+	bool intern;
 	int nblk;
-	int i, f;
+	int f;
 	int error;
 
 	fnode = cur->inode;
@@ -986,8 +833,7 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 	data = malloc(MAX(chunk, context.sector_size));
 	assert(data);
 
-	printf("  ");
-	i = 0;
+	intern = (udf_datablocks(chunk) == 0);
 	error = 0;
 	while (chunk) {
 		rd = read(f, data, chunk);
@@ -996,17 +842,15 @@ udf_copy_file(struct stat *st, char *path, fsnode *cur, struct fileid_desc *fid,
 			error = errno;
 			break;
 		}
-		printf("\b%c", "\\|/-"[i++ % 4]); fflush(stdout);fflush(stderr);
 
-		nblk = udf_datablocks(chunk);
-		if (nblk > 0)
+		nblk = UDF_ROUNDUP(chunk, context.sector_size) / context.sector_size;
+		if (chunk && !intern)
 			udf_data_alloc(nblk, &data_icb);
 		udf_append_file_contents(dscr, &data_icb, data, chunk);
 
 		sz -= chunk;
 		chunk = MIN(sz, UDF_MAX_CHUNK_SIZE);
 	}
-	printf("\b \n");
 	close(f);
 	free(data);
 
@@ -1049,16 +893,9 @@ udf_populate_walk(fsinfo_t *fsopts, fsnode *root, char *dir,
 	udf_create_new_file(&root->inode->st, &dir_dscr,
 		UDF_ICB_FILETYPE_DIRECTORY, dir_icb);
 
-	/* claim space for the directory contents */
-	dirlen = root->inode->st.st_size;
-	nblk = udf_datablocks(dirlen);
-	if (nblk > 0) {
-		/* claim disc space for the dir contents */
-		udf_data_alloc(nblk, &dirdata_icb);
-	}
-
 	/* allocate memory for the directory contents */
-	nblk++;
+	dirlen = root->inode->st.st_size;
+	nblk = UDF_ROUNDUP(dirlen, context.sector_size) / context.sector_size;
 	dirdata = malloc(nblk * context.sector_size);
 	assert(dirdata);
 	memset(dirdata, 0, nblk * context.sector_size);
@@ -1066,6 +903,7 @@ udf_populate_walk(fsinfo_t *fsopts, fsnode *root, char *dir,
 	/* create and append '..' */
 	fid = (struct fileid_desc *) dirdata;
 	ddoff = udf_create_parentfid(fid, parent_icb);
+	assert(ddoff == 40);
 
 	/* for '..' */
 	udf_inc_link(dir_dscr);
@@ -1108,7 +946,7 @@ udf_populate_walk(fsinfo_t *fsopts, fsnode *root, char *dir,
 			fnode = cur->inode;
 			/* don't re-copy hard-links */
 			if (!(fnode->flags & FI_WRITTEN)) {
-				printf("%s", dir);
+				printf("%s\n", dir);
 				error = udf_copy_file(&fnode->st, dir, cur,
 					fid, &icb);
 				if (!error) {
@@ -1166,9 +1004,15 @@ udf_populate_walk(fsinfo_t *fsopts, fsnode *root, char *dir,
 		}
 		mydir[0] = '\0';
 	}
+	assert(dirlen == ddoff);
 
-	/* writeout directory contents */
-	dirlen = ddoff;	/* XXX might bite back */
+	/* pre allocate space for the directory contents */
+	memset(&dirdata_icb, 0, sizeof(dirdata_icb));
+	nblk = udf_datablocks(dirlen);
+
+	/* claim disc space for the dir contents if needed */
+	if (nblk > 0)
+		udf_fids_alloc(nblk, &dirdata_icb);
 
 	udf_prepare_fids(dir_icb, &dirdata_icb, dirdata, dirlen);
 	udf_append_file_contents(dir_dscr, &dirdata_icb, dirdata, dirlen);
@@ -1191,10 +1035,6 @@ udf_populate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 	static char path[MAXPATHLEN+1];
 	int error;
 
-	/* make sure the root gets the rootdir entry */
-	context.metadata_alloc_pos = layout.rootdir;
-	context.data_alloc_pos = layout.rootdir;
-
 	strncpy(path, dir, sizeof(path));
 	error = udf_populate_walk(fsopts, root, path, &rooticb, &rooticb);
 
@@ -1208,17 +1048,20 @@ udf_enumerate_and_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 {
 	char path[MAXPATHLEN + 1];
 	off_t proposed_size;
-	uint32_t n, nblk;
+	uint32_t n, nblk, nmetablk, nbytes;
+	uint32_t spareable_blocks, spareable_blockingnr;
 
 	strncpy(path, dir, sizeof(path));
 
 	/* calculate strict minimal size */
 	udf_estimate_walk(fsopts, root, path, stats);
+#if 0
 	printf("ndirs            %d\n", stats->ndirs);
 	printf("nfiles           %d\n", stats->nfiles);
 	printf("ndata_blocks     %d\n", stats->ndatablocks);
 	printf("nmetadata_blocks %d\n", stats->nmetadatablocks);
 	printf("\n");
+#endif
 
 	/* adjust for options : free file nodes */
 	if (fsopts->freefiles) {
@@ -1237,10 +1080,48 @@ udf_enumerate_and_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 
 	/* rough predictor of minimum disc size */
 	nblk  = stats->ndatablocks + stats->nmetadatablocks;
-	nblk = (double) nblk * (1.0 + 1.0/8.0);		/* free space map    */
+	if (context.format_flags & FORMAT_META) {
+		float meta_p;
+		double factor;
+
+		meta_p = (float) context.meta_perc/100.0;
+		factor = meta_p / (1.0 - meta_p);
+
+		/* add space for metadata partition including some slack */
+		nmetablk = factor * nblk + 32;
+		nblk =  stats->ndatablocks + nmetablk;
+
+		/* free space maps */
+		nbytes = ceil((double) nblk * (1.0/8.0));
+		nblk += 1 + (nbytes + context.sector_size-1)/context.sector_size;
+		if (!(context.format_flags & FORMAT_READONLY)) {
+			nbytes = ceil((double) nmetablk * (1.0/8.0));
+			nblk += 1 + (nbytes + context.sector_size-1)/context.sector_size;
+		}
+	} else if (context.format_flags & FORMAT_SEQUENTIAL) {
+		/* nothing */
+	} else {
+		if (!(context.format_flags & FORMAT_READONLY)) {
+			nbytes = ceil((double) nblk * (1.0/8.0));
+			nblk += 1 + (nbytes + context.sector_size-1)/
+				context.sector_size;
+		}
+	}
+
+	/*
+	 * Make extra room for spareable table if requested
+	 */
+	if (context.format_flags & FORMAT_SPAREABLE) {
+		spareable_blockingnr = udf_spareable_blockingnr();
+		spareable_blocks     = udf_spareable_blocks();
+
+		nblk += spareable_blocks * spareable_blockingnr;
+		nblk += spareable_blockingnr;		/* slack */
+	}
+
 	nblk += 256;					/* pre-volume space  */
 	nblk += 256;					/* post-volume space */
-	nblk += 64;					/* safeguard	     */
+	nblk += 1024;					/* safeguard	     */
 
 	/* try to honour minimum size */
 	n = fsopts->minsize / fsopts->sectorsize;
@@ -1254,8 +1135,8 @@ udf_enumerate_and_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 		proposed_size = 512*1024;
 
 	if (fsopts->size) {
-		if (fsopts->size < proposed_size) 
-			err(EINVAL, "makefs_udf: won't fit on disc!");
+		if (fsopts->size < proposed_size)
+			errx(1, "makefs_udf: won't fit on disc!");
 	} else {
 		fsopts->size = proposed_size;
 	}
@@ -1269,107 +1150,118 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
 	struct udf_stats stats;
 	uint64_t truncate_len;
+	uint32_t last_sector, ext;
 	char scrap[255];
 	int error;
 
-	/* determine format */
-	udf_emulate_discinfo(fsopts, &mmc_discinfo, mmc_profile);
-	printf("req_enable %d, req_disable %d\n", req_enable, req_disable);
-
+	/* setup */
+	emul_sectorsize = fsopts->sectorsize;
+	emul_size = 0;
 	context.sector_size = fsopts->sectorsize;
-	error = udf_derive_format(req_enable, req_disable, false);
-	if (error)
-		err(EINVAL, "makefs_udf: can't determine format");
 
 	/* names */
 	error = udf_proces_names();
 	if (error)
-		err(EINVAL, "makefs_udf: bad names given");
+		errx(1, "bad names given");
 
-	/* set return value to 1 indicating error */
-	error = 1;
+	/* open disc device or emulated file */
+	if (udf_opendisc(image, O_CREAT)) {
+		udf_closedisc();
+		errx(1, "can't open %s", image);
+	}
+	fsopts->fd = dev_fd;
+
+	/* determine format */
+	if (udf_readonly_format())
+		req_enable |= FORMAT_READONLY;
+	// printf("req_enable %d, req_disable %d\n", req_enable, req_disable);
+	error = udf_derive_format(req_enable, req_disable);
+	if (error) {
+		udf_closedisc();
+		errx(1, "can't derive format from media/settings");
+	}
 
 	/* estimate the amount of space needed */
 	memset(&stats, 0, sizeof(stats));
 	udf_enumerate_and_estimate(dir, root, fsopts, &stats);
 
-	printf("Calculated size of `%s': %lld bytes, %ld inodes\n",
-	    image, (long long)fsopts->size, (long)fsopts->inodes);
+	printf("Calculated size of `%s' is "
+		"%"PRIu64" KiB, %"PRIu64" MiB, %"PRIu64" GiB with %ld inodes\n",
+		image,
+		(uint64_t) fsopts->size/1024,
+		(uint64_t) fsopts->size/1024/1024,
+		(uint64_t) fsopts->size/1024/1024/1024,
+		(long)fsopts->inodes);
+	emul_size = MAX(emul_size, fsopts->size);
+	if ((fsopts->maxsize > 0) && (emul_size > fsopts->maxsize))
+		errx(1, "won't fit due to set maximum disk size");
 
-	/* create file image */
-	if ((fd = open(image, O_RDWR | O_CREAT | O_TRUNC, 0666)) == -1) {
-		err(EXIT_FAILURE, "%s", image);
+	/* prepare disc if necessary (recordables mainly) */
+	error = udf_prepare_disc();
+	if (error) {
+		udf_closedisc();
+		errx(1, "preparing disc failed");
 	}
-	if (lseek(fd, fsopts->size - 1, SEEK_SET) == -1) {
-		goto err_exit;
-	}
-	if (write(fd, &fd, 1) != 1) {
-		goto err_exit;
-	}
-	if (lseek(fd, 0, SEEK_SET) == -1) {
-		goto err_exit;
-	}
-	fsopts->fd = fd;
-
-	/* calculate metadata percentage */
-	meta_fract = fsopts->size / (stats.nmetadatablocks*fsopts->sectorsize);
-	meta_fract = ((int) ((meta_fract + 0.005)*100.0)) / 100;
 
 	/* update mmc info but now with correct size */
-	udf_emulate_discinfo(fsopts, &mmc_discinfo, mmc_profile);
+	udf_update_discinfo();
+	udf_dump_discinfo(&mmc_discinfo);
 
 	printf("Building disc compatible with UDF version %x to %x\n\n",
 		context.min_udf, context.max_udf);
 	(void)snprintb(scrap, sizeof(scrap), FORMAT_FLAGBITS,
-	    (uint64_t) format_flags);
+	    (uint64_t) context.format_flags);
 	printf("UDF properties       %s\n", scrap);
 	printf("Volume set          `%s'\n", context.volset_name);
 	printf("Primary volume      `%s`\n", context.primary_name);
 	printf("Logical volume      `%s`\n", context.logvol_name);
-	if (format_flags & FORMAT_META)
-		printf("Metadata percentage  %d %%\n",
-			(int) (100.0*stats.ndatablocks/stats.nmetadatablocks));
+	if (context.format_flags & FORMAT_META)
+		printf("Metadata percentage  %d%% (%d%% used)\n",
+			context.meta_perc,
+			(int) ceilf(100.0*stats.nmetadatablocks/stats.ndatablocks));
 	printf("\n");
-	udf_do_newfs_prefix();
+
+	/* prefix */
+	udf_allow_writing();
+	if (udf_do_newfs_prefix()) {
+		udf_closedisc();
+		errx(1, "basic setup failed");
+	}
 
 	/* update context */
 	context.unique_id = 0;
 
-	/* XXX are the next two needed? or should be re-count them? */
-	context.num_files = stats.nfiles;
-	context.num_directories = stats.ndirs;
-
+	/* add all directories */
 	error = udf_populate(dir, root, fsopts, &stats);
 
-	udf_do_newfs_postfix();
+	if (!error) {
+		/* update values for integrety sequence */
+		context.num_files = stats.nfiles;
+		context.num_directories = stats.ndirs;
 
-	if (format_flags & FORMAT_VAT) {
-		truncate_len = context.vtop_offset[context.data_part] +
-			context.data_alloc_pos;
-		truncate_len *= context.sector_size;
+		udf_do_newfs_postfix();
 
-		printf("\nTruncing the disc-image to allow for VAT\n");
-		printf("Free space left on this volume approx. "
-			"%"PRIu64" KiB, %"PRIu64" MiB\n",
-			(fsopts->size - truncate_len)/1024,
-			(fsopts->size - truncate_len)/1024/1024);
-		ftruncate(fd, truncate_len);
+		if (S_ISREG(dev_fd_stat.st_mode) &&
+				(context.format_flags & FORMAT_VAT)) {
+			udf_translate_vtop(context.alloc_pos[context.data_part],
+				context.data_part,
+				&last_sector, &ext);
+			truncate_len = (uint64_t) last_sector * context.sector_size;
+
+			printf("\nTruncing the disc-image to allow for VAT\n");
+			printf("Free space left on this volume approx. "
+				"%"PRIu64" KiB, %"PRIu64" MiB\n",
+				(fsopts->size - truncate_len)/1024,
+				(fsopts->size - truncate_len)/1024/1024);
+			ftruncate(dev_fd, truncate_len);
+		}
 	}
+	udf_closedisc();
 
-	if (error) {
-		error = 2;	/* some files couldn't be added */
-		goto err_exit;
-	}
-
-	close(fd);
-	return;
-
-err_exit:
-	close(fd);
-	if (error == 2) {
-		errx(error, "Not all files could be added");
-	} else {
+	if (error == 2) 
+		errx(error, "not all files could be added");
+	if (error == 1)
 		errx(error, "creation of %s failed", image);
-	}
+	return;
 }
 
