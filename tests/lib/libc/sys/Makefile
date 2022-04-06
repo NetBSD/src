@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.70 2021/11/01 14:33:41 hannken Exp $
+# $NetBSD: Makefile,v 1.71 2022/04/06 10:02:55 gson Exp $
 
 MKMAN=	no
 
@@ -97,6 +97,7 @@ SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT} t_mprotect_helper.c
 
 LDADD.t_eventfd+=	-lpthread
 LDADD.t_getpid+=	-lpthread
+LDADD.t_mmap+=		-lpthread
 LDADD.t_timerfd+=	-lpthread
 
 LDADD.t_ptrace_sigchld+=	-pthread -lm
