@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.310 2022/04/06 21:51:29 mlelstv Exp $ */
+/*	$NetBSD: ehci.c,v 1.311 2022/04/06 22:01:45 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.310 2022/04/06 21:51:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.311 2022/04/06 22:01:45 mlelstv Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -790,9 +790,6 @@ ehci_intr1(ehci_softc_t *sc)
 	if (eintrs & EHCI_STS_HSE) {
 		printf("%s: unrecoverable error, controller halted\n",
 		       device_xname(sc->sc_dev));
-#ifdef EHCI_DEBUG
-		ehci_dump();
-#endif
 		/* XXX what else */
 	}
 	if (eintrs & EHCI_STS_PCD) {
@@ -2244,7 +2241,6 @@ ehci_sync_hc(ehci_softc_t *sc)
 	unsigned starttime = getticks();
 	unsigned endtime = starttime + delta;
 	unsigned now;
-	uint32_t v;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -2264,10 +2260,7 @@ ehci_sync_hc(ehci_softc_t *sc)
 	sc->sc_doorbelllwp = curlwp;
 
 	/* ask for doorbell */
-	v = EOREAD4(sc, EHCI_USBCMD);
-	if ((v & EHCI_CMD_IAAD) == 0)
-		EOWRITE4(sc, EHCI_USBCMD, v | EHCI_CMD_IAAD);
-
+	EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) | EHCI_CMD_IAAD);
 	DPRINTF("cmd = 0x%08jx sts = 0x%08jx",
 	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
 
