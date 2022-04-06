@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.64 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: ubt.c,v 1.65 2022/04/06 21:51:29 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.64 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.65 2022/04/06 21:51:29 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1456,7 +1456,7 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 			     isoc,
 			     isoc->size,
 			     num,
-			     USBD_FORCE_SHORT_XFER,
+			     USBD_FORCE_SHORT_XFER | USBD_SHORT_XFER_OK,
 			     ubt_xmit_sco_complete);
 
 	usbd_transfer(isoc->xfer);
@@ -1777,11 +1777,11 @@ ubt_recv_sco_complete(struct usbd_xfer *xfer,
 			if (m == NULL) {
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
-					aprint_error_dev(sc->sc_dev,
+					device_printf(sc->sc_dev,
 					    "out of memory (xfer halted)\n");
 
 					sc->sc_stats.err_rx++;
-					return;		/* lost sync */
+					return; /* lost sync */
 				}
 
 				ptr = mtod(m, uint8_t *);
@@ -1808,14 +1808,21 @@ ubt_recv_sco_complete(struct usbd_xfer *xfer,
 				if (want == sizeof(hci_scodata_hdr_t)) {
 					uint32_t len =
 					    mtod(m, hci_scodata_hdr_t *)->length;
-					want += len;
-					if (len == 0 || want > MHLEN) {
-						aprint_error_dev(sc->sc_dev,
+					if (len == 0) {
+						ptr = mtod(m, uint8_t *);
+						ptr++;
+						got = 1;
+					} else if (want > MHLEN) {
+						device_printf(sc->sc_dev,
 						    "packet too large %u "
 						    "(lost sync)\n", len);
 						sc->sc_stats.err_rx++;
+
+						/* lost sync */
+						m_freem(m);
 						return;
-					}
+					} else
+						want += len;
 				}
 
 				if (got == want) {
@@ -1825,6 +1832,9 @@ ubt_recv_sco_complete(struct usbd_xfer *xfer,
 						sc->sc_stats.err_rx++;
 
 					m = NULL;
+					ptr = NULL;
+					got = 0;
+					want = 0;
 				}
 			}
 
