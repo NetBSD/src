@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.16 2021/08/25 04:13:42 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.17 2022/04/06 22:47:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 /*
  * The VAX mutex implementation is troublesome, because VAX lacks a
- * compare-and-swap operation.  
+ * compare-and-swap operation.
  *
  * So we emulate compare-and-swap by raising IPL to lock out interrupts
  * and (if MP) using BBSSI/BBCCI to lock out the other processors.
