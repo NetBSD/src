@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.69 2022/04/06 13:29:15 reinoud Exp $
+.\"	$NetBSD: makefs.8,v 1.70 2022/04/06 13:39:06 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -490,7 +490,8 @@ population.
 .Ss UDF-specific options
 .Nm
 supports besides writing to image files also direct formatting of disc
-partitions and optical media. Optical media will auto configure settings.
+partitions and optical media.
+Optical media will auto configure settings.
 The following udf-specific optional parameters may be provided.
 Each of the options consists of a keyword, an equal sign
 .Pq Ql = ,
@@ -511,8 +512,10 @@ create a rewritable fs on once recordable media using a VAT
 create a rewritable fs with sparing for defective sectors
 .El
 The sectorsize is set for the selected media and the default maximum disc size
-is assumed unless overridden. For cdrom, dvdrom and bdrom images, the disc
-size is the minimum size needed. Note that the size estimator can
+is assumed unless overridden.
+For CD-ROM, DVD-ROM and BD-ROM images, the disc
+size is the minimum size needed.
+Note that the size estimator can
 under-estimate in some cases; specify extra free blocks if encountering this.
 .It Sy loglabel
 Set the logical volume label of the disc to the specified argument.
@@ -525,22 +528,22 @@ manually unless it has an unique hex number in the first 8 character
 positions.
 .It Sy minver
 Set the minimum UDF version to be used.
-Choose UDF version numbers from 0x102, 0x150, 0x200, 0x201 and 0x250.
+Choose UDF version numbers from 0x102, 0x150, 0x200, 0x201, and 0x250.
 Version 0x260 is currently not supported
 in
 .Nm .
 .It Sy maxver
 Set the maximum UDF version to be used.
-Choose UDF version numbers from 0x102, 0x150, 0x200, 0x201 and 0x250.
+Choose UDF version numbers from 0x102, 0x150, 0x200, 0x201, and 0x250.
 Version 0x260 is currently not supported
 in
 .Nm .
 .It Sy metaperc
-Set the minimum amount of free metadata space. This is only applicable on UDF
-0x250 on rewritable media.
+Set the minimum amount of free metadata space.
+This is only applicable on UDF 0x250 on rewritable media.
 .It Sy checksurface
-Check the surface of non error-free rewritable media for remapping. Note this
-is a destructive test and can take quite a while!
+Check the surface of non error-free rewritable media for remapping.
+Note this is a destructive test and can take quite a while!
 .It Sy forceformat
 Force formatting on non-empty recordable media.
 .El
