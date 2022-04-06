@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2022/04/06 13:42:39 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2022/04/06 16:01:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.2 2022/04/06 13:42:39 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2022/04/06 16:01:06 martin Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -520,7 +520,7 @@ udf_rebuild_fid_stream(struct udf_fsck_node *node, int64_t *rest_lenp)
 	}
 
 	if (sfpos != dfpos)
-		printf("%s: could save %ld bytes in directory\n", udf_node_path(node), sfpos - dfpos);
+		printf("%s: could save %" PRIi64 " bytes in directory\n", udf_node_path(node), sfpos - dfpos);
 
 	memset(directory, 0, inf_len);
 	memcpy(directory, rebuild_dir, dfpos);
@@ -2985,7 +2985,7 @@ udf_close_volume(void)
 
 	/* check our highest unique id */
 	if (context.unique_id > udf_rw64(lvid->lvint_next_unique_id)) {
-		pwarn("Last unique id updated from %ld to %ld : FIXED\n",
+		pwarn("Last unique id updated from %" PRIi64 " to %" PRIi64 " : FIXED\n",
 				udf_rw64(lvid->lvint_next_unique_id),
 				context.unique_id);
 		open_integrity = 1;
@@ -3299,7 +3299,7 @@ udf_fixup_lengths_pass1(struct udf_fsck_node *node, union dscrptr *dscr)
 	diff = node->found.inf_len - node->declared.inf_len;
 	if (diff) {
 		pwarn("%s : recorded information length incorrect: "
-			"%lu instead of declared %lu\n",
+			"%" PRIu64 " instead of declared %" PRIu64 "\n",
 			udf_node_path(node),
 			node->found.inf_len, node->declared.inf_len);
 			node->declared.inf_len = node->found.inf_len;
@@ -3311,7 +3311,7 @@ udf_fixup_lengths_pass1(struct udf_fsck_node *node, union dscrptr *dscr)
 	diff = node->found.logblks_rec - node->declared.logblks_rec;
 	if (diff) {
 		pwarn("%s : logical blocks recorded incorrect: "
-		      "%lu instead of declared %lu, fixing\n",
+		      "%" PRIu64 " instead of declared %" PRIu64 ", fixing\n",
 			udf_node_path(node),
 			node->found.logblks_rec, node->declared.logblks_rec);
 		node->declared.logblks_rec = node->found.logblks_rec;
@@ -3332,7 +3332,7 @@ udf_fixup_lengths_pass1(struct udf_fsck_node *node, union dscrptr *dscr)
 	if (udf_rw16(dscr->tag.desc_crc_len) !=
 			udf_tagsize(dscr, 1) - sizeof(struct desc_tag)) {
 		pwarn("%s : node file descriptor CRC length mismatch; "
-			"%d declared, %ld expected\n",
+			"%d declared, %zu\n",
 			udf_node_path(node), udf_rw16(dscr->tag.desc_crc_len),
 			udf_tagsize(dscr, 1) - sizeof(struct desc_tag));
 		udf_recursive_keep(node);
@@ -4020,7 +4020,7 @@ udf_check_directory_tree(void)
 		/* object sizes */
 		if (cur_node->declared.obj_size != cur_node->found.obj_size) {
 			pwarn("%s : recorded object size incorrect; "
-			      "%lu instead of declared %lu\n",
+			      "%" PRIu64 " instead of declared %" PRIu64 "\n",
 				udf_node_path(cur_node),
 				cur_node->found.obj_size, cur_node->declared.obj_size);
 			cur_node->declared.obj_size = cur_node->found.obj_size;
