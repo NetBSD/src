@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.314 2022/03/12 15:32:31 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.315 2022/04/06 22:48:21 riastradh Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314 2022/03/12 15:32:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.315 2022/04/06 22:48:21 riastradh Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -163,6 +163,7 @@ static void ctx_free(struct pmap *, struct cpu_info *);
 static __inline void
 dmmu_set_secondary_context(uint ctx)
 {
+
 	if (!CPU_ISSUN4V)
 		__asm volatile(
 			"stxa %0,[%1]%2;	"
@@ -175,7 +176,6 @@ dmmu_set_secondary_context(uint ctx)
 			"membar #Sync		"
 			: : "r" (ctx), "r" (CTX_SECONDARY), "n" (ASI_MMU_CONTEXTID)
 			: "memory");
-		
 }
 
 /*
@@ -564,7 +564,7 @@ pmap_mp_init(void)
 			if (CPU_ISSUN4V)
 				tp[i].data |= SUN4V_TLB_X;
 		}
-			
+
 		DPRINTF(PDB_BOOT1, ("xtlb[%d]: Tag: %" PRIx64 " Data: %"
 				PRIx64 "\n", i, tp[i].tag, tp[i].data));
 	}
