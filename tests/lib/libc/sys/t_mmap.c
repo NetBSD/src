@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.16 2022/04/05 15:59:22 gson Exp $ */
+/* $NetBSD: t_mmap.c,v 1.17 2022/04/06 10:02:55 gson Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.16 2022/04/05 15:59:22 gson Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.17 2022/04/06 10:02:55 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -74,6 +74,7 @@ __RCSID("$NetBSD: t_mmap.c,v 1.16 2022/04/05 15:59:22 gson Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <paths.h>
+#include <pthread.h>
 
 static long	page = 0;
 static char	path[] = "mmap";
@@ -413,6 +414,65 @@ ATF_TC_CLEANUP(mmap_prot_3, tc)
 	(void)unlink(path);
 }
 
+ATF_TC(mmap_reprotect_race);
+
+ATF_TC_HEAD(mmap_reprotect_race, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test for the race condition of PR 52239");
+}
+
+const int mmap_reprotect_race_npages = 13;
+const int mmap_reprotect_iterations = 1000000;
+
+static void *
+mmap_reprotect_race_thread(void *arg)
+{
+	int i, r;
+	void *p;
+
+	for (i = 0; i < mmap_reprotect_iterations; i++) {
+		/* Get some unrelated memory */
+		p = mmap(0, mmap_reprotect_race_npages * page,
+			 PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+		ATF_REQUIRE(p);
+		r = munmap(p, mmap_reprotect_race_npages * page);
+		ATF_REQUIRE(r == 0);
+	}
+	return 0;
+}
+
+ATF_TC_BODY(mmap_reprotect_race, tc)
+{
+	pthread_t thread;
+	void *p, *q;
+	int i, r;
+
+	r = pthread_create(&thread, 0, mmap_reprotect_race_thread, 0);
+	ATF_REQUIRE(r == 0);
+
+	for (i = 0; i < mmap_reprotect_iterations; i++) {
+		/* Get a placeholder region */
+		p = mmap(0, mmap_reprotect_race_npages * page,
+			 PROT_NONE, MAP_ANON|MAP_PRIVATE, -1, 0);
+		if (p == MAP_FAILED)
+			atf_tc_fail("mmap: %s", strerror(errno));
+
+		/* Upgrade placeholder to read/write access */
+		q = mmap(p, mmap_reprotect_race_npages * page,
+			 PROT_READ|PROT_WRITE,
+			 MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1, 0);
+		if (q == MAP_FAILED)
+			atf_tc_fail("update mmap: %s", strerror(errno));
+		ATF_REQUIRE(q == p);
+
+		/* Free it */
+		r = munmap(q, mmap_reprotect_race_npages * page);
+		if (r != 0)
+			atf_tc_fail("munmap: %s", strerror(errno));
+	}
+	pthread_join(thread, NULL);
+}
+
 ATF_TC_WITH_CLEANUP(mmap_truncate);
 ATF_TC_HEAD(mmap_truncate, tc)
 {
@@ -570,6 +630,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mmap_prot_1);
 	ATF_TP_ADD_TC(tp, mmap_prot_2);
 	ATF_TP_ADD_TC(tp, mmap_prot_3);
+	ATF_TP_ADD_TC(tp, mmap_reprotect_race);
 	ATF_TP_ADD_TC(tp, mmap_truncate);
 	ATF_TP_ADD_TC(tp, mmap_truncate_signal);
 	ATF_TP_ADD_TC(tp, mmap_va0);
