@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.23 2022/04/06 13:29:15 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.24 2022/04/06 13:44:25 wiz Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.23 2022/04/06 13:29:15 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.24 2022/04/06 13:44:25 wiz Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,7 +130,7 @@ udf_prep_opts(fsinfo_t *fsopts)
 		OPT_BOOL('c', "checksurface", check_surface,
 			"perform crude surface check on rewritable media"),
 		OPT_BOOL('F', "forceformat", create_new_session,
-			"force file system contruction on non-empty recordable media"),
+			"force file system construction on non-empty recordable media"),
 		{ .name = NULL }
 	};
 
@@ -1235,7 +1235,7 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	error = udf_populate(dir, root, fsopts, &stats);
 
 	if (!error) {
-		/* update values for integrety sequence */
+		/* update values for integrity sequence */
 		context.num_files = stats.nfiles;
 		context.num_directories = stats.ndirs;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.70 2017/12/16 23:08:40 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.71 2022/04/06 13:44:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.70 2017/12/16 23:08:40 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.71 2022/04/06 13:44:25 wiz Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -149,7 +149,7 @@ static  void	*ffs_build_dinode2(struct ufs2_dinode *, dirbuf_t *, fsnode *,
 
 
 
-	/* publically visible functions */
+	/* publicly visible functions */
 void
 ffs_prep_opts(fsinfo_t *fsopts)
 {
