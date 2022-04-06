@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_keymap.h,v 1.8 2020/08/31 17:51:56 macallan Exp $	*/
+/*	$NetBSD: adb_keymap.h,v 1.9 2022/04/06 17:14:42 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(50),			KS_grave,	KS_asciitilde,
     KC(51),			KS_Delete,
     KC(52),			KS_KP_Enter,    /* Pretend this is alt-R ? */
-    KC(53),			KS_Escape,
+    KC(53), KS_Cmd_Debugger,	KS_Escape,
     KC(54),  KS_Cmd1,		KS_Control_L,
     KC(55),			KS_Meta_L,	/* Command */
     KC(56),			KS_Shift_L,
