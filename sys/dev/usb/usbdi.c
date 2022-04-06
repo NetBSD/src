@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.241 2022/04/06 21:51:29 mlelstv Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.242 2022/04/06 22:01:45 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.241 2022/04/06 21:51:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.242 2022/04/06 22:01:45 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1185,11 +1185,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 
 	if (xfer->ux_callback) {
 		if (!polling) {
-			while (pipe->up_callingxfer != NULL) {
-printf("callingxfer used\n");
-				cv_wait(&pipe->up_callingcv,
-				    pipe->up_dev->ud_bus->ub_lock);
-			}
+			KASSERT(pipe->up_callingxfer == NULL);
 			pipe->up_callingxfer = xfer;
 			mutex_exit(pipe->up_dev->ud_bus->ub_lock);
 			if (!(pipe->up_flags & USBD_MPSAFE))
