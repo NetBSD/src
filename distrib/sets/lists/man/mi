@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1737 2022/03/24 16:33:05 wiz Exp $
+# $NetBSD: mi,v 1.1738 2022/04/06 14:20:07 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2626,6 +2626,7 @@
 ./usr/share/man/cat8/fsck_ffs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck_lfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck_msdos.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/fsck_udf.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck_v7fs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsinfo.0			man-sysutil-catman	.cat
@@ -5722,6 +5723,7 @@
 ./usr/share/man/html8/fsck_ffs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fsck_lfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fsck_msdos.html		man-sysutil-htmlman	html
+./usr/share/man/html8/fsck_udf.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fsck_v7fs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fsdb.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/fsinfo.html		man-sysutil-htmlman	html
@@ -8907,6 +8909,7 @@
 ./usr/share/man/man8/fsck_ffs.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck_msdos.8		man-sysutil-man		.man
+./usr/share/man/man8/fsck_udf.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck_v7fs.8		man-sysutil-man		.man
 ./usr/share/man/man8/fsdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsinfo.8			man-sysutil-man		.man
