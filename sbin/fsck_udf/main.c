@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2022/04/06 13:35:50 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2022/04/06 13:42:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 2022/04/06 13:35:50 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2022/04/06 13:42:39 wiz Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1040,7 +1040,7 @@ udf_process_file(union dscrptr *dscrptr, int vpart_num, uint8_t **resultp,
 		case UDF_EXT_REDIRECT  :
 			if (piece_len != context.sector_size) {
 				/* should this be an error? */
-				pwarn("Got extention redirect with wrong size %d\n",
+				pwarn("Got extension redirect with wrong size %d\n",
 					piece_len);
 				error = EINVAL;
 				break;
@@ -3501,7 +3501,7 @@ udf_process_node_pass1(struct udf_fsck_node *node, union dscrptr *dscr)
 		node->fsck_flags |= FSCK_NODE_FLAG_PAR_NOT_FOUND;
 		rest_len = node->found.inf_len;
 
-		/* walk trough all our FIDs in the directory stream */
+		/* walk through all our FIDs in the directory stream */
 		bpos = node->directory;
 		fpos = 0;
 		while (rest_len > 0) {
@@ -4321,7 +4321,7 @@ checkfilesys(char *given_dev)
 static void
 usage(void)
 {
-    	(void)fprintf(stderr, "Usage: %s [-psSynfH] filesystem ... \n",
+    	(void)fprintf(stderr, "Usage: %s [-fHnpSsy] file-system ... \n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
 }
