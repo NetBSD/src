@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.28 2022/01/01 21:07:13 andvar Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.29 2022/04/07 19:33:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -183,10 +183,10 @@ struct	siop_softc {
 
 /* negotiation states */
 #define NEG_WIDE	0	/* Negotiate wide transfers */
-#define	NEG_WAITW	1	/* Waiting for wide negotation response */
+#define	NEG_WAITW	1	/* Waiting for wide negotiation response */
 #define NEG_SYNC	2	/* Negotiate synch transfers */
 #define	NEG_WAITS	3	/* Waiting for synch negoation response */
-#define NEG_DONE	4	/* Wide and/or sync negotation done */
+#define NEG_DONE	4	/* Wide and/or sync negotiation done */
 
 #define	MSG_CMD_COMPLETE	0x00
 #define MSG_EXT_MESSAGE		0x01

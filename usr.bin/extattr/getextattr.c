@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.12 2014/06/20 15:22:01 manu Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.13 2022/04/07 19:33:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -258,7 +258,7 @@ main(int argc, char *argv[])
 		argc--; argv++;
 	} else {
 		/*
-		 * The namespace was not valid. Perhaps it was omited.
+		 * The namespace was not valid. Perhaps it was omitted.
 		 * Try to guess a missing namespace by using
 		 * linux layout "namespace.attribute". While
 		 * we are here, also test the Linux namespaces.

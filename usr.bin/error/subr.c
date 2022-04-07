@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.19 2009/08/13 06:59:37 dholland Exp $	*/
+/*	$NetBSD: subr.c,v 1.20 2022/04/07 19:33:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.19 2009/08/13 06:59:37 dholland Exp $");
+__RCSID("$NetBSD: subr.c,v 1.20 2022/04/07 19:33:38 andvar Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -111,7 +111,7 @@ position(const char *string, char ch)
 }
 
 /*
- * clobber the first occurance of ch in string by the new character
+ * clobber the first occurrence of ch in string by the new character
  */
 char *
 substitute(char *string, char chold, char chnew)

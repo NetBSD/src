@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.70 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.71 2022/04/07 19:33:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.70 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.71 2022/04/07 19:33:37 andvar Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -1785,7 +1785,7 @@ scsi_dmaok(SC_REQ *reqp)
 		return (0);
 
 	/*
-	 * LWP: I think that this restriction is not strictly nessecary.
+	 * LWP: I think that this restriction is not strictly necessary.
 	 */
 	if ((req_len & 0x1) || ((u_int)req_addr & 0x3))
 		return (0);

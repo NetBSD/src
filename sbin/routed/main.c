@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2017/10/02 11:02:19 maya Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2022/04/07 19:33:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -45,7 +45,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
  The Regents of the University of California.  All rights reserved.");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.42 2017/10/02 11:02:19 maya Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2022/04/07 19:33:37 andvar Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -402,7 +402,7 @@ usage:
 			continue;
 		}
 
-		/* Check the kernel table occassionally for mysteriously
+		/* Check the kernel table occasionally for mysteriously
 		 * evaporated routes
 		 */
 		timevalsub(&t2, &flush_kern_timer, &now);

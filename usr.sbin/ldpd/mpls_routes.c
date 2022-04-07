@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.24 2016/04/04 07:37:08 ozaki-r Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.25 2022/04/07 19:33:38 andvar Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -864,7 +864,7 @@ bind_current_routes()
 
 		/*
 		 * This function is called only at startup, so use
-		 * this ocassion to delete all MPLS routes
+		 * this occasion to delete all MPLS routes
 		 */
 		if (so_dst->sa.sa_family == AF_MPLS) {
 			delete_route(so_dst, NULL, NO_FREESO);

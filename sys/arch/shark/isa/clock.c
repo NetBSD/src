@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2018/09/03 16:29:27 riastradh Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 2022/04/07 19:33:37 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2022/04/07 19:33:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ gettick(void)
 /* modifications from i386 to shark isa version:
    - removed hardcoded "n -=" values that approximated the time to
      calculate delay ticks
-   - made the time to calculate delay ticks almost negligable. 4 multiplies
+   - made the time to calculate delay ticks almost negligible. 4 multiplies
      = maximum of 12 cycles = 75ns on a slow SA-110, plus a bunch of shifts;
      as opposed to 4 multiplies plus a bunch of divides.
    - removed i386 assembly language hack
