@@ -1,4 +1,4 @@
-/*	$NetBSD: majors+minors,v 1.1 2001/10/18 00:05:01 reinoud Exp $	*/
+/*	$NetBSD: majors+minors,v 1.2 2022/04/07 20:23:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 19941198 Mark Brinicombe.
@@ -49,7 +49,7 @@ same device driver even if the driver does not require both.
 	  minor = 2 - /dev/null
 	  minor = 3 - /dev/zero
  1 B	- swap device
- 1 C	- psuedo swap device
+ 1 C	- pseudo swap device
 	  minor = 0 - /dev/drum
  2 B	- reserved
  2 C	- console device
@@ -65,7 +65,7 @@ same device driver even if the driver does not require both.
  5 C	- kernel log device
 	  minor = 0 - /dev/klog
  6 B	- reserved
- 6 C	- psuedo tty master
+ 6 C	- pseudo tty master
 	  /dev/pty{class}{unit}
 	  unit = minor % 16
 	  minor / 16 = 0 - class = p
@@ -74,7 +74,7 @@ same device driver even if the driver does not require both.
 	  minor / 16 = 3 - class = s
 	  minor / 16 = 4 - class = t
  7 B	- reserved
- 7 C	- psuedo tty slave
+ 7 C	- pseudo tty slave
 	  /dev/tty{class}{unit}
 	  unit = minor % 16
 	  minor / 16 = 0 - class = p

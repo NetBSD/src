@@ -1,4 +1,4 @@
-# $NetBSD: SANDPOINT,v 1.20 2021/01/21 06:51:56 nia Exp $
+# $NetBSD: SANDPOINT,v 1.21 2022/04/07 20:23:44 andvar Exp $
 #
 # Sandpoint X3/X2 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SANDPOINT-$Revision: 1.20 $"
+#ident 		"SANDPOINT-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -87,7 +87,7 @@ options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 
 config		netbsd	root on ? type ?
 
-# network psuedo-devices
+# network pseudo-devices
 pseudo-device	bpfilter		# packet filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

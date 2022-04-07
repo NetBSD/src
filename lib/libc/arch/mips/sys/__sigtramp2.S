@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.4 2021/11/18 04:33:20 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.5 2022/04/07 20:23:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigtramp2.S,v 1.4 2021/11/18 04:33:20 thorpej Exp $")
+	RCSID("$NetBSD: __sigtramp2.S,v 1.5 2022/04/07 20:23:44 andvar Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 
@@ -48,7 +48,7 @@
  *
  * The DWARF register numbers for the general purpose registers are the
  * same as the architected register numbers.  For MIPS, there is a DWARF
- * psuedo-register for signal handler return addresses, as well as for the
+ * pseudo-register for signal handler return addresses, as well as for the
  * MDLO and MDHI registers.
  */
 
