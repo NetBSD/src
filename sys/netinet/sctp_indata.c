@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.8 2018/12/22 13:11:38 maxv Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.9 2022/04/07 19:33:38 andvar Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.8 2018/12/22 13:11:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.9 2022/04/07 19:33:38 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -4503,7 +4503,7 @@ sctp_handle_forward_tsn(struct sctp_tcb *stcb,
 	if (cumack_set_flag) {
 		/*
 		 * fwd-tsn went outside my gap array - not a
-		 * common occurance. Do the same thing we
+		 * common occurrence. Do the same thing we
 		 * do when a cookie-echo arrives.
 		 */
 		asoc->highest_tsn_inside_map =  new_cum_tsn - 1;

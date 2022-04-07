@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.118 2021/06/11 18:47:56 rillig Exp $	*/
+/*	$NetBSD: ping.c,v 1.119 2022/04/07 19:33:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.118 2021/06/11 18:47:56 rillig Exp $");
+__RCSID("$NetBSD: ping.c,v 1.119 2022/04/07 19:33:37 andvar Exp $");
 #endif
 
 #include <stdio.h>
@@ -874,7 +874,7 @@ jiggle(int delta)
 	jiggle_cnt += delta;
 
 	/* flush the FLOOD dots when things are quiet
-	 * or occassionally to make the cursor jiggle.
+	 * or occasionally to make the cursor jiggle.
 	 */
 	dt = diffsec(&last_tx, &jiggle_time);
 	if (dt > 0.2 || (dt >= 0.15 && delta*jiggle_direction < 0))

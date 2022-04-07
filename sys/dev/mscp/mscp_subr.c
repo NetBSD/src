@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.47 2017/06/01 02:45:10 chs Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.48 2022/04/07 19:33:38 andvar Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.47 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.48 2022/04/07 19:33:38 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -326,7 +326,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 				/*
 				 * The drive is not spun up.  Use it anyway.
 				 *
-				 * N.B.: this seems to be a common occurrance
+				 * N.B.: this seems to be a common occurrence
 				 * after a power failure.  The first attempt
 				 * to bring it on line seems to spin it up
 				 * (and thus takes several minutes).  Perhaps

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.351 2022/01/22 19:01:56 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.352 2022/04/07 19:33:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.351 2022/01/22 19:01:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.352 2022/04/07 19:33:38 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1257,7 +1257,7 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 	/* For now, just save the new Rx-intr thresholds and record
 	 * that a threshold update is pending.  Updating the hardware
 	 * registers here (even at splhigh()) is observed to
-	 * occasionaly cause glitches where Rx-interrupts are not
+	 * occasionally cause glitches where Rx-interrupts are not
 	 * honoured for up to 10 seconds. jonathan@NetBSD.org, 2003-04-05
 	 */
 	s = splnet();
