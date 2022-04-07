@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.130 2022/03/28 12:42:37 riastradh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.131 2022/04/07 17:35:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.130 2022/03/28 12:42:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.131 2022/04/07 17:35:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -205,6 +205,12 @@ dev_type_stop(ucomstop);
 dev_type_tty(ucomtty);
 dev_type_poll(ucompoll);
 
+static int
+ucom_unit(dev_t dev)
+{
+	return UCOMUNIT(dev);
+}
+
 const struct cdevsw ucom_cdevsw = {
 	.d_open = ucomopen,
 	.d_cancel = ucomcancel,
@@ -219,7 +225,7 @@ const struct cdevsw ucom_cdevsw = {
 	.d_kqfilter = ttykqfilter,
 	.d_discard = nodiscard,
 	.d_cfdriver = &ucom_cd,
-	.d_devtounit = dev_minor_unit,
+	.d_devtounit = ucom_unit,
 	.d_flag = D_TTY | D_MPSAFE
 };
 
