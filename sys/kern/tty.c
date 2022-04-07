@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.300 2022/03/28 12:39:28 riastradh Exp $	*/
+/*	$NetBSD: tty.c,v 1.301 2022/04/07 21:46:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.300 2022/03/28 12:39:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.301 2022/04/07 21:46:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2898,6 +2898,18 @@ tty_free(struct tty *tp)
 	seldestroy(&tp->t_rsel);
 	seldestroy(&tp->t_wsel);
 	kmem_free(tp, sizeof(*tp));
+}
+
+/*
+ * tty_unit: map dev_t to tty unit number, as with TTUNIT
+ *
+ * => defined as function for use with struct cdevsw::d_devtounit
+ * => not for drivers with different unit numbering, e.g. TTUNIT(d) >> 4
+ */
+int
+tty_unit(dev_t dev)
+{
+	return TTUNIT(dev);
 }
 
 /*
