@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.74 2020/07/27 20:54:18 christos Exp $
+.\" $NetBSD: gpt.8,v 1.75 2022/04/07 09:06:01 nia Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd July 27, 2020
+.Dd April 7, 2022
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -216,9 +216,9 @@ Linux swap
 .It Cm linux-lvm
 Linux LVM
 .It Cm windows
-Windows basic data
+Microsoft basic data - NTFS, FAT32 ("msdos"), FAT16, also used for UDF
 .It Cm windows-reserved
-Windows reserved
+Microsoft reserved
 .It Cm ccd
 .Nx
 ccd component
