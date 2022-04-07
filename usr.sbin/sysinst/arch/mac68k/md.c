@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2022/01/29 16:01:19 martin Exp $ */
+/*	$NetBSD: md.c,v 1.12 2022/04/07 19:33:38 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -782,7 +782,7 @@ getName(part, len_name, name)
 }
 
 /*
- * Find the first occurance of a Standard Type partition and
+ * Find the first occurrence of a Standard Type partition and
  *  mark it for use along with the default mount slot.
  */
 static int

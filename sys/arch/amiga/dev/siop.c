@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.70 2019/11/10 21:16:22 chs Exp $ */
+/*	$NetBSD: siop.c,v 1.71 2022/04/07 19:33:37 andvar Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.70 2019/11/10 21:16:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.71 2022/04/07 19:33:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -780,7 +780,7 @@ siop_start(struct siop_softc *sc, int target, int lun, u_char *cbuf, int clen,
 	/*
 	 * Negotiate wide is the initial negotiation state;  since the 53c710
 	 * doesn't do wide transfers, just begin the synchronous transfer
-	 * negotation here.
+	 * negotiation here.
 	 */
 	if (sc->sc_sync[target].state == NEG_WIDE) {
 		if (siop_inhibit_sync[target]) {

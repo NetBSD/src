@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.17 2022/03/28 12:33:21 riastradh Exp $ */
+/* $NetBSD: hdaudio.c,v 1.18 2022/04/07 19:33:37 andvar Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.17 2022/03/28 12:33:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.18 2022/04/07 19:33:37 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1079,7 +1079,7 @@ hdaudio_stream_disestablish(struct hdaudio_stream *st)
 }
 
 /*
- * Convert most of audio_params_t to stream fmt descriptor; noticably missing
+ * Convert most of audio_params_t to stream fmt descriptor; noticeably missing
  * is the # channels bits, as this is encoded differently in codec and
  * stream descriptors.
  *
