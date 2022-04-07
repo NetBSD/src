@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.131 2022/04/07 17:35:31 riastradh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.132 2022/04/07 21:47:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.131 2022/04/07 17:35:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.132 2022/04/07 21:47:02 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -122,6 +122,7 @@ fail:
 #define	UCOMCALLUNIT(x)		TTCALLUNIT(x)
 #define	UCOMUNIT(x)		TTUNIT(x)
 #define	UCOMDIALOUT(x)		TTDIALOUT(x)
+#define	ucom_unit		tty_unit
 
 /*
  * XXX: We can submit multiple input/output buffers to the usb stack
@@ -204,12 +205,6 @@ dev_type_ioctl(ucomioctl);
 dev_type_stop(ucomstop);
 dev_type_tty(ucomtty);
 dev_type_poll(ucompoll);
-
-static int
-ucom_unit(dev_t dev)
-{
-	return UCOMUNIT(dev);
-}
 
 const struct cdevsw ucom_cdevsw = {
 	.d_open = ucomopen,
