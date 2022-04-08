@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.8 2022/03/19 11:37:05 riastradh Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.9 2022/04/08 23:14:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.8 2022/03/19 11:37:05 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.9 2022/04/08 23:14:21 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -300,7 +300,7 @@ rk_v1crypto_sysctl_attach(struct rk_v1crypto_softc *sc)
 	}
 
 	/* hw.rkv1cryptoN.rng (`struct', 32-byte array) */
-	sysctl_createv(&cy->cy_log, 0, &cy->cy_root_node, NULL,
+	error = sysctl_createv(&cy->cy_log, 0, &cy->cy_root_node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_PRIVATE, CTLTYPE_STRUCT,
 	    "rng", SYSCTL_DESCR("Read up to 32 bytes out of the TRNG"),
 	    &rk_v1crypto_sysctl_rng, 0, sc, 0, CTL_CREATE, CTL_EOL);
