@@ -1,4 +1,4 @@
-/*	$NetBSD: getyx.c,v 1.6 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: getyx.c,v 1.7 2022/04/08 10:27:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getyx.c,v 1.6 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: getyx.c,v 1.7 2022/04/08 10:27:04 andvar Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: getyx.c,v 1.6 2017/01/06 13:53:18 roy Exp $");
 
 /*
  * getpary --
- *      Get the y postion of the window relative to the parent window
+ *      Get the y position of the window relative to the parent window
  * return -1 if not a subwindow.
  */
 int
@@ -59,7 +59,7 @@ getpary(WINDOW *win)
 
 /*
  * getparx --
- *      Get the x postion of the window relative to the parent window
+ *      Get the x position of the window relative to the parent window
  * return -1 if not a subwindow.
  */
 int
