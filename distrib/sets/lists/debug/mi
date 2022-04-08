@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.375 2022/04/06 14:28:44 reinoud Exp $
+# $NetBSD: mi,v 1.376 2022/04/08 23:35:51 riastradh Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2062,6 +2062,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctype.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/membar/t_dekker.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/membar/t_seqlock.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/membar/t_spinlock.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf,compattestfile
