@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.173 2022/02/19 17:45:02 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.174 2022/04/08 20:11:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.173 2022/02/19 17:45:02 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.174 2022/04/08 20:11:31 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2307,9 +2307,14 @@ _rl_update_pos(void)
 char *
 rl_copy_text(int from, int to)
 {
-	const LineInfo *li = el_line(e);
+	const LineInfo *li;
 	size_t len;
 	char * out;
+
+	if (h == NULL || e == NULL)
+		rl_initialize();
+
+	li = el_line(e);
 
 	if (from > to)
 		return NULL;
