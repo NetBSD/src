@@ -1,8 +1,8 @@
-/*	$NetBSD: cache_r5k_subr.S,v 1.4 2020/06/14 15:12:56 tsutsui Exp $ 	*/
+/*	$NetBSD: cache_r5k_subr.S,v 1.5 2022/04/08 10:17:54 andvar Exp $ 	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
- * modification, are permited provided that the following conditions
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.

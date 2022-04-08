@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.94 2020/02/02 05:56:42 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.95 2022/04/08 10:17:54 andvar Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.94 2020/02/02 05:56:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.95 2022/04/08 10:17:54 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -1113,7 +1113,7 @@ xi_full_reset(struct xi_softc *sc)
 	/* Set the local memory dividing line. */
 	if (sc->sc_rev != 1) {
 		PAGE(sc, 2);
-		/* XXX Symbolic constant preferrable. */
+		/* XXX Symbolic constant preferable. */
 		bus_space_write_2(bst, bsh, RBS0, 0x2000);
 	}
 

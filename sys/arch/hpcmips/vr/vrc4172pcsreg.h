@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pcsreg.h,v 1.1 2000/11/11 04:42:09 sato Exp $	*/
+/*	$NetBSD: vrc4172pcsreg.h,v 1.2 2022/04/08 10:17:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 /*
- *	Vrc4172 PCS (Programable Chip Select) Unit Registers.
+ *	Vrc4172 PCS (Programmable Chip Select) Unit Registers.
  */
 #define VRC2_EXCSREG_MAX		0x30
 

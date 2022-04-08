@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r3k_subr.S,v 1.5 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: cache_r3k_subr.S,v 1.6 2022/04/08 10:17:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -8,7 +8,7 @@
  * Digital Equipment Corporation and Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permited provided that the following conditions
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.28 2021/12/05 04:56:40 msaitoh Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.29 2022/04/08 10:17:55 andvar Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.28 2021/12/05 04:56:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.29 2022/04/08 10:17:55 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -743,7 +743,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 		 */
 #ifdef SCTP_DEBUG
 		if (sctp_debug_on & SCTP_DEBUG_OUTPUT1) {
-			printf("Have a STCB - no asconf allowed, not bound all have a postive list\n");
+			printf("Have a STCB - no asconf allowed, not bound all have a positive list\n");
 		}
 #endif
 		/* First look at all addresses for one that is on
@@ -1280,7 +1280,7 @@ sctp_choose_v6_boundspecific_stcb(struct sctp_inpcb *inp,
 	 *   Each endpoint has a list of local addresses associated
 	 *   with it. The address list is either a "negative list" i.e.
 	 *   those addresses that are NOT allowed to be used as a source OR
-	 *   a "postive list" i.e. those addresses that CAN be used.
+	 *   a "positive list" i.e. those addresses that CAN be used.
 	 *
 	 *   Its a negative list if asconf is allowed. What we do
 	 *   in this case is use the ep address list BUT we have
@@ -1394,7 +1394,7 @@ sctp_choose_v6_boundspecific_stcb(struct sctp_inpcb *inp,
 	} else {
 #ifdef SCTP_DEBUG
 		if (sctp_debug_on & SCTP_DEBUG_OUTPUT1) {
-			printf("Have a STCB - no asconf allowed, not bound all have a postive list\n");
+			printf("Have a STCB - no asconf allowed, not bound all have a positive list\n");
 		}
 #endif
 		/* First try for interface output match */
@@ -4008,7 +4008,7 @@ sctp_prepare_chunk(struct sctp_tmit_chunk *template,
 		/* If:
 		 *  Peer supports PR-SCTP
 		 *  The flags is set against this send for PR-SCTP
-		 *  And timetolive is a postive value, zero is reserved
+		 *  And timetolive is a positive value, zero is reserved
 		 *     to mean a reliable send for both buffer/time
 		 *     related one.
 		 */

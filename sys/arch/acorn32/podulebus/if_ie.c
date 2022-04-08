@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.51 2021/11/10 16:44:42 msaitoh Exp $ */
+/* $NetBSD: if_ie.c,v 1.52 2022/04/08 10:17:53 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.51 2021/11/10 16:44:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.52 2022/04/08 10:17:53 andvar Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -342,7 +342,7 @@ ieattach(device_t parent, device_t self, void *aux)
 
 	/* Verify the podulebus probe incase RiscOS lied */
         if ( ReadByte ( sc->sc_rom + (3<<2) ) != 0x03 ) {
-		printf(": Ether1 ROM probablly broken.  ECID corrupt\n");
+		printf(": Ether1 ROM probably broken.  ECID corrupt\n");
 		sc->sc_flags |= IE_BROKEN;
 		return;
 	}
