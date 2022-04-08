@@ -1,4 +1,4 @@
-/*	$NetBSD: qatreg.h,v 1.2 2021/12/31 20:22:49 andvar Exp $	*/
+/*	$NetBSD: qatreg.h,v 1.3 2022/04/08 10:27:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -919,7 +919,7 @@ struct mof_uof_chunk_hdr {
 #define UOF_MAX_NUM_OF_AE	16	/* maximum number of AE */
 
 #define UOF_OBJ_ID_LEN		8	/* length of object ID */
-#define UOF_FIELD_POS_SIZE	12	/* field postion size */
+#define UOF_FIELD_POS_SIZE	12	/* field position size */
 #define MIN_UOF_SIZE		24	/* minimum .uof file size */
 #define UOF_FID			0xc6c2	/* uof magic number */
 #define UOF_MIN_VER		0x11

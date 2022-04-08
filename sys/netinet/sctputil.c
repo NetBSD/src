@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.18 2021/12/05 03:08:19 msaitoh Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.19 2022/04/08 10:27:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.18 2021/12/05 03:08:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.19 2022/04/08 10:27:04 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3301,7 +3301,7 @@ sctp_grub_through_socket_buffer(struct sctp_inpcb *inp, struct socket *old,
 	next = old_sb->sb_mb;
 	while (next) {
 		this = next;
-		/* postion for next one */
+		/* position for next one */
 		next = this->m_nextpkt;
 		/* check the tag of this packet */
 		if (sctp_should_be_moved(this, asoc)) {
@@ -3328,7 +3328,7 @@ sctp_grub_through_socket_buffer(struct sctp_inpcb *inp, struct socket *old,
 	}
 	if (moved_top) {
 		/*
-		 * Ok so now we must re-postion vtag_first to
+		 * Ok so now we must re-position vtag_first to
 		 * match the new first one since we moved the
 		 * mbuf at the top.
 		 */

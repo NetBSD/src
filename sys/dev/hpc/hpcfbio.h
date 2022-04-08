@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbio.h,v 1.3 2021/07/31 20:51:32 andvar Exp $	*/
+/*	$NetBSD: hpcfbio.h,v 1.4 2022/04/08 10:27:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -207,7 +207,7 @@ struct hpcfb_dsp_op {
 };
 
 /*
- * view port postion
+ * view port position
  * arg0 is x_offset
  * arg1 is y_offset
  */

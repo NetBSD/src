@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.9 2022/04/07 19:33:38 andvar Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.10 2022/04/08 10:27:04 andvar Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.9 2022/04/07 19:33:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.10 2022/04/08 10:27:04 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2289,7 +2289,7 @@ sctp_sack_check(struct sctp_tcb *stcb, int ok_to_sack, int was_a_gap, int *abort
 #endif
 	} else if (at >= 8) {
 		/* we can slide the mapping array down */
-		/* Calculate the new byte postion we can move down */
+		/* Calculate the new byte position we can move down */
 		slide_from = at >> 3;
 		/* now calculate the ceiling of the move using our highest TSN value */
 		if (asoc->highest_tsn_inside_map >= asoc->mapping_array_base_tsn) {
