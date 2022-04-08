@@ -1,7 +1,19 @@
-/*	$NetBSD: msg_043.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_043.c,v 1.3 2022/04/08 21:29:29 rillig Exp $	*/
 # 3 "msg_043.c"
 
-// Test for message: redefinition hides earlier one: %s [43]
+/* Test for message: redefinition hides earlier one: %s [43] */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -h */
+
+struct s {
+	int member;
+};
+
+void
+example(void)
+{
+	/* expect+1: warning: redefinition hides earlier one: s [43] */
+	struct s {
+		int member;
+	};
+}

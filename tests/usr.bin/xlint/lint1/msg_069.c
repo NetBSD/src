@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_069.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_069.c,v 1.3 2022/04/08 21:29:29 rillig Exp $	*/
 # 3 "msg_069.c"
 
 // Test for message: inappropriate qualifiers with 'void' [69]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* expect+2: error: void type for 'const_void' [19] */
+/* expect+1: warning: inappropriate qualifiers with 'void' */
+const void const_void;
+
+/* expect+2: error: void type for 'volatile_void' [19] */
+/* expect+1: warning: inappropriate qualifiers with 'void' */
+volatile void volatile_void;

@@ -1,1 +1,4 @@
-msg_069.c(6): error: syntax error ':' [249]
+msg_069.c(8): error: void type for 'const_void' [19]
+msg_069.c(8): warning: inappropriate qualifiers with 'void' [69]
+msg_069.c(12): error: void type for 'volatile_void' [19]
+msg_069.c(12): warning: inappropriate qualifiers with 'void' [69]
