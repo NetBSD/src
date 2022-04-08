@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.268 2022/04/03 10:05:22 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.269 2022/04/08 21:48:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.268 2022/04/03 10:05:22 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.269 2022/04/08 21:48:19 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1926,11 +1926,11 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	sym->s_type = dcs->d_tagtyp;
 	sym->s_value.v_tspec = INT;
 	sym->s_value.v_quad = val;
-	if (impl && val - 1 == TARG_INT_MAX) {
+	if (impl && val == TARG_INT_MIN) {
 		/* overflow in enumeration values: %s */
 		warning(48, sym->s_name);
 	}
-	enumval = val + 1;
+	enumval = val == TARG_INT_MAX ? TARG_INT_MIN : val + 1;
 	return sym;
 }
 
