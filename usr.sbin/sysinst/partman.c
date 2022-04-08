@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.54 2021/11/06 06:40:33 msaitoh Exp $ */
+/*	$NetBSD: partman.c,v 1.55 2022/04/08 10:17:55 andvar Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -457,7 +457,7 @@ pm_manage_getfreenode(void *node, const char *d, structinfo_t *s)
 /*
  * Show a line for a device, usually with full size in the right
  * column, alternatively (if != NULL) with no_size_display
- * instead in paranthesis (used for error displays or to note
+ * instead in parentheses (used for error displays or to note
  * a action that can be done to this device.
  */
 static void

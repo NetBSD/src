@@ -53,7 +53,7 @@ protected: IMPORT_C virtual void foo6(){};
 
 
 /*
- * DLogicalDevice is probaly derived from CObject as the original Arlo
+ * DLogicalDevice is probably derived from CObject as the original Arlo
  * calls SetName from Install
  */
 class DLogicalDevice : public CObject

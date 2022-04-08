@@ -1,4 +1,4 @@
-*	$NetBSD: round.sa,v 1.4 2021/07/31 20:29:37 andvar Exp $
+*	$NetBSD: round.sa,v 1.5 2022/04/08 10:17:53 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -236,7 +236,7 @@ sgl_done:
 add_ext:
 	addq.l  #1,LOCAL_LO(a0)		;add 1 to l-bit
 	bcc.b	xcc_clr			;test for carry out
-	addq.l  #1,LOCAL_HI(a0)		;propogate carry
+	addq.l  #1,LOCAL_HI(a0)		;propagate carry
 	bcc.b	xcc_clr
 	roxr.w  LOCAL_HI(a0)		;mant is 0 so restore v-bit
 	roxr.w  LOCAL_HI+2(a0)		;mant is 0 so restore v-bit
@@ -255,7 +255,7 @@ add_ext_done:
 add_dbl:
 	add.l	#ad_1_dbl,LOCAL_LO(a0)
 	bcc.b	dcc_clr
-	addq.l	#1,LOCAL_HI(a0)		;propogate carry
+	addq.l	#1,LOCAL_HI(a0)		;propagate carry
 	bcc.b	dcc_clr
 	roxr.w	LOCAL_HI(a0)		;mant is 0 so restore v-bit
 	roxr.w	LOCAL_HI+2(a0)		;mant is 0 so restore v-bit

@@ -1,4 +1,4 @@
-/* $NetBSD: err.c,v 1.24 2021/09/11 20:55:03 christos Exp $ */
+/* $NetBSD: err.c,v 1.25 2022/04/08 10:17:52 andvar Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.24 2021/09/11 20:55:03 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.25 2022/04/08 10:17:52 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,7 +313,7 @@ seterror(int id, ...)
  *		  in bname
  *
  * This routine always resets or exits.  The flag haderr
- * is set so the routine who catches the unwind can propogate
+ * is set so the routine who catches the unwind can propagate
  * it if they want.
  *
  * Note that any open files at the point of error will eventually

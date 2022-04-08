@@ -1,4 +1,4 @@
-*	$NetBSD: x_store.sa,v 1.4 2001/12/09 01:43:13 briggs Exp $
+*	$NetBSD: x_store.sa,v 1.5 2022/04/08 10:17:53 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -163,7 +163,7 @@ dest_dbl:
 	swap	d0		;d0 now in upper word
 	lsl.l	#4,d0		;d0 now in proper place for dbl prec exp
 	tst.b	LOCAL_SGN(a1)	
-	beq.b	get_mant	;if postive, go process mantissa
+	beq.b	get_mant	;if positive, go process mantissa
 	bset.l	#31,d0		;if negative, put in sign information
 *				; before continuing
 	bra.b	get_mant	;go process mantissa

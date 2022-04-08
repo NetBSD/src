@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.1 2011/06/27 11:52:58 uch Exp $	*/
+/*	$NetBSD: inode.c,v 1.2 2022/04/08 10:17:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inode.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
+__RCSID("$NetBSD: inode.c,v 1.2 2022/04/08 10:17:53 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,14 +94,14 @@ freeinode_check(struct v7fs_self *fs)
 	return FSCK_EXIT_OK;
 }
 
-/* Counting freeinode and find partialy allocated inode. */
+/* Counting freeinode and find partially allocated inode. */
 static int
 v7fs_inode_check(struct v7fs_self *fs, struct v7fs_inode *p, v7fs_ino_t ino)
 {
 	int error = 0;
 
 	if (v7fs_inode_allocated(p) && !p->nlink) {
-		pwarn("*** partialy allocated inode #%d", ino);
+		pwarn("*** partially allocated inode #%d", ino);
 		v7fs_inode_dump(p);
 		if (reply_trivial("REMOVE?")) {
 			memset(p, 0, sizeof(*p));

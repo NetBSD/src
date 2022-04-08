@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.4 2021/07/30 22:07:14 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.5 2022/04/08 10:17:53 andvar Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.4 2021/07/30 22:07:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.5 2022/04/08 10:17:53 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,7 +503,7 @@ fcu_adjust(void *cookie)
 		for (i = 0; i < FCU_ZONE_COUNT; i++)
 			fancontrol_adjust_zone(&sc->sc_zones[i]);
 		/*
-		 * take a shorter nap if we're in the proccess of adjusting a
+		 * take a shorter nap if we're in the process of adjusting a
 		 * PWM fan, which relies on measuring speed and then changing
 		 * its duty cycle until we're reasonable close to the target
 		 * speed

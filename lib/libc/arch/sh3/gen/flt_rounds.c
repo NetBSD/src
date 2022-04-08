@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.7 2017/03/11 01:25:04 chs Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.8 2022/04/08 10:17:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.7 2017/03/11 01:25:04 chs Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.8 2022/04/08 10:17:52 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,7 +53,7 @@ static const int map[] = {
  * Returns:
  *	0 - round to zero
  *	1 - round to nearest
- *	2 - round to postive infinity
+ *	2 - round to positive infinity
  *	3 - round to negative infinity
  *
  * ok all we need to do is get the current FP rounding mode
