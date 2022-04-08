@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1191 2022/04/08 21:29:29 rillig Exp $
+# $NetBSD: mi,v 1.1192 2022/04/08 23:35:52 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -104,6 +104,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/inet		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale		tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libc/membar		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/misc		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo	tests-lib-debug		compattestfile,atf
@@ -2955,6 +2956,12 @@
 ./usr/tests/lib/libc/locale/t_wcstod			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wctomb			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wctype			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/membar				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/membar/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/membar/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libc/membar/t_dekker			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/membar/t_seqlock			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/membar/t_spinlock			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/misc				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/misc/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/misc/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
