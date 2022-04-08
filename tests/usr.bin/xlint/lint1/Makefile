@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.118 2022/04/05 23:09:19 rillig Exp $
+# $NetBSD: Makefile,v 1.119 2022/04/08 21:29:29 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	348		# see lint1/err.c
@@ -216,7 +216,7 @@ FILES+=		lex_wide_char.c
 FILES+=		lex_wide_char.exp
 FILES+=		lex_wide_string.c
 FILES+=		lex_wide_string.exp
-FILES+=		${:U0 ${:U:${:Urange=${MAX_MESSAGE}}}:C,^.$,0&,:C,^..$,0&,:@i@msg_${i}.c msg_${i}.exp@:Nmsg_040.exp:Nmsg_176.exp}
+FILES+=		${MSG_FILES}
 FILES+=		msg_001_c90.c
 FILES+=		msg_001_c90.exp
 FILES+=		msg_000_c90.c
@@ -265,6 +265,12 @@ FILES+=		stmt_goto.c
 FILES+=		stmt_goto.exp
 FILES+=		stmt_if.c
 FILES+=		stmt_if.exp
+
+MSG_IDS=	${:U0 ${:U:${:Urange=${MAX_MESSAGE}}}:C,^.$,0&,:C,^..$,0&,}
+MSG_FILES=	${MSG_IDS:@id@msg_${id}.c ${MSG_NO_EXP.${id}:D:Umsg_${id}.exp}@}
+MSG_NO_EXP.040=	yes
+MSG_NO_EXP.070=	yes
+MSG_NO_EXP.176=	yes
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.

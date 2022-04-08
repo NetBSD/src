@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.158 2022/04/05 23:13:56 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.159 2022/04/08 21:29:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.158 2022/04/05 23:13:56 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.159 2022/04/08 21:29:29 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -124,7 +124,7 @@ const char *const msgs[] = {
 	"cannot return incomplete type",			      /* 67 */
 	"typedef already qualified with '%s'",			      /* 68 */
 	"inappropriate qualifiers with 'void'",			      /* 69 */
-	"%soperand of '%s' is unsigned in ANSI C",		      /* 70 */
+	"",			/* unused */			      /* 70 */
 	"too many characters in character constant",		      /* 71 */
 	"typedef declares no type name",			      /* 72 */
 	"empty character constant",				      /* 73 */

@@ -1,1 +1,1 @@
-msg_042.c(6): error: syntax error ':' [249]
+msg_042.c(9): warning: forward reference to enum type [42]

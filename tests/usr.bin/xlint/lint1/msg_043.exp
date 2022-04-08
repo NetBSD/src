@@ -1,1 +1,1 @@
-msg_043.c(6): error: syntax error ':' [249]
+msg_043.c(16): warning: redefinition hides earlier one: s [43]
