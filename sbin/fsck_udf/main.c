@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2022/04/08 23:47:19 riastradh Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2022/04/08 23:48:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.4 2022/04/08 23:47:19 riastradh Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2022/04/08 23:48:05 riastradh Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1782,6 +1782,7 @@ udf_check_for_vat(union dscrptr *dscr)
 		return ENOENT;
 
 	/* TODO sanity check vat length */
+	(void)vat_length;
 
 	return 0;
 }
