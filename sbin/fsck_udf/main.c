@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2022/04/06 16:01:06 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2022/04/08 23:47:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.3 2022/04/06 16:01:06 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2022/04/08 23:47:19 riastradh Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1782,7 +1782,6 @@ udf_check_for_vat(union dscrptr *dscr)
 		return ENOENT;
 
 	/* TODO sanity check vat length */
-	vat_length = vat_length;
 
 	return 0;
 }
@@ -4405,7 +4404,7 @@ main(int argc, char **argv)
 
 
 /*VARARGS*/
-static int
+static int __printflike(2, 3)
 ask(int def, const char *fmt, ...)
 {
 	va_list ap;
@@ -4438,7 +4437,7 @@ ask(int def, const char *fmt, ...)
 
 
 /*VARARGS*/
-static int
+static int __printflike(2, 3)
 ask_noauto(int def, const char *fmt, ...)
 {
 	va_list ap;
