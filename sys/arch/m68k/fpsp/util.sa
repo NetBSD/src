@@ -1,4 +1,4 @@
-*	$NetBSD: util.sa,v 1.4 2001/12/09 01:43:13 briggs Exp $
+*	$NetBSD: util.sa,v 1.5 2022/04/08 10:17:53 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -302,7 +302,7 @@ s_rp_neg:
 	bset.b	#neg_bit,FPSR_CC(a6)
 	bra.b	end_ovfr
 s_rp_pos:
-	lea.l	EXT_PINF,a1	;answer is postive infinity
+	lea.l	EXT_PINF,a1	;answer is positive infinity
 	bset.b	#inf_bit,FPSR_CC(a6)
 	bra.b	end_ovfr
 

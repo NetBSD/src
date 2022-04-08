@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.12 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: ka650.h,v 1.13 2022/04/08 10:17:54 andvar Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -179,7 +179,7 @@ struct ka650_ssc {
 #define CBTCR_RWT	0x40000000	/* CDAL Bus Timeout on CPU or DMA */
 
 /*
- * TCR0/TCR1: Programable Timer Control Registers (ssc_tcr[01])
+ * TCR0/TCR1: Programmable Timer Control Registers (ssc_tcr[01])
  * (The rest of the bits are the same as in the standard VAX
  *	Interval timer and are defined in clock.h)
  */

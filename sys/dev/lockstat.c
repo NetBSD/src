@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.29 2022/02/27 14:16:32 riastradh Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.30 2022/04/08 10:17:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2019 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.29 2022/02/27 14:16:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.30 2022/04/08 10:17:54 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -374,7 +374,7 @@ lockstat_free(void)
 }
 
 /*
- * Main entry point from lock primatives.
+ * Main entry point from lock primitives.
  */
 void
 lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,

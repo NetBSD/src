@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172reg.h,v 1.5 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vrc4172reg.h,v 1.6 2022/04/08 10:17:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #define VRC2_GPIOL_ADDR	0x15001080	/* GPIO (0..15) */
-#define VRC2_PCS_ADDR	0x15001090	/* PCS Programable chip selects */
+#define VRC2_PCS_ADDR	0x15001090	/* PCS Programmable chip selects */
 #define VRC2_GPIOH_ADDR	0x150010c0	/* GPIO (16..23) */
 #define VRC2_PMU_ADDR	0x15003800	/* PMU */
 #define VRC2_ICU_ADDR	0x15003808	/* ICU */

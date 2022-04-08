@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.55 2020/05/24 14:41:26 jmcneill Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.56 2022/04/08 10:17:53 andvar Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.55 2020/05/24 14:41:26 jmcneill Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.56 2022/04/08 10:17:53 andvar Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -1072,7 +1072,7 @@ grow(void)
 }
 /*
  * Call (*fn)() for each inode, passing the inode and its inumber.  The
- *  number of cylinder groups is pased in, so this can be used to map
+ *  number of cylinder groups is passed in, so this can be used to map
  *  over either the old or the new file system's set of inodes.
  */
 static void

@@ -55,7 +55,7 @@
 #define WARPMACRO "%X/Kbmap.%{TERM}"
 
 /* warp library */
-#ifndef WARPLIB		/* ~ and %l only ("~%l" is permissable) */
+#ifndef WARPLIB		/* ~ and %l only ("~%l" is permissible) */
 #   ifdef PRIVLIB
 #	define WARPLIB PRIVLIB
 #   else

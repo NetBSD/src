@@ -1,4 +1,4 @@
-#	$NetBSD: README.seagate,v 1.7 2021/07/24 21:31:37 andvar Exp $
+#	$NetBSD: README.seagate,v 1.8 2022/04/08 10:17:54 andvar Exp $
 
 The hardware:
 
@@ -26,7 +26,7 @@ A scsi command is sent to scsi_cmd function. The command is either placed in
 the queue or an retryable message is returned. The routine may wait for
 completion of the command depending on the supplied flags. A timer is started
 for every command placed in the queue. The commands are added in the order they
-are received. There is a possiblity to make all REQUEST SENSE commands be
+are received. There is a possibility to make all REQUEST SENSE commands be
 queued before all other commands, but I dont think it is a good thing (Linux
 do however use this).
 

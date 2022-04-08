@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.36 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: screen.c,v 1.37 2022/04/08 10:17:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.36 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: screen.c,v 1.37 2022/04/08 10:17:52 andvar Exp $");
 #endif
 #endif					/* not lint */
 
@@ -152,7 +152,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->echoit = new_screen->nl = 1;
 	new_screen->pfast = new_screen->rawmode = new_screen->noqch = 0;
 	new_screen->filtered = filtered;
-	filtered = FALSE; /* filter() must preceed each newterm() */
+	filtered = FALSE; /* filter() must precede each newterm() */
 	new_screen->nca = A_NORMAL;
 	new_screen->color_type = COLOR_NONE;
 	new_screen->COLOR_PAIRS = 0;

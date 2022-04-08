@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.106 2021/06/11 18:47:56 rillig Exp $	*/
+/*	$NetBSD: ping6.c,v 1.107 2022/04/08 10:17:53 andvar Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.106 2021/06/11 18:47:56 rillig Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.107 2022/04/08 10:17:53 andvar Exp $");
 #endif
 #endif
 
@@ -1006,7 +1006,7 @@ doit(u_char *packet, u_int packlen)
 
 			/*
 			 * receive control messages only. Process the
-			 * exceptions (currently the only possiblity is
+			 * exceptions (currently the only possibility is
 			 * a path MTU notification.)
 			 */
 			if ((mtu = get_pathmtu(&m)) > 0) {

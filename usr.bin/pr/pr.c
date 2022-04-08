@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.25 2021/12/05 08:03:07 msaitoh Exp $	*/
+/*	$NetBSD: pr.c,v 1.26 2022/04/08 10:17:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.25 2021/12/05 08:03:07 msaitoh Exp $");
+__RCSID("$NetBSD: pr.c,v 1.26 2022/04/08 10:17:55 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -1020,7 +1020,7 @@ out:
  *	inf:	file
  *	buf:	buffer
  *	lim:	buffer length
- *	cps:	column positon 1st char in buffer (large line support)
+ *	cps:	column position 1st char in buffer (large line support)
  *	trnc:	throw away data more than lim up to \n 
  *	mor:	set if more data in line (not truncated)
  */

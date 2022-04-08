@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.228 2021/12/07 17:39:53 brad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.229 2022/04/08 10:17:52 andvar Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -443,7 +443,7 @@ setup()
 	do_update=false
 	opts=
 	while getopts Mfm:p:st:u ch; do
-		# Note that $opts is only for options pased through to
+		# Note that $opts is only for options passed through to
 		# MAKEDEV.local, not for all options.
 		case ${ch} in
 		M)

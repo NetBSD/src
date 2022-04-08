@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.70 2022/01/01 12:00:01 msaitoh Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.71 2022/04/08 10:17:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.70 2022/01/01 12:00:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.71 2022/04/08 10:17:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -528,7 +528,7 @@ sleepq_abort(kmutex_t *mtx, int unlock)
 /*
  * sleepq_reinsert:
  *
- *	Move the possition of the lwp in the sleep queue after a possible
+ *	Move the position of the lwp in the sleep queue after a possible
  *	change of the lwp's effective priority.
  */
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.19 2021/08/17 22:00:30 andvar Exp $ */
+/* $NetBSD: aureg.h,v 1.20 2022/04/08 10:17:54 andvar Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
  */
 
 /************************************************************************/
-/*************   Programable Serial Controller registers   **************/
+/*************   Programmable Serial Controller registers   **************/
 /************************************************************************/
 
 #define	PSC0_BASE		0x11A00000

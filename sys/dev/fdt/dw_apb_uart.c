@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.11 2021/11/12 21:57:44 jmcneill Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.12 2022/04/08 10:17:54 andvar Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.11 2021/11/12 21:57:44 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.12 2022/04/08 10:17:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,7 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 		reg_shift = 2;
 	}
 	if (of_getprop_uint32(phandle, "reg-io-width", &reg_iowidth)) {
-		/* missing or bad reg-io-width propery, assume 1 */
+		/* missing or bad reg-io-width property, assume 1 */
 		reg_iowidth = 1;
 	}
 
@@ -183,7 +183,7 @@ dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		reg_shift = 2;
 	}
 	if (of_getprop_uint32(phandle, "reg-io-width", &reg_iowidth)) {
-		/* missing or bad reg-io-width propery, assume 1 */
+		/* missing or bad reg-io-width property, assume 1 */
 		reg_iowidth = 1;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: flt_rounds.c,v 1.1 2014/08/10 05:47:36 matt Exp $ */
+/* $NetBSD: flt_rounds.c,v 1.2 2022/04/08 10:17:52 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.1 2014/08/10 05:47:36 matt Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.2 2022/04/08 10:17:52 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,12 +47,12 @@ __RCSID("$NetBSD: flt_rounds.c,v 1.1 2014/08/10 05:47:36 matt Exp $");
  * Returns:
  *	0 - round to zero
  *	1 - round to nearest
- *	2 - round to postive infinity
+ *	2 - round to positive infinity
  *	3 - round to negative infinity
  *
  * However, the rounding modes stored in the FPCR are:
  *	0 - round to nearest
- *	1 - round to postive infinity
+ *	1 - round to positive infinity
  *	2 - round to negative infinity
  *	3 - round to zero
  *

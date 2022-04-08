@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.19 2008/10/22 07:59:43 mishka Exp $	*/
+/*	$NetBSD: lpq.c,v 1.20 2022/04/08 10:17:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.19 2008/10/22 07:59:43 mishka Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.20 2022/04/08 10:17:55 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 		case 'w':
 			wait_time = atoi(optarg);
 			if (wait_time < 0)
-				errx(1, "wait time must be postive: %s",
+				errx(1, "wait time must be positive: %s",
 				    optarg);
 			if (wait_time < 30)
 			    warnx("warning: wait time less than 30 seconds");
