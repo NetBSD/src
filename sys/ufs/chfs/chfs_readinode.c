@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.12 2021/12/10 20:36:04 andvar Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.13 2022/04/08 10:27:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -693,7 +693,7 @@ chfs_truncate_fragtree(struct chfs_mount *chmp,
 		return frag->ofs + frag->size;
 	}
 
-	/* FIXME Should we check the postion of the last node? (PAGE_CACHE size, etc.) */
+	/* FIXME Should we check the position of the last node? (PAGE_CACHE size, etc.) */
 	if (frag->node && (frag->ofs & (PAGE_SIZE - 1)) == 0) {
 		frag->node->nref->nref_offset =
 			CHFS_GET_OFS(frag->node->nref->nref_offset) | CHFS_PRISTINE_NODE_MASK;

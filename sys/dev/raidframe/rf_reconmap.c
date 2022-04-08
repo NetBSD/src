@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.38 2020/04/13 00:27:17 chs Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.39 2022/04/08 10:27:04 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.38 2020/04/13 00:27:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.39 2022/04/08 10:27:04 andvar Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -178,7 +178,7 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 			mapPtr->low_ru++;
 			mapPtr->high_ru++;
 			/* initialize "highest" RU status entry, which
-			   will take over the current head postion */
+			   will take over the current head position */
 			mapPtr->status[mapPtr->head]=RU_NOTHING;
 			
 			/* move head too */
