@@ -1,4 +1,4 @@
-*	$NetBSD: round.sa,v 1.5 2022/04/08 10:17:53 andvar Exp $
+*	$NetBSD: round.sa,v 1.6 2022/04/08 14:33:24 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -530,7 +530,7 @@ dnrm_lp:
 	beq.b	not_E3			;not type E3 exception
 	bfextu	WBTEMP_GRS(a6){6:3},d2	;extract guard,round, sticky  bit
 	move.l	#29,d0
-	lsl.l	d0,d2			;shift g,r,s to their postions
+	lsl.l	d0,d2			;shift g,r,s to their positions
 	move.l	d2,d0
 not_E3:
 	move.l	(sp)+,d2		;restore d2
