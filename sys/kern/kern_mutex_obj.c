@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.8 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.9 2022/04/09 23:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.8 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.9 2022/04/09 23:38:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -158,13 +158,13 @@ mutex_obj_free(kmutex_t *lock)
 	     __func__, mo, mo->mo_refcnt);
 
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 	if (atomic_dec_uint_nv(&mo->mo_refcnt) > 0) {
 		return false;
 	}
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
+	membar_acquire();
 #endif
 	mutex_destroy(&mo->mo_lock);
 	pool_cache_put(mutex_obj_cache, mo);

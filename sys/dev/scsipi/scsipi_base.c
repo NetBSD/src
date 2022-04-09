@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.188 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.189 2022/04/09 23:38:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.188 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.189 2022/04/09 23:38:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2733,10 +2733,10 @@ void
 scsipi_adapter_delref(struct scsipi_adapter *adapt)
 {
 
-	membar_exit();
+	membar_release();
 	if (atomic_dec_uint_nv(&adapt->adapt_refcnt) == 0
 	    && adapt->adapt_enable != NULL) {
-		membar_enter();
+		membar_acquire();
 		scsipi_adapter_lock(adapt);
 		(void) scsipi_adapter_enable(adapt, 0);
 		scsipi_adapter_unlock(adapt);
