@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2412 2022/02/15 22:46:29 riastradh Exp $
+#	$NetBSD: mi,v 1.2413 2022/04/09 23:32:52 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6307,6 +6307,7 @@
 ./usr/share/man/cat3/atoi.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atoll.0			comp-c-catman		.cat
+./usr/share/man/cat3/atomic.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_add.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_add_32.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_add_32_nv.0		comp-c-catman		.cat
@@ -8913,12 +8914,15 @@
 ./usr/share/man/cat3/md5.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mdc2.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/mdoc.0			comp-obsolete		obsolete
+./usr/share/man/cat3/membar.0			comp-c-catman		.cat
+./usr/share/man/cat3/membar_acquire.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_consumer.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_datadep_consumer.0	comp-c-catman		.cat
 ./usr/share/man/cat3/membar_enter.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_exit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_ops.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_producer.0		comp-c-catman		.cat
+./usr/share/man/cat3/membar_release.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_sync.0		comp-c-catman		.cat
 ./usr/share/man/cat3/memccpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memchr.0			comp-c-catman		.cat
@@ -14668,6 +14672,7 @@
 ./usr/share/man/html3/atoi.html			comp-c-htmlman		html
 ./usr/share/man/html3/atol.html			comp-c-htmlman		html
 ./usr/share/man/html3/atoll.html		comp-c-htmlman		html
+./usr/share/man/html3/atomic.html		comp-c-htmlman		html
 ./usr/share/man/html3/atomic_add.html		comp-c-htmlman		html
 ./usr/share/man/html3/atomic_add_32.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_add_32_nv.html	comp-c-htmlman		html
@@ -17195,12 +17200,15 @@
 ./usr/share/man/html3/md4.html			comp-c-htmlman		html
 ./usr/share/man/html3/md5.html			comp-c-htmlman		html
 ./usr/share/man/html3/mdoc.html			comp-obsolete		obsolete
+./usr/share/man/html3/membar.html		comp-c-htmlman		html
+./usr/share/man/html3/membar_acquire.html	comp-c-htmlman		html
 ./usr/share/man/html3/membar_consumer.html	comp-c-htmlman		html
 ./usr/share/man/html3/membar_datadep_consumer.html	comp-c-htmlman		html
 ./usr/share/man/html3/membar_enter.html		comp-c-htmlman		html
 ./usr/share/man/html3/membar_exit.html		comp-c-htmlman		html
 ./usr/share/man/html3/membar_ops.html		comp-c-htmlman		html
 ./usr/share/man/html3/membar_producer.html	comp-c-htmlman		html
+./usr/share/man/html3/membar_release.html	comp-c-htmlman		html
 ./usr/share/man/html3/membar_sync.html		comp-c-htmlman		html
 ./usr/share/man/html3/memccpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/memchr.html		comp-c-htmlman		html
@@ -22866,6 +22874,7 @@
 ./usr/share/man/man3/atoi.3			comp-c-man		.man
 ./usr/share/man/man3/atol.3			comp-c-man		.man
 ./usr/share/man/man3/atoll.3			comp-c-man		.man
+./usr/share/man/man3/atomic.3			comp-c-man		.man
 ./usr/share/man/man3/atomic_add.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_add_32.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_add_32_nv.3		comp-c-man		.man
@@ -25484,12 +25493,15 @@
 ./usr/share/man/man3/md5.3			comp-c-man		.man
 ./usr/share/man/man3/mdc2.3			comp-obsolete		obsolete
 ./usr/share/man/man3/mdoc.3			comp-obsolete		obsolete
+./usr/share/man/man3/membar.3			comp-c-man		.man
+./usr/share/man/man3/membar_acquire.3		comp-c-man		.man
 ./usr/share/man/man3/membar_consumer.3		comp-c-man		.man
 ./usr/share/man/man3/membar_datadep_consumer.3	comp-c-man		.man
 ./usr/share/man/man3/membar_enter.3		comp-c-man		.man
 ./usr/share/man/man3/membar_exit.3		comp-c-man		.man
 ./usr/share/man/man3/membar_ops.3		comp-c-man		.man
 ./usr/share/man/man3/membar_producer.3		comp-c-man		.man
+./usr/share/man/man3/membar_release.3		comp-c-man		.man
 ./usr/share/man/man3/membar_sync.3		comp-c-man		.man
 ./usr/share/man/man3/memccpy.3			comp-c-man		.man
 ./usr/share/man/man3/memchr.3			comp-c-man		.man

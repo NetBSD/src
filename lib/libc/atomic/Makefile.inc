@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2019/12/07 15:13:59 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2022/04/09 23:32:52 riastradh Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -75,6 +75,10 @@ MLINKS+=atomic_add.3 atomic_add_32.3 \
 	atomic_swap.3 atomic_swap_ulong.3 \
 	atomic_swap.3 atomic_swap_ptr.3 \
 	atomic_swap.3 atomic_swap_64.3 \
+	atomic_ops.3 atomic.3 \
+	membar_ops.3 membar.3 \
+	membar_ops.3 membar_acquire.3 \
+	membar_ops.3 membar_release.3 \
 	membar_ops.3 membar_enter.3 \
 	membar_ops.3 membar_exit.3 \
 	membar_ops.3 membar_producer.3 \

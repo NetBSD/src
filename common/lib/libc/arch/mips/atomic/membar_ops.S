@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.11 2022/02/12 17:10:02 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.12 2022/04/09 23:32:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,22 +40,40 @@ LEAF(_membar_sync)
 END(_membar_sync)
 
 #ifdef __OCTEON__
-LEAF(_membar_producer)
+LEAF(_membar_release)
+	/*
+	 * syncw is documented as ordering store-before-store in
+	 *
+	 *	Cavium OCTEON III CN78XX Hardware Reference Manual,
+	 *	CN78XX-HM-0.99E, September 2014.
+	 *
+	 * It's unclear from the documentation the architecture
+	 * guarantees load-before-store ordering without barriers, but
+	 * this code assumes it does.  If that assumption is wrong, we
+	 * can only use syncw for membar_producer -- membar_release has
+	 * to use the full sync.
+	 */
 	j	ra
 	 syncw
-END(_membar_producer)
+END(_membar_release)
 #endif
 
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
+ATOMIC_OP_ALIAS(membar_acquire,_membar_sync)
+STRONG_ALIAS(_membar_acquire,_membar_sync)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_enter,_membar_sync)
 #ifdef __OCTEON__
-ATOMIC_OP_ALIAS(membar_exit,_membar_producer)
-STRONG_ALIAS(_membar_exit,_membar_producer)
-STRONG_ALIAS(membar_producer,_membar_producer)
+ATOMIC_OP_ALIAS(membar_exit,_membar_release)
+STRONG_ALIAS(_membar_exit,_membar_release)
+ATOMIC_OP_ALIAS(membar_release,_membar_release)
+ATOMIC_OP_ALIAS(membar_producer,_membar_release)
+STRONG_ALIAS(_membar_producer,_membar_release)
 #else
 ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
 STRONG_ALIAS(_membar_exit,_membar_sync)
+ATOMIC_OP_ALIAS(membar_release,_membar_sync)
+STRONG_ALIAS(_membar_release,_membar_sync)
 ATOMIC_OP_ALIAS(membar_producer,_membar_sync)
 STRONG_ALIAS(_membar_producer,_membar_sync)
 #endif
