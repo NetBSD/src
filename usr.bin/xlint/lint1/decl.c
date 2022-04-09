@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.273 2022/04/09 15:43:41 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.274 2022/04/09 16:02:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.273 2022/04/09 15:43:41 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.274 2022/04/09 16:02:14 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1123,12 +1123,10 @@ declarator_1_struct_union(sym_t *dsym)
 	int	sz;
 	unsigned int o = 0;	/* Appease GCC */
 
-	lint_assert(dsym->s_scl == MOS || dsym->s_scl == MOU);
+	lint_assert(is_member(dsym));
 
 	if (dcs->d_redeclared_symbol != NULL) {
-		/* should be ensured by storesym() */
-		lint_assert(dcs->d_redeclared_symbol->s_scl == MOS ||
-		    dcs->d_redeclared_symbol->s_scl == MOU);
+		lint_assert(is_member(dcs->d_redeclared_symbol));
 
 		if (dsym->u.s_member.sm_sou_type ==
 		    dcs->d_redeclared_symbol->u.s_member.sm_sou_type) {

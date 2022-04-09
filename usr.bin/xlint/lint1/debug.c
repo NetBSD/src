@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.14 2022/04/09 15:43:41 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.15 2022/04/09 16:02:14 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.14 2022/04/09 15:43:41 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.15 2022/04/09 16:02:14 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -277,8 +277,7 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 		debug_printf(" value=%s",
 		    sym->u.s_bool_constant ? "true" : "false");
 
-	if ((sym->s_scl == MOS || sym->s_scl == MOU) &&
-	    sym->u.s_member.sm_sou_type != NULL) {
+	if (is_member(sym) && sym->u.s_member.sm_sou_type != NULL) {
 		struct_or_union *sou_type = sym->u.s_member.sm_sou_type;
 		const char *tag = sou_type->sou_tag->s_name;
 		const sym_t *def = sou_type->sou_first_typedef;
