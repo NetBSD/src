@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.10 2021/12/22 15:36:37 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.11 2022/04/09 14:50:18 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckbool.c,v 1.10 2021/12/22 15:36:37 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.11 2022/04/09 14:50:18 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -241,7 +241,7 @@ bool
 fallback_symbol_strict_bool(sym_t *sym)
 {
 	if (Tflag && strcmp(sym->s_name, "__lint_false") == 0) {
-		sym->s_scl = CTCONST; /* close enough */
+		sym->s_scl = BOOL_CONST;
 		sym->s_type = gettyp(BOOL);
 		sym->s_value.v_tspec = BOOL;
 		sym->s_value.v_unsigned_since_c90 = false;
@@ -250,7 +250,7 @@ fallback_symbol_strict_bool(sym_t *sym)
 	}
 
 	if (Tflag && strcmp(sym->s_name, "__lint_true") == 0) {
-		sym->s_scl = CTCONST; /* close enough */
+		sym->s_scl = BOOL_CONST;
 		sym->s_type = gettyp(BOOL);
 		sym->s_value.v_tspec = BOOL;
 		sym->s_value.v_unsigned_since_c90 = false;

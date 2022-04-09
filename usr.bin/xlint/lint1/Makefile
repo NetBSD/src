@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2021/12/21 15:27:19 roy Exp $
+#	$NetBSD: Makefile,v 1.89 2022/04/09 14:50:18 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,13 @@ ${MAN}.date:	err.c
 	    -e 's,^12,December,' \
 	    -e 1q \
 	    ${.ALLSRC} > ${.TARGET}
+
+# Extra -UYYDEBUG since cgram.c contains 'int yydebug; if (yydebug)'.
+cgram.ln: cgram.c
+	: extra
+	${LINT} ${LINTFLAGS} \
+	    ${CPPFLAGS:C/-([IDUW]) */-\1/Wg:M-[IDUW]*} \
+	    -i -UYYDEBUG ${.IMPSRC}
 
 ${MAN}:		makeman ${LINT1:./%=%} Makefile ${MAN}.date
 	${_MKTARGET_CREATE}
