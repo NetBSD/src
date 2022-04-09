@@ -1,9 +1,9 @@
-/* $NetBSD: udf.c,v 1.24 2022/04/06 13:44:25 wiz Exp $ */
+/* $NetBSD: udf.c,v 1.25 2022/04/09 10:05:35 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,14 +23,14 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.24 2022/04/06 13:44:25 wiz Exp $");
+__RCSID("$NetBSD: udf.c,v 1.25 2022/04/09 10:05:35 riastradh Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1258,10 +1258,9 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	}
 	udf_closedisc();
 
-	if (error == 2) 
+	if (error == 2)
 		errx(error, "not all files could be added");
 	if (error == 1)
 		errx(error, "creation of %s failed", image);
 	return;
 }
-

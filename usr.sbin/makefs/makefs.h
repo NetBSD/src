@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.37 2021/04/03 14:10:56 simonb Exp $	*/
+/*	$NetBSD: makefs.h,v 1.38 2022/04/09 10:05:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -57,7 +57,7 @@
  *	a component of the tree; contains a filename, a pointer to
  *	fsinode, optional symlink name, and tree pointers
  *
- * fsinode - 
+ * fsinode -
  *	equivalent to an inode, containing target file system inode number,
  *	refcount (nlink), and stat buffer
  *

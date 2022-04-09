@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.21 2021/10/23 16:58:17 thorpej Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.22 2022/04/09 10:05:35 riastradh Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.21 2021/10/23 16:58:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.22 2022/04/09 10:05:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -101,7 +101,7 @@ msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
 	struct timespec at;
 	struct timespec mt;
 
-	if (stampst.st_ino) 
+	if (stampst.st_ino)
 	    st = &stampst;
 
 #ifndef HAVE_NBTOOL_CONFIG_H
@@ -135,7 +135,7 @@ msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
  * memory denode's will be in synch.
  */
 static int
-msdosfs_findslot(struct denode *dp, struct componentname *cnp) 
+msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 {
 	daddr_t bn;
 	int error;
@@ -500,7 +500,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		    0, &bp)) != 0) {
 			DPRINTF(("bread %d\n", error));
 			goto out;
-		} 
+		}
 		cpsize = MIN((nsize - offs), blsize - on);
 		memcpy((char *)bp->b_data + on, dat + offs, cpsize);
 		bwrite(bp);

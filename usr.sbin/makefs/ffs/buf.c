@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.25 2022/04/09 10:05:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.24 2016/06/24 19:24:11 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.25 2022/04/09 10:05:35 riastradh Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -118,7 +118,7 @@ brelse(struct buf *bp, int u1 __unused)
 		bp->b_bcount = 0;
 		return;
 	}
-		
+
 	TAILQ_REMOVE(&buftail, bp, b_tailq);
 	free(bp->b_data);
 	free(bp);
@@ -163,7 +163,7 @@ bcleanup(void)
 	 *	know why there's still some buffers lying around that
 	 *	aren't brelse()d
 	 */
-	
+
 	if (TAILQ_EMPTY(&buftail))
 		return;
 

@@ -153,7 +153,7 @@ write_eb_header(fsinfo_t *fsopts)
 		    CHFS_EB_HDR_NOR_SIZE - 4));
 		memcpy(buf, &ebhdr.u.nor_hdr, CHFS_EB_HDR_NOR_SIZE);
 	}
-	
+
 	buf_write(fsopts, buf, opts->pagesize);
 	free(buf);
 }
@@ -163,7 +163,7 @@ write_vnode(fsinfo_t *fsopts, fsnode *node)
 {
 	struct chfs_flash_vnode fvnode;
 	memset(&fvnode, 0, sizeof(fvnode));
-	
+
 	fvnode.magic = htole16(CHFS_FS_MAGIC_BITMASK);
 	fvnode.type = htole16(CHFS_NODETYPE_VNODE);
 	fvnode.length = htole32(CHFS_PAD(sizeof(fvnode)));
@@ -215,7 +215,7 @@ write_dirent(fsinfo_t *fsopts, fsnode *node)
 	fdirent.name_crc = htole32(crc32(0, (uint8_t *)name, fdirent.nsize));
 	fdirent.node_crc = htole32(crc32(0, (uint8_t *)&fdirent,
 	    sizeof(fdirent) - 4));
-	
+
 	pad_block_if_less_than(fsopts, sizeof(fdirent) + fdirent.nsize);
 	buf_write(fsopts, &fdirent, sizeof(fdirent));
 	buf_write(fsopts, name, fdirent.nsize);
@@ -256,7 +256,7 @@ write_file(fsinfo_t *fsopts, fsnode *node, const char *dir)
 			fileofs += len;
 		}
 		free(longname);
-		close(fd);	
+		close(fd);
 	} else if (node->type == S_IFLNK) {
 		len = strlen(node->symlink);
 		memcpy(buf, node->symlink, len);
@@ -284,7 +284,7 @@ write_data(fsinfo_t *fsopts, fsnode *node, unsigned char *buf, size_t len,
 	if (len == 0) {
 		return;
 	}
-	
+
 	pad_block_if_less_than(fsopts, sizeof(fdata) + len);
 
 	fdata.magic = htole16(CHFS_FS_MAGIC_BITMASK);

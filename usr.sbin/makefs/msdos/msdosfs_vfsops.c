@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.12 2021/10/23 16:58:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.13 2022/04/09 10:05:35 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -108,7 +108,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	if (!(flags & MSDOSFSMNT_GEMDOSFS)) {
 		if (bsp->bs50.bsBootSectSig0 != BOOTSIG0
 		    || bsp->bs50.bsBootSectSig1 != BOOTSIG1) {
-			DPRINTF(("bootsig0 %d bootsig1 %d\n", 
+			DPRINTF(("bootsig0 %d bootsig1 %d\n",
 			    bsp->bs50.bsBootSectSig0,
 			    bsp->bs50.bsBootSectSig1));
 			error = EINVAL;
@@ -145,7 +145,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
     		if (!pmp->pm_BytesPerSec || !SecPerClust
 	    		|| pmp->pm_SecPerTrack > 63) {
 			DPRINTF(("bytespersec %d secperclust %d "
-			    "secpertrack %d\n", 
+			    "secpertrack %d\n",
 			    pmp->pm_BytesPerSec, SecPerClust,
 			    pmp->pm_SecPerTrack));
 			error = EINVAL;
@@ -317,7 +317,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	 * must be a power of 2
 	 */
 	if (pmp->pm_bpcluster ^ (1 << pmp->pm_cnshift)) {
-		DPRINTF(("bpcluster %lu cnshift %lu\n", 
+		DPRINTF(("bpcluster %lu cnshift %lu\n",
 		    pmp->pm_bpcluster, pmp->pm_cnshift));
 		error = EINVAL;
 		goto error_exit;
