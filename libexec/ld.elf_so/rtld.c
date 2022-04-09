@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.210 2021/12/04 14:39:08 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.211 2022/04/09 23:39:07 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.210 2021/12/04 14:39:08 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.211 2022/04/09 23:39:07 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1682,7 +1682,7 @@ _rtld_shared_enter(void)
 			/* Yes, so increment use counter */
 			if (atomic_cas_uint(&_rtld_mutex, cur, cur + 1) != cur)
 				continue;
-			membar_enter();
+			membar_acquire();
 			return;
 		}
 		/*
@@ -1728,7 +1728,7 @@ _rtld_shared_exit(void)
 	 * Wakeup LWPs waiting for an exclusive lock if this is the last
 	 * LWP on the shared lock.
 	 */
-	membar_exit();
+	membar_release();
 	if (atomic_dec_uint_nv(&_rtld_mutex))
 		return;
 	membar_sync();
@@ -1750,7 +1750,7 @@ _rtld_exclusive_enter(sigset_t *mask)
 
 	for (;;) {
 		if (atomic_cas_uint(&_rtld_mutex, 0, locked_value) == 0) {
-			membar_enter();
+			membar_acquire();
 			break;
 		}
 		waiter = atomic_swap_uint(&_rtld_waiter_exclusive, self);
@@ -1774,7 +1774,7 @@ _rtld_exclusive_exit(sigset_t *mask)
 {
 	lwpid_t waiter;
 
-	membar_exit();
+	membar_release();
 	_rtld_mutex = 0;
 	membar_sync();
 	if ((waiter = _rtld_waiter_exclusive) != 0)
