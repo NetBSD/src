@@ -1,4 +1,4 @@
-/*	$NetBSD: llist.h,v 1.6 2021/12/19 11:52:08 riastradh Exp $	*/
+/*	$NetBSD: llist.h,v 1.7 2022/04/09 23:43:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ llist_add(struct llist_node *node, struct llist_head *head)
 	do {
 		first = head->first;
 		node->next = first;
-		membar_exit();
+		membar_release();
 	} while (atomic_cas_ptr(&head->first, first, node) != first);
 
 	return first == NULL;
@@ -96,7 +96,7 @@ llist_del_all(struct llist_head *head)
 	struct llist_node *first;
 
 	first = atomic_swap_ptr(&head->first, NULL);
-	membar_enter();
+	membar_datadep_consumer();
 
 	return first;
 }
