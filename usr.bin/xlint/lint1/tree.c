@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.422 2022/04/09 15:43:41 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.423 2022/04/09 16:02:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.422 2022/04/09 15:43:41 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.423 2022/04/09 16:02:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -386,7 +386,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 */
 	if (str != NULL) {
 		for (sym = msym; sym != NULL; sym = sym->s_symtab_next) {
-			if (sym->s_scl != MOS && sym->s_scl != MOU)
+			if (!is_member(sym))
 				continue;
 			if (sym->u.s_member.sm_sou_type != str)
 				continue;
@@ -2776,7 +2776,7 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	bool	nolval;
 
 	lint_assert(rn->tn_op == NAME);
-	lint_assert(rn->tn_sym->s_scl == MOS || rn->tn_sym->s_scl == MOU);
+	lint_assert(is_member(rn->tn_sym));
 
 	/*
 	 * Remember if the left operand is an lvalue (structure members
