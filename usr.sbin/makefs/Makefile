@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2022/04/06 22:25:00 hauke Exp $
+#	$NetBSD: Makefile,v 1.39 2022/04/09 14:38:47 riastradh Exp $
 #
 
 WARNS?=	5
@@ -28,7 +28,9 @@ CPPFLAGS+=	-I${.CURDIR} -I${MKNODSRC} -I${MTREESRC} -DMAKEFS
 .include "${.CURDIR}/msdos/Makefile.inc"
 .include "${.CURDIR}/udf/Makefile.inc"
 
-.if !defined(HOSTPROG)
+.if defined(HOSTPROG)
+LDADD+=	-lm
+.else
 DPADD+= ${LIBUTIL} ${LIBM}
 LDADD+= -lutil -lm
 
