@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.418 2022/04/03 00:39:32 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.419 2022/04/09 13:22:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.418 2022/04/03 00:39:32 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.419 2022/04/09 13:22:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3084,8 +3084,8 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 }
 
 /*
- * Get length of type tp->t_subt, as a constant expression of type ptrdiff_t
- * as seen from the target platform.
+ * Get length_in_bits of type tp->t_subt, as a constant expression of type
+ * ptrdiff_t as seen from the target platform.
  */
 static tnode_t *
 plength(type_t *tp)
@@ -4254,7 +4254,7 @@ check_array_index(tnode_t *tn, bool amper)
 		return;
 
 	/* Get the size of one array element */
-	if ((elsz = length(ln->tn_type->t_subt, NULL)) == 0)
+	if ((elsz = length_in_bits(ln->tn_type->t_subt, NULL)) == 0)
 		return;
 	elsz /= CHAR_SIZE;
 
