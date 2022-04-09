@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.14 2022/02/17 01:38:38 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.15 2022/04/09 23:44:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.14 2022/02/17 01:38:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.15 2022/04/09 23:44:44 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -160,10 +160,10 @@ void
 dma_buf_put(struct dma_buf *dmabuf)
 {
 
-	membar_exit();
+	membar_release();
 	if (atomic_dec_uint_nv(&dmabuf->db_refcnt) != 0)
 		return;
-	membar_enter();
+	membar_acquire();
 
 	dma_resv_poll_fini(&dmabuf->db_resv_poll);
 	mutex_destroy(&dmabuf->db_lock);
