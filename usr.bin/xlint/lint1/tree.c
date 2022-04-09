@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.421 2022/04/09 14:50:18 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.422 2022/04/09 15:43:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.421 2022/04/09 14:50:18 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.422 2022/04/09 15:43:41 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -279,10 +279,16 @@ build_name(sym_t *sym, bool is_funcname)
 
 	n = expr_alloc_tnode();
 	n->tn_type = sym->s_type;
-	if (sym->s_scl == BOOL_CONST || sym->s_scl == ENUM_CONST) {
+	if (sym->s_scl == BOOL_CONST) {
 		n->tn_op = CON;
 		n->tn_val = expr_zero_alloc(sizeof(*n->tn_val));
-		*n->tn_val = sym->s_value;
+		n->tn_val->v_tspec = BOOL;
+		n->tn_val->v_quad = sym->u.s_bool_constant ? 1 : 0;
+	} else if (sym->s_scl == ENUM_CONST) {
+		n->tn_op = CON;
+		n->tn_val = expr_zero_alloc(sizeof(*n->tn_val));
+		n->tn_val->v_tspec = INT;	/* ENUM is in n->tn_type */
+		n->tn_val->v_quad = sym->u.s_enum_constant;
 	} else {
 		n->tn_op = NAME;
 		n->tn_sym = sym;
@@ -350,11 +356,16 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
-		msym->u.s_sou_type = expr_zero_alloc(sizeof(*msym->u.s_sou_type));
-		msym->u.s_sou_type->sou_tag = expr_zero_alloc(
-		    sizeof(*msym->u.s_sou_type->sou_tag));
-		msym->u.s_sou_type->sou_tag->s_name = unnamed;
-		msym->s_value.v_tspec = INT;
+
+		struct_or_union *sou = expr_zero_alloc(sizeof(*sou));
+		sou->sou_tag = expr_zero_alloc(sizeof(*sou->sou_tag));
+		sou->sou_tag->s_name = unnamed;
+
+		msym->u.s_member.sm_sou_type = sou;
+		/*
+		 * The member sm_offset_in_bits is not needed here since this
+		 * symbol can only be used for error reporting.
+		 */
 		return msym;
 	}
 
@@ -377,7 +388,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		for (sym = msym; sym != NULL; sym = sym->s_symtab_next) {
 			if (sym->s_scl != MOS && sym->s_scl != MOU)
 				continue;
-			if (sym->u.s_sou_type != str)
+			if (sym->u.s_member.sm_sou_type != str)
 				continue;
 			if (strcmp(sym->s_name, msym->s_name) != 0)
 				continue;
@@ -403,7 +414,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 				continue;
 			if (strcmp(csym->s_name, sym->s_name) != 0)
 				continue;
-			if (csym->s_value.v_quad != sym->s_value.v_quad) {
+			if (csym->u.s_member.sm_offset_in_bits !=
+			    sym->u.s_member.sm_offset_in_bits) {
 				eq = false;
 				break;
 			}
@@ -1793,10 +1805,10 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 	max_ec = ec;
 	lint_assert(ec != NULL);
 	for (ec = ec->s_next; ec != NULL; ec = ec->s_next)
-		if (ec->s_value.v_quad > max_ec->s_value.v_quad)
+		if (ec->u.s_enum_constant > max_ec->u.s_enum_constant)
 			max_ec = ec;
 
-	max_enum_value = max_ec->s_value.v_quad;
+	max_enum_value = max_ec->u.s_enum_constant;
 	lint_assert(INT_MIN <= max_enum_value && max_enum_value <= INT_MAX);
 
 	max_array_index = lt->t_dim - 1;
@@ -2764,7 +2776,6 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	bool	nolval;
 
 	lint_assert(rn->tn_op == NAME);
-	lint_assert(rn->tn_sym->s_value.v_tspec == INT);
 	lint_assert(rn->tn_sym->s_scl == MOS || rn->tn_sym->s_scl == MOU);
 
 	/*
@@ -2782,7 +2793,7 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	}
 
 	ctn = build_integer_constant(PTRDIFF_TSPEC,
-	    rn->tn_sym->s_value.v_quad / CHAR_SIZE);
+	    rn->tn_sym->u.s_member.sm_offset_in_bits / CHAR_SIZE);
 
 	ntn = new_tnode(PLUS, sys, expr_derive_type(rn->tn_type, PTR),
 	    ln, ctn);

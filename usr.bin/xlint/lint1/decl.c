@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.272 2022/04/09 14:50:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.273 2022/04/09 15:43:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.272 2022/04/09 14:50:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.273 2022/04/09 15:43:41 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1130,8 +1130,8 @@ declarator_1_struct_union(sym_t *dsym)
 		lint_assert(dcs->d_redeclared_symbol->s_scl == MOS ||
 		    dcs->d_redeclared_symbol->s_scl == MOU);
 
-		if (dsym->u.s_sou_type ==
-		    dcs->d_redeclared_symbol->u.s_sou_type) {
+		if (dsym->u.s_member.sm_sou_type ==
+		    dcs->d_redeclared_symbol->u.s_member.sm_sou_type) {
 			/* duplicate member name: %s */
 			error(33, dsym->s_name);
 			rmsym(dcs->d_redeclared_symbol);
@@ -1168,13 +1168,14 @@ declarator_1_struct_union(sym_t *dsym)
 	}
 	if (dsym->s_bitfield) {
 		align(alignment_in_bits(tp), tp->t_flen);
-		dsym->s_value.v_quad =
+		dsym->u.s_member.sm_offset_in_bits =
 		    dcs->d_offset - dcs->d_offset % size_in_bits(t);
-		tp->t_foffs = dcs->d_offset - (int)dsym->s_value.v_quad;
+		tp->t_foffs =
+		    dcs->d_offset - dsym->u.s_member.sm_offset_in_bits;
 		dcs->d_offset += tp->t_flen;
 	} else {
 		align(alignment_in_bits(tp), 0);
-		dsym->s_value.v_quad = dcs->d_offset;
+		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset;
 		dcs->d_offset += sz;
 	}
 	if (dcs->d_ctx == MOU) {
@@ -1575,9 +1576,9 @@ declarator_name(sym_t *sym)
 	case MOS:
 	case MOU:
 		/* Set parent */
-		sym->u.s_sou_type = dcs->d_tagtyp->t_str;
+		sym->u.s_member.sm_sou_type = dcs->d_tagtyp->t_str;
 		sym->s_def = DEF;
-		sym->s_value.v_tspec = INT;
+		/* XXX: Where is sym->u.s_member.sm_offset_in_bits set? */
 		sc = dcs->d_ctx;
 		break;
 	case EXTERN:
@@ -1858,8 +1859,8 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	n = 0;
 	for (mem = fmem; mem != NULL; mem = mem->s_next) {
 		/* bind anonymous members to the structure */
-		if (mem->u.s_sou_type == NULL) {
-			mem->u.s_sou_type = sp;
+		if (mem->u.s_member.sm_sou_type == NULL) {
+			mem->u.s_member.sm_sou_type = sp;
 			if (mem->s_type->t_bitfield) {
 				sp->sou_size_in_bits += bitfieldsize(&mem);
 				if (mem == NULL)
@@ -1925,8 +1926,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	}
 	sym->s_scl = ENUM_CONST;
 	sym->s_type = dcs->d_tagtyp;
-	sym->s_value.v_tspec = INT;
-	sym->s_value.v_quad = val;
+	sym->u.s_enum_constant = val;
 	if (impl && val == TARG_INT_MIN) {
 		/* overflow in enumeration values: %s */
 		warning(48, sym->s_name);
