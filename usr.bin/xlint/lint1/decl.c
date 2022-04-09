@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.269 2022/04/08 21:48:19 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.270 2022/04/09 13:22:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.269 2022/04/08 21:48:19 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.270 2022/04/09 13:22:05 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -836,11 +836,11 @@ end_type(void)
  * Return the length of a type in bits.
  *
  * Printing a message if the outermost dimension of an array is 0 must
- * be done by the caller. All other problems are reported by length()
+ * be done by the caller. All other problems are reported by this function
  * if name is not NULL.
  */
 int
-length(const type_t *tp, const char *name)
+length_in_bits(const type_t *tp, const char *name)
 {
 	unsigned int elem, elsz;
 
@@ -991,7 +991,7 @@ check_type(sym_t *sym)
 				/* illegal use of 'void' */
 				error(18);
 				*tpp = gettyp(INT);
-#if 0	/* errors are produced by length() */
+#if 0	/* errors are produced by length_in_bits */
 			} else if (is_incomplete(tp)) {
 				/* array of incomplete type */
 				if (sflag) {
@@ -1150,11 +1150,11 @@ declarator_1_struct_union(sym_t *dsym)
 	}
 
 	/*
-	 * bit-fields of length 0 are not warned about because length()
+	 * bit-fields of length 0 are not warned about because length_in_bits
 	 * does not return the length of the bit-field but the length
 	 * of the type the bit-field is packed in (it's ok)
 	 */
-	if ((sz = length(dsym->s_type, dsym->s_name)) == 0) {
+	if ((sz = length_in_bits(dsym->s_type, dsym->s_name)) == 0) {
 		if (t == ARRAY && dsym->s_type->t_dim == 0) {
 			/* zero sized array in struct is a C99 extension: %s */
 			c99ism(39, dsym->s_name);
@@ -2483,12 +2483,12 @@ declare_argument(sym_t *sym, bool initflg)
 		warning(269, sym->s_name);
 
 	/*
-	 * Arguments must have complete types. length() prints the needed
-	 * error messages (null dimension is impossible because arrays are
-	 * converted to pointers).
+	 * Arguments must have complete types. length_in_bits prints the
+	 * needed error messages (null dimension is impossible because arrays
+	 * are converted to pointers).
 	 */
 	if (sym->s_type->t_tspec != VOID)
-		(void)length(sym->s_type, sym->s_name);
+		(void)length_in_bits(sym->s_type, sym->s_name);
 
 	sym->s_used = dcs->d_used;
 	mark_as_set(sym);
@@ -2983,7 +2983,7 @@ check_size(sym_t *dsym)
 	if (dsym->s_type->t_tspec == FUNC)
 		return;
 
-	if (length(dsym->s_type, dsym->s_name) == 0 &&
+	if (length_in_bits(dsym->s_type, dsym->s_name) == 0 &&
 	    dsym->s_type->t_tspec == ARRAY && dsym->s_type->t_dim == 0) {
 		if (tflag) {
 			/* empty array declaration: %s */
@@ -3291,7 +3291,7 @@ static void
 check_global_variable_size(const sym_t *sym)
 {
 	pos_t cpos;
-	int length_in_bits;
+	int len_in_bits;
 
 	if (sym->s_def != TDEF)
 		return;
@@ -3302,14 +3302,15 @@ check_global_variable_size(const sym_t *sym)
 		 */
 		return;
 	if (sym->s_def == TDEF && sym->s_type->t_tspec == VOID)
-		return;		/* prevent internal error in length() below */
+		return;		/* prevent internal error in length_in_bits
+				 * below */
 
 	cpos = curr_pos;
 	curr_pos = sym->s_def_pos;
-	length_in_bits = length(sym->s_type, sym->s_name);
+	len_in_bits = length_in_bits(sym->s_type, sym->s_name);
 	curr_pos = cpos;
 
-	if (length_in_bits == 0 &&
+	if (len_in_bits == 0 &&
 	    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
 		if (tflag || (sym->s_scl == EXTERN && !sflag)) {
 			/* empty array declaration: %s */
