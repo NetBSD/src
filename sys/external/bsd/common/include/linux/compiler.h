@@ -1,4 +1,4 @@
-/*	$NetBSD: compiler.h,v 1.7 2022/02/17 01:21:02 riastradh Exp $	*/
+/*	$NetBSD: compiler.h,v 1.8 2022/04/09 23:43:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #define	smp_store_release(X, V)	do {					      \
 	typeof(X) __smp_store_release_tmp = (V);			      \
-	membar_exit();							      \
+	membar_release();						      \
 	(X) = __write_once_tmp;						      \
 } while (0)
 
