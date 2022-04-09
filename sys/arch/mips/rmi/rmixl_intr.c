@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.12 2016/08/26 15:45:48 skrll Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.13 2022/04/09 23:34:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.12 2016/08/26 15:45:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.13 2022/04/09 23:34:50 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -967,6 +967,7 @@ rmixl_send_ipi(struct cpu_info *ci, int tag)
 	  | (RMIXL_INTRVEC_IPI + tag);
 
 	mutex_enter(&rmixl_ipi_lock);
+	membar_release();
 	atomic_or_64(&ci->ci_request_ipis, req);
 	RMIXL_PICREG_WRITE(RMIXL_PIC_IPIBASE, r);
 	mutex_exit(&rmixl_ipi_lock);
@@ -984,8 +985,9 @@ rmixl_ipi_intr(void *arg)
 	KASSERT((uintptr_t)arg < NIPIS);
 
 	/* if the request is clear, it was previously processed */
-	if ((ci->ci_request_ipis & ipi_mask) == 0)
+	if ((atomic_load_relaxed(&ci->ci_request_ipis) & ipi_mask) == 0)
 		return 0;
+	membar_acquire();
 
 	atomic_or_64(&ci->ci_active_ipis, ipi_mask);
 	atomic_and_64(&ci->ci_request_ipis, ~ipi_mask);
