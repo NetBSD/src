@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.281 2022/02/27 14:16:43 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.282 2022/04/09 23:51:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.281 2022/02/27 14:16:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.282 2022/04/09 23:51:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2621,7 +2621,7 @@ pool_pcg_put(pcg_t *volatile *head, pcg_t *pcg)
 		}
 		pcg->pcg_next = o;
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_exit();
+		membar_release();
 #endif
 		n = atomic_cas_ptr(head, o, pcg);
 		if (o == n) {
