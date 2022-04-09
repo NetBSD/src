@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.8 2021/12/19 11:34:45 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.9 2022/04/09 19:59:08 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.8 2021/12/19 11:34:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.9 2022/04/09 19:59:08 riastradh Exp $");
 
 #include "priv.h"
 
@@ -34,37 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.8 2021/12/19 
 #  define	__iomem	__nvkm_memory_iomem
 #endif
 
-#ifdef __NetBSD__
-
-/*
- * XXX I think this should be done with bus_space, but the depth of
- * abstractions is dizzying and I'm not actually sure where these
- * pointers come from.
- */
-
-#  define	ioread32_native		fake_ioread32_native
-#  define	iowrite32_native	fake_iowrite32_native
-
-static inline uint32_t
-ioread32_native(const void __iomem *ptr)
-{
-	uint32_t v;
-
-	v = *(const uint32_t __iomem *)ptr;
-	membar_consumer();
-
-	return v;
-}
-
-static inline void
-iowrite32_native(uint32_t v, void __iomem *ptr)
-{
-
-	membar_producer();
-	*(uint32_t __iomem *)ptr = v;
-}
-
-#endif
 /******************************************************************************
  * instmem object base implementation
  *****************************************************************************/
@@ -87,12 +56,6 @@ nvkm_instobj_load(struct nvkm_instobj *iobj)
 	kvfree(iobj->suspend);
 	iobj->suspend = NULL;
 }
-
-#ifdef __NetBSD__
-#  undef	ioread32_native
-#  undef	iowrite32_native
-#endif
-
 
 static int
 nvkm_instobj_save(struct nvkm_instobj *iobj)
