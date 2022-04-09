@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.164 2021/10/23 01:28:33 thorpej Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.165 2022/04/09 23:52:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ struct uio;
 struct lwp;
 struct uidinfo;
 #else
+#include <sys/atomic.h>
 #include <sys/uidinfo.h>
 #endif
 
@@ -520,12 +521,12 @@ solock(struct socket *so)
 {
 	kmutex_t *lock;
 
-	lock = so->so_lock;
+	lock = atomic_load_consume(&so->so_lock);
 	mutex_enter(lock);
-	if (__predict_false(lock != so->so_lock))
+	if (__predict_false(lock != atomic_load_relaxed(&so->so_lock)))
 		solockretry(so, lock);
 }
-	
+
 static __inline void
 sounlock(struct socket *so)
 {

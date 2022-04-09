@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.201 2021/08/08 20:54:48 nia Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.202 2022/04/09 23:52:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.201 2021/08/08 20:54:48 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.202 2022/04/09 23:52:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -291,7 +291,12 @@ unp_setpeerlocks(struct socket *so, struct socket *so2)
 	lock = unp->unp_streamlock;
 	unp->unp_streamlock = NULL;
 	mutex_obj_hold(lock);
-	membar_exit();
+	/*
+	 * Ensure lock is initialized before publishing it with
+	 * solockreset.  Pairs with atomic_load_consume in solock and
+	 * various loops to reacquire lock after wakeup.
+	 */
+	membar_release();
 	/*
 	 * possible race if lock is not held - see comment in
 	 * uipc_usrreq(PRU_ACCEPT).
