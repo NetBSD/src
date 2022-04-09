@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.131 2022/04/09 13:38:17 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.132 2022/04/09 23:41:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.131 2022/04/09 13:38:17 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.132 2022/04/09 23:41:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -423,7 +423,7 @@ funcend(void)
 	 * the symbol table
 	 */
 	lint_assert(dcs->d_enclosing == NULL);
-	lint_assert(dcs->d_ctx == EXTERN);
+	lint_assert(dcs->d_kind == DK_EXTERN);
 	rmsyms(dcs->d_func_proto_syms);
 
 	/* must be set on level 0 */
@@ -1178,7 +1178,7 @@ argsused(int n)
 	if (n == -1)
 		n = 0;
 
-	if (dcs->d_ctx != EXTERN) {
+	if (dcs->d_kind != DK_EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "ARGSUSED");
 		return;
@@ -1204,7 +1204,7 @@ varargs(int n)
 	if (n == -1)
 		n = 0;
 
-	if (dcs->d_ctx != EXTERN) {
+	if (dcs->d_kind != DK_EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "VARARGS");
 		return;
@@ -1230,7 +1230,7 @@ printflike(int n)
 	if (n == -1)
 		n = 0;
 
-	if (dcs->d_ctx != EXTERN) {
+	if (dcs->d_kind != DK_EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "PRINTFLIKE");
 		return;
@@ -1256,7 +1256,7 @@ scanflike(int n)
 	if (n == -1)
 		n = 0;
 
-	if (dcs->d_ctx != EXTERN) {
+	if (dcs->d_kind != DK_EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "SCANFLIKE");
 		return;
@@ -1311,7 +1311,7 @@ void
 lintlib(int n)
 {
 
-	if (dcs->d_ctx != EXTERN) {
+	if (dcs->d_kind != DK_EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "LINTLIBRARY");
 		return;
@@ -1354,7 +1354,7 @@ void
 protolib(int n)
 {
 
-	if (dcs->d_ctx != EXTERN) {
+	if (dcs->d_kind != DK_EXTERN) {
 		/* must be outside function: ** %s ** */
 		warning(280, "PROTOLIB");
 		return;
