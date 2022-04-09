@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.122 2022/03/31 19:30:15 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.123 2022/04/09 23:35:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.122 2022/03/31 19:30:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.123 2022/04/09 23:35:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -316,7 +316,7 @@ audio_mlog_flush(void)
 	/* Nothing to do if already in use ? */
 	if (atomic_swap_32(&mlog_inuse, 1) == 1)
 		return;
-	membar_enter();
+	membar_acquire();
 
 	int rpage = mlog_wpage;
 	mlog_wpage ^= 1;
@@ -353,7 +353,7 @@ audio_mlog_printf(const char *fmt, ...)
 		mlog_drop++;
 		return;
 	}
-	membar_enter();
+	membar_acquire();
 
 	va_start(ap, fmt);
 	len = vsnprintf(
@@ -1684,7 +1684,7 @@ audio_track_lock_tryenter(audio_track_t *track)
 
 	if (atomic_swap_uint(&track->lock, 1) != 0)
 		return false;
-	membar_enter();
+	membar_acquire();
 	return true;
 }
 
