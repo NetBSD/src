@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.11 2022/04/02 14:28:30 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.12 2022/04/09 13:38:17 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.11 2022/04/02 14:28:30 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.12 2022/04/09 13:38:17 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -275,9 +275,9 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 		debug_printf(" value=%d", (int)sym->s_value.v_quad);
 
 	if ((sym->s_scl == MOS || sym->s_scl == MOU) &&
-	    sym->s_sou_type != NULL) {
-		const char *tag = sym->s_sou_type->sou_tag->s_name;
-		const sym_t *def = sym->s_sou_type->sou_first_typedef;
+	    sym->u.s_sou_type != NULL) {
+		const char *tag = sym->u.s_sou_type->sou_tag->s_name;
+		const sym_t *def = sym->u.s_sou_type->sou_first_typedef;
 		if (tag == unnamed && def != NULL)
 			debug_printf(" sou='typedef %s'", def->s_name);
 		else
@@ -287,12 +287,13 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 	if (sym->s_keyword != NULL) {
 		int t = (int)sym->s_value.v_quad;
 		if (t == T_TYPE || t == T_STRUCT_OR_UNION)
-			debug_printf(" %s", tspec_name(sym->s_tspec));
+			debug_printf(" %s", tspec_name(sym->u.s_tspec));
 		else if (t == T_QUAL)
-			debug_printf(" %s", tqual_name(sym->s_tqual));
+			debug_printf(" %s", tqual_name(sym->u.s_qualifier));
 	}
 
-	debug_word(sym->s_osdef && sym->s_args != NULL, "old-style-args");
+	debug_word(sym->s_osdef && sym->u.s_old_style_args != NULL,
+	    "old-style-args");
 
 	debug_printf("%s", suffix);
 }

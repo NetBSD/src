@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.419 2022/04/09 13:22:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.420 2022/04/09 13:38:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.419 2022/04/09 13:22:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.420 2022/04/09 13:38:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -350,10 +350,10 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
-		msym->s_sou_type = expr_zero_alloc(sizeof(*msym->s_sou_type));
-		msym->s_sou_type->sou_tag = expr_zero_alloc(
-		    sizeof(*msym->s_sou_type->sou_tag));
-		msym->s_sou_type->sou_tag->s_name = unnamed;
+		msym->u.s_sou_type = expr_zero_alloc(sizeof(*msym->u.s_sou_type));
+		msym->u.s_sou_type->sou_tag = expr_zero_alloc(
+		    sizeof(*msym->u.s_sou_type->sou_tag));
+		msym->u.s_sou_type->sou_tag->s_name = unnamed;
 		msym->s_value.v_tspec = INT;
 		return msym;
 	}
@@ -377,7 +377,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		for (sym = msym; sym != NULL; sym = sym->s_symtab_next) {
 			if (sym->s_scl != MOS && sym->s_scl != MOU)
 				continue;
-			if (sym->s_sou_type != str)
+			if (sym->u.s_sou_type != str)
 				continue;
 			if (strcmp(sym->s_name, msym->s_name) != 0)
 				continue;
