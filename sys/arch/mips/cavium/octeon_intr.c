@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.26 2022/03/26 19:38:00 riastradh Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.27 2022/04/09 23:34:40 riastradh Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.26 2022/03/26 19:38:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.27 2022/04/09 23:34:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -548,6 +548,7 @@ octeon_ipi_intr(void *arg)
 	ipi_mask &= mips3_ld(cpu->cpu_mbox_set);
 	if (ipi_mask == 0)
 		return 0;
+	membar_acquire();
 
 	mips3_sd(cpu->cpu_mbox_clr, ipi_mask);
 
@@ -566,8 +567,9 @@ octeon_ipi_intr(void *arg)
 #endif
 
 	/* if the request is clear, it was previously processed */
-	if ((ci->ci_request_ipis & ipi_mask) == 0)
+	if ((atomic_load_relaxed(&ci->ci_request_ipis) & ipi_mask) == 0)
 		return 0;
+	membar_acquire();
 
 	atomic_or_64(&ci->ci_active_ipis, ipi_mask);
 	atomic_and_64(&ci->ci_request_ipis, ~ipi_mask);
@@ -600,8 +602,10 @@ octeon_send_ipi(struct cpu_info *ci, int req)
 	const u_int ipi_shift = ipi_prio[req] == IPL_SCHED ? 16 : 0;
 	const uint32_t ipi_mask = __BIT(req + ipi_shift);
 
+	membar_release();
 	atomic_or_64(&ci->ci_request_ipis, ipi_mask);
 
+	membar_release();
 	mips3_sd(cpu->cpu_mbox_set, ipi_mask);
 
 	return 0;
