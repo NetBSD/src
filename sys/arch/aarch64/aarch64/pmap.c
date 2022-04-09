@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 2022/04/02 11:16:06 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.133 2022/04/09 23:38:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2022/04/02 11:16:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2022/04/09 23:38:31 riastradh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1651,11 +1651,11 @@ pmap_destroy(struct pmap *pm)
 	if (pm == pmap_kernel())
 		panic("cannot destroy kernel pmap");
 
-	membar_exit();
+	membar_release();
 	refcnt = atomic_dec_uint_nv(&pm->pm_refcnt);
 	if (refcnt > 0)
 		return;
-	membar_enter();
+	membar_acquire();
 
 	KASSERT(LIST_EMPTY(&pm->pm_pvlist));
 	pmap_tlb_asid_release_all(pm);

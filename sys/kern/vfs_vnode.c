@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.141 2022/03/28 12:37:56 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.142 2022/04/09 23:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.141 2022/03/28 12:37:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.142 2022/04/09 23:38:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -355,7 +355,7 @@ vstate_assert_change(vnode_t *vp, enum vnode_state from, enum vnode_state to,
 	/* Open/close the gate for vcache_tryvget(). */
 	if (to == VS_LOADED) {
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_exit();
+		membar_release();
 #endif
 		atomic_or_uint(&vp->v_usecount, VUSECOUNT_GATE);
 	} else {
@@ -398,10 +398,10 @@ vstate_change(vnode_t *vp, enum vnode_state from, enum vnode_state to)
 {
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	/* Open/close the gate for vcache_tryvget(). */	
+	/* Open/close the gate for vcache_tryvget(). */
 	if (to == VS_LOADED) {
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_exit();
+		membar_release();
 #endif
 		atomic_or_uint(&vp->v_usecount, VUSECOUNT_GATE);
 	} else {
@@ -736,7 +736,7 @@ vtryrele(vnode_t *vp)
 	u_int use, next;
 
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 	for (use = atomic_load_relaxed(&vp->v_usecount);; use = next) {
 		if (__predict_false((use & VUSECOUNT_MASK) == 1)) {
@@ -836,7 +836,7 @@ retry:
 		}
 	}
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
+	membar_acquire();
 #endif
 	if (vrefcnt(vp) <= 0 || vp->v_writecount != 0) {
 		vnpanic(vp, "%s: bad ref count", __func__);
@@ -1003,7 +1003,7 @@ out:
 		}
 	}
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
+	membar_acquire();
 #endif
 
 	if (VSTATE_GET(vp) == VS_RECLAIMED && vp->v_holdcnt == 0) {
@@ -1476,7 +1476,7 @@ vcache_tryvget(vnode_t *vp)
 		    use, (use + 1) | VUSECOUNT_VGET);
 		if (__predict_true(next == use)) {
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-			membar_enter();
+			membar_acquire();
 #endif
 			return 0;
 		}

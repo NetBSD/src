@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.403 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.404 2022/04/09 23:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.403 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.404 2022/04/09 23:38:33 riastradh Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -311,9 +311,9 @@ void
 sigactsfree(struct sigacts *ps)
 {
 
-	membar_exit();
+	membar_release();
 	if (atomic_dec_uint_nv(&ps->sa_refcnt) == 0) {
-		membar_enter();
+		membar_acquire();
 		mutex_destroy(&ps->sa_mutex);
 		pool_cache_put(sigacts_cache, ps);
 	}

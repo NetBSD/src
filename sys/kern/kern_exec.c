@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.516 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.517 2022/04/09 23:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.516 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.517 2022/04/09 23:38:33 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2137,10 +2137,10 @@ static void
 spawn_exec_data_release(struct spawn_exec_data *data)
 {
 
-	membar_exit();
+	membar_release();
 	if (atomic_dec_32_nv(&data->sed_refcnt) != 0)
 		return;
-	membar_enter();
+	membar_acquire();
 
 	cv_destroy(&data->sed_cv_child_ready);
 	mutex_destroy(&data->sed_mtx_child);

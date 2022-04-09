@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2022/03/12 15:32:32 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2022/04/09 23:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2022/03/12 15:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2022/04/09 23:38:33 riastradh Exp $");
 
 /*
  *	Manages physical address maps.
@@ -690,13 +690,13 @@ pmap_destroy(pmap_t pmap)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx)", (uintptr_t)pmap, 0, 0, 0);
 
-	membar_exit();
+	membar_release();
 	if (atomic_dec_uint_nv(&pmap->pm_count) > 0) {
 		PMAP_COUNT(dereference);
 		UVMHIST_LOG(pmaphist, " <-- done (deref)", 0, 0, 0, 0);
 		return;
 	}
-	membar_enter();
+	membar_acquire();
 
 	PMAP_COUNT(destroy);
 	KASSERT(pmap->pm_count == 0);
