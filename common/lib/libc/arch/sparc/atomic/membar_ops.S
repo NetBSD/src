@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.5 2022/04/06 22:47:56 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.6 2022/04/09 12:06:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,25 +31,43 @@
 
 #include "atomic_op_asm.h"
 
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
 	.text
 
-/* These assume Total Store Order (TSO) */
-
-ENTRY(_membar_producer)
-	retl
-	 nop
+/*
+ * These assume Total Store Order (TSO), which may reorder
+ * store-before-load but nothing else.  Hence, only membar_sync must
+ * issue anything -- specifically, an LDSTUB, which (along with SWAP)
+ * is the only instruction that implies a sequential consistency
+ * barrier.
+ *
+ * If we ran with Partial Store Order (PSO), we would also need to
+ * issue STBAR for membar_exit (load/store-before-store) and
+ * membar_producer (store-before-store).
+ */
 
 ENTRY(_membar_consumer)
-	add	%sp, -112, %sp
-	st	%g0, [%sp+100]
 	retl
-	 sub	%sp, -112, %sp
+	 nop
+END(_membar_consumer)
 
-ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
+ENTRY(_membar_sync)
+	retl
+#if !defined(_KERNEL) || defined(MULTIPROCESSOR)
+	 ldstub	[%sp - 4], %g0
+#else
+	 nop
+#endif
+END(_membar_sync)
+
+ATOMIC_OP_ALIAS(membar_producer,_membar_consumer)
+STRONG_ALIAS(_membar_producer,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_enter,_membar_consumer)
 STRONG_ALIAS(_membar_enter,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_exit,_membar_consumer)
 STRONG_ALIAS(_membar_exit,_membar_consumer)
-ATOMIC_OP_ALIAS(membar_sync,_membar_consumer)
-STRONG_ALIAS(_membar_sync,_membar_consumer)
+ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
