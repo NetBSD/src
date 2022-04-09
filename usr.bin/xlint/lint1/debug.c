@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.13 2022/04/09 14:50:18 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.14 2022/04/09 15:43:41 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.13 2022/04/09 14:50:18 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.14 2022/04/09 15:43:41 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -271,14 +271,17 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 		debug_printf(" used-at=%s:%d",
 		    sym->s_use_pos.p_file, sym->s_use_pos.p_line);
 
-	if (sym->s_type != NULL &&
-	    (sym->s_type->t_is_enum || sym->s_type->t_tspec == BOOL))
-		debug_printf(" value=%d", (int)sym->s_value.v_quad);
+	if (sym->s_type != NULL && sym->s_type->t_is_enum)
+		debug_printf(" value=%d", sym->u.s_enum_constant);
+	if (sym->s_type != NULL && sym->s_type->t_tspec == BOOL)
+		debug_printf(" value=%s",
+		    sym->u.s_bool_constant ? "true" : "false");
 
 	if ((sym->s_scl == MOS || sym->s_scl == MOU) &&
-	    sym->u.s_sou_type != NULL) {
-		const char *tag = sym->u.s_sou_type->sou_tag->s_name;
-		const sym_t *def = sym->u.s_sou_type->sou_first_typedef;
+	    sym->u.s_member.sm_sou_type != NULL) {
+		struct_or_union *sou_type = sym->u.s_member.sm_sou_type;
+		const char *tag = sou_type->sou_tag->s_name;
+		const sym_t *def = sou_type->sou_first_typedef;
 		if (tag == unnamed && def != NULL)
 			debug_printf(" sou='typedef %s'", def->s_name);
 		else
@@ -286,11 +289,13 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 	}
 
 	if (sym->s_keyword != NULL) {
-		int t = (int)sym->s_value.v_quad;
+		int t = sym->u.s_keyword.sk_token;
 		if (t == T_TYPE || t == T_STRUCT_OR_UNION)
-			debug_printf(" %s", tspec_name(sym->u.s_tspec));
+			debug_printf(" %s",
+			    tspec_name(sym->u.s_keyword.sk_tspec));
 		else if (t == T_QUAL)
-			debug_printf(" %s", tqual_name(sym->u.s_qualifier));
+			debug_printf(" %s",
+			    tqual_name(sym->u.s_keyword.sk_qualifier));
 	}
 
 	debug_word(sym->s_osdef && sym->u.s_old_style_args != NULL,

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.146 2022/04/09 14:50:18 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.147 2022/04/09 15:43:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -244,14 +244,21 @@ typedef	struct sym {
 	int	s_block_level;	/* level of declaration, -1 if not in symbol
 				   table */
 	type_t	*s_type;
-	val_t	s_value;	/* value (if enum or bool constant) */
 	union {
-		/* XXX: what is the difference to s_type->t_str? */
-		struct_or_union	*s_sou_type;
-		tspec_t	s_tspec;	/* type (only for keywords) */
-		tqual_t	s_qualifier;	/* qualifier (only for keywords) */
-		struct	sym *s_old_style_args; /* arguments in old style
-				 	* function definitions */
+		bool s_bool_constant;
+		int s_enum_constant;	/* XXX: should be TARG_INT */
+		struct {
+			/* XXX: what is the difference to s_type->t_str? */
+			struct_or_union	*sm_sou_type;
+			unsigned int sm_offset_in_bits;
+		} s_member;
+		struct {
+			int sk_token;
+			tspec_t	sk_tspec;	/* only for types */
+			tqual_t	sk_qualifier;	/* only for qualifiers */
+		} s_keyword;
+		struct	sym *s_old_style_args;	/* arguments in an old-style
+						 * function definition */
 	} u;
 	struct	sym *s_symtab_next;	/* next symbol with same hash value */
 	struct	sym **s_symtab_ref;	/* pointer to s_symtab_next of the
@@ -342,7 +349,7 @@ typedef	struct dinfo {
 	type_t	*d_type;	/* after end_type() pointer to the type used
 				   for all declarators */
 	sym_t	*d_redeclared_symbol;
-	unsigned int d_offset;	/* offset of next structure member */
+	unsigned int d_offset;	/* offset of next structure member in bits */
 	unsigned short d_sou_align_in_bits; /* alignment required for current
 				 * structure */
 	scl_t	d_ctx;		/* context of declaration */
