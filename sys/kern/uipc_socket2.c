@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.140 2021/10/02 02:07:41 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.141 2022/04/09 23:52:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.140 2021/10/02 02:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.141 2022/04/09 23:52:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -134,7 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.140 2021/10/02 02:07:41 thorpej E
  *
  * o In order to mutate so_lock, the lock pointed to by the current value
  *   of so_lock must be held: i.e., the socket must be held locked by the
- *   changing thread.  The thread must issue membar_exit() to prevent
+ *   changing thread.  The thread must issue membar_release() to prevent
  *   memory accesses being reordered, and can set so_lock to the desired
  *   value.  If the lock pointed to by the new value of so_lock is not
  *   held by the changing thread, the socket must then be considered
@@ -324,6 +324,9 @@ sonewconn(struct socket *head, bool soready)
 	/*
 	 * Share the lock with the listening-socket, it may get unshared
 	 * once the connection is complete.
+	 *
+	 * so_lock is stable while we hold the socket locked, so no
+	 * need for atomic_load_* here.
 	 */
 	mutex_obj_hold(head->so_lock);
 	so->so_lock = head->so_lock;
@@ -537,7 +540,7 @@ sbwait(struct sockbuf *sb)
 		error = cv_timedwait(&sb->sb_cv, lock, sb->sb_timeo);
 	else
 		error = cv_timedwait_sig(&sb->sb_cv, lock, sb->sb_timeo);
-	if (__predict_false(lock != so->so_lock))
+	if (__predict_false(lock != atomic_load_relaxed(&so->so_lock)))
 		solockretry(so, lock);
 	return error;
 }
@@ -589,6 +592,8 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
  * Reset a socket's lock pointer.  Wake all threads waiting on the
  * socket's condition variables so that they can restart their waits
  * using the new lock.  The existing lock must be held.
+ *
+ * Caller must have issued membar_release before this.
  */
 void
 solockreset(struct socket *so, kmutex_t *lock)
@@ -1464,9 +1469,9 @@ void
 solockretry(struct socket *so, kmutex_t *lock)
 {
 
-	while (lock != so->so_lock) {
+	while (lock != atomic_load_relaxed(&so->so_lock)) {
 		mutex_exit(lock);
-		lock = so->so_lock;
+		lock = atomic_load_consume(&so->so_lock);
 		mutex_enter(lock);
 	}
 }
@@ -1475,6 +1480,10 @@ bool
 solocked(const struct socket *so)
 {
 
+	/*
+	 * Used only for diagnostic assertions, so so_lock should be
+	 * stable at this point, hence on need for atomic_load_*.
+	 */
 	return mutex_owned(so->so_lock);
 }
 
@@ -1483,6 +1492,10 @@ solocked2(const struct socket *so1, const struct socket *so2)
 {
 	const kmutex_t *lock;
 
+	/*
+	 * Used only for diagnostic assertions, so so_lock should be
+	 * stable at this point, hence on need for atomic_load_*.
+	 */
 	lock = so1->so_lock;
 	if (lock != so2->so_lock)
 		return false;
@@ -1533,7 +1546,7 @@ sblock(struct sockbuf *sb, int wf)
 			error = 0;
 		} else
 			error = cv_wait_sig(&so->so_cv, lock);
-		if (__predict_false(lock != so->so_lock))
+		if (__predict_false(lock != atomic_load_relaxed(&so->so_lock)))
 			solockretry(so, lock);
 		if (error != 0)
 			return error;
@@ -1568,7 +1581,7 @@ sowait(struct socket *so, bool catch_p, int timo)
 		error = cv_timedwait_sig(&so->so_cv, lock, timo);
 	else
 		error = cv_timedwait(&so->so_cv, lock, timo);
-	if (__predict_false(lock != so->so_lock))
+	if (__predict_false(lock != atomic_load_relaxed(&so->so_lock)))
 		solockretry(so, lock);
 	return error;
 }
