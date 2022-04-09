@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.147 2022/04/09 15:43:41 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.148 2022/04/09 16:02:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -581,4 +581,10 @@ static inline bool
 is_struct_or_union(tspec_t t)
 {
 	return t == STRUCT || t == UNION;
+}
+
+static inline bool
+is_member(const sym_t *sym)
+{
+	return sym->s_scl == MOS || sym->s_scl == MOU;
 }
