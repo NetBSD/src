@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.149 2022/04/09 21:19:52 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.150 2022/04/09 23:41:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -206,9 +206,6 @@ typedef enum {
 	BOOL_CONST,
 	ENUM_CONST,
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
-	OLD_STYLE_ARG,	/* old-style function argument declarations */
-	PROTO_ARG,	/* used in declaration stack during prototype
-			   declaration */
 	INLINE		/* only used by the parser */
 } scl_t;
 
@@ -323,24 +320,26 @@ struct array_size {
 	int dim;
 };
 
+typedef enum declaration_kind {
+	DK_EXTERN,		/* global variable or function */
+	DK_MOS,			/* struct member */
+	DK_MOU,			/* union member */
+	DK_ENUM_CONST,		/* enum constant */
+	DK_OLD_STYLE_ARG,	/* argument in an old-style function
+				 * definition */
+	DK_PROTO_ARG,		/* argument in a prototype function
+				 * definition */
+	DK_AUTO,		/* local symbol */
+	DK_ABSTRACT		/* abstract declaration; type name */
+} declaration_kind;
+
 /*
  * For nested declarations there is a stack that holds all information
  * needed for the current level. dcs points to the innermost element of this
  * stack.
- *
- * d_ctx describes the context of the current declaration. Its value is
- * one of
- *	EXTERN		global declarations
- *	MOS or MOU	declarations of struct or union members
- *	CTCONST		declarations of enums or boolean constants
- *	OLD_STYLE_ARG	declaration of arguments in old-style function
- *			definitions
- *	PROTO_ARG	declaration of arguments in function prototypes
- *	AUTO		declaration of local symbols
- *	ABSTRACT	abstract declarations (sizeof, casts)
- *
  */
 typedef	struct dinfo {
+	declaration_kind d_kind;
 	tspec_t	d_abstract_type;/* VOID, BOOL, CHAR, INT or COMPLEX */
 	tspec_t	d_complex_mod;	/* FLOAT or DOUBLE */
 	tspec_t	d_sign_mod;	/* SIGNED or UNSIGN */
@@ -352,7 +351,6 @@ typedef	struct dinfo {
 	unsigned int d_offset_in_bits; /* offset of next structure member */
 	unsigned short d_sou_align_in_bits; /* alignment required for current
 				 * structure */
-	scl_t	d_ctx;		/* context of declaration */
 	bool	d_const:1;	/* const in declaration specifiers */
 	bool	d_volatile:1;	/* volatile in declaration specifiers */
 	bool	d_inline:1;	/* inline in declaration specifiers */

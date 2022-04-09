@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.16 2022/04/09 21:19:52 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.17 2022/04/09 23:41:22 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.16 2022/04/09 21:19:52 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.17 2022/04/09 23:41:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -177,6 +177,23 @@ def_name(def_t def)
 }
 
 const char *
+declaration_kind_name(declaration_kind dk)
+{
+	static const char *const name[] = {
+		"extern",
+		"member-of-struct",
+		"member-of-union",
+		"enum-constant",
+		"old-style-function-argument",
+		"prototype-argument",
+		"auto",
+		"abstract",
+	};
+
+	return name[dk];
+}
+
+const char *
 scl_name(scl_t scl)
 {
 	static const char *const name[] = {
@@ -191,8 +208,6 @@ scl_name(scl_t scl)
 		"enum",
 		"member-of-struct",
 		"member-of-union",
-		"bool-constant",
-		"enum-constant",
 		"abstract",
 		"old-style-function-argument",
 		"prototype-argument",
@@ -308,7 +323,7 @@ debug_dinfo(const dinfo_t *d) // NOLINT(misc-no-recursion)
 {
 
 	debug_print_indent();
-	debug_printf("dinfo: %s", scl_name(d->d_ctx));
+	debug_printf("dinfo: %s", declaration_kind_name(d->d_kind));
 	if (d->d_scl != NOSCL)
 		debug_printf(" %s", scl_name(d->d_scl));
 	if (d->d_type != NULL) {

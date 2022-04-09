@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.153 2022/04/09 13:22:05 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.154 2022/04/09 23:41:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -115,6 +115,7 @@ extern	void	expr_restore_memory(struct memory_block *);
  */
 
 #ifdef DEBUG
+const char *declaration_kind_name(declaration_kind);
 const char *scl_name(scl_t);
 const char *symt_name(symt_t);
 const char *tqual_name(tqual_t);
@@ -186,7 +187,7 @@ extern	void	add_type(type_t *);
 extern	void	add_qualifier(tqual_t);
 extern	void	addpacked(void);
 extern	void	add_attr_used(void);
-extern	void	begin_declaration_level(scl_t);
+extern	void	begin_declaration_level(declaration_kind);
 extern	void	end_declaration_level(void);
 extern	void	setasm(void);
 extern	void	begin_type(void);
