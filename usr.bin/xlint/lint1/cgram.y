@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.392 2022/04/09 21:19:52 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.393 2022/04/09 23:41:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.392 2022/04/09 21:19:52 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.393 2022/04/09 23:41:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -920,7 +920,7 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 struct_or_union:		/* C99 6.7.2.1 */
 	  T_STRUCT_OR_UNION {
 		symtyp = FTAG;
-		begin_declaration_level($1 == STRUCT ? MOS : MOU);
+		begin_declaration_level($1 == STRUCT ? DK_MOS : DK_MOU);
 		dcs->d_offset_in_bits = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
 		$$ = $1;
@@ -1069,7 +1069,7 @@ enum_specifier:			/* C99 6.7.2.2 */
 enum:				/* helper for C99 6.7.2.2 */
 	  T_ENUM {
 		symtyp = FTAG;
-		begin_declaration_level(ENUM_CONST);
+		begin_declaration_level(DK_ENUM_CONST);
 	  }
 	;
 
@@ -1329,7 +1329,7 @@ param_list:
 id_list_lparen:
 	  T_LPAREN {
 		block_level++;
-		begin_declaration_level(PROTO_ARG);
+		begin_declaration_level(DK_PROTO_ARG);
 	  }
 	;
 
@@ -1380,7 +1380,7 @@ identifier_list:		/* C99 6.7.5 */
 /* XXX: C99 requires an additional specifier-qualifier-list. */
 type_name:			/* C99 6.7.6 */
 	  {
-		begin_declaration_level(ABSTRACT);
+		begin_declaration_level(DK_ABSTRACT);
 	  } abstract_declaration {
 		end_declaration_level();
 		$$ = $2->s_type;
@@ -1460,7 +1460,7 @@ abstract_decl_param_list:	/* specific to lint */
 abstract_decl_lparen:		/* specific to lint */
 	  T_LPAREN {
 		block_level++;
-		begin_declaration_level(PROTO_ARG);
+		begin_declaration_level(DK_PROTO_ARG);
 	  }
 	;
 
@@ -1674,7 +1674,7 @@ compound_statement_lbrace:
 	  T_LBRACE {
 		block_level++;
 		mem_block_level++;
-		begin_declaration_level(AUTO);
+		begin_declaration_level(DK_AUTO);
 	  }
 	;
 
@@ -1824,7 +1824,7 @@ do_while_expr:			/* see C99 6.8.5 */
 
 for_start:			/* see C99 6.8.5 */
 	  T_FOR T_LPAREN {
-		begin_declaration_level(AUTO);
+		begin_declaration_level(DK_AUTO);
 		block_level++;
 	  }
 	;
@@ -1960,7 +1960,7 @@ function_definition:		/* C99 6.9.1 */
 		}
 		funcdef($1);
 		block_level++;
-		begin_declaration_level(OLD_STYLE_ARG);
+		begin_declaration_level(DK_OLD_STYLE_ARG);
 		if (lwarn == LWARN_NONE)
 			$1->s_used = true;
 	  } arg_declaration_list_opt {
