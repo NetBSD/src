@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.39 2021/12/19 12:39:40 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.40 2022/04/09 23:44:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.39 2021/12/19 12:39:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.40 2022/04/09 23:44:44 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -245,9 +245,9 @@ dma_fence_context_alloc(unsigned n)
 	} S;
 	uint64_t c;
 
-	while (__predict_false(atomic_cas_uint(&S.lock, 0, 1) != 0))
+	while (__predict_false(atomic_swap_uint(&S.lock, 1)))
 		SPINLOCK_BACKOFF_HOOK;
-	membar_enter();
+	membar_acquire();
 	c = S.context;
 	S.context += n;
 	atomic_store_release(&S.lock, 0);
