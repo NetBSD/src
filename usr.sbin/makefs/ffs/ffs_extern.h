@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.7 2017/02/09 04:42:53 kre Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.8 2022/04/09 10:05:35 riastradh Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
 /*-
@@ -46,7 +46,7 @@ struct indir {
 
 	/* ffs.c */
 void panic(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));  
+    __attribute__((__noreturn__,__format__(__printf__,1,2)));
 
 	/* ffs_alloc.c */
 int ffs_alloc(struct inode *, daddr_t, daddr_t, int, daddr_t *);
