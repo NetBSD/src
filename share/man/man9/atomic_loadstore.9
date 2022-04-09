@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_loadstore.9,v 1.6 2020/09/03 00:23:57 riastradh Exp $
+.\"	$NetBSD: atomic_loadstore.9,v 1.7 2022/04/09 23:32:53 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 25, 2019
+.Dd February 11, 2022
 .Dt ATOMIC_LOADSTORE 9
 .Os
 .Sh NAME
@@ -648,7 +648,7 @@ is an atomic read/modify/write operation in
 .Xr atomic_ops 3 ,
 then
 .Bd -literal
-	membar_exit();
+	membar_release();
 	atomic_r/m/w(obj, ...);
 .Ed
 .Pp
@@ -657,32 +657,34 @@ functions like a release operation on
 and
 .Bd -literal
 	atomic_r/m/w(obj, ...);
-	membar_enter();
+	membar_acquire();
 .Ed
 .Pp
 functions like a acquire operation on
 .Va obj .
-.Pp
-.Sy WARNING :
-The combination of
-.Fn atomic_load_relaxed
-and
-.Xr membar_enter 3
-.Em does not
-make an acquire operation; only read/modify/write atomics may be
-combined with
-.Xr membar_enter 3
-this way.
 .Pp
 On architectures where
 .Dv __HAVE_ATOMIC_AS_MEMBAR
 is defined, all the
 .Xr atomic_ops 3
 imply release and acquire operations, so the
-.Xr membar_enter 3
+.Xr membar_acquire 3
 and
-.Xr membar_exit 3
+.Xr membar_release 3
 are redundant.
+.Pp
+The combination of
+.Fn atomic_load_relaxed
+and
+.Xr membar_acquire 3
+in that order is equivalent to
+.Fn atomic_load_acquire ,
+and the combination of
+.Xr membar_release 3
+and
+.Fn atomic_store_relaxed
+in that order is equivalent to
+.Fn atomic_store_release .
 .Sh EXAMPLES
 Maintaining lossy counters.
 These may lose some counts, because the read/modify/write cycle as a

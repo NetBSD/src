@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.6 2022/04/06 22:47:56 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.7 2022/04/09 23:32:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -117,6 +117,16 @@ ENTRY(_membar_producer,0)
 	br.ret.sptk	rp
 END(_membar_producer)
 
+ENTRY(_membar_acquire,0)
+	mf
+	br.ret.sptk	rp
+END(_membar_acquire)
+
+ENTRY(_membar_release,0)
+	mf
+	br.ret.sptk	rp
+END(_membar_release)
+
 ENTRY(_membar_enter,0)
 	mf
 	br.ret.sptk	rp
@@ -213,6 +223,8 @@ ALIAS(atomic_cas_ptr_ni,_atomic_cas_64)
 
 ALIAS(membar_consumer,_membar_consumer)
 ALIAS(membar_producer,_membar_producer)
+ALIAS(membar_acquire,_membar_acquire)
+ALIAS(membar_release,_membar_release)
 ALIAS(membar_enter,_membar_enter)
 ALIAS(membar_exit,_membar_exit)
 ALIAS(membar_sync,_membar_sync)

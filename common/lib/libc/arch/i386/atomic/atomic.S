@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.34 2022/04/09 22:53:36 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.35 2022/04/09 23:32:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -178,23 +178,23 @@ ENTRY(_atomic_cas_32_ni)
 	ret
 END(_atomic_cas_32_ni)
 
-ENTRY(_membar_consumer)
+ENTRY(_membar_acquire)
 	/*
 	 * Every load from normal memory is a load-acquire on x86, so
 	 * there is never any need for explicit barriers to order
 	 * load-before-anything.
 	 */
 	ret
-END(_membar_consumer)
+END(_membar_acquire)
 
-ENTRY(_membar_producer)
+ENTRY(_membar_release)
 	/*
 	 * Every store to normal memory is a store-release on x86, so
 	 * there is never any need for explicit barriers to order
 	 * anything-before-store.
 	 */
 	ret
-END(_membar_producer)
+END(_membar_release)
 
 ENTRY(_membar_sync)
 	/*
@@ -340,10 +340,14 @@ ALIAS(atomic_cas_64_ni,_atomic_cas_64)
 ALIAS(__sync_val_compare_and_swap_8,_atomic_cas_64)
 #endif /* __HAVE_ATOMIC64_OPS || _KERNEL */
 
-ALIAS(membar_consumer,_membar_consumer)
-ALIAS(membar_producer,_membar_producer)
+ALIAS(membar_acquire,_membar_acquire)
+ALIAS(membar_release,_membar_release)
+ALIAS(membar_sync,_membar_sync)
+
+ALIAS(membar_consumer,_membar_acquire)
+ALIAS(membar_producer,_membar_release)
 ALIAS(membar_enter,_membar_sync)
-ALIAS(membar_exit,_membar_producer)
+ALIAS(membar_exit,_membar_release)
 ALIAS(membar_sync,_membar_sync)
 
 STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
@@ -398,8 +402,10 @@ STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32_ni)
 STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32_ni)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32_ni)
 
+STRONG_ALIAS(_membar_consumer,_membar_acquire)
+STRONG_ALIAS(_membar_producer,_membar_release)
 STRONG_ALIAS(_membar_enter,_membar_sync)
-STRONG_ALIAS(_membar_exit,_membar_producer)
+STRONG_ALIAS(_membar_exit,_membar_release)
 
 #ifdef _HARDKERNEL
 	.section .rodata
