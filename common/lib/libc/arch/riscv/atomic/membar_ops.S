@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.2 2022/04/06 22:47:56 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.3 2022/04/09 22:53:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
 CRT_ALIAS(__sync_synchronize,_membar_sync)
 
 ENTRY_NP(_membar_enter)
-	fence	w,rw
+	fence	rw,rw
 	ret
 END(_membar_enter)
 ATOMIC_OP_ALIAS(membar_enter,_membar_enter)
