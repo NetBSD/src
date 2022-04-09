@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.6 2022/02/12 17:09:07 riastradh Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.7 2022/04/09 23:43:12 riastradh Exp $	*/
 /*	$OpenBSD: ipi.c,v 1.4 2011/01/14 13:20:06 jsing Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ hppa_ipi_intr(void *arg)
 
 	/* Handle an IPI. */
 	ipi_pending = atomic_swap_ulong(&ci->ci_ipi, 0);
-	membar_enter();	/* matches membar_exit in xc_send_ipi, cpu_ipi */
+	membar_acquire(); /* matches membar_release in xc_send_ipi, cpu_ipi */
 
 	KASSERT(ipi_pending);
 
@@ -169,7 +169,7 @@ xc_send_ipi(struct cpu_info *ci)
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
 
-	membar_exit();		/* matches membar_enter in hppa_ipi_intr */
+	membar_release();	/* matches membar_acquire in hppa_ipi_intr */
 	if (ci) {
 		/* Unicast: remote CPU. */
 		hppa_ipi_send(ci, HPPA_IPI_XCALL);
@@ -185,7 +185,7 @@ cpu_ipi(struct cpu_info *ci)
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
 
-	membar_exit();		/* matches membar_enter in hppa_ipi_intr */
+	membar_release();	/* matches membar_acquire in hppa_ipi_intr */
 	if (ci) {
 		/* Unicast: remote CPU. */
 		hppa_ipi_send(ci, HPPA_IPI_GENERIC);
