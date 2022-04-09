@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2022/04/08 21:48:19 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2022/04/09 22:26:49 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -24,3 +24,5 @@ CFLAGS+=	${ACTIVE_CC:Mgcc:%=-ftrapv}
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
+
+LINTFLAGS+=	-w	# treat warnings as errors
