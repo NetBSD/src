@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.21 2020/11/01 20:58:38 christos Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.22 2022/04/09 23:45:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.21 2020/11/01 20:58:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.22 2022/04/09 23:45:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -163,7 +163,6 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
-	membar_exit();
-	l->l_mutex = new;
+	atomic_store_release(&l->l_mutex, new);
 	mutex_spin_exit(old);
 }
