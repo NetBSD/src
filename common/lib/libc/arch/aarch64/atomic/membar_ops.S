@@ -1,4 +1,4 @@
-/* $NetBSD: membar_ops.S,v 1.2 2020/10/13 21:22:12 skrll Exp $ */
+/* $NetBSD: membar_ops.S,v 1.3 2022/04/09 12:07:37 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ STRONG_ALIAS(_membar_write,_membar_producer)
 ENTRY_NP(_membar_consumer)
 	dmb	ishld
 	ret
-END(_membar_producer)
+END(_membar_consumer)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_read,_membar_consumer)
 STRONG_ALIAS(_membar_read,_membar_consumer)
