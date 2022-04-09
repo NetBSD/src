@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.391 2022/04/09 15:43:41 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.392 2022/04/09 21:19:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.391 2022/04/09 15:43:41 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.392 2022/04/09 21:19:52 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -921,7 +921,7 @@ struct_or_union:		/* C99 6.7.2.1 */
 	  T_STRUCT_OR_UNION {
 		symtyp = FTAG;
 		begin_declaration_level($1 == STRUCT ? MOS : MOU);
-		dcs->d_offset = 0;
+		dcs->d_offset_in_bits = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
 		$$ = $1;
 	  }
