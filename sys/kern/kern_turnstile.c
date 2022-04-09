@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.41 2022/02/23 21:54:41 andvar Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.42 2022/04/09 23:45:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.41 2022/02/23 21:54:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.42 2022/04/09 23:45:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -252,7 +252,7 @@ turnstile_lendpri(lwp_t *cur)
 		 * Because we already have another LWP lock (l->l_mutex) held,
 		 * we need to play a try lock dance to avoid deadlock.
 		 */
-		dolock = l->l_mutex != owner->l_mutex;
+		dolock = l->l_mutex != atomic_load_relaxed(&owner->l_mutex);
 		if (l == owner || (dolock && !lwp_trylock(owner))) {
 			/*
 			 * The owner was changed behind us or trylock failed.
@@ -299,7 +299,7 @@ turnstile_lendpri(lwp_t *cur)
 		l = owner;
 	}
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
-	if (cur->l_mutex != l->l_mutex) {
+	if (cur->l_mutex != atomic_load_relaxed(&l->l_mutex)) {
 		lwp_unlock(l);
 		lwp_lock(cur);
 	}
@@ -322,7 +322,8 @@ turnstile_unlendpri(turnstile_t *ts)
 
 	KASSERT(ts->ts_inheritor != NULL);
 	ts->ts_inheritor = NULL;
-	dolock = l->l_mutex == l->l_cpu->ci_schedstate.spc_lwplock;
+	dolock = (atomic_load_relaxed(&l->l_mutex) ==
+	    l->l_cpu->ci_schedstate.spc_lwplock);
 	if (dolock) {
 		lwp_lock(l);
 	}
