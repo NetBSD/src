@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.12 2020/08/12 07:37:39 skrll Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.13 2022/04/09 14:09:32 riastradh Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.12 2020/08/12 07:37:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.13 2022/04/09 14:09:32 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.12 2020/08/12 07:37:39 skrll Exp $")
 #include <mips/db_machdep.h>
 #endif
 
+#include <mips/asm.h>		/* XXX CALLFRAME_SIZ */
 
 static int	cpu_rmixl_match(device_t, cfdata_t, void *);
 static void	cpu_rmixl_attach(device_t, device_t, void *);
