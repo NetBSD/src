@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.65 2020/02/22 21:24:45 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.66 2022/04/09 23:46:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.65 2020/02/22 21:24:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.66 2022/04/09 23:46:19 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -101,12 +101,12 @@ do { \
  * Memory barriers.
  */
 #ifdef __HAVE_ATOMIC_AS_MEMBAR
-#define	RW_MEMBAR_ENTER()
-#define	RW_MEMBAR_EXIT()
+#define	RW_MEMBAR_ACQUIRE()
+#define	RW_MEMBAR_RELEASE()
 #define	RW_MEMBAR_PRODUCER()
 #else
-#define	RW_MEMBAR_ENTER()		membar_enter()
-#define	RW_MEMBAR_EXIT()		membar_exit()
+#define	RW_MEMBAR_ACQUIRE()		membar_acquire()
+#define	RW_MEMBAR_RELEASE()		membar_release()
 #define	RW_MEMBAR_PRODUCER()		membar_producer()
 #endif
 
@@ -344,7 +344,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			    ~RW_WRITE_WANTED);
 			if (__predict_true(next == owner)) {
 				/* Got it! */
-				RW_MEMBAR_ENTER();
+				RW_MEMBAR_ACQUIRE();
 				break;
 			}
 
@@ -396,6 +396,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			continue;
 		}
 		next = rw_cas(rw, owner, owner | set_wait);
+		/* XXX membar? */
 		if (__predict_false(next != owner)) {
 			turnstile_exit(rw);
 			owner = next;
@@ -471,7 +472,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * proceed to do direct handoff if there are waiters, and if the
 	 * lock would become unowned.
 	 */
-	RW_MEMBAR_EXIT();
+	RW_MEMBAR_RELEASE();
 	for (;;) {
 		newown = (owner - decr);
 		if ((newown & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
@@ -585,7 +586,7 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 	RW_ASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
 
-	RW_MEMBAR_ENTER();
+	RW_MEMBAR_ACQUIRE();
 	return 1;
 }
 
