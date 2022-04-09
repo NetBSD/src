@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.306 2022/04/09 23:36:22 riastradh Exp $ */
+/* $NetBSD: pmap.c,v 1.307 2022/04/09 23:38:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.306 2022/04/09 23:36:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307 2022/04/09 23:38:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1659,11 +1659,11 @@ pmap_destroy(pmap_t pmap)
 		printf("pmap_destroy(%p)\n", pmap);
 #endif
 
-	PMAP_MP(membar_exit());
+	PMAP_MP(membar_release());
 	KASSERT(atomic_load_relaxed(&pmap->pm_count) > 0);
 	if (atomic_dec_uint_nv(&pmap->pm_count) > 0)
 		return;
-	PMAP_MP(membar_enter());
+	PMAP_MP(membar_acquire());
 
 	pt_entry_t *lev1map = pmap_lev1map(pmap);
 

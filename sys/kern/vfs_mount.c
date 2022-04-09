@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.92 2022/03/28 12:37:46 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.93 2022/04/09 23:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.92 2022/03/28 12:37:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.93 2022/04/09 23:38:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -284,13 +284,13 @@ vfs_rele(struct mount *mp)
 {
 
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 	if (__predict_true((int)atomic_dec_uint_nv(&mp->mnt_refcnt) > 0)) {
 		return;
 	}
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
+	membar_acquire();
 #endif
 
 	/*

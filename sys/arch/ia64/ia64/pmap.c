@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.41 2022/03/12 15:32:31 riastradh Exp $ */
+/* $NetBSD: pmap.c,v 1.42 2022/04/09 23:38:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2022/03/12 15:32:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2022/04/09 23:38:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1516,11 +1516,11 @@ pmap_destroy(pmap_t pmap)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(pm=%p)", pmap, 0, 0, 0);
-	
-	membar_exit();
+
+	membar_release();
 	if (atomic_dec_64_nv(&pmap->pm_refcount) > 0)
 		return;
-	membar_enter();
+	membar_acquire();
 
 	KASSERT(pmap->pm_stats.resident_count == 0);
 	KASSERT(pmap->pm_stats.wired_count == 0);
