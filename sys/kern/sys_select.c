@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.58 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.59 2022/04/09 23:52:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.58 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.59 2022/04/09 23:52:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ sel_do_scan(const char *opname, void *fds, const int nf, const size_t ni,
 			l->l_selflag = SEL_SCANNING;
 		}
 		ncoll = sc->sc_ncoll;
-		membar_exit();
+		membar_release();
 
 		if (opname == selop_select) {
 			error = selscan((char *)fds, nf, ni, retval);
@@ -653,7 +653,7 @@ selrecord(lwp_t *selector, struct selinfo *sip)
 		 * barrier to ensure that we access sel_lwp (above) before
 		 * other fields - this guards against a call to selclear().
 		 */
-		membar_enter();
+		membar_acquire();
 		sip->sel_lwp = selector;
 		SLIST_INSERT_HEAD(&selector->l_selwait, sip, sel_chain);
 		/* Copy the argument, which is for selnotify(). */
@@ -872,9 +872,8 @@ selclear(void)
 		 * globally visible.
 		 */
 		next = SLIST_NEXT(sip, sel_chain);
-		membar_exit();
 		/* Release the record for another named waiter to use. */
-		sip->sel_lwp = NULL;
+		atomic_store_release(&sip->sel_lwp, NULL);
 	}
 	mutex_spin_exit(lock);
 }
