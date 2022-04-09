@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.83 2021/07/14 03:16:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.84 2022/04/09 23:45:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.83 2021/07/14 03:16:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.84 2022/04/09 23:45:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -144,7 +144,7 @@ shmif_lockbus(struct shmif_mem *busmem)
 		}
 		continue;
 	}
-	membar_enter();
+	membar_acquire();
 }
 
 static void
@@ -152,7 +152,7 @@ shmif_unlockbus(struct shmif_mem *busmem)
 {
 	unsigned int old __diagused;
 
-	membar_exit();
+	membar_release();
 	old = atomic_swap_32(&busmem->shm_lock, LOCK_UNLOCKED);
 	KASSERT(old == LOCK_LOCKED);
 }
