@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.20 2017/04/14 15:40:35 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.21 2022/04/09 10:05:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.20 2017/04/14 15:40:35 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.21 2022/04/09 10:05:35 riastradh Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -91,7 +91,7 @@ msdos_prep_opts(fsinfo_t *fsopts)
 	.desc = _desc,						\
 },
 ALLOPTS
-#undef AOPT	
+#undef AOPT
 		{ 'U', "utf8", &msdos_opt->utf8, OPT_BOOL,
 		  0, 1, "Use UTF8 names" },
 		{ .name = NULL }
@@ -169,7 +169,7 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 		fsopts->sectorsize = msdos_opt->options.bytes_per_sector;
 	} else if (fsopts->sectorsize != msdos_opt->options.bytes_per_sector) {
 		err(1, "inconsistent sectorsize -S %u"
-		    "!= -o bytes_per_sector %u", 
+		    "!= -o bytes_per_sector %u",
 		    fsopts->sectorsize, msdos_opt->options.bytes_per_sector);
 	}
 
@@ -223,8 +223,8 @@ msdos_populate_dir(const char *path, struct denode *dir, fsnode *root,
 
 	assert(dir != NULL);
 	assert(root != NULL);
-	assert(fsopts != NULL);	
-	
+	assert(fsopts != NULL);
+
 	for (cur = root->next; cur != NULL; cur = cur->next) {
 		if ((size_t)snprintf(pbuf, sizeof(pbuf), "%s/%s", path,
 		    cur->name) >= sizeof(pbuf)) {

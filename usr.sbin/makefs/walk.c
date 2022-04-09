@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.31 2022/04/06 13:44:25 wiz Exp $	*/
+/*	$NetBSD: walk.c,v 1.32 2022/04/09 10:05:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.31 2022/04/06 13:44:25 wiz Exp $");
+__RCSID("$NetBSD: walk.c,v 1.32 2022/04/09 10:05:35 riastradh Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -266,7 +266,7 @@ create_fsnode(const char *root, const char *path, const char *name,
 		cur->inode->st.st_mtimensec = stampst.st_mtimensec;
 		cur->inode->st.st_ctimensec = stampst.st_ctimensec;
 #endif
-#if HAVE_STRUCT_STAT_BIRTHTIME 
+#if HAVE_STRUCT_STAT_BIRTHTIME
 		cur->inode->st.st_birthtime = stampst.st_birthtime;
 		cur->inode->st.st_birthtimensec = stampst.st_birthtimensec;
 #endif
@@ -639,7 +639,7 @@ inode_type(mode_t mode)
  *	return pointer to fsinode matching `entry's st_ino & st_dev if it exists,
  *	otherwise add `entry' to table and return NULL
  */
-/* This was borrowed from du.c and tweaked to keep an fsnode 
+/* This was borrowed from du.c and tweaked to keep an fsnode
  * pointer instead. -- dbj@netbsd.org
  */
 static fsinode *
@@ -658,7 +658,7 @@ link_check(fsinode *entry)
 	 */
 	const uint64_t HTCONST = 11400714819323198485ULL;
 	const int HTBITS = 64;
-	
+
 	/* Never store zero in hashtable */
 	assert(entry);
 
@@ -693,7 +693,7 @@ link_check(fsinode *entry)
 	tmp *= HTCONST;
 	h  = tmp >> (HTBITS - htshift);
 	h2 = 1 | ( tmp >> (HTBITS - (htshift<<1) - 1)); /* must be odd */
-	
+
 	/* open address hashtable search with double hash probing */
 	while (htable[h].data) {
 		if ((htable[h].data->st.st_ino == entry->st.st_ino) &&

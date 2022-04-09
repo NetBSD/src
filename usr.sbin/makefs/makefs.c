@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.54 2021/04/03 14:10:56 simonb Exp $	*/
+/*	$NetBSD: makefs.c,v 1.55 2022/04/09 10:05:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.54 2021/04/03 14:10:56 simonb Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.55 2022/04/09 10:05:35 riastradh Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -209,10 +209,10 @@ main(int argc, char *argv[])
 			break;
 
 		case 'O':
-			fsoptions.offset = 
+			fsoptions.offset =
 			    strsuftoll("offset", optarg, 0LL, LLONG_MAX);
 			break;
-			
+
 		case 'o':
 		{
 			char *p;
@@ -411,7 +411,7 @@ static fstype_t *
 get_fstype(const char *type)
 {
 	int i;
-	
+
 	for (i = 0; fstypes[i].type != NULL; i++)
 		if (strcmp(fstypes[i].type, type) == 0)
 			return (&fstypes[i]);
@@ -451,7 +451,7 @@ get_tstamp(const char *b, struct stat *st)
 	}
 
 	st->st_ino = 1;
-#if HAVE_STRUCT_STAT_BIRTHTIME 
+#if HAVE_STRUCT_STAT_BIRTHTIME
 	st->st_birthtime =
 #endif
 	st->st_mtime = st->st_ctime = st->st_atime = when;
