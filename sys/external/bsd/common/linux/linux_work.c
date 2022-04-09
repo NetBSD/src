@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.60 2021/12/31 14:30:20 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.61 2022/04/09 23:43:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.60 2021/12/31 14:30:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.61 2022/04/09 23:43:31 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -639,7 +639,7 @@ acquire_work(struct work_struct *work, struct workqueue_struct *wq)
 	    owner0);
 
 	KASSERT(work_queue(work) == wq);
-	membar_enter();
+	membar_acquire();
 	SDT_PROBE2(sdt, linux, work, acquire,  work, wq);
 	return true;
 }
@@ -660,7 +660,7 @@ release_work(struct work_struct *work, struct workqueue_struct *wq)
 	KASSERT(mutex_owned(&wq->wq_lock));
 
 	SDT_PROBE2(sdt, linux, work, release,  work, wq);
-	membar_exit();
+	membar_release();
 
 	/*
 	 * Non-interlocked r/m/w is safe here because nobody else can

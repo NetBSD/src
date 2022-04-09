@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.12 2021/12/27 10:41:57 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.13 2022/04/09 23:43:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -68,8 +68,8 @@
 #endif
 
 #if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
-#  define	smp_mb__before_atomic()		membar_exit()
-#  define	smp_mb__after_atomic()		membar_sync() /* XXX acquire */
+#  define	smp_mb__before_atomic()		membar_release()
+#  define	smp_mb__after_atomic()		membar_acquire()
 #else
 #  define	smp_mb__before_atomic()		__insn_barrier()
 #  define	smp_mb__after_atomic()		__insn_barrier()
