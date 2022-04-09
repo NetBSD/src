@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.22 2021/12/18 16:31:40 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.23 2022/04/09 23:32:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -181,11 +181,17 @@ uint8_t 	atomic_cas_8(volatile uint8_t *, uint8_t, uint8_t);
 /*
  * Memory barrier operations
  */
-void		membar_enter(void);
-void		membar_exit(void);
+void		membar_acquire(void);
+void		membar_release(void);
 void		membar_producer(void);
 void		membar_consumer(void);
 void		membar_sync(void);
+
+/*
+ * Deprecated memory barriers
+ */
+void		membar_enter(void);
+void		membar_exit(void);
 
 #ifdef	__HAVE_MEMBAR_DATADEP_CONSUMER
 void		membar_datadep_consumer(void);

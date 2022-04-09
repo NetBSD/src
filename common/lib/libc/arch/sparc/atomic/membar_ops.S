@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.7 2022/04/09 22:53:17 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.8 2022/04/09 23:32:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,14 +45,21 @@
  * instruction that implies a sequential consistency barrier.
  *
  * If we ran with Partial Store Order (PSO), we would also need to
- * issue STBAR for membar_exit (load/store-before-store) and
+ * issue STBAR for membar_release (load/store-before-store) and
  * membar_producer (store-before-store).
  */
 
-ENTRY(_membar_consumer)
+ENTRY(_membar_acquire)
 	retl
 	 nop
-END(_membar_consumer)
+END(_membar_acquire)
+ATOMIC_OP_ALIAS(membar_acquire,_membar_acquire)
+
+ENTRY(_membar_release)
+	retl
+	 nop
+END(_membar_release)
+ATOMIC_OP_ALIAS(membar_release,_membar_release)
 
 ENTRY(_membar_sync)
 	retl
@@ -62,12 +69,13 @@ ENTRY(_membar_sync)
 	 nop
 #endif
 END(_membar_sync)
+ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
 
-ATOMIC_OP_ALIAS(membar_producer,_membar_consumer)
-STRONG_ALIAS(_membar_producer,_membar_consumer)
-ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)
+ATOMIC_OP_ALIAS(membar_producer,_membar_release)
+STRONG_ALIAS(_membar_producer,_membar_release)
+ATOMIC_OP_ALIAS(membar_consumer,_membar_acquire)
+STRONG_ALIAS(_membar_consumer,_membar_acquire)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_enter,_membar_sync)
-ATOMIC_OP_ALIAS(membar_exit,_membar_consumer)
-STRONG_ALIAS(_membar_exit,_membar_consumer)
-ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
+ATOMIC_OP_ALIAS(membar_exit,_membar_release)
+STRONG_ALIAS(_membar_exit,_membar_release)

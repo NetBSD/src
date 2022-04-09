@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.8 2022/04/06 22:47:55 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.9 2022/04/09 23:32:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,45 +42,50 @@
 LEAF(_membar_producer, 0)
 	RET
 	nop
-	END(_membar_producer)
+END(_membar_producer)
 EXPORT(_membar_producer_end)
 
 LEAF(_membar_sync, 0)
 	RET
 	nop
-	END(_membar_sync)
+END(_membar_sync)
 EXPORT(_membar_sync_end)
 
 LEAF(_membar_producer_mp, 0)
-	wmb
+	wmb		/* store-before-store */
 	RET
-	END(_membar_producer_mp)
+END(_membar_producer_mp)
 EXPORT(_membar_producer_mp_end)
 
 LEAF(_membar_sync_mp, 0)
-	mb
+	mb		/* load/store-before-load/store */
 	RET
-	END(_membar_sync_mp)
+END(_membar_sync_mp)
 EXPORT(_membar_sync_mp_end)
 
 #else	/* _KERNEL */
 
 LEAF(_membar_producer, 0)
-	mb
+	mb		/* load/store-before-load/store */
 	RET
-	END(_membar_producer)
+END(_membar_producer)
 EXPORT(_membar_producer_end)
 
 LEAF(_membar_sync, 0)
-	mb
+	mb		/* load/store-before-load/store */
 	RET
-	END(_membar_sync)
+END(_membar_sync)
 EXPORT(_membar_sync_end)
 
 #endif	/* _KERNEL */
 
 ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
+
+ATOMIC_OP_ALIAS(membar_acquire,_membar_sync)
+STRONG_ALIAS(_membar_acquire,_membar_sync)
+ATOMIC_OP_ALIAS(membar_release,_membar_sync)
+STRONG_ALIAS(_membar_release,_membar_sync)
 ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_enter,_membar_sync)
 ATOMIC_OP_ALIAS(membar_exit,_membar_sync)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: membar_ops.3,v 1.9 2022/02/15 22:46:53 riastradh Exp $
+.\"	$NetBSD: membar_ops.3,v 1.10 2022/04/09 23:32:52 riastradh Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,13 +27,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 2, 2020
+.Dd March 30, 2022
 .Dt MEMBAR_OPS 3
 .Os
 .Sh NAME
 .Nm membar_ops ,
-.Nm membar_enter ,
-.Nm membar_exit ,
+.Nm membar_acquire ,
+.Nm membar_release ,
 .Nm membar_producer ,
 .Nm membar_consumer ,
 .Nm membar_datadep_consumer ,
@@ -45,9 +45,9 @@
 .In sys/atomic.h
 .\"
 .Ft void
-.Fn membar_enter "void"
+.Fn membar_acquire "void"
 .Ft void
-.Fn membar_exit "void"
+.Fn membar_release "void"
 .Ft void
 .Fn membar_producer "void"
 .Ft void
@@ -65,9 +65,9 @@ relaxed load and store order.
 .Pp
 In general, memory barriers must come in pairs \(em a barrier on one
 CPU, such as
-.Fn membar_exit ,
+.Fn membar_release ,
 must pair with a barrier on another CPU, such as
-.Fn membar_enter ,
+.Fn membar_acquire ,
 in order to synchronize anything between the two CPUs.
 Code using
 .Nm
@@ -92,72 +92,57 @@ not just C11 atomic operations on
 .Vt _Atomic\^ Ns -qualified
 objects.
 .Bl -tag -width abcd
-.It Fn membar_enter
-Any store preceding
-.Fn membar_enter
+.It Fn membar_acquire
+Any load preceding
+.Fn membar_acquire
 will happen before all memory operations following it.
 .Pp
-An atomic read/modify/write operation
-.Pq Xr atomic_ops 3
-followed by a
-.Fn membar_enter
+A load followed by a
+.Fn membar_acquire
 implies a
 .Em load-acquire
 operation in the language of C11.
+.Fn membar_acquire
+should only be used after atomic read/modify/write, such as
+.Xr atomic_cas_uint 3 .
+For regular loads, instead of
+.Li "x = *p; membar_acquire()" ,
+you should use
+.Li "x = atomic_load_acquire(p)" .
 .Pp
-.Sy WARNING :
-A load followed by
-.Fn membar_enter
-.Em does not
-imply a
-.Em load-acquire
-operation, even though
-.Fn membar_exit
-followed by a store implies a
-.Em store-release
-operation; the symmetry of these names and asymmetry of the semantics
-is a historical mistake.
-In the
-.Nx
-kernel, you can use
-.Xr atomic_load_acquire 9
-for a
-.Em load-acquire
-operation without any atomic read/modify/write.
-.Pp
-.Fn membar_enter
+.Fn membar_acquire
 is typically used in code that implements locking primitives to ensure
 that a lock protects its data, and is typically paired with
-.Fn membar_exit ;
+.Fn membar_release ;
 see below for an example.
-.It Fn membar_exit
+.It Fn membar_release
 All memory operations preceding
-.Fn membar_exit
+.Fn membar_release
 will happen before any store that follows it.
 .Pp
 A
-.Fn membar_exit
+.Fn membar_release
 followed by a store implies a
 .Em store-release
 operation in the language of C11.
-.Fn membar_exit
+.Fn membar_release
 should only be used before atomic read/modify/write, such as
 .Xr atomic_inc_uint 3 .
 For regular stores, instead of
-.Li "membar_exit(); *p = x" ,
+.Li "membar_release(); *p = x" ,
 you should use
 .Li "atomic_store_release(p, x)" .
 .Pp
-.Fn membar_exit
+.Fn membar_release
 is typically paired with
-.Fn membar_enter ,
+.Fn membar_acquire ,
 and is typically used in code that implements locking or reference
 counting primitives.
 Releasing a lock or reference count should use
-.Fn membar_exit ,
+.Fn membar_release ,
 and acquiring a lock or handling an object after draining references
 should use
-.Fn membar_enter ,
+.Fn membar_acquire ,
 so that whatever happened before releasing will also have happened
 before acquiring.
 For example:
@@ -165,7 +150,7 @@ For example:
 /* thread A -- release a reference */
 obj->state.mumblefrotz = 42;
 KASSERT(valid(&obj->state));
-membar_exit();
+membar_release();
 atomic_dec_uint(&obj->refcnt);
 
 /*
@@ -174,7 +159,7 @@ atomic_dec_uint(&obj->refcnt);
  */
 while (atomic_cas_uint(&obj->refcnt, 0, -1) != 0)
 	continue;
-membar_enter();
+membar_acquire();
 KASSERT(valid(&obj->state));
 obj->state.mumblefrotz--;
 .Ed
@@ -188,9 +173,9 @@ in thread B witnesses the store in
 in thread A setting the reference count to zero,
 .Em then
 everything in thread A before the
-.Fn membar_exit
+.Fn membar_release
 is guaranteed to happen before everything in thread B after the
-.Fn membar_enter ,
+.Fn membar_acquire ,
 as if the machine had sequentially executed:
 .Bd -literal -offset abcdefgh
 obj->state.mumblefrotz = 42;	/* from thread A */
@@ -200,11 +185,11 @@ KASSERT(valid(&obj->state));	/* from thread B */
 obj->state.mumblefrotz--;
 .Ed
 .Pp
-.Fn membar_exit
+.Fn membar_release
 followed by a store, serving as a
 .Em store-release
 operation, may also be paired with a subsequent load followed by
-.Fn membar_sync ,
+.Fn membar_acquire ,
 serving as the corresponding
 .Em load-acquire
 operation.
@@ -214,7 +199,7 @@ and
 .Xr atomic_load_acquire 9
 instead in that situation, unless the store is an atomic
 read/modify/write which requires a separate
-.Fn membar_exit .
+.Fn membar_release .
 .It Fn membar_producer
 All stores preceding
 .Fn membar_producer
@@ -294,7 +279,7 @@ consume(v);
 .Pp
 .Fn membar_datadep_consumer
 is typically paired with
-.Fn membar_exit
+.Fn membar_release
 by code that initializes an object before publishing it.
 However, you should use
 .Xr atomic_store_release 9
@@ -337,24 +322,48 @@ in C11.
 is typically paired with
 .Fn membar_sync .
 .Pp
-A load followed by
-.Fn membar_sync ,
-serving as a
-.Em load-acquire
-operation, may also be paired with a prior
-.Fn membar_exit
-followed by a store, serving as the corresponding
-.Em store-release
-operation.
-However, you should use
-.Xr atomic_load_acquire 9
-instead of
-.No load-then- Ns Fn membar_sync
-if it is a regular load, or
-.Fn membar_enter
-instead of
 .Fn membar_sync
-if the load is in an atomic read/modify/write operation.
+is typically not needed except in exotic synchronization schemes like
+Dekker's algorithm that require store-before-load ordering.
+If you are tempted to reach for it, see if there is another way to do
+what you're trying to do first.
+.El
+.Sh DEPRECATED MEMORY BARRIERS
+The following memory barriers are deprecated.
+They were imported from Solaris, which describes them as providing
+ordering relative to
+.Sq lock acquisition ,
+but the documentation in
+.Nx
+disagreed with the implementation and use on the semantics.
+.Bl -tag -width abcd
+.It Fn membar_enter
+Originally documented as store-before-load/store, this was instead
+implemented as load-before-load/store on some platforms, which is what
+essentially all uses relied on.
+Now this is implemented as an alias for
+.Fn membar_sync
+everywhere, meaning a full load/store-before-load/store sequential
+consistency barrier, in order to guarantee what the documentation
+claimed
+.Em and
+what the implementation actually did.
+.Pp
+New code should use
+.Fn membar_acquire
+for load-before-load/store ordering, which is what most uses need, or
+.Fn membar_sync
+for store-before-load/store ordering, which typically only appears in
+exotic synchronization schemes like Dekker's algorithm.
+.It Fn membar_exit
+Alias for
+.Fn membar_release .
+This was originally meant to be paired with
+.Fn membar_enter .
+.Pp
+New code should use
+.Fn membar_release
+instead.
 .El
 .Sh SEE ALSO
 .Xr atomic_ops 3 ,
@@ -366,7 +375,19 @@ The
 .Nm membar_ops
 functions first appeared in
 .Nx 5.0 .
+.Pp
 The data-dependent load barrier,
 .Fn membar_datadep_consumer ,
 first appeared in
 .Nx 7.0 .
+.Pp
+The
+.Fn membar_acquire
+and
+.Fn membar_release
+functions first appeared, and the
+.Fn membar_enter
+and
+.Fn membar_exit
+functions were deprecated, in
+.Nx 10.0 .

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_spinlock.c,v 1.1 2022/04/08 23:35:52 riastradh Exp $	*/
+/*	$NetBSD: t_spinlock.c,v 1.2 2022/04/09 23:32:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_spinlock.c,v 1.1 2022/04/08 23:35:52 riastradh Exp $");
+__RCSID("$NetBSD: t_spinlock.c,v 1.2 2022/04/09 23:32:53 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -43,10 +43,6 @@ __RCSID("$NetBSD: t_spinlock.c,v 1.1 2022/04/08 23:35:52 riastradh Exp $");
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
-
-/* XXX */
-#define	membar_acquire()	membar_enter()
-#define	membar_release()	membar_exit()
 
 #ifdef	BROKEN_ACQUIRE
 #undef	membar_acquire
