@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.12 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.13 2022/04/09 23:43:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,10 +58,6 @@ kref_get(struct kref *kref)
 	    atomic_inc_uint_nv(&kref->kr_count);
 
 	KASSERTMSG((count > 1), "getting released kref");
-
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
-#endif
 }
 
 static inline bool
@@ -76,10 +72,6 @@ kref_get_unless_zero(struct kref *kref)
 	} while (atomic_cas_uint(&kref->kr_count, count, (count + 1)) !=
 	    count);
 
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_enter();
-#endif
-
 	return true;
 }
 
@@ -89,7 +81,7 @@ kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 	unsigned int old, new;
 
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 
 	do {
@@ -100,6 +92,9 @@ kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 	} while (atomic_cas_uint(&kref->kr_count, old, new) != old);
 
 	if (new == 0) {
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_acquire();
+#endif
 		(*release)(kref);
 		return 1;
 	}
@@ -114,7 +109,7 @@ kref_put_lock(struct kref *kref, void (*release)(struct kref *),
 	unsigned int old, new;
 
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 
 	do {
@@ -123,6 +118,9 @@ kref_put_lock(struct kref *kref, void (*release)(struct kref *),
 		if (old == 1) {
 			spin_lock(interlock);
 			if (atomic_add_int_nv(&kref->kr_count, -1) == 0) {
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+				membar_acquire();
+#endif
 				(*release)(kref);
 				return 1;
 			}
@@ -149,7 +147,7 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 	unsigned int old, new;
 
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 
 	do {
@@ -158,6 +156,9 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 		if (old == 1) {
 			mutex_lock(interlock);
 			if (atomic_add_int_nv(&kref->kr_count, -1) == 0) {
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+				membar_acquire();
+#endif
 				(*release)(kref);
 				return 1;
 			}
