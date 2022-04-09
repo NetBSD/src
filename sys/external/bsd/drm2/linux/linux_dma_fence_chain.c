@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence_chain.c,v 1.3 2021/12/19 12:39:32 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence_chain.c,v 1.4 2022/04/09 23:44:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_chain.c,v 1.3 2021/12/19 12:39:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_chain.c,v 1.4 2022/04/09 23:44:44 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -262,7 +262,7 @@ dma_fence_chain_walk(struct dma_fence *fence)
 				break;
 			splice = NULL;
 		}
-		membar_exit();	/* pairs with dma_fence_get_rcu_safe */
+		membar_release();	/* pairs with dma_fence_get_rcu_safe */
 		if (atomic_cas_ptr(&chain->dfc_prev, prev, splice) == prev)
 			dma_fence_put(prev); /* transferred to splice */
 		else
