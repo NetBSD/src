@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.69 2022/02/27 19:22:20 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.70 2022/04/09 14:09:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,12 +61,14 @@
 #include "opt_gprof.h"
 #endif
 
+#ifdef __ASSEMBLER__
 #define	__BIT(n)	(1 << (n))
 #define	__BITS(hi,lo)	((~((~0)<<((hi)+1)))&((~0)<<(lo)))
 
 #define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
 #define	__SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
 #define	__SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
+#endif	/* __ASSEMBLER__ */
 
 /*
  * Define -pg profile entry code.
