@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.6 2022/04/06 22:47:57 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.7 2022/04/09 12:06:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,22 +33,48 @@
 
 	.text
 
-/* These assume Total Store Order (TSO) */
-
-ENTRY(_membar_producer)
-	retl
-	 nop
+/*
+ * These assume Total Store Order (TSO), which may reorder
+ * store-before-load but nothing else.  Hence, only membar_sync must
+ * issue anything -- namely, membar #StoreLoad.
+ *
+ * If we ran with Partial Store Order (PSO), we would also need to
+ * issue membar #StoreStore for membar_exit (load/store-before-store)
+ * and membar_producer (store-before-store).
+ */
 
 ENTRY(_membar_consumer)
-	membar	#LoadLoad
 	retl
 	 nop
+END(_membar_consumer)
 
-ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
+ENTRY(_membar_sync)
+	/*
+	 * Some SPARC CPUs have errata with MEMBAR in the delay slot of
+	 * a branch, such as the UltraSPARC-IIi:
+	 *
+	 *	`Apparently, the deadlock is most easily caused if the
+	 *	 delay slot of the JMPL is a MEMBAR #Sync, or any
+	 *	 instruction that synchronizes on the load or store
+	 *	 buffers being empty.'
+	 *
+	 *	UltraSPARC-IIi User's Manual, Part No. 805-0087-01, Sun
+	 *	Microsystems, October 1997, Appendix K.2 `Errata
+	 *	Created by UltraSPARC-I', Erratum 51, p. 476.
+	 *	https://www.oracle.com/technetwork/server-storage/sun-sparc-enterprise/documentation/sparc-2i-usersmanual-2516677.pdf#page=518
+	 *
+	 * So let's avoid doing that.
+	 */
+	membar	#StoreLoad
+	retl
+	 nop
+END(_membar_sync)
+
+ATOMIC_OP_ALIAS(membar_producer,_membar_consumer)
+STRONG_ALIAS(_membar_producer,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_enter,_membar_consumer)
 STRONG_ALIAS(_membar_enter,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_exit,_membar_consumer)
 STRONG_ALIAS(_membar_exit,_membar_consumer)
-ATOMIC_OP_ALIAS(membar_sync,_membar_consumer)
-STRONG_ALIAS(_membar_sync,_membar_consumer)
+ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
