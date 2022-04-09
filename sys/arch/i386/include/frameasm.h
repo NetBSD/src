@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.33 2020/05/01 09:40:47 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.34 2022/04/09 12:07:00 riastradh Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -48,11 +48,10 @@
 #define HP_NAME_STAC		2
 #define HP_NAME_NOLOCK		3
 #define HP_NAME_RETFENCE	4
-#define HP_NAME_SSE2_LFENCE	5
-#define HP_NAME_SSE2_MFENCE	6
-#define HP_NAME_CAS_64		7
-#define HP_NAME_SPLLOWER	8
-#define HP_NAME_MUTEX_EXIT	9
+#define HP_NAME_SSE2_MFENCE	5
+#define HP_NAME_CAS_64		6
+#define HP_NAME_SPLLOWER	7
+#define HP_NAME_MUTEX_EXIT	8
 
 #define HOTPATCH(name, size) \
 123:						; \

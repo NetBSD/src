@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.49 2020/05/07 18:13:05 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.50 2022/04/09 12:07:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.49 2020/05/07 18:13:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.50 2022/04/09 12:07:00 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -116,19 +116,6 @@ static const struct x86_hotpatch_descriptor hp_nolock_desc = {
 	.srcs = { &hp_nolock_source }
 };
 __link_set_add_rodata(x86_hotpatch_descriptors, hp_nolock_desc);
-
-/* Use LFENCE if available, part of SSE2. */
-extern uint8_t sse2_lfence, sse2_lfence_end;
-static const struct x86_hotpatch_source hp_sse2_lfence_source = {
-	.saddr = &sse2_lfence,
-	.eaddr = &sse2_lfence_end
-};
-static const struct x86_hotpatch_descriptor hp_sse2_lfence_desc = {
-	.name = HP_NAME_SSE2_LFENCE,
-	.nsrc = 1,
-	.srcs = { &hp_sse2_lfence_source }
-};
-__link_set_add_rodata(x86_hotpatch_descriptors, hp_sse2_lfence_desc);
 
 /* Use MFENCE if available, part of SSE2. */
 extern uint8_t sse2_mfence, sse2_mfence_end;
@@ -342,12 +329,15 @@ x86_patch(bool early)
 
 	if (!early && (cpu_feature[0] & CPUID_SSE2) != 0) {
 		/*
-		 * Faster memory barriers.  We do not need to patch
-		 * membar_producer to use SFENCE because on x86
-		 * ordinary non-temporal stores are always issued in
-		 * program order to main memory and to other CPUs.
+		 * Faster memory barriers.  The only barrier x86 ever
+		 * requires for MI synchronization between CPUs is
+		 * MFENCE for store-before-load ordering; all other
+		 * ordering is guaranteed already -- every load is a
+		 * load-acquire and every store is a store-release.
+		 *
+		 * LFENCE and SFENCE are relevant only for MD logic
+		 * involving I/O devices or non-temporal stores.
 		 */
-		x86_hotpatch(HP_NAME_SSE2_LFENCE, 0);
 		x86_hotpatch(HP_NAME_SSE2_MFENCE, 0);
 	}
 

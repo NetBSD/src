@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.30 2022/04/06 22:47:56 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.31 2022/04/09 12:07:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,12 +46,10 @@
 #include "opt_xen.h"
 #include <machine/frameasm.h>
 #define LOCK			HOTPATCH(HP_NAME_NOLOCK, 1); lock
-#define HOTPATCH_SSE2_LFENCE	HOTPATCH(HP_NAME_SSE2_LFENCE, 7);
 #define HOTPATCH_SSE2_MFENCE	HOTPATCH(HP_NAME_SSE2_MFENCE, 7);
 #define HOTPATCH_CAS_64		HOTPATCH(HP_NAME_CAS_64, 49);
 #else
 #define LOCK			lock
-#define HOTPATCH_SSE2_LFENCE	/* nothing */
 #define HOTPATCH_SSE2_MFENCE	/* nothing */
 #define HOTPATCH_CAS_64		/* nothing */
 #endif
@@ -181,10 +179,11 @@ ENTRY(_atomic_cas_32_ni)
 END(_atomic_cas_32_ni)
 
 ENTRY(_membar_consumer)
-	HOTPATCH_SSE2_LFENCE
-	/* 7 bytes of instructions */
-	LOCK
-	addl	$0, -4(%esp)
+	/*
+	 * Every load from normal memory is a load-acquire on x86, so
+	 * there is never any need for explicit barriers to order
+	 * load-before-anything.
+	 */
 	ret
 END(_membar_consumer)
 
@@ -395,12 +394,6 @@ STRONG_ALIAS(_membar_exit,_membar_producer)
 
 #ifdef _HARDKERNEL
 	.section .rodata
-
-LABEL(sse2_lfence)
-	lfence
-	ret
-	nop; nop; nop;
-LABEL(sse2_lfence_end)
 
 LABEL(sse2_mfence)
 	mfence
