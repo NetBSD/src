@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.142 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.143 2022/04/09 23:45:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.142 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.143 2022/04/09 23:45:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -273,6 +273,8 @@ _vstate_assert(vnode_t *vp, enum vnode_state state, const char *func, int line,
 		/*
 		 * Prevent predictive loads from the CPU, but check the state
 		 * without loooking first.
+		 *
+		 * XXX what does this pair with?
 		 */
 		membar_enter();
 		if (state == VS_ACTIVE && refcnt > 0 &&
