@@ -38,7 +38,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/contrib/ena-com/ena_plat.h 333453 2018-05-10 09:25:51Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.8 2022/04/09 12:49:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.9 2022/04/09 23:44:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,8 +392,8 @@ void prefetch(void *x)
 #define	wmb()		__asm __volatile("dsb st" ::: "memory")
 #define	mb()		__asm __volatile("dsb sy" ::: "memory")
 #else
-#define	rmb()		membar_enter()
-#define	wmb()		membar_exit()
+#define	rmb()		membar_acquire()
+#define	wmb()		membar_release()
 #define	mb()		membar_sync()
 #endif
 
