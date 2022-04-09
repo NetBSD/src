@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.274 2022/04/09 16:02:14 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.275 2022/04/09 21:19:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.274 2022/04/09 16:02:14 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.275 2022/04/09 21:19:52 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1161,24 +1161,24 @@ declarator_1_struct_union(sym_t *dsym)
 	}
 
 	if (dcs->d_ctx == MOU) {
-		o = dcs->d_offset;
-		dcs->d_offset = 0;
+		o = dcs->d_offset_in_bits;
+		dcs->d_offset_in_bits = 0;
 	}
 	if (dsym->s_bitfield) {
 		align(alignment_in_bits(tp), tp->t_flen);
-		dsym->u.s_member.sm_offset_in_bits =
-		    dcs->d_offset - dcs->d_offset % size_in_bits(t);
-		tp->t_foffs =
-		    dcs->d_offset - dsym->u.s_member.sm_offset_in_bits;
-		dcs->d_offset += tp->t_flen;
+		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits -
+		    dcs->d_offset_in_bits % size_in_bits(t);
+		tp->t_foffs = dcs->d_offset_in_bits -
+		    dsym->u.s_member.sm_offset_in_bits;
+		dcs->d_offset_in_bits += tp->t_flen;
 	} else {
 		align(alignment_in_bits(tp), 0);
-		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset;
-		dcs->d_offset += sz;
+		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits;
+		dcs->d_offset_in_bits += sz;
 	}
 	if (dcs->d_ctx == MOU) {
-		if (o > dcs->d_offset)
-			dcs->d_offset = o;
+		if (o > dcs->d_offset_in_bits)
+			dcs->d_offset_in_bits = o;
 	}
 
 	check_function_definition(dsym, false);
@@ -1210,9 +1210,9 @@ align(unsigned int al, unsigned int len)
 	if (al > dcs->d_sou_align_in_bits)
 		dcs->d_sou_align_in_bits = al;
 
-	no = (dcs->d_offset + (al - 1)) & ~(al - 1);
-	if (len == 0 || dcs->d_offset + len > no)
-		dcs->d_offset = no;
+	no = (dcs->d_offset_in_bits + (al - 1)) & ~(al - 1);
+	if (len == 0 || dcs->d_offset_in_bits + len > no)
+		dcs->d_offset_in_bits = no;
 }
 
 /*
@@ -1847,7 +1847,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	if (tp->t_packed)
 		setpackedsize(tp);
 	else
-		sp->sou_size_in_bits = dcs->d_offset;
+		sp->sou_size_in_bits = dcs->d_offset_in_bits;
 
 	if (sp->sou_size_in_bits == 0) {
 		/* zero sized %s is a C99 feature */

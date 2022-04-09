@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.15 2022/04/09 16:02:14 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.16 2022/04/09 21:19:52 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.15 2022/04/09 16:02:14 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.16 2022/04/09 21:19:52 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -325,8 +325,8 @@ debug_dinfo(const dinfo_t *d) // NOLINT(misc-no-recursion)
 	}
 	if (d->d_redeclared_symbol != NULL)
 		debug_sym(" redeclared=(", d->d_redeclared_symbol, ")");
-	if (d->d_offset != 0)
-		debug_printf(" offset=%u", d->d_offset);
+	if (d->d_offset_in_bits != 0)
+		debug_printf(" offset=%u", d->d_offset_in_bits);
 	if (d->d_sou_align_in_bits != 0)
 		debug_printf(" align=%u", (unsigned)d->d_sou_align_in_bits);
 
