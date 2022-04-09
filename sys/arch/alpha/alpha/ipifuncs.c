@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.54 2020/10/10 03:05:04 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.55 2022/04/09 23:42:56 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.54 2020/10/10 03:05:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.55 2022/04/09 23:42:56 riastradh Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -127,10 +127,12 @@ alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
 
 	while ((pending_ipis = atomic_swap_ulong(&ci->ci_ipis, 0)) != 0) {
 		/*
-		 * Ensure the atomic swap is globally visible before
-		 * we do any of the work.
+		 * Ensure everything prior to setting ci_ipis in
+		 * alpha_send_ipi happens-before everything after
+		 * reading ci_ipis here so we're not working on stale
+		 * inputs.
 		 */
-		membar_enter();
+		membar_acquire();
 
 		sc->sc_evcnt_ipi.ev_count++;
 
@@ -159,7 +161,7 @@ alpha_send_ipi(u_long const cpu_id, u_long const ipimask)
 	 * alpha_send_ipi() have completed before informing
 	 * the CPU of the work we are asking it to do.
 	 */
-	membar_exit();
+	membar_release();
 	atomic_or_ulong(&cpu_info[cpu_id]->ci_ipis, ipimask);
 
 	/*
