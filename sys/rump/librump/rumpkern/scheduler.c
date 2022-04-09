@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.52 2020/11/01 20:58:38 christos Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.53 2022/04/09 23:45:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.52 2020/11/01 20:58:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.53 2022/04/09 23:45:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -473,7 +473,7 @@ rump_unschedule_cpu1(struct lwp *l, void *interlock)
 	if (interlock == rcpu->rcpu_mtx)
 		rumpuser_mutex_enter_nowrap(rcpu->rcpu_mtx);
 	else
-		membar_exit();
+		membar_release(); /* XXX what does this pair with? */
 
 	/* Release the CPU. */
 	old = atomic_swap_ptr(&rcpu->rcpu_prevlwp, l);
