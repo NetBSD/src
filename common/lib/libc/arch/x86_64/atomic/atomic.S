@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.26 2022/04/09 12:07:29 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.27 2022/04/09 22:53:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -365,7 +365,7 @@ ALIAS(atomic_cas_ptr_ni,_atomic_cas_64_ni)
 
 ALIAS(membar_consumer,_membar_consumer)
 ALIAS(membar_producer,_membar_producer)
-ALIAS(membar_enter,_membar_consumer)
+ALIAS(membar_enter,_membar_sync)
 ALIAS(membar_exit,_membar_producer)
 ALIAS(membar_sync,_membar_sync)
 
@@ -421,7 +421,7 @@ STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32_ni)
 STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_64_ni)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_64_ni)
 
-STRONG_ALIAS(_membar_enter,_membar_consumer)
+STRONG_ALIAS(_membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_exit,_membar_producer)
 
 #ifdef _HARDKERNEL
