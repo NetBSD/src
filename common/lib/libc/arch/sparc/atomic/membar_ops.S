@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.6 2022/04/09 12:06:39 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.7 2022/04/09 22:53:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 
 /*
  * These assume Total Store Order (TSO), which may reorder
- * store-before-load but nothing else.  Hence, only membar_sync must
- * issue anything -- specifically, an LDSTUB, which (along with SWAP)
- * is the only instruction that implies a sequential consistency
- * barrier.
+ * store-before-load but nothing else.  Hence, only membar_sync (and
+ * its deprecated alias membar_enter) must issue anything --
+ * specifically, an LDSTUB, which (along with SWAP) is the only
+ * instruction that implies a sequential consistency barrier.
  *
  * If we ran with Partial Store Order (PSO), we would also need to
  * issue STBAR for membar_exit (load/store-before-store) and
@@ -66,8 +66,8 @@ END(_membar_sync)
 ATOMIC_OP_ALIAS(membar_producer,_membar_consumer)
 STRONG_ALIAS(_membar_producer,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)
-ATOMIC_OP_ALIAS(membar_enter,_membar_consumer)
-STRONG_ALIAS(_membar_enter,_membar_consumer)
+ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
+STRONG_ALIAS(_membar_enter,_membar_sync)
 ATOMIC_OP_ALIAS(membar_exit,_membar_consumer)
 STRONG_ALIAS(_membar_exit,_membar_consumer)
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
