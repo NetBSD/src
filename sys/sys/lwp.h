@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.213 2022/02/27 01:03:14 gutteridge Exp $	*/
+/*	$NetBSD: lwp.h,v 1.214 2022/04/09 13:38:15 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -88,7 +88,7 @@ struct lwp {
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	struct turnstile *l_ts;		/* l: current turnstile */
 	int		l_stat;		/* l: overall LWP status */
-	int		l__reserved;	/*  : padding - reuse as needed */	
+	int		l__reserved;	/*  : padding - reuse as needed */
 
 	/* Scheduling and overall state. */
 #define	l_startzero l_runq
@@ -272,7 +272,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 
 /*
  * The second set of flags is kept in l_pflag, and they are modified only by
- * the LWP itself, or modified when it's known the LWP cannot be running. 
+ * the LWP itself, or modified when it's known the LWP cannot be running.
  * LP_RUNNING is typically updated with the LWP locked, but not always in
  * the case of soft interrupt handlers.
  */
