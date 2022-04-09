@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.11 2022/04/01 00:16:40 riastradh Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.12 2022/04/09 23:51:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -112,7 +112,7 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.11 2022/04/01 00:16:40 riastradh Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.12 2022/04/09 23:51:57 riastradh Exp $");
 
 #include <crypto/blake2/blake2s.h>
 
@@ -121,7 +121,7 @@ THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.11 2022/04/01 00:16:40 riastradh Exp $");
  */
 #ifdef _KERNEL
 #define	ASSERT KASSERT
-#define	atomic_thread_fence(x) membar_exit() /* only used for release order */
+#define	atomic_thread_fence(x) membar_release() /* only used for release order */
 #define	atomic_compare_exchange_weak_explicit_32(p, e, n, m1, m2) \
     (atomic_cas_32((p), *(e), (n)) == *(e))
 #define	atomic_compare_exchange_weak_explicit_ptr(p, e, n, m1, m2) \
