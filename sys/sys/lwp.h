@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.214 2022/04/09 13:38:15 riastradh Exp $	*/
+/*	$NetBSD: lwp.h,v 1.215 2022/04/09 23:45:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -53,6 +53,7 @@ struct lwp;
 /* forward declare this for <machine/cpu.h> so it can get l_cpu. */
 static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
+#include <sys/atomic.h>
 #ifdef _KERNEL_OPT
 #include "opt_kcov.h"
 #include "opt_kmsan.h"
@@ -407,16 +408,16 @@ void	lwp_whatis(uintptr_t, void (*)(const char *, ...) __printflike(1, 2));
 static __inline void
 lwp_lock(lwp_t *l)
 {
-	kmutex_t *old = l->l_mutex;
+	kmutex_t *old = atomic_load_consume(&l->l_mutex);
 
 	/*
 	 * Note: mutex_spin_enter() will have posted a read barrier.
 	 * Re-test l->l_mutex.  If it has changed, we need to try again.
 	 */
 	mutex_spin_enter(old);
-	while (__predict_false(l->l_mutex != old)) {
+	while (__predict_false(atomic_load_relaxed(&l->l_mutex) != old)) {
 		mutex_spin_exit(old);
-		old = l->l_mutex;
+		old = atomic_load_consume(&l->l_mutex);
 		mutex_spin_enter(old);
 	}
 }

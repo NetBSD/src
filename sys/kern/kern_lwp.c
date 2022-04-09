@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.247 2022/03/10 12:21:25 riastradh Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.248 2022/04/09 23:45:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.247 2022/03/10 12:21:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.248 2022/04/09 23:45:36 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1565,8 +1565,7 @@ lwp_setlock(struct lwp *l, kmutex_t *mtx)
 
 	KASSERT(mutex_owned(oldmtx));
 
-	membar_exit();
-	l->l_mutex = mtx;
+	atomic_store_release(&l->l_mutex, mtx);
 	return oldmtx;
 }
 
@@ -1582,8 +1581,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *mtx)
 	KASSERT(lwp_locked(l, NULL));
 
 	old = l->l_mutex;
-	membar_exit();
-	l->l_mutex = mtx;
+	atomic_store_release(&l->l_mutex, mtx);
 	mutex_spin_exit(old);
 }
 
@@ -1593,9 +1591,9 @@ lwp_trylock(struct lwp *l)
 	kmutex_t *old;
 
 	for (;;) {
-		if (!mutex_tryenter(old = l->l_mutex))
+		if (!mutex_tryenter(old = atomic_load_consume(&l->l_mutex)))
 			return 0;
-		if (__predict_true(l->l_mutex == old))
+		if (__predict_true(atomic_load_relaxed(&l->l_mutex) == old))
 			return 1;
 		mutex_spin_exit(old);
 	}
