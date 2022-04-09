@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.5 2022/04/08 23:48:05 riastradh Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2022/04/09 09:59:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,7 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.5 2022/04/08 23:48:05 riastradh Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2022/04/09 09:59:16 riastradh Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1282,7 +1282,7 @@ udf_get_anchors(void)
 			break;
 	}
 	/* support for track 512 */
-	if (ti.flags & MMC_TRACKINFO_BLANK) 
+	if (ti.flags & MMC_TRACKINFO_BLANK)
 		context.format_flags |= FORMAT_TRACK512;
 
 	assert(!error);
@@ -1743,7 +1743,7 @@ udf_file_mtime(union dscrptr *dscr)
 	assert((tag_id == TAGID_FENTRY) || (tag_id == TAGID_EXTFENTRY));
 	if (tag_id == TAGID_FENTRY)
 		return &dscr->fe.mtime;
-	else 
+	else
 		return &dscr->efe.mtime;
 	;
 }
@@ -2159,7 +2159,7 @@ udf_search_vat(union udf_pmap *mapping, int log_part)
 	undo_opening_session = 0;
 
 	if (!accepted_vat) {
-		if ((context.last_ti.sessionnr > 1) && 
+		if ((context.last_ti.sessionnr > 1) &&
 				ask_noauto(0, "Undo opening of last session")) {
 			undo_opening_session = 1;
 			pwarn("Undoing opening of last session not implemented!\n");
@@ -2385,7 +2385,7 @@ udf_process_vds(void) {
 	struct long_ad fsd_loc;
 	uint8_t *pmap_pos;
 	char *domain_name, *map_name;
-	const char *check_name;	
+	const char *check_name;
 	int pmap_stype, pmap_size;
 	int pmap_type, log_part, phys_part, raw_phys_part; //, maps_on;
 	int n_pm, n_phys, n_virt, n_spar, n_meta;
@@ -2872,7 +2872,7 @@ udf_prepare_writing(void)
 	error = udf_update_trackinfo(&ti);
 	if (error)
 		return error;
-	if (!(ti.flags & MMC_TRACKINFO_BLANK) && 
+	if (!(ti.flags & MMC_TRACKINFO_BLANK) &&
 	     (ti.flags & MMC_TRACKINFO_NWA_VALID)) {
 		/*
 		 * Not closed; translate next_writable to a position relative to our
@@ -4075,7 +4075,7 @@ udf_check_directory_tree(void)
 
 			if (cur_node->fsck_flags & FSCK_NODE_FLAG_DIRECTORY)
 				context.num_directories++;
-			else 
+			else
 				context.num_files += link_count;
 			;
 		}
