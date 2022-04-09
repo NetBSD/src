@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.32 2022/04/09 12:07:17 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.33 2022/04/09 12:07:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -197,6 +197,12 @@ ENTRY(_membar_producer)
 END(_membar_producer)
 
 ENTRY(_membar_sync)
+	/*
+	 * MFENCE, or a serializing instruction like a locked addq,
+	 * is necessary to order store-before-load.  Every other
+	 * ordering -- load-before-anything, anything-before-store --
+	 * is already guaranteed without explicit barriers.
+	 */
 	HOTPATCH_SSE2_MFENCE
 	/* 7 bytes of instructions */
 	LOCK
