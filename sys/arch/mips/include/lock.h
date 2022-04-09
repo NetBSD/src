@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.22 2022/02/12 17:10:02 riastradh Exp $	*/
+/*	$NetBSD: lock.h,v 1.23 2022/04/09 23:43:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 	 * Successful _atomic_cas_uint functions as a load-acquire --
 	 * on MP systems, it issues sync after the LL/SC CAS succeeds;
 	 * on non-MP systems every load is a load-acquire so it's moot.
-	 * This pairs with the membar_exit and store sequence in
+	 * This pairs with the membar_release and store sequence in
 	 * __cpu_simple_unlock that functions as a store-release
 	 * operation.
 	 *
@@ -153,14 +153,14 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lp)
 {
 
 	/*
-	 * The membar_exit and then store functions as a store-release
-	 * operation that pairs with the load-acquire operation in
-	 * successful __cpu_simple_lock_try.
+	 * The membar_release and then store functions as a
+	 * store-release operation that pairs with the load-acquire
+	 * operation in successful __cpu_simple_lock_try.
 	 *
 	 * Can't use atomic_store_release here because that's not
 	 * available in userland at the moment.
 	 */
-	membar_exit();
+	membar_release();
 	*lp = __SIMPLELOCK_UNLOCKED;
 
 #ifdef _MIPS_ARCH_OCTEONP
