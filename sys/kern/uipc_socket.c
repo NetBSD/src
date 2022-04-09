@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.301 2022/03/12 16:06:15 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.302 2022/04/09 23:52:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.301 2022/03/12 16:06:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.302 2022/04/09 23:52:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -539,6 +539,10 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	 * the lock with another socket, e.g. socketpair(2) case.
 	 */
 	if (lockso) {
+		/*
+		 * lockso->so_lock should be stable at this point, so
+		 * no need for atomic_load_*.
+		 */
 		lock = lockso->so_lock;
 		so->so_lock = lock;
 		mutex_obj_hold(lock);
