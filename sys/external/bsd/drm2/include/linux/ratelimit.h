@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimit.h,v 1.5 2021/12/19 11:36:57 riastradh Exp $	*/
+/*	$NetBSD: ratelimit.h,v 1.6 2022/04/09 23:44:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -86,14 +86,13 @@ __ratelimit(struct ratelimit_state *r)
 {
 	int ok;
 
-	if (atomic_cas_uint(&r->rl_lock, 0, 1)) {
+	if (atomic_swap_uint(&r->rl_lock, 1)) {
 		ok = false;
 		goto out;
 	}
-	membar_enter();
+	membar_acquire();
 	ok = ppsratecheck(&r->rl_lasttime, &r->rl_curpps, r->rl_maxpps);
-	membar_exit();
-	r->rl_lock = 0;
+	atomic_store_release(&r->rl_lock, 0);
 
 out:	if (!ok)
 		atomic_store_relaxed(&r->missed, 1);
