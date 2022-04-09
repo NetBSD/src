@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_load.c,v 1.3 2020/09/07 00:52:19 mrg Exp $	*/
+/*	$NetBSD: atomic_load.c,v 1.4 2022/04/09 23:38:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_load.c,v 1.3 2020/09/07 00:52:19 mrg Exp $");
+__RCSID("$NetBSD: atomic_load.c,v 1.4 2022/04/09 23:38:57 riastradh Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -40,9 +40,8 @@ uint ## b ## _t \
 __atomic_load_ ## n(const volatile void *ptr, int memmodel) \
 { \
 	uint## b ##_t val; \
-	membar_enter(); \
 	val = *(const volatile uint ## b ## _t *)ptr; \
-	membar_exit(); \
+	membar_acquire(); \
 	return val; \
 }
 
