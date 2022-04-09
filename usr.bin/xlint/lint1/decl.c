@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.270 2022/04/09 13:22:05 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.271 2022/04/09 13:38:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.270 2022/04/09 13:22:05 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.271 2022/04/09 13:38:17 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1130,7 +1130,8 @@ declarator_1_struct_union(sym_t *dsym)
 		lint_assert(dcs->d_redeclared_symbol->s_scl == MOS ||
 		    dcs->d_redeclared_symbol->s_scl == MOU);
 
-		if (dsym->s_sou_type == dcs->d_redeclared_symbol->s_sou_type) {
+		if (dsym->u.s_sou_type ==
+		    dcs->d_redeclared_symbol->u.s_sou_type) {
 			/* duplicate member name: %s */
 			error(33, dsym->s_name);
 			rmsym(dcs->d_redeclared_symbol);
@@ -1521,7 +1522,7 @@ old_style_function(sym_t *decl, sym_t *args)
 		 */
 		if (args != NULL) {
 			decl->s_osdef = true;
-			decl->s_args = args;
+			decl->u.s_old_style_args = args;
 		}
 	} else {
 		if (args != NULL)
@@ -1545,7 +1546,7 @@ check_function_definition(sym_t *sym, bool msg)
 			error(22);
 		}
 		sym->s_osdef = false;
-		sym->s_args = NULL;
+		sym->u.s_old_style_args = NULL;
 	}
 }
 
@@ -1574,7 +1575,7 @@ declarator_name(sym_t *sym)
 	case MOS:
 	case MOU:
 		/* Set parent */
-		sym->s_sou_type = dcs->d_tagtyp->t_str;
+		sym->u.s_sou_type = dcs->d_tagtyp->t_str;
 		sym->s_def = DEF;
 		sym->s_value.v_tspec = INT;
 		sc = dcs->d_ctx;
@@ -1857,8 +1858,8 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	n = 0;
 	for (mem = fmem; mem != NULL; mem = mem->s_next) {
 		/* bind anonymous members to the structure */
-		if (mem->s_sou_type == NULL) {
-			mem->s_sou_type = sp;
+		if (mem->u.s_sou_type == NULL) {
+			mem->u.s_sou_type = sp;
 			if (mem->s_type->t_bitfield) {
 				sp->sou_size_in_bits += bitfieldsize(&mem);
 				if (mem == NULL)
@@ -1993,8 +1994,9 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 
 		/*
 		 * If the old symbol stems from an old style function
-		 * definition, we have remembered the params in rdsym->s_args
-		 * and compare them with the params of the prototype.
+		 * definition, we have remembered the params in
+		 * rdsym->s_old_style_args and compare them with the params
+		 * of the prototype.
 		 */
 		if (rdsym->s_osdef && dsym->s_type->t_proto) {
 			redec = check_old_style_definition(rdsym, dsym);
@@ -2021,7 +2023,8 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 			 */
 			if (rdsym->s_osdef && !dsym->s_type->t_proto) {
 				dsym->s_osdef = rdsym->s_osdef;
-				dsym->s_args = rdsym->s_args;
+				dsym->u.s_old_style_args =
+				    rdsym->u.s_old_style_args;
 				dsym->s_def_pos = rdsym->s_def_pos;
 			}
 
@@ -2347,7 +2350,7 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 	int	narg, nparg, n;
 	bool	dowarn, msg;
 
-	args = rdsym->s_args;
+	args = rdsym->u.s_old_style_args;
 	pargs = dsym->s_type->t_args;
 
 	msg = false;
@@ -2576,7 +2579,7 @@ check_func_old_style_arguments(void)
 	int narg, nparg;
 	bool msg;
 
-	args = funcsym->s_args;
+	args = funcsym->u.s_old_style_args;
 	pargs = funcsym->s_type->t_args;
 
 	/*
@@ -2627,7 +2630,7 @@ check_func_old_style_arguments(void)
 
 		/* from now on the prototype is valid */
 		funcsym->s_osdef = false;
-		funcsym->s_args = NULL;
+		funcsym->u.s_old_style_args = NULL;
 	}
 }
 
