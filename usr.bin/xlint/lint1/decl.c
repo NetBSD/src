@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.271 2022/04/09 13:38:17 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.272 2022/04/09 14:50:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.271 2022/04/09 13:38:17 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.272 2022/04/09 14:50:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -603,7 +603,7 @@ end_declaration_level(void)
 	switch (di->d_ctx) {
 	case MOS:
 	case MOU:
-	case CTCONST:
+	case ENUM_CONST:
 		/*
 		 * Symbols declared in (nested) structs or enums are
 		 * part of the next level (they are removed from the
@@ -1923,7 +1923,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 		}
 		sym = pushdown(sym);
 	}
-	sym->s_scl = CTCONST;
+	sym->s_scl = ENUM_CONST;
 	sym->s_type = dcs->d_tagtyp;
 	sym->s_value.v_tspec = INT;
 	sym->s_value.v_quad = val;
@@ -2115,7 +2115,8 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 {
 	sym_t	*rsym;
 
-	if ((rsym = dcs->d_redeclared_symbol)->s_scl == CTCONST) {
+	rsym = dcs->d_redeclared_symbol;
+	if (rsym->s_scl == ENUM_CONST) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
@@ -3275,18 +3276,19 @@ check_static_global_variable(const sym_t *sym)
 static void
 check_global_variable(const sym_t *sym)
 {
+	scl_t scl = sym->s_scl;
 
-	if (sym->s_scl == TYPEDEF || sym->s_scl == CTCONST)
+	if (scl == TYPEDEF || scl == BOOL_CONST || scl == ENUM_CONST)
 		return;
 
-	if (sym->s_scl == NOSCL)
+	if (scl == NOSCL)
 		return;		/* May be caused by a syntax error. */
 
-	lint_assert(sym->s_scl == EXTERN || sym->s_scl == STATIC);
+	lint_assert(scl == EXTERN || scl == STATIC);
 
 	check_global_variable_size(sym);
 
-	if (sym->s_scl == STATIC)
+	if (scl == STATIC)
 		check_static_global_variable(sym);
 }
 

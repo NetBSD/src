@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.420 2022/04/09 13:38:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.421 2022/04/09 14:50:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.420 2022/04/09 13:38:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.421 2022/04/09 14:50:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -279,7 +279,7 @@ build_name(sym_t *sym, bool is_funcname)
 
 	n = expr_alloc_tnode();
 	n->tn_type = sym->s_type;
-	if (sym->s_scl == CTCONST) {
+	if (sym->s_scl == BOOL_CONST || sym->s_scl == ENUM_CONST) {
 		n->tn_op = CON;
 		n->tn_val = expr_zero_alloc(sizeof(*n->tn_val));
 		*n->tn_val = sym->s_value;

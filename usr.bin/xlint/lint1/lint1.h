@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.145 2022/04/09 13:38:17 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.146 2022/04/09 14:50:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -203,7 +203,8 @@ typedef enum {
 	ENUM_TAG,
 	MOS,		/* member of struct */
 	MOU,		/* member of union */
-	CTCONST,	/* enumerator, enum constant or bool constant */
+	BOOL_CONST,
+	ENUM_CONST,
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
 	OLD_STYLE_ARG,	/* old-style function argument declarations */
 	PROTO_ARG,	/* used in declaration stack during prototype

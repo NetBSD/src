@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.12 2022/04/09 13:38:17 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.13 2022/04/09 14:50:18 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.12 2022/04/09 13:38:17 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.13 2022/04/09 14:50:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -191,7 +191,8 @@ scl_name(scl_t scl)
 		"enum",
 		"member-of-struct",
 		"member-of-union",
-		"compile-time-constant",
+		"bool-constant",
+		"enum-constant",
 		"abstract",
 		"old-style-function-argument",
 		"prototype-argument",
