@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.130 2022/04/02 20:12:46 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.131 2022/04/09 13:38:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.130 2022/04/02 20:12:46 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.131 2022/04/09 13:38:17 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -248,7 +248,7 @@ funcdef(sym_t *fsym)
 	 * style function definition or only an old style declaration,
 	 * if there are no arguments inside the argument list ("f()").
 	 */
-	if (!fsym->s_type->t_proto && fsym->s_args == NULL)
+	if (!fsym->s_type->t_proto && fsym->u.s_old_style_args == NULL)
 		fsym->s_osdef = true;
 
 	check_type(fsym);

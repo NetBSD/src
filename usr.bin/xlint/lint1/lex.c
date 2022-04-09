@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.115 2022/04/02 14:28:30 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.116 2022/04/09 13:38:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.115 2022/04/02 14:28:30 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.116 2022/04/09 13:38:17 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -395,11 +395,11 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 	sym->s_keyword = kw;
 	sym->s_value.v_quad = kw->kw_token;
 	if (kw->kw_token == T_TYPE || kw->kw_token == T_STRUCT_OR_UNION) {
-		sym->s_tspec = kw->kw_tspec;
+		sym->u.s_tspec = kw->kw_tspec;
 	} else if (kw->kw_token == T_SCLASS) {
 		sym->s_scl = kw->kw_scl;
 	} else if (kw->kw_token == T_QUAL) {
-		sym->s_tqual = kw->kw_tqual;
+		sym->u.s_qualifier = kw->kw_tqual;
 	}
 
 	symtab_add(sym);
@@ -457,9 +457,9 @@ lex_keyword(sym_t *sym)
 	if ((t = (int)sym->s_value.v_quad) == T_SCLASS) {
 		yylval.y_scl = sym->s_scl;
 	} else if (t == T_TYPE || t == T_STRUCT_OR_UNION) {
-		yylval.y_tspec = sym->s_tspec;
+		yylval.y_tspec = sym->u.s_tspec;
 	} else if (t == T_QUAL) {
-		yylval.y_tqual = sym->s_tqual;
+		yylval.y_tqual = sym->u.s_qualifier;
 	}
 	return t;
 }

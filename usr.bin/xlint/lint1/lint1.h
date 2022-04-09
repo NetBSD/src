@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.144 2022/04/02 22:15:57 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.145 2022/04/09 13:38:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -246,11 +246,11 @@ typedef	struct sym {
 	val_t	s_value;	/* value (if enum or bool constant) */
 	union {
 		/* XXX: what is the difference to s_type->t_str? */
-		struct_or_union	*_s_st;
-		tspec_t	_s_tsp;	/* type (only for keywords) */
-		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
-		struct	sym *_s_args; /* arguments in old style function
-					 definitions */
+		struct_or_union	*s_sou_type;
+		tspec_t	s_tspec;	/* type (only for keywords) */
+		tqual_t	s_qualifier;	/* qualifier (only for keywords) */
+		struct	sym *s_old_style_args; /* arguments in old style
+				 	* function definitions */
 	} u;
 	struct	sym *s_symtab_next;	/* next symbol with same hash value */
 	struct	sym **s_symtab_ref;	/* pointer to s_symtab_next of the
@@ -260,11 +260,6 @@ typedef	struct sym {
 	struct	sym *s_level_next;	/* next symbol declared on the same
 					 * level */
 } sym_t;
-
-#define	s_sou_type	u._s_st
-#define	s_tspec	u._s_tsp
-#define	s_tqual	u._s_tqu
-#define	s_args	u._s_args
 
 /*
  * Used to keep some information about symbols before they are entered
