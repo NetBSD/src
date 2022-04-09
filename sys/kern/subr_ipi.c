@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ipi.c,v 1.9 2020/11/27 20:11:33 riastradh Exp $	*/
+/*	$NetBSD: subr_ipi.c,v 1.10 2022/04/09 23:51:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.9 2020/11/27 20:11:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.10 2022/04/09 23:51:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -190,7 +190,7 @@ ipi_mark_pending(u_int ipi_id, struct cpu_info *ci)
 	/* Mark as pending and return true if not previously marked. */
 	if ((atomic_load_acquire(&ci->ci_ipipend[i]) & bitm) == 0) {
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_exit();
+		membar_release();
 #endif
 		atomic_or_32(&ci->ci_ipipend[i], bitm);
 		return true;
@@ -265,7 +265,7 @@ ipi_trigger_broadcast(u_int ipi_id, bool skip_self)
 /*
  * put_msg: insert message into the mailbox.
  *
- * Caller is responsible for issuing membar_exit first.
+ * Caller is responsible for issuing membar_release first.
  */
 static inline void
 put_msg(ipi_mbox_t *mbox, ipi_msg_t *msg)
@@ -304,7 +304,7 @@ ipi_cpu_handler(void)
 		}
 		pending = atomic_swap_32(&ci->ci_ipipend[i], 0);
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_enter();
+		membar_acquire();
 #endif
 		while ((bit = ffs(pending)) != 0) {
 			const u_int ipi_id = (i << IPI_BITW_SHIFT) | --bit;
@@ -342,7 +342,7 @@ ipi_msg_cpu_handler(void *arg __unused)
 
 		/* Ack the request. */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_exit();
+		membar_release();
 #endif
 		atomic_dec_uint(&msg->_pending);
 	}
@@ -365,7 +365,7 @@ ipi_unicast(ipi_msg_t *msg, struct cpu_info *ci)
 
 	msg->_pending = 1;
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 
 	put_msg(&ipi_mboxes[id], msg);
@@ -391,7 +391,7 @@ ipi_multicast(ipi_msg_t *msg, const kcpuset_t *target)
 	local = !!kcpuset_isset(target, cpu_index(self));
 	msg->_pending = kcpuset_countset(target) - local;
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -429,7 +429,7 @@ ipi_broadcast(ipi_msg_t *msg, bool skip_self)
 
 	msg->_pending = ncpu - 1;
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 
 	/* Broadcast IPIs for remote CPUs. */
