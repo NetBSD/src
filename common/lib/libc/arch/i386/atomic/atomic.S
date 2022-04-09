@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.31 2022/04/09 12:07:00 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.32 2022/04/09 12:07:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -188,8 +188,11 @@ ENTRY(_membar_consumer)
 END(_membar_consumer)
 
 ENTRY(_membar_producer)
-	/* A store is enough */
-	movl	$0, -4(%esp)
+	/*
+	 * Every store to normal memory is a store-release on x86, so
+	 * there is never any need for explicit barriers to order
+	 * anything-before-store.
+	 */
 	ret
 END(_membar_producer)
 
