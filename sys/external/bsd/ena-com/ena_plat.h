@@ -38,7 +38,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/contrib/ena-com/ena_plat.h 333453 2018-05-10 09:25:51Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.7 2021/07/19 21:16:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.8 2022/04/09 12:49:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,8 +378,23 @@ void prefetch(void *x)
 
 #include "ena_defs/ena_includes.h"
 
+/*
+ * XXX This is not really right.  Need to adjust the driver to use
+ * bus_space_barrier or bus_dmamap_sync.
+ */
+#if defined(__i386__) || defined(__x86_64__)
+#include <x86/cpufunc.h>
+#define	rmb()		x86_lfence()
+#define	wmb()		x86_sfence()
+#define	mb()		x86_mfence()
+#elif defined(__aarch64__)
+#define	rmb()		__asm __volatile("dsb ld" ::: "memory")
+#define	wmb()		__asm __volatile("dsb st" ::: "memory")
+#define	mb()		__asm __volatile("dsb sy" ::: "memory")
+#else
 #define	rmb()		membar_enter()
 #define	wmb()		membar_exit()
 #define	mb()		membar_sync()
+#endif
 
 #endif /* ENA_PLAT_H_ */
