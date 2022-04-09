@@ -1,9 +1,9 @@
-/* $NetBSD: udf_core.c,v 1.1 2022/04/06 13:29:15 reinoud Exp $ */
+/* $NetBSD: udf_core.c,v 1.2 2022/04/09 09:58:11 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,14 +23,14 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.1 2022/04/06 13:29:15 reinoud Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.2 2022/04/09 09:58:11 riastradh Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -818,7 +818,7 @@ udf_add_app_regid(struct regid *regid)
 }
 
 
-/*       
+/*
  * Timestamp to timespec conversion code is taken with small modifications
  * from FreeBSD /sys/fs/udf by Scott Long <scottl@freebsd.org>
  */
@@ -831,13 +831,13 @@ static int mon_lens[2][12] = {
 
 static int
 udf_isaleapyear(int year)
-{       
+{
 	int i;
-	
+
 	i = (year % 4) ? 0 : 1;
 	i &= (year % 100) ? 1 : 0;
 	i |= (year % 400) ? 0 : 1;
-	
+
 	return i;
 }
 
@@ -861,21 +861,21 @@ udf_timestamp_to_timespec(struct timestamp *timestamp, struct timespec *timespec
 	if ((year < 1970) || (timestamp->month > 12)) {
 		return;
 	}
-	
+
 	/* Calculate the time and day */
 	usecs = timestamp->usec + 100*timestamp->hund_usec + 10000*timestamp->centisec;
 	nsecs = usecs * 1000;
-	secs  = timestamp->second; 
+	secs  = timestamp->second;
 	secs += timestamp->minute * 60;
 	secs += timestamp->hour * 3600;
 	secs += (timestamp->day-1) * 3600 * 24;			/* day : 1-31 */
-	
+
 	/* Calclulate the month */
 	lpyear = udf_isaleapyear(year);
 	for (i = 1; i < timestamp->month; i++)
 		secs += mon_lens[lpyear][i-1] * 3600 * 24;	/* month: 1-12 */
- 
-	for (i = 1970; i < year; i++) { 
+
+	for (i = 1970; i < year; i++) {
 		daysinyear = udf_isaleapyear(i) + 365 ;
 		secs += daysinyear * 3600 * 24;
 	}
@@ -966,7 +966,7 @@ static uint32_t
 unix_mode_to_udf_perm(mode_t mode)
 {
 	uint32_t perm;
-	
+
 	perm  = ((mode & S_IRWXO)     );
 	perm |= ((mode & S_IRWXG) << 2);
 	perm |= ((mode & S_IRWXU) << 4);
@@ -1219,7 +1219,7 @@ udf_create_base_logical_dscr(void)
 }
 
 
-static void 
+static void
 udf_add_logvol_part_physical(uint16_t phys_part)
 {
 	struct logvol_desc *logvol = context.logical_vol;
@@ -1666,7 +1666,7 @@ udf_create_space_bitmap(uint32_t dscr_size, uint32_t part_size_lba,
 
 /* --------------------------------------------------------------------- */
 
-int 
+int
 udf_register_bad_block(uint32_t location)
 {
 	struct udf_sparing_table *spt;
@@ -2810,12 +2810,12 @@ udf_vat_update(uint32_t virt, uint32_t phys)
 
 	if (context.vtop_tp[context.metadata_part] != UDF_VTOP_TYPE_VIRT)
 		return;
- 
+
 	new_size = MAX(context.vat_size,
 		(context.vat_start + (virt+1)*sizeof(uint32_t)));
 
 	if (new_size > context.vat_allocated) {
-		context.vat_allocated = 
+		context.vat_allocated =
 			UDF_ROUNDUP(new_size, context.sector_size);
 		context.vat_contents = realloc(context.vat_contents,
 			context.vat_allocated);
@@ -3015,7 +3015,7 @@ udf_create_VAT(union dscrptr **vat_dscr, struct long_ad *vatdata_loc)
 		*vat_dscr = (union dscrptr *) fe;
 #endif
 	}
-	
+
 	return 0;
 }
 
@@ -3197,7 +3197,7 @@ udf_update_discinfo(void)
 			emul_mmc_profile = 0x01;
 		if (emul_mmc_profile != 0x01) {
 			warnx("format incompatible with disc partition");
-			return EXIT_FAILURE; 
+			return EXIT_FAILURE;
 		}
 
 		/* get our disc info */
@@ -4766,7 +4766,7 @@ udf_do_newfs_prefix(void)
 		return ENOMEM;
 	udf_create_terminator(terminator_dscr, 0);
 
-	/* 
+	/*
 	 * Create the two Volume Descriptor Sets (VDS) each containing the
 	 * following descriptors : primary volume, partition space,
 	 * unallocated space, logical volume, implementation use and the
@@ -4808,7 +4808,7 @@ udf_do_newfs_prefix(void)
 	 * Write out what we've created so far.
 	 *
 	 * Start with wipeout of VRS1 upto start of partition. This allows
-	 * formatting for sequentials with the track reservation and it 
+	 * formatting for sequentials with the track reservation and it
 	 * cleans old rubbish on rewritables. For sequentials without the
 	 * track reservation all is wiped from track start.
 	 */
@@ -4949,7 +4949,7 @@ udf_do_newfs_prefix(void)
 					&context.part_unalloc_bits[metadata_part]);
 			if (error)
 				return error;
-	
+
 			udf_mark_allocated(layout.meta_bitmap, data_part, 1);
 			/* mark space allocated for the unallocated space bitmap */
 			udf_mark_allocated(layout.meta_bitmap_space,
@@ -5068,7 +5068,7 @@ udf_do_newfs_postfix(void)
 		error = udf_write_dscr_virt(dscr, loc, data_part, 1);
 		if (error)
 			return error;
-	
+
 		loc = layout.meta_mirror;
 		dscr = (union dscrptr *) context.meta_mirror;
 		error = udf_write_dscr_virt(dscr, loc, data_part, 1);
