@@ -1,4 +1,4 @@
-/*	$NetBSD: t_seqlock.c,v 1.1 2022/04/08 23:35:52 riastradh Exp $	*/
+/*	$NetBSD: t_seqlock.c,v 1.2 2022/04/10 11:36:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_seqlock.c,v 1.1 2022/04/08 23:35:52 riastradh Exp $");
+__RCSID("$NetBSD: t_seqlock.c,v 1.2 2022/04/10 11:36:32 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -39,7 +39,6 @@ __RCSID("$NetBSD: t_seqlock.c,v 1.1 2022/04/08 23:35:52 riastradh Exp $");
 #include <errno.h>
 #include <inttypes.h>
 #include <pthread.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -63,14 +62,6 @@ volatile struct {
 } __aligned(COHERENCY_UNIT) stats[16];
 
 uint64_t results[2];
-
-static void
-alarm_handler(int signo)
-{
-
-	(void)signo;
-	times_up = 1;
-}
 
 static void *
 writer(void *cookie)
@@ -163,21 +154,22 @@ ATF_TC_BODY(seqlock, tc)
 	size_t ncpulen = sizeof(ncpu);
 	int error;
 
+	alarm(10);
+
 	if (sysctlbyname("hw.ncpu", &ncpu, &ncpulen, NULL, 0) == -1)
 		atf_tc_fail("hw.ncpu: (%d) %s", errno, strerror(errno));
 	assert(ncpulen == sizeof(ncpu));
 	if (ncpu == 1)
 		atf_tc_skip("membar tests are only for multicore systems");
 
-	if (signal(SIGALRM, alarm_handler) == SIG_ERR)
-		err(1, "signal(SIGALRM");
-	alarm(5);
 	for (i = 0; i < 2; i++) {
 		error = pthread_create(&t[i], NULL, start[i],
 		    (void *)(uintptr_t)i);
 		if (error)
 			errc(1, error, "pthread_create");
 	}
+	sleep(5);
+	times_up = 1;
 	for (i = 0; i < 2; i++) {
 		error = pthread_join(t[i], NULL);
 		if (error)
