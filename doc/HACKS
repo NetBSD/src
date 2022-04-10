@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.226 2021/11/23 23:29:55 thorpej Exp $
+# $NetBSD: HACKS,v 1.227 2022/04/10 13:26:47 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1031,3 +1031,15 @@ file	src/tests/lib/libexecinfo/t_sig_backtrace: 1.2
 descr	Unit test fails to pass unless t_sig_backtrace.c is compiled
 	with -fno-omit-frame-pointer and -DNOINLINE_HACK.
 kcah
+
+hack	alpha gcc error in lint
+cdate	2022/04/10 13:21:34
+who	martin
+port	alpha
+file	usr.bin/xlint/Makefile.inc: 1.23
+pr	56789
+descr
+	Compiling lint with -ftrapv fails with an internal
+	gcc compiler error.
+kcah
+
