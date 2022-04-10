@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_queue.h,v 1.5 2009/10/05 23:33:48 rmind Exp $	*/
+/*	$NetBSD: pthread_queue.h,v 1.6 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * Definition of a queue interface for the pthread library.
  * Style modeled on the sys/queue.h macros; implementation taken from
  * the tail queue, with the added property of static initializability
- * (and a corresponding extra cost in the _INSERT_TAIL() function.  
+ * (and a corresponding extra cost in the _INSERT_TAIL() function.
 */
 
 /*
