@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.24 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.25 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.24 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.25 2022/04/10 10:38:33 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -132,10 +132,10 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 
 	/* Get a lock on the allocation list */
 	pthread_mutex_lock(&tsd_mutex);
-	
+
 	/* Find an available slot:
 	 * The condition for an available slot is one with the destructor
-	 * not being NULL. If the desired destructor is NULL we set it to 
+	 * not being NULL. If the desired destructor is NULL we set it to
 	 * our own internal destructor to satisfy the non NULL condition.
 	 */
 	/* 1. Search from "nextkey" to the end of the list. */
@@ -150,7 +150,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 		for (i = 0; i < nextkey; i++)
 			if (pthread__tsd_destructors[i] == NULL)
 				break;
-		
+
 		if (i == nextkey) {
 			/* If we didn't find one here, there isn't one
 			 * to be found.
@@ -229,7 +229,7 @@ pthread_key_delete(pthread_key_t key)
 	 * Date: Thu, 21 Feb 2002 09:06:17 -0500
 	 *	 http://groups.google.com/groups?\
 	 *	 hl=en&selm=u97d8.29%24fL6.200%40news.cpqcorp.net
-	 * 
+	 *
 	 * Given:
 	 *
 	 * 1: Applications are not required to clear keys in all
@@ -328,7 +328,7 @@ pthread__destroy_tsd(pthread_t self)
 		return;
 
 	/* Butenhof, section 5.4.2 (page 167):
-	 * 
+	 *
 	 * ``Also, Pthreads sets the thread-specific data value for a
 	 * key to NULL before calling that key's destructor (passing
 	 * the previous value of the key) when a thread terminates [*].

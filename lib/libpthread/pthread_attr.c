@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.20 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.21 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.20 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.21 2022/04/10 10:38:33 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -113,7 +113,7 @@ pthread_attr_get_np(pthread_t thread, pthread_attr_t *attr)
 	if (p == NULL)
 		return ENOMEM;
 
-	attr->pta_flags = thread->pt_flags & 
+	attr->pta_flags = thread->pt_flags &
 	    (PT_FLAG_DETACHED | PT_FLAG_SCOPE_SYSTEM | PT_FLAG_EXPLICIT_SCHED);
 
 	p->ptap_namearg = thread->pt_name;
@@ -309,7 +309,7 @@ pthread_attr_getschedparam(const pthread_attr_t *attr,
 	p = attr->pta_private;
 	if (p == NULL)
 		memset(param, 0, sizeof(*param));
-	else 
+	else
 		*param = p->ptap_sp;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.18 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.19 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.18 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.19 2022/04/10 10:38:33 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -77,7 +77,7 @@ pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
 }
 
 int
-pthread_setschedparam(pthread_t thread, int policy, 
+pthread_setschedparam(pthread_t thread, int policy,
     const struct sched_param *param)
 {
 	struct sched_param sp;

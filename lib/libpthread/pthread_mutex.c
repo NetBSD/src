@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.82 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.83 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  * attempting to acquire that spinlock will needlessly busy wait.
  *
  * There is no good way to know that the holding thread is no longer
- * running, nor to request a wake-up once it has begun running again. 
+ * running, nor to request a wake-up once it has begun running again.
  * Of more concern, threads in the SCHED_FIFO class do not have a
  * limited time quantum and so could spin forever, preventing the
  * thread holding the spinlock from getting CPU time: it would never
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.82 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.83 2022/04/10 10:38:33 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -262,7 +262,7 @@ pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 			break;
 		if (thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE)
 			break;
-		if (count < 128) 
+		if (count < 128)
 			count += count;
 		for (i = count; i != 0; i--)
 			pthread__mutex_pause();
@@ -608,7 +608,7 @@ pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)
 int
 pthread_mutexattr_getprotocol(const pthread_mutexattr_t *attr, int*proto)
 {
-	
+
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
@@ -616,7 +616,7 @@ pthread_mutexattr_getprotocol(const pthread_mutexattr_t *attr, int*proto)
 	return 0;
 }
 
-int 
+int
 pthread_mutexattr_setprotocol(pthread_mutexattr_t* attr, int proto)
 {
 
@@ -635,10 +635,10 @@ pthread_mutexattr_setprotocol(pthread_mutexattr_t* attr, int proto)
 	}
 }
 
-int 
+int
 pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *attr, int *ceil)
 {
-	
+
 	pthread__error(EINVAL, "Invalid mutex attribute",
 		attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
@@ -646,8 +646,8 @@ pthread_mutexattr_getprioceiling(const pthread_mutexattr_t *attr, int *ceil)
 	return 0;
 }
 
-int 
-pthread_mutexattr_setprioceiling(pthread_mutexattr_t *attr, int ceil) 
+int
+pthread_mutexattr_setprioceiling(pthread_mutexattr_t *attr, int ceil)
 {
 
 	pthread__error(EINVAL, "Invalid mutex attribute",
@@ -733,7 +733,7 @@ pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm,
 }
 
 int
-pthread_mutex_getprioceiling(const pthread_mutex_t *ptm, int *ceil) 
+pthread_mutex_getprioceiling(const pthread_mutex_t *ptm, int *ceil)
 {
 
 	pthread__error(EINVAL, "Invalid mutex",
@@ -744,7 +744,7 @@ pthread_mutex_getprioceiling(const pthread_mutex_t *ptm, int *ceil)
 }
 
 int
-pthread_mutex_setprioceiling(pthread_mutex_t *ptm, int ceil, int *old_ceil) 
+pthread_mutex_setprioceiling(pthread_mutex_t *ptm, int ceil, int *old_ceil)
 {
 	int error;
 

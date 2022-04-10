@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.26 2021/03/10 15:05:11 christos Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.27 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 /*
  * We use the "pthread_spin_t" name internally; "pthread_spinlock_t" is the
- * POSIX spinlock object. 
+ * POSIX spinlock object.
  *
  * C++ expects to be using PTHREAD_FOO_INITIALIZER as a member initializer.
  * This does not work for volatile types.  Since C++ does not touch the guts
@@ -210,7 +210,7 @@ struct	__pthread_spinlock_st {
 	__pthread_spin_t pts_spin;
 	int		pts_flags;
 };
-	
+
 #define	_PT_SPINLOCK_MAGIC	0x77770007
 #define	_PT_SPINLOCK_DEAD	0xDEAD0007
 #define _PT_SPINLOCK_PSHARED	0x00000001

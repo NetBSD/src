@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_spin.c,v 1.9 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.10 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -29,12 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Public (POSIX-specified) spinlocks.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_spin.c,v 1.9 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.10 2022/04/10 10:38:33 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -64,7 +64,7 @@ pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 
 	/*
 	 * We don't actually use the pshared flag for anything;
-	 * CPU simple locks have all the process-shared properties 
+	 * CPU simple locks have all the process-shared properties
 	 * that we want anyway.
 	 */
 	lock->pts_flags = pshared;
