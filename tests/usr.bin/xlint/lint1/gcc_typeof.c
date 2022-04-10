@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_typeof.c,v 1.3 2021/07/25 15:58:24 rillig Exp $	*/
+/*	$NetBSD: gcc_typeof.c,v 1.4 2022/04/10 12:14:10 rillig Exp $	*/
 # 3 "gcc_typeof.c"
 
 /*
@@ -31,3 +31,13 @@ cast(double(*fn)(double))
 	/* identity cast */
 	take_function_double_returning_double((double (*)(double))fn);
 }
+
+/*
+ * Since cgram 1.58 from 2014-02-18, when support for __typeof__ was added,
+ * and before cgram.y 1.394 from 2022-04-10, lint ran into an assertion
+ * failure when encountering a redundant type qualifier 'const' or 'volatile'
+ * in a declaration using __typeof__.  Seen in sys/sys/lwp.h on x86_64, in
+ * the call atomic_load_consume(&l->l_mutex).
+ */
+int *volatile lock;
+const volatile __typeof__(lock) *lock_pointer = &lock;
