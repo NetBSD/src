@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.168 2020/04/02 18:32:31 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.169 2022/04/10 09:50:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.168 2020/04/02 18:32:31 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.169 2022/04/10 09:50:45 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ usage(const char *cp)
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	(void)fprintf(stderr,
-	    "Usage: %s [-%s] cmd [[-<qualifers>] args]\n", getprogname(), opts);
+	    "Usage: %s [-%s] cmd [[-<qualifiers>] args]\n", getprogname(), opts);
 	exit(1);
 	/* NOTREACHED */
 }

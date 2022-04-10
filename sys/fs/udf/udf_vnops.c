@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.122 2022/04/01 08:26:27 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.123 2022/04/10 09:50:46 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.122 2022/04/01 08:26:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.123 2022/04/10 09:50:46 andvar Exp $");
 #endif /* not lint */
 
 
@@ -847,7 +847,7 @@ done:
 out:
 	if (error == 0 && *vpp != dvp)
 		VOP_UNLOCK(*vpp);
-	DPRINTFIF(LOOKUP, error, ("udf_lookup returing error %d\n", error));
+	DPRINTFIF(LOOKUP, error, ("udf_lookup returning error %d\n", error));
 
 	return error;
 }

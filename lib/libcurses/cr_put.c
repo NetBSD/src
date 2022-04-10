@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.38 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.39 2022/04/10 09:50:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.38 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.39 2022/04/10 09:50:44 andvar Exp $");
 #endif
 #endif				/* not lint */
 
@@ -151,7 +151,7 @@ fgoto(int in_refresh)
 			 * essential in some SB's because CRLF mode puts
 			 * garbage in at end of memory), but you must use
 			 * linefeed to scroll since down arrow won't go past
-			 * memory end. I turned this off after recieving Paul
+			 * memory end. I turned this off after receiving Paul
 			 * Eggert's Superbee description which wins better. */
 			if (cursor_down /* && !__tc_xb */ && __pfast)
 				tputs(cursor_down, 0, __cputchar);

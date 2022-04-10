@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.h,v 1.4 2020/12/11 09:40:28 skrll Exp $	*/
+/*	$NetBSD: fdt_port.h,v 1.5 2022/04/10 09:50:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ enum endpoint_type {
 int fdt_ports_register(struct fdt_device_ports *, device_t,
 					int, enum endpoint_type);
 
-/* various methods to retrive an enpoint descriptor */
+/* various methods to retrieve an enpoint descriptor */
 struct fdt_endpoint *fdt_endpoint_get_from_phandle(int);
 struct fdt_endpoint *fdt_endpoint_get_from_index(struct fdt_device_ports *,
 							int, int);

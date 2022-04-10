@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.133 2021/02/03 18:13:13 roy Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.134 2022/04/10 09:50:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,7 +64,7 @@ struct ipflow {
 	struct route ipf_ro;		/* associated route entry */
 	u_long ipf_uses;		/* number of uses in this period */
 	u_long ipf_last_uses;		/* number of uses in last period */
-	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
+	u_long ipf_dropped;		/* ENOBUFS returned by if_output */
 	u_long ipf_errors;		/* other errors returned by if_output */
 	u_int ipf_timer;		/* lifetime timer */
 };

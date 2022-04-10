@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.393 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.394 2022/04/10 09:50:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.393 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.394 2022/04/10 09:50:46 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4361,7 +4361,7 @@ uvm_mapent_forkcopy(struct vm_map *new_map, struct vm_map *old_map,
 	 *    process is sharing the amap with another
 	 *    process.  if we do not clear needs_copy here
 	 *    we will end up in a situation where both the
-	 *    parent and child process are refering to the
+	 *    parent and child process are referring to the
 	 *    same amap with "needs_copy" set.  if the
 	 *    parent write-faults, the fault routine will
 	 *    clear "needs_copy" in the parent by allocating

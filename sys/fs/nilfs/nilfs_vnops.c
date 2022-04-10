@@ -1,4 +1,4 @@
-/*	$NetBSD: nilfs_vnops.c,v 1.45 2021/10/20 03:08:17 thorpej Exp $	*/
+/*	$NetBSD: nilfs_vnops.c,v 1.46 2022/04/10 09:50:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.45 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.46 2022/04/10 09:50:45 andvar Exp $");
 #endif /* not lint */
 
 
@@ -753,7 +753,7 @@ out:
 		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 			    cnp->cn_flags);
 
-	DPRINTFIF(LOOKUP, error, ("nilfs_lookup returing error %d\n", error));
+	DPRINTFIF(LOOKUP, error, ("nilfs_lookup returning error %d\n", error));
 
 	if (error)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.89 2020/12/29 16:02:01 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.90 2022/04/10 09:50:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.89 2020/12/29 16:02:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.90 2022/04/10 09:50:45 andvar Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1365,7 +1365,7 @@ dcmsetischeme(int brd, int flags)
 		    device_xname(sc->sc_dev), perchar, dis->dis_perchar,
 		    dis->dis_intr, dis->dis_char);
 	if ((flags & DIS_RESET) == 0 && perchar == dis->dis_perchar) {
-		printf("%s: dcmsetischeme: redundent request %d\n",
+		printf("%s: dcmsetischeme: redundant request %d\n",
 		    device_xname(sc->sc_dev), perchar);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uart.c,v 1.1 2021/12/07 17:39:55 brad Exp $	*/
+/*	$NetBSD: uart.c,v 1.2 2022/04/10 09:50:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #ifdef __RCSID
-__RCSID("$NetBSD: uart.c,v 1.1 2021/12/07 17:39:55 brad Exp $");
+__RCSID("$NetBSD: uart.c,v 1.2 2022/04/10 09:50:47 andvar Exp $");
 #endif
 
 /* Functions that know how to talk to a SCMD using the uart tty
@@ -132,7 +132,7 @@ uart_get_response(int fd, bool debug, char *obuf, int len)
 			return EINVAL;
 		while (c != '>') {
 			if (debug)
-				fprintf(stderr,"uart_get_reponse: draining: %d -%c-\n",i,c);
+				fprintf(stderr,"uart_get_response: draining: %d -%c-\n",i,c);
 			i = read(fd,&c,1);
 			if (i == -1)
 				return EINVAL;

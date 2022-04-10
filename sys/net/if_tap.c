@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.126 2022/03/31 19:30:17 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.127 2022/04/10 09:50:46 andvar Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.126 2022/03/31 19:30:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.127 2022/04/10 09:50:46 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -555,7 +555,7 @@ tap_init(struct ifnet *ifp)
 
 /*
  * _stop() is called when an interface goes down.  It is our
- * responsability to validate that state by clearing the
+ * responsibility to validate that state by clearing the
  * IFF_RUNNING flag.
  *
  * We have to wake up all the sleeping processes to have the pending

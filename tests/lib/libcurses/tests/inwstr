@@ -5,7 +5,7 @@ call OK refresh
 call OK move 0 73
 call2 OK $WSTR inwstr
 
-# this one fails (non-spacing character should also be recieved)
+# this one fails (non-spacing character should also be received)
 # wchar WSTR2 [0x3401, 0x300]
 # call OK mvaddwstr 2 78 $WSTR2
 # call OK refresh

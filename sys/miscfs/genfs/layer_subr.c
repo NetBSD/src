@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.38 2020/04/13 19:23:19 ad Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.39 2022/04/10 09:50:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.38 2020/04/13 19:23:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.39 2022/04/10 09:50:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ layerfs_done(void)
 }
 
 /*
- * layer_node_create: try to find an existing layerfs vnode refering to it,
+ * layer_node_create: try to find an existing layerfs vnode referring to it,
  * otherwise make a new vnode which contains a reference to the lower vnode.
  */
 int

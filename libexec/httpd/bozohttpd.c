@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.139 2022/03/14 05:58:36 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.140 2022/04/10 09:50:44 andvar Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -75,7 +75,7 @@
  *
  *	- 3.5/3.6: content/transfer codings.  probably can ignore
  *	  this?  we "SHOULD"n't.  but 4.4 says we should ignore a
- *	  `content-length' header upon reciept of a `transfer-encoding'
+ *	  `content-length' header upon receipt of a `transfer-encoding'
  *	  header.
  *
  *	- 5.1.1: request methods.  only MUST support GET and HEAD,
