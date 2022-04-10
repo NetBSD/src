@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.227 2022/04/10 13:26:47 martin Exp $
+# $NetBSD: HACKS,v 1.228 2022/04/10 19:54:57 rillig Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1041,5 +1041,6 @@ pr	56789
 descr
 	Compiling lint with -ftrapv fails with an internal
 	gcc compiler error.
-kcah
 
+	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105209
+kcah
