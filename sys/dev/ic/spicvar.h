@@ -1,4 +1,4 @@
-/*	$NetBSD: spicvar.h,v 1.8 2016/06/27 07:37:54 pgoyette Exp $ */
+/*	$NetBSD: spicvar.h,v 1.9 2022/04/10 09:50:45 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  *
  * The general way of talking to the SPIC was gleaned from the Linux and
  * FreeBSD drivers.  The hex numbers were taken from these drivers (they
- * come from reverese engineering.)
+ * come from reverse engineering.)
  *
  * TODO:
  *   Make it handle more models.

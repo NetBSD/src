@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.167 2022/03/08 18:30:43 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.168 2022/04/10 09:50:46 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.167 2022/03/08 18:30:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.168 2022/04/10 09:50:46 andvar Exp $");
 #endif /* not lint */
 
 
@@ -5921,7 +5921,7 @@ udf_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	/* initialise genfs */
 	genfs_node_init(vp, &udf_genfsops);
 
-	/* get parent's unique ID for refering '..' if its a directory */
+	/* get parent's unique ID for referring '..' if its a directory */
 	if (dir_node->fe) {
 		parent_unique_id = udf_rw64(dir_node->fe->unique_id);
 		parent_gid       = (gid_t) udf_rw32(dir_node->fe->gid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.36 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: icp.c,v 1.37 2022/04/10 09:50:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.36 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.37 2022/04/10 09:50:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 */
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_IOCTL, ICP_BOARD_INFO,
 	    ICP_INVALID_CHANNEL, sizeof(struct icp_binfo))) {
-		aprint_error_dev(icp->icp_dv, "unable to retrive board info\n");
+		aprint_error_dev(icp->icp_dv, "unable to retrieve board info\n");
 		goto bail_out;
 	}
 	memcpy(&binfo, icp->icp_scr, sizeof(binfo));

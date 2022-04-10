@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.84 2019/11/01 04:23:21 knakahara Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.85 2022/04/10 09:50:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.84 2019/11/01 04:23:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.85 2022/04/10 09:50:46 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -616,7 +616,7 @@ noneed:
 	 * bypass this call because of the explicit call done above
 	 * (necessary to deal with IP_DF handling for IPv4).
 	 *
-	 * NB: m & sav are ``passed to caller'' who's reponsible for
+	 * NB: m & sav are ``passed to caller'' who's responsible for
 	 *     for reclaiming their resources.
 	 */
 	if (sav->tdb_xform->xf_type != XF_IP4) {
