@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.35 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.36 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.35 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.36 2022/04/10 10:38:33 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -143,7 +143,7 @@ const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
  * Prevent this routine from being inlined.  The common case is no
  * contention and it's better to not burden the instruction decoder.
  */
-static void 
+static void
 pthread__spinlock_slow(pthread_spin_t *lock)
 {
 	pthread_t self;

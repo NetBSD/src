@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.41 2022/02/12 14:59:32 riastradh Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.42 2022/04/10 10:38:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.41 2022/02/12 14:59:32 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.42 2022/04/10 10:38:33 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -160,7 +160,7 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	TESTCANCEL(self);
 	retval = _sys_accept(s, addr, addrlen);
 	TESTCANCEL(self);
-	
+
 	return retval;
 }
 
@@ -205,7 +205,7 @@ clock_nanosleep(clockid_t clock_id, int flags,
 	TESTCANCEL(self);
 	retval = _sys_clock_nanosleep(clock_id, flags, rqtp, rmtp);
 	TESTCANCEL(self);
-	
+
 	return retval;
 }
 
@@ -219,7 +219,7 @@ close(int d)
 	TESTCANCEL(self);
 	retval = _sys_close(d);
 	TESTCANCEL(self);
-	
+
 	return retval;
 }
 
@@ -233,7 +233,7 @@ connect(int s, const struct sockaddr *addr, socklen_t namelen)
 	TESTCANCEL(self);
 	retval = _sys_connect(s, addr, namelen);
 	TESTCANCEL(self);
-	
+
 	return retval;
 }
 
@@ -264,7 +264,7 @@ fdatasync(int d)
 	TESTCANCEL(self);
 	retval = _sys_fdatasync(d);
 	TESTCANCEL(self);
-	
+
 	return retval;
 }
 
@@ -278,7 +278,7 @@ fsync(int d)
 	TESTCANCEL(self);
 	retval = _sys_fsync(d);
 	TESTCANCEL(self);
-	
+
 	return retval;
 }
 
@@ -492,7 +492,7 @@ pread(int d, void *buf, size_t nbytes, off_t offset)
 }
 
 int
-__pselect50(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, 
+__pselect50(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     const struct timespec *timeout, const sigset_t *sigmask)
 {
 	int retval;
@@ -594,7 +594,7 @@ recvmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
 }
 
 int
-__select50(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, 
+__select50(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     struct timeval *timeout)
 {
 	int retval;
