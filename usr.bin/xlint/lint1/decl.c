@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.276 2022/04/09 23:41:22 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.277 2022/04/10 12:14:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.276 2022/04/09 23:41:22 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.277 2022/04/10 12:14:10 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -815,12 +815,13 @@ end_type(void)
 
 	dcs_adjust_storage_class();
 
-	if (dcs->d_const && dcs->d_type->t_const) {
+	if (dcs->d_const && dcs->d_type->t_const && !dcs->d_type->t_typeof) {
 		lint_assert(dcs->d_type->t_typedef);
 		/* typedef already qualified with '%s' */
 		warning(68, "const");
 	}
-	if (dcs->d_volatile && dcs->d_type->t_volatile) {
+	if (dcs->d_volatile && dcs->d_type->t_volatile &&
+	    !dcs->d_type->t_typeof) {
 		lint_assert(dcs->d_type->t_typedef);
 		/* typedef already qualified with '%s' */
 		warning(68, "volatile");
