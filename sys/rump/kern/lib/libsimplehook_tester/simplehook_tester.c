@@ -1,4 +1,4 @@
-/*	$NetBSD: simplehook_tester.c,v 1.1 2021/09/30 02:00:20 yamaguchi Exp $	*/
+/*	$NetBSD: simplehook_tester.c,v 1.2 2022/04/10 09:50:46 andvar Exp $	*/
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplehook_tester.c,v 1.1 2021/09/30 02:00:20 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplehook_tester.c,v 1.2 2022/04/10 09:50:46 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -239,7 +239,7 @@ simplehook_tester_hook(void *xth)
 	th->th_count++;
 
 	if (th->th_disestablish && th->th_hook != NULL) {
-		HK_DPRINTF(("[%s, %d]: disestablish runing hook%zu\n",
+		HK_DPRINTF(("[%s, %d]: disestablish running hook%zu\n",
 		    __func__, __LINE__, th->th_idx));
 		simplehook_disestablish(ctx->ctx_hooks,
 		    th->th_hook, &ctx->ctx_mutex);

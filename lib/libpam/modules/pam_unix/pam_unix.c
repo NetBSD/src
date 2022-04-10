@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.17 2018/05/16 13:55:39 joerg Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.18 2022/04/10 09:50:44 andvar Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.17 2018/05/16 13:55:39 joerg Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.18 2022/04/10 09:50:44 andvar Exp $");
 #endif
 
 
@@ -271,7 +271,7 @@ yp_set_password(pam_handle_t *pamh, struct passwd *opwd,
 	if ((rpcport = getrpcport(master, YPPASSWDPROG,
 				  YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
 		pam_error(pamh,
-		    "Master NIS server not runing yppasswd daemon.\n\t"
+		    "Master NIS server not running yppasswd daemon.\n\t"
 		    "Can't change NIS password.");
 		return (PAM_SERVICE_ERR);
 	}

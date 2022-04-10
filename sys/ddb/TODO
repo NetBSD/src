@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.18 2020/12/19 23:32:36 mrg Exp $
+$NetBSD: TODO,v 1.19 2022/04/10 09:50:45 andvar Exp $
 
 In rough order.
 
@@ -46,7 +46,7 @@ done	Numbers starting with [a-f] should work, but symbols
 
 10.	macros ("macro", "dmacro", "show macro"). from Mach.
 
-11.	!! command repitition (mostly unnecessary, just for consistency).
+11.	!! command repetition (mostly unnecessary, just for consistency).
 	from Mach.
 
 12.	"continue" should honor _count as a number of breakpoints to ignore,

@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.35 2021/10/26 10:07:20 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.36 2022/04/10 09:50:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.35 2021/10/26 10:07:20 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.36 2022/04/10 09:50:44 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,7 +349,7 @@ ungrabstackstr(char *s, char *p)
  *
  * Remaining args are pointers to strings - sufficient space to hold
  * the concat of the strings is allocated on the stack, the strings
- * are copied into that space, and a pointer to its start is retured.
+ * are copied into that space, and a pointer to its start is returned.
  * The arg list is terminated with STSTRC_END.
  *
  * Use stunalloc(string) (in proper sequence) to release the string

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.24 2022/04/04 06:12:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.25 2022/04/10 09:50:46 andvar Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.24 2022/04/04 06:12:27 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.25 2022/04/10 09:50:46 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -507,8 +507,8 @@ lacp_attach(struct lagg_softc *sc, struct lagg_proto_softc **lscp)
 	    "%s-lacp", sc->sc_if.if_xname);
 	lacp_evcnt_attach(lsc, &lsc->lsc_mgethdr_failed, "MGETHDR failed");
 	lacp_evcnt_attach(lsc, &lsc->lsc_mpullup_failed, "m_pullup failed");
-	lacp_evcnt_attach(lsc, &lsc->lsc_badlacpdu, "Bad LACPDU recieved");
-	lacp_evcnt_attach(lsc, &lsc->lsc_badmarkerdu, "Bad MarkerDU recieved");
+	lacp_evcnt_attach(lsc, &lsc->lsc_badlacpdu, "Bad LACPDU received");
+	lacp_evcnt_attach(lsc, &lsc->lsc_badmarkerdu, "Bad MarkerDU received");
 	lacp_evcnt_attach(lsc, &lsc->lsc_norcvif, "No received interface");
 	lacp_evcnt_attach(lsc, &lsc->lsc_nolaggport, "No lagg context");
 	lacp_evcnt_attach(lsc, &lsc->lsc_duq_nospc, "No space left on queues");

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.23 2021/08/03 23:12:14 andvar Exp $ */
+/* $NetBSD: locore.S,v 1.24 2022/04/10 09:50:45 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -357,7 +357,7 @@ ENTRY_NP(cpu_exception_handler)
 
 	bltz	a3, intr_handler	// MSB is set if interrupt
 
-	// stval is only relavent for non-interrupts
+	// stval is only relevant for non-interrupts
 	csrr	a4, stval		// get stval
 	REG_S	a4, TF_TVAL(sp)
 
