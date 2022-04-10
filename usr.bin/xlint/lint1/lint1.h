@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.150 2022/04/09 23:41:22 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.151 2022/04/10 12:14:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -143,6 +143,7 @@ struct lint1_type {
 	bool	t_proto:1;	/* function prototype (t_args valid) */
 	bool	t_vararg:1;	/* prototype with '...' */
 	bool	t_typedef:1;	/* type defined with typedef */
+	bool	t_typeof:1;	/* type defined with GCC's __typeof__ */
 	bool	t_bitfield:1;
 	/*
 	 * Either the type is currently an enum (having t_tspec ENUM), or
