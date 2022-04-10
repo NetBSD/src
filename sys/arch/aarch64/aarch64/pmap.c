@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133 2022/04/09 23:38:31 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.134 2022/04/10 10:01:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2022/04/09 23:38:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2022/04/10 10:01:15 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1992,7 +1992,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	idx = l3pte_index(va);
 	ptep = &l3[idx];	/* as PTE */
 	opte = *ptep;
-	need_sync_icache = (prot & VM_PROT_EXECUTE);
+	need_sync_icache = (prot & VM_PROT_EXECUTE) && !efirt_p;
 
 	/* for lock ordering for old page and new page */
 	pps[0] = pp;
