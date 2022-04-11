@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.89 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.90 2022/04/11 21:23:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.89 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.90 2022/04/11 21:23:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ struct fd_types {
 /*
  * This is set only once at attach time. The value is determined by reading
  * the configuration switches and is one of the FLP_TYPE_*'s. 
- * This is simular to the way Atari handles the _FLP cookie.
+ * This is similar to the way Atari handles the _FLP cookie.
  */
 static short	def_type = 0;		/* Reflects config-switches	*/
 
