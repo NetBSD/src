@@ -1,4 +1,4 @@
-/*	$NetBSD: service.c,v 1.3 2015/03/31 09:25:41 plunky Exp $	*/
+/*	$NetBSD: service.c,v 1.4 2022/04/11 20:57:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: service.c,v 1.3 2015/03/31 09:25:41 plunky Exp $");
+__RCSID("$NetBSD: service.c,v 1.4 2022/04/11 20:57:37 andvar Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -418,7 +418,7 @@ service_search_attribute_request(server_t *srv, int fd)
 /*
  * validate ServiceSearchPattern
  *
- * The SerivceSearchPattern is a list of data elements, where each element
+ * The ServiceSearchPattern is a list of data elements, where each element
  * is a UUID. The list must contain at least one UUID and the maximum number
  * of UUIDs is 12
  */
