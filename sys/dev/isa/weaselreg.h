@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselreg.h,v 1.7 2007/12/25 18:33:40 perry Exp $	*/
+/*	$NetBSD: weaselreg.h,v 1.8 2022/04/11 20:57:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -137,7 +137,7 @@ struct weasel_config_block {
  *		}
  *	}
  *
- * To serivce the watchdog when armed:
+ * To service the watchdog when armed:
  *
  *	tmp = WDT_SEMPAPHORE;
  *	WDT_SEMAPHORE ~= tmp;
