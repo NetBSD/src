@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.100 2018/03/15 02:25:31 ginsbach Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.101 2022/04/11 20:57:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.100 2018/03/15 02:25:31 ginsbach Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.101 2022/04/11 20:57:37 andvar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1728,7 +1728,7 @@ main(int argc, char *argv[])
 	 * for encoding and are *not* dispatched via the sunrpc
 	 * libraries.
 	 *
-	 * The ypbind serivce *is* dispatched via the sunrpc libraries.
+	 * The ypbind service *is* dispatched via the sunrpc libraries.
 	 * svc_getreqset() does whatever internal muck and ultimately
 	 * ypbind service calls arrive at ypbindprog_2().
 	 */
