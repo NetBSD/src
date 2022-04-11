@@ -1,4 +1,4 @@
-/*	$NetBSD: uart.c,v 1.2 2022/04/10 09:50:47 andvar Exp $	*/
+/*	$NetBSD: uart.c,v 1.3 2022/04/11 21:23:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #ifdef __RCSID
-__RCSID("$NetBSD: uart.c,v 1.2 2022/04/10 09:50:47 andvar Exp $");
+__RCSID("$NetBSD: uart.c,v 1.3 2022/04/11 21:23:07 andvar Exp $");
 #endif
 
 /* Functions that know how to talk to a SCMD using the uart tty
@@ -321,7 +321,7 @@ uart_local_read_register(int fd, bool debug, uint8_t reg, uint8_t reg_end, uint8
 }
 
 /* When speaking to a SCMD device in any uart mode the view port for
- * chained slave modules has to be handled in userland.  This is simular
+ * chained slave modules has to be handled in userland.  This is similar
  * to what the scmd(4) kernel driver ends up doing, but is much slower.
  */
 static int
