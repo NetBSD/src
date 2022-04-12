@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.33 2021/12/08 20:50:01 andvar Exp $	*/
+/*	$NetBSD: attributes.c,v 1.34 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.33 2021/12/08 20:50:01 andvar Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.34 2022/04/12 07:03:04 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -460,6 +460,6 @@ __wcolor_set(WINDOW *win, attr_t attr)
 	/* If another color pair is set, turn that off first. */
 	win->wattr &= ~__COLOR;
 	/* If can do color video, set the color pair bits. */
-	if (t_max_colors(t) != 0 && attr & __COLOR)
+	if (t_max_colors(t) != 0)
 		win->wattr |= attr & __COLOR;
 }

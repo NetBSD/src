@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.34 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: erase.c,v 1.35 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.34 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: erase.c,v 1.35 2022/04/12 07:03:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -70,11 +70,8 @@ werase(WINDOW *win)
 	attr_t	battr;
 
 	__CTRACE(__CTRACE_ERASE, "werase: (%p)\n", win);
-#ifdef HAVE_WCHAR
-	bch = (wchar_t)btowc((int)win->bch);
-#else
+
 	bch = win->bch;
-#endif
 	if (win != curscr)
 		battr = win->battr & __ATTRIBUTES;
 	else
@@ -101,7 +98,7 @@ werase(WINDOW *win)
 	 * Mark the whole window as changed in case we have overlapping
 	 * windows - this will result in the (intended) clearing of the
 	 * screen over the area covered by the window. */
-	__touchwin(win);
+	__touchwin(win, 0);
 	wmove(win, 0, 0);
 	return OK;
 }

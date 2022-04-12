@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.22 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.23 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.22 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: border.c,v 1.23 2022/04/12 07:03:04 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -154,7 +154,7 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 		lp[endx].ch = (wchar_t) botright & __CHARTEXT;
 		lp[endx].attr = (attr_t) botright & __ATTRIBUTES;
 	}
-	__touchwin(win);
+	__touchwin(win, 0);
 	return OK;
 #else /* HAVE_WCHAR */
 	cchar_t ls, rs, ts, bs, tl, tr, bl, br;
@@ -331,7 +331,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		for (j = cw; win->alines[i]->line[j].wcols < 0; j++) {
 			__CTRACE(__CTRACE_INPUT,
 			    "wborder_set: clean out partial char[%d]", j);
-			win->alines[i]->line[j].ch = ( wchar_t )btowc(win->bch);
+			win->alines[i]->line[j].ch = win->bch;
 			if (_cursesi_copy_nsp(win->bnsp,
 					      &win->alines[i]->line[j]) == ERR)
 				return ERR;
@@ -377,8 +377,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 			    endx - cw + pcw, endx - cw);
 			k = pcw < 0 ? endx -cw + pcw : endx - cw;
 			for (j = endx - cw; j >= k; j--) {
-				win->alines[i]->line[j].ch
-					= (wchar_t)btowc(win->bch);
+				win->alines[i]->line[j].ch = win->bch;
 				if (_cursesi_copy_nsp(win->bnsp,
 					       &win->alines[i]->line[j]) == ERR)
 					return ERR;
@@ -435,8 +434,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 	}
 	while (i <= endx - trcw) {
-		win->alines[0]->line[i].ch =
-			(wchar_t)btowc((int) win->bch);
+		win->alines[0]->line[i].ch = win->bch;
 		if (_cursesi_copy_nsp(win->bnsp,
 				      &win->alines[0]->line[i]) == ERR)
 			return ERR;
@@ -476,7 +474,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 	}
 	while (i <= endx - brcw) {
-		win->alines[endy]->line[i].ch = (wchar_t)btowc((int) win->bch );
+		win->alines[endy]->line[i].ch = win->bch;
 		if (_cursesi_copy_nsp(win->bnsp,
 				      &win->alines[endy]->line[i]) == ERR)
 			return ERR;
@@ -603,7 +601,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 				    endx - brcw + 1 - i;
 		}
 	}
-	__touchwin(win);
+	__touchwin(win, 0);
 	return OK;
 #endif /* HAVE_WCHAR */
 }

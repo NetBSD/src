@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.33 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.34 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.33 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.34 2022/04/12 07:03:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -187,15 +187,20 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 	return OK;
 }
 
+/*
+ * Touch all the lines in a window.  If force is set to 1 then screen
+ * update optimisation will disabled to force the change out.
+ */
 int
-__touchwin(WINDOW *win)
+__touchwin(WINDOW *win, int force)
 {
 	int	 y, maxy;
 
 	__CTRACE(__CTRACE_LINE, "__touchwin: (%p)\n", win);
 	maxy = win->maxy;
 	for (y = 0; y < maxy; y++)
-		__touchline(win, y, 0, (int) win->maxx - 1);
+		_cursesi_touchline_force(win, y, 0, (int) win->maxx - 1,
+		    force);
 	return OK;
 }
 
@@ -241,7 +246,7 @@ wsyncup(WINDOW *win)
 {
 
 	do {
-		__touchwin(win);
+		__touchwin(win, 0);
 		win = win->orig;
 	} while (win);
 }
@@ -253,7 +258,7 @@ wsyncdown(WINDOW *win)
 
 	while (w) {
 		if (is_wintouched(w)) {
-			__touchwin(win);
+			__touchwin(win, 0);
 			break;
 		}
 		w = w->orig;
