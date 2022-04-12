@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.74 2021/09/11 20:28:06 andvar Exp $ */
+/* $NetBSD: ispvar.h,v 1.75 2022/04/12 20:51:42 andvar Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -395,9 +395,9 @@ typedef struct {
  * index to put it into the Database, but that's just an optimization. We mark
  * the entry VALID and make sure that the target index is updated and correct.
  *
- * When we get done searching the local loop, we then search similarily for
+ * When we get done searching the local loop, we then search similarly for
  * a list of devices we've gotten from the fabric name controller (if we're
- * on a fabric). VALID marking is also done similarily.
+ * on a fabric). VALID marking is also done similarly.
  *
  * When all of this is done, we can march through the database and clean up
  * any entry that is still PROBATIONAL (these represent devices which have
