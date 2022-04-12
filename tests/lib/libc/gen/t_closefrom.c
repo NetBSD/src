@@ -1,4 +1,4 @@
-/* $NetBSD: t_closefrom.c,v 1.4 2011/05/11 08:11:36 jruoho Exp $ */
+/* $NetBSD: t_closefrom.c,v 1.5 2022/04/12 21:05:37 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_closefrom.c,v 1.4 2011/05/11 08:11:36 jruoho Exp $");
+__RCSID("$NetBSD: t_closefrom.c,v 1.5 2022/04/12 21:05:37 andvar Exp $");
 
 #include <sys/wait.h>
 
@@ -155,7 +155,7 @@ ATF_TC_BODY(closefrom_one, tc)
 	(void)wait(&sta);
 
 	/*
-	 * STDIN_FILENO sould still be open; WEXITSTATUS(1) == 0.
+	 * STDIN_FILENO should still be open; WEXITSTATUS(1) == 0.
 	 */
 	if (WIFEXITED(sta) == 0 || WEXITSTATUS(sta) != 0)
 		atf_tc_fail("not all descriptors were closed");

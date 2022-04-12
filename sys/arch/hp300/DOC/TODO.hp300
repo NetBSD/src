@@ -1,4 +1,4 @@
-$NetBSD: TODO.hp300,v 1.2 1994/10/26 07:22:59 cgd Exp $
+$NetBSD: TODO.hp300,v 1.3 2022/04/12 21:05:37 andvar Exp $
 
 1. Create and use an interrupt stack.
    Well actually, use the master SP for kernel stacks instead of
@@ -55,7 +55,7 @@ $NetBSD: TODO.hp300,v 1.2 1994/10/26 07:22:59 cgd Exp $
    statistics/profiling timer.  Should be able to compile-time (runtime?)
    select between the two.
 
-7. Conditional MMU code sould be restructured.
+7. Conditional MMU code should be restructured.
    Right now it reflects the evolutionary path of the code: 320/350 MMU
    was supported and PMMU support was glued on.  The latter can be ifdef'ed
    out when not needed, but not all of the former (e.g. ``mmutype'' tests).

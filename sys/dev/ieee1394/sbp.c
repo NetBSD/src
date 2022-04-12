@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.41 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: sbp.c,v 1.42 2022/04/12 21:05:37 andvar Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.41 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.42 2022/04/12 21:05:37 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -672,7 +672,7 @@ sbp_alloc_lun(struct sbp_target *target)
 
 	sc = target->sbp;
 	crom_init_context(&cc, target->fwdev->csrrom);
-	/* XXX shoud parse appropriate unit directories only */
+	/* XXX should parse appropriate unit directories only */
 	maxlun = -1;
 	while (cc.depth >= 0) {
 		reg = crom_search_key(&cc, CROM_LUN);

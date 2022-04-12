@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.13 2022/04/09 23:38:32 riastradh Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.14 2022/04/12 21:05:37 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -403,7 +403,7 @@ mvxpsec_attach(device_t parent, device_t self, void *aux)
 	MVXPSEC_WRITE(sc, MV_TDMA_ERR_MASK, MVXPSEC_DEFAULT_ERR);
 	sc->sc_done_ih =
 	    marvell_intr_establish(mva->mva_irq, IPL_NET, mvxpsec_intr, sc);
-	/* XXX: sould pass error IRQ using mva */
+	/* XXX: should pass error IRQ using mva */
 	sc->sc_error_ih = marvell_intr_establish(MVXPSEC_ERR_INT(sc),
 	    IPL_NET, mvxpsec_eintr, sc);
 	aprint_normal_dev(self,
