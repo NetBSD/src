@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $	*/
+/*	$NetBSD: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $
+ * $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $ */
+/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -294,7 +294,7 @@ void   zcfree(voidpf opaque, voidpf ptr);
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $ */
+/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +656,7 @@ void _tr_stored_type_only(deflate_state *);
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $ */
+/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
 
 /* #include "deflate.h" */
 
@@ -1999,7 +1999,7 @@ local block_state deflate_slow(deflate_state *s, int flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $ */
+/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -3986,7 +3986,7 @@ local const uInt border[] = { /* Order of the bit length code lengths */
       end-of-block.  Note however that the static length tree defines
       288 codes just to fill out the Huffman codes.  Codes 286 and 287
       cannot be used though, since there is no length base or extra bits
-      defined for them.  Similarily, there are up to 30 distance codes.
+      defined for them.  Similarly, there are up to 30 distance codes.
       However, static trees define 32 codes (all 5 bits) to fill out the
       Huffman codes, but the last two had better not show up in the data.
    7. Unzip can check dynamic Huffman blocks for complete code sets.
@@ -5813,7 +5813,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.37 2019/07/11 03:49:51 msaitoh Exp $ */
+/* @(#) $Id: zlib.c,v 1.38 2022/04/12 20:51:42 andvar Exp $ */
 
 /* #include "zlib.h" */
 
