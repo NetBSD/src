@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.119 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.120 2022/04/12 21:54:16 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.119 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.120 2022/04/12 21:54:16 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1297,8 +1297,8 @@ makech(int wy)
 #ifdef HAVE_WCHAR
 						if (_cursesi_copy_nsp(blank.nsp, csp) == ERR)
 							return ERR;
-#endif /* HAVE_WCHAR */
 						csp->wcols = blank.wcols;
+#endif /* HAVE_WCHAR */
 						assert(csp != &blank);
 						csp++;
 					}
