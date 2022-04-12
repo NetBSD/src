@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.933 2022/03/07 09:45:02 mrg Exp $
+# $NetBSD: shl.mi,v 1.934 2022/04/12 07:03:29 blymn Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -279,7 +279,7 @@
 ./usr/lib/libctf.so.3.0				base-sys-shlib		compatfile,ctf
 ./usr/lib/libcurses.so				base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.9			base-sys-shlib		compatfile
-./usr/lib/libcurses.so.9.0			base-sys-shlib		compatfile
+./usr/lib/libcurses.so.9.1			base-sys-shlib		compatfile
 ./usr/lib/libdes.so				base-crypto-shlib	compatfile
 ./usr/lib/libdes.so.12				base-crypto-shlib	compatfile,openssl=10
 ./usr/lib/libdes.so.12.0				base-crypto-shlib	compatfile,openssl=10
