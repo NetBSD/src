@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.10 2021/09/06 07:03:49 rin Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.11 2022/04/12 07:03:04 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.10 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.11 2022/04/12 07:03:04 blymn Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -167,7 +167,7 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 		return ERR;
 	if (killwchar(&kc) == ERR)
 		return ERR;
-	sc[0] = (wchar_t)btowc( ' ' );
+	sc[0] = win->bch;
 	sc[1] = L'\0';
 	setcchar(&cc, sc, win->wattr, 0, NULL);
 	oldx = win->curx;

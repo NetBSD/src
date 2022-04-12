@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.11 2022/01/25 03:05:06 blymn Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.12 2022/04/12 07:03:04 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.11 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.12 2022/04/12 07:03:04 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -170,7 +170,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 		if (wcwidth(chp->vals[0])) {
 			/* clear the partial character before cursor */
 			for (tp = lp + cw; tp < lp; tp++) {
-				tp->ch = (wchar_t) btowc((int) win->bch);
+				tp->ch = win->bch;
 				if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 					return ERR;
 				tp->attr = win->battr;
@@ -205,8 +205,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 			if (cw > win->maxx - ex) {
 				/* clear to EOL */
 				while (ex < win->maxx) {
-					lp->ch = (wchar_t)
-						btowc((int) win->bch);
+					lp->ch = win->bch;
 					if (_cursesi_copy_nsp(win->bnsp, lp)
 					    == ERR)
 						return ERR;

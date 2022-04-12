@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.61 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.62 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.61 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.62 2022/04/12 07:03:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -448,7 +448,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 			    "_cursesi_addwchar: clear current char (%d,%d)\n",
 			    *y, sx);
 			tp = &win->alines[*y]->line[sx];
-			tp->ch = (wchar_t) btowc((int) win->bch);
+			tp->ch = win->bch;
 			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 				return ERR;
 
@@ -481,7 +481,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		if (newx < *(*lnp)->firstchp)
 			*(*lnp)->firstchp = newx;
 		for (tp = lp; *x < win->maxx; tp++, (*x)++) {
-			tp->ch = (wchar_t) btowc((int) win->bch);
+			tp->ch = win->bch;
 			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 				return ERR;
 			tp->attr = win->battr;
@@ -595,7 +595,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 				    "_cursesi_addwchar: clear "
 				    "remaining of current char (%d,%d)nn",
 				    *y, ex);
-				tp->ch = (wchar_t) btowc((int) win->bch);
+				tp->ch = win->bch;
 				if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 					return ERR;
 				tp->attr = win->battr;

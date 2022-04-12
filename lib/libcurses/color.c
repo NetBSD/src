@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.45 2021/12/17 03:50:18 uwe Exp $	*/
+/*	$NetBSD: color.c,v 1.46 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.45 2021/12/17 03:50:18 uwe Exp $");
+__RCSID("$NetBSD: color.c,v 1.46 2022/04/12 07:03:04 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: color.c,v 1.45 2021/12/17 03:50:18 uwe Exp $");
 
 /* Have we initialised colours? */
 int	__using_color = 0;
+int	__do_color_init = 0; /* force refresh to init color in all cells */
 
 /* Default colour number */
 attr_t	__default_color = 0;
@@ -110,7 +111,11 @@ start_color(void)
 			COLOR_PAIRS = (max_pairs > MAX_PAIRS - 1 ?
 			    MAX_PAIRS - 1 : max_pairs);
 			 /* Use the last colour pair for curses default. */
+#ifdef __OLD_DEFAULT_COLOR
 			__default_color = COLOR_PAIR(MAX_PAIRS - 1);
+#else
+			__default_color = COLOR_PAIR(0);
+#endif
 		}
 	}
 	if (!COLORS)
@@ -235,6 +240,7 @@ start_color(void)
 	    __default_pair.flags;
 
 	__using_color = 1;
+	__do_color_init = 1;
 
 	/* Set all positions on all windows to curses default colours. */
 	for (wlp = _cursesi_screen->winlistp; wlp != NULL; wlp = wlp->nextp) {
@@ -243,12 +249,13 @@ start_color(void)
 			/* Set color attribute on other windows */
 			win->battr |= __default_color;
 			for (y = 0; y < win->maxy; y++) {
+				win->alines[y]->flags |= __ISFORCED;
 				for (x = 0; x < win->maxx; x++) {
 					win->alines[y]->line[x].attr &= ~__COLOR;
 					win->alines[y]->line[x].attr |= __default_color;
 				}
 			}
-			__touchwin(win);
+			__touchwin(win, 0);
 		}
 	}
 
@@ -528,7 +535,8 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 {
 	short	pair;
 
-	if ((curscr->wattr & __COLOR) == (attr & __COLOR))
+	if ((__do_color_init != 1) &&
+	    ((curscr->wattr & __COLOR) == (attr & __COLOR)))
 		return;
 
 	pair = PAIR_NUMBER((uint32_t)attr);
