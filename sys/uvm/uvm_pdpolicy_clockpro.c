@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.26 2020/05/17 19:38:17 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.27 2022/04/12 20:27:56 andvar Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.26 2020/05/17 19:38:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.27 2022/04/12 20:27:56 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -648,7 +648,7 @@ clockpro_movereferencebit(struct vm_page *pg, bool locked)
 	KASSERT(!locked || uvm_page_owner_locked_p(pg, false));
 	if (!locked) {
 		/*
-		 * acquire interlock to stablize page identity.
+		 * acquire interlock to stabilize page identity.
 		 * if we have caught the page in a state of flux
 		 * and it should be dequeued, abort.  it will be
 		 * dequeued later.
@@ -1354,7 +1354,7 @@ uvmpdpol_selectvictim(kmutex_t **plock)
 		}
 		ss->ss_nscanned++;
 		/*
-		 * acquire interlock to stablize page identity.
+		 * acquire interlock to stabilize page identity.
 		 * if we have caught the page in a state of flux
 		 * and it should be dequeued, do it now and then
 		 * move on to the next.

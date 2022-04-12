@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.39 2020/06/11 22:21:05 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.40 2022/04/12 20:27:56 andvar Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.39 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.40 2022/04/12 20:27:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -261,7 +261,7 @@ uvmpdpol_selectvictim(krwlock_t **plock)
 		uvmexp.pdscans++;
 
 		/*
-		 * acquire interlock to stablize page identity.
+		 * acquire interlock to stabilize page identity.
 		 * if we have caught the page in a state of flux
 		 * deal with it and retry.
 		 */
@@ -383,7 +383,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 		KASSERT((p->flags & PG_MARKER) == 0);
 
 		/*
-		 * acquire interlock to stablize page identity.
+		 * acquire interlock to stabilize page identity.
 		 * if we have caught the page in a state of flux
 		 * deal with it and retry.
 		 */
