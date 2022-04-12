@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.33 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.34 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.33 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.34 2022/04/12 07:03:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -68,11 +68,7 @@ wclrtoeol(WINDOW *win)
 	wchar_t bch;
 	attr_t	battr;
 
-#ifdef HAVE_WCHAR
-	bch = (wchar_t)btowc((int)win->bch);
-#else
 	bch = win->bch;
-#endif
 	if (win != curscr)
 		battr = win->battr & __ATTRIBUTES;
 	else

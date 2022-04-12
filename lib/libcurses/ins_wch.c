@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.18 2022/01/25 03:05:06 blymn Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.19 2022/04/12 07:03:04 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.18 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.19 2022/04/12 07:03:04 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -164,7 +164,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 				}
 				temp1->nsp = NULL;
 			}
-			temp1->ch = (wchar_t)btowc((int)win->bch );
+			temp1->ch = win->bch;
 			if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
 				return ERR;
 			temp1->attr = win->battr;

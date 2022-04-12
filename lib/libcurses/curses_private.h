@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.77 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.78 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -404,7 +404,7 @@ void	 __swflags(WINDOW *);
 void	 __sync(WINDOW *);
 int	 __timeout(int);
 int	 __touchline(WINDOW *, int, int, int);
-int	 __touchwin(WINDOW *);
+int	 __touchwin(WINDOW *, int);
 int	 __unripoffline(int (*)(WINDOW *, int));
 void	 __unsetattr(int);
 void	 __unset_color(WINDOW *win);

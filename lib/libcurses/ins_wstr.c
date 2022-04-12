@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.22 2022/01/25 03:05:06 blymn Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.23 2022/04/12 07:03:04 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.22 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.23 2022/04/12 07:03:04 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -317,7 +317,7 @@ loopdone:
 				    win->maxx + pcw, win->maxx - 1);
 				temp2 += pcw;
 				while (temp1 > temp2 + width) {
-					temp1->ch = (wchar_t)btowc((int) win->bch);
+					temp1->ch = win->bch;
 					if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR) {
 						free(lstr);
 						return ERR;

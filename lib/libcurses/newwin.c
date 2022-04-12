@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.65 2022/03/26 16:03:02 uwe Exp $	*/
+/*	$NetBSD: newwin.c,v 1.66 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.65 2022/03/26 16:03:02 uwe Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.66 2022/04/12 07:03:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -142,7 +142,12 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad,
 	if ((win = __makenew(screen, maxy, maxx, by, bx, 0, ispad)) == NULL)
 		return NULL;
 
+#ifdef HAVE_WCHAR
+	win->bch = (wchar_t) btowc((int) ' ');
+#else
 	win->bch = ' ';
+#endif
+
 	if (__using_color)
 		win->battr |= __default_color;
 	win->nextp = win;
@@ -161,10 +166,8 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad,
 			lp->flags = 0;
 		for (sp = lp->line, j = 0; j < maxx; j++, sp++) {
 			sp->attr = 0;
-#ifndef HAVE_WCHAR
 			sp->ch = win->bch;
-#else
-			sp->ch = (wchar_t)btowc((int) win->bch);
+#ifdef HAVE_WCHAR
 			sp->nsp = NULL;
 			sp->wcols = 1;
 #endif /* HAVE_WCHAR */

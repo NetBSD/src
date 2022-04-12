@@ -1,7 +1,7 @@
-#	$NetBSD: shlib_version,v 1.46 2021/09/06 15:17:25 rin Exp $
+#	$NetBSD: shlib_version,v 1.47 2022/04/12 07:03:04 blymn Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #	Remember to increment the major numbers of libform, libmenu and
 #	libpanel when the libcurses major number increments.
 #
 major=9
-minor=0
+minor=1

@@ -1,4 +1,4 @@
-/*	$NetBSD: delch.c,v 1.27 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: delch.c,v 1.28 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delch.c,v 1.27 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: delch.c,v 1.28 2022/04/12 07:03:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -134,7 +134,7 @@ wdelch(WINDOW *win)
 		}
 	}
 	while (temp1 <= end) {
-		temp1->ch = ( wchar_t )btowc((int) win->bch);
+		temp1->ch = win->bch;
 		temp1->attr = 0;
 		if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
 			return ERR;

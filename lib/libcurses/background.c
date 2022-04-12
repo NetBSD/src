@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.28 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.29 2022/04/12 07:03:04 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.28 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.29 2022/04/12 07:03:04 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -110,7 +110,7 @@ wbkgd(WINDOW *win, chtype ch)
 #endif
 		}
 	}
-	__touchwin(win);
+	__touchwin(win, 1);
 	return OK;
 }
 
@@ -230,7 +230,7 @@ wbkgrnd(WINDOW *win, const cchar_t *wch)
 		return ERR;
 
 	wbkgrndset(win, wch);
-	__touchwin(win);
+	__touchwin(win, 1);
 	return OK;
 }
 
