@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.89 2021/09/11 21:30:46 andvar Exp $ */
+/*  $NetBSD: ops.c,v 1.90 2022/04/12 21:05:36 andvar Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2367,7 +2367,7 @@ perfuse_node_rmdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 		return ENOENT;
 
 	/*
-	 * Attempt to rmdir dir/.. shoud raise ENOTEMPTY
+	 * Attempt to rmdir dir/.. should raise ENOTEMPTY
 	 */
 	if (PERFUSE_NODE_DATA(targ)->pnd_nodeid == pnd->pnd_parent_nodeid)
 		return ENOTEMPTY;
