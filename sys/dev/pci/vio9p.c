@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.5 2022/03/31 19:30:16 pgoyette Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.6 2022/04/13 13:50:37 uwe Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.5 2022/03/31 19:30:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.6 2022/04/13 13:50:37 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,11 +60,17 @@ __KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.5 2022/03/31 19:30:16 pgoyette Exp $");
 #define DLOG(fmt, args...) __nothing
 #endif
 
+/* Device-specific feature bits */
+#define VIO9P_F_MOUNT_TAG	(UINT64_C(1) << 0) /* mount tag specified */
+
 /* Configuration registers */
 #define VIO9P_CONFIG_TAG_LEN	0 /* 16bit */
 #define VIO9P_CONFIG_TAG	2
 
-#define VIO9P_FLAG_BITS		VIRTIO_COMMON_FLAG_BITS
+#define VIO9P_FLAG_BITS				\
+	VIRTIO_COMMON_FLAG_BITS			\
+	"b\x00" "MOUNT_TAG\0"
+
 
 // Must be the same as P9P_DEFREQLEN of usr.sbin/puffs/mount_9p/ninepuffs.h
 #define VIO9P_MAX_REQLEN	(16 * 1024)
