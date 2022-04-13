@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.212 2021/11/14 15:48:02 skrll Exp $
+#	$NetBSD: Makefile,v 1.213 2022/04/13 17:52:56 jkoshy Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -58,6 +58,7 @@ TOOLCHAIN_BITS+= dbsym mdsetimage
 
 DTRACE_BITS=
 .if ${MKDTRACE} != "no" || ${MKCTF} != "no"
+DTRACE_BITS+= .WAIT elftoolchain
 DTRACE_BITS+= .WAIT libelf
 DTRACE_BITS+= .WAIT libdwarf
 DTRACE_BITS+= .WAIT libctf
