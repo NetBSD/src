@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.29 2021/01/20 19:46:48 reinoud Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.30 2022/04/13 10:42:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.29 2021/01/20 19:46:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.30 2022/04/13 10:42:12 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,18 +76,18 @@ __KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.29 2021/01/20 19:46:48 reinoud Exp $
 */
 #define	VIRTIO_BLK_MIN_SEGMENTS	2
 
-#define VIRTIO_BLK_FLAG_BITS \
-	VIRTIO_COMMON_FLAG_BITS \
-	"\x0c""CONFIG_WCE" \
-	"\x0b""TOPOLOGY" \
-	"\x0a""FLUSH" \
-	"\x08""SCSI" \
-	"\x07""BLK_SIZE" \
-	"\x06""RO" \
-	"\x05""GEOMETRY" \
-	"\x03""SEG_MAX" \
-	"\x02""SIZE_MAX" \
-	"\x01""BARRIER"
+#define VIRTIO_BLK_FLAG_BITS			\
+	VIRTIO_COMMON_FLAG_BITS			\
+	"b\x0b" "CONFIG_WCE\0"			\
+	"b\x0a" "TOPOLOGY\0"			\
+	"b\x09" "FLUSH\0"			\
+	"b\x07" "SCSI\0"			\
+	"b\x06" "BLK_SIZE\0"			\
+	"b\x05" "RO\0"				\
+	"b\x04" "GEOMETRY\0"			\
+	"b\x02" "SEG_MAX\0"			\
+	"b\x01" "SIZE_MAX\0"			\
+	"b\x00" "BARRIER\0"
 
 /* Command */
 #define VIRTIO_BLK_T_IN		0
