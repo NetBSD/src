@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.8 2022/04/13 10:42:12 uwe Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.9 2022/04/13 10:50:28 uwe Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -101,7 +101,7 @@
 /* common device/guest features */
 #define VIRTIO_COMMON_FLAG_BITS			\
         "\177\020"				\
-	"b\x20" "V1\0"	/*XXX*/			\
+	"b\x20" "V1\0"				\
 	"b\x1e" "BAD_FEATURE\0"			\
 	"b\x1d" "EVENT_IDX\0"			\
 	"b\x1c" "INDIRECT_DESC\0"		\
