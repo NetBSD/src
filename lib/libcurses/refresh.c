@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.120 2022/04/12 21:54:16 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.121 2022/04/13 19:17:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.120 2022/04/12 21:54:16 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.121 2022/04/13 19:17:09 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1256,7 +1256,7 @@ makech(int wy)
 				else
 					clsp = 0;
 				__CTRACE(__CTRACE_REFRESH,
-				    "makech: clsp = %zu, nlsp = %zu, strlen(ce) = %ld\n",
+				    "makech: clsp = %zu, nlsp = %zu, strlen(ce) = %zu\n",
 				    clsp, nlsp, strlen(ce));
 				__CTRACE(__CTRACE_REFRESH,
 				    "makech: line = %p, cep = %p, begx = %u\n",
