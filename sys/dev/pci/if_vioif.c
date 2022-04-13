@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.78 2022/04/13 02:28:01 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.79 2022/04/13 10:42:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.78 2022/04/13 02:28:01 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.79 2022/04/13 10:42:12 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -101,29 +101,29 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.78 2022/04/13 02:28:01 yamaguchi Exp 
 #define VIRTIO_NET_F_MQ			__BIT(22)
 #define VIRTIO_NET_F_CTRL_MAC_ADDR 	__BIT(23)
 
-#define VIRTIO_NET_FLAG_BITS \
-	VIRTIO_COMMON_FLAG_BITS \
-	"\x18""CTRL_MAC" \
-	"\x17""MQ" \
-	"\x16""GUEST_ANNOUNCE" \
-	"\x15""CTRL_RX_EXTRA" \
-	"\x14""CTRL_VLAN" \
-	"\x13""CTRL_RX" \
-	"\x12""CTRL_VQ" \
-	"\x11""STATUS" \
-	"\x10""MRG_RXBUF" \
-	"\x0f""HOST_UFO" \
-	"\x0e""HOST_ECN" \
-	"\x0d""HOST_TSO6" \
-	"\x0c""HOST_TSO4" \
-	"\x0b""GUEST_UFO" \
-	"\x0a""GUEST_ECN" \
-	"\x09""GUEST_TSO6" \
-	"\x08""GUEST_TSO4" \
-	"\x07""GSO" \
-	"\x06""MAC" \
-	"\x02""GUEST_CSUM" \
-	"\x01""CSUM"
+#define VIRTIO_NET_FLAG_BITS			\
+	VIRTIO_COMMON_FLAG_BITS			\
+	"b\x17" "CTRL_MAC\0"			\
+	"b\x16" "MQ\0"				\
+	"b\x15" "GUEST_ANNOUNCE\0"		\
+	"b\x14" "CTRL_RX_EXTRA\0"		\
+	"b\x13" "CTRL_VLAN\0"			\
+	"b\x12" "CTRL_RX\0"			\
+	"b\x11" "CTRL_VQ\0"			\
+	"b\x10" "STATUS\0"			\
+	"b\x0f" "MRG_RXBUF\0"			\
+	"b\x0e" "HOST_UFO\0"			\
+	"b\x0d" "HOST_ECN\0"			\
+	"b\x0c" "HOST_TSO6\0"			\
+	"b\x0b" "HOST_TSO4\0"			\
+	"b\x0a" "GUEST_UFO\0"			\
+	"b\x09" "GUEST_ECN\0"			\
+	"b\x08" "GUEST_TSO6\0"			\
+	"b\x07" "GUEST_TSO4\0"			\
+	"b\x06" "GSO\0"				\
+	"b\x05" "MAC\0"				\
+	"b\x01" "GUEST_CSUM\0"			\
+	"b\x00" "CSUM\0"
 
 /* Status */
 #define VIRTIO_NET_S_LINK_UP	1

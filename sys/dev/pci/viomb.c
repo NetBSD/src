@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.12 2021/01/20 19:46:48 reinoud Exp $	*/
+/*	$NetBSD: viomb.c,v 1.13 2022/04/13 10:42:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.12 2021/01/20 19:46:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.13 2022/04/13 10:42:12 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.12 2021/01/20 19:46:48 reinoud Exp $");
 #define VIRTIO_BALLOON_F_MUST_TELL_HOST (1<<0)
 #define VIRTIO_BALLOON_F_STATS_VQ	(1<<1)
 
-#define VIRTIO_BALLOON_FLAG_BITS \
-	VIRTIO_COMMON_FLAG_BITS \
-	"\x02""STATS_VQ" \
-	"\x01""MUST_TELL_HOST"
+#define VIRTIO_BALLOON_FLAG_BITS		\
+	VIRTIO_COMMON_FLAG_BITS			\
+	"b\x01" "STATS_VQ\0"			\
+	"b\x00" "MUST_TELL_HOST\0"
 
 #define PGS_PER_REQ		(256) /* 1MB, 4KB/page */
 #define VQ_INFLATE	0
