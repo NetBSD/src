@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.9 2022/04/13 10:50:28 uwe Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.10 2022/04/13 10:56:11 uwe Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -83,7 +83,7 @@
 #define  VIRTIO_F_RING_INDIRECT_DESC		(1<<28)
 #define  VIRTIO_F_RING_EVENT_IDX		(1<<29)
 #define  VIRTIO_F_BAD_FEATURE			(1<<30)
-#define  VIRTIO_F_VERSION_1			(1ULL<<32)
+#define  VIRTIO_F_VERSION_1			(UINT64_C(1) << 32)
 
 /* common device status flags */
 #define  VIRTIO_CONFIG_DEVICE_STATUS_RESET		  0
