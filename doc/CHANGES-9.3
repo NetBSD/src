@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.82 2022/03/15 18:02:12 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.83 2022/04/13 03:39:58 snj Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1528,4 +1528,10 @@ sys/dev/ata/ata.c				1.167
 
 	PR 56745: avoid an unaccounted extra ATA channel freeze.
 	[perseant, ticket #1435]
+
+distrib/amd64/ramdisks/common/Makefile.ramdisk	1.16
+distrib/amd64/ramdisks/common/list.ramdisk	1.22
+
+	Add missing EFI bootloaders to the install kernel ramdisk.
+	[martin, ticket #1436]
 
