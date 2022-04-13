@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.21 2018/10/01 17:50:08 martin Exp $
+#	$NetBSD: list.ramdisk,v 1.21.2.1 2022/04/13 03:39:23 snj Exp $
 
 SRCDIRS	external/bsd/less/bin
 SRCDIRS	bin sbin usr.bin usr.sbin libexec
@@ -81,6 +81,8 @@ COPY	${DESTDIR}/usr/mdec/bootxx_ffsv1	usr/mdec/bootxx_ffsv1
 COPY	${DESTDIR}/usr/mdec/bootxx_ffsv2	usr/mdec/bootxx_ffsv2
 COPY	${DESTDIR}/usr/mdec/bootxx_lfsv2	usr/mdec/bootxx_lfsv2
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
+COPY	${DESTDIR}/usr/mdec/bootia32.efi	usr/mdec/bootia32.efi
+COPY	${DESTDIR}/usr/mdec/bootx64.efi		usr/mdec/bootx64.efi
 COPY	${DESTDIR}/usr/mdec/mbr_ext		usr/mdec/mbr_ext
 COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
 COPY	${DESTDIR}/usr/mdec/gptmbr.bin		usr/mdec/gptmbr.bin

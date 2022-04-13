@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.14 2019/01/27 04:22:46 dholland Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.14.2.1 2022/04/13 03:39:23 snj Exp $
 
 NOSANITIZER=	# defined
 
@@ -28,6 +28,8 @@ IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		${DESTDIR}/usr/mdec/mbr_ext \
 		${DESTDIR}/usr/mdec/mbr_bootsel \
 		${DESTDIR}/usr/mdec/gptmbr.bin \
+		${DESTDIR}/usr/mdec/bootia32.efi \
+		${DESTDIR}/usr/mdec/bootx64.efi \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services
