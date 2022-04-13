@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.6 2022/04/13 13:50:37 uwe Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.7 2022/04/13 15:08:52 uwe Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.6 2022/04/13 13:50:37 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.7 2022/04/13 15:08:52 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,11 +497,12 @@ vio9p_attach(device_t parent, device_t self, void *aux)
 
 	virtio_child_attach_start(vsc, self, IPL_VM, NULL,
 	    NULL, virtio_vq_intr,
-	    VIRTIO_F_INTR_MPSAFE | VIRTIO_F_INTR_SOFTINT, 0,
+	    VIRTIO_F_INTR_MPSAFE | VIRTIO_F_INTR_SOFTINT,
+	    VIO9P_F_MOUNT_TAG,
 	    VIO9P_FLAG_BITS);
 
 	features = virtio_features(vsc);
-	if (features == 0)
+	if ((features & VIO9P_F_MOUNT_TAG) == 0)
 		goto err_none;
 
 	error = virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, VIO9P_MAX_REQLEN,
