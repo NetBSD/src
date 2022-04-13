@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.118 2022/04/09 23:41:22 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.119 2022/04/13 22:20:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.118 2022/04/09 23:41:22 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.119 2022/04/13 22:20:42 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1448,7 +1448,7 @@ sym_t *
 mktempsym(type_t *tp)
 {
 	static unsigned n = 0;
-	char *s = level_zero_alloc(block_level, 64);
+	char *s = level_zero_alloc((size_t)block_level, 64);
 	sym_t *sym = block_zero_alloc(sizeof(*sym));
 	scl_t scl;
 
