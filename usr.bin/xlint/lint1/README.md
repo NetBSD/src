@@ -1,8 +1,8 @@
-[//]: # ($NetBSD: README.md,v 1.1 2022/04/10 00:42:29 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.2 2022/04/13 22:58:18 rillig Exp $)
 
 # Introduction
 
-To learn how a specific message is triggered, read the corresponding unit 
+To learn how a specific message is triggered, read the corresponding unit
 test in `tests/usr.bin/xlint/lint1/msg_???.c`.
 
 # Features
@@ -36,7 +36,7 @@ Each node has a type (`type_t`) and a few other properties.
 The basic types are `int`, `_Bool`, `unsigned long`, and so on.
 A basic type is created by `gettyp(INT)`.
 Derived types are created by `block_derive_pointer`,
-`block_derive_array` and `block_derive_function`. 
+`block_derive_array` and `block_derive_function`.
 (See [below](#memory-management) for the meaning of the prefix `block_`.)
 
 After a type has been created, it should not be modified anymore.
@@ -46,7 +46,7 @@ it needs to be copied using `block_dup_type` or `expr_dup_type`.
 
 ## tnode_t
 
-When lint parses an expressions, 
+When lint parses an expressions,
 it builds a tree of nodes representing the AST.
 Each node has an operator, which defines which other members may be accessed.
 The operators and their properties are defined in `ops.def`.
@@ -86,7 +86,7 @@ See `expr_free_all`.
 # Null pointers
 
 * Expressions can be null.
-  * This typically happens in case of syntax errors or other errors.
+    * This typically happens in case of syntax errors or other errors.
 * The subtype of a pointer, array or function is never null.
 
 # Common variable names
@@ -111,13 +111,28 @@ See `expr_free_all`.
 | st   | subtype  |
 | op   | operator |
 
+# Debugging
+
+Useful breakpoints are:
+
+| Location                      | Remarks                                              |
+|-------------------------------|------------------------------------------------------|
+| build_binary in tree.c        | Creates an expression for a unary or binary operator |
+| initialization_expr in init.c | Checks a single initializer                          |
+| expr in tree.c                | Checks a full expression                             |
+| typeok in tree.c              | Checks two types for compatibility                   |
+| vwarning_at in err.c          | Prints a warning                                     |
+| verror_at in err.c            | Prints an error                                      |
+| assert_failed in err.c        | Prints the location of a failed assertion            |
+
 # Tests
 
 The tests are in `tests/usr.bin/xlint`.
-By default, each test is run with the lint flags `-g` for GNU mode, 
+By default, each test is run with the lint flags `-g` for GNU mode,
 `-S` for C99 mode and `-w` to report warnings as errors.
 
 Each test can override the lint flags using comments of the following forms:
+
 * `/* lint1-flags: -tw */` replaces the default flags.
 * `/* lint1-extra-flags: -p */` adds to the default flags.
 
