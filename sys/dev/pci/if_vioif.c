@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.77 2022/03/31 06:17:34 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.78 2022/04/13 02:28:01 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.77 2022/03/31 06:17:34 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.78 2022/04/13 02:28:01 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -99,9 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.77 2022/03/31 06:17:34 yamaguchi Exp 
 #define VIRTIO_NET_F_CTRL_RX_EXTRA	__BIT(20)
 #define VIRTIO_NET_F_GUEST_ANNOUNCE	__BIT(21)
 #define VIRTIO_NET_F_MQ			__BIT(22)
+#define VIRTIO_NET_F_CTRL_MAC_ADDR 	__BIT(23)
 
 #define VIRTIO_NET_FLAG_BITS \
 	VIRTIO_COMMON_FLAG_BITS \
+	"\x18""CTRL_MAC" \
 	"\x17""MQ" \
 	"\x16""GUEST_ANNOUNCE" \
 	"\x15""CTRL_RX_EXTRA" \
@@ -858,6 +860,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	    VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS | VIRTIO_NET_F_CTRL_VQ |
 	    VIRTIO_NET_F_CTRL_RX | VIRTIO_F_NOTIFY_ON_EMPTY;
 	req_features |= VIRTIO_F_RING_EVENT_IDX;
+	req_features |= VIRTIO_NET_F_CTRL_MAC_ADDR;
 #ifdef VIOIF_MULTIQ
 	req_features |= VIRTIO_NET_F_MQ;
 #endif
@@ -2170,23 +2173,41 @@ vioif_set_mac_addr(struct vioif_softc *sc)
 	struct vioif_ctrl_cmdspec specs[1];
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int nspecs = __arraycount(specs);
+	uint64_t features;
 	int r;
+	size_t i;
 
 	if (!sc->sc_has_ctrl)
 		return ENOTSUP;
 
-	vioif_ctrl_acquire(sc);
+	if (memcmp(CLLADDR(ifp->if_sadl), sc->sc_mac,
+	    ETHER_ADDR_LEN) == 0) {
+		return 0;
+	}
 
-	memcpy(ma->mac, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
-	specs[0].dmamap = sc->sc_ctrlq.ctrlq_mac_addr_dmamap;
-	specs[0].buf = ma;
-	specs[0].bufsize = sizeof(*ma);
+	memcpy(sc->sc_mac, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 
-	r = vioif_ctrl_send_command(sc,
-	    VIRTIO_NET_CTRL_MAC, VIRTIO_NET_CTRL_MAC_ADDR_SET,
-	    specs, nspecs);
+	features = virtio_features(sc->sc_virtio);
+	if (features & VIRTIO_NET_F_CTRL_MAC_ADDR) {
+		vioif_ctrl_acquire(sc);
 
-	vioif_ctrl_release(sc);
+		memcpy(ma->mac, sc->sc_mac, ETHER_ADDR_LEN);
+		specs[0].dmamap = sc->sc_ctrlq.ctrlq_mac_addr_dmamap;
+		specs[0].buf = ma;
+		specs[0].bufsize = sizeof(*ma);
+
+		r = vioif_ctrl_send_command(sc,
+		    VIRTIO_NET_CTRL_MAC, VIRTIO_NET_CTRL_MAC_ADDR_SET,
+		    specs, nspecs);
+
+		vioif_ctrl_release(sc);
+	} else {
+		for (i = 0; i < __arraycount(sc->sc_mac); i++) {
+			virtio_write_device_config_1(sc->sc_virtio,
+			    VIRTIO_NET_CONFIG_MAC + i, sc->sc_mac[i]);
+		}
+		r = 0;
+	}
 
 	return r;
 }
