@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.7 2022/04/13 15:08:52 uwe Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.8 2022/04/13 15:24:42 uwe Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.7 2022/04/13 15:08:52 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.8 2022/04/13 15:24:42 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,12 @@ __KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.7 2022/04/13 15:08:52 uwe Exp $");
 #define VIO9P_SEGSIZE		PAGE_SIZE
 #define VIO9P_N_SEGMENTS	(VIO9P_MAX_REQLEN / VIO9P_SEGSIZE)
 
-#define P9_MAX_TAG_LEN		16
+/*
+ * QEMU defines this as 32 but includes the final zero byte into the
+ * limit.  The code below counts the final zero byte separately, so
+ * adjust this define to match.
+ */
+#define P9_MAX_TAG_LEN		31
 
 CTASSERT((PAGE_SIZE) == (VIRTIO_PAGE_SIZE)); /* XXX */
 
