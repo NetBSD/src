@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.36 2022/03/17 23:05:01 uwe Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.37 2022/04/13 22:41:17 uwe Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.36 2022/03/17 23:05:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.37 2022/04/13 22:41:17 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,8 +588,8 @@ virtio_pci_kick_09(struct virtio_softc *sc, uint16_t idx)
 static int
 virtio_pci_adjust_config_region(struct virtio_pci_softc *psc)
 {
-	struct virtio_softc * const sc = (struct virtio_softc *) psc;
-	device_t self = psc->sc_sc.sc_dev;
+	struct virtio_softc * const sc = &psc->sc_sc;
+	device_t self = sc->sc_dev;
 
 	if (psc->sc_sc.sc_version_1)
 		return 0;
