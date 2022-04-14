@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.152 2022/04/01 21:09:24 pgoyette Exp $
+# $NetBSD: mi,v 1.153 2022/04/14 16:51:57 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -385,6 +385,8 @@
 ./@MODULEDIR@/putter/putter.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/raid				modules-base-kernel	kmod
 ./@MODULEDIR@/raid/raid.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/scsi_subr				modules-base-kernel	kmod
+./@MODULEDIR@/scsi_subr/scsi_subr.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/scsiverbose			modules-base-kernel	kmod
 ./@MODULEDIR@/scsiverbose/scsiverbose.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/sdt				base-obsolete		obsolete
