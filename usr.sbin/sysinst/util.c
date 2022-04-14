@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.64 2022/01/29 15:32:49 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.65 2022/04/14 15:48:31 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1156,6 +1156,7 @@ entropy_add_manual(void)
 	SHA256_CTX ctx;
 	char buf[256];
 	uint8_t digest[SHA256_DIGEST_LENGTH];
+	static const char prompt[] = "> ";
 	size_t l;
 	int txt_y, maxy, init_y;
 	bool ok = false;
@@ -1181,7 +1182,7 @@ entropy_add_manual(void)
 		} else {
 			wmove(mainwin, txt_y, 0);
 		}
-		msg_fmt_table_add(0, "> ");
+		msg_fmt_table_add(prompt, prompt);
 		mvwgetnstr(mainwin, txt_y, 2, buf, sizeof buf);
 		l = strlen(buf);
 		if (l > 0)
