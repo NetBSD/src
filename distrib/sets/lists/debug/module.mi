@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.18 2022/04/01 21:09:24 pgoyette Exp $
+# $NetBSD: module.mi,v 1.19 2022/04/14 16:51:57 pgoyette Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -326,6 +326,8 @@
 ./usr/libdata/debug/@MODULEDIR@/scmd/scmd.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/scmdi2c				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/scmdi2c/scmdi2c.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/scsi_subr			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/scsi_subr/scsi_subr.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/scsiverbose			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/scsiverbose/scsiverbose.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/sdtemp				modules-base-kernel	kmod,debug
