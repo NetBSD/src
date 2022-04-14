@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.39 2022/03/31 19:30:16 pgoyette Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.40 2022/04/14 16:50:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -656,7 +656,7 @@ SYSCTL_SETUP(sysctl_iscsi_setup, "ISCSI subtree setup")
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_DRIVER, iscsi, NULL); /* Possibly a builtin module */
+MODULE(MODULE_CLASS_DRIVER, iscsi, "scsi_subr"); /* Possibly a builtin module */
 
 #ifdef _MODULE
 static const struct cfiattrdata ibescsi_info = { "scsi", 1,

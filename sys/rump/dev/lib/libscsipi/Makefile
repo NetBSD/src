@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/01/26 23:12:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2022/04/14 16:50:27 pgoyette Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/scsipi
@@ -9,7 +9,7 @@ COMMENT=SCSI & ATAPI mid-layer
 IOCONF=	SCSIPI.ioconf
 
 SRCS+=	scsipiconf.c scsipi_base.c scsipi_ioctl.c scsi_base.c scsiconf.c
-SRCS+=	atapi_base.c atapiconf.c
+SRCS+=	scsi_subr.c atapi_base.c atapiconf.c
 SRCS+=	cd.c sd.c
 
 .if 1

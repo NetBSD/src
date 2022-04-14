@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.301 2022/04/09 23:38:32 riastradh Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.302 2022/04/14 16:50:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.301 2022/04/09 23:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.302 2022/04/14 16:50:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,46 +126,6 @@ static int	scsibusprint(void *, const char *);
 static void	scsibus_discover_thread(void *);
 static void	scsibus_config(struct scsibus_softc *);
 
-const struct scsipi_bustype scsi_bustype = {
-	.bustype_type = SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI,
-	    SCSIPI_BUSTYPE_SCSI_PSCSI),
-	.bustype_cmd = scsi_scsipi_cmd,
-	.bustype_interpret_sense = scsipi_interpret_sense,
-	.bustype_printaddr = scsi_print_addr,
-	.bustype_kill_pending = scsi_kill_pending,
-	.bustype_async_event_xfer_mode = scsi_async_event_xfer_mode,
-};
-
-const struct scsipi_bustype scsi_fc_bustype = {
-	.bustype_type = SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI,
-	    SCSIPI_BUSTYPE_SCSI_FC),
-	.bustype_cmd = scsi_scsipi_cmd,
-	.bustype_interpret_sense = scsipi_interpret_sense,
-	.bustype_printaddr = scsi_print_addr,
-	.bustype_kill_pending = scsi_kill_pending,
-	.bustype_async_event_xfer_mode = scsi_fc_sas_async_event_xfer_mode,
-};
-
-const struct scsipi_bustype scsi_sas_bustype = {
-	.bustype_type = SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI,
-	    SCSIPI_BUSTYPE_SCSI_SAS),
-	.bustype_cmd = scsi_scsipi_cmd,
-	.bustype_interpret_sense = scsipi_interpret_sense,
-	.bustype_printaddr = scsi_print_addr,
-	.bustype_kill_pending = scsi_kill_pending,
-	.bustype_async_event_xfer_mode = scsi_fc_sas_async_event_xfer_mode,
-};
-
-const struct scsipi_bustype scsi_usb_bustype = {
-	.bustype_type = SCSIPI_BUSTYPE_BUSTYPE(SCSIPI_BUSTYPE_SCSI,
-	    SCSIPI_BUSTYPE_SCSI_USB),
-	.bustype_cmd = scsi_scsipi_cmd,
-	.bustype_interpret_sense = scsipi_interpret_sense,
-	.bustype_printaddr = scsi_print_addr,
-	.bustype_kill_pending = scsi_kill_pending,
-	.bustype_async_event_xfer_mode = NULL,
-};
-
 static int
 scsibus_init(void)
 {
@@ -174,23 +134,6 @@ scsibus_init(void)
 	mutex_init(&scsibus_qlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&scsibus_qcv, "scsinitq");
 	return 0;
-}
-
-int
-scsiprint(void *aux, const char *pnp)
-{
-	struct scsipi_channel *chan = aux;
-	struct scsipi_adapter *adapt = chan->chan_adapter;
-
-	/* only "scsibus"es can attach to "scsi"s; easy. */
-	if (pnp)
-		aprint_normal("scsibus at %s", pnp);
-
-	/* don't print channel if the controller says there can be only one. */
-	if (adapt->adapt_nchannels != 1)
-		aprint_normal(" channel %d", chan->chan_channel);
-
-	return (UNCONF);
 }
 
 static int
