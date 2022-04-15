@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rhosts.c,v 1.14 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: auth-rhosts.c,v 1.55 2022/02/23 11:15:57 djm Exp $ */
+/*	$NetBSD: auth-rhosts.c,v 1.15 2022/04/15 14:00:06 christos Exp $	*/
+/* $OpenBSD: auth-rhosts.c,v 1.56 2022/02/23 21:21:49 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rhosts.c,v 1.14 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.15 2022/04/15 14:00:06 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -26,6 +26,7 @@ __RCSID("$NetBSD: auth-rhosts.c,v 1.14 2022/02/23 19:07:20 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "packet.h"
