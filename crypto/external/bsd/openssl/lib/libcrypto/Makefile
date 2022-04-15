@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2019/11/11 22:44:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2022/04/15 22:26:36 rillig Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -33,6 +33,13 @@ CWARNFLAGS.clang+=	-Wno-atomic-alignment
 
 # XXX Not yet.
 LINTFLAGS+=-D__int128='long long'
+
+LINTFLAGS+=	-X 161	# constant in conditional context
+LINTFLAGS+=	-X 129	# expression has null effect
+LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
+LINTFLAGS+=	-X 231	# argument '%s' unused in function '%s'
+LINTFLAGS+=	-X 220	# fallthrough on case statement
+LINTFLAGS+=	-X 118	# semantics of '%s' change in ANSI C; use explicit cast
 
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
 CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/crypto/include
