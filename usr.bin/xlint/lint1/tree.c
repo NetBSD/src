@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.424 2022/04/09 23:41:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.425 2022/04/15 16:38:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.424 2022/04/09 23:41:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.425 2022/04/15 16:38:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2226,20 +2226,18 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		}
 	}
 
-	if (portable_size_in_bits(nt) < portable_size_in_bits(ot) &&
+	if (aflag > 0 &&
+	    portable_size_in_bits(nt) < portable_size_in_bits(ot) &&
 	    (ot == LONG || ot == ULONG || ot == QUAD || ot == UQUAD ||
 	     aflag > 1)) {
-		/* conversion from '%s' may lose accuracy */
-		if (aflag > 0) {
-			if (op == FARG) {
-				/* conversion from '%s' to '%s' may ... */
-				warning(298,
-				    type_name(tn->tn_type), type_name(tp), arg);
-			} else {
-				/* conversion from '%s' to '%s' may ... */
-				warning(132,
-				    type_name(tn->tn_type), type_name(tp));
-			}
+		if (op == FARG) {
+			/* conversion from '%s' to '%s' may lose ... */
+			warning(298,
+			    type_name(tn->tn_type), type_name(tp), arg);
+		} else {
+			/* conversion from '%s' to '%s' may lose accuracy */
+			warning(132,
+			    type_name(tn->tn_type), type_name(tp));
 		}
 	}
 }
