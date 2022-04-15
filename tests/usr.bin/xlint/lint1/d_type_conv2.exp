@@ -1,1 +1,1 @@
-d_type_conv2.c(14): warning: argument #1 is converted from 'double' to 'float' due to prototype [259]
+d_type_conv2.c(21): warning: argument #1 is converted from 'double' to 'float' due to prototype [259]
