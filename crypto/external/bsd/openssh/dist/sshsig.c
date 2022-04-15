@@ -1,5 +1,5 @@
-/*	$NetBSD: sshsig.c,v 1.8 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: sshsig.c,v 1.28 2022/02/01 23:34:47 djm Exp $ */
+/*	$NetBSD: sshsig.c,v 1.9 2022/04/15 14:00:06 christos Exp $	*/
+/* $OpenBSD: sshsig.c,v 1.29 2022/03/30 04:27:51 djm Exp $ */
 /*
  * Copyright (c) 2019 Google LLC
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshsig.c,v 1.8 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: sshsig.c,v 1.9 2022/04/15 14:00:06 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -740,7 +740,7 @@ parse_principals_key_and_options(const char *path, u_long linenum, char *line,
 		return SSH_ERR_KEY_NOT_FOUND; /* blank or all-comment line */
 
 	/* format: identity[,identity...] [option[,option...]] key */
-	if ((tmp = strdelimw(&cp)) == NULL) {
+	if ((tmp = strdelimw(&cp)) == NULL || cp == NULL) {
 		error("%s:%lu: invalid line", path, linenum);
 		r = SSH_ERR_INVALID_FORMAT;
 		goto out;
@@ -775,6 +775,11 @@ parse_principals_key_and_options(const char *path, u_long linenum, char *line,
 		opts = cp;
 		if (sshkey_advance_past_options(&cp) != 0) {
 			error("%s:%lu: invalid options", path, linenum);
+			r = SSH_ERR_INVALID_FORMAT;
+			goto out;
+		}
+		if (cp == NULL || *cp == '\0') {
+			error("%s:%lu: missing key", path, linenum);
 			r = SSH_ERR_INVALID_FORMAT;
 			goto out;
 		}

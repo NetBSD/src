@@ -1,6 +1,6 @@
-/*	$NetBSD: servconf.c,v 1.39 2022/02/23 19:07:20 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.40 2022/04/15 14:00:06 christos Exp $	*/
 
-/* $OpenBSD: servconf.c,v 1.383 2022/02/08 08:59:12 dtucker Exp $ */
+/* $OpenBSD: servconf.c,v 1.384 2022/03/18 04:04:11 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.39 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.40 2022/04/15 14:00:06 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -2796,7 +2796,7 @@ parse_server_match_config(ServerOptions *options,
 
 	initialize_server_options(&mo);
 	parse_server_config(&mo, "reprocess config", cfg, includes,
-	    connectinfo);
+	    connectinfo, 0);
 	copy_set_server_options(options, &mo, 0);
 }
 
@@ -2974,12 +2974,13 @@ parse_server_config_depth(ServerOptions *options, const char *filename,
 void
 parse_server_config(ServerOptions *options, const char *filename,
     struct sshbuf *conf, struct include_list *includes,
-    struct connection_info *connectinfo)
+    struct connection_info *connectinfo, int reexec)
 {
 	int active = connectinfo ? 0 : 1;
 	parse_server_config_depth(options, filename, conf, includes,
 	    connectinfo, (connectinfo ? SSHCFG_MATCH_ONLY : 0), &active, 0);
-	process_queued_listen_addrs(options);
+	if (!reexec)
+		process_queued_listen_addrs(options);
 }
 
 static const char *

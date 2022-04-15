@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.34 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.245 2022/02/10 04:12:38 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.35 2022/04/15 14:00:06 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.247 2022/03/20 08:52:17 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.34 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.35 2022/04/15 14:00:06 christos Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -434,7 +434,7 @@ main(int argc, char **argv)
 	const char *errstr;
 	extern char *optarg;
 	extern int optind;
-	enum scp_mode_e mode = MODE_SCP;
+	enum scp_mode_e mode = MODE_SFTP;
 	char *sftp_direct = NULL;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
@@ -948,7 +948,7 @@ do_sftp_connect(char *host, char *user, int port, char *sftp_direct,
 			return NULL;
 
 	} else {
-		args.list = NULL;
+		freeargs(&args);
 		addargs(&args, "sftp-server");
 		if (do_cmd(sftp_direct, host, NULL, -1, 0, "sftp",
 		    reminp, remoutp, pidp) < 0)

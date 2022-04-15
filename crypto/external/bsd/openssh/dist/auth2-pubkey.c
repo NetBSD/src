@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.30 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.112 2021/12/19 22:12:30 djm Exp $ */
+/*	$NetBSD: auth2-pubkey.c,v 1.31 2022/04/15 14:00:06 christos Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.113 2022/02/27 01:33:59 naddy Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.30 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.31 2022/04/15 14:00:06 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -171,8 +171,8 @@ userauth_pubkey(struct ssh *ssh, const char *method)
 		goto done;
 	}
 	if (match_pattern_list(pkalg, options.pubkey_accepted_algos, 0) != 1) {
-		logit_f("key type %s not in PubkeyAcceptedAlgorithms",
-		    sshkey_ssh_name(key));
+		logit_f("signature algorithm %s not in "
+		    "PubkeyAcceptedAlgorithms", pkalg);
 		goto done;
 	}
 	if ((r = sshkey_check_cert_sigtype(key,
