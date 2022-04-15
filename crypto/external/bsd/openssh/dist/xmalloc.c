@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.c,v 1.12 2020/02/27 00:24:40 christos Exp $	*/
-/* $OpenBSD: xmalloc.c,v 1.36 2019/11/12 22:32:48 djm Exp $ */
+/*	$NetBSD: xmalloc.c,v 1.13 2022/04/15 14:00:06 christos Exp $	*/
+/* $OpenBSD: xmalloc.c,v 1.37 2022/03/13 23:27:54 cheloha Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: xmalloc.c,v 1.12 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.13 2022/04/15 14:00:06 christos Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -91,8 +91,7 @@ xstrdup(const char *str)
 
 	len = strlen(str) + 1;
 	cp = xmalloc(len);
-	strlcpy(cp, str, len);
-	return cp;
+	return memcpy(cp, str, len);
 }
 
 int

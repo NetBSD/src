@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.c,v 1.39 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: ssh.c,v 1.573 2022/02/08 08:59:12 dtucker Exp $ */
+/*	$NetBSD: ssh.c,v 1.40 2022/04/15 14:00:06 christos Exp $	*/
+/* $OpenBSD: ssh.c,v 1.574 2022/03/30 04:33:09 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.39 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.40 2022/04/15 14:00:06 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -677,7 +677,7 @@ main(int ac, char **av)
 
  again:
 	while ((opt = getopt(ac, av, "1246ab:c:e:fgi:kl:m:no:p:qstvx"
-	    "AB:CD:E:F:GI:J:KL:MNO:PQ:R:S:TVw:W:XYy")) != -1) {
+	    "AB:CD:E:F:GI:J:KL:MNO:PQ:R:S:TVw:W:XYy")) != -1) { /* HUZdhjruz */
 		switch (opt) {
 		case '1':
 			fatal("SSH protocol v.1 is no longer supported");
