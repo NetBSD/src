@@ -1,2 +1,2 @@
-d_type_conv3.c(14): warning: argument #1 is converted from 'long long' to 'unsigned int' due to prototype [259]
-d_type_conv3.c(14): warning: conversion of 'long long' to 'unsigned int' is out of range, arg #1 [295]
+d_type_conv3.c(21): warning: argument #1 is converted from 'long long' to 'unsigned int' due to prototype [259]
+d_type_conv3.c(21): warning: conversion of 'long long' to 'unsigned int' is out of range, arg #1 [295]
