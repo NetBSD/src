@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2022/04/15 22:26:36 rillig Exp $
+#	$NetBSD: Makefile,v 1.22 2022/04/15 23:21:33 rillig Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -30,9 +30,6 @@ WARNS=0
 CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses -Wno-implicit-int-float-conversion
 # XXX: This warning seems to trigger incorrectly
 CWARNFLAGS.clang+=	-Wno-atomic-alignment
-
-# XXX Not yet.
-LINTFLAGS+=-D__int128='long long'
 
 LINTFLAGS+=	-X 161	# constant in conditional context
 LINTFLAGS+=	-X 129	# expression has null effect
