@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2869 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2870 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -487,4 +487,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzcode: Updated to 2022a. [christos 20220322]
 	dhcp: Import version 4.4.3. [christos 20220402]
 	udf: Added fsck_udf(8) and upgraded newfs_udf/makefs for UDF. [reinoud 20220506]
-
+	OpenSSH: Import 9.0. [christos 20220415]
