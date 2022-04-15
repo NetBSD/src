@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.51 2021/12/17 06:28:20 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.52 2022/04/15 17:53:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51 2021/12/17 06:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.52 2022/04/15 17:53:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,6 +373,13 @@ device_isa_register(device_t dev, void *aux)
 		prop_dictionary_set_bool(device_properties(dev),
 		    "no-legacy-devices", true);
 #if NACPICA > 0
+#if notyet
+	/*
+	 * The following code block is technically correct, but unfortunately
+	 * it breaks things like being able to use lm(4) on platforms that
+	 * have no other means of exposing temperature, fan, and voltage
+	 * sensors.
+	 */
 	if (device_is_a(dev, "isa") && acpi_active) {
 		/*
 		 * For FACP >= 2, the LEGACY_DEVICES flag indicates that
@@ -387,6 +394,8 @@ device_isa_register(device_t dev, void *aux)
 			    "no-legacy-devices", true);
 		}
 	}
+#endif
+
 	if (vm_guest == VM_GUEST_VMWARE &&
 	    device_is_a(dev, "isa") && acpi_active) {
 		prop_dictionary_set_bool(device_properties(dev),
