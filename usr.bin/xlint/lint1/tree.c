@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.425 2022/04/15 16:38:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.426 2022/04/15 17:08:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.425 2022/04/15 16:38:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.426 2022/04/15 17:08:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2198,32 +2198,24 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	if (Sflag && nt == BOOL)
 		return;		/* See C99 6.3.1.2 */
 
-	if (Pflag && portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
+	if (Pflag && pflag && aflag > 0 &&
+	    portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
 	    is_uinteger(nt) != is_uinteger(ot)) {
-		if (aflag > 0 && pflag) {
-			if (op == FARG) {
-				/* conversion to '%s' may sign-extend ... */
-				warning(297, type_name(tp), arg);
-			} else {
-				/* conversion to '%s' may sign-extend ... */
-				warning(131, type_name(tp));
-			}
+		if (op == FARG) {
+			/* conversion to '%s' may sign-extend ... */
+			warning(297, type_name(tp), arg);
+		} else {
+			/* conversion to '%s' may sign-extend ... */
+			warning(131, type_name(tp));
 		}
 	}
 
-	if (Pflag && portable_size_in_bits(nt) > portable_size_in_bits(ot)) {
-		switch (tn->tn_op) {
-		case PLUS:
-		case MINUS:
-		case MULT:
-		case SHL:
-			/* suggest cast from '%s' to '%s' on op %s to ... */
-			warning(324, type_name(gettyp(ot)), type_name(tp),
-			    op_name(tn->tn_op));
-			break;
-		default:
-			break;
-		}
+	if (Pflag && portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
+	    (tn->tn_op == PLUS || tn->tn_op == MINUS || tn->tn_op == MULT ||
+	     tn->tn_op == SHL)) {
+		/* suggest cast from '%s' to '%s' on op %s to ... */
+		warning(324, type_name(gettyp(ot)), type_name(tp),
+		    op_name(tn->tn_op));
 	}
 
 	if (aflag > 0 &&
