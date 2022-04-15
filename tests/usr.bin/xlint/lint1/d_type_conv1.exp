@@ -1,1 +1,1 @@
-d_type_conv1.c(14): warning: argument #1 is converted from 'long long' to 'unsigned int' due to prototype [259]
+d_type_conv1.c(21): warning: argument #1 is converted from 'long long' to 'unsigned int' due to prototype [259]

@@ -1,1 +1,1 @@
-d_constant_conv2.c(12): warning: argument #1 is converted from 'double' to 'unsigned int' due to prototype [259]
+d_constant_conv2.c(19): warning: argument #1 is converted from 'double' to 'unsigned int' due to prototype [259]

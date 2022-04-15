@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.426 2022/04/15 17:08:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.427 2022/04/15 21:50:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.426 2022/04/15 17:08:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.427 2022/04/15 21:50:07 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2077,8 +2077,9 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	nt = tp->t_tspec;
 	ot = tn->tn_type->t_tspec;
 
-	if (!tflag && !sflag && op == FARG)
+	if (!tflag && !sflag && !Sflag && op == FARG)
 		check_prototype_conversion(arg, nt, ot, tp, tn);
+
 	if (is_integer(nt) && is_integer(ot)) {
 		check_integer_conversion(op, arg, nt, ot, tp, tn);
 	} else if (nt == PTR && is_null_pointer(tn)) {

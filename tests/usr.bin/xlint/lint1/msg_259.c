@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.19 2021/09/02 17:55:27 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.20 2022/04/15 21:50:07 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259]
@@ -20,7 +20,7 @@
  */
 
 /* lint1-only-if: lp64 */
-/* lint1-extra-flags: -h */
+/* lint1-flags: -g -h -w */
 
 void plain_char(char);
 void signed_char(signed char);
