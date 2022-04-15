@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.2 2022/01/29 00:52:53 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.3 2022/04/15 09:33:20 rillig Exp $
 
 --[[
 
@@ -72,7 +72,11 @@ local function check_mk(mk_fname)
   for mk_lineno, mk_line in ipairs(mk_lines) do
     for text in mk_line:gmatch("#%s*expect:%s*(.*)") do
       local i = prev_expect_line
-      while i < #exp_lines and text ~= exp_lines[i + 1] do
+      -- As of 2022-04-15, some lines in the .exp files contain trailing
+      -- whitespace.  If possible, this should be avoided by rewriting the
+      -- debug logging.  When done, the gsub can be removed.
+      -- See deptgt-phony.exp lines 14 and 15.
+      while i < #exp_lines and text ~= exp_lines[i + 1]:gsub("%s*$", "") do
         i = i + 1
       end
       if i < #exp_lines then
