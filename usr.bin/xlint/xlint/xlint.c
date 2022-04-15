@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.89 2022/03/08 23:24:20 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.90 2022/04/15 16:08:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.89 2022/03/08 23:24:20 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.90 2022/04/15 16:08:39 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -730,14 +730,50 @@ fname(const char *name)
 	free(args);
 }
 
+static bool
+is_safe_shell(char ch)
+{
+
+	return ch_isalnum(ch) || ch == '%' || ch == '+' || ch == ',' ||
+	       ch == '-' || ch == '.' || ch == '/' || ch == ':' ||
+	       ch == '=' || ch == '@' || ch == '_';
+}
+
+static void
+print_sh_quoted(const char *s)
+{
+
+	if (s[0] == '\0')
+		goto needs_quoting;
+	for (const char *p = s; *p != '\0'; p++)
+		if (!is_safe_shell(*p))
+			goto needs_quoting;
+
+	(void)printf("%s", s);
+	return;
+
+needs_quoting:
+	(void)putchar('\'');
+	for (const char *p = s; *p != '\0'; p++) {
+		if (*p == '\'')
+			(void)printf("'\\''");
+		else
+			(void)putchar(*p);
+	}
+	(void)putchar('\'');
+}
+
 static void
 runchild(const char *path, char *const *args, const char *crfn, int fdout)
 {
 	int	status, rv, signo, i;
 
 	if (Vflag) {
-		for (i = 0; args[i] != NULL; i++)
-			(void)printf("%s ", args[i]);
+		print_sh_quoted(args[0]);
+		for (i = 1; args[i] != NULL; i++) {
+			(void)printf(" ");
+			print_sh_quoted(args[i]);
+		}
 		(void)printf("\n");
 	}
 
