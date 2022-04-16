@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.159 2022/04/08 21:29:29 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.160 2022/04/16 13:25:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.159 2022/04/08 21:29:29 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.160 2022/04/16 13:25:27 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -630,12 +630,6 @@ void
 	va_end(ap);
 }
 
-/*
- * XXX I think the logic is possibly somewhat screwed up here. The
- * question is, how do we want to interpret the -s and -S flags going
- * forward? We need to answer that and then we can fix this to be
- * "right"... [perry, 2 Nov 2002]
-*/
 void
 (c99ism)(int msgid, ...)
 {

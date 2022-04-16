@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.59 2022/02/27 11:40:29 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.60 2022/04/16 13:25:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.59 2022/02/27 11:40:29 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.60 2022/04/16 13:25:27 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,17 +68,11 @@ bool	bflag;
 /* Print warnings for pointer casts. */
 bool	cflag;
 
-/* Allow features from C11, C99 and C90. */
-bool	c11flag;
-
 /* Perform stricter checking of enum types and operations on enum types. */
 bool	eflag;
 
 /* Print complete pathnames, not only the basename. */
 bool	Fflag;
-
-/* Enable some extensions of gcc */
-bool	gflag;
 
 /* Treat warnings as errors */
 bool	wflag;
@@ -98,16 +92,7 @@ bool	pflag;
  */
 bool	rflag;
 
-/* Strict ANSI C mode. */
-bool	sflag;
-
 bool	Tflag;
-
-/* Traditional C mode. */
-bool	tflag;
-
-/* Enable C99 extensions */
-bool	Sflag;
 
 /* Picky flag */
 bool	Pflag;
@@ -123,6 +108,17 @@ bool	vflag = true;
 
 /* Complain about structures which are never defined. */
 bool	zflag = true;
+
+/*
+ * The default language level is the one that checks for compatibility
+ * between traditional C and C90.  As of 2022, this default is no longer
+ * useful since most traditional C code has already been migrated.
+ */
+bool	allow_trad = true;
+bool	allow_c90 = true;
+bool	allow_c99;
+bool	allow_c11;
+bool	allow_gcc;
 
 err_set	msgset;
 
@@ -211,15 +207,30 @@ main(int argc, char *argv[])
 		case 'c':	cflag = true;	break;
 		case 'e':	eflag = true;	break;
 		case 'F':	Fflag = true;	break;
-		case 'g':	gflag = true;	break;
+		case 'g':	allow_gcc = true;	break;
 		case 'h':	hflag = true;	break;
 		case 'p':	pflag = true;	break;
 		case 'P':	Pflag = true;	break;
 		case 'r':	rflag = true;	break;
-		case 's':	sflag = true;	break;
-		case 'S':	Sflag = true;	break;
+		case 's':
+			allow_trad = false;
+			allow_c90 = true;
+			allow_c99 = false;
+			allow_c11 = false;
+			break;
+		case 'S':
+			allow_trad = false;
+			allow_c90 = true;
+			allow_c99 = true;
+			allow_c11 = false;
+			break;
 		case 'T':	Tflag = true;	break;
-		case 't':	tflag = true;	break;
+		case 't':
+			allow_trad = true;
+			allow_c90 = false;
+			allow_c99 = false;
+			allow_c11 = false;
+			break;
 		case 'u':	uflag = false;	break;
 		case 'w':	wflag = true;	break;
 		case 'v':	vflag = false;	break;
@@ -228,9 +239,10 @@ main(int argc, char *argv[])
 
 		case 'A':
 			if (strcmp(optarg, "c11") == 0) {
-				c11flag = true;
-				Sflag = true;
-				sflag = false;
+				allow_trad = false;
+				allow_c90 = true;
+				allow_c99 = true;
+				allow_c11 = true;
 			} else
 				usage();
 			break;
@@ -273,7 +285,7 @@ main(int argc, char *argv[])
 	initdecl();
 	initscan();
 
-	if (gflag && !tflag) {
+	if (allow_gcc && !tflag) {
 		if ((yyin = gcc_builtins()) == NULL)
 			err(1, "cannot open builtins");
 		yyparse();

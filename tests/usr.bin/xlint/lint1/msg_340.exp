@@ -1,1 +1,1 @@
-msg_340.c(16): error: initialization with '[a...b]' is a GCC extension [340]
+msg_340.c(16): warning: initialization with '[a...b]' is a GCC extension [340]
