@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.427 2022/04/15 21:50:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.428 2022/04/16 14:06:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.427 2022/04/15 21:50:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.428 2022/04/16 14:06:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -944,24 +944,24 @@ typeok_shr(const mod_t *mp,
 			/* bitwise '%s' on signed value nonportable */
 			warning(120, mp->m_name);
 		}
-	} else if (!tflag && !sflag && !is_uinteger(olt) && is_uinteger(ort)) {
+	} else if (allow_trad && allow_c90 &&
+		   !is_uinteger(olt) && is_uinteger(ort)) {
 		/*
 		 * The left operand would become unsigned in
 		 * traditional C.
 		 */
-		if (hflag && !Sflag &&
-		    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
+		if (hflag && (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
 		}
-	} else if (!tflag && !sflag && !is_uinteger(olt) && !is_uinteger(ort) &&
+	} else if (allow_trad && allow_c90 &&
+		   !is_uinteger(olt) && !is_uinteger(ort) &&
 		   portable_size_in_bits(lt) < portable_size_in_bits(rt)) {
 		/*
-		 * In traditional C the left operand would be extended,
-		 * possibly with 1, and then shifted.
+		 * In traditional C the left operand would be extended
+		 * (possibly sign-extended) and then shifted.
 		 */
-		if (hflag && !Sflag &&
-		    (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
+		if (hflag && (ln->tn_op != CON || ln->tn_val->v_quad < 0)) {
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
 		}
@@ -2077,7 +2077,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	nt = tp->t_tspec;
 	ot = tn->tn_type->t_tspec;
 
-	if (!tflag && !sflag && !Sflag && op == FARG)
+	if (allow_trad && allow_c90 && op == FARG)
 		check_prototype_conversion(arg, nt, ot, tp, tn);
 
 	if (is_integer(nt) && is_integer(ot)) {
