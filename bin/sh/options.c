@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.56 2021/10/26 00:05:38 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.57 2022/04/16 14:20:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.56 2021/10/26 00:05:38 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.57 2022/04/16 14:20:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,7 +325,7 @@ minus_o(char *name, int val)
 #endif
 				return;
 			}
-		error("Illegal option %co %s", "+-"[val], name);
+		error("Unknown option %co %s", "+-"[val], name);
 	}
 }
 
@@ -344,7 +344,7 @@ setoption(int flag, int val)
 #endif
 			return;
 		}
-	error("Illegal option %c%c", "+-"[val], flag);
+	error("Unknown option %c%c", "+-"[val], flag);
 	/* NOTREACHED */
 }
 
@@ -540,7 +540,7 @@ atend:
 				s[1] = '\0';
 				err |= setvarsafe("OPTARG", s, 0);
 			} else {
-				outfmt(&errout, "Illegal option -%c\n", c);
+				outfmt(&errout, "Unknown option -%c\n", c);
 				(void) unsetvar("OPTARG", 0);
 			}
 			c = '?';
@@ -631,7 +631,7 @@ nextopt(const char *optstring)
 	c = *p++;
 	for (q = optstring ; *q != c ; ) {
 		if (*q == '\0')
-			error("Illegal option -%c", c);
+			error("Unknown option -%c", c);
 		if (*++q == ':')
 			q++;
 	}

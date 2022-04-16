@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.177 2021/12/08 20:21:09 andvar Exp $	*/
+/*	$NetBSD: parser.c,v 1.178 2022/04/16 14:20:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.177 2021/12/08 20:21:09 andvar Exp $");
+__RCSID("$NetBSD: parser.c,v 1.178 2022/04/16 14:20:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -795,7 +795,8 @@ parsefname(void)
 		 * So, leave it like this until the rest of the parser is fixed.
 		 */
 		if (!noexpand(wordtext))
-			synerror("Illegal eof marker for << redirection");
+			synerror("Unimplemented form of eof marker"
+			    " for << redirection");
 
 		rmescapes(wordtext);
 		here->eofmark = wordtext;
