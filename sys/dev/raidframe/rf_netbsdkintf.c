@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.406 2022/04/16 07:57:33 hannken Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.407 2022/04/16 16:40:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.406 2022/04/16 07:57:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.407 2022/04/16 16:40:54 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -2951,7 +2951,6 @@ rf_find_raid_components(void)
 
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_OPEN(vp, FREAD | FSILENT, NOCRED);
-			VOP_UNLOCK(vp);
 
 			if (error) {
 				/* "Who cares."  Continue looking
@@ -2960,6 +2959,7 @@ rf_find_raid_components(void)
 				continue;
 			}
 
+			VOP_UNLOCK(vp);
 			error = getdisksize(vp, &numsecs, &secsize);
 			if (error) {
 				/*
