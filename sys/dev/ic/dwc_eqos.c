@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.5 2022/02/13 18:29:15 riastradh Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.6 2022/04/16 23:20:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.5 2022/02/13 18:29:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.6 2022/04/16 23:20:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -564,6 +564,12 @@ eqos_init_locked(struct eqos_softc *sc)
 	val |= (MCLBYTES << GMAC_DMA_CHAN0_RX_CONTROL_RBSZ_SHIFT);
 	val |= GMAC_DMA_CHAN0_RX_CONTROL_START;
 	WR4(sc, GMAC_DMA_CHAN0_RX_CONTROL, val);
+
+	/* Disable counters */
+	WR4(sc, GMAC_MMC_CONTROL,
+	    GMAC_MMC_CONTROL_CNTFREEZ |
+	    GMAC_MMC_CONTROL_CNTPRST |
+	    GMAC_MMC_CONTROL_CNTPRSTLVL);
 
 	/* Configure operation modes */
 	WR4(sc, GMAC_MTL_TXQ0_OPERATION_MODE,
