@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.137 2021/10/23 16:58:17 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.138 2022/04/16 07:58:21 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.137 2021/10/23 16:58:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.138 2022/04/16 07:58:21 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -472,7 +472,10 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	u_long fatbytes, fatblocksecs;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
+	VOP_UNLOCK(devvp);
+	if (error)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
