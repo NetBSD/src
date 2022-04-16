@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.122 2022/04/16 20:02:55 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.123 2022/04/16 20:08:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.122 2022/04/16 20:02:55 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.123 2022/04/16 20:08:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -220,7 +220,6 @@ static const struct keyword {
 	kwdef_gcc_attr(	"warn_unused_result", T_AT_WARN_UNUSED_RESULT),
 	kwdef_gcc_attr(	"weak",		T_AT_WEAK),
 	kwdef_keyword(	"while",	T_WHILE),
-	kwdef(NULL, 0, 0, 0, 0, 0, 0, 0, 0),
 #undef kwdef
 #undef kwdef_token
 #undef kwdef_sclass
@@ -415,9 +414,10 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 void
 initscan(void)
 {
-	const struct keyword *kw;
+	const struct keyword *kw, *end;
 
-	for (kw = keywords; kw->kw_name != NULL; kw++) {
+	end = keywords + sizeof(keywords) / sizeof(keywords[0]);
+	for (kw = keywords; kw != end; kw++) {
 		if ((kw->kw_c90 || kw->kw_c99) && tflag)
 			continue;
 		/* FIXME: C99 and GCC are independent. */
