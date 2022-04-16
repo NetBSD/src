@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.17 2021/08/19 18:39:34 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.18 2022/04/16 21:14:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -46,8 +46,8 @@ typedef	struct {
 	bool	m_requires_arith: 1;
 	bool	m_requires_scalar: 1;
 	bool	m_fold_constant_operands: 1;
-	bool	m_left_value_context: 1;
-	bool	m_left_test_context: 1;
+	bool	m_value_context: 1;
+	bool	m_test_context: 1;
 	bool	m_balance_operands: 1;
 	bool	m_has_side_effect: 1;
 	bool	m_warn_if_left_unsigned_in_c90: 1;

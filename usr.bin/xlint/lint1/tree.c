@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.431 2022/04/16 20:57:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.432 2022/04/16 21:14:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.431 2022/04/16 20:57:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.432 2022/04/16 21:14:33 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -536,7 +536,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	 * Apply class conversions to the left operand, but only if its
 	 * value is needed or it is compared with zero.
 	 */
-	if (mp->m_left_value_context || mp->m_left_test_context)
+	if (mp->m_value_context || mp->m_test_context)
 		ln = cconv(ln);
 	/*
 	 * The right operand is almost always in a test or value context,
@@ -555,7 +555,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	if (mp->m_comparison)
 		check_integer_comparison(op, ln, rn);
 
-	if (mp->m_left_value_context || mp->m_left_test_context)
+	if (mp->m_value_context || mp->m_test_context)
 		ln = promote(op, false, ln);
 	if (mp->m_binary && op != ARROW && op != POINT &&
 	    op != ASSIGN && op != RETURN && op != INIT) {
@@ -664,7 +664,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	 * it is compared with zero and if this operand is a constant.
 	 */
 	if (hflag && !constcond_flag &&
-	    mp->m_left_test_context &&
+	    mp->m_test_context &&
 	    (ln->tn_op == CON ||
 	     ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) &&
 	    /* XXX: rn->tn_system_dependent should be checked as well */
@@ -676,7 +676,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	/* Fold if the operator requires it */
 	if (mp->m_fold_constant_operands) {
 		if (ln->tn_op == CON && (!mp->m_binary || rn->tn_op == CON)) {
-			if (mp->m_left_test_context) {
+			if (mp->m_test_context) {
 				ntn = fold_test(ntn);
 			} else if (is_floating(ntn->tn_type->t_tspec)) {
 				ntn = fold_float(ntn);
@@ -4172,8 +4172,8 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	    szof, fcall, vctx, tctx, retval_discarded, eqwarn))
 		return;
 
-	cvctx = mp->m_left_value_context;
-	ctctx = mp->m_left_test_context;
+	cvctx = mp->m_value_context;
+	ctctx = mp->m_test_context;
 	eq = mp->m_warn_if_operand_eq &&
 	     !ln->tn_parenthesized &&
 	     rn != NULL && !rn->tn_parenthesized;
