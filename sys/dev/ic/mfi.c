@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.67 2021/12/05 02:47:01 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.68 2022/04/16 18:15:21 andvar Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.67 2021/12/05 02:47:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.68 2022/04/16 18:15:21 andvar Exp $");
 
 #include "bio.h"
 
@@ -3366,7 +3366,7 @@ mfi_tbolt_create_sgl(struct mfi_ccb *ccb, int flags)
  * interrupt thread.
  *
  * The driver could get the RAID state via the MFI_DCMD_LD_MAP_GET_INFO
- * That requires a bunch of structure and it is simplier to just do
+ * That requires a bunch of structure and it is simpler to just do
  * the MFI_DCMD_LD_GET_LIST versus walking the RAID map.
  */
 

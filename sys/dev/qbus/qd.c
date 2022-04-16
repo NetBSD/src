@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.60 2021/12/12 22:20:52 andvar Exp $	*/
+/*	$NetBSD: qd.c,v 1.61 2022/04/16 18:15:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.60 2021/12/12 22:20:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.61 2022/04/16 18:15:22 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -3390,7 +3390,7 @@ setup_dragon(int unit)
 	adder->sync_phase_adj = 0x0100;
 	adder->x_scan_conf = 0x00C8;
 	/*
-	 * got a bug in secound pass ADDER! lets take care of it
+	 * got a bug in second pass ADDER! lets take care of it
 	 *
 	 * normally, just use the code in the following bug fix code, but to
 	 * make repeated demos look pretty, load the registers as if there was

@@ -1,4 +1,4 @@
-.\"	$NetBSD: trekmanual.nr,v 1.4 2021/12/08 23:38:51 snj Exp $
+.\"	$NetBSD: trekmanual.nr,v 1.5 2022/04/16 18:15:20 andvar Exp $
 .br
 .po 10
 .if n \!.
@@ -675,7 +675,7 @@ and starsystems.
 .pp
 More than one request may be stated
 on a line
-by seperating them
+by separating them
 with semicolons.
 .bl "Dock at Starbase"
 Mnemonic: dock
