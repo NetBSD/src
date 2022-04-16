@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.49 2022/04/16 14:23:36 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.50 2022/04/16 14:26:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.49 2022/04/16 14:23:36 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.50 2022/04/16 14:26:26 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -316,53 +316,95 @@ umaskcmd(int argc, char **argv)
 struct limits {
 	const char *name;
 	const char *unit;
-	int	cmd;
-	int	factor;	/* multiply by to get rlim_{cur,max} values */
 	char	option;
+	int8_t	cmd;		/* all RLIMIT_xxx are <= 127 */
+	unsigned short factor;	/* multiply by to get rlim_{cur,max} values */
 };
+
+#define	OPTSTRING_BASE "HSa"
 
 static const struct limits limits[] = {
 #ifdef RLIMIT_CPU
-	{ "time",	"seconds",	RLIMIT_CPU,	   1, 't' },
+	{ "time",	"seconds",	't',	RLIMIT_CPU,	   1 },
+#define	OPTSTRING_t	OPTSTRING_BASE "t"
+#else
+#define	OPTSTRING_t	OPTSTRING_BASE
 #endif
 #ifdef RLIMIT_FSIZE
-	{ "file",	"blocks",	RLIMIT_FSIZE,	 512, 'f' },
+	{ "file",	"blocks",	'f',	RLIMIT_FSIZE,	 512 },
+#define	OPTSTRING_f	OPTSTRING_t "f"
+#else
+#define	OPTSTRING_f	OPTSTRING_t
 #endif
 #ifdef RLIMIT_DATA
-	{ "data",	"kbytes",	RLIMIT_DATA,	1024, 'd' },
+	{ "data",	"kbytes",	'd',	RLIMIT_DATA,	1024 },
+#define	OPTSTRING_d	OPTSTRING_f "d"
+#else
+#define	OPTSTRING_d	OPTSTRING_f
 #endif
 #ifdef RLIMIT_STACK
-	{ "stack",	"kbytes",	RLIMIT_STACK,	1024, 's' },
+	{ "stack",	"kbytes",	's',	RLIMIT_STACK,	1024 },
+#define	OPTSTRING_s	OPTSTRING_d "s"
+#else
+#define	OPTSTRING_s	OPTSTRING_d
 #endif
 #ifdef RLIMIT_CORE
-	{ "coredump",	"blocks",	RLIMIT_CORE,	 512, 'c' },
+	{ "coredump",	"blocks",	'c',	RLIMIT_CORE,	 512 },
+#define	OPTSTRING_c	OPTSTRING_s "c"
+#else
+#define	OPTSTRING_c	OPTSTRING_s
 #endif
 #ifdef RLIMIT_RSS
-	{ "memory",	"kbytes",	RLIMIT_RSS,	1024, 'm' },
+	{ "memory",	"kbytes",	'm',	RLIMIT_RSS,	1024 },
+#define	OPTSTRING_m	OPTSTRING_c "m"
+#else
+#define	OPTSTRING_m	OPTSTRING_c
 #endif
 #ifdef RLIMIT_MEMLOCK
-	{ "locked memory","kbytes",	RLIMIT_MEMLOCK, 1024, 'l' },
+	{ "locked memory","kbytes",	'l',	RLIMIT_MEMLOCK, 1024 },
+#define	OPTSTRING_l	OPTSTRING_m "l"
+#else
+#define	OPTSTRING_l	OPTSTRING_m
 #endif
 #ifdef RLIMIT_NTHR
-	{ "thread",	"threads",	RLIMIT_NTHR,       1, 'r' },
+	{ "thread",	"threads",	'r',	RLIMIT_NTHR,       1 },
+#define	OPTSTRING_r	OPTSTRING_l "r"
+#else
+#define	OPTSTRING_r	OPTSTRING_l
 #endif
 #ifdef RLIMIT_NPROC
-	{ "process",	"processes",	RLIMIT_NPROC,      1, 'p' },
+	{ "process",	"processes",	'p',	RLIMIT_NPROC,      1 },
+#define	OPTSTRING_p	OPTSTRING_r "p"
+#else
+#define	OPTSTRING_p	OPTSTRING_r
 #endif
 #ifdef RLIMIT_NOFILE
-	{ "nofiles",	"descriptors",	RLIMIT_NOFILE,     1, 'n' },
+	{ "nofiles",	"descriptors",	'n',	RLIMIT_NOFILE,     1 },
+#define	OPTSTRING_n	OPTSTRING_p "n"
+#else
+#define	OPTSTRING_n	OPTSTRING_p
 #endif
 #ifdef RLIMIT_VMEM
-	{ "vmemory",	"kbytes",	RLIMIT_VMEM,	1024, 'v' },
+	{ "vmemory",	"kbytes",	'v',	RLIMIT_VMEM,	1024 },
+#define	OPTSTRING_v	OPTSTRING_n "v"
+#else
+#define	OPTSTRING_v	OPTSTRING_n
 #endif
 #ifdef RLIMIT_SWAP
-	{ "swap",	"kbytes",	RLIMIT_SWAP,	1024, 'w' },
+	{ "swap",	"kbytes",	'w',	RLIMIT_SWAP,	1024 },
+#define	OPTSTRING_w	OPTSTRING_v "w"
+#else
+#define	OPTSTRING_w	OPTSTRING_v
 #endif
 #ifdef RLIMIT_SBSIZE
-	{ "sbsize",	"bytes",	RLIMIT_SBSIZE,	   1, 'b' },
+	{ "sbsize",	"bytes",	'b',	RLIMIT_SBSIZE,	   1 },
+#define	OPTSTRING_b	OPTSTRING_w "b"
+#else
+#define	OPTSTRING_b	OPTSTRING_w
 #endif
-	{ NULL,		NULL,		0,		   0,  '\0' }
+	{ NULL,		NULL,		'\0',	0,		   0 }
 };
+#define	OPTSTRING	OPTSTRING_b
 
 int
 ulimitcmd(int argc, char **argv)
@@ -377,7 +419,7 @@ ulimitcmd(int argc, char **argv)
 	struct rlimit	limit;
 
 	what = 'f';
-	while ((optc = nextopt("HSabtfdscmlrpnv")) != '\0')
+	while ((optc = nextopt(OPTSTRING)) != '\0')
 		switch (optc) {
 		case 'H':
 			how |= HARD;
@@ -413,16 +455,16 @@ ulimitcmd(int argc, char **argv)
 
 			while ((c = *p++) >= '0' && c <= '9') {
 				if (val >= RLIM_INFINITY/10)
-					error("value overflow");
+					error("%s: value overflow", *argptr);
 				val = (val * 10);
 				if (val >= RLIM_INFINITY - (long)(c - '0'))
-					error("value overflow");
+					error("%s: value overflow", *argptr);
 				val += (long)(c - '0');
 			}
 			if (c)
-				error("bad number");
+				error("%s: bad number", *argptr);
 			if (val > RLIM_INFINITY / l->factor)
-				error("value overflow");
+				error("%s: value overflow", *argptr);
 			val *= l->factor;
 		}
 	} else if (how == 0)
