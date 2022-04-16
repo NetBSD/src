@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.90 2022/04/15 16:08:39 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.91 2022/04/16 00:15:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.90 2022/04/15 16:08:39 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.91 2022/04/16 00:15:47 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -157,6 +157,16 @@ list_add(char ***lstp, const char *s)
 {
 
 	list_add_ref(lstp, xstrdup(s));
+}
+
+static void
+list_add_unique(char ***lstp, const char *s)
+{
+
+	for (char **p = *lstp; *p != NULL; p++)
+		if (strcmp(*p, s) == 0)
+			return;
+	list_add(lstp, s);
 }
 
 static void
@@ -516,7 +526,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'l':
-			list_add(&libs, optarg);
+			list_add_unique(&libs, optarg);
 			break;
 
 		case 'o':
@@ -530,7 +540,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'L':
-			list_add(&libsrchpath, optarg);
+			list_add_unique(&libsrchpath, optarg);
 			break;
 
 		case 'B':
@@ -577,10 +587,10 @@ main(int argc, char *argv[])
 			}
 
 			if (arg[2] != '\0')
-				list_add(list, arg + 2);
+				list_add_unique(list, arg + 2);
 			else if (argc > 1) {
 				argc--;
-				list_add(list, *++argv);
+				list_add_unique(list, *++argv);
 			} else
 				usage("Missing argument for l or L");
 		} else {
