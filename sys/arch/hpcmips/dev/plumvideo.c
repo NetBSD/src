@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.43 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.44 2022/04/16 17:35:57 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.43 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.44 2022/04/16 17:35:57 andvar Exp $");
 
 #undef PLUMVIDEODEBUG
 
@@ -356,7 +356,7 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 	chip->vc_fbdepth = bpp;
 
 	/*
-	 * Get display size from WindowsCE setted.
+	 * Get display size from WindowsCE set.
 	 */
 	chip->vc_fbwidth = width = bootinfo->fb_width = 
 	    plum_conf_read(regt, regh, PLUM_VIDEO_PLHPX_REG) + 1;
