@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.594 2022/03/24 02:24:24 manu Exp $
+# $NetBSD: GENERIC,v 1.595 2022/04/16 11:57:46 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.594 $"
+#ident		"GENERIC-$Revision: 1.595 $"
 
 maxusers	64		# estimated number of users
 
@@ -250,7 +250,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
-#options 	HDAUDIOVERBOSE	# verbose HDAUDIO driver messages
+options 	HDAUDIOVERBOSE	# human readable HDAUDIO device names
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
