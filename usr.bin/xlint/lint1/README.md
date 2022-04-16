@@ -1,8 +1,17 @@
-[//]: # ($NetBSD: README.md,v 1.2 2022/04/13 22:58:18 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.3 2022/04/16 09:18:33 rillig Exp $)
 
 # Introduction
 
-To learn how a specific message is triggered, read the corresponding unit
+Lint1 analyzes a single translation unit of C code.
+
+* It reads the output of the C preprocessor, comments are retained.
+* The lexer in `scan.l` and `lex.c` splits the input into tokens.
+* The parser in `cgram.y` creates types and expressions from the tokens.
+* It checks declarations in `decl.c`.
+* It checks initializations in `init.c`.
+* It checks types and expressions in `tree.c`.
+
+To see how a specific lint message is triggered, read the corresponding unit
 test in `tests/usr.bin/xlint/lint1/msg_???.c`.
 
 # Features
@@ -16,7 +25,8 @@ see the test `msg_135.c` for examples.
 ## Control flow analysis
 
 Lint roughly tracks the control flow inside a single function.
-It doesn't follow `goto` statements though.
+It doesn't follow `goto` statements precisely though,
+it rather assumes that each label is reachable.
 See the test `msg_193.c` for examples.
 
 ## Error handling
@@ -24,6 +34,7 @@ See the test `msg_193.c` for examples.
 Lint tries to continue parsing and checking even after seeing errors.
 This part of lint is not robust though, so expect some crashes here,
 as variables may not be properly initialized or be null pointers.
+The cleanup after handling a parse error is often incomplete.
 
 # Fundamental types
 
@@ -33,15 +44,17 @@ Each node has a type (`type_t`) and a few other properties.
 
 ## type_t
 
-The basic types are `int`, `_Bool`, `unsigned long`, and so on.
-A basic type is created by `gettyp(INT)`.
-Derived types are created by `block_derive_pointer`,
+The elementary types are `int`, `_Bool`, `unsigned long`, `pointer` and so on,
+as defined in `tspec_t`.
+
+Actual types like `int`, `const char *` are created by `gettyp(INT)`,
+or by deriving new types from existing types, using `block_derive_pointer`,
 `block_derive_array` and `block_derive_function`.
 (See [below](#memory-management) for the meaning of the prefix `block_`.)
 
 After a type has been created, it should not be modified anymore.
 Ideally all references to types would be `const`, but that's a lot of work.
-Until that is implemented, before modifying a type,
+Before modifying a type,
 it needs to be copied using `block_dup_type` or `expr_dup_type`.
 
 ## tnode_t
@@ -59,7 +72,10 @@ Some examples for operators:
 | UPLUS    | the unary operator `+tn_left`                           |
 | PLUS     | the binary operator `tn_left + tn_right`                |
 | CALL     | a function call, typically CALL(LOAD(NAME("function"))) |
+| ICALL    | an indirect function call                               |
 | CVT      | an implicit conversion or an explicit cast              |
+
+See `debug_node` for how to interpret the members of `tnode_t`.
 
 ## sym_t
 
@@ -98,18 +114,20 @@ See `expr_free_all`.
 | stp  | `type_t`  | the subtype of a pointer, array or function          |
 | tn   | `tnode_t` | a tree node, mostly used for expressions             |
 | op   | `op_t`    | an operator used in an expression                    |
-| ln   | `tnode_t` | the left-hand side operand of a binary operator      |
-| rn   | `tnode_t` | the right-hand side operand of a binary operator     |
+| ln   | `tnode_t` | the left-hand operand of a binary operator           |
+| rn   | `tnode_t` | the right-hand operand of a binary operator          |
 | sym  | `sym_t`   | a symbol from the symbol table                       |
 
-# Abbreviations
+# Abbreviations in variable names
 
-| Abbr | Expanded |
-|------|----------|
-| l    | left     |
-| r    | right    |
-| st   | subtype  |
-| op   | operator |
+| Abbr | Expanded                                    |
+|------|---------------------------------------------|
+| l    | left                                        |
+| r    | right                                       |
+| o    | old (during type conversions)               |
+| n    | new (during type conversions)               |
+| op   | operator                                    |
+| arg  | the number of the argument, for diagnostics |
 
 # Debugging
 
@@ -151,4 +169,7 @@ Most other tests focus on a single feature.
 ## Adding a new test
 
 1. Run `make -C tests/usr.bin/xlint/lint1 add-test NAME=test_name`.
-2. Run `cvs commit distrib/sets/lists/tests/mi tests/usr.bin/xlint`.
+2. Sort the `FILES` lines in `tests/usr.bin/xlint/lint1/Makefile`.
+3. Make the test generate the desired diagnostics.
+4. Run `cd tests/usr.bin/xlint/lint1 && sh ./accept.sh test_name`.
+6. Run `cvs commit distrib/sets/lists/tests/mi tests/usr.bin/xlint`.
