@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.154 2022/04/09 23:41:22 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.155 2022/04/16 13:25:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,23 +37,40 @@
 extern	int	aflag;
 extern	bool	bflag;
 extern	bool	cflag;
-extern	bool	c11flag;
 extern	bool	eflag;
 extern	bool	Fflag;
-extern	bool	gflag;
 extern	bool	hflag;
 extern	bool	pflag;
 extern	bool	rflag;
-extern	bool	sflag;
-extern	bool	tflag;
 extern	bool	uflag;
 extern	bool	vflag;
 extern	bool	yflag;
 extern	bool	wflag;
 extern	bool	zflag;
-extern	bool	Sflag;
 extern	bool	Tflag;
 extern	bool	Pflag;
+
+extern	bool	allow_trad;
+extern	bool	allow_c90;
+extern	bool	allow_c99;
+extern	bool	allow_c11;
+extern	bool	allow_gcc;
+
+/*
+ * TODO: Replace the old flags with the new expressions, checking in each
+ * case whether the specific condition still makes sense.  When lint was
+ * invented in 1995, it did not know about C99 mode, which makes all
+ * conditions involving tflag and sflag suspicious.
+ *
+ * In 1995, gflag meant "C90 plus GCC extensions".  That definition needs to
+ * be extended to C99 and later as well to properly match "C99 + GCC" or "C11
+ * + GCC".
+ */
+#define tflag	(allow_trad && !allow_c90)
+#define sflag	(!allow_trad && !allow_c99)
+#define Sflag	(!!allow_c99)
+#define c11flag	(!!allow_c11)
+#define gflag	(!!allow_gcc)
 
 extern	void	norecover(void);
 
