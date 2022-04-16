@@ -1,4 +1,4 @@
-/*	$NetBSD: ops.def,v 1.25 2021/09/10 20:02:50 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.26 2022/04/16 21:14:33 rillig Exp $ */
 
 begin_ops()
 
@@ -14,8 +14,8 @@ begin_ops()
  *	warn if left operand unsigned			  x	|
  *	has side effects	- - - - - - - - - - - - x	|
  *	balance operands			      x	|	|
- *	left test context			    x	|	|
- *	left value context			  x	|	|
+ *	test context				    x	|	|
+ *	value context				  x	|	|
  *	fold constant operands	- - - - - - - - x	|	|
  *	requires scalar			      x	|	|	|
  *	requires arithmetic		    x	|	|	|
