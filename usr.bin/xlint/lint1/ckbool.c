@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.12 2022/04/09 15:43:41 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.13 2022/04/16 22:21:10 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckbool.c,v 1.12 2022/04/09 15:43:41 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.13 2022/04/16 22:21:10 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -156,7 +156,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 	    !typeok_strict_bool_binary_compatible(op, arg, ln, lt, rn, rt))
 		return false;
 
-	if (mp->m_requires_bool || op == QUEST) {
+	if (mp->m_requires_bool) {
 		bool binary = mp->m_binary;
 		bool lbool = is_typeok_bool_operand(ln);
 		bool ok = true;
