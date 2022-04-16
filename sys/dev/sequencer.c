@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.78 2022/04/16 11:13:01 riastradh Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.79 2022/04/16 11:13:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.78 2022/04/16 11:13:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.79 2022/04/16 11:13:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -1466,7 +1466,9 @@ midiseq_open(int unit, int flags)
 	if ((mi.props & MIDI_PROP_CAN_INPUT) == 0)
 	        flags &= ~FREAD;
 	if ((flags & (FREAD|FWRITE)) == 0) {
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		VOP_CLOSE(vp, oflags, kauth_cred_get());
+		VOP_UNLOCK(vp);
 		vrele(vp);
 	        return NULL;
 	}
