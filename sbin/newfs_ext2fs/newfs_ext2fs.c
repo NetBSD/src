@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.10 2019/03/06 05:11:13 mrg Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.11 2022/04/16 18:15:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.10 2019/03/06 05:11:13 mrg Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.11 2022/04/16 18:15:21 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,7 +332,7 @@ main(int argc, char *argv[])
 	    && ftruncate(fso, (off_t)fssize * sectorsize) == -1)
 		err(1, "can't ftruncate %s to %" PRId64, special, fssize);
 
-	if (Zflag && fso != -1) {	/* pre-zero (and de-sparce) the file */
+	if (Zflag && fso != -1) {	/* pre-zero (and de-sparse) the file */
 		char *buf;
 		int bufsize, i;
 		off_t bufrem;

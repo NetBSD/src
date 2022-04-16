@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: swap1,v 1.13 2018/10/19 14:11:12 martin Exp $
+# $NetBSD: swap1,v 1.14 2022/04/16 18:15:20 andvar Exp $
 #
 
 # PROVIDE: localswap
@@ -16,7 +16,7 @@ stop_cmd="swap1_stop"
 dev_free_tmpfs()
 {
 	# Generate a list of tmpfs filesystems that contain no device nodes,
-	# which can presumably be unmounted safetly at shutdown time.
+	# which can presumably be unmounted safely at shutdown time.
 	# Filenames are quoted and the list contains no unquoted newlines,
 	# so that the output can be reparsed as a single argument list.
 	mount -t tmpfs | while read -r line

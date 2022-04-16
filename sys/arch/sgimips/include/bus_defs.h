@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3 2022/04/16 18:15:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 /*
  * Values for sgimips bus space tag, not to be used directly by MI code.
- * XXX these need spacial handling 
+ * XXX these need special handling 
  */
 
 #include <mips/bus_space_defs.h>

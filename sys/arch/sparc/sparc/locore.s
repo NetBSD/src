@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.281 2021/08/09 21:08:06 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.282 2022/04/16 18:15:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4225,7 +4225,7 @@ no_3mmu:
 
 	/*
 	 * Ok, we have a non-Mbus TI Viking, a MicroSparc.
-	 * In this scenerio, in order to play with the MMU
+	 * In this scenario, in order to play with the MMU
 	 * passthrough safely, we need turn off traps, flip
 	 * the AC bit on in the mmu status register, do our
 	 * passthroughs, then restore the mmu reg and %psr

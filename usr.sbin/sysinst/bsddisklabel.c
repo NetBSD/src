@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.59 2021/07/20 16:41:27 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.60 2022/04/16 18:15:23 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1776,7 +1776,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 	have_existing = check_existing_netbsd(parts);
 
 	/*
-	 * Make sure the cylinder size multiplier/divisor and disk sieze are
+	 * Make sure the cylinder size multiplier/divisor and disk size are
 	 * valid
 	 */
 	if (pm->current_cylsize == 0)

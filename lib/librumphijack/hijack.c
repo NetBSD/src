@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.135 2021/09/11 14:22:12 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.136 2022/04/16 18:15:20 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.135 2021/09/11 14:22:12 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.136 2022/04/16 18:15:20 andvar Exp $");
 #endif
 
 #include <sys/param.h>
@@ -957,7 +957,7 @@ rcinit(void)
 	/*
 	 * In theory cannot print anything during lookups because
 	 * we might not have the call vector set up.  so, the errx()
-	 * is a bit of a strech, but it might work.
+	 * is a bit of a stretch, but it might work.
 	 */
 
 	for (i = 0; i < DUALCALL__NUM; i++) {

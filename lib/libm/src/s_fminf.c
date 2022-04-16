@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_fminf.c,v 1.2 2010/03/08 01:05:20 snj Exp $");
+__RCSID("$NetBSD: s_fminf.c,v 1.3 2022/04/16 18:15:20 andvar Exp $");
 #ifdef notdef
 __FBSDID("$FreeBSD: src/lib/msun/src/s_fminf.c,v 1.1 2004/06/30 07:04:01 das Exp $");
 #endif
@@ -50,7 +50,7 @@ fminf(float x, float y)
 	    u[1].sngu_sng.sng_frac != 0)
 		return (x);
 
-	/* Handle comparisons of sng_singed zeroes. */
+	/* Handle comparisons of sng_signed zeroes. */
 	if (u[0].sngu_sng.sng_sign != u[1].sngu_sng.sng_sign)
 		return (u[u[1].sngu_sng.sng_sign].sngu_f);
 

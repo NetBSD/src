@@ -1,4 +1,4 @@
-.\"     $NetBSD: tmac.e,v 1.9 2003/08/07 10:31:32 agc Exp $
+.\"     $NetBSD: tmac.e,v 1.10 2022/04/16 18:15:21 andvar Exp $
 .\"
 .nr _0 \n(.c
 .\" Copyright (c) 1988, 1993
@@ -611,7 +611,7 @@
 .if \\n(.$>1 \
 .	nr $m \\$2
 .if \\n(.$>0 \
-.	nr $s \\$1n		\" param 1: column seperation
+.	nr $s \\$1n		\" param 1: column separation
 .nr $l (\\n(.l-((\\n($m-1)*\\n($s))/\\n($m
 .xl \\n($lu
 .mk _k

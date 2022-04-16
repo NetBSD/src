@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.16 2021/12/25 13:51:31 mlelstv Exp $ */
+/* $NetBSD: edid.c,v 1.17 2022/04/16 18:15:22 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.16 2021/12/25 13:51:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.17 2022/04/16 18:15:22 andvar Exp $");
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -195,7 +195,7 @@ edid_print(struct edid_info *edid)
 		if (edid->edid_video_input & EDID_VIDEO_INPUT_BLANK_TO_BLACK)
 			printf("\tBlank-to-black setup\n");
 		if (edid->edid_video_input & EDID_VIDEO_INPUT_SEPARATE_SYNCS)
-			printf("\tSeperate syncs\n");
+			printf("\tSeparate syncs\n");
 		if (edid->edid_video_input & EDID_VIDEO_INPUT_COMPOSITE_SYNC)
 			printf("\tComposite sync\n");
 		if (edid->edid_video_input & EDID_VIDEO_INPUT_SYNC_ON_GRN)

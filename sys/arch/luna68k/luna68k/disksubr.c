@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.32 2019/04/03 22:10:50 christos Exp $ */
+/* $NetBSD: disksubr.c,v 1.33 2022/04/16 18:15:21 andvar Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2019/04/03 22:10:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2022/04/16 18:15:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,8 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2019/04/03 22:10:50 christos Exp $
  * Mach writedisklabel logic seems to fail when no BSD label is found.
  *
  * Kernel handles disklabel in this way;
- *	- searchs BSD label at offset 64
- *	- if not found, searchs UniOS/ISI label at the end of block
+ *	- searches BSD label at offset 64
+ *	- if not found, searches UniOS/ISI label at the end of block
  *	- kernel can distinguish whether it was SunOS label or UniOS/ISI
  *	  label and understand both
  *	- kernel writes UniOS/ISI label combined with BSD label to update
