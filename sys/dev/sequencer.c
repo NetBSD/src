@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.77 2022/04/16 11:12:21 riastradh Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.78 2022/04/16 11:13:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.77 2022/04/16 11:12:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.78 2022/04/16 11:13:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -243,12 +243,10 @@ sequencerget(int unit)
 {
 	struct sequencer_softc *sc;
 
-	if (unit < 0) {
-#ifdef DIAGNOSTIC
-		panic("%s: unit %d!", __func__, unit);
-#endif
+	KASSERTMSG(unit >= 0, "unit=%d", unit);
+
+	if (unit < 0)
 		return NULL;
-	}
 
 	mutex_enter(&sequencer_lock);
 	LIST_FOREACH(sc, &sequencers, sc_link) {
@@ -1305,12 +1303,7 @@ seq_do_fullsize(struct sequencer_softc *sc, seq_event_t *b, struct uio *uio)
 	struct sysex_info sysex;
 	u_int dev;
 
-#ifdef DIAGNOSTIC
-	if (sizeof(seq_event_rec) != SEQ_SYSEX_HDRSIZE) {
-		printf("seq_do_fullsize: sysex size ??\n");
-		return EINVAL;
-	}
-#endif
+	CTASSERT(sizeof(seq_event_rec) == SEQ_SYSEX_HDRSIZE);
 	memcpy(&sysex, b, sizeof(*b));
 	dev = sysex.device_no;
 	if (/* dev < 0 || */ dev >= sc->nmidi)
