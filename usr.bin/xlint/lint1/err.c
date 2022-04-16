@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.160 2022/04/16 13:25:27 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.161 2022/04/16 15:55:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.160 2022/04/16 13:25:27 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.161 2022/04/16 15:55:10 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -634,14 +634,13 @@ void
 (c99ism)(int msgid, ...)
 {
 	va_list	ap;
-	bool extensions_ok = Sflag || gflag;
+	int severity = (!allow_c99 && !allow_gcc ? 1 : 0) + (sflag ? 1 : 0);
 
 	va_start(ap, msgid);
-	if (sflag && !extensions_ok) {
+	if (severity == 2)
 		verror_at(msgid, &curr_pos, ap);
-	} else if (sflag || !extensions_ok) {
+	if (severity == 1)
 		vwarning_at(msgid, &curr_pos, ap);
-	}
 	va_end(ap);
 }
 
@@ -661,12 +660,12 @@ void
 (gnuism)(int msgid, ...)
 {
 	va_list	ap;
+	int severity = (!allow_gcc ? 1 : 0) + (sflag ? 1 : 0);
 
 	va_start(ap, msgid);
-	if (sflag && !gflag) {
+	if (severity == 2)
 		verror_at(msgid, &curr_pos, ap);
-	} else if (sflag || !gflag) {
+	if (severity == 1)
 		vwarning_at(msgid, &curr_pos, ap);
-	}
 	va_end(ap);
 }
