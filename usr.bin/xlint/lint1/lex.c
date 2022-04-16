@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.121 2022/04/16 19:18:17 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.122 2022/04/16 20:02:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.121 2022/04/16 19:18:17 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.122 2022/04/16 20:02:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -67,24 +67,27 @@ pos_t	csrc_pos = { "", 1, 0 };
 bool in_gcc_attribute;
 bool in_system_header;
 
-#define kwdef(name, token, scl, tspec, tqual,	c90, c99, gcc, attr, deco) \
+/* Valid values for 'since' are 78, 90, 99, 11. */
+#define kwdef(name, token, scl, tspec, tqual,	since, gcc, attr, deco) \
 	{ \
 		name, token, scl, tspec, tqual, \
-		(c90) > 0, (c99) > 0, (gcc) > 0, (attr) > 0, \
+		(since) == 90, \
+		/* CONSTCOND */ (since) == 99 || (since) == 11, \
+		(gcc) > 0, (attr) > 0, \
 		((deco) & 1) != 0, ((deco) & 2) != 0, ((deco) & 4) != 0, \
 	}
-#define kwdef_token(name, token,		c90, c99, gcc, deco) \
-	kwdef(name, token, 0, 0, 0,		c90, c99, gcc, 0, deco)
-#define kwdef_sclass(name, sclass,		c90, c99, gcc, deco) \
-	kwdef(name, T_SCLASS, sclass, 0, 0,	c90, c99, gcc, 0, deco)
-#define kwdef_type(name, tspec,			c90, c99, gcc, deco) \
-	kwdef(name, T_TYPE, 0, tspec, 0,	c90, c99, gcc, 0, deco)
-#define kwdef_tqual(name, tqual,		c90, c99, gcc, deco) \
-	kwdef(name, T_QUAL, 0, 0, tqual,	c90, c99, gcc, 0, deco)
+#define kwdef_token(name, token,		since, gcc, deco) \
+	kwdef(name, token, 0, 0, 0,		since, gcc, 0, deco)
+#define kwdef_sclass(name, sclass,		since, gcc, deco) \
+	kwdef(name, T_SCLASS, sclass, 0, 0,	since, gcc, 0, deco)
+#define kwdef_type(name, tspec,			since, gcc, deco) \
+	kwdef(name, T_TYPE, 0, tspec, 0,	since, gcc, 0, deco)
+#define kwdef_tqual(name, tqual,		since, gcc, deco) \
+	kwdef(name, T_QUAL, 0, 0, tqual,	since, gcc, 0, deco)
 #define kwdef_keyword(name, token) \
-	kwdef(name, token, 0, 0, 0,		0, 0, 0, 0, 1)
+	kwdef(name, token, 0, 0, 0,		78, 0, 0, 1)
 #define kwdef_gcc_attr(name, token) \
-	kwdef(name, token, 0, 0, 0,		0, 0, 1, 1, 5)
+	kwdef(name, token, 0, 0, 0,		78, 1, 1, 5)
 
 /* During initialization, these keywords are written to the symbol table. */
 static const struct keyword {
@@ -97,7 +100,7 @@ static const struct keyword {
 	bool	kw_c90:1;	/* C90 keyword */
 	bool	kw_c99:1;	/* C99 keyword */
 	bool	kw_gcc:1;	/* GCC keyword */
-	bool	kw_attr:1;	/* GCC attribute, keyword */
+	bool	kw_attr:1;	/* GCC attribute */
 	bool	kw_plain:1;	/* 'name' */
 	bool	kw_leading:1;	/* '__name' */
 	bool	kw_both:1;	/* '__name__' */
@@ -106,23 +109,23 @@ static const struct keyword {
 	kwdef_keyword(	"_Alignas",	T_ALIGNAS),
 	kwdef_keyword(	"_Alignof",	T_ALIGNOF),
 	kwdef_gcc_attr(	"aligned",	T_AT_ALIGNED),
-	kwdef_token(	"__alignof__",	T_ALIGNOF,		0,0,0,1),
+	kwdef_token(	"__alignof__",	T_ALIGNOF,		78,0,1),
 	kwdef_gcc_attr(	"alloc_size",	T_AT_ALLOC_SIZE),
 	kwdef_gcc_attr(	"always_inline",T_AT_ALWAYS_INLINE),
-	kwdef_token(	"asm",		T_ASM,			0,0,1,7),
-	kwdef_token(	"attribute",	T_ATTRIBUTE,		0,0,1,6),
-	kwdef_sclass(	"auto",		AUTO,			0,0,0,1),
-	kwdef_type(	"_Bool",	BOOL,			0,1,0,1),
+	kwdef_token(	"asm",		T_ASM,			78,1,7),
+	kwdef_token(	"attribute",	T_ATTRIBUTE,		78,1,6),
+	kwdef_sclass(	"auto",		AUTO,			78,0,1),
+	kwdef_type(	"_Bool",	BOOL,			99,0,1),
 	kwdef_gcc_attr(	"bounded",	T_AT_BOUNDED),
 	kwdef_keyword(	"break",	T_BREAK),
 	kwdef_gcc_attr(	"buffer",	T_AT_BUFFER),
-	kwdef_token(	"__builtin_offsetof", T_BUILTIN_OFFSETOF, 0,0,1,1),
+	kwdef_token(	"__builtin_offsetof", T_BUILTIN_OFFSETOF, 78,1,1),
 	kwdef_keyword(	"case",		T_CASE),
-	kwdef_type(	"char",		CHAR,			0,0,0,1),
+	kwdef_type(	"char",		CHAR,			78,0,1),
 	kwdef_gcc_attr(	"cold",		T_AT_COLD),
 	kwdef_gcc_attr(	"common",	T_AT_COMMON),
-	kwdef_type(	"_Complex",	COMPLEX,		0,1,0,1),
-	kwdef_tqual(	"const",	CONST,			1,0,0,7),
+	kwdef_type(	"_Complex",	COMPLEX,		99,0,1),
+	kwdef_tqual(	"const",	CONST,			90,0,7),
 	kwdef_gcc_attr(	"constructor",	T_AT_CONSTRUCTOR),
 	kwdef_keyword(	"continue",	T_CONTINUE),
 	kwdef_keyword(	"default",	T_DEFAULT),
@@ -131,29 +134,29 @@ static const struct keyword {
 	kwdef_gcc_attr(	"disable_sanitizer_instrumentation",
 	    T_AT_DISABLE_SANITIZER_INSTRUMENTATION),
 	kwdef_keyword(	"do",		T_DO),
-	kwdef_type(	"double",	DOUBLE,			0,0,0,1),
+	kwdef_type(	"double",	DOUBLE,			78,0,1),
 	kwdef_keyword(	"else",		T_ELSE),
 	kwdef_keyword(	"enum",		T_ENUM),
-	kwdef_token(	"__extension__",T_EXTENSION,		0,0,1,1),
-	kwdef_sclass(	"extern",	EXTERN,			0,0,0,1),
+	kwdef_token(	"__extension__",T_EXTENSION,		78,1,1),
+	kwdef_sclass(	"extern",	EXTERN,			78,0,1),
 	kwdef_gcc_attr(	"fallthrough",	T_AT_FALLTHROUGH),
-	kwdef_type(	"float",	FLOAT,			0,0,0,1),
+	kwdef_type(	"float",	FLOAT,			78,0,1),
 	kwdef_keyword(	"for",		T_FOR),
 	kwdef_gcc_attr(	"format",	T_AT_FORMAT),
 	kwdef_gcc_attr(	"format_arg",	T_AT_FORMAT_ARG),
-	kwdef_token(	"_Generic",	T_GENERIC,		0,1,0,1),
+	kwdef_token(	"_Generic",	T_GENERIC,		11,0,1),
 	kwdef_gcc_attr(	"gnu_inline",	T_AT_GNU_INLINE),
 	kwdef_gcc_attr(	"gnu_printf",	T_AT_FORMAT_GNU_PRINTF),
 	kwdef_keyword(	"goto",		T_GOTO),
 	kwdef_gcc_attr(	"hot",		T_AT_HOT),
 	kwdef_keyword(	"if",		T_IF),
-	kwdef_token(	"__imag__",	T_IMAG,			0,0,1,1),
-	kwdef_sclass(	"inline",	INLINE,			0,1,0,7),
-	kwdef_type(	"int",		INT,			0,0,0,1),
+	kwdef_token(	"__imag__",	T_IMAG,			78,1,1),
+	kwdef_sclass(	"inline",	INLINE,			99,0,7),
+	kwdef_type(	"int",		INT,			78,0,1),
 #ifdef INT128_SIZE
-	kwdef_type(	"__int128_t",	INT128,			0,1,0,1),
+	kwdef_type(	"__int128_t",	INT128,			99,0,1),
 #endif
-	kwdef_type(	"long",		LONG,			0,0,0,1),
+	kwdef_type(	"long",		LONG,			78,0,1),
 	kwdef_gcc_attr(	"malloc",	T_AT_MALLOC),
 	kwdef_gcc_attr(	"may_alias",	T_AT_MAY_ALIAS),
 	kwdef_gcc_attr(	"minbytes",	T_AT_MINBYTES),
@@ -165,59 +168,59 @@ static const struct keyword {
 	kwdef_gcc_attr(	"noinline",	T_AT_NOINLINE),
 	kwdef_gcc_attr(	"nonnull",	T_AT_NONNULL),
 	kwdef_gcc_attr(	"nonstring",	T_AT_NONSTRING),
-	kwdef_token(	"_Noreturn",	T_NORETURN,		0,1,0,1),
+	kwdef_token(	"_Noreturn",	T_NORETURN,		11,0,1),
 	kwdef_gcc_attr(	"noreturn",	T_AT_NORETURN),
 	kwdef_gcc_attr(	"nothrow",	T_AT_NOTHROW),
 	kwdef_gcc_attr(	"optimize",	T_AT_OPTIMIZE),
 	kwdef_gcc_attr(	"optnone",	T_AT_OPTNONE),
 	kwdef_gcc_attr(	"packed",	T_AT_PACKED),
-	kwdef_token(	"__packed",	T_PACKED,		0,0,0,1),
+	kwdef_token(	"__packed",	T_PACKED,		78,0,1),
 	kwdef_gcc_attr(	"pcs",		T_AT_PCS),
 	kwdef_gcc_attr(	"printf",	T_AT_FORMAT_PRINTF),
 	kwdef_gcc_attr(	"pure",		T_AT_PURE),
-	kwdef_token(	"__real__",	T_REAL,			0,0,1,1),
-	kwdef_sclass(	"register",	REG,			0,0,0,1),
+	kwdef_token(	"__real__",	T_REAL,			78,1,1),
+	kwdef_sclass(	"register",	REG,			78,0,1),
 	kwdef_gcc_attr(	"regparm",	T_AT_REGPARM),
-	kwdef_tqual(	"restrict",	RESTRICT,		0,1,0,7),
+	kwdef_tqual(	"restrict",	RESTRICT,		99,0,7),
 	kwdef_keyword(	"return",	T_RETURN),
 	kwdef_gcc_attr(	"returns_nonnull",T_AT_RETURNS_NONNULL),
 	kwdef_gcc_attr(	"returns_twice",T_AT_RETURNS_TWICE),
 	kwdef_gcc_attr(	"scanf",	T_AT_FORMAT_SCANF),
-	kwdef(		"section",	T_AT_SECTION,		0,0,0,0,0,1,1,7),
+	kwdef(		"section",	T_AT_SECTION,	0,0,0,	78,1,1,7),
 	kwdef_gcc_attr(	"sentinel",	T_AT_SENTINEL),
-	kwdef_type(	"short",	SHORT,			0,0,0,1),
-	kwdef_type(	"signed",	SIGNED,			1,0,0,3),
+	kwdef_type(	"short",	SHORT,			78,0,1),
+	kwdef_type(	"signed",	SIGNED,			90,0,3),
 	kwdef_keyword(	"sizeof",	T_SIZEOF),
-	kwdef_sclass(	"static",	STATIC,			0,0,0,1),
+	kwdef_sclass(	"static",	STATIC,			78,0,1),
 	kwdef_keyword(	"_Static_assert",	T_STATIC_ASSERT),
 	kwdef_gcc_attr(	"strfmon",	T_AT_FORMAT_STRFMON),
 	kwdef_gcc_attr(	"strftime",	T_AT_FORMAT_STRFTIME),
 	kwdef_gcc_attr(	"string",	T_AT_STRING),
-	kwdef("struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	0,0,0,0,1),
+	kwdef("struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	78,0,0,1),
 	kwdef_keyword(	"switch",	T_SWITCH),
-	kwdef_token(	"__symbolrename",	T_SYMBOLRENAME,	0,0,0,1),
+	kwdef_token(	"__symbolrename",	T_SYMBOLRENAME,	78,0,1),
 	kwdef_gcc_attr(	"syslog",	T_AT_FORMAT_SYSLOG),
 	kwdef_gcc_attr(	"target",	T_AT_TARGET),
-	kwdef_tqual(	"__thread",	THREAD,			0,0,1,1),
-	kwdef_tqual(	"_Thread_local", THREAD,		0,1,0,1),
+	kwdef_tqual(	"__thread",	THREAD,			78,1,1),
+	kwdef_tqual(	"_Thread_local", THREAD,		11,0,1),
 	kwdef_gcc_attr(	"tls_model",	T_AT_TLS_MODEL),
 	kwdef_gcc_attr(	"transparent_union", T_AT_TUNION),
-	kwdef_sclass(	"typedef",	TYPEDEF,		0,0,0,1),
-	kwdef_token(	"typeof",	T_TYPEOF,		0,0,1,7),
+	kwdef_sclass(	"typedef",	TYPEDEF,		78,0,1),
+	kwdef_token(	"typeof",	T_TYPEOF,		78,1,7),
 #ifdef INT128_SIZE
-	kwdef_type(	"__uint128_t",	UINT128,		0,1,0,1),
+	kwdef_type(	"__uint128_t",	UINT128,		99,0,1),
 #endif
-	kwdef("union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	0,0,0,0,1),
-	kwdef_type(	"unsigned",	UNSIGN,			0,0,0,1),
+	kwdef("union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	78,0,0,1),
+	kwdef_type(	"unsigned",	UNSIGN,			78,0,1),
 	kwdef_gcc_attr(	"unused",	T_AT_UNUSED),
 	kwdef_gcc_attr(	"used",		T_AT_USED),
 	kwdef_gcc_attr(	"visibility",	T_AT_VISIBILITY),
-	kwdef_type(	"void",		VOID,			0,0,0,1),
-	kwdef_tqual(	"volatile",	VOLATILE,		1,0,0,7),
+	kwdef_type(	"void",		VOID,			78,0,1),
+	kwdef_tqual(	"volatile",	VOLATILE,		90,0,7),
 	kwdef_gcc_attr(	"warn_unused_result", T_AT_WARN_UNUSED_RESULT),
 	kwdef_gcc_attr(	"weak",		T_AT_WEAK),
 	kwdef_keyword(	"while",	T_WHILE),
-	kwdef(NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+	kwdef(NULL, 0, 0, 0, 0, 0, 0, 0, 0),
 #undef kwdef
 #undef kwdef_token
 #undef kwdef_sclass

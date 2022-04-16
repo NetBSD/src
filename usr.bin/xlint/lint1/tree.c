@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.429 2022/04/16 19:18:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.430 2022/04/16 20:02:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.429 2022/04/16 19:18:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.430 2022/04/16 20:02:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -668,7 +668,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 
 	/*
 	 * Print a warning if one of the operands is in a context where
-	 * it is compared with null and if this operand is a constant.
+	 * it is compared with zero and if this operand is a constant.
 	 */
 	if (mp->m_left_test_context) {
 		if (ln->tn_op == CON ||
