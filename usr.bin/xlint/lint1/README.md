@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.3 2022/04/16 09:18:33 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.4 2022/04/16 20:18:51 rillig Exp $)
 
 # Introduction
 
@@ -168,8 +168,8 @@ Most other tests focus on a single feature.
 
 ## Adding a new test
 
-1. Run `make -C tests/usr.bin/xlint/lint1 add-test NAME=test_name`.
-2. Sort the `FILES` lines in `tests/usr.bin/xlint/lint1/Makefile`.
+1. Run `make add-test NAME=test_name`.
+2. Sort the `FILES` lines in `../../tests/usr.bin/xlint/lint1/Makefile`.
 3. Make the test generate the desired diagnostics.
-4. Run `cd tests/usr.bin/xlint/lint1 && sh ./accept.sh test_name`.
-6. Run `cvs commit distrib/sets/lists/tests/mi tests/usr.bin/xlint`.
+4. Run `cd ../../tests/usr.bin/xlint/lint1 && sh ./accept.sh test_name`.
+5. Run `cd ../.. && cvs commit distrib/sets/lists/tests/mi tests/usr.bin/xlint`.
