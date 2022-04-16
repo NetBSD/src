@@ -132,9 +132,7 @@ vdev_disk_flush(struct work *work, void *cookie)
 	KASSERT(vp == dvd->vd_vp);
 
 	cmd = 1;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_IOCTL(vp, DIOCCACHESYNC, &cmd, FREAD|FWRITE, kcred);
-	VOP_UNLOCK(vp, 0);
 	bp->b_error = error;
 	vdev_disk_io_intr(bp);
 }
