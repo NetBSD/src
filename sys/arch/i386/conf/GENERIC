@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1237 2021/05/17 04:07:43 yamaguchi Exp $
+# $NetBSD: GENERIC,v 1.1238 2022/04/16 11:57:46 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1237 $"
+#ident		"GENERIC-$Revision: 1.1238 $"
 
 maxusers	64		# estimated number of users
 
@@ -211,7 +211,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 #options 	MCAVERBOSE	# verbose MCA device autoconfig messages
-#options 	HDAUDIOVERBOSE	# verbose HDAUDIO driver messages
+options 	HDAUDIOVERBOSE	# human readable HDAUDIO device names
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
