@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.119 2022/04/08 21:29:29 rillig Exp $
+# $NetBSD: Makefile,v 1.120 2022/04/16 20:18:52 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	348		# see lint1/err.c
@@ -17,8 +17,6 @@ archsubdir.sh:
 	@echo archsubdir=${ARCHSUBDIR} >${.TARGET}
 
 FILESDIR=	${TESTSDIR}
-FILES+=		msg_259_c90.c
-FILES+=		msg_259_c90.exp
 FILES+=		c11_generic_expression.c
 FILES+=		c11_generic_expression.exp
 FILES+=		c90.c
@@ -30,14 +28,14 @@ FILES+=		c99_init_designator.c
 FILES+=		c99_init_designator.exp
 FILES+=		d_alignof.c
 FILES+=		d_bltinoffsetof.c
+FILES+=		d_c99_anon_struct.c
+FILES+=		d_c99_anon_union.c
 FILES+=		d_c99_bool.c
 FILES+=		d_c99_bool.exp
 FILES+=		d_c99_bool_strict.c
 FILES+=		d_c99_bool_strict.exp
 FILES+=		d_c99_bool_strict_syshdr.c
 FILES+=		d_c99_bool_strict_syshdr.exp
-FILES+=		d_c99_anon_struct.c
-FILES+=		d_c99_anon_union.c
 FILES+=		d_c99_complex_num.c
 FILES+=		d_c99_complex_split.c
 FILES+=		d_c99_complex_split.exp
@@ -217,14 +215,16 @@ FILES+=		lex_wide_char.exp
 FILES+=		lex_wide_string.c
 FILES+=		lex_wide_string.exp
 FILES+=		${MSG_FILES}
-FILES+=		msg_001_c90.c
-FILES+=		msg_001_c90.exp
 FILES+=		msg_000_c90.c
 FILES+=		msg_000_c90.exp
+FILES+=		msg_001_c90.c
+FILES+=		msg_001_c90.exp
 FILES+=		msg_132_ilp32.c
 FILES+=		msg_132_ilp32.exp
 FILES+=		msg_230_uchar.c
 FILES+=		msg_230_uchar.exp
+FILES+=		msg_259_c90.c
+FILES+=		msg_259_c90.exp
 FILES+=		msg_259_ilp32.c
 FILES+=		msg_259_ilp32.exp
 FILES+=		msg_272_c90.c
