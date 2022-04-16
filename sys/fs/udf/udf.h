@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.52 2016/05/24 09:55:57 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.53 2022/04/16 18:15:22 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -199,7 +199,7 @@ VFS_PROTOS(udf);
 			"\7APPENDONLY_LVINT\10WRITE_METAPART_NODES"
 
 /* logical volume error handling actions */
-#define UDF_UPDATE_TRACKINFO	  0x01	/* update trackinfo and re-shedule   */
+#define UDF_UPDATE_TRACKINFO	  0x01	/* update trackinfo and re-schedule  */
 #define UDF_REMAP_BLOCK		  0x02	/* remap the failing block length    */
 #define UDFONERROR_BITS "\20\1UPDATE_TRACKINFO\2REMAP_BLOCK"
 

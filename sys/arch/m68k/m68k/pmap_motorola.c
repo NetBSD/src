@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.75 2021/10/12 08:36:28 andvar Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.76 2022/04/16 18:15:21 andvar Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.75 2021/10/12 08:36:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.76 2022/04/16 18:15:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
 #ifdef CACHE_HAVE_VAC
-u_int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
+u_int		pmap_aliasmask;	/* separation at which VA aliasing ok */
 #endif
 #if defined(M68040) || defined(M68060)
 u_int		protostfree;	/* prototype (default) free ST map */

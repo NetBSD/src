@@ -1,4 +1,4 @@
-/* $NetBSD: t_condwait.c,v 1.8 2019/08/11 11:42:23 martin Exp $ */
+/* $NetBSD: t_condwait.c,v 1.9 2022/04/16 18:15:22 andvar Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_condwait.c,v 1.8 2019/08/11 11:42:23 martin Exp $");
+__RCSID("$NetBSD: t_condwait.c,v 1.9 2022/04/16 18:15:22 andvar Exp $");
 
 #include <sys/time.h>
 #include <errno.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: t_condwait.c,v 1.8 2019/08/11 11:42:23 martin Exp $");
 
 #include "h_common.h"
 
-#define WAITTIME 2	/* Timeout wait secound */
+#define WAITTIME 2	/* Timeout wait in seconds */
 
 static const int debug = 1;
 

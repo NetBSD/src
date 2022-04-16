@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.21 2022/04/06 22:01:45 mlelstv Exp $ */
+/* $NetBSD: xhcireg.h,v 1.22 2022/04/16 18:15:22 andvar Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -53,7 +53,7 @@
 #define	 XHCI_HCIVERSION_1_1	0x0110	/* xHCI version 1.1 */
 #define	 XHCI_HCIVERSION_1_2	0x0120	/* xHCI version 1.2 */
 
-#define	XHCI_HCSPARAMS1		0x04	/* RO structual parameters 1 */
+#define	XHCI_HCSPARAMS1		0x04	/* RO structural parameters 1 */
 #define	 XHCI_HCS1_MAXSLOTS_MASK	__BITS(7, 0)
 #define	 XHCI_HCS1_MAXSLOTS(x)		__SHIFTOUT((x), XHCI_HCS1_MAXSLOTS_MASK)
 #define	 XHCI_HCS1_MAXINTRS_MASK	__BITS(18, 8)
@@ -61,7 +61,7 @@
 #define	 XHCI_HCS1_MAXPORTS_MASK	__BITS(31, 24)
 #define	 XHCI_HCS1_MAXPORTS(x)		__SHIFTOUT((x), XHCI_HCS1_MAXPORTS_MASK)
 
-#define	XHCI_HCSPARAMS2		0x08	/* RO structual parameters 2 */
+#define	XHCI_HCSPARAMS2		0x08	/* RO structural parameters 2 */
 #define	 XHCI_HCS2_IST_MASK	__BITS(3, 0)
 #define	 XHCI_HCS2_IST(x)	__SHIFTOUT((x), XHCI_HCS2_IST_MASK)
 #define	 XHCI_HCS2_ERSTMAX_MASK	__BITS(7, 4)
@@ -74,7 +74,7 @@
     (__SHIFTOUT((x), XHCI_HCS2_SPBUFHI_MASK) << 5) | \
     (__SHIFTOUT((x), XHCI_HCS2_SPBUFLO_MASK))
 
-#define	XHCI_HCSPARAMS3		0x0c	/* RO structual parameters 3 */
+#define	XHCI_HCSPARAMS3		0x0c	/* RO structural parameters 3 */
 #define	 XHCI_HCS3_U1_DEL_MASK	__BITS(7, 0)
 #define	 XHCI_HCS3_U1_DEL(x)	__SHIFTOUT((x), XHCI_HCS3_U1_DEL_MASK)
 #define	 XHCI_HCS3_U2_DEL_MASK	__BITS(15, 8)

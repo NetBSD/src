@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.32 2017/07/04 08:11:32 ozaki-r Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.33 2022/04/16 18:15:22 andvar Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -504,7 +504,7 @@ struct sadb_x_nat_t_frag {
 #define SADB_X_EXT_CYCSEQ	0x0040	/* allowing to cyclic sequence. */
 
 	/* three of followings are exclusive flags each them */
-#define SADB_X_EXT_PSEQ		0x0000	/* sequencial padding for ESP */
+#define SADB_X_EXT_PSEQ		0x0000	/* sequential padding for ESP */
 #define SADB_X_EXT_PRAND	0x0100	/* random padding for ESP */
 #define SADB_X_EXT_PZERO	0x0200	/* zero padding for ESP */
 #define SADB_X_EXT_PMASK	0x0300	/* mask for padding flag */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_locl.h,v 1.7 2021/10/15 22:32:28 andvar Exp $	*/
+/*	$NetBSD: bf_locl.h,v 1.8 2022/04/16 18:15:21 andvar Exp $	*/
 /*	$KAME: bf_locl.h,v 1.5 2000/08/31 06:03:48 itojun Exp $	*/
 
 /* crypto/bf/bf_local.h */
@@ -211,7 +211,7 @@
 		*(const BF_LONG *)((const unsigned char *)&(S[768])+((R<<BF_3)&BF_M)));
 #else
 
-/* This will always work, even on 64 bit machines and strangly enough,
+/* This will always work, even on 64 bit machines and strangely enough,
  * on the Alpha it is faster than the pointer versions (both 32 and 64
  * versions of BF_LONG) */
 

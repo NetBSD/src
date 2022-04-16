@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsgen_ieee754.c,v 1.3 2012/03/25 19:53:41 christos Exp $	*/
+/*	$NetBSD: fixunsgen_ieee754.c,v 1.4 2022/04/16 18:15:20 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if !defined(FIXUNSNAME) && defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fixunsgen_ieee754.c,v 1.3 2012/03/25 19:53:41 christos Exp $");
+__RCSID("$NetBSD: fixunsgen_ieee754.c,v 1.4 2022/04/16 18:15:20 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stddef.h>
@@ -71,7 +71,7 @@ FIXUNSNAME(__fixunsgen)(int exp, bool sign, size_t mant_dig, size_t fracbits,
 		return 0;
 
 	/*
-	 * This is simplier than it seems.  Basically we are constructing
+	 * This is simpler than it seems.  Basically we are constructing
 	 * fixed binary representation of the floating point number tossing
 	 * away bits that wont be in the modulis we return.
 	 */

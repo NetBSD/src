@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.74 2021/07/27 09:32:55 manu Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.75 2022/04/16 18:15:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.74 2021/07/27 09:32:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.75 2022/04/16 18:15:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ lf_split(struct lockf *lock1, struct lockf *lock2, struct lockf **sparelock)
 	}
 #endif /* LOCKF_DEBUG */
 	/*
-	 * Check to see if spliting into only two pieces.
+	 * Check to see if splitting into only two pieces.
 	 */
 	if (lock1->lf_start == lock2->lf_start) {
 		lock1->lf_start = lock2->lf_end + 1;

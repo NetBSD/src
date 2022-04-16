@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.79 2022/04/13 10:42:12 uwe Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.80 2022/04/16 18:15:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.79 2022/04/13 10:42:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.80 2022/04/16 18:15:22 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1231,7 +1231,7 @@ vioif_stop(struct ifnet *ifp, int disable)
 	/*
 	 * stop all packet processing:
 	 * 1. stop interrupt handlers by rxq_stopping and txq_stopping
-	 * 2. wait for stoping workqueue for packet processing
+	 * 2. wait for stopping workqueue for packet processing
 	 */
 	for (i =0; i < sc->sc_act_nvq_pairs; i++) {
 		txq = &sc->sc_txq[i];
