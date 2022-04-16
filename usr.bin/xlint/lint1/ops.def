@@ -1,4 +1,4 @@
-/*	$NetBSD: ops.def,v 1.27 2022/04/16 21:22:12 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.28 2022/04/16 22:21:10 rillig Exp $ */
 
 begin_ops()
 
@@ -14,7 +14,7 @@ begin_ops()
  *	warn if left operand unsigned			  x	|
  *	has side effects	- - - - - - - - - - - - x	|
  *	balance operands			      x	|	|
- *	test context				    x	|	|
+ *	(unused)				    x	|	|
  *	value context				  x	|	|
  *	fold constant operands	- - - - - - - - x	|	|
  *	requires scalar			      x	|	|	|
@@ -26,11 +26,11 @@ begin_ops()
  *	logical			  x	|	|	|	|
  *	binary			x	|	|	|	|
  */
-/*	name	repr		b l b B i c a s f v t b s l r p c e e =	*/
+/*	name	repr		b l b B i c a s f v - b s l r p c e e =	*/
 op(	NOOP,	"no-op",	 , , , , , , , , , , , , , , , , , , , )
 op(	ARROW,	"->",		1, ,1, , , , , , ,1, , , , , , , , , , )
 op(	POINT,	".",		1, ,1, , , , , , , , , , , , , , , , , )
-op(	NOT,	"!",		 ,1,1,1, , , ,1,1, ,1, , , , , , , ,1, )
+op(	NOT,	"!",		 ,1,1,1, , , ,1,1, , , , , , , , , ,1, )
 op(	COMPL,	"~",		 , , , , ,1, , ,1,1, , , , , , , , ,1,1)
 op(	INC,	"++",		 , , , , , , , , , , , , , , , , , , , )
 op(	DEC,	"--",		 , , , , , , , , , , , , , , , , , , , )
@@ -44,7 +44,7 @@ op(	INDIR,	"*",		 , , , , , , , , ,1, , , , , , , , , , )
 op(	ADDR,	"&",		 , ,1, , , , , , , , , , , , , , , , , )
 /* the operator 'arr[ind]' is translated to '*(arr + ind)' during parsing. */
 
-/*	name	repr		b l b B i c a s f v t b s l r p c e e = */
+/*	name	repr		b l b B i c a s f v - b s l r p c e e =	*/
 op(	MULT,	"*",		1, , , , , ,1, ,1,1, ,1, , ,1, , , ,1,1)
 op(	DIV,	"/",		1, , , , , ,1, ,1,1, ,1, ,1,1, , , ,1,1)
 op(	MOD,	"%",		1, , , ,1, , , ,1,1, ,1, ,1,1, , , ,1,1)
@@ -53,7 +53,7 @@ op(	MINUS,	"-",		1, , , , , , ,1,1,1, ,1, , , , , , ,1, )
 op(	SHL,	"<<",		1, , , ,1, , , ,1,1, , , , , ,1, , ,1,1)
 op(	SHR,	">>",		1, , , ,1, , , ,1,1, , , ,1, ,1, , ,1,1)
 
-/*	name	repr		b l b B i c a s f v t b s l r p c e e = */
+/*	name	repr		b l b B i c a s f v - b s l r p c e e =	*/
 op(	LT,	"<",		1,1, , , , , ,1,1,1, ,1, ,1,1, ,1,1, ,1)
 op(	LE,	"<=",		1,1, , , , , ,1,1,1, ,1, ,1,1, ,1,1, ,1)
 op(	GT,	">",		1,1, , , , , ,1,1,1, ,1, ,1,1, ,1,1, ,1)
@@ -61,16 +61,16 @@ op(	GE,	">=",		1,1, , , , , ,1,1,1, ,1, ,1,1, ,1,1, ,1)
 op(	EQ,	"==",		1,1,1, , , , ,1,1,1, ,1, , , , ,1,1, ,1)
 op(	NE,	"!=",		1,1,1, , , , ,1,1,1, ,1, , , , ,1,1, ,1)
 
-/*	name	repr		b l b B i c a s f v t b s l r p c e e = */
+/*	name	repr		b l b B i c a s f v - b s l r p c e e =	*/
 op(	BITAND,	"&",		1, ,1, ,1, , , ,1,1, ,1, , , ,1, , ,1, )
 op(	BITXOR,	"^",		1, ,1, ,1, , , ,1,1, ,1, , , ,1, , ,1, )
 op(	BITOR,	"|",		1, ,1, ,1, , , ,1,1, ,1, , , ,1, , ,1, )
-op(	LOGAND,	"&&",		1,1,1,1, , , ,1,1, ,1, , , , , , , ,1, )
-op(	LOGOR,	"||",		1,1,1,1, , , ,1,1, ,1, , , , ,1, , ,1, )
-op(	QUEST,	"?",		1, , , , , , , ,1, ,1, , , , , , , , , )
+op(	LOGAND,	"&&",		1,1,1,1, , , ,1,1, , , , , , , , , ,1, )
+op(	LOGOR,	"||",		1,1,1,1, , , ,1,1, , , , , , ,1, , ,1, )
+op(	QUEST,	"?",		1, , ,1, , , , ,1, , , , , , , , , , , )
 op(	COLON,	":",		1, ,1, , , , , , ,1, ,1, , , , , ,1, , )
 
-/*	name	repr		b l b B i c a s f v t b s l r p c e e = */
+/*	name	repr		b l b B i c a s f v - b s l r p c e e =	*/
 op(	ASSIGN,	"=",		1, ,1, , , , , , , , , ,1, , , , ,1, , )
 op(	MULASS,	"*=",		1, , , , , ,1, , , , , ,1, , , , , ,1, )
 op(	DIVASS,	"/=",		1, , , , , ,1, , , , , ,1, ,1, , , ,1, )
@@ -83,7 +83,7 @@ op(	ANDASS,	"&=",		1, ,1, ,1, , , , , , , ,1, , , , , ,1, )
 op(	XORASS,	"^=",		1, ,1, ,1, , , , , , , ,1, , , , , ,1, )
 op(	ORASS,	"|=",		1, ,1, ,1, , , , , , , ,1, , , , , ,1, )
 
-/*	name	repr		b l b B i c a s f v t b s l r p c e e = */
+/*	name	repr		b l b B i c a s f v - b s l r p c e e =	*/
 op(	NAME,	"name",		 , , , , , , , , , , , , , , , , , , , )
 op(	CON,	"constant",	 , , , , , , , , , , , , , , , , , , , )
 op(	STRING,	"string",	 , , , , , , , , , , , , , , , , , , , )
@@ -105,7 +105,7 @@ op(	REAL,	"real",		 , , , , , , , , , , , , , , , , , , , )
 op(	IMAG,	"imag",		 , , , , , , , , , , , , , , , , , , , )
 
 /* INIT, CASE and FARG are pseudo operators that don't appear in the tree. */
-/*	name	repr		b l b B i c a s f v t b s l r p c e e = */
+/*	name	repr		b l b B i c a s f v - b s l r p c e e =	*/
 op(	INIT,	"init",		1, ,1, , , , , , , , , ,1, , , , ,1, , )
 op(	CASE,	"case",		 , , , , , , , , , , , , , , , , , , , )
 /*

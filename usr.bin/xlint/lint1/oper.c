@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.10 2021/08/02 20:58:39 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.11 2022/04/16 22:21:10 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@ const mod_t modtab[NOPS] =
 #define op(name, repr, \
 		is_binary, is_logical, takes_bool, requires_bool, \
 		is_integer, is_complex, is_arithmetic, is_scalar, \
-		can_fold, is_value, is_test, balances_operands, \
+		can_fold, is_value, unused, balances_operands, \
 		side_effects, left_unsigned, right_unsigned, \
 		precedence_confusion, is_comparison, \
 		valid_on_enum, bad_on_enum, warn_if_eq) \
@@ -48,7 +48,7 @@ const mod_t modtab[NOPS] =
 		is_integer	+ 0 > 0, is_complex		+ 0 > 0, \
 		is_arithmetic	+ 0 > 0, is_scalar		+ 0 > 0, \
 		can_fold	+ 0 > 0, is_value		+ 0 > 0, \
-		is_test		+ 0 > 0, balances_operands	+ 0 > 0, \
+		balances_operands + 0 > 0, \
 		side_effects	+ 0 > 0, left_unsigned		+ 0 > 0, \
 		right_unsigned	+ 0 > 0, precedence_confusion	+ 0 > 0, \
 		is_comparison	+ 0 > 0, valid_on_enum		+ 0 > 0, \

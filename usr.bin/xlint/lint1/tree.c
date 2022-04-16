@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.432 2022/04/16 21:14:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.433 2022/04/16 22:21:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.432 2022/04/16 21:14:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.433 2022/04/16 22:21:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -85,7 +85,7 @@ static	tnode_t	*build_colon(bool, tnode_t *, tnode_t *);
 static	tnode_t	*build_assignment(op_t, bool, tnode_t *, tnode_t *);
 static	tnode_t	*plength(type_t *);
 static	tnode_t	*fold(tnode_t *);
-static	tnode_t	*fold_test(tnode_t *);
+static	tnode_t	*fold_bool(tnode_t *);
 static	tnode_t	*fold_float(tnode_t *);
 static	tnode_t	*check_function_arguments(type_t *, tnode_t *);
 static	tnode_t	*check_prototype_argument(int, type_t *, tnode_t *);
@@ -536,7 +536,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	 * Apply class conversions to the left operand, but only if its
 	 * value is needed or it is compared with zero.
 	 */
-	if (mp->m_value_context || mp->m_test_context)
+	if (mp->m_value_context || mp->m_requires_bool)
 		ln = cconv(ln);
 	/*
 	 * The right operand is almost always in a test or value context,
@@ -555,7 +555,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	if (mp->m_comparison)
 		check_integer_comparison(op, ln, rn);
 
-	if (mp->m_value_context || mp->m_test_context)
+	if (mp->m_value_context || mp->m_requires_bool)
 		ln = promote(op, false, ln);
 	if (mp->m_binary && op != ARROW && op != POINT &&
 	    op != ASSIGN && op != RETURN && op != INIT) {
@@ -664,7 +664,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	 * it is compared with zero and if this operand is a constant.
 	 */
 	if (hflag && !constcond_flag &&
-	    mp->m_test_context &&
+	    mp->m_requires_bool &&
 	    (ln->tn_op == CON ||
 	     ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) &&
 	    /* XXX: rn->tn_system_dependent should be checked as well */
@@ -676,8 +676,8 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	/* Fold if the operator requires it */
 	if (mp->m_fold_constant_operands) {
 		if (ln->tn_op == CON && (!mp->m_binary || rn->tn_op == CON)) {
-			if (mp->m_test_context) {
-				ntn = fold_test(ntn);
+			if (mp->m_requires_bool) {
+				ntn = fold_bool(ntn);
 			} else if (is_floating(ntn->tn_type->t_tspec)) {
 				ntn = fold_float(ntn);
 			} else {
@@ -3292,11 +3292,10 @@ fold(tnode_t *tn)
 }
 
 /*
- * Fold constant nodes, as much as is needed for comparing the value with 0
- * (test context, for controlling expressions).
+ * Fold constant nodes, as much as is needed for comparing the value with 0.
  */
 static tnode_t *
-fold_test(tnode_t *tn)
+fold_bool(tnode_t *tn)
 {
 	bool	l, r;
 	val_t	*v;
@@ -3878,7 +3877,7 @@ is_constcond_false(const tnode_t *tn, tspec_t t)
  * memory which is used for the expression.
  */
 void
-expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool is_do_while)
+expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
 {
 
 	if (tn == NULL) {	/* in case of errors */
@@ -3890,13 +3889,13 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool is_do_while)
 	if (dcs->d_kind != DK_EXTERN && !is_do_while)
 		check_statement_reachable();
 
-	check_expr_misc(tn, vctx, tctx, !tctx, false, false, false);
+	check_expr_misc(tn, vctx, cond, !cond, false, false, false);
 	if (tn->tn_op == ASSIGN) {
-		if (hflag && tctx)
+		if (hflag && cond)
 			/* assignment in conditional context */
 			warning(159);
 	} else if (tn->tn_op == CON) {
-		if (hflag && tctx && !constcond_flag &&
+		if (hflag && cond && !constcond_flag &&
 		    !tn->tn_system_dependent &&
 		    !(is_do_while &&
 		      is_constcond_false(tn, tn->tn_type->t_tspec)))
@@ -3908,7 +3907,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool is_do_while)
 		 * for left operands of COMMA this warning is already
 		 * printed
 		 */
-		if (tn->tn_op != COMMA && !vctx && !tctx)
+		if (tn->tn_op != COMMA && !vctx && !cond)
 			check_null_effect(tn);
 	}
 	debug_node(tn);
@@ -4054,18 +4053,18 @@ check_expr_assign(const tnode_t *ln, bool szof)
 
 static void
 check_expr_call(const tnode_t *tn, const tnode_t *ln,
-		bool szof, bool vctx, bool tctx, bool retval_discarded)
+		bool szof, bool vctx, bool cond, bool retval_discarded)
 {
 	lint_assert(ln->tn_op == ADDR);
 	lint_assert(ln->tn_left->tn_op == NAME);
 	if (!szof &&
 	    !is_compiler_builtin(ln->tn_left->tn_sym->s_name))
-		outcall(tn, vctx || tctx, retval_discarded);
+		outcall(tn, vctx || cond, retval_discarded);
 }
 
 static bool
 check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
-	      bool szof, bool fcall, bool vctx, bool tctx,
+	      bool szof, bool fcall, bool vctx, bool cond,
 	      bool retval_discarded, bool eqwarn)
 {
 	switch (op) {
@@ -4098,7 +4097,7 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 		check_expr_assign(ln, szof);
 		break;
 	case CALL:
-		check_expr_call(tn, ln, szof, vctx, tctx, retval_discarded);
+		check_expr_call(tn, ln, szof, vctx, cond, retval_discarded);
 		break;
 	case EQ:
 		if (hflag && eqwarn)
@@ -4153,13 +4152,13 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 }
 
 void
-check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
+check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 		bool eqwarn, bool fcall, bool retval_discarded, bool szof)
 {
 	tnode_t *ln, *rn;
 	const mod_t *mp;
 	op_t op;
-	bool cvctx, ctctx, eq, discard;
+	bool cvctx, ccond, eq, discard;
 
 	if (tn == NULL)
 		return;
@@ -4169,11 +4168,11 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	mp = &modtab[op = tn->tn_op];
 
 	if (!check_expr_op(tn, op, ln,
-	    szof, fcall, vctx, tctx, retval_discarded, eqwarn))
+	    szof, fcall, vctx, cond, retval_discarded, eqwarn))
 		return;
 
 	cvctx = mp->m_value_context;
-	ctctx = mp->m_test_context;
+	ccond = mp->m_requires_bool;
 	eq = mp->m_warn_if_operand_eq &&
 	     !ln->tn_parenthesized &&
 	     rn != NULL && !rn->tn_parenthesized;
@@ -4185,9 +4184,9 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	 * context for both operands of COLON
 	 */
 	if (op == COLON && tn->tn_type->t_tspec == VOID)
-		cvctx = ctctx = false;
+		cvctx = ccond = false;
 	discard = op == CVT && tn->tn_type->t_tspec == VOID;
-	check_expr_misc(ln, cvctx, ctctx, eq, op == CALL, discard, szof);
+	check_expr_misc(ln, cvctx, ccond, eq, op == CALL, discard, szof);
 
 	switch (op) {
 	case PUSH:
@@ -4200,10 +4199,10 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 		check_expr_misc(rn, false, true, eq, false, false, szof);
 		break;
 	case COLON:
-		check_expr_misc(rn, cvctx, ctctx, eq, false, false, szof);
+		check_expr_misc(rn, cvctx, ccond, eq, false, false, szof);
 		break;
 	case COMMA:
-		check_expr_misc(rn, vctx, tctx, eq, false, false, szof);
+		check_expr_misc(rn, vctx, cond, eq, false, false, szof);
 		break;
 	default:
 		if (mp->m_binary)
