@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.8 2021/08/26 19:23:25 rillig Exp $
+# $NetBSD: accept.sh,v 1.9 2022/04/16 09:22:25 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,8 @@
 
 set -eu
 
-. './t_integration.sh'
+: "${archsubdir:=$(make -v ARCHSUBDIR)}"
+. './t_integration.sh'		# for configure_test_case
 
 for pattern in "$@"; do
 	# shellcheck disable=SC2231

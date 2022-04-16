@@ -1,1 +1,1 @@
-msg_054.c(12): warning: trailing ',' prohibited in enum declaration [54]
+msg_054.c(12): error: trailing ',' prohibited in enum declaration [54]

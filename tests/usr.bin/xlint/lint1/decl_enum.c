@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_enum.c,v 1.2 2022/04/08 21:29:29 rillig Exp $	*/
+/*	$NetBSD: decl_enum.c,v 1.3 2022/04/16 09:22:25 rillig Exp $	*/
 # 3 "decl_enum.c"
 
 /*
@@ -58,3 +58,8 @@ typedef int reveal_o1[-o1];
 typedef int reveal_o2[-o2];
 /* expect+1: error: negative array dimension (-10002) [20] */
 typedef int reveal_o3[-o3];
+
+/* Since C99, a trailing comma is allowed in an enum declaration. */
+enum trailing_comma {
+	constant,
+};
