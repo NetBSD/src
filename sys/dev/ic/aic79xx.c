@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.65 2022/04/07 19:33:37 andvar Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.66 2022/04/16 17:34:34 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.65 2022/04/07 19:33:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.66 2022/04/16 17:34:34 andvar Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -653,7 +653,7 @@ ahd_run_data_fifo(struct ahd_softc *ahd, struct scb *scb)
 			ahd_outb(ahd, SG_STATE, 0);
 
 			/*
-			 * Flush the data FIFO.  Strickly only
+			 * Flush the data FIFO.  Strictly only
 			 * necessary for Rev A parts.
 			 */
 			ahd_outb(ahd, DFCNTRL,
