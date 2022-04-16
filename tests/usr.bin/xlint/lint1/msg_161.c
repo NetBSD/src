@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_161.c,v 1.7 2021/03/21 15:44:57 rillig Exp $	*/
+/*	$NetBSD: msg_161.c,v 1.8 2022/04/16 20:57:10 rillig Exp $	*/
 # 3 "msg_161.c"
 
 // Test for message: constant in conditional context [161]
@@ -55,3 +55,22 @@ test_sizeof(void)
 	if (sizeof(int) < sizeof(char))
 		println("impossible");
 }
+
+const _Bool conditions[] = {
+	/* XXX: Why no warning here? */
+	13 < 13,
+	/* XXX: Why no warning here? */
+	0 < 0,
+	/* XXX: Why no warning here? */
+	0 != 0,
+	/* expect+1: warning: constant in conditional context [161] */
+	0 == 0 && 1 == 0,
+	/* expect+1: warning: constant in conditional context [161] */
+	1 == 0 || 2 == 1,
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: error: non-constant initializer [177] */
+	0 == 0 && ""[0] == '\0',
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: error: non-constant initializer [177] */
+	""[0] == '\0' && 0 == 0,
+};

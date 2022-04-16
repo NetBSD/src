@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.430 2022/04/16 20:02:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.431 2022/04/16 20:57:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.430 2022/04/16 20:02:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.431 2022/04/16 20:57:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -534,7 +534,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 
 	/*
 	 * Apply class conversions to the left operand, but only if its
-	 * value is needed or it is compared with null.
+	 * value is needed or it is compared with zero.
 	 */
 	if (mp->m_left_value_context || mp->m_left_test_context)
 		ln = cconv(ln);
@@ -549,21 +549,14 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	 * Print some warnings for comparisons of unsigned values with
 	 * constants lower than or equal to null. This must be done
 	 * before promote() because otherwise unsigned char and unsigned
-	 * short would be promoted to int. Also types are tested to be
+	 * short would be promoted to int. Types are also tested to be
 	 * CHAR, which would also become int.
 	 */
 	if (mp->m_comparison)
 		check_integer_comparison(op, ln, rn);
 
-	/*
-	 * Promote the left operand if it is in a test or value context
-	 */
 	if (mp->m_left_value_context || mp->m_left_test_context)
 		ln = promote(op, false, ln);
-	/*
-	 * Promote the right operand, but only if it is no struct or
-	 * union member, or if it is not to be assigned to the left operand
-	 */
 	if (mp->m_binary && op != ARROW && op != POINT &&
 	    op != ASSIGN && op != RETURN && op != INIT) {
 		rn = promote(op, false, rn);
@@ -653,7 +646,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	default:
 		rettp = mp->m_returns_bool
 		    ? gettyp(Tflag ? BOOL : INT) : ln->tn_type;
-		lint_assert(mp->m_binary || rn == NULL);
+		lint_assert(mp->m_binary == (rn != NULL));
 		ntn = new_tnode(op, sys, rettp, ln, rn);
 		break;
 	}
@@ -670,14 +663,14 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	 * Print a warning if one of the operands is in a context where
 	 * it is compared with zero and if this operand is a constant.
 	 */
-	if (mp->m_left_test_context) {
-		if (ln->tn_op == CON ||
-		    ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) {
-			if (hflag && !constcond_flag &&
-			    !ln->tn_system_dependent)
-				/* constant in conditional context */
-				warning(161);
-		}
+	if (hflag && !constcond_flag &&
+	    mp->m_left_test_context &&
+	    (ln->tn_op == CON ||
+	     ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) &&
+	    /* XXX: rn->tn_system_dependent should be checked as well */
+	    !ln->tn_system_dependent) {
+		/* constant in conditional context */
+		warning(161);
 	}
 
 	/* Fold if the operator requires it */
