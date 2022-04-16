@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.120 2022/04/16 18:13:54 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.121 2022/04/16 19:18:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.120 2022/04/16 18:13:54 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.121 2022/04/16 19:18:17 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -417,9 +417,10 @@ initscan(void)
 	for (kw = keywords; kw->kw_name != NULL; kw++) {
 		if ((kw->kw_c90 || kw->kw_c99) && tflag)
 			continue;
-		if (kw->kw_c99 && !(Sflag || gflag))
+		/* FIXME: C99 and GCC are independent. */
+		if (kw->kw_c99 && !(Sflag || allow_gcc))
 			continue;
-		if (kw->kw_gcc && !gflag)
+		if (kw->kw_gcc && !allow_gcc)
 			continue;
 		if (kw->kw_plain)
 			add_keyword(kw, false, false);
@@ -1228,9 +1229,9 @@ lex_slash_slash_comment(void)
 {
 	int c;
 
-	if (!Sflag && !gflag)
+	if (!allow_c99 && !allow_gcc)
 		/* %s does not support // comments */
-		gnuism(312, tflag ? "traditional C" : "C90");
+		gnuism(312, allow_c90 ? "C90" : "traditional C");
 
 	while ((c = inpc()) != EOF && c != '\n')
 		continue;

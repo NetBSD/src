@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.151 2022/04/10 12:14:10 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.152 2022/04/16 19:18:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -492,10 +492,11 @@ check_printf(const char *fmt, ...)
 	wrap_check_printf_at(message_at, msgid, pos, ##args)
 
 #  define wrap_check_printf(func, msgid, args...)			\
-	do {								\
+	({								\
 		check_printf(__CONCAT(MSG_, msgid), ##args);		\
 		(func)(msgid, ##args);					\
-	} while (false)
+		/* LINTED 129 */					\
+	})
 
 #  define error(msgid, args...) wrap_check_printf(error, msgid, ##args)
 #  define warning(msgid, args...) wrap_check_printf(warning, msgid, ##args)

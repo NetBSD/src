@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.428 2022/04/16 14:06:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.429 2022/04/16 19:18:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.428 2022/04/16 14:06:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.429 2022/04/16 19:18:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -200,7 +200,7 @@ bool
 is_compiler_builtin(const char *name)
 {
 	/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
-	if (gflag) {
+	if (allow_gcc) {
 		if (strncmp(name, "__atomic_", 9) == 0 ||
 		    strncmp(name, "__builtin_", 10) == 0 ||
 		    strcmp(name, "alloca") == 0 ||
@@ -245,7 +245,7 @@ build_name_call(sym_t *sym)
 		 * they are regular functions compatible with
 		 * non-prototype calling conventions.
 		 */
-		if (gflag && is_gcc_bool_builtin(sym->s_name))
+		if (allow_gcc && is_gcc_bool_builtin(sym->s_name))
 			sym->s_type = gettyp(BOOL);
 
 	} else if (Sflag) {
@@ -3589,13 +3589,14 @@ cast(tnode_t *tn, type_t *tp)
 
 	if (nt == VOID) {
 		/*
-		 * XXX ANSI C requires scalar types or void (Plauger & Brodie).
-		 * But this seems really questionable.
+		 * C90 6.3.4, C99 6.5.4p2 and C11 6.5.4p2 allow any type to
+		 * be cast to void.  The only other allowed casts are from a
+		 * scalar type to a scalar type.
 		 */
 	} else if (nt == UNION) {
 		sym_t *m;
 		struct_or_union *str = tp->t_str;
-		if (!gflag) {
+		if (!allow_gcc) {
 			/* union cast is a GCC extension */
 			error(328);
 			return NULL;
@@ -3616,7 +3617,7 @@ cast(tnode_t *tn, type_t *tp)
 		return NULL;
 	} else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
 		/* Casting to a struct is an undocumented GCC extension. */
-		if (!(gflag && nt == STRUCT))
+		if (!(allow_gcc && nt == STRUCT))
 			goto invalid_cast;
 	} else if (ot == STRUCT || ot == UNION) {
 		goto invalid_cast;

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.277 2022/04/10 12:14:10 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.278 2022/04/16 19:18:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.277 2022/04/10 12:14:10 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.278 2022/04/16 19:18:17 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1066,24 +1066,18 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 			/* bit-field of type plain 'int' has ... */
 			warning(344);
 		}
-	} else if (t != INT && t != UINT && t != BOOL) {
-		/*
-		 * Non-integer types are always illegal for bitfields,
-		 * regardless of BITFIELDTYPE. Integer types not dealt with
-		 * above are okay only if BITFIELDTYPE is in effect.
-		 */
-		if (!(bitfieldtype_ok || gflag) || !is_integer(t)) {
-			unsigned int sz;
+	} else if (!(t == INT || t == UINT || t == BOOL ||
+		     (is_integer(t) && (bitfieldtype_ok || allow_gcc)))) {
 
-			/* illegal bit-field type '%s' */
-			warning(35, type_name(tp));
-			sz = tp->t_flen;
-			dsym->s_type = tp = block_dup_type(gettyp(t = INT));
-			if ((tp->t_flen = sz) > size_in_bits(t))
-				tp->t_flen = size_in_bits(t);
-			*inout_t = t;
-			*inout_tp = tp;
-		}
+		/* illegal bit-field type '%s' */
+		warning(35, type_name(tp));
+
+		unsigned int sz = tp->t_flen;
+		dsym->s_type = tp = block_dup_type(gettyp(t = INT));
+		if ((tp->t_flen = sz) > size_in_bits(t))
+			tp->t_flen = size_in_bits(t);
+		*inout_t = t;
+		*inout_tp = tp;
 	}
 }
 
@@ -2645,23 +2639,21 @@ static bool
 check_prototype_declaration(sym_t *arg, sym_t *parg)
 {
 	type_t	*tp, *ptp;
-	bool	dowarn, msg;
+	bool	dowarn;
 
 	tp = arg->s_type;
 	ptp = parg->s_type;
 
-	msg = false;
 	dowarn = false;
 
 	if (!eqtype(tp, ptp, true, true, &dowarn)) {
 		if (eqtype(tp, ptp, true, false, &dowarn)) {
 			/* type does not match prototype: %s */
-			gnuism(58, arg->s_name);
-			msg = sflag || !gflag;
+			return gnuism(58, arg->s_name);
 		} else {
 			/* type does not match prototype: %s */
 			error(58, arg->s_name);
-			msg = true;
+			return true;
 		}
 	} else if (dowarn) {
 		if (sflag)
@@ -2670,10 +2662,10 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 		else
 			/* type does not match prototype: %s */
 			warning(58, arg->s_name);
-		msg = true;
+		return true;
 	}
 
-	return msg;
+	return false;
 }
 
 static void
