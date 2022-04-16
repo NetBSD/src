@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.48 2022/04/16 14:20:45 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.49 2022/04/16 14:23:36 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.48 2022/04/16 14:20:45 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.49 2022/04/16 14:23:36 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,7 +215,7 @@ int
 umaskcmd(int argc, char **argv)
 {
 	char *ap;
-	int mask;
+	mode_t mask;
 	int i;
 	int symbolic_mode = 0;
 
@@ -265,13 +265,19 @@ umaskcmd(int argc, char **argv)
 		}
 	} else {
 		if (isdigit((unsigned char)*ap)) {
+			int range = 0;
+
 			mask = 0;
 			do {
 				if (*ap >= '8' || *ap < '0')
 					error("Not a valid octal number: '%s'",
-					    argv[1]);
+					    *argptr);
 				mask = (mask << 3) + (*ap - '0');
+				if (mask & ~07777)
+					range = 1;
 			} while (*++ap != '\0');
+			if (range)
+			    error("Mask constant '%s' out of range", *argptr);
 			umask(mask);
 		} else {
 			void *set;
