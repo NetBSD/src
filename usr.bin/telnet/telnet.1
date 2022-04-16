@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.36 2018/12/15 22:17:02 wiz Exp $
+.\"	$NetBSD: telnet.1,v 1.37 2022/04/16 09:53:13 nia Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)telnet.1	8.4 (Berkeley) 2/3/94
 .\"
-.Dd December 16, 2018
+.Dd April 16, 2022
 .Dt TELNET 1
 .Os
 .Sh NAME
@@ -350,9 +350,12 @@ The encrypt command manipulates the information sent through the
 .Dv TELNET ENCRYPT
 option.
 .Pp
-Note:  Because of export controls, the
-.Dv TELNET ENCRYPT
-option is not supported outside of the United States and Canada.
+.Bf -symbolic
+Note:  By modern standards the encryption provided by
+.Nm
+is weak and insecure.
+.Ef
+This option is provided for compatibility.
 .Pp
 Valid arguments for the encrypt command are:
 .Bl -tag -width Ar
@@ -1152,9 +1155,12 @@ The autoencrypt
 output (input) stream should be enabled as soon as
 possible.
 .Pp
-Note:  Because of export controls, the
-.Dv TELNET ENCRYPT
-option is not supported outside the United States and Canada.
+.Bf -symbolic
+Note:  By modern standards the encryption provided by
+.Nm
+is weak and insecure.
+.Ef
+This option is provided for compatibility.
 .It Ic autologin
 If the remote side supports the
 .Dv TELNET AUTHENTICATION
