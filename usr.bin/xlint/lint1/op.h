@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.18 2022/04/16 21:14:33 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.19 2022/04/16 22:21:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -47,7 +47,6 @@ typedef	struct {
 	bool	m_requires_scalar: 1;
 	bool	m_fold_constant_operands: 1;
 	bool	m_value_context: 1;
-	bool	m_test_context: 1;
 	bool	m_balance_operands: 1;
 	bool	m_has_side_effect: 1;
 	bool	m_warn_if_left_unsigned_in_c90: 1;
@@ -66,7 +65,7 @@ extern const mod_t modtab[];
 #define op(name, repr, \
 		is_binary, is_logical, takes_bool, requires_bool, \
 		is_integer, is_complex, is_arithmetic, is_scalar, \
-		can_fold, is_value, is_test, balances_operands, \
+		can_fold, is_value, unused, balances_operands, \
 		side_effects, left_unsigned, right_unsigned, \
 		precedence_confusion, is_comparison, \
 		valid_on_enum, bad_on_enum, warn_if_eq) \
