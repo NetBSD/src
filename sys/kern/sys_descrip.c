@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.39 2022/03/15 10:37:42 riastradh Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.40 2022/04/16 07:59:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.39 2022/03/15 10:37:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.40 2022/04/16 07:59:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,7 +595,9 @@ sys_fpathconf(struct lwp *l, const struct sys_fpathconf_args *uap,
 		break;
 
 	case DTYPE_VNODE:
+		vn_lock(fp->f_vnode, LK_SHARED | LK_RETRY);
 		error = VOP_PATHCONF(fp->f_vnode, SCARG(uap, name), retval);
+		VOP_UNLOCK(fp->f_vnode);
 		break;
 
 	case DTYPE_KQUEUE:
