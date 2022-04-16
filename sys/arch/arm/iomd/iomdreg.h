@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdreg.h,v 1.4 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: iomdreg.h,v 1.5 2022/04/16 17:34:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -201,7 +201,7 @@
 #define IOMD_SIZE	0x100	/* XXX - should be words ? */
 
 /*
- * Ok these mouse buttons are not strickly part of the iomd but
+ * Ok these mouse buttons are not strictly part of the iomd but
  * this register is required if the IOMD supports a quadrature mouse
  */
 
