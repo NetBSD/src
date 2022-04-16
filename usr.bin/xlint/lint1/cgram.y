@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.394 2022/04/10 12:14:10 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.395 2022/04/16 09:22:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.394 2022/04/10 12:14:10 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.395 2022/04/16 09:22:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1047,6 +1047,7 @@ type_struct_declarator:
 	  }
 	;
 
+/* K&R ---, C90 6.5.2.2, C99 6.7.2.2, C11 6.7.2.2 */
 enum_specifier:			/* C99 6.7.2.2 */
 	  enum gcc_attribute_list_opt identifier_sym {
 		$$ = mktag($3, ENUM, false, false);
@@ -1090,7 +1091,9 @@ enum_decl_lbrace:		/* helper for C99 6.7.2.2 */
 enums_with_opt_comma:		/* helper for C99 6.7.2.2 */
 	  enumerator_list
 	| enumerator_list T_COMMA {
-		if (sflag) {
+		if (Sflag) {
+			/* C99 6.7.2.2p1 allows trailing ',' */
+		} else if (sflag) {
 			/* trailing ',' prohibited in enum declaration */
 			error(54);
 		} else {
