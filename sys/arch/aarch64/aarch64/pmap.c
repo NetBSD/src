@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134 2022/04/10 10:01:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135 2022/04/17 15:20:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2022/04/10 10:01:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2022/04/17 15:20:36 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1577,6 +1577,8 @@ pmap_deactivate_efirt(void)
 	pm->pm_activated = false;
 
 	PMAP_COUNT(deactivate);
+
+	kpreempt_enable();
 }
 #endif
 
