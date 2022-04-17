@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.76 2022/04/17 13:17:06 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.77 2022/04/17 13:17:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.76 2022/04/17 13:17:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.77 2022/04/17 13:17:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -530,12 +530,7 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	/* iterate through interface descriptors and initialize softc */
 	usb_desc_iter_init(sc->sc_udev, &iter);
 	while ((ifdesc = usb_desc_iter_next_interface(&iter)) != NULL) {
-		if (ifdesc->bLength < USB_INTERFACE_DESCRIPTOR_SIZE) {
-			DPRINTFN(50, ("uvideo_attach: "
-				      "ignoring incorrect descriptor len=%d\n",
-				      ifdesc->bLength));
-			continue;
-		}
+		KASSERT(ifdesc->bLength >= USB_INTERFACE_DESCRIPTOR_SIZE);
 		if (ifdesc->bInterfaceClass != UICLASS_VIDEO) {
 			DPRINTFN(50, ("uvideo_attach: "
 				      "ignoring non-uvc interface: "
