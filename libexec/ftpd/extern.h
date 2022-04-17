@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.65 2019/10/15 18:29:32 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.66 2022/04/17 21:24:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -280,7 +280,7 @@ struct ftpclass {
 	LLT		 maxtimeout;	/* Maximum permitted timeout */
 	char		*motd;		/* MotD file to display after login */
 	char		*notify;	/* Files to notify about upon chdir */
-	LLT		 portmin;	/* Minumum port for passive mode */
+	LLT		 portmin;	/* Minimum port for passive mode */
 	LLT		 portmax;	/* Maximum port for passive mode */
 	LLT		 rateget;	/* Get (RETR) transfer rate throttle */
 	LLT		 rateput;	/* Put (STOR) transfer rate throttle */
