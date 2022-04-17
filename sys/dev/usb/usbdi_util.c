@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.85 2022/03/13 11:30:13 riastradh Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.86 2022/04/17 13:16:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.85 2022/03/13 11:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.86 2022/04/17 13:16:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -747,6 +747,7 @@ const usb_descriptor_t *
 usb_desc_iter_next(usbd_desc_iter_t *iter)
 {
 	const usb_descriptor_t *desc = usb_desc_iter_peek(iter);
+
 	if (desc == NULL)
 		return NULL;
 	KASSERT(desc->bLength <= iter->end - iter->cur);
@@ -754,32 +755,34 @@ usb_desc_iter_next(usbd_desc_iter_t *iter)
 	return desc;
 }
 
-/* Return the next interface descriptor, skipping over any other
- * descriptors.  Returns NULL at the end or on error. */
+/*
+ * Return the next interface descriptor, skipping over any other
+ * descriptors.  Returns NULL at the end or on error.
+ */
 const usb_interface_descriptor_t *
 usb_desc_iter_next_interface(usbd_desc_iter_t *iter)
 {
 	const usb_descriptor_t *desc;
 
 	while ((desc = usb_desc_iter_peek(iter)) != NULL &&
-	       desc->bDescriptorType != UDESC_INTERFACE)
-	{
+	    desc->bDescriptorType != UDESC_INTERFACE) {
 		usb_desc_iter_next(iter);
 	}
 
 	return (const usb_interface_descriptor_t *)usb_desc_iter_next(iter);
 }
 
-/* Returns the next non-interface descriptor, returning NULL when the
- * next descriptor would be an interface descriptor. */
+/*
+ * Returns the next non-interface descriptor, returning NULL when the
+ * next descriptor would be an interface descriptor.
+ */
 const usb_descriptor_t *
 usb_desc_iter_next_non_interface(usbd_desc_iter_t *iter)
 {
 	const usb_descriptor_t *desc;
 
 	if ((desc = usb_desc_iter_peek(iter)) != NULL &&
-	    desc->bDescriptorType != UDESC_INTERFACE)
-	{
+	    desc->bDescriptorType != UDESC_INTERFACE) {
 		return usb_desc_iter_next(iter);
 	} else {
 		return NULL;
@@ -795,18 +798,24 @@ usb_find_desc(struct usbd_device *dev, int type, int subtype)
 	usb_desc_iter_init(dev, &iter);
 	for (;;) {
 		desc = (const usb_cdc_descriptor_t *)usb_desc_iter_next(&iter);
-		if (!desc || (desc->bDescriptorType == type &&
-			      (subtype == USBD_CDCSUBTYPE_ANY ||
-			       subtype == desc->bDescriptorSubtype)))
+		if (desc == NULL)
+			break;
+		if (desc->bDescriptorType != type)
+			continue;
+		if (subtype == USBD_CDCSUBTYPE_ANY ||
+		    subtype == desc->bDescriptorSubtype)
 			break;
 	}
 	return desc;
 }
 
-/* same as usb_find_desc(), but searches only in the specified interface. */
+/*
+ * Same as usb_find_desc(), but searches only in the specified
+ * interface.
+ */
 const usb_cdc_descriptor_t *
 usb_find_desc_if(struct usbd_device *dev, int type, int subtype,
-		 usb_interface_descriptor_t *id)
+    usb_interface_descriptor_t *id)
 {
 	usbd_desc_iter_t iter;
 	const usb_cdc_descriptor_t *desc;
@@ -820,7 +829,7 @@ usb_find_desc_if(struct usbd_device *dev, int type, int subtype,
 	usb_desc_iter_next(&iter);	/* and skip it */
 
 	while ((desc = (const usb_cdc_descriptor_t *)usb_desc_iter_next(&iter))
-	       != NULL) {
+	    != NULL) {
 		if (desc->bDescriptorType == UDESC_INTERFACE) {
 			/* we ran into the next interface --- not found */
 			return NULL;
