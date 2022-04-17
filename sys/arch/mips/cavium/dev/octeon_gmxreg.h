@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxreg.h,v 1.5 2020/06/23 05:17:13 simonb Exp $	*/
+/*	$NetBSD: octeon_gmxreg.h,v 1.6 2022/04/17 21:24:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -238,7 +238,7 @@
 #define	RXN_STATS_CTL_XXX_63_1			UINT64_C(0xfffffffffffffffe)
 #define	RXN_STATS_CTL_RD_CLR			UINT64_C(0x0000000000000001)
 
-/* GMX Minimun Interface-Gap Cycles Registers */
+/* GMX Minimum Interface-Gap Cycles Registers */
 
 #define	RXN_IFG_XXX_63_4			UINT64_C(0xfffffffffffffff0)
 #define	RXN_IFG_IFG				UINT64_C(0x000000000000000f)

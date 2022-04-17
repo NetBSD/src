@@ -1,4 +1,4 @@
-/*	$NetBSD: iopio.h,v 1.8 2017/10/28 06:27:32 riastradh Exp $	*/
+/*	$NetBSD: iopio.h,v 1.9 2022/04/17 21:24:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #define	IOP_MF_RESERVE		4	/* Frames to reserve for ctl ops */
 #define	IOP_MAX_XFER		64*1024	/* Maximum transfer size */
 #define	IOP_MAX_MSG_SIZE	160	/* Maximum message frame size */
-#define	IOP_MIN_MSG_SIZE	128	/* Minumum size supported by IOP */
+#define	IOP_MIN_MSG_SIZE	128	/* Minimum size supported by IOP */
 
 struct iop_tidmap {
 	u_short	it_tid;

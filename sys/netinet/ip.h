@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.38 2021/02/03 18:13:13 roy Exp $	*/
+/*	$NetBSD: ip.h,v 1.39 2022/04/17 21:24:53 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,7 +73,7 @@ struct ip {
 };
 
 #define	IP_MAXPACKET	65535		/* maximum packet size */
-#define	IP_MINFRAGSIZE	69		/* minumum size that can be fraged */
+#define	IP_MINFRAGSIZE	69		/* minimum size that can be fraged */
 
 /*
  * Definitions for IP type of service (ip_tos)

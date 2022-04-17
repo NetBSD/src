@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.17 2018/02/21 10:42:16 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.18 2022/04/17 21:24:53 andvar Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.17 2018/02/21 10:42:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.18 2022/04/17 21:24:53 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -990,7 +990,7 @@ static	const char	fdreg[][4] = {
 
 /* To replace instr function, do the following:				*/
 /*	a) locate the desired entry in instrs[] below			*/
-/*	b) change the 3rd field if an alternate mneumonic is 		*/
+/*	b) change the 3rd field if an alternate mnemonic is 		*/
 /*	   desired for window disassembly				*/
 /*	c) change the 4th field to the name of the function being	*/
 /* 	   used for replacement (i.e. ldwRepl instead of ldw)		*/
