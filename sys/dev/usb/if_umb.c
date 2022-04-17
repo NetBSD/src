@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.22 2022/04/17 13:15:27 riastradh Exp $ */
+/*	$NetBSD: if_umb.c,v 1.23 2022/04/17 13:17:40 riastradh Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.22 2022/04/17 13:15:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.23 2022/04/17 13:17:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -336,6 +336,8 @@ umb_attach(device_t parent, device_t self, void *aux)
 	usb_desc_iter_init(sc->sc_udev, &iter);
 	while ((desc = usb_desc_iter_next(&iter))) {
 		if (desc->bDescriptorType == UDESC_INTERFACE_ASSOC) {
+			if (desc->bLength < sizeof(*ad))
+				continue;
 			ad = (const usb_interface_assoc_descriptor_t *)desc;
 			if (ad->bFirstInterface == uiaa->uiaa_ifaceno &&
 			    ad->bInterfaceCount > 1)
@@ -343,6 +345,8 @@ umb_attach(device_t parent, device_t self, void *aux)
 			continue;
 		}
 		if (desc->bDescriptorType == UDESC_INTERFACE) {
+			if (desc->bLength < sizeof(*id))
+				continue;
 			id = (const usb_interface_descriptor_t *)desc;
 			current_ifaceno = id->bInterfaceNumber;
 			continue;
@@ -351,13 +355,19 @@ umb_attach(device_t parent, device_t self, void *aux)
 			continue;
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE)
 			continue;
+		if (desc->bLength < sizeof(*csdesc))
+			continue;
 		csdesc = (const usb_cdc_descriptor_t *)desc;
 		switch (csdesc->bDescriptorSubtype) {
 		case UDESCSUB_CDC_UNION:
+			if (desc->bLength < sizeof(*ud))
+				continue;
 			ud = (const usb_cdc_union_descriptor_t *)desc;
 			data_ifaceno = ud->bSlaveInterface[0];
 			break;
 		case UDESCSUB_MBIM:
+			if (desc->bLength < sizeof(*md))
+				continue;
 			md = (const struct mbim_descriptor *)desc;
 			v = UGETW(md->bcdMBIMVersion);
 			sc->sc_ver_maj = MBIM_VER_MAJOR(v);
