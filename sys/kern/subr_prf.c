@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.187 2022/03/16 20:31:02 andvar Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.188 2022/04/17 09:09:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.187 2022/03/16 20:31:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.188 2022/04/17 09:09:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -96,6 +96,7 @@ static bool kprintf_inited = false;
  */
 
 static void	 putchar(int, int, struct tty *);
+static void	 kprintf_internal(const char *, int, void *, char *, ...);
 
 
 /*
@@ -261,18 +262,20 @@ vpanic(const char *fmt, va_list ap)
 	if (logenabled(msgbufp))
 		panicstart = msgbufp->msg_bufx;
 
-	printf("panic: ");
+	kprintf_lock();
+	kprintf_internal("panic: ", TOLOG|TOCONS, NULL, NULL);
 	if (panicstr == NULL) {
 		/* first time in panic - store fmt first for precaution */
 		panicstr = fmt;
 
 		vsnprintf(scratchstr, sizeof(scratchstr), fmt, ap);
-		printf("%s", scratchstr);
+		kprintf_internal("%s", TOLOG|TOCONS, NULL, NULL, scratchstr);
 		panicstr = scratchstr;
 	} else {
-		vprintf(fmt, ap);
+		kprintf(fmt, TOLOG|TOCONS, NULL, NULL, ap);
 	}
-	printf("\n");
+	kprintf_internal("\n", TOLOG|TOCONS, NULL, NULL);
+	kprintf_unlock();
 
 	if (logenabled(msgbufp))
 		panicend = msgbufp->msg_bufx;
