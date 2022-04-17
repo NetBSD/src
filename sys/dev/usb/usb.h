@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.119 2021/10/11 00:25:05 jmcneill Exp $	*/
+/*	$NetBSD: usb.h,v 1.120 2022/04/17 13:15:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,12 +202,18 @@ typedef struct {
 
 #define USB_3_MAX_CTRL_PACKET	512
 
+/*
+ * This is the common header to all USB descriptors defined in the USB
+ * specification.
+ *
+ * DO NOT CHANGE THIS TYPE!
+ */
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
-	uByte		bDescriptorSubtype;
 } UPACKED usb_descriptor_t;
-#define USB_DESCRIPTOR_SIZE 3
+#define USB_DESCRIPTOR_SIZE 2
+__CTASSERT(sizeof(usb_descriptor_t) == USB_DESCRIPTOR_SIZE);
 
 typedef struct {
 	uByte		bLength;
