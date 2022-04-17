@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.75 2022/04/17 13:16:11 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.76 2022/04/17 13:17:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.75 2022/04/17 13:16:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.76 2022/04/17 13:17:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -870,8 +870,7 @@ uvideo_unit_alloc(const uvideo_descriptor_t *desc)
 	struct uvideo_unit *vu;
 	usbd_status err;
 
-	if (desc->bDescriptorType != UDESC_CS_INTERFACE)
-		return NULL;
+	KASSERT(desc->bDescriptorType == UDESC_CS_INTERFACE);
 
 	vu = kmem_zalloc(sizeof(*vu), KM_SLEEP);
 	err = uvideo_unit_init(vu, desc);
