@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.132 2022/04/07 21:47:02 riastradh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.133 2022/04/17 09:25:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.132 2022/04/07 21:47:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.133 2022/04/17 09:25:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -299,6 +299,9 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&sc->sc_statecv, "ucomstate");
 
+	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
+	    RND_TYPE_TTY, RND_FLAG_DEFAULT);
+
 	SIMPLEQ_INIT(&sc->sc_ibuff_empty);
 	SIMPLEQ_INIT(&sc->sc_ibuff_full);
 	SIMPLEQ_INIT(&sc->sc_obuff_free);
@@ -360,9 +363,6 @@ ucom_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTF("tty_attach %#jx", (uintptr_t)tp, 0, 0, 0);
 	tty_attach(tp);
-
-	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, RND_FLAG_DEFAULT);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
