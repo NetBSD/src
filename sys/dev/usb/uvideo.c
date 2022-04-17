@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.74 2022/04/17 13:15:48 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.75 2022/04/17 13:16:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.74 2022/04/17 13:15:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.75 2022/04/17 13:16:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -774,7 +774,7 @@ uvideo_stream_guess_format(struct uvideo_stream *vs,
 static struct uvideo_stream *
 uvideo_stream_alloc(void)
 {
-	return kmem_zalloc(sizeof(struct uvideo_stream), KM_SLEEP);
+	return kmem_zalloc(sizeof(*uvideo_stream_alloc()), KM_SLEEP);
 }
 
 
@@ -1287,11 +1287,11 @@ uvideo_stream_free(struct uvideo_stream *vs)
 	/* free linked-list of formats and pixel formats */
 	while ((format = SIMPLEQ_FIRST(&vs->vs_formats)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&vs->vs_formats, entries);
-		kmem_free(format, sizeof(struct uvideo_format));
+		kmem_free(format, sizeof(*format));
 	}
 	while ((pixel_format = SIMPLEQ_FIRST(&vs->vs_pixel_formats)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&vs->vs_pixel_formats, entries);
-		kmem_free(pixel_format, sizeof(struct uvideo_pixel_format));
+		kmem_free(pixel_format, sizeof(*pixel_format));
 	}
 
 	kmem_free(vs, sizeof(*vs));
@@ -1387,7 +1387,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 	{
 		uvdesc = (const uvideo_descriptor_t *) usb_desc_iter_next(iter);
 
-		format = kmem_zalloc(sizeof(struct uvideo_format), KM_SLEEP);
+		format = kmem_zalloc(sizeof(*format), KM_SLEEP);
 		format->format.pixel_format = pixel_format;
 
 		switch (format_desc->bDescriptorSubtype) {
@@ -1475,7 +1475,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			/* shouldn't ever get here */
 			DPRINTF(("uvideo: unknown frame based format %d\n",
 				 format_desc->bDescriptorSubtype));
-			kmem_free(format, sizeof(struct uvideo_format));
+			kmem_free(format, sizeof(*format));
 			return USBD_INVAL;
 		}
 
