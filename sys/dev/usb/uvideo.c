@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.72 2022/04/06 22:01:45 mlelstv Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.73 2022/04/17 13:15:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.72 2022/04/06 22:01:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.73 2022/04/17 13:15:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2458,6 +2458,11 @@ print_descriptor(const usb_descriptor_t *desc)
 
 	if (desc->bDescriptorType == UDESC_INTERFACE) {
 		const usb_interface_descriptor_t *id;
+
+		if (desc->bLength < sizeof(*id)) {
+			printf("[truncated interface]\n");
+			return;
+		}
 		id = (const usb_interface_descriptor_t *)desc;
 		current_class = id->bInterfaceClass;
 		current_subclass = id->bInterfaceSubClass;
@@ -2498,22 +2503,45 @@ print_vc_descriptor(const usb_descriptor_t *desc)
 
 	switch (desc->bDescriptorType) {
 	case UDESC_ENDPOINT:
+		if (desc->bLength < sizeof(usb_endpoint_descriptor_t)) {
+			printf("[truncated endpoint]");
+			break;
+		}
 		print_endpoint_descriptor(
 			(const usb_endpoint_descriptor_t *)desc);
 		break;
 	case UDESC_CS_INTERFACE:
+		if (desc->bLength < sizeof(*vcdesc)) {
+			printf("[truncated class-specific]");
+			break;
+		}
 		vcdesc = (const uvideo_descriptor_t *)desc;
 		switch (vcdesc->bDescriptorSubtype) {
 		case UDESC_VC_HEADER:
+			if (desc->bLength <
+			    sizeof(uvideo_vc_header_descriptor_t)) {
+				printf("[truncated videocontrol header]");
+				break;
+			}
 			print_vc_header_descriptor(
 			  (const uvideo_vc_header_descriptor_t *)
 				vcdesc);
 			break;
 		case UDESC_INPUT_TERMINAL:
+			if (desc->bLength <
+			    sizeof(uvideo_input_terminal_descriptor_t)) {
+				printf("[truncated input terminal]");
+				break;
+			}
 			switch (UGETW(
 			   ((const uvideo_input_terminal_descriptor_t *)
 				    vcdesc)->wTerminalType)) {
 			case UVIDEO_ITT_CAMERA:
+				if (desc->bLength <
+				    sizeof(uvideo_camera_terminal_descriptor_t)) {
+					printf("[truncated camera terminal]");
+					break;
+				}
 				print_camera_terminal_descriptor(
 			  (const uvideo_camera_terminal_descriptor_t *)vcdesc);
 				break;
@@ -2524,21 +2552,41 @@ print_vc_descriptor(const usb_descriptor_t *desc)
 			}
 			break;
 		case UDESC_OUTPUT_TERMINAL:
+			if (desc->bLength <
+			    sizeof(uvideo_output_terminal_descriptor_t)) {
+				printf("[truncated output terminal]");
+				break;
+			}
 			print_output_terminal_descriptor(
 				(const uvideo_output_terminal_descriptor_t *)
 				vcdesc);
 			break;
 		case UDESC_SELECTOR_UNIT:
+			if (desc->bLength <
+			    sizeof(uvideo_selector_unit_descriptor_t)) {
+				printf("[truncated selector unit]");
+				break;
+			}
 			print_selector_unit_descriptor(
 				(const uvideo_selector_unit_descriptor_t *)
 				vcdesc);
 			break;
 		case UDESC_PROCESSING_UNIT:
+			if (desc->bLength <
+			    sizeof(uvideo_processing_unit_descriptor_t)) {
+				printf("[truncated processing unit]");
+				break;
+			}
 			print_processing_unit_descriptor(
 				(const uvideo_processing_unit_descriptor_t *)
 				vcdesc);
 			break;
 		case UDESC_EXTENSION_UNIT:
+			if (desc->bLength <
+			    sizeof(uvideo_extension_unit_descriptor_t)) {
+				printf("[truncated extension unit]");
+				break;
+			}
 			print_extension_unit_descriptor(
 				(const uvideo_extension_unit_descriptor_t *)
 				vcdesc);
@@ -2553,9 +2601,19 @@ print_vc_descriptor(const usb_descriptor_t *desc)
 		}
 		break;
 	case UDESC_CS_ENDPOINT:
+		if (desc->bLength < sizeof(*vcdesc)) {
+			printf("[truncated class-specific]");
+			break;
+		}
 		vcdesc = (const uvideo_descriptor_t *)desc;
 		switch (vcdesc->bDescriptorSubtype) {
 		case UDESC_VC_INTERRUPT_ENDPOINT:
+			if (desc->bLength <
+			    sizeof(uvideo_vc_interrupt_endpoint_descriptor_t)) {
+				printf("[truncated "
+				    "videocontrol interrupt endpoint]");
+				break;
+			}
 			print_interrupt_endpoint_descriptor(
 			    (const uvideo_vc_interrupt_endpoint_descriptor_t *)
 				vcdesc);
@@ -2584,43 +2642,91 @@ print_vs_descriptor(const usb_descriptor_t *desc)
 
 	switch (desc->bDescriptorType) {
 	case UDESC_ENDPOINT:
+		if (desc->bLength < sizeof(usb_endpoint_descriptor_t)) {
+			printf("[truncated endpoint]");
+			break;
+		}
 		print_endpoint_descriptor(
 			(const usb_endpoint_descriptor_t *)desc);
 		break;
 	case UDESC_CS_INTERFACE:
+		if (desc->bLength < sizeof(*vsdesc)) {
+			printf("[truncated class-specific]");
+			break;
+		}
 		vsdesc = (const uvideo_descriptor_t *)desc;
 		switch (vsdesc->bDescriptorSubtype) {
 		case UDESC_VS_INPUT_HEADER:
+			if (desc->bLength <
+			    sizeof(uvideo_vs_input_header_descriptor_t)) {
+				printf("[truncated videostream input header]");
+				break;
+			}
 			print_vs_input_header_descriptor(
 			 (const uvideo_vs_input_header_descriptor_t *)
 				vsdesc);
 			break;
 		case UDESC_VS_OUTPUT_HEADER:
+			if (desc->bLength <
+			    sizeof(uvideo_vs_output_header_descriptor_t)) {
+				printf("[truncated "
+				    "videostream output header]");
+				break;
+			}
 			print_vs_output_header_descriptor(
 			(const uvideo_vs_output_header_descriptor_t *)
 				vsdesc);
 			break;
 		case UDESC_VS_FORMAT_UNCOMPRESSED:
+			if (desc->bLength <
+			    sizeof(uvideo_vs_format_uncompressed_descriptor_t))
+			{
+				printf("[truncated "
+				    "videostream format uncompressed]");
+				break;
+			}
 			print_vs_format_uncompressed_descriptor(
 			   (const uvideo_vs_format_uncompressed_descriptor_t *)
 				vsdesc);
 			break;
 		case UDESC_VS_FRAME_UNCOMPRESSED:
+			if (desc->bLength <
+			    sizeof(uvideo_vs_frame_uncompressed_descriptor_t))
+			{
+				printf("[truncated "
+				    "videostream frame uncompressed]");
+				break;
+			}
 			print_vs_frame_uncompressed_descriptor(
 			    (const uvideo_vs_frame_uncompressed_descriptor_t *)
 				vsdesc);
 			break;
 		case UDESC_VS_FORMAT_MJPEG:
+			if (desc->bLength <
+			    sizeof(uvideo_vs_format_mjpeg_descriptor_t)) {
+				printf("[truncated videostream format mjpeg]");
+				break;
+			}
 			print_vs_format_mjpeg_descriptor(
 				(const uvideo_vs_format_mjpeg_descriptor_t *)
 				vsdesc);
 			break;
 		case UDESC_VS_FRAME_MJPEG:
+			if (desc->bLength <
+			    sizeof(uvideo_vs_frame_mjpeg_descriptor_t)) {
+				printf("[truncated videostream frame mjpeg]");
+				break;
+			}
 			print_vs_frame_mjpeg_descriptor(
 				(const uvideo_vs_frame_mjpeg_descriptor_t *)
 				vsdesc);
 			break;
 		case UDESC_VS_FORMAT_DV:
+			if (desc->bLength <
+			    sizeof(uvideo_vs_format_dv_descriptor_t)) {
+				printf("[truncated videostream format dv]");
+				break;
+			}
 			print_vs_format_dv_descriptor(
 				(const uvideo_vs_format_dv_descriptor_t *)
 				vsdesc);
