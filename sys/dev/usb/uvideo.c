@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.73 2022/04/17 13:15:05 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.74 2022/04/17 13:15:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.73 2022/04/17 13:15:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.74 2022/04/17 13:15:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -116,8 +116,10 @@ struct uvideo_extension_unit {
 	guid_t		xu_guid;
 };
 
-/* For simplicity, we consider a Terminal a special case of Unit
- * rather than a separate entity. */
+/*
+ * For simplicity, we consider a Terminal a special case of Unit
+ * rather than a separate entity.
+ */
 struct uvideo_unit {
 	uint8_t		vu_id;
 	uint8_t		vu_type;
@@ -310,8 +312,10 @@ static void			uvideo_unit_free_sources(struct uvideo_unit *);
 
 
 
-/* Functions for uvideo_stream, primary unit associated with a video
- * driver or device file. */
+/*
+ * Functions for uvideo_stream, primary unit associated with a video
+ * driver or device file.
+ */
 static struct uvideo_stream *	uvideo_find_stream(struct uvideo_softc *,
 						   uint8_t);
 #if 0
@@ -392,8 +396,10 @@ static const struct video_hw_if uvideo_hw_if = {
 };
 
 #ifdef UVIDEO_DEBUG
-/* Some functions to print out descriptors.  Mostly useless other than
- * debugging/exploration purposes. */
+/*
+ * Some functions to print out descriptors.  Mostly useless other than
+ * debugging/exploration purposes.
+ */
 static void usb_guid_print(const usb_guid_t *);
 static void print_descriptor(const usb_descriptor_t *);
 static void print_interface_descriptor(const usb_interface_descriptor_t *);
@@ -439,8 +445,10 @@ static void print_vs_format_dv_descriptor(
 #define GET(type, descp, field) (((const type *)(descp))->field)
 #define GETP(type, descp, field) (&(((const type *)(descp))->field))
 
-/* Given a format descriptor and frame descriptor, copy values common
- * to all formats into a struct uvideo_format. */
+/*
+ * Given a format descriptor and frame descriptor, copy values common
+ * to all formats into a struct uvideo_format.
+ */
 #define UVIDEO_FORMAT_INIT_FRAME_BASED(format_type, format_desc,	\
 				       frame_type, frame_desc,		\
 				       format)				\
@@ -467,8 +475,10 @@ uvideo_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
 
-        /* TODO: May need to change in the future to work with
-         * Interface Association Descriptor. */
+        /*
+         * TODO: May need to change in the future to work with
+         * Interface Association Descriptor.
+	 */
 
 	/* Trigger on the Video Control Interface which must be present */
 	if (uiaa->uiaa_class == UICLASS_VIDEO &&
@@ -504,8 +514,10 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_udev->ud_cookie.cookie);
 
 #ifdef UVIDEO_DEBUG
-	/* Debugging dump of descriptors. TODO: move this to userspace
-	 * via a custom IOCTL or something. */
+	/*
+	 * Debugging dump of descriptors. TODO: move this to userspace
+	 * via a custom IOCTL or something.
+	 */
 	const usb_descriptor_t *desc;
 	usb_desc_iter_init(sc->sc_udev, &iter);
 	while ((desc = usb_desc_iter_next(&iter)) != NULL) {
@@ -667,8 +679,10 @@ uvideo_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	/* TODO: close the device if it is currently opened?  Or will
-	 * close be called automatically? */
+	/*
+	 * TODO: close the device if it is currently opened?  Or will
+	 * close be called automatically?
+	 */
 
 	while (!SLIST_EMPTY(&sc->sc_stream_list)) {
 		vs = SLIST_FIRST(&sc->sc_stream_list);
@@ -678,8 +692,10 @@ uvideo_detach(device_t self, int flags)
 	}
 
 #if 0
-	/* Wait for outstanding request to complete.  TODO: what is
-	 * appropriate here? */
+	/*
+	 * Wait for outstanding request to complete.  TODO: what is
+	 * appropriate here?
+	 */
 	usbd_delay_ms(sc->sc_udev, 1000);
 #endif
 
@@ -693,9 +709,11 @@ uvideo_detach(device_t self, int flags)
 	return 0;
 }
 
-/* Search the stream list for a stream matching the interface number.
+/*
+ * Search the stream list for a stream matching the interface number.
  * This is an O(n) search, but most devices should have only one or at
- * most two streams. */
+ * most two streams.
+ */
 static struct uvideo_stream *
 uvideo_find_stream(struct uvideo_softc *sc, uint8_t ifaceno)
 {
@@ -709,10 +727,12 @@ uvideo_find_stream(struct uvideo_softc *sc, uint8_t ifaceno)
 	return NULL;
 }
 
-/* Search the format list for the given format and frame index.  This
+/*
+ * Search the format list for the given format and frame index.  This
  * might be improved through indexing, but the format and frame count
  * is unknown ahead of time (only after iterating through the
- * usb device descriptors). */
+ * usb device descriptors).
+ */
 #if 0
 static struct uvideo_format *
 uvideo_stream_find_format(struct uvideo_stream *vs,
@@ -840,8 +860,10 @@ uvideo_init_collection(struct uvideo_softc *sc,
 	return USBD_NORMAL_COMPLETION;
 }
 
-/* Allocates space for and initializes a uvideo unit based on the
- * given descriptor.  Returns NULL with bad descriptor or ENOMEM. */
+/*
+ * Allocates space for and initializes a uvideo unit based on the
+ * given descriptor.  Returns NULL with bad descriptor or ENOMEM.
+ */
 static struct uvideo_unit *
 uvideo_unit_alloc(const uvideo_descriptor_t *desc)
 {
@@ -1012,11 +1034,13 @@ uvideo_unit_free_controls(struct uvideo_unit *vu)
 }
 
 
-/* Initialize a stream from a Video Streaming interface
+/*
+ * Initialize a stream from a Video Streaming interface
  * descriptor. Adds the stream to the stream_list in uvideo_softc.
  * This should be called once for new streams, and
  * uvideo_stream_init_desc() should then be called for this and each
- * additional interface with the same interface number. */
+ * additional interface with the same interface number.
+ */
 static usbd_status
 uvideo_stream_init(struct uvideo_stream *vs,
 		   struct uvideo_softc *sc,
@@ -1051,12 +1075,14 @@ uvideo_stream_init(struct uvideo_stream *vs,
 		return err;
 	}
 
-	/* For Xbox Live Vision camera, linux-uvc folk say we need to
+	/*
+	 * For Xbox Live Vision camera, linux-uvc folk say we need to
 	 * set an alternate interface and wait ~3 seconds prior to
 	 * doing the format probe/commit.  We set to alternate
 	 * interface 0, which is the default, zero bandwidth
 	 * interface.  This should not have adverse affects on other
-	 * cameras.  Errors are ignored. */
+	 * cameras.  Errors are ignored.
+	 */
 	err = usbd_set_interface(vs->vs_iface, 0);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_stream_init: error setting alt interface: "
@@ -1064,9 +1090,11 @@ uvideo_stream_init(struct uvideo_stream *vs,
 			 usbd_errstr(err), err));
 	}
 
-	/* Initialize probe and commit data size.  This value is
+	/*
+	 * Initialize probe and commit data size.  This value is
 	 * dependent on the version of the spec the hardware
-	 * implements. */
+	 * implements.
+	 */
 	err = uvideo_stream_probe(vs, UR_GET_LEN, &len);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_stream_init: "
@@ -1086,12 +1114,14 @@ uvideo_stream_init(struct uvideo_stream *vs,
 	return USBD_NORMAL_COMPLETION;
 }
 
-/* Further stream initialization based on a Video Streaming interface
+/*
+ * Further stream initialization based on a Video Streaming interface
  * descriptor and following descriptors belonging to that interface.
  * Iterates through all descriptors belonging to this particular
  * interface descriptor, modifying the iterator.  This may be called
  * multiple times because there may be several alternate interfaces
- * associated with the same interface number. */
+ * associated with the same interface number.
+ */
 /*
  * XXX XXX XXX: This function accesses descriptors in an unsafe manner.
  */
@@ -1112,9 +1142,11 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 	DPRINTF(("%s: bInterfaceNumber=%d bAlternateSetting=%d\n", __func__,
 		ifdesc->bInterfaceNumber, ifdesc->bAlternateSetting));
 
-	/* Iterate until the next interface descriptor.  All
+	/*
+	 * Iterate until the next interface descriptor.  All
 	 * descriptors until then belong to this streaming
-	 * interface. */
+	 * interface.
+	 */
 	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
 		uvdesc = (const uvideo_descriptor_t *)desc;
 
@@ -1345,9 +1377,11 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		    pformat, entries);
 	}
 
-	/* Iterate through frame descriptors directly following the
+	/*
+	 * Iterate through frame descriptors directly following the
 	 * format descriptor, and add a format to the format list for
-	 * each frame descriptor. */
+	 * each frame descriptor.
+	 */
 	while ((uvdesc = (const uvideo_descriptor_t *)usb_desc_iter_peek(iter)) &&
 	       (uvdesc != NULL) && (uvdesc->bDescriptorSubtype == subtype))
 	{
@@ -1532,7 +1566,8 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 	case UE_ISOCHRONOUS:
 		ix = &vs->vs_xfer.isoc;
 
-		/* Choose an alternate interface most suitable for
+		/*
+		 * Choose an alternate interface most suitable for
 		 * this format.  Choose the smallest size that can
 		 * contain max_payload_size.
 		 *
@@ -1544,10 +1579,12 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		 */
 		alt = NULL;
 		SLIST_FOREACH(alt_maybe, &ix->ix_altlist, entries) {
-			/* TODO: define "packet" and "payload".  I think
+			/*
+			 * TODO: define "packet" and "payload".  I think
 			 * several packets can make up one payload which would
 			 * call into question this method of selecting an
-			 * alternate interface... */
+			 * alternate interface...
+			 */
 
 			if (alt_maybe->max_packet_size > vs->vs_max_payload_size)
 				continue;
@@ -2033,9 +2070,11 @@ uvideo_set_format(void *addr, struct video_format *format)
 	}
 	USETDW(probe.dwFrameInterval, vs->vs_frame_interval);	/* XXX */
 
-	/* commit/SET_CUR. Fourth step is to set the alternate
+	/*
+	 * commit/SET_CUR. Fourth step is to set the alternate
 	 * interface.  Currently the fourth step is in
-	 * uvideo_start_transfer.  Maybe move it here? */
+	 * uvideo_start_transfer.  Maybe move it here?
+	 */
 	err = uvideo_stream_commit(vs, UR_SET_CUR, &probe);
 	if (err) {
 		DPRINTF(("uvideo: error commit/SET_CUR: %s (%d)\n",
@@ -2433,8 +2472,10 @@ uvideo_modcmd(modcmd_t cmd, void *arg)
 
 
 #ifdef UVIDEO_DEBUG
-/* Some functions to print out descriptors.  Mostly useless other than
- * debugging/exploration purposes. */
+/*
+ * Some functions to print out descriptors.  Mostly useless other than
+ * debugging/exploration purposes.
+ */
 
 
 static void
@@ -3130,8 +3171,10 @@ usb_guid_print(const usb_guid_t *guid)
 }
 #endif /* !UVIDEO_DEBUG */
 
-/* Returns less than zero, zero, or greater than zero if uguid is less
- * than, equal to, or greater than guid. */
+/*
+ * Returns less than zero, zero, or greater than zero if uguid is less
+ * than, equal to, or greater than guid.
+ */
 static int
 usb_guid_cmp(const usb_guid_t *uguid, const guid_t *guid)
 {
