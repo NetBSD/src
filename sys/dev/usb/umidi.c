@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.86 2022/03/19 20:44:07 riastradh Exp $	*/
+/*	$NetBSD: umidi.c,v 1.87 2022/04/17 13:15:15 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.86 2022/03/19 20:44:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.87 2022/04/17 13:15:15 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -69,6 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.86 2022/03/19 20:44:07 riastradh Exp $")
 /* Jack Type */
 #define UMIDI_EMBEDDED	0x01
 #define UMIDI_EXTERNAL	0x02
+
+/* generic, for iteration */
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+} UPACKED umidi_cs_descriptor_t;
 
 typedef struct {
 	uByte		bLength;
@@ -866,6 +873,7 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 	char *end;
 	usb_config_descriptor_t *cdesc;
 	usb_descriptor_t *desc;
+	umidi_cs_descriptor_t *csdesc;
 	usb_interface_descriptor_t *idesc;
 	umidi_cs_interface_descriptor_t *udesc;
 	usb_endpoint_descriptor_t *epd;
@@ -902,12 +910,13 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		return USBD_INVAL;
 
 	/* count jacks */
-	if (!(desc->bDescriptorType == UDESC_CS_INTERFACE &&
-	      desc->bDescriptorSubtype == UMIDI_MS_HEADER))
+	if (desc->bDescriptorType != UDESC_CS_INTERFACE ||
+	    desc->bLength < sizeof(*csdesc))
 		return USBD_INVAL;
-	if (desc->bLength < sizeof(*udesc))
+	csdesc = (umidi_cs_descriptor_t *)desc;
+	if (csdesc->bDescriptorSubtype != UMIDI_MS_HEADER)
 		return USBD_INVAL;
-	udesc = TO_CSIFD(desc);
+	udesc = TO_CSIFD(csdesc);
 	if (UGETW(udesc->wTotalLength) > end - (char *)udesc)
 		return USBD_INVAL;
 	if (UGETW(udesc->wTotalLength) < udesc->bLength)
@@ -919,13 +928,15 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		if (desc->bLength < sizeof(*desc) ||
 		    desc->bLength > end - (char *)desc)
 			break;
-		if (desc->bDescriptorType == UDESC_CS_INTERFACE &&
-		    desc->bLength >= UMIDI_JACK_DESCRIPTOR_SIZE) {
-			if (desc->bDescriptorSubtype == UMIDI_OUT_JACK)
-				sc->sc_out_num_jacks++;
-			else if (desc->bDescriptorSubtype == UMIDI_IN_JACK)
-				sc->sc_in_num_jacks++;
-		}
+		if (desc->bDescriptorType != UDESC_CS_INTERFACE ||
+		    desc->bLength < sizeof(*csdesc) ||
+		    desc->bLength < UMIDI_JACK_DESCRIPTOR_SIZE)
+			continue;
+		csdesc = (umidi_cs_descriptor_t *)desc;
+		if (csdesc->bDescriptorSubtype == UMIDI_OUT_JACK)
+			sc->sc_out_num_jacks++;
+		else if (csdesc->bDescriptorSubtype == UMIDI_IN_JACK)
+			sc->sc_in_num_jacks++;
 	}
 
 	/* validate some parameters */
