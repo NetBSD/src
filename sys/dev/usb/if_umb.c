@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.21 2021/09/21 14:49:01 christos Exp $ */
+/*	$NetBSD: if_umb.c,v 1.22 2022/04/17 13:15:27 riastradh Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.21 2021/09/21 14:49:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.22 2022/04/17 13:15:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -297,6 +297,7 @@ umb_attach(device_t parent, device_t self, void *aux)
 	usbd_status status;
 	usbd_desc_iter_t iter;
 	const usb_descriptor_t *desc;
+	const usb_cdc_descriptor_t *csdesc;
 	int	 v;
 	const usb_cdc_union_descriptor_t *ud;
 	const struct mbim_descriptor *md;
@@ -350,7 +351,8 @@ umb_attach(device_t parent, device_t self, void *aux)
 			continue;
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE)
 			continue;
-		switch (desc->bDescriptorSubtype) {
+		csdesc = (const usb_cdc_descriptor_t *)desc;
+		switch (csdesc->bDescriptorSubtype) {
 		case UDESCSUB_CDC_UNION:
 			ud = (const usb_cdc_union_descriptor_t *)desc;
 			data_ifaceno = ud->bSlaveInterface[0];
