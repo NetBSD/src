@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.77 2022/04/17 13:17:19 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.78 2022/04/17 13:17:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.77 2022/04/17 13:17:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.78 2022/04/17 13:17:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -442,8 +442,12 @@ static void print_vs_format_dv_descriptor(
 	const uvideo_vs_format_dv_descriptor_t *);
 #endif /* !UVIDEO_DEBUG */
 
-#define GET(type, descp, field) (((const type *)(descp))->field)
-#define GETP(type, descp, field) (&(((const type *)(descp))->field))
+#define GET(type, descp, field)						      \
+	(KASSERT((descp)->bLength >= sizeof(type)),			      \
+	    ((const type *)(descp))->field)
+#define GETP(type, descp, field)					      \
+	(KASSERT((descp)->bLength >= sizeof(type)),			      \
+	    &(((const type *)(descp))->field))
 
 /*
  * Given a format descriptor and frame descriptor, copy values common
@@ -789,10 +793,11 @@ uvideo_init_control(struct uvideo_softc *sc,
 	/* count number of units and terminals */
 	nunits = 0;
 	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
+		if (desc->bDescriptorType != UDESC_CS_INTERFACE ||
+		    desc->bLength < sizeof(*uvdesc))
+			continue;
 		uvdesc = (const uvideo_descriptor_t *)desc;
 
-		if (uvdesc->bDescriptorType != UDESC_CS_INTERFACE)
-			continue;
 		if (uvdesc->bDescriptorSubtype < UDESC_INPUT_TERMINAL ||
 		    uvdesc->bDescriptorSubtype > UDESC_EXTENSION_UNIT)
 			continue;
@@ -815,10 +820,11 @@ uvideo_init_control(struct uvideo_softc *sc,
 
 	/* iterate again, initializing the units */
 	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
+		if (desc->bDescriptorType != UDESC_CS_INTERFACE ||
+		    desc->bLength < sizeof(*uvdesc))
+			continue;
 		uvdesc = (const uvideo_descriptor_t *)desc;
 
-		if (uvdesc->bDescriptorType != UDESC_CS_INTERFACE)
-			continue;
 		if (uvdesc->bDescriptorSubtype < UDESC_INPUT_TERMINAL ||
 		    uvdesc->bDescriptorSubtype > UDESC_EXTENSION_UNIT)
 			continue;
@@ -1116,9 +1122,6 @@ uvideo_stream_init(struct uvideo_stream *vs,
  * multiple times because there may be several alternate interfaces
  * associated with the same interface number.
  */
-/*
- * XXX XXX XXX: This function accesses descriptors in an unsafe manner.
- */
 static usbd_status
 uvideo_stream_init_desc(struct uvideo_stream *vs,
 			const usb_interface_descriptor_t *ifdesc,
@@ -1142,10 +1145,10 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 	 * interface.
 	 */
 	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
-		uvdesc = (const uvideo_descriptor_t *)desc;
-
-		switch (uvdesc->bDescriptorType) {
+		switch (desc->bDescriptorType) {
 		case UDESC_ENDPOINT:
+			if (desc->bLength < sizeof(usb_endpoint_descriptor_t))
+				goto baddesc;
 			bmAttributes = GET(usb_endpoint_descriptor_t,
 					   desc, bmAttributes);
 			bEndpointAddress = GET(usb_endpoint_descriptor_t,
@@ -1204,6 +1207,9 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 			}
 			break;
 		case UDESC_CS_INTERFACE:
+			if (desc->bLength < sizeof(*uvdesc))
+				goto baddesc;
+			uvdesc = (const uvideo_descriptor_t *)desc;
 			if (ifdesc->bAlternateSetting != 0) {
 				DPRINTF(("uvideo_stream_init_alternate: "
 					 "unexpected class-specific descriptor "
@@ -1244,11 +1250,12 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 			}
 			break;
 		default:
+		baddesc:
 			DPRINTF(("uvideo_stream_init_desc: "
-				 "unknown descriptor "
+				 "bad descriptor "
 				 "len=%d type=0x%02x\n",
-				 uvdesc->bLength,
-				 uvdesc->bDescriptorType));
+				 desc->bLength,
+				 desc->bDescriptorType));
 			break;
 		}
 	}
@@ -1300,8 +1307,9 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 	struct uvideo_pixel_format *pformat, *pfiter;
 	enum video_pixel_format pixel_format;
 	struct uvideo_format *format;
+	const usb_descriptor_t *desc;
 	const uvideo_descriptor_t *uvdesc;
-	uint8_t subtype, default_index, index;
+	uint8_t subtype, subtypelen, default_index, index;
 	uint32_t frame_interval;
 	const usb_guid_t *guid;
 
@@ -1313,7 +1321,14 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 	switch (format_desc->bDescriptorSubtype) {
 	case UDESC_VS_FORMAT_UNCOMPRESSED:
 		DPRINTF(("%s: uncompressed\n", __func__));
+		if (format_desc->bLength <
+		    sizeof(uvideo_vs_format_uncompressed_descriptor_t)) {
+			DPRINTF(("uvideo: truncated uncompressed format: %d",
+				format_desc->bLength));
+			return USBD_INVAL;
+		}
 		subtype = UDESC_VS_FRAME_UNCOMPRESSED;
+		subtypelen = sizeof(uvideo_vs_frame_uncompressed_descriptor_t);
 		default_index = GET(uvideo_vs_format_uncompressed_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
@@ -1336,14 +1351,28 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		break;
 	case UDESC_VS_FORMAT_FRAME_BASED:
 		DPRINTF(("%s: frame-based\n", __func__));
+		if (format_desc->bLength <
+		    sizeof(uvideo_format_frame_based_descriptor_t)) {
+			DPRINTF(("uvideo: truncated frame-based format: %d",
+				format_desc->bLength));
+			return USBD_INVAL;
+		}
 		subtype = UDESC_VS_FRAME_FRAME_BASED;
+		subtypelen = sizeof(uvideo_frame_frame_based_descriptor_t);
 		default_index = GET(uvideo_format_frame_based_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
 		break;
 	case UDESC_VS_FORMAT_MJPEG:
 		DPRINTF(("%s: mjpeg\n", __func__));
+		if (format_desc->bLength <
+		    sizeof(uvideo_vs_format_mjpeg_descriptor_t)) {
+			DPRINTF(("uvideo: truncated mjpeg format: %d",
+				format_desc->bLength));
+			return USBD_INVAL;
+		}
 		subtype = UDESC_VS_FRAME_MJPEG;
+		subtypelen = sizeof(uvideo_vs_frame_mjpeg_descriptor_t);
 		default_index = GET(uvideo_vs_format_mjpeg_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
@@ -1354,6 +1383,8 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			 format_desc->bDescriptorSubtype));
 		return USBD_INVAL;
 	}
+
+	KASSERT(subtypelen >= sizeof(*uvdesc));
 
 	pformat = NULL;
 	SIMPLEQ_FOREACH(pfiter, &vs->vs_pixel_formats, entries) {
@@ -1376,10 +1407,27 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 	 * format descriptor, and add a format to the format list for
 	 * each frame descriptor.
 	 */
-	while ((uvdesc = (const uvideo_descriptor_t *)usb_desc_iter_peek(iter)) &&
-	       (uvdesc != NULL) && (uvdesc->bDescriptorSubtype == subtype))
-	{
-		uvdesc = (const uvideo_descriptor_t *) usb_desc_iter_next(iter);
+	while ((desc = usb_desc_iter_peek(iter)) != NULL) {
+		if (desc->bDescriptorType != UDESC_CS_INTERFACE)
+			break;
+		if (desc->bLength < sizeof(*uvdesc)) {
+			DPRINTF(("uvideo: truncated CS descriptor, length %d",
+				desc->bLength));
+			break;
+		}
+		uvdesc = (const uvideo_descriptor_t *)desc;
+		if (uvdesc->bDescriptorSubtype != subtype)
+			break;
+		if (uvdesc->bLength < subtypelen) {
+			DPRINTF(("uvideo:"
+				" truncated CS subtype-0x%x descriptor,"
+				" length %d < %d",
+				uvdesc->bLength, subtypelen));
+			break;
+		}
+
+		/* We peeked; now consume.  */
+		(void)usb_desc_iter_next(iter);
 
 		format = kmem_zalloc(sizeof(*format), KM_SLEEP);
 		format->format.pixel_format = pixel_format;
