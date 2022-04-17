@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.23 2022/04/17 13:17:40 riastradh Exp $ */
+/*	$NetBSD: if_umb.c,v 1.24 2022/04/17 13:17:56 riastradh Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.23 2022/04/17 13:17:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.24 2022/04/17 13:17:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1742,7 +1742,8 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(ifra.ifra_dstaddr);
 		off = le32toh(ic->ipv4_gwoffs);
-		sin->sin_addr.s_addr = *((uint32_t *)((char *)data + off));
+		memcpy(&sin->sin_addr.s_addr, (const char *)data + off,
+		    sizeof(sin->sin_addr.s_addr));
 
 		sin = (struct sockaddr_in *)&ifra.ifra_mask;
 		sin->sin_family = AF_INET;
@@ -1771,7 +1772,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		while (n-- > 0) {
 			if (off + sizeof(uint32_t) > len)
 				break;
-			val = *((uint32_t *)((char *)data + off));
+			memcpy(&val, (const char *)data + off, sizeof(val));
 			if (i < UMB_MAX_DNSSRV)
 				sc->sc_info.ipv4dns[i++] = val;
 			off += sizeof(uint32_t);
