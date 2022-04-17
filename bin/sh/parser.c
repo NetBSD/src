@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.178 2022/04/16 14:20:45 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.179 2022/04/17 21:24:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.178 2022/04/16 14:20:45 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.179 2022/04/17 21:24:52 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ command(void)
 	}
 	tokpushback++;
 
-#ifdef BOGUS_NOT_COMMAND		/* only in pileline() */
+#ifdef BOGUS_NOT_COMMAND		/* only in pipeline() */
 	while (readtoken() == TNOT) {
 		CTRACE(DBG_PARSE, ("command: TNOT (bogus) recognized\n"));
 		negate++;
@@ -891,7 +891,7 @@ slurp_heredoc(char *const eofmark, const int striptabs, const int sq)
 				/*
 				 * in single quoted mode (eofmark quoted)
 				 * all we look for is \n so we can check
-				 * for the epfmark - everything saved literally.
+				 * for the eofmark - everything saved literally.
 				 */
 				STPUTC(c, out);
 				if (c == '\n') {
@@ -1767,7 +1767,7 @@ readcstyleesc(char *out)
 /*
  * Add a byte to output string, while checking if it needs to
  * be escaped -- if its value happens to match the value of one
- * of our internal CTL* chars - which would (at a minumum) be
+ * of our internal CTL* chars - which would (at a minimum) be
  * summarily removed later, if not escaped.
  *
  * The current definition of ISCTL() allows the compiler to
@@ -2675,7 +2675,7 @@ getprompt(void *unused)
  * expanded half way through reading a "command line")
  *
  * on error, expandonstack() cleans up the parser state, but then
- * simply jumps out through expandstr() withut doing any stack cleanup,
+ * simply jumps out through expandstr() without doing any stack cleanup,
  * which is OK, as the error handler must deal with that anyway.
  *
  * The split into two funcs is to avoid problems with setjmp/longjmp
