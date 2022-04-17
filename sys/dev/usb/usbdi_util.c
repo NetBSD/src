@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.86 2022/04/17 13:16:43 riastradh Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.87 2022/04/17 13:16:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.86 2022/04/17 13:16:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.87 2022/04/17 13:16:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -769,7 +769,11 @@ usb_desc_iter_next_interface(usbd_desc_iter_t *iter)
 		usb_desc_iter_next(iter);
 	}
 
-	return (const usb_interface_descriptor_t *)usb_desc_iter_next(iter);
+	if ((desc = usb_desc_iter_next(iter)) == NULL ||
+	    desc->bLength < sizeof(usb_interface_descriptor_t))
+		return NULL;
+	KASSERT(desc->bDescriptorType == UDESC_INTERFACE);
+	return (const usb_interface_descriptor_t *)desc;
 }
 
 /*
