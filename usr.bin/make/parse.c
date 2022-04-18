@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.669 2022/04/18 15:06:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.670 2022/04/18 16:09:05 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.669 2022/04/18 15:06:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.670 2022/04/18 16:09:05 sjg Exp $");
 
 /*
  * A file being read.
@@ -1254,6 +1254,11 @@ HandleDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
 #ifdef POSIX
 	case SP_POSIX:
 		if (posix_state == PS_NOW_OR_NEVER) {
+			/*
+			 * With '-r', 'posix.mk' (if it exists)
+			 * can effectively substitute for 'sys.mk',
+			 * otherwise it is an extension.
+			 */
 			Global_Set("%POSIX", "1003.2");
 			IncludeFile("posix.mk", true, false, true);
 		}
