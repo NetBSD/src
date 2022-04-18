@@ -1,11 +1,13 @@
-# $NetBSD: depsrc-usebefore.mk,v 1.8 2022/04/18 14:38:24 rillig Exp $
+# $NetBSD: depsrc-usebefore.mk,v 1.9 2022/04/18 14:41:42 rillig Exp $
 #
 # Tests for the special source .USEBEFORE in dependency declarations,
 # which allows to prepend common commands to other targets.
 #
-# If a target depends on several .USE or .USEBEFORE targets, the commands get
-# appended in declaration order.  For .USE targets, this is the expected
-# order, for .USEBEFORE targets the order is somewhat reversed.
+# If a target depends on several .USE or .USEBEFORE nodes, the commands get
+# appended or prepended in declaration order.  For .USE nodes, this is the
+# expected order, for .USEBEFORE nodes the order is somewhat reversed, and for
+# .USE or .USEBEFORE nodes that depend on other .USE or .USEBEFORE nodes, it
+# gets even more complicated.
 #
 # See also:
 #	.USE
