@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.83 2022/04/13 03:39:58 snj Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.84 2022/04/18 10:57:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1534,4 +1534,9 @@ distrib/amd64/ramdisks/common/list.ramdisk	1.22
 
 	Add missing EFI bootloaders to the install kernel ramdisk.
 	[martin, ticket #1436]
+
+sys/fs/udf/udf_allocation.c			1.46
+
+	Avoid a race introduced with ticket #1431.
+	[reinoud, ticket #1437]
 
