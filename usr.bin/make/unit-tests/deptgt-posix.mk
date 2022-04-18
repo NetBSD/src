@@ -1,4 +1,4 @@
-# $NetBSD: deptgt-posix.mk,v 1.1 2022/04/18 15:06:28 rillig Exp $
+# $NetBSD: deptgt-posix.mk,v 1.2 2022/04/18 15:59:39 sjg Exp $
 #
 # Tests for the special target '.POSIX', which enables POSIX mode.
 #
@@ -15,10 +15,10 @@
 # See also:
 #	https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html
 
-TMPDIR?=	/tmp/make.test.deptgt-posix
-SYSDIR=		${TMPDIR}/sysdir
-MAIN_MK=	${TMPDIR}/main.mk
-INCLUDED_MK=	${TMPDIR}/included.mk
+TESTTMP=	${TMPDIR:U/tmp}/make.test.deptgt-posix
+SYSDIR=		${TESTTMP}/sysdir
+MAIN_MK=	${TESTTMP}/main.mk
+INCLUDED_MK=	${TESTTMP}/included.mk
 
 all: .PHONY
 .SILENT:
@@ -58,9 +58,9 @@ check-not-seen-sys-mk: .USE
 	    '.endif'
 
 run: .USE
-	(cd "${TMPDIR}" && MAKEFLAGS=${MAKEFLAGS.${.TARGET}:Q} ${MAKE} \
+	(cd "${TESTTMP}" && MAKEFLAGS=${MAKEFLAGS.${.TARGET}:Q} ${MAKE} \
 	    -m "${SYSDIR}" -f ${MAIN_MK:T})
-	rm -rf ${TMPDIR}
+	rm -rf ${TESTTMP}
 
 # If the main makefile has a '.for' loop as its first non-comment line, a
 # strict reading of POSIX 2018 makes the makefile non-conforming.
