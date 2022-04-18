@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.115 2021/12/19 21:15:27 andvar Exp $	*/
+/*	$NetBSD: jobs.c,v 1.116 2022/04/18 06:02:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.115 2021/12/19 21:15:27 andvar Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.116 2022/04/18 06:02:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,8 @@ STATIC void cmdtxt(union node *);
 STATIC void cmdlist(union node *, int);
 STATIC void cmdputs(const char *);
 inline static void cmdputi(int);
+
+#define	JNUM(j)	((int)((j) != NULL ? ((j) - jobtab) + 1 : 0))
 
 #ifdef SYSV
 STATIC int onsigchild(void);
@@ -355,7 +357,7 @@ bgcmd(int argc, char **argv)
 		if (jp->jobctl == 0)
 			error("job not created under job control");
 		set_curjob(jp, 1);
-		out1fmt("[%ld] %s", (long)(jp - jobtab + 1), jp->ps[0].cmd);
+		out1fmt("[%d] %s", JNUM(jp), jp->ps[0].cmd);
 		for (i = 1; i < jp->nprocs; i++)
 			out1fmt(" | %s", jp->ps[i].cmd );
 		out1c('\n');
@@ -403,9 +405,9 @@ restartjob(struct job *jp)
 	for (ps = jp->ps, i = jp->nprocs ; --i >= 0 ; ps++) {
 		if (WIFSTOPPED(ps->status)) {
 			VTRACE(DBG_JOBS, (
-			   "restartjob: [%zu] pid %d status change"
+			   "restartjob: [%d] pid %d status change"
 			   " from %#x (stopped) to -1 (running)\n",
-			   (size_t)(jp-jobtab+1), ps->pid, ps->status));
+			   JNUM(jp), ps->pid, ps->status));
 			ps->status = -1;
 			jp->state = JOBRUNNING;
 		}
@@ -470,7 +472,7 @@ showjob(struct output *out, struct job *jp, int mode)
 	if (mode & SHOW_SIGNALLED && !(mode & SHOW_ISSIG)) {
 		if (jp->state == JOBDONE && !(mode & SHOW_NO_FREE)) {
 			VTRACE(DBG_JOBS, ("showjob: freeing job %d\n",
-			    jp - jobtab + 1));
+			    JNUM(jp)));
 			freejob(jp);
 		}
 		return;
@@ -478,8 +480,8 @@ showjob(struct output *out, struct job *jp, int mode)
 
 	for (ps = jp->ps; --procno >= 0; ps++) {	/* for each process */
 		if (ps == jp->ps)
-			fmtstr(s, 16, "[%ld] %c ",
-				(long)(jp - jobtab + 1),
+			fmtstr(s, 16, "[%d] %c ",
+				JNUM(jp),
 #if JOBS
 				jp - jobtab == curjob ?
 									  '+' :
@@ -948,7 +950,7 @@ jobidcmd(int argc, char **argv)
 
 	jp = getjob(*argptr, 0);
 	if (job) {
-		out1fmt("%%%zu\n", (size_t)(jp - jobtab + 1));
+		out1fmt("%%%d\n", JNUM(jp));
 		return 0;
 	}
 	if (pg) {
@@ -1157,7 +1159,7 @@ makejob(union node *node, int nprocs)
 	}
 	INTON;
 	VTRACE(DBG_JOBS, ("makejob(%p, %d)%s returns %%%d\n", (void *)node,
-	    nprocs, (jp->flags&JPIPEFAIL)?" PF":"", jp - jobtab + 1));
+	    nprocs, (jp->flags & JPIPEFAIL) ? " PF" : "", JNUM(jp)));
 	return jp;
 }
 
@@ -1184,7 +1186,7 @@ forkshell(struct job *jp, union node *n, int mode)
 	int serrno;
 
 	CTRACE(DBG_JOBS, ("forkshell(%%%d, %p, %d) called\n",
-	    jp - jobtab, n, mode));
+	    JNUM(jp), n, mode));
 
 	switch ((pid = fork())) {
 	case -1:
@@ -1326,7 +1328,7 @@ waitforjob(struct job *jp)
 	int st;
 
 	INTOFF;
-	VTRACE(DBG_JOBS, ("waitforjob(%%%d) called\n", jp - jobtab + 1));
+	VTRACE(DBG_JOBS, ("waitforjob(%%%d) called\n", JNUM(jp)));
 	while (jp->state == JOBRUNNING) {
 		dowait(WBLOCK, jp, NULL);
 	}
@@ -1352,7 +1354,7 @@ waitforjob(struct job *jp)
 		st = WTERMSIG(status) + 128;
 
 	VTRACE(DBG_JOBS, ("waitforjob: job %d, nproc %d, status %d, st %x\n",
-		jp - jobtab + 1, jp->nprocs, status, st));
+		JNUM(jp), jp->nprocs, status, st));
 #if JOBS
 	if (jp->jobctl) {
 		/*
@@ -1402,7 +1404,7 @@ dowait(int flags, struct job *job, struct job **changed)
 	int err;
 
 	VTRACE(DBG_JOBS|DBG_PROCS, ("dowait(%x) called for job %d%s\n",
-	    flags, (job ? job-jobtab+1 : 0), changed ? " [report change]":""));
+	    flags, JNUM(job), changed ? " [report change]" : ""));
 
 	if (changed != NULL)
 		*changed = NULL;
@@ -1458,9 +1460,8 @@ dowait(int flags, struct job *job, struct job **changed)
 				if (sp->pid == pid &&
 				  (sp->status==-1 || WIFSTOPPED(sp->status))) {
 					VTRACE(DBG_JOBS | DBG_PROCS,
-			("Job %d: changing status of proc %d from %#x to %#x\n",
-						jp - jobtab + 1, pid,
-						sp->status, status));
+			("Job %d: changing status of proc %d from %#x to ",
+					    JNUM(jp), pid, sp->status));
 
 					/*
 					 * If the process continued,
@@ -1475,10 +1476,14 @@ dowait(int flags, struct job *job, struct job **changed)
 						if (sp->status != -1)
 							jp->flags |= JOBCHANGED;
 						sp->status = -1;
-						jp->state = 0;
+						jp->state = JOBRUNNING;
+						VTRACE(DBG_JOBS|DBG_PROCS,
+						    ("running\n"));
 					} else {
 						/* otherwise update status */
 						sp->status = status;
+						VTRACE(DBG_JOBS|DBG_PROCS,
+						    ("%#x\n", status));
 					}
 
 					/*
@@ -1519,7 +1524,7 @@ dowait(int flags, struct job *job, struct job **changed)
 				if (jp->state != state) {
 					VTRACE(DBG_JOBS,
 				("Job %d: changing state from %d to %d\n",
-					    jp - jobtab + 1, jp->state, state));
+					    JNUM(jp), jp->state, state));
 					jp->state = state;
 #if JOBS
 					if (done)
@@ -1554,8 +1559,8 @@ dowait(int flags, struct job *job, struct job **changed)
 			VTRACE(DBG_JOBS,
 			    ("Not printing status for %p [%d], "
 			     "mode=%#x rootshell=%d, job=%p [%d]\n",
-			    thisjob, (thisjob ? (thisjob-jobtab+1) : 0),
-			    mode, rootshell, job, (job ? (job-jobtab+1) : 0)));
+			    thisjob, JNUM(thisjob), mode, rootshell,
+			    job, JNUM(job)));
 			thisjob->flags |= JOBCHANGED;
 		}
 	}
@@ -1564,7 +1569,7 @@ dowait(int flags, struct job *job, struct job **changed)
 	/*
 	 * Finally tell our caller that something happened (in general all
 	 * anyone tests for is <= 0 (or >0) so the actual pid value here
-	 * doesn't matter much, but we know it is >0 and we may as well
+	 * doesn't matter much, but we know pid is >0 so we may as well
 	 * give back something meaningful
 	 */
 	return pid;
@@ -1596,7 +1601,7 @@ dowait(int flags, struct job *job, struct job **changed)
  *
  * If neither SYSV nor BSD is defined, we don't implement nonblocking
  * waits at all.  In this case, the user will not be informed when
- * a background process until the next time she runs a real program
+ * a background process ends until the next time she runs a real program
  * (as opposed to running a builtin command or just typing return),
  * and the jobs command may give out of date information.
  */
