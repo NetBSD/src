@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2018/05/01 19:59:46 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2022/04/18 19:40:06 jkoshy Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -45,8 +45,8 @@ OSNETDIR=	${.CURDIR}/../../external/cddl/osnet
 OPENSOLARIS_DISTDIR= ${OSNETDIR}/dist
 
 CTFOBJ!=	cd ${.CURDIR}/../libctf && ${PRINTOBJDIR}
-DWARFOBJ!=	cd ${.CURDIR}/../libdwarf && ${PRINTOBJDIR}
-ELFOBJ!=	cd ${.CURDIR}/../libelf && ${PRINTOBJDIR}
+DWARFOBJ!=	cd ${.CURDIR}/../elftoolchain/libdwarf && ${PRINTOBJDIR}
+ELFOBJ!=	cd ${.CURDIR}/../elftoolchain/libelf && ${PRINTOBJDIR}
 LDADD+=		-L${CTFOBJ} -lctf
 DPADD+=		${CTFOBJ}/libctf.a
 LDADD+=		-L${DWARFOBJ} -ldwarf
