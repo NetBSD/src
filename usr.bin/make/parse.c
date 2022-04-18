@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.668 2022/03/25 21:16:04 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.669 2022/04/18 15:06:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.668 2022/03/25 21:16:04 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.669 2022/04/18 15:06:27 rillig Exp $");
 
 /*
  * A file being read.
@@ -294,6 +294,7 @@ static const struct {
     { ".WAIT",		SP_WAIT,	OP_NONE },
 };
 
+enum PosixState posix_state = PS_NOT_YET;
 
 static IncludedFile *
 GetInclude(size_t i)
@@ -1252,23 +1253,9 @@ HandleDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
 		break;
 #ifdef POSIX
 	case SP_POSIX:
-		Global_Set("%POSIX", "1003.2");
-		{
-			static bool first_posix = true;
-
-			/*
-			 * Since .POSIX: should be the first
-			 * operative line in a makefile,
-			 * if '-r' flag is used, no default rules have
-			 * been read yet, in which case 'posix.mk' can
-			 * be a substiute for 'sys.mk'.
-			 * If '-r' is not used, then 'posix.mk' acts
-			 * as an extension of 'sys.mk'.
-			 */
-			if (first_posix) {
-				first_posix = false;
-				IncludeFile("posix.mk", true, false, true);
-			}
+		if (posix_state == PS_NOW_OR_NEVER) {
+			Global_Set("%POSIX", "1003.2");
+			IncludeFile("posix.mk", true, false, true);
 		}
 		break;
 #endif
@@ -2590,6 +2577,10 @@ ReadHighLevelLine(void)
 
 	for (;;) {
 		line = ReadLowLevelLine(LK_NONEMPTY);
+		if (posix_state == PS_MAYBE_NEXT_LINE)
+			posix_state = PS_NOW_OR_NEVER;
+		else
+			posix_state = PS_TOO_LATE;
 		if (line == NULL)
 			return NULL;
 
