@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.20 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.21 2022/04/18 10:09:07 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.20 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.21 2022/04/18 10:09:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,10 @@ fdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 		return (0);
 
 	if (ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
+		return (0);
+
+	/* ISA chipset tag is required for DMA support. */
+	if (ia->ia_ic == NULL)
 		return (0);
 
 	/* Map the I/O space. */
