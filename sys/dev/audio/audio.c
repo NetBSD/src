@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.123 2022/04/09 23:35:58 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.124 2022/04/19 09:19:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.123 2022/04/09 23:35:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.124 2022/04/19 09:19:53 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1344,6 +1344,7 @@ audiodetach(device_t self, int flags)
 {
 	struct audio_softc *sc;
 	struct audio_file *file;
+	int maj, mn;
 	int error;
 
 	sc = device_private(self);
@@ -1357,6 +1358,16 @@ audiodetach(device_t self, int flags)
 	error = config_detach_children(self, flags);
 	if (error)
 		return error;
+
+	/*
+	 * Prevent new opens and wait for existing opens to complete.
+	 */
+	maj = cdevsw_lookup_major(&audio_cdevsw);
+	mn = device_unit(self);
+	vdevgone(maj, mn|SOUND_DEVICE, mn|SOUND_DEVICE, VCHR);
+	vdevgone(maj, mn|AUDIO_DEVICE, mn|AUDIO_DEVICE, VCHR);
+	vdevgone(maj, mn|AUDIOCTL_DEVICE, mn|AUDIOCTL_DEVICE, VCHR);
+	vdevgone(maj, mn|MIXER_DEVICE, mn|MIXER_DEVICE, VCHR);
 
 	/*
 	 * This waits currently running sysctls to finish if exists.
