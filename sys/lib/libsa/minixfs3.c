@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.8 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.9 2022/04/19 09:25:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -572,7 +572,7 @@ minixfs3_open(const char *path, struct open_file *f)
 		/*
 		 * We note that the number of indirect blocks is always
 		 * a power of 2.  This lets us use shifts and masks instead
-		 * of divide and remainder and avoinds pulling in the
+		 * of divide and remainder and avoids pulling in the
 		 * 64bit division routine into the boot code.
 		 */
 		mult = MFS_NINDIR(fs);
