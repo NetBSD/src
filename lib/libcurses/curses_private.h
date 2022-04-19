@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.78 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.79 2022/04/19 22:26:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -361,10 +361,12 @@ unsigned int	 __hash_line(const __LDATA *, int);
 void	 __id_subwins(WINDOW *);
 void	 __init_getch(SCREEN *);
 void	 __init_acs(SCREEN *);
+int	 _cursesi_celleq(__LDATA *, __LDATA *);
 #ifdef HAVE_WCHAR
 void	 __init_get_wch(SCREEN *);
 void	 __init_wacs(SCREEN *);
 int	__cputwchar_args( wchar_t, void * );
+void	_cursesi_copy_wchar(__LDATA *, __LDATA *);
 int     _cursesi_copy_nsp(nschar_t *, struct __ldata *);
 void	__cursesi_free_nsp(nschar_t *);
 void	__cursesi_win_free_nsp(WINDOW *);

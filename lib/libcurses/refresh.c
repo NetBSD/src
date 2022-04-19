@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.121 2022/04/13 19:17:09 pgoyette Exp $	*/
+/*	$NetBSD: refresh.c,v 1.122 2022/04/19 22:26:57 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.121 2022/04/13 19:17:09 pgoyette Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.122 2022/04/19 22:26:57 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,7 +57,6 @@ static void	scrolln(int, int, int, int, int);
 
 static int	_wnoutrefresh(WINDOW *, int, int, int, int, int, int);
 
-static int celleq(__LDATA *, __LDATA *);
 static int lineeq(__LDATA *, __LDATA *, size_t);
 
 #define	CHECK_INTERVAL		5 /* Change N lines before checking typeahead */
@@ -1174,7 +1173,7 @@ makech(int wy)
 	    || (__using_color && back_color_erase))) {
 		cp = &win->alines[wy]->line[win->maxx - 1];
 #ifdef HAVE_WCHAR
-		while ((celleq(cp, &space) == 1) &&
+		while ((_cursesi_celleq(cp, &space) == 1) &&
 #else
 		while (cp->ch == space.ch &&
 #endif /* HAVE_WCHAR */
@@ -1200,7 +1199,7 @@ makech(int wy)
 		__CTRACE(__CTRACE_REFRESH, "makech: wx=%d,lch=%d\n", wx, lch);
 #ifdef HAVE_WCHAR
 		__CTRACE(__CTRACE_REFRESH, "makech: farnarkle: flags 0x%x, wflags 0x%x, color_init %d, celleq %d\n",
-			wlp->flags, nsp->wflags, __do_color_init, celleq(nsp, csp));
+			wlp->flags, nsp->wflags, __do_color_init, _cursesi_celleq(nsp, csp));
 		__CTRACE(__CTRACE_REFRESH, "makech: nsp=(%x,%x,%d,%x,%x,%d,%p)\n",
 			nsp->ch, nsp->attr, nsp->wcols, win->bch, win->battr,
 			win->wcols, nsp->nsp);
@@ -1212,10 +1211,10 @@ makech(int wy)
 #ifdef HAVE_WCHAR
 		    ((nsp->wflags & WCA_CONTINUATION) != WCA_CONTINUATION) &&
 #endif
-		    celleq(nsp, csp))
+		    _cursesi_celleq(nsp, csp))
 		{
 			if (wx <= lch) {
-				while (wx <= lch && celleq(nsp, csp)) {
+				while (wx <= lch && _cursesi_celleq(nsp, csp)) {
 #ifdef HAVE_WCHAR
 					wx += nsp->wcols;
 #else
@@ -1239,7 +1238,7 @@ makech(int wy)
 		_cursesi_screen->lx = wx;
 		owx = wx;
 		while (wx <= lch &&
-		       ((wlp->flags & __ISFORCED) || !celleq(nsp, csp)))
+		       ((wlp->flags & __ISFORCED) || !_cursesi_celleq(nsp, csp)))
 		{
 			if ((ce != NULL) && (wx >= nlsp) &&
 			    (nsp->ch == space.ch) &&
@@ -1346,7 +1345,7 @@ makech(int wy)
 			    !(win->flags & __SCROLLWIN))
 			{
 				tld = nsp;
-				if (celleq(&blank, nsp))
+				if (_cursesi_celleq(&blank, nsp))
 					tld = &blank;
 				
 				if (putch(tld, csp, wy, wx) == ERR)
@@ -1711,7 +1710,7 @@ done:
 				if (clp->hash != blank_hash ||
 				    !lineeq(clp->line, clp->line + 1,
 					    (__virtscr->maxx - 1)) ||
-				    !celleq(clp->line, buf))
+				    !_cursesi_celleq(clp->line, buf))
 				{
 					for (i = __virtscr->maxx;
 					    i > BLANKSIZE;
@@ -1990,40 +1989,6 @@ __unsetattr(int checkms)
 		__unset_color(curscr);
 }
 
-/* compare two cells on screen, must have the same foreground/background,
- * and for wide characters the same sequence of non-spacing characters
- */
-static int
-celleq(__LDATA *x, __LDATA *y)
-{
-#ifdef HAVE_WCHAR
-	nschar_t *xnp = x->nsp, *ynp = y->nsp;
-#endif /* HAVE_WCHAR */
-	int ret = ( x->ch == y->ch ) && ( x->attr == y->attr );
-
-#ifdef HAVE_WCHAR
-	if (!ret)
-		return 0;
-
-	if (!xnp && !ynp)
-		return 1;
-
-	if ((xnp && !ynp) || (!xnp && ynp))
-		return 0;
-
-	while (xnp && ynp) {
-		if (xnp->ch != ynp->ch)
-			return 0;
-		xnp = xnp->next;
-		ynp = ynp->next;
-	}
-
-	return !xnp && !ynp;
-#else
-	return ret;
-#endif /* HAVE_WCHAR */
-}
-
 /* compare two line segments */
 static int
 lineeq(__LDATA *xl, __LDATA *yl, size_t len)
@@ -2032,7 +1997,7 @@ lineeq(__LDATA *xl, __LDATA *yl, size_t len)
 	__LDATA *xp = xl, *yp = yl;
 
 	for (i = 0; i < len; i++, xp++, yp++) {
-		if (!celleq(xp, yp))
+		if (!_cursesi_celleq(xp, yp))
 			return 0;
 	}
 	return 1;
