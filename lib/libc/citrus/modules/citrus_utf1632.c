@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf1632.c,v 1.12 2012/02/12 13:51:29 wiz Exp $	*/
+/*	$NetBSD: citrus_utf1632.c,v 1.13 2022/04/19 20:32:14 rillig Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.12 2012/02/12 13:51:29 wiz Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.13 2022/04/19 20:32:14 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -366,7 +366,7 @@ do {								\
 		lenvar -= sizeof(#x)-1;				\
 		p += sizeof(#x)-1;				\
 	}							\
-} while (/*CONSTCOND*/0)
+} while (0)
 	const char *p;
 	p = var;
 	while (lenvar>0) {

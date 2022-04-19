@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.22 2022/01/10 19:51:30 christos Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.23 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -135,4 +135,4 @@ ssize_t	_kvm_pread(kvm_t *, int, void *, size_t, off_t);
 		kd->member ## _len = 0; \
 		return (NULL); \
 	} \
-    } while (/*CONSTCOND*/0)
+    } while (0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.11 2012/03/13 21:13:39 christos Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.12 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_print.c,v 1.12 2009/03/03 05:29:58 each Exp";
 #else
-__RCSID("$NetBSD: ns_print.c,v 1.11 2012/03/13 21:13:39 christos Exp $");
+__RCSID("$NetBSD: ns_print.c,v 1.12 2022/04/19 20:32:15 rillig Exp $");
 #endif
 #endif
 
@@ -74,7 +74,7 @@ static int	addtab(size_t len, size_t target, int spaced,
 	do { \
 		if ((x) < 0) \
 			return (-1); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 static const char base32hex[] =
         "0123456789ABCDEFGHIJKLMNOPQRSTUV=0123456789abcdefghijklmnopqrstuv";

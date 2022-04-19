@@ -1,4 +1,4 @@
-/*	$NetBSD: catrig.c,v 1.2 2016/09/20 18:25:20 christos Exp $	*/
+/*	$NetBSD: catrig.c,v 1.3 2022/04/19 20:32:16 rillig Exp $	*/
 /*-
  * Copyright (c) 2012 Stephen Montgomery-Smith <stephen@FreeBSD.ORG>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/catrig.c 275819 2014-12-16 09:21:56Z ed $");
 #endif
-__RCSID("$NetBSD: catrig.c,v 1.2 2016/09/20 18:25:20 christos Exp $");
+__RCSID("$NetBSD: catrig.c,v 1.3 2022/04/19 20:32:16 rillig Exp $");
 
 #include "namespace.h"
 #ifdef __weak_alias
@@ -51,7 +51,7 @@ __weak_alias(catan, _catan)
 #define isinf(x)	(fabs(x) == INFINITY)
 #undef isnan
 #define isnan(x)	((x) != (x))
-#define	raise_inexact()	do { volatile float junk __unused = /*LINTED*/1 + tiny; } while(/*CONSTCOND*/0)
+#define	raise_inexact()	do { volatile float junk __unused = /*LINTED*/1 + tiny; } while (0)
 #undef signbit
 #define signbit(x)	(__builtin_signbit(x))
 

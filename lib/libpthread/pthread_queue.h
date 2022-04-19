@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_queue.h,v 1.6 2022/04/10 10:38:33 riastradh Exp $	*/
+/*	$NetBSD: pthread_queue.h,v 1.7 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct {								\
 #define	PTQ_INIT(head) do {						\
 	(head)->ptqh_first = NULL;					\
 	(head)->ptqh_last = &(head)->ptqh_first;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	PTQ_INSERT_HEAD(head, elm, field) do {				\
 	if (((elm)->field.ptqe_next = (head)->ptqh_first) != NULL)	\
@@ -74,7 +74,7 @@ struct {								\
 		(head)->ptqh_last = &(elm)->field.ptqe_next;		\
 	(head)->ptqh_first = (elm);					\
 	(elm)->field.ptqe_prev = &(head)->ptqh_first;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	PTQ_INSERT_TAIL(head, elm, field) do {				\
 	(elm)->field.ptqe_next = NULL;					\
@@ -83,7 +83,7 @@ struct {								\
 	(elm)->field.ptqe_prev = (head)->ptqh_last;			\
 	*(head)->ptqh_last = (elm);					\
 	(head)->ptqh_last = &(elm)->field.ptqe_next;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	PTQ_INSERT_AFTER(head, listelm, elm, field) do {		\
 	if (((elm)->field.ptqe_next = (listelm)->field.ptqe_next) != NULL)\
@@ -93,14 +93,14 @@ struct {								\
 		(head)->ptqh_last = &(elm)->field.ptqe_next;		\
 	(listelm)->field.ptqe_next = (elm);				\
 	(elm)->field.ptqe_prev = &(listelm)->field.ptqe_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	PTQ_INSERT_BEFORE(listelm, elm, field) do {			\
 	(elm)->field.ptqe_prev = (listelm)->field.ptqe_prev;		\
 	(elm)->field.ptqe_next = (listelm);				\
 	*(listelm)->field.ptqe_prev = (elm);				\
 	(listelm)->field.ptqe_prev = &(elm)->field.ptqe_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	PTQ_REMOVE(head, elm, field) do {				\
 	if (((elm)->field.ptqe_next) != NULL)				\
@@ -109,7 +109,7 @@ struct {								\
 	else								\
 		(head)->ptqh_last = (elm)->field.ptqe_prev;		\
 	*(elm)->field.ptqe_prev = (elm)->field.ptqe_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * Queue access methods.

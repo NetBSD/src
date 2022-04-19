@@ -1,4 +1,4 @@
-/*	$NetBSD: res_findzonecut.c,v 1.2 2021/12/08 20:50:01 andvar Exp $	*/
+/*	$NetBSD: res_findzonecut.c,v 1.3 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Id: res_findzonecut.c,v 1.10 2005/10/11 00:10:16 marka Exp ";
 #else
-__RCSID("$NetBSD: res_findzonecut.c,v 1.2 2021/12/08 20:50:01 andvar Exp $");
+__RCSID("$NetBSD: res_findzonecut.c,v 1.3 2022/04/19 20:32:17 rillig Exp $");
 #endif
 
 
@@ -96,7 +96,7 @@ static void	res_dprintf(const char *, ...) ISC_FORMAT_PRINTF(1, 2);
 		int save_errno = errno; \
 		if ((statp->options & RES_DEBUG) != 0U) res_dprintf x; \
 		errno = save_errno; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /* Public. */
 

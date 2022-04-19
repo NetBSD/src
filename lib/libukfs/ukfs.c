@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.59 2016/01/25 11:45:57 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.60 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -150,7 +150,7 @@ do {									\
 		errno = ukfs_rv;					\
 		return -1;						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define POSTCALL() postcall(ukfs_curlwp);
 
