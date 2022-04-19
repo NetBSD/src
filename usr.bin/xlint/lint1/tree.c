@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.435 2022/04/19 22:14:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.436 2022/04/19 23:16:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.435 2022/04/19 22:14:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.436 2022/04/19 23:16:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3210,7 +3210,7 @@ fold(tnode_t *tn)
 		q = sl;
 		break;
 	case UMINUS:
-		q = -sl;
+		q = sl == INT64_MIN ? sl : -sl;
 		if (sl != 0 && msb(q, t) == msb(sl, t))
 			ovfl = true;
 		break;
