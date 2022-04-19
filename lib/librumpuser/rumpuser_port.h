@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.51 2021/04/03 07:38:11 simonb Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.52 2022/04/19 20:32:17 rillig Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -317,7 +317,7 @@ typedef RUMP_REGISTER_T register_t;
 do {						\
 	(ts)->tv_sec  = (tv)->tv_sec;		\
 	(ts)->tv_nsec = (tv)->tv_usec * 1000;	\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif
 
 #if !defined(HAVE_SETPROGNAME)

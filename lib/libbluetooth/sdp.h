@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.h,v 1.2 2009/07/25 17:04:51 plunky Exp $	*/
+/*	$NetBSD: sdp.h,v 1.3 2022/04/19 20:32:14 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -497,22 +497,22 @@ void sdp_print(uint32_t, uint8_t *, uint8_t const *);
 #define SDP_GET8(b, cp)		do {			\
 	(b) = *(const uint8_t *)(cp);			\
 	(cp) += sizeof(uint8_t);			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_GET16(s, cp)	do {			\
 	(s) = be16dec(cp);				\
 	(cp) += sizeof(uint16_t);			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_GET32(l, cp)	do {			\
 	(l) = be32dec(cp);				\
 	(cp) += sizeof(uint32_t);			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_GET64(l, cp)	do {			\
 	(l) = be64dec(cp);				\
 	(cp) += sizeof(uint64_t);			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define SDP_GET128(l, cp)	do {			\
@@ -534,17 +534,17 @@ void sdp_print(uint32_t, uint8_t *, uint8_t const *);
 	(l)->b[1]  = *t_cp++;				\
 	(l)->b[0]  = *t_cp++;				\
 	(cp) += 16;					\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_GET_UUID128(l, cp)	do {			\
 	memcpy(&((l)->b), (cp), 16);			\
 	(cp) += 16;					\
-} while (/* CONSTCOND */0)
+} while (0)
 #elif BYTE_ORDER == BIG_ENDIAN
 #define SDP_GET128(l, cp)	do {			\
 	memcpy(&((l)->b), (cp), 16);			\
 	(cp) += 16;					\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_GET_UUID128(l, cp)	SDP_GET128(l, cp)
 #else
@@ -554,22 +554,22 @@ void sdp_print(uint32_t, uint8_t *, uint8_t const *);
 #define SDP_PUT8(b, cp)		do {			\
 	*(uint8_t *)(cp) = (b);				\
 	(cp) += sizeof(uint8_t);			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_PUT16(s, cp)	do {			\
 	be16enc((cp), (s));				\
 	(cp) += sizeof(uint16_t);			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_PUT32(s, cp)	do {			\
 	be32enc((cp), (s));				\
 	(cp) += sizeof(uint32_t);			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_PUT64(s, cp)	do {			\
 	be64enc((cp), (s));				\
 	(cp) += sizeof(uint64_t);			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define SDP_PUT128(l, cp)	do {			\
@@ -591,17 +591,17 @@ void sdp_print(uint32_t, uint8_t *, uint8_t const *);
 	*t_cp++ = (l)->b[1];				\
 	*t_cp   = (l)->b[0];				\
 	(cp) += 16;					\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_PUT_UUID128(l, cp)	do {			\
 	memcpy((cp), &((l)->b), 16);			\
 	(cp) += 16;					\
-} while (/* CONSTCOND */0)
+} while (0)
 #elif BYTE_ORDER == BIG_ENDIAN
 #define SDP_PUT128(l, cp)	do {			\
 	memcpy((cp), &((l)->b), 16);			\
 	(cp) += 16;					\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define SDP_PUT_UUID128(l, cp)	SDP_PUT128(l, cp)
 #else

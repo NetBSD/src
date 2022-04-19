@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.31 2021/02/06 00:08:58 jdolecek Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.32 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.31 2021/02/06 00:08:58 jdolecek Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.32 2022/04/19 20:32:16 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -62,7 +62,7 @@ extern int __isthreaded;
 do {					\
 	if (__isthreaded)		\
 		DIE();			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #if 1
 #define	CHECK_NOT_THREADED()	CHECK_NOT_THREADED_ALWAYS()

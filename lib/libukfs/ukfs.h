@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.14 2012/07/19 06:33:03 joerg Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.15 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -134,7 +134,7 @@ do {									\
 		*part = NULL;						\
 	else if (ukfs_part_probe(argv[argc-2], part) == -1)		\
 			err(1, "ukfs_part_probe");			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 int		ukfs_part_probe(char *, struct ukfs_part **);
 void		ukfs_part_release(struct ukfs_part *);

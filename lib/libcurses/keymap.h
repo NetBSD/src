@@ -1,4 +1,4 @@
-/*   $NetBSD: keymap.h,v 1.4 2012/04/21 12:27:28 roy Exp $ */
+/*   $NetBSD: keymap.h,v 1.5 2022/04/19 20:32:16 rillig Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keymap.h,v 1.4 2012/04/21 12:27:28 roy Exp $");
+__RCSID("$NetBSD: keymap.h,v 1.5 2022/04/19 20:32:16 rillig Exp $");
 #endif                          /* not lint */
 
 /* keymap related stuff */
@@ -97,7 +97,7 @@ struct keymap {
 #define INC_POINTER(ptr)  do {	\
 	(ptr)++;		\
 	(ptr) %= INBUF_SZ;	\
-} while(/*CONSTCOND*/0)
+} while (0)
 
 #define INKEY_NORM	   0 /* no key backlog to process */
 #define INKEY_ASSEMBLING   1 /* assembling a multi-key sequence */

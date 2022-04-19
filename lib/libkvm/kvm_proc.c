@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.97 2022/01/10 20:04:01 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.98 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.97 2022/01/10 20:04:01 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.98 2022/04/19 20:32:16 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,7 +133,7 @@ struct miniproc {
 		(p)->p_paddr = NULL; \
 		(p)->p_vmspace = (kp)->p_vmspace; \
 		(p)->p_psstrp = (kp)->p_psstrp; \
-	} while (/*CONSTCOND*/0);
+	} while (0);
 
 #define KPTOMINI(kp, p) \
 	do { \
@@ -141,7 +141,7 @@ struct miniproc {
 		(p)->p_pid = (kp)->kp_proc.p_pid; \
 		(p)->p_paddr = (kp)->kp_eproc.e_paddr; \
 		(p)->p_vmspace = (kp)->kp_proc.p_vmspace; \
-	} while (/*CONSTCOND*/0);
+	} while (0);
 
 #define KP2TOMINI(kp, p) \
 	do { \
@@ -149,7 +149,7 @@ struct miniproc {
 		(p)->p_pid = (kp)->p_pid; \
 		(p)->p_paddr = (void *)(long)(kp)->p_paddr; \
 		(p)->p_vmspace = (void *)(long)(kp)->p_vmspace; \
-	} while (/*CONSTCOND*/0);
+	} while (0);
 
 /*
  * NetBSD uses kauth(9) to manage credentials, which are stored in kauth_cred_t,

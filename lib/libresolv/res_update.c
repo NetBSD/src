@@ -1,4 +1,4 @@
-/*	$NetBSD: res_update.c,v 1.1 2012/11/15 18:48:49 christos Exp $	*/
+/*	$NetBSD: res_update.c,v 1.2 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #if 0
 static const char rcsid[] = "Id: res_update.c,v 1.13 2005/04/27 04:56:43 sra Exp ";
 #else
-__RCSID("$NetBSD: res_update.c,v 1.1 2012/11/15 18:48:49 christos Exp $");
+__RCSID("$NetBSD: res_update.c,v 1.2 2022/04/19 20:32:17 rillig Exp $");
 #endif
 
 
@@ -91,7 +91,7 @@ static void	res_dprintf(const char *, ...) ISC_FORMAT_PRINTF(1, 2);
 		int save_errno = errno; \
 		if ((statp->options & RES_DEBUG) != 0U) res_dprintf x; \
 		errno = save_errno; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /* Public. */
 

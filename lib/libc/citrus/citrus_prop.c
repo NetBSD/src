@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_prop.c,v 1.5 2014/06/24 22:24:18 spz Exp $ */
+/* $NetBSD: citrus_prop.c,v 1.6 2022/04/19 20:32:14 rillig Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_prop.c,v 1.5 2014/06/24 22:24:18 spz Exp $");
+__RCSID("$NetBSD: citrus_prop.c,v 1.6 2022/04/19 20:32:14 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -401,13 +401,13 @@ do {							\
 	_DIAGASSERT(hint->cb._func_.func != NULL);	\
 	errnum = (*hint->cb._func_.func)(context,	\
 	    hint->name,	ostart.u._func_);		\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define CALL1(_func_)					\
 do {							\
 	_DIAGASSERT(hint->cb._func_.func != NULL);	\
 	errnum = (*hint->cb._func_.func)(context,	\
 	    hint->name,	ostart.u._func_, oend.u._func_);\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 		switch (hint->type) {
 

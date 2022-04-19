@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.14 2021/12/05 08:09:30 msaitoh Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.15 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.14 2021/12/05 08:09:30 msaitoh Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.15 2022/04/19 20:32:16 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,13 +72,13 @@ __RCSID("$NetBSD: strfmon.c,v 1.14 2021/12/05 08:09:30 msaitoh Exp $");
 	if (dst >= s + maxsize) 				\
 		goto e2big_error;				\
 	*dst++ = CH;						\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define PRINTS(STR) do {					\
 	const char *tmps = STR;					\
 	while (*tmps != '\0')					\
 		PRINT(*tmps++);					\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define GET_NUMBER(VAR)	do {					\
 	VAR = 0;						\
@@ -89,7 +89,7 @@ __RCSID("$NetBSD: strfmon.c,v 1.14 2021/12/05 08:09:30 msaitoh Exp $");
 			goto e2big_error;			\
 		fmt++;						\
 	}							\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define GRPCPY(howmany) do {					\
 	int i = howmany;					\
@@ -97,12 +97,12 @@ __RCSID("$NetBSD: strfmon.c,v 1.14 2021/12/05 08:09:30 msaitoh Exp $");
 		avalue_size--;					\
 		*--bufend = *(avalue+avalue_size+padded);	\
 	}							\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define GRPSEP do {						\
 	*--bufend = thousands_sep;				\
 	groups++;						\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 static void __setup_vars(struct lconv *, int, char *, char *, char *, const char **);
 static int __calc_left_pad(struct lconv *, int, char *);

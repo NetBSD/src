@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.38 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.39 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.38 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.39 2022/04/19 20:32:15 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -238,7 +238,7 @@ _nsvect_free(void *vec, u_int *count, size_t esize, _nsvect_free_elem free_elem)
 do {									\
 	_nsvect_free((v), (c), (s), (f));				\
 	(v) = NULL;							\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 static int
 _nsdbtcmp(const void *a, const void *b)

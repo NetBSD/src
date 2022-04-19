@@ -1,4 +1,4 @@
-/*	$NetBSD: catrigl.c,v 1.2 2017/05/07 21:59:06 christos Exp $	*/
+/*	$NetBSD: catrigl.c,v 1.3 2022/04/19 20:32:16 rillig Exp $	*/
 /*-
  * Copyright (c) 2012 Stephen Montgomery-Smith <stephen@FreeBSD.ORG>
  * All rights reserved.
@@ -35,7 +35,7 @@
  * The code for catrig.c contains complete comments.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: catrigl.c,v 1.2 2017/05/07 21:59:06 christos Exp $");
+__RCSID("$NetBSD: catrigl.c,v 1.3 2022/04/19 20:32:16 rillig Exp $");
 
 #include "namespace.h"
 #ifdef __weak_alias
@@ -58,7 +58,7 @@ __weak_alias(catanl, _catanl)
 #define isinf(x)	(fabsl(x) == INFINITY)
 #undef isnan
 #define isnan(x)	((x) != (x))
-#define	raise_inexact()	do { volatile float junk __unused = /*LINTED*/1 + tiny; } while(/*CONSTCOND*/0)
+#define	raise_inexact()	do { volatile float junk __unused = /*LINTED*/1 + tiny; } while (0)
 #undef signbit
 #define signbit(x)	(__builtin_signbitl(x)) 
 
@@ -90,7 +90,7 @@ union ieee_ext_u {
 	    u.extu_ld = s; \
 	    r = u.extu_sign; \
 	    r >>= EXT_EXPBITS - 1; \
-    } while (/*CONSTCOND*/0)
+    } while (0)
 #define SET_LDBL_EXPSIGN(s, r) \
     do { \
 	    union ieee_ext_u u; \
@@ -98,7 +98,7 @@ union ieee_ext_u {
 	    u.extu_exp &= __BITS(0, EXT_EXPBITS - 1); \
 	    u.extu_exp |= (r) << (EXT_EXPBITS - 1); \
 	    s = u.extu_ld; \
-    } while (/*CONSTCOND*/0)
+    } while (0)
 
 static const long double
 A_crossover =		10,

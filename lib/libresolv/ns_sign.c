@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_sign.c,v 1.1 2012/11/15 18:48:48 christos Exp $	*/
+/*	$NetBSD: ns_sign.c,v 1.2 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Id: ns_sign.c,v 1.6 2006/03/09 23:57:56 marka Exp ";
 #else
-__RCSID("$NetBSD: ns_sign.c,v 1.1 2012/11/15 18:48:48 christos Exp $");
+__RCSID("$NetBSD: ns_sign.c,v 1.2 2022/04/19 20:32:17 rillig Exp $");
 #endif
 
 /* Import. */
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: ns_sign.c,v 1.1 2012/11/15 18:48:48 christos Exp $");
 			errno = EMSGSIZE; \
 			return(NS_TSIG_ERROR_NO_SPACE); \
 		} \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*%
  *  ns_sign

@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.18 2022/01/26 11:48:53 andvar Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.19 2022/04/19 20:32:15 rillig Exp $ */
 
 /****************************************************************
 
@@ -505,12 +505,12 @@ extern mutex_t __gdtoa_locks[2];
 	do {							\
 		if (__isthreaded)				\
 			mutex_lock(&__gdtoa_locks[n]);		\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #define FREE_DTOA_LOCK(n)	\
 	do {							\
 		if (__isthreaded)				\
 			mutex_unlock(&__gdtoa_locks[n]);	\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #endif
 
 #define Kmax (sizeof(size_t) << 3)

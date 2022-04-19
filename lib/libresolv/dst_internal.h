@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.3 2021/11/07 20:31:09 andvar Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.4 2022/04/19 20:32:17 rillig Exp $	*/
 
 #ifndef DST_INTERNAL_H
 #define DST_INTERNAL_H
@@ -67,7 +67,7 @@ typedef struct dst_key {
 #ifdef DEBUG
 #define EREPORT(str)		printf str
 #else
-#define EREPORT(str)		do {} while (/*CONSTCOND*/0)
+#define EREPORT(str)		do {} while (0)
 #endif
 
 /* use our own special macro to FRRE memory */
@@ -79,7 +79,7 @@ typedef struct dst_key {
 		free((a)); \
 		(a) = NULL; \
 	} \
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif
 
 #ifndef SAFE_FREE

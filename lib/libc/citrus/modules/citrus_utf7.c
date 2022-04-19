@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.6 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.7 2022/04/19 20:32:14 rillig Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.6 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.7 2022/04/19 20:32:14 rillig Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -544,7 +544,7 @@ _citrus_UTF7_encoding_module_init(_UTF7EncodingInfo * __restrict ei,
 do {						\
 	for (s = str; *s != '\0'; s++)		\
 		ei->cell[*s & 0x7f] |= flag;	\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 	FILL(base64, (s - base64) + 1);
 	FILL(direct, EI_DIRECT);

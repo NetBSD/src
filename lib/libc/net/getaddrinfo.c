@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.122 2021/10/28 20:56:32 riastradh Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.123 2022/04/19 20:32:15 rillig Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.122 2021/10/28 20:56:32 riastradh Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.123 2022/04/19 20:32:15 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -322,7 +322,7 @@ do {								\
 		error = EAI_MEMORY;				\
 		goto free;					\
 	}							\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define GET_PORT(ai, serv, svd)					\
 do {								\
@@ -330,7 +330,7 @@ do {								\
 	error = get_port((ai), (serv), 0, (svd));		\
 	if (error != 0)						\
 		goto free;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define GET_CANONNAME(ai, str)					\
 do {								\
@@ -338,7 +338,7 @@ do {								\
 	error = get_canonname(pai, (ai), (str));		\
 	if (error != 0)						\
 		goto free;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ERR(err)						\
 do {								\
@@ -346,7 +346,7 @@ do {								\
 	error = (err);						\
 	goto bad;						\
 	/*NOTREACHED*/						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define MATCH_FAMILY(x, y, w)						\
 	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC ||	\
