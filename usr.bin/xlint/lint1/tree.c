@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.433 2022/04/16 22:21:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.434 2022/04/19 20:08:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.433 2022/04/16 22:21:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.434 2022/04/19 20:08:52 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2176,6 +2176,37 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 }
 
 /*
+ * When converting a large integer type to a small integer type, in some
+ * cases the value of the actual expression is further restricted than the
+ * type bounds, such as in (expr & 0xFF) or (expr % 100) or (expr >> 24).
+ *
+ * See new_tnode, the '#if 0' code for SHR.
+ */
+static bool
+can_represent(const type_t *tp, const tnode_t *tn)
+{
+
+	if (tn->tn_op == BITAND) {
+		const tnode_t *rn = tn->tn_right;
+		tspec_t nt;
+
+		if (!(rn != NULL && rn->tn_op == CON &&
+		      is_integer(rn->tn_type->t_tspec)))
+			return false;
+
+		uint64_t nmask = value_bits(size_in_bits(nt = tp->t_tspec));
+		if (!is_uinteger(nt))
+			nmask >>= 1;
+
+		uint64_t omask = (uint64_t)rn->tn_val->v_quad;
+		if ((omask & ~nmask) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+/*
  * Print warnings for conversions of integer types which may cause problems.
  */
 static void
@@ -2214,6 +2245,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 
 	if (aflag > 0 &&
 	    portable_size_in_bits(nt) < portable_size_in_bits(ot) &&
+	    !can_represent(tp, tn) &&
 	    (ot == LONG || ot == ULONG || ot == QUAD || ot == UQUAD ||
 	     aflag > 1)) {
 		if (op == FARG) {
