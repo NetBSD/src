@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.6 2021/08/25 22:04:52 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.7 2022/04/19 22:40:13 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -84,4 +84,19 @@ cover_build_plus_minus(const char *arr, double idx)
 	if (idx > 0.0)
 		return arr + idx;
 	return arr + (unsigned int)idx;
+}
+
+int
+non_constant_expression(void)
+{
+	/*
+	 * Even though this variable definition looks like a constant, it
+	 * does not fall within C's definition of an integer constant
+	 * expression.  Due to that, lint does not perform constant folding
+	 * on the expression built from this variable and thus doesn't know
+	 * that the conversion will always succeed.
+	 */
+	const int not_a_constant = 8;
+	/* expect+1: warning: conversion from 'unsigned long' to 'int' may lose accuracy [132] */
+	return sizeof(double) + not_a_constant * sizeof(char *);
 }
