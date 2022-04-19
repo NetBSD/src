@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.14 2019/08/27 22:48:53 kamil Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.15 2022/04/19 20:32:15 rillig Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.14 2019/08/27 22:48:53 kamil Exp $");
+__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.15 2022/04/19 20:32:15 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -483,7 +483,7 @@ sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 			*(cs) = strlen(t) + 1;			\
 		if ((nlp) != NULL)				\
 			*(nlp) = (l);				\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	piece = gname;
 	while (piece != NULL && *piece != '\0') {

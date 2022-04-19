@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.22 2016/12/07 10:03:29 pgoyette Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.23 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.22 2016/12/07 10:03:29 pgoyette Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.23 2022/04/19 20:32:15 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,7 +151,7 @@ link_ntoa(const struct sockaddr_dl *sdl)
 		if (out >= obuf + sizeof(obuf) - 1) \
 			return obuf; \
 		*out++ = (ch); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	/*
 	 * This is not needed on the first call, as the static

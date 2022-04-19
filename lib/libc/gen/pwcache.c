@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.33 2021/12/05 05:03:05 msaitoh Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.34 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.33 2021/12/05 05:03:05 msaitoh Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.34 2022/04/19 20:32:15 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -524,7 +524,7 @@ gid_from_group(const char *name, gid_t *gid)
 			arr = NULL;			\
 		}					\
 		fail = 0;				\
-	} while (/* CONSTCOND */0);
+	} while (0);
 
 int
 pwcache_userdb(

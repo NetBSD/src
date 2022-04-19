@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.12 2014/06/12 22:21:20 justin Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.13 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.12 2014/06/12 22:21:20 justin Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.13 2022/04/19 20:32:16 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -140,7 +140,7 @@ do { \
 		continue; \
 	if (tc != WEOF) \
 		ungetwc(tc, fp); \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 /*
  * Non-MT-safe version.

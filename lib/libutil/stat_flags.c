@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.2 2007/01/16 17:34:02 cbiere Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.3 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.2 2007/01/16 17:34:02 cbiere Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.3 2022/04/19 20:32:17 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: stat_flags.c,v 1.2 2007/01/16 17:34:02 cbiere Exp $");
 		(void)strlcat(string, prefix, sizeof(string));		\
 	(void)strlcat(string, s, sizeof(string));			\
 	prefix = ",";							\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 /*
  * flags_to_string --

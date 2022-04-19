@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_config.h,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $	*/
+/*	$NetBSD: isns_config.h,v 1.2 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
 #define _ISNS_CONFIG_H_
 
 #ifdef ISNS_DEBUG
-#define DBG(...)	do { printf(__VA_ARGS__); } while (/* CONSTCOND */0)
+#define DBG(...)	do { printf(__VA_ARGS__); } while (0)
 #else
-#define DBG(...)	do {} while (/* CONSTCOND */ 0)
+#define DBG(...)	do {} while (0)
 #endif
 
 #include "isns_fileio.h"

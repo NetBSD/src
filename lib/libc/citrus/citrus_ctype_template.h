@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.38 2020/06/02 01:30:31 joerg Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.39 2022/04/19 20:32:14 rillig Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -486,14 +486,14 @@ do {									\
 			_FUNCNAME(unpack_state)(_CEI_TO_EI(_cei_),	\
 						_pse_, _pspriv_);	\
 		}							\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define _RESTART_END(_func_, _cei_, _pspriv_, _pse_)			\
 	if (_pspriv_ != NULL) {						\
 		_FUNCNAME(pack_state)(_CEI_TO_EI(_cei_), _pspriv_,	\
 				      _pse_);				\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 int
 _FUNCNAME(ctype_getops)(_citrus_ctype_ops_rec_t *ops, size_t lenops,

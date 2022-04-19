@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.37 2021/10/29 19:27:06 kre Exp $	*/
+/*	$NetBSD: popen.c,v 1.38 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.37 2021/10/29 19:27:06 kre Exp $");
+__RCSID("$NetBSD: popen.c,v 1.38 2022/04/19 20:32:15 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,12 +78,12 @@ static  mutex_t pidlist_mutex = MUTEX_INITIALIZER;
     do { \
 	    if (__isthreaded) \
 		    mutex_lock(&pidlist_mutex); \
-    } while (/*CONSTCOND*/0)
+    } while (0)
 # define MUTEX_UNLOCK() \
     do { \
 	    if (__isthreaded) \
 		    mutex_unlock(&pidlist_mutex); \
-    } while (/*CONSTCOND*/0)
+    } while (0)
 #else
 # define MUTEX_LOCK() __nothing
 # define MUTEX_UNLOCK() __nothing

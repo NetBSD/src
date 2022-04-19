@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.38 2022/03/12 17:31:39 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.39 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.38 2022/03/12 17:31:39 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.39 2022/04/19 20:32:16 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -719,7 +719,7 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 			fp->_flags |= __SERR;	\
 			goto error;		\
 		}				\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define FLUSH()
 #else
 #define	PRINT(ptr, len) do { \
@@ -732,13 +732,13 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 			goto error; \
 		iovp = iov; \
 	} \
-} while (/*CONSTCOND*/0)
+} while (0)
 #define	FLUSH() do { \
 	if (uio.uio_resid && __sprint(fp, &uio)) \
 		goto error; \
 	uio.uio_iovcnt = 0; \
 	iovp = iov; \
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif /* NARROW */
 
 #define	PAD(howmany, with)	do {		\
@@ -749,7 +749,7 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 		}				\
 		PRINT(with, n);			\
 	}					\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define	PRINTANDPAD(p, ep, len, with) do {	\
 	ptrdiff_t td = (ep) - (p);		\
 	_DIAGASSERT(__type_fit(int, td));	\
@@ -759,7 +759,7 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 	if (n2 > 0)				\
 		PRINT((p), n2);			\
 	PAD((len) - (n2 > 0 ? n2 : 0), (with));	\
-} while(/*CONSTCOND*/0)
+} while (0)
 
 	/*
 	 * Get the argument indexed by nextarg.   If the argument table is
@@ -1626,7 +1626,7 @@ __find_arguments(const CHAR_T *fmt0, va_list ap, union arg **argtable)
 			tablemax = nextarg; \
 		typetable[nextarg++] = type; \
 		nitems++; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define	ADDSARG() \
 	do { \
@@ -1642,7 +1642,7 @@ __find_arguments(const CHAR_T *fmt0, va_list ap, union arg **argtable)
 			ADDTYPE(T_LONG); \
 		else \
 			ADDTYPE(T_INT); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define	ADDUARG() \
 	do { \
@@ -1658,7 +1658,7 @@ __find_arguments(const CHAR_T *fmt0, va_list ap, union arg **argtable)
 			ADDTYPE(T_U_LONG); \
 		else \
 			ADDTYPE(T_U_INT); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 	/*
 	 * Add * arguments to the type array.
 	 */

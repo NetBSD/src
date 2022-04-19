@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.37 2022/03/12 17:31:39 christos Exp $	*/
+/*	$NetBSD: setmode.c,v 1.38 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.37 2022/03/12 17:31:39 christos Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.38 2022/04/19 20:32:15 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -172,7 +172,7 @@ common:			if (set->cmd2 & CMD2_CLR) {
 		endset = newset + (setlen - 2);				\
 	}								\
 	set = addcmd(set, (mode_t)(a), (mode_t)(b), (mode_t)(c), (d));	\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define	STANDARD_BITS	(S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO)
 

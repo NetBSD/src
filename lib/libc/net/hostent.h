@@ -1,4 +1,4 @@
-/*	$NetBSD: hostent.h,v 1.2 2013/08/27 09:56:12 christos Exp $	*/
+/*	$NetBSD: hostent.h,v 1.3 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ int _yp_gethtbyname(void *, void *, va_list);
 		dst = (void *)ptr; \
 		ptr += _len; \
 		len -= _len; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #define HENT_COPY(dst, src, slen, ptr, len) \
 	do { \
@@ -94,13 +94,13 @@ int _yp_gethtbyname(void *, void *, va_list);
 		dst = ptr; \
 		ptr += slen; \
 		len -= slen; \
-	} while (/* CONSTCOND */0)
+	} while (0)
 
 #define HENT_SCOPY(dst, src, ptr, len) \
 	do { \
 		size_t _len = strlen(src) + 1; \
 		HENT_COPY(dst, src, _len, ptr, len); \
-	} while (/* CONSTCOND */0)
+	} while (0)
 
 #define	MAXALIASES	35
 #define	MAXADDRS	35

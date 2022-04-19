@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.10 2014/07/22 22:41:58 justin Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.11 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <rump/rumpuser.h>
 
-#define seterror(value) do { if (error) *error = value;} while (/*CONSTCOND*/0)
+#define seterror(value) do { if (error) *error = value;} while (0)
 
 extern struct rumpuser_hyperup rumpuser__hyp;
 
@@ -53,7 +53,7 @@ do {									\
 	rumpkern_unsched(&nlocks, NULL);				\
 	a;								\
 	rumpkern_sched(nlocks, NULL);					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define DOCALL(rvtype, call)						\
 {									\
@@ -82,7 +82,7 @@ do {									\
 
 void rumpuser__thrinit(void);
 
-#define NOFAIL(a) do {if (!(a)) abort();} while (/*CONSTCOND*/0)
+#define NOFAIL(a) do {if (!(a)) abort();} while (0)
 
 #define NOFAIL_ERRNO(a)							\
 do {									\
@@ -92,7 +92,7 @@ do {									\
 		    fail_rv, strerror(fail_rv));			\
 		abort();						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 int  rumpuser__sig_rump2host(int);
 int  rumpuser__errtrans(int);

@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_template.h,v 1.8 2013/09/13 13:13:32 joerg Exp $ */
+/* $NetBSD: nb_lc_template.h,v 1.9 2022/04/19 20:32:15 rillig Exp $ */
 
 /*-
  * Copyright (c)1999, 2008 Citrus Project,
@@ -189,7 +189,7 @@ do {									\
 		_DIAGASSERT(!ret || !force);				\
 		goto done;						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 	/* (1) non-aliased file */
 	mutex_lock(&_nb_mutex);

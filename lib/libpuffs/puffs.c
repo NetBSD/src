@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.128 2022/01/22 07:35:26 pho Exp $	*/
+/*	$NetBSD: puffs.c,v 1.129 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.128 2022/01/22 07:35:26 pho Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.129 2022/04/19 20:32:17 rillig Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ pthread_mutex_t pu_lock = PTHREAD_MUTEX_INITIALIZER;
 do {									\
 	if (pops->puffs_node_##lower)					\
 		opmask[PUFFS_VN_##upper] = 1;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 static void
 fillvnopmask(struct puffs_ops *pops, struct puffs_kargs *pa)
 {
@@ -563,7 +563,7 @@ do {									\
 		rv = -1;						\
 		goto out;						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 		len = strlen(dir)+1;
 		allwrite(&len, sizeof(len));
 		allwrite(dir, len);

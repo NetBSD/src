@@ -1,4 +1,4 @@
-/*	$NetBSD: plural_parser.c,v 1.3 2019/10/03 16:37:45 christos Exp $	*/
+/*	$NetBSD: plural_parser.c,v 1.4 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 Citrus Project,
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: plural_parser.c,v 1.3 2019/10/03 16:37:45 christos Exp $");
+__RCSID("$NetBSD: plural_parser.c,v 1.4 2022/04/19 20:32:16 rillig Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -351,7 +351,7 @@ quit:
 do {									      \
 	if (T_IS_ERROR(token))						      \
 		goto label;						      \
-} while (/*CONSTCOND*/0)
+} while (0)
 #define T_ENSURE_SOMETHING(token, label)				      \
 do {									      \
 	if ((token) == T_EOF) {						      \
@@ -359,7 +359,7 @@ do {									      \
 		goto label;						      \
 	} else if (T_IS_ERROR(token))					      \
 		goto label;						      \
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define parser_element	plural_element
 

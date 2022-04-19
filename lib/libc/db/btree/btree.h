@@ -1,4 +1,4 @@
-/*	$NetBSD: btree.h,v 1.17 2013/09/04 13:03:22 ryoon Exp $	*/
+/*	$NetBSD: btree.h,v 1.18 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -166,7 +166,7 @@ NBINTERNAL(uint32_t len) {
 	p += sizeof(pgno_t);						\
 	*(uint8_t *)(void *)p = flags;					\
 	p += sizeof(uint8_t);						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * For the recno internal pages, the item is a page number with the number of
@@ -190,7 +190,7 @@ typedef struct _rinternal {
 	*(recno_t *)(void *)p = nrecs;					\
 	p += sizeof(recno_t);						\
 	*(pgno_t *)(void *)p = pgno;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* For the btree leaf pages, the item is a key and data pair. */
 typedef struct _bleaf {
@@ -236,7 +236,7 @@ NBLEAFDBT(size_t k, size_t d) {
 	(void)memmove(p, key->data, key->size);				\
 	p += key->size;							\
 	(void)memmove(p, data->data, data->size);			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* For the recno leaf pages, the item is a data entry. */
 typedef struct _rleaf {
@@ -276,7 +276,7 @@ NRLEAFDBT(size_t d) {
 	*(uint8_t *)(void *)p = flags;					\
 	p += sizeof(uint8_t);						\
 	memmove(p, data->data, data->size);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * A record in the tree is either a pointer to a page and an index in the page

@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_pdu.h,v 1.4 2019/10/08 19:38:38 christos Exp $	*/
+/*	$NetBSD: isns_pdu.h,v 1.5 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 		((struct isns_buffer_s *)(_bufp))->alloc_len &= ~0x03;		\
 		((struct isns_buffer_s *)(_bufp))->buf_type = (_type);		\
 		((struct isns_buffer_s *)(_bufp))->next = NULL;			\
-	} while (/* CONSTCOND */0)
+	} while (0)
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf_ss.c,v 1.13 2014/09/29 14:58:33 christos Exp $	*/
+/*	$NetBSD: vsnprintf_ss.c,v 1.14 2022/04/19 20:32:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf_ss.c,v 1.13 2014/09/29 14:58:33 christos Exp $");
+__RCSID("$NetBSD: vsnprintf_ss.c,v 1.14 2022/04/19 20:32:16 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,7 +113,7 @@ __weak_alias(vsnprintf_ss,_vsnprintf_ss)
 #define PUTCHAR(C) do {					\
 	if (sbuf < tailp)				\
 		*sbuf++ = (C);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 int
 vsnprintf_ss(char *sbuf, size_t slen, const char *fmt0, va_list ap)

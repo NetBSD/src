@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_verify.c,v 1.3 2013/09/13 19:29:47 joerg Exp $	*/
+/*	$NetBSD: ns_verify.c,v 1.4 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@ __RCSID("Id: ns_verify.c,v 1.5 2006/03/09 23:57:56 marka Exp ");
 		if ((ptr) + (count) > eom) { \
 			return (NS_TSIG_ERROR_FORMERR); \
 		} \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /* Public. */
 

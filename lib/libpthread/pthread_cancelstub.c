@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.42 2022/04/10 10:38:33 riastradh Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.43 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.42 2022/04/10 10:38:33 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.43 2022/04/19 20:32:17 rillig Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -147,7 +147,7 @@ int	__sigsuspend14(const sigset_t *);
 	if (__predict_true(!__uselibcstub) &&				\
 	    __predict_false((id)->pt_cancel))				\
 		pthread__cancelled();					\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 
 int

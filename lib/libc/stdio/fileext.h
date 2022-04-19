@@ -1,4 +1,4 @@
-/* $NetBSD: fileext.h,v 1.6 2010/01/11 20:39:29 joerg Exp $ */
+/* $NetBSD: fileext.h,v 1.7 2022/04/19 20:32:15 rillig Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -64,11 +64,11 @@ struct __sfileext {
 	_LOCKOWNER(f) = NULL; \
 	_LOCKCOUNT(f) = 0; \
 	_LOCKINTERNAL(f) = 0; \
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #else
 #define _FILEEXT_SETUP(f, fext) do { \
 	/* LINTED */(f)->_ext._base = (unsigned char *)(fext); \
 	(fext)->_fgetstr_len = 0; \
 	(fext)->_fgetstr_buf = NULL; \
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 #endif

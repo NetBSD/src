@@ -1,4 +1,4 @@
-/* $NetBSD: wcio.h,v 1.3 2003/01/18 11:30:00 thorpej Exp $ */
+/* $NetBSD: wcio.h,v 1.4 2022/04/19 20:32:16 rillig Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -51,7 +51,7 @@ do {\
 	struct wchar_io_data *_wcio = WCIO_GET(fp);\
 	if (_wcio && _wcio->wcio_mode == 0)\
 		_wcio->wcio_mode = (mode);\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * WCIO_FREE should be called by fclose
@@ -61,10 +61,10 @@ do {\
 do {\
 	_EXT(fp)->_wcio.wcio_mode = 0;\
 	WCIO_FREEUB(fp);\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define WCIO_FREEUB(fp) \
 do {\
 	_EXT(fp)->_wcio.wcio_ungetwc_inbuf = 0;\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #endif /*_WCIO_H_*/

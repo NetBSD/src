@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog_private.h,v 1.3 2020/03/02 14:18:50 christos Exp $	*/
+/*	$NetBSD: syslog_private.h,v 1.4 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 			prlen = tbuf_left - 1;			\
 		p += prlen;					\
 		tbuf_left -= prlen;				\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 struct syslog_fun {
 	size_t (*timefun)(char *, size_t);

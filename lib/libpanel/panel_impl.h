@@ -1,4 +1,4 @@
-/*	$NetBSD: panel_impl.h,v 1.2 2015/11/02 01:06:15 kamil Exp $ */
+/*	$NetBSD: panel_impl.h,v 1.3 2022/04/19 20:32:17 rillig Exp $ */
 
 /*
  * Copyright (c) 2015 Valery Ushakov
@@ -64,7 +64,7 @@ extern PANEL _stdscr_panel __dso_hidden;
 	TAILQ_REMOVE((head), (elm), field);	\
 	(elm)->field.tqe_next = NULL;		\
 	(elm)->field.tqe_prev = NULL;		\
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #define TAILQ_LINKED_NP(elm, field) \
 	(((elm)->field.tqe_prev) != NULL)
@@ -72,15 +72,15 @@ extern PANEL _stdscr_panel __dso_hidden;
 
 #define DECK_INSERT_TOP(p) do {					\
 	TAILQ_INSERT_TAIL(&_deck, (p), zorder);			\
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #define DECK_INSERT_BOTTOM(p) do {				\
 	TAILQ_INSERT_AFTER(&_deck, &_stdscr_panel, (p), zorder); \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 #define DECK_REMOVE(p) do {					\
 	TAILQ_REMOVE_NP(&_deck, (p), zorder);			\
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 
 #define PANEL_ABOVE(p)		(TAILQ_NEXT((p), zorder))

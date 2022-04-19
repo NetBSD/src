@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_zw.c,v 1.5 2013/05/28 16:57:56 joerg Exp $ */
+/* $NetBSD: citrus_zw.c,v 1.6 2022/04/19 20:32:14 rillig Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_zw.c,v 1.5 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_zw.c,v 1.6 2022/04/19 20:32:14 rillig Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <sys/types.h>
@@ -166,7 +166,7 @@ do {					\
 	if (len++ > MB_LEN_MAX || ch > 0x7F)\
 		goto ilseq;		\
 	psenc->ch[psenc->chlen++] = ch;	\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 loop:
 	switch (psenc->charset) {

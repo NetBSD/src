@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.33 2020/03/22 13:30:10 pgoyette Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.34 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.33 2020/03/22 13:30:10 pgoyette Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.34 2022/04/19 20:32:17 rillig Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -113,7 +113,7 @@ do {									\
 		/*LINTED*/						\
 		result = dyn[n].thevar;					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define SYMn_GETMEMBER(base, n, thevar, result)				\
 do {									\
@@ -126,7 +126,7 @@ do {									\
 		/*LINTED*/						\
 		result = sym[n].thevar;					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define SYMn_SETMEMBER(base, n, thevar, value)				\
 do {									\
@@ -139,7 +139,7 @@ do {									\
 		/*LINTED*/						\
 		sym[n].thevar = value;					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define SYM_GETSIZE() ((eident==ELFCLASS32)?sizeof(Elf32_Sym):sizeof(Elf64_Sym))
 

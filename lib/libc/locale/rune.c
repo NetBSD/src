@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.46 2013/04/13 10:21:20 joerg Exp $	*/
+/*	$NetBSD: rune.c,v 1.47 2022/04/19 20:32:15 rillig Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -255,7 +255,7 @@ do {									\
 		}							\
 		++fre, ++re;						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 	READ_RANGE(runetype);
 	READ_RANGE(maplower);
@@ -314,7 +314,7 @@ do {									\
 	    map, &c)  || c == EOF))					\
 		c = i;							\
 	rlp->rlp_to##name##_tab[i + 1] = (short)c;			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 			CONVERT_MAP(lower);
 			CONVERT_MAP(upper);

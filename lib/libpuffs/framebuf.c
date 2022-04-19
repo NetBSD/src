@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.36 2021/10/30 10:34:18 nia Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.37 2022/04/19 20:32:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.36 2021/10/30 10:34:18 nia Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.37 2022/04/19 20:32:17 rillig Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -349,7 +349,7 @@ do {									\
 		errno = ESHUTDOWN;					\
 		return -1;						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 int
 puffs_framev_enqueue_cc(struct puffs_cc *pcc, int fd,

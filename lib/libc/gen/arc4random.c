@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.32 2019/09/23 18:17:03 christos Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.33 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.32 2019/09/23 18:17:03 christos Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.33 2022/04/19 20:32:15 rillig Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -123,7 +123,7 @@ rotate(uint32_t u, unsigned c)
 	(c) += (d); (b) ^= (c); (b) = rotate((b), 12);			      \
 	(a) += (b); (d) ^= (a); (d) = rotate((d),  8);			      \
 	(c) += (d); (b) ^= (c); (b) = rotate((b),  7);			      \
-} while (/*CONSTCOND*/0)
+} while (0)
 
 const uint8_t crypto_core_constant32[16] = "expand 32-byte k";
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mskanji.c,v 1.14 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_mskanji.c,v 1.15 2022/04/19 20:32:14 rillig Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mskanji.c,v 1.14 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_mskanji.c,v 1.15 2022/04/19 20:32:14 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -507,7 +507,7 @@ do {								\
 		lenvar -= sizeof(#x)-1;				\
 		p += sizeof(#x)-1;				\
 	}							\
-} while (/*CONSTCOND*/0)
+} while (0)
 	memset((void *)ei, 0, sizeof(*ei));
 	while (lenvar > 0) {
 		switch (_bcs_toupper(*p)) {

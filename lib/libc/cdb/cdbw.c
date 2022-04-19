@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbw.c,v 1.7 2021/01/07 14:41:50 joerg Exp $	*/
+/*	$NetBSD: cdbw.c,v 1.8 2022/04/19 20:32:14 rillig Exp $	*/
 /*-
  * Copyright (c) 2009, 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbw.c,v 1.7 2021/01/07 14:41:50 joerg Exp $");
+__RCSID("$NetBSD: cdbw.c,v 1.8 2022/04/19 20:32:14 rillig Exp $");
 
 #include "namespace.h"
 
@@ -538,7 +538,7 @@ compute_size(uint32_t size)
 			return -1;				\
 		cur_pos = 0;					\
 	}							\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 static int
 print_hash(struct cdbw *cdbw, struct state *state, int fd, const char *descr)
