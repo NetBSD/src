@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.434 2022/04/19 20:08:52 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.435 2022/04/19 22:14:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.434 2022/04/19 20:08:52 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.435 2022/04/19 22:14:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2644,10 +2644,10 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 		nv->v_quad = v->v_quad;
 	}
 
-	if ((v->v_unsigned_since_c90 && is_floating(nt)) ||
-	    (v->v_unsigned_since_c90 && (is_integer(nt) && !is_uinteger(nt) &&
-			    portable_size_in_bits(nt) >
-			    portable_size_in_bits(ot)))) {
+	if (allow_trad && allow_c90 && v->v_unsigned_since_c90 &&
+	    (is_floating(nt) || (
+		(is_integer(nt) && !is_uinteger(nt) &&
+		 portable_size_in_bits(nt) > portable_size_in_bits(ot))))) {
 		/* ANSI C treats constant as unsigned */
 		warning(157);
 		v->v_unsigned_since_c90 = false;
