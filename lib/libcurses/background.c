@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.29 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.30 2022/04/19 22:26:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.29 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.30 2022/04/19 22:26:57 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -160,7 +160,9 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 {
 	attr_t battr;
 	nschar_t *np, *tnp;
-	int i;
+	int i, wy, wx;
+	__LDATA obkgrnd, nbkgrnd;
+	__LINE *wlp;
 
 	__CTRACE(__CTRACE_ATTR, "wbkgrndset: (%p), '%s', %x\n",
 	    win, (const char *)wunctrl(wch), wch->attributes);
@@ -168,6 +170,14 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 	/* ignore multi-column characters */
 	if (!wch->elements || wcwidth(wch->vals[0]) > 1)
 		return;
+
+	/* get a copy of the old background, we will need it. */
+	obkgrnd.ch = win->bch;
+	obkgrnd.attr = win->battr;
+	obkgrnd.wflags = 0;
+	obkgrnd.wcols = win->wcols;
+	obkgrnd.nsp = NULL;
+	_cursesi_copy_nsp(win->bnsp, &obkgrnd);
 
 	/* Background character. */
 	tnp = np = win->bnsp;
@@ -204,11 +214,7 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 		}
 	}
 	/* clear the old non-spacing characters */
-	while (np) {
-		tnp = np->next;
-		free(np);
-		np = tnp;
-	}
+	__cursesi_free_nsp(np);
 
 	/* Background attributes (check colour). */
 	battr = wch->attributes & WA_ATTRIBUTES;
@@ -216,6 +222,29 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 		battr |= __default_color;
 	win->battr = battr;
 	win->wcols = 1;
+
+	/*
+	 * Now do the dirty work of updating all the locations
+	 * that have the old background character with the new.
+	 */
+
+	nbkgrnd.ch = win->bch;
+	nbkgrnd.attr = win->battr;
+	nbkgrnd.wflags = 0;
+	nbkgrnd.wcols = win->wcols;
+	nbkgrnd.nsp = NULL;
+	_cursesi_copy_nsp(win->bnsp, &nbkgrnd);
+
+	for (wy = 0; wy < win->maxy; wy++) {
+		wlp = win->alines[wy];
+		for (wx = 0; wx < win->maxx; wx++) {
+			if (_cursesi_celleq(&obkgrnd, &wlp->line[wx])) {
+				_cursesi_copy_wchar(&nbkgrnd, &wlp->line[wx]);
+			}
+		}
+	}
+	__touchwin(win, 1);
+
 }
 
 
