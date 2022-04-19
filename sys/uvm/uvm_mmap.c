@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.178 2022/04/19 01:34:52 riastradh Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.179 2022/04/19 22:53:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.178 2022/04/19 01:34:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.179 2022/04/19 22:53:34 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -277,8 +277,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	vsize_t size, pageoff, newsize;
 	vm_prot_t prot, maxprot, extraprot;
 	int flags, fd, advice;
-	vaddr_t defaddr = 0;	/* XXXGCC */
-	bool addrhint = false;
+	vaddr_t defaddr;
 	struct file *fp = NULL;
 	struct uvm_object *uobj;
 	int error;
@@ -350,12 +349,6 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 			addr = MAX(addr, defaddr);
 		else
 			addr = MIN(addr, defaddr);
-
-		/*
-		 * If addr is nonzero and not the default, then the
-		 * address is a hint.
-		 */
-		addrhint = (addr != 0 && addr != defaddr);
 	}
 
 	/*
@@ -408,20 +401,9 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	/*
 	 * now let kernel internal function uvm_mmap do the work.
 	 */
+
 	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
 	    flags, advice, uobj, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
-
-	/*
-	 * If the user provided a hint, and we couldn't satisfy that
-	 * hint, try again with the default address.
-	 */
-	if (error && addrhint) {
-		addr = defaddr;
-		pax_aslr_mmap(l, &addr, orig_addr, flags);
-		error = uvm_mmap(&p->p_vmspace->vm_map, &addr, size, prot,
-		    maxprot, flags, advice, uobj, pos,
-		    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
-	}
 
 	/* remember to add offset */
 	*retval = (register_t)(addr + pageoff);
