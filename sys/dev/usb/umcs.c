@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.18 2022/02/09 07:32:33 mrg Exp $ */
+/* $NetBSD: umcs.c,v 1.19 2022/04/19 01:35:28 riastradh Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.18 2022/02/09 07:32:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.19 2022/04/19 01:35:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,8 +226,8 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	 *
 	 * Also, see notes in header file for these constants.
 	 */
-	umcs7840_get_reg(sc, MCS7840_DEV_REG_GPIO, &data);
-	if (data & MCS7840_DEV_GPIO_4PORTS) {
+	error = umcs7840_get_reg(sc, MCS7840_DEV_REG_GPIO, &data);
+	if (error == 0 && (data & MCS7840_DEV_GPIO_4PORTS) != 0) {
 		sc->sc_numports = 4;
 		/* physical port no are : 0, 1, 2, 3 */
 	} else {
