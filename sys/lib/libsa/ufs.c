@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.80 2021/05/27 06:54:44 mrg Exp $	*/
+/*	$NetBSD: ufs.c,v 1.81 2022/04/19 09:25:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -701,7 +701,7 @@ ufs_open(const char *path, struct open_file *f)
 		/*
 		 * We note that the number of indirect blocks is always
 		 * a power of 2.  This lets us use shifts and masks instead
-		 * of divide and remainder and avoinds pulling in the
+		 * of divide and remainder and avoids pulling in the
 		 * 64bit division routine into the boot code.
 		 */
 		mult = UFS_NINDIR(fs);
