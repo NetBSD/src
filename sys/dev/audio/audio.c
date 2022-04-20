@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.125 2022/04/20 04:41:29 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.126 2022/04/20 06:05:22 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.125 2022/04/20 04:41:29 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.126 2022/04/20 06:05:22 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -608,7 +608,8 @@ static void audio_rintr(void *);
 
 static int audio_query_devinfo(struct audio_softc *, mixer_devinfo_t *);
 
-static __inline int audio_track_readablebytes(const audio_track_t *);
+static int audio_track_inputblk_as_usrbyte(const audio_track_t *, int);
+static int audio_track_readablebytes(const audio_track_t *);
 static int audio_file_setinfo(struct audio_softc *, audio_file_t *,
 	const struct audio_info *);
 static int audio_track_setinfo_check(audio_track_t *,
@@ -2775,10 +2776,10 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 		int bytes;
 
 		TRACET(3, track,
-		    "while resid=%zd input=%d/%d/%d usrbuf=%d/%d/H%d",
+		    "while resid=%zd input=%d/%d/%d usrbuf=%d/%d/C%d",
 		    uio->uio_resid,
 		    input->head, input->used, input->capacity,
-		    usrbuf->head, usrbuf->used, track->usrbuf_usedhigh);
+		    usrbuf->head, usrbuf->used, usrbuf->capacity);
 
 		/* Wait when buffers are empty. */
 		mutex_enter(sc->sc_lock);
@@ -2805,34 +2806,27 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 		mutex_exit(sc->sc_lock);
 
 		audio_track_lock_enter(track);
-		/* Convert as many blocks as possible. */
-		while (usrbuf->used <=
-		            track->usrbuf_usedhigh - track->usrbuf_blksize &&
-		    input->used > 0) {
+		/* Convert one block if possible. */
+		if (usrbuf->used == 0 && input->used > 0) {
 			audio_track_record(track);
 		}
 
 		/* uiomove from usrbuf as many bytes as possible. */
 		bytes = uimin(usrbuf->used, uio->uio_resid);
-		while (bytes > 0) {
-			int head = usrbuf->head;
-			int len = uimin(bytes, usrbuf->capacity - head);
-			error = uiomove((uint8_t *)usrbuf->mem + head, len,
-			    uio);
-			if (error) {
-				audio_track_lock_exit(track);
-				device_printf(sc->sc_dev,
-				    "%s: uiomove(%d) failed: errno=%d\n",
-				    __func__, len, error);
-				goto abort;
-			}
-			auring_take(usrbuf, len);
-			track->useriobytes += len;
-			TRACET(3, track, "uiomove(len=%d) usrbuf=%d/%d/C%d",
-			    len,
-			    usrbuf->head, usrbuf->used, usrbuf->capacity);
-			bytes -= len;
+		error = uiomove((uint8_t *)usrbuf->mem + usrbuf->head, bytes,
+		    uio);
+		if (error) {
+			audio_track_lock_exit(track);
+			device_printf(sc->sc_dev,
+			    "%s: uiomove(%d) failed: errno=%d\n",
+			    __func__, bytes, error);
+			goto abort;
 		}
+		auring_take(usrbuf, bytes);
+		track->useriobytes += bytes;
+		TRACET(3, track, "uiomove(len=%d) usrbuf=%d/%d/C%d",
+		    bytes,
+		    usrbuf->head, usrbuf->used, usrbuf->capacity);
 
 		audio_track_lock_exit(track);
 	}
@@ -3298,9 +3292,31 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 }
 
 /*
+ * Convert n [frames] of the input buffer to bytes in the usrbuf format.
+ * n is in frames but should be a multiple of frame/block.  Note that the
+ * usrbuf's frame/block and the input buffer's frame/block may be different
+ * (i.e., if frequencies are different).
+ *
+ * This function is for recording track only.
+ */
+static int
+audio_track_inputblk_as_usrbyte(const audio_track_t *track, int n)
+{
+	int input_fpb;
+
+	/*
+	 * In the input buffer on recording track, these are the same.
+	 * input_fpb = frame_per_block(track->mixer, &track->input->fmt);
+	 */
+	input_fpb = track->mixer->frames_per_block;
+
+	return (n / input_fpb) * track->usrbuf_blksize;
+}
+
+/*
  * Returns the number of bytes that can be read on recording buffer.
  */
-static __inline int
+static int
 audio_track_readablebytes(const audio_track_t *track)
 {
 	int bytes;
@@ -3309,12 +3325,20 @@ audio_track_readablebytes(const audio_track_t *track)
 	KASSERT(track->mode == AUMODE_RECORD);
 
 	/*
-	 * Although usrbuf is primarily readable data, recorded data
-	 * also stays in track->input until reading.  So it is necessary
-	 * to add it.  track->input is in frame, usrbuf is in byte.
+	 * For recording, track->input is the main block-unit buffer and
+	 * track->usrbuf holds less than one block of byte data ("fragment").
+	 * Note that the input buffer is in frames and the usrbuf is in bytes.
+	 *
+	 * Actual total capacity of these two buffers is
+	 *  input->capacity [frames] + usrbuf.capacity [bytes],
+	 * but only input->capacity is reported to userland as buffer_size.
+	 * So, even if the total used bytes exceed input->capacity, report it
+	 * as input->capacity for consistency.
 	 */
-	bytes = track->usrbuf.used +
-	    track->input->used * frametobyte(&track->usrbuf.fmt, 1);
+	bytes = audio_track_inputblk_as_usrbyte(track, track->input->used);
+	if (track->input->used < track->input->capacity) {
+		bytes += track->usrbuf.used;
+	}
 	return bytes;
 }
 
@@ -4488,45 +4512,98 @@ audio_track_init_freq(audio_track_t *track, audio_ring_t **last_dstp)
 }
 
 /*
- * When playing back: (e.g. if codec and freq stage are valid)
+ * There are two unit of buffers; A block buffer and a byte buffer.  Both use
+ * audio_ring_t.  Internally, audio data is always handled in block unit.
+ * Converting format, sythesizing tracks, transferring from/to the hardware,
+ * and etc.  Only one exception is usrbuf.  To transfer with userland, usrbuf
+ * is buffered in byte unit.
+ * For playing back, write(2) writes arbitrary length of data to usrbuf.
+ * When one block is filled, it is sent to the next stage (converting and/or
+ * synthesizing).
+ * For recording, the rmixer writes one block length of data to input buffer
+ * (the bottom stage buffer) each time.  read(2) (converts one block if usrbuf
+ * is empty and then) reads arbitrary length of data from usrbuf.
  *
- *               write
+ * The following charts show the data flow and buffer types for playback and
+ * recording track.  In this example, both have two conversion stages, codec
+ * and freq.  Every [**] represents a buffer described below.
+ *
+ * On playback track:
+ *
+ *               write(2)
+ *                |
  *                | uiomove
  *                v
- *  usrbuf      [...............]  byte ring buffer (mmap-able)
- *                | memcpy
+ *  usrbuf       [BB|BB ... BB|BB]     .. Byte ring buffer
+ *                |
+ *                | memcpy one block
  *                v
- *  codec.srcbuf[....]             1 block (ring) buffer   <-- stage input
+ *  codec.srcbuf [FF]                  .. 1 block (ring) buffer
  *       .dst ----+
+ *                |
  *                | convert
  *                v
- *  freq.srcbuf [....]             1 block (ring) buffer
+ *  freq.srcbuf  [FF]                  .. 1 block (ring) buffer
  *      .dst  ----+
+ *                |
  *                | convert
  *                v
- *  outbuf      [...............]  NBLKOUT blocks ring buffer
+ *  outbuf       [FF|FF|FF|FF]         .. NBLKOUT blocks ring buffer
+ *                |
+ *                v
+ *               pmixer
+ *
+ * There are three different types of buffers:
+ *
+ *  [BB|BB ... BB|BB]  usrbuf.  Is the buffer closest to userland.  Mandatory.
+ *                     This is a byte buffer and its length is basically less
+ *                     than or equal to 64KB or at least AUMINNOBLK blocks.
+ *
+ *  [FF]               Interim conversion stage's srcbuf if necessary.
+ *                     This is one block (ring) buffer counted in frames.
+ *
+ *  [FF|FF|FF|FF]      outbuf.  Is the buffer closest to pmixer.  Mandatory.
+ *                     This is NBLKOUT blocks ring buffer counted in frames.
  *
  *
- * When recording:
+ * On recording track:
  *
- *  freq.srcbuf [...............]  NBLKOUT blocks ring buffer <-- stage input
- *      .dst  ----+
- *                | convert
- *                v
- *  codec.srcbuf[.....]            1 block (ring) buffer
- *       .dst ----+
- *                | convert
- *                v
- *  outbuf      [.....]            1 block (ring) buffer
- *                | memcpy
- *                v
- *  usrbuf      [...............]  byte ring buffer (mmap-able *)
+ *               read(2)
+ *                ^
  *                | uiomove
- *                v
- *               read
+ *                |
+ *  usrbuf       [BB]                  .. Byte (ring) buffer
+ *                ^
+ *                | memcpy one block
+ *                |
+ *  outbuf       [FF]                  .. 1 block (ring) buffer
+ *                ^
+ *                | convert
+ *                |
+ *  codec.dst ----+
+ *       .srcbuf [FF]                  .. 1 block (ring) buffer
+ *                ^
+ *                | convert
+ *                |
+ *  freq.dst  ----+
+ *      .srcbuf  [FF|FF ... FF|FF]     .. NBLKIN blocks ring buffer
+ *                ^
+ *                |
+ *               rmixer
  *
- *    *: usrbuf for recording is also mmap-able due to symmetry with
- *       playback buffer, but for now mmap will never happen for recording.
+ * There are also three different types of buffers.
+ *
+ *  [BB]               usrbuf.  Is the buffer closest to userland.  Mandatory.
+ *                     This is a byte buffer and its length is one block.
+ *                     This buffer holds only "fragment".
+ *
+ *  [FF]               Interim conversion stage's srcbuf (or outbuf).
+ *                     This is one block (ring) buffer counted in frames.
+ *
+ *  [FF|FF ... FF|FF]  The bottom conversion stage's srcbuf (or outbuf).
+ *                     This is the buffer closest to rmixer, and mandatory.
+ *                     This is NBLKIN blocks ring buffer counted in frames.
+ *                     Also pointed by *input.
  */
 
 /*
@@ -4545,6 +4622,8 @@ static int
 audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 {
 	struct audio_softc *sc;
+	audio_ring_t *last_dst;
+	int is_playback;
 	u_int newbufsize;
 	u_int oldblksize;
 	u_int len;
@@ -4553,9 +4632,19 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 	KASSERT(track);
 	sc = track->mixer->sc;
 
+	is_playback = audio_track_is_playback(track);
+
 	/* usrbuf is the closest buffer to the userland. */
 	track->usrbuf.fmt = *usrfmt;
 
+	/*
+	 * Usrbuf.
+	 * On the playback track, its capacity is less than or equal to 64KB
+	 * (for historical reason) and must be a multiple of a block
+	 * (constraint in this implementation).  But at least AUMINNOBLK
+	 * blocks.
+	 * On the recording track, its capacity is one block.
+	 */
 	/*
 	 * For references, one block size (in 40msec) is:
 	 *  320 bytes    = 204 blocks/64KB for mulaw/8kHz/1ch
@@ -4580,32 +4669,37 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 	    frame_per_block(track->mixer, &track->usrbuf.fmt));
 	track->usrbuf.head = 0;
 	track->usrbuf.used = 0;
-	newbufsize = MAX(track->usrbuf_blksize * AUMINNOBLK, 65536);
-	newbufsize = rounddown(newbufsize, track->usrbuf_blksize);
-	error = audio_realloc_usrbuf(track, newbufsize);
-	if (error) {
-		device_printf(sc->sc_dev, "malloc usrbuf(%d) failed\n",
-		    newbufsize);
-		goto error;
+	if (is_playback) {
+		if (track->usrbuf_blksize * AUMINNOBLK > 65536)
+			newbufsize = track->usrbuf_blksize * AUMINNOBLK;
+		else
+			newbufsize = rounddown(65536, track->usrbuf_blksize);
+	} else {
+		newbufsize = track->usrbuf_blksize;
 	}
-
-	/* Recalc water mark. */
 	if (track->usrbuf_blksize != oldblksize) {
-		if (audio_track_is_playback(track)) {
-			/* Set high at 100%, low at 75%.  */
-			track->usrbuf_usedhigh = track->usrbuf.capacity;
-			track->usrbuf_usedlow = track->usrbuf.capacity * 3 / 4;
-		} else {
-			/* Set high at 100% minus 1block(?), low at 0% */
-			track->usrbuf_usedhigh = track->usrbuf.capacity -
-			    track->usrbuf_blksize;
-			track->usrbuf_usedlow = 0;
+		error = audio_realloc_usrbuf(track, newbufsize);
+		if (error) {
+			device_printf(sc->sc_dev, "malloc usrbuf(%d) failed\n",
+			    newbufsize);
+			goto error;
 		}
 	}
 
+	/* Recalc water mark. */
+	if (is_playback) {
+		/* Set high at 100%, low at 75%. */
+		track->usrbuf_usedhigh = track->usrbuf.capacity;
+		track->usrbuf_usedlow = track->usrbuf.capacity * 3 / 4;
+	} else {
+		/* Set high at 100%, low at 0%. (But not used) */
+		track->usrbuf_usedhigh = track->usrbuf.capacity;
+		track->usrbuf_usedlow = 0;
+	}
+
 	/* Stage buffer */
-	audio_ring_t *last_dst = &track->outbuf;
-	if (audio_track_is_playback(track)) {
+	last_dst = &track->outbuf;
+	if (is_playback) {
 		/* On playback, initialize from the mixer side in order. */
 		track->inputfmt = *usrfmt;
 		track->outbuf.fmt =  track->mixer->track_fmt;
@@ -4656,17 +4750,6 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 	track->input = last_dst;
 
 	/*
-	 * On the recording track, make the first stage a ring buffer.
-	 * XXX is there a better way?
-	 */
-	if (audio_track_is_record(track)) {
-		track->input->capacity = NBLKOUT *
-		    frame_per_block(track->mixer, &track->input->fmt);
-		len = auring_bytelen(track->input);
-		track->input->mem = audio_realloc(track->input->mem, len);
-	}
-
-	/*
 	 * Output buffer.
 	 * On the playback track, its capacity is NBLKOUT blocks.
 	 * On the recording track, its capacity is 1 block.
@@ -4675,7 +4758,7 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 	track->outbuf.used = 0;
 	track->outbuf.capacity = frame_per_block(track->mixer,
 	    &track->outbuf.fmt);
-	if (audio_track_is_playback(track))
+	if (is_playback)
 		track->outbuf.capacity *= NBLKOUT;
 	len = auring_bytelen(&track->outbuf);
 	track->outbuf.mem = audio_realloc(track->outbuf.mem, len);
@@ -4683,6 +4766,20 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 		device_printf(sc->sc_dev, "malloc outbuf(%d) failed\n", len);
 		error = ENOMEM;
 		goto error;
+	}
+
+	/*
+	 * On the recording track, expand the input stage buffer, which is
+	 * the closest buffer to rmixer, to NBLKOUT blocks.
+	 * Note that input buffer may point to outbuf.
+	 */
+	if (!is_playback) {
+		int input_fpb;
+
+		input_fpb = frame_per_block(track->mixer, &track->input->fmt);
+		track->input->capacity = input_fpb * NBLKIN;
+		len = auring_bytelen(track->input);
+		track->input->mem = audio_realloc(track->input->mem, len);
 	}
 
 #if defined(AUDIO_DEBUG)
@@ -4711,7 +4808,7 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 		snprintf(m.usrbuf, sizeof(m.usrbuf),
 		    " usr=%d", track->usrbuf.capacity);
 
-		if (audio_track_is_playback(track)) {
+		if (is_playback) {
 			TRACET(0, track, "bufsize%s%s%s%s%s%s",
 			    m.outbuf, m.freq, m.chmix,
 			    m.chvol, m.codec, m.usrbuf);
@@ -5016,8 +5113,8 @@ audio_track_record(audio_track_t *track)
 	/* Copy outbuf to usrbuf */
 	outbuf = &track->outbuf;
 	usrbuf = &track->usrbuf;
-	/* usrbuf must have at least one free block. */
-	KASSERT(usrbuf->used <= track->usrbuf_usedhigh - track->usrbuf_blksize);
+	/* usrbuf should be empty. */
+	KASSERT(usrbuf->used == 0);
 	/*
 	 * framesize is always 1 byte or more since all formats supported
 	 * as usrfmt(=output) have 8bit or more stride.
@@ -7686,12 +7783,13 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai, int need_mixerinfo,
 	pi->active = sc->sc_pbusy;
 
 	if (rtrack) {
-		ri->seek = rtrack->usrbuf.used;
+		ri->seek = audio_track_readablebytes(rtrack);
 		ri->samples = rtrack->usrbuf_stamp;
 		ri->eof = 0;
 		ri->error = (rtrack->dropframes != 0) ? 1 : 0;
 		ri->open = 1;
-		ri->buffer_size = rtrack->usrbuf.capacity;
+		ri->buffer_size = audio_track_inputblk_as_usrbyte(rtrack,
+		    rtrack->input->capacity);
 	}
 	ri->waiting = 0;		/* open never hangs */
 	ri->active = sc->sc_rbusy;
