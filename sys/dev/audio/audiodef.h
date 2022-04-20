@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.17 2022/04/20 06:05:22 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.18 2022/04/20 07:11:13 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -121,8 +121,6 @@ struct audio_track {
 	u_int		usrbuf_blksize;	/* usrbuf block size in bytes */
 	struct uvm_object *uobj;
 	bool		mmapped;	/* device is mmap()-ed */
-	u_int		usrbuf_stamp;	/* transferred bytes from/to stage */
-	u_int		usrbuf_stamp_last; /* last stamp */
 	u_int		usrbuf_usedhigh;/* high water mark in bytes */
 	u_int		usrbuf_usedlow;	/* low water mark in bytes */
 
@@ -161,6 +159,13 @@ struct audio_track {
 	/* Track volume (0..256) */
 	u_int		volume;
 #endif
+
+	/*
+	 * For AUDIO_GET[IO]OFFS.
+	 * No locks are required for these.
+	 */
+	u_int		stamp;		/* number of transferred blocks */
+	u_int		last_stamp;
 
 	audio_trackmixer_t *mixer;	/* connected track mixer */
 
