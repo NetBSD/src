@@ -1,0 +1,10 @@
+include start
+call OK addstr "this is a test"
+# background attributes set to standout and A for space
+cchar BKGND $STANDOUT "A"
+call OK bkgrndset $BKGND
+call OK refresh
+compare bkgrndset1.chk
+call OK erase
+call OK refresh
+compare bgkrndset2.chk

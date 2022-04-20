@@ -2011,6 +2011,16 @@ bkgdset_body()
 	h_run bkgdset
 }
 
+atf_test_case bkgrndset
+bkgrndset_head()
+{
+	atf_set "descr" "Validate curses sets the background character using a complex char on stdscr"
+}
+bkgrndset_body()
+{
+	h_run bkgrndset
+}
+
 atf_test_case getbkgd
 getbkgd_head()
 {
