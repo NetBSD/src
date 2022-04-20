@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.16 2021/08/21 10:18:14 andvar Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.17 2022/04/20 06:05:22 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -33,13 +33,28 @@
 #include "opt_audio.h"
 #endif
 
-/* Number of HW buffer's blocks. */
+/* Number of blocks in HW buffer. */
 #define NBLKHW (3)
 
-/* Number of track output buffer's blocks.  Must be > NBLKHW */
+/* Number of blocks in output buffer on playback track.  Must be > NBLKHW */
 #define NBLKOUT	(4)
 
-/* Minimum number of usrbuf's blocks. */
+/*
+ * Number of blocks in input buffer on recording track.
+ *
+ * For references:
+ *  On 48000Hz/2ch (blk_ms=10), the buffer time is 160 [msec], and
+ *  the input buffer size is 30720 [bytes] (= 1920 [byte/block] * 16).
+ *
+ *  On 192000Hz/12ch (blk_ms=10), the buffer time is 160 [msec], and
+ *  the input buffer size is 737280 [bytes] (= 46080 [byte/block] * 16).
+ *
+ *  On 8000Hz/1ch (blk_ms=40), the buffer time is 640 [msec], and
+ *  the input buffer size = 10240 [bytes] (= 640 [byte/block] * 16).
+ */
+#define NBLKIN	(16)
+
+/* Minimum number of blocks in usrbuf on playback track. */
 #define AUMINNOBLK	(3)
 
 /*
