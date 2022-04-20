@@ -1,4 +1,4 @@
-/*	$NetBSD: clkctrl.c,v 1.6 2019/12/30 22:13:47 ad Exp $	*/
+/*	$NetBSD: clkctrl.c,v 1.7 2022/04/20 23:32:17 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.6 2019/12/30 22:13:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clkctrl.c,v 1.7 2022/04/20 23:32:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ clkctrl_attach(device_t parent, device_t self, void *aux)
 	}
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot, sa->sa_offset,
-			 sizeof(long),
+			 1,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		aprint_error("unable to map register\n");
 		return;
