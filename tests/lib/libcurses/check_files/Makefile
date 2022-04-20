@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2021/11/16 21:02:06 blymn Exp $
+# $NetBSD: Makefile,v 1.10 2022/04/20 07:43:05 blymn Exp $
 
 NOMAN=		# defined
 
@@ -34,6 +34,8 @@ FILES+=		background4.chk
 FILES+=		background5.chk
 FILES+=		bell.chk
 FILES+=		bkgdset1.chk
+FILES+=		bkgrndset1.chk
+FILES+=		bkgrndset2.chk
 FILES+=		blank.chk
 FILES+=		border_set1.chk
 FILES+=		border_set2.chk

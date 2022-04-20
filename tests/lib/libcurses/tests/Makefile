@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2021/02/13 06:29:45 rillig Exp $
+# $NetBSD: Makefile,v 1.6 2022/04/20 07:43:05 blymn Exp $
 
 NOMAN=		# defined
 
@@ -24,6 +24,7 @@ FILES+=		attributes
 FILES+=		background
 FILES+=		beep
 FILES+=		bkgdset
+FILES+=		bkgrndset
 FILES+=		border_set
 FILES+=		box
 FILES+=		box_set
