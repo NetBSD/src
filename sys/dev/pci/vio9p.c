@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.8 2022/04/13 15:24:42 uwe Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.9 2022/04/20 22:08:10 uwe Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.8 2022/04/13 15:24:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.9 2022/04/20 22:08:10 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ vio9p_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_virtio = vsc;
 
-	virtio_child_attach_start(vsc, self, IPL_VM, NULL,
+	virtio_child_attach_start(vsc, self, IPL_VM, sc->sc_vq,
 	    NULL, virtio_vq_intr,
 	    VIRTIO_F_INTR_MPSAFE | VIRTIO_F_INTR_SOFTINT,
 	    VIO9P_F_MOUNT_TAG,
