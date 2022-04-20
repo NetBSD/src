@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.7 2022/04/19 22:40:13 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.8 2022/04/20 22:50:56 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -97,6 +97,6 @@ non_constant_expression(void)
 	 * that the conversion will always succeed.
 	 */
 	const int not_a_constant = 8;
-	/* expect+1: warning: conversion from 'unsigned long' to 'int' may lose accuracy [132] */
-	return sizeof(double) + not_a_constant * sizeof(char *);
+	/* expect+1: warning: conversion from 'unsigned long long' to 'int' may lose accuracy [132] */
+	return not_a_constant * 8ULL;
 }
