@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1193 2022/04/18 15:06:27 rillig Exp $
+# $NetBSD: mi,v 1.1194 2022/04/20 07:41:04 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3305,6 +3305,8 @@
 ./usr/tests/lib/libcurses/check_files/background5.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/bell.chk			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/bkgdset1.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/bkgrndset1.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/bkgrndset2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/blank.chk			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/border_set1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/border_set2.chk		tests-lib-tests		compattestfile,atf
@@ -3574,6 +3576,7 @@
 ./usr/tests/lib/libcurses/tests/background		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/beep			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/bkgdset			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/tests/bkgrndset		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/border_set		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/box			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/box_set			tests-lib-tests		compattestfile,atf
