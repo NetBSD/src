@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.179 2021/10/10 18:08:12 thorpej Exp $	*/
+/*	$NetBSD: db_command.c,v 1.180 2022/04/20 19:06:35 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.179 2021/10/10 18:08:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.180 2022/04/20 19:06:35 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -597,15 +597,16 @@ db_command_loop(void)
 	/* save context for return from ddb */
 	savejmp = db_recover;
 	db_recover = &db_jmpbuf;
-	(void) setjmp(&db_jmpbuf);
 
 	/*
 	 * Execute default ddb start commands only if this is the
 	 * first entry into DDB, in case the start commands fault
 	 * and we recurse into here.
 	 */
-	if (!savejmp)
-		db_execute_commandlist(db_cmd_on_enter);
+	if (savejmp == NULL && db_cmd_on_enter[0] != '\0') {
+		if (setjmp(&db_jmpbuf) == 0)
+			db_execute_commandlist(db_cmd_on_enter);
+	}
 
 	(void) setjmp(&db_jmpbuf);
 	while (!db_cmd_loop_done) {
