@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.14 2021/08/03 13:34:04 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.15 2022/04/21 17:30:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -655,14 +655,19 @@ run_program(int flags, const char *cmd, ...)
 		win.ws_col = 80;
 
 	if ((flags & RUN_DISPLAY) != 0) {
-		if (flags & RUN_FULLSCREEN) {
+		if (flags & RUN_STDSCR) {
+			actionwin = stdscr;
+			wmove(stdscr, msg_row()+2, 0);
+			wrefresh(stdscr);
+		} else if (flags & RUN_FULLSCREEN) {
 			wclear(stdscr);
 			clearok(stdscr, 1);
 			touchwin(stdscr);
 			refresh();
 			actionwin = stdscr;
-		} else
+		} else {
 			actionwin = show_cmd(scmd, &win);
+		}
 	} else
 		win.ws_row -= 4;
 

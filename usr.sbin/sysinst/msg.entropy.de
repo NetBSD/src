@@ -1,4 +1,4 @@
-/*      $NetBSD: msg.entropy.de,v 1.4 2021/10/11 17:23:28 rillig Exp $  */
+/*      $NetBSD: msg.entropy.de,v 1.5 2022/04/21 17:30:15 martin Exp $  */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,27 +28,29 @@
 
 message Configure_entropy	{Entropie konfigurieren}
 
-message continue_without_entropy	{Weiter ohne Entropie}
+message continue_without_entropy	{Jetzt nicht - weiter!}
 
 message not_enough_entropy
-{Dieses System scheint nicht über einen Pseudo-Zufallszahlengenerator
-zu verfügen. Für das Erzeugen von kryptografisch sicheren Schlüsseldateien
-(z.B. ssh host keys) ist nicht genug Entropie verfügbar. 
+{Dieses System verfügt momentan nicht über genug Entropie um kryptografisch
+starke Zufallszahlen zu generieren. 
  
-Am einfachsten generieren Sie Zufallsdaten auf einem anderen Computer
-und laden sie in dieser Installation. Alternativ können Sie auch
-manuell Zufallsdaten eingeben. 
+Falls Sie diese Installation produktiv verwenden möchten und z.B.
+ssh host keys generieren werden, empfehlen wir dringend die
+Entropie-Konfiguration zu vervollständigen! 
  
-Falls Sie einen USB-Zufallsgenerator besitzen, verbinden Sie diesen
+Sie können Zufallszahlen von einem anderen Computer verwenden oder
+manuell zufällige Zeichen eingeben. 
+ 
+Falls Sie einen USB-Zufallsgenerator haben, verbinden Sie diesen
 jetzt und wählen dann die Option "Erneut testen".}
 
-message entropy_add_manually		{Manuelle Zufallseingabe}
+message entropy_add_manually		{Zufallsdaten manuell eingeben}
 message entropy_download_raw		{Rohe binäre Zufallsdaten laden}
 message	entropy_download_seed		{NetBSD-Entropie-Datei laden}
 message entropy_retry			{Erneut testen}
 
 message entropy_enter_manual1
-{Geben Sie bitte mehrere Zeilen zufällige Zeichen ein,
+{Geben Sie bitte zufällige Zeichen ein,
 in denen genug Entropie enthalten sein sollte, die 256 Münzwürfen,
 100 Würfen mit einem sechsseitigen Würfel oder 64 zufälligen hexadezimalen
 Zeichen entspricht.}
@@ -60,11 +62,9 @@ folgenden Befehls (auf einem System, dessen Entropie Sie vertrauen)
 verwenden:}
 
 message entropy_enter_manual3
-{Benutzen Sie nicht die gleiche Eingabe für mehrere Installationen. 
-Beenden Sie die Eingabe mit einer leeren Zeile.}
-
-message entropy_manual_not_enough
-{Sie haben nicht genug Zeichen eingegeben!}
+{Sie können eine Zeile mit beliebiger Länge eingeben. Wenn die
+Eingabe nicht mindestens 256 zufällige Bits enthält, ist
+das installierte System eventuell nicht sicher.}
 
 message entropy_select_file
 {Wählen Sie, auf welche Art Sie die Zufallsdaten auf diesen Computer

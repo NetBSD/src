@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.14 2021/10/09 09:06:28 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.15 2022/04/21 17:30:15 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -289,6 +289,14 @@ add_new_user(struct menudesc *menu, void *arg)
 	run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
 	    "passwd -l %s", username);
 	return 0;
+}
+
+void
+root_pw_setup(void)
+{
+	msg_display(MSG_force_rootpw);
+	run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT | RUN_STDSCR,
+	    "passwd -l root");
 }
 
 static int

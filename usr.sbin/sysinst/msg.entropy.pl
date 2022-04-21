@@ -1,4 +1,4 @@
-/*      $NetBSD: msg.entropy.pl,v 1.4 2021/10/08 22:07:11 nia Exp $  */
+/*      $NetBSD: msg.entropy.pl,v 1.5 2022/04/21 17:30:15 martin Exp $  */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,26 +28,30 @@
 
 message Configure_entropy	{Set up entropy}
 
-message continue_without_entropy	{Continue without entropy}
+message continue_without_entropy	{Not now, continue!}
 
 message not_enough_entropy
 {This system seems to lack a cryptographically strong pseudo random
 number generator. There is not enough entropy available to create secure
 keys (e.g. ssh host keys). 
-
+ 
+If you plan to use this installation for production work and will
+for example have ssh host keys generated, we strongly advise to complete
+the entropy setup now! 
+ 
 You may use random data generated on another computer and load it
 here, or you could enter random characters manually. 
  
-If you own a USB random number device, connect it now and select
+If you have a USB random number device, connect it now and select
 the "Re-test" option.}
 
-message entropy_add_manually		{Manual input of random data}
+message entropy_add_manually		{Manually input random characters}
 message entropy_download_raw		{Load raw binary random data}
 message	entropy_download_seed		{Import a NetBSD entropy file}
 message entropy_retry			{Re-test}
 
 message entropy_enter_manual1
-{Enter random characters.}
+{Enter one line of random characters.}
 
 message entropy_enter_manual2
 {They should contain at last 256 bits of randomness, as in 256 coin
@@ -57,11 +61,9 @@ installer) the output from running the following command on another
 machine whose randomness you trust:}
 
 message entropy_enter_manual3
-{Do not use the same data for multiple installations. 
-Terminate the input with an empty line.}
-
-message entropy_manual_not_enough
-{You did not enter enough characters!}
+{A line of any length and content will be accepted and assumed to
+contain at least 256 bits of randomness.  If it actually contains
+less, the installed system may not be secure.}
 
 message entropy_select_file
 {Please select how you want to transfer the random data file
@@ -125,4 +127,3 @@ message entropy_path_and_file
 message entropy_localfs
 {Enter the unmounted local device and directory on that device where
 the random data is located.}
-
