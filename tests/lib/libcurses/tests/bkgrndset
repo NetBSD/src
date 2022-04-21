@@ -7,4 +7,4 @@ call OK refresh
 compare bkgrndset1.chk
 call OK erase
 call OK refresh
-compare bgkrndset2.chk
+compare bkgrndset2.chk
