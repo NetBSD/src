@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.22 2022/01/29 16:01:16 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.23 2022/04/21 17:30:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -233,6 +233,10 @@ do_install(void)
 	if (md_post_extract(&install, false) != 0)
 		goto error;
 
+	root_pw_setup();
+#if CHECK_ENTROPY
+	do_add_entropy();
+#endif
 	do_configmenu(&install);
 
 	sanity_check();

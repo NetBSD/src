@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.31 2022/01/10 12:17:48 nia Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.32 2022/04/21 17:30:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -992,6 +992,12 @@ message rootpw
 {La contraseña de root del nuevo sistema instalado no ha sido asignada todavía,
 y por tanto está vacía.  ¿Quiere establecer ahora una contraseña de root para
 el sistema?}
+
+message force_rootpw
+{The root password of the newly installed system has not yet been
+initialized. 
+ 
+If you do not want to set a password, enter an empty line.}
 
 message rootsh
 {Ahora puede seleccionar que shell quiere usar para el usuario root.  Por

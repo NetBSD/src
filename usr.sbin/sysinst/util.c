@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.65 2022/04/14 15:48:31 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.66 2022/04/21 17:30:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1158,48 +1158,32 @@ entropy_add_manual(void)
 	uint8_t digest[SHA256_DIGEST_LENGTH];
 	static const char prompt[] = "> ";
 	size_t l;
-	int txt_y, maxy, init_y;
-	bool ok = false;
+	int txt_y;
 
 	msg_display(MSG_entropy_enter_manual1);
 	msg_printf("\n\n");
 	msg_display_add(MSG_entropy_enter_manual2);
-	msg_printf("\n\n   dd if=/dev/random bs=32 count=16 | openssl base64\n\n");
+	msg_printf("\n\n   dd if=/dev/random bs=32 count=1 | openssl base64\n\n");
 	msg_display_add(MSG_entropy_enter_manual3);
 	msg_printf("\n\n");
 	SHA256_Init(&ctx);
-	txt_y = getcury(mainwin);
-	maxy = getmaxy(mainwin);
-	init_y = txt_y;
+	txt_y = getcury(mainwin)+1;
 
 	echo();
-	do {
-		txt_y++;
-		if (txt_y >= maxy) {
-			txt_y = init_y;
-			wmove(mainwin, txt_y, 0);
-			wclrtobot(mainwin);
-		} else {
-			wmove(mainwin, txt_y, 0);
-		}
-		msg_fmt_table_add(prompt, prompt);
-		mvwgetnstr(mainwin, txt_y, 2, buf, sizeof buf);
-		l = strlen(buf);
-		if (l > 0)
-			SHA256_Update(&ctx, (const uint8_t*)buf, l);
-	} while(l > 0);
+	wmove(mainwin, txt_y, 0);
+	msg_fmt_table_add(prompt, prompt);
+	mvwgetnstr(mainwin, txt_y, 2, buf, sizeof buf);
+	l = strlen(buf);
+	if (l > 0)
+		SHA256_Update(&ctx, (const uint8_t*)buf, l);
 	noecho();
-	ok = ctx.bitcount >= 256;
 	SHA256_Final(digest, &ctx);
 
-	wmove(mainwin, init_y, 0);
+	wmove(mainwin, txt_y-1, 0);
 	wclrtobot(mainwin);
 	wrefresh(mainwin);
 
-	if (ok)
-		entropy_write_to_kernel(digest, sizeof digest);
-	else
-		hit_enter_to_continue(NULL, MSG_entropy_manual_not_enough);
+	entropy_write_to_kernel(digest, sizeof digest);
 }
 
 /*

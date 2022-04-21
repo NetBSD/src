@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.35 2022/01/10 12:17:48 nia Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.36 2022/04/21 17:30:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1033,6 +1033,13 @@ aufgetreten. Bitte starten Sie das System neu.}
 message rootpw
 {Das Rootpasswort für das neu installierte System wurde noch nicht gesetzt
 und ist somit leer. Möchten Sie jetzt ein Rootpasswort für das System setzen?}
+
+message force_rootpw
+{Das Rootpasswort für das neu installierte System wurde noch nicht gesetzt.
+Geben Sie es jetzt ein. 
+ 
+Falls Sie kein Rootpasswort setzen möchten, geben Sie ein leeres
+Passwort ein.}
 
 message rootsh
 {Sie können jetzt die Standardshell für Benutzer "root" auswählen.

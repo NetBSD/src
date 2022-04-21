@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.19 2022/01/29 16:01:16 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.20 2022/04/21 17:30:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -125,6 +125,10 @@ do_upgrade(void)
 	merge_X("/usr/X11R6");
 	merge_X("/usr/X11R7");
 
+#if CHECK_ENTROPY
+	do_add_entropy();
+#endif
+
 	sanity_check();
 
 free_install:
@@ -222,6 +226,10 @@ do_reinstall_sets()
 		goto free_install;
 	if (get_and_unpack_sets(0, NULL, MSG_unpackcomplete, MSG_abortunpack) != 0)
 		goto free_install;
+
+#if CHECK_ENTROPY
+	do_add_entropy();
+#endif
 
 	sanity_check();
 
