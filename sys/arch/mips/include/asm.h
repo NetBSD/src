@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.70 2022/04/09 14:09:32 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.71 2022/04/21 12:06:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -574,12 +574,21 @@ _C_LABEL(x):
 
 /* compiler define */
 #if defined(__OCTEON__)
-				/* early cnMIPS have erratum which means 2 */
-#define	LLSCSYNC	sync 4; sync 4
+/*
+ * See common/lib/libc/arch/mips/atomic/membar_ops.S for notes on
+ * Octeon memory ordering guarantees and barriers.
+ *
+ * cnMIPS also has a quirk where the store buffer can get clogged and
+ * we need to apply a plunger to it _after_ releasing a lock or else
+ * other CPUs may spin for hundreds of thousands of cycles before they
+ * see the lock is released.  So we also have the quirky SYNC_PLUNGER
+ * barrier as syncw.
+ */
+#define	LLSCSYNC	/* nothing */
 #define	BDSYNC		sync
-#define	BDSYNC_ACQ	sync
-#define	SYNC_ACQ	sync
-#define	SYNC_REL	sync
+#define	BDSYNC_ACQ	nop
+#define	SYNC_ACQ	/* nothing */
+#define	SYNC_REL	sync 4
 #define	BDSYNC_PLUNGER	sync 4
 #define	SYNC_PLUNGER	sync 4
 #elif __mips >= 3 || !defined(__mips_o32)
