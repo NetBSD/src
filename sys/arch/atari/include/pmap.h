@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2009/12/06 06:41:29 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42 2022/04/21 21:31:11 andvar Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -95,10 +95,10 @@ struct memseg {
 /*
  * Memory segment descriptors.
  *  - boot_segs
- *	describes the segments obtainted from the bootcode. 
+ *	describes the segments obtained from the bootcode. 
  *  - usable_segs
  *	describes the segments available after system requirements are
- *	substracted (reserved pages, etc...).
+ *	subtracted (reserved pages, etc...).
  */
 extern struct memseg	boot_segs[NMEM_SEGS];
 extern struct memseg	usable_segs[NMEM_SEGS];
