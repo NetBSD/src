@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.17 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.18 2022/04/21 12:05:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.17 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.18 2022/04/21 12:05:13 riastradh Exp $");
 
 /*
  * Futexes
@@ -63,13 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.17 2022/04/09 23:38:33 riastradh Exp
  *				continue;
  *			}
  *		} while (atomic_cas_uint(&lock, v, v & ~1) != v);
- *		membar_enter();
+ *		membar_acquire();
  *
  *		...
  *
  *		// Release the lock.  Optimistically assume there are
  *		// no waiters first until demonstrated otherwise.
- *		membar_exit();
+ *		membar_release();
  *		if (atomic_cas_uint(&lock, 1, 0) != 1) {
  *			// There may be waiters.
  *			v = atomic_swap_uint(&lock, 0);
