@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.46 2021/11/16 22:12:44 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.47 2022/04/21 21:09:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.46 2021/11/16 22:12:44 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.47 2022/04/21 21:09:13 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1084,15 +1084,16 @@ chkrvu(const hte_t *hte, sym_t *def)
 
 	if (def->s_function_has_return_value) {
 		/*
-		 * XXX as soon as we are able to disable single warnings
+		 * XXX as soon as we are able to disable single warnings,
 		 * the following dependencies from hflag should be removed.
-		 * but for now I don't want to be bothered by this warnings
+		 * But for now I don't want to be bothered by these warnings
 		 * which are almost always useless.
 		 */
 		if (!hflag)
 			return;
 		if (hflag && bsearch(hte->h_name, ignorelist,
-		    __arraycount(ignorelist), sizeof(ignorelist[0]),
+		    sizeof(ignorelist) / sizeof(ignorelist[0]),
+		    sizeof(ignorelist[0]),
 		    (int (*)(const void *, const void *))strcmp) != NULL)
 			return;
 
