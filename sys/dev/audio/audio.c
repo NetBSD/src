@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.127 2022/04/20 07:11:13 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.128 2022/04/21 01:15:24 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.127 2022/04/20 07:11:13 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.128 2022/04/21 01:15:24 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -733,6 +733,7 @@ audio_track_is_playback(const audio_track_t *track)
 	return ((track->mode & AUMODE_PLAY) != 0);
 }
 
+#if 0
 /* Return true if this track is a recording track. */
 static __inline bool
 audio_track_is_record(const audio_track_t *track)
@@ -740,6 +741,7 @@ audio_track_is_record(const audio_track_t *track)
 
 	return ((track->mode & AUMODE_RECORD) != 0);
 }
+#endif
 
 #if 0 /* XXX Not used yet */
 /*
