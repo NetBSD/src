@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.23 2021/12/19 12:28:44 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.24 2022/04/21 21:22:25 andvar Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.23 2021/12/19 12:28:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.24 2022/04/21 21:22:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -217,7 +217,7 @@ sunxi_drm_init(device_t dev)
 		(*task->sdt_fn)(task);
 	}
 
-out:	/* Cause any subesquent tasks to be processed by the workqueue.  */
+out:	/* Cause any subsequent tasks to be processed by the workqueue.  */
 	atomic_store_relaxed(&sc->sc_task_thread, NULL);
 }
 
