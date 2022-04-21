@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.8 2022/04/20 22:50:56 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.9 2022/04/21 19:48:18 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -6,67 +6,107 @@
 /*
  * NetBSD's default lint flags only include a single -a, which only flags
  * narrowing conversions from long.  To get warnings for all narrowing
- * conversions, -aa needs to be given more than once.
+ * conversions, -a needs to be given more than once.
  *
  * https://gnats.netbsd.org/14531
  */
 
 /* lint1-extra-flags: -aa */
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
+unsigned char u8;
+unsigned short u16;
+unsigned int u32;
+unsigned long long u64;
 
-typedef signed char i8;
-typedef signed short i16;
-typedef signed int i32;
-typedef signed long long i64;
+signed char s8;
+signed short s16;
+signed int s32;
+signed long long s64;
 
 void
-convert_unsigned(u8 v8, u16 v16, u32 v32, u64 v64)
+unsigned_to_unsigned(void)
 {
-	v8 = v16;		/* expect: 132 */
-	v8 = v32;		/* expect: 132 */
-	v8 = v64;		/* expect: 132 */
+	u8 = u16;		/* expect: 132 */
+	u8 = u32;		/* expect: 132 */
+	u8 = u64;		/* expect: 132 */
 
-	v16 = v8;
-	v16 = v32;		/* expect: 132 */
-	v16 = v64;		/* expect: 132 */
+	u16 = u8;
+	u16 = u32;		/* expect: 132 */
+	u16 = u64;		/* expect: 132 */
 
-	v32 = v8;
-	v32 = v16;
-	v32 = v64;		/* expect: 132 */
+	u32 = u8;
+	u32 = u16;
+	u32 = u64;		/* expect: 132 */
 
-	v64 = v8;
-	v64 = v16;
-	v64 = v32;
+	u64 = u8;
+	u64 = u16;
+	u64 = u32;
 }
 
 void
-convert_signed(i8 v8, i16 v16, i32 v32, i64 v64)
+unsigned_to_signed(void)
 {
-	v8 = v16;		/* expect: 132 */
-	v8 = v32;		/* expect: 132 */
-	v8 = v64;		/* expect: 132 */
+	s8 = u16;		/* expect: 132 */
+	s8 = u32;		/* expect: 132 */
+	s8 = u64;		/* expect: 132 */
 
-	v16 = v8;
-	v16 = v32;		/* expect: 132 */
-	v16 = v64;		/* expect: 132 */
+	s16 = u8;
+	s16 = u32;		/* expect: 132 */
+	s16 = u64;		/* expect: 132 */
 
-	v32 = v8;
-	v32 = v16;
-	v32 = v64;		/* expect: 132 */
+	s32 = u8;
+	s32 = u16;
+	s32 = u64;		/* expect: 132 */
 
-	v64 = v8;
-	v64 = v16;
-	v64 = v32;
+	s64 = u8;
+	s64 = u16;
+	s64 = u32;
+}
+
+void
+signed_to_unsigned(void)
+{
+	u8 = s16;		/* expect: 132 */
+	u8 = s32;		/* expect: 132 */
+	u8 = s64;		/* expect: 132 */
+
+	u16 = s8;
+	u16 = s32;		/* expect: 132 */
+	u16 = s64;		/* expect: 132 */
+
+	u32 = s8;
+	u32 = s16;
+	u32 = s64;		/* expect: 132 */
+
+	u64 = s8;
+	u64 = s16;
+	u64 = s32;
+}
+
+void
+signed_to_signed(void)
+{
+	s8 = s16;		/* expect: 132 */
+	s8 = s32;		/* expect: 132 */
+	s8 = s64;		/* expect: 132 */
+
+	s16 = s8;
+	s16 = s32;		/* expect: 132 */
+	s16 = s64;		/* expect: 132 */
+
+	s32 = s8;
+	s32 = s16;
+	s32 = s64;		/* expect: 132 */
+
+	s64 = s8;
+	s64 = s16;
+	s64 = s32;
 }
 
 /*
- * Before tree.c 1.268 from 2021-04-06, lint wrongly warned that conversion to
- * _Bool might lose accuracy.  C99 6.3.1.2 defines a special conversion rule
- * from scalar to _Bool though.
+ * Before tree.c 1.268 from 2021-04-06, lint wrongly warned that conversion
+ * to _Bool might lose accuracy.  C99 6.3.1.2 defines a special conversion
+ * rule from scalar to _Bool though by comparing the value to 0.
  */
 _Bool
 to_bool(long a, long b)
