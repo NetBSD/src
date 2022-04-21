@@ -2410,6 +2410,7 @@ atf_init_test_cases()
 	# curses background attribute manipulation routines
 	atf_add_test_case background
 	atf_add_test_case bkgdset
+	atf_add_test_case bkgrndset
 	atf_add_test_case getbkgd
 
 	# curses border drawing routines
