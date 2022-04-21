@@ -1,4 +1,4 @@
-/*	$NetBSD: gnuc.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: gnuc.h,v 1.5 2022/04/21 19:14:46 rillig Exp $	*/
 
 /* Id: gnuc.h,v 1.4 2004/11/18 15:14:44 ludvigm Exp */
 
@@ -13,7 +13,7 @@
 #endif
 
 /* inline foo */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(lint)
 #define inline __inline
 #else
 #define inline
