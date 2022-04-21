@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.55 2021/11/07 01:51:56 thorpej Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.56 2022/04/21 21:31:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.55 2021/11/07 01:51:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.56 2022/04/21 21:31:11 andvar Exp $");
 
 #include "opt_dtrace.h"
 
@@ -838,7 +838,7 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 		/* Compute how much time has passed since start. */
 		timespecsub(&tsnow, &tsstart, &tsnow);
 
-		/* Substract passed time from timeout. */
+		/* Subtract passed time from timeout. */
 		timespecsub(&ts, &tsnow, &ts);
 
 		if (ts.tv_sec < 0)
