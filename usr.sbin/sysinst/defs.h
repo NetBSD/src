@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.80 2022/02/10 16:11:41 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.81 2022/04/21 17:30:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -108,6 +108,7 @@ const char *getfslabelname(uint, uint);
 #define RUN_PROGRESS	0x0080		/* Output is just progess test */
 #define RUN_NO_CLEAR	0x0100		/* Leave program output after error */
 #define RUN_XFER_DIR	0x0200		/* cd to xfer_dir in child */
+#define	RUN_STDSCR	0x0400		/* run program in standard screen */
 
 /* for bsddisklabel.c */
 enum layout_type {
@@ -1004,6 +1005,7 @@ void	save_kb_encoding(void);
 
 /* from configmenu.c */
 void	do_configmenu(struct install_partition_desc*);
+void	root_pw_setup(void);
 
 /* from checkrc.c */
 int	check_rcvar(const char *);

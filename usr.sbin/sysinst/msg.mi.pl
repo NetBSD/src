@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.37 2022/01/10 12:17:48 nia Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.38 2022/04/21 17:30:15 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -962,6 +962,12 @@ do instalacji. Zrestartuj komputer i sprobuj jeszcze raz.}
 message rootpw
 {Haslo root'a w nowo zainstalowanym systemie nie zostalo jeszcze ustawione,
 i dlatego jest puste. Czy chcesz teraz ustawic haslo dla root'a?}
+
+message force_rootpw
+{The root password of the newly installed system has not yet been
+initialized. 
+ 
+If you do not want to set a password, enter an empty line.}
 
 message rootsh
 {Mozesz teraz wybrac, ktorej powloki ma uzywac uzytkownik root. Domyslnie
