@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.c,v 1.10 2021/12/19 12:44:57 riastradh Exp $ */
+/* $NetBSD: ti_lcdc.c,v 1.11 2022/04/21 21:22:25 andvar Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.10 2021/12/19 12:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.11 2022/04/21 21:22:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -472,7 +472,7 @@ tilcdc_attach(device_t parent, device_t self, void *aux)
 		(*task->tdt_fn)(task);
 	}
 
-out:	/* Cause any subesquent tasks to be processed by the workqueue.  */
+out:	/* Cause any subsequent tasks to be processed by the workqueue.  */
 	atomic_store_relaxed(&sc->sc_task_thread, NULL);
 }
 
