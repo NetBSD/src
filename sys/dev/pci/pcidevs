@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1452 2022/03/24 08:46:49 yamaguchi Exp $
+$NetBSD: pcidevs,v 1.1453 2022/04/22 07:34:55 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2568,6 +2568,9 @@ product BROADCOM BCM4350	0x43a3	BCM4350 802.11ac Wireless Network Adapter
 product BROADCOM BCM43602	0x43ba	BCM43602 802.11ac Wireless LAN SoC
 product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
 product BROADCOM BCM4401_B0	0x4401	BCM4401-B0 10/100 Ethernet
+product BROADCOM BCM4371	0x440d	BCM4371
+product BROADCOM BCM4378	0x4425	BCM4378
+product BROADCOM BCM4387	0x4433	BCM4387
 product BROADCOM BCM4727	0x4727	BCM4727 802.11b/g/n
 product BROADCOM 5801		0x5801	5801 Security Processor
 product BROADCOM 5802		0x5802	5802 Security Processor
