@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2022/04/09 09:59:16 riastradh Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2022/04/22 19:21:08 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.6 2022/04/09 09:59:16 riastradh Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2022/04/22 19:21:08 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3545,6 +3545,7 @@ udf_process_node_pass1(struct udf_fsck_node *node, union dscrptr *dscr)
 			udf_node_path(node));
 		return EINVAL;
 	}
+	(void) fpos;
 	return 0;
 }
 
@@ -3646,6 +3647,7 @@ udf_node_pass3_repairdir(struct udf_fsck_node *node, union dscrptr *dscr)
 			&fid_context);
 	if (error)
 		pwarn("Failed to write out directory!\n");
+	(void) fpos;
 }
 
 
