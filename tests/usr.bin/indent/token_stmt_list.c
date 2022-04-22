@@ -1,5 +1,4 @@
-/* $NetBSD: token_stmt_list.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_stmt_list.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for lists of statements.

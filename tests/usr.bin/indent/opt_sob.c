@@ -1,5 +1,4 @@
-/* $NetBSD: opt_sob.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_sob.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-sob' and '-nsob'.

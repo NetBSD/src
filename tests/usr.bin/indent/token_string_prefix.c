@@ -1,5 +1,4 @@
-/* $NetBSD: token_string_prefix.c,v 1.2 2021/10/22 19:46:41 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_string_prefix.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for strings of wide characters, which are prefixed with 'L'.

@@ -1,5 +1,4 @@
-/* $NetBSD: token_lparen.c,v 1.9 2021/10/29 17:50:37 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_lparen.c,v 1.10 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the tokens '(', which has several possible meanings, and for '['.

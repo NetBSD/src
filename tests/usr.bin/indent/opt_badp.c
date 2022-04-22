@@ -1,5 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.6 2021/11/20 09:59:53 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_badp.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.

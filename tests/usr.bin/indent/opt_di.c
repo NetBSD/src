@@ -1,5 +1,4 @@
-/* $NetBSD: opt_di.c,v 1.6 2021/11/20 16:54:17 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_di.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Test the option '-di', which specifies the indentation of the first

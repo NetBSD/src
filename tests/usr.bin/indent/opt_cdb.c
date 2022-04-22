@@ -1,5 +1,4 @@
-/* $NetBSD: opt_cdb.c,v 1.6 2021/11/20 10:24:30 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_cdb.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-cdb' and '-ncdb'.

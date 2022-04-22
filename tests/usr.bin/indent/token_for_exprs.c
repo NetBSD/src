@@ -1,5 +1,4 @@
-/* $NetBSD: token_for_exprs.c,v 1.2 2021/10/31 23:33:12 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_for_exprs.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Test for 'for' loops.

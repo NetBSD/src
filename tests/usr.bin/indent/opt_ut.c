@@ -1,5 +1,4 @@
-/* $NetBSD: opt_ut.c,v 1.3 2021/11/20 16:54:17 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_ut.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-ut' and '-nut'.

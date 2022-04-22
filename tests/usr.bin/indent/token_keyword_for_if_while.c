@@ -1,5 +1,4 @@
-/* $NetBSD: token_keyword_for_if_while.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_keyword_for_if_while.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the keywords 'for', 'if' and 'while'.  These keywords have in

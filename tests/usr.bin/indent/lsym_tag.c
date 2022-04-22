@@ -1,5 +1,4 @@
-/* $NetBSD: lsym_tag.c,v 1.2 2022/02/12 19:46:56 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lsym_tag.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_tag, which represents one of the keywords

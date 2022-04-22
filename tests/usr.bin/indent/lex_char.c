@@ -1,5 +1,4 @@
-/* $NetBSD: lex_char.c,v 1.2 2021/11/19 22:24:29 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lex_char.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Test lexing of character constants.

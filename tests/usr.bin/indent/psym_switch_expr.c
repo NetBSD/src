@@ -1,5 +1,4 @@
-/* $NetBSD: psym_switch_expr.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: psym_switch_expr.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_switch_expr, which represents the keyword

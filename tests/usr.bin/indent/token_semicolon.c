@@ -1,5 +1,4 @@
-/* $NetBSD: token_semicolon.c,v 1.2 2021/10/24 20:43:28 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_semicolon.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token ';'.

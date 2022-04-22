@@ -1,5 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.32 2021/11/27 20:33:39 rillig Exp $	*/
-/* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
+/*	$NetBSD: fmt_decl.c,v 1.33 2022/04/22 21:21:20 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local

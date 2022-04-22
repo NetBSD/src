@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.19 2021/11/25 21:45:28 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.20 2022/04/22 21:21:20 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,8 +24,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
-# $FreeBSD$
 
 # Tests for indent that do not follow the input-profile-output scheme that is
 # used in t_indent.

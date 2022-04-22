@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.48 2021/11/07 18:26:17 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.49 2022/04/22 21:21:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$FreeBSD$");
+__RCSID("$NetBSD: parse.c,v 1.49 2022/04/22 21:21:20 rillig Exp $");
 #else
 __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pstef $");
 #endif

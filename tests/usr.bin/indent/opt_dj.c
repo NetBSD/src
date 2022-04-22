@@ -1,5 +1,4 @@
-/* $NetBSD: opt_dj.c,v 1.5 2021/11/20 16:54:17 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_dj.c,v 1.6 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-dj' and '-ndj'.

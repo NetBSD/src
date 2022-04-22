@@ -1,5 +1,4 @@
-/* $NetBSD: token_keyword_struct_union_enum.c,v 1.3 2021/11/07 15:44:28 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_keyword_struct_union_enum.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the keywords 'struct', 'union' and 'enum'.
@@ -24,7 +23,6 @@ union variant {
 
 
 /* See FreeBSD r303485. */
-/* $FreeBSD: head/usr.bin/indent/tests/struct.0 334564 2018-06-03 16:21:15Z pstef $ */
 #indent input
 int f(struct x *a);
 

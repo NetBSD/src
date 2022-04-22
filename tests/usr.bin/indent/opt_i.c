@@ -1,5 +1,4 @@
-/* $NetBSD: opt_i.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_i.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the option '-i', which specifies the indentation for a single

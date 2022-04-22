@@ -1,5 +1,4 @@
-/* $NetBSD: lsym_lbrace.c,v 1.3 2022/02/13 11:07:48 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lsym_lbrace.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lbrace, which represents a '{' in these contexts:

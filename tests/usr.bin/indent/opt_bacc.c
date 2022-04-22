@@ -1,5 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.6 2021/11/19 22:24:29 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_bacc.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-bacc' and '-nbacc' ("blank line around conditional

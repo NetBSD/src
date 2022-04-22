@@ -1,5 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.9 2021/11/20 16:54:17 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_binary_op.c,v 1.10 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for binary operators like '+', '&&' and several others.
