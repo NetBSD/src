@@ -1,5 +1,4 @@
-/* $NetBSD: lsym_colon.c,v 1.3 2021/11/28 16:05:59 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lsym_colon.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_colon, which represents a ':' in these contexts:

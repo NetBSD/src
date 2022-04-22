@@ -1,5 +1,4 @@
-/* $NetBSD: lsym_case_label.c,v 1.4 2021/11/28 16:05:59 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lsym_case_label.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_case_label, which represents either the keyword

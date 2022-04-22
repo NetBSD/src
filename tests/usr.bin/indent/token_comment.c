@@ -1,5 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.27 2021/11/27 18:37:17 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_comment.c,v 1.28 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for formatting comments.  C99 defines block comments and end-of-line

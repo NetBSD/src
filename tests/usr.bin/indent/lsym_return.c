@@ -1,5 +1,4 @@
-/* $NetBSD: lsym_return.c,v 1.2 2021/11/28 16:31:39 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lsym_return.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_return, which represents the keyword 'return' that

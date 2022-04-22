@@ -1,5 +1,4 @@
-/* $NetBSD: opt_P.c,v 1.3 2021/11/20 09:59:53 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_P.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the option '-P', which specifies a profile file to be used

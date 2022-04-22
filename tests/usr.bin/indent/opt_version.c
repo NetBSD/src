@@ -1,5 +1,4 @@
-/* $NetBSD: opt_version.c,v 1.2 2021/10/28 20:31:17 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_version.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the option '--version', which outputs the program version and
