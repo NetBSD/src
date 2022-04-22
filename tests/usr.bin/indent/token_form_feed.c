@@ -1,5 +1,4 @@
-/* $NetBSD: token_form_feed.c,v 1.3 2021/11/07 18:49:02 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_form_feed.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for form feeds, which is a control character (C99 5.2.1p3).

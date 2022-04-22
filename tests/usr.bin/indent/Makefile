@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2021/11/28 16:20:13 rillig Exp $
+#	$NetBSD: Makefile,v 1.40 2022/04/22 21:21:20 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -161,7 +161,6 @@ add-test: .PHONY
 	echo "=> Adding test $$test"; \
 	printf '%s\n' \
 		'/* $$''NetBSD$$ */' \
-		'/* $$''FreeBSD$$ */' \
 		'' \
 		'/*' \
 		' * TODO: Explain the purpose of the test.' \

@@ -1,5 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.3 2022/02/13 12:04:37 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['

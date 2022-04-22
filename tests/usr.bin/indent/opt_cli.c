@@ -1,5 +1,4 @@
-/* $NetBSD: opt_cli.c,v 1.3 2021/11/28 16:05:59 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_cli.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the option '-cli' ("case label indentation"), which sets the

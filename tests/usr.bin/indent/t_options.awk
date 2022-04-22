@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.7 2021/11/20 13:14:34 rillig Exp $
+# $NetBSD: t_options.awk,v 1.8 2022/04/22 21:21:20 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -23,8 +23,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-#
-# $FreeBSD$
 
 # Test driver for indent that focuses on comparing the effects of the various
 # command line options.

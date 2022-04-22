@@ -1,5 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.6 2021/11/25 17:10:53 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: indent_off_on.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the comments 'INDENT OFF' and 'INDENT ON', which temporarily

@@ -1,5 +1,4 @@
-/* $NetBSD: lsym_word.c,v 1.3 2021/11/20 09:43:03 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lsym_word.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_word, which represents a constant, a string

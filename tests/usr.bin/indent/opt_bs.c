@@ -1,5 +1,4 @@
-/* $NetBSD: opt_bs.c,v 1.7 2021/11/20 11:13:18 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_bs.c,v 1.8 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-bs' and '-nbs' ("blank after sizeof").

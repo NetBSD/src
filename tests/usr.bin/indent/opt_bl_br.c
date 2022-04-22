@@ -1,5 +1,4 @@
-/* $NetBSD: opt_bl_br.c,v 1.4 2021/11/20 09:59:53 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_bl_br.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
 
 #indent input
 void

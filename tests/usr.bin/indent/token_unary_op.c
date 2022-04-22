@@ -1,5 +1,4 @@
-/* $NetBSD: token_unary_op.c,v 1.2 2021/11/04 17:12:12 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: token_unary_op.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for unary operators, such as '+', '-', '*', '&'.

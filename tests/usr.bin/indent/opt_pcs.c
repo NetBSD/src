@@ -1,5 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.11 2021/11/25 16:56:02 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_pcs.c,v 1.12 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-pcs' and '-npcs'.

@@ -1,5 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.6 2021/11/25 20:44:10 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_fc1.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the options '-fc1' and '-nfc1'.

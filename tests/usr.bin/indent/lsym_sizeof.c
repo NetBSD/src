@@ -1,5 +1,4 @@
-/* $NetBSD: lsym_sizeof.c,v 1.3 2021/11/25 18:36:30 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: lsym_sizeof.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_sizeof, which represents the keyword 'sizeof' for

@@ -1,5 +1,4 @@
-/* $NetBSD: ps_ind_level.c,v 1.4 2021/11/25 19:56:03 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: ps_ind_level.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * The indentation of the very first line of a file determines the

@@ -1,5 +1,4 @@
-/* $NetBSD: opt_ts.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: opt_ts.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
 
 /*
  * Tests for the option '-ts', which specifies the width of a single
