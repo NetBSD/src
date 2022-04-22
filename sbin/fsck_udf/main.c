@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2022/04/22 20:56:46 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2022/04/22 21:00:28 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.8 2022/04/22 20:56:46 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2022/04/22 21:00:28 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2148,6 +2148,8 @@ udf_search_vat(union udf_pmap *mapping, int log_part)
 		} else {
 			late_vat_loc = early_vat_loc - 1;
 		}
+		if (early_vat_loc == first_possible_vat_location)
+			break;
 		early_vat_loc = first_possible_vat_location;
 		if (late_vat_loc > VAT_BLK)
 			early_vat_loc = MAX(early_vat_loc, late_vat_loc - VAT_BLK);
