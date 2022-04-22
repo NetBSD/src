@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.2 2022/04/09 09:58:11 riastradh Exp $ */
+/* $NetBSD: udf_core.c,v 1.3 2022/04/22 20:56:46 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.2 2022/04/09 09:58:11 riastradh Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.3 2022/04/22 20:56:46 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2024,7 +2024,7 @@ udf_fidsize(struct fileid_desc *fid)
 	if (udf_rw16(fid->tag.id) != TAGID_FID)
 		errx(1, "internal error, bad tag in %s", __func__);
 
-	size = UDF_FID_SIZE + udf_rw16(fid->l_fi) + udf_rw16(fid->l_iu);
+	size = UDF_FID_SIZE + fid->l_fi + udf_rw16(fid->l_iu);
 	size = (size + 3) & ~3;
 
 	return size;
