@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2022/04/22 21:00:28 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2022/04/22 21:07:56 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.9 2022/04/22 21:00:28 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2022/04/22 21:07:56 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1873,6 +1873,7 @@ udf_extract_vat(union dscrptr *dscr, uint8_t **vat_contents)
 		error = udf_extattr_search_intern(dscr, 2048, extstr, &offset, &a_l);
 		if (error) {
 			/* VAT LVExtension extended attribute missing */
+			error = 0;
 			vat_writeout = 1;
 			goto ok;
 		}
@@ -1881,6 +1882,7 @@ udf_extract_vat(union dscrptr *dscr, uint8_t **vat_contents)
 		error = udf_impl_extattr_check(implext);
 		if (error) {
 			/* VAT LVExtension checksum failed */
+			error = 0;
 			vat_writeout = 1;
 			goto ok;
 		}
@@ -1888,6 +1890,7 @@ udf_extract_vat(union dscrptr *dscr, uint8_t **vat_contents)
 		/* paranoia */
 		if (a_l != sizeof(*implext) -2 + udf_rw32(implext->iu_l) + sizeof(lvext)) {
 			/* VAT LVExtension size doesn't compute */
+			error = 0;
 			vat_writeout = 1;
 			goto ok;
 		}
