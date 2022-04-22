@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.42 2021/08/08 18:43:21 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.43 2022/04/22 12:41:06 skrll Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -9,7 +9,7 @@ file	arch/arm/broadcom/bcm283x_platform.c
 
 define bcmmboxbus { }
 
-# Interrupt Controller (BCM2835_ARMICU_BASE) #, pic_splfuncs
+# Interrupt Controller (BCM2835_ARMICU_BASE)
 device	bcmicu: pic, pic_splfuncs
 attach	bcmicu at fdt with bcmicu
 file	arch/arm/broadcom/bcm2835_intr.c	bcmicu
