@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2022/04/22 19:21:08 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2022/04/22 20:56:46 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.7 2022/04/22 19:21:08 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2022/04/22 20:56:46 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -362,13 +362,13 @@ udf_wipe_and_reallocate(union dscrptr *dscrptr, int vpart_num, uint32_t *l_adp)
 	/* create one short_ad or one long_ad */
 	if (ad_type == UDF_ICB_SHORT_ALLOC) {
 		short_adp = (struct short_ad *) bpos;
-		short_adp->len    = udf_rw64(inf_len);
+		short_adp->len    = udf_rw32(inf_len);
 		short_adp->lb_num = allocated.loc.lb_num;
 		l_ad = sizeof(struct short_ad);
 	} else {
 		long_adp  = (struct long_ad  *) bpos;
 		memcpy(long_adp, &allocated, sizeof(struct long_ad));
-		long_adp->len = udf_rw64(inf_len);
+		long_adp->len = udf_rw32(inf_len);
 		l_ad = sizeof(struct long_ad);
 	}
 	if (id == TAGID_FENTRY)
@@ -2600,7 +2600,7 @@ udf_process_vds(void) {
 			 * data file length
 			 */
 			context.part_size[log_part] =
-				udf_rw32(context.meta_file->inf_len) / context.sector_size;
+				udf_rw64(context.meta_file->inf_len) / context.sector_size;
 			break;
 		default:
 			break;
