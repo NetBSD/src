@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.3 2022/04/22 20:56:46 reinoud Exp $ */
+/* $NetBSD: udf_core.c,v 1.4 2022/04/22 21:22:14 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.3 2022/04/22 20:56:46 reinoud Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.4 2022/04/22 21:22:14 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2269,11 +2269,11 @@ udf_extattr_search_intern(union dscrptr *dscr,
 		if ((a_l == 0) || (a_l > l_ea))
 			return EINVAL;
 
-		if (attrhdr->type != sattr)
+		if (udf_rw32(attrhdr->type) != sattr)
 			goto next_attribute;
 
 		/* we might have found it! */
-		if (attrhdr->type < 2048) {	/* Ecma-167 attribute */
+		if (udf_rw32(attrhdr->type) < 2048) {	/* Ecma-167 attribute */
 			*offsetp = offset;
 			*lengthp = a_l;
 			return 0;		/* success */
