@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.132 2022/04/23 11:30:57 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.133 2022/04/23 11:44:01 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.132 2022/04/23 11:30:57 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.133 2022/04/23 11:44:01 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3160,7 +3160,6 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 			audio_exlock_exit(sc);
 			break;
 		}
-		/* XXX TODO: update last_ai if /dev/sound ? */
 		if (ISDEVSOUND(dev))
 			error = audiogetinfo(sc, &sc->sc_ai, 0, file);
 		audio_exlock_exit(sc);
@@ -4514,7 +4513,7 @@ audio_track_init_freq(audio_track_t *track, audio_ring_t **last_dstp)
 
 		arg = &track->freq.arg;
 		arg->srcfmt = &srcbuf->fmt;
-		arg->dstfmt = dstfmt;/*&last_dst->fmt;*/
+		arg->dstfmt = dstfmt;
 		arg->context = track;
 
 		*last_dstp = srcbuf;
@@ -4780,7 +4779,7 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 
 	/*
 	 * On the recording track, expand the input stage buffer, which is
-	 * the closest buffer to rmixer, to NBLKOUT blocks.
+	 * the closest buffer to rmixer, to NBLKIN blocks.
 	 * Note that input buffer may point to outbuf.
 	 */
 	if (!is_playback) {
