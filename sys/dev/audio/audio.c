@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.131 2022/04/23 07:55:07 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.132 2022/04/23 11:30:57 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.131 2022/04/23 07:55:07 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.132 2022/04/23 11:30:57 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3689,7 +3689,8 @@ audio_realloc(void *memblock, size_t bytes)
 {
 
 	KASSERT(bytes != 0);
-	audio_free(memblock);
+	if (memblock)
+		kern_free(memblock);
 	return kern_malloc(bytes, M_WAITOK);
 }
 
@@ -4776,11 +4777,6 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 		track->outbuf.capacity *= NBLKOUT;
 	len = auring_bytelen(&track->outbuf);
 	track->outbuf.mem = audio_realloc(track->outbuf.mem, len);
-	if (track->outbuf.mem == NULL) {
-		device_printf(sc->sc_dev, "malloc outbuf(%d) failed\n", len);
-		error = ENOMEM;
-		goto error;
-	}
 
 	/*
 	 * On the recording track, expand the input stage buffer, which is
@@ -5387,12 +5383,6 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 		mixer->codecbuf.capacity = mixer->frames_per_block;
 		len = auring_bytelen(&mixer->codecbuf);
 		mixer->codecbuf.mem = audio_realloc(mixer->codecbuf.mem, len);
-		if (mixer->codecbuf.mem == NULL) {
-			device_printf(sc->sc_dev,
-			    "malloc codecbuf(%d) failed\n", len);
-			error = ENOMEM;
-			goto abort;
-		}
 	}
 
 	/* Succeeded so display it. */
