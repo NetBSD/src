@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.11 2022/04/23 09:35:26 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.12 2022/04/23 17:25:58 rillig Exp $ */
 
 /*
  * Tests for binary operators like '+', '&&' and several others.
@@ -15,14 +15,9 @@
 void
 punctuators(void)
 {
-	int brackets = array[subscript];
-	int parentheses = function(argument);
 	int braces = { initializer };
 	int period = structure.member;
 	int arrow = structure->member;
-
-	number = function(argument1, argument2);
-	number = function(argument), number;
 
 	/* digraphs */
 	number = array<:subscript:>;
@@ -34,15 +29,10 @@ punctuators(void)
 void
 punctuators(void)
 {
-	int brackets = array[subscript];
-	int parentheses = function(argument);
 /* $ XXX: The spaces around the initializer are gone. */
 	int braces = {initializer};
 	int period = structure.member;
 	int arrow = structure->member;
-
-	number = function(argument1, argument2);
-	number = function(argument), number;
 
 	/* digraphs */
 /* $ XXX: indent is confused by the digraphs for '[' and ']'. */
@@ -83,9 +73,9 @@ long_run_of_operators(void)
 
 
 /*
- * For '+' and '-', this does not work since the lexer has to
- * distinguish between '++' and '+' early.  The following sequence is
- * thus tokenized as:
+ * Long chains of '+' and '-' must be split into several operators as the
+ * lexer has to distinguish between '++' and '+' early.  The following
+ * sequence is thus tokenized as:
  *
  *	word		"a"
  *	postfix_op	"++"
