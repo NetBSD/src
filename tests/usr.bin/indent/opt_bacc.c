@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.8 2022/04/23 06:43:23 rillig Exp $ */
 
 /*
  * Tests for the options '-bacc' and '-nbacc' ("blank line around conditional
@@ -23,7 +23,7 @@ int		c;
 
 /*
  * XXX: As of 2021-11-19, the option -bacc has no effect on declarations since
- * process_type resets blank_line_before unconditionally.
+ * process_type resets out.blank_line_before unconditionally.
  */
 #indent run -bacc
 int		a;

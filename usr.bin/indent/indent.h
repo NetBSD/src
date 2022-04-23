@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.111 2022/02/13 12:43:26 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.112 2022/04/23 06:43:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -143,6 +143,13 @@ struct buffer {
     char *l;			/* end of the allocated memory */
 };
 
+extern struct output_control {
+    int blank_lines_to_output;
+    bool blank_line_before;
+    bool blank_line_after;
+    bool suppress_blanklines;
+} out;
+
 extern FILE *input;
 extern FILE *output;
 
@@ -234,9 +241,6 @@ extern struct options {
 } opt;
 
 extern bool found_err;
-extern int blank_lines_to_output;
-extern bool blank_line_before;
-extern bool blank_line_after;
 extern bool break_comma;	/* when true and not in parentheses, break
 				 * after a comma */
 extern float case_ind;		/* indentation level to be used for a "case
