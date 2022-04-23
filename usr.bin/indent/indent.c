@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.242 2022/02/13 12:43:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.243 2022/04/23 06:32:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,16 +43,12 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.242 2022/02/13 12:43:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.243 2022/04/23 06:32:20 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
 
 #include <sys/param.h>
-#if HAVE_CAPSICUM
-#include <sys/capsicum.h>
-#include <capsicum_helpers.h>
-#endif
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
@@ -115,23 +111,6 @@ static const char *out_name = "Standard Output";
 static const char *backup_suffix = ".BAK";
 static char bakfile[MAXPATHLEN] = "";
 
-#if HAVE_CAPSICUM
-static void
-init_capsicum(void)
-{
-    cap_rights_t rights;
-
-    /* Restrict input/output descriptors and enter Capsicum sandbox. */
-    cap_rights_init(&rights, CAP_FSTAT, CAP_WRITE);
-    if (caph_rights_limit(fileno(output), &rights) < 0)
-	err(EXIT_FAILURE, "unable to limit rights for %s", out_name);
-    cap_rights_init(&rights, CAP_FSTAT, CAP_READ);
-    if (caph_rights_limit(fileno(input), &rights) < 0)
-	err(EXIT_FAILURE, "unable to limit rights for %s", in_name);
-    if (caph_enter() < 0)
-	err(EXIT_FAILURE, "unable to enter capability mode");
-}
-#endif
 
 static void
 buf_init(struct buffer *buf)
