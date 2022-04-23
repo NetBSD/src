@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.130 2022/04/23 07:43:16 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.131 2022/04/23 07:55:07 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.130 2022/04/23 07:43:16 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.131 2022/04/23 07:55:07 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2825,7 +2825,6 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 			goto abort;
 		}
 		auring_take(usrbuf, bytes);
-		track->useriobytes += bytes;
 		TRACET(3, track, "uiomove(len=%d) usrbuf=%d/%d/C%d",
 		    bytes,
 		    usrbuf->head, usrbuf->used, usrbuf->capacity);
@@ -2953,7 +2952,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 				goto abort;
 			}
 			auring_push(usrbuf, len);
-			track->useriobytes += len;
 			TRACET(3, track, "uiomove(len=%d) usrbuf=%d/%d/C%d",
 			    len,
 			    usrbuf->head, usrbuf->used, usrbuf->capacity);
@@ -4955,9 +4953,6 @@ audio_track_play(audio_track_t *track)
 	    "count=%d fpb=%d",
 	    count, frame_per_block(track->mixer, &track->outbuf.fmt));
 
-	/* XXX TODO: is this necessary for now? */
-	int track_count_0 = track->outbuf.used;
-
 	usrbuf = &track->usrbuf;
 	input = track->input;
 
@@ -5066,12 +5061,6 @@ audio_track_play(audio_track_t *track)
 			KASSERT(track->freq.srcbuf.used == 0);
 			track->freq.srcbuf.head = 0;
 		}
-	}
-
-	if (track->input == &track->outbuf) {
-		track->outputcounter = track->inputcounter;
-	} else {
-		track->outputcounter += track->outbuf.used - track_count_0;
 	}
 
 	track->stamp++;
@@ -6389,8 +6378,7 @@ audio_track_drain(struct audio_softc *sc, audio_track_t *track)
 	}
 
 	track->pstate = AUDIO_STATE_CLEAR;
-	TRACET(3, track, "done trk_inp=%d trk_out=%d",
-		(int)track->inputcounter, (int)track->outputcounter);
+	TRACET(3, track, "done");
 	return 0;
 }
 

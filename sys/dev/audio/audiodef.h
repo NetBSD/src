@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.18 2022/04/20 07:11:13 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.19 2022/04/23 07:55:07 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -175,11 +175,7 @@ struct audio_track {
 	audio_state_t	pstate;		/* playback state */
 	bool		is_pause;
 
-	/* Statistic counters. */
-	uint64_t	inputcounter;	/* # of frames input to track */
-	uint64_t	outputcounter;	/* # of frames output from track */
-	uint64_t	useriobytes;	/* # of bytes xfer to/from userland */
-	uint64_t	dropframes;	/* # of frames dropped */
+	uint64_t	dropframes;	/* number of dropped frames */
 	int		eofcounter;	/* count of zero-sized write */
 
 	/*
