@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.243 2022/04/23 06:32:20 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.244 2022/04/23 06:43:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.243 2022/04/23 06:32:20 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.244 2022/04/23 06:43:22 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -91,9 +91,6 @@ struct buffer code;
 struct buffer com;
 
 bool found_err;
-int blank_lines_to_output;
-bool blank_line_before;
-bool blank_line_after;
 bool break_comma;
 float case_ind;
 bool had_eof;
@@ -105,6 +102,7 @@ static struct parser_state state_stack[5];
 
 FILE *input;
 FILE *output;
+struct output_control out;
 
 static const char *in_name = "Standard Input";
 static const char *out_name = "Standard Output";
@@ -903,7 +901,7 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
     }
 
     if (ps.in_func_def_params)
-	blank_line_before = false;
+	out.blank_line_before = false;
 
     if (ps.nparen > 0) {
 	diag(1, "Unbalanced parentheses");
@@ -929,7 +927,7 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
 					 * declaration, so don't do special
 					 * indentation of comments */
 	if (opt.blanklines_after_decl_at_top && ps.in_func_def_params)
-	    blank_line_after = true;
+	    out.blank_line_after = true;
 	ps.in_func_def_params = false;
 	ps.in_decl = false;
     }
@@ -981,14 +979,14 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 	ps.in_decl = true;
     }
 
-    blank_line_before = false;
+    out.blank_line_before = false;
     parse(psym_rbrace);
     ps.search_stmt = opt.cuddle_else
 	&& ps.s_sym[ps.tos] == psym_if_expr_stmt
 	&& ps.s_ind_level[ps.tos] >= ps.ind_level;
 
     if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_level <= 0)
-	blank_line_after = true;
+	out.blank_line_after = true;
 }
 
 static void
@@ -1048,7 +1046,7 @@ process_type(int *decl_ind, bool *tabs_to_var)
     if (ps.decl_level <= 0)
 	ps.just_saw_decl = 2;
 
-    blank_line_before = false;
+    out.blank_line_before = false;
 
     int len = (int)buf_len(&token) + 1;
     int ind = ps.ind_level == 0 || ps.decl_level > 0
@@ -1242,11 +1240,11 @@ process_preprocessing(void)
     }
 
     if (opt.blanklines_around_conditional_compilation) {
-	blank_line_after = true;
-	blank_lines_to_output = 0;
+	out.blank_line_after = true;
+	out.blank_lines_to_output = 0;
     } else {
-	blank_line_after = false;
-	blank_line_before = false;
+	out.blank_line_after = false;
+	out.blank_line_before = false;
     }
 
     /*
@@ -1386,7 +1384,7 @@ main_loop(void)
 
 	case lsym_typedef:
 	case lsym_storage_class:
-	    blank_line_before = false;
+	    out.blank_line_before = false;
 	    goto copy_token;
 
 	case lsym_tag:
