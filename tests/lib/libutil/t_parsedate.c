@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.31 2020/10/19 15:06:49 kre Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.32 2022/04/23 13:08:49 christos Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.31 2020/10/19 15:06:49 kre Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.32 2022/04/23 13:08:49 christos Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -137,6 +137,8 @@ ATF_TC_BODY(dates, tc)
 		2006, 11, 17, 0, 0, 0);
 	parsecheck("10/1/2000", NULL, NULL, localtime_r,
 		2000, 10, 1, 0, 0, 0); /* month/day/year */
+	parsecheck("12/01/2022", NULL, NULL, localtime_r,
+		2022, 12, 1, 0, 0, 0); /* month/day/year, December */
 	parsecheck("20 Jun 1994", NULL, NULL, localtime_r,
 		1994, 6, 20, 0, 0, 0);
 	parsecheck("97 September 2", NULL, NULL, localtime_r,
@@ -618,6 +620,7 @@ ATF_TC_BODY(gibberish, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+	unsetenv("TZ");
 	ATF_TP_ADD_TC(tp, dates);
 	ATF_TP_ADD_TC(tp, times);
 	ATF_TP_ADD_TC(tp, dsttimes);
