@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.110 2022/01/15 19:34:11 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.111 2022/04/23 16:22:23 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.110 2022/01/15 19:34:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.111 2022/04/23 16:22:23 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1592,6 +1592,7 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	unsigned shift;
 	off_t offset, maxlen;
+	int error;
 
 	if (sc == NULL)
 		return (ENODEV);
@@ -1615,7 +1616,12 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 		return (EINVAL);
 
 	pos += offset;
-	return VOP_FDISCARD(sc->sc_parent->dk_rawvp, pos, len);
+
+	vn_lock(sc->sc_parent->dk_rawvp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_FDISCARD(sc->sc_parent->dk_rawvp, pos, len);
+	VOP_UNLOCK(sc->sc_parent->dk_rawvp);
+
+	return error;
 }
 
 /*
