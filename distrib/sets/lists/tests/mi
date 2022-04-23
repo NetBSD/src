@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1194 2022/04/20 07:41:04 blymn Exp $
+# $NetBSD: mi,v 1.1195 2022/04/23 09:01:03 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5265,9 +5265,9 @@
 ./usr/tests/usr.bin/indent/token_form_feed.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_funcname.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_ident.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_if_expr.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_if_expr_stmt.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_if_expr_stmt_else.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_if_expr.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_if_expr_stmt.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_if_expr_stmt_else.c			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_keyword_do.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_keyword_do_else.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_keyword_else.c				tests-usr.bin-tests	compattestfile,atf

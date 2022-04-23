@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: psym_if_expr.c,v 1.3 2022/04/23 09:01:03 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr, representing the parser state
@@ -7,7 +7,16 @@
  */
 
 #indent input
-// TODO: add input
+void function(void) {
+	if(cond) stmt();
+}
 #indent end
 
-#indent run-equals-input
+#indent run
+void
+function(void)
+{
+	if (cond)
+		stmt();
+}
+#indent end

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2022/04/22 21:21:20 rillig Exp $
+#	$NetBSD: Makefile,v 1.41 2022/04/23 09:01:03 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -119,9 +119,6 @@ FILES+=		token_for_exprs.c
 FILES+=		token_form_feed.c
 FILES+=		token_funcname.c
 FILES+=		token_ident.c
-FILES+=		token_if_expr.c
-FILES+=		token_if_expr_stmt.c
-FILES+=		token_if_expr_stmt_else.c
 FILES+=		token_keyword_do.c
 FILES+=		token_keyword_do_else.c
 FILES+=		token_keyword_else.c
