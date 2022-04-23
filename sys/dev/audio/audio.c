@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.129 2022/04/23 06:17:59 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.130 2022/04/23 07:43:16 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.129 2022/04/23 06:17:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.130 2022/04/23 07:43:16 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3086,12 +3086,31 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 		break;
 
 	case AUDIO_GETIOFFS:
-		/* XXX TODO */
-		TRACEF(2, file, "%s", pre);
 		ao = (struct audio_offset *)addr;
-		ao->samples = 0;
-		ao->deltablks = 0;
-		ao->offset = 0;
+		track = file->rtrack;
+		if (track == NULL) {
+			ao->samples = 0;
+			ao->deltablks = 0;
+			ao->offset = 0;
+			TRACEF(2, file, "%s no rtrack", pre);
+			break;
+		}
+		mutex_enter(sc->sc_lock);
+		mutex_enter(sc->sc_intr_lock);
+		/* figure out where next transfer will start */
+		stamp = track->stamp;
+		offset = auring_tail(track->input);
+		mutex_exit(sc->sc_intr_lock);
+		mutex_exit(sc->sc_lock);
+
+		/* samples will overflow soon but is as per spec. */
+		ao->samples = stamp * track->usrbuf_blksize;
+		ao->deltablks = stamp - track->last_stamp;
+		ao->offset = audio_track_inputblk_as_usrbyte(track, offset);
+		TRACET(2, track, "%s samples=%u deltablks=%u offset=%u",
+		    pre, ao->samples, ao->deltablks, ao->offset);
+
+		track->last_stamp = stamp;
 		break;
 
 	case AUDIO_GETOOFFS:
@@ -5152,8 +5171,6 @@ audio_track_record(audio_track_t *track)
 		auring_take(outbuf, bytes2 / framesize);
 	}
 
-	/* XXX TODO: any counters here? */
-
 #if defined(AUDIO_DEBUG)
 	if (audiodebug >= 3) {
 		struct audio_track_debugbuf m;
@@ -6098,7 +6115,7 @@ audio_rmixer_process(struct audio_softc *sc)
 		    bytes);
 		auring_push(input, count);
 
-		/* XXX sequence counter? */
+		track->stamp++;
 
 		audio_track_lock_exit(track);
 	}
