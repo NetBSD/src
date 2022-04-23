@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.36 2020/10/30 22:03:11 kre Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.37 2022/04/23 13:02:04 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -359,7 +359,7 @@ date:
 			param->yyMonth = $3;
 			param->yyDay = $5;
 		} else {
-			if ($1 >= 12 || $3 > 31 || $1 == 0 || $3 == 0)
+			if ($1 > 12 || $3 > 31 || $1 == 0 || $3 == 0)
 				YYREJECT;
 			param->yyMonth = $1;
 			param->yyDay = $3;
