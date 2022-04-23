@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.10 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.11 2022/04/23 09:35:26 rillig Exp $ */
 
 /*
  * Tests for binary operators like '+', '&&' and several others.
@@ -21,50 +21,6 @@ punctuators(void)
 	int period = structure.member;
 	int arrow = structure->member;
 
-	++prefix_increment;
-	postfix_increment++;
-	--prefix_decrement;
-	postfix_decrement--;
-	int *address = &lvalue;
-	int bitwise_and = value & mask;
-	int product = factor * factor;
-	int dereferenced = *address;
-	int positive = +number;
-	int sum = number + number;
-	int negative = -number;
-	int difference = number - number;
-	bool negated = !condition;
-
-	int quotient = number / number;
-	int modulo = number % number;
-	int shifted_left = number << number;
-	int shifted_right = number >> number;
-	bool less_than = number < number;
-	bool greater_than = number > number;
-	bool less_equal = number <= number;
-	bool greater_equal = number >= number;
-	bool equal = number == number;
-	bool unequal = number != number;
-	int bitwise_exclusive_or = number ^ number;
-	int bitwise_or = number | number;
-	bool logical_and = condition && condition;
-	bool logical_or = condition || condition;
-
-	int conditional = condition ? number : number;
-
-	/* combined assignment operators */
-	number = (expression);
-	number *= number;
-	number /= number;
-	number %= number;
-	number += number;
-	number -= number;
-	number <<= number;
-	number >>= number;
-	number &= number;
-	number ^= number;
-	number |= number;
-
 	number = function(argument1, argument2);
 	number = function(argument), number;
 
@@ -84,50 +40,6 @@ punctuators(void)
 	int braces = {initializer};
 	int period = structure.member;
 	int arrow = structure->member;
-
-	++prefix_increment;
-	postfix_increment++;
-	--prefix_decrement;
-	postfix_decrement--;
-	int *address = &lvalue;
-	int bitwise_and = value & mask;
-	int product = factor * factor;
-	int dereferenced = *address;
-	int positive = +number;
-	int sum = number + number;
-	int negative = -number;
-	int difference = number - number;
-	bool negated = !condition;
-
-	int quotient = number / number;
-	int modulo = number % number;
-	int shifted_left = number << number;
-	int shifted_right = number >> number;
-	bool less_than = number < number;
-	bool greater_than = number > number;
-	bool less_equal = number <= number;
-	bool greater_equal = number >= number;
-	bool equal = number == number;
-	bool unequal = number != number;
-	int bitwise_exclusive_or = number ^ number;
-	int bitwise_or = number | number;
-	bool logical_and = condition && condition;
-	bool logical_or = condition || condition;
-
-	int conditional = condition ? number : number;
-
-	/* combined assignment operators */
-	number = (expression);
-	number *= number;
-	number /= number;
-	number %= number;
-	number += number;
-	number -= number;
-	number <<= number;
-	number >>= number;
-	number &= number;
-	number ^= number;
-	number |= number;
 
 	number = function(argument1, argument2);
 	number = function(argument), number;
