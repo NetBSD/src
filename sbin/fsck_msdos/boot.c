@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.23 2020/02/22 09:59:22 kamil Exp $");
+__RCSID("$NetBSD: boot.c,v 1.24 2022/04/23 22:40:28 mlelstv Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -36,6 +36,8 @@ __RCSID("$NetBSD: boot.c,v 1.23 2020/02/22 09:59:22 kamil Exp $");
 #include <inttypes.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/dkio.h>
 
 #include "ext.h"
 #include "fsutil.h"
@@ -43,19 +45,34 @@ __RCSID("$NetBSD: boot.c,v 1.23 2020/02/22 09:59:22 kamil Exp $");
 int
 readboot(int dosfs, struct bootblock *boot)
 {
-	u_char block[DOSBOOTBLOCKSIZE];
-	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
-	u_char backup[DOSBOOTBLOCKSIZE];
+	u_char *block;
+	u_char *fsinfo;
+	u_char *backup;
 	int ret = FSOK;
-	int i;
+	int i, err;
+	u_int secsize;
+
+	secsize = 0;
+	err = ioctl(dosfs, DIOCGSECTORSIZE, &secsize);
+	if (err != 0 || secsize == 0)
+		secsize = DOSBOOTBLOCKSIZE;
+
+	if (secsize < DOSBOOTBLOCKSIZE)
+		pfatal("Invalid sector size %u\n", secsize);
+
+	block = calloc(1, secsize);
+	if (block == NULL)
+		pfatal("Out of memory");
 	
-	if ((size_t)read(dosfs, block, sizeof block) != sizeof block) {
+	if ((size_t)read(dosfs, block, secsize) != secsize) {
 		perr("could not read boot block");
+		free(block);
 		return FSFATAL;
 	}
 
 	if (block[510] != 0x55 || block[511] != 0xaa) {
 		pfatal("Invalid signature in boot block: %02x%02x", block[511], block[510]);
+		free(block);
 		return FSFATAL;
 	}
 
@@ -86,6 +103,13 @@ readboot(int dosfs, struct bootblock *boot)
 
 	boot->FATsecs = boot->FATsmall;
 
+	fsinfo = calloc(2, secsize);
+	if (fsinfo == NULL)
+		pfatal("Out of memory");
+	backup = calloc(1, secsize);
+	if (backup == NULL)
+		pfatal("Out of memory");
+
 	if (!boot->RootDirEnts)
 		boot->flags |= FAT32;
 	if (boot->flags & FAT32) {
@@ -108,8 +132,7 @@ readboot(int dosfs, struct bootblock *boot)
 
 		if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 		    != boot->FSInfo * boot->BytesPerSec
-		    || read(dosfs, fsinfo, sizeof fsinfo)
-		    != sizeof fsinfo) {
+		    || read(dosfs, fsinfo, 2 * secsize) != 2 * secsize) {
 			perr("could not read fsinfo block");
 			return FSFATAL;
 		}
@@ -138,6 +161,9 @@ readboot(int dosfs, struct bootblock *boot)
 				    || write(dosfs, fsinfo, sizeof fsinfo)
 				    != sizeof fsinfo) {
 					perr("Unable to write FSInfo");
+					free(fsinfo);
+					free(backup);
+					free(block);
 					return FSFATAL;
 				}
 				ret = FSBOOTMOD;
@@ -155,8 +181,11 @@ readboot(int dosfs, struct bootblock *boot)
 
 		if (lseek(dosfs, boot->Backup * boot->BytesPerSec, SEEK_SET)
 		    != boot->Backup * boot->BytesPerSec
-		    || read(dosfs, backup, sizeof backup) != sizeof  backup) {
+		    || read(dosfs, backup, secsize) != secsize) {
 			perr("could not read backup bootblock");
+			free(fsinfo);
+			free(backup);
+			free(block);
 			return FSFATAL;
 		}
 		backup[65] = block[65];				/* XXX */
@@ -180,6 +209,11 @@ readboot(int dosfs, struct bootblock *boot)
 		}
 		/* Check backup FSInfo?					XXX */
 	}
+
+	free(fsinfo);
+	free(backup);
+	free(block);
+
 	if (boot->FATsecs == 0) {
 		pfatal("Invalid number of FAT sectors: %u\n", boot->FATsecs);
 		return FSFATAL;
@@ -265,12 +299,17 @@ readboot(int dosfs, struct bootblock *boot)
 int
 writefsinfo(int dosfs, struct bootblock *boot)
 {
-	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
+	u_char *fsinfo;
+
+	fsinfo = calloc(2, boot->BytesPerSec);
+	if (fsinfo == NULL)
+		pfatal("Out of memory");
 
 	if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 	    != boot->FSInfo * boot->BytesPerSec
-	    || read(dosfs, fsinfo, sizeof fsinfo) != sizeof fsinfo) {
+	    || read(dosfs, fsinfo, 2 * boot->BytesPerSec) != 2 * boot->BytesPerSec) {
 		perr("could not read fsinfo block");
+		free(fsinfo);
 		return FSFATAL;
 	}
 	fsinfo[0x1e8] = (u_char)boot->FSFree;
@@ -283,11 +322,14 @@ writefsinfo(int dosfs, struct bootblock *boot)
 	fsinfo[0x1ef] = (u_char)(boot->FSNext >> 24);
 	if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 	    != boot->FSInfo * boot->BytesPerSec
-	    || write(dosfs, fsinfo, sizeof fsinfo)
-	    != sizeof fsinfo) {
+	    || write(dosfs, fsinfo, 2 * boot->BytesPerSec) != 2 * boot->BytesPerSec) {
 		perr("Unable to write FSInfo");
+		free(fsinfo);
 		return FSFATAL;
 	}
+
+	free(fsinfo);
+
 	/*
 	 * Technically, we should return FSBOOTMOD here.
 	 *
