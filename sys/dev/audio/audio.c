@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.128 2022/04/21 01:15:24 macallan Exp $	*/
+/*	$NetBSD: audio.c,v 1.129 2022/04/23 06:17:59 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.128 2022/04/21 01:15:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.129 2022/04/23 06:17:59 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6280,8 +6280,9 @@ audio_track_clear(struct audio_softc *sc, audio_track_t *track)
 
 	audio_track_lock_enter(track);
 
-	track->usrbuf.used = 0;
 	/* Clear all internal parameters. */
+	track->usrbuf.used = 0;
+	track->usrbuf.head = 0;
 	if (track->codec.filter) {
 		track->codec.srcbuf.used = 0;
 		track->codec.srcbuf.head = 0;
