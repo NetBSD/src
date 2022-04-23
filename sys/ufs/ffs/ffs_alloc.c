@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.170 2021/09/03 21:55:01 andvar Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.171 2022/04/23 16:22:23 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.170 2021/09/03 21:55:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.171 2022/04/23 16:22:23 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1649,10 +1649,12 @@ ffs_discardcb(struct work *wk, void *arg)
 
 	start = FFS_FSBTOBYTES(fs, td->bno);
 	len = td->size;
+	vn_lock(td->devvp, LK_EXCLUSIVE | LK_RETRY);
 #ifdef TRIMDEBUG
 	error =
 #endif
 		VOP_FDISCARD(td->devvp, start, len);
+	VOP_UNLOCK(td->devvp);
 #ifdef TRIMDEBUG
 	printf("trim(%" PRId64 ",%ld):%d\n", td->bno, td->size, error);
 #endif
