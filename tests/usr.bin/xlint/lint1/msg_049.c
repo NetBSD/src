@@ -1,14 +1,9 @@
-/*	$NetBSD: msg_049.c,v 1.4 2022/02/27 11:40:30 rillig Exp $	*/
+/*	$NetBSD: msg_049.c,v 1.5 2022/04/24 15:55:50 rillig Exp $	*/
 # 3 "msg_049.c"
 
 /* Test for message: anonymous struct/union members is a C11 feature [49] */
 
-/* lint1-flags: -sw */
-
-/*
- * FIXME: C99 does not allow anonymous struct/union members, that's a GCC
- * extension that got incorporated into C11.
- */
+/* lint1-flags: -Sw */
 
 struct {
 	unsigned int flag: 1;
