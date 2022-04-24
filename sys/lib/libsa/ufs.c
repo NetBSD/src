@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.82 2022/04/24 06:48:15 mlelstv Exp $	*/
+/*	$NetBSD: ufs.c,v 1.83 2022/04/24 06:52:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -857,9 +857,11 @@ ufs_open(const char *path, struct open_file *f)
 out:
 	if (rc)
 		ufs_close(f);
-#ifdef FSMOD		/* Only defined for lfs */
 	else
+#ifdef FSMOD
 		fsmod = FSMOD;
+#else
+		fsmod = NULL;
 #endif
 	return rc;
 }

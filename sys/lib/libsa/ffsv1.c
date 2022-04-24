@@ -1,4 +1,4 @@
-/* $NetBSD: ffsv1.c,v 1.8 2021/05/27 06:54:44 mrg Exp $ */
+/* $NetBSD: ffsv1.c,v 1.9 2022/04/24 06:52:59 mlelstv Exp $ */
 
 #define LIBSA_FFSv1
 
@@ -19,8 +19,7 @@
 
 #define FS_MAGIC FS_UFS1_MAGIC
 
-#if 0
-#define	FSMOD	"wapbl/ufs/ffs"
-#endif
+/* #define	FSMOD	"wapbl/ufs/ffs" */
+#define	FSMOD	NULL
 
 #include "ufs.c"
