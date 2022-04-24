@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.397 2022/04/24 15:55:50 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.398 2022/04/24 16:50:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.397 2022/04/24 15:55:50 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.398 2022/04/24 16:50:06 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -126,7 +126,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 144
+%expect 138
 
 %union {
 	val_t	*y_val;
@@ -834,6 +834,11 @@ declmod:
 	| type_attribute_list
 	;
 
+type_attribute_list_opt:
+	  /* empty */
+	| type_attribute_list
+	;
+
 type_attribute_list:
 	  type_attribute
 	| type_attribute_list type_attribute
@@ -1223,14 +1228,11 @@ type_declarator:
 	;
 
 notype_direct_declarator:
-	  T_NAME {
-		$$ = declarator_name(getsym($1));
+	  type_attribute_list_opt T_NAME {
+		$$ = declarator_name(getsym($2));
 	  }
-	| T_LPAREN type_declarator T_RPAREN {
-		$$ = $2;
-	  }
-	| type_attribute notype_direct_declarator {
-		$$ = $2;
+	| type_attribute_list_opt T_LPAREN type_declarator T_RPAREN {
+		$$ = $3;
 	  }
 	| notype_direct_declarator T_LBRACK array_size_opt T_RBRACK {
 		$$ = add_array($1, $3.has_dim, $3.dim);
