@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.18 2021/10/30 11:18:51 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.19 2022/04/24 06:49:38 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -129,20 +129,21 @@ efi_block_do_read_blockio(struct efi_block_dev *bdev, UINT64 off, void *buf,
 	EFI_STATUS status;
 	EFI_LBA lba_start, lba_end;
 	UINT64 blkbuf_offset;
-	UINT64 blkbuf_size;
+	UINT64 blkbuf_size, alloc_size;
 
 	lba_start = off / bdev->bio->Media->BlockSize;
-	lba_end = (off + bufsize + bdev->bio->Media->BlockSize - 1) /
-	    bdev->bio->Media->BlockSize;
+	lba_end = (off + bufsize - 1) / bdev->bio->Media->BlockSize;
 	blkbuf_offset = off % bdev->bio->Media->BlockSize;
-	blkbuf_size = (lba_end - lba_start) * bdev->bio->Media->BlockSize;
+	blkbuf_size = (lba_end - lba_start + 1) * bdev->bio->Media->BlockSize;
+
+	alloc_size = blkbuf_size;
 	if (bdev->bio->Media->IoAlign > 1) {
-		blkbuf_size = (blkbuf_size + bdev->bio->Media->IoAlign - 1) /
+		alloc_size = (blkbuf_size + bdev->bio->Media->IoAlign - 1) /
 		    bdev->bio->Media->IoAlign *
 		    bdev->bio->Media->IoAlign;
 	}
 
-	blkbuf = AllocatePool(blkbuf_size);
+	blkbuf = AllocatePool(alloc_size);
 	if (blkbuf == NULL) {
 		return EFI_OUT_OF_RESOURCES;
 	}
@@ -285,18 +286,16 @@ efi_block_find_partitions_disklabel(struct efi_block_dev *bdev,
     struct mbr_sector *mbr, uint32_t start, uint32_t size)
 {
 	struct efi_block_part *bpart;
-	char buf[DEV_BSIZE];
+	char buf[DEV_BSIZE]; /* XXX, arbitrary size >= struct disklabel */
 	struct disklabel d;
 	struct partition *p;
 	EFI_STATUS status;
 	int n;
 
 	status = efi_block_read(bdev,
-	    ((EFI_LBA)start + LABELSECTOR) * DEV_BSIZE, buf, sizeof(buf));
-	if (EFI_ERROR(status) || getdisklabel(buf, &d) != NULL) {
-		FreePool(buf);
+	    ((EFI_LBA)start + LABELSECTOR) * bdev->bio->Media->BlockSize, buf, sizeof(buf));
+	if (EFI_ERROR(status) || getdisklabel(buf, &d) != NULL)
 		return EIO;
-	}
 
 	if (le32toh(d.d_magic) != DISKMAGIC || le32toh(d.d_magic2) != DISKMAGIC)
 		return EINVAL;
@@ -419,7 +418,7 @@ efi_block_find_partitions_gpt(struct efi_block_dev *bdev)
 	void *buf;
 	UINTN sz;
 
-	status = efi_block_read(bdev, GPT_HDR_BLKNO * DEV_BSIZE, &hdr,
+	status = efi_block_read(bdev, (EFI_LBA)GPT_HDR_BLKNO * bdev->bio->Media->BlockSize, &hdr,
 	    sizeof(hdr));
 	if (EFI_ERROR(status)) {
 		return EIO;
@@ -436,7 +435,7 @@ efi_block_find_partitions_gpt(struct efi_block_dev *bdev)
 		return ENOMEM;
 
 	status = efi_block_read(bdev,
-	    le64toh(hdr.hdr_lba_table) * DEV_BSIZE, buf, sz);
+	    le64toh(hdr.hdr_lba_table) * bdev->bio->Media->BlockSize, buf, sz);
 	if (EFI_ERROR(status)) {
 		FreePool(buf);
 		return EIO;
@@ -682,6 +681,7 @@ int
 efi_block_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct efi_block_part *bpart = devdata;
+	struct efi_block_dev *bdev = bpart->bdev;
 	EFI_STATUS status;
 	UINT64 off;
 
@@ -692,13 +692,13 @@ efi_block_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, 
 
 	switch (bpart->type) {
 	case EFI_BLOCK_PART_DISKLABEL:
-		off = (dblk + bpart->disklabel.part.p_offset) * DEV_BSIZE;
+		off = ((EFI_LBA)dblk + bpart->disklabel.part.p_offset) * bdev->bio->Media->BlockSize;
 		break;
 	case EFI_BLOCK_PART_GPT:
-		off = (dblk + le64toh(bpart->gpt.ent.ent_lba_start)) * DEV_BSIZE;
+		off = ((EFI_LBA)dblk + le64toh(bpart->gpt.ent.ent_lba_start)) * bdev->bio->Media->BlockSize;
 		break;
 	case EFI_BLOCK_PART_CD9660:
-		off = dblk * ISO_DEFAULT_BLOCK_SIZE;
+		off = (EFI_LBA)dblk * ISO_DEFAULT_BLOCK_SIZE;
 		break;
 	default:
 		return EINVAL;
@@ -717,4 +717,23 @@ void
 efi_block_set_readahead(bool onoff)
 {
 	efi_ra_enable = onoff;
+}
+
+int
+efi_block_ioctl(struct open_file *f, u_long cmd, void *data)
+{
+	struct efi_block_part *bpart = f->f_devdata;
+	struct efi_block_dev *bdev = bpart->bdev;
+	int error = 0;
+
+	switch (cmd) {
+	case SAIOSECSIZE:
+		*(u_int *)data = bdev->bio->Media->BlockSize;
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
 }
