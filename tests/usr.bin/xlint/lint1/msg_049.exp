@@ -1,1 +1,1 @@
-msg_049.c(25): warning: anonymous struct/union members is a C11 feature [49]
+msg_049.c(20): warning: anonymous struct/union members is a C11 feature [49]
