@@ -1,1 +1,2 @@
-msg_007.c(6): error: only one storage class allowed [7]
+msg_007.c(7): error: only one storage class allowed [7]
+msg_007.c(10): error: old style declaration; add 'int' [1]

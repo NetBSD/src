@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.10 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.11 2022/04/24 19:21:01 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -121,7 +121,7 @@ extern const volatile int	extern_const_volatile_int;
 
 extern void return_void_unknown_parameters();
 extern /* implicit int */ return_implicit_int_unknown_parameters();
-
+/* expect-1: error: old style declaration; add 'int' [1] */
 /* For function declarations, the keyword 'extern' is optional. */
 extern void extern_return_void_no_parameters(void);
 /* implicit extern */ void return_void_no_parameters(void);

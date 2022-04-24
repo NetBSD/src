@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.400 2022/04/24 17:32:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.401 2022/04/24 19:21:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.400 2022/04/24 17:32:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.401 2022/04/24 19:21:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -745,8 +745,15 @@ declaration:			/* C99 6.7 */
 			warning(2);
 		}
 	  }
-	| begin_type_declmods end_type notype_init_declarators T_SEMI
-	/* ^^ There is no check for the missing type-specifier. */
+	| begin_type_declmods end_type notype_init_declarators T_SEMI {
+		if (dcs->d_scl == TYPEDEF) {
+			/* syntax error '%s' */
+			error(249, "missing base type for typedef");
+		} else {
+			/* old style declaration; add 'int' */
+			error(1);
+		}
+	  }
 	| begin_type_declaration_specifiers end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
