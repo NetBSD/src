@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.78 2022/04/17 13:17:30 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.79 2022/04/24 09:55:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.78 2022/04/17 13:17:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.79 2022/04/24 09:55:48 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1422,6 +1422,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			DPRINTF(("uvideo:"
 				" truncated CS subtype-0x%x descriptor,"
 				" length %d < %d",
+				uvdesc->bDescriptorSubtype,
 				uvdesc->bLength, subtypelen));
 			break;
 		}
