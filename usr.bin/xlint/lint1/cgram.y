@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.401 2022/04/24 19:21:01 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.402 2022/04/24 20:08:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.401 2022/04/24 19:21:01 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.402 2022/04/24 20:08:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -416,7 +416,7 @@ string:
 /* K&R 7.1, C90 ???, C99 6.5.1, C11 6.5.1 */
 primary_expression:
 	  T_NAME {
-	  	bool sys_name, sys_next;
+		bool sys_name, sys_next;
 		sys_name = in_system_header;
 		if (yychar < 0)
 			yychar = yylex();
@@ -1597,7 +1597,7 @@ designator:			/* C99 6.7.8 "Initialization" */
 static_assert_declaration:
 	  T_STATIC_ASSERT T_LPAREN constant_expr T_COMMA T_STRING T_RPAREN T_SEMI /* C11 */
 	| T_STATIC_ASSERT T_LPAREN constant_expr T_RPAREN T_SEMI /* C23 */
- 	;
+	;
 
 range:
 	  constant_expr {
@@ -1990,11 +1990,17 @@ function_definition:		/* C99 6.9.1 */
 
 func_declarator:
 	  begin_type end_type notype_declarator {
-		/* ^^ There is no check for the missing type-specifier. */
+		if (!allow_trad) {
+			/* old style declaration; add 'int' */
+			error(1);
+		}
 		$$ = $3;
 	  }
 	| begin_type_declmods end_type notype_declarator {
-		/* ^^ There is no check for the missing type-specifier. */
+		if (!allow_trad) {
+			/* old style declaration; add 'int' */
+			error(1);
+		}
 		$$ = $3;
 	  }
 	| begin_type_declaration_specifiers end_type type_declarator {
