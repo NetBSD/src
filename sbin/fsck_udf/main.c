@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2022/04/22 21:07:56 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2022/04/24 15:07:08 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 2022/04/22 21:07:56 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2022/04/24 15:07:08 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1088,7 +1088,7 @@ udf_process_file(union dscrptr *dscrptr, int vpart_num, uint8_t **resultp,
 					lb_num, vpart_num,
 					1);
 			/* TODO check for prev_entry? */
-			l_ad = ext->l_ad;
+			l_ad = udf_rw32(ext->l_ad);
 			bpos = ext->data;
 			if (ad_type == UDF_ICB_SHORT_ALLOC)
 				short_adp = (struct short_ad *) bpos;
