@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2022/04/24 09:04:12 rillig Exp $
+#	$NetBSD: Makefile,v 1.45 2022/04/24 10:36:37 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -8,10 +8,12 @@ TESTS_SH+=	t_misc
 TESTS_SH+=	t_options
 
 FILESDIR=	${TESTSDIR}
+FILES+=		edge_cases.c
 FILES+=		fmt_block.c
 FILES+=		fmt_decl.c
 FILES+=		fmt_else_comment.c
 FILES+=		fmt_expr.c
+FILES+=		fmt_init.c
 FILES+=		indent_off_on.c
 FILES+=		label.c
 FILES+=		lex_char.c
@@ -110,33 +112,6 @@ FILES+=		psym_stmt_list.c
 FILES+=		psym_switch_expr.c
 FILES+=		psym_while_expr.c
 FILES+=		t_options.awk
-FILES+=		token_binary_op.c
-FILES+=		token_comment.c
-FILES+=		token_decl.c
-FILES+=		token_do_stmt.c
-FILES+=		token_end_of_file.c
-FILES+=		token_for_exprs.c
-FILES+=		token_form_feed.c
-FILES+=		token_funcname.c
-FILES+=		token_ident.c
-FILES+=		token_keyword_do.c
-FILES+=		token_keyword_do_else.c
-FILES+=		token_keyword_else.c
-FILES+=		token_keyword_for_if_while.c
-FILES+=		token_keyword_struct_union_enum.c
-FILES+=		token_newline.c
-FILES+=		token_postfix_op.c
-FILES+=		token_preprocessing.c
-FILES+=		token_rparen.c
-FILES+=		token_semicolon.c
-FILES+=		token_stmt.c
-FILES+=		token_stmt_list.c
-FILES+=		token_storage_class.c
-FILES+=		token_string_prefix.c
-FILES+=		token_switch_expr.c
-FILES+=		token_type_def.c
-FILES+=		token_unary_op.c
-FILES+=		token_while_expr.c
 
 add-test: .PHONY
 	@set -eu; \
