@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.395 2022/04/16 09:22:25 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.396 2022/04/24 13:38:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.395 2022/04/16 09:22:25 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.396 2022/04/24 13:38:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -126,7 +126,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 150
+%expect 144
 
 %union {
 	val_t	*y_val;
@@ -1416,6 +1416,12 @@ abstract_declarator:
 	| pointer direct_abstract_declarator {
 		$$ = add_pointer($2, $1);
 	  }
+	| type_attribute_list direct_abstract_declarator {
+		$$ = $2;
+	  }
+	| pointer type_attribute_list direct_abstract_declarator {
+		$$ = add_pointer($3, $1);
+	  }
 	;
 
 /* K&R ---, C90 ???, C99 6.7.6, C11 6.7.7 */
@@ -1426,9 +1432,6 @@ direct_abstract_declarator:
 	  }
 	| T_LBRACK array_size_opt T_RBRACK {
 		$$ = add_array(abstract_name(), $2.has_dim, $2.dim);
-	  }
-	| type_attribute direct_abstract_declarator {
-		$$ = $2;
 	  }
 	| direct_abstract_declarator T_LBRACK array_size_opt T_RBRACK {
 		$$ = add_array($1, $3.has_dim, $3.dim);
