@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.5 2020/10/11 14:03:33 jmcneill Exp $ */
+/* $NetBSD: conf.c,v 1.6 2022/04/24 06:49:38 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -41,7 +41,7 @@
 
 struct devsw devsw[] = {
 	{ "efifile", efi_file_strategy, efi_file_open, efi_file_close, noioctl },
-	{ "efiblock", efi_block_strategy, efi_block_open, efi_block_close, noioctl },
+	{ "efiblock", efi_block_strategy, efi_block_open, efi_block_close, efi_block_ioctl },
 	{ "net", net_strategy, net_open, net_close, noioctl },
 };
 int ndevs = __arraycount(devsw);
