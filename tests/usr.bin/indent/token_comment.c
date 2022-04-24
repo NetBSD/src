@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.28 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.29 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for formatting comments.  C99 defines block comments and end-of-line
@@ -851,6 +851,7 @@ comment_at_end_of_function(void)
 int		decl;
 // end-of-line comment at the end of the file
 #indent end
+
 #indent run-equals-input
 
 
@@ -861,6 +862,7 @@ int		decl;
  */
 /*-AE*/
 #indent end
+
 #indent run-equals-input
 
 
@@ -975,6 +977,7 @@ f(void)
 #indent end
 
 #indent run-equals-input -l5
+
 #indent run-equals-input -l32
 
 
@@ -1010,6 +1013,7 @@ line 4 */
 #indent end
 
 #indent run-equals-input -nfc1
+
 #indent run-equals-input -nfc1 -nsc
 
 #indent run -nsc
