@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.h,v 1.6 2021/06/21 21:18:47 jmcneill Exp $ */
+/* $NetBSD: efiblock.h,v 1.7 2022/04/24 06:49:38 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -79,6 +79,7 @@ struct efi_block_part *efi_block_boot_part(void);
 
 int efi_block_open(struct open_file *, ...);
 int efi_block_close(struct open_file *);
+int efi_block_ioctl(struct open_file *, u_long, void *);
 int efi_block_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 void efi_block_set_readahead(bool);
