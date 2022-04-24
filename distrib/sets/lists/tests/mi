@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1197 2022/04/24 08:48:17 rillig Exp $
+# $NetBSD: mi,v 1.1198 2022/04/24 10:36:37 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4771,6 +4771,7 @@
 ./usr/tests/usr.bin/indent/declarations.0				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/declarations.0.stderr			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/declarations.0.stdout			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/edge_cases.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/elsecomment.0				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/elsecomment.0.pro				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/elsecomment.0.stdout				tests-obsolete		obsolete,atf
@@ -4782,6 +4783,7 @@
 ./usr/tests/usr.bin/indent/fmt_decl.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/fmt_else_comment.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/fmt_expr.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/fmt_init.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/indent_off_on.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/indent_variables.0				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/indent_variables.0.pro			tests-obsolete		obsolete,atf
@@ -5253,44 +5255,44 @@
 ./usr/tests/usr.bin/indent/token-while_expr.0				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token-while_expr.0.pro			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token-while_expr.0.stdout			tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/token_binary_op.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_binary_op.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_case_label.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_colon.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_comma.c				tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/token_comment.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_decl.c					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_do_stmt.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_end_of_file.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_for_exprs.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_form_feed.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_funcname.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_ident.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_comment.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_decl.c					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_do_stmt.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_end_of_file.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_for_exprs.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_form_feed.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_funcname.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_ident.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_if_expr.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_if_expr_stmt.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_if_expr_stmt_else.c			tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/token_keyword_do.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_keyword_do_else.c			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_keyword_else.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_keyword_for_if_while.c			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_keyword_struct_union_enum.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_keyword_do.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_keyword_do_else.c			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_keyword_else.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_keyword_for_if_while.c			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_keyword_struct_union_enum.c		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_lbrace.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_lparen.c				tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/token_newline.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_newline.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_period.c				tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/token_postfix_op.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_preprocessing.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_postfix_op.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_preprocessing.c			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_question.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_rbrace.c				tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/token_rparen.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_semicolon.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_stmt.c					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_stmt_list.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_storage_class.c			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_string_prefix.c			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_switch_expr.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_type_def.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_unary_op.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_while_expr.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_rparen.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_semicolon.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_stmt.c					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_stmt_list.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_storage_class.c			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_string_prefix.c			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_switch_expr.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_type_def.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_unary_op.c				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/token_while_expr.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/types_from_file.0				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/types_from_file.0.list			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/types_from_file.0.pro			tests-obsolete		obsolete,atf

@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_typedef.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_typedef.c,v 1.6 2022/04/24 10:36:37 rillig Exp $ */
 
 /*
  * Tests for the token lsym_typedef, which represents the keyword 'typedef'
@@ -48,3 +48,14 @@ enum {
 	EC2
 }		E;
 //indent end
+
+
+/*
+ * Contrary to declarations, type definitions are not affected by the option
+ * '-di'.
+ */
+//indent input
+typedef int number;
+//indent end
+
+//indent run-equals-input
