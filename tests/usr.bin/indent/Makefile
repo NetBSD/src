@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2022/04/23 09:59:14 rillig Exp $
+#	$NetBSD: Makefile,v 1.43 2022/04/24 08:48:17 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -124,11 +124,9 @@ FILES+=		token_keyword_do_else.c
 FILES+=		token_keyword_else.c
 FILES+=		token_keyword_for_if_while.c
 FILES+=		token_keyword_struct_union_enum.c
-FILES+=		token_lparen.c
 FILES+=		token_newline.c
 FILES+=		token_postfix_op.c
 FILES+=		token_preprocessing.c
-FILES+=		token_rbrace.c
 FILES+=		token_rparen.c
 FILES+=		token_semicolon.c
 FILES+=		token_stmt.c

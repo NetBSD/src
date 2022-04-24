@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1196 2022/04/23 09:59:13 rillig Exp $
+# $NetBSD: mi,v 1.1197 2022/04/24 08:48:17 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5274,13 +5274,13 @@
 ./usr/tests/usr.bin/indent/token_keyword_for_if_while.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_keyword_struct_union_enum.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_lbrace.c				tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/token_lparen.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_lparen.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_newline.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_period.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_postfix_op.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_preprocessing.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_question.c				tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/token_rbrace.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_rbrace.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_rparen.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_semicolon.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_stmt.c					tests-usr.bin-tests	compattestfile,atf
