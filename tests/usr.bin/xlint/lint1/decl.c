@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.13 2022/04/03 10:05:23 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.14 2022/04/24 19:21:01 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -104,7 +104,7 @@ int
 declaration_without_type_specifier(void)
 {
 	const i = 3;
-
+	/* expect-1: error: old style declaration; add 'int' [1] */
 	return i;
 }
 
