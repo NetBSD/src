@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.8 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.
@@ -15,6 +15,7 @@ empty(void)
 #indent end
 
 #indent run-equals-input -badp
+
 #indent run-equals-input -nbadp
 
 
@@ -27,6 +28,7 @@ blank(void)
 #indent end
 
 #indent run-equals-input -badp
+
 #indent run-equals-input -nbadp
 
 
@@ -39,6 +41,7 @@ declaration(void)
 #indent end
 
 #indent run-equals-input -badp
+
 #indent run-equals-input -nbadp
 
 
@@ -58,6 +61,7 @@ statement(void)
 	stmt();
 }
 #indent end
+
 #indent run-equals-input -nbadp
 
 
@@ -79,6 +83,7 @@ declaration_statement(void)
 	stmt();
 }
 #indent end
+
 #indent run-equals-input -nbadp
 
 
@@ -93,6 +98,7 @@ declaration_blank_statement(void)
 #indent end
 
 #indent run-equals-input -badp
+
 #indent run-equals-input -nbadp
 
 
@@ -109,4 +115,5 @@ declaration_blank_blank_statement(void)
 #indent end
 
 #indent run-equals-input -badp
+
 #indent run-equals-input -nbadp

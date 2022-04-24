@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bs.c,v 1.8 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_bs.c,v 1.9 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for the options '-bs' and '-nbs' ("blank after sizeof").
@@ -106,6 +106,7 @@ int sizeof_newline = sizeof
 #indent end
 
 #indent run-equals-input -di0 -bs
+
 #indent run-equals-input -di0 -nbs
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.33 2022/04/22 21:21:20 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.34 2022/04/24 08:52:44 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -613,6 +613,7 @@ ToToken(bool cond)
 #indent end
 
 #indent run-equals-input -TToken
+
 /* Since lexi.c 1.153 from 2021-11-25. */
 #indent run-equals-input
 
@@ -647,6 +648,7 @@ static CachedDir *dot = NULL;
 #indent end
 
 #indent run-equals-input -TCachedDir
+
 /* Since lexi.c 1.153 from 2021-11-25. */
 #indent run-equals-input
 
@@ -713,6 +715,7 @@ CachedDir_Assign(CachedDir **var, CachedDir *dir)
 #indent end
 
 #indent run-equals-input
+
 #indent run-equals-input -TCachedDir
 
 

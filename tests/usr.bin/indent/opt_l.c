@@ -1,4 +1,4 @@
-/* $NetBSD: opt_l.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_l.c,v 1.4 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for the option '-l', which specifies the maximum length of a line.
@@ -27,9 +27,11 @@
  * same output.
  */
 #indent end
+
 #indent run-equals-prev-output -lc38
 
 #indent run-equals-input -l78
+
 #indent run-equals-input -lc78
 
 

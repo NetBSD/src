@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ci.c,v 1.6 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_ci.c,v 1.7 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for the option '-ci', which controls the indentation of continuation
@@ -23,8 +23,11 @@ int		top_level = (1 +
 			     2 + (
 				  3));
 #indent end
+
 #indent run-equals-prev-output -ci2
+
 #indent run-equals-prev-output -ci4
+
 #indent run-equals-prev-output -ci8
 
 #indent run -ci0 -nlp
@@ -143,8 +146,11 @@ sum(int a, int b)
 			  third));
 }
 #indent end
+
 #indent run-equals-prev-output -ci2
+
 #indent run-equals-prev-output -ci4
+
 #indent run-equals-prev-output -ci8
 
 #indent run -ci2 -nlp

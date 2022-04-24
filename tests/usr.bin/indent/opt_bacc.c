@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.8 2022/04/23 06:43:23 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.9 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for the options '-bacc' and '-nbacc' ("blank line around conditional
@@ -145,4 +145,5 @@ int outer_below;
 #indent end
 
 #indent run-equals-input -di0 -bacc
+
 #indent run-equals-input -di0 -nbacc
