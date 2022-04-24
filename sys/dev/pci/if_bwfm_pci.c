@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.11 2021/08/26 21:33:36 andvar Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.12 2022/04/24 07:11:31 skrll Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_pci.c,v 1.11 2021/08/26 21:33:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_pci.c,v 1.12 2022/04/24 07:11:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,36 +326,36 @@ static const struct bwfm_firmware_selector bwfm_pci_fwtab[] = {
 
 	BWFM_FW_ENTRY(BRCM_CC_43465_CHIP_ID,
 		      BWFM_FWSEL_REV_GE(4), "brcmfmac4366c-pcie"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_4350_CHIP_ID,
 		      BWFM_FWSEL_REV_LE(7), "brcmfmac4350c2-pcie"),
 	BWFM_FW_ENTRY(BRCM_CC_4350_CHIP_ID,
 		      BWFM_FWSEL_REV_GE(8), "brcmfmac4350-pcie"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_43525_CHIP_ID,
 		      BWFM_FWSEL_REV_GE(4), "brcmfmac4365c-pcie"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_4356_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac4356-pcie"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_43567_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac43570-pcie"),
 	BWFM_FW_ENTRY(BRCM_CC_43569_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac43570-pcie"),
 	BWFM_FW_ENTRY(BRCM_CC_43570_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac43570-pcie"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_4358_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac4358-pcie"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_4359_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac4359-pcie"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_4365_CHIP_ID,
 		      BWFM_FWSEL_REV_LE(3), "brcmfmac4365b-pcie"),
 	BWFM_FW_ENTRY(BRCM_CC_4365_CHIP_ID,
 		      BWFM_FWSEL_REV_GE(4), "brcmfmac4365c-pcie"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_4366_CHIP_ID,
 		      BWFM_FWSEL_REV_LE(3), "brcmfmac4366b-pcie"),
 	BWFM_FW_ENTRY(BRCM_CC_4366_CHIP_ID,
@@ -496,7 +496,7 @@ bwfm_pci_attachhook(device_t self)
 	bwfm_firmware_context_init(&fwctx,
 	    bwfm->sc_chip.ch_chip, bwfm->sc_chip.ch_chiprev, NULL,
 	    BWFM_FWREQ(BWFM_FILETYPE_UCODE));
-	
+
 	if (!bwfm_firmware_open(bwfm, bwfm_pci_fwtab, &fwctx)) {
 		/* Error message already displayed. */
 		goto err;
