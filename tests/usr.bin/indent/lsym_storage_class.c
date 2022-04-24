@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_storage_class.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_storage_class.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
 
 /*
  * Tests for the token lsym_storage_class, which represents a storage class as
@@ -6,7 +6,9 @@
  */
 
 //indent input
-// TODO: add input
+static int definition_with_internal_linkage;
+extern int declaration_with_external_linkage;
+int definition_with_external_linkage;
 //indent end
 
-//indent run-equals-input
+//indent run-equals-input -di0

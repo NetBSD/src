@@ -1,4 +1,4 @@
-/* $NetBSD: psym_do_stmt.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: psym_do_stmt.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_do_stmt, which represents the state after
@@ -7,7 +7,25 @@
  */
 
 //indent input
-// TODO: add input
+void function(void) {
+	do stmt(); while (0);
+	do { stmt(); } while (0);
+	do /* comment */ stmt(); while (0);
+}
 //indent end
 
-//indent run-equals-input
+//indent run
+void
+function(void)
+{
+	do
+		stmt();
+	while (0);
+	do {
+		stmt();
+	} while (0);
+	do			/* comment */
+		stmt();
+	while (0);
+}
+//indent end

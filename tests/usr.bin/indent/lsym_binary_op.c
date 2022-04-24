@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.6 2022/04/24 10:36:37 rillig Exp $ */
 
 /*
  * Tests for the token lsym_binary_op, which represents a binary operator in
@@ -73,4 +73,90 @@ int var = expr**ptr;
 
 //indent run -di0
 int var = expr * *ptr;
+//indent end
+
+
+/*
+ * When indent tokenizes some operators, it allows for
+ * arbitrary repetitions of the operator character, followed by an
+ * arbitrary amount of '='.  This is used for operators like '&&' or
+ * '|||==='.
+ *
+ * Before 2021-03-07 22:11:01, the comment '//' was treated as an
+ * operator as well, and so was the comment '/////', leading to
+ * unexpected results.
+ *
+ * See lexi.c, lexi, "default:".
+ */
+//indent input
+void
+long_run_of_operators(void)
+{
+	if (a &&&&&&& b)
+		return;
+	if (a |||=== b)
+		return;
+}
+//indent end
+
+//indent run-equals-input
+
+
+/*
+ * Long chains of '+' and '-' must be split into several operators as the
+ * lexer has to distinguish between '++' and '+' early.  The following
+ * sequence is thus tokenized as:
+ *
+ *	word		"a"
+ *	postfix_op	"++"
+ *	binary_op	"++"
+ *	unary_op	"++"
+ *	unary_op	"+"
+ *	word		"b"
+ *
+ * See lexi.c, lexi, "case '+':".
+ */
+//indent input
+void
+joined_unary_and_binary_operators(void)
+{
+	if (a +++++++ b)
+		return;
+}
+//indent end
+
+//indent run
+void
+joined_unary_and_binary_operators(void)
+{
+	if (a++ ++ ++ +b)
+		return;
+}
+//indent end
+
+
+/*
+ * Ensure that the result of the indentation does not depend on whether a
+ * token from the input starts in column 1 or 9.
+ *
+ * See process_binary_op, ps.curr_col_1.
+ */
+//indent input
+int col_1 //
+= //
+1;
+
+int col_9 //
+	= //
+	9;
+//indent end
+
+//indent run
+int		col_1		//
+=				//
+1;
+
+int		col_9		//
+=				//
+9;
 //indent end
