@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lpl.c,v 1.6 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_lpl.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-lpl' and '-nlpl'.
@@ -15,7 +15,7 @@
 
 /* $ TODO: Add code that differs between -lpl and -nlpl. */
 
-#indent input
+//indent input
 void
 example(void)
 {
@@ -37,9 +37,9 @@ example(void)
 
 	call_function((call_function(call_function(call_function(call_function(call_function()))))));
 }
-#indent end
+//indent end
 
-#indent run -lpl
+//indent run -lpl
 void
 example(void)
 {
@@ -63,6 +63,6 @@ example(void)
 
 	call_function((call_function(call_function(call_function(call_function(call_function()))))));
 }
-#indent end
+//indent end
 
-#indent run-equals-prev-output -nlpl
+//indent run-equals-prev-output -nlpl

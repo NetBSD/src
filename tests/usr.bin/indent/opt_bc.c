@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bc.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-bc' and '-nbc'.
@@ -9,16 +9,16 @@
  * places, indent preserves line breaks.
  */
 
-#indent input
+//indent input
 int a,b,c;
 void function_declaration(int a,int b,int c);
 int m1,
 m2,
 m3;
 char plain, *pointer;
-#indent end
+//indent end
 
-#indent run -bc
+//indent run -bc
 int		a,
 		b,
 		c;
@@ -28,25 +28,25 @@ int		m1,
 		m3;
 char		plain,
 	       *pointer;
-#indent end
+//indent end
 
-#indent run -nbc
+//indent run -nbc
 int		a, b, c;
 void		function_declaration(int a, int b, int c);
 int		m1, m2, m3;
 char		plain, *pointer;
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 old_style_definition(a, b, c)
 double a,b,c;
 {
     return a+b+c;
 }
-#indent end
+//indent end
 
-#indent run -bc
+//indent run -bc
 old_style_definition(a, b, c)
 double		a,
 		b,
@@ -54,12 +54,12 @@ double		a,
 {
 	return a + b + c;
 }
-#indent end
+//indent end
 
-#indent run -nbc
+//indent run -nbc
 old_style_definition(a, b, c)
 double		a, b, c;
 {
 	return a + b + c;
 }
-#indent end
+//indent end

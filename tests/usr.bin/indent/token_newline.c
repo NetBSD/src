@@ -1,4 +1,4 @@
-/* $NetBSD: token_newline.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_newline.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*-
  * Tests for the token '\n', which ends a line.
@@ -12,18 +12,18 @@
  * compiler's point of view. Indent preserves most line breaks though.
  */
 
-#indent input
+//indent input
 int var=
 1
 	+2
 		+3
 			+4;
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		var =
 1
 + 2
 + 3
 + 4;
-#indent end
+//indent end

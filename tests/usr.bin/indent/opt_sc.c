@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sc.c,v 1.6 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_sc.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-sc' and '-nsc'.
@@ -9,56 +9,56 @@
  * lines of comments.
  */
 
-#indent input
+//indent input
 /* comment
 without
 asterisks
 */
-#indent end
+//indent end
 
-#indent run -sc
+//indent run -sc
 /*
  * comment without asterisks
  */
-#indent end
+//indent end
 
-#indent run -nsc
+//indent run -nsc
 /*
 comment without asterisks
  */
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 /*
 ** This comment style is used by Lua.
 */
-#indent end
+//indent end
 
 /* XXX: The additional '*' is debatable. */
-#indent run -sc
+//indent run -sc
 /*
  * * This comment style is used by Lua.
  */
-#indent end
+//indent end
 
 /* This comment, as rewritten by indent, is not actually used by Lua. */
-#indent run -nsc
+//indent run -nsc
 /*
  * This comment style is used by Lua.
  */
-#indent end
+//indent end
 
 
 /*
  * Comments that start with '*' or '-' do not get modified at all.
  */
-#indent input
+//indent input
 /**
  * Javadoc, adopted by several other programming languages.
  */
-#indent end
+//indent end
 
-#indent run-equals-input -sc
+//indent run-equals-input -sc
 
-#indent run-equals-input -nsc
+//indent run-equals-input -nsc

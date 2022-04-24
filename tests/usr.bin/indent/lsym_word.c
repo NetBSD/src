@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_word.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_word.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_word, which represents a constant, a string
@@ -12,11 +12,11 @@
 // TODO: Is '123(' syntactically valid in any context?
 // TODO: Would the output of the above depend on -pcs/-npcs?
 
-#indent input
+//indent input
 // TODO: add input
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -24,11 +24,11 @@
  * character after a backslash continuation was always considered part of a
  * word, no matter whether it was a word character or not.
  */
-#indent input
+//indent input
 int var\
 +name = 4;
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		var + name = 4;
-#indent end
+//indent end

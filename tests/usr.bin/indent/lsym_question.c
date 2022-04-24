@@ -1,41 +1,41 @@
-/* $NetBSD: lsym_question.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_question.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_question, which represents the '?' in a '?:'
  * conditional expression.
  */
 
-#indent input
+//indent input
 const char *result = cond ? "then" : "else";
 
 const char *multi = cond1 ? "cond1" : cond2 ? "cond2" : cond3 ? "cond3" : "";
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
  * To make them easier to read, conditional expressions can be split into
  * multiple lines.
  */
-#indent input
+//indent input
 const char *separate_lines = cond
 	? "then"
 	: "else";
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 const char *separate_lines = cond
 // $ XXX: Continuation lines in expressions should be indented, even in column 1.
 ? "then"
 : "else";
-#indent end
+//indent end
 
 
 /*
  * In functions, conditional expressions are indented as intended.
  */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -43,15 +43,15 @@ function(void)
 		? "then"
 		: "else";
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * In functions, conditional expressions are indented as intended.
  */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -62,6 +62,6 @@ function(void)
 	? "then"
 	: "else";
 }
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0

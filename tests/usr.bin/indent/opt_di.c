@@ -1,25 +1,25 @@
-/* $NetBSD: opt_di.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_di.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Test the option '-di', which specifies the indentation of the first
  * variable name in a declaration.
  */
 
-#indent input
+//indent input
 int space;
 int	tab;
 int		tab16;
 
 struct long_name long_name;
-#indent end
+//indent end
 
-#indent run -di8
+//indent run -di8
 int	space;
 int	tab;
 int	tab16;
 
 struct long_name long_name;
-#indent end
+//indent end
 
 
 /*
@@ -31,72 +31,72 @@ struct long_name long_name;
  * commas. Only the first of them is aligned to the indentation given by
  * '-di', the others are separated with a single space.
  */
-#indent input
+//indent input
 int var;
 int *ptr, *****ptr;
-#indent end
+//indent end
 
-#indent run -di12
+//indent run -di12
 int	    var;
 int	   *ptr, *****ptr;
-#indent end
+//indent end
 
 
 /*
  * Test the various values for indenting.
  */
-#indent input
+//indent input
 int decl ;
-#indent end
+//indent end
 
 /*
  * An indentation of 0 columns uses a single space between the declaration
  * specifiers (in this case 'int') and the declarator.
  */
-#indent run -di0
+//indent run -di0
 int decl;
-#indent end
+//indent end
 
 /*
  * An indentation of 7 columns uses spaces for indentation since in the
  * default configuration, the next tab stop would be at indentation 8.
  */
-#indent run -di7
+//indent run -di7
 int    decl;
-#indent end
+//indent end
 
 /* The indentation consists of a single tab. */
-#indent run -di8
+//indent run -di8
 int	decl;
-#indent end
+//indent end
 
 /* The indentation consists of a tab and a space. */
-#indent run -di9
+//indent run -di9
 int	 decl;
-#indent end
+//indent end
 
-#indent run -di16
+//indent run -di16
 int		decl;
-#indent end
+//indent end
 
 
 /*
  * Ensure that all whitespace is normalized to be indented by 8 columns,
  * which in the default configuration amounts to a single tab.
  */
-#indent input
+//indent input
 int space;
 int	tab;
 int		tab16;
 struct long_name long_name;
-#indent end
+//indent end
 
-#indent run -di8
+//indent run -di8
 int	space;
 int	tab;
 int	tab16;
 struct long_name long_name;
-#indent end
+//indent end
 
 
 /*
@@ -108,20 +108,20 @@ struct long_name long_name;
  * the length of the keyword 'struct', 'union' or 'enum', together with type
  * qualifiers like 'const' or the storage class like 'static'.
  */
-#indent input
+//indent input
 struct {
 	int member;
 } var = {
 	3,
 };
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
-#indent run
+//indent run
 struct {
 	int		member;
 }		var = {
 	3,
 };
-#indent end
+//indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: token_keyword_do_else.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_keyword_do_else.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the keyword 'do' or 'else'.  These two keywords are followed by
@@ -6,16 +6,16 @@
  * followed by a parenthesized expression.
  */
 
-#indent input
+//indent input
 void
 function(void)
 {
 	do(var)--;while(var>0);
 	if(var>0)var=0;else(var=3);
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -27,4 +27,4 @@ function(void)
 	else
 		(var = 3);
 }
-#indent end
+//indent end

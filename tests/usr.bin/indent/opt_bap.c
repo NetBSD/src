@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bap.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_bap.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-bap' and '-nbap' ("blank line after procedure
@@ -12,7 +12,7 @@
  * TODO: Investigate how nobody could have noticed this for 20 years.
  */
 
-#indent input
+//indent input
 static void one_liner(void){}
 static void several_lines(void)
 {
@@ -32,9 +32,9 @@ void has_several_blank_lines_below(void)
 
 
 int		the_end;
-#indent end
+//indent end
 
-#indent run -bap
+//indent run -bap
 static void
 one_liner(void)
 {
@@ -66,6 +66,6 @@ has_several_blank_lines_below(void)
 
 
 int		the_end;
-#indent end
+//indent end
 
-#indent run-equals-prev-output -nbap
+//indent run-equals-prev-output -nbap

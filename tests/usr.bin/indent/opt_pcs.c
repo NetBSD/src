@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.12 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.13 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-pcs' and '-npcs'.
@@ -10,7 +10,7 @@
  * between the function name and the opening parenthesis.
  */
 
-#indent input
+//indent input
 void
 example(void)
 {
@@ -18,9 +18,9 @@ example(void)
 	function_call (1);
 	function_call   (1,2,3);
 }
-#indent end
+//indent end
 
-#indent run -pcs
+//indent run -pcs
 void
 example(void)
 {
@@ -28,9 +28,9 @@ example(void)
 	function_call (1);
 	function_call (1, 2, 3);
 }
-#indent end
+//indent end
 
-#indent run -npcs
+//indent run -npcs
 void
 example(void)
 {
@@ -38,30 +38,30 @@ example(void)
 	function_call(1);
 	function_call(1, 2, 3);
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 void ( * signal ( void ( * handler ) ( int ) ) ) ( int ) ;
 int var = (function)(arg);
-#indent end
+//indent end
 
-#indent run -di0 -pcs
+//indent run -di0 -pcs
 void (*signal (void (*handler) (int))) (int);
 int var = (function) (arg);
-#indent end
+//indent end
 
-#indent run -di0 -npcs
+//indent run -di0 -npcs
 void (*signal(void (*handler)(int)))(int);
 int var = (function)(arg);
-#indent end
+//indent end
 
 
 /*
  * The option '-pcs' also applies to 'sizeof' and 'offsetof', even though
  * these are not functions.
  */
-#indent input
+//indent input
 int sizeof_type = sizeof   (int);
 int sizeof_type = sizeof(int);
 int sizeof_expr = sizeof   (0);
@@ -70,10 +70,10 @@ int sizeof_expr = sizeof   0;
 
 int offset = offsetof(struct s, member);
 int offset = offsetof   (struct s, member);
-#indent end
+//indent end
 
 /* The option '-pcs' overrides '-nbs'. */
-#indent run -pcs -di0 -nbs
+//indent run -pcs -di0 -nbs
 int sizeof_type = sizeof (int);
 int sizeof_type = sizeof (int);
 int sizeof_expr = sizeof (0);
@@ -82,13 +82,13 @@ int sizeof_expr = sizeof 0;
 
 int offset = offsetof (struct s, member);
 int offset = offsetof (struct s, member);
-#indent end
+//indent end
 
 /*
  * If the option '-npcs' is given, '-bs' can still specialize it. This only
  * applies to 'sizeof', but not 'offsetof'.
  */
-#indent run -npcs -di0 -bs
+//indent run -npcs -di0 -bs
 int sizeof_type = sizeof (int);
 int sizeof_type = sizeof (int);
 int sizeof_expr = sizeof (0);
@@ -97,9 +97,9 @@ int sizeof_expr = sizeof 0;
 
 int offset = offsetof(struct s, member);
 int offset = offsetof(struct s, member);
-#indent end
+//indent end
 
-#indent run -npcs -di0
+//indent run -npcs -di0
 int sizeof_type = sizeof(int);
 int sizeof_type = sizeof(int);
 int sizeof_expr = sizeof(0);
@@ -108,4 +108,4 @@ int sizeof_expr = sizeof 0;
 
 int offset = offsetof(struct s, member);
 int offset = offsetof(struct s, member);
-#indent end
+//indent end

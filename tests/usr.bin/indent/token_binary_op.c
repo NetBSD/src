@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.12 2022/04/23 17:25:58 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.13 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for binary operators like '+', '&&' and several others.
@@ -11,7 +11,7 @@
 /* TODO: split into separate tests */
 
 /* See C99 6.4.6 */
-#indent input
+//indent input
 void
 punctuators(void)
 {
@@ -23,9 +23,9 @@ punctuators(void)
 	number = array<:subscript:>;
 	number = (int)<% initializer %>;
 }
-#indent end
+//indent end
 
-#indent run -ldi0
+//indent run -ldi0
 void
 punctuators(void)
 {
@@ -40,7 +40,7 @@ punctuators(void)
 number = array <:subscript:>;
 	number = (int)<%initializer % >;
 }
-#indent end
+//indent end
 /* TODO: move digraphs into separate test */
 /* TODO: test trigraphs, which are as unusual as digraphs */
 /* TODO: test digraphs and trigraphs in string literals, just for fun */
@@ -58,7 +58,7 @@ number = array <:subscript:>;
  *
  * See lexi.c, lexi, "default:".
  */
-#indent input
+//indent input
 void
 long_run_of_operators(void)
 {
@@ -67,9 +67,9 @@ long_run_of_operators(void)
 	if (a |||=== b)
 		return;
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -86,23 +86,23 @@ long_run_of_operators(void)
  *
  * See lexi.c, lexi, "case '+':".
  */
-#indent input
+//indent input
 void
 joined_unary_and_binary_operators(void)
 {
 	if (a +++++++ b)
 		return;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 joined_unary_and_binary_operators(void)
 {
 	if (a++ ++ ++ +b)
 		return;
 }
-#indent end
+//indent end
 
 
 /*
@@ -115,15 +115,15 @@ joined_unary_and_binary_operators(void)
  * rule for inserting a blank before a binary operator was changed to always
  * insert a blank, except at the beginning of a line.
  */
-#indent input
+//indent input
 char *(*fn)() = NULL;
 char *(*fn)(int) = NULL;
 char *(*fn)(int, int) = NULL;
-#indent end
+//indent end
 
 /* XXX: The parameter '(int)' is wrongly interpreted as a type cast. */
 /* XXX: The parameter '(int, int)' is wrongly interpreted as a type cast. */
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
@@ -132,7 +132,7 @@ char *(*fn)(int, int) = NULL;
  *
  * See process_binary_op, ps.curr_col_1.
  */
-#indent input
+//indent input
 int col_1 //
 = //
 1;
@@ -140,9 +140,9 @@ int col_1 //
 int col_9 //
 	= //
 	9;
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		col_1		//
 =				//
 1;
@@ -150,4 +150,4 @@ int		col_1		//
 int		col_9		//
 =				//
 9;
-#indent end
+//indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: token_end_of_file.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_end_of_file.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the end of a file.
@@ -7,10 +7,10 @@
  * a preprocessing directive. Everything else is a syntax error.
  */
 
-#indent input
+//indent input
 int decl;
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		decl;
-#indent end
+//indent end

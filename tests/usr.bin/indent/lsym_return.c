@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_return.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_return.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_return, which represents the keyword 'return' that
@@ -10,7 +10,7 @@
  * Since 'return' is not a function name, there is a space between the
  * 'return' and the '('.
  */
-#indent input
+//indent input
 void
 function(bool cond)
 {
@@ -26,16 +26,16 @@ calculate(int a, int b)
 	return (((a))) + b;
 	return calculate(b, a);
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Returning complex expressions may spread the expression over several lines.
  * The exact formatting depends on the option '-lp'.
  */
-#indent input
+//indent input
 int
 multi_line(int a)
 {
@@ -49,11 +49,11 @@ multi_line(int a)
 			 4
 		);
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
-#indent run -nlp
+//indent run -nlp
 int
 multi_line(int a)
 {
@@ -67,4 +67,4 @@ multi_line(int a)
 		4
 		);
 }
-#indent end
+//indent end

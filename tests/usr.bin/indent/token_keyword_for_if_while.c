@@ -1,4 +1,4 @@
-/* $NetBSD: token_keyword_for_if_while.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_keyword_for_if_while.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the keywords 'for', 'if' and 'while'.  These keywords have in
@@ -7,7 +7,7 @@
  * the head is 0 to 3 expressions, separated by semicolons.
  */
 
-#indent input
+//indent input
 void
 function(void)
 {
@@ -16,9 +16,9 @@ function(void)
 	for(;cond;)stmt();
 	do stmt();while(cond);
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -32,4 +32,4 @@ function(void)
 		stmt();
 	while (cond);
 }
-#indent end
+//indent end

@@ -1,8 +1,8 @@
-/*	$NetBSD: label.c,v 1.3 2022/04/22 21:21:20 rillig Exp $	*/
+/*	$NetBSD: label.c,v 1.4 2022/04/24 09:04:12 rillig Exp $	*/
 
 /* See FreeBSD r303489 */
 
-#indent input
+//indent input
 void t(void) {
 	switch (1)
 	{
@@ -14,9 +14,9 @@ CLEANUP:
 V: ;
 U: ;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 t(void)
 {
@@ -29,10 +29,10 @@ CLEANUP:
 V:	;
 U:	;
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 void
 label_width(void)
 {
@@ -45,9 +45,9 @@ L____6:;
 L_____7:;
 L______8:;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 label_width(void)
 {
@@ -60,13 +60,13 @@ L____6:	;
 L_____7:;
 L______8:;
 }
-#indent end
+//indent end
 
 
 /*
  * The indentation of statement labels is fixed to -2, it is not configurable.
  */
-#indent input
+//indent input
 void
 label_indentation(void)
 {
@@ -93,9 +93,9 @@ label_indentation(void)
 	label0:
 	statement();
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 label_indentation(void)
 {
@@ -122,4 +122,4 @@ label1:
 label0:
 	statement();
 }
-#indent end
+//indent end

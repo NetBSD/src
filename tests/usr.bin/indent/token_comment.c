@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.29 2022/04/24 08:52:44 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.30 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for formatting comments.  C99 defines block comments and end-of-line
@@ -51,19 +51,19 @@
  * - wrap/nowrap comment containing '\b'
  */
 
-#indent input
+//indent input
 typedef enum x {
 	aaaaaaaaaaaaaaaaaaaaaa = 1 << 0,	/* test a */
 	bbbbbbbbbbbbbbbbb = 1 << 1,	/* test b */
 	cccccccccccccc = 1 << 1,	/* test c */
 	dddddddddddddddddddddddddddddd = 1 << 2	/* test d */
 } x;
-#indent end
+//indent end
 
-#indent run-equals-input -bbb
+//indent run-equals-input -bbb
 
 
-#indent input
+//indent input
 /* See FreeBSD r303597, r303598, r309219, and r309343 */
 void
 t(void) {
@@ -90,9 +90,9 @@ t(void) {
 
 	/* r309343	*/
 }
-#indent end
+//indent end
 
-#indent run -bbb
+//indent run -bbb
 /* See FreeBSD r303597, r303598, r309219, and r309343 */
 void
 t(void)
@@ -124,7 +124,7 @@ t(void)
 
 	/* r309343	*/
 }
-#indent end
+//indent end
 
 
 /*
@@ -138,7 +138,7 @@ t(void)
  * Since the comments occur between psym_if_expr and the following statement,
  * they are handled by search_stmt_comment.
  */
-#indent input
+//indent input
 {
 	if (1) /*- a Christmas tree  *  search_stmt_comment
 				    ***
@@ -148,9 +148,9 @@ t(void)
 				  ***** */
 		1;
 }
-#indent end
+//indent end
 
-#indent run -bbb
+//indent run -bbb
 {
 	if (1)			/*- a Christmas tree  *  search_stmt_comment
 						     ***
@@ -160,7 +160,7 @@ t(void)
 			      ***** */
 		1;
 }
-#indent end
+//indent end
 
 
 /*
@@ -171,7 +171,7 @@ t(void)
  * The other Christmas tree is a standalone block comment, therefore the
  * comment starts in the code column.
  */
-#indent input
+//indent input
 {
 	if (7) { /*- a Christmas tree  *
 				      ***
@@ -182,9 +182,9 @@ t(void)
 		stmt();
 	}
 }
-#indent end
+//indent end
 
-#indent run -bbb
+//indent run -bbb
 {
 	if (7) {		/*- a Christmas tree  *
 					             ***
@@ -195,54 +195,54 @@ t(void)
 		stmt();
 	}
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 int decl;/*-fixed comment
 	    fixed comment*/
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int decl;			/*-fixed comment
 			           fixed comment*/
-#indent end
+//indent end
 /*
  * XXX: The second line of the above comment contains 11 spaces in a row,
  * instead of using as many tabs as possible.
  */
 
 
-#indent input
+//indent input
 {
 	if (0)/*-search_stmt_comment   |
 	   search_stmt_comment         |*/
 		;
 }
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 {
 	if (0)			/*-search_stmt_comment   |
 			     search_stmt_comment         |*/
 		;
 }
-#indent end
+//indent end
 
 
 /*
  * Ensure that all text of the comment is preserved when the comment is moved
  * to the right.
  */
-#indent input
+//indent input
 int decl;/*-fixed comment
 123456789ab fixed comment*/
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int decl;			/*-fixed comment
 		       123456789ab fixed comment*/
-#indent end
+//indent end
 
 
 /*
@@ -251,21 +251,21 @@ int decl;			/*-fixed comment
  *
  * This comment is handled by search_stmt_comment.
  */
-#indent input
+//indent input
 {
 	if(0)/*-search_stmt_comment
 123456789ab search_stmt_comment   |*/
 	    ;
 }
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 {
 	if (0)			/*-search_stmt_comment
 		   123456789ab search_stmt_comment   |*/
 		;
 }
-#indent end
+//indent end
 
 
 /*
@@ -273,23 +273,23 @@ int decl;			/*-fixed comment
  * to the left. In this case, the internal layout of the comment cannot be
  * preserved since the second line already starts in column 1.
  */
-#indent input
+//indent input
 int decl;					    /*-|fixed comment
 					| minus 12     |
 		| tabs inside		|
 	    |---|
 |-----------|
 tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int decl;			/*-|fixed comment
 		    | minus 12     |
 | tabs inside		|
 |---|
 |-----------|
 tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
-#indent end
+//indent end
 
 
 /*
@@ -299,7 +299,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  *
  * This comment is processed by search_stmt_comment.
  */
-#indent input
+//indent input
 {
 	if(0)					    /*-|search_stmt_comment
 					| minus 12     |
@@ -309,9 +309,9 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 		;
 }
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 {
 	if (0)			/*-|search_stmt_comment
 		    | minus 12     |
@@ -321,41 +321,41 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 		;
 }
-#indent end
+//indent end
 
 
 /*
  * Ensure that '{' after a search_stmt_comment is preserved.
  */
-#indent input
+//indent input
 {
 	if(0)/*comment*/{
 	}
 }
-#indent end
+//indent end
 
 /* The comment in the output has moved to the right of the '{'. */
-#indent run
+//indent run
 {
 	if (0) {		/* comment */
 	}
 }
-#indent end
+//indent end
 
 
 /*
  * The following comments test line breaking when the comment ends with a
  * space.
  */
-#indent input
+//indent input
 /* 456789 123456789 123456789 12345 */
 /* 456789 123456789 123456789 123456 */
 /* 456789 123456789 123456789 1234567 */
 /* 456789 123456789 123456789 12345678 */
 /* 456789 123456789 123456789 123456789 */
-#indent end
+//indent end
 
-#indent run -l38
+//indent run -l38
 /* 456789 123456789 123456789 12345 */
 /*
  * 456789 123456789 123456789 123456
@@ -370,7 +370,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  * 456789 123456789 123456789
  * 123456789
  */
-#indent end
+//indent end
 
 
 /*
@@ -378,7 +378,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  * with a space. Since indent adds a trailing space to a single-line comment,
  * this space has to be taken into account when computing the line length.
  */
-#indent input
+//indent input
 /* x		. line length 35*/
 /* x		.. line length 36*/
 /* x		... line length 37*/
@@ -387,9 +387,9 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 /* x		...... line length 40*/
 /* x		....... line length 41*/
 /* x		........ line length 42*/
-#indent end
+//indent end
 
-#indent run -l38
+//indent run -l38
 /* x		. line length 35 */
 /* x		.. line length 36 */
 /* x		... line length 37 */
@@ -406,14 +406,14 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 /*
  * x		........ line length 42
  */
-#indent end
+//indent end
 
 
 /*
  * The different types of comments that indent distinguishes, starting in
  * column 1 (see options '-fc1' and '-nfc1').
  */
-#indent input
+//indent input
 /* This is a traditional C block comment. */
 
 // This is a C99 line comment.
@@ -438,9 +438,9 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  * that is not re-wrapped.
  * It is often used for copyright declarations.
  */
-#indent end
+//indent end
 
-#indent run
+//indent run
 /* This is a traditional C block comment. */
 
 // This is a C99 line comment.
@@ -464,14 +464,14 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  * that is not re-wrapped.
  * It is often used for copyright declarations.
  */
-#indent end
+//indent end
 
 
 /*
  * The different types of comments that indent distinguishes, starting in
  * column 9, so they are independent of the option '-fc1'.
  */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -494,9 +494,9 @@ function(void)
 	 * that is not re-wrapped.
 	 */
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -518,13 +518,13 @@ function(void)
 	 * that is not re-wrapped.
 	 */
 }
-#indent end
+//indent end
 
 
 /*
  * Comments to the right of declarations.
  */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -556,9 +556,9 @@ function(void)
 		}
 	}
 }
-#indent end
+//indent end
 
-#indent run -ldi0
+//indent run -ldi0
 void
 function(void)
 {
@@ -587,13 +587,13 @@ function(void)
 		}
 	}
 }
-#indent end
+//indent end
 
 
 /*
  * Comments to the right of code.
  */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -636,9 +636,9 @@ function(void)
 					if (cond) /* comment */
 						code(); /* comment */
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -683,10 +683,10 @@ function(void)
 					if (cond)	/* comment */
 						code();	/* comment */
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 /*
 	 * this
 		 * is a boxed
@@ -698,9 +698,9 @@ There may also be
 		lines without asterisks.
 
  */
-#indent end
+//indent end
 
-#indent run
+//indent run
 /*
  * this is a boxed staircase.
  *
@@ -709,10 +709,10 @@ There may also be
  * There may also be lines without asterisks.
  *
  */
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 void loop(void)
 {
 while(cond)/*comment*/;
@@ -720,9 +720,9 @@ while(cond)/*comment*/;
 	while(cond)
 	/*comment*/;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 loop(void)
 {
@@ -733,7 +733,7 @@ loop(void)
 /* $ XXX: The spaces around the comment look unintentional. */
 		 /* comment */ ;
 }
-#indent end
+//indent end
 
 
 /*
@@ -741,11 +741,11 @@ loop(void)
  * line only contains a single word, the maximum allowed line width is
  * extended such that each comment line may contain 22 characters.
  */
-#indent input
+//indent input
 int		global_variable_with_really_long_name_that_reaches_up_to_column_83;	/* 1234567890123456789 1 1234567890123456789 12 1234567890123456789 123 1234567890123456789 1234 1234567890123456789 12345 1234567890123456789 123456 */
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		global_variable_with_really_long_name_that_reaches_up_to_column_83;	/* 1234567890123456789 1
 											 * 1234567890123456789 12
 											 * 1234567890123456789
@@ -756,7 +756,7 @@ int		global_variable_with_really_long_name_that_reaches_up_to_column_83;	/* 1234
 											 * 12345
 											 * 1234567890123456789
 											 * 123456 */
-#indent end
+//indent end
 
 
 /*
@@ -767,7 +767,7 @@ int		global_variable_with_really_long_name_that_reaches_up_to_column_83;	/* 1234
  * seemingly unpredictable ways. It treated any sequence of '/' as a binary
  * operator, no matter whether it was '/' or '//' or '/////'.
  */
-#indent input
+//indent input
 int dummy // comment
     = // eq
     1		// one
@@ -785,9 +785,9 @@ int
 main(void)
 {
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		dummy		// comment
 =				// eq
 1				// one
@@ -808,7 +808,7 @@ int
 main(void)
 {
 }
-#indent end
+//indent end
 
 
 /*
@@ -816,25 +816,25 @@ main(void)
  * very basically. It messed up the following code, repeating the identifier
  * 'bar' twice in a row.
  */
-#indent input
+//indent input
 void c99_comment(void)
 {
 foo(); // C99 comment
 bar();
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 c99_comment(void)
 {
 	foo();			// C99 comment
 	bar();
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 void
 comment_at_end_of_function(void)
 {
@@ -842,28 +842,28 @@ comment_at_end_of_function(void)
 		statement();
 	// comment
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
-#indent input
+//indent input
 int		decl;
 // end-of-line comment at the end of the file
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /* A form feed in the middle of a comment is an ordinary character. */
-#indent input
+//indent input
 /*
  * AE
  */
 /*-AE*/
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -871,26 +871,26 @@ int		decl;
  * is an implementation detail that should not be visible from the outside.
  * Form feeds in comments are seldom used though, so this is no problem.
  */
-#indent input
+//indent input
 /* comment*/
 /*text* comment*/
-#indent end
+//indent end
 
-#indent run
+//indent run
 /* * comment */
 /* text* * comment */
-#indent end
+//indent end
 
 /*
  * Without 'star_comment_cont', there is no separator between the form feed
  * and the surrounding text.
  */
-#indent run -nsc
+//indent run -nsc
 /*comment */
 /* text*comment */
-#indent end
+//indent end
 
-#indent run-equals-input -nfc1
+//indent run-equals-input -nfc1
 
 
 /*
@@ -899,38 +899,38 @@ int		decl;
  * otherwise empty comment. This space forces output_complete_line to add some output,
  * but the trailing space is discarded, resulting in an empty line.
  */
-#indent input
+//indent input
 /*- comment
 
 
 end */
-#indent end
+//indent end
 
-#indent run-equals-input -nfc1
+//indent run-equals-input -nfc1
 
 
-#indent input
+//indent input
 /* comment comment comment comment Ümläute */
-#indent end
+//indent end
 
-#indent run -l40
+//indent run -l40
 /*
  * comment comment comment comment
  * Ümläute
  */
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 int f(void)
 {
 	if (0)
 		/* 12 1234 123 123456 1234 1234567 123 1234.  */;
 }
-#indent end
+//indent end
 
 /* The comment is too long to fit in a single line. */
-#indent run -l54
+//indent run -l54
 int
 f(void)
 {
@@ -940,17 +940,17 @@ f(void)
 		 * 1234.
 		  */ ;
 }
-#indent end
+//indent end
 
 /* The comment fits in a single line. */
-#indent run
+//indent run
 int
 f(void)
 {
 	if (0)
 		 /* 12 1234 123 123456 1234 1234567 123 1234.  */ ;
 }
-#indent end
+//indent end
 
 
 /*
@@ -959,73 +959,73 @@ f(void)
  * wrongly assumed that the comment would end at the '*' '/', tokenizing the
  * second word 'still' as a type_outside_parentheses.
  */
-#indent input
+//indent input
 /* block comment */
 // line comment /* still a line comment */ still a line comment
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Tests for comments that are not wrapped.
  */
-#indent input
+//indent input
 /*-	tab space	tab space */
 /*-	very-long-word-that-cannot-be-broken very-long-word-that-cannot-be-broken */
 /*-	very-long-word-that-cannot-be-broken very-long-word-that-cannot-be-broken */
-#indent end
+//indent end
 
-#indent run-equals-input -l5
+//indent run-equals-input -l5
 
-#indent run-equals-input -l32
+//indent run-equals-input -l32
 
 
 /*
  * Test for form feeds in nowrap comments.
  */
-#indent input
+//indent input
 /*-*/
 /*-<>*/
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Test two completely empty lines in a wrap comment. The second empty line
  * covers the condition ps.next_col_1 in copy_comment_wrap.
  */
-#indent input
+//indent input
 /* line 1
 
 
 line 4 */
-#indent end
+//indent end
 
-#indent run
+//indent run
 /*
  * line 1
  *
  *
  * line 4
  */
-#indent end
+//indent end
 
-#indent run-equals-input -nfc1
+//indent run-equals-input -nfc1
 
-#indent run-equals-input -nfc1 -nsc
+//indent run-equals-input -nfc1 -nsc
 
-#indent run -nsc
+//indent run -nsc
 /*
 line 1
 
 
 line 4
  */
-#indent end
+//indent end
 
-#indent run-equals-input -nsc -ncdb
+//indent run-equals-input -nsc -ncdb
 
 
 /*
@@ -1033,11 +1033,11 @@ line 4
  * default buffer size is 200. To actually fill the comment buffer, there must
  * be a single line of a comment that is longer than 200 bytes.
  */
-#indent input
+//indent input
 /*-_____10________20________30________40________50________60________70________80________90_______100_______110_______120_______130_______140_______150_______160_______170_______180_______190_______200 */
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -1047,30 +1047,30 @@ line 4
  * comment buffer to expanded in com_terminate, the comment must be exactly
  * 193 bytes long.
  */
-#indent input
+//indent input
 /*-_____10________20________30________40________50________60________70________80________90_______100_______110_______120_______130_______140_______150_______160_______170_______180_______190 */
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Since 2019-04-04 and before pr_comment.c 1.123 from 2021-11-25, the
  * function analyze_comment wrongly joined the two comments.
  */
-#indent input
+//indent input
 /*
  *//*
 join*/
-#indent end
+//indent end
 
 /* FIXME: The last line of the first comment must not be modified. */
-#indent run -nfc1
+//indent run -nfc1
 /*
   *//*
   * join
   */
-#indent end
+//indent end
 
 
 /*
@@ -1078,15 +1078,15 @@ join*/
  * function analyze_comment generated malformed output by terminating the
  * first comment but omitting the start of the second comment.
  */
-#indent input
+//indent input
 /*
 *//*
 error*/
-#indent end
+//indent end
 
-#indent run -nfc1
+//indent run -nfc1
 /*
  *//*
   * error
   */
-#indent end
+//indent end

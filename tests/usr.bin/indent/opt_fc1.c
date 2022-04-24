@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-fc1' and '-nfc1'.
@@ -9,7 +9,7 @@
  * in column 1.
  */
 
-#indent input
+//indent input
 /*
  * A comment
  * in column 1.
@@ -17,21 +17,21 @@
  *
  *
  */
-#indent end
+//indent end
 
-#indent run -fc1
+//indent run -fc1
 /*
  * A comment in column 1.
  *
  *
  *
  */
-#indent end
+//indent end
 
-#indent run-equals-input -nfc1
+//indent run-equals-input -nfc1
 
 
-#indent input
+//indent input
 /* $ Neither indentation nor surrounding spaces. */
 /*narrow*/
 
@@ -46,9 +46,9 @@
 
 /* $ Both comment texts get surrounded by spaces. */
 /*block1*//*block2*/
-#indent end
+//indent end
 
-#indent run -fc1
+//indent run -fc1
 /* $ The comment text got surrounded by spaces. */
 /* narrow */
 
@@ -63,9 +63,9 @@
 
 /* $ Both comment texts got surrounded by spaces. */
 /* block1 *//* block2 */
-#indent end
+//indent end
 
-#indent run -nfc1
+//indent run -nfc1
 /* $ No spaces got added around the comment text. */
 /*narrow*/
 
@@ -93,52 +93,52 @@
 /* $ formatted, but the comment 'block1' was moved from column 1 to 2. */
 /* $ This is probably because there is a second comment in the same line. */
  /*block1*//* block2 */
-#indent end
+//indent end
 
 
 /*
  * Since 2019-04-04 and before pr_comment.c 1.123 from 2021-11-25, the
  * function analyze_comment wrongly joined the two comments.
  */
-#indent input
+//indent input
 /*
  * A multi-line comment that starts
  * in column 1.
  *//* followed by another multi-line comment
  * that starts in column 4.
  */
-#indent end
+//indent end
 
-#indent run -fc1
+//indent run -fc1
 /*
  * A multi-line comment that starts in column 1.
  *//*
  * followed by another multi-line comment that starts in column 4.
  */
-#indent end
+//indent end
 
 /* FIXME: The last line of the first comment must not be modified. */
-#indent run -nfc1
+//indent run -nfc1
 /*
  * A multi-line comment that starts
  * in column 1.
   *//*
   * followed by another multi-line comment that starts in column 4.
   */
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 /* comment */ int decl2; /* comment */
 /* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2; /* second comment */
 /* first comment */ int decl2; /* looooooooooooooooooooooooooooooooooooooooong second comment */
-#indent end
+//indent end
 
-#indent run -fc1
+//indent run -fc1
  /* comment */ int decl2;	/* comment */
  /* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2;	/* second comment */
  /* first comment */ int decl2;	/* looooooooooooooooooooooooooooooooooooooooong
 				 * second comment */
-#indent end
+//indent end
 
-#indent run-equals-prev-output -nfc1
+//indent run-equals-prev-output -nfc1

@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr_stmt.c,v 1.3 2022/04/23 09:01:03 rillig Exp $ */
+/* $NetBSD: psym_if_expr_stmt.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr_stmt, which represents the state
@@ -11,7 +11,7 @@
  * Any token other than 'else' completes the 'if' statement.
  */
 
-#indent input
+//indent input
 void
 function(void)
 {
@@ -22,6 +22,6 @@ function(void)
 	else			/* belongs to the second 'if' */
 		stmt();
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ip.c,v 1.6 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_ip.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-ip' and '-nip'.
@@ -9,35 +9,35 @@
  * The option '-nip' places the parameter declarations in column 1.
  */
 
-#indent input
+//indent input
 double
 plus3(a, b, c)
 	double a, b, c;
 {
 	return a + b + c;
 }
-#indent end
+//indent end
 
-#indent run -ip
+//indent run -ip
 double
 plus3(a, b, c)
 	double		a, b, c;
 {
 	return a + b + c;
 }
-#indent end
+//indent end
 
-#indent run -nip
+//indent run -nip
 double
 plus3(a, b, c)
 double		a, b, c;
 {
 	return a + b + c;
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 int
 first_parameter_in_same_line(int a,
 int b,
@@ -54,9 +54,9 @@ multiple_parameters_per_line(
 int a1, int a2,
 int b1, int b2,
 const char *cp);
-#indent end
+//indent end
 
-#indent run -ip
+//indent run -ip
 int
 first_parameter_in_same_line(int a,
 			     int b,
@@ -73,6 +73,6 @@ multiple_parameters_per_line(
 			     int a1, int a2,
 			     int b1, int b2,
 			     const char *cp);
-#indent end
+//indent end
 
-#indent run-equals-prev-output -nip
+//indent run-equals-prev-output -nip
