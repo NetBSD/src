@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.84 2022/04/18 10:57:05 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.85 2022/04/24 16:39:56 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1539,4 +1539,12 @@ sys/fs/udf/udf_allocation.c			1.46
 
 	Avoid a race introduced with ticket #1431.
 	[reinoud, ticket #1437]
+
+sys/compat/netbsd32/netbsd32.h			1.140
+sys/compat/netbsd32/netbsd32_fs.c		1.95
+sys/fs/udf/udf_subr.c				1.169
+
+	Fix endian issue with UDF extended attribute handling.
+	PR 56801: implement support for mounting UDF in compat32.
+	[reinoud, ticket #1438]
 
