@@ -1,4 +1,4 @@
-/* $NetBSD: files.c,v 1.1 2002/03/15 13:23:34 simonb Exp $ */
+/* $NetBSD: files.c,v 1.2 2022/04/24 06:52:59 mlelstv Exp $ */
 
 /*
  *	files.c:
@@ -10,3 +10,4 @@
 #include "stand.h"
 
 struct open_file files[SOPEN_MAX];
+const char *fsmod = NULL;	/* file system module name to load */

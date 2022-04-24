@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.11 2014/03/29 14:30:16 jakllsch Exp $	*/
+/*	$NetBSD: globals.c,v 1.12 2022/04/24 06:52:59 mlelstv Exp $	*/
 
 /*
  *	globals.c:
@@ -20,7 +20,6 @@ u_char	bcea[ETHER_ADDR_LEN] = BA;	/* broadcast ethernet address */
 char	rootpath[FNAME_SIZE];		/* root mount path */
 char	bootfile[FNAME_SIZE];		/* bootp says to boot this */
 char	hostname[FNAME_SIZE];		/* our hostname */
-const char	*fsmod = NULL;		/* file system module name to load */
 struct	in_addr myip;			/* my ip address */
 struct	in_addr rootip;			/* root ip address */
 struct	in_addr gateip;			/* swap ip address */
