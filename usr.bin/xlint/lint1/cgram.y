@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.396 2022/04/24 13:38:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.397 2022/04/24 15:55:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.396 2022/04/24 13:38:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.397 2022/04/24 15:55:50 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -979,7 +979,7 @@ struct_declaration:		/* C99 6.7.2.1 */
 	| begin_type_specifier_qualifier_list end_type type_attribute_opt
 	    T_SEMI {
 		symtyp = FVFT;
-		if (!Sflag)
+		if (!allow_c11 && !allow_gcc)
 			/* anonymous struct/union members is a C11 feature */
 			warning(49);
 		if (is_struct_or_union(dcs->d_type->t_tspec)) {
