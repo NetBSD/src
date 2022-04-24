@@ -1,4 +1,4 @@
-/*	$NetBSD: saioctl.h,v 1.4 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: saioctl.h,v 1.5 2022/04/24 06:48:15 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,3 +46,5 @@
 #define	SAIOSSDEV	(('d'<<8)|12)	/* is device skip sector type? */
 #define	SAIODEBUG	(('d'<<8)|13)	/* enable/disable debugging */
 #define	SAIOGBADINFO	(('d'<<8)|14)	/* get bad-sector table */
+
+#define SAIOSECSIZE	(('d'<<8)|15)	/* get sector size */
