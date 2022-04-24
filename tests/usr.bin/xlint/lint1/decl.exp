@@ -9,6 +9,7 @@ decl.c(68): warning: converting 'pointer to char' to incompatible 'pointer to do
 decl.c(70): warning: illegal combination of pointer (pointer to double) and integer (char), arg #1 [154]
 decl.c(72): warning: converting 'pointer to pointer to char' to incompatible 'pointer to double' for argument 1 [153]
 decl.c(80): error: syntax error '"' [249]
+decl.c(106): error: old style declaration; add 'int' [1]
 decl.c(163): error: syntax error 'int' [249]
 decl.c(166): error: syntax error 'int' [249]
 decl.c(180): error: syntax error 'goto' [249]
