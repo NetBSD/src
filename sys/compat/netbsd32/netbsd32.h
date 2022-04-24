@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.123.4.1 2019/11/19 13:36:25 martin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.123.4.2 2022/04/24 16:39:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1093,6 +1093,25 @@ struct netbsd32_msdosfs_args {
 	int	version;	/* version of the struct */
 	mode_t  dirmask;	/* v2: mask to be applied for msdosfs perms */
 	int	gmtoff;		/* v3: offset from UTC in seconds */
+};
+
+/* from <udf/udf_mount.h> */
+struct netbsd32_udf_args {
+	uint32_t	 version;	/* version of this structure         */
+	netbsd32_charp	 fspec;		/* mount specifier                   */
+	int32_t		 sessionnr;	/* session specifier, rel of abs     */
+	uint32_t	 udfmflags;	/* mount options                     */
+	int32_t		 gmtoff;	/* offset from UTC in seconds        */
+
+	uid_t		 anon_uid;	/* mapping of anonymous files uid    */
+	gid_t		 anon_gid;	/* mapping of anonymous files gid    */
+	uid_t		 nobody_uid;	/* nobody:nobody will map to -1:-1   */
+	gid_t		 nobody_gid;	/* nobody:nobody will map to -1:-1   */
+
+	uint32_t	 sector_size;	/* for mounting dumps/files          */
+
+	/* extendable */
+	uint8_t	 reserved[32];
 };
 
 /* from <miscfs/genfs/layer.h> */
