@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.24 2022/04/23 22:40:28 mlelstv Exp $");
+__RCSID("$NetBSD: boot.c,v 1.25 2022/04/24 10:35:15 hannken Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -132,7 +132,8 @@ readboot(int dosfs, struct bootblock *boot)
 
 		if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 		    != boot->FSInfo * boot->BytesPerSec
-		    || read(dosfs, fsinfo, 2 * secsize) != 2 * secsize) {
+		    || (size_t)read(dosfs, fsinfo, 2 * secsize)
+		    != 2 * secsize) {
 			perr("could not read fsinfo block");
 			return FSFATAL;
 		}
@@ -181,7 +182,7 @@ readboot(int dosfs, struct bootblock *boot)
 
 		if (lseek(dosfs, boot->Backup * boot->BytesPerSec, SEEK_SET)
 		    != boot->Backup * boot->BytesPerSec
-		    || read(dosfs, backup, secsize) != secsize) {
+		    || (size_t)read(dosfs, backup, secsize) != secsize) {
 			perr("could not read backup bootblock");
 			free(fsinfo);
 			free(backup);
@@ -307,7 +308,8 @@ writefsinfo(int dosfs, struct bootblock *boot)
 
 	if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 	    != boot->FSInfo * boot->BytesPerSec
-	    || read(dosfs, fsinfo, 2 * boot->BytesPerSec) != 2 * boot->BytesPerSec) {
+	    || (size_t)read(dosfs, fsinfo, 2 * boot->BytesPerSec)
+	    != 2 * boot->BytesPerSec) {
 		perr("could not read fsinfo block");
 		free(fsinfo);
 		return FSFATAL;
@@ -322,7 +324,8 @@ writefsinfo(int dosfs, struct bootblock *boot)
 	fsinfo[0x1ef] = (u_char)(boot->FSNext >> 24);
 	if (lseek(dosfs, boot->FSInfo * boot->BytesPerSec, SEEK_SET)
 	    != boot->FSInfo * boot->BytesPerSec
-	    || write(dosfs, fsinfo, 2 * boot->BytesPerSec) != 2 * boot->BytesPerSec) {
+	    || (size_t)write(dosfs, fsinfo, 2 * boot->BytesPerSec)
+	    != 2 * boot->BytesPerSec) {
 		perr("Unable to write FSInfo");
 		free(fsinfo);
 		return FSFATAL;
