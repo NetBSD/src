@@ -1,4 +1,4 @@
-/* $NetBSD: token_string_prefix.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_string_prefix.c,v 1.4 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for strings of wide characters, which are prefixed with 'L'.
@@ -15,7 +15,9 @@ wchar_t wide_string[] = L"wide string";
  * string literal.
  */
 #indent run-equals-input -di0
+
 #indent run-equals-input -di0 -l25
+
 #indent run-equals-input -di0 -l1
 
 

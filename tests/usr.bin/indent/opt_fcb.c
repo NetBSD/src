@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fcb.c,v 1.6 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_fcb.c,v 1.7 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for the options '-fcb' and '-nfcb'.
@@ -63,6 +63,7 @@
 #indent end
 
 #indent run-equals-input -fcb
+
 #indent run-equals-input -nfcb
 
 
@@ -137,4 +138,5 @@ example(void)
 #indent end
 
 #indent run-equals-input -fcb
+
 #indent run-equals-input -nfcb

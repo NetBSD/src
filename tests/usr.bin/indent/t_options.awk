@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.8 2022/04/22 21:21:20 rillig Exp $
+# $NetBSD: t_options.awk,v 1.9 2022/04/24 08:52:44 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,6 +54,7 @@ BEGIN {
 
 	prev_empty_lines = 0	# the finished "block" of empty lines
 	curr_empty_lines = 0	# the ongoing "block" of empty lines
+	max_empty_lines = 0	# between sections
 	seen_input_section = 0	# the first input section is not checked
 
 	section = ""		# "", "input" or "run"
@@ -89,6 +90,12 @@ function quote(s)
 	return "'" s "'"
 }
 
+function check_empty_lines_block(n)
+{
+	if (max_empty_lines != n && seen_input_section)
+	 	warn(NR, "expecting " n " empty " (n != 1 ? "lines" : "line") ", got " max_empty_lines)
+}
+
 function check_unused_input()
 {
 	if (unused_input_lineno != 0)
@@ -110,6 +117,8 @@ section == "" {
 	if (NF == 0)
 		curr_empty_lines++
 	else {
+		if (curr_empty_lines > max_empty_lines)
+			max_empty_lines = curr_empty_lines
 		if (curr_empty_lines > 0) {
 			if (prev_empty_lines > 1)
 				warn(NR - curr_empty_lines - 1,
@@ -138,6 +147,7 @@ section == "" {
 		if (prev_empty_lines != 2 && seen_input_section)
 			warn(NR, "input section needs 2 empty lines above, " \
 			    "not " prev_empty_lines)
+		check_empty_lines_block(2)
 		check_unused_input()
 		section = "input"
 		section_excl_comm = ""
@@ -148,6 +158,7 @@ section == "" {
 	} else if ($2 == "run") {
 		if (section != "")
 			warn(NR, "unfinished section " quote(section))
+		check_empty_lines_block(1)
 		if (prev_empty_lines != 1)
 			warn(NR, "run section needs 1 empty line above, " \
 			    "not " prev_empty_lines)
@@ -160,13 +171,17 @@ section == "" {
 		unused_input_lineno = 0
 
 	} else if ($2 == "run-equals-input") {
+		check_empty_lines_block(1)
 		run_indent(input_excl_comm)
 		printf("%s", input_excl_comm) > "expected.out"
 		unused_input_lineno = 0
+		max_empty_lines = 0
 
 	} else if ($2 == "run-equals-prev-output") {
+		check_empty_lines_block(1)
 		run_indent(input_excl_comm)
 		printf("%s", output_excl_comm) > "expected.out"
+		max_empty_lines = 0
 
 	} else if ($2 == "end" && section == "input") {
 		if (section_incl_comm == input_incl_comm)
@@ -175,6 +190,7 @@ section == "" {
 		input_excl_comm = section_excl_comm
 		input_incl_comm = section_incl_comm
 		section = ""
+		max_empty_lines = 0
 
 	} else if ($2 == "end" && section == "run") {
 		if (section_incl_comm == input_incl_comm)
@@ -187,6 +203,7 @@ section == "" {
 		output_excl_comm = section_excl_comm
 		output_incl_comm = section_incl_comm
 		section = ""
+		max_empty_lines = 0
 
 	} else if ($2 == "end") {
 		warn(NR, "misplaced " quote("#indent end"))

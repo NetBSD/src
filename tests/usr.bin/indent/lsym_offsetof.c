@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_offsetof.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_offsetof.c,v 1.4 2022/04/24 08:52:44 rillig Exp $ */
 
 /*
  * Tests for the token lsym_offsetof, which represents the keyword 'offsetof'
@@ -10,6 +10,7 @@ size_t		offset = offsetof(struct s, member);
 #indent end
 
 #indent run-equals-input
+
 #indent run-equals-input -bs
 
 /*
