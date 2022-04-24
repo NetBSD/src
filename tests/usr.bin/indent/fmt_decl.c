@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.34 2022/04/24 08:52:44 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.35 2022/04/24 09:04:12 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -14,32 +14,32 @@
  * A type definition usually declares a single type, so there is no need to
  * align the newly declared type name with the other variables.
  */
-#indent input
+//indent input
 typedef   void   (   *   function_ptr   )   (   int   *   )   ;
-#indent end
+//indent end
 
-#indent run
+//indent run
 typedef void (*function_ptr)(int *);
-#indent end
+//indent end
 
 
 /*
  * In variable declarations, the names of the first declarators are indented
  * by the amount given in '-di', which defaults to 16.
  */
-#indent input
+//indent input
 extern   void   (   *   function_pointer   )   (   int   *   )   ;
 extern   void   *   pointer;
-#indent end
+//indent end
 
-#indent run
+//indent run
 /* $ XXX: Why is the token 'function_pointer' not aligned with 'pointer'? */
 extern void	(*function_pointer)(int *);
 extern void    *pointer;
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 static const struct
 {
 	double		x;
@@ -52,9 +52,9 @@ static const struct
 		5
 	}
 };
-#indent end
+//indent end
 
-#indent run
+//indent run
 static const struct {
 	double		x;
 	double		y, z;
@@ -66,23 +66,23 @@ static const struct {
 		5
 	}
 };
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 typedef struct Complex
 {
 	double		x;
 	double		y;
 }	Complex;
-#indent end
+//indent end
 
-#indent run
+//indent run
 typedef struct Complex {
 	double		x;
 	double		y;
 }		Complex;
-#indent end
+//indent end
 
 
 /*
@@ -119,24 +119,24 @@ typedef struct Complex {
  * line 6: rbrace "}"
  * line 6: eof "\n"
  */
-#indent input
+//indent input
 void
 t1 (char *a, int b,
 	void (*fn)(void))
 {}
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 t1(char *a, int b,
    void (*fn)(void))
 {
 }
-#indent end
+//indent end
 
 
 /* See opt_bc.c. */
-#indent input
+//indent input
 void t2 (char *x, int y)
 {
 	int a,
@@ -158,9 +158,9 @@ void t2 (char *x, int y)
 	;
 	int		chars[ /* push the comma beyond column 74 .... */ ], x;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 t2(char *x, int y)
 {
@@ -176,103 +176,103 @@ t2(char *x, int y)
 	int		chars[ /* push the comma beyond column 74 .... */ ],
 			x;
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 const int	int_minimum_size =
 MAXALIGN(offsetof(int, test)) + MAXIMUM_ALIGNOF;
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Ensure that the usual GCC-style function attributes are formatted in a
  * sensible way.
  */
-#indent input
+//indent input
 void function(const char *, ...) __attribute__((format(printf, 1, 2)));
-#indent end
+//indent end
 
 /* FIXME: missing space before '__attribute__' */
-#indent run -di0
+//indent run -di0
 void function(const char *, ...)__attribute__((format(printf, 1, 2)));
-#indent end
+//indent end
 
 /* FIXME: missing space before '__attribute__' */
-#indent run
+//indent run
 void		function(const char *, ...)__attribute__((format(printf, 1, 2)));
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 static
 _attribute_printf(1, 2)
 void
 print_error(const char *fmt,...)
 {
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 static
 _attribute_printf(1, 2)
 void
 print_error(const char *fmt, ...)
 {
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 static _attribute_printf(1, 2)
 void
 print_error(const char *fmt,...)
 {
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 static _attribute_printf(1, 2)
 void
 print_error(const char *fmt, ...)
 {
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 static void _attribute_printf(1, 2)
 print_error(const char *fmt,...)
 {
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 static void
 _attribute_printf(1, 2)
 print_error(const char *fmt, ...)
 {
 }
-#indent end
+//indent end
 
 
 /* See FreeBSD r309380 */
-#indent input
+//indent input
 static LIST_HEAD(, alq) ald_active;
 static int ald_shutting_down = 0;
 struct thread *ald_thread;
-#indent end
+//indent end
 
-#indent run
+//indent run
 static LIST_HEAD(, alq) ald_active;
 static int	ald_shutting_down = 0;
 struct thread  *ald_thread;
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 static int
 old_style_definition(a, b, c)
 	struct thread *a;
@@ -281,9 +281,9 @@ old_style_definition(a, b, c)
 {
 
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 static int
 old_style_definition(a, b, c)
 	struct thread  *a;
@@ -292,14 +292,14 @@ old_style_definition(a, b, c)
 {
 
 }
-#indent end
+//indent end
 
 
 /*
  * Demonstrate how variable declarations are broken into several lines when
  * the line length limit is set quite low.
  */
-#indent input
+//indent input
 struct s a,b;
 struct s0 a,b;
 struct s01 a,b;
@@ -315,9 +315,9 @@ struct s01234567890 a,b;
 struct s012345678901 a,b;
 struct s0123456789012 a,b;
 struct s01234567890123 a,b;
-#indent end
+//indent end
 
-#indent run -l20 -di0
+//indent run -l20 -di0
 struct s a, b;
 /* $ XXX: See process_comma, varname_len for why this line is broken. */
 struct s0 a,
@@ -351,10 +351,10 @@ struct s0123456789012 a,
                b;
 struct s01234567890123 a,
                 b;
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 char * x(void)
 {
     type identifier;
@@ -368,9 +368,9 @@ char * x(void)
 
     return NULL;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 char *
 x(void)
 {
@@ -385,10 +385,10 @@ x(void)
 
 	return NULL;
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 int *
 y(void) {
 
@@ -398,9 +398,9 @@ int
 z(void) {
 
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 int *
 y(void)
 {
@@ -412,36 +412,36 @@ z(void)
 {
 
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 int x;
 int *y;
 int * * * * z;
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		x;
 int	       *y;
 int	    ****z;
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 int main(void) {
     char (*f1)() = NULL;
     char *(*f1)() = NULL;
     char *(*f2)();
 }
-#indent end
+//indent end
 
 /*
  * Before NetBSD io.c 1.103 from 2021-10-27, indent wrongly placed the second
  * and third variable declaration in column 1. This bug has been introduced
  * to NetBSD when FreeBSD indent was imported in 2019.
  */
-#indent run -ldi0
+//indent run -ldi0
 int
 main(void)
 {
@@ -449,9 +449,9 @@ main(void)
 	char *(*f1)() = NULL;
 	char *(*f2)();
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 int
 main(void)
 {
@@ -462,7 +462,7 @@ main(void)
 /* $ XXX: Not really pretty, the name 'f2' should be aligned, if at all. */
 	char *(*	f2)();
 }
-#indent end
+//indent end
 
 
 /*
@@ -473,19 +473,19 @@ main(void)
  * Before NetBSD lexi.c 1.123 from 2021-10-31, indent treated the '-' as a
  * unary operator.
  */
-#indent input
+//indent input
 int a - 1;
 {
 int a - 1;
 }
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int a - 1;
 {
 	int a - 1;
 }
-#indent end
+//indent end
 
 
 /*
@@ -495,7 +495,7 @@ int a - 1;
  * all other function names (containing [$0-9_]) the '*' was right-aligned on
  * the declaration indentation, which defaults to 16.
  */
-#indent input
+//indent input
 int *
 f2(void)
 {
@@ -510,45 +510,45 @@ int *
 int_create(void)
 {
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Since 2019-04-04, the space between the '){' is missing.
  */
-#indent input
+//indent input
 int *
 function_name_____20________30________40________50
 (void)
 {}
-#indent end
+//indent end
 
 /* FIXME: The space between '){' is missing. */
-#indent run
+//indent run
 int	       *function_name_____20________30________40________50
 		(void){
 }
-#indent end
+//indent end
 
 
 /*
  * Since 2019-04-04 and before lexi.c 1.144 from 2021-11-19, some function
  * names were preserved while others were silently discarded.
  */
-#indent input
+//indent input
 int *
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 (void)
 {}
-#indent end
+//indent end
 
-#indent run
+//indent run
 int	       *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 		(void){
 }
-#indent end
+//indent end
 
 
 /*
@@ -577,7 +577,7 @@ int	       *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
  *
  * Fixed in lexi.c 1.156 from 2021-11-25.
  */
-#indent input
+//indent input
 void		buffer_add(buffer *, char);
 void		buffer_add(buffer *buf, char ch);
 
@@ -586,10 +586,10 @@ buffer_add(buffer *buf, char ch)
 {
 	*buf->e++ = ch;
 }
-#indent end
+//indent end
 
 /* Before lexi.c 1.156 from 2021-11-25, indent generated 'buffer * buf'. */
-#indent run
+//indent run
 void		buffer_add(buffer *, char);
 /* $ FIXME: space after '*' */
 void		buffer_add(buffer * buf, char ch);
@@ -599,58 +599,58 @@ buffer_add(buffer *buf, char ch)
 {
 	*buf->e++ = ch;
 }
-#indent end
+//indent end
 
 
 /*
  * Indent gets easily confused by type names it does not know about.
  */
-#indent input
+//indent input
 static Token
 ToToken(bool cond)
 {
 }
-#indent end
+//indent end
 
-#indent run-equals-input -TToken
+//indent run-equals-input -TToken
 
 /* Since lexi.c 1.153 from 2021-11-25. */
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Indent gets easily confused by unknown type names in struct declarations.
  */
-#indent input
+//indent input
 typedef struct OpenDirs {
 	CachedDirList	list;
 	HashTable /* of CachedDirListNode */ table;
 }		OpenDirs;
-#indent end
+//indent end
 
 /* FIXME: The word 'HashTable' must not be aligned like a member name. */
-#indent run
+//indent run
 typedef struct OpenDirs {
 	CachedDirList	list;
 			HashTable /* of CachedDirListNode */ table;
 }		OpenDirs;
-#indent end
+//indent end
 
-#indent run-equals-input -THashTable
+//indent run-equals-input -THashTable
 
 
 /*
  * Indent gets easily confused by unknown type names, even in declarations
  * that are syntactically unambiguous.
  */
-#indent input
+//indent input
 static CachedDir *dot = NULL;
-#indent end
+//indent end
 
-#indent run-equals-input -TCachedDir
+//indent run-equals-input -TCachedDir
 
 /* Since lexi.c 1.153 from 2021-11-25. */
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -658,15 +658,15 @@ static CachedDir *dot = NULL;
  * type names in declarations and generated 'HashEntry * he' with an extra
  * space.
  */
-#indent input
+//indent input
 static CachedDir *
 CachedDir_New(const char *name)
 {
 }
-#indent end
+//indent end
 
 /* Since lexi.c 1.153 from 2021-11-25. */
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -674,14 +674,14 @@ CachedDir_New(const char *name)
  * type names in declarations and generated 'CachedDir * dir' with an extra
  * space.
  */
-#indent input
+//indent input
 static CachedDir *
 CachedDir_Ref(CachedDir *dir)
 {
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -692,14 +692,14 @@ CachedDir_Ref(CachedDir *dir)
  * Before lexi.c 1.153 from 2021-11-25, indent also placed the '{' at the end
  * of the line.
  */
-#indent input
+//indent input
 static bool
 HashEntry_KeyEquals(const HashEntry *he, Substring key)
 {
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -707,16 +707,16 @@ HashEntry_KeyEquals(const HashEntry *he, Substring key)
  * are in a declaration, instead it interpreted the first '*' as a binary
  * operator, therefore generating 'CachedDir * *var' with an extra space.
  */
-#indent input
+//indent input
 static void
 CachedDir_Assign(CachedDir **var, CachedDir *dir)
 {
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
-#indent run-equals-input -TCachedDir
+//indent run-equals-input -TCachedDir
 
 
 /*
@@ -724,17 +724,17 @@ CachedDir_Assign(CachedDir **var, CachedDir *dir)
  * first one were indented as if they would be statement continuations. This
  * was because the token 'Shell' was identified as a word, not as a type name.
  */
-#indent input
+//indent input
 static Shell	shells[] = {
 	{
 		first,
 		second,
 	},
 };
-#indent end
+//indent end
 
 /* Since lexi.c 1.153 from 2021-11-25. */
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -746,16 +746,16 @@ static Shell	shells[] = {
  * function prototypes and GCC attributes, the situation became more
  * complicated, and it took indent 31 years to adapt to this new reality.
  */
-#indent input
+//indent input
 static void JobInterrupt(bool, int) MAKE_ATTR_DEAD;
 static void JobRestartJobs(void);
-#indent end
+//indent end
 
-#indent run
+//indent run
 /* $ FIXME: Missing space before 'MAKE_ATTR_DEAD'. */
 static void	JobInterrupt(bool, int)MAKE_ATTR_DEAD;
 static void	JobRestartJobs(void);
-#indent end
+//indent end
 
 
 /*
@@ -763,10 +763,10 @@ static void	JobRestartJobs(void);
  * tokens ')' and ';' in the function body. It wrongly regarded them as
  * finishing a function declaration.
  */
-#indent input
+//indent input
 MAKE_INLINE const char *
 GNode_VarTarget(GNode *gn) { return GNode_ValueDirect(gn, TARGET); }
-#indent end
+//indent end
 
 /*
  * Before lexi.c 1.156 from 2021-11-25, indent generated 'GNode * gn' with an
@@ -775,22 +775,22 @@ GNode_VarTarget(GNode *gn) { return GNode_ValueDirect(gn, TARGET); }
  * Before lexi.c 1.158 from 2021-11-25, indent wrongly placed the function
  * name in line 1, together with the '{'.
  */
-#indent run
+//indent run
 MAKE_INLINE const char *
 GNode_VarTarget(GNode *gn)
 {
 	return GNode_ValueDirect(gn, TARGET);
 }
-#indent end
+//indent end
 
-#indent run-equals-prev-output -TGNode
+//indent run-equals-prev-output -TGNode
 
 
 /*
  * Ensure that '*' in declarations is interpreted (or at least formatted) as
  * a 'pointer to' type derivation, not as a binary or unary operator.
  */
-#indent input
+//indent input
 number *var = a * b;
 
 void
@@ -798,9 +798,9 @@ function(void)
 {
 	number *var = a * b;
 }
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
@@ -808,7 +808,7 @@ function(void)
  * There are a few exceptions though. Some of these are hard to detect
  * without knowing which identifiers are type names.
  */
-#indent input
+//indent input
 char str[expr * expr];
 char str[expr**ptr];
 char str[*ptr**ptr];
@@ -817,9 +817,9 @@ char str[sizeof(int) * expr];
 char str[sizeof(*ptr)];
 char str[sizeof(type**)];
 char str[sizeof(**ptr)];
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 char str[expr * expr];
 char str[expr * *ptr];
 char str[*ptr * *ptr];
@@ -829,7 +829,7 @@ char str[sizeof(*ptr)];
 /* $ FIXME: should be 'type **' */
 char str[sizeof(type * *)];
 char str[sizeof(**ptr)];
-#indent end
+//indent end
 
 
 /*
@@ -841,7 +841,7 @@ char str[sizeof(**ptr)];
  * Seen amongst others in args.c 1.72, function add_typedefs_from_file.
  * Fixed in lexi.c 1.165 from 2021-11-27.
  */
-#indent input
+//indent input
 struct {
 } v = {
     pn("ta"),
@@ -861,9 +861,9 @@ static void
 a(char *fe)
 {
 }
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 struct {
 } v = {
 	pn("ta"),
@@ -883,4 +883,4 @@ static void
 a(char *fe)
 {
 }
-#indent end
+//indent end

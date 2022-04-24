@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.4 2022/04/23 09:35:26 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_binary_op, which represents a binary operator in
@@ -21,7 +21,7 @@
  *	C99 6.4.6		"Punctuators"
  */
 
-#indent input
+//indent input
 void
 binary_operators(void)
 {
@@ -58,19 +58,19 @@ binary_operators(void)
 	a |= a;
 	a = a, a;
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * If a '*' is immediately followed by another '*', they still form separate
  * operators. The first is a binary operator, the second is unary.
  */
-#indent input
+//indent input
 int var = expr**ptr;
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int var = expr * *ptr;
-#indent end
+//indent end

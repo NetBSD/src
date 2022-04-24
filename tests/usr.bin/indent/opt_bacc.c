@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.9 2022/04/24 08:52:44 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.10 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-bacc' and '-nbacc' ("blank line around conditional
@@ -13,19 +13,19 @@
 
 
 /* Example code without surrounding blank lines. */
-#indent input
+//indent input
 int		a;
 #if 0
 int		b;
 #endif
 int		c;
-#indent end
+//indent end
 
 /*
  * XXX: As of 2021-11-19, the option -bacc has no effect on declarations since
  * process_type resets out.blank_line_before unconditionally.
  */
-#indent run -bacc
+//indent run -bacc
 int		a;
 /* $ FIXME: expecting a blank line here */
 #if 0
@@ -33,17 +33,17 @@ int		b;
 #endif
 /* $ FIXME: expecting a blank line here */
 int		c;
-#indent end
+//indent end
 
 /*
  * With '-nbacc' the code is unchanged since there are no blank lines to
  * remove.
  */
-#indent run-equals-input -nbacc
+//indent run-equals-input -nbacc
 
 
 /* Example code containing blank lines. */
-#indent input
+//indent input
 int		space_a;
 
 #if 0
@@ -53,9 +53,9 @@ int		space_b;
 #endif
 
 int		space_c;
-#indent end
+//indent end
 
-#indent run -bacc
+//indent run -bacc
 int		space_a;
 /* $ FIXME: expecting a blank line here */
 #if 0
@@ -65,16 +65,16 @@ int		space_b;
 #endif
 
 int		space_c;
-#indent end
+//indent end
 
 /* The option '-nbacc' does not remove anything. */
-#indent run-equals-input -nbacc
+//indent run-equals-input -nbacc
 
 
 /*
  * Preprocessing directives can also occur in function bodies.
  */
-#indent input
+//indent input
 const char *
 os_name(void)
 {
@@ -84,9 +84,9 @@ os_name(void)
 	return "unknown";
 #endif
 }
-#indent end
+//indent end
 
-#indent run -bacc
+//indent run -bacc
 const char *
 os_name(void)
 {
@@ -102,23 +102,23 @@ os_name(void)
 #endif
 /* $ FIXME: expecting a blank line here. */
 }
-#indent end
+//indent end
 
-#indent run-equals-input -nbacc
+//indent run-equals-input -nbacc
 
 
 /*
  * Test nested preprocessor directives.
  */
-#indent input
+//indent input
 #if outer
 #if inner
 int decl;
 #endif
 #endif
-#indent end
+//indent end
 
-#indent run -di0 -bacc
+//indent run -di0 -bacc
 #if outer
 
 #if inner
@@ -126,15 +126,15 @@ int decl;
 #endif
 
 #endif
-#indent end
+//indent end
 
-#indent run-equals-input -di0 -nbacc
+//indent run-equals-input -di0 -nbacc
 
 
 /*
  * Test nested preprocessor directives that are interleaved with declarations.
  */
-#indent input
+//indent input
 #ifdef outer
 int outer_above;
 #ifdef inner
@@ -142,8 +142,8 @@ int inner;
 #endif
 int outer_below;
 #endif
-#indent end
+//indent end
 
-#indent run-equals-input -di0 -bacc
+//indent run-equals-input -di0 -bacc
 
-#indent run-equals-input -di0 -nbacc
+//indent run-equals-input -di0 -nbacc

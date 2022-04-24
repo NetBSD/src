@@ -1,4 +1,4 @@
-/* $NetBSD: opt_P.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_P.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the option '-P', which specifies a profile file to be used
@@ -11,10 +11,10 @@
  *	t_misc			for tests with individual setup
  */
 
-#indent input
+//indent input
 int decl;
-#indent end
+//indent end
 
-#indent run -di24 -P/dev/null -di32
+//indent run -di24 -P/dev/null -di32
 int				decl;
-#indent end
+//indent end

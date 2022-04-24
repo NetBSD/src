@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_typedef.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_typedef.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_typedef, which represents the keyword 'typedef'
@@ -13,7 +13,7 @@
  *
  * https://gnats.netbsd.org/55453
  */
-#indent input
+//indent input
 typedef enum {
     TC1,
     TC2
@@ -23,9 +23,9 @@ enum {
     EC1,
     EC2
 } E;
-#indent end
+//indent end
 
-#indent run -ci4 -i4
+//indent run -ci4 -i4
 typedef enum {
     TC1,
     TC2
@@ -35,9 +35,9 @@ enum {
     EC1,
     EC2
 }		E;
-#indent end
+//indent end
 
-#indent run -ci2
+//indent run -ci2
 typedef enum {
 	TC1,
 	TC2
@@ -47,4 +47,4 @@ enum {
 	EC1,
 	EC2
 }		E;
-#indent end
+//indent end

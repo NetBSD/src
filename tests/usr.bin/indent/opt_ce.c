@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ce.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_ce.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-ce' and '-nce'.
@@ -11,7 +11,7 @@
  *	opt_ei.c
  */
 
-#indent input
+//indent input
 void
 example(int n)
 {
@@ -20,9 +20,9 @@ example(int n)
 	else if (n > 0) print("positive");
 	else { print("negative"); }
 }
-#indent end
+//indent end
 
-#indent run -ce
+//indent run -ce
 void
 example(int n)
 {
@@ -36,9 +36,9 @@ example(int n)
 		print("negative");
 	}
 }
-#indent end
+//indent end
 
-#indent run -nce
+//indent run -nce
 void
 example(int n)
 {
@@ -54,4 +54,4 @@ example(int n)
 		print("negative");
 	}
 }
-#indent end
+//indent end

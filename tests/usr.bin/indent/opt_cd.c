@@ -1,12 +1,12 @@
-/* $NetBSD: opt_cd.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_cd.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
-#indent input
+//indent input
 int aflag; /* Apply to all files. */
-#indent end
+//indent end
 
-#indent run -cd49
+//indent run -cd49
 int		aflag;				/* Apply to all files. */
-#indent end
+//indent end
 
 /* If '-cd' is not given, it falls back to '-c'. */
-#indent run-equals-prev-output -c49
+//indent run-equals-prev-output -c49

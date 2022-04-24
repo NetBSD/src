@@ -1,4 +1,4 @@
-/* $NetBSD: token_preprocessing.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_preprocessing.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*-
  * Tests for indenting preprocessing directives:
@@ -10,18 +10,18 @@
  */
 
 
-#indent input
+//indent input
 #include <system-header.h>
 #include "local-header.h"
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Nested conditional compilation.
  */
-#indent input
+//indent input
 #if 0
 #else
 #endif
@@ -35,9 +35,9 @@
 #  else /* inner else comment */
 #  endif /* inner endif comment */
 #endif /* outer endif comment */
-#indent end
+//indent end
 
-#indent run
+//indent run
 #if 0
 #else
 #endif
@@ -52,17 +52,17 @@
 #else				/* inner else comment */
 #endif				/* inner endif comment */
 #endif				/* outer endif comment */
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 #define multi_line_definition /* first line
  * middle
  * final line
  */ actual_value
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -76,7 +76,7 @@
  * The effect was that the extra space after d2 was not formatted, as that
  * line was considered part of the comment.
  */
-#indent input
+//indent input
 #define comment_in_string_literal "/* no comment "
 int this_is_an_ordinary_line_again;
 
@@ -91,9 +91,9 @@ int s1 ;
 int s2 ;
 #define resolve_s '*/'
 int s3 ;
-#indent end
+//indent end
 
-#indent run
+//indent run
 #define comment_in_string_literal "/* no comment "
 int		this_is_an_ordinary_line_again;
 
@@ -108,30 +108,30 @@ int		s1;
 int		s2;
 #define resolve_s '*/'
 int		s3;
-#indent end
+//indent end
 
 
 /*
  * A preprocessing directive inside an expression keeps the state about
  * whether the next operator is unary or binary.
  */
-#indent input
+//indent input
 int binary_plus = 3
 #define intermediate 1
 	+4;
 int unary_plus =
 #define intermediate 1
 	+ 4;
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		binary_plus = 3
 #define intermediate 1
 + 4;
 int		unary_plus =
 #define intermediate 1
 +4;
-#indent end
+//indent end
 
 
 /*
@@ -139,14 +139,14 @@ int		unary_plus =
  * lines that had arguments even though they shouldn't. It is not the task of
  * an indenter to fix code, that's what a linter is for.
  */
-#indent input
+//indent input
 #if 0
 #elif 1
 #else if 3
 #endif 0
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -157,7 +157,7 @@ int		unary_plus =
  * compilers issue warnings about these invalid lines, not much code still has
  * these, making this automatic fix an edge case.
  */
-#indent input
+//indent input
 #if 0		/* comment */
 #else		/* comment */
 #endif		/* comment */
@@ -165,9 +165,9 @@ int		unary_plus =
 #if 0/* comment */
 #else/* comment */
 #endif/* comment */
-#indent end
+//indent end
 
-#indent run
+//indent run
 #if 0				/* comment */
 #else				/* comment */
 #endif				/* comment */
@@ -175,4 +175,4 @@ int		unary_plus =
 #if 0				/* comment */
 #else				/* comment */
 #endif				/* comment */
-#indent end
+//indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the comments 'INDENT OFF' and 'INDENT ON', which temporarily
@@ -6,20 +6,20 @@
  * indent still keeps track of the number of braces and other indentation.
  */
 
-#indent input
+//indent input
 {}
 
 /*INDENT OFF*/
 /*INDENT ON*/
 
 {}
-#indent end
+//indent end
 
 /*
  * XXX: It is asymmetric that 'INDENT OFF' is kept as is, while 'INDENT ON'
  * gets enclosed with spaces.
  */
-#indent run
+//indent run
 {
 }
 /* $ FIXME: This empty line must stay. */
@@ -28,124 +28,124 @@
 
 {
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 {}
 
 
 /*INDENT OFF*/
 /*INDENT ON*/
-#indent end
+//indent end
 
-#indent run
+//indent run
 {
 }
 /* $ FIXME: This empty line must stay. */
 /* $ FIXME: This empty line must stay. */
 /*INDENT OFF*/
 /* INDENT ON */
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 {}
  /* INDENT OFF */
  /* INDENT ON */
 {}
-#indent end
+//indent end
 
 /*
  * XXX: It is asymmetric that 'INDENT OFF' is indented, while 'INDENT ON'
  * is aligned.
  */
-#indent run
+//indent run
 {
 }
  /* INDENT OFF */
 /* INDENT ON */
 {
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 {}
 	/* INDENT OFF */
 	/* INDENT ON */
 {}
-#indent end
+//indent end
 
 /*
  * XXX: It is asymmetric that 'INDENT OFF' is indented, while 'INDENT ON'
  * is aligned.
  */
-#indent run
+//indent run
 {
 }
 	/* INDENT OFF */
 /* INDENT ON */
 {
 }
-#indent end
+//indent end
 
 
 /*
  * The INDENT comments can be written without space between the words, but
  * nobody does this.
  */
-#indent input
+//indent input
 int   decl   ;
 /*INDENTOFF*/
 int   decl   ;
 /*INDENTON*/
 int   decl   ;
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int decl;
 /*INDENTOFF*/
 int   decl   ;
 /* INDENTON */
 int decl;
-#indent end
+//indent end
 
 
 /*
  * Any whitespace around the 'INDENT ON/OFF' is ignored, as is any whitespace
  * between the two words.
  */
-#indent input
+//indent input
 int   decl   ;
 /*		INDENT		OFF		*/
 int   decl   ;
 /*		INDENT		ON		*/
 int   decl   ;
-#indent end
+//indent end
 
 /*
  * XXX: It is asymmetric that 'INDENT OFF' is indented, while 'INDENT ON'
  * is pushed to the start of the line.
  */
-#indent run -di0
+//indent run -di0
 int decl;
 /*		INDENT		OFF		*/
 int   decl   ;
 /* INDENT		ON		*/
 int decl;
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 /*INDENT OFF*/
 /* No formatting takes place here. */
 int format( void ) {{{
 /*INDENT ON*/
 }}}
-#indent end
+//indent end
 
-#indent run
+//indent run
 /*INDENT OFF*/
 /* No formatting takes place here. */
 int format( void ) {{{
@@ -155,10 +155,10 @@ int format( void ) {{{
 }
 }
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 /* INDENT OFF */
 void indent_off ( void ) ;
 /*  INDENT */
@@ -179,9 +179,9 @@ void indent_on ( void ) ;
 void indent_still_on ( void ) ;	/* due to the colon in the middle */
 /* INDENT OFF */		/* extra comment */
 void indent_still_on ( void ) ;	/* due to the extra comment to the right */
-#indent end
+//indent end
 
-#indent run
+//indent run
 /* INDENT OFF */
 void indent_off ( void ) ;
 /* $ XXX: The double space from the below comment got merged to a single */
@@ -209,7 +209,7 @@ void		indent_still_on(void);	/* due to the colon in the middle */
 /* INDENT OFF *//* extra comment */
 void		indent_still_on(void);	/* due to the extra comment to the
 					 * right */
-#indent end
+//indent end
 
 
 /*
@@ -218,23 +218,23 @@ void		indent_still_on(void);	/* due to the extra comment to the
  * INDENT comment to go from the very beginning of the line to the very end of
  * the line.
  */
-#indent input
+//indent input
 const char *str = "\
 /* INDENT OFF */\
 "   ,   ch;
-#indent end
+//indent end
 
-#indent run
+//indent run
 const char     *str = "\
 /* INDENT OFF */\
 ", ch;
-#indent end
+//indent end
 
 
 /*
  * The keywords in the INDENT comments must all be uppercase.
  */
-#indent input
+//indent input
 int   on   ;
 /* indent off */
 int   still_on   ;
@@ -244,9 +244,9 @@ int   still_on   ;
 int   still_on   ;
 /* INDENT OFF */
 int   finally_off   ;
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int on;
 /* indent off */
 int still_on;
@@ -256,4 +256,4 @@ int still_on;
 int still_on;
 /* INDENT OFF */
 int   finally_off   ;
-#indent end
+//indent end

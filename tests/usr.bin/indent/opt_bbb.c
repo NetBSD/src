@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bbb.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_bbb.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-bbb' and '-nbbb'.
@@ -8,7 +8,7 @@
  * The option '-nbbb' keeps everything as is.
  */
 
-#indent input
+//indent input
 /*
  * This is a block comment.
  */
@@ -32,9 +32,9 @@ void
 function_definition(void)
 {
 }
-#indent end
+//indent end
 
-#indent run -bbb
+//indent run -bbb
 /*
  * This is a block comment.
  */
@@ -62,6 +62,6 @@ void
 function_definition(void)
 {
 }
-#indent end
+//indent end
 
-#indent run-equals-input -nbbb
+//indent run-equals-input -nbbb

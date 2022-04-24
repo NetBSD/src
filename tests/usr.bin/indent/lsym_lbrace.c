@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lbrace.c,v 1.5 2022/04/23 09:59:14 rillig Exp $ */
+/* $NetBSD: lsym_lbrace.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lbrace, which represents a '{' in these contexts:
@@ -18,7 +18,7 @@
  */
 
 /* Brace level in an initializer */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -27,17 +27,17 @@ function(void)
 		.age = {{{35}}},	/* C11 6.7.9 allows this. */
 	};
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /* Begin of a block of statements */
-#indent input
+//indent input
 void function(void) {{{ body(); }}}
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 /* $ FIXME: Each '{' must be properly indented. */
@@ -46,11 +46,11 @@ function(void)
 }
 }
 }
-#indent end
+//indent end
 
 
 /* Compound literal */
-#indent input
+//indent input
 struct point
 origin(void)
 {
@@ -59,9 +59,9 @@ origin(void)
 		.y = 0,
 	};
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 struct point
 origin(void)
 {
@@ -71,4 +71,4 @@ origin(void)
 			.y = 0,
 	};
 }
-#indent end
+//indent end

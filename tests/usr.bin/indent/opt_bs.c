@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bs.c,v 1.9 2022/04/24 08:52:44 rillig Exp $ */
+/* $NetBSD: opt_bs.c,v 1.10 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-bs' and '-nbs' ("blank after sizeof").
@@ -9,7 +9,7 @@
  * unless the next token is a word as well.
  */
 
-#indent input
+//indent input
 void
 example(int i)
 {
@@ -24,9 +24,9 @@ example(int i)
 	print(sizeof   (i));
 	print(sizeof   (int));
 }
-#indent end
+//indent end
 
-#indent run -bs
+//indent run -bs
 void
 example(int i)
 {
@@ -41,9 +41,9 @@ example(int i)
 	print(sizeof (i));
 	print(sizeof (int));
 }
-#indent end
+//indent end
 
-#indent run -nbs
+//indent run -nbs
 void
 example(int i)
 {
@@ -58,14 +58,14 @@ example(int i)
 	print(sizeof(i));
 	print(sizeof(int));
 }
-#indent end
+//indent end
 
 
 /*
  * The option '-bs' only affects 'sizeof', not 'offsetof', even though these
  * two keywords are syntactically similar.
  */
-#indent input
+//indent input
 int sizeof_type = sizeof   (int);
 int sizeof_type = sizeof(int);
 int sizeof_expr = sizeof   (0);
@@ -74,9 +74,9 @@ int sizeof_expr = sizeof   0;
 
 int offset = offsetof(struct s, member);
 int offset = offsetof   (struct s, member);
-#indent end
+//indent end
 
-#indent run -pcs -di0
+//indent run -pcs -di0
 int sizeof_type = sizeof (int);
 int sizeof_type = sizeof (int);
 int sizeof_expr = sizeof (0);
@@ -85,9 +85,9 @@ int sizeof_expr = sizeof 0;
 
 int offset = offsetof (struct s, member);
 int offset = offsetof (struct s, member);
-#indent end
+//indent end
 
-#indent run -npcs -di0
+//indent run -npcs -di0
 int sizeof_type = sizeof(int);
 int sizeof_type = sizeof(int);
 int sizeof_expr = sizeof(0);
@@ -96,27 +96,27 @@ int sizeof_expr = sizeof 0;
 
 int offset = offsetof(struct s, member);
 int offset = offsetof(struct s, member);
-#indent end
+//indent end
 
 
 /* Ensure that there is no blank before 'sizeof(' if there is a '\n' between. */
-#indent input
+//indent input
 int sizeof_newline = sizeof
 (0);
-#indent end
+//indent end
 
-#indent run-equals-input -di0 -bs
+//indent run-equals-input -di0 -bs
 
-#indent run-equals-input -di0 -nbs
+//indent run-equals-input -di0 -nbs
 
 
 /* Ensure that only the first '(' after 'sizeof' gets a blank. */
-#indent input
+//indent input
 int sizeof_parenthesized = sizeof((0));
-#indent end
+//indent end
 
-#indent run -di0 -bs
+//indent run -di0 -bs
 int sizeof_parenthesized = sizeof ((0));
-#indent end
+//indent end
 
-#indent run-equals-input -di0 -nbs
+//indent run-equals-input -di0 -nbs

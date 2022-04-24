@@ -1,4 +1,4 @@
-/* $NetBSD: token_stmt_list.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_stmt_list.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for lists of statements.
@@ -7,7 +7,7 @@
  * declarations in arbitrary ways.
  */
 
-#indent input
+//indent input
 void
 function(void)
 {
@@ -20,6 +20,6 @@ function(void)
 		stmt();
 	}
 }
-#indent end
+//indent end
 
-#indent run-equals-input -ldi0
+//indent run-equals-input -ldi0

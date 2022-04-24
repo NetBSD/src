@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-bad' and '-nbad'.
@@ -11,27 +11,27 @@
  */
 
 /* Test global declarations. */
-#indent input
+//indent input
 int global_variable;
 void function_declaration(void);
 #if 0
 #endif
 /* comment */
-#indent end
+//indent end
 
-#indent run -bad
+//indent run -bad
 int		global_variable;
 void		function_declaration(void);
 #if 0
 #endif
 /* comment */
-#indent end
+//indent end
 
-#indent run-equals-prev-output -nbad
+//indent run-equals-prev-output -nbad
 
 
 /* See FreeBSD r303599. */
-#indent input
+//indent input
 #if defined(__i386__)
 int a;
 #elif defined(__amd64__)
@@ -39,9 +39,9 @@ int b;
 #else
 #error "Port me"
 #endif
-#indent end
+//indent end
 
-#indent run -bad
+//indent run -bad
 #if defined(__i386__)
 int		a;
 #elif defined(__amd64__)
@@ -49,20 +49,20 @@ int		b;
 #else
 #error "Port me"
 #endif
-#indent end
+//indent end
 
 
 /* Test local declarations. */
-#indent input
+//indent input
 void function_definition(void) {
     int local_variable;
     function_call();
     int local_variable_after_statement;
     function_call();
 }
-#indent end
+//indent end
 
-#indent run -bad
+//indent run -bad
 void
 function_definition(void)
 {
@@ -73,9 +73,9 @@ function_definition(void)
 
 	function_call();
 }
-#indent end
+//indent end
 
-#indent run -nbad
+//indent run -nbad
 void
 function_definition(void)
 {
@@ -86,4 +86,4 @@ function_definition(void)
 	/* $ No blank line here. */
 	function_call();
 }
-#indent end
+//indent end

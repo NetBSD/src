@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ci.c,v 1.7 2022/04/24 08:52:44 rillig Exp $ */
+/* $NetBSD: opt_ci.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the option '-ci', which controls the indentation of continuation
@@ -8,43 +8,43 @@
 /*
  * Top level expressions with and without parentheses.
  */
-#indent input
+//indent input
 int top_level = 1 +
  2;
 int top_level = (1 +
  2 + (
   3));
-#indent end
+//indent end
 
-#indent run -ci0
+//indent run -ci0
 int		top_level = 1 +
 2;
 int		top_level = (1 +
 			     2 + (
 				  3));
-#indent end
+//indent end
 
-#indent run-equals-prev-output -ci2
+//indent run-equals-prev-output -ci2
 
-#indent run-equals-prev-output -ci4
+//indent run-equals-prev-output -ci4
 
-#indent run-equals-prev-output -ci8
+//indent run-equals-prev-output -ci8
 
-#indent run -ci0 -nlp
+//indent run -ci0 -nlp
 int		top_level = 1 +
 2;
 int		top_level = (1 +
 	2 + (
 		3));
-#indent end
+//indent end
 
-#indent run -ci2 -nlp
+//indent run -ci2 -nlp
 int		top_level = 1 +
 2;
 int		top_level = (1 +
   2 + (
     3));
-#indent end
+//indent end
 
 /*
  * Since '-ci4' is half an indentation level, indent all continuations using
@@ -52,19 +52,19 @@ int		top_level = (1 +
  * this may have been to prevent that the continuation line has the same
  * indentation as a follow-up statement, such as in 'if' statements.
  */
-#indent run -ci4 -nlp
+//indent run -ci4 -nlp
 int		top_level = 1 +
 2;
 int		top_level = (1 +
     2 + (
     3));
-#indent end
+//indent end
 
 
 /*
  * Declarations in functions without parentheses.
  */
-#indent input
+//indent input
 int
 sum(int a, int b)
 {
@@ -73,9 +73,9 @@ sum(int a, int b)
 	return first +
 	 second;
 }
-#indent end
+//indent end
 
-#indent run -ci0
+//indent run -ci0
 int
 sum(int a, int b)
 {
@@ -84,9 +84,9 @@ sum(int a, int b)
 	return first +
 		second;
 }
-#indent end
+//indent end
 
-#indent run -ci2
+//indent run -ci2
 int
 sum(int a, int b)
 {
@@ -95,9 +95,9 @@ sum(int a, int b)
 	return first +
 	  second;
 }
-#indent end
+//indent end
 
-#indent run -ci4
+//indent run -ci4
 int
 sum(int a, int b)
 {
@@ -106,9 +106,9 @@ sum(int a, int b)
 	return first +
 	    second;
 }
-#indent end
+//indent end
 
-#indent run -ci8
+//indent run -ci8
 int
 sum(int a, int b)
 {
@@ -117,13 +117,13 @@ sum(int a, int b)
 	return first +
 		second;
 }
-#indent end
+//indent end
 
 
 /*
  * Continued statements with expressions in parentheses.
  */
-#indent input
+//indent input
 int
 sum(int a, int b)
 {
@@ -133,9 +133,9 @@ sum(int a, int b)
 	second + (
 	third));
 }
-#indent end
+//indent end
 
-#indent run -ci0
+//indent run -ci0
 int
 sum(int a, int b)
 {
@@ -145,15 +145,15 @@ sum(int a, int b)
 		second + (
 			  third));
 }
-#indent end
+//indent end
 
-#indent run-equals-prev-output -ci2
+//indent run-equals-prev-output -ci2
 
-#indent run-equals-prev-output -ci4
+//indent run-equals-prev-output -ci4
 
-#indent run-equals-prev-output -ci8
+//indent run-equals-prev-output -ci8
 
-#indent run -ci2 -nlp
+//indent run -ci2 -nlp
 int
 sum(int a, int b)
 {
@@ -163,7 +163,7 @@ sum(int a, int b)
 	  second + (
 	    third));
 }
-#indent end
+//indent end
 
 /*
  * Since '-ci4' is half an indentation level, indent all continuations using
@@ -171,7 +171,7 @@ sum(int a, int b)
  * this may have been to prevent that the continuation line has the same
  * indentation as a follow-up statement, such as in 'if' statements.
  */
-#indent run -ci4 -nlp
+//indent run -ci4 -nlp
 int
 sum(int a, int b)
 {
@@ -181,9 +181,9 @@ sum(int a, int b)
 	    second + (
 	    third));
 }
-#indent end
+//indent end
 
-#indent run -ci8 -nlp
+//indent run -ci8 -nlp
 int
 sum(int a, int b)
 {
@@ -193,7 +193,7 @@ sum(int a, int b)
 		second + (
 			third));
 }
-#indent end
+//indent end
 
 
 /*
@@ -201,7 +201,7 @@ sum(int a, int b)
  * as the continuation indentation from '-ci'.  The difference between these
  * becomes visible for structural macros like 'forever' or 'foreach'.
  */
-#indent input
+//indent input
 #define forever for (;;)
 void
 function(void)
@@ -213,15 +213,15 @@ function(void)
 		stmt();
 	}
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 /*
  * The difference between the block indentation and the continuation
  * indentation only becomes visible when these two differ.
  */
-#indent run -i8 -ci4
+//indent run -i8 -ci4
 #define forever for (;;)
 void
 function(void)
@@ -233,4 +233,4 @@ function(void)
 		stmt();
 	}
 }
-#indent end
+//indent end

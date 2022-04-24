@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comma.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_comma.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comma, which represents a ',' in these contexts:
@@ -28,46 +28,46 @@
 /*
  * The ',' is a binary operator with very low precedence.
  */
-#indent input
+//indent input
 int
 comma_expression(void)
 {
 	return 1, 3;
 	return a = b, c = d;
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * In a declaration, a ',' separates the declarators.
  */
-#indent input
+//indent input
 int decl, old_style(), prototype(const char *, double *);
 int a, b, c;
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
  * In a parameter list of a function type, a ',' separates the parameter
  * declarations.
  */
-#indent input
+//indent input
 double dbl_reduce(double init, const double *s, const double *e, double (*merge)(double, double));
 double dbl_reduce(double, const double *, const double *, double (*)(double, double));
 void debug_printf(const char *, ...);
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
  * In a traditional function definition, a ',' separates the parameter names.
  */
-#indent input
+//indent input
 double
 trad_dbl_reduce(init, s, e, merge)
 	double init;
@@ -79,16 +79,16 @@ trad_dbl_reduce(init, s, e, merge)
 		x = merge(x, *s++);
 	return x;
 }
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
  * In a prototype function definition, a ',' separates the parameter
  * declarations.
  */
-#indent input
+//indent input
 void
 dbl_reduce(double init, const double *s, const double *e, double (*merge)(double, double))
 {
@@ -97,55 +97,55 @@ dbl_reduce(double init, const double *s, const double *e, double (*merge)(double
 		x = merge(x, *s++);
 	return x;
 }
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
  * In a function call expression, a ',' separates the arguments.
  */
-#indent input
+//indent input
 void
 function(void)
 {
 	function_call(arg1, arg2);
 	(*indirect_function_call)(arg1, arg2);
 }
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
  * In a macro definition, a ',' separates the parameter names.
  */
-#indent input
+//indent input
 #define no_space(a,b) a ## b
 #define normal_space(a, b) a ## b
 #define wide_space(a  ,  b) a ## b
-#indent end
+//indent end
 
 /*
  * Indent does not touch preprocessor directives, except for the spacing
  * between the '#' and the directive.
  */
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * In a macro invocation, a ',' separates the arguments.
  */
-#indent input
+//indent input
 void
 function(void)
 {
 	macro_invocation(arg1, arg2);
 	empty_arguments(,,,);
 }
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
@@ -153,16 +153,16 @@ function(void)
  *
  * If a ',' starts a line, indent doesn't put a space before it.
  */
-#indent input
+//indent input
 int arr[] = {1, 2, 3};
 int arr[] = {
 	1,
 	2,
 	3,			/* there may be a trailing comma */
 };
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
@@ -170,12 +170,12 @@ int arr[] = {
  * uncommon and looks unbalanced since the '1' is not aligned to the other
  * numbers.
  */
-#indent input
+//indent input
 int arr[] = {
 	1
 	,2
 	,3
 };
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0

@@ -1,6 +1,6 @@
-/* $NetBSD: opt_bl_br.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_bl_br.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
-#indent input
+//indent input
 void
 example(int n)
 {
@@ -9,13 +9,13 @@ example(int n)
 	else if (n > 0) print("positive");
 	else { print("negative"); }
 }
-#indent end
+//indent end
 
 /*
  * XXX: The '} else' looks strange in this style since the '}' is not on a
  * line of its own.
  */
-#indent run -bl
+//indent run -bl
 void
 example(int n)
 {
@@ -32,9 +32,9 @@ example(int n)
 		print("negative");
 	}
 }
-#indent end
+//indent end
 
-#indent run -br
+//indent run -br
 void
 example(int n)
 {
@@ -48,13 +48,13 @@ example(int n)
 		print("negative");
 	}
 }
-#indent end
+//indent end
 
 
 /*
  * Test C99 comments after 'if (expr)', which are handled by search_stmt.
  */
-#indent input
+//indent input
 void function(void)
 {
 	if (expr) // C99 comment
@@ -65,9 +65,9 @@ void function(void)
 		stmt();
 	}
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -78,13 +78,13 @@ function(void)
 		stmt();
 	}
 }
-#indent end
+//indent end
 
 
 /*
  * Test multiple mixed comments after 'if (expr)'.
  */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -93,9 +93,9 @@ function(void)
 			// C99 comment 3
 		stmt();
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -104,14 +104,14 @@ function(void)
 		// C99 comment 3
 		stmt();
 }
-#indent end
+//indent end
 
 
 /*
  * The combination of the options '-br' and '-ei' (both active by default)
  * remove extra newlines between the tokens '}', 'else' and 'if'.
  */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -125,9 +125,9 @@ function(void)
 		stmt();
 	}
 }
-#indent end
+//indent end
 
-#indent run -br
+//indent run -br
 void
 function(void)
 {
@@ -137,4 +137,4 @@ function(void)
 		stmt();
 	}
 }
-#indent end
+//indent end

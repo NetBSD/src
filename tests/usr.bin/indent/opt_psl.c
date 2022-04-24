@@ -1,4 +1,4 @@
-/* $NetBSD: opt_psl.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_psl.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-psl' and '-npsl' ("procedure definition in separate
@@ -12,15 +12,15 @@
  */
 
 /* Single-line function declarations are not affected by these options. */
-#indent input
+//indent input
 void function_declaration(void);
-#indent end
+//indent end
 
-#indent run -psl
+//indent run -psl
 void		function_declaration(void);
-#indent end
+//indent end
 
-#indent run-equals-prev-output -npsl
+//indent run-equals-prev-output -npsl
 
 
 /*
@@ -32,25 +32,25 @@ void		function_declaration(void);
  * 'int'), the function name and the list of parameter names, without
  * parameter types or type qualifiers like 'const'.
  */
-#indent input
+//indent input
 void function_declaration(
 void);
-#indent end
+//indent end
 
-#indent run -psl
+//indent run -psl
 void
 function_declaration(
 		     void);
-#indent end
+//indent end
 
 /*
  * In a function definition (which indent wrongly assumes here), in contrast
  * to a declaration, the function name is not indented to column 17.
  */
-#indent run -npsl
+//indent run -npsl
 void function_declaration(
 			  void);
-#indent end
+//indent end
 
 
 /*
@@ -58,19 +58,19 @@ void function_declaration(
  * is not indented to column 17 since the other function definitions are too
  * far away.
  */
-#indent input
+//indent input
 void function_definition(void) {}
-#indent end
+//indent end
 
-#indent run -psl
+//indent run -psl
 void
 function_definition(void)
 {
 }
-#indent end
+//indent end
 
-#indent run -npsl
+//indent run -npsl
 void function_definition(void)
 {
 }
-#indent end
+//indent end

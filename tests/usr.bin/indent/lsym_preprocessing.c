@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -12,26 +12,26 @@
 // TODO: test stringify '#'
 // TODO: test token paste '##'
 
-#indent input
+//indent input
 // TODO: add input
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Whitespace in the following preprocessing directives is preserved.
  */
-#indent input
+//indent input
 #define space ' '		/* the 'define' is followed by a space */
 #define	tab '\t'		/* the 'define' is followed by a tab */
 #if   0				/* 3 spaces */
 #elif		0		/* 2 tabs */
 #elif	0	>	1	/* tabs between the tokens */
 #endif
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 // TODO: #define unfinished_string "...
 // TODO: #define unfinished_char '...

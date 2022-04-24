@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr.c,v 1.3 2022/04/23 09:01:03 rillig Exp $ */
+/* $NetBSD: psym_if_expr.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr, representing the parser state
@@ -6,17 +6,17 @@
  * for the statement of the 'then' branch.
  */
 
-#indent input
+//indent input
 void function(void) {
 	if(cond) stmt();
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
 	if (cond)
 		stmt();
 }
-#indent end
+//indent end

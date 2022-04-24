@@ -1,29 +1,29 @@
-/* $NetBSD: token_form_feed.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_form_feed.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for form feeds, which is a control character (C99 5.2.1p3).
  */
 
-#indent input
+//indent input
 void function_1(void);
 
 void function_2(void);
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 void function_1(void);
 
 /* $ XXX: The form feed is not preserved. */
 /* $ XXX: Why 2 empty lines? */
 
 void function_2(void);
-#indent end
+//indent end
 
 
 /*
  * Test form feed after 'if (expr)', which is handled in search_stmt.
  */
-#indent input
+//indent input
 void function(void)
 {
 	if (expr)
@@ -31,9 +31,9 @@ void function(void)
 	{
 	}
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -42,4 +42,4 @@ function(void)
 		/* <-- form feed */
 	}
 }
-#indent end
+//indent end

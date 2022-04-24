@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fcb.c,v 1.7 2022/04/24 08:52:44 rillig Exp $ */
+/* $NetBSD: opt_fcb.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-fcb' and '-nfcb'.
@@ -12,66 +12,66 @@
 /*
  * The following comment starts with '/' '*' '\n'.
  */
-#indent input
+//indent input
 /*
  * Block
  * comment
  * with delimiters.
  */
-#indent end
+//indent end
 
-#indent run -fcb
+//indent run -fcb
 /*
  * Block comment with delimiters.
  */
-#indent end
+//indent end
 
-#indent run-equals-input -nfcb
+//indent run-equals-input -nfcb
 
 
 /*
  * The following comment does not count as a block comment since it has a word
  * in its first line.
  */
-#indent input
+//indent input
 /* Not
  *
  * a block
  *      comment. */
-#indent end
+//indent end
 
-#indent run -fcb
+//indent run -fcb
 /*
  * Not
  *
  * a block comment.
  */
-#indent end
+//indent end
 
-#indent run-equals-prev-output -nfcb
+//indent run-equals-prev-output -nfcb
 
 
 /*
  * Block comments that start with '-' or another '*' are always preserved.
  */
-#indent input
+//indent input
 /*-
  * car         mat         men
  *    efu   for   ted   com   t
  *       lly         box       .
  */
-#indent end
+//indent end
 
-#indent run-equals-input -fcb
+//indent run-equals-input -fcb
 
-#indent run-equals-input -nfcb
+//indent run-equals-input -nfcb
 
 
 /*
  * The option '-fcb' does not distinguish between comments at the top level
  * and comments in functions.
  */
-#indent input
+//indent input
 void
 example(void)
 {
@@ -80,9 +80,9 @@ example(void)
 	 * a block
 	 *      comment */
 }
-#indent end
+//indent end
 
-#indent run -fcb
+//indent run -fcb
 void
 example(void)
 {
@@ -92,12 +92,12 @@ example(void)
 	 * a block comment
 	 */
 }
-#indent end
+//indent end
 
-#indent run-equals-prev-output -nfcb
+//indent run-equals-prev-output -nfcb
 
 
-#indent input
+//indent input
 void
 example(void)
 {
@@ -108,9 +108,9 @@ example(void)
 	 *	comment.
 	 */
 }
-#indent end
+//indent end
 
-#indent run -fcb
+//indent run -fcb
 void
 example(void)
 {
@@ -120,12 +120,12 @@ example(void)
 	 * a block comment.
 	 */
 }
-#indent end
+//indent end
 
-#indent run-equals-input -nfcb
+//indent run-equals-input -nfcb
 
 
-#indent input
+//indent input
 void
 example(void)
 {
@@ -135,8 +135,8 @@ example(void)
 	 *       lly         box       .
 	 */
 }
-#indent end
+//indent end
 
-#indent run-equals-input -fcb
+//indent run-equals-input -fcb
 
-#indent run-equals-input -nfcb
+//indent run-equals-input -nfcb

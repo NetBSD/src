@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fbs.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_fbs.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-fbs' and '-nfbs'.
@@ -12,19 +12,19 @@
  * See '-bl', '-br'.
  */
 
-#indent input
+//indent input
 void example(int n) {}
-#indent end
+//indent end
 
-#indent run -fbs
+//indent run -fbs
 void
 example(int n)
 {
 }
-#indent end
+//indent end
 
-#indent run -nfbs
+//indent run -nfbs
 void
 example(int n) {
 }
-#indent end
+//indent end

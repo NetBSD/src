@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_period.c,v 1.3 2022/04/23 09:59:14 rillig Exp $ */
+/* $NetBSD: lsym_period.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_period, which represents '.' in these contexts:
@@ -18,7 +18,7 @@
  */
 
 /* Designators in an initialization */
-#indent input
+//indent input
 struct point {
 	int x;
 	int y;
@@ -26,40 +26,40 @@ struct point {
 	.x = 3,
 	.y = 4,
 };
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /* Accessing struct members */
-#indent input
+//indent input
 time_t
 get_time(struct stat st)
 {
 	return st.st_mtime > 0 ? st . st_atime : st.st_ctime;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 time_t
 /* $ FIXME: The '{' must be in the next line. */
 get_time(struct stat st){
 	return st.st_mtime > 0 ? st.st_atime : st.st_ctime;
 }
-#indent end
+//indent end
 
-#indent run -Ttime_t
+//indent run -Ttime_t
 time_t
 get_time(struct stat st)
 {
 	return st.st_mtime > 0 ? st.st_atime : st.st_ctime;
 }
-#indent end
+//indent end
 
 
 /* Varargs in a function declaration */
-#indent input
+//indent input
 void my_printf(const char *, ...);
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0

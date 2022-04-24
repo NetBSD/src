@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_unary_op.c,v 1.3 2022/04/23 09:35:26 rillig Exp $ */
+/* $NetBSD: lsym_unary_op.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_unary_op, which represents a unary operator.
@@ -10,13 +10,13 @@
  * pointer type.
  */
 
-#indent input
+//indent input
 void
 unary_operators(void)
 {
 	/* In the order of appearance in C11 6.5. */
 	function(a++, a--, ++a, --a, &a, *a, +a, -a, ~a, !a);
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input

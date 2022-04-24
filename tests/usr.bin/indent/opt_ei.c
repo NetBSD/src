@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ei.c,v 1.6 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_ei.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-ei' and '-nei'.
@@ -10,7 +10,7 @@
  * statement that is indented one level deeper than the outer 'if'.
  */
 
-#indent input
+//indent input
 void
 example(int n)
 {
@@ -24,11 +24,11 @@ example(int n)
 		print("negative");
 	}
 }
-#indent end
+//indent end
 
-#indent run-equals-input -ei
+//indent run-equals-input -ei
 
-#indent run -nei
+//indent run -nei
 void
 example(int n)
 {
@@ -44,9 +44,9 @@ example(int n)
 				print("negative");
 			}
 }
-#indent end
+//indent end
 
-#indent run -nei -nce
+//indent run -nei -nce
 void
 example(int n)
 {
@@ -64,4 +64,4 @@ example(int n)
 				print("negative");
 			}
 }
-#indent end
+//indent end

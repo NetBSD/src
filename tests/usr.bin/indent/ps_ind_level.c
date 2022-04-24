@@ -1,4 +1,4 @@
-/* $NetBSD: ps_ind_level.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: ps_ind_level.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * The indentation of the very first line of a file determines the
@@ -14,19 +14,19 @@
  * spaces. The initial indentation of the code is intended to be rounded down,
  * to 4 levels of indentation, amounting to 20 spaces.
  */
-#indent input
+//indent input
 			int indented_by_24;
 
 void function_in_column_1(void){}
-#indent end
+//indent end
 
 /* 5 spaces indentation, 8 spaces per tabulator */
-#indent run -i5 -ts8
+//indent run -i5 -ts8
 		    int		    indented_by_24;
 
 		    void	    function_in_column_1(void){
 		    }
-#indent end
+//indent end
 /*
  * In the above function declaration, the space between '){' is missing. This
  * is because the tokenizer only recognizes function definitions if they start
@@ -43,25 +43,25 @@ void function_in_column_1(void){}
  * at indentation level 3, the code in the function is therefore at level 4,
  * and the label is at level 2, sticking out of the code.
  */
-#indent input
+//indent input
 			int indent_by_24;
 
 void function(void) {
 label:;
 }
-#indent end
+//indent end
 
-#indent run -i8 -ts8 -di0
+//indent run -i8 -ts8 -di0
 			int indent_by_24;
 
 			void function(void){
 		label:		;
 			}
-#indent end
+//indent end
 
 
 /* Test the indentation computation in code_add_decl_indent. */
-#indent input
+//indent input
 int level_0;
 {
 int level_1;
@@ -75,13 +75,13 @@ int level_4;
 }
 }
 }
-#indent end
+//indent end
 
 /*
  * The variables are indented by 16, 21, 26, 31, 36.
  * The variables end up in columns 17, 22, 27, 32, 37.
  */
-#indent run -i5 -ts8 -di16 -ldi16
+//indent run -i5 -ts8 -di16 -ldi16
 int		level_0;
 {
      int	     level_1;
@@ -95,13 +95,13 @@ int		level_0;
 	  }
      }
 }
-#indent end
+//indent end
 
 /*
  * The variables are indented by 7, 12, 17, 22, 27.
  * The variables end up in columns 8, 13, 18, 23, 28.
  */
-#indent run -i5 -ts8 -di7 -ldi7
+//indent run -i5 -ts8 -di7 -ldi7
 int    level_0;
 {
      int    level_1;
@@ -115,4 +115,4 @@ int    level_0;
 	  }
      }
 }
-#indent end
+//indent end

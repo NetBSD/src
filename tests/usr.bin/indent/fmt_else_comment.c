@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_else_comment.c,v 1.3 2022/04/22 21:21:20 rillig Exp $	*/
+/*	$NetBSD: fmt_else_comment.c,v 1.4 2022/04/24 09:04:12 rillig Exp $	*/
 
 /*
  * Tests for comments after 'if (expr)' and 'else'. If the option '-br' is
@@ -15,7 +15,7 @@
  * The two 'if' statements below exercise two different code paths, even
  * though they look very similar.
  */
-#indent input
+//indent input
 void t(void) {
 	if (1) /* a */ int a; else /* b */ int b;
 
@@ -24,9 +24,9 @@ void t(void) {
 	else /* b */
 		int b;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 t(void)
 {
@@ -40,10 +40,10 @@ t(void)
 	else			/* b */
 		int		b;
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 void t(void) {
 	if (1) {
 
@@ -75,9 +75,9 @@ void t(void) {
 
 	}
 }
-#indent end
+//indent end
 
-#indent run -bl
+//indent run -bl
 void
 t(void)
 {
@@ -113,4 +113,4 @@ t(void)
 
 	}
 }
-#indent end
+//indent end

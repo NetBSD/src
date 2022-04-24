@@ -1,10 +1,10 @@
-/* $NetBSD: lex_char.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lex_char.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Test lexing of character constants.
  */
 
-#indent input
+//indent input
 int simple = 'x';
 int multi = 'xy';
 int empty = '';
@@ -24,6 +24,6 @@ int line_break_before = '\
 x';
 int line_break_after = 'x\
 ';
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0

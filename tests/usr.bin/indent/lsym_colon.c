@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_colon.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_colon.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_colon, which represents a ':' in these contexts:
@@ -23,7 +23,7 @@
 /*
  * The ':' marks a label that can be used in a 'goto' statement.
  */
-#indent input
+//indent input
 void endless(void)
 {
 label1:
@@ -31,9 +31,9 @@ goto label2;
 
     if (true)if (true)if (true)if (true)label2 :goto label1;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 endless(void)
 {
@@ -46,14 +46,14 @@ label1:
 				if (true)
 			label2:		goto label1;
 }
-#indent end
+//indent end
 
 
 /*
  * The ':' is used in a 'switch' statement, after a 'case' label or a
  * 'default' label.
  */
-#indent input
+//indent input
 void
 example(void)
 {
@@ -64,27 +64,27 @@ example(void)
 		return;
 	}
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * The ':' is used as part of the conditional operator '?:'.
  */
-#indent input
+//indent input
 int constant_expression = true?4:12345;
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		constant_expression = true ? 4 : 12345;
-#indent end
+//indent end
 
 
 /*
  * The ':' is used in the declaration of a struct member that is a bit-field.
  */
-#indent input
+//indent input
 struct bit_field {
 	bool flag:1;
 	int maybe_signed : 4;
@@ -93,9 +93,9 @@ struct bit_field {
 	unsigned int definitely_unsigned:3;
 	unsigned int:0;/* padding */
 };
-#indent end
+//indent end
 
-#indent run
+//indent run
 struct bit_field {
 	bool		flag:1;
 	int		maybe_signed:4;
@@ -106,4 +106,4 @@ struct bit_field {
 /* $ XXX: Placing the colon directly at the type looks inconsistent. */
 	unsigned int:	0;	/* padding */
 };
-#indent end
+//indent end

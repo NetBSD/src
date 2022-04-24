@@ -1,4 +1,4 @@
-/* $NetBSD: opt_v.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-v' and '-nv'.
@@ -11,7 +11,7 @@
  * in this mode, but no progress messages.
  */
 
-#indent input
+//indent input
 /*
  * A block comment.
  */
@@ -26,9 +26,9 @@ example(void)
 
 /* $ The below comment is formatted and counted. */
 #define macro2 prefix /* suffix */
-#indent end
+//indent end
 
-#indent run -v
+//indent run -v
 /*
  * A block comment.
  */
@@ -43,19 +43,19 @@ example(void)
 #define macro2 prefix		/* suffix */
 There were 10 output lines and 2 comments
 (Lines with comments)/(Lines with code):  0.571
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 void
 example(void)
 {
 	int sum1 = 1+2+3+4+5+6+7+8+9+10+11+12+13+14+15+16+17+18+19+20+21;
 	int sum2 = (1+2+3+4+5+6+7+8+9+10+11+12+13+14+15+16+17+18+19+20+21);
 }
-#indent end
+//indent end
 
-#indent run -nv
+//indent run -nv
 void
 example(void)
 {
@@ -64,17 +64,17 @@ example(void)
 	int		sum1 = 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 + 20 + 21;
 	int		sum2 = (1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 + 20 + 21);
 }
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 /* Demonstrates line number counting in verbose mode. */
 
 int *function(void)
 {}
-#indent end
+//indent end
 
-#indent run -v
+//indent run -v
 /* Demonstrates line number counting in verbose mode. */
 
 int *
@@ -83,7 +83,7 @@ function(void)
 }
 There were 5 output lines and 1 comments
 (Lines with comments)/(Lines with code):  0.250
-#indent end
+//indent end
 /* In the above output, the '5' means 5 non-empty lines. */
 
 /*
@@ -95,7 +95,7 @@ There were 5 output lines and 1 comments
 /*
  * Test line counting in preprocessor directives.
  */
-#indent input
+//indent input
 #if 0
 int line = 1;
 int line = 2;
@@ -103,9 +103,9 @@ int line = 3;
 #else
 int line = 5;
 #endif
-#indent end
+//indent end
 
-#indent run -v -di0
+//indent run -v -di0
 #if 0
 int line = 1;
 int line = 2;
@@ -115,7 +115,7 @@ int line = 5;
 #endif
 There were 3 output lines and 0 comments
 (Lines with comments)/(Lines with code):  0.000
-#indent end
+//indent end
 /*
  * FIXME: The lines within the conditional compilation directives must be
  * counted as well. TODO: Move stats out of parser_state.

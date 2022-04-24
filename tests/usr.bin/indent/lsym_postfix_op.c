@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_postfix_op.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_postfix_op.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_postfix_op, which represents the operators '++'
@@ -8,24 +8,24 @@
  *	lsym_unary_op.c		for the corresponding prefix operators
  */
 
-#indent input
+//indent input
 int decl = lvalue ++;
 int decl = lvalue --;
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int decl = lvalue++;
 int decl = lvalue--;
-#indent end
+//indent end
 
 
 /*
  * There is no operator '**', so try that just for fun.
  */
-#indent input
+//indent input
 int decl = lvalue **;
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 int decl = lvalue * *;
-#indent end
+//indent end

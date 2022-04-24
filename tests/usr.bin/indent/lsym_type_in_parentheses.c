@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_type_in_parentheses.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_type_in_parentheses.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_token_in_parentheses, which represents a type name
@@ -11,8 +11,8 @@
  * In a compound expression (since C99).
  */
 
-#indent input
+//indent input
 // TODO: add input
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input

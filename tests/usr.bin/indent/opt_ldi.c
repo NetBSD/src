@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ldi.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_ldi.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the option '-ldi', which specifies where the variable names of
@@ -8,7 +8,7 @@
  *	opt_di.c
  */
 
-#indent input
+//indent input
 int global;
 
 void
@@ -16,9 +16,9 @@ function(void)
 {
 	int local;
 }
-#indent end
+//indent end
 
-#indent run -ldi0
+//indent run -ldi0
 int		global;
 
 void
@@ -26,9 +26,9 @@ function(void)
 {
 	int local;
 }
-#indent end
+//indent end
 
-#indent run -ldi8
+//indent run -ldi8
 int		global;
 
 void
@@ -36,9 +36,9 @@ function(void)
 {
 	int	local;
 }
-#indent end
+//indent end
 
-#indent run -ldi24
+//indent run -ldi24
 int		global;
 
 void
@@ -46,7 +46,7 @@ function(void)
 {
 	int			local;
 }
-#indent end
+//indent end
 
 
 /*
@@ -58,7 +58,7 @@ function(void)
  * the length of the keyword 'struct', 'union' or 'enum', together with type
  * qualifiers like 'const' or the storage class like 'static'.
  */
-#indent input
+//indent input
 {
 	struct {
 		int member;
@@ -66,13 +66,13 @@ function(void)
 		3,
 	};
 }
-#indent end
+//indent end
 
 /*
  * Struct members use '-di' for indentation, no matter whether they are
  * declared globally or locally.
  */
-#indent run -ldi0
+//indent run -ldi0
 {
 	struct {
 		int		member;
@@ -80,9 +80,9 @@ function(void)
 		3,
 	};
 }
-#indent end
+//indent end
 
-#indent run -ldi16
+//indent run -ldi16
 {
 	struct {
 		int		member;
@@ -90,4 +90,4 @@ function(void)
 		3,
 	};
 }
-#indent end
+//indent end

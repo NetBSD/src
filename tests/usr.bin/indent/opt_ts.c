@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ts.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_ts.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the option '-ts', which specifies the width of a single
@@ -9,7 +9,7 @@
  * Since in this test, a tab is only worth 4 spaces, the indentation needs
  * more tabs to reach the indentation of 8 and the alignment at 16.
  */
-#indent input
+//indent input
 int variable;
 
 void
@@ -18,9 +18,9 @@ function(void)
 	int local_variable;
 	char local_variable;
 }
-#indent end
+//indent end
 
-#indent run -ts4
+//indent run -ts4
 int				variable;
 
 void
@@ -29,4 +29,4 @@ function(void)
 		int				local_variable;
 		char			local_variable;
 }
-#indent end
+//indent end

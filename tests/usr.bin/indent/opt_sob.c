@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sob.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_sob.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-sob' and '-nsob'.
@@ -15,7 +15,7 @@
  * FIXME: There are lots of 'optional blank lines' here that should be
  *  swallowed.
  */
-#indent input
+//indent input
 void		function_declaration(void);
 
 
@@ -69,9 +69,9 @@ function_with_2_blank_lines(void)
 
 
 }
-#indent end
+//indent end
 
-#indent run -sob
+//indent run -sob
 void		function_declaration(void);
 
 
@@ -120,9 +120,9 @@ function_with_2_blank_lines(void)
 
 
 }
-#indent end
+//indent end
 
-#indent run -nsob
+//indent run -nsob
 void		function_declaration(void);
 
 
@@ -174,4 +174,4 @@ function_with_2_blank_lines(void)
 
 
 }
-#indent end
+//indent end

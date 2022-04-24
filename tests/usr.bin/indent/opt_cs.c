@@ -1,4 +1,4 @@
-/* $NetBSD: opt_cs.c,v 1.5 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_cs.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-cs' and '-ncs'.
@@ -8,42 +8,42 @@
  * The option '-ncs' removes all whitespace after the parentheses of a cast.
  */
 
-#indent input
+//indent input
 int		i0 = (int)3.0;
 int		i1 = (int) 3.0;
 int		i3 = (int)   3.0;
-#indent end
+//indent end
 
-#indent run -cs
+//indent run -cs
 int		i0 = (int) 3.0;
 int		i1 = (int) 3.0;
 int		i3 = (int) 3.0;
-#indent end
+//indent end
 
-#indent run -ncs
+//indent run -ncs
 int		i0 = (int)3.0;
 int		i1 = (int)3.0;
 int		i3 = (int)3.0;
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 struct s	s3 = (struct s)   s;
 struct s       *ptr = (struct s *)   s;
 union u		u3 = (union u)   u;
 enum e		e3 = (enum e)   e;
-#indent end
+//indent end
 
-#indent run -cs
+//indent run -cs
 struct s	s3 = (struct s) s;
 struct s       *ptr = (struct s *) s;
 union u		u3 = (union u) u;
 enum e		e3 = (enum e) e;
-#indent end
+//indent end
 
-#indent run -ncs
+//indent run -ncs
 struct s	s3 = (struct s)s;
 struct s       *ptr = (struct s *)s;
 union u		u3 = (union u)u;
 enum e		e3 = (enum e)e;
-#indent end
+//indent end

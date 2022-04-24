@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_block.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: fmt_block.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for formatting blocks of statements and declarations.
@@ -9,7 +9,7 @@
  *	psym_stmt_list.c
  */
 
-#indent input
+//indent input
 void
 function(void)
 {
@@ -21,9 +21,9 @@ function(void)
 		print("block");
 	}
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -36,22 +36,22 @@ function(void)
 		print("block");
 	}
 }
-#indent end
+//indent end
 
 
 /*
  * Two adjacent blocks must not be merged.  They are typically used in C90 and
  * earlier to declare local variables with a limited scope.
  */
-#indent input
+//indent input
 void
 function(void)
 {
 	{}{}
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -60,14 +60,14 @@ function(void)
 	} {
 	}
 }
-#indent end
+//indent end
 
 /*
  * The buggy behavior only occurs with the default setting '-br', which
  * places an opening brace to the right of the preceding 'if (expr)' or
  * similar statements.
  */
-#indent run -bl
+//indent run -bl
 void
 function(void)
 {
@@ -76,4 +76,4 @@ function(void)
 	{
 	}
 }
-#indent end
+//indent end
