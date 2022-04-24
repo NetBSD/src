@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.82.4.1 2019/10/16 17:29:49 martin Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.82.4.2 2022/04/24 16:39:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.82.4.1 2019/10/16 17:29:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.82.4.2 2022/04/24 16:39:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.82.4.1 2019/10/16 17:29:49 martin 
 #include <fs/tmpfs/tmpfs_args.h>
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/msdosfsmount.h>
+#include <fs/udf/udf_mount.h>
 #include <ufs/ufs/ufsmount.h>
 #include <miscfs/nullfs/null.h>
 
@@ -794,6 +795,7 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		struct netbsd32_iso_args iso_args;
 		struct netbsd32_nfs_args nfs_args;
 		struct netbsd32_msdosfs_args msdosfs_args;
+		struct netbsd32_udf_args udf_args;
 		struct netbsd32_tmpfs_args tmpfs_args;
 		struct netbsd32_null_args null_args;
 	} fs_args32;
@@ -803,6 +805,7 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		struct iso_args iso_args;
 		struct nfs_args nfs_args;
 		struct msdosfs_args msdosfs_args;
+		struct udf_args udf_args;
 		struct tmpfs_args tmpfs_args;
 		struct null_args null_args;
 	} fs_args;
@@ -928,6 +931,40 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		data_seg = UIO_SYSSPACE;
 		data = &fs_args.msdosfs_args;
 		data_len = sizeof(fs_args.msdosfs_args);
+	} else if (strcmp(mtype, MOUNT_UDF) == 0) {
+		if (data_len != 0 && data_len < sizeof(fs_args32.udf_args))
+			return EINVAL;
+		if ((flags & MNT_GETARGS) == 0) {
+			error = copyin(data, &fs_args32.udf_args,
+			    sizeof(fs_args32.udf_args));
+			if (error)
+				return error;
+			fs_args.udf_args.version =
+			    fs_args32.udf_args.version;
+			fs_args.udf_args.fspec =
+			    NETBSD32PTR64(fs_args32.udf_args.fspec);
+			fs_args.udf_args.sessionnr =
+			    fs_args32.udf_args.sessionnr;
+			fs_args.udf_args.udfmflags =
+			    fs_args32.udf_args.udfmflags;
+			fs_args.udf_args.gmtoff =
+			    fs_args32.udf_args.gmtoff;
+			fs_args.udf_args.anon_uid =
+			    fs_args32.udf_args.anon_uid;
+			fs_args.udf_args.anon_gid =
+			    fs_args32.udf_args.anon_gid;
+			fs_args.udf_args.nobody_uid =
+			    fs_args32.udf_args.nobody_uid;
+			fs_args.udf_args.nobody_gid =
+			    fs_args32.udf_args.nobody_gid;
+			fs_args.udf_args.sector_size =
+			    fs_args32.udf_args.sector_size;
+			memset(fs_args.udf_args.reserved, 0,
+			    sizeof(fs_args.udf_args.reserved));
+		}
+		data_seg = UIO_SYSSPACE;
+		data = &fs_args.udf_args;
+		data_len = sizeof(fs_args.udf_args);
 	} else if (strcmp(mtype, MOUNT_NFS) == 0) {
 		if (data_len < sizeof(fs_args32.nfs_args))
 			return EINVAL;
@@ -1031,6 +1068,35 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 			error = copyout(&fs_args32.iso_args, udata,
 				    sizeof(fs_args32.iso_args));
 			*retval = sizeof(fs_args32.iso_args);
+		} else if (strcmp(mtype, MOUNT_UDF) == 0) {
+			if (data_len != 0 &&
+			    data_len != sizeof(fs_args.udf_args))
+				return EINVAL;
+			fs_args32.udf_args.version =
+			    fs_args.udf_args.version;
+			NETBSD32PTR32(fs_args32.udf_args.fspec,
+			    fs_args.udf_args.fspec);
+			fs_args32.udf_args.sessionnr =
+			    fs_args.udf_args.sessionnr;
+			fs_args32.udf_args.udfmflags =
+			    fs_args.udf_args.udfmflags;
+			fs_args32.udf_args.gmtoff =
+			    fs_args.udf_args.gmtoff;
+			fs_args32.udf_args.anon_uid =
+			    fs_args.udf_args.anon_uid;
+			fs_args32.udf_args.anon_gid =
+			    fs_args.udf_args.anon_gid;
+			fs_args32.udf_args.nobody_uid =
+			    fs_args.udf_args.nobody_uid;
+			fs_args32.udf_args.nobody_gid =
+			    fs_args.udf_args.nobody_gid;
+			fs_args32.udf_args.sector_size =
+			    fs_args.udf_args.sector_size;
+			memset(fs_args32.udf_args.reserved, 0,
+			    sizeof(fs_args32.udf_args.reserved));
+			error = copyout(&fs_args32.udf_args, udata,
+				    sizeof(fs_args32.udf_args));
+			*retval = sizeof(fs_args32.udf_args);
 		} else if (strcmp(mtype, MOUNT_NFS) == 0) {
 			if (data_len != sizeof(fs_args.nfs_args))
 				return EINVAL;

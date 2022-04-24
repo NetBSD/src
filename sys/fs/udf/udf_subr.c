@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.146.2.2 2022/03/13 09:48:32 martin Exp $ */
+/* $NetBSD: udf_subr.c,v 1.146.2.3 2022/04/24 16:39:00 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.146.2.2 2022/03/13 09:48:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.146.2.3 2022/04/24 16:39:00 martin Exp $");
 #endif /* not lint */
 
 
@@ -2439,11 +2439,11 @@ udf_extattr_search_intern(struct udf_node *node,
 		if ((a_l == 0) || (a_l > l_ea))
 			return EINVAL;
 
-		if (attrhdr->type != sattr)
+		if (udf_rw32(attrhdr->type) != sattr)
 			goto next_attribute;
 
 		/* we might have found it! */
-		if (attrhdr->type < 2048) {	/* Ecma-167 attribute */
+		if (udf_rw32(attrhdr->type) < 2048) {	/* Ecma-167 attribute */
 			*offsetp = offset;
 			*lengthp = a_l;
 			return 0;		/* success */
