@@ -1,4 +1,4 @@
-/*	$NetBSD: d_compound_literals2.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
+/*	$NetBSD: d_compound_literals2.c,v 1.4 2022/04/24 20:08:23 rillig Exp $	*/
 # 3 "d_compound_literals2.c"
 
 /* compound literals */
@@ -16,7 +16,7 @@ bar(int i)
 	return &q[i];
 }
 
-foo()
+void foo(void)
 {
 	*bar(1) = (struct p){ 1, 2, 3, 4 };
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: d_gcc_compound_statements1.c,v 1.8 2022/04/03 00:39:32 rillig Exp $	*/
+/*	$NetBSD: d_gcc_compound_statements1.c,v 1.9 2022/04/24 20:08:23 rillig Exp $	*/
 # 3 "d_gcc_compound_statements1.c"
 
 /* GCC compound statement with expression */
 
-foo(unsigned long z)
+void foo(unsigned long z)
 {
 	z = ({
 		unsigned long tmp;

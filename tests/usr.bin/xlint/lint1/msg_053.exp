@@ -1,1 +1,2 @@
-msg_053.c(9): error: declared argument extra_argument is missing [53]
+msg_053.c(8): error: old style declaration; add 'int' [1]
+msg_053.c(10): error: declared argument extra_argument is missing [53]

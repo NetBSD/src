@@ -1,2 +1,3 @@
-msg_062.c(9): warning: function prototype parameters must have types [62]
-msg_062.c(9): warning: dubious static function at block level: inner [93]
+msg_062.c(7): error: old style declaration; add 'int' [1]
+msg_062.c(10): warning: function prototype parameters must have types [62]
+msg_062.c(10): warning: dubious static function at block level: inner [93]

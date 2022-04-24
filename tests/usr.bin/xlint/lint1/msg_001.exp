@@ -1,5 +1,7 @@
 msg_001.c(7): warning: old style declaration; add 'int' [1]
 msg_001.c(13): error: old style declaration; add 'int' [1]
+msg_001.c(20): error: old style declaration; add 'int' [1]
+msg_001.c(27): error: old style declaration; add 'int' [1]
 msg_001.c(13): warning: static variable static_old_style unused [226]
 msg_001.c(16): warning: static variable static_new_style unused [226]
 msg_001.c(26): warning: static function static_implicit_int unused [236]

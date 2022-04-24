@@ -1,2 +1,3 @@
-msg_250.c(6): error: unknown character \100 [250]
-msg_250.c(7): error: syntax error 'char' [249]
+msg_250.c(7): error: unknown character \100 [250]
+msg_250.c(10): error: old style declaration; add 'int' [1]
+msg_250.c(10): error: syntax error 'char' [249]

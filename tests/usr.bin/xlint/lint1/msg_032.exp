@@ -1,3 +1,4 @@
-msg_032.c(10): warning: argument type defaults to 'int': a [32]
-msg_032.c(10): warning: argument type defaults to 'int': b [32]
-msg_032.c(10): warning: argument type defaults to 'int': c [32]
+msg_032.c(11): error: old style declaration; add 'int' [1]
+msg_032.c(11): warning: argument type defaults to 'int': a [32]
+msg_032.c(11): warning: argument type defaults to 'int': b [32]
+msg_032.c(11): warning: argument type defaults to 'int': c [32]
