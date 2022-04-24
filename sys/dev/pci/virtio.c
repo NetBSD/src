@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.53 2021/10/28 01:36:43 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.54 2022/04/24 11:51:09 uwe Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.53 2021/10/28 01:36:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.54 2022/04/24 11:51:09 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ virtio_soft_intr(void *arg)
 
 	KASSERT(sc->sc_intrhand != NULL);
 
-	(sc->sc_intrhand)(sc);
+	(*sc->sc_intrhand)(sc);
 }
 
 /*
@@ -496,7 +496,7 @@ virtio_vq_intr(struct virtio_softc *sc)
 		vq = &sc->sc_vqs[i];
 		if (virtio_vq_is_enqueued(sc, vq) == 1) {
 			if (vq->vq_done)
-				r |= (vq->vq_done)(vq);
+				r |= (*vq->vq_done)(vq);
 		}
 	}
 
@@ -511,7 +511,7 @@ virtio_vq_intrhand(struct virtio_softc *sc)
 
 	for (i = 0; i < sc->sc_nvqs; i++) {
 		vq = &sc->sc_vqs[i];
-		r |= (vq->vq_intrhand)(vq->vq_intrhand_arg);
+		r |= (*vq->vq_intrhand)(vq->vq_intrhand_arg);
 	}
 
 	return r;
@@ -1293,7 +1293,7 @@ virtio_child(struct virtio_softc *sc)
 int
 virtio_intrhand(struct virtio_softc *sc)
 {
-	return (sc->sc_intrhand)(sc);
+	return (*sc->sc_intrhand)(sc);
 }
 
 uint64_t
