@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.6 2022/04/24 08:48:17 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -29,29 +29,29 @@
  */
 
 /* The '(' in a type name derives a function type. */
-#indent input
+//indent input
 typedef void signal_handler(int);
 void (*signal(void (*)(int)))(int);
-#indent end
+//indent end
 
-#indent run
+//indent run
 typedef void signal_handler(int);
 void		(*signal(void (*)(int)))(int);
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 #define macro(arg) ((arg) + 1)
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
  * The '(' in an expression overrides operator precedence.  In multi-line
  * expressions, the continuation lines are aligned on the parentheses.
  */
-#indent input
+//indent input
 int nested = (
 	(
 		(
@@ -61,9 +61,9 @@ int nested = (
 		)
 	)
 );
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		nested = (
 			  (
 			   (
@@ -73,55 +73,55 @@ int		nested = (
 			    )
 			   )
 );
-#indent end
+//indent end
 
 
 /* The '(' in a function call expression starts the argument list. */
-#indent input
+//indent input
 int var = macro_call ( arg1,  arg2  ,arg3);
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		var = macro_call(arg1, arg2, arg3);
-#indent end
+//indent end
 
 
 /*
  * The '(' in a sizeof expression is required for type names and optional for
  * expressions.
  */
-#indent input
+//indent input
 size_t sizeof_typename = sizeof ( int );
 size_t sizeof_expr = sizeof ( 12345 ) ;
-#indent end
+//indent end
 
-#indent run
+//indent run
 size_t		sizeof_typename = sizeof(int);
 size_t		sizeof_expr = sizeof(12345);
-#indent end
+//indent end
 
 
 /* The '[' in a type name derives an array type. */
-#indent input
+//indent input
 int array_of_numbers[100];
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		array_of_numbers[100];
-#indent end
+//indent end
 
 
 /* The '[' in an expression accesses an array element. */
-#indent input
+//indent input
 int second_prime = &primes[1];
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		second_prime = &primes[1];
-#indent end
+//indent end
 
 
-#indent input
+//indent input
 void
 function(void)
 {
@@ -139,27 +139,27 @@ function(void)
 	/* Grouping subexpressions */
 	a = ((((b + c)))) * d;
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /* This is the maximum supported number of parentheses. */
-#indent input
+//indent input
 int zero = (((((((((((((((((((0)))))))))))))))))));
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
-#indent input
+//indent input
 void (*action)(void);
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
-#indent input
+//indent input
 void
 function(void)
 {
@@ -177,9 +177,9 @@ function(void)
     /* expr = ({if(expr)debug();expr;}); */
 /* $ XXX: Generates 'error: Standard Input:36: Unbalanced parentheses'. */
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -201,26 +201,26 @@ function(void)
 	/* GCC statement expression */
 	/* expr = ({if(expr)debug();expr;}); */
 }
-#indent end
+//indent end
 
 
 /*
  * C99 designator initializers are the rare situation where there is a space
  * before a '['.
  */
-#indent input
+//indent input
 int array[] = {
 	1, 2, [2] = 3, [3] = 4,
 };
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
 /*
  * Test want_blank_before_lparen for all possible token types.
  */
-#indent input
+//indent input
 void cover_want_blank_before_lparen(void)
 {
 	/* ps.prev_token can never be 'newline'. */
@@ -263,9 +263,9 @@ void cover_want_blank_before_lparen(void)
 	// $ TODO: is keyword_struct_union_enum possible?
 	struct (keyword_struct_union_enum);	/* syntax error */
 }
-#indent end
+//indent end
 
-#indent run -ldi0
+//indent run -ldi0
 void
 cover_want_blank_before_lparen(void)
 {
@@ -317,6 +317,6 @@ cover_want_blank_before_lparen(void)
 	typedef (type_def) new_type;
 	struct (keyword_struct_union_enum);	/* syntax error */
 }
-#indent end
+//indent end
 
 /* See t_errors.sh, test case 'compound_literal'. */

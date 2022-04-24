@@ -1,4 +1,4 @@
-/* $NetBSD: token_keyword_else.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_keyword_else.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the keyword 'else'.
@@ -13,7 +13,7 @@
  * next token is 'else'. The comment does not influence this since it never
  * reaches 'parse'.
  */
-#indent input
+//indent input
 void
 example(bool cond)
 {
@@ -27,9 +27,9 @@ example(bool cond)
 	else
 	stmt();
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 example(bool cond)
 {
@@ -43,4 +43,4 @@ example(bool cond)
 		else
 			stmt();
 }
-#indent end
+//indent end

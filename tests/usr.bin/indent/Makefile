@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2022/04/24 08:48:17 rillig Exp $
+#	$NetBSD: Makefile,v 1.44 2022/04/24 09:04:12 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -159,13 +159,13 @@ add-test: .PHONY
 		' * TODO: Explain the purpose of the test.' \
 		' */' \
 		'' \
-		'#indent input' \
+		'//indent input' \
 		'// TODO: add input' \
-		'#indent end' \
+		'//indent end' \
 		'' \
-		'#indent run [-options]' \
+		'//indent run [-options]' \
 		'// TODO: add expected output' \
-		'#indent end' \
+		'//indent end' \
 	> "$$test"; \
 	cvs add "$$test"; \
 	printf '%s\n' \

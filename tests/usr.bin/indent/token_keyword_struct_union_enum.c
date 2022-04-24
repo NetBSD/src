@@ -1,10 +1,10 @@
-/* $NetBSD: token_keyword_struct_union_enum.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_keyword_struct_union_enum.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the keywords 'struct', 'union' and 'enum'.
  */
 
-#indent input
+//indent input
 struct stat {
 	mode_t		st_mode;
 };
@@ -17,13 +17,13 @@ union variant {
 	bool		v_bool;
 	void	       *v_pointer;
 };
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /* See FreeBSD r303485. */
-#indent input
+//indent input
 int f(struct x *a);
 
 void
@@ -42,9 +42,9 @@ void u(struct x a) {
 	int b;
 	struct y c = (struct y *)&a;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		f(struct x *a);
 
 void
@@ -65,14 +65,14 @@ u(struct x a)
 	int		b;
 	struct y	c = (struct y *)&a;
 }
-#indent end
+//indent end
 
 
 /* Comment between 'struct' and the tag name; doesn't occur in practice. */
-#indent input
+//indent input
 struct   /* comment */   tag var;
-#indent end
+//indent end
 
-#indent run -di0
+//indent run -di0
 struct /* comment */ tag var;
-#indent end
+//indent end

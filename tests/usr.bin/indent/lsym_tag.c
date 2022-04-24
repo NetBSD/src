@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_tag.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_tag.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_tag, which represents one of the keywords
@@ -10,7 +10,7 @@
 /* TODO: Add systematic tests for 'enum'. */
 
 
-#indent input
+//indent input
 int
 indent_enum_constants(void)
 {
@@ -37,6 +37,6 @@ indent_enum_constants(void)
 	}
 	return 0;
 }
-#indent end
+//indent end
 
-#indent run-equals-input -ci2
+//indent run-equals-input -ci2

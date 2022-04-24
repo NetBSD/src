@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr_stmt_else.c,v 1.3 2022/04/23 09:01:03 rillig Exp $ */
+/* $NetBSD: psym_if_expr_stmt_else.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr_stmt_else, which represents the
@@ -9,7 +9,7 @@
  * '-nei'.  Any other lookahead token completes the 'if' statement.
  */
 
-#indent input
+//indent input
 void
 example(_Bool cond)
 {
@@ -18,9 +18,9 @@ example(_Bool cond)
 	else if (cond) i++;
 	else {}
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 example(_Bool cond)
 {
@@ -31,13 +31,13 @@ example(_Bool cond)
 	else {
 	}
 }
-#indent end
+//indent end
 
 /*
  * Combining the options '-bl' (place brace on the left margin) and '-ce'
  * (cuddle else) looks strange, but is technically correct.
  */
-#indent run -bl
+//indent run -bl
 void
 example(_Bool cond)
 {
@@ -51,9 +51,9 @@ example(_Bool cond)
 	{
 	}
 }
-#indent end
+//indent end
 
-#indent run -bl -nce
+//indent run -bl -nce
 void
 example(_Bool cond)
 {
@@ -69,13 +69,13 @@ example(_Bool cond)
 	{
 	}
 }
-#indent end
+//indent end
 
 /*
  * Adding the option '-nei' (do not join 'else if') expands the code even
  * more.
  */
-#indent run -bl -nce -nei
+//indent run -bl -nce -nei
 void
 example(_Bool cond)
 {
@@ -93,4 +93,4 @@ example(_Bool cond)
 			{
 			}
 }
-#indent end
+//indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_expr.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: fmt_expr.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for all kinds of expressions that are not directly related to unary
@@ -10,16 +10,16 @@
  */
 
 /* See lsym_offsetof.c. */
-#indent input
+//indent input
 void t(void) {
     int n = malloc(offsetof(struct s, f) + 1);
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 t(void)
 {
 	int		n = malloc(offsetof(struct s, f) + 1);
 }
-#indent end
+//indent end

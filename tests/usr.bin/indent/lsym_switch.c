@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_switch.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: lsym_switch.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_switch, which represents the keyword 'switch' that
@@ -9,8 +9,8 @@
  *	C11 6.8.4.2		"The 'switch' statement"
  */
 
-#indent input
+//indent input
 // TODO: add input
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input

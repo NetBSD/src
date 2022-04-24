@@ -1,4 +1,4 @@
-/* $NetBSD: token_for_exprs.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_for_exprs.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Test for 'for' loops.
@@ -10,7 +10,7 @@
  * 'forever' loop.
  */
 
-#indent input
+//indent input
 void
 function(void)
 {
@@ -20,16 +20,16 @@ function(void)
 		stmt();
 	}
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Indent can cope with various syntax errors, which may be caused by
  * syntactic macros like 'forever' or 'foreach'.
  */
-#indent input
+//indent input
 #define forever for (;;)
 #define foreach(list, it) for (it = list.first; it != NULL; it = it->next)
 
@@ -52,19 +52,19 @@ function(void)
 		println(it->data);
 	}
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
  * Another variant of a 'for' loop, seen in sys/arch/arm/apple/apple_intc.c.
  */
-#indent input
+//indent input
 {
 	for (CPU_INFO_FOREACH(cii, ci)) {
 	}
 }
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input

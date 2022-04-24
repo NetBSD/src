@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.7 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the options '-eei' and '-neei'.
@@ -11,7 +11,7 @@
  * continued statements.
  */
 
-#indent input
+//indent input
 bool
 less(int a, int b)
 {
@@ -23,9 +23,9 @@ less(int a, int b)
 	    b)
 		return true;
 }
-#indent end
+//indent end
 
-#indent run -eei
+//indent run -eei
 bool
 less(int a, int b)
 {
@@ -37,16 +37,16 @@ less(int a, int b)
 			b)
 		return true;
 }
-#indent end
+//indent end
 
-#indent run-equals-input -neei
+//indent run-equals-input -neei
 
 /*
  * When a single indentation level is the same as the continuation
  * indentation, the code does not clearly show whether the 'b' belongs to the
  * condition or the body statement.
  */
-#indent run -neei -i4
+//indent run -neei -i4
 bool
 less(int a, int b)
 {
@@ -58,7 +58,7 @@ less(int a, int b)
 	b)
 	return true;
 }
-#indent end
+//indent end
 
 /*
  * Adding the extra level of indentation is useful when the standard
@@ -66,7 +66,7 @@ less(int a, int b)
  * such a case, the continued condition would have the same indentation as the
  * following statement, which would be confusing.
  */
-#indent run -eei -i4
+//indent run -eei -i4
 bool
 less(int a, int b)
 {
@@ -78,7 +78,7 @@ less(int a, int b)
 	    b)
 	return true;
 }
-#indent end
+//indent end
 
 /*
  * With an indentation size of 4, the width of the code 'if (' is exactly one
@@ -87,7 +87,7 @@ less(int a, int b)
  * XXX: This is unexpected since this creates the exact ambiguity that the
  * option '-eei' is supposed to prevent.
  */
-#indent run -eei -i4 -nlp
+//indent run -eei -i4 -nlp
 bool
 less(int a, int b)
 {
@@ -99,7 +99,7 @@ less(int a, int b)
 	b)
 	return true;
 }
-#indent end
+//indent end
 
 
 /*
@@ -107,38 +107,38 @@ less(int a, int b)
  * with a word or an operator like '&&'. The latter cannot start a statement,
  * so there would be no ambiguity.
  */
-#indent input
+//indent input
 {
 	if (a
 && b)
 	    stmt();
 }
-#indent end
+//indent end
 
 /*
  * XXX: The extra indentation is unnecessary since there is no possible
  * confusion: the standard indentation is 8, the indentation of the continued
  * condition could have stayed at 4.
  */
-#indent run -eei
+//indent run -eei
 {
 	if (a
 			&& b)
 		stmt();
 }
-#indent end
+//indent end
 
 /*
  * The extra indentation is necessary here since otherwise the '&&' and the
  * 'stmt()' would start at the same indentation.
  */
-#indent run -eei -i4
+//indent run -eei -i4
 {
     if (a
 	    && b)
 	stmt();
 }
-#indent end
+//indent end
 
 /*
  * With an indentation size of 4, the width of the code 'if (' is exactly one
@@ -147,10 +147,10 @@ less(int a, int b)
  * XXX: This is unexpected since this creates the exact ambiguity that the
  * option '-eei' is supposed to prevent.
  */
-#indent run -eei -i4 -nlp
+//indent run -eei -i4 -nlp
 {
     if (a
 	&& b)
 	stmt();
 }
-#indent end
+//indent end

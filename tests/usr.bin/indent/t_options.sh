@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_options.sh,v 1.9 2022/04/22 21:21:20 rillig Exp $
+# $NetBSD: t_options.sh,v 1.10 2022/04/24 09:04:12 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,15 +32,15 @@
 # and the output, all as close together as possible. The test files use the
 # following directives:
 #
-#	#indent input [description]
+#	//indent input [description]
 #		Specifies the input to be formatted.
-#	#indent run [options]
+#	//indent run [options]
 #		Runs indent on the input, using the given options.
-#	#indent end [description]
-#		Finishes an '#indent input' or '#indent run' section.
-#	#indent run-equals-input [options]
+#	//indent end [description]
+#		Finishes an '//indent input' or '//indent run' section.
+#	//indent run-equals-input [options]
 #		Runs indent on the input, expecting unmodified output.
-#	#indent run-equals-prev-output [options]
+#	//indent run-equals-prev-output [options]
 #		Runs indent on the input, expecting the same output as from
 #		the previous run.
 #

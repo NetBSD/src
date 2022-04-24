@@ -1,4 +1,4 @@
-/* $NetBSD: token_ident.c,v 1.6 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_ident.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for identifiers, numbers and string literals.
@@ -8,7 +8,7 @@
 /* TODO: Completely cover each state transition in lex_number_state. */
 
 /* Binary number literals, a GCC extension that was added in C11. */
-#indent input
+//indent input
 #define b00101010 -1
 void t(void) {
 	unsigned a[] = {0b00101010, 0x00005678, 02, 17U};
@@ -21,9 +21,9 @@ void t(void) {
 	if (0r12345)
 		return;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 #define b00101010 -1
 void
 t(void)
@@ -37,11 +37,11 @@ t(void)
 	if (0 r12345)
 		return;
 }
-#indent end
+//indent end
 
 
 /* Floating point numbers. */
-#indent input
+//indent input
 void t(void) {
 	unsigned long x = 314UL;
 	double y[] = {0x1P+9F, 0.3, .1, 1.2f, 0xa.p01f, 3.14f, 2.L};
@@ -49,9 +49,9 @@ void t(void) {
 	DO_NOTHING;
 	x._y = 5;
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 t(void)
 {
@@ -61,22 +61,22 @@ t(void)
 	DO_NOTHING;
 	x._y = 5;
 }
-#indent end
+//indent end
 
 
 /*
  * Test identifiers containing '$', which some compilers support as an
  * extension to the C standard.
  */
-#indent input
+//indent input
 int $		= jQuery;			// just kidding
 const char SYS$LOGIN[]="$HOME";
-#indent end
+//indent end
 
-#indent run
+//indent run
 int		$ = jQuery;	// just kidding
 const char	SYS$LOGIN[] = "$HOME";
-#indent end
+//indent end
 
 
 /*
@@ -86,9 +86,9 @@ const char	SYS$LOGIN[] = "$HOME";
  * '0x') but may later be extended to form a valid token (such as '0x123'),
  * indent does not care about this invalid prefix and returns it nevertheless.
  */
-#indent input
+//indent input
 int unfinished_hex_prefix = 0x;
 double unfinished_hex_float = 0x123p;
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0

@@ -1,4 +1,4 @@
-/* $NetBSD: psym_switch_expr.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: psym_switch_expr.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_switch_expr, which represents the keyword
@@ -6,11 +6,11 @@
  * statement (usually a block) containing the 'case' labels.
  */
 
-#indent input
+//indent input
 // TODO: add input
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input
 
 
 /*
@@ -18,7 +18,7 @@
  * C syntax allows an arbitrary statement.  Unless such a statement has a
  * label, it is unreachable.
  */
-#indent input
+//indent input
 void
 function(void)
 {
@@ -28,9 +28,9 @@ function(void)
 	case 2: break;
 	}
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -42,4 +42,4 @@ function(void)
 			break;
 		}
 }
-#indent end
+//indent end

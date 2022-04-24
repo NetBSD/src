@@ -1,4 +1,4 @@
-/* $NetBSD: opt_cli.c,v 1.4 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: opt_cli.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the option '-cli' ("case label indentation"), which sets the
@@ -9,7 +9,7 @@
  *	lsym_case_label.c
  */
 
-#indent input
+//indent input
 void
 classify(int n)
 {
@@ -21,9 +21,9 @@ classify(int n)
 	default: print("large"); break;
 	}
 }
-#indent end
+//indent end
 
-#indent run -cli0.5
+//indent run -cli0.5
 void
 classify(int n)
 {
@@ -46,9 +46,9 @@ classify(int n)
 		break;
 	}
 }
-#indent end
+//indent end
 
-#indent run -cli1.5
+//indent run -cli1.5
 void
 classify(int n)
 {
@@ -71,4 +71,4 @@ classify(int n)
 			break;
 	}
 }
-#indent end
+//indent end

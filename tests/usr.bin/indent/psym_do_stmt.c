@@ -1,4 +1,4 @@
-/* $NetBSD: psym_do_stmt.c,v 1.2 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: psym_do_stmt.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_do_stmt, which represents the state after
@@ -6,8 +6,8 @@
  * 'while' and the controlling expression.
  */
 
-#indent input
+//indent input
 // TODO: add input
-#indent end
+//indent end
 
-#indent run-equals-input
+//indent run-equals-input

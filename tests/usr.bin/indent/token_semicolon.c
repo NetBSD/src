@@ -1,4 +1,4 @@
-/* $NetBSD: token_semicolon.c,v 1.3 2022/04/22 21:21:20 rillig Exp $ */
+/* $NetBSD: token_semicolon.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
 
 /*
  * Tests for the token ';'.
@@ -10,16 +10,16 @@
  * The ';' separates the 3 expressions in the head of the 'for' loop.
  */
 
-#indent input
+//indent input
 struct {
 	int member;
 } global_var;
-#indent end
+//indent end
 
-#indent run-equals-input -di0
+//indent run-equals-input -di0
 
 
-#indent input
+//indent input
 void
 function(void)
 {
@@ -28,9 +28,9 @@ function(void)
 	for (;;)
 		stmt();
 }
-#indent end
+//indent end
 
-#indent run
+//indent run
 void
 function(void)
 {
@@ -39,4 +39,4 @@ function(void)
 	for (;;)
 		stmt();
 }
-#indent end
+//indent end
