@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.27 2022/04/25 14:46:38 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.28 2022/04/25 15:48:57 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -431,9 +431,9 @@ main(int argc, char *argv[])
 	*rpo = 0; rpo += delta;
 	*rpo = 0; rpo += delta;
 
-	printf("using %td bytes, %td bytes remaining.\n", delta > 0 ?
-	    rpo-buffer-tsz-dsz : buffer+bbsize-rpo, delta > 0 ?
-	    buffer + bbsize - rpo : rpo - buffer - tsz - dsz);
+	printf("using %td bytes, %td bytes remaining.\n",
+	    delta > 0 ? rpo - buffer - tsz - dsz : buffer + bbsize - rpo,
+	    delta > 0 ? buffer + bbsize - rpo : rpo - buffer - tsz - dsz);
 	/*
 	 * RELOCs must fit into the bss area.
 	 */
