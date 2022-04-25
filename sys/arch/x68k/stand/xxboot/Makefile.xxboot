@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.19 2022/02/04 06:16:03 isaki Exp $
+#	$NetBSD: Makefile.xxboot,v 1.20 2022/04/25 15:12:07 mlelstv Exp $
 
 NOMAN=		# defined
 
@@ -25,7 +25,7 @@ BINMODE=	444
 S=		${.CURDIR}/../../../../..
 M=		$S/arch/x68k
 .PATH:		${.CURDIR}/..
-SRCS=	boot.S bootmain.c conf.c xx.c
+SRCS=	boot.S bootmain.c xx.c
 SRCS+=	ashrdi3.S
 SRCS+=	ashldi3.S
 SRCS+=	memcpy.S
@@ -65,7 +65,7 @@ CPPFLAGS+= -DLIBSA_NO_RAW_ACCESS
 CPPFLAGS+= -DLIBSA_NO_TWIDDLE
 CPPFLAGS+= -DUSTAR_SECT_PER_CYL=30
 SRCS+=	open.c close.c read.c lseek.c loadfile.c loadfile_aout.c alloc.c
-SRCS+=	errno.c globals.c
+SRCS+=	errno.c globals.c files.c
 SRCS+=  $(FS).c
 SRCS+=	${BOOTSRCS}
 
