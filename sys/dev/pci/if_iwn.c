@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.98 2021/12/31 14:25:23 riastradh Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.99 2022/04/25 02:29:14 gutteridge Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.98 2021/12/31 14:25:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.99 2022/04/25 02:29:14 gutteridge Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -859,7 +859,7 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		 * PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2
 		 */
 		else
-			sc->fwname = "iwlwifi-6000g2a-5.ucode";
+			sc->fwname = "iwlwifi-6000g2a-6.ucode";
 		break;
 	case IWN_HW_REV_TYPE_2030:
 		sc->limits = &iwn2030_sensitivity_limits;
