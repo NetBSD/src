@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.4 2022/04/22 21:22:14 reinoud Exp $ */
+/* $NetBSD: udf_core.c,v 1.5 2022/04/25 20:41:25 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.4 2022/04/22 21:22:14 reinoud Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.5 2022/04/25 20:41:25 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1206,7 +1206,7 @@ udf_create_base_logical_dscr(void)
 
 	/* just one fsd for now */
 	lvd->lv_fsd_loc.len = udf_rw32(sector_size);
-	lvd->lv_fsd_loc.loc.part_num = udf_rw32(context.metadata_part);
+	lvd->lv_fsd_loc.loc.part_num = udf_rw16(context.metadata_part);
 	lvd->lv_fsd_loc.loc.lb_num   = udf_rw32(layout.fsd);
 
 	crclen  = sizeof(struct logvol_desc) - 1 - UDF_DESC_TAG_LENGTH;
