@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.10 2018/03/19 15:43:45 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.11 2022/04/25 15:06:34 mlelstv Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -58,7 +58,8 @@ int	ctuopen(struct open_file *, int, int, int, int),
 int	tmscpopen(struct open_file *, int, int, int, int),
 	    tmscpstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	romopen(struct open_file *, int, int, int, int),
-	    romstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+	    romstrategy(void *, int, daddr_t, size_t, void *, size_t *),
+	    romioctl(struct open_file *, u_long, void *);
 int	mfmopen(struct open_file *, int, int, int, int),
 	    mfmstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	sdopen(struct open_file *),
