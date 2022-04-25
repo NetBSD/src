@@ -1,4 +1,4 @@
-/* $NetBSD: chksum.c,v 1.5 2009/03/14 15:36:01 dsl Exp $ */
+/* $NetBSD: chksum.c,v 1.6 2022/04/25 13:43:50 rin Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 
 #include "chksum.h"
 
-u_int32_t
-chksum(u_int32_t *block, int size)
+uint32_t
+chksum(uint32_t *block, int size)
 {
-	u_int32_t sum, lastsum;
+	uint32_t sum, lastsum;
 	int i;
 
 	sum = 0;
@@ -58,17 +58,17 @@ chksum(u_int32_t *block, int size)
 }
 
 #ifdef TESTSUM
-u_int32_t myblock[8192];
+uint32_t myblock[8192];
 
 int
 main(int argc, char *argb[]) {
 	int bbsize;
-	u_int32_t cks, cks1;
+	uint32_t cks, cks1;
 
 	bbsize=atol(argb[1]);
-	bbsize *= (512 / sizeof (u_int32_t));
+	bbsize *= (512 / sizeof (uint32_t));
 
-	if (4*bbsize != read(0, myblock, sizeof(u_int32_t)*bbsize)) {
+	if (4*bbsize != read(0, myblock, sizeof(uint32_t)*bbsize)) {
 		fprintf(stderr, "short read\n");
 		exit(1);
 	}
