@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.23 2022/04/25 14:03:15 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.24 2022/04/25 14:10:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@
 #include "elf2bb.h"
 #include "chksum.h"
 
-void usage(void);
-int intcmp(const void *, const void *);
-int main(int argc, char *argv[]);
+static void usage(void);
+static int intcmp(const void *, const void *);
+static int eval(Elf32_Sym *, uint32_t *);
 
 #ifdef DEBUG
 #define dprintf(x) if (debug) printf x
@@ -78,7 +78,7 @@ uint8_t *buffer;
 uint32_t *relbuf;
 	/* can't have more relocs than that*/
 
-int
+static int
 intcmp(const void *i, const void *j)
 {
 	int r;
@@ -98,7 +98,6 @@ main(int argc, char *argv[])
 	char *shstrtab;
 	Elf32_Sym *symtab;
 	char *strtab;
-	int eval(Elf32_Sym *, uint32_t *);
 	uint32_t *lptr;
 	int i, l, delta;
 	uint8_t *rpo;
