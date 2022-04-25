@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.21 2022/02/18 06:42:59 mlelstv Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.22 2022/04/25 13:43:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@ int debug;
 
 char *progname;
 int bbsize = BBSIZE;
-u_int8_t *buffer;
-u_int32_t *relbuf;
+uint8_t *buffer;
+uint32_t *relbuf;
 	/* can't have more relocs than that*/
 
 int
@@ -83,7 +83,7 @@ intcmp(const void *i, const void *j)
 {
 	int r;
 
-	r = (*(u_int32_t *)i) < (*(u_int32_t *)j);
+	r = (*(uint32_t *)i) < (*(uint32_t *)j);
 	
 	return 2*r-1;
 }
@@ -98,16 +98,16 @@ main(int argc, char *argv[])
 	char *shstrtab;
 	Elf32_Sym *symtab;
 	char *strtab;
-	int eval(Elf32_Sym *, u_int32_t *);
-	u_int32_t *lptr;
+	int eval(Elf32_Sym *, uint32_t *);
+	uint32_t *lptr;
 	int i, l, delta;
-	u_int8_t *rpo;
-	u_int32_t oldaddr, addrdiff;
-	u_int32_t tsz, dsz, bsz, trsz, relver;
-	u_int32_t pcrelsz, r32sz;
+	uint8_t *rpo;
+	uint32_t oldaddr, addrdiff;
+	uint32_t tsz, dsz, bsz, trsz, relver;
+	uint32_t pcrelsz, r32sz;
 	int sumsize = 16;
 	int c;
-	u_int32_t *sect_offset;
+	uint32_t *sect_offset;
 	int undefsyms;
 	uint32_t tmp32;
 	uint16_t tmp16;
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 	strtab = NULL;	/*XXX*/
 	dprintf(("    name                      type     flags    addr     offset   size     align\n"));
 	for (i = 0; i < htobe16(eh->e_shnum); ++i) {
-		u_int32_t sh_size;
+		uint32_t sh_size;
 
 		dprintf( ("%2d: %08x %-16s %08x %08x %08x %08x %08x %08x\n", i,
 		    htobe32(sh[i].sh_name), shstrtab + htobe32(sh[i].sh_name),
@@ -244,7 +244,7 @@ retry:
 	memset(buffer, 0, bbsize);
 
 	/* Allocate and load loadable sections */
-	sect_offset = (u_int32_t *)malloc(htobe16(eh->e_shnum) * sizeof(u_int32_t));
+	sect_offset = (uint32_t *)malloc(htobe16(eh->e_shnum) * sizeof(uint32_t));
 	for (i = 0, l = 0; i < htobe16(eh->e_shnum); ++i) {
 		if (htobe32(sh[i].sh_flags) & SHF_ALLOC) {
 			dprintf(("vaddr 0x%04x size 0x%04x offset 0x%04x section %s\n",
@@ -264,7 +264,7 @@ retry:
 	 * relocator version. For now, check that the relocator at
 	 * the image start does understand what we output.
 	 */
-	relver = htobe32(*(u_int32_t *)(buffer + 4));
+	relver = htobe32(*(uint32_t *)(buffer + 4));
 	switch (relver) {
 	default:
 		errx(1, "%s: unrecognized relocator version %d",
@@ -279,7 +279,7 @@ retry:
 	case RELVER_RELATIVE_BYTES_FORWARD:
 		rpo = buffer + tsz + dsz;
 		delta = +1;
-		*(u_int16_t *)(buffer + 14) = htobe16(tsz + dsz);
+		*(uint16_t *)(buffer + 14) = htobe16(tsz + dsz);
 		break;
 	}
 
@@ -299,7 +299,7 @@ retry:
 	for (i = 0; i < htobe16(eh->e_shnum); ++i) {
 		int n;
 		Elf32_Rela *ra;
-		u_int8_t *base;
+		uint8_t *base;
 
 		if (htobe32(sh[i].sh_type) != SHT_RELA)
 			continue;
@@ -375,7 +375,7 @@ retry:
 	
 	for (--i; i>=0; --i) {
 		dprintf(("0x%04x: ", relbuf[i]));
-		lptr = (u_int32_t *)&buffer[relbuf[i]];
+		lptr = (uint32_t *)&buffer[relbuf[i]];
 		addrdiff = relbuf[i] - oldaddr;
 		dprintf(("(0x%04x, 0x%04x): ", *lptr, addrdiff));
 		if (addrdiff > 0xffff) {
@@ -441,9 +441,9 @@ retry:
 	if (undefsyms > 0)
 		errx(1, "Undefined symbols referenced");
 
-	((u_int32_t *)buffer)[1] = 0;
-	((u_int32_t *)buffer)[1] =
-	    htobe32((0xffffffff - chksum((u_int32_t *)buffer, sumsize * 512 / 4)));
+	((uint32_t *)buffer)[1] = 0;
+	((uint32_t *)buffer)[1] =
+	    htobe32((0xffffffff - chksum((uint32_t *)buffer, sumsize * 512 / 4)));
 
 	ofd = open(argv[1], O_CREAT|O_WRONLY, 0644);
 	if (ofd < 0)
@@ -465,7 +465,7 @@ usage(void)
 }
 
 int
-eval(Elf32_Sym *s, u_int32_t *o)
+eval(Elf32_Sym *s, uint32_t *o)
 {
 	int value;
 
