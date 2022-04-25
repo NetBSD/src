@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.313 2022/04/25 07:54:42 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.314 2022/04/25 07:56:47 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.313 2022/04/25 07:54:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.314 2022/04/25 07:56:47 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3430,7 +3430,13 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_INT,
-	    "num_rx_desc", SYSCTL_DESCR("Number of rx descriptors"),
+	    "num_tx_desc", SYSCTL_DESCR("Number of TX descriptors"),
+	    NULL, 0, &adapter->num_tx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT,
+	    "num_rx_desc", SYSCTL_DESCR("Number of RX descriptors"),
 	    NULL, 0, &adapter->num_rx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
