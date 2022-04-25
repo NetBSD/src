@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 2016/06/25 14:35:58 isaki Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 2022/04/25 15:12:07 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -84,5 +84,3 @@ struct netif_driver *netif_drivers[] = {
 };
 
 int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
-
-struct open_file files[SOPEN_MAX];
