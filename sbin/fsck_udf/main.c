@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2022/04/24 15:07:08 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2022/04/25 15:18:15 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.11 2022/04/24 15:07:08 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2022/04/25 15:18:15 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3661,7 +3661,7 @@ udf_node_pass3_writeout_update(struct udf_fsck_node *node, union dscrptr *dscr)
 {
 	struct file_entry    *fe  = NULL;
 	struct extfile_entry *efe = NULL;
-	int error;
+	int crc_len, error;
 
 	vat_writeout = 1;
 	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
@@ -3682,7 +3682,8 @@ udf_node_pass3_writeout_update(struct udf_fsck_node *node, union dscrptr *dscr)
 	}
 
 	/* fixup CRC length (if needed) */
-	dscr->tag.desc_crc_len = udf_tagsize(dscr, 1) - sizeof(struct desc_tag);
+	crc_len = udf_tagsize(dscr, 1) - sizeof(struct desc_tag);
+	dscr->tag.desc_crc_len = udf_rw16(crc_len);
 
 	pwarn("%s : updating node\n", udf_node_path(node));
 	error = udf_write_dscr_virt(dscr, udf_rw32(node->loc.loc.lb_num),
