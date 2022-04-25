@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.95 2022/01/25 01:56:22 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.96 2022/04/25 07:48:53 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.95 2022/01/25 01:56:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.96 2022/04/25 07:48:53 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2034,7 +2034,7 @@ ixgbe_rxeof(struct ix_queue *que)
 				IXGBE_EVC_ADD(&rxr->rx_copies, 1);
 				rbuf->flags |= IXGBE_RX_COPY;
 			} else {
-				/* Non short packet */
+				/* For long packet */
 
 				/* Update new (used in future) mbuf */
 				newmp->m_pkthdr.len = newmp->m_len
