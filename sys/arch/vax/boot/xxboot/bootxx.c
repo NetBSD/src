@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.38 2018/05/01 07:03:47 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.39 2022/04/25 15:06:34 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -296,6 +296,12 @@ romstrategy(void *sc, int func, daddr_t dblk, size_t size, void *buf, size_t *rs
 	if (rsize)
 		*rsize = nsize;
 	return 0;
+}
+
+int
+romioctl(struct open_file *f, u_long cmd, void *data)
+{
+	return ENOTTY;
 }
 
 /*

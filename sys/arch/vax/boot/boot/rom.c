@@ -1,4 +1,4 @@
-/*	$NetBSD: rom.c,v 1.10 2017/05/22 16:59:32 ragge Exp $ */
+/*	$NetBSD: rom.c,v 1.11 2022/04/25 15:06:34 mlelstv Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -102,3 +102,8 @@ romstrategy (void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rs
 	return 0;
 }
 
+int
+romioctl(struct open_file *f, u_long cmd, void *data)
+{
+	return ENOTTY;
+}
