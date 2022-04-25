@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2022/04/25 15:18:15 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2022/04/25 15:37:14 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.12 2022/04/25 15:18:15 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2022/04/25 15:37:14 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2862,9 +2862,8 @@ udf_prepare_writing(void)
 	}
 
 	/* if we are not on sequential media, we're done */
-	if ((mmc_discinfo.mmc_cur & MMC_CAP_SEQUENTIAL) == 0)
+	if ((context.format_flags & FORMAT_VAT) == 0)
 		return 0;
-	assert(context.format_flags & FORMAT_VAT);
 
 	/* if the disc is full, we drop back to read only */
 	if (mmc_discinfo.disc_state == MMC_STATE_FULL)
