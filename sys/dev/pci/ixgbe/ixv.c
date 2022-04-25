@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.179 2022/04/25 07:54:42 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.180 2022/04/25 07:57:23 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.179 2022/04/25 07:54:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.180 2022/04/25 07:57:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2560,6 +2560,18 @@ ixv_add_device_sysctls(struct adapter *adapter)
 	    "rx_copy_len", SYSCTL_DESCR("RX Copy Length"),
 	    ixv_sysctl_rx_copy_len, 0,
 	    (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT,
+	    "num_tx_desc", SYSCTL_DESCR("Number of TX descriptors"),
+	    NULL, 0, &adapter->num_tx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT,
+	    "num_rx_desc", SYSCTL_DESCR("Number of RX descriptors"),
+	    NULL, 0, &adapter->num_rx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
