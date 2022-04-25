@@ -1,4 +1,4 @@
-/* $NetBSD: chksum.c,v 1.7 2022/04/25 14:03:15 rin Exp $ */
+/* $NetBSD: chksum.c,v 1.8 2022/04/25 14:39:30 rin Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,17 +65,17 @@ main(int argc, char *argb[]) {
 	int bbsize;
 	uint32_t cks, cks1;
 
-	bbsize=atol(argb[1]);
+	bbsize = atol(argb[1]);
 	bbsize *= (512 / sizeof (uint32_t));
 
-	if (4*bbsize != read(0, myblock, sizeof(uint32_t)*bbsize)) {
+	if (4 * bbsize != read(0, myblock, sizeof(uint32_t) * bbsize)) {
 		fprintf(stderr, "short read\n");
 		exit(1);
 	}
 	fprintf(stderr, "Cksum field = 0x%x, ", myblock[1]);
 	cks = chksum(myblock, bbsize);
 	fprintf(stderr, "cksum = 0x%x\n", cks);
-	myblock[1] += 0xFFFFFFFF - cks;
+	myblock[1] += 0xffffffff - cks;
 	fprintf(stderr, "New cksum field = 0x%x, ", myblock[1]);
 	cks1 = chksum(myblock, bbsize);
 	fprintf(stderr, "cksum = 0x%x\n", cks1);
