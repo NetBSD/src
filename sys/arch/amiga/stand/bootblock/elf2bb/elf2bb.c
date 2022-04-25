@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.26 2022/04/25 14:39:30 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.27 2022/04/25 14:46:38 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "Usage: %s [-F] bootprog bootprog.bin\n",
@@ -475,7 +475,7 @@ usage(void)
 	/* NOTREACHED */
 }
 
-int
+static int
 eval(Elf32_Sym *s, uint32_t *o)
 {
 	int value;
