@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.24 2022/04/25 14:10:15 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.25 2022/04/25 14:36:47 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ retry:
 	memset(buffer, 0, bbsize);
 
 	/* Allocate and load loadable sections */
-	sect_offset = (uint32_t *)malloc(be16toh(eh->e_shnum) * sizeof(uint32_t));
+	sect_offset = malloc(be16toh(eh->e_shnum) * sizeof(uint32_t));
 	for (i = 0, l = 0; i < be16toh(eh->e_shnum); ++i) {
 		if (be32toh(sh[i].sh_flags) & SHF_ALLOC) {
 			dprintf(("vaddr 0x%04x size 0x%04x offset 0x%04x section %s\n",
