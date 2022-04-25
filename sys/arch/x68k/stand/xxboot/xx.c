@@ -1,4 +1,4 @@
-/*	$NetBSD: xx.c,v 1.4 2020/08/16 06:43:43 isaki Exp $	*/
+/*	$NetBSD: xx.c,v 1.5 2022/04/25 15:12:07 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 MINOURA Makoto.
@@ -72,3 +72,11 @@ xxstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 		*rsize = size;
 	return 0;
 }
+
+int
+xxioctl(struct open_file *f, u_long cmd, void *data)
+{
+
+	return ENOTTY;
+}
+
