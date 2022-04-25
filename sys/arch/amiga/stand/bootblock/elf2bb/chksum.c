@@ -1,4 +1,4 @@
-/* $NetBSD: chksum.c,v 1.8 2022/04/25 14:39:30 rin Exp $ */
+/* $NetBSD: chksum.c,v 1.9 2022/04/25 14:45:26 rin Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ main(int argc, char *argb[]) {
 	uint32_t cks, cks1;
 
 	bbsize = atol(argb[1]);
-	bbsize *= (512 / sizeof (uint32_t));
+	bbsize *= (512 / sizeof(uint32_t));
 
 	if (4 * bbsize != read(0, myblock, sizeof(uint32_t) * bbsize)) {
 		fprintf(stderr, "short read\n");
