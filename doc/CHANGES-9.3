@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.85 2022/04/24 16:39:56 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.86 2022/04/25 12:39:27 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1547,4 +1547,9 @@ sys/fs/udf/udf_subr.c				1.169
 	Fix endian issue with UDF extended attribute handling.
 	PR 56801: implement support for mounting UDF in compat32.
 	[reinoud, ticket #1438]
+
+xsrc/external/mit/xinit/dist/startx.cpp		1.9
+
+	Do not attempt to trap SIGKILL.
+	[nia, ticket #1439]
 
