@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.22 2022/04/25 13:43:50 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.23 2022/04/25 14:03:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -147,51 +147,51 @@ main(int argc, char *argv[])
 
 	eh = (Elf32_Ehdr *)image; /* XXX endianness */
 
-	dprintf(("%04x sections, offset %08x\n", htobe16(eh->e_shnum), htobe32(eh->e_shoff)));
-	if (htobe16(eh->e_type) != ET_REL)
+	dprintf(("%04x sections, offset %08x\n", be16toh(eh->e_shnum), be32toh(eh->e_shoff)));
+	if (be16toh(eh->e_type) != ET_REL)
 		errx(1, "%s isn't a relocatable file, type=%d",
-		    argv[0], htobe16(eh->e_type));
-	if (htobe16(eh->e_machine) != EM_68K)
+		    argv[0], be16toh(eh->e_type));
+	if (be16toh(eh->e_machine) != EM_68K)
 		errx(1, "%s isn't M68K, machine=%d", argv[0],
-		    htobe16(eh->e_machine));
+		    be16toh(eh->e_machine));
 
 	/* Calculate sizes from section headers. */
 	tsz = dsz = bsz = trsz = 0;
-	sh = (Elf32_Shdr *)(image + htobe32(eh->e_shoff));
-	shstrtab = (char *)(image + htobe32(sh[htobe16(eh->e_shstrndx)].sh_offset));
+	sh = (Elf32_Shdr *)(image + be32toh(eh->e_shoff));
+	shstrtab = (char *)(image + be32toh(sh[be16toh(eh->e_shstrndx)].sh_offset));
 	symtab = NULL;	/*XXX*/
 	strtab = NULL;	/*XXX*/
 	dprintf(("    name                      type     flags    addr     offset   size     align\n"));
-	for (i = 0; i < htobe16(eh->e_shnum); ++i) {
+	for (i = 0; i < be16toh(eh->e_shnum); ++i) {
 		uint32_t sh_size;
 
 		dprintf( ("%2d: %08x %-16s %08x %08x %08x %08x %08x %08x\n", i,
-		    htobe32(sh[i].sh_name), shstrtab + htobe32(sh[i].sh_name),
-		    htobe32(sh[i].sh_type),
-		    htobe32(sh[i].sh_flags), htobe32(sh[i].sh_addr),
-		    htobe32(sh[i].sh_offset), htobe32(sh[i].sh_size),
-		    htobe32(sh[i].sh_addralign)));
-		sh_size = (htobe32(sh[i].sh_size) + htobe32(sh[i].sh_addralign) - 1) &
-		    -htobe32(sh[i].sh_addralign);
+		    be32toh(sh[i].sh_name), shstrtab + be32toh(sh[i].sh_name),
+		    be32toh(sh[i].sh_type),
+		    be32toh(sh[i].sh_flags), be32toh(sh[i].sh_addr),
+		    be32toh(sh[i].sh_offset), be32toh(sh[i].sh_size),
+		    be32toh(sh[i].sh_addralign)));
+		sh_size = (be32toh(sh[i].sh_size) + be32toh(sh[i].sh_addralign) - 1) &
+		    - be32toh(sh[i].sh_addralign);
 		/* If section allocates memory, add to text, data, or bss size. */
-		if (htobe32(sh[i].sh_flags) & SHF_ALLOC) {
-			if (htobe32(sh[i].sh_type) == SHT_PROGBITS) {
-				if (htobe32(sh[i].sh_flags) & SHF_WRITE)
+		if (be32toh(sh[i].sh_flags) & SHF_ALLOC) {
+			if (be32toh(sh[i].sh_type) == SHT_PROGBITS) {
+				if (be32toh(sh[i].sh_flags) & SHF_WRITE)
 					dsz += sh_size;
 				else
 					tsz += sh_size;
 			} else
 				bsz += sh_size;
 		/* If it's relocations, add to relocation count */
-		} else if (htobe32(sh[i].sh_type) == SHT_RELA) {
-			trsz += htobe32(sh[i].sh_size);
+		} else if (be32toh(sh[i].sh_type) == SHT_RELA) {
+			trsz += be32toh(sh[i].sh_size);
 		}
 		/* Check for SHT_REL? */
 		/* Get symbol table location. */
-		else if (htobe32(sh[i].sh_type) == SHT_SYMTAB) {
-			symtab = (Elf32_Sym *)(image + htobe32(sh[i].sh_offset));
-		} else if (strcmp(".strtab", shstrtab + htobe32(sh[i].sh_name)) == 0) {
-			strtab = image + htobe32(sh[i].sh_offset);
+		else if (be32toh(sh[i].sh_type) == SHT_SYMTAB) {
+			symtab = (Elf32_Sym *)(image + be32toh(sh[i].sh_offset));
+		} else if (strcmp(".strtab", shstrtab + be32toh(sh[i].sh_name)) == 0) {
+			strtab = image + be32toh(sh[i].sh_offset);
 		}
 	}
 	dprintf(("tsz = 0x%x, dsz = 0x%x, bsz = 0x%x, total 0x%x\n",
@@ -244,18 +244,18 @@ retry:
 	memset(buffer, 0, bbsize);
 
 	/* Allocate and load loadable sections */
-	sect_offset = (uint32_t *)malloc(htobe16(eh->e_shnum) * sizeof(uint32_t));
-	for (i = 0, l = 0; i < htobe16(eh->e_shnum); ++i) {
-		if (htobe32(sh[i].sh_flags) & SHF_ALLOC) {
+	sect_offset = (uint32_t *)malloc(be16toh(eh->e_shnum) * sizeof(uint32_t));
+	for (i = 0, l = 0; i < be16toh(eh->e_shnum); ++i) {
+		if (be32toh(sh[i].sh_flags) & SHF_ALLOC) {
 			dprintf(("vaddr 0x%04x size 0x%04x offset 0x%04x section %s\n",
-			    l, htobe32(sh[i].sh_size), htobe32(sh[i].sh_offset),
-			    shstrtab + htobe32(sh[i].sh_name)));
-			if (htobe32(sh[i].sh_type) == SHT_PROGBITS)
-				memcpy(buffer + l, image + htobe32(sh[i].sh_offset),
-				    htobe32(sh[i].sh_size));
+			    l, be32toh(sh[i].sh_size), be32toh(sh[i].sh_offset),
+			    shstrtab + be32toh(sh[i].sh_name)));
+			if (be32toh(sh[i].sh_type) == SHT_PROGBITS)
+				memcpy(buffer + l, image + be32toh(sh[i].sh_offset),
+				    be32toh(sh[i].sh_size));
 			sect_offset[i] = l;
-			l += (htobe32(sh[i].sh_size) + htobe32(sh[i].sh_addralign) - 1) &
-			    -htobe32(sh[i].sh_addralign);
+			l += (be32toh(sh[i].sh_size) + be32toh(sh[i].sh_addralign) - 1) &
+			    - be32toh(sh[i].sh_addralign);
 		}
 	}
 
@@ -264,7 +264,7 @@ retry:
 	 * relocator version. For now, check that the relocator at
 	 * the image start does understand what we output.
 	 */
-	relver = htobe32(*(uint32_t *)(buffer + 4));
+	relver = be32toh(*(uint32_t *)(buffer + 4));
 	switch (relver) {
 	default:
 		errx(1, "%s: unrecognized relocator version %d",
@@ -296,70 +296,70 @@ retry:
 	 *    PC-relative entries will be absolute and don't need relocation
 	 */
 	undefsyms = 0;
-	for (i = 0; i < htobe16(eh->e_shnum); ++i) {
+	for (i = 0; i < be16toh(eh->e_shnum); ++i) {
 		int n;
 		Elf32_Rela *ra;
 		uint8_t *base;
 
-		if (htobe32(sh[i].sh_type) != SHT_RELA)
+		if (be32toh(sh[i].sh_type) != SHT_RELA)
 			continue;
 		base = NULL;
-		if (strncmp(shstrtab + htobe32(sh[i].sh_name), ".rela", 5) != 0)
+		if (strncmp(shstrtab + be32toh(sh[i].sh_name), ".rela", 5) != 0)
 			err(1, "bad relocation section name %s", shstrtab +
-			    htobe32(sh[i].sh_name));
-		for (n = 0; n < htobe16(eh->e_shnum); ++n) {
-			if (strcmp(shstrtab + htobe32(sh[i].sh_name) + 5, shstrtab +
-			    htobe32(sh[n].sh_name)) != 0)
+			    be32toh(sh[i].sh_name));
+		for (n = 0; n < be16toh(eh->e_shnum); ++n) {
+			if (strcmp(shstrtab + be32toh(sh[i].sh_name) + 5, shstrtab +
+			    be32toh(sh[n].sh_name)) != 0)
 				continue;
 			base = buffer + sect_offset[n];
 			break;
 		}
 		if (base == NULL)
 			errx(1, "Can't find section for reloc %s", shstrtab +
-			    htobe32(sh[i].sh_name));
-		ra = (Elf32_Rela *)(image + htobe32(sh[i].sh_offset));
-		for (n = 0; n < htobe32(sh[i].sh_size); n += sizeof(Elf32_Rela), ++ra) {
+			    be32toh(sh[i].sh_name));
+		ra = (Elf32_Rela *)(image + be32toh(sh[i].sh_offset));
+		for (n = 0; n < be32toh(sh[i].sh_size); n += sizeof(Elf32_Rela), ++ra) {
 			Elf32_Sym *s;
 			int value;
 
-			s = &symtab[ELF32_R_SYM(htobe32(ra->r_info))];
+			s = &symtab[ELF32_R_SYM(be32toh(ra->r_info))];
 			if (s->st_shndx == ELF_SYM_UNDEFINED) {
 				fprintf(stderr, "Undefined symbol: %s\n",
-				    strtab + htobe32(s->st_name));
+				    strtab + be32toh(s->st_name));
 				++undefsyms;
 			}
-			value = htobe32(ra->r_addend) + eval(s, sect_offset);
+			value = be32toh(ra->r_addend) + eval(s, sect_offset);
 			dprintf(("reloc %04x info %04x (type %d sym %d) add 0x%x val %x\n",
-			    htobe32(ra->r_offset), htobe32(ra->r_info),
-			    ELF32_R_TYPE(htobe32(ra->r_info)),
-			    ELF32_R_SYM(htobe32(ra->r_info)),
-			    htobe32(ra->r_addend), value));
-			switch (ELF32_R_TYPE(htobe32(ra->r_info))) {
+			    be32toh(ra->r_offset), be32toh(ra->r_info),
+			    ELF32_R_TYPE(be32toh(ra->r_info)),
+			    ELF32_R_SYM(be32toh(ra->r_info)),
+			    be32toh(ra->r_addend), value));
+			switch (ELF32_R_TYPE(be32toh(ra->r_info))) {
 			case R_68K_32:
 				tmp32 = htobe32(value);
-				memcpy(base + htobe32(ra->r_offset), &tmp32,
+				memcpy(base + be32toh(ra->r_offset), &tmp32,
 				       sizeof(tmp32));
-				relbuf[r32sz++] = (base - buffer) + htobe32(ra->r_offset);
+				relbuf[r32sz++] = (base - buffer) + be32toh(ra->r_offset);
 				break;
 			case R_68K_PC32:
 				++pcrelsz;
-				tmp32 = htobe32(value - htobe32(ra->r_offset));
-				memcpy(base + htobe32(ra->r_offset), &tmp32,
+				tmp32 = htobe32(value - be32toh(ra->r_offset));
+				memcpy(base + be32toh(ra->r_offset), &tmp32,
 				       sizeof(tmp32));
 				break;
 			case R_68K_PC16:
 				++pcrelsz;
-				value -= htobe32(ra->r_offset);
+				value -= be32toh(ra->r_offset);
 				if (value < -0x8000 || value > 0x7fff)
 					errx(1,  "PC-relative offset out of range: %x\n",
 					    value);
 				tmp16 = htobe16(value);
-				memcpy(base + htobe32(ra->r_offset), &tmp16,
+				memcpy(base + be32toh(ra->r_offset), &tmp16,
 				       sizeof(tmp16));
 				break;
 			default:
 				errx(1, "Relocation type %d not supported",
-				    ELF32_R_TYPE(htobe32(ra->r_info)));
+				    ELF32_R_TYPE(be32toh(ra->r_info)));
 			}
 		}
 	}
@@ -469,10 +469,10 @@ eval(Elf32_Sym *s, uint32_t *o)
 {
 	int value;
 
-	value = htobe32(s->st_value);
-	if (htobe16(s->st_shndx) < 0xf000)
-		value += o[htobe16(s->st_shndx)];
+	value = be32toh(s->st_value);
+	if (be16toh(s->st_shndx) < 0xf000)
+		value += o[be16toh(s->st_shndx)];
 	else
-		printf("eval: %x\n", htobe16(s->st_shndx));
+		printf("eval: %x\n", be16toh(s->st_shndx));
 	return value;
 }

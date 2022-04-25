@@ -1,4 +1,4 @@
-/* $NetBSD: chksum.c,v 1.6 2022/04/25 13:43:50 rin Exp $ */
+/* $NetBSD: chksum.c,v 1.7 2022/04/25 14:03:15 rin Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ chksum(uint32_t *block, int size)
 
 	for (i=0; i<size; i++) {
 		lastsum = sum;
-		sum += htobe32(block[i]);
+		sum += be32toh(block[i]);
 		if (sum < lastsum)
 			++sum;
 	}
