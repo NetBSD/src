@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1293 2022/04/06 14:20:07 reinoud Exp $
+# $NetBSD: mi,v 1.1294 2022/04/25 02:29:13 gutteridge Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -240,7 +240,8 @@
 ./libdata/firmware/if_iwn/iwlwifi-5000-2.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn/iwlwifi-5150-2.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn/iwlwifi-6000-4.ucode	base-firmware-root	firmware
-./libdata/firmware/if_iwn/iwlwifi-6000g2a-5.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwn/iwlwifi-6000g2a-5.ucode	base-obsolete		obsolete
+./libdata/firmware/if_iwn/iwlwifi-6000g2a-6.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn/iwlwifi-6000g2b-6.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn/iwlwifi-6050-5.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_otus			base-firmware-root

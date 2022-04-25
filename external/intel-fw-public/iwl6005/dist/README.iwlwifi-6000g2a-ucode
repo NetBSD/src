@@ -1,5 +1,5 @@
 Intel Wireless WiFi Link 6000G2A AGN Adapter
-Copyright (C) 2006-2011 Intel Corporation.  All rights reserved.
+Copyright (C) 2006-2012 Intel Corporation.  All rights reserved.
 
 Microcode Package README.iwlwifi-6000g2a-ucode
 
@@ -12,11 +12,11 @@ INDEX
 
 1. OVERVIEW
 
-The file iwlwifi-6000g2a-5.ucode provided in this package must be
+The file iwlwifi-6000g2a-6.ucode provided in this package must be
 present on your system in order for the Intel Wireless WiFi Link
 AGN driver for Linux (iwlagn) to operate on your system.
 
-The "-5" in the filename reflects an interface/architecture version number.
+The "-6" in the filename reflects an interface/architecture version number.
 It will change only when changes in new uCode releases make the new uCode
 incompatible with earlier drivers.
 
@@ -30,7 +30,7 @@ interest given the current operating mode of the device.
 
 2. INSTALLATION
 
-The iwlagn driver will look for the file iwlwifi-6000g2a-5.ucode using the
+The iwlagn driver will look for the file iwlwifi-6000g2a-6.ucode using the
 kernel's firmware_class infrastructure. More information can be found under
 Documentation/firmware_class in kernel source. In order to function
 correctly, you need to have this support enabled in your kernel.  When
@@ -61,18 +61,18 @@ udev scripts of your distro, the default is /lib/firmware.
 
 Installation of the firmware is simply:
 
-        % cp iwlwifi-6000g2a-5.ucode /lib/firmware
+        % cp iwlwifi-6000g2a-6.ucode /lib/firmware
 
 You can now load the driver (see the INSTALL and README.iwlwifi provided with
 the iwlwifi package for information on building and using that driver.)
 
 3. LICENSE
 
-The microcode in this package (iwlwifi-6000g2a-5.ucode) is provided under the
+The microcode in this package (iwlwifi-6000g2a-6.ucode) is provided under the
 terms of the following license (available in the file
 LICENSE.iwlwifi-6000g2a-ucode):
 
-Copyright (c) 2006-2011, Intel Corporation.
+Copyright (c) 2006-2012, Intel Corporation.
 All rights reserved.
 
 Redistribution.  Redistribution and use in binary form, without
