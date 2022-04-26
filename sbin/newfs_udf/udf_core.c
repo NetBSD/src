@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.6 2022/04/26 13:40:15 reinoud Exp $ */
+/* $NetBSD: udf_core.c,v 1.7 2022/04/26 14:54:40 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.6 2022/04/26 13:40:15 reinoud Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.7 2022/04/26 14:54:40 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2466,7 +2466,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type, struct stat *st)
 		fe->uid  = udf_rw32(st->st_uid);
 		fe->gid  = udf_rw32(st->st_gid);
 
-		fe->perm = unix_mode_to_udf_perm(st->st_mode);
+		fe->perm = udf_rw32(unix_mode_to_udf_perm(st->st_mode));
 
 		icbflags = udf_rw16(fe->icbtag.flags);
 		icbflags &= ~UDF_ICB_TAG_FLAGS_SETUID;
@@ -2566,7 +2566,7 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type, struct stat *st)
 		efe->uid = udf_rw32(st->st_uid);
 		efe->gid = udf_rw32(st->st_gid);
 
-		efe->perm = unix_mode_to_udf_perm(st->st_mode);
+		efe->perm = udf_rw32(unix_mode_to_udf_perm(st->st_mode));
 
 		icbflags = udf_rw16(efe->icbtag.flags);
 		icbflags &= ~UDF_ICB_TAG_FLAGS_SETUID;
