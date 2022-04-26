@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.25 2022/04/09 10:05:35 riastradh Exp $ */
+/* $NetBSD: udf.c,v 1.26 2022/04/26 13:26:30 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.25 2022/04/09 10:05:35 riastradh Exp $");
+__RCSID("$NetBSD: udf.c,v 1.26 2022/04/26 13:26:30 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -505,7 +505,7 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
 		fe          = &dscr->fe;
 		data        = fe->data;
-		l_ea        = fe->l_ea;
+		l_ea        = udf_rw32(fe->l_ea);
 		l_ad        = udf_rw32(fe->l_ad);
 		icb         = &fe->icbtag;
 		inf_len     = udf_rw64(fe->inf_len);
@@ -514,7 +514,7 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	} else if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
 		efe         = &dscr->efe;
 		data        = efe->data;
-		l_ea        = efe->l_ea;
+		l_ea        = udf_rw32(efe->l_ea);
 		l_ad        = udf_rw32(efe->l_ad);
 		icb         = &efe->icbtag;
 		inf_len     = udf_rw64(efe->inf_len);
