@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.86 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.87 2022/04/26 05:29:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.86 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.87 2022/04/26 05:29:15 msaitoh Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -1007,7 +1007,7 @@ lapic_dump(void)
 	APIC_LVT_PRINT(ci, "lint", 1, LAPIC_LVT_LINT1);
 	APIC_LVT_PRINT(ci, "err", 0, LAPIC_LVT_ERR);
 
-#undef APIC_LVT_PRIINT
+#undef APIC_LVT_PRINT
 }
 #else /* XENPV */
 void
