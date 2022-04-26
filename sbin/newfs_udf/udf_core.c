@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.7 2022/04/26 14:54:40 reinoud Exp $ */
+/* $NetBSD: udf_core.c,v 1.8 2022/04/26 15:09:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.7 2022/04/26 14:54:40 reinoud Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.8 2022/04/26 15:09:52 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2944,7 +2944,7 @@ udf_create_VAT(union dscrptr **vat_dscr, struct long_ad *vatdata_loc)
 		fe->l_ad      = udf_rw32(sizeof(struct long_ad));
 		blks = UDF_ROUNDUP(inf_len, context.sector_size) /
 			context.sector_size;
-		fe->logblks_rec = udf_rw32(blks);
+		fe->logblks_rec = udf_rw64(blks);
 
 		/* update vat descriptor's CRC length */
 		vat_len  = sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
@@ -2976,7 +2976,7 @@ udf_create_VAT(union dscrptr **vat_dscr, struct long_ad *vatdata_loc)
 		efe->l_ad        = udf_rw32(sizeof(struct long_ad));
 		blks = UDF_ROUNDUP(inf_len, context.sector_size) /
 			context.sector_size;
-		efe->logblks_rec = udf_rw32(blks);
+		efe->logblks_rec = udf_rw64(blks);
 
 		vat_len  = sizeof(struct extfile_entry)-1 - UDF_DESC_TAG_LENGTH;
 		vat_len += udf_rw32(efe->l_ad);
