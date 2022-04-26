@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.27 2022/04/26 13:27:24 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.28 2022/04/26 14:59:37 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.27 2022/04/26 13:27:24 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.28 2022/04/26 14:59:37 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -666,13 +666,13 @@ udf_create_new_file(struct stat *st, union dscrptr **dscr,
 		if (error)
 			errx(error, "can't create fe");
 		*dscr = (union dscrptr *) fe;
-		icb->longad_uniqueid = fe->unique_id;
+		icb->longad_uniqueid = udf_rw32(udf_rw64(fe->unique_id));
 	} else {
 		error = udf_create_new_efe(&efe, filetype, st);
 		if (error)
 			errx(error, "can't create fe");
 		*dscr = (union dscrptr *) efe;
-		icb->longad_uniqueid = efe->unique_id;
+		icb->longad_uniqueid = udf_rw32(udf_rw64(efe->unique_id));
 	}
 
 	return 0;
