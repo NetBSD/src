@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.26 2022/04/26 13:26:30 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.27 2022/04/26 13:27:24 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.26 2022/04/26 13:26:30 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.27 2022/04/26 13:27:24 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1218,7 +1218,7 @@ udf_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	if (context.format_flags & FORMAT_META)
 		printf("Metadata percentage  %d%% (%d%% used)\n",
 			context.meta_perc,
-			(int) ceilf(100.0*stats.nmetadatablocks/stats.ndatablocks));
+			(int) ceil(100.0*stats.nmetadatablocks/stats.ndatablocks));
 	printf("\n");
 
 	/* prefix */
