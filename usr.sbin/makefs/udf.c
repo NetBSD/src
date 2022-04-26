@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.28 2022/04/26 14:59:37 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.29 2022/04/26 15:18:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.28 2022/04/26 14:59:37 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.29 2022/04/26 15:18:08 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -473,6 +473,7 @@ udf_file_inject_blob(union dscrptr *dscr,  uint8_t *blob, off_t size)
 	dscr->tag.desc_crc_len = udf_rw16(crclen);
 	udf_validate_tag_and_crc_sums(dscr);
 
+	(void) obj_size;
 	return 0;
 }
 
@@ -617,7 +618,7 @@ udf_append_file_mapping(union dscrptr *dscr, struct long_ad *piece)
 	} else if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
 		efe->l_ad = udf_rw32(l_ad);
 		efe->inf_len  = udf_rw64(inf_len);
-		efe->obj_size = udf_rw64(inf_len);
+		efe->obj_size = udf_rw64(obj_size);
 		efe->logblks_rec = udf_rw64(logblks_rec);
 	}
 }
