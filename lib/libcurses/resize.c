@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.34 2022/01/25 03:05:06 blymn Exp $	*/
+/*	$NetBSD: resize.c,v 1.35 2022/04/26 22:40:32 blymn Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.34 2022/01/25 03:05:06 blymn Exp $");
+__RCSID("$NetBSD: resize.c,v 1.35 2022/04/26 22:40:32 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -390,7 +390,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 			if (swin->begx + x > win->begx + win->maxx)
 				x = 0;
 			if (x <= 0)
-				x += win->begy + win->maxx - swin->begx;
+				x += win->begx + win->maxx - swin->begx;
 			if (x < 1)
 				x = 1;
 			__resizewin(swin, y, x);
