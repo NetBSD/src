@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.5 2022/04/25 20:41:25 reinoud Exp $ */
+/* $NetBSD: udf_core.c,v 1.6 2022/04/26 13:40:15 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.5 2022/04/25 20:41:25 reinoud Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.6 2022/04/26 13:40:15 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2922,7 +2922,7 @@ udf_create_VAT(union dscrptr **vat_dscr, struct long_ad *vatdata_loc)
 		bpos = ((uint8_t *) implext->data) + 4;
 		vatlvext = (struct vatlvext_extattr_entry *) bpos;
 
-		vatlvext->unique_id_chk = udf_rw64(fe->unique_id);
+		vatlvext->unique_id_chk = fe->unique_id;
 		vatlvext->num_files = udf_rw32(context.num_files);
 		vatlvext->num_directories = udf_rw32(context.num_directories);
 		memcpy(vatlvext->logvol_id, context.logical_vol->logvol_id,128);
