@@ -1666,6 +1666,16 @@ wredrawln_body()
     h_run wredrawln
 }
 
+atf_test_case wresize
+wresize_head()
+{
+    atf_set "descr" "Tests resizing a window with a subwin"
+}
+wresize_body()
+{
+    h_run wresize
+}
+
 ##########################################
 # curses soft label key routines
 ##########################################
@@ -2365,6 +2375,7 @@ atf_init_test_cases()
 	atf_add_test_case is_linetouched
 	atf_add_test_case is_wintouched
 	atf_add_test_case redrawwin
+	atf_add_test_case wresize
 	atf_add_test_case wredrawln
 
 	# curses soft label key routines

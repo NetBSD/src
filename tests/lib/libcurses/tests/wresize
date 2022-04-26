@@ -1,0 +1,9 @@
+include window
+
+call win2 subwin $win1 5 5 3 6
+check win2 NON_NULL
+#
+call OK wresize $win1 4 4
+#
+call2 4 4 getmaxyx $win1
+call2 3 3 getmaxyx $win2
