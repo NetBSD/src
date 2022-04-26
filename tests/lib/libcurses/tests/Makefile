@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2022/04/20 07:43:05 blymn Exp $
+# $NetBSD: Makefile,v 1.7 2022/04/26 22:48:36 blymn Exp $
 
 NOMAN=		# defined
 
@@ -213,6 +213,7 @@ FILES+=		winsch
 FILES+=		winwstr
 FILES+=		wprintw
 FILES+=		wredrawln
+FILES+=		wresize
 FILES+=		wscrl
 FILES+=		wsetscrreg
 FILES+=		wstandout
