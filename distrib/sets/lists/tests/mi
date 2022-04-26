@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1198 2022/04/24 10:36:37 rillig Exp $
+# $NetBSD: mi,v 1.1199 2022/04/26 22:48:53 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3766,6 +3766,7 @@
 ./usr/tests/lib/libcurses/tests/winwstr			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/wprintw			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/wredrawln		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/tests/wresize			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/wscrl			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/wsetscrreg		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/tests/wstandout		tests-lib-tests		compattestfile,atf
