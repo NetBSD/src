@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.30 2012/04/07 05:07:33 christos Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.31 2022/04/26 15:39:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.30 2012/04/07 05:07:33 christos Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.31 2022/04/26 15:39:00 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,12 +217,14 @@ quotaonoff(struct fstab *fs, struct quotahandle *qh, int offmode, int idtype,
     int warn_on_enxio, const char *fsspec)
 {
 	const char *mode = (offmode == 1) ? "off" : "on";
+	const char *type;
 
 	if (strcmp(fs->fs_file, "/") && readonly(fs, fsspec)) {
 		return 1;
 	}
 
 	if (offmode) {
+		type = quota_idtype_getname(qh, idtype);
 		if (quota_quotaoff(qh, idtype)) {
 			if (warn_on_enxio || errno != ENXIO) {
 				warn("quota%s for %s", mode, fs->fs_file);
@@ -236,11 +238,12 @@ quotaonoff(struct fstab *fs, struct quotahandle *qh, int offmode, int idtype,
 			}
 			return 1;
 		}
+		type = quota_idtype_getname(qh, idtype);
 	}
 
 	if (vflag) {
 		printf("%s: %s quotas turned %s\n",
-		    fs->fs_file, quota_idtype_getname(qh, idtype), mode);
+		    fs->fs_file, type, mode);
 	}
 	return 0;
 }
