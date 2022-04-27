@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_oldfiles.c,v 1.9 2012/02/24 18:00:09 njoly Exp $	*/
+/*	$NetBSD: quota_oldfiles.c,v 1.9.26.1 2022/04/27 16:55:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quota_oldfiles.c,v 1.9 2012/02/24 18:00:09 njoly Exp $");
+__RCSID("$NetBSD: quota_oldfiles.c,v 1.9.26.1 2022/04/27 16:55:18 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -255,7 +255,7 @@ __quota_oldfiles_defquotafile(struct quotahandle *qh, int idtype,
 
 	(void)snprintf(buf, maxlen, "%s/%s.%s",
 		       qh->qh_mountpoint,
-		       QUOTAFILENAME, names[USRQUOTA]);
+		       QUOTAFILENAME, names[idtype]);
 }
 
 const char *
