@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.125 2022/03/18 13:27:22 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.126 2022/04/27 16:56:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2558,4 +2558,12 @@ usr.sbin/puffs/mount_9p/node.c			1.30,1.31 (adapted)
 	mount_9p(8): fix writing to a file opened with write-only mode,
 	check returned type from T_READ request.
 	[ozaki-r, ticket #1738]
+
+lib/libquota/quota_oldfiles.c			1.10
+sys/ufs/ufs/ufs_quota1.c			1.25
+usr.sbin/quotaon/quotaon.c			1.31
+
+	Fix quota1 user+group quota, quotaoff live lock and quotaon/off
+	verbose output.  Avoids possibly corrupted quota data.
+	[hannken, ticket #1739]
 
