@@ -1,4 +1,4 @@
-#	$NetBSD: files.apple,v 1.3 2022/04/27 07:55:42 skrll Exp $
+#	$NetBSD: files.apple,v 1.4 2022/04/27 07:59:18 skrll Exp $
 #
 # Configuration info for Apple Silicon SoCs
 #
@@ -20,6 +20,12 @@ file	arch/arm/apple/apple_intc.c		apple_intc
 device	applepcie: pcibus, pcihost_fdt
 attach	applepcie at fdt with apple_pcie
 file	arch/arm/apple/apple_pcie.c		apple_pcie
+
+# GPIO controller
+# : gpiobus?
+device	applepinctrl
+attach	applepinctrl at fdt with apple_pinctrl
+file	arch/arm/apple/apple_pinctrl.c		apple_pinctrl
 
 # Power domain controller
 device	applepmgr
