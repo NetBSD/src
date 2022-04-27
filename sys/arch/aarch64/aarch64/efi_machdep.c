@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.11 2022/04/02 11:16:06 skrll Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.12 2022/04/27 23:38:31 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.11 2022/04/02 11:16:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.12 2022/04/27 23:38:31 ryo Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -106,8 +106,11 @@ arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz,
 int
 arm_efirt_md_enter(void)
 {
-	struct lwp *l = curlwp;
+	struct lwp *l;
 	int err;
+
+	kpreempt_disable();
+	l = curlwp;
 
 	/* Save FPU state */
 	arm_efirt_state.fpu_used = fpu_used_p(l) != 0;
@@ -126,8 +129,12 @@ arm_efirt_md_enter(void)
 	if (err)
 		return err;
 
-	if (efi_userva)
+	if (efi_userva) {
+		if ((l->l_flag & LW_SYSTEM) == 0) {
+			pmap_deactivate(l);
+		}
 		pmap_activate_efirt();
+	}
 
 	return 0;
 }
@@ -137,8 +144,13 @@ arm_efirt_md_exit(void)
 {
 	struct lwp *l = curlwp;
 
-	if (efi_userva)
+	if (efi_userva) {
 		pmap_deactivate_efirt();
+		if ((l->l_flag & LW_SYSTEM) == 0) {
+			pmap_activate(l);
+		}
+	}
+
 
 	/* Disable FP access */
 	reg_cpacr_el1_write(CPACR_FPEN_NONE);
@@ -150,4 +162,6 @@ arm_efirt_md_exit(void)
 
 	/* Remove custom fault handler */
 	cpu_unset_onfault();
+
+	kpreempt_enable();
 }
