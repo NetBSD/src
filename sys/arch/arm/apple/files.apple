@@ -1,4 +1,4 @@
-#	$NetBSD: files.apple,v 1.2 2022/01/03 08:44:10 skrll Exp $
+#	$NetBSD: files.apple,v 1.3 2022/04/27 07:55:42 skrll Exp $
 #
 # Configuration info for Apple Silicon SoCs
 #
@@ -20,6 +20,11 @@ file	arch/arm/apple/apple_intc.c		apple_intc
 device	applepcie: pcibus, pcihost_fdt
 attach	applepcie at fdt with apple_pcie
 file	arch/arm/apple/apple_pcie.c		apple_pcie
+
+# Power domain controller
+device	applepmgr
+attach	applepmgr at fdt with apple_pmgr
+file	arch/arm/apple/apple_pmgr.c		apple_pmgr
 
 # Watchdog timer
 device	applewdog: sysmon_wdog
