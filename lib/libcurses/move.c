@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.23 2021/10/19 06:41:03 blymn Exp $	*/
+/*	$NetBSD: move.c,v 1.24 2022/04/27 22:04:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: move.c,v 1.23 2021/10/19 06:41:03 blymn Exp $");
+__RCSID("$NetBSD: move.c,v 1.24 2022/04/27 22:04:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -67,6 +67,10 @@ wmove(WINDOW *win, int y, int x)
 		return ERR;
 	if (x >= win->maxx || y >= win->maxy)
 		return ERR;
+
+	/* clear the EOL flags for both where we were and where we are going */
+	win->alines[win->cury]->flags &= ~ __ISPASTEOL;
+	win->alines[y]->flags &= ~ __ISPASTEOL;
 
 	win->curx = x;
 	win->cury = y;
