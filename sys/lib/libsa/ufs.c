@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.84 2022/04/27 11:48:26 rin Exp $	*/
+/*	$NetBSD: ufs.c,v 1.85 2022/04/27 14:48:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -594,15 +594,21 @@ ffs_find_superblock(struct open_file *f, FS *fs)
 	struct file *fp = (struct file *)f->f_fsdata;
 	int rc;
 	size_t buf_size;
+	u_int secsize;
 #ifdef LIBSA_FFSv2
 	static daddr_t sblock_try[] = SBLOCKSEARCH;
 	int i;
 #endif
 
+	secsize = 0;
+	rc = DEV_IOCTL(f->f_dev)(f, SAIOSECSIZE, &secsize);
+	if (rc != 0 || secsize == 0)
+		secsize = DEV_BSIZE;
+
 #ifdef LIBSA_FFSv2
 	for (i = 0; sblock_try[i] != -1; i++) {
 		rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-		    sblock_try[i] / GETSECSIZE(f), SBLOCKSIZE, fs, &buf_size);
+		    sblock_try[i] / secsize, SBLOCKSIZE, fs, &buf_size);
 		if (rc)
 			return rc;
 		if (buf_size != SBLOCKSIZE)
@@ -617,7 +623,7 @@ ffs_find_superblock(struct open_file *f, FS *fs)
 	return EINVAL;
 #else /* LIBSA_FFSv2 */
 	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-		SBLOCKOFFSET / GETSECSIZE(f), SBLOCKSIZE, fs, &buf_size);
+		SBLOCKOFFSET / secsize, SBLOCKSIZE, fs, &buf_size);
 	if (rc)
 		return rc;
 	if (buf_size != SBLOCKSIZE)
