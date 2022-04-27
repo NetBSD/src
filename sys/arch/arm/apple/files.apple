@@ -1,10 +1,8 @@
-#	$NetBSD: files.apple,v 1.4 2022/04/27 07:59:18 skrll Exp $
+#	$NetBSD: files.apple,v 1.5 2022/04/27 08:06:20 skrll Exp $
 #
 # Configuration info for Apple Silicon SoCs
 #
 #
-
-file	arch/arm/apple/apple_platform.c		soc_apple
 
 # IOMMU
 device	appledart
@@ -15,6 +13,11 @@ file	arch/arm/apple/apple_dart.c		apple_dart
 device	appleintc: pic, pic_splfuncs
 attach	appleintc at fdt with apple_intc
 file	arch/arm/apple/apple_intc.c		apple_intc
+
+# Mailbox
+device	applembox
+attach	applembox at fdt with apple_mbox
+file	arch/arm/apple/apple_mbox.c		apple_mbox
 
 # PCIe controller
 device	applepcie: pcibus, pcihost_fdt
@@ -39,3 +42,6 @@ file	arch/arm/apple/apple_wdog.c		apple_wdog
 
 # SOC parameters
 defflag	opt_soc.h				SOC_APPLE
+
+file	arch/arm/apple/apple_platform.c		soc_apple
+file	arch/arm/apple/apple_rtkit.c		soc_apple & apple_mbox
