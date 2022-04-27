@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.195 2022/03/21 09:20:04 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.196 2022/04/27 07:55:42 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -362,6 +362,9 @@ pcf8563rtc*	at iic?			# PCF8563 RTC
 rkpmic* 	at iic?			# Rockchip Power Management IC
 rkreg*		at rkpmic?
 tcagpio*	at iic?
+
+# Power Domain controllers
+applepmgr* 	at fdt? pass 0
 
 # Random number generators
 amdccp* 	at fdt?			# AMD Cryptograhic Coprocessor RNG
