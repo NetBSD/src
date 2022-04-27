@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.70 2022/03/31 19:30:16 pgoyette Exp $ */
+/* $NetBSD: gpio.c,v 1.71 2022/04/27 23:15:30 brad Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.70 2022/03/31 19:30:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.71 2022/04/27 23:15:30 brad Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -181,12 +181,14 @@ gpio_childdetached(device_t self, device_t child)
 	if (error)
 		return;
 
+	KERNEL_LOCK(1, NULL);
 	LIST_FOREACH(gdev, &sc->sc_devs, sc_next)
 		if (gdev->sc_dev == child) {
 			LIST_REMOVE(gdev, sc_next);
 			kmem_free(gdev, sizeof(struct gpio_dev));
 			break;
 		}
+	KERNEL_UNLOCK_ONE(NULL);
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_attach_busy = 0;
@@ -199,8 +201,10 @@ static int
 gpio_rescan(device_t self, const char *ifattr, const int *locators)
 {
 
+	KERNEL_LOCK(1, NULL);
 	config_search(self, NULL,
 	    CFARGS(.search = gpio_search));
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return 0;
 }
@@ -882,6 +886,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		locs[GPIOCF_MASK] = ga.ga_mask;
 		locs[GPIOCF_FLAG] = ga.ga_flags;
 
+		KERNEL_LOCK(1, NULL);
 		cf = config_search(sc->sc_dev, &ga,
 		    CFARGS(.locators = locs));
 		if (cf != NULL) {
@@ -902,6 +907,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 #endif
 		} else
 			error = EINVAL;
+		KERNEL_UNLOCK_ONE(NULL);
+
 		mutex_enter(&sc->sc_mtx);
 		sc->sc_attach_busy = 0;
 		cv_signal(&sc->sc_attach);
@@ -1139,6 +1146,7 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		if (error)
 			return EBUSY;
 
+		KERNEL_LOCK(1, NULL);
 		attach = data;
 		LIST_FOREACH(gdev, &sc->sc_devs, sc_next) {
 			if (strcmp(device_xname(gdev->sc_dev),
@@ -1148,11 +1156,15 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 				cv_signal(&sc->sc_attach);
 				mutex_exit(&sc->sc_mtx);
 
-				if (config_detach(gdev->sc_dev, 0) == 0)
+				if (config_detach(gdev->sc_dev, 0) == 0) {
+					KERNEL_UNLOCK_ONE(NULL);
 					return 0;
+				}
 				break;
 			}
 		}
+		KERNEL_UNLOCK_ONE(NULL);
+
 		if (gdev == NULL) {
 			mutex_enter(&sc->sc_mtx);
 			sc->sc_attach_busy = 0;
