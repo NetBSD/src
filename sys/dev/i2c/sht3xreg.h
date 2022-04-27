@@ -1,4 +1,4 @@
-/*	$NetBSD: sht3xreg.h,v 1.1 2021/11/06 13:34:40 brad Exp $	*/
+/*	$NetBSD: sht3xreg.h,v 1.2 2022/04/27 23:11:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -80,6 +80,12 @@
 #define SHT3X_WRITE_DATA_CHECKSUM	0x0001
 
 /* Alert mode */
+/* This is not supported by the sht3xtemp driver as
+   the information in the datasheet was not enough to
+   get it working.  A read of the registers appears to
+   funtion just fine, but writes do not do anything, and
+   the chip does not indicate any errors occured.
+*/
 #define SHT3X_READ_HIGH_ALERT_SET	0xE11F
 #define SHT3X_READ_HIGH_ALERT_CLEAR	0xE114
 #define SHT3X_READ_LOW_ALERT_SET	0xE102
