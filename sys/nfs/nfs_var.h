@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.95 2021/06/04 10:44:58 hannken Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.96 2022/04/27 17:38:52 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -271,8 +271,8 @@ void nfs_delayedtruncate(struct vnode *);
 int nfs_check_wccdata(struct nfsnode *, const struct timespec *,
 	struct timespec *, bool);
 int nfs_namei(struct nameidata *, nfsrvfh_t *, uint32_t, struct nfssvc_sock *,
-	struct mbuf *, struct mbuf **, char **, struct vnode **, struct lwp *,
-	int, int);
+	struct mbuf *, struct mbuf **, char **, struct vnode **,
+	int *, struct vattr *, struct lwp *, int, int);
 void nfs_zeropad(struct mbuf *, int, int);
 void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
 	struct vattr *, struct mbuf **, char **);
