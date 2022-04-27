@@ -1,4 +1,5 @@
-/* $NetBSD: apple_dart.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp $ */
+/* $NetBSD: apple_dart.c,v 1.4 2022/04/27 07:53:24 skrll Exp $ */
+/*	$OpenBSD: apldart.c,v 1.10 2022/02/27 17:36:52 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -20,7 +21,7 @@
 //#define APPLE_DART_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.4 2022/04/27 07:53:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -34,37 +35,78 @@ __KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp 
 #include <arm/cpufunc.h>
 
 #include <dev/fdt/fdtvar.h>
+/*
+ * This driver largely ignores stream IDs and simply uses a single
+ * translation table for all the devices that it serves.  This is good
+ * enough for the PCIe host bridge that serves the on-board devices on
+ * the current generation Apple Silicon Macs as these only have a
+ * single PCIe device behind each DART.
+ */
 
 /*
  * DART registers
  */
+#define	DART_PARAMS2		0x0004
+#define	 DART_PARAMS2_BYPASS_SUPPORT	__BIT(0)
 #define	DART_TLB_OP		0x0020
-#define	 DART_TLB_OP_FLUSH	__BIT(20)
-#define	 DART_TLB_OP_BUSY	__BIT(2)
+#define	 DART_TLB_OP_BUSY		__BIT(2)
+#define	 DART_TLB_OP_FLUSH		__BIT(20)
 #define	DART_TLB_OP_SIDMASK	0x0034
 #define	DART_ERR_STATUS		0x0040
+#define	 DART_ERR_FLAG		__BIT(31)
+#define	 DART_ERR_STREAM_MASK	__BITS(27, 24)
+#define	 DART_ERR_CODE_MASK	__BITS(11, 0)
+#define	 DART_ERR_READ_FAULT	__BIT(4)
+#define	 DART_ERR_WRITE_FAULT	__BIT(3)
+#define	 DART_ERR_NOPTE		__BIT(2)
+#define	 DART_ERR_NOPMD		__BIT(1)
+#define	 DART_ERR_NOTTBR	__BIT(0)
 #define	DART_ERR_ADDRL		0x0050
 #define	DART_ERR_ADDRH		0x0054
-#define	DART_CONFIG(sid)	(0x0100 + (sid) * 0x4)
-#define	 DART_CONFIG_TXEN	__BIT(7)
+#define	DART_CONFIG		0x0060
+#define	 DART_CONFIG_LOCK		__BIT(15)
+#define	DART_TCR(sid)		(0x0100 + (sid) * 0x4)
+#define	 DART_TCR_TRANSLATE_ENABLE	__BIT(7)
+#define	 DART_TCR_BYPASS_DART		__BIT(8)
+#define	 DART_TCR_BYPASS_DAPF		__BIT(12)
 #define	DART_TTBR(sid, idx)	(0x0200 + (sid) * 0x10 + (idx) * 0x4)
-#define	 DART_TTBR_VALID	__BIT(31)
-#define	 DART_TTBR_SHIFT	12
+#define	 DART_TTBR_VALID		__BIT(31)
+#define	 DART_TTBR_SHIFT		12
+
+#define	DART_NUM_STREAMS	16
+#define	DART_ALL_STREAMS	((1 << DART_NUM_STREAMS) - 1)
 
 #define	DART_APERTURE_START	0x00100000
 #define	DART_APERTURE_SIZE	0x3fe00000
 #define	DART_PAGE_SIZE		16384
 #define	DART_PAGE_MASK		(DART_PAGE_SIZE - 1)
 
-#define	DART_L1_TABLE		0xb
+/*
+ * Some hardware (e.g. bge(4)) will always use (aligned) 64-bit memory
+ * access.  To make sure this doesn't fault, round the subpage limits
+ * down and up accordingly.
+ */
+#define DART_OFFSET_MASK	7
+
+#define	DART_L1_TABLE		0x3
 #define	DART_L2_INVAL		0x0
-#define	DART_L2_PAGE		0x3
+#define	DART_L2_VALID		__BIT(0)
+#define	DART_L2_FULL_PAGE	__BIT(1)
+
+#define	DART_L2_START_MASK	__BITS(63, 52)
+#define	DART_L2_END_MASK	__BITS(51, 40)
+#define	DART_L2_SUBPAGE(addr)	__SHIFTOUT((addr), __BITS(13, 2))
+#define	DART_L2_START(addr)	__SHIFTIN(DART_L2_SUBPAGE(addr), DART_L2_START_MASK)
+#define	DART_L2_END(addr)	__SHIFTIN(DART_L2_SUBPAGE(addr), DART_L2_END_MASK)
 
 #define	DART_ROUND_PAGE(pa)	(((pa) + DART_PAGE_MASK) & ~DART_PAGE_MASK)
 #define	DART_TRUNC_PAGE(pa)	((pa) & ~DART_PAGE_MASK)
+#define	DART_ROUND_OFFSET(pa)	(((pa) + DART_OFFSET_MASK) & ~DART_OFFSET_MASK)
+#define	DART_TRUNC_OFFSET(pa)	((pa) & ~DART_OFFSET_MASK)
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "apple,dart-m1",		.value = 16 },
+	{ .compat = "apple,t8103-dart",		.value = 16 },
 	DEVICE_COMPAT_EOL
 };
 
@@ -188,14 +230,42 @@ apple_dart_intr(void *priv)
 	uint32_t status;
 
 	status = DART_READ(sc, DART_ERR_STATUS);
-	addr = DART_READ(sc, DART_ERR_ADDRL);
-	addr |= (uint64_t)DART_READ(sc, DART_ERR_ADDRH) << 32;
+	addr  = __SHIFTIN(DART_READ(sc, DART_ERR_ADDRL), __BITS(31, 0));
+	addr |= __SHIFTIN(DART_READ(sc, DART_ERR_ADDRH), __BITS(63, 32));
 	DART_WRITE(sc, DART_ERR_STATUS, status);
 
+	if ((status & DART_ERR_FLAG) == 0)
+		return 1;
+
+#ifdef APPLE_DART_DEBUG
+	printf("%s: status %#"PRIx32"\n", __func__, status);
+	printf("%s: addrl  %#"PRIx32"\n", __func__, DART_READ(sc, DART_ERR_ADDRL));
+	printf("%s: addrh  %#"PRIx32"\n", __func__, DART_READ(sc, DART_ERR_ADDRH));
+#endif
+
+	const char *reason = NULL;
+	int32_t code = __SHIFTOUT(status, DART_ERR_CODE_MASK);
+	switch (code) {
+	case DART_ERR_NOTTBR:
+	    reason = "no ttbr for address";
+	    break;
+	case DART_ERR_NOPMD:
+	    reason = "no pmd for address";
+	    break;
+	case DART_ERR_NOPTE:
+	    reason = "no pte for address";
+	    break;
+	case DART_ERR_WRITE_FAULT:
+	    reason = "write fault";
+	    break;
+	case DART_ERR_READ_FAULT:
+	    reason = "read fault";
+	    break;
+	}
 	fdtbus_get_path(sc->sc_phandle, fdt_path, sizeof(fdt_path));
 
-	printf("%s (%s): error addr 0x%016lx status 0x%08x\n",
-	    device_xname(sc->sc_dev), fdt_path, addr, status);
+	printf("%s (%s): error addr 0x%016lx status 0x%08x: %s\n",
+	    device_xname(sc->sc_dev), fdt_path, addr, status, reason);
 
 	return 1;
 }
@@ -206,9 +276,8 @@ apple_dart_lookup_tte(struct apple_dart_softc *sc, bus_addr_t dva)
 	int idx = dva / DART_PAGE_SIZE;
 	int l2_idx = idx / (DART_PAGE_SIZE / sizeof(uint64_t));
 	int tte_idx = idx % (DART_PAGE_SIZE / sizeof(uint64_t));
-	volatile uint64_t *l2;
+	volatile uint64_t *l2 = DART_DMA_KVA(sc->sc_l2[l2_idx]);
 
-	l2 = DART_DMA_KVA(sc->sc_l2[l2_idx]);
 	return &l2[tte_idx];
 }
 
@@ -288,13 +357,22 @@ apple_dart_load_map(struct apple_dart_softc *sc, bus_dmamap_t map)
 		map->dm_segs[seg].ds_addr = dva + off;
 
 		pa = DART_TRUNC_PAGE(pa);
+		paddr_t start = DART_TRUNC_OFFSET(off);
+		paddr_t end = DART_PAGE_MASK;
 		while (len > 0) {
 			tte = apple_dart_lookup_tte(sc, dva);
-			*tte = pa | DART_L2_PAGE;
+			if (len < DART_PAGE_SIZE)
+				end = DART_ROUND_OFFSET(len) - 1;
 
+			*tte = pa | DART_L2_VALID |
+			    DART_L2_START(start) | DART_L2_END(end);
+#ifdef APPLE_DART_DEBUG
+			printf("tte %p = %"PRIx64"\n", tte, *tte);
+#endif
 			pa += DART_PAGE_SIZE;
 			dva += DART_PAGE_SIZE;
 			len -= DART_PAGE_SIZE;
+			start = 0;
 		}
 	}
 
@@ -459,8 +537,6 @@ apple_dart_attach(device_t parent, device_t self, void *aux)
 	struct apple_dart_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	uint64_t sidmask64;
-	uint32_t sidmask32;
 	char intrstr[128];
 	volatile uint64_t *l1;
 	bus_addr_t addr;
@@ -486,15 +562,34 @@ apple_dart_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_nsid = of_compatible_lookup(phandle, compat_data)->value;
 
-	if (of_getprop_uint64(phandle, "sid-mask", &sidmask64) == 0) {
-		sc->sc_sid_mask = sidmask64;
-	} else if (of_getprop_uint32(phandle, "sid-mask", &sidmask32) == 0) {
-		sc->sc_sid_mask = sidmask32;
-	} else {
-		sc->sc_sid_mask = 0xffff;
+	/* Skip locked DARTs for now. */
+	uint32_t config = DART_READ(sc, DART_CONFIG);
+	if (config & DART_CONFIG_LOCK) {
+		aprint_naive("\n");
+		aprint_normal(": locked\n");
+		return;
 	}
+
+	/*
+	 * Use bypass mode if supported.  This avoids an issue with
+	 * the USB3 controllers which need mappings entered into two
+	 * IOMMUs, which is somewhat difficult to implement with our
+	 * current kernel interfaces.
+	 */
+	uint32_t params2 = DART_READ(sc, DART_PARAMS2);
+	if (params2 & DART_PARAMS2_BYPASS_SUPPORT) {
+		for (sid = 0; sid < DART_NUM_STREAMS; sid++) {
+			DART_WRITE(sc, DART_TCR(sid),
+			    DART_TCR_BYPASS_DART | DART_TCR_BYPASS_DAPF);
+		}
+		aprint_naive("\n");
+		aprint_normal(": bypass\n");
+		return;
+	}
+
+	sc->sc_nsid = of_compatible_lookup(phandle, compat_data)->value;
+	sc->sc_sid_mask = __MASK(sc->sc_nsid);
 
 	aprint_naive("\n");
 	aprint_normal(": Apple DART @ %#lx/%#lx, %u SIDs (mask 0x%lx)\n",
@@ -513,7 +608,7 @@ apple_dart_attach(device_t parent, device_t self, void *aux)
 
 	/* Disable translations */
 	for (sid = 0; sid < sc->sc_nsid; sid++) {
-		DART_WRITE(sc, DART_CONFIG(sid), 0);
+		DART_WRITE(sc, DART_TCR(sid), 0);
 	}
 
 	/* Remove page tables */
@@ -528,6 +623,9 @@ apple_dart_attach(device_t parent, device_t self, void *aux)
 	 * Build translation tables. We pre-allocate the translation
 	 * tables for the entire aperture such that we don't have to worry
 	 * about growing them in an mpsafe manner later.
+	 *
+	 * Cover the entire address space [0, ..._START + ..._SIZE) even if vmem
+	 * only allocates from [..._START, ..._START + ...+SIZE)
 	 */
 
 	const u_int ntte = howmany(DART_APERTURE_START + DART_APERTURE_SIZE - 1,
@@ -553,23 +651,35 @@ apple_dart_attach(device_t parent, device_t self, void *aux)
 			    "couldn't allocate L2 tables\n");
 			return;
 		}
+
 		l1[idx] = DART_DMA_DVA(sc->sc_l2[idx]) | DART_L1_TABLE;
+#ifdef APPLE_DART_DEBUG
+		printf("l1[%d] (%p) = %"PRIx64"\n", idx, &l1[idx], l1[idx]);
+#endif
 	}
 
 	/* Install page tables */
 	for (sid = 0; sid < sc->sc_nsid; sid++) {
 		pa = DART_DMA_DVA(sc->sc_l1);
 		for (idx = 0; idx < nl1; idx++) {
+			KASSERTMSG(__SHIFTOUT(pa, __BITS(DART_TTBR_SHIFT - 1, 0)) == 0,
+			    "TTBR pa is not correctly aligned %" PRIxPADDR, pa);
+
 			DART_WRITE(sc, DART_TTBR(sid, idx),
 			    (pa >> DART_TTBR_SHIFT) | DART_TTBR_VALID);
 			pa += DART_PAGE_SIZE;
+#ifdef APPLE_DART_DEBUG
+			printf("writing %"PRIx64" to %"PRIx32"\n",
+			    (pa >> DART_TTBR_SHIFT) | DART_TTBR_VALID,
+			    DART_TTBR(sid, idx));
+#endif
 		}
 	}
 	apple_dart_flush_tlb(sc);
 
 	/* Enable translations */
 	for (sid = 0; sid < sc->sc_nsid; sid++) {
-		DART_WRITE(sc, DART_CONFIG(sid), DART_CONFIG_TXEN);
+		DART_WRITE(sc, DART_TCR(sid), DART_TCR_TRANSLATE_ENABLE);
 	}
 
 	ih = fdtbus_intr_establish_xname(phandle, 0, IPL_HIGH, FDT_INTR_MPSAFE,
