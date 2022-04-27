@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.22.10.1 2021/01/01 13:19:57 martin Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.22.10.2 2022/04/27 16:55:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.22.10.1 2021/01/01 13:19:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.22.10.2 2022/04/27 16:55:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -435,7 +435,6 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 		return (0);
 	}
 	ump->umq1_qflags[type] |= QTF_CLOSING;
-	ump->um_flags &= ~UFS_QUOTA;
 	mutex_exit(&dqlock);
 	/*
 	 * Search vnodes associated with this mount point,
@@ -472,6 +471,8 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 		if (ump->um_quotas[i] != NULLVP)
 			break;
 	ump->umq1_qflags[type] &= ~QTF_CLOSING;
+	if (i == MAXQUOTAS)
+		ump->um_flags &= ~UFS_QUOTA;
 	cv_broadcast(&dqcv);
 	mutex_exit(&dqlock);
 	kauth_cred_free(cred);
