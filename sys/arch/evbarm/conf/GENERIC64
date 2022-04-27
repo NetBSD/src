@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.197 2022/04/27 07:59:18 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.198 2022/04/27 08:06:20 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -199,6 +199,9 @@ tegrafuse*	at fdt? pass 4		# NVIDIA Tegra FUSE
 
 # Power management controller
 tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
+
+# Mailbox controller
+applembox*	at fdt? pass 2		# Apple Mailbox
 
 # Clock and Reset controller
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
