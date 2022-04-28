@@ -26,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.3 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.4 2022/04/28 15:43:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -184,7 +184,9 @@ npf_param_register(npf_t *npf, npf_param_t *params, unsigned count)
 		void *ret __diagused;
 
 		ret = thmap_put(pinfo->map, name, strlen(name), param);
-		KASSERT(ret == param);
+		KASSERTMSG(ret == param,
+		    "parameter insertion failed: ret=%p, param=%p",
+		    ret, param);
 
 		/* Assign the default value. */
 		KASSERT(param->default_val >= param->min);
