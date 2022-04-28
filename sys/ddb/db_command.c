@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.180 2022/04/20 19:06:35 uwe Exp $	*/
+/*	$NetBSD: db_command.c,v 1.181 2022/04/28 07:08:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.180 2022/04/20 19:06:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.181 2022/04/28 07:08:38 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -320,7 +320,7 @@ static const struct db_command db_show_cmds[] = {
 	    "Print a selection of UVM counters and statistics.",
 	    NULL,NULL) },
 	{ DDB_ADD_CMD("vmem", db_vmem_print_cmd,	0,
-	    "Print the vmem usage.", "[/a] address", NULL) },
+	    "Print the vmem usage.", "address", NULL) },
 	{ DDB_ADD_CMD("vmems", db_show_all_vmems,	0,
 	    "Show all vmems.", NULL, NULL) },
 	{ DDB_ADD_CMD("vnode",	db_vnode_print_cmd,	0,
