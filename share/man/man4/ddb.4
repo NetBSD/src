@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.201 2021/06/29 10:25:33 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.202 2022/04/28 07:17:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd June 20, 2021
+.Dd April 28, 2022
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -816,6 +816,11 @@ of the kernel history options
 .Cd BIOHIST ,
 or
 .Cd UVMHIST .
+.It Ic show vmem Ar address
+Print the vmem at
+.Ar address .
+.It Ic show vmems
+Display all vmems.
 .It Ic show vnode Ns Oo Cm /f Oc Ar address
 Print the vnode at
 .Ar address .
