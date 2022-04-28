@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.402 2022/04/24 20:08:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.403 2022/04/28 21:38:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.402 2022/04/24 20:08:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.403 2022/04/28 21:38:38 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -126,7 +126,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 128
+%expect 132
 
 %union {
 	val_t	*y_val;
@@ -1655,7 +1655,7 @@ non_expr_statement:		/* helper for C99 6.8 */
 	;
 
 labeled_statement:		/* C99 6.8.1 */
-	  label statement
+	  label type_attribute_opt statement
 	;
 
 label:

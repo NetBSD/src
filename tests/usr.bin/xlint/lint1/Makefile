@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.120 2022/04/16 20:18:52 rillig Exp $
+# $NetBSD: Makefile,v 1.121 2022/04/28 21:38:38 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	348		# see lint1/err.c
@@ -165,6 +165,7 @@ FILES+=		gcc_attribute_enum.exp
 FILES+=		gcc_attribute_func.c
 FILES+=		gcc_attribute_func.exp
 FILES+=		gcc_attribute_label.c
+FILES+=		gcc_attribute_label.exp
 FILES+=		gcc_attribute_stmt.c
 FILES+=		gcc_attribute_stmt.exp
 FILES+=		gcc_attribute_type.c
