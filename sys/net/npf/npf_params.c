@@ -26,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.4 2022/04/28 15:43:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.5 2022/04/28 17:28:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -69,13 +69,30 @@ npf_param_general_register(npf_t *npf)
 	npf_param_register(npf, param_map, __arraycount(param_map));
 }
 
+static uintptr_t
+npf_param_thmap_alloc(size_t len)
+{
+	return (uintptr_t)kmem_alloc(len, KM_SLEEP);
+}
+
+static void
+npf_param_thmap_free(uintptr_t addr, size_t len)  
+{
+        kmem_free((void *)addr, len);
+} 
+
+static const thmap_ops_t npf_param_thmap_ops = {
+        .alloc = npf_param_thmap_alloc,
+        .free = npf_param_thmap_free
+};
+
 void
 npf_param_init(npf_t *npf)
 {
 	npf_paraminfo_t *paraminfo;
 
 	paraminfo = kmem_zalloc(sizeof(npf_paraminfo_t), KM_SLEEP);
-	paraminfo->map = thmap_create(0, NULL, THMAP_NOCOPY);
+	paraminfo->map = thmap_create(0, &npf_param_thmap_ops, THMAP_NOCOPY);
 	npf->paraminfo = paraminfo;
 
 	/* Register some general parameters. */
