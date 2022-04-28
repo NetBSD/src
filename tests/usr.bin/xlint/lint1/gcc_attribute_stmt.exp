@@ -1,1 +1,3 @@
 gcc_attribute_stmt.c(34): error: syntax error '__attribute__' [249]
+gcc_attribute_stmt.c(49): error: syntax error 'break' [249]
+gcc_attribute_stmt.c(55): error: syntax error 'return' [249]

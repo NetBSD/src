@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_stmt.c,v 1.1 2021/07/06 17:33:07 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_stmt.c,v 1.2 2022/04/28 07:10:39 rillig Exp $	*/
 # 3 "gcc_attribute_stmt.c"
 
 /*
@@ -32,5 +32,26 @@ attribute_fallthrough(int i)
 		/* expect+2: error: syntax error '__attribute__' [249] */
 		println("prime")
 		    __attribute__((__fallthrough__));
+	}
+}
+
+/*
+ * Despite being undocumented, GCC 10 accepts __attribute__((__unused__))
+ * at the beginning of a statement.
+ */
+void
+unused_statements(int x)
+{
+	switch (x) {
+	case 3:
+		__attribute__((__unused__))
+		/* expect+1: error: syntax error 'break' [249] */
+		break;
+	case 4:
+		goto label;
+	label:
+		__attribute__((__unused__))
+		/* expect+1: error: syntax error 'return' [249] */
+		return;
 	}
 }
