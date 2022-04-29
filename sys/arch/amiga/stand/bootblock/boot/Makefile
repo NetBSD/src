@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2022/04/29 06:48:22 rin Exp $
+#	$NetBSD: Makefile,v 1.61 2022/04/29 06:56:56 rin Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -92,9 +92,6 @@ COPTIM+= -m68060 -Wa,-march=68030 -Wa,-mcpu=68030 -fno-unwind-tables
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS}
 CFLAGS+= -Werror
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
-
-# XXX work around a gcc 4.5 bug
-COPTS.cread.c = -O1
 
 .c.o:
 	${_MKTARGET_COMPILE}
