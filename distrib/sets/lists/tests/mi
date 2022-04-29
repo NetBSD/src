@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1200 2022/04/28 21:38:38 rillig Exp $
+# $NetBSD: mi,v 1.1201 2022/04/29 22:17:50 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -103,6 +103,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/hash		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/inet		tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libc/kevent_nullmnt	tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/membar		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/misc		tests-lib-debug		compattestfile,atf
@@ -2932,6 +2933,11 @@
 ./usr/tests/lib/libc/inet/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/inet/t_inet_addr			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/inet/t_inet_network		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/kevent_nullmnt			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/kevent_nullmnt/Atffile		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/kevent_nullmnt/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libc/kevent_nullmnt/h_nullmnt		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/kevent_nullmnt/t_nullmnt		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/Kyuafile			tests-lib-tests		compattestfile,atf,kyua

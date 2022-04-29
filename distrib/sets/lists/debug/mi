@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.376 2022/04/08 23:35:51 riastradh Exp $
+# $NetBSD: mi,v 1.377 2022/04/29 22:17:49 pgoyette Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2041,6 +2041,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/inet/t_inet_addr.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/inet/t_inet_network.debug	tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/kevent_nullmnt/h_nullmnt.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_btowc.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype1.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype2.debug		tests-obsolete		obsolete,compattestfile

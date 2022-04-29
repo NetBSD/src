@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.51 2022/04/08 23:35:52 riastradh Exp $
+# $NetBSD: Makefile,v 1.52 2022/04/29 22:17:49 pgoyette Exp $
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
@@ -11,6 +11,7 @@ TESTS_SUBDIRS+=	db
 TESTS_SUBDIRS+=	gen
 TESTS_SUBDIRS+=	hash
 TESTS_SUBDIRS+=	inet
+TESTS_SUBDIRS+= kevent_nullmnt
 TESTS_SUBDIRS+=	locale
 TESTS_SUBDIRS+=	membar
 TESTS_SUBDIRS+=	misc
