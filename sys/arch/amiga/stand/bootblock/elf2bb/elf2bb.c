@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.29 2022/04/29 06:59:29 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.30 2022/04/29 07:12:42 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -394,15 +394,16 @@ main(int argc, char *argv[])
 			    "oldaddr = 0x%08x, abort.\n", relbuf[i], oldaddr);
 		} else if (addrdiff > 0xff) {
 			*rpo = 0;
+			tmp16 = htobe16(addrdiff);
 			if (delta > 0) {
 				++rpo;
-				*rpo++ = (relbuf[i] >> 8) & 0xff;
-				*rpo++ = relbuf[i] & 0xff;
+				memcpy(rpo, &tmp16, sizeof(tmp16));
+				rpo += sizeof(tmp16);
 				dprintf(("%02x%02x%02x\n",
 				    rpo[-3], rpo[-2], rpo[-1]));
 			} else {
-				*--rpo = relbuf[i] & 0xff;
-				*--rpo = (relbuf[i] >> 8) & 0xff;
+				rpo -= sizeof(tmp16);
+				memcpy(rpo, &tmp16, sizeof(tmp16));
 				--rpo;
 				dprintf(("%02x%02x%02x\n",
 				    rpo[0], rpo[1], rpo[2]));
