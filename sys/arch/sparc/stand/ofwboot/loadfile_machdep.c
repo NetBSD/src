@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.16 2016/11/04 20:04:11 macallan Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.17 2022/04/29 20:24:02 rin Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,6 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
@@ -46,8 +48,6 @@
 #define MAXSEGNUM	50
 #define hi(val)		((uint32_t)(((val) >> 32) & (uint32_t)-1))
 #define lo(val)		((uint32_t)((val) & (uint32_t)-1))
-
-#define roundup2(x, y)	(((x)+((y)-1))&(~((y)-1)))
 
 
 typedef int phandle_t;
@@ -133,7 +133,7 @@ kvamap_extract(vaddr_t va, vsize_t len, vaddr_t *new_va)
 
 	*new_va  = va;
 	for (i = 0; (len > 0) && (i < MAXSEGNUM); i++) {
-		if (kvamap[i].start == NULL)
+		if (kvamap[i].start == 0)
 			break;
 		if ((kvamap[i].start <= va) && (va < kvamap[i].end)) {
 			uint64_t va_len = kvamap[i].end - va;
@@ -155,7 +155,7 @@ kvamap_enter(uint64_t va, uint64_t len)
 
 	DPRINTF(("kvamap_enter: %d@%p\n", (int)len, (void*)(u_long)va));
 	for (i = 0; (len > 0) && (i < MAXSEGNUM); i++) {
-		if (kvamap[i].start == NULL) {
+		if (kvamap[i].start == 0) {
 			kvamap[i].start = va;
 			kvamap[i].end = va + len;
 			break;
