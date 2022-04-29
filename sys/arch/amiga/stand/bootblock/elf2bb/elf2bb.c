@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.28 2022/04/25 15:48:57 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.29 2022/04/29 06:59:29 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -288,7 +288,7 @@ main(int argc, char *argv[])
 	case RELVER_RELATIVE_BYTES_FORWARD:
 		rpo = buffer + tsz + dsz;
 		delta = +1;
-		*(uint16_t *)(buffer + 14) = htobe16(tsz + dsz);
+		*(uint16_t *)(buffer + 14) /* reltab */ = htobe16(tsz + dsz);
 		break;
 	}
 
