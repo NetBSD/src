@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.12 2022/04/27 14:48:50 rin Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.13 2022/04/29 07:42:07 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -449,7 +449,6 @@ read_sblock(struct open_file *f, struct mfs_sblock *fs)
 	static uint8_t sbbuf[MINBSIZE];
 	size_t buf_size;
 	int rc;
-	u_int secsize;
 
 	/* We must read amount multiple of sector size, hence we can't
 	 * read SBSIZE and read MINBSIZE.
@@ -457,13 +456,8 @@ read_sblock(struct open_file *f, struct mfs_sblock *fs)
 	if (SBSIZE > MINBSIZE)
 		return EINVAL;
 
-	secsize = 0;
-	rc = DEV_IOCTL(f->f_dev)(f, SAIOSECSIZE, &secsize);
-	if (rc != 0 || secsize == 0)
-		secsize = DEV_BSIZE;
-
 	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-	    SUPER_BLOCK_OFF / secsize, MINBSIZE, sbbuf, &buf_size);
+	    SUPER_BLOCK_OFF / GETSECSIZE(f), MINBSIZE, sbbuf, &buf_size);
 	if (rc)
 		return rc;
 
