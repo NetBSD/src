@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.14 2022/04/29 06:42:58 rin Exp $ */
+/* $NetBSD: bbstart.s,v 1.15 2022/04/29 07:12:41 rin Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -159,7 +159,6 @@ Lrelocate:
 	
 Loopw:
 	clrw	%a2@+
-	movl	%d1,%a0	| for a variant with relative words, erase this line
 Loopb:
 	addl	%d0,%a0
 	addl	%d1,%a0@
