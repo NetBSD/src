@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2022/04/29 07:18:17 rin Exp $
+#	$NetBSD: Makefile,v 1.28 2022/04/29 07:45:20 rin Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -46,7 +46,8 @@ SOBJS += libstubs.o memcmp.o memmove.o memset.o strncmp.o
 
 OBJS+=	$(SOBJS) $(COBJS)
 
-DEFS+= -D_STANDALONE -DSA_EXEC_ANYOWNER -D_PRIMARY_BOOT -DSERCONSOLE
+DEFS+=	-D_STANDALONE -DSA_EXEC_ANYOWNER -DSA_HARDCODED_SECSIZE \
+	-D_PRIMARY_BOOT -DSERCONSOLE
 
 .NOPATH: ${OBJS} x.out f.out libboot.a xxstart.o
 
