@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.8 2011/02/25 10:12:44 kiyohara Exp $	*/
+/*	$NetBSD: tgets.c,v 1.9 2022/04/29 20:48:26 rin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,12 +43,12 @@ tgets(char *buf)
 #ifdef	USE_SCAN
 	int i;
 
-#define	SCANWAIT	10000
-#define	PWAIT		500
-	for (i = 0; i < PWAIT; i++) {
+#define	SCANDELAY	10000
+#define	SCANWAIT	500
+	for (i = 0; i < SCANWAIT; i++) {
 		if ((c = cnscan()) != -1)
 			goto next;
-		delay(SCANWAIT);
+		delay(SCANDELAY);
 	}
 	return -1;
 next:
