@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.406 2022/04/29 19:37:00 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.407 2022/04/29 22:44:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.406 2022/04/29 19:37:00 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.407 2022/04/29 22:44:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -117,10 +117,10 @@ anonymize(sym_t *s)
 		s->u.s_member.sm_sou_type = NULL;
 }
 
-#if defined(YYDEBUG) && (defined(YYBYACC) || defined(YYBISON))
+#if YYDEBUG && (YYBYACC || YYBISON)
 #define YYSTYPE_TOSTRING cgram_to_string
 #endif
-#if defined(YYDEBUG) && defined(YYBISON)
+#if YYDEBUG && YYBISON
 #define YYPRINT cgram_print
 #endif
 
@@ -363,7 +363,7 @@ anonymize(sym_t *s)
 %type	<y_in_system_header> sys
 
 %{
-#if defined(YYDEBUG) && defined(YYBISON)
+#if YYDEBUG && YYBISON
 static inline void cgram_print(FILE *, int, YYSTYPE);
 #endif
 %}
@@ -2177,8 +2177,7 @@ yyerror(const char *msg)
 	return 0;
 }
 
-#if (defined(YYDEBUG) && YYDEBUG > 0 && defined(YYBYACC)) \
-    || (defined(YYDEBUG) && defined(YYBISON))
+#if YYDEBUG && (YYBYACC || YYBISON)
 static const char *
 cgram_to_string(int token, YYSTYPE val)
 {
@@ -2207,7 +2206,7 @@ cgram_to_string(int token, YYSTYPE val)
 }
 #endif
 
-#if defined(YYDEBUG) && defined(YYBISON)
+#if YYDEBUG && YYBISON
 static inline void
 cgram_print(FILE *output, int token, YYSTYPE val)
 {
