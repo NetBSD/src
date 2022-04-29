@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.13 2010/07/06 05:59:57 mrg Exp $ */
+/* $NetBSD: bbstart.s,v 1.14 2022/04/29 06:42:58 rin Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -143,7 +143,17 @@ Lioerr:
 Lrelocate:
 	lea	%pc@(Lzero),%a0
 	movl	%a0,%d1
-	movw	%pc@(Lreltab),%a2
+
+	/*
+	 * Here, we cannot use
+	 *	movw	%pc@(Lreltab),%a2
+	 * "movw" against An is synonym for "movea.w", which carries out
+	 * sign extension. This breaks things when reltab >= 0x8000.
+	 */
+	movq	#0,%d0
+	movw	%pc@(Lreltab),%d0
+	movl	%d0,%a2
+
 	addl	%d1,%a2
 	jra	Loopend
 	
