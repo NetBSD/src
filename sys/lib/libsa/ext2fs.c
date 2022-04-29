@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.33 2022/04/27 14:48:50 rin Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.34 2022/04/29 07:42:07 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -415,15 +415,9 @@ read_sblock(struct open_file *f, struct m_ext2fs *fs)
 	struct ext2fs ext2fs;
 	size_t buf_size;
 	int rc;
-	u_int secsize;
-
-	secsize = 0;
-	rc = DEV_IOCTL(f->f_dev)(f, SAIOSECSIZE, &secsize);
-	if (rc != 0 || secsize == 0)
-		secsize = DEV_BSIZE;
 
 	rc = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
-	    SBOFF / secsize, SBSIZE, sbbuf, &buf_size);
+	    SBOFF / GETSECSIZE(f), SBSIZE, sbbuf, &buf_size);
 	if (rc)
 		return rc;
 
