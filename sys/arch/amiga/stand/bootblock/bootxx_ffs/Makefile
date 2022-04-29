@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2021/02/25 03:42:14 rin Exp $
+#	$NetBSD: Makefile,v 1.27 2022/04/29 07:18:17 rin Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -36,7 +36,7 @@ DEFS+=		-DBOOTXX_FFS_VERSION=1
 
 BINDIR=/usr/mdec
 
-COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
+COBJS = main.o console.o xd.o bzero.o gets.o
 COBJS+=  lseek.o open.o vers.o read.o close.o dev.o errno.o
 COBJS+=  ${FSOBJS} panic.o files.o
 

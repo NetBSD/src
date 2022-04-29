@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.9 2009/11/15 20:38:36 snj Exp $
+ * $NetBSD: main.c,v 1.10 2022/04/29 07:18:17 rin Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -138,4 +138,11 @@ err:
 	(void)getchar();
 	consclose();
 	return 1;
+}
+
+void
+twiddle(void)
+{
+
+	/* Keep silence; boot.amiga should be small enough. */
 }
