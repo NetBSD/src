@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.404 2022/04/29 06:40:51 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.405 2022/04/29 07:02:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.404 2022/04/29 06:40:51 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.405 2022/04/29 07:02:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1643,7 +1643,7 @@ statement:			/* C99 6.8 */
 	;
 
 non_expr_statement:		/* helper for C99 6.8 */
-	  type_attribute T_SEMI
+	  gcc_attribute /* ((__fallthrough__)) */ T_SEMI
 	| labeled_statement
 	| compound_statement
 	| selection_statement
