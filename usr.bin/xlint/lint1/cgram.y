@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.407 2022/04/29 22:44:44 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.408 2022/04/30 19:18:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.407 2022/04/29 22:44:44 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.408 2022/04/30 19:18:48 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -500,7 +500,7 @@ postfix_expression:
 		begin_initialization(tmp);
 		cgram_declare(tmp, true, NULL);
 	  } init_lbrace initializer_list comma_opt init_rbrace {
-		if (!Sflag)
+		if (!allow_c99)
 			 /* compound literals are a C99/GCC extension */
 			 gnuism(319);
 		$$ = build_name(*current_initsym(), false);
@@ -1103,9 +1103,7 @@ enum_decl_lbrace:		/* helper for C99 6.7.2.2 */
 enums_with_opt_comma:		/* helper for C99 6.7.2.2 */
 	  enumerator_list
 	| enumerator_list T_COMMA {
-		if (Sflag) {
-			/* C99 6.7.2.2p1 allows trailing ',' */
-		} else if (sflag) {
+		if (!allow_c99 && !allow_trad) {
 			/* trailing ',' prohibited in enum declaration */
 			error(54);
 		} else {
@@ -1581,13 +1579,13 @@ designator_list:		/* C99 6.7.8 "Initialization" */
 
 designator:			/* C99 6.7.8 "Initialization" */
 	  T_LBRACK range T_RBRACK {
-		add_designator_subscript($2);
-		if (!Sflag)
+		if (!allow_c99)
 			/* array initializer with designators is a C99 ... */
 			warning(321);
+		add_designator_subscript($2);
 	  }
 	| T_POINT identifier {
-		if (!Sflag)
+		if (!allow_c99)
 			/* struct or union member name in initializer is ... */
 			warning(313);
 		add_designator_member($2);
@@ -1704,7 +1702,7 @@ compound_statement_rbrace:
 block_item_list:		/* C99 6.8.2 */
 	  block_item
 	| block_item_list block_item {
-		if (!Sflag && $1 && !$2)
+		if ($1 && !$2)
 			/* declarations after statements is a C99 feature */
 			c99ism(327);
 		$$ = $1 || $2;
