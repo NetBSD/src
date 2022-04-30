@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.124 2022/04/30 19:53:37 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.125 2022/04/30 20:24:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.124 2022/04/30 19:53:37 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.125 2022/04/30 20:24:57 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -67,7 +67,14 @@ pos_t	csrc_pos = { "", 1, 0 };
 bool in_gcc_attribute;
 bool in_system_header;
 
-/* Valid values for 'since' are 78, 90, 99, 11. */
+/*
+ * Valid values for 'since' are 78, 90, 99, 11.
+ *
+ * As of 2022-04-30, lint treats 11 like 99, in order to provide good error
+ * messages instead of a simple parse error.  If the keyword '_Generic' were
+ * not defined, it would be interpreted as an implicit function call, leading
+ * to a parse error.
+ */
 #define kwdef(name, token, scl, tspec, tqual,	since, gcc, attr, deco) \
 	{ \
 		name, token, scl, tspec, tqual, \
@@ -418,10 +425,10 @@ initscan(void)
 
 	end = keywords + sizeof(keywords) / sizeof(keywords[0]);
 	for (kw = keywords; kw != end; kw++) {
-		if ((kw->kw_c90 || kw->kw_c99) && tflag)
+		if ((kw->kw_c90 || kw->kw_c99) && !allow_c90)
 			continue;
 		/* FIXME: C99 and GCC are independent. */
-		if (kw->kw_c99 && !(Sflag || allow_gcc))
+		if (kw->kw_c99 && !(allow_c99 || allow_gcc))
 			continue;
 		if (kw->kw_gcc && !allow_gcc)
 			continue;
