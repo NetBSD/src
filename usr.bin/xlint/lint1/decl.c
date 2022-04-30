@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.279 2022/04/30 21:38:03 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.280 2022/04/30 22:31:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.279 2022/04/30 21:38:03 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.280 2022/04/30 22:31:23 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -958,7 +958,8 @@ check_type(sym_t *sym)
 		 */
 		if (t == FUNC && !tp->t_proto &&
 		    !(to == NOTSPEC && sym->s_osdef)) {
-			if (sflag && hflag)
+			/* TODO: Make this an error in C99 mode as well. */
+			if ((!allow_trad && !allow_c99) && hflag)
 				/* function declaration is not a prototype */
 				warning(287);
 		}
@@ -974,7 +975,8 @@ check_type(sym_t *sym)
 				}
 				return;
 			} else if (tp->t_const || tp->t_volatile) {
-				if (sflag) {	/* XXX or better allow_c90? */
+				/* TODO: Make this a warning in C99 mode as well. */
+				if (!allow_trad && !allow_c99) {	/* XXX or better allow_c90? */
 					/* function cannot return const... */
 					warning(228);
 				}
@@ -996,7 +998,8 @@ check_type(sym_t *sym)
 #if 0	/* errors are produced by length_in_bits */
 			} else if (is_incomplete(tp)) {
 				/* array of incomplete type */
-				if (sflag) {
+				/* TODO: Make this an error in C99 mode as well. */
+				if (!allow_trad && !allow_c99) {
 					/* array of incomplete type */
 					error(301);
 				} else {
@@ -1053,7 +1056,8 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 	if (t == CHAR || t == UCHAR || t == SCHAR ||
 	    t == SHORT || t == USHORT || t == ENUM) {
 		if (!bitfieldtype_ok) {
-			if (sflag) {
+			/* TODO: Make this an error in C99 mode as well. */
+			if (!allow_trad && !allow_c99) {
 				/* bit-field type '%s' invalid in ANSI C */
 				warning(273, type_name(tp));
 			} else if (pflag) {
@@ -1699,7 +1703,8 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 			/* a new tag, no empty declaration */
 			dcs->d_enclosing->d_nonempty_decl = true;
 			if (scl == ENUM_TAG && !decl) {
-				if (allow_c90 && (sflag || pflag))
+				/* TODO: Make this an error in C99 mode as well. */
+				if (allow_c90 && ((!allow_trad && !allow_c99) || pflag))
 					/* forward reference to enum type */
 					warning(42);
 			}
@@ -1753,7 +1758,8 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 		if (semi) {
 			/* "struct a;" */
 			if (allow_c90) {
-				if (!sflag)
+				/* XXX: Why is this warning suppressed in C90 mode? */
+				if (allow_trad || allow_c99)
 					/* declaration introduces new ... */
 					warning(44, storage_class_name(scl),
 					    tag->s_name);
@@ -1775,7 +1781,8 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			/* base type is really '%s %s' */
 			warning(45, storage_class_name(tag->s_scl),
 			    tag->s_name);
-			if (!sflag) {
+			/* XXX: Why is this warning suppressed in C90 mode? */
+			if (allow_trad || allow_c99) {
 				/* declaration introduces new type in ... */
 				warning(44, storage_class_name(scl),
 				    tag->s_name);
@@ -2002,7 +2009,8 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 		    !check_redeclaration(dsym, (dowarn = false, &dowarn))) {
 
 			if (dowarn) {
-				if (sflag)
+				/* TODO: Make this an error in C99 mode as well. */
+				if (!allow_trad && !allow_c99)
 					/* redeclaration of %s */
 					error(27, dsym->s_name);
 				else
@@ -2169,7 +2177,8 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 	 * "static a; int a;", "static a; int a = 1;", "static a = 1; int a;"
 	 */
 	/* redeclaration of %s; ANSI C requires "static" */
-	if (sflag) {
+	/* TODO: Make this an error in C99 mode as well. */
+	if (!allow_trad && !allow_c99) {
 		/* redeclaration of %s; ANSI C requires static */
 		warning(30, dsym->s_name);
 		print_previous_declaration(-1, rsym);
@@ -2369,8 +2378,10 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 	while (narg-- > 0) {
 		dowarn = false;
 		/*
-		 * If it does not match due to promotion and sflag is
-		 * not set we print only a warning.
+		 * If it does not match due to promotion and lint runs in
+		 * "traditional to C90" migration mode, print only a warning.
+		 *
+		 * XXX: Where is this "only a warning"?
 		 */
 		if (!eqtype(arg->s_type, parg->s_type, true, true, &dowarn) ||
 		    dowarn) {
@@ -2656,7 +2667,8 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 			return true;
 		}
 	} else if (dowarn) {
-		if (sflag)
+		/* TODO: Make this an error in C99 mode as well. */
+		if (!allow_trad && !allow_c99)
 			/* type does not match prototype: %s */
 			error(58, arg->s_name);
 		else
@@ -3311,7 +3323,9 @@ check_global_variable_size(const sym_t *sym)
 
 	if (len_in_bits == 0 &&
 	    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
-		if (!allow_c90 || (sym->s_scl == EXTERN && !sflag)) {
+		/* TODO: C99 6.7.5.2p1 defines this as an error as well. */
+		if (!allow_c90 ||
+		    (sym->s_scl == EXTERN && (allow_trad || allow_c99))) {
 			/* empty array declaration: %s */
 			warning_at(190, &sym->s_def_pos, sym->s_name);
 		} else {
