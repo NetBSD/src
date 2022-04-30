@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.126 2022/04/30 20:43:16 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.127 2022/04/30 21:38:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.126 2022/04/30 20:43:16 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.127 2022/04/30 21:38:03 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -590,7 +590,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		if (u_suffix > 1)
 			u_suffix = 1;
 	}
-	if (tflag && u_suffix != 0) {
+	if (!allow_c90 && u_suffix != 0) {
 		/* suffix U is illegal in traditional C */
 		warning(97);
 	}
@@ -627,7 +627,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 			}
 		}
 		if (typ == UINT || typ == ULONG) {
-			if (tflag) {
+			if (!allow_c90) {
 				typ = LONG;
 			} else if (!sflag) {
 				/*
@@ -648,7 +648,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		}
 		break;
 	case LONG:
-		if (uq > TARG_LONG_MAX && !tflag) {
+		if (uq > TARG_LONG_MAX && allow_c90) {
 			typ = ULONG;
 			if (!sflag)
 				ansiu = true;
@@ -665,7 +665,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		}
 		break;
 	case QUAD:
-		if (uq > TARG_QUAD_MAX && !tflag) {
+		if (uq > TARG_QUAD_MAX && allow_c90) {
 			typ = UQUAD;
 			if (!sflag)
 				ansiu = true;
@@ -746,7 +746,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 		typ = DOUBLE;
 	}
 
-	if (tflag && typ != DOUBLE) {
+	if (!allow_c90 && typ != DOUBLE) {
 		/* suffixes F and L are illegal in traditional C */
 		warning(98);
 	}
@@ -915,7 +915,7 @@ get_escaped_char(int delim)
 		return -1;
 	switch (c) {
 	case '\n':
-		if (tflag) {
+		if (!allow_c90) {
 			/* newline in string or char constant */
 			error(254);
 			return -2;
@@ -930,21 +930,21 @@ get_escaped_char(int delim)
 	case '\\':
 		switch (c = inpc()) {
 		case '"':
-			if (tflag && delim == '\'')
+			if (!allow_c90 && delim == '\'')
 				/* \" inside character constants undef... */
 				warning(262);
 			return '"';
 		case '\'':
 			return '\'';
 		case '?':
-			if (tflag)
+			if (!allow_c90)
 				/* \? undefined in traditional C */
 				warning(263);
 			return '?';
 		case '\\':
 			return '\\';
 		case 'a':
-			if (tflag)
+			if (!allow_c90)
 				/* \a undefined in traditional C */
 				warning(81);
 			return '\a';
@@ -959,7 +959,7 @@ get_escaped_char(int delim)
 		case 't':
 			return '\t';
 		case 'v':
-			if (tflag)
+			if (!allow_c90)
 				/* \v undefined in traditional C */
 				warning(264);
 			return '\v';
@@ -983,7 +983,7 @@ get_escaped_char(int delim)
 			}
 			return v;
 		case 'x':
-			if (tflag)
+			if (!allow_c90)
 				/* \x undefined in traditional C */
 				warning(82);
 			v = 0;
