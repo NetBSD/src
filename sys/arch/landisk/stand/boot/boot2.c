@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.6 2016/06/11 06:31:49 dholland Exp $	*/
+/*	$NetBSD: boot2.c,v 1.7 2022/04/30 03:37:09 rin Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -479,7 +479,7 @@ parseboot(char *arg, char **filename, int *howto)
 	*howto = 0;
 
 	/* if there were no arguments */
-	if (*arg == NULL)
+	if (*arg == '\0')
 		return (1);
 
 	/* format is... */
@@ -493,7 +493,7 @@ parseboot(char *arg, char **filename, int *howto)
 		*filename = arg;
 
 		opts = gettrailer(arg);
-		if (*opts == NULL) {
+		if (*opts == '\0') {
 			opts = NULL;
 		} else if (*opts != '-') {
 			printf("invalid arguments\n");

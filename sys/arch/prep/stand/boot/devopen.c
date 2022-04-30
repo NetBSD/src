@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6 2022/04/30 03:41:05 rin Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -73,7 +73,7 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 
 	if (*s == '(') {
 		/* lookup device and get index */
-		*s = NULL;
+		*s = '\0';
 		if ((*dev = devlookup(nametmp)) < 0)
 		    goto baddev;
 
@@ -86,13 +86,13 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 				}
 			} else {
 				if (flag) {
-					*s = NULL;
+					*s = '\0';
 					flag = 0;
 				}
 			}
 		}
 		if (*s == ')')
-			*s = NULL;
+			*s = '\0';
 
 		switch (argc) {
 		case 3:
