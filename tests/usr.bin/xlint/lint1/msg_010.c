@@ -1,20 +1,23 @@
-/*	$NetBSD: msg_010.c,v 1.4 2021/01/18 17:43:44 rillig Exp $	*/
+/*	$NetBSD: msg_010.c,v 1.5 2022/04/30 20:24:57 rillig Exp $	*/
 # 3 "msg_010.c"
 
 // Test for message: duplicate '%s' [10]
 
-inline inline void		/* expect: [10] */
+/* expect+1: warning: duplicate 'inline' [10] */
+inline inline void
 double_inline(void)
 {
 }
 
-const const int			/* expect: [10] */
+/* expect+1: warning: duplicate 'const' [10] */
+const const int
 double_const(void)
 {
 	return 0;
 }
 
-volatile volatile int		/* expect: [10] */
+/* expect+1: warning: duplicate 'volatile' [10] */
+volatile volatile int
 double_volatile(void)
 {
 	return 0;
