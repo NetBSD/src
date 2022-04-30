@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.18 2015/09/29 15:12:52 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.19 2022/04/30 03:52:41 rin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -473,7 +473,7 @@ dlabel_valid(int unit)
 
 	dsk = lookup_disk(unit);
 	if (dsk == NULL)
-		return NULL;
+		return 0;
 	return dsk->dlabel != NULL;
 }
 
