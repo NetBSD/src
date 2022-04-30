@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.125 2022/04/30 20:24:57 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.126 2022/04/30 20:43:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.125 2022/04/30 20:24:57 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.126 2022/04/30 20:43:16 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -105,7 +105,7 @@ static const struct keyword {
 				 * T_TYPE or T_STRUCT_OR_UNION */
 	tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
 	bool	kw_c90:1;	/* C90 keyword */
-	bool	kw_c99:1;	/* C99 keyword */
+	bool	kw_c99_or_c11:1; /* C99 or C11 keyword */
 	bool	kw_gcc:1;	/* GCC keyword */
 	bool	kw_attr:1;	/* GCC attribute */
 	bool	kw_plain:1;	/* 'name' */
@@ -414,6 +414,29 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 	symtab_add(sym);
 }
 
+static bool
+is_keyword_known(const struct keyword *kw)
+{
+
+	if ((kw->kw_c90 || kw->kw_c99_or_c11) && !allow_c90)
+		return false;
+
+	/*
+	 * In the 1990s, GCC defined several keywords that were later
+	 * incorporated into C99, therefore in GCC mode, all C99 keywords are
+	 * made available.  The C11 keywords are made available as well, but
+	 * there are so few that they don't matter practically.
+	 */
+	if (allow_gcc)
+		return true;
+	if (kw->kw_gcc)
+		return false;
+
+	if (kw->kw_c99_or_c11 && !allow_c99)
+		return false;
+	return true;
+}
+
 /*
  * All keywords are written to the symbol table. This saves us looking
  * in an extra table for each name we found.
@@ -425,12 +448,7 @@ initscan(void)
 
 	end = keywords + sizeof(keywords) / sizeof(keywords[0]);
 	for (kw = keywords; kw != end; kw++) {
-		if ((kw->kw_c90 || kw->kw_c99) && !allow_c90)
-			continue;
-		/* FIXME: C99 and GCC are independent. */
-		if (kw->kw_c99 && !(allow_c99 || allow_gcc))
-			continue;
-		if (kw->kw_gcc && !allow_gcc)
+		if (!is_keyword_known(kw))
 			continue;
 		if (kw->kw_plain)
 			add_keyword(kw, false, false);
