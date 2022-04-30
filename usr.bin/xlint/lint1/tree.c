@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.437 2022/04/30 19:18:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.438 2022/04/30 21:38:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.437 2022/04/30 19:18:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.438 2022/04/30 21:38:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -256,7 +256,7 @@ build_name_call(sym_t *sym)
 		warning(215, sym->s_name);
 	}
 
-	/* XXX if tflag is set, the symbol should be exported to level 0 */
+	/* XXX if !allow_c90, the symbol should be exported to level 0 */
 	sym->s_type = block_derive_type(sym->s_type, FUNC);
 }
 
@@ -452,7 +452,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 * to a struct/union, but the right operand is not member of it.
 	 */
 	if (str != NULL) {
-		if (eq && tflag) {
+		if (eq && !allow_c90) {
 			/* illegal member use: %s */
 			warning(102, msym->s_name);
 		} else {
@@ -468,7 +468,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 */
 	if (eq) {
 		if (op == POINT) {
-			if (tflag) {
+			if (!allow_c90) {
 				/* left operand of '.' must be struct ... */
 				warning(103, type_name(tn->tn_type));
 			} else {
@@ -476,7 +476,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 				error(103, type_name(tn->tn_type));
 			}
 		} else {
-			if (tflag && tn->tn_type->t_tspec == PTR) {
+			if (!allow_c90 && tn->tn_type->t_tspec == PTR) {
 				/* left operand of '->' must be pointer ... */
 				warning(104, type_name(tn->tn_type));
 			} else {
@@ -485,7 +485,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 			}
 		}
 	} else {
-		if (tflag) {
+		if (!allow_c90) {
 			/* non-unique member requires struct/union %s */
 			error(105, op == POINT ? "object" : "pointer");
 		} else {
@@ -581,7 +581,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	}
 
 	/* Make sure both operands are of the same type */
-	if (mp->m_balance_operands || (tflag && (op == SHL || op == SHR)))
+	if (mp->m_balance_operands || (!allow_c90 && (op == SHL || op == SHR)))
 		balance(op, &ln, &rn);
 
 	/*
@@ -790,8 +790,8 @@ typeok_point(const tnode_t *ln, const type_t *ltp, tspec_t lt)
 {
 	if (lt == FUNC || lt == VOID || ltp->t_bitfield ||
 	    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue)) {
-		/* Without tflag we got already an error */
-		if (tflag)
+		/* With allow_c90 we already got an error */
+		if (!allow_c90)
 			/* unacceptable operand of '%s' */
 			error(111, op_name(POINT));
 		return false;
@@ -802,11 +802,17 @@ typeok_point(const tnode_t *ln, const type_t *ltp, tspec_t lt)
 static bool
 typeok_arrow(tspec_t lt)
 {
-	if (lt == PTR || (tflag && is_integer(lt)))
+	/*
+	 * C1978 Appendix A 14.1 says: <quote>In fact, any lvalue is allowed
+	 * before '.', and that lvalue is then assumed to have the form of
+	 * the structure of which the name of the right is a member. [...]
+	 * Such constructions are non-portable.</quote>
+	 */
+	if (lt == PTR || (!allow_c90 && is_integer(lt)))
 		return true;
 
-	/* Without tflag we got already an error */
-	if (tflag)
+	/* With allow_c90 we already got an error */
+	if (!allow_c90)
 		/* unacceptable operand of '%s' */
 		error(111, op_name(ARROW));
 	return false;
@@ -826,7 +832,7 @@ typeok_incdec(op_t op, const tnode_t *tn, const type_t *tp)
 		error(114, "", op_name(op));
 		return false;
 	} else if (tp->t_const) {
-		if (!tflag)
+		if (allow_c90)
 			/* %soperand of '%s' must be modifiable lvalue */
 			warning(115, "", op_name(op));
 	}
@@ -1141,7 +1147,7 @@ typeok_assign(op_t op, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 		return false;
 	} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
 				    has_constant_member(ltp))) {
-		if (!tflag)
+		if (allow_c90)
 			/* %soperand of '%s' must be modifiable lvalue */
 			warning(115, "left ", op_name(op));
 	}
@@ -1255,7 +1261,8 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case SHLASS:
 		goto assign;
 	case SHRASS:
-		if (pflag && !is_uinteger(lt) && !(tflag && is_uinteger(rt))) {
+		if (pflag && !is_uinteger(lt) &&
+		    !(!allow_c90 && is_uinteger(rt))) {
 			/* bitwise '%s' on signed value possibly nonportable */
 			warning(117, mp->m_name);
 		}
@@ -1516,7 +1523,7 @@ check_assign_void_pointer_compat(op_t op, int arg,
 		return false;
 
 	/* compatible pointer types (qualifiers ignored) */
-	if (!tflag &&
+	if (allow_c90 &&
 	    ((!lstp->t_const && rstp->t_const) ||
 	     (!lstp->t_volatile && rstp->t_volatile))) {
 		/* left side has not all qualifiers of right */
@@ -1539,7 +1546,7 @@ check_assign_void_pointer_compat(op_t op, int arg,
 		}
 	}
 
-	if (!tflag)
+	if (allow_c90)
 		check_unconst_function(lstp, rn);
 
 	return true;
@@ -1896,7 +1903,7 @@ new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
  * Performs the "integer promotions" (C99 6.3.1.1p2), which convert small
  * integer types to either int or unsigned int.
  *
- * If tflag is set or the operand is a function argument with no type
+ * If allow_c90 is unset or the operand is a function argument with no type
  * information (no prototype or variable # of args), converts float to double.
  */
 tnode_t *
@@ -1911,7 +1918,7 @@ promote(op_t op, bool farg, tnode_t *tn)
 	if (!is_arithmetic(t))
 		return tn;
 
-	if (!tflag) {
+	if (allow_c90) {
 		/*
 		 * C99 6.3.1.1p2 requires for types with lower rank than int
 		 * that "If an int can represent all the values of the
@@ -1996,7 +2003,7 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	if (!is_arithmetic(lt) || !is_arithmetic(rt))
 		return;
 
-	if (!tflag) {
+	if (allow_c90) {
 		if (lt == rt) {
 			t = lt;
 		} else if (lt == LCOMPLEX || rt == LCOMPLEX) {
@@ -2803,7 +2810,7 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	if (op == POINT) {
 		ln = build_address(sys, ln, true);
 	} else if (ln->tn_type->t_tspec != PTR) {
-		lint_assert(tflag);
+		lint_assert(!allow_c90);
 		lint_assert(is_integer(ln->tn_type->t_tspec));
 		ln = convert(NOOP, 0, expr_derive_type(gettyp(VOID), PTR), ln);
 	}
@@ -2901,7 +2908,7 @@ build_address(bool sys, tnode_t *tn, bool noign)
 	tspec_t	t;
 
 	if (!noign && ((t = tn->tn_type->t_tspec) == ARRAY || t == FUNC)) {
-		if (tflag)
+		if (!allow_c90)
 			/* '&' before array or function: ignored */
 			warning(127);
 		return tn;

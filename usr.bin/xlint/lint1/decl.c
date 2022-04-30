@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.278 2022/04/16 19:18:17 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.279 2022/04/30 21:38:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.278 2022/04/16 19:18:17 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.279 2022/04/30 21:38:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -328,7 +328,7 @@ add_type(type_t *tp)
 		dcs->d_rank_mod = NOTSPEC;
 		if (!quadflg)
 			/* %s does not support 'long long' */
-			c99ism(265, tflag ? "traditional C" : "C90");
+			c99ism(265, allow_c90 ? "C90" : "traditional C");
 	}
 
 	if (dcs->d_type != NULL && dcs->d_type->t_typedef) {
@@ -410,7 +410,7 @@ tdeferr(type_t *td, tspec_t t)
 	if ((t == SIGNED || t == UNSIGN) &&
 	    (t2 == CHAR || t2 == SHORT || t2 == INT ||
 	     t2 == LONG || t2 == QUAD)) {
-		if (!tflag)
+		if (allow_c90)
 			/* modifying typedef with '%s'; only qualifiers... */
 			warning(5, tspec_name(t));
 		td = block_dup_type(gettyp(merge_signedness(t2, t)));
@@ -766,7 +766,7 @@ dcs_merge_declaration_specifiers(void)
 	if (l == LONG && t == FLOAT) {
 		l = NOTSPEC;
 		t = DOUBLE;
-		if (!tflag)
+		if (allow_c90)
 			/* use 'double' instead of 'long float' */
 			warning(6);
 	}
@@ -774,7 +774,7 @@ dcs_merge_declaration_specifiers(void)
 		l = NOTSPEC;
 		t = LDOUBLE;
 	}
-	if (t == LDOUBLE && tflag) {
+	if (t == LDOUBLE && !allow_c90) {
 		/* 'long double' is illegal in traditional C */
 		warning(266);
 	}
@@ -974,7 +974,7 @@ check_type(sym_t *sym)
 				}
 				return;
 			} else if (tp->t_const || tp->t_volatile) {
-				if (sflag) {	/* XXX or better !tflag ? */
+				if (sflag) {	/* XXX or better allow_c90? */
 					/* function cannot return const... */
 					warning(228);
 				}
@@ -1414,7 +1414,7 @@ add_function(sym_t *decl, sym_t *args)
 #endif
 
 	if (dcs->d_proto) {
-		if (tflag)
+		if (!allow_c90)
 			/* function prototypes are illegal in traditional C */
 			warning(270);
 		args = new_style_function(args);
@@ -1699,7 +1699,7 @@ mktag(sym_t *tag, tspec_t kind, bool decl, bool semi)
 			/* a new tag, no empty declaration */
 			dcs->d_enclosing->d_nonempty_decl = true;
 			if (scl == ENUM_TAG && !decl) {
-				if (!tflag && (sflag || pflag))
+				if (allow_c90 && (sflag || pflag))
 					/* forward reference to enum type */
 					warning(42);
 			}
@@ -1752,7 +1752,7 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 	if (tag->s_block_level < block_level) {
 		if (semi) {
 			/* "struct a;" */
-			if (!tflag) {
+			if (allow_c90) {
 				if (!sflag)
 					/* declaration introduces new ... */
 					warning(44, storage_class_name(scl),
@@ -2181,10 +2181,10 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 static bool
 qualifiers_correspond(const type_t *tp1, const type_t *tp2, bool ignqual)
 {
-	if (tp1->t_const != tp2->t_const && !ignqual && !tflag)
+	if (tp1->t_const != tp2->t_const && !ignqual && allow_c90)
 		return false;
 
-	if (tp1->t_volatile != tp2->t_volatile && !ignqual && !tflag)
+	if (tp1->t_volatile != tp2->t_volatile && !ignqual && allow_c90)
 		return false;
 
 	return true;
@@ -2227,12 +2227,12 @@ eqtype(const type_t *tp1, const type_t *tp2,
 			} else if (t == CHAR || t == SCHAR) {
 				t = INT;
 			} else if (t == UCHAR) {
-				t = tflag ? UINT : INT;
+				t = allow_c90 ? INT : UINT;
 			} else if (t == SHORT) {
 				t = INT;
 			} else if (t == USHORT) {
 				/* CONSTCOND */
-				t = TARG_INT_MAX < TARG_USHRT_MAX || tflag
+				t = TARG_INT_MAX < TARG_USHRT_MAX || !allow_c90
 				    ? UINT : INT;
 			}
 		}
@@ -2255,7 +2255,7 @@ eqtype(const type_t *tp1, const type_t *tp2,
 		}
 
 		/* don't check prototypes for traditional */
-		if (t == FUNC && !tflag) {
+		if (t == FUNC && allow_c90) {
 			if (tp1->t_proto && tp2->t_proto) {
 				if (!eqargs(tp1, tp2, dowarn))
 					return false;
@@ -2468,12 +2468,12 @@ declare_argument(sym_t *sym, bool initflg)
 	if ((t = sym->s_type->t_tspec) == ARRAY) {
 		sym->s_type = block_derive_type(sym->s_type->t_subt, PTR);
 	} else if (t == FUNC) {
-		if (tflag)
+		if (!allow_c90)
 			/* a function is declared as an argument: %s */
 			warning(50, sym->s_name);
 		sym->s_type = block_derive_type(sym->s_type, PTR);
 	} else if (t == FLOAT) {
-		if (tflag)
+		if (!allow_c90)
 			sym->s_type = gettyp(DOUBLE);
 	}
 
@@ -2704,10 +2704,10 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
 		/* no hflag, because it's illegal! */
 		if (rsym->s_arg) {
 			/*
-			 * if !tflag, a "redeclaration of %s" error
+			 * if allow_c90, a "redeclaration of %s" error
 			 * is produced below
 			 */
-			if (tflag) {
+			if (!allow_c90) {
 				if (hflag)
 					/* declaration hides parameter: %s */
 					warning(91, dsym->s_name);
@@ -2758,7 +2758,7 @@ declare_local(sym_t *dsym, bool initflg)
 	 * functions may be declared inline at local scope, although
 	 * this has no effect for a later definition of the same
 	 * function.
-	 * XXX it should have an effect if tflag is set. this would
+	 * XXX it should have an effect if !allow_c90 is set. this would
 	 * also be the way gcc behaves.
 	 */
 	if (dcs->d_inline) {
@@ -2983,7 +2983,7 @@ check_size(sym_t *dsym)
 
 	if (length_in_bits(dsym->s_type, dsym->s_name) == 0 &&
 	    dsym->s_type->t_tspec == ARRAY && dsym->s_type->t_dim == 0) {
-		if (tflag) {
+		if (!allow_c90) {
 			/* empty array declaration: %s */
 			warning(190, dsym->s_name);
 		} else {
@@ -3261,7 +3261,7 @@ check_static_global_variable(const sym_t *sym)
 	if (!sym->s_used)
 		check_unused_static_global_variable(sym);
 
-	if (!tflag && sym->s_def == TDEF && sym->s_type->t_const) {
+	if (allow_c90 && sym->s_def == TDEF && sym->s_type->t_const) {
 		/* const object %s should have initializer */
 		warning_at(227, &sym->s_def_pos, sym->s_name);
 	}
@@ -3311,7 +3311,7 @@ check_global_variable_size(const sym_t *sym)
 
 	if (len_in_bits == 0 &&
 	    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
-		if (tflag || (sym->s_scl == EXTERN && !sflag)) {
+		if (!allow_c90 || (sym->s_scl == EXTERN && !sflag)) {
 			/* empty array declaration: %s */
 			warning_at(190, &sym->s_def_pos, sym->s_name);
 		} else {
