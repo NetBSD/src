@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.22 2022/01/31 09:16:09 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.23 2022/04/30 07:07:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.22 2022/01/31 09:16:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.23 2022/04/30 07:07:01 skrll Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_cpuoptions.h"
@@ -223,7 +223,6 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 		    tf->tf_far, va, 0, 0);
 		return;
 	}
-
 
  do_fault:
 	/* faultbail path? */
