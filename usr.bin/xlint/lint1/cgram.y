@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.409 2022/04/30 21:38:03 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.410 2022/04/30 22:31:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.409 2022/04/30 21:38:03 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.410 2022/04/30 22:31:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -372,7 +372,8 @@ static inline void cgram_print(FILE *, int, YYSTYPE);
 
 program:
 	  /* empty */ {
-		if (sflag) {
+		/* TODO: Make this an error in C99 mode as well. */
+		if (!allow_trad && !allow_c99) {
 			/* empty translation unit */
 			error(272);
 		} else if (allow_c90) {
@@ -1482,7 +1483,8 @@ vararg_parameter_type_list:	/* specific to lint */
 		$$ = $1;
 	  }
 	| T_ELLIPSIS {
-		if (sflag) {
+		/* TODO: C99 6.7.5 makes this an error as well. */
+		if (!allow_trad && !allow_c99) {
 			/* ANSI C requires formal parameter before '...' */
 			error(84);
 		} else if (allow_c90) {
@@ -1919,7 +1921,11 @@ external_declaration:		/* C99 6.9 */
 	  }
 	| asm_statement		/* GCC extension */
 	| T_SEMI {		/* GCC extension */
-		if (sflag) {
+		/*
+		 * TODO: Only allow this in GCC mode, not in plain C99.
+		 * This is one of the top 10 warnings in the NetBSD build.
+		 */
+		if (!allow_trad && !allow_c99) {
 			/* empty declaration */
 			error(0);
 		} else if (allow_c90) {
@@ -1940,7 +1946,8 @@ external_declaration:		/* C99 6.9 */
  */
 top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 	  begin_type end_type notype_init_declarators T_SEMI {
-		if (sflag) {
+		/* TODO: Make this an error in C99 mode as well. */
+		if (!allow_trad && !allow_c99) {
 			/* old style declaration; add 'int' */
 			error(1);
 		} else if (allow_c90) {

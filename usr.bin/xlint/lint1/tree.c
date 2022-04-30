@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.438 2022/04/30 21:38:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.439 2022/04/30 22:31:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.438 2022/04/30 21:38:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.439 2022/04/30 22:31:23 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1070,7 +1070,8 @@ typeok_colon_pointer(const mod_t *mp, const type_t *ltp, const type_t *rtp)
 
 	if ((lst == VOID && rst == FUNC) || (lst == FUNC && rst == VOID)) {
 		/* (void *)0 handled above */
-		if (sflag)
+		/* TODO: C99 behaves like C90 here. */
+		if (!allow_trad && !allow_c99)
 			/* ANSI C forbids conversion of %s to %s, op %s */
 			warning(305, "function pointer", "'void *'",
 			    mp->m_name);
@@ -1343,7 +1344,9 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 	rst = (rtp = rn->tn_type)->t_subt->t_tspec;
 
 	if (lst == VOID || rst == VOID) {
-		if (sflag && (lst == FUNC || rst == FUNC)) {
+		/* TODO: C99 behaves like C90 here. */
+		if ((!allow_trad && !allow_c99) &&
+		    (lst == FUNC || rst == FUNC)) {
 			/* (void *)0 already handled in typeok() */
 			*(lst == FUNC ? &lsts : &rsts) = "function pointer";
 			*(lst == VOID ? &lsts : &rsts) = "'void *'";
@@ -1359,7 +1362,8 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 	}
 
 	if (lst == FUNC && rst == FUNC) {
-		if (sflag && op != EQ && op != NE)
+		/* TODO: C99 behaves like C90 here, see C99 6.5.8p2. */
+		if ((!allow_trad && !allow_c99) && op != EQ && op != NE)
 			/* ANSI C forbids ordered comparisons of ... */
 			warning(125);
 	}
@@ -1486,7 +1490,8 @@ check_assign_void_pointer(op_t op, int arg,
 		return;
 	/* two pointers, at least one pointer to void */
 
-	if (!(sflag && (lst == FUNC || rst == FUNC)))
+	/* TODO: C99 behaves like C90 here. */
+	if (!((!allow_trad && !allow_c99) && (lst == FUNC || rst == FUNC)))
 		return;
 	/* comb. of ptr to func and ptr to void */
 
@@ -2335,7 +2340,8 @@ check_pointer_conversion(tnode_t *tn, type_t *ntp)
 	ost = ostp->t_tspec;
 
 	if (nst == VOID || ost == VOID) {
-		if (sflag && (nst == FUNC || ost == FUNC)) {
+		/* TODO: C99 behaves like C90 here. */
+		if ((!allow_trad && !allow_c99) && (nst == FUNC || ost == FUNC)) {
 			/* null pointers are already handled in convert() */
 			*(nst == FUNC ? &nts : &ots) = "function pointer";
 			*(nst == VOID ? &nts : &ots) = "'void *'";

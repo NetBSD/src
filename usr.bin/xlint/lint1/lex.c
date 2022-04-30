@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.127 2022/04/30 21:38:03 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.128 2022/04/30 22:31:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.127 2022/04/30 21:38:03 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.128 2022/04/30 22:31:23 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -629,10 +629,12 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		if (typ == UINT || typ == ULONG) {
 			if (!allow_c90) {
 				typ = LONG;
-			} else if (!sflag) {
+			} else if (allow_trad || allow_c99) {
 				/*
 				 * Remember that the constant is unsigned
-				 * only in ANSI C
+				 * only in ANSI C.
+				 *
+				 * TODO: C99 behaves like C90 here.
 				 */
 				ansiu = true;
 			}
@@ -650,7 +652,8 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	case LONG:
 		if (uq > TARG_LONG_MAX && allow_c90) {
 			typ = ULONG;
-			if (!sflag)
+			/* TODO: C99 behaves like C90 here. */
+			if (allow_trad || allow_c99)
 				ansiu = true;
 			if (uq > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
@@ -667,7 +670,8 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	case QUAD:
 		if (uq > TARG_QUAD_MAX && allow_c90) {
 			typ = UQUAD;
-			if (!sflag)
+			/* TODO: C99 behaves like C90 here. */
+			if (allow_trad || allow_c99)
 				ansiu = true;
 		}
 		break;
