@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.436 2022/04/19 23:16:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.437 2022/04/30 19:18:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.436 2022/04/19 23:16:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.437 2022/04/30 19:18:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -179,7 +179,7 @@ fallback_symbol(sym_t *sym)
 	}
 
 	if (block_level > 0 && strcmp(sym->s_name, "__func__") == 0) {
-		if (!Sflag)
+		if (!allow_c99)
 			/* __func__ is a C99 feature */
 			warning(317);
 		sym->s_type = block_derive_type(gettyp(CHAR), PTR);
@@ -248,10 +248,10 @@ build_name_call(sym_t *sym)
 		if (allow_gcc && is_gcc_bool_builtin(sym->s_name))
 			sym->s_type = gettyp(BOOL);
 
-	} else if (Sflag) {
+	} else if (allow_c99) {
 		/* function '%s' implicitly declared to return int */
 		error(215, sym->s_name);
-	} else if (sflag) {
+	} else if (!allow_trad) {
 		/* function '%s' implicitly declared to return int */
 		warning(215, sym->s_name);
 	}
@@ -978,7 +978,7 @@ typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
 		 * that there is really a difference between
 		 * ANSI C and traditional C.
 		 */
-		if (hflag && !Sflag)
+		if (hflag && !allow_c99)
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
 	}
@@ -2220,7 +2220,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	if (op == CVT)
 		return;
 
-	if (Sflag && nt == BOOL)
+	if (allow_c99 && nt == BOOL)
 		return;		/* See C99 6.3.1.2 */
 
 	if (Pflag && pflag && aflag > 0 &&

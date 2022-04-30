@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.132 2022/04/09 23:41:22 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.133 2022/04/30 19:18:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.132 2022/04/09 23:41:22 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.133 2022/04/30 19:18:48 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -359,7 +359,7 @@ check_missing_return_value(void)
 		return;
 
 	/* C99 5.1.2.2.3 "Program termination" p1 */
-	if (Sflag && strcmp(funcsym->s_name, "main") == 0)
+	if (allow_c99 && strcmp(funcsym->s_name, "main") == 0)
 		return;
 
 	/* function %s falls off bottom without returning value */
