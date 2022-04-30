@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: gpio,v 1.1 2009/07/25 16:20:10 mbalmer Exp $
+# $NetBSD: gpio,v 1.2 2022/04/30 13:48:09 brad Exp $
 #
 
 # PROVIDE: gpio
@@ -18,10 +18,21 @@ gpio_start()
 	if [ -f /etc/gpio.conf ]; then
 		echo "Configuring GPIO."
 		cat /etc/gpio.conf |
+		collapse_backslash_newline |
 		while read -r args; do
-			args=${args%%#*}		# strip comments
-			test -z "$args" && continue
-			/usr/sbin/gpioctl -q $args
+			case "$args" in
+			"!"*)
+				# Run arbitrary command in a subshell.
+				( eval "${args#*!}" )
+				;;
+			*)
+			        (
+				    args=${args%%#*}		# strip comments
+				    test -z "$args" && continue
+				    /usr/sbin/gpioctl -q $args
+				)
+				;;
+			esac
 		done
 	fi
 }
