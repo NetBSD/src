@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.156 2022/04/16 19:18:17 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.157 2022/04/30 18:51:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -69,7 +69,6 @@ extern	bool	allow_gcc;
 #define tflag	(allow_trad && !allow_c90)
 #define sflag	(!allow_trad && !allow_c99)
 #define Sflag	allow_c99
-#define c11flag	allow_c11
 
 extern	void	norecover(void);
 
