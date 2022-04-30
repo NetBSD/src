@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.163 2022/04/30 18:51:00 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.164 2022/04/30 22:31:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.163 2022/04/30 18:51:00 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.164 2022/04/30 22:31:23 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -634,9 +634,12 @@ void
 (c99ism)(int msgid, ...)
 {
 	va_list	ap;
-	int severity = (!allow_c99 && !allow_gcc ? 1 : 0) + (sflag ? 1 : 0);
+
+	if (allow_c99)
+		return;
 
 	va_start(ap, msgid);
+	int severity = (!allow_gcc ? 1 : 0) + (!allow_trad ? 1 : 0);
 	if (severity == 2)
 		verror_at(msgid, &curr_pos, ap);
 	if (severity == 1)
@@ -661,7 +664,8 @@ bool
 (gnuism)(int msgid, ...)
 {
 	va_list	ap;
-	int severity = (!allow_gcc ? 1 : 0) + (sflag ? 1 : 0);
+	int severity = (!allow_gcc ? 1 : 0) +
+	    (!allow_trad && !allow_c99 ? 1 : 0);
 
 	va_start(ap, msgid);
 	if (severity == 2)

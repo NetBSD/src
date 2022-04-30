@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.159 2022/04/30 21:38:03 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.160 2022/04/30 22:31:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -55,18 +55,6 @@ extern	bool	allow_c90;
 extern	bool	allow_c99;
 extern	bool	allow_c11;
 extern	bool	allow_gcc;
-
-/*
- * TODO: Replace the old flags with the new expressions, checking in each
- * case whether the specific condition still makes sense.  When lint was
- * invented in 1995, it did not know about C99 mode, which makes all
- * conditions involving sflag suspicious.
- *
- * In 1995, gflag meant "C90 plus GCC extensions".  That definition needs to
- * be extended to C99 and later as well to properly match "C99 + GCC" or "C11
- * + GCC", in all calls to gnuism.
- */
-#define sflag	(!allow_trad && !allow_c99)
 
 extern	void	norecover(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.134 2022/04/30 21:38:03 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.135 2022/04/30 22:31:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.134 2022/04/30 21:38:03 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.135 2022/04/30 22:31:23 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -307,7 +307,8 @@ funcdef(sym_t *fsym)
 			 * be printed in check_func_lint_directives().
 			 */
 			if (dowarn && !fsym->s_osdef) {
-				if (sflag)
+				/* TODO: error in C99 mode as well? */
+				if (!allow_trad && !allow_c99)
 					/* redeclaration of %s */
 					error(27, fsym->s_name);
 				else
@@ -339,7 +340,9 @@ funcdef(sym_t *fsym)
 	}
 
 	if (fsym->s_osdef && !fsym->s_type->t_proto) {
-		if (sflag && hflag && strcmp(fsym->s_name, "main") != 0)
+		/* TODO: Make this an error in C99 mode as well. */
+		if ((!allow_trad && !allow_c99) && hflag &&
+		    strcmp(fsym->s_name, "main") != 0)
 			/* function definition is not a prototype */
 			warning(286);
 	}
