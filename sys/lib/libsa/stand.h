@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.86 2022/04/29 07:42:07 rin Exp $	*/
+/*	$NetBSD: stand.h,v 1.87 2022/04/30 09:24:05 rin Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -71,10 +71,6 @@
 #include <sys/stdarg.h>
 #include "saioctl.h"
 #include "saerrno.h"
-
-#ifndef NULL
-#define	NULL	0
-#endif
 
 #ifdef LIBSA_RENAME_PRINTF
 #define getchar		libsa_getchar
