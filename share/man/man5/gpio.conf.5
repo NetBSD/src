@@ -1,4 +1,4 @@
-.\"        $NetBSD: gpio.conf.5,v 1.2 2009/08/01 13:14:40 mbalmer Exp $
+.\"        $NetBSD: gpio.conf.5,v 1.3 2022/04/30 13:48:09 brad Exp $
 .\"
 .\" Copyright (c) 2009 Marc Balmer <marc@msys.ch>
 .\" All rights reserved.
@@ -40,6 +40,9 @@ and is intended for configuring GPIO pins.
 Lines starting with a hash
 .Pq Sq #
 and empty lines are ignored.
+If a line starts with
+.Sq \&! ,
+the rest of line will get evaluated as shell script fragment.
 All other lines are passed to
 .Xr gpioctl 8 .
 .Sh FILES
