@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.13 2019/02/04 08:21:12 mrg Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.14 2022/04/30 13:20:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.13 2019/02/04 08:21:12 mrg Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.14 2022/04/30 13:20:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -246,6 +246,7 @@ npfd_log_pcap_reopen(npfd_log_t *ctx)
 {
 	char errbuf[PCAP_ERRBUF_SIZE];
 	int snaplen = ctx->snaplen;
+	int rc;
 
 	if (ctx->pcap != NULL)
 		pcap_close(ctx->pcap);
@@ -277,9 +278,14 @@ npfd_log_pcap_reopen(npfd_log_t *ctx)
 		errx(EXIT_FAILURE, "pcap_set_timeout failed: %s",
 		    pcap_geterr(ctx->pcap));
 
-	if (pcap_activate(ctx->pcap) == -1)
-		errx(EXIT_FAILURE, "pcap_activate failed: %s",
-		    pcap_geterr(ctx->pcap));
+	if ((rc = pcap_activate(ctx->pcap)) != 0) {
+		const char *msg = pcap_geterr(ctx->pcap);
+		if (rc > 0) {
+			warnx("pcap_activate warning: %s", msg);
+		} else {
+			errx(EXIT_FAILURE, "pcap_activate failed: %s", msg);
+		}
+	}
 
 	npfd_log_setfilter(ctx);
 	return true;
