@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.233 2022/04/02 22:38:45 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.234 2022/04/30 21:38:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.233 2022/04/02 22:38:45 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.234 2022/04/30 21:38:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -262,7 +262,7 @@ static void
 check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 {
 
-	if (tflag &&
+	if (!allow_c90 &&
 	    is_integer(lt) &&
 	    ln->tn_type->t_bitfield &&
 	    !is_integer(rt)) {
@@ -775,10 +775,10 @@ initialization_lbrace(initialization *in)
 		goto done;
 
 	outer_bl = in->in_brace_level;
-	if (tflag && outer_bl == NULL)
+	if (!allow_c90 && outer_bl == NULL)
 		check_trad_no_auto_aggregate(in->in_sym);
 
-	if (tflag && tp->t_tspec == UNION) {
+	if (!allow_c90 && tp->t_tspec == UNION) {
 		/* initialization of union is illegal in traditional C */
 		warning(238);
 	}

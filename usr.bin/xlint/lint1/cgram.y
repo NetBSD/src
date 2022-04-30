@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.408 2022/04/30 19:18:48 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.409 2022/04/30 21:38:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.408 2022/04/30 19:18:48 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.409 2022/04/30 21:38:03 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -375,7 +375,7 @@ program:
 		if (sflag) {
 			/* empty translation unit */
 			error(272);
-		} else if (!tflag) {
+		} else if (allow_c90) {
 			/* empty translation unit */
 			warning(272);
 		}
@@ -405,7 +405,7 @@ identifier:
 string:
 	  T_STRING
 	| string T_STRING {
-		if (tflag) {
+		if (!allow_c90) {
 			/* concatenated strings are illegal in traditional C */
 			warning(219);
 		}
@@ -590,7 +590,7 @@ unary_expression:
 		$$ = build_unary(INDIR, $2, $3);
 	  }
 	| T_ADDITIVE sys cast_expression {
-		if (tflag && $1 == PLUS) {
+		if (!allow_c90 && $1 == PLUS) {
 			/* unary + is illegal in traditional C */
 			warning(100);
 		}
@@ -1485,7 +1485,7 @@ vararg_parameter_type_list:	/* specific to lint */
 		if (sflag) {
 			/* ANSI C requires formal parameter before '...' */
 			error(84);
-		} else if (!tflag) {
+		} else if (allow_c90) {
 			/* ANSI C requires formal parameter before '...' */
 			warning(84);
 		}
@@ -1922,7 +1922,7 @@ external_declaration:		/* C99 6.9 */
 		if (sflag) {
 			/* empty declaration */
 			error(0);
-		} else if (!tflag) {
+		} else if (allow_c90) {
 			/* empty declaration */
 			warning(0);
 		}
@@ -1943,7 +1943,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 		if (sflag) {
 			/* old style declaration; add 'int' */
 			error(1);
-		} else if (!tflag) {
+		} else if (allow_c90) {
 			/* old style declaration; add 'int' */
 			warning(1);
 		}
