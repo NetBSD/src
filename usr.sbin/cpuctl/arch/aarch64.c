@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.20 2022/01/06 18:00:58 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.21 2022/04/30 14:06:10 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.20 2022/01/06 18:00:58 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.21 2022/04/30 14:06:10 ryo Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -91,6 +91,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_THUNDERX81XXRX, "ThunderX CN81XX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX83XXRX, "ThunderX CN83XX", "Cavium", "v8-A" },
 	{ CPU_ID_THUNDERX2RX, "ThunderX2", "Marvell", "v8.1-A" },
+	{ CPU_ID_APPLE_M1_ICESTORM & CPU_PARTMASK, "M1 Icestorm", "Apple", "Apple Silicon" },
+	{ CPU_ID_APPLE_M1_FIRESTORM & CPU_PARTMASK, "M1 Firestorm", "Apple", "Apple Silicon" },
 };
 
 const struct impltab implids[] = {
