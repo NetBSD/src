@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.162 2022/04/16 19:18:17 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.163 2022/04/30 18:51:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.162 2022/04/16 19:18:17 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.163 2022/04/30 18:51:00 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -650,7 +650,7 @@ void
 	va_list	ap;
 
 	/* FIXME: C11 mode has nothing to do with GCC mode. */
-	if (c11flag || allow_gcc)
+	if (allow_c11 || allow_gcc)
 		return;
 	va_start(ap, msgid);
 	verror_at(msgid, &curr_pos, ap);
