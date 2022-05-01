@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.25 2020/09/27 19:36:54 roy Exp $
+.\" $NetBSD: tun.4,v 1.26 2022/05/01 00:25:42 gutteridge Exp $
 .\"
 .\" Copyright (c) 1996-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -228,8 +228,8 @@ mode, where every packet is preceded with a four byte address family.
 .It Dv FIONBIO
 Turn non-blocking I/O for reads off or on, according as the argument
 .Va int Ns 's
-value is or isn't zero
-.Pq Writes are always nonblocking .
+value is or isn't zero.
+.Pq Writes are always non-blocking.
 .It Dv FIOASYNC
 Turn asynchronous I/O for reads
 .Po
@@ -281,8 +281,13 @@ been established so that Duplicate Address Detection, if applicable,
 can be performed.
 If connectivity is lost, the character device should be closed.
 .Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr read 2 ,
+.Xr select 2 ,
+.Xr write 2 ,
 .Xr inet 4 ,
-.Xr intro 4
+.Xr intro 4 ,
+.Xr ifconfig 8
 .Sh HISTORY
 .An -split
 IPv6 support comes mostly from
