@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_reloc.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: libdwarf_reloc.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2010 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_reloc.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_reloc.c 3198 2015-05-14 18:36:19Z emaste ");
+__RCSID("$NetBSD: libdwarf_reloc.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_reloc.c 3198 2015-05-14 18:36:19Z emaste");
 
 #ifndef R_386_32
 #define R_386_32	1

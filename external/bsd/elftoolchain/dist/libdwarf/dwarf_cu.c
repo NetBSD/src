@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_cu.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: dwarf_cu.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_cu.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: dwarf_cu.c 3041 2014-05-18 15:11:03Z kaiwang27 ");
+__RCSID("$NetBSD: dwarf_cu.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: dwarf_cu.c 3041 2014-05-18 15:11:03Z kaiwang27");
 
 int
 dwarf_next_cu_header_c(Dwarf_Debug dbg, Dwarf_Bool is_info,

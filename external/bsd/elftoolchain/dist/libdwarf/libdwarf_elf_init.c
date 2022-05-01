@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_elf_init.c,v 1.4 2016/03/07 14:32:02 hannken Exp $	*/
+/*	$NetBSD: libdwarf_elf_init.c,v 1.5 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_elf_init.c,v 1.4 2016/03/07 14:32:02 hannken Exp $");
-ELFTC_VCSID("Id: libdwarf_elf_init.c 3161 2015-02-15 21:43:36Z emaste ");
+__RCSID("$NetBSD: libdwarf_elf_init.c,v 1.5 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_elf_init.c 3161 2015-02-15 21:43:36Z emaste");
 
 static const char *debug_name[] = {
 	".debug_abbrev",
