@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.142 2021/12/06 17:52:00 abs Exp $
+#	$NetBSD: bsd.x11.mk,v 1.143 2022/05/01 23:02:32 uwe Exp $
 
 .include <bsd.init.mk>
 
@@ -432,6 +432,7 @@ _X11MANTRANSFORMS_BOTH=\
 	XCONFIGFILE		xorg.conf \
 	xconfigfile		xorg.conf \
 	XCONFIGFILEMAN		'xorg.conf(5)' \
+	xlocaledir		${X11LIBDIR}/locale \
 	xorgversion		${XORGVERSION:C/ /%/gW} \
 	XSERVERNAME		Xorg \
 	xservername		Xorg
