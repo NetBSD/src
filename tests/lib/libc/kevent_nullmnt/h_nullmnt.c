@@ -7,7 +7,7 @@
 #include <sys/time.h>
 
 /*
- * External set-up code is expected to do the equivalent of
+ * External test set-up code is expected to do the equivalent of
  *	cd $TOPDIR
  *	mkdir realdir
  *	mkdir nulldir
@@ -29,7 +29,7 @@
 
 int main(int argc, char **argv)
 {
-	int realfile, nullfile;
+	int watch_file, write_file;
 	int kq, nev, rsize;
 	struct timespec timeout;
 	struct kevent eventlist;
@@ -39,14 +39,14 @@ int main(int argc, char **argv)
 	if (argc <= 2)
 		errx(EXIT_FAILURE, "insufficient args %d", argc);
 
-	realfile = open(argv[1], O_RDONLY);
-	if (realfile == -1)
-		err(EXIT_FAILURE, "failed to open realfile %s",
+	watch_file = open(argv[1], O_RDONLY);
+	if (watch_file == -1)
+		err(EXIT_FAILURE, "failed to open watch_file %s",
 		    argv[1]);
 
-	nullfile = open(argv[2], O_WRONLY, O_APPEND);
-	if (nullfile == -1)
-		err(EXIT_FAILURE, "failed to open nullfile %s",
+	write_file = open(argv[2], O_WRONLY, O_APPEND);
+	if (write_file == -1)
+		err(EXIT_FAILURE, "failed to open write_file %s",
 		    argv[2]);
 
 	if ((kq = kqueue()) == -1)
@@ -55,18 +55,18 @@ int main(int argc, char **argv)
 	timeout.tv_sec = 5;
 	timeout.tv_nsec = 0;
 
-	EV_SET(&eventlist, realfile,
+	EV_SET(&eventlist, watch_file,
 	    EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
 	    NOTE_WRITE | NOTE_EXTEND, 0, 0);
 	if (kevent(kq, &eventlist, 1, NULL, 0, NULL) == -1)
 		err(EXIT_FAILURE, "Failed to set eventlist for fd %d",
-		    realfile);
+		    watch_file);
 
-	rsize = read(realfile, &inbuf, sizeof(inbuf));
+	rsize = read(watch_file, &inbuf, sizeof(inbuf));
 	if (rsize)
 		errx(EXIT_FAILURE, "Ooops we got %d bytes of data!\n", rsize);
 
-	write(nullfile, &outbuf, sizeof(outbuf) - 1);
+	write(write_file, &outbuf, sizeof(outbuf) - 1);
 
 	nev = kevent(kq, NULL, 0, &eventlist, 1, &timeout);
 	if (nev == -1)
