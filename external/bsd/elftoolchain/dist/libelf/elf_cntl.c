@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_cntl.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
+/*	$NetBSD: elf_cntl.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -30,8 +30,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_cntl.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
-ELFTC_VCSID("Id: elf_cntl.c 2225 2011-11-26 18:55:54Z jkoshy ");
+__RCSID("$NetBSD: elf_cntl.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
+ELFTC_VCSID("Id: elf_cntl.c 2225 2011-11-26 18:55:54Z jkoshy");
 
 int
 elf_cntl(Elf *e, Elf_Cmd c)
