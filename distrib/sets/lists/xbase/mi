@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.166 2021/04/27 06:50:27 mrg Exp $
+# $NetBSD: mi,v 1.167 2022/05/01 22:54:59 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1409,6 +1409,8 @@
 ./usr/X11R7/man/cat4/evbarm				base-x11-root	xorg
 ./usr/X11R7/man/cat4/x86					base-x11-root	xorg
 ./usr/X11R7/man/cat5					base-x11-root	xorg
+./usr/X11R7/man/cat5/Compose.0				xbase-x11-catman	.cat,xorg
+./usr/X11R7/man/cat5/XCompose.0				xbase-x11-catman	.cat,xorg
 ./usr/X11R7/man/cat5/fonts-conf.0			xbase-x11-catman	.cat,xorg
 ./usr/X11R7/man/cat5/fonts.conf.0			xbase-x11-catman	.cat,xorg
 ./usr/X11R7/man/cat7					base-x11-root	xorg
@@ -1557,6 +1559,8 @@
 ./usr/X11R7/man/html4/evbarm				base-x11-root	xorg
 ./usr/X11R7/man/html4/x86					base-x11-root	xorg
 ./usr/X11R7/man/html5					base-x11-root	xorg
+./usr/X11R7/man/html5/Compose.html			xbase-x11-htmlman	html,xorg
+./usr/X11R7/man/html5/XCompose.html			xbase-x11-htmlman	html,xorg
 ./usr/X11R7/man/html5/fonts-conf.html			xbase-x11-htmlman	html,xorg
 ./usr/X11R7/man/html5/fonts.conf.html			xbase-x11-htmlman	html,xorg
 ./usr/X11R7/man/html7					base-x11-root	xorg
@@ -1706,6 +1710,8 @@
 ./usr/X11R7/man/man4/evbarm				base-x11-root	xorg
 ./usr/X11R7/man/man4/x86					base-x11-root	xorg
 ./usr/X11R7/man/man5					base-x11-root	xorg
+./usr/X11R7/man/man5/Compose.5				xbase-x11-man	.man,xorg
+./usr/X11R7/man/man5/XCompose.5				xbase-x11-man	.man,xorg
 ./usr/X11R7/man/man5/fonts-conf.5			xbase-x11-man	.man,xorg
 ./usr/X11R7/man/man5/fonts.conf.5			xbase-x11-man	.man,xorg
 ./usr/X11R7/man/man7					base-x11-root	xorg
