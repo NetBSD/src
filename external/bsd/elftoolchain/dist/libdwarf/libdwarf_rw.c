@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_rw.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: libdwarf_rw.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_rw.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_rw.c 3286 2015-12-31 16:45:46Z emaste ");
+__RCSID("$NetBSD: libdwarf_rw.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_rw.c 3286 2015-12-31 16:45:46Z emaste");
 
 uint64_t
 _dwarf_read_lsb(uint8_t *data, uint64_t *offsetp, int bytes_to_read)

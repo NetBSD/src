@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_loclist.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: dwarf_loclist.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009,2014 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_loclist.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: dwarf_loclist.c 3066 2014-06-06 19:36:06Z kaiwang27 ");
+__RCSID("$NetBSD: dwarf_loclist.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: dwarf_loclist.c 3066 2014-06-06 19:36:06Z kaiwang27");
 
 static int
 copy_locdesc(Dwarf_Debug dbg, Dwarf_Locdesc *dst, Dwarf_Locdesc *src,
