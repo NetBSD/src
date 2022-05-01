@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.112 2021/10/12 14:15:34 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.113 2022/05/01 04:24:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.112 2021/10/12 14:15:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.113 2022/05/01 04:24:47 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2004,6 +2004,13 @@ const struct puc_device_description puc_devices[] = {
 	/* Intel 100 Series KT */
 	{   "Intel 100 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+	{   "Intel 100 Series LP KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_KT, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
