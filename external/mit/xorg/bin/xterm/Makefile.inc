@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2015/12/25 18:50:48 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2022/05/01 23:24:34 uwe Exp $
 
 VERSION_H=	${X11SRCDIR.xterm}/version.h
 XTERM_DATE=	${:!${TOOL_GREP} XTERM_DATE ${VERSION_H}!:C/^[^0-9]*//}
@@ -9,6 +9,7 @@ X11EXTRAMANDEFS+= \
 	-e 's,__app_date__,${XTERM_DATE},g' \
 	-e 's,__default_termname__,xterm,g' \
 	-e 's,__default_termid__,420,g' \
+	-e 's,__double_buffer__,False,g' \
 	-e 's,__alt_sends_esc__,False,g' \
 	-e 's,__meta_sends_esc__,False,g' \
 	-e 's,__backarrow_is_bs__,True,g' \
