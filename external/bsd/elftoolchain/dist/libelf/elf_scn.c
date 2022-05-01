@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_scn.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
+/*	$NetBSD: elf_scn.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
@@ -43,8 +43,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_scn.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
-ELFTC_VCSID("Id: elf_scn.c 3177 2015-03-30 18:19:41Z emaste ");
+__RCSID("$NetBSD: elf_scn.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
+ELFTC_VCSID("Id: elf_scn.c 3177 2015-03-30 18:19:41Z emaste");
 
 /*
  * Load an ELF section table and create a list of Elf_Scn structures.

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_update.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
+/*	$NetBSD: elf_update.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006-2011 Joseph Koshy
@@ -47,8 +47,8 @@
 #include <sys/mman.h>
 #endif
 
-__RCSID("$NetBSD: elf_update.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
-ELFTC_VCSID("Id: elf_update.c 3190 2015-05-04 15:23:08Z jkoshy ");
+__RCSID("$NetBSD: elf_update.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
+ELFTC_VCSID("Id: elf_update.c 3190 2015-05-04 15:23:08Z jkoshy");
 
 /*
  * Layout strategy:

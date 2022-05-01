@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_open.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
+/*	$NetBSD: libelf_open.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
@@ -45,8 +45,8 @@
 #include <sys/mman.h>
 #endif
 
-__RCSID("$NetBSD: libelf_open.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
-ELFTC_VCSID("Id: libelf_open.c 3007 2014-03-22 08:10:14Z jkoshy ");
+__RCSID("$NetBSD: libelf_open.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
+ELFTC_VCSID("Id: libelf_open.c 3007 2014-03-22 08:10:14Z jkoshy");
 
 #define	_LIBELF_INITSIZE	(64*1024)
 
