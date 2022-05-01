@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2022/05/01 13:45:46 uwe Exp $
+#	$NetBSD: Makefile,v 1.17 2022/05/01 22:55:00 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -81,6 +81,8 @@ MAN=		AllPlanes.3 BlackPixelOfScreen.3 DisplayOfCCC.3 \
 		XrmGetResource.3 XrmInitialize.3 XrmMergeDatabases.3 \
 		XrmPutResource.3 XrmUniqueQuark.3
 # XGetEventData.man
+
+MAN +=		Compose.5
 
 USETBL=		yes
 
@@ -535,6 +537,8 @@ MLINKS += XrmUniqueQuark.3 XrmQuarkToString.3
 MLINKS += XrmUniqueQuark.3 XrmStringToBindingQuarkList.3
 MLINKS += XrmUniqueQuark.3 XrmStringToQuark.3
 MLINKS += XrmUniqueQuark.3 XrmStringToQuarkList.3
+
+MLINKS += Compose.5 XCompose.5
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
