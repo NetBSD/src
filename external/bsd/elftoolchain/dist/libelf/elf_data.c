@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_data.c,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
+/*	$NetBSD: elf_data.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2011 Joseph Koshy
@@ -38,8 +38,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_data.c,v 1.3 2016/02/20 02:43:42 christos Exp $");
-ELFTC_VCSID("Id: elf_data.c 3258 2015-11-20 18:59:43Z emaste ");
+__RCSID("$NetBSD: elf_data.c,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
+ELFTC_VCSID("Id: elf_data.c 3258 2015-11-20 18:59:43Z emaste");
 
 Elf_Data *
 elf_getdata(Elf_Scn *s, Elf_Data *ed)

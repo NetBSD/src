@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_fsize.m4,v 1.3 2016/02/20 02:43:42 christos Exp $	*/
+/*	$NetBSD: libelf_fsize.m4,v 1.4 2022/05/01 19:41:35 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
@@ -30,8 +30,8 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_fsize.m4,v 1.3 2016/02/20 02:43:42 christos Exp $");
-ELFTC_VCSID("Id: libelf_fsize.m4 2225 2011-11-26 18:55:54Z jkoshy ");
+__RCSID("$NetBSD: libelf_fsize.m4,v 1.4 2022/05/01 19:41:35 jkoshy Exp $");
+ELFTC_VCSID("Id: libelf_fsize.m4 2225 2011-11-26 18:55:54Z jkoshy");
 
 /* WARNING: GENERATED FROM __file__. */
 
