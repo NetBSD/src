@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_arange.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: dwarf_arange.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009,2011 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_arange.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: dwarf_arange.c 2072 2011-10-27 03:26:49Z jkoshy ");
+__RCSID("$NetBSD: dwarf_arange.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: dwarf_arange.c 2072 2011-10-27 03:26:49Z jkoshy");
 
 int
 dwarf_get_aranges(Dwarf_Debug dbg, Dwarf_Arange **arlist,

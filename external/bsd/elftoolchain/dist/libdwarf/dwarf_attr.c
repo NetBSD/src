@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_attr.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: dwarf_attr.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_attr.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: dwarf_attr.c 3064 2014-06-06 19:35:55Z kaiwang27 ");
+__RCSID("$NetBSD: dwarf_attr.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: dwarf_attr.c 3064 2014-06-06 19:35:55Z kaiwang27");
 
 int
 dwarf_attr(Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute *atp,

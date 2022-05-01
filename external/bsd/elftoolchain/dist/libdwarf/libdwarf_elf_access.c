@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_elf_access.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: libdwarf_elf_access.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_elf_access.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_elf_access.c 2070 2011-10-27 03:05:32Z jkoshy ");
+__RCSID("$NetBSD: libdwarf_elf_access.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_elf_access.c 2070 2011-10-27 03:05:32Z jkoshy");
 
 int
 _dwarf_elf_get_section_info(void *obj, Dwarf_Half ndx,

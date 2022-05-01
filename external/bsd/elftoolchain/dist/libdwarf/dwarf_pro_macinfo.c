@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_pro_macinfo.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: dwarf_pro_macinfo.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2010 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_pro_macinfo.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: dwarf_pro_macinfo.c 2074 2011-10-27 03:34:33Z jkoshy ");
+__RCSID("$NetBSD: dwarf_pro_macinfo.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: dwarf_pro_macinfo.c 2074 2011-10-27 03:34:33Z jkoshy");
 
 static int
 _dwarf_add_macro(Dwarf_P_Debug dbg, int type, Dwarf_Unsigned lineno,

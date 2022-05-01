@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_frame.c,v 1.3 2016/02/20 02:43:41 christos Exp $	*/
+/*	$NetBSD: libdwarf_frame.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009-2011,2014 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_frame.c,v 1.3 2016/02/20 02:43:41 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_frame.c 3106 2014-12-19 16:00:58Z kaiwang27 ");
+__RCSID("$NetBSD: libdwarf_frame.c,v 1.4 2022/05/01 17:20:47 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_frame.c 3106 2014-12-19 16:00:58Z kaiwang27");
 
 static int
 _dwarf_frame_find_cie(Dwarf_FrameSec fs, Dwarf_Unsigned offset,
