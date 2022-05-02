@@ -1,4 +1,4 @@
-.\" $NetBSD: tap.4,v 1.15 2020/09/27 19:36:54 roy Exp $
+.\" $NetBSD: tap.4,v 1.16 2022/05/02 23:25:12 gutteridge Exp $
 .\"
 .\"  Copyright (c) 2004, 2005 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -24,7 +24,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 27, 2020
+.Dd May 2, 2022
 .Dt TAP 4
 .Os
 .Sh NAME
@@ -38,14 +38,10 @@ The
 driver allows the creation and use of virtual Ethernet devices.
 Those interfaces appear just as any real Ethernet NIC to the kernel,
 but can also be accessed by userland through a character device node in order
-to read frames being sent by the system or to inject frames.
-.Pp
-In that respect it is very similar to what
+to read frames being sent by the system or to inject frames. In that respect
+it is very similar to what
 .Xr tun 4
-provides, but the added Ethernet layer allows easy integration with machine
-emulators or virtual Ethernet networks through the use of
-.Xr bridge 4
-with tunneling.
+provides.
 .Ss INTERFACE CREATION
 Interfaces may be created in two different ways:
 using the
