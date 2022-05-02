@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.42 2021/10/31 16:23:47 skrll Exp $ */
+/* $NetBSD: db_machdep.c,v 1.43 2022/05/02 10:13:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.42 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.43 2022/05/02 10:13:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -456,17 +456,29 @@ db_par_print(uint64_t par, vaddr_t va)
 	paddr_t pa = (__SHIFTOUT(par, PAR_PA) << PAR_PA_SHIFT) +
 	    (va & __BITS(PAR_PA_SHIFT - 1, 0));
 
-	db_printf("%016"PRIx64": ATTR=0x%02lx, NS=%ld, S=%ld, SHA=%ld, PTW=%ld"
-	    ", FST=%ld, F=%ld, PA=%016"PRIxPADDR"\n",
-	    par,
-	    __SHIFTOUT(par, PAR_ATTR),
-	    __SHIFTOUT(par, PAR_NS),
-	    __SHIFTOUT(par, PAR_S),
-	    __SHIFTOUT(par, PAR_SHA),
-	    __SHIFTOUT(par, PAR_PTW),
-	    __SHIFTOUT(par, PAR_FST),
-	    __SHIFTOUT(par, PAR_F),
-	    pa);
+	if (__SHIFTOUT(par, PAR_F) == 0) {
+		db_printf("%016" PRIx64
+		    ": ATTR=0x%02" __PRIxBITS
+		    ", NS=%" __PRIuBITS
+		    ", SH=%" __PRIuBITS
+		    ", PA=%016" PRIxPADDR
+		    " (no fault)\n",
+		    par,
+		    __SHIFTOUT(par, PAR_ATTR),
+		    __SHIFTOUT(par, PAR_NS),
+		    __SHIFTOUT(par, PAR_SH),
+		    pa);
+	} else {
+		db_printf("%016" PRIx64
+		    ", S=%" __PRIuBITS
+		    ", PTW=%" __PRIuBITS
+		    ", FST=%" __PRIuBITS
+		    " (fault)\n",
+		    par,
+		    __SHIFTOUT(par, PAR_S),
+		    __SHIFTOUT(par, PAR_PTW),
+		    __SHIFTOUT(par, PAR_FST));
+	}
 }
 
 void

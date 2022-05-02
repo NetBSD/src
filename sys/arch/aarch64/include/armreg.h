@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.60 2022/01/05 19:53:32 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.61 2022/05/02 10:13:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -788,11 +788,12 @@ AARCH64REG_WRITE_INLINE(par_el1)
 #define	PAR_PA			__BITS(51,12)	// F=0 physical address
 #define	PAR_PA_SHIFT		12
 #define	PAR_NS			__BIT(9)	// F=0 non-secure
+#define	PAR_SH			__BITS(8,7)	// F=0 shareability attribute
+#define	 PAR_SH_NONE		 0
+#define	 PAR_SH_OUTER		 2
+#define	 PAR_SH_INNER		 3
+
 #define	PAR_S			__BIT(9)	// F=1 failure stage
-#define	PAR_SHA			__BITS(8,7)	// F=0 shareability attribute
-#define	 PAR_SHA_NONE		 0
-#define	 PAR_SHA_OUTER		 2
-#define	 PAR_SHA_INNER		 3
 #define	PAR_PTW			__BIT(8)	// F=1 partial table walk
 #define	PAR_FST			__BITS(6,1)	// F=1 fault status code
 #define	PAR_F			__BIT(0)	// translation failed
