@@ -1,4 +1,4 @@
-dnl	$NetBSD: elfconstants.m4,v 1.3 2022/05/02 09:43:23 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.4 2022/05/02 20:27:43 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -33,7 +33,7 @@ dnl	$NetBSD: elfconstants.m4,v 1.3 2022/05/02 09:43:23 jkoshy Exp $
 # - The "Linkers and Libraries Guide", from Sun Microsystems.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 3946 2021-04-10 21:10:42Z jkoshy')
+	`Id: elfconstants.m4 3980 2022-05-02 19:50:00Z jkoshy')
 
 # In the following definitions, `_' is an M4 macro that is meant to be
 # expanded later.  Its intended usage is:
@@ -592,6 +592,12 @@ _(ELFMAG0, 0x7FU)
 _(ELFMAG1, 0x45U)
 _(ELFMAG2, 0x4CU)
 _(ELFMAG3, 0x46U)
+')
+
+# Additional ELFMAG related constants.
+define(`DEFINE_ELF_MAGIC_ADDITIONAL_CONSTANTS',`
+_(ELFMAG,  "\177ELF")
+_(SELFMAG, 4)
 ')
 
 #
@@ -1498,6 +1504,12 @@ _(STT_SPARC_REGISTER,  13,
 	`SPARC register information')
 _(STT_HIPROC,          15,
 	`end of processor-specific types')
+')
+
+# Additional symbol type related constants.
+define(`DEFINE_SYMBOL_TYPES_ADDITIONAL_CONSTANTS',`
+_(STT_NUM,             7,
+	`the number of symbol types')
 ')
 
 #
