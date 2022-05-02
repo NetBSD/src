@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.32 2022/04/23 13:08:49 christos Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.33 2022/05/02 19:57:50 christos Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.32 2022/04/23 13:08:49 christos Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.33 2022/05/02 19:57:50 christos Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -620,7 +620,8 @@ ATF_TC_BODY(gibberish, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	unsetenv("TZ");
+	setenv("TZ", "UTC", 1);
+	tzset();
 	ATF_TP_ADD_TC(tp, dates);
 	ATF_TP_ADD_TC(tp, times);
 	ATF_TP_ADD_TC(tp, dsttimes);
