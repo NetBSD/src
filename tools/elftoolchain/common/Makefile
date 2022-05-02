@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2022/04/13 17:54:05 jkoshy Exp $
+# $NetBSD: Makefile,v 1.2 2022/05/02 18:28:38 jkoshy Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -23,7 +23,7 @@ ${HOST_INCSDIR}/${_f}: ${_f}
 
 install: .PHONY includes
 
-includes: .PHONY ${HOST_INCSDIR} .WAIT ${INCS}
+includes: .PHONY ${HOST_INCSDIR} .WAIT ${HOST_INCINSTFILES}
 
 all depend clean clobber:
 
