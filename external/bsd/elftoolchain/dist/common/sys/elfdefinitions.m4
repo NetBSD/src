@@ -1,4 +1,4 @@
-dnl	$NetBSD: elfdefinitions.m4,v 1.3 2022/05/02 09:43:23 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.4 2022/05/02 20:27:43 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021 Joseph Koshy
  * All rights reserved.
@@ -26,7 +26,7 @@ dnl	$NetBSD: elfdefinitions.m4,v 1.3 2022/05/02 09:43:23 jkoshy Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 3947 2021-04-10 21:15:17Z jkoshy')
+	`Id: elfdefinitions.m4 3980 2022-05-02 19:50:00Z jkoshy')
 include(`elfconstants.m4')dnl
 
 define(`_',`ifelse(eval(len($1) <= 7),1,
@@ -101,6 +101,8 @@ DEFINE_ELF_DATA_ENDIANNESSES()
  * These numbers are: 0x7F, 'E', 'L' and 'F'.
  */
 DEFINE_ELF_MAGIC_VALUES()
+/* Additional magic-related constants. */
+DEFINE_ELF_MAGIC_ADDITIONAL_CONSTANTS()
 
 /*
  * ELF OS ABI field.
@@ -175,6 +177,8 @@ DEFINE_SYMBOL_BINDINGS()
  * Symbol types
  */
 DEFINE_SYMBOL_TYPES()
+/* Additional constants related to symbol types. */
+DEFINE_SYMBOL_TYPES_ADDITIONAL_CONSTANTS()
 
 /*
  * Symbol binding.
