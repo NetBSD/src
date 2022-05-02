@@ -1678,11 +1678,8 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 			 * already been processed by an earlier link
 			 * invocation.
 			 */
-#ifndef illumos
-#define SHN_SUNW_IGNORE	SHN_ABS
-#endif
-			if (rsym.st_shndx != SHN_SUNW_IGNORE) {
-				rsym.st_shndx = SHN_SUNW_IGNORE;
+			if (rsym.st_shndx != SHN_ABS) {
+				rsym.st_shndx = SHN_ABS;
 				(void) gelf_update_sym(data_sym, ndx, &rsym);
 			}
 		}
