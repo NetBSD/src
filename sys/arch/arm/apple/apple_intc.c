@@ -1,4 +1,4 @@
-/* $NetBSD: apple_intc.c,v 1.7 2022/03/28 19:59:26 riastradh Exp $ */
+/* $NetBSD: apple_intc.c,v 1.8 2022/05/02 04:39:29 ryo Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.7 2022/03/28 19:59:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.8 2022/05/02 04:39:29 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -503,16 +503,20 @@ apple_intc_attach(device_t parent, device_t self, void *aux)
 		pc->pc_sc = sc;
 		pc->pc_cpuid = cpuno;
 
+#ifdef MULTIPROCESSOR
 		pic->pic_cpus = ci->ci_kcpuset;
+#endif
 		pic->pic_ops = &apple_intc_localpicops;
 		pic->pic_maxsources = 2;
 		snprintf(pic->pic_name, sizeof(pic->pic_name), "AIC/%lu", cpuno);
 
 		pic_add(pic, PIC_IRQBASE_ALLOC);
 
+#ifdef MULTIPROCESSOR
 		intr_establish_xname(pic->pic_irqbase + LOCALPIC_SOURCE_IPI,
 		    IPL_HIGH, IST_LEVEL | IST_MPSAFE, apple_intc_ipi_handler,
 		    pc, "ipi");
+#endif
 	}
 
 	apple_intc_cpu_init(&sc->sc_pic, curcpu());
