@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.121 2022/01/26 23:00:55 rillig Exp $
+#	$NetBSD: Makefile,v 1.122 2022/05/03 19:05:34 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -54,39 +54,6 @@ COPTS+=		-fsanitize=undefined
 LDADD+=		-fsanitize=undefined
 .endif
 
-# Whether to compile with GCC 10 from pkgsrc, during development.
-USE_GCC10?=	no
-.if ${USE_GCC10} == "yes"
-# CC is set further down in this file
-COPTS+=		-Wno-attributes	# for abs and labs
-COPTS.arch.c+=	-Wno-error=format-truncation
-COPTS.dir.c+=	-Wno-error=format-truncation
-COPTS.main.c+=	-Wno-error=format-truncation
-COPTS.meta.c+=	-Wno-error=format-truncation
-.endif
-
-# Whether to compile with GCC 9 from pkgsrc, during development.
-USE_GCC9?=	no
-.if ${USE_GCC9} == "yes"
-# CC is set further down in this file
-COPTS+=		-Wno-attributes	# for abs and labs
-COPTS.arch.c+=	-Wno-error=format-truncation
-COPTS.dir.c+=	-Wno-error=format-truncation
-COPTS.main.c+=	-Wno-error=format-truncation
-COPTS.meta.c+=	-Wno-error=format-truncation
-.endif
-
-# Whether to compile with GCC 8 from pkgsrc, during development.
-USE_GCC8?=	no
-.if ${USE_GCC8} == "yes"
-# CC is set further down in this file
-COPTS+=		-Wno-attributes	# for abs and labs
-COPTS.arch.c+=	-Wno-error=format-truncation
-COPTS.dir.c+=	-Wno-error=format-truncation
-COPTS.main.c+=	-Wno-error=format-truncation
-COPTS.meta.c+=	-Wno-error=format-truncation
-.endif
-
 USE_META?=	yes
 .if ${USE_META:tl} != "no"
 
@@ -128,24 +95,6 @@ COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.var.c+=	-Wno-format-nonliteral	# strftime
 
 CPPFLAGS+=	-DMAKE_NATIVE
-
-.if ${USE_GCC10} == "yes"
-GCC10BASE?=	/usr/pkg/gcc10
-LATE_CC=	${GCC10BASE}/bin/gcc
-GCOV=		${GCC10BASE}/bin/gcov
-.endif
-
-.if ${USE_GCC9} == "yes"
-GCC9BASE?=	/usr/pkg/gcc9
-LATE_CC=	${GCC9BASE}/bin/gcc
-GCOV=		${GCC9BASE}/bin/gcov
-.endif
-
-.if ${USE_GCC8} == "yes"
-GCC8BASE?=	/usr/pkg/gcc8
-LATE_CC=	${GCC8BASE}/bin/gcc
-GCOV=		${GCC8BASE}/bin/gcov
-.endif
 
 .if defined(TOOLDIR)
 # This is a native NetBSD build, use libutil rather than the local emalloc etc.
@@ -204,6 +153,3 @@ report-coverage: .PHONY
 CPPFLAGS+=	${USER_CPPFLAGS}
 # For overriding -std=gnu99 or similar options.
 CFLAGS+=	${USER_CFLAGS}
-.if defined(LATE_CC)
-CC=		${LATE_CC}
-.endif
