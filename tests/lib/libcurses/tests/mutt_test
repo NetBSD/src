@@ -1,3 +1,8 @@
+#
+# This test attempts to emulate some of the behaviours of mutt, it is neither
+# an exact nor complete emulation of what mutt does but it does test the
+# interaction of various call types.
+#
 include start_color
 include fill_screen
 comparend mutt_test1.chk
