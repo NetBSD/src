@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.436 2022/04/09 23:38:31 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.437 2022/05/03 20:12:28 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.436 2022/04/09 23:38:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.437 2022/05/03 20:12:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4986,14 +4986,15 @@ pmap_md_pdetab_deactivate(pmap_t pm)
 void
 pmap_activate_efirt(void)
 {
-	kpreempt_disable();
-
-	struct cpu_info * const ci = curcpu();
 	struct pmap * const pm = &efirt_pmap;
-	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, " (pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
+
+	KASSERT(kpreempt_disabled());
+
+	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
 
 	PMAPCOUNT(activations);
 
@@ -5037,6 +5038,10 @@ pmap_activate(struct lwp *l)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "l=%#jx pm=%#jx", (uintptr_t)l,
 	    (uintptr_t)npm, 0, 0);
+
+#ifdef ARM_MMU_EXTENDED
+	KASSERT(kpreempt_disabled());
+#endif
 
 	struct cpu_info * const ci = curcpu();
 
@@ -5197,6 +5202,7 @@ pmap_deactivate(struct lwp *l)
 		(uintptr_t)pm, 0, 0);
 
 #ifdef ARM_MMU_EXTENDED
+	KASSERT(kpreempt_disabled());
 	pmap_md_pdetab_deactivate(pm);
 #else
 	/*
@@ -5219,6 +5225,7 @@ pmap_deactivate_efirt(void)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
+	KASSERT(kpreempt_disabled());
 	struct cpu_info * const ci = curcpu();
 
 	/*
@@ -5234,7 +5241,6 @@ pmap_deactivate_efirt(void)
 
 	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
 	    ci->ci_pmap_asid_cur);
-	kpreempt_enable();
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
