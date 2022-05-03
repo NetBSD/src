@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.231 2022/05/01 13:45:46 uwe Exp $
+#	 $NetBSD: mi,v 1.232 2022/05/03 00:29:23 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2172,6 +2172,20 @@
 ./usr/X11R7/man/cat3/XQueryTextExtents.0			xcomp-libX11-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XQueryTextExtents16.0		xcomp-libX11-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XQueryTree.0			xcomp-libX11-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRConfigCurrentConfiguration.0	xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRConfigCurrentRate.0		xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRConfigRates.0			xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRConfigRotations.0		xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRConfigSizes.0			xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRConfigTimes.0			xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRFreeScreenConfigInfo.0		xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRGetScreenInfo.0			xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRQueryExtension.0		xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRQueryVersion.0			xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRRootToScreen.0			xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRSelectInput.0			xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRSetScreenConfig.0		xcomp-libXrandr-catman	.cat,xorg
+./usr/X11R7/man/cat3/XRRSetScreenConfigAndRate.0	xcomp-libXrandr-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XRaiseWindow.0			xcomp-libX11-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XReadBitmapFile.0			xcomp-libX11-catman	.cat,xorg
 ./usr/X11R7/man/cat3/XReadBitmapFileData.0		xcomp-libX11-catman	.cat,xorg
@@ -3593,6 +3607,20 @@
 ./usr/X11R7/man/html3/XQueryTextExtents.html		xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XQueryTextExtents16.html		xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XQueryTree.html			xcomp-libX11-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRConfigCurrentConfiguration.html	xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRConfigCurrentRate.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRConfigRates.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRConfigRotations.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRConfigSizes.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRConfigTimes.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRFreeScreenConfigInfo.html	xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRGetScreenInfo.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRQueryExtension.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRQueryVersion.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRRootToScreen.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRSelectInput.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRSetScreenConfig.html		xcomp-libXrandr-htmlman	html,xorg
+./usr/X11R7/man/html3/XRRSetScreenConfigAndRate.html	xcomp-libXrandr-htmlman	html,xorg
 ./usr/X11R7/man/html3/XRaiseWindow.html			xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XReadBitmapFile.html		xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XReadBitmapFileData.html		xcomp-libX11-htmlman	html,xorg
@@ -5013,6 +5041,20 @@
 ./usr/X11R7/man/man3/XQueryTextExtents.3		xcomp-libX11-man	.man,xorg
 ./usr/X11R7/man/man3/XQueryTextExtents16.3		xcomp-libX11-man	.man,xorg
 ./usr/X11R7/man/man3/XQueryTree.3			xcomp-libX11-man	.man,xorg
+./usr/X11R7/man/man3/XRRConfigCurrentConfiguration.3	xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRConfigCurrentRate.3		xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRConfigRates.3			xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRConfigRotations.3		xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRConfigSizes.3			xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRConfigTimes.3			xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRFreeScreenConfigInfo.3		xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRGetScreenInfo.3			xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRQueryExtension.3		xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRQueryVersion.3			xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRRootToScreen.3			xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRSelectInput.3			xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRSetScreenConfig.3		xcomp-libXrandr-man	.man,xorg
+./usr/X11R7/man/man3/XRRSetScreenConfigAndRate.3	xcomp-libXrandr-man	.man,xorg
 ./usr/X11R7/man/man3/XRaiseWindow.3			xcomp-libX11-man	.man,xorg
 ./usr/X11R7/man/man3/XReadBitmapFile.3			xcomp-libX11-man	.man,xorg
 ./usr/X11R7/man/man3/XReadBitmapFileData.3		xcomp-libX11-man	.man,xorg
