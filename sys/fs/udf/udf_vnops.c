@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.123 2022/04/10 09:50:46 andvar Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.124 2022/05/03 07:35:43 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.123 2022/04/10 09:50:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.124 2022/05/03 07:35:43 hannken Exp $");
 #endif /* not lint */
 
 
@@ -1701,7 +1701,7 @@ udf_do_symlink(struct udf_node *udf_node, char *target)
 	/* write out structure on the new file */
 	error = vn_rdwr(UIO_WRITE, udf_node->vnode,
 		pathbuf, pathlen, 0,
-		UIO_SYSSPACE, IO_NODELOCKED | IO_ALTSEMANTICS,
+		UIO_SYSSPACE, IO_ALTSEMANTICS,
 		FSCRED, NULL, NULL);
 
 	/* return status of symlink contents writeout */
