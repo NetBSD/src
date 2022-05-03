@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2022/03/19 13:49:21 hannken Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 2022/05/03 14:20:24 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2022/03/19 13:49:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2022/05/03 14:20:24 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 		vput(tmpvn);
 		return (0);
 	}
+	VOP_UNLOCK(tmpvn);
 	error = VOP_IOCTL(tmpvn, DIOCGDINFO, &label, FREAD, NOCRED);
 	if (error) {
 		/*
@@ -140,6 +141,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 	    	found = 1;
 
 closeout:
+	vn_lock(tmpvn, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(tmpvn, FREAD, NOCRED);
 	vput(tmpvn);
 	return (found);
