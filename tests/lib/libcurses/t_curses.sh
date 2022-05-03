@@ -2187,6 +2187,20 @@ wunderscore_body()
 	h_run wunderscore
 }
 
+##########################################
+# Simulate curses application behaviour
+##########################################
+
+atf_test_case mutt_test
+mutt_test_head()
+{
+	atf_set "descr" "Try to emulate a curses application"
+}
+mutt_test_body()
+{
+	h_run mutt_test
+}
+
 atf_init_test_cases()
 {
 	# testframe utility functions
@@ -2444,4 +2458,7 @@ atf_init_test_cases()
 	# curses underscore attribute manipulation routines
 	atf_add_test_case underscore
 	atf_add_test_case wunderscore
+
+	# emulate a curses application
+	atf_add_test_case mutt_test
 }
