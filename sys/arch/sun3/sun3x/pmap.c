@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2021/12/05 04:37:11 msaitoh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119 2022/05/03 20:52:31 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2021/12/05 04:37:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2022/05/03 20:52:31 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1523,7 +1523,7 @@ free_c_table(c_tmgr_t *c_tbl, bool relink)
 /* pmap_remove_pte			INTERNAL
  **
  * Unmap the given pte and preserve any page modification
- * information by transfering it to the pv head of the
+ * information by transferring it to the pv head of the
  * physical page it maps to.  This function does not update
  * any reference counts because it is assumed that the calling
  * function will do so.

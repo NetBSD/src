@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.27 2022/05/03 20:52:31 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.27 2022/05/03 20:52:31 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -234,7 +234,7 @@ asc_ioasic_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
 
-	/* have dmamap for the transfering addresses */
+	/* have dmamap for the transferring addresses */
 	if (bus_dmamap_load(asc->sc_dmat, asc->sc_dmamap,
 	    *addr, size, NULL /* kernel address */, BUS_DMA_NOWAIT))
 		panic("%s: cannot allocate DMA address",

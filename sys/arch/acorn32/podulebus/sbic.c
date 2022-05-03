@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.17 2012/10/27 17:17:23 chs Exp $ */
+/* $NetBSD: sbic.c,v 1.18 2022/05/03 20:52:30 andvar Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -114,7 +114,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.17 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.18 2022/05/03 20:52:30 andvar Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -2130,7 +2130,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 			acb->sc_tcnt =
 			    dev->sc_dmanext(dev->sc_dmah, dev->sc_dmat,
 				acb, acb->offset);
-			DBGPRINTF(("dmanext transfering %ld bytes\n",
+			DBGPRINTF(("dmanext transferring %ld bytes\n",
 			    acb->sc_tcnt), data_pointer_debug);
 			SBIC_TC_PUT(regs, (unsigned)acb->sc_tcnt);
 			SET_SBIC_cmd(regs, SBIC_CMD_XFER_INFO);
