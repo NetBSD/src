@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.729 2022/02/26 15:04:39 rillig Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.730 2022/05/03 00:23:33 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.729 2022/02/26 15:04:39 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.730 2022/05/03 00:23:33 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -429,7 +429,7 @@ struct wm_txqueue {
 	WM_Q_EVCNT_DEFINE(txq, toomanyseg)  /* Pkt dropped(toomany DMA segs) */
 	WM_Q_EVCNT_DEFINE(txq, defrag)	    /* m_defrag() */
 	WM_Q_EVCNT_DEFINE(txq, underrun)    /* Tx underrun */
-	WM_Q_EVCNT_DEFINE(txq, skipcontext) /* Tx skip wring cksum context */
+	WM_Q_EVCNT_DEFINE(txq, skipcontext) /* Tx skip wrong cksum context */
 
 	char txq_txseg_evcnt_names[WM_NTXSEGS][sizeof("txqXXtxsegXXX")];
 	struct evcnt txq_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
@@ -530,7 +530,7 @@ struct wm_softc {
 					 */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 
-	struct ethercom sc_ethercom;	/* ethernet common data */
+	struct ethercom sc_ethercom;	/* Ethernet common data */
 	struct mii_data sc_mii;		/* MII/media information */
 
 	pci_chipset_tag_t sc_pc;
@@ -3470,10 +3470,10 @@ wm_tick(void *arg)
 	    + CSR_READ(sc, WMREG_CEXTERR)
 	    + CSR_READ(sc, WMREG_RLEC));
 	/*
-	 * WMREG_RNBC is incremented when there is no available buffers in host
-	 * memory. It does not mean the number of dropped packet. Because
-	 * ethernet controller can receive packets in such case if there is
-	 * space in phy's FIFO.
+	 * WMREG_RNBC is incremented when there are no available buffers in host
+	 * memory. It does not mean the number of dropped packets, because an
+	 * Ethernet controller can receive packets in such case if there is
+	 * space in the phy's FIFO.
 	 *
 	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
 	 * own EVCNT instead of if_iqdrops.
@@ -5069,7 +5069,7 @@ wm_reset(struct wm_softc *sc)
 		}
 		if (timeout == 0)
 			device_printf(sc->sc_dev,
-			    "failed to disable busmastering\n");
+			    "failed to disable bus mastering\n");
 	}
 
 	/* Set the completion timeout for interface */
@@ -5588,8 +5588,8 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		hw_nrxqueues = 2;
 		break;
 		/*
-		 * As below ethernet controllers does not support MSI-X,
-		 * this driver let them not use multiqueue.
+		 * The below Ethernet controllers do not support MSI-X;
+		 * this driver doesn't let them use multiqueue.
 		 *     - WM_T_80003
 		 *     - WM_T_ICH8
 		 *     - WM_T_ICH9
@@ -5616,7 +5616,7 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		sc->sc_nqueues = hw_nqueues;
 
 	/*
-	 * As queues more then cpus cannot improve scaling, we limit
+	 * As queues more than CPUs cannot improve scaling, we limit
 	 * the number of queues used actually.
 	 */
 	if (ncpu < sc->sc_nqueues)
@@ -5902,12 +5902,12 @@ wm_itrs_writereg(struct wm_softc *sc, struct wm_queue *wmq)
 
 /*
  * TODO
- * Below dynamic calculation of itr is almost the same as linux igb,
+ * Below dynamic calculation of itr is almost the same as Linux igb,
  * however it does not fit to wm(4). So, we will have been disable AIM
  * until we will find appropriate calculation of itr.
  */
 /*
- * calculate interrupt interval value to be going to write register in
+ * Calculate interrupt interval value to be going to write register in
  * wm_itrs_writereg(). This function does not write ITR/EITR register.
  */
 static void
@@ -6323,7 +6323,7 @@ wm_init_locked(struct ifnet *ifp)
 			reg &= ~CTRL_EXT_LINK_MODE_MASK;
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 
-			/* Bypass RX and TX FIFO's */
+			/* Bypass RX and TX FIFOs */
 			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
 			    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS
 			    | KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
@@ -6376,7 +6376,7 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 
 			/*
-			 * Workaround issue with spurious interrupts
+			 * Work around issue with spurious interrupts
 			 * in MSI-X mode.
 			 * At wm_initialize_hardware_bits(), sc_nintrs has not
 			 * initialized yet. So re-initialize WMREG_RFCTL here.
@@ -6549,12 +6549,12 @@ wm_init_locked(struct ifnet *ifp)
 		 */
 	}
 
-	/* Set the VLAN ethernetype. */
+	/* Set the VLAN EtherType. */
 	CSR_WRITE(sc, WMREG_VET, ETHERTYPE_VLAN);
 
 	/*
 	 * Set up the transmit control register; we start out with
-	 * a collision distance suitable for FDX, but update it whe
+	 * a collision distance suitable for FDX, but update it when
 	 * we resolve the media type.
 	 */
 	sc->sc_tctl = TCTL_EN | TCTL_PSP | TCTL_RTLC
@@ -7855,7 +7855,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		 * configured checksum offload context.
 		 * For TSO, in theory we can use the same TSO context only if
 		 * frame is the same type(IP/TCP) and the same MSS. However
-		 * checking whether a frame has the same IP/TCP structure is
+		 * checking whether a frame has the same IP/TCP structure is a
 		 * hard thing so just ignore that and always restablish a
 		 * new TSO context.
 		 */
@@ -8785,7 +8785,7 @@ retry:
 		/* Initialize the first transmit descriptor. */
 		nexttx = txq->txq_next;
 		if (!do_csum) {
-			/* Setup a legacy descriptor */
+			/* Set up a legacy descriptor */
 			wm_set_dma_addr(&txq->txq_descs[nexttx].wtx_addr,
 			    dmamap->dm_segs[0].ds_addr);
 			txq->txq_descs[nexttx].wtx_cmdlen =
@@ -8802,7 +8802,7 @@ retry:
 
 			dcmdlen = 0;
 		} else {
-			/* Setup an advanced data descriptor */
+			/* Set up an advanced data descriptor */
 			txq->txq_nq_descs[nexttx].nqtx_data.nqtxd_addr =
 			    htole64(dmamap->dm_segs[0].ds_addr);
 			KASSERT((dmamap->dm_segs[0].ds_len & cmdlen) == 0);
@@ -8823,8 +8823,8 @@ retry:
 		lasttx = nexttx;
 		nexttx = WM_NEXTTX(txq, nexttx);
 		/*
-		 * Fill in the next descriptors. legacy or advanced format
-		 * is the same here
+		 * Fill in the next descriptors. Legacy or advanced format
+		 * is the same here.
 		 */
 		for (seg = 1; seg < dmamap->dm_nsegs;
 		     seg++, nexttx = WM_NEXTTX(txq, nexttx)) {
@@ -10441,7 +10441,7 @@ wm_gmii_reset(struct wm_softc *sc)
 }
 
 /*
- * Setup sc_phytype and mii_{read|write}reg.
+ * Set up sc_phytype and mii_{read|write}reg.
  *
  *  To identify PHY type, correct read/write function should be selected.
  * To select correct read/write function, PCI ID or MAC type are required
@@ -10456,7 +10456,7 @@ wm_gmii_reset(struct wm_softc *sc)
  * would be better than the first call.
  *
  *  If the detected new result and previous assumption is different,
- * diagnous message will be printed.
+ * a diagnostic message will be printed.
  */
 static void
 wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
@@ -10886,7 +10886,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	}
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
-		/* Any PHY wasn't find */
+		/* Any PHY wasn't found */
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 		sc->sc_phytype = WMPHY_NONE;
@@ -10894,7 +10894,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		struct mii_softc *child = LIST_FIRST(&mii->mii_phys);
 
 		/*
-		 * PHY Found! Check PHY type again by the second call of
+		 * PHY found! Check PHY type again by the second call of
 		 * wm_gmii_setup_phytype.
 		 */
 		wm_gmii_setup_phytype(sc, child->mii_mpd_oui,
@@ -14219,7 +14219,7 @@ wm_nvm_version(struct wm_softc *sc)
 	/*
 	 * XXX
 	 * Qemu's e1000e emulation (82574L)'s SPI has only 64 words.
-	 * I've never seen on real 82574 hardware with such small SPI ROM.
+	 * I've never seen real 82574 hardware with such small SPI ROM.
 	 */
 	if ((sc->sc_nvm_wordsize < NVM_OFF_IMAGE_UID1)
 	    || (wm_nvm_read(sc, NVM_OFF_IMAGE_UID1, 1, &uid1) != 0))
@@ -16064,7 +16064,7 @@ wm_set_eee(struct wm_softc *sc)
  * Basically, PHY's workarounds are in the PHY drivers.
  */
 
-/* Work-around for 82566 Kumeran PCS lock loss */
+/* Workaround for 82566 Kumeran PCS lock loss */
 static int
 wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
 {
