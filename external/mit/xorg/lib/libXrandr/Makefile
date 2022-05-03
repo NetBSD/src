@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/07/20 03:13:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2022/05/03 00:29:23 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -18,9 +18,6 @@ CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/extensions
 CPPFLAGS+=	-DHAVE__XEATDATAWORDS
 
-
-MAN=	Xrandr.3
-
 LIBDPLIBS=\
 	Xrender	${.CURDIR}/../libXrender \
 	Xext	${.CURDIR}/../libXext \
@@ -29,6 +26,24 @@ LIBDPLIBS=\
 PKGDIST=	${LIB}
 
 CWARNFLAGS.clang+=	-Wno-pointer-sign
+
+
+MAN = Xrandr.3
+
+MLINKS += Xrandr.3 XRRConfigCurrentConfiguration.3
+MLINKS += Xrandr.3 XRRConfigCurrentRate.3
+MLINKS += Xrandr.3 XRRConfigRates.3
+MLINKS += Xrandr.3 XRRConfigRotations.3
+MLINKS += Xrandr.3 XRRConfigSizes.3
+MLINKS += Xrandr.3 XRRConfigTimes.3
+MLINKS += Xrandr.3 XRRFreeScreenConfigInfo.3
+MLINKS += Xrandr.3 XRRGetScreenInfo.3
+MLINKS += Xrandr.3 XRRQueryExtension.3
+MLINKS += Xrandr.3 XRRQueryVersion.3
+MLINKS += Xrandr.3 XRRRootToScreen.3
+MLINKS += Xrandr.3 XRRSelectInput.3
+MLINKS += Xrandr.3 XRRSetScreenConfig.3
+MLINKS += Xrandr.3 XRRSetScreenConfigAndRate.3
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
