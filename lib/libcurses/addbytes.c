@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.62 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.63 2022/05/03 07:25:34 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.62 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.63 2022/05/03 07:25:34 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -311,6 +311,8 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 #endif
 	}
 
+	(*lp)->line[*x].cflags &= ~ CA_BACKGROUND;
+
 	if (attributes & __COLOR)
 		(*lp)->line[*x].attr =
 			attributes | (win->battr & ~__COLOR);
@@ -449,6 +451,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 			    *y, sx);
 			tp = &win->alines[*y]->line[sx];
 			tp->ch = win->bch;
+			tp->cflags |= CA_BACKGROUND;
 			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 				return ERR;
 
@@ -513,6 +516,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	}
 
 	lp->ch = wch->vals[0];
+	lp->cflags &= ~CA_BACKGROUND;
 
 	attributes = (win->wattr | wch->attributes)
 		& (WA_ATTRIBUTES & ~__COLOR);
@@ -559,7 +563,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		tp->ch = wch->vals[0];
 		tp->attr = lp->attr & WA_ATTRIBUTES;
 		/* Mark as "continuation" cell */
-		tp->wflags |= WCA_CONTINUATION;
+		tp->cflags |= CA_CONTINUATION;
 	}
 
 
@@ -596,6 +600,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 				    "remaining of current char (%d,%d)nn",
 				    *y, ex);
 				tp->ch = win->bch;
+				tp->cflags |= CA_BACKGROUND;
 				if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
 					return ERR;
 				tp->attr = win->battr;

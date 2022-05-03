@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.12 2022/04/12 07:03:04 blymn Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.13 2022/05/03 07:25:34 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.12 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.13 2022/05/03 07:25:34 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -210,6 +210,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 					    == ERR)
 						return ERR;
 					lp->attr = win->battr;
+					lp->cflags |= CA_BACKGROUND;
 					(*lp).wcols = 1;
 					lp++, ex++;
 				}
@@ -229,6 +230,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 			}
 			lp->ch = chp->vals[0];
 			lp->attr = chp->attributes & WA_ATTRIBUTES;
+			lp->cflags &= ~CA_BACKGROUND;
 			(*lp).wcols = cw;
 			if (chp->elements > 1) {
 				for (i = 1; i < chp->elements; i++) {

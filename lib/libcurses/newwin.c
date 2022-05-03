@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.66 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: newwin.c,v 1.67 2022/05/03 07:25:34 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.66 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.67 2022/05/03 07:25:34 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -166,6 +166,7 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad,
 			lp->flags = 0;
 		for (sp = lp->line, j = 0; j < maxx; j++, sp++) {
 			sp->attr = 0;
+			sp->cflags = CA_BACKGROUND;
 			sp->ch = win->bch;
 #ifdef HAVE_WCHAR
 			sp->nsp = NULL;

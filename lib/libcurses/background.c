@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.30 2022/04/19 22:26:57 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.31 2022/05/03 07:25:34 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.30 2022/04/19 22:26:57 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.31 2022/05/03 07:25:34 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -87,12 +87,10 @@ wbkgdset(WINDOW *win, chtype ch)
 int
 wbkgd(WINDOW *win, chtype ch)
 {
-	chtype obch;
 	int y, x;
 
 	__CTRACE(__CTRACE_ATTR, "wbkgd: (%p), '%s', %08x\n",
 	    win, unctrl(ch & __CHARTEXT), ch & __ATTRIBUTES);
-	obch = win->bch;
 	wbkgdset(win, ch);
 
 	for (y = 0; y < win->maxy; y++) {
@@ -100,7 +98,7 @@ wbkgd(WINDOW *win, chtype ch)
 			__LDATA *cp = &win->alines[y]->line[x];
 
 			/* Update/switch background characters */
-			if (cp->ch == obch)
+			if (cp->cflags & CA_BACKGROUND)
 				cp->ch = win->bch;
 
 			/* Update/merge attributes */
@@ -174,7 +172,7 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 	/* get a copy of the old background, we will need it. */
 	obkgrnd.ch = win->bch;
 	obkgrnd.attr = win->battr;
-	obkgrnd.wflags = 0;
+	obkgrnd.cflags |= CA_BACKGROUND;
 	obkgrnd.wcols = win->wcols;
 	obkgrnd.nsp = NULL;
 	_cursesi_copy_nsp(win->bnsp, &obkgrnd);
@@ -223,22 +221,26 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 	win->battr = battr;
 	win->wcols = 1;
 
+	nbkgrnd.ch = win->bch;
+	nbkgrnd.attr = win->battr;
+	nbkgrnd.cflags |= CA_BACKGROUND;
+	nbkgrnd.wcols = win->wcols;
+	nbkgrnd.nsp = NULL;
+	_cursesi_copy_nsp(win->bnsp, &nbkgrnd);
+
+	/* if the background is already this char then skip updating */
+	if (_cursesi_celleq(&obkgrnd, &nbkgrnd))
+		return;
+
 	/*
 	 * Now do the dirty work of updating all the locations
 	 * that have the old background character with the new.
 	 */
 
-	nbkgrnd.ch = win->bch;
-	nbkgrnd.attr = win->battr;
-	nbkgrnd.wflags = 0;
-	nbkgrnd.wcols = win->wcols;
-	nbkgrnd.nsp = NULL;
-	_cursesi_copy_nsp(win->bnsp, &nbkgrnd);
-
 	for (wy = 0; wy < win->maxy; wy++) {
 		wlp = win->alines[wy];
 		for (wx = 0; wx < win->maxx; wx++) {
-			if (_cursesi_celleq(&obkgrnd, &wlp->line[wx])) {
+			if (wlp->line[wx].cflags & CA_BACKGROUND) {
 				_cursesi_copy_wchar(&nbkgrnd, &wlp->line[wx]);
 			}
 		}
