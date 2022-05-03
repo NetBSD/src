@@ -1,4 +1,4 @@
-# $NetBSD: test-variants.mk,v 1.2 2022/03/03 20:03:19 rillig Exp $
+# $NetBSD: test-variants.mk,v 1.3 2022/05/03 19:05:34 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -26,12 +26,6 @@ TESTS+=			default
 #
 TESTS+=			llvm
 ENV.llvm=		HAVE_LLVM="yes"
-
-TESTS+=			gcc8
-ENV.gcc8=		USE_GCC8="yes"
-
-TESTS+=			gcc9
-ENV.gcc9=		USE_GCC9="yes"
 
 # Use emalloc for memory allocation.
 TESTS+=			emalloc
@@ -182,37 +176,36 @@ ENV.fort=		USE_FORT="yes"
 TESTS+=			abs
 ENV.abs=		USE_ABSOLUTE_TESTNAMES="yes"
 
-# This test is the result of reading through the GCC "Warning Options"
+# This test is the result of reading through the GCC 10 "Warning Options"
 # documentation, noting down everything that sounded interesting.
 #
-TESTS+=			gcc10-warn
-ENV.gcc10-warn=		USE_GCC10=yes
-CFLAGS.gcc10-warn=	-Wmisleading-indentation
-CFLAGS.gcc10-warn+=	-Wmissing-attributes
-CFLAGS.gcc10-warn+=	-Wmissing-braces
-CFLAGS.gcc10-warn+=	-Wextra
-CFLAGS.gcc10-warn+=	-Wnonnull
-CFLAGS.gcc10-warn+=	-Wnonnull-compare
-CFLAGS.gcc10-warn+=	-Wnull-dereference
-CFLAGS.gcc10-warn+=	-Wimplicit
-CFLAGS.gcc10-warn+=	-Wimplicit-fallthrough=4
-CFLAGS.gcc10-warn+=	-Wignored-qualifiers
-CFLAGS.gcc10-warn+=	-Wunused
-CFLAGS.gcc10-warn+=	-Wunused-but-set-variable
-CFLAGS.gcc10-warn+=	-Wunused-parameter
-CFLAGS.gcc10-warn+=	-Wduplicated-branches
-CFLAGS.gcc10-warn+=	-Wduplicated-cond
-CFLAGS.gcc10-warn+=	-Wunused-macros
-CFLAGS.gcc10-warn+=	-Wcast-function-type
-CFLAGS.gcc10-warn+=	-Wconversion
-CFLAGS.gcc10-warn+=	-Wenum-compare
-CFLAGS.gcc10-warn+=	-Wmissing-field-initializers
-CFLAGS.gcc10-warn+=	-Wredundant-decls
-CFLAGS.gcc10-warn+=	-Wno-error=conversion
-CFLAGS.gcc10-warn+=	-Wno-error=sign-conversion
-CFLAGS.gcc10-warn+=	-Wno-error=unused-macros
-CFLAGS.gcc10-warn+=	-Wno-error=unused-parameter
-CFLAGS.gcc10-warn+=	-Wno-error=duplicated-branches
+TESTS+=			gcc-warn
+CFLAGS.gcc-warn=	-Wmisleading-indentation
+CFLAGS.gcc-warn+=	-Wmissing-attributes
+CFLAGS.gcc-warn+=	-Wmissing-braces
+CFLAGS.gcc-warn+=	-Wextra
+CFLAGS.gcc-warn+=	-Wnonnull
+CFLAGS.gcc-warn+=	-Wnonnull-compare
+CFLAGS.gcc-warn+=	-Wnull-dereference
+CFLAGS.gcc-warn+=	-Wimplicit
+CFLAGS.gcc-warn+=	-Wimplicit-fallthrough=4
+CFLAGS.gcc-warn+=	-Wignored-qualifiers
+CFLAGS.gcc-warn+=	-Wunused
+CFLAGS.gcc-warn+=	-Wunused-but-set-variable
+CFLAGS.gcc-warn+=	-Wunused-parameter
+CFLAGS.gcc-warn+=	-Wduplicated-branches
+CFLAGS.gcc-warn+=	-Wduplicated-cond
+CFLAGS.gcc-warn+=	-Wunused-macros
+CFLAGS.gcc-warn+=	-Wcast-function-type
+CFLAGS.gcc-warn+=	-Wconversion
+CFLAGS.gcc-warn+=	-Wenum-compare
+CFLAGS.gcc-warn+=	-Wmissing-field-initializers
+CFLAGS.gcc-warn+=	-Wredundant-decls
+CFLAGS.gcc-warn+=	-Wno-error=conversion
+CFLAGS.gcc-warn+=	-Wno-error=sign-conversion
+CFLAGS.gcc-warn+=	-Wno-error=unused-macros
+CFLAGS.gcc-warn+=	-Wno-error=unused-parameter
+CFLAGS.gcc-warn+=	-Wno-error=duplicated-branches
 
 .for shell in /usr/pkg/bin/bash /usr/pkg/bin/dash
 .  if exists(${shell})
