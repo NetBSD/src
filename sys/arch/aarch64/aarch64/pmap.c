@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.136 2022/04/27 23:38:31 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137 2022/05/03 20:09:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2022/04/27 23:38:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2022/05/03 20:09:54 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1502,6 +1502,8 @@ pmap_activate_efirt(void)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, " (pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
 
+	KASSERT(kpreempt_disabled());
+
 	ci->ci_pmap_asid_cur = pai->pai_asid;
 	UVMHIST_LOG(pmaphist, "setting asid to %#jx", pai->pai_asid,
 	    0, 0, 0);
@@ -1527,6 +1529,7 @@ pmap_activate(struct lwp *l)
 	UVMHIST_CALLARGS(pmaphist, "lwp=%p (pid=%d, kernel=%u)", l,
 	    l->l_proc->p_pid, pm == pmap_kernel() ? 1 : 0, 0);
 
+	KASSERT(kpreempt_disabled());
 	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	if (pm == pmap_kernel())
@@ -1561,6 +1564,8 @@ pmap_deactivate_efirt(void)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 
+	KASSERT(kpreempt_disabled());
+
 	/* Disable translation table walks using TTBR0 */
 	uint64_t tcr = reg_tcr_el1_read();
 	reg_tcr_el1_write(tcr | TCR_EPD0);
@@ -1587,6 +1592,8 @@ pmap_deactivate(struct lwp *l)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "lwp=%p (pid=%d, (kernel=%u))", l,
 	    l->l_proc->p_pid, pm == pmap_kernel() ? 1 : 0, 0);
+
+	KASSERT(kpreempt_disabled());
 
 	/* Disable translation table walks using TTBR0 */
 	tcr = reg_tcr_el1_read();
