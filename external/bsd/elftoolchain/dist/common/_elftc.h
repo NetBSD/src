@@ -1,4 +1,4 @@
-/*	$NetBSD: _elftc.h,v 1.8 2021/03/10 21:36:29 jkoshy Exp $	*/
+/*	$NetBSD: _elftc.h,v 1.9 2022/05/03 16:47:15 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joseph Koshy
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _elftc.h 3933 2021-03-10 21:09:49Z jkoshy
+ * Id: _elftc.h 3975 2022-04-30 20:10:58Z jkoshy
  */
 
 /**
@@ -285,11 +285,11 @@ struct name {							\
 /*
  * VCS Ids.
  *
- * The marker below is intended to be replaced with a project-specific
+ * The place holder below is intended to be replaced with a project-specific
  * definition of the ELFTC_VCSID macro.
  */
 
-#ifndef ELFTC_VCSID
+#ifndef	ELFTC_VCSID
 #define	ELFTC_VCSID(ID)		/**/
 #endif
 
@@ -315,6 +315,20 @@ struct name {							\
 #endif
 
 #endif	/* ELFTC_VCSID */
+
+/*
+ * The place holder below is meant to be replaced by a declaration
+ * of the downstream project's revision control macro.
+ *
+ * E.g. on NetBSD, this place holder would be replaced by:
+ *
+ *   #if !defined(__RCSID)
+ *   #define __RCSID(ID)
+ *   #endif
+ */
+#if !defined(__RCSID)
+#define __RCSID(ID) /**/
+#endif  /* !defined(__RCSID) */
 
 /*
  * Provide an equivalent for getprogname(3).
