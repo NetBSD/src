@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.122 2022/04/19 22:26:57 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.123 2022/05/03 07:25:34 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.122 2022/04/19 22:26:57 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.123 2022/05/03 07:25:34 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1183,7 +1183,7 @@ makech(int wy)
 		}
 
 #ifdef HAVE_WCHAR
-		if ((cp->wflags & WCA_CONTINUATION) == WCA_CONTINUATION)
+		if ((cp->cflags & CA_CONTINUATION) == CA_CONTINUATION)
 			cp--;
 #endif /* HAVE_WCHAR */
 
@@ -1198,8 +1198,8 @@ makech(int wy)
 	while (wx <= lch) {
 		__CTRACE(__CTRACE_REFRESH, "makech: wx=%d,lch=%d\n", wx, lch);
 #ifdef HAVE_WCHAR
-		__CTRACE(__CTRACE_REFRESH, "makech: farnarkle: flags 0x%x, wflags 0x%x, color_init %d, celleq %d\n",
-			wlp->flags, nsp->wflags, __do_color_init, _cursesi_celleq(nsp, csp));
+		__CTRACE(__CTRACE_REFRESH, "makech: farnarkle: flags 0x%x, cflags 0x%x, color_init %d, celleq %d\n",
+			wlp->flags, nsp->cflags, __do_color_init, _cursesi_celleq(nsp, csp));
 		__CTRACE(__CTRACE_REFRESH, "makech: nsp=(%x,%x,%d,%x,%x,%d,%p)\n",
 			nsp->ch, nsp->attr, nsp->wcols, win->bch, win->battr,
 			win->wcols, nsp->nsp);
@@ -1209,7 +1209,7 @@ makech(int wy)
 #endif
 		if (!(wlp->flags & __ISFORCED) &&
 #ifdef HAVE_WCHAR
-		    ((nsp->wflags & WCA_CONTINUATION) != WCA_CONTINUATION) &&
+		    ((nsp->cflags & CA_CONTINUATION) != CA_CONTINUATION) &&
 #endif
 		    _cursesi_celleq(nsp, csp))
 		{

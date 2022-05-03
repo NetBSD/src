@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.79 2022/04/19 22:26:57 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.80 2022/05/03 07:25:34 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -70,10 +70,11 @@ typedef struct nschar_t {
 struct __ldata {
 	wchar_t	ch;			/* Character */
 	attr_t	attr;			/* Attributes */
+#define CA_CONTINUATION		0x0001	/* a continuation cell */
+#define CA_BACKGROUND		0x0002	/* background char */
+	int16_t		cflags;		/* internal attributes for wide char */
 #ifdef HAVE_WCHAR
 	nschar_t	*nsp;	/* Foreground non-spacing character pointer */
-#define WCA_CONTINUATION	0x0001	/* a continuation cell */
-	int16_t		wflags;		/* internal attributes for wide char */
 	int16_t		wcols;		/* display width of a wide char */
 #endif /* HAVE_WCHAR */
 };
@@ -332,6 +333,7 @@ void	 __CTRACE(int, const char *, ...) __attribute__((__format__(__printf__, 2, 
 #ifdef HAVE_WCHAR
 #define __NEED_ERASE(_sp, _bch, _battr)				\
 	((_sp)->ch != (_bch) ||					\
+	(((_sp)->cflags & CA_BACKGROUND) != CA_BACKGROUND) ||	\
 	    ((_sp)->attr & WA_ATTRIBUTES) != (_battr) ||	\
 	    (_sp)->nsp != NULL ||				\
 	    (_sp)->wcols < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.23 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.24 2022/05/03 07:25:34 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.23 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: border.c,v 1.24 2022/05/03 07:25:34 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -301,6 +301,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 			cw = 1;
 		for ( j = 0; j < cw; j++ ) {
 			win->alines[i]->line[j].ch = left.vals[0];
+			win->alines[i]->line[j].cflags &= ~CA_BACKGROUND;
 			win->alines[i]->line[j].attr = left.attributes;
 			np = win->alines[i]->line[j].nsp;
 			if (np) {
@@ -332,6 +333,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 			__CTRACE(__CTRACE_INPUT,
 			    "wborder_set: clean out partial char[%d]", j);
 			win->alines[i]->line[j].ch = win->bch;
+			win->alines[i]->line[j].cflags |= CA_BACKGROUND;
 			if (_cursesi_copy_nsp(win->bnsp,
 					      &win->alines[i]->line[j]) == ERR)
 				return ERR;
@@ -344,6 +346,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		pcw = win->alines[i]->line[endx - cw].wcols;
 		for ( j = endx - cw + 1; j <= endx; j++ ) {
 			win->alines[i]->line[j].ch = right.vals[0];
+			win->alines[i]->line[j].cflags &= ~CA_BACKGROUND;
 			win->alines[i]->line[j].attr = right.attributes;
 			np = win->alines[i]->line[j].nsp;
 			if (np) {
@@ -378,6 +381,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 			k = pcw < 0 ? endx -cw + pcw : endx - cw;
 			for (j = endx - cw; j >= k; j--) {
 				win->alines[i]->line[j].ch = win->bch;
+				win->alines[i]->line[j].cflags |= CA_BACKGROUND;
 				if (_cursesi_copy_nsp(win->bnsp,
 					       &win->alines[i]->line[j]) == ERR)
 					return ERR;
@@ -405,6 +409,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	for (i = tlcw; i <= min( endx - cw, endx - trcw); i += cw) {
 		for (j = 0; j < cw; j++) {
 			win->alines[0]->line[i + j].ch = top.vals[0];
+			win->alines[0]->line[i + j].cflags &= ~CA_BACKGROUND;
 			win->alines[0]->line[i + j].attr = top.attributes;
 			np = win->alines[0]->line[i + j].nsp;
 			if (np) {
@@ -435,6 +440,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	}
 	while (i <= endx - trcw) {
 		win->alines[0]->line[i].ch = win->bch;
+		win->alines[0]->line[i].cflags |= CA_BACKGROUND;
 		if (_cursesi_copy_nsp(win->bnsp,
 				      &win->alines[0]->line[i]) == ERR)
 			return ERR;
@@ -446,6 +452,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	for (i = blcw; i <= min( endx - cw, endx - brcw); i += cw) {
 		for (j = 0; j < cw; j++) {
 			win->alines[endy]->line[i + j].ch = bottom.vals[0];
+			win->alines[endy]->line[i + j].cflags &= ~CA_BACKGROUND;
 			win->alines[endy]->line[i + j].attr = bottom.attributes;
 			np = win->alines[endy]->line[i + j].nsp;
 			if (np) {
@@ -475,6 +482,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	}
 	while (i <= endx - brcw) {
 		win->alines[endy]->line[i].ch = win->bch;
+		win->alines[endy]->line[i].cflags |= CA_BACKGROUND;
 		if (_cursesi_copy_nsp(win->bnsp,
 				      &win->alines[endy]->line[i]) == ERR)
 			return ERR;
@@ -488,6 +496,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		(win->flags & __SCROLLOK) && (win->flags & __SCROLLWIN))) {
 		for (i = 0; i < tlcw; i++) {
 			win->alines[0]->line[i].ch = topleft.vals[0];
+			win->alines[0]->line[i].cflags &= ~CA_BACKGROUND;
 			win->alines[0]->line[i].attr = topleft.attributes;
 			np = win->alines[0]->line[i].nsp;
 			if (np) {
@@ -517,6 +526,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 		for (i = endx - trcw + 1; i <= endx; i++) {
 			win->alines[0]->line[i].ch = topright.vals[0];
+			win->alines[0]->line[i].cflags &= ~CA_BACKGROUND;
 			win->alines[0]->line[i].attr = topright.attributes;
 			np = win->alines[0]->line[i].nsp;
 			if (np) {
@@ -546,6 +556,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 		for (i = 0; i < blcw; i++) {
 			win->alines[endy]->line[i].ch = botleft.vals[0];
+			win->alines[endy]->line[i].cflags &= ~CA_BACKGROUND;
 			win->alines[endy]->line[i].attr = botleft.attributes;
 			np = win->alines[ endy ]->line[i].nsp;
 			if (np) {
@@ -574,6 +585,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 		for (i = endx - brcw + 1; i <= endx; i++) {
 			win->alines[endy]->line[i].ch = botright.vals[0];
+			win->alines[endy]->line[i].cflags &= ~CA_BACKGROUND;
 			win->alines[endy]->line[i].attr = botright.attributes;
 			np = win->alines[endy]->line[i].nsp;
 			if (np) {

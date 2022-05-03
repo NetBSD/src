@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.29 2022/04/19 22:26:57 blymn Exp $	*/
+/*	$NetBSD: curses.c,v 1.30 2022/05/03 07:25:34 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.29 2022/04/19 22:26:57 blymn Exp $");
+__RCSID("$NetBSD: curses.c,v 1.30 2022/05/03 07:25:34 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -121,7 +121,7 @@ _cursesi_copy_wchar(__LDATA *src, __LDATA *dest)
 {
 	dest->ch = src->ch;
 	dest->attr = src->attr;
-	dest->wflags = src->wflags;
+	dest->cflags = src->cflags;
 	dest->wcols = src->wcols;
 	_cursesi_copy_nsp(src->nsp, dest);
 }
