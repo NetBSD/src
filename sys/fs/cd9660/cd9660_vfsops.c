@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.96 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.97 2022/05/03 07:33:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.96 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.97 2022/05/03 07:33:07 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -358,7 +358,10 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 		return EROFS;
 
 	/* Flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
+	VOP_UNLOCK(devvp);
+	if (error != 0)
 		return (error);
 
 	/* This is the "logical sector size".  The standard says this
