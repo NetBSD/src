@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.74 2022/05/03 08:33:59 hannken Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.75 2022/05/03 13:54:18 hannken Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -610,28 +610,34 @@ vop_post(vnode_t *vp, struct mount *mp, bool mpsafe, enum fst_op op)
 static inline void
 assert_vop_unlocked(vnode_t *vp, const char *str)
 {
+#if defined(VNODE_LOCKDEBUG)
 
 	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE)
 		panic(\"%s: %p %d/%d is locked but should not be\",
 		    str, vp, vp->v_tag, vp->v_type);
+#endif
 }
 
 static inline void
 assert_vop_locked(vnode_t *vp, const char *str)
 {
+#if defined(VNODE_LOCKDEBUG)
 
 	if (VOP_ISLOCKED(vp) == LK_NONE)
 		panic(\"%s: %p %d/%d is not locked but should be\",
 		    str, vp, vp->v_tag, vp->v_type);
+#endif
 }
 
 static inline void
 assert_vop_elocked(vnode_t *vp, const char *str)
 {
+#if defined(VNODE_LOCKDEBUG)
 
 	if (VOP_ISLOCKED(vp) != LK_EXCLUSIVE)
 		panic(\"%s: %p %d/%d is not exclusive locked but should be\",
 		    str, vp, vp->v_tag, vp->v_type);
+#endif
 }
 
 const struct vnodeop_desc vop_default_desc = {"
