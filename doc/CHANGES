@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2871 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2872 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -490,3 +490,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSH: Import 9.0. [christos 20220415]
 	gpio: Allow /etc/rc.d/gpio to use a '!' character like /etc/rc.d/network
 		can to run a shell script. [brad 20220430]
+	indent(1): Support for C99, lots of bug fixes. [rillig 20220503]
+	lint(1): Reduce amount of wrong warnings. [rillig 20220503]
+	make(1): Speed up evaluation of conditions, reduce memory leaks.
+		[rillig 20220503]
