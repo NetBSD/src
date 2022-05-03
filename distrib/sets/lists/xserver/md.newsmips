@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.24 2020/11/10 21:47:41 kamil Exp $
+# $NetBSD: md.newsmips,v 1.25 2022/05/03 12:53:51 uwe Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -91,6 +91,7 @@
 ./usr/X11R7/man/cat4/ws.0				xserver-xf86-input-ws-catman	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				xserver-xf86-video-wsfb-catman	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0			xserver-xorg-server-catman	.cat,xorg
+./usr/X11R7/man/cat5/xorg.conf.d.0			xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/html1/Xorg.html				xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html1/cvt.html				xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html1/gtf.html				xserver-xorg-server-htmlman	html,xorg
@@ -100,6 +101,7 @@
 ./usr/X11R7/man/html4/ws.html				xserver-xf86-input-ws-htmlman	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				xserver-xf86-video-wsfb-htmlman	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
+./usr/X11R7/man/html5/xorg.conf.d.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/cvt.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				xserver-xorg-server-man	.man,xorg
@@ -109,4 +111,5 @@
 ./usr/X11R7/man/man4/ws.4				xserver-xf86-input-ws-man	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				xserver-xf86-video-wsfb-man	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			xserver-xorg-server-man	.man,xorg
+./usr/X11R7/man/man5/xorg.conf.d.5			xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/share/aclocal/xorg-server.m4		xserver-xorg-server-share	xorg
