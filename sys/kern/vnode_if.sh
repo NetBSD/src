@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.73 2022/03/19 13:53:32 hannken Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.74 2022/05/03 08:33:59 hannken Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -53,7 +53,7 @@ out_h=../sys/vnode_if.h
 out_rumph=../rump/include/rump/rumpvnode_if.h
 
 # generate VNODE_LOCKDEBUG checks (not fully functional)
-lockdebug=0
+lockdebug=1
 
 # Awk program (must support nawk extensions)
 # Use "awk" at Berkeley, "nawk" or "gawk" elsewhere.
@@ -150,14 +150,17 @@ awk_parser='
 	i=2;
 
 	if (is_context == 0) {
-		if ($2 == "LOCKED=YES") {
-			lockstate[argc] = 1;
+		if ($2 == "LOCKED=EXCL") {
+			lockstate[argc] = "elocked";
+			i++;
+		} else if ($2 == "LOCKED=YES") {
+			lockstate[argc] = "locked";
 			i++;
 		} else if ($2 == "LOCKED=NO") {
-			lockstate[argc] = 0;
+			lockstate[argc] = "unlocked";
 			i++;
 		} else
-			lockstate[argc] = -1;
+			lockstate[argc] = "";
 
 		if ($2 == "WILLRELE" ||
 		    $3 == "WILLRELE") {
@@ -175,7 +178,8 @@ awk_parser='
 			i++;
 		}
 		if (argc == 0 && fstrans == "") {
-			if (lockstate[0] == 1)
+			if (lockstate[0] == "locked" ||
+			     lockstate[0] == "elocked")
 				fstrans = "NO";
 			else
 				fstrans = "YES";
@@ -249,12 +253,6 @@ echo -n "$copyright"
 echo ''
 echo "#ifndef _${SYS}VNODE_IF_H_"
 echo "#define _${SYS}VNODE_IF_H_"
-if [ ${lockdebug} -ne 0 ] ; then
-	echo ''
-	echo '#ifdef _KERNEL_OPT'
-	echo '#include "opt_vnode_lockdebug.h"'
-	echo '#endif /* _KERNEL_OPT */'
-fi
 [ -z "${rump}" ] && echo "
 extern const struct vnodeop_desc ${rump}vop_default_desc;"
 echo
@@ -343,7 +341,12 @@ echo "
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, \"\$NetBSD\$\");"
 
-[ ${lockdebug} -ne 0 ] && echo && echo '#include "opt_vnode_lockdebug.h"'
+if [ -z "${rump}" -a ${lockdebug} -ne 0 ] ; then
+	echo ''
+	echo '#ifdef _KERNEL_OPT'
+	echo '#include "opt_vnode_lockdebug.h"'
+	echo '#endif /* _KERNEL_OPT */'
+fi
 
 echo '
 #include <sys/param.h>
@@ -604,6 +607,33 @@ vop_post(vnode_t *vp, struct mount *mp, bool mpsafe, enum fst_op op)
 	}
 }
 
+static inline void
+assert_vop_unlocked(vnode_t *vp, const char *str)
+{
+
+	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE)
+		panic(\"%s: %p %d/%d is locked but should not be\",
+		    str, vp, vp->v_tag, vp->v_type);
+}
+
+static inline void
+assert_vop_locked(vnode_t *vp, const char *str)
+{
+
+	if (VOP_ISLOCKED(vp) == LK_NONE)
+		panic(\"%s: %p %d/%d is not locked but should be\",
+		    str, vp, vp->v_tag, vp->v_type);
+}
+
+static inline void
+assert_vop_elocked(vnode_t *vp, const char *str)
+{
+
+	if (VOP_ISLOCKED(vp) != LK_EXCLUSIVE)
+		panic(\"%s: %p %d/%d is not exclusive locked but should be\",
+		    str, vp, vp->v_tag, vp->v_type);
+}
+
 const struct vnodeop_desc vop_default_desc = {"
 echo '	0,
 	"default",
@@ -691,25 +721,16 @@ function bodynorm() {
 	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n",
 		args_name);
 	printf("\tstruct mount *mp;\n");
-	if (lockdebug) {
-		printf("#ifdef VNODE_LOCKDEBUG\n");
-		for (i=0; i<argc; i++) {
-			if (lockstate[i] != -1)
-				printf("\tint islocked_%s;\n", argname[i]);
-		}
-		printf("#endif\n");
-	}
 	printf("\ta.a_desc = VDESC(%s);\n", name);
 	for (i=0; i<argc; i++) {
 		printf("\ta.a_%s = %s;\n", argname[i], argname[i]);
-		if (lockdebug && lockstate[i] != -1) {
-			printf("#ifdef VNODE_LOCKDEBUG\n");
-			printf("\tislocked_%s = (VOP_ISLOCKED(%s) == LK_EXCLUSIVE);\n",
-			    argname[i], argname[i]);
-			printf("\tif (islocked_%s != %d)\n", argname[i],
-			    lockstate[i]);
-			printf("\t\tpanic(\"%s: %s: locked %%d, expected %%d\", islocked_%s, %d);\n", name, argname[i], argname[i], lockstate[i]);
-			printf("#endif\n");
+	}
+	if (lockdebug) {
+		for (i=0; i<argc; i++) {
+			if (lockstate[i] == "")
+				continue;
+			printf("\tassert_vop_%s(%s, \"%s: %s\");\n",
+			    lockstate[i], argname[i], name, argname[i]);
 		}
 	}
 	# This is done before generic vop_pre() because we want

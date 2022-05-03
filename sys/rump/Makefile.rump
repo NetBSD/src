@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.133 2021/07/07 11:51:45 martin Exp $
+#	$NetBSD: Makefile.rump,v 1.134 2022/05/03 08:34:00 hannken Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -121,6 +121,10 @@ CPPFLAGS+=	-DDEBUG
 
 .ifdef RUMP_LOCKDEBUG
 CPPFLAGS+=	-DLOCKDEBUG
+.endif
+
+.ifdef RUMP_VNODE_LOCKDEBUG
+CPPFLAGS+=	-DVNODE_LOCKDEBUG
 .endif
 
 RUMP_KTRACE?=yes
