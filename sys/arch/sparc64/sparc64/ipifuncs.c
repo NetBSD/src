@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.56 2016/01/30 22:47:06 palle Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.57 2022/05/03 20:52:31 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.56 2016/01/30 22:47:06 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.57 2022/05/03 20:52:31 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -365,7 +365,7 @@ mp_halt_cpus(void)
 
 	/*
 	 * Depending on available firmware methods, other cpus will
-	 * either shut down themselfs, or spin and wait for us to
+	 * either shut down themselves, or spin and wait for us to
 	 * stop them.
 	 */
 	if (CPUSET_EMPTY(cpus_spinning)) {

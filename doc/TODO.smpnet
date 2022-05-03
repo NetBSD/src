@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.45 2021/12/31 00:57:12 riastradh Exp $
+$NetBSD: TODO.smpnet,v 1.46 2022/05/03 20:52:30 andvar Exp $
 
 MP-safe components
 ==================
@@ -171,7 +171,7 @@ netstat(1) accesses ifnet_list, the head of a list of interface objects
 (struct ifnet), and traverses each object through ifnet#if_list member variable.
 ifnet_list and ifnet#if_list is obsoleted by ifnet_pslist and
 ifnet#if_pslist_entry respectively. netstat also accesses the IP address list
-of an interface throught ifnet#if_addrlist. struct ifaddr, struct in_ifaddr
+of an interface through ifnet#if_addrlist. struct ifaddr, struct in_ifaddr
 and struct in6_ifaddr are accessed and the following obsolete member variables
 are stuck: ifaddr#ifa_list, in_ifaddr#ia_hash, in_ifaddr#ia_list,
 in6_ifaddr#ia_next and in6_ifaddr#_ia6_multiaddrs. Note that netstat already

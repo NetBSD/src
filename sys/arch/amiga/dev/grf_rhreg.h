@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.16 2007/03/04 05:59:19 christos Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.17 2022/05/03 20:52:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -198,7 +198,7 @@ struct MonDef {
  * You may set a character and its associated attribute byte
  * with a single word-access, or you may perform to byte writes
  * for the char and attribute. Each 2. word has no meaning,
- * and writes to theese locations are ignored.
+ * and writes to these locations are ignored.
  *
  * The attribute byte for each character has the following
  * structure:
@@ -342,7 +342,7 @@ struct MonDef {
  * parameters have sensible values. 8 bit gfx-mode only!
  *
  * The blitter has a lot more capabilities, which aren't
- * currently used by theese routines, among them color-expanded
+ * currently used by these routines, among them color-expanded
  * and text-blits, which can speed up GUIs like X11 a lot.
  * If you've got any idea how to make use of them within
  * your routines, contact me, and I'll implement the necessary

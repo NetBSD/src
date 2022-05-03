@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.61 2022/03/28 12:38:57 riastradh Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.62 2022/05/03 20:52:30 andvar Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.61 2022/03/28 12:38:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.62 2022/05/03 20:52:30 andvar Exp $");
 
 #include "grfrt.h"
 #include "ite.h"
@@ -80,7 +80,7 @@ int retina_inited;
  * manufactured by MS MacroSystem GmbH from within NetBSD for the Amiga.
  *
  * Thanks to MacroSystem for providing me with the necessary information
- * to create theese routines. The sparse documentation of this code
+ * to create these routines. The sparse documentation of this code
  * results from the agreements between MS and me.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2011/09/06 18:28:18 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2022/05/03 20:52:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2011/09/06 18:28:18 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2022/05/03 20:52:32 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ int	debug;		/* debugging flag */
 int	nflag;		/* NOP flag, just print commands without executing */
 int	qflag;		/* Quiet. Don't print messages */
 int	options;	/* global options */
-int	iamremote;	/* act as remote server for transfering files */
+int	iamremote;	/* act as remote server for transferring files */
 
 FILE	*fin = NULL;	/* input file pointer */
 int	rem = -1;	/* file descriptor to remote source/sink process */

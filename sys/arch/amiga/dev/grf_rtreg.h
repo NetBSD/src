@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.16 2010/02/28 15:52:16 snj Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.17 2022/05/03 20:52:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -50,7 +50,7 @@
  * manufactured by MS MacroSystem GmbH from within NetBSD for the Amiga.
  *
  * Thanks to MacroSystem for providing me with the necessary information
- * to create theese routines. The sparse documentation of this code
+ * to create these routines. The sparse documentation of this code
  * results from the agreements between MS and me.
  */
 
@@ -204,7 +204,7 @@ extern unsigned char NCRStdPalette[];
    You may set a character and its associated attribute byte
    with a single word-access, or you may perform to byte writes
    for the char and attribute. Each 2. word has no meaning,
-   and writes to theese locations are ignored.
+   and writes to these locations are ignored.
 
    The attribute byte for each character has the following
    structure:

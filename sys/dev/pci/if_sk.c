@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.109 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.110 2022/05/03 20:52:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.109 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.110 2022/05/03 20:52:32 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2519,7 +2519,7 @@ sk_init_xmac(struct sk_if_softc *sc_if)
 	 * that jumbo frames larger than 8192 bytes will be
 	 * truncated. Disabling all bad frame filtering causes
 	 * the RX FIFO to operate in streaming mode, in which
-	 * case the XMAC will start transfering frames out of the
+	 * case the XMAC will start transferring frames out of the
 	 * RX FIFO as soon as the FIFO threshold is reached.
 	 */
 	SK_XM_SETBIT_4(sc_if, XM_MODE, XM_MODE_RX_BADFRAMES |

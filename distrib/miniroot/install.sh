@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.27 2019/04/04 20:51:35 christos Exp $
+#	$NetBSD: install.sh,v 1.28 2022/05/03 20:52:30 andvar Exp $
 #
 # Copyright (c) 1996,1997,1999,2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-FILESYSTEMS="/tmp/filesystems"		# used thoughout
+FILESYSTEMS="/tmp/filesystems"		# used throughout
 FQDN=""					# domain name
 
 trap "umount /tmp > /dev/null 2>&1" 0

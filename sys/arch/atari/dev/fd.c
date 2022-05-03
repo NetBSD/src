@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.90 2022/04/11 21:23:07 andvar Exp $	*/
+/*	$NetBSD: fd.c,v 1.91 2022/05/03 20:52:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.90 2022/04/11 21:23:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.91 2022/05/03 20:52:31 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -555,7 +555,7 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 		 * floppy (eq. the same partition).
 		 */
 		if (sc->density != fdtypes[DISKPART(dev)].density)
-			return ENXIO;	/* XXX temporarely out of business */
+			return ENXIO;	/* XXX temporarily out of business */
 	}
 	fdgetdisklabel(sc, dev);
 #ifdef FLP_DEBUG
