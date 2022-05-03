@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.18 2022/02/05 14:11:52 zafer Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.19 2022/05/03 07:34:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.18 2022/02/05 14:11:52 zafer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.19 2022/05/03 07:34:38 hannken Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -157,9 +157,12 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
+
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
 		    KAUTH_ARG(accessmode));
+		VOP_UNLOCK(devvp);
 	}
 
 	if (error) {
