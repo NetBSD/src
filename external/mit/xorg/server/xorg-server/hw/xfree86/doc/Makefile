@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2020/08/10 09:23:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2022/05/03 12:53:52 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,10 @@ FILES=	README.modes
 
 FILESDIR=	${X11USRLIBDIR}/X11/doc
 
-MAN=	Xorg.1 xorg.conf.5
-# xorg.conf.d.5?
+MAN += Xorg.1
+MAN += xorg.conf.5
+
+MLINKS += xorg.conf.5 xorg.conf.d.5
 
 X11EXTRAMANTRANSFORMS_BOTH+= \
 	xconfigdir		xorg.conf.d \
