@@ -1,4 +1,4 @@
-/*	$NetBSD: t_p2kifs.c,v 1.6 2017/01/13 21:30:43 christos Exp $	*/
+/*	$NetBSD: t_p2kifs.c,v 1.7 2022/05/03 07:36:20 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@ ATF_TC_BODY(makecn, tc)
 	/* need stable lwp for componentname */
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 
+	/* obey vnode locking rules */
+	RZ(RUMP_VOP_LOCK(rumpns_rootvnode, RUMP_LK_EXCLUSIVE));
+
 	/* try it once with the right path */
 	cn = rump_pub_makecn(RUMP_NAMEI_LOOKUP, 0, pathstr, strlen(pathstr),
 	    rump_pub_cred_create(0, 0, 0, NULL), rump_pub_lwproc_curlwp());
@@ -81,6 +84,8 @@ ATF_TC_BODY(makecn, tc)
 	    rump_pub_cred_create(0, 0, 0, NULL), rump_pub_lwproc_curlwp());
 	strcpy(pathstr, "/muuta");
 	RZ(RUMP_VOP_LOOKUP(rumpns_rootvnode, &vp, cn));
+
+	RZ(RUMP_VOP_UNLOCK(rumpns_rootvnode));
 	rump_pub_freecn(cn, RUMPCN_FREECRED);
 }
 
