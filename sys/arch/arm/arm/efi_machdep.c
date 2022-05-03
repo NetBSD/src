@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.1 2022/04/02 11:16:06 skrll Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.2 2022/05/03 20:12:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.1 2022/04/02 11:16:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.2 2022/05/03 20:12:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -50,6 +50,10 @@ static struct {
 int
 arm_efirt_md_enter(void)
 {
+	kpreempt_disable();
+
+	struct lwp * const l = curlwp;
+
 	arm_efirt_state.aert_tpidrprw = armreg_tpidrprw_read();
 
 	/* Disable the VFP.  */
@@ -65,6 +69,9 @@ arm_efirt_md_enter(void)
 	if (err)
 		return err;
 
+	if ((l->l_flag & LW_SYSTEM) == 0) {
+		pmap_deactivate(l);
+	}
 	pmap_activate_efirt();
 
 	return 0;
@@ -73,7 +80,12 @@ arm_efirt_md_enter(void)
 void
 arm_efirt_md_exit(void)
 {
+	struct lwp * const l = curlwp;
+
 	pmap_deactivate_efirt();
+	if ((l->l_flag & LW_SYSTEM) == 0) {
+		pmap_activate(l);
+	}
 
 	armreg_tpidrprw_write(arm_efirt_state.aert_tpidrprw);
 
@@ -83,6 +95,8 @@ arm_efirt_md_exit(void)
 
 	/* Remove custom fault handler */
 	cpu_unset_onfault();
+
+	kpreempt_enable();
 }
 
 
