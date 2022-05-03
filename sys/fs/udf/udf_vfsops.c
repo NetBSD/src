@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.84 2022/03/23 13:06:06 andvar Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.85 2022/05/03 07:33:07 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.84 2022/03/23 13:06:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.85 2022/05/03 07:33:07 hannken Exp $");
 #endif /* not lint */
 
 
@@ -574,7 +574,10 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	int    num_anchors, error;
 
 	/* flush out any old buffers remaining from a previous use. */
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)))
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
+	VOP_UNLOCK(devvp);
+	if (error)
 		return error;
 
 	/* setup basic mount information */
