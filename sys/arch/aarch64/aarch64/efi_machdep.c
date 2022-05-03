@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.12 2022/04/27 23:38:31 ryo Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.13 2022/05/03 20:10:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.12 2022/04/27 23:38:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.13 2022/05/03 20:10:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -106,11 +106,9 @@ arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz,
 int
 arm_efirt_md_enter(void)
 {
-	struct lwp *l;
-	int err;
-
 	kpreempt_disable();
-	l = curlwp;
+
+	struct lwp * const l = curlwp;
 
 	/* Save FPU state */
 	arm_efirt_state.fpu_used = fpu_used_p(l) != 0;
@@ -125,7 +123,7 @@ arm_efirt_md_enter(void)
 	 * Install custom fault handler. EFI lock is held across calls so
 	 * shared faultbuf is safe here.
 	 */
-	err = cpu_set_onfault(&arm_efirt_state.faultbuf);
+	int err = cpu_set_onfault(&arm_efirt_state.faultbuf);
 	if (err)
 		return err;
 
@@ -142,7 +140,7 @@ arm_efirt_md_enter(void)
 void
 arm_efirt_md_exit(void)
 {
-	struct lwp *l = curlwp;
+	struct lwp * const l = curlwp;
 
 	if (efi_userva) {
 		pmap_deactivate_efirt();
@@ -150,7 +148,6 @@ arm_efirt_md_exit(void)
 			pmap_activate(l);
 		}
 	}
-
 
 	/* Disable FP access */
 	reg_cpacr_el1_write(CPACR_FPEN_NONE);
