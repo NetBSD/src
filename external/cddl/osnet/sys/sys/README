@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.1 2018/06/03 20:59:49 christos Exp $
+# $NetBSD: README,v 1.2 2022/05/03 12:09:19 jkoshy Exp $
 
 General guidelines for system wrapper header maintainance.
 
@@ -26,7 +26,7 @@ solaris/foo.h:
 
     #endif /* SOLARIS_SYS_FOO_H */
 
-Now there caaes where the solaris headers expose more stuff than ours,
+Now there cases where the solaris headers expose more stuff than ours,
 so we need to include more of our system headers from theirs. When that
 happens the rule should be that:
 
