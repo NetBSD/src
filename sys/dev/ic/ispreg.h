@@ -1,4 +1,4 @@
-/* $NetBSD: ispreg.h,v 1.34 2010/03/26 20:52:01 mjacob Exp $ */
+/* $NetBSD: ispreg.h,v 1.35 2022/05/03 20:52:32 andvar Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -535,7 +535,7 @@ typedef struct {
 #define	SXP_FIFO_STATUS	(SXP_BLOCK+0x5C)	/* RW*: SCSI FIFO Status */
 #define	SXP_FIFO_TOP	(SXP_BLOCK+0x5E)	/* RW*: SCSI FIFO Top Resid */
 #define	SXP_FIFO_BOTTOM	(SXP_BLOCK+0x60)	/* RW*: SCSI FIFO Bot Resid */
-#define	SXP_TRAN_REG	(SXP_BLOCK+0x64)	/* RW*: SCSI Transferr Reg */
+#define	SXP_TRAN_REG	(SXP_BLOCK+0x64)	/* RW*: SCSI Transfer Reg */
 #define	SXP_TRAN_CNT_LO	(SXP_BLOCK+0x68)	/* RW*: SCSI Trans Count */
 #define	SXP_TRAN_CNT_HI	(SXP_BLOCK+0x6A)	/* RW*: SCSI Trans Count */
 #define	SXP_TRAN_CTR_LO	(SXP_BLOCK+0x6C)	/* RW*: SCSI Trans Counter */

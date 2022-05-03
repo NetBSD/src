@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.3 2016/09/18 18:24:00 christos Exp $
+#	$NetBSD: install.sh,v 1.4 2022/05/03 20:52:30 andvar Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-FILESYSTEMS="/tmp/filesystems"		# used thoughout
+FILESYSTEMS="/tmp/filesystems"		# used throughout
 MODE="install"
 
 # include machine-dependent functions

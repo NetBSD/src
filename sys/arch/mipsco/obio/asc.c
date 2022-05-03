@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.22 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: asc.c,v 1.23 2022/05/03 20:52:31 andvar Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.22 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.23 2022/05/03 20:52:31 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -311,7 +311,7 @@ asc_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	if (esc->sc_dmasize == 0)
 		return 0;
 
-	/* have dmamap for the transfering addresses */
+	/* have dmamap for the transferring addresses */
 	if ((err = bus_dmamap_load(esc->sc_dmat, esc->sc_dmamap,
 	    *esc->sc_dmaaddr, esc->sc_dmasize, NULL /* kernel address */,		    BUS_DMA_NOWAIT)) != 0)
 		panic("%s: bus_dmamap_load err=%d",

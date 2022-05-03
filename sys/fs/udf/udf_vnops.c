@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.124 2022/05/03 07:35:43 hannken Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.125 2022/05/03 20:52:32 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.124 2022/05/03 07:35:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.125 2022/05/03 20:52:32 andvar Exp $");
 #endif /* not lint */
 
 
@@ -815,7 +815,7 @@ udf_lookup(void *v)
 		/*
 		 * Check if the directory has its sticky bit set. If so, ask
 		 * for clearance since only the owner of a file or directory
-		 * can remove/rename from taht directory.
+		 * can remove/rename from that directory.
 		 */
 		mode = udf_getaccessmode(dir_node);
 		if ((mode & S_ISTXT) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.111 2022/03/09 22:17:41 riastradh Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.112 2022/05/03 20:52:32 andvar Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -59,7 +59,7 @@
 
 /*
  * XXX TODO:
- *   copy next output packet while transfering
+ *   copy next output packet while transferring
  *   usb suspend
  *   could keep track of known values of all buffer space?
  *   combined print/log function for errors
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.111 2022/03/09 22:17:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.112 2022/05/03 20:52:32 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.83 2021/04/15 00:04:07 rin Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.84 2022/05/03 20:52:31 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.83 2021/04/15 00:04:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.84 2022/05/03 20:52:31 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -617,7 +617,7 @@ cpu_halt_others(void)
 	/*
 	 * TBD
 	 * Depending on available firmware methods, other cpus will
-	 * either shut down themselfs, or spin and wait for us to
+	 * either shut down themselves, or spin and wait for us to
 	 * stop them.
 	 */
 }
