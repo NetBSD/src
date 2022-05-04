@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.20 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.21 2022/05/04 07:32:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.20 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.21 2022/05/04 07:32:50 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,7 +593,7 @@ octgmx_set_filter(struct octgmx_port_softc *sc)
 	}
 
 	/*
-	 * Note first entry is self MAC address; other 7 entires are available
+	 * Note first entry is self MAC address; other 7 entries are available
 	 * for multicast addresses.
 	 */
 
