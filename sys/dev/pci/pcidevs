@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1455 2022/05/04 06:42:43 nia Exp $
+$NetBSD: pcidevs,v 1.1456 2022/05/04 07:55:05 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4566,7 +4566,7 @@ product INTEL XEONSC_MMVTD	0x2024	Xeon Scalable MM/Vt-d
 product INTEL XEONSC_RAS	0x2025	Xeon Scalable RAS
 product INTEL XEONSC_IOAPIC	0x2026	Xeon Scalable I/O APIC
 product INTEL XEONSC_VTD	0x2034	Xeon Scalable VT-d
-product INTEL XEONSC_RAS	0x2035	Xeon Scalable RAS
+product INTEL XEONSC_RAS_CFG	0x2035	Xeon Scalable RAS Configuration
 product INTEL XEONSC_IOAPIC_C	0x2036	Xeon Scalable IOxAPIC
 product INTEL XEONSC_IMC_1	0x2041	Xeon Scalable IMC
 product INTEL XEONSC_IMC_2	0x2042	Xeon Scalable IMC
