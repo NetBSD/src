@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.9 2016/08/23 06:23:26 christos Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.10 2022/05/04 07:34:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.9 2016/08/23 06:23:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.10 2022/05/04 07:34:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 	char *newidxblock = NULL;
 	struct ext2fs_htree_node *dst_node;
 	struct ext2fs_htree_entry *dst_entries;
-	struct ext2fs_htree_entry *root_entires;
+	struct ext2fs_htree_entry *root_entries;
 	struct buf *dst_bp = NULL;
 	int error, write_bp = 0, write_dst_bp = 0, write_info = 0;
 
@@ -517,7 +517,7 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 	ent_num = ext2fs_htree_get_count(entries);
 	if (ent_num == ext2fs_htree_get_limit(entries)) {
 		/* Split the index node. */
-		root_entires = info.h_levels[0].h_entries;
+		root_entries = info.h_levels[0].h_entries;
 		newidxblock = malloc(blksize, M_TEMP, M_WAITOK | M_ZERO);
 		dst_node = (struct ext2fs_htree_node *)newidxblock;
 		dst_entries = dst_node->h_entries;
@@ -543,8 +543,8 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 		if (info.h_levels_num == 2) {
 			uint16_t src_ent_num, dst_ent_num;
 
-			if (ext2fs_htree_get_count(root_entires) ==
-			    ext2fs_htree_get_limit(root_entires)) {
+			if (ext2fs_htree_get_count(root_entries) ==
+			    ext2fs_htree_get_limit(root_entries)) {
 				/* Directory index is full */
 				error = EIO;
 				goto finish;
