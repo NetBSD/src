@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.80 2022/04/16 18:15:22 andvar Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.81 2022/05/04 02:38:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.80 2022/04/16 18:15:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.81 2022/05/04 02:38:27 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -819,7 +819,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	uint64_t features, req_features;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int softint_flags;
-	int r, i, nvqs=0, req_flags;
+	int r, i, nvqs = 0, req_flags;
 	char xnamebuf[MAXCOMLEN];
 
 	if (virtio_child(vsc) != NULL) {
@@ -1233,7 +1233,7 @@ vioif_stop(struct ifnet *ifp, int disable)
 	 * 1. stop interrupt handlers by rxq_stopping and txq_stopping
 	 * 2. wait for stopping workqueue for packet processing
 	 */
-	for (i =0; i < sc->sc_act_nvq_pairs; i++) {
+	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
 		txq = &sc->sc_txq[i];
 		rxq = &sc->sc_rxq[i];
 
