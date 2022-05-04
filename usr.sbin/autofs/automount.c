@@ -1,4 +1,4 @@
-/*	$NetBSD: automount.c,v 1.3 2018/01/15 14:38:06 christos Exp $	*/
+/*	$NetBSD: automount.c,v 1.4 2022/05/04 11:27:54 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: automount.c,v 1.3 2018/01/15 14:38:06 christos Exp $");
+__RCSID("$NetBSD: automount.c,v 1.4 2022/05/04 11:27:54 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -83,18 +83,8 @@ mount_autofs(const char *from, const char *fspath, const char *options,
 {
 	struct autofs_args args;
 	int error;
-	char *cwd;
 
-	/*
-	 * There is no guarantee we are at /, so chdir to /.
-	 */
-	cwd = getcwd(NULL, 0);
-	if (chdir("/") != 0)
-		log_warn("failed to chdir to /");
 	create_directory(fspath);
-	if (chdir(cwd) != 0)
-		log_warn("failed to restore cwd");
-	free(cwd);
 
 	log_debugx("mounting %s on %s, prefix \"%s\", options \"%s\"",
 	    from, fspath, prefix, options);
