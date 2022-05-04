@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.69 2021/12/13 02:53:43 msaitoh Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.70 2022/05/04 07:48:35 andvar Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.69 2021/12/13 02:53:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.70 2022/05/04 07:48:35 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -313,7 +313,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
     if (sc == NULL)
 	return 0;
     /*
-     * Loop waiting for input, checking that nothing disasterous
+     * Loop waiting for input, checking that nothing disastrous
      * happens in the meantime.
      */
     mutex_spin_enter(&tty_lock);

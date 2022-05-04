@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.40 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.41 2022/05/04 07:48:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.40 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.41 2022/05/04 07:48:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ iopsp_attach(device_t parent, device_t self, void *aux)
 	fc = (param.p.ci.bustype == I2O_HBA_BUS_FCA);
 
 	/*
-	 * Say what the device is.  If we can find out what the controling
+	 * Say what the device is.  If we can find out what the controlling
 	 * device is, say what that is too.
 	 */
 	aprint_normal(": SCSI port");
