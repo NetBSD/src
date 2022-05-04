@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.125.6.10 2020/02/13 19:37:39 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.125.6.11 2022/05/04 15:36:35 sborrill Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.10 2020/02/13 19:37:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.11 2022/05/04 15:36:35 sborrill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -871,6 +871,10 @@ breakbreak:;
 			}
 			sc->sc_ac_cookie_len = ac_cookie_len;
 			memcpy(sc->sc_ac_cookie, ac_cookie, ac_cookie_len);
+		} else if (sc->sc_ac_cookie) {
+			free(sc->sc_ac_cookie, M_DEVBUF);
+			sc->sc_ac_cookie = NULL;
+			sc->sc_ac_cookie_len = 0;
 		}
 		if (relay_sid) {
 			if (sc->sc_relay_sid)
@@ -886,6 +890,10 @@ breakbreak:;
 			}
 			sc->sc_relay_sid_len = relay_sid_len;
 			memcpy(sc->sc_relay_sid, relay_sid, relay_sid_len);
+		} else if (sc->sc_relay_sid) {
+			free(sc->sc_relay_sid, M_DEVBUF);
+			sc->sc_relay_sid = NULL;
+			sc->sc_relay_sid_len = 0;
 		}
 		memcpy(&sc->sc_dest, eh->ether_shost, sizeof sc->sc_dest);
 		callout_stop(&sc->sc_timeout);
@@ -1312,6 +1320,9 @@ static struct mbuf *
 pppoe_get_mbuf(size_t len)
 {
 	struct mbuf *m;
+
+	if (len + sizeof(struct ether_header) > MCLBYTES)
+		return NULL;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
