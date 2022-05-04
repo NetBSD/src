@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915reg.h,v 1.6 2019/08/01 15:21:09 msaitoh Exp $	*/
+/*	$NetBSD: aic6915reg.h,v 1.7 2022/05/04 07:32:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ struct sf_tcd {
 
 /*
  * To make matters worse, the manual lies about the indices in the
- * completion queue entires.  It claims they are in 8-byte units,
+ * completion queue entries.  It claims they are in 8-byte units,
  * but they're actually *BYTES*, which means we need to divide by
  * 128 to get the actual index.
  */

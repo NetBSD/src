@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.60 2022/04/16 18:15:23 andvar Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.61 2022/05/04 07:32:50 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1240,7 +1240,7 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 	if (infos == NULL)
 		return;
 
-	/* pre-initialize the first entires as dummy entries */
+	/* pre-initialize the first entries as dummy entries */
 	for (i = 0; i < pset->parts->num_part; i++) {
 		infos[i].cur_part_id = NO_PART;
 		infos[i].cur_flags = PTI_PSCHEME_INTERNAL;
@@ -1284,7 +1284,7 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 		infos[pno].fs_type = info.fs_type;
 		infos[pno].fs_version = info.fs_sub_type;
 	}
-	/* Add the non-partition entires after that */
+	/* Add the non-partition entries after that */
 	j = pset->parts->num_part;
 	for (i = 0; i < pset->num; i++) {
 		if (j >= no)
