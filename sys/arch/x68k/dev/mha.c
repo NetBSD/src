@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.56 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: mha.c,v 1.57 2022/05/04 07:48:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.56 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.57 2022/05/04 07:48:34 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -812,7 +812,7 @@ mha_setsync(struct mha_softc *sc, struct spc_tinfo *ti)
 /*
  * Schedule a SCSI operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from mha_scsi_cmd and mha_done.  This may
- * save us an unecessary interrupt just to get things going.  Should only be
+ * save us an unnecessary interrupt just to get things going.  Should only be
  * called when state == SPC_IDLE and at bio pl.
  */
 void

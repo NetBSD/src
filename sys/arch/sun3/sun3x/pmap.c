@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119 2022/05/03 20:52:31 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120 2022/05/04 07:48:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2022/05/03 20:52:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2022/05/04 07:48:34 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -222,7 +222,7 @@ int pmap_debug = 0;
  * For every A table in the MMU A area, there will be a corresponding
  * a_tmgr structure in the TMGR A area.  The same will be true for
  * the B and C tables.  This arrangement will make it easy to find the
- * controling tmgr structure for any table in the system by use of
+ * controlling tmgr structure for any table in the system by use of
  * (relatively) simple macros.
  */
 
@@ -293,7 +293,7 @@ struct pool	pmap_pmap_pool;
  * physical memory.  Memory is divided into 4 banks which are physically
  * locatable on the system board.  Although the size of these banks varies
  * with the size of memory they contain, their base addresses are
- * permenently fixed.  The following structure, which describes these
+ * permanently fixed.  The following structure, which describes these
  * banks, is initialized by pmap_bootstrap() after it reads from a similar
  * structure provided by the ROM Monitor.
  *
@@ -1218,7 +1218,7 @@ pmap_init_pv(void)
  *
  * Note: A "managed" address is one that was reported to the VM system as
  * a "usable page" during system startup.  As such, the VM system expects the
- * pmap module to keep an accurate track of the useage of those pages.
+ * pmap module to keep an accurate track of the usage of those pages.
  * Any page not given to the VM system at startup does not exist (as far as
  * the VM system is concerned) and is therefore "unmanaged."  Examples are
  * those pages which belong to the ROM monitor and the memory allocated before
@@ -1704,7 +1704,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/*
 	 * Determine if the physical address being mapped is on-board RAM.
 	 * Any other area of the address space is likely to belong to a
-	 * device and hence it would be disasterous to cache its contents.
+	 * device and hence it would be disastrous to cache its contents.
 	 */
 	if ((managed = is_managed(pa)) == false)
 		mapflags |= PMAP_NC;
@@ -2064,7 +2064,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
  * Note that the kernel should never take a fault on any page
  * between [ KERNBASE .. virtual_avail ] and this is checked in
  * trap.c for kernel-mode MMU faults.  This means that mappings
- * created in that range must be implicily wired. -gwr
+ * created in that range must be implicitly wired. -gwr
  */
 void
 pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
@@ -3026,7 +3026,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 * If we just modified the current address space,
 	 * make sure to flush the MMU cache.
 	 *
-	 * XXX - this could be an unecessarily large flush.
+	 * XXX - this could be an unnecessarily large flush.
 	 * XXX - Could decide, based on the size of the VA range
 	 * to be removed, whether to flush "by pages" or "all".
 	 */
@@ -3060,7 +3060,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 
 	/*
 	 * The following code works with what I call a 'granularity
-	 * reduction algorithim'.  A range of addresses will always have
+	 * reduction algorithm'.  A range of addresses will always have
 	 * the following properties, which are classified according to
 	 * how the range relates to the size of the current granularity
 	 * - an A table entry:
@@ -3071,13 +3071,13 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 	 *
 	 * A range will always start on a granularity boundary, illustrated
 	 * by '+' signs in the table above, or it will start at some point
-	 * inbetween a granularity boundary, as illustrated by point 1.
+	 * in-between a granularity boundary, as illustrated by point 1.
 	 * The first step in removing a range of addresses is to remove the
 	 * range between 1 and 2, the nearest granularity boundary.  This
 	 * job is handled by the section of code governed by the
 	 * 'if (start < nstart)' statement.
 	 *
-	 * A range will always encompass zero or more intergral granules,
+	 * A range will always encompass zero or more integral granules,
 	 * illustrated by points 2 and 3.  Integral granules are easy to
 	 * remove.  The removal of these granules is the second step, and
 	 * is handled by the code block 'if (nstart < nend)'.
@@ -3592,7 +3592,7 @@ pmap_kcore_hdr(struct sun3x_kcore_hdr *sh)
 /* pmap_virtual_space			INTERFACE
  **
  * Return the current available range of virtual addresses in the
- * arguuments provided.  Only really called once.
+ * arguments provided.  Only really called once.
  */
 void
 pmap_virtual_space(vaddr_t *vstart, vaddr_t *vend)
@@ -3649,7 +3649,7 @@ pmap_count(pmap_t pmap, int type)
 
 	/*
 	 * If the pmap does not have its own A table manager, it has no
-	 * valid entires.
+	 * valid entries.
 	 */
 	if (pmap->pm_a_tmgr == NULL)
 		return 0;
