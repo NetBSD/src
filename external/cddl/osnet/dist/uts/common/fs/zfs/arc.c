@@ -3963,7 +3963,7 @@ arc_available_memory(void)
 	}
 
 #endif	/* illumos */
-#if defined(__i386) || !defined(UMA_MD_SMALL_ALLOC)
+#if !defined(_LP64)
 	/*
 	 * If we're on an i386 platform, it's possible that we'll exhaust the
 	 * kernel heap space before we ever run out of available physical
@@ -5750,7 +5750,7 @@ arc_memory_throttle(uint64_t reserve, uint64_t txg)
 	static uint64_t page_load = 0;
 	static uint64_t last_txg = 0;
 
-#if defined(__i386) || !defined(UMA_MD_SMALL_ALLOC)
+#if !defined(_LP64)
 	available_memory =
 	    MIN(available_memory, ptob(vmem_size(heap_arena, VMEM_FREE)));
 #endif
