@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915var.h,v 1.4 2012/10/27 17:18:19 chs Exp $	*/
+/*	$NetBSD: aic6915var.h,v 1.5 2022/05/04 07:32:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct sf_control_data {
 	struct sf_txdesc0 scd_txdescs[SF_NTXDESC];
 
 	/*
-	 * The transmit completion queue entires.
+	 * The transmit completion queue entries.
 	 */
 	struct sf_tcd scd_txcomp[SF_NTCD];
 
