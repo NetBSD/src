@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.87 2022/04/27 16:54:20 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.88 2022/05/04 15:16:27 sborrill Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1560,4 +1560,10 @@ usr.sbin/quotaon/quotaon.c			1.31
 	Fix quota1 user+group quota, quotaoff live lock and quotaon/off
 	verbose output.  Avoids possibly corrupted quota data.
 	[hannken, ticket #1440]
+
+sys/net/if_pppoe.c				1.179
+
+	pppoe(4): fix CVE-2022-29867 - discovery phase local network
+	mbuf corruption.
+	[martin, ticket #1442]
 
