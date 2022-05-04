@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.71 2021/08/07 16:19:15 thorpej Exp $ */
+/*	$NetBSD: stp4020.c,v 1.72 2022/05/04 07:48:35 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.71 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.72 2022/05/04 07:48:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -982,14 +982,14 @@ stp4020_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 		h->int_enable = v;
 		h->int_disable = v & ~STP4020_ICR0_IOIE;
 #endif
-		DPRINTF(("%s: configuring card for IO useage\n", device_xname(h->sc->sc_dev)));
+		DPRINTF(("%s: configuring card for IO usage\n", device_xname(h->sc->sc_dev)));
 	} else {
 		v |= STP4020_ICR0_IFTYPE_MEM;
 #ifndef SUN4U
 		h->int_enable = h->int_disable = v;
 #endif
-		DPRINTF(("%s: configuring card for IO useage\n", device_xname(h->sc->sc_dev)));
-		DPRINTF(("%s: configuring card for MEM ONLY useage\n", device_xname(h->sc->sc_dev)));
+		DPRINTF(("%s: configuring card for IO usage\n", device_xname(h->sc->sc_dev)));
+		DPRINTF(("%s: configuring card for MEM ONLY usage\n", device_xname(h->sc->sc_dev)));
 	}
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 }
