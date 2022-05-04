@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.4 2021/09/14 20:40:55 rillig Exp $	*/
+/*	$NetBSD: common.c,v 1.5 2022/05/04 11:27:54 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * $FreeBSD: head/usr.sbin/autofs/common.c 303527 2016-07-30 01:10:05Z bapt $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.4 2021/09/14 20:40:55 rillig Exp $");
+__RCSID("$NetBSD: common.c,v 1.5 2022/05/04 11:27:54 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -132,7 +132,7 @@ create_directory(const char *path)
 	 */
 	copy = tofree = checked_strdup(path + 1);
 
-	partial = checked_strdup("");
+	partial = checked_strdup("/");
 	for (;;) {
 		component = strsep(&copy, "/");
 		if (component == NULL)
