@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.88 2022/05/04 15:16:27 sborrill Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.89 2022/05/04 17:52:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1566,4 +1566,9 @@ sys/net/if_pppoe.c				1.179
 	pppoe(4): fix CVE-2022-29867 - discovery phase local network
 	mbuf corruption.
 	[martin, ticket #1442]
+
+sys/nfs/nfs_vfsops.c				1.243
+
+	nfs: fix file size limit.
+	[gavan, ticket #1441]
 
