@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1454 2022/04/27 06:57:48 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1455 2022/05/04 06:42:43 nia Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4558,9 +4558,40 @@ product INTEL C2000_SGMII	0x1f41	C2000 Ethernet(SGMII)
 product INTEL C2000_DUMMYGBE	0x1f42	C2000 Ethernet(Dummy function)
 product INTEL C2000_25GBE	0x1f45	C2000 Ethernet(2.5Gbe)
 product INTEL XEONSC_UBOX_0	0x2014	Xeon Scalable Ubox
-product INTEL XEONSC_UBOX_1	0x2016	Xeon Scalable Ubox
+product INTEL XEONSC_UBOX_1	0x2015	Xeon Scalable Ubox
+product INTEL XEONSC_UBOX_2	0x2016	Xeon Scalable Ubox
+product INTEL XEONSC_M2PCIR	0x2018	Xeon Scalable M2PCI
+product INTEL XEONSC_CBDMAR	0x2021	Xeon Scalable CBDMA
+product INTEL XEONSC_MMVTD	0x2024	Xeon Scalable MM/Vt-d
+product INTEL XEONSC_RAS	0x2025	Xeon Scalable RAS
+product INTEL XEONSC_IOAPIC	0x2026	Xeon Scalable I/O APIC
+product INTEL XEONSC_VTD	0x2034	Xeon Scalable VT-d
+product INTEL XEONSC_RAS	0x2035	Xeon Scalable RAS
+product INTEL XEONSC_IOAPIC_C	0x2036	Xeon Scalable IOxAPIC
+product INTEL XEONSC_IMC_1	0x2041	Xeon Scalable IMC
+product INTEL XEONSC_IMC_2	0x2042	Xeon Scalable IMC
+product INTEL XEONSC_IMC_3	0x2043  Xeon Scalable IMC
+product INTEL XEONSC_IMC_4	0x2044  Xeon Scalable IMC
+product INTEL XEONSC_LMC_1	0x2045  Xeon Scalable LM
+product INTEL XEONSC_LMSC_1	0x2046  Xeon Scalable LMS
+product INTEL XEONSC_LMDPC_1	0x2047  Xeon Scalable LMDP
+product INTEL XEONSC_DECSC_1	0x2048  Xeon Scalable DECS
+product INTEL XEONSC_LMC_2	0x2049  Xeon Scalable LM
+product INTEL XEONSC_LMSC_2	0x204a	Xeon Scalable LMS
+product INTEL XEONSC_LMDPC_2	0x204b	Xeon Scalable LMDP
+product INTEL XEONSC_M3KTI_1	0x204c	Xeon Scalable M3KTI
+product INTEL XEONSC_M3KTI_2	0x204d	Xeon Scalable M3KTI
+product INTEL XEONSC_CHA_1	0x2054	Xeon Scalable CHA
+product INTEL XEONSC_CHA_2	0x2055	Xeon Scalable CHA
+product INTEL XEONSC_CHA_3	0x2056	Xeon Scalable CHA
+product INTEL XEONSC_CHA_4	0x2057	Xeon Scalable CHA
+product INTEL XEONSC_KTI	0x2058	Xeon Scalable KTI
+product INTEL XEONSC_UPIR	0x2059	Xeon Scalable UPI
 product INTEL XEONSC_PCU_0	0x2080	Xeon Scalable PCU
-product INTEL XEONSC_PCU_1	0x2082	Xeon Scalable PCU
+product	INTEL XEONSC_PCU_1	0x2081  Xeon Scalable PCU
+product INTEL XEONSC_PCU_2	0x2082	Xeon Scalable PCU
+product INTEL XEONSC_CHA_5	0x208d	Xeon Scalable CHA
+product INTEL XEONSC_CHA_6	0x208e	Xeon Scalable CHA
 product INTEL BSW_HB		0x2280	Braswell Soc Transaction Router
 product INTEL BSW_HDA		0x2284	Braswell HD Audio
 product INTEL BSW_SIO_DMA_2	0x2286	Braswell SIO DMA
