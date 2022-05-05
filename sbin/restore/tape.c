@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.71 2021/06/19 13:56:35 christos Exp $	*/
+/*	$NetBSD: tape.c,v 1.72 2022/05/05 07:45:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.71 2021/06/19 13:56:35 christos Exp $");
+__RCSID("$NetBSD: tape.c,v 1.72 2022/05/05 07:45:43 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1122,7 +1122,7 @@ loop:
 			curfile.name, blksread);
 	}
 	if (curblk > 0)
-		panic("getfile: lost data\n");
+		panic("getfile: lost data: %s\n", curfile.name);
 	/* Skip over Linux extended attributes. */
 	if (spcl.c_type == TS_INODE && (spcl.c_flags & DR_EXTATTRIBUTES)) {
 		for (i = 0; i < spcl.c_count; i++)
