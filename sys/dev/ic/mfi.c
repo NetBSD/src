@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.68 2022/04/16 18:15:21 andvar Exp $ */
+/* $NetBSD: mfi.c,v 1.69 2022/05/05 07:18:02 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.68 2022/04/16 18:15:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.69 2022/05/05 07:18:02 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -582,7 +582,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 		case MFI_STATE_OPERATIONAL:
 			if (sc->sc_ioptype == MFI_IOP_SKINNY ||
 			    sc->sc_ioptype == MFI_IOP_TBOLT)
-				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_READY);
+				mfi_write(sc, MFI_SKINNY_IDB, MFI_RESET_FLAGS);
 			else
 				mfi_write(sc, MFI_IDB, MFI_INIT_READY);
 			max_wait = 10;
@@ -1059,6 +1059,8 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		sc->sc_max_sgl = max_sgl;
 		sc->sc_sgl_size = sizeof(struct mfi_sg32);
 	}
+	if (sc->sc_ioptype == MFI_IOP_SKINNY)
+		sc->sc_sgl_size = sizeof(struct mfi_sg_ieee);
 	DNPRINTF(MFI_D_MISC, "%s: max commands: %u, max sgl: %u\n",
 	    DEVNAME(sc), sc->sc_max_cmds, sc->sc_max_sgl);
 
@@ -1779,7 +1781,8 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 	sgl = ccb->ccb_sgl;
 	sgd = ccb->ccb_dmamap->dm_segs;
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
-		if (sc->sc_ioptype == MFI_IOP_TBOLT &&
+		if (((sc->sc_ioptype == MFI_IOP_SKINNY) ||
+			(sc->sc_ioptype == MFI_IOP_TBOLT)) &&
 		    (hdr->mfh_cmd == MFI_CMD_PD_SCSI_IO ||
 		     hdr->mfh_cmd == MFI_CMD_LD_READ ||
 		     hdr->mfh_cmd == MFI_CMD_LD_WRITE)) {
