@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.14 2022/03/23 11:08:27 andvar Exp $ */
+/* $NetBSD: mfireg.h,v 1.15 2022/05/05 07:18:02 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -125,11 +125,12 @@
 #define MFI_STATE_TB_FAULT		0x40000000
 
 /* command reset register */
-#define MFI_INIT_ABORT			0x00000000
+#define MFI_INIT_ABORT			0x00000001
 #define MFI_INIT_READY			0x00000002
 #define MFI_INIT_MFIMODE		0x00000004
 #define MFI_INIT_CLEAR_HANDSHAKE	0x00000008
-#define MFI_RESET_FLAGS			MFI_INIT_READY|MFI_INIT_MFIMODE
+#define MFI_RESET_FLAGS			MFI_INIT_READY | MFI_INIT_MFIMODE | \
+					MFI_INIT_ABORT
 #define MFI_INIT_HOTPLUG		0x00000010
 
 /* ADP reset flags */
