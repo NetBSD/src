@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.31 2022/05/03 07:25:34 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.32 2022/05/05 22:02:17 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.31 2022/05/03 07:25:34 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.32 2022/05/05 22:02:17 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -245,7 +245,7 @@ wbkgrndset(WINDOW *win, const cchar_t *wch)
 			}
 		}
 	}
-	__touchwin(win, 1);
+	__touchwin(win, 0);
 
 }
 
