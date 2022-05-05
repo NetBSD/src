@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.9 2021/08/07 16:19:14 thorpej Exp $ */
+/* $NetBSD: mfii.c,v 1.10 2022/05/05 09:14:17 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.9 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.10 2022/05/05 09:14:17 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -198,8 +198,8 @@ struct mfii_task_mgmt {
 
 /* We currently don't know the full details of the following struct */
 struct mfii_foreign_scan_cfg {
-        char data[24];
-} __packed; 
+	char data[24];
+} __packed;
 
 struct mfii_foreign_scan_info {
 	uint32_t count; /* Number of foreign configs found */
@@ -373,7 +373,7 @@ struct mfii_softc {
 uint32_t	mfii_debug = 0
 /*		    | MFII_D_CMD */
 /*		    | MFII_D_INTR */
-	    	    | MFII_D_MISC
+		    | MFII_D_MISC
 /*		    | MFII_D_DMA */
 /*		    | MFII_D_IOCTL */
 /*		    | MFII_D_RW */
@@ -1008,7 +1008,7 @@ mfii_childdetached(device_t self, device_t child)
 		sc->sc_child = NULL;
 }
 
-static bool             
+static bool
 mfii_suspend(device_t dev, const pmf_qual_t *q)
 {
 	/* XXX to be implemented */
@@ -1017,11 +1017,11 @@ mfii_suspend(device_t dev, const pmf_qual_t *q)
 
 static bool
 mfii_resume(device_t dev, const pmf_qual_t *q)
-{       
+{
 	/* XXX to be implemented */
 	return false;
 }
- 
+
 static bool
 mfii_shutdown(device_t dev, int how)
 {
@@ -1058,7 +1058,7 @@ mfii_shutdown(device_t dev, int how)
 		    NULL, 0, MFII_DATA_NONE, true)) {
 			aprint_error_dev(dev, "shutdown: "
 			    "firmware shutdown failed\n");
-		    	rv = false;
+			rv = false;
 			goto fail;
 		}
 	} else {
@@ -1268,13 +1268,13 @@ mfii_aen(struct work *wk, void *arg)
 	case MR_EVT_PD_INSERTED_EXT:
 		if (med->med_arg_type != MR_EVT_ARGS_PD_ADDRESS)
 			break;
-		
+
 		mfii_aen_pd_insert(sc, &med->args.pd_address);
 		break;
- 	case MR_EVT_PD_REMOVED_EXT:
+	case MR_EVT_PD_REMOVED_EXT:
 		if (med->med_arg_type != MR_EVT_ARGS_PD_ADDRESS)
 			break;
-		
+
 		mfii_aen_pd_remove(sc, &med->args.pd_address);
 		break;
 
@@ -1348,7 +1348,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 	for (i = 0; i < MFI_MAX_LD; i++) {
 		old = sc->sc_target_lds[i];
 		nld = newlds[i];
-		
+
 		if (old == -1 && nld != -1) {
 			printf("%s: logical drive %d added (target %d)\n",
 			    DEVNAME(sc), i, nld);
@@ -1932,9 +1932,9 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 	iiq->reply_descriptor_post_queue_address_hi =
 	    htole32(MFII_DMA_DVA(sc->sc_reply_postq) >> 32);
 
-	iiq->system_request_frame_base_address_lo = 
+	iiq->system_request_frame_base_address_lo =
 	    htole32(MFII_DMA_DVA(sc->sc_requests));
-	iiq->system_request_frame_base_address_hi = 
+	iiq->system_request_frame_base_address_hi =
 	    htole32(MFII_DMA_DVA(sc->sc_requests) >> 32);
 
 	iiq->timestamp = htole64(time_uptime);
@@ -2016,7 +2016,7 @@ mfii_postq(struct mfii_softc *sc)
 
 	for (;;) {
 		rdp = &postq[sc->sc_reply_postq_index];
-		DNPRINTF(MFII_D_INTR, "%s: mfii_postq index %d flags 0x%x data 0x%x\n", 
+		DNPRINTF(MFII_D_INTR, "%s: mfii_postq index %d flags 0x%x data 0x%x\n",
 		    DEVNAME(sc), sc->sc_reply_postq_index, rdp->reply_flags,
 			rdp->data == 0xffffffff);
 		if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
@@ -2056,7 +2056,7 @@ mfii_postq(struct mfii_softc *sc)
 
 static void
 mfii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
-    void *arg)		
+    void *arg)
 {
 	struct scsipi_periph    *periph;
 	struct scsipi_xfer	*xs;
@@ -2066,7 +2066,7 @@ mfii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	int timeout;
 	int target;
 
-	switch(req) {
+	switch (req) {
 		case ADAPTER_REQ_GROW_RESOURCES:
 		/* Not supported. */
 		return;
@@ -2910,7 +2910,7 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 	strlcpy(bv->bv_dev, sc->sc_ld_details[i].mld_cfg.mlc_prop.mlp_name,
 	    sizeof(bv->bv_dev));
 
-	switch(sc->sc_ld_list.mll_list[i].mll_state) {
+	switch (sc->sc_ld_list.mll_list[i].mll_state) {
 	case MFI_LD_OFFLINE:
 		bv->bv_status = BIOC_SVOFFLINE;
 		break;
@@ -3135,7 +3135,7 @@ mfii_ioctl_alarm(struct mfii_softc *sc, struct bioc_alarm *ba)
 	int8_t			ret;
 	mfii_direction_t dir = MFII_DATA_NONE;
 
-	switch(ba->ba_opcode) {
+	switch (ba->ba_opcode) {
 	case BIOC_SADISABLE:
 		opc = MR_DCMD_SPEAKER_DISABLE;
 		break;
@@ -3714,7 +3714,7 @@ mfii_bbu(struct mfii_softc *sc, envsys_data_t *edata)
 	}
 
 	status = le32toh(bbu.fw_status) & mask;
-	switch(edata->sensor) {
+	switch (edata->sensor) {
 	case 0:
 		edata->value_cur = (status || soh_bad) ? 0 : 1;
 		edata->state =
@@ -3835,8 +3835,8 @@ mfii_destroy_sensors(struct mfii_softc *sc)
 	sysmon_envsys_unregister(sc->sc_sme);
 	sc->sc_sme = NULL;
 	free(sc->sc_sensors, M_DEVBUF);
-	return 0;	
-}		
+	return 0;
+}
 
 static void
 mfii_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
