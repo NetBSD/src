@@ -1,5 +1,3 @@
-Xcursor.theme: whiteglass
-
 xlogin*login.translations: #override BS
 	Ctrl<Key>R: abort-display()NLBS
 	<Key>F1: set-session-argument(failsafe) finish-field()NLBS
@@ -18,84 +16,63 @@ xlogin*namePrompt: \040\040\040\040\040\040\040Login:
 xlogin*fail: Login incorrect or forbidden by policy
 
 XHASHif WIDTH > 800
-xlogin*greetFont: -adobe-helvetica-bold-o-normal-*-18-*-*-*-*-*-iso8859-1
-xlogin*font: -adobe-helvetica-medium-o-normal-*-14-*-*-*-*-*-iso8859-1
-xlogin*promptFont: -adobe-helvetica-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
-xlogin*failFont: -adobe-helvetica-medium-r-normal-*-14-*-*-*-*-*-iso8859-1
-xlogin*greetFace:	Sans-24
-xlogin*face: 		Sans-14
-xlogin*promptFace: 	Sans-14:bold
-xlogin*failFace: 	Sans-14:bold
+xlogin*greetFont:	-*-spleen-*-*-*-*-32-*-*-*-*-*-*-*
+xlogin*font:		-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
+xlogin*promptFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
+xlogin*failFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
+xlogin*greetFace:	Liberation Sans:pixelsize=32:hintstyle=hintslight
+xlogin*face: 		Liberation Mono:pixelsize=16:hintstyle=hintslight
+xlogin*promptFace:	Liberation Mono:pixelsize=16:hintstyle=hintslight
+xlogin*failFace:	Liberation Mono:pixelsize=16:hintstyle=hintslight
 XHASHelse
-xlogin*greetFont: -adobe-helvetica-bold-o-normal--17-120-100-100-p-92-iso8859-1
-xlogin*font: -adobe-helvetica-medium-r-normal--12-120-75-75-p-67-iso8859-1
-xlogin*promptFont: -adobe-helvetica-bold-r-normal--12-120-75-75-p-70-iso8859-1
-xlogin*failFont: -adobe-helvetica-bold-o-normal--14-140-75-75-p-82-iso8859-1
-xlogin*greetFace:	Sans-18
-xlogin*face:		Sans-12
-xlogin*promptFace:	Sans-12:bold
-xlogin*failFace:	Sans-14:bold
+xlogin*greetFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
+xlogin*font:		-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
+xlogin*promptFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
+xlogin*failFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
+xlogin*greetFace:	Liberation Sans:pixelsize=16:hintstyle=hintslight
+xlogin*face: 		Libreation Mono:pixelsize=16:hintstyle=hintslight
+xlogin*face: 		Libreation Mono:pixelsize=16:hintstyle=hintslight
+xlogin*promptFace:	Libreation Mono:pixelsize=16:hintstyle=hintslight
+xlogin*failFace:	Libreation Mono:pixelsize=16:hintstyle=hintslight
 XHASHendif
 
-XHASHifdef COLOR
-xlogin*borderWidth: 1
-xlogin*frameWidth: 5
+xlogin*borderWidth: 2
+xlogin*frameWidth: 2
 xlogin*innerFramesWidth: 2
-xlogin*shdColor: grey30
-xlogin*hiColor: grey90
-xlogin*background: grey
-xlogin*inpColor: grey
-!xlogin*foreground: darkgreen
-xlogin*greetColor: Blue3
-xlogin*failColor: red
-*Foreground: black
-*Background: #fffff0
+xlogin*sepWidth: 0
+
+XHASHifdef COLOR
+xlogin*shdColor: steelblue
+xlogin*hiColor: steelblue
+xlogin*background: white
+xlogin*inpColor: lavender
+xlogin*greetColor: black
+xlogin*failColor: darkred
 XHASHelse
-xlogin*borderWidth: 3
-xlogin*frameWidth: 0
-xlogin*innerFramesWidth: 1
 xlogin*shdColor: black
 xlogin*hiColor: black
+xlogin*background: white
+xlogin*inpColor: white
+xlogin*greetColor: black
+xlogin*failColor: black
 XHASHendif
-#ifdef XPM
-XHASHif PLANES >= 8
-XHASHif 1
-! XDM has no support for images with alpha channel, so we precomputed a
-! NetBSD logo with fixed background and use it here. If you change this
-! file to use another background colour, you need to create a new logo
-! xpm file. This can be done with netpbm from pkgsrc:
-!
-!   pngtopnm -mix -background grey NetBSD-flag.png | pnmtoxpm > NetBSD-flag.xpm
-!
-! (all files in BITMAPDIR)
-!
-xlogin*logoFileName: BITMAPDIR/**//NetBSD-flag1.xpm
-xlogin*useShape: false
-XHASHelse
-!
-! This is the stock method, using a coloured xpm file and a b&w mask xpm.
-! Antialiased borders look ugly this way, but it works with arbitrary
-! background colours.
-!
+
+*Foreground: black
+*Background: white
+
 xlogin*logoFileName: BITMAPDIR/**//XDM_PIXMAP
 xlogin*useShape: true
-XHASHendif
-XHASHelse
-xlogin*logoFileName: BITMAPDIR/**//XDM_BWPIXMAP
-xlogin*useShape: true
-XHASHendif
-xlogin*logoPadding: 10
-#endif /* XPM */
+xlogin*logoPadding: 12
 
 XConsole.text.geometry:	480x130
 XConsole.verbose:	true
 XConsole*iconic:	true
-XConsole*font:		fixed
+XConsole*font:		-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
 
 Chooser*geometry:		700x500+300+200
 Chooser*allowShellResize:	false
 Chooser*viewport.forceBars:	true
-Chooser*label.font:		*-new century schoolbook-bold-i-normal-*-240-*
+Chooser*label.font:		-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
 Chooser*label.label:		XDMCP Host Menu from CLIENTHOST
-Chooser*list.font:		-*-*-medium-r-normal-*-*-230-*-*-c-*-iso8859-1
-Chooser*Command.font:		*-new century schoolbook-bold-r-normal-*-180-*
+Chooser*list.font:		-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
+Chooser*Command.font:		-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
