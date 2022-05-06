@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.33 2021/03/09 16:44:27 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.34 2022/05/06 06:09:50 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.33 2021/03/09 16:44:27 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.34 2022/05/06 06:09:50 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -115,6 +115,7 @@ ENTRY_NP(cpu_switchto)
 	msr	APGAKeyLo_EL1, x5
 	msr	APGAKeyHi_EL1, x6
 1:
+	isb
 #endif
 
 	msr	tpidr_el1, x1		/* switch curlwp to new lwp */
@@ -202,6 +203,7 @@ ENTRY_NP(cpu_switchto_softint)
 	ldp	x5, x6, [x0, #L_MD_IA_KERN]
 	msr	APIAKeyLo_EL1, x5
 	msr	APIAKeyHi_EL1, x6
+	isb
 1:
 #endif
 	ENABLE_INTERRUPT
@@ -235,6 +237,7 @@ ENTRY_NP(cpu_switchto_softint)
 	ldp	x5, x6, [x19, #L_MD_IA_KERN]
 	msr	APIAKeyLo_EL1, x5
 	msr	APIAKeyHi_EL1, x6
+	isb
 1:
 #endif
 
@@ -289,12 +292,14 @@ ENTRY_NP(lwp_trampoline)
 	ldr	w4, [x4]
 	cbz	w4, 1f
 	mov	x26, x1
+
 	bl	_C_LABEL(cprng_strong64)
-	str	x0, [x26, #L_MD_IA_KERN]
-	msr	APIAKeyLo_EL1, x0
+	mov	x25, x0
 	bl	_C_LABEL(cprng_strong64)
-	str	x0, [x26, #(L_MD_IA_KERN + 8)]
+	stp	x25, x0, [x26, #L_MD_IA_KERN]
+	msr	APIAKeyLo_EL1, x25
 	msr	APIAKeyHi_EL1, x0
+	isb
 1:
 #endif
 
