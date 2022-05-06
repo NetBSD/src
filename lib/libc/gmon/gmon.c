@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.36 2021/07/03 14:08:55 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.37 2022/05/06 04:49:13 rin Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.36 2021/07/03 14:08:55 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.37 2022/05/06 04:49:13 rin Exp $");
 #endif
 #endif
 
@@ -141,21 +141,25 @@ monstartup(u_long lowpc, u_long highpc)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
 
-	cp = sbrk((intptr_t)(p->kcountsize + p->fromssize + p->tossize));
-	if (cp == (char *)-1) {
+	cp = sbrk((intptr_t)0);
+
+#define	GMON_ALLOC(buf, ptr, size)					\
+    do {								\
+	(buf) = (void *)roundup((uintptr_t)(buf), __alignof(*(ptr)));	\
+	(ptr) = (void *)(buf);						\
+	(buf) += (size);						\
+    } while (0)
+
+	GMON_ALLOC(cp, p->kcount, p->kcountsize);
+	GMON_ALLOC(cp, p->froms, p->fromssize);
+	GMON_ALLOC(cp, p->tos, p->tossize);
+
+	if (brk(cp)) {
 		warnx("%s: out of memory", __func__);
 		return;
 	}
-#ifdef notdef
-	(void)memset(cp, 0, p->kcountsize + p->fromssize + p->tossize);
-#endif
-	p->tos = (struct tostruct *)(void *)cp;
-	cp += (size_t)p->tossize;
-	p->kcount = (u_short *)(void *)cp;
-	cp += (size_t)p->kcountsize;
-	p->froms = (u_short *)(void *)cp;
+	__minbrk = cp;
 
-	__minbrk = sbrk((intptr_t)0);
 	p->tos[0].link = 0;
 
 	o = p->highpc - p->lowpc;
@@ -226,17 +230,22 @@ _m_gmon_alloc(void)
 	} else {
 		mutex_unlock(&_gmonlock);
 		cp = mmap(NULL,
-		    (size_t)(sizeof (struct gmonparam) + 
-			_gmonparam.fromssize + _gmonparam.tossize),
+		    (size_t)(__alignof(*p) + sizeof(*p) +
+			__alignof(*_gmonparam.froms) + _gmonparam.fromssize +
+			__alignof(*_gmonparam.tos) + _gmonparam.tossize),
 		    PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
-		p = (void *)cp;
+
+		GMON_ALLOC(cp, p, sizeof(*p));
 		*p = _gmonparam;
 		p->state = GMON_PROF_ON;
 		p->kcount = NULL;
-		cp += sizeof (struct gmonparam);
-		memset(cp, 0, (size_t)(p->fromssize + p->tossize));
-		p->froms = (u_short *)(void *)cp;
-		p->tos = (struct tostruct *)(void *)(cp + p->fromssize);
+
+		GMON_ALLOC(cp, p->froms, p->fromssize);
+		memset(p->froms, 0, p->fromssize);
+
+		GMON_ALLOC(cp, p->tos, p->tossize);
+		memset(p->tos, 0, p->tossize);
+
 		mutex_lock(&_gmonlock);
 		p->kcount = (u_short *)(void *)_gmoninuse;
 		_gmoninuse = p;
