@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.25 2022/05/06 05:14:38 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.26 2022/05/06 06:09:50 ryo Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
@@ -11,7 +11,7 @@
 #include "opt_dtrace.h"
 #include "opt_gic.h"
 
-RCSID("$NetBSD: vectors.S,v 1.25 2022/05/06 05:14:38 ryo Exp $")
+RCSID("$NetBSD: vectors.S,v 1.26 2022/05/06 06:09:50 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -100,6 +100,7 @@ ENTRY_NBTI(\func)
 	ldp	x5, x6, [x1, #L_MD_IA_KERN]
 	msr	APIAKeyLo_EL1, x5
 	msr	APIAKeyHi_EL1, x6
+	isb
 1:
 #endif
 	.endif
@@ -310,6 +311,7 @@ ENTRY_NP(el0_trap_exit)
 	ldp	x5, x6, [x9, #L_MD_IA_USER]
 	msr	APIAKeyLo_EL1, x5
 	msr	APIAKeyHi_EL1, x6
+	isb
 1:
 #endif
 

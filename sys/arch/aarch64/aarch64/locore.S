@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.85 2022/01/31 09:16:09 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.86 2022/05/06 06:09:50 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.85 2022/01/31 09:16:09 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.86 2022/05/06 06:09:50 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -196,6 +196,7 @@ vstart:
 	ldr	x1, sctlr_pac
 	orr	x0, x0, x1		/*  enable PAC */
 	msr	sctlr_el1, x0
+	isb
 1:
 
 	adrl	x19, cpu_info_store	/* curcpu (&cpu_info_store[0] */
@@ -565,6 +566,7 @@ mp_vstart:
 	ldr	x1, sctlr_pac
 	orr	x0, x0, x1		/*  enable PAC */
 	msr	sctlr_el1, x0
+	isb
 1:
 
 	mov	fp, xzr			/* trace back starts here */
