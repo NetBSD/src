@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.24 2021/09/18 12:25:06 jmcneill Exp $	*/
+/*	$NetBSD: vectors.S,v 1.25 2022/05/06 05:14:38 ryo Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
@@ -11,7 +11,7 @@
 #include "opt_dtrace.h"
 #include "opt_gic.h"
 
-RCSID("$NetBSD: vectors.S,v 1.24 2021/09/18 12:25:06 jmcneill Exp $")
+RCSID("$NetBSD: vectors.S,v 1.25 2022/05/06 05:14:38 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -282,7 +282,7 @@ ENTRY_NP(el0_trap_exit)
 	cbz	w8, 9f
 
 	/* curlwp->l_md.md_astpending = 0; */
-	str	xzr, [x9, #L_MD_ASTPENDING]
+	str	wzr, [x9, #L_MD_ASTPENDING]
 
 	/*  trap_doast(tf); */
 	ENABLE_INTERRUPT
