@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.238 2022/01/22 18:59:23 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.239 2022/05/07 08:01:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,16 +70,11 @@
  */
 
 /*
- * compat.c --
- *	The routines in this file implement the full-compatibility
- *	mode of PMake. Most of the special functionality of PMake
- *	is available in this mode. Things not supported:
- *	    - different shells.
- *	    - friendly variable substitution.
+ * This file implements the full-compatibility mode of make, which makes the
+ * targets without parallelism and without a custom shell.
  *
  * Interface:
- *	Compat_Run	Initialize things for this module and recreate
- *			thems as need creatin'
+ *	Compat_MakeAll	Initialize this module and make the given targets.
  */
 
 #include <sys/types.h>
@@ -96,7 +91,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.238 2022/01/22 18:59:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.239 2022/05/07 08:01:20 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -689,14 +684,8 @@ InitSignals(void)
 		bmake_signal(SIGQUIT, CompatInterrupt);
 }
 
-/*
- * Initialize this module and start making.
- *
- * Input:
- *	targs		The target nodes to re-create
- */
 void
-Compat_Run(GNodeList *targs)
+Compat_MakeAll(GNodeList *targs)
 {
 	GNode *errorNode = NULL;
 

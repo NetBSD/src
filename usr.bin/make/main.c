@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.580 2022/04/18 15:06:27 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.581 2022/05/07 08:01:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.580 2022/04/18 15:06:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.581 2022/05/07 08:01:20 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -903,11 +903,7 @@ runTargets(void)
 		/* Traverse the graph, checking on all the targets */
 		outOfDate = Make_Run(&targs);
 	} else {
-		/*
-		 * Compat_Init will take care of creating all the
-		 * targets as well as initializing the module.
-		 */
-		Compat_Run(&targs);
+		Compat_MakeAll(&targs);
 		outOfDate = false;
 	}
 	Lst_Done(&targs);	/* Don't free the targets themselves. */
