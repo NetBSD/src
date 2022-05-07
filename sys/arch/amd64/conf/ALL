@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.169 2021/12/23 17:13:13 hannken Exp $
+# $NetBSD: ALL,v 1.170 2022/05/07 04:32:29 rin Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.169 $"
+#ident		"ALL-$Revision: 1.170 $"
 
 maxusers	64		# estimated number of users
 
@@ -97,6 +97,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	MODULAR		# new style module(7) framework
 options 	MODULAR_DEFAULT_AUTOLOAD
+options 	MODULAR_DEFAULT_VERBOSE
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
