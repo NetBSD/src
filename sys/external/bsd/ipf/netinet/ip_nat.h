@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.7 2015/08/07 17:31:12 prlw1 Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.8 2022/05/07 04:38:09 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -571,9 +571,7 @@ typedef	struct	natstat	{
 	u_int		ns_wilds;
 	u_long		ns_proto[256];
 	nat_stat_side_t	ns_side[2];
-#ifdef USE_INET6
 	nat_stat_side_t	ns_side6[2];
-#endif
 } natstat_t;
 
 typedef	struct	natlog {
