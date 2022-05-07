@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.9 2022/04/26 15:11:42 reinoud Exp $ */
+/* $NetBSD: udf_core.c,v 1.10 2022/05/07 08:51:32 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.9 2022/04/26 15:11:42 reinoud Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.10 2022/05/07 08:51:32 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -3782,6 +3782,7 @@ udf_writeout_writequeue(bool complete)
 	int		 blockingnr = layout.blockingnr;
 	int		 linesize, offset, ret;
 	uint8_t		*linebuf;
+	int32_t		 wsects;
 	uint64_t	 present, all_present = -1;
 	uint64_t	 rpos, wpos;
 	static int	 t = 0;
@@ -3832,8 +3833,17 @@ udf_writeout_writequeue(bool complete)
 		if (complete || (packet->present == all_present)) {
 			printf("%c", "\\|/-"[t++ % 4]); fflush(stdout);fflush(stderr);
 //printf("write %lu + %d\n", packet->start_sectornr, linesize / context.sector_size);
+
+			/* don't write past last possible lba */
+			wsects = (mmc_discinfo.last_possible_lba + 1 - packet->start_sectornr);
+			assert(wsects >= 0);
+			wsects = MIN(wsects, blockingnr);
+	
 			wpos = (uint64_t) packet->start_sectornr * context.sector_size;
-			ret = pwrite(dev_fd, packet->packet_data, linesize, wpos);
+			ret = pwrite(dev_fd,
+				packet->packet_data,
+				wsects * context.sector_size,
+				wpos);
 			printf("\b");
 			if (ret == -1)
 				warn("error writing packet, "
