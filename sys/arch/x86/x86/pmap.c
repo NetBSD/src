@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.413 2022/01/02 20:28:53 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.414 2022/05/07 14:59:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.413 2022/01/02 20:28:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.414 2022/05/07 14:59:25 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3813,8 +3813,10 @@ pmap_zero_page(paddr_t pa)
 	memset(PAGE_ALIGNED(PMAP_DIRECT_MAP(pa)), 0, PAGE_SIZE);
 #else
 #if defined(XENPV)
-	if (XEN_VERSION_SUPPORTED(3, 4))
+	if (XEN_VERSION_SUPPORTED(3, 4)) {
 		xen_pagezero(pa);
+		return;
+	}
 #endif
 	struct cpu_info *ci;
 	pt_entry_t *zpte;
