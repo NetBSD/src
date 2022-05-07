@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.55 2022/05/07 04:12:54 rin Exp $	*/
+/*	$NetBSD: spr.h,v 1.56 2022/05/07 09:02:19 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, The NetBSD Foundation, Inc.
@@ -144,7 +144,6 @@ mfspr(int reg)
 #define	SPR_TBL			0x11c	/* E468 Time Base Lower */
 #define	SPR_TBU			0x11d	/* E468 Time Base Upper */
 #define	SPR_PVR			0x11f	/* E468 Processor Version Register */
-#define	SPR_CCR0		0x3b3	/* .4.. Core Configuration Register */
 
 /* Time Base Register declarations */
 #define	TBR_TBL			0x10c	/* E468 Time Base Lower */
