@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.300 2022/04/18 15:06:27 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.301 2022/05/07 08:01:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -788,7 +788,7 @@ bool Arch_IsLib(GNode *) MAKE_ATTR_USE;
 
 /* compat.c */
 bool Compat_RunCommand(const char *, GNode *, StringListNode *);
-void Compat_Run(GNodeList *);
+void Compat_MakeAll(GNodeList *);
 void Compat_Make(GNode *, GNode *);
 
 /* cond.c */
