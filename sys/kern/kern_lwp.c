@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.248 2022/04/09 23:45:36 riastradh Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.249 2022/05/07 19:44:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.248 2022/04/09 23:45:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.249 2022/05/07 19:44:40 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -294,6 +294,15 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_fd = &filedesc0,
 };
 
+static int
+lwp_maxlwp(void)
+{
+	/* Assume 1 LWP per 1MiB. */
+	uint64_t lwps_per = ctob(physmem) / (1024 * 1024);
+
+	return MAX(MIN(MAXMAXLWP, lwps_per), MAXLWP);
+}
+
 static int sysctl_kern_maxlwp(SYSCTLFN_PROTO);
 
 /*
@@ -313,9 +322,9 @@ sysctl_kern_maxlwp(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	if (nmaxlwp < 0 || nmaxlwp >= 65536)
+	if (nmaxlwp < 0 || nmaxlwp >= MAXMAXLWP)
 		return EINVAL;
-	if (nmaxlwp > cpu_maxlwp())
+	if (nmaxlwp > lwp_maxlwp())
 		return EINVAL;
 	maxlwp = nmaxlwp;
 
@@ -350,7 +359,7 @@ lwpinit(void)
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0,
 	    PR_PSERIALIZE, "lwppl", NULL, IPL_NONE, lwp_ctor, lwp_dtor, NULL);
 
-	maxlwp = cpu_maxlwp();
+	maxlwp = lwp_maxlwp();
 	sysctl_kern_lwp_setup();
 }
 
