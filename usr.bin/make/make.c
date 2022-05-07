@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.252 2022/01/09 15:48:30 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.253 2022/05/07 09:44:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.252 2022/01/09 15:48:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.253 2022/05/07 09:44:50 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -125,17 +125,6 @@ debug_printf(const char *fmt, ...)
 	va_start(ap, fmt);
 	vfprintf(opts.debug_file, fmt, ap);
 	va_end(ap);
-}
-
-MAKE_ATTR_DEAD static void
-make_abort(GNode *gn, int lineno)
-{
-
-	debug_printf("make_abort from line %d\n", lineno);
-	Targ_PrintNode(gn, 2);
-	Targ_PrintNodes(&toBeMade, 2);
-	Targ_PrintGraph(3);
-	abort();
 }
 
 static const char *
@@ -1033,13 +1022,12 @@ MakeStartJobs(void)
 		DEBUG2(MAKE, "Examining %s%s...\n", gn->name, gn->cohort_num);
 
 		if (gn->made != REQUESTED) {
-			/*
-			 * XXX: Replace %d with string representation;
-			 * see made_name.
-			 */
-			DEBUG1(MAKE, "state %d\n", gn->made);
-
-			make_abort(gn, __LINE__);
+			debug_printf("internal error: made = %s\n",
+			    GNodeMade_Name(gn->made));
+			Targ_PrintNode(gn, 2);
+			Targ_PrintNodes(&toBeMade, 2);
+			Targ_PrintGraph(3);
+			abort();
 		}
 
 		if (gn->checked_seqno == checked_seqno) {
