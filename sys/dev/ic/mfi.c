@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.70 2022/05/07 04:40:02 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.71 2022/05/07 14:14:34 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.70 2022/05/07 04:40:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.71 2022/05/07 14:14:34 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -2085,12 +2085,19 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	/* additional status can modify MFI status */
 	switch (sc->sc_ld_details.mld_progress.mlp_in_prog) {
 	case MFI_LD_PROG_CC:
-	case MFI_LD_PROG_BGI:
 		bv->bv_status = BIOC_SVSCRUB;
 		per = (int)sc->sc_ld_details.mld_progress.mlp_cc.mp_progress;
 		bv->bv_percent = (per * 100) / 0xffff;
 		bv->bv_seconds =
 		    sc->sc_ld_details.mld_progress.mlp_cc.mp_elapsed_seconds;
+		break;
+
+	case MFI_LD_PROG_BGI:
+		bv->bv_status = BIOC_SVSCRUB;
+		per = (int)sc->sc_ld_details.mld_progress.mlp_bgi.mp_progress;
+		bv->bv_percent = (per * 100) / 0xffff;
+		bv->bv_seconds =
+		    sc->sc_ld_details.mld_progress.mlp_bgi.mp_elapsed_seconds;
 		break;
 
 	case MFI_LD_PROG_FGI:
