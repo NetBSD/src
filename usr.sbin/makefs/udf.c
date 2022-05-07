@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.29 2022/04/26 15:18:08 reinoud Exp $ */
+/* $NetBSD: udf.c,v 1.30 2022/05/07 08:54:02 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.29 2022/04/26 15:18:08 reinoud Exp $");
+__RCSID("$NetBSD: udf.c,v 1.30 2022/05/07 08:54:02 reinoud Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1130,7 +1130,24 @@ udf_enumerate_and_estimate(const char *dir, fsnode *root, fsinfo_t *fsopts,
 		stats->ndatablocks += (n - nblk);
 		nblk += n - nblk;
 	}
+
+	/* keep proposed size a multiple of blockingnr for image creation */
+	if (S_ISREG(dev_fd_stat.st_mode)) {
+		struct mmc_trackinfo ti;
+		int blockingnr;
+		int error;
+
+		/* adjust proposed size to be a multiple of the blockingnr */
+		udf_update_discinfo();
+		ti.tracknr = mmc_discinfo.first_track_last_session;
+		error = udf_update_trackinfo(&ti);
+		assert(!error);
+		blockingnr = udf_get_blockingnr(&ti);
+		nblk = UDF_ROUNDUP(nblk, blockingnr);
+	}
+
 	proposed_size = (off_t) nblk * fsopts->sectorsize;
+
 	/* sanity size */
 	if (proposed_size < 512*1024)
 		proposed_size = 512*1024;
