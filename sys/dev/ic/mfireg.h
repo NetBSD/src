@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.15 2022/05/05 07:18:02 msaitoh Exp $ */
+/* $NetBSD: mfireg.h,v 1.16 2022/05/07 04:47:25 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -828,7 +828,7 @@ struct mfi_info_pci {
 	uint8_t			mip_reserved[24];
 } __packed;
 
-/* host interface infor */
+/* host interface info */
 struct mfi_info_host {
 	uint8_t			mih_type;
 #define MFI_INFO_HOST_PCIX	0x01
@@ -840,7 +840,7 @@ struct mfi_info_host {
 	uint64_t		mih_port_addr[8];
 } __packed;
 
-/* device  interface info */
+/* device interface info */
 struct mfi_info_device {
 	uint8_t			mid_type;
 #define MFI_INFO_DEV_SPI	0x01
@@ -1105,7 +1105,7 @@ struct mfi_pd_details {
 	uint8_t			mpd_inq_data[96];
 	uint8_t			mpd_inq_page83[64];
 	uint8_t			mpd_no_support;
-	uint8_t			mpd_scsy_type;
+	uint8_t			mpd_scsi_type;
 	uint8_t			mpd_port;
 	uint8_t			mpd_speed;
 	uint32_t		mpd_mediaerr_cnt;
@@ -1145,7 +1145,7 @@ struct mfi_pd_details {
 	uint8_t			mpd_res[218]; /* size is 512 */
 } __packed;
 
-/* array configuration from MD_DCMD_CONF_GET */
+/* array configuration from MR_DCMD_CONF_GET */
 struct mfi_array {
 	u_quad_t		mar_smallest_pd;
 	uint8_t			mar_no_disk;
