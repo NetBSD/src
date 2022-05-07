@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.670 2022/04/18 16:09:05 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.671 2022/05/07 17:25:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.670 2022/04/18 16:09:05 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.671 2022/05/07 17:25:28 rillig Exp $");
 
 /*
  * A file being read.
@@ -699,11 +699,11 @@ static void
 ApplyDependencySourceWait(bool isSpecial)
 {
 	static unsigned wait_number = 0;
-	char wait_src[16];
+	char name[6 + 10 + 1];
 	GNode *gn;
 
-	snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
-	gn = Targ_NewInternalNode(wait_src);
+	snprintf(name, sizeof name, ".WAIT_%u", ++wait_number);
+	gn = Targ_NewInternalNode(name);
 	if (doing_depend)
 		RememberLocation(gn);
 	gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
