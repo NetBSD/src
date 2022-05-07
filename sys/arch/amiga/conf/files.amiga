@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.183 2020/03/07 20:27:54 is Exp $
+#	$NetBSD: files.amiga,v 1.184 2022/05/07 04:40:01 msaitoh Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -324,7 +324,7 @@ file	arch/amiga/dev/lpt_supio.c	lpt_supio
 
 include	"dev/scsipi/files.scsipi"
 
-# wd 33c93 contrllers
+# wd 33c93 controllers
 define	sbic
 file	arch/amiga/dev/sbic.c		sbic
 
