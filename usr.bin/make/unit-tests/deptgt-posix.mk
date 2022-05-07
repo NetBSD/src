@@ -1,4 +1,4 @@
-# $NetBSD: deptgt-posix.mk,v 1.3 2022/05/07 12:40:40 rillig Exp $
+# $NetBSD: deptgt-posix.mk,v 1.4 2022/05/07 21:24:52 rillig Exp $
 #
 # Tests for the special target '.POSIX', which enables POSIX mode.
 #
@@ -13,7 +13,10 @@
 #
 # Implementation note: this test needs to run isolated from the usual tests
 # directory to prevent unit-tests/posix.mk from interfering with the posix.mk
-# from the system directory that this test uses.
+# from the system directory that this test uses; since at least 1997, the
+# directive '.include <file>' has been looking in the current directory first
+# before searching the file in the system search path, as described in
+# https://gnats.netbsd.org/15163.
 #
 # See also:
 #	https://pubs.opengroup.org/onlinepubs/9699919799/utilities/make.html
