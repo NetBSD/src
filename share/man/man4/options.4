@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.521 2021/11/16 05:16:47 msaitoh Exp $
+.\"	$NetBSD: options.4,v 1.522 2022/05/07 04:35:20 rin Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 16, 2021
+.Dd May 7, 2022
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1289,6 +1289,12 @@ Enables the framework for kernel modules (see
 Enables the autoloading of kernel modules by default.
 This sets the default value of the
 .Em kern.module.autoload
+.Xr sysctl 3
+variable which may be changed at run time.
+.It Cd options MODULAR_DEFAULT_VERBOSE
+Enables verbose debug messages of kernel modules by default.
+This sets the default value of the
+.Em kern.module.verbose
 .Xr sysctl 3
 variable which may be changed at run time.
 .It Cd options VND_COMPRESSION
