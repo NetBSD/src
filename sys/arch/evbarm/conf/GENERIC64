@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.198 2022/04/27 08:06:20 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.199 2022/05/07 08:20:04 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -413,6 +413,7 @@ wd*		at atabus? drive ?
 cd*		at atapibus? drive ?
 
 # NVMe
+nvme*		at fdt?			# Apple M1
 nvme*		at pci? dev ? function ?
 ld*		at nvme? nsid ?
 
