@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.301 2022/05/07 08:01:20 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.302 2022/05/07 17:49:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -769,6 +769,11 @@ typedef struct CmdOpts {
 	 */
 	StringList create;
 
+	/*
+	 * Randomize the order in which the targets from toBeMade are made,
+	 * to catch undeclared dependencies.
+	 */
+	bool randomizeTargets;
 } CmdOpts;
 
 extern CmdOpts opts;

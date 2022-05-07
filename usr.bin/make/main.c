@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.581 2022/05/07 08:01:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.582 2022/05/07 17:49:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.581 2022/05/07 08:01:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.582 2022/05/07 17:49:47 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -799,6 +799,8 @@ MakeMode(void)
 		if (strstr(mode, "meta") != NULL)
 			meta_mode_init(mode);
 #endif
+		if (strstr(mode, "randomize-targets") != NULL)
+			opts.randomizeTargets = true;
 	}
 
 	free(mode);
