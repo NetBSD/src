@@ -1,4 +1,4 @@
-#	$NetBSD: files.apple,v 1.5 2022/04/27 08:06:20 skrll Exp $
+#	$NetBSD: files.apple,v 1.6 2022/05/07 08:20:04 skrll Exp $
 #
 # Configuration info for Apple Silicon SoCs
 #
@@ -18,6 +18,11 @@ file	arch/arm/apple/apple_intc.c		apple_intc
 device	applembox
 attach	applembox at fdt with apple_mbox
 file	arch/arm/apple/apple_mbox.c		apple_mbox
+
+# NVME
+device	applenvme: nvme
+attach	nvme at fdt with apple_nvme
+file	arch/arm/apple/apple_nvme.c		apple_nvme
 
 # PCIe controller
 device	applepcie: pcibus, pcihost_fdt
