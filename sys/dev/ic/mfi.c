@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.71 2022/05/07 14:14:34 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.72 2022/05/07 14:25:12 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.71 2022/05/07 14:14:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.72 2022/05/07 14:25:12 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -970,8 +970,10 @@ mfi_shutdown(device_t dev, int how)
 	struct mfi_softc	*sc = device_private(dev);
 	uint8_t			mbox[MFI_MBOX_SIZE];
 	int s = splbio();
+
 	DNPRINTF(MFI_D_MISC, "%s: mfi_shutdown\n", DEVNAME(sc));
 	if (sc->sc_running) {
+		memset(mbox, 0, sizeof(mbox));
 		mbox[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
 		if (mfi_mgmt_internal(sc, MR_DCMD_CTRL_CACHE_FLUSH,
 		    MFI_DATA_NONE, 0, NULL, mbox, true)) {
@@ -1683,6 +1685,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 	case SCSI_SYNCHRONIZE_CACHE_10:
 	case SCSI_SYNCHRONIZE_CACHE_16:
+		memset(mbox, 0, sizeof(mbox));
 		mbox[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
 		if (mfi_mgmt(ccb, xs,
 		    MR_DCMD_CTRL_CACHE_FLUSH, MFI_DATA_NONE, 0, NULL, mbox)) {
@@ -2045,6 +2048,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 		goto done;
 
 	i = bv->bv_volid;
+	memset(mbox, 0, sizeof(mbox));
 	mbox[0] = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_vol target %#x\n",
 	    DEVNAME(sc), mbox[0]);
@@ -2220,6 +2224,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	}
 
 	/* get the remaining fields */
+	memset(mbox, 0, sizeof(mbox));
 	*((uint16_t *)&mbox) = ar[arr].pd[disk].mar_pd.mfp_id;
 	memset(pd, 0, sizeof(*pd));
 	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
