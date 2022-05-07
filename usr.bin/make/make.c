@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.254 2022/05/07 10:05:49 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.255 2022/05/07 17:49:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.254 2022/05/07 10:05:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.255 2022/05/07 17:49:47 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -932,6 +932,28 @@ GNode_SetLocalVars(GNode *gn)
 	gn->flags.doneAllsrc = true;
 }
 
+static void
+ScheduleRandomly(GNode *gn)
+{
+	GNodeListNode *ln;
+	size_t i, n;
+
+	n = 0;
+	for (ln = toBeMade.first; ln != NULL; ln = ln->next)
+		n++;
+	i = n > 0 ? (size_t)random() % (n + 1) : 0;
+
+	if (i == 0) {
+		Lst_Append(&toBeMade, gn);
+		return;
+	}
+	i--;
+
+	for (ln = toBeMade.first; i > 0; ln = ln->next)
+		i--;
+	Lst_InsertBefore(&toBeMade, ln, gn);
+}
+
 static bool
 MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 {
@@ -957,7 +979,9 @@ MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 	    cn->name, cn->cohort_num);
 
 	cn->made = REQUESTED;
-	if (toBeMadeNext == NULL)
+	if (opts.randomizeTargets && !(cn->type & OP_WAIT))
+		ScheduleRandomly(cn);
+	else if (toBeMadeNext == NULL)
 		Lst_Append(&toBeMade, cn);
 	else
 		Lst_InsertBefore(&toBeMade, toBeMadeNext, cn);

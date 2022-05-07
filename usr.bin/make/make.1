@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.308 2022/04/18 15:06:27 rillig Exp $
+.\"	$NetBSD: make.1,v 1.309 2022/05/07 17:49:47 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd April 18, 2022
+.Dd May 7, 2022
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -978,6 +978,10 @@ If
 .Va bf
 is True, when a .meta file is created, mark the target
 .Ic .SILENT .
+.It Pa randomize-targets
+In both compat and parallel mode, do not make the targets in the usual order,
+but instead randomize their order.
+This mode can be used to detect undeclared dependencies between files.
 .El
 .It Va .MAKE.META.BAILIWICK
 In "meta" mode, provides a list of prefixes which
@@ -2250,8 +2254,9 @@ will
 to it and update the value of
 .Ql Va .OBJDIR .
 .It Ic .ORDER
-The named targets are made in sequence.
+In parallel mode, the named targets are made in sequence.
 This ordering does not add targets to the list of targets to be made.
+.Pp
 Since the dependents of a target do not get built until the target itself
 could be built, unless
 .Ql a
@@ -2262,9 +2267,6 @@ the following is a dependency loop:
 b: a
 .Ed
 .Pp
-The ordering imposed by
-.Ic .ORDER
-is only relevant for parallel makes.
 .\" XXX: NOT YET!!!!
 .\" .It Ic .PARALLEL
 .\" The named targets are executed in parallel mode.
