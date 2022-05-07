@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.69 2022/05/05 07:18:02 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.70 2022/05/07 04:40:02 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.69 2022/05/05 07:18:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.70 2022/05/07 04:40:02 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -2101,7 +2101,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 
 	/*
 	 * The RAID levels are determined per the SNIA DDF spec, this is only
-	 * a subset that is valid for the MFI contrller.
+	 * a subset that is valid for the MFI controller.
 	 */
 	bv->bv_level = sc->sc_ld_details.mld_cfg.mlc_parm.mpa_pri_raid;
 	if (sc->sc_ld_details.mld_cfg.mlc_parm.mpa_sec_raid ==
