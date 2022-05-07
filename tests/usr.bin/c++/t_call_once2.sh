@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once2.sh,v 1.3 2021/09/04 05:47:31 rin Exp $
+#	$NetBSD: t_call_once2.sh,v 1.4 2022/05/07 05:14:09 rin Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,60 +29,70 @@ atf_test_case call_once2
 call_once2_head() {
 	atf_set "descr" "compile and run std::call_once"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_profile
 call_once2_profile_head() {
 	atf_set "descr" "compile and run std::call_once with profiling option"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_pic
 call_once2_pic_head() {
 	atf_set "descr" "compile and run PIC std::call_once"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_pic_32
 call_once2_pic_32_head() {
 	atf_set "descr" "compile and run 32-bit PIC std::call_once"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_pic_profile
 call_once2_pic_profile_head() {
 	atf_set "descr" "compile and run PIC std::call_once with profiling flag"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_pic_profile_32
 call_once2_pic_profile_32_head() {
 	atf_set "descr" "compile and run 32-bit PIC std::call_once with profiling flag"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_profile_32
 call_once2_profile_32_head() {
 	atf_set "descr" "compile and run 32-bit std::call_once with profiling flag"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_pie
 call_once2_pie_head() {
 	atf_set "descr" "compile and run position independent (PIE) std::call_once"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_32
 call_once2_32_head() {
 	atf_set "descr" "compile and run std::call_once for/in netbsd32 emulation"
 	atf_set "require.progs" "c++ file diff cat"
+	atf_set "timeout" "600"
 }
 
 atf_test_case call_once2_static
 call_once2_static_head() {
 	atf_set "descr" "compile and run std::call_once with static flag"
 	atf_set "require.progs" "c++"
+	atf_set "timeout" "600"
 }
 
 call_once2_body() {
