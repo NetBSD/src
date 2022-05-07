@@ -1,4 +1,4 @@
-# $NetBSD: compat-error.mk,v 1.3 2020/12/13 19:33:53 rillig Exp $
+# $NetBSD: compat-error.mk,v 1.4 2022/05/07 08:01:20 rillig Exp $
 #
 # Test detailed error handling in compat mode.
 #
@@ -11,7 +11,7 @@
 # XXX: As of 2020-12-13, .ERROR_CMD is empty, which is wrong.
 #
 # See also:
-#	Compat_Run
+#	Compat_MakeAll
 #
 #	The commit that added the NULL command to gn->commands:
 #		CVS: 1994.06.06.22.45.??
