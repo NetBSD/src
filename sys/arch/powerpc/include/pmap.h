@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2022/02/16 23:31:13 riastradh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42 2022/05/07 07:10:46 rin Exp $	*/
 
 #ifndef _POWERPC_PMAP_H_
 #define _POWERPC_PMAP_H_
@@ -22,8 +22,6 @@
 
 #endif /* !_MODULE */
 
-#include <uvm/pmap/pmap_pvt.h>
-
 #if !defined(_LOCORE) && (defined(MODULAR) || defined(_MODULE))
 /*
  * Both BOOKE and OEA use __HAVE_VM_PAGE_MD but IBM4XX doesn't so define
@@ -40,6 +38,15 @@ struct vm_page_md {
 #endif /* !__HAVE_VM_PAGE_MD */
 
 __CTASSERT(sizeof(struct vm_page_md) == sizeof(uintptr_t)*5);
+
+#ifndef __HAVE_PMAP_PV_TRACK
+/*
+ * We need empty stubs for modules shared with all sub-archs.
+ */
+#define	__HAVE_PMAP_PV_TRACK
+#define	PMAP_PV_TRACK_ONLY_STUBS
+#include <uvm/pmap/pmap_pvt.h>
+#endif /* !__HAVE_PMAP_PV_TRACK */
 
 #endif /* !LOCORE && (MODULAR || _MODULE) */
 

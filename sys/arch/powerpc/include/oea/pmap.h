@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 2022/02/16 23:31:13 riastradh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37 2022/05/07 07:10:46 rin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,6 +47,9 @@
 #include "opt_modular.h"
 #endif
 #include <powerpc/oea/pte.h>
+
+#define	__HAVE_PMAP_PV_TRACK
+#include <uvm/pmap/pmap_pvt.h>
 
 /*
  * Pmap stuff
