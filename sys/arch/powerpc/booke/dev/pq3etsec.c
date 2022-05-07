@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.56 2021/08/07 16:19:02 thorpej Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.57 2022/05/07 05:01:29 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.56 2021/08/07 16:19:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.57 2022/05/07 05:01:29 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -251,8 +251,6 @@ struct pq3etsec_softc {
 struct pq3mdio_softc {
 	device_t mdio_dev;
 
-	kmutex_t *mdio_lock;
-
 	bus_space_tag_t mdio_bst;
 	bus_space_handle_t mdio_bsh;
 };
@@ -380,7 +378,6 @@ pq3mdio_attach(device_t parent, device_t self, void *aux)
 	struct cpunode_locators * const cnl = &cna->cna_locs;
 
 	mdio->mdio_dev = self;
-	mdio->mdio_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 
 	if (device_is_a(parent, "cpunode")) {
 		struct cpunode_softc * const psc = device_private(parent);
@@ -416,8 +413,6 @@ pq3mdio_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 	struct pq3mdio_softc * const mdio = device_private(self);
 	uint32_t miimcom = etsec_mdio_read(mdio, MIIMCOM);
 
-	mutex_enter(mdio->mdio_lock);
-
 	etsec_mdio_write(mdio, MIIMADD,
 	    __SHIFTIN(phy, MIIMADD_PHY) | __SHIFTIN(reg, MIIMADD_REG));
 
@@ -436,7 +431,6 @@ pq3mdio_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 	aprint_normal_dev(mdio->mdio_dev, "%s: phy %d reg %d: %#x\n",
 	    __func__, phy, reg, data);
 #endif
-	mutex_exit(mdio->mdio_lock);
 	return 0;
 }
 
@@ -451,8 +445,6 @@ pq3mdio_mii_writereg(device_t self, int phy, int reg, uint16_t data)
 	    __func__, phy, reg, data);
 #endif
 
-	mutex_enter(mdio->mdio_lock);
-
 	etsec_mdio_write(mdio, MIIMADD,
 	    __SHIFTIN(phy, MIIMADD_PHY) | __SHIFTIN(reg, MIIMADD_REG));
 	etsec_mdio_write(mdio, MIIMCOM, 0);	/* clear any past bits */
@@ -465,8 +457,6 @@ pq3mdio_mii_writereg(device_t self, int phy, int reg, uint16_t data)
 
 	if (miimcom == MIIMCOM_SCAN)
 		etsec_mdio_write(mdio, MIIMCOM, miimcom);
-
-	mutex_exit(mdio->mdio_lock);
 
 	return 0;
 }
