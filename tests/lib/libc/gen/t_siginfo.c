@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.46 2021/12/10 20:36:05 andvar Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.47 2022/05/07 13:14:16 rin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -367,7 +367,7 @@ ATF_TC_BODY(sigfpe_int, tc)
 	struct sigaction sa;
 	long l = strtol("0", NULL, 10);
 
-#if defined(__powerpc__) || defined(__aarch64__)
+#if defined(__aarch64__) || defined(__powerpc__) || defined(__sh3__)
 	atf_tc_skip("Integer division by zero doesn't trap");
 #endif
 	if (sigsetjmp(sigfpe_int_env, 0) == 0) {
