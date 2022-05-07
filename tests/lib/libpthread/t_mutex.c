@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.19 2017/12/01 13:25:29 kre Exp $ */
+/* $NetBSD: t_mutex.c,v 1.20 2022/05/07 05:13:17 rin Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.19 2017/12/01 13:25:29 kre Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.20 2022/05/07 05:13:17 rin Exp $");
 
 #include <sys/time.h> /* For timespecadd */
 #include <inttypes.h> /* For UINT16_MAX */
@@ -148,6 +148,7 @@ ATF_TC(mutex2);
 ATF_TC_HEAD(mutex2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes");
+	atf_tc_set_md_var(tc, "timeout", "600");
 }
 ATF_TC_BODY(mutex2, tc)
 {
@@ -204,6 +205,7 @@ ATF_TC_HEAD(mutex3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes using a static "
 	    "initializer");
+	atf_tc_set_md_var(tc, "timeout", "600");
 }
 ATF_TC_BODY(mutex3, tc)
 {
