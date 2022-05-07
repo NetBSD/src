@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 2022/05/07 06:53:16 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2022/05/07 06:53:16 rin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -118,6 +118,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2022/04/09 23:38:33 riastradh Exp $");
     && !defined(PMAP_NO_PV_UNCACHED)
 #error PMAP_VIRTUAL_CACHE_ALIASES with MULTIPROCESSOR requires \
  PMAP_NO_PV_UNCACHED to be defined
+#endif
+
+#if defined(PMAP_PV_TRACK_ONLY_STUBS)
+#undef	__HAVE_PMAP_PV_TRACK
 #endif
 
 PMAP_COUNTER(remove_kernel_calls, "remove kernel calls");

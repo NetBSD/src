@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.20 2021/03/19 07:51:33 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21 2022/05/07 06:53:16 rin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -203,7 +203,7 @@ void	pmap_pvlist_lock_init(size_t);
 void	pmap_page_cache(struct vm_page_md *, bool);
 #endif
 
-#ifdef __HAVE_PMAP_PV_TRACK
+#if defined(__HAVE_PMAP_PV_TRACK) && !defined(PMAP_PV_TRACK_ONLY_STUBS)
 void	pmap_pv_protect(paddr_t, vm_prot_t);
 #endif
 

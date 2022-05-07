@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.c,v 1.11 2021/07/21 06:35:45 skrll Exp $	*/
+/*	$NetBSD: pmap_pvt.c,v 1.12 2022/05/07 06:53:16 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_pvt.c,v 1.11 2021/07/21 06:35:45 skrll Exp $");
+__RCSID("$NetBSD: pmap_pvt.c,v 1.12 2022/05/07 06:53:16 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: pmap_pvt.c,v 1.11 2021/07/21 06:35:45 skrll Exp $");
 #include <uvm/uvm.h>
 #include <uvm/pmap/pmap_pvt.h>
 
+#if !defined(PMAP_PV_TRACK_ONLY_STUBS)
 /*
  * unmanaged pv-tracked ranges
  *
@@ -177,3 +178,33 @@ pmap_pv_tracked(paddr_t pa)
 	return &pvt->pvt_pages[pgno];
 }
 
+#else /* PMAP_PV_TRACK_ONLY_STUBS */
+/*
+ * Provide empty stubs just for MODULAR kernels.
+ */
+
+void
+pmap_pv_init(void)
+{
+
+}
+
+void
+pmap_pv_track(paddr_t start, psize_t size)
+{
+
+}
+
+void
+pmap_pv_untrack(paddr_t start, psize_t size)
+{
+
+}
+
+struct pmap_page *
+pmap_pv_tracked(paddr_t pa)
+{
+
+	return NULL;
+}
+#endif
