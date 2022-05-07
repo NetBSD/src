@@ -1,3 +1,5 @@
+! $NetBSD: Xresources.in,v 1.7 2022/05/07 06:31:39 nia Exp $
+
 xlogin*login.translations: #override BS
 	Ctrl<Key>R: abort-display()NLBS
 	<Key>F1: set-session-argument(failsafe) finish-field()NLBS
@@ -42,6 +44,7 @@ xlogin*innerFramesWidth: 2
 xlogin*sepWidth: 0
 
 XHASHifdef COLOR
+xlogin*logoFileName: BITMAPDIR/**//XDM_PIXMAP
 xlogin*shdColor: steelblue
 xlogin*hiColor: steelblue
 xlogin*background: white
@@ -49,6 +52,7 @@ xlogin*inpColor: lavender
 xlogin*greetColor: black
 xlogin*failColor: darkred
 XHASHelse
+xlogin*logoFileName: BITMAPDIR/**//XDM_BWPIXMAP
 xlogin*shdColor: black
 xlogin*hiColor: black
 xlogin*background: white
@@ -60,7 +64,6 @@ XHASHendif
 *Foreground: black
 *Background: white
 
-xlogin*logoFileName: BITMAPDIR/**//XDM_PIXMAP
 xlogin*useShape: true
 xlogin*logoPadding: 12
 
