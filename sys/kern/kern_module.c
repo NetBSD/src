@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.153 2021/09/16 21:29:42 andvar Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.154 2022/05/07 04:30:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.153 2021/09/16 21:29:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.154 2022/05/07 04:30:41 rin Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -84,7 +84,11 @@ static const modinfo_t module_netbsd_modinfo = {
 };
 
 static module_t	*module_active;
-bool		module_verbose_on;
+#ifdef MODULAR_DEFAULT_VERBOSE
+bool		module_verbose_on = true;
+#else
+bool		module_verbose_on = false;
+#endif
 #ifdef MODULAR_DEFAULT_AUTOLOAD
 bool		module_autoload_on = true;
 #else
