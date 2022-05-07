@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.215 2022/04/09 23:45:37 riastradh Exp $	*/
+/*	$NetBSD: lwp.h,v 1.216 2022/05/07 19:44:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -239,10 +239,10 @@ extern struct lwplist	alllwp;		/* List of all LWPs. */
 extern lwp_t		lwp0;		/* LWP for proc0. */
 extern int		maxlwp __read_mostly;	/* max number of lwps */
 #ifndef MAXLWP
-#define	MAXLWP		2048
+#define	MAXLWP		4096		/* default max */
 #endif
-#ifndef	__HAVE_CPU_MAXLWP
-#define	cpu_maxlwp()	MAXLWP
+#ifndef MAXMAXLWP
+#define MAXMAXLWP	65535		/* absolute max */
 #endif
 #endif
 
