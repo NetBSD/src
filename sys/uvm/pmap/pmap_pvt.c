@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.c,v 1.14 2022/05/08 22:00:06 rin Exp $	*/
+/*	$NetBSD: pmap_pvt.c,v 1.15 2022/05/08 22:03:02 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_pvt.c,v 1.14 2022/05/08 22:00:06 rin Exp $");
+__RCSID("$NetBSD: pmap_pvt.c,v 1.15 2022/05/08 22:03:02 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -219,4 +219,4 @@ pmap_pv_untrack(paddr_t start, psize_t size)
 }
 #endif /* notdef */
 
-#endif /* !PMAP_PV_TRACK_ONLY_STUBS */
+#endif /* PMAP_PV_TRACK_ONLY_STUBS */
