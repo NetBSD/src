@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.4 2022/05/02 20:27:43 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.5 2022/05/08 17:28:14 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021 Joseph Koshy
  * All rights reserved.
@@ -26,7 +26,7 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.4 2022/05/02 20:27:43 jkoshy Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 3980 2022-05-02 19:50:00Z jkoshy')
+	`Id: elfdefinitions.m4 3984 2022-05-06 11:22:42Z jkoshy')
 include(`elfconstants.m4')dnl
 
 define(`_',`ifelse(eval(len($1) <= 7),1,
@@ -54,8 +54,6 @@ divert(0)dnl
 
 #ifndef _SYS_ELFDEFINITIONS_H_
 #define _SYS_ELFDEFINITIONS_H_
-
-#include <stdint.h>
 
 /*
  * Types of capabilities.
