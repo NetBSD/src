@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.14 2021/12/09 07:33:24 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.15 2022/05/08 08:20:16 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -260,16 +260,50 @@ Monochrome
     MapWindowBackground 	"white"
 }
 
+menu "deskutils"
+{
+    "Desktop utilities"		f.title
+    " Calculator"		!"xcalc &"
+    " Clipboard"		!"xclipboard &"
+    " Text editor"		!"xedit &"
+    ""				f.separator
+    " XEyes"			!"xeyes &"
+    " OpenGL Gears"		!"glxgears &"
+    " Icosahedron"		!"ico -sleep 0.016 &"
+    ""				f.separator
+    " Compositor (shadows)"	!"pkill xcompmgr; xcompmgr -c &"
+    " Compositor (simple)"	!"pkill xcompmgr; xcompmgr -n &"
+    ""				f.separator
+    " Magnify"			!"xmag -source 100x100 &"
+    " Kill window"		!"xkill &"
+}
+
+menu "termutils"
+{
+    "Terminal utilities"	f.title
+    ""				f.separator
+    " VIsual Editor"		!"xterm -class UXTerm -e vi &"
+    " Tetris"			!"xterm -class UXTerm -e tetris &"
+    ""				f.separator
+    " Audio mixer"		!"xterm -class UXTerm -e aiomixer &"
+    " System setup"		!"xterm -class UXTerm -e sysinst &"
+    ""				f.separator
+    " Top processes"		!"xterm -class UXTerm -e top &"
+    " I/O stats"		!"xterm -class UXTerm -e 'sysstat iostat' &"
+    " Network stats"		!"xterm -class UXTerm -e 'sysstat ifstat' &"
+    " Disk usage"		!"xterm -class UXTerm -e 'sysstat df' &"
+}
+
 menu "NetBSD"
 {
     "NetBSD"			f.title
     ""				f.separator
     " Terminal"			!"uxterm &"
-    " Calculator"		!"xcalc &"
-    " Clock"			!"xclock -digital &"
-    " XEyes"			!"xeyes &"
+    " Manual pages"		!"LC_ALL=C xman -notopbox &"
     ""				f.separator
     " Applications"		f.menu "appmenu"
+    " Desktop utilities"	f.menu "deskutils"
+    " Terminal utilities"	f.menu "termutils"
     ""				f.separator
     " Restart CTWM"		f.twmrc
     " Quit"			f.quit
@@ -313,7 +347,6 @@ OccupyAll
 
 AlwaysOnTop
 {
-   "xclock"
    "XEyes"
    "XVidCap"
 }
@@ -322,6 +355,7 @@ NoTitle
 {
    "TWM Icon Manager"
    "WorkSpaceManager"
+   "XClock"
 }
 
 WindowRingExclude
@@ -339,7 +373,6 @@ StartIconified
 
 NoBorder
 {
-   "TWM Icon Manager"
 }
 
 Function "raise-move"          { f.raise f.deltastop f.forcemove }
