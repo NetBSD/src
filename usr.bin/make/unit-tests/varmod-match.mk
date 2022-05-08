@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.8 2022/03/27 18:39:01 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.9 2022/05/08 06:51:27 rillig Exp $
 #
 # Tests for the :M variable modifier, which filters words that match the
 # given pattern.
@@ -182,5 +182,21 @@ ${:U*}=		asterisk
 # Without the modifier ':tW', the string is split into words.  All whitespace
 # around and between the words is normalized to a single space.
 .if ${   plain    string   :L:M*} != "plain string"
+.  error
+.endif
+
+
+# The pattern can come from a variable expression.  For single-letter
+# variables, either the short form or the long form can be used, just as
+# everywhere else.
+PRIMES=	2 3 5 7 11
+n=	2
+.if ${PRIMES:M$n} != "2"
+.  error
+.endif
+.if ${PRIMES:M${n}} != "2"
+.  error
+.endif
+.if ${PRIMES:M${:U2}} != "2"
 .  error
 .endif
