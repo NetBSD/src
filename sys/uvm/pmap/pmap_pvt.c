@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.c,v 1.12 2022/05/07 06:53:16 rin Exp $	*/
+/*	$NetBSD: pmap_pvt.c,v 1.13 2022/05/08 21:55:34 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_pvt.c,v 1.12 2022/05/07 06:53:16 rin Exp $");
+__RCSID("$NetBSD: pmap_pvt.c,v 1.13 2022/05/08 21:55:34 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -189,22 +189,34 @@ pmap_pv_init(void)
 
 }
 
-void
-pmap_pv_track(paddr_t start, psize_t size)
-{
-
-}
-
-void
-pmap_pv_untrack(paddr_t start, psize_t size)
-{
-
-}
-
 struct pmap_page *
 pmap_pv_tracked(paddr_t pa)
 {
 
 	return NULL;
 }
-#endif
+
+#if notdef
+/*
+ * pmap_pv_{,un}track() are intentionally commented out. If modules
+ * call these functions, the result should be an inconsistent state.
+ *
+ * Such modules require real PV-tracking support. Let us make two
+ * symbols undefined, and prevent these modules from loaded.
+ */
+void
+pmap_pv_track(paddr_t start, psize_t size)
+{
+
+	panic("PV-tracking not supported");
+}
+
+void
+pmap_pv_untrack(paddr_t start, psize_t size)
+{
+
+	panic("PV-tracking not supported");
+}
+#endif /* notdef */
+
+#endif /* !PMAP_PV_TRACK_ONLY_STUBS */
