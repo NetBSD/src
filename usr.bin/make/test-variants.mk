@@ -1,4 +1,4 @@
-# $NetBSD: test-variants.mk,v 1.3 2022/05/03 19:05:34 rillig Exp $
+# $NetBSD: test-variants.mk,v 1.4 2022/05/08 19:19:11 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -73,12 +73,6 @@ SKIP_TESTS.debug-meta=	depsrc-meta meta-cmd-cmp # generate extra debug output
 TESTS+=			debug-src
 CPPFLAGS.debug-src=	-DDEBUG_SRC
 SKIP.debug-src=		yes
-
-# In this variant, the tests for 'export VAR=value' fail, as expected.
-#
-TESTS+=			no-gmake-export
-CPPFLAGS.no-gmake-export= -UGMAKEEXPORT
-SKIP.no-gmake-export=	yes
 
 # NetBSD 8.0 x86_64
 # In file included from arch.c:135:0:
