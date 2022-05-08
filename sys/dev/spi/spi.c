@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.24 2022/03/28 11:09:24 mlelstv Exp $ */
+/* $NetBSD: spi.c,v 1.25 2022/05/08 06:38:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.24 2022/03/28 11:09:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.25 2022/05/08 06:38:58 skrll Exp $");
 
 #include "locators.h"
 
@@ -544,7 +544,7 @@ spi_transfer(struct spi_handle *sh, struct spi_transfer *st)
 	spi_acquire(sh);
 
 	st->st_spiprivate = (void *)sh;
-	
+
 	/*
 	 * Reconfigure controller
 	 *
