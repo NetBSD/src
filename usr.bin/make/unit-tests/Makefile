@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.314 2022/05/08 06:51:27 rillig Exp $
+# $NetBSD: Makefile,v 1.315 2022/05/08 10:20:49 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -437,7 +437,6 @@ TESTS+=		varparse-dynamic
 TESTS+=		varparse-errors
 TESTS+=		varparse-mod
 TESTS+=		varparse-undef-partial
-TESTS+=		varquote
 
 # Some tests just do not work on some platforms or environments
 # so allow for some filtering.
