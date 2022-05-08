@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.25 2021/08/07 16:19:16 thorpej Exp $ */
+/* $NetBSD: spiflash.c,v 1.26 2022/05/08 06:38:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.25 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.26 2022/05/08 06:38:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -384,7 +384,7 @@ spiflash_process_read(spiflash_handle_t sc)
 			bufq_move(sc->sc_doneq, sc->sc_workq);
 			break;
 		}
-		
+
 		bp->b_resid -= cnt;
 		data += cnt;
 		addr += cnt;
@@ -422,7 +422,7 @@ spiflash_process_write(spiflash_handle_t sc)
 	/* read in as much of the data as we need */
 	DPRINTF(("reading in %d bytes\n", len));
 	if ((err = sc->sc_read(sc, base, len, save)) != 0) {
-		bufq_move(sc->sc_doneq, sc->sc_workq);	
+		bufq_move(sc->sc_doneq, sc->sc_workq);
 		spiflash_process_done(sc, err);
 		return;
 	}
@@ -455,7 +455,7 @@ spiflash_process_write(spiflash_handle_t sc)
 
 		bufq_put(sc->sc_doneq, bp);
 	}
-	
+
 	/*
 	 * do the erase, if we need to.
 	 */
@@ -578,7 +578,7 @@ spiflash_common_erase(spiflash_handle_t sc, size_t start, size_t size)
 	if ((start % sc->sc_erase_size) || (size % sc->sc_erase_size))
 		return EINVAL;
 
-	/* the second test is to test against wrap */ 
+	/* the second test is to test against wrap */
 	if ((start > sc->sc_device_size) ||
 	    ((start + size) > sc->sc_device_size))
 		return EINVAL;
@@ -674,7 +674,7 @@ spiflash_common_read(spiflash_handle_t sc, size_t start, size_t size,
 
 		if (sc->sc_read_size > 0)
 			cnt = uimin(size, sc->sc_read_size);
-		else 
+		else
 			cnt = size;
 
 		if ((rv = spiflash_cmd(sc, SPIFLASH_CMD_READ, 3, start,
