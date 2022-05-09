@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2872 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2873 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -336,6 +336,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	bind: Import version 9.16.12. [christos 20210219]
 	OpenSSL: Imported 1.1.1j. [christos 20210219]
 	byacc: Update to 20210109. [christos 20210220]
+	virtio(4): Add support for VirtIO PCI v1.0 attachments next to legacy v0.9
+		[reinoud 20210120]
 	regex(3): Add NLS support and gnu regex extensions (off by default).
 		[christos 20210223]
 	wpa: Import wpa_supplicant and hostapd 2.9. [christos 20210228]
