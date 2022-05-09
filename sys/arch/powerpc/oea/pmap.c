@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 2022/04/09 23:38:32 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114 2022/05/09 11:39:44 rin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2022/04/09 23:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2022/05/09 11:39:44 rin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -674,7 +674,7 @@ static inline void
 pmap_pp_attr_clear(struct pmap_page *pp, int ptebit)
 {
 
-	pp->pp_attrs &= ptebit;
+	pp->pp_attrs &= ~ptebit;
 }
 
 static inline void
