@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.369 2021/10/10 18:07:51 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.370 2022/05/09 13:27:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -565,7 +565,7 @@ int	proc_compare(const struct proc *, const struct lwp *,
 /*
  * Special handlers for delivering EVFILT_PROC notifications.  These
  * exist to handle some of the special locking considerations around
- * proesses.
+ * processes.
  */
 void	knote_proc_exec(struct proc *);
 void	knote_proc_fork(struct proc *, struct proc *);
