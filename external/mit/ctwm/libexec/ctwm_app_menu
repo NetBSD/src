@@ -1,7 +1,7 @@
 #!/bin/sh
-#	$NetBSD: ctwm_app_menu,v 1.3 2021/03/01 15:40:40 nia Exp $
+#	$NetBSD: ctwm_app_menu,v 1.4 2022/05/09 15:05:18 nia Exp $
 #
-# Copyright (c) 2020 The NetBSD Foundation, Inc.
+# Copyright (c) 2020-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -29,54 +29,117 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 LOCALBASE=$(pkg_info -Q LOCALBASE pkg_install 2>/dev/null || echo /usr/pkg)
+DESKTOPFILES=$(find $LOCALBASE/share/applications -name '*.desktop')
 OFS=$IFS
 IFS='
 '
-printf 'menu "appmenu"\n'
-printf '{\n'
-printf '\t"Applications"\tf.title\n'
-for app in $(find $LOCALBASE/share/applications -name '*.desktop');
-do
-	name=""
-	exec=""
-	terminal=""
-	nodisplay=""
-	while read line;
+do_category()
+{
+	printf 'menu "%s"\n' "$1"
+	printf '{\n'
+	printf '\t"%s"\tf.title\n' "$1"
+	for app in $DESKTOPFILES;
 	do
-		case $line in
-			Name=*)
-				if ! [ -n "$name" ];
-				then
-					name=$(printf '%s' "$line" | cut -c6- | tr -d '\r')
+		name=""
+		exec=""
+		terminal=""
+		nodisplay=""
+		category=$(grep -m 1 '^Categories=' "$app")
+		case "$category" in
+			*Audio*)
+				if [ "$1" != "Multimedia" ]; then
+					continue
 				fi
 			;;
-			Exec=*)
-				if ! [ -n "$exec" ];
-				then
-					exec=$(printf '%s' "$line" | cut -c6- | sed -e 's/ %.*//g' | tr -d '\r')
+			*Development*)
+				if [ "$1" != "Programming" ]; then
+					continue
 				fi
 			;;
-			Terminal=true)
-				terminal="true"
+			*Graphics*)
+				if [ "$1" != "Graphics" ]; then
+					continue
+				fi
 			;;
-			OnlyShowIn=*|NoDisplay=true)
-				nodisplay="true"
+			*Game*)
+				if [ "$1" != "Games" ]; then
+					continue
+				fi
+			;;
+			*Office*)
+				if [ "$1" != "Office" ]; then
+					continue
+				fi
+			;;
+			*Network*)
+				if [ "$1" != "Internet" ]; then
+					continue
+				fi
+			;;
+			*System*)
+				if [ "$1" != "System" ]; then
+					continue
+				fi
+			;;
+			*Utility*)
+				if [ "$1" != "Accessories" ]; then
+					continue
+				fi
+			;;
+			*)
+				if [ "$1" != "Misc" ]; then
+					continue
+				fi
 			;;
 		esac
-	done < "$app"
-	if [ -n "$nodisplay" ];
-	then
-		continue
-	fi
-	if [ -n "$name" -a -n "$exec" ];
-	then
-		if [ -n "$terminal" ];
+		while read line;
+		do
+			case $line in
+				Name=*)
+					if ! [ -n "$name" ];
+					then
+						name=$(printf '%s' "$line" | cut -c6- | tr -d '\r')
+					fi
+				;;
+				Exec=*)
+					if ! [ -n "$exec" ];
+					then
+						exec=$(printf '%s' "$line" | cut -c6- | sed -e 's/ %.*//g' | tr -d '\r')
+					fi
+				;;
+				Terminal=true)
+					terminal="true"
+				;;
+				OnlyShowIn=*|NoDisplay=true)
+					nodisplay="true"
+				;;
+			esac
+		done < "$app"
+		if [ -n "$nodisplay" ];
 		then
-			printf '\t" %s" !"uxterm %s &" \n' "$name" "$exec"
-		else
-			printf '\t" %s" !"%s &" \n' "$name" "$exec"
+			continue
 		fi
-	fi
-done | sort
-printf '}\n'
+		if [ -n "$name" -a -n "$exec" ];
+		then
+			if [ -n "$terminal" ];
+			then
+				printf '\t" %s" !"xterm -class UXTerm -e %s &" \n' "$name" "$exec"
+			else
+				printf '\t" %s" !"%s &" \n' "$name" "$exec"
+			fi
+		fi
+	done | sort
+	printf '}\n'
+}
+
+do_category Accessories
+do_category Games
+do_category Graphics
+do_category Internet
+do_category Multimedia
+do_category Office
+do_category Programming
+do_category System
+do_category Misc
+
 IFS=$OIFS
