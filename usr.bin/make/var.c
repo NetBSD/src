@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1019 2022/03/27 18:39:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1020 2022/05/09 21:24:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1019 2022/03/27 18:39:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1020 2022/05/09 21:24:42 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -452,7 +452,6 @@ VarFindSubstring(Substring name, GNode *scope, bool elsewhere)
 	return var;
 }
 
-/* TODO: Replace these calls with VarFindSubstring, as far as possible. */
 static Var *
 VarFind(const char *name, GNode *scope, bool elsewhere)
 {
