@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.72 2022/05/07 14:25:12 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.73 2022/05/09 15:56:36 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.72 2022/05/07 14:25:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.73 2022/05/09 15:56:36 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -112,7 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.72 2022/05/07 14:25:12 msaitoh Exp $");
 
 #ifdef MFI_DEBUG
 uint32_t	mfi_debug = 0
-/*		    | MFI_D_CMD  */
+/*		    | MFI_D_CMD */
 /*		    | MFI_D_INTR */
 /*		    | MFI_D_MISC */
 /*		    | MFI_D_DMA */
@@ -201,10 +201,10 @@ const struct cdevsw mfi_cdevsw = {
 };
 
 static uint32_t 	mfi_xscale_fw_state(struct mfi_softc *sc);
-static void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
-static void 		mfi_xscale_intr_dis(struct mfi_softc *sc);
-static int 		mfi_xscale_intr(struct mfi_softc *sc);
-static void 		mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
+static void		mfi_xscale_intr_ena(struct mfi_softc *sc);
+static void		mfi_xscale_intr_dis(struct mfi_softc *sc);
+static int		mfi_xscale_intr(struct mfi_softc *sc);
+static void		mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
 
 static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_fw_state,
@@ -216,10 +216,10 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
 };
 
 static uint32_t 	mfi_ppc_fw_state(struct mfi_softc *sc);
-static void 		mfi_ppc_intr_ena(struct mfi_softc *sc);
-static void 		mfi_ppc_intr_dis(struct mfi_softc *sc);
-static int 		mfi_ppc_intr(struct mfi_softc *sc);
-static void 		mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
+static void		mfi_ppc_intr_ena(struct mfi_softc *sc);
+static void		mfi_ppc_intr_dis(struct mfi_softc *sc);
+static int		mfi_ppc_intr(struct mfi_softc *sc);
+static void		mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
 
 static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_fw_state,
@@ -285,11 +285,11 @@ static const struct mfi_iop_ops mfi_iop_tbolt = {
 	mfi_tbolt_scsi_ld_io,
 };
 
-#define mfi_fw_state(_s) 	((_s)->sc_iop->mio_fw_state(_s))
-#define mfi_intr_enable(_s) 	((_s)->sc_iop->mio_intr_ena(_s))
-#define mfi_intr_disable(_s) 	((_s)->sc_iop->mio_intr_dis(_s))
-#define mfi_my_intr(_s) 	((_s)->sc_iop->mio_intr(_s))
-#define mfi_post(_s, _c) 	((_s)->sc_iop->mio_post((_s), (_c)))
+#define mfi_fw_state(_s)	((_s)->sc_iop->mio_fw_state(_s))
+#define mfi_intr_enable(_s)	((_s)->sc_iop->mio_intr_ena(_s))
+#define mfi_intr_disable(_s)	((_s)->sc_iop->mio_intr_dis(_s))
+#define mfi_my_intr(_s)		((_s)->sc_iop->mio_intr(_s))
+#define mfi_post(_s, _c)	((_s)->sc_iop->mio_post((_s), (_c)))
 
 static struct mfi_ccb *
 mfi_get_ccb(struct mfi_softc *sc)
@@ -684,7 +684,6 @@ mfi_get_info(struct mfi_softc *sc)
 		return 1;
 
 #ifdef MFI_DEBUG
-
 	for (i = 0; i < sc->sc_info.mci_image_component_count; i++) {
 		printf("%s: active FW %s Version %s date %s time %s\n",
 		    DEVNAME(sc),
@@ -845,7 +844,7 @@ mfi_get_bbu(struct mfi_softc *sc, struct mfi_bbu_status *stat)
 	    "status 0x%x\n", stat->battery_type, stat->voltage, stat->current,
 	    stat->temperature, stat->fw_status);
 	printf("details: ");
-	switch(stat->battery_type) {
+	switch (stat->battery_type) {
 	case MFI_BBU_TYPE_IBBU:
 		printf("guage %d relative charge %d charger state %d "
 		    "charger ctrl %d\n", stat->detail.ibbu.gas_guage_status,
@@ -871,9 +870,9 @@ mfi_get_bbu(struct mfi_softc *sc, struct mfi_bbu_status *stat)
 		printf("\n");
 	}
 #endif
-	switch(stat->battery_type) {
+	switch (stat->battery_type) {
 	case MFI_BBU_TYPE_BBU:
-		return (stat->detail.bbu.is_SOH_good ? 
+		return (stat->detail.bbu.is_SOH_good ?
 		    MFI_BBU_GOOD : MFI_BBU_BAD);
 	case MFI_BBU_TYPE_NONE:
 		return MFI_BBU_UNKNOWN;
@@ -1040,7 +1039,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		sc->sc_iop = &mfi_iop_tbolt;
 		break;
 	default:
-		 panic("%s: unknown iop %d", DEVNAME(sc), iop);
+		panic("%s: unknown iop %d", DEVNAME(sc), iop);
 	}
 
 	if (mfi_transition_firmware(sc))
@@ -1205,7 +1204,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 			aprint_normal("unknown type %d", bbu_stat.battery_type);
 		}
 		aprint_normal(", status ");
-		switch(mfi_bbu_status) {
+		switch (mfi_bbu_status) {
 		case MFI_BBU_GOOD:
 			aprint_normal("good\n");
 			sc->sc_bbuok = true;
@@ -2065,7 +2064,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 
 	strlcpy(bv->bv_dev, sc->sc_ld[i].ld_dev, sizeof(bv->bv_dev));
 
-	switch(sc->sc_ld_list.mll_list[i].mll_state) {
+	switch (sc->sc_ld_list.mll_list[i].mll_state) {
 	case MFI_LD_OFFLINE:
 		bv->bv_status = BIOC_SVOFFLINE;
 		break;
@@ -2220,7 +2219,6 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	default:
 		bd->bd_status = BIOC_SDINVALID;
 		break;
-
 	}
 
 	/* get the remaining fields */
@@ -2259,7 +2257,7 @@ mfi_ioctl_alarm(struct mfi_softc *sc, struct bioc_alarm *ba)
 	int			rv = 0;
 	int8_t			ret;
 
-	switch(ba->ba_opcode) {
+	switch (ba->ba_opcode) {
 	case BIOC_SADISABLE:
 		opc = MR_DCMD_SPEAKER_DISABLE;
 		break;
@@ -2322,7 +2320,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
 		if (bb->bb_channel == pd->mpl_address[i].mpa_enc_index &&
 		    bb->bb_target == pd->mpl_address[i].mpa_enc_slot) {
-		    	found = 1;
+			found = 1;
 			break;
 		}
 
@@ -2378,7 +2376,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
 		if (bs->bs_channel == pd->mpl_address[i].mpa_enc_index &&
 		    bs->bs_target == pd->mpl_address[i].mpa_enc_slot) {
-		    	found = 1;
+			found = 1;
 			break;
 		}
 
@@ -2611,7 +2609,7 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		bbu_status = mfi_get_bbu(sc, &bbu_stat);
 		splx(s);
 		KERNEL_UNLOCK_ONE(curlwp);
-		switch(bbu_status) {
+		switch (bbu_status) {
 		case MFI_BBU_GOOD:
 			edata->value_cur = 1;
 			edata->state = ENVSYS_SVALID;
@@ -2878,7 +2876,7 @@ mfi_tbolt_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 			mfi_tbolt_build_mpt_ccb(ccb);
 		mfi_write(sc, MFI_IQPL,
 		    ccb->ccb_tb_request_desc.words & 0xFFFFFFFF);
-		mfi_write(sc, MFI_IQPH, 
+		mfi_write(sc, MFI_IQPH,
 		    ccb->ccb_tb_request_desc.words >> 32);
 		ccb->ccb_state = MFI_CCB_RUNNING;
 		return;
@@ -2922,7 +2920,7 @@ mfi_tbolt_build_mpt_ccb(struct mfi_ccb *ccb)
 	    MFI_REQ_DESCRIPT_FLAGS_TYPE_SHIFT);
 	ccb->ccb_flags |= MFI_CCB_F_TBOLT;
 	bus_dmamap_sync(ccb->ccb_sc->sc_dmat,
-	    MFIMEM_MAP(ccb->ccb_sc->sc_tbolt_reqmsgpool), 
+	    MFIMEM_MAP(ccb->ccb_sc->sc_tbolt_reqmsgpool),
 	    ccb->ccb_tb_pio_request -
 	     MFIMEM_DVA(ccb->ccb_sc->sc_tbolt_reqmsgpool),
 	    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE,
@@ -3039,7 +3037,7 @@ mfi_tbolt_init_MFI_queue(struct mfi_softc *sc)
 
 	verbuf = MFIMEM_KVA(sc->sc_tbolt_verbuf);
 	snprintf(verbuf, strlen(MEGASAS_VERSION) + 2, "%s\n",
-                MEGASAS_VERSION);
+	    MEGASAS_VERSION);
 	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_tbolt_verbuf), 0,
 	    MFIMEM_MAP(sc->sc_tbolt_verbuf)->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	mfi_init->driver_ver_lo = htole32(MFIMEM_DVA(sc->sc_tbolt_verbuf));
@@ -3111,7 +3109,7 @@ mfi_tbolt_intrh(void *arg)
 	     sc->sc_last_reply_idx * MEGASAS_THUNDERBOLT_REPLY_SIZE);
 
 	bus_dmamap_sync(sc->sc_dmat,
-	    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+	    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool),
 	    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE * (sc->sc_max_cmds + 1),
 	    MEGASAS_THUNDERBOLT_REPLY_SIZE * sc->sc_reply_pool_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
@@ -3129,14 +3127,14 @@ mfi_tbolt_intrh(void *arg)
 		if (ccb->ccb_flags & MFI_CCB_F_TBOLT_IO &&
 		    ccb->ccb_tb_io_request->ChainOffset != 0) {
 			bus_dmamap_sync(sc->sc_dmat,
-			    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+			    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool),
 			    ccb->ccb_tb_psg_frame -
 				MFIMEM_DVA(sc->sc_tbolt_reqmsgpool),
 			    MEGASAS_MAX_SZ_CHAIN_FRAME,  BUS_DMASYNC_POSTREAD);
 		}
 		if (ccb->ccb_flags & MFI_CCB_F_TBOLT_IO) {
 			bus_dmamap_sync(sc->sc_dmat,
-			    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+			    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool),
 			    ccb->ccb_tb_pio_request -
 				MFIMEM_DVA(sc->sc_tbolt_reqmsgpool),
 			    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE,
@@ -3161,7 +3159,7 @@ mfi_tbolt_intrh(void *arg)
 		return 0;
 
 	bus_dmamap_sync(sc->sc_dmat,
-	    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+	    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool),
 	    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE * (sc->sc_max_cmds + 1),
 	    MEGASAS_THUNDERBOLT_REPLY_SIZE * sc->sc_reply_pool_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -3232,7 +3230,7 @@ mfi_tbolt_scsi_ld_io(struct mfi_ccb *ccb, struct scsipi_xfer *xs,
 
 	ccb->ccb_flags |= MFI_CCB_F_TBOLT | MFI_CCB_F_TBOLT_IO;
 	bus_dmamap_sync(ccb->ccb_sc->sc_dmat,
-	    MFIMEM_MAP(ccb->ccb_sc->sc_tbolt_reqmsgpool), 
+	    MFIMEM_MAP(ccb->ccb_sc->sc_tbolt_reqmsgpool),
 	    ccb->ccb_tb_pio_request -
 	     MFIMEM_DVA(ccb->ccb_sc->sc_tbolt_reqmsgpool),
 	    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE,
@@ -3338,7 +3336,7 @@ mfi_tbolt_create_sgl(struct mfi_ccb *ccb, int flags)
 			sgl_ptr++;
 		}
 		bus_dmamap_sync(sc->sc_dmat,
-		    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+		    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool),
 		    ccb->ccb_tb_psg_frame - MFIMEM_DVA(sc->sc_tbolt_reqmsgpool),
 		    MEGASAS_MAX_SZ_CHAIN_FRAME,  BUS_DMASYNC_PREREAD);
 	}
@@ -3412,7 +3410,7 @@ again:
 	}
 
 	ld_size = sizeof(*ld_sync) * sc->sc_ld_list.mll_no_ld;
-	
+
 	ld_sync = malloc(ld_size, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (ld_sync == NULL) {
 		aprint_error_dev(sc->sc_dev, "Failed to allocate sync\n");
@@ -3427,7 +3425,7 @@ again:
 		goto err;
 	}
 	sc->sc_ldsync_ccb = ccb;
-	
+
 	memset(mbox, 0, MFI_MBOX_SIZE);
 	mbox[0] = sc->sc_ld_list.mll_no_ld;
 	mbox[1] = MFI_DCMD_MBOX_PEND_FLAG;
@@ -3508,7 +3506,7 @@ mfifioctl(dev_t dev, u_long cmd, void *data, int flag,
 	int ctx, i, s, error;
 	union mfi_sense_ptr sense_ptr;
 
-	switch(cmd) {
+	switch (cmd) {
 	case MFI_CMD:
 		sc = device_lookup_private(&mfi_cd, ioc->mfi_adapter_no);
 		break;
@@ -3520,7 +3518,7 @@ mfifioctl(dev_t dev, u_long cmd, void *data, int flag,
 	if (sc->sc_opened)
 		return (EBUSY);
 
-	switch(cmd) {
+	switch (cmd) {
 	case MFI_CMD:
 		error = kauth_authorize_device_passthru(l->l_cred, dev,
 		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
