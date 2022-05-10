@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.10 2015/09/06 06:00:59 dholland Exp $ */
+/*	$NetBSD: biovar.h,v 1.11 2022/05/10 14:13:09 msaitoh Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ struct bioc_vol {
 	char		bv_dev[16];	/* device */
 	char		bv_vendor[32];	/* scsi string */
 
-	uint16_t	bv_stripe_size;	/* stripe size */
+	uint16_t	bv_stripe_size;	/* stripe size in KB */
 };
 
 /* COMPATIBILITY */
