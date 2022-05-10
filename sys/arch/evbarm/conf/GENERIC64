@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.200 2022/05/10 08:05:32 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.201 2022/05/10 08:09:57 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -182,6 +182,7 @@ appledart*	at fdt? pass 3		# Apple DART
 tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
 
 # Firmware devices
+applesmc*	at fdt? pass 3		# Apple RTKIT based SMC
 bcmmbox*	at fdt?			# Broadcom VideoCore IV mailbox
 bcmmbox*	at acpi?
 vcmbox* 	at bcmmbox?
