@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.179 2022/05/04 14:30:04 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.180 2022/05/10 09:05:03 knakahara Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.179 2022/05/04 14:30:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.180 2022/05/10 09:05:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -953,6 +953,7 @@ breakbreak:;
 			if (sc->sc_ac_cookie == NULL) {
 				pppoe_printf(sc, "FATAL: could not allocate memory "
 				    "for AC cookie\n");
+				sc->sc_ac_cookie_len = 0;
 				PPPOE_UNLOCK(sc);
 				goto done;
 			}
@@ -971,6 +972,7 @@ breakbreak:;
 			if (sc->sc_relay_sid == NULL) {
 				pppoe_printf(sc, "FATAL: could not allocate memory "
 				    "for relay SID\n");
+				sc->sc_relay_sid_len = 0;
 				PPPOE_UNLOCK(sc);
 				goto done;
 			}
