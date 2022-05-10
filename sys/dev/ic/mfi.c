@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.74 2022/05/09 17:13:30 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.75 2022/05/10 14:13:37 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.74 2022/05/09 17:13:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.75 2022/05/10 14:13:37 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -2124,6 +2124,9 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	    sc->sc_ld_details.mld_cfg.mlc_parm.mpa_span_depth;
 
 	bv->bv_size = sc->sc_ld_details.mld_size * 512; /* bytes per block */
+	bv->bv_stripe_size =
+	    (512 << sc->sc_ld_details.mld_cfg.mlc_parm.mpa_stripe_size)
+	    / 1024; /* in KB */
 
 	rv = 0;
 done:
