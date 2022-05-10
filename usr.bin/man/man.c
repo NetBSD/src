@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.72 2022/03/08 23:13:05 rillig Exp $	*/
+/*	$NetBSD: man.c,v 1.73 2022/05/10 00:42:00 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.72 2022/03/08 23:13:05 rillig Exp $");
+__RCSID("$NetBSD: man.c,v 1.73 2022/05/10 00:42:00 gutteridge Exp $");
 #endif
 #endif /* not lint */
 
@@ -932,7 +932,7 @@ check_pager(const char *name)
 		++p;
 
 	/* make sure it's "more", not "morex" */
-	if (!strncmp(p, "more", 4) && (!p[4] || isspace((unsigned char)p[4]))){
+	if (!strncmp(p, "more", 4) && (!p[4] || isspace((unsigned char)p[4]))) {
 		char *newname;
 		(void)asprintf(&newname, "%s %s", p, "-s");
 		name = newname;
