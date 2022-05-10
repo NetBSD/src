@@ -1,4 +1,4 @@
-/* $NetBSD: apple_pmgr.c,v 1.1 2022/04/27 07:55:42 skrll Exp $ */
+/* $NetBSD: apple_pmgr.c,v 1.2 2022/05/10 08:10:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_pmgr.c,v 1.1 2022/04/27 07:55:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_pmgr.c,v 1.2 2022/05/10 08:10:28 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -131,6 +131,9 @@ apple_pmgr_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers: %d\n", error);
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal(": Apple PMGR\n");
 
 	for (int node = OF_child(phandle); node; node = OF_peer(node)) {
 		static const struct device_compatible_entry compat_ps[] = {
