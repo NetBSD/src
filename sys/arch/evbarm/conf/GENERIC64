@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.199 2022/05/07 08:20:04 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.200 2022/05/10 08:05:32 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -333,6 +333,7 @@ com*		at puc? port ?
 
 # I2C controllers
 options 	I2C_MAX_ADDR=0xfff
+appleiic*	at fdt?			# Apple I2C
 bsciic* 	at fdt?			# Broadcom BCM283x Serial Control
 bsciic* 	at acpi?
 dwiic*		at fdt?			# Designware I2C

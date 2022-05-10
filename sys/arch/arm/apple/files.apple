@@ -1,4 +1,4 @@
-#	$NetBSD: files.apple,v 1.6 2022/05/07 08:20:04 skrll Exp $
+#	$NetBSD: files.apple,v 1.7 2022/05/10 08:05:32 skrll Exp $
 #
 # Configuration info for Apple Silicon SoCs
 #
@@ -8,6 +8,11 @@
 device	appledart
 attach	appledart at fdt with apple_dart
 file	arch/arm/apple/apple_dart.c		apple_dart
+
+# I2C controller
+device	appleiic: i2cbus
+attach	appleiic at fdt with apple_iic
+file	arch/arm/apple/apple_iic.c		apple_iic
 
 # Interrupt controller
 device	appleintc: pic, pic_splfuncs
