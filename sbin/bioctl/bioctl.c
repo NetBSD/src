@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.18 2019/02/04 04:36:41 mrg Exp $ */
+/* $NetBSD: bioctl.c,v 1.19 2022/05/10 14:16:25 msaitoh Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.18 2019/02/04 04:36:41 mrg Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.19 2022/05/10 14:16:25 msaitoh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -245,7 +245,7 @@ bio_show_volumes(struct biotmp *bt)
 	bv.bv_cookie = bl.bl_cookie;
 	bv.bv_volid = bt->volid;
 	bv.bv_percent = -1;
-	bv.bv_seconds = -1;
+	bv.bv_seconds = 0;
 
 	if (ioctl(bt->fd, BIOCVOL, &bv) == -1)
 		err(EXIT_FAILURE, "BIOCVOL");
