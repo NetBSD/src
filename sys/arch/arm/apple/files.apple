@@ -1,4 +1,4 @@
-#	$NetBSD: files.apple,v 1.7 2022/05/10 08:05:32 skrll Exp $
+#	$NetBSD: files.apple,v 1.8 2022/05/10 08:09:57 skrll Exp $
 #
 # Configuration info for Apple Silicon SoCs
 #
@@ -44,6 +44,10 @@ file	arch/arm/apple/apple_pinctrl.c		apple_pinctrl
 device	applepmgr
 attach	applepmgr at fdt with apple_pmgr
 file	arch/arm/apple/apple_pmgr.c		apple_pmgr
+
+# SMC
+attach	applesmc at fdt with apple_rtkitsmc
+file	arch/arm/apple/apple_smc.c		apple_rtkitsmc
 
 # Watchdog timer
 device	applewdog: sysmon_wdog
