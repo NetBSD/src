@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.36 2017/01/11 18:32:48 christos Exp $	*/
+/*	$NetBSD: installboot.c,v 1.37 2022/05/11 10:27:45 rin Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -66,8 +66,7 @@ static void	mkahdiboot(struct ahdi_root *, char *,
 static void	mkbootblock(struct bootblock *, char *,
 				char *, struct disklabel *, u_int);
 static void	install_fd(char *, struct disklabel *);
-static void	install_sd(char *, struct disklabel *);
-static void	install_wd(char *, struct disklabel *);
+static void	install_hd(char *, struct disklabel *, bool);
 
 static struct bootblock	bootarea;
 static struct ahdi_root ahdiboot;
@@ -104,6 +103,7 @@ main(int argc, char *argv[])
 	char		 *dn;
 	char		 *devchr;
 	int		 fd, c;
+	bool		 use_wd = false;
 
 #ifdef CHECK_OS_BOOTVERSION
 	/* check OS bootversion */
@@ -169,11 +169,10 @@ main(int argc, char *argv[])
 			install_fd(dn, &dl);
 			break;
 		case 'w': /* wd */
-			install_wd(dn, &dl);
-			setNVpref();
-			break;
+			use_wd = true;
+			/* FALLTHROUGH */
 		case 's': /* sd */
-			install_sd(dn, &dl);
+			install_hd(dn, &dl, use_wd);
 			setNVpref();
 			break;
 		default:
@@ -275,13 +274,19 @@ install_fd(char *devnm, struct disklabel *label)
 }
 
 static void
-install_sd(char *devnm, struct disklabel *label)
+install_hd(char *devnm, struct disklabel *label, bool use_wd)
 {
 	const char	 *machpath;
 	char		 *xxb00t, *xxboot, *bootxx;
 	struct disklabel rawlabel;
 	u_int32_t	 bbsec;
 	u_int		 magic;
+	char		 disktype;
+
+	if (use_wd)
+		disktype = 'w';
+	else
+		disktype = 's';
 
 	if (label->d_partitions[0].p_size == 0)
 		errx(EXIT_FAILURE, "%s: No root-filesystem.", devnm);
@@ -302,7 +307,7 @@ install_sd(char *devnm, struct disklabel *label)
 	if (bbsec) {
 		size_t xxb00tlen = strlen(mdecpath) + strlen(machpath) + 14;
 		xxb00t = alloca(xxb00tlen);
-		snprintf(xxb00t, xxb00tlen, "%s%ssdb00t.ahdi", mdecpath, machpath);
+		snprintf(xxb00t, xxb00tlen, "%s%s%cdb00t.ahdi", mdecpath, machpath, disktype);
 		xxboot = alloca(xxb00tlen);
 		snprintf(xxboot, xxb00tlen, "%s%sxxboot.ahdi", mdecpath, machpath);
 		magic = AHDIMAGIC;
@@ -310,14 +315,15 @@ install_sd(char *devnm, struct disklabel *label)
 		size_t xxbootlen = strlen(mdecpath) + strlen(machpath) + 8;
 		xxb00t = NULL;
 		xxboot = alloca(xxbootlen);
-		snprintf(xxboot, xxbootlen, "%s%ssdboot", mdecpath, machpath);
+		snprintf(xxboot, xxbootlen, "%s%s%cdboot", mdecpath, machpath, disktype);
 		magic = NBDAMAGIC;
 	}
 	size_t bootxxlen = strlen(mdecpath) + strlen(machpath) + 8;
 	bootxx = alloca(bootxxlen);
 	snprintf(bootxx, bootxxlen, "%s%sbootxx", mdecpath, machpath);
 
-	trackpercyl = secpertrack = 0;
+	if (!use_wd)
+		trackpercyl = secpertrack = 0;
 	if (xxb00t)
 		mkahdiboot(&ahdiboot, xxb00t, devnm, bbsec);
 	mkbootblock(&bootarea, xxboot, bootxx, label, magic);
@@ -343,82 +349,6 @@ install_sd(char *devnm, struct disklabel *label)
 				err(EXIT_FAILURE, "%s", devnm);
 			if (verbose)
 				printf("AHDI root  installed on %s (0)\n",
-				    devnm);
-		}
-		if (close(fd))
-			err(EXIT_FAILURE, "%s", devnm);
-	}
-}
-
-static void
-install_wd(char *devnm, struct disklabel *label)
-{
-	const char	 *machpath;
-	char		 *xxb00t, *xxboot, *bootxx;
-	struct disklabel rawlabel;
-	u_int32_t	 bbsec;
-	u_int		 magic;
-
-	if (label->d_partitions[0].p_size == 0)
-		errx(EXIT_FAILURE, "%s: No root-filesystem.", devnm);
-	if (label->d_partitions[0].p_fstype != FS_BSDFFS)
-		errx(EXIT_FAILURE, "%s: %s: Illegal root-filesystem type.",
-		     devnm, fstypenames[label->d_partitions[0].p_fstype]);
-
-	bbsec = readdisklabel(devnm, &rawlabel);
-	if (bbsec == NO_BOOT_BLOCK)
-		errx(EXIT_FAILURE, "%s: No NetBSD boot block.", devnm);
-	if (memcmp(label, &rawlabel, sizeof(*label)))
-		errx(EXIT_FAILURE, "%s: Invalid NetBSD boot block.", devnm);
-
-	if (milan)
-		machpath = milanpath;
-	else
-		machpath = stdpath;
-	if (bbsec) {
-		size_t xxb00tlen = strlen(mdecpath) + strlen(machpath) + 14;
-		xxb00t = alloca(xxb00tlen);
-		snprintf(xxb00t, xxb00tlen, "%s%swdb00t.ahdi", mdecpath, machpath);
-		xxboot = alloca(xxb00tlen);
-		snprintf(xxboot, xxb00tlen, "%s%sxxboot.ahdi", mdecpath, machpath);
-		magic = AHDIMAGIC;
-	} else {
-		size_t xxbootlen = strlen(mdecpath) + strlen(machpath) + 8;
-		xxb00t = NULL;
-		xxboot = alloca(xxbootlen);
-		snprintf(xxboot, xxbootlen, "%s%swdboot", mdecpath, machpath);
-		magic = NBDAMAGIC;
-	}
-	size_t bootxxlen = strlen(mdecpath) + strlen(machpath) + 8;
-	bootxx = alloca(bootxxlen);
-	snprintf(bootxx, bootxxlen, "%s%sbootxx", mdecpath, machpath);
-
-	if (xxb00t)
-		mkahdiboot(&ahdiboot, xxb00t, devnm, bbsec);
-	mkbootblock(&bootarea, xxboot, bootxx, label, magic);
-
-	if (!nowrite) {
-		int	fd;
-		off_t	bbo;
-
-		bbo = (off_t)bbsec * AHDI_BSIZE;
-		if ((fd = open(devnm, O_WRONLY)) < 0)
-			err(EXIT_FAILURE, "%s", devnm);
-		if (lseek(fd, bbo, SEEK_SET) != bbo)
-			err(EXIT_FAILURE, "%s", devnm);
-		if (write(fd, &bootarea, sizeof(bootarea)) != sizeof(bootarea))
-			err(EXIT_FAILURE, "%s", devnm);
-		if (verbose)
-			printf("Boot block installed on %s (sector %d)\n",
-			    devnm, bbsec);
-		if (xxb00t) {
-			if (lseek(fd, (off_t)0, SEEK_SET) != 0)
-				err(EXIT_FAILURE, "%s", devnm);
-			if (write(fd, &ahdiboot, sizeof(ahdiboot))
-							!= sizeof(ahdiboot))
-				err(EXIT_FAILURE, "%s", devnm);
-			if (verbose)
-				printf("AHDI root installed on %s (sector 0)\n",
 				    devnm);
 		}
 		if (close(fd))
