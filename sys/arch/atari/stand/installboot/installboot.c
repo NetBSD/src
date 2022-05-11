@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.37 2022/05/11 10:27:45 rin Exp $	*/
+/*	$NetBSD: installboot.c,v 1.38 2022/05/11 10:31:12 rin Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -65,7 +65,9 @@ static void	mkahdiboot(struct ahdi_root *, char *,
 						char *, u_int32_t);
 static void	mkbootblock(struct bootblock *, char *,
 				char *, struct disklabel *, u_int);
+#ifdef SUPPORT_FD
 static void	install_fd(char *, struct disklabel *);
+#endif
 static void	install_hd(char *, struct disklabel *, bool);
 
 static struct bootblock	bootarea;
@@ -165,9 +167,11 @@ main(int argc, char *argv[])
 		++devchr;
 
 	switch (*devchr) {
+#ifdef SUPPORT_FD
 		case 'f': /* fd */
 			install_fd(dn, &dl);
 			break;
+#endif
 		case 'w': /* wd */
 			use_wd = true;
 			/* FALLTHROUGH */
@@ -218,6 +222,7 @@ oscheck(void)
 }
 #endif
 
+#ifdef SUPPORT_FD
 static void
 install_fd(char *devnm, struct disklabel *label)
 {
@@ -272,6 +277,7 @@ install_fd(char *devnm, struct disklabel *label)
 			printf("Boot block installed on %s\n", devnm);
 	}
 }
+#endif /* SUPPORT_FD */
 
 static void
 install_hd(char *devnm, struct disklabel *label, bool use_wd)
