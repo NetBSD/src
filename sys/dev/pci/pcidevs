@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1456 2022/05/04 07:55:05 martin Exp $
+$NetBSD: pcidevs,v 1.1457 2022/05/11 20:44:05 markd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7501,6 +7501,14 @@ product SYMBIOS FC949X			0x0640	FC949X
 product SYMBIOS FC939X			0x0642	FC939X
 product SYMBIOS FC949E			0x0646	FC949E
 product SYMBIOS 1030R			0x1030	53c1030R
+product SYMBIOS MEGARAID_39XX_1		0x10e0	MegaRAID Unsupported SAS39xx
+product SYMBIOS MEGARAID_39XX_2		0x10e1	MegaRAID SAS39xx
+product SYMBIOS MEGARAID_39XX_3		0x10e2	MegaRAID Secure SAS39xx
+product SYMBIOS MEGARAID_39XX_4		0x10e3	MegaRAID Unsupported SAS39xx
+product SYMBIOS MEGARAID_38XX_1		0x10e4	MegaRAID Unsupported SAS38xx
+product SYMBIOS MEGARAID_38XX_2		0x10e5	MegaRAID SAS38xx
+product SYMBIOS MEGARAID_38XX_3		0x10e6	MegaRAID Secure SAS38xx
+product SYMBIOS MEGARAID_38XX_4		0x10e7	MegaRAID Unsupported SAS38xx
 product SYMBIOS PERC_4SC		0x1960	PERC 4/SC
 
 /* Packet Engines products */
