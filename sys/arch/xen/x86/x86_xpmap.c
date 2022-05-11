@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.90 2020/09/06 02:18:53 riastradh Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.91 2022/05/11 16:22:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.90 2020/09/06 02:18:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.91 2022/05/11 16:22:46 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -911,7 +911,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	/* Unpin old PGD */
 	xpq_queue_unpin_table(xpmap_ptom_masked(old_pgd - KERNBASE));
 
-	/* Mark old tables RW */
+	/* Mark old tables RW if used, unmap otherwise */
 	page = old_pgd;
 	addr = xpmap_mtop((paddr_t)L2[pl2_pi(page)] & PTE_4KFRAME);
 	pte = (pd_entry_t *)((u_long)addr + KERNBASE);
@@ -923,6 +923,12 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 		/*
 		 * Our PTEs are contiguous so it's safe to just "++" here.
 		 */
+		pte++;
+	}
+	while (page < old_pgd + (old_count * PAGE_SIZE)) {
+		addr = xpmap_ptom(((u_long)pte) - KERNBASE);
+		xpq_queue_pte_update(addr, 0);
+		page += PAGE_SIZE;
 		pte++;
 	}
 	xpq_flush_queue();
