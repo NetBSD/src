@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.23 2020/06/18 18:14:06 tsutsui Exp $
+#	$NetBSD: list,v 1.24 2022/05/11 10:36:52 rin Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -67,7 +67,6 @@ MTREE	./usr/mdec/milan	type=dir uname=root gname=wheel mode=0755
 
 COPY	${DESTDIR}/usr/mdec/std/bootxx		usr/mdec/std/bootxx
 COPY	${DESTDIR}/usr/mdec/std/boot.atari	usr/mdec/std/boot.atari	
-COPY	${DESTDIR}/usr/mdec/std/fdboot		usr/mdec/std/fdboot		
 COPY	${DESTDIR}/usr/mdec/std/sdboot		usr/mdec/std/sdboot		
 COPY	${DESTDIR}/usr/mdec/std/wdboot		usr/mdec/std/wdboot		
 COPY	${DESTDIR}/usr/mdec/std/sdb00t.ahdi	usr/mdec/std/sdb00t.ahdi	
@@ -75,8 +74,12 @@ COPY	${DESTDIR}/usr/mdec/std/wdb00t.ahdi	usr/mdec/std/wdb00t.ahdi
 COPY	${DESTDIR}/usr/mdec/std/xxboot.ahdi	usr/mdec/std/xxboot.ahdi	
 COPY	${DESTDIR}/usr/mdec/milan/bootxx	usr/mdec/milan/bootxx		
 COPY	${DESTDIR}/usr/mdec/milan/boot.atari	usr/mdec/milan/boot.atari	
-COPY	${DESTDIR}/usr/mdec/milan/fdboot	usr/mdec/milan/fdboot		
 COPY	${DESTDIR}/usr/mdec/milan/sdboot	usr/mdec/milan/sdboot		
 LINK	usr/mdec/milan/sdboot			usr/mdec/milan/wdboot
 COPY	${DESTDIR}/usr/mdec/milan/sdb00t.ahdi	usr/mdec/milan/sdb00t.ahdi	
 COPY	${DESTDIR}/usr/mdec/milan/xxboot.ahdi	usr/mdec/milan/xxboot.ahdi	
+
+# If you want to revive FD support, enable -DSUPPORT_FD for SMALLPROG in
+# sys/arch/stand/atari/installboot/Makefile.
+#COPY	${DESTDIR}/usr/mdec/std/fdboot		usr/mdec/std/fdboot
+#COPY	${DESTDIR}/usr/mdec/milan/fdboot	usr/mdec/milan/fdboot
