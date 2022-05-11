@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.26 2019/12/29 18:26:16 christos Exp $
+#	$NetBSD: Makefile.crunch,v 1.27 2022/05/11 10:45:48 rin Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -41,10 +41,14 @@ CRUNCHENV+=		AWK=${TOOL_AWK:Q}
 
 SMALLPROG?=		1
 SMALLPROG_INET6?=	0
+NOIEEE80211?=		0
 .if ${SMALLPROG}				# {
 CRUNCHENV+=		SMALLPROG=1
 .if ${SMALLPROG_INET6} && (${USE_INET6} != "no")
 CRUNCHENV+=		SMALLPROG_INET6=1
+.endif
+.if ${NOIEEE80211}
+CRUNCHENV+=		NOIEEE80211=1
 .endif
 .endif						# }
 
