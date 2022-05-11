@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.22 2016/01/04 18:17:31 christos Exp $	*/
+/*	$NetBSD: pbr.S,v 1.23 2022/05/11 14:58:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 #endif
 
 /*
- * This code is loaded to addresss 0:7c00 by either the system BIOS
+ * This code is loaded to address 0:7c00 by either the system BIOS
  * (for a floppy) or the mbr boot code.  Since the boot program will
  * be loaded to address 1000:0, we don't need to relocate ourselves
  * and can load the subsequent blocks (that load boot) to an address
@@ -274,7 +274,7 @@ boot:
 	and	$0x3f, %dx
 	add	%dx, %ax
 	dec	%ax
-	pop	%dx				/* recover drive nmber */
+	pop	%dx				/* recover drive number */
 
 	cmp	%bp, %ax
 	je	read_chs

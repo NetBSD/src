@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.9 2021/09/19 10:34:09 andvar Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.10 2022/05/11 14:58:00 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -68,7 +68,7 @@ struct txbd {
 #define	TXFCB_UDP	0x0800	/* UDP at layer 4 */
 #define	TXFCB_CIP	0x0400	/* Checksum IP header enable */
 #define	TXFCB_CTU	0x0200	/* Checksum TCP or UCP header enable */
-#define	TXFCB_NPH	0x0100	/* No std Pseudo-Header checksm, use phcs */
+#define	TXFCB_NPH	0x0100	/* No std Pseudo-Header checksum, use phcs */
 
 struct txfcb {
 	uint16_t txfcb_flags;
@@ -84,11 +84,11 @@ struct txfcb {
 #define	RXBD_I		0x1000		/* Interrupt IEVENT[RXB|RXF] */
 #define	RXBD_L		0x0800		/* Last in frame */
 #define	RXBD_F		0x0400		/* First in frame */
-#define	RXBD_M		0x0100		/* Miss (promiscious match) */
+#define	RXBD_M		0x0100		/* Miss (promiscuous match) */
 #define	RXBD_BC		0x0080		/* BroadCast match */
 #define	RXBD_MC		0x0040		/* MultiCast match */
 #define	RXBD_LG		0x0020		/* rx LarGe frame error */
-#define	RXBD_NO		0x0010		/* Non-octect aligned frame error */
+#define	RXBD_NO		0x0010		/* Non-octet aligned frame error */
 #define	RXBD_SH		0x0008		/* SHort frame */
 #define	RXBD_CR		0x0004		/* rx CRc error */
 #define	RXBD_OV		0x0002		/* OVerrun error */
@@ -142,8 +142,8 @@ struct rxfcb {
 #define	IEVENT_RXB	__PPCBIT(16)	/* receive buffer */
 #define	IEVENT_TWK	__PPCBIT(19)	/* timer wakeup */
 #define	IEVENT_MAG	__PPCBIT(20)	/* magic packet detected */
-#define	IEVENT_MMRD	__PPCBIT(21)	/* MMI manangement read complete */
-#define	IEVENT_MMWR	__PPCBIT(22)	/* MMI manangement write complete */
+#define	IEVENT_MMRD	__PPCBIT(21)	/* MMI management read complete */
+#define	IEVENT_MMWR	__PPCBIT(22)	/* MMI management write complete */
 #define	IEVENT_GRSC	__PPCBIT(23)	/* graceful receive stop complete */
 #define	IEVENT_RXF	__PPCBIT(24)	/* receive frame interrupt */
 #define	IEVENT_FGPI	__PPCBIT(27)	/* filer generated general purpose interrupt */
@@ -395,7 +395,7 @@ struct rxfcb {
 #define RQFPR_PID1_IP4	__PPCBIT(22) /* IPv4 header */
 #define RQFPR_PID1_IP6	__PPCBIT(23) /* IPv6 header */
 #define RQFPR_PID1_ICC	__PPCBIT(24) /* IPv4 header checksum */
-#define RQFPR_PID1_ICV	__PPCBIT(25) /* IPv4 header checksum was verifed correct */
+#define RQFPR_PID1_ICV	__PPCBIT(25) /* IPv4 header checksum was verified correct */
 #define RQFPR_PID1_TCP	__PPCBIT(26) /* TCP header */
 #define RQFPR_PID1_UDP	__PPCBIT(27) /* UDP header */
 #define RQFPR_PID1_PER	__PPCBIT(30) /* parse error */
@@ -459,7 +459,7 @@ struct rxfcb {
 #define MAXFRM		0x510 /* Maximum frame length */
 #define MIIMCFG		0x520 /* MII management configuration */
 #define	MIIMCFG_RESET	__PPCBIT(0) /* Reset management */
-#define	MIIMCFG_NOPRE	__PPCBIT(27) /* Preamble suppess */
+#define	MIIMCFG_NOPRE	__PPCBIT(27) /* Preamble suppress */
 #define MIIMCOM		0x524 /* MII management command */
 #define	MIIMCOM_SCAN	__PPCBIT(30)
 #define	MIIMCOM_READ	__PPCBIT(31)

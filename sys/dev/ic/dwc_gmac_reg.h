@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.20 2020/05/17 21:50:47 chs Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.21 2022/05/11 14:58:01 andvar Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -62,11 +62,11 @@
 #define	AWIN_GMAC_MAC_FFILT_SAF		__BIT(9)  /* source address filter */
 #define	AWIN_GMAC_MAC_FFILT_SAIF	__BIT(8)  /* inverse filtering */
 #define	AWIN_GMAC_MAC_FFILT_DBF		__BIT(5)  /* disable broadcast frames */
-#define	AWIN_GMAC_MAC_FFILT_PM		__BIT(4)  /* promiscious multicast */
+#define	AWIN_GMAC_MAC_FFILT_PM		__BIT(4)  /* promiscuous multicast */
 #define	AWIN_GMAC_MAC_FFILT_DAIF	__BIT(3)  /* DA inverse filtering */
 #define	AWIN_GMAC_MAC_FFILT_HMC		__BIT(2)  /* multicast hash compare */
 #define	AWIN_GMAC_MAC_FFILT_HUC		__BIT(1)  /* unicast hash compare */
-#define	AWIN_GMAC_MAC_FFILT_PR		__BIT(0)  /* promiscious mode */
+#define	AWIN_GMAC_MAC_FFILT_PR		__BIT(0)  /* promiscuous mode */
 
 #define	AWIN_GMAC_MAC_INT_LPI		__BIT(10)
 #define	AWIN_GMAC_MAC_INT_TSI		__BIT(9)
