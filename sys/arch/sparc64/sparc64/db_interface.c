@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.136 2021/02/23 07:13:53 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.137 2022/05/11 14:58:00 andvar Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.136 2021/02/23 07:13:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.137 2022/05/11 14:58:00 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -891,7 +891,7 @@ db_traptrace(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 }
 
 /*
- * Use physical or virtul watchpoint registers -- ugh
+ * Use physical or virtual watchpoint registers -- ugh
  *
  * UltraSPARC I and II have both a virtual and physical
  * watchpoint register.  They are controlled by the LSU

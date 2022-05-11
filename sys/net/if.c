@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.503 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.504 2022/05/11 14:58:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.503 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.504 2022/05/11 14:58:01 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2090,7 +2090,7 @@ ifa_ifwithnet_psref(const struct sockaddr *addr, struct psref *psref)
 }
 
 /*
- * Find the interface of the addresss.
+ * Find the interface of the address.
  */
 struct ifaddr *
 ifa_ifwithladdr(const struct sockaddr *addr)

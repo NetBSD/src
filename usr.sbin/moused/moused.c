@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.28 2022/01/21 21:39:32 andvar Exp $ */
+/* $NetBSD: moused.c,v 1.29 2022/05/11 14:58:01 andvar Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.28 2022/01/21 21:39:32 andvar Exp $");
+__RCSID("$NetBSD: moused.c,v 1.29 2022/05/11 14:58:01 andvar Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -1522,7 +1522,7 @@ r_protocol(u_char rBuf, mousestatus_t *act)
      *  b) invalid (0x80 == -128 and that might be wrong for MouseSystems)
      *  c) bad header-package
      *
-     * NOTE: b) is a voilation of the MouseSystems-Protocol, since values of
+     * NOTE: b) is a violation of the MouseSystems-Protocol, since values of
      *       -128 are allowed, but since they are very seldom we can easily
      *       use them as package-header with no button pressed.
      * NOTE/2: On a PS/2 mouse any byte is valid as a data byte. Furthermore,
