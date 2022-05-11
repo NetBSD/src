@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/08/12 17:59:51 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2022/05/11 10:36:52 rin Exp $
 
 WARNS=	4
 PROG=	installboot
@@ -6,7 +6,7 @@ NOMAN=	# defined
 SRCS=	installboot.c disklabel.c
 BINDIR=	/usr/mdec
 .ifndef SMALLPROG
-CPPFLAGS+=	-DCHECK_OS_BOOTVERSION -DNO_USAGE
+CPPFLAGS+=	-DCHECK_OS_BOOTVERSION -DNO_USAGE -DSUPPORT_FD
 LDADD=	-lkvm
 .endif
 
