@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2021/01/06 08:17:46 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26 2022/05/11 13:58:43 andvar Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -30,7 +30,7 @@
 #if defined(MODULAR) || defined(_MODULE) || !defined(_KERNEL)
 /*
  * If we are a module or a modular kernel, then we need to defined the range
- * of our varible page sizes since BOOKE and OEA use 4KB pages while IBM4XX
+ * of our variable page sizes since BOOKE and OEA use 4KB pages while IBM4XX
  * use 16KB pages.
  * This is also required for userland by jemalloc.
  */
