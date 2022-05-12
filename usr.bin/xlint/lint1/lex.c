@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.129 2022/05/11 15:46:25 christos Exp $ */
+/* $NetBSD: lex.c,v 1.130 2022/05/12 00:18:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.129 2022/05/11 15:46:25 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.130 2022/05/12 00:18:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -114,7 +114,7 @@ static const struct keyword {
 } keywords[] = {
 	kwdef_keyword(	"_Alignas",	T_ALIGNAS),
 	kwdef_keyword(	"_Alignof",	T_ALIGNOF),
-	kwdef_token(	"alignof",	T_ALIGNOF,		78,0,3),
+	kwdef_token(	"alignof",	T_ALIGNOF,		78,0,6),
 	kwdef_token(	"asm",		T_ASM,			78,1,7),
 	kwdef_token(	"attribute",	T_ATTRIBUTE,		78,1,6),
 	kwdef_sclass(	"auto",		AUTO,			78,0,1),

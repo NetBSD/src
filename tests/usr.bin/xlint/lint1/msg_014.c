@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_014.c,v 1.6 2022/05/12 00:09:44 rillig Exp $	*/
+/*	$NetBSD: msg_014.c,v 1.7 2022/05/12 00:18:35 rillig Exp $	*/
 # 3 "msg_014.c"
 
 // Test for message: compiler takes alignment of function [14]
@@ -6,9 +6,7 @@
 
 typedef void function(void);
 
-/* FIXME: '__alignof__' must be recognized. */
-/* expect+2: error: function '__alignof__' implicitly declared to return int [215] */
-/* expect+1: error: syntax error 'function' [249] */
+/* expect+1: error: cannot take size/alignment of function type 'function(void) returning void' [144] */
 unsigned long alignof_function = __alignof__(function);
 
 struct illegal_bit_field {
