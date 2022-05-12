@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.13 2022/05/11 15:30:33 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.14 2022/05/12 12:04:09 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.13 2022/05/11 15:30:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.14 2022/05/12 12:04:09 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -3708,11 +3708,11 @@ mfii_bbu(struct mfii_softc *sc, envsys_data_t *edata)
 
 	switch (bbu.battery_type) {
 	case MFI_BBU_TYPE_IBBU:
+	case MFI_BBU_TYPE_IBBU09:
 		mask = MFI_BBU_STATE_BAD_IBBU;
 		soh_bad = 0;
 		break;
 	case MFI_BBU_TYPE_BBU:
-	case MFI_BBU_TYPE_IBBU09:
 		mask = MFI_BBU_STATE_BAD_BBU;
 		soh_bad = (bbu.detail.bbu.is_SOH_good == 0);
 		break;
