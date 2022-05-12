@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.19 2022/05/12 11:56:29 msaitoh Exp $ */
+/* $NetBSD: mfireg.h,v 1.20 2022/05/12 12:00:58 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -414,6 +414,7 @@ typedef enum {
 #define MFI_MAX_LD				64
 #define MFI_MAX_SPAN				8
 #define MFI_MAX_ARRAY_DEDICATED			16
+#define MFI_MAX_PD				256
 
 /* sense buffer */
 struct mfi_sense {
@@ -1077,7 +1078,6 @@ struct mfi_pd_address {
 	uint64_t		mpa_sas_address[2];
 } __packed;
 
-#define MFI_MAX_PD 256
 struct mfi_pd_list {
 	uint32_t		mpl_size;
 	uint32_t		mpl_no_pd;
@@ -1170,6 +1170,39 @@ struct mfi_array {
 	} pd[MFI_MAX_PD_ARRAY];
 } __packed;
 
+struct mfi_hotspare {
+	struct mfi_pd	mhs_pd;
+	uint8_t		mhs_type;
+#define MFI_PD_HS_DEDICATED	0x01
+#define MFI_PD_HS_REVERTIBLE	0x02
+#define MFI_PD_HS_ENC_AFFINITY	0x04
+	uint8_t		mhs_res[2];
+	uint8_t		mhs_array_max;
+	uint16_t	mhs_array_ref[MFI_MAX_ARRAY_DEDICATED];
+} __packed;
+
+struct mfi_conf {
+	uint32_t		mfc_size;
+	uint16_t		mfc_no_array;
+	uint16_t		mfc_array_size;
+	uint16_t		mfc_no_ld;
+	uint16_t		mfc_ld_size;
+	uint16_t		mfc_no_hs;
+	uint16_t		mfc_hs_size;
+	uint8_t			mfc_res[16];
+	/*
+	 * XXX this is a ridiculous hack and does not reflect reality
+	 * Structures are actually indexed and therefore need pointer
+	 * math to reach.  We need the size of this structure first so
+	 * call it with the size of this structure and then use the returned
+	 * values to allocate memory and do the transfer of the whole structure
+	 * then calculate pointers to each of these structures.
+	 */
+	struct mfi_array	mfc_array[1];
+	struct mfi_ld_cfg	mfc_ld[1];
+	struct mfi_hotspare	mfc_hs[1];
+} __packed;
+
 /* informations from MR_DCMD_BBU_GET_CAPACITY_INFO */
 struct mfi_bbu_capacity_info {
 	uint16_t		relative_charge;
@@ -1235,9 +1268,9 @@ struct mfi_bbu_status {
 #define MFI_BBU_TYPE_BBU	2
 #define MFI_BBU_TYPE_IBBU09	5
 	uint8_t			reserved;
-	uint16_t		voltage;
-	int16_t			current;
-	uint16_t		temperature;
+	uint16_t		voltage; /* mV */
+	int16_t			current; /* mA */
+	uint16_t		temperature; /* degC */
 	uint32_t		fw_status;
 #define MFI_BBU_STATE_PACK_MISSING	(1 << 0)
 #define MFI_BBU_STATE_VOLTAGE_LOW	(1 << 1)
@@ -1247,11 +1280,11 @@ struct mfi_bbu_status {
 #define MFI_BBU_STATE_LEARN_CYC_REQ	(1 << 5)
 #define MFI_BBU_STATE_LEARN_CYC_ACTIVE	(1 << 6)
 #define MFI_BBU_STATE_LEARN_CYC_FAIL	(1 << 7)
-#define MFI_BBU_STATE_LEARN_CYC_TIMEOUT (1 << 8)
+#define MFI_BBU_STATE_LEARN_CYC_TIMEOUT	(1 << 8)
 #define MFI_BBU_STATE_I2C_ERR_DETECT	(1 << 9)
-#define MFI_BBU_STATE_REPLACE_PACK      (1 << 10)
-#define MFI_BBU_STATE_CAPACITY_LOW      (1 << 11)
-#define MFI_BBU_STATE_LEARN_REQUIRED    (1 << 12)
+#define MFI_BBU_STATE_REPLACE_PACK	(1 << 10)
+#define MFI_BBU_STATE_CAPACITY_LOW	(1 << 11)
+#define MFI_BBU_STATE_LEARN_REQUIRED	(1 << 12)
 #define MFI_BBU_STATE_BAD_IBBU	(					\
 				    MFI_BBU_STATE_PACK_MISSING |	\
 				    MFI_BBU_STATE_VOLTAGE_LOW |		\
@@ -1266,39 +1299,6 @@ struct mfi_bbu_status {
 				    MFI_BBU_STATE_CAPACITY_LOW)
 	uint8_t			pad[20];
 	union mfi_bbu_status_detail detail;
-} __packed;
-
-struct mfi_hotspare {
-	struct mfi_pd	mhs_pd;
-	uint8_t		mhs_type;
-#define MFI_PD_HS_DEDICATED	0x01
-#define MFI_PD_HS_REVERTIBLE	0x02
-#define MFI_PD_HS_ENC_AFFINITY	0x04
-	uint8_t		mhs_res[2];
-	uint8_t		mhs_array_max;
-	uint16_t	mhs_array_ref[MFI_MAX_ARRAY_DEDICATED];
-} __packed;
-
-struct mfi_conf {
-	uint32_t		mfc_size;
-	uint16_t		mfc_no_array;
-	uint16_t		mfc_array_size;
-	uint16_t		mfc_no_ld;
-	uint16_t		mfc_ld_size;
-	uint16_t		mfc_no_hs;
-	uint16_t		mfc_hs_size;
-	uint8_t			mfc_res[16];
-	/*
-	 * XXX this is a ridiculous hack and does not reflect reality
-	 * Structures are actually indexed and therefore need pointer
-	 * math to reach.  We need the size of this structure first so
-	 * call it with the size of this structure and then use the returned
-	 * values to allocate memory and do the transfer of the whole structure
-	 * then calculate pointers to each of these structures.
-	 */
-	struct mfi_array	mfc_array[1];
-	struct mfi_ld_cfg	mfc_ld[1];
-	struct mfi_hotspare	mfc_hs[1];
 } __packed;
 
 /* ThunderBolt support */
