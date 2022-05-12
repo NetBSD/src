@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.34 2022/04/12 07:03:04 blymn Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.35 2022/05/12 22:25:38 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.34 2022/04/12 07:03:04 blymn Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.35 2022/05/12 22:25:38 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -91,6 +91,12 @@ wclrtoeol(WINDOW *win)
 	maxx = &win->alines[y]->line[x];
 
 	for (sp = maxx; sp < end; sp++) {
+		/*
+		 * It looks like ncurses makes the rest of line foreground
+		 * when it is cleared - this doesn't seem right but it
+		 * makes applicatins look right.
+		 */
+		sp->cflags &= ~CA_BACKGROUND;
 		if (!(__NEED_ERASE(sp, bch, battr)))
 			continue;
 
