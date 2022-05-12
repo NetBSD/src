@@ -1,4 +1,4 @@
-/*	$NetBSD: d_alignof.c,v 1.6 2022/05/12 20:49:21 rillig Exp $	*/
+/*	$NetBSD: d_alignof.c,v 1.7 2022/05/12 20:57:49 rillig Exp $	*/
 # 3 "d_alignof.c"
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Alignment.html */
@@ -65,8 +65,5 @@ alignof_pointer_to_member(void)
 		unsigned long member;
 	} var = { 0 }, *ptr = &var;
 
-	/* FIXME: the syntax error is wrong, this is perfectly valid */
-	/* expect+1: error: syntax error '->' [249] */
 	return __alignof__(ptr)->member + ptr->member;
 }
-/* expect-1: warning: function alignof_pointer_to_member falls off bottom without returning value [217] */
