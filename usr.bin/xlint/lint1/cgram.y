@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.412 2022/05/12 17:31:30 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.413 2022/05/12 18:47:29 martin Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.412 2022/05/12 17:31:30 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.413 2022/05/12 18:47:29 martin Exp $");
 #endif
 
 #include <limits.h>
@@ -126,7 +126,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 129
+%expect 130
 
 %union {
 	val_t	*y_val;
