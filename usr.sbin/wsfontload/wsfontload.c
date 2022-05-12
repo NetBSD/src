@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.23 2021/04/24 07:52:07 wiz Exp $ */
+/* $NetBSD: wsfontload.c,v 1.24 2022/05/12 22:08:55 uwe Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -199,7 +199,7 @@ main(int argc, char **argv)
 	if (argc > 1)
 		usage();
 
-	wsfd = open(wsdev, O_RDWR, 0);
+	wsfd = open(wsdev, listfonts ? O_RDONLY : O_RDWR, 0);
 	if (wsfd < 0)
 		err(2, "open ws-device %s", wsdev);
 
