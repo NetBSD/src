@@ -1,4 +1,4 @@
-/*	$NetBSD: d_alignof.c,v 1.4 2022/05/12 00:18:35 rillig Exp $	*/
+/*	$NetBSD: d_alignof.c,v 1.5 2022/05/12 00:28:01 rillig Exp $	*/
 # 3 "d_alignof.c"
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Alignment.html */
@@ -28,21 +28,14 @@ plain_alignof_type(void)
 unsigned long
 leading_and_trailing_alignof_expr(void)
 {
-	/* FIXME: '__alignof__' must be recognized. */
-	/* FIXME: '__alignof__ expr' must be recognized. */
-	/* expect+1: error: syntax error '3' [249] */
 	return __alignof__ 3;
 }
-/* expect-1: warning: function leading_and_trailing_alignof_expr falls off bottom without returning value [217] */
 
 unsigned long
 leading_alignof_expr(void)
 {
-	/* FIXME: '__alignof expr' must be recognized. */
-	/* expect+1: error: syntax error '3' [249] */
 	return __alignof 3;
 }
-/* expect-1: warning: function leading_alignof_expr falls off bottom without returning value [217] */
 
 unsigned long
 plain_alignof_expr(void)
