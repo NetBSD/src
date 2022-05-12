@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.413 2022/05/12 18:47:29 martin Exp $ */
+/* $NetBSD: cgram.y,v 1.414 2022/05/12 20:22:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.413 2022/05/12 18:47:29 martin Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.414 2022/05/12 20:22:58 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -620,6 +620,7 @@ unary_expression:
 	  }
 	/* gcc */
 	| T_ALIGNOF T_LPAREN unary_expression T_RPAREN {
+		/* non type argument to alignof is a GCC extension */
 		gnuism(349);
 		if ($3 != NULL)
 			$$ = build_alignof($3->tn_type);
