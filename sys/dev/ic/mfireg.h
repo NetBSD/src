@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.20 2022/05/12 12:00:58 msaitoh Exp $ */
+/* $NetBSD: mfireg.h,v 1.21 2022/05/12 12:05:04 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -1289,7 +1289,6 @@ struct mfi_bbu_status {
 				    MFI_BBU_STATE_PACK_MISSING |	\
 				    MFI_BBU_STATE_VOLTAGE_LOW |		\
 				    MFI_BBU_STATE_DISCHARGE_ACTIVE |	\
-				    MFI_BBU_STATE_LEARN_CYC_REQ |	\
 				    MFI_BBU_STATE_LEARN_CYC_ACTIVE |	\
 				    MFI_BBU_STATE_REPLACE_PACK |	\
 				    MFI_BBU_STATE_CAPACITY_LOW)
