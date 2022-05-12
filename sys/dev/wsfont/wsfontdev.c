@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.19 2021/04/24 00:15:37 macallan Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.20 2022/05/12 23:17:42 uwe Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.19 2021/04/24 00:15:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.20 2022/05/12 23:17:42 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/event.h>
@@ -122,6 +123,9 @@ wsfontioctl(dev_t dev, u_long cmd, void *data, int flag,
 	switch (cmd) {
 	case WSDISPLAYIO_LDFONT:
 #define d ((struct wsdisplay_font *)data)
+		if ((flag & FWRITE) == 0)
+			return EPERM;
+
 		if (d->name) {
 			res = copyinstr(d->name, nbuf, sizeof(nbuf), 0);
 			if (res)
