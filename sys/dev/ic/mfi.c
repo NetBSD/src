@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.75 2022/05/10 14:13:37 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.76 2022/05/12 11:56:29 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.75 2022/05/10 14:13:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.76 2022/05/12 11:56:29 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -2316,10 +2316,10 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	if (bb->bb_channel == 0)
 		return EINVAL;
 
-	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
+	pd = malloc(sizeof(*pd), M_DEVBUF, M_WAITOK);
 
 	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
-	    MFI_PD_LIST_SIZE, pd, NULL, false))
+	    sizeof(*pd), pd, NULL, false))
 		goto done;
 
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
@@ -2371,10 +2371,10 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_setstate %x\n", DEVNAME(sc),
 	    bs->bs_status);
 
-	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
+	pd = malloc(sizeof(*pd), M_DEVBUF, M_WAITOK);
 
 	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
-	    MFI_PD_LIST_SIZE, pd, NULL, false))
+	    sizeof(*pd), pd, NULL, false))
 		goto done;
 
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)

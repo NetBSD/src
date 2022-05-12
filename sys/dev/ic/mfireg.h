@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.18 2022/05/11 15:30:33 msaitoh Exp $ */
+/* $NetBSD: mfireg.h,v 1.19 2022/05/12 11:56:29 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -1083,7 +1083,6 @@ struct mfi_pd_list {
 	uint32_t		mpl_no_pd;
 	struct mfi_pd_address	mpl_address[MFI_MAX_PD];
 } __packed;
-#define MFI_PD_LIST_SIZE	(sizeof(struct mfi_pd_list))
 
 struct mfi_pd {
 	uint16_t		mfp_id;
