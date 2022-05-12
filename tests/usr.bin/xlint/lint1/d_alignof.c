@@ -1,4 +1,4 @@
-/*	$NetBSD: d_alignof.c,v 1.5 2022/05/12 00:28:01 rillig Exp $	*/
+/*	$NetBSD: d_alignof.c,v 1.6 2022/05/12 20:49:21 rillig Exp $	*/
 # 3 "d_alignof.c"
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Alignment.html */
@@ -46,3 +46,27 @@ plain_alignof_expr(void)
 	return alignof 3;
 }
 /* expect-1: warning: function plain_alignof_expr falls off bottom without returning value [217] */
+
+
+/*
+ * As with 'sizeof', the keyword '__alignof__' doesn't require parentheses
+ * when followed by an expression.  This allows for the seemingly strange
+ * '->' after the parentheses, which in fact is perfectly fine.
+ *
+ * The NetBSD style guide says "We parenthesize sizeof expressions", even
+ * though it is misleading in edge cases like this.  The GCC manual says that
+ * '__alignof__' and 'sizeof' are syntactically the same, therefore the same
+ * reasoning applies to '__alignof__'.
+ */
+unsigned long
+alignof_pointer_to_member(void)
+{
+	struct s {
+		unsigned long member;
+	} var = { 0 }, *ptr = &var;
+
+	/* FIXME: the syntax error is wrong, this is perfectly valid */
+	/* expect+1: error: syntax error '->' [249] */
+	return __alignof__(ptr)->member + ptr->member;
+}
+/* expect-1: warning: function alignof_pointer_to_member falls off bottom without returning value [217] */
