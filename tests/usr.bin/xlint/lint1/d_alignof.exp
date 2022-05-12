@@ -4,5 +4,3 @@ d_alignof.c(25): warning: function plain_alignof_type falls off bottom without r
 d_alignof.c(46): error: 'alignof' undefined [99]
 d_alignof.c(46): error: syntax error '3' [249]
 d_alignof.c(47): warning: function plain_alignof_expr falls off bottom without returning value [217]
-d_alignof.c(70): error: syntax error '->' [249]
-d_alignof.c(71): warning: function alignof_pointer_to_member falls off bottom without returning value [217]

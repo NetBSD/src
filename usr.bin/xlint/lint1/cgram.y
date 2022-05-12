@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.414 2022/05/12 20:22:58 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.415 2022/05/12 20:57:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.414 2022/05/12 20:22:58 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.415 2022/05/12 20:57:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -126,7 +126,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 130
+%expect 129
 
 %union {
 	val_t	*y_val;
@@ -618,18 +618,12 @@ unary_expression:
 			check_expr_misc($2,
 			    false, false, false, false, false, true);
 	  }
-	/* gcc */
-	| T_ALIGNOF T_LPAREN unary_expression T_RPAREN {
-		/* non type argument to alignof is a GCC extension */
-		gnuism(349);
-		if ($3 != NULL)
-			$$ = build_alignof($3->tn_type);
-	  }
 	| T_SIZEOF T_LPAREN type_name T_RPAREN {
 		$$ = build_sizeof($3);
 	  }
-	/* GCC extension */
 	| T_ALIGNOF unary_expression {
+		/* non type argument to alignof is a GCC extension */
+		gnuism(349);
 		lint_assert($2 != NULL);
 		$$ = build_alignof($2->tn_type);
 	  }
