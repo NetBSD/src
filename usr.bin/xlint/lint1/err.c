@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.164 2022/04/30 22:31:23 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.165 2022/05/12 17:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.164 2022/04/30 22:31:23 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.165 2022/05/12 17:31:30 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -403,6 +403,7 @@ const char *const msgs[] = {
 	"call to '%s' effectively discards 'const' from argument",    /* 346 */
 	"redeclaration of '%s' with type '%s', expected '%s'",	      /* 347 */
 	"maximum value %d of '%s' does not match maximum array index %d", /* 348 */
+	"non type argument to alignof is a GCC extension",	      /* 349 */
 };
 
 static struct include_level {
