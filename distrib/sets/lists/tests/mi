@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1203 2022/05/08 10:20:49 rillig Exp $
+# $NetBSD: mi,v 1.1204 2022/05/12 00:09:44 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6371,6 +6371,7 @@
 ./usr/tests/usr.bin/xlint/lint1/c99_init_designator.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c99_init_designator.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_alignof.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_alignof.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_bltinoffsetof.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_anon_struct.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_anon_union.c		tests-usr.bin-tests	compattestfile,atf

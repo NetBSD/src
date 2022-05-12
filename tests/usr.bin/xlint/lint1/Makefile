@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.121 2022/04/28 21:38:38 rillig Exp $
+# $NetBSD: Makefile,v 1.122 2022/05/12 00:09:44 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	348		# see lint1/err.c
@@ -27,6 +27,7 @@ FILES+=		c99_init_array.exp
 FILES+=		c99_init_designator.c
 FILES+=		c99_init_designator.exp
 FILES+=		d_alignof.c
+FILES+=		d_alignof.exp
 FILES+=		d_bltinoffsetof.c
 FILES+=		d_c99_anon_struct.c
 FILES+=		d_c99_anon_union.c
