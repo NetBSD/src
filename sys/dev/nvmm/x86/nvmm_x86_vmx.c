@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.82 2021/03/26 15:59:53 reinoud Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.83 2022/05/13 19:34:47 tnn Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.82 2021/03/26 15:59:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.83 2022/05/13 19:34:47 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,6 @@ vmx_vmwrite(uint64_t field, uint64_t value)
 	);
 }
 
-#ifdef DIAGNOSTIC
 static inline paddr_t
 vmx_vmptrst(void)
 {
@@ -149,7 +148,6 @@ vmx_vmptrst(void)
 
 	return pa;
 }
-#endif
 
 static inline void
 vmx_vmptrld(paddr_t *pa)
