@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.54 2022/03/24 12:58:56 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.55 2022/05/13 09:39:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.54 2022/03/24 12:58:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.55 2022/05/13 09:39:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1340,6 +1340,16 @@ sysctl_entropy_gather(SYSCTLFN_ARGS)
  * entropy_extract(buf, len, flags)
  *
  *	Extract len bytes from the global entropy pool into buf.
+ *
+ *	Caller MUST NOT expose these bytes directly -- must use them
+ *	ONLY to seed a cryptographic pseudorandom number generator
+ *	(`CPRNG'), a.k.a. deterministic random bit generator (`DRBG'),
+ *	and then erase them.  entropy_extract does not, on its own,
+ *	provide backtracking resistance -- it must be combined with a
+ *	PRNG/DRBG that does.
+ *
+ *	You generally shouldn't use this directly -- use cprng(9)
+ *	instead.
  *
  *	Flags may have:
  *
