@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.9 2022/04/08 23:14:21 riastradh Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.10 2022/05/13 09:49:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.9 2022/04/08 23:14:21 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.10 2022/05/13 09:49:44 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -268,7 +268,7 @@ rk_v1crypto_rng_get(size_t nbytes, void *cookie)
 			device_printf(self, "timed out\n");
 			break;
 		}
-		if (consttime_memequal(buf, buf + n/2, n/2)) {
+		if (consttime_memequal(buf, buf + n/2, sizeof(buf[0]) * n/2)) {
 			device_printf(self, "failed repeated output test\n");
 			break;
 		}
