@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.32 2021/08/22 20:18:39 andvar Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.33 2022/05/13 18:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.32 2021/08/22 20:18:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.33 2022/05/13 18:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,9 @@ hppa_ras(struct lwp *l)
 
 	p = l->l_proc;
 	tf = l->l_md.md_regs;
-	rasaddr = (intptr_t)ras_lookup(p, (void *)tf->tf_iioq_head);
+
+	rasaddr = (intptr_t)ras_lookup(p,
+	    (void *)(tf->tf_iioq_head & ~HPPA_PC_PRIV_MASK));
 	if (rasaddr != -1) {
 		rasaddr |= HPPA_PC_PRIV_USER;
 		tf->tf_iioq_head = rasaddr;
