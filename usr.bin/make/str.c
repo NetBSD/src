@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.90 2022/05/13 20:37:01 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.91 2022/05/13 21:42:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.90 2022/05/13 20:37:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.91 2022/05/13 21:42:30 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -293,6 +293,26 @@ Str_Words(const char *str, bool expand)
 }
 
 /*
+ * XXX: In the extreme edge case that one of the characters is from the basic
+ * execution character set and the other isn't, the result of the comparison
+ * differs depending on whether plain char is signed or unsigned.
+ *
+ * An example is the character range from \xE4 to 'a', where \xE4 may come
+ * from U+00E4 'Latin small letter A with diaeresis'.
+ *
+ * If char is signed, \xE4 evaluates to -28, the first half of the condition
+ * becomes -28 <= '0' && '0' <= 'a', which evaluates to true.
+ *
+ * If char is unsigned, \xE4 evaluates to 228, the second half of the
+ * condition becomes 'a' <= '0' && '0' <= 228, which evaluates to false.
+ */
+static bool
+in_range(char e1, char c, char e2)
+{
+	return (e1 <= c && c <= e2) || (e2 <= c && c <= e1);
+}
+
+/*
  * Str_Match -- Test if a string matches a pattern like "*.[ch]".
  * The following special characters are known *?\[] (as in fnmatch(3)).
  *
@@ -355,9 +375,7 @@ Str_Match(const char *str, const char *pat)
 				if (pat[1] == '-') {
 					if (pat[2] == '\0')
 						return neg;
-					if (pat[0] <= *str && *str <= pat[2])
-						break;
-					if (pat[2] <= *str && *str <= pat[0])
+					if (in_range(pat[0], *str, pat[2]))
 						break;
 					pat += 2;
 				}
