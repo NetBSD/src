@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.42 2022/03/16 23:56:33 riastradh Exp $	*/
+/*	$NetBSD: subr_cprng.c,v 1.43 2022/05/13 09:40:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.42 2022/03/16 23:56:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.43 2022/05/13 09:40:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -268,7 +268,7 @@ cprng_fini_cpu(void *ptr, void *cookie, struct cpu_info *ci)
 size_t
 cprng_strong(struct cprng_strong *cprng, void *buf, size_t len, int flags)
 {
-	uint32_t seed[NIST_HASH_DRBG_SEEDLEN_BYTES];
+	uint8_t seed[NIST_HASH_DRBG_SEEDLEN_BYTES];
 	struct cprng_cpu *cc;
 	unsigned epoch;
 	int s;
