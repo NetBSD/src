@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.89 2022/03/03 19:50:01 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.90 2022/05/13 20:37:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.89 2022/03/03 19:50:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.90 2022/05/13 20:37:01 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -302,33 +302,24 @@ bool
 Str_Match(const char *str, const char *pat)
 {
 	for (;;) {
-		/*
-		 * See if we're at the end of both the pattern and the
-		 * string. If so, we succeeded.  If we're at the end of the
-		 * pattern but not at the end of the string, we failed.
-		 */
 		if (*pat == '\0')
 			return *str == '\0';
-		if (*str == '\0' && *pat != '*')
-			return false;
 
-		/*
-		 * A '*' in the pattern matches any substring.  We handle this
-		 * by calling ourselves for each suffix of the string.
-		 */
+		/* A '*' in the pattern matches any substring. */
 		if (*pat == '*') {
 			pat++;
 			while (*pat == '*')
 				pat++;
 			if (*pat == '\0')
 				return true;
-			while (*str != '\0') {
+			for (; *str != '\0'; str++)
 				if (Str_Match(str, pat))
 					return true;
-				str++;
-			}
 			return false;
 		}
+
+		if (*str == '\0')
+			return false;
 
 		/* A '?' in the pattern matches any single character. */
 		if (*pat == '?')
