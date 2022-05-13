@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.55 2022/05/13 09:39:52 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.56 2022/05/13 09:40:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.55 2022/05/13 09:39:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.56 2022/05/13 09:40:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1364,9 +1364,8 @@ sysctl_entropy_gather(SYSCTLFN_ARGS)
  *		EINTR/ERESTART	No entropy, ENTROPY_SIG set, and interrupted.
  *
  *	If ENTROPY_WAIT is set, allowed only in thread context.  If
- *	ENTROPY_WAIT is not set, allowed up to IPL_VM.  (XXX That's
- *	awfully high...  Do we really need it in hard interrupts?  This
- *	arises from use of cprng_strong(9).)
+ *	ENTROPY_WAIT is not set, allowed also in softint context.
+ *	Forbidden in hard interrupt context.
  */
 int
 entropy_extract(void *buf, size_t len, int flags)
