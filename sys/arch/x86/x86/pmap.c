@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.414 2022/05/07 14:59:25 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.415 2022/05/13 09:39:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.414 2022/05/07 14:59:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.415 2022/05/13 09:39:40 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -176,6 +176,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.414 2022/05/07 14:59:25 bouyer Exp $");
 #include <xen/include/public/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/xenpmap.h>
+#endif
+
+#ifdef __HAVE_DIRECT_MAP
+#include <crypto/nist_hash_drbg/nist_hash_drbg.h>
 #endif
 
 /*
@@ -1602,6 +1606,33 @@ pmap_init_pcpu(void)
 #endif
 
 #ifdef __HAVE_DIRECT_MAP
+static void
+randomize_hole(size_t *randholep, vaddr_t *randvap)
+{
+	struct nist_hash_drbg drbg;
+	uint8_t seed[NIST_HASH_DRBG_SEEDLEN_BYTES];
+	const char p[] = "x86/directmap";
+	int error;
+
+	entropy_extract(seed, sizeof(seed), 0);
+
+	error = nist_hash_drbg_instantiate(&drbg, seed, sizeof(seed),
+	    /*nonce*/NULL, 0,
+	    /*personalization*/p, strlen(p));
+	KASSERTMSG(error == 0, "error=%d", error);
+
+	error = nist_hash_drbg_generate(&drbg, randholep, sizeof(*randholep),
+	    /*additional*/NULL, 0);
+	KASSERTMSG(error == 0, "error=%d", error);
+
+	error = nist_hash_drbg_generate(&drbg, randvap, sizeof(*randvap),
+	    /*additional*/NULL, 0);
+	KASSERTMSG(error == 0, "error=%d", error);
+
+	explicit_memset(seed, 0, sizeof(seed));
+	explicit_memset(&drbg, 0, sizeof(drbg));
+}
+
 /*
  * Create the amd64 direct map. Called only once at boot time. We map all of
  * the physical memory contiguously using 2MB large pages, with RW permissions.
@@ -1648,8 +1679,7 @@ pmap_init_directmap(struct pmap *kpm)
 		panic("pmap_init_directmap: lastpa incorrect");
 	}
 
-	entropy_extract(&randhole, sizeof randhole, 0);
-	entropy_extract(&randva, sizeof randva, 0);
+	randomize_hole(&randhole, &randva);
 	startva = slotspace_rand(SLAREA_DMAP, lastpa, NBPD_L2,
 	    randhole, randva);
 	endva = startva + lastpa;
