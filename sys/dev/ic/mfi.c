@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.76 2022/05/12 11:56:29 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.77 2022/05/13 10:41:42 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.76 2022/05/12 11:56:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.77 2022/05/13 10:41:42 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -441,11 +441,11 @@ mfi_init_ccb(struct mfi_softc *sc)
 		}
 
 		DNPRINTF(MFI_D_CCB,
-		    "ccb(%d): %p frame: %#lx (%#lx) sense: %#lx (%#lx) map: %#lx\n",
+		    "ccb(%d): %p frame: %p (%#lx) sense: %p (%#lx) map: %p\n",
 		    ccb->ccb_frame->mfr_header.mfh_context, ccb,
-		    (u_long)ccb->ccb_frame, (u_long)ccb->ccb_pframe,
-		    (u_long)ccb->ccb_sense, (u_long)ccb->ccb_psense,
-		    (u_long)ccb->ccb_dmamap);
+		    ccb->ccb_frame, (u_long)ccb->ccb_pframe,
+		    ccb->ccb_sense, (u_long)ccb->ccb_psense,
+		    ccb->ccb_dmamap);
 
 		/* add ccb to queue */
 		mfi_put_ccb(ccb);
@@ -474,14 +474,14 @@ mfi_read(struct mfi_softc *sc, bus_size_t r)
 	    BUS_SPACE_BARRIER_READ);
 	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
-	DNPRINTF(MFI_D_RW, "%s: mr 0x%lx 0x08%x ", DEVNAME(sc), (u_long)r, rv);
+	DNPRINTF(MFI_D_RW, "%s: mr %#zx 0x08%x ", DEVNAME(sc), r, rv);
 	return rv;
 }
 
 static void
 mfi_write(struct mfi_softc *sc, bus_size_t r, uint32_t v)
 {
-	DNPRINTF(MFI_D_RW, "%s: mw 0x%lx 0x%08x", DEVNAME(sc), (u_long)r, v);
+	DNPRINTF(MFI_D_RW, "%s: mw %#zx 0x%08x", DEVNAME(sc), r, v);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
@@ -494,8 +494,8 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 	struct mfi_mem		*mm;
 	int			nsegs;
 
-	DNPRINTF(MFI_D_MEM, "%s: mfi_allocmem: %ld\n", DEVNAME(sc),
-	    (long)size);
+	DNPRINTF(MFI_D_MEM, "%s: mfi_allocmem: %zu\n", DEVNAME(sc),
+	    size);
 
 	mm = malloc(sizeof(struct mfi_mem), M_DEVBUF, M_WAITOK|M_ZERO);
 	mm->am_size = size;
@@ -1373,8 +1373,7 @@ mfi_intr(void *arg)
 
 	pcq = MFIMEM_KVA(sc->sc_pcq);
 
-	DNPRINTF(MFI_D_INTR, "%s: mfi_intr %#lx %#lx\n", DEVNAME(sc),
-	    (u_long)sc, (u_long)pcq);
+	DNPRINTF(MFI_D_INTR, "%s: mfi_intr %p %p\n", DEVNAME(sc), sc, pcq);
 
 	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_pcq), 0,
 	    sizeof(uint32_t) * sc->sc_max_cmds + sizeof(struct mfi_prod_cons),
@@ -1478,8 +1477,8 @@ mfi_scsi_xs_done(struct mfi_ccb *ccb, int status, int scsi_status)
 	struct scsipi_xfer	*xs = ccb->ccb_xs;
 	struct mfi_softc	*sc = ccb->ccb_sc;
 
-	DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done %#lx %#lx\n",
-	    DEVNAME(sc), (u_long)ccb, (u_long)ccb->ccb_frame);
+	DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done %p %p\n",
+	    DEVNAME(sc), ccb, ccb->ccb_frame);
 
 	if (xs->data != NULL) {
 		DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done sync\n",
@@ -1502,9 +1501,9 @@ mfi_scsi_xs_done(struct mfi_ccb *ccb, int status, int scsi_status)
 			    ccb->ccb_psense - MFIMEM_DVA(sc->sc_sense),
 			    MFI_SENSE_SIZE, BUS_DMASYNC_POSTREAD);
 			DNPRINTF(MFI_D_INTR,
-			    "%s: mfi_scsi_xs_done sense %#x %lx %lx\n",
+			    "%s: mfi_scsi_xs_done sense %#x %p %p\n",
 			    DEVNAME(sc), scsi_status,
-			    (u_long)&xs->sense, (u_long)ccb->ccb_sense);
+			    &xs->sense, ccb->ccb_sense);
 			memset(&xs->sense, 0, sizeof(xs->sense));
 			memcpy(&xs->sense, ccb->ccb_sense,
 			    sizeof(struct scsi_sense_data));
@@ -1761,8 +1760,8 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 	union mfi_sgl		*sgl;
 	int			error, i;
 
-	DNPRINTF(MFI_D_DMA, "%s: mfi_create_sgl %#lx\n", DEVNAME(sc),
-	    (u_long)ccb->ccb_data);
+	DNPRINTF(MFI_D_DMA, "%s: mfi_create_sgl %p\n", DEVNAME(sc),
+	    ccb->ccb_data);
 
 	if (!ccb->ccb_data)
 		return 1;
@@ -3292,8 +3291,8 @@ mfi_tbolt_create_sgl(struct mfi_ccb *ccb, int flags)
 		/* One element to store the chain info */
 		sge_idx = MEGASAS_THUNDERBOLT_MAX_SGE_IN_MAINMSG - 1;
 		DNPRINTF(MFI_D_DMA,
-		    "mfi sge_idx %d sge_count %d io_req paddr 0x%" PRIx64 "\n",
-		    sge_idx, sge_count, ccb->ccb_tb_pio_request);
+		    "mfi sge_idx %d sge_count %d io_req paddr %jx\n",
+		    sge_idx, sge_count, (uintmax_t)ccb->ccb_tb_pio_request);
 	} else {
 		sge_idx = sge_count;
 	}
