@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.14 2022/05/12 12:04:09 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.15 2022/05/13 10:44:38 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.14 2022/05/12 12:04:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.15 2022/05/13 10:44:38 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -339,8 +339,8 @@ struct mfii_softc {
 	int			sc_target_lds[MFI_MAX_LD];
 
 	/* bio */
-	struct mfi_conf	 *sc_cfg;
-	struct mfi_ctrl_info    sc_info;
+	struct mfi_conf		*sc_cfg;
+	struct mfi_ctrl_info	sc_info;
 	struct mfi_ld_list	sc_ld_list;
 	struct mfi_ld_details	*sc_ld_details; /* array to all logical disks */
 	int			sc_no_pd; /* used physical disks */
@@ -1033,7 +1033,7 @@ mfii_shutdown(device_t dev, int how)
 	memset(&mbox, 0, sizeof(mbox));
 
 	mutex_enter(&sc->sc_lock);
-	DNPRINTF(MFI_D_MISC, "%s: mfii_shutdown\n", DEVNAME(sc));
+	DNPRINTF(MFII_D_MISC, "%s: mfii_shutdown\n", DEVNAME(sc));
 	ccb = mfii_get_ccb(sc);
 	if (ccb == NULL)
 		return false;
