@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.89 2022/05/04 17:52:41 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.90 2022/05/13 11:20:04 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1571,4 +1571,22 @@ sys/nfs/nfs_vfsops.c				1.243
 
 	nfs: fix file size limit.
 	[gavan, ticket #1441]
+
+sys/arch/x86/x86/pmap.c				1.414
+
+	Xen performance improvement for zeroing pages.
+	[bouyer, ticket #1443]
+
+sys/arch/xen/x86/x86_xpmap.c			1.91
+
+	Xen: in bootstrap, after switching to a new page table make sure that
+	now-unused memory is unmapped.
+	[bouyer, ticket #1444]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.98
+
+	ixg(4): fix dma memory unmap/free error that could cause
+	kernel panics, like "panic: HYPERVISOR_mmu_update failed"
+	as seen on Xen.
+	[bouyer, ticket #1445]
 
