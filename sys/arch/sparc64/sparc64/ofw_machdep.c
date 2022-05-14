@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.50 2022/03/17 08:08:03 andvar Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.51 2022/05/14 07:11:23 hgutch Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.50 2022/03/17 08:08:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.51 2022/05/14 07:11:23 hgutch Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -339,8 +339,6 @@ prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 		cell_t vaddr;
 		cell_t phys_hi;
 		cell_t phys_lo;
-		cell_t status;
-		cell_t retaddr;
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
@@ -349,7 +347,7 @@ prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 	}
 	args.name = ADR2CELL(&"call-method");
 	args.nargs = 7;
-	args.nreturns = 1;
+	args.nreturns = 0;
 	args.method = ADR2CELL(&"map");
 	args.ihandle = HDL2CELL(mmuh);
 	args.mode = mode;
@@ -360,9 +358,7 @@ prom_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 
 	if (openfirmware(&args) == -1)
 		return -1;
-	if (args.status)
-		return -1;
-	return (int)args.retaddr;
+	return 0;
 }
 
 
