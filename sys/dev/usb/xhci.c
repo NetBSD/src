@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.165 2022/05/14 19:44:26 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.166 2022/05/14 19:44:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.165 2022/05/14 19:44:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.166 2022/05/14 19:44:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2253,6 +2253,10 @@ xhci_pipe_restart_async_task(void *cookie)
 	struct xhci_ring * const tr = xs->xs_xr[dci];
 	struct usbd_xfer *xfer;
 
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("sc=%#jx pipe=%#jx",
+	    (uintptr_t)sc, (uintptr_t)pipe, 0, 0);
+
 	mutex_enter(&sc->sc_lock);
 
 	xhci_pipe_restart(pipe);
@@ -2263,8 +2267,26 @@ xhci_pipe_restart_async_task(void *cookie)
 	 */
 	tr->is_halted = false;
 	xfer = SIMPLEQ_FIRST(&pipe->up_queue);
-	if (xfer)
-		(*pipe->up_methods->upm_start)(xfer);
+	if (xfer) {
+		/*
+		 * If the first xfer of the queue is not in progress,
+		 * though, there may be a concurrent software abort
+		 * that has already cancelled it and is now in the
+		 * middle of a concurrent xhci_pipe_restart waiting to
+		 * reacquire the pipe (bus) lock.  So only restart the
+		 * xfer if it's still USBD_IN_PROGRESS.
+		 *
+		 * Either way, xfers on the queue can't be in
+		 * USBD_NOT_STARTED.
+		 */
+		KASSERT(xfer->ux_status != USBD_NOT_STARTED);
+		if (xfer->ux_status == USBD_IN_PROGRESS) {
+			(*pipe->up_methods->upm_start)(xfer);
+		} else {
+			DPRINTF("pipe restart race xfer=%#jx status=%jd",
+			    (uintptr_t)xfer, xfer->ux_status, 0, 0);
+		}
+	}
 
 	mutex_exit(&sc->sc_lock);
 }
