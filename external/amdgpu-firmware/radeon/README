@@ -1,0 +1,19 @@
+$NetBSD: README,v 1.1 2022/05/14 20:54:31 mrg Exp $
+
+Radeon ships files with the same name for case-insensitive file systems,
+and we can't build NetBSD on systems that have case-insensitive file
+systems that will be used for the $DESTDIR, we have to install these
+into different subdirs, and there needs to be a different locations for
+them in the installation.
+
+Workaround this by forcing consumers of the newer radeon firmware files
+to have /usr on the same file-system as /, so that /usr/libdata/firmware
+can be used for these.
+
+Hopefully these files won't change again, so we don't have to deal with
+this ever again.
+
+This subdir installs the lower-case versions.  To avoid repo bloat, the
+upper-case versions remain in their current location.
+
+-mrg 2022-05-07
