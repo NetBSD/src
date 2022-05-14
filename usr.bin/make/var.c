@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1020 2022/05/09 21:24:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1021 2022/05/14 12:25:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1020 2022/05/09 21:24:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1021 2022/05/14 12:25:16 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4444,9 +4444,8 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
  *
  * Input:
  *	*pp		The string to parse.
- *			In CondParser_FuncCallEmpty, it may also point to the
- *			"y" of "empty(VARNAME:Modifiers)", which is
- *			syntactically the same.
+ *			When called from CondParser_FuncCallEmpty, it can
+ *			also point to the "y" of "empty(VARNAME:Modifiers)".
  *	scope		The scope for finding variables
  *	emode		Controls the exact details of parsing and evaluation
  *
@@ -4477,16 +4476,14 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 {
 	const char *p = *pp;
 	const char *const start = p;
-	/* true if have modifiers for the variable. */
-	bool haveModifier;
-	/* Starting character if variable in parens or braces. */
-	char startc;
-	/* Ending character if variable in parens or braces. */
-	char endc;
+	bool haveModifier;	/* true for ${VAR:...}, false for ${VAR} */
+	char startc;		/* the actual '{' or '(' or '\0' */
+	char endc;		/* the expected '}' or ')' or '\0' */
 	/*
-	 * true if the variable is local and we're expanding it in a
-	 * non-local scope. This is done to support dynamic sources.
-	 * The result is just the expression, unaltered.
+	 * true if the expression is based on one of the 7 predefined
+	 * variables that are local to a target, and the expression is
+	 * expanded in a non-local scope.  The result is the text of the
+	 * expression, unaltered.  This is needed to support dynamic sources.
 	 */
 	bool dynamic;
 	const char *extramodifiers;
@@ -4503,11 +4500,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	extramodifiers = NULL;	/* extra modifiers to apply first */
 	dynamic = false;
 
-	/*
-	 * Appease GCC, which thinks that the variable might not be
-	 * initialized.
-	 */
-	endc = '\0';
+	endc = '\0';		/* Appease GCC. */
 
 	startc = p[1];
 	if (startc != '(' && startc != '{') {
@@ -4540,7 +4533,9 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	 * XXX: This assignment creates an alias to the current value of the
 	 * variable.  This means that as long as the value of the expression
 	 * stays the same, the value of the variable must not change.
-	 * Using the '::=' modifier, it could be possible to do exactly this.
+	 * Using the '::=' modifier, it could be possible to trigger exactly
+	 * this situation.
+	 *
 	 * At the bottom of this function, the resulting value is compared to
 	 * the then-current value of the variable.  This might also invoke
 	 * undefined behavior.
