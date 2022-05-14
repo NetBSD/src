@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.164 2022/04/06 22:01:45 mlelstv Exp $	*/
+/*	$NetBSD: xhci.c,v 1.165 2022/05/14 19:44:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.164 2022/04/06 22:01:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.165 2022/05/14 19:44:26 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2473,18 +2473,18 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		break;
 	}
 
-	/*
-	 * Try to claim this xfer for completion.  If it has already
-	 * completed or aborted, drop it on the floor.
-	 */
-	if (!usbd_xfer_trycomplete(xfer))
-		return;
-
-	/* Set the status.  */
-	xfer->ux_status = err;
-
 	if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0 ||
 	    (trb_0 & 0x3) == 0x0) {
+		/*
+		 * Try to claim this xfer for completion.  If it has
+		 * already completed or aborted, drop it on the floor.
+		 */
+		if (!usbd_xfer_trycomplete(xfer))
+			return;
+
+		/* Set the status.  */
+		xfer->ux_status = err;
+
 		usb_transfer_complete(xfer);
 	}
 }
