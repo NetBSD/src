@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_keymap.h,v 1.9 2022/04/06 17:14:42 macallan Exp $	*/
+/*	$NetBSD: adb_keymap.h,v 1.10 2022/05/14 01:16:55 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -492,4 +492,11 @@ static const struct wscons_keydesc akbd_keydesctab[] = {
 #undef KBD_MAP
 #undef KC
 
-extern keysym_t adb_to_usb[];
+#define ADB_EMUL_USB_NONE	0
+#define ADB_EMUL_USB_ANSI	1
+#define ADB_EMUL_USB_ISO	2 
+#define ADB_EMUL_USB_JIS	3
+
+extern keysym_t adb_to_usb_ansi[];
+extern keysym_t adb_to_usb_iso[];
+extern keysym_t adb_to_usb_jis[];
