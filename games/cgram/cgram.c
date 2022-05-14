@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.27 2022/03/28 20:00:29 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.28 2022/05/14 14:20:10 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.27 2022/03/28 20:00:29 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.28 2022/05/14 14:20:10 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -579,6 +579,10 @@ loop(void)
 static void
 done(void)
 {
+	move(LINES - 1, 0);
+	clrtoeol();
+	refresh();
+
 	endwin();
 
 	stringarray_done(&sollines);
