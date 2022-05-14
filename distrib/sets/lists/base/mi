@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1209.2.6 2020/10/11 11:26:24 martin Exp $
+# $NetBSD: mi,v 1.1209.2.7 2022/05/14 11:37:07 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2029,6 +2029,7 @@
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete
+./usr/sbin/tsig-keygen				base-bind-bin
 ./usr/sbin/unbound				base-netutil-bin	unbound
 ./usr/sbin/unbound-anchor			base-netutil-bin	unbound
 ./usr/sbin/unbound-checkconf			base-netutil-bin	unbound
