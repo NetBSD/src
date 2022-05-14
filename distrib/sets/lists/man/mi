@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1649.2.9 2021/08/03 16:10:24 snj Exp $
+# $NetBSD: mi,v 1.1649.2.10 2022/05/14 11:37:06 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3181,6 +3181,7 @@
 ./usr/share/man/cat8/trivial-rewrite.0	man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trpt.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/trsp.0			man-obsolete		obsolete
+./usr/share/man/cat8/tsig-keygen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/umbctl.0			man-netutil-catman	.cat
@@ -6071,6 +6072,7 @@
 ./usr/share/man/html8/traceroute6.html		man-netutil-htmlman	use_inet6,html
 ./usr/share/man/html8/trivial-rewrite.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/trpt.html			man-netutil-htmlman	html
+./usr/share/man/html8/tsig-keygen.html		man-bind-htmlman	html
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/umbctl.html		man-netutil-htmlman	html
@@ -9308,6 +9310,7 @@
 ./usr/share/man/man8/trivial-rewrite.8		man-postfix-man		postfix,.man
 ./usr/share/man/man8/trpt.8			man-netutil-man		.man
 ./usr/share/man/man8/trsp.8			man-obsolete		obsolete
+./usr/share/man/man8/tsig-keygen.8		man-bind-man		.man
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
 ./usr/share/man/man8/umbctl.8			man-netutil-man		.man
