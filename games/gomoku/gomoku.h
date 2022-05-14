@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.20 2014/03/22 18:58:57 dholland Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.21 2022/05/14 16:21:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -267,8 +267,6 @@ extern	int	debug;
 
 extern int interactive;
 extern const char *plyr[];
-
-#define ASSERT(x)
 
 void	bdinit(struct spotstr *);
 int	get_coord(void);

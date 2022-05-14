@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.22 2013/10/19 17:23:08 christos Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.23 2022/05/14 16:21:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.22 2013/10/19 17:23:08 christos Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.23 2022/05/14 16:21:04 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -806,7 +806,7 @@ static struct combostr *ecombo[MAXDEPTH];	/* separate from elist to save space *
 static void
 makeempty(struct combostr *ocbp)
 {
-	struct combostr *cbp, *tcbp, **cbpp;
+	struct combostr *cbp, **cbpp;
 	struct elist *ep, *nep;
 	struct spotstr *sp;
 	int s, d, m, emask, i;
@@ -835,8 +835,7 @@ makeempty(struct combostr *ocbp)
 	 */
 	ep = &einfo[nframes];
 	cbpp = &ecombo[nframes];
-	for (cbp = ocbp; (tcbp = cbp->c_link[1]) != NULL;
-	    cbp = cbp->c_link[0]) {
+	for (cbp = ocbp; cbp->c_link[1] != NULL; cbp = cbp->c_link[0]) {
 		ep--;
 		ep->e_combo = cbp;
 		*--cbpp = cbp->c_link[1];
