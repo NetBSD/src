@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2022/05/14 14:02:08 uwe Exp $
+# $NetBSD: Makefile,v 1.14 2022/05/14 17:52:10 uwe Exp $
 
 FONTS=	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
 	vt220l.816 vt220h.816 vt220l.810 vt220h.810 \
@@ -17,11 +17,13 @@ FONTS=	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
 #   b - bold
 #   v - CRT VGA Bold (8 columns, rendered in 9)
 
+FONTS += ter-i12n.wsf
 FONTS += ter-i16b.wsf
 FONTS += ter-i16n.wsf
 FONTS += ter-i16v.wsf
 FONTS += ter-i20n.wsf
 FONTS += ter-i24n.wsf
+FONTS += ter-i28n.wsf
 FONTS += ter-i32n.wsf
 
 
