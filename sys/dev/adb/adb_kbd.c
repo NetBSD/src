@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.32 2021/08/07 16:19:09 thorpej Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.33 2022/05/14 01:16:55 manu Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.32 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.33 2022/05/14 01:16:55 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -93,7 +93,7 @@ struct adbkbd_softc {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
 #endif
-	bool sc_emul_usb;
+	int sc_emul_usb;
 	bool sc_power_dbg;
 
 	uint32_t sc_power;
@@ -235,7 +235,7 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_power = 0xffff;
 	sc->sc_timestamp = 0;
-	sc->sc_emul_usb = FALSE;
+	sc->sc_emul_usb = ADB_EMUL_USB_NONE;
 #ifdef ADBKBD_POWER_DDB
 	sc->sc_power_dbg = TRUE;
 #else
@@ -386,8 +386,56 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint,
 	    CFARGS(.iattr = "wskbddev"));
 #ifdef ADBKBD_EMUL_USB
-	sc->sc_emul_usb = TRUE;
-	wskbd_set_evtrans(sc->sc_wskbddev, adb_to_usb, 128);
+	/* Values from Linux's drivers/macintosh/adbhud.c */
+        switch (sc->sc_adbdev->handler_id) {
+	case ADB_ISOKBD:	/* FALLTHROUGH */
+	case ADB_EXTISOKBD:	/* FALLTHROUGH */
+	case 0x07:		/* FALLTHROUGH */
+	case ADB_ISOKBDII:	/* FALLTHROUGH */
+	case ADB_PBISOKBD:	/* FALLTHROUGH */
+	case ADB_ADJISOKBD:	/* FALLTHROUGH */
+	case ADB_PBEXTISOKBD:	/* FALLTHROUGH */
+	case 0x19:		/* FALLTHROUGH */
+	case 0x1d:		/* FALLTHROUGH */
+	case 0xc1:		/* FALLTHROUGH */
+	case ADB_IBOOKKBD:	/* FALLTHROUGH */
+	case 0xc7:
+		sc->sc_emul_usb = ADB_EMUL_USB_ISO;
+		wskbd_set_evtrans(sc->sc_wskbddev, adb_to_usb_iso, 128);
+		break;
+#ifdef notyet
+	case ADB_ADJJAPKBD:	/* FALLTHROUGH */
+	case ADB_PBEXTJAPKBD:	/* FALLTHROUGH */
+	case ADB_JPKBDII:	/* FALLTHROUGH */
+	case 0x17:		/* FALLTHROUGH */
+	case 0x1a:		/* FALLTHROUGH */
+	case ADB_PBJPKBD:	/* FALLTHROUGH */
+	case 0xc2:		/* FALLTHROUGH */
+	case 0xc5:		/* FALLTHROUGH */
+	case 0xc8:		/* FALLTHROUGH */
+	case 0xc9:
+		sc->sc_emul_usb = ADB_EMUL_USB_JIS;
+		wskbd_set_evtrans(sc->sc_wskbddev, adb_to_usb_jis, 128);
+		break;
+#endif
+	case ADB_STDKBD:	/* FALLTHROUGH */
+	case ADB_EXTKBD:	/* FALLTHROUGH */
+	case 0x03:		/* FALLTHROUGH */
+	case 0x06:		/* FALLTHROUGH */
+	case ADB_KBDII:		/* FALLTHROUGH */
+	case ADB_PBKBD:		/* FALLTHROUGH */
+	case ADB_ADJKBD:	/* FALLTHROUGH */
+	case ADB_PBEXTKBD:	/* FALLTHROUGH */
+	case ADB_DESIGNKBD:	/* FALLTHROUGH */
+	case 0x1c:		/* FALLTHROUGH */
+	case 0xc0:		/* FALLTHROUGH */
+	case ADB_PBG3KBD:	/* FALLTHROUGH */
+	case 0xc6:		/* FALLTHROUGH */
+	default:	/* default to ANSI for unknown values */
+		sc->sc_emul_usb = ADB_EMUL_USB_ANSI;
+		wskbd_set_evtrans(sc->sc_wskbddev, adb_to_usb_ansi, 128);
+		break;
+	}
 #endif /* ADBKBD_EMUL_USB */
 
 #if NWSMOUSE > 0
@@ -633,7 +681,7 @@ adbkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
-		if (sc->sc_emul_usb) {
+		if (sc->sc_emul_usb != ADB_EMUL_USB_NONE) {
 			*(int *)data = WSKBD_TYPE_USB;
 		} else {
 			*(int *)data = WSKBD_TYPE_ADB;
@@ -798,7 +846,7 @@ adbkbd_sysctl_usb(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	struct adbkbd_softc *sc=(struct adbkbd_softc *)node.sysctl_data;
 	const int *np = newp;
-	bool reg;
+	int reg;
 
 	DPRINTF("%s\n", __func__);
 	reg = sc->sc_emul_usb;
@@ -807,12 +855,26 @@ adbkbd_sysctl_usb(SYSCTLFN_ARGS)
 		node.sysctl_data = &reg;
 		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
 			
-			sc->sc_emul_usb = *(bool *)node.sysctl_data;
-			if (sc->sc_emul_usb) {
-				wskbd_set_evtrans(sc->sc_wskbddev,
-				    adb_to_usb, 128);
-			} else {
+			sc->sc_emul_usb = *(int *)node.sysctl_data;
+			switch (sc->sc_emul_usb) {
+			case ADB_EMUL_USB_NONE:
 				wskbd_set_evtrans(sc->sc_wskbddev, NULL, 0);
+				break;
+			case ADB_EMUL_USB_ANSI:
+				wskbd_set_evtrans(sc->sc_wskbddev,
+				    adb_to_usb_ansi, 128);
+				break;
+			case ADB_EMUL_USB_ISO:
+				wskbd_set_evtrans(sc->sc_wskbddev,
+				    adb_to_usb_iso, 128);
+				break;
+			case ADB_EMUL_USB_JIS:
+				wskbd_set_evtrans(sc->sc_wskbddev,
+				    adb_to_usb_jis, 128);
+				break;
+			default:
+				return EINVAL;
+				break;
 			}
 			return 0;
 		}
@@ -865,7 +927,7 @@ adbkbd_setup_sysctl(struct adbkbd_softc *sc)
 	ret = sysctl_createv(NULL, 0, NULL,
 	    (void *)&node, 
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
-	    CTLTYPE_BOOL, "emulate_usb", "USB keyboard emulation", 
+	    CTLTYPE_INT, "emulate_usb", "USB keyboard emulation", 
 	    adbkbd_sysctl_usb, 1, (void *)sc, 0, CTL_MACHDEP, 
 	    me->sysctl_num, CTL_CREATE, CTL_EOL);
 	ret = sysctl_createv(NULL, 0, NULL,
