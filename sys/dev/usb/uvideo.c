@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.80 2022/05/14 15:28:50 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.81 2022/05/14 15:29:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.80 2022/05/14 15:28:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.81 2022/05/14 15:29:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1333,7 +1333,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		DPRINTF(("%s: uncompressed\n", __func__));
 		if (format_desc->bLength <
 		    sizeof(uvideo_vs_format_uncompressed_descriptor_t)) {
-			DPRINTF(("uvideo: truncated uncompressed format: %d",
+			DPRINTF(("uvideo: truncated uncompressed format: %d\n",
 				format_desc->bLength));
 			return USBD_INVAL;
 		}
@@ -1363,7 +1363,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		DPRINTF(("%s: frame-based\n", __func__));
 		if (format_desc->bLength <
 		    sizeof(uvideo_format_frame_based_descriptor_t)) {
-			DPRINTF(("uvideo: truncated frame-based format: %d",
+			DPRINTF(("uvideo: truncated frame-based format: %d\n",
 				format_desc->bLength));
 			return USBD_INVAL;
 		}
@@ -1377,7 +1377,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		DPRINTF(("%s: mjpeg\n", __func__));
 		if (format_desc->bLength <
 		    sizeof(uvideo_vs_format_mjpeg_descriptor_t)) {
-			DPRINTF(("uvideo: truncated mjpeg format: %d",
+			DPRINTF(("uvideo: truncated mjpeg format: %d\n",
 				format_desc->bLength));
 			return USBD_INVAL;
 		}
@@ -1421,7 +1421,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE)
 			break;
 		if (desc->bLength < sizeof(*uvdesc)) {
-			DPRINTF(("uvideo: truncated CS descriptor, length %d",
+			DPRINTF(("uvideo: truncated CS descriptor, length %d\n",
 				desc->bLength));
 			break;
 		}
@@ -1431,7 +1431,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		if (uvdesc->bLength < subtypelen) {
 			DPRINTF(("uvideo:"
 				" truncated CS subtype-0x%x descriptor,"
-				" length %d < %d",
+				" length %d < %d\n",
 				uvdesc->bDescriptorSubtype,
 				uvdesc->bLength, subtypelen));
 			break;
