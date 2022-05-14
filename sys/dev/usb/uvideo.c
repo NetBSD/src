@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.79 2022/04/24 09:55:48 hannken Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.80 2022/05/14 15:28:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.79 2022/04/24 09:55:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.80 2022/05/14 15:28:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -613,6 +613,16 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	SLIST_FOREACH(vs, &sc->sc_stream_list, entries) {
+		/*
+		 * If the descriptor is invalid, there may be no
+		 * default format.
+		 *
+		 * XXX Maybe this should just be removed from the list
+		 * at some other point, but finding the right other
+		 * point is not trivial.
+		 */
+		if (vs->vs_default_format == NULL)
+			continue;
 		/* XXX initialization of vs_videodev is racy */
 		vs->vs_videodev = video_attach_mi(&uvideo_hw_if, sc->sc_dev,
 		    vs);
