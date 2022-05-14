@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.18 2021/05/02 12:50:44 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.19 2022/05/14 16:21:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.18 2021/05/02 12:50:44 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.19 2022/05/14 16:21:04 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ get_key(const char *allowed)
 {
 	int ch;
 
-	while (1) {
+	for (;;) {
 		ch = getch();
 		if (allowed != NULL &&
 		    ch != '\0' && strchr(allowed, ch) == NULL) {
@@ -448,16 +448,13 @@ get_coord(void)
 		case 'Q':
 		case 'q':
 			return RESIGN;
-			break;
 		case 'S':
 		case 's':
 			return SAVE;
-			break;
 		case ' ':
 		case '\r':
 			(void) mvaddstr(BSZ3, (BSZ -6)/2, "      ");
 			return PT(curx+1,cury+1);
-			break;
 	}
 
 	curx = nx % BSZ;
