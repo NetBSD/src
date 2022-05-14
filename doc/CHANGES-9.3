@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.90 2022/05/13 11:20:04 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.91 2022/05/14 11:42:17 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1589,4 +1589,27 @@ sys/dev/pci/ixgbe/ix_txrx.c			1.98
 	kernel panics, like "panic: HYPERVISOR_mmu_update failed"
 	as seen on Xen.
 	[bouyer, ticket #1445]
+
+sys/arch/hppa/hppa/hppa_machdep.c		1.33
+
+	PR 56830: RAS support is slightly incorrect on hppa.
+	[skrll, ticket #1446]
+
+distrib/sets/lists/base/mi			1.1295
+distrib/sets/lists/man/mi			1.1739
+external/mpl/bind/bin/confgen/ddns-confgen/Makefile 1.2
+
+	Provide tsig-keygen(8).
+	[brad, ticket #1447]
+
+sys/arch/hppa/hppa/idle_machdep.c		1.4
+sys/arch/hppa/hppa/machdep.c			1.17
+
+	Add some special NOPs to help qemu.
+	[skrll, ticket #1448]
+
+sbin/bioctl/bioctl.c				1.19
+
+	bioctl(8): Don't print garbage bv_seconds.
+	[msaitoh, ticket #1449]
 
