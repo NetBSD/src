@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2021/04/29 17:26:14 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2022/05/14 11:43:25 rillig Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -33,6 +33,16 @@ DNSSEC_SRCS+=	gssapi_link.c
 CWARNFLAGS.clang+=	-Wno-error=tautological-constant-compare
 .endif
 
+# util.h, ISC_REQUIRE
+LINTFLAGS+=	-X 129	# expression has null effect
+# opensslecdsa_link.c, DST_RET does not conform to macro conventions.
+LINTFLAGS+=	-X 193	# statement not reached
+# Most casts are to isc__magic_t and thus look intentional.
+LINTFLAGS+=	-X 247	# pointer cast from '%s' to '%s' may be troublesome
+# 'uint32_tobuffer(token.value.as_ulong' looks obviously wrong but is used in
+# a lot of places.
+LINTFLAGS+=	-X 132	# conversion from '%s' to '%s' may lose accuracy
+LINTFLAGS+=	-X 298	# conversion from '%s' to '%s' may lose accuracy, arg #%d
 
 SRCS=	acl.c adb.c badcache.c byaddr.c cache.c callbacks.c catz.c \
 	clientinfo.c compress.c client.c dyndb.c tsec.c ecdb.c ecs.c \
