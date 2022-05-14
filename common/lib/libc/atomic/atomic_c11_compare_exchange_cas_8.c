@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_c11_compare_exchange_cas_8.c,v 1.3 2020/09/07 00:52:19 mrg Exp $	*/
+/*	$NetBSD: atomic_c11_compare_exchange_cas_8.c,v 1.4 2022/05/14 05:35:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,12 +44,17 @@ __atomic_compare_exchange_1(volatile void *mem,
     void *expected, uint8_t desired,
     bool weak, int success, int failure)
 {
-	uint8_t old = *(uint8_t *)expected;
+	uint8_t * const ep = expected;
+	const uint8_t old = *ep;
 
 	/*
 	 * Ignore the details (weak, memory model on success and failure)
 	 * and just do the cas. If we get here the compiler couldn't
 	 * do better and it mostly will not matter at all.
 	 */
-	return atomic_cas_8(mem, old, desired) == old;
+	const uint8_t prev = atomic_cas_8(mem, old, desired);
+	if (prev == old)
+		return true;
+	*ep = prev;
+	return false;
 }
