@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2020/09/14 16:11:32 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2022/05/14 06:07:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2020/09/14 16:11:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2022/05/14 06:07:53 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1447,8 +1447,13 @@ cpu_reboot(int howto, char *user_boot_string)
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
 
-	for (;;)
-		/* loop while bus reset is coming up */ ;
+	for (;;) {
+		/*
+		 * loop while bus reset is coming up.  This NOP instruction
+		 * is used by qemu to detect the 'death loop'.
+		 */
+		__asm volatile("or %%r31, %%r31, %%r31" ::: "memory");
+	}
 	/* NOTREACHED */
 }
 
