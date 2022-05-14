@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.16 2017/09/15 13:25:34 martin Exp $	*/
+/*	$NetBSD: Locore.c,v 1.17 2022/05/14 07:11:23 hgutch Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -664,8 +664,6 @@ OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 		cell_t vaddr;
 		cell_t paddr_hi;
 		cell_t paddr_lo;
-		cell_t status;
-		cell_t retaddr;
 	} args;
 
 #ifdef	__notyet
@@ -676,7 +674,7 @@ OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 #endif
 	args.name = ADR2CELL("call-method");
 	args.nargs = 7;
-	args.nreturns = 1;
+	args.nreturns = 0;
 	args.method = ADR2CELL("map");
 	args.ihandle = HDL2CELL(mmuh);
 	args.mode = mode;
@@ -687,9 +685,7 @@ OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 
 	if (openfirmware(&args) == -1)
 		return -1;
-	if (args.status)
-		return -1;
-	return (vaddr_t)args.retaddr;
+	return 0;
 }
 
 
