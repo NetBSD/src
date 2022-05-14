@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.3 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.3.4.1 2022/05/14 11:38:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.3 2019/04/15 20:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.3.4.1 2022/05/14 11:38:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -36,5 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.3 2019/04/15 20:45:08 skrll Exp $
 void
 cpu_idle(void)
 {
-	/* do nothing */
+        /*
+	 * This NOP instruction is used by qemu to detect the idle loop.
+	 */
+	__asm volatile("or	%%r10,%%r10,%%r10" ::: "memory");
 }
