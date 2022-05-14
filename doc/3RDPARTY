@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1855 2022/05/10 05:41:54 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1856 2022/05/14 14:02:08 uwe Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2275,3 +2275,20 @@ Responsible:	brad
 License:	BSD (3-clause)
 Location:	sys/dev/i2c/sensirion_voc_algorithm.c sys/dev/i2c/sensirion_voc_algorithm.h
 Notes:
+
+Package:	Terminus Font
+Version:	4.49.1
+Current Vers:	4.49.1
+Maintainer:	Dimitar Toshkov Zhekov
+Archive Site:	http://terminus-font.sourceforge.net/
+Home Page:	http://terminus-font.sourceforge.net/
+Date:		2020-12-28
+Mailing List:
+Responsible:
+License:	OFL-1.1-RFN
+Location:	share/wscons/fonts
+Notes:
+Suitably encoded BDF files are prepared from the Unicode encoded
+masters using upstream build scripts.  BDF files are converted to the
+WSF files with xsrc/local/programs/bdfload.  File names for the
+re-encoded subsets follow the convention used by the upstream.
