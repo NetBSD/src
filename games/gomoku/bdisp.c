@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.21 2022/05/15 22:08:05 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.22 2022/05/15 22:56:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.21 2022/05/15 22:08:05 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.22 2022/05/15 22:56:20 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ void
 cursfini(void)
 {
 
-	move(BSZ4, 0);
+	move(BSZ + 4, 0);
 	clrtoeol();
 	refresh();
 	echo();
@@ -101,19 +101,19 @@ bdisp_init(void)
 	int i, j;
 
 	/* top border */
-	for (i = 1; i < BSZ1; i++) {
+	for (i = 1; i < BSZ + 1; i++) {
 		move(0, 2 * i + 1);
 		addch(letters[i]);
 	}
 	/* left and right edges */
-	for (j = BSZ1; --j > 0; ) {
+	for (j = BSZ + 1; --j > 0; ) {
 		move(20 - j, 0);
 		printw("%2d ", j);
-		move(20 - j, 2 * BSZ1 + 1);
+		move(20 - j, 2 * (BSZ + 1) + 1);
 		printw("%d ", j);
 	}
 	/* bottom border */
-	for (i = 1; i < BSZ1; i++) {
+	for (i = 1; i < BSZ + 1; i++) {
 		move(20, 2 * i + 1);
 		addch(letters[i]);
 	}
@@ -165,10 +165,10 @@ bdisp(void)
 	int i, j, c;
 	struct spotstr *sp;
 
-	for (j = BSZ1; --j > 0; ) {
-		for (i = 1; i < BSZ1; i++) {
-			move(BSZ1 - j, 2 * i + 1);
-			sp = &board[i + j * BSZ1];
+	for (j = BSZ + 1; --j > 0; ) {
+		for (i = 1; i < BSZ + 1; i++) {
+			move(BSZ + 1 - j, 2 * i + 1);
+			sp = &board[i + j * (BSZ + 1)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
 				if (sp->s_flags & IFLAGALL)
 					c = '+';
@@ -197,11 +197,11 @@ bdump(FILE *fp)
 	/* top border */
 	fprintf(fp, "   A B C D E F G H J K L M N O P Q R S T\n");
 
-	for (j = BSZ1; --j > 0; ) {
+	for (j = BSZ + 1; --j > 0; ) {
 		/* left edge */
 		fprintf(fp, "%2d ", j);
-		for (i = 1; i < BSZ1; i++) {
-			sp = &board[i + j * BSZ1];
+		for (i = 1; i < BSZ + 1; i++) {
+			sp = &board[i + j * (BSZ + 1)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
 				if (sp->s_flags & IFLAGALL)
 					c = '+';
@@ -250,10 +250,10 @@ ask(const char *str)
 {
 	int len = strlen(str);
 
-	move(BSZ4, 0);
+	move(BSZ + 4, 0);
 	addstr(str);
 	clrtoeol();
-	move(BSZ4, len);
+	move(BSZ + 4, len);
 	refresh();
 }
 
@@ -336,7 +336,7 @@ get_coord(void)
 	nx = curx;
 	ny = cury;
 	for (;;) {
-		mvprintw(BSZ3, (BSZ - 6) / 2, "(%c %d) ",
+		mvprintw(BSZ + 3, (BSZ - 6) / 2, "(%c %d) ",
 		    'A' + ((curx > 7) ? (curx + 1) : curx), cury + 1);
 		BGOTO(cury, curx);
 
@@ -434,8 +434,8 @@ get_coord(void)
 			MEVENT	myevent;
 
 			getmouse(&myevent);
-			if (myevent.y >= 1 && myevent.y <= BSZ1 &&
-			    myevent.x >= 3 && myevent.x <= (2 * BSZ + 1)) {
+			if (myevent.y >= 1 && myevent.y <= BSZ + 1 &&
+			    myevent.x >= 3 && myevent.x <= 2 * BSZ + 1) {
 				curx = (myevent.x - 3) / 2;
 				cury = BSZ - myevent.y;
 				return PT(curx,cury);
@@ -453,7 +453,7 @@ get_coord(void)
 			return SAVE;
 		case ' ':
 		case '\r':
-			(void)mvaddstr(BSZ3, (BSZ - 6) / 2, "      ");
+			(void)mvaddstr(BSZ + 3, (BSZ - 6) / 2, "      ");
 			return PT(curx + 1, cury + 1);
 		}
 

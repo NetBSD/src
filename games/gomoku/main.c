@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2022/05/15 22:08:05 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2022/05/15 22:56:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2022/05/15 22:08:05 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2022/05/15 22:56:20 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ again:
 #endif
 
 		if (inputfp == NULL && test == 0) {
-			move(BSZ3, 0);
+			move(BSZ + 3, 0);
 			printw("Black moves first. ");
 			ask("(B)lack or (W)hite? ");
 			for (;;) {
@@ -176,7 +176,7 @@ again:
 				beep();
 				ask("Please choose (B)lack or (W)hite: ");
 			}
-			move(BSZ3, 0);
+			move(BSZ + 3, 0);
 			clrtoeol();
 		}
 	} else {
@@ -300,7 +300,7 @@ again:
 			bdisp();
 	}
 	if (interactive) {
-		move(BSZ3, 0);
+		move(BSZ + 3, 0);
 		switch (i) {
 		case WIN:
 			if (input[color] == PROGRAM)
