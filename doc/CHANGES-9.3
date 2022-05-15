@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.91 2022/05/14 11:42:17 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.92 2022/05/15 12:38:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1612,4 +1612,18 @@ sbin/bioctl/bioctl.c				1.19
 
 	bioctl(8): Don't print garbage bv_seconds.
 	[msaitoh, ticket #1449]
+
+sys/arch/luna68k/conf/GENERIC			1.131
+sys/arch/luna68k/conf/INSTALL			1.32
+
+	Use "options WS_KERNEL_FG=WSCOL_GREEN" as most ports with color
+	support.
+	[tsutsui, ticket #1450]
+
+common/lib/libc/atomic/atomic_c11_compare_exchange_cas_16.c 1.4 (patch)
+common/lib/libc/atomic/atomic_c11_compare_exchange_cas_32.c 1.4 (patch)
+common/lib/libc/atomic/atomic_c11_compare_exchange_cas_8.c 1.4 (patch)
+
+	PR 56832: fix C implementations of __atomic_compare_exchange*.
+	[skrll, ticket #1451]
 
