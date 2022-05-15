@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.78 2022/05/15 14:48:37 jmcneill Exp $ */
+/*	$NetBSD: disks.c,v 1.79 2022/05/15 18:27:35 jmcneill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -343,9 +343,9 @@ get_descr_drvctl(struct disk_desc *dd)
 	command_dict = prop_dictionary_create();
 	args_dict = prop_dictionary_create();
 
-	prop_dictionary_set_cstring_nocopy(command_dict, "drvctl-command",
+	prop_dictionary_set_string_nocopy(command_dict, "drvctl-command",
 	    "get-properties");
-	prop_dictionary_set_cstring_nocopy(args_dict, "device-name",
+	prop_dictionary_set_string_nocopy(args_dict, "device-name",
 	    dd->dd_name);
 	prop_dictionary_set(command_dict, "drvctl-arguments", args_dict);
 	prop_object_release(args_dict);
