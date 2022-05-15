@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2021/11/28 02:01:30 christos Exp $
+# $NetBSD: Makefile,v 1.18 2022/05/15 19:53:27 christos Exp $
 
 RUMPPRG=cgdconfig
 MAN=	cgdconfig.8
@@ -12,10 +12,6 @@ SRCS+=	cgdconfig.c		\
 	params.c		\
 	utils.c
 
-.if ${MKARGON2} != "no"
-SRCS+=	argon2_utils.c
-.endif
-
 CPPFLAGS+= -I${.CURDIR} -I. -DYY_NO_INPUT
 
 YHEADER=1
@@ -24,15 +20,11 @@ DPADD=  ${LIBUTIL} ${LIBCRYPT} ${LIBY} ${LIBL}
 LDADD=  -lutil -lcrypt -ly -ll
 
 .if ${MKARGON2} != "no"
-ARGON2DIR=	${NETBSDSRCDIR}/external/apache2/argon2
-ARGON2OBJDIR!=	cd ${ARGON2DIR}/lib/libargon2 && ${PRINTOBJDIR}
-CPPFLAGS+=	-I${NETBSDSRCDIR}/external/apache2/argon2/dist/phc-winner-argon2/include
-CPPFLAGS+=	-DHAVE_ARGON2
-
-PROGDPLIBS+=	argon2 ${ARGON2DIR}/lib/libargon2
-
-LDADD+=		-lpthread
-DPADD+=		${LIBPTHREAD}
+ARGON2DIR=	${NETBSDSRCDIR}/external/apache2/argon2/dist/phc-winner-argon2
+CPPFLAGS+=	-I${ARGON2DIR}/include -I${ARGON2DIR}/src/blake2
+CPPFLAGS+=	-DHAVE_ARGON2 -DARGON2_NO_THREADS
+.PATH.c: ${ARGON2DIR}/src ${ARGON2DIR}/src/blake2
+SRCS+=	argon2_utils.c argon2.c core.c encoding.c ref.c blake2b.c
 .endif
 
 .include <bsd.prog.mk>
