@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.24 2022/05/15 22:00:11 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.25 2022/05/15 22:08:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.24 2022/05/15 22:00:11 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.25 2022/05/15 22:08:05 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ pickmove(int us)
 
 	/* first move is easy */
 	if (movenum == 1)
-		return (PT(K, 10));
+		return PT(K, 10);
 
 	/* initialize all the board values */
 	for (pos = PT(T, 20); pos-- > PT(A, 1); ) {
@@ -173,8 +173,8 @@ pickmove(int us)
 	 */
 	if (Tcp->c.a <= 1 && (Ocp->c.a > 1 ||
 	    Tcp->c.a + Tcp->c.b < Ocp->c.a + Ocp->c.b))
-		return (sp2 - board);
-	return (sp1 - board);
+		return sp2 - board;
+	return sp1 - board;
 }
 
 /*
@@ -186,44 +186,44 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 	int them, s, s1;
 
 	if (sp->s_combo[us].s < sp1->s_combo[us].s)
-		return (1);
+		return 1;
 	if (sp->s_combo[us].s != sp1->s_combo[us].s)
-		return (0);
+		return 0;
 	if (sp->s_level[us] < sp1->s_level[us])
-		return (1);
+		return 1;
 	if (sp->s_level[us] != sp1->s_level[us])
-		return (0);
+		return 0;
 	if (sp->s_nforce[us] > sp1->s_nforce[us])
-		return (1);
+		return 1;
 	if (sp->s_nforce[us] != sp1->s_nforce[us])
-		return (0);
+		return 0;
 
 	them = !us;
 	s = sp - board;
 	s1 = sp1 - board;
 	if (BIT_TEST(forcemap, s) && !BIT_TEST(forcemap, s1))
-		return (1);
+		return 1;
 	if (!BIT_TEST(forcemap, s) && BIT_TEST(forcemap, s1))
-		return (0);
+		return 0;
 	if (sp->s_combo[them].s < sp1->s_combo[them].s)
-		return (1);
+		return 1;
 	if (sp->s_combo[them].s != sp1->s_combo[them].s)
-		return (0);
+		return 0;
 	if (sp->s_level[them] < sp1->s_level[them])
-		return (1);
+		return 1;
 	if (sp->s_level[them] != sp1->s_level[them])
-		return (0);
+		return 0;
 	if (sp->s_nforce[them] > sp1->s_nforce[them])
-		return (1);
+		return 1;
 	if (sp->s_nforce[them] != sp1->s_nforce[them])
-		return (0);
+		return 0;
 
 	if (sp->s_wval > sp1->s_wval)
-		return (1);
+		return 1;
 	if (sp->s_wval != sp1->s_wval)
-		return (0);
+		return 0;
 
-	return (random() & 1);
+	return random() & 1;
 }
 
 static int curcolor;	/* implicit parameter to makecombo() */
@@ -1106,7 +1106,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	for (; (tcbp = cbp->c_link[1]) != NULL;
 	    lcbp = cbp, cbp = cbp->c_link[0]) {
 		if (tcbp == fcbp)
-			return (-1);	/* fcbp is already included */
+			return -1;	/* fcbp is already included */
 
 		/* check for intersection of 'tcbp' with 'fcbp' */
 		myindex--;
@@ -1120,7 +1120,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			 * more than one point.
 			 */
 			if (tcbp->c_dir == fcbp->c_dir && (mask & (0x10 << n)))
-				return (-1);
+				return -1;
 			/*
 			 * If this is not the spot we are attaching
 			 * 'fcbp' to and it is a reasonable intersection
@@ -1130,9 +1130,9 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			if (osp != &board[n]) {
 				/* check to see if this is a valid loop */
 				if (verts)
-					return (-1);
+					return -1;
 				if (fcnt == 0 || cbp->c_framecnt[1] == 0)
-					return (-1);
+					return -1;
 				/*
 				 * Check to be sure the intersection is not
 				 * one of the end points if it is an open
@@ -1141,11 +1141,11 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				if ((flags & C_OPEN_1) &&
 				    (n == tcbp->c_vertex ||
 				     n == tcbp->c_vertex + 5 * dd[tcbp->c_dir]))
-					return (-1);	/* invalid overlap */
+					return -1;	/* invalid overlap */
 				if (cb.c.b &&
 				    (n == fcbp->c_vertex ||
 				     n == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
-					return (-1);	/* invalid overlap */
+					return -1;	/* invalid overlap */
 
 				vertices->o_intersect = n;
 				vertices->o_fcombo = cbp;
@@ -1159,7 +1159,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 		n = i + ((flags & C_OPEN_0) != 0);
 	}
 	if (cbp == fcbp)
-		return (-1);	/* fcbp is already included */
+		return -1;	/* fcbp is already included */
 
 	/* check for intersection of 'cbp' with 'fcbp' */
 	mask = str[cbp - frames];
@@ -1170,7 +1170,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 		 * more than one point.
 		 */
 		if (cbp->c_dir == fcbp->c_dir && (mask & (0x10 << n)))
-			return (-1);
+			return -1;
 		/*
 		 * If this is not the spot we are attaching
 		 * 'fcbp' to and it is a reasonable intersection
@@ -1180,9 +1180,9 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 		if (osp != &board[n]) {
 			/* check to see if this is a valid loop */
 			if (verts)
-				return (-1);
+				return -1;
 			if (fcnt == 0 || lcbp->c_framecnt[0] == 0)
-				return (-1);
+				return -1;
 			/*
 			 * Check to be sure the intersection is not
 			 * one of the end points if it is an open
@@ -1191,11 +1191,11 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			if ((flags & C_OPEN_0) &&
 			    (n == cbp->c_vertex ||
 			     n == cbp->c_vertex + 5 * dd[cbp->c_dir]))
-				return (-1);	/* invalid overlap */
+				return -1;	/* invalid overlap */
 			if (cb.c.b &&
 			    (n == fcbp->c_vertex ||
 			     n == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
-				return (-1);	/* invalid overlap */
+				return -1;	/* invalid overlap */
 
 			vertices->o_intersect = n;
 			vertices->o_fcombo = lcbp;
@@ -1206,7 +1206,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			verts++;
 		}
 	}
-	return (verts);
+	return verts;
 }
 
 /*
@@ -1269,7 +1269,7 @@ inserted:
 		    ((char *)scbpp - sizeof(struct combostr));
 		hashcombos[inx] = fcbp;
 		fcbp->c_next = fcbp->c_prev = fcbp;
-		return (0);
+		return 0;
 	}
 	ecbp = cbp;
 	do {
@@ -1309,7 +1309,7 @@ inserted:
 			debuglog("%s", buf);
 		}
 #endif /* DEBUG */
-		return (1);
+		return 1;
 	next:
 		;
 	} while ((cbp = cbp->c_next) != ecbp);
@@ -1323,7 +1323,7 @@ inserted:
 	fcbp->c_prev = ecbp;
 	cbp->c_prev = fcbp;
 	ecbp->c_next = fcbp;
-	return (0);
+	return 0;
 }
 
 /*
@@ -1491,9 +1491,9 @@ list_eq(struct combostr **scbpp, struct combostr **cbpp, int n)
 	cpp = cbpp + n;
 	do {
 		if (*--spp != *--cpp)
-			return (0);
+			return 0;
 	} while (cpp != cbpp);
 	/* we found a match */
-	return (1);
+	return 1;
 }
 #endif /* DEBUG */
