@@ -1,4 +1,5 @@
-#	$NetBSD: NetBSD.dist.i386,v 1.2 2019/03/12 10:07:49 mrg Exp $
+#	$NetBSD: NetBSD.dist.i386,v 1.3 2022/05/15 00:24:14 mrg Exp $
 
 ./usr/include/x86
 ./usr/include/xen
+./usr/libdata/firmware/radeon
