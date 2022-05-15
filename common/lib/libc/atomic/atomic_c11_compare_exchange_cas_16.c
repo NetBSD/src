@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_c11_compare_exchange_cas_16.c,v 1.2 2014/11/04 19:56:44 joerg Exp $	*/
+/*	$NetBSD: atomic_c11_compare_exchange_cas_16.c,v 1.2.20.1 2022/05/15 12:37:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,20 +36,25 @@
 #endif
 #include <sys/atomic.h>
 
-bool __atomic_compare_exchange_2(volatile uint16_t *, uint16_t *, uint16_t,
+bool __atomic_compare_exchange_2(volatile void *, void *, uint16_t,
     bool, int, int);
 
 bool
-__atomic_compare_exchange_2(volatile uint16_t *mem,
-    uint16_t *expected, uint16_t desired,
+__atomic_compare_exchange_2(volatile void *mem,
+    void *expected, uint16_t desired,
     bool weak, int success, int failure)
 {
-	uint16_t old = *expected;
+	uint16_t * const ep = expected;
+	const uint16_t old = *ep;
 
 	/*
 	 * Ignore the details (weak, memory model on success and failure)
 	 * and just do the cas. If we get here the compiler couldn't
 	 * do better and it mostly will not matter at all.
 	 */
-	return atomic_cas_16(mem, old, desired) == old;
+	const uint16_t prev = atomic_cas_16(mem, old, desired);
+	if (prev == old)
+		return true;
+	*ep = prev;
+	return false;
 }
