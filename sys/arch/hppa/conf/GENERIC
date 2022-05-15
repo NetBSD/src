@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38 2021/06/29 10:22:35 nia Exp $
+# $NetBSD: GENERIC,v 1.39 2022/05/15 08:28:29 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.38 $"
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 maxusers	32		# estimated number of users
 
@@ -95,21 +95,21 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system 	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
-file-system	CODA		# Coda File System; also needs vcoda (below)
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system 	CODA		# Coda File System; also needs vcoda (below)
+file-system 	PTYFS		# /dev/pts/N support
+file-system 	TMPFS		# Efficient memory file-system
+#file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
@@ -335,7 +335,7 @@ osiop*	at gsc? flags 0x00000		# NCR 53c710
 siop*	at gsc?				# NCR 53c720 (Fast/Wide)
 siop*	at mainbus0			# NCR 53c720 (Fast/Wide)
 siop*	at phantomas?			# NCR 53c720 (Fast/Wide)
-siop*	at uturn? 			# NCR 53c720 (Fast/Wide)
+siop*	at uturn?			# NCR 53c720 (Fast/Wide)
 
 # PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
@@ -400,7 +400,7 @@ icpsp*	at icp? unit ?			# SCSI pass-through
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-acardide*	at pci? dev ? function ?	# Acard IDE controllers
+acardide* 	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
@@ -410,12 +410,12 @@ hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 nside*  	at pci? dev ? function ?	# National Semiconductor IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
-pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
+pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
-satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+satalink* 	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
-stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
+stpcide* 	at pci? dev ? function ?	# STMicro STPC IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ATA (IDE) bus support
@@ -451,7 +451,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 # Miscellaneous mass storage devices
 
 # GSC floppy
-#fdc*	at gsc? 			# PC floppy controller (WD37C65C)
+#fdc*	at gsc?				# PC floppy controller (WD37C65C)
 #fd*	at fdc? drive ?			# the drives themselves
 
 # Network Interfaces
@@ -462,33 +462,33 @@ ie*	at gsc?				# old 82C5[89]6 Ethernet, use iee(4)
 iee*	at gsc?				# 82C596 Ethernet
 
 # PCI network interfaces
-an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
-atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
+an* 	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+atw* 	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
-ep*	at pci? dev ? function ?	# 3Com 3c59x
-epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-ex*	at pci? dev ? function ?	# 3Com 90x[BC]
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
-ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
-ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
-pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
-sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
-skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
-sk*	at skc?				# SysKonnect SK9821 Gigabit Ethernet
-ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
-stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
-ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
-tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
-vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
-wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+ep* 	at pci? dev ? function ?	# 3Com 3c59x
+epic* 	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+ex* 	at pci? dev ? function ?	# 3Com 90x[BC]
+fxp* 	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+gsip* 	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
+mtd* 	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
+ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
+ntwoc* 	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+pcn* 	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re* 	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
+rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
+sf* 	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
+sip* 	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+skc* 	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
+sk* 	at skc?				# SysKonnect SK9821 Gigabit Ethernet
+ste* 	at pci? dev ? function ?	# Sundance ST-201 Ethernet
+stge* 	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
+ti* 	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+tl* 	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tlp* 	at pci? dev ? function ?	# DECchip 21x4x and clones
+vr* 	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+wi* 	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+wm* 	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -514,7 +514,7 @@ iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-nsphyter* at mii? phy ? 		# NS83843 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 rgephy*	at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
@@ -632,7 +632,7 @@ upl*	at uhub? port ?
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
 
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+uchcom* at uhub? port ?		# WinChipHead CH341/CH340 serial adapter
 ucom*	at uchcom? portno ?
 
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
@@ -644,13 +644,13 @@ ucom*	at uipaq? portno ?
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
 
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+uplcom* at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
 uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
 ucom*	at uslsa? portno ?
 
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+uvscom* at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
 # RIM BlackBerry
@@ -689,12 +689,12 @@ ucom*	at ugensa?
 # Pseudo-Devices
 
 pseudo-device 	crypto			# /dev/crypto device
-pseudo-device	swcrypto		# software crypto implementation
+pseudo-device 	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd			# concatenated/striped disk devices
-#pseudo-device	cgd			# cryptographic disk devices
-pseudo-device	raid			# RAIDframe disk driver
+pseudo-device 	ccd			# concatenated/striped disk devices
+#pseudo-device 	cgd			# cryptographic disk devices
+pseudo-device 	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
