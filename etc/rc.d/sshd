@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.31 2021/09/26 10:53:20 martin Exp $
+# $NetBSD: sshd,v 1.32 2022/05/15 11:47:42 martin Exp $
 #
 
 # PROVIDE: sshd
@@ -45,6 +45,7 @@ sshd_keygen()
 (
 	keygen="/usr/bin/ssh-keygen"
 	umask 022
+	new_key_created=false
 	while read type bits filename;  do
 		f="/etc/ssh/$filename"
 		if [ "$1" != "force" ] && [ -f "$f" ]; then
@@ -58,14 +59,17 @@ sshd_keygen()
 		esac
 		"${keygen}" -t "${type}" ${bitarg} -f "${f}" -N '' -q && \
 		    printf "ssh-keygen: " && "${keygen}" -f "${f}" -l
+		new_key_created=true
 	done << _EOF
 dsa	1024	ssh_host_dsa_key
 ecdsa	521	ssh_host_ecdsa_key
 ed25519	-1	ssh_host_ed25519_key
 rsa	0	ssh_host_rsa_key
 _EOF
+	if "${new_key_created}"; then
+		sshd_motd_unsafe_keys_warning
+	fi
 )
-	sshd_motd_unsafe_keys_warning
 }
 
 sshd_precmd()
