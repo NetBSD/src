@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.36 2021/09/16 20:17:46 andvar Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.37 2022/05/15 20:37:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.36 2021/09/16 20:17:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.37 2022/05/15 20:37:51 andvar Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -422,7 +422,7 @@ initarm(void *cookie)
 	 * virtual address == physical address apart from the areas:
 	 * 0x00000000 -> 0x000fffff which is mapped to
 	 * top 1MB of physical memory
-	 * 0xf0000000 -> 0xf0ffffff wich is mapped to
+	 * 0xf0000000 -> 0xf0ffffff which is mapped to
 	 * physical address 0x01000000 -> 0x01ffffff (DRAM0a, dram[0])
 	 *
 	 * This means that the kernel is mapped suitably for continuing
