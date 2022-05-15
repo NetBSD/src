@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.22 2022/05/15 22:00:11 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.23 2022/05/15 22:18:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -74,26 +74,6 @@
 #define WIN	3
 #define TIE	4
 #define SAVE	5
-
-#define A 1
-#define B 2
-#define C 3
-#define D 4
-#define E 5
-#define F 6
-#define G 7
-#define H 8
-#define J 9
-#define K 10
-#define L 11
-#define M 12
-#define N 13
-#define O 14
-#define P 15
-#define Q 16
-#define R 17
-#define S 18
-#define T 19
 
 #define PT(x, y)	((x) + BSZ1 * (y))
 
