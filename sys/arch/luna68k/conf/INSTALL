@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27 2019/04/26 22:46:03 sevan Exp $
+# $NetBSD: INSTALL,v 1.27.2.1 2022/05/15 12:29:46 martin Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -108,6 +108,9 @@ options 	NFS_BOOT_DHCP	# superset of BOOTP
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=1
 #options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+
 options 	FONT_OMRON12x20
 
 config		netbsd root on ? type ?
