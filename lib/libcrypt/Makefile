@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2021/11/01 03:09:58 agc Exp $
+#	$NetBSD: Makefile,v 1.34 2022/05/15 16:25:09 christos Exp $
 
 USE_FORT?=	yes	# cryptographic software
 
@@ -14,6 +14,8 @@ LIB=	crypt
 
 SRCS=	crypt.c md5crypt.c bcrypt.c crypt-sha1.c util.c pw_gensalt.c
 SRCS+=	hmac_sha1.c
+
+CPPFLAGS+= -include ${.CURDIR}/namespace.h
 
 .if defined(HAVE_ARGON2)
 ARGON2DIR=	${NETBSDSRCDIR}/external/apache2/argon2
