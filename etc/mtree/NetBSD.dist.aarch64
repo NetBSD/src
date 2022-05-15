@@ -1,0 +1,5 @@
+#	$NetBSD: NetBSD.dist.aarch64,v 1.8 2022/05/15 00:24:14 mrg Exp $
+
+./usr/include/aarch64
+./usr/include/arm
+./usr/libdata/firmware/radeon
