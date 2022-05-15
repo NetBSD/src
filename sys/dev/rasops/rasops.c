@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.127 2022/05/15 16:12:52 uwe Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.128 2022/05/15 16:43:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.127 2022/05/15 16:12:52 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.128 2022/05/15 16:43:39 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -1195,6 +1195,11 @@ rasops_make_box_chars_16(struct rasops_info *ri)
 	vert_mask = 0xc000U >> ((ri->ri_font->fontwidth >> 1) - 1);
 	hmask_left = 0xff00U << (8 - (ri->ri_font->fontwidth >> 1));
 	hmask_right = hmask_left >> ((ri->ri_font->fontwidth + 1) >> 1);
+
+	vert_mask = htobe16(vert_mask);
+	hmask_left = htobe16(hmask_left);
+	hmask_right = htobe16(hmask_right);
+
 	mid = (ri->ri_font->fontheight + 1) >> 1;
 
 	/* 0x00 would be empty anyway so don't bother */
@@ -1234,6 +1239,7 @@ rasops_make_box_chars_8(struct rasops_info *ri)
 	vert_mask = 0xc0U >> ((ri->ri_font->fontwidth >> 1) - 1);
 	hmask_left = 0xf0U << (4 - (ri->ri_font->fontwidth >> 1));
 	hmask_right = hmask_left >> ((ri->ri_font->fontwidth + 1) >> 1);
+
 	mid = (ri->ri_font->fontheight + 1) >> 1;
 
 	/* 0x00 would be empty anyway so don't bother */
@@ -1273,6 +1279,11 @@ rasops_make_box_chars_32(struct rasops_info *ri)
 	vert_mask = 0xc0000000U >> ((ri->ri_font->fontwidth >> 1) - 1);
 	hmask_left = 0xffff0000U << (16 - (ri->ri_font->fontwidth >> 1));
 	hmask_right = hmask_left >> ((ri->ri_font->fontwidth + 1) >> 1);
+
+	vert_mask = htobe32(vert_mask);
+	hmask_left = htobe32(hmask_left);
+	hmask_right = htobe32(hmask_right);
+
 	mid = (ri->ri_font->fontheight + 1) >> 1;
 
 	/* 0x00 would be empty anyway so don't bother */
