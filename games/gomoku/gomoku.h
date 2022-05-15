@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.23 2022/05/15 22:18:36 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.24 2022/05/15 22:41:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -174,7 +174,6 @@ struct combostr {
 #define C_OPEN_0	0x01		/* link[0] is an open ended frame */
 #define C_OPEN_1	0x02		/* link[1] is an open ended frame */
 #define C_LOOP		0x04		/* link[1] intersects previous frame */
-#define C_MARK		0x08		/* indicates combo processed */
 
 /*
  * This structure is used for recording the completion points of
@@ -220,17 +219,6 @@ struct	spotstr {
 #define MFLAGALL	0x00F000	/* all frames seen */
 #define BFLAG		0x010000	/* frame intersects border or dead */
 #define BFLAGALL	0x0F0000	/* all frames dead */
-
-/*
- * This structure is used to store overlap information between frames.
- */
-struct overlap_info {
-	int		o_intersect;	/* intersection spot */
-	struct combostr	*o_fcombo;	/* the connecting combo */
-	u_char		o_link;		/* which link to update (0 or 1) */
-	u_char		o_off;		/* offset in frame of intersection */
-	u_char		o_frameindex;	/* intersection frame index */
-};
 
 extern	const char	*letters;
 extern	const char	pdir[];

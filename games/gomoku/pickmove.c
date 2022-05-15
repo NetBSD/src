@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.26 2022/05/15 22:18:36 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.27 2022/05/15 22:41:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.26 2022/05/15 22:18:36 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.27 2022/05/15 22:41:51 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,15 @@ __RCSID("$NetBSD: pickmove.c,v 1.26 2022/05/15 22:18:36 rillig Exp $");
 #define BIT_SET(a, b)	((a)[(b)/BITS_PER_INT] |= (1 << ((b) % BITS_PER_INT)))
 #define BIT_CLR(a, b)	((a)[(b)/BITS_PER_INT] &= ~(1 << ((b) % BITS_PER_INT)))
 #define BIT_TEST(a, b)	((a)[(b)/BITS_PER_INT] & (1 << ((b) % BITS_PER_INT)))
+
+/*
+ * This structure is used to store overlap information between frames.
+ */
+struct overlap_info {
+	int		o_intersect;	/* intersection spot */
+	u_char		o_off;		/* offset in frame of intersection */
+	u_char		o_frameindex;	/* intersection frame index */
+};
 
 static struct combostr *hashcombos[FAREA];/* hash list for finding duplicates */
 static struct combostr *sortcombos;	/* combos at higher levels */
@@ -1148,8 +1157,6 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 					return -1;	/* invalid overlap */
 
 				vertices->o_intersect = n;
-				vertices->o_fcombo = cbp;
-				vertices->o_link = 1;
 				vertices->o_off = (n - tcbp->c_vertex) /
 					dd[tcbp->c_dir];
 				vertices->o_frameindex = myindex;
@@ -1198,8 +1205,6 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				return -1;	/* invalid overlap */
 
 			vertices->o_intersect = n;
-			vertices->o_fcombo = lcbp;
-			vertices->o_link = 0;
 			vertices->o_off = (n - cbp->c_vertex) /
 				dd[cbp->c_dir];
 			vertices->o_frameindex = 0;
