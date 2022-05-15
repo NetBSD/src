@@ -1,7 +1,8 @@
-#	$NetBSD: NetBSD.dist.x86_64,v 1.14 2019/03/12 10:07:49 mrg Exp $
+#	$NetBSD: NetBSD.dist.x86_64,v 1.15 2022/05/15 00:24:14 mrg Exp $
 
 ./usr/include/dev/nvmm
 ./usr/include/dev/nvmm/x86
 ./usr/include/i386
 ./usr/include/x86
 ./usr/include/xen
+./usr/libdata/firmware/radeon
