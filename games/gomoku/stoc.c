@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.15 2022/05/15 22:08:05 rillig Exp $	*/
+/*	$NetBSD: stoc.c,v 1.16 2022/05/15 22:56:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-__RCSID("$NetBSD: stoc.c,v 1.15 2022/05/15 22:08:05 rillig Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.16 2022/05/15 22:56:20 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,8 @@ stoc(int s)
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (s == mv[i].m_code)
 			return mv[i].m_text;
-	snprintf(buf, sizeof(buf), "%c%d", letters[s % BSZ1], s / BSZ1);
+	snprintf(buf, sizeof(buf), "%c%d",
+	    letters[s % (BSZ + 1)], s / (BSZ + 1));
 	return buf;
 }
 

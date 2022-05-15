@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.24 2022/05/15 22:41:51 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.25 2022/05/15 22:56:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -40,13 +40,9 @@
 
 /* board dimensions */
 #define BSZ	19
-#define BSZ1	(BSZ + 1)
-#define BSZ2	(BSZ + 2)
-#define BSZ3	(BSZ + 3)
-#define BSZ4	(BSZ + 4)
-#define BAREA	(BSZ2 * BSZ1 + 1)
+#define BAREA	((1 + BSZ + 1) * (BSZ + 1) + 1)
 
-#define TRANSCRIPT_COL	(2 * BSZ4)
+#define TRANSCRIPT_COL	(2 * (BSZ + 4))
 
 /* interactive curses stuff */
 #define BGOTO(y, x)	move(BSZ - (y), 2 * (x) + 3)
@@ -56,8 +52,8 @@
 #define FSZ2	(BSZ-4)
 #define FAREA	(FSZ1*FSZ2 + FSZ2*FSZ2 + FSZ1*FSZ2 + FSZ2*FSZ2)
 
-#define MUP	(BSZ1)
-#define MDOWN	(-BSZ1)
+#define MUP	(BSZ + 1)
+#define MDOWN	(-(BSZ + 1))
 #define MLEFT	(-1)
 #define MRIGHT	(1)
 
@@ -75,7 +71,7 @@
 #define TIE	4
 #define SAVE	5
 
-#define PT(x, y)	((x) + BSZ1 * (y))
+#define PT(x, y)	((x) + (BSZ + 1) * (y))
 
 /*
  * A 'frame' is a group of five or six contiguous board locations.
