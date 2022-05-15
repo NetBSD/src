@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.77 2022/05/15 12:48:25 jmcneill Exp $ */
+/*	$NetBSD: disks.c,v 1.78 2022/05/15 14:48:37 jmcneill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,6 +60,8 @@
 
 #include <dev/ata/atareg.h>
 #include <sys/ataio.h>
+
+#include <sys/drvctlio.h>
 
 #include "defs.h"
 #include "md.h"
@@ -321,20 +323,86 @@ get_descr_ata(struct disk_desc *dd)
 	return 1;
 }
 
+static int
+get_descr_drvctl(struct disk_desc *dd)
+{
+	prop_dictionary_t command_dict;
+	prop_dictionary_t args_dict;
+	prop_dictionary_t results_dict;
+	prop_dictionary_t props;
+	int8_t perr;
+	int error, fd;
+	bool rv;
+	char size[5];
+	const char *model;
+
+	fd = open("/dev/drvctl", O_RDONLY);
+	if (fd == -1)
+		return 0;
+
+	command_dict = prop_dictionary_create();
+	args_dict = prop_dictionary_create();
+
+	prop_dictionary_set_cstring_nocopy(command_dict, "drvctl-command",
+	    "get-properties");
+	prop_dictionary_set_cstring_nocopy(args_dict, "device-name",
+	    dd->dd_name);
+	prop_dictionary_set(command_dict, "drvctl-arguments", args_dict);
+	prop_object_release(args_dict);
+
+	error = prop_dictionary_sendrecv_ioctl(command_dict, fd,
+	    DRVCTLCOMMAND, &results_dict);
+	prop_object_release(command_dict);
+	close(fd);
+	if (error)
+		return 0;
+
+	rv = prop_dictionary_get_int8(results_dict, "drvctl-error", &perr);
+	if (rv == false || perr != 0) {
+		prop_object_release(results_dict);
+		return 0;
+	}
+
+	props = prop_dictionary_get(results_dict,
+	    "drvctl-result-data");
+	if (props == NULL) {
+		prop_object_release(results_dict);
+		return 0;
+	}
+	props = prop_dictionary_get(props, "disk-info");
+	if (props == NULL ||
+	    !prop_dictionary_get_string(props, "type", &model)) {
+		prop_object_release(results_dict);
+		return 0;
+	}
+
+	humanize_number(size, sizeof(size),
+	    (uint64_t)dd->dd_secsize * (uint64_t)dd->dd_totsec,
+	    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
+
+	snprintf(dd->dd_descr, sizeof(dd->dd_descr), "%s (%s, %s)",
+	    dd->dd_name, size, model);
+
+	prop_object_release(results_dict);
+
+	return 1;
+}
+
 static void
 get_descr(struct disk_desc *dd)
 {
 	char size[5];
 	dd->dd_descr[0] = '\0';
 
+	/* try drvctl first, fallback to direct probing */
+	if (get_descr_drvctl(dd))
+		return;
 	/* try ATA */
 	if (get_descr_ata(dd))
 		return;
 	/* try SCSI */
 	if (get_descr_scsi(dd))
 		return;
-
-	/* XXX: identify for ld @ NVME or microSD */
 
 	/* XXX: get description from raid, cgd, vnd... */
 
