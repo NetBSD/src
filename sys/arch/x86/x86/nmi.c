@@ -1,4 +1,4 @@
-/*	$Id: nmi.c,v 1.5 2017/06/01 02:45:08 chs Exp $	*/
+/*	$Id: nmi.c,v 1.6 2022/05/15 12:45:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2009,2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.5 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.6 2022/05/15 12:45:33 riastradh Exp $");
 
 /*
  * nmi dispatcher.
@@ -82,8 +82,7 @@ nmi_establish(int (*func)(const struct trapframe *, void *), void *arg)
 
 	mutex_enter(&nmi_list_lock);
 	n->n_next = nmi_handlers;
-	membar_producer(); /* n->n_next should be visible before nmi_handlers */
-	nmi_handlers = n; /* atomic store */
+	atomic_store_release(&nmi_handlers, n);
 	mutex_exit(&nmi_list_lock);
 
 	return n;
@@ -121,7 +120,7 @@ nmi_disestablish(nmi_handler_t *handle)
 		panic("%s: invalid handle %p", __func__, handle);
 	}
 #endif /* defined(DIAGNOSTIC) */
-	*pp = n->n_next; /* atomic store */
+	atomic_store_relaxed(pp, n->n_next);
 	mutex_exit(&nmi_list_lock); /* mutex_exit implies a store fence */
 
 	/*
@@ -154,9 +153,9 @@ nmi_dispatch(const struct trapframe *tf)
 	 * we are in a dangerous context. (NMI)
 	 */
 
-	for (n = nmi_handlers; /* atomic load */
-	    n != NULL;
-	    membar_consumer(), n = n->n_next) { /* atomic load */
+	for (n = atomic_load_consume(&nmi_handlers);
+	     n != NULL;
+	     n = atomic_load_relaxed(&n->n_next)) {
 		handled |= (*n->n_func)(tf, n->n_arg);
 	}
 	return handled;
