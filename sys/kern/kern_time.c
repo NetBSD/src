@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.213 2022/03/13 12:21:28 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.214 2022/05/15 16:20:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.213 2022/03/13 12:21:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.214 2022/05/15 16:20:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -625,9 +625,11 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 		 */
 		if (delta->tv_sec > INT64_MAX/1000000 - 1) {
 			time_adjtime = INT64_MAX;
+		} else if (delta->tv_sec < INT64_MIN/1000000 + 1) {
+			time_adjtime = INT64_MIN;
 		} else {
-			time_adjtime = MAX(0, delta->tv_sec) * 1000000
-			    + MAX(0, MIN(999999, delta->tv_usec));
+			time_adjtime = delta->tv_sec * 1000000
+			    + MAX(-999999, MIN(999999, delta->tv_usec));
 		}
 
 		if (time_adjtime) {
