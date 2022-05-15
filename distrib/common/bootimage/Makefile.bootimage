@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.29 2021/09/25 08:54:29 maya Exp $
+#	$NetBSD: Makefile.bootimage,v 1.30 2022/05/15 00:05:24 mrg Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -201,8 +201,8 @@ LABELSECTORS?=	2048	# 1MB aligned for modern flash devices
 .endif
 
 FSSECTORS!=	expr ${IMAGESECTORS} - ${SWAPSECTORS} - ${LABELSECTORS} \
-		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS}
-FSSIZE!=	expr ${FSSECTORS} \* 512
+		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS} || test $$? -eq 1 || exit 1
+FSSIZE!=	expr ${FSSECTORS} \* 512 || test $$? -eq 1 || exit 1
 
 # parameters for disklabel and MBR
 HEADS=		64
@@ -217,9 +217,9 @@ MBRFAT?=	6	# 16-bit FAT, more than 32M
 
 BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS} \
 		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS}
-FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS} + ${FATSECTORS}
+FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS} + ${FATSECTORS} || test $$? -eq 1 || exit 1
 SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} \
-		    + ${EFISECTORS} + ${FATSECTORS}
+		    + ${EFISECTORS} + ${FATSECTORS} || test $$? -eq 1 || exit 1
 FATOFFSET=	${LABELSECTORS}
 
 # parameters for sunlabel
