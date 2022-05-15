@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.91 2022/05/03 20:52:31 andvar Exp $	*/
+/*	$NetBSD: fd.c,v 1.92 2022/05/15 20:37:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.91 2022/05/03 20:52:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.92 2022/05/15 20:37:51 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1255,7 +1255,7 @@ fdmoff(struct fd_softc *fdsoftc)
 }
 
 /*
- * Used to find out wich drives are actually connected. We do this by issuing
+ * Used to find out which drives are actually connected. We do this by issuing
  * is 'RESTORE' command and check if the 'track-0' bit is set. This also works
  * if the drive is present but no floppy is inserted.
  */
