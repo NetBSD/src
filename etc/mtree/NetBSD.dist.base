@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.242 2022/03/06 17:51:42 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.243 2022/05/15 21:41:56 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -380,6 +380,7 @@
 ./usr/libdata/debug/usr/sbin
 ./usr/libdata/firmware
 ./usr/libdata/firmware/bcm43xx
+./usr/libdata/firmware/radeon
 ./usr/libdata/ldscripts
 ./usr/libdata/lint
 ./usr/libdata/lint/strict-bool
