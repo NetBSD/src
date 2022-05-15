@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.10 2022/05/15 22:00:11 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.11 2022/05/15 22:56:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.10 2022/05/15 22:00:11 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.11 2022/05/15 22:56:20 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ bdinit(struct spotstr *bp)
 
 	/* mark the borders as such */
 	sp = bp;
-	for (i = BSZ2; --i >= 0; sp++) {
+	for (i = 1 + BSZ + 1; --i >= 0; sp++) {
 		sp->s_occ = BORDER;			/* top border */
 		sp->s_flags = BFLAGALL;
 	}
@@ -65,8 +65,8 @@ bdinit(struct spotstr *bp)
 	/* fill entire board with EMPTY spots */
 	memset(frames, 0, sizeof(frames));
 	cbp = frames;
-	for (j = 0; ++j < BSZ1; sp++) {			/* for each row */
-		for (i = 0; ++i < BSZ1; sp++) {		/* for each column */
+	for (j = 0; ++j < BSZ + 1; sp++) {		/* for each row */
+		for (i = 0; ++i < BSZ + 1; sp++) {	/* for each column */
 			sp->s_occ = EMPTY;
 			sp->s_flags = 0;
 			sp->s_wval = 0;
@@ -145,8 +145,8 @@ bdinit(struct spotstr *bp)
 	}
 
 	/* mark the borders as such */
-	for (i = BSZ1; --i >= 0; sp++) {
-		sp->s_occ = BORDER;		/* bottom border */
+	for (i = BSZ + 1; --i >= 0; sp++) {
+		sp->s_occ = BORDER;			/* bottom border */
 		sp->s_flags = BFLAGALL;
 	}
 
