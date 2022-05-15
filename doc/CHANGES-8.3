@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.127 2022/05/04 15:37:12 sborrill Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.128 2022/05/15 12:18:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2572,4 +2572,9 @@ sys/net/if_pppoe.c			1.179
 	pppoe(4): fix CVE-2022-29867 - discovery phase local network
 	mbuf corruption.
 	[martin, ticket #1740]
+
+sbin/bioctl/bioctl.c				1.19
+
+	bioctl(8): don't print garbage bv_seconds.
+	[msaitoh, ticket #1741]
 
