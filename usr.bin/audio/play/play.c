@@ -1,7 +1,7 @@
-/*	$NetBSD: play.c,v 1.60 2019/11/11 15:40:42 joerg Exp $	*/
+/*	$NetBSD: play.c,v 1.61 2022/05/15 02:16:06 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2001, 2002, 2010, 2015, 2019 Matthew R. Green
+ * Copyright (c) 1999, 2000, 2001, 2002, 2010, 2015, 2019, 2021 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.60 2019/11/11 15:40:42 joerg Exp $");
+__RCSID("$NetBSD: play.c,v 1.61 2022/05/15 02:16:06 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -559,7 +559,7 @@ set_audio_mode:
 			if (sizeof(double) * CHAR_BIT != 64)
 				return -1;
 			*conv = float64_to_linear32;
-			msg = "32";
+			msg = "64";
 		}
 		info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
 		info.play.precision = 32;
