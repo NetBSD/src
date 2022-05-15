@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.9 2012/10/13 20:57:35 dholland Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.10 2022/05/15 22:00:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.9 2012/10/13 20:57:35 dholland Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.10 2022/05/15 22:00:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ bdinit(struct spotstr *bp)
 	/* mark the borders as such */
 	sp = bp;
 	for (i = BSZ2; --i >= 0; sp++) {
-		sp->s_occ = BORDER;		/* top border */
+		sp->s_occ = BORDER;			/* top border */
 		sp->s_flags = BFLAGALL;
 	}
 
@@ -73,7 +73,7 @@ bdinit(struct spotstr *bp)
 			if (j < 5) {
 				/* directions 1, 2, 3 are blocked */
 				sp->s_flags |= (BFLAG << 1) | (BFLAG << 2) |
-					(BFLAG << 3);
+				    (BFLAG << 3);
 				sp->s_fval[BLACK][1].s = MAXCOMBO;
 				sp->s_fval[BLACK][2].s = MAXCOMBO;
 				sp->s_fval[BLACK][3].s = MAXCOMBO;

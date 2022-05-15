@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2021/05/02 12:50:44 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2022/05/15 22:00:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2021/05/02 12:50:44 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2022/05/15 22:00:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ u_char	overlap[FAREA * FAREA];		/* true if frame [a][b] overlap */
 short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
 int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
-const char	*plyr[2];			/* who's who */
+const char	*plyr[2];		/* who's who */
 
 static int readinput(FILE *);
 static void misclog(const char *, ...) __printflike(1, 2);
@@ -263,7 +263,7 @@ again:
 					}
 					for (i = 0; i < movenum - 1; i++)
 						fprintf(fp, "%s\n",
-							stoc(movelog[i]));
+						    stoc(movelog[i]));
 					fclose(fp);
 					goto getinput;
 				}
@@ -336,7 +336,7 @@ again:
 				}
 				for (i = 0; i < movenum - 1; i++)
 					fprintf(fp, "%s\n",
-						stoc(movelog[i]));
+					    stoc(movelog[i]));
 				fclose(fp);
 				goto replay;
 			}
@@ -344,7 +344,7 @@ again:
 	}
 	quit();
 	/* NOTREACHED */
-	return(0);
+	return (0);
 }
 
 static int

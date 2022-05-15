@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.13 2021/05/02 12:50:44 rillig Exp $	*/
+/*	$NetBSD: stoc.c,v 1.14 2022/05/15 22:00:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-__RCSID("$NetBSD: stoc.c,v 1.13 2021/05/02 12:50:44 rillig Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.14 2022/05/15 22:00:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,9 +73,9 @@ stoc(int s)
 
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (s == mv[i].m_code)
-			return(mv[i].m_text);
+			return (mv[i].m_text);
 	snprintf(buf, sizeof(buf), "%c%d", letters[s % BSZ1], s / BSZ1);
-	return(buf);
+	return (buf);
 }
 
 /*
@@ -88,13 +88,13 @@ ctos(const char *mp)
 
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (strcmp(mp, mv[i].m_text) == 0)
-			return(mv[i].m_code);
+			return (mv[i].m_code);
 	if (!isalpha((unsigned char)mp[0]))
-		return(ILLEGAL);
+		return (ILLEGAL);
 	i = atoi(&mp[1]);
 	if (i < 1 || i > 19)
-		return(ILLEGAL);
-	return(PT(lton((unsigned char)mp[0]), i));
+		return (ILLEGAL);
+	return (PT(lton((unsigned char)mp[0]), i));
 }
 
 /*
@@ -109,5 +109,5 @@ lton(int c)
 		c = toupper(c);
 	for (i = 1; i <= BSZ && letters[i] != c; i++)
 		;
-	return(i);
+	return (i);
 }

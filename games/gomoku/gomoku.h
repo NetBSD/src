@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.21 2022/05/14 16:21:04 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.22 2022/05/15 22:00:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -40,16 +40,16 @@
 
 /* board dimensions */
 #define BSZ	19
-#define BSZ1	(BSZ+1)
-#define BSZ2	(BSZ+2)
-#define BSZ3	(BSZ+3)
-#define BSZ4	(BSZ+4)
-#define BAREA	(BSZ2*BSZ1+1)
+#define BSZ1	(BSZ + 1)
+#define BSZ2	(BSZ + 2)
+#define BSZ3	(BSZ + 3)
+#define BSZ4	(BSZ + 4)
+#define BAREA	(BSZ2 * BSZ1 + 1)
 
-#define TRANSCRIPT_COL	46	/* necessarily == 2*BSZ4 */
+#define TRANSCRIPT_COL	(2 * BSZ4)
 
 /* interactive curses stuff */
-#define BGOTO(y,x)	move(BSZ - (y), 2 * (x) + 3)
+#define BGOTO(y, x)	move(BSZ - (y), 2 * (x) + 3)
 
 /* frame dimensions (based on 5 in a row) */
 #define FSZ1	BSZ
@@ -95,7 +95,7 @@
 #define S 18
 #define T 19
 
-#define PT(x,y)		((x) + BSZ1 * (y))
+#define PT(x, y)	((x) + BSZ1 * (y))
 
 /*
  * A 'frame' is a group of five or six contiguous board locations.
@@ -147,7 +147,7 @@
 #define MAXB		2
 #define MAXCOMBO	0x600
 
-union	comboval {
+union comboval {
 	struct {
 #if BYTE_ORDER == BIG_ENDIAN
 		u_char	a;	/* # moves to complete force */
