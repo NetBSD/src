@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.20 2022/05/15 22:00:11 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.21 2022/05/15 22:08:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.20 2022/05/15 22:00:11 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.21 2022/05/15 22:08:05 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,7 +317,7 @@ get_line(char *buf, int size)
 		}
 	}
 	*cp = '\0';
-	return (c != EOF);
+	return c != EOF;
 }
 
 /*

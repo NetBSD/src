@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.12 2022/05/15 22:00:11 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.13 2022/05/15 22:08:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.12 2022/05/15 22:00:11 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.13 2022/05/15 22:08:05 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,18 +73,18 @@ makemove(int us, int mv)
 
 	/* check for end of game */
 	if (mv == RESIGN)
-		return (RESIGN);
+		return RESIGN;
 
 	/* check for illegal move */
 	sp = &board[mv];
 	if (sp->s_occ != EMPTY)
-		return (ILLEGAL);
+		return ILLEGAL;
 
 	/* make move */
 	sp->s_occ = us;
 	movelog[movenum - 1] = mv;
 	if (++movenum == BSZ * BSZ)
-		return (TIE);
+		return TIE;
 
 	/* compute new frame values */
 	sp->s_wval = 0;
@@ -211,7 +211,7 @@ makemove(int us, int mv)
 
 	update_overlap(osp);
 
-	return (MOVEOK);
+	return MOVEOK;
 }
 
 /*
