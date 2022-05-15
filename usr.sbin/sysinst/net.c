@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.40 2022/01/13 14:47:11 nia Exp $	*/
+/*	$NetBSD: net.c,v 1.41 2022/05/15 17:02:37 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -652,13 +652,15 @@ again:
 		}
 	}
 
-	if (!(net_dhcpconf & DHCPCONF_HOST))
-		msg_prompt_add(MSG_net_host, net_host, net_host,
-		    sizeof net_host);
-
-	if (!(net_dhcpconf & DHCPCONF_DOMAIN))
-		msg_prompt_add(MSG_net_domain, net_domain, net_domain,
-		    sizeof net_domain);
+	/*
+	 * Prompt for hostname and domain, even when using DHCP. The names
+	 * discovered on the network may not match the desired values
+	 * for the target system.
+	 */ 
+	msg_prompt_add(MSG_net_host, net_host, net_host,
+	    sizeof net_host);
+	msg_prompt_add(MSG_net_domain, net_domain, net_domain,
+	    sizeof net_domain);
 
 	if (!dhcp_config) {
 		/* Manually configure IPv4 */
