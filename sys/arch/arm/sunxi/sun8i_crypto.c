@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.30 2022/03/19 11:37:05 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.31 2022/05/15 16:58:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.30 2022/03/19 11:37:05 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.31 2022/05/15 16:58:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -494,7 +494,7 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	 * be from us because we've kept ICR set to 0 to mask all
 	 * interrupts, but in case the interrupt vector is shared.
 	 */
-	atomic_store_relaxed(&sc->sc_polling, true);
+	atomic_store_relaxed(&sc->sc_polling, false);
 
 	/* Attach the sysctl.  */
 	sun8i_crypto_sysctl_attach(sc);
