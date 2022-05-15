@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.25 2022/05/15 22:08:05 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.26 2022/05/15 22:18:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.25 2022/05/15 22:08:05 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.26 2022/05/15 22:18:36 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,10 +88,10 @@ pickmove(int us)
 
 	/* first move is easy */
 	if (movenum == 1)
-		return PT(K, 10);
+		return PT((BSZ + 1) / 2, (BSZ + 1) / 2);
 
 	/* initialize all the board values */
-	for (pos = PT(T, 20); pos-- > PT(A, 1); ) {
+	for (pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
 		sp->s_combo[BLACK].s = MAXCOMBO + 1;
 		sp->s_combo[WHITE].s = MAXCOMBO + 1;
@@ -110,9 +110,9 @@ pickmove(int us)
 	scanframes(WHITE);
 
 	/* find the spot with the highest value */
-	pos = PT(T, 19);
+	pos = PT(BSZ, BSZ);
 	sp1 = sp2 = &board[pos];
-	for ( ; pos-- > PT(A, 1); ) {
+	for ( ; pos-- > PT(1, 1); ) {
 		sp = &board[pos];
 		if (sp->s_occ != EMPTY)
 			continue;
@@ -352,7 +352,7 @@ scanframes(int color)
 	}
 
 	/* scan for combos at empty spots */
-	for (pos = PT(T, 20); pos-- > PT(A, 1); ) {
+	for (pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
 		for (ep = sp->s_empty; ep; ep = nep) {
 			cbp = ep->e_combo;
@@ -562,7 +562,7 @@ addframes(int level)
 
 	/* scan for combos at empty spots */
 	i = curcolor;
-	for (pos = PT(T, 20); pos-- > PT(A, 1); ) {
+	for (pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
 		for (ep = sp->s_empty; ep; ep = nep) {
 			cbp = ep->e_combo;
