@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.125 2021/12/24 18:12:58 jmcneill Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.126 2022/05/15 10:29:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.125 2021/12/24 18:12:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.126 2022/05/15 10:29:20 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -597,7 +597,7 @@ rasops_mapchar(void *cookie, int c, u_int *cp)
 	KASSERT(ri->ri_font != NULL);
 
 	if ((c = wsfont_map_unichar(ri->ri_font, c)) < 0 ||
-	    !CHAR_IN_FONT(c, ri->ri_font)) {
+	    !CHAR_IN_FONT(c, PICK_FONT(ri, c))) {
 		*cp = ' ';
 		return 0;
 	}
