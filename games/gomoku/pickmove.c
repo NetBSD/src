@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.23 2022/05/14 16:21:04 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.24 2022/05/15 22:00:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.23 2022/05/14 16:21:04 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.24 2022/05/15 22:00:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,10 +88,10 @@ pickmove(int us)
 
 	/* first move is easy */
 	if (movenum == 1)
-		return (PT(K,10));
+		return (PT(K, 10));
 
 	/* initialize all the board values */
-	for (pos = PT(T,20); pos-- > PT(A,1); ) {
+	for (pos = PT(T, 20); pos-- > PT(A, 1); ) {
 		sp = &board[pos];
 		sp->s_combo[BLACK].s = MAXCOMBO + 1;
 		sp->s_combo[WHITE].s = MAXCOMBO + 1;
@@ -110,20 +110,21 @@ pickmove(int us)
 	scanframes(WHITE);
 
 	/* find the spot with the highest value */
-	pos = PT(T,19);
+	pos = PT(T, 19);
 	sp1 = sp2 = &board[pos];
-	for ( ; pos-- > PT(A,1); ) {
+	for ( ; pos-- > PT(A, 1); ) {
 		sp = &board[pos];
 		if (sp->s_occ != EMPTY)
 			continue;
 		if (debug && (sp->s_combo[BLACK].c.a == 1 ||
 		    sp->s_combo[WHITE].c.a == 1)) {
-			debuglog("- %s %x/%d %d %x/%d %d %d", stoc(sp - board),
-				sp->s_combo[BLACK].s, sp->s_level[BLACK],
-				sp->s_nforce[BLACK],
-				sp->s_combo[WHITE].s, sp->s_level[WHITE],
-				sp->s_nforce[WHITE],
-				sp->s_wval);
+			debuglog("- %s %x/%d %d %x/%d %d %d",
+			    stoc(sp - board),
+			    sp->s_combo[BLACK].s, sp->s_level[BLACK],
+			    sp->s_nforce[BLACK],
+			    sp->s_combo[WHITE].s, sp->s_level[WHITE],
+			    sp->s_nforce[WHITE],
+			    sp->s_wval);
 		}
 		/* pick the best black move */
 		if (better(sp, sp1, BLACK))
@@ -135,17 +136,17 @@ pickmove(int us)
 
 	if (debug) {
 		debuglog("B %s %x/%d %d %x/%d %d %d",
-			stoc(sp1 - board),
-			sp1->s_combo[BLACK].s, sp1->s_level[BLACK],
-			sp1->s_nforce[BLACK],
-			sp1->s_combo[WHITE].s, sp1->s_level[WHITE],
-			sp1->s_nforce[WHITE], sp1->s_wval);
+		    stoc(sp1 - board),
+		    sp1->s_combo[BLACK].s, sp1->s_level[BLACK],
+		    sp1->s_nforce[BLACK],
+		    sp1->s_combo[WHITE].s, sp1->s_level[WHITE],
+		    sp1->s_nforce[WHITE], sp1->s_wval);
 		debuglog("W %s %x/%d %d %x/%d %d %d",
-			stoc(sp2 - board),
-			sp2->s_combo[WHITE].s, sp2->s_level[WHITE],
-			sp2->s_nforce[WHITE],
-			sp2->s_combo[BLACK].s, sp2->s_level[BLACK],
-			sp2->s_nforce[BLACK], sp2->s_wval);
+		    stoc(sp2 - board),
+		    sp2->s_combo[WHITE].s, sp2->s_level[WHITE],
+		    sp2->s_nforce[WHITE],
+		    sp2->s_combo[BLACK].s, sp2->s_level[BLACK],
+		    sp2->s_nforce[BLACK], sp2->s_wval);
 		/*
 		 * Check for more than one force that can't
 		 * all be blocked with one move.
@@ -342,7 +343,7 @@ scanframes(int color)
 	while (d <= ((movenum + 1) >> 1) && combolen > n) {
 		if (debug) {
 			debuglog("%cL%d %d %d %d", "BW"[color],
-				d, combolen - n, combocnt, elistcnt);
+			    d, combolen - n, combocnt, elistcnt);
 			refresh();
 		}
 		n = combolen;
@@ -351,7 +352,7 @@ scanframes(int color)
 	}
 
 	/* scan for combos at empty spots */
-	for (pos = PT(T,20); pos-- > PT(A,1); ) {
+	for (pos = PT(T, 20); pos-- > PT(A, 1); ) {
 		sp = &board[pos];
 		for (ep = sp->s_empty; ep; ep = nep) {
 			cbp = ep->e_combo;
@@ -561,7 +562,7 @@ addframes(int level)
 
 	/* scan for combos at empty spots */
 	i = curcolor;
-	for (pos = PT(T,20); pos-- > PT(A,1); ) {
+	for (pos = PT(T, 20); pos-- > PT(A, 1); ) {
 		sp = &board[pos];
 		for (ep = sp->s_empty; ep; ep = nep) {
 			cbp = ep->e_combo;
@@ -923,7 +924,7 @@ makeempty(struct combostr *ocbp)
 			/* add the combo to the list of empty spots */
 			nep = (struct elist *)malloc(sizeof(struct elist));
 			if (nep == NULL)
-			    panic("Out of memory!");
+				panic("Out of memory!");
 			nep->e_combo = ocbp;
 			nep->e_off = s;
 			nep->e_frameindex = i;
@@ -937,12 +938,12 @@ makeempty(struct combostr *ocbp)
 			nep->e_fval.s = ep->e_fval.s;
 			if (debug > 2) {
 				debuglog("e %s o%d i%d c%d m%x %x",
-					stoc(sp - board),
-					nep->e_off,
-					nep->e_frameindex,
-					nep->e_framecnt,
-					nep->e_emask,
-					nep->e_fval.s);
+				    stoc(sp - board),
+				    nep->e_off,
+				    nep->e_frameindex,
+				    nep->e_framecnt,
+				    nep->e_emask,
+				    nep->e_fval.s);
 			}
 
 			/* sort by the number of frames in the combo */
@@ -1247,9 +1248,9 @@ sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 		cpp--;
 		if (fcbp > *cpp) {
 			*--spp = fcbp;
-			do
+			do {
 				*--spp = *cpp;
-			while (cpp-- != cbpp);
+			} while (cpp-- != cbpp);
 			goto inserted;
 		}
 		*--spp = *cpp;
@@ -1265,7 +1266,7 @@ inserted:
 		 * Add it to the hash list.
 		 */
 		fcbp = (struct combostr *)
-			((char *)scbpp - sizeof(struct combostr));
+		    ((char *)scbpp - sizeof(struct combostr));
 		hashcombos[inx] = fcbp;
 		fcbp->c_next = fcbp->c_prev = fcbp;
 		return (0);
@@ -1335,16 +1336,16 @@ printcombo(struct combostr *cbp, char *buf, size_t max)
 	size_t pos = 0;
 
 	snprintf(buf + pos, max - pos, "%x/%d",
-		cbp->c_combo.s, cbp->c_nframes);
+	    cbp->c_combo.s, cbp->c_nframes);
 	pos += strlen(buf + pos);
 
 	for (; (tcbp = cbp->c_link[1]) != NULL; cbp = cbp->c_link[0]) {
 		snprintf(buf + pos, max - pos, " %s%c%x",
-			stoc(tcbp->c_vertex), pdir[tcbp->c_dir], cbp->c_flags);
+		    stoc(tcbp->c_vertex), pdir[tcbp->c_dir], cbp->c_flags);
 		pos += strlen(buf + pos);
 	}
 	snprintf(buf + pos, max - pos, " %s%c",
-		stoc(cbp->c_vertex), pdir[cbp->c_dir]);
+	    stoc(cbp->c_vertex), pdir[cbp->c_dir]);
 }
 
 #ifdef DEBUG

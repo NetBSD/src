@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.19 2022/05/14 16:21:04 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.20 2022/05/15 22:00:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.19 2022/05/14 16:21:04 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.20 2022/05/15 22:00:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,11 +133,11 @@ bdwho(int update)
 	int i, j;
 
 	move(21, 0);
-        printw("                                              ");
+	printw("                                              ");
 	i = strlen(plyr[BLACK]);
 	j = strlen(plyr[WHITE]);
 	if (i + j <= 20) {
-		move(21, 10 - (i+j)/2);
+		move(21, 10 - (i + j) / 2);
 		printw("BLACK/%s (*) vs. WHITE/%s (O)",
 		    plyr[BLACK], plyr[WHITE]);
 	} else {
@@ -317,7 +317,7 @@ get_line(char *buf, int size)
 		}
 	}
 	*cp = '\0';
-	return(c != EOF);
+	return (c != EOF);
 }
 
 /*
@@ -336,8 +336,8 @@ get_coord(void)
 	nx = curx;
 	ny = cury;
 	for (;;) {
-		mvprintw(BSZ3, (BSZ -6)/2, "(%c %d) ",
-				'A'+ ((curx > 7) ? (curx+1) : curx), cury + 1);
+		mvprintw(BSZ3, (BSZ - 6) / 2, "(%c %d) ",
+		    'A' + ((curx > 7) ? (curx + 1) : curx), cury + 1);
 		BGOTO(cury, curx);
 
 		ch = getch();
@@ -407,7 +407,7 @@ get_coord(void)
 			ny = cury;
 			break;
 		case 'Y':
-		        nx = BSZ + curx - 5;
+			nx = BSZ + curx - 5;
 			ny = cury + 5;
 			break;
 		case 'B':
@@ -453,11 +453,11 @@ get_coord(void)
 			return SAVE;
 		case ' ':
 		case '\r':
-			(void) mvaddstr(BSZ3, (BSZ -6)/2, "      ");
-			return PT(curx+1,cury+1);
-	}
+			(void)mvaddstr(BSZ3, (BSZ - 6) / 2, "      ");
+			return PT(curx + 1, cury + 1);
+		}
 
-	curx = nx % BSZ;
-	cury = ny % BSZ;
-    }
+		curx = nx % BSZ;
+		cury = ny % BSZ;
+	}
 }
