@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.76 2021/08/21 11:55:26 andvar Exp $ */
+/*	$NetBSD: disks.c,v 1.77 2022/05/15 12:48:25 jmcneill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -329,15 +329,15 @@ get_descr(struct disk_desc *dd)
 
 	/* try ATA */
 	if (get_descr_ata(dd))
-		goto done;
+		return;
 	/* try SCSI */
 	if (get_descr_scsi(dd))
-		goto done;
+		return;
 
 	/* XXX: identify for ld @ NVME or microSD */
 
 	/* XXX: get description from raid, cgd, vnd... */
-done:
+
 	/* punt, just give some generic info */
 	humanize_number(size, sizeof(size),
 	    (uint64_t)dd->dd_secsize * (uint64_t)dd->dd_totsec,
