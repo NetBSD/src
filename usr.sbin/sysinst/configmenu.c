@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.15 2022/04/21 17:30:15 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.16 2022/05/15 16:38:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ static int set_pkgsrc(struct menudesc *, void *);
 static void config_list_init(void);
 static void get_rootsh(void);
 static int toggle_rcvar(struct menudesc *, void *);
+static int toggle_mdnsd(struct menudesc *, void *);
 static void configmenu_hdr(struct menudesc *, void *);
 static int check_root_password(void);
 
@@ -100,7 +101,7 @@ configinfo config_list[] = {
 	{MSG_enable_sshd, CONFIGOPT_SSHD, "sshd", toggle_rcvar, NULL},
 	{MSG_enable_ntpd, CONFIGOPT_NTPD, "ntpd", toggle_rcvar, NULL},
 	{MSG_run_ntpdate, CONFIGOPT_NTPDATE, "ntpdate", toggle_rcvar, NULL},
-	{MSG_enable_mdnsd, CONFIGOPT_MDNSD, "mdnsd", toggle_rcvar, NULL},
+	{MSG_enable_mdnsd, CONFIGOPT_MDNSD, "mdnsd", toggle_mdnsd, NULL},
 	{MSG_enable_xdm, CONFIGOPT_XDM, "xdm", toggle_rcvar, NULL},
 	{MSG_enable_cgd, CONFIGOPT_CGD, "cgd", toggle_rcvar, NULL},
 	{MSG_enable_lvm, CONFIGOPT_LVM, "lvm", toggle_rcvar, NULL},
@@ -451,6 +452,37 @@ toggle_rcvar(struct menudesc *menu, void *arg)
 		}
 		replace("/etc/rc.conf", "%s", pattern);
 	}
+
+	return 0;
+}
+
+static int
+toggle_mdnsd(struct menudesc *menu, void *arg)
+{
+	configinfo **confp = arg;
+	int s;
+	const char *setting, *varname;
+
+	varname = confp[menu->cursel]->rcvar;
+
+	s = check_rcvar(varname);
+
+	/* we're toggling, so invert the sense */
+	if (s) {
+		confp[menu->cursel]->setting = MSG_NO;
+		setting = "files dns";
+	} else {
+		confp[menu->cursel]->setting = MSG_YES;
+		setting = "files multicast_dns dns";
+	}
+
+	if (logfp) {
+		fprintf(logfp, "setting hosts: %s\n", setting);
+		fflush(logfp);
+	}
+	replace("/etc/nsswitch.conf", "s/^hosts:.*/hosts:\t\t%s/", setting);
+
+	toggle_rcvar(menu, arg);
 
 	return 0;
 }

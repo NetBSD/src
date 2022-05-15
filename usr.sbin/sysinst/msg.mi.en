@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.38 2022/04/21 17:30:15 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.39 2022/05/15 16:38:25 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1158,7 +1158,7 @@ message enable_binpkg {Enable installation of binary packages}
 message enable_sshd {Enable sshd}
 message enable_ntpd {Enable ntpd}
 message run_ntpdate {Run ntpdate at boot}
-message enable_mdnsd {Enable mdnsd}
+message enable_mdnsd {Enable multicast DNS support}
 message enable_xdm {Enable xdm}
 message enable_cgd {Enable cgd}
 message enable_lvm {Enable lvm}
