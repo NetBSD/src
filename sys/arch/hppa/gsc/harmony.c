@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.10 2021/02/04 15:08:44 isaki Exp $	*/
+/*	$NetBSD: harmony.c,v 1.11 2022/05/15 00:25:15 gutteridge Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -136,7 +136,10 @@ const struct audio_hw_if harmony_sa_hw_if = {
 	.get_locks		= harmony_get_locks,
 };
 
-/* The HW actually supports more frequencies, but these looks enough. */
+/*
+ * The HW actually supports more frequencies, but these are the standard ones.
+ * For the full list, see the definition of harmony_speeds below.
+ */
 #define HARMONY_FORMAT(enc, prec) \
 	{ \
 		.mode		= AUMODE_PLAY | AUMODE_RECORD, \
@@ -343,7 +346,7 @@ harmony_reset_codec(struct harmony_softc *sc)
 	/* start reset */
 	WRITE_REG(sc, HARMONY_RESET, RESET_RST);
 
-	DELAY(100000);		/* wait at least 0.05 sec */
+	DELAY(100000);		/* wait at least 0.1 sec */
 
 	harmony_set_gainctl(sc);
 	WRITE_REG(sc, HARMONY_RESET, 0);
