@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.169 2022/04/22 21:21:10 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.170 2022/05/15 20:37:51 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.169 2022/04/22 21:21:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.170 2022/05/15 20:37:51 andvar Exp $");
 #endif /* not lint */
 
 
@@ -4683,7 +4683,7 @@ udf_create_new_fe(struct udf_mount *ump, struct file_entry *fe, int file_type,
 	icb = &fe->icbtag;
 
 	/*
-	 * Always use strategy type 4 unless on WORM wich we don't support
+	 * Always use strategy type 4 unless on WORM which we don't support
 	 * (yet). Fill in defaults and set for internal allocation of data.
 	 */
 	icb->strat_type      = udf_rw16(4);
@@ -4765,7 +4765,7 @@ udf_create_new_efe(struct udf_mount *ump, struct extfile_entry *efe,
 	icb = &efe->icbtag;
 
 	/*
-	 * Always use strategy type 4 unless on WORM wich we don't support
+	 * Always use strategy type 4 unless on WORM which we don't support
 	 * (yet). Fill in defaults and set for internal allocation of data.
 	 */
 	icb->strat_type      = udf_rw16(4);

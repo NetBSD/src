@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.100 2021/09/16 20:17:46 andvar Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.101 2022/05/15 20:37:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.100 2021/09/16 20:17:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.101 2022/05/15 20:37:50 andvar Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -457,7 +457,7 @@ initarm(void *cookie)
 	 * virtual address == physical address apart from the areas:
 	 * 0x00000000 -> 0x000fffff which is mapped to
 	 * top 1MB of physical memory
-	 * 0xf0000000 -> 0xf0ffffff wich is mapped to
+	 * 0xf0000000 -> 0xf0ffffff which is mapped to
 	 * physical address 0x10000000 -> 0x10ffffff
 	 * or on a Kinetic:
 	 * physical address 0x20400000 -> 0x20ffffff

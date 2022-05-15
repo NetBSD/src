@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.19 2021/11/27 22:30:26 rillig Exp $	*/
+/*	$NetBSD: tls.c,v 1.20 2022/05/15 20:37:51 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.19 2021/11/27 22:30:26 rillig Exp $");
+__RCSID("$NetBSD: tls.c,v 1.20 2022/05/15 20:37:51 andvar Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -336,7 +336,7 @@ get_fingerprint(const X509 *cert, char **returnstring, const char *alg_name)
 	 *
 	 * Intended behaviour is to prefer the IANA names,
 	 * but allow the user to use OpenSSL names as well
-	 * (e.g. for "RIPEMD160" wich has no IANA name)
+	 * (e.g. for "RIPEMD160" which has no IANA name)
 	 */
 	static const struct hash_alg_namemap {
 		const char *iana;
