@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.26 2021/12/05 02:52:17 msaitoh Exp $ */
+/*	$NetBSD: part_edit.c,v 1.27 2022/05/15 15:06:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1459,7 +1459,7 @@ select_part_scheme(
 		title = msg_string(hdr);
 	}
 	ps_menu = new_menu(title, opt, used,
-	    5, 5, 0, 0, 0, NULL, NULL, NULL, NULL, MSG_exit_menu_generic);
+	    -1, 5, 0, 0, 0, NULL, NULL, NULL, NULL, MSG_exit_menu_generic);
 	if (ps_menu != -1)
 		process_menu(ps_menu, &selected);
 out:
