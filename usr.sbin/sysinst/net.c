@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.41 2022/05/15 17:02:37 jmcneill Exp $	*/
+/*	$NetBSD: net.c,v 1.42 2022/05/15 17:42:32 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -493,6 +493,7 @@ config_network(void)
  	int  pid, status;
  	char **ap, *slcmd[10], *in_buf;
  	char buffer[STRSIZE];
+	char hostname[MAXHOSTNAMELEN + 1];
  	struct statvfs sb;
 	struct net_desc net_devs[MAX_NETS];
 	menu_ent *net_menu;
@@ -657,10 +658,14 @@ again:
 	 * discovered on the network may not match the desired values
 	 * for the target system.
 	 */ 
+	strlcpy(hostname, recombine_host_domain(), MAXHOSTNAMELEN);
 	msg_prompt_add(MSG_net_host, net_host, net_host,
 	    sizeof net_host);
 	msg_prompt_add(MSG_net_domain, net_domain, net_domain,
 	    sizeof net_domain);
+	if (strcmp(hostname, recombine_host_domain()) != 0) {
+		net_dhcpconf &= ~(DHCPCONF_DOMAIN|DHCPCONF_HOST);
+	}
 
 	if (!dhcp_config) {
 		/* Manually configure IPv4 */
