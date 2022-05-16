@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2022/05/15 22:56:20 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2022/05/16 19:55:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 2022/05/15 22:56:20 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2022/05/16 19:55:58 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 	}
 
 	if (!debug)
-		srandom(time(0));
+		srandom((unsigned int)time(0));
 	if (interactive)
 		cursinit();		/* initialize curses */
 again:

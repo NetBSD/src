@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.13 2022/05/15 22:08:05 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.14 2022/05/16 19:55:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.13 2022/05/15 22:08:05 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.14 2022/05/16 19:55:58 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,7 +243,7 @@ update_overlap(struct spotstr *osp)
 		 * do the rows 0 <= r1 <= r. The r1 == r case is special
 		 * since the two frames can overlap at more than one point.
 		 */
-		str = &overlap[(a = sp1->s_frame[r] - frames) * FAREA];
+		str = &overlap[(a = (int)(sp1->s_frame[r] - frames)) * FAREA];
 		sp2 = sp1 - d;
 		for (i = f + 1; i < 6; i++, sp2 -= d) {
 		    if (sp2->s_occ == BORDER)
@@ -262,12 +262,12 @@ update_overlap(struct spotstr *osp)
 			    n++;
 			}
 		    }
-		    b = sp2->s_frame[r] - frames;
+		    b = (int)(sp2->s_frame[r] - frames);
 		    if (n == 0) {
 			if (sp->s_occ == EMPTY) {
 			    str[b] &= 0xA;
 			    overlap[b * FAREA + a] &= 0xC;
-			    intersect[a * FAREA + b] = n = sp - board;
+			    intersect[a * FAREA + b] = n = (int)(sp - board);
 			    intersect[b * FAREA + a] = n;
 			} else {
 			    str[b] = 0;
@@ -281,7 +281,7 @@ update_overlap(struct spotstr *osp)
 			    str[b] &= 0xF;
 			    overlap[b * FAREA + a] &= 0xF;
 			}
-			intersect[a * FAREA + b] = n = esp - board;
+			intersect[a * FAREA + b] = n = (int)(esp - board);
 			intersect[b * FAREA + a] = n;
 		    }
 		    /* else no change, still multiple overlap */
@@ -297,7 +297,7 @@ update_overlap(struct spotstr *osp)
 			    break;
 			if (sp->s_flags & bmask1)
 			    continue;
-			b = sp->s_frame[r1] - frames;
+			b = (int)(sp->s_frame[r1] - frames);
 			str[b] = 0;
 			overlap[b * FAREA + a] = 0;
 		    }

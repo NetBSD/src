@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.28 2022/05/16 19:20:25 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.29 2022/05/16 19:55:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.28 2022/05/16 19:20:25 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.29 2022/05/16 19:55:58 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ pickmove(int us)
 		if (debug && (sp->s_combo[BLACK].c.a == 1 ||
 		    sp->s_combo[WHITE].c.a == 1)) {
 			debuglog("- %s %x/%d %d %x/%d %d %d",
-			    stoc(sp - board),
+			    stoc((int)(sp - board)),
 			    sp->s_combo[BLACK].s, sp->s_level[BLACK],
 			    sp->s_nforce[BLACK],
 			    sp->s_combo[WHITE].s, sp->s_level[WHITE],
@@ -145,13 +145,13 @@ pickmove(int us)
 
 	if (debug) {
 		debuglog("B %s %x/%d %d %x/%d %d %d",
-		    stoc(sp1 - board),
+		    stoc((int)(sp1 - board)),
 		    sp1->s_combo[BLACK].s, sp1->s_level[BLACK],
 		    sp1->s_nforce[BLACK],
 		    sp1->s_combo[WHITE].s, sp1->s_level[WHITE],
 		    sp1->s_nforce[WHITE], sp1->s_wval);
 		debuglog("W %s %x/%d %d %x/%d %d %d",
-		    stoc(sp2 - board),
+		    stoc((int)(sp2 - board)),
 		    sp2->s_combo[WHITE].s, sp2->s_level[WHITE],
 		    sp2->s_nforce[WHITE],
 		    sp2->s_combo[BLACK].s, sp2->s_level[BLACK],
@@ -161,7 +161,7 @@ pickmove(int us)
 		 * all be blocked with one move.
 		 */
 		sp = (us == BLACK) ? sp2 : sp1;
-		m = sp - board;
+		m = (int)(sp - board);
 		if (sp->s_combo[!us].c.a == 1 && !BIT_TEST(forcemap, m))
 			debuglog("*** Can't be blocked");
 	}
@@ -182,8 +182,8 @@ pickmove(int us)
 	 */
 	if (Tcp->c.a <= 1 && (Ocp->c.a > 1 ||
 	    Tcp->c.a + Tcp->c.b < Ocp->c.a + Ocp->c.b))
-		return sp2 - board;
-	return sp1 - board;
+		return (int)(sp2 - board);
+	return (int)(sp1 - board);
 }
 
 /*
@@ -202,8 +202,8 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 		return sp->s_nforce[us] > sp1->s_nforce[us];
 
 	them = !us;
-	s = sp - board;
-	s1 = sp1 - board;
+	s = (int)(sp - board);
+	s1 = (int)(sp1 - board);
 	if ((BIT_TEST(forcemap, s) != 0) != (BIT_TEST(forcemap, s1) != 0))
 		return BIT_TEST(forcemap, s) != 0;
 
@@ -307,7 +307,7 @@ scanframes(int color)
 			if (cp->s == 0x101) {
 				sp->s_nforce[color]++;
 				if (color != nextcolor) {
-					n = sp - board;
+					n = (int)(sp - board);
 					BIT_SET(tmpmap, n);
 				}
 			}
@@ -334,6 +334,7 @@ scanframes(int color)
 	 * Limit the search depth early in the game.
 	 */
 	d = 2;
+	/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
 	while (d <= ((movenum + 1) >> 1) && combolen > n) {
 		if (debug) {
 			debuglog("%cL%d %d %d %d", "BW"[color],
@@ -474,7 +475,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		    2 * sizeof(struct combostr *));
 		if (ncbp == NULL)
 		    panic("Out of memory!");
-		scbpp = (struct combostr **)(ncbp + 1);
+		scbpp = (void *)(ncbp + 1);
 		fcbp = fsp->s_frame[r];
 		if (ocbp < fcbp) {
 		    scbpp[0] = ocbp;
@@ -491,7 +492,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		ncbp->c_linkv[1].s = fcb.s;
 		ncbp->c_voff[0] = off;
 		ncbp->c_voff[1] = f;
-		ncbp->c_vertex = osp - board;
+		ncbp->c_vertex = (u_short)(osp - board);
 		ncbp->c_nframes = 2;
 		ncbp->c_dir = 0;
 		ncbp->c_frameindex = 0;
@@ -720,8 +721,8 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		(cbp->c_nframes + 1) * sizeof(struct combostr *));
 	    if (ncbp == NULL)
 		panic("Out of memory!");
-	    scbpp = (struct combostr **)(ncbp + 1);
-	    if (sortcombo(scbpp, (struct combostr **)(cbp + 1), ocbp)) {
+	    scbpp = (void *)(ncbp + 1);
+	    if (sortcombo(scbpp, (void *)(cbp + 1), ocbp)) {
 		free(ncbp);
 		continue;
 	    }
@@ -733,7 +734,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	    ncbp->c_link[1] = ocbp;
 	    ncbp->c_linkv[1].s = ocb.s;
 	    ncbp->c_voff[1] = off;
-	    ncbp->c_vertex = osp - board;
+	    ncbp->c_vertex = (u_short)(osp - board);
 	    ncbp->c_nframes = cbp->c_nframes + 1;
 	    ncbp->c_flags = ocb.c.b ? C_OPEN_1 : 0;
 	    ncbp->c_frameindex = ep->e_frameindex;
@@ -932,7 +933,7 @@ makeempty(struct combostr *ocbp)
 			nep->e_fval.s = ep->e_fval.s;
 			if (debug > 2) {
 				debuglog("e %s o%d i%d c%d m%x %x",
-				    stoc(sp - board),
+				    stoc((int)(sp - board)),
 				    nep->e_off,
 				    nep->e_frameindex,
 				    nep->e_framecnt,
@@ -1089,7 +1090,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	fcnt = cb.c.a - 2;
 	verts = 0;
 	myindex = cbp->c_nframes;
-	n = (fcbp - frames) * FAREA;
+	n = (int)(fcbp - frames) * FAREA;
 	str = &overlap[n];
 	ip = &intersect[n];
 	/*
@@ -1249,21 +1250,20 @@ sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 inserted:
 
 	/* now check to see if this list of frames has already been seen */
-	cbp = hashcombos[inx = *scbpp - frames];
+	cbp = hashcombos[inx = (int)(*scbpp - frames)];
 	if (cbp == (struct combostr *)0) {
 		/*
 		 * Easy case, this list hasn't been seen.
 		 * Add it to the hash list.
 		 */
-		fcbp = (struct combostr *)
-		    ((char *)scbpp - sizeof(struct combostr));
+		fcbp = (void *)((char *)scbpp - sizeof(struct combostr));
 		hashcombos[inx] = fcbp;
 		fcbp->c_next = fcbp->c_prev = fcbp;
 		return 0;
 	}
 	ecbp = cbp;
 	do {
-		cbpp = (struct combostr **)(cbp + 1);
+		cbpp = (void *)(cbp + 1);
 		cpp = cbpp + n;
 		spp = scbpp + n;
 		cbpp++;	/* first frame is always the same */
@@ -1308,7 +1308,7 @@ inserted:
 	 * Add it to the hash list.
 	 */
 	ecbp = cbp->c_prev;
-	fcbp = (struct combostr *)((char *)scbpp - sizeof(struct combostr));
+	fcbp = (void *)((char *)scbpp - sizeof(struct combostr));
 	fcbp->c_next = cbp;
 	fcbp->c_prev = ecbp;
 	cbp->c_prev = fcbp;

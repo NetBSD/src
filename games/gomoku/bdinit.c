@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.11 2022/05/15 22:56:20 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.12 2022/05/16 19:55:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.11 2022/05/15 22:56:20 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.12 2022/05/16 19:55:58 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ bdinit(struct spotstr *bp)
 				if (sp->s_flags & (BFLAG << r))
 					continue;
 				cbp->c_combo.s = sp->s_fval[BLACK][r].s;
-				cbp->c_vertex = sp - board;
+				cbp->c_vertex = (u_short)(sp - board);
 				cbp->c_nframes = 1;
 				cbp->c_dir = r;
 				sp->s_frame[r] = cbp;
@@ -213,7 +213,7 @@ init_overlap(void)
 			    break;
 			if (sp2->s_flags & bmask)
 			    continue;
-			n = sp2->s_frame[r] - frames;
+			n = (int)(sp2->s_frame[r] - frames);
 			ip[n] = vertex;
 			str[n] |= (f == 5) ? mask & 0xA : mask;
 			if (r == cbp->c_dir) {
