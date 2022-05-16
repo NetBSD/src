@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_c11_compare_exchange_cas_32.c,v 1.4 2022/05/14 05:35:55 skrll Exp $	*/
+/*	$NetBSD: atomic_c11_compare_exchange_cas_32.c,v 1.5 2022/05/16 06:07:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ __atomic_compare_exchange_4(volatile void *mem,
 	 * and just do the cas. If we get here the compiler couldn't
 	 * do better and it mostly will not matter at all.
 	 */
-	const uint32_t prev = atomic_cas_8(mem, old, desired);
+	const uint32_t prev = atomic_cas_32(mem, old, desired);
 	if (prev == old)
 		return true;
 	*ep = prev;
