@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.30 2022/05/16 20:57:01 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.31 2022/05/16 21:02:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.30 2022/05/16 20:57:01 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.31 2022/05/16 21:02:18 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,9 @@ static void makeempty(struct combostr *);
 static int checkframes(struct combostr *, struct combostr *, struct spotstr *,
 		    int, struct overlap_info *);
 static bool sortcombo(struct combostr **, struct combostr **, struct combostr *);
+#if !defined(DEBUG)
 static void printcombo(struct combostr *, char *, size_t);
+#endif
 
 int
 pickmove(int us)
@@ -1321,7 +1323,10 @@ inserted:
 /*
  * Print the combo into string buffer 'buf'.
  */
-static void
+#if !defined(DEBUG)
+static
+#endif
+void
 printcombo(struct combostr *cbp, char *buf, size_t max)
 {
 	struct combostr *tcbp;

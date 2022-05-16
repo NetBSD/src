@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.26 2022/05/16 20:57:01 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.27 2022/05/16 21:02:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -255,3 +255,6 @@ int	list_eq(struct combostr **, struct combostr **, int);
 void	clearcombo(struct combostr *, int);
 void	markcombo(struct combostr *);
 int	pickmove(int);
+#if defined(DEBUG)
+void	printcombo(struct combostr *, char *, size_t);
+#endif
