@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.25 2022/05/16 21:35:39 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.26 2022/05/16 21:48:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.25 2022/05/16 21:35:39 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.26 2022/05/16 21:48:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ bdisp_init(void)
  * Update who is playing whom.
  */
 void
-bdwho(int update)
+bdwho(bool update)
 {
 	int i, j;
 
@@ -275,7 +275,7 @@ get_key(const char *allowed)
 	return ch;
 }
 
-int
+bool
 get_line(char *buf, int size)
 {
 	char *cp, *end;

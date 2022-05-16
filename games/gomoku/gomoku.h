@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.27 2022/05/16 21:02:18 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.28 2022/05/16 21:48:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -230,13 +230,13 @@ extern	int	movelog[BSZ * BSZ];		/* history of moves */
 extern	int	movenum;
 extern	int	debug;
 
-extern int interactive;
+extern bool interactive;
 extern const char *plyr[];
 
 void	bdinit(struct spotstr *);
 int	get_coord(void);
-int	get_key(const char *allowedkeys);
-int	get_line(char *, int);
+int	get_key(const char *);
+bool	get_line(char *, int);
 void	ask(const char *);
 void	dislog(const char *);
 void	bdump(FILE *);
@@ -244,7 +244,7 @@ void	bdisp(void);
 void	bdisp_init(void);
 void	cursfini(void);
 void	cursinit(void);
-void	bdwho(int);
+void	bdwho(bool);
 void	panic(const char *, ...) __printflike(1, 2) __dead;
 void	debuglog(const char *, ...) __printflike(1, 2);
 void	whatsup(int);
