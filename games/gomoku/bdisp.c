@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.24 2022/05/16 20:57:01 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.25 2022/05/16 21:35:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.24 2022/05/16 20:57:01 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.25 2022/05/16 21:35:39 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,9 +203,9 @@ bdump(FILE *fp)
 		for (i = 1; i < BSZ + 1; i++) {
 			sp = &board[i + j * (BSZ + 1)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
-				if (sp->s_flags & IFLAGALL)
+				if ((sp->s_flags & IFLAGALL) != 0)
 					c = '+';
-				else if (sp->s_flags & CFLAGALL)
+				else if ((sp->s_flags & CFLAGALL) != 0)
 					c = '-';
 				else
 					c = '.';
