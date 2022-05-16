@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.27 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: curses_input.3,v 1.28 2022/05/16 20:09:13 rillig Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd January 5, 2017
+.Dd May 16, 2022
 .Dt CURSES_INPUT 3
 .Os
 .Sh NAME
@@ -94,17 +94,17 @@
 .Ft int
 .Fn mvwgetstr "WINDOW *win" "int y" "int x" "char *str"
 .Ft int
-.Fn keypad "WINDOW *win" "boolf flag"
+.Fn keypad "WINDOW *win" "bool flag"
 .Ft bool
 .Fn is_keypad "const WINDOW *win"
 .Ft int
-.Fn notimeout "WINDOW *win" "boolf flag"
+.Fn notimeout "WINDOW *win" "bool flag"
 .Ft int
 .Fn timeout "int delay"
 .Ft int
 .Fn wtimeout "WINDOW *win" "int delay"
 .Ft int
-.Fn nodelay "WINDOW *win" "boolf flag"
+.Fn nodelay "WINDOW *win" "bool flag"
 .Ft int
 .Fn ungetch "int c"
 .Ft int
