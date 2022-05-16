@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.27 2022/05/15 22:41:51 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.28 2022/05/16 19:20:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.27 2022/05/15 22:41:51 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.28 2022/05/16 19:20:25 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,43 +194,28 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 {
 	int them, s, s1;
 
-	if (sp->s_combo[us].s < sp1->s_combo[us].s)
-		return 1;
-	if (sp->s_combo[us].s != sp1->s_combo[us].s)
-		return 0;
-	if (sp->s_level[us] < sp1->s_level[us])
-		return 1;
-	if (sp->s_level[us] != sp1->s_level[us])
-		return 0;
-	if (sp->s_nforce[us] > sp1->s_nforce[us])
-		return 1;
-	if (sp->s_nforce[us] != sp1->s_nforce[us])
-		return 0;
+	if (/* .... */ sp->s_combo[us].s != sp1->s_combo[us].s)
+		return sp->s_combo[us].s < sp1->s_combo[us].s;
+	if (/* .... */ sp->s_level[us] != sp1->s_level[us])
+		return sp->s_level[us] < sp1->s_level[us];
+	if (/* .... */ sp->s_nforce[us] != sp1->s_nforce[us])
+		return sp->s_nforce[us] > sp1->s_nforce[us];
 
 	them = !us;
 	s = sp - board;
 	s1 = sp1 - board;
-	if (BIT_TEST(forcemap, s) && !BIT_TEST(forcemap, s1))
-		return 1;
-	if (!BIT_TEST(forcemap, s) && BIT_TEST(forcemap, s1))
-		return 0;
-	if (sp->s_combo[them].s < sp1->s_combo[them].s)
-		return 1;
-	if (sp->s_combo[them].s != sp1->s_combo[them].s)
-		return 0;
-	if (sp->s_level[them] < sp1->s_level[them])
-		return 1;
-	if (sp->s_level[them] != sp1->s_level[them])
-		return 0;
-	if (sp->s_nforce[them] > sp1->s_nforce[them])
-		return 1;
-	if (sp->s_nforce[them] != sp1->s_nforce[them])
-		return 0;
+	if ((BIT_TEST(forcemap, s) != 0) != (BIT_TEST(forcemap, s1) != 0))
+		return BIT_TEST(forcemap, s) != 0;
 
-	if (sp->s_wval > sp1->s_wval)
-		return 1;
-	if (sp->s_wval != sp1->s_wval)
-		return 0;
+	if (/* .... */ sp->s_combo[them].s != sp1->s_combo[them].s)
+		return sp->s_combo[them].s < sp1->s_combo[them].s;
+	if (/* .... */ sp->s_level[them] != sp1->s_level[them])
+		return sp->s_level[them] < sp1->s_level[them];
+	if (/* .... */ sp->s_nforce[them] != sp1->s_nforce[them])
+		return sp->s_nforce[them] > sp1->s_nforce[them];
+
+	if (/* .... */ sp->s_wval != sp1->s_wval)
+		return sp->s_wval > sp1->s_wval;
 
 	return random() & 1;
 }
