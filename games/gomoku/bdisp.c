@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.22 2022/05/15 22:56:20 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.23 2022/05/16 19:55:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.22 2022/05/15 22:56:20 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.23 2022/05/16 19:55:58 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,8 +134,8 @@ bdwho(int update)
 
 	move(21, 0);
 	printw("                                              ");
-	i = strlen(plyr[BLACK]);
-	j = strlen(plyr[WHITE]);
+	i = (int)strlen(plyr[BLACK]);
+	j = (int)strlen(plyr[WHITE]);
 	if (i + j <= 20) {
 		move(21, 10 - (i + j) / 2);
 		printw("BLACK/%s (*) vs. WHITE/%s (O)",
@@ -248,7 +248,7 @@ dislog(const char *str)
 void
 ask(const char *str)
 {
-	int len = strlen(str);
+	int len = (int)strlen(str);
 
 	move(BSZ + 4, 0);
 	addstr(str);
