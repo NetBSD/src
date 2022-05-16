@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.183 2021/11/27 08:51:01 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.184 2022/05/16 07:07:17 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.183 2021/11/27 08:51:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.184 2022/05/16 07:07:17 skrll Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -2713,7 +2713,7 @@ arm10_setup(char *args)
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
-	    | CPU_CONTROL_BPRD_ENABLE
+	    | CPU_CONTROL_BPRD_ENABLE | CPU_CONTROL_VECRELOC
 	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
 #endif
 
@@ -2776,7 +2776,8 @@ arm11_setup(char *args)
 	int cpuctrlmask = cpuctrl
 	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
-	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
+	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK
+	    | CPU_CONTROL_VECRELOC;
 
 #ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
 	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
