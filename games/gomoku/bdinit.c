@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.12 2022/05/16 19:55:58 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.13 2022/05/16 20:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.12 2022/05/16 19:55:58 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.13 2022/05/16 20:57:01 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ bdinit(struct spotstr *bp)
 				sp->s_fval[BLACK][0].s = 0x500;
 				sp->s_fval[WHITE][0].s = 0x500;
 				/* if direction 1 is not blocked */
-				if (!(sp->s_flags & (BFLAG << 1))) {
+				if ((sp->s_flags & (BFLAG << 1)) == 0) {
 					sp->s_fval[BLACK][1].s = 0x500;
 					sp->s_fval[WHITE][1].s = 0x500;
 				}
@@ -121,7 +121,7 @@ bdinit(struct spotstr *bp)
 					sp->s_fval[BLACK][3].s = MAXCOMBO;
 					sp->s_fval[WHITE][3].s = MAXCOMBO;
 				} else if (i == 5 &&
-				    !(sp->s_flags & (BFLAG << 3))) {
+				    (sp->s_flags & (BFLAG << 3)) == 0) {
 					sp->s_fval[BLACK][3].s = 0x500;
 					sp->s_fval[WHITE][3].s = 0x500;
 				}
@@ -130,7 +130,7 @@ bdinit(struct spotstr *bp)
 			 * Allocate a frame structure for non blocked frames.
 			 */
 			for (r = 4; --r >= 0; ) {
-				if (sp->s_flags & (BFLAG << r))
+				if ((sp->s_flags & (BFLAG << r)) != 0)
 					continue;
 				cbp->c_combo.s = sp->s_fval[BLACK][r].s;
 				cbp->c_vertex = (u_short)(sp - board);
@@ -211,7 +211,7 @@ init_overlap(void)
 		    for (f = 0; f < 6; f++, sp2 -= d2) {
 			if (sp2->s_occ == BORDER)
 			    break;
-			if (sp2->s_flags & bmask)
+			if ((sp2->s_flags & bmask) != 0)
 			    continue;
 			n = (int)(sp2->s_frame[r] - frames);
 			ip[n] = vertex;

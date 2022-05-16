@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2022/05/16 19:55:58 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2022/05/16 20:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 2022/05/16 19:55:58 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2022/05/16 20:57:01 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,8 @@ __RCSID("$NetBSD: main.c,v 1.32 2022/05/16 19:55:58 rillig Exp $");
 #define PROGRAM	1		/* get input from program */
 #define INPUTF	2		/* get input from a file */
 
-int	interactive = 1;	/* true if interactive */
-int	debug;			/* true if debugging */
+int	interactive = true;	/* true if interactive */
+int	debug;			/* > 0 if debugging */
 static int test;		/* both moves come from 1: input, 2: computer */
 static char *prog;		/* name of program */
 static char user[LOGIN_NAME_MAX]; /* name of player */
@@ -99,7 +99,7 @@ main(int argc, char **argv)
 	setgid(getgid());
 
 	tmp = getlogin();
-	if (tmp) {
+	if (tmp != NULL) {
 		strlcpy(user, tmp, sizeof(user));
 	} else {
 		strcpy(user, "you");
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	color = curmove = 0;
 
 	prog = strrchr(argv[0], '/');
-	if (prog)
+	if (prog != NULL)
 		prog++;
 	else
 		prog = argv[0];
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "bcdD:u")) != -1) {
 		switch (ch) {
 		case 'b':	/* background */
-			interactive = 0;
+			interactive = false;
 			break;
 		case 'd':	/* debugging */
 			debug++;
@@ -135,12 +135,12 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc) {
+	if (argc != 0) {
 		if ((inputfp = fopen(*argv, "r")) == NULL)
 			err(1, "%s", *argv);
 	}
 
-	if (!debug)
+	if (debug == 0)
 		srandom((unsigned int)time(0));
 	if (interactive)
 		cursinit();		/* initialize curses */
@@ -192,14 +192,14 @@ again:
 		}
 	}
 
-	if (inputfp) {
+	if (inputfp != NULL) {
 		input[BLACK] = INPUTF;
 		input[WHITE] = INPUTF;
 	} else {
 		switch (test) {
 		case 0: /* user versus program */
 			input[color] = USER;
-			input[!color] = PROGRAM;
+			input[color != BLACK ? BLACK : WHITE] = PROGRAM;
 			break;
 
 		case 1: /* user versus user */
@@ -216,10 +216,10 @@ again:
 	if (interactive) {
 		plyr[BLACK] = input[BLACK] == USER ? user : prog;
 		plyr[WHITE] = input[WHITE] == USER ? user : prog;
-		bdwho(1);
+		bdwho(true);
 	}
 
-	for (color = BLACK; ; color = !color) {
+	for (color = BLACK; ; color = color != BLACK ? BLACK : WHITE) {
 	top:
 		switch (input[color]) {
 		case INPUTF: /* input comes from a file */
@@ -229,7 +229,8 @@ again:
 			switch (test) {
 			case 0: /* user versus program */
 				input[color] = USER;
-				input[!color] = PROGRAM;
+				input[color != BLACK ? BLACK : WHITE] =
+				    PROGRAM;
 				break;
 
 			case 1: /* user versus user */
@@ -244,7 +245,7 @@ again:
 			}
 			plyr[BLACK] = input[BLACK] == USER ? user : prog;
 			plyr[WHITE] = input[WHITE] == USER ? user : prog;
-			bdwho(1);
+			bdwho(true);
 			goto top;
 
 		case USER: /* input comes from standard input */
@@ -291,7 +292,8 @@ again:
 			break;
 		}
 		if (interactive) {
-			misclog("%3d%s%-6s", movenum, color ? "        " : " ",
+			misclog("%3d%s%-6s", movenum,
+			    color != BLACK ? "        " : " ",
 			    stoc(curmove));
 		}
 		if ((i = makemove(color, curmove)) != MOVEOK)
@@ -512,7 +514,7 @@ debuglog(const char *fmt, ...)
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
-	if (debugfp)
+	if (debugfp != NULL)
 		fprintf(debugfp, "%s\n", buf);
 	if (interactive)
 		dislog(buf);
@@ -530,7 +532,7 @@ misclog(const char *fmt, ...)
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
-	if (debugfp)
+	if (debugfp != NULL)
 		fprintf(debugfp, "%s\n", buf);
 	if (interactive)
 		dislog(buf);

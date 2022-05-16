@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.14 2022/05/16 19:55:58 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.15 2022/05/16 20:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.14 2022/05/16 19:55:58 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.15 2022/05/16 20:57:01 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,12 +96,12 @@ makemove(int us, int mv)
 	    for (f = 5; --f >= 0; fsp -= d) {		/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    goto nextr;
-		if (fsp->s_flags & bmask)
+		if ((fsp->s_flags & bmask) != 0)
 		    continue;
 
 		/* remove this frame from the sorted list of frames */
 		cbp = fsp->s_frame[r];
-		if (cbp->c_next) {
+		if (cbp->c_next != NULL) {
 			if (sortframes[BLACK] == cbp)
 			    sortframes[BLACK] = cbp->c_next;
 			if (sortframes[WHITE] == cbp)
@@ -148,7 +148,7 @@ makemove(int us, int mv)
 		    return(WIN);
 
 		/* compute new value & combo number for this frame & color */
-		fsp->s_fval[!us][r].s = MAXCOMBO;
+		fsp->s_fval[us != BLACK ? BLACK : WHITE][r].s = MAXCOMBO;
 		cp = &fsp->s_fval[us][r];
 		/* both ends open? */
 		if (space && sp->s_occ == EMPTY) {
@@ -166,7 +166,7 @@ makemove(int us, int mv)
 
 		/* add this frame to the sorted list of frames by combo value */
 		cbp1 = sortframes[us];
-		if (!cbp1)
+		if (cbp1 == NULL)
 		    sortframes[us] = cbp->c_next = cbp->c_prev = cbp;
 		else {
 		    cp1 = &board[cbp1->c_vertex].s_fval[us][cbp1->c_dir];
@@ -194,12 +194,12 @@ makemove(int us, int mv)
 	    /* both ends open? */
 	    if (fsp->s_occ == EMPTY) {
 		cp = &fsp->s_fval[BLACK][r];
-		if (cp->c.b) {
+		if (cp->c.b != 0) {
 		    cp->c.a += 1;
 		    cp->c.b = 0;
 		}
 		cp = &fsp->s_fval[WHITE][r];
-		if (cp->c.b) {
+		if (cp->c.b != 0) {
 		    cp->c.a += 1;
 		    cp->c.b = 0;
 		}
@@ -234,7 +234,7 @@ update_overlap(struct spotstr *osp)
 	    for (f = 0; f < 6; f++, sp1 -= d) {		/* for each frame */
 		if (sp1->s_occ == BORDER)
 		    break;
-		if (sp1->s_flags & bmask)
+		if ((sp1->s_flags & bmask) != 0)
 		    continue;
 		/*
 		 * Update all other frames that intersect the current one
@@ -248,7 +248,7 @@ update_overlap(struct spotstr *osp)
 		for (i = f + 1; i < 6; i++, sp2 -= d) {
 		    if (sp2->s_occ == BORDER)
 			break;
-		    if (sp2->s_flags & bmask)
+		    if ((sp2->s_flags & bmask) != 0)
 			continue;
 		    /*
 		     * count the number of empty spots to see if there is
@@ -295,7 +295,7 @@ update_overlap(struct spotstr *osp)
 		    for (i = 6; --i >= 0; sp -= d1) {	/* for each spot */
 			if (sp->s_occ == BORDER)
 			    break;
-			if (sp->s_flags & bmask1)
+			if ((sp->s_flags & bmask1) != 0)
 			    continue;
 			b = (int)(sp->s_frame[r1] - frames);
 			str[b] = 0;

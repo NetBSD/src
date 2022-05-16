@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.23 2022/05/16 19:55:58 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.24 2022/05/16 20:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.23 2022/05/16 19:55:58 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.24 2022/05/16 20:57:01 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,14 +60,14 @@ void
 cursinit(void)
 {
 
-	if (!initscr()) {
+	if (initscr() == NULL) {
 		errx(EXIT_FAILURE, "Couldn't initialize screen");
 	}
 	if ((LINES < SCRNH) || (COLS < SCRNW)) {
 		errx(EXIT_FAILURE, "Screen too small (need %d%xd)",
 		    SCRNW, SCRNH);
 	}
-	keypad(stdscr, TRUE);
+	keypad(stdscr, true);
 	nonl();
 	noecho();
 	cbreak();
@@ -117,7 +117,7 @@ bdisp_init(void)
 		move(20, 2 * i + 1);
 		addch(letters[i]);
 	}
-	bdwho(0);
+	bdwho(false);
 	move(0, 47);
 	addstr("#  black  white");
 	lastline = 0;
@@ -170,9 +170,9 @@ bdisp(void)
 			move(BSZ + 1 - j, 2 * i + 1);
 			sp = &board[i + j * (BSZ + 1)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
-				if (sp->s_flags & IFLAGALL)
+				if ((sp->s_flags & IFLAGALL) != 0)
 					c = '+';
-				else if (sp->s_flags & CFLAGALL)
+				else if ((sp->s_flags & CFLAGALL) != 0)
 					c = '-';
 				else
 					c = '.';
@@ -425,7 +425,7 @@ get_coord(void)
 		case '\f':
 			nx = curx;
 			ny = cury;
-			(void)clearok(stdscr, TRUE);
+			(void)clearok(stdscr, true);
 			(void)refresh();
 			break;
 #if 0 /* notyet */
