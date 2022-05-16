@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.32 2022/04/21 17:30:15 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.33 2022/05/16 18:44:38 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,6 +140,8 @@ message ask_disk
 
 message Available_disks
 {Discos disponibles}
+
+message Available_wedges	{Existing "wedges"}
 
 message heads
 {cabezas}
@@ -1245,6 +1247,7 @@ message failed {Error}
 message askfsmountadv {Punto de montaje o 'raid' o 'CGD' o 'lvm'?}
 message partman {Partición extendida}
 message editpart {Editar particiones}
+message selectwedge {Preconfigured "wedges" dk(4)}
 
 message fremove {QUITAR}
 message remove {Quitar}

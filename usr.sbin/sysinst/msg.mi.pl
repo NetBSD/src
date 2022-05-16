@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.38 2022/04/21 17:30:15 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.39 2022/05/16 18:44:38 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -137,6 +137,8 @@ message ask_disk
 
 message Available_disks
 {Dostepne dyski}
+
+message Available_wedges	{Existing "wedges"}
 
 message heads
 {glowice}
@@ -1194,6 +1196,7 @@ message failed {Nie powiodlo sie}
 message askfsmountadv {Punkt montowania (lub "raid", "cgd" albo "lvm")?}
 message partman {Partycje rozszerzone}
 message editpart {Edytuj partycje}
+message selectwedge {Preconfigured "wedges" dk(4)}
 
 message fremove {USUN}
 message remove {Usun}
