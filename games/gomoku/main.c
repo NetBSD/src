@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2022/05/16 21:38:46 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2022/05/16 21:48:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2022/05/16 21:38:46 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2022/05/16 21:48:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: main.c,v 1.36 2022/05/16 21:38:46 rillig Exp $");
 #define PROGRAM	1		/* get input from program */
 #define INPUTF	2		/* get input from a file */
 
-int	interactive = true;	/* true if interactive */
+bool	interactive = true;	/* true if interactive */
 int	debug;			/* > 0 if debugging */
 static int test;		/* both moves come from 1: input, 2: computer */
 static char *prog;		/* name of program */
