@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2022/05/16 21:48:45 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2022/05/16 21:53:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2022/05/16 21:48:45 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2022/05/16 21:53:41 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,10 @@ main(int argc, char **argv)
 		case 'c':	/* testing: computer versus computer */
 			test = 2;
 			break;
+		default:
+			fprintf(stderr, "usage: %s [-bcdu] [-Dfile] [file]\n",
+			    getprogname());
+			return EXIT_FAILURE;
 		}
 	}
 	argc -= optind;
