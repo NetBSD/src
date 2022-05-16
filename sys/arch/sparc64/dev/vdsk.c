@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.9 2021/12/04 13:23:03 andvar Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.10 2022/05/16 17:13:28 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -218,6 +218,7 @@ void	vdsk_scsi_inq(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_inquiry(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_capacity(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_capacity16(struct vdsk_softc *sc, struct scsipi_xfer *);
+void	vdsk_scsi_report_luns(struct vdsk_softc *sc, struct scsipi_xfer *);
 void	vdsk_scsi_done(struct scsipi_xfer *, int);
 
 int
@@ -1048,6 +1049,10 @@ vdsk_scsi_cmd(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 			vdsk_scsi_capacity16(sc, xs);
 			return;
 
+		case SCSI_REPORT_LUNS:
+			vdsk_scsi_report_luns(sc, xs);
+			return;
+			
 		case SCSI_TEST_UNIT_READY:
 		case START_STOP:
 		case SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL:
@@ -1329,6 +1334,12 @@ vdsk_scsi_capacity16(struct vdsk_softc *sc, struct scsipi_xfer *xs)
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
 
+	vdsk_scsi_done(xs, XS_NOERROR);
+}
+
+void
+vdsk_scsi_report_luns(struct vdsk_softc *sc, struct scsipi_xfer *xs)
+{
 	vdsk_scsi_done(xs, XS_NOERROR);
 }
 
