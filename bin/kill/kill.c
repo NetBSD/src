@@ -1,4 +1,4 @@
-/* $NetBSD: kill.c,v 1.32 2020/08/30 19:35:09 kre Exp $ */
+/* $NetBSD: kill.c,v 1.33 2022/05/16 10:53:14 kre Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.32 2020/08/30 19:35:09 kre Exp $");
+__RCSID("$NetBSD: kill.c,v 1.33 2022/05/16 10:53:14 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 		if (*argv[0] == '%') {
 			pid = getjobpgrp(*argv);
 			if (pid == 0) {
-				warnx("illegal job id: %s", *argv);
+				warnx("bad job id: %s", *argv);
 				errors = 1;
 				continue;
 			}
@@ -221,7 +221,7 @@ signum(const char *sn)
 
 	/* check for correctly parsed number */
 	if (*ep || n <= INT_MIN || n >= INT_MAX )
-		errx(EXIT_FAILURE, "illegal signal number: %s", sn);
+		errx(EXIT_FAILURE, "bad signal number: %s", sn);
 		/* NOTREACHED */
 
 	return (int)n;
@@ -239,7 +239,7 @@ processnum(const char *s, pid_t *pid)
 	/* check for correctly parsed number */
 	if (ep == s || *ep || n == INTMAX_MIN || n == INTMAX_MAX ||
 	    (pid_t)n != n || errno != 0) {
-		warnx("illegal process%s id: '%s'", (n < 0 ? " group" : ""), s);
+		warnx("bad process%s id: '%s'", (n < 0 ? " group" : ""), s);
 		return -1;
 	}
 
