@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.26 2022/05/16 21:48:45 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.27 2022/05/16 22:03:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.26 2022/05/16 21:48:45 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.27 2022/05/16 22:03:16 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,12 @@ bdisp(void)
 					c = '.';
 			} else
 				c = pcolor[sp->s_occ];
-			addch(c);
+			if (movenum > 1 && movelog[movenum - 2] == PT(i, j)) {
+				attron(A_BOLD);
+				addch(c);
+				attroff(A_BOLD);
+			} else
+				addch(c);
 		}
 	}
 	refresh();
