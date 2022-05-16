@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.79 2022/05/15 18:27:35 jmcneill Exp $ */
+/*	$NetBSD: disks.c,v 1.80 2022/05/16 18:44:38 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -874,14 +874,18 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 {
 	struct disk_desc disks[MAX_DISKS];
 	/* need two more menu entries: current system + extended partitioning */
-	menu_ent dsk_menu[__arraycount(disks) + 2];
+	menu_ent dsk_menu[__arraycount(disks) + 2],
+	    wedge_menu[__arraycount(dsk_menu)];
+	int disk_no[__arraycount(dsk_menu)], wedge_no[__arraycount(dsk_menu)];
 	struct disk_desc *disk;
-	int i = 0, skipped = 0;
+	int i = 0, dno, wno, skipped = 0;
 	int already_found, numdisks, selected_disk = -1;
-	int menu_no;
+	int menu_no, w_menu_no;
 	struct pm_devs *pm_i, *pm_last = NULL;
+	bool any_wedges = false;
 
 	memset(dsk_menu, 0, sizeof(dsk_menu));
+	memset(wedge_menu, 0, sizeof(wedge_menu));
 
 	/* Find disks. */
 	numdisks = get_disks(disks, partman_go <= 0);
@@ -906,49 +910,98 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 			return -1;
 		} else {
 			/* One or more disks found or current system allowed */
-			i = 0;
+			dno = wno = 0;
 			if (allow_cur_system) {
-				dsk_menu[i].opt_name = MSG_running_system;
-				dsk_menu[i].opt_flags = OPT_EXIT;
-				dsk_menu[i].opt_action = set_menu_select;
-				i++;
+				dsk_menu[dno].opt_name = MSG_running_system;
+				dsk_menu[dno].opt_flags = OPT_EXIT;
+				dsk_menu[dno].opt_action = set_menu_select;
+				disk_no[dno] = -1;
+				i++; dno++;
 			}
-			for (; i < numdisks+allow_cur_system; i++) {
-				dsk_menu[i].opt_name =
-				    disks[i-allow_cur_system].dd_descr;
-				dsk_menu[i].opt_flags = OPT_EXIT;
-				dsk_menu[i].opt_action = set_menu_select;
+			for (i = 0; i < numdisks; i++) {
+				if (disks[i].dd_no_part) {
+					any_wedges = true;
+					wedge_menu[wno].opt_name =
+					    disks[i].dd_descr;
+					wedge_menu[wno].opt_flags = OPT_EXIT;
+					wedge_menu[wno].opt_action =
+					    set_menu_select;
+					wedge_no[wno] = i;
+					wno++;
+				} else {
+					dsk_menu[dno].opt_name =
+					    disks[i].dd_descr;
+					dsk_menu[dno].opt_flags = OPT_EXIT;
+					dsk_menu[dno].opt_action =
+					    set_menu_select;
+					disk_no[dno] = i;
+					dno++;
+				}
+			}
+			if (any_wedges) {
+				dsk_menu[dno].opt_name = MSG_selectwedge;
+				dsk_menu[dno].opt_flags = OPT_EXIT;
+				dsk_menu[dno].opt_action = set_menu_select;
+				disk_no[dno] = -2;
+				dno++;
 			}
 			if (partman_go < 0) {
-				dsk_menu[i].opt_name = MSG_partman;
-				dsk_menu[i].opt_flags = OPT_EXIT;
-				dsk_menu[i].opt_action = set_menu_select;
-				i++;
+				dsk_menu[dno].opt_name = MSG_partman;
+				dsk_menu[dno].opt_flags = OPT_EXIT;
+				dsk_menu[dno].opt_action = set_menu_select;
+				disk_no[dno] = -3;
+				dno++;
 			}
+			w_menu_no = -1;
 			menu_no = new_menu(MSG_Available_disks,
-				dsk_menu, i, -1,
+				dsk_menu, dno, -1,
 				 4, 0, 0, MC_SCROLL,
 				NULL, NULL, NULL, NULL, MSG_exit_menu_generic);
 			if (menu_no == -1)
 				return -1;
-			msg_fmt_display(MSG_ask_disk, "%s", doingwhat);
-			process_menu(menu_no, &selected_disk);
-			free_menu(menu_no);
-			if (allow_cur_system) {
-				if (selected_disk == 0) {
-					pm = dummy_whole_system_pm();
-					return 1;
-				} else {
-					selected_disk--;
+			for (;;) {
+				msg_fmt_display(MSG_ask_disk, "%s", doingwhat);
+				i = -1;
+				process_menu(menu_no, &i);
+				if (disk_no[i] == -2) {
+					/* do wedges menu */
+					if (w_menu_no == -1) {
+						w_menu_no = new_menu(
+						    MSG_Available_wedges,
+						    wedge_menu, wno, -1,
+						    4, 0, 0, MC_SCROLL,
+						    NULL, NULL, NULL, NULL,
+						    MSG_exit_menu_generic);
+						if (w_menu_no == -1) {
+							selected_disk = -1;
+							break;
+						}
+					}
+					i = -1;
+					process_menu(w_menu_no, &i);
+					if (i == -1)
+						continue;
+					selected_disk = wedge_no[i];
+					break;
 				}
+				selected_disk = disk_no[i];
+				break;
+			}
+			if (w_menu_no >= 0)
+				free_menu(w_menu_no);
+			free_menu(menu_no);
+			if (allow_cur_system && selected_disk == -1) {
+				pm = dummy_whole_system_pm();
+				return 1;
 			}
 		}
-		if (partman_go < 0 && selected_disk == numdisks) {
+		if (partman_go < 0 &&  selected_disk == -3) {
 			partman_go = 1;
 			return -2;
 		} else
 			partman_go = 0;
-		if (selected_disk < 0 || selected_disk >= numdisks)
+		if (selected_disk < 0 ||  selected_disk < 0
+		    || selected_disk >= numdisks)
 			return -1;
 	}
 
