@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.h,v 1.1 2018/07/15 16:05:24 jmcneill Exp $ */
+/* $NetBSD: tprof_armv8.h,v 1.2 2022/05/16 09:42:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,7 @@
 #ifndef _DEV_TPROF_TPROF_ARMV8_H
 #define _DEV_TPROF_TPROF_ARMV8_H
 
+bool	armv8_pmu_detect(void);
 int	armv8_pmu_intr(void *);
 int	armv8_pmu_init(void);
 
