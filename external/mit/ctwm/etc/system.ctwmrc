@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.17 2022/05/09 15:05:18 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.18 2022/05/16 04:52:11 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -281,7 +281,6 @@ menu "deskutils"
     "Desktop utilities"		f.title
     " Calculator"		!"xcalc &"
     " Text editor"		!"xedit &"
-    " Manual pages"		!"LC_ALL=en_US.ISO8859-1 xman -notopbox &"
     ""				f.separator
     " XEyes"			!"xeyes &"
     " OpenGL Gears"		!"glxgears &"
@@ -302,7 +301,6 @@ menu "termutils"
     " Tetris"			!"xterm -class UXTerm -e tetris &"
     ""				f.separator
     " Audio mixer"		!"xterm -class UXTerm -e aiomixer &"
-    " System setup"		!"xterm -class UXTerm -e sysinst &"
     ""				f.separator
     " Top processes"		!"xterm -class UXTerm -e top &"
     " I/O stats"		!"xterm -class UXTerm -e 'sysstat iostat' &"
