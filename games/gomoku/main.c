@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2022/05/16 21:02:18 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2022/05/16 21:35:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 2022/05/16 21:02:18 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2022/05/16 21:35:39 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,9 @@ const char	*plyr[2];		/* who's who */
 static int readinput(FILE *);
 static void misclog(const char *, ...) __printflike(1, 2);
 static void quit(void) __dead;
-static void quitsig(int) __dead __unused;
+#if !defined(DEBUG)
+static void quitsig(int) __dead;
+#endif
 
 int
 main(int argc, char **argv)
@@ -367,6 +369,7 @@ readinput(FILE *fp)
 /*
  * Handle strange situations.
  */
+/* ARGSUSED */
 void
 whatsup(int signum)
 {
@@ -390,10 +393,12 @@ top:
 		goto top;
 	case 'q':		/* conservative quit */
 		quit();
+		/* NOTREACHED */
 	case 'd':		/* set debug level */
 		debug = input[1] - '0';
 		debuglog("Debug set to %d", debug);
 		sleep(1);
+		break;
 	case 'c':
 		break;
 	case 'b':		/* back up a move */
@@ -409,7 +414,8 @@ top:
 			stoc(pickmove(i)));
 		goto top;
 	case 'f':		/* go forward a move */
-		board[movelog[movenum - 1]].s_occ = movenum & 1 ? BLACK : WHITE;
+		board[movelog[movenum - 1]].s_occ =
+		    (movenum & 1) != 0 ? BLACK : WHITE;
 		movenum++;
 		bdisp();
 		goto top;
@@ -436,19 +442,19 @@ top:
 		d1 = s1 = 0;
 
 		n = 0;
-		for (str = input + 1; *str; str++)
+		for (str = input + 1; *str != '\0'; str++)
 			if (*str == ',') {
 				for (d1 = 0; d1 < 4; d1++)
 					if (str[-1] == pdir[d1])
 						break;
 				str[-1] = '\0';
 				sp = &board[s1 = ctos(input + 1)];
-				n = (sp->s_frame[d1] - frames) * FAREA;
+				n = (int)((sp->s_frame[d1] - frames) * FAREA);
 				*str++ = '\0';
 				break;
 			}
 		sp = &board[s2 = ctos(str)];
-		while (*str)
+		while (*str != '\0')
 			str++;
 		for (d2 = 0; d2 < 4; d2++)
 			if (str[-1] == pdir[d2])
@@ -478,9 +484,9 @@ top:
 		else
 			n = 0;
 		sp = &board[i = ctos(str)];
-		for (ep = sp->s_empty; ep; ep = ep->e_next) {
+		for (ep = sp->s_empty; ep != NULL; ep = ep->e_next) {
 			cbp = ep->e_combo;
-			if (n) {
+			if (n != 0) {
 				if (cbp->c_nframes > n)
 					continue;
 				if (cbp->c_nframes != n)
@@ -550,11 +556,13 @@ quit(void)
 	exit(0);
 }
 
+#if !defined(DEBUG)
 static void
 quitsig(int dummy __unused)
 {
 	quit();
 }
+#endif
 
 /*
  * Die gracefully.
