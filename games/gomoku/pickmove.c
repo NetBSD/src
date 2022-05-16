@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.31 2022/05/16 21:02:18 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.32 2022/05/16 21:35:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.31 2022/05/16 21:02:18 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.32 2022/05/16 21:35:39 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -398,12 +398,12 @@ scanframes(int color)
 	combolen = 0;
 
 #ifdef DEBUG
-	if (combocnt) {
+	if (combocnt != 0) {
 		debuglog("scanframes: %c combocnt %d", "BW"[color],
 			combocnt);
 		whatsup(0);
 	}
-	if (elistcnt) {
+	if (elistcnt != 0) {
 		debuglog("scanframes: %c elistcnt %d", "BW"[color],
 			elistcnt);
 		whatsup(0);
@@ -687,7 +687,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 #ifdef DEBUG
 		if (sp->s_occ != EMPTY) {
 		    debuglog("loop: %c %s", "BW"[curcolor],
-			stoc(sp - board));
+			stoc((int)(sp - board)));
 		    whatsup(0);
 		}
 #endif
@@ -1349,7 +1349,7 @@ printcombo(struct combostr *cbp, char *buf, size_t max)
 void
 markcombo(struct combostr *ocbp)
 {
-	struct combostr *cbp, *tcbp, **cbpp;
+	struct combostr *cbp, **cbpp;
 	struct elist *ep, *nep;
 	struct spotstr *sp;
 	int s, d, m, i;
@@ -1373,7 +1373,7 @@ markcombo(struct combostr *ocbp)
 	 */
 	ep = &einfo[nframes];
 	cbpp = &ecombo[nframes];
-	for (cbp = ocbp; (tcbp = cbp->c_link[1]) != NULL; cbp = cbp->c_link[0]) {
+	for (cbp = ocbp; cbp->c_link[1] != NULL; cbp = cbp->c_link[0]) {
 		ep--;
 		ep->e_combo = cbp;
 		*--cbpp = cbp->c_link[1];
@@ -1401,14 +1401,14 @@ markcombo(struct combostr *ocbp)
 		nep->e_framecnt = cbp->c_framecnt[0];
 		nep->e_emask = cbp->c_emask[0];
 
-		if (cbp->c_flags & C_LOOP) {
+		if ((cbp->c_flags & C_LOOP) != 0) {
 			s++;
 			/*
 			 * Account for the fact that this frame connects
 			 * to a previous one (thus forming a loop).
 			 */
 			nep = &einfo[cbp->c_dir];
-			if (--nep->e_framecnt)
+			if (--nep->e_framecnt != 0)
 				nep->e_emask &= ~(1 << cbp->c_voff[0]);
 			else
 				nep->e_emask = 0;
@@ -1419,13 +1419,13 @@ markcombo(struct combostr *ocbp)
 	 * We only need to update the emask values of "complete" loops
 	 * to include the intersection spots.
 	 */
-	if (s && ocbp->c_combo.c.a == 2) {
+	if (s != 0 && ocbp->c_combo.c.a == 2) {
 		/* process loops from the top down */
 		ep = &einfo[nframes];
 		do {
 			ep--;
 			cbp = ep->e_combo;
-			if (!(cbp->c_flags & C_LOOP))
+			if ((cbp->c_flags & C_LOOP) == 0)
 				continue;
 
 			/*
@@ -1454,9 +1454,10 @@ markcombo(struct combostr *ocbp)
 		d = dd[s = cbp->c_dir];
 		cmask = CFLAG << s;
 		omask = (IFLAG | CFLAG) << s;
-		s = ep->e_fval.c.b ? 6 : 5;
+		s = ep->e_fval.c.b != 0 ? 6 : 5;
+		/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
 		for (; --s >= 0; sp += d, m >>= 1)
-			sp->s_flags |= (m & 1) ? omask : cmask;
+			sp->s_flags |= (m & 1) != 0 ? omask : cmask;
 	}
 }
 
@@ -1474,7 +1475,7 @@ clearcombo(struct combostr *cbp, int open)
 	sp = &board[cbp->c_vertex];
 	d = dd[n = cbp->c_dir];
 	mask = ~((IFLAG | CFLAG) << n);
-	n = open ? 6 : 5;
+	n = open != 0 ? 6 : 5;
 	for (; --n >= 0; sp += d)
 		sp->s_flags &= mask;
 }
