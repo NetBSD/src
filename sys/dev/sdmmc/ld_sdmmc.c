@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.41 2020/08/02 01:17:56 riastradh Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.42 2022/05/16 10:03:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.41 2020/08/02 01:17:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.42 2022/05/16 10:03:23 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -247,6 +247,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	struct ld_softc *ld = &sc->sc_ld;
 	struct ld_sdmmc_task *task;
 	struct lwp *lwp;
+	const char *cardtype;
 	int i;
 
 	ld->sc_dv = self;
@@ -256,8 +257,13 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 	    sa->sf->cid.rev, sa->sf->cid.psn, sa->sf->cid.mdt);
 	aprint_naive("\n");
 
-	sc->sc_typename = kmem_asprintf("0x%02x:0x%04x:%s",
-	    sa->sf->cid.mid, sa->sf->cid.oid, sa->sf->cid.pnm);
+	if (ISSET(sa->sf->sc->sc_flags, SMF_SD_MODE)) {
+		cardtype = "SD card";
+	} else {
+		cardtype = "MMC";
+	}
+	sc->sc_typename = kmem_asprintf("%s 0x%02x:0x%04x:%s",
+	    cardtype, sa->sf->cid.mid, sa->sf->cid.oid, sa->sf->cid.pnm);
 
 	evcnt_attach_dynamic(&sc->sc_ev_discard, EVCNT_TYPE_MISC,
 	    NULL, device_xname(self), "sdmmc discard count");
