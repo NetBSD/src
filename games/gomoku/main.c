@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2022/05/16 20:57:01 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2022/05/16 21:02:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2022/05/16 20:57:01 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2022/05/16 21:02:18 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ const char	*plyr[2];		/* who's who */
 static int readinput(FILE *);
 static void misclog(const char *, ...) __printflike(1, 2);
 static void quit(void) __dead;
-static void quitsig(int) __dead;
+static void quitsig(int) __dead __unused;
 
 int
 main(int argc, char **argv)
