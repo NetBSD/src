@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.30 2021/12/11 19:24:21 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.31 2022/05/16 21:28:05 mrg Exp $ */
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -93,6 +93,7 @@ extern	int	icache_size;
 void 	dcache_flush_page_us(paddr_t);	/* flush page from D$ */
 void 	dcache_flush_page_usiii(paddr_t); /* flush page from D$ */
 void 	sp_blast_dcache(int, int);	/* Clear entire D$ */
+void 	sp_blast_dcache_disabled(int, int); /* Above with D$ disable. */
 void 	blast_icache_us(void);		/* Clear entire I$ */
 void 	blast_icache_usiii(void);	/* Clear entire I$ */
 
