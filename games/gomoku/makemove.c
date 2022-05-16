@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.15 2022/05/16 20:57:01 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.16 2022/05/16 21:48:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.15 2022/05/16 20:57:01 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.16 2022/05/16 21:48:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,8 @@ makemove(int us, int mv)
 	struct combostr *cbp, *cbp1;
 	union comboval *cp1;
 	int i, f, r, d, n;
-	int space, val, bmask;
+	int val, bmask;
+	bool space;
 
 	/* check for end of game */
 	if (mv == RESIGN)

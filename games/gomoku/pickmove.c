@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.32 2022/05/16 21:35:39 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.33 2022/05/16 21:48:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.32 2022/05/16 21:35:39 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.33 2022/05/16 21:48:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: pickmove.c,v 1.32 2022/05/16 21:35:39 rillig Exp $");
 
 #define BIT_SET(a, b)	((a)[(b)/BITS_PER_INT] |= (1 << ((b) % BITS_PER_INT)))
 #define BIT_CLR(a, b)	((a)[(b)/BITS_PER_INT] &= ~(1 << ((b) % BITS_PER_INT)))
-#define BIT_TEST(a, b)	(((a)[(b)/BITS_PER_INT] & (1 << ((b) % BITS_PER_INT))))
+#define BIT_TEST(a, b)	(((a)[(b)/BITS_PER_INT] & (1 << ((b) % BITS_PER_INT))) != 0)
 
 /*
  * This structure is used to store overlap information between frames.
@@ -74,7 +74,7 @@ static int forcemap[MAPSZ];		/* map for blocking <1,x> combos */
 static int tmpmap[MAPSZ];		/* map for blocking <1,x> combos */
 static int nforce;			/* count of opponent <1,x> combos */
 
-static int better(const struct spotstr *, const struct spotstr *, int);
+static bool better(const struct spotstr *, const struct spotstr *, int);
 static void scanframes(int);
 static void makecombo2(struct combostr *, struct spotstr *, int, int);
 static void addframes(int);
@@ -192,7 +192,7 @@ pickmove(int us)
 /*
  * Return true if spot 'sp' is better than spot 'sp1' for color 'us'.
  */
-static int
+static bool
 better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 {
 	int them, s, s1;
@@ -207,8 +207,8 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 	them = us != BLACK ? BLACK : WHITE;
 	s = (int)(sp - board);
 	s1 = (int)(sp1 - board);
-	if ((BIT_TEST(forcemap, s) != 0) != (BIT_TEST(forcemap, s1) != 0))
-		return BIT_TEST(forcemap, s) != 0;
+	if (BIT_TEST(forcemap, s) != BIT_TEST(forcemap, s1))
+		return BIT_TEST(forcemap, s);
 
 	if (/* .... */ sp->s_combo[them].s != sp1->s_combo[them].s)
 		return sp->s_combo[them].s < sp1->s_combo[them].s;
@@ -1110,7 +1110,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 		myindex--;
 		mask = str[tcbp - frames];
 		flags = cbp->c_flags;
-		n = i + ((flags & C_OPEN_1) != 0);
+		n = i + ((flags & C_OPEN_1) != 0 ? 1 : 0);
 		if ((mask & (1 << n)) != 0) {
 			/*
 			 * The two frames are not independent if they
@@ -1153,7 +1153,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				verts++;
 			}
 		}
-		n = i + ((flags & C_OPEN_0) != 0);
+		n = i + ((flags & C_OPEN_0) != 0 ? 1 : 0);
 	}
 	if (cbp == fcbp)
 		return -1;	/* fcbp is already included */
