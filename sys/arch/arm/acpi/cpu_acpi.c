@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.13 2021/11/25 09:36:20 skrll Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.14 2022/05/16 09:42:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.13 2021/11/25 09:36:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.14 2022/05/16 09:42:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -135,7 +135,7 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 	cpu_attach(self, mpidr);
 
 #if NTPROF > 0
-	if (cpu_mpidr_aff_read() == mpidr)
+	if (cpu_mpidr_aff_read() == mpidr && armv8_pmu_detect())
 		config_interrupts(self, cpu_acpi_tprof_init);
 #endif
 }
