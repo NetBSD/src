@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.29 2022/05/16 19:55:58 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.30 2022/05/16 20:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.29 2022/05/16 19:55:58 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.30 2022/05/16 20:57:01 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: pickmove.c,v 1.29 2022/05/16 19:55:58 rillig Exp $");
 
 #define BIT_SET(a, b)	((a)[(b)/BITS_PER_INT] |= (1 << ((b) % BITS_PER_INT)))
 #define BIT_CLR(a, b)	((a)[(b)/BITS_PER_INT] &= ~(1 << ((b) % BITS_PER_INT)))
-#define BIT_TEST(a, b)	((a)[(b)/BITS_PER_INT] & (1 << ((b) % BITS_PER_INT)))
+#define BIT_TEST(a, b)	(((a)[(b)/BITS_PER_INT] & (1 << ((b) % BITS_PER_INT))))
 
 /*
  * This structure is used to store overlap information between frames.
@@ -84,7 +84,7 @@ static void updatecombo(struct combostr *, int);
 static void makeempty(struct combostr *);
 static int checkframes(struct combostr *, struct combostr *, struct spotstr *,
 		    int, struct overlap_info *);
-static int sortcombo(struct combostr **, struct combostr **, struct combostr *);
+static bool sortcombo(struct combostr **, struct combostr **, struct combostr *);
 static void printcombo(struct combostr *, char *, size_t);
 
 int
@@ -125,7 +125,7 @@ pickmove(int us)
 		sp = &board[pos];
 		if (sp->s_occ != EMPTY)
 			continue;
-		if (debug && (sp->s_combo[BLACK].c.a == 1 ||
+		if (debug != 0 && (sp->s_combo[BLACK].c.a == 1 ||
 		    sp->s_combo[WHITE].c.a == 1)) {
 			debuglog("- %s %x/%d %d %x/%d %d %d",
 			    stoc((int)(sp - board)),
@@ -143,7 +143,7 @@ pickmove(int us)
 			sp2 = sp;
 	}
 
-	if (debug) {
+	if (debug != 0) {
 		debuglog("B %s %x/%d %d %x/%d %d %d",
 		    stoc((int)(sp1 - board)),
 		    sp1->s_combo[BLACK].s, sp1->s_level[BLACK],
@@ -162,7 +162,8 @@ pickmove(int us)
 		 */
 		sp = (us == BLACK) ? sp2 : sp1;
 		m = (int)(sp - board);
-		if (sp->s_combo[!us].c.a == 1 && !BIT_TEST(forcemap, m))
+		if (sp->s_combo[us != BLACK ? BLACK : WHITE].c.a == 1 &&
+		    !BIT_TEST(forcemap, m))
 			debuglog("*** Can't be blocked");
 	}
 	if (us == BLACK) {
@@ -201,7 +202,7 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 	if (/* .... */ sp->s_nforce[us] != sp1->s_nforce[us])
 		return sp->s_nforce[us] > sp1->s_nforce[us];
 
-	them = !us;
+	them = us != BLACK ? BLACK : WHITE;
 	s = (int)(sp - board);
 	s1 = (int)(sp1 - board);
 	if ((BIT_TEST(forcemap, s) != 0) != (BIT_TEST(forcemap, s1) != 0))
@@ -217,7 +218,7 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 	if (/* .... */ sp->s_wval != sp1->s_wval)
 		return sp->s_wval > sp1->s_wval;
 
-	return random() & 1;
+	return (random() & 1) != 0;
 }
 
 static int curcolor;	/* implicit parameter to makecombo() */
@@ -271,7 +272,7 @@ scanframes(int color)
 		sp = &board[cbp->c_vertex];
 		cp = &sp->s_fval[color][r = cbp->c_dir];
 		d = dd[r];
-		if (cp->c.b) {
+		if (cp->c.b != 0) {
 			/*
 			 * Since this is the first spot of an open ended
 			 * frame, we treat it as a closed frame.
@@ -336,7 +337,7 @@ scanframes(int color)
 	d = 2;
 	/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
 	while (d <= ((movenum + 1) >> 1) && combolen > n) {
-		if (debug) {
+		if (debug != 0) {
 			debuglog("%cL%d %d %d %d", "BW"[color],
 			    d, combolen - n, combocnt, elistcnt);
 			refresh();
@@ -349,7 +350,7 @@ scanframes(int color)
 	/* scan for combos at empty spots */
 	for (pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
-		for (ep = sp->s_empty; ep; ep = nep) {
+		for (ep = sp->s_empty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
 				if (cbp->c_combo.s != sp->s_combo[color].s) {
@@ -363,7 +364,7 @@ scanframes(int color)
 			elistcnt--;
 		}
 		sp->s_empty = (struct elist *)0;
-		for (ep = sp->s_nempty; ep; ep = nep) {
+		for (ep = sp->s_nempty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
 				if (cbp->c_combo.s != sp->s_combo[color].s) {
@@ -427,7 +428,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	ocb.s = s;
 	baseB = ocb.c.a + ocb.c.b - 1;
 	fcnt = ocb.c.a - 2;
-	emask = fcnt ? ((ocb.c.b ? 0x1E : 0x1F) & ~(1 << off)) : 0;
+	emask = fcnt != 0 ? ((ocb.c.b != 0 ? 0x1E : 0x1F) & ~(1 << off)) : 0;
 	for (r = 4; --r >= 0; ) {			/* for each direction */
 	    /* don't include frames that overlap in the same direction */
 	    if (r == ocbp->c_dir)
@@ -444,7 +445,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	    for (f = 0; f < 5; f++, fsp -= d) {		/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    break;
-		if (fsp->s_flags & bmask)
+		if ((fsp->s_flags & bmask) != 0)
 		    continue;
 
 		/* don't include frames of the wrong color */
@@ -457,7 +458,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		 * If this is the end point of the frame,
 		 * use the closed ended value for the frame.
 		 */
-		if ((f == 0 && fcb.c.b) || fcb.s == 0x101) {
+		if ((f == 0 && fcb.c.b != 0) || fcb.s == 0x101) {
 		    fcb.c.a++;
 		    fcb.c.b = 0;
 		}
@@ -496,14 +497,14 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		ncbp->c_nframes = 2;
 		ncbp->c_dir = 0;
 		ncbp->c_frameindex = 0;
-		ncbp->c_flags = (ocb.c.b) ? C_OPEN_0 : 0;
-		if (fcb.c.b)
+		ncbp->c_flags = ocb.c.b != 0 ? C_OPEN_0 : 0;
+		if (fcb.c.b != 0)
 		    ncbp->c_flags |= C_OPEN_1;
 		ncbp->c_framecnt[0] = fcnt;
 		ncbp->c_emask[0] = emask;
 		ncbp->c_framecnt[1] = fcb.c.a - 2;
-		ncbp->c_emask[1] = ncbp->c_framecnt[1] ?
-		    ((fcb.c.b ? 0x1E : 0x1F) & ~(1 << f)) : 0;
+		ncbp->c_emask[1] = ncbp->c_framecnt[1] != 0 ?
+		    ((fcb.c.b != 0 ? 0x1E : 0x1F) & ~(1 << f)) : 0;
 		combocnt++;
 
 		if ((c == 1 && debug > 1) || debug > 3) {
@@ -559,7 +560,7 @@ addframes(int level)
 	i = curcolor;
 	for (pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
-		for (ep = sp->s_empty; ep; ep = nep) {
+		for (ep = sp->s_empty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[i].s) {
 				if (cbp->c_combo.s != sp->s_combo[i].s) {
@@ -582,7 +583,7 @@ addframes(int level)
 		fsp = &board[cbp->c_vertex];
 		r = cbp->c_dir;
 		/* skip frames that are part of a <1,x> combo */
-		if (fsp->s_flags & (FFLAG << r))
+		if ((fsp->s_flags & (FFLAG << r)) != 0)
 			continue;
 
 		/*
@@ -598,7 +599,7 @@ addframes(int level)
 		 * the combo value with the end closed.
 		 */
 		if (fsp->s_occ == EMPTY) {
-			if (fcb.c.b) {
+			if (fcb.c.b != 0) {
 				cb.c.a = fcb.c.a + 1;
 				cb.c.b = 0;
 			} else
@@ -670,8 +671,8 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	ocb.s = s;
 	baseB = ocb.c.a + ocb.c.b - 1;
 	fcnt = ocb.c.a - 2;
-	emask = fcnt ? ((ocb.c.b ? 0x1E : 0x1F) & ~(1 << off)) : 0;
-	for (ep = osp->s_empty; ep; ep = ep->e_next) {
+	emask = fcnt != 0 ? ((ocb.c.b != 0 ? 0x1E : 0x1F) & ~(1 << off)) : 0;
+	for (ep = osp->s_empty; ep != NULL; ep = ep->e_next) {
 	    /* check for various kinds of overlap */
 	    cbp = ep->e_combo;
 	    verts = checkframes(cbp, ocbp, osp, s, vertices);
@@ -679,7 +680,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		continue;
 
 	    /* check to see if this frame forms a valid loop */
-	    if (verts) {
+	    if (verts > 0) {
 		sp = &board[vertices[0].o_intersect];
 #ifdef DEBUG
 		if (sp->s_occ != EMPTY) {
@@ -694,7 +695,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		 * of the completion spots of the combostr
 		 * we are trying to attach the frame to.
 		 */
-		for (nep = sp->s_empty; nep; nep = nep->e_next) {
+		for (nep = sp->s_empty; nep != NULL; nep = nep->e_next) {
 		    if (nep->e_combo == cbp)
 			goto fnd;
 		    if (nep->e_combo->c_nframes < cbp->c_nframes)
@@ -736,7 +737,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	    ncbp->c_voff[1] = off;
 	    ncbp->c_vertex = (u_short)(osp - board);
 	    ncbp->c_nframes = cbp->c_nframes + 1;
-	    ncbp->c_flags = ocb.c.b ? C_OPEN_1 : 0;
+	    ncbp->c_flags = ocb.c.b != 0 ? C_OPEN_1 : 0;
 	    ncbp->c_frameindex = ep->e_frameindex;
 	    /*
 	     * Update the completion spot mask of the frame we
@@ -745,11 +746,11 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	     */
 	    ncbp->c_framecnt[0] = ep->e_framecnt;
 	    ncbp->c_emask[0] = ep->e_emask;
-	    if (verts) {
+	    if (verts != 0) {
 		ncbp->c_flags |= C_LOOP;
 		ncbp->c_dir = vertices[0].o_frameindex;
 		ncbp->c_framecnt[1] = fcnt - 1;
-		if (ncbp->c_framecnt[1]) {
+		if (ncbp->c_framecnt[1] != 0) {
 		    n = (vertices[0].o_intersect - ocbp->c_vertex) /
 			dd[ocbp->c_dir];
 		    ncbp->c_emask[1] = emask & ~(1 << n);
@@ -859,14 +860,14 @@ makeempty(struct combostr *ocbp)
 		nep->e_framecnt = cbp->c_framecnt[0];
 		nep->e_emask = cbp->c_emask[0];
 
-		if (cbp->c_flags & C_LOOP) {
+		if ((cbp->c_flags & C_LOOP) != 0) {
 			s++;
 			/*
 			 * Account for the fact that this frame connects
 			 * to a previous one (thus forming a loop).
 			 */
 			nep = &einfo[cbp->c_dir];
-			if (--nep->e_framecnt)
+			if (--nep->e_framecnt != 0)
 				nep->e_emask &= ~(1 << cbp->c_voff[0]);
 			else
 				nep->e_emask = 0;
@@ -877,13 +878,13 @@ makeempty(struct combostr *ocbp)
 	 * We only need to update the emask values of "complete" loops
 	 * to include the intersection spots.
 	 */
-	if (s && ocbp->c_combo.c.a == 2) {
+	if (s != 0 && ocbp->c_combo.c.a == 2) {
 		/* process loops from the top down */
 		ep = &einfo[nframes];
 		do {
 			ep--;
 			cbp = ep->e_combo;
-			if (!(cbp->c_flags & C_LOOP))
+			if ((cbp->c_flags & C_LOOP) == 0)
 				continue;
 
 			/*
@@ -913,7 +914,7 @@ makeempty(struct combostr *ocbp)
 		sp = &board[cbp->c_vertex];
 		d = dd[cbp->c_dir];
 		for (s = 0, m = 1; s < 5; s++, sp += d, m <<= 1) {
-			if (sp->s_occ != EMPTY || !(emask & m))
+			if (sp->s_occ != EMPTY || (emask & m) == 0)
 				continue;
 
 			/* add the combo to the list of empty spots */
@@ -990,7 +991,7 @@ updatecombo(struct combostr *cbp, int color)
 			/* update the board values for each spot in frame */
 			sp = &board[s = tcbp->c_vertex];
 			d = dd[tcbp->c_dir];
-			i = (flags & C_OPEN_1) ? 6 : 5;
+			i = (flags & C_OPEN_1) != 0 ? 6 : 5;
 			for (; --i >= 0; sp += d, s += d) {
 				if (sp->s_occ != EMPTY)
 					continue;
@@ -1014,7 +1015,7 @@ updatecombo(struct combostr *cbp, int color)
 		/* update the board values for each spot in frame */
 		sp = &board[s = cbp->c_vertex];
 		d = dd[cbp->c_dir];
-		i = (flags & C_OPEN_0) ? 6 : 5;
+		i = (flags & C_OPEN_0) != 0 ? 6 : 5;
 		for (; --i >= 0; sp += d, s += d) {
 			if (sp->s_occ != EMPTY)
 				continue;
@@ -1097,7 +1098,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	 * i == which overlap bit to test based on whether 'fcbp' is
 	 * an open or closed frame.
 	 */
-	i = cb.c.b ? 2 : 0;
+	i = cb.c.b != 0 ? 2 : 0;
 	for (; (tcbp = cbp->c_link[1]) != NULL;
 	    lcbp = cbp, cbp = cbp->c_link[0]) {
 		if (tcbp == fcbp)
@@ -1108,13 +1109,14 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 		mask = str[tcbp - frames];
 		flags = cbp->c_flags;
 		n = i + ((flags & C_OPEN_1) != 0);
-		if (mask & (1 << n)) {
+		if ((mask & (1 << n)) != 0) {
 			/*
 			 * The two frames are not independent if they
 			 * both lie in the same line and intersect at
 			 * more than one point.
 			 */
-			if (tcbp->c_dir == fcbp->c_dir && (mask & (0x10 << n)))
+			if (tcbp->c_dir == fcbp->c_dir &&
+			    (mask & (0x10 << n)) != 0)
 				return -1;
 			/*
 			 * If this is not the spot we are attaching
@@ -1124,7 +1126,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			n = ip[tcbp - frames];
 			if (osp != &board[n]) {
 				/* check to see if this is a valid loop */
-				if (verts)
+				if (verts != 0)
 					return -1;
 				if (fcnt == 0 || cbp->c_framecnt[1] == 0)
 					return -1;
@@ -1133,11 +1135,11 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				 * one of the end points if it is an open
 				 * ended frame.
 				 */
-				if ((flags & C_OPEN_1) &&
+				if ((flags & C_OPEN_1) != 0 &&
 				    (n == tcbp->c_vertex ||
 				     n == tcbp->c_vertex + 5 * dd[tcbp->c_dir]))
 					return -1;	/* invalid overlap */
-				if (cb.c.b &&
+				if (cb.c.b != 0 &&
 				    (n == fcbp->c_vertex ||
 				     n == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
 					return -1;	/* invalid overlap */
@@ -1156,13 +1158,13 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 
 	/* check for intersection of 'cbp' with 'fcbp' */
 	mask = str[cbp - frames];
-	if (mask & (1 << n)) {
+	if ((mask & (1 << n)) != 0) {
 		/*
 		 * The two frames are not independent if they
 		 * both lie in the same line and intersect at
 		 * more than one point.
 		 */
-		if (cbp->c_dir == fcbp->c_dir && (mask & (0x10 << n)))
+		if (cbp->c_dir == fcbp->c_dir && (mask & (0x10 << n)) != 0)
 			return -1;
 		/*
 		 * If this is not the spot we are attaching
@@ -1172,7 +1174,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 		n = ip[cbp - frames];
 		if (osp != &board[n]) {
 			/* check to see if this is a valid loop */
-			if (verts)
+			if (verts != 0)
 				return -1;
 			if (fcnt == 0 || lcbp->c_framecnt[0] == 0)
 				return -1;
@@ -1181,11 +1183,11 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			 * one of the end points if it is an open
 			 * ended frame.
 			 */
-			if ((flags & C_OPEN_0) &&
+			if ((flags & C_OPEN_0) != 0 &&
 			    (n == cbp->c_vertex ||
 			     n == cbp->c_vertex + 5 * dd[cbp->c_dir]))
 				return -1;	/* invalid overlap */
-			if (cb.c.b &&
+			if (cb.c.b != 0 &&
 			    (n == fcbp->c_vertex ||
 			     n == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
 				return -1;	/* invalid overlap */
@@ -1206,7 +1208,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
  * Return true if this list of frames is already in the hash list.
  * Otherwise, add the new combo to the hash list.
  */
-static int
+static bool
 sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 	  struct combostr *fcbp)
 {
@@ -1259,7 +1261,7 @@ inserted:
 		fcbp = (void *)((char *)scbpp - sizeof(struct combostr));
 		hashcombos[inx] = fcbp;
 		fcbp->c_next = fcbp->c_prev = fcbp;
-		return 0;
+		return false;
 	}
 	ecbp = cbp;
 	do {
@@ -1299,7 +1301,7 @@ inserted:
 			debuglog("%s", buf);
 		}
 #endif /* DEBUG */
-		return 1;
+		return true;
 	next:
 		;
 	} while ((cbp = cbp->c_next) != ecbp);
@@ -1313,7 +1315,7 @@ inserted:
 	fcbp->c_prev = ecbp;
 	cbp->c_prev = fcbp;
 	ecbp->c_next = fcbp;
-	return 0;
+	return false;
 }
 
 /*

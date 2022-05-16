@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.25 2022/05/15 22:56:20 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.26 2022/05/16 20:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,6 +36,7 @@
 
 #include <sys/types.h>
 #include <sys/endian.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 /* board dimensions */
