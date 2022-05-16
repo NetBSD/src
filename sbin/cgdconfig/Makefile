@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2022/05/15 19:53:27 christos Exp $
+# $NetBSD: Makefile,v 1.19 2022/05/16 10:44:06 christos Exp $
 
 RUMPPRG=cgdconfig
 MAN=	cgdconfig.8
@@ -22,9 +22,11 @@ LDADD=  -lutil -lcrypt -ly -ll
 .if ${MKARGON2} != "no"
 ARGON2DIR=	${NETBSDSRCDIR}/external/apache2/argon2/dist/phc-winner-argon2
 CPPFLAGS+=	-I${ARGON2DIR}/include -I${ARGON2DIR}/src/blake2
-CPPFLAGS+=	-DHAVE_ARGON2 -DARGON2_NO_THREADS
+CPPFLAGS+=	-DHAVE_ARGON2
 .PATH.c: ${ARGON2DIR}/src ${ARGON2DIR}/src/blake2
-SRCS+=	argon2_utils.c argon2.c core.c encoding.c ref.c blake2b.c
+SRCS+=	argon2_utils.c argon2.c core.c encoding.c ref.c blake2b.c thread.c
+DPADD+=  ${LIBPTHREAD}
+LDADD+=  -lpthread
 .endif
 
 .include <bsd.prog.mk>
