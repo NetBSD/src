@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.13 2021/12/03 10:54:19 skrll Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.14 2022/05/16 09:42:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.13 2021/12/03 10:54:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.14 2022/05/16 09:42:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -220,9 +220,21 @@ armv8_pmu_init_cpu(void *arg1, void *arg2)
 	reg_pmcntenclr_el0_write(PMCNTEN_P);
 }
 
+bool
+armv8_pmu_detect(void)
+{
+	const uint64_t dfr0 = reg_id_aa64dfr0_el1_read();
+	const u_int pmuver = __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_PMUVER);
+
+	return pmuver != ID_AA64DFR0_EL1_PMUVER_NONE &&
+	       pmuver != ID_AA64DFR0_EL1_PMUVER_IMPL;
+}
+
 int
 armv8_pmu_init(void)
 {
+	KASSERT(armv8_pmu_detect());
+
 	uint64_t xc = xc_broadcast(0, armv8_pmu_init_cpu, NULL, NULL);
 	xc_wait(xc);
 
