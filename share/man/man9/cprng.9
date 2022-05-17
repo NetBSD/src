@@ -1,4 +1,4 @@
-.\"	$NetBSD: cprng.9,v 1.15 2022/03/16 23:56:33 riastradh Exp $
+.\"	$NetBSD: cprng.9,v 1.16 2022/05/17 15:00:05 riastradh Exp $
 .\"
 .\" Copyright (c) 2011-2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,7 +131,7 @@ argument specifies the interrupt priority level for the mutex which
 will serialize access to the new instance of the generator (see
 .Xr spl 9 ) ,
 and must be no higher than
-.Dv IPL_VM .
+.Dv IPL_SOFTSERIAL .
 .Pp
 The
 .Fa flags
