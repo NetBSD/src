@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.28 2016/07/21 12:29:37 shm Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.28.6.1 2022/05/17 12:12:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.28 2016/07/21 12:29:37 shm Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.28.6.1 2022/05/17 12:12:14 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,11 +217,12 @@ deliver(int fd, char *name, int lockfile)
 		return(EX_OSERR);
 	}
 	
-	if ((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
+	if ((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK|O_NOFOLLOW,
 	    S_IRUSR|S_IWUSR)) == -1) {
 		/* create file */
-		if ((mbfd = open(path, O_APPEND|O_CREAT|O_WRONLY|O_EXLOCK,
-		    S_IRUSR|S_IWUSR)) == -1) {
+		if (errno != ENOENT ||
+		   (mbfd = open(path, O_APPEND|O_CREAT|O_WRONLY|O_EXLOCK|O_EXCL,
+		     S_IRUSR|S_IWUSR)) == -1) {
 			logwarn("%s: %s", path, strerror(errno));
 			rval = EX_OSERR;
 			goto bad;
