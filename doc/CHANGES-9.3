@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.92 2022/05/15 12:38:02 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.93 2022/05/17 10:30:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1627,3 +1627,29 @@ common/lib/libc/atomic/atomic_c11_compare_exchange_cas_8.c 1.4 (patch)
 	PR 56832: fix C implementations of __atomic_compare_exchange*.
 	[skrll, ticket #1451]
 
+external/gpl2/dtc/dist/dtc-lexer.l		1.5
+
+	Satisfy -fno-common
+	[tnn, ticket #1452]
+
+sys/dev/ic/mfi.c				1.63, 1.66-77
+sys/dev/ic/mfireg.h				1.11-1.20 via patch
+sys/dev/pci/mfi_pci.c				1.21
+sys/dev/pci/mfii.c				1.6-1.7, 1.10-1.15
+share/man/man4/mfi.4				1.13
+						
+	Improve mfi(4) and mfii(4):
+	- Set 'ld_sync' to NULL as part of 'again', to prevent use-after-free.  
+	- Add some code for the SKINNY variant to make Dell PERC H310 work.
+	- Print the percentage correctly when the background initialization is
+	  running.
+	- Clear mailbox to not to pass garbage data.
+	- Use union mbox instead of unit8_t xxx[] to avoid unaligned access.
+	- Set stripe size for BIOCVOL to show the size correctly in bioctl.
+	- Add support for iBBU-09 to show BBU voltage, current and temperature  
+	  correctly.
+	- Fix typos in comments.
+	- Sprinkle static.
+	- Improve debug printf()s.
+	- KNF. Remove extra semicolon. Whitespace fixes.
+	[msaitoh, ticket #1454]
