@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.730 2022/05/03 00:23:33 gutteridge Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.731 2022/05/17 00:02:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.730 2022/05/03 00:23:33 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.731 2022/05/17 00:02:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8016,9 +8016,10 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 			 * increment successed packet counter as in the case
 			 * which the packet is discarded by link down PHY.
 			 */
-			if (m0 != NULL)
+			if (m0 != NULL) {
 				if_statinc(ifp, if_opackets);
-			m_freem(m0);
+				m_freem(m0);
+			}
 		} while (m0 != NULL);
 		return;
 	}
@@ -8633,9 +8634,10 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 			 * increment successed packet counter as in the case
 			 * which the packet is discarded by link down PHY.
 			 */
-			if (m0 != NULL)
+			if (m0 != NULL) {
 				if_statinc(ifp, if_opackets);
-			m_freem(m0);
+				m_freem(m0);
+			}
 		} while (m0 != NULL);
 		return;
 	}
