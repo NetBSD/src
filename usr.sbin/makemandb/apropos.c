@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.24 2017/11/25 14:29:38 abhinav Exp $	*/
+/*	$NetBSD: apropos.c,v 1.25 2022/05/17 00:21:22 gutteridge Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.24 2017/11/25 14:29:38 abhinav Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.25 2022/05/17 00:21:22 gutteridge Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -157,6 +157,7 @@ main(int argc, char *argv[])
 	char *query = NULL;	// the user query
 	char *errmsg = NULL;
 	char *str;
+	int pc = 0;
 	int rc = 0;
 	size_t i;
 	int s;
@@ -249,6 +250,8 @@ main(int argc, char *argv[])
 	if (aflags.format == APROPOS_HTML)
 		fprintf(cbdata.out, "</table>\n</body>\n</html>\n");
 
+	if (aflags.pager)
+		pc = pclose(cbdata.out);
 	free(query);
 
 	if (aflags.sections) {
@@ -263,6 +266,9 @@ main(int argc, char *argv[])
 		free(errmsg);
 		exit(EXIT_FAILURE);
 	}
+
+	if (pc == -1)
+		err(EXIT_FAILURE, "pclose error");
 
 	if (rc < 0) {
 		/* Something wrong with the database. Exit */
