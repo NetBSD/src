@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.116 2021/08/14 20:43:05 andvar Exp $ */
+/*	$NetBSD: crypto.c,v 1.117 2022/05/17 10:32:58 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.116 2021/08/14 20:43:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.117 2022/05/17 10:32:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1718,6 +1718,8 @@ crypto_done(struct cryptop *crp)
 #endif
 	DPRINTF("lid[%u]: crp %p\n", CRYPTO_SESID2LID(crp->crp_sid), crp);
 
+	crp->crp_flags |= CRYPTO_F_DONE;
+
 	/*
 	 * Normal case; queue the callback for the thread.
 	 *
@@ -1732,8 +1734,6 @@ crypto_done(struct cryptop *crp)
   	 	* callback routine does very little (e.g. the
 	 	* /dev/crypto callback method just does a wakeup).
 	 	*/
-		crp->crp_flags |= CRYPTO_F_DONE;
-
 #ifdef CRYPTO_TIMING
 		if (crypto_timing) {
 			/*
@@ -1749,7 +1749,6 @@ crypto_done(struct cryptop *crp)
 #endif
 		crp->crp_callback(crp);
 	} else {
-		crp->crp_flags |= CRYPTO_F_DONE;
 #if 0
 		if (crp->crp_flags & CRYPTO_F_USER) {
 			/*
