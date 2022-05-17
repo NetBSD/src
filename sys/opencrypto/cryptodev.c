@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.107 2022/03/31 19:30:17 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.108 2022/05/17 09:53:09 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.107 2022/03/31 19:30:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.108 2022/05/17 09:53:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,11 +188,11 @@ static int	cryptodev_key(struct crypt_kop *);
 static int	cryptodev_mkey(struct fcrypt *, struct crypt_n_kop *, int);
 static int	cryptodev_msessionfin(struct fcrypt *, int, u_int32_t *);
 
-static int	cryptodev_cb(void *);
-static int	cryptodevkey_cb(void *);
+static int	cryptodev_cb(struct cryptop *);
+static int	cryptodevkey_cb(struct cryptkop *);
 
-static int	cryptodev_mcb(void *);
-static int	cryptodevkey_mcb(void *);
+static int	cryptodev_mcb(struct cryptop *);
+static int	cryptodevkey_mcb(struct cryptkop *);
 
 static int 	cryptodev_getmstatus(struct fcrypt *, struct crypt_result *,
     int);
@@ -612,9 +612,9 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	crp->crp_flags = CRYPTO_F_IOV | (cop->flags & COP_F_BATCH) | CRYPTO_F_USER |
 			flags;
 	crp->crp_buf = (void *)&cse->uio;
-	crp->crp_callback = (int (*) (struct cryptop *)) cryptodev_cb;
+	crp->crp_callback = cryptodev_cb;
 	crp->crp_sid = cse->sid;
-	crp->crp_opaque = (void *)cse;
+	crp->crp_opaque = cse;
 
 	if (cop->iv) {
 		if (crde == NULL) {
@@ -748,10 +748,9 @@ bail:
 }
 
 static int
-cryptodev_cb(void *op)
+cryptodev_cb(struct cryptop *crp)
 {
-	struct cryptop *crp = (struct cryptop *) op;
-	struct csession *cse = (struct csession *)crp->crp_opaque;
+	struct csession *cse = crp->crp_opaque;
 	int error = 0;
 
 	mutex_enter(&cryptodev_mtx);
@@ -771,11 +770,10 @@ cryptodev_cb(void *op)
 }
 
 static int
-cryptodev_mcb(void *op)
+cryptodev_mcb(struct cryptop *crp)
 {
-	struct cryptop *crp = (struct cryptop *) op;
-	struct csession *cse = (struct csession *)crp->crp_opaque;
-	int  error=0;
+	struct csession *cse = crp->crp_opaque;
+	int error = 0;
 
 	mutex_enter(&cryptodev_mtx);
 	cse->error = crp->crp_etype;
@@ -795,10 +793,9 @@ cryptodev_mcb(void *op)
 }
 
 static int
-cryptodevkey_cb(void *op)
+cryptodevkey_cb(struct cryptkop *krp)
 {
-	struct cryptkop *krp = op;
-	
+
 	mutex_enter(&cryptodev_mtx);
 	krp->krp_devflags |= CRYPTODEV_F_RET;
 	cv_signal(&krp->krp_cv);
@@ -807,9 +804,8 @@ cryptodevkey_cb(void *op)
 }
 
 static int
-cryptodevkey_mcb(void *op)
+cryptodevkey_mcb(struct cryptkop *krp)
 {
-	struct cryptkop *krp = op;
 
 	mutex_enter(&cryptodev_mtx);
 	cv_signal(&krp->krp_cv);
@@ -892,7 +888,7 @@ cryptodev_key(struct crypt_kop *kop)
 	krp->krp_iparams = kop->crk_iparams;
 	krp->krp_oparams = kop->crk_oparams;
 	krp->krp_status = 0;
-	krp->krp_callback = (int (*) (struct cryptkop *)) cryptodevkey_cb;
+	krp->krp_callback = cryptodevkey_cb;
 
 	for (i = 0; i < CRK_MAXPARAM; i++)
 		krp->krp_param[i].crp_nbits = kop->crk_param[i].crp_nbits;
@@ -1306,9 +1302,9 @@ cryptodev_mop(struct fcrypt *fcr,
 		crp->crp_flags = CRYPTO_F_IOV | CRYPTO_F_CBIMM |
 		    (cnop[req].flags & COP_F_BATCH) | flags;
 		crp->crp_buf = (void *)&crp->uio;
-		crp->crp_callback = (int (*) (struct cryptop *)) cryptodev_mcb;
+		crp->crp_callback = cryptodev_mcb;
 		crp->crp_sid = cse->sid;
-		crp->crp_opaque = (void *)cse;
+		crp->crp_opaque = cse;
 		crp->fcrp = fcr;
 		crp->dst = cnop[req].dst;
 		crp->len = cnop[req].len; /* input len, iov may be larger */
@@ -1482,8 +1478,7 @@ cryptodev_mkey(struct fcrypt *fcr, struct crypt_n_kop *kop, int count)
 		krp->krp_iparams = kop[req].crk_iparams;
 		krp->krp_oparams = kop[req].crk_oparams;
 		krp->krp_status = 0;
-		krp->krp_callback =
-		    (int (*) (struct cryptkop *)) cryptodevkey_mcb;
+		krp->krp_callback = cryptodevkey_mcb;
 		(void)memcpy(krp->crk_param, kop[req].crk_param,
 		    sizeof(kop[req].crk_param));
 
