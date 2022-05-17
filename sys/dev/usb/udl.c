@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.27 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: udl.c,v 1.28 2022/05/17 05:05:20 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.27 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.28 2022/05/17 05:05:20 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1020,7 +1020,7 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	if (uc == ' ') {
 		/*
-		 * Writting a block for the space character instead rendering
+		 * Writing a block for the space character instead rendering
 		 * it from font bits is more slim.
 		 */
 		udl_fill_rect(sc, rgb16[0], x, y, width, height);
