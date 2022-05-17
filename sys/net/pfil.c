@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.40 2022/05/17 10:27:37 riastradh Exp $	*/
+/*	$NetBSD: pfil.c,v 1.41 2022/05/17 10:28:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.40 2022/05/17 10:27:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.41 2022/05/17 10:28:08 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.40 2022/05/17 10:27:37 riastradh Exp $");
 #include <sys/queue.h>
 #include <sys/kmem.h>
 #include <sys/psref.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/pfil.h>
@@ -411,6 +412,7 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 	int ret = 0;
 
 	KASSERT(dir == PFIL_IN || dir == PFIL_OUT);
+	KASSERT(!cpu_intr_p());
 
 	if (ph == NULL) {
 		return ret;
@@ -448,6 +450,8 @@ pfil_run_arg(pfil_listset_t *phlistset, u_long cmd, void *arg)
 	pfil_list_t *phlist;
 	struct psref psref;
 	int s, bound;
+
+	KASSERT(!cpu_intr_p());
 
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
