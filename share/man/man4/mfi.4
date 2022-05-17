@@ -1,4 +1,4 @@
-.\"	$NetBSD: mfi.4,v 1.11.24.1 2019/09/02 16:39:20 martin Exp $
+.\"	$NetBSD: mfi.4,v 1.11.24.2 2022/05/17 10:33:46 bouyer Exp $
 .\"	$OpenBSD: mfi.4,v 1.7 2006/09/01 09:58:09 jmc Exp $
 .\"
 .\" Written by Marco Peereboom <marco@peereboom.us>
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 22, 2012
+.Dd May 5, 2022
 .Dt MFI 4
 .Os
 .Sh NAME
@@ -43,7 +43,10 @@ including:
 Dell PERC 5/e,
 PERC 5/i,
 PERC 6/e,
-PERC 6/i
+PERC 6/i,
+PERC H310,
+PERC H700,
+PERC H800
 .It
 Intel RAID Controller SRCSAS18E,
 SRCSAS144E
@@ -56,9 +59,11 @@ MegaRAID SAS 8344ELP,
 MegaRAID SAS 8408E,
 MegaRAID SAS 8480E,
 MegaRAID SAS 8708ELP,
-MegaRAID SAS 8888ELP,
 MegaRAID SAS 8880EM2,
-MegaRAID SAS 9260-8i
+MegaRAID SAS 8888ELP,
+MegaRAID SAS 9260-8i,
+MegaRAID SAS 9261-8i,
+MegaRAID SAS 9265-8i
 .It
 IBM ServeRAID M1015,
 ServeRAID M5014
