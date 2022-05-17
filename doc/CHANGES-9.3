@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.93 2022/05/17 10:30:22 bouyer Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.94 2022/05/17 12:11:08 bouyer Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1653,3 +1653,14 @@ share/man/man4/mfi.4				1.13
 	- Improve debug printf()s.
 	- KNF. Remove extra semicolon. Whitespace fixes.
 	[msaitoh, ticket #1454]
+
+libexec/mail.local/mail.local.c			1.29
+
+	fix local privilege escalation due to a race condition
+
+	NetBSD-SA2016-006 included an incomplete fix for CVE-2016-6253,
+	a local privilege escalation vulnerability in mail.local(8).
+
+	Thanks to Jan Schaumann for bringing this to our attention.
+	[kre, ticket #1455]
+
