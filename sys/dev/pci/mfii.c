@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.3.2.4 2019/04/26 19:04:19 martin Exp $ */
+/* $NetBSD: mfii.c,v 1.3.2.5 2022/05/17 10:33:46 bouyer Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.3.2.4 2019/04/26 19:04:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.3.2.5 2022/05/17 10:33:46 bouyer Exp $");
 
 #include "bio.h"
 
@@ -197,8 +197,8 @@ struct mfii_task_mgmt {
 
 /* We currently don't know the full details of the following struct */
 struct mfii_foreign_scan_cfg {
-        char data[24];
-} __packed; 
+	char data[24];
+} __packed;
 
 struct mfii_foreign_scan_info {
 	uint32_t count; /* Number of foreign configs found */
@@ -338,8 +338,8 @@ struct mfii_softc {
 	int			sc_target_lds[MFI_MAX_LD];
 
 	/* bio */
-	struct mfi_conf	 *sc_cfg;
-	struct mfi_ctrl_info    sc_info;
+	struct mfi_conf		*sc_cfg;
+	struct mfi_ctrl_info	sc_info;
 	struct mfi_ld_list	sc_ld_list;
 	struct mfi_ld_details	*sc_ld_details; /* array to all logical disks */
 	int			sc_no_pd; /* used physical disks */
@@ -372,7 +372,7 @@ struct mfii_softc {
 uint32_t	mfii_debug = 0
 /*		    | MFII_D_CMD */
 /*		    | MFII_D_INTR */
-	    	    | MFII_D_MISC
+		    | MFII_D_MISC
 /*		    | MFII_D_DMA */
 /*		    | MFII_D_IOCTL */
 /*		    | MFII_D_RW */
@@ -384,11 +384,11 @@ uint32_t	mfii_debug = 0
 #define DNPRINTF(n,x...)
 #endif
 
-int		mfii_match(device_t, cfdata_t, void *);
-void		mfii_attach(device_t, device_t, void *);
-int		mfii_detach(device_t, int);
-int		mfii_rescan(device_t, const char *, const int *);
-void		mfii_childdetached(device_t, device_t);
+static int	mfii_match(device_t, cfdata_t, void *);
+static void	mfii_attach(device_t, device_t, void *);
+static int	mfii_detach(device_t, int);
+static int	mfii_rescan(device_t, const char *, const int *);
+static void	mfii_childdetached(device_t, device_t);
 static bool	mfii_suspend(device_t, const pmf_qual_t *);
 static bool	mfii_resume(device_t, const pmf_qual_t *);
 static bool	mfii_shutdown(device_t, int);
@@ -398,94 +398,91 @@ CFATTACH_DECL3_NEW(mfii, sizeof(struct mfii_softc),
     mfii_match, mfii_attach, mfii_detach, NULL, mfii_rescan,
 	mfii_childdetached, DVF_DETACH_SHUTDOWN);
 
-void		mfii_scsipi_request(struct scsipi_channel *,
+static void	mfii_scsipi_request(struct scsipi_channel *,
 			scsipi_adapter_req_t, void *);
-void		mfii_scsi_cmd_done(struct mfii_softc *, struct mfii_ccb *);
+static void	mfii_scsi_cmd_done(struct mfii_softc *, struct mfii_ccb *);
 
 #define DEVNAME(_sc)		(device_xname((_sc)->sc_dev))
 
 static u_int32_t	mfii_read(struct mfii_softc *, bus_size_t);
 static void		mfii_write(struct mfii_softc *, bus_size_t, u_int32_t);
 
-struct mfii_dmamem *	mfii_dmamem_alloc(struct mfii_softc *, size_t);
-void			mfii_dmamem_free(struct mfii_softc *,
+static struct mfii_dmamem *	mfii_dmamem_alloc(struct mfii_softc *, size_t);
+static void		mfii_dmamem_free(struct mfii_softc *,
 			    struct mfii_dmamem *);
 
-struct mfii_ccb *	mfii_get_ccb(struct mfii_softc *);
-void			mfii_put_ccb(struct mfii_softc *, struct mfii_ccb *);
-int			mfii_init_ccb(struct mfii_softc *);
-void			mfii_scrub_ccb(struct mfii_ccb *);
+static struct mfii_ccb *	mfii_get_ccb(struct mfii_softc *);
+static void		mfii_put_ccb(struct mfii_softc *, struct mfii_ccb *);
+static int		mfii_init_ccb(struct mfii_softc *);
+static void		mfii_scrub_ccb(struct mfii_ccb *);
 
-int			mfii_transition_firmware(struct mfii_softc *);
-int			mfii_initialise_firmware(struct mfii_softc *);
-int			mfii_get_info(struct mfii_softc *);
+static int		mfii_transition_firmware(struct mfii_softc *);
+static int		mfii_initialise_firmware(struct mfii_softc *);
+static int		mfii_get_info(struct mfii_softc *);
 
-void			mfii_start(struct mfii_softc *, struct mfii_ccb *);
-void			mfii_done(struct mfii_softc *, struct mfii_ccb *);
-int			mfii_poll(struct mfii_softc *, struct mfii_ccb *);
-void			mfii_poll_done(struct mfii_softc *, struct mfii_ccb *);
-int			mfii_exec(struct mfii_softc *, struct mfii_ccb *);
-void			mfii_exec_done(struct mfii_softc *, struct mfii_ccb *);
-int			mfii_my_intr(struct mfii_softc *);
-int			mfii_intr(void *);
-void			mfii_postq(struct mfii_softc *);
+static void		mfii_start(struct mfii_softc *, struct mfii_ccb *);
+static void		mfii_done(struct mfii_softc *, struct mfii_ccb *);
+static int		mfii_poll(struct mfii_softc *, struct mfii_ccb *);
+static void		mfii_poll_done(struct mfii_softc *, struct mfii_ccb *);
+static int		mfii_exec(struct mfii_softc *, struct mfii_ccb *);
+static void		mfii_exec_done(struct mfii_softc *, struct mfii_ccb *);
+static int		mfii_my_intr(struct mfii_softc *);
+static int		mfii_intr(void *);
+static void		mfii_postq(struct mfii_softc *);
 
-int			mfii_load_ccb(struct mfii_softc *, struct mfii_ccb *,
+static int		mfii_load_ccb(struct mfii_softc *, struct mfii_ccb *,
 			    void *, int);
-int			mfii_load_mfa(struct mfii_softc *, struct mfii_ccb *,
+static int		mfii_load_mfa(struct mfii_softc *, struct mfii_ccb *,
 			    void *, int);
 
-int			mfii_mfa_poll(struct mfii_softc *, struct mfii_ccb *);
+static int		mfii_mfa_poll(struct mfii_softc *, struct mfii_ccb *);
 
-int			mfii_mgmt(struct mfii_softc *, uint32_t,
+static int		mfii_mgmt(struct mfii_softc *, uint32_t,
 			    const union mfi_mbox *, void *, size_t,
 			    mfii_direction_t, bool);
-int			mfii_do_mgmt(struct mfii_softc *, struct mfii_ccb *,
+static int		mfii_do_mgmt(struct mfii_softc *, struct mfii_ccb *,
 			    uint32_t, const union mfi_mbox *, void *, size_t,
 			    mfii_direction_t, bool);
-void			mfii_empty_done(struct mfii_softc *, struct mfii_ccb *);
+static void		mfii_empty_done(struct mfii_softc *, struct mfii_ccb *);
 
-int			mfii_scsi_cmd_io(struct mfii_softc *,
+static int		mfii_scsi_cmd_io(struct mfii_softc *,
 			    struct mfii_ccb *, struct scsipi_xfer *);
-int			mfii_scsi_cmd_cdb(struct mfii_softc *,
+static int		mfii_scsi_cmd_cdb(struct mfii_softc *,
 			    struct mfii_ccb *, struct scsipi_xfer *);
-void			mfii_scsi_cmd_tmo(void *);
+static void		mfii_scsi_cmd_tmo(void *);
 
-int			mfii_dev_handles_update(struct mfii_softc *sc);
-void			mfii_dev_handles_dtor(void *, void *);
-
-void			mfii_abort_task(struct work *, void *);
-void			mfii_abort(struct mfii_softc *, struct mfii_ccb *,
+static void		mfii_abort_task(struct work *, void *);
+static void		mfii_abort(struct mfii_softc *, struct mfii_ccb *,
 			    uint16_t, uint16_t, uint8_t, uint32_t);
-void			mfii_scsi_cmd_abort_done(struct mfii_softc *,
+static void		mfii_scsi_cmd_abort_done(struct mfii_softc *,
 			    struct mfii_ccb *);
 
-int			mfii_aen_register(struct mfii_softc *);
-void			mfii_aen_start(struct mfii_softc *, struct mfii_ccb *,
+static int		mfii_aen_register(struct mfii_softc *);
+static void		mfii_aen_start(struct mfii_softc *, struct mfii_ccb *,
 			    struct mfii_dmamem *, uint32_t);
-void			mfii_aen_done(struct mfii_softc *, struct mfii_ccb *);
-void			mfii_aen(struct work *, void *);
-void			mfii_aen_unregister(struct mfii_softc *);
+static void		mfii_aen_done(struct mfii_softc *, struct mfii_ccb *);
+static void		mfii_aen(struct work *, void *);
+static void		mfii_aen_unregister(struct mfii_softc *);
 
-void			mfii_aen_pd_insert(struct mfii_softc *,
+static void		mfii_aen_pd_insert(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_address *);
-void			mfii_aen_pd_remove(struct mfii_softc *,
+static void		mfii_aen_pd_remove(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_address *);
-void			mfii_aen_pd_state_change(struct mfii_softc *,
+static void		mfii_aen_pd_state_change(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_state *);
-void			mfii_aen_ld_update(struct mfii_softc *);
+static void		mfii_aen_ld_update(struct mfii_softc *);
 
 #if NBIO > 0
-int		mfii_ioctl(device_t, u_long, void *);
-int		mfii_ioctl_inq(struct mfii_softc *, struct bioc_inq *);
-int		mfii_ioctl_vol(struct mfii_softc *, struct bioc_vol *);
-int		mfii_ioctl_disk(struct mfii_softc *, struct bioc_disk *);
-int		mfii_ioctl_alarm(struct mfii_softc *, struct bioc_alarm *);
-int		mfii_ioctl_blink(struct mfii_softc *sc, struct bioc_blink *);
-int		mfii_ioctl_setstate(struct mfii_softc *,
+static int	mfii_ioctl(device_t, u_long, void *);
+static int	mfii_ioctl_inq(struct mfii_softc *, struct bioc_inq *);
+static int	mfii_ioctl_vol(struct mfii_softc *, struct bioc_vol *);
+static int	mfii_ioctl_disk(struct mfii_softc *, struct bioc_disk *);
+static int	mfii_ioctl_alarm(struct mfii_softc *, struct bioc_alarm *);
+static int	mfii_ioctl_blink(struct mfii_softc *sc, struct bioc_blink *);
+static int	mfii_ioctl_setstate(struct mfii_softc *,
 		    struct bioc_setstate *);
-int		mfii_bio_hs(struct mfii_softc *, int, int, void *);
-int		mfii_bio_getitall(struct mfii_softc *);
+static int	mfii_bio_hs(struct mfii_softc *, int, int, void *);
+static int	mfii_bio_getitall(struct mfii_softc *);
 #endif /* NBIO > 0 */
 
 #if 0
@@ -506,13 +503,13 @@ static const char *mfi_bbu_indicators[] = {
 };
 #endif
 
-void		mfii_init_ld_sensor(struct mfii_softc *, envsys_data_t *, int);
-void		mfii_refresh_ld_sensor(struct mfii_softc *, envsys_data_t *);
+static void	mfii_init_ld_sensor(struct mfii_softc *, envsys_data_t *, int);
+static void	mfii_refresh_ld_sensor(struct mfii_softc *, envsys_data_t *);
 static void	mfii_attach_sensor(struct mfii_softc *, envsys_data_t *);
-int		mfii_create_sensors(struct mfii_softc *);
+static int	mfii_create_sensors(struct mfii_softc *);
 static int	mfii_destroy_sensors(struct mfii_softc *);
-void		mfii_refresh_sensor(struct sysmon_envsys *, envsys_data_t *);
-void		mfii_bbu(struct mfii_softc *, envsys_data_t *);
+static void	mfii_refresh_sensor(struct sysmon_envsys *, envsys_data_t *);
+static void	mfii_bbu(struct mfii_softc *, envsys_data_t *);
 
 /*
  * mfii boards support asynchronous (and non-polled) completion of
@@ -525,8 +522,7 @@ void		mfii_bbu(struct mfii_softc *, envsys_data_t *);
  * hold the dcmd, we reuse the sense memory buffer for it.
  */
 
-void			mfii_dcmd_start(struct mfii_softc *,
-			    struct mfii_ccb *);
+static void	mfii_dcmd_start(struct mfii_softc *, struct mfii_ccb *);
 
 static inline void
 mfii_dcmd_scrub(struct mfii_ccb *ccb)
@@ -550,7 +546,7 @@ mfii_dcmd_sync(struct mfii_softc *sc, struct mfii_ccb *ccb, int flags)
 
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
 
-const struct mfii_iop mfii_iop_thunderbolt = {
+static const struct mfii_iop mfii_iop_thunderbolt = {
 	MFII_BAR,
 	MFII_IOP_NUM_SGE_LOC_ORIG,
 	0,
@@ -563,7 +559,7 @@ const struct mfii_iop mfii_iop_thunderbolt = {
 /*
  * a lot of these values depend on us not implementing fastpath yet.
  */
-const struct mfii_iop mfii_iop_25 = {
+static const struct mfii_iop mfii_iop_25 = {
 	MFII_BAR,
 	MFII_IOP_NUM_SGE_LOC_ORIG,
 	MFII_RAID_CTX_RL_FLAGS_CPU0, /* | MFII_RAID_CTX_RL_FLAGS_SEQNO_EN */
@@ -573,7 +569,7 @@ const struct mfii_iop mfii_iop_25 = {
 	MFII_SGE_END_OF_LIST
 };
 
-const struct mfii_iop mfii_iop_35 = {
+static const struct mfii_iop mfii_iop_35 = {
 	MFII_BAR_35,
 	MFII_IOP_NUM_SGE_LOC_35,
 	MFII_RAID_CTX_ROUTING_FLAGS_CPU0, /* | MFII_RAID_CTX_ROUTING_FLAGS_SQN */
@@ -589,7 +585,7 @@ struct mfii_device {
 	const struct mfii_iop	*mpd_iop;
 };
 
-const struct mfii_device mfii_devices[] = {
+static const struct mfii_device mfii_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_2208,
 	    &mfii_iop_thunderbolt },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3008,
@@ -610,9 +606,9 @@ const struct mfii_device mfii_devices[] = {
 	    &mfii_iop_35 }
 };
 
-const struct mfii_iop *mfii_find_iop(struct pci_attach_args *);
+static const struct mfii_iop *mfii_find_iop(struct pci_attach_args *);
 
-const struct mfii_iop *
+static const struct mfii_iop *
 mfii_find_iop(struct pci_attach_args *pa)
 {
 	const struct mfii_device *mpd;
@@ -629,13 +625,13 @@ mfii_find_iop(struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 mfii_match(device_t parent, cfdata_t match, void *aux)
 {
 	return ((mfii_find_iop(aux) != NULL) ? 2 : 0);
 }
 
-void
+static void
 mfii_attach(device_t parent, device_t self, void *aux)
 {
 	struct mfii_softc *sc = device_private(self);
@@ -912,7 +908,7 @@ mfii_dev_handle(struct mfii_softc *sc, uint16_t target)
 	return (handle);
 }
 
-int
+static int
 mfii_dev_handles_update(struct mfii_softc *sc)
 {
 	struct mfii_ld_map *lm;
@@ -947,7 +943,7 @@ free_lm:
 	return (rv);
 }
 
-void
+static void
 mfii_dev_handles_dtor(void *null, void *v)
 {
 	uint16_t *dev_handles = v;
@@ -956,7 +952,7 @@ mfii_dev_handles_dtor(void *null, void *v)
 }
 #endif /* 0 */
 
-int
+static int
 mfii_detach(device_t self, int flags)
 {
 	struct mfii_softc *sc = device_private(self);
@@ -987,7 +983,7 @@ mfii_detach(device_t self, int flags)
 	return (0);
 }
 
-int
+static int
 mfii_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct mfii_softc *sc = device_private(self);
@@ -999,7 +995,7 @@ mfii_rescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
-void
+static void
 mfii_childdetached(device_t self, device_t child)
 {
 	struct mfii_softc *sc = device_private(self);
@@ -1011,7 +1007,7 @@ mfii_childdetached(device_t self, device_t child)
 		sc->sc_child = NULL;
 }
 
-static bool             
+static bool
 mfii_suspend(device_t dev, const pmf_qual_t *q)
 {
 	/* XXX to be implemented */
@@ -1020,23 +1016,23 @@ mfii_suspend(device_t dev, const pmf_qual_t *q)
 
 static bool
 mfii_resume(device_t dev, const pmf_qual_t *q)
-{       
+{
 	/* XXX to be implemented */
 	return false;
 }
- 
+
 static bool
 mfii_shutdown(device_t dev, int how)
 {
 	struct mfii_softc	*sc = device_private(dev);
 	struct mfii_ccb *ccb;
 	union mfi_mbox		mbox;
-	bool rv = true;;
+	bool rv = true;
 
 	memset(&mbox, 0, sizeof(mbox));
 
 	mutex_enter(&sc->sc_lock);
-	DNPRINTF(MFI_D_MISC, "%s: mfii_shutdown\n", DEVNAME(sc));
+	DNPRINTF(MFII_D_MISC, "%s: mfii_shutdown\n", DEVNAME(sc));
 	ccb = mfii_get_ccb(sc);
 	if (ccb == NULL)
 		return false;
@@ -1061,7 +1057,7 @@ mfii_shutdown(device_t dev, int how)
 		    NULL, 0, MFII_DATA_NONE, true)) {
 			aprint_error_dev(dev, "shutdown: "
 			    "firmware shutdown failed\n");
-		    	rv = false;
+			rv = false;
 			goto fail;
 		}
 	} else {
@@ -1089,7 +1085,7 @@ mfii_write(struct mfii_softc *sc, bus_size_t r, u_int32_t v)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-struct mfii_dmamem *
+static struct mfii_dmamem *
 mfii_dmamem_alloc(struct mfii_softc *sc, size_t size)
 {
 	struct mfii_dmamem *m;
@@ -1132,7 +1128,7 @@ mdmfree:
 	return (NULL);
 }
 
-void
+static void
 mfii_dmamem_free(struct mfii_softc *sc, struct mfii_dmamem *m)
 {
 	bus_dmamap_unload(sc->sc_dmat, m->mdm_map);
@@ -1142,7 +1138,7 @@ mfii_dmamem_free(struct mfii_softc *sc, struct mfii_dmamem *m)
 	free(m, M_DEVBUF);
 }
 
-void
+static void
 mfii_dcmd_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
@@ -1163,7 +1159,7 @@ mfii_dcmd_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	mfii_start(sc, ccb);
 }
 
-int
+static int
 mfii_aen_register(struct mfii_softc *sc)
 {
 	struct mfi_evt_log_info mel;
@@ -1201,7 +1197,7 @@ mfii_aen_register(struct mfii_softc *sc)
 	return (0);
 }
 
-void
+static void
 mfii_aen_start(struct mfii_softc *sc, struct mfii_ccb *ccb,
     struct mfii_dmamem *mdm, uint32_t seq)
 {
@@ -1239,7 +1235,7 @@ mfii_aen_start(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	mfii_dcmd_start(sc, ccb);
 }
 
-void
+static void
 mfii_aen_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	KASSERT(sc->sc_aen_ccb == ccb);
@@ -1253,7 +1249,7 @@ mfii_aen_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 		workqueue_enqueue(sc->sc_aen_wq, &sc->sc_aen_work, NULL);
 }
 
-void
+static void
 mfii_aen(struct work *wk, void *arg)
 {
 	struct mfii_softc *sc = arg;
@@ -1274,13 +1270,13 @@ mfii_aen(struct work *wk, void *arg)
 	case MR_EVT_PD_INSERTED_EXT:
 		if (med->med_arg_type != MR_EVT_ARGS_PD_ADDRESS)
 			break;
-		
+
 		mfii_aen_pd_insert(sc, &med->args.pd_address);
 		break;
- 	case MR_EVT_PD_REMOVED_EXT:
+	case MR_EVT_PD_REMOVED_EXT:
 		if (med->med_arg_type != MR_EVT_ARGS_PD_ADDRESS)
 			break;
-		
+
 		mfii_aen_pd_remove(sc, &med->args.pd_address);
 		break;
 
@@ -1303,7 +1299,7 @@ mfii_aen(struct work *wk, void *arg)
 	mfii_aen_start(sc, ccb, mdm, le32toh(med->med_seq_num) + 1);
 }
 
-void
+static void
 mfii_aen_pd_insert(struct mfii_softc *sc,
     const struct mfi_evtarg_pd_address *pd)
 {
@@ -1311,7 +1307,7 @@ mfii_aen_pd_insert(struct mfii_softc *sc,
 	    le16toh(pd->device_id), le16toh(pd->encl_id));
 }
 
-void
+static void
 mfii_aen_pd_remove(struct mfii_softc *sc,
     const struct mfi_evtarg_pd_address *pd)
 {
@@ -1319,14 +1315,14 @@ mfii_aen_pd_remove(struct mfii_softc *sc,
 	    le16toh(pd->device_id), le16toh(pd->encl_id));
 }
 
-void
+static void
 mfii_aen_pd_state_change(struct mfii_softc *sc,
     const struct mfi_evtarg_pd_state *state)
 {
 	return;
 }
 
-void
+static void
 mfii_aen_ld_update(struct mfii_softc *sc)
 {
 	int i, target, old, nld;
@@ -1354,7 +1350,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 	for (i = 0; i < MFI_MAX_LD; i++) {
 		old = sc->sc_target_lds[i];
 		nld = newlds[i];
-		
+
 		if (old == -1 && nld != -1) {
 			printf("%s: logical drive %d added (target %d)\n",
 			    DEVNAME(sc), i, nld);
@@ -1376,13 +1372,13 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 	memcpy(sc->sc_target_lds, newlds, sizeof(sc->sc_target_lds));
 }
 
-void
+static void
 mfii_aen_unregister(struct mfii_softc *sc)
 {
 	/* XXX */
 }
 
-int
+static int
 mfii_transition_firmware(struct mfii_softc *sc)
 {
 	int32_t			fw_state, cur_state;
@@ -1436,7 +1432,7 @@ mfii_transition_firmware(struct mfii_softc *sc)
 	return (0);
 }
 
-int
+static int
 mfii_get_info(struct mfii_softc *sc)
 {
 	int i, rv;
@@ -1591,7 +1587,7 @@ mfii_get_info(struct mfii_softc *sc)
 	return (0);
 }
 
-int
+static int
 mfii_mfa_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	struct mfi_frame_header	*hdr = ccb->ccb_request;
@@ -1647,7 +1643,7 @@ mfii_mfa_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	return (rv);
 }
 
-int
+static int
 mfii_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	void (*done)(struct mfii_softc *, struct mfii_ccb *);
@@ -1673,7 +1669,7 @@ mfii_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	return (0);
 }
 
-void
+static void
 mfii_poll_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	int *rv = ccb->ccb_cookie;
@@ -1681,7 +1677,7 @@ mfii_poll_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	*rv = 0;
 }
 
-int
+static int
 mfii_exec(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 #ifdef DIAGNOSTIC
@@ -1702,7 +1698,7 @@ mfii_exec(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	return (0);
 }
 
-void
+static void
 mfii_exec_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	mutex_enter(&ccb->ccb_mtx);
@@ -1711,7 +1707,7 @@ mfii_exec_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	mutex_exit(&ccb->ccb_mtx);
 }
 
-int
+static int
 mfii_mgmt(struct mfii_softc *sc, uint32_t opc, const union mfi_mbox *mbox,
     void *buf, size_t len, mfii_direction_t dir, bool poll)
 {
@@ -1733,7 +1729,7 @@ mfii_mgmt(struct mfii_softc *sc, uint32_t opc, const union mfi_mbox *mbox,
 	return (rv);
 }
 
-int
+static int
 mfii_do_mgmt(struct mfii_softc *sc, struct mfii_ccb *ccb, uint32_t opc,
     const union mfi_mbox *mbox, void *buf, size_t len, mfii_direction_t dir,
     bool poll)
@@ -1804,13 +1800,13 @@ done:
 	return (rv);
 }
 
-void
+static void
 mfii_empty_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	return;
 }
 
-int
+static int
 mfii_load_mfa(struct mfii_softc *sc, struct mfii_ccb *ccb,
     void *sglp, int nosleep)
 {
@@ -1843,7 +1839,7 @@ mfii_load_mfa(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	return (0);
 }
 
-void
+static void
 mfii_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	u_long *r = (u_long *)&ccb->ccb_req;
@@ -1867,7 +1863,7 @@ mfii_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 #endif
 }
 
-void
+static void
 mfii_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_requests),
@@ -1900,7 +1896,7 @@ mfii_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	ccb->ccb_done(sc, ccb);
 }
 
-int
+static int
 mfii_initialise_firmware(struct mfii_softc *sc)
 {
 	struct mpii_msg_iocinit_request *iiq;
@@ -1938,9 +1934,9 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 	iiq->reply_descriptor_post_queue_address_hi =
 	    htole32(MFII_DMA_DVA(sc->sc_reply_postq) >> 32);
 
-	iiq->system_request_frame_base_address_lo = 
+	iiq->system_request_frame_base_address_lo =
 	    htole32(MFII_DMA_DVA(sc->sc_requests));
-	iiq->system_request_frame_base_address_hi = 
+	iiq->system_request_frame_base_address_hi =
 	    htole32(MFII_DMA_DVA(sc->sc_requests) >> 32);
 
 	iiq->timestamp = htole64(time_uptime);
@@ -1976,7 +1972,7 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 	return (rv);
 }
 
-int
+static int
 mfii_my_intr(struct mfii_softc *sc)
 {
 	u_int32_t status;
@@ -1992,7 +1988,7 @@ mfii_my_intr(struct mfii_softc *sc)
 	return (ISSET(status, MFII_OSTS_INTR_VALID) ? 1 : 0);
 }
 
-int
+static int
 mfii_intr(void *arg)
 {
 	struct mfii_softc *sc = arg;
@@ -2005,7 +2001,7 @@ mfii_intr(void *arg)
 	return (1);
 }
 
-void
+static void
 mfii_postq(struct mfii_softc *sc)
 {
 	struct mfii_ccb_list ccbs = SIMPLEQ_HEAD_INITIALIZER(ccbs);
@@ -2022,7 +2018,7 @@ mfii_postq(struct mfii_softc *sc)
 
 	for (;;) {
 		rdp = &postq[sc->sc_reply_postq_index];
-		DNPRINTF(MFII_D_INTR, "%s: mfii_postq index %d flags 0x%x data 0x%x\n", 
+		DNPRINTF(MFII_D_INTR, "%s: mfii_postq index %d flags 0x%x data 0x%x\n",
 		    DEVNAME(sc), sc->sc_reply_postq_index, rdp->reply_flags,
 			rdp->data == 0xffffffff);
 		if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
@@ -2060,9 +2056,9 @@ mfii_postq(struct mfii_softc *sc)
 	}
 }
 
-void
+static void
 mfii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
-    void *arg)		
+    void *arg)
 {
 	struct scsipi_periph    *periph;
 	struct scsipi_xfer	*xs;
@@ -2072,7 +2068,7 @@ mfii_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	int timeout;
 	int target;
 
-	switch(req) {
+	switch (req) {
 		case ADAPTER_REQ_GROW_RESOURCES:
 		/* Not supported. */
 		return;
@@ -2168,7 +2164,7 @@ stuffup:
 	mfii_put_ccb(sc, ccb);
 }
 
-void
+static void
 mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	struct scsipi_xfer *xs = ccb->ccb_cookie;
@@ -2202,7 +2198,7 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	mfii_put_ccb(sc, ccb);
 }
 
-int
+static int
 mfii_scsi_cmd_io(struct mfii_softc *sc, struct mfii_ccb *ccb,
     struct scsipi_xfer *xs)
 {
@@ -2262,7 +2258,7 @@ mfii_scsi_cmd_io(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	return (0);
 }
 
-int
+static int
 mfii_scsi_cmd_cdb(struct mfii_softc *sc, struct mfii_ccb *ccb,
     struct scsipi_xfer *xs)
 {
@@ -2431,7 +2427,7 @@ mfii_pd_scsi_cmd_cdb(struct mfii_softc *sc, struct mfii_ccb *ccb,
 }
 #endif
 
-int
+static int
 mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
     int nosleep)
 {
@@ -2499,7 +2495,7 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 	return (0);
 }
 
-void
+static void
 mfii_scsi_cmd_tmo(void *p)
 {
 	struct mfii_ccb *ccb = p;
@@ -2516,7 +2512,7 @@ mfii_scsi_cmd_tmo(void *p)
 	mutex_exit(&sc->sc_abort_mtx);
 }
 
-void
+static void
 mfii_abort_task(struct work *wk, void *scp)
 {
 	struct mfii_softc *sc = scp;
@@ -2556,7 +2552,7 @@ mfii_abort_task(struct work *wk, void *scp)
 	}
 }
 
-void
+static void
 mfii_abort(struct mfii_softc *sc, struct mfii_ccb *accb, uint16_t dev_handle,
     uint16_t smid, uint8_t type, uint32_t flags)
 {
@@ -2575,7 +2571,7 @@ mfii_abort(struct mfii_softc *sc, struct mfii_ccb *accb, uint16_t dev_handle,
 	accb->ccb_req.smid = le16toh(accb->ccb_smid);
 }
 
-void
+static void
 mfii_scsi_cmd_abort_done(struct mfii_softc *sc, struct mfii_ccb *accb)
 {
 	struct mfii_ccb *ccb = accb->ccb_cookie;
@@ -2591,7 +2587,7 @@ mfii_scsi_cmd_abort_done(struct mfii_softc *sc, struct mfii_ccb *accb)
 	mfii_put_ccb(sc, ccb);
 }
 
-struct mfii_ccb *
+static struct mfii_ccb *
 mfii_get_ccb(struct mfii_softc *sc)
 {
 	struct mfii_ccb *ccb;
@@ -2608,7 +2604,7 @@ mfii_get_ccb(struct mfii_softc *sc)
 	return (ccb);
 }
 
-void
+static void
 mfii_scrub_ccb(struct mfii_ccb *ccb)
 {
 	ccb->ccb_cookie = NULL;
@@ -2624,7 +2620,7 @@ mfii_scrub_ccb(struct mfii_ccb *ccb)
 	memset(ccb->ccb_mfi, 0, MFI_FRAME_SIZE);
 }
 
-void
+static void
 mfii_put_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
 	mutex_enter(&sc->sc_ccb_mtx);
@@ -2632,7 +2628,7 @@ mfii_put_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	mutex_exit(&sc->sc_ccb_mtx);
 }
 
-int
+static int
 mfii_init_ccb(struct mfii_softc *sc)
 {
 	struct mfii_ccb *ccb;
@@ -2719,7 +2715,7 @@ destroy:
 }
 
 #if NBIO > 0
-int
+static int
 mfii_ioctl(device_t dev, u_long cmd, void *addr)
 {
 	struct mfii_softc	*sc = device_private(dev);
@@ -2777,7 +2773,7 @@ mfii_ioctl(device_t dev, u_long cmd, void *addr)
 	return (error);
 }
 
-int
+static int
 mfii_bio_getitall(struct mfii_softc *sc)
 {
 	int			i, d, rv = EINVAL;
@@ -2858,7 +2854,7 @@ done:
 	return (rv);
 }
 
-int
+static int
 mfii_ioctl_inq(struct mfii_softc *sc, struct bioc_inq *bi)
 {
 	int			rv = EINVAL;
@@ -2891,7 +2887,7 @@ done:
 	return (rv);
 }
 
-int
+static int
 mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 {
 	int			i, per, rv = EINVAL;
@@ -2916,7 +2912,7 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 	strlcpy(bv->bv_dev, sc->sc_ld_details[i].mld_cfg.mlc_prop.mlp_name,
 	    sizeof(bv->bv_dev));
 
-	switch(sc->sc_ld_list.mll_list[i].mll_state) {
+	switch (sc->sc_ld_list.mll_list[i].mll_state) {
 	case MFI_LD_OFFLINE:
 		bv->bv_status = BIOC_SVOFFLINE;
 		break;
@@ -2940,12 +2936,19 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 	/* additional status can modify MFI status */
 	switch (sc->sc_ld_details[i].mld_progress.mlp_in_prog) {
 	case MFI_LD_PROG_CC:
-	case MFI_LD_PROG_BGI:
 		bv->bv_status = BIOC_SVSCRUB;
 		per = (int)sc->sc_ld_details[i].mld_progress.mlp_cc.mp_progress;
 		bv->bv_percent = (per * 100) / 0xffff;
 		bv->bv_seconds =
 		    sc->sc_ld_details[i].mld_progress.mlp_cc.mp_elapsed_seconds;
+		break;
+
+	case MFI_LD_PROG_BGI:
+		bv->bv_status = BIOC_SVSCRUB;
+		per = (int)sc->sc_ld_details[i].mld_progress.mlp_bgi.mp_progress;
+		bv->bv_percent = (per * 100) / 0xffff;
+		bv->bv_seconds =
+		    sc->sc_ld_details[i].mld_progress.mlp_bgi.mp_elapsed_seconds;
 		break;
 
 	case MFI_LD_PROG_FGI:
@@ -2973,13 +2976,16 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 	    sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth;
 
 	bv->bv_size = sc->sc_ld_details[i].mld_size * 512; /* bytes per block */
+	bv->bv_stripe_size =
+	    (512 << sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_stripe_size)
+	    / 1024; /* in KB */
 
 	rv = 0;
 done:
 	return (rv);
 }
 
-int
+static int
 mfii_ioctl_disk(struct mfii_softc *sc, struct bioc_disk *bd)
 {
 	struct mfi_conf		*cfg;
@@ -3133,7 +3139,7 @@ freeme:
 	return (rv);
 }
 
-int
+static int
 mfii_ioctl_alarm(struct mfii_softc *sc, struct bioc_alarm *ba)
 {
 	uint32_t		opc;
@@ -3141,7 +3147,7 @@ mfii_ioctl_alarm(struct mfii_softc *sc, struct bioc_alarm *ba)
 	int8_t			ret;
 	mfii_direction_t dir = MFII_DATA_NONE;
 
-	switch(ba->ba_opcode) {
+	switch (ba->ba_opcode) {
 	case BIOC_SADISABLE:
 		opc = MR_DCMD_SPEAKER_DISABLE;
 		break;
@@ -3180,7 +3186,7 @@ mfii_ioctl_alarm(struct mfii_softc *sc, struct bioc_alarm *ba)
 	return (rv);
 }
 
-int
+static int
 mfii_ioctl_blink(struct mfii_softc *sc, struct bioc_blink *bb)
 {
 	int			i, found, rv = EINVAL;
@@ -3347,7 +3353,7 @@ done:
 	return (rv);
 }
 
-int
+static int
 mfii_ioctl_setstate(struct mfii_softc *sc, struct bioc_setstate *bs)
 {
 	struct mfi_pd_details	*pd;
@@ -3579,7 +3585,7 @@ mfii_ioctl_patrol(struct mfii_softc *sc, struct bioc_patrol *bp)
 }
 #endif
 
-int
+static int
 mfii_bio_hs(struct mfii_softc *sc, int volid, int type, void *bio_hs)
 {
 	struct mfi_conf		*cfg;
@@ -3683,7 +3689,7 @@ freeme:
 
 #define MFI_BBU_SENSORS 4
 
-void
+static void
 mfii_bbu(struct mfii_softc *sc, envsys_data_t *edata)
 {
 	struct mfi_bbu_status bbu;
@@ -3704,6 +3710,7 @@ mfii_bbu(struct mfii_softc *sc, envsys_data_t *edata)
 
 	switch (bbu.battery_type) {
 	case MFI_BBU_TYPE_IBBU:
+	case MFI_BBU_TYPE_IBBU09:
 		mask = MFI_BBU_STATE_BAD_IBBU;
 		soh_bad = 0;
 		break;
@@ -3720,7 +3727,7 @@ mfii_bbu(struct mfii_softc *sc, envsys_data_t *edata)
 	}
 
 	status = le32toh(bbu.fw_status) & mask;
-	switch(edata->sensor) {
+	switch (edata->sensor) {
 	case 0:
 		edata->value_cur = (status || soh_bad) ? 0 : 1;
 		edata->state =
@@ -3741,7 +3748,7 @@ mfii_bbu(struct mfii_softc *sc, envsys_data_t *edata)
 	}
 }
 
-void
+static void
 mfii_refresh_ld_sensor(struct mfii_softc *sc, envsys_data_t *edata)
 {
 	struct bioc_vol bv;
@@ -3757,7 +3764,7 @@ mfii_refresh_ld_sensor(struct mfii_softc *sc, envsys_data_t *edata)
 	bio_vol_to_envsys(edata, &bv);
 }
 
-void
+static void
 mfii_init_ld_sensor(struct mfii_softc *sc, envsys_data_t *sensor, int i)
 {
 	sensor->units = ENVSYS_DRIVE;
@@ -3776,7 +3783,7 @@ mfii_attach_sensor(struct mfii_softc *sc, envsys_data_t *s)
 		    "failed to attach sensor %s\n", s->desc);
 }
 
-int
+static int
 mfii_create_sensors(struct mfii_softc *sc)
 {
 	int i, rv;
@@ -3845,10 +3852,10 @@ mfii_destroy_sensors(struct mfii_softc *sc)
 	sysmon_envsys_unregister(sc->sc_sme);
 	sc->sc_sme = NULL;
 	free(sc->sc_sensors, M_DEVBUF);
-	return 0;	
-}		
+	return 0;
+}
 
-void
+static void
 mfii_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct mfii_softc	*sc = sme->sme_cookie;
