@@ -1,4 +1,4 @@
-/*	$NetBSD: dtc-lexer.l,v 1.3 2017/06/08 16:00:40 skrll Exp $	*/
+/*	$NetBSD: dtc-lexer.l,v 1.3.8.1 2022/05/17 10:23:17 bouyer Exp $	*/
 
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
@@ -40,7 +40,7 @@ LINECOMMENT	"//".*\n
 #include "srcpos.h"
 #include "dtc-parser.h"
 
-YYLTYPE yylloc;
+extern YYLTYPE yylloc;
 extern bool treesource_error;
 
 /* CAUTION: this will stop working if we ever use yyless() or yyunput() */
