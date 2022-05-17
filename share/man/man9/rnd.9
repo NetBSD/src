@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.30 2022/03/19 11:54:53 riastradh Exp $
+.\"	$NetBSD: rnd.9,v 1.31 2022/05/17 01:39:57 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -171,6 +171,17 @@ issues calls to each source's
 .Fa callback
 in serial \(em it never issues two calls to the same source's callback
 at the same time in two differen threads or on two different CPUs.
+.Pp
+The callback may be invoked in thread context or soft interrupt
+context, up to
+.Dv SOFTINT_SERIAL ,
+and as such must follow the rules of soft interrupt handlers in
+.Xr softint 9
+\(em that is, the callback must never sleep, except on adaptive
+.Xr mutex 9
+locks at
+.Dv IPL_SOFTSERIAL .
+The callback will never be called in hard interrupt context.
 .It Fn rnd_attach_source "rnd_source" "devname" "type" "flags"
 Makes
 .Fa rnd_source
