@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.39 2020/06/22 16:39:56 maxv Exp $	*/
+/*	$NetBSD: pfil.c,v 1.40 2022/05/17 10:27:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.39 2020/06/22 16:39:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.40 2022/05/17 10:27:37 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -266,6 +266,8 @@ pfil_add_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 	KASSERT(func != NULL);
 	KASSERT((flags & ~PFIL_ALL) == 0);
 
+	ASSERT_SLEEPABLE();
+
 	for (u_int i = 0; i < __arraycount(pfil_flag_cases); i++) {
 		const int fcase = pfil_flag_cases[i];
 		pfil_listset_t *phlistset;
@@ -299,6 +301,8 @@ pfil_add_ihook(pfil_ifunc_t func, void *arg, int flags, pfil_head_t *ph)
 
 	KASSERT(func != NULL);
 	KASSERT(flags == PFIL_IFADDR || flags == PFIL_IFNET);
+
+	ASSERT_SLEEPABLE();
 
 	phlistset = pfil_hook_get(flags, ph);
 	return pfil_list_add(phlistset, (pfil_polyfunc_t)func, arg, flags);
@@ -364,6 +368,8 @@ pfil_remove_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 {
 	KASSERT((flags & ~PFIL_ALL) == 0);
 
+	ASSERT_SLEEPABLE();
+
 	for (u_int i = 0; i < __arraycount(pfil_flag_cases); i++) {
 		const int fcase = pfil_flag_cases[i];
 		pfil_listset_t *pflistset;
@@ -383,6 +389,9 @@ pfil_remove_ihook(pfil_ifunc_t func, void *arg, int flags, pfil_head_t *ph)
 	pfil_listset_t *pflistset;
 
 	KASSERT(flags == PFIL_IFADDR || flags == PFIL_IFNET);
+
+	ASSERT_SLEEPABLE();
+
 	pflistset = pfil_hook_get(flags, ph);
 	(void)pfil_list_remove(pflistset, (pfil_polyfunc_t)func, arg);
 	return 0;
