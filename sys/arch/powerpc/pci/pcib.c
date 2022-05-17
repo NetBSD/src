@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.10 2021/08/07 16:19:03 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.11 2022/05/17 05:05:20 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.10 2021/08/07 16:19:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11 2022/05/17 05:05:20 andvar Exp $");
 
 #include "isa.h"
 #include "isadma.h"
@@ -151,7 +151,7 @@ pcibattach(device_t parent, device_t self, void *aux)
 	 * us that the interrupt is MPIC 0, which is the bridge intr for
 	 * the 8259.
 	 * Additionally, sometimes the PCI Interrupt Routing Control Register
-	 * is improperly initialized, causing all sorts of wierd interrupt
+	 * is improperly initialized, causing all sorts of weird interrupt
 	 * issues on the machine.  The manual says it should default to
 	 * 0000h (index 45-44h) however it would appear that PPCBUG is
 	 * setting it up differently.  Reset it to 0000h.

@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.25 2022/05/08 06:38:58 skrll Exp $ */
+/* $NetBSD: spi.c,v 1.26 2022/05/17 05:05:20 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.25 2022/05/08 06:38:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.26 2022/05/17 05:05:20 andvar Exp $");
 
 #include "locators.h"
 
@@ -615,7 +615,7 @@ spi_done(struct spi_transfer *st, int err)
  *
  * spi_send_recv - sends data to the bus, and then receives.  Note that this is
  * done synchronously, i.e. send a command and get the response.  This is
- * not full duplex.  If you wnat full duplex, you can't use these convenience
+ * not full duplex.  If you want full duplex, you can't use these convenience
  * wrappers.
  */
 int

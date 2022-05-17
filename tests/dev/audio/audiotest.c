@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.19 2022/04/23 07:47:42 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.20 2022/05/17 05:05:20 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.19 2022/04/23 07:47:42 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.20 2022/05/17 05:05:20 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -3121,7 +3121,7 @@ DEF(poll_out_hiwat)
 
 /*
  * Unpause from buffer full, POLLOUT should raise.
- * XXX poll(2) on NetBSD7 is really incomplete and wierd.  I don't test it.
+ * XXX poll(2) on NetBSD7 is really incomplete and weird.  I don't test it.
  */
 DEF(poll_out_unpause)
 {
