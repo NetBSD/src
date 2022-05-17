@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.229 2022/04/08 10:17:52 andvar Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.230 2022/05/17 11:41:41 uwe Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1729,7 +1729,7 @@ altq)
 	;;
 
 wsfont)
-	mkdev wsfont c %wsfont_chr% 0
+	mkdev wsfont c %wsfont_chr% 0 644
 	;;
 
 cir[0-9]*)
