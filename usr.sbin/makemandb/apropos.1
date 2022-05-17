@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.21 2022/05/17 08:39:58 uwe Exp $
+.\" $NetBSD: apropos.1,v 1.22 2022/05/17 11:31:14 uwe Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -63,8 +63,12 @@ Quotes are optional for specifying multiword queries.
 .Pp
 It supports the following options:
 .Bl -tag -width Fl
-.It Fl [1-9]
-Search only within the specified section of manual pages.
+.It Fl 1 , No \&... , Fl 9
+Limit the search to the specified section of the manual.
+By default, pages from all sections are shown.
+These options are abbreviations for the
+.Fl s
+option for single digit sections.
 .It Fl C Ar path
 Use different
 .Xr man 1
@@ -95,12 +99,10 @@ Turn off formatting.
 Limit the search to the pages for the specified machine architecture.
 By default pages for all architectures are shown in the search results.
 .It Fl s Ar section
-Restrict the search to the specified section of the manual.
+Limit the search to the specified section of the manual.
 By default, pages from all sections are shown.
-This option is for backwards compatibility with the classic version of apropos,
-using it is equivalent to using the
-.Op 123456789
-options directly.
+For single digit sections you can use abbreviations:
+.Fl 1 , No \&... , Fl 9 .
 .El
 .Sh FILES
 .Bl -hang -width /etc/man.conf -compact
