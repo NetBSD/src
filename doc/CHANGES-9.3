@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.94 2022/05/17 12:11:08 bouyer Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.95 2022/05/17 13:49:43 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1663,4 +1663,9 @@ libexec/mail.local/mail.local.c			1.29
 
 	Thanks to Jan Schaumann for bringing this to our attention.
 	[kre, ticket #1455]
+
+common/lib/libc/atomic/atomic_c11_compare_exchange_cas_32.c 1.5
+
+	Fix the copy&paste error in ticket #1451.
+	[skrll, ticket #1453]
 
