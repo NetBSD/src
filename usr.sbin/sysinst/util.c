@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.66 2022/04/21 17:30:15 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.67 2022/05/18 16:39:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1225,7 +1225,7 @@ entropy_get_file(bool use_netbsd_seed, char *path)
 	case 2:
 #ifndef DEBUG
 		if (!network_up)
-			config_network();
+			config_network(0);
 #endif
 		server.xfer = rv == 1 ? XFER_HTTP : XFER_FTP;
 		arg.arg = &server;
@@ -1251,7 +1251,7 @@ entropy_get_file(bool use_netbsd_seed, char *path)
 	case 3:
 #ifndef DEBUG
 		if (!network_up)
-			config_network();
+			config_network(0);
 #endif
 		rv = -1;
 		msg_display_add_subst(MSG_entropy_via_nfs, 1, file_desc);

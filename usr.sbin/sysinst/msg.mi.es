@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.33 2022/05/16 18:44:38 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.34 2022/05/18 16:39:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1541,3 +1541,8 @@ message clone_target_hdr
 message clone_target_disp		{cloned partition(s)}
 message clone_src_done
 {Source selection OK, proceed to target selection}
+
+message network_ok
+{Your network seems to work fine. 
+Should we skip the configuration 
+and just use the network as-is?}
