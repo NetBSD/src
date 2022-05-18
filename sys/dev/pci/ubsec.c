@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.52 2020/06/14 23:22:09 riastradh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.53 2022/05/18 12:48:49 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.52 2020/06/14 23:22:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.53 2022/05/18 12:48:49 riastradh Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -1148,7 +1148,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 {
 	struct ubsec_q *q = NULL;
 	int err = 0, i, j, nicealign;
-	struct ubsec_softc *sc;
+	struct ubsec_softc *sc = arg;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
 	int encoffset = 0, macoffset = 0, cpskip, cpoffset;
 	int sskip, dskip, stheend, dtheend;
@@ -1158,13 +1158,6 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	u_int16_t flags = 0;
 	int ivlen = 0, keylen = 0;
 
-	sc = arg;
-	KASSERT(sc != NULL /*, ("ubsec_process: null softc")*/);
-
-	if (crp == NULL || crp->crp_callback == NULL || sc == NULL) {
-		ubsecstats.hst_invalid++;
-		return (EINVAL);
-	}
 	if (UBSEC_SESSION(crp->crp_sid) >= sc->sc_nsessions) {
 		ubsecstats.hst_badsession++;
 		return (EINVAL);
@@ -2402,13 +2395,8 @@ ubsec_kfree(struct ubsec_softc *sc, struct ubsec_q2 *q)
 static int
 ubsec_kprocess(void *arg, struct cryptkop *krp, int hint)
 {
-	struct ubsec_softc *sc;
+	struct ubsec_softc *sc = arg;
 	int r;
-
-	if (krp == NULL || krp->krp_callback == NULL)
-		return (EINVAL);
-	sc = arg;
-	KASSERT(sc != NULL /*, ("ubsec_kprocess: null softc")*/);
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_q2free)) {
 		struct ubsec_q2 *q;
