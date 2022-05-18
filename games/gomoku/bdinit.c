@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.13 2022/05/16 20:57:01 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.14 2022/05/18 21:45:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.13 2022/05/16 20:57:01 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.14 2022/05/18 21:45:40 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,16 +180,16 @@ init_overlap(void)
 	unsigned frameix;
 	int i, f, r, n, d1, d2;
 	int mask, bmask, vertex, s;
-	u_char *str;
+	u_char *op;
 	short *ip;
 
 	memset(overlap, 0, sizeof(overlap));
 	memset(intersect, 0, sizeof(intersect));
-	str = &overlap[FAREA * FAREA];
+	op = &overlap[FAREA * FAREA];
 	ip = &intersect[FAREA * FAREA];
 	for (frameix = FAREA; frameix-- > 0; ) {	/* each frame */
 	    cbp = &frames[frameix];
-	    str -= FAREA;
+	    op -= FAREA;
 	    ip -= FAREA;
 	    sp1 = &board[vertex = cbp->c_vertex];
 	    d1 = dd[r = cbp->c_dir];
@@ -215,36 +215,36 @@ init_overlap(void)
 			    continue;
 			n = (int)(sp2->s_frame[r] - frames);
 			ip[n] = vertex;
-			str[n] |= (f == 5) ? mask & 0xA : mask;
+			op[n] |= (f == 5) ? mask & 0xA : mask;
 			if (r == cbp->c_dir) {
 			    /* compute the multiple spot overlap values */
 			    switch (i) {
 			    case 0:	/* sp1 is the first spot in A */
 				if (f == 4)
-				    str[n] |= 0xA0;
+				    op[n] |= 0xA0;
 				else if (f != 5)
-				    str[n] |= 0xF0;
+				    op[n] |= 0xF0;
 				break;
 			    case 1:	/* sp1 is the second spot in A */
 				if (f == 5)
-				    str[n] |= 0xA0;
+				    op[n] |= 0xA0;
 				else
-				    str[n] |= 0xF0;
+				    op[n] |= 0xF0;
 				break;
 			    case 4:	/* sp1 is the penultimate spot in A */
 				if (f == 0)
-				    str[n] |= 0xC0;
+				    op[n] |= 0xC0;
 				else
-				    str[n] |= 0xF0;
+				    op[n] |= 0xF0;
 				break;
 			    case 5:	/* sp1 is the last spot in A */
 				if (f == 1)
-				    str[n] |= 0xC0;
+				    op[n] |= 0xC0;
 				else if (f != 0)
-				    str[n] |= 0xF0;
+				    op[n] |= 0xF0;
 				break;
 			    default:
-				str[n] |= 0xF0;
+				op[n] |= 0xF0;
 			    }
 			}
 		    }
