@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2022/05/16 21:53:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2022/05/18 19:29:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 2022/05/16 21:53:41 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2022/05/18 19:29:00 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,8 @@ main(int argc, char **argv)
 
 	/* Revoke setgid privileges */
 	setgid(getgid());
+
+	setprogname(argv[0]);
 
 	tmp = getlogin();
 	if (tmp != NULL) {
