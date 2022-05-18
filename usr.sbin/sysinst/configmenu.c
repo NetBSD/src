@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.16 2022/05/15 16:38:25 jmcneill Exp $ */
+/* $NetBSD: configmenu.c,v 1.17 2022/05/18 16:39:03 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ static int
 set_network(struct menudesc *menu, void *arg)
 {
 	network_up = 0;
-	if (config_network())
+	if (config_network(1))
 		mnt_net_config();
 	return 0;
 }

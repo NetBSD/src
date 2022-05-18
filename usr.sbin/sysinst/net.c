@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.42 2022/05/15 17:42:32 jmcneill Exp $	*/
+/*	$NetBSD: net.c,v 1.43 2022/05/18 16:39:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,10 @@
 #include <net/if_media.h>
 #include <netinet/in.h>
 #include <net80211/ieee80211_ioctl.h>
+#include <netinet/ip_var.h>
+#ifdef INET6
+#include <netinet6/ip6_var.h>
+#endif
 
 #include <err.h>
 #include <stdio.h>
@@ -224,6 +228,50 @@ static const char *ignored_if_names[] = {
 	/* XXX others? */
 	NULL,
 };
+
+static bool
+have_working_ipv4(void)
+{
+	uint64_t ipstats[IP_NSTATS];
+	size_t size = sizeof(ipstats);
+
+	/* At least some packets delivered to upper layers? */
+	if (sysctlbyname("net.inet.ip.stats", ipstats, &size, NULL, 0) == -1)
+		return false;
+	if (ipstats[IP_STAT_DELIVERED] < 10)	/* arbitrary threshold */
+		return false;
+
+	/* do we have a default route? */
+	if (run_program(RUN_SILENT|RUN_ERROR_OK,
+	    "/sbin/route  get -inet default") != 0)
+		return false;
+
+	return true;
+}
+
+#ifdef INET6
+static bool
+have_working_ipv6(void)
+{
+	uint64_t ipstats[IP6_NSTATS];
+	size_t size = sizeof(ipstats);
+
+	/* At least some packets delivered to upper layers? */
+	if (sysctlbyname("net.inet6.ip6.stats", ipstats, &size, NULL, 0) == -1)
+		return false;
+	if (ipstats[IP6_STAT_DELIVERED] < 10)	/* arbitrary threshold */
+		return false;
+
+	/* do we have a default route? */
+	if (run_program(RUN_SILENT|RUN_ERROR_OK,
+	    "/sbin/route  get -inet6 default") != 0)
+		return false;
+
+	return true;
+}
+#else
+#define	have_working_ipv6()	false
+#endif
 
 static int
 get_ifconfig_info(struct net_desc *devs)
@@ -483,7 +531,7 @@ handle_license(const char *dev)
  * make sure both the gateway and the name server are up.
  */
 int
-config_network(void)
+config_network(int force)
 {
 	char *textbuf;
 	int  octet0;
@@ -517,6 +565,13 @@ config_network(void)
 		/* No network interfaces found! */
 		hit_enter_to_continue(NULL, MSG_nonet);
 		return -1;
+	}
+
+	if (!force && (have_working_ipv4() || have_working_ipv6())) {
+		if (ask_yesno(MSG_network_ok)) {
+			network_up = 1;
+			return 1;
+		}
 	}
 
 	net_menu = calloc(num_devs, sizeof(*net_menu));
@@ -971,6 +1026,9 @@ int
 get_via_ftp(unsigned int xfer)
 {
 	arg_rv arg;
+
+	if (!network_up)
+		config_network(0);
 
 	arg.rv = -1;
 	arg.arg = (void*)(uintptr_t)(xfer);

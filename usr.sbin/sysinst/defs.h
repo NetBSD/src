@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.81 2022/04/21 17:30:15 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.82 2022/05/18 16:39:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -789,7 +789,7 @@ extern int network_up;
 extern char net_namesvr[STRSIZE];
 int	get_via_ftp(unsigned int);
 int	get_via_nfs(void);
-int	config_network(void);
+int	config_network(int force);
 void	mnt_net_config(void);
 void	make_url(char *, struct ftpinfo *, const char *);
 int	get_pkgsrc(void);
