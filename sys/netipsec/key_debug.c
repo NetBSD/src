@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.23 2019/01/27 02:08:48 pgoyette Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.24 2022/05/18 15:20:18 christos Exp $	*/
 /*	$FreeBSD: key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.23 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.24 2022/05/18 15:20:18 christos Exp $");
 #endif
 
 #if defined(_KERNEL_OPT)
@@ -90,7 +90,7 @@ static void kdebug_secreplay(const struct secreplay *);
 #endif
 
 #ifndef _KERNEL
-#define panic(...)	err(EXIT_FAILURE, __VA_ARGS__)
+#define panic(fmt, ...)	err(EXIT_FAILURE, fmt, __VA_ARGS__)
 #endif
 
 /* NOTE: host byte order */
