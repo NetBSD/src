@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.109 2022/05/18 20:02:49 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.110 2022/05/18 20:03:32 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.109 2022/05/18 20:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.110 2022/05/18 20:03:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -652,34 +652,15 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 
 	cv_init(&crp->crp_cv, "crydev");
 
-	/*
-	 * XXX there was a comment here which said that we went to
-	 * XXX splcrypto() but needed to only if CRYPTO_F_CBIMM,
-	 * XXX disabled on NetBSD since 1.6O due to a race condition.
-	 * XXX But crypto_dispatch went to splcrypto() itself!  (And
-	 * XXX now takes the cryptodev_mtx mutex itself).  We do, however,
-	 * XXX need to hold the mutex across the call to cv_wait().
-	 * XXX     (should we arrange for crypto_dispatch to return to
-	 * XXX      us with it held?  it seems quite ugly to do so.)
-	 */
-#ifdef notyet
-eagain:
-#endif
 	error = crypto_dispatch(crp);
 	mutex_enter(&cryptodev_mtx);
 
-	/* 
+	/*
 	 * Don't touch crp before returned by any error or received
 	 * cv_signal(&crp->crp_cv). It is required to restructure locks.
 	 */
 
 	switch (error) {
-#ifdef notyet	/* don't loop forever -- but EAGAIN not possible here yet */
-	case EAGAIN:
-		mutex_exit(&cryptodev_mtx);
-		goto eagain;
-		break;
-#endif
 	case 0:
 		break;
 	default:
@@ -1056,7 +1037,6 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
 	}
 }
 
-/* csefree: call with cryptodev_mtx held. */
 static int
 csefree(struct csession *cse)
 {
