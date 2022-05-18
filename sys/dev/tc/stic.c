@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.57 2021/08/17 22:00:32 andvar Exp $	*/
+/*	$NetBSD: stic.c,v 1.58 2022/05/18 13:56:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.57 2021/08/17 22:00:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.58 2022/05/18 13:56:32 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ stic_reset(struct stic_info *si)
 	DELAY(2000);			/* wait 2ms for STIC to respond. */
 	sr->sr_sticsr = 0x00000000;	/* Hit the STIC's csr again... */
 	tc_wmb();
-	sr->sr_buscsr = 0xffffffff;	/* and bash its bus-acess csr. */
+	sr->sr_buscsr = 0xffffffff;	/* and bash its bus-access csr. */
 	tc_wmb();
 	tc_syncbus();			/* Blam! */
 	DELAY(20000);			/* wait until the stic recovers... */

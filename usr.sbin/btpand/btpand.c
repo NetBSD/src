@@ -1,4 +1,4 @@
-/*	$NetBSD: btpand.c,v 1.7 2014/06/21 17:50:01 christos Exp $	*/
+/*	$NetBSD: btpand.c,v 1.8 2022/05/18 13:56:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008-2009 Iain Hibbert. All rights reserved.");
-__RCSID("$NetBSD: btpand.c,v 1.7 2014/06/21 17:50:01 christos Exp $");
+__RCSID("$NetBSD: btpand.c,v 1.8 2022/05/18 13:56:32 andvar Exp $");
 
 #include <sys/wait.h>
 
@@ -69,7 +69,7 @@ static const struct {
 	  "Personal Ad-hoc User Service"
 	},
 	{ "NAP",  SDP_SERVICE_CLASS_NAP,
-	  "Network Acess Point",
+	  "Network Access Point",
 	  "Personal Ad-hoc Network Service"
 	},
 	{ "GN",	  SDP_SERVICE_CLASS_GN,
