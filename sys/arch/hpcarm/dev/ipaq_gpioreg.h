@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_gpioreg.h,v 1.6 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: ipaq_gpioreg.h,v 1.7 2022/05/18 13:38:47 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -69,7 +69,7 @@ Extended GPIO
 9	O(H)	IR_ON		Enables power to IR module
 10	O(H)	AUD_ON		Enables power to audio output amp.
 11	O(H)	AUD_PWR_ON	Enables power to all audio modules.
-12	O(H)	QMUTE		Mutes yhe onboard audio codec
+12	O(H)	QMUTE		Mutes the onboard audio codec
 13	O	IR_FSEL		FIR mode selection:H=FIR,L=SIR
 14	O(H)	LCD_5V_ON	Enables 5V to the LCD module
 15	O(H)	LVDD_ON		Enables 9V and -6.5V to the LCD module
