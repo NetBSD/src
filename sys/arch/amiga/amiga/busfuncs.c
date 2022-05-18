@@ -1,4 +1,4 @@
-/*	$NetBSD: busfuncs.c,v 1.12 2011/07/19 15:55:26 dyoung Exp $	*/
+/*	$NetBSD: busfuncs.c,v 1.13 2022/05/18 13:56:31 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: busfuncs.c,v 1.12 2011/07/19 15:55:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: busfuncs.c,v 1.13 2022/05/18 13:56:31 andvar Exp $");
 
 /*
  * Amiga bus access methods for data widths > 1
@@ -208,7 +208,7 @@ amiga_contiguous_copy_region_2(bus_space_tag_t t, bus_space_handle_t srch, bus_s
 
 /*
  * Interleaved methods.
- * These use single-byte acceses. In case of stride = 0, the contiguous
+ * These use single-byte accesses. In case of stride = 0, the contiguous
  * methods are preferred, as they only create word accesses.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.69 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: segments.h,v 1.70 2022/05/18 13:56:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -247,7 +247,7 @@ struct idt_vec* idt_vec_ref(struct idt_vec *);
 #define SDT_MEMROD	20	/* memory read only expand dwn limit */
 #define SDT_MEMRODA	21	/* memory read only expand dwn limit accessed */
 #define SDT_MEMRWD	22	/* memory read write expand dwn limit */
-#define SDT_MEMRWDA	23	/* memory read write expand dwn limit acessed */
+#define SDT_MEMRWDA	23	/* memory read write expand dwn limit accessed */
 #define SDT_MEME	24	/* memory execute only */
 #define SDT_MEMEA	25	/* memory execute only accessed */
 #define SDT_MEMER	26	/* memory execute read */

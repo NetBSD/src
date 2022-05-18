@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.85 2021/02/24 16:42:38 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.86 2022/05/18 13:56:32 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -767,7 +767,7 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 	streg	%r30,(savearea+CPUSAVE_SRR1)(%r31);	/* save SRR1 */	\
 	mfmsr	%r30;							\
 	ori	%r30,%r30,(PSL_DR|PSL_IR);	/* turn on relocation */ \
-	mtmsr	%r30;			/* stack can be accesed now */	\
+	mtmsr	%r30;			/* stack can be accessed now */	\
 	isync;								\
 	mfsprg1	%r31;			/* get saved SP */		\
 	stregu	%r31,-FRAMELEN(%r1);	/* save it in the callframe */	\
@@ -1079,7 +1079,7 @@ _C_LABEL(sctrapexit):
 	streg	%r30,(savearea+CPUSAVE_SRR1)(%r31);	/* save SRR1 */	\
 	mfmsr	%r30;							\
 	ori	%r30,%r30,(PSL_DR|PSL_IR);	/* turn on relocation */ \
-	mtmsr	%r30;			/* stack can be accesed now */	\
+	mtmsr	%r30;			/* stack can be accessed now */	\
 	isync;								\
 	mfsprg1	%r31;			/* get saved SP */		\
 	stregu	%r31,-FRAMELEN(%r1);	/* save it in the callframe */	\
