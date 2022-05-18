@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.16 2022/05/15 22:56:20 rillig Exp $	*/
+/*	$NetBSD: stoc.c,v 1.17 2022/05/18 22:30:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-__RCSID("$NetBSD: stoc.c,v 1.16 2022/05/15 22:56:20 rillig Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.17 2022/05/18 22:30:19 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,9 +69,8 @@ const char *
 stoc(int s)
 {
 	static char buf[32];
-	int i;
 
-	for (i = 0; mv[i].m_code >= 0; i++)
+	for (int i = 0; mv[i].m_code >= 0; i++)
 		if (s == mv[i].m_code)
 			return mv[i].m_text;
 	snprintf(buf, sizeof(buf), "%c%d",
@@ -85,14 +84,13 @@ stoc(int s)
 int
 ctos(const char *mp)
 {
-	int i;
 
-	for (i = 0; mv[i].m_code >= 0; i++)
+	for (int i = 0; mv[i].m_code >= 0; i++)
 		if (strcmp(mp, mv[i].m_text) == 0)
 			return mv[i].m_code;
 	if (!isalpha((unsigned char)mp[0]))
 		return ILLEGAL;
-	i = atoi(&mp[1]);
+	int i = atoi(&mp[1]);
 	if (i < 1 || i > 19)
 		return ILLEGAL;
 	return PT(lton((unsigned char)mp[0]), i);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.33 2022/05/16 21:48:45 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.34 2022/05/18 22:30:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.33 2022/05/16 21:48:45 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.34 2022/05/18 22:30:19 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,6 @@ pickmove(int us)
 {
 	struct spotstr *sp, *sp1, *sp2;
 	union comboval *Ocp, *Tcp;
-	unsigned pos;
 	int m;
 
 	/* first move is easy */
@@ -102,7 +101,7 @@ pickmove(int us)
 		return PT((BSZ + 1) / 2, (BSZ + 1) / 2);
 
 	/* initialize all the board values */
-	for (pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
+	for (unsigned pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
 		sp->s_combo[BLACK].s = MAXCOMBO + 1;
 		sp->s_combo[WHITE].s = MAXCOMBO + 1;
@@ -121,7 +120,7 @@ pickmove(int us)
 	scanframes(WHITE);
 
 	/* find the spot with the highest value */
-	pos = PT(BSZ, BSZ);
+	unsigned pos = PT(BSZ, BSZ);
 	sp1 = sp2 = &board[pos];
 	for ( ; pos-- > PT(1, 1); ) {
 		sp = &board[pos];
@@ -237,10 +236,9 @@ scanframes(int color)
 	struct combostr *cbp, *ecbp;
 	struct spotstr *sp;
 	union comboval *cp;
-	struct elist *ep, *nep;
+	struct elist *nep;
 	int i, r, d, n;
 	union comboval cb;
-	unsigned pos;
 
 	curcolor = color;
 
@@ -350,9 +348,9 @@ scanframes(int color)
 	}
 
 	/* scan for combos at empty spots */
-	for (pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
+	for (unsigned pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
-		for (ep = sp->s_empty; ep != NULL; ep = nep) {
+		for (struct elist *ep = sp->s_empty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
 				if (cbp->c_combo.s != sp->s_combo[color].s) {
@@ -366,7 +364,7 @@ scanframes(int color)
 			elistcnt--;
 		}
 		sp->s_empty = (struct elist *)0;
-		for (ep = sp->s_nempty; ep != NULL; ep = nep) {
+		for (struct elist *ep = sp->s_nempty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
 				if (cbp->c_combo.s != sp->s_combo[color].s) {
@@ -420,7 +418,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 {
 	struct spotstr *fsp;
 	struct combostr *ncbp;
-	int f, r, d, c;
+	int d, c;
 	int baseB, fcnt, emask, bmask, n;
 	union comboval ocb, fcb;
 	struct combostr **scbpp, *fcbp;
@@ -431,7 +429,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	baseB = ocb.c.a + ocb.c.b - 1;
 	fcnt = ocb.c.a - 2;
 	emask = fcnt != 0 ? ((ocb.c.b != 0 ? 0x1E : 0x1F) & ~(1 << off)) : 0;
-	for (r = 4; --r >= 0; ) {			/* for each direction */
+	for (int r = 4; --r >= 0; ) {		/* for each direction */
 	    /* don't include frames that overlap in the same direction */
 	    if (r == ocbp->c_dir)
 		continue;
@@ -444,7 +442,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	     */
 	    bmask = (BFLAG | FFLAG | MFLAG) << r;
 	    fsp = osp;
-	    for (f = 0; f < 5; f++, fsp -= d) {		/* for each frame */
+	    for (int f = 0; f < 5; f++, fsp -= d) {	/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    break;
 		if ((fsp->s_flags & bmask) != 0)
@@ -550,19 +548,18 @@ addframes(int level)
 {
 	struct combostr *cbp, *ecbp;
 	struct spotstr *sp, *fsp;
-	struct elist *ep, *nep;
+	struct elist *nep;
 	int i, r, d;
 	struct combostr **cbpp, *pcbp;
 	union comboval fcb, cb;
-	unsigned pos;
 
 	curlevel = level;
 
 	/* scan for combos at empty spots */
 	i = curcolor;
-	for (pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
+	for (unsigned pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
-		for (ep = sp->s_empty; ep != NULL; ep = nep) {
+		for (struct elist *ep = sp->s_empty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[i].s) {
 				if (cbp->c_combo.s != sp->s_combo[i].s) {
@@ -652,9 +649,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 {
 	struct combostr *cbp, *ncbp;
 	struct spotstr *sp;
-	struct elist *ep;
 	int n, c;
-	struct elist *nep;
 	struct combostr **scbpp;
 	int baseB, fcnt, emask, verts;
 	union comboval ocb;
@@ -674,7 +669,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	baseB = ocb.c.a + ocb.c.b - 1;
 	fcnt = ocb.c.a - 2;
 	emask = fcnt != 0 ? ((ocb.c.b != 0 ? 0x1E : 0x1F) & ~(1 << off)) : 0;
-	for (ep = osp->s_empty; ep != NULL; ep = ep->e_next) {
+	for (struct elist *ep = osp->s_empty; ep != NULL; ep = ep->e_next) {
 	    /* check for various kinds of overlap */
 	    cbp = ep->e_combo;
 	    verts = checkframes(cbp, ocbp, osp, s, vertices);
@@ -697,7 +692,8 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 		 * of the completion spots of the combostr
 		 * we are trying to attach the frame to.
 		 */
-		for (nep = sp->s_empty; nep != NULL; nep = nep->e_next) {
+		for (struct elist *nep = sp->s_empty;
+			nep != NULL; nep = nep->e_next) {
 		    if (nep->e_combo == cbp)
 			goto fnd;
 		    if (nep->e_combo->c_nframes < cbp->c_nframes)
@@ -963,7 +959,7 @@ updatecombo(struct combostr *cbp, int color)
 {
 	struct spotstr *sp;
 	struct combostr *tcbp;
-	int i, d;
+	int d;
 	int nframes, flags, s;
 	union comboval cb;
 
@@ -993,7 +989,7 @@ updatecombo(struct combostr *cbp, int color)
 			/* update the board values for each spot in frame */
 			sp = &board[s = tcbp->c_vertex];
 			d = dd[tcbp->c_dir];
-			i = (flags & C_OPEN_1) != 0 ? 6 : 5;
+			int i = (flags & C_OPEN_1) != 0 ? 6 : 5;
 			for (; --i >= 0; sp += d, s += d) {
 				if (sp->s_occ != EMPTY)
 					continue;
@@ -1017,7 +1013,7 @@ updatecombo(struct combostr *cbp, int color)
 		/* update the board values for each spot in frame */
 		sp = &board[s = cbp->c_vertex];
 		d = dd[cbp->c_dir];
-		i = (flags & C_OPEN_0) != 0 ? 6 : 5;
+		int i = (flags & C_OPEN_0) != 0 ? 6 : 5;
 		for (; --i >= 0; sp += d, s += d) {
 			if (sp->s_occ != EMPTY)
 				continue;
