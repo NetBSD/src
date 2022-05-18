@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.110 2022/05/18 20:03:32 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.111 2022/05/18 20:03:45 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.110 2022/05/18 20:03:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.111 2022/05/18 20:03:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,7 +653,6 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	cv_init(&crp->crp_cv, "crydev");
 
 	error = crypto_dispatch(crp);
-	mutex_enter(&cryptodev_mtx);
 
 	/*
 	 * Don't touch crp before returned by any error or received
@@ -665,11 +664,11 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		break;
 	default:
 		DPRINTF("not waiting, error.\n");
-		mutex_exit(&cryptodev_mtx);
 		cv_destroy(&crp->crp_cv);
 		goto bail;
 	}
 
+	mutex_enter(&cryptodev_mtx);
 	while (!(crp->crp_devflags & CRYPTODEV_F_RET)) {
 		DPRINTF("cse->sid[%d]: sleeping on cv %p for crp %p\n",
 			(uint32_t)cse->sid, &crp->crp_cv, crp);
