@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.h,v 1.10 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$NetBSD: key_debug.h,v 1.11 2022/05/18 15:20:18 christos Exp $	*/
 /*	$FreeBSD: key_debug.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.h,v 1.10 2001/08/05 08:37:52 itojun Exp $	*/
 
@@ -60,8 +60,8 @@
 #define KEYDEBUG_PRINTF(lev, fmt, ...)				\
 	do {							\
 		if (KEYDEBUG_ON((lev)))				\
-			log(LOG_DEBUG, "%s: " fmt, __func__,	\
-			    __VA_ARGS__);			\
+			log(LOG_DEBUG, "%s: " fmt, __func__	\
+			    __VA_OPT__(,) __VA_ARGS__);		\
 	} while (0)
 
 extern u_int32_t key_debug_level;

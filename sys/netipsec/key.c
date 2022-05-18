@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.273 2022/01/02 20:28:53 andvar Exp $	*/
+/*	$NetBSD: key.c,v 1.274 2022/05/18 15:20:18 christos Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.273 2022/01/02 20:28:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.274 2022/05/18 15:20:18 christos Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -700,9 +700,9 @@ static void key_init_sav(struct secasvar *);
 static void key_wait_sav(struct secasvar *);
 static void key_destroy_sav(struct secasvar *);
 static struct secasvar *key_newsav(struct mbuf *,
-	const struct sadb_msghdr *, int *, const char*, int);
-#define	KEY_NEWSAV(m, sadb, e)				\
-	key_newsav(m, sadb, e, __func__, __LINE__)
+	const struct sadb_msghdr *, int *, int, const char*, int);
+#define	KEY_NEWSAV(m, sadb, e, proto)				\
+	key_newsav(m, sadb, e, proto, __func__, __LINE__)
 static void key_delsav (struct secasvar *);
 static struct secashead *key_getsah(const struct secasindex *, int);
 static struct secashead *key_getsah_ref(const struct secasindex *, int);
@@ -1288,8 +1288,11 @@ key_lookup_sa(
 		}
 	}
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP from %s:%u check_spi=%d, check_alg=%d\n",
-	    where, tag, must_check_spi, must_check_alg);
+	    "DP from %s:%u check_spi=%d(%#x), check_alg=%d(%d), proto=%d\n",
+	    where, tag,
+	    must_check_spi, ntohl(spi),
+	    must_check_alg, algo,
+	    proto);
 
 
 	/*
@@ -3279,7 +3282,7 @@ key_destroy_sah(struct secashead *sah)
  */
 static struct secasvar *
 key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
-    int *errp, const char* where, int tag)
+    int *errp, int proto, const char* where, int tag)
 {
 	struct secasvar *newsav;
 	const struct sadb_sa *xsa;
@@ -3339,7 +3342,8 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	newsav->pid = mhp->msg->sadb_msg_pid;
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
-	    "DP from %s:%u return SA:%p\n", where, tag, newsav);
+	    "DP from %s:%u return SA:%p spi=%#x proto=%d\n",
+	    where, tag, newsav, ntohl(newsav->spi), proto);
 	return newsav;
 
 error:
@@ -4679,75 +4683,103 @@ key_spidx_match_withmask(
 	if (spidx0->src.sa.sa_family != spidx1->src.sa.sa_family ||
 	    spidx0->dst.sa.sa_family != spidx1->dst.sa.sa_family ||
 	    spidx0->src.sa.sa_len != spidx1->src.sa.sa_len ||
-	    spidx0->dst.sa.sa_len != spidx1->dst.sa.sa_len)
+	    spidx0->dst.sa.sa_len != spidx1->dst.sa.sa_len) {
+		KEYDEBUG_PRINTF(KEYDEBUG_MATCH, ".sa wrong\n");
 		return 0;
+	}
 
 	/* if spidx.ul_proto == IPSEC_ULPROTO_ANY, ignore. */
 	if (spidx0->ul_proto != (u_int16_t)IPSEC_ULPROTO_ANY &&
-	    spidx0->ul_proto != spidx1->ul_proto)
+	    spidx0->ul_proto != spidx1->ul_proto) {
+		KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "proto wrong\n");
 		return 0;
+	}
 
 	switch (spidx0->src.sa.sa_family) {
 	case AF_INET:
 		if (spidx0->src.sin.sin_port != IPSEC_PORT_ANY &&
-		    spidx0->src.sin.sin_port != spidx1->src.sin.sin_port)
+		    spidx0->src.sin.sin_port != spidx1->src.sin.sin_port) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v4 src port wrong\n");
 			return 0;
+		}
 		if (!key_bb_match_withmask(&spidx0->src.sin.sin_addr,
-		    &spidx1->src.sin.sin_addr, spidx0->prefs))
+					   &spidx1->src.sin.sin_addr, spidx0->prefs)) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v4 src addr wrong\n");
 			return 0;
+		}
 		break;
 	case AF_INET6:
 		if (spidx0->src.sin6.sin6_port != IPSEC_PORT_ANY &&
-		    spidx0->src.sin6.sin6_port != spidx1->src.sin6.sin6_port)
+		    spidx0->src.sin6.sin6_port != spidx1->src.sin6.sin6_port) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v6 src port wrong\n");
 			return 0;
+		}
 		/*
 		 * scope_id check. if sin6_scope_id is 0, we regard it
 		 * as a wildcard scope, which matches any scope zone ID.
 		 */
 		if (spidx0->src.sin6.sin6_scope_id &&
 		    spidx1->src.sin6.sin6_scope_id &&
-		    spidx0->src.sin6.sin6_scope_id != spidx1->src.sin6.sin6_scope_id)
+		    spidx0->src.sin6.sin6_scope_id != spidx1->src.sin6.sin6_scope_id) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v6 src scope wrong\n");
 			return 0;
+		}
 		if (!key_bb_match_withmask(&spidx0->src.sin6.sin6_addr,
-		    &spidx1->src.sin6.sin6_addr, spidx0->prefs))
+		    &spidx1->src.sin6.sin6_addr, spidx0->prefs)) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v6 src addr wrong\n");
 			return 0;
+		}
 		break;
 	default:
 		/* XXX */
-		if (memcmp(&spidx0->src, &spidx1->src, spidx0->src.sa.sa_len) != 0)
+		if (memcmp(&spidx0->src, &spidx1->src, spidx0->src.sa.sa_len) != 0) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "src memcmp wrong\n");
 			return 0;
+		}
 		break;
 	}
 
 	switch (spidx0->dst.sa.sa_family) {
 	case AF_INET:
 		if (spidx0->dst.sin.sin_port != IPSEC_PORT_ANY &&
-		    spidx0->dst.sin.sin_port != spidx1->dst.sin.sin_port)
+		    spidx0->dst.sin.sin_port != spidx1->dst.sin.sin_port) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v4 dst port wrong\n");
 			return 0;
+		}
 		if (!key_bb_match_withmask(&spidx0->dst.sin.sin_addr,
-		    &spidx1->dst.sin.sin_addr, spidx0->prefd))
+		    &spidx1->dst.sin.sin_addr, spidx0->prefd)) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v4 dst addr wrong\n");
 			return 0;
+		}
 		break;
 	case AF_INET6:
 		if (spidx0->dst.sin6.sin6_port != IPSEC_PORT_ANY &&
-		    spidx0->dst.sin6.sin6_port != spidx1->dst.sin6.sin6_port)
+		    spidx0->dst.sin6.sin6_port != spidx1->dst.sin6.sin6_port) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v6 dst port wrong\n");
 			return 0;
+		}
 		/*
 		 * scope_id check. if sin6_scope_id is 0, we regard it
 		 * as a wildcard scope, which matches any scope zone ID.
 		 */
 		if (spidx0->src.sin6.sin6_scope_id &&
 		    spidx1->src.sin6.sin6_scope_id &&
-		    spidx0->dst.sin6.sin6_scope_id != spidx1->dst.sin6.sin6_scope_id)
+		    spidx0->dst.sin6.sin6_scope_id != spidx1->dst.sin6.sin6_scope_id) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "DP v6 dst scope wrong\n");
 			return 0;
+		}
 		if (!key_bb_match_withmask(&spidx0->dst.sin6.sin6_addr,
-		    &spidx1->dst.sin6.sin6_addr, spidx0->prefd))
+		    &spidx1->dst.sin6.sin6_addr, spidx0->prefd)) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "v6 dst addr wrong\n");
 			return 0;
+		}
 		break;
 	default:
 		/* XXX */
-		if (memcmp(&spidx0->dst, &spidx1->dst, spidx0->dst.sa.sa_len) != 0)
+		if (memcmp(&spidx0->dst, &spidx1->dst, spidx0->dst.sa.sa_len) != 0) {
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH, "dst memcmp wrong\n");
 			return 0;
+		}
 		break;
 	}
 
@@ -5402,7 +5434,7 @@ key_api_getspi(struct socket *so, struct mbuf *m,
 
 	/* get a new SA */
 	/* XXX rewrite */
-	newsav = KEY_NEWSAV(m, mhp, &error);
+	newsav = KEY_NEWSAV(m, mhp, &error, proto);
 	if (newsav == NULL) {
 		key_sah_unref(sah);
 		/* XXX don't free new SA index allocated in above. */
@@ -5818,6 +5850,10 @@ key_api_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	newsav->created = sav->created;
 	newsav->pid = sav->pid;
 	newsav->sah = sav->sah;
+ 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP from %s:%u update SA:%p to SA:%p spi=%#x proto=%d\n",
+	    __func__, __LINE__, sav, newsav,
+	    ntohl(newsav->spi), proto);
 
 	error = key_setsaval(newsav, m, mhp);
 	if (error) {
@@ -6031,7 +6067,7 @@ key_api_add(struct socket *so, struct mbuf *m,
     }
 
 	/* create new SA entry. */
-	newsav = KEY_NEWSAV(m, mhp, &error);
+	newsav = KEY_NEWSAV(m, mhp, &error, proto);
 	if (newsav == NULL)
 		goto error;
 	newsav->sah = sah;
