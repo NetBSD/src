@@ -1,5 +1,5 @@
 /*	$KAME: sctp_constants.h,v 1.17 2005/03/06 16:04:17 itojun Exp $	*/
-/*	$NetBSD: sctp_constants.h,v 1.3 2022/01/01 08:34:35 msaitoh Exp $ */
+/*	$NetBSD: sctp_constants.h,v 1.4 2022/05/18 13:37:52 andvar Exp $ */
 
 #ifndef __SCTP_CONSTANTS_H__
 #define __SCTP_CONSTANTS_H__
@@ -755,7 +755,7 @@
  * course the overhead of the next pointer as well). Using 15 as
  * an example will yield * ((8 * 15) + 8) or 128 bytes of overhead
  * for each timewait block that gets initialized. Increasing it to
- * 31 would yeild 256 bytes per block.
+ * 31 would yield 256 bytes per block.
  */
 /* Undef the following turns on per EP behavior */
 #define SCTP_VTAG_TIMEWAIT_PER_STACK 1
