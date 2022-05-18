@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.24 2020/11/04 14:29:40 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.25 2022/05/18 16:39:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ menu utility, title MSG_NetBSD_VERSION_Utilities, exit,
 		action {
 			extern int network_up;
 			network_up = 0;
-			config_network();
+			config_network(1);
 		};
 	option MSG_Partition_a_disk,
 		action {
@@ -407,7 +407,7 @@ menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 		action {
 			extern int network_up;
 			network_up = 0;
-			config_network();
+			config_network(1);
 		};
 	option MSG_exit_menu_generic, exit, action { ((arg_rv*)arg)->rv = SET_RETRY; };
 
@@ -428,7 +428,7 @@ menu nfssource, y=-4, x=0, w=70, no box, no clear,
 		action {
 			extern int network_up;
 			network_up = 0;
-			config_network();
+			config_network(1);
 		};
 	option MSG_exit_menu_generic, exit, action { *((int*)arg) = SET_RETRY; };
 
@@ -593,7 +593,7 @@ menu binpkg, y=-4, x=0, w=70, no box, no clear,
 		action {
 			extern int network_up;
 			network_up = 0;
-			config_network();
+			config_network(1);
 			mnt_net_config();
 		};
 	option {src_legend(menu, MSG_transfer_method, url_proto(pkg.xfer));},

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.39 2022/05/16 18:44:38 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.40 2022/05/18 16:39:03 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1478,3 +1478,8 @@ message clone_target_hdr
 message clone_target_disp		{cloned partition(s)}
 message clone_src_done
 {Source selection OK, proceed to target selection}
+
+message network_ok
+{Your network seems to work fine. 
+Should we skip the configuration 
+and just use the network as-is?}
