@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_160.c,v 1.7 2022/05/18 19:25:12 rillig Exp $	*/
+/*	$NetBSD: msg_160.c,v 1.8 2022/05/18 20:10:11 rillig Exp $	*/
 # 3 "msg_160.c"
 
 // Test for message: operator '==' found where '=' was expected [160]
@@ -68,8 +68,6 @@ assignment_in_comma_expression(int len)
 	 * comma is a preparation, most often an assignment, and the
 	 * right-hand operand of the comma is the actual condition.
 	 */
-	/* FIXME: The following code is totally fine. */
-	/* expect+1: warning: operator '==' found where '=' was expected [160] */
 	if (len = 3 * len + 1, len == 0)
 		return;
 
@@ -86,8 +84,6 @@ assignment_in_comma_expression(int len)
 	 * In this case the parentheses are redundant, it's quite possible
 	 * that they come from a macro expansion though.
 	 */
-	/* FIXME: The following code is totally fine. */
-	/* expect+1: warning: operator '==' found where '=' was expected [160] */
 	if ((len = 3 * len + 1, len == 0))
 		return;
 
@@ -97,8 +93,6 @@ assignment_in_comma_expression(int len)
 	 * parentheses must therefore not be interpreted as changing the
 	 * intention from a condition to an assignment.
 	 */
-	/* FIXME: The following code is totally fine. */
-	/* expect+1: warning: operator '==' found where '=' was expected [160] */
 	if ((len = 3 * len + 1, len == 0) && len < 2)
 		return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.440 2022/05/18 20:01:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.441 2022/05/18 20:10:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.440 2022/05/18 20:01:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.441 2022/05/18 20:10:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4274,7 +4274,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 		check_expr_misc(rn, cvctx, ccond, eq, false, false, szof);
 		break;
 	case COMMA:
-		check_expr_misc(rn, vctx, cond, eq, false, false, szof);
+		check_expr_misc(rn, vctx, cond, false, false, false, szof);
 		break;
 	default:
 		if (mp->m_binary)
