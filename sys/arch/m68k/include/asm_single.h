@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_single.h,v 1.9 2009/10/20 19:10:12 snj Exp $	*/
+/*	$NetBSD: asm_single.h,v 1.10 2022/05/18 13:56:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -30,7 +30,7 @@
 /*
  * Provide bit manipulation macro's that resolve to a single instruction.
  * These can be considered atomic on single processor architectures when
- * no page faults can occur when acessing <var>.
+ * no page faults can occur when accessing <var>.
  * There primary use is to avoid race conditions when manipulating device
  * registers.
  */
