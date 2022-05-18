@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.15 2022/05/18 22:30:19 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.16 2022/05/18 22:35:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.15 2022/05/18 22:30:19 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.16 2022/05/18 22:35:13 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ bdinit(struct spotstr *bp)
 				}
 			}
 			/*
-			 * Allocate a frame structure for non blocked frames.
+			 * Allocate a frame structure for non-blocked frames.
 			 */
 			for (int r = 4; --r >= 0; ) {
 				if ((sp->s_flags & (BFLAG << r)) != 0)
@@ -158,7 +158,7 @@ bdinit(struct spotstr *bp)
  * Initialize the overlap array.
  * Each entry in the array is a bit mask with eight bits corresponding
  * to whether frame B overlaps frame A (as indexed by overlap[A * FAREA + B]).
- * The eight bits coorespond to whether A and B are open ended (length 6) or
+ * The eight bits correspond to whether A and B are open-ended (length 6) or
  * closed (length 5).
  *	0	A closed and B closed
  *	1	A closed and B open
@@ -174,45 +174,40 @@ bdinit(struct spotstr *bp)
 static void
 init_overlap(void)
 {
-	struct spotstr *sp1, *sp2;
-	struct combostr *cbp;
-	int n, d1, d2;
-	int mask, bmask, vertex, s;
-	u_char *op;
-	short *ip;
 
 	memset(overlap, 0, sizeof(overlap));
 	memset(intersect, 0, sizeof(intersect));
-	op = &overlap[FAREA * FAREA];
-	ip = &intersect[FAREA * FAREA];
+	u_char *op = &overlap[FAREA * FAREA];
+	short *ip = &intersect[FAREA * FAREA];
+
 	for (unsigned fi = FAREA; fi-- > 0; ) {	/* each frame */
-	    cbp = &frames[fi];
+	    struct combostr *cbp = &frames[fi];
 	    op -= FAREA;
 	    ip -= FAREA;
-	    sp1 = &board[vertex = cbp->c_vertex];
-	    d1 = dd[cbp->c_dir];
+	    int vertex = cbp->c_vertex;
+	    struct spotstr *sp1 = &board[vertex];
+	    int d1 = dd[cbp->c_dir];
 	    /*
 	     * s = 5 if closed, 6 if open.
 	     * At this point black & white are the same.
 	     */
-	    s = 5 + sp1->s_fval[BLACK][cbp->c_dir].c.b;
+	    int s = 5 + sp1->s_fval[BLACK][cbp->c_dir].c.b;
 	    /* for each spot in frame A */
 	    for (int i = 0; i < s; i++, sp1 += d1, vertex += d1) {
 		/* the sixth spot in frame A only overlaps if it is open */
-		mask = (i == 5) ? 0xC : 0xF;
+		int mask = (i == 5) ? 0xC : 0xF;
 		/* for each direction */
 		for (int r = 4; --r >= 0; ) {
-		    bmask = BFLAG << r;
-		    sp2 = sp1;
-		    d2 = dd[r];
+		    struct spotstr *sp2 = sp1;
+		    int d2 = dd[r];
 		    /* for each frame that intersects at spot sp1 */
 		    for (int f = 0; f < 6; f++, sp2 -= d2) {
 			if (sp2->s_occ == BORDER)
 			    break;
-			if ((sp2->s_flags & bmask) != 0)
+			if ((sp2->s_flags & BFLAG << r) != 0)
 			    continue;
-			n = (int)(sp2->s_frame[r] - frames);
-			ip[n] = vertex;
+			int n = (int)(sp2->s_frame[r] - frames);
+			ip[n] = (short)vertex;
 			op[n] |= (f == 5) ? mask & 0xA : mask;
 			if (r == cbp->c_dir) {
 			    /* compute the multiple spot overlap values */
