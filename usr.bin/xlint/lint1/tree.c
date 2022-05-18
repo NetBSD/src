@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.439 2022/04/30 22:31:23 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.440 2022/05/18 20:01:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.439 2022/04/30 22:31:23 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.440 2022/05/18 20:01:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -788,15 +788,28 @@ is_null_pointer(const tnode_t *tn)
 static bool
 typeok_point(const tnode_t *ln, const type_t *ltp, tspec_t lt)
 {
-	if (lt == FUNC || lt == VOID || ltp->t_bitfield ||
-	    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue)) {
-		/* With allow_c90 we already got an error */
-		if (!allow_c90)
-			/* unacceptable operand of '%s' */
-			error(111, op_name(POINT));
-		return false;
-	}
-	return true;
+	if (is_struct_or_union(lt))
+		return true;
+
+	if (lt == FUNC || lt == VOID || ltp->t_bitfield)
+		goto wrong;
+
+	/*
+	 * Some C dialects from before C90 tolerated any lvalue on the
+	 * left-hand side of the '.' operator, allowing things like
+	 * char st[100]; st.st_mtime, assuming that the member 'st_mtime'
+	 * only occurred in a single struct; see typeok_arrow.
+	 */
+	if (ln->tn_lvalue)
+		return true;
+
+wrong:
+	/* With allow_c90 we already got an error */
+	if (!allow_c90)
+		/* unacceptable operand of '%s' */
+		error(111, op_name(POINT));
+
+	return false;
 }
 
 static bool
@@ -4196,6 +4209,20 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 	return true;
 }
 
+/*
+ *	vctx			???
+ *	cond			whether the expression is a condition that
+ *				will be compared with 0
+ *	eqwarn			whether the operator '==' might be a
+ *				misspelled '='
+ *	fcall			whether the expression is a function call
+ *	retval_discarded	whether the return value of a function call
+ *				is discarded; such calls will be analyzed by
+ *				lint2 in messages 4, 8 and 9
+ *	szof			whether the expression is part of a sizeof
+ *				expression, which means that its value is
+ *				discarded since only the type is relevant
+ */
 void
 check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 		bool eqwarn, bool fcall, bool retval_discarded, bool szof)
