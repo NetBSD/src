@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_160.c,v 1.6 2021/10/09 21:25:39 rillig Exp $	*/
+/*	$NetBSD: msg_160.c,v 1.7 2022/05/18 19:25:12 rillig Exp $	*/
 # 3 "msg_160.c"
 
 // Test for message: operator '==' found where '=' was expected [160]
@@ -57,14 +57,48 @@ unparenthesized(int a, int b, int c, _Bool z)
 	eval(a == (b == c));
 }
 
-/* Seen in bin/csh/dir.c 1.35 from 2020-08-09, line 223. */
 void
-assignment_in_comma_expression(void)
+assignment_in_comma_expression(int len)
 {
-	int len;
 
+	/*
+	 * No extra parentheses, just a comma operator.
+	 *
+	 * The usual interpretation is that the left-hand operand of the
+	 * comma is a preparation, most often an assignment, and the
+	 * right-hand operand of the comma is the actual condition.
+	 */
 	/* FIXME: The following code is totally fine. */
 	/* expect+1: warning: operator '==' found where '=' was expected [160] */
-	if ((len = 3, len == 0))
+	if (len = 3 * len + 1, len == 0)
+		return;
+
+	/* Seen in bin/csh/dir.c 1.35 from 2020-08-09, line 223. */
+	/*
+	 * The extra parentheses are typically used to inform the compiler
+	 * that an assignment using '=' is intentional, in particular it is
+	 * not a typo of the comparison operator '=='.
+	 *
+	 * The comma operator in a condition is seldom used, which makes it
+	 * reasonable to assume that the code author selected the operators
+	 * on purpose.
+	 *
+	 * In this case the parentheses are redundant, it's quite possible
+	 * that they come from a macro expansion though.
+	 */
+	/* FIXME: The following code is totally fine. */
+	/* expect+1: warning: operator '==' found where '=' was expected [160] */
+	if ((len = 3 * len + 1, len == 0))
+		return;
+
+	/*
+	 * If the comma expression is part of a larger expression, the
+	 * parentheses are required to mark the operator precedence.  The
+	 * parentheses must therefore not be interpreted as changing the
+	 * intention from a condition to an assignment.
+	 */
+	/* FIXME: The following code is totally fine. */
+	/* expect+1: warning: operator '==' found where '=' was expected [160] */
+	if ((len = 3 * len + 1, len == 0) && len < 2)
 		return;
 }
