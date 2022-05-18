@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.111 2022/05/18 20:03:45 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.112 2022/05/18 20:03:58 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.111 2022/05/18 20:03:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.112 2022/05/18 20:03:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -647,22 +647,12 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 			error = EINVAL;
 			goto bail;
 		}
-		crp->crp_mac=cse->tmp_mac;
+		crp->crp_mac = cse->tmp_mac;
 	}
 
 	cv_init(&crp->crp_cv, "crydev");
-
 	error = crypto_dispatch(crp);
-
-	/*
-	 * Don't touch crp before returned by any error or received
-	 * cv_signal(&crp->crp_cv). It is required to restructure locks.
-	 */
-
-	switch (error) {
-	case 0:
-		break;
-	default:
+	if (error) {
 		DPRINTF("not waiting, error.\n");
 		cv_destroy(&crp->crp_cv);
 		goto bail;
