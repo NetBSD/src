@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.27 2022/05/16 22:03:16 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.28 2022/05/18 22:30:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.27 2022/05/16 22:03:16 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.28 2022/05/18 22:30:19 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,22 +98,21 @@ cursfini(void)
 void
 bdisp_init(void)
 {
-	int i, j;
 
 	/* top border */
-	for (i = 1; i < BSZ + 1; i++) {
+	for (int i = 1; i < BSZ + 1; i++) {
 		move(0, 2 * i + 1);
 		addch(letters[i]);
 	}
 	/* left and right edges */
-	for (j = BSZ + 1; --j > 0; ) {
+	for (int j = BSZ + 1; --j > 0; ) {
 		move(20 - j, 0);
 		printw("%2d ", j);
 		move(20 - j, 2 * (BSZ + 1) + 1);
 		printw("%d ", j);
 	}
 	/* bottom border */
-	for (i = 1; i < BSZ + 1; i++) {
+	for (int i = 1; i < BSZ + 1; i++) {
 		move(20, 2 * i + 1);
 		addch(letters[i]);
 	}
@@ -162,11 +161,11 @@ bdwho(bool update)
 void
 bdisp(void)
 {
-	int i, j, c;
+	int c;
 	struct spotstr *sp;
 
-	for (j = BSZ + 1; --j > 0; ) {
-		for (i = 1; i < BSZ + 1; i++) {
+	for (int j = BSZ + 1; --j > 0; ) {
+		for (int i = 1; i < BSZ + 1; i++) {
 			move(BSZ + 1 - j, 2 * i + 1);
 			sp = &board[i + j * (BSZ + 1)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
@@ -196,16 +195,16 @@ bdisp(void)
 void
 bdump(FILE *fp)
 {
-	int i, j, c;
+	int c;
 	struct spotstr *sp;
 
 	/* top border */
 	fprintf(fp, "   A B C D E F G H J K L M N O P Q R S T\n");
 
-	for (j = BSZ + 1; --j > 0; ) {
+	for (int j = BSZ + 1; --j > 0; ) {
 		/* left edge */
 		fprintf(fp, "%2d ", j);
-		for (i = 1; i < BSZ + 1; i++) {
+		for (int i = 1; i < BSZ + 1; i++) {
 			sp = &board[i + j * (BSZ + 1)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
 				if ((sp->s_flags & IFLAGALL) != 0)

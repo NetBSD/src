@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.14 2022/05/18 21:45:40 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.15 2022/05/18 22:30:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.14 2022/05/18 21:45:40 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.15 2022/05/18 22:30:19 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,6 @@ static void init_overlap(void);
 void
 bdinit(struct spotstr *bp)
 {
-	int i, j, r;
 	struct spotstr *sp;
 	struct combostr *cbp;
 
@@ -57,7 +56,7 @@ bdinit(struct spotstr *bp)
 
 	/* mark the borders as such */
 	sp = bp;
-	for (i = 1 + BSZ + 1; --i >= 0; sp++) {
+	for (int i = 1 + BSZ + 1; --i >= 0; sp++) {
 		sp->s_occ = BORDER;			/* top border */
 		sp->s_flags = BFLAGALL;
 	}
@@ -65,8 +64,8 @@ bdinit(struct spotstr *bp)
 	/* fill entire board with EMPTY spots */
 	memset(frames, 0, sizeof(frames));
 	cbp = frames;
-	for (j = 0; ++j < BSZ + 1; sp++) {		/* for each row */
-		for (i = 0; ++i < BSZ + 1; sp++) {	/* for each column */
+	for (int j = 0; ++j < BSZ + 1; sp++) {		/* for each row */
+		for (int i = 0; ++i < BSZ + 1; sp++) {	/* for each column */
 			sp->s_occ = EMPTY;
 			sp->s_flags = 0;
 			sp->s_wval = 0;
@@ -129,7 +128,7 @@ bdinit(struct spotstr *bp)
 			/*
 			 * Allocate a frame structure for non blocked frames.
 			 */
-			for (r = 4; --r >= 0; ) {
+			for (int r = 4; --r >= 0; ) {
 				if ((sp->s_flags & (BFLAG << r)) != 0)
 					continue;
 				cbp->c_combo.s = sp->s_fval[BLACK][r].s;
@@ -145,7 +144,7 @@ bdinit(struct spotstr *bp)
 	}
 
 	/* mark the borders as such */
-	for (i = BSZ + 1; --i >= 0; sp++) {
+	for (int i = BSZ + 1; --i >= 0; sp++) {
 		sp->s_occ = BORDER;			/* bottom border */
 		sp->s_flags = BFLAGALL;
 	}
@@ -177,8 +176,7 @@ init_overlap(void)
 {
 	struct spotstr *sp1, *sp2;
 	struct combostr *cbp;
-	unsigned frameix;
-	int i, f, r, n, d1, d2;
+	int n, d1, d2;
 	int mask, bmask, vertex, s;
 	u_char *op;
 	short *ip;
@@ -187,28 +185,28 @@ init_overlap(void)
 	memset(intersect, 0, sizeof(intersect));
 	op = &overlap[FAREA * FAREA];
 	ip = &intersect[FAREA * FAREA];
-	for (frameix = FAREA; frameix-- > 0; ) {	/* each frame */
-	    cbp = &frames[frameix];
+	for (unsigned fi = FAREA; fi-- > 0; ) {	/* each frame */
+	    cbp = &frames[fi];
 	    op -= FAREA;
 	    ip -= FAREA;
 	    sp1 = &board[vertex = cbp->c_vertex];
-	    d1 = dd[r = cbp->c_dir];
+	    d1 = dd[cbp->c_dir];
 	    /*
 	     * s = 5 if closed, 6 if open.
 	     * At this point black & white are the same.
 	     */
-	    s = 5 + sp1->s_fval[BLACK][r].c.b;
+	    s = 5 + sp1->s_fval[BLACK][cbp->c_dir].c.b;
 	    /* for each spot in frame A */
-	    for (i = 0; i < s; i++, sp1 += d1, vertex += d1) {
+	    for (int i = 0; i < s; i++, sp1 += d1, vertex += d1) {
 		/* the sixth spot in frame A only overlaps if it is open */
 		mask = (i == 5) ? 0xC : 0xF;
 		/* for each direction */
-		for (r = 4; --r >= 0; ) {
+		for (int r = 4; --r >= 0; ) {
 		    bmask = BFLAG << r;
 		    sp2 = sp1;
 		    d2 = dd[r];
 		    /* for each frame that intersects at spot sp1 */
-		    for (f = 0; f < 6; f++, sp2 -= d2) {
+		    for (int f = 0; f < 6; f++, sp2 -= d2) {
 			if (sp2->s_occ == BORDER)
 			    break;
 			if ((sp2->s_flags & bmask) != 0)
