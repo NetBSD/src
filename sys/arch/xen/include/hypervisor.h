@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.52 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.53 2022/05/19 09:54:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -159,6 +159,10 @@ extern volatile struct xencons_interface *xencons_interface;
 struct intrframe;
 struct cpu_info;
 void do_hypervisor_callback(struct intrframe *regs);
+#if defined(XENPV) && (NPCI > 0 || NISA > 0)
+void hypervisor_prime_pirq_event(int, unsigned int);
+void hypervisor_ack_pirq_event(unsigned int);
+#endif /* XENPV && ( NPCI > 0 || NISA > 0 ) */
 
 extern int xen_version;
 #define XEN_MAJOR(x) (((x) & 0xffff0000) >> 16)
