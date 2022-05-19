@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.31 2022/05/19 18:58:59 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.32 2022/05/19 19:16:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.31 2022/05/19 18:58:59 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.32 2022/05/19 19:16:38 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,9 +138,9 @@ bdwho(bool update)
 	printw("                                              ");
 	i = (int)strlen(plyr[BLACK]);
 	j = (int)strlen(plyr[WHITE]);
-	if (i + j <= 20) {
-		/* TODO: properly center the text when i + j is even. */
-		move(BSZ + 2, 10 - (i + j) / 2);
+	int sx = (scr_x(BSZ) + scr_x(1)) / 2 - (25 + i + j) / 2;
+	if (sx >= 0) {
+		move(BSZ + 2, sx);
 		printw("BLACK/%s (*) vs. WHITE/%s (O)",
 		    plyr[BLACK], plyr[WHITE]);
 	} else {
@@ -345,9 +345,8 @@ get_coord(void)
 	nx = curx;
 	ny = cury;
 	for (;;) {
-		/* TODO: replace with 'letters[curx + 1]' */
 		mvprintw(BSZ + 3, (BSZ - 6) / 2, "(%c %d) ",
-		    'A' + ((curx > 7) ? (curx + 1) : curx), cury + 1);
+		    letters[curx + 1], cury + 1);
 		move(scr_y(cury + 1), scr_x(curx + 1));
 
 		ch = getch();
