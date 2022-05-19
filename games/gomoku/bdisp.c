@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.28 2022/05/18 22:30:19 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.29 2022/05/19 16:58:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.28 2022/05/18 22:30:19 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.29 2022/05/19 16:58:39 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ cursinit(void)
 	nonl();
 	noecho();
 	cbreak();
-	leaveok(stdscr, FALSE);
+	leaveok(stdscr, false);
 
 #if 0 /* no mouse support in netbsd curses yet */
 	mousemask(BUTTON1_CLICKED, NULL);
