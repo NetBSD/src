@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.13 2022/04/16 22:21:10 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.14 2022/05/19 17:24:14 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckbool.c,v 1.13 2022/04/16 22:21:10 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.14 2022/05/19 17:24:14 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -89,6 +89,9 @@ is_typeok_strict_bool_binary(op_t op,
 {
 	if ((lt == BOOL) == (rt == BOOL))
 		return true;
+
+	if (op == FARG && rn->tn_sys)
+		return false;
 
 	if ((ln->tn_sys || rn->tn_sys) &&
 	    (is_int_constant_zero(ln, lt) || is_int_constant_zero(rn, rt)))
