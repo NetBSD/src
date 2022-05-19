@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.75 2019/01/27 02:08:48 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.76 2022/05/19 19:18:03 christos Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.75 2019/01/27 02:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.76 2022/05/19 19:18:03 christos Exp $");
 
 /*
  * IPsec input processing.
@@ -182,6 +182,29 @@ nat_t_ports_get(struct mbuf *m, uint16_t *dport, uint16_t *sport)
 		*sport = *dport = 0;
 }
 
+static uint32_t
+spi_get(struct mbuf *m, int sproto, int skip)
+{
+	uint32_t spi;
+	uint16_t cpi;
+
+	switch (sproto) {
+	case IPPROTO_ESP:
+		m_copydata(m, skip, sizeof(spi), &spi);
+		return spi;
+	case IPPROTO_AH:
+		m_copydata(m, skip + sizeof(spi), sizeof(spi), &spi);
+		return spi;
+	case IPPROTO_IPCOMP:
+		m_copydata(m, skip + sizeof(cpi), sizeof(cpi), &cpi);
+		return htonl(ntohs(cpi));
+	default:
+		panic("%s called with bad protocol number: %d\n", __func__,
+		    sproto);
+	}
+}
+
+
 /*
  * ipsec_common_input gets called when an IPsec-protected packet
  * is received by IPv4 or IPv6.  Its job is to find the right SA
@@ -222,18 +245,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	}
 
 	/* Retrieve the SPI from the relevant IPsec header */
-	if (sproto == IPPROTO_ESP) {
-		m_copydata(m, skip, sizeof(u_int32_t), &spi);
-	} else if (sproto == IPPROTO_AH) {
-		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t), &spi);
-	} else if (sproto == IPPROTO_IPCOMP) {
-		u_int16_t cpi;
-		m_copydata(m, skip + sizeof(u_int16_t), sizeof(u_int16_t), &cpi);
-		spi = ntohl(htons(cpi));
-	} else {
-		panic("%s called with bad protocol number: %d\n", __func__,
-		    sproto);
-	}
+	spi = spi_get(m, sproto, skip);
 
 	/* find the source port for NAT-T */
 	nat_t_ports_get(m, &dport, &sport);
