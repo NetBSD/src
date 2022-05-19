@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.37 2022/05/19 22:29:36 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.38 2022/05/19 23:12:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.37 2022/05/19 22:29:36 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.38 2022/05/19 23:12:40 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -1469,20 +1469,5 @@ clearcombo(struct combostr *cbp, int open)
 	n = open != 0 ? 6 : 5;
 	for (; --n >= 0; sp += d)
 		sp->s_flags &= mask;
-}
-
-int
-list_eq(struct combostr **scbpp, struct combostr **cbpp, int n)
-{
-	struct combostr **spp, **cpp;
-
-	spp = scbpp + n;
-	cpp = cbpp + n;
-	do {
-		if (*--spp != *--cpp)
-			return 0;
-	} while (cpp != cbpp);
-	/* we found a match */
-	return 1;
 }
 #endif /* DEBUG */
