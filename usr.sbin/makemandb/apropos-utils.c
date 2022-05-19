@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.48 2021/11/27 22:30:25 rillig Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.49 2022/05/19 04:08:03 gutteridge Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.48 2021/11/27 22:30:25 rillig Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.49 2022/05/19 04:08:03 gutteridge Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -665,7 +665,7 @@ get_stmt_col_text(sqlite3_stmt *stmt, int col)
  * Execute the full text search query and return the number of results
  * obtained.
  */
-static unsigned int
+static int
 execute_search_query(sqlite3 *db, char *query, query_args *args)
 {
 	sqlite3_stmt *stmt;
@@ -699,8 +699,8 @@ execute_search_query(sqlite3 *db, char *query, query_args *args)
 		return -1;
 	}
 
-	unsigned int nresults = 0;
-	while (sqlite3_step(stmt) == SQLITE_ROW) {
+	int nresults = rc = 0;
+	while (rc == 0 && sqlite3_step(stmt) == SQLITE_ROW) {
 		nresults++;
 		callback_args.section = get_stmt_col_text(stmt, 0);
 		name_temp = get_stmt_col_text(stmt, 1);
@@ -725,11 +725,11 @@ execute_search_query(sqlite3 *db, char *query, query_args *args)
 		}
 		callback_args.name = name;
 		callback_args.other_data = args->callback_data;
-		(args->callback)(&callback_args);
+		rc = (args->callback)(&callback_args);
 		free(name);
 	}
 	sqlite3_finalize(stmt);
-	return nresults;
+	return (rc < 0) ? rc : nresults;
 }
 
 
@@ -752,9 +752,9 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		return -1;
 	}
 
-	execute_search_query(db, query, args);
+	int rc = execute_search_query(db, query, args);
 	sqlite3_free(query);
-	return *(args->errmsg) == NULL ? 0 : -1;
+	return (rc < 0 || *(args->errmsg) != NULL) ? -1 : 0;
 }
 
 static char *
@@ -845,10 +845,10 @@ callback_html(query_callback_args *callback_args)
 	callback_args->snippet = qsnippet;
 	callback_args->snippet_length = length;
 	callback_args->other_data = orig_data->data;
-	(*callback)(callback_args);
+	int rc = (*callback)(callback_args);
 	free(qsnippet);
 	free(qname_description);
-	return 0;
+	return rc;
 }
 
 /*
@@ -968,12 +968,12 @@ callback_pager(query_callback_args *callback_args)
 	callback_args->snippet = psnippet;
 	callback_args->snippet_length = psnippet_length;
 	callback_args->other_data = orig_data->data;
-	(orig_data->callback)(callback_args);
+	int rc = (orig_data->callback)(callback_args);
 	free(ul_section);
 	free(ul_name);
 	free(ul_name_desc);
 	free(psnippet);
-	return 0;
+	return rc;
 }
 
 struct term_args {
@@ -1013,11 +1013,11 @@ callback_term(query_callback_args *callback_args)
 	callback_args->name = ul_name;
 	callback_args->name_desc = ul_name_desc;
 	callback_args->other_data = orig_data->data;
-	(orig_data->callback)(callback_args);
+	int rc = (orig_data->callback)(callback_args);
 	free(ul_section);
 	free(ul_name);
 	free(ul_name_desc);
-	return 0;
+	return rc;
 }
 
 /*
