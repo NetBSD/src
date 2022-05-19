@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.25 2022/05/17 00:21:22 gutteridge Exp $	*/
+/*	$NetBSD: apropos.c,v 1.26 2022/05/19 04:08:03 gutteridge Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.25 2022/05/17 00:21:22 gutteridge Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.26 2022/05/19 04:08:03 gutteridge Exp $");
 
 #include <err.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -223,6 +224,10 @@ main(int argc, char *argv[])
 		const char *pager = getenv("PAGER");
 		if (pager == NULL)
 			pager = _PATH_PAGER;
+
+		/* Don't get killed by a broken pipe */
+		signal(SIGPIPE, SIG_IGN);
+
 		/* Open a pipe to the pager */
 		if ((cbdata.out = popen(pager, "w")) == NULL) {
 			close_db(db);
@@ -270,10 +275,12 @@ main(int argc, char *argv[])
 	if (pc == -1)
 		err(EXIT_FAILURE, "pclose error");
 
-	if (rc < 0) {
-		/* Something wrong with the database. Exit */
+	/* 
+	 * Something wrong with the database, writing output, or a non-existent
+	 * pager.
+	 */
+	if (rc < 0)
 		exit(EXIT_FAILURE);
-	}
 
 	if (cbdata.count == 0) {
 		warnx("No relevant results obtained.\n"
@@ -286,7 +293,7 @@ main(int argc, char *argv[])
 /*
  * query_callback --
  *  Callback function for run_query.
- *  It simply outputs the results from do_query. If the user specified the -p
+ *  It simply outputs the results from run_query. If the user specified the -p
  *  option, then the output is sent to a pager, otherwise stdout is the default
  *  output stream.
  */
@@ -308,7 +315,7 @@ query_callback(query_callback_args *qargs)
 		    fprintf(out, "<tr><td colspan=2>%s</td></tr>\n", qargs->snippet);
 	}
 
-	return 0;
+	return fflush(out);
 }
 
 #include "stopwords.c"
