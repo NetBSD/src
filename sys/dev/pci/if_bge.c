@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.352 2022/04/07 19:33:38 andvar Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.353 2022/05/19 04:43:43 buhrow Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.352 2022/04/07 19:33:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.353 2022/05/19 04:43:43 buhrow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3640,7 +3640,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	BGE_SETBIT_FLUSH(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
 
 	bge_stop_fw(sc);
-	bge_sig_pre_reset(sc, BGE_RESET_START);
+	bge_sig_pre_reset(sc, BGE_RESET_SHUTDOWN);
 	if (bge_reset(sc))
 		aprint_error_dev(sc->bge_dev, "chip reset failed\n");
 
@@ -3674,8 +3674,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    "HW config %08x, %08x, %08x, %08x %08x\n",
 	    hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5);
 
-	bge_sig_legacy(sc, BGE_RESET_START);
-	bge_sig_post_reset(sc, BGE_RESET_START);
+	bge_sig_legacy(sc, BGE_RESET_SHUTDOWN);
+	bge_sig_post_reset(sc, BGE_RESET_SHUTDOWN);
 
 	if (bge_chipinit(sc)) {
 		aprint_error_dev(sc->bge_dev, "chip initialization failed\n");
