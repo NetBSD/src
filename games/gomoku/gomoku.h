@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.28 2022/05/16 21:48:45 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.29 2022/05/19 18:58:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -43,15 +43,10 @@
 #define BSZ	19
 #define BAREA	((1 + BSZ + 1) * (BSZ + 1) + 1)
 
-#define TRANSCRIPT_COL	(2 * (BSZ + 4))
-
-/* interactive curses stuff */
-#define BGOTO(y, x)	move(BSZ - (y), 2 * (x) + 3)
+#define TRANSCRIPT_COL	(3 + (2 * BSZ - 1) + 3 + 3)
 
 /* frame dimensions (based on 5 in a row) */
-#define FSZ1	BSZ
-#define FSZ2	(BSZ-4)
-#define FAREA	(FSZ1*FSZ2 + FSZ2*FSZ2 + FSZ1*FSZ2 + FSZ2*FSZ2)
+#define FAREA	(2 * BSZ * (BSZ - 4) + 2 * (BSZ - 4) * (BSZ - 4))
 
 #define MUP	(BSZ + 1)
 #define MDOWN	(-(BSZ + 1))
@@ -120,8 +115,6 @@
  *	complete which takes fewer or the same number of moves to win).
  */
 
-#define MAXA		6
-#define MAXB		2
 #define MAXCOMBO	0x600
 
 union comboval {
