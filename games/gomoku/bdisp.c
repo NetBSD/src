@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.29 2022/05/19 16:58:39 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.30 2022/05/19 17:02:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.29 2022/05/19 16:58:39 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.30 2022/05/19 17:02:51 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ cursinit(void)
 		errx(EXIT_FAILURE, "Couldn't initialize screen");
 	}
 	if ((LINES < SCRNH) || (COLS < SCRNW)) {
-		errx(EXIT_FAILURE, "Screen too small (need %d%xd)",
+		errx(EXIT_FAILURE, "Screen too small (need %dx%d)",
 		    SCRNW, SCRNH);
 	}
 	keypad(stdscr, true);
