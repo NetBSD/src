@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.32 2022/05/19 19:16:38 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.33 2022/05/19 19:52:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.32 2022/05/19 19:16:38 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.33 2022/05/19 19:52:56 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,28 +132,33 @@ bdisp_init(void)
 void
 bdwho(bool update)
 {
-	int i, j;
+	int bw = (int)strlen(plyr[BLACK]);
+	int ww = (int)strlen(plyr[WHITE]);
+	int available = 3 + (1 + scr_x(BSZ) - scr_x(1)) + 3;
+	int fixed = (int)sizeof("BLACK/ (*) vs. WHITE/ (O)") - 1;
+	int total = fixed + bw + ww;
 
 	move(BSZ + 2, 0);
-	printw("                                              ");
-	i = (int)strlen(plyr[BLACK]);
-	j = (int)strlen(plyr[WHITE]);
-	int sx = (scr_x(BSZ) + scr_x(1)) / 2 - (25 + i + j) / 2;
-	if (sx >= 0) {
-		move(BSZ + 2, sx);
+	hline(' ', available);
+
+	if (total <= available) {
+		move(BSZ + 2, (available - total) / 2);
 		printw("BLACK/%s (*) vs. WHITE/%s (O)",
 		    plyr[BLACK], plyr[WHITE]);
 	} else {
+		int remaining = available - fixed;
+		int half = remaining / 2;
+
+		if (bw <= half)
+			ww = remaining - bw;
+		else if (ww <= half)
+			bw = remaining - ww;
+		else
+			bw = half, ww = remaining - half;
+
 		move(BSZ + 2, 0);
-		if (i <= 10) {
-			j = 20 - i;
-		} else if (j <= 10) {
-			i = 20 - j;
-		} else {
-			i = j = 10;
-		}
 		printw("BLACK/%.*s (*) vs. WHITE/%.*s (O)",
-		    i, plyr[BLACK], j, plyr[WHITE]);
+		    bw, plyr[BLACK], ww, plyr[WHITE]);
 	}
 	if (update)
 		refresh();
