@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.S,v 1.1 2009/05/16 22:20:40 ad Exp $	*/
+/*	$NetBSD: pthread_md.S,v 1.2 2022/05/19 07:10:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/ras.h>
 #include <machine/asm.h>
 
 LEAF_ENTRY(pthread__ras_simple_lock_init)
@@ -47,10 +48,10 @@ LEAF_ENTRY(pthread__ras_simple_lock_try)
 	ldo	15(%arg0),%arg0
 	depi	0,31,4,%arg0
 
-pthread__lock_ras_start:
+RAS_START_ASM_HIDDEN(pthread__lock)
 	ldw	0(%arg0),%ret0
 	stw	%r0,0(%arg0)		/* 0 == locked */
-pthread__lock_ras_end:
+RAS_END_ASM_HIDDEN(pthread__lock)
 
 	comiclr,= 0,%ret0,%ret0		/* if locked return 0 */
 	ldi	1,%ret0			/* else return 1 */
