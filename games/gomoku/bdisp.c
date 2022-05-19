@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.34 2022/05/19 22:19:18 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.35 2022/05/19 22:24:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.34 2022/05/19 22:19:18 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.35 2022/05/19 22:24:54 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -345,7 +345,7 @@ get_coord(void)
 	nx = curx;
 	ny = cury;
 	for (;;) {
-		mvprintw(BSZ + 3, (BSZ - 6) / 2, "(%c %d) ",
+		mvprintw(BSZ + 3, 6, "(%c %d) ",
 		    letters[curx + 1], cury + 1);
 		move(scr_y(cury + 1), scr_x(curx + 1));
 
@@ -462,7 +462,7 @@ get_coord(void)
 			return SAVE;
 		case ' ':
 		case '\r':
-			(void)mvaddstr(BSZ + 3, (BSZ - 6) / 2, "      ");
+			(void)mvaddstr(BSZ + 3, 6, "      ");
 			return PT(curx + 1, cury + 1);
 		}
 
