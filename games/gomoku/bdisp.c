@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.35 2022/05/19 22:24:54 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.36 2022/05/19 22:49:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.35 2022/05/19 22:24:54 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.36 2022/05/19 22:49:05 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -97,26 +97,20 @@ void
 bdisp_init(void)
 {
 
-	/* top border */
+	/* top and bottom borders */
 	for (int i = 1; i < BSZ + 1; i++) {
-		move(scr_y(BSZ + 1), scr_x(i));
-		addch(letters[i]);
+		mvaddch(scr_y(BSZ + 1), scr_x(i), letters[i]);
+		mvaddch(scr_y(0), scr_x(i), letters[i]);
 	}
+
 	/* left and right edges */
 	for (int j = BSZ + 1; --j > 0; ) {
-		move(scr_y(j), 0);
-		printw("%2d ", j);
-		move(scr_y(j), scr_x(BSZ) + 2);
-		printw("%d ", j);
+		mvprintw(scr_y(j), 0, "%2d ", j);
+		mvprintw(scr_y(j), scr_x(BSZ) + 2, "%d ", j);
 	}
-	/* bottom border */
-	for (int i = 1; i < BSZ + 1; i++) {
-		move(scr_y(0), scr_x(i));
-		addch(letters[i]);
-	}
+
 	bdwho(false);
-	move(0, TRANSCRIPT_COL + 1);
-	addstr("#  black  white");
+	mvaddstr(0, TRANSCRIPT_COL + 1, "#  black  white");
 	lastline = 0;
 	bdisp();
 }
@@ -133,12 +127,11 @@ bdwho(bool update)
 	int fixed = (int)sizeof("BLACK/ (*) vs. WHITE/ (O)") - 1;
 	int total = fixed + bw + ww;
 
-	move(BSZ + 2, 0);
-	hline(' ', available);
+	mvhline(BSZ + 2, 0, ' ', available);
 
 	if (total <= available) {
-		move(BSZ + 2, (available - total) / 2);
-		printw("BLACK/%s (*) vs. WHITE/%s (O)",
+		mvprintw(BSZ + 2, (available - total) / 2,
+		    "BLACK/%s (*) vs. WHITE/%s (O)",
 		    plyr[BLACK], plyr[WHITE]);
 	} else {
 		int remaining = available - fixed;
@@ -151,8 +144,7 @@ bdwho(bool update)
 		else
 			bw = half, ww = remaining - half;
 
-		move(BSZ + 2, 0);
-		printw("BLACK/%.*s (*) vs. WHITE/%.*s (O)",
+		mvprintw(BSZ + 2, 0, "BLACK/%.*s (*) vs. WHITE/%.*s (O)",
 		    bw, plyr[BLACK], ww, plyr[WHITE]);
 	}
 	if (update)
@@ -170,7 +162,6 @@ bdisp(void)
 
 	for (int j = BSZ + 1; --j > 0; ) {
 		for (int i = 1; i < BSZ + 1; i++) {
-			move(scr_y(j), scr_x(i));
 			sp = &board[i + j * (BSZ + 1)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
 				if ((sp->s_flags & IFLAGALL) != 0)
@@ -181,6 +172,8 @@ bdisp(void)
 					c = '.';
 			} else
 				c = pcolor[sp->s_occ];
+
+			move(scr_y(j), scr_x(i));
 			if (movenum > 1 && movelog[movenum - 2] == PT(i, j)) {
 				attron(A_BOLD);
 				addch(c);
@@ -242,8 +235,7 @@ dislog(const char *str)
 		/* move 'em up */
 		lastline = 1;
 	}
-	move(lastline, TRANSCRIPT_COL);
-	addnstr(str, SCRNW - TRANSCRIPT_COL - 1);
+	mvaddnstr(lastline, TRANSCRIPT_COL, str, SCRNW - TRANSCRIPT_COL - 1);
 	clrtoeol();
 	move(lastline + 1, TRANSCRIPT_COL);
 	clrtoeol();
@@ -258,8 +250,7 @@ ask(const char *str)
 {
 	int len = (int)strlen(str);
 
-	move(BSZ + 4, 0);
-	addstr(str);
+	mvaddstr(BSZ + 4, 0, str);
 	clrtoeol();
 	move(BSZ + 4, len);
 	refresh();

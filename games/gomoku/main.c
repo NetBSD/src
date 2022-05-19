@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2022/05/19 22:19:18 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2022/05/19 22:49:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.41 2022/05/19 22:19:18 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2022/05/19 22:49:05 rillig Exp $");
 
 #include <curses.h>
 #include <err.h>
@@ -157,8 +157,7 @@ again:
 #endif
 
 		if (inputfp == NULL && test == 0) {
-			move(BSZ + 3, 0);
-			printw("Black moves first. ");
+			mvprintw(BSZ + 3, 0, "Black moves first. ");
 			ask("(B)lack or (W)hite? ");
 			for (;;) {
 				ch = get_key(NULL);
