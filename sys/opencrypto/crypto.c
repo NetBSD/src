@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.118 2022/05/19 20:51:46 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.119 2022/05/19 20:51:59 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.118 2022/05/19 20:51:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.119 2022/05/19 20:51:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1264,6 +1264,7 @@ crypto_dispatch(struct cryptop *crp)
 	struct crypto_crp_q *crp_q;
 
 	KASSERT(crp != NULL);
+	KASSERT(!cpu_intr_p());
 
 	DPRINTF("crp %p, alg %d\n", crp, crp->crp_desc->crd_alg);
 
@@ -1373,6 +1374,7 @@ crypto_kdispatch(struct cryptkop *krp)
 	struct crypto_crp_kq *crp_kq;
 
 	KASSERT(krp != NULL);
+	KASSERT(!cpu_intr_p());
 
 	cryptostats.cs_kops++;
 
@@ -1439,6 +1441,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 	int error;
 
 	KASSERT(krp != NULL);
+	KASSERT(!cpu_intr_p());
 
 	/* Sanity checks. */
 	if (krp->krp_callback == NULL) {
@@ -1524,6 +1527,7 @@ crypto_invoke(struct cryptop *crp, int hint)
 	struct cryptocap *cap;
 
 	KASSERT(crp != NULL);
+	KASSERT(!cpu_intr_p());
 
 #ifdef CRYPTO_TIMING
 	if (crypto_timing)
