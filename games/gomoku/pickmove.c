@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.35 2022/05/19 18:58:59 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.36 2022/05/19 22:19:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -33,13 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
-#else
-__RCSID("$NetBSD: pickmove.c,v 1.35 2022/05/19 18:58:59 rillig Exp $");
-#endif
-#endif /* not lint */
+/*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
+__RCSID("$NetBSD: pickmove.c,v 1.36 2022/05/19 22:19:18 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>

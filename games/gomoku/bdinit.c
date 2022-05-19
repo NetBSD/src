@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.17 2022/05/19 18:58:59 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.18 2022/05/19 22:19:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -33,13 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
-#else
-__RCSID("$NetBSD: bdinit.c,v 1.17 2022/05/19 18:58:59 rillig Exp $");
-#endif
-#endif /* not lint */
+/*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
+__RCSID("$NetBSD: bdinit.c,v 1.18 2022/05/19 22:19:18 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
