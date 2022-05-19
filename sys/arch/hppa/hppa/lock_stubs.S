@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.28 2022/03/20 20:19:34 andvar Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.29 2022/05/19 06:41:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -155,8 +155,8 @@ mutex_enter_crit_start:
 	GET_CURLWP(%t2)
 
 	bv	%r0(%rp)
-mutex_enter_crit_end:
 	 stw	%t2, MTX_OWNER(%arg0)
+mutex_enter_crit_end:
 EXIT(mutex_enter)
 
 #endif	/* !LOCKDEBUG */
@@ -171,8 +171,8 @@ _lock_cas_ras_start:
 	ldw	0(%arg0),%t1
 	comb,<>	%arg1, %t1, 1f
 	 copy	%t1,%ret0
-_lock_cas_ras_end:
 	stw	%arg2,0(%arg0)
+_lock_cas_ras_end:
 	copy	%arg1,%ret0
 1:
 	bv,n	%r0(%rp)
