@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.36 2022/05/19 22:19:18 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.37 2022/05/19 22:29:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.36 2022/05/19 22:19:18 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.37 2022/05/19 22:29:36 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -239,7 +239,7 @@ scanframes(int color)
 
 	/* check for empty list of frames */
 	cbp = sortframes[color];
-	if (cbp == (struct combostr *)0)
+	if (cbp == NULL)
 		return;
 
 	/* quick check for four in a row */
@@ -358,7 +358,7 @@ scanframes(int color)
 			free(ep);
 			elistcnt--;
 		}
-		sp->s_empty = (struct elist *)0;
+		sp->s_empty = NULL;
 		for (struct elist *ep = sp->s_nempty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
@@ -372,11 +372,11 @@ scanframes(int color)
 			free(ep);
 			elistcnt--;
 		}
-		sp->s_nempty = (struct elist *)0;
+		sp->s_nempty = NULL;
 	}
 
 	/* remove old combos */
-	if ((cbp = sortcombos) != (struct combostr *)0) {
+	if ((cbp = sortcombos) != NULL) {
 		struct combostr *ncbp;
 
 		/* scan the list */
@@ -386,7 +386,7 @@ scanframes(int color)
 			free(cbp);
 			combocnt--;
 		} while ((cbp = ncbp) != ecbp);
-		sortcombos = (struct combostr *)0;
+		sortcombos = NULL;
 	}
 	combolen = 0;
 
@@ -568,7 +568,7 @@ addframes(int level)
 			elistcnt--;
 		}
 		sp->s_empty = sp->s_nempty;
-		sp->s_nempty = (struct elist *)0;
+		sp->s_nempty = NULL;
 	}
 
 	/* try to add frames to the uncompleted combos at level curlevel */
@@ -618,11 +618,11 @@ addframes(int level)
 	cbpp = &hashcombos[FAREA];
 	do {
 		cbp = *--cbpp;
-		if (cbp == (struct combostr *)0)
+		if (cbp == NULL)
 			continue;
-		*cbpp = (struct combostr *)0;
+		*cbpp = NULL;
 		ecbp = sortcombos;
-		if (ecbp == (struct combostr *)0)
+		if (ecbp == NULL)
 			sortcombos = cbp;
 		else {
 			/* append to sort list */
@@ -1045,7 +1045,7 @@ appendcombo(struct combostr *cbp, int color __unused)
 
 	combolen++;
 	ncbp = sortcombos;
-	if (ncbp == (struct combostr *)0) {
+	if (ncbp == NULL) {
 		sortcombos = cbp;
 		cbp->c_next = cbp;
 		cbp->c_prev = cbp;
@@ -1246,7 +1246,7 @@ inserted:
 
 	/* now check to see if this list of frames has already been seen */
 	cbp = hashcombos[inx = (int)(*scbpp - frames)];
-	if (cbp == (struct combostr *)0) {
+	if (cbp == NULL) {
 		/*
 		 * Easy case, this list hasn't been seen.
 		 * Add it to the hash list.
