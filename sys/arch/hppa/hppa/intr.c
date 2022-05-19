@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 2022/02/26 03:02:25 macallan Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 2022/05/19 06:41:45 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2022/02/26 03:02:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2022/05/19 06:41:45 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -339,8 +339,8 @@ hppa_intr(struct trapframe *frame)
 	extern char _lock_cas_ras_end[];
 
 	if (frame->tf_iisq_head == HPPA_SID_KERNEL &&
-	    frame->tf_iioq_head >= (u_int)_lock_cas_ras_start &&
-	    frame->tf_iioq_head <= (u_int)_lock_cas_ras_end) {
+	    frame->tf_iioq_head > (u_int)_lock_cas_ras_start &&
+	    frame->tf_iioq_head < (u_int)_lock_cas_ras_end) {
 		frame->tf_iioq_head = (u_int)_lock_cas_ras_start;
 		frame->tf_iioq_tail = (u_int)_lock_cas_ras_start + 4;
 	}
@@ -353,8 +353,8 @@ hppa_intr(struct trapframe *frame)
 	 * the owner value is left unset.
 	 */
 	if (frame->tf_iisq_head == HPPA_SID_KERNEL &&
-	    frame->tf_iioq_head >= (u_int)mutex_enter_crit_start &&
-	    frame->tf_iioq_head <= (u_int)mutex_enter_crit_end &&
+	    frame->tf_iioq_head > (u_int)mutex_enter_crit_start &&
+	    frame->tf_iioq_head < (u_int)mutex_enter_crit_end &&
 	    frame->tf_ret0 != 0)
 		((kmutex_t *)frame->tf_arg0)->mtx_owner = (uintptr_t)curlwp;
 #endif
