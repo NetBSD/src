@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.16 2022/05/18 22:35:13 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.17 2022/05/19 18:58:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.16 2022/05/18 22:35:13 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.17 2022/05/19 18:58:59 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ bdinit(struct spotstr *bp)
 
 	/* mark the borders as such */
 	sp = bp;
-	for (int i = 1 + BSZ + 1; --i >= 0; sp++) {
+	for (int i = 0; i < 1 + BSZ + 1; i++, sp++) {
 		sp->s_occ = BORDER;			/* top border */
 		sp->s_flags = BFLAGALL;
 	}
@@ -144,7 +144,7 @@ bdinit(struct spotstr *bp)
 	}
 
 	/* mark the borders as such */
-	for (int i = BSZ + 1; --i >= 0; sp++) {
+	for (int i = 0; i < BSZ + 1; i++, sp++) {
 		sp->s_occ = BORDER;			/* bottom border */
 		sp->s_flags = BFLAGALL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.30 2022/05/19 17:02:51 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.31 2022/05/19 18:58:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.30 2022/05/19 17:02:51 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.31 2022/05/19 18:58:59 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,9 @@ __RCSID("$NetBSD: bdisp.c,v 1.30 2022/05/19 17:02:51 rillig Exp $");
 
 static	int	lastline;
 static	char	pcolor[] = "*O.?";
+
+#define	scr_y(by)	(1 + (BSZ - 1) - ((by) - 1))
+#define	scr_x(bx)	(3 + 2 * ((bx) - 1))
 
 /*
  * Initialize screen display.
@@ -101,23 +104,23 @@ bdisp_init(void)
 
 	/* top border */
 	for (int i = 1; i < BSZ + 1; i++) {
-		move(0, 2 * i + 1);
+		move(scr_y(BSZ + 1), scr_x(i));
 		addch(letters[i]);
 	}
 	/* left and right edges */
 	for (int j = BSZ + 1; --j > 0; ) {
-		move(20 - j, 0);
+		move(scr_y(j), 0);
 		printw("%2d ", j);
-		move(20 - j, 2 * (BSZ + 1) + 1);
+		move(scr_y(j), scr_x(BSZ) + 2);
 		printw("%d ", j);
 	}
 	/* bottom border */
 	for (int i = 1; i < BSZ + 1; i++) {
-		move(20, 2 * i + 1);
+		move(scr_y(0), scr_x(i));
 		addch(letters[i]);
 	}
 	bdwho(false);
-	move(0, 47);
+	move(0, TRANSCRIPT_COL + 1);
 	addstr("#  black  white");
 	lastline = 0;
 	bdisp();
@@ -131,16 +134,17 @@ bdwho(bool update)
 {
 	int i, j;
 
-	move(21, 0);
+	move(BSZ + 2, 0);
 	printw("                                              ");
 	i = (int)strlen(plyr[BLACK]);
 	j = (int)strlen(plyr[WHITE]);
 	if (i + j <= 20) {
-		move(21, 10 - (i + j) / 2);
+		/* TODO: properly center the text when i + j is even. */
+		move(BSZ + 2, 10 - (i + j) / 2);
 		printw("BLACK/%s (*) vs. WHITE/%s (O)",
 		    plyr[BLACK], plyr[WHITE]);
 	} else {
-		move(21, 0);
+		move(BSZ + 2, 0);
 		if (i <= 10) {
 			j = 20 - i;
 		} else if (j <= 10) {
@@ -166,7 +170,7 @@ bdisp(void)
 
 	for (int j = BSZ + 1; --j > 0; ) {
 		for (int i = 1; i < BSZ + 1; i++) {
-			move(BSZ + 1 - j, 2 * i + 1);
+			move(scr_y(j), scr_x(i));
 			sp = &board[i + j * (BSZ + 1)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
 				if ((sp->s_flags & IFLAGALL) != 0)
@@ -331,18 +335,20 @@ get_line(char *buf, int size)
 int
 get_coord(void)
 {
+	/* XXX: These coordinates are 0-based, all others are 1-based. */
 	static int curx = BSZ / 2;
 	static int cury = BSZ / 2;
 	int ny, nx, ch;
 
-	BGOTO(cury, curx);
+	move(scr_y(cury + 1), scr_x(curx + 1));
 	refresh();
 	nx = curx;
 	ny = cury;
 	for (;;) {
+		/* TODO: replace with 'letters[curx + 1]' */
 		mvprintw(BSZ + 3, (BSZ - 6) / 2, "(%c %d) ",
 		    'A' + ((curx > 7) ? (curx + 1) : curx), cury + 1);
-		BGOTO(cury, curx);
+		move(scr_y(cury + 1), scr_x(curx + 1));
 
 		ch = getch();
 		switch (ch) {

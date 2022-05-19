@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.34 2022/05/18 22:30:19 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.35 2022/05/19 18:58:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.34 2022/05/18 22:30:19 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.35 2022/05/19 18:58:59 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -450,7 +450,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 
 		/* don't include frames of the wrong color */
 		fcb.s = fsp->s_fval[curcolor][r].s;
-		if (fcb.c.a >= MAXA)
+		if (fcb.c.a >= 6)
 		    continue;
 
 		/*
