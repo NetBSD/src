@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.12 2021/12/22 15:36:37 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.13 2022/05/19 17:10:50 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -193,13 +193,57 @@ controlling_expression_with_comma_operator(void)
 	int c;
 
 	while (c = read_char(),
-# 191 "c_c99_bool_strict_syshdr.c" 3 4
+# 197 "d_c99_bool_strict_syshdr.c" 3 4
 	    ((int)((ctype_table + 1)[(
-# 193 "c_c99_bool_strict_syshdr.c"
+# 199 "d_c99_bool_strict_syshdr.c"
 		c
-# 195 "c_c99_bool_strict_syshdr.c" 3 4
+# 201 "d_c99_bool_strict_syshdr.c" 3 4
 	    )] & 0x0040 /* Space     */))
-# 197 "c_c99_bool_strict_syshdr.c"
+# 203 "d_c99_bool_strict_syshdr.c"
 	    )
 		continue;
+}
+
+
+void take_bool(_Bool);
+
+/*
+ * On NetBSD, the header <curses.h> defines TRUE or FALSE as integer
+ * constants with a CONSTCOND comment.  This comment suppresses legitimate
+ * warnings in user code; that's irrelevant for this test though.
+ *
+ * Several curses functions take bool as a parameter, for example keypad or
+ * leaveok.  As of 2022-05-19, lint does not complain when these functions
+ * get 0 instead of 'false' as an argument.  It does complain about 1 instead
+ * of 'true' though.
+ */
+void
+pass_bool_to_function(void)
+{
+
+	/* expect+5: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	take_bool(
+# 227 "d_c99_bool_strict_syshdr.c" 3 4
+	    (/*CONSTCOND*/1)
+# 229 "d_c99_bool_strict_syshdr.c"
+	);
+
+	take_bool(
+# 233 "d_c99_bool_strict_syshdr.c" 3 4
+	    __lint_true
+# 235 "d_c99_bool_strict_syshdr.c"
+	);
+
+	/* TODO: make this a type error */
+	take_bool(
+# 240 "d_c99_bool_strict_syshdr.c" 3 4
+	    (/*CONSTCOND*/0)
+# 242 "d_c99_bool_strict_syshdr.c"
+	);
+
+	take_bool(
+# 246 "d_c99_bool_strict_syshdr.c" 3 4
+	    __lint_false
+# 248 "d_c99_bool_strict_syshdr.c"
+	);
 }

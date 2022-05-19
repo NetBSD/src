@@ -4,3 +4,4 @@ d_c99_bool_strict_syshdr.c(80): error: operands of 'init' have incompatible type
 d_c99_bool_strict_syshdr.c(157): error: return value type mismatch (_Bool) and (int) [211]
 d_c99_bool_strict_syshdr.c(172): error: operand of '!' must be bool, not 'int' [330]
 d_c99_bool_strict_syshdr.c(172): warning: function 'str_equal_bad' expects to return value [214]
+d_c99_bool_strict_syshdr.c(229): error: argument #1 expects '_Bool', gets passed 'int' [334]
