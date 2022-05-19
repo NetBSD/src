@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.112 2022/05/18 20:03:58 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.113 2022/05/19 20:51:46 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.112 2022/05/18 20:03:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.113 2022/05/19 20:51:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,13 +604,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 
 
 	crp->crp_ilen = cop->len;
-	/*
-	 * The request is flagged as CRYPTO_F_USER as long as it is running
-	 * in the user IOCTL thread. However, whether the request completes
-	 * immediately or belatedly is depends on the used encryption driver.
-	 */
-	crp->crp_flags = CRYPTO_F_IOV | (cop->flags & COP_F_BATCH) | CRYPTO_F_USER |
-			flags;
+	crp->crp_flags = CRYPTO_F_IOV | (cop->flags & COP_F_BATCH) | flags;
 	crp->crp_buf = (void *)&cse->uio;
 	crp->crp_callback = cryptodev_cb;
 	crp->crp_sid = cse->sid;
@@ -1268,7 +1262,7 @@ cryptodev_mop(struct fcrypt *fcr,
 		}
 
 		crp->crp_ilen = cnop[req].len;
-		crp->crp_flags = CRYPTO_F_IOV | CRYPTO_F_CBIMM |
+		crp->crp_flags = CRYPTO_F_IOV |
 		    (cnop[req].flags & COP_F_BATCH) | flags;
 		crp->crp_buf = (void *)&crp->uio;
 		crp->crp_callback = cryptodev_mcb;
@@ -1451,7 +1445,7 @@ cryptodev_mkey(struct fcrypt *fcr, struct crypt_n_kop *kop, int count)
 		(void)memcpy(krp->crk_param, kop[req].crk_param,
 		    sizeof(kop[req].crk_param));
 
-		krp->krp_flags = CRYPTO_F_CBIMM;
+		krp->krp_flags = 0;
 
 		for (i = 0; i < CRK_MAXPARAM; i++)
 			krp->krp_param[i].crp_nbits =
