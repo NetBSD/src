@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2022/05/18 19:29:00 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2022/05/19 20:09:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.39 2022/05/18 19:29:00 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2022/05/19 20:09:46 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,8 +353,6 @@ again:
 		}
 	}
 	quit();
-	/* NOTREACHED */
-	return 0;
 }
 
 static int
