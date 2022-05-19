@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.42 2021/08/14 20:43:05 andvar Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.43 2022/05/19 20:51:46 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -469,11 +469,11 @@ struct cryptop {
 #define CRYPTO_F_IOV		0x0002	/* Input/output are uio */
 #define CRYPTO_F_REL		0x0004	/* Must return data in same place */
 #define	CRYPTO_F_BATCH		0x0008	/* Batch op if possible possible */
-#define	CRYPTO_F_CBIMM		0x0010	/* Do callback immediately */
+#define	CRYPTO_F_UNUSED0	0x0010	/* was CRYPTO_F_CBIMM */
 #define	CRYPTO_F_DONE		0x0020	/* Operation completed */
-#define	CRYPTO_F_CBIFSYNC	0x0040	/* Do CBIMM if op is synchronous */
+#define	CRYPTO_F_UNUSED1	0x0040	/* was CRYPTO_F_CBIFSYNC */
 #define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
-#define	CRYPTO_F_USER		0x0100	/* Request is in user context */
+#define	CRYPTO_F_UNUSED2	0x0100	/* was CRYPTO_F_USER */
 #define	CRYPTO_F_MORE		0x0200	/* more data to follow */
 
 	int		crp_devflags;	/* other than cryptodev.c must not use. */

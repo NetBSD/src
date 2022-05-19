@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.117 2022/05/17 10:32:58 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.118 2022/05/19 20:51:46 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.117 2022/05/17 10:32:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.118 2022/05/19 20:51:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1707,6 +1707,9 @@ crypto_kgetreq(int num __unused, int prflags)
 void
 crypto_done(struct cryptop *crp)
 {
+	int wasempty;
+	struct crypto_crp_ret_qs *qs;
+	struct crypto_crp_ret_q *crp_ret_q;
 
 	KASSERT(crp != NULL);
 
@@ -1720,70 +1723,19 @@ crypto_done(struct cryptop *crp)
 
 	crp->crp_flags |= CRYPTO_F_DONE;
 
-	/*
-	 * Normal case; queue the callback for the thread.
-	 *
-	 * The return queue is manipulated by the swi thread
-	 * and, potentially, by crypto device drivers calling
-	 * back to mark operations completed.  Thus we need
-	 * to mask both while manipulating the return queue.
-	 */
-  	if (crp->crp_flags & CRYPTO_F_CBIMM) {
-		/*
-	 	* Do the callback directly.  This is ok when the
-  	 	* callback routine does very little (e.g. the
-	 	* /dev/crypto callback method just does a wakeup).
-	 	*/
-#ifdef CRYPTO_TIMING
-		if (crypto_timing) {
-			/*
-		 	* NB: We must copy the timestamp before
-		 	* doing the callback as the cryptop is
-		 	* likely to be reclaimed.
-		 	*/
-			struct timespec t = crp->crp_tstamp;
-			crypto_tstat(&cryptostats.cs_cb, &t);
-			crp->crp_callback(crp);
-			crypto_tstat(&cryptostats.cs_finis, &t);
-		} else
-#endif
-		crp->crp_callback(crp);
-	} else {
-#if 0
-		if (crp->crp_flags & CRYPTO_F_USER) {
-			/*
-			 * TODO:
-			 * If crp->crp_flags & CRYPTO_F_USER and the used
-			 * encryption driver does all the processing in
-			 * the same context, we can skip enqueueing crp_ret_q
-			 * and softint_schedule(crypto_ret_si).
-			 */
-			DPRINTF("lid[%u]: crp %p CRYPTO_F_USER\n",
-				CRYPTO_SESID2LID(crp->crp_sid), crp);
-		} else
-#endif
-		{
-			int wasempty;
-			struct crypto_crp_ret_qs *qs;
-			struct crypto_crp_ret_q *crp_ret_q;
-
-			qs = crypto_get_crp_ret_qs(crp->reqcpu);
-			crp_ret_q = &qs->crp_ret_q;
-			wasempty = TAILQ_EMPTY(crp_ret_q);
-			DPRINTF("lid[%u]: queueing %p\n",
-				CRYPTO_SESID2LID(crp->crp_sid), crp);
-			crp->crp_flags |= CRYPTO_F_ONRETQ;
-			TAILQ_INSERT_TAIL(crp_ret_q, crp, crp_next);
-			qs->crp_ret_q_len++;
-			if (wasempty && !qs->crp_ret_q_exit_flag) {
-				DPRINTF("lid[%u]: waking cryptoret,"
-					"crp %p hit empty queue\n.",
-					CRYPTO_SESID2LID(crp->crp_sid), crp);
-				softint_schedule_cpu(crypto_ret_si, crp->reqcpu);
-			}
-			crypto_put_crp_ret_qs(crp->reqcpu);
-		}
+	qs = crypto_get_crp_ret_qs(crp->reqcpu);
+	crp_ret_q = &qs->crp_ret_q;
+	wasempty = TAILQ_EMPTY(crp_ret_q);
+	DPRINTF("lid[%u]: queueing %p\n", CRYPTO_SESID2LID(crp->crp_sid), crp);
+	crp->crp_flags |= CRYPTO_F_ONRETQ;
+	TAILQ_INSERT_TAIL(crp_ret_q, crp, crp_next);
+	qs->crp_ret_q_len++;
+	if (wasempty && !qs->crp_ret_q_exit_flag) {
+		DPRINTF("lid[%u]: waking cryptoret, crp %p hit empty queue\n.",
+		    CRYPTO_SESID2LID(crp->crp_sid), crp);
+		softint_schedule_cpu(crypto_ret_si, crp->reqcpu);
 	}
+	crypto_put_crp_ret_qs(crp->reqcpu);
 }
 
 /*
@@ -1792,38 +1744,27 @@ crypto_done(struct cryptop *crp)
 void
 crypto_kdone(struct cryptkop *krp)
 {
+	int wasempty;
+	struct crypto_crp_ret_qs *qs;
+	struct crypto_crp_ret_kq *crp_ret_kq;
 
 	KASSERT(krp != NULL);
 
 	if (krp->krp_status != 0)
 		cryptostats.cs_kerrs++;
-		
+
 	krp->krp_flags |= CRYPTO_F_DONE;
 
-	/*
-	 * The return queue is manipulated by the swi thread
-	 * and, potentially, by crypto device drivers calling
-	 * back to mark operations completed.  Thus we need
-	 * to mask both while manipulating the return queue.
-	 */
-	if (krp->krp_flags & CRYPTO_F_CBIMM) {
-		krp->krp_callback(krp);
-	} else {
-		int wasempty;
-		struct crypto_crp_ret_qs *qs;
-		struct crypto_crp_ret_kq *crp_ret_kq;
+	qs = crypto_get_crp_ret_qs(krp->reqcpu);
+	crp_ret_kq = &qs->crp_ret_kq;
 
-		qs = crypto_get_crp_ret_qs(krp->reqcpu);
-		crp_ret_kq = &qs->crp_ret_kq;
-
-		wasempty = TAILQ_EMPTY(crp_ret_kq);
-		krp->krp_flags |= CRYPTO_F_ONRETQ;
-		TAILQ_INSERT_TAIL(crp_ret_kq, krp, krp_next);
-		qs->crp_ret_kq_len++;
-		if (wasempty && !qs->crp_ret_q_exit_flag)
-			softint_schedule_cpu(crypto_ret_si, krp->reqcpu);
-		crypto_put_crp_ret_qs(krp->reqcpu);
-	}
+	wasempty = TAILQ_EMPTY(crp_ret_kq);
+	krp->krp_flags |= CRYPTO_F_ONRETQ;
+	TAILQ_INSERT_TAIL(crp_ret_kq, krp, krp_next);
+	qs->crp_ret_kq_len++;
+	if (wasempty && !qs->crp_ret_q_exit_flag)
+		softint_schedule_cpu(crypto_ret_si, krp->reqcpu);
+	crypto_put_crp_ret_qs(krp->reqcpu);
 }
 
 int
