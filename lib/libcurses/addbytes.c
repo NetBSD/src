@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.63 2022/05/03 07:25:34 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.64 2022/05/19 07:41:26 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.63 2022/05/03 07:25:34 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.64 2022/05/19 07:41:26 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -588,6 +588,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		}
 		lp = &win->alines[*y]->line[0];
 		(*lnp) = win->alines[*y];
+		*(*lnp)->lastchp = win->ch_off + win->maxx - 1;
 	} else {
 
 		/* clear the remaining of the current character */
