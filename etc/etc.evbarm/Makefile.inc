@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.125 2021/08/30 00:14:45 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.126 2022/05/20 16:12:34 rin Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -21,6 +21,7 @@ EVBARM_BOARDS.xscale+=		ADI_BRH
 KERNEL_SETS.xscale+=		NSLU2
 
 EVBARM_BOARDS.armv5t+=		KUROBOX_PRO
+KERNEL_SETS.armv5t+=		OPENBLOCKS_A6
 # Other marvell-based machines may also work but not tested yet.
 
 EVBARM_BOARDS.armv6+=		RPI
@@ -66,7 +67,7 @@ EVBARM_BOARDS.armv5t+=		KUROBOX_PRO
 #EVBARM_BOARDS.armv5t+=		MARVELL_NAS
 #EVBARM_BOARDS.armv5t+=		MMNET_GENERIC
 EVBARM_BOARDS.armv5t+=		MV2120
-#EVBARM_BOARDS.armv5t+=		OPENBLOCKS_A6
+KERNEL_SETS.armv5t+=		OPENBLOCKS_A6
 EVBARM_BOARDS.armv5t+=		OPENRD
 #EVBARM_BOARDS.armv5t+=		OSK5912
 EVBARM_BOARDS.armv5t+=		SHEEVAPLUG
