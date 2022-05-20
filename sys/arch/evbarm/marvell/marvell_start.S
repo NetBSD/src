@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.11 2021/08/30 00:00:02 rin Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.12 2022/05/20 15:04:15 rin Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.11 2021/08/30 00:00:02 rin Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.12 2022/05/20 15:04:15 rin Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -109,6 +109,22 @@ _C_LABEL(marvell_start):
 	 * u-boot is running in little-endian mode. Therefore, we need to
 	 * encode first few instructions in the opposite byte order.
 	 */
+
+#ifdef CPU_SHEEVA
+	/*
+	 * XXX
+	 * For now, disable L2 unconditionally ifdef CPU_SHEEVA.
+	 * Not working for older CPUs.
+	 */
+	.word	0x115f3fee	/* mrc r15, 1, r5, r15, r1, 0 */
+	.word	0x0155c5e3	/* bic r5, r5, #0x400000 */
+	.word	0x115f2fee	/* mcr r15, 1, r5, r15, r1, 0 */
+
+	/* Flush prefetch buffer. */
+	.word	0x0000a0e1	/* nop */
+	.word	0x0000a0e1	/* nop */
+	.word	0x0000a0e1	/* nop */
+#endif
 
 	/* Turn on CPU_CONTROL_BEND_ENABLE bit. */
 	.word	0x104f11ee	/* mrc p15, 0, r4, c1, c0, 0 */
