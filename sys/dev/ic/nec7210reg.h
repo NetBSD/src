@@ -1,4 +1,4 @@
-/*	$NetBSD: nec7210reg.h,v 1.4 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: nec7210reg.h,v 1.5 2022/05/20 19:34:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #define 	ADMR_TRM1	0x20
 #define 	ADMR_LON	0x40
 #define 	ADMR_TON	0x80
-#define NEC7210_AUXMR		5	/* (W) auxilliary mode */
+#define NEC7210_AUXMR		5	/* (W) auxiliary mode */
 #define		AUXMR_CMD	0x00	/* see below */
 #define 	AUXMR_ICR	0x20
 #define		AUXMR_REGD	0x40

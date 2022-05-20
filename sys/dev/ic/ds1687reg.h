@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1687reg.h,v 1.12 2021/10/21 13:21:54 andvar Exp $ 	*/
+/*	$NetBSD: ds1687reg.h,v 1.13 2022/05/20 19:34:22 andvar Exp $ 	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@
 	#define DS1687_X4A_WAF	0x02	/* wakeup alarm flag */
 	#define DS1687_X4A_KF	0x01	/* kickstart flag */
 #define DS1687_BANK1_XCTRL4B	0x4b
-	#define DS1687_X4B_ABE	0x80	/* auxillary battery enable */
+	#define DS1687_X4B_ABE	0x80	/* auxiliary battery enable */
 	#define DS1687_X4B_E32K	0x40	/* enable 32.768kHz output */
 	#define DS1687_X4B_CS	0x20	/* chrystal select */
 	#define DS1687_X4B_RCE	0x10	/* RAM clear enable */

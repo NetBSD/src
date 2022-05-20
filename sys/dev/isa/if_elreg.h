@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elreg.h,v 1.4 1994/10/27 04:17:29 cgd Exp $	*/
+/*	$NetBSD: if_elreg.h,v 1.5 2022/05/20 19:34:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -25,8 +25,8 @@
 #define	EL_RBC		0xa	/* Receive buffer clear */
 #define	EL_RBH		0xb	/* Receive buffer ptr high byte */
 #define	EL_EAW		0xc	/* Ethernet address window */
-#define	EL_AS		0xe	/* Auxillary status register */
-#define	EL_AC		0xe	/* Auxillary command register */
+#define	EL_AS		0xe	/* Auxiliary status register */
+#define	EL_AC		0xe	/* Auxiliary command register */
 #define	EL_BUF		0xf	/* Data buffer */
 
 /* Receive status register bits */
@@ -62,12 +62,12 @@
 #define	EL_TXC_DCOLL16	0x04	/* Detect collision 16 */
 #define	EL_TXC_DSUCCESS	0x08	/* Detect success */
 
-/* Auxillary status register bits */
+/* Auxiliary status register bits */
 #define	EL_AS_RXBUSY	0x01	/* Receive busy */
 #define	EL_AS_DMADONE	0x10	/* DMA finished */
 #define	EL_AS_TXBUSY	0x80	/* Transmit busy */
 
-/* Auxillary command register bits */
+/* Auxiliary command register bits */
 #define	EL_AC_HOST	0x00	/* System bus can access buffer */
 #define	EL_AC_IRQE	0x01	/* IRQ enable */
 #define	EL_AC_TXBAD	0x02	/* Transmit frames with bad FCS */
