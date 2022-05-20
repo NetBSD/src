@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.23 2021/11/16 22:03:12 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.24 2022/05/20 21:18:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -36,8 +36,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.23 2021/11/16 22:03:12 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: hash.c,v 1.24 2022/05/20 21:18:55 rillig Exp $");
 #endif
 
 /*

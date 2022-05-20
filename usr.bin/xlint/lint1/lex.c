@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.130 2022/05/12 00:18:35 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.131 2022/05/20 21:18:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -37,8 +37,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.130 2022/05/12 00:18:35 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: lex.c,v 1.131 2022/05/20 21:18:55 rillig Exp $");
 #endif
 
 #include <ctype.h>

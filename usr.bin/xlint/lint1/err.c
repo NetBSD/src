@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.165 2022/05/12 17:31:30 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.166 2022/05/20 21:18:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -36,8 +36,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.165 2022/05/12 17:31:30 christos Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: err.c,v 1.166 2022/05/20 21:18:55 rillig Exp $");
 #endif
 
 #include <sys/types.h>

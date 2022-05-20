@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.16 2021/09/04 14:48:27 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.17 2022/05/20 21:18:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -36,8 +36,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit.c,v 1.16 2021/09/04 14:48:27 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: emit.c,v 1.17 2022/05/20 21:18:54 rillig Exp $");
 #endif
 
 #include <stdio.h>
