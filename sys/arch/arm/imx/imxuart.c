@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.28 2022/05/20 06:56:59 skrll Exp $ */
+/* $NetBSD: imxuart.c,v 1.29 2022/05/20 06:59:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.28 2022/05/20 06:56:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.29 2022/05/20 06:59:02 skrll Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -1819,7 +1819,6 @@ imxuintr_read(struct imxuart_softc *sc)
 	while (cc > 0) {
 		int cn_trapped = 0;
 
-
 		sc->sc_rbuf[sc->sc_rbuf_in] = rd =
 		    bus_space_read_4(iot, ioh, IMX_URXD);
 
@@ -2152,6 +2151,7 @@ imxuart_common_putc(dev_t dev, struct imxuart_regs *regsp, int c)
 		int __attribute__((__unused__))cn_trapped = 0;
 		cin = bus_space_read_4(iot, ioh, IMX_URXD);
 		cn_check_magic(dev, cin & 0xff, imxuart_cnm_state);
+		imxuart_readahead[imxuart_readahead_in] = cin & 0xff;
 		imxuart_readahead_in = (imxuart_readahead_in + 1) &
 		    (READAHEAD_RING_LEN-1);
 	}
