@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervreg.h,v 1.1 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: hypervreg.h,v 1.2 2022/05/20 13:55:17 nonaka Exp $	*/
 /*	$OpenBSD: hypervreg.h,v 1.10 2017/01/05 13:17:22 mikeb Exp $	*/
 
 /*-
@@ -258,6 +258,7 @@ struct vmbus_bufring {
 	uint8_t			br_rsvd[4084];
 	uint8_t			br_data[0];
 } __packed;
+__CTASSERT(sizeof(struct vmbus_bufring) == PAGE_SIZE);
 
 /*
  * Channel

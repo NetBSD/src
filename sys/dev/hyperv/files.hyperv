@@ -1,4 +1,4 @@
-#	$NetBSD: files.hyperv,v 1.2 2019/05/24 14:28:48 nonaka Exp $
+#	$NetBSD: files.hyperv,v 1.3 2022/05/20 13:55:17 nonaka Exp $
 
 define	hypervvmbus {}
 device	vmbus: hypervvmbus
@@ -14,6 +14,11 @@ file	dev/hyperv/hvkbd.c		hvkbd needs-flag
 device	hvn: ether, ifnet, arp
 attach	hvn at hypervvmbus
 file	dev/hyperv/if_hvn.c		hvn
+defparam opt_if_hvn.h	HVN_UDP_CKSUM_FIXUP_MTU_DEFAULT
+			HVN_CHANNEL_MAX_COUNT_DEFAULT
+			HVN_CHANNEL_COUNT_DEFAULT
+			HVN_TX_RING_COUNT_DEFAULT
+			HVN_LINK_STATE_CHANGE_DELAY
 
 device	hvs: scsi
 attach	hvs at hypervvmbus

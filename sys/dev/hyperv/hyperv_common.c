@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv_common.c,v 1.5 2019/12/10 12:20:20 nonaka Exp $	*/
+/*	$NetBSD: hyperv_common.c,v 1.6 2022/05/20 13:55:17 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.5 2019/12/10 12:20:20 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.6 2022/05/20 13:55:17 nonaka Exp $");
 
 #include "hyperv.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.5 2019/12/10 12:20:20 nonaka Exp
 #include <dev/hyperv/hypervreg.h>
 #include <dev/hyperv/hypervvar.h>
 
+u_int hyperv_ver_major;
 hyperv_tc64_t hyperv_tc64;
 
 int		hyperv_nullop(void);
@@ -111,46 +112,40 @@ hyperv_guid2str(const struct hyperv_guid *guid, char *buf, size_t sz)
  */
 void *
 hyperv_dma_alloc(bus_dma_tag_t dmat, struct hyperv_dma *dma, bus_size_t size,
-    bus_size_t alignment, bus_size_t boundary, int nsegs, int flags)
+    bus_size_t alignment, bus_size_t boundary, int nsegs)
 {
-	const int waitok = (flags & HYPERV_DMA_NOSLEEP) != HYPERV_DMA_NOSLEEP;
-	const int kmemflags = waitok ? KM_SLEEP: KM_NOSLEEP;
-	const int dmaflags = waitok ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT;
 	int rseg, error;
 
 	KASSERT(dma != NULL);
 	KASSERT(dma->segs == NULL);
 	KASSERT(nsegs > 0);
 
-	dma->segs = kmem_intr_zalloc(sizeof(*dma->segs) * nsegs, kmemflags);
-	if (dma->segs == NULL)
-		return NULL;
-
+	dma->segs = kmem_zalloc(sizeof(*dma->segs) * nsegs, KM_SLEEP);
 	dma->nsegs = nsegs;
 
 	error = bus_dmamem_alloc(dmat, size, alignment, boundary, dma->segs,
-	    nsegs, &rseg, dmaflags);
+	    nsegs, &rseg, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: bus_dmamem_alloc failed: error=%d\n",
 		    __func__, error);
 		goto fail1;
 	}
 	error = bus_dmamem_map(dmat, dma->segs, rseg, size, &dma->addr,
-	    dmaflags);
+	    BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: bus_dmamem_map failed: error=%d\n",
 		    __func__, error);
 		goto fail2;
 	}
-	error = bus_dmamap_create(dmat, size, rseg, size, boundary, dmaflags,
-	    &dma->map);
+	error = bus_dmamap_create(dmat, size, rseg, size, boundary,
+	    BUS_DMA_WAITOK, &dma->map);
 	if (error) {
 		printf("%s: bus_dmamap_create failed: error=%d\n",
 		    __func__, error);
 		goto fail3;
 	}
 	error = bus_dmamap_load(dmat, dma->map, dma->addr, size, NULL,
-	    BUS_DMA_READ | BUS_DMA_WRITE | dmaflags);
+	    BUS_DMA_READ | BUS_DMA_WRITE | BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: bus_dmamap_load failed: error=%d\n",
 		    __func__, error);
