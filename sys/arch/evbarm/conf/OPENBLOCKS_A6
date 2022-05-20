@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.43 2021/01/20 01:20:26 nia Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.44 2022/05/20 14:42:01 rin Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -152,10 +152,10 @@ mvgbe*	at mvgbec? port ? irq ?
 
 # MII/PHY support
 makphy* at mii? phy ?
-rgephy* at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
-rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
-ukphy*	at mii? phy ?			# generic unknown PHYs
-urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
+#rgephy* at mii? phy ?			# Realtek 8169S/8110S/8211 PHYs
+#rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+#ukphy*	at mii? phy ?			# generic unknown PHYs
+#urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # On-chip USB 2.0 Interface
 ehci*	at mvsoc? offset ? irq ?
@@ -210,100 +210,100 @@ uhub*	at uhub? port ?
 uhidev* at uhub? port ? configuration ? interface ?
 
 # USB TEMPer and TEMPerHUM
-uthum*	at uhidev? reportid ?
+#uthum*	at uhidev? reportid ?
 
 # USB serial adapter
-ucycom* at uhidev? reportid ?
+#ucycom* at uhidev? reportid ?
 
 # USB Modem
-umodem* at uhub? port ? configuration ?
-ucom*	at umodem?
+#umodem* at uhub? port ? configuration ?
+#ucom*	at umodem?
 
 # Option N.V. Wireless WAN modems
-uhso*	at uhub? port ? configuration ?
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # USB IrDA
 # USB-IrDA bridge spec
-uirda* at uhub? port ? configuration ? interface ?
-irframe* at uirda?
+#uirda* at uhub? port ? configuration ? interface ?
+#irframe* at uirda?
 
-stuirda* at uhub? port ? configuration ? interface ?
-irframe* at stuirda?
+#stuirda* at uhub? port ? configuration ? interface ?
+#irframe* at stuirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
-ustir* at uhub? port ?
-irframe* at ustir?
+#ustir* at uhub? port ?
+#irframe* at ustir?
 
 # USB Ethernet adapters
-aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-axe*	at uhub? port ?		# ASIX AX88172 based adapters
-cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
-cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
-udav*	at uhub? port ?		# Davicom DM9601 based adapters
-ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
-url*	at uhub? port ?		# Realtek RTL8150L based adapters
+#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#axe*	at uhub? port ?		# ASIX AX88172 based adapters
+#cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
+#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
+#udav*	at uhub? port ?		# Davicom DM9601 based adapters
+#ure*	at uhub? port ?		# Realtek RTL8152/RTL8153 based adapters
+#url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11 adapters
-atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
-rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
-zyd*	at uhub? port ?		# Zydas ZD1211
+#atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+#ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
+#rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
-upl*	at uhub? port ?
+#upl*	at uhub? port ?
 
 # Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
+#ubsa*	at uhub? port ?		# Belkin serial adapter
+#ucom*	at ubsa? portno ?
 
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*	at uchcom? portno ?
+#uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+#ucom*	at uchcom? portno ?
 
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
+#uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+#ucom*	at uftdi? portno ?
 
-uipaq*	at uhub? port ?		# iPAQ PDAs
-ucom*	at uipaq? portno ?
+#uipaq*	at uhub? port ?		# iPAQ PDAs
+#ucom*	at uipaq? portno ?
 
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
+#umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+#ucom*	at umct? portno ?
 
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
+#uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+#ucom*	at uplcom? portno ?
 
-uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-ucom*	at uslsa? portno ?
+#uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+#ucom*	at uslsa? portno ?
 
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
+#uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+#ucom*	at uvscom? portno ?
 
 # Kyocera AIR-EDGE PHONE
-ukyopon* at uhub? port ?
-ucom*	at ukyopon? portno ?
+#ukyopon* at uhub? port ?
+#ucom*	at ukyopon? portno ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
 
 # USB generic serial port (e.g., data over cellular)
-ugensa* at uhub? port ?
-ucom*	at ugensa?
+#ugensa* at uhub? port ?
+#ucom*	at ugensa?
 
 # Bluetooth Controller and Device support
 
 # Bluetooth USB Controllers
-ubt* at uhub? port ?
-aubtfwl* at uhub? port ?
+#ubt* at uhub? port ?
+#aubtfwl* at uhub? port ?
 
 # Bluetooth Device Hub
-bthub* at ubt?
+#bthub* at ubt?
 
 # Pseudo-Devices
 
