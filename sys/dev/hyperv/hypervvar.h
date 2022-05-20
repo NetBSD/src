@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervvar.h,v 1.5 2021/12/23 04:06:51 yamaguchi Exp $	*/
+/*	$NetBSD: hypervvar.h,v 1.6 2022/05/20 13:55:17 nonaka Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -59,6 +59,7 @@ __CTASSERT(sizeof(struct hyperv_reftsc) == PAGE_SIZE);
 #endif
 
 #if defined(_KERNEL)
+extern u_int hyperv_ver_major;
 
 int	hyperv_hypercall_enabled(void);
 int	hyperv_synic_supported(void);
@@ -108,10 +109,8 @@ hyperv_dma_get_paddr(struct hyperv_dma *dma)
 	return dma->map->dm_segs[0].ds_addr;
 }
 
-#define HYPERV_DMA_SLEEPOK	0
-#define HYPERV_DMA_NOSLEEP	__BIT(0)
 void *hyperv_dma_alloc(bus_dma_tag_t, struct hyperv_dma *, bus_size_t,
-    bus_size_t, bus_size_t, int, int);
+    bus_size_t, bus_size_t, int);
 void hyperv_dma_free(bus_dma_tag_t, struct hyperv_dma *);
 
 #endif	/* _KERNEL */

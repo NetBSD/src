@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.14 2021/12/23 04:06:51 yamaguchi Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.15 2022/05/20 13:55:16 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.14 2021/12/23 04:06:51 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.15 2022/05/20 13:55:16 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -105,8 +105,6 @@ static char hyperv_hypercall_page[PAGE_SIZE]
     __section(".text") __aligned(PAGE_SIZE) = { 0xcc };
 
 static u_int	hyperv_get_timecount(struct timecounter *);
-
-static u_int hyperv_ver_major;
 
 static u_int hyperv_features;		/* CPUID_HV_MSR_ */
 static u_int hyperv_recommends;
