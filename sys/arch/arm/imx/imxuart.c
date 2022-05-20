@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.27 2021/03/08 06:23:31 mlelstv Exp $ */
+/* $NetBSD: imxuart.c,v 1.28 2022/05/20 06:56:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.27 2021/03/08 06:23:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.28 2022/05/20 06:56:59 skrll Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -2111,8 +2111,7 @@ imxuart_common_getc(dev_t dev, struct imxuart_regs *regsp)
 	uint32_t usr2;
 
 	/* got a character from reading things earlier */
-	if (imxuart_readahead_in != imxuart_readahead_out) {
-
+	if (!READAHEAD_IS_EMPTY()) {
 		c = imxuart_readahead[imxuart_readahead_out];
 		imxuart_readahead_out = (imxuart_readahead_out + 1) &
 		    (READAHEAD_RING_LEN-1);
