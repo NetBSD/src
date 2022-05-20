@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.15 2022/02/27 18:29:14 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.16 2022/05/20 21:18:55 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -34,8 +34,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.15 2022/02/27 18:29:14 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: ckgetopt.c,v 1.16 2022/05/20 21:18:55 rillig Exp $");
 #endif
 
 #include <stdbool.h>
