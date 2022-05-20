@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.38 2022/05/19 23:12:40 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.39 2022/05/20 19:30:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.38 2022/05/19 23:12:40 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.39 2022/05/20 19:30:17 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -174,7 +174,7 @@ pickmove(int us)
 	}
 	/*
 	 * Block their combo only if we have to (i.e., if they are one move
-	 * away from completing a force and we don't have a force that
+	 * away from completing a force, and we don't have a force that
 	 * we can complete which takes fewer moves to win).
 	 */
 	if (Tcp->c.a <= 1 && (Ocp->c.a > 1 ||
@@ -269,7 +269,7 @@ scanframes(int color)
 		d = dd[r];
 		if (cp->c.b != 0) {
 			/*
-			 * Since this is the first spot of an open ended
+			 * Since this is the first spot of an open-ended
 			 * frame, we treat it as a closed frame.
 			 */
 			cb.c.a = cp->c.a + 1;
@@ -589,7 +589,7 @@ addframes(int level)
 			fcb.s = 0x200;
 
 		/*
-		 * If this is an open ended frame, use
+		 * If this is an open-ended frame, use
 		 * the combo value with the end closed.
 		 */
 		if (fsp->s_occ == EMPTY) {
@@ -654,7 +654,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	/*
 	 * XXX: when I made functions static gcc started warning about
 	 * some members of vertices[0] maybe being used uninitialized.
-	 * For now I'm just going to clear it rather than wade through
+	 * For now, I'm just going to clear it rather than wade through
 	 * the logic to find out whether gcc or the code is wrong. I
 	 * wouldn't be surprised if it were the code though. - dholland
 	 */
@@ -1113,7 +1113,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				return -1;
 			/*
 			 * If this is not the spot we are attaching
-			 * 'fcbp' to and it is a reasonable intersection
+			 * 'fcbp' to, and it is a reasonable intersection
 			 * spot, then there might be a loop.
 			 */
 			n = ip[tcbp - frames];
@@ -1125,8 +1125,8 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 					return -1;
 				/*
 				 * Check to be sure the intersection is not
-				 * one of the end points if it is an open
-				 * ended frame.
+				 * one of the end points if it is an
+				 * open-ended frame.
 				 */
 				if ((flags & C_OPEN_1) != 0 &&
 				    (n == tcbp->c_vertex ||
@@ -1161,7 +1161,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			return -1;
 		/*
 		 * If this is not the spot we are attaching
-		 * 'fcbp' to and it is a reasonable intersection
+		 * 'fcbp' to, and it is a reasonable intersection
 		 * spot, then there might be a loop.
 		 */
 		n = ip[cbp - frames];
@@ -1173,8 +1173,8 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				return -1;
 			/*
 			 * Check to be sure the intersection is not
-			 * one of the end points if it is an open
-			 * ended frame.
+			 * one of the end points if it is an open-ended
+			 * frame.
 			 */
 			if ((flags & C_OPEN_0) != 0 &&
 			    (n == cbp->c_vertex ||
