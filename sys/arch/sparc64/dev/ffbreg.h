@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.11 2012/08/09 00:48:06 macallan Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.12 2022/05/20 19:34:22 andvar Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -187,7 +187,7 @@
 #define	FFB_FBC_XPMASK		0x294	/* X PlaneMask */
 #define	FFB_FBC_YPMASK		0x298
 #define	FFB_FBC_ZPMASK		0x29c
-#define	FFB_FBC_CLIP0MIN	0x2a0	/* Auxilliary Viewport Clips */
+#define	FFB_FBC_CLIP0MIN	0x2a0	/* Auxiliary Viewport Clips */
 #define	FFB_FBC_CLIP0MAX	0x2a4
 #define	FFB_FBC_CLIP1MIN	0x2a8
 #define	FFB_FBC_CLIP1MAX	0x2ac

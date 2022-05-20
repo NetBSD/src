@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.86 2021/08/07 16:19:06 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.87 2022/05/20 19:34:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.86 2021/08/07 16:19:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.87 2022/05/20 19:34:22 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -340,7 +340,7 @@ static void	fdconf(struct fdc_softc *);
 /*
  * The Floppy Control Register on the sun3x, not to be confused with the
  * Floppy ControllER Registers that this driver mostly insterfaces with,
- * controls some of the auxillary functions of the floppy drive.  These
+ * controls some of the auxiliary functions of the floppy drive.  These
  * include asserting the floppy eject and terminal data count (or TC) pins
  * of the floppy drive and controller chip respectively.
  *

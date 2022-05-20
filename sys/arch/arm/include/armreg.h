@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.134 2021/11/27 08:25:18 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.135 2022/05/20 19:34:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -270,7 +270,7 @@
 #define	MPCORE_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
 #define	MPCORE_AUXCTL_SA	0x00000020 /* SMP/AMP */
 
-/* Marvell PJ4B Auxillary Control Register (CP15.0.R1.c0.1) */
+/* Marvell PJ4B Auxiliary Control Register (CP15.0.R1.c0.1) */
 #define PJ4B_AUXCTL_FW		__BIT(0)   /* Cache and TLB updates broadcast */
 #define PJ4B_AUXCTL_SMPNAMP	__BIT(6)   /* 0 = AMP, 1 = SMP */
 #define PJ4B_AUXCTL_L1PARITY	__BIT(9)   /* L1 parity checking */
