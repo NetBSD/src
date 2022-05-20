@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.30 2022/05/19 23:12:40 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.31 2022/05/20 19:30:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -71,7 +71,7 @@
 
 /*
  * A 'frame' is a group of five or six contiguous board locations.
- * An open ended frame is one with spaces on both ends; otherwise, its closed.
+ * An open-ended frame is one with spaces on both ends; otherwise, its closed.
  * A 'combo' is a group of intersecting frames and consists of two numbers:
  * 'A' is the number of moves to make the combo non-blockable.
  * 'B' is the minimum number of moves needed to win once it can't be blocked.
@@ -111,7 +111,7 @@
  * Different colors, <A1,B1> is the combo for the player with the next move:
  *	<A',B'> = A2 <= 1 && (A1 > 1 || A2 + B2 < A1 + B1) ? <A2,B2> : <A1,B1>
  *	We want to block only if we have to (i.e., if they are one move away
- *	from completing a force and we don't have a force that we can
+ *	from completing a force, and we don't have a force that we can
  *	complete which takes fewer or the same number of moves to win).
  */
 
@@ -161,8 +161,8 @@ struct combostr {
 };
 
 /* flag values for c_flags */
-#define C_OPEN_0	0x01		/* link[0] is an open ended frame */
-#define C_OPEN_1	0x02		/* link[1] is an open ended frame */
+#define C_OPEN_0	0x01		/* link[0] is an open-ended frame */
+#define C_OPEN_1	0x02		/* link[1] is an open-ended frame */
 #define C_LOOP		0x04		/* link[1] intersects previous frame */
 
 /*
