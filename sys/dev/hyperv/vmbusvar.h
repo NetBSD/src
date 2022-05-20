@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbusvar.h,v 1.6 2020/07/14 00:45:53 yamaguchi Exp $	*/
+/*	$NetBSD: vmbusvar.h,v 1.7 2022/05/20 13:55:17 nonaka Exp $	*/
 /*	$OpenBSD: hypervvar.h,v 1.13 2017/06/23 19:05:42 mikeb Exp $	*/
 
 /*
@@ -121,6 +121,9 @@ struct vmbus_channel {
 	struct evcnt			ch_evcnt;
 	void				*ch_taskq;
 
+	kmutex_t			ch_event_lock;
+	kcondvar_t			ch_event_cv;
+
 	uint32_t			ch_flags;
 #define  CHF_BATCHED			__BIT(0)
 #define  CHF_MONITOR			__BIT(1)
@@ -135,6 +138,7 @@ struct vmbus_channel {
 	TAILQ_ENTRY(vmbus_channel)	ch_entry;
 
 	kmutex_t			ch_subchannel_lock;
+	kcondvar_t			ch_subchannel_cv;
 	struct vmbus_channels		ch_subchannels;
 	u_int				ch_subchannel_count;
 	TAILQ_ENTRY(vmbus_channel)	ch_subentry;
@@ -175,6 +179,8 @@ struct vmbus_softc {
 
 	u_long			*sc_wevents;	/* Write events */
 	u_long			*sc_revents;	/* Read events */
+	struct vmbus_channel * volatile *sc_chanmap;
+	volatile u_long		sc_evtmask[VMBUS_EVTFLAGS_MAX];
 	struct vmbus_mnf	*sc_monitor[2];
 	struct vmbus_percpu_data sc_percpu[MAXCPUS];
 
@@ -286,9 +292,15 @@ int	vmbus_channel_recv(struct vmbus_channel *, void *, uint32_t, uint32_t *,
 void	vmbus_channel_cpu_set(struct vmbus_channel *, int);
 void	vmbus_channel_cpu_rr(struct vmbus_channel *);
 bool	vmbus_channel_is_revoked(struct vmbus_channel *);
+bool	vmbus_channel_tx_empty(struct vmbus_channel *);
+bool	vmbus_channel_rx_empty(struct vmbus_channel *);
+void	vmbus_channel_pause(struct vmbus_channel *);
+uint32_t vmbus_channel_unpause(struct vmbus_channel *);
+uint32_t vmbus_channel_ready(struct vmbus_channel *);
 
 struct vmbus_channel **
 	vmbus_subchannel_get(struct vmbus_channel *, int);
-void	vmbus_subchannel_put(struct vmbus_channel **, int);
+void	vmbus_subchannel_rel(struct vmbus_channel **, int);
+void	vmbus_subchannel_drain(struct vmbus_channel *);
 
 #endif	/* _VMBUSVAR_H_ */
