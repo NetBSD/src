@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.28 2021/11/24 14:34:51 uwe Exp $ */
+/* $NetBSD: wsmoused.c,v 1.29 2022/05/20 21:31:24 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: wsmoused.c,v 1.28 2021/11/24 14:34:51 uwe Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.29 2022/05/20 21:31:24 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -298,8 +298,8 @@ open_device(unsigned int secs)
 
 /* Main program event loop.  This function polls the wscons status
  * device and the mouse device; whenever an event is received, the
- * appropiate callback is fired for all attached modes.  If the polls
- * times out (which only appens when the mouse is disabled), another
+ * appropriate callback is fired for all attached modes.  If the polls
+ * times out (which only happens when the mouse is disabled), another
  * callback is launched. */
 static void
 event_loop(void)
