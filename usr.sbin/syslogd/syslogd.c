@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.138 2021/11/27 22:30:26 rillig Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.139 2022/05/20 19:34:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.138 2021/11/27 22:30:26 rillig Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.139 2022/05/20 19:34:23 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -4756,7 +4756,7 @@ make_timestamp(time_t *in_now, bool iso, size_t tlen)
 	}
 }
 
-/* auxillary code to allocate memory and copy a string */
+/* auxiliary code to allocate memory and copy a string */
 bool
 copy_string(char **mem, const char *p, const char *q)
 {

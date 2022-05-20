@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.84 2022/05/03 20:52:31 andvar Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.85 2022/05/20 19:34:22 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.84 2022/05/03 20:52:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.85 2022/05/20 19:34:22 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -139,7 +139,7 @@ setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	tf->tf_fixreg[3] = arginfo.ps_nargvstr;
 	tf->tf_fixreg[4] = (register_t)arginfo.ps_argvstr;
 	tf->tf_fixreg[5] = (register_t)arginfo.ps_envstr;
-	tf->tf_fixreg[6] = 0;			/* auxillary vector */
+	tf->tf_fixreg[6] = 0;			/* auxiliary vector */
 	tf->tf_fixreg[7] = 0;			/* termination vector */
 	tf->tf_fixreg[8] = p->p_psstrp;		/* NetBSD extension */
 

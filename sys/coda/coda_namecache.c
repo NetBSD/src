@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.27 2020/04/13 19:23:17 ad Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.28 2022/05/20 19:34:22 andvar Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.27 2020/04/13 19:23:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.28 2022/05/20 19:34:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -160,7 +160,7 @@ coda_nc_init(void)
 }
 
 /*
- * Auxillary routines -- shouldn't be entry points
+ * Auxiliary routines -- shouldn't be entry points
  */
 
 static struct coda_cache *
