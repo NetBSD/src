@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.50 2021/09/05 18:34:50 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.51 2022/05/20 21:18:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,8 +34,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.50 2021/09/05 18:34:50 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: tyname.c,v 1.51 2022/05/20 21:18:54 rillig Exp $");
 #endif
 
 #include <limits.h>

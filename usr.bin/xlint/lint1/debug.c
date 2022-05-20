@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.17 2022/04/09 23:41:22 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.18 2022/05/20 21:18:55 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -34,8 +34,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.17 2022/04/09 23:41:22 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: debug.c,v 1.18 2022/05/20 21:18:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>

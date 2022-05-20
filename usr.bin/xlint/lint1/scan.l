@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.135 2021/07/11 18:03:47 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.136 2022/05/20 21:18:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,8 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.135 2021/07/11 18:03:47 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: scan.l,v 1.136 2022/05/20 21:18:55 rillig Exp $");
 #endif
 
 #include "lint1.h"

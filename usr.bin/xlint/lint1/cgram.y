@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.415 2022/05/12 20:57:49 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.416 2022/05/20 21:18:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,8 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.415 2022/05/12 20:57:49 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: cgram.y,v 1.416 2022/05/20 21:18:55 rillig Exp $");
 #endif
 
 #include <limits.h>

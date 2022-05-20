@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.27 2021/11/16 22:12:44 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.28 2022/05/20 21:18:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,8 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.27 2021/11/16 22:12:44 rillig Exp $");
+#if defined(__RCSID)
+__RCSID("$NetBSD: emit2.c,v 1.28 2022/05/20 21:18:55 rillig Exp $");
 #endif
 
 #include "lint2.h"
