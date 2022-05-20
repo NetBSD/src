@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.14 2022/05/19 17:24:14 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.15 2022/05/20 21:03:04 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -213,9 +213,9 @@ void take_bool(_Bool);
  * warnings in user code; that's irrelevant for this test though.
  *
  * Several curses functions take bool as a parameter, for example keypad or
- * leaveok.  As of 2022-05-19, lint does not complain when these functions
- * get 0 instead of 'false' as an argument.  It does complain about 1 instead
- * of 'true' though.
+ * leaveok.  Before ckbool.c 1.14 from 2022-05-19, lint did not complain when
+ * these functions get 0 instead of 'false' as an argument.  It did complain
+ * about 1 instead of 'true' though.
  */
 void
 pass_bool_to_function(void)
