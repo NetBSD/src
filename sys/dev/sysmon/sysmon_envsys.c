@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.150 2021/12/31 14:30:04 riastradh Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.151 2022/05/20 21:31:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.150 2021/12/31 14:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.151 2022/05/20 21:31:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1815,7 +1815,7 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 /*
  * sme_userset_dictionary:
  *
- * 	+ Parse the userland dictionary and run the appropiate tasks
+ * 	+ Parse the userland dictionary and run the appropriate tasks
  * 	  that were specified.
  */
 int
