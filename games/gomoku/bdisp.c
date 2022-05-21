@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.36 2022/05/19 22:49:05 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.37 2022/05/21 09:25:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.36 2022/05/19 22:49:05 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.37 2022/05/21 09:25:51 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -109,7 +109,7 @@ bdisp_init(void)
 		mvprintw(scr_y(j), scr_x(BSZ) + 2, "%d ", j);
 	}
 
-	bdwho(false);
+	bdwho();
 	mvaddstr(0, TRANSCRIPT_COL + 1, "#  black  white");
 	lastline = 0;
 	bdisp();
@@ -119,21 +119,18 @@ bdisp_init(void)
  * Update who is playing whom.
  */
 void
-bdwho(bool update)
+bdwho(void)
 {
 	int bw = (int)strlen(plyr[BLACK]);
 	int ww = (int)strlen(plyr[WHITE]);
 	int available = 3 + (1 + scr_x(BSZ) - scr_x(1)) + 3;
 	int fixed = (int)sizeof("BLACK/ (*) vs. WHITE/ (O)") - 1;
 	int total = fixed + bw + ww;
+	int x;
 
-	mvhline(BSZ + 2, 0, ' ', available);
-
-	if (total <= available) {
-		mvprintw(BSZ + 2, (available - total) / 2,
-		    "BLACK/%s (*) vs. WHITE/%s (O)",
-		    plyr[BLACK], plyr[WHITE]);
-	} else {
+	if (total <= available)
+		x = (available - total) / 2;
+	else {
 		int remaining = available - fixed;
 		int half = remaining / 2;
 
@@ -143,12 +140,12 @@ bdwho(bool update)
 			bw = remaining - ww;
 		else
 			bw = half, ww = remaining - half;
-
-		mvprintw(BSZ + 2, 0, "BLACK/%.*s (*) vs. WHITE/%.*s (O)",
-		    bw, plyr[BLACK], ww, plyr[WHITE]);
+		x = 0;
 	}
-	if (update)
-		refresh();
+
+	mvhline(BSZ + 2, 0, ' ', available);
+	mvprintw(BSZ + 2, x, "BLACK/%.*s (*) vs. WHITE/%.*s (O)",
+	    bw, plyr[BLACK], ww, plyr[WHITE]);
 }
 
 /*
