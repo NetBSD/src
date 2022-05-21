@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.19 2022/05/21 17:19:10 rillig Exp $	*/
+/*	$NetBSD: stoc.c,v 1.20 2022/05/21 19:02:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)stoc.c	8.1 (Berkeley) 7/24/94	*/
-__RCSID("$NetBSD: stoc.c,v 1.19 2022/05/21 17:19:10 rillig Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.20 2022/05/21 19:02:14 rillig Exp $");
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -42,19 +42,6 @@ __RCSID("$NetBSD: stoc.c,v 1.19 2022/05/21 17:19:10 rillig Exp $");
 #include "gomoku.h"
 
 const char	letters[]	= "<ABCDEFGHJKLMNOPQRST>";
-
-struct mvstr {
-	int	m_code;
-	const char	*m_text;
-};
-static	const struct	mvstr	mv[] = {
-	{ RESIGN,	"resign" },
-	{ RESIGN,	"quit" },
-	{ SAVE,		"save" },
-	{ -1,		0 }
-};
-
-static int lton(int);
 
 
 /*
@@ -65,9 +52,10 @@ stoc(int s)
 {
 	static char buf[32];
 
-	for (int i = 0; mv[i].m_code >= 0; i++)
-		if (s == mv[i].m_code)
-			return mv[i].m_text;
+	if (s == RESIGN)
+		return "resign";
+	if (s == SAVE)
+		return "save";
 	snprintf(buf, sizeof(buf), "%c%d",
 	    letters[s % (BSZ + 1)], s / (BSZ + 1));
 	return buf;
@@ -80,28 +68,21 @@ int
 ctos(const char *mp)
 {
 
-	for (int i = 0; mv[i].m_code >= 0; i++)
-		if (strcmp(mp, mv[i].m_text) == 0)
-			return mv[i].m_code;
-	if (!isalpha((unsigned char)mp[0]))
-		return ILLEGAL;
-	int i = atoi(&mp[1]);
-	if (i < 1 || i > 19)
-		return ILLEGAL;
-	return PT(lton((unsigned char)mp[0]), i);
-}
+	if (strcmp(mp, "resign") == 0 || strcmp(mp, "quit") == 0)
+		return RESIGN;
+	if (strcmp(mp, "save") == 0)
+		return SAVE;
 
-/*
- * Turn a letter into a number.
- */
-static int
-lton(int c)
-{
-	int i;
+	int letter = toupper((unsigned char)mp[0]);
+	int x = 1;
+	while (x <= BSZ && letters[x] != letter)
+		x++;
+	if (x > BSZ)
+		return ILLEGAL;
 
-	if (islower(c))
-		c = toupper(c);
-	for (i = 1; i <= BSZ && letters[i] != c; i++)
-		;
-	return i;
+	int y = atoi(&mp[1]);
+	if (y < 1 || y > 19)
+		return ILLEGAL;
+
+	return PT(x, y);
 }
