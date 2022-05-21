@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2873 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2874 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -326,10 +326,10 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	resize: Import Xterm's resize(1) for querying (x)terminal sizes in
 		base for headless clients [reinoud 20201227]
 	dhcpcd: Update to version 9.4.0 [roy 20201228]
-	tzdata updated to 2020f (includes update to 2020e)  [kre 20201231] 
+	tzdata updated to 2020f (includes update to 2020e)  [kre 20201231]
 	evbarm: Add support for Amlogic G12 family SoCs. [ryo 20210101]
 	pppd(8): updated to version 2.4.9. [christos 20210109]
-	tzdata updated to 2021a [kre 20210124] 
+	tzdata updated to 2021a [kre 20210124]
 	evbmips: Add support for QEMU "mipssim" emulator. [simonb 20210127]
 	x68k: Add Emulate3Buttons support to X68k Xorg based monolithic server.
 		[tsutsui 20210207]
@@ -395,7 +395,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	hp300: Add support of multiple rd(4) disks on all punits for HPDisk.
 		[tsutsui 20210709]
 	GMP: Import 6.2.1 [mrg 20210711]
-	kernel: Tie the maximum file lock per unprivilegied uid to 
+	kernel: Tie the maximum file lock per unprivilegied uid to
 		kern.maxfiles [manu 20210727]
 	evbppc: Switch ibm4xx to generic evbppc kernel modules. [rin 20210803]
 	evbarm: Add support for Arm PCI Configuration Space Access Firmware
@@ -437,7 +437,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		and integrated them into the synaptics(4) driver and
 		xf86-input-ws. [nia 20210928]
 	gnu-efi: Import version 3.0.14. [jmcneill 20210930]
-	tzdata partly updated to 2021b [kre 20211001] 
+	tzdata partly updated to 2021b [kre 20211001]
 	sht4xtemp(4): Driver for the Sensirion SHT40/SHT41/SHT45 temperature
 		and humidity sensor [brad 20211003]
 	network: Make pktq_rps_hash() pluggable for each interface type.
@@ -449,7 +449,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	aarch64: Enable MKRELRO and MKPIE by default. [nia 20211014]
 	dhcpcd(8): Update to dhcpcd-9.4.1. [roy 20211022]
 	tzcode: Updated to 2021e. [christos 20211022]
-	tzdata: updated to 2021e (still missing trash from 2021b) [kre 20211022] 
+	tzdata: updated to 2021e (still missing trash from 2021b) [kre 20211022]
 	passwd.conf(5): Make 'argon2id' the default cipher for new
 		passwords. [nia 20211026]
 	acpi(4): Updated ACPICA to 20210930. [christos 20211028]
@@ -485,7 +485,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[reinoud 20220309]
 	OpenSSL: Imported 1.1.1n. [christos 20220315]
 	tzdata: updated to 2022a (using the 2022agtz fork to restore data
-		from previously merged zones) [kre 20220320] 
+		from previously merged zones) [kre 20220320]
 	tzcode: Updated to 2022a. [christos 20220322]
 	dhcp: Import version 4.4.3. [christos 20220402]
 	udf: Added fsck_udf(8) and upgraded newfs_udf/makefs for UDF. [reinoud 20220506]
