@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.19 2022/05/21 15:11:24 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.20 2022/05/21 16:39:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.19 2022/05/21 15:11:24 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.20 2022/05/21 16:39:14 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -109,12 +109,12 @@ makemove(int us, int mv)
 		/* compute old weight value for this frame */
 		cp = &fsp->s_fval[BLACK][r];
 		if (cp->s <= 0x500)
-		    val = weight[5 - cp->c.a - cp->c.b];
+		    val = weight[5 - cp->cv_force - cp->cv_win];
 		else
 		    val = 0;
 		cp = &fsp->s_fval[WHITE][r];
 		if (cp->s <= 0x500)
-		    val += weight[5 - cp->c.a - cp->c.b];
+		    val += weight[5 - cp->cv_force - cp->cv_win];
 
 		/* compute new combo value for this frame */
 		sp = fsp;
@@ -148,11 +148,11 @@ makemove(int us, int mv)
 		cp = &fsp->s_fval[us][r];
 		/* both ends open? */
 		if (space && sp->s_occ == EMPTY) {
-		    cp->c.a = 4 - n;
-		    cp->c.b = 1;
+		    cp->cv_force = 4 - n;
+		    cp->cv_win = 1;
 		} else {
-		    cp->c.a = 5 - n;
-		    cp->c.b = 0;
+		    cp->cv_force = 5 - n;
+		    cp->cv_win = 0;
 		}
 		val = weight[n];
 		sp = fsp;
@@ -190,14 +190,14 @@ makemove(int us, int mv)
 	    /* both ends open? */
 	    if (fsp->s_occ == EMPTY) {
 		cp = &fsp->s_fval[BLACK][r];
-		if (cp->c.b != 0) {
-		    cp->c.a += 1;
-		    cp->c.b = 0;
+		if (cp->cv_win != 0) {
+		    cp->cv_force++;
+		    cp->cv_win = 0;
 		}
 		cp = &fsp->s_fval[WHITE][r];
-		if (cp->c.b != 0) {
-		    cp->c.a += 1;
-		    cp->c.b = 0;
+		if (cp->cv_win != 0) {
+		    cp->cv_force++;
+		    cp->cv_win = 0;
 		}
 	    }
 
