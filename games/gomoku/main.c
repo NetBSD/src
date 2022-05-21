@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.47 2022/05/21 14:55:26 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.48 2022/05/21 17:19:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.47 2022/05/21 14:55:26 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.48 2022/05/21 17:19:10 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -306,9 +306,8 @@ again:
 			break;
 		}
 		if (interactive) {
-			misclog("%3d%s%-6s", movenum,
-			    color != BLACK ? "        " : " ",
-			    stoc(curmove));
+			misclog("%3d%*s%-6s", movenum,
+			    color == BLACK ? 2 : 9, "", stoc(curmove));
 		}
 		if ((i = makemove(color, curmove)) != MOVEOK)
 			break;

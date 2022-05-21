@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.18 2022/05/19 22:19:18 rillig Exp $	*/
+/*	$NetBSD: stoc.c,v 1.19 2022/05/21 17:19:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,14 +34,14 @@
 
 #include <sys/cdefs.h>
 /*	@(#)stoc.c	8.1 (Berkeley) 7/24/94	*/
-__RCSID("$NetBSD: stoc.c,v 1.18 2022/05/19 22:19:18 rillig Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.19 2022/05/21 17:19:10 rillig Exp $");
 
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include "gomoku.h"
 
-const char	*letters	= "<ABCDEFGHJKLMNOPQRST>";
+const char	letters[]	= "<ABCDEFGHJKLMNOPQRST>";
 
 struct mvstr {
 	int	m_code;

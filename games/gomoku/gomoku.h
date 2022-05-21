@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.37 2022/05/21 16:39:14 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.38 2022/05/21 17:19:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -215,7 +215,7 @@ struct	spotstr {
 #define BFLAG		0x010000	/* frame intersects border or dead */
 #define BFLAGALL	0x0F0000	/* all frames dead */
 
-extern	const char	*letters;
+extern	const char	letters[];
 extern	const char	pdir[];
 
 extern	const int     dd[4];

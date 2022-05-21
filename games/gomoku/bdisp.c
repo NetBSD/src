@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.41 2022/05/21 15:21:40 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.42 2022/05/21 17:19:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.41 2022/05/21 15:21:40 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.42 2022/05/21 17:19:10 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: bdisp.c,v 1.41 2022/05/21 15:21:40 rillig Exp $");
 #define	SCRNW		80		/* assume 80 chars for the moment */
 
 static	int	lastline;
-static	char	pcolor[] = "*O.?";
+static	const char pcolor[] = "*O.?";
 
 #define	scr_y(by)	(1 + (BSZ - 1) - ((by) - 1))
 #define	scr_x(bx)	(3 + 2 * ((bx) - 1))
@@ -107,12 +107,12 @@ bdisp_init(void)
 
 	/* left and right edges */
 	for (int j = BSZ + 1; --j > 0; ) {
-		mvprintw(scr_y(j), 0, "%2d ", j);
-		mvprintw(scr_y(j), scr_x(BSZ) + 2, "%d ", j);
+		mvprintw(scr_y(j), 0, "%2d", j);
+		mvprintw(scr_y(j), scr_x(BSZ) + 2, "%d", j);
 	}
 
 	bdwho();
-	mvaddstr(0, TRANSCRIPT_COL + 1, "#  black  white");
+	mvaddstr(0, TRANSCRIPT_COL, "  #  black  white");
 	lastline = 0;
 	bdisp();
 }
