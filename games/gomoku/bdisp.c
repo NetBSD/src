@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.39 2022/05/21 12:16:53 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.40 2022/05/21 12:29:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.39 2022/05/21 12:16:53 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.40 2022/05/21 12:29:34 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -272,7 +272,7 @@ get_key(const char *allowed)
 }
 
 bool
-get_line(char *buf, int size)
+get_line(char *buf, int size, void (*on_change)(const char *))
 {
 	char *cp, *end;
 	int c;
@@ -310,6 +310,10 @@ get_line(char *buf, int size)
 				addch(c);
 			} else
 				beep();
+		}
+		if (on_change != NULL) {
+			*cp = '\0';
+			on_change(buf);
 		}
 		refresh();
 	}

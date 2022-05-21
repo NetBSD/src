@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.32 2022/05/21 09:25:51 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.33 2022/05/21 12:29:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -229,7 +229,7 @@ extern const char *plyr[];
 void	bdinit(struct spotstr *);
 int	get_coord(void);
 int	get_key(const char *);
-bool	get_line(char *, int);
+bool	get_line(char *, int, void (*)(const char *));
 void	ask(const char *);
 void	dislog(const char *);
 void	bdump(FILE *);
