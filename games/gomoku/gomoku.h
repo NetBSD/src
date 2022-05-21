@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.33 2022/05/21 12:29:34 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.34 2022/05/21 14:55:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -59,14 +59,13 @@
 #define EMPTY	2
 #define BORDER	3
 
-/* return values for makemove() */
+/* return values for makemove, readinput */
 #define MOVEOK	0
 #define RESIGN	1
 #define ILLEGAL	2
 #define WIN	3
 #define TIE	4
 #define SAVE	5
-
 #define PT(x, y)	((x) + (BSZ + 1) * (y))
 
 /*
