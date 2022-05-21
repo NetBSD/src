@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.38 2022/05/21 12:08:06 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.39 2022/05/21 12:16:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.38 2022/05/21 12:08:06 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.39 2022/05/21 12:16:53 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -280,36 +280,38 @@ get_line(char *buf, int size)
 	c = 0;
 	cp = buf;
 	end = buf + size - 1;	/* save room for the '\0' */
-	while (cp < end && (c = getchar()) != EOF && c != '\n' && c != '\r') {
-		*cp++ = c;
-		if (interactive) {
-			switch (c) {
-			case 0x0c: /* ^L */
-				wrefresh(curscr);
-				cp--;
-				continue;
-			case 0x15: /* ^U */
-			case 0x18: /* ^X */
-				while (cp > buf) {
-					cp--;
-					addch('\b');
-				}
-				clrtoeol();
-				break;
-			case '\b':
-			case 0x7f: /* DEL */
-				if (cp == buf + 1) {
-					cp--;
-					continue;
-				}
-				cp -= 2;
-				addstr("\b \b");
-				break;
-			default:
-				addch(c);
-			}
-			refresh();
+	while ((c = getchar()) != EOF && c != '\n' && c != '\r') {
+		if (!interactive && cp < end) {
+			*cp++ = c;
+			continue;
 		}
+		if (!interactive)
+			errx(EXIT_FAILURE, "line too long");
+
+		switch (c) {
+		case 0x0c:	/* ^L */
+			wrefresh(curscr);
+			continue;
+		case 0x15:	/* ^U */
+		case 0x18:	/* ^X */
+			for (; cp > buf; cp--)
+				addstr("\b \b");
+			break;
+		case '\b':
+		case 0x7f:	/* DEL */
+			if (cp == buf)
+				continue;
+			cp--;
+			addstr("\b \b");
+			break;
+		default:
+			if (cp < end) {
+				*cp++ = c;
+				addch(c);
+			} else
+				beep();
+		}
+		refresh();
 	}
 	*cp = '\0';
 	return c != EOF;
