@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.114 2022/05/21 20:37:18 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.115 2022/05/21 23:11:03 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.114 2022/05/21 20:37:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.115 2022/05/21 23:11:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -737,13 +737,12 @@ static int
 cryptodev_mcb(struct cryptop *crp)
 {
 	struct csession *cse = crp->crp_opaque;
-	int error = 0;
 
 	mutex_enter(&cryptodev_mtx);
 	cse->error = crp->crp_etype;
 	if (crp->crp_etype == EAGAIN) {
 		mutex_exit(&cryptodev_mtx);
-		error = crypto_dispatch(crp);
+		(void)crypto_dispatch(crp);
 		mutex_enter(&cryptodev_mtx);
 	}
 
