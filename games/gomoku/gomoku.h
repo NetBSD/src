@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.35 2022/05/21 15:11:24 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.36 2022/05/21 15:21:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -39,13 +39,18 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-/* board dimensions */
+/*
+ * The board consists of 19x19 spots, the coordinates are 1-based. The board
+ * is surrounded by border spots.
+ */
+
 #define BSZ	19
 #define BAREA	((1 + BSZ + 1) * (BSZ + 1) + 1)
 
-#define TRANSCRIPT_COL	(3 + (2 * BSZ - 1) + 3 + 3)
-
-/* frame dimensions (based on 5 in a row) */
+/*
+ * A 'frame' is a group of five or six contiguous board locations. An
+ * open-ended frame is one with spaces on both ends; otherwise, it is closed.
+ */
 #define FAREA	(2 * BSZ * (BSZ - 4) + 2 * (BSZ - 4) * (BSZ - 4))
 
 #define MUP	(BSZ + 1)
@@ -69,31 +74,12 @@
 #define PT(x, y)	((x) + (BSZ + 1) * (y))
 
 /*
- * A 'frame' is a group of five or six contiguous board locations.
- * An open-ended frame is one with spaces on both ends; otherwise, its closed.
  * A 'combo' is a group of intersecting frames and consists of two numbers:
  * 'A' is the number of moves to make the combo non-blockable.
  * 'B' is the minimum number of moves needed to win once it can't be blocked.
- * A 'force' is a combo that is one move away from being non-blockable
  *
- * Single frame combo values:
- *     <A,B>	board values
- *	5,0	. . . . . O
- *	4,1	. . . . . .
- *	4,0	. . . . X O
- *	3,1	. . . . X .
- *	3,0	. . . X X O
- *	2,1	. . . X X .
- *	2,0	. . X X X O
- *	1,1	. . X X X .
- *	1,0	. X X X X O
- *	0,1	. X X X X .
- *	0,0	X X X X X O
+ * A 'force' is a combo that is one move away from being non-blockable.
  *
- * The rule for combining two combos (<A1,B1> <A2,B2>)
- * with V valid intersection points, is:
- *	A' = A1 + A2 - 2 - V
- *	B' = MIN(A1 + B1 - 1, A2 + B2 - 1)
  * Each time a frame is added to the combo, the number of moves to complete
  * the force is the number of moves needed to 'fill' the frame plus one at
  * the intersection point. The number of moves to win is the number of moves
@@ -114,6 +100,26 @@
  *	complete which takes fewer or the same number of moves to win).
  */
 
+/*
+ * Single frame combo values:
+ *     <A,B>	board values
+ *	5,0	. . . . . O
+ *	4,1	. . . . . .
+ *	4,0	. . . . X O
+ *	3,1	. . . . X .
+ *	3,0	. . . X X O
+ *	2,1	. . . X X .
+ *	2,0	. . X X X O
+ *	1,1	. . X X X .
+ *	1,0	. X X X X O
+ *	0,1	. X X X X .
+ *	0,0	X X X X X O
+ *
+ * The rule for combining two combos (<A1,B1> <A2,B2>) with V valid
+ * intersection points is:
+ *	A' = A1 + A2 - 2 - V
+ *	B' = MIN(A1 + B1 - 1, A2 + B2 - 1)
+ */
 union comboval {
 	struct {
 #if BYTE_ORDER == BIG_ENDIAN
