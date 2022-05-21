@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.24 2021/12/23 17:09:25 hannken Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.25 2022/05/21 17:50:21 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.24 2021/12/23 17:09:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.25 2022/05/21 17:50:21 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/pagemap.h>
@@ -63,12 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.24 2021/12/23 17:09:25 hannken Exp 
 #include <uvm/uvm_fault.h>
 #include <uvm/uvm_param.h>
 #include <drm/bus_dma_hacks.h>
-#endif
-
-#ifdef _LP64
-#define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
-#else
-#define DRM_FILE_PAGE_OFFSET (0xa0000000UL >> PAGE_SHIFT)
 #endif
 
 static int radeon_ttm_debugfs_init(struct radeon_device *rdev);
@@ -1106,9 +1100,6 @@ radeon_mmap_object(struct drm_device *dev, off_t offset, size_t size,
 	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
 
 	if (__predict_false(rdev == NULL))	/* XXX How?? */
-		return -EINVAL;
-
-	if (__predict_false((offset >> PAGE_SHIFT) < DRM_FILE_PAGE_OFFSET))
 		return -EINVAL;
 
 	return ttm_bo_mmap_object(&rdev->mman.bdev, offset, size, prot,

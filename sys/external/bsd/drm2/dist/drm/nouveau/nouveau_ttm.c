@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_ttm.c,v 1.9 2021/12/19 10:51:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_ttm.c,v 1.10 2022/05/21 17:50:21 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /*
@@ -25,7 +25,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.9 2021/12/19 10:51:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.10 2022/05/21 17:50:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>	/* pmap_pv_track/untrack */
@@ -177,12 +177,8 @@ nouveau_ttm_mmap_object(struct drm_device *dev, off_t offset, size_t size,
 
 	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
 
-	if (__predict_false((offset >> PAGE_SHIFT) < DRM_FILE_PAGE_OFFSET))
-		return drm_legacy_mmap_object(dev, offset, size, prot, uobjp,
-		    uoffsetp, file);
-	else
-		return ttm_bo_mmap_object(&drm->ttm.bdev, offset, size, prot,
-		    uobjp, uoffsetp, file);
+	return ttm_bo_mmap_object(&drm->ttm.bdev, offset, size, prot,
+	    uobjp, uoffsetp, file);
 }
 
 #else

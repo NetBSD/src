@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drv.h,v 1.3 2021/12/19 10:50:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drv.h,v 1.4 2022/05/21 17:50:21 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_DRV_H__
@@ -66,12 +66,6 @@
 
 struct nouveau_channel;
 struct platform_device;
-
-#ifdef _LP64
-#define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
-#else
-#define DRM_FILE_PAGE_OFFSET (0xa0000000UL >> PAGE_SHIFT)
-#endif
 
 #include "nouveau_fence.h"
 #include "nouveau_bios.h"
