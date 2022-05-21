@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.19 2022/05/19 22:29:36 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.20 2022/05/21 15:11:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.19 2022/05/19 22:29:36 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.20 2022/05/21 15:11:24 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -68,12 +68,12 @@ bdinit(struct spotstr *bp)
 				/* directions 1, 2, 3 are blocked */
 				sp->s_flags |= (BFLAG << 1) | (BFLAG << 2) |
 				    (BFLAG << 3);
-				sp->s_fval[BLACK][1].s = MAXCOMBO;
-				sp->s_fval[BLACK][2].s = MAXCOMBO;
-				sp->s_fval[BLACK][3].s = MAXCOMBO;
-				sp->s_fval[WHITE][1].s = MAXCOMBO;
-				sp->s_fval[WHITE][2].s = MAXCOMBO;
-				sp->s_fval[WHITE][3].s = MAXCOMBO;
+				sp->s_fval[BLACK][1].s = 0x600;
+				sp->s_fval[BLACK][2].s = 0x600;
+				sp->s_fval[BLACK][3].s = 0x600;
+				sp->s_fval[WHITE][1].s = 0x600;
+				sp->s_fval[WHITE][2].s = 0x600;
+				sp->s_fval[WHITE][3].s = 0x600;
 			} else if (j == 5) {
 				/* five spaces, blocked on one side */
 				sp->s_fval[BLACK][1].s = 0x500;
@@ -94,10 +94,10 @@ bdinit(struct spotstr *bp)
 			if (i > (BSZ - 4)) {
 				/* directions 0, 1 are blocked */
 				sp->s_flags |= BFLAG | (BFLAG << 1);
-				sp->s_fval[BLACK][0].s = MAXCOMBO;
-				sp->s_fval[BLACK][1].s = MAXCOMBO;
-				sp->s_fval[WHITE][0].s = MAXCOMBO;
-				sp->s_fval[WHITE][1].s = MAXCOMBO;
+				sp->s_fval[BLACK][0].s = 0x600;
+				sp->s_fval[BLACK][1].s = 0x600;
+				sp->s_fval[WHITE][0].s = 0x600;
+				sp->s_fval[WHITE][1].s = 0x600;
 			} else if (i == (BSZ - 4)) {
 				sp->s_fval[BLACK][0].s = 0x500;
 				sp->s_fval[WHITE][0].s = 0x500;
@@ -112,8 +112,8 @@ bdinit(struct spotstr *bp)
 				if (i < 5) {
 					/* direction 3 is blocked */
 					sp->s_flags |= (BFLAG << 3);
-					sp->s_fval[BLACK][3].s = MAXCOMBO;
-					sp->s_fval[WHITE][3].s = MAXCOMBO;
+					sp->s_fval[BLACK][3].s = 0x600;
+					sp->s_fval[WHITE][3].s = 0x600;
 				} else if (i == 5 &&
 				    (sp->s_flags & (BFLAG << 3)) == 0) {
 					sp->s_fval[BLACK][3].s = 0x500;
