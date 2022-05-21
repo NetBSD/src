@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.18 2022/05/19 22:19:18 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.19 2022/05/21 15:11:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.18 2022/05/19 22:19:18 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.19 2022/05/21 15:11:24 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -128,8 +128,8 @@ makemove(int us, int mv)
 		    else {
 			/* this frame is now blocked, adjust values */
 			fsp->s_flags |= bmask;
-			fsp->s_fval[BLACK][r].s = MAXCOMBO;
-			fsp->s_fval[WHITE][r].s = MAXCOMBO;
+			fsp->s_fval[BLACK][r].s = 0x600;
+			fsp->s_fval[WHITE][r].s = 0x600;
 			while (--i >= 0) {
 			    sp += d;
 			    if (sp->s_occ == EMPTY)
@@ -144,7 +144,7 @@ makemove(int us, int mv)
 		    return(WIN);
 
 		/* compute new value & combo number for this frame & color */
-		fsp->s_fval[us != BLACK ? BLACK : WHITE][r].s = MAXCOMBO;
+		fsp->s_fval[us != BLACK ? BLACK : WHITE][r].s = 0x600;
 		cp = &fsp->s_fval[us][r];
 		/* both ends open? */
 		if (space && sp->s_occ == EMPTY) {

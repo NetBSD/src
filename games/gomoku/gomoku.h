@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.34 2022/05/21 14:55:26 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.35 2022/05/21 15:11:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -113,8 +113,6 @@
  *	from completing a force, and we don't have a force that we can
  *	complete which takes fewer or the same number of moves to win).
  */
-
-#define MAXCOMBO	0x600
 
 union comboval {
 	struct {
