@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 2022/05/21 09:25:51 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2022/05/21 09:57:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.43 2022/05/21 09:25:51 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2022/05/21 09:57:53 rillig Exp $");
 
 #include <curses.h>
 #include <err.h>
@@ -394,8 +394,7 @@ top:
 	case 'd':		/* set debug level */
 		debug = input[1] - '0';
 		debuglog("Debug set to %d", debug);
-		sleep(1);
-		break;
+		goto top;
 	case 'c':
 		break;
 	case 'b':		/* back up a move */
