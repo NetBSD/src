@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.63 2022/05/21 10:22:27 rin Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.64 2022/05/21 10:24:50 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.63 2022/05/21 10:22:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.64 2022/05/21 10:24:50 rin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1825,8 +1825,10 @@ do_defrag:
 		/* A small unaligned segment was detected. */
 		struct mbuf *m_new;
 		m_new = m_defrag(m_head, M_DONTWAIT);
-		if (m_new == NULL)
+		if (m_new == NULL) {
+			DPRINTFN(2, ("mvgbe_encap: defrag failed\n"));
 			return EFBIG;
+		}
 		m_head = m_new;
 	}
 
