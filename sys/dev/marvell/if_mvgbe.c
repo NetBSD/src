@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.65 2022/05/21 10:27:30 rin Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.66 2022/05/21 10:33:05 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.65 2022/05/21 10:27:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.66 2022/05/21 10:33:05 rin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1587,6 +1587,7 @@ mvgbe_newbuf(struct mvgbe_softc *sc, int i, struct mbuf *m,
 	struct mvgbe_rx_desc *r;
 	int align;
 	vaddr_t offset;
+	uint16_t bufsize;
 
 	if (m == NULL) {
 		void *buf = NULL;
@@ -1631,12 +1632,13 @@ mvgbe_newbuf(struct mvgbe_softc *sc, int i, struct mbuf *m,
 	c->mvgbe_mbuf = m_new;
 	offset = (vaddr_t)m_new->m_data - (vaddr_t)sc->sc_cdata.mvgbe_jumbo_buf;
 	r->bufptr = H2MVGBE32(dmamap->dm_segs[0].ds_addr + offset);
-	r->bufsize = MVGBE_JLEN & ~MVGBE_RXBUF_MASK;
+	bufsize = MVGBE_JLEN & ~MVGBE_RXBUF_MASK;
+	r->bufsize = H2MVGBE16(bufsize);
 	r->cmdsts =
 	    H2MVGBE32(MVGBE_BUFFER_OWNED_BY_DMA | MVGBE_RX_ENABLE_INTERRUPT);
 
 	/* Invalidate RX buffer */
-	bus_dmamap_sync(sc->sc_dmat, dmamap, offset, r->bufsize,
+	bus_dmamap_sync(sc->sc_dmat, dmamap, offset, bufsize,
 	    BUS_DMASYNC_PREREAD);
 
 	MVGBE_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1991,7 +1993,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 		m = cdata->mvgbe_rx_chain[idx].mvgbe_mbuf;
 		cdata->mvgbe_rx_chain[idx].mvgbe_mbuf = NULL;
 		total_len = MVGBE2H16(cur_rx->bytecnt) - ETHER_CRC_LEN;
-		bufsize = cur_rx->bufsize;
+		bufsize = MVGBE2H16(cur_rx->bufsize);
 
 		cdata->mvgbe_rx_map[idx] = NULL;
 
