@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.40 2022/05/21 12:29:34 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.41 2022/05/21 15:21:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.40 2022/05/21 12:29:34 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.41 2022/05/21 15:21:40 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -50,6 +50,8 @@ static	char	pcolor[] = "*O.?";
 
 #define	scr_y(by)	(1 + (BSZ - 1) - ((by) - 1))
 #define	scr_x(bx)	(3 + 2 * ((bx) - 1))
+
+#define TRANSCRIPT_COL	(3 + (2 * BSZ - 1) + 3 + 3)
 
 /*
  * Initialize screen display.
