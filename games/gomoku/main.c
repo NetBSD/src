@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2022/05/21 09:57:53 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2022/05/21 12:29:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,8 +36,9 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.44 2022/05/21 09:57:53 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.45 2022/05/21 12:29:34 rillig Exp $");
 
+#include <sys/stat.h>
 #include <curses.h>
 #include <err.h>
 #include <limits.h>
@@ -79,6 +80,20 @@ static void quit(void) __dead;
 #if !defined(DEBUG)
 static void quitsig(int) __dead;
 #endif
+
+static void
+warn_if_exists(const char *fname)
+{
+	struct stat st;
+
+	if (lstat(fname, &st) == 0) {
+		int x, y;
+		getyx(stdscr, y, x);
+		addstr("  (already exists)");
+		move(y, x);
+	} else
+		clrtoeol();
+}
 
 int
 main(int argc, char **argv)
@@ -180,7 +195,7 @@ again:
 		}
 	} else {
 		setbuf(stdout, 0);
-		get_line(buf, sizeof(buf));
+		get_line(buf, sizeof(buf), NULL);
 		if (strcmp(buf, "black") == 0)
 			color = BLACK;
 		else if (strcmp(buf, "white") == 0)
@@ -258,7 +273,8 @@ again:
 					FILE *fp;
 
 					ask("Save file name? ");
-					(void)get_line(fname, sizeof(fname));
+					(void)get_line(fname, sizeof(fname),
+					    warn_if_exists);
 					if ((fp = fopen(fname, "w")) == NULL) {
 						misclog("cannot create save file");
 						goto getinput;
@@ -276,7 +292,7 @@ again:
 					goto getinput;
 				}
 			} else {
-				if (!get_line(buf, sizeof(buf))) {
+				if (!get_line(buf, sizeof(buf), NULL)) {
 					curmove = RESIGN;
 					break;
 				}
@@ -332,7 +348,8 @@ again:
 				FILE *fp;
 
 				ask("Save file name? ");
-				(void)get_line(fname, sizeof(fname));
+				(void)get_line(fname, sizeof(fname),
+				    warn_if_exists);
 				if ((fp = fopen(fname, "w")) == NULL) {
 					misclog("cannot create save file");
 					goto replay;
@@ -383,7 +400,7 @@ whatsup(int signum)
 		quit();
 top:
 	ask("debug command: ");
-	if (!get_line(input, sizeof(input)))
+	if (!get_line(input, sizeof(input), NULL))
 		quit();
 	switch (*input) {
 	case '\0':
