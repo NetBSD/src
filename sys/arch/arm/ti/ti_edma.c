@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.c,v 1.4 2021/09/16 22:19:10 andvar Exp $ */
+/* $NetBSD: ti_edma.c,v 1.5 2022/05/21 19:07:23 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.4 2021/09/16 22:19:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.5 2022/05/21 19:07:23 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ edma_channel_free(struct edma_channel *ch)
 }
 
 /*
- * Allocate a PaRAM entry. The driver artifically restricts the number
+ * Allocate a PaRAM entry. The driver artificially restricts the number
  * of PaRAM entries available for each channel to MAX_PARAM_PER_CHANNEL.
  * If the number of entries for the channel has been exceeded, or there
  * are no entries available, 0xffff is returned.
