@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ioctl.c,v 1.3 2017/06/14 21:43:02 christos Exp $	*/
+/*	$NetBSD: h_ioctl.c,v 1.4 2022/05/21 13:31:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -88,7 +88,7 @@ test_ngsession(int fd)
 
 	ret = ioctl(fd, CIOCNGSESSION, &sg);
 	if (ret < 0)
-		fprintf(stderr, "failed: CIOCNGSESSION\n");
+		warn("failed: CIOCNGSESSION");
 
 	return ret;
 }
@@ -111,7 +111,7 @@ test_nfsession(int fd)
 
 	ret = ioctl(fd, CIOCNFSESSION, &sf);
 	if (ret < 0)
-		fprintf(stderr, "failed: CIOCNFSESSION\n");
+		warn("failed: CIOCNFSESSION");
 
 	return ret;
 }
@@ -143,7 +143,7 @@ test_ncryptm(int fd)
 
 	ret = ioctl(fd, CIOCNCRYPTM, &mop);
 	if (ret < 0)
-		fprintf(stderr, "failed: CIOCNCRYPTM\n");
+		warn("failed: CIOCNCRYPTM");
 
 	return ret;
 }
@@ -170,7 +170,7 @@ test_ncryptretm(int fd)
 	cs.key = __UNCONST(&aes_key);
 	ret = ioctl(fd, CIOCGSESSION, &cs);
 	if (ret < 0) {
-		fprintf(stderr, "failed: CIOCGSESSION\n");
+		warn("failed: CIOCGSESSION");
 		return ret;
 	}
 
@@ -191,7 +191,7 @@ test_ncryptretm(int fd)
 	mop.reqs = cnos;
 	ret = ioctl(fd, CIOCNCRYPTM, &mop);
 	if (ret < 0)
-		fprintf(stderr, "failed: CIOCNCRYPTM\n");
+		warn("failed: CIOCNCRYPTM");
 
 	for (size_t i = 0; i < COUNT; i++) {
 		struct crypt_result *cr = &crs[i];
@@ -205,7 +205,7 @@ test_ncryptretm(int fd)
 	cret.results = crs;
 	ret = ioctl(fd, CIOCNCRYPTRETM, &cret);
 	if (ret < 0)
-		fprintf(stderr, "failed: CIOCNCRYPTRETM\n");
+		warn("failed: CIOCNCRYPTRETM");
 
 	return ret;
 }
@@ -225,8 +225,7 @@ test_ncryptret_noent(int fd)
 
 	ret = ioctl(fd, CIOCNCRYPTRET, &cr);
 	if (ret == 0) {
-		fprintf(stderr,
-		    "failed: CIOCNCRYPTRET unexpected success when no entry\n");
+		warn("failed: CIOCNCRYPTRET unexpected success when no entry");
 		ret = -1;
 	} else if (errno == EINPROGRESS) {
 		/* expected fail */
@@ -254,7 +253,7 @@ test_ncryptret_ent(int fd)
 	cs.key = __UNCONST(&aes_key);
 	ret = ioctl(fd, CIOCGSESSION, &cs);
 	if (ret < 0) {
-		fprintf(stderr, "failed: CIOCGSESSION\n");
+		warn("failed: CIOCGSESSION");
 		return ret;
 	}
 
@@ -271,14 +270,14 @@ test_ncryptret_ent(int fd)
 	mop.reqs = &cno;
 	ret = ioctl(fd, CIOCNCRYPTM, &mop);
 	if (ret < 0)
-		fprintf(stderr, "failed: CIOCNCRYPTM\n");
+		warn("failed: CIOCNCRYPTM");
 
 	memset(&cr, 0, sizeof(cr));
 	cr.reqid = cno.reqid;
 
 	ret = ioctl(fd, CIOCNCRYPTRET, &cr);
 	if (ret < 0)
-		fprintf(stderr, "failed: CIOCNCRYPTRET\n");
+		warn("failed: CIOCNCRYPTRET");
 
 	return ret;
 }
@@ -309,7 +308,7 @@ set_userasymcrypto(int new, int *old)
 
 	ret = sysctlbyname("kern.userasymcrypto", NULL, NULL, &new, sizeof(new));
 	if (ret < 0) {
-		fprintf(stderr, "failed: kern.userasymcrypto=%d", new);
+		warn("failed: kern.userasymcrypto=%d", new);
 		return ret;
 	}
 
@@ -326,7 +325,7 @@ test_asymfeat_each(int fd, u_int32_t *asymfeat, int userasym)
 
 	ret = ioctl(fd, CIOCASYMFEAT, asymfeat);
 	if (ret < 0)
-		fprintf(stderr, "failed: CIOCASYMFEAT when userasym=%d\n", userasym);
+		warn("failed: CIOCASYMFEAT when userasym=%d", userasym);
 
 	return ret;
 }
@@ -358,7 +357,7 @@ test_asymfeat(int fd)
 	/* cleanup */
 	ret = set_userasymcrypto(orig, NULL);
 	if (ret < 0)
-		fprintf(stderr, "failed: cleanup kern.userasymcrypto\n");
+		warnx("failed: cleanup kern.userasymcrypto");
 
 	return ret;
 }
