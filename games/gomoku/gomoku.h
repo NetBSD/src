@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.31 2022/05/20 19:30:17 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.32 2022/05/21 09:25:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -237,7 +237,7 @@ void	bdisp(void);
 void	bdisp_init(void);
 void	cursfini(void);
 void	cursinit(void);
-void	bdwho(bool);
+void	bdwho(void);
 void	panic(const char *, ...) __printflike(1, 2) __dead;
 void	debuglog(const char *, ...) __printflike(1, 2);
 void	whatsup(int);
