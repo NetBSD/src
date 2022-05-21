@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ioctl.c,v 1.4 2022/05/21 13:31:29 riastradh Exp $	*/
+/*	$NetBSD: h_ioctl.c,v 1.5 2022/05/21 20:38:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -29,6 +29,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -58,6 +59,30 @@ unsigned char aes_cipher[AES_CIPHER_LEN] =
   0x27, 0x08, 0x94, 0x2d, 0xbe, 0x77, 0x18, 0x1a, };
 
 #define COUNT 2
+
+static int
+wait_for_read(int fd)
+{
+	struct pollfd pfd = { .fd = fd, .events = POLLIN };
+	int nfd;
+
+	nfd = poll(&pfd, 1, 5000);
+	if (nfd == -1) {
+		warn("failed: poll");
+		return -1;
+	}
+	if (nfd == 0) {
+		warnx("failed: timeout");
+		errno = ETIMEDOUT;
+		return -1;
+	}
+	if (nfd != 1 || (pfd.revents & POLLIN) == 0) {
+		warnx("failed: invalid poll: %d", nfd);
+		errno = EIO;
+		return -1;
+	}
+	return 0;
+}
 
 /*
  * CRIOGET is deprecated.
@@ -190,8 +215,10 @@ test_ncryptretm(int fd)
 	mop.count = COUNT;
 	mop.reqs = cnos;
 	ret = ioctl(fd, CIOCNCRYPTM, &mop);
-	if (ret < 0)
+	if (ret < 0) {
 		warn("failed: CIOCNCRYPTM");
+		return ret;
+	}
 
 	for (size_t i = 0; i < COUNT; i++) {
 		struct crypt_result *cr = &crs[i];
@@ -204,8 +231,24 @@ test_ncryptretm(int fd)
 	cret.count = COUNT;
 	cret.results = crs;
 	ret = ioctl(fd, CIOCNCRYPTRETM, &cret);
-	if (ret < 0)
-		warn("failed: CIOCNCRYPTRETM");
+	if (ret < 0) {
+		if (errno != EINPROGRESS) {
+			warn("failed: CIOCNCRYPTRETM");
+			return ret;
+		}
+
+		ret = wait_for_read(fd);
+		if (ret < 0)
+			return ret;
+
+		cret.count = COUNT;
+		cret.results = crs;
+		ret = ioctl(fd, CIOCNCRYPTRETM, &cret);
+		if (ret < 0) {
+			warn("failed: CIOCNCRYPTRET");
+			return ret;
+		}
+	}
 
 	return ret;
 }
@@ -269,15 +312,31 @@ test_ncryptret_ent(int fd)
 	mop.count = 1;
 	mop.reqs = &cno;
 	ret = ioctl(fd, CIOCNCRYPTM, &mop);
-	if (ret < 0)
+	if (ret < 0) {
 		warn("failed: CIOCNCRYPTM");
+		return ret;
+	}
 
 	memset(&cr, 0, sizeof(cr));
 	cr.reqid = cno.reqid;
 
 	ret = ioctl(fd, CIOCNCRYPTRET, &cr);
-	if (ret < 0)
-		warn("failed: CIOCNCRYPTRET");
+	if (ret < 0) {
+		if (errno != EINPROGRESS) {
+			warn("failed: CIOCNCRYPTRET");
+			return ret;
+		}
+
+		ret = wait_for_read(fd);
+		if (ret < 0)
+			return ret;
+		ret = ioctl(fd, CIOCNCRYPTRET, &cr);
+		if (ret < 0) {
+			warn("failed: CIOCNCRYPTRET");
+			return ret;
+		}
+		return 0;
+	}
 
 	return ret;
 }
