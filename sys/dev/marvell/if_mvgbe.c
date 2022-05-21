@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.62 2021/08/30 00:08:28 rin Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.63 2022/05/21 10:22:27 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.62 2021/08/30 00:08:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.63 2022/05/21 10:22:27 rin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1871,7 +1871,7 @@ do_defrag:
 	}
 
 
-	DPRINTFN(2, ("mvgbe_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
+	DPRINTFN(3, ("mvgbe_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
 
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		f = &sc->sc_rdata->mvgbe_tx_ring[current];
