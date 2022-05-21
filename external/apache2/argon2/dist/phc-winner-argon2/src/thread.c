@@ -46,6 +46,7 @@ int argon2_thread_join(argon2_thread_handle_t handle) {
 #endif
 }
 
+__attribute__((__noreturn__))
 void argon2_thread_exit(void) {
 #if defined(_WIN32)
     _endthreadex(0);
