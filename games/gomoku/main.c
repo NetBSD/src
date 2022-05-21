@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2022/05/21 17:19:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2022/05/21 19:02:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.48 2022/05/21 17:19:10 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 2022/05/21 19:02:14 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -235,7 +235,7 @@ again:
 		switch (input[color]) {
 		case INPUTF: /* input comes from a file */
 			curmove = readinput(inputfp);
-			if (curmove != ILLEGAL)
+			if (curmove != EOF)
 				break;
 			/* Switch to another input source. */
 			switch (test) {
@@ -305,7 +305,7 @@ again:
 			curmove = pickmove(color);
 			break;
 		}
-		if (interactive) {
+		if (interactive && curmove != ILLEGAL) {
 			misclog("%3d%*s%-6s", movenum,
 			    color == BLACK ? 2 : 9, "", stoc(curmove));
 		}
@@ -372,7 +372,7 @@ readinput(FILE *fp)
 	while ((c = getc(fp)) != EOF && c != '\n' && pos < sizeof(buf) - 1)
 		buf[pos++] = c;
 	buf[pos] = '\0';
-	return ctos(buf);
+	return c == EOF ? EOF : ctos(buf);
 }
 
 #ifdef DEBUG
