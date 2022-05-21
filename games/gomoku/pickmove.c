@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.39 2022/05/20 19:30:17 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.40 2022/05/21 10:01:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.39 2022/05/20 19:30:17 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.40 2022/05/21 10:01:49 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -332,6 +332,8 @@ scanframes(int color)
 	d = 2;
 	/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
 	while (d <= ((movenum + 1) >> 1) && combolen > n) {
+		if (d >= 9)
+			break;	/* Do not think too long. */
 		if (debug != 0) {
 			debuglog("%cL%d %d %d %d", "BW"[color],
 			    d, combolen - n, combocnt, elistcnt);
