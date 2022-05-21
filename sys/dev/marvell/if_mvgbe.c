@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.64 2022/05/21 10:24:50 rin Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.65 2022/05/21 10:27:30 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.64 2022/05/21 10:24:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.65 2022/05/21 10:27:30 rin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2127,13 +2127,14 @@ mvgbe_txeof(struct mvgbe_softc *sc)
 		if (cdata->mvgbe_tx_chain[idx].mvgbe_mbuf != NULL) {
 			entry = cdata->mvgbe_tx_map[idx];
 
-			m_freem(cdata->mvgbe_tx_chain[idx].mvgbe_mbuf);
-			cdata->mvgbe_tx_chain[idx].mvgbe_mbuf = NULL;
-
 			bus_dmamap_sync(sc->sc_dmat, entry->dmamap, 0,
 			    entry->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
 			bus_dmamap_unload(sc->sc_dmat, entry->dmamap);
+
+			m_freem(cdata->mvgbe_tx_chain[idx].mvgbe_mbuf);
+			cdata->mvgbe_tx_chain[idx].mvgbe_mbuf = NULL;
+
 			SIMPLEQ_INSERT_TAIL(&sc->sc_txmap_head, entry, link);
 			cdata->mvgbe_tx_map[idx] = NULL;
 		}
