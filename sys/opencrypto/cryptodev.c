@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.113 2022/05/19 20:51:46 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.114 2022/05/21 20:37:18 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.113 2022/05/19 20:51:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.114 2022/05/21 20:37:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -745,9 +745,6 @@ cryptodev_mcb(struct cryptop *crp)
 		mutex_exit(&cryptodev_mtx);
 		error = crypto_dispatch(crp);
 		mutex_enter(&cryptodev_mtx);
-	}
-	if (error != 0 || (crp->crp_flags & CRYPTO_F_DONE)) {
-		cv_signal(&crp->crp_cv);
 	}
 
 	TAILQ_INSERT_TAIL(&crp->fcrp->crp_ret_mq, crp, crp_next);
