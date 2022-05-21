@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.20 2022/05/21 15:11:24 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.21 2022/05/21 16:39:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.20 2022/05/21 15:11:24 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.21 2022/05/21 16:39:14 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -186,7 +186,7 @@ init_overlap(void)
 	     * s = 5 if closed, 6 if open.
 	     * At this point black & white are the same.
 	     */
-	    int s = 5 + sp1->s_fval[BLACK][cbp->c_dir].c.b;
+	    int s = 5 + sp1->s_fval[BLACK][cbp->c_dir].cv_win;
 	    /* for each spot in frame A */
 	    for (int i = 0; i < s; i++, sp1 += d1, vertex += d1) {
 		/* the sixth spot in frame A only overlaps if it is open */

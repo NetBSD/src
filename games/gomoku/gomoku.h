@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.36 2022/05/21 15:21:40 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.37 2022/05/21 16:39:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -75,8 +75,8 @@
 
 /*
  * A 'combo' is a group of intersecting frames and consists of two numbers:
- * 'A' is the number of moves to make the combo non-blockable.
- * 'B' is the minimum number of moves needed to win once it can't be blocked.
+ * 'F' is the number of moves to make the combo non-blockable.
+ * 'W' is the minimum number of moves needed to win once it can't be blocked.
  *
  * A 'force' is a combo that is one move away from being non-blockable.
  *
@@ -88,13 +88,13 @@
  * it is already a force. Also, the frames have to be independent so a
  * single move doesn't affect more than one frame making up the combo.
  *
- * Rules for comparing which of two combos (<A1,B1> <A2,B2>) is better:
+ * Rules for comparing which of two combos (<F1,W1> <F2,W2>) is better:
  * Both the same color:
- *	<A',B'> = (A1 < A2 || A1 == A2 && B1 <= B2) ? <A1,B1> : <A2,B2>
+ *	<F',W'> = (F1 < F2 || F1 == F2 && W1 <= W2) ? <F1,W1> : <F2,W2>
  *	We want to complete the force first, then the combo with the
  *	fewest moves to win.
- * Different colors, <A1,B1> is the combo for the player with the next move:
- *	<A',B'> = A2 <= 1 && (A1 > 1 || A2 + B2 < A1 + B1) ? <A2,B2> : <A1,B1>
+ * Different colors, <F1,W1> is the combo for the player with the next move:
+ *	<F',W'> = F2 <= 1 && (F1 > 1 || F2 + W2 < F1 + W1) ? <F2,W2> : <F1,W1>
  *	We want to block only if we have to (i.e., if they are one move away
  *	from completing a force, and we don't have a force that we can
  *	complete which takes fewer or the same number of moves to win).
@@ -102,7 +102,7 @@
 
 /*
  * Single frame combo values:
- *     <A,B>	board values
+ *     <F,W>	board values
  *	5,0	. . . . . O
  *	4,1	. . . . . .
  *	4,0	. . . . X O
@@ -115,24 +115,26 @@
  *	0,1	. X X X X .
  *	0,0	X X X X X O
  *
- * The rule for combining two combos (<A1,B1> <A2,B2>) with V valid
+ * The rule for combining two combos (<F1,W1> <F2,W2>) with V valid
  * intersection points is:
- *	A' = A1 + A2 - 2 - V
- *	B' = MIN(A1 + B1 - 1, A2 + B2 - 1)
+ *	F' = F1 + F2 - 2 - V
+ *	W' = MIN(F1 + W1 - 1, F2 + W2 - 1)
  */
 union comboval {
 	struct {
 #if BYTE_ORDER == BIG_ENDIAN
-		u_char	a;	/* # moves to complete force */
-		u_char	b;	/* # moves to win */
+		u_char	a;
+		u_char	b;
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
-		u_char	b;	/* # moves to win */
-		u_char	a;	/* # moves to complete force */
+		u_char	b;
+		u_char	a;
 #endif
 	} c;
 	u_short	s;
 };
+#define cv_force	c.a	/* # moves to complete force */
+#define cv_win		c.b	/* # moves to win */
 
 /*
  * This structure is used to record information about single frames (F) and
