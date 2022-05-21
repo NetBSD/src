@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.40 2022/05/21 10:01:49 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.41 2022/05/21 15:11:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.40 2022/05/21 10:01:49 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.41 2022/05/21 15:11:24 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -98,8 +98,8 @@ pickmove(int us)
 	/* initialize all the board values */
 	for (unsigned pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		sp = &board[pos];
-		sp->s_combo[BLACK].s = MAXCOMBO + 1;
-		sp->s_combo[WHITE].s = MAXCOMBO + 1;
+		sp->s_combo[BLACK].s = 0x601;
+		sp->s_combo[WHITE].s = 0x601;
 		sp->s_level[BLACK] = 255;
 		sp->s_level[WHITE] = 255;
 		sp->s_nforce[BLACK] = 0;
