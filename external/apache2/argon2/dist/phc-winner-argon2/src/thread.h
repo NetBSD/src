@@ -61,7 +61,7 @@ int argon2_thread_join(argon2_thread_handle_t handle);
 /* Terminate the current thread. Must be run inside a thread created by
  * argon2_thread_create.
 */
-void argon2_thread_exit(void);
+void argon2_thread_exit(void) __attribute__((__noreturn__));
 
 #endif /* ARGON2_NO_THREADS */
 #endif
