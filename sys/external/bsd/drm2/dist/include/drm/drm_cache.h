@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.h,v 1.10 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.h,v 1.11 2022/05/21 23:42:13 tnn Exp $	*/
 
 /**************************************************************************
  *
@@ -68,8 +68,6 @@ static inline bool drm_arch_can_wc_memory(void)
 	 * detecting whether NoSnoop works or not, just disable this
 	 * optimization entirely for ARM and arm64.
 	 */
-	return false;
-#elif defined(CONFIG_ARM) || defined(CONFIG_ARM64)
 	return false;
 #else
 	return true;
