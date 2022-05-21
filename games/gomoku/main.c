@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2022/05/21 12:29:34 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2022/05/21 14:23:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.45 2022/05/21 12:29:34 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.46 2022/05/21 14:23:10 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -100,7 +100,7 @@ main(int argc, char **argv)
 {
 	char buf[128];
 	char fname[PATH_MAX];
-	char *tmp;
+	char *user_name;
 	int color, curmove, i, ch;
 	int input[2];
 
@@ -109,27 +109,20 @@ main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	tmp = getlogin();
-	if (tmp != NULL) {
-		strlcpy(user, tmp, sizeof(user));
-	} else {
-		strcpy(user, "you");
-	}
+	user_name = getlogin();
+	strlcpy(user, user_name != NULL ? user_name : "you", sizeof(user));
 
 	color = curmove = 0;
 
 	prog = strrchr(argv[0], '/');
-	if (prog != NULL)
-		prog++;
-	else
-		prog = argv[0];
+	prog = prog != NULL ? prog + 1 : argv[0];
 
 	while ((ch = getopt(argc, argv, "bcdD:u")) != -1) {
 		switch (ch) {
 		case 'b':	/* background */
 			interactive = false;
 			break;
-		case 'd':	/* debugging */
+		case 'd':
 			debug++;
 			break;
 		case 'D':	/* log debug output to file */
@@ -143,6 +136,7 @@ main(int argc, char **argv)
 			test = 2;
 			break;
 		default:
+		usage:
 			fprintf(stderr, "usage: %s [-bcdu] [-Dfile] [file]\n",
 			    getprogname());
 			return EXIT_FAILURE;
@@ -150,10 +144,10 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc != 0) {
-		if ((inputfp = fopen(*argv, "r")) == NULL)
-			err(1, "%s", *argv);
-	}
+	if (argc > 1)
+		goto usage;
+	if (argc == 1 && (inputfp = fopen(*argv, "r")) == NULL)
+		err(1, "%s", *argv);
 
 	if (debug == 0)
 		srandom((unsigned int)time(0));
