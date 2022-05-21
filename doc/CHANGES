@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2874 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2875 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -288,7 +288,12 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		pmap module.  Implemented fast-soft-interrupts.  Enabled
 		MULTIPROCESSOR in GENERIC.  [thorpej 20200918]
 	ld.so(1): Upgrade r_debug to the protocol version 1. [kamil 20200921]
-	vether(4): Imported from OpenBSD. [roy 20200927]
+	vether(4): New virtual ethernet interface for bridging to physical
+		interfaces, imported from OpenBSD.  [roy 20200927]
+	tap(4): Link state now reflects whether device is open by a process.
+	        For virtual ethernet interfaces not associated with a
+		backing process to bridge with physical interfaces, use
+		vether(4).  [roy 20200927]
 	dhcpcd: Update to version 9.3.0 [roy 20201005]
 	tzdata updated to 2020b  [kre 20201008]
 	tzcode: Updated to 2020b. [christos 20201009]
