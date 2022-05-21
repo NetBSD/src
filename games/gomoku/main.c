@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2022/05/19 22:49:05 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2022/05/21 09:25:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.42 2022/05/19 22:49:05 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2022/05/21 09:25:51 rillig Exp $");
 
 #include <curses.h>
 #include <err.h>
@@ -215,7 +215,8 @@ again:
 	if (interactive) {
 		plyr[BLACK] = input[BLACK] == USER ? user : prog;
 		plyr[WHITE] = input[WHITE] == USER ? user : prog;
-		bdwho(true);
+		bdwho();
+		refresh();
 	}
 
 	for (color = BLACK; ; color = color != BLACK ? BLACK : WHITE) {
@@ -244,7 +245,8 @@ again:
 			}
 			plyr[BLACK] = input[BLACK] == USER ? user : prog;
 			plyr[WHITE] = input[WHITE] == USER ? user : prog;
-			bdwho(true);
+			bdwho();
+			refresh();
 			goto top;
 
 		case USER: /* input comes from standard input */
