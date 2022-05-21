@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 2022/05/21 14:23:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.47 2022/05/21 14:55:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.46 2022/05/21 14:23:10 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.47 2022/05/21 14:55:26 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -51,9 +51,11 @@ __RCSID("$NetBSD: main.c,v 1.46 2022/05/21 14:23:10 rillig Exp $");
 
 #include "gomoku.h"
 
-#define USER	0		/* get input from standard input */
-#define PROGRAM	1		/* get input from program */
-#define INPUTF	2		/* get input from a file */
+enum input_source {
+	USER,			/* get input from standard input */
+	PROGRAM,		/* get input from program */
+	INPUTF			/* get input from a file */
+};
 
 bool	interactive = true;	/* true if interactive */
 int	debug;			/* > 0 if debugging */
@@ -102,7 +104,7 @@ main(int argc, char **argv)
 	char fname[PATH_MAX];
 	char *user_name;
 	int color, curmove, i, ch;
-	int input[2];
+	enum input_source input[2];
 
 	/* Revoke setgid privileges */
 	setgid(getgid());
@@ -235,6 +237,7 @@ again:
 			curmove = readinput(inputfp);
 			if (curmove != ILLEGAL)
 				break;
+			/* Switch to another input source. */
 			switch (test) {
 			case 0: /* user versus program */
 				input[color] = USER;
