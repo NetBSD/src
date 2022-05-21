@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.37 2022/05/21 09:25:51 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.38 2022/05/21 12:08:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.37 2022/05/21 09:25:51 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.38 2022/05/21 12:08:06 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -303,9 +303,8 @@ get_line(char *buf, int size)
 					continue;
 				}
 				cp -= 2;
-				addch('\b');
-				c = ' ';
-				/* FALLTHROUGH */
+				addstr("\b \b");
+				break;
 			default:
 				addch(c);
 			}
