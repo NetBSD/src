@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.129 2022/05/22 11:40:29 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.130 2022/05/22 11:40:54 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.129 2022/05/22 11:40:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.130 2022/05/22 11:40:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -870,11 +870,10 @@ crypto_freesession(u_int64_t sid)
 
 	/* Determine two IDs. */
 	cap = crypto_checkdriver_lock(CRYPTO_SESID2HID(sid));
-	if (cap == NULL)	/* XXX should assert; need to audit callers */
-		return;
+	KASSERTMSG(cap != NULL, "sid=%"PRIx64, sid);
 
-	if (cap->cc_sessions)
-		(cap->cc_sessions)--;
+	KASSERT(cap->cc_sessions > 0);
+	cap->cc_sessions--;
 
 	/* Call the driver cleanup routine, if available. */
 	if (cap->cc_freesession)
