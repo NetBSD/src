@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.78 2022/05/22 11:34:57 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.79 2022/05/22 11:38:34 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.179 2020/01/11 21:34:03 cheloha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.78 2022/05/22 11:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.79 2022/05/22 11:38:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -2076,10 +2076,6 @@ hifn_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 	struct hifn_softc *sc = arg;
 	int i, mac = 0, cry = 0, comp = 0, retval = EINVAL;
 
-	KASSERT(sc != NULL /*, ("hifn_newsession: null softc")*/);
-	if (sidp == NULL || cri == NULL || sc == NULL)
-		return retval;
-
 	mutex_spin_enter(&sc->sc_mtx);
 	for (i = 0; i < sc->sc_maxses; i++)
 		if (isclr(sc->sc_sessions, i))
@@ -2154,16 +2150,12 @@ hifn_freesession(void *arg, uint64_t tid)
 	int session;
 	uint32_t sid = ((uint32_t) tid) & 0xffffffff;
 
-	KASSERT(sc != NULL /*, ("hifn_freesession: null softc")*/);
-	if (sc == NULL)
-		return (EINVAL);
-
 	mutex_spin_enter(&sc->sc_mtx);
 	session = HIFN_SESSION(sid);
-	if (session >= sc->sc_maxses) {
-		mutex_spin_exit(&sc->sc_mtx);
-		return (EINVAL);
-	}
+	KASSERTMSG(session >= 0, "session=%d", session);
+	KASSERTMSG(session < sc->sc_maxses, "session=%d maxses=%d",
+	    session, sc->sc_maxses);
+	KASSERT(isset(sc->sc_sessions, session));
 	clrbit(sc->sc_sessions, session);
 	mutex_spin_exit(&sc->sc_mtx);
 	return (0);
@@ -2185,10 +2177,8 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 
 	mutex_spin_enter(&sc->sc_mtx);
 	session = HIFN_SESSION(crp->crp_sid);
-	if (session >= sc->sc_maxses) {
-		err = EINVAL;
-		goto errout;
-	}
+	KASSERTMSG(session < sc->sc_maxses, "session=%d maxses=%d",
+	    session, sc->sc_maxses);
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		cmd->srcu.src_m = (struct mbuf *)crp->crp_buf;
