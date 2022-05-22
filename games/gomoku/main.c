@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2022/05/22 08:47:26 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.57 2022/05/22 08:58:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.56 2022/05/22 08:47:26 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.57 2022/05/22 08:58:31 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -57,9 +57,15 @@ enum input_source {
 	INPUTF			/* get input from a file */
 };
 
+enum testing_mode {
+	NORMAL_PLAY,
+	USER_VS_USER,
+	PROGRAM_VS_PROGRAM
+};
+
 bool	interactive = true;	/* true if interactive */
 int	debug;			/* > 0 if debugging */
-static int test;		/* both moves come from 1: input, 2: computer */
+static enum testing_mode test = NORMAL_PLAY;
 static char *prog;		/* name of program */
 static char user[LOGIN_NAME_MAX]; /* name of player */
 static FILE *debugfp;		/* file for debug output */
@@ -127,8 +133,8 @@ parse_args(int argc, char **argv)
 		case 'b':	/* background */
 			interactive = false;
 			break;
-		case 'c':	/* testing: computer versus computer */
-			test = 2;
+		case 'c':
+			test = PROGRAM_VS_PROGRAM;
 			break;
 		case 'd':
 			debug++;
@@ -137,8 +143,8 @@ parse_args(int argc, char **argv)
 			if ((debugfp = fopen(optarg, "w")) == NULL)
 				err(1, "%s", optarg);
 			break;
-		case 'u':	/* testing: user versus user */
-			test = 1;
+		case 'u':
+			test = USER_VS_USER;
 			break;
 		default:
 		usage:
@@ -159,17 +165,15 @@ static void
 set_input_sources(enum input_source *input, int color)
 {
 	switch (test) {
-	case 0:			/* user versus program */
+	case NORMAL_PLAY:
 		input[color] = USER;
 		input[color != BLACK ? BLACK : WHITE] = PROGRAM;
 		break;
-
-	case 1:			/* user versus user */
+	case USER_VS_USER:
 		input[BLACK] = USER;
 		input[WHITE] = USER;
 		break;
-
-	case 2:			/* program versus program */
+	case PROGRAM_VS_PROGRAM:
 		input[BLACK] = PROGRAM;
 		input[WHITE] = PROGRAM;
 		break;
@@ -304,7 +308,7 @@ again:
 		signal(SIGINT, quitsig);
 #endif
 
-		if (inputfp == NULL && test == 0)
+		if (inputfp == NULL && test == NORMAL_PLAY)
 			color = ask_user_color();
 	} else {
 		setbuf(stdout, NULL);
