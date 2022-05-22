@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.128 2022/05/22 11:40:15 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.129 2022/05/22 11:40:29 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.128 2022/05/22 11:40:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.129 2022/05/22 11:40:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1274,7 +1274,7 @@ crypto_unblock(u_int32_t driverid, int what)
  * Dispatch a crypto request to a driver or queue
  * it, to be processed by the kernel thread.
  */
-int
+void
 crypto_dispatch(struct cryptop *crp)
 {
 	int result, s;
@@ -1318,7 +1318,7 @@ crypto_dispatch(struct cryptop *crp)
 			softint_schedule(crypto_q_si);
 			kpreempt_enable();
 		}
-		return 0;
+		return;
 	}
 
 	crp_qs = crypto_get_crp_qs(&s);
@@ -1371,14 +1371,13 @@ crypto_dispatch(struct cryptop *crp)
 
 out:
 	crypto_put_crp_qs(&s);
-	return 0;
 }
 
 /*
  * Add an asymmetric crypto request to a queue,
  * to be processed by the kernel thread.
  */
-int
+void
 crypto_kdispatch(struct cryptkop *krp)
 {
 	int result, s;
@@ -1433,7 +1432,6 @@ crypto_kdispatch(struct cryptkop *krp)
 
 out:
 	crypto_put_crp_qs(&s);
-	return 0;
 }
 
 /*

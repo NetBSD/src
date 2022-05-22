@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.49 2022/05/22 11:40:03 riastradh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.50 2022/05/22 11:40:29 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -609,8 +609,8 @@ extern	int crypto_kregister(u_int32_t, int, u_int32_t,
 	    void *arg);
 extern	int crypto_unregister(u_int32_t driverid, int alg);
 extern	int crypto_unregister_all(u_int32_t driverid);
-extern	int crypto_dispatch(struct cryptop *crp);
-extern	int crypto_kdispatch(struct cryptkop *);
+extern	void crypto_dispatch(struct cryptop *crp);
+extern	void crypto_kdispatch(struct cryptkop *);
 #define	CRYPTO_SYMQ	0x1
 #define	CRYPTO_ASYMQ	0x2
 extern	int crypto_unblock(u_int32_t, int);

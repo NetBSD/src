@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.73 2022/05/22 11:40:03 riastradh Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.74 2022/05/22 11:40:29 riastradh Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.73 2022/05/22 11:40:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.74 2022/05/22 11:40:29 riastradh Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -208,7 +208,8 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_skip = skip;
 	tc->tc_sav = sav;
 
-	return crypto_dispatch(crp);
+	crypto_dispatch(crp);
+	return 0;
 
 error_tc:
 	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
@@ -493,7 +494,8 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	crp->crp_opaque = tc;
 	crp->crp_sid = sav->tdb_cryptoid;
 
-	return crypto_dispatch(crp);
+	crypto_dispatch(crp);
+	return 0;
 
 bad:
 	if (m)

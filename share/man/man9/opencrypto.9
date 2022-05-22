@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.21 2022/05/22 11:40:03 riastradh Exp $
+.\"	$NetBSD: opencrypto.9,v 1.22 2022/05/22 11:40:29 riastradh Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -57,9 +57,9 @@
 .Fn crypto_newsession "u_int64_t *" "struct cryptoini *" "int"
 .Ft void
 .Fn crypto_freesession "u_int64_t"
-.Ft int
+.Ft void
 .Fn crypto_dispatch "struct cryptop *"
-.Ft int
+.Ft void
 .Fn crypto_kdispatch "struct cryptkop *"
 .Ft struct cryptop *
 .Fn crypto_getreq "int"
@@ -650,14 +650,10 @@ structure and
 .Dv NULL
 on failure.
 .Fn crypto_dispatch
-returns
-.Er EINVAL
-if its argument or the callback function was
-.Dv NULL ,
-and 0 otherwise.
-The callback is provided with an error code in case of failure, in the
+arranges to invoke the callback with an error code
+in the
 .Fa crp_etype
-field.
+field, or zero on success.
 .Sh FILES
 .Bl -tag -width sys/opencrypto/crypto.c
 .It Pa sys/opencrypto/crypto.c

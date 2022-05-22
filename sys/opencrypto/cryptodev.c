@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.122 2022/05/22 11:40:03 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.123 2022/05/22 11:40:29 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.122 2022/05/22 11:40:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.123 2022/05/22 11:40:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,13 +648,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	}
 
 	cv_init(&crp->crp_cv, "crydev");
-	error = crypto_dispatch(crp);
-	if (error) {
-		DPRINTF("not waiting, error.\n");
-		cv_destroy(&crp->crp_cv);
-		goto bail;
-	}
-
+	crypto_dispatch(crp);
 	mutex_enter(&cryptodev_mtx);
 	while (!(crp->crp_devflags & CRYPTODEV_F_RET)) {
 		DPRINTF("cse->sid[%d]: sleeping on cv %p for crp %p\n",
@@ -849,10 +843,7 @@ cryptodev_key(struct crypt_kop *kop)
 			goto fail;
 	}
 
-	error = crypto_kdispatch(krp);
-	if (error != 0) {
-		goto fail;
-	}
+	crypto_kdispatch(krp);
 
 	mutex_enter(&cryptodev_mtx);
 	while (!(krp->krp_devflags & CRYPTODEV_F_RET)) {
@@ -1304,7 +1295,8 @@ cryptodev_mop(struct fcrypt *fcr,
 #ifdef notyet
 eagain:
 #endif
-		cnop[req].status = crypto_dispatch(crp);
+		crypto_dispatch(crp);
+		cnop[req].status = 0;
 		mutex_enter(&cryptodev_mtx);	/* XXX why mutex? */
 
 		switch (cnop[req].status) {
@@ -1455,13 +1447,10 @@ cryptodev_mkey(struct fcrypt *fcr, struct crypt_n_kop *kop, int count)
 		krp->krp_reqid = kop[req].crk_reqid;
 		krp->krp_usropaque = kop[req].crk_opaque;
 
-		kop[req].crk_status = crypto_kdispatch(krp);
-		if (kop[req].crk_status != 0) {
-			goto fail;
-		}
-
+		crypto_kdispatch(krp);
+		kop[req].crk_status = 0;
 fail:
-		if(kop[req].crk_status) {
+		if (kop[req].crk_status) {
 			if (krp) {
 				kop[req].crk_status = krp->krp_status;
 				for (i = 0; i < CRK_MAXPARAM; i++) {
