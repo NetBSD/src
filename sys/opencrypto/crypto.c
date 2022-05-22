@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.120 2022/05/22 11:25:14 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.121 2022/05/22 11:30:05 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.120 2022/05/22 11:25:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.121 2022/05/22 11:30:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1748,8 +1748,6 @@ crypto_done(struct cryptop *crp)
 #endif
 	DPRINTF("lid[%u]: crp %p\n", CRYPTO_SESID2LID(crp->crp_sid), crp);
 
-	crp->crp_flags |= CRYPTO_F_DONE;
-
 	qs = crypto_get_crp_ret_qs(crp->reqcpu);
 	crp_ret_q = &qs->crp_ret_q;
 	wasempty = TAILQ_EMPTY(crp_ret_q);
@@ -1779,8 +1777,6 @@ crypto_kdone(struct cryptkop *krp)
 
 	if (krp->krp_status != 0)
 		cryptostats.cs_kerrs++;
-
-	krp->krp_flags |= CRYPTO_F_DONE;
 
 	qs = crypto_get_crp_ret_qs(krp->reqcpu);
 	crp_ret_kq = &qs->crp_ret_kq;
