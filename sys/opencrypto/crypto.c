@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.127 2022/05/22 11:40:03 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.128 2022/05/22 11:40:15 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.127 2022/05/22 11:40:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.128 2022/05/22 11:40:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1318,7 +1318,6 @@ crypto_dispatch(struct cryptop *crp)
 			softint_schedule(crypto_q_si);
 			kpreempt_enable();
 		}
-
 		return 0;
 	}
 
@@ -1336,7 +1335,6 @@ crypto_dispatch(struct cryptop *crp)
 		 * to other drivers in cryptointr() later.
 		 */
 		TAILQ_INSERT_TAIL(crp_q, crp, crp_next);
-		result = 0;
 		goto out;
 	}
 
@@ -1347,7 +1345,6 @@ crypto_dispatch(struct cryptop *crp)
 		 * it unblocks and the swi thread gets kicked.
 		 */
 		TAILQ_INSERT_TAIL(crp_q, crp, crp_next);
-		result = 0;
 		goto out;
 	}
 
@@ -1358,6 +1355,7 @@ crypto_dispatch(struct cryptop *crp)
 	 */
 	crypto_driver_unlock(cap);
 	result = crypto_invoke(crp, 0);
+	KASSERTMSG(result == 0 || result == ERESTART, "result=%d", result);
 	if (result == ERESTART) {
 		/*
 		 * The driver ran out of resources, mark the
@@ -1369,18 +1367,11 @@ crypto_dispatch(struct cryptop *crp)
 		crypto_driver_unlock(cap);
 		TAILQ_INSERT_HEAD(crp_q, crp, crp_next);
 		cryptostats.cs_blocks++;
-
-		/*
-		 * The crp is enqueued to crp_q, that is,
-		 * no error occurs. So, this function should
-		 * not return error.
-		 */
-		result = 0;
 	}
 
 out:
 	crypto_put_crp_qs(&s);
-	return result;
+	return 0;
 }
 
 /*
@@ -1411,7 +1402,6 @@ crypto_kdispatch(struct cryptkop *krp)
 	 */
 	if (cap == NULL) {
 		TAILQ_INSERT_TAIL(crp_kq, krp, krp_next);
-		result = 0;
 		goto out;
 	}
 
@@ -1422,12 +1412,12 @@ crypto_kdispatch(struct cryptkop *krp)
 		 * it unblocks and the swi thread gets kicked.
 		 */
 		TAILQ_INSERT_TAIL(crp_kq, krp, krp_next);
-		result = 0;
 		goto out;
 	}
 
 	crypto_driver_unlock(cap);
 	result = crypto_kinvoke(krp, 0);
+	KASSERTMSG(result == 0 || result == ERESTART, "result=%d", result);
 	if (result == ERESTART) {
 		/*
 		 * The driver ran out of resources, mark the
@@ -1439,18 +1429,11 @@ crypto_kdispatch(struct cryptkop *krp)
 		crypto_driver_unlock(cap);
 		TAILQ_INSERT_HEAD(crp_kq, krp, krp_next);
 		cryptostats.cs_kblocks++;
-
-		/*
-		 * The krp is enqueued to crp_kq, that is,
-		 * no error occurs. So, this function should
-		 * not return error.
-		 */
-		result = 0;
 	}
 
 out:
 	crypto_put_crp_qs(&s);
-	return result;
+	return 0;
 }
 
 /*
@@ -1500,15 +1483,14 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 		krp->reqcpu = curcpu();
 		crypto_driver_unlock(cap);
 		error = (*process)(arg, krp, hint);
+		KASSERTMSG(error == 0 || error == ERESTART, "error=%d",
+		    error);
+		return error;
 	} else {
-		error = ENODEV;
-	}
-
-	if (error) {
-		krp->krp_status = error;
+		krp->krp_status = ENODEV;
 		crypto_kdone(krp);
+		return 0;
 	}
-	return 0;
 }
 
 #ifdef CRYPTO_TIMING
@@ -1542,6 +1524,7 @@ static int
 crypto_invoke(struct cryptop *crp, int hint)
 {
 	struct cryptocap *cap;
+	int error;
 
 	KASSERT(crp != NULL);
 	KASSERT(crp->crp_callback != NULL);
@@ -1567,7 +1550,10 @@ crypto_invoke(struct cryptop *crp, int hint)
 		 */
 		DPRINTF("calling process for %p\n", crp);
 		crypto_driver_unlock(cap);
-		return (*process)(arg, crp, hint);
+		error = (*process)(arg, crp, hint);
+		KASSERTMSG(error == 0 || error == ERESTART, "error=%d",
+		    error);
+		return error;
 	} else {
 		if (cap != NULL) {
 			crypto_driver_unlock(cap);
@@ -1880,6 +1866,8 @@ cryptointr(void *arg __unused)
 		if (submit != NULL) {
 			TAILQ_REMOVE(crp_q, submit, crp_next);
 			result = crypto_invoke(submit, hint);
+			KASSERTMSG(result == 0 || result == ERESTART,
+			    "result=%d", result);
 			/* we must take here as the TAILQ op or kinvoke
 			   may need this mutex below.  sigh. */
 			if (result == ERESTART) {
@@ -1924,6 +1912,8 @@ cryptointr(void *arg __unused)
 		if (krp != NULL) {
 			TAILQ_REMOVE(crp_kq, krp, krp_next);
 			result = crypto_kinvoke(krp, 0);
+			KASSERTMSG(result == 0 || result == ERESTART,
+			    "result=%d", result);
 			/* the next iteration will want the mutex. :-/ */
 			if (result == ERESTART) {
 				/*
