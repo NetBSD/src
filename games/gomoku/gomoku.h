@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.38 2022/05/21 17:19:10 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.39 2022/05/22 10:45:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -151,18 +151,23 @@ union comboval {
 struct combostr {
 	struct combostr	*c_next;	/* list of combos at the same level */
 	struct combostr	*c_prev;	/* list of combos at the same level */
-	struct combostr	*c_link[2];	/* C:previous level or F:NULL */
-	union comboval	c_linkv[2];	/* C:combo value for link[0,1] */
-	union comboval	c_combo;	/* C:combo value for this level */
-	u_short		c_vertex;	/* C:intersection or F:frame head */
-	u_char		c_nframes;	/* number of frames in the combo */
-	u_char		c_dir;		/* C:loop frame or F:frame direction */
-	u_char		c_flags;	/* C:combo flags */
-	u_char		c_frameindex;	/* C:intersection frame index */
+	struct combostr	*c_link[2];	/* F: NULL,
+					 * C: previous level */
+	union comboval	c_linkv[2];	/* C: combo value for link[0, 1] */
+	union comboval	c_combo;	/* F: initial combo value (read-only),
+					 * C: combo value for this level */
+	u_short		c_vertex;	/* F: frame head,
+					 * C: intersection */
+	u_char		c_nframes;	/* F: 1,
+					 * C: number of frames in the combo */
+	u_char		c_dir;		/* F: frame direction,
+					 * C: loop frame */
+	u_char		c_flags;	/* C: combo flags */
+	u_char		c_frameindex;	/* C: intersection frame index */
 	u_char		c_framecnt[2];	/* number of frames left to attach */
-	u_char		c_emask[2];	/* C:bit mask of completion spots for
+	u_char		c_emask[2];	/* C: bit mask of completion spots for
 					 * link[0] and link[1] */
-	u_char		c_voff[2];	/* C:vertex offset within frame */
+	u_char		c_voff[2];	/* C: vertex offset within frame */
 };
 
 /* flag values for c_flags */
