@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.117 2022/05/22 11:30:41 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.118 2022/05/22 11:34:29 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.117 2022/05/22 11:30:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.118 2022/05/22 11:34:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,6 +470,9 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		    % cse->txform->blocksize != 0)
 			return EINVAL;
 	}
+
+	if (cse->tcomp == NULL && cse->txform == NULL && cse->thash == NULL)
+		return EINVAL;
 
 	DPRINTF("cryptodev_op[%u]: iov_len %d\n",
 		CRYPTO_SESID2LID(cse->sid), iov_len);
@@ -1129,6 +1132,13 @@ cryptodev_mop(struct fcrypt *fcr,
 				cnop[req].status = EINVAL;
 				continue;
 			}
+		}
+
+		if (cse->txform == NULL &&
+		    cse->thash == NULL &&
+		    cse->tcomp == NULL) {
+			cnop[req].status = EINVAL;
+			goto bail;
 		}
 
 		/* sanitize */
