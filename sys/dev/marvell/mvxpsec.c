@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.14 2022/04/12 21:05:37 andvar Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.15 2022/05/22 11:38:51 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -2029,21 +2029,13 @@ mvxpsec_freesession(void *arg, uint64_t tid)
 	uint32_t sid = ((uint32_t)tid) & 0xffffffff;
 
 	session = MVXPSEC_SESSION(sid);
-	if (session < 0 || session >= MVXPSEC_MAX_SESSIONS) {
-		log(LOG_ERR, "%s: invalid session (id:%u)\n",
-		    __func__, session);
-		return EINVAL;
-	}
+	KASSERTMSG(session >= 0, "session=%d", session);
+	KASSERTMSG(session < MVXPSEC_MAX_SESSIONS, "session=%d max=%d",
+	    session, MVXPSEC_MAX_SESSIONS);
 
 	mutex_enter(&sc->sc_session_mtx);
-	if ( (mv_s = sc->sc_sessions[session]) == NULL) {
-		mutex_exit(&sc->sc_session_mtx);
-#ifdef DEBUG
-		log(LOG_DEBUG, "%s: session %d already inactivated\n",
-		    __func__, session);
-#endif
-		return ENOENT;
-	}
+	mv_s = sc->sc_sessions[session];
+	KASSERT(mv_s != NULL);
 	MVXPSEC_PRINTF(MVXPSEC_DEBUG_OPENCRYPTO,
 	    "%s: inactivate session %d\n", __func__, session);
 
