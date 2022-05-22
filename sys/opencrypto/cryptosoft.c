@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.61 2021/04/06 03:38:04 knakahara Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.62 2022/05/22 11:29:25 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.61 2021/04/06 03:38:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.62 2022/05/22 11:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1131,10 +1131,6 @@ swcr_freesession(void *arg, u_int64_t tid)
 	if (sid > swcr_sesnum || swcr_sessions == NULL ||
 	    swcr_sessions[sid] == NULL)
 		return EINVAL;
-
-	/* Silently accept and return */
-	if (sid == 0)
-		return 0;
 
 	swd = swcr_sessions[sid];
 	swcr_sessions[sid] = NULL;
