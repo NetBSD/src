@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.61 2022/05/04 07:32:50 andvar Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.62 2022/05/22 11:27:37 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1044,7 +1044,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	/*
 	 * Now we have the defaults as if we were installing to an
 	 * empty disk. Merge the partitions in target range that are already
-	 * there (match with wanted) or are there additionaly.
+	 * there (match with wanted) or are there additionally.
 	 * The only thing outside of target range that we care for
 	 * are FAT partitions, EXT2FS partitions, and a potential
 	 * swap partition - we assume one is enough.

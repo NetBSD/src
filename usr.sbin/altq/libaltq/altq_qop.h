@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_qop.h,v 1.7 2019/07/11 03:49:51 msaitoh Exp $	*/
+/*	$NetBSD: altq_qop.h,v 1.8 2022/05/22 11:27:37 andvar Exp $	*/
 /*	$KAME: altq_qop.h,v 1.5 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -205,7 +205,7 @@ int client_input(FILE *fp);
 #define QOPERR_FILTER_INVAL	12	/* bad filter value */
 #define QOPERR_FILTER_SHADOW	13	/* shadows an existing filter */
 
-/* addmission errors */
+/* admission errors */
 #define QOPERR_ADMISSION	14	/* admission control failure */
 #define QOPERR_ADMISSION_NOBW	15	/* insufficient bandwidth */
 #define QOPERR_ADMISSION_DELAY	16	/* cannot meet delay bound req */

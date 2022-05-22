@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.227 2022/03/25 08:57:15 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.228 2022/05/22 11:27:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.227 2022/03/25 08:57:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.228 2022/05/22 11:27:36 andvar Exp $");
 
 #include "veriexec.h"
 
@@ -1446,7 +1446,7 @@ vn_knote_detach(struct vnode *vp, struct knote *kn)
 	int interest = 0;
 
 	/*
-	 * We special case removing the head of the list, beacuse:
+	 * We special case removing the head of the list, because:
 	 *
 	 * 1. It's extremely likely that we're detaching the only
 	 *    knote.

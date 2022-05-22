@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.114 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.115 2022/05/22 11:27:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.114 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.115 2022/05/22 11:27:34 andvar Exp $");
 
 /*
  * Note that we must NOT include "opt_compat_linux32.h" here,
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.114 2021/11/25 03:08:04 ry
 
 /*
  * This file contains routines which are used
- * on every linux architechture except the Alpha.
+ * on every linux architecture except the Alpha.
  */
 
 /* Used on: arm, aarch64, i386, m68k, mips, ppc, sparc, sparc64 */

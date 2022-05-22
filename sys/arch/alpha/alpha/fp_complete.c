@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.29 2021/12/08 20:21:09 andvar Exp $ */
+/* $NetBSD: fp_complete.c,v 1.30 2022/05/22 11:27:33 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.29 2021/12/08 20:21:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.30 2022/05/22 11:27:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -703,7 +703,7 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 
 	/*
 	 * Start out with the code mirroring the exception flags
-	 * (FP_X_*).  Shift right 1 bit to discard SWC to achive
+	 * (FP_X_*).  Shift right 1 bit to discard SWC to achieve
 	 * this.
 	 */
 	*ucode = a0 >> 1;

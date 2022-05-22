@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.54 2021/12/20 19:56:42 riastradh Exp $	*/
+/*	$NetBSD: firewire.c,v 1.55 2022/05/22 11:27:35 andvar Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.54 2021/12/20 19:56:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.55 2022/05/22 11:27:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1787,7 +1787,7 @@ fw_explore_node(struct fw_device *dfwdev)
 		 * speed map value.
 		 * 1394a-2000 compliant devices only use
 		 * the Bus Info Block link spd value, so
-		 * ignore the speed map alltogether. SWB
+		 * ignore the speed map altogether. SWB
 		 */
 		if (binfo->link_spd == FWSPD_S100 /* 0 */) {
 			aprint_normal_dev(fc->bdev,

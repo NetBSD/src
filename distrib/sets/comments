@@ -232,7 +232,7 @@ comp-objc-bin compilers and tools for the Objective C programming language
 comp-objc-lib static libraries and shared library links for the Objective C programming language
 comp-objc-piclib PIC libraries for Objective C language shared library generation
 comp-objc-proflib profiling libraries for the Objective C programming language
-comp-nis-include Headers for bulding NIS applications
+comp-nis-include Headers for building NIS applications
 comp-sys-catman formatted manual pages for kernel programming
 comp-sys-man manual pages source for kernel programming
 comp-sys-shlib shared library support for basic i386 math and utility libs
@@ -425,7 +425,7 @@ man-timed-catman formatted manual pages for the timed(8) network time daemon
 man-timed-man manual pages source for the timed(8) network time daemon
 man-tn3270-catman formatted manual pages for utilities for connecting to IBM VM/CMS systems
 man-tn3270-man manual pages source for utilities for connecting to IBM VM/CMS systems
-man-tpm-catman formated manual pages for the Trusted Platform Module utilities
+man-tpm-catman formatted manual pages for the Trusted Platform Module utilities
 man-tpm-htmlman HTML documentation for the Trusted Platform Module utilities
 man-tpm-man documentation for the Trusted Platform Module utilities
 man-util-catman formatted manual pages for basic user utilities

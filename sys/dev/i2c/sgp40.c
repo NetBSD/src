@@ -1,4 +1,4 @@
-/*	$NetBSD: sgp40.c,v 1.3 2022/03/30 00:06:50 pgoyette Exp $	*/
+/*	$NetBSD: sgp40.c,v 1.4 2022/05/22 11:27:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.3 2022/03/30 00:06:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.4 2022/05/22 11:27:35 andvar Exp $");
 
 /*
   Driver for the Sensirion SGP40 MOx gas sensor for air quality
@@ -229,7 +229,7 @@ sgp40_take_measurement(void *aux, VocAlgorithmParams* params)
 	args[5] = sgp40_crc(&args[3], 2);
 
 	/*
-	 * The VOC algoritm has a black out time when it first starts to run
+	 * The VOC algorithm has a black out time when it first starts to run
 	 * and does not return any indicator that is going on, so voc_index
 	 * in that case would be 0..  however, that is also a valid response
 	 * otherwise, although an unlikely one.

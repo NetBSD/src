@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.2 2021/10/12 22:51:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.3 2022/05/22 11:27:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.2 2021/10/12 22:51:28 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.3 2022/05/22 11:27:37 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -399,7 +399,7 @@ getconfigent(char **current_pos)
 
 	if (/*CONSTCOND*/false) {
 		/*
-		 * Go to the next line, but only after attemting to read the
+		 * Go to the next line, but only after attempting to read the
 		 * current one! Keep reading until we find a valid definition
 		 * or EOF.
 		 */
