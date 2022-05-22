@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.43 2022/05/22 08:12:15 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.44 2022/05/22 12:30:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.43 2022/05/22 08:12:15 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.44 2022/05/22 12:30:05 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -332,19 +332,17 @@ get_line(char *buf, int size, void (*on_change)(const char *))
 int
 get_coord(void)
 {
-	/* XXX: These coordinates are 0-based, all others are 1-based. */
 	static int curx = BSZ / 2;
 	static int cury = BSZ / 2;
-	int ny, nx, ch;
+	int nx, ny, ch;
 
-	move(scr_y(cury + 1), scr_x(curx + 1));
+	move(scr_y(cury), scr_x(curx));
 	refresh();
 	nx = curx;
 	ny = cury;
 	for (;;) {
-		mvprintw(BSZ + 3, 6, "(%c %d) ",
-		    letters[curx + 1], cury + 1);
-		move(scr_y(cury + 1), scr_x(curx + 1));
+		mvprintw(BSZ + 3, 6, "(%c %d) ", letters[curx], cury);
+		move(scr_y(cury), scr_x(curx));
 
 		ch = getch();
 		switch (ch) {
@@ -358,12 +356,12 @@ get_coord(void)
 		case '2':
 		case KEY_DOWN:
 			nx = curx;
-			ny = BSZ + cury - 1;
+			ny = cury + BSZ - 1;
 			break;
 		case 'h':
 		case '4':
 		case KEY_LEFT:
-			nx = BSZ + curx - 1;
+			nx = curx + BSZ - 1;
 			ny = cury;
 			break;
 		case 'l':
@@ -375,14 +373,14 @@ get_coord(void)
 		case 'y':
 		case '7':
 		case KEY_A1:
-			nx = BSZ + curx - 1;
+			nx = curx + BSZ - 1;
 			ny = cury + 1;
 			break;
 		case 'b':
 		case '1':
 		case KEY_C1:
-			nx = BSZ + curx - 1;
-			ny = BSZ + cury - 1;
+			nx = curx + BSZ - 1;
+			ny = cury + BSZ - 1;
 			break;
 		case 'u':
 		case '9':
@@ -394,7 +392,7 @@ get_coord(void)
 		case '3':
 		case KEY_C3:
 			nx = curx + 1;
-			ny = BSZ + cury - 1;
+			ny = cury + BSZ - 1;
 			break;
 		case 'K':
 			nx = curx;
@@ -402,10 +400,10 @@ get_coord(void)
 			break;
 		case 'J':
 			nx = curx;
-			ny = BSZ + cury - 5;
+			ny = cury + BSZ - 5;
 			break;
 		case 'H':
-			nx = BSZ + curx - 5;
+			nx = curx + BSZ - 5;
 			ny = cury;
 			break;
 		case 'L':
@@ -413,12 +411,12 @@ get_coord(void)
 			ny = cury;
 			break;
 		case 'Y':
-			nx = BSZ + curx - 5;
+			nx = curx + BSZ - 5;
 			ny = cury + 5;
 			break;
 		case 'B':
-			nx = BSZ + curx - 5;
-			ny = BSZ + cury - 5;
+			nx = curx + BSZ - 5;
+			ny = cury + BSZ - 5;
 			break;
 		case 'U':
 			nx = curx + 5;
@@ -426,9 +424,9 @@ get_coord(void)
 			break;
 		case 'N':
 			nx = curx + 5;
-			ny = BSZ + cury - 5;
+			ny = cury + BSZ - 5;
 			break;
-		case '\f':
+		case 0x0c:	/* ^L */
 			nx = curx;
 			ny = cury;
 			(void)clearok(stdscr, true);
@@ -440,17 +438,19 @@ get_coord(void)
 			MEVENT	myevent;
 
 			getmouse(&myevent);
+			/* XXX: 'y <= BSZ + 1' should probably be '<'. */
+			/* TODO: use scr_x and scr_y. */
 			if (myevent.y >= 1 && myevent.y <= BSZ + 1 &&
 			    myevent.x >= 3 && myevent.x <= 2 * BSZ + 1) {
-				curx = (myevent.x - 3) / 2;
-				cury = BSZ - myevent.y;
-				return PT(curx,cury);
+				curx0 = (myevent.x - 3) / 2;
+				cury0 = BSZ - myevent.y;
+				return PT(curx0,cury0);
 			} else {
 				beep();
 			}
 		}
 		break;
-#endif /* 0 */
+#endif
 		case 'Q':
 		case 'q':
 			return RESIGN;
@@ -459,11 +459,11 @@ get_coord(void)
 			return SAVE;
 		case ' ':
 		case '\r':
-			(void)mvaddstr(BSZ + 3, 6, "      ");
-			return PT(curx + 1, cury + 1);
+			(void)mvhline(BSZ + 3, 6, ' ', 6);
+			return PT(curx, cury);
 		}
 
-		curx = nx % BSZ;
-		cury = ny % BSZ;
+		curx = 1 + (nx - 1) % BSZ;
+		cury = 1 + (ny - 1) % BSZ;
 	}
 }
