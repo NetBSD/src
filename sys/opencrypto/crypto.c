@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.122 2022/05/22 11:34:17 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.123 2022/05/22 11:34:40 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.122 2022/05/22 11:34:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.123 2022/05/22 11:34:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1287,6 +1287,8 @@ crypto_dispatch(struct cryptop *crp)
 	struct crypto_crp_q *crp_q;
 
 	KASSERT(crp != NULL);
+	KASSERT(crp->crp_desc != NULL);
+	KASSERT(crp->crp_buf != NULL);
 	KASSERT(!cpu_intr_p());
 
 	DPRINTF("crp %p, alg %d\n", crp, crp->crp_desc->crd_alg);
