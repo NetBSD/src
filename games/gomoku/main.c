@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2022/05/21 19:02:14 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2022/05/22 08:12:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.49 2022/05/21 19:02:14 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.50 2022/05/22 08:12:15 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -97,11 +97,27 @@ warn_if_exists(const char *fname)
 		clrtoeol();
 }
 
+static void
+save_game(void)
+{
+	char fname[PATH_MAX];
+	FILE *fp;
+
+	ask("Save file name? ");
+	(void)get_line(fname, sizeof(fname), warn_if_exists);
+	if ((fp = fopen(fname, "w")) == NULL) {
+		misclog("cannot create save file");
+		return;
+	}
+	for (int i = 0; i < movenum - 1; i++)
+		fprintf(fp, "%s\n", stoc(movelog[i]));
+	fclose(fp);
+}
+
 int
 main(int argc, char **argv)
 {
 	char buf[128];
-	char fname[PATH_MAX];
 	char *user_name;
 	int color, curmove, i, ch;
 	enum input_source input[2];
@@ -267,19 +283,7 @@ again:
 				ask("Select move, (S)ave or (Q)uit.");
 				curmove = get_coord();
 				if (curmove == SAVE) {
-					FILE *fp;
-
-					ask("Save file name? ");
-					(void)get_line(fname, sizeof(fname),
-					    warn_if_exists);
-					if ((fp = fopen(fname, "w")) == NULL) {
-						misclog("cannot create save file");
-						goto getinput;
-					}
-					for (i = 0; i < movenum - 1; i++)
-						fprintf(fp, "%s\n",
-						    stoc(movelog[i]));
-					fclose(fp);
+					save_game();
 					goto getinput;
 				}
 				if (curmove != RESIGN &&
@@ -341,19 +345,7 @@ again:
 			if (ch == 'Y' || ch == 'y')
 				goto again;
 			if (ch == 'S') {
-				FILE *fp;
-
-				ask("Save file name? ");
-				(void)get_line(fname, sizeof(fname),
-				    warn_if_exists);
-				if ((fp = fopen(fname, "w")) == NULL) {
-					misclog("cannot create save file");
-					goto replay;
-				}
-				for (i = 0; i < movenum - 1; i++)
-					fprintf(fp, "%s\n",
-					    stoc(movelog[i]));
-				fclose(fp);
+				save_game();
 				goto replay;
 			}
 		}
