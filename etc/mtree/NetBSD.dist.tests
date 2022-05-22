@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.191 2022/04/29 22:17:50 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.192 2022/05/22 17:55:08 rillig Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -429,6 +429,7 @@
 ./usr/tests/usr.bin/config/support/arch/regress/conf
 ./usr/tests/usr.bin/config/support/conf
 ./usr/tests/usr.bin/cpio
+./usr/tests/usr.bin/compress
 ./usr/tests/usr.bin/cut
 ./usr/tests/usr.bin/diff
 ./usr/tests/usr.bin/dirname
