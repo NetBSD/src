@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2022/05/22 08:31:12 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.55 2022/05/22 08:36:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.54 2022/05/22 08:31:12 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.55 2022/05/22 08:36:15 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -230,6 +230,31 @@ again:
 	}
 }
 
+static void
+declare_winner(int outcome, const enum input_source *input, int color)
+{
+
+	move(BSZ + 3, 0);
+	switch (outcome) {
+	case WIN:
+		if (input[color] == PROGRAM)
+			addstr("Ha ha, I won");
+		else if (input[0] == USER && input[1] == USER)
+			addstr("Well, you won (and lost)");
+		else
+			addstr("Rats! you won");
+		break;
+	case TIE:
+		addstr("Wow! It's a tie");
+		break;
+	case ILLEGAL:
+		addstr("Illegal move");
+		break;
+	}
+	clrtoeol();
+	bdisp();
+}
+
 int
 main(int argc, char **argv)
 {
@@ -330,25 +355,7 @@ again:
 			bdisp();
 	}
 	if (interactive) {
-		move(BSZ + 3, 0);
-		switch (outcome) {
-		case WIN:
-			if (input[color] == PROGRAM)
-				addstr("Ha ha, I won");
-			else if (input[0] == USER && input[1] == USER)
-				addstr("Well, you won (and lost)");
-			else
-				addstr("Rats! you won");
-			break;
-		case TIE:
-			addstr("Wow! It's a tie");
-			break;
-		case ILLEGAL:
-			addstr("Illegal move");
-			break;
-		}
-		clrtoeol();
-		bdisp();
+		declare_winner(outcome, input, color);
 		if (outcome != RESIGN) {
 		replay:
 			ask("Play again? ");
