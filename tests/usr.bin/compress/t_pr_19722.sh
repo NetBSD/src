@@ -1,4 +1,4 @@
-#	$NetBSD: t_pr_19722.sh,v 1.2 2022/05/22 20:49:12 rillig Exp $
+#	$NetBSD: t_pr_19722.sh,v 1.3 2022/05/22 21:16:50 rillig Exp $
 #
 # Copyright (c) 2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -92,15 +92,17 @@ atf_test_case 'uncompress_no_source_no_target'
 uncompress_no_source_no_target_body()
 {
 	# PR 19722: uncompressing a missing source creates empty target
+	#
+	# Before compress.c 1.28 from 2022-05-22, uncompress created an empty
+	# target file and didn't clean it up.
 
 	atf_check \
 	    -s 'not-exit:0' \
 	    -e 'inline:uncompress: file.Z: No such file or directory\n' \
 	    uncompress -f file
 
-	# FIXME: The target file must not be created.
-	atf_check cat file
-	atf_check test ! -f nonexistent.Z
+	atf_check test ! -f file
+	atf_check test ! -f file.Z
 }
 
 
@@ -108,6 +110,9 @@ atf_test_case 'uncompress_no_source_existing_target'
 uncompress_no_source_existing_target_body()
 {
 	# PR 19722: uncompressing a missing source truncates target
+	#
+	# Before compress.c 1.28 from 2022-05-22, uncompress truncated the
+	# target.
 
 	atf_check sh -c "echo 'hello' > file"
 
@@ -116,8 +121,7 @@ uncompress_no_source_existing_target_body()
 	    -e 'inline:uncompress: file.Z: No such file or directory\n' \
 	    uncompress -f file
 
-	# FIXME: The file must not be truncated.
-	atf_check cat file
+	atf_check -o 'inline:hello\n' cat file
 	atf_check test ! -f file.Z
 }
 
