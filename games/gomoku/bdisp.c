@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.42 2022/05/21 17:19:10 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.43 2022/05/22 08:12:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.42 2022/05/21 17:19:10 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.43 2022/05/22 08:12:15 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -324,8 +324,10 @@ get_line(char *buf, int size, void (*on_change)(const char *))
 }
 
 /*
- * Decent (n)curses interface for the game, based on Eric S. Raymond's
- * modifications to the battleship (bs) user interface.
+ * Ask the user for the coordinate of a move, or return RESIGN or SAVE.
+ *
+ * Based on Eric S. Raymond's modifications to the battleship (bs) user
+ * interface.
  */
 int
 get_coord(void)
