@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.109 2019/11/01 04:23:21 knakahara Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.110 2022/05/22 11:30:40 riastradh Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.109 2019/11/01 04:23:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.110 2022/05/22 11:30:40 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -108,8 +108,8 @@ static const char ipseczeroes[256];
 
 int ah_max_authsize;			/* max authsize over all algorithms */
 
-static int ah_input_cb(struct cryptop *);
-static int ah_output_cb(struct cryptop *);
+static void ah_input_cb(struct cryptop *);
+static void ah_output_cb(struct cryptop *);
 
 const uint8_t ah_stats[256] = { SADB_AALG_STATS_INIT };
 
@@ -713,24 +713,24 @@ bad:
 #ifdef INET6
 #define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		     \
 	if (saidx->dst.sa.sa_family == AF_INET6) {			     \
-		error = ipsec6_common_input_cb(m, sav, skip, protoff);	     \
+		(void)ipsec6_common_input_cb(m, sav, skip, protoff);	     \
 	} else {							     \
-		error = ipsec4_common_input_cb(m, sav, skip, protoff);	     \
+		(void)ipsec4_common_input_cb(m, sav, skip, protoff);	     \
 	}								     \
 } while (0)
 #else
 #define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			     \
-	(error = ipsec4_common_input_cb(m, sav, skip, protoff))
+	((void)ipsec4_common_input_cb(m, sav, skip, protoff))
 #endif
 
 /*
  * AH input callback from the crypto driver.
  */
-static int
+static void
 ah_input_cb(struct cryptop *crp)
 {
 	char buf[IPSEC_ADDRSTRLEN];
-	int rplen, ahsize, error, skip, protoff;
+	int rplen, ahsize, skip, protoff;
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m;
 	struct tdb_crypto *tc;
@@ -776,12 +776,12 @@ ah_input_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			IPSEC_RELEASE_GLOBAL_LOCKS();
-			return crypto_dispatch(crp);
+			(void)crypto_dispatch(crp);
+			return;
 		}
 
 		AH_STATINC(AH_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
-		error = crp->crp_etype;
 		goto bad;
 	} else {
 		AH_STATINC(AH_STAT_HIST + ah_stats[sav->alg_auth]);
@@ -814,7 +814,6 @@ ah_input_cb(struct cryptop *crp)
 		     pppp[4], pppp[5], pppp[6], pppp[7],
 		     pppp[8], pppp[9], pppp[10], pppp[11]);
 		AH_STATINC(AH_STAT_BADAUTH);
-		error = EACCES;
 		goto bad;
 	}
 
@@ -845,7 +844,6 @@ ah_input_cb(struct cryptop *crp)
 		    sizeof(seq), &seq);
 		if (ipsec_updatereplay(ntohl(seq), sav)) {
 			AH_STATINC(AH_STAT_REPLAY);
-			error = EACCES;
 			goto bad;
 		}
 	}
@@ -853,8 +851,7 @@ ah_input_cb(struct cryptop *crp)
 	/*
 	 * Remove the AH header and authenticator from the mbuf.
 	 */
-	error = m_striphdr(m, skip, ahsize);
-	if (error) {
+	if (m_striphdr(m, skip, ahsize) != 0) {
 		DPRINTF("mangled mbuf chain for SA %s/%08lx\n",
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi));
@@ -867,7 +864,7 @@ ah_input_cb(struct cryptop *crp)
 
 	KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	return error;
+	return;
 
 bad:
 	if (sav)
@@ -883,7 +880,7 @@ bad:
 	}
 	if (crp != NULL)
 		crypto_freereq(crp);
-	return error;
+	return;
 }
 
 /*
@@ -1135,16 +1132,16 @@ bad:
 /*
  * AH output callback from the crypto driver.
  */
-static int
+static void
 ah_output_cb(struct cryptop *crp)
 {
-	int skip, error;
+	int skip;
 	struct tdb_crypto *tc;
 	const struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m;
 	void *ptr;
-	int err, flags;
+	int flags;
 	size_t size;
 	bool pool_used;
 	IPSEC_DECLARE_LOCK_VARIABLE;
@@ -1169,12 +1166,12 @@ ah_output_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			IPSEC_RELEASE_GLOBAL_LOCKS();
-			return crypto_dispatch(crp);
+			(void)crypto_dispatch(crp);
+			return;
 		}
 
 		AH_STATINC(AH_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
-		error = crp->crp_etype;
 		goto bad;
 	}
 
@@ -1209,11 +1206,11 @@ ah_output_cb(struct cryptop *crp)
 #endif
 
 	/* NB: m is reclaimed by ipsec_process_done. */
-	err = ipsec_process_done(m, isr, sav, flags);
+	(void)ipsec_process_done(m, isr, sav, flags);
 	KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	return err;
+	return;
 bad:
 	if (sav)
 		KEY_SA_UNREF(&sav);
@@ -1226,7 +1223,6 @@ bad:
 	else
 		kmem_intr_free(tc, size);
 	crypto_freereq(crp);
-	return error;
 }
 
 static struct xformsw ah_xformsw = {

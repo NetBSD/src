@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.45 2022/05/22 11:30:05 riastradh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.46 2022/05/22 11:30:41 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -483,7 +483,7 @@ struct cryptop {
 	void *		crp_opaque;	/* Opaque pointer, passed along */
 	struct cryptodesc *crp_desc;	/* Linked list of processing descriptors */
 
-	int (*crp_callback)(struct cryptop *); /*
+	void (*crp_callback)(struct cryptop *); /*
 						* Callback function.
 						* That must not sleep as it is
 						* called in softint context.
@@ -538,7 +538,7 @@ struct cryptkop {
 	u_short		krp_oparams;	/* # of output parameters */
 	u_int32_t	krp_hid;
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
-	int		(*krp_callback)(struct cryptkop *);  /*
+	void		(*krp_callback)(struct cryptkop *);  /*
 							      * Callback function.
 							      * That must not sleep as it is
 							      * called in softint context.
