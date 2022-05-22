@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.45 2022/05/22 12:42:54 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.46 2022/05/22 13:38:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.45 2022/05/22 12:42:54 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.46 2022/05/22 13:38:08 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -73,9 +73,7 @@ cursinit(void)
 	cbreak();
 	leaveok(stdscr, false);
 
-#if 0 /* no mouse support in netbsd curses yet */
 	mousemask(BUTTON1_CLICKED, NULL);
-#endif
 }
 
 /*
@@ -323,6 +321,23 @@ get_line(char *buf, int size, void (*on_change)(const char *))
 	return c != EOF;
 }
 
+static bool
+get_coord_mouse(int *x, int *y)
+{
+	MEVENT ev;
+
+	if (getmouse(&ev) == OK &&
+	    (ev.bstate & (BUTTON1_RELEASED | BUTTON1_CLICKED)) != 0 &&
+	    ev.y >= scr_y(BSZ) && ev.y <= scr_y(1) &&
+	    ev.x >= scr_x(1) && ev.x <= scr_x(BSZ) &&
+	    (ev.x - scr_x(1)) % (scr_x(2) - scr_x(1)) == 0) {
+		*x = 1 + (ev.x - scr_x(1)) / (scr_x(2) - scr_x(1));
+		*y = 1 + (scr_y(1) - ev.y) / (scr_y(1) - scr_y(2));
+		return true;
+	}
+	return false;
+}
+
 /*
  * Ask the user for the coordinate of a move, or return RESIGN or SAVE.
  *
@@ -419,25 +434,11 @@ get_coord(void)
 			(void)clearok(stdscr, true);
 			(void)refresh();
 			break;
-#if 0 /* notyet */
 		case KEY_MOUSE:
-		{
-			MEVENT	myevent;
-
-			getmouse(&myevent);
-			/* XXX: 'y <= BSZ + 1' should probably be '<'. */
-			/* TODO: use scr_x and scr_y. */
-			if (myevent.y >= 1 && myevent.y <= BSZ + 1 &&
-			    myevent.x >= 3 && myevent.x <= 2 * BSZ + 1) {
-				curx0 = (myevent.x - 3) / 2;
-				cury0 = BSZ - myevent.y;
-				return PT(curx0,cury0);
-			} else {
-				beep();
-			}
-		}
-		break;
-#endif
+			if (get_coord_mouse(&x, &y))
+				return PT(x, y);
+			beep();
+			break;
 		case 'Q':
 		case 'q':
 			return RESIGN;
