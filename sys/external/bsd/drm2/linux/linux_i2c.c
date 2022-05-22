@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_i2c.c,v 1.6 2021/12/19 11:49:12 riastradh Exp $	*/
+/*	$NetBSD: linux_i2c.c,v 1.7 2022/05/22 18:41:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_i2c.c,v 1.6 2021/12/19 11:49:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_i2c.c,v 1.7 2022/05/22 18:41:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -127,8 +127,18 @@ i2c_master_recv(const struct i2c_client *client, char *buf, int count)
 int
 __i2c_transfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, int n)
 {
+	unsigned timeout = hz;	/* XXX adapter->timeout */
+	unsigned start = getticks();
+	int ret, nretries = 0;
 
-	return (*adapter->algo->master_xfer)(adapter, msgs, n);
+	do {
+		ret = (*adapter->algo->master_xfer)(adapter, msgs, n);
+		if (ret != -EAGAIN)
+			break;
+	} while (nretries++ < adapter->retries &&
+	    getticks() - start < timeout);
+
+	return ret;
 }
 
 int
