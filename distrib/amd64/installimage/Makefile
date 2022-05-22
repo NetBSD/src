@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2022/05/08 08:12:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2022/05/22 19:32:41 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -14,3 +14,5 @@ EFIBOOT+=		${WORKDIR}/usr/mdec/bootia32.efi
 USE_MBR=		yes
 USE_GPT=		yes
 USE_GPTMBR=		yes
+
+.include "${NETBSDSRCDIR}/distrib/common/bootimage/Makefile.installimage"
