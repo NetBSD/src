@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.72 2022/05/22 11:39:37 riastradh Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.73 2022/05/22 11:40:03 riastradh Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.72 2022/05/22 11:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.73 2022/05/22 11:40:03 riastradh Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -269,13 +269,6 @@ ipcomp_input_cb(struct cryptop *crp)
 		/* Reset the session ID */
 		if (sav->tdb_cryptoid != 0)
 			sav->tdb_cryptoid = crp->crp_sid;
-
-		if (crp->crp_etype == EAGAIN) {
-			KEY_SA_UNREF(&sav);
-			IPSEC_RELEASE_GLOBAL_LOCKS();
-			(void)crypto_dispatch(crp);
-			return;
-		}
 
 		IPCOMP_STATINC(IPCOMP_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
@@ -542,11 +535,6 @@ ipcomp_output_cb(struct cryptop *crp)
 		if (sav->tdb_cryptoid != 0)
 			sav->tdb_cryptoid = crp->crp_sid;
 
-		if (crp->crp_etype == EAGAIN) {
-			IPSEC_RELEASE_GLOBAL_LOCKS();
-			(void)crypto_dispatch(crp);
-			return;
-		}
 		IPCOMP_STATINC(IPCOMP_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
 		goto bad;

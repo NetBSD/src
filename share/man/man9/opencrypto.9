@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.20 2022/05/22 11:39:37 riastradh Exp $
+.\"	$NetBSD: opencrypto.9,v 1.21 2022/05/22 11:40:03 riastradh Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -288,16 +288,6 @@ level.
 .It Fa crp_etype
 Contains the error type, if any errors were encountered, or zero if
 the request was successfully processed.
-If the
-.Er EAGAIN
-error code is returned, the SID has changed (and has been recorded in the
-.Fa crp_sid
-field).
-The consumer should record the new SID and use it in all subsequent requests.
-In this case, the request may be re-submitted immediately.
-This mechanism is used by the framework to perform
-session migration (move a session from one driver to another, because
-of availability, performance, or other considerations).
 .Pp
 Note that this field only makes sense when examined by
 the callback routine specified in

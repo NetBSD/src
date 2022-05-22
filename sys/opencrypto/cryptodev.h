@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.48 2022/05/22 11:39:37 riastradh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.49 2022/05/22 11:40:03 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -453,7 +453,7 @@ struct cryptop {
 
 	int		crp_etype;	/*
 					 * Error type (zero means no error).
-					 * All error codes except EAGAIN
+					 * All error codes
 					 * indicate possible data corruption (as in,
 					 * the data have been touched). On all
 					 * errors, the crp_sid may have changed
