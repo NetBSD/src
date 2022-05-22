@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.120 2022/05/22 11:39:37 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.121 2022/05/22 11:39:45 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.120 2022/05/22 11:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.121 2022/05/22 11:39:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,11 +182,11 @@ static struct	csession *csecreate(struct fcrypt *, u_int64_t, void *,
     u_int64_t, void *, u_int64_t, u_int32_t, u_int32_t, u_int32_t,
     const struct enc_xform *, const struct auth_hash *,
     const struct comp_algo *);
-static int	csefree(struct csession *);
+static void	csefree(struct csession *);
 
 static int	cryptodev_key(struct crypt_kop *);
 static int	cryptodev_mkey(struct fcrypt *, struct crypt_n_kop *, int);
-static int	cryptodev_msessionfin(struct fcrypt *, int, u_int32_t *);
+static void	cryptodev_msessionfin(struct fcrypt *, int, u_int32_t *);
 
 static void	cryptodev_cb(struct cryptop *);
 static void	cryptodevkey_cb(struct cryptkop *);
@@ -317,7 +317,7 @@ mbail:
 		}
 		csedelete(fcr, cse);
 		mutex_exit(&cryptodev_mtx);
-		error = csefree(cse);
+		csefree(cse);
 		break;
 	case CIOCNFSESSION:
 		mutex_enter(&cryptodev_mtx);
@@ -334,7 +334,7 @@ mbail:
 		error = copyin(sfop->sesid, sesid,
 		    (sfop->count * sizeof(u_int32_t)));
 		if (!error) {
-			error = cryptodev_msessionfin(fcr, sfop->count, sesid);
+			cryptodev_msessionfin(fcr, sfop->count, sesid);
 		}
 		kmem_free(sesid, (sfop->count * sizeof(u_int32_t)));
 		break;
@@ -922,7 +922,7 @@ cryptof_close(struct file *fp)
 	while ((cse = TAILQ_FIRST(&fcr->csessions))) {
 		TAILQ_REMOVE(&fcr->csessions, cse, next);
 		mutex_exit(&cryptodev_mtx);
-		(void)csefree(cse);
+		csefree(cse);
 		mutex_enter(&cryptodev_mtx);
 	}
 	seldestroy(&fcr->sinfo);
@@ -950,7 +950,7 @@ csefind(struct fcrypt *fcr, u_int ses)
 	TAILQ_FOREACH_SAFE(cse, &fcr->csessions, next, cnext)
 		if (cse->ses == ses)
 			ret = cse;
-	
+
 	return ret;
 }
 
@@ -1014,19 +1014,16 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
 	}
 }
 
-static int
+static void
 csefree(struct csession *cse)
 {
-	int error;
 
 	crypto_freesession(cse->sid);
-	error = 0;
 	if (cse->key)
 		free(cse->key, M_XDATA);
 	if (cse->mackey)
 		free(cse->mackey, M_XDATA);
 	pool_put(&csepl, cse);
-	return error;
 }
 
 static int
@@ -1757,11 +1754,11 @@ cryptodev_msession(struct fcrypt *fcr, struct session_n_op *sn_ops,
 	return 0;
 }
 
-static int
+static void
 cryptodev_msessionfin(struct fcrypt *fcr, int count, u_int32_t *sesid)
 {
 	struct csession *cse;
-	int req, error = 0;
+	int req;
 
 	mutex_enter(&cryptodev_mtx);
 	for(req = 0; req < count; req++) {
@@ -1770,11 +1767,10 @@ cryptodev_msessionfin(struct fcrypt *fcr, int count, u_int32_t *sesid)
 			continue;
 		csedelete(fcr, cse);
 		mutex_exit(&cryptodev_mtx);
-		error = csefree(cse);
+		csefree(cse);
 		mutex_enter(&cryptodev_mtx);
 	}
 	mutex_exit(&cryptodev_mtx);
-	return error;
 }
 
 /*
