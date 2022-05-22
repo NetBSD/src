@@ -1,4 +1,4 @@
-#	$NetBSD: t_pr_19722.sh,v 1.1 2022/05/22 17:55:08 rillig Exp $
+#	$NetBSD: t_pr_19722.sh,v 1.2 2022/05/22 20:49:12 rillig Exp $
 #
 # Copyright (c) 2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,65 +25,149 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# https://gnats.netbsd.org/19722
-#
-# Before TODO:rev from TODO:date, trying to uncompress a nonexistent or
-# malformed source file resulted in a truncated target file.
-
-
-atf_test_case 'no_source_no_target'
-no_source_no_target_body()
+atf_test_case 'compress_small_file'
+compress_small_file_body()
 {
+	# If the compressed version of a file would be larger than the
+	# original file, the original file is kept.
+
+	echo 'hello' > file
+
+	atf_check compress file
+
+	atf_check -o 'inline:hello\n' cat file
+	atf_check test ! -f file.Z
+}
+
+
+atf_test_case 'compress_small_file_force'
+compress_small_file_force_body()
+{
+	# The option '-f' forces compression to happen, even if the resulting
+	# file becomes larger than the original.
+
+	echo 'hello' > file
+
+	atf_check compress -f file
+
+	atf_check test ! -f file
+	atf_check \
+	    -o 'inline:0000000   1f  9d  90  68  ca  b0  61  f3  46  01                        \n000000a\n' \
+	    od -Ax -tx1 file.Z
+}
+
+
+atf_test_case 'roundtrip'
+roundtrip_body()
+{
+	# Compressing and decompressing a file must preserve every byte.
+
+	atf_check -e 'ignore' dd if=/dev/urandom of=file bs=4k count=10
+	atf_check cp file original
+
+	atf_check compress -f file
+	atf_check uncompress file.Z
+
+	atf_check cmp file original
+}
+
+
+atf_test_case 'uncompress_basename'
+uncompress_basename_body()
+{
+	# To uncompress a file, it suffices to specify the basename of the
+	# file, the filename extension '.Z' is optional.
+
+	atf_check sh -c "echo 'hello' > file"
+	atf_check compress -f file
+
+	atf_check uncompress file
+
+	atf_check -o 'inline:hello\n' cat file
+	atf_check test ! -f file.Z
+}
+
+
+atf_test_case 'uncompress_no_source_no_target'
+uncompress_no_source_no_target_body()
+{
+	# PR 19722: uncompressing a missing source creates empty target
 
 	atf_check \
 	    -s 'not-exit:0' \
 	    -e 'inline:uncompress: file.Z: No such file or directory\n' \
-	    uncompress -f 'file'
+	    uncompress -f file
 
 	# FIXME: The target file must not be created.
-	atf_check cat 'file'
-	atf_check test ! -f 'nonexistent.Z'
+	atf_check cat file
+	atf_check test ! -f nonexistent.Z
 }
 
 
-atf_test_case 'no_source_existing_target'
-no_source_existing_target_body()
+atf_test_case 'uncompress_no_source_existing_target'
+uncompress_no_source_existing_target_body()
 {
+	# PR 19722: uncompressing a missing source truncates target
 
-	echo 'before' > 'file'
+	atf_check sh -c "echo 'hello' > file"
 
 	atf_check \
 	    -s 'not-exit:0' \
 	    -e 'inline:uncompress: file.Z: No such file or directory\n' \
-	    uncompress -f 'file'
+	    uncompress -f file
 
-	# FIXME: The target file must not be truncated.
-	atf_check cat 'file'
+	# FIXME: The file must not be truncated.
+	atf_check cat file
+	atf_check test ! -f file.Z
 }
 
 
-atf_test_case 'broken_source_existing_target'
-broken_source_existing_target_body()
+atf_test_case 'uncompress_broken_source_no_target'
+uncompress_broken_source_no_target_body()
 {
-	# If the source file is not compressed, preserve the target file.
+	# When trying to uncompress a broken source, the target is created
+	# temporarily but deleted again, as part of the cleanup.
 
-	echo 'broken' > 'file.Z'
-	echo 'before' > 'file'
+	echo 'broken' > file.Z
 
 	atf_check \
 	    -s 'not-exit:0' \
 	    -e 'inline:uncompress: file.Z: Inappropriate file type or format\n' \
-	    uncompress -f 'file.Z'
+	    uncompress -f file
 
-	# FIXME: Must not be removed, must not be truncated.
-	atf_check test ! -f 'file'
+	atf_check test ! -f file
+	atf_check test -f file.Z
+}
+
+
+atf_test_case 'uncompress_broken_source_existing_target'
+uncompress_broken_source_existing_target_body()
+{
+	# PR 19722: uncompressing a broken source removes existing target
+
+	echo 'broken' > file.Z
+	echo 'before' > file
+
+	atf_check \
+	    -s 'not-exit:0' \
+	    -e 'inline:uncompress: file.Z: Inappropriate file type or format\n' \
+	    uncompress -f file.Z
+
+	atf_check -o 'inline:broken\n' cat file.Z
+	# FIXME: Must not be modified.
+	atf_check test ! -f file
 }
 
 
 atf_init_test_cases()
 {
 
-	atf_add_test_case no_source_no_target
-	atf_add_test_case no_source_existing_target
-	atf_add_test_case broken_source_existing_target
+	atf_add_test_case compress_small_file
+	atf_add_test_case compress_small_file_force
+	atf_add_test_case roundtrip
+	atf_add_test_case uncompress_basename
+	atf_add_test_case uncompress_no_source_no_target
+	atf_add_test_case uncompress_no_source_existing_target
+	atf_add_test_case uncompress_broken_source_no_target
+	atf_add_test_case uncompress_broken_source_existing_target
 }
