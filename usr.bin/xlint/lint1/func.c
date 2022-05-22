@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.136 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.137 2022/05/22 13:58:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.136 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.137 2022/05/22 13:58:59 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -760,7 +760,7 @@ switch2(void)
 		}
 		for (cl = cstmt->c_case_labels; cl != NULL; cl = cl->cl_next)
 			nclab++;
-		if (hflag && eflag && nenum != nclab && !cstmt->c_default) {
+		if (hflag && eflag && nclab < nenum && !cstmt->c_default) {
 			/* enumeration value(s) not handled in switch */
 			warning(206);
 		}
