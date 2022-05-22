@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.17 2022/05/22 11:35:21 riastradh Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.18 2022/05/22 11:38:12 riastradh Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.17 2022/05/22 11:35:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.18 2022/05/22 11:38:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,8 +314,7 @@ glxsb_crypto_newsession(void *aux, uint32_t *sidp, struct cryptoini *cri)
 	struct glxsb_session *ses = NULL;
 	int sesn;
 
-	if (sc == NULL || sidp == NULL || cri == NULL ||
-	    cri->cri_next != NULL || cri->cri_alg != CRYPTO_AES_CBC ||
+	if (cri->cri_next != NULL || cri->cri_alg != CRYPTO_AES_CBC ||
 	    cri->cri_klen != 128)
 		return (EINVAL);
 
@@ -360,11 +359,10 @@ glxsb_crypto_freesession(void *aux, uint64_t tid)
 	int sesn;
 	uint32_t sid = ((uint32_t)tid) & 0xffffffff;
 
-	if (sc == NULL)
-		return (EINVAL);
 	sesn = GLXSB_SESSION(sid);
-	if (sesn >= sc->sc_nsessions)
-		return (EINVAL);
+	KASSERTMSG(sesn < sc->sc_nsessions, "sesn=%d nsessions=%d",
+	    sesn, sc->sc_nsessions);
+
 	memset(&sc->sc_sessions[sesn], 0, sizeof(sc->sc_sessions[sesn]));
 	return (0);
 }
