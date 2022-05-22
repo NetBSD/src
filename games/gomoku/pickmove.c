@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.42 2022/05/21 16:39:14 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.43 2022/05/22 10:45:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.42 2022/05/21 16:39:14 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.43 2022/05/22 10:45:02 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -243,6 +243,11 @@ scanframes(int color)
 		return;
 
 	/* quick check for four in a row */
+	/*
+	 * TODO: This quick check misses that after loading the game K10 J9
+	 *  M10 J10 O10 J11 Q10 J8 and playing K9, there are 2 immediate
+	 *  winning moves J12 and J7.
+	 */
 	sp = &board[cbp->c_vertex];
 	cb.s = sp->s_fval[color][d = cbp->c_dir].s;
 	if (cb.s < 0x101) {
