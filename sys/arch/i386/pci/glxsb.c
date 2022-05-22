@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.16 2020/06/29 23:32:24 riastradh Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.17 2022/05/22 11:35:21 riastradh Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.16 2020/06/29 23:32:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.17 2022/05/22 11:35:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -581,7 +581,7 @@ out:
 	crp->crp_etype = err;
 	crypto_done(crp);
 	splx(s);
-	return (err);
+	return 0;
 }
 
 int
