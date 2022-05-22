@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_206.c,v 1.5 2022/05/22 13:53:39 rillig Exp $	*/
+/*	$NetBSD: msg_206.c,v 1.6 2022/05/22 13:58:59 rillig Exp $	*/
 # 3 "msg_206.c"
 
 // Test for message: enumeration value(s) not handled in switch [206]
@@ -40,7 +40,11 @@ too_many(enum number num)
 	case 3:
 		return -1;
 	}
-	/* FIXME: There are _too many_ branches, not _too few_. */
-	/* expect-2: warning: enumeration value(s) not handled in switch [206] */
+	/*
+	 * Before func.c 1.137 from 2022-05-22, lint complained that there
+	 * were enum constants not handled in switch, even though all of them
+	 * are handled.  The code smell in this case is that there are _too
+	 * many_ branches that cover "impossible" values.
+	 */
 	return 3;
 }
