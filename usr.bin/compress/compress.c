@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.27 2022/05/22 19:41:49 rillig Exp $	*/
+/*	$NetBSD: compress.c,v 1.28 2022/05/22 21:16:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.27 2022/05/22 19:41:49 rillig Exp $");
+__RCSID("$NetBSD: compress.c,v 1.28 2022/05/22 21:16:50 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,13 +313,13 @@ decompress(const char *in, const char *out, int bits)
 		oreg = 0;
 
 	ifp = ofp = NULL;
-	if ((ofp = fopen(out, "w")) == NULL) {
-		cwarn("%s", out);
-		return;
-	}
 
 	if ((ifp = zopen(in, "r", bits)) == NULL) {
 		cwarn("%s", in);
+		goto err;
+	}
+	if ((ofp = fopen(out, "w")) == NULL) {
+		cwarn("%s", out);
 		goto err;
 	}
 	if (!isstdin) {
