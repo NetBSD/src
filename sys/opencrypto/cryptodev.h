@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.47 2022/05/22 11:39:27 riastradh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.48 2022/05/22 11:39:37 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -596,7 +596,7 @@ struct cryptocap {
 MALLOC_DECLARE(M_CRYPTO_DATA);
 
 extern	int crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard);
-extern	int crypto_freesession(u_int64_t sid);
+extern	void crypto_freesession(u_int64_t sid);
 extern	int32_t crypto_get_driverid(u_int32_t flags);
 extern	int crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	    u_int32_t flags,

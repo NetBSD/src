@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.124 2022/05/22 11:39:27 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.125 2022/05/22 11:39:37 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.124 2022/05/22 11:39:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.125 2022/05/22 11:39:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -852,11 +852,10 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
  * Delete an existing session (or a reserved session on an unregistered
  * driver).
  */
-int
+void
 crypto_freesession(u_int64_t sid)
 {
 	struct cryptocap *cap;
-	int err = 0;
 
 	/*
 	 * crypto_newsession never returns 0 as a sid (by virtue of
@@ -871,8 +870,8 @@ crypto_freesession(u_int64_t sid)
 
 	/* Determine two IDs. */
 	cap = crypto_checkdriver_lock(CRYPTO_SESID2HID(sid));
-	if (cap == NULL)
-		return ENOENT;
+	if (cap == NULL)	/* XXX should assert; need to audit callers */
+		return;
 
 	if (cap->cc_sessions)
 		(cap->cc_sessions)--;
@@ -889,7 +888,6 @@ crypto_freesession(u_int64_t sid)
 		crypto_driver_clear(cap);
 
 	crypto_driver_unlock(cap);
-	return err;
 }
 
 static bool
