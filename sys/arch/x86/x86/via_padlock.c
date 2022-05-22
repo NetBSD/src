@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.31 2020/06/29 23:58:44 riastradh Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.32 2022/05/22 11:27:34 andvar Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.31 2020/06/29 23:58:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.32 2022/05/22 11:27:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,10 +99,10 @@ via_c3_ace_init(struct via_padlock_softc *sc)
 	 *
 	 *
 	 * XXX We should actually implement the HMAC modes this hardware
-	 * XXX can accellerate (wrap its plain SHA1/SHA2 as HMAC) and
+	 * XXX can accelerate (wrap its plain SHA1/SHA2 as HMAC) and
 	 * XXX strongly consider removing those passed through to cryptosoft.
 	 * XXX As it stands, we can "steal" sessions from drivers which could
-	 * XXX better accellerate them.
+	 * XXX better accelerate them.
 	 *
 	 * XXX Note the ordering dependency between when this (or any
 	 * XXX crypto driver) attaches and when cryptosoft does.  We are

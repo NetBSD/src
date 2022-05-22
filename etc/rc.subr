@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.110 2022/02/06 16:23:12 alnsn Exp $
+# $NetBSD: rc.subr,v 1.111 2022/05/22 11:27:33 andvar Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1327,7 +1327,7 @@ print_rc_normal()
 #	treatment.
 #
 #	The intent is that interactive commands can be run via
-#	no_rc_postprocess(), and their output will apear immediately
+#	no_rc_postprocess(), and their output will appear immediately
 #	on the console instead of being hidden or delayed by the
 #	post-processor.	 An unfortunate consequence of the output
 #	bypassing the post-processor is that the output will not be

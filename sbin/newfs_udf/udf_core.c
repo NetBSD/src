@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.11 2022/05/15 20:37:50 andvar Exp $ */
+/* $NetBSD: udf_core.c,v 1.12 2022/05/22 11:27:33 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.11 2022/05/15 20:37:50 andvar Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.12 2022/05/22 11:27:33 andvar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1682,7 +1682,7 @@ udf_register_bad_block(uint32_t location)
 	free_sme = NULL;
 	for (cnt = 0; cnt < layout.spareable_blocks; cnt++) {
 		sme = &spt->entries[cnt];
-		/* if we are allready in it, bail out */
+		/* if we are already in it, bail out */
 		if (udf_rw32(sme->org) == location)
 			return 0;
 		if (udf_rw32(sme->org) == 0xffffffff) {
@@ -1934,7 +1934,7 @@ udf_encode_symlink(uint8_t **pathbufp, uint32_t *pathlenp, char *target)
 	}
 
 	if (error) {
-		/* aparently too big */
+		/* apparently too big */
 		free(pathbuf);
 		return error;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.96 2022/03/31 19:30:15 pgoyette Exp $	*/
+/*	$NetBSD: midi.c,v 1.97 2022/05/22 11:27:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.96 2022/03/31 19:30:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.97 2022/05/22 11:27:35 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -420,7 +420,7 @@ static struct {
  * meaningless) outside of a System Exclusive message, anywhere a status byte
  * could appear. Second, it is allowed to be absent at the end of a System
  * Exclusive message (!) - any status byte at all (non-realtime) is allowed to
- * terminate the message. Both require accomodation in the interface to
+ * terminate the message. Both require accommodation in the interface to
  * midi_fst's caller. A stray 0xf7 should be ignored BUT should count as a
  * message received for purposes of Active Sense timeout; the case is
  * represented by a return of FST_COM with a length of zero (pos == end). A

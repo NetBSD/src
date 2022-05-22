@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.504 2022/05/11 14:58:01 andvar Exp $	*/
+/*	$NetBSD: if.c,v 1.505 2022/05/22 11:27:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.504 2022/05/11 14:58:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.505 2022/05/22 11:27:36 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3824,7 +3824,7 @@ if_do_dad(struct ifnet *ifp)
 		/*
 		 * Our DAD routine requires the interface up and running.
 		 * However, some interfaces can be up before the RUNNING
-		 * status.  Additionaly, users may try to assign addresses
+		 * status.  Additionally, users may try to assign addresses
 		 * before the interface becomes up (or running).
 		 * We simply skip DAD in such a case as a work around.
 		 * XXX: we should rather mark "tentative" on such addresses,

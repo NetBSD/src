@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.55 2019/12/27 09:41:50 msaitoh Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.56 2022/05/22 11:27:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.55 2019/12/27 09:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.56 2022/05/22 11:27:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,7 +820,7 @@ siop_sdp(struct siop_common_cmd *siop_cmd, int offset)
 	 */
 
 	/*
-	 * before doing that we decrease resid from the ammount of data which
+	 * before doing that we decrease resid from the amount of data which
 	 * has been transferred.
 	 */
 	siop_update_resid(siop_cmd, offset);

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.46 2022/02/03 09:46:26 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.47 2022/05/22 11:27:36 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.46 2022/02/03 09:46:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.47 2022/05/22 11:27:36 andvar Exp $");
 #endif /* not lint */
 
 
@@ -1657,7 +1657,7 @@ udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf,
 	vpart_num = *vpart_nump = udf_get_record_vpart(ump, udf_c_type);
 
 	if (udf_c_type == UDF_C_NODE) {
-		/* if not VAT, its allready allocated */
+		/* if not VAT, its already allocated */
 		if (ump->vtop_alloc[ump->node_part] != UDF_ALLOC_VAT)
 			return;
 

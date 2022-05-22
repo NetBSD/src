@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.249 2022/05/07 19:44:40 mrg Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.250 2022/05/22 11:27:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.249 2022/05/07 19:44:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.250 2022/05/22 11:27:36 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -837,7 +837,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 
 	/*
 	 * Allocate a process ID for this LWP.  We need to do this now
-	 * while we can still unwind if it fails.  Beacuse we're marked
+	 * while we can still unwind if it fails.  Because we're marked
 	 * as LSIDL, no lookups by the ID will succeed.
 	 *
 	 * N.B. this will always succeed for the first LWP in a process,

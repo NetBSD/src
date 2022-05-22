@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.87 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: agp.c,v 1.88 2022/05/22 11:27:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.87 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.88 2022/05/22 11:27:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,7 +698,7 @@ agp_generic_bind_memory_bounded(struct agp_softc *sc, struct agp_memory *mem,
 
 	/*
 	 * XXXfvdl
-	 * The memory here needs to be directly accessable from the
+	 * The memory here needs to be directly accessible from the
 	 * AGP video card, so it should be allocated using bus_dma.
 	 * However, it need not be contiguous, since individual pages
 	 * are translated using the GATT.
