@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.77 2019/11/01 04:23:21 knakahara Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.78 2022/05/22 11:39:08 riastradh Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.77 2019/11/01 04:23:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.78 2022/05/22 11:39:08 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -556,11 +556,10 @@ ipe4_init(struct secasvar *sav, const struct xformsw *xsp)
 	return 0;
 }
 
-static int
+static void
 ipe4_zeroize(struct secasvar *sav)
 {
 	sav->tdb_xform = NULL;
-	return 0;
 }
 
 static int
