@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.121 2022/05/22 11:30:05 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.122 2022/05/22 11:34:17 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.121 2022/05/22 11:30:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.122 2022/05/22 11:34:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1641,6 +1641,8 @@ crypto_getreq(int num)
 	struct cryptop *crp;
 	struct crypto_crp_ret_qs *qs;
 
+	KASSERT(num > 0);
+
 	/*
 	 * When crp_ret_q is full, we restrict here to avoid crp_ret_q overflow
 	 * by error callback.
@@ -1701,10 +1703,12 @@ crypto_kfreereq(struct cryptkop *krp)
  * Currently, support one descriptor only.
  */
 struct cryptkop *
-crypto_kgetreq(int num __unused, int prflags)
+crypto_kgetreq(int num __diagused, int prflags)
 {
 	struct cryptkop *krp;
 	struct crypto_crp_ret_qs *qs;
+
+	KASSERTMSG(num == 1, "num=%d not supported", num);
 
 	/*
 	 * When crp_ret_kq is full, we restrict here to avoid crp_ret_kq
