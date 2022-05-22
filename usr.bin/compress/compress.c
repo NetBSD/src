@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.28 2022/05/22 21:16:50 rillig Exp $	*/
+/*	$NetBSD: compress.c,v 1.29 2022/05/22 21:39:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.28 2022/05/22 21:16:50 rillig Exp $");
+__RCSID("$NetBSD: compress.c,v 1.29 2022/05/22 21:39:44 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -318,10 +318,6 @@ decompress(const char *in, const char *out, int bits)
 		cwarn("%s", in);
 		goto err;
 	}
-	if ((ofp = fopen(out, "w")) == NULL) {
-		cwarn("%s", out);
-		goto err;
-	}
 	if (!isstdin) {
 		if (stat(in, &sb)) {
 			cwarn("%s", in);
@@ -333,6 +329,19 @@ decompress(const char *in, const char *out, int bits)
 			isreg = 1;
 	} else
 		isreg = 0;
+	if ((nr = fread(buf, 1, sizeof(buf), ifp)) == 0) {
+		cwarn("%s", in);
+		goto err;
+	}
+
+	if ((ofp = fopen(out, "w")) == NULL) {
+		cwarn("%s", out);
+		goto err;
+	}
+	if (fwrite(buf, 1, nr, ofp) != nr) {
+		cwarn("%s", out);
+		goto err;
+	}
 
 	oreg <<= 1;
 	while ((nr = fread(buf, 1, sizeof(buf), ifp)) != 0)
