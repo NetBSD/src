@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.22 2022/05/22 11:40:29 riastradh Exp $
+.\"	$NetBSD: opencrypto.9,v 1.23 2022/05/22 11:40:46 riastradh Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -276,15 +276,12 @@ buffer for the result (or for re-formatting the input).
 .It Fa crp_callback
 This routine is invoked upon completion of the request, whether
 successful or not.
-It is invoked through the
+It is invoked by the driver through the
 .Fn crypto_done
 routine.
 If the request was not successful, an error code is set in the
 .Fa crp_etype
 field.
-It is the responsibility of the callback routine to set the appropriate
-.Xr spl 9
-level.
 .It Fa crp_etype
 Contains the error type, if any errors were encountered, or zero if
 the request was successfully processed.
@@ -710,13 +707,3 @@ supported.
 Note that 3DES is considered one algorithm (and not three
 instances of DES).
 Thus, 3DES and DES could be mixed in the same request.
-.Pp
-A queue for completed operations should be implemented and processed
-at some software
-.Xr spl 9
-level, to avoid overall system latency issues, and potential kernel
-stack exhaustion while processing a callback.
-.Pp
-When SMP time comes, we will support use of a second processor (or
-more) as a crypto device (this is actually AMP, but we need the same
-basic support).
