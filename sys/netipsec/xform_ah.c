@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.113 2022/05/22 11:40:03 riastradh Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.114 2022/05/22 11:40:29 riastradh Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.113 2022/05/22 11:40:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.114 2022/05/22 11:40:29 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -691,7 +691,8 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	     crp->crp_ilen, tc->tc_skip,
 	     crda->crd_len, crda->crd_skip, crda->crd_inject);
 
-	return crypto_dispatch(crp);
+	crypto_dispatch(crp);
+	return 0;
 
 bad:
 	if (tc != NULL) {
@@ -1106,7 +1107,8 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	tc->tc_flags = flags;
 	tc->tc_sav = sav;
 
-	return crypto_dispatch(crp);
+	crypto_dispatch(crp);
+	return 0;
 
 bad_tc:
 	if (__predict_true(pool_used))
