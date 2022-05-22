@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.62 2022/05/22 11:29:25 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.63 2022/05/22 11:38:59 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.62 2022/05/22 11:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.63 2022/05/22 11:38:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -766,9 +766,6 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 	u_int32_t i;
 	int k, error;
 
-	if (sid == NULL || cri == NULL)
-		return EINVAL;
-
 	if (swcr_sessions) {
 		for (i = 1; i < swcr_sesnum; i++)
 			if (swcr_sessions[i] == NULL)
@@ -1128,9 +1125,9 @@ swcr_freesession(void *arg, u_int64_t tid)
 	struct swcr_data *swd;
 	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
-	if (sid > swcr_sesnum || swcr_sessions == NULL ||
-	    swcr_sessions[sid] == NULL)
-		return EINVAL;
+	KASSERTMSG(sid < swcr_sesnum, "sid=%"PRIu32" swcr_sesnum=%"PRIu32,
+	    sid, swcr_sesnum);
+	KASSERT(swcr_sessions[sid]);
 
 	swd = swcr_sessions[sid];
 	swcr_sessions[sid] = NULL;
