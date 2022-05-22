@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.75 2022/05/22 11:31:25 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.76 2022/05/22 11:31:33 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.179 2020/01/11 21:34:03 cheloha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.75 2022/05/22 11:31:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.76 2022/05/22 11:31:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -128,7 +128,7 @@ static void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *,
 static void	hifn_write_4(struct hifn_softc *, int, bus_size_t, uint32_t);
 static uint32_t hifn_read_4(struct hifn_softc *, int, bus_size_t);
 #ifdef CRYPTO_LZS_COMP
-static int	hifn_compression(struct hifn_softc *, struct cryptop *,
+static void	hifn_compression(struct hifn_softc *, struct cryptop *,
 				 struct hifn_command *);
 static struct mbuf *hifn_mkmbuf_chain(int, struct mbuf *);
 static int	hifn_compress_enter(struct hifn_softc *, struct hifn_command *);
@@ -2230,9 +2230,9 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 			enccrd = crd1;
 #ifdef CRYPTO_LZS_COMP
 		} else if (crd1->crd_alg == CRYPTO_LZS_COMP) {
-			err = hifn_compression(sc, crp, cmd);
+			hifn_compression(sc, crp, cmd);
 			mutex_spin_exit(&sc->sc_mtx);
-			return err;
+			return 0;
 #endif
 		} else {
 			err = EINVAL;
@@ -2616,7 +2616,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, uint8_t *resbuf)
 
 #ifdef CRYPTO_LZS_COMP
 
-static int
+static void
 hifn_compression(struct hifn_softc *sc, struct cryptop *crp,
     struct hifn_command *cmd)
 {
@@ -2706,10 +2706,10 @@ hifn_compression(struct hifn_softc *sc, struct cryptop *crp,
 	cmd->softc = sc;
 
 	err = hifn_compress_enter(sc, cmd);
-
-	if (err != 0)
+	if (err)
 		goto fail;
-	return (0);
+
+	return;
 
 fail:
 	if (cmd->dst_map != NULL) {
@@ -2728,7 +2728,6 @@ fail:
 		hifnstats.hst_nomem++;
 	crp->crp_etype = err;
 	crypto_done(crp);
-	return (0);
 }
 
 static int
