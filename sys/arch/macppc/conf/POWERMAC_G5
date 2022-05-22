@@ -226,8 +226,8 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 
-#pseudo-device 	crypto			# opencrypto framework
-					# (disabled, requires generic softints)
+pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
