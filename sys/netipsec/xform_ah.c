@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.112 2022/05/22 11:39:37 riastradh Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.113 2022/05/22 11:40:03 riastradh Exp $	*/
 /*	$FreeBSD: xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.112 2022/05/22 11:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.113 2022/05/22 11:40:03 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -772,12 +772,6 @@ ah_input_cb(struct cryptop *crp)
 		if (sav->tdb_cryptoid != 0)
 			sav->tdb_cryptoid = crp->crp_sid;
 
-		if (crp->crp_etype == EAGAIN) {
-			IPSEC_RELEASE_GLOBAL_LOCKS();
-			(void)crypto_dispatch(crp);
-			return;
-		}
-
 		AH_STATINC(AH_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
 		goto bad;
@@ -1161,12 +1155,6 @@ ah_output_cb(struct cryptop *crp)
 	if (crp->crp_etype) {
 		if (sav->tdb_cryptoid != 0)
 			sav->tdb_cryptoid = crp->crp_sid;
-
-		if (crp->crp_etype == EAGAIN) {
-			IPSEC_RELEASE_GLOBAL_LOCKS();
-			(void)crypto_dispatch(crp);
-			return;
-		}
 
 		AH_STATINC(AH_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);

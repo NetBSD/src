@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.121 2022/05/22 11:39:45 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.122 2022/05/22 11:40:03 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.121 2022/05/22 11:39:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.122 2022/05/22 11:40:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -718,16 +718,9 @@ static void
 cryptodev_cb(struct cryptop *crp)
 {
 	struct csession *cse = crp->crp_opaque;
-	int error;
-
-	if ((error = crp->crp_etype) == EAGAIN) {
-		error = crypto_dispatch(crp);
-		if (error == 0)
-			return;
-	}
 
 	mutex_enter(&cryptodev_mtx);
-	cse->error = error;
+	cse->error = crp->crp_etype;
 	crp->crp_devflags |= CRYPTODEV_F_RET;
 	cv_signal(&crp->crp_cv);
 	mutex_exit(&cryptodev_mtx);
@@ -737,16 +730,9 @@ static void
 cryptodev_mcb(struct cryptop *crp)
 {
 	struct csession *cse = crp->crp_opaque;
-	int error;
-
-	if ((error = crp->crp_etype) == EAGAIN) {
-		error = crypto_dispatch(crp);
-		if (error == 0)
-			return;
-	}
 
 	mutex_enter(&cryptodev_mtx);
-	cse->error = error;
+	cse->error = crp->crp_etype;
 	TAILQ_INSERT_TAIL(&crp->fcrp->crp_ret_mq, crp, crp_next);
 	selnotify(&crp->fcrp->sinfo, 0, 0);
 	mutex_exit(&cryptodev_mtx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.126 2022/05/22 11:39:54 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.127 2022/05/22 11:40:03 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.126 2022/05/22 11:39:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.127 2022/05/22 11:40:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1569,26 +1569,11 @@ crypto_invoke(struct cryptop *crp, int hint)
 		crypto_driver_unlock(cap);
 		return (*process)(arg, crp, hint);
 	} else {
-		struct cryptodesc *crd;
-		u_int64_t nid = 0;
-
-		if (cap != NULL)
+		if (cap != NULL) {
 			crypto_driver_unlock(cap);
-
-		/*
-		 * Driver has unregistered; migrate the session and return
-		 * an error to the caller so they'll resubmit the op.
-		 */
-		crypto_freesession(crp->crp_sid);
-
-		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
-			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
-
-		if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
-			crp->crp_sid = nid;
-
-		crp->crp_etype = EAGAIN;
-
+			crypto_freesession(crp->crp_sid);
+		}
+		crp->crp_etype = ENODEV;
 		crypto_done(crp);
 		return 0;
 	}
