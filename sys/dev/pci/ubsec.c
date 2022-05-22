@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.53 2022/05/18 12:48:49 riastradh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.54 2022/05/22 11:30:49 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.53 2022/05/18 12:48:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.54 2022/05/22 11:30:49 riastradh Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -2883,8 +2883,10 @@ ubsec_kprocess_rsapriv(struct ubsec_softc *sc, struct cryptkop *krp,
 	}
 
 	rp = malloc(sizeof *rp, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (rp == NULL)
-		return (ENOMEM);
+	if (rp == NULL) {
+		err = ENOMEM;
+		goto errout;
+	}
 	rp->rpr_krp = krp;
 	rp->rpr_q.q_type = UBS_CTXOP_RSAPRIV;
 
