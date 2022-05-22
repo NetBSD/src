@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsecvar.h,v 1.2 2019/12/27 09:41:51 msaitoh Exp $	*/
+/*	$NetBSD: mvxpsecvar.h,v 1.3 2022/05/22 11:39:27 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -475,7 +475,7 @@ struct mvxpsec_softc {
  */
 extern int mvxpsec_register(struct mvxpsec_softc *);
 extern int mvxpsec_newsession(void *, uint32_t *, struct cryptoini *);
-extern int mvxpsec_freesession(void *, uint64_t);
+extern void mvxpsec_freesession(void *, uint64_t);
 extern int mvxpsec_dispatch(void *, struct cryptop *, int);
 extern void mvxpsec_done(void *);
 
