@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.82 2022/05/18 16:39:03 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.83 2022/05/22 11:27:37 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -386,7 +386,7 @@ struct single_part_fs_edit {
 
 /*
  * Description of a full target installation, all partitions and
- * devices (may be accross several struct pm_devs / disks).
+ * devices (may be across several struct pm_devs / disks).
  */
 struct install_partition_desc {
 	size_t num;				/* how many entries in infos */

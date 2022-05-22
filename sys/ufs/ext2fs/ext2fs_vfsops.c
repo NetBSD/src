@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.220 2022/03/19 13:53:33 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.221 2022/05/22 11:27:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.220 2022/03/19 13:53:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.221 2022/05/22 11:27:36 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -518,7 +518,7 @@ ext2fs_loadvnode_content(struct m_ext2fs *fs, ino_t ino, struct buf *bp, struct 
 		goto bad;
 	}
 
-	/* everything allright, proceed with copy */
+	/* everything alright, proceed with copy */
 	if (ip->i_din.e2fs_din == NULL)
 		ip->i_din.e2fs_din = kmem_alloc(EXT2_DINODE_SIZE(fs), KM_SLEEP);
 

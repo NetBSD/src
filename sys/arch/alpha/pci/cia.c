@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.79 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.80 2022/05/22 11:27:33 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.79 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.80 2022/05/22 11:27:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ cia_init(struct cia_config *ccp, int mallocsafe)
 	/*
 	 * Use BWX iff:
 	 *
-	 *	- It hasn't been disbled by the user,
+	 *	- It hasn't been disabled by the user,
 	 *	- it's enabled in CNFG,
 	 *	- we're implementation version ev5,
 	 *	- BWX is enabled in the CPU's capabilities mask

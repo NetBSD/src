@@ -1,4 +1,4 @@
-/* $NetBSD: uscsi_subr.c,v 1.3 2021/11/10 16:19:49 msaitoh Exp $	*/
+/* $NetBSD: uscsi_subr.c,v 1.4 2022/05/22 11:27:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -519,7 +519,7 @@ uscsi_check_for_scsi(struct uscsi_dev *disc)
 
 /*
  * Generic SCSI functions also used by the sense printing functionality.
- * FreeBSD support has it allready asked for by the CAM.
+ * FreeBSD support has it already asked for by the CAM.
  */
 
 int

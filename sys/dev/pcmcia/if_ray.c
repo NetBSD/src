@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.98 2020/02/04 05:46:32 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.99 2022/05/22 11:27:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.98 2020/02/04 05:46:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.99 2022/05/22 11:27:35 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.98 2020/02/04 05:46:32 thorpej Exp $");
 #define	RAY_CHECK_CCS_TIMEOUT	(hz / 2)
 #endif
 
-/* ammount of time to consider start/join failed */
+/* amount of time to consider start/join failed */
 #ifndef	RAY_START_TIMEOUT
 #define	RAY_START_TIMEOUT	(30 * hz)
 #endif

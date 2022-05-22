@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.25 2021/11/07 20:31:09 andvar Exp $	*/
+/*	$NetBSD: partitions.h,v 1.26 2022/05/22 11:27:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -294,7 +294,7 @@ struct disk_partitioning_scheme {
 	bool (*get_part_info)(const struct disk_partitions*, part_id,
 	    struct disk_part_info*);
 
-	/* Optional: fill a atribute string describing the given partition */
+	/* Optional: fill an attribute string describing the given partition */
 	bool (*get_part_attr_str)(const struct disk_partitions*, part_id,
 	    char *str, size_t avail_space);
 	/* Format a partition editor element for the "col" column in

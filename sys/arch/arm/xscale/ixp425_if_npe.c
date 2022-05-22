@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.50 2021/12/31 14:25:22 riastradh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.51 2022/05/22 11:27:34 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.50 2021/12/31 14:25:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.51 2022/05/22 11:27:34 andvar Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1445,7 +1445,7 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 			    & (IFF_PROMISC | IFF_ALLMULTI);
 			if ((diff & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
 				/*
-				 * If the difference bettween last flag and
+				 * If the difference between last flag and
 				 * new flag only IFF_PROMISC or IFF_ALLMULTI,
 				 * set multicast filter only (don't reset to
 				 * prevent link down).

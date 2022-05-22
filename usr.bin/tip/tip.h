@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.36 2022/01/24 09:14:37 andvar Exp $	*/
+/*	$NetBSD: tip.h,v 1.37 2022/05/22 11:27:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -99,7 +99,7 @@ typedef
 		const char *v_name;	/* whose name is it */
 		uint8_t v_type;		/* for interpreting set's */
 		uint8_t v_access;	/* protection of touchy ones */
-		const char *v_abrev;	/* possible abreviation */
+		const char *v_abrev;	/* possible abbreviation */
 		void *v_value;		/* casted to a union later */
 				/*
 				 * XXX:	this assumes that the storage space

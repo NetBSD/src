@@ -1,4 +1,4 @@
-/* $NetBSD: mmcformat.c,v 1.6 2019/12/26 04:53:12 msaitoh Exp $ */
+/* $NetBSD: mmcformat.c,v 1.7 2022/05/22 11:27:37 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -96,7 +96,7 @@ uscsi_waitop(struct uscsi_dev *mydev)
 	bzero(buffer, sizeof(buffer));
 
 	/*
-	 * not be to unpatient... give the drive some time to start or it
+	 * not be to impatient... give the drive some time to start or it
 	 * might break off
 	 */
 
@@ -155,7 +155,7 @@ print_mmc_profile(int profile)
 
 	switch (profile) {
 	case 0x00 : return "Unknown[0] profile";
-	case 0x01 : return "Non removeable disc";
+	case 0x01 : return "Non removable disc";
 	case 0x02 : return "Removable disc";
 	case 0x03 : return "Magneto Optical with sector erase";
 	case 0x04 : return "Magneto Optical write once";
@@ -350,38 +350,38 @@ print_format(int format_tp, uint32_t num_blks, uint32_t param,
 	/* 0x06 - 0x0f reserved */
 	case  0x10 :
 		format_str = "CD-RW/DVD-RW full packet format";
-		nblks_str  = "adressable blocks";
+		nblks_str  = "addressable blocks";
 		param_str  = "fixed packet size/ECC blocksize in sectors";
 		user_spec  = "'-F -p [-b blockingnr]'";
 		break;
 	case  0x11 :
 		format_str = "CD-RW/DVD-RW grow session";
-		nblks_str  = "adressable blocks";
+		nblks_str  = "addressable blocks";
 		param_str  = "fixed packet size/ECC blocksize in sectors";
 		user_spec  = "'-G'";
 		break;
 	case  0x12 :
 		format_str = "CD-RW/DVD-RW add session";
-		nblks_str  = "adressable blocks";
+		nblks_str  = "addressable blocks";
 		param_str  = "maximum fixed packet size/ECC blocksize "
 			     "in sectors";
 		*supported = 0;
 		break;
 	case  0x13 :
 		format_str = "DVD-RW max growth of last complete session";
-		nblks_str  = "adressable blocks";
+		nblks_str  = "addressable blocks";
 		param_str  = "ECC blocksize in sectors";
 		user_spec  = "'-G'";
 		break;
 	case  0x14 :
 		format_str = "DVD-RW quick grow last session";
-		nblks_str  = "adressable blocks";
+		nblks_str  = "addressable blocks";
 		param_str  = "ECC blocksize in sectors";
 		*supported = 0;
 		break;
 	case  0x15 :
 		format_str = "DVD-RW quick full format";
-		nblks_str  = "adressable blocks";
+		nblks_str  = "addressable blocks";
 		param_str  = "ECC blocksize in sectors";
 		*supported = 0;
 		break;

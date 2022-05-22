@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.36 2022/03/30 12:45:58 christos Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.37 2022/05/22 11:27:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.36 2022/03/30 12:45:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.37 2022/05/22 11:27:36 andvar Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -430,7 +430,7 @@ v7fs_getattr(void *v)
 	vap->va_fileid = inode->inode_number;
 	vap->va_size = vp->v_size;
 	if (vp->v_type == VLNK) {
-		/* Ajust for trailing NUL. */
+		/* Adjust for trailing NUL. */
 		KASSERT(vap->va_size > 0);
 		vap->va_size -= 1;
 	}

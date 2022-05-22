@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.119 2022/04/07 19:33:37 andvar Exp $	*/
+/*	$NetBSD: ping.c,v 1.120 2022/05/22 11:27:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.119 2022/04/07 19:33:37 andvar Exp $");
+__RCSID("$NetBSD: ping.c,v 1.120 2022/05/22 11:27:33 andvar Exp $");
 #endif
 
 #include <stdio.h>
@@ -1387,7 +1387,7 @@ timespec_to_sec(const struct timespec *tp)
  * Heavily buffered STDIO is used here, so that all the statistics
  * will be written with 1 sys-write call.  This is nice when more
  * than one copy of the program is running on a terminal;  it prevents
- * the statistics output from becomming intermingled.
+ * the statistics output from becoming intermingled.
  */
 static void
 summary(int header)

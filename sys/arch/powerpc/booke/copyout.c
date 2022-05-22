@@ -1,4 +1,4 @@
-/*	$NetBSD: copyout.c,v 1.9 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: copyout.c,v 1.10 2022/05/22 11:27:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.9 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.10 2022/05/22 11:27:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -443,7 +443,7 @@ out:
 	return rv;
 }
 #else
-/* XXX This version of copyoutstr(9) has never beeen enabled so far. */
+/* XXX This version of copyoutstr(9) has never been enabled so far. */
 int
 copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *lenp)
 {

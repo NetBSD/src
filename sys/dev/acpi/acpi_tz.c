@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.90 2019/04/21 21:52:09 mrg Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.91 2022/05/22 11:27:35 andvar Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.90 2019/04/21 21:52:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.91 2022/05/22 11:27:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -616,7 +616,7 @@ acpitz_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 static void
 acpitz_sane_temp(uint32_t *tmp)
 {
-	/* Sane temperatures are beteen 0 and 150 C. */
+	/* Sane temperatures are between 0 and 150 C. */
 	if (*tmp < ATZ_ZEROC || *tmp > ATZ_ZEROC + 1500)
 		*tmp = ATZ_TMP_INVALID;
 }

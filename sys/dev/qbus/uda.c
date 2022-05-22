@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.63 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: uda.c,v 1.64 2022/05/22 11:27:35 andvar Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.63 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.64 2022/05/22 11:27:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -233,7 +233,7 @@ udaattach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * The only thing that differ UDA's and Tape ctlr's is
-	 * their vcid. Beacuse there are no way to determine which
+	 * their vcid. Because there are no way to determine which
 	 * ctlr type it is, we check what is generated and later
 	 * set the correct vcid.
 	 */

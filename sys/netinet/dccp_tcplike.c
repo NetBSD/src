@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tcplike.c,v 1.19 2005/07/27 06:27:25 nishida Exp $	*/
-/*	$NetBSD: dccp_tcplike.c,v 1.4 2019/06/04 10:15:22 msaitoh Exp $ */
+/*	$NetBSD: dccp_tcplike.c,v 1.5 2022/05/22 11:27:36 andvar Exp $ */
 
 /*
  * Copyright (c) 2003 Magnus Erixzon
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.4 2019/06/04 10:15:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.5 2022/05/22 11:27:36 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -580,7 +580,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 		/* Might be an Ack we've been missing */
 		/* This code has a flaw; If we miss 2 Ack packets, we only care
 		 * about the older one. This means that the next-to-oldest one could
-		 * be lost without any action beeing taken.
+		 * be lost without any action being taken.
 		 * Time will tell if that is going to be a Giant Problem(r)
 		 */
 		if (cb->pcb->seq_rcv == cb->ack_miss) {

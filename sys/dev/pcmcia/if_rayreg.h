@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.11 2015/09/06 06:01:00 dholland Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.12 2022/05/22 11:27:35 andvar Exp $	*/
 /*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -201,7 +201,7 @@ struct ray_startup_params_head {
 /*2c*/	u_int8_t	sp_dwell_time[2];
 /*2e*/	u_int8_t	sp_beacon_period[2];
 /*30*/	u_int8_t	sp_dtim_interval;
-/*31*/	u_int8_t	sp_max_retry;	/* number of times to attemp tx */
+/*31*/	u_int8_t	sp_max_retry;	/* number of times to attempt tx */
 /*32*/	u_int8_t	sp_ack_timo;
 /*33*/	u_int8_t	sp_sifs;
 /*34*/	u_int8_t	sp_difs;

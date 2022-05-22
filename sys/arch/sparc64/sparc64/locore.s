@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.428 2022/05/16 21:28:05 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.429 2022/05/22 11:27:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4438,7 +4438,7 @@ sun4v_dev_mondo:
 	add	%g2, 64, %g2			 ! each element is 64 bytes 		
 	and	%g2, 0x7ff, %g2			 ! assume 32 elements
 	mov	0x3d0, %g1			 ! Dev Mondo Queue Head
-	stxa	%g2, [%g1] ASI_QUEUE		 ! ajust head index value
+	stxa	%g2, [%g1] ASI_QUEUE		 ! adjust head index value
 	membar	#Sync
 
 	cmp	%g5, MAXINTNUM			! Handle both sun4v legacy (sysino) and cookies.

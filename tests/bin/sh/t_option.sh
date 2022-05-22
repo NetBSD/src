@@ -1,4 +1,4 @@
-# $NetBSD: t_option.sh,v 1.8 2021/11/22 05:07:15 kre Exp $
+# $NetBSD: t_option.sh,v 1.9 2022/05/22 11:27:36 andvar Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1007,7 +1007,7 @@ Option_switching_body() {
 
 	# and these are extensions that might not exist (non-fatal to test)
 	# -i and -s (and -c) are posix options, but are not required to
-	# be accessable via the "set" command, just the command line.
+	# be accessible via the "set" command, just the command line.
 	# We allow for -i to work with set, as that makes some sense,
 	# -c and -s do not.
 	test_optional_on_off E i I p q V X || true

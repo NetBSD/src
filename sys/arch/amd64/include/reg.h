@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.10 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: reg.h,v 1.11 2022/05/22 11:27:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  * Registers accessible to ptrace(2) syscall for debugger use.
  * Same as mcontext.__gregs (except that is 'unsigned long').
  * NB this structure is no longer the same as 'struct trapframe',
- * athough the array indexes are defined in the same place.
+ * although the array indexes are defined in the same place.
  */
 struct reg {
 	long	regs[_NGREG];

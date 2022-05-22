@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.8 2022/01/01 13:47:19 andvar Exp $	*/
+/*	$NetBSD: siop.c,v 1.9 2022/05/22 11:27:34 andvar Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -188,7 +188,7 @@ siop_sdp(struct siop_adapter *adp, struct siop_xfer *xfer, struct scsi_xfer *xs,
 	 */
 
 	/*
-	 * before doing that we decrease resid from the ammount of data which
+	 * before doing that we decrease resid from the amount of data which
 	 * has been transferred.
 	 */
 	siop_update_resid(adp, xfer, xs, offset);

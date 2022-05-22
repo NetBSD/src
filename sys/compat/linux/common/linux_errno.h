@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.h,v 1.16 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_errno.h,v 1.17 2022/05/22 11:27:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 
 /* Error numbers after here vary wildly    */
-/* depending on the machine architechture. */
+/* depending on the machine architecture. */
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_errno.h>
 #elif defined(__mips__)

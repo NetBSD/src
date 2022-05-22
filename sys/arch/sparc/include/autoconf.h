@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.50 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: autoconf.h,v 1.51 2022/05/22 11:27:34 andvar Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ struct rom_intr {
 	uint32_t	int_vec;	/* vector (always 0?) */
 };
 
-/* Address translation accross busses */
+/* Address translation across busses */
 struct rom_range {		/* Only used on v3 PROMs */
 	uint32_t	cspace;		/* Client space */
 	uint32_t	coffset;	/* Client offset */

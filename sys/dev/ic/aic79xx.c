@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.66 2022/04/16 17:34:34 andvar Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.67 2022/05/22 11:27:35 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.66 2022/04/16 17:34:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.67 2022/05/22 11:27:35 andvar Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5276,7 +5276,7 @@ ahd_reset(struct ahd_softc *ahd, int reinit)
 		 * does not disable its parity logic prior to
 		 * the start of the reset.  This may cause a
 		 * parity error to be detected and thus a
-		 * spurious SERR or PERR assertion.  Disble
+		 * spurious SERR or PERR assertion.  Disable
 		 * PERR and SERR responses during the CHIPRST.
 		 */
 		mod_cmd = cmd &
@@ -6019,7 +6019,7 @@ ahd_init(struct ahd_softc *ahd)
 				  M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/*
-	 * Verify that the compiler hasn't over-agressively
+	 * Verify that the compiler hasn't over-aggressively
 	 * padded important structures.
 	 */
 	if (sizeof(struct hardware_scb) != 64)
