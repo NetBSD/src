@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.77 2022/05/13 10:41:42 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.78 2022/05/22 08:59:34 hannken Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.77 2022/05/13 10:41:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.78 2022/05/22 08:59:34 hannken Exp $");
 
 #include "bio.h"
 
@@ -516,8 +516,8 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 	    BUS_DMA_NOWAIT) != 0)
 		goto unmap;
 
-	DNPRINTF(MFI_D_MEM, "  kva: %p  dva: %p  map: %p\n",
-	    mm->am_kva, (void *)mm->am_map->dm_segs[0].ds_addr, mm->am_map);
+	DNPRINTF(MFI_D_MEM, "  kva: %p  dva: %" PRIxBUSADDR "  map: %p\n",
+	    mm->am_kva, mm->am_map->dm_segs[0].ds_addr, mm->am_map);
 
 	memset(mm->am_kva, 0, size);
 	return mm;
