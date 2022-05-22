@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.17 2017/07/03 21:28:48 wiz Exp $
+.\"	$NetBSD: opencrypto.9,v 1.18 2022/05/22 11:34:17 riastradh Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -417,7 +417,8 @@ allocates a
 .Fa cryptop
 structure with a linked list of as many
 .Fa cryptodesc
-structures as were specified in the argument passed to it.
+structures as were specified in the argument passed to it, which must
+be at least 1.
 .Pp
 .Fn crypto_freereq
 deallocates a structure
@@ -462,7 +463,8 @@ allocates a
 .Fa cryptkop
 structure.
 The first argument means the same as
-.Fn crypto_getreq .
+.Fn crypto_getreq ,
+except it is currently limited to be exactly 1.
 The second argument means flags passed to
 .Fn pool_get .
 .Pp
