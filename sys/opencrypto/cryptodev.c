@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.123 2022/05/22 11:40:29 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.124 2022/05/22 11:40:38 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.123 2022/05/22 11:40:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.124 2022/05/22 11:40:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1292,30 +1292,8 @@ cryptodev_mop(struct fcrypt *fcr,
 		crp->crp_reqid = cnop[req].reqid;
 		crp->crp_usropaque = cnop[req].opaque;
 		cv_init(&crp->crp_cv, "crydev");
-#ifdef notyet
-eagain:
-#endif
 		crypto_dispatch(crp);
 		cnop[req].status = 0;
-		mutex_enter(&cryptodev_mtx);	/* XXX why mutex? */
-
-		switch (cnop[req].status) {
-#ifdef notyet	/* don't loop forever -- but EAGAIN not possible here yet */
-		case EAGAIN:
-			mutex_exit(&cryptodev_mtx);
-			goto eagain;
-			break;
-#endif
-		case 0:
-			break;
-		default:
-			DPRINTF("not waiting, error.\n");
-			mutex_exit(&cryptodev_mtx);
-			cv_destroy(&crp->crp_cv);
-			goto bail;
-		}
-
-		mutex_exit(&cryptodev_mtx);
 		cv_destroy(&crp->crp_cv);
 bail:
 		if (cnop[req].status) {
