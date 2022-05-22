@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2022/05/22 08:28:10 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2022/05/22 08:31:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.53 2022/05/22 08:28:10 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 2022/05/22 08:31:12 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -177,6 +177,34 @@ set_input_sources(enum input_source *input, int color)
 }
 
 static int
+ask_user_color(void)
+{
+	int color;
+
+	mvprintw(BSZ + 3, 0, "Black moves first. ");
+	ask("(B)lack or (W)hite? ");
+	for (;;) {
+		int ch = get_key(NULL);
+		if (ch == 'b' || ch == 'B') {
+			color = BLACK;
+			break;
+		}
+		if (ch == 'w' || ch == 'W') {
+			color = WHITE;
+			break;
+		}
+		if (ch == 'q' || ch == 'Q')
+			quit();
+
+		beep();
+		ask("Please choose (B)lack or (W)hite: ");
+	}
+	move(BSZ + 3, 0);
+	clrtoeol();
+	return color;
+}
+
+static int
 read_move(void)
 {
 again:
@@ -239,26 +267,7 @@ again:
 #endif
 
 		if (inputfp == NULL && test == 0) {
-			mvprintw(BSZ + 3, 0, "Black moves first. ");
-			ask("(B)lack or (W)hite? ");
-			for (;;) {
-				int ch = get_key(NULL);
-				if (ch == 'b' || ch == 'B') {
-					color = BLACK;
-					break;
-				}
-				if (ch == 'w' || ch == 'W') {
-					color = WHITE;
-					break;
-				}
-				if (ch == 'q' || ch == 'Q') {
-					quit();
-				}
-				beep();
-				ask("Please choose (B)lack or (W)hite: ");
-			}
-			move(BSZ + 3, 0);
-			clrtoeol();
+			color = ask_user_color();
 		}
 	} else {
 		setbuf(stdout, 0);
