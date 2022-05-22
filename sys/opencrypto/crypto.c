@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.125 2022/05/22 11:39:37 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.126 2022/05/22 11:39:54 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.125 2022/05/22 11:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.126 2022/05/22 11:39:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1283,6 +1283,7 @@ crypto_dispatch(struct cryptop *crp)
 	struct crypto_crp_q *crp_q;
 
 	KASSERT(crp != NULL);
+	KASSERT(crp->crp_callback != NULL);
 	KASSERT(crp->crp_desc != NULL);
 	KASSERT(crp->crp_buf != NULL);
 	KASSERT(!cpu_intr_p());
@@ -1395,6 +1396,7 @@ crypto_kdispatch(struct cryptkop *krp)
 	struct crypto_crp_kq *crp_kq;
 
 	KASSERT(krp != NULL);
+	KASSERT(krp->krp_callback != NULL);
 	KASSERT(!cpu_intr_p());
 
 	cryptostats.cs_kops++;
@@ -1462,14 +1464,8 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 	int error;
 
 	KASSERT(krp != NULL);
+	KASSERT(krp->krp_callback != NULL);
 	KASSERT(!cpu_intr_p());
-
-	/* Sanity checks. */
-	if (krp->krp_callback == NULL) {
-		cv_destroy(&krp->krp_cv);
-		crypto_kfreereq(krp);
-		return EINVAL;
-	}
 
 	mutex_enter(&crypto_drv_mtx);
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
@@ -1548,21 +1544,14 @@ crypto_invoke(struct cryptop *crp, int hint)
 	struct cryptocap *cap;
 
 	KASSERT(crp != NULL);
+	KASSERT(crp->crp_callback != NULL);
+	KASSERT(crp->crp_desc != NULL);
 	KASSERT(!cpu_intr_p());
 
 #ifdef CRYPTO_TIMING
 	if (crypto_timing)
 		crypto_tstat(&cryptostats.cs_invoke, &crp->crp_tstamp);
 #endif
-	/* Sanity checks. */
-	if (crp->crp_callback == NULL) {
-		return EINVAL;
-	}
-	if (crp->crp_desc == NULL) {
-		crp->crp_etype = EINVAL;
-		crypto_done(crp);
-		return 0;
-	}
 
 	cap = crypto_checkdriver_lock(CRYPTO_SESID2HID(crp->crp_sid));
 	if (cap != NULL && (cap->cc_flags & CRYPTOCAP_F_CLEANUP) == 0) {
