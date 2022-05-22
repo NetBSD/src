@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.33 2022/05/22 11:38:02 riastradh Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.34 2022/05/22 11:38:19 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.33 2022/05/22 11:38:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.34 2022/05/22 11:38:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,10 +134,6 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 	const struct swcr_auth_hash *axf;
 	struct swcr_data *swd;
 	int sesn, i, cw0;
-
-	KASSERT(sc != NULL /*, ("via_padlock_crypto_freesession: null softc")*/);
-	if (sc == NULL || sidp == NULL || cri == NULL)
-		return (EINVAL);
 
 	if (sc->sc_sessions == NULL) {
 		ses = sc->sc_sessions = malloc(sizeof(*ses), M_DEVBUF,
@@ -311,13 +307,10 @@ via_padlock_crypto_freesession(void *arg, uint64_t tid)
 	int sesn;
 	uint32_t sid = ((uint32_t)tid) & 0xffffffff;
 
-	KASSERT(sc != NULL /*, ("via_padlock_crypto_freesession: null softc")*/);
-	if (sc == NULL)
-		return (EINVAL);
-
 	sesn = VIAC3_SESSION(sid);
-	if (sesn >= sc->sc_nsessions)
-		return (EINVAL);
+	KASSERTMSG(sesn >= 0, "sesn=%d", sesn);
+	KASSERTMSG(sesn < sc->sc_nsessions, "sesn=%d nsessions=%d",
+	    sesn, sc->sc_nsessions);
 
 	if (sc->sc_sessions[sesn].swd) {
 		swd = sc->sc_sessions[sesn].swd;
