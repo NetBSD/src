@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.55 2022/05/22 08:36:15 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.56 2022/05/22 08:47:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.55 2022/05/22 08:36:15 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.56 2022/05/22 08:47:26 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -74,7 +74,7 @@ u_char	overlap[FAREA * FAREA];		/* true if frame [a][b] overlap */
 short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
 int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
-const char	*plyr[2];		/* who's who */
+const char *plyr[2] = { "???", "???" };	/* who's who */
 
 static int readinput(FILE *);
 static void misclog(const char *, ...) __printflike(1, 2);
@@ -205,6 +205,20 @@ ask_user_color(void)
 }
 
 static int
+read_color(void)
+{
+	char buf[128];
+
+	get_line(buf, sizeof(buf), NULL);
+	if (strcmp(buf, "black") == 0)
+		return BLACK;
+	if (strcmp(buf, "white") == 0)
+		return WHITE;
+	panic("Huh?  Expected `black' or `white', got `%s'\n", buf);
+	/* NOTREACHED */
+}
+
+static int
 read_move(void)
 {
 again:
@@ -258,7 +272,6 @@ declare_winner(int outcome, const enum input_source *input, int color)
 int
 main(int argc, char **argv)
 {
-	char buf[128];
 	char *user_name;
 	int color, curmove;
 	enum input_source input[2];
@@ -271,7 +284,8 @@ main(int argc, char **argv)
 	user_name = getlogin();
 	strlcpy(user, user_name != NULL ? user_name : "you", sizeof(user));
 
-	color = curmove = 0;
+	curmove = 0;
+	color = BLACK;
 
 	parse_args(argc, argv);
 
@@ -283,7 +297,6 @@ again:
 	bdinit(board);			/* initialize board contents */
 
 	if (interactive) {
-		plyr[BLACK] = plyr[WHITE] = "???";
 		bdisp_init();		/* initialize display of board */
 #ifdef DEBUG
 		signal(SIGINT, whatsup);
@@ -291,20 +304,11 @@ again:
 		signal(SIGINT, quitsig);
 #endif
 
-		if (inputfp == NULL && test == 0) {
+		if (inputfp == NULL && test == 0)
 			color = ask_user_color();
-		}
 	} else {
-		setbuf(stdout, 0);
-		get_line(buf, sizeof(buf), NULL);
-		if (strcmp(buf, "black") == 0)
-			color = BLACK;
-		else if (strcmp(buf, "white") == 0)
-			color = WHITE;
-		else {
-			panic("Huh?  Expected `black' or `white', got `%s'\n",
-			    buf);
-		}
+		setbuf(stdout, NULL);
+		color = read_color();
 	}
 
 	if (inputfp != NULL) {
