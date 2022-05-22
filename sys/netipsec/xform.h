@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.21 2019/11/01 04:23:21 knakahara Exp $	*/
+/*	$NetBSD: xform.h,v 1.22 2022/05/22 11:39:08 riastradh Exp $	*/
 /*	$FreeBSD: xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -77,7 +77,7 @@ struct xformsw {
 #define	XFT_COMP	0x1000
 	const char *xf_name;
 	int (*xf_init)(struct secasvar *, const struct xformsw *);
-	int (*xf_zeroize)(struct secasvar *);
+	void (*xf_zeroize)(struct secasvar *);
 	int (*xf_input)(struct mbuf *, struct secasvar *, int, int);
 	int (*xf_output)(struct mbuf *, const struct ipsecrequest *,
 	    struct secasvar *, int, int, int);
@@ -95,7 +95,7 @@ int ipip_output(struct mbuf *, struct secasvar *, struct mbuf **);
 
 /* XF_AH */
 int ah_init0(struct secasvar *, const struct xformsw *, struct cryptoini *);
-int ah_zeroize(struct secasvar *);
+void ah_zeroize(struct secasvar *);
 const struct auth_hash *ah_algorithm_lookup(int);
 size_t ah_authsiz(const struct secasvar *);
 size_t ah_hdrsiz(const struct secasvar *);

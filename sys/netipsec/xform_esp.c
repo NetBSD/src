@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.102 2022/05/22 11:30:40 riastradh Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.103 2022/05/22 11:39:08 riastradh Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.102 2022/05/22 11:30:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.103 2022/05/22 11:39:08 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -280,11 +280,11 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 /*
  * Paranoia.
  */
-static int
+static void
 esp_zeroize(struct secasvar *sav)
 {
 	/* NB: ah_zerorize free's the crypto session state */
-	int error = ah_zeroize(sav);
+	ah_zeroize(sav);
 
 	if (sav->key_enc) {
 		explicit_memset(_KEYBUF(sav->key_enc), 0,
@@ -292,7 +292,6 @@ esp_zeroize(struct secasvar *sav)
 	}
 	sav->tdb_encalgxform = NULL;
 	sav->tdb_xform = NULL;
-	return error;
 }
 
 /*

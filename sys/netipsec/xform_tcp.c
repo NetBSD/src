@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.24 2019/11/01 04:23:21 knakahara Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.25 2022/05/22 11:39:08 riastradh Exp $ */
 /*	$FreeBSD: xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.24 2019/11/01 04:23:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.25 2022/05/22 11:39:08 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -108,7 +108,7 @@ tcpsignature_init(struct secasvar *sav, const struct xformsw *xsp)
 	return 0;
 }
 
-static int
+static void
 tcpsignature_zeroize(struct secasvar *sav)
 {
 	if (sav->key_auth) {
@@ -119,8 +119,6 @@ tcpsignature_zeroize(struct secasvar *sav)
 	sav->tdb_cryptoid = 0;
 	sav->tdb_authalgxform = NULL;
 	sav->tdb_xform = NULL;
-
-	return 0;
 }
 
 static int
