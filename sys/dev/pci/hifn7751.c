@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.77 2022/05/22 11:34:48 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.78 2022/05/22 11:34:57 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.179 2020/01/11 21:34:03 cheloha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.77 2022/05/22 11:34:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.78 2022/05/22 11:34:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -2408,7 +2408,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		sc->sc_needwakeup |= CRYPTO_SYMQ;
 		mutex_spin_exit(&sc->sc_mtx);
 		pool_cache_put(sc->sc_cmd_cache, cmd);
-		return (err);
+		return ERESTART;
 	}
 
 errout:
@@ -2426,7 +2426,7 @@ errout:
 		pool_cache_put(sc->sc_cmd_cache, cmd);
 	}
 	crypto_done(crp);
-	return (0);
+	return 0;
 }
 
 static void
