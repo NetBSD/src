@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.19 2022/05/22 11:39:26 riastradh Exp $
+.\"	$NetBSD: opencrypto.9,v 1.20 2022/05/22 11:39:37 riastradh Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -55,7 +55,7 @@
 .Fn crypto_kdone "struct cryptkop *"
 .Ft int
 .Fn crypto_newsession "u_int64_t *" "struct cryptoini *" "int"
-.Ft int
+.Ft void
 .Fn crypto_freesession "u_int64_t"
 .Ft int
 .Fn crypto_dispatch "struct cryptop *"
@@ -642,9 +642,8 @@ routine should invoke
 .Fn crypto_register ,
 .Fn crypto_kregister ,
 .Fn crypto_unregister ,
-.Fn crypto_newsession ,
 and
-.Fn crypto_freesession
+.Fn crypto_newsession
 return 0 on success, or an error code on failure.
 .Fn crypto_get_driverid
 returns a non-negative value on error, and \-1 on failure.

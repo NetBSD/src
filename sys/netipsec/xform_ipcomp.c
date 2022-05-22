@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.71 2022/05/22 11:39:08 riastradh Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.72 2022/05/22 11:39:37 riastradh Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.71 2022/05/22 11:39:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.72 2022/05/22 11:39:37 riastradh Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -128,7 +128,7 @@ static void
 ipcomp_zeroize(struct secasvar *sav)
 {
 
-	(void)crypto_freesession(sav->tdb_cryptoid);
+	crypto_freesession(sav->tdb_cryptoid);
 	sav->tdb_cryptoid = 0;
 }
 
