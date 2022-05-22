@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.119 2022/05/22 11:39:17 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.120 2022/05/22 11:39:37 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.119 2022/05/22 11:39:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.120 2022/05/22 11:39:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1019,8 +1019,8 @@ csefree(struct csession *cse)
 {
 	int error;
 
-	error = crypto_freesession(cse->sid);
-	KASSERTMSG(error == 0, "error=%d", error);
+	crypto_freesession(cse->sid);
+	error = 0;
 	if (cse->key)
 		free(cse->key, M_XDATA);
 	if (cse->mackey)
