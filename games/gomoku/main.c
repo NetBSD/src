@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 2022/05/22 08:12:15 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2022/05/22 08:18:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.50 2022/05/22 08:12:15 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.51 2022/05/22 08:18:49 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -114,12 +114,53 @@ save_game(void)
 	fclose(fp);
 }
 
+static void
+parse_args(int argc, char **argv)
+{
+	int ch;
+
+	prog = strrchr(argv[0], '/');
+	prog = prog != NULL ? prog + 1 : argv[0];
+
+	while ((ch = getopt(argc, argv, "bcdD:u")) != -1) {
+		switch (ch) {
+		case 'b':	/* background */
+			interactive = false;
+			break;
+		case 'c':	/* testing: computer versus computer */
+			test = 2;
+			break;
+		case 'd':
+			debug++;
+			break;
+		case 'D':	/* log debug output to file */
+			if ((debugfp = fopen(optarg, "w")) == NULL)
+				err(1, "%s", optarg);
+			break;
+		case 'u':	/* testing: user versus user */
+			test = 1;
+			break;
+		default:
+		usage:
+			fprintf(stderr, "usage: %s [-bcdu] [-Dfile] [file]\n",
+			    getprogname());
+			exit(EXIT_FAILURE);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+	if (argc > 1)
+		goto usage;
+	if (argc == 1 && (inputfp = fopen(*argv, "r")) == NULL)
+		err(1, "%s", *argv);
+}
+
 int
 main(int argc, char **argv)
 {
 	char buf[128];
 	char *user_name;
-	int color, curmove, i, ch;
+	int color, curmove;
 	enum input_source input[2];
 
 	/* Revoke setgid privileges */
@@ -132,40 +173,7 @@ main(int argc, char **argv)
 
 	color = curmove = 0;
 
-	prog = strrchr(argv[0], '/');
-	prog = prog != NULL ? prog + 1 : argv[0];
-
-	while ((ch = getopt(argc, argv, "bcdD:u")) != -1) {
-		switch (ch) {
-		case 'b':	/* background */
-			interactive = false;
-			break;
-		case 'd':
-			debug++;
-			break;
-		case 'D':	/* log debug output to file */
-			if ((debugfp = fopen(optarg, "w")) == NULL)
-				err(1, "%s", optarg);
-			break;
-		case 'u':	/* testing: user versus user */
-			test = 1;
-			break;
-		case 'c':	/* testing: computer versus computer */
-			test = 2;
-			break;
-		default:
-		usage:
-			fprintf(stderr, "usage: %s [-bcdu] [-Dfile] [file]\n",
-			    getprogname());
-			return EXIT_FAILURE;
-		}
-	}
-	argc -= optind;
-	argv += optind;
-	if (argc > 1)
-		goto usage;
-	if (argc == 1 && (inputfp = fopen(*argv, "r")) == NULL)
-		err(1, "%s", *argv);
+	parse_args(argc, argv);
 
 	if (debug == 0)
 		srandom((unsigned int)time(0));
@@ -187,7 +195,7 @@ again:
 			mvprintw(BSZ + 3, 0, "Black moves first. ");
 			ask("(B)lack or (W)hite? ");
 			for (;;) {
-				ch = get_key(NULL);
+				int ch = get_key(NULL);
 				if (ch == 'b' || ch == 'B') {
 					color = BLACK;
 					break;
@@ -246,6 +254,7 @@ again:
 		refresh();
 	}
 
+	int outcome;
 	for (color = BLACK; ; color = color != BLACK ? BLACK : WHITE) {
 	top:
 		switch (input[color]) {
@@ -313,14 +322,14 @@ again:
 			misclog("%3d%*s%-6s", movenum,
 			    color == BLACK ? 2 : 9, "", stoc(curmove));
 		}
-		if ((i = makemove(color, curmove)) != MOVEOK)
+		if ((outcome = makemove(color, curmove)) != MOVEOK)
 			break;
 		if (interactive)
 			bdisp();
 	}
 	if (interactive) {
 		move(BSZ + 3, 0);
-		switch (i) {
+		switch (outcome) {
 		case WIN:
 			if (input[color] == PROGRAM)
 				addstr("Ha ha, I won");
@@ -338,10 +347,10 @@ again:
 		}
 		clrtoeol();
 		bdisp();
-		if (i != RESIGN) {
+		if (outcome != RESIGN) {
 		replay:
 			ask("Play again? ");
-			ch = get_key("YyNnQqSs");
+			int ch = get_key("YyNnQqSs");
 			if (ch == 'Y' || ch == 'y')
 				goto again;
 			if (ch == 'S') {
