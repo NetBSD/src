@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2022/05/22 08:22:43 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2022/05/22 08:28:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.52 2022/05/22 08:22:43 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.53 2022/05/22 08:28:10 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -176,6 +176,32 @@ set_input_sources(enum input_source *input, int color)
 	}
 }
 
+static int
+read_move(void)
+{
+again:
+	if (interactive) {
+		ask("Select move, (S)ave or (Q)uit.");
+		int s = get_coord();
+		if (s == SAVE) {
+			save_game();
+			goto again;
+		}
+		if (s != RESIGN && board[s].s_occ != EMPTY) {
+			beep();
+			goto again;
+		}
+		return s;
+	} else {
+		char buf[128];
+		if (!get_line(buf, sizeof(buf), NULL))
+			return RESIGN;
+		if (buf[0] == '\0')
+			goto again;
+		return ctos(buf);
+	}
+}
+
 int
 main(int argc, char **argv)
 {
@@ -276,29 +302,7 @@ again:
 			goto top;
 
 		case USER: /* input comes from standard input */
-		getinput:
-			if (interactive) {
-				ask("Select move, (S)ave or (Q)uit.");
-				curmove = get_coord();
-				if (curmove == SAVE) {
-					save_game();
-					goto getinput;
-				}
-				if (curmove != RESIGN &&
-				    board[curmove].s_occ != EMPTY) {
-					/*misclog("Illegal move");*/
-					beep();
-					goto getinput;
-				}
-			} else {
-				if (!get_line(buf, sizeof(buf), NULL)) {
-					curmove = RESIGN;
-					break;
-				}
-				if (buf[0] == '\0')
-					goto getinput;
-				curmove = ctos(buf);
-			}
+			curmove = read_move();
 			break;
 
 		case PROGRAM: /* input comes from the program */
