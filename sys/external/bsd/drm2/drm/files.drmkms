@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.72 2021/12/21 12:55:23 tnn Exp $
+#	$NetBSD: files.drmkms,v 1.73 2022/05/22 00:10:56 tnn Exp $
 
 version	20180827
 
@@ -39,7 +39,7 @@ makeoptions	drmkms	CPPFLAGS+="-DCONFIG_X86_PAT"
 elifdef arm
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_ARM"
 elifdef aarch64
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_AARCH64"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_ARM64"
 endif
 
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
