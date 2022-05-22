@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.43 2022/05/19 20:51:46 riastradh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.44 2022/05/22 11:25:14 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -589,7 +589,7 @@ struct cryptocap {
  * a copy of the driver's capabilities that can be used by client code to
  * optimize operation.
  */
-#define	CRYPTO_SESID2HID(_sid)	(((_sid) >> 32) & 0xffffff)
+#define	CRYPTO_SESID2HID(_sid)	((((_sid) >> 32) & 0xffffff) - 1)
 #define	CRYPTO_SESID2CAPS(_sid)	(((_sid) >> 56) & 0xff)
 #define	CRYPTO_SESID2LID(_sid)	(((u_int32_t) (_sid)) & 0xffffffff)
 

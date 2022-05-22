@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.119 2022/05/19 20:51:59 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.120 2022/05/22 11:25:14 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.119 2022/05/19 20:51:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.120 2022/05/22 11:25:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -800,6 +800,16 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	struct cryptocap *cap;
 	int err = EINVAL;
 
+	/*
+	 * On failure, leave *sid initialized to a sentinel value that
+	 * crypto_freesession will ignore.  This is the same as what
+	 * you get from zero-initialized memory -- some callers (I'm
+	 * looking at you, netipsec!) have paths that lead from
+	 * zero-initialized memory into crypto_freesession without any
+	 * crypto_newsession.
+	 */
+	*sid = 0;
+
 	mutex_enter(&crypto_drv_mtx);
 
 	cap = crypto_select_driver_lock(cri, hard);
@@ -807,6 +817,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		u_int32_t hid, lid;
 
 		hid = cap - crypto_drivers;
+		KASSERT(hid < 0xffffff);
 		/*
 		 * Can't do everything in one session.
 		 *
@@ -820,10 +831,11 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		err = cap->cc_newsession(cap->cc_arg, &lid, cri);
 		crypto_driver_lock(cap);
 		if (err == 0) {
-			(*sid) = hid;
+			(*sid) = hid + 1;
 			(*sid) <<= 32;
 			(*sid) |= (lid & 0xffffffff);
-			(cap->cc_sessions)++;
+			KASSERT(*sid != 0);
+			cap->cc_sessions++;
 		} else {
 			DPRINTF("crypto_drivers[%d].cc_newsession() failed. error=%d\n",
 			    hid, err);
@@ -845,6 +857,17 @@ crypto_freesession(u_int64_t sid)
 {
 	struct cryptocap *cap;
 	int err = 0;
+
+	/*
+	 * crypto_newsession never returns 0 as a sid (by virtue of
+	 * never returning 0 as a hid, which is part of the sid).
+	 * However, some callers assume that freeing zero is safe.
+	 * Previously this relied on all drivers to agree that freeing
+	 * invalid sids is a no-op, but that's a terrible API contract
+	 * that we're getting rid of.
+	 */
+	if (sid == 0)
+		return;
 
 	/* Determine two IDs. */
 	cap = crypto_checkdriver_lock(CRYPTO_SESID2HID(sid));
