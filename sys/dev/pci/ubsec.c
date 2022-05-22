@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.56 2022/05/22 11:35:05 riastradh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.57 2022/05/22 11:35:13 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.56 2022/05/22 11:35:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.57 2022/05/22 11:35:13 riastradh Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -1163,14 +1163,12 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	    crp->crp_sid, sc->sc_nsessions);
 
 	mutex_spin_enter(&sc->sc_mtx);
-
 	if (SIMPLEQ_EMPTY(&sc->sc_freequeue)) {
 		ubsecstats.hst_queuefull++;
-		sc->sc_needwakeup |= CRYPTO_SYMQ;
 		mutex_spin_exit(&sc->sc_mtx);
-		return(ERESTART);
+		err = ERESTART;
+		goto errout;
 	}
-
 	q = SIMPLEQ_FIRST(&sc->sc_freequeue);
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_freequeue, /*q,*/ q_next);
 	mutex_spin_exit(&sc->sc_mtx);
@@ -1760,7 +1758,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	if ((hint & CRYPTO_HINT_MORE) == 0 || sc->sc_nqueue >= ubsec_maxbatch)
 		ubsec_feed(sc);
 	mutex_spin_exit(&sc->sc_mtx);
-	return (0);
+	return 0;
 
 errout:
 	if (q != NULL) {
@@ -1778,19 +1776,15 @@ errout:
 		SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q, q_next);
 		mutex_spin_exit(&sc->sc_mtx);
 	}
-#if 0 /* jonathan says: this openbsd code seems to be subsumed elsewhere */
-	if (err == EINVAL)
-		ubsecstats.hst_invalid++;
-	else
-		ubsecstats.hst_nomem++;
-#endif
-	if (err != ERESTART) {
-		crp->crp_etype = err;
-		crypto_done(crp);
-	} else {
+	if (err == ERESTART) {
+		mutex_spin_enter(&sc->sc_mtx);
 		sc->sc_needwakeup |= CRYPTO_SYMQ;
+		mutex_spin_exit(&sc->sc_mtx);
+		return ERESTART;
 	}
-	return (err);
+	crp->crp_etype = err;
+	crypto_done(crp);
+	return 0;
 }
 
 static void
