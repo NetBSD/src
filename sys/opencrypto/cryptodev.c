@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.116 2022/05/22 11:29:54 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.117 2022/05/22 11:30:41 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.116 2022/05/22 11:29:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.117 2022/05/22 11:30:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,11 +188,11 @@ static int	cryptodev_key(struct crypt_kop *);
 static int	cryptodev_mkey(struct fcrypt *, struct crypt_n_kop *, int);
 static int	cryptodev_msessionfin(struct fcrypt *, int, u_int32_t *);
 
-static int	cryptodev_cb(struct cryptop *);
-static int	cryptodevkey_cb(struct cryptkop *);
+static void	cryptodev_cb(struct cryptop *);
+static void	cryptodevkey_cb(struct cryptkop *);
 
-static int	cryptodev_mcb(struct cryptop *);
-static int	cryptodevkey_mcb(struct cryptkop *);
+static void	cryptodev_mcb(struct cryptop *);
+static void	cryptodevkey_mcb(struct cryptkop *);
 
 static int 	cryptodev_getmstatus(struct fcrypt *, struct crypt_result *,
     int);
@@ -711,7 +711,7 @@ bail:
 	return error;
 }
 
-static int
+static void
 cryptodev_cb(struct cryptop *crp)
 {
 	struct csession *cse = crp->crp_opaque;
@@ -720,7 +720,7 @@ cryptodev_cb(struct cryptop *crp)
 	if ((error = crp->crp_etype) == EAGAIN) {
 		error = crypto_dispatch(crp);
 		if (error == 0)
-			return 0;
+			return;
 	}
 
 	mutex_enter(&cryptodev_mtx);
@@ -728,10 +728,9 @@ cryptodev_cb(struct cryptop *crp)
 	crp->crp_devflags |= CRYPTODEV_F_RET;
 	cv_signal(&crp->crp_cv);
 	mutex_exit(&cryptodev_mtx);
-	return 0;
 }
 
-static int
+static void
 cryptodev_mcb(struct cryptop *crp)
 {
 	struct csession *cse = crp->crp_opaque;
@@ -740,7 +739,7 @@ cryptodev_mcb(struct cryptop *crp)
 	if ((error = crp->crp_etype) == EAGAIN) {
 		error = crypto_dispatch(crp);
 		if (error == 0)
-			return 0;
+			return;
 	}
 
 	mutex_enter(&cryptodev_mtx);
@@ -748,10 +747,9 @@ cryptodev_mcb(struct cryptop *crp)
 	TAILQ_INSERT_TAIL(&crp->fcrp->crp_ret_mq, crp, crp_next);
 	selnotify(&crp->fcrp->sinfo, 0, 0);
 	mutex_exit(&cryptodev_mtx);
-	return 0;
 }
 
-static int
+static void
 cryptodevkey_cb(struct cryptkop *krp)
 {
 
@@ -759,10 +757,9 @@ cryptodevkey_cb(struct cryptkop *krp)
 	krp->krp_devflags |= CRYPTODEV_F_RET;
 	cv_signal(&krp->krp_cv);
 	mutex_exit(&cryptodev_mtx);
-	return 0;
 }
 
-static int
+static void
 cryptodevkey_mcb(struct cryptkop *krp)
 {
 
@@ -771,7 +768,6 @@ cryptodevkey_mcb(struct cryptkop *krp)
 	TAILQ_INSERT_TAIL(&krp->fcrp->crp_ret_mkq, krp, krp_next);
 	selnotify(&krp->fcrp->sinfo, 0, 0);
 	mutex_exit(&cryptodev_mtx);
-	return 0;
 }
 
 static int

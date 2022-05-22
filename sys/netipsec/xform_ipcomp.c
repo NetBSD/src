@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.69 2019/11/01 04:23:21 knakahara Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.70 2022/05/22 11:30:40 riastradh Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.69 2019/11/01 04:23:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.70 2022/05/22 11:30:40 riastradh Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -75,8 +75,8 @@ percpu_t *ipcompstat_percpu;
 
 int ipcomp_enable = 1;
 
-static int ipcomp_input_cb(struct cryptop *crp);
-static int ipcomp_output_cb(struct cryptop *crp);
+static void ipcomp_input_cb(struct cryptop *crp);
+static void ipcomp_output_cb(struct cryptop *crp);
 
 const uint8_t ipcomp_stats[256] = { SADB_CALG_STATS_INIT };
 
@@ -225,20 +225,20 @@ error_m:
 #ifdef INET6
 #define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		     \
 	if (saidx->dst.sa.sa_family == AF_INET6) {			     \
-		error = ipsec6_common_input_cb(m, sav, skip, protoff);	     \
+		(void)ipsec6_common_input_cb(m, sav, skip, protoff);	     \
 	} else {							     \
-		error = ipsec4_common_input_cb(m, sav, skip, protoff);       \
+		(void)ipsec4_common_input_cb(m, sav, skip, protoff);       \
 	}								     \
 } while (0)
 #else
 #define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			     \
-	(error = ipsec4_common_input_cb(m, sav, skip, protoff))
+	((void)ipsec4_common_input_cb(m, sav, skip, protoff))
 #endif
 
 /*
  * IPComp input callback from the crypto driver.
  */
-static int
+static void
 ipcomp_input_cb(struct cryptop *crp)
 {
 	char buf[IPSEC_ADDRSTRLEN];
@@ -247,7 +247,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	struct mbuf *m;
 	struct secasvar *sav;
 	struct secasindex *saidx __diagused;
-	int hlen = IPCOMP_HLENGTH, error, clen;
+	int hlen = IPCOMP_HLENGTH, clen;
 	uint8_t nproto;
 	struct ipcomp *ipc;
 	IPSEC_DECLARE_LOCK_VARIABLE;
@@ -275,12 +275,12 @@ ipcomp_input_cb(struct cryptop *crp)
 		if (crp->crp_etype == EAGAIN) {
 			KEY_SA_UNREF(&sav);
 			IPSEC_RELEASE_GLOBAL_LOCKS();
-			return crypto_dispatch(crp);
+			(void)crypto_dispatch(crp);
+			return;
 		}
 
 		IPCOMP_STATINC(IPCOMP_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
-		error = crp->crp_etype;
 		goto bad;
 	}
 
@@ -309,7 +309,6 @@ ipcomp_input_cb(struct cryptop *crp)
 	if (m->m_len < skip + hlen && (m = m_pullup(m, skip + hlen)) == 0) {
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
 		DPRINTF("m_pullup failed\n");
-		error = EINVAL;
 		goto bad;
 	}
 	ipc = (struct ipcomp *)(mtod(m, uint8_t *) + skip);
@@ -323,15 +322,13 @@ ipcomp_input_cb(struct cryptop *crp)
 		DPRINTF("nested ipcomp, IPCA %s/%08lx\n",
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi));
-		error = EINVAL;
 		goto bad;
 	default:
 		break;
 	}
 
 	/* Remove the IPCOMP header */
-	error = m_striphdr(m, skip, hlen);
-	if (error) {
+	if (m_striphdr(m, skip, hlen) != 0) {
 		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
 		DPRINTF("bad mbuf chain, IPCA %s/%08lx\n",
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
@@ -346,7 +343,7 @@ ipcomp_input_cb(struct cryptop *crp)
 
 	KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	return error;
+	return;
 
 bad:
 	if (sav)
@@ -358,7 +355,6 @@ bad:
 		pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	if (crp)
 		crypto_freereq(crp);
-	return error;
 }
 
 /*
@@ -517,7 +513,7 @@ bad:
 /*
  * IPComp output callback from the crypto driver.
  */
-static int
+static void
 ipcomp_output_cb(struct cryptop *crp)
 {
 	char buf[IPSEC_ADDRSTRLEN];
@@ -525,7 +521,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	const struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m, *mo;
-	int error, skip, rlen, roff, flags;
+	int skip, rlen, roff, flags;
 	uint8_t prot;
 	uint16_t cpi;
 	struct ipcomp * ipcomp;
@@ -550,11 +546,11 @@ ipcomp_output_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			IPSEC_RELEASE_GLOBAL_LOCKS();
-			return crypto_dispatch(crp);
+			(void)crypto_dispatch(crp);
+			return;
 		}
 		IPCOMP_STATINC(IPCOMP_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
-		error = crp->crp_etype;
 		goto bad;
 	}
 
@@ -569,7 +565,6 @@ ipcomp_output_cb(struct cryptop *crp)
 			    "IPCA %s/%08lx\n",
 			    ipsec_address(&sav->sah->saidx.dst, buf,
 			    sizeof(buf)), (u_long) ntohl(sav->spi));
-			error = ENOBUFS;
 			goto bad;
 		}
 		ipcomp = (struct ipcomp *)(mtod(mo, char *) + roff);
@@ -620,7 +615,6 @@ ipcomp_output_cb(struct cryptop *crp)
 			    sav->sah->saidx.dst.sa.sa_family,
 			    ipsec_address(&sav->sah->saidx.dst, buf,
 			    sizeof(buf)), (u_long) ntohl(sav->spi));
-			error = EPFNOSUPPORT;
 			goto bad;
 		}
 	} else {
@@ -636,11 +630,11 @@ ipcomp_output_cb(struct cryptop *crp)
 	crypto_freereq(crp);
 
 	/* NB: m is reclaimed by ipsec_process_done. */
-	error = ipsec_process_done(m, isr, sav, flags);
+	(void)ipsec_process_done(m, isr, sav, flags);
 	KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	return error;
+	return;
 
 bad:
 	if (sav)
@@ -651,7 +645,6 @@ bad:
 		m_freem(m);
 	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
-	return error;
 }
 
 static struct xformsw ipcomp_xformsw = {

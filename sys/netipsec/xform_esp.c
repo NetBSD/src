@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.101 2020/10/05 09:51:25 knakahara Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.102 2022/05/22 11:30:40 riastradh Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.101 2020/10/05 09:51:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.102 2022/05/22 11:30:40 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -90,8 +90,8 @@ int esp_enable = 1;
 
 static int esp_max_ivlen;		/* max iv length over all algorithms */
 
-static int esp_input_cb(struct cryptop *op);
-static int esp_output_cb(struct cryptop *crp);
+static void esp_input_cb(struct cryptop *op);
+static void esp_output_cb(struct cryptop *crp);
 
 const uint8_t esp_stats[256] = { SADB_EALG_STATS_INIT };
 
@@ -488,25 +488,25 @@ out:
 #ifdef INET6
 #define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff) do {		\
 	if (saidx->dst.sa.sa_family == AF_INET6) {			\
-		error = ipsec6_common_input_cb(m, sav, skip, protoff);	\
+		(void)ipsec6_common_input_cb(m, sav, skip, protoff);	\
 	} else {							\
-		error = ipsec4_common_input_cb(m, sav, skip, protoff);	\
+		(void)ipsec4_common_input_cb(m, sav, skip, protoff);	\
 	}								\
 } while (0)
 #else
 #define	IPSEC_COMMON_INPUT_CB(m, sav, skip, protoff)			\
-	(error = ipsec4_common_input_cb(m, sav, skip, protoff))
+	((void)ipsec4_common_input_cb(m, sav, skip, protoff))
 #endif
 
 /*
  * ESP input callback from the crypto driver.
  */
-static int
+static void
 esp_input_cb(struct cryptop *crp)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	uint8_t lastthree[3], aalg[AH_ALEN_MAX];
-	int hlen, skip, protoff, error;
+	int hlen, skip, protoff;
 	struct mbuf *m;
 	const struct auth_hash *esph;
 	struct tdb_crypto *tc;
@@ -542,12 +542,12 @@ esp_input_cb(struct cryptop *crp)
 		if (crp->crp_etype == EAGAIN) {
 			KEY_SA_UNREF(&sav);
 			IPSEC_RELEASE_GLOBAL_LOCKS();
-			return crypto_dispatch(crp);
+			(void)crypto_dispatch(crp);
+			return;
 		}
 
 		ESP_STATINC(ESP_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
-		error = crp->crp_etype;
 		goto bad;
 	}
 
@@ -574,7 +574,6 @@ esp_input_cb(struct cryptop *crp)
 			    ipsec_address(&saidx->dst, buf,
 			    sizeof(buf)), (u_long) ntohl(sav->spi));
 			ESP_STATINC(ESP_STAT_BADAUTH);
-			error = EACCES;
 			goto bad;
 		}
 
@@ -606,7 +605,6 @@ esp_input_cb(struct cryptop *crp)
 			DPRINTF("packet replay check for %s\n",
 			    ipsec_logsastr(sav, logbuf, sizeof(logbuf)));
 			ESP_STATINC(ESP_STAT_REPLAY);
-			error = EACCES;
 			goto bad;
 		}
 	}
@@ -618,8 +616,7 @@ esp_input_cb(struct cryptop *crp)
 		hlen = sizeof(struct newesp) + sav->ivlen;
 
 	/* Remove the ESP header and IV from the mbuf. */
-	error = m_striphdr(m, skip, hlen);
-	if (error) {
+	if (m_striphdr(m, skip, hlen) != 0) {
 		ESP_STATINC(ESP_STAT_HDROPS);
 		DPRINTF("bad mbuf chain, SA %s/%08lx\n",
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
@@ -638,7 +635,6 @@ esp_input_cb(struct cryptop *crp)
 		    lastthree[1], m->m_pkthdr.len - skip,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi));
-		error = EINVAL;
 		goto bad;
 	}
 
@@ -652,7 +648,6 @@ esp_input_cb(struct cryptop *crp)
 			    sizeof(buf)), (u_long) ntohl(sav->spi));
 			DPRINTF("%x %x\n", lastthree[0],
 			    lastthree[1]);
-			error = EINVAL;
 			goto bad;
 		}
 	}
@@ -667,7 +662,7 @@ esp_input_cb(struct cryptop *crp)
 
 	KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	return error;
+	return;
 bad:
 	if (sav)
 		KEY_SA_UNREF(&sav);
@@ -678,7 +673,6 @@ bad:
 		pool_cache_put(esp_tdb_crypto_pool_cache, tc);
 	if (crp != NULL)
 		crypto_freereq(crp);
-	return error;
 }
 
 /*
@@ -949,14 +943,14 @@ bad:
 /*
  * ESP output callback from the crypto driver.
  */
-static int
+static void
 esp_output_cb(struct cryptop *crp)
 {
 	struct tdb_crypto *tc;
 	const struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m;
-	int err, error, flags;
+	int flags;
 	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	KASSERT(crp->crp_opaque != NULL);
@@ -976,12 +970,12 @@ esp_output_cb(struct cryptop *crp)
 
 		if (crp->crp_etype == EAGAIN) {
 			IPSEC_RELEASE_GLOBAL_LOCKS();
-			return crypto_dispatch(crp);
+			(void)crypto_dispatch(crp);
+			return;
 		}
 
 		ESP_STATINC(ESP_STAT_NOXFORM);
 		DPRINTF("crypto error %d\n", crp->crp_etype);
-		error = crp->crp_etype;
 		goto bad;
 	}
 
@@ -1013,11 +1007,11 @@ esp_output_cb(struct cryptop *crp)
 #endif
 
 	/* NB: m is reclaimed by ipsec_process_done. */
-	err = ipsec_process_done(m, isr, sav, flags);
+	(void)ipsec_process_done(m, isr, sav, flags);
 	KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
-	return err;
+	return;
 
 bad:
 	if (sav)
@@ -1028,7 +1022,6 @@ bad:
 		m_freem(m);
 	pool_cache_put(esp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
-	return error;
 }
 
 static struct xformsw esp_xformsw = {
