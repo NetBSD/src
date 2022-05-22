@@ -1,4 +1,4 @@
-#	$NetBSD: t_pr_19722.sh,v 1.3 2022/05/22 21:16:50 rillig Exp $
+#	$NetBSD: t_pr_19722.sh,v 1.4 2022/05/22 21:39:44 rillig Exp $
 #
 # Copyright (c) 2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -148,6 +148,10 @@ atf_test_case 'uncompress_broken_source_existing_target'
 uncompress_broken_source_existing_target_body()
 {
 	# PR 19722: uncompressing a broken source removes existing target
+	#
+	# Before compress.c 1.29 from 2022-05-22, uncompress removed an
+	# existing target before checking that the source has the correct
+	# format.
 
 	echo 'broken' > file.Z
 	echo 'before' > file
@@ -158,8 +162,7 @@ uncompress_broken_source_existing_target_body()
 	    uncompress -f file.Z
 
 	atf_check -o 'inline:broken\n' cat file.Z
-	# FIXME: Must not be modified.
-	atf_check test ! -f file
+	atf_check -o 'inline:before\n' cat file
 }
 
 
