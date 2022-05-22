@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2022/05/22 08:18:49 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2022/05/22 08:22:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.51 2022/05/22 08:18:49 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2022/05/22 08:22:43 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -155,6 +155,27 @@ parse_args(int argc, char **argv)
 		err(1, "%s", *argv);
 }
 
+static void
+set_input_sources(enum input_source *input, int color)
+{
+	switch (test) {
+	case 0:			/* user versus program */
+		input[color] = USER;
+		input[color != BLACK ? BLACK : WHITE] = PROGRAM;
+		break;
+
+	case 1:			/* user versus user */
+		input[BLACK] = USER;
+		input[WHITE] = USER;
+		break;
+
+	case 2:			/* program versus program */
+		input[BLACK] = PROGRAM;
+		input[WHITE] = PROGRAM;
+		break;
+	}
+}
+
 int
 main(int argc, char **argv)
 {
@@ -230,22 +251,7 @@ again:
 		input[BLACK] = INPUTF;
 		input[WHITE] = INPUTF;
 	} else {
-		switch (test) {
-		case 0: /* user versus program */
-			input[color] = USER;
-			input[color != BLACK ? BLACK : WHITE] = PROGRAM;
-			break;
-
-		case 1: /* user versus user */
-			input[BLACK] = USER;
-			input[WHITE] = USER;
-			break;
-
-		case 2: /* program versus program */
-			input[BLACK] = PROGRAM;
-			input[WHITE] = PROGRAM;
-			break;
-		}
+		set_input_sources(input, color);
 	}
 	if (interactive) {
 		plyr[BLACK] = input[BLACK] == USER ? user : prog;
@@ -262,24 +268,7 @@ again:
 			curmove = readinput(inputfp);
 			if (curmove != EOF)
 				break;
-			/* Switch to another input source. */
-			switch (test) {
-			case 0: /* user versus program */
-				input[color] = USER;
-				input[color != BLACK ? BLACK : WHITE] =
-				    PROGRAM;
-				break;
-
-			case 1: /* user versus user */
-				input[BLACK] = USER;
-				input[WHITE] = USER;
-				break;
-
-			case 2: /* program versus program */
-				input[BLACK] = PROGRAM;
-				input[WHITE] = PROGRAM;
-				break;
-			}
+			set_input_sources(input, color);
 			plyr[BLACK] = input[BLACK] == USER ? user : prog;
 			plyr[WHITE] = input[WHITE] == USER ? user : prog;
 			bdwho();
