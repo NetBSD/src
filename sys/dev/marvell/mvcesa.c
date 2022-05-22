@@ -1,4 +1,4 @@
-/*	$NetBSD: mvcesa.c,v 1.5 2022/05/22 11:38:26 riastradh Exp $	*/
+/*	$NetBSD: mvcesa.c,v 1.6 2022/05/22 11:39:27 riastradh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvcesa.c,v 1.5 2022/05/22 11:38:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvcesa.c,v 1.6 2022/05/22 11:39:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,7 +80,7 @@ static void mvcesa_attach(device_t, device_t, void *);
 static int mvcesa_intr(void *);
 
 static int mvcesa_newsession(void *, u_int32_t *, struct cryptoini *);
-static int mvcesa_freesession(void *, u_int64_t);
+static void mvcesa_freesession(void *, u_int64_t);
 static int mvcesa_process(void *, struct cryptop *, int);
 
 static int mvcesa_authentication(struct mvcesa_softc *, struct mvcesa_session *,
@@ -325,7 +325,7 @@ mvcesa_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 /*
  * Deallocate a session.
  */
-static int
+static void
 mvcesa_freesession(void *arg, u_int64_t tid)
 {
 	struct mvcesa_softc *sc = (struct mvcesa_softc *)arg;
@@ -338,7 +338,6 @@ mvcesa_freesession(void *arg, u_int64_t tid)
 	    session, sc->sc_nsessions);
 
 	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
-	return (0);
 }
 
 static int

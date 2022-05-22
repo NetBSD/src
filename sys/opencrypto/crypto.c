@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.123 2022/05/22 11:34:40 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.124 2022/05/22 11:39:27 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.123 2022/05/22 11:34:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.124 2022/05/22 11:39:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -879,9 +879,7 @@ crypto_freesession(u_int64_t sid)
 
 	/* Call the driver cleanup routine, if available. */
 	if (cap->cc_freesession)
-		err = cap->cc_freesession(cap->cc_arg, sid);
-	else
-		err = 0;
+		cap->cc_freesession(cap->cc_arg, sid);
 
 	/*
 	 * If this was the last session of a driver marked as invalid,
@@ -1107,7 +1105,7 @@ int
 crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
     u_int32_t flags,
     int (*newses)(void *, u_int32_t*, struct cryptoini*),
-    int (*freeses)(void *, u_int64_t),
+    void (*freeses)(void *, u_int64_t),
     int (*process)(void *, struct cryptop *, int),
     void *arg)
 {

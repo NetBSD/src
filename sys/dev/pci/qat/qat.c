@@ -1,4 +1,4 @@
-/*	$NetBSD: qat.c,v 1.7 2021/11/06 06:52:48 msaitoh Exp $	*/
+/*	$NetBSD: qat.c,v 1.8 2022/05/22 11:39:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.7 2021/11/06 06:52:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.8 2022/05/22 11:39:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,11 +346,11 @@ int		qat_crypto_process(void *, struct cryptop *, int);
 int		qat_crypto_setup_ring(struct qat_softc *,
 		    struct qat_crypto_bank *);
 int		qat_crypto_new_session(void *, uint32_t *, struct cryptoini *);
-int		qat_crypto_free_session0(struct qat_crypto *,
+void		qat_crypto_free_session0(struct qat_crypto *,
 		    struct qat_session *);
 void		qat_crypto_check_free_session(struct qat_crypto *,
 		    struct qat_session *);
-int		qat_crypto_free_session(void *, uint64_t);
+void		qat_crypto_free_session(void *, uint64_t);
 int		qat_crypto_bank_init(struct qat_softc *,
 		    struct qat_crypto_bank *);
 int		qat_crypto_init(struct qat_softc *);
@@ -1978,7 +1978,7 @@ qat_crypto_clean_desc(struct qat_crypto_desc *desc)
 	    sizeof(desc->qcd_req_cache));
 }
 
-int
+void
 qat_crypto_free_session0(struct qat_crypto *qcy, struct qat_session *qs)
 {
 
@@ -1994,8 +1994,6 @@ qat_crypto_free_session0(struct qat_crypto *qcy, struct qat_session *qs)
 	QAT_EVCNT_INCR(&qcy->qcy_ev_free_sess);
 
 	mutex_spin_exit(&qcy->qcy_crypto_mtx);
-
-	return 0;
 }
 
 void
@@ -2010,12 +2008,11 @@ qat_crypto_check_free_session(struct qat_crypto *qcy, struct qat_session *qs)
 	}
 }
 
-int
+void
 qat_crypto_free_session(void *arg, uint64_t sid)
 {
 	struct qat_crypto *qcy = arg;
 	struct qat_session *qs;
-	int error;
 
 	qs = qcy->qcy_sessions[CRYPTO_SESID2LID(sid)];
 
@@ -2024,12 +2021,10 @@ qat_crypto_free_session(void *arg, uint64_t sid)
 	if (qs->qs_inflight > 0) {
 		qs->qs_status |= QAT_SESSION_STATUS_FREEING;
 		mutex_spin_exit(&qs->qs_session_mtx);
-		return 0;
+		return;
 	}
 
-	error = qat_crypto_free_session0(qcy, qs);
-
-	return error;
+	qat_crypto_free_session0(qcy, qs);
 }
 
 int

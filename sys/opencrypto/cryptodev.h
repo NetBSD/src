@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.46 2022/05/22 11:30:41 riastradh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.47 2022/05/22 11:39:27 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -575,7 +575,7 @@ struct cryptocap {
 	void		*cc_arg;		/* callback argument */
 	int		(*cc_newsession)(void*, u_int32_t*, struct cryptoini*);
 	int		(*cc_process) (void*, struct cryptop *, int);
-	int		(*cc_freesession) (void*, u_int64_t);
+	void		(*cc_freesession) (void *, u_int64_t);
 	void		*cc_karg;		/* callback argument */
 	int		(*cc_kprocess) (void*, struct cryptkop *, int);
 
@@ -601,7 +601,7 @@ extern	int32_t crypto_get_driverid(u_int32_t flags);
 extern	int crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	    u_int32_t flags,
 	    int (*newses)(void*, u_int32_t*, struct cryptoini*),
-	    int (*freeses)(void*, u_int64_t),
+	    void (*freeses)(void *, u_int64_t),
 	    int (*process)(void*, struct cryptop *, int),
 	    void *arg);
 extern	int crypto_kregister(u_int32_t, int, u_int32_t,

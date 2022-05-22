@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.63 2022/05/22 11:38:59 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.64 2022/05/22 11:39:27 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.63 2022/05/22 11:38:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.64 2022/05/22 11:39:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static	int swcr_compdec(struct cryptodesc *, const struct swcr_data *, void *, i
 static	int swcr_combined(struct cryptop *, int);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
-static	int swcr_freesession(void *, u_int64_t);
+static void swcr_freesession(void *, u_int64_t);
 static void swcr_freesession_internal(struct swcr_data *);
 
 static	int swcryptoattach_internal(void);
@@ -1119,7 +1119,7 @@ swcr_freesession_internal(struct swcr_data *arg)
 /*
  * Free a session.
  */
-static int
+static void
 swcr_freesession(void *arg, u_int64_t tid)
 {
 	struct swcr_data *swd;
@@ -1132,8 +1132,6 @@ swcr_freesession(void *arg, u_int64_t tid)
 	swd = swcr_sessions[sid];
 	swcr_sessions[sid] = NULL;
 	swcr_freesession_internal(swd);
-
-	return 0;
 }
 
 /*

@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.34 2022/05/22 11:38:19 riastradh Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.35 2022/05/22 11:39:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.34 2022/05/22 11:38:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.35 2022/05/22 11:39:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ int	via_padlock_crypto_swauth(struct cryptop *, struct cryptodesc *,
 	    struct swcr_data *, void *);
 int	via_padlock_crypto_encdec(struct cryptop *, struct cryptodesc *,
 	    struct via_padlock_session *, struct via_padlock_softc *, void *);
-int	via_padlock_crypto_freesession(void *, uint64_t);
+void	via_padlock_crypto_freesession(void *, uint64_t);
 static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 	    void *);
 
@@ -298,7 +298,7 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 	return (0);
 }
 
-int
+void
 via_padlock_crypto_freesession(void *arg, uint64_t tid)
 {
 	struct via_padlock_softc *sc = arg;
@@ -328,7 +328,6 @@ via_padlock_crypto_freesession(void *arg, uint64_t tid)
 	}
 
 	memset(&sc->sc_sessions[sesn], 0, sizeof(sc->sc_sessions[sesn]));
-	return (0);
 }
 
 static __inline void
