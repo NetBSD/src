@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gmbus.c,v 1.5 2022/05/22 18:41:22 riastradh Exp $	*/
+/*	$NetBSD: intel_gmbus.c,v 1.6 2022/05/22 20:35:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gmbus.c,v 1.5 2022/05/22 18:41:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gmbus.c,v 1.6 2022/05/22 20:35:20 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/i2c-algo-bit.h>
@@ -351,7 +351,7 @@ static int gmbus_wait(struct drm_i915_private *dev_priv, u32 status, u32 irq_en)
 
 	status |= GMBUS_SATOER;
 	if (!irq_en) {
-		unsigned timeout = 10*1000;
+		unsigned timeout = 50*1000;
 
 		ret = 0;
 		while ((gmbus2 = intel_uncore_read_fw(&dev_priv->uncore,
@@ -366,7 +366,7 @@ static int gmbus_wait(struct drm_i915_private *dev_priv, u32 status, u32 irq_en)
 		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
 		    &dev_priv->gmbus_wait_queue,
 		    &dev_priv->gmbus_wait_lock,
-		    msecs_to_jiffies_timeout(10),
+		    msecs_to_jiffies_timeout(50),
 		    (((gmbus2 = intel_uncore_read_fw(&dev_priv->uncore,
 				GMBUS2))
 			    & status)
