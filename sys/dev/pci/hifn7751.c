@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.76 2022/05/22 11:31:33 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.77 2022/05/22 11:34:48 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.179 2020/01/11 21:34:03 cheloha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.76 2022/05/22 11:31:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.77 2022/05/22 11:34:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -2176,11 +2176,6 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 	struct hifn_command *cmd = NULL;
 	int session, err = 0, ivlen;
 	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
-
-	if (crp == NULL || crp->crp_callback == NULL) {
-		hifnstats.hst_invalid++;
-		return (EINVAL);
-	}
 
 	if ((cmd = pool_cache_get(sc->sc_cmd_cache, PR_NOWAIT)) == NULL) {
 		hifnstats.hst_nomem++;
