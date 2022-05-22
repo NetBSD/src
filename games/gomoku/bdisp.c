@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.44 2022/05/22 12:30:05 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.45 2022/05/22 12:42:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.44 2022/05/22 12:30:05 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.45 2022/05/22 12:42:54 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -332,103 +332,90 @@ get_line(char *buf, int size, void (*on_change)(const char *))
 int
 get_coord(void)
 {
-	static int curx = BSZ / 2;
-	static int cury = BSZ / 2;
-	int nx, ny, ch;
+	static int x = 1 + (BSZ - 1) / 2;
+	static int y = 1 + (BSZ - 1) / 2;
 
-	move(scr_y(cury), scr_x(curx));
+	move(scr_y(y), scr_x(x));
 	refresh();
-	nx = curx;
-	ny = cury;
 	for (;;) {
-		mvprintw(BSZ + 3, 6, "(%c %d) ", letters[curx], cury);
-		move(scr_y(cury), scr_x(curx));
+		mvprintw(BSZ + 3, 6, "(%c %d) ", letters[x], y);
+		move(scr_y(y), scr_x(x));
 
-		ch = getch();
+		int ch = getch();
 		switch (ch) {
 		case 'k':
 		case '8':
 		case KEY_UP:
-			nx = curx;
-			ny = cury + 1;
+			y++;
 			break;
 		case 'j':
 		case '2':
 		case KEY_DOWN:
-			nx = curx;
-			ny = cury + BSZ - 1;
+			y--;
 			break;
 		case 'h':
 		case '4':
 		case KEY_LEFT:
-			nx = curx + BSZ - 1;
-			ny = cury;
+			x--;
 			break;
 		case 'l':
 		case '6':
 		case KEY_RIGHT:
-			nx = curx + 1;
-			ny = cury;
+			x++;
 			break;
 		case 'y':
 		case '7':
 		case KEY_A1:
-			nx = curx + BSZ - 1;
-			ny = cury + 1;
+			x--;
+			y++;
 			break;
 		case 'b':
 		case '1':
 		case KEY_C1:
-			nx = curx + BSZ - 1;
-			ny = cury + BSZ - 1;
+			x--;
+			y--;
 			break;
 		case 'u':
 		case '9':
 		case KEY_A3:
-			nx = curx + 1;
-			ny = cury + 1;
+			x++;
+			y++;
 			break;
 		case 'n':
 		case '3':
 		case KEY_C3:
-			nx = curx + 1;
-			ny = cury + BSZ - 1;
+			x++;
+			y--;
 			break;
 		case 'K':
-			nx = curx;
-			ny = cury + 5;
+			y += 5;
 			break;
 		case 'J':
-			nx = curx;
-			ny = cury + BSZ - 5;
+			y -= 5;
 			break;
 		case 'H':
-			nx = curx + BSZ - 5;
-			ny = cury;
+			x -= 5;
 			break;
 		case 'L':
-			nx = curx + 5;
-			ny = cury;
+			x += 5;
 			break;
 		case 'Y':
-			nx = curx + BSZ - 5;
-			ny = cury + 5;
+			x -= 5;
+			y += 5;
 			break;
 		case 'B':
-			nx = curx + BSZ - 5;
-			ny = cury + BSZ - 5;
+			x -= 5;
+			y -= 5;
 			break;
 		case 'U':
-			nx = curx + 5;
-			ny = cury + 5;
+			x += 5;
+			y += 5;
 			break;
 		case 'N':
-			nx = curx + 5;
-			ny = cury + BSZ - 5;
+			x += 5;
+			y -= 5;
 			break;
 		case 0x0c:	/* ^L */
-			nx = curx;
-			ny = cury;
 			(void)clearok(stdscr, true);
 			(void)refresh();
 			break;
@@ -460,10 +447,10 @@ get_coord(void)
 		case ' ':
 		case '\r':
 			(void)mvhline(BSZ + 3, 6, ' ', 6);
-			return PT(curx, cury);
+			return PT(x, y);
 		}
 
-		curx = 1 + (nx - 1) % BSZ;
-		cury = 1 + (ny - 1) % BSZ;
+		x = 1 + (x + BSZ - 1) % BSZ;
+		y = 1 + (y + BSZ - 1) % BSZ;
 	}
 }
