@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2022/05/22 08:58:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2022/05/22 09:17:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.57 2022/05/22 08:58:31 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.58 2022/05/22 09:17:15 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -273,11 +273,62 @@ declare_winner(int outcome, const enum input_source *input, int color)
 	bdisp();
 }
 
+struct outcome {
+	int result;
+	int winner;
+};
+
+static struct outcome
+main_game_loop(enum input_source *input)
+{
+	int color, curmove, outcome;
+
+	curmove = 0;		/* for GCC */
+	color = BLACK;
+
+again:
+	switch (input[color]) {
+	case INPUTF:
+		curmove = readinput(inputfp);
+		if (curmove != EOF)
+			break;
+		set_input_sources(input, color);
+		plyr[BLACK] = input[BLACK] == USER ? user : prog;
+		plyr[WHITE] = input[WHITE] == USER ? user : prog;
+		bdwho();
+		refresh();
+		goto again;
+
+	case USER:
+		curmove = read_move();
+		break;
+
+	case PROGRAM:
+		if (interactive)
+			ask("Thinking...");
+		curmove = pickmove(color);
+		break;
+	}
+
+	if (interactive && curmove != ILLEGAL) {
+		misclog("%3d%*s%-6s",
+		    movenum, color == BLACK ? 2 : 9, "", stoc(curmove));
+	}
+
+	if ((outcome = makemove(color, curmove)) != MOVEOK)
+		return (struct outcome){ outcome, color };
+
+	if (interactive)
+		bdisp();
+	color = color != BLACK ? BLACK : WHITE;
+	goto again;
+}
+
 int
 main(int argc, char **argv)
 {
 	char *user_name;
-	int color, curmove;
+	int color;
 	enum input_source input[2];
 
 	/* Revoke setgid privileges */
@@ -288,7 +339,6 @@ main(int argc, char **argv)
 	user_name = getlogin();
 	strlcpy(user, user_name != NULL ? user_name : "you", sizeof(user));
 
-	curmove = 0;
 	color = BLACK;
 
 	parse_args(argc, argv);
@@ -328,43 +378,11 @@ again:
 		refresh();
 	}
 
-	int outcome;
-	for (color = BLACK; ; color = color != BLACK ? BLACK : WHITE) {
-	top:
-		switch (input[color]) {
-		case INPUTF: /* input comes from a file */
-			curmove = readinput(inputfp);
-			if (curmove != EOF)
-				break;
-			set_input_sources(input, color);
-			plyr[BLACK] = input[BLACK] == USER ? user : prog;
-			plyr[WHITE] = input[WHITE] == USER ? user : prog;
-			bdwho();
-			refresh();
-			goto top;
+	struct outcome outcome = main_game_loop(input);
 
-		case USER: /* input comes from standard input */
-			curmove = read_move();
-			break;
-
-		case PROGRAM: /* input comes from the program */
-			if (interactive)
-				ask("Thinking...");
-			curmove = pickmove(color);
-			break;
-		}
-		if (interactive && curmove != ILLEGAL) {
-			misclog("%3d%*s%-6s", movenum,
-			    color == BLACK ? 2 : 9, "", stoc(curmove));
-		}
-		if ((outcome = makemove(color, curmove)) != MOVEOK)
-			break;
-		if (interactive)
-			bdisp();
-	}
 	if (interactive) {
-		declare_winner(outcome, input, color);
-		if (outcome != RESIGN) {
+		declare_winner(outcome.result, input, outcome.winner);
+		if (outcome.result != RESIGN) {
 		replay:
 			ask("Play again? ");
 			int ch = get_key("YyNnQqSs");
