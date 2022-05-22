@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.55 2022/05/22 11:30:58 riastradh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.56 2022/05/22 11:35:05 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.55 2022/05/22 11:30:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.56 2022/05/22 11:35:05 riastradh Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -1158,10 +1158,9 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	u_int16_t flags = 0;
 	int ivlen = 0, keylen = 0;
 
-	if (UBSEC_SESSION(crp->crp_sid) >= sc->sc_nsessions) {
-		ubsecstats.hst_badsession++;
-		return (EINVAL);
-	}
+	KASSERTMSG(UBSEC_SESSION(crp->crp_sid) < sc->sc_nsessions,
+	    "invalid session id 0x%"PRIx64", nsessions=%d",
+	    crp->crp_sid, sc->sc_nsessions);
 
 	mutex_spin_enter(&sc->sc_mtx);
 
