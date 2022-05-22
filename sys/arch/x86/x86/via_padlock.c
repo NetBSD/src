@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.32 2022/05/22 11:27:34 andvar Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.33 2022/05/22 11:38:02 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.32 2022/05/22 11:27:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.33 2022/05/22 11:38:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,7 +504,7 @@ via_padlock_crypto_process(void *arg, struct cryptop *crp, int hint)
 out:
 	crp->crp_etype = err;
 	crypto_done(crp);
-	return (err);
+	return 0;
 }
 
 static int
