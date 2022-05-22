@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.18 2022/05/22 11:34:17 riastradh Exp $
+.\"	$NetBSD: opencrypto.9,v 1.19 2022/05/22 11:39:26 riastradh Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -579,7 +579,7 @@ and migrate existing sessions to other drivers.
 The calling convention for the three driver-supplied routines is:
 .Bd -literal
 int (*newsession) (void *, u_int32_t *, struct cryptoini *);
-int (*freesession) (void *, u_int64_t);
+void (*freesession) (void *, u_int64_t);
 int (*process) (void *, struct cryptop *, int);
 .Ed
 .Pp
@@ -595,7 +595,9 @@ The second argument is identical to that of
 The
 .Fn freesession
 routine takes as argument the SID (which is the concatenation of the
-driver identifier and the driver-specific session identifier).
+driver identifier and the driver-specific session identifier returned
+by
+.Fn newsession ).
 It should clear any context associated with the session (clear hardware
 registers, memory, etc.).
 .Pp

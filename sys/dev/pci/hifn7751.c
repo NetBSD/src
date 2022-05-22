@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.79 2022/05/22 11:38:34 riastradh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.80 2022/05/22 11:39:27 riastradh Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.179 2020/01/11 21:34:03 cheloha Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.79 2022/05/22 11:38:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.80 2022/05/22 11:39:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -105,7 +105,7 @@ static int	hifn_intr(void *);
 static u_int	hifn_write_command(struct hifn_command *, uint8_t *);
 static uint32_t hifn_next_signature(uint32_t a, u_int cnt);
 static int	hifn_newsession(void*, uint32_t *, struct cryptoini *);
-static int	hifn_freesession(void*, uint64_t);
+static void	hifn_freesession(void*, uint64_t);
 static int	hifn_process(void*, struct cryptop *, int);
 static void	hifn_callback(struct hifn_softc *, struct hifn_command *,
 			      uint8_t *);
@@ -2143,7 +2143,7 @@ out:
  * XXX this routine should run a zero'd mac/encrypt key into context ram.
  * XXX to blow away any keys already stored there.
  */
-static int
+static void
 hifn_freesession(void *arg, uint64_t tid)
 {
 	struct hifn_softc *sc = arg;
@@ -2158,7 +2158,6 @@ hifn_freesession(void *arg, uint64_t tid)
 	KASSERT(isset(sc->sc_sessions, session));
 	clrbit(sc->sc_sessions, session);
 	mutex_spin_exit(&sc->sc_mtx);
-	return (0);
 }
 
 static int

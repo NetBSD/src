@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.31 2022/05/15 16:58:28 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.32 2022/05/22 11:39:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.31 2022/05/15 16:58:28 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.32 2022/05/22 11:39:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -249,7 +249,7 @@ static void	sun8i_crypto_register(struct sun8i_crypto_softc *);
 static void	sun8i_crypto_register1(struct sun8i_crypto_softc *, uint32_t);
 static int	sun8i_crypto_newsession(void *, uint32_t *,
 		    struct cryptoini *);
-static int	sun8i_crypto_freesession(void *, uint64_t);
+static void	sun8i_crypto_freesession(void *, uint64_t);
 static u_int	sun8i_crypto_ivlen(const struct cryptodesc *);
 static int	sun8i_crypto_process(void *, struct cryptop *, int);
 static void	sun8i_crypto_callback(struct sun8i_crypto_softc *,
@@ -2050,14 +2050,11 @@ sun8i_crypto_newsession(void *cookie, uint32_t *sidp, struct cryptoini *cri)
  *	Note: dsid is actually a 64-bit quantity containing both the
  *	driver id in the high half and the session id in the low half.
  */
-static int
+static void
 sun8i_crypto_freesession(void *cookie, uint64_t dsid)
 {
 
 	KASSERT((dsid & 0xffffffff) == 1);
-
-	/* Success! */
-	return 0;
 }
 
 /*
