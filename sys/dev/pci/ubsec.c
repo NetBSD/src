@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.57 2022/05/22 11:35:13 riastradh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.58 2022/05/22 11:38:43 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.57 2022/05/22 11:35:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.58 2022/05/22 11:38:43 riastradh Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -955,17 +955,11 @@ static int
 ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct cryptoini *c, *encini = NULL, *macini = NULL;
-	struct ubsec_softc *sc;
+	struct ubsec_softc *sc = arg;
 	struct ubsec_session *ses = NULL;
 	MD5_CTX md5ctx;
 	SHA1_CTX sha1ctx;
 	int i, sesn;
-
-	sc = arg;
-	KASSERT(sc != NULL /*, ("ubsec_newsession: null softc")*/);
-
-	if (sidp == NULL || cri == NULL || sc == NULL)
-		return (EINVAL);
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		if (c->cri_alg == CRYPTO_MD5_HMAC_96 ||
@@ -1108,16 +1102,14 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 static int
 ubsec_freesession(void *arg, u_int64_t tid)
 {
-	struct ubsec_softc *sc;
+	struct ubsec_softc *sc = arg;
 	int session;
 	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
 
-	sc = arg;
-	KASSERT(sc != NULL /*, ("ubsec_freesession: null softc")*/);
-
 	session = UBSEC_SESSION(sid);
-	if (session >= sc->sc_nsessions)
-		return (EINVAL);
+	KASSERTMSG(session >= 0, "session=%d", session);
+	KASSERTMSG(session < sc->sc_nsessions, "session=%d nsessions=%d",
+	    session, sc->sc_nsessions);
 
 	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
 	return (0);
