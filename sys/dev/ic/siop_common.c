@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.56 2022/05/22 11:27:35 andvar Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.57 2022/05/23 19:21:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.56 2022/05/22 11:27:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.57 2022/05/23 19:21:30 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -841,7 +841,7 @@ siop_sdp(struct siop_common_cmd *siop_cmd, int offset)
 
 	/*
 	 * now we can remove entries which have been transferred.
-	 * We just move the entries with data left at the beggining of the
+	 * We just move the entries with data left at the beginning of the
 	 * tables
 	 */
 	memmove(&siop_cmd->siop_tables->data[0],
