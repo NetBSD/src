@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.26 2022/04/08 10:17:55 andvar Exp $	*/
+/*	$NetBSD: pr.c,v 1.27 2022/05/23 19:52:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.26 2022/04/08 10:17:55 andvar Exp $");
+__RCSID("$NetBSD: pr.c,v 1.27 2022/05/23 19:52:35 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -860,7 +860,7 @@ mulfile(int argc, char *argv[])
 		goto out;
 
 	/*
-	 * calculate page boundries based on open file count
+	 * calculate page boundaries based on open file count
 	 */
 	clcnt = j;
 	if (nmwd) {
@@ -1496,7 +1496,7 @@ prhead(char *buf, const char *fname, int pagcnt)
 	 * restrictions. The specification for header line format
 	 * in the spec clearly does not limit length. No pr currently
 	 * restricts header length. However if we need to truncate in
-	 * an reasonable way, adjust the length of the printf by
+	 * a reasonable way, adjust the length of the printf by
 	 * changing HDFMT to allow a length max as an argument printf.
 	 * buf (which contains the offset spaces and time field could
 	 * also be trimmed
