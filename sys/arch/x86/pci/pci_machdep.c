@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.89 2021/10/15 18:51:38 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.90 2022/05/23 15:03:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.89 2021/10/15 18:51:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.90 2022/05/23 15:03:05 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -739,6 +739,44 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 	outl(pci_conf_port(tag, reg), data);
 	pci_conf_unlock(&ocl);
 }
+
+#ifdef XENPV
+void
+pci_conf_write16(pci_chipset_tag_t pc, pcitag_t tag, int reg, uint16_t data)
+{
+	pci_chipset_tag_t ipc;
+	struct pci_conf_lock ocl;
+	int dev;
+
+	KASSERT((reg & 0x1) == 0);
+
+	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
+		if ((ipc->pc_present & PCI_OVERRIDE_CONF_WRITE) == 0)
+			continue;
+		panic("pci_conf_write16 and override");
+	}
+
+	pci_decompose_tag(pc, tag, NULL, &dev, NULL);
+	if (__predict_false(pci_mode == 2 && dev >= 16)) {
+		return;
+	}
+
+	if (reg < 0)
+		return;
+	if (reg >= PCI_CONF_SIZE) {
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+		if (reg >= PCI_EXTCONF_SIZE)
+			return;
+		panic("pci_conf_write16 and reg >= PCI_CONF_SIZE");
+#endif
+		return;
+	}
+
+	pci_conf_lock(&ocl, pci_conf_selector(tag, reg & ~0x3));
+	outl(pci_conf_port(tag, reg & ~0x3) + (reg & 0x3), data);
+	pci_conf_unlock(&ocl);
+}
+#endif /* XENPV */
 
 void
 pci_mode_set(int mode)
