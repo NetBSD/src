@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.12 2022/04/24 07:11:31 skrll Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.13 2022/05/23 13:53:37 rin Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_pci.c,v 1.12 2022/04/24 07:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_pci.c,v 1.13 2022/05/23 13:53:37 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -911,6 +911,7 @@ bdmfree:
 void
 bwfm_pci_dmamem_free(struct bwfm_pci_softc *sc, struct bwfm_pci_dmamem *bdm)
 {
+	bus_dmamap_unload(sc->sc_dmat, bdm->bdm_map);
 	bus_dmamem_unmap(sc->sc_dmat, bdm->bdm_kva, bdm->bdm_size);
 	bus_dmamem_free(sc->sc_dmat, &bdm->bdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, bdm->bdm_map);

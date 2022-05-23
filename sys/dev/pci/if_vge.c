@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.83 2022/01/22 19:09:21 martin Exp $ */
+/* $NetBSD: if_vge.c,v 1.84 2022/05/23 13:53:37 rin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.83 2022/01/22 19:09:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.84 2022/05/23 13:53:37 rin Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1382,11 +1382,11 @@ vge_txeof(struct vge_softc *sc)
 		}
 
 		txs = &sc->sc_txsoft[idx];
-		m_freem(txs->txs_mbuf);
-		txs->txs_mbuf = NULL;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap, 0,
 		    txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+		m_freem(txs->txs_mbuf);
+		txs->txs_mbuf = NULL;
 		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (VGE_TDSTS_EXCESSCOLL | VGE_TDSTS_COLL))
 			if_statinc_ref(nsr, if_collisions);

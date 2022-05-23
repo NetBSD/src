@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.32 2021/09/23 10:31:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.33 2022/05/23 13:53:37 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,12 +793,12 @@ ena_free_tx_resources(struct ena_adapter *adapter, int qid)
 
 	/* Free buffer DMA maps, */
 	for (int i = 0; i < tx_ring->ring_size; i++) {
-		m_freem(tx_ring->tx_buffer_info[i].mbuf);
-		tx_ring->tx_buffer_info[i].mbuf = NULL;
 		bus_dmamap_unload(adapter->sc_dmat,
 		    tx_ring->tx_buffer_info[i].map);
 		bus_dmamap_destroy(adapter->sc_dmat,
 		    tx_ring->tx_buffer_info[i].map);
+		m_freem(tx_ring->tx_buffer_info[i].mbuf);
+		tx_ring->tx_buffer_info[i].mbuf = NULL;
 	}
 
 	/* And free allocated memory. */
@@ -994,12 +994,12 @@ ena_free_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 
 	/* Free buffer DMA maps, */
 	for (int i = 0; i < rx_ring->ring_size; i++) {
-		m_freem(rx_ring->rx_buffer_info[i].mbuf);
-		rx_ring->rx_buffer_info[i].mbuf = NULL;
 		bus_dmamap_unload(adapter->sc_dmat,
 		    rx_ring->rx_buffer_info[i].map);
 		bus_dmamap_destroy(adapter->sc_dmat,
 		    rx_ring->rx_buffer_info[i].map);
+		m_freem(rx_ring->rx_buffer_info[i].mbuf);
+		rx_ring->rx_buffer_info[i].mbuf = NULL;
 	}
 
 #ifdef LRO
