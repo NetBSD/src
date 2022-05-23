@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.15 2022/04/19 20:32:16 rillig Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.16 2022/05/23 19:21:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.15 2022/04/19 20:32:16 rillig Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.16 2022/05/23 19:21:30 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -563,7 +563,7 @@ __format_grouped_double(struct lconv *lc, double value, int *flags,
 	}
 	bufend = rslt + bufsize - 1;	/* reserve space for trailing '\0' */
 
-	/* skip spaces at beggining */
+	/* skip spaces at beginning */
 	padded = 0;
 	while (avalue[padded] == ' ') {
 		padded++;

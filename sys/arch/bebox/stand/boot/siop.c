@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.9 2022/05/22 11:27:34 andvar Exp $	*/
+/*	$NetBSD: siop.c,v 1.10 2022/05/23 19:21:30 andvar Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -213,7 +213,7 @@ siop_sdp(struct siop_adapter *adp, struct siop_xfer *xfer, struct scsi_xfer *xs,
 
 	/*
 	 * now we can remove entries which have been transferred.
-	 * We just move the entries with data left at the beggining of the
+	 * We just move the entries with data left at the beginning of the
 	 * tables
 	 */
 	memmove(xfer->siop_tables.data, &xfer->siop_tables.data[offset],
