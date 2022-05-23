@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1206 2022/05/22 17:55:08 rillig Exp $
+# $NetBSD: mi,v 1.1207 2022/05/23 22:33:56 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5630,6 +5630,8 @@
 ./usr/tests/usr.bin/make/unit-tests/directive-export-literal.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-export.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-export.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directive-for-empty.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directive-for-empty.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-for-errors.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-for-errors.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-for-escape.exp			tests-usr.bin-tests	compattestfile,atf
