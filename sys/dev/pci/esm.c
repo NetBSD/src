@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.65 2020/04/19 08:18:19 isaki Exp $      */
+/*      $NetBSD: esm.c,v 1.66 2022/05/23 13:53:37 rin Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.65 2020/04/19 08:18:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.66 2022/05/23 13:53:37 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1418,13 +1418,13 @@ esm_freemem(struct esm_softc *sc, struct esm_dma *p)
 	if (p->size == 0)
 		return;
 
-	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
-
-	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
+	bus_dmamap_unload(sc->dmat, p->map);
 
 	bus_dmamap_destroy(sc->dmat, p->map);
 
-	bus_dmamap_unload(sc->dmat, p->map);
+	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
+
+	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
 
 	p->size = 0;
 }

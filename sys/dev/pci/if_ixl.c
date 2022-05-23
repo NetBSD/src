@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.82 2022/03/31 06:23:18 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.83 2022/05/23 13:53:37 rin Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.82 2022/03/31 06:23:18 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.83 2022/05/23 13:53:37 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2532,9 +2532,6 @@ ixl_txr_free(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 	unsigned int i;
 
 	softint_disestablish(txr->txr_si);
-	while ((m = pcq_get(txr->txr_intrq)) != NULL)
-		m_freem(m);
-	pcq_destroy(txr->txr_intrq);
 
 	maps = txr->txr_maps;
 	for (i = 0; i < sc->sc_tx_ring_ndescs; i++) {
@@ -2542,6 +2539,10 @@ ixl_txr_free(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 
 		bus_dmamap_destroy(sc->sc_dmat, txm->txm_map);
 	}
+
+	while ((m = pcq_get(txr->txr_intrq)) != NULL)
+		m_freem(m);
+	pcq_destroy(txr->txr_intrq);
 
 	ixl_dmamem_free(sc, &txr->txr_mem);
 	mutex_destroy(&txr->txr_lock);

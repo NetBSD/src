@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.59 2022/05/22 11:39:27 riastradh Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.60 2022/05/23 13:53:37 rin Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.59 2022/05/22 11:39:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.60 2022/05/23 13:53:37 rin Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -1753,15 +1753,15 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 
 errout:
 	if (q != NULL) {
-		if ((q->q_dst_m != NULL) && (q->q_src_m != q->q_dst_m))
-			m_freem(q->q_dst_m);
-
 		if (q->q_dst_map != NULL && q->q_dst_map != q->q_src_map) {
 			bus_dmamap_unload(sc->sc_dmat, q->q_dst_map);
 		}
 		if (q->q_src_map != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, q->q_src_map);
 		}
+
+		if ((q->q_dst_m != NULL) && (q->q_src_m != q->q_dst_m))
+			m_freem(q->q_dst_m);
 
 		mutex_spin_enter(&sc->sc_mtx);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q, q_next);
