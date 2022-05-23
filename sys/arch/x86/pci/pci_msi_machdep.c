@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.16 2021/12/05 04:56:39 msaitoh Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.17 2022/05/23 15:03:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.16 2021/12/05 04:56:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.17 2022/05/23 15:03:05 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "ioapic.h"
@@ -175,14 +175,6 @@ pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
 		return EINVAL;
 	}
 
-#ifdef XENPV
-	if (xen_pci_msi_probe(msi_pic, *count)) {
-		DPRINTF(("xen_pci_msi_probe() failed\n"));
-		msipic_destruct_msi_pic(msi_pic);
-		return EINVAL;
-	}
-#endif
-
 	vectors = NULL;
 	while (*count > 0) {
 		vectors = pci_msi_alloc_vectors(msi_pic, NULL, count);
@@ -216,6 +208,15 @@ pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
 	}
 
 	*ihps = vectors;
+#ifdef XENPV
+	if (xen_map_msi_pirq(msi_pic, *count)) {
+		DPRINTF(("xen_map_msi_pirq() failed\n"));
+		pci_msi_free_vectors(msi_pic, vectors, *count);
+		msipic_destruct_msi_pic(msi_pic);
+		return EINVAL;
+	}
+#endif
+
 	return 0;
 }
 #endif /* __HAVE_PCI_MSI_MSIX */
@@ -270,14 +271,6 @@ pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 	if (msix_pic == NULL)
 		return EINVAL;
 
-#ifdef XENPV
-	if (xen_pci_msi_probe(msix_pic, *count)) {
-		DPRINTF(("xen_pci_msi_probe() failed\n"));
-		msipic_destruct_msix_pic(msix_pic);
-		return EINVAL;
-	}
-#endif
-
 	vectors = NULL;
 	while (*count > 0) {
 		vectors = pci_msi_alloc_vectors(msix_pic, table_indexes, count);
@@ -311,6 +304,15 @@ pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 	}
 
 	*ihps = vectors;
+
+#ifdef XENPV
+	if (xen_map_msix_pirq(msix_pic, *count)) {
+		DPRINTF(("xen_map_msi_pirq() failed\n"));
+		pci_msi_free_vectors(msix_pic, vectors, *count);
+		msipic_destruct_msix_pic(msix_pic);
+		return EINVAL;
+	}
+#endif
 	return 0;
 }
 
@@ -340,6 +342,9 @@ x86_pci_msi_release_internal(pci_intr_handle_t *pihs, int count)
 	if (pic == NULL)
 		return;
 
+#ifdef XENPV
+	xen_pci_msi_release(pic, count);
+#endif
 	pci_msi_free_vectors(pic, pihs, count);
 	msipic_destruct_msi_pic(pic);
 }
@@ -379,6 +384,9 @@ x86_pci_msix_release_internal(pci_intr_handle_t *pihs, int count)
 	if (pic == NULL)
 		return;
 
+#ifdef XENPV
+	xen_pci_msi_release(pic, count);
+#endif
 	pci_msi_free_vectors(pic, pihs, count);
 	msipic_destruct_msix_pic(pic);
 }

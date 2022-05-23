@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.20 2019/02/12 07:58:26 cherry Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.21 2022/05/23 15:03:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -71,6 +71,10 @@ int		xpci_enumerate_bus(struct pci_softc *, const int *,
 		   int (*)(const struct pci_attach_args *),
 		   struct pci_attach_args *);
 #define PCI_MACHDEP_ENUMERATE_BUS xpci_enumerate_bus
+#endif
+
+#ifdef XENPV
+void pci_conf_write16(pci_chipset_tag_t, pcitag_t, int, uint16_t);
 #endif
 
 /* functions provided to MI PCI */

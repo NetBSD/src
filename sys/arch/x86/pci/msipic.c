@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.25 2020/12/11 09:22:20 knakahara Exp $	*/
+/*	$NetBSD: msipic.c,v 1.26 2022/05/23 15:03:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.25 2020/12/11 09:22:20 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.26 2022/05/23 15:03:05 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -282,6 +282,16 @@ msipic_destruct_common_msi_pic(struct pic *msi_pic)
 	msipic_release_common_msi_devid(msipic->mp_devid);
 	mutex_exit(&msipic_list_lock);
 
+	if (msipic->mp_i.mp_xen_pirq != NULL) {
+		KASSERT(msipic->mp_i.mp_veccnt > 0);
+#ifdef DIAGNOSTIC
+		for (int i = 0; i < msipic->mp_i.mp_veccnt; i++) {
+			KASSERT(msipic->mp_i.mp_xen_pirq[i] == 0);
+		}
+#endif
+		kmem_free(msipic->mp_i.mp_xen_pirq, 
+	            sizeof(*msipic->mp_i.mp_xen_pirq) * msipic->mp_i.mp_veccnt);
+	}
 	kmem_free(msipic, sizeof(*msipic));
 	kmem_free(msi_pic, sizeof(*msi_pic));
 }
@@ -421,7 +431,11 @@ msi_addroute(struct pic *pic, struct cpu_info *ci,
 	}
 #endif /* !XENPV */
 	ctl |= PCI_MSI_CTL_MSI_ENABLE;
+#ifdef XENPV
+	pci_conf_write16(pc, tag, off + PCI_MSI_CTL + 2, ctl >> 16);
+#else
 	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
+#endif
 }
 
 /*
@@ -546,9 +560,9 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	pci_chipset_tag_t pc;
 	struct pci_attach_args *pa;
 	pcitag_t tag;
+#ifndef XENPV
 	bus_space_tag_t bstag;
 	bus_space_handle_t bshandle;
-#ifndef XENPV
 	uint64_t entry_base;
 	pcireg_t addr, data;
 #endif
@@ -567,6 +581,7 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	err = pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, NULL);
 	KASSERT(err != 0);
 
+#ifndef XENPV
 	/* Disable MSI-X before writing MSI-X table */
 	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
 	ctl &= ~PCI_MSIX_CTL_ENABLE;
@@ -574,7 +589,6 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 
 	bstag = pic->pic_msipic->mp_bstag;
 	bshandle = pic->pic_msipic->mp_bshandle;
-#ifndef XENPV
 	entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
 
 	/*
@@ -597,12 +611,19 @@ msix_addroute(struct pic *pic, struct cpu_info *ci,
 	    entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_HI, 0);
 	bus_space_write_4(bstag, bshandle,
 	    entry_base + PCI_MSIX_TABLE_ENTRY_DATA, data);
-#endif /* !XENPV */
 	BUS_SPACE_WRITE_FLUSH(bstag, bshandle);
+#endif /* !XENPV */
 
 	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);
+	if (ctl & PCI_MSIX_CTL_FUNCMASK) {
+		ctl &= ~PCI_MSIX_CTL_FUNCMASK;
+	}
 	ctl |= PCI_MSIX_CTL_ENABLE;
+#ifdef XENPV
+	pci_conf_write16(pc, tag, off + PCI_MSIX_CTL + 2, ctl >> 16);
+#else
 	pci_conf_write(pc, tag, off + PCI_MSIX_CTL, ctl);
+#endif
 }
 
 /*
@@ -803,6 +824,11 @@ msipic_set_msi_vectors(struct pic *msi_pic, pci_intr_handle_t *pihs,
 	}
 
 	msi_pic->pic_msipic->mp_i.mp_veccnt = count;
+#ifdef XENPV
+	msi_pic->pic_msipic->mp_i.mp_xen_pirq =
+	    kmem_zalloc(sizeof(*msi_pic->pic_msipic->mp_i.mp_xen_pirq) * count,
+	    KM_SLEEP);
+#endif
 	return 0;
 }
 

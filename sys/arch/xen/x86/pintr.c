@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.20 2020/08/01 12:39:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.21 2022/05/23 15:03:05 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -168,65 +168,119 @@ short irq2port[NR_EVENT_CHANNELS] = {0}; /* actually port + 1, so that 0 is inva
 #if defined(DOM0OPS) || NPCI > 0
 
 #ifdef __HAVE_PCI_MSI_MSIX
-static int
-xen_map_msi_pirq(struct pic *pic, int count, int *gsi)
+int
+xen_map_msi_pirq(struct pic *pic, int count)
 {
 	struct physdev_map_pirq map_irq;
-	const struct msipic_pci_info *i = msipic_get_pci_info(pic);
+	const struct msipic_pci_info *msi_i = msipic_get_pci_info(pic);
+	int i;
 	int ret;
 
 	if (count == -1)
-		count = i->mp_veccnt;
+		count = msi_i->mp_veccnt;
 	KASSERT(count > 0);
+
+	KASSERT(pic->pic_type == PIC_MSI);
 
 	memset(&map_irq, 0, sizeof(map_irq));
 	map_irq.domid = DOMID_SELF;
 	map_irq.type = MAP_PIRQ_TYPE_MSI_SEG;
 	map_irq.index = -1;
 	map_irq.pirq = -1;
-	map_irq.bus = i->mp_bus;
- 	map_irq.devfn = (i->mp_dev << 3) | i->mp_fun;
+	map_irq.bus = msi_i->mp_bus;
+ 	map_irq.devfn = (msi_i->mp_dev << 3) | msi_i->mp_fun;
+	aprint_debug("xen_map_msi_pirq bus %d devfn 0x%x (%d %d) entry_nr %d",
+	    map_irq.bus, map_irq.devfn, msi_i->mp_dev, msi_i->mp_fun,
+	    map_irq.entry_nr);
 	map_irq.entry_nr = count;
-	if (pic->pic_type == PIC_MSI && i->mp_veccnt > 1) {
+	if (msi_i->mp_veccnt > 1) {
 		map_irq.type = MAP_PIRQ_TYPE_MULTI_MSI;
-	} else if (pic->pic_type == PIC_MSIX) {
-		map_irq.table_base = i->mp_table_base;
 	}
 
 	ret = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq, &map_irq);
 
 	if (ret == 0) {
 		KASSERT(map_irq.entry_nr == count);
-		*gsi = map_irq.pirq;
+		aprint_debug(" pirq(s)");
+		for (i = 0; i < count; i++) {
+			msi_i->mp_xen_pirq[i] = map_irq.pirq + i;
+			aprint_debug(" %d", msi_i->mp_xen_pirq[i]);
+		}
+		aprint_debug("\n");
+	} else {
+		aprint_debug(" fail\n");
 	}
-
 	return ret;
 }
 
-/*
- * Check if we can map MSI interrupt. The Xen call fails if VT-d is not
- * available or disabled.
- */
 int
-xen_pci_msi_probe(struct pic *pic, int count)
+xen_map_msix_pirq(struct pic *pic, int count)
 {
-	int pirq, ret;
+	struct physdev_map_pirq map_irq;
+	const struct msipic_pci_info *msi_i = msipic_get_pci_info(pic);
+	int i;
+	int ret;
 
-	ret = xen_map_msi_pirq(pic, count, &pirq);
+	if (count == -1)
+		count = msi_i->mp_veccnt;
+	KASSERT(count > 0);
 
-	if (ret == 0) {
+	KASSERT(pic->pic_type == PIC_MSIX);
+
+	memset(&map_irq, 0, sizeof(map_irq));
+	map_irq.domid = DOMID_SELF;
+	map_irq.type = MAP_PIRQ_TYPE_MSI_SEG;
+	map_irq.index = -1;
+	map_irq.pirq = -1;
+	map_irq.bus = msi_i->mp_bus;
+ 	map_irq.devfn = (msi_i->mp_dev << 3) | msi_i->mp_fun;
+	aprint_debug("xen_map_msix_pirq bus %d devfn 0x%x (%d %d) count %d",
+	    map_irq.bus, map_irq.devfn, msi_i->mp_dev, msi_i->mp_fun,
+	    count);
+
+	for (i = 0; i < count; i++) {
+		map_irq.entry_nr = i;
+		map_irq.pirq = -1;
+		aprint_debug(" map %d", i);
+		ret = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq, &map_irq);
+		if (ret) {
+			aprint_debug(" fail\n");
+			goto fail;
+		}
+		msi_i->mp_xen_pirq[i] = map_irq.pirq;
+		aprint_debug("->%d", msi_i->mp_xen_pirq[i]);
+	}
+	aprint_debug("\n");
+	return 0;
+
+fail:
+	i--;
+	while(i >= 0) {
 		struct physdev_unmap_pirq unmap_irq;
 		unmap_irq.domid = DOMID_SELF;
-		unmap_irq.pirq = pirq;
+		unmap_irq.pirq = msi_i->mp_xen_pirq[i];
 		
 		(void)HYPERVISOR_physdev_op(PHYSDEVOP_unmap_pirq, &unmap_irq);
-	} else {
-		aprint_debug("PHYSDEVOP_map_pirq() failed %d, MSI disabled\n",
-		    ret);
+		msi_i->mp_xen_pirq[i] = 0;
 	}
-
 	return ret;
 }
+
+void
+xen_pci_msi_release(struct pic *pic, int count)
+{
+	const struct msipic_pci_info *msi_i = msipic_get_pci_info(pic);
+	KASSERT(count == msi_i->mp_veccnt);
+	for (int i = 0; i < count; i++) {
+		struct physdev_unmap_pirq unmap_irq;
+		unmap_irq.domid = DOMID_SELF;
+		unmap_irq.pirq = msi_i->mp_xen_pirq[i];
+		
+		(void)HYPERVISOR_physdev_op(PHYSDEVOP_unmap_pirq, &unmap_irq);
+		msi_i->mp_xen_pirq[i] = 0;
+	}
+}
+
 #endif /* __HAVE_PCI_MSI_MSIX */
 
 /*
@@ -273,17 +327,25 @@ xen_pic_to_gsi(struct pic *pic, int pin)
 			panic("physdev_op(PHYSDEVOP_alloc_irq_vector) %d"
 			    " fail %d", gsi, ret);
 		}
+		aprint_debug("xen_pic_to_gsi %s pin %d gsi %d allocated %d\n",
+		    (pic->pic_type == PIC_IOAPIC) ? "ioapic" : "i8259",
+		    pin, gsi, irq_op.vector);
+
 		KASSERT(irq_op.vector == gsi);
 		break;
 	    }
 	case PIC_MSI:
 	case PIC_MSIX:
 #ifdef __HAVE_PCI_MSI_MSIX
-		ret = xen_map_msi_pirq(pic, -1, &gsi);
-		if (ret != 0)
-			panic("physdev_op(PHYSDEVOP_map_pirq) MSI fail %d",
-			    ret);
+	{
+		const struct msipic_pci_info *msi_i = msipic_get_pci_info(pic);
+		KASSERT(pin < msi_i->mp_veccnt);
+		gsi = msi_i->mp_xen_pirq[pin];
+		aprint_debug("xen_pic_to_gsi %s pin %d gsi %d\n",
+		    (pic->pic_type == PIC_MSI) ? "MSI" : "MSIX",
+		    pin, gsi);
 		break;
+	}
 #endif
 	default:
 		panic("unknown pic_type %d", pic->pic_type);
