@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.36 2021/04/24 16:24:14 tsutsui Exp $ */
+/*	$NetBSD: ms.c,v 1.37 2022/05/23 12:17:17 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36 2021/04/24 16:24:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.37 2022/05/23 12:17:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -464,7 +464,16 @@ ms_input(struct ms_softc *ms, int c)
 	if (ms->ms_dy) {
 		NEXT;
 		fe->id = LOC_Y_DELTA;
-		fe->value = -ms->ms_dy;	/* XXX? */
+		/*
+		 * struct firm_events (derived from SunOS) defines
+		 * moving up (forward) is positive. (see vuid_event.h)
+		 * On the other hand, X680x0 mouse protocol reports
+		 * moving down (backward) is positive.
+		 * 
+		 * Note wsmouse(9) also defines moving upward is positive,
+		 * but Xorg DIX layer requires moving down is positive.
+		 */
+		fe->value = -ms->ms_dy;
 		firm_gettime(fe);
 		ADVANCE;
 		ms->ms_dy = 0;
