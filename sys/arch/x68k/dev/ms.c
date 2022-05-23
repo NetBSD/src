@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.37 2022/05/23 12:17:17 tsutsui Exp $ */
+/*	$NetBSD: ms.c,v 1.38 2022/05/23 16:19:59 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.37 2022/05/23 12:17:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.38 2022/05/23 16:19:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.37 2022/05/23 12:17:17 tsutsui Exp $");
  *	b dx dy
  *
  * where b is the button state, encoded as 0x80|(buttons)---there are
- * two buttons (2=left, 1=right)---and dx,dy are X and Y delta values.
+ * two buttons (1=left, 2=right)---and dx,dy are X and Y delta values.
  *
  * It needs a trigger for the transmission.  When zs RTS negated, the
  * mouse begins the sequence.  RTS assertion has no effect.
