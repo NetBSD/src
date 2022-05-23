@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.38 2022/05/23 16:19:59 tsutsui Exp $ */
+/*	$NetBSD: ms.c,v 1.39 2022/05/23 16:54:29 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.38 2022/05/23 16:19:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.39 2022/05/23 16:54:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -149,7 +149,7 @@ struct ms_softc {
 static int ms_match(device_t, cfdata_t, void *);
 static void ms_attach(device_t, device_t, void *);
 static void ms_trigger(struct zs_chanstate *, int);
-void ms_modem(void *);
+static void ms_modem(void *);
 
 CFATTACH_DECL_NEW(ms, sizeof(struct ms_softc),
     ms_match, ms_attach, NULL, NULL);
@@ -160,19 +160,19 @@ static void ms_txint(struct zs_chanstate *);
 static void ms_softint(struct zs_chanstate *);
 static void ms_input(struct ms_softc *, int);
 
-struct zsops zsops_ms = {
+static struct zsops zsops_ms = {
 	ms_rxint,	/* receive char available */
 	ms_stint,	/* external/status */
 	ms_txint,	/* xmit buffer empty */
 	ms_softint,	/* process software interrupt */
 };
 
-dev_type_open(msopen);
-dev_type_close(msclose);
-dev_type_read(msread);
-dev_type_ioctl(msioctl);
-dev_type_poll(mspoll);
-dev_type_kqfilter(mskqfilter);
+static dev_type_open(msopen);
+static dev_type_close(msclose);
+static dev_type_read(msread);
+static dev_type_ioctl(msioctl);
+static dev_type_poll(mspoll);
+static dev_type_kqfilter(mskqfilter);
 
 const struct cdevsw ms_cdevsw ={
 	.d_open = msopen,
@@ -192,7 +192,7 @@ const struct cdevsw ms_cdevsw ={
 /*
  * ms_match: how is this zs channel configured?
  */
-int
+static int
 ms_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zsc_attach_args *args = aux;
@@ -209,7 +209,7 @@ ms_match(device_t parent, cfdata_t cf, void *aux)
 	return 2;
 }
 
-void
+static void
 ms_attach(device_t parent, device_t self, void *aux)
 {
 	struct ms_softc *ms = device_private(self);
@@ -247,7 +247,7 @@ ms_attach(device_t parent, device_t self, void *aux)
  *  (open,close,read,write,...)
  ****************************************************************/
 
-int
+static int
 msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -273,7 +273,7 @@ msopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -287,7 +287,7 @@ msclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_softc *ms;
@@ -296,7 +296,7 @@ msread(dev_t dev, struct uio *uio, int flags)
 	return ev_read(&ms->ms_events, uio, flags);
 }
 
-int
+static int
 msioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -336,7 +336,7 @@ msioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return ENOTTY;
 }
 
-int
+static int
 mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -345,7 +345,7 @@ mspoll(dev_t dev, int events, struct lwp *l)
 	return ev_poll(&ms->ms_events, events, l);
 }
 
-int
+static int
 mskqfilter(dev_t dev, struct knote *kn)
 {
 	struct ms_softc *ms;
@@ -658,7 +658,7 @@ ms_trigger(struct zs_chanstate *cs, int onoff)
  * mouse timer interrupt.
  * called after system tick interrupt is done.
  */
-void
+static void
 ms_modem(void *arg)
 {
 	struct ms_softc *ms = arg;
