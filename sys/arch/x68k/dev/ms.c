@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.39 2022/05/23 16:54:29 tsutsui Exp $ */
+/*	$NetBSD: ms.c,v 1.40 2022/05/23 16:58:37 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.39 2022/05/23 16:54:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.40 2022/05/23 16:58:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -144,7 +144,7 @@ struct ms_softc {
 	volatile int ms_ready;		/* event queue is ready */
 	struct	evvar ms_events;	/* event queue state */
 	kmutex_t ms_lock;
-} ms_softc;
+};
 
 static int ms_match(device_t, cfdata_t, void *);
 static void ms_attach(device_t, device_t, void *);
