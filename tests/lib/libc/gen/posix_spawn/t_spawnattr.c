@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawnattr.c,v 1.5 2021/11/07 15:46:20 christos Exp $ */
+/* $NetBSD: t_spawnattr.c,v 1.6 2022/05/23 21:46:12 andvar Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_spawnattr.c,v 1.5 2021/11/07 15:46:20 christos Exp $");
+__RCSID("$NetBSD: t_spawnattr.c,v 1.6 2022/05/23 21:46:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <atf-c.h>
@@ -109,7 +109,7 @@ ATF_TC_BODY(t_spawnattr, tc)
 	char helper[FILENAME_MAX];
 
 	/*
-	 * create a pipe to controll the child
+	 * create a pipe to control the child
 	 */
 	err = pipe(pfd);
 	ATF_REQUIRE_MSG(err == 0, "could not create pipe, errno %d", errno);

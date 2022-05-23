@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800reg.h,v 1.7 2010/02/21 06:08:53 bsh Exp $ */
+/* $NetBSD: s3c2800reg.h,v 1.8 2022/05/23 21:46:11 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -124,7 +124,7 @@
 #define	 CLKCON_TIMER	(1<<2)	/* PCLK to TIMER */
 #define	 CLKCON_IDLE	(1<<1)	/* Enter IDLE Mode */
 
-#define	CLKMAN_CLKSLOW	0x08	/* slow clock controll */
+#define	CLKMAN_CLKSLOW	0x08	/* slow clock control */
 #define	 CLKSLOW_SLOW	(1<<4)	/* 1: Enable SLOW mode */
 #define	 CLKSLOW_VAL_MASK  0x0f	/* divider value for slow clock */
 

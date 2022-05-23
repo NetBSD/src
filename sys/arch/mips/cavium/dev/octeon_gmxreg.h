@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmxreg.h,v 1.6 2022/04/17 21:24:53 andvar Exp $	*/
+/*	$NetBSD: octeon_gmxreg.h,v 1.7 2022/05/23 21:46:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -644,7 +644,7 @@
 
 /* -------------------------------------------------------------------------- */
 
-/* Low-level SGMII link controll */
+/* Low-level SGMII link control */
 
 #define	PCS_BASE(g, i)	(UINT64_C(0x00011800b0001000) + 0x8000000 * (g) + 0x400 * (i))
 #define	PCS_SIZE	0x98
