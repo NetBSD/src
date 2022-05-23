@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.42 2022/03/23 13:06:06 andvar Exp $ */
+/*	$NetBSD: mbr.c,v 1.43 2022/05/23 21:46:12 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -500,7 +500,7 @@ validate_and_set_names(mbr_info_t *mbri, const struct mbr_bootsel *src,
 
 	for (i = 0; i < MBR_PART_COUNT; i++) {
 		/*
-		 * Make sure the name does not contain controll chars
+		 * Make sure the name does not contain control chars
 		 * (not using iscntrl due to minimalistic locale support
 		 * in miniroot environments) and is properly 0-terminated.
 		 */
