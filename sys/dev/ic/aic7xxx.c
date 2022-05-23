@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.145 2021/10/25 07:45:01 ryo Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.146 2022/05/23 19:52:35 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.145 2021/10/25 07:45:01 ryo Exp $
+ * $Id: aic7xxx.c,v 1.146 2022/05/23 19:52:35 andvar Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.145 2021/10/25 07:45:01 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.146 2022/05/23 19:52:35 andvar Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -88,7 +88,7 @@ struct ahc_hard_error_entry {
 
 static struct ahc_hard_error_entry ahc_hard_errors[] = {
 	{ ILLHADDR,	"Illegal Host Access" },
-	{ ILLSADDR,	"Illegal Sequencer Address referrenced" },
+	{ ILLSADDR,	"Illegal Sequencer Address referenced" },
 	{ ILLOPCODE,	"Illegal Opcode in sequencer program" },
 	{ SQPARERR,	"Sequencer Parity Error" },
 	{ DPARERR,	"Data-path Parity Error" },
@@ -113,7 +113,7 @@ static struct ahc_phase_table_entry ahc_phase_table[] =
 };
 
 /*
- * In most cases we only wish to itterate over real phases, so
+ * In most cases we only wish to iterate over real phases, so
  * exclude the last element from the count.
  */
 static const u_int num_phases = NUM_ELEMENTS(ahc_phase_table) - 1;

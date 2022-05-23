@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.67 2022/05/22 11:27:35 andvar Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.68 2022/05/23 19:52:35 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.67 2022/05/22 11:27:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.68 2022/05/23 19:52:35 andvar Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -104,7 +104,7 @@ static struct ahd_phase_table_entry ahd_phase_table[] =
 };
 
 /*
- * In most cases we only wish to itterate over real phases, so
+ * In most cases we only wish to iterate over real phases, so
  * exclude the last element from the count.
  */
 static const u_int num_phases = NUM_ELEMENTS(ahd_phase_table) - 1;

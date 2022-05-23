@@ -1,4 +1,4 @@
-/*	$NetBSD: pramasm.s,v 1.9 2013/09/07 19:06:29 chs Exp $	*/
+/*	$NetBSD: pramasm.s,v 1.10 2022/05/23 19:52:34 andvar Exp $	*/
 
 /*
  * RTC toolkit version 1.08b, copyright 1995, erik vogan
@@ -338,7 +338,7 @@ tagain:
 	swap	%d1		| now we want to tweak the command
 	addqw	#4,%d1		| increment our memory addr by 1 (this even 
 				| works if we want to dump across 32 byte
-				| boundries for an extended command!!!
+				| boundaries for an extended command!!!
 				| thanks to the oriw #$3880 above !!!)
 	dbf	%d4,tagain	| repeat until we've got all we want
 	movel	#0x00d50035,%d1	| remember that command to write the wp byte ?

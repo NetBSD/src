@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.13 2018/03/16 17:56:33 ryo Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.14 2022/05/23 19:52:34 andvar Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.13 2018/03/16 17:56:33 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_io.c,v 1.14 2022/05/23 19:52:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ ifpga_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_sp
 		return 0;
 	}
 
-	/* Round the allocation to page boundries */
+	/* Round the allocation to page boundaries */
 	startpa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
 
