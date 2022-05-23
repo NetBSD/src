@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.125 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.126 2022/05/23 16:58:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.125 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.126 2022/05/23 16:58:37 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -158,7 +158,7 @@ struct fdc_softc {
 	enum fdc_state sc_state;
 	int sc_errors;			/* number of retries so far */
 	uint8_t sc_status[7];		/* copy of registers */
-} fdc_softc;
+};
 
 int fdcintr(void *);
 void fdcreset(struct fdc_softc *);
