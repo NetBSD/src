@@ -1,4 +1,4 @@
-/* $NetBSD: gsckbc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $ */
+/* $NetBSD: gsckbc.c,v 1.2 2022/05/23 21:46:12 andvar Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.2 2022/05/23 21:46:12 andvar Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
 #define	REG_RESET	0x0	/* W: reset port */
 #define	REG_RCVDATA	0x4	/* R: received data (4 byte FIFO) */
 #define	REG_XMITDATA	0x4	/* W: data to transmit */
-#define	REG_CONTROL	0x8	/* Controll Bits */
+#define	REG_CONTROL	0x8	/* Control Bits */
 #define	REG_STATUS	0xc	/* Status Bits */
 #define	REG_SZ		0xc	/* Size of register set */
 #define	REG_OFFSET	0x100	/* Address Offset of the two ports */

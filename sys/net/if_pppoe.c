@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.180 2022/05/10 09:05:03 knakahara Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.181 2022/05/23 21:46:12 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.180 2022/05/10 09:05:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.181 2022/05/23 21:46:12 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -232,7 +232,7 @@ static void pppoe_timeout_co_halt(void *);
 static void pppoe_timeout_wk(struct work *, void *);
 static void pppoe_timeout(struct pppoe_softc *);
 
-/* sending actual protocol controll packets */
+/* sending actual protocol control packets */
 static int pppoe_send_padi(struct pppoe_softc *);
 static int pppoe_send_padr(struct pppoe_softc *);
 #ifdef PPPOE_SERVER

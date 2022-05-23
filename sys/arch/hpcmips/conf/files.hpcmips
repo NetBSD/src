@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.109 2019/08/21 04:17:40 msaitoh Exp $
+#	$NetBSD: files.hpcmips,v 1.110 2022/05/23 21:46:12 andvar Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -436,7 +436,7 @@ device vrdmaau
 attach vrdmaau at vripif
 file arch/hpcmips/vr/vrdmaau.c	vrdmaau
 
-# DMA Controll Unit
+# DMA Control Unit
 device vrdcu
 attach vrdcu at vripif
 file arch/hpcmips/vr/vrdcu.c	vrdcu

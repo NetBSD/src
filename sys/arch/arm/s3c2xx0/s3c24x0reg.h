@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.10 2012/01/30 03:28:33 nisimura Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.11 2022/05/23 21:46:11 andvar Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -160,7 +160,7 @@
 #define	 PLLCON_SDIV_MASK	(0x03<<PLLCON_SDIV_SHIFT)
 #define	CLKMAN_CLKCON	0x0c
 
-#define	CLKMAN_CLKSLOW	0x10	/* slow clock controll */
+#define	CLKMAN_CLKSLOW	0x10	/* slow clock control */
 #define	 CLKSLOW_UCLK 	(1<<7)	/* 1=UPLL off */
 #define	 CLKSLOW_MPLL 	(1<<5)	/* 1=PLL off */
 #define	 CLKSLOW_SLOW	(1<<4)	/* 1: Enable SLOW mode */

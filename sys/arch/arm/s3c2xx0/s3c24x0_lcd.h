@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.h,v 1.6 2012/01/30 03:28:33 nisimura Exp $ */
+/* $NetBSD: s3c24x0_lcd.h,v 1.7 2022/05/23 21:46:11 andvar Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -83,7 +83,7 @@ struct s3c24x0_lcd_panel_info {
 	short panel_height;
 	int   pixel_clock;		/* in Hz */
 
-	/* Initial values to go to LCD controll registers */
+	/* Initial values to go to LCD control registers */
 	uint32_t lcdcon1;
 	uint32_t lcdcon2;
 	uint32_t lcdcon3;

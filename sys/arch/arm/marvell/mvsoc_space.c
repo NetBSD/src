@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.11 2021/08/30 00:04:30 rin Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.12 2022/05/23 21:46:11 andvar Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.11 2021/08/30 00:04:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.12 2022/05/23 21:46:11 andvar Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -420,7 +420,7 @@ mvsoc_bs_map(void *space, bus_addr_t address, bus_size_t size, int flags,
  * XXX: We are not configuring any decode windows for Armada XP
  * 	at the moment. We rely on those that have been set by u-boot.
  *	Hence we don't want to mess around with decode windows,
- *	till we get full controll over them.
+ *	till we get full control over them.
  */
 
 	int tag = (int)space;
