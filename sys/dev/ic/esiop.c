@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.60 2022/02/23 21:54:41 andvar Exp $	*/
+/*	$NetBSD: esiop.c,v 1.61 2022/05/23 19:21:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.60 2022/02/23 21:54:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.61 2022/05/23 19:21:30 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ esiop_reset(struct esiop_softc *sc)
 	siop_common_reset(&sc->sc_c);
 
 	/*
-	 * we copy the script at the beggining of RAM. Then there is 4 bytes
+	 * we copy the script at the beginning of RAM. Then there is 4 bytes
 	 * for messages in, and 4 bytes for semaphore
 	 */
 	sc->sc_free_offset = __arraycount(esiop_script);

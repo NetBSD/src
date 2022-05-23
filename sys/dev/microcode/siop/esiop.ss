@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.21 2009/10/19 18:41:13 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.22 2022/05/23 19:21:30 andvar Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -288,7 +288,7 @@ ignore_cmd:
 	MOVE SCRATCHD3 + 0 to SCRATCHD3 WITH CARRY;
 	MOVE SCRATCHE0 TO SFBR;
 	JUMP REL(handle_cmd), IF  NOT ncmd_slots_last;
-; reset pointers to beggining of area
+; reset pointers to beginning of area
 cmdr0:
 	MOVE 0xff to SCRATCHD0; correct value will be patched by driver
 cmdr1:
