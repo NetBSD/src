@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 2019/02/06 21:42:46 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 2022/05/23 19:52:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2019/02/06 21:42:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2022/05/23 19:52:34 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -397,7 +397,7 @@ decode_bootstring(void)
 	char *equ;
 	int i;
 
-	/* break apart bootstring on ' ' boundries and itterate */
+	/* break apart bootstring on ' ' boundaries and iterate */
 	work = strtok_light(bootstring, ' ');
 	while (work != NULL) {
 		/* if starts with '-', we got options, walk its decode */

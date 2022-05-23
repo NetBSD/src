@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.17 2021/07/11 13:00:52 tsutsui Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.18 2022/05/23 19:52:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -198,8 +198,8 @@ struct	rd_clearcmd {
  * Several HP drives have an odd number of 256 byte sectors per track.
  * This makes it rather difficult to break them into 512 and 1024 byte blocks.
  * So...we just do like HPUX and don't bother to respect hardware track/head
- * boundries -- we just mold the disk so that we use the entire capacity.
- * HPUX also sometimes doesn't abide by cylinder boundries, we attempt to
+ * boundaries -- we just mold the disk so that we use the entire capacity.
+ * HPUX also sometimes doesn't abide by cylinder boundaries, we attempt to
  * whenever possible.
  *
  * DISK		REAL (256 BPS)		HPUX (1024 BPS)		BSD (512 BPS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.91 2021/08/17 22:00:30 andvar Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.92 2022/05/23 19:52:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.91 2021/08/17 22:00:30 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.92 2022/05/23 19:52:34 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -557,7 +557,7 @@ initarm(void *arg)
 #endif
 
 	/*
-	 * Now we start consturction of the L1 page table
+	 * Now we start construction of the L1 page table
 	 * We start by mapping the L2 page tables into the L1.
 	 * This means that we can replace L1 mappings later on if necessary
 	 */
@@ -947,7 +947,7 @@ nw_footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable
 {
 	bus_addr_t startpa, endpa;
 
-	/* Round the allocation to page boundries */
+	/* Round the allocation to page boundaries */
 	startpa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
 
