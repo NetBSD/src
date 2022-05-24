@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.11 2021/11/01 21:28:02 andvar Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.12 2022/05/24 06:18:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,7 +69,7 @@ struct	grfinfo {
 	int	gd_fbwidth;	/* frame buffer width		*/
 	int	gd_fbheight;	/* frame buffer height		*/
 
-	struct grfdyninfo gd_dyn; /* everything changable by GRFIOCSINFO */
+	struct grfdyninfo gd_dyn; /* everything changeable by GRFIOCSINFO */
 /* compatibility... */
 #define gd_fbx		gd_dyn.gdi_fbx
 #define gd_fby		gd_dyn.gdi_fby

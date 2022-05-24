@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.26 2022/05/22 11:27:37 andvar Exp $	*/
+/*	$NetBSD: partitions.h,v 1.27 2022/05/24 06:18:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -303,14 +303,14 @@ struct disk_partitioning_scheme {
 	bool (*format_partition_table_str)(const struct disk_partitions*,
 	    part_id, size_t col, char *outstr, size_t outspace);
 
-	/* is the type of this partition changable? */
+	/* is the type of this partition changeable? */
 	bool (*part_type_can_change)(const struct disk_partitions*,
 	    part_id);
 
 	/* can we add further partitions? */
 	bool (*can_add_partition)(const struct disk_partitions*);
 
-	/* is the custom attribut changable? */
+	/* is the custom attribute changeable? */
 	bool (*custom_attribute_writable)(const struct disk_partitions*,
 	    part_id, size_t attr_no);
 	/*

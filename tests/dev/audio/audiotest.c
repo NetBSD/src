@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.20 2022/05/17 05:05:20 andvar Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.21 2022/05/24 06:18:34 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.20 2022/05/17 05:05:20 andvar Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.21 2022/05/24 06:18:34 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -5083,7 +5083,7 @@ test_AUDIO_SETINFO_params_set(int openmode, int aimode, int pause)
 #define f(a,b,c) test_AUDIO_SETINFO_params_set(a, b, c)
 DEF(AUDIO_SETINFO_params_set_RDONLY_0)	{ f(O_RDONLY, 0, 0); }
 DEF(AUDIO_SETINFO_params_set_RDONLY_1)	{ f(O_RDONLY, 0, 1); }
-/* On RDONLY, ai.mode is not changable
+/* On RDONLY, ai.mode is not changeable
  *  AUDIO_SETINFO_params_set_RDONLY_2)	{ f(O_RDONLY, 1, 0); }
  *  AUDIO_SETINFO_params_set_RDONLY_3)	{ f(O_RDONLY, 1, 1); }
  */
@@ -5479,7 +5479,7 @@ test_AUDIO_SETINFO_pause(int openmode, int aimode, int param)
 }
 DEF(AUDIO_SETINFO_pause_RDONLY_0) { test_AUDIO_SETINFO_pause(O_RDONLY, 0, 0); }
 DEF(AUDIO_SETINFO_pause_RDONLY_1) { test_AUDIO_SETINFO_pause(O_RDONLY, 0, 1); }
-/* On RDONLY, ai.mode is not changable
+/* On RDONLY, ai.mode is not changeable
  *  AUDIO_SETINFO_pause_RDONLY_2) { test_AUDIO_SETINFO_pause(O_RDONLY, 1, 0); }
  *  AUDIO_SETINFO_pause_RDONLY_3) { test_AUDIO_SETINFO_pause(O_RDONLY, 1, 1); }
  */
