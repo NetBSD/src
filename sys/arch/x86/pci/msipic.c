@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.26 2022/05/23 15:03:05 bouyer Exp $	*/
+/*	$NetBSD: msipic.c,v 1.27 2022/05/24 14:00:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.26 2022/05/23 15:03:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.27 2022/05/24 14:00:23 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -356,7 +356,11 @@ msi_set_msictl_enablebit(struct pic *pic, int msi_vec, int flag)
 	else
 		ctl &= ~PCI_MSI_CTL_MSI_ENABLE;
 
+#ifdef XENPV
+	pci_conf_write16(pc, tag, off + PCI_MSI_CTL + 2, ctl >> 16);
+#else
 	pci_conf_write(pc, tag, off, ctl);
+#endif
 }
 
 static void
@@ -771,7 +775,7 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 	msix_pic->pic_msipic->mp_bstag = bstag;
 	msix_pic->pic_msipic->mp_bshandle = bshandle;
 	msix_pic->pic_msipic->mp_bssize = bssize;
-	msix_pic->pic_msipic->mp_i.mp_table_base = memaddr + table_offset;
+	msix_pic->pic_msipic->mp_i.mp_table_base = memaddr;
 
 	return msix_pic;
 }
