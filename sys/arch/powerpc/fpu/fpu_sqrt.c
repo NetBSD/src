@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.9 2020/06/27 04:29:27 rin Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.10 2022/05/24 20:00:49 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.9 2020/06/27 04:29:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.10 2022/05/24 20:00:49 andvar Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -130,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.9 2020/06/27 04:29:27 rin Exp $");
  * zero bit at the top of x.  Doing so means that q is not going to acquire
  * a 1 bit in the first trip around the loop (since x0 < 2^NBITS).  If the
  * final value in x is not needed, or can be off by a factor of 2, this is
- * equivalant to moving the `x *= 2' step to the bottom of the loop:
+ * equivalent to moving the `x *= 2' step to the bottom of the loop:
  *
  *	for k = NBITS-1 to 0 step -1 do if ... fi; x *= 2; done
  *
