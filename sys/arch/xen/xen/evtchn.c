@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.97 2022/05/19 09:54:27 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.98 2022/05/24 15:55:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.97 2022/05/19 09:54:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.98 2022/05/24 15:55:19 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -352,6 +352,11 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		hypervisor_set_ipending(evtsource[evtch]->ev_imask,
 					evtch >> LONG_SHIFT,
 					evtch & LONG_MASK);
+		ih = evtsource[evtch]->ev_handlers;
+		while (ih != NULL) {
+			ih->ih_pending++;
+			ih = ih->ih_evt_next;
+		}
 
 		/* leave masked */
 
@@ -382,10 +387,15 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			hypervisor_set_ipending(iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
+			while (ih != NULL) {
+				ih->ih_pending++;
+				ih = ih->ih_evt_next;
+			}
 			goto splx;
 		}
 		iplmask &= ~(1 << XEN_IPL2SIR(ih->ih_level));
 		ci->ci_ilevel = ih->ih_level;
+		ih->ih_pending = 0;
 		ih_fun = (void *)ih->ih_fun;
 		ih_fun(ih->ih_arg, regs);
 		ih = ih->ih_evt_next;
@@ -891,6 +901,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	esh_args.ih->ih_arg = esh_args.ih->ih_realarg = arg;
 	esh_args.ih->ih_evt_next = NULL;
 	esh_args.ih->ih_next = NULL;
+	esh_args.ih->ih_pending = 0;
 	esh_args.ih->ih_cpu = ci;
 	esh_args.ih->ih_pin = evtch;
 #ifdef MULTIPROCESSOR
