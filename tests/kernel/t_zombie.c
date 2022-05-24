@@ -1,4 +1,4 @@
-/*	$NetBSD: t_zombie.c,v 1.2 2018/05/18 00:25:30 kamil Exp $	*/
+/*	$NetBSD: t_zombie.c,v 1.3 2022/05/24 20:08:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2018\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_zombie.c,v 1.2 2018/05/18 00:25:30 kamil Exp $");
+__RCSID("$NetBSD: t_zombie.c,v 1.3 2022/05/24 20:08:38 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -57,7 +57,7 @@ do {									\
  * A child process cannot call atf functions and expect them to magically
  * work like in the parent.
  * The printf(3) messaging from a child will not work out of the box as well
- * without estabilishing a communication protocol with its parent. To not
+ * without establishing a communication protocol with its parent. To not
  * overcomplicate the tests - do not log from a child and use err(3)/errx(3)
  * wrapped with ASSERT_EQ()/ASSERT_NEQ() as that is guaranteed to work.
  */
