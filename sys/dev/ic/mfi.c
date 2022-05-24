@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.78 2022/05/22 08:59:34 hannken Exp $ */
+/* $NetBSD: mfi.c,v 1.79 2022/05/24 20:50:19 andvar Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.78 2022/05/22 08:59:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.79 2022/05/24 20:50:19 andvar Exp $");
 
 #include "bio.h"
 
@@ -1096,7 +1096,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 
 		/*
 		 * Allocate DMA memory mapping for MPI2 IOC Init descriptor,
-		 * we are taking it diffrent from what we have allocated for
+		 * we are taking it different from what we have allocated for
 		 * Request and reply descriptors to avoid confusion later
 		 */
 		sc->sc_tbolt_ioc_init = mfi_allocmem(sc,

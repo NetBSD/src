@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_targets.c,v 1.6 2016/05/29 13:35:45 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_targets.c,v 1.7 2022/05/24 20:50:17 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -973,7 +973,7 @@ refresh_targets(iscsid_refresh_req_t * par)
 	case TARGET_LIST:
 		/*
 		 * Refreshing for a specific target makes no sense if it's
-		 * static. Maybe implement it for dynamically dicovered
+		 * static. Maybe implement it for dynamically discovered
 		 * targets? But then it's best done through the discovering
 		 * instance, or we'll refresh much more than just the given
 		 * target. And refreshing the whole list is iffy as well. So

@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.166 2022/05/14 19:44:37 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.167 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.166 2022/05/14 19:44:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.167 2022/05/24 20:50:19 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2448,7 +2448,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		 * ux_actlen and ux_dmabuf will be passed to
 		 * usb_transfer_complete after the Status stage event.
 		 *
-		 * It can be distingished which stage generates the event:
+		 * It can be distinguished which stage generates the event:
 		 * + by checking least 3 bits of trb_0 if ED==1.
 		 *   (see xhci_device_ctrl_start).
 		 * + by checking the type of original TRB if ED==0.

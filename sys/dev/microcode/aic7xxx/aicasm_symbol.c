@@ -1,7 +1,7 @@
-/*	$NetBSD: aicasm_symbol.c,v 1.8 2022/01/01 22:01:18 andvar Exp $	*/
+/*	$NetBSD: aicasm_symbol.c,v 1.9 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*
- * Aic7xxx SCSI host adapter firmware asssembler symbol table implementation
+ * Aic7xxx SCSI host adapter firmware assembler symbol table implementation
  *
  * Copyright (c) 1997 Justin T. Gibbs.
  * Copyright (c) 2002 Adaptec Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm_symbol.c,v 1.8 2022/01/01 22:01:18 andvar Exp $");
+__RCSID("$NetBSD: aicasm_symbol.c,v 1.9 2022/05/24 20:50:19 andvar Exp $");
 
 #include <sys/types.h>
 

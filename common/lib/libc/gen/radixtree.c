@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.27 2020/05/14 08:34:19 msaitoh Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.28 2022/05/24 20:50:17 andvar Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.27 2020/05/14 08:34:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.28 2022/05/24 20:50:17 andvar Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.27 2020/05/14 08:34:19 msaitoh Exp $
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.27 2020/05/14 08:34:19 msaitoh Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.28 2022/05/24 20:50:17 andvar Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -911,7 +911,7 @@ scan_siblings:
 descend:
 		/*
 		 * following the left-most (or right-most in the case of
-		 * reverse scan) child node, decend until reaching the leaf or
+		 * reverse scan) child node, descend until reaching the leaf or
 		 * an non-matching entry.
 		 */
 		while (entry_match_p(*vpp, tagmask) && lastidx < t->t_height) {

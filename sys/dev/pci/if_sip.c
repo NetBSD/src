@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.185 2022/02/16 22:00:56 andvar Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.186 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.185 2022/02/16 22:00:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.186 2022/05/24 20:50:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1737,7 +1737,7 @@ sipcom_start(struct ifnet *ifp)
 		 * chip's internal queue (indicated by TXE being clear),
 		 * then the driver software must set the TXDP to the
 		 * first descriptor to be transmitted.  However, if we
-		 * do this, it causes serious performance degredation on
+		 * do this, it causes serious performance degradation on
 		 * the DP83820 under load, not setting TXDP doesn't seem
 		 * to adversely affect the SiS 900 or DP83815.
 		 *
@@ -2745,7 +2745,7 @@ sipcom_init(struct ifnet *ifp)
 
 	/*
 	 * Checksum offloading is disabled if the user selects an MTU
-	 * larger than 8109.  (FreeBSD says 8152, but there is emperical
+	 * larger than 8109.  (FreeBSD says 8152, but there is empirical
 	 * evidence that >8109 does not work on some boards, such as the
 	 * Planex GN-1000TE).
 	 */

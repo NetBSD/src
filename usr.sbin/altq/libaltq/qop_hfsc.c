@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_hfsc.c,v 1.10 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: qop_hfsc.c,v 1.11 2022/05/24 20:50:21 andvar Exp $	*/
 /*	$KAME: qop_hfsc.c,v 1.12 2005/01/05 04:53:47 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -245,7 +245,7 @@ hfsc_class_parser(const char *ifname, const char *class_name,
 		flags |= HFCF_RED;
 
 	/*
-	 * if the link-sharing service curve is diffrent from
+	 * if the link-sharing service curve is different from
 	 * the real-time service curve, we first create a class with the
 	 * smaller service curve and then modify the other service curve.
 	 */

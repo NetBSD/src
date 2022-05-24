@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.12 2021/07/21 06:47:33 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.13 2022/05/24 20:50:18 andvar Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ struct rm_class {
  */
 struct rm_ifdat {
 	int		queued_;	/* # pkts queued downstream */
-	int		efficient_;	/* Link Efficency bit */
+	int		efficient_;	/* Link Efficiency bit */
 	int		wrr_;		/* Enable Weighted Round-Robin */
 	uint64_t	ps_per_byte_;	/* Link byte speed. */
 	int		maxqueued_;	/* Max packets to queue */

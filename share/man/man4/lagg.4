@@ -1,4 +1,4 @@
-.\"	$NetBSD: lagg.4,v 1.3 2021/06/29 10:26:00 wiz Exp $
+.\"	$NetBSD: lagg.4,v 1.4 2022/05/24 20:50:18 andvar Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -119,9 +119,9 @@ available, the VLAN tag, and the IP source and destination address.
 .It Ic lacp
 Supports the IEEE 802.1AX (formerly 802.3ad) Link Aggregation Control Protocol
 (LACP) and the Marker Protocol.
-LACP will nagotiate a set of aggregable links wit the peer in to a Link
+LACP will negotiate a set of aggregable links wit the peer in to a Link
 Aggregated Group.
-The LAG is composed of ports of the diffrent speed, set to full-duplex operation,
+The LAG is composed of ports of the different speed, set to full-duplex operation,
 if
 .Ic lagglacp Nm multi-speed
 option is configured.
@@ -143,7 +143,7 @@ interface itself.
 .Pp
 Each
 .Nm
-interface is created at runtime using interface cloing.
+interface is created at runtime using interface cloning.
 This is
 most easily done with the
 .Xr ifconfig 8

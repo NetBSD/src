@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.67 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: grf.c,v 1.68 2022/05/24 20:50:18 andvar Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.67 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.68 2022/05/24 20:50:18 andvar Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -163,7 +163,7 @@ grfmatch(device_t parent, cfdata_t cf, void *aux)
 /*
  * Attach.. plug pointer in and print some info.
  * Then try and attach a wsdisplay or ite to us.
- * Note: self is NULL durring console init.
+ * Note: self is NULL during console init.
  */
 void
 grfattach(device_t parent, device_t self, void *aux)

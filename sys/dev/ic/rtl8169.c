@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.170 2022/01/27 18:07:27 jakllsch Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.171 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.170 2022/01/27 18:07:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.171 2022/05/24 20:50:19 andvar Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -736,7 +736,7 @@ re_attach(struct rtk_softc *sc)
 	/*
 	 * RTL81x9 chips automatically read EEPROM to init MAC address,
 	 * and some NAS override its MAC address per own configuration,
-	 * so no need to explicitely read EEPROM and set ID registers.
+	 * so no need to explicitly read EEPROM and set ID registers.
 	 */
 #ifdef RE_USE_EECMD
 	if ((sc->sc_quirk & RTKQ_NOEECMD) != 0) {

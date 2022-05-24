@@ -1,4 +1,4 @@
-/* $NetBSD: t_digittoint.c,v 1.2 2017/06/01 15:45:02 perseant Exp $ */
+/* $NetBSD: t_digittoint.c,v 1.3 2022/05/24 20:50:20 andvar Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_digittoint.c,v 1.2 2017/06/01 15:45:02 perseant Exp $");
+__RCSID("$NetBSD: t_digittoint.c,v 1.3 2022/05/24 20:50:20 andvar Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -88,7 +88,7 @@ ATF_TC(digittoint);
 ATF_TC_HEAD(digittoint, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"Checks digittoint under diferent locales");
+		"Checks digittoint under different locales");
 }
 
 ATF_TC_BODY(digittoint, tc)

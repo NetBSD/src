@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.30 2020/05/07 13:40:20 kim Exp $	*/
+/*	$NetBSD: util.c,v 1.31 2022/05/24 20:50:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.30 2020/05/07 13:40:20 kim Exp $");
+__RCSID("$NetBSD: util.c,v 1.31 2022/05/24 20:50:20 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ enter_lastlog(PERSON *pn)
 		/*
 		 * and if it's not any of the current logins
 		 * can't use time comparison because there may be a small
-		 * discrepency since login calls time() twice
+		 * discrepancy since login calls time() twice
 		 */
 		for (w = pn->whead; doit && w != NULL; w = w->next)
 			if (w->info == LOGGEDIN &&

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.54 2022/02/13 22:20:09 andvar Exp $ */
+/* $NetBSD: acpi.c,v 1.55 2022/05/24 20:50:21 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.54 2022/02/13 22:20:09 andvar Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.55 2022/05/24 20:50:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1151,7 +1151,7 @@ acpi_print_madt(ACPI_SUBTABLE_HEADER *mp)
 		printf("\tGICR ADDR=%016jx\n",
 		    (uintmax_t)gicc->GicrBaseAddress);
 		printf("\tMPIDR=%jx\n", (uintmax_t)gicc->ArmMpidr);
-		printf("\tEfficency Class=%d\n", (u_int)gicc->EfficiencyClass);
+		printf("\tEfficiency Class=%d\n", (u_int)gicc->EfficiencyClass);
 		break;
 	case ACPI_MADT_TYPE_GENERIC_DISTRIBUTOR:
 		gicd = (ACPI_MADT_GENERIC_DISTRIBUTOR *)mp;

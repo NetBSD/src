@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.h,v 1.5 2022/04/10 09:50:45 andvar Exp $	*/
+/*	$NetBSD: fdt_port.h,v 1.6 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ void * fdt_endpoint_get_data(struct fdt_endpoint *);
 int fdt_endpoint_activate(struct fdt_endpoint *, bool);
 
 /*
- * Activate/deactive an endpoint by direct reference.
+ * Activate/deactivate an endpoint by direct reference.
  */
 int fdt_endpoint_activate_direct(struct fdt_endpoint *, bool);
 

@@ -1,5 +1,5 @@
 /*	$KAME: sctp_pcb.h,v 1.21 2005/07/16 01:18:47 suz Exp $	*/
-/*	$NetBSD: sctp_pcb.h,v 1.4 2021/08/09 20:49:10 andvar Exp $ */
+/*	$NetBSD: sctp_pcb.h,v 1.5 2022/05/24 20:50:20 andvar Exp $ */
 
 #ifndef __SCTP_PCB_H__
 #define __SCTP_PCB_H__
@@ -375,7 +375,7 @@ struct sctp_tcb {
  * the locking i.e. we try to contain the lock and
  * unlock within the function that needs to lock it. This
  * sometimes mean we do extra locks and unlocks and loose
- * a bit of efficency, but if the performance statements about
+ * a bit of efficiency, but if the performance statements about
  * non-recursive locks are true this should not be a problem.
  * One issue that arises with this only lock when needed
  * is that if an implicit association setup is done we

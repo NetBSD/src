@@ -1,5 +1,5 @@
 /*	$OpenBSD: eval.c,v 1.66 2008/08/21 21:01:47 espie Exp $	*/
-/*	$NetBSD: eval.c,v 1.28 2020/06/27 19:18:58 uwe Exp $	*/
+/*	$NetBSD: eval.c,v 1.29 2022/05/24 20:50:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: eval.c,v 1.28 2020/06/27 19:18:58 uwe Exp $");
+__RCSID("$NetBSD: eval.c,v 1.29 2022/05/24 20:50:21 andvar Exp $");
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -910,7 +910,7 @@ dosub(const char *argv[], int argc)
  * language. Within mapvec, we replace every character of "from" with
  * the corresponding character in "to". If "to" is shorter than "from",
  * than the corresponding entries are null, which means that those
- * characters dissapear altogether. Furthermore, imagine
+ * characters disapear altogether. Furthermore, imagine
  * map(dest, "sourcestring", "srtin", "rn..*") type call. In this case,
  * `s' maps to `r', `r' maps to `n' and `n' maps to `*'. Thus, `s'
  * ultimately maps to `*'. In order to achieve this effect in an efficient

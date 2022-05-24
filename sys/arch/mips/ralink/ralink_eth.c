@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.23 2022/03/16 10:08:02 andvar Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.24 2022/05/24 20:50:18 andvar Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.23 2022/03/16 10:08:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.24 2022/05/24 20:50:18 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1332,7 +1332,7 @@ ralink_eth_watchdog(struct ifnet *ifp)
 
 	sc->sc_evcnt_wd_reactivate.ev_count++;
 	const int s = splnet();
-	/* deactive the active partitions, retaining the active information */
+	/* deactivate the active partitions, retaining the active information */
 	ralink_eth_disable(sc);
 	ralink_eth_enable(sc);
 	splx(s);

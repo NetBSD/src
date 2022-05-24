@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.16 2014/12/27 17:58:21 nonaka Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.17 2022/05/24 20:50:18 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -358,7 +358,7 @@
 #define	SPMODEn_CI	__PPCBIT(0)	/* Clock invert: 0=inactive state of SPI_CLK is low, 1=high */
 #define	SPMODEn_CP	__PPCBIT(1)	/* Clock phase: SPI_CLK starts toggling at the middle of the data transfer, 1=beginning */
 #define	SPMODEn_REV	__PPCBIT(2)	/* Reverse data mode: 0=LSB of the character sent and received first, 1=MSB */
-#define	SPMODEn_DIV16	__PPCBIT(3)	/* Devide by 16: 0=System clock, 1=System clock/16 */
+#define	SPMODEn_DIV16	__PPCBIT(3)	/* Divide by 16: 0=System clock, 1=System clock/16 */
 #define	SPMODEn_PM	__PPCBITS(4,7)	/* Prescale modulus select */
 #define	SPMODEn_ODD	__PPCBIT(8)	/* 0=Even division, 1=Odd dividion */
 #define	SPMODEn_POL	__PPCBIT(11)	/* CS polarity: 0=Asserted high/Negated low, 1=Asserted low/Negated high */

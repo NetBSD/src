@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.10 2022/04/08 10:27:04 andvar Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.11 2022/05/24 20:50:20 andvar Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.10 2022/04/08 10:27:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.11 2022/05/24 20:50:20 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -3265,7 +3265,7 @@ sctp_try_advance_peer_ack_point(struct sctp_tcb *stcb,
 			/*
 			 * we don't want to de-queue it here. Just wait for the
 			 * next peer SACK to come with a new cumTSN and then
-			 * the chunk will be droped in the normal fashion.
+			 * the chunk will be dropped in the normal fashion.
 			 */
 			if (tp1->data) {
 				sctp_free_bufspace(stcb, asoc, tp1);

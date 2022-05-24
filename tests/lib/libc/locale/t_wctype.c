@@ -1,4 +1,4 @@
-/* $NetBSD: t_wctype.c,v 1.2 2017/07/12 17:32:51 perseant Exp $ */
+/* $NetBSD: t_wctype.c,v 1.3 2022/05/24 20:50:20 andvar Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wctype.c,v 1.2 2017/07/12 17:32:51 perseant Exp $");
+__RCSID("$NetBSD: t_wctype.c,v 1.3 2022/05/24 20:50:20 andvar Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -262,7 +262,7 @@ ATF_TC(ctype);
 ATF_TC_HEAD(ctype, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"Checks is* and isw* under diferent locales");
+		"Checks is* and isw* under different locales");
 }
 
 ATF_TC_BODY(ctype, tc)

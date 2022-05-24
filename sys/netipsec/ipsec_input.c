@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.76 2022/05/19 19:18:03 christos Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.77 2022/05/24 20:50:20 andvar Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.76 2022/05/19 19:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.77 2022/05/24 20:50:20 andvar Exp $");
 
 /*
  * IPsec input processing.
@@ -116,7 +116,7 @@ do {									\
  * XXX: if we have NAT-OA payload from IKE server,
  *      we must do the differential update of checksum.
  *
- * XXX: NAT-OAi/NAT-OAr drived from IKE initiator/responder.
+ * XXX: NAT-OAi/NAT-OAr derived from IKE initiator/responder.
  *      how to know the IKE side from kernel?
  */
 static struct mbuf *
