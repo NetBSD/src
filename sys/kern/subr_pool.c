@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.282 2022/04/09 23:51:48 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.283 2022/05/24 06:28:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.282 2022/04/09 23:51:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.283 2022/05/24 06:28:01 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1004,7 +1004,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 }
 
 /*
- * De-commision a pool resource.
+ * De-commission a pool resource.
  */
 void
 pool_destroy(struct pool *pp)

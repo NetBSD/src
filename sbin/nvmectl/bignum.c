@@ -1,4 +1,4 @@
-/*	$NetBSD: bignum.c,v 1.4 2021/11/10 16:02:14 msaitoh Exp $	*/
+/*	$NetBSD: bignum.c,v 1.5 2022/05/24 06:27:59 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
@@ -1664,7 +1664,7 @@ mp_2expt(mp_int * a, int b)
 }
 
 /* pre-calculate the value required for Barrett reduction
- * For a given modulus "b" it calulates the value required in "a"
+ * For a given modulus "b" it calculates the value required in "a"
  */
 static int
 mp_reduce_setup(mp_int * a, mp_int * b)

@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.27 2022/03/21 09:20:04 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.28 2022/05/24 06:28:00 andvar Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.27 2022/03/21 09:20:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.28 2022/05/24 06:28:00 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3761,7 +3761,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 
 	hda_debug(sc, "preparing pin controls\n");
 	hdafg_prepare_pin_controls(sc);
-	hda_debug(sc, "commiting settings\n");
+	hda_debug(sc, "committing settings\n");
 	hdafg_commit(sc);
 
 	hda_debug(sc, "setup jack sensing\n");

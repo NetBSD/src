@@ -1,9 +1,9 @@
-#	$NetBSD: files.isapnp,v 1.40 2020/01/19 20:00:36 thorpej Exp $
+#	$NetBSD: files.isapnp,v 1.41 2022/05/24 06:28:01 andvar Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
 
-# XXX: We don't use locators currenly...
+# XXX: We don't use locators currently...
 
 device	isapnp {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],

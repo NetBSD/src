@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.103 2021/12/12 13:05:13 andvar Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.104 2022/05/24 06:28:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.103 2021/12/12 13:05:13 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.104 2022/05/24 06:28:00 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -127,7 +127,7 @@ int iomem_malloc_safe;
  * All info needed to generate a panic dump. All fields are setup by
  * start_c().
  * XXX: Should sheck usage of phys_segs. There is some unwanted overlap
- *      here.... Also, the name is badly choosen. Phys_segs contains the
+ *      here.... Also, the name is badly chosen. Phys_segs contains the
  *      segment descriptions _after_ reservations are made.
  * XXX: 'lowram' is obsoleted by the new panicdump format
  */

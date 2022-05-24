@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs.h,v 1.3 2022/05/22 11:27:36 andvar Exp $	*/
+/*	$NetBSD: v7fs.h,v 1.4 2022/05/24 06:28:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ struct v7fs_inode_diskimage {
 
 /* File type */
 #define	V7FS_IFMT	0170000	/* File type mask */
-#define	V7FS_IFCHR	0020000	/* charcter device */
+#define	V7FS_IFCHR	0020000	/* character device */
 #define	V7FS_IFDIR	0040000	/* directory */
 #define	V7FS_IFBLK	0060000	/* block device */
 #define	V7FS_IFREG	0100000	/* file. */

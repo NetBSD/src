@@ -1,4 +1,4 @@
-/*	$NetBSD: dcrept.c,v 1.10 2009/05/24 22:55:03 dholland Exp $	*/
+/*	$NetBSD: dcrept.c,v 1.11 2022/05/24 06:27:59 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dcrept.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dcrept.c,v 1.10 2009/05/24 22:55:03 dholland Exp $");
+__RCSID("$NetBSD: dcrept.c,v 1.11 2022/05/24 06:27:59 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ dcrept(int v __unused)
 			Device[e->systemname].name, x * m1 + 0.005,
 			x * m2 + 0.005);
 
-		/* do a little consistancy checking */
+		/* do a little consistency checking */
 	}
 
 	/* if everything was ok, reassure the nervous captain */

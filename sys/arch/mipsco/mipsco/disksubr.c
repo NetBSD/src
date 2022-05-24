@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2019/04/03 22:10:50 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.29 2022/05/24 06:28:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28 2019/04/03 22:10:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.29 2022/05/24 06:28:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ ioerror:
 }
 
 /*
- * Convertion table for mapping partition numbers and types between
+ * Conversion table for mapping partition numbers and types between
  * a MIPS volume header and a BSD partition table.
  *
  * Mips volume header compatibility is required in order to boot

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.44 2019/04/03 22:10:49 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.45 2022/05/24 06:28:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.44 2019/04/03 22:10:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45 2022/05/24 06:28:00 andvar Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -126,7 +126,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		uprintf("Warning: unknown disklabel format"
 		    "- assuming empty disk\n");
 
-	/* Calulate new checksum. */
+	/* Calculate new checksum. */
 	lp->d_magic = lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);

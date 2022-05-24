@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.6 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: platform.c,v 1.7 2022/05/24 06:28:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.6 2008/04/28 20:23:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.7 2022/05/24 06:28:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ ident_platform(void)
 		}
 		printf(". ");
 		print_platform(plattab[matched]);
-		printf(" is choosed.\n");
+		printf(" is chosen.\n");
 	}
 	if (match)
 		platform = plattab[matched];

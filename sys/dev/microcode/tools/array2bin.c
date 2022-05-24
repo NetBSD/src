@@ -1,4 +1,4 @@
-/*	$NetBSD: array2bin.c,v 1.1 2008/05/04 23:50:32 ad Exp $	*/
+/*	$NetBSD: array2bin.c,v 1.2 2022/05/24 06:28:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,12 +29,12 @@
 /*
  * Takes an array from array.h named array[], and spits it out as a
  * binary image.  NO DECOMPRESSION IS DONE.  This is for taking existing
- * images formatted as C arrays, for convertion to binary files.
+ * images formatted as C arrays, for conversion to binary files.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: array2bin.c,v 1.1 2008/05/04 23:50:32 ad Exp $");
+__RCSID("$NetBSD: array2bin.c,v 1.2 2022/05/24 06:28:01 andvar Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.81 2020/11/30 05:33:32 msaitoh Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.82 2022/05/24 06:28:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81 2020/11/30 05:33:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82 2022/05/24 06:28:00 andvar Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -299,7 +299,7 @@ cpu_lwp_free2(struct lwp *l)
 
 /*
  * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
+ * one of five categories:
  *
  *	B_PHYS|B_UAREA:	User u-area swap.
  *			Address is relative to start of u-area.

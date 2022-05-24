@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.49 2022/04/29 21:03:08 rin Exp $	*/
+/*	$NetBSD: boot32.c,v 1.50 2022/05/24 06:27:59 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -409,7 +409,7 @@ get_memory_configuration(void)
 		DRAM_pages[top_bank  ] -= one_mb_pages;
 		dram_blocks++;
 
-		/* Map video memory at the end of the choosen DIMM */
+		/* Map video memory at the end of the chosen DIMM */
 		videomem_start          = DRAM_addr[video_bank] +
 		    (DRAM_pages[video_bank] - videomem_pages)*nbpp;
 		DRAM_pages[video_bank] -= videomem_pages;

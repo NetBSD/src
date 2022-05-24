@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.323 2022/03/30 10:52:59 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.324 2022/05/24 06:28:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.323 2022/03/30 10:52:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.324 2022/05/24 06:28:02 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1346,7 +1346,7 @@ retry:
 				commit = fxdr_unsigned(int, *tl++);
 
 				/*
-				 * Return the lowest committment level
+				 * Return the lowest commitment level
 				 * obtained by any of the RPCs.
 				 */
 				if (committed == NFSV3WRITE_FILESYNC)

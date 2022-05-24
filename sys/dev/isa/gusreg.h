@@ -1,4 +1,4 @@
-/* $NetBSD: gusreg.h,v 1.9 2008/04/28 20:23:52 martin Exp $ */
+/* $NetBSD: gusreg.h,v 1.10 2022/05/24 06:28:01 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@
 
 #define GUSMASK_DMA_ENABLE	0x01		/* Enable DMA transfer */
 #define GUSMASK_DMA_READ	0x02		/* 1=read, 0=write */
-#define GUSMASK_DMA_WRITE	0x00		/* for consistancy */
+#define GUSMASK_DMA_WRITE	0x00		/* for consistency */
 #define GUSMASK_DMA_WIDTH	0x04		/* Data transfer width */
 #define GUSMASK_DMA_R0		0x00		/* Various DMA speeds */
 #define GUSMASK_DMA_R1		0x08
