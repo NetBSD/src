@@ -1,4 +1,4 @@
-! $NetBSD: Xresources.in,v 1.7 2022/05/07 06:31:39 nia Exp $
+! $NetBSD: Xresources.in,v 1.8 2022/05/24 14:53:15 nia Exp $
 
 xlogin*login.translations: #override BS
 	Ctrl<Key>R: abort-display()NLBS
@@ -22,25 +22,24 @@ xlogin*greetFont:	-*-spleen-*-*-*-*-32-*-*-*-*-*-*-*
 xlogin*font:		-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
 xlogin*promptFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
 xlogin*failFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
-xlogin*greetFace:	Liberation Sans:pixelsize=32:hintstyle=hintslight
-xlogin*face: 		Liberation Mono:pixelsize=16:hintstyle=hintslight
-xlogin*promptFace:	Liberation Mono:pixelsize=16:hintstyle=hintslight
-xlogin*failFace:	Liberation Mono:pixelsize=16:hintstyle=hintslight
+xlogin*greetFace:	Sans-24:hintstyle=hintslight
+xlogin*face:		Sans-14:hintstyle=hintslight
+xlogin*promptFace:	Sans-14:bold:hintstyle=hintslight
+xlogin*failFace:	Sans-14:bold:hintstyle=hintslight
 XHASHelse
 xlogin*greetFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
 xlogin*font:		-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
 xlogin*promptFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
 xlogin*failFont:	-*-spleen-*-*-*-*-16-*-*-*-*-*-*-*
-xlogin*greetFace:	Liberation Sans:pixelsize=16:hintstyle=hintslight
-xlogin*face: 		Libreation Mono:pixelsize=16:hintstyle=hintslight
-xlogin*face: 		Libreation Mono:pixelsize=16:hintstyle=hintslight
-xlogin*promptFace:	Libreation Mono:pixelsize=16:hintstyle=hintslight
-xlogin*failFace:	Libreation Mono:pixelsize=16:hintstyle=hintslight
+xlogin*greetFace:	Sans-18:hintstyle=hintslight
+xlogin*face:		Sans-12:hintstyle=hintslight
+xlogin*promptFace:	Sans-12:bold:hintstyle=hintslight
+xlogin*failFace:	Sans-14:bold:hintstyle=hintslight
 XHASHendif
 
 xlogin*borderWidth: 2
 xlogin*frameWidth: 2
-xlogin*innerFramesWidth: 2
+xlogin*innerFramesWidth: 1
 xlogin*sepWidth: 0
 
 XHASHifdef COLOR
