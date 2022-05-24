@@ -1,7 +1,7 @@
-/*	$NetBSD: aicasm_symbol.h,v 1.3 2021/10/25 07:40:29 ryo Exp $	*/
+/*	$NetBSD: aicasm_symbol.h,v 1.4 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*
- * Aic7xxx SCSI host adapter firmware asssembler symbol table definitions
+ * Aic7xxx SCSI host adapter firmware assembler symbol table definitions
  *
  * Copyright (c) 1997 Justin T. Gibbs.
  * Copyright (c) 2002 Adaptec Inc.

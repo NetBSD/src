@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.10 2012/10/06 22:15:09 matt Exp $	*/
+/*	$NetBSD: ptree.c,v 1.11 2022/05/24 20:50:17 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.10 2012/10/06 22:15:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.11 2022/05/24 20:50:17 andvar Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.10 2012/10/06 22:15:09 matt Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.10 2012/10/06 22:15:09 matt Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.11 2022/05/24 20:50:17 andvar Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -582,7 +582,7 @@ ptree_insert_node_common(pt_tree_t *pt, void *item)
 		KASSERT(id.id_bitoff >= branch_bitoff);
 
 		/*
-		 * Decend the tree one level.
+		 * Descend the tree one level.
 		 */
 		id.id_parent = ptn;
 		id.id_parent_slot = ptree_testnode(pt, target, id.id_parent);
@@ -1011,7 +1011,7 @@ ptree_remove_node(pt_tree_t *pt, void *item)
 		/*
 		 * Now we are the normal removal case.  Since after the
 		 * target's leaf identity is removed from the its parent,
-		 * that parent will only have one decendent.  So we can
+		 * that parent will only have one descendant.  So we can
 		 * just as easily replace the node that has the parent's
 		 * branch identity with the surviving node.  This freeing
 		 * parent from its branching duties which means it can

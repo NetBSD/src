@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.65 2021/09/26 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.66 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.65 2021/09/26 01:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.66 2022/05/24 20:50:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1138,7 +1138,7 @@ irts_litelink(struct tty *tp, u_int speed)
 /* Control register 1 */
 #define GIRBIL_TXEN      0x01 /* Enable transmitter */
 #define GIRBIL_RXEN      0x02 /* Enable receiver */
-#define GIRBIL_ECAN      0x04 /* Cancel self emmited data */
+#define GIRBIL_ECAN      0x04 /* Cancel self emitted data */
 #define GIRBIL_ECHO      0x08 /* Echo control characters */
 
 /* LED Current Register */

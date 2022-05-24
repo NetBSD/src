@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.140 2022/02/12 15:51:29 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.141 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.140 2022/02/12 15:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.141 2022/05/24 20:50:19 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -924,7 +924,7 @@ knote_proc_fork_track(struct proc *p1, struct proc *p2, struct knote *okn)
 	 * notification if the child exits before the tracking process
 	 * has received the NOTE_CHILD notification, which applications
 	 * aren't expecting (the event's 'data' field would be clobbered,
-	 * for exmaple).
+	 * for example).
 	 *
 	 * To do this, what we have here is an **extremely** stripped-down
 	 * version of kqueue_register() that has the following properties:

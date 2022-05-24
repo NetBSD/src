@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530reg.h,v 1.12 2005/12/11 12:21:29 christos Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.13 2022/05/24 20:50:19 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -243,7 +243,7 @@
 
 /*
  * Bits in Write Register 7' (ZSWR_ENHANCED above). This register is
- * only available on the 85230. Dispite the fact it contains flags
+ * only available on the 85230. Despite the fact it contains flags
  * and not a single value, the register was named as it is read
  * via RR14. Weird.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.43 2021/02/03 18:13:13 roy Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.44 2022/05/24 20:50:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -170,7 +170,7 @@ __CTASSERT(sizeof(struct icmp_ext_obj_hdr) == 4);
 /*
  * Lower bounds on packet lengths for various types.
  * For the error advice packets must first insure that the
- * packet is large enought to contain the returned ip header.
+ * packet is large enough to contain the returned ip header.
  * Only then can we do the check to see if 64 bits of packet
  * data have been returned, since we need to check the returned
  * ip header length.

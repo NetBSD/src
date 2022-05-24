@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.108 2021/01/20 01:20:26 nia Exp $
+#	$NetBSD: GUMSTIX,v 1.109 2022/05/24 20:50:18 andvar Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -206,7 +206,7 @@ gxio0	at pxaip?
 options 	GXIO_BLUETOOTH_ON_HWUART	# Bluetooth module on HWUART
 #options 	GXIO_DEFAULT_EXPANSION="\"netCF\""
 
-# gumstix expantion boards
+# gumstix expansion boards
 
 # SMC 91C111
 sm0	at gxio? addr 0x04000300 gpirq ?
