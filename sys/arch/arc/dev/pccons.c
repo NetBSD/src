@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.62 2014/10/18 08:33:24 snj Exp $	*/
+/*	$NetBSD: pccons.c,v 1.63 2022/05/24 20:50:18 andvar Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.62 2014/10/18 08:33:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.63 2022/05/24 20:50:18 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -557,7 +557,7 @@ pccons_common_match(bus_space_tag_t crt_iot, bus_space_tag_t crt_memt,
 	 * is set to table 1; in fact, it would appear that some keyboards just
 	 * ignore the command altogether.  So by default, we use the AT scan
 	 * codes and have the 8042 translate them.  Unfortunately, this is
-	 * known to not work on some PS/2 machines.  We try desparately to deal
+	 * known to not work on some PS/2 machines.  We try desperately to deal
 	 * with this by checking the (lack of a) translate bit in the 8042 and
 	 * attempting to set the keyboard to XT mode.  If this all fails, well,
 	 * tough luck.

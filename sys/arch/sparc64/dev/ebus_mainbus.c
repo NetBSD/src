@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.22 2022/01/22 11:49:17 thorpej Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.23 2022/05/24 20:50:19 andvar Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.22 2022/01/22 11:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.23 2022/05/24 20:50:19 andvar Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -141,7 +141,7 @@ ebus_mainbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Ebus interrupts may be connected to any of the PCI Express
 	 * leafs.  Here we add the appropriate IGN to the interrupt
-	 * mappings such that we can use it to distingish between
+	 * mappings such that we can use it to distinguish between
 	 * interrupts connected to PCIE-A and PCIE-B.
 	 */
 	for (i = 0; i < sc->sc_nintmap; i++) {

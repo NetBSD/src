@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.8 2021/05/19 22:45:49 kre Exp $
+# $NetBSD: printf.sh,v 1.9 2022/05/24 20:50:20 andvar Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1561,7 +1561,7 @@ NetBSD_extensions()
 	expect 99.000000	'%f'		'"c'
 	expect 97		'%g'		'"a'
 
-	# NetBSD (non-POSIX) format excape extensions
+	# NetBSD (non-POSIX) format escape extensions
 	expect ''		'\e'
 	expect ''		'\E'
 	expect ''		'\e\E'

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.106 2020/02/07 00:56:48 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.107 2022/05/24 20:50:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,12 +66,12 @@
 /*
  * Core driver for the SMC 91Cxx family of Ethernet chips.
  *
- * Memory allocation interrupt logic is drived from an SMC 91C90 driver
+ * Memory allocation interrupt logic is derived from an SMC 91C90 driver
  * written for NetBSD/amiga by Michael Hitch.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.106 2020/02/07 00:56:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.107 2022/05/24 20:50:19 andvar Exp $");
 
 #include "opt_inet.h"
 

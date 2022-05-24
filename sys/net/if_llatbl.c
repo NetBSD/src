@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.33 2020/09/11 15:16:00 roy Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.34 2022/05/24 20:50:20 andvar Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -331,7 +331,7 @@ lltable_drop_entry_queue(struct llentry *lle)
 	}
 
 	KASSERTMSG(lle->la_numheld == 0,
-		"la_numheld %d > 0, pkts_droped %zd",
+		"la_numheld %d > 0, pkts_dropped %zd",
 		 lle->la_numheld, pkts_dropped);
 
 	return (pkts_dropped);

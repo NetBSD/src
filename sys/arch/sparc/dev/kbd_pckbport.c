@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_pckbport.c,v 1.6 2011/07/01 18:50:41 dyoung Exp $ */
+/*	$NetBSD: kbd_pckbport.c,v 1.7 2022/05/24 20:50:18 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -90,7 +90,7 @@
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.6 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.7 2022/05/24 20:50:18 andvar Exp $");
 
 /*
  * Serve JavaStation-1 PS/2 keyboard as a Type5 keyboard with US101A
@@ -261,7 +261,7 @@ kbd_pckbport_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot)
 	 * is set to table 1; in fact, it would appear that some keyboards just
 	 * ignore the command altogether.  So by default, we use the AT scan
 	 * codes and have the 8042 translate them.  Unfortunately, this is
-	 * known to not work on some PS/2 machines.  We try desparately to deal
+	 * known to not work on some PS/2 machines.  We try desperately to deal
 	 * with this by checking the (lack of a) translate bit in the 8042 and
 	 * attempting to set the keyboard to XT mode.  If this all fails, well,
 	 * tough luck.

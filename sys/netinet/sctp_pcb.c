@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.23 2021/12/10 20:36:04 andvar Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.24 2022/05/24 20:50:20 andvar Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.23 2021/12/10 20:36:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.24 2022/05/24 20:50:20 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1320,7 +1320,7 @@ sctp_inpcb_alloc(struct socket *so)
 	 * be taken out ... since the last set of fixes I
 	 * have not seen the "Found a GONE on list" has not
 	 * came out. But i am paranoid and we will leave this
-	 * in at the cost of efficency on allocation of PCB's.
+	 * in at the cost of efficiency on allocation of PCB's.
 	 * Probably we should move this to the invariant
 	 * compile options
 	 */

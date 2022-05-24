@@ -1,4 +1,4 @@
-/* $NetBSD: ixm1200_start.S,v 1.5 2013/12/02 18:36:11 joerg Exp $ */
+/* $NetBSD: ixm1200_start.S,v 1.6 2022/05/24 20:50:18 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 	.section .start,"ax",%progbits
 
-RCSID("$NetBSD: ixm1200_start.S,v 1.5 2013/12/02 18:36:11 joerg Exp $")
+RCSID("$NetBSD: ixm1200_start.S,v 1.6 2022/05/24 20:50:18 andvar Exp $")
 
 	.global _C_LABEL(ixm1200_start)
 _C_LABEL(ixm1200_start):
@@ -115,7 +115,7 @@ _C_LABEL(ixm1200_start):
 	 * talk to VA == PA during bootstrap.
 	 *
 	 * We also want to map the v0xf0000000 == p0x90000000
-	 * to output eary bootstrup messages to the console.
+	 * to output early bootstrup messages to the console.
 	 *
 	 * We just use section mappings for all of this to make it easy.
 	 *

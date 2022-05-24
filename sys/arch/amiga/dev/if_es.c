@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.65 2020/01/29 05:23:16 thorpej Exp $ */
+/*	$NetBSD: if_es.c,v 1.66 2022/05/24 20:50:18 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.65 2020/01/29 05:23:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.66 2022/05/24 20:50:18 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -764,7 +764,7 @@ esstart(struct ifnet *ifp)
 #ifdef ESDEBUG
 	if (sc->sc_smcbusy++) {
 		printf("%s: esstart re-entered\n", device_xname(sc->sc_dev));
-		panic("esstart re-entred");
+		panic("esstart re-entered");
 	}
 	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 		printf("%s: esstart BSR not 2: %04x\n", device_xname(sc->sc_dev),

@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.74 2022/04/19 20:32:17 rillig Exp $	*/
+/*	$NetBSD: p2k.c,v 1.75 2022/05/24 20:50:17 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -361,7 +361,7 @@ p2k_init(uint32_t puffs_flags)
 	}
 
 	/*
-	 * Explicitely tell that our cookies can be treated as
+	 * Explicitly tell that our cookies can be treated as
 	 * puffs_node, since we never let libpuffs know by 
 	 * calling  call puffs_pn_new()
 	 */

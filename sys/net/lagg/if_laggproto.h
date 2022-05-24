@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.16 2022/04/04 06:10:00 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.17 2022/05/24 20:50:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -190,7 +190,7 @@ struct lagg_softc {
  *    - Updates of sc_var is serialized by sc_lock
  * - Items in sc_ports is protected by both psref (lp_psref) and
  *   pserialize contained in struct lagg_proto_softc
- *   - details are discribed in if_laggport.c and if_lagg_lacp.c
+ *   - details are described in if_laggport.c and if_lagg_lacp.c
  *   - Updates of items in sc_ports are serialized by sc_lock
  * - an instance referenced by lp_proto_ctx in struct lagg_port is
  *   protected by a lock in struct lagg_proto_softc

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.274 2022/05/18 15:20:18 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.275 2022/05/24 20:50:20 andvar Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.274 2022/05/18 15:20:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.275 2022/05/24 20:50:20 andvar Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -2513,7 +2513,7 @@ key_api_spddelete(struct socket *so, struct mbuf *m,
 
 	xpl0 = mhp->ext[SADB_X_EXT_POLICY];
 
-	/* checking the directon. */
+	/* checking the direction. */
 	switch (xpl0->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
 	case IPSEC_DIR_OUTBOUND:
