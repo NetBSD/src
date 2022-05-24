@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.22 2022/05/24 14:00:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.23 2022/05/24 15:51:10 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -236,9 +236,9 @@ xen_map_msix_pirq(struct pic *pic, int count)
  	map_irq.devfn = (msi_i->mp_dev << 3) | msi_i->mp_fun;
  	map_irq.table_base = msi_i->mp_table_base;
 
-	aprint_debug("xen_map_msix_pirq bus %d devfn 0x%x (%d %d) count %d base 0x%lx",
+	aprint_debug("xen_map_msix_pirq bus %d devfn 0x%x (%d %d) count %d",
 	    map_irq.bus, map_irq.devfn, msi_i->mp_dev, msi_i->mp_fun,
-	    count, map_irq.table_base);
+	    count);
 
 	for (i = 0; i < count; i++) {
 		map_irq.entry_nr = i;
