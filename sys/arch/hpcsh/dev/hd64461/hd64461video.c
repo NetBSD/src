@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.55 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.56 2022/05/24 06:28:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.55 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.56 2022/05/24 06:28:00 andvar Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -898,7 +898,7 @@ hd64461video_font_set_attr(struct hd64461video_softc *sc,
 
 }
 
-/* return frame buffer virtual address of charcter #n */
+/* return frame buffer virtual address of character #n */
 STATIC vaddr_t
 hd64461video_font_start_addr(struct hd64461video_softc *sc, int n)
 {

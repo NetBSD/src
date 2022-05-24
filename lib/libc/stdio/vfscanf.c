@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.46 2022/04/19 20:32:15 rillig Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.47 2022/05/24 06:27:59 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfscanf.c,v 1.41 2007/01/09 00:28:07 imp Exp $");
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.46 2022/04/19 20:32:15 rillig Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.47 2022/05/24 06:27:59 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -905,7 +905,7 @@ doswitch:
 			 * z', but treats `a-a' as `the letter a, the
 			 * character -, and the letter a'.
 			 *
-			 * For compatibility, the `-' is not considerd
+			 * For compatibility, the `-' is not considered
 			 * to define a range if the character following
 			 * it is either a close bracket (required by ANSI)
 			 * or is not numerically greater than the character

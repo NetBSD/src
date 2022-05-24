@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.8 2022/01/24 09:14:37 andvar Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.9 2022/05/24 06:27:59 andvar Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: dst_api.c,v 1.8 2022/01/24 09:14:37 andvar Exp $");
+__RCSID("$NetBSD: dst_api.c,v 1.9 2022/05/24 06:27:59 andvar Exp $");
 #endif
 
 
@@ -537,7 +537,7 @@ dst_s_read_public_key(const char *in_name, const u_int16_t in_id, int in_alg)
 	while ((c = getc(fp)) != EOF)
 		if (!isspace(c))
 			break;
-	ungetc(c, fp);		/*%< return the charcter to the input field */
+	ungetc(c, fp);		/*%< return the character to the input field */
 	/* Handle hex!! FIXME.  */
 
 	if (fscanf(fp, "%d %d %d", &flags, &proto, &alg) != 3) {

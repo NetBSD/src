@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.31 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.32 2022/05/24 06:28:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.31 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.32 2022/05/24 06:28:01 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -714,7 +714,7 @@ ntwoc_pci_setup_dma(struct sca_softc *sc)
 	}
 
 	/*
-	 * as a consistancy check, addroff should be equal to the allocation
+	 * as a consistency check, addroff should be equal to the allocation
 	 * size.
 	 */
 	if (sc->scu_allocsize != addroff)
