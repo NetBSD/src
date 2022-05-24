@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.87 2020/05/17 14:15:55 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.88 2022/05/24 15:55:19 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.87 2020/05/17 14:15:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.88 2022/05/24 15:55:19 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -955,9 +955,13 @@ IDTVEC(resume_ ## name ## sir)						\
 	STI(%eax)							;\
 	movl	IS_HANDLERS(%ebp),%ebx					;\
 6:									\
+	cmpl	$0, IH_PENDING(%ebx)	/* is handler pending ? */	;\
+	je	7f			/* no */			;\
+	movl	$0, IH_PENDING(%ebx)					;\
 	pushl	IH_ARG(%ebx)						;\
 	call	*IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
+7:									\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	6b							;\

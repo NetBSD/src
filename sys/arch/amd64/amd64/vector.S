@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.77 2020/05/17 14:15:55 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.78 2022/05/24 15:55:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -712,9 +712,13 @@ IDTVEC(resume_ ## name ## sir)						\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
 6:									\
+	cmpl	$0, IH_PENDING(%rbx)	/* is handler pending ? */	;\
+	je	7f			/* no */			;\
+	movl	$0, IH_PENDING(%rbx)					;\
 	movq	IH_ARG(%rbx),%rdi					;\
 	movq	%rsp,%rsi						;\
 	call	*IH_FUN(%rbx)		/* call it */			;\
+7:									\
 	movq	IH_NEXT(%rbx),%rbx	/* next handler in chain */	;\
 	testq	%rbx,%rbx						;\
 	jnz	6b							;\
