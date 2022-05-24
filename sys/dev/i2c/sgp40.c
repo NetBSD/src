@@ -1,4 +1,4 @@
-/*	$NetBSD: sgp40.c,v 1.4 2022/05/22 11:27:35 andvar Exp $	*/
+/*	$NetBSD: sgp40.c,v 1.5 2022/05/24 06:28:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.4 2022/05/22 11:27:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.5 2022/05/24 06:28:01 andvar Exp $");
 
 /*
   Driver for the Sensirion SGP40 MOx gas sensor for air quality
@@ -159,16 +159,16 @@ sgp40_compute_temp_comp(int unconverted)
 {
 	/*
 	 * The published algorithm for this conversion is:
-	 * (temp_in_celcius + 45) * 65535 / 175
+	 * (temp_in_celsius + 45) * 65535 / 175
 	 *
 	 * However, this did not exactly yield the results that
 	 * the example in the data sheet, so something a little
 	 * different was done.
 	 *
-	 * (temp_in_celcius + 45) * 65536 / 175
+	 * (temp_in_celsius + 45) * 65536 / 175
 	 *
 	 * This was also scaled up by 10^2 and then scaled back to
-	 * preserve some percision.  37449 is simply (65536 * 100) / 175
+	 * preserve some precision.  37449 is simply (65536 * 100) / 175
 	 * and rounded.
 	 */
 
@@ -191,7 +191,7 @@ sgp40_compute_rh_comp(int unconverted)
 	 * %rh * 65536 / 100
 	 *
 	 * This was also scaled up by 10^2 and then scaled back to
-	 * preserve some percision.  The value is also latched to 65535
+	 * preserve some precision.  The value is also latched to 65535
 	 * as an upper limit.
 	 */
 

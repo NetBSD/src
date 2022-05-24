@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modlinkset.c,v 1.3 2017/01/13 21:30:43 christos Exp $	*/
+/*	$NetBSD: t_modlinkset.c,v 1.4 2022/05/24 06:28:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ ATF_TC_HEAD(modlinkset, tc)
 }
 
 /*
- * We link against cd9660 and msdosfs (both chosed because the names
+ * We link against cd9660 and msdosfs (both chosen because the names
  * are unlikely to ever be a substring of a another file system).
  * Without proper linkset handling at most one will be reported.
  */

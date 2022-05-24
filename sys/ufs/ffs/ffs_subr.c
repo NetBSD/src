@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.52 2020/04/21 15:04:12 christos Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.53 2022/05/24 06:28:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.52 2020/04/21 15:04:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.53 2022/05/24 06:28:02 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -174,7 +174,7 @@ ffs_fragacct(struct fs *fs, int fragmap, int32_t fraglist[], int cnt,
  * block operations
  *
  * check if a block is available
- *  returns true if all the correponding bits in the free map are 1
+ *  returns true if all the corresponding bits in the free map are 1
  *  returns false if any corresponding bit in the free map is 0
  */
 int

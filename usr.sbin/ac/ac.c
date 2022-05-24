@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.26 2021/04/12 09:29:53 mrg Exp $ */
+/* $NetBSD: ac.c,v 1.27 2022/05/24 06:28:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.26 2021/04/12 09:29:53 mrg Exp $");
+__RCSID("$NetBSD: ac.c,v 1.27 2022/05/24 06:28:02 andvar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ struct user_list {
 };
 
 /*
- * this is for chosing whether to ignore a login
+ * this is for choosing whether to ignore a login
  */
 struct tty_list {
 	struct tty_list *next;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.77 2022/04/01 19:57:22 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.78 2022/05/24 06:28:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.77 2022/04/01 19:57:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.78 2022/05/24 06:28:00 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -446,7 +446,7 @@ fpu_kern_leave(void)
  * on more than one value or if the user process modifies the control
  * word while a status word bit is already set (which this is a sign
  * of bad coding).
- * We have no choise than to narrow them down to one bit, since we must
+ * We have no choice than to narrow them down to one bit, since we must
  * not send a trapcode that is not exactly one of the FPE_ macros.
  *
  * The mechanism has a static table with 127 entries.  Each combination

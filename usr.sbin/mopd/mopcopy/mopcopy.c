@@ -1,11 +1,11 @@
-/*	$NetBSD: mopcopy.c,v 1.11 2022/04/10 09:50:47 andvar Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.12 2022/05/24 06:28:02 andvar Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
  * can be transferred via MOP.
  *
  * This code was written while referring to the NetBSD/vax boot
  * loader. Therefore anything that can be booted by the Vax
- * should be convertable with this program.
+ * should be convertible with this program.
  *
  * If necessary, the a.out header is stripped, and the program
  * segments are padded out. The BSS segment is zero filled.
@@ -49,7 +49,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.11 2022/04/10 09:50:47 andvar Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.12 2022/05/24 06:28:02 andvar Exp $");
 #endif
 
 #include "os.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.29 2019/04/03 22:10:51 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.30 2022/05/24 06:28:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.29 2019/04/03 22:10:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30 2022/05/24 06:28:00 andvar Exp $");
 
 #include "opt_disksubr.h"
 
@@ -558,7 +558,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		osdep->pblist[osdep->pbindex[i] = cindex++] = nextb;
 	}
 	/*
-	 * calulate new checksum.
+	 * calculate new checksum.
 	 */
 	lp->d_magic = lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;

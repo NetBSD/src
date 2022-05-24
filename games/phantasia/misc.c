@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.23 2021/05/02 12:50:46 rillig Exp $	*/
+/*	$NetBSD: misc.c,v 1.24 2022/05/24 06:27:59 andvar Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -463,7 +463,7 @@ allstatslist(void)
 const char   *
 descrtype(struct player *playerp, phbool shortflag)
 {
-	int     type;		/* for caluculating result subscript */
+	int     type;		/* for calculating result subscript */
 	static const char *const results[] =/* description table */
 	{
 		" Magic User", " MU",

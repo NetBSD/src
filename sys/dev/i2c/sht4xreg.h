@@ -1,4 +1,4 @@
-/*	$NetBSD: sht4xreg.h,v 1.1 2021/10/03 17:27:02 brad Exp $	*/
+/*	$NetBSD: sht4xreg.h,v 1.2 2022/05/24 06:28:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -25,13 +25,13 @@
 #define SHT4X_SOFT_RESET 0x94
 
 /* If you do not use the heater, you can take measurements at a couple
-   of different percisions */
+   of different precisions */
 #define SHT4X_MEASURE_HIGH_PRECISION 0xFD
 #define SHT4X_MEASURE_MEDIUM_PRECISION 0xF6
 #define SHT4X_MEASURE_LOW_PRECISION 0xE0
 
 /* The SHT4X chip only support the heater when reading with the
-   highest percision and then only when the measurement is happening.
+   highest precision and then only when the measurement is happening.
    You can have the heater on for 1 second or 1 tenth of a second.
    After the measurement the heater will switch itself off */
 #define SHT4X_MEASURE_HIGH_PRECISION_HIGH_HEAT_1_S 0x39
