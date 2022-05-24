@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.29 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.30 2022/05/24 06:20:05 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.29 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.30 2022/05/24 06:20:05 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -170,7 +170,7 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 
 	/*
 	 * Load data into our internal buffers for both active and
-	 * build-in module lists
+	 * built-in module lists
 	 */
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		mi = mod->mod_info;
