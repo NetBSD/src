@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.29 2021/08/09 21:20:50 andvar Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.30 2022/05/24 14:00:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.29 2021/08/09 21:20:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.30 2022/05/24 14:00:23 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pci.h"
@@ -167,6 +167,8 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	    "non-legacy IRQon i8259 ");
 
 	gsi = xen_pic_to_gsi(pic, pin);
+	if (gsi < 0)
+		return NULL;
 	KASSERTMSG(gsi < NR_EVENT_CHANNELS, "gsi %d >= NR_EVENT_CHANNELS %u",
 	    gsi, (int)NR_EVENT_CHANNELS);
 
@@ -195,6 +197,8 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	pih = pirq_establish(gsi, evtchn, handler, arg, level,
 			     intrstr, xname, mpsafe);
 	pih->pic = pic;
+	if (msipic_is_msi_pic(pic))
+		pic->pic_hwunmask(pic, pin);
 	return pih;
 #endif /* NPCI > 0 || NISA > 0 */
 
