@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.64 2022/04/04 19:33:45 andvar Exp $	*/
+/*	$NetBSD: intr.h,v 1.65 2022/05/24 15:55:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -142,6 +142,7 @@ struct intrhand {
 	int	ih_pin;
 	int	ih_slot;
 #if defined(XEN)
+	int	ih_pending;
 	struct	intrhand *ih_evt_next;
 #endif
 	struct cpu_info *ih_cpu;

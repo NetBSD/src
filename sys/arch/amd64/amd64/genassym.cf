@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.85 2020/05/16 18:31:47 christos Exp $
+#	$NetBSD: genassym.cf,v 1.86 2022/05/24 15:55:19 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -367,6 +367,7 @@ define	VM_GUEST_XENPVH		VM_GUEST_XENPVH
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
+define IH_PENDING		offsetof(struct intrhand, ih_pending)
 define SIR_XENIPL_VM		SIR_XENIPL_VM
 define SIR_XENIPL_SCHED		SIR_XENIPL_SCHED
 define SIR_XENIPL_HIGH		SIR_XENIPL_HIGH
