@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.194 2021/09/24 00:29:46 manu Exp $
+# $NetBSD: XEN3_DOM0,v 1.195 2022/05/24 16:01:25 bouyer Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.194 $"
+#ident		"XEN3_DOM0-$Revision: 1.195 $"
 
 maxusers	32		# estimated number of users
 
@@ -383,9 +383,6 @@ wmimsi* 	at acpiwmibus?		# MSI WMI mappings
 pci*	at hypervisor? bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
-
-# MSIX bugs with XEN3_DOM0: kern/55667, kern/56291
-options NO_PCI_MSI_MSIX
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
