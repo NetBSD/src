@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.33 2021/05/24 10:44:06 gson Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.34 2022/05/24 20:08:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ do {									\
  * A child process cannot call atf functions and expect them to magically
  * work like in the parent.
  * The printf(3) messaging from a child will not work out of the box as well
- * without estabilishing a communication protocol with its parent. To not
+ * without establishing a communication protocol with its parent. To not
  * overcomplicate the tests - do not log from a child and use err(3)/errx(3)
  * wrapped with FORKEE_ASSERT()/FORKEE_ASSERTX() as that is guaranteed to work.
  */

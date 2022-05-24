@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.4 2018/05/14 12:44:40 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.5 2022/05/24 20:08:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.4 2018/05/14 12:44:40 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.5 2022/05/24 20:08:38 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: t_ptrace.c,v 1.4 2018/05/14 12:44:40 kamil Exp $");
  * A child process cannot call atf functions and expect them to magically
  * work like in the parent.
  * The printf(3) messaging from a child will not work out of the box as well
- * without estabilishing a communication protocol with its parent. To not
+ * without establishing a communication protocol with its parent. To not
  * overcomplicate the tests - do not log from a child and use err(3)/errx(3)
  * wrapped with FORKEE_ASSERT()/FORKEE_ASSERTX() as that is guaranteed to work.
  */
