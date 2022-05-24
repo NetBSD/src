@@ -1,4 +1,4 @@
-/*	$NetBSD: qat_c2xxx.c,v 1.1 2019/11/20 09:37:46 hikaru Exp $	*/
+/*	$NetBSD: qat_c2xxx.c,v 1.2 2022/05/24 08:35:47 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat_c2xxx.c,v 1.1 2019/11/20 09:37:46 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat_c2xxx.c,v 1.2 2022/05/24 08:35:47 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,16 @@ const struct qat_hw qat_hw_c2xxx = {
 	.qhw_num_ap_banks = ETR_MAX_AP_BANKS_C2XXX,
 	.qhw_num_rings_per_bank = ETR_MAX_RINGS_PER_BANK,
 	.qhw_num_accel = MAX_ACCEL_C2XXX,
+#if 0
 	.qhw_num_engines = MAX_AE_C2XXX,
+#else
+	/*
+	 * Workaround:
+	 * C2xxx qat has two engines, however it doesn't have arbiter which
+	 * C3xxx qat has.  So, we don't use secondary engine for C2xxx qat.
+	 */
+	.qhw_num_engines = 1,
+#endif
 	.qhw_tx_rx_gap = ETR_TX_RX_GAP_C2XXX,
 	.qhw_tx_rings_mask = ETR_TX_RINGS_MASK_C2XXX,
 	.qhw_msix_ae_vec_gap = MSIX_AE_VEC_GAP_C2XXX,
