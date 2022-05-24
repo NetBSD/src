@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.36 2012/10/02 23:54:54 christos Exp $	*/
+/*	$NetBSD: bus.c,v 1.37 2022/05/24 19:55:09 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.36 2012/10/02 23:54:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.37 2022/05/24 19:55:09 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ x68k_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 /*
  * Utility function to load a linear buffer.  lastaddrp holds state
  * between invocations (for multiple-buffer loads).  segp contains
- * the starting segment on entrace, and the ending segment on exit.
+ * the starting segment on entrance, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
 int
