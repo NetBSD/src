@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.10 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.11 2022/05/24 06:20:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.10 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.11 2022/05/24 06:20:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -101,7 +101,7 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 
 	/*
 	 * Load data into our internal buffers for both active and
-	 * build-in module lists
+	 * built-in module lists
 	 */
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		mi = mod->mod_info;
