@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1858 2022/05/24 13:52:52 fcambus Exp $
+#	$NetBSD: 3RDPARTY,v 1.1859 2022/05/24 14:11:15 fcambus Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2292,3 +2292,16 @@ Suitably encoded BDF files are prepared from the Unicode encoded
 masters using upstream build scripts.  BDF files are converted to the
 WSF files with xsrc/local/programs/bdfload.  File names for the
 re-encoded subsets follow the convention used by the upstream.
+
+Package:	Spleen
+Version:	1.9.1
+Current Vers:	1.9.1
+Maintainer:	Frederic Cambus
+Archive Site:	https://github.com/fcambus/spleen
+Home Page:	https://github.com/fcambus/spleen
+Date:		2021-06-13
+Mailing List:
+Responsible:	fcambus
+License:	BSD (2-clause)
+Location:	share/wscons/fonts
+Notes:
