@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.98 2022/05/24 15:55:19 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.99 2022/05/25 14:35:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.98 2022/05/24 15:55:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.99 2022/05/25 14:35:15 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -81,6 +81,14 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.98 2022/05/24 15:55:19 bouyer Exp $");
 #include <xen/evtchn.h>
 #include <xen/xenfunc.h>
 
+/* maximum number of (v)CPUs supported */
+#ifdef XENPV
+#define NBSD_XEN_MAX_VCPUS XEN_LEGACY_MAX_VCPUS
+#else
+#include <xen/include/public/hvm/hvm_info_table.h>
+#define NBSD_XEN_MAX_VCPUS HVM_MAX_VCPUS
+#endif
+
 #define	NR_PIRQS	NR_EVENT_CHANNELS
 
 /*
@@ -96,10 +104,10 @@ struct evtsource *evtsource[NR_EVENT_CHANNELS];
 static uint8_t evtch_bindcount[NR_EVENT_CHANNELS];
 
 /* event-channel <-> VCPU mapping for IPIs. XXX: redo for SMP. */
-static evtchn_port_t vcpu_ipi_to_evtch[XEN_LEGACY_MAX_VCPUS];
+static evtchn_port_t vcpu_ipi_to_evtch[NBSD_XEN_MAX_VCPUS];
 
 /* event-channel <-> VCPU mapping for VIRQ_TIMER.  XXX: redo for SMP. */
-static int virq_timer_to_evtch[XEN_LEGACY_MAX_VCPUS];
+static int virq_timer_to_evtch[NBSD_XEN_MAX_VCPUS];
 
 /* event-channel <-> VIRQ mapping. */
 static int virq_to_evtch[NR_VIRQS];
@@ -226,11 +234,11 @@ events_default_setup(void)
 	int i;
 
 	/* No VCPU -> event mappings. */
-	for (i = 0; i < XEN_LEGACY_MAX_VCPUS; i++)
+	for (i = 0; i < NBSD_XEN_MAX_VCPUS; i++)
 		vcpu_ipi_to_evtch[i] = -1;
 
 	/* No VIRQ_TIMER -> event mappings. */
-	for (i = 0; i < XEN_LEGACY_MAX_VCPUS; i++)
+	for (i = 0; i < NBSD_XEN_MAX_VCPUS; i++)
 		virq_timer_to_evtch[i] = -1;
 
 	/* No VIRQ -> event mappings. */
