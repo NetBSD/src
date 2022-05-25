@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.86 2022/05/25 10:18:29 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.87 2022/05/25 20:44:01 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -403,6 +403,13 @@ Indicates whether debug information
 .Sy ( lib*_g.a )
 will be included in the build toolchain.
 .DFLTn
+.
+.It Sy MKDHCPD
+.YorN
+Indicates whether 
+.Xr dhcpd 8
+will be built and installed.
+.DFLTy
 .
 .It Sy MKDOC
 .YorN

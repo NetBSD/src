@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.378 2022/05/25 12:47:40 nia Exp $
+# $NetBSD: mi,v 1.379 2022/05/25 20:44:01 nia Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1088,8 +1088,8 @@
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
 ./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
-./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
+./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	dhcpd,debug
+./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	dhcpd,debug
 ./usr/libdata/debug/usr/sbin/diskpart.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-importkey.debug	comp-bind-debug		debug
@@ -1223,7 +1223,7 @@
 ./usr/libdata/debug/usr/sbin/ntpq.debug		comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntptime.debug	comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/nvmmctl.debug	comp-sysutil-debug	debug,nvmm
-./usr/libdata/debug/usr/sbin/omshell.debug	comp-dhcpd-debug	debug
+./usr/libdata/debug/usr/sbin/omshell.debug	comp-dhcpd-debug	debug,dhcpd
 ./usr/libdata/debug/usr/sbin/pac.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/paxctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pcictl.debug	comp-sysutil-debug	debug
