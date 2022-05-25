@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2877 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2878 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -151,6 +151,10 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	Collect network interface statistics using per-cpu counters
 		that are collated when they are queried. [thorpej 20200201]
 	realpath(1): Ported from FreeBSD. [kamil 20200202]
+	env(1): Add -u flag to remove an environment variable, and -0 to
+		allow variable input separated by NUL characters,
+		compatibile with similar options in GNU and
+		FreeBSD env. [kamil 20200208]
 	kernel: Remove azalia(4). [jmcneill 20200209]
 	awk(1): Import 20200218 [christos 20200218]
 	genet(4): Add support for Broadcom GENETv5 ethernet controllers, found
@@ -290,12 +294,16 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	bind: Import version 9.16.5. [christos 20200803]
 	dhcp: Import version 4.4.2. [christos 20200803]
 	openldap: Import 2.4.50. [christos 20200811]
+	evbarm: Add ISO9660 file system support to efiboot. [jmcneill 20200811]
 	inetd(8): Various improvements. Add -f flag to run in
 		foreground.  [christos 20200812]
 	kernel: Add getrandom system call. [riastradh 20200813]
 	kernel: Disable COMPAT_LINUX by default [jdolecek 20200816]
 	mips: Port crash(8) to mips.  [mrg 20200816]
 	wg(4): Add implementation of WireGuard protocol. [ozaki-r 20200820]
+	xhci(4): Initial support for Isochronous Pipes. [jakllsch 20200821]
+	netstat(1): Support various new dropped and discarded packet
+		counters. [ozaki-r 20200828]
 	gcc(1): Import GCC 9.3. [mrg 20200904]
 	dhcpcd: Update to version 9.2.0. [roy 20200906]
 	iavf(4): Add driver for Intel Ethernet Adaptive Virtual Function
@@ -457,6 +465,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Improvements in interrupt handling on Arm GIC v2 and v3 systems
 		resulting in better network and storage performance.
 		[jmcneill 20210810]
+	evbarm: Introduce a /dev/efi character device that provides a means
+		for accessing UEFI RT variable services from userland.
+		[jmcneill 20210810]
 	kernel profiling: Improved performance of kernel profiling with
 		MULTIPROCESSOR. [ryo 20210814]
 	kgmon(8): added -c option to get profile information for each cpu.
@@ -484,6 +495,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libfido2: Import 1.8.0 [christos 20210924]
 	pam-u2f: Import pam u2f 1.2.0 [christos 20210924]
 	OpenSSH: Import 8.8. [christos 20210927]
+	evbarm: Add support for changing the video mode with the 'gop'
+		comamnd to efiboot. [jmcneill 20210928]
 	wsmouse(4): Added WSCONS_EVENT_(H|V)SCROLL event types from OpenBSD
 		and integrated them into the synaptics(4) driver and
 		xf86-input-ws. [nia 20210928]
@@ -547,6 +560,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		HDAUDIO_ENABLE_HDMI, enabling DisplayPort and HDMI audio
 		devices by default in kernel configurations. The default
 		device may change in audiocfg(1).  [jmcneill 20220321]
+	evbarm: Add support for the userconf command to efiboot.
+		[jmcneill 20200325]
 	tzcode: Updated to 2022a. [christos 20220322]
 	kernel: Implement restrictions on hardlink creation
 		in secmodel_extensions(9) [christos 20220327]
