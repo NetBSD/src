@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.105 2022/05/22 11:40:29 riastradh Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.106 2022/05/25 04:15:44 ozaki-r Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.105 2022/05/22 11:40:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.106 2022/05/25 04:15:44 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -310,9 +310,13 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 	KASSERT(sav != NULL);
 	KASSERT(sav->tdb_encalgxform != NULL);
-	KASSERTMSG((skip & 3) == 0 && (m->m_pkthdr.len & 3) == 0,
-	    "misaligned packet, skip %u pkt len %u",
-	    skip, m->m_pkthdr.len);
+	if (__predict_false((skip & 3) != 0 || (m->m_pkthdr.len & 3) != 0)) {
+		DPRINTF("%s: misaligned packet, skip %u pkt len %u", __func__,
+		    skip, m->m_pkthdr.len);
+		stat = ESP_STAT_BADILEN; /* Same as FreeBSD */
+		error = EINVAL;
+		goto out;
+	}
 
 	/* XXX don't pullup, just copy header */
 	M_REGION_GET(esp, struct newesp *, m, skip, sizeof(struct newesp));
