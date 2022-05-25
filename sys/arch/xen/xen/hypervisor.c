@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.94 2022/05/25 14:35:15 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.95 2022/05/25 15:52:25 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.94 2022/05/25 14:35:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.95 2022/05/25 15:52:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.94 2022/05/25 14:35:15 bouyer Exp $
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/include/public/version.h>
+#include <xen/include/public/vcpu.h>
 #include <x86/pio.h>
 #include <x86/machdep.h>
 
@@ -169,7 +170,6 @@ struct  x86_isa_chipset x86_isa_chipset;
 #include <xen/include/public/arch-x86/hvm/start_info.h>
 #include <xen/include/public/hvm/hvm_op.h>
 #include <xen/include/public/hvm/params.h>
-#include <xen/include/public/vcpu.h>
 
 #include <x86/bootinfo.h>
 
