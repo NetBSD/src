@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1740 2022/05/25 10:18:29 nia Exp $
+# $NetBSD: mi,v 1.1741 2022/05/25 20:44:01 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -374,7 +374,7 @@
 ./usr/share/man/cat1/nvi.0			man-obsolete		obsolete
 ./usr/share/man/cat1/nview.0			man-obsolete		obsolete
 ./usr/share/man/cat1/od.0			man-util-catman		.cat
-./usr/share/man/cat1/omshell.0			man-dhcpd-catman	.cat
+./usr/share/man/cat1/omshell.0			man-dhcpd-catman	dhcpd,.cat
 ./usr/share/man/cat1/openpgp.0			man-obsolete		obsolete
 ./usr/share/man/cat1/openssl.0			man-crypto-catman	.cat
 ./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman	.cat
@@ -2173,11 +2173,11 @@
 ./usr/share/man/cat5/daily.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/dhclient.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/dhclient.leases.0		man-obsolete		obsolete
-./usr/share/man/cat5/dhcp-eval.0		man-dhcpd-catman	.cat
-./usr/share/man/cat5/dhcp-options.0		man-dhcpd-catman	.cat
+./usr/share/man/cat5/dhcp-eval.0		man-dhcpd-catman	dhcpd,.cat
+./usr/share/man/cat5/dhcp-options.0		man-dhcpd-catman	dhcpd,.cat
 ./usr/share/man/cat5/dhcpcd.conf.0		man-dhcpcd-catman	.cat
-./usr/share/man/cat5/dhcpd.conf.0		man-dhcpd-catman	.cat
-./usr/share/man/cat5/dhcpd.leases.0		man-dhcpd-catman	.cat
+./usr/share/man/cat5/dhcpd.conf.0		man-dhcpd-catman	dhcpd,.cat
+./usr/share/man/cat5/dhcpd.leases.0		man-dhcpd-catman	dhcpd,.cat
 ./usr/share/man/cat5/dir.0			man-obsolete		obsolete
 ./usr/share/man/cat5/dirent.0			man-obsolete		obsolete
 ./usr/share/man/cat5/disklabel.0		man-sys-catman		.cat
@@ -2556,8 +2556,8 @@
 ./usr/share/man/cat8/dhclient.0			man-obsolete		obsolete
 ./usr/share/man/cat8/dhcpcd-run-hooks.0		man-dhcpcd-catman	.cat
 ./usr/share/man/cat8/dhcpcd.0			man-dhcpcd-catman	.cat
-./usr/share/man/cat8/dhcpd.0			man-dhcpd-catman	.cat
-./usr/share/man/cat8/dhcrelay.0			man-dhcpd-catman	.cat
+./usr/share/man/cat8/dhcpd.0			man-dhcpd-catman	dhcpd,.cat
+./usr/share/man/cat8/dhcrelay.0			man-dhcpd-catman	dhcpd,.cat
 ./usr/share/man/cat8/discard.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/disklabel.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/diskless.0			man-sysutil-catman	.cat
@@ -3696,7 +3696,7 @@
 ./usr/share/man/html1/nvi.html			man-obsolete		obsolete
 ./usr/share/man/html1/nview.html		man-obsolete		obsolete
 ./usr/share/man/html1/od.html			man-util-htmlman	html
-./usr/share/man/html1/omshell.html		man-dhcpd-htmlman	html
+./usr/share/man/html1/omshell.html		man-dhcpd-htmlman	dhcpd,html
 ./usr/share/man/html1/openpgp.html		man-obsolete		obsolete
 ./usr/share/man/html1/openssl.html		man-crypto-htmlman	html
 ./usr/share/man/html1/openssl_CA.pl.html	man-crypto-htmlman	html
@@ -5349,11 +5349,11 @@
 ./usr/share/man/html5/daily.html		man-sys-htmlman		html
 ./usr/share/man/html5/dhclient.conf.html	man-obsolete		obsolete
 ./usr/share/man/html5/dhclient.leases.html	man-obsolete		obsolete
-./usr/share/man/html5/dhcp-eval.html		man-dhcpd-htmlman	html
-./usr/share/man/html5/dhcp-options.html		man-dhcpd-htmlman	html
+./usr/share/man/html5/dhcp-eval.html		man-dhcpd-htmlman	dhcpd,html
+./usr/share/man/html5/dhcp-options.html		man-dhcpd-htmlman	dhcpd,html
 ./usr/share/man/html5/dhcpcd.conf.html		man-dhcpcd-htmlman	html
-./usr/share/man/html5/dhcpd.conf.html		man-dhcpd-htmlman	html
-./usr/share/man/html5/dhcpd.leases.html		man-dhcpd-htmlman	html
+./usr/share/man/html5/dhcpd.conf.html		man-dhcpd-htmlman	dhcpd,html
+./usr/share/man/html5/dhcpd.leases.html		man-dhcpd-htmlman	dhcpd,html
 ./usr/share/man/html5/dir.html			man-obsolete		obsolete
 ./usr/share/man/html5/dirent.html		man-obsolete		obsolete
 ./usr/share/man/html5/disklabel.html		man-sys-htmlman		html
@@ -5672,8 +5672,8 @@
 ./usr/share/man/html8/dhclient.html		man-obsolete		obsolete
 ./usr/share/man/html8/dhcpcd-run-hooks.html	man-dhcpcd-htmlman	html
 ./usr/share/man/html8/dhcpcd.html		man-dhcpcd-htmlman	html
-./usr/share/man/html8/dhcpd.html		man-dhcpd-htmlman	html
-./usr/share/man/html8/dhcrelay.html		man-dhcpd-htmlman	html
+./usr/share/man/html8/dhcpd.html		man-dhcpd-htmlman	dhcpd,html
+./usr/share/man/html8/dhcrelay.html		man-dhcpd-htmlman	dhcpd,html
 ./usr/share/man/html8/discard.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/disklabel.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/diskless.html		man-sysutil-htmlman	html
@@ -6660,7 +6660,7 @@
 ./usr/share/man/man1/nvi.1			man-obsolete		obsolete
 ./usr/share/man/man1/nview.1			man-obsolete		obsolete
 ./usr/share/man/man1/od.1			man-util-man		.man
-./usr/share/man/man1/omshell.1			man-dhcpd-man		.man
+./usr/share/man/man1/omshell.1			man-dhcpd-man		dhcpd,.man
 ./usr/share/man/man1/openpgp.1			man-obsolete		obsolete
 ./usr/share/man/man1/openssl.1			man-crypto-man		.man
 ./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man		.man
@@ -8459,11 +8459,11 @@
 ./usr/share/man/man5/daily.conf.5		man-sys-man		.man
 ./usr/share/man/man5/dhclient.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/dhclient.leases.5		man-obsolete		obsolete
-./usr/share/man/man5/dhcp-eval.5		man-dhcpd-man		.man
-./usr/share/man/man5/dhcp-options.5		man-dhcpd-man		.man
+./usr/share/man/man5/dhcp-eval.5		man-dhcpd-man		dhcpd,.man
+./usr/share/man/man5/dhcp-options.5		man-dhcpd-man		dhcpd,.man
 ./usr/share/man/man5/dhcpcd.conf.5		man-dhcpcd-man		.man
-./usr/share/man/man5/dhcpd.conf.5		man-dhcpd-man		.man
-./usr/share/man/man5/dhcpd.leases.5		man-dhcpd-man		.man
+./usr/share/man/man5/dhcpd.conf.5		man-dhcpd-man		dhcpd,.man
+./usr/share/man/man5/dhcpd.leases.5		man-dhcpd-man		dhcpd,.man
 ./usr/share/man/man5/dir.5			man-obsolete		obsolete
 ./usr/share/man/man5/dirent.5			man-obsolete		obsolete
 ./usr/share/man/man5/disklabel.5		man-sys-man		.man
@@ -8841,8 +8841,8 @@
 ./usr/share/man/man8/dhclient.8			man-obsolete		obsolete
 ./usr/share/man/man8/dhcpcd-run-hooks.8		man-dhcpcd-man		.man
 ./usr/share/man/man8/dhcpcd.8			man-dhcpcd-man		.man
-./usr/share/man/man8/dhcpd.8			man-dhcpd-man		.man
-./usr/share/man/man8/dhcrelay.8			man-dhcpd-man		.man
+./usr/share/man/man8/dhcpd.8			man-dhcpd-man		dhcpd,.man
+./usr/share/man/man8/dhcrelay.8			man-dhcpd-man		dhcpd,.man
 ./usr/share/man/man8/discard.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/disklabel.8		man-sysutil-man		.man
 ./usr/share/man/man8/diskless.8			man-sysutil-man		.man
