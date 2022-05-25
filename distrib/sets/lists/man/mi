@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1741 2022/05/25 20:44:01 nia Exp $
+# $NetBSD: mi,v 1.1742 2022/05/25 21:25:46 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2811,7 +2811,7 @@
 ./usr/share/man/cat8/makemandb.0		man-man-catman		makemandb,.cat
 ./usr/share/man/cat8/makemap.0			man-obsolete		obsolete
 ./usr/share/man/cat8/makewhatis.0		man-man-catman		!makemandb,.cat
-./usr/share/man/cat8/map-mbone.0		man-netutil-catman	mbone,.cat
+./usr/share/man/cat8/map-mbone.0		man-netutil-catman	mrouting,.cat
 ./usr/share/man/cat8/master.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/mbr.0			man-obsolete		obsolete
 ./usr/share/man/cat8/mbrlabel.0			man-sysutil-catman	.cat
@@ -2874,10 +2874,10 @@
 ./usr/share/man/cat8/mount_zfs.0		man-sysutil-catman	zfs,.cat
 ./usr/share/man/cat8/mountd.0			man-nfsserver-catman	.cat
 ./usr/share/man/cat8/moused.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/mrinfo.0			man-netutil-catman	mbone,.cat
-./usr/share/man/cat8/mrouted.0			man-router-catman	mbone,.cat
+./usr/share/man/cat8/mrinfo.0			man-netutil-catman	mrouting,.cat
+./usr/share/man/cat8/mrouted.0			man-router-catman	mrouting,.cat
 ./usr/share/man/cat8/mscdlabel.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/mtrace.0			man-netutil-catman	mbone,.cat
+./usr/share/man/cat8/mtrace.0			man-netutil-catman	mrouting,.cat
 ./usr/share/man/cat8/mtrace6.0			man-obsolete		obsolete
 ./usr/share/man/cat8/mtree.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mvme68k/MAKEDEV.0		man-obsolete		obsolete
@@ -5869,7 +5869,7 @@
 ./usr/share/man/html8/makekey.html		man-crypto-htmlman	html
 ./usr/share/man/html8/makemandb.html		man-man-htmlman		makemandb,html
 ./usr/share/man/html8/makewhatis.html		man-man-htmlman		!makemandb,html
-./usr/share/man/html8/map-mbone.html		man-netutil-htmlman	mbone,html
+./usr/share/man/html8/map-mbone.html		man-netutil-htmlman	mrouting,html
 ./usr/share/man/html8/master.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/mbrlabel.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mdconfig.html		man-sysutil-htmlman	html
@@ -5926,10 +5926,10 @@
 ./usr/share/man/html8/mount_zfs.html		man-sysutil-htmlman	zfs,html
 ./usr/share/man/html8/mountd.html		man-nfsserver-htmlman	html
 ./usr/share/man/html8/moused.html		man-sysutil-htmlman	html
-./usr/share/man/html8/mrinfo.html		man-netutil-htmlman	mbone,html
-./usr/share/man/html8/mrouted.html		man-router-htmlman	mbone,html
+./usr/share/man/html8/mrinfo.html		man-netutil-htmlman	mrouting,html
+./usr/share/man/html8/mrouted.html		man-router-htmlman	mrouting,html
 ./usr/share/man/html8/mscdlabel.html		man-sysutil-htmlman	html
-./usr/share/man/html8/mtrace.html		man-netutil-htmlman	mbone,html
+./usr/share/man/html8/mtrace.html		man-netutil-htmlman	mrouting,html
 ./usr/share/man/html8/mtree.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mvme68k/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/mvme68k/installboot.html	man-sysutil-htmlman	html
@@ -9097,7 +9097,7 @@
 ./usr/share/man/man8/makemandb.8		man-man-man		makemandb,.man
 ./usr/share/man/man8/makemap.8			man-obsolete		obsolete
 ./usr/share/man/man8/makewhatis.8		man-man-man		!makemandb,.man
-./usr/share/man/man8/map-mbone.8		man-netutil-man		mbone,.man
+./usr/share/man/man8/map-mbone.8		man-netutil-man		mrouting,.man
 ./usr/share/man/man8/master.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/mbr.8			man-obsolete		obsolete
 ./usr/share/man/man8/mbrlabel.8			man-sysutil-man		.man
@@ -9160,10 +9160,10 @@
 ./usr/share/man/man8/mount_zfs.8		man-sysutil-man		zfs,.man
 ./usr/share/man/man8/mountd.8			man-nfsserver-man	.man
 ./usr/share/man/man8/moused.8			man-sysutil-man		.man
-./usr/share/man/man8/mrinfo.8			man-netutil-man		mbone,.man
-./usr/share/man/man8/mrouted.8			man-router-man		mbone,.man
+./usr/share/man/man8/mrinfo.8			man-netutil-man		mrouting,.man
+./usr/share/man/man8/mrouted.8			man-router-man		mrouting,.man
 ./usr/share/man/man8/mscdlabel.8		man-sysutil-man		.man
-./usr/share/man/man8/mtrace.8			man-netutil-man		mbone,.man
+./usr/share/man/man8/mtrace.8			man-netutil-man		mrouting,.man
 ./usr/share/man/man8/mtrace6.8			man-obsolete		obsolete
 ./usr/share/man/man8/mtree.8			man-sysutil-man		.man
 ./usr/share/man/man8/mvme68k/MAKEDEV.8		man-obsolete		obsolete
