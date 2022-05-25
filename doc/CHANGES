@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2876 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2877 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -357,7 +357,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		base for headless clients [reinoud 20201227]
 	dhcpcd: Update to version 9.4.0 [roy 20201228]
 	pci(4): Add support for Enhanced Allocations, as seen in the Cavium
-		ThunderX-based GIGABYTE MT30-GS2-00. [thorepj 20201229]
+		ThunderX-based GIGABYTE MT30-GS2-00. [thorpej 20201229]
 	tzdata updated to 2020f (includes update to 2020e)  [kre 20201231]
 	evbarm: Add support for Amlogic G12 family SoCs. [ryo 20210101]
 	ps(1): Add -G to take a single group argument, heading towards
