@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1299 2022/05/25 10:18:29 nia Exp $
+# $NetBSD: mi,v 1.1300 2022/05/25 20:44:01 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1457,8 +1457,8 @@
 ./usr/sbin/dbsym				base-sysutil-bin	binutils
 ./usr/sbin/ddns-confgen				base-bind-bin
 ./usr/sbin/dev_mkdb				base-sysutil-bin
-./usr/sbin/dhcpd				base-dhcpd-bin
-./usr/sbin/dhcrelay				base-dhcpd-bin
+./usr/sbin/dhcpd				base-dhcpd-bin		dhcpd
+./usr/sbin/dhcrelay				base-dhcpd-bin		dhcpd
 ./usr/sbin/dig					base-obsolete		obsolete
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
@@ -1635,7 +1635,7 @@
 ./usr/sbin/ntptimeset				base-obsolete		obsolete
 ./usr/sbin/ntptrace				base-ntp-bin
 ./usr/sbin/nvmmctl				base-sysutil-bin	nvmm
-./usr/sbin/omshell				base-dhcpd-bin
+./usr/sbin/omshell				base-dhcpd-bin		dhcpd
 ./usr/sbin/opensnoop				base-debug-bin		dtrace
 ./usr/sbin/pac					base-sysutil-bin
 ./usr/sbin/paxctl				base-sysutil-bin
@@ -1867,8 +1867,8 @@
 ./usr/share/calendar/calendar.music		base-calendar-share	share
 ./usr/share/calendar/calendar.netbsd		base-calendar-share	share
 ./usr/share/calendar/calendar.usholiday		base-calendar-share	share
-./usr/share/dhcpd				base-dhcpd-bin
-./usr/share/dhcpd/pxe.defs			base-dhcpd-bin		share
+./usr/share/dhcpd				base-dhcpd-bin		dhcpd
+./usr/share/dhcpd/pxe.defs			base-dhcpd-bin		dhcpd,share
 ./usr/share/dict				base-reference-share
 ./usr/share/dict/papers				base-reference-share
 ./usr/share/dict/special			base-reference-share
@@ -2015,7 +2015,7 @@
 ./usr/share/examples/blocklist			base-sys-examples
 ./usr/share/examples/blocklist/blocklistd.conf	base-sys-examples
 ./usr/share/examples/blocklist/npf.conf		base-sys-examples
-./usr/share/examples/dhcp			base-dhcpd-examples
+./usr/share/examples/dhcp			base-dhcpd-examples	dhcpd
 ./usr/share/examples/dhcpcd			base-dhcpcd-examples
 ./usr/share/examples/dhcpcd/hooks		base-dhcpcd-examples
 ./usr/share/examples/disktab			base-sys-examples

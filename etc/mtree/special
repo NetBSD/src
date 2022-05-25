@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.173 2022/05/25 10:18:29 nia Exp $
+#	$NetBSD: special,v 1.174 2022/05/25 20:44:01 nia Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -207,8 +207,8 @@
 ./etc/rc.d/cron			type=file mode=0555
 ./etc/rc.d/devpubd		type=file mode=0555
 ./etc/rc.d/dhcpcd		type=file mode=0555
-./etc/rc.d/dhcpd		type=file mode=0555
-./etc/rc.d/dhcpd6		type=file mode=0555
+./etc/rc.d/dhcpd		type=file mode=0555 optional
+./etc/rc.d/dhcpd6		type=file mode=0555 optional
 ./etc/rc.d/dhcrelay		type=file mode=0555
 ./etc/rc.d/dmesg		type=file mode=0555
 ./etc/rc.d/downinterfaces	type=file mode=0555

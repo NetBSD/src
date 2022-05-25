@@ -1,0 +1,3 @@
+# $NetBSD: NetBSD.dist.dhcpd,v 1.1 2022/05/25 20:44:01 nia Exp $
+./usr/share/dhcpd
+./usr/share/examples/dhcp

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.430 2022/05/25 10:18:29 nia Exp $
+#	$NetBSD: bsd.README,v 1.431 2022/05/25 20:44:01 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -200,6 +200,9 @@ MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
 		files that need refreshing. It is off by default because
 		it is possibly slower.
 		Default "no"
+
+MKDHCPD		If "no", don't build or install dhcpd(8).
+		Default: yes
 
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes

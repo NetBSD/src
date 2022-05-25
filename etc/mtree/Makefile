@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2021/04/25 23:40:52 christos Exp $
+#	$NetBSD: Makefile,v 1.46 2022/05/25 20:44:01 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,10 @@ EXTRA_DIST_FILES+=	NetBSD.dist.tests
 .if defined(MKCOMPATTESTS) && ${MKCOMPATTESTS} != "no"
 EXTRA_DIST_FILES+=	NetBSD.dist.tests.compat
 .endif
+.endif
+
+.if ${MKDHCPD} != "no"
+EXTRA_DIST_FILES+=	NetBSD.dist.dhcpd
 .endif
 
 .if ${MKDTB} != "no"
