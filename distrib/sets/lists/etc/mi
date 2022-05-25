@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.265 2021/01/26 13:31:19 martin Exp $
+# $NetBSD: mi,v 1.266 2022/05/25 10:18:29 nia Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -97,7 +97,7 @@
 ./etc/monthly					etc-sys-etc
 ./etc/monthly.conf				etc-sys-etc
 ./etc/motd					etc-sys-etc
-./etc/mrouted.conf				etc-router-etc
+./etc/mrouted.conf				etc-router-etc		mbone
 ./etc/mtree/NetBSD.dist				etc-sys-etc
 ./etc/mtree/set.etc				etc-sys-etc
 ./etc/mtree/special				etc-sys-etc
@@ -263,7 +263,7 @@
 ./etc/rc.d/mountcritremote			etc-sys-rc
 ./etc/rc.d/mountd				etc-nfsserver-rc
 ./etc/rc.d/moused				etc-sysutil-rc
-./etc/rc.d/mrouted				etc-router-rc
+./etc/rc.d/mrouted				etc-router-rc		mbone
 ./etc/rc.d/named				etc-bind-rc
 ./etc/rc.d/ndbootd				etc-bootserver-rc
 ./etc/rc.d/network				etc-net-rc
