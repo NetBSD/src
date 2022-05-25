@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.35 2021/06/29 10:22:34 nia Exp $
+#	$NetBSD: majors.amd64,v 1.36 2022/05/25 08:12:42 uwe Exp $
 #
 # Device majors for amd64
 #
@@ -91,6 +91,9 @@ device-major	kttcp		char 92			kttcp
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
 #device-major	obsolete	char 98			obsolete (nsmb)
+
+# Reserve a major for VirtualBox Guest Additions
+device-major	vboxguest	char 109		vboxguest
 
 #
 # Device majors for Xen. These are assigned here so that:
