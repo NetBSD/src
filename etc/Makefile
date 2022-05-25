@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.459 2022/05/25 10:18:29 nia Exp $
+#	$NetBSD: Makefile,v 1.460 2022/05/25 21:25:46 nia Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -111,7 +111,7 @@ BIN1+=	auto_master bootptab changelist csh.cshrc csh.login \
 	rc.shutdown remote rpc security security.conf services shells \
 	shrc sysctl.conf syslog.conf weekly weekly.conf wscons.conf
 
-.if ${MKMBONE} != "no"
+.if ${MKMROUTING} != "no"
 BIN1+=	mrouted.conf
 .endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.379 2022/05/25 20:44:01 nia Exp $
+# $NetBSD: mi,v 1.380 2022/05/25 21:25:46 nia Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1173,7 +1173,7 @@
 ./usr/libdata/debug/usr/sbin/makedbm.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/makefs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/makemandb.debug	comp-makemandb-debug	makemandb,debug
-./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	mbone,debug
+./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	mrouting,debug
 ./usr/libdata/debug/usr/sbin/mdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mdnsd.debug	comp-mdns-debug		mdns,debug
 ./usr/libdata/debug/usr/sbin/mdsetimage.debug	comp-sysutil-debug	binutils,debug
@@ -1194,10 +1194,10 @@
 ./usr/libdata/debug/usr/sbin/mount_sysctlfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/mountd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/moused.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/mrinfo.debug	comp-router-debug	mbone,debug
-./usr/libdata/debug/usr/sbin/mrouted.debug	comp-router-debug	mbone,debug
+./usr/libdata/debug/usr/sbin/mrinfo.debug	comp-router-debug	mrouting,debug
+./usr/libdata/debug/usr/sbin/mrouted.debug	comp-router-debug	mrouting,debug
 ./usr/libdata/debug/usr/sbin/mscdlabel.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/mtrace.debug	comp-netutil-debug	mbone,debug
+./usr/libdata/debug/usr/sbin/mtrace.debug	comp-netutil-debug	mrouting,debug
 ./usr/libdata/debug/usr/sbin/mtree.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-bind-bin		debug

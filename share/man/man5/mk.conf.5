@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.87 2022/05/25 20:44:01 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.88 2022/05/25 21:25:47 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -634,21 +634,24 @@ Indicates whether manual pages should be compressed with
 at installation time.
 .DFLTn
 .
-.It Sy MKMBONE
+.It Sy MKMDNS
 .YorN
-Indicates whether Multicast Backbone applications will be built and
+Indicates whether the mDNS (Multicast DNS) infrastructure
+(libraries and support programs) is built and installed.
+.DFLTy
+.
+.It Sy MKMROUITNG
+.YorN
+Indicates whether multicast routing applications will be built and
 installed, i.e. 
 .Xr map-mbone 8 ,
 .Xr mrinfo 8 ,
 .Xr mrouted 8 ,
 and
 .Xr mtrace 8 .
-.DFLTy
-.
-.It Sy MKMDNS
-.YorN
-Indicates whether the mDNS (Multicast DNS) infrastructure
-(libraries and support programs) is built and installed.
+These require the
+.Dv MROUTING
+kernel option to be enabled.
 .DFLTy
 .
 .It Sy MKNLS

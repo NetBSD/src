@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.431 2022/05/25 20:44:01 nia Exp $
+#	$NetBSD: bsd.README,v 1.432 2022/05/25 21:25:47 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -372,12 +372,13 @@ MKMANDOC	If "yes", mandoc is built as tool and used to compile
 MKMANZ		If not "no", compress manual pages at installation time.
 		Default: no
 
-MKMBONE		If "no", don't build or install Multicast Backbone
-		applications.
-		Default: yes
-
 MKMDNS		If "no", disables building of mDNS infrastructure
 		(libraries and support programs).
+		Default: yes
+
+MKMROUTING	If "no", don't build or install the multicast routing
+		applications - map-mbone(8), mrinfo(8), mrouted(8), or
+		mtrace(8).
 		Default: yes
 
 MKNLS		If "no", don't build or install the NLS files and locale
