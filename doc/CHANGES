@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2875 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2876 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -67,10 +67,15 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[jmcneill 20191101]
 	amd64: Add support for kCSan - Kernel Concurrency Sanitizer.
 		[maxv 20191105]
+	audioplay(1): Add support for playing IEEE float32 and float64
+		RIFF WAVE files [mrg 20191109]
 	tmux(1): Imported 2.9a. [christos 20191112]
 	dhcpcd(8): Import 8.1.2. [roy 20191113]
 	amd64: Add support for kMSan - Kernel Memory Sanitizer.
 		[maxv 20191114]
+	kernel: Add fexecve(2) system call for executing a file from a file
+		descriptor, conforming to The Open Group Extended API Set 2.
+		[christos 20191115]
 	qat(4): Add opencrypto driver for Intel QuickAssist.
 		Atom C2XXX, C3XXX, Xeon D-21XX and D-15XX, C62X chipsets and
 		QuickAssist Adapter 8960/8970.
@@ -114,6 +119,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		not needed anymore [christos 20191229]
 	uvm: Reduce lock contention by making the maintentance of page
 		replacement state more concurrent. [ad 20191231]
+	rge(4): Imported driver for Realtek 8125/8125B PCIe 2.5Gb
+		Ethernet devices from OpenBSD. [sevan 20200111]
 	aq(4): Add Aquantia 10G network adapter driver [ryo 20200101]
 	dhcpcd(8): Import dhcpcd-8.1.5 [roy 20200103]
 	tmux(1): Imported 3.0a. [christos 20200106]
@@ -219,14 +226,24 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	postfix(1): Import version 3.5.2. [christos 20200525]
 	OpenSSH: Import 8.3. [christos 20200528]
 	evbarm: Add install media for earmv7hf and aarch64. [jmcneill 20200528]
+	aarch64: Switch to USE_XZ_SETS=yes. [jmcneill 20200602]
 	dhcpcd: Import version 9.1.1 [roy 20200604]
+	proplib(3): Various API improvements - many functions deprecated and
+		now produce compiler warnings. [thorpej 20200606]
 	inet6: in-kernel Router Advertisment handling removed. [roy 20200612]
+	httpd(8): Add blocklistd(8) support. [jruoho 20200613]
 	file(1): Upgraded to 5.39. [christos 20200614]
 	blocklist: import current version [christos 20200614]
 	dhcpcd: Import version 9.1.2 [roy 20200615]
+	evbmips: Create an "octeon.img.gz" bootable image for
+		evbmips64-eb release builds. [jmcneill 20200617]
 	evbarm: Add support for loading modules with the bootloader.
 		[jmcneill 20200221]
 	evbarm: Added boot.cfg support to efiboot [jmcneill 20200211]
+	evbmips: Add ofctl(8) and /dev/openfirm support for Cavium
+		Octeon devices. [jmcneill 20200624]
+	mv(1): Add -h option to atomically replace a symlink to a
+		directory. [riastradh 20200624]
 	kernel: Remove all variable-time AES and replace it by constant-time
 		aes_ct from BearSSL or a CPU-dependent implementation,
 		selected at boot time according to CPU capabilities.
@@ -264,6 +281,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[tsutsui 20200722]
 	wwanc(4): Add driver for Intel XMM7360 LTE modem [jdolecek 20200726]
 	xen: MSI enabled by default [jdolecek 20200728]
+	script(1): Add proper playback of curses sessions. [christos 20200801]
 	kernel: remove the BRIDGE_IPF option, build its code by default
 		unconditionally. [maxv 20200801]
 	aarch64: Add support for Privileged Access Never (PAN).
@@ -272,6 +290,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	bind: Import version 9.16.5. [christos 20200803]
 	dhcp: Import version 4.4.2. [christos 20200803]
 	openldap: Import 2.4.50. [christos 20200811]
+	inetd(8): Various improvements. Add -f flag to run in
+		foreground.  [christos 20200812]
 	kernel: Add getrandom system call. [riastradh 20200813]
 	kernel: Disable COMPAT_LINUX by default [jdolecek 20200816]
 	mips: Port crash(8) to mips.  [mrg 20200816]
@@ -291,7 +311,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	vether(4): New virtual ethernet interface for bridging to physical
 		interfaces, imported from OpenBSD.  [roy 20200927]
 	tap(4): Link state now reflects whether device is open by a process.
-	        For virtual ethernet interfaces not associated with a
+		For virtual ethernet interfaces not associated with a
 		backing process to bridge with physical interfaces, use
 		vether(4).  [roy 20200927]
 	dhcpcd: Update to version 9.3.0 [roy 20201005]
@@ -303,6 +323,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	ossaudio(3): Added support for the OSSv4 Mixer API [nia 20201017]
 	tzdata updated to 2020d  [kre 20201022]
 	pcf8574(4): Add a driver for the PCF8574 I/O expander [jdc 20201029]
+	kernel: Add EVFILT_USER to kqueue(2) for user-established
+		events. [christos 20201031]
 	dhcpcd: Update to version 9.3.2 [roy 20201101]
 	tmux(1): Imported 3.1c. [christos 20201101]
 	kernel: Better default for kern.maxfiles for systems with
@@ -319,6 +341,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libfido2: Update to 1.5.0 for OpenSSH 8.4 support [christos 20201204]
 	OpenSSH: Import 8.4. [christos 20201204]
 	pkg_install: Updated to 20201205. [wiz 20201205]
+	acpi(4): Add /dev/acpi character device for accessing ACPI tables,
+		remove the "options INSECURE" requirement for
+		acpidump(8) [jmcneill 20201206]
 	acpicpu(4): Add support for Arm CPUs. [jmcneill 20201207]
 	OpenSSL: Imported 1.1.1i. [christos 20201209]
 	pkg_install: Updated to 20201212. [wiz 20201212]
@@ -331,11 +356,19 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	resize: Import Xterm's resize(1) for querying (x)terminal sizes in
 		base for headless clients [reinoud 20201227]
 	dhcpcd: Update to version 9.4.0 [roy 20201228]
+	pci(4): Add support for Enhanced Allocations, as seen in the Cavium
+		ThunderX-based GIGABYTE MT30-GS2-00. [thorepj 20201229]
 	tzdata updated to 2020f (includes update to 2020e)  [kre 20201231]
 	evbarm: Add support for Amlogic G12 family SoCs. [ryo 20210101]
+	ps(1): Add -G to take a single group argument, heading towards
+		POSIX.2 compliance. [jperkin 20210104]
+	nbperf(1): Optimize. Reduce memory footprint by 30%. [joerg 20210107]
 	pppd(8): updated to version 2.4.9. [christos 20210109]
 	tzdata updated to 2021a [kre 20210124]
 	evbmips: Add support for QEMU "mipssim" emulator. [simonb 20210127]
+	mcx(4): Sync. with OpenBSD. Lots of improvements including checksum
+		offload, hardware vlan tagging, and support for multiple
+		receive queues.  [jmcneill 20210130]
 	x68k: Add Emulate3Buttons support to X68k Xorg based monolithic server.
 		[tsutsui 20210207]
 	bind: Import version 9.16.12. [christos 20210219]
@@ -351,6 +384,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	nsd: Import 4.3.5. [christos 20210315]
 	unbound(8): Import 1.13.1. [christos 20210315]
 	OpenSSL: Imported 1.1.1k. [christos 20210325]
+	kernel: Add fast sysctl(7)-based kernel hash statistics generation
+		for vmstat -h/-H [simonb 20210401]
 	evbppc: Add support for DHT Walnut 405GP evaluation board.
 		[rin 20210402]
 	acpi(4): Updated ACPICA to 20210331. [christos 20210403]
@@ -371,18 +406,25 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tmux(1): Imported 3.2. [christos 20210417]
 	hppa: Switch to GCC 10.  [skrll 20210418]
 	OpenSSH: Import 8.6. [christos 20210419]
+	wsfontload(8): Add -l option to list all available fonts.
+		[macallan 20210424]
 	powerpc: Switch to GCC 10.  [mrg 20210425]
 	aarch64: Switch to GCC 10.  [mrg 20210425]
 	bind: Import version 9.16.15. [christos 20210429]
 	resolver: The default has been changed to check-names
 		(see resolv.conf(5)), which means that hostnames that
 		contain invalid characters will not resolve. [christos 20210430]
+	rge(4): Finished porting driver for Realtek 8125/8125B PCIe 2.5Gb
+		Ethernet devices from OpenBSD. [jakllsch 20210501]
 	evbarm: Add support for Allwinner V3s SoCs. [jmcneill 20210505]
 	aiomixer(1): Added aiomixer, a curses-based mixer for NetBSD's
 		audio API. [nia 20210507]
 	wskbd(4): Added German Neo 2 layout. [nia 20210511]
+	macppc: Improve iMac G5 support: audio, CPU temperature sensors,
+		GeForce framebuffer support. [macallan 20210511]
 	spiflash(4): Add support for Rockchip RK3328. [mrg 20210514]
 	lagg(4): Added a link-aggregation interface. [yamaguchi 20210517]
+	xhci(4): Add suspend/resume support. [riastradh 20210523]
 	raid(4): Add support for swapped-endian autoconfiguration.
 		[mrg 20210525]
 	dhcp: Import version 4.4.2-P1. [christos 20210526]
@@ -391,6 +433,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		volumes. [mrg 20210526]
 	mips: Switch to GCC 10. [mrg 20210526]
 	i386: Switch to GCC 10. [mrg 20210526]
+	nvme(4): Add suspend/resume support. [riastradh 20210529]
+	mips: Ported dtrace(1). [simonb 20210529]
+	mips: Support for kernel modules. [simonb 20210531]
 	arm: Remove support for building the old ABI (oabi). [christos 20210607]
 	libfido2: Import 1.7.0 [christos 20210616]
 	m68k: Switch to GCC 10. [mrg 20210619]
@@ -417,6 +462,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	kgmon(8): added -c option to get profile information for each cpu.
 		[ryo 20210814]
 	openldap: Import 2.5.6. [christos 20210814]
+	sh(1): Add command auto-completion, from FreeBSD. [christos 20210815]
 	sh3: Switch to GCC 10. [mrg 20210816]
 	bind: Import version 9.16.20. [christos 20210819]
 	evbarm: Support marvell-based machines in big-endian mode. Currently,
@@ -452,6 +498,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	sgp40mox(4): Driver for the Sensirion SGP40 MOx gas sensor for air
 		quality [brad 20211014]
 	aarch64: Enable MKRELRO and MKPIE by default. [nia 20211014]
+	pms(4): Significant update to Synaptics trackpad
+		support. [blymn 20211021]
 	dhcpcd(8): Update to dhcpcd-9.4.1. [roy 20211022]
 	tzcode: Updated to 2021e. [christos 20211022]
 	tzdata: updated to 2021e (still missing trash from 2021b) [kre 20211022]
@@ -464,6 +512,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Add support for Rockchip RK3288 SoCs. [jmcneill 20211112]
 	cgdconfig(8): Added 'argon2id' password-based key generation method.
 		[nia 20211122]
+	wsmoused(8): Support absolute mouse position events,
+		tested with VirtualBox Guest Addtions. [uwe 20211124]
 	aarch64: Add initial COMPAT_LINUX32 support. [ryo 20211125]
 	scmd: Driver and userland utility for the Sparkfun Serial Controlled
 		Motor Driver [brad 20211207]
@@ -478,6 +528,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	scan_ffs(8): Add SIGINFO support. [mrg 20220119]
 	sysinst(8): Allow configuring IEEE 802.11 / Wi-Fi devices with
 		WPA or open networks. [nia 20220111]
+	refuse(3): Support all FUSE API variants from FUSE 1.1
+		to FUSE 3.10. [pho 20220122]
 	tmux(1): Imported 3.2a. [christos 20220123]
 	vmstat(1): Pick better default disk for vmstat. [mrg 20220201]
 	tools: Allow tools to use C99. [rillig 20220203]
@@ -491,7 +543,13 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSL: Imported 1.1.1n. [christos 20220315]
 	tzdata: updated to 2022a (using the 2022agtz fork to restore data
 		from previously merged zones) [kre 20220320]
+	hdaudio(4): Obsolete HDAUDIO_ENABLE_DISPLAYPORT and
+		HDAUDIO_ENABLE_HDMI, enabling DisplayPort and HDMI audio
+		devices by default in kernel configurations. The default
+		device may change in audiocfg(1).  [jmcneill 20220321]
 	tzcode: Updated to 2022a. [christos 20220322]
+	kernel: Implement restrictions on hardlink creation
+		in secmodel_extensions(9) [christos 20220327]
 	dhcp: Import version 4.4.3. [christos 20220402]
 	udf: Added fsck_udf(8) and upgraded newfs_udf/makefs for UDF. [reinoud 20220506]
 	OpenSSH: Import 9.0. [christos 20220415]
@@ -501,3 +559,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	lint(1): Reduce amount of wrong warnings. [rillig 20220503]
 	make(1): Speed up evaluation of conditions, reduce memory leaks.
 		[rillig 20220503]
+	make(1): Add "randomize-targets" for debugging race conditions.
+		[rillig 20220507]
