@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2878 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2879 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -44,6 +44,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libpcap: Import 1.9.1. [christos 20191001]
 	tcpdump(8): Import 4.9.3. [christos 20191001]
 	rescue(8): Moved into a separate, rescue-only set. [maya 20191001]
+	kqueue(2): Switch kevent udata from intptr_t void* for compatibility
+		with other BSDs. [kamil 20191003]
 	byacc: Update to 20190617. [christos 20191006]
 	tzdata updates from 2019a to 2019c (incl 2019b) [kre 20191008]
 	services(5): Update to version 2019-10-04 from IANA.
@@ -329,6 +331,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata updated to 2020c  [kre 20201017]
 	tzcode: Updated to 2020c. [christos 20201017]
 	ossaudio(3): Added support for the OSSv4 Mixer API [nia 20201017]
+	queue(3): Remove CIRCLEQ API [kamil 20201020]
 	tzdata updated to 2020d  [kre 20201022]
 	pcf8574(4): Add a driver for the PCF8574 I/O expander [jdc 20201029]
 	kernel: Add EVFILT_USER to kqueue(2) for user-established
@@ -495,6 +498,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libfido2: Import 1.8.0 [christos 20210924]
 	pam-u2f: Import pam u2f 1.2.0 [christos 20210924]
 	OpenSSH: Import 8.8. [christos 20210927]
+	csh(1), ksh(1), sh(1): Add -Z option to jobs builtin to set the
+		process title, compatible with zsh [christos 20210927]
 	evbarm: Add support for changing the video mode with the 'gop'
 		comamnd to efiboot. [jmcneill 20210928]
 	wsmouse(4): Added WSCONS_EVENT_(H|V)SCROLL event types from OpenBSD
