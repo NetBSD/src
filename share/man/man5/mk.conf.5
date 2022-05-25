@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.85 2021/12/20 20:33:20 christos Exp $
+.\"	$NetBSD: mk.conf.5,v 1.86 2022/05/25 10:18:29 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2021
+.Dd May 23, 2022
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -626,6 +626,17 @@ Indicates whether manual pages should be compressed with
 .Xr gzip 1
 at installation time.
 .DFLTn
+.
+.It Sy MKMBONE
+.YorN
+Indicates whether Multicast Backbone applications will be built and
+installed, i.e. 
+.Xr map-mbone 8 ,
+.Xr mrinfo 8 ,
+.Xr mrouted 8 ,
+and
+.Xr mtrace 8 .
+.DFLTy
 .
 .It Sy MKMDNS
 .YorN
