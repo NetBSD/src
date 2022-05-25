@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2879 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2880 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -536,6 +536,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	scmd: Driver and userland utility for the Sparkfun Serial Controlled
 		Motor Driver [brad 20211207]
 	acpi(4): Updated ACPICA to 20211217. [christos 20211218]
+	kernel: Merge DRM/KMS GPU drivers from Linux 5.6. [riastradh 20211219]
 	udf: Fix corruption when writing to Microsoft Windows 10 formatted
 		recordables. [reinoud 20211216]
 	mcommphy(4): Add driver for Motorcomm YT8511 GbE PHY.
