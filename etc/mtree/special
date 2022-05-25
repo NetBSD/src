@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.172 2021/11/30 06:21:58 simonb Exp $
+#	$NetBSD: special,v 1.173 2022/05/25 10:18:29 nia Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -116,7 +116,7 @@
 ./etc/monthly			type=file mode=0644
 ./etc/monthly.conf		type=file mode=0644
 ./etc/monthly.local		type=file mode=0644 optional
-./etc/mrouted.conf		type=file mode=0644
+./etc/mrouted.conf		type=file mode=0644 optional
 ./etc/mtree			type=dir  mode=0755
 ./etc/mtree/special		type=file mode=0444
 ./etc/mtree/special.local	type=file mode=0644 optional
@@ -249,7 +249,7 @@
 ./etc/rc.d/mountcritremote	type=file mode=0555
 ./etc/rc.d/mountd		type=file mode=0555
 ./etc/rc.d/moused		type=file mode=0555
-./etc/rc.d/mrouted		type=file mode=0555
+./etc/rc.d/mrouted		type=file mode=0555 optional
 ./etc/rc.d/named		type=file mode=0555
 ./etc/rc.d/ndbootd		type=file mode=0555
 ./etc/rc.d/network		type=file mode=0555

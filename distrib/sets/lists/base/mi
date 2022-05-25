@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1298 2022/05/15 00:24:14 mrg Exp $
+# $NetBSD: mi,v 1.1299 2022/05/25 10:18:29 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1570,7 +1570,7 @@
 ./usr/sbin/makefs				base-sysutil-bin
 ./usr/sbin/makemandb				base-man-bin		makemandb
 ./usr/sbin/makemap				base-obsolete		obsolete
-./usr/sbin/map-mbone				base-netutil-bin
+./usr/sbin/map-mbone				base-netutil-bin	mbone
 ./usr/sbin/mbrlabel				base-obsolete		obsolete
 ./usr/sbin/mdconfig				base-sysutil-bin
 ./usr/sbin/mdnsd				base-mdns-bin		mdns
@@ -1593,10 +1593,10 @@
 ./usr/sbin/mount_sysctlfs			base-puffs-bin
 ./usr/sbin/mountd				base-nfsserver-bin
 ./usr/sbin/moused				base-sysutil-bin
-./usr/sbin/mrinfo				base-router-bin
-./usr/sbin/mrouted				base-router-bin
+./usr/sbin/mrinfo				base-router-bin		mbone
+./usr/sbin/mrouted				base-router-bin		mbone
 ./usr/sbin/mscdlabel				base-sysutil-bin
-./usr/sbin/mtrace				base-netutil-bin
+./usr/sbin/mtrace				base-netutil-bin	mbone
 ./usr/sbin/mtrace6				base-obsolete		obsolete
 ./usr/sbin/mtree				base-sysutil-bin
 ./usr/sbin/named				base-bind-bin
