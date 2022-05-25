@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.287 2022/05/25 10:18:28 nia Exp $
+#	$NetBSD: Makefile,v 1.288 2022/05/25 21:25:47 nia Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -38,7 +38,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 SUBDIR+= makemandb
 .endif
 
-.if ${MKMBONE} != "no"
+.if ${MKMROUTING} != "no"
 SUBDIR+= map-mbone mrinfo mrouted mtrace
 .endif
 
