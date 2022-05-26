@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.445 2022/05/26 10:48:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.446 2022/05/26 16:52:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.445 2022/05/26 10:48:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.446 2022/05/26 16:52:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3084,14 +3084,12 @@ build_address(bool sys, tnode_t *tn, bool noign)
 static tnode_t *
 build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
-	tnode_t	*ntn, *ctn;
-	type_t	*tp;
 
 	/* If pointer and integer, then pointer to the lhs. */
 	if (rn->tn_type->t_tspec == PTR && is_integer(ln->tn_type->t_tspec)) {
-		ntn = ln;
+		tnode_t *tmp = ln;
 		ln = rn;
-		rn = ntn;
+		rn = tmp;
 	}
 
 	if (ln->tn_type->t_tspec == PTR && rn->tn_type->t_tspec != PTR) {
@@ -3100,32 +3098,28 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		check_ctype_macro_invocation(ln, rn);
 		check_enum_array_index(ln, rn);
 
-		ctn = plength(ln->tn_type);
+		tnode_t *ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
 		rn = new_tnode(MULT, sys, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
 			rn = fold(rn);
-		ntn = new_tnode(op, sys, ln->tn_type, ln, rn);
+		return new_tnode(op, sys, ln->tn_type, ln, rn);
+	}
 
-	} else if (rn->tn_type->t_tspec == PTR) {
-
+	if (rn->tn_type->t_tspec == PTR) {
 		lint_assert(ln->tn_type->t_tspec == PTR);
 		lint_assert(op == MINUS);
-		tp = gettyp(PTRDIFF_TSPEC);
-		ntn = new_tnode(op, sys, tp, ln, rn);
+		type_t *tp = gettyp(PTRDIFF_TSPEC);
+		tnode_t *ntn = new_tnode(op, sys, tp, ln, rn);
 		if (ln->tn_op == CON && rn->tn_op == CON)
 			ntn = fold(ntn);
-		ctn = plength(ln->tn_type);
+		tnode_t *ctn = plength(ln->tn_type);
 		balance(NOOP, &ntn, &ctn);
-		ntn = new_tnode(DIV, sys, tp, ntn, ctn);
-
-	} else {
-
-		ntn = new_tnode(op, sys, ln->tn_type, ln, rn);
-
+		return new_tnode(DIV, sys, tp, ntn, ctn);
 	}
-	return ntn;
+
+	return new_tnode(op, sys, ln->tn_type, ln, rn);
 }
 
 /*
