@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.19 2021/09/26 16:36:19 thorpej Exp $ */
+/*	$NetBSD: event.c,v 1.20 2022/05/26 14:30:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.19 2021/09/26 16:36:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.20 2022/05/26 14:30:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -101,18 +101,18 @@ ev_read(struct evvar *ev, struct uio *uio, int flags)
 	 * Make sure we can return at least 1.
 	 */
 	if (uio->uio_resid < sizeof(struct firm_event))
-		return (EMSGSIZE);	/* ??? */
+		return EMSGSIZE;	/* ??? */
 	mutex_enter(ev->ev_lock);
 	while (ev->ev_get == ev->ev_put) {
 		if (flags & IO_NDELAY) {
 			mutex_exit(ev->ev_lock);
-			return (EWOULDBLOCK);
+			return EWOULDBLOCK;
 		}
 		ev->ev_wanted = true;
 		error = cv_wait_sig(&ev->ev_cv, ev->ev_lock);
 		if (error != 0) {
 			mutex_exit(ev->ev_lock);
-			return (error);
+			return error;
 		}
 	}
 	/*
@@ -138,13 +138,13 @@ ev_read(struct evvar *ev, struct uio *uio, int flags)
 	 */
 	if ((ev->ev_get = (ev->ev_get + cnt) % EV_QSIZE) != 0 ||
 	    n == 0 || error || (cnt = put) == 0)
-		return (error);
+		return error;
 	if (cnt > n)
 		cnt = n;
 	error = uiomove((void *)&ev->ev_q[0],
 	    cnt * sizeof(struct firm_event), uio);
 	ev->ev_get = cnt;
-	return (error);
+	return error;
 }
 
 int
@@ -161,7 +161,7 @@ ev_poll(struct evvar *ev, int events, struct lwp *l)
 	}
 	revents |= events & (POLLOUT | POLLWRNORM);
 	mutex_exit(ev->ev_lock);
-	return (revents);
+	return revents;
 }
 
 void
@@ -233,7 +233,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = ev;
@@ -242,5 +242,5 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 	selrecord_knote(&ev->ev_sel, kn);
 	mutex_exit(ev->ev_lock);
 
-	return (0);
+	return 0;
 }
