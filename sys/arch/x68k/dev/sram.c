@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.20 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: sram.c,v 1.21 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.20 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.21 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.20 2014/07/25 08:10:35 dholland Exp $");
 #include <machine/sram.h>
 #include <x68k/dev/intiovar.h>
 #include <x68k/dev/sramvar.h>
+
+#include "ioconf.h"
 
 #define SRAM_ADDR	(0xed0000)
 
@@ -64,8 +66,6 @@ int sramdebug = SRAM_DEBUG_IOCTL;
 
 int  srammatch(device_t, cfdata_t, void *);
 void sramattach(device_t, device_t, void *);
-
-extern struct cfdriver sram_cd;
 
 dev_type_open(sramopen);
 dev_type_close(sramclose);

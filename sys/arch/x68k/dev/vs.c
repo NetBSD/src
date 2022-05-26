@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.55 2021/08/21 10:18:14 andvar Exp $	*/
+/*	$NetBSD: vs.c,v 1.56 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.55 2021/08/21 10:18:14 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.56 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.55 2021/08/21 10:18:14 andvar Exp $");
 #include <arch/x68k/dev/opmvar.h>
 
 #include <arch/x68k/dev/vsvar.h>
+
+#include "ioconf.h"
 
 #ifdef VS_DEBUG
 #define DPRINTF(y,x)	if (vs_debug >= (y)) printf x
@@ -97,8 +99,6 @@ static void vs_get_locks(void *, kmutex_t **, kmutex_t **);
 /* lower functions */
 static int vs_round_sr(u_long);
 static inline void vs_set_panout(struct vs_softc *, u_long);
-
-extern struct cfdriver vs_cd;
 
 CFATTACH_DECL_NEW(vs, sizeof(struct vs_softc),
     vs_match, vs_attach, NULL, NULL);

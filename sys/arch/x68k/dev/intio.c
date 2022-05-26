@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.51 2021/12/17 06:28:20 skrll Exp $	*/
+/*	$NetBSD: intio.c,v 1.52 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.51 2021/12/17 06:28:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.52 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.51 2021/12/17 06:28:20 skrll Exp $");
 
 #include <arch/x68k/dev/intiovar.h>
 
+#include "ioconf.h"
 
 /*
  * bus_space(9) interface
@@ -122,8 +123,6 @@ static void intio_alloc_system_ports(struct intio_softc*);
 
 CFATTACH_DECL_NEW(intio, sizeof(struct intio_softc),
     intio_match, intio_attach, NULL, NULL);
-
-extern struct cfdriver intio_cd;
 
 static int intio_attached;
 
