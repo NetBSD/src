@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.66 2022/05/26 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.67 2022/05/26 15:05:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.66 2022/05/26 14:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67 2022/05/26 15:05:11 tsutsui Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -118,10 +118,7 @@ static int ite_argnum(struct ite_softc *);
 static int ite_zargnum(struct ite_softc *);
 static void ite_sendstr(struct ite_softc *, const char *);
 inline static int atoi(const char *);
-void ite_reset(struct ite_softc *);
 struct ite_softc *getitesp(dev_t);
-int iteon(dev_t, int);
-void iteoff(dev_t, int);
 
 struct itesw itesw[] = {
 	{0,	tv_init,	tv_deinit,	0,
