@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.19 2022/05/26 11:54:33 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.20 2022/05/26 12:04:56 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.19 2022/05/26 11:54:33 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.20 2022/05/26 12:04:56 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -118,15 +118,24 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 
 	op = tn->tn_op;
 	debug_print_indent();
-	debug_printf("'%s' with type '%s'%s%s%s",
-	    op == CVT && !tn->tn_cast ? "convert" : modtab[op].m_name,
-	    type_name(tn->tn_type), tn->tn_lvalue ? ", lvalue" : "",
-	    tn->tn_parenthesized ? ", parenthesized" : "",
-	    tn->tn_sys ? ", sys" : "");
+	debug_printf("'%s'",
+	    op == CVT && !tn->tn_cast ? "convert" : modtab[op].m_name);
+	if (op == NAME)
+		debug_printf(" '%s' with %s",
+		    tn->tn_sym->s_name,
+		    storage_class_name(tn->tn_sym->s_scl));
+	else
+		debug_printf(" type");
+	debug_printf(" '%s'", type_name(tn->tn_type));
+	if (tn->tn_lvalue)
+		debug_printf(", lvalue");
+	if (tn->tn_parenthesized)
+		debug_printf(", parenthesized");
+	if (tn->tn_sys)
+		debug_printf(", sys");
 
 	if (op == NAME)
-		debug_printf(" %s %s\n", tn->tn_sym->s_name,
-		    storage_class_name(tn->tn_sym->s_scl));
+		debug_printf("\n");
 	else if (op == CON && is_floating(tn->tn_type->t_tspec))
 		debug_printf(", value %Lg\n", tn->tn_val->v_ldbl);
 	else if (op == CON && is_uinteger(tn->tn_type->t_tspec))
