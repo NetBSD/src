@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.442 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.443 2022/05/26 06:43:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.442 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.443 2022/05/26 06:43:58 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4166,44 +4166,7 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 	case NAME:
 	case STRING:
 		return false;
-		/* LINTED206: (enumeration values not handled in switch) */
-	case BITOR:
-	case BITXOR:
-	case NE:
-	case GE:
-	case GT:
-	case LE:
-	case LT:
-	case SHR:
-	case SHL:
-	case MINUS:
-	case PLUS:
-	case MOD:
-	case DIV:
-	case MULT:
-	case INDIR:
-	case UMINUS:
-	case UPLUS:
-	case DEC:
-	case INC:
-	case COMPL:
-	case NOT:
-	case POINT:
-	case ARROW:
-	case NOOP:
-	case BITAND:
-	case FARG:
-	case CASE:
-	case INIT:
-	case RETURN:
-	case ICALL:
-	case CVT:
-	case COMMA:
-	case FSEL:
-	case COLON:
-	case QUEST:
-	case LOGOR:
-	case LOGAND:
+	default:
 		break;
 	}
 	return true;
