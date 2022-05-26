@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.23 2022/05/24 15:51:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.24 2022/05/26 11:06:14 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -208,7 +208,7 @@ xen_map_msi_pirq(struct pic *pic, int count)
 		}
 		aprint_debug("\n");
 	} else {
-		aprint_debug(" fail\n");
+		aprint_debug(" fail %d\n", ret);
 	}
 	return ret;
 }
@@ -246,7 +246,7 @@ xen_map_msix_pirq(struct pic *pic, int count)
 		aprint_debug(" map %d", i);
 		ret = HYPERVISOR_physdev_op(PHYSDEVOP_map_pirq, &map_irq);
 		if (ret) {
-			aprint_debug(" fail\n");
+			aprint_debug(" fail %d\n", ret);
 			goto fail;
 		}
 		msi_i->mp_xen_pirq[i] = map_irq.pirq;
