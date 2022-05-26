@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_intel.c,v 1.3 2019/06/14 11:50:35 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86_intel.c,v 1.4 2022/05/26 13:02:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.3 2019/06/14 11:50:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.4 2022/05/26 13:02:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.3 2019/06/14 11:50:35 msaitoh 
 #define	PERFEVTSEL_EN		__BIT(22)
 #define	PERFEVTSEL_INV		__BIT(23)
 #define	PERFEVTSEL_COUNTER_MASK	__BITS(24, 31)
-
-#define CPUID_0A_VERSION	__BITS(0, 7)
-#define CPUID_0A_NCOUNTERS	__BITS(8, 15)
-#define CPUID_0A_BITWIDTH	__BITS(16, 23)
 
 static uint64_t counter_bitwidth;
 static uint64_t counter_val = 5000000;
@@ -195,14 +191,14 @@ tprof_intel_ident(void)
 		return TPROF_IDENT_NONE;
 	}
 	x86_cpuid(0x0A, descs);
-	if ((descs[0] & CPUID_0A_VERSION) == 0) {
+	if ((descs[0] & CPUID_PERF_VERSION) == 0) {
 		return TPROF_IDENT_NONE;
 	}
-	if ((descs[0] & CPUID_0A_NCOUNTERS) == 0) {
+	if ((descs[0] & CPUID_PERF_NGPPC) == 0) {
 		return TPROF_IDENT_NONE;
 	}
 
-	counter_bitwidth = __SHIFTOUT(descs[0], CPUID_0A_BITWIDTH);
+	counter_bitwidth = __SHIFTOUT(descs[0], CPUID_PERF_NBWGPPC);
 
 	return TPROF_IDENT_INTEL_GENERIC;
 }
