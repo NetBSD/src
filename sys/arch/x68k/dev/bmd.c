@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.25 2016/07/07 06:55:39 msaitoh Exp $	*/
+/*	$NetBSD: bmd.c,v 1.26 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.25 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.26 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.25 2016/07/07 06:55:39 msaitoh Exp $");
 #include <machine/cpu.h>
 
 #include <arch/x68k/dev/intiovar.h>
+
+#include "ioconf.h"
 
 #define BMD_ADDR1	(0xece3f0)
 #define BMD_ADDR2	(0xecebf0)
@@ -90,8 +92,6 @@ struct bmd_softc {
 static int  bmd_match(device_t, cfdata_t, void *);
 static void bmd_attach(device_t, device_t, void *);
 static int  bmd_getdisklabel(struct bmd_softc *, dev_t);
-
-extern struct cfdriver bmd_cd;
 
 CFATTACH_DECL_NEW(bmd, sizeof(struct bmd_softc),
 	bmd_match, bmd_attach, NULL, NULL);

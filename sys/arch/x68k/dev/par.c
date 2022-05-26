@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.43 2018/09/03 16:29:28 riastradh Exp $	*/
+/*	$NetBSD: par.c,v 1.44 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.43 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.44 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: par.c,v 1.43 2018/09/03 16:29:28 riastradh Exp $");
 #include <machine/parioctl.h>
 
 #include <arch/x68k/dev/intiovar.h>
+
+#include "ioconf.h"
 
 struct	par_softc {
 	device_t		sc_dev;
@@ -114,8 +116,6 @@ void parattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(par, sizeof(struct par_softc),
     parmatch, parattach, NULL, NULL);
-
-extern struct cfdriver par_cd;
 
 static int par_attached;
 

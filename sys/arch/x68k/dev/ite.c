@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.65 2022/03/29 06:56:51 riastradh Exp $	*/
+/*	$NetBSD: ite.c,v 1.66 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.65 2022/03/29 06:56:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.66 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -77,6 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.65 2022/03/29 06:56:51 riastradh Exp $");
 #include <arch/x68k/dev/itevar.h>
 #include <arch/x68k/dev/kbdmap.h>
 #include <arch/x68k/dev/mfp.h>
+
+#include "ioconf.h"
+
 #if NBELL > 0
 void opm_bell(void);
 #endif
@@ -155,8 +158,6 @@ void iteattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ite, sizeof(struct ite_softc),
     itematch, iteattach, NULL, NULL);
-
-extern struct cfdriver ite_cd;
 
 dev_type_open(iteopen);
 dev_type_close(iteclose);

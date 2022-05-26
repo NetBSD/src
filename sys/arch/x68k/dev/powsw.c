@@ -1,4 +1,4 @@
-/*	$NetBSD: powsw.c,v 1.1 2011/11/27 09:00:32 isaki Exp $	*/
+/*	$NetBSD: powsw.c,v 1.2 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2011 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powsw.c,v 1.1 2011/11/27 09:00:32 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powsw.c,v 1.2 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: powsw.c,v 1.1 2011/11/27 09:00:32 isaki Exp $");
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
+
+#include "ioconf.h"
 
 extern int power_switch_is_off;		/* XXX should be in .h */
 
@@ -88,8 +90,6 @@ struct powsw_softc {
 	int sc_loglen;
 #endif
 };
-
-extern struct cfdriver powsw_cd;
 
 static int  powsw_match(device_t, cfdata_t, void *);
 static void powsw_attach(device_t, device_t, void *);
