@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.92 2022/05/26 02:24:00 mrg Exp $	*/
+/*	$NetBSD: w.c,v 1.93 2022/05/26 06:48:36 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.92 2022/05/26 02:24:00 mrg Exp $");
+__RCSID("$NetBSD: w.c,v 1.93 2022/05/26 06:48:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -702,7 +702,7 @@ usage(int wcmd)
 
 	if (wcmd)
 		(void)fprintf(stderr,
-		    "Usage: %s [-hinw] [-M core] [-N system] [user]\n",
+		    "Usage: %s [-Ahinw] [-M core] [-N system] [user]\n",
 		    getprogname());
 	else
 		(void)fprintf(stderr, "Usage: %s\n", getprogname());
