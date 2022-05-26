@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.443 2022/05/26 06:43:58 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.444 2022/05/26 09:26:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.443 2022/05/26 06:43:58 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.444 2022/05/26 09:26:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -49,6 +49,15 @@ __RCSID("$NetBSD: tree.c,v 1.443 2022/05/26 06:43:58 rillig Exp $");
 
 #include "lint1.h"
 #include "cgram.h"
+
+typedef struct integer_constraints {
+	int64_t		smin;	/* signed minimum */
+	int64_t		smax;	/* signed maximum */
+	uint64_t	umin;	/* unsigned minimum */
+	uint64_t	umax;	/* unsigned maximum */
+	uint64_t	bset;	/* bits that are definitely set */
+	uint64_t	bclr;	/* bits that are definitely clear */
+} integer_constraints;
 
 static	tnode_t	*build_integer_constant(tspec_t, int64_t);
 static	void	check_pointer_comparison(op_t,
@@ -95,6 +104,137 @@ static	void	check_integer_comparison(op_t, tnode_t *, tnode_t *);
 static	void	check_precedence_confusion(tnode_t *);
 
 extern sig_atomic_t fpe;
+
+static integer_constraints
+ic_any(const type_t *tp)
+{
+	integer_constraints c;
+
+	lint_assert(is_integer(tp->t_tspec));
+	unsigned int sz = type_size_in_bits(tp);
+	uint64_t vbits = value_bits(sz);
+	if (is_uinteger(tp->t_tspec)) {
+		c.smin = INT64_MIN;
+		c.smax = INT64_MAX;
+		c.umin = 0;
+		c.umax = vbits;
+		c.bset = 0;
+		c.bclr = ~c.umax;
+	} else {
+		c.smin = (int64_t)-1 - (int64_t)(vbits >> 1);
+		c.smax = (int64_t)(vbits >> 1);
+		c.umin = 0;
+		c.umax = UINT64_MAX;
+		c.bset = 0;
+		c.bclr = 0;
+	}
+	return c;
+}
+
+static integer_constraints
+ic_con(const type_t *tp, const val_t *v)
+{
+	integer_constraints c;
+
+	lint_assert(is_integer(tp->t_tspec));
+	int64_t s = v->v_quad;
+	uint64_t u = (uint64_t)s;
+	c.smin = s;
+	c.smax = s;
+	c.umin = u;
+	c.umax = u;
+	c.bset = u;
+	c.bclr = ~u;
+	return c;
+}
+
+static integer_constraints
+ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
+{
+
+	if (type_size_in_bits(ntp) > type_size_in_bits(otp) &&
+	    is_uinteger(otp->t_tspec))
+		return a;
+	return ic_any(ntp);
+}
+
+static integer_constraints
+ic_bitand(integer_constraints a, integer_constraints b)
+{
+	integer_constraints c;
+
+	c.smin = INT64_MIN;
+	c.smax = INT64_MAX;
+	c.umin = 0;
+	c.umax = UINT64_MAX;
+	c.bset = a.bset & b.bset;
+	c.bclr = a.bclr | b.bclr;
+	return c;
+}
+
+static integer_constraints
+ic_bitor(integer_constraints a, integer_constraints b)
+{
+	integer_constraints c;
+
+	c.smin = INT64_MIN;
+	c.smax = INT64_MAX;
+	c.umin = 0;
+	c.umax = UINT64_MAX;
+	c.bset = a.bset | b.bset;
+	c.bclr = a.bclr & b.bclr;
+	return c;
+}
+
+static integer_constraints
+ic_shl(const type_t *tp, integer_constraints a, integer_constraints b)
+{
+	integer_constraints c;
+	unsigned int amount;
+
+	if (b.smin == b.smax && b.smin >= 0 && b.smin < 64)
+		amount = (unsigned int)b.smin;
+	else if (b.umin == b.umax && b.umin < 64)
+		amount = (unsigned int)b.umin;
+	else
+		return ic_any(tp);
+
+	c.smin = INT64_MIN;
+	c.smax = INT64_MAX;
+	c.umin = 0;
+	c.umax = UINT64_MAX;
+	c.bset = a.bset << amount;
+	c.bclr = a.bclr << amount | (((uint64_t)1 << amount) - 1);
+	return c;
+}
+
+static integer_constraints
+ic_expr(const tnode_t *tn)
+{
+	integer_constraints lc, rc;
+
+	switch (tn->tn_op) {
+	case CON:
+		return ic_con(tn->tn_type, tn->tn_val);
+	case CVT:
+		lc = ic_expr(tn->tn_left);
+		return ic_cvt(tn->tn_type, tn->tn_left->tn_type, lc);
+	case SHL:
+		lc = ic_expr(tn->tn_left);
+		rc = ic_expr(tn->tn_right);
+		return ic_shl(tn->tn_type, lc, rc);
+	case BITAND:
+		lc = ic_expr(tn->tn_left);
+		rc = ic_expr(tn->tn_right);
+		return ic_bitand(lc, rc);
+	case BITOR:
+		lc = ic_expr(tn->tn_left);
+		rc = ic_expr(tn->tn_right);
+		return ic_bitor(lc, rc);
+	default:
+		return ic_any(tn->tn_type);
+	}
+}
 
 static const char *
 op_name(op_t op)
@@ -2211,22 +2351,16 @@ static bool
 can_represent(const type_t *tp, const tnode_t *tn)
 {
 
-	if (tn->tn_op == BITAND) {
-		const tnode_t *rn = tn->tn_right;
-		tspec_t nt;
+	debug_step("%s: type '%s'", __func__, type_name(tp));
+	debug_node(tn);
 
-		if (!(rn != NULL && rn->tn_op == CON &&
-		      is_integer(rn->tn_type->t_tspec)))
-			return false;
+	uint64_t nmask = value_bits(type_size_in_bits(tp));
+	if (!is_uinteger(tp->t_tspec))
+		nmask >>= 1;
 
-		uint64_t nmask = value_bits(size_in_bits(nt = tp->t_tspec));
-		if (!is_uinteger(nt))
-			nmask >>= 1;
-
-		uint64_t omask = (uint64_t)rn->tn_val->v_quad;
-		if ((omask & ~nmask) == 0)
-			return true;
-	}
+	integer_constraints c = ic_expr(tn);
+	if ((~c.bclr & ~nmask) == 0)
+		return true;
 
 	return false;
 }
