@@ -1,4 +1,4 @@
-/*	$NetBSD: common_int_const.h,v 1.1 2014/07/25 21:43:13 joerg Exp $	*/
+/*	$NetBSD: common_int_const.h,v 1.2 2022/05/26 09:55:31 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _SYS_COMMON_INT_CONST_H_
 
 #ifndef __INTMAX_C_SUFFIX__
-#error Your compiler does not provide inter constant suffix macros.
+#error Your compiler does not provide integer constant suffix macros.
 #endif
 
 #define __int_join_(c,suffix) c ## suffix
