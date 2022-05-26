@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.91 2021/04/17 06:14:15 maya Exp $	*/
+/*	$NetBSD: w.c,v 1.92 2022/05/26 02:24:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.91 2021/04/17 06:14:15 maya Exp $");
+__RCSID("$NetBSD: w.c,v 1.92 2022/05/26 02:24:00 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,8 @@ int		argwidth;	/* width of tty left to print process args */
 int		header = 1;	/* true if -h flag: don't print heading */
 int		nflag;		/* true if -n flag: don't convert addrs */
 int		wflag;		/* true if -w flag: wide printout */
-int		sortidle;	/* sort bu idle time */
+int		sortidle;	/* sort by idle time */
+int		alphasort;	/* sort by tty alphabeta, not numeric */
 char	       *sel_user;	/* login of particular user selected */
 char		domain[MAXHOSTNAMELEN + 1];
 int maxname = 8, maxline = 3, maxhost = 16;
@@ -158,12 +159,15 @@ main(int argc, char **argv)
 		options = "";
 	} else {
 		wcmd = 1;
-		options = "hiM:N:nw";
+		options = "AhiM:N:nw";
 	}
 
 	memf = nlistf = NULL;
 	while ((ch = getopt(argc, argv, options)) != -1)
 		switch (ch) {
+		case 'A':
+			alphasort = 1;
+			break;
 		case 'h':
 			header = 0;
 			break;
@@ -382,8 +386,8 @@ main(int argc, char **argv)
 			*nextp = save;
 		}
 	}
-#if defined(SUPPORT_UTMP) && defined(SUPPORT_UTMPX)
-	else if (ehead != NULL) {
+#if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
+	else if (ehead != NULL && alphasort) {
 		struct entry *from = ehead, *save;
 
 		ehead = NULL;
