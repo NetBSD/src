@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.18 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.19 2022/05/26 11:54:33 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.18 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.19 2022/05/26 11:54:33 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -128,7 +128,7 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		debug_printf(" %s %s\n", tn->tn_sym->s_name,
 		    storage_class_name(tn->tn_sym->s_scl));
 	else if (op == CON && is_floating(tn->tn_type->t_tspec))
-		debug_printf(", value %Lg", tn->tn_val->v_ldbl);
+		debug_printf(", value %Lg\n", tn->tn_val->v_ldbl);
 	else if (op == CON && is_uinteger(tn->tn_type->t_tspec))
 		debug_printf(", value %llu\n",
 		    (unsigned long long)tn->tn_val->v_quad);
@@ -148,7 +148,7 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		size_t n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
 		char *s = xmalloc(n);
 		(void)wcstombs(s, tn->tn_string->st_mem, n);
-		debug_printf(", length %zu, L\"%s\"",
+		debug_printf(", length %zu, L\"%s\"\n",
 		    tn->tn_string->st_len, s);
 		free(s);
 
