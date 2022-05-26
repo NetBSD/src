@@ -1,4 +1,4 @@
-.\" $NetBSD: bc.1,v 1.10 2021/01/08 01:17:55 uwe Exp $
+.\" $NetBSD: bc.1,v 1.11 2022/05/26 08:06:58 mlelstv Exp $
 .\"
 .\" bc.1 - the bc manual
 .\"
@@ -913,8 +913,8 @@ is placed between the key word
 and the function name.
 For example, consider the following session.
 .Bd -literal -offset indent
-define py (y) { print "--->", y, "<---", "\n"; }
-define void px (x) { print "--->", x, "<---", "\n"; }
+define py (y) { print "--->", y, "<---", "\en"; }
+define void px (x) { print "--->", x, "<---", "\en"; }
 py(1)
 --->1<---
 0
