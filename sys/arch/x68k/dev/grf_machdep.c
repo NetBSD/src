@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.34 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.35 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.34 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.35 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include "locators.h"
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.34 2021/08/07 16:19:07 thorpej Exp
 #include <machine/grfioctl.h>
 #include <x68k/dev/grfvar.h>
 #include <x68k/x68k/iodevice.h>
+
+#include "ioconf.h"
 
 /* grfbus: is this necessary? */
 int grfbusprint(void *, const char *);
@@ -75,8 +77,6 @@ CFATTACH_DECL_NEW(grfbus, 0,
 
 CFATTACH_DECL_NEW(grf, sizeof(struct grf_softc),
     grfmatch, grfattach, NULL, NULL);
-
-extern struct cfdriver grfbus_cd;
 
 int
 grfbusmatch(device_t parent, cfdata_t cf, void *aux)

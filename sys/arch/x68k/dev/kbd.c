@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.40 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: kbd.c,v 1.41 2022/05/26 14:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.40 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.41 2022/05/26 14:33:29 tsutsui Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.40 2014/07/25 08:10:35 dholland Exp $");
 #include <machine/kbio.h>
 #include <machine/kbd.h>
 #include <machine/vuid_event.h>
+
+#include "ioconf.h"
 
 struct kbd_softc {
 	device_t sc_dev;
@@ -178,8 +180,6 @@ kbdenable(int mode)	/* 1: interrupt, 0: poll */
 	if (!(intio_get_sysport_keyctrl() & 8))
 		aprint_normal(" (no connected keyboard)");
 }
-
-extern struct cfdriver kbd_cd;
 
 int
 kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
