@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.448 2022/05/26 18:08:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.449 2022/05/26 20:17:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.448 2022/05/26 18:08:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.449 2022/05/26 20:17:40 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -104,6 +104,14 @@ static	void	check_integer_comparison(op_t, tnode_t *, tnode_t *);
 static	void	check_precedence_confusion(tnode_t *);
 
 extern sig_atomic_t fpe;
+
+static bool
+ic_maybe_signed(const type_t *tp, const integer_constraints *ic)
+{
+
+	return !is_uinteger(tp->t_tspec) &&
+	    (ic->bclr & ((uint64_t)1 << 63)) == 0;
+}
 
 static integer_constraints
 ic_any(const type_t *tp)
@@ -192,6 +200,9 @@ ic_shl(const type_t *tp, integer_constraints a, integer_constraints b)
 	integer_constraints c;
 	unsigned int amount;
 
+	if (ic_maybe_signed(tp, &a))
+		return ic_any(tp);
+
 	if (b.smin == b.smax && b.smin >= 0 && b.smin < 64)
 		amount = (unsigned int)b.smin;
 	else if (b.umin == b.umax && b.umin < 64)
@@ -205,6 +216,31 @@ ic_shl(const type_t *tp, integer_constraints a, integer_constraints b)
 	c.umax = UINT64_MAX;
 	c.bset = a.bset << amount;
 	c.bclr = a.bclr << amount | (((uint64_t)1 << amount) - 1);
+	return c;
+}
+
+static integer_constraints
+ic_shr(const type_t *tp, integer_constraints a, integer_constraints b)
+{
+	integer_constraints c;
+	unsigned int amount;
+
+	if (ic_maybe_signed(tp, &a))
+		return ic_any(tp);
+
+	if (b.smin == b.smax && b.smin >= 0 && b.smin < 64)
+		amount = (unsigned int)b.smin;
+	else if (b.umin == b.umax && b.umin < 64)
+		amount = (unsigned int)b.umin;
+	else
+		return ic_any(tp);
+
+	c.smin = INT64_MIN;
+	c.smax = INT64_MAX;
+	c.umin = 0;
+	c.umax = UINT64_MAX;
+	c.bset = a.bset >> amount;
+	c.bclr = a.bclr >> amount | ~(~(uint64_t)0 >> amount);
 	return c;
 }
 
@@ -223,6 +259,10 @@ ic_expr(const tnode_t *tn)
 		lc = ic_expr(tn->tn_left);
 		rc = ic_expr(tn->tn_right);
 		return ic_shl(tn->tn_type, lc, rc);
+	case SHR:
+		lc = ic_expr(tn->tn_left);
+		rc = ic_expr(tn->tn_right);
+		return ic_shr(tn->tn_type, lc, rc);
 	case BITAND:
 		lc = ic_expr(tn->tn_left);
 		rc = ic_expr(tn->tn_right);
