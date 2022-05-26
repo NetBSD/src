@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.126 2022/05/23 16:58:37 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.127 2022/05/26 14:27:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.126 2022/05/23 16:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.127 2022/05/26 14:27:43 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -160,13 +160,13 @@ struct fdc_softc {
 	uint8_t sc_status[7];		/* copy of registers */
 };
 
-int fdcintr(void *);
-void fdcreset(struct fdc_softc *);
+static int fdcintr(void *);
+static void fdcreset(struct fdc_softc *);
 
 /* controller driver configuration */
-int fdcprobe(device_t, cfdata_t, void *);
-void fdcattach(device_t, device_t, void *);
-int fdprint(void *, const char *);
+static int fdcprobe(device_t, cfdata_t, void *);
+static void fdcattach(device_t, device_t, void *);
+static int fdprint(void *, const char *);
 
 CFATTACH_DECL_NEW(fdc, sizeof(struct fdc_softc),
     fdcprobe, fdcattach, NULL, NULL);
@@ -194,7 +194,7 @@ struct fd_type {
 };
 
 /* The order of entries in the following table is important -- BEWARE! */
-struct fd_type fd_types[] = {
+static struct fd_type fd_types[] = {
 	{  8,2,16,3,0xff,0xdf,0x35,0x74,77,1232,1,FDC_500KBPS, 0xf6, 1,
 	    "1.2MB/[1024bytes/sector]"    }, /* 1.2 MB japanese format */
 	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS, 0xf6, 1,
@@ -257,18 +257,18 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int fdprobe(device_t, cfdata_t, void *);
-void fdattach(device_t, device_t, void *);
+static int fdprobe(device_t, cfdata_t, void *);
+static void fdattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdprobe, fdattach, NULL, NULL);
 
-dev_type_open(fdopen);
-dev_type_close(fdclose);
-dev_type_read(fdread);
-dev_type_write(fdwrite);
-dev_type_ioctl(fdioctl);
-dev_type_strategy(fdstrategy);
+static dev_type_open(fdopen);
+static dev_type_close(fdclose);
+static dev_type_read(fdread);
+static dev_type_write(fdwrite);
+static dev_type_ioctl(fdioctl);
+static dev_type_strategy(fdstrategy);
 
 const struct bdevsw fd_bdevsw = {
 	.d_open = fdopen,
@@ -296,32 +296,34 @@ const struct cdevsw fd_cdevsw = {
 	.d_flag = D_DISK
 };
 
-void fdstart(struct fd_softc *);
+static void fdstart(struct fd_softc *);
 
 struct dkdriver fddkdriver = {
 	.d_strategy = fdstrategy
 };
 
-void fd_set_motor(struct fdc_softc *, int);
-void fd_motor_off(void *);
+static void fd_set_motor(struct fdc_softc *, int);
+static void fd_motor_off(void *);
 #if 0
-void fd_motor_on(void *);
+static void fd_motor_on(void *);
 #endif
-int fdcresult(struct fdc_softc *);
-int out_fdc(bus_space_tag_t, bus_space_handle_t, uint8_t);
-void fdcstart(struct fdc_softc *);
-void fdcstatus(device_t, int, const char *);
-void fdctimeout(void *);
-void fdcpseudointr(void *);
-void fdcretry(struct fdc_softc *);
-void fdfinish(struct fd_softc *, struct buf *);
+static int fdcresult(struct fdc_softc *);
+static int out_fdc(bus_space_tag_t, bus_space_handle_t, uint8_t);
+static void fdcstart(struct fdc_softc *);
+static void fdcstatus(device_t, int, const char *);
+static void fdctimeout(void *);
+#if 0
+static void fdcpseudointr(void *);
+#endif
+static void fdcretry(struct fdc_softc *);
+static void fdfinish(struct fd_softc *, struct buf *);
 static struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
-int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
+static int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 static int fdcpoll(struct fdc_softc *);
 static int fdgetdisklabel(struct fd_softc *, dev_t);
 static void fd_do_eject(struct fdc_softc *, int);
 
-void fd_mountroot_hook(device_t);
+static void fd_mountroot_hook(device_t);
 
 /* DMA transfer routines */
 inline static void fdc_dmastart(struct fdc_softc *, int, void *, vsize_t);
@@ -400,7 +402,7 @@ fdcdmaerrintr(void *dummy)
 }
 
 /* ARGSUSED */
-int
+static int
 fdcprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -443,7 +445,7 @@ struct fdc_attach_args {
  * Return QUIET (config_find ignores this if the device was configured) to
  * avoid printing `fdN not configured' messages.
  */
-int
+static int
 fdprint(void *aux, const char *fdc)
 {
 	struct fdc_attach_args *fa = aux;
@@ -453,7 +455,7 @@ fdprint(void *aux, const char *fdc)
 	return QUIET;
 }
 
-void
+static void
 fdcattach(device_t parent, device_t self, void *aux)
 {
 	struct fdc_softc *fdc = device_private(self);
@@ -520,7 +522,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 	intio_enable_intr(SICILIAN_INTR_FDC);
 }
 
-void
+static void
 fdcreset(struct fdc_softc *fdc)
 {
 
@@ -543,7 +545,7 @@ fdcpoll(struct fdc_softc *fdc)
 	return i;
 }
 
-int
+static int
 fdprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdc_softc *fdc = device_private(parent);
@@ -620,7 +622,7 @@ fdprobe(device_t parent, cfdata_t cf, void *aux)
 /*
  * Controller is working, and drive responded.  Attach it.
  */
-void
+static void
 fdattach(device_t parent, device_t self, void *aux)
 {
 	struct fdc_softc *fdc = device_private(parent);
@@ -680,7 +682,7 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 	return &fd_types[type];
 }
 
-void
+static void
 fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd;
@@ -761,7 +763,7 @@ fdstrategy(struct buf *bp)
 	biodone(bp);
 }
 
-void
+static void
 fdstart(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
@@ -776,7 +778,7 @@ fdstart(struct fd_softc *fd)
 		fdcstart(fdc);
 }
 
-void
+static void
 fdfinish(struct fd_softc *fd, struct buf *bp)
 {
 	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
@@ -807,21 +809,21 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 	fdc->sc_state = DEVIDLE;
 }
 
-int
+static int
 fdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return physio(fdstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
-int
+static int
 fdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
-void
+static void
 fd_set_motor(struct fdc_softc *fdc, int reset)
 {
 	struct fd_softc *fd;
@@ -836,7 +838,7 @@ fd_set_motor(struct fdc_softc *fdc, int reset)
 	}
 }
 
-void
+static void
 fd_motor_off(void *arg)
 {
 	struct fd_softc *fd = arg;
@@ -856,7 +858,7 @@ fd_motor_off(void *arg)
 }
 
 #if 0 /* on x68k motor on triggers interrupts by state change of ready line. */
-void
+static void
 fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
@@ -874,7 +876,7 @@ fd_motor_on(void *arg)
 }
 #endif
 
-int
+static int
 fdcresult(struct fdc_softc *fdc)
 {
 	bus_space_tag_t iot = fdc->sc_iot;
@@ -903,7 +905,7 @@ fdcresult(struct fdc_softc *fdc)
 	return -1;
 }
 
-int
+static int
 out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t x)
 {
 	int i = 100000;
@@ -918,7 +920,7 @@ out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t x)
 	return 0;
 }
 
-int
+static int
 fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit;
@@ -963,7 +965,7 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = FDUNIT(dev);
@@ -992,7 +994,7 @@ fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-void
+static void
 fdcstart(struct fdc_softc *fdc)
 {
 
@@ -1041,7 +1043,7 @@ fdcpstatus(int n, struct fdc_softc *fdc)
 	}
 }
 
-void
+static void
 fdcstatus(device_t dv, int n, const char *s)
 {
 	struct fdc_softc *fdc = device_private(device_parent(dv));
@@ -1056,7 +1058,7 @@ fdcstatus(device_t dv, int n, const char *s)
 	fdcpstatus(n, fdc);
 }
 
-void
+static void
 fdctimeout(void *arg)
 {
 	struct fdc_softc *fdc = arg;
@@ -1076,7 +1078,7 @@ fdctimeout(void *arg)
 }
 
 #if 0
-void
+static void
 fdcpseudointr(void *arg)
 {
 	int s;
@@ -1089,7 +1091,7 @@ fdcpseudointr(void *arg)
 }
 #endif
 
-int
+static int
 fdcintr(void *arg)
 {
 	struct fdc_softc *fdc = arg;
@@ -1560,7 +1562,7 @@ fdcintr(void *arg)
 #undef	cyl
 }
 
-void
+static void
 fdcretry(struct fdc_softc *fdc)
 {
 	struct fd_softc *fd;
@@ -1605,7 +1607,7 @@ fdcretry(struct fdc_softc *fdc)
 	fdc->sc_errors++;
 }
 
-int
+static int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
@@ -1805,7 +1807,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 }
 
-int
+static int
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 {
 	int rv = 0;
@@ -1847,7 +1849,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	return rv;
 }
 
-void
+static void
 fd_do_eject(struct fdc_softc *fdc, int unit)
 {
 
@@ -1902,7 +1904,7 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
  * Mountroot hook: prompt the user to enter the root file system
  * floppy.
  */
-void
+static void
 fd_mountroot_hook(device_t dev)
 {
 	struct fd_softc *fd = device_private(dev);
