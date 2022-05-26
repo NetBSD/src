@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.418 2022/05/26 12:47:20 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.419 2022/05/26 13:40:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.418 2022/05/26 12:47:20 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.419 2022/05/26 13:40:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -64,7 +64,8 @@ size_t	mem_block_level;
  * Save the no-warns state and restore it to avoid the problem where
  * if (expr) { stmt } / * NOLINT * / stmt;
  */
-static int olwarn = LWARN_BAD;
+#define LWARN_NOTHING_SAVED (-3)
+static int saved_lwarn = LWARN_NOTHING_SAVED;
 
 static	void	cgram_declare(sym_t *, bool, sbuf_t *);
 static	void	read_until_rparen(void);
@@ -77,7 +78,7 @@ clear_warning_flags_loc(const char *file, size_t line)
 {
 	debug_step("%s:%zu: clearing flags", file, line);
 	clear_warn_flags();
-	olwarn = LWARN_BAD;
+	saved_lwarn = LWARN_NOTHING_SAVED;
 }
 
 /* ARGSUSED */
@@ -85,8 +86,9 @@ static void
 save_warning_flags_loc(const char *file, size_t line)
 {
 	/*
-	 * There used to be an assertion for 'olwarn == LWARN_BAD' here,
-	 * but that triggered for the following code:
+	 * There used to be an assertion that saved_lwarn is
+	 * LWARN_NOTHING_SAVED here, but that triggered for the following
+	 * code:
 	 *
 	 * void function(int x) { if (x > 0) if (x > 1) return; }
 	 *
@@ -96,19 +98,19 @@ save_warning_flags_loc(const char *file, size_t line)
 	 *  warnings.
 	 */
 	debug_step("%s:%zu: saving flags %d", file, line, lwarn);
-	olwarn = lwarn;
+	saved_lwarn = lwarn;
 }
 
 /* ARGSUSED */
 static void
 restore_warning_flags_loc(const char *file, size_t line)
 {
-	if (olwarn != LWARN_BAD) {
-		lwarn = olwarn;
+	if (saved_lwarn != LWARN_NOTHING_SAVED) {
+		lwarn = saved_lwarn;
 		debug_step("%s:%zu: restoring flags %d", file, line, lwarn);
 		/*
-		 * Do not set 'olwarn = LWARN_BAD' here, to avoid triggering
-		 * the assertion in save_warning_flags_loc.
+		 * Do not set 'saved_lwarn = LWARN_NOTHING_SAVED' here, to
+		 * avoid triggering the assertion in save_warning_flags_loc.
 		 */
 	} else
 		clear_warning_flags_loc(file, line);

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.153 2022/04/16 20:57:10 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.154 2022/05/26 13:40:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include "err-msgs.h"
 #include "op.h"
 
-#define LWARN_BAD	(-3)
+/* See saved_lwarn in cgram.y. */
 #define LWARN_ALL	(-2)
 #define LWARN_NONE	(-1)
 
