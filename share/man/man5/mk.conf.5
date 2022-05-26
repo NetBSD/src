@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.88 2022/05/25 21:25:47 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.89 2022/05/26 06:33:03 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 23, 2022
+.Dd May 26, 2022
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -406,7 +406,7 @@ will be included in the build toolchain.
 .
 .It Sy MKDHCPD
 .YorN
-Indicates whether 
+Indicates whether
 .Xr dhcpd 8
 will be built and installed.
 .DFLTy
@@ -643,7 +643,7 @@ Indicates whether the mDNS (Multicast DNS) infrastructure
 .It Sy MKMROUITNG
 .YorN
 Indicates whether multicast routing applications will be built and
-installed, i.e. 
+installed, i.e.
 .Xr map-mbone 8 ,
 .Xr mrinfo 8 ,
 .Xr mrouted 8 ,
@@ -659,6 +659,14 @@ kernel option to be enabled.
 Indicates whether Native Language System (NLS) locale zone files will be
 built and installed.
 .DFLTy
+.
+.It Sy MKNOUVEAUFIRMWARE
+.YorN
+Indicates whether to install the
+.Pa /libdata/firmware/nouveau
+directory, which is necessary for the nvidia DRM driver.
+.DFLT
+Platform dependent.
 .
 .It Sy MKNPF
 .YorN
@@ -751,7 +759,8 @@ used to generate shared libraries.
 .It Sy MKPIE
 Indicates whether Position Independent Executables (PIE)
 are built and installed.
-.DFLTn
+.DFLT
+Platform dependent.
 .
 .It Sy MKPIGZGZIP
 .YorN
@@ -787,6 +796,24 @@ If
 two builds from the same source tree will produce the same build
 results.
 .DFLTn
+.
+.It Sy MKRADEONFIRMWARE
+.YorN
+Indicates whether to install the
+.Pa /libdata/firmware/radeon
+directory, which is necessary for the radeon DRM driver.
+.DFLT
+Platform dependent.
+.
+.It Sy MKRELRO
+If
+.Dq partial ,
+set the non-PLT GOT to read-only.
+If
+.Dq full ,
+also force immediate symbol binding.
+.DFLT
+Platform dependent.
 .
 .It Sy MKRUMP
 .YorN
