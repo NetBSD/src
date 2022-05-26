@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.16 2021/05/19 12:16:01 skrll Exp $ */
+/* $NetBSD: db_interface.c,v 1.17 2022/05/26 17:11:05 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16 2021/05/19 12:16:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.17 2022/05/26 17:11:05 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ db_regs_t ddb_regs;
 static int
 db_validate_address(vaddr_t addr)
 {
-	struct proc *p = curproc;
+	struct proc *p = curcpu()->ci_onproc->l_proc;
 	struct pmap *pmap;
 
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap ||
