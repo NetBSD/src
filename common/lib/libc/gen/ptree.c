@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.11 2022/05/24 20:50:17 andvar Exp $	*/
+/*	$NetBSD: ptree.c,v 1.12 2022/05/26 15:23:33 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.11 2022/05/24 20:50:17 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.12 2022/05/26 15:23:33 rillig Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.11 2022/05/24 20:50:17 andvar Exp $");
 #include <assert.h>
 #define	KASSERT(e)	assert(e)
 #else
-#define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
+#define	KASSERT(e)	do { } while (0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.11 2022/05/24 20:50:17 andvar Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.12 2022/05/26 15:23:33 rillig Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -115,7 +115,7 @@ bool ptree_check(const pt_tree_t *);
 #if PTCHECK > 1
 #define	PTREE_CHECK(pt)		ptree_check(pt)
 #else
-#define	PTREE_CHECK(pt)		do { } while (/*CONSTCOND*/ 0)
+#define	PTREE_CHECK(pt)		do { } while (0)
 #endif
 
 static inline bool
