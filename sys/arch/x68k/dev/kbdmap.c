@@ -1,10 +1,10 @@
-/*	$NetBSD: kbdmap.c,v 1.7 2007/10/17 19:58:02 garbled Exp $	*/
+/*	$NetBSD: kbdmap.c,v 1.8 2022/05/26 14:28:56 tsutsui Exp $	*/
 
 /* from: arch/amiga/dev/kbdmap.c */
 /* modified for X680x0 by Masaru Oki and Makoto MINOURA */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.7 2007/10/17 19:58:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.8 2022/05/26 14:28:56 tsutsui Exp $");
 
 #include "kbdmap.h"
 
@@ -22,7 +22,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.7 2007/10/17 19:58:02 garbled Exp $");
 #define D KBD_MODE_DEAD
 
 struct kbdmap kbdmap;
-struct kbdmap ascii_kbdmap = {
+const struct kbdmap ascii_kbdmap = {
 	/* normal map */
 	{
 	   {0, 0},	/* 0x00 */
