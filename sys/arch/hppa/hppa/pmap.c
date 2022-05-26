@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2022/04/09 23:38:32 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2022/05/26 05:34:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2022/04/09 23:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2022/05/26 05:34:04 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1109,7 +1109,7 @@ pmap_bootstrap(vaddr_t vstart)
 		else if (va == uvm_lwp_getuarea(&lwp0) + USPACE - PAGE_SIZE)
 			prot = UVM_PROT_NONE;
 #endif
-		pmap_kenter_pa(va, va, prot, 0);
+		pmap_kenter_pa(va, va, prot, PMAP_DIRECTMAP);
 	}
 
 	/* XXXNH update */
@@ -1990,8 +1990,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	    pmap_prot(pmap_kernel(), prot & VM_PROT_ALL));
 	if (IS_IOPAGE_P(pa) || (flags & PMAP_NOCACHE))
 		pte |= PTE_PROT(TLB_UNCACHEABLE);
-	pmap_kernel()->pm_stats.wired_count++;
-	pmap_kernel()->pm_stats.resident_count++;
+
+	if ((flags & PMAP_DIRECTMAP) == 0) {
+		pmap_kernel()->pm_stats.wired_count++;
+		pmap_kernel()->pm_stats.resident_count++;
+	}
 	if (opte)
 		pmap_pte_flush(pmap_kernel(), va, opte);
 
@@ -2070,6 +2073,9 @@ pmap_kremove(vaddr_t va, vsize_t size)
 
 		pmap_pte_flush(pmap, va, pte);
 		pmap_pte_set(pde, va, 0);
+
+		pmap->pm_stats.wired_count--;
+		pmap->pm_stats.resident_count--;
 
 		pg = pmap_initialized ? PHYS_TO_VM_PAGE(PTE_PAGE(pte)) : NULL;
 		if (pg != NULL) {
