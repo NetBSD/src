@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.9 2022/04/21 19:48:18 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.10 2022/05/26 07:03:03 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -139,4 +139,38 @@ non_constant_expression(void)
 	const int not_a_constant = 8;
 	/* expect+1: warning: conversion from 'unsigned long long' to 'int' may lose accuracy [132] */
 	return not_a_constant * 8ULL;
+}
+
+typedef unsigned char u8_t;
+typedef unsigned short u16_t;
+typedef unsigned int u32_t;
+typedef unsigned long long u64_t;
+
+/*
+ * PR 36668 notices that lint wrongly complains about the possible loss.
+ * The expression 'uint8_t << 8' is guaranteed to fit into an 'unsigned short'.
+ * 'unsigned short | unsigned char' is guaranteed to fit into 'unsigned short'
+ */
+static inline u16_t
+be16dec(const void *buf)
+{
+	const u8_t *p = buf;
+
+	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
+	return ((u16_t)p[0]) << 8 | p[1];
+}
+
+/*
+ * Since tree.c 1.434 from 2022-04-19, lint infers the possible values of
+ * expressions of the form 'integer & constant', see can_represent.
+ */
+static inline void
+be32enc(void *buf, u32_t u)
+{
+	u8_t *p = buf;
+
+	p[0] = u >> 24 & 0xff;
+	p[1] = u >> 16 & 0xff;
+	p[2] = u >> 8 & 0xff;
+	p[3] = u & 0xff;
 }

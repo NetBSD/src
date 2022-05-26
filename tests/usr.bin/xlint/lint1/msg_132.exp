@@ -25,3 +25,4 @@ msg_132.c(99): warning: conversion from 'long long' to 'int' may lose accuracy [
 msg_132.c(125): error: operands of '+' have incompatible types (pointer != double) [107]
 msg_132.c(125): warning: function 'cover_build_plus_minus' expects to return value [214]
 msg_132.c(141): warning: conversion from 'unsigned long long' to 'int' may lose accuracy [132]
+msg_132.c(160): warning: conversion from 'int' to 'unsigned short' may lose accuracy [132]
