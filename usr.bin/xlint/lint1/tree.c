@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.444 2022/05/26 09:26:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.445 2022/05/26 10:48:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.444 2022/05/26 09:26:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.445 2022/05/26 10:48:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2404,9 +2404,9 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 
 	if (aflag > 0 &&
 	    portable_size_in_bits(nt) < portable_size_in_bits(ot) &&
-	    !can_represent(tp, tn) &&
 	    (ot == LONG || ot == ULONG || ot == QUAD || ot == UQUAD ||
-	     aflag > 1)) {
+	     aflag > 1) &&
+	    !can_represent(tp, tn)) {
 		if (op == FARG) {
 			/* conversion from '%s' to '%s' may lose ... */
 			warning(298,
