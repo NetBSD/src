@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.416 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.417 2022/05/26 12:27:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.416 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.417 2022/05/26 12:27:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -83,7 +83,12 @@ CLEAR_WARN_FLAGS(const char *file, size_t line)
 static void
 SAVE_WARN_FLAGS(const char *file, size_t line)
 {
-	lint_assert(olwarn == LWARN_BAD);
+	/*
+	 * There used to be an assertion for 'olwarn == LWARN_BAD' here,
+	 * but that triggered for the following code:
+	 *
+	 * void function(int x) { if (x > 0) if (x > 1) return; }
+	 */
 	debug_step("%s:%zu: saving flags %d", file, line, lwarn);
 	olwarn = lwarn;
 }
