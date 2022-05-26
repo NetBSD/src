@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.10 2022/05/26 07:03:03 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.11 2022/05/26 09:26:00 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -148,15 +148,23 @@ typedef unsigned long long u64_t;
 
 /*
  * PR 36668 notices that lint wrongly complains about the possible loss.
- * The expression 'uint8_t << 8' is guaranteed to fit into an 'unsigned short'.
- * 'unsigned short | unsigned char' is guaranteed to fit into 'unsigned short'
+ *
+ * The expression 'u8_t << 8' is guaranteed to fit into an 'u16_t', and its
+ * lower 8 bits are guaranteed to be clear.  'u16_t | u8_t' is guaranteed to
+ * fit into 'u16_t'.
+ *
+ * Since tree.c 1.444 from 2022-05-26, lint tracks simple bitwise and
+ * arithmetic constraints across a single expression.
  */
 static inline u16_t
 be16dec(const void *buf)
 {
 	const u8_t *p = buf;
 
-	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
+	/*
+	 * Before tree.c 1.444 from 2022-05-26, lint complained that the
+	 * conversion from 'int' to 'unsigned short' may lose accuracy.
+	 */
 	return ((u16_t)p[0]) << 8 | p[1];
 }
 
