@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.11 2022/05/26 09:26:00 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.12 2022/05/26 19:55:57 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -181,4 +181,17 @@ be32enc(void *buf, u32_t u)
 	p[1] = u >> 16 & 0xff;
 	p[2] = u >> 8 & 0xff;
 	p[3] = u & 0xff;
+}
+
+u32_t
+test_ic_shr(u64_t x)
+{
+	if (x > 3)
+		/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+		return x >> 32;
+	if (x > 2)
+		/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+		return x >> 31;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+	return x;
 }
