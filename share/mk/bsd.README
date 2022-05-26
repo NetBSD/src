@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.432 2022/05/25 21:25:47 nia Exp $
+#	$NetBSD: bsd.README,v 1.433 2022/05/26 06:23:57 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -387,7 +387,7 @@ MKNLS		If "no", don't build or install the NLS files and locale
 
 MKNOUVEAUFIRMWARE If "yes", install the /libdata/firmware/nouveau directory,
 		which is necessary for the nouveau DRM driver.
-		Default: yes on amd64 and i386, no elsewhere.
+		Default: yes on x86 and aarch64, no elsewhere.
 
 MKNPF		If "no", don't build or install the NPF and its modules.
 		Default: yes
@@ -429,7 +429,7 @@ MKPICLIB	If "no", don't build *_pic.a libraries, and build the
 
 MKPIE		If "no", create regular executables. Otherwise create
 		PIE (Position Independent Executables).
-		Default: no
+		Default: depends on CPU architecture
 
 NOPIE		Don't create PIE (Position Independent Executables)
 		It is set internally for standalone programs.
@@ -445,11 +445,11 @@ MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
 
 MKRADEONFIRMWARE If "yes", install the /libdata/firmware/radeon directory,
 		which is necessary for the radeon DRM driver.
-		Default: yes on amd64 and i386, no elsewhere.
+		Default: yes on x86 and aarch64, no elsewhere.
 
 MKRELRO		If "partial", set the non-PLT GOT to read-only. If "full"
 		also force immediate symbol binding.
-		Default: no
+		Default: partial on x86 and aarch64, no elsewhere.
 
 NOFULLRELRO	Don't compile with immediate symbol binding during build.
 		It is set internally for standalone programs.
