@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.137 2022/05/22 13:58:59 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.138 2022/05/26 13:40:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.137 2022/05/22 13:58:59 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.138 2022/05/26 13:40:49 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -122,18 +122,19 @@ bool	plibflg;
 bool	constcond_flag;
 
 /*
- * llibflg is set if a lint library shall be created. The effect of
- * llibflg is that all defined symbols are treated as used.
+ * Whether a lint library shall be created. The effect of this flag is that
+ * all defined symbols are treated as used.
  * (The LINTLIBRARY comment also resets vflag.)
  */
 bool	llibflg;
 
 /*
- * Nonzero if warnings are suppressed by a LINTED directive
- * LWARN_BAD:	error
- * LWARN_ALL:	warnings on
- * LWARN_NONE:	all warnings ignored
- * 0..n: warning n ignored
+ * Determines the warnings that are suppressed by a LINTED directive.  For
+ * globally suppressed warnings, see 'msgset'.
+ *
+ * LWARN_ALL:	all warnings are enabled
+ * LWARN_NONE:	all warnings are suppressed
+ * n >= 0:	warning n is ignored, the others are active
  */
 int	lwarn = LWARN_ALL;
 
