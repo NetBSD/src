@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.417 2022/05/26 12:27:25 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.418 2022/05/26 12:47:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.417 2022/05/26 12:27:25 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.418 2022/05/26 12:47:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -71,48 +71,52 @@ static	void	read_until_rparen(void);
 static	sym_t	*symbolrename(sym_t *, sbuf_t *);
 
 
-#ifdef DEBUG
+/* ARGSUSED */
 static void
-CLEAR_WARN_FLAGS(const char *file, size_t line)
+clear_warning_flags_loc(const char *file, size_t line)
 {
 	debug_step("%s:%zu: clearing flags", file, line);
 	clear_warn_flags();
 	olwarn = LWARN_BAD;
 }
 
+/* ARGSUSED */
 static void
-SAVE_WARN_FLAGS(const char *file, size_t line)
+save_warning_flags_loc(const char *file, size_t line)
 {
 	/*
 	 * There used to be an assertion for 'olwarn == LWARN_BAD' here,
 	 * but that triggered for the following code:
 	 *
 	 * void function(int x) { if (x > 0) if (x > 1) return; }
+	 *
+	 * It didn't trigger if the inner 'if' was enclosed in braces though.
+	 *
+	 * TODO: If actually needed, add support for nested suppression of
+	 *  warnings.
 	 */
 	debug_step("%s:%zu: saving flags %d", file, line, lwarn);
 	olwarn = lwarn;
 }
 
+/* ARGSUSED */
 static void
-RESTORE_WARN_FLAGS(const char *file, size_t line)
+restore_warning_flags_loc(const char *file, size_t line)
 {
 	if (olwarn != LWARN_BAD) {
 		lwarn = olwarn;
 		debug_step("%s:%zu: restoring flags %d", file, line, lwarn);
-		olwarn = LWARN_BAD;
+		/*
+		 * Do not set 'olwarn = LWARN_BAD' here, to avoid triggering
+		 * the assertion in save_warning_flags_loc.
+		 */
 	} else
-		CLEAR_WARN_FLAGS(file, line);
+		clear_warning_flags_loc(file, line);
 }
-#else
-#define CLEAR_WARN_FLAGS(f, l)	clear_warn_flags(), olwarn = LWARN_BAD
-#define SAVE_WARN_FLAGS(f, l)	olwarn = lwarn
-#define RESTORE_WARN_FLAGS(f, l) \
-	(void)(olwarn == LWARN_BAD ? (clear_warn_flags(), 0) : (lwarn = olwarn))
-#endif
 
-#define clear_warning_flags()	CLEAR_WARN_FLAGS(__FILE__, __LINE__)
-#define save_warning_flags()	SAVE_WARN_FLAGS(__FILE__, __LINE__)
-#define restore_warning_flags()	RESTORE_WARN_FLAGS(__FILE__, __LINE__)
+#define clear_warning_flags()	clear_warning_flags_loc(__FILE__, __LINE__)
+#define save_warning_flags()	save_warning_flags_loc(__FILE__, __LINE__)
+#define restore_warning_flags()	restore_warning_flags_loc(__FILE__, __LINE__)
 
 /* unbind the anonymous struct members from the struct */
 static void
