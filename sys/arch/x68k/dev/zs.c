@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.47 2021/09/11 20:28:05 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.48 2022/05/26 14:30:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.47 2021/09/11 20:28:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.48 2022/05/26 14:30:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ int zscn_def_cflag = (CREAD | CS8 | HUPCL);
 
 /* Default physical addresses. */
 #define ZS_MAXDEV 5
-static bus_addr_t zs_physaddr[ZS_MAXDEV] = {
+static const bus_addr_t zs_physaddr[ZS_MAXDEV] = {
 	0x00e98000,
 	0x00eafc00,
 	0x00eafc10,
