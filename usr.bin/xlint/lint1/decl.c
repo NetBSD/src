@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.281 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.282 2022/05/26 13:40:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.281 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.282 2022/05/26 13:40:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3048,16 +3048,16 @@ void
 check_usage(dinfo_t *di)
 {
 	sym_t	*sym;
-	int	mklwarn;
+	int	saved_lwarn;
 
 	/* for this warning LINTED has no effect */
-	mklwarn = lwarn;
+	saved_lwarn = lwarn;
 	lwarn = LWARN_ALL;
 
 	debug_step("begin lwarn %d", lwarn);
 	for (sym = di->d_dlsyms; sym != NULL; sym = sym->s_level_next)
 		check_usage_sym(di->d_asm, sym);
-	lwarn = mklwarn;
+	lwarn = saved_lwarn;
 	debug_step("end lwarn %d", lwarn);
 }
 
