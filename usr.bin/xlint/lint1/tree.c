@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.446 2022/05/26 16:52:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.447 2022/05/26 17:23:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.446 2022/05/26 16:52:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.447 2022/05/26 17:23:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -92,7 +92,7 @@ static	tnode_t	*build_plus_minus(op_t, bool, tnode_t *, tnode_t *);
 static	tnode_t	*build_bit_shift(op_t, bool, tnode_t *, tnode_t *);
 static	tnode_t	*build_colon(bool, tnode_t *, tnode_t *);
 static	tnode_t	*build_assignment(op_t, bool, tnode_t *, tnode_t *);
-static	tnode_t	*plength(type_t *);
+static	tnode_t	*subt_size_in_bytes(type_t *);
 static	tnode_t	*fold(tnode_t *);
 static	tnode_t	*fold_bool(tnode_t *);
 static	tnode_t	*fold_float(tnode_t *);
@@ -2999,7 +2999,7 @@ build_prepost_incdec(op_t op, bool sys, tnode_t *ln)
 	lint_assert(ln != NULL);
 
 	if (ln->tn_type->t_tspec == PTR) {
-		cn = plength(ln->tn_type);
+		cn = subt_size_in_bytes(ln->tn_type);
 	} else {
 		cn = build_integer_constant(INT, (int64_t)1);
 	}
@@ -3092,31 +3092,38 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		rn = tmp;
 	}
 
+	/* pointer +- integer */
 	if (ln->tn_type->t_tspec == PTR && rn->tn_type->t_tspec != PTR) {
 		lint_assert(is_integer(rn->tn_type->t_tspec));
 
 		check_ctype_macro_invocation(ln, rn);
 		check_enum_array_index(ln, rn);
 
-		tnode_t *ctn = plength(ln->tn_type);
-		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
-			rn = convert(NOOP, 0, ctn->tn_type, rn);
-		rn = new_tnode(MULT, sys, rn->tn_type, rn, ctn);
-		if (rn->tn_left->tn_op == CON)
-			rn = fold(rn);
-		return new_tnode(op, sys, ln->tn_type, ln, rn);
+		tnode_t *elsz = subt_size_in_bytes(ln->tn_type);
+		if (rn->tn_type->t_tspec != elsz->tn_type->t_tspec)
+			rn = convert(NOOP, 0, elsz->tn_type, rn);
+
+		tnode_t *prod = new_tnode(MULT, sys, rn->tn_type, rn, elsz);
+		if (rn->tn_op == CON)
+			prod = fold(prod);
+
+		return new_tnode(op, sys, ln->tn_type, ln, prod);
 	}
 
+	/* pointer - pointer */
 	if (rn->tn_type->t_tspec == PTR) {
 		lint_assert(ln->tn_type->t_tspec == PTR);
 		lint_assert(op == MINUS);
-		type_t *tp = gettyp(PTRDIFF_TSPEC);
-		tnode_t *ntn = new_tnode(op, sys, tp, ln, rn);
+
+		type_t *ptrdiff = gettyp(PTRDIFF_TSPEC);
+		tnode_t *raw_diff = new_tnode(op, sys, ptrdiff, ln, rn);
 		if (ln->tn_op == CON && rn->tn_op == CON)
-			ntn = fold(ntn);
-		tnode_t *ctn = plength(ln->tn_type);
-		balance(NOOP, &ntn, &ctn);
-		return new_tnode(DIV, sys, tp, ntn, ctn);
+			raw_diff = fold(raw_diff);
+
+		tnode_t *elsz = subt_size_in_bytes(ln->tn_type);
+		balance(NOOP, &raw_diff, &elsz);
+
+		return new_tnode(DIV, sys, ptrdiff, raw_diff, elsz);
 	}
 
 	return new_tnode(op, sys, ln->tn_type, ln, rn);
@@ -3219,7 +3226,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 
 	if ((op == ADDASS || op == SUBASS) && lt == PTR) {
 		lint_assert(is_integer(rt));
-		ctn = plength(ln->tn_type);
+		ctn = subt_size_in_bytes(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
 		rn = new_tnode(MULT, sys, rn->tn_type, rn, ctn);
@@ -3265,11 +3272,11 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 }
 
 /*
- * Get length_in_bits of type tp->t_subt, as a constant expression of type
+ * Get the size in bytes of type tp->t_subt, as a constant expression of type
  * ptrdiff_t as seen from the target platform.
  */
 static tnode_t *
-plength(type_t *tp)
+subt_size_in_bytes(type_t *tp)
 {
 	int elem, elsz_in_bits;
 
