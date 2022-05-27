@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.24 2022/05/27 23:10:54 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.25 2022/05/27 23:29:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.24 2022/05/27 23:10:54 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.25 2022/05/27 23:29:15 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -101,16 +101,12 @@ makemove(int us, int mv)
 		}
 
 		/* compute old weight value for this frame */
-		union comboval *cp = &fsp->s_fval[BLACK][r];
-
-		int val;
-		if (cp->s <= 0x500)
-		    val = weight[5 - cp->cv_force - cp->cv_win];
-		else
-		    val = 0;
-		cp = &fsp->s_fval[WHITE][r];
-		if (cp->s <= 0x500)
-		    val += weight[5 - cp->cv_force - cp->cv_win];
+		union comboval cb;
+		int val = 0;
+		if ((cb = fsp->s_fval[BLACK][r]).s <= 0x500)
+		    val += weight[5 - cb.cv_force - cb.cv_win];
+		if ((cb = fsp->s_fval[WHITE][r]).s <= 0x500)
+		    val += weight[5 - cb.cv_force - cb.cv_win];
 
 		/* compute new combo value for this frame */
 		bool space = fsp->s_occ == EMPTY;
@@ -141,7 +137,7 @@ makemove(int us, int mv)
 
 		/* compute new value & combo number for this frame & color */
 		fsp->s_fval[us != BLACK ? BLACK : WHITE][r].s = 0x600;
-		cp = &fsp->s_fval[us][r];
+		union comboval *cp = &fsp->s_fval[us][r];
 		/* both ends open? */
 		if (space && sp->s_occ == EMPTY) {
 		    cp->cv_force = 4 - n;
@@ -266,8 +262,8 @@ update_overlap(struct spotstr *osp)
 			if (sp->s_occ == EMPTY) {
 			    str[b] &= 0xA;
 			    overlap[b * FAREA + a] &= 0xC;
-			    intersect[a * FAREA + b] = n = (int)(sp - board);
-			    intersect[b * FAREA + a] = n;
+			    intersect[a * FAREA + b] = (short)(sp - board);
+			    intersect[b * FAREA + a] = (short)(sp - board);
 			} else {
 			    str[b] = 0;
 			    overlap[b * FAREA + a] = 0;
@@ -280,8 +276,8 @@ update_overlap(struct spotstr *osp)
 			    str[b] &= 0xF;
 			    overlap[b * FAREA + a] &= 0xF;
 			}
-			intersect[a * FAREA + b] = n = (int)(esp - board);
-			intersect[b * FAREA + a] = n;
+			intersect[a * FAREA + b] = (short)(esp - board);
+			intersect[b * FAREA + a] = (short)(esp - board);
 		    }
 		    /* else no change, still multiple overlap */
 		}
