@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_utils.h,v 1.5 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: i915_utils.h,v 1.6 2022/05/27 21:02:27 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -44,13 +44,13 @@ struct timer_list;
 	bool __i915_warn_cond = (x); \
 	if (__builtin_constant_p(__i915_warn_cond)) \
 		BUILD_BUG_ON(__i915_warn_cond); \
-	WARN(__i915_warn_cond, "WARN_ON(" #x ")"); })
+	WARN(__i915_warn_cond, "WARN_ON(" #x ")\n"); })
 #else
-#define WARN_ON(x) WARN((x), "%s", "WARN_ON(" __stringify(x) ")")
+#define WARN_ON(x) WARN((x), "%s\n", "WARN_ON(" __stringify(x) ")")
 #endif
 
 #undef WARN_ON_ONCE
-#define WARN_ON_ONCE(x) WARN_ONCE((x), "%s", "WARN_ON_ONCE(" __stringify(x) ")")
+#define WARN_ON_ONCE(x) WARN_ONCE((x), "%s", "WARN_ON_ONCE(" __stringify(x) ")\n")
 
 #define MISSING_CASE(x) WARN(1, "Missing case (%s == %ld)\n", \
 			     __stringify(x), (long)(x))
