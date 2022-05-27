@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.90 2022/05/26 14:24:42 uwe Exp $
+.\"	$NetBSD: mk.conf.5,v 1.91 2022/05/27 09:25:08 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -572,6 +572,17 @@ Indicates whether the Lightweight Directory Access Protocol (LDAP)
 infrastructure
 (libraries and support programs) is built and installed.
 .DFLTy
+.
+.It Sy MKLFS
+.YorN
+Indicates whether the log-structured file system (LFS) programs
+are built and installed, i.e.
+.Xr newfs_lfs 8 ,
+.Xr mount_lfs 8 ,
+.Xr dumplfs 8 ,
+etc.
+.DFLTy
+.
 .
 .It Sy MKLINKLIB
 .YorN
