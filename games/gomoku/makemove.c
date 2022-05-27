@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.20 2022/05/21 16:39:14 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.21 2022/05/27 19:59:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.20 2022/05/21 16:39:14 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.21 2022/05/27 19:59:56 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -78,8 +78,8 @@ makemove(int us, int mv)
 
 	/* make move */
 	sp->s_occ = us;
-	movelog[movenum - 1] = mv;
-	if (++movenum == BSZ * BSZ)
+	movelog[nmoves++] = mv;
+	if (nmoves + 1 == BSZ * BSZ)	/* FIXME: off-by-one */
 		return TIE;
 
 	/* compute new frame values */

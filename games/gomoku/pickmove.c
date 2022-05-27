@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.44 2022/05/27 19:30:56 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.45 2022/05/27 19:59:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.44 2022/05/27 19:30:56 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.45 2022/05/27 19:59:56 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -72,7 +72,7 @@ static int nforce;			/* count of opponent <1,x> combos */
 static bool better(const struct spotstr *, const struct spotstr *, int);
 static void scanframes(int);
 static void makecombo2(struct combostr *, struct spotstr *, int, int);
-static void addframes(int);
+static void addframes(unsigned int);
 static void makecombo(struct combostr *, struct spotstr *, int, int);
 static void appendcombo(struct combostr *, int);
 static void updatecombo(struct combostr *, int);
@@ -92,7 +92,7 @@ pickmove(int us)
 	int m;
 
 	/* first move is easy */
-	if (movenum == 1)
+	if (nmoves == 0)
 		return PT((BSZ + 1) / 2, (BSZ + 1) / 2);
 
 	/* initialize all the board values */
@@ -218,7 +218,7 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 }
 
 static int curcolor;	/* implicit parameter to makecombo() */
-static int curlevel;	/* implicit parameter to makecombo() */
+static unsigned int curlevel;	/* implicit parameter to makecombo() */
 
 /*
  * Scan the sorted list of non-empty frames and
@@ -335,12 +335,12 @@ scanframes(int color)
 	 * Limit the search depth early in the game.
 	 */
 	/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
-	for (int level = 2;
-	     level <= ((movenum + 1) >> 1) && combolen > n; level++) {
+	for (unsigned int level = 2;
+	     level <= 1 + nmoves / 2 && combolen > n; level++) {
 		if (level >= 9)
 			break;	/* Do not think too long. */
 		if (debug != 0) {
-			debuglog("%cL%d %d %d %d", "BW"[color],
+			debuglog("%cL%u %d %d %d", "BW"[color],
 			    level, combolen - n, combocnt, elistcnt);
 			refresh();
 		}
@@ -545,7 +545,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
  * combinations of 'level' number of frames.
  */
 static void
-addframes(int level)
+addframes(unsigned int level)
 {
 	struct combostr *cbp, *ecbp;
 	struct spotstr *sp, *fsp;
@@ -1213,14 +1213,14 @@ sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 {
 	struct combostr **spp, **cpp;
 	struct combostr *cbp, *ecbp;
-	int n, inx;
+	int inx;
 
 #ifdef DEBUG
 	if (debug > 3) {
 		char buf[128];
 		size_t pos;
 
-		debuglog("sortc: %s%c l%d", stoc(fcbp->c_vertex),
+		debuglog("sortc: %s%c l%u", stoc(fcbp->c_vertex),
 			pdir[fcbp->c_dir], curlevel);
 		pos = 0;
 		for (cpp = cbpp; cpp < cbpp + curlevel; cpp++) {
@@ -1233,7 +1233,7 @@ sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 #endif /* DEBUG */
 
 	/* first build the new sorted list */
-	n = curlevel + 1;
+	unsigned int n = curlevel + 1;
 	spp = scbpp + n;
 	cpp = cbpp + curlevel;
 	do {
@@ -1278,7 +1278,7 @@ inserted:
 			char buf[128];
 			size_t pos;
 
-			debuglog("sort1: n%d", n);
+			debuglog("sort1: n%u", n);
 			pos = 0;
 			for (cpp = scbpp; cpp < scbpp + n; cpp++) {
 				snprintf(buf + pos, sizeof(buf) - pos, " %s%c",
