@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1742 2022/05/25 21:25:46 nia Exp $
+# $NetBSD: mi,v 1.1743 2022/05/27 07:28:22 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2583,9 +2583,9 @@
 ./usr/share/man/cat8/dreamcast/makedev.0	man-obsolete		obsolete
 ./usr/share/man/cat8/drvctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dump.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/dump_lfs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/dump_lfs.0			man-sysutil-catman	lfs,.cat
 ./usr/share/man/cat8/dumpfs.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/dumplfs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/dumplfs.0			man-sysutil-catman	lfs,.cat
 ./usr/share/man/cat8/editmap.0			man-obsolete		obsolete
 ./usr/share/man/cat8/edquota.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/eeprom.0			man-sysutil-catman	.cat
@@ -2624,7 +2624,7 @@
 ./usr/share/man/cat8/fsck.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck_ext2fs.0		man-ext2fs-catman	.cat
 ./usr/share/man/cat8/fsck_ffs.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/fsck_lfs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/fsck_lfs.0			man-sysutil-catman	lfs,.cat
 ./usr/share/man/cat8/fsck_msdos.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck_udf.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsck_v7fs.0		man-sysutil-catman	.cat
@@ -2761,7 +2761,7 @@
 ./usr/share/man/cat8/lastlogin.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/ldconfig.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ldpd.0			man-router-catman	.cat
-./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman	lfs,.cat
 ./usr/share/man/cat8/link.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/lmcconfig.0		man-obsolete		obsolete
 ./usr/share/man/cat8/lmcctl.0			man-obsolete		obsolete
@@ -2848,7 +2848,7 @@
 ./usr/share/man/cat8/mount_hfs.0		man-hfs-catman		.cat
 ./usr/share/man/cat8/mount_hfsp.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mount_kernfs.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/mount_lfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_lfs.0		man-sysutil-catman	lfs,.cat
 ./usr/share/man/cat8/mount_mfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_msdos.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_nfs.0		man-nfsclient-catman	.cat
@@ -2907,7 +2907,7 @@
 ./usr/share/man/cat8/newbtconf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_ext2fs.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman	lfs,.cat
 ./usr/share/man/cat8/newfs_msdos.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_sysvbfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_udf.0		man-sysutil-catman	.cat
@@ -3061,13 +3061,13 @@
 ./usr/share/man/cat8/rdconfig.0			man-obsolete		obsolete
 ./usr/share/man/cat8/rdisc.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rdump.0			man-netutil-catman	.cat
-./usr/share/man/cat8/rdump_lfs.0		man-netutil-catman	.cat
+./usr/share/man/cat8/rdump_lfs.0		man-netutil-catman	lfs,.cat
 ./usr/share/man/cat8/reboot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/renice.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/repquota.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/rescue.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/resize_ffs.0		man-sysutil-catman      .cat
-./usr/share/man/cat8/resize_lfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/resize_lfs.0		man-sysutil-catman	lfs,.cat
 ./usr/share/man/cat8/resolvconf.0		man-resolvconf-catman	.cat
 ./usr/share/man/cat8/restore.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/revnetgroup.0		man-nis-catman		yp,.cat
@@ -3109,7 +3109,7 @@
 ./usr/share/man/cat8/rump_ext2fs.0		man-puffs-catman	.cat,rump
 ./usr/share/man/cat8/rump_ffs.0			man-puffs-catman	.cat,rump
 ./usr/share/man/cat8/rump_hfs.0			man-puffs-catman	.cat,rump
-./usr/share/man/cat8/rump_lfs.0			man-puffs-catman	.cat,rump
+./usr/share/man/cat8/rump_lfs.0			man-puffs-catman	lfs,.cat,rump
 ./usr/share/man/cat8/rump_msdos.0		man-puffs-catman	.cat,rump
 ./usr/share/man/cat8/rump_nfs.0			man-puffs-catman	.cat,rump
 ./usr/share/man/cat8/rump_ntfs.0		man-puffs-catman	.cat,rump
@@ -5695,9 +5695,9 @@
 ./usr/share/man/html8/dreamcast/boot.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/drvctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dump.html			man-sysutil-htmlman	html
-./usr/share/man/html8/dump_lfs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/dump_lfs.html		man-sysutil-htmlman	lfs,html
 ./usr/share/man/html8/dumpfs.html		man-sysutil-htmlman	html
-./usr/share/man/html8/dumplfs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/dumplfs.html		man-sysutil-htmlman	lfs,html
 ./usr/share/man/html8/edquota.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/eeprom.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
@@ -5722,7 +5722,7 @@
 ./usr/share/man/html8/fsck.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/fsck_ext2fs.html		man-ext2fs-htmlman	html
 ./usr/share/man/html8/fsck_ffs.html		man-sysutil-htmlman	html
-./usr/share/man/html8/fsck_lfs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/fsck_lfs.html		man-sysutil-htmlman	lfs,html
 ./usr/share/man/html8/fsck_msdos.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fsck_udf.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fsck_v7fs.html		man-sysutil-htmlman	html
@@ -5828,7 +5828,7 @@
 ./usr/share/man/html8/lastlogin.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ldconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ldpd.html			man-router-htmlman	html
-./usr/share/man/html8/lfs_cleanerd.html		man-sysutil-htmlman	html
+./usr/share/man/html8/lfs_cleanerd.html		man-sysutil-htmlman	lfs,html
 ./usr/share/man/html8/link.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/lmcconfig.html		man-obsolete		obsolete
 ./usr/share/man/html8/lmtp.html			man-postfix-htmlman	postfix,html
@@ -5900,7 +5900,7 @@
 ./usr/share/man/html8/mount_filecore.html	man-filecorefs-htmlman	html
 ./usr/share/man/html8/mount_hfs.html		man-hfs-htmlman		html
 ./usr/share/man/html8/mount_kernfs.html		man-sysutil-htmlman	html
-./usr/share/man/html8/mount_lfs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/mount_lfs.html		man-sysutil-htmlman	lfs,html
 ./usr/share/man/html8/mount_mfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_msdos.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_nfs.html		man-nfsclient-htmlman	html
@@ -5947,7 +5947,7 @@
 ./usr/share/man/html8/newbtconf.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/newfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/newfs_ext2fs.html		man-sysutil-htmlman	html
-./usr/share/man/html8/newfs_lfs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/newfs_lfs.html		man-sysutil-htmlman	lfs,html
 ./usr/share/man/html8/newfs_msdos.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/newfs_sysvbfs.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/newfs_udf.html		man-sysutil-htmlman	html
@@ -6066,13 +6066,13 @@
 ./usr/share/man/html8/rdate.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rdisc.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rdump.html		man-netutil-htmlman	html
-./usr/share/man/html8/rdump_lfs.html		man-netutil-htmlman	html
+./usr/share/man/html8/rdump_lfs.html		man-netutil-htmlman	lfs,html
 ./usr/share/man/html8/reboot.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/renice.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/repquota.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/rescue.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/resize_ffs.html		man-sysutil-htmlman     html
-./usr/share/man/html8/resize_lfs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/resize_lfs.html		man-sysutil-htmlman	lfs,html
 ./usr/share/man/html8/resolvconf.html		man-resolvconf-htmlman	html
 ./usr/share/man/html8/restore.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/revnetgroup.html		man-nis-htmlman		yp,html
@@ -6113,7 +6113,7 @@
 ./usr/share/man/html8/rump_ext2fs.html		man-puffs-htmlman	html,rump
 ./usr/share/man/html8/rump_ffs.html		man-puffs-htmlman	html,rump
 ./usr/share/man/html8/rump_hfs.html		man-puffs-htmlman	html,rump
-./usr/share/man/html8/rump_lfs.html		man-puffs-htmlman	html,rump
+./usr/share/man/html8/rump_lfs.html		man-puffs-htmlman	lfs,html,rump
 ./usr/share/man/html8/rump_msdos.html		man-puffs-htmlman	html,rump
 ./usr/share/man/html8/rump_nfs.html		man-puffs-htmlman	html,rump
 ./usr/share/man/html8/rump_ntfs.html		man-puffs-htmlman	html,rump
@@ -8868,9 +8868,9 @@
 ./usr/share/man/man8/dreamcast/makedev.8	man-obsolete		obsolete
 ./usr/share/man/man8/drvctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/dump.8			man-sysutil-man		.man
-./usr/share/man/man8/dump_lfs.8			man-sysutil-man		.man
+./usr/share/man/man8/dump_lfs.8			man-sysutil-man		lfs,.man
 ./usr/share/man/man8/dumpfs.8			man-sysutil-man		.man
-./usr/share/man/man8/dumplfs.8			man-sysutil-man		.man
+./usr/share/man/man8/dumplfs.8			man-sysutil-man		lfs,.man
 ./usr/share/man/man8/editmap.8			man-obsolete		obsolete
 ./usr/share/man/man8/edquota.8			man-sysutil-man		.man
 ./usr/share/man/man8/eeprom.8			man-sysutil-man		.man
@@ -8909,7 +8909,7 @@
 ./usr/share/man/man8/fsck.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck_ext2fs.8		man-ext2fs-man		.man
 ./usr/share/man/man8/fsck_ffs.8			man-sysutil-man		.man
-./usr/share/man/man8/fsck_lfs.8			man-sysutil-man		.man
+./usr/share/man/man8/fsck_lfs.8			man-sysutil-man		lfs,.man
 ./usr/share/man/man8/fsck_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/fsck_udf.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsck_v7fs.8		man-sysutil-man		.man
@@ -9047,7 +9047,7 @@
 ./usr/share/man/man8/lastlogin.8		man-sysutil-man		.man
 ./usr/share/man/man8/ldconfig.8			man-sysutil-man		.man
 ./usr/share/man/man8/ldpd.8			man-router-man		.man
-./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man		.man
+./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man		lfs,.man
 ./usr/share/man/man8/link.8			man-sysutil-man		.man
 ./usr/share/man/man8/lmcconfig.8		man-obsolete		obsolete
 ./usr/share/man/man8/lmcctl.8			man-obsolete		obsolete
@@ -9134,7 +9134,7 @@
 ./usr/share/man/man8/mount_hfs.8		man-hfs-man		.man
 ./usr/share/man/man8/mount_hfsp.8		man-obsolete		obsolete
 ./usr/share/man/man8/mount_kernfs.8		man-sysutil-man		.man
-./usr/share/man/man8/mount_lfs.8		man-sysutil-man		.man
+./usr/share/man/man8/mount_lfs.8		man-sysutil-man		lfs,.man
 ./usr/share/man/man8/mount_mfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_nfs.8		man-nfsclient-man	.man
@@ -9193,7 +9193,7 @@
 ./usr/share/man/man8/newbtconf.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/newfs_ext2fs.8		man-sysutil-man		.man
-./usr/share/man/man8/newfs_lfs.8		man-sysutil-man		.man
+./usr/share/man/man8/newfs_lfs.8		man-sysutil-man		lfs,.man
 ./usr/share/man/man8/newfs_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_sysvbfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_udf.8		man-sysutil-man		.man
@@ -9347,13 +9347,13 @@
 ./usr/share/man/man8/rdconfig.8			man-obsolete		obsolete
 ./usr/share/man/man8/rdisc.8			man-netutil-man		.man
 ./usr/share/man/man8/rdump.8			man-netutil-man		.man
-./usr/share/man/man8/rdump_lfs.8		man-netutil-man		.man
+./usr/share/man/man8/rdump_lfs.8		man-netutil-man		lfs,.man
 ./usr/share/man/man8/reboot.8			man-sysutil-man		.man
 ./usr/share/man/man8/renice.8			man-sysutil-man		.man
 ./usr/share/man/man8/repquota.8			man-sysutil-man		.man
 ./usr/share/man/man8/rescue.8			man-sysutil-man		.man
 ./usr/share/man/man8/resize_ffs.8		man-sysutil-man         .man
-./usr/share/man/man8/resize_lfs.8		man-sysutil-man		.man
+./usr/share/man/man8/resize_lfs.8		man-sysutil-man		lfs,.man
 ./usr/share/man/man8/resolvconf.8		man-resolvconf-man	.man
 ./usr/share/man/man8/restore.8			man-sysutil-man		.man
 ./usr/share/man/man8/revnetgroup.8		man-nis-man		yp,.man
@@ -9395,7 +9395,7 @@
 ./usr/share/man/man8/rump_ext2fs.8		man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_ffs.8			man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_hfs.8			man-puffs-man		.man,rump
-./usr/share/man/man8/rump_lfs.8			man-puffs-man		.man,rump
+./usr/share/man/man8/rump_lfs.8			man-puffs-man		lfs,.man,rump
 ./usr/share/man/man8/rump_msdos.8		man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_nfs.8			man-puffs-man		.man,rump
 ./usr/share/man/man8/rump_ntfs.8		man-puffs-man		.man,rump
