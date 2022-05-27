@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.23 2022/05/27 20:48:42 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.24 2022/05/27 23:10:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,13 +34,16 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.23 2022/05/27 20:48:42 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.24 2022/05/27 23:10:54 rillig Exp $");
 
 #include "gomoku.h"
 
 		/* direction deltas */
 const int     dd[4] = {
-	MRIGHT, MRIGHT+MDOWN, MDOWN, MDOWN+MLEFT
+	1,			/* right */
+	-(BSZ + 1) + 1,		/* down + right */
+	-(BSZ + 1),		/* down */
+	-(BSZ + 1) - 1		/* down + left */
 };
 
 static const int weight[5] = { 0, 1, 7, 22, 100 };
@@ -58,21 +61,13 @@ static void update_overlap(struct spotstr *);
 int
 makemove(int us, int mv)
 {
-	struct spotstr *sp, *fsp;
-	union comboval *cp;
-	struct spotstr *osp;
-	struct combostr *cbp, *cbp1;
-	union comboval *cp1;
-	int d, n;
-	int val, bmask;
-	bool space;
 
 	/* check for end of game */
 	if (mv == RESIGN)
 		return RESIGN;
 
 	/* check for illegal move */
-	sp = &board[mv];
+	struct spotstr *sp = &board[mv];
 	if (sp->s_occ != EMPTY)
 		return ILLEGAL;
 
@@ -82,11 +77,12 @@ makemove(int us, int mv)
 
 	/* compute new frame values */
 	sp->s_wval = 0;
-	osp = sp;
+	struct spotstr *osp = sp;
 	for (int r = 4; --r >= 0; ) {		/* for each direction */
-	    d = dd[r];
-	    fsp = osp;
-	    bmask = BFLAG << r;
+	    int d = dd[r];
+	    struct spotstr *fsp = osp;
+	    int bmask = BFLAG << r;
+
 	    for (int f = 5; --f >= 0; fsp -= d) {	/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    goto nextr;
@@ -94,7 +90,7 @@ makemove(int us, int mv)
 		    continue;
 
 		/* remove this frame from the sorted list of frames */
-		cbp = fsp->s_frame[r];
+		struct combostr *cbp = fsp->s_frame[r];
 		if (cbp->c_next != NULL) {
 			if (sortframes[BLACK] == cbp)
 			    sortframes[BLACK] = cbp->c_next;
@@ -105,7 +101,9 @@ makemove(int us, int mv)
 		}
 
 		/* compute old weight value for this frame */
-		cp = &fsp->s_fval[BLACK][r];
+		union comboval *cp = &fsp->s_fval[BLACK][r];
+
+		int val;
 		if (cp->s <= 0x500)
 		    val = weight[5 - cp->cv_force - cp->cv_win];
 		else
@@ -115,9 +113,9 @@ makemove(int us, int mv)
 		    val += weight[5 - cp->cv_force - cp->cv_win];
 
 		/* compute new combo value for this frame */
+		bool space = fsp->s_occ == EMPTY;
+		int n = 0;
 		sp = fsp;
-		space = sp->s_occ == EMPTY;
-		n = 0;
 		for (int i = 5; --i >= 0; sp += d) {	/* for each spot */
 		    if (sp->s_occ == us)
 			n++;
@@ -139,7 +137,7 @@ makemove(int us, int mv)
 
 		/* check for game over */
 		if (n == 5)
-		    return(WIN);
+		    return WIN;
 
 		/* compute new value & combo number for this frame & color */
 		fsp->s_fval[us != BLACK ? BLACK : WHITE][r].s = 0x600;
@@ -159,11 +157,12 @@ makemove(int us, int mv)
 			sp->s_wval += val;
 
 		/* add this frame to the sorted list of frames by combo value */
-		cbp1 = sortframes[us];
+		struct combostr *cbp1 = sortframes[us];
 		if (cbp1 == NULL)
 		    sortframes[us] = cbp->c_next = cbp->c_prev = cbp;
 		else {
-		    cp1 = &board[cbp1->c_vertex].s_fval[us][cbp1->c_dir];
+		    union comboval *cp1 =
+			&board[cbp1->c_vertex].s_fval[us][cbp1->c_dir];
 		    if (cp->s <= cp1->s) {
 			/* insert at the head of the list */
 			sortframes[us] = cbp;
@@ -187,7 +186,7 @@ makemove(int us, int mv)
 
 	    /* both ends open? */
 	    if (fsp->s_occ == EMPTY) {
-		cp = &fsp->s_fval[BLACK][r];
+		union comboval *cp = &fsp->s_fval[BLACK][r];
 		if (cp->cv_win != 0) {
 		    cp->cv_force++;
 		    cp->cv_win = 0;
@@ -221,17 +220,13 @@ makemove(int us, int mv)
 static void
 update_overlap(struct spotstr *osp)
 {
-	struct spotstr *sp, *sp1, *sp2;
-	int d, d1, n;
-	int a, b, bmask, bmask1;
-	struct spotstr *esp;
-	u_char *str;
 
-	esp = NULL;
+	struct spotstr *esp = NULL;
 	for (int r = 4; --r >= 0; ) {		/* for each direction */
-	    d = dd[r];
-	    sp1 = osp;
-	    bmask = BFLAG << r;
+	    int d = dd[r];
+	    struct spotstr *sp1 = osp;
+	    int bmask = BFLAG << r;
+
 	    for (int f = 0; f < 6; f++, sp1 -= d) {	/* for each frame */
 		if (sp1->s_occ == BORDER)
 		    break;
@@ -244,26 +239,29 @@ update_overlap(struct spotstr *osp)
 		 * do the rows 0 <= r1 <= r. The r1 == r case is special
 		 * since the two frames can overlap at more than one point.
 		 */
-		str = &overlap[(a = (int)(sp1->s_frame[r] - frames)) * FAREA];
-		sp2 = sp1 - d;
+		int a = (int)(sp1->s_frame[r] - frames);
+		u_char *str = &overlap[a * FAREA];
+		struct spotstr *sp2 = sp1 - d;
+
 		for (int i = f + 1; i < 6; i++, sp2 -= d) {
 		    if (sp2->s_occ == BORDER)
 			break;
 		    if ((sp2->s_flags & bmask) != 0)
 			continue;
+
 		    /*
 		     * count the number of empty spots to see if there is
 		     * still an overlap.
 		     */
-		    n = 0;
-		    sp = sp1;
-		    for (b = i - f; b < 5; b++, sp += d) {
+		    int n = 0;
+		    struct spotstr *sp = sp1;
+		    for (int b = i - f; b < 5; b++, sp += d) {
 			if (sp->s_occ == EMPTY) {
 			    esp = sp;	/* save the intersection point */
 			    n++;
 			}
 		    }
-		    b = (int)(sp2->s_frame[r] - frames);
+		    int b = (int)(sp2->s_frame[r] - frames);
 		    if (n == 0) {
 			if (sp->s_occ == EMPTY) {
 			    str[b] &= 0xA;
@@ -290,15 +288,15 @@ update_overlap(struct spotstr *osp)
 
 		/* the other directions can only intersect at spot osp */
 		for (int r1 = r; --r1 >= 0; ) {
-		    d1 = dd[r1];
-		    bmask1 = BFLAG << r1;
-		    sp = osp;
+		    int d1 = dd[r1];
+		    int bmask1 = BFLAG << r1;
+		    struct spotstr *sp = osp;
 		    for (int i = 6; --i >= 0; sp -= d1) { /* for each spot */
 			if (sp->s_occ == BORDER)
 			    break;
 			if ((sp->s_flags & bmask1) != 0)
 			    continue;
-			b = (int)(sp->s_frame[r1] - frames);
+			int b = (int)(sp->s_frame[r1] - frames);
 			str[b] = 0;
 			overlap[b * FAREA + a] = 0;
 		    }
