@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.40 2022/05/27 19:59:56 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.41 2022/05/27 23:10:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -52,11 +52,6 @@
  * open-ended frame is one with spaces on both ends; otherwise, it is closed.
  */
 #define FAREA	(2 * BSZ * (BSZ - 4) + 2 * (BSZ - 4) * (BSZ - 4))
-
-#define MUP	(BSZ + 1)
-#define MDOWN	(-(BSZ + 1))
-#define MLEFT	(-1)
-#define MRIGHT	(1)
 
 /* values for s_occ */
 #define BLACK	0
