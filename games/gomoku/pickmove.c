@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.43 2022/05/22 10:45:02 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.44 2022/05/27 19:30:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.43 2022/05/22 10:45:02 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.44 2022/05/27 19:30:56 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -232,7 +232,7 @@ scanframes(int color)
 	struct spotstr *sp;
 	union comboval *cp;
 	struct elist *nep;
-	int i, r, d, n;
+	int i, r, n;
 	union comboval cb;
 
 	curcolor = color;
@@ -249,10 +249,10 @@ scanframes(int color)
 	 *  winning moves J12 and J7.
 	 */
 	sp = &board[cbp->c_vertex];
-	cb.s = sp->s_fval[color][d = cbp->c_dir].s;
+	cb.s = sp->s_fval[color][cbp->c_dir].s;
 	if (cb.s < 0x101) {
-		d = dd[d];
-		for (i = 5 + cb.cv_win; --i >= 0; sp += d) {
+		int delta = dd[cbp->c_dir];
+		for (i = 5 + cb.cv_win; --i >= 0; sp += delta) {
 			if (sp->s_occ != EMPTY)
 				continue;
 			sp->s_combo[color].s = cb.s;
@@ -271,7 +271,7 @@ scanframes(int color)
 	do {
 		sp = &board[cbp->c_vertex];
 		cp = &sp->s_fval[color][r = cbp->c_dir];
-		d = dd[r];
+		int delta = dd[r];
 		if (cp->cv_win != 0) {
 			/*
 			 * Since this is the first spot of an open-ended
@@ -292,13 +292,13 @@ scanframes(int color)
 				cb.s = cp->s;
 			else if (color != nextcolor)
 				memset(tmpmap, 0, sizeof(tmpmap));
-			sp += d;
+			sp += delta;
 			i = 1;
 		} else {
 			cb.s = cp->s;
 			i = 0;
 		}
-		for (; i < 5; i++, sp += d) {	/* for each spot */
+		for (; i < 5; i++, sp += delta) {	/* for each spot */
 			if (sp->s_occ != EMPTY)
 				continue;
 			if (cp->s < sp->s_combo[color].s) {
@@ -334,19 +334,18 @@ scanframes(int color)
 	 * Try to make new 3rd level combos, 4th level, etc.
 	 * Limit the search depth early in the game.
 	 */
-	d = 2;
 	/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
-	while (d <= ((movenum + 1) >> 1) && combolen > n) {
-		if (d >= 9)
+	for (int level = 2;
+	     level <= ((movenum + 1) >> 1) && combolen > n; level++) {
+		if (level >= 9)
 			break;	/* Do not think too long. */
 		if (debug != 0) {
 			debuglog("%cL%d %d %d %d", "BW"[color],
-			    d, combolen - n, combocnt, elistcnt);
+			    level, combolen - n, combocnt, elistcnt);
 			refresh();
 		}
 		n = combolen;
-		addframes(d);
-		d++;
+		addframes(level);
 	}
 
 	/* scan for combos at empty spots */
