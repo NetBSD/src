@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131 2022/02/04 18:28:53 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.132 2022/05/27 16:59:19 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,9 +22,9 @@ include 	"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.131 $"
+#ident 		"GENERIC-$Revision: 1.132 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
+makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
 	# backtraces in DDB.
 
