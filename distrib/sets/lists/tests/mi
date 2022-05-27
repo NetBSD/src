@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1207 2022/05/23 22:33:56 rillig Exp $
+# $NetBSD: mi,v 1.1208 2022/05/27 07:28:22 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1507,10 +1507,10 @@
 ./usr/tests/fs/kernfs/Kyuafile				tests-fs-tests		atf,rump,kyua
 ./usr/tests/fs/kernfs/t_basic				tests-fs-tests		atf,rump
 ./usr/tests/fs/lfs					tests-fs-tests		compattestfile,atf
-./usr/tests/fs/lfs/Atffile				tests-fs-tests		atf,rump
-./usr/tests/fs/lfs/Kyuafile				tests-fs-tests		atf,rump,kyua
-./usr/tests/fs/lfs/t_pr					tests-fs-tests		atf,rump
-./usr/tests/fs/lfs/t_rfw				tests-fs-tests		atf,rump
+./usr/tests/fs/lfs/Atffile				tests-fs-tests		atf,rump,lfs
+./usr/tests/fs/lfs/Kyuafile				tests-fs-tests		atf,rump,kyua,lfs
+./usr/tests/fs/lfs/t_pr					tests-fs-tests		atf,rump,lfs
+./usr/tests/fs/lfs/t_rfw				tests-fs-tests		atf,rump,lfs
 ./usr/tests/fs/msdosfs					tests-fs-tests		compattestfile,atf
 ./usr/tests/fs/msdosfs/Atffile				tests-fs-tests		atf,rump
 ./usr/tests/fs/msdosfs/Kyuafile				tests-fs-tests		atf,rump,kyua

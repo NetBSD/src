@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.288 2022/05/25 21:25:47 nia Exp $
+#	$NetBSD: Makefile,v 1.289 2022/05/27 07:28:21 nia Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	bad144 bootp bta2dpd btattach btconfig btdevctl bthcid btpand catman \
 	chroot cnwctl cpuctl crash \
-	dev_mkdb diskpart dumpfs dumplfs \
+	dev_mkdb diskpart dumpfs \
 	edquota eeprom envstat etcupdate extattrctl \
 	flashctl fssconfig fstyp fusermount fwctl \
 	gpioctl grfconfig gspa \
@@ -33,6 +33,10 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	wakeonlan wg-keygen wg-userspace wgconfig wiconfig wlanctl \
 	wsconscfg wsfontload wsmoused wsmuxctl \
 	zdump zic
+
+.if ${MKLFS} != "no"
+SUBDIR+= dumplfs
+.endif
 
 .if ${MKMAKEMANDB} != "no"
 SUBDIR+= makemandb

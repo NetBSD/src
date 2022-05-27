@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1301 2022/05/25 21:25:46 nia Exp $
+# $NetBSD: mi,v 1.1302 2022/05/27 07:28:21 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -327,7 +327,7 @@
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
 ./libexec/dhcpcd-run-hooks			base-dhcpcd-root
-./libexec/lfs_cleanerd				base-sysutil-bin
+./libexec/lfs_cleanerd				base-sysutil-bin	lfs
 ./libexec/resolvconf				base-resolvconf-root
 ./libexec/resolvconf/dnsmasq			base-resolvconf-root
 ./libexec/resolvconf/libc			base-resolvconf-root
@@ -371,7 +371,7 @@
 ./sbin/dmsetup					base-lvm-root		lvm
 ./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
-./sbin/dump_lfs					base-sysutil-root
+./sbin/dump_lfs					base-sysutil-root	lfs
 ./sbin/dumpfs					base-obsolete		obsolete
 ./sbin/dumplfs					base-obsolete		obsolete
 ./sbin/fastboot					base-sysutil-root
@@ -381,7 +381,7 @@
 ./sbin/fsck					base-sysutil-root
 ./sbin/fsck_ext2fs				base-ext2fs-root
 ./sbin/fsck_ffs					base-sysutil-root
-./sbin/fsck_lfs					base-sysutil-root
+./sbin/fsck_lfs					base-sysutil-root	lfs
 ./sbin/fsck_msdos				base-sysutil-root
 ./sbin/fsck_udf					base-sysutil-root
 ./sbin/fsck_v7fs				base-sysutil-root
@@ -417,7 +417,7 @@
 ./sbin/mount_hfs				base-hfs-root
 ./sbin/mount_hfsp				base-obsolete		obsolete
 ./sbin/mount_kernfs				base-sysutil-root
-./sbin/mount_lfs				base-sysutil-root
+./sbin/mount_lfs				base-sysutil-root	lfs
 ./sbin/mount_mfs				base-sysutil-root
 ./sbin/mount_msdos				base-sysutil-root
 ./sbin/mount_nfs				base-nfsclient-root
@@ -443,7 +443,7 @@
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
 ./sbin/newfs_ext2fs				base-sysutil-root
-./sbin/newfs_lfs				base-sysutil-root
+./sbin/newfs_lfs				base-sysutil-root	lfs
 ./sbin/newfs_msdos				base-sysutil-root
 ./sbin/newfs_sysvbfs				base-sysutil-root
 ./sbin/newfs_udf				base-sysutil-root
@@ -466,10 +466,10 @@
 ./sbin/raidctl					base-sysutil-root
 ./sbin/rcorder					base-sysutil-root
 ./sbin/rdump					base-sysutil-root
-./sbin/rdump_lfs				base-sysutil-root
+./sbin/rdump_lfs				base-sysutil-root	lfs
 ./sbin/reboot					base-sysutil-root
 ./sbin/resize_ffs				base-sysutil-root
-./sbin/resize_lfs				base-sysutil-root
+./sbin/resize_lfs				base-sysutil-root	lfs
 ./sbin/resolvconf				base-resolvconf-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
@@ -1477,7 +1477,7 @@
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dtruss				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
-./usr/sbin/dumplfs				base-sysutil-bin
+./usr/sbin/dumplfs				base-sysutil-bin	lfs
 ./usr/sbin/eaytest				base-obsolete		obsolete
 ./usr/sbin/editmap				base-obsolete		obsolete
 ./usr/sbin/edquota				base-sysutil-bin
@@ -1721,7 +1721,7 @@
 ./usr/sbin/rump_ext2fs				base-puffs-bin	rump
 ./usr/sbin/rump_ffs				base-puffs-bin	rump
 ./usr/sbin/rump_hfs				base-puffs-bin	rump
-./usr/sbin/rump_lfs				base-puffs-bin	rump
+./usr/sbin/rump_lfs				base-puffs-bin	rump,lfs
 ./usr/sbin/rump_msdos				base-puffs-bin	rump
 ./usr/sbin/rump_nfs				base-puffs-bin	rump
 ./usr/sbin/rump_ntfs				base-puffs-bin	rump
