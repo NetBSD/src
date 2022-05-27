@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.433 2022/05/26 06:23:57 nia Exp $
+#	$NetBSD: bsd.README,v 1.434 2022/05/27 07:28:21 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -301,6 +301,11 @@ MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
 
 MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
+		Default: yes
+
+MKLFS		If "no", disables building and installation of programs for
+		the log-structured file system - mount_lfs(8), newfs_lfs(8),
+		dumplfs(8), etc.
 		Default: yes
 
 MKLIBCSANITIZER	If "yes", use the selected sanitizer inside libc to compile

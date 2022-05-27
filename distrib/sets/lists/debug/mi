@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.380 2022/05/25 21:25:46 nia Exp $
+# $NetBSD: mi,v 1.381 2022/05/27 07:28:22 nia Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -323,7 +323,7 @@
 ./usr/libdata/debug/bin/systrace.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/bin/tar.debug		comp-util-debug		debug,bsdtar
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
-./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug,lfs
 ./usr/libdata/debug/netbsd			comp-sysutil-debug	debug,kernel_dir
 ./usr/libdata/debug/netbsd-@CONFIG@.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
@@ -353,12 +353,12 @@
 ./usr/libdata/debug/sbin/dmsetup.debug		comp-sysutil-debug	lvm,debug
 ./usr/libdata/debug/sbin/drvctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/dump_lfs.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/dump_lfs.debug		comp-sysutil-debug	lfs,debug
 ./usr/libdata/debug/sbin/fdisk.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_ext2fs.debug	comp-ext2fs-debug	debug
 ./usr/libdata/debug/sbin/fsck_ffs.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/fsck_lfs.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/fsck_lfs.debug		comp-sysutil-debug	lfs,debug
 ./usr/libdata/debug/sbin/fsck_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_udf.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_v7fs.debug	comp-sysutil-debug	debug
@@ -389,7 +389,7 @@
 ./usr/libdata/debug/sbin/mount_filecore.debug	comp-filecorefs-debug	debug
 ./usr/libdata/debug/sbin/mount_hfs.debug	comp-hfs-debug		debug
 ./usr/libdata/debug/sbin/mount_kernfs.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/mount_lfs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/mount_lfs.debug	comp-sysutil-debug	lfs,debug
 ./usr/libdata/debug/sbin/mount_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_nfs.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/sbin/mount_nilfs.debug	comp-sysutil-debug	debug
@@ -410,7 +410,7 @@
 ./usr/libdata/debug/sbin/mount_v7fs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_ext2fs.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/newfs_lfs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/newfs_lfs.debug	comp-sysutil-debug	lfs,debug
 ./usr/libdata/debug/sbin/newfs_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_udf.debug	comp-sysutil-debug	debug
@@ -428,7 +428,7 @@
 ./usr/libdata/debug/sbin/rcorder.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/reboot.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/resize_ffs.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/resize_lfs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/resize_lfs.debug	comp-sysutil-debug	lfs,debug
 ./usr/libdata/debug/sbin/restore.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/rndctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/route.debug		comp-netutil-debug	debug
@@ -1102,7 +1102,7 @@
 ./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dtrace.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	lfs,debug
 ./usr/libdata/debug/usr/sbin/edquota.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/envstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/eshconfig.debug	comp-obsolete		obsolete
@@ -1295,7 +1295,7 @@
 ./usr/libdata/debug/usr/sbin/rump_ext2fs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_ffs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_hfs.debug	comp-puffs-debug	debug,rump
-./usr/libdata/debug/usr/sbin/rump_lfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_lfs.debug	comp-puffs-debug	debug,rump,lfs
 ./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_nfs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-puffs-debug	debug,rump
@@ -1692,8 +1692,8 @@
 ./usr/libdata/debug/usr/tests/fs/fifofs/t_fifo.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/hfs/t_pathconvert.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/fs/lfs/t_pr.debug				tests-fs-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/fs/lfs/t_rfw.debug			tests-fs-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/fs/lfs/t_pr.debug				tests-fs-debug		debug,atf,rump,lfs
+./usr/libdata/debug/usr/tests/fs/lfs/t_rfw.debug			tests-fs-debug		debug,atf,rump,lfs
 ./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/nfs/nfsservice/rumpnfsd.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/nfs/t_mountd.debug			tests-fs-debug		debug,atf,rump
