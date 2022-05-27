@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.39 2022/05/22 10:45:02 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.40 2022/05/27 19:59:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -229,8 +229,8 @@ extern	struct	combostr frames[FAREA];		/* storage for single frames */
 extern	struct	combostr *sortframes[2];	/* sorted, non-empty frames */
 extern	u_char	overlap[FAREA * FAREA];		/* frame [a][b] overlap */
 extern	short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
-extern	int	movelog[BSZ * BSZ];		/* history of moves */
-extern	int	movenum;
+extern	int	movelog[BSZ * BSZ];
+extern	unsigned int nmoves;
 extern	int	debug;
 
 extern bool interactive;
