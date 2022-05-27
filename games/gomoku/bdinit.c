@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.21 2022/05/21 16:39:14 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.22 2022/05/27 19:59:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.21 2022/05/21 16:39:14 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.22 2022/05/27 19:59:56 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -47,7 +47,7 @@ bdinit(struct spotstr *bp)
 	struct spotstr *sp;
 	struct combostr *cbp;
 
-	movenum = 1;
+	nmoves = 0;
 
 	/* mark the borders as such */
 	sp = bp;

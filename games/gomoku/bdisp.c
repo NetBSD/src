@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.46 2022/05/22 13:38:08 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.47 2022/05/27 19:59:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.46 2022/05/22 13:38:08 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.47 2022/05/27 19:59:56 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -171,7 +171,7 @@ bdisp(void)
 				c = pcolor[sp->s_occ];
 
 			move(scr_y(j), scr_x(i));
-			if (movenum > 1 && movelog[movenum - 2] == PT(i, j)) {
+			if (nmoves > 0 && movelog[nmoves - 1] == PT(i, j)) {
 				attron(A_BOLD);
 				addch(c);
 				attroff(A_BOLD);
