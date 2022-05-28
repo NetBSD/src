@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2022/05/28 08:19:18 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2022/05/28 17:51:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.61 2022/05/28 08:19:18 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.62 2022/05/28 17:51:27 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -349,7 +349,7 @@ main(int argc, char **argv)
 	if (interactive)
 		cursinit();		/* initialize curses */
 again:
-	bdinit(board);			/* initialize board contents */
+	init_board();			/* initialize board contents */
 
 	if (interactive) {
 		bdisp_init();		/* initialize display of board */
