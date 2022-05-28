@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.49 2022/05/28 08:32:55 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.50 2022/05/28 20:54:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.49 2022/05/28 08:32:55 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.50 2022/05/28 20:54:31 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -60,13 +60,13 @@ void
 cursinit(void)
 {
 
-	if (initscr() == NULL) {
+	if (initscr() == NULL)
 		errx(EXIT_FAILURE, "Couldn't initialize screen");
-	}
-	if ((LINES < SCRNH) || (COLS < SCRNW)) {
+
+	if (LINES < SCRNH || COLS < SCRNW)
 		errx(EXIT_FAILURE, "Screen too small (need %dx%d)",
 		    SCRNW, SCRNH);
-	}
+
 	keypad(stdscr, true);
 	nonl();
 	noecho();
@@ -254,7 +254,6 @@ dislog(const char *str)
 /*
  * Display a question.
  */
-
 void
 ask(const char *str)
 {
@@ -269,19 +268,15 @@ ask(const char *str)
 int
 get_key(const char *allowed)
 {
-	int ch;
 
 	for (;;) {
-		ch = getch();
-		if (allowed != NULL &&
-		    ch != '\0' && strchr(allowed, ch) == NULL) {
-			beep();
-			refresh();
-			continue;
-		}
-		break;
+		int ch = getch();
+		if (allowed == NULL || ch == '\0' ||
+		    strchr(allowed, ch) != NULL)
+			return ch;
+		beep();
+		refresh();
 	}
-	return ch;
 }
 
 bool
