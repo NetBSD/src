@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.42 2021/02/17 08:15:43 knakahara Exp $
+.\"	$NetBSD: wm.4,v 1.43 2022/05/28 00:53:41 manu Exp $
 .\"
 .\" Copyright 2002, 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -184,6 +184,16 @@ utility configures the adapter to receive and transmit jumbo frames.
 .\" .Sh DIAGNOSTICS
 .\" XXX to be done.
 .Sh OPTIONS
+The driver default behavior is to handle packets in interrupt context,
+which reduces the CPU time available to user processes when under 
+heavy nerwork load. The 
+.Em hw.wmX.txrx_workqueue
+.Xr sysctl 8
+alters this behavior so that packets are handled by a kernel thread, 
+which executes at a lower priority. This gives user processes more
+opportunity to be executed, at the exepense of network throughput.
+.Pp
+The following options can be set at build time:
 .Bl -tag -width WM_RX_INTR_PROCESS_LIMIT_DEFAULT -offset 3n
 .It Dv WM_RX_PROCESS_LIMIT_DEFAULT
 The maximum number of received packets processed in each
@@ -247,7 +257,8 @@ to
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
-.Xr ifconfig 8
+.Xr ifconfig 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
