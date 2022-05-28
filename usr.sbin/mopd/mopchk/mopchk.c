@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.15 2020/04/22 23:57:56 joerg Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.16 2022/05/28 21:14:57 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopchk.c,v 1.15 2020/04/22 23:57:56 joerg Exp $");
+__RCSID("$NetBSD: mopchk.c,v 1.16 2022/05/28 21:14:57 andvar Exp $");
 #endif
 
 /*
@@ -149,7 +149,7 @@ Usage(void)
 }
 
 /*
- * Process incomming packages.
+ * Process incoming packages.
  * Doesn't actually do anything for mopchk(1)
  */
 void

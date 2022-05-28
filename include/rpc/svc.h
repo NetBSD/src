@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.32 2016/01/23 02:36:57 dholland Exp $	*/
+/*	$NetBSD: svc.h,v 1.33 2022/05/28 21:14:56 andvar Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -89,7 +89,7 @@ typedef struct __rpc_svcxprt {
 	int		xp_fd;
 	unsigned short	xp_port;	 /* associated port number */
 	const struct xp_ops {
-		/* receive incomming requests */
+		/* receive incoming requests */
 		bool_t	(*xp_recv)(struct __rpc_svcxprt *, struct rpc_msg *);
 		/* get transport status */
 		enum xprt_stat (*xp_stat)(struct __rpc_svcxprt *);

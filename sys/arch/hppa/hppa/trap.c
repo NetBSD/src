@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 2020/08/19 02:19:07 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.117 2022/05/28 21:14:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2020/08/19 02:19:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2022/05/28 21:14:56 andvar Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1043,7 +1043,7 @@ ss_put_value(struct lwp *l, vaddr_t addr, u_int value)
 void
 ss_clear_breakpoints(struct lwp *l)
 {
-	/* Restore origional instructions. */
+	/* Restore original instructions. */
 	if (l->l_md.md_bpva != 0) {
 		ss_put_value(l, l->l_md.md_bpva, l->l_md.md_bpsave[0]);
 		ss_put_value(l, l->l_md.md_bpva + 4, l->l_md.md_bpsave[1]);
