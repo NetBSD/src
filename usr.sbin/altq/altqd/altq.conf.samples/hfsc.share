@@ -1,5 +1,5 @@
 #
-# a config for hierachical sharing
+# a config for hierarchical sharing
 #
 
 interface pvc0 bandwidth 45M hfsc
