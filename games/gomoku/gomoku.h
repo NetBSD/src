@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.44 2022/05/28 08:32:55 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.45 2022/05/28 17:51:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -237,7 +237,7 @@ extern	int	debug;
 extern bool interactive;
 extern const char *plyr[];
 
-void	bdinit(struct spotstr *);
+void	init_board(void);
 int	get_coord(void);
 int	get_key(const char *);
 bool	get_line(char *, int, void (*)(const char *));

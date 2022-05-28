@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.24 2022/05/28 08:32:55 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.25 2022/05/28 17:51:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,119 +34,129 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.24 2022/05/28 08:32:55 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.25 2022/05/28 17:51:27 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
 
 static void init_overlap(void);
 
-void
-bdinit(struct spotstr *bp)
+static void
+init_spot_flags_and_fval(struct spotstr *sp, int i, int j)
 {
-	struct spotstr *sp;
-	struct combostr *cbp;
+
+	sp->s_flags = 0;
+	if (j < 5) {
+		/* directions 1, 2, 3 are blocked */
+		sp->s_flags |= (BFLAG << 1) | (BFLAG << 2) |
+		    (BFLAG << 3);
+		sp->s_fval[BLACK][1].s = 0x600;
+		sp->s_fval[BLACK][2].s = 0x600;
+		sp->s_fval[BLACK][3].s = 0x600;
+		sp->s_fval[WHITE][1].s = 0x600;
+		sp->s_fval[WHITE][2].s = 0x600;
+		sp->s_fval[WHITE][3].s = 0x600;
+	} else if (j == 5) {
+		/* five spaces, blocked on one side */
+		sp->s_fval[BLACK][1].s = 0x500;
+		sp->s_fval[BLACK][2].s = 0x500;
+		sp->s_fval[BLACK][3].s = 0x500;
+		sp->s_fval[WHITE][1].s = 0x500;
+		sp->s_fval[WHITE][2].s = 0x500;
+		sp->s_fval[WHITE][3].s = 0x500;
+	} else {
+		/* six spaces, not blocked */
+		sp->s_fval[BLACK][1].s = 0x401;
+		sp->s_fval[BLACK][2].s = 0x401;
+		sp->s_fval[BLACK][3].s = 0x401;
+		sp->s_fval[WHITE][1].s = 0x401;
+		sp->s_fval[WHITE][2].s = 0x401;
+		sp->s_fval[WHITE][3].s = 0x401;
+	}
+	if (i > (BSZ - 4)) {
+		/* directions 0, 1 are blocked */
+		sp->s_flags |= BFLAG | (BFLAG << 1);
+		sp->s_fval[BLACK][0].s = 0x600;
+		sp->s_fval[BLACK][1].s = 0x600;
+		sp->s_fval[WHITE][0].s = 0x600;
+		sp->s_fval[WHITE][1].s = 0x600;
+	} else if (i == (BSZ - 4)) {
+		sp->s_fval[BLACK][0].s = 0x500;
+		sp->s_fval[WHITE][0].s = 0x500;
+		/* if direction 1 is not blocked */
+		if ((sp->s_flags & (BFLAG << 1)) == 0) {
+			sp->s_fval[BLACK][1].s = 0x500;
+			sp->s_fval[WHITE][1].s = 0x500;
+		}
+	} else {
+		sp->s_fval[BLACK][0].s = 0x401;
+		sp->s_fval[WHITE][0].s = 0x401;
+		if (i < 5) {
+			/* direction 3 is blocked */
+			sp->s_flags |= (BFLAG << 3);
+			sp->s_fval[BLACK][3].s = 0x600;
+			sp->s_fval[WHITE][3].s = 0x600;
+		} else if (i == 5 &&
+		    (sp->s_flags & (BFLAG << 3)) == 0) {
+			sp->s_fval[BLACK][3].s = 0x500;
+			sp->s_fval[WHITE][3].s = 0x500;
+		}
+	}
+}
+
+/* Allocate one of the pre-allocated frames for each non-blocked frame. */
+static void
+init_spot_frame(struct spotstr *sp, struct combostr **cbpp)
+{
+
+	for (int r = 4; --r >= 0; ) {
+		if ((sp->s_flags & (BFLAG << r)) != 0)
+			continue;
+
+		struct combostr *cbp = (*cbpp)++;
+		cbp->c_combo.s = sp->s_fval[BLACK][r].s;
+		cbp->c_vertex = (u_short)(sp - board);
+		cbp->c_nframes = 1;
+		cbp->c_dir = r;
+		sp->s_frame[r] = cbp;
+	}
+}
+
+void
+init_board(void)
+{
 
 	game.nmoves = 0;
 	game.winning_spot = 0;
 
-	/* mark the borders as such */
-	sp = bp;
+	struct spotstr *sp = board;
 	for (int i = 0; i < 1 + BSZ + 1; i++, sp++) {
-		sp->s_occ = BORDER;			/* top border */
+		sp->s_occ = BORDER;	/* bottom border and corners */
 		sp->s_flags = BFLAGALL;
 	}
 
-	/* fill entire board with EMPTY spots */
+	/* fill the playing area of the board with EMPTY spots */
+	struct combostr *cbp = frames;
 	memset(frames, 0, sizeof(frames));
-	cbp = frames;
-	for (int j = 0; ++j < BSZ + 1; sp++) {		/* for each row */
-		for (int i = 0; ++i < BSZ + 1; sp++) {	/* for each column */
+	for (int row = 1; row <= BSZ; row++, sp++) {
+		for (int col = 1; col <= BSZ; col++, sp++) {
 			sp->s_occ = EMPTY;
-			sp->s_flags = 0;
 			sp->s_wval = 0;
-			if (j < 5) {
-				/* directions 1, 2, 3 are blocked */
-				sp->s_flags |= (BFLAG << 1) | (BFLAG << 2) |
-				    (BFLAG << 3);
-				sp->s_fval[BLACK][1].s = 0x600;
-				sp->s_fval[BLACK][2].s = 0x600;
-				sp->s_fval[BLACK][3].s = 0x600;
-				sp->s_fval[WHITE][1].s = 0x600;
-				sp->s_fval[WHITE][2].s = 0x600;
-				sp->s_fval[WHITE][3].s = 0x600;
-			} else if (j == 5) {
-				/* five spaces, blocked on one side */
-				sp->s_fval[BLACK][1].s = 0x500;
-				sp->s_fval[BLACK][2].s = 0x500;
-				sp->s_fval[BLACK][3].s = 0x500;
-				sp->s_fval[WHITE][1].s = 0x500;
-				sp->s_fval[WHITE][2].s = 0x500;
-				sp->s_fval[WHITE][3].s = 0x500;
-			} else {
-				/* six spaces, not blocked */
-				sp->s_fval[BLACK][1].s = 0x401;
-				sp->s_fval[BLACK][2].s = 0x401;
-				sp->s_fval[BLACK][3].s = 0x401;
-				sp->s_fval[WHITE][1].s = 0x401;
-				sp->s_fval[WHITE][2].s = 0x401;
-				sp->s_fval[WHITE][3].s = 0x401;
-			}
-			if (i > (BSZ - 4)) {
-				/* directions 0, 1 are blocked */
-				sp->s_flags |= BFLAG | (BFLAG << 1);
-				sp->s_fval[BLACK][0].s = 0x600;
-				sp->s_fval[BLACK][1].s = 0x600;
-				sp->s_fval[WHITE][0].s = 0x600;
-				sp->s_fval[WHITE][1].s = 0x600;
-			} else if (i == (BSZ - 4)) {
-				sp->s_fval[BLACK][0].s = 0x500;
-				sp->s_fval[WHITE][0].s = 0x500;
-				/* if direction 1 is not blocked */
-				if ((sp->s_flags & (BFLAG << 1)) == 0) {
-					sp->s_fval[BLACK][1].s = 0x500;
-					sp->s_fval[WHITE][1].s = 0x500;
-				}
-			} else {
-				sp->s_fval[BLACK][0].s = 0x401;
-				sp->s_fval[WHITE][0].s = 0x401;
-				if (i < 5) {
-					/* direction 3 is blocked */
-					sp->s_flags |= (BFLAG << 3);
-					sp->s_fval[BLACK][3].s = 0x600;
-					sp->s_fval[WHITE][3].s = 0x600;
-				} else if (i == 5 &&
-				    (sp->s_flags & (BFLAG << 3)) == 0) {
-					sp->s_fval[BLACK][3].s = 0x500;
-					sp->s_fval[WHITE][3].s = 0x500;
-				}
-			}
-			/*
-			 * Allocate a frame structure for non-blocked frames.
-			 */
-			for (int r = 4; --r >= 0; ) {
-				if ((sp->s_flags & (BFLAG << r)) != 0)
-					continue;
-				cbp->c_combo.s = sp->s_fval[BLACK][r].s;
-				cbp->c_vertex = (u_short)(sp - board);
-				cbp->c_nframes = 1;
-				cbp->c_dir = r;
-				sp->s_frame[r] = cbp;
-				cbp++;
-			}
+			init_spot_flags_and_fval(sp, col, row);
+			init_spot_frame(sp, &cbp);
 		}
-		sp->s_occ = BORDER;		/* left & right border */
+		sp->s_occ = BORDER;	/* combined left and right border */
 		sp->s_flags = BFLAGALL;
 	}
 
-	/* mark the borders as such */
 	for (int i = 0; i < BSZ + 1; i++, sp++) {
-		sp->s_occ = BORDER;			/* bottom border */
+		sp->s_occ = BORDER;	/* top border and top-right corner */
 		sp->s_flags = BFLAGALL;
 	}
 
 	sortframes[BLACK] = NULL;
 	sortframes[WHITE] = NULL;
+
 	init_overlap();
 }
 
