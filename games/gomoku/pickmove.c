@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.46 2022/05/27 23:10:54 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.47 2022/05/28 08:19:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.46 2022/05/27 23:10:54 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.47 2022/05/28 08:19:18 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -89,7 +89,7 @@ pickmove(int us)
 {
 
 	/* first move is easy */
-	if (nmoves == 0)
+	if (game.nmoves == 0)
 		return PT((BSZ + 1) / 2, (BSZ + 1) / 2);
 
 	/* initialize all the board values */
@@ -336,7 +336,7 @@ scanframes(int color)
 	 */
 	/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
 	for (unsigned int level = 2;
-	     level <= 1 + nmoves / 2 && combolen > n; level++) {
+	     level <= 1 + game.nmoves / 2 && combolen > n; level++) {
 		if (level >= 9)
 			break;	/* Do not think too long. */
 		if (debug != 0) {

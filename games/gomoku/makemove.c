@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.31 2022/05/28 08:09:22 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.32 2022/05/28 08:19:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.31 2022/05/28 08:09:22 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.32 2022/05/28 08:19:18 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -111,7 +111,7 @@ makemove(int us, int mv)
 
 	/* make move */
 	sp->s_occ = us;
-	movelog[nmoves++] = mv;
+	game.moves[game.nmoves++] = mv;
 
 	/* compute new frame values */
 	sp->s_wval = 0;
