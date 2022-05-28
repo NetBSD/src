@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.64 2022/05/28 20:57:26 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.65 2022/05/28 21:31:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.64 2022/05/28 20:57:26 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.65 2022/05/28 21:31:41 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -414,11 +414,11 @@ readinput(FILE *fp)
 
 #ifdef DEBUG
 /*
- * Handle strange situations.
+ * Handle strange situations and ^C.
  */
 /* ARGSUSED */
 void
-whatsup(int signum)
+whatsup(int signum __unused)
 {
 	int i, n, s1, s2, d1, d2;
 	struct spotstr *sp;
