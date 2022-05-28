@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 2022/05/28 06:25:35 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.61 2022/05/28 08:19:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.60 2022/05/28 06:25:35 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.61 2022/05/28 08:19:18 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -79,8 +79,7 @@ struct	combostr *sortframes[2];	/* sorted list of non-empty frames */
 u_char	overlap[FAREA * FAREA];		/* non-zero if frame [a][b] overlap;
 					 * see init_overlap */
 short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
-int	movelog[BSZ * BSZ];		/* log of all played moves */
-unsigned int nmoves;			/* number of played moves */
+struct game game;
 const char *plyr[2] = { "???", "???" };	/* who's who */
 
 static int readinput(FILE *);
@@ -116,8 +115,8 @@ save_game(void)
 		misclog("cannot create save file");
 		return;
 	}
-	for (unsigned int i = 0; i < nmoves; i++)
-		fprintf(fp, "%s\n", stoc(movelog[i]));
+	for (unsigned int i = 0; i < game.nmoves; i++)
+		fprintf(fp, "%s\n", stoc(game.moves[i]));
 	fclose(fp);
 }
 
@@ -313,7 +312,8 @@ again:
 
 	if (interactive && curmove != ILLEGAL) {
 		misclog("%3u%*s%-6s",
-		    nmoves + 1, color == BLACK ? 2 : 9, "", stoc(curmove));
+		    game.nmoves + 1, color == BLACK ? 2 : 9, "",
+		    stoc(curmove));
 	}
 
 	if ((outcome = makemove(color, curmove)) != MOVEOK)
@@ -448,9 +448,9 @@ top:
 	case 'c':
 		break;
 	case 'b':		/* back up a move */
-		if (nmoves > 0) {
-			nmoves--;
-			board[movelog[nmoves]].s_occ = EMPTY;
+		if (game.nmoves > 0) {
+			game.nmoves--;
+			board[game.moves[game.nmoves]].s_occ = EMPTY;
 			bdisp();
 		}
 		goto top;
@@ -460,23 +460,23 @@ top:
 			stoc(pickmove(i)));
 		goto top;
 	case 'f':		/* go forward a move */
-		board[movelog[nmoves]].s_occ =
-		    nmoves % 2 == 0 ? BLACK : WHITE;
-		nmoves++;
+		board[game.moves[game.nmoves]].s_occ =
+		    game.nmoves % 2 == 0 ? BLACK : WHITE;
+		game.nmoves++;
 		bdisp();
 		goto top;
 	case 'l':		/* print move history */
 		if (input[1] == '\0') {
-			for (unsigned int m = 0; m < nmoves; m++)
-				debuglog("%s", stoc(movelog[m]));
+			for (unsigned int m = 0; m < game.nmoves; m++)
+				debuglog("%s", stoc(game.moves[m]));
 			goto top;
 		}
 		if ((fp = fopen(input + 1, "w")) == NULL)
 			goto top;
-		for (unsigned int m = 0; m < nmoves; m++) {
-			fprintf(fp, "%s", stoc(movelog[m]));
-			if (++m < nmoves)
-				fprintf(fp, " %s\n", stoc(movelog[m]));
+		for (unsigned int m = 0; m < game.nmoves; m++) {
+			fprintf(fp, "%s", stoc(game.moves[m]));
+			if (++m < game.nmoves)
+				fprintf(fp, " %s\n", stoc(game.moves[m]));
 			else
 				fputc('\n', fp);
 		}
