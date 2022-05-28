@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2881 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2882 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -582,3 +582,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[rillig 20220503]
 	make(1): Add "randomize-targets" for debugging race conditions.
 		[rillig 20220507]
+	gomoku(6): Add highlighting, fix input handling, announce tie early,
+		prevent overly long thinking. [rillig 20220528]
