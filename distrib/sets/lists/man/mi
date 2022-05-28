@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1744 2022/05/28 11:17:36 nia Exp $
+# $NetBSD: mi,v 1.1745 2022/05/28 14:31:12 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -172,7 +172,7 @@
 ./usr/share/man/cat1/file.0			man-util-catman		.cat
 ./usr/share/man/cat1/fincore.0			man-util-catman		.cat
 ./usr/share/man/cat1/find.0			man-util-catman		.cat
-./usr/share/man/cat1/finger.0			man-util-catman		.cat
+./usr/share/man/cat1/finger.0			man-util-catman		finger,.cat
 ./usr/share/man/cat1/flock.0			man-util-catman		.cat
 ./usr/share/man/cat1/fmt.0			man-util-catman		.cat
 ./usr/share/man/cat1/fold.0			man-util-catman		.cat
@@ -572,7 +572,7 @@
 ./usr/share/man/cat1/tabs.0			man-util-catman		.cat
 ./usr/share/man/cat1/tac.0			man-util-catman		.cat
 ./usr/share/man/cat1/tail.0			man-util-catman		.cat
-./usr/share/man/cat1/talk.0			man-netutil-catman	.cat
+./usr/share/man/cat1/talk.0			man-netutil-catman	talk,.cat
 ./usr/share/man/cat1/tar.0			man-util-catman		.cat
 ./usr/share/man/cat1/tcopy.0			man-util-catman		.cat
 ./usr/share/man/cat1/tee.0			man-util-catman		.cat
@@ -2617,7 +2617,7 @@
 ./usr/share/man/cat8/fasthalt.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fdiscard.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fdisk.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/fingerd.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/fingerd.0			man-sysutil-catman	finger,.cat
 ./usr/share/man/cat8/fixmount.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/flashctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/flush.0			man-postfix-catman	postfix,.cat
@@ -2936,7 +2936,7 @@
 ./usr/share/man/cat8/nsec3hash.0		man-bind-catman		.cat
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-obsolete		obsolete
-./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/ntalkd.0			man-netutil-catman	talk,.cat
 ./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		ntp,.cat
 ./usr/share/man/cat8/ntpd.0			man-ntp-catman		ntp,.cat
 ./usr/share/man/cat8/ntpdate.0			man-ntp-catman		ntp,.cat
@@ -3211,7 +3211,7 @@
 ./usr/share/man/cat8/sysctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sysinst.0			man-sysutil-man		.cat
 ./usr/share/man/cat8/syslogd.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/talkd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/talkd.0			man-netutil-catman	talk,.cat
 ./usr/share/man/cat8/tbrconfig.0		man-router-catman	.cat
 ./usr/share/man/cat8/tcpdchk.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tcpdmatch.0		man-netutil-catman	.cat
@@ -3508,7 +3508,7 @@
 ./usr/share/man/html1/file.html			man-util-htmlman	html
 ./usr/share/man/html1/fincore.html		man-util-htmlman	html
 ./usr/share/man/html1/find.html			man-util-htmlman	html
-./usr/share/man/html1/finger.html		man-util-htmlman	html
+./usr/share/man/html1/finger.html		man-util-htmlman	finger,html
 ./usr/share/man/html1/flock.html		man-util-htmlman	html
 ./usr/share/man/html1/fmt.html			man-util-htmlman	html
 ./usr/share/man/html1/fold.html			man-util-htmlman	html
@@ -3888,7 +3888,7 @@
 ./usr/share/man/html1/tabs.html			man-util-htmlman	html
 ./usr/share/man/html1/tac.html			man-util-htmlman	html
 ./usr/share/man/html1/tail.html			man-util-htmlman	html
-./usr/share/man/html1/talk.html			man-netutil-htmlman	html
+./usr/share/man/html1/talk.html			man-netutil-htmlman	talk,html
 ./usr/share/man/html1/tar.html			man-util-htmlman	html
 ./usr/share/man/html1/tcopy.html		man-util-htmlman	html
 ./usr/share/man/html1/tee.html			man-util-htmlman	html
@@ -5715,7 +5715,7 @@
 ./usr/share/man/html8/fasthalt.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fdiscard.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fdisk.html		man-sysutil-htmlman	html
-./usr/share/man/html8/fingerd.html		man-sysutil-htmlman	html
+./usr/share/man/html8/fingerd.html		man-sysutil-htmlman	finger,html
 ./usr/share/man/html8/fixmount.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/flashctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/flush.html		man-postfix-htmlman	postfix,html
@@ -5967,7 +5967,7 @@
 ./usr/share/man/html8/nsec3hash.html		man-bind-htmlman	html
 ./usr/share/man/html8/nslookup.html		man-netutil-htmlman	html
 ./usr/share/man/html8/nsupdate.html		man-obsolete		obsolete
-./usr/share/man/html8/ntalkd.html		man-netutil-htmlman	html
+./usr/share/man/html8/ntalkd.html		man-netutil-htmlman	talk,html
 ./usr/share/man/html8/ntp-keygen.html		man-ntp-htmlman		ntp,html
 ./usr/share/man/html8/ntpd.html			man-ntp-htmlman		ntp,html
 ./usr/share/man/html8/ntpdate.html		man-ntp-htmlman		ntp,html
@@ -6183,7 +6183,7 @@
 ./usr/share/man/html8/sysctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/sysinst.html		man-sysutil-man		html
 ./usr/share/man/html8/syslogd.html		man-sysutil-htmlman	html
-./usr/share/man/html8/talkd.html		man-netutil-htmlman	html
+./usr/share/man/html8/talkd.html		man-netutil-htmlman	talk,html
 ./usr/share/man/html8/tbrconfig.html		man-router-htmlman	html
 ./usr/share/man/html8/tcpdchk.html		man-netutil-htmlman	html
 ./usr/share/man/html8/tcpdmatch.html		man-netutil-htmlman	html
@@ -6458,7 +6458,7 @@
 ./usr/share/man/man1/file.1			man-util-man		.man
 ./usr/share/man/man1/fincore.1			man-util-man		.man
 ./usr/share/man/man1/find.1			man-util-man		.man
-./usr/share/man/man1/finger.1			man-util-man		.man
+./usr/share/man/man1/finger.1			man-util-man		finger,.man
 ./usr/share/man/man1/flock.1			man-util-man		.man
 ./usr/share/man/man1/fmt.1			man-util-man		.man
 ./usr/share/man/man1/fold.1			man-util-man		.man
@@ -6858,7 +6858,7 @@
 ./usr/share/man/man1/tabs.1			man-util-man		.man
 ./usr/share/man/man1/tac.1			man-util-man		.man
 ./usr/share/man/man1/tail.1			man-util-man		.man
-./usr/share/man/man1/talk.1			man-netutil-man		.man
+./usr/share/man/man1/talk.1			man-netutil-man		talk,.man
 ./usr/share/man/man1/tar.1			man-util-man		.man
 ./usr/share/man/man1/tcopy.1			man-util-man		.man
 ./usr/share/man/man1/tee.1			man-util-man		.man
@@ -8902,7 +8902,7 @@
 ./usr/share/man/man8/fasthalt.8			man-sysutil-man		.man
 ./usr/share/man/man8/fdiscard.8			man-sysutil-man		.man
 ./usr/share/man/man8/fdisk.8			man-sysutil-man		.man
-./usr/share/man/man8/fingerd.8			man-sysutil-man		.man
+./usr/share/man/man8/fingerd.8			man-sysutil-man		finger,.man
 ./usr/share/man/man8/fixmount.8			man-sysutil-man		.man
 ./usr/share/man/man8/flashctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/flush.8			man-postfix-man		postfix,.man
@@ -9222,7 +9222,7 @@
 ./usr/share/man/man8/nsec3hash.8		man-bind-man		.man
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-obsolete		obsolete
-./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
+./usr/share/man/man8/ntalkd.8			man-netutil-man		talk,.man
 ./usr/share/man/man8/ntp-keygen.8		man-ntp-man		ntp,.man
 ./usr/share/man/man8/ntpd.8			man-ntp-man		ntp,.man
 ./usr/share/man/man8/ntpdate.8			man-ntp-man		ntp,.man
@@ -9497,7 +9497,7 @@
 ./usr/share/man/man8/sysctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/sysinst.8			man-sysutil-man		.man
 ./usr/share/man/man8/syslogd.8			man-sysutil-man		.man
-./usr/share/man/man8/talkd.8			man-netutil-man		.man
+./usr/share/man/man8/talkd.8			man-netutil-man		talk,.man
 ./usr/share/man/man8/tbrconfig.8		man-router-man		.man
 ./usr/share/man/man8/tcpdchk.8			man-netutil-man		.man
 ./usr/share/man/man8/tcpdmatch.8		man-netutil-man		.man

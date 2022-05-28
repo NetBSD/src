@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.92 2022/05/28 11:17:35 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.93 2022/05/28 14:31:12 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -443,6 +443,15 @@ link programs in
 and
 .Pa /sbin
 statically.
+.DFLTy
+.
+.It Sy MKFINGER
+.YorN
+Indicates whether
+.Xr finger 1
+and
+.Xr fingerd 8
+are to be built and installed.
 .DFLTy
 .
 .It Sy MKGCC
@@ -902,6 +911,15 @@ Keeping non-temporary local symbols
 such as static function names is useful on using DTrace for
 userland libraries and getting a backtrace from a rump kernel
 loading shared libraries.
+.DFLTy
+.
+.It Sy MKTALK
+.YorN
+Indicates whether
+.Xr talk 1
+and
+.Xr ntalkd 8
+are to be built and installed.
 .DFLTy
 .
 .It Sy MKTCPDUMP
