@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 2022/05/27 19:59:56 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.60 2022/05/28 06:25:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.59 2022/05/27 19:59:56 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.60 2022/05/28 06:25:35 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -76,7 +76,8 @@ const char	pdir[4]		= "-\\|/";
 struct	spotstr	board[BAREA];		/* info for board */
 struct	combostr frames[FAREA];		/* storage for all frames */
 struct	combostr *sortframes[2];	/* sorted list of non-empty frames */
-u_char	overlap[FAREA * FAREA];		/* true if frame [a][b] overlap */
+u_char	overlap[FAREA * FAREA];		/* non-zero if frame [a][b] overlap;
+					 * see init_overlap */
 short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
 int	movelog[BSZ * BSZ];		/* log of all played moves */
 unsigned int nmoves;			/* number of played moves */
