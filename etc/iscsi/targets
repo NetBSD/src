@@ -1,4 +1,4 @@
-# $NetBSD: targets,v 1.2 2006/02/16 19:30:57 agc Exp $
+# $NetBSD: targets,v 1.3 2022/05/28 21:57:39 andvar Exp $
 #
 # Structure of this file:
 #
@@ -6,7 +6,7 @@
 #   it's the lowest common storage denominator
 #   at least one is needed
 # + a device is made up of one or more extents or other devices
-#   devices can be added in a hierachical manner, to enhance resilience
+#   devices can be added in a hierarchical manner, to enhance resilience
 # + in this example, no device definitions are necessary, as the target
 #   will just use a simple extent for persistent storage
 # + a target is made up of 1 or more devices

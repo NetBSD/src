@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.25 2021/11/02 22:02:42 abs Exp $
+#	$NetBSD: install.md,v 1.26 2022/05/28 21:57:39 andvar Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ md_mv_aout_libs()
 	if [ -d $root/emul/aout/. ]; then
 		echo "Using existing /emul/aout directory"
 	else
-		echo "Creating /emul/aout hierachy"
+		echo "Creating /emul/aout hierarchy"
 		mkdir -p $root/usr/aout || return 1
 
 		if [ ! -d $root/emul ]; then
