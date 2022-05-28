@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.167 2022/03/14 22:15:51 perseant Exp $	*/
+/*	$NetBSD: ata.c,v 1.168 2022/05/28 22:16:43 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.167 2022/03/14 22:15:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.168 2022/05/28 22:16:43 andvar Exp $");
 
 #include "opt_ata.h"
 
@@ -1924,7 +1924,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			}
 			/*
 			 * If controller's driver can't set its PIO mode,
-			 * get the highter one for the drive.
+			 * get the higher one for the drive.
 			 */
 			if (atac->atac_set_modes == NULL ||
 			    atac->atac_pio_cap >= i + 3) {

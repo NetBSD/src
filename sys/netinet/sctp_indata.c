@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.11 2022/05/24 20:50:20 andvar Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.12 2022/05/28 22:16:44 andvar Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.11 2022/05/24 20:50:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.12 2022/05/28 22:16:44 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2263,7 +2263,7 @@ sctp_sack_check(struct sctp_tcb *stcb, int ok_to_sack, int was_a_gap, int *abort
 	if (all_ones ||
 	    (asoc->cumulative_tsn == asoc->highest_tsn_inside_map && at >= 8)) {
 		/* The complete array was completed by a single FR */
-		/* higest becomes the cum-ack */
+		/* highest becomes the cum-ack */
 		int clr;
 		asoc->cumulative_tsn = asoc->highest_tsn_inside_map;
 		/* clear the array */
