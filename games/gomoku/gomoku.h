@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.43 2022/05/28 08:19:18 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.44 2022/05/28 08:32:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -218,6 +218,8 @@ struct	spotstr {
 struct game {
 	int moves[BSZ * BSZ];		/* log of all played moves */
 	unsigned int nmoves;		/* number of played moves */
+	int winning_spot;
+	int winning_dir;
 };
 
 extern	const char	letters[];
