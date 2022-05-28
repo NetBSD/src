@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.34 2021/10/15 22:32:29 andvar Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.35 2022/05/28 22:08:46 andvar Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.5 2015/02/22 14:12:48 maxv Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.34 2021/10/15 22:32:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.35 2022/05/28 22:08:46 andvar Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.34 2021/10/15 22:32:29 andvar Exp 
  * LOCKING:
  * Data in the entries are protected by the associated struct dquot's
  * dq_interlock (this means we can't read or change a quota entry without
- * grabing a dquot for it).
+ * grabbing a dquot for it).
  * The header and lists (including pointers in the data entries, and q2e_uid)
  * are protected by the global dqlock.
  * the locking order is dq_interlock -> dqlock
