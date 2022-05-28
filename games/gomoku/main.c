@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 2022/05/28 21:31:41 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.66 2022/05/28 23:05:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.65 2022/05/28 21:31:41 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.66 2022/05/28 23:05:45 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -290,7 +290,7 @@ again:
 	switch (input[color]) {
 	case INPUTF:
 		curmove = readinput(inputfp);
-		if (curmove != EOF)
+		if (curmove != END_OF_INPUT)
 			break;
 		set_input_sources(input, color);
 		plyr[BLACK] = input[BLACK] == USER ? user : prog;
@@ -409,7 +409,7 @@ readinput(FILE *fp)
 	while ((c = getc(fp)) != EOF && c != '\n' && pos < sizeof(buf) - 1)
 		buf[pos++] = c;
 	buf[pos] = '\0';
-	return c == EOF ? EOF : ctos(buf);
+	return c == EOF ? END_OF_INPUT : ctos(buf);
 }
 
 #ifdef DEBUG
