@@ -1,4 +1,4 @@
-/* $NetBSD: udf_core.c,v 1.12 2022/05/22 11:27:33 andvar Exp $ */
+/* $NetBSD: udf_core.c,v 1.13 2022/05/28 21:14:56 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2021, 2022 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_core.c,v 1.12 2022/05/22 11:27:33 andvar Exp $");
+__RCSID("$NetBSD: udf_core.c,v 1.13 2022/05/28 21:14:56 andvar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -3081,7 +3081,7 @@ udf_writeout_VAT(void)
 
 /* --------------------------------------------------------------------- */
 /*
- * mmc_discinfo and mmc_trackinfo readers modified from origional in udf main
+ * mmc_discinfo and mmc_trackinfo readers modified from original in udf main
  * code in sys/fs/udf/
  */
 

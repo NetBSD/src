@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.73 2022/05/28 10:36:22 andvar Exp $ */
+/* $NetBSD: trap.c,v 1.74 2022/05/28 21:14:56 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2022/05/28 10:36:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2022/05/28 21:14:56 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -569,7 +569,7 @@ illegal_instruction(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t 
 	ksi.ksi_trap  = 0;	/* XXX */
 	ksi.ksi_errno = 0; // info->si_errno;
 	ksi.ksi_code  = 0; // info->si_code;
-	ksi.ksi_addr  = (void *) md_get_pc(ucp); /* only relyable source */
+	ksi.ksi_addr  = (void *) md_get_pc(ucp); /* only reliable source */
 
 #if 0
 	p->p_emul->e_trapsignal(l, &ksi);
@@ -583,7 +583,7 @@ illegal_instruction(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t 
 /*
  * handle pass to userland signals
  *
- * arguments other than the origional siginfo_t are not used
+ * arguments other than the original siginfo_t are not used
  */
 static void
 pass_on(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
@@ -599,7 +599,7 @@ pass_on(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 	ksi.ksi_trap  = 0;	/* XXX ? */
 	ksi.ksi_errno = info->si_errno;
 	ksi.ksi_code  = info->si_code;
-	ksi.ksi_addr  = (void *) md_get_pc(ucp); /* only relyable source */
+	ksi.ksi_addr  = (void *) md_get_pc(ucp); /* only reliable source */
 
 	trapsignal(l, &ksi);
 	userret(l);
