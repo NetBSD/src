@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm.h,v 1.18 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.19 2022/05/28 21:14:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.18 2014/08/08 03:05:45 rtr Exp $
+ * $Id: rfcomm.h,v 1.19 2022/05/28 21:14:57 andvar Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -102,7 +102,7 @@
 #define RFCOMM_MSC_FC			0x02	/* Flow Control asserted */
 #define RFCOMM_MSC_RTC			0x04	/* Ready To Communicate */
 #define RFCOMM_MSC_RTR			0x08	/* Ready To Receive */
-#define RFCOMM_MSC_IC			0x40	/* Incomming Call (RING) */
+#define RFCOMM_MSC_IC			0x40	/* Incoming Call (RING) */
 #define RFCOMM_MSC_DV			0x80	/* Data Valid */
 
 /* RPN parameters - baud rate */

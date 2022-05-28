@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.16 2020/04/22 23:57:56 joerg Exp $	*/
+/*	$NetBSD: mopd.c,v 1.17 2022/05/28 21:14:57 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopd.c,v 1.16 2020/04/22 23:57:56 joerg Exp $");
+__RCSID("$NetBSD: mopd.c,v 1.17 2022/05/28 21:14:57 andvar Exp $");
 #endif
 
 /*
@@ -161,7 +161,7 @@ Usage(void)
 }
 
 /*
- * Process incomming packages.
+ * Process incoming packages.
  */
 void
 mopProcess(struct if_info *ii, u_char *pkt)

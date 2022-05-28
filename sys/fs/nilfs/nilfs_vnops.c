@@ -1,4 +1,4 @@
-/*	$NetBSD: nilfs_vnops.c,v 1.46 2022/04/10 09:50:45 andvar Exp $	*/
+/*	$NetBSD: nilfs_vnops.c,v 1.47 2022/05/28 21:14:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.46 2022/04/10 09:50:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.47 2022/05/28 21:14:56 andvar Exp $");
 #endif /* not lint */
 
 
@@ -328,7 +328,7 @@ nilfs_trivial_bmap(void *v)
 	struct vnode  *vp  = ap->a_vp;	/* our node	*/
 	struct vnode **vpp = ap->a_vpp;	/* return node	*/
 	daddr_t *bnp  = ap->a_bnp;	/* translated	*/
-	daddr_t  bn   = ap->a_bn;	/* origional	*/
+	daddr_t  bn   = ap->a_bn;	/* original	*/
 	int     *runp = ap->a_runp;
 	struct nilfs_node *node = VTOI(vp);
 	uint64_t *l2vmap;

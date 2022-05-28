@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.125 2022/05/03 20:52:32 andvar Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.126 2022/05/28 21:14:57 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.125 2022/05/03 20:52:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.126 2022/05/28 21:14:57 andvar Exp $");
 #endif /* not lint */
 
 
@@ -419,7 +419,7 @@ udf_write(void *v)
 /* --------------------------------------------------------------------- */
 
 /*
- * `Special' bmap functionality that translates all incomming requests to
+ * `Special' bmap functionality that translates all incoming requests to
  * translate to vop_strategy() calls with the same blocknumbers effectively
  * not translating at all.
  */
@@ -437,7 +437,7 @@ udf_trivial_bmap(void *v)
 	struct vnode  *vp  = ap->a_vp;	/* our node	*/
 	struct vnode **vpp = ap->a_vpp;	/* return node	*/
 	daddr_t *bnp  = ap->a_bnp;	/* translated	*/
-	daddr_t  bn   = ap->a_bn;	/* origional	*/
+	daddr_t  bn   = ap->a_bn;	/* original	*/
 	int     *runp = ap->a_runp;
 	struct udf_node *udf_node = VTOI(vp);
 	uint32_t lb_size;
@@ -1343,7 +1343,7 @@ udf_open(void *v)
 
 	/*
 	 * Files marked append-only must be opened for appending.
-	 * TODO: get chflags(2) flags from extened attribute.
+	 * TODO: get chflags(2) flags from extended attribute.
 	 */
 	flags = 0;
 	if ((flags & APPEND) && (ap->a_mode & (FWRITE | O_APPEND)) == FWRITE)
@@ -1422,7 +1422,7 @@ udf_check_possible(struct vnode *vp, struct vattr *vap, mode_t mode)
 	}
 
 	/* noone may write immutable files */
-	/* TODO: get chflags(2) flags from extened attribute. */
+	/* TODO: get chflags(2) flags from extended attribute. */
 	flags = 0;
 	if ((mode & VWRITE) && (flags & IMMUTABLE))
 		return EPERM;
@@ -2021,7 +2021,7 @@ udf_rmdir(void *v)
 		 * Bug alert: we need to remove '..' from the detaching
 		 * udf_node so further lookups of this are not possible. This
 		 * prevents a process in a deleted directory from going to its
-		 * deleted parent. Since `udf_node' is garanteed to be empty
+		 * deleted parent. Since `udf_node' is guaranteed to be empty
 		 * here, trunc it so no fids are there.
 		 */
 		dirhash_purge(&udf_node->dir_hash);

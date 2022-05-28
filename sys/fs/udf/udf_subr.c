@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.170 2022/05/15 20:37:51 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.171 2022/05/28 21:14:57 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.170 2022/05/15 20:37:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.171 2022/05/28 21:14:57 andvar Exp $");
 #endif /* not lint */
 
 
@@ -2161,7 +2161,7 @@ udf_update_logvolname(struct udf_mount *ump, char *logvol_id)
 	if (ump->implementation)
 		lvi = &ump->implementation->_impl_use.lv_info;
 
-	/* logvol's id might be specified as origional so use memmove here */
+	/* logvol's id might be specified as original so use memmove here */
 	memmove(lvd->logvol_id, logvol_id, 128);
 	if (fsd)
 		memmove(fsd->logvol_id, logvol_id, 128);

@@ -1,4 +1,4 @@
-/* $NetBSD: uscsi_subr.c,v 1.4 2022/05/22 11:27:37 andvar Exp $	*/
+/* $NetBSD: uscsi_subr.c,v 1.5 2022/05/28 21:14:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ uscsi_check_for_scsi(struct uscsi_dev *disc)
 #ifdef USCSI_LINUX_SCSI
 	/*
 	 * Support code for Linux SCSI code. It uses the ioctl() way of
-	 * communicating since this is more close to the origional NetBSD
+	 * communicating since this is more close to the original NetBSD
 	 * scsipi implementation.
 	 */
 #include <scsi/sg.h>
