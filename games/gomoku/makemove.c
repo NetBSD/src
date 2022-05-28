@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.32 2022/05/28 08:19:18 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.33 2022/05/28 08:32:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.32 2022/05/28 08:19:18 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.33 2022/05/28 08:32:55 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -154,8 +154,11 @@ makemove(int us, int mv)
 		}
 
 		/* check for game over */
-		if (n == 5)
+		if (n == 5) {
+		    game.winning_spot = (int)(fsp - board);
+		    game.winning_dir = r;
 		    return WIN;
+		}
 
 		/* compute new value & combo number for this frame & color */
 		fsp->s_fval[us != BLACK ? BLACK : WHITE][r].s = 0x600;

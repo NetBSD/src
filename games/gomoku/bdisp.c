@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.48 2022/05/28 08:19:18 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.49 2022/05/28 08:32:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.48 2022/05/28 08:19:18 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.49 2022/05/28 08:32:55 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -148,6 +148,19 @@ bdwho(void)
 	    bw, plyr[BLACK], ww, plyr[WHITE]);
 }
 
+static bool
+should_highlight(int s)
+{
+
+	if (game.nmoves > 0 && game.moves[game.nmoves - 1] == s)
+		return true;
+	if (game.winning_spot != 0)
+		for (int i = 0; i < 5; i++)
+			if (s == game.winning_spot + i * dd[game.winning_dir])
+				return true;
+	return false;
+}
+
 /*
  * Update the board display after a move.
  */
@@ -171,8 +184,7 @@ bdisp(void)
 				c = pcolor[sp->s_occ];
 
 			move(scr_y(j), scr_x(i));
-			if (game.nmoves > 0 &&
-			    game.moves[game.nmoves - 1] == PT(i, j)) {
+			if (should_highlight(PT(i, j))) {
 				attron(A_BOLD);
 				addch(c);
 				attroff(A_BOLD);
