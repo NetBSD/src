@@ -29,7 +29,7 @@ FILES
 
      Makefile       The main Makefile for NetBSD; should only be run for
                     native builds with an appropriately up-to-date version of
-                    NetBSD make(1).  Intended for expert use with knowlege of
+                    NetBSD make(1).  Intended for expert use with knowledge of
                     its shortcomings, it has been superseded by the build.sh
                     shell script as the recommended means for building NetBSD.
 
