@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.29 2022/04/08 10:17:55 andvar Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.30 2022/05/28 10:36:23 andvar Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.29 2022/04/08 10:17:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.30 2022/05/28 10:36:23 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -4697,7 +4697,7 @@ sctp_sendall_completes(void *ptr, u_int32_t val)
 	 * Kacheong suggests that the notify
 	 * be done at the send time.. so you would
 	 * push up a notification if any send failed.
-	 * Don't know if this is feasable since the
+	 * Don't know if this is feasible since the
 	 * only failures we have is "memory" related and
 	 * if you cannot get an mbuf to send the data
 	 * you surely can't get an mbuf to send up

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.30 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.31 2022/05/28 10:36:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.30 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.31 2022/05/28 10:36:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -875,7 +875,7 @@ ite8181_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
 		/*
-		 * curently not implemented...
+		 * currently not implemented...
 		 */
 		return (EINVAL);
 	}

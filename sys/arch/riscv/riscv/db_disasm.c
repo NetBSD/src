@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.8 2021/05/23 23:22:55 dholland Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9 2022/05/28 10:36:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_disasm.c,v 1.8 2021/05/23 23:22:55 dholland Exp $");
+__RCSID("$NetBSD: db_disasm.c,v 1.9 2022/05/28 10:36:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1203,7 +1203,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 		} else if (info->printflags & CSRIIMM) {
 			/*
 			 * CSR instruction with immediate; the CSR
-			 * number is in the immediate fiel and the RS1
+			 * number is in the immediate field and the RS1
 			 * field contains the immediate. Bleck.
 			 */
 			imm = INSN_IMM_I(insn);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_lcd.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: wzero3_lcd.c,v 1.8 2022/05/28 10:36:22 andvar Exp $	*/
 
 /*-
  * Copyright (C) 2008, 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.8 2022/05/28 10:36:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,7 +417,7 @@ wzero3lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp 
 
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
-		/* curently not implemented...  */
+		/* currently not implemented...  */
 		break;
 	}
 

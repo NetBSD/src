@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.101 2021/11/27 22:30:25 rillig Exp $ */
+/* $NetBSD: envstat.c,v 1.102 2022/05/28 10:36:24 andvar Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.101 2021/11/27 22:30:25 rillig Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.102 2022/05/28 10:36:24 andvar Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: envstat.c,v 1.101 2021/11/27 22:30:25 rillig Exp $");
 #include "prog_ops.h"
 
 #define ENVSYS_DFLAG	0x00000001	/* list registered devices */
-#define ENVSYS_FFLAG	0x00000002	/* show temp in farenheit */
+#define ENVSYS_FFLAG	0x00000002	/* show temp in fahrenheit */
 #define ENVSYS_LFLAG	0x00000004	/* list sensors */
 #define ENVSYS_XFLAG	0x00000008	/* externalize dictionary */
 #define ENVSYS_IFLAG 	0x00000010	/* skip invalid sensors */
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
 		case 'd':	/* show sensors of a specific device */
 			mydevname = optarg;
 			break;
-		case 'f':	/* display temperature in Farenheit */
+		case 'f':	/* display temperature in Fahrenheit */
 			flags |= ENVSYS_FFLAG;
 			break;
 		case 'I':	/* Skips invalid sensors */

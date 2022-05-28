@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.36 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.37 2022/05/28 10:36:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.36 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.37 2022/05/28 10:36:23 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -610,7 +610,7 @@ bivideo_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
 		/*
-		 * curently not implemented...
+		 * currently not implemented...
 		 */
 		return (EINVAL);
 	}

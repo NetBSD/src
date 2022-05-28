@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.28 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.29 2022/05/28 10:36:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.28 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.29 2022/05/28 10:36:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,7 +545,7 @@ sed1356_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
 		/*
-		 * curently not implemented...
+		 * currently not implemented...
 		 */
 		return EINVAL;
 	}
