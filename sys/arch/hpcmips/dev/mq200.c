@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.35 2022/05/28 10:36:22 andvar Exp $	*/
+/*	$NetBSD: mq200.c,v 1.36 2022/05/28 15:57:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.35 2022/05/28 10:36:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.36 2022/05/28 15:57:18 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -696,7 +696,7 @@ mq200_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
 		/*
-		 * currrently not implemented...
+		 * currently not implemented...
 		 */
 		return (EINVAL);
 	}
