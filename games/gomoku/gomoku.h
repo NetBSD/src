@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.45 2022/05/28 17:51:27 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.46 2022/05/28 23:05:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -66,6 +66,7 @@
 #define WIN	3
 #define TIE	4
 #define SAVE	5
+#define END_OF_INPUT 6
 #define PT(x, y)	((x) + (BSZ + 1) * (y))
 
 /*
