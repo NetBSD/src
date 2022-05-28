@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.67 2022/05/26 15:05:11 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.68 2022/05/28 10:36:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67 2022/05/26 15:05:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.68 2022/05/28 10:36:22 andvar Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -2367,7 +2367,7 @@ itecninit(struct consdev *cd)
 
 /*
  * itecnfinish() is called in ite_init() when the device is
- * being probed in the normal fasion, thus we can finish setting
+ * being probed in the normal fashion, thus we can finish setting
  * up this ite now that the system is more functional.
  */
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.39 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.40 2022/05/28 10:36:23 andvar Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.39 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.40 2022/05/28 10:36:23 andvar Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -606,7 +606,7 @@ ahd_pci_test_register_access(struct ahd_softc *ahd)
 	 * Next create a situation where write combining
 	 * or read prefetching could be initiated by the
 	 * CPU or host bridge.  Our device does not support
-	 * either, so look for data corruption and/or flaged
+	 * either, so look for data corruption and/or flagged
 	 * PCI errors.  First pause without causing another
 	 * chip reset.
 	 */

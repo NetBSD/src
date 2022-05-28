@@ -1,4 +1,4 @@
-/* $NetBSD: w100lcd.c,v 1.5 2021/08/07 16:19:08 thorpej Exp $ */
+/* $NetBSD: w100lcd.c,v 1.6 2022/05/28 10:36:23 andvar Exp $ */
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -39,7 +39,7 @@
  * LCD on/off switch and backlight brightness are done in lcdctl.c.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.5 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.6 2022/05/28 10:36:23 andvar Exp $");
 
 #include "lcdctl.h"
 
@@ -311,7 +311,7 @@ w100lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
-		/* curently not implemented...  */
+		/* currently not implemented...  */
 		break;
 
 	default:

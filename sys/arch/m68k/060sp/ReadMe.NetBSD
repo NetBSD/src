@@ -1,4 +1,4 @@
-$NetBSD: ReadMe.NetBSD,v 1.6 2008/05/03 23:57:21 martin Exp $
+$NetBSD: ReadMe.NetBSD,v 1.7 2022/05/28 10:36:22 andvar Exp $
 
 Copyright (c) 1996 The NetBSD Foundation, Inc.
 All rights reserved.
@@ -53,7 +53,7 @@ the translation time.
 through an RTE as in the example file
 
 Other changes are only in the method this was integrated into the
-Amiga vs. X68k port, which is machine dependend anyway.
+Amiga vs. X68k port, which is machine dependent anyway.
 
 Thanks for the initial effort!
 
@@ -73,7 +73,7 @@ These are:
 errata, changes, files, readme: by Motorola.
 
 
-I choose .S as the file suffix which is feeded to our assembler
+I choose .S as the file suffix which is fed to our assembler
 directly or indirectly.
 
 We use:		To create: 

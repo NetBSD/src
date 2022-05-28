@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.22 2021/05/29 16:49:57 riastradh Exp $	*/
+/*	$NetBSD: power.h,v 1.23 2022/05/28 10:36:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -139,7 +139,7 @@ struct pswitch_state {
  * envsys events are sent by the sysmon envsys framework when
  * a warning or critical condition happens in a sensor.
  *
- * We define the folowing types of envsys events:
+ * We define the following types of envsys events:
  *
  *	sensor temperature	To handle temperature sensors.
  *

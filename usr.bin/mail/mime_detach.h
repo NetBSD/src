@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_detach.h,v 1.2 2008/04/28 20:24:14 martin Exp $	*/
+/*	$NetBSD: mime_detach.h,v 1.3 2022/05/28 10:36:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define __MIME_DETACH_H__
 
 /*
- * The fundametal data structure shared by mime_decode.c and mime_detach.c.
+ * The fundamental data structure shared by mime_decode.c and mime_detach.c.
  */
 struct mime_info {
 	struct mime_info *mi_blink;

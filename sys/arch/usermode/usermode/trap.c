@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.72 2019/11/29 18:27:33 ad Exp $ */
+/* $NetBSD: trap.c,v 1.73 2022/05/28 10:36:22 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2019/11/29 18:27:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2022/05/28 10:36:22 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,7 +115,7 @@ setup_signal_handlers(void)
 	 * Set up the alternative signal stack. This prevents signals to be
 	 * pushed on the NetBSD/usermode userland's stack with all desastrous
 	 * effects. Especially ld.so and friends have such tiny stacks that
-	 * its not feasable.
+	 * its not feasible.
 	 */
 	sigstk.ss_sp    = sig_stack;
 	sigstk.ss_size  = SIGSTKSZ;

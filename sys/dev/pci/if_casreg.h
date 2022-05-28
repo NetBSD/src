@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casreg.h,v 1.5 2021/12/09 20:49:26 andvar Exp $ */
+/*	$NetBSD: if_casreg.h,v 1.6 2022/05/28 10:36:23 andvar Exp $ */
 /*	$OpenBSD: if_casreg.h,v 1.10 2008/05/31 22:49:03 kettenis Exp $	*/
 
 /*
@@ -254,7 +254,7 @@
 #define	CAS_RX_PAGE_SIZE_SZ	0x00000003	/* Page size */
 #define	CAS_RX_PAGE_SIZE_COUNT	0x00007800	/* MTU buffers per page */
 #define	CAS_RX_PAGE_SIZE_STRIDE	0x18000000	/* MTU buffer separation */
-#define	CAS_RX_PAGE_SIZE_FBOFF	0xc0000000	/* Firts byte offset */
+#define	CAS_RX_PAGE_SIZE_FBOFF	0xc0000000	/* First byte offset */
 
 #define	CAS_RX_PAGE_SIZE_COUNT_SHIFT	11
 #define	CAS_RX_PAGE_SIZE_STRIDE_SHIFT	27

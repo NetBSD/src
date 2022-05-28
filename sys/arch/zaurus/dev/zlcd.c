@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.20 2021/08/07 16:19:08 thorpej Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.21 2022/05/28 10:36:23 andvar Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.20 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.21 2022/05/28 10:36:23 andvar Exp $");
 
 #include "lcdctl.h"
 
@@ -324,7 +324,7 @@ lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
-		/* curently not implemented...  */
+		/* currently not implemented...  */
 		break;
 	}
 
