@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.39 2022/04/19 20:32:14 rillig Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.40 2022/05/28 22:16:43 andvar Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -90,7 +90,7 @@
  *           wcsrtombs
  *           wcsnrtombs
  *           wctomb
- *     These need to be keeped in the ctype encoding information structure,
+ *     These need to be kept in the ctype encoding information structure,
  *     pointed by "cei".
  *
  *   _ENCODING_INFO :
@@ -103,7 +103,7 @@
  *     It should be expanded to the name of the encoding state structure.
  *     e.g. For EUC encoding, this macro is expanded to _EUCState.
  *     Encoding state structure need to contain the context-dependent states,
- *     which are "unpacked-form" of mbstate_t type and keeped during sequent
+ *     which are "unpacked-form" of mbstate_t type and kept during sequent
  *     calls of mb/wc functions,
  *
  *   _ENCODING_IS_STATE_DEPENDENT :
