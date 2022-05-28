@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.h,v 1.9 2022/02/27 14:22:50 riastradh Exp $	*/
+/*	$NetBSD: acpi.h,v 1.10 2022/05/28 01:07:47 manu Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
-#endif
 
 #include <linux/types.h>
 #include <linux/uuid.h>
@@ -58,4 +57,5 @@ union acpi_object *acpi_evaluate_dsm_typed(acpi_handle, const guid_t *,
     uint64_t, uint64_t, union acpi_object *, acpi_object_type);
 bool acpi_check_dsm(acpi_handle, const guid_t *, uint64_t, uint64_t);
 
+#endif	/* NACPICA > 0 */
 #endif  /* _LINUX_ACPI_H_ */
