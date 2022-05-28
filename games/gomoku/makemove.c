@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.30 2022/05/28 07:58:35 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.31 2022/05/28 08:09:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.30 2022/05/28 07:58:35 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.31 2022/05/28 08:09:22 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -59,6 +59,33 @@ is_tie(void)
 			if (board[PT(x, y)].s_wval != 0)
 				return false;
 	return true;
+}
+
+static void
+sortframes_remove(struct combostr *cbp)
+{
+
+	if (cbp->c_next == NULL)
+		return;
+
+	if (sortframes[BLACK] == cbp)
+		sortframes[BLACK] = cbp->c_next;
+	if (sortframes[WHITE] == cbp)
+		sortframes[WHITE] = cbp->c_next;
+	cbp->c_next->c_prev = cbp->c_prev;
+	cbp->c_prev->c_next = cbp->c_next;
+}
+
+static int
+old_weight_value(const struct spotstr *sp, int r)
+{
+	union comboval cb;
+	int val = 0;
+	if ((cb = sp->s_fval[BLACK][r]).s <= 0x500)
+		val += weight[5 - cb.cv_force - cb.cv_win];
+	if ((cb = sp->s_fval[WHITE][r]).s <= 0x500)
+		val += weight[5 - cb.cv_force - cb.cv_win];
+	return val;
 }
 
 /*
@@ -91,32 +118,17 @@ makemove(int us, int mv)
 	for (int r = 4; --r >= 0; ) {		/* for each direction */
 	    int d = dd[r];
 	    struct spotstr *fsp = &board[mv];
-	    int bmask = BFLAG << r;
 
 	    for (int f = 5; --f >= 0; fsp -= d) {	/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    goto nextr;
-		if ((fsp->s_flags & bmask) != 0)
+		if ((fsp->s_flags & BFLAG << r) != 0)
 		    continue;
 
-		/* remove this frame from the sorted list of frames */
 		struct combostr *cbp = fsp->s_frame[r];
-		if (cbp->c_next != NULL) {
-			if (sortframes[BLACK] == cbp)
-			    sortframes[BLACK] = cbp->c_next;
-			if (sortframes[WHITE] == cbp)
-			    sortframes[WHITE] = cbp->c_next;
-			cbp->c_next->c_prev = cbp->c_prev;
-			cbp->c_prev->c_next = cbp->c_next;
-		}
+		sortframes_remove(cbp);
 
-		/* compute old weight value for this frame */
-		union comboval cb;
-		int val = 0;
-		if ((cb = fsp->s_fval[BLACK][r]).s <= 0x500)
-		    val += weight[5 - cb.cv_force - cb.cv_win];
-		if ((cb = fsp->s_fval[WHITE][r]).s <= 0x500)
-		    val += weight[5 - cb.cv_force - cb.cv_win];
+		int val = old_weight_value(fsp, r);
 
 		/* compute new combo value for this frame */
 		bool space = fsp->s_occ == EMPTY;
@@ -129,7 +141,7 @@ makemove(int us, int mv)
 			sp->s_wval -= val;
 		    else {
 			/* this frame is now blocked, adjust values */
-			fsp->s_flags |= bmask;
+			fsp->s_flags |= BFLAG << r;
 			fsp->s_fval[BLACK][r].s = 0x600;
 			fsp->s_fval[WHITE][r].s = 0x600;
 			while (--i >= 0) {
