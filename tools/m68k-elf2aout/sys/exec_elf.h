@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.3 2019/05/20 18:24:57 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.4 2022/05/28 22:00:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1234,7 +1234,7 @@ typedef struct {
 #define VER_NDX(x)		((x) & ~VER_NDX_HIDDEN)
 
 /*
- * GNU Extension hidding symbol
+ * GNU Extension hiding symbol
  */
 #define VERSYM_HIDDEN		0x8000
 #define VERSYM_VERSION		0x7fff
