@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.91 2022/05/27 09:25:08 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.92 2022/05/28 11:17:35 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 26, 2022
+.Dd May 27, 2022
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -684,6 +684,15 @@ Platform dependent.
 Indicates whether the NPF packet filter is to be built and installed.
 .DFLTy
 .
+.It Sy MKNTP
+.YorN
+Indicates whether
+.Xr ntpd 8
+and
+.Xr ntpdate 8
+are to be built and installed.
+.DFLTy
+.
 .It Sy MKOBJ
 .YorN
 Indicates whether object directories will be created when running
@@ -893,6 +902,13 @@ Keeping non-temporary local symbols
 such as static function names is useful on using DTrace for
 userland libraries and getting a backtrace from a rump kernel
 loading shared libraries.
+.DFLTy
+.
+.It Sy MKTCPDUMP
+.YorN
+Indicates whether
+.Xr tcpdump 8
+is to be built and installed.
 .DFLTy
 .
 .It Sy MKUNPRIVED

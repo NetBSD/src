@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1302 2022/05/27 07:28:21 nia Exp $
+# $NetBSD: mi,v 1.1303 2022/05/28 11:17:36 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1626,14 +1626,14 @@
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
 ./usr/sbin/nstest				base-obsolete		obsolete
-./usr/sbin/ntp-keygen				base-ntp-bin
-./usr/sbin/ntpd					base-ntp-bin
-./usr/sbin/ntpdate				base-ntp-bin
-./usr/sbin/ntpdc				base-ntp-bin
-./usr/sbin/ntpq					base-ntp-bin
-./usr/sbin/ntptime				base-ntp-bin
+./usr/sbin/ntp-keygen				base-ntp-bin		ntp
+./usr/sbin/ntpd					base-ntp-bin		ntp
+./usr/sbin/ntpdate				base-ntp-bin		ntp
+./usr/sbin/ntpdc				base-ntp-bin		ntp
+./usr/sbin/ntpq					base-ntp-bin		ntp
+./usr/sbin/ntptime				base-ntp-bin		ntp
 ./usr/sbin/ntptimeset				base-obsolete		obsolete
-./usr/sbin/ntptrace				base-ntp-bin
+./usr/sbin/ntptrace				base-ntp-bin		ntp
 ./usr/sbin/nvmmctl				base-sysutil-bin	nvmm
 ./usr/sbin/omshell				base-dhcpd-bin		dhcpd
 ./usr/sbin/opensnoop				base-debug-bin		dtrace
@@ -1747,7 +1747,7 @@
 ./usr/sbin/sliplogin				base-slip-bin
 ./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
-./usr/sbin/sntp					base-ntp-bin
+./usr/sbin/sntp					base-ntp-bin		ntp
 ./usr/sbin/spamdb				base-obsolete		obsolete
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
@@ -1770,7 +1770,7 @@
 ./usr/sbin/tcpdchk				base-netutil-bin
 ./usr/sbin/tcpdmatch				base-netutil-bin
 ./usr/sbin/tcpdrop				base-netutil-bin
-./usr/sbin/tcpdump				base-netutil-bin
+./usr/sbin/tcpdump				base-netutil-bin	tcpdump
 ./usr/sbin/tcsd					base-tpm-bin		tpm
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
