@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2022/05/28 17:51:27 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.63 2022/05/28 20:54:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.62 2022/05/28 17:51:27 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.63 2022/05/28 20:54:31 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -389,7 +389,7 @@ again:
 			int ch = get_key("YyNnQqSs");
 			if (ch == 'Y' || ch == 'y')
 				goto again;
-			if (ch == 'S') {
+			if (ch == 'S') {	/* TODO: add 's' */
 				save_game();
 				goto replay;
 			}
