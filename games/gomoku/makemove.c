@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.28 2022/05/28 05:44:41 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.29 2022/05/28 06:25:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.28 2022/05/28 05:44:41 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.29 2022/05/28 06:25:35 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -254,6 +254,30 @@ update_overlap_same_direction(const struct spotstr *sp1,
 }
 
 /*
+ * The last move was at 'osp', which is part of frame 'a'. There are 6 frames
+ * with direction 'rb' that cross frame 'a' in 'osp'. Since the spot 'osp'
+ * cannot be used as a double threat anymore, mark each of these crossing
+ * frames as non-overlapping with frame 'a'.
+ */
+static void
+update_overlap_different_direction(const struct spotstr *osp, int a, int rb)
+{
+
+	int db = dd[rb];
+	for (int i = 0; i < 6; i++) {
+		const struct spotstr *sp = osp - db * i;
+		if (sp->s_occ == BORDER)
+			break;
+		if ((sp->s_flags & BFLAG << rb) != 0)
+			continue;
+
+		int b = (int)(sp->s_frame[rb] - frames);
+		overlap[a * FAREA + b] = 0;
+		overlap[b * FAREA + a] = 0;
+	}
+}
+
+/*
  * fix up the overlap array according to the changed 'osp'.
  */
 static void
@@ -264,7 +288,7 @@ update_overlap(struct spotstr *osp)
 	    int d = dd[r];
 	    struct spotstr *sp1 = osp;
 
-	    /* for each frame that contains 'osp' */
+	    /* for each frame 'a' that contains the spot 'osp' */
 	    for (int f = 0; f < 6; f++, sp1 -= d) {
 		if (sp1->s_occ == BORDER)
 		    break;
@@ -279,8 +303,8 @@ update_overlap(struct spotstr *osp)
 		 * since the two frames can overlap at more than one point.
 		 */
 		int a = (int)(sp1->s_frame[r] - frames);
-		struct spotstr *sp2 = sp1 - d;
 
+		struct spotstr *sp2 = sp1 - d;
 		for (int i = f + 1; i < 6; i++, sp2 -= d) {
 		    if (sp2->s_occ == BORDER)
 			break;
@@ -291,19 +315,8 @@ update_overlap(struct spotstr *osp)
 		}
 
 		/* the other directions can only intersect at spot osp */
-		for (int r1 = r; --r1 >= 0; ) {
-		    int d1 = dd[r1];
-		    struct spotstr *sp = osp;
-		    for (int i = 6; --i >= 0; sp -= d1) { /* for each spot */
-			if (sp->s_occ == BORDER)
-			    break;
-			if ((sp->s_flags & BFLAG << r1) != 0)
-			    continue;
-			int b = (int)(sp->s_frame[r1] - frames);
-			overlap[a * FAREA + b] = 0;
-			overlap[b * FAREA + a] = 0;
-		    }
-		}
+		for (int rb = 0; rb < r; rb++)
+			update_overlap_different_direction(osp, a, rb);
 	    }
 	}
 }
