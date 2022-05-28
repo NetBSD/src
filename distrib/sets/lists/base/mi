@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1303 2022/05/28 11:17:36 nia Exp $
+# $NetBSD: mi,v 1.1304 2022/05/28 14:31:11 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -608,7 +608,7 @@
 ./usr/bin/file					base-util-bin
 ./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
-./usr/bin/finger				base-util-bin
+./usr/bin/finger				base-util-bin		finger
 ./usr/bin/flock					base-util-bin
 ./usr/bin/fmt					base-util-bin
 ./usr/bin/fold					base-util-bin
@@ -861,7 +861,7 @@
 ./usr/bin/tabs					base-util-bin
 ./usr/bin/tac					base-util-bin
 ./usr/bin/tail					base-util-bin
-./usr/bin/talk					base-netutil-bin
+./usr/bin/talk					base-netutil-bin	talk
 ./usr/bin/tar					base-util-bin
 ./usr/bin/tcopy					base-util-bin
 ./usr/bin/tee					base-util-bin
@@ -1281,7 +1281,7 @@
 ./usr/libexec/cpp0				base-obsolete		obsolete
 ./usr/libexec/digest-service			base-krb5-bin		kerberos
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
-./usr/libexec/fingerd				base-netutil-bin
+./usr/libexec/fingerd				base-netutil-bin	finger
 ./usr/libexec/ftp-proxy				base-obsolete		obsolete
 ./usr/libexec/ftpd				base-netutil-bin
 ./usr/libexec/getNAME				base-man-bin		!makemandb
@@ -1310,7 +1310,7 @@
 ./usr/libexec/makewhatis			base-man-bin		!makemandb
 ./usr/libexec/named				base-bind-bin
 ./usr/libexec/named-xfer			base-obsolete		obsolete
-./usr/libexec/ntalkd				base-netutil-bin
+./usr/libexec/ntalkd				base-netutil-bin	talk
 ./usr/libexec/pfspamd				base-obsolete		obsolete
 ./usr/libexec/pfspamd-setup			base-obsolete		obsolete
 ./usr/libexec/pfspamlogd			base-obsolete		obsolete

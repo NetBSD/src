@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.462 2022/05/28 12:36:56 nia Exp $
+#	$NetBSD: Makefile,v 1.463 2022/05/28 14:31:11 nia Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
