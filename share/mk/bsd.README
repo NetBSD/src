@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.435 2022/05/28 11:17:35 nia Exp $
+#	$NetBSD: bsd.README,v 1.436 2022/05/28 14:31:12 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -224,6 +224,9 @@ MKEXTSRC        If not "no", 'make build' also descends into either src/extsrc
 		to cross-build programs and libraries externally added by
 		users, and automatically enables creation of those sets.
 		Default: no
+
+MKFINGER	If "no", don't build finger(1) or fingerd(8).
+		Default: yes
 
 MKFIRMWARE      If not "no", install the /libdata/firmware directory,
 		which is necessary for several drivers: athn(4), bwfm(4),
@@ -522,6 +525,9 @@ MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
 		such as static function names is useful on using DTrace for
 		userland libraries and getting a backtrace from a rump kernel
 		loading shared libraries.
+		Default: yes
+
+MKTOUCH		If "no", don't build talk(1) or ntalkd(8).
 		Default: yes
 
 MKTCPDUMP	If "no" then don't build tcpdump(8).

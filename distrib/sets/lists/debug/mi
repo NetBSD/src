@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.382 2022/05/28 11:17:36 nia Exp $
+# $NetBSD: mi,v 1.383 2022/05/28 14:31:12 nia Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -561,7 +561,7 @@
 ./usr/libdata/debug/usr/bin/file.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fincore.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/find.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/finger.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/finger.debug	comp-util-debug		finger,debug
 ./usr/libdata/debug/usr/bin/flock.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fmt.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fold.debug		comp-util-debug		debug
@@ -826,7 +826,7 @@
 ./usr/libdata/debug/usr/bin/systat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tabs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tail.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/talk.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/bin/talk.debug		comp-netutil-debug	talk,debug
 ./usr/libdata/debug/usr/bin/tbl.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/tcopy.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tee.debug		comp-util-debug		debug
@@ -975,7 +975,7 @@
 ./usr/libdata/debug/usr/libexec/cxxcom.debug	comp-cxx-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/digest-service.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		obsolete
-./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	finger,debug
 ./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/ftpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		!makemandb,debug
@@ -1000,7 +1000,7 @@
 ./usr/libdata/debug/usr/libexec/mail.local.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/libexec/makekey.debug	comp-crypto-debug	debug
 ./usr/libdata/debug/usr/libexec/makewhatis.debug	comp-man-debug		!makemandb,debug
-./usr/libdata/debug/usr/libexec/ntalkd.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/libexec/ntalkd.debug	comp-netutil-debug	talk,debug
 ./usr/libdata/debug/usr/libexec/pcpp.debug	comp-c-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/postfix/anvil.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/bounce.debug	comp-postfix-debug	postfix,debug
