@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1743 2022/05/27 07:28:22 nia Exp $
+# $NetBSD: mi,v 1.1744 2022/05/28 11:17:36 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -543,7 +543,7 @@
 ./usr/share/man/cat1/sleep.0			man-util-catman		.cat
 ./usr/share/man/cat1/slogin.0			man-secsh-catman	.cat
 ./usr/share/man/cat1/smbutil.0			man-obsolete		obsolete
-./usr/share/man/cat1/sntp.0			man-ntp-catman		.cat
+./usr/share/man/cat1/sntp.0			man-ntp-catman		ntp,.cat
 ./usr/share/man/cat1/sockstat.0			man-util-catman		.cat
 ./usr/share/man/cat1/sort.0			man-util-catman		.cat
 ./usr/share/man/cat1/sortinfo.0			man-texinfo-catman	.cat
@@ -2277,8 +2277,8 @@
 ./usr/share/man/cat5/npf.conf.0			man-npf-catman		.cat,npf
 ./usr/share/man/cat5/nsd.conf.0			man-nsd-catman		.cat,nsd
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
-./usr/share/man/cat5/ntp.conf.0			man-ntp-catman		.cat
-./usr/share/man/cat5/ntp.keys.0			man-ntp-catman		.cat
+./usr/share/man/cat5/ntp.conf.0			man-ntp-catman		ntp,.cat
+./usr/share/man/cat5/ntp.keys.0			man-ntp-catman		ntp,.cat
 ./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman	.cat
 ./usr/share/man/cat5/pam.conf.0			man-sys-catman		pam,.cat
 ./usr/share/man/cat5/passwd.0			man-sys-catman		.cat
@@ -2937,13 +2937,13 @@
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
-./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		.cat
-./usr/share/man/cat8/ntpd.0			man-ntp-catman		.cat
-./usr/share/man/cat8/ntpdate.0			man-ntp-catman		.cat
-./usr/share/man/cat8/ntpdc.0			man-ntp-catman		.cat
-./usr/share/man/cat8/ntpq.0			man-ntp-catman		.cat
-./usr/share/man/cat8/ntptime.0			man-ntp-catman		.cat
-./usr/share/man/cat8/ntptrace.0			man-ntp-catman		.cat
+./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		ntp,.cat
+./usr/share/man/cat8/ntpd.0			man-ntp-catman		ntp,.cat
+./usr/share/man/cat8/ntpdate.0			man-ntp-catman		ntp,.cat
+./usr/share/man/cat8/ntpdc.0			man-ntp-catman		ntp,.cat
+./usr/share/man/cat8/ntpq.0			man-ntp-catman		ntp,.cat
+./usr/share/man/cat8/ntptime.0			man-ntp-catman		ntp,.cat
+./usr/share/man/cat8/ntptrace.0			man-ntp-catman		ntp,.cat
 ./usr/share/man/cat8/nvmectl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/nvmmctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ofctl.0			man-sysutil-catman	.cat
@@ -3216,7 +3216,7 @@
 ./usr/share/man/cat8/tcpdchk.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tcpdmatch.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/tcpdrop.0			man-netutil-catman	.cat
-./usr/share/man/cat8/tcpdump.0			man-netutil-catman	.cat
+./usr/share/man/cat8/tcpdump.0			man-netutil-catman	tcpdump,.cat
 ./usr/share/man/cat8/telnetd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tftp-proxy.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat8/tftpd.0			man-netutil-catman	.cat
@@ -3860,7 +3860,7 @@
 ./usr/share/man/html1/sleep.html		man-util-htmlman	html
 ./usr/share/man/html1/slogin.html		man-secsh-htmlman	html
 ./usr/share/man/html1/smbutil.html		man-obsolete		obsolete
-./usr/share/man/html1/sntp.html			man-ntp-htmlman		html
+./usr/share/man/html1/sntp.html			man-ntp-htmlman		ntp,html
 ./usr/share/man/html1/sockstat.html		man-util-htmlman	html
 ./usr/share/man/html1/sort.html			man-util-htmlman	html
 ./usr/share/man/html1/sortinfo.html		man-texinfo-htmlman	html
@@ -5446,8 +5446,8 @@
 ./usr/share/man/html5/npf.conf.html		man-npf-htmlman		html,npf
 ./usr/share/man/html5/nsd.conf.html		man-nsd-htmlman		html,nsd
 ./usr/share/man/html5/nsswitch.conf.html	man-net-htmlman		html
-./usr/share/man/html5/ntp.conf.html		man-ntp-htmlman		html
-./usr/share/man/html5/ntp.keys.html		man-ntp-htmlman		html
+./usr/share/man/html5/ntp.conf.html		man-ntp-htmlman		ntp,html
+./usr/share/man/html5/ntp.keys.html		man-ntp-htmlman		ntp,html
 ./usr/share/man/html5/openssl.cnf.html		man-crypto-htmlman	html
 ./usr/share/man/html5/pam.conf.html		man-sys-htmlman		pam,html
 ./usr/share/man/html5/passwd.conf.html		man-sys-htmlman		html
@@ -5968,13 +5968,13 @@
 ./usr/share/man/html8/nslookup.html		man-netutil-htmlman	html
 ./usr/share/man/html8/nsupdate.html		man-obsolete		obsolete
 ./usr/share/man/html8/ntalkd.html		man-netutil-htmlman	html
-./usr/share/man/html8/ntp-keygen.html		man-ntp-htmlman		html
-./usr/share/man/html8/ntpd.html			man-ntp-htmlman		html
-./usr/share/man/html8/ntpdate.html		man-ntp-htmlman		html
-./usr/share/man/html8/ntpdc.html		man-ntp-htmlman		html
-./usr/share/man/html8/ntpq.html			man-ntp-htmlman		html
-./usr/share/man/html8/ntptime.html		man-ntp-htmlman		html
-./usr/share/man/html8/ntptrace.html		man-ntp-htmlman		html
+./usr/share/man/html8/ntp-keygen.html		man-ntp-htmlman		ntp,html
+./usr/share/man/html8/ntpd.html			man-ntp-htmlman		ntp,html
+./usr/share/man/html8/ntpdate.html		man-ntp-htmlman		ntp,html
+./usr/share/man/html8/ntpdc.html		man-ntp-htmlman		ntp,html
+./usr/share/man/html8/ntpq.html			man-ntp-htmlman		ntp,html
+./usr/share/man/html8/ntptime.html		man-ntp-htmlman		ntp,html
+./usr/share/man/html8/ntptrace.html		man-ntp-htmlman		ntp,html
 ./usr/share/man/html8/nvmectl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/nvmmctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ofctl.html		man-sysutil-htmlman	html
@@ -6188,7 +6188,7 @@
 ./usr/share/man/html8/tcpdchk.html		man-netutil-htmlman	html
 ./usr/share/man/html8/tcpdmatch.html		man-netutil-htmlman	html
 ./usr/share/man/html8/tcpdrop.html		man-netutil-htmlman	html
-./usr/share/man/html8/tcpdump.html		man-netutil-htmlman	html
+./usr/share/man/html8/tcpdump.html		man-netutil-htmlman	tcpdump,html
 ./usr/share/man/html8/telnetd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/tftp-proxy.html		man-pf-htmlman		pf,html
 ./usr/share/man/html8/tftpd.html		man-netutil-htmlman	html
@@ -6829,7 +6829,7 @@
 ./usr/share/man/man1/sleep.1			man-util-man		.man
 ./usr/share/man/man1/slogin.1			man-secsh-man		.man
 ./usr/share/man/man1/smbutil.1			man-obsolete		obsolete
-./usr/share/man/man1/sntp.1			man-ntp-man		.man
+./usr/share/man/man1/sntp.1			man-ntp-man		ntp,.man
 ./usr/share/man/man1/sockstat.1			man-util-man		.man
 ./usr/share/man/man1/sort.1			man-util-man		.man
 ./usr/share/man/man1/sortinfo.1			man-texinfo-man		.man
@@ -8563,8 +8563,8 @@
 ./usr/share/man/man5/npf.conf.5			man-npf-man		.man,npf
 ./usr/share/man/man5/nsd.conf.5			man-nsd-man		.man,nsd
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
-./usr/share/man/man5/ntp.conf.5			man-ntp-man		.man
-./usr/share/man/man5/ntp.keys.5			man-ntp-man		.man
+./usr/share/man/man5/ntp.conf.5			man-ntp-man		ntp,.man
+./usr/share/man/man5/ntp.keys.5			man-ntp-man		ntp,.man
 ./usr/share/man/man5/openssl.cnf.5		man-crypto-man		.man
 ./usr/share/man/man5/pam.conf.5			man-sys-man		pam,.man
 ./usr/share/man/man5/passwd.5			man-sys-man		.man
@@ -9223,13 +9223,13 @@
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-obsolete		obsolete
 ./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
-./usr/share/man/man8/ntp-keygen.8		man-ntp-man		.man
-./usr/share/man/man8/ntpd.8			man-ntp-man		.man
-./usr/share/man/man8/ntpdate.8			man-ntp-man		.man
-./usr/share/man/man8/ntpdc.8			man-ntp-man		.man
-./usr/share/man/man8/ntpq.8			man-ntp-man		.man
-./usr/share/man/man8/ntptime.8			man-ntp-man		.man
-./usr/share/man/man8/ntptrace.8			man-ntp-man		.man
+./usr/share/man/man8/ntp-keygen.8		man-ntp-man		ntp,.man
+./usr/share/man/man8/ntpd.8			man-ntp-man		ntp,.man
+./usr/share/man/man8/ntpdate.8			man-ntp-man		ntp,.man
+./usr/share/man/man8/ntpdc.8			man-ntp-man		ntp,.man
+./usr/share/man/man8/ntpq.8			man-ntp-man		ntp,.man
+./usr/share/man/man8/ntptime.8			man-ntp-man		ntp,.man
+./usr/share/man/man8/ntptrace.8			man-ntp-man		ntp,.man
 ./usr/share/man/man8/nvmectl.8			man-sysutil-man		.man
 ./usr/share/man/man8/nvmmctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/ofctl.8			man-sysutil-man		.man
@@ -9502,7 +9502,7 @@
 ./usr/share/man/man8/tcpdchk.8			man-netutil-man		.man
 ./usr/share/man/man8/tcpdmatch.8		man-netutil-man		.man
 ./usr/share/man/man8/tcpdrop.8			man-netutil-man		.man
-./usr/share/man/man8/tcpdump.8			man-netutil-man		.man
+./usr/share/man/man8/tcpdump.8			man-netutil-man		tcpdump,.man
 ./usr/share/man/man8/telnetd.8			man-netutil-man		.man
 ./usr/share/man/man8/tftp-proxy.8		man-pf-man		pf,.man
 ./usr/share/man/man8/tftpd.8			man-netutil-man		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.267 2022/05/25 21:25:46 nia Exp $
+# $NetBSD: mi,v 1.268 2022/05/28 11:17:36 nia Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -111,7 +111,7 @@
 ./etc/networks					etc-net-etc
 ./etc/newsyslog.conf				etc-sysutil-etc
 ./etc/nsswitch.conf				etc-net-etc
-./etc/ntp.conf					etc-ntp-etc
+./etc/ntp.conf					etc-ntp-etc		ntp
 ./etc/obsolete/base				etc-obsolete		obsolete
 ./etc/obsolete/comp				etc-obsolete		obsolete
 ./etc/obsolete/etc				etc-obsolete		obsolete
@@ -274,8 +274,8 @@
 ./etc/rc.d/npf_boot				etc-npf-rc
 ./etc/rc.d/npfd					etc-npf-rc
 ./etc/rc.d/nsd					etc-nsd-rc		nsd
-./etc/rc.d/ntpd					etc-ntp-rc
-./etc/rc.d/ntpdate				etc-ntp-rc
+./etc/rc.d/ntpd					etc-ntp-rc		ntp
+./etc/rc.d/ntpdate				etc-ntp-rc		ntp
 ./etc/rc.d/perusertmp				etc-sys-rc
 ./etc/rc.d/pf					etc-net-rc
 ./etc/rc.d/pf_boot				etc-net-rc
