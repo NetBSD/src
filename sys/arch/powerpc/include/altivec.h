@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.18 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: altivec.h,v 1.19 2022/05/28 22:16:43 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef	_POWERPC_ALTIVEC_H_
 #define	_POWERPC_ALTIVEC_H_
 
-#define	VSCR_SA		0x00000001	/* Saturation happended (sticky) */
+#define	VSCR_SA		0x00000001	/* Saturation happened (sticky) */
 #define	VSCR_NJ		0x00010000	/* Non Java-IEEE-C9X FP mode */
 
 #ifdef _KERNEL

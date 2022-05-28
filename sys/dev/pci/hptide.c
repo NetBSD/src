@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.34 2013/10/07 19:51:55 jakllsch Exp $	*/
+/*	$NetBSD: hptide.c,v 1.35 2022/05/28 22:16:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.34 2013/10/07 19:51:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.35 2022/05/28 22:16:44 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ hpt_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372A ||
 	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374) {
 		/*
-		 * HPT370_REV and highter has a bit to disable interrupts,
+		 * HPT370_REV and higher has a bit to disable interrupts,
 		 * make sure to clear it
 		 */
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, HPT_CSEL,

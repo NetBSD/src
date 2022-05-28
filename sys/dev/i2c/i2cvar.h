@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.24 2021/04/16 07:02:09 skrll Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.25 2022/05/28 22:16:43 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -188,7 +188,7 @@ const struct device_compatible_entry *
 
 /*
  * Constants to indicate the quality of a match made by a driver's
- * match routine, from lowest to higest:
+ * match routine, from lowest to highest:
  *
  *	-- Address only; no other checks were made.
  *

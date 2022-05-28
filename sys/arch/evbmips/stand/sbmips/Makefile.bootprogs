@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.5 2021/03/15 18:13:54 christos Exp $
+# $NetBSD: Makefile.bootprogs,v 1.6 2022/05/28 22:16:43 andvar Exp $
 
 NOSSP=yes
 NOPIE=yes
@@ -73,7 +73,7 @@ UNIFIED_MAX_TOTAL!=	expr ${REGION1_SIZE}
 UNIFIED_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
 
 #	two-stage boot loaders must share region 1.  The first stage
-#	loads into the lowest portion, and uses the higest portion
+#	loads into the lowest portion, and uses the highest portion
 #	for its heap.  The second stage loads in between the primary image
 #	and the heap, and can reuse the memory after it (i.e. the primary's
 #	heap) for its own heap.
