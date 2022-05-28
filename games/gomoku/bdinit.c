@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.25 2022/05/28 17:51:27 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.26 2022/05/28 18:55:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.25 2022/05/28 17:51:27 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.26 2022/05/28 18:55:16 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -160,6 +160,52 @@ init_board(void)
 	init_overlap();
 }
 
+/*-
+ * ra	direction of frame A
+ * ia	index of the spot in frame A (0 to 5)
+ * rb	direction of frame B
+ * ib	index of the spot in frame B (0 to 5)
+ */
+static u_char
+adjust_overlap(u_char ov, int ra, int ia, int rb, int ib, int mask)
+{
+	ov |= (ib == 5) ? mask & 0xA : mask;
+	if (rb != ra)
+		return ov;
+
+	/* compute the multiple spot overlap values */
+	switch (ia) {
+	case 0:
+		if (ib == 4)
+			ov |= 0xA0;
+		else if (ib != 5)
+			ov |= 0xF0;
+		break;
+	case 1:
+		if (ib == 5)
+			ov |= 0xA0;
+		else
+			ov |= 0xF0;
+		break;
+	case 4:
+		if (ib == 0)
+			ov |= 0xC0;
+		else
+			ov |= 0xF0;
+		break;
+	case 5:
+		if (ib == 1)
+			ov |= 0xC0;
+		else if (ib != 0)
+			ov |= 0xF0;
+		break;
+	default:
+		ov |= 0xF0;
+	}
+
+	return ov;
+}
+
 /*
  * Initialize the overlap array.
  * Each entry in the array is a bit mask with eight bits corresponding
@@ -183,69 +229,49 @@ init_overlap(void)
 
 	memset(overlap, 0, sizeof(overlap));
 	memset(intersect, 0, sizeof(intersect));
-	u_char *op = &overlap[FAREA * FAREA];
-	short *ip = &intersect[FAREA * FAREA];
 
-	for (unsigned fi = FAREA; fi-- > 0; ) {	/* each frame */
-	    struct combostr *cbp = &frames[fi];
-	    op -= FAREA;
-	    ip -= FAREA;
-	    int vertex = cbp->c_vertex;
-	    struct spotstr *sp1 = &board[vertex];
-	    int d1 = dd[cbp->c_dir];
+	/*-
+	 * Variables for frames A and B:
+	 *
+	 * fi	index of the frame in the global 'frames'
+	 * r	direction: 0 = right, 1 = down right, 2 = down, 3 = down left
+	 * d	direction delta, difference between adjacent spot indexes
+	 * si	index of the spot in the frame, 0 to 5
+	 * sp	data of the spot at index i
+	 */
+
+	for (unsigned fia = FAREA; fia-- > 0; ) {
+	    struct combostr *fa = &frames[fia];
+	    int vertex = fa->c_vertex;
+	    struct spotstr *spa = &board[vertex];
+	    u_char ra = fa->c_dir;
+	    int da = dd[ra];
+
 	    /*
-	     * s = 5 if closed, 6 if open.
-	     * At this point black & white are the same.
+	     * len = 5 if closed, 6 if open.
+	     * At this point, Black and White have the same values.
 	     */
-	    int s = 5 + sp1->s_fval[BLACK][cbp->c_dir].cv_win;
-	    /* for each spot in frame A */
-	    for (int i = 0; i < s; i++, sp1 += d1, vertex += d1) {
+	    int len = 5 + spa->s_fval[BLACK][ra].cv_win;
+
+	    for (int sia = 0; sia < len; sia++, spa += da, vertex += da) {
 		/* the sixth spot in frame A only overlaps if it is open */
-		int mask = (i == 5) ? 0xC : 0xF;
-		/* for each direction */
-		for (int r = 4; --r >= 0; ) {
-		    struct spotstr *sp2 = sp1;
-		    int d2 = dd[r];
-		    /* for each frame that intersects at spot sp1 */
-		    for (int f = 0; f < 6; f++, sp2 -= d2) {
-			if (sp2->s_occ == BORDER)
+		int mask = (sia == 5) ? 0xC : 0xF;
+
+		for (int rb = 4; --rb >= 0; ) {
+		    struct spotstr *spb = spa;
+		    int db = dd[rb];
+
+		    /* for each frame that intersects at spot spa */
+		    for (int sib = 0; sib < 6; sib++, spb -= db) {
+			if (spb->s_occ == BORDER)
 			    break;
-			if ((sp2->s_flags & BFLAG << r) != 0)
+			if ((spb->s_flags & BFLAG << rb) != 0)
 			    continue;
-			int n = (int)(sp2->s_frame[r] - frames);
-			ip[n] = (short)vertex;
-			op[n] |= (f == 5) ? mask & 0xA : mask;
-			if (r == cbp->c_dir) {
-			    /* compute the multiple spot overlap values */
-			    switch (i) {
-			    case 0:	/* sp1 is the first spot in A */
-				if (f == 4)
-				    op[n] |= 0xA0;
-				else if (f != 5)
-				    op[n] |= 0xF0;
-				break;
-			    case 1:	/* sp1 is the second spot in A */
-				if (f == 5)
-				    op[n] |= 0xA0;
-				else
-				    op[n] |= 0xF0;
-				break;
-			    case 4:	/* sp1 is the penultimate spot in A */
-				if (f == 0)
-				    op[n] |= 0xC0;
-				else
-				    op[n] |= 0xF0;
-				break;
-			    case 5:	/* sp1 is the last spot in A */
-				if (f == 1)
-				    op[n] |= 0xC0;
-				else if (f != 0)
-				    op[n] |= 0xF0;
-				break;
-			    default:
-				op[n] |= 0xF0;
-			    }
-			}
+
+			int fib = (int)(spb->s_frame[rb] - frames);
+			intersect[fia * FAREA + fib] = (short)vertex;
+			u_char *op = &overlap[fia * FAREA + fib];
+			*op = adjust_overlap(*op, ra, sia, rb, sib, mask);
 		    }
 		}
 	    }
