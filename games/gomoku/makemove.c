@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.25 2022/05/27 23:29:15 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.26 2022/05/28 04:52:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.25 2022/05/27 23:29:15 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.26 2022/05/28 04:52:23 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -217,7 +217,6 @@ static void
 update_overlap(struct spotstr *osp)
 {
 
-	struct spotstr *esp = NULL;
 	for (int r = 4; --r >= 0; ) {		/* for each direction */
 	    int d = dd[r];
 	    struct spotstr *sp1 = osp;
@@ -251,12 +250,14 @@ update_overlap(struct spotstr *osp)
 		     */
 		    int n = 0;
 		    struct spotstr *sp = sp1;
+		    struct spotstr *esp = NULL;
 		    for (int b = i - f; b < 5; b++, sp += d) {
 			if (sp->s_occ == EMPTY) {
 			    esp = sp;	/* save the intersection point */
 			    n++;
 			}
 		    }
+
 		    int b = (int)(sp2->s_frame[r] - frames);
 		    if (n == 0) {
 			if (sp->s_occ == EMPTY) {
