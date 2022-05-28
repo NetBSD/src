@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_bios.c,v 1.11 2022/02/28 17:15:29 riastradh Exp $	*/
+/*	$NetBSD: radeon_bios.c,v 1.12 2022/05/28 01:07:47 manu Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.11 2022/02/28 17:15:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.12 2022/05/28 01:07:47 manu Exp $");
 
 #include <linux/acpi.h>
 #include <linux/pci.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.11 2022/02/28 17:15:29 riastradh E
 #include "radeon.h"
 #include "radeon_reg.h"
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) && NACPICA > 0
 #include <dev/acpi/acpireg.h>
 #define	_COMPONENT	ACPI_DISPLAY_COMPONENT
 ACPI_MODULE_NAME("radeon_acpi")
