@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.434 2022/05/27 07:28:21 nia Exp $
+#	$NetBSD: bsd.README,v 1.435 2022/05/28 11:17:35 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -401,6 +401,9 @@ MKNSD		If "no", don't build or install the "nsd" DNS authoritative
 		server.
 		Default: no
 
+MKNTP		If "no", don't build or install ntpd(8) or ntpdate(8).
+		Default: yes
+
 MKOBJ		If "no", don't enable the rule which creates objdirs,
 		and also acts as "MKOBJDIRS=no".
 		Default: yes
@@ -519,6 +522,9 @@ MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
 		such as static function names is useful on using DTrace for
 		userland libraries and getting a backtrace from a rump kernel
 		loading shared libraries.
+		Default: yes
+
+MKTCPDUMP	If "no" then don't build tcpdump(8).
 		Default: yes
 
 MKTEGRAFIRMWARE	If "no", install the /libdata/firmware/nvidia directory,

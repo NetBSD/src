@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.381 2022/05/27 07:28:22 nia Exp $
+# $NetBSD: mi,v 1.382 2022/05/28 11:17:36 nia Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1216,12 +1216,12 @@
 ./usr/libdata/debug/usr/sbin/nsd-control.debug		comp-nsd-debug	nsd
 ./usr/libdata/debug/usr/sbin/nsd.debug		comp-nsd-debug		nsd
 ./usr/libdata/debug/usr/sbin/nsec3hash.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		debug
-./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		debug
-./usr/libdata/debug/usr/sbin/ntpdate.debug	comp-ntp-debug		debug
-./usr/libdata/debug/usr/sbin/ntpdc.debug	comp-ntp-debug		debug
-./usr/libdata/debug/usr/sbin/ntpq.debug		comp-ntp-debug		debug
-./usr/libdata/debug/usr/sbin/ntptime.debug	comp-ntp-debug		debug
+./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		ntp,debug
+./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		ntp,debug
+./usr/libdata/debug/usr/sbin/ntpdate.debug	comp-ntp-debug		ntp,debug
+./usr/libdata/debug/usr/sbin/ntpdc.debug	comp-ntp-debug		ntp,debug
+./usr/libdata/debug/usr/sbin/ntpq.debug		comp-ntp-debug		ntp,debug
+./usr/libdata/debug/usr/sbin/ntptime.debug	comp-ntp-debug		ntp,debug
 ./usr/libdata/debug/usr/sbin/nvmmctl.debug	comp-sysutil-debug	debug,nvmm
 ./usr/libdata/debug/usr/sbin/omshell.debug	comp-dhcpd-debug	debug,dhcpd
 ./usr/libdata/debug/usr/sbin/pac.debug		comp-sysutil-debug	debug
@@ -1315,7 +1315,7 @@
 ./usr/libdata/debug/usr/sbin/setencstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/setobjstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sliplogin.debug	comp-slip-debug		debug
-./usr/libdata/debug/usr/sbin/sntp.debug		comp-ntp-debug		debug
+./usr/libdata/debug/usr/sbin/sntp.debug		comp-ntp-debug		ntp,debug
 ./usr/libdata/debug/usr/sbin/spray.debug	comp-rpcutil-debug	debug
 ./usr/libdata/debug/usr/sbin/srtconfig.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sshd.debug		comp-secsh-debug	debug
@@ -1331,7 +1331,7 @@
 ./usr/libdata/debug/usr/sbin/tcpdchk.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdmatch.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdrop.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/tcpdump.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/tcpdump.debug	comp-netutil-debug	tcpdump,debug
 ./usr/libdata/debug/usr/sbin/tcsd.debug		comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/sbin/timed.debug	comp-timed-debug	debug
 ./usr/libdata/debug/usr/sbin/timedc.debug	comp-timed-debug	debug

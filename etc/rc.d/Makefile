@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.113 2022/05/25 21:25:47 nia Exp $
+# $NetBSD: Makefile,v 1.114 2022/05/28 11:17:35 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -31,7 +31,7 @@ CONFIGFILES=\
 		makemandb mdnsd mixerctl modules mopd motd mountall \
 		mountcritlocal mountcritremote mountd moused \
 		named ndbootd network newsyslog nfsd nfslocking npf npf_boot \
-		npfd ntpd ntpdate \
+		npfd \
 		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
@@ -46,6 +46,10 @@ FILESMODE=	${BINMODE}
 
 .if ${MKMROUTING} != "no"
 CONFIGFILES+=	mrouted
+.endif
+
+.if ${MKNTP} != "no"
+CONFIGFILES+=	ntpd ntpdate
 .endif
 
 .if ${MKYP} != "no"
