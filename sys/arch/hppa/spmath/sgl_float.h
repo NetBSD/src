@@ -1,4 +1,4 @@
-/*	$NetBSD: sgl_float.h,v 1.3 2009/01/27 11:49:54 skrll Exp $	*/
+/*	$NetBSD: sgl_float.h,v 1.4 2022/05/28 22:08:47 andvar Exp $	*/
 
 /*	$OpenBSD: sgl_float.h,v 1.10 2004/01/02 14:39:01 mickey Exp $	*/
 
@@ -46,7 +46,7 @@
  * Single precision functions *
  ******************************/
 
-/* 32-bit word grabing functions */
+/* 32-bit word grabbing functions */
 #define Sgl_firstword(value) Sall(value)
 #define Sgl_secondword(value) dummy_location
 #define Sgl_thirdword(value) dummy_location

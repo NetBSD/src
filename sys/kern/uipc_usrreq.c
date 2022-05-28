@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.202 2022/04/09 23:52:23 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.203 2022/05/28 22:08:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.202 2022/04/09 23:52:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.203 2022/05/28 22:08:46 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -851,7 +851,7 @@ unp_accept(struct socket *so, struct sockaddr *nam)
 	 * this should be harmless, except that this makes
 	 * solocked2() and solocked() unreliable.
 	 * Another problem is that unp_setaddr() expects the
-	 * the socket locked. Grabing sotounpcb(so2)->unp_streamlock
+	 * the socket locked. Grabbing sotounpcb(so2)->unp_streamlock
 	 * fixes both issues.
 	 */
 	mutex_enter(sotounpcb(so2)->unp_streamlock);

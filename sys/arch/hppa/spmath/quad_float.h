@@ -1,4 +1,4 @@
-/*	$NetBSD: quad_float.h,v 1.2 2008/04/06 08:03:36 skrll Exp $	*/
+/*	$NetBSD: quad_float.h,v 1.3 2022/05/28 22:08:47 andvar Exp $	*/
 
 /*	$OpenBSD: quad_float.h,v 1.5 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -45,7 +45,7 @@
  *  Quad precision functions  *
  ******************************/
 
-/* 32-bit word grabing functions */
+/* 32-bit word grabbing functions */
 #define Quad_firstword(value) Qallp1(value)
 #define Quad_secondword(value) Qallp2(value)
 #define Quad_thirdword(value)  Qallp3(value)

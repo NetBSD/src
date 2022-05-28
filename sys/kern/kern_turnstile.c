@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.42 2022/04/09 23:45:36 riastradh Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.43 2022/05/28 22:08:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.42 2022/04/09 23:45:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.43 2022/05/28 22:08:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -259,7 +259,7 @@ turnstile_lendpri(lwp_t *cur)
 			 * Restart from curlwp.
 			 *
 			 * Note that there may be a livelock here:
-			 * the owner may try grabing cur's lock (which is the
+			 * the owner may try grabbing cur's lock (which is the
 			 * tc lock) while we're trying to grab the owner's lock.
 			 */
 			lwp_unlock(l);

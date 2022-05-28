@@ -1,4 +1,4 @@
-/*	$NetBSD: dbl_float.h,v 1.3 2009/01/27 11:49:54 skrll Exp $	*/
+/*	$NetBSD: dbl_float.h,v 1.4 2022/05/28 22:08:47 andvar Exp $	*/
 
 /*	$OpenBSD: dbl_float.h,v 1.10 2004/01/02 14:39:01 mickey Exp $	*/
 
@@ -46,7 +46,7 @@
  * Declare double precision functions *
  **************************************/
 
-/* 32-bit word grabing functions */
+/* 32-bit word grabbing functions */
 #define Dbl_firstword(value) Dallp1(value)
 #define Dbl_secondword(value) Dallp2(value)
 #define Dbl_thirdword(value) dummy_location
