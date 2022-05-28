@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.29 2022/05/28 06:25:35 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.30 2022/05/28 07:58:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.29 2022/05/28 06:25:35 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.30 2022/05/28 07:58:35 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -49,6 +49,17 @@ const int     dd[4] = {
 static const int weight[5] = { 0, 1, 7, 22, 100 };
 
 static void update_overlap(struct spotstr *);
+
+static bool
+is_tie(void)
+{
+
+	for (int y = 1; y <= BSZ; y++)
+		for (int x = 1; x <= BSZ; x++)
+			if (board[PT(x, y)].s_wval != 0)
+				return false;
+	return true;
+}
 
 /*
  * Return values:
@@ -199,11 +210,7 @@ makemove(int us, int mv)
 
 	update_overlap(&board[mv]);
 
-	/*
-	 * TODO: Declare a tie as soon as all frames are blocked. This is
-	 *  usually much earlier than when the whole board is filled.
-	 */
-	if (nmoves == BSZ * BSZ)
+	if (is_tie())
 		return TIE;
 
 	return MOVEOK;
