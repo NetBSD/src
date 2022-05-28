@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.47 2022/05/28 08:19:18 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.48 2022/05/28 21:48:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.47 2022/05/28 08:19:18 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.48 2022/05/28 21:48:21 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -46,9 +46,8 @@ __RCSID("$NetBSD: pickmove.c,v 1.47 2022/05/28 08:19:18 rillig Exp $");
 #define BITS_PER_INT	(sizeof(int) * CHAR_BIT)
 #define MAPSZ		(BAREA / BITS_PER_INT)
 
-#define BIT_SET(a, b)	((a)[(b)/BITS_PER_INT] |= (1 << ((b) % BITS_PER_INT)))
-#define BIT_CLR(a, b)	((a)[(b)/BITS_PER_INT] &= ~(1 << ((b) % BITS_PER_INT)))
-#define BIT_TEST(a, b)	(((a)[(b)/BITS_PER_INT] & (1 << ((b) % BITS_PER_INT))) != 0)
+#define BIT_SET(a, b)	((a)[(unsigned int)(b)/BITS_PER_INT] |= (1 << ((unsigned int)(b) % BITS_PER_INT)))
+#define BIT_TEST(a, b)	(((a)[(unsigned int)(b)/BITS_PER_INT] & (1 << ((unsigned int)(b) % BITS_PER_INT))) != 0)
 
 /*
  * This structure is used to store overlap information between frames.
