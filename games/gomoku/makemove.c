@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.26 2022/05/28 04:52:23 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.27 2022/05/28 05:14:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.26 2022/05/28 04:52:23 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.27 2022/05/28 05:14:34 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -220,12 +220,11 @@ update_overlap(struct spotstr *osp)
 	for (int r = 4; --r >= 0; ) {		/* for each direction */
 	    int d = dd[r];
 	    struct spotstr *sp1 = osp;
-	    int bmask = BFLAG << r;
 
 	    for (int f = 0; f < 6; f++, sp1 -= d) {	/* for each frame */
 		if (sp1->s_occ == BORDER)
 		    break;
-		if ((sp1->s_flags & bmask) != 0)
+		if ((sp1->s_flags & BFLAG << r) != 0)
 		    continue;
 		/*
 		 * Update all other frames that intersect the current one
@@ -235,13 +234,12 @@ update_overlap(struct spotstr *osp)
 		 * since the two frames can overlap at more than one point.
 		 */
 		int a = (int)(sp1->s_frame[r] - frames);
-		u_char *str = &overlap[a * FAREA];
 		struct spotstr *sp2 = sp1 - d;
 
 		for (int i = f + 1; i < 6; i++, sp2 -= d) {
 		    if (sp2->s_occ == BORDER)
 			break;
-		    if ((sp2->s_flags & bmask) != 0)
+		    if ((sp2->s_flags & BFLAG << r) != 0)
 			continue;
 
 		    /*
@@ -261,20 +259,20 @@ update_overlap(struct spotstr *osp)
 		    int b = (int)(sp2->s_frame[r] - frames);
 		    if (n == 0) {
 			if (sp->s_occ == EMPTY) {
-			    str[b] &= 0xA;
+			    overlap[a * FAREA + b] &= 0xA;
 			    overlap[b * FAREA + a] &= 0xC;
 			    intersect[a * FAREA + b] = (short)(sp - board);
 			    intersect[b * FAREA + a] = (short)(sp - board);
 			} else {
-			    str[b] = 0;
+			    overlap[a * FAREA + b] = 0;
 			    overlap[b * FAREA + a] = 0;
 			}
 		    } else if (n == 1) {
 			if (sp->s_occ == EMPTY) {
-			    str[b] &= 0xAF;
+			    overlap[a * FAREA + b] &= 0xAF;
 			    overlap[b * FAREA + a] &= 0xCF;
 			} else {
-			    str[b] &= 0xF;
+			    overlap[a * FAREA + b] &= 0xF;
 			    overlap[b * FAREA + a] &= 0xF;
 			}
 			intersect[a * FAREA + b] = (short)(esp - board);
@@ -286,15 +284,14 @@ update_overlap(struct spotstr *osp)
 		/* the other directions can only intersect at spot osp */
 		for (int r1 = r; --r1 >= 0; ) {
 		    int d1 = dd[r1];
-		    int bmask1 = BFLAG << r1;
 		    struct spotstr *sp = osp;
 		    for (int i = 6; --i >= 0; sp -= d1) { /* for each spot */
 			if (sp->s_occ == BORDER)
 			    break;
-			if ((sp->s_flags & bmask1) != 0)
+			if ((sp->s_flags & BFLAG << r1) != 0)
 			    continue;
 			int b = (int)(sp->s_frame[r1] - frames);
-			str[b] = 0;
+			overlap[a * FAREA + b] = 0;
 			overlap[b * FAREA + a] = 0;
 		    }
 		}
