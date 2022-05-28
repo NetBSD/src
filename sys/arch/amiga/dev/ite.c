@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.99 2018/09/03 16:29:22 riastradh Exp $ */
+/*	$NetBSD: ite.c,v 1.100 2022/05/28 10:36:22 andvar Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.99 2018/09/03 16:29:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.100 2022/05/28 10:36:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -325,7 +325,7 @@ itecninit(struct consdev *cd)
 
 /*
  * ite_cnfinish() is called in ite_init() when the device is
- * being probed in the normal fasion, thus we can finish setting
+ * being probed in the normal fashion, thus we can finish setting
  * up this ite now that the system is more functional.
  */
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.62 2022/05/22 11:27:37 andvar Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.63 2022/05/28 10:36:24 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -897,7 +897,7 @@ merge_part_with_wanted(struct disk_partitions *parts, part_id pno,
 	}
 
 	/*
-	 * no match - if this is fromt the outer scheme, we are done.
+	 * no match - if this is from the outer scheme, we are done.
 	 * otherwise it must be inserted into the wanted set.
 	 */
 	if (is_outer)
@@ -1246,7 +1246,7 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 		infos[i].cur_flags = PTI_PSCHEME_INTERNAL;
 	}
 	/*
-	 * Now copy over eveything from our old entries that points to
+	 * Now copy over everything from our old entries that points to
 	 * a real partition.
 	 */
 	for (i = 0; i < pset->num; i++) {

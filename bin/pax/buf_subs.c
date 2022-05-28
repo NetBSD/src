@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.29 2018/03/19 03:11:39 msaitoh Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.30 2022/05/28 10:36:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.29 2018/03/19 03:11:39 msaitoh Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.30 2022/05/28 10:36:21 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ cp_start(void)
  *	on disk files, this is trivial. However, many devices are really picky
  *	about the conditions under which they will allow a write to occur.
  *	Often devices restrict the conditions where writes can be made,
- *	so it may not be feasable to append archives stored on all types of
+ *	so it may not be feasible to append archives stored on all types of
  *	devices.
  * Return:
  *	0 for success, -1 for failure
@@ -462,7 +462,7 @@ rd_skip(off_t skcnt)
  * wr_fin()
  *	flush out any data (and pad if required) the last block. We always pad
  *	with zero (even though we do not have to). Padding with 0 makes it a
- *	lot easier to recover if the archive is damaged. zero paddding SHOULD
+ *	lot easier to recover if the archive is damaged. zero padding SHOULD
  *	BE a requirement....
  */
 

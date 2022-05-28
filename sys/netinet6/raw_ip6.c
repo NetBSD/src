@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.177 2022/02/23 21:54:41 andvar Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.178 2022/05/28 10:36:23 andvar Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.177 2022/02/23 21:54:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.178 2022/05/28 10:36:23 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -783,7 +783,7 @@ rip6_shutdown(struct socket *so)
 	KASSERT(solocked(so));
 
 	/*
-	 * Mark the connection as being incapable of futher input.
+	 * Mark the connection as being incapable of further input.
 	 */
 	socantsendmore(so);
 	return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.44 2021/09/11 20:28:06 andvar Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.45 2022/05/28 10:36:23 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.44 2021/09/11 20:28:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.45 2022/05/28 10:36:23 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -107,7 +107,7 @@ static void	zs_putc(struct zs_chanstate *, int);
 int zs_def_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 
 /*
- * ZS chips are feeded a 7.372 MHz clock.
+ * ZS chips are fed a 7.372 MHz clock.
  */
 #define	PCLK	(9600 * 768)	/* PCLK pin input clock rate */
 
