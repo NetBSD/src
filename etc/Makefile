@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.461 2022/05/28 11:17:35 nia Exp $
+#	$NetBSD: Makefile,v 1.462 2022/05/28 12:36:56 nia Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -116,7 +116,7 @@ BIN1+=	mrouted.conf
 .endif
 
 .if ${MKNTP} != "no"
-BIN1+=	ntpd.conf
+BIN1+=	ntp.conf
 .endif
 
 # Use machine-specific disktab if it exists, or the MI one otherwise
