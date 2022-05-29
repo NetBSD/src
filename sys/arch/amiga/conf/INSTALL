@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.138 2021/01/26 10:50:20 rin Exp $
+# $NetBSD: INSTALL,v 1.139 2022/05/29 10:43:19 andvar Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.139 $"
 
 makeoptions	COPTS="-Os -fno-omit-frame-pointer"
 
@@ -190,7 +190,7 @@ options        KFONT_CONS_ISO8859_1
 #options 	ULOWELL_OSC2=66667000
 
 # This is how you specify the blitting speed, higher values may speed up blits
-# a littel bit.  If you raise this value too much some trash may appear.
+# a little bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
 #options 	RH_MEMCLK=61000000
 # this option enables the 64 bit sprite which does not work
