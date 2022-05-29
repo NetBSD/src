@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.50 2022/05/28 20:54:31 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.51 2022/05/29 00:12:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.50 2022/05/28 20:54:31 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.51 2022/05/29 00:12:11 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -149,7 +149,7 @@ bdwho(void)
 }
 
 static bool
-should_highlight(int s)
+should_highlight(spot_index s)
 {
 
 	if (game.nmoves > 0 && game.moves[game.nmoves - 1] == s)

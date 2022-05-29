@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.20 2022/05/21 19:02:14 rillig Exp $	*/
+/*	$NetBSD: stoc.c,v 1.21 2022/05/29 00:12:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)stoc.c	8.1 (Berkeley) 7/24/94	*/
-__RCSID("$NetBSD: stoc.c,v 1.20 2022/05/21 19:02:14 rillig Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.21 2022/05/29 00:12:11 rillig Exp $");
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -48,7 +48,7 @@ const char	letters[]	= "<ABCDEFGHJKLMNOPQRST>";
  * Turn the spot number form of a move into the character form.
  */
 const char *
-stoc(int s)
+stoc(spot_index s)
 {
 	static char buf[32];
 
@@ -64,7 +64,7 @@ stoc(int s)
 /*
  * Turn the character form of a move into the spot number form.
  */
-int
+spot_index
 ctos(const char *mp)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.46 2022/05/28 23:05:45 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.47 2022/05/29 00:12:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -60,6 +60,7 @@
 #define BORDER	3
 
 /* return values for makemove, readinput */
+typedef int spot_index;
 #define MOVEOK	0
 #define RESIGN	1
 #define ILLEGAL	2
@@ -217,9 +218,9 @@ struct	spotstr {
 #define BFLAGALL	0x0F0000	/* all frames dead */
 
 struct game {
-	int moves[BSZ * BSZ];		/* log of all played moves */
+	spot_index moves[BSZ * BSZ];	/* log of all played moves */
 	unsigned int nmoves;		/* number of played moves */
-	int winning_spot;
+	spot_index winning_spot;
 	int winning_dir;
 };
 
@@ -253,8 +254,8 @@ void	bdwho(void);
 void	panic(const char *, ...) __printflike(1, 2) __dead;
 void	debuglog(const char *, ...) __printflike(1, 2);
 void	whatsup(int);
-const char   *stoc(int);
-int	ctos(const char *);
+const char *stoc(spot_index);
+spot_index ctos(const char *);
 int	makemove(int, int);
 void	clearcombo(struct combostr *, int);
 void	markcombo(struct combostr *);
