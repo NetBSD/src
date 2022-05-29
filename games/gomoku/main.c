@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2022/05/29 14:37:44 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.71 2022/05/29 17:01:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.70 2022/05/29 14:37:44 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.71 2022/05/29 17:01:42 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -82,7 +82,7 @@ spot_index intersect[FAREA * FAREA];	/* frame [a][b] intersection */
 struct game game;
 const char *plyr[2] = { "???", "???" };	/* who's who */
 
-static int readinput(FILE *);
+static spot_index readinput(FILE *);
 static void misclog(const char *, ...) __printflike(1, 2);
 static void quit(void) __dead;
 #if !defined(DEBUG)
@@ -281,10 +281,8 @@ struct outcome {
 static struct outcome
 main_game_loop(enum input_source *input)
 {
-	int color, curmove, outcome;
-
-	curmove = 0;		/* for GCC */
-	color = BLACK;
+	spot_index curmove = 0;
+	player_color color = BLACK;
 
 again:
 	switch (input[color]) {
@@ -316,6 +314,7 @@ again:
 		    stoc(curmove));
 	}
 
+	int outcome;
 	if ((outcome = makemove(color, curmove)) != MOVEOK)
 		return (struct outcome){ outcome, color };
 
@@ -398,7 +397,7 @@ again:
 	quit();
 }
 
-static int
+static spot_index
 readinput(FILE *fp)
 {
 	int c;
@@ -420,8 +419,9 @@ readinput(FILE *fp)
 void
 whatsup(int signum __unused)
 {
-	int n, s1, s2, d1, d2, color;
-	spot_index s;
+	int n, d1, d2;
+	player_color color;
+	spot_index s, s1, s2;
 	struct spotstr *sp;
 	FILE *fp;
 	char *str;

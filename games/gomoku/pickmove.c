@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.61 2022/05/29 15:31:12 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.62 2022/05/29 17:01:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.61 2022/05/29 15:31:12 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.62 2022/05/29 17:01:42 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,14 +70,14 @@ static int nforce;			/* count of opponent <1,x> combos */
 
 static bool better(spot_index, spot_index, player_color);
 static void scanframes(int);
-static void makecombo2(struct combostr *, struct spotstr *, int, int);
+static void makecombo2(struct combostr *, struct spotstr *, u_char, u_short);
 static void addframes(unsigned int);
-static void makecombo(struct combostr *, struct spotstr *, int, int);
+static void makecombo(struct combostr *, struct spotstr *, u_char, u_short);
 static void appendcombo(struct combostr *, int);
 static void updatecombo(struct combostr *, int);
 static void makeempty(struct combostr *);
 static int checkframes(struct combostr *, struct combostr *, struct spotstr *,
-		    int, struct overlap_info *);
+		    u_short, struct overlap_info *);
 static bool sortcombo(struct combostr **, struct combostr **, struct combostr *);
 #if !defined(DEBUG)
 static void printcombo(struct combostr *, char *, size_t);
@@ -256,7 +256,7 @@ scanframes(int color)
 	struct spotstr *sp;
 	union comboval *cp;
 	struct elist *nep;
-	int off, r, n;
+	int r, n;
 	union comboval cb;
 
 	curcolor = color;
@@ -280,6 +280,7 @@ scanframes(int color)
 		sp = &board[cbp->c_vertex];
 		cp = &sp->s_fval[color][r = cbp->c_dir];
 		int delta = dd[r];
+		u_char off;
 		if (cp->cv_win != 0) {
 			/*
 			 * Since this is the first spot of an open-ended
@@ -318,7 +319,7 @@ scanframes(int color)
 				if (color != nextcolor) {
 					/* XXX: suspicious use of 'n' */
 					n = (spot_index)(sp - board);
-					BIT_SET(tmpmap, n);
+					BIT_SET(tmpmap, (spot_index)n);
 				}
 			}
 			/*
@@ -423,11 +424,10 @@ scanframes(int color)
  * within the frame 'ocbp' and combo value 'cv'.
  */
 static void
-makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
+makecombo2(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 {
 	struct combostr *ncbp;
-	int c;
-	int baseB, fcnt, emask, n;
+	int baseB, fcnt, emask;
 	union comboval ocb, fcb;
 	struct combostr **scbpp, *fcbp;
 	char tmp[128];
@@ -451,7 +451,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 	     */
 	    int bmask = (BFLAG | FFLAG | MFLAG) << r;
 	    struct spotstr *fsp = osp;
-	    for (int f = 0; f < 5; f++, fsp -= d) {	/* for each frame */
+	    for (u_char f = 0; f < 5; f++, fsp -= d) {	/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    break;
 		if ((fsp->s_flags & bmask) != 0)
@@ -473,10 +473,10 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 		}
 
 		/* compute combo value */
-		c = fcb.cv_force + ocb.cv_force - 3;
+		int c = fcb.cv_force + ocb.cv_force - 3;
 		if (c > 4)
 		    continue;
-		n = fcb.cv_force + fcb.cv_win - 1;
+		int n = fcb.cv_force + fcb.cv_win - 1;
 		if (baseB < n)
 		    n = baseB;
 
@@ -621,7 +621,7 @@ addframes(unsigned int level)
 		 */
 		int d = dd[r];
 		struct spotstr *sp = fsp + d;
-		for (int off = 1; off < 5; off++, sp += d) {
+		for (u_char off = 1; off < 5; off++, sp += d) {
 			if (sp->s_occ != EMPTY)
 				continue;
 			makecombo(cbp, sp, off, fcb.s);
@@ -654,7 +654,7 @@ addframes(unsigned int level)
  * within the frame 'ocbp' and combo value 'cv'.
  */
 static void
-makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
+makecombo(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 {
 	struct combostr *cbp;
 	struct spotstr *sp;
@@ -966,13 +966,12 @@ static void
 updatecombo(struct combostr *cbp, int color)
 {
 	struct combostr *tcbp;
-	int nframes, flags;
 	union comboval cb;
 
-	flags = 0;
+	int flags = 0;
 	/* save the top level value for the whole combo */
 	cb.cv_force = cbp->c_combo.cv_force;
-	nframes = cbp->c_nframes;
+	u_char nframes = cbp->c_nframes;
 
 	if (color != nextcolor)
 		memset(tmpmap, 0, sizeof(tmpmap));
@@ -1082,10 +1081,10 @@ appendcombo(struct combostr *cbp, int color __unused)
  */
 static int
 checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
-	    int cv, struct overlap_info *vertices)
+	    u_short cv, struct overlap_info *vertices)
 {
 	struct combostr *tcbp, *lcbp;
-	int ovbit, n, mask, flags, verts, myindex, fcnt;
+	int ovbit, n, mask, flags, fcnt;
 	union comboval cb;
 	u_char *str;
 
@@ -1094,8 +1093,8 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 
 	cb.s = cv;
 	fcnt = cb.cv_force - 2;
-	verts = 0;
-	myindex = cbp->c_nframes;
+	int verts = 0;
+	u_char myindex = cbp->c_nframes;
 	n = (frame_index)(fcbp - frames) * FAREA;
 	str = &overlap[n];
 	spot_index *ip = &intersect[n];

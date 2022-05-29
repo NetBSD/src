@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.54 2022/05/29 16:30:44 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.55 2022/05/29 17:01:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.54 2022/05/29 16:30:44 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.55 2022/05/29 17:01:42 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -167,12 +167,12 @@ should_highlight(spot_index s)
 void
 bdisp(void)
 {
-	int c;
 	struct spotstr *sp;
 
 	for (int row = BSZ + 1; --row > 0; ) {
 		for (int col = 1; col <= BSZ; col++) {
 			sp = &board[PT(col, row)];
+			char c;
 			if (debug > 1 && sp->s_occ == EMPTY) {
 				if ((sp->s_flags & IFLAGALL) != 0)
 					c = '+';
@@ -285,7 +285,6 @@ get_line(char *buf, int size, void (*on_change)(const char *))
 	char *cp, *end;
 	int c;
 
-	c = 0;
 	cp = buf;
 	end = buf + size - 1;	/* save room for the '\0' */
 	while ((c = getchar()) != EOF && c != '\n' && c != '\r') {
@@ -352,7 +351,7 @@ get_coord_mouse(int *x, int *y)
  * Based on Eric S. Raymond's modifications to the battleship (bs) user
  * interface.
  */
-int
+spot_index
 get_coord(void)
 {
 	int x = game.user_x, y = game.user_y;
