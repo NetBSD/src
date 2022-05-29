@@ -335,13 +335,17 @@ decode_option(argon2_context *ctx, argon2_type *atype, const char *option)
 	}
 
 	a = strsep(&inp, "$");
+	if (a == null) {
+		free(in);
+		return -1;
+ 	}
 
 	sl = ctx->saltlen;
 
 	if (from_base64(ctx->salt, &sl, a) == NULL) {
-                free(in);
+		free(in);
 		return -1;
-        }
+	}
 
 	ctx->saltlen = sl;
 
