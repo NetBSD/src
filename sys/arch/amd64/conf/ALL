@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.171 2022/05/13 10:45:24 msaitoh Exp $
+# $NetBSD: ALL,v 1.172 2022/05/29 08:06:40 rin Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.171 $"
+#ident		"ALL-$Revision: 1.172 $"
 
 maxusers	64		# estimated number of users
 
@@ -1574,6 +1574,18 @@ vioif*	at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
 vio9p*	at virtio?			# Virtio 9P device
+
+# Hyper-V devices
+vmbus*		at acpi?		# Hyper-V VMBus
+genfb*		at vmbus?		# Hyper-V Synthetic Video Framebuffer
+hvkbd*		at vmbus?		# Hyper-V Synthetic Keyboard
+wskbd*		at hvkbd? console ? mux 1
+hvn*		at vmbus?		# Hyper-V NetVSC
+hvs*		at vmbus?		# Hyper-V StorVSC
+hvheartbeat*	at vmbus?		# Hyper-V Heartbeat Service
+hvshutdown*	at vmbus?		# Hyper-V Guest Shutdown Service
+hvtimesync*	at vmbus?		# Hyper-V Time Synchronization Service
+#hvkvp*		at vmbus?		# Hyper-V Data Exchange Service
 
 # Flash subsystem
 flash* at flashbus?
