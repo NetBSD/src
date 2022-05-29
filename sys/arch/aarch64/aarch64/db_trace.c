@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.14 2021/11/27 14:11:04 riastradh Exp $ */
+/* $NetBSD: db_trace.c,v 1.15 2022/05/29 16:13:41 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14 2021/11/27 14:11:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15 2022/05/29 16:13:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -288,7 +288,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		db_read_bytes(lastfp + 8, sizeof(lr), (char *)&lr);
 		lr = aarch64_strip_pac(lr);
 
-		if (!trace_user && IN_USER_VM_ADDRESS(lr))
+		if (lr == 0 || (!trace_user && IN_USER_VM_ADDRESS(lr)))
 			break;
 
 #if defined(_KERNEL)
@@ -318,14 +318,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp),
 			    (char *)&fp);
 			lr = aarch64_strip_pac(lr);
-
-			/*
-			 * no need to display the frame of el0_trap
-			 * of kernel thread
-			 */
-			if (((char *)(lastlr - 4) == (char *)el0_trap) &&
-			    (lr == 0))
-				break;
 
 			pr_traceaddr("tf", (db_addr_t)tf, lastlr - 4, flags, pr);
 
