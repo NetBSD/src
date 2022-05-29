@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.72 2022/05/29 20:21:28 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.73 2022/05/29 21:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.72 2022/05/29 20:21:28 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.73 2022/05/29 21:02:37 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -162,7 +162,7 @@ parse_args(int argc, char **argv)
 }
 
 static void
-set_input_sources(enum input_source *input, int color)
+set_input_sources(enum input_source *input, player_color color)
 {
 	switch (test) {
 	case NORMAL_PLAY:
@@ -249,7 +249,7 @@ again:
 }
 
 static void
-declare_winner(int outcome, const enum input_source *input, int color)
+declare_winner(int outcome, const enum input_source *input, player_color color)
 {
 
 	move(BSZ + 3, 0);
@@ -275,7 +275,7 @@ declare_winner(int outcome, const enum input_source *input, int color)
 
 struct outcome {
 	int result;
-	int winner;
+	player_color winner;
 };
 
 static struct outcome
