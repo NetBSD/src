@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.54 2022/05/29 11:36:12 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.55 2022/05/29 12:20:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.54 2022/05/29 11:36:12 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.55 2022/05/29 12:20:07 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -225,6 +225,24 @@ better(spot_index s, spot_index s1, int us)
 static int curcolor;	/* implicit parameter to makecombo() */
 static unsigned int curlevel;	/* implicit parameter to makecombo() */
 
+static bool
+quick_check(int color, struct combostr *cbp)
+{
+
+	struct spotstr *sp = &board[cbp->c_vertex];
+	union comboval cb = { .s = sp->s_fval[color][cbp->c_dir].s };
+	if (cb.s >= 0x101)
+		return false;
+
+	for (int i = 5 + cb.cv_win, d = dd[cbp->c_dir]; --i >= 0; sp += d) {
+		if (sp->s_occ != EMPTY)
+			continue;
+		sp->s_combo[color].s = cb.s;
+		sp->s_level[color] = 1;
+	}
+	return true;
+}
+
 /*
  * Scan the sorted list of non-empty frames and
  * update the minimum combo values for each empty spot.
@@ -248,18 +266,8 @@ scanframes(int color)
 		return;
 
 	/* quick check for four in a row */
-	sp = &board[cbp->c_vertex];
-	cb.s = sp->s_fval[color][cbp->c_dir].s;
-	if (cb.s < 0x101) {
-		int delta = dd[cbp->c_dir];
-		for (i = 5 + cb.cv_win; --i >= 0; sp += delta) {
-			if (sp->s_occ != EMPTY)
-				continue;
-			sp->s_combo[color].s = cb.s;
-			sp->s_level[color] = 1;
-		}
+	if (quick_check(color, cbp))
 		return;
-	}
 
 	/*
 	 * Update the minimum combo value for each spot in the frame
@@ -335,7 +343,6 @@ scanframes(int color)
 	 * Try to make new 3rd level combos, 4th level, etc.
 	 * Limit the search depth early in the game.
 	 */
-	/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
 	for (unsigned int level = 2;
 	     level <= 1 + game.nmoves / 2 && combolen > n; level++) {
 		if (level >= 9)
