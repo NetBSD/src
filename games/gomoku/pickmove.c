@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.65 2022/05/29 21:02:37 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.66 2022/05/29 21:38:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.65 2022/05/29 21:02:37 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.66 2022/05/29 21:38:36 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -117,15 +117,16 @@ pickmove(player_color us)
 	scanframes(WHITE);
 
 	/* find the spot with the highest value */
-	spot_index s = PT(BSZ, BSZ);
-	spot_index s1 = s;
-	spot_index s2 = s;
-	for ( ; s-- > PT(1, 1); ) {
-		struct spotstr *sp = &board[s];
+	spot_index s1 = PT(BSZ, BSZ);
+	spot_index s2 = PT(BSZ, BSZ);
+	for (spot_index s = PT(BSZ, BSZ); s-- > PT(1, 1); ) {
+		const struct spotstr *sp = &board[s];
 		if (sp->s_occ != EMPTY)
 			continue;
-		if (debug != 0 && (sp->s_combo[BLACK].cv_force == 1 ||
-		    sp->s_combo[WHITE].cv_force == 1)) {
+
+		if (debug > 0 &&
+		    (sp->s_combo[BLACK].cv_force == 1 ||
+		     sp->s_combo[WHITE].cv_force == 1)) {
 			debuglog("- %s %x/%d %d %x/%d %d %d",
 			    stoc(s),
 			    sp->s_combo[BLACK].s, sp->s_level[BLACK],
@@ -134,15 +135,14 @@ pickmove(player_color us)
 			    sp->s_nforce[WHITE],
 			    sp->s_wval);
 		}
-		/* pick the best black move */
-		if (better(s, s1, BLACK))
+
+		if (better(s, s1, BLACK))	/* pick the best black move */
 			s1 = s;
-		/* pick the best white move */
-		if (better(s, s2, WHITE))
+		if (better(s, s2, WHITE))	/* pick the best white move */
 			s2 = s;
 	}
 
-	if (debug != 0) {
+	if (debug > 0) {
 		const struct spotstr *sp1 = &board[s1], *sp2 = &board[s2];
 		debuglog("B %s %x/%d %d %x/%d %d %d",
 		    stoc(s1),
@@ -156,9 +156,10 @@ pickmove(player_color us)
 		    sp2->s_nforce[WHITE],
 		    sp2->s_combo[BLACK].s, sp2->s_level[BLACK],
 		    sp2->s_nforce[BLACK], sp2->s_wval);
+
 		/*
-		 * Check for more than one force that can't
-		 * all be blocked with one move.
+		 * Check for more than one force that can't all be blocked
+		 * with one move.
 		 */
 		spot_index m = us == BLACK ? s2 : s1;
 		player_color them = us != BLACK ? BLACK : WHITE;
@@ -179,6 +180,7 @@ pickmove(player_color us)
 		s1 = s2;
 		s2 = tmp;
 	}
+
 	/*
 	 * Block their combo only if we have to (i.e., if they are one move
 	 * away from completing a force, and we don't have a force that
@@ -348,7 +350,7 @@ scanframes(player_color color)
 	     level <= 1 + game.nmoves / 2 && combolen > n; level++) {
 		if (level >= 9)
 			break;	/* Do not think too long. */
-		if (debug != 0) {
+		if (debug > 0) {
 			debuglog("%cL%u %d %d %d", "BW"[color],
 			    level, combolen - n, combocnt, elistcnt);
 			refresh();
