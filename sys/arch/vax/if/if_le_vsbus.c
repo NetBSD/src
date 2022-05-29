@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.28 2010/12/14 23:38:30 matt Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.29 2022/05/29 10:45:05 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.28 2010/12/14 23:38:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.29 2022/05/29 10:45:05 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -229,23 +229,19 @@ le_vsbus_attach(device_t parent, device_t self, void *aux)
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (err) {
 		aprint_error(": unable to map buffer block: err %d\n", err);
-		bus_dmamem_free(va->va_dmat, &seg, rseg);
-		return;
+		goto bad_free;
 	}
 	bus_dmamap_create(va->va_dmat, ALLOCSIZ, rseg, ALLOCSIZ, 
 	    0, BUS_DMA_NOWAIT, &sc->sc_dm);
 	if (err) {
 		aprint_error(": unable to create DMA map: err %d\n", err);
-		bus_dmamem_free(va->va_dmat, &seg, rseg);
-		return;
+		goto bad_unmap;
 	}
 	err = bus_dmamap_load(va->va_dmat, sc->sc_dm, sc->sc_am7990.lsc.sc_mem,
 	    ALLOCSIZ, NULL, BUS_DMA_NOWAIT);
 	if (err) {
 		aprint_error(": unable to load DMA map: err %d\n", err);
-		bus_dmamap_destroy(va->va_dmat, sc->sc_dm);
-		bus_dmamem_free(va->va_dmat, &seg, rseg);
-		return;
+		goto bad_destroy;
 	}
 	aprint_normal(" buf 0x%lx-0x%lx", sc->sc_dm->dm_segs->ds_addr,
 	    sc->sc_dm->dm_segs->ds_addr + sc->sc_dm->dm_segs->ds_len - 1);
@@ -276,4 +272,13 @@ le_vsbus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n%s", device_xname(self));
 
 	am7990_config(&sc->sc_am7990);
+
+	return;
+
+ bad_destroy:
+	bus_dmamap_destroy(va->va_dmat, sc->sc_dm);
+ bad_unmap:
+	bus_dmamem_unmap(va->va_dmat, sc->sc_am7990.lsc.sc_mem, ALLOCSIZ);
+ bad_free:
+	bus_dmamem_free(va->va_dmat, &seg, rseg);
 }
