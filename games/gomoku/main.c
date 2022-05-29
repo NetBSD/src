@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2022/05/28 23:05:45 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.67 2022/05/29 00:12:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.66 2022/05/28 23:05:45 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.67 2022/05/29 00:12:11 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -222,13 +222,13 @@ read_color(void)
 	/* NOTREACHED */
 }
 
-static int
+static spot_index
 read_move(void)
 {
 again:
 	if (interactive) {
 		ask("Select move, (S)ave or (Q)uit.");
-		int s = get_coord();
+		spot_index s = get_coord();
 		if (s == SAVE) {
 			save_game();
 			goto again;

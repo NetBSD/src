@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.27 2022/05/28 19:47:24 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.28 2022/05/29 00:12:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.27 2022/05/28 19:47:24 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.28 2022/05/29 00:12:11 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -233,7 +233,7 @@ adjust_overlap(u_char ov, int ra, int sia, int rb, int sib, int mask)
  * each frame B that overlaps frame A in that spot.
  */
 static void
-init_overlap_frame(int fia, int ra, int sia, int s, int mask)
+init_overlap_frame(int fia, int ra, int sia, spot_index s, int mask)
 {
 
 	for (int rb = 4; --rb >= 0;) {
@@ -264,7 +264,7 @@ init_overlap(void)
 
 	for (int fia = FAREA; fia-- > 0;) {
 		const struct combostr *fa = &frames[fia];
-		int s = fa->c_vertex;
+		spot_index s = fa->c_vertex;
 		u_char ra = fa->c_dir;
 		int da = dd[ra];
 
