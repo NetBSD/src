@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.62 2022/05/29 17:01:42 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.63 2022/05/29 18:05:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.62 2022/05/29 17:01:42 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.63 2022/05/29 18:05:25 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -92,8 +92,8 @@ pickmove(player_color us)
 		return PT((BSZ + 1) / 2, (BSZ + 1) / 2);
 
 	/* initialize all the board values */
-	for (unsigned pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
-		struct spotstr *sp = &board[pos];
+	for (spot_index s = PT(BSZ, BSZ) + 1; s-- > PT(1, 1); ) {
+		struct spotstr *sp = &board[s];
 		sp->s_combo[BLACK].s = 0x601;
 		sp->s_combo[WHITE].s = 0x601;
 		sp->s_level[BLACK] = 255;
@@ -358,8 +358,8 @@ scanframes(int color)
 	}
 
 	/* scan for combos at empty spots */
-	for (unsigned pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
-		sp = &board[pos];
+	for (spot_index s = PT(BSZ, BSZ) + 1; s-- > PT(1, 1); ) {
+		sp = &board[s];
 		for (struct elist *ep = sp->s_empty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
@@ -566,8 +566,8 @@ addframes(unsigned int level)
 
 	/* scan for combos at empty spots */
 	int c = curcolor;
-	for (unsigned pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
-		struct spotstr *sp = &board[pos];
+	for (spot_index s = PT(BSZ, BSZ) + 1; s-- > PT(1, 1); ) {
+		struct spotstr *sp = &board[s];
 		for (struct elist *ep = sp->s_empty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[c].s) {
