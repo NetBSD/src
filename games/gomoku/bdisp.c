@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.52 2022/05/29 14:37:44 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.53 2022/05/29 16:19:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.52 2022/05/29 14:37:44 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.53 2022/05/29 16:19:52 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -444,7 +444,7 @@ get_coord(void)
 			break;
 		case KEY_MOUSE:
 			if (get_coord_mouse(&x, &y))
-				return PT(x, y);
+				goto selected;
 			beep();
 			break;
 		case 'Q':
@@ -455,6 +455,7 @@ get_coord(void)
 			return SAVE;
 		case ' ':
 		case '\r':
+		selected:
 			(void)mvhline(BSZ + 3, 6, ' ', 6);
 			return PT(x, y);
 		}
