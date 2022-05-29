@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.41 2022/05/29 15:31:12 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.42 2022/05/29 17:01:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,12 +34,11 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.41 2022/05/29 15:31:12 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.42 2022/05/29 17:01:42 rillig Exp $");
 
 #include "gomoku.h"
 
-		/* direction deltas */
-const int     dd[4] = {
+const int     dd[4] = {		/* direction deltas */
 	1,			/* right */
 	-(BSZ + 1) + 1,		/* down + right */
 	-(BSZ + 1),		/* down */
