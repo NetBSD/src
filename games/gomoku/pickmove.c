@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.48 2022/05/28 21:48:21 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.49 2022/05/29 00:12:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.48 2022/05/28 21:48:21 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.49 2022/05/29 00:12:11 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -198,8 +198,8 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 		return sp->s_nforce[us] > sp1->s_nforce[us];
 
 	int them = us != BLACK ? BLACK : WHITE;
-	int s = (int)(sp - board);
-	int s1 = (int)(sp1 - board);
+	spot_index s = (spot_index)(sp - board);
+	spot_index s1 = (spot_index)(sp1 - board);
 	if (BIT_TEST(forcemap, s) != BIT_TEST(forcemap, s1))
 		return BIT_TEST(forcemap, s);
 
@@ -411,10 +411,10 @@ scanframes(int color)
 
 /*
  * Compute all level 2 combos of frames intersecting spot 'osp'
- * within the frame 'ocbp' and combo value 's'.
+ * within the frame 'ocbp' and combo value 'cv'.
  */
 static void
-makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
+makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 {
 	struct combostr *ncbp;
 	int c;
@@ -424,7 +424,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	char tmp[128];
 
 	/* try to combine a new frame with those found so far */
-	ocb.s = s;
+	ocb.s = cv;
 	baseB = ocb.cv_force + ocb.cv_win - 1;
 	fcnt = ocb.cv_force - 2;
 	emask = fcnt != 0 ? ((ocb.cv_win != 0 ? 0x1E : 0x1F) & ~(1 << off)) : 0;
@@ -641,10 +641,10 @@ addframes(unsigned int level)
 
 /*
  * Compute all level N combos of frames intersecting spot 'osp'
- * within the frame 'ocbp' and combo value 's'.
+ * within the frame 'ocbp' and combo value 'cv'.
  */
 static void
-makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
+makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 {
 	struct combostr *cbp;
 	struct spotstr *sp;
@@ -663,14 +663,14 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int s)
 	 */
 	memset(vertices, 0, sizeof(vertices));
 
-	ocb.s = s;
+	ocb.s = cv;
 	baseB = ocb.cv_force + ocb.cv_win - 1;
 	fcnt = ocb.cv_force - 2;
 	emask = fcnt != 0 ? ((ocb.cv_win != 0 ? 0x1E : 0x1F) & ~(1 << off)) : 0;
 	for (struct elist *ep = osp->s_empty; ep != NULL; ep = ep->e_next) {
 	    /* check for various kinds of overlap */
 	    cbp = ep->e_combo;
-	    verts = checkframes(cbp, ocbp, osp, s, vertices);
+	    verts = checkframes(cbp, ocbp, osp, cv, vertices);
 	    if (verts < 0)
 		continue;
 
@@ -802,7 +802,7 @@ makeempty(struct combostr *ocbp)
 	struct combostr *cbp, **cbpp;
 	struct elist *ep, *nep;
 	struct spotstr *sp;
-	int s, d, m, emask, i;
+	int d, emask, i;
 	int nframes;
 	char tmp[128];
 
@@ -849,7 +849,7 @@ makeempty(struct combostr *ocbp)
 	ep->e_emask = cbp->c_emask[0];
 
 	/* now update the emask info */
-	s = 0;
+	int n = 0;
 	for (i = 2, ep += 2; i < nframes; i++, ep++) {
 		cbp = ep->e_combo;
 		nep = &einfo[ep->e_frameindex];
@@ -857,7 +857,7 @@ makeempty(struct combostr *ocbp)
 		nep->e_emask = cbp->c_emask[0];
 
 		if ((cbp->c_flags & C_LOOP) != 0) {
-			s++;
+			n++;
 			/*
 			 * Account for the fact that this frame connects
 			 * to a previous one (thus forming a loop).
@@ -874,7 +874,7 @@ makeempty(struct combostr *ocbp)
 	 * We only need to update the emask values of "complete" loops
 	 * to include the intersection spots.
 	 */
-	if (s != 0 && ocbp->c_combo.cv_force == 2) {
+	if (n != 0 && ocbp->c_combo.cv_force == 2) {
 		/* process loops from the top down */
 		ep = &einfo[nframes];
 		do {
@@ -909,7 +909,7 @@ makeempty(struct combostr *ocbp)
 		cbp = *cbpp;
 		sp = &board[cbp->c_vertex];
 		d = dd[cbp->c_dir];
-		for (s = 0, m = 1; s < 5; s++, sp += d, m <<= 1) {
+		for (int off = 0, m = 1; off < 5; off++, sp += d, m <<= 1) {
 			if (sp->s_occ != EMPTY || (emask & m) == 0)
 				continue;
 
@@ -918,7 +918,7 @@ makeempty(struct combostr *ocbp)
 			if (nep == NULL)
 				panic("Out of memory!");
 			nep->e_combo = ocbp;
-			nep->e_off = s;
+			nep->e_off = off;
 			nep->e_frameindex = i;
 			if (ep->e_framecnt > 1) {
 				nep->e_framecnt = ep->e_framecnt - 1;
@@ -983,7 +983,7 @@ updatecombo(struct combostr *cbp, int color)
 			}
 		} else {
 			/* update the board values for each spot in frame */
-			int s = tcbp->c_vertex;
+			spot_index s = tcbp->c_vertex;
 			struct spotstr *sp = &board[s];
 			int d = dd[tcbp->c_dir];
 			int i = (flags & C_OPEN_1) != 0 ? 6 : 5;
@@ -1008,7 +1008,7 @@ updatecombo(struct combostr *cbp, int color)
 
 	if (color != nextcolor) {
 		/* update the board values for each spot in frame */
-		int s = cbp->c_vertex;
+		spot_index s = cbp->c_vertex;
 		struct spotstr *sp = &board[s];
 		int d = dd[cbp->c_dir];
 		int i = (flags & C_OPEN_0) != 0 ? 6 : 5;
@@ -1068,11 +1068,11 @@ appendcombo(struct combostr *cbp, int color __unused)
  * would form some kind of valid loop. Also return the intersection spots
  * in 'vertices[]' beside the known intersection at spot 'osp'.
  * Return -1 if 'fcbp' should not be combined with 'cbp'.
- * 's' is the combo value for frame 'fcpb'.
+ * 'cv' is the combo value for frame 'fcbp'.
  */
 static int
 checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
-	    int s, struct overlap_info *vertices)
+	    int cv, struct overlap_info *vertices)
 {
 	struct combostr *tcbp, *lcbp;
 	int i, n, mask, flags, verts, myindex, fcnt;
@@ -1083,7 +1083,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	lcbp = NULL;
 	flags = 0;
 
-	cb.s = s;
+	cb.s = cv;
 	fcnt = cb.cv_force - 2;
 	verts = 0;
 	myindex = cbp->c_nframes;
@@ -1346,7 +1346,7 @@ markcombo(struct combostr *ocbp)
 	struct combostr *cbp, **cbpp;
 	struct elist *ep, *nep;
 	struct spotstr *sp;
-	int s, d, m, i;
+	int d, m, i;
 	int nframes;
 	int cmask, omask;
 
@@ -1388,7 +1388,7 @@ markcombo(struct combostr *ocbp)
 	ep->e_emask = cbp->c_emask[0];
 
 	/* now update the emask info */
-	s = 0;
+	int n = 0;
 	for (i = 2, ep += 2; i < nframes; i++, ep++) {
 		cbp = ep->e_combo;
 		nep = &einfo[ep->e_frameindex];
@@ -1396,7 +1396,7 @@ markcombo(struct combostr *ocbp)
 		nep->e_emask = cbp->c_emask[0];
 
 		if ((cbp->c_flags & C_LOOP) != 0) {
-			s++;
+			n++;
 			/*
 			 * Account for the fact that this frame connects
 			 * to a previous one (thus forming a loop).
@@ -1413,7 +1413,7 @@ markcombo(struct combostr *ocbp)
 	 * We only need to update the emask values of "complete" loops
 	 * to include the intersection spots.
 	 */
-	if (s != 0 && ocbp->c_combo.cv_force == 2) {
+	if (n != 0 && ocbp->c_combo.cv_force == 2) {
 		/* process loops from the top down */
 		ep = &einfo[nframes];
 		do {
@@ -1445,12 +1445,12 @@ markcombo(struct combostr *ocbp)
 		m = ep->e_emask;
 		cbp = *cbpp;
 		sp = &board[cbp->c_vertex];
-		d = dd[s = cbp->c_dir];
-		cmask = CFLAG << s;
-		omask = (IFLAG | CFLAG) << s;
-		s = ep->e_fval.cv_win != 0 ? 6 : 5;
+		d = dd[cbp->c_dir];
+		cmask = CFLAG << cbp->c_dir;
+		omask = (IFLAG | CFLAG) << cbp->c_dir;
+		int off = ep->e_fval.cv_win != 0 ? 6 : 5;
 		/* LINTED 117: bitwise '>>' on signed value possibly nonportable */
-		for (; --s >= 0; sp += d, m >>= 1)
+		for (; --off >= 0; sp += d, m >>= 1)
 			sp->s_flags |= (m & 1) != 0 ? omask : cmask;
 	}
 }
