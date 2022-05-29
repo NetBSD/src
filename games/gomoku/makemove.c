@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.38 2022/05/29 13:49:10 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.39 2022/05/29 14:01:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.38 2022/05/29 13:49:10 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.39 2022/05/29 14:01:57 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -134,7 +134,7 @@ makemove(int us, spot_index mv)
 		bool space = fsp->s_occ == EMPTY;
 		int n = 0;
 		sp = fsp;
-		for (int i = 5; --i >= 0; sp += d) {	/* for each spot */
+		for (int off = 5; off-- > 0; sp += d) {	/* for each spot */
 		    if (sp->s_occ == us)
 			n++;
 		    else if (sp->s_occ == EMPTY)
@@ -144,7 +144,7 @@ makemove(int us, spot_index mv)
 			fsp->s_flags |= BFLAG << r;
 			fsp->s_fval[BLACK][r].s = 0x600;
 			fsp->s_fval[WHITE][r].s = 0x600;
-			while (--i >= 0) {
+			while (off-- > 0) {
 			    sp += d;
 			    if (sp->s_occ == EMPTY)
 				sp->s_wval -= val;
@@ -174,7 +174,7 @@ makemove(int us, spot_index mv)
 		}
 		val = weight[n];
 		sp = fsp;
-		for (int i = 5; --i >= 0; sp += d)	/* for each spot */
+		for (int off = 5; off-- > 0; sp += d)	/* for each spot */
 		    if (sp->s_occ == EMPTY)
 			sp->s_wval += val;
 

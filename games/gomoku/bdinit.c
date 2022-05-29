@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.32 2022/05/29 13:49:10 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.33 2022/05/29 14:01:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.32 2022/05/29 13:49:10 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.33 2022/05/29 14:01:57 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -166,9 +166,8 @@ init_board(void)
  * Variable names for frames A and B:
  *
  * fi	index of the frame in the global 'frames'
- * r	direction: 0 = right, 1 = down right, 2 = down, 3 = down left
  * d	direction delta, difference between adjacent spot indexes
- * si	index of the spot in the frame, 0 to 5
+ * off	index of the spot in the frame, 0 to 5
  */
 
 /*
@@ -191,36 +190,36 @@ init_board(void)
  * spot will be removed from the overlap array by setting the entry to 0.
  */
 static u_char
-adjust_overlap(u_char ov, int ra, int sia, int rb, int sib, int mask)
+adjust_overlap(u_char ov, int ra, int offa, int rb, int offb, int mask)
 {
-	ov |= (sib == 5) ? mask & 0xA : mask;
+	ov |= (offb == 5) ? mask & 0xA : mask;
 	if (rb != ra)
 		return ov;
 
 	/* compute the multiple spot overlap values */
-	switch (sia) {
+	switch (offa) {
 	case 0:
-		if (sib == 4)
+		if (offb == 4)
 			ov |= 0xA0;
-		else if (sib != 5)
+		else if (offb != 5)
 			ov |= 0xF0;
 		break;
 	case 1:
-		if (sib == 5)
+		if (offb == 5)
 			ov |= 0xA0;
 		else
 			ov |= 0xF0;
 		break;
 	case 4:
-		if (sib == 0)
+		if (offb == 0)
 			ov |= 0xC0;
 		else
 			ov |= 0xF0;
 		break;
 	case 5:
-		if (sib == 1)
+		if (offb == 1)
 			ov |= 0xC0;
-		else if (sib != 0)
+		else if (offb != 0)
 			ov |= 0xF0;
 		break;
 	default:
@@ -235,15 +234,15 @@ adjust_overlap(u_char ov, int ra, int sia, int rb, int sib, int mask)
  * each frame B that overlaps frame A in that spot.
  */
 static void
-init_overlap_frame(int fia, int ra, int sia, spot_index s, int mask)
+init_overlap_frame(int fia, int ra, int offa, spot_index s, int mask)
 {
 
 	for (int rb = 4; --rb >= 0;) {
 		int db = dd[rb];
 
-		for (int sib = 0; sib < 6; sib++) {
+		for (int offb = 0; offb < 6; offb++) {
 			/* spb0 is the spot where frame B starts. */
-			const struct spotstr *spb0 = &board[s - sib * db];
+			const struct spotstr *spb0 = &board[s - offb * db];
 			if (spb0->s_occ == BORDER)
 				break;
 			if ((spb0->s_flags & BFLAG << rb) != 0)
@@ -252,7 +251,7 @@ init_overlap_frame(int fia, int ra, int sia, spot_index s, int mask)
 			frame_index fib = spb0->s_frame[rb];
 			intersect[fia * FAREA + fib] = s;
 			u_char *op = &overlap[fia * FAREA + fib];
-			*op = adjust_overlap(*op, ra, sia, rb, sib, mask);
+			*op = adjust_overlap(*op, ra, offa, rb, offb, mask);
 		}
 	}
 }
@@ -276,11 +275,11 @@ init_overlap(void)
 		 */
 		int len = 5 + board[s].s_fval[BLACK][ra].cv_win;
 
-		for (int sia = 0; sia < len; sia++) {
+		for (int offa = 0; offa < len; offa++) {
 			/* spot[5] in frame A only overlaps if it is open */
-			int mask = (sia == 5) ? 0xC : 0xF;
+			int mask = (offa == 5) ? 0xC : 0xF;
 
-			init_overlap_frame(fia, ra, sia, s + sia * da, mask);
+			init_overlap_frame(fia, ra, offa, s + offa * da, mask);
 		}
 	}
 }
