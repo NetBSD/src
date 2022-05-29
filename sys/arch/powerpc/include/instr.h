@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.9 2020/07/15 08:58:51 rin Exp $ */
+/*	$NetBSD: instr.h,v 1.10 2022/05/29 11:55:05 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,11 +135,10 @@ union instr {
 		u_int	i_opcd:6;
 		u_int	i_rs:5;
 		u_int	i_ra:5;
-		u_int	i_rb:5;
 		int	i_sh1_5:5;
 		int	i_mb:6;
 		u_int	i_xo:3;
-		int	i_sh0:2;
+		int	i_sh0:1;
 		u_int	i_rc:1;
 	} i_md;
 
@@ -151,7 +150,6 @@ union instr {
 		u_int	i_rs:5;
 		u_int	i_ra:5;
 		u_int	i_rb:5;
-		int	i_sh:5;
 		int	i_mb:6;
 		u_int	i_xo:4;
 		u_int	i_rc:1;
