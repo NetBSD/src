@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.60 2021/01/21 06:51:54 nia Exp $
+# $NetBSD: NULL,v 1.61 2022/05/29 10:43:19 andvar Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.60 $"
+#ident          "GENERIC-$Revision: 1.61 $"
 
 maxusers	8
 
@@ -163,7 +163,7 @@ options        KFONT_CONS_ISO8859_1
 #options 	ULOWELL_OSC2=66667000
 
 # This is how you specify the blitting speed, higher values may speed up blits
-# a littel bit.  If you raise this value too much some trash may appear.
+# a little bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
 #options 	RH_MEMCLK=61000000
 # this option enables the 64 bit sprite which does not work

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.33 2019/08/14 00:51:10 rin Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.34 2022/05/29 10:43:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.33 2019/08/14 00:51:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.34 2022/05/29 10:43:19 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -139,7 +139,7 @@ rasops2_makestamp(struct rasops_info *ri, long attr)
 		if ((ri->ri_flg & RI_BSWAP) != 0)
 #endif
 		{
-			/* littel endian */
+			/* little endian */
 			stamp[i]  = (i & 8 ? fg : bg);
 			stamp[i] |= (i & 4 ? fg : bg) << 2;
 			stamp[i] |= (i & 2 ? fg : bg) << 4;
