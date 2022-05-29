@@ -1,4 +1,4 @@
-/*	$NetBSD: le_elb.c,v 1.11 2021/12/08 20:50:02 andvar Exp $	*/
+/*	$NetBSD: le_elb.c,v 1.12 2022/05/29 10:45:05 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.11 2021/12/08 20:50:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.12 2022/05/29 10:45:05 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -116,13 +116,13 @@ le_elb_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamem_alloc(msc->sc_dmat, LE_MEMSIZE, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		aprint_error_dev(self, "couldn't allocate memory for card\n");
-		return;
+		goto bad_bsunmap;
 	}
 	if (bus_dmamem_map(msc->sc_dmat, &seg, rseg, LE_MEMSIZE,
 	    (void **)&sc->sc_mem,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		aprint_error_dev(self, "couldn't map memory for card\n");
-		return;
+		goto bad_free;
 	}
 
 	/*
@@ -131,14 +131,12 @@ le_elb_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamap_create(msc->sc_dmat, LE_MEMSIZE, 1,
 	    LE_MEMSIZE, 0, BUS_DMA_NOWAIT, &msc->sc_dmam)) {
 		aprint_error_dev(self, "couldn't create DMA map\n");
-		bus_dmamem_free(msc->sc_dmat, &seg, rseg);
-		return;
+		goto bad_unmap;
 	}
 	if (bus_dmamap_load(msc->sc_dmat, msc->sc_dmam,
 	    sc->sc_mem, LE_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
 		aprint_error_dev(self, "couldn't load DMA map\n");
-		bus_dmamem_free(msc->sc_dmat, &seg, rseg);
-		return;
+		goto bad_destroy;
 	}
 
 	/*
@@ -172,6 +170,17 @@ le_elb_attach(device_t parent, device_t self, void *aux)
 
 	intr_establish_xname(eaa->elb_irq, IST_LEVEL, IPL_NET, am79900_intr,
 	    sc, device_xname(self));
+
+	return;
+
+ bad_destroy:
+	bus_dmamap_destroy(msc->sc_dmat, msc->sc_dmam);
+ bad_unmap:
+	bus_dmamem_unmap(msc->sc_dmat, sc->sc_mem, LE_MEMSIZE);
+ bad_free:
+	bus_dmamem_free(msc->sc_dmat, &seg, rseg);
+ bad_bsunmap:
+	bus_space_unmap(msc->sc_iot, msc->sc_ioh, LE_NPORTS);
 }
 
 /*
