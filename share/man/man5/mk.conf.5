@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.94 2022/05/29 08:15:47 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.95 2022/05/29 15:23:20 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -660,6 +660,13 @@ Indicates whether the mDNS (Multicast DNS) infrastructure
 (libraries and support programs) is built and installed.
 .DFLTy
 .
+.It Sy MKMOUSED
+.YorN
+Indicates whether
+.Xr moused 8 ,
+the serial mouse support daemon is built and installed.
+.DFLTy
+.
 .It Sy MKMROUITNG
 .YorN
 Indicates whether multicast routing applications will be built and
@@ -940,6 +947,15 @@ are to be built and installed.
 .YorN
 Indicates whether
 .Xr tcpdump 8
+is to be built and installed.
+.DFLTy
+.
+.It Sy MKTIMED
+.YorN
+Indicates whether
+.Xr timed 8 ,
+the Time Synchronization Protocol daemon, not to be confused with
+.Xr ntpd 8 ,
 is to be built and installed.
 .DFLTy
 .
