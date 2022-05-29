@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.29 2022/05/29 00:38:26 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.30 2022/05/29 10:37:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.29 2022/05/29 00:38:26 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.30 2022/05/29 10:37:21 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -106,19 +106,21 @@ init_spot_flags_and_fval(struct spotstr *sp, int i, int j)
 
 /* Allocate one of the pre-allocated frames for each non-blocked frame. */
 static void
-init_spot_frame(struct spotstr *sp, struct combostr **cbpp)
+init_spot_frame(struct spotstr *sp, frame_index *fip)
 {
 
 	for (int r = 4; --r >= 0; ) {
 		if ((sp->s_flags & (BFLAG << r)) != 0)
 			continue;
 
-		struct combostr *cbp = (*cbpp)++;
+		frame_index fi = (*fip)++;
+		sp->s_frame[r] = fi;
+
+		struct combostr *cbp = &frames[fi];
 		cbp->c_combo.s = sp->s_fval[BLACK][r].s;
 		cbp->c_vertex = (u_short)(sp - board);
 		cbp->c_nframes = 1;
 		cbp->c_dir = r;
-		sp->s_frame[r] = cbp;
 	}
 }
 
@@ -136,14 +138,14 @@ init_board(void)
 	}
 
 	/* fill the playing area of the board with EMPTY spots */
-	struct combostr *cbp = frames;
+	frame_index fi = 0;
 	memset(frames, 0, sizeof(frames));
 	for (int row = 1; row <= BSZ; row++, sp++) {
 		for (int col = 1; col <= BSZ; col++, sp++) {
 			sp->s_occ = EMPTY;
 			sp->s_wval = 0;
 			init_spot_flags_and_fval(sp, col, row);
-			init_spot_frame(sp, &cbp);
+			init_spot_frame(sp, &fi);
 		}
 		sp->s_occ = BORDER;	/* combined left and right border */
 		sp->s_flags = BFLAGALL;
@@ -247,7 +249,7 @@ init_overlap_frame(int fia, int ra, int sia, spot_index s, int mask)
 			if ((spb0->s_flags & BFLAG << rb) != 0)
 				continue;
 
-			int fib = (int)(spb0->s_frame[rb] - frames);
+			frame_index fib = spb0->s_frame[rb];
 			intersect[fia * FAREA + fib] = s;
 			u_char *op = &overlap[fia * FAREA + fib];
 			*op = adjust_overlap(*op, ra, sia, rb, sib, mask);

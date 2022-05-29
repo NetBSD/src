@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.52 2022/05/29 10:06:43 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.53 2022/05/29 10:37:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.52 2022/05/29 10:06:43 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.53 2022/05/29 10:37:21 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -477,7 +477,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 		if (ncbp == NULL)
 		    panic("Out of memory!");
 		scbpp = (void *)(ncbp + 1);
-		fcbp = fsp->s_frame[r];
+		fcbp = &frames[fsp->s_frame[r]];
 		if (ocbp < fcbp) {
 		    scbpp[0] = ocbp;
 		    scbpp[1] = fcbp;

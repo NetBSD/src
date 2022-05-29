@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.68 2022/05/29 00:38:26 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.69 2022/05/29 10:37:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.68 2022/05/29 00:38:26 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.69 2022/05/29 10:37:21 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -495,7 +495,7 @@ top:
 						break;
 				str[-1] = '\0';
 				sp = &board[s1 = ctos(input + 1)];
-				n = (int)(sp->s_frame[d1] - frames) * FAREA;
+				n = sp->s_frame[d1] * FAREA;
 				*str++ = '\0';
 				break;
 			}
@@ -505,7 +505,7 @@ top:
 		for (d2 = 0; d2 < 4; d2++)
 			if (str[-1] == pdir[d2])
 				break;
-		n += (int)(sp->s_frame[d2] - frames);
+		n += sp->s_frame[d2];
 		debuglog("overlap %s%c,%s%c = %x", stoc(s1), pdir[d1],
 		    stoc(s2), pdir[d2], overlap[n]);
 		goto top;
