@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs.c,v 1.12 2019/04/25 10:44:53 msaitoh Exp $	*/
+/*	$NetBSD: if_cs.c,v 1.13 2022/05/29 10:47:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.12 2019/04/25 10:44:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.13 2022/05/29 10:47:39 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs.c,v 1.12 2019/04/25 10:44:53 msaitoh Exp $");
  * This only effects the value programmed into the CS8920 memory offset
  * registers.
  *
- * Just to add to the fun the I/O registers are layed out as:
+ * Just to add to the fun the I/O registers are laid out as:
  * xxxxR1R0
  * xxxxR3R2
  * xxxxR5R4

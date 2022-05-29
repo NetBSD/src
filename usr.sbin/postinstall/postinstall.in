@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.50 2022/01/08 23:30:41 lukem Exp $
+# $NetBSD: postinstall.in,v 1.51 2022/05/29 10:47:40 andvar Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -587,7 +587,7 @@ exclude()
 }
 
 #
-# find all the target symlinks of shared libaries and exclude them
+# find all the target symlinks of shared libraries and exclude them
 # from consideration for removal
 #
 exclude_libs()
