@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.26 2022/05/06 06:09:50 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.27 2022/05/29 23:39:59 ryo Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
@@ -11,7 +11,7 @@
 #include "opt_dtrace.h"
 #include "opt_gic.h"
 
-RCSID("$NetBSD: vectors.S,v 1.26 2022/05/06 06:09:50 ryo Exp $")
+RCSID("$NetBSD: vectors.S,v 1.27 2022/05/29 23:39:59 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -29,7 +29,7 @@ RCSID("$NetBSD: vectors.S,v 1.26 2022/05/06 06:09:50 ryo Exp $")
 /*
  * Template for the handler functions.
  */
-.macro	vector_func, func, el, label, tpidr
+.macro	vector_func, func, el, intr_p, label, tpidr
 	.align 7	/* cacheline-aligned */
 
 ENTRY_NBTI(\func)
@@ -76,8 +76,13 @@ ENTRY_NBTI(\func)
 	mrs	x22, spsr_el1
 	str	x22, [sp, #TF_SPSR]
 
+	.if \intr_p == 1
+	mov	x23, #-1
+	mov	x24, xzr
+	.else
 	mrs	x23, esr_el1
 	mrs	x24, far_el1
+	.endif
 
 	.if TF_ESR + 8 == TF_FAR
 	stp	x23, x24, [sp, #TF_ESR]
@@ -126,25 +131,25 @@ END(\func)
 /*
  * The functions.
  */
-vector_func	el1t_sync_handler,  1, trap_el1t_sync
-vector_func	el1t_irq_handler,   1, trap_el1t_irq
-vector_func	el1t_fiq_handler,   1, trap_el1t_fiq
-vector_func	el1t_error_handler, 1, trap_el1t_error
+vector_func	el1t_sync_handler,  1, 0, trap_el1t_sync
+vector_func	el1t_irq_handler,   1, 1, trap_el1t_irq
+vector_func	el1t_fiq_handler,   1, 1, trap_el1t_fiq
+vector_func	el1t_error_handler, 1, 0, trap_el1t_error
 
-vector_func	el1h_sync_handler,  1, trap_el1h_sync
-vector_func	el1h_intr_handler,  1, cpu_irq
-vector_func	el1h_fiq_handler,   1, cpu_fiq
-vector_func	el1h_error_handler, 1, trap_el1h_error
+vector_func	el1h_sync_handler,  1, 0, trap_el1h_sync
+vector_func	el1h_intr_handler,  1, 1, cpu_irq
+vector_func	el1h_fiq_handler,   1, 1, cpu_fiq
+vector_func	el1h_error_handler, 1, 0, trap_el1h_error
 
-vector_func	el0_sync_handler,  0, trap_el0_sync
-vector_func	el0_intr_handler,  0, cpu_irq
-vector_func	el0_fiq_handler,   0, cpu_fiq
-vector_func	el0_error_handler, 0, trap_el0_error
+vector_func	el0_sync_handler,  0, 0, trap_el0_sync
+vector_func	el0_intr_handler,  0, 1, cpu_irq
+vector_func	el0_fiq_handler,   0, 1, cpu_fiq
+vector_func	el0_error_handler, 0, 0, trap_el0_error
 
-vector_func	el0_32sync_handler,  0, trap_el0_32sync, ro
-vector_func	el0_32intr_handler,  0, cpu_irq, ro
-vector_func	el0_32fiq_handler,   0, cpu_fiq, ro
-vector_func	el0_32error_handler, 0, trap_el0_32error, ro
+vector_func	el0_32sync_handler,  0, 0, trap_el0_32sync, ro
+vector_func	el0_32intr_handler,  0, 1, cpu_irq, ro
+vector_func	el0_32fiq_handler,   0, 1, cpu_fiq, ro
+vector_func	el0_32error_handler, 0, 0, trap_el0_32error, ro
 
 /*
  * The vector table. Must be aligned to 2048.
