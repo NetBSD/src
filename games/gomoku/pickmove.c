@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.57 2022/05/29 13:49:10 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.58 2022/05/29 14:01:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.57 2022/05/29 13:49:10 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.58 2022/05/29 14:01:57 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -235,7 +235,7 @@ four_in_a_row(int color, spot_index s, direction r)
 	if (cb.s >= 0x101)
 		return false;
 
-	for (int i = 5 + cb.cv_win, d = dd[r]; --i >= 0; sp += d) {
+	for (int off = 5 + cb.cv_win, d = dd[r]; off-- > 0; sp += d) {
 		if (sp->s_occ != EMPTY)
 			continue;
 		sp->s_combo[color].s = cb.s;
