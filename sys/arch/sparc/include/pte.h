@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.32 2017/12/01 23:14:20 mrg Exp $ */
+/*	$NetBSD: pte.h,v 1.33 2022/05/29 10:47:39 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -147,7 +147,7 @@ typedef u_char smeg_t;		/* 8 bits needed per Sun-4 regmap entry */
  *
  * (the above being in the hardware, accessed as Alternate Address Spaces on
  *  all machines but the Sun4m SRMMU, in which case the tables are in physical
- *  kernel memory. In the 4m architecture, the tables are not layed out as
+ *  kernel memory. In the 4m architecture, the tables are not laid out as
  *  2-dim arrays, but are sparsely allocated as needed, and point to each
  *  other.)
  *
