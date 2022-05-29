@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.51 2022/05/29 00:12:11 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.52 2022/05/29 14:37:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.51 2022/05/29 00:12:11 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.52 2022/05/29 14:37:44 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -98,15 +98,15 @@ bdisp_init(void)
 {
 
 	/* top and bottom borders */
-	for (int i = 1; i < BSZ + 1; i++) {
-		mvaddch(scr_y(BSZ + 1), scr_x(i), letters[i]);
-		mvaddch(scr_y(0), scr_x(i), letters[i]);
+	for (int col = 1; col <= BSZ; col++) {
+		mvaddch(scr_y(BSZ + 1), scr_x(col), letters[col]);
+		mvaddch(scr_y(0), scr_x(col), letters[col]);
 	}
 
 	/* left and right edges */
-	for (int j = BSZ + 1; --j > 0; ) {
-		mvprintw(scr_y(j), 0, "%2d", j);
-		mvprintw(scr_y(j), scr_x(BSZ) + 2, "%d", j);
+	for (int row = BSZ; row >= 1; row--) {
+		mvprintw(scr_y(row), 0, "%2d", row);
+		mvprintw(scr_y(row), scr_x(BSZ) + 2, "%d", row);
 	}
 
 	bdwho();
@@ -154,9 +154,9 @@ should_highlight(spot_index s)
 
 	if (game.nmoves > 0 && game.moves[game.nmoves - 1] == s)
 		return true;
-	if (game.winning_spot != 0)
-		for (int i = 0; i < 5; i++)
-			if (s == game.winning_spot + i * dd[game.winning_dir])
+	if (game.win_spot != 0)
+		for (int off = 0; off < 5; off++)
+			if (s == game.win_spot + off * dd[game.win_dir])
 				return true;
 	return false;
 }
@@ -170,9 +170,9 @@ bdisp(void)
 	int c;
 	struct spotstr *sp;
 
-	for (int j = BSZ + 1; --j > 0; ) {
-		for (int i = 1; i < BSZ + 1; i++) {
-			sp = &board[i + j * (BSZ + 1)];
+	for (int row = BSZ + 1; --row > 0; ) {
+		for (int col = 1; col <= BSZ; col++) {
+			sp = &board[PT(col, row)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
 				if ((sp->s_flags & IFLAGALL) != 0)
 					c = '+';
@@ -183,8 +183,8 @@ bdisp(void)
 			} else
 				c = pcolor[sp->s_occ];
 
-			move(scr_y(j), scr_x(i));
-			if (should_highlight(PT(i, j))) {
+			move(scr_y(row), scr_x(col));
+			if (should_highlight(PT(col, row))) {
 				attron(A_BOLD);
 				addch(c);
 				attroff(A_BOLD);
@@ -208,11 +208,11 @@ bdump(FILE *fp)
 	/* top border */
 	fprintf(fp, "   A B C D E F G H J K L M N O P Q R S T\n");
 
-	for (int j = BSZ + 1; --j > 0; ) {
-		/* left edge */
-		fprintf(fp, "%2d ", j);
-		for (int i = 1; i < BSZ + 1; i++) {
-			sp = &board[i + j * (BSZ + 1)];
+	for (int row = BSZ + 1; --row > 0; ) {
+		fprintf(fp, "%2d ", row);	/* left edge */
+
+		for (int col = 1; col <= BSZ; col++) {
+			sp = &board[PT(col, row)];
 			if (debug > 1 && sp->s_occ == EMPTY) {
 				if ((sp->s_flags & IFLAGALL) != 0)
 					c = '+';
@@ -225,8 +225,8 @@ bdump(FILE *fp)
 			putc(c, fp);
 			putc(' ', fp);
 		}
-		/* right edge */
-		fprintf(fp, "%d\n", j);
+
+		fprintf(fp, "%d\n", row);	/* right edge */
 	}
 
 	/* bottom border */

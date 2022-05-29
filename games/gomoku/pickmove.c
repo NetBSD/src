@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.58 2022/05/29 14:01:57 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.59 2022/05/29 14:37:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.58 2022/05/29 14:01:57 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.59 2022/05/29 14:37:44 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -256,7 +256,7 @@ scanframes(int color)
 	struct spotstr *sp;
 	union comboval *cp;
 	struct elist *nep;
-	int i, r, n;
+	int off, r, n;
 	union comboval cb;
 
 	curcolor = color;
@@ -301,12 +301,12 @@ scanframes(int color)
 			else if (color != nextcolor)
 				memset(tmpmap, 0, sizeof(tmpmap));
 			sp += delta;
-			i = 1;
+			off = 1;
 		} else {
 			cb.s = cp->s;
-			i = 0;
+			off = 0;
 		}
-		for (; i < 5; i++, sp += delta) {	/* for each spot */
+		for (; off < 5; off++, sp += delta) {	/* for each spot */
 			if (sp->s_occ != EMPTY)
 				continue;
 			if (cp->s < sp->s_combo[color].s) {
@@ -325,13 +325,13 @@ scanframes(int color)
 			 * Try combining other frames that intersect
 			 * at this spot.
 			 */
-			makecombo2(cbp, sp, i, cb.s);
+			makecombo2(cbp, sp, off, cb.s);
 		}
 		if (cp->s == 0x101 && color != nextcolor) {
 			if (nforce == 0)
 				memcpy(forcemap, tmpmap, sizeof(tmpmap));
 			else {
-				for (i = 0; (unsigned int)i < MAPSZ; i++)
+				for (int i = 0; (unsigned int)i < MAPSZ; i++)
 					forcemap[i] &= tmpmap[i];
 			}
 		}
@@ -558,24 +558,24 @@ addframes(unsigned int level)
 	struct combostr *cbp, *ecbp;
 	struct spotstr *fsp;
 	struct elist *nep;
-	int i, r;
+	int r;
 	struct combostr **cbpp, *pcbp;
 	union comboval fcb, cb;
 
 	curlevel = level;
 
 	/* scan for combos at empty spots */
-	i = curcolor;
+	int c = curcolor;
 	for (unsigned pos = PT(BSZ, BSZ + 1); pos-- > PT(1, 1); ) {
 		struct spotstr *sp = &board[pos];
 		for (struct elist *ep = sp->s_empty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
-			if (cbp->c_combo.s <= sp->s_combo[i].s) {
-				if (cbp->c_combo.s != sp->s_combo[i].s) {
-					sp->s_combo[i].s = cbp->c_combo.s;
-					sp->s_level[i] = cbp->c_nframes;
-				} else if (cbp->c_nframes < sp->s_level[i])
-					sp->s_level[i] = cbp->c_nframes;
+			if (cbp->c_combo.s <= sp->s_combo[c].s) {
+				if (cbp->c_combo.s != sp->s_combo[c].s) {
+					sp->s_combo[c].s = cbp->c_combo.s;
+					sp->s_level[c] = cbp->c_nframes;
+				} else if (cbp->c_nframes < sp->s_level[c])
+					sp->s_level[c] = cbp->c_nframes;
 			}
 			nep = ep->e_next;
 			free(ep);
@@ -621,10 +621,10 @@ addframes(unsigned int level)
 		 */
 		int d = dd[r];
 		struct spotstr *sp = fsp + d;
-		for (i = 1; i < 5; i++, sp += d) {
+		for (int off = 1; off < 5; off++, sp += d) {
 			if (sp->s_occ != EMPTY)
 				continue;
-			makecombo(cbp, sp, i, fcb.s);
+			makecombo(cbp, sp, off, fcb.s);
 		}
 	} while ((cbp = cbp->c_next) != ecbp);
 
@@ -996,8 +996,8 @@ updatecombo(struct combostr *cbp, int color)
 			spot_index s = tcbp->c_vertex;
 			struct spotstr *sp = &board[s];
 			int d = dd[tcbp->c_dir];
-			int i = (flags & C_OPEN_1) != 0 ? 6 : 5;
-			for (; --i >= 0; sp += d, s += d) {
+			int off = (flags & C_OPEN_1) != 0 ? 6 : 5;
+			for (; --off >= 0; sp += d, s += d) {
 				if (sp->s_occ != EMPTY)
 					continue;
 				sp->s_nforce[color]++;
@@ -1021,8 +1021,8 @@ updatecombo(struct combostr *cbp, int color)
 		spot_index s = cbp->c_vertex;
 		struct spotstr *sp = &board[s];
 		int d = dd[cbp->c_dir];
-		int i = (flags & C_OPEN_0) != 0 ? 6 : 5;
-		for (; --i >= 0; sp += d, s += d) {
+		int off = (flags & C_OPEN_0) != 0 ? 6 : 5;
+		for (; --off >= 0; sp += d, s += d) {
 			if (sp->s_occ != EMPTY)
 				continue;
 			sp->s_nforce[color]++;
@@ -1038,7 +1038,7 @@ updatecombo(struct combostr *cbp, int color)
 		if (nforce == 0)
 			memcpy(forcemap, tmpmap, sizeof(tmpmap));
 		else {
-			for (i = 0; (unsigned int)i < MAPSZ; i++)
+			for (int i = 0; (unsigned int)i < MAPSZ; i++)
 				forcemap[i] &= tmpmap[i];
 		}
 		nforce++;
@@ -1085,7 +1085,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	    int cv, struct overlap_info *vertices)
 {
 	struct combostr *tcbp, *lcbp;
-	int i, n, mask, flags, verts, myindex, fcnt;
+	int ovbit, n, mask, flags, verts, myindex, fcnt;
 	union comboval cb;
 	u_char *str;
 
@@ -1100,10 +1100,10 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	str = &overlap[n];
 	spot_index *ip = &intersect[n];
 	/*
-	 * i == which overlap bit to test based on whether 'fcbp' is
+	 * ovbit == which overlap bit to test based on whether 'fcbp' is
 	 * an open or closed frame.
 	 */
-	i = cb.cv_win != 0 ? 2 : 0;
+	ovbit = cb.cv_win != 0 ? 2 : 0;
 	for (; (tcbp = cbp->c_link[1]) != NULL;
 	    lcbp = cbp, cbp = cbp->c_link[0]) {
 		if (tcbp == fcbp)
@@ -1113,7 +1113,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 		myindex--;
 		mask = str[tcbp - frames];
 		flags = cbp->c_flags;
-		n = i + ((flags & C_OPEN_1) != 0 ? 1 : 0);
+		n = ovbit + ((flags & C_OPEN_1) != 0 ? 1 : 0);
 		if ((mask & (1 << n)) != 0) {
 			/*
 			 * The two frames are not independent if they
@@ -1156,7 +1156,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				verts++;
 			}
 		}
-		n = i + ((flags & C_OPEN_0) != 0 ? 1 : 0);
+		n = ovbit + ((flags & C_OPEN_0) != 0 ? 1 : 0);
 	}
 	if (cbp == fcbp)
 		return -1;	/* fcbp is already included */

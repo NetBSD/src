@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.69 2022/05/29 10:37:21 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.70 2022/05/29 14:37:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.69 2022/05/29 10:37:21 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.70 2022/05/29 14:37:44 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -115,8 +115,8 @@ save_game(void)
 		misclog("cannot create save file");
 		return;
 	}
-	for (unsigned int i = 0; i < game.nmoves; i++)
-		fprintf(fp, "%s\n", stoc(game.moves[i]));
+	for (unsigned int m = 0; m < game.nmoves; m++)
+		fprintf(fp, "%s\n", stoc(game.moves[m]));
 	fclose(fp);
 }
 
@@ -420,7 +420,8 @@ readinput(FILE *fp)
 void
 whatsup(int signum __unused)
 {
-	int i, n, s1, s2, d1, d2;
+	int n, s1, s2, d1, d2, color;
+	spot_index s;
 	struct spotstr *sp;
 	FILE *fp;
 	char *str;
@@ -455,9 +456,9 @@ top:
 		}
 		goto top;
 	case 's':		/* suggest a move */
-		i = input[1] == 'b' ? BLACK : WHITE;
-		debuglog("suggest %c %s", i == BLACK ? 'B' : 'W',
-			stoc(pickmove(i)));
+		color = input[1] == 'b' ? BLACK : WHITE;
+		debuglog("suggest %c %s", color == BLACK ? 'B' : 'W',
+			stoc(pickmove(color)));
 		goto top;
 	case 'f':		/* go forward a move */
 		board[game.moves[game.nmoves]].s_occ =
@@ -510,16 +511,16 @@ top:
 		    stoc(s2), pdir[d2], overlap[n]);
 		goto top;
 	case 'p':
-		sp = &board[i = ctos(input + 1)];
-		debuglog("V %s %x/%d %d %x/%d %d %d %x", stoc(i),
+		sp = &board[s = ctos(input + 1)];
+		debuglog("V %s %x/%d %d %x/%d %d %d %x", stoc(s),
 			sp->s_combo[BLACK].s, sp->s_level[BLACK],
 			sp->s_nforce[BLACK],
 			sp->s_combo[WHITE].s, sp->s_level[WHITE],
 			sp->s_nforce[WHITE], sp->s_wval, sp->s_flags);
-		debuglog("FB %s %x %x %x %x", stoc(i),
+		debuglog("FB %s %x %x %x %x", stoc(s),
 			sp->s_fval[BLACK][0].s, sp->s_fval[BLACK][1].s,
 			sp->s_fval[BLACK][2].s, sp->s_fval[BLACK][3].s);
-		debuglog("FW %s %x %x %x %x", stoc(i),
+		debuglog("FW %s %x %x %x %x", stoc(s),
 			sp->s_fval[WHITE][0].s, sp->s_fval[WHITE][1].s,
 			sp->s_fval[WHITE][2].s, sp->s_fval[WHITE][3].s);
 		goto top;
@@ -529,7 +530,7 @@ top:
 			n = *str++ - '0';
 		else
 			n = 0;
-		sp = &board[i = ctos(str)];
+		sp = &board[ctos(str)];
 		for (ep = sp->s_empty; ep != NULL; ep = ep->e_next) {
 			cbp = ep->e_combo;
 			if (n != 0) {
