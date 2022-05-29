@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.34 2022/05/29 14:37:44 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.35 2022/05/29 16:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.34 2022/05/29 14:37:44 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.35 2022/05/29 16:30:44 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -130,6 +130,8 @@ init_board(void)
 
 	game.nmoves = 0;
 	game.win_spot = 0;
+	game.user_x = 1 + (BSZ - 1) / 2;
+	game.user_y = 1 + (BSZ - 1) / 2;
 
 	struct spotstr *sp = board;
 	for (int i = 0; i < 1 + BSZ + 1; i++, sp++) {
