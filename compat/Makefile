@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2012/08/17 16:22:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2022/05/29 10:47:39 andvar Exp $
 
-# Build multi-abi libaries
+# Build multi-abi libraries
 
 .include <bsd.own.mk>
 

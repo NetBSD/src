@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2020/09/07 00:29:14 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2022/05/29 10:47:40 andvar Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SRCS.t_ubsanxx=	t_ubsanxx.cpp
 
 .if ${MKSANITIZER:Uno} != "yes" && ${MKLIBCSANITIZER:Uno} != "yes"
 # These tests are designed to be used against micro-UBSan only.
-# micro-UBSan is used in these tests as a standalone libary only.
+# micro-UBSan is used in these tests as a standalone library only.
 CPPFLAGS+=		-DENABLE_TESTS
 SRCS.t_ubsan+=		ubsan.c
 SRCS.t_ubsanxx+=	ubsan.c

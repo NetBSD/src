@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.13 2017/02/13 16:53:41 zafer Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.14 2022/05/29 10:47:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -63,8 +63,8 @@
  *	due to swap interleaving not all that much less), but the blist code 
  *	scales much, much better.
  *
- *	LAYOUT: The radix tree is layed out recursively using a
- *	linear array.  Each meta node is immediately followed (layed out
+ *	LAYOUT: The radix tree is laid out recursively using a
+ *	linear array.  Each meta node is immediately followed (laid out
  *	sequentially in memory) by BLIST_META_RADIX lower level nodes.  This
  *	is a recursive structure but one that can be easily scanned through
  *	a very simple 'skip' calculation.  In order to support large radixes, 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.13 2017/02/13 16:53:41 zafer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.14 2022/05/29 10:47:40 andvar Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
