@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.48 2022/05/29 00:38:26 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.49 2022/05/29 10:37:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -154,7 +154,7 @@ struct combostr {
 	union comboval	c_linkv[2];	/* C: combo value for link[0, 1] */
 	union comboval	c_combo;	/* F: initial combo value (read-only),
 					 * C: combo value for this level */
-	u_short		c_vertex;	/* F: frame head,
+	spot_index	c_vertex;	/* F: frame head,
 					 * C: intersection */
 	u_char		c_nframes;	/* F: 1,
 					 * C: number of frames in the combo */
@@ -187,6 +187,9 @@ struct	elist {
 	union comboval	e_fval;		/* frame combo value */
 };
 
+/* The index of a frame in the global 'frames'. */
+typedef unsigned short frame_index;
+
 /*
  * One spot structure for each location on the board.
  * A frame consists of the combination for the current spot plus the five spots
@@ -196,14 +199,13 @@ struct	spotstr {
 	short		s_occ;		/* color of occupant */
 	short		s_wval;		/* weighted value */
 	int		s_flags;	/* flags for graph walks */
-	struct combostr	*s_frame[4];	/* level 1 combo for frame[dir] */
+	frame_index	s_frame[4];	/* level 1 combo for [dir] */
 	union comboval	s_fval[2][4];	/* combo value for [color][frame] */
 	union comboval	s_combo[2];	/* minimum combo value for BLK & WHT */
 	u_char		s_level[2];	/* number of frames in the min combo */
 	u_char		s_nforce[2];	/* number of <1,x> combos */
 	struct elist	*s_empty;	/* level n combo completion spots */
 	struct elist	*s_nempty;	/* level n+1 combo completion spots */
-	int		dummy[2];	/* XXX */
 };
 
 /* flag values for s_flags */
