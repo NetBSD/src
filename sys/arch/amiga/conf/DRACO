@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.199 2022/05/29 10:43:19 andvar Exp $
+# $NetBSD: DRACO,v 1.200 2022/05/29 10:51:42 rin Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.148 2021/01/21 06:51:54 nia Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.149 2022/05/29 10:43:19 andvar Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.199 $"
+#ident 		"GENERIC-$Revision: 1.200 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
