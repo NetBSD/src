@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.49 2022/05/29 00:12:11 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.50 2022/05/29 00:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.49 2022/05/29 00:12:11 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.50 2022/05/29 00:38:26 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -1078,7 +1078,6 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	int i, n, mask, flags, verts, myindex, fcnt;
 	union comboval cb;
 	u_char *str;
-	short *ip;
 
 	lcbp = NULL;
 	flags = 0;
@@ -1089,7 +1088,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	myindex = cbp->c_nframes;
 	n = (int)(fcbp - frames) * FAREA;
 	str = &overlap[n];
-	ip = &intersect[n];
+	spot_index *ip = &intersect[n];
 	/*
 	 * i == which overlap bit to test based on whether 'fcbp' is
 	 * an open or closed frame.
@@ -1119,8 +1118,8 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			 * 'fcbp' to, and it is a reasonable intersection
 			 * spot, then there might be a loop.
 			 */
-			n = ip[tcbp - frames];
-			if (osp != &board[n]) {
+			spot_index s = ip[tcbp - frames];
+			if (osp != &board[s]) {
 				/* check to see if this is a valid loop */
 				if (verts != 0)
 					return -1;
@@ -1132,16 +1131,16 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				 * open-ended frame.
 				 */
 				if ((flags & C_OPEN_1) != 0 &&
-				    (n == tcbp->c_vertex ||
-				     n == tcbp->c_vertex + 5 * dd[tcbp->c_dir]))
+				    (s == tcbp->c_vertex ||
+				     s == tcbp->c_vertex + 5 * dd[tcbp->c_dir]))
 					return -1;	/* invalid overlap */
 				if (cb.cv_win != 0 &&
-				    (n == fcbp->c_vertex ||
-				     n == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
+				    (s == fcbp->c_vertex ||
+				     s == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
 					return -1;	/* invalid overlap */
 
-				vertices->o_intersect = n;
-				vertices->o_off = (n - tcbp->c_vertex) /
+				vertices->o_intersect = s;
+				vertices->o_off = (s - tcbp->c_vertex) /
 					dd[tcbp->c_dir];
 				vertices->o_frameindex = myindex;
 				verts++;
@@ -1167,8 +1166,8 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 		 * 'fcbp' to, and it is a reasonable intersection
 		 * spot, then there might be a loop.
 		 */
-		n = ip[cbp - frames];
-		if (osp != &board[n]) {
+		spot_index s = ip[cbp - frames];
+		if (osp != &board[s]) {
 			/* check to see if this is a valid loop */
 			if (verts != 0)
 				return -1;
@@ -1180,16 +1179,16 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			 * frame.
 			 */
 			if ((flags & C_OPEN_0) != 0 &&
-			    (n == cbp->c_vertex ||
-			     n == cbp->c_vertex + 5 * dd[cbp->c_dir]))
+			    (s == cbp->c_vertex ||
+			     s == cbp->c_vertex + 5 * dd[cbp->c_dir]))
 				return -1;	/* invalid overlap */
 			if (cb.cv_win != 0 &&
-			    (n == fcbp->c_vertex ||
-			     n == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
+			    (s == fcbp->c_vertex ||
+			     s == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
 				return -1;	/* invalid overlap */
 
-			vertices->o_intersect = n;
-			vertices->o_off = (n - cbp->c_vertex) /
+			vertices->o_intersect = s;
+			vertices->o_off = (s - cbp->c_vertex) /
 				dd[cbp->c_dir];
 			vertices->o_frameindex = 0;
 			verts++;

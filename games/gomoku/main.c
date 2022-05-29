@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67 2022/05/29 00:12:11 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.68 2022/05/29 00:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.67 2022/05/29 00:12:11 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.68 2022/05/29 00:38:26 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -78,7 +78,7 @@ struct	combostr frames[FAREA];		/* storage for all frames */
 struct	combostr *sortframes[2];	/* sorted list of non-empty frames */
 u_char	overlap[FAREA * FAREA];		/* non-zero if frame [a][b] overlap;
 					 * see init_overlap */
-short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
+spot_index intersect[FAREA * FAREA];	/* frame [a][b] intersection */
 struct game game;
 const char *plyr[2] = { "???", "???" };	/* who's who */
 
