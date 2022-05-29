@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.69 2022/03/03 06:26:05 riastradh Exp $ */
+/* $NetBSD: cpu.c,v 1.70 2022/05/29 16:14:41 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.69 2022/03/03 06:26:05 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.70 2022/05/29 16:14:41 ryo Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -170,7 +170,9 @@ cpu_attach(device_t dv, cpuid_t id)
 	    return;
 	}
 
+#ifdef DDB
 	db_machdep_init(ci);
+#endif
 
 	cpu_init_counter(ci);
 
