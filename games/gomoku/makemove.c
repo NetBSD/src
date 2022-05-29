@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.37 2022/05/29 11:36:12 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.38 2022/05/29 13:49:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.37 2022/05/29 11:36:12 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.38 2022/05/29 13:49:10 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -77,7 +77,7 @@ sortframes_remove(struct combostr *cbp)
 }
 
 static int
-old_weight_value(const struct spotstr *sp, int r)
+old_weight_value(const struct spotstr *sp, direction r)
 {
 	union comboval cb;
 	int val = 0;
@@ -115,7 +115,7 @@ makemove(int us, spot_index mv)
 
 	/* compute new frame values */
 	sp->s_wval = 0;
-	for (int r = 4; --r >= 0; ) {		/* for each direction */
+	for (direction r = 4; r-- > 0; ) {
 	    int d = dd[r];
 	    struct spotstr *fsp = &board[mv];
 
@@ -161,7 +161,8 @@ makemove(int us, spot_index mv)
 		}
 
 		/* compute new value & combo number for this frame & color */
-		fsp->s_fval[us != BLACK ? BLACK : WHITE][r].s = 0x600;
+		int them = us != BLACK ? BLACK : WHITE;
+		fsp->s_fval[them][r].s = 0x600;
 		union comboval *cp = &fsp->s_fval[us][r];
 		/* both ends open? */
 		if (space && sp->s_occ == EMPTY) {
@@ -233,7 +234,8 @@ makemove(int us, spot_index mv)
 
 static void
 update_overlap_same_direction(spot_index s1, spot_index s2,
-			      frame_index a, int d, int i_minus_f, int r)
+			      frame_index a, int d, int i_minus_f,
+			      direction r)
 {
 	/*
 	 * count the number of empty spots to see if there is
@@ -275,13 +277,13 @@ update_overlap_same_direction(spot_index s1, spot_index s2,
 }
 
 /*
- * The last move was at 'osp', which is part of frame 'a'. There are 6 frames
- * with direction 'rb' that cross frame 'a' in 'osp'. Since the spot 'osp'
+ * The last move was at 'os', which is part of frame 'a'. There are 6 frames
+ * with direction 'rb' that cross frame 'a' in 'os'. Since the spot 'os'
  * cannot be used as a double threat anymore, mark each of these crossing
  * frames as non-overlapping with frame 'a'.
  */
 static void
-update_overlap_different_direction(spot_index os, frame_index a, int rb)
+update_overlap_different_direction(spot_index os, frame_index a, direction rb)
 {
 
 	int db = dd[rb];
@@ -299,17 +301,17 @@ update_overlap_different_direction(spot_index os, frame_index a, int rb)
 }
 
 /*
- * fix up the overlap array according to the changed 'osp'.
+ * fix up the overlap array according to the changed 'os'.
  */
 static void
 update_overlap(spot_index os)
 {
 
-	for (int r = 4; --r >= 0; ) {		/* for each direction */
+	for (direction r = 4; r-- > 0; ) {
 	    int d = dd[r];
 	    spot_index s1 = os;
 
-	    /* for each frame 'a' that contains the spot 'osp' */
+	    /* for each frame 'a' that contains the spot 'os' */
 	    for (int f = 0; f < 6; f++, s1 -= d) {
 		if (board[s1].s_occ == BORDER)
 		    break;
@@ -321,7 +323,7 @@ update_overlap(spot_index os)
 		 * to indicate whether they still overlap or not.
 		 * Since F1 overlap F2 == F2 overlap F1, we only need to
 		 * do the rows 0 <= r1 <= r. The r1 == r case is special
-		 * since the two frames can overlap at more than one point.
+		 * since the two frames can overlap in more than one spot.
 		 */
 		frame_index a = board[s1].s_frame[r];
 
@@ -335,8 +337,8 @@ update_overlap(spot_index os)
 		    update_overlap_same_direction(s1, s2, a, d, i - f, r);
 		}
 
-		/* the other directions can only intersect at spot osp */
-		for (int rb = 0; rb < r; rb++)
+		/* the other directions can only intersect at spot 'os' */
+		for (direction rb = 0; rb < r; rb++)
 			update_overlap_different_direction(os, a, rb);
 	    }
 	}
