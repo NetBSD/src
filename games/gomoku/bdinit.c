@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.30 2022/05/29 10:37:21 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.31 2022/05/29 11:36:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.30 2022/05/29 10:37:21 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.31 2022/05/29 11:36:12 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -118,7 +118,7 @@ init_spot_frame(struct spotstr *sp, frame_index *fip)
 
 		struct combostr *cbp = &frames[fi];
 		cbp->c_combo.s = sp->s_fval[BLACK][r].s;
-		cbp->c_vertex = (u_short)(sp - board);
+		cbp->c_vertex = (spot_index)(sp - board);
 		cbp->c_nframes = 1;
 		cbp->c_dir = r;
 	}

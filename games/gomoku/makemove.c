@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.36 2022/05/29 10:37:21 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.37 2022/05/29 11:36:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.36 2022/05/29 10:37:21 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.37 2022/05/29 11:36:12 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -155,7 +155,7 @@ makemove(int us, spot_index mv)
 
 		/* check for game over */
 		if (n == 5) {
-		    game.winning_spot = (int)(fsp - board);
+		    game.winning_spot = (spot_index)(fsp - board);
 		    game.winning_dir = r;
 		    return WIN;
 		}
