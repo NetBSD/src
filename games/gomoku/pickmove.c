@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.66 2022/05/29 21:38:36 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.67 2022/05/29 21:47:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.66 2022/05/29 21:38:36 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.67 2022/05/29 21:47:12 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -106,6 +106,7 @@ pickmove(player_color us)
 	memset(forcemap, 0, sizeof(forcemap));
 
 	/* compute new values */
+	player_color them = us != BLACK ? BLACK : WHITE;
 	nextcolor = us;
 	/*
 	 * TODO: Scanning for both frames misses that after loading the game
@@ -117,8 +118,8 @@ pickmove(player_color us)
 	scanframes(WHITE);
 
 	/* find the spot with the highest value */
-	spot_index s1 = PT(BSZ, BSZ);
-	spot_index s2 = PT(BSZ, BSZ);
+	spot_index os = PT(BSZ, BSZ);		/* our spot */
+	spot_index ts = PT(BSZ, BSZ);		/* their spot */
 	for (spot_index s = PT(BSZ, BSZ); s-- > PT(1, 1); ) {
 		const struct spotstr *sp = &board[s];
 		if (sp->s_occ != EMPTY)
@@ -136,13 +137,15 @@ pickmove(player_color us)
 			    sp->s_wval);
 		}
 
-		if (better(s, s1, BLACK))	/* pick the best black move */
-			s1 = s;
-		if (better(s, s2, WHITE))	/* pick the best white move */
-			s2 = s;
+		if (better(s, os, us))		/* pick our best move */
+			os = s;
+		if (better(s, ts, them))	/* pick their best move */
+			ts = s;
 	}
 
 	if (debug > 0) {
+		spot_index s1 = us == BLACK ? os : ts;
+		spot_index s2 = us == BLACK ? ts : os;
 		const struct spotstr *sp1 = &board[s1], *sp2 = &board[s2];
 		debuglog("B %s %x/%d %d %x/%d %d %d",
 		    stoc(s1),
@@ -161,36 +164,24 @@ pickmove(player_color us)
 		 * Check for more than one force that can't all be blocked
 		 * with one move.
 		 */
-		spot_index m = us == BLACK ? s2 : s1;
-		player_color them = us != BLACK ? BLACK : WHITE;
-		if (board[m].s_combo[them].cv_force == 1 &&
-		    !BIT_TEST(forcemap, m))
+		if (board[ts].s_combo[them].cv_force == 1 &&
+		    !BIT_TEST(forcemap, ts))
 			debuglog("*** Can't be blocked");
 	}
 
-	union comboval *Ocp, *Tcp;
-	if (us == BLACK) {
-		Ocp = &board[s1].s_combo[BLACK];
-		Tcp = &board[s2].s_combo[WHITE];
-	} else {
-		Tcp = &board[s1].s_combo[BLACK];
-		Ocp = &board[s2].s_combo[WHITE];
-
-		spot_index tmp = s1;
-		s1 = s2;
-		s2 = tmp;
-	}
+	union comboval ocv = board[os].s_combo[us];
+	union comboval tcv = board[ts].s_combo[them];
 
 	/*
 	 * Block their combo only if we have to (i.e., if they are one move
 	 * away from completing a force, and we don't have a force that
 	 * we can complete which takes fewer moves to win).
 	 */
-	if (Tcp->cv_force <= 1 &&
-	    !(Ocp->cv_force <= 1 &&
-	      Tcp->cv_force + Tcp->cv_win >= Ocp->cv_force + Ocp->cv_win))
-		return s2;
-	return s1;
+	if (tcv.cv_force <= 1 &&
+	    !(ocv.cv_force <= 1 &&
+	      tcv.cv_force + tcv.cv_win >= ocv.cv_force + ocv.cv_win))
+		return ts;
+	return os;
 }
 
 /*
