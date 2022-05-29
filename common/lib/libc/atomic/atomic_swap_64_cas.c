@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64_cas.c,v 1.9 2014/06/28 20:18:55 joerg Exp $	*/
+/*	$NetBSD: atomic_swap_64_cas.c,v 1.10 2022/05/29 08:11:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ atomic_swap_64(volatile uint64_t *addr, uint64_t new)
 	return (old);
 }
 
-crt_alias(__atomic_exchange_8,_atomic_swap_8)
+crt_alias(__atomic_exchange_8,_atomic_swap_64)
 
 #undef atomic_swap_64
 atomic_op_alias(atomic_swap_64,_atomic_swap_64)
