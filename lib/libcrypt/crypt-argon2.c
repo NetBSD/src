@@ -335,7 +335,7 @@ decode_option(argon2_context *ctx, argon2_type *atype, const char *option)
 	}
 
 	a = strsep(&inp, "$");
-	if (a == null) {
+	if (a == NULL) {
 		free(in);
 		return -1;
  	}
