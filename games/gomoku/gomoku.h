@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.54 2022/05/29 16:30:44 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.55 2022/05/29 17:01:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -256,7 +256,7 @@ extern bool interactive;
 extern const char *plyr[];
 
 void	init_board(void);
-int	get_coord(void);
+spot_index get_coord(void);
 int	get_key(const char *);
 bool	get_line(char *, int, void (*)(const char *));
 void	ask(const char *);
