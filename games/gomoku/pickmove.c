@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.64 2022/05/29 18:25:39 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.65 2022/05/29 21:02:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.64 2022/05/29 18:25:39 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.65 2022/05/29 21:02:37 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -69,12 +69,12 @@ static unsigned int tmpmap[MAPSZ];	/* map for blocking <1,x> combos */
 static int nforce;			/* count of opponent <1,x> combos */
 
 static bool better(spot_index, spot_index, player_color);
-static void scanframes(int);
+static void scanframes(player_color);
 static void makecombo2(struct combostr *, struct spotstr *, u_char, u_short);
 static void addframes(unsigned int);
 static void makecombo(struct combostr *, struct spotstr *, u_char, u_short);
-static void appendcombo(struct combostr *, int);
-static void updatecombo(struct combostr *, int);
+static void appendcombo(struct combostr *);
+static void updatecombo(struct combostr *, player_color);
 static void makeempty(struct combostr *);
 static int checkframes(struct combostr *, struct combostr *, struct spotstr *,
 		    u_short, struct overlap_info *);
@@ -223,11 +223,11 @@ better(spot_index s, spot_index s1, player_color us)
 	return (random() & 1) != 0;
 }
 
-static int curcolor;	/* implicit parameter to makecombo() */
+static player_color curcolor;	/* implicit parameter to makecombo() */
 static unsigned int curlevel;	/* implicit parameter to makecombo() */
 
 static bool
-four_in_a_row(int color, spot_index s, direction r)
+four_in_a_row(player_color color, spot_index s, direction r)
 {
 
 	struct spotstr *sp = &board[s];
@@ -250,7 +250,7 @@ four_in_a_row(int color, spot_index s, direction r)
  * Also, try to combine frames to find more complex (chained) moves.
  */
 static void
-scanframes(int color)
+scanframes(player_color color)
 {
 	struct combostr *ecbp;
 	struct spotstr *sp;
@@ -530,7 +530,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 		    makeempty(ncbp);
 
 		    /* add the new combo to the end of the list */
-		    appendcombo(ncbp, curcolor);
+		    appendcombo(ncbp);
 		} else {
 		    updatecombo(ncbp, curcolor);
 		    free(ncbp);
@@ -565,7 +565,7 @@ addframes(unsigned int level)
 	curlevel = level;
 
 	/* scan for combos at empty spots */
-	int c = curcolor;
+	player_color c = curcolor;
 	for (spot_index s = PT(BSZ, BSZ) + 1; s-- > PT(1, 1); ) {
 		struct spotstr *sp = &board[s];
 		for (struct elist *ep = sp->s_empty; ep != NULL; ep = nep) {
@@ -953,7 +953,7 @@ makeempty(struct combostr *ocbp)
  * would be trying to "complete" the combo or trying to block it.
  */
 static void
-updatecombo(struct combostr *cbp, int color)
+updatecombo(struct combostr *cbp, player_color color)
 {
 	struct combostr *tcbp;
 	union comboval cb;
@@ -1041,7 +1041,7 @@ updatecombo(struct combostr *cbp, int color)
  * Add combo to the end of the list.
  */
 static void
-appendcombo(struct combostr *cbp, int color __unused)
+appendcombo(struct combostr *cbp)
 {
 	struct combostr *pcbp, *ncbp;
 
