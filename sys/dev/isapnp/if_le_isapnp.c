@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.36 2021/12/08 20:50:02 andvar Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.37 2022/05/29 10:43:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.36 2021/12/08 20:50:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.37 2022/05/29 10:43:46 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ le_isapnp_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_ISAPNP_MEMSIZE,
 	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		aprint_error(": couldn't map memory for card\n");
-		return;
+		goto bad_free;
 	}
 
 	/*
@@ -215,14 +215,12 @@ le_isapnp_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamap_create(dmat, LE_ISAPNP_MEMSIZE, 1,
 	    LE_ISAPNP_MEMSIZE, 0, BUS_DMA_NOWAIT, &lesc->sc_dmam)) {
 		aprint_error(": couldn't create DMA map\n");
-		bus_dmamem_free(dmat, &seg, rseg);
-		return;
+		goto bad_unmap;
 	}
 	if (bus_dmamap_load(dmat, lesc->sc_dmam,
 	    sc->sc_mem, LE_ISAPNP_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
 		aprint_error(": couldn't load DMA map\n");
-		bus_dmamem_free(dmat, &seg, rseg);
-		return;
+		goto bad_destroy;
 	}
 
 	sc->sc_conf3 = 0;
@@ -244,7 +242,7 @@ le_isapnp_attach(device_t parent, device_t self, void *aux)
 		    ipa->ipa_drq[0].num)) != 0) {
 			aprint_error(": unable to cascade DRQ, error = %d\n",
 			    error);
-			return;
+			goto bad_destroy;
 		}
 	}
 
@@ -255,6 +253,15 @@ le_isapnp_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("%s", device_xname(self));
 	am7990_config(&lesc->sc_am7990);
+
+	return;
+
+ bad_destroy:
+	bus_dmamap_destroy(dmat, lesc->sc_dmam);
+ bad_unmap:
+	bus_dmamem_unmap(dmat, sc->sc_mem, LE_ISAPNP_MEMSIZE);
+ bad_free:
+	bus_dmamem_free(dmat, &seg, rseg);
 }
 
 
