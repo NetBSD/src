@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.49 2022/05/29 10:37:21 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.50 2022/05/29 13:49:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -190,18 +190,21 @@ struct	elist {
 /* The index of a frame in the global 'frames'. */
 typedef unsigned short frame_index;
 
+/* 0 = right, 1 = down right, 2 = down, 3 = down left. */
+typedef unsigned char direction;
+
 /*
  * One spot structure for each location on the board.
- * A frame consists of the combination for the current spot plus the five spots
- * 0: right, 1: right & down, 2: down, 3: down & left.
+ * A frame consists of the combination for the current spot plus the next
+ * five spots in the direction.
  */
 struct	spotstr {
 	short		s_occ;		/* color of occupant */
 	short		s_wval;		/* weighted value */
 	int		s_flags;	/* flags for graph walks */
 	frame_index	s_frame[4];	/* level 1 combo for [dir] */
-	union comboval	s_fval[2][4];	/* combo value for [color][frame] */
-	union comboval	s_combo[2];	/* minimum combo value for BLK & WHT */
+	union comboval	s_fval[2][4];	/* combo value for [color][dir] */
+	union comboval	s_combo[2];	/* minimum combo value for [color] */
 	u_char		s_level[2];	/* number of frames in the min combo */
 	u_char		s_nforce[2];	/* number of <1,x> combos */
 	struct elist	*s_empty;	/* level n combo completion spots */
@@ -221,10 +224,10 @@ struct	spotstr {
 #define BFLAGALL	0x0F0000	/* all frames dead */
 
 struct game {
-	spot_index moves[BSZ * BSZ];	/* log of all played moves */
-	unsigned int nmoves;		/* number of played moves */
-	spot_index winning_spot;
-	int winning_dir;
+	unsigned int	nmoves;		/* number of played moves */
+	spot_index	moves[BSZ * BSZ]; /* log of all played moves */
+	spot_index	winning_spot;
+	direction	winning_dir;
 };
 
 extern	const char	letters[];

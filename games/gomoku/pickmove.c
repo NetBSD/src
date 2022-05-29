@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.56 2022/05/29 12:44:17 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.57 2022/05/29 13:49:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.56 2022/05/29 12:44:17 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.57 2022/05/29 13:49:10 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -227,7 +227,7 @@ static int curcolor;	/* implicit parameter to makecombo() */
 static unsigned int curlevel;	/* implicit parameter to makecombo() */
 
 static bool
-four_in_a_row(int color, spot_index s, int r)
+four_in_a_row(int color, spot_index s, direction r)
 {
 
 	struct spotstr *sp = &board[s];
@@ -437,7 +437,8 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 	baseB = ocb.cv_force + ocb.cv_win - 1;
 	fcnt = ocb.cv_force - 2;
 	emask = fcnt != 0 ? ((ocb.cv_win != 0 ? 0x1E : 0x1F) & ~(1 << off)) : 0;
-	for (int r = 4; --r >= 0; ) {		/* for each direction */
+
+	for (direction r = 4; r-- > 0; ) {
 	    /* don't include frames that overlap in the same direction */
 	    if (r == ocbp->c_dir)
 		continue;

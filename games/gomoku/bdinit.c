@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.31 2022/05/29 11:36:12 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.32 2022/05/29 13:49:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.31 2022/05/29 11:36:12 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.32 2022/05/29 13:49:10 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -109,7 +109,7 @@ static void
 init_spot_frame(struct spotstr *sp, frame_index *fip)
 {
 
-	for (int r = 4; --r >= 0; ) {
+	for (direction r = 4; r-- > 0; ) {
 		if ((sp->s_flags & (BFLAG << r)) != 0)
 			continue;
 
