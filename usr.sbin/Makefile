@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.289 2022/05/27 07:28:21 nia Exp $
+#	$NetBSD: Makefile,v 1.290 2022/05/29 15:23:20 nia Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -16,7 +16,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	kgmon \
 	lastlogin ldpd link lockstat lpr \
 	mailwrapper makefs mdconfig memswitch mlxctl mmcformat \
-	mopd mountd moused mscdlabel mtree \
+	mopd mountd mscdlabel mtree \
 	ndbootd netgroup_mkdb nfsd \
 	ofctl \
 	paxctl pcictl perfused psrset pstat pwd_mkdb postinstall \
@@ -27,7 +27,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	sa screenblank sdpd service services_mkdb sesd schedctl \
 	sliplogin spray \
 	srtconfig sti sunlabel sysinst syslogd \
-	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
+	tadpolectl tcpdchk tcpdmatch tcpdrop tpctl tprof traceroute trpt \
 	unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
 	wakeonlan wg-keygen wg-userspace wgconfig wiconfig wlanctl \
@@ -44,6 +44,14 @@ SUBDIR+= makemandb
 
 .if ${MKMROUTING} != "no"
 SUBDIR+= map-mbone mrinfo mrouted mtrace
+.endif
+
+.if ${MKMOUSED} != "no"
+SUBDIR+= moused
+.endif
+
+.if ${MKTIMED} != "no"
+SUBDIR+= timed
 .endif
 
 .if (${MKYP} != "no")
