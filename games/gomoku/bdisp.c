@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.53 2022/05/29 16:19:52 rillig Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.54 2022/05/29 16:30:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)bdisp.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdisp.c,v 1.53 2022/05/29 16:19:52 rillig Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.54 2022/05/29 16:30:44 rillig Exp $");
 
 #include <curses.h>
 #include <string.h>
@@ -355,8 +355,7 @@ get_coord_mouse(int *x, int *y)
 int
 get_coord(void)
 {
-	static int x = 1 + (BSZ - 1) / 2;
-	static int y = 1 + (BSZ - 1) / 2;
+	int x = game.user_x, y = game.user_y;
 
 	move(scr_y(y), scr_x(x));
 	refresh();
@@ -457,6 +456,8 @@ get_coord(void)
 		case '\r':
 		selected:
 			(void)mvhline(BSZ + 3, 6, ' ', 6);
+			game.user_x = x;
+			game.user_y = y;
 			return PT(x, y);
 		}
 
