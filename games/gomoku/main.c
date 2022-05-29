@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.71 2022/05/29 17:01:42 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.72 2022/05/29 20:21:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,7 +36,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  The Regents of the University of California.  All rights reserved.");
 /*	@(#)main.c	8.4 (Berkeley) 5/4/95	*/
-__RCSID("$NetBSD: main.c,v 1.71 2022/05/29 17:01:42 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.72 2022/05/29 20:21:28 rillig Exp $");
 
 #include <sys/stat.h>
 #include <curses.h>
@@ -412,6 +412,59 @@ readinput(FILE *fp)
 }
 
 #ifdef DEBUG
+
+static bool
+skip_any(const char **pp, const char *s)
+{
+	while (strchr(s, **pp) != NULL)
+		(*pp)++;
+	return true;
+}
+
+static bool
+parse_char_index(const char **pp, const char *s, unsigned int *out)
+{
+	const char *found = strchr(s, **pp);
+	if (found != NULL)
+		*out = (unsigned int)(found - s), (*pp)++;
+	return found != NULL;
+}
+
+static bool
+parse_direction(const char **pp, direction *out)
+{
+	unsigned int u;
+	if (!parse_char_index(pp, "-\\|/", &u))
+		return false;
+	*out = (direction)u;
+	return true;
+}
+
+static bool
+parse_row(const char **pp, unsigned int *out)
+{
+	if (!('0' <= **pp && **pp <= '9'))
+		return false;
+	unsigned int u = *(*pp)++ - '0';
+	if ('0' <= **pp && **pp <= '9')
+		u = 10 * u + *(*pp)++ - '0';
+	*out = u;
+	return 1 <= u && u <= BSZ;
+}
+
+static bool
+parse_spot(const char **pp, spot_index *out)
+{
+	unsigned row, col;
+	if (!parse_char_index(pp, "abcdefghjklmnopqrst", &col) &&
+	    !parse_char_index(pp, "ABCDEFGHJKLMNOPQRST", &col))
+		return false;
+	if (!parse_row(pp, &row))
+		return false;
+	*out = PT(col + 1, row);
+	return true;
+}
+
 /*
  * Handle strange situations and ^C.
  */
@@ -419,12 +472,13 @@ readinput(FILE *fp)
 void
 whatsup(int signum __unused)
 {
-	int n, d1, d2;
+	unsigned int n;
 	player_color color;
 	spot_index s, s1, s2;
+	direction r1, r2;
 	struct spotstr *sp;
 	FILE *fp;
-	char *str;
+	const char *str;
 	struct elist *ep;
 	struct combostr *cbp;
 	char input[128];
@@ -447,7 +501,8 @@ top:
 		debuglog("Debug set to %d", debug);
 		goto top;
 	case 'c':
-		break;
+		ask("");
+		return;
 	case 'b':		/* back up a move */
 		if (game.nmoves > 0) {
 			game.nmoves--;
@@ -485,30 +540,21 @@ top:
 		fclose(fp);
 		goto top;
 	case 'o':
-		/* avoid use w/o initialization on invalid input */
-		d1 = s1 = 0;
-
-		n = 0;
-		for (str = input + 1; *str != '\0'; str++)
-			if (*str == ',') {
-				for (d1 = 0; d1 < 4; d1++)
-					if (str[-1] == pdir[d1])
-						break;
-				str[-1] = '\0';
-				sp = &board[s1 = ctos(input + 1)];
-				n = sp->s_frame[d1] * FAREA;
-				*str++ = '\0';
-				break;
-			}
-		sp = &board[s2 = ctos(str)];
-		while (*str != '\0')
-			str++;
-		for (d2 = 0; d2 < 4; d2++)
-			if (str[-1] == pdir[d2])
-				break;
-		n += sp->s_frame[d2];
-		debuglog("overlap %s%c,%s%c = %x", stoc(s1), pdir[d1],
-		    stoc(s2), pdir[d2], overlap[n]);
+		str = input + 1;
+		if (skip_any(&str, " ") &&
+		    parse_spot(&str, &s1) &&
+		    parse_direction(&str, &r1) &&
+		    skip_any(&str, ", ") &&
+		    parse_spot(&str, &s2) &&
+		    parse_direction(&str, &r2) &&
+		    *str == '\0') {
+			n = board[s1].s_frame[r1] * FAREA
+			    + board[s2].s_frame[r2];
+			debuglog("overlap %s%c,%s%c = %02x",
+			    stoc(s1), pdir[r1], stoc(s2), pdir[r2],
+			    overlap[n]);
+		} else
+			debuglog("usage: o <spot><dir> <spot><dir>");
 		goto top;
 	case 'p':
 		sp = &board[s = ctos(input + 1)];
@@ -524,7 +570,7 @@ top:
 			sp->s_fval[WHITE][0].s, sp->s_fval[WHITE][1].s,
 			sp->s_fval[WHITE][2].s, sp->s_fval[WHITE][3].s);
 		goto top;
-	case 'e':	/* e {b|w} [0-9] spot */
+	case 'e':	/* e [0-9] spot */
 		str = input + 1;
 		if (*str >= '0' && *str <= '9')
 			n = *str++ - '0';
