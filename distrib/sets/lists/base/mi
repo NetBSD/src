@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1304 2022/05/28 14:31:11 nia Exp $
+# $NetBSD: mi,v 1.1305 2022/05/29 08:09:59 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1445,7 +1445,7 @@
 ./usr/sbin/btpand				base-sysutil-bin
 ./usr/sbin/btuartd				base-obsolete		obsolete
 ./usr/sbin/catman				base-man-bin
-./usr/sbin/chat					base-ppp-bin
+./usr/sbin/chat					base-ppp-bin		ppp
 ./usr/sbin/chown				base-sysutil-bin
 ./usr/sbin/chroot				base-sysutil-bin
 ./usr/sbin/chrtbl				base-obsolete		obsolete
@@ -1668,10 +1668,10 @@
 ./usr/sbin/postsuper				base-postfix-bin	postfix
 ./usr/sbin/posttls-finger			base-postfix-bin	postfix
 ./usr/sbin/powerd				base-sysutil-bin
-./usr/sbin/pppd					base-ppp-bin
-./usr/sbin/pppdump				base-ppp-bin
+./usr/sbin/pppd					base-ppp-bin		ppp
+./usr/sbin/pppdump				base-ppp-bin		ppp
 ./usr/sbin/pppoectl				base-obsolete		obsolete
-./usr/sbin/pppstats				base-ppp-bin
+./usr/sbin/pppstats				base-ppp-bin		ppp
 ./usr/sbin/praliases				base-obsolete		obsolete
 ./usr/sbin/procsystime				base-debug-bin		dtrace
 ./usr/sbin/psrset				base-sysutil-bin
@@ -1745,7 +1745,7 @@
 ./usr/sbin/setkey				base-obsolete		obsolete
 ./usr/sbin/setobjstat				base-sysutil-bin
 ./usr/sbin/sliplogin				base-slip-bin
-./usr/sbin/slstats				base-slip-bin
+./usr/sbin/slstats				base-slip-bin		ppp
 ./usr/sbin/smrsh				base-obsolete		obsolete
 ./usr/sbin/sntp					base-ntp-bin		ntp
 ./usr/sbin/spamdb				base-obsolete		obsolete

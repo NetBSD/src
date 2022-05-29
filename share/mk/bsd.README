@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.436 2022/05/28 14:31:12 nia Exp $
+#	$NetBSD: bsd.README,v 1.437 2022/05/29 08:10:00 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -449,6 +449,13 @@ MKPIGZGZIP	If "no", only install pigz as pigz, not gzip.
 		Default: no
 
 MKPOSTFIX	If "no", don't build or install postfix(1).
+		Default: yes
+
+MKPPP		If "no", disables building the Point-to-Point Protocol
+		daemon pppd(8), as well as related utilities chat(8),
+		pppdump(8), and pppstats(8).
+		This option has no effect on PPPoE (Point-to-Point over
+		Ethernet) support, but rather only affects serial links.
 		Default: yes
 
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.

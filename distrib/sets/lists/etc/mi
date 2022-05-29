@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.268 2022/05/28 11:17:36 nia Exp $
+# $NetBSD: mi,v 1.269 2022/05/29 08:09:59 nia Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -283,7 +283,7 @@
 ./etc/rc.d/poffd				etc-obsolete		obsolete
 ./etc/rc.d/postfix				etc-postfix-rc
 ./etc/rc.d/powerd				etc-sysutil-rc
-./etc/rc.d/ppp					etc-ppp-rc
+./etc/rc.d/ppp					etc-ppp-rc		ppp
 ./etc/rc.d/pwcheck				etc-sys-rc
 ./etc/rc.d/quota				etc-sys-rc
 ./etc/rc.d/racoon				etc-net-rc

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.114 2022/05/28 11:17:35 nia Exp $
+# $NetBSD: Makefile,v 1.115 2022/05/29 08:10:00 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,7 @@ CONFIGFILES=\
 		mountcritlocal mountcritremote mountd moused \
 		named ndbootd network newsyslog nfsd nfslocking npf npf_boot \
 		npfd \
-		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
+		perusertmp pf pf_boot pflogd postfix powerd pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
 		rbootd resize_root rndctl root route6d routed rtadvd \
@@ -50,6 +50,10 @@ CONFIGFILES+=	mrouted
 
 .if ${MKNTP} != "no"
 CONFIGFILES+=	ntpd ntpdate
+.endif
+
+.if ${MKPPP} != "no"
+CONFIGFILES+=	ppp
 .endif
 
 .if ${MKYP} != "no"
