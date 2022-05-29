@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.35 2022/05/29 01:34:49 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.36 2022/05/29 10:37:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.35 2022/05/29 01:34:49 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.36 2022/05/29 10:37:21 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -125,7 +125,7 @@ makemove(int us, spot_index mv)
 		if ((fsp->s_flags & BFLAG << r) != 0)
 		    continue;
 
-		struct combostr *cbp = fsp->s_frame[r];
+		struct combostr *cbp = &frames[fsp->s_frame[r]];
 		sortframes_remove(cbp);
 
 		int val = old_weight_value(fsp, r);
@@ -233,7 +233,7 @@ makemove(int us, spot_index mv)
 
 static void
 update_overlap_same_direction(spot_index s1, spot_index s2,
-			      int a, int d, int i_minus_f, int r)
+			      frame_index a, int d, int i_minus_f, int r)
 {
 	/*
 	 * count the number of empty spots to see if there is
@@ -249,7 +249,7 @@ update_overlap_same_direction(spot_index s1, spot_index s2,
 		}
 	}
 
-	int b = (int)(board[s2].s_frame[r] - frames);
+	frame_index b = board[s2].s_frame[r];
 	if (n == 0) {
 		if (board[s].s_occ == EMPTY) {
 			overlap[a * FAREA + b] &= 0xA;
@@ -281,7 +281,7 @@ update_overlap_same_direction(spot_index s1, spot_index s2,
  * frames as non-overlapping with frame 'a'.
  */
 static void
-update_overlap_different_direction(spot_index os, int a, int rb)
+update_overlap_different_direction(spot_index os, frame_index a, int rb)
 {
 
 	int db = dd[rb];
@@ -292,7 +292,7 @@ update_overlap_different_direction(spot_index os, int a, int rb)
 		if ((sp->s_flags & BFLAG << rb) != 0)
 			continue;
 
-		int b = (int)(sp->s_frame[rb] - frames);
+		frame_index b = sp->s_frame[rb];
 		overlap[a * FAREA + b] = 0;
 		overlap[b * FAREA + a] = 0;
 	}
@@ -323,7 +323,7 @@ update_overlap(spot_index os)
 		 * do the rows 0 <= r1 <= r. The r1 == r case is special
 		 * since the two frames can overlap at more than one point.
 		 */
-		int a = (int)(board[s1].s_frame[r] - frames);
+		frame_index a = board[s1].s_frame[r];
 
 		spot_index s2 = s1 - d;
 		for (int i = f + 1; i < 6; i++, s2 -= d) {
