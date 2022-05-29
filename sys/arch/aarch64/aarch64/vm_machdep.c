@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.12 2021/08/30 22:54:40 jmcneill Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.13 2022/05/29 16:13:41 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12 2021/08/30 22:54:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13 2022/05/29 16:13:41 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,9 +162,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct trapframe * const ktf = utf - 1;
 	ktf->tf_reg[27] = (uint64_t)func;
 	ktf->tf_reg[28] = (uint64_t)arg;
-	ktf->tf_reg[29] = 0;
 	ktf->tf_lr = (uintptr_t)lwp_trampoline;
 #ifdef DDB
+	ktf->tf_reg[29] = (uint64_t)utf;
 	ktf->tf_pc = (uint64_t)&&backtrace_here;
 	ktf->tf_sp = 0;	/* mark as switchframe */
  backtrace_here:
