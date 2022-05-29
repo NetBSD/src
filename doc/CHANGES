@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2882 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2883 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -387,7 +387,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	byacc: Update to 20210109. [christos 20210220]
 	virtio(4): Add support for VirtIO PCI v1.0 attachments next to legacy v0.9
 		[reinoud 20210120]
-	regex(3): Add NLS support and gnu regex extensions (off by default).
+	regex(3): Add NLS support and GNU regex extensions (off by default).
 		[christos 20210223]
 	wpa: Import wpa_supplicant and hostapd 2.9. [christos 20210228]
 	tzcode: Updated to 2021a. [christos 20210228]
@@ -555,9 +555,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	blkdiscard(8): Add tool to access fdiscard(2). [mrg 20220207]
 	expat: Import 2.4.6 (security fixes). [christos 20220223]
 	OpenSSH: Import 8.9. [christos 20220223]
-	udf: Be bugcompatible with Microsoft Windows 10 so it can read our
+	udf: Be bug compatible with Microsoft Windows 10 so it can read our
 		updated recordable media. [reinoud 20220309]
-	udf: Fix locking up CD/DVD burner issue that would lockup the FS.
+	udf: Fix locking up CD/DVD burner issue that would lock up the FS.
 		[reinoud 20220309]
 	OpenSSL: Imported 1.1.1n. [christos 20220315]
 	tzdata: updated to 2022a (using the 2022agtz fork to restore data
