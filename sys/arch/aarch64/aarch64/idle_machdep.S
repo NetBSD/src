@@ -1,4 +1,4 @@
-/* $NetBSD: idle_machdep.S,v 1.11 2021/10/10 08:59:45 skrll Exp $ */
+/* $NetBSD: idle_machdep.S,v 1.12 2022/05/29 23:39:59 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <aarch64/locore.h>
 #include "assym.h"
 
-RCSID("$NetBSD: idle_machdep.S,v 1.11 2021/10/10 08:59:45 skrll Exp $");
+RCSID("$NetBSD: idle_machdep.S,v 1.12 2022/05/29 23:39:59 ryo Exp $");
 
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
@@ -68,6 +68,9 @@ ENTRY(cpu_idle)
 	stp	x29, x30, [sp, #TF_X29]		/* save x29,x30 */
 #ifdef DDB
 	add	x29, sp, #TF_X29		/* link frame for backtrace */
+	mov	x0, #-1
+	str	x0, [sp, #TF_ESR]
+	str	xzr, [sp, #TF_FAR]
 #endif
 
 	/* fill the minimum required trapframe */
