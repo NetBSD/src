@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.60 2022/05/29 15:16:11 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.61 2022/05/29 15:31:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.60 2022/05/29 15:16:11 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.61 2022/05/29 15:31:12 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -61,14 +61,14 @@ struct overlap_info {
 static struct combostr *hashcombos[FAREA];/* hash list for finding duplicates */
 static struct combostr *sortcombos;	/* combos at higher levels */
 static int combolen;			/* number of combos in sortcombos */
-static int nextcolor;			/* color of next move */
+static player_color nextcolor;		/* color of next move */
 static int elistcnt;			/* count of struct elist allocated */
 static int combocnt;			/* count of struct combostr allocated */
 static unsigned int forcemap[MAPSZ];	/* map for blocking <1,x> combos */
 static unsigned int tmpmap[MAPSZ];	/* map for blocking <1,x> combos */
 static int nforce;			/* count of opponent <1,x> combos */
 
-static bool better(spot_index, spot_index, int);
+static bool better(spot_index, spot_index, player_color);
 static void scanframes(int);
 static void makecombo2(struct combostr *, struct spotstr *, int, int);
 static void addframes(unsigned int);
@@ -83,8 +83,8 @@ static bool sortcombo(struct combostr **, struct combostr **, struct combostr *)
 static void printcombo(struct combostr *, char *, size_t);
 #endif
 
-int
-pickmove(int us)
+spot_index
+pickmove(player_color us)
 {
 
 	/* first move is easy */
@@ -161,7 +161,7 @@ pickmove(int us)
 		 * all be blocked with one move.
 		 */
 		spot_index m = us == BLACK ? s2 : s1;
-		int them = us != BLACK ? BLACK : WHITE;
+		player_color them = us != BLACK ? BLACK : WHITE;
 		if (board[m].s_combo[them].cv_force == 1 &&
 		    !BIT_TEST(forcemap, m))
 			debuglog("*** Can't be blocked");
@@ -192,10 +192,10 @@ pickmove(int us)
 }
 
 /*
- * Return true if spot 'sp' is better than spot 'sp1' for color 'us'.
+ * Return true if spot 's' is better than spot 's1' for color 'us'.
  */
 static bool
-better(spot_index s, spot_index s1, int us)
+better(spot_index s, spot_index s1, player_color us)
 {
 	const struct spotstr *sp = &board[s], *sp1 = &board[s1];
 
@@ -206,7 +206,7 @@ better(spot_index s, spot_index s1, int us)
 	if (/* .... */ sp->s_nforce[us] != sp1->s_nforce[us])
 		return sp->s_nforce[us] > sp1->s_nforce[us];
 
-	int them = us != BLACK ? BLACK : WHITE;
+	player_color them = us != BLACK ? BLACK : WHITE;
 	if (BIT_TEST(forcemap, s) != BIT_TEST(forcemap, s1))
 		return BIT_TEST(forcemap, s);
 

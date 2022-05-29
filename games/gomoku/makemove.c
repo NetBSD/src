@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.40 2022/05/29 14:37:44 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.41 2022/05/29 15:31:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.40 2022/05/29 14:37:44 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.41 2022/05/29 15:31:12 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -97,7 +97,7 @@ old_weight_value(const struct spotstr *sp, direction r)
  *	TIE	The game is a tie.
  */
 int
-makemove(int us, spot_index mv)
+makemove(player_color us, spot_index mv)
 {
 
 	/* check for end of game */
@@ -161,7 +161,7 @@ makemove(int us, spot_index mv)
 		}
 
 		/* compute new value & combo number for this frame & color */
-		int them = us != BLACK ? BLACK : WHITE;
+		player_color them = us != BLACK ? BLACK : WHITE;
 		fsp->s_fval[them][r].s = 0x600;
 		union comboval *cp = &fsp->s_fval[us][r];
 		/* both ends open? */

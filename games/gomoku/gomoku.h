@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.52 2022/05/29 14:50:37 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.53 2022/05/29 15:31:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -62,6 +62,9 @@
 #define WHITE	1
 #define EMPTY	2
 #define BORDER	3
+
+/* Either BLACK or WHITE. */
+typedef unsigned char player_color;
 
 /* A spot on the board, or one of the special values below. */
 typedef unsigned short spot_index;
@@ -267,10 +270,10 @@ void	debuglog(const char *, ...) __printflike(1, 2);
 void	whatsup(int);
 const char *stoc(spot_index);
 spot_index ctos(const char *);
-int	makemove(int, spot_index);
+int	makemove(player_color, spot_index);
 void	clearcombo(struct combostr *, int);
 void	markcombo(struct combostr *);
-int	pickmove(int);
+spot_index pickmove(player_color);
 #if defined(DEBUG)
 void	printcombo(struct combostr *, char *, size_t);
 #endif
