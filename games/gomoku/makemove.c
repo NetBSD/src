@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.39 2022/05/29 14:01:57 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.40 2022/05/29 14:37:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.39 2022/05/29 14:01:57 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.40 2022/05/29 14:37:44 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -155,8 +155,8 @@ makemove(int us, spot_index mv)
 
 		/* check for game over */
 		if (n == 5) {
-		    game.winning_spot = (spot_index)(fsp - board);
-		    game.winning_dir = r;
+		    game.win_spot = (spot_index)(fsp - board);
+		    game.win_dir = r;
 		    return WIN;
 		}
 
@@ -234,7 +234,7 @@ makemove(int us, spot_index mv)
 
 static void
 update_overlap_same_direction(spot_index s1, spot_index s2,
-			      frame_index a, int d, int i_minus_f,
+			      frame_index a, int d, int off_minus_f,
 			      direction r)
 {
 	/*
@@ -244,7 +244,7 @@ update_overlap_same_direction(spot_index s1, spot_index s2,
 	int n = 0;
 	spot_index s = s1;
 	spot_index es = 0;
-	for (int b = i_minus_f; b < 5; b++, s += d) {
+	for (int b = off_minus_f; b < 5; b++, s += d) {
 		if (board[s].s_occ == EMPTY) {
 			es = s;	/* save the intersection point */
 			n++;
@@ -287,8 +287,8 @@ update_overlap_different_direction(spot_index os, frame_index a, direction rb)
 {
 
 	int db = dd[rb];
-	for (int i = 0; i < 6; i++) {
-		const struct spotstr *sp = &board[os - db * i];
+	for (int off = 0; off < 6; off++) {
+		const struct spotstr *sp = &board[os - db * off];
 		if (sp->s_occ == BORDER)
 			break;
 		if ((sp->s_flags & BFLAG << rb) != 0)
@@ -328,13 +328,13 @@ update_overlap(spot_index os)
 		frame_index a = board[s1].s_frame[r];
 
 		spot_index s2 = s1 - d;
-		for (int i = f + 1; i < 6; i++, s2 -= d) {
+		for (int off = f + 1; off < 6; off++, s2 -= d) {
 		    if (board[s2].s_occ == BORDER)
 			break;
 		    if ((board[s2].s_flags & BFLAG << r) != 0)
 			continue;
 
-		    update_overlap_same_direction(s1, s2, a, d, i - f, r);
+		    update_overlap_same_direction(s1, s2, a, d, off - f, r);
 		}
 
 		/* the other directions can only intersect at spot 'os' */

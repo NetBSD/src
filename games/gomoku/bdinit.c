@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.33 2022/05/29 14:01:57 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.34 2022/05/29 14:37:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.33 2022/05/29 14:01:57 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.34 2022/05/29 14:37:44 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -42,11 +42,11 @@ __RCSID("$NetBSD: bdinit.c,v 1.33 2022/05/29 14:01:57 rillig Exp $");
 static void init_overlap(void);
 
 static void
-init_spot_flags_and_fval(struct spotstr *sp, int i, int j)
+init_spot_flags_and_fval(struct spotstr *sp, int col, int row)
 {
 
 	sp->s_flags = 0;
-	if (j < 5) {
+	if (row < 5) {
 		/* directions 1, 2, 3 are blocked */
 		sp->s_flags |= (BFLAG << 1) | (BFLAG << 2) |
 		    (BFLAG << 3);
@@ -56,7 +56,7 @@ init_spot_flags_and_fval(struct spotstr *sp, int i, int j)
 		sp->s_fval[WHITE][1].s = 0x600;
 		sp->s_fval[WHITE][2].s = 0x600;
 		sp->s_fval[WHITE][3].s = 0x600;
-	} else if (j == 5) {
+	} else if (row == 5) {
 		/* five spaces, blocked on one side */
 		sp->s_fval[BLACK][1].s = 0x500;
 		sp->s_fval[BLACK][2].s = 0x500;
@@ -73,14 +73,14 @@ init_spot_flags_and_fval(struct spotstr *sp, int i, int j)
 		sp->s_fval[WHITE][2].s = 0x401;
 		sp->s_fval[WHITE][3].s = 0x401;
 	}
-	if (i > (BSZ - 4)) {
+	if (col > (BSZ - 4)) {
 		/* directions 0, 1 are blocked */
 		sp->s_flags |= BFLAG | (BFLAG << 1);
 		sp->s_fval[BLACK][0].s = 0x600;
 		sp->s_fval[BLACK][1].s = 0x600;
 		sp->s_fval[WHITE][0].s = 0x600;
 		sp->s_fval[WHITE][1].s = 0x600;
-	} else if (i == (BSZ - 4)) {
+	} else if (col == (BSZ - 4)) {
 		sp->s_fval[BLACK][0].s = 0x500;
 		sp->s_fval[WHITE][0].s = 0x500;
 		/* if direction 1 is not blocked */
@@ -91,12 +91,12 @@ init_spot_flags_and_fval(struct spotstr *sp, int i, int j)
 	} else {
 		sp->s_fval[BLACK][0].s = 0x401;
 		sp->s_fval[WHITE][0].s = 0x401;
-		if (i < 5) {
+		if (col < 5) {
 			/* direction 3 is blocked */
 			sp->s_flags |= (BFLAG << 3);
 			sp->s_fval[BLACK][3].s = 0x600;
 			sp->s_fval[WHITE][3].s = 0x600;
-		} else if (i == 5 &&
+		} else if (col == 5 &&
 		    (sp->s_flags & (BFLAG << 3)) == 0) {
 			sp->s_fval[BLACK][3].s = 0x500;
 			sp->s_fval[WHITE][3].s = 0x500;
@@ -129,7 +129,7 @@ init_board(void)
 {
 
 	game.nmoves = 0;
-	game.winning_spot = 0;
+	game.win_spot = 0;
 
 	struct spotstr *sp = board;
 	for (int i = 0; i < 1 + BSZ + 1; i++, sp++) {
