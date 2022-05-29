@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.67 2022/05/29 21:47:12 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.68 2022/05/29 22:03:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.67 2022/05/29 21:47:12 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.68 2022/05/29 22:03:29 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -102,6 +102,7 @@ pickmove(player_color us)
 		sp->s_nforce[WHITE] = 0;
 		sp->s_flags &= ~(FFLAGALL | MFLAGALL);
 	}
+
 	nforce = 0;
 	memset(forcemap, 0, sizeof(forcemap));
 
@@ -144,21 +145,23 @@ pickmove(player_color us)
 	}
 
 	if (debug > 0) {
-		spot_index s1 = us == BLACK ? os : ts;
-		spot_index s2 = us == BLACK ? ts : os;
-		const struct spotstr *sp1 = &board[s1], *sp2 = &board[s2];
+		spot_index bs = us == BLACK ? os : ts;
+		spot_index ws = us == BLACK ? ts : os;
+		const struct spotstr *bsp = &board[bs];
+		const struct spotstr *wsp = &board[ws];
+
 		debuglog("B %s %x/%d %d %x/%d %d %d",
-		    stoc(s1),
-		    sp1->s_combo[BLACK].s, sp1->s_level[BLACK],
-		    sp1->s_nforce[BLACK],
-		    sp1->s_combo[WHITE].s, sp1->s_level[WHITE],
-		    sp1->s_nforce[WHITE], sp1->s_wval);
+		    stoc(bs),
+		    bsp->s_combo[BLACK].s, bsp->s_level[BLACK],
+		    bsp->s_nforce[BLACK],
+		    bsp->s_combo[WHITE].s, bsp->s_level[WHITE],
+		    bsp->s_nforce[WHITE], bsp->s_wval);
 		debuglog("W %s %x/%d %d %x/%d %d %d",
-		    stoc(s2),
-		    sp2->s_combo[WHITE].s, sp2->s_level[WHITE],
-		    sp2->s_nforce[WHITE],
-		    sp2->s_combo[BLACK].s, sp2->s_level[BLACK],
-		    sp2->s_nforce[BLACK], sp2->s_wval);
+		    stoc(ws),
+		    wsp->s_combo[WHITE].s, wsp->s_level[WHITE],
+		    wsp->s_nforce[WHITE],
+		    wsp->s_combo[BLACK].s, wsp->s_level[BLACK],
+		    wsp->s_nforce[BLACK], wsp->s_wval);
 
 		/*
 		 * Check for more than one force that can't all be blocked
@@ -185,33 +188,34 @@ pickmove(player_color us)
 }
 
 /*
- * Return true if spot 's' is better than spot 's1' for color 'us'.
+ * Return true if spot 'as' is better than spot 'bs' for color 'us'.
  */
 static bool
-better(spot_index s, spot_index s1, player_color us)
+better(spot_index as, spot_index bs, player_color us)
 {
-	const struct spotstr *sp = &board[s], *sp1 = &board[s1];
+	const struct spotstr *asp = &board[as];
+	const struct spotstr *bsp = &board[bs];
 
-	if (/* .... */ sp->s_combo[us].s != sp1->s_combo[us].s)
-		return sp->s_combo[us].s < sp1->s_combo[us].s;
-	if (/* .... */ sp->s_level[us] != sp1->s_level[us])
-		return sp->s_level[us] < sp1->s_level[us];
-	if (/* .... */ sp->s_nforce[us] != sp1->s_nforce[us])
-		return sp->s_nforce[us] > sp1->s_nforce[us];
+	if (/* .... */ asp->s_combo[us].s != bsp->s_combo[us].s)
+		return asp->s_combo[us].s < bsp->s_combo[us].s;
+	if (/* .... */ asp->s_level[us] != bsp->s_level[us])
+		return asp->s_level[us] < bsp->s_level[us];
+	if (/* .... */ asp->s_nforce[us] != bsp->s_nforce[us])
+		return asp->s_nforce[us] > bsp->s_nforce[us];
 
 	player_color them = us != BLACK ? BLACK : WHITE;
-	if (BIT_TEST(forcemap, s) != BIT_TEST(forcemap, s1))
-		return BIT_TEST(forcemap, s);
+	if (BIT_TEST(forcemap, as) != BIT_TEST(forcemap, bs))
+		return BIT_TEST(forcemap, as);
 
-	if (/* .... */ sp->s_combo[them].s != sp1->s_combo[them].s)
-		return sp->s_combo[them].s < sp1->s_combo[them].s;
-	if (/* .... */ sp->s_level[them] != sp1->s_level[them])
-		return sp->s_level[them] < sp1->s_level[them];
-	if (/* .... */ sp->s_nforce[them] != sp1->s_nforce[them])
-		return sp->s_nforce[them] > sp1->s_nforce[them];
+	if (/* .... */ asp->s_combo[them].s != bsp->s_combo[them].s)
+		return asp->s_combo[them].s < bsp->s_combo[them].s;
+	if (/* .... */ asp->s_level[them] != bsp->s_level[them])
+		return asp->s_level[them] < bsp->s_level[them];
+	if (/* .... */ asp->s_nforce[them] != bsp->s_nforce[them])
+		return asp->s_nforce[them] > bsp->s_nforce[them];
 
-	if (/* .... */ sp->s_wval != sp1->s_wval)
-		return sp->s_wval > sp1->s_wval;
+	if (/* .... */ asp->s_wval != bsp->s_wval)
+		return asp->s_wval > bsp->s_wval;
 
 	return (random() & 1) != 0;
 }
@@ -273,6 +277,7 @@ scanframes(player_color color)
 		sp = &board[cbp->c_vertex];
 		cp = &sp->s_fval[color][r = cbp->c_dir];
 		int delta = dd[r];
+
 		u_char off;
 		if (cp->cv_win != 0) {
 			/*
@@ -300,6 +305,7 @@ scanframes(player_color color)
 			cb.s = cp->s;
 			off = 0;
 		}
+
 		for (; off < 5; off++, sp += delta) {	/* for each spot */
 			if (sp->s_occ != EMPTY)
 				continue;
@@ -321,6 +327,7 @@ scanframes(player_color color)
 			 */
 			makecombo2(cbp, sp, off, cb.s);
 		}
+
 		if (cp->s == 0x101 && color != nextcolor) {
 			if (nforce == 0)
 				memcpy(forcemap, tmpmap, sizeof(tmpmap));
@@ -329,6 +336,7 @@ scanframes(player_color color)
 					forcemap[i] &= tmpmap[i];
 			}
 		}
+
 		/* mark frame as having been processed */
 		board[cbp->c_vertex].s_flags |= MFLAG << r;
 	} while ((cbp = cbp->c_next) != ecbp);
@@ -353,6 +361,7 @@ scanframes(player_color color)
 	/* scan for combos at empty spots */
 	for (spot_index s = PT(BSZ, BSZ) + 1; s-- > PT(1, 1); ) {
 		sp = &board[s];
+
 		for (struct elist *ep = sp->s_empty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
@@ -367,6 +376,7 @@ scanframes(player_color color)
 			elistcnt--;
 		}
 		sp->s_empty = NULL;
+
 		for (struct elist *ep = sp->s_nempty; ep != NULL; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
@@ -435,6 +445,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 	    /* don't include frames that overlap in the same direction */
 	    if (r == ocbp->c_dir)
 		continue;
+
 	    int d = dd[r];
 	    /*
 	     * Frame A combined with B is the same value as B combined with A
@@ -444,6 +455,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 	     */
 	    int bmask = (BFLAG | FFLAG | MFLAG) << r;
 	    struct spotstr *fsp = osp;
+
 	    for (u_char f = 0; f < 5; f++, fsp -= d) {	/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    break;
@@ -479,6 +491,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 		if (ncbp == NULL)
 		    panic("Out of memory!");
 		scbpp = (void *)(ncbp + 1);
+
 		fcbp = &frames[fsp->s_frame[r]];
 		if (ocbp < fcbp) {
 		    scbpp[0] = ocbp;
@@ -487,6 +500,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 		    scbpp[0] = fcbp;
 		    scbpp[1] = ocbp;
 		}
+
 		ncbp->c_combo.cv_force = c;
 		ncbp->c_combo.cv_win = n;
 		ncbp->c_link[0] = ocbp;
@@ -518,6 +532,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 		    printcombo(ncbp, tmp, sizeof(tmp));
 		    debuglog("%s", tmp);
 		}
+
 		if (c > 1) {
 		    /* record the empty spots that will complete this combo */
 		    makeempty(ncbp);
@@ -1132,8 +1147,8 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 					return -1;	/* invalid overlap */
 
 				ovi->o_intersect = s;
-				ovi->o_off = (s - tcbp->c_vertex) /
-					dd[tcbp->c_dir];
+				ovi->o_off =
+				    (s - tcbp->c_vertex) / dd[tcbp->c_dir];
 				ovi->o_frameindex = myindex;
 				verts++;
 			}
@@ -1180,8 +1195,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				return -1;	/* invalid overlap */
 
 			ovi->o_intersect = s;
-			ovi->o_off = (s - cbp->c_vertex) /
-				dd[cbp->c_dir];
+			ovi->o_off = (s - cbp->c_vertex) / dd[cbp->c_dir];
 			ovi->o_frameindex = 0;
 			verts++;
 		}
