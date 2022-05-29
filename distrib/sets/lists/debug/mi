@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.383 2022/05/28 14:31:12 nia Exp $
+# $NetBSD: mi,v 1.384 2022/05/29 08:09:59 nia Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1076,7 +1076,7 @@
 ./usr/libdata/debug/usr/sbin/btpand.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btuartd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
-./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
+./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		ppp,debug
 ./usr/libdata/debug/usr/sbin/chown.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/chroot.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/chrtbl.debug	comp-obsolete		obsolete
@@ -1248,9 +1248,9 @@
 ./usr/libdata/debug/usr/sbin/postsuper.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/posttls-finger.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/powerd.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/pppd.debug		comp-ppp-debug		debug
-./usr/libdata/debug/usr/sbin/pppdump.debug	comp-ppp-debug		debug
-./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		debug
+./usr/libdata/debug/usr/sbin/pppd.debug		comp-ppp-debug		ppp,debug
+./usr/libdata/debug/usr/sbin/pppdump.debug	comp-ppp-debug		ppp,debug
+./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		ppp,debug
 ./usr/libdata/debug/usr/sbin/psrset.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-obsolete		obsolete
