@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.59 2022/05/29 14:37:44 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.60 2022/05/29 15:16:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.59 2022/05/29 14:37:44 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.60 2022/05/29 15:16:11 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -46,8 +46,8 @@ __RCSID("$NetBSD: pickmove.c,v 1.59 2022/05/29 14:37:44 rillig Exp $");
 #define BITS_PER_INT	(sizeof(int) * CHAR_BIT)
 #define MAPSZ		(BAREA / BITS_PER_INT)
 
-#define BIT_SET(a, b)	((a)[(unsigned int)(b)/BITS_PER_INT] |= (1 << ((unsigned int)(b) % BITS_PER_INT)))
-#define BIT_TEST(a, b)	(((a)[(unsigned int)(b)/BITS_PER_INT] & (1 << ((unsigned int)(b) % BITS_PER_INT))) != 0)
+#define BIT_SET(a, b)	((a)[(b)/BITS_PER_INT] |= (1U << ((b) % BITS_PER_INT)))
+#define BIT_TEST(a, b)	(((a)[(b)/BITS_PER_INT] & (1U << ((b) % BITS_PER_INT))) != 0)
 
 /*
  * This structure is used to store overlap information between frames.
@@ -64,8 +64,8 @@ static int combolen;			/* number of combos in sortcombos */
 static int nextcolor;			/* color of next move */
 static int elistcnt;			/* count of struct elist allocated */
 static int combocnt;			/* count of struct combostr allocated */
-static int forcemap[MAPSZ];		/* map for blocking <1,x> combos */
-static int tmpmap[MAPSZ];		/* map for blocking <1,x> combos */
+static unsigned int forcemap[MAPSZ];	/* map for blocking <1,x> combos */
+static unsigned int tmpmap[MAPSZ];	/* map for blocking <1,x> combos */
 static int nforce;			/* count of opponent <1,x> combos */
 
 static bool better(spot_index, spot_index, int);
