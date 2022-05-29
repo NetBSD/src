@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.34 2022/05/29 00:38:26 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.35 2022/05/29 01:34:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.34 2022/05/29 00:38:26 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.35 2022/05/29 01:34:49 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -48,7 +48,7 @@ const int     dd[4] = {
 
 static const int weight[5] = { 0, 1, 7, 22, 100 };
 
-static void update_overlap(struct spotstr *);
+static void update_overlap(spot_index);
 
 static bool
 is_tie(void)
@@ -223,7 +223,7 @@ makemove(int us, spot_index mv)
 	    ;
 	}
 
-	update_overlap(&board[mv]);
+	update_overlap(mv);
 
 	if (is_tie())
 		return TIE;
@@ -232,8 +232,7 @@ makemove(int us, spot_index mv)
 }
 
 static void
-update_overlap_same_direction(const struct spotstr *sp1,
-			      const struct spotstr *sp2,
+update_overlap_same_direction(spot_index s1, spot_index s2,
 			      int a, int d, int i_minus_f, int r)
 {
 	/*
@@ -241,36 +240,36 @@ update_overlap_same_direction(const struct spotstr *sp1,
 	 * still an overlap.
 	 */
 	int n = 0;
-	const struct spotstr *sp = sp1;
-	const struct spotstr *esp = NULL;
-	for (int b = i_minus_f; b < 5; b++, sp += d) {
-		if (sp->s_occ == EMPTY) {
-			esp = sp;	/* save the intersection point */
+	spot_index s = s1;
+	spot_index es = 0;
+	for (int b = i_minus_f; b < 5; b++, s += d) {
+		if (board[s].s_occ == EMPTY) {
+			es = s;	/* save the intersection point */
 			n++;
 		}
 	}
 
-	int b = (int)(sp2->s_frame[r] - frames);
+	int b = (int)(board[s2].s_frame[r] - frames);
 	if (n == 0) {
-		if (sp->s_occ == EMPTY) {
+		if (board[s].s_occ == EMPTY) {
 			overlap[a * FAREA + b] &= 0xA;
 			overlap[b * FAREA + a] &= 0xC;
-			intersect[a * FAREA + b] = (short)(sp - board);
-			intersect[b * FAREA + a] = (short)(sp - board);
+			intersect[a * FAREA + b] = s;
+			intersect[b * FAREA + a] = s;
 		} else {
 			overlap[a * FAREA + b] = 0;
 			overlap[b * FAREA + a] = 0;
 		}
 	} else if (n == 1) {
-		if (sp->s_occ == EMPTY) {
+		if (board[s].s_occ == EMPTY) {
 			overlap[a * FAREA + b] &= 0xAF;
 			overlap[b * FAREA + a] &= 0xCF;
 		} else {
 			overlap[a * FAREA + b] &= 0xF;
 			overlap[b * FAREA + a] &= 0xF;
 		}
-		intersect[a * FAREA + b] = (short)(esp - board);
-		intersect[b * FAREA + a] = (short)(esp - board);
+		intersect[a * FAREA + b] = es;
+		intersect[b * FAREA + a] = es;
 	}
 	/* else no change, still multiple overlap */
 }
@@ -282,12 +281,12 @@ update_overlap_same_direction(const struct spotstr *sp1,
  * frames as non-overlapping with frame 'a'.
  */
 static void
-update_overlap_different_direction(const struct spotstr *osp, int a, int rb)
+update_overlap_different_direction(spot_index os, int a, int rb)
 {
 
 	int db = dd[rb];
 	for (int i = 0; i < 6; i++) {
-		const struct spotstr *sp = osp - db * i;
+		const struct spotstr *sp = &board[os - db * i];
 		if (sp->s_occ == BORDER)
 			break;
 		if ((sp->s_flags & BFLAG << rb) != 0)
@@ -303,18 +302,18 @@ update_overlap_different_direction(const struct spotstr *osp, int a, int rb)
  * fix up the overlap array according to the changed 'osp'.
  */
 static void
-update_overlap(struct spotstr *osp)
+update_overlap(spot_index os)
 {
 
 	for (int r = 4; --r >= 0; ) {		/* for each direction */
 	    int d = dd[r];
-	    struct spotstr *sp1 = osp;
+	    spot_index s1 = os;
 
 	    /* for each frame 'a' that contains the spot 'osp' */
-	    for (int f = 0; f < 6; f++, sp1 -= d) {
-		if (sp1->s_occ == BORDER)
+	    for (int f = 0; f < 6; f++, s1 -= d) {
+		if (board[s1].s_occ == BORDER)
 		    break;
-		if ((sp1->s_flags & BFLAG << r) != 0)
+		if ((board[s1].s_flags & BFLAG << r) != 0)
 		    continue;
 
 		/*
@@ -324,21 +323,21 @@ update_overlap(struct spotstr *osp)
 		 * do the rows 0 <= r1 <= r. The r1 == r case is special
 		 * since the two frames can overlap at more than one point.
 		 */
-		int a = (int)(sp1->s_frame[r] - frames);
+		int a = (int)(board[s1].s_frame[r] - frames);
 
-		struct spotstr *sp2 = sp1 - d;
-		for (int i = f + 1; i < 6; i++, sp2 -= d) {
-		    if (sp2->s_occ == BORDER)
+		spot_index s2 = s1 - d;
+		for (int i = f + 1; i < 6; i++, s2 -= d) {
+		    if (board[s2].s_occ == BORDER)
 			break;
-		    if ((sp2->s_flags & BFLAG << r) != 0)
+		    if ((board[s2].s_flags & BFLAG << r) != 0)
 			continue;
 
-		    update_overlap_same_direction(sp1, sp2, a, d, i - f, r);
+		    update_overlap_same_direction(s1, s2, a, d, i - f, r);
 		}
 
 		/* the other directions can only intersect at spot osp */
 		for (int rb = 0; rb < r; rb++)
-			update_overlap_different_direction(osp, a, rb);
+			update_overlap_different_direction(os, a, rb);
 	    }
 	}
 }
