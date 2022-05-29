@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.43 2022/05/02 10:13:15 skrll Exp $ */
+/* $NetBSD: db_machdep.c,v 1.44 2022/05/29 16:45:00 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.43 2022/05/02 10:13:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.44 2022/05/29 16:45:00 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -337,33 +337,35 @@ static void
 show_cpuinfo(struct cpu_info *ci)
 {
 	struct cpu_info cpuinfobuf;
-	cpuid_t cpuid;
+	u_int cpuidx;
 	int i;
 
 	db_read_bytes((db_addr_t)ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
 
-	cpuid = cpuinfobuf.ci_cpuid;
+	cpuidx = cpu_index(&cpuinfobuf);
 	db_printf("cpu_info=%p, cpu_name=%s\n", ci, cpuinfobuf.ci_cpuname);
-	db_printf("%p cpu[%lu].ci_cpuid        = %lu\n",
-	    &ci->ci_cpuid, cpuid, cpuinfobuf.ci_cpuid);
-	db_printf("%p cpu[%lu].ci_curlwp       = %p\n",
-	    &ci->ci_curlwp, cpuid, cpuinfobuf.ci_curlwp);
+	db_printf("%p cpu[%u].ci_cpuid         = 0x%lx\n",
+	    &ci->ci_cpuid, cpuidx, cpuinfobuf.ci_cpuid);
+	db_printf("%p cpu[%u].ci_curlwp        = %p\n",
+	    &ci->ci_curlwp, cpuidx, cpuinfobuf.ci_curlwp);
+	db_printf("%p cpu[%u].ci_onproc        = %p\n",
+	    &ci->ci_onproc, cpuidx, cpuinfobuf.ci_onproc);
 	for (i = 0; i < SOFTINT_COUNT; i++) {
-		db_printf("%p cpu[%lu].ci_softlwps[%d]  = %p\n",
-		    &ci->ci_softlwps[i], cpuid, i, cpuinfobuf.ci_softlwps[i]);
+		db_printf("%p cpu[%u].ci_softlwps[%d]   = %p\n",
+		    &ci->ci_softlwps[i], cpuidx, i, cpuinfobuf.ci_softlwps[i]);
 	}
-	db_printf("%p cpu[%lu].ci_lastintr     = %" PRIu64 "\n",
-	    &ci->ci_lastintr, cpuid, cpuinfobuf.ci_lastintr);
-	db_printf("%p cpu[%lu].ci_want_resched = %d\n",
-	    &ci->ci_want_resched, cpuid, cpuinfobuf.ci_want_resched);
-	db_printf("%p cpu[%lu].ci_cpl          = %d\n",
-	    &ci->ci_cpl, cpuid, cpuinfobuf.ci_cpl);
-	db_printf("%p cpu[%lu].ci_softints     = 0x%08x\n",
-	    &ci->ci_softints, cpuid, cpuinfobuf.ci_softints);
-	db_printf("%p cpu[%lu].ci_intr_depth   = %u\n",
-	    &ci->ci_intr_depth, cpuid, cpuinfobuf.ci_intr_depth);
-	db_printf("%p cpu[%lu].ci_biglock_count = %u\n",
-	    &ci->ci_biglock_count, cpuid, cpuinfobuf.ci_biglock_count);
+	db_printf("%p cpu[%u].ci_lastintr      = %" PRIu64 "\n",
+	    &ci->ci_lastintr, cpuidx, cpuinfobuf.ci_lastintr);
+	db_printf("%p cpu[%u].ci_want_resched  = %d\n",
+	    &ci->ci_want_resched, cpuidx, cpuinfobuf.ci_want_resched);
+	db_printf("%p cpu[%u].ci_cpl           = %d\n",
+	    &ci->ci_cpl, cpuidx, cpuinfobuf.ci_cpl);
+	db_printf("%p cpu[%u].ci_softints      = 0x%08x\n",
+	    &ci->ci_softints, cpuidx, cpuinfobuf.ci_softints);
+	db_printf("%p cpu[%u].ci_intr_depth    = %u\n",
+	    &ci->ci_intr_depth, cpuidx, cpuinfobuf.ci_intr_depth);
+	db_printf("%p cpu[%u].ci_biglock_count = %u\n",
+	    &ci->ci_biglock_count, cpuidx, cpuinfobuf.ci_biglock_count);
 }
 
 void
