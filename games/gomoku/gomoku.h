@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.51 2022/05/29 14:37:44 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.52 2022/05/29 14:50:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -40,27 +40,32 @@
 #include <stdio.h>
 
 /*
- * The board consists of 19x19 spots, the coordinates are 1-based. The board
- * is surrounded by border spots.
+ * The gomoku 'board' mainly consists of the playing area of BSZ x BSZ spots.
+ * The playing area uses 1-based coordinates. Around the playing area is a
+ * rectangle of border spots, to avoid having to check the coordinates when
+ * calculating spot coordinates. The left and right border overlap, to save a
+ * few bytes.
  */
 
 #define BSZ	19
 #define BAREA	((1 + BSZ + 1) * (BSZ + 1) + 1)
 
 /*
- * A 'frame' is a group of five or six contiguous board locations. An
+ * A 'frame' is a group of five or six contiguous spots on the board. An
  * open-ended frame is one with spaces on both ends; otherwise, it is closed.
  */
 #define FAREA	(2 * BSZ * (BSZ - 4) + 2 * (BSZ - 4) * (BSZ - 4))
 
-/* values for s_occ */
+
+/* The content of a spot on the board; used in s_occ. */
 #define BLACK	0
 #define WHITE	1
 #define EMPTY	2
 #define BORDER	3
 
-/* A spot on the board, or in some cases one of the below special values. */
+/* A spot on the board, or one of the special values below. */
 typedef unsigned short spot_index;
+#define PT(x, y)	((x) + (BSZ + 1) * (y))
 /* return values for makemove, readinput */
 #define MOVEOK	0
 #define RESIGN	1
@@ -69,11 +74,11 @@ typedef unsigned short spot_index;
 #define TIE	4
 #define SAVE	5
 #define END_OF_INPUT 6
-#define PT(x, y)	((x) + (BSZ + 1) * (y))
 
 /*
- * A 'combo' is a group of intersecting frames and consists of two numbers:
- * 'F' is the number of moves to make the combo non-blockable.
+ * A 'combo' is a group of intersecting or overlapping frames and consists of
+ * two numbers:
+ * 'F' is the number of moves still needed to make the combo non-blockable.
  * 'W' is the minimum number of moves needed to win once it can't be blocked.
  *
  * A 'force' is a combo that is one move away from being non-blockable.
