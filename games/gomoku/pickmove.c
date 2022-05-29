@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.53 2022/05/29 10:37:21 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.54 2022/05/29 11:36:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.53 2022/05/29 10:37:21 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.54 2022/05/29 11:36:12 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -308,7 +308,8 @@ scanframes(int color)
 			if (cp->s == 0x101) {
 				sp->s_nforce[color]++;
 				if (color != nextcolor) {
-					n = (int)(sp - board);
+					/* XXX: suspicious use of 'n' */
+					n = (spot_index)(sp - board);
 					BIT_SET(tmpmap, n);
 				}
 			}
@@ -493,7 +494,7 @@ makecombo2(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 		ncbp->c_linkv[1].s = fcb.s;
 		ncbp->c_voff[0] = off;
 		ncbp->c_voff[1] = f;
-		ncbp->c_vertex = (u_short)(osp - board);
+		ncbp->c_vertex = (spot_index)(osp - board);
 		ncbp->c_nframes = 2;
 		ncbp->c_dir = 0;
 		ncbp->c_frameindex = 0;
@@ -681,7 +682,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 #ifdef DEBUG
 		if (sp->s_occ != EMPTY) {
 		    debuglog("loop: %c %s", "BW"[curcolor],
-			stoc((int)(sp - board)));
+			stoc((spot_index)(sp - board)));
 		    whatsup(0);
 		}
 #endif
@@ -732,7 +733,7 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, int off, int cv)
 	    ncbp->c_link[1] = ocbp;
 	    ncbp->c_linkv[1].s = ocb.s;
 	    ncbp->c_voff[1] = off;
-	    ncbp->c_vertex = (u_short)(osp - board);
+	    ncbp->c_vertex = (spot_index)(osp - board);
 	    ncbp->c_nframes = cbp->c_nframes + 1;
 	    ncbp->c_flags = ocb.cv_win != 0 ? C_OPEN_1 : 0;
 	    ncbp->c_frameindex = ep->e_frameindex;
@@ -931,7 +932,7 @@ makeempty(struct combostr *ocbp)
 			nep->e_fval.s = ep->e_fval.s;
 			if (debug > 2) {
 				debuglog("e %s o%d i%d c%d m%x %x",
-				    stoc((int)(sp - board)),
+				    stoc((spot_index)(sp - board)),
 				    nep->e_off,
 				    nep->e_frameindex,
 				    nep->e_framecnt,
@@ -1087,7 +1088,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	fcnt = cb.cv_force - 2;
 	verts = 0;
 	myindex = cbp->c_nframes;
-	n = (int)(fcbp - frames) * FAREA;
+	n = (frame_index)(fcbp - frames) * FAREA;
 	str = &overlap[n];
 	spot_index *ip = &intersect[n];
 	/*
@@ -1248,7 +1249,7 @@ sortcombo(struct combostr **scbpp, struct combostr **cbpp,
 inserted:
 
 	/* now check to see if this list of frames has already been seen */
-	cbp = hashcombos[inx = (int)(*scbpp - frames)];
+	cbp = hashcombos[inx = (frame_index)(*scbpp - frames)];
 	if (cbp == NULL) {
 		/*
 		 * Easy case, this list hasn't been seen.
