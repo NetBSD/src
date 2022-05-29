@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.28 2022/05/29 00:12:11 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.29 2022/05/29 00:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.28 2022/05/29 00:12:11 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.29 2022/05/29 00:38:26 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -248,7 +248,7 @@ init_overlap_frame(int fia, int ra, int sia, spot_index s, int mask)
 				continue;
 
 			int fib = (int)(spb0->s_frame[rb] - frames);
-			intersect[fia * FAREA + fib] = (short)s;
+			intersect[fia * FAREA + fib] = s;
 			u_char *op = &overlap[fia * FAREA + fib];
 			*op = adjust_overlap(*op, ra, sia, rb, sib, mask);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.47 2022/05/29 00:12:11 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.48 2022/05/29 00:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -59,8 +59,9 @@
 #define EMPTY	2
 #define BORDER	3
 
+/* A spot on the board, or in some cases one of the below special values. */
+typedef unsigned short spot_index;
 /* return values for makemove, readinput */
-typedef int spot_index;
 #define MOVEOK	0
 #define RESIGN	1
 #define ILLEGAL	2
@@ -232,7 +233,7 @@ extern	struct	spotstr	board[BAREA];		/* info for board */
 extern	struct	combostr frames[FAREA];		/* storage for single frames */
 extern	struct	combostr *sortframes[2];	/* sorted, non-empty frames */
 extern	u_char	overlap[FAREA * FAREA];
-extern	short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
+extern	spot_index intersect[FAREA * FAREA];	/* frame [a][b] intersection */
 extern	struct game	game;
 extern	int	debug;
 
@@ -256,7 +257,7 @@ void	debuglog(const char *, ...) __printflike(1, 2);
 void	whatsup(int);
 const char *stoc(spot_index);
 spot_index ctos(const char *);
-int	makemove(int, int);
+int	makemove(int, spot_index);
 void	clearcombo(struct combostr *, int);
 void	markcombo(struct combostr *);
 int	pickmove(int);
