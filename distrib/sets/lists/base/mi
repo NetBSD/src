@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1305 2022/05/29 08:09:59 nia Exp $
+# $NetBSD: mi,v 1.1306 2022/05/29 15:23:20 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1592,7 +1592,7 @@
 ./usr/sbin/mount_puffsportal			base-obsolete		obsolete
 ./usr/sbin/mount_sysctlfs			base-puffs-bin
 ./usr/sbin/mountd				base-nfsserver-bin
-./usr/sbin/moused				base-sysutil-bin
+./usr/sbin/moused				base-sysutil-bin	moused
 ./usr/sbin/mrinfo				base-router-bin		mrouting
 ./usr/sbin/mrouted				base-router-bin		mrouting
 ./usr/sbin/mscdlabel				base-sysutil-bin
@@ -1772,8 +1772,8 @@
 ./usr/sbin/tcpdrop				base-netutil-bin
 ./usr/sbin/tcpdump				base-netutil-bin	tcpdump
 ./usr/sbin/tcsd					base-tpm-bin		tpm
-./usr/sbin/timed				base-timed-bin
-./usr/sbin/timedc				base-timed-bin
+./usr/sbin/timed				base-timed-bin		timed
+./usr/sbin/timedc				base-timed-bin		timed
 ./usr/sbin/tpm_changeownerauth			base-tpm-bin		tpm
 ./usr/sbin/tpm_clear				base-tpm-bin		tpm
 ./usr/sbin/tpm_createek				base-tpm-bin		tpm

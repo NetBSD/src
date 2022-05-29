@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.437 2022/05/29 08:10:00 nia Exp $
+#	$NetBSD: bsd.README,v 1.438 2022/05/29 15:23:20 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -384,6 +384,10 @@ MKMDNS		If "no", disables building of mDNS infrastructure
 		(libraries and support programs).
 		Default: yes
 
+MKMOUSED	If "no", don't build moused(8) (serial mouse support
+		daemon, not to be confused with wsmoused(8)).
+		Default: yes
+
 MKMROUTING	If "no", don't build or install the multicast routing
 		applications - map-mbone(8), mrinfo(8), mrouted(8), or
 		mtrace(8).
@@ -532,6 +536,10 @@ MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
 		such as static function names is useful on using DTrace for
 		userland libraries and getting a backtrace from a rump kernel
 		loading shared libraries.
+		Default: yes
+
+MKTIMED		If "no", don't build timed(8) (original Time Synchronization
+		Protocol server, not to be confused with ntpd(8)).
 		Default: yes
 
 MKTOUCH		If "no", don't build talk(1) or ntalkd(8).

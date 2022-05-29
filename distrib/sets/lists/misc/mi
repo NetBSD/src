@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.221 2022/05/28 11:17:36 nia Exp $
+# $NetBSD: mi,v 1.222 2022/05/29 15:23:20 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -749,33 +749,33 @@
 ./usr/share/doc/reference/ref3/sysman/sysman7.png		misc-psd-doc		doc,html,groffhtmldoc
 ./usr/share/doc/reference/ref3/sysman/sysman8.png		misc-psd-doc		doc,html,groffhtmldoc
 ./usr/share/doc/reference/ref3/sysman/sysman9.png		misc-psd-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed.html			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed.ps.gz		misc-smm-doc		doc,groff
-./usr/share/doc/reference/ref5/timed/timed.txt			misc-smm-doc		doc,groff
-./usr/share/doc/reference/ref5/timed/timed1.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed10.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed11.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed12.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed13.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed14.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed15.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed16.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed17.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed18.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed19.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed2.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed20.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed21.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed22.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed23.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed24.png		misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed3.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed4.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed5.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed6.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed7.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed8.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref5/timed/timed9.png			misc-smm-doc		doc,html,groffhtmldoc
+./usr/share/doc/reference/ref5/timed/timed.html			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed.ps.gz		misc-smm-doc		doc,groff,timed
+./usr/share/doc/reference/ref5/timed/timed.txt			misc-smm-doc		doc,groff,timed
+./usr/share/doc/reference/ref5/timed/timed1.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed10.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed11.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed12.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed13.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed14.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed15.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed16.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed17.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed18.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed19.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed2.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed20.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed21.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed22.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed23.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed24.png		misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed3.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed4.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed5.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed6.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed7.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed8.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref5/timed/timed9.png			misc-smm-doc		doc,html,groffhtmldoc,timed
 ./usr/share/doc/reference/ref7/quotas/quotas.html		misc-smm-doc		doc,html,groffhtmldoc
 ./usr/share/doc/reference/ref7/quotas/quotas.ps.gz		misc-smm-doc		doc,groff
 ./usr/share/doc/reference/ref7/quotas/quotas.txt		misc-smm-doc		doc,groff
@@ -1017,11 +1017,11 @@
 ./usr/share/doc/reference/ref8/postfix/verify.8.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/virtual.5.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/reference/ref8/postfix/virtual.8.html		misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/reference/ref8/timed/timed.html			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref8/timed/timed.ps.gz		misc-smm-doc		doc,groff
-./usr/share/doc/reference/ref8/timed/timed.txt			misc-smm-doc		doc,groff
-./usr/share/doc/reference/ref8/timed/timed1.png			misc-smm-doc		doc,html,groffhtmldoc
-./usr/share/doc/reference/ref8/timed/timed2.png			misc-smm-doc		doc,html,groffhtmldoc
+./usr/share/doc/reference/ref8/timed/timed.html			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref8/timed/timed.ps.gz		misc-smm-doc		doc,groff,timed
+./usr/share/doc/reference/ref8/timed/timed.txt			misc-smm-doc		doc,groff,timed
+./usr/share/doc/reference/ref8/timed/timed1.png			misc-smm-doc		doc,html,groffhtmldoc,timed
+./usr/share/doc/reference/ref8/timed/timed2.png			misc-smm-doc		doc,html,groffhtmldoc,timed
 ./usr/share/doc/reference/ref9/net/net.html			misc-smm-doc		doc,html,groffhtmldoc
 ./usr/share/doc/reference/ref9/net/net.ps.gz			misc-smm-doc		doc,groff
 ./usr/share/doc/reference/ref9/net/net.txt			misc-smm-doc		doc,groff

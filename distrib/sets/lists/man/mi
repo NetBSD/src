@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1746 2022/05/29 08:09:59 nia Exp $
+# $NetBSD: mi,v 1.1747 2022/05/29 15:23:20 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2873,7 +2873,7 @@
 ./usr/share/man/cat8/mount_v7fs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_zfs.0		man-sysutil-catman	zfs,.cat
 ./usr/share/man/cat8/mountd.0			man-nfsserver-catman	.cat
-./usr/share/man/cat8/moused.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/moused.0			man-sysutil-catman	moused,.cat
 ./usr/share/man/cat8/mrinfo.0			man-netutil-catman	mrouting,.cat
 ./usr/share/man/cat8/mrouted.0			man-router-catman	mrouting,.cat
 ./usr/share/man/cat8/mscdlabel.0		man-sysutil-catman	.cat
@@ -3220,8 +3220,8 @@
 ./usr/share/man/cat8/telnetd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tftp-proxy.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat8/tftpd.0			man-netutil-catman	.cat
-./usr/share/man/cat8/timed.0			man-timed-catman	.cat
-./usr/share/man/cat8/timedc.0			man-timed-catman	.cat
+./usr/share/man/cat8/timed.0			man-timed-catman	timed,.cat
+./usr/share/man/cat8/timedc.0			man-timed-catman	timed,.cat
 ./usr/share/man/cat8/tlsmgr.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/tlsproxy.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/tpctl.0			man-sysutil-catman	.cat
@@ -5925,7 +5925,7 @@
 ./usr/share/man/html8/mount_v7fs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_zfs.html		man-sysutil-htmlman	zfs,html
 ./usr/share/man/html8/mountd.html		man-nfsserver-htmlman	html
-./usr/share/man/html8/moused.html		man-sysutil-htmlman	html
+./usr/share/man/html8/moused.html		man-sysutil-htmlman	moused,html
 ./usr/share/man/html8/mrinfo.html		man-netutil-htmlman	mrouting,html
 ./usr/share/man/html8/mrouted.html		man-router-htmlman	mrouting,html
 ./usr/share/man/html8/mscdlabel.html		man-sysutil-htmlman	html
@@ -6192,8 +6192,8 @@
 ./usr/share/man/html8/telnetd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/tftp-proxy.html		man-pf-htmlman		pf,html
 ./usr/share/man/html8/tftpd.html		man-netutil-htmlman	html
-./usr/share/man/html8/timed.html		man-timed-htmlman	html
-./usr/share/man/html8/timedc.html		man-timed-htmlman	html
+./usr/share/man/html8/timed.html		man-timed-htmlman	timed,html
+./usr/share/man/html8/timedc.html		man-timed-htmlman	timed,html
 ./usr/share/man/html8/tlsmgr.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/tlsproxy.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/tpctl.html		man-sysutil-htmlman	html
@@ -9159,7 +9159,7 @@
 ./usr/share/man/man8/mount_v7fs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_zfs.8		man-sysutil-man		zfs,.man
 ./usr/share/man/man8/mountd.8			man-nfsserver-man	.man
-./usr/share/man/man8/moused.8			man-sysutil-man		.man
+./usr/share/man/man8/moused.8			man-sysutil-man		moused,.man
 ./usr/share/man/man8/mrinfo.8			man-netutil-man		mrouting,.man
 ./usr/share/man/man8/mrouted.8			man-router-man		mrouting,.man
 ./usr/share/man/man8/mscdlabel.8		man-sysutil-man		.man
@@ -9506,8 +9506,8 @@
 ./usr/share/man/man8/telnetd.8			man-netutil-man		.man
 ./usr/share/man/man8/tftp-proxy.8		man-pf-man		pf,.man
 ./usr/share/man/man8/tftpd.8			man-netutil-man		.man
-./usr/share/man/man8/timed.8			man-timed-man		.man
-./usr/share/man/man8/timedc.8			man-timed-man		.man
+./usr/share/man/man8/timed.8			man-timed-man		timed,.man
+./usr/share/man/man8/timedc.8			man-timed-man		timed,.man
 ./usr/share/man/man8/tlsmgr.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/tlsproxy.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/tpctl.8			man-sysutil-man		.man
