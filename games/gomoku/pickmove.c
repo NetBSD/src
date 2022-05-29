@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.55 2022/05/29 12:20:07 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.56 2022/05/29 12:44:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.55 2022/05/29 12:20:07 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.56 2022/05/29 12:44:17 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -184,8 +184,9 @@ pickmove(int us)
 	 * away from completing a force, and we don't have a force that
 	 * we can complete which takes fewer moves to win).
 	 */
-	if (Tcp->cv_force <= 1 && (Ocp->cv_force > 1 ||
-	    Tcp->cv_force + Tcp->cv_win < Ocp->cv_force + Ocp->cv_win))
+	if (Tcp->cv_force <= 1 &&
+	    !(Ocp->cv_force <= 1 &&
+	      Tcp->cv_force + Tcp->cv_win >= Ocp->cv_force + Ocp->cv_win))
 		return s2;
 	return s1;
 }
@@ -226,15 +227,15 @@ static int curcolor;	/* implicit parameter to makecombo() */
 static unsigned int curlevel;	/* implicit parameter to makecombo() */
 
 static bool
-quick_check(int color, struct combostr *cbp)
+four_in_a_row(int color, spot_index s, int r)
 {
 
-	struct spotstr *sp = &board[cbp->c_vertex];
-	union comboval cb = { .s = sp->s_fval[color][cbp->c_dir].s };
+	struct spotstr *sp = &board[s];
+	union comboval cb = { .s = sp->s_fval[color][r].s };
 	if (cb.s >= 0x101)
 		return false;
 
-	for (int i = 5 + cb.cv_win, d = dd[cbp->c_dir]; --i >= 0; sp += d) {
+	for (int i = 5 + cb.cv_win, d = dd[r]; --i >= 0; sp += d) {
 		if (sp->s_occ != EMPTY)
 			continue;
 		sp->s_combo[color].s = cb.s;
@@ -265,8 +266,7 @@ scanframes(int color)
 	if (cbp == NULL)
 		return;
 
-	/* quick check for four in a row */
-	if (quick_check(color, cbp))
+	if (four_in_a_row(color, cbp->c_vertex, cbp->c_dir))
 		return;
 
 	/*
