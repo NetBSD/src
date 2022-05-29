@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.28 2019/04/25 10:08:45 msaitoh Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.29 2022/05/29 10:45:05 rin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.28 2019/04/25 10:08:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.29 2022/05/29 10:45:05 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,29 +151,26 @@ leattach_obio(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE, 0,
 	    BUS_DMA_NOWAIT|BUS_DMA_24BIT, &lesc->sc_dmamap)) != 0) {
 		aprint_error(": DMA map create error %d\n", error);
-		return;
+		goto bad_bsunmap;
 	}
 
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
 		aprint_error(": DMA memory allocation error %d\n", error);
-		return;
+		goto bad_destroy;
 	}
 	/* Map DMA buffer into kernel space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
 	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error(": DMA memory map error %d\n", error);
-		bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
-		return;
+		goto bad_free;
 	}
 	/* Load DMA buffer */
 	if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap,
 	    sc->sc_mem, MEMSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(": DMA buffer map load error %d\n", error);
-		bus_dmamem_unmap(dmatag, (void *)sc->sc_mem, MEMSIZE);
-		bus_dmamem_free(dmatag, &seg, rseg);
-		return;
+		goto bad_unmap;
 	}
 
 	sc->sc_addr = lesc->sc_dmamap->dm_segs[0].ds_addr & 0xffffff;
@@ -200,4 +197,15 @@ leattach_obio(device_t parent, device_t self, void *aux)
 	/* Install interrupt */
 	(void)bus_intr_establish(lesc->sc_bustag, oba->oba_pri, IPL_NET,
 	    am7990_intr, sc);
+
+	return;
+
+ bad_unmap:
+	bus_dmamem_unmap(dmatag, (void *)sc->sc_mem, MEMSIZE);
+ bad_free:
+	bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
+ bad_destroy:
+	bus_dmamap_destroy(dmatag, lesc->sc_dmamap);
+ bad_bsunmap:
+	bus_space_unmap(oba->oba_bustag, lesc->sc_reg, 2 * sizeof(uint16_t));
 }

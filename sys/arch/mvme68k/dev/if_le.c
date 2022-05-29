@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.36 2010/01/19 22:06:21 pooka Exp $	*/
+/*	$NetBSD: if_le.c,v 1.37 2022/05/29 10:45:05 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.36 2010/01/19 22:06:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.37 2022/05/29 10:45:05 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -179,13 +179,12 @@ le_pcc_attach(device_t parent, device_t self, void *aux)
 	    &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT)) {
 		aprint_error(": Failed to allocate ether buffer\n");
-		return;
+		goto bad_unmap;
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
 	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
 		aprint_error(": Failed to map ether buffer\n");
-		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		return;
+		goto bad_free;
 	}
 	sc->sc_addr = seg.ds_addr;
 	sc->sc_memsize = ether_data_buff_size;
@@ -212,4 +211,11 @@ le_pcc_attach(device_t parent, device_t self, void *aux)
 
 	pcc_reg_write(sys_pcc, PCCREG_LANCE_INTR_CTRL,
 	    pa->pa_ipl | PCC_IENABLE);
+
+	return;
+
+ bad_free:
+	bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+ bad_unmap:
+	bus_space_unmap(pa->pa_bust, lsc->sc_bush, 4);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.13 2010/01/19 22:06:21 pooka Exp $	*/
+/*	$NetBSD: if_le.c,v 1.14 2022/05/29 10:45:05 rin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.13 2010/01/19 22:06:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.14 2022/05/29 10:45:05 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -177,25 +177,24 @@ le_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamem_alloc(dmat, LE_MEMSIZE, 0, 0, &seg, 1,
 			     &rseg, BUS_DMA_NOWAIT)) {
 		aprint_error(": can't allocate DMA area\n");
-		return;
+		goto bad_bsunmap;
 	}
 	/* Map pages into kernel memory */
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_MEMSIZE,
 	    &kvaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		aprint_error(": can't map DMA area\n");
-		bus_dmamem_free(dmat, &seg, rseg);
-		return;
+		goto bad_free;
 	}
 	/* Build DMA map so we can get physical address */
 	if (bus_dmamap_create(dmat, LE_MEMSIZE, 1, LE_MEMSIZE,
 			      0, BUS_DMA_NOWAIT, &lesc->sc_dmamap)) {
 		aprint_error(": can't create DMA map\n");
-		goto bad;
+		goto bad_unmap;
 	}
 	if (bus_dmamap_load(dmat, lesc->sc_dmamap, kvaddr, LE_MEMSIZE,
 			    NULL, BUS_DMA_NOWAIT)) {
 		aprint_error(": can't load DMA map\n");
-		goto bad;
+		goto bad_destroy;
 	}
 
 	sc->sc_memsize = LE_MEMSIZE;	/* 16K Buffer space*/
@@ -226,9 +225,14 @@ le_attach(device_t parent, device_t self, void *aux)
 	am7990_config(&lesc->sc_am7990);
 	return;
 
-bad:
+ bad_destroy:
+	bus_dmamap_destroy(dmat, lesc->sc_dmamap);
+ bad_unmap:
 	bus_dmamem_unmap(dmat, kvaddr, LE_MEMSIZE);
+ bad_free:
 	bus_dmamem_free(dmat, &seg, rseg);
+ bad_bsunmap:
+	bus_space_unmap(ca->ca_bustag, lesc->sc_reg, 8);
 }
 
 int
