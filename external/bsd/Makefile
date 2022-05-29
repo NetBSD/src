@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2022/05/28 11:17:35 nia Exp $
+#	$NetBSD: Makefile,v 1.74 2022/05/29 08:10:00 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -39,6 +39,9 @@ SUBDIR+= pam-u2f
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
+.if (${MKPPP} != "no")
+SUBDIR+= ppp
+.endif
 .if (${MKDTRACE} != "no")
 SUBDIR+= libproc
 SUBDIR+= librtld_db
@@ -50,6 +53,6 @@ SUBDIR+= tcpdump
 SUBDIR+= unbound
 .endif
 
-SUBDIR+= blocklist pdisk nvi ppp libnv
+SUBDIR+= blocklist pdisk nvi libnv
 
 .include <bsd.subdir.mk>
