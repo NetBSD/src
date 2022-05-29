@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.53 2022/01/01 09:53:32 msaitoh Exp $	*/
+/*	$NetBSD: ciss.c,v 1.54 2022/05/29 10:43:46 rin Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.53 2022/01/01 09:53:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.54 2022/05/29 10:43:46 rin Exp $");
 
 #include "bio.h"
 
@@ -334,8 +334,8 @@ ciss_attach(struct ciss_softc *sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->cmdmap, sc->ccbs, total,
 	    NULL, BUS_DMA_NOWAIT))) {
 		aprint_error(": cannot load CCBs dmamap (%d)\n", error);
-		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
+		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		return -1;
 	}
 
@@ -370,8 +370,8 @@ ciss_attach(struct ciss_softc *sc)
 		aprint_error(": cannot create ccb#%d dmamap (%d)\n", i, error);
 		if (i == 0) {
 			/* TODO leaking cmd's dmamaps and shitz */
-			bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 			bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
+			bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 			return -1;
 		}
 	}
@@ -395,8 +395,8 @@ ciss_attach(struct ciss_softc *sc)
 	if (ciss_inq(sc, inq)) {
 		aprint_error(": adapter inquiry failed\n");
 		mutex_exit(&sc->sc_mutex_scratch);
-		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
+		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		return -1;
 	}
 
@@ -404,8 +404,8 @@ ciss_attach(struct ciss_softc *sc)
 		aprint_error(": big map is not supported, flags=0x%x\n",
 		    inq->flags);
 		mutex_exit(&sc->sc_mutex_scratch);
-		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
+		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		return -1;
 	}
 
@@ -434,8 +434,8 @@ ciss_attach(struct ciss_softc *sc)
 	/* map LDs */
 	if (ciss_ldmap(sc)) {
 		aprint_error_dev(sc->sc_dev, "adapter LD map failed\n");
-		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
+		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		return -1;
 	}
 
@@ -446,8 +446,8 @@ ciss_attach(struct ciss_softc *sc)
 	if (!(sc->sc_sh = shutdownhook_establish(ciss_shutdown, sc))) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to establish shutdown hook\n");
-		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
+		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		return -1;
 	}
 

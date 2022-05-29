@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.34 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.35 2022/05/29 10:43:46 rin Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.34 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.35 2022/05/29 10:43:46 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -130,8 +130,7 @@ le_ioasic_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_IOASIC_MEMSIZE,
 	    &le_iomem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		aprint_error(": can't map DMA area for LANCE\n");
-		bus_dmamem_free(dmat, &seg, rseg);
-		return;
+		goto bad_free;
 	}
 	/*
 	 * Create and load the DMA map for the DMA area.
@@ -139,12 +138,12 @@ le_ioasic_attach(device_t parent, device_t self, void *aux)
 	if (bus_dmamap_create(dmat, LE_IOASIC_MEMSIZE, 1,
 	    LE_IOASIC_MEMSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) {
 		aprint_error(": can't create DMA map\n");
-		goto bad;
+		goto bad_unmap;
 	}
 	if (bus_dmamap_load(dmat, sc->sc_dmamap,
 	    le_iomem, LE_IOASIC_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
 		aprint_error(": can't load DMA map\n");
-		goto bad;
+		goto bad_destroy;
 	}
 	/*
 	 * Bind 128KB buffer with IOASIC DMA.
@@ -171,8 +170,11 @@ le_ioasic_attach(device_t parent, device_t self, void *aux)
 	    am7990_intr, sc);
 	return;
 
- bad:
+ bad_destroy:
+	bus_dmamap_destroy(dmat, sc->sc_dmamap);
+ bad_unmap:
 	bus_dmamem_unmap(dmat, le_iomem, LE_IOASIC_MEMSIZE);
+ bad_free:
 	bus_dmamem_free(dmat, &seg, rseg);
 }
 

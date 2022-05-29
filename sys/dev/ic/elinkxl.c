@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.138 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.139 2022/05/29 10:43:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.138 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.139 2022/05/29 10:43:46 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1598,10 +1598,10 @@ ex_stop(struct ifnet *ifp, int disable)
 	for (tx = sc->tx_head ; tx != NULL; tx = tx->tx_next) {
 		if (tx->tx_mbhead == NULL)
 			continue;
-		m_freem(tx->tx_mbhead);
-		tx->tx_mbhead = NULL;
 		bus_dmamap_unload(sc->sc_dmat, tx->tx_dmamap);
 		tx->tx_dpd->dpd_fsh = tx->tx_dpd->dpd_nextptr = 0;
+		m_freem(tx->tx_mbhead);
+		tx->tx_mbhead = NULL;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((char *)tx->tx_dpd - (char *)sc->sc_dpd),
 		    sizeof (struct ex_dpd),

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.52 2021/12/08 20:50:02 andvar Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.53 2022/05/29 10:43:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.52 2021/12/08 20:50:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.53 2022/05/29 10:43:46 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,13 +328,13 @@ le_isa_attach(device_t parent, struct le_softc *lesc,
 			     &rseg, BUS_DMA_NOWAIT)) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't allocate memory for card\n");
-		return;
+		goto bad_bsunmap;
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_ISA_MEMSIZE,
 			   (void **)&sc->sc_mem,
 			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		aprint_error_dev(sc->sc_dev, "couldn't map memory for card\n");
-		return;
+		goto bad_free;
 	}
 
 	/*
@@ -343,14 +343,12 @@ le_isa_attach(device_t parent, struct le_softc *lesc,
 	if (bus_dmamap_create(dmat, LE_ISA_MEMSIZE, 1,
 			LE_ISA_MEMSIZE, 0, BUS_DMA_NOWAIT, &lesc->sc_dmam)) {
 		aprint_error_dev(sc->sc_dev, "couldn't create DMA map\n");
-		bus_dmamem_free(dmat, &seg, rseg);
-		return;
+		goto bad_unmap;
 	}
 	if (bus_dmamap_load(dmat, lesc->sc_dmam,
 			sc->sc_mem, LE_ISA_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
 		aprint_error_dev(sc->sc_dev, "couldn't load DMA map\n");
-		bus_dmamem_free(dmat, &seg, rseg);
-		return;
+		goto bad_destroy;
 	}
 
 	sc->sc_conf3 = 0;
@@ -372,7 +370,7 @@ le_isa_attach(device_t parent, struct le_softc *lesc,
 					    ia->ia_drq[0].ir_drq)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to cascade DRQ, error = %d\n", error);
-			return;
+			goto bad_destroy;
 		}
 	}
 
@@ -381,6 +379,17 @@ le_isa_attach(device_t parent, struct le_softc *lesc,
 
 	aprint_normal("%s", device_xname(sc->sc_dev));
 	am7990_config(&lesc->sc_am7990);
+
+	return;
+
+ bad_destroy:
+	bus_dmamap_destroy(dmat, lesc->sc_dmam);
+ bad_unmap:
+	bus_dmamem_unmap(dmat, sc->sc_mem, LE_ISA_MEMSIZE);
+ bad_free:
+	bus_dmamem_free(dmat, &seg, rseg);
+ bad_bsunmap:
+	bus_space_unmap(iot, ioh, p->iosize);
 }
 
 /*
