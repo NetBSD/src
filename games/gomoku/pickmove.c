@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.63 2022/05/29 18:05:25 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.64 2022/05/29 18:25:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.63 2022/05/29 18:05:25 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.64 2022/05/29 18:25:39 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: pickmove.c,v 1.63 2022/05/29 18:05:25 rillig Exp $");
  * This structure is used to store overlap information between frames.
  */
 struct overlap_info {
-	int		o_intersect;	/* intersection spot */
+	spot_index	o_intersect;	/* intersection spot */
 	u_char		o_off;		/* offset in frame of intersection */
 	u_char		o_frameindex;	/* intersection frame index */
 };
@@ -661,17 +661,8 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 	struct combostr **scbpp;
 	int baseB, fcnt, emask, verts;
 	union comboval ocb;
-	struct overlap_info vertices[1];
+	struct overlap_info ovi;
 	char tmp[128];
-
-	/*
-	 * XXX: when I made functions static gcc started warning about
-	 * some members of vertices[0] maybe being used uninitialized.
-	 * For now, I'm just going to clear it rather than wade through
-	 * the logic to find out whether gcc or the code is wrong. I
-	 * wouldn't be surprised if it were the code though. - dholland
-	 */
-	memset(vertices, 0, sizeof(vertices));
 
 	ocb.s = cv;
 	baseB = ocb.cv_force + ocb.cv_win - 1;
@@ -680,13 +671,13 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 	for (struct elist *ep = osp->s_empty; ep != NULL; ep = ep->e_next) {
 	    /* check for various kinds of overlap */
 	    cbp = ep->e_combo;
-	    verts = checkframes(cbp, ocbp, osp, cv, vertices);
+	    verts = checkframes(cbp, ocbp, osp, cv, &ovi);
 	    if (verts < 0)
 		continue;
 
 	    /* check to see if this frame forms a valid loop */
 	    if (verts > 0) {
-		sp = &board[vertices[0].o_intersect];
+		sp = &board[ovi.o_intersect];
 #ifdef DEBUG
 		if (sp->s_occ != EMPTY) {
 		    debuglog("loop: %c %s", "BW"[curcolor],
@@ -754,15 +745,14 @@ makecombo(struct combostr *ocbp, struct spotstr *osp, u_char off, u_short cv)
 	    ncbp->c_emask[0] = ep->e_emask;
 	    if (verts != 0) {
 		ncbp->c_flags |= C_LOOP;
-		ncbp->c_dir = vertices[0].o_frameindex;
+		ncbp->c_dir = ovi.o_frameindex;
 		ncbp->c_framecnt[1] = fcnt - 1;
 		if (ncbp->c_framecnt[1] != 0) {
-		    n = (vertices[0].o_intersect - ocbp->c_vertex) /
-			dd[ocbp->c_dir];
+		    n = (ovi.o_intersect - ocbp->c_vertex) / dd[ocbp->c_dir];
 		    ncbp->c_emask[1] = emask & ~(1 << n);
 		} else
 		    ncbp->c_emask[1] = 0;
-		ncbp->c_voff[0] = vertices[0].o_off;
+		ncbp->c_voff[0] = ovi.o_off;
 	    } else {
 		ncbp->c_dir = 0;
 		ncbp->c_framecnt[1] = fcnt;
@@ -1074,14 +1064,14 @@ appendcombo(struct combostr *cbp, int color __unused)
  * Return zero if it is valid to combine frame 'fcbp' with the frames
  * in 'cbp' and forms a linked chain of frames (i.e., a tree; no loops).
  * Return positive if combining frame 'fcbp' to the frames in 'cbp'
- * would form some kind of valid loop. Also return the intersection spots
- * in 'vertices[]' beside the known intersection at spot 'osp'.
+ * would form some kind of valid loop. Also return the intersection spot
+ * in 'ovi' beside the known intersection at spot 'osp'.
  * Return -1 if 'fcbp' should not be combined with 'cbp'.
  * 'cv' is the combo value for frame 'fcbp'.
  */
 static int
 checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
-	    u_short cv, struct overlap_info *vertices)
+	    u_short cv, struct overlap_info *ovi)
 {
 	struct combostr *tcbp, *lcbp;
 	int ovbit, n, mask, flags, fcnt;
@@ -1148,10 +1138,10 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 				     s == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
 					return -1;	/* invalid overlap */
 
-				vertices->o_intersect = s;
-				vertices->o_off = (s - tcbp->c_vertex) /
+				ovi->o_intersect = s;
+				ovi->o_off = (s - tcbp->c_vertex) /
 					dd[tcbp->c_dir];
-				vertices->o_frameindex = myindex;
+				ovi->o_frameindex = myindex;
 				verts++;
 			}
 		}
@@ -1196,10 +1186,10 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 			     s == fcbp->c_vertex + 5 * dd[fcbp->c_dir]))
 				return -1;	/* invalid overlap */
 
-			vertices->o_intersect = s;
-			vertices->o_off = (s - cbp->c_vertex) /
+			ovi->o_intersect = s;
+			ovi->o_off = (s - cbp->c_vertex) /
 				dd[cbp->c_dir];
-			vertices->o_frameindex = 0;
+			ovi->o_frameindex = 0;
 			verts++;
 		}
 	}
