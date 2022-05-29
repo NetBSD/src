@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.41 2019/05/29 06:21:58 msaitoh Exp $	*/
+/*	$NetBSD: if_le.c,v 1.42 2022/05/29 10:43:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.41 2019/05/29 06:21:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.42 2022/05/29 10:43:46 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -233,6 +233,7 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 		    &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) != 0) {
 			aprint_error(": DMA buffer allocation error %d\n",
 			    error);
+			bus_dmamap_destroy(dmatag, lesc->sc_dmamap);
 			return;
 		}
 
@@ -242,6 +243,7 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 		    != 0) {
 			aprint_error(": DMA buffer map error %d\n", error);
 			bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
+			bus_dmamap_destroy(dmatag, lesc->sc_dmamap);
 			return;
 		}
 
@@ -249,8 +251,9 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap,
 		    sc->sc_mem, MEMSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
 			aprint_error(": DMA buffer map load error %d\n", error);
-			bus_dmamem_free(dmatag, &seg, rseg);
 			bus_dmamem_unmap(dmatag, sc->sc_mem, MEMSIZE);
+			bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
+			bus_dmamap_destroy(dmatag, lesc->sc_dmamap);
 			return;
 		}
 

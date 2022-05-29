@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.22 2022/05/20 13:55:17 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.23 2022/05/29 10:43:45 rin Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.22 2022/05/20 13:55:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.23 2022/05/29 10:43:45 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_hvn.h"
@@ -3997,10 +3997,11 @@ hvn_rndis_init(struct hvn_softc *sc)
 		    PAGE_SIZE, NULL, BUS_DMA_WAITOK)) {
 			DPRINTF("%s: failed to load RNDIS command map\n",
 			    device_xname(sc->sc_dev));
+			bus_dmamem_unmap(sc->sc_dmat, rc->rc_req, PAGE_SIZE);
+			rc->rc_req = NULL;
 			bus_dmamem_free(sc->sc_dmat, &rc->rc_segs,
 			    rc->rc_nsegs);
 			bus_dmamap_destroy(sc->sc_dmat, rc->rc_dmap);
-			rc->rc_req = NULL;
 			goto errout;
 		}
 		rc->rc_gpa = atop(rc->rc_dmap->dm_segs[0].ds_addr);
@@ -4034,8 +4035,10 @@ hvn_rndis_destroy(struct hvn_softc *sc)
 			continue;
 
 		TAILQ_REMOVE(&sc->sc_cntl_fq, rc, rc_entry);
-		bus_dmamem_free(sc->sc_dmat, &rc->rc_segs, rc->rc_nsegs);
+		bus_dmamap_unload(sc->sc_dmat, rc->rc_dmap);
+		bus_dmamem_unmap(sc->sc_dmat, rc->rc_req, PAGE_SIZE);
 		rc->rc_req = NULL;
+		bus_dmamem_free(sc->sc_dmat, &rc->rc_segs, rc->rc_nsegs);
 		bus_dmamap_destroy(sc->sc_dmat, rc->rc_dmap);
 		mutex_destroy(&rc->rc_lock);
 		cv_destroy(&rc->rc_cv);

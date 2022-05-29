@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.108 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.109 2022/05/29 10:43:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.108 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.109 2022/05/29 10:43:46 rin Exp $");
 
 /* #define HMEDEBUG */
 
@@ -198,16 +198,14 @@ hme_config(struct hme_softc *sc)
 				    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev, "DMA buffer map error %d\n",
 			error);
-		bus_dmamap_unload(dmatag, sc->sc_dmamap);
-		bus_dmamem_free(dmatag, &seg, rseg);
-		return;
+		goto bad_free;
 	}
 
 	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
 				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		aprint_error_dev(sc->sc_dev, "DMA map create error %d\n",
 			error);
-		return;
+		goto bad_unmap;
 	}
 
 	/* Load the buffer */
@@ -216,8 +214,7 @@ hme_config(struct hme_softc *sc)
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev, "DMA buffer map load error %d\n",
 			error);
-		bus_dmamem_free(dmatag, &seg, rseg);
-		return;
+		goto bad_destroy;
 	}
 	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
@@ -316,6 +313,15 @@ hme_config(struct hme_softc *sc)
 
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, hme_tick, sc);
+
+	return;
+
+ bad_destroy:
+	bus_dmamap_destroy(dmatag, sc->sc_dmamap);
+ bad_unmap:
+	bus_dmamem_unmap(dmatag, sc->sc_rb.rb_membase, size);
+ bad_free:
+	bus_dmamem_free(dmatag, &seg, rseg);
 }
 
 void
