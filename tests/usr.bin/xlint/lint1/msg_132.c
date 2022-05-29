@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.14 2022/05/29 23:09:43 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.15 2022/05/29 23:24:09 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -205,37 +205,12 @@ struct bit_fields {
 unsigned char
 test_bit_fields(struct bit_fields s, unsigned long m)
 {
-	/* expect+4: error: cannot take size/alignment of bit-field [145] */
-	/* expect+3: error: cannot take size/alignment of bit-field [145] */
-	/* expect+2: error: cannot take size/alignment of bit-field [145] */
-	/* expect+1: error: cannot take size/alignment of bit-field [145] */
+	/* expect+1: warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy [132] */
 	s.bits_3 = s.bits_32 & m;
 
-	/* expect+9: error: cannot take size/alignment of bit-field [145] */
-	/* expect+8: error: cannot take size/alignment of bit-field [145] */
-	/* expect+7: error: cannot take size/alignment of bit-field [145] */
-	/* expect+6: error: cannot take size/alignment of bit-field [145] */
-	/* expect+5: error: cannot take size/alignment of bit-field [145] */
-	/* expect+4: error: cannot take size/alignment of bit-field [145] */
-	/* expect+3: error: cannot take size/alignment of bit-field [145] */
-	/* expect+2: error: cannot take size/alignment of bit-field [145] */
-	/* expect+1: warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy [132] */
 	s.bits_5 = s.bits_3 & m;
-
-	/* expect+9: error: cannot take size/alignment of bit-field [145] */
-	/* expect+8: error: cannot take size/alignment of bit-field [145] */
-	/* expect+7: error: cannot take size/alignment of bit-field [145] */
-	/* expect+6: error: cannot take size/alignment of bit-field [145] */
-	/* expect+5: error: cannot take size/alignment of bit-field [145] */
-	/* expect+4: error: cannot take size/alignment of bit-field [145] */
-	/* expect+3: error: cannot take size/alignment of bit-field [145] */
-	/* expect+2: error: cannot take size/alignment of bit-field [145] */
-	/* expect+1: warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy [132] */
 	s.bits_32 = s.bits_5 & m;
 
-	/* expect+4: error: cannot take size/alignment of bit-field [145] */
-	/* expect+3: error: cannot take size/alignment of bit-field [145] */
-	/* expect+2: error: cannot take size/alignment of bit-field [145] */
 	/* expect+1: warning: conversion from 'unsigned long' to 'unsigned char' may lose accuracy [132] */
 	return s.bits_32 & m;
 }

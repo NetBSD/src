@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.449 2022/05/26 20:17:40 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.450 2022/05/29 23:24:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.449 2022/05/26 20:17:40 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.450 2022/05/29 23:24:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -113,14 +113,20 @@ ic_maybe_signed(const type_t *tp, const integer_constraints *ic)
 	    (ic->bclr & ((uint64_t)1 << 63)) == 0;
 }
 
+static unsigned
+ic_length_in_bits(const type_t *tp)
+{
+
+	lint_assert(is_integer(tp->t_tspec));
+	return tp->t_bitfield ? tp->t_flen : size_in_bits(tp->t_tspec);
+}
+
 static integer_constraints
 ic_any(const type_t *tp)
 {
 	integer_constraints c;
 
-	lint_assert(is_integer(tp->t_tspec));
-	unsigned int sz = type_size_in_bits(tp);
-	uint64_t vbits = value_bits(sz);
+	uint64_t vbits = value_bits(ic_length_in_bits(tp));
 	if (is_uinteger(tp->t_tspec)) {
 		c.smin = INT64_MIN;
 		c.smax = INT64_MAX;
@@ -160,7 +166,7 @@ static integer_constraints
 ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
 {
 
-	if (type_size_in_bits(ntp) > type_size_in_bits(otp) &&
+	if (ic_length_in_bits(ntp) > ic_length_in_bits(otp) &&
 	    is_uinteger(otp->t_tspec))
 		return a;
 	return ic_any(ntp);
@@ -2394,7 +2400,7 @@ can_represent(const type_t *tp, const tnode_t *tn)
 	debug_step("%s: type '%s'", __func__, type_name(tp));
 	debug_node(tn);
 
-	uint64_t nmask = value_bits(type_size_in_bits(tp));
+	uint64_t nmask = value_bits(ic_length_in_bits(tp));
 	if (!is_uinteger(tp->t_tspec))
 		nmask >>= 1;
 
