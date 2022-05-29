@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.50 2022/05/29 00:38:26 rillig Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.51 2022/05/29 01:17:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)pickmove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: pickmove.c,v 1.50 2022/05/29 00:38:26 rillig Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.51 2022/05/29 01:17:55 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +68,7 @@ static int forcemap[MAPSZ];		/* map for blocking <1,x> combos */
 static int tmpmap[MAPSZ];		/* map for blocking <1,x> combos */
 static int nforce;			/* count of opponent <1,x> combos */
 
-static bool better(const struct spotstr *, const struct spotstr *, int);
+static bool better(spot_index, spot_index, int);
 static void scanframes(int);
 static void makecombo2(struct combostr *, struct spotstr *, int, int);
 static void addframes(unsigned int);
@@ -111,17 +111,17 @@ pickmove(int us)
 	scanframes(WHITE);
 
 	/* find the spot with the highest value */
-	unsigned pos = PT(BSZ, BSZ);
-	struct spotstr *sp1 = &board[pos];
-	struct spotstr *sp2 = sp1;
-	for ( ; pos-- > PT(1, 1); ) {
-		struct spotstr *sp = &board[pos];
+	spot_index s = PT(BSZ, BSZ);
+	spot_index s1 = s;
+	spot_index s2 = s;
+	for ( ; s-- > PT(1, 1); ) {
+		struct spotstr *sp = &board[s];
 		if (sp->s_occ != EMPTY)
 			continue;
 		if (debug != 0 && (sp->s_combo[BLACK].cv_force == 1 ||
 		    sp->s_combo[WHITE].cv_force == 1)) {
 			debuglog("- %s %x/%d %d %x/%d %d %d",
-			    stoc((int)(sp - board)),
+			    stoc(s),
 			    sp->s_combo[BLACK].s, sp->s_level[BLACK],
 			    sp->s_nforce[BLACK],
 			    sp->s_combo[WHITE].s, sp->s_level[WHITE],
@@ -129,22 +129,23 @@ pickmove(int us)
 			    sp->s_wval);
 		}
 		/* pick the best black move */
-		if (better(sp, sp1, BLACK))
-			sp1 = sp;
+		if (better(s, s1, BLACK))
+			s1 = s;
 		/* pick the best white move */
-		if (better(sp, sp2, WHITE))
-			sp2 = sp;
+		if (better(s, s2, WHITE))
+			s2 = s;
 	}
 
 	if (debug != 0) {
+		const struct spotstr *sp1 = &board[s1], *sp2 = &board[s2];
 		debuglog("B %s %x/%d %d %x/%d %d %d",
-		    stoc((int)(sp1 - board)),
+		    stoc(s1),
 		    sp1->s_combo[BLACK].s, sp1->s_level[BLACK],
 		    sp1->s_nforce[BLACK],
 		    sp1->s_combo[WHITE].s, sp1->s_level[WHITE],
 		    sp1->s_nforce[WHITE], sp1->s_wval);
 		debuglog("W %s %x/%d %d %x/%d %d %d",
-		    stoc((int)(sp2 - board)),
+		    stoc(s2),
 		    sp2->s_combo[WHITE].s, sp2->s_level[WHITE],
 		    sp2->s_nforce[WHITE],
 		    sp2->s_combo[BLACK].s, sp2->s_level[BLACK],
@@ -153,24 +154,24 @@ pickmove(int us)
 		 * Check for more than one force that can't
 		 * all be blocked with one move.
 		 */
-		struct spotstr *sp = (us == BLACK) ? sp2 : sp1;
-		int m = (int)(sp - board);
-		if (sp->s_combo[us != BLACK ? BLACK : WHITE].cv_force == 1 &&
+		spot_index m = us == BLACK ? s2 : s1;
+		int them = us != BLACK ? BLACK : WHITE;
+		if (board[m].s_combo[them].cv_force == 1 &&
 		    !BIT_TEST(forcemap, m))
 			debuglog("*** Can't be blocked");
 	}
 
 	union comboval *Ocp, *Tcp;
 	if (us == BLACK) {
-		Ocp = &sp1->s_combo[BLACK];
-		Tcp = &sp2->s_combo[WHITE];
+		Ocp = &board[s1].s_combo[BLACK];
+		Tcp = &board[s2].s_combo[WHITE];
 	} else {
-		Tcp = &sp1->s_combo[BLACK];
-		Ocp = &sp2->s_combo[WHITE];
+		Tcp = &board[s1].s_combo[BLACK];
+		Ocp = &board[s2].s_combo[WHITE];
 
-		struct spotstr *sp = sp1;
-		sp1 = sp2;
-		sp2 = sp;
+		spot_index tmp = s1;
+		s1 = s2;
+		s2 = tmp;
 	}
 	/*
 	 * Block their combo only if we have to (i.e., if they are one move
@@ -179,16 +180,17 @@ pickmove(int us)
 	 */
 	if (Tcp->cv_force <= 1 && (Ocp->cv_force > 1 ||
 	    Tcp->cv_force + Tcp->cv_win < Ocp->cv_force + Ocp->cv_win))
-		return (int)(sp2 - board);
-	return (int)(sp1 - board);
+		return s2;
+	return s1;
 }
 
 /*
  * Return true if spot 'sp' is better than spot 'sp1' for color 'us'.
  */
 static bool
-better(const struct spotstr *sp, const struct spotstr *sp1, int us)
+better(spot_index s, spot_index s1, int us)
 {
+	const struct spotstr *sp = &board[s], *sp1 = &board[s1];
 
 	if (/* .... */ sp->s_combo[us].s != sp1->s_combo[us].s)
 		return sp->s_combo[us].s < sp1->s_combo[us].s;
@@ -198,8 +200,6 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 		return sp->s_nforce[us] > sp1->s_nforce[us];
 
 	int them = us != BLACK ? BLACK : WHITE;
-	spot_index s = (spot_index)(sp - board);
-	spot_index s1 = (spot_index)(sp1 - board);
 	if (BIT_TEST(forcemap, s) != BIT_TEST(forcemap, s1))
 		return BIT_TEST(forcemap, s);
 
