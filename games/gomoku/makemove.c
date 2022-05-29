@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.33 2022/05/28 08:32:55 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.34 2022/05/29 00:38:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.33 2022/05/28 08:32:55 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.34 2022/05/29 00:38:26 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -97,7 +97,7 @@ old_weight_value(const struct spotstr *sp, int r)
  *	TIE	The game is a tie.
  */
 int
-makemove(int us, int mv)
+makemove(int us, spot_index mv)
 {
 
 	/* check for end of game */
