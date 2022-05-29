@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.15 2022/05/29 16:13:41 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.16 2022/05/29 23:43:49 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15 2022/05/29 16:13:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2022/05/29 23:43:49 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -254,14 +254,17 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (tf != NULL) {
 #if defined(_KERNEL)
-		bool is_switchframe = (tf->tf_sp == 0);
-		(*pr)("---- %s %p (%zu bytes) ----\n",
-		    is_switchframe ? "switchframe" : "trapframe",
-		    tf, sizeof(*tf));
-		if (is_switchframe)
+		if (tf->tf_sp == 0) {
+			(*pr)("---- switchframe %p (%zu bytes) ----\n",
+			    tf, sizeof(*tf));
 			dump_switchframe(tf, pr);
-		else
+		} else {
+			(*pr)("---- %s: trapframe %p (%zu bytes) ----\n",
+			    (tf->tf_esr == -1) ? "Interrupt" :
+			    eclass_trapname(__SHIFTOUT(tf->tf_esr, ESR_EC)),
+			    tf, sizeof(*tf));
 			dump_trapframe(tf, pr);
+		}
 		(*pr)("------------------------"
 		      "------------------------\n");
 
@@ -324,7 +327,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			if (lr == 0)
 				break;
 
-			(*pr)("---- trapframe %p (%zu bytes) ----\n",
+			(*pr)("---- %s: trapframe %p (%zu bytes) ----\n",
+			    (tf->tf_esr == -1) ? "Interrupt" :
+			    eclass_trapname(__SHIFTOUT(tf->tf_esr, ESR_EC)),
 			    tf, sizeof(*tf));
 			dump_trapframe(tf, pr);
 			(*pr)("------------------------"
