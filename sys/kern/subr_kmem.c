@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.86 2022/05/30 21:42:02 mrg Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.87 2022/05/30 23:36:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.86 2022/05/30 21:42:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.87 2022/05/30 23:36:26 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -184,16 +184,12 @@ SDT_PROBE_DEFINE3(sdt, kmem, free, large,
 
 static const struct kmem_cache_info kmem_cache_sizes[] = {
 	KMEM_CACHE_SIZES(F)
-#ifndef KDTRACE_HOOKS
-	{ 0, NULL }
-#endif
+	{ 0 }
 };
 
 static const struct kmem_cache_info kmem_cache_big_sizes[] = {
 	KMEM_CACHE_BIG_SIZES(F)
-#ifndef KDTRACE_HOOKS
-	{ 0, NULL }
-#endif
+	{ 0 }
 };
 
 #undef	F
