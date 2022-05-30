@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.17 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: md.evbppc,v 1.18 2022/05/30 15:06:54 rin Exp $
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbppc/ansi.h			comp-c-include
@@ -59,3 +59,5 @@
 ./usr/include/evbppc/vmparam.h			comp-c-include
 ./usr/include/evbppc/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
+./usr/lib/libc_aligned.a	comp-c-lib	!machine_arch=powerpc64
+./usr/lib/libc_aligned_p.a	comp-c-lib	!machine_arch=powerpc64
