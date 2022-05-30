@@ -1,14 +1,16 @@
-#	$NetBSD: files.powerpc,v 1.101 2022/05/07 07:10:46 rin Exp $
+#	$NetBSD: files.powerpc,v 1.102 2022/05/30 14:05:36 rin Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC_DISTRIBUTE
 defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK CLOCKBASE VERBOSE_INITPPC PPC_CPU_FREQ
 defflag	opt_ppcarch.h	PPC_OEA PPC_OEA601 PPC_OEA64 PPC_OEA64_BRIDGE PPC_MPC8XX PPC_IBM4XX PPC_IBM403 PPC_IBM440 PPC_BOOKE
 defflag opt_ppccache.h	CACHE_PROTO_MEI
+defflag	opt_ppcopts.h	PPC_NO_UNALIGNED
 defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS PMAP_MINIMALTLB PMAP_TLBDEBUG
 defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 
 file	arch/powerpc/powerpc/core_machdep.c		coredump
+file	arch/powerpc/powerpc/fix_unaligned.c		ppc_no_unaligned
 file	arch/powerpc/powerpc/fixup.c
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/kobj_machdep.c		modular
