@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.121 2022/05/30 14:05:36 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.122 2022/05/30 14:48:08 rin Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -511,5 +511,6 @@ void	__syncicache(void *, size_t);
 #define	CPU_BOOTED_KERNEL	10	/* string: kernel we booted */
 #define	CPU_EXECPROT		11	/* bool: PROT_EXEC works */
 #define	CPU_FPU			12
+#define	CPU_NO_UNALIGNED	13	/* No HW support for unaligned access */
 
 #endif	/* _POWERPC_CPU_H_ */

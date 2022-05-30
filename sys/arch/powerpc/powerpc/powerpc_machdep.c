@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.85 2022/05/20 19:34:22 andvar Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.86 2022/05/30 14:48:08 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.85 2022/05/20 19:34:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.86 2022/05/30 14:48:08 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.85 2022/05/20 19:34:22 andvar 
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
+#include "opt_ppcopts.h"
 #endif
 
 #include <sys/param.h>
@@ -301,6 +302,17 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 		       NULL, 0,
 		       CTL_MACHDEP, CPU_FPU, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "no_unaligned", NULL,
+		       NULL,
+#if defined(PPC_NO_UNALIGNED)
+		       1,
+#else
+		       0,
+#endif
+		       NULL, 0,
+		       CTL_MACHDEP, CPU_NO_UNALIGNED, CTL_EOL);
 }
 
 /*
