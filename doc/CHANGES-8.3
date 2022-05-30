@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.130 2022/05/17 12:12:38 bouyer Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.131 2022/05/30 17:08:06 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2609,4 +2609,26 @@ libexec/mail.local/mail.local.c			1.29
 
 	Thanks to Jan Schaumann for bringing this to our attention.
 	[kre, ticket #1743]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.270,1.280,1.307-1.311,
+						1.313-1.314 via patch
+sys/dev/pci/ixgbe/ix_txrx.c			1.96-1.97
+sys/dev/pci/ixgbe/ixv.c				1.179-1.180 via patch
+
+
+	- ixg(4): Print Printed Board Assembly (PBA) number.
+	- ixg(4): Add IFF_RUNNING check in ixgbe_legacy_irq() again. this might
+	  fix small race but it's not so dangerous.
+	- Add value check for {tx,rx}_process_limit sysctl to avoid setting
+	  wrong value.
+	- Add missing num_tx_desc sysctl.
+	- No functional change:
+	  - KNF a bit.
+	  - Simplify setting of EIAC register.
+	  - Move the definition of eicr_mask variable.
+	  - Enclose flow director stuff in ixgbe_intr_admin_common() with
+	    IXGBE_FIR which is not defined in NetBSD.
+	  - Modify comment for consistency.
+	  - Use cached rx_copy_len in ixgbe_rxeof().
+	[msaitoh, ticket #1744]
 
