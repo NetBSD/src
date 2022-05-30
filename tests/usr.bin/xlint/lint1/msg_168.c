@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_168.c,v 1.7 2022/05/30 08:14:53 rillig Exp $	*/
+/*	$NetBSD: msg_168.c,v 1.8 2022/05/30 08:51:08 rillig Exp $	*/
 # 3 "msg_168.c"
 
 // Test for message: array subscript cannot be > %d: %ld [168]
@@ -42,6 +42,29 @@ array_with_c99_initializer(void)
 }
 
 
+/*
+ * In its expression tree, lint represents pointer addition as 'ptr + off',
+ * where 'off' is the offset in bytes, regardless of the pointer type.
+ *
+ * In the below code, the member 'offset_8' has type 'short', and the
+ * expression 's->offset_8' is represented as '&s + 8', or more verbose:
+ *
+ *	'+' type 'pointer to short'
+ *		'&' type 'pointer to struct s'
+ *			'name' 's' with auto 'array[1] of struct s', lvalue
+ *		'constant' type 'long', value 8
+ *
+ * The constant 8 differs from the usual model of pointer arithmetics.  Since
+ * the type of the '&' expression is 'pointer to struct s', adding a constant
+ * would rather be interpreted as adding 'constant * sizeof(struct s)', and
+ * to access a member, the pointer to 'struct s' would need to be converted
+ * to 'pointer of byte' first, then adding the offset 8, then converting the
+ * pointer to the target type 'pointer to short'.
+ *
+ * Lint uses the simpler representation, saving a few conversions on the way.
+ * Without this pre-multiplied representation, the below code would generate
+ * warnings about out-of-bounds array access, starting with offset_1.
+ */
 struct s {
 	char offset_0;
 	char offset_1;
