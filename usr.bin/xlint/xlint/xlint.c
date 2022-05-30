@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.92 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.93 2022/05/30 23:02:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.92 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.93 2022/05/30 23:02:02 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -322,14 +322,15 @@ usage(const char *fmt, ...)
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	fprintf(stderr, "\n");
+	if (fmt[0] != '\0')
+		fprintf(stderr, "\n");
 
 	indent = (int)(strlen("usage: ") + strlen(name));
 	(void)fprintf(stderr,
 	    "usage: %s [-abceghprvwxzHFST] [-s|-t] [-i|-nu]\n"
 	    "%*s [-Dname[=def]] [-Uname] [-Idirectory] [-Z <cpparg>]\n"
 	    "%*s [-Ldirectory] [-llibrary] [-ooutputfile]\n"
-	    "%*s [-X <id>[,<id>]...] [-Ac11] file...\n",
+	    "%*s [-X <id>[,<id>]...] [-Ac11] file ...\n",
 	    name, indent, "", indent, "", indent, "");
 	(void)fprintf(stderr,
 	    "       %s [-abceghprvwzHFST] [-s|-t] -Clibrary\n"
@@ -556,7 +557,7 @@ main(int argc, char *argv[])
 			break;
 
 		default:
-			usage("Unknown flag %c", c);
+			usage("");
 			/* NOTREACHED */
 		}
 	}
@@ -582,7 +583,7 @@ main(int argc, char *argv[])
 			else if (arg[1] == 'L')
 				list = &libsrchpath;
 			else {
-				usage("Unknown argument %s", arg);
+				usage("Unknown late option '%s'", arg);
 				/* NOTREACHED */
 			}
 
