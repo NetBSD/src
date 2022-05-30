@@ -1,4 +1,4 @@
-/*	$NetBSD: cd1190reg.h,v 1.5 2008/07/02 10:16:20 plunky Exp $	*/
+/*	$NetBSD: cd1190reg.h,v 1.6 2022/05/30 09:56:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert.
@@ -168,7 +168,7 @@
 /* Strobe Width Register */
 #define CD1190_SWR		0x02
 
-/* Timer Multipler Register */
+/* Timer Multiplier Register */
 #define CD1190_TMR		0x05
 
 /* Timer Prescale Register */
