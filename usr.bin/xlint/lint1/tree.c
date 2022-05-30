@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.450 2022/05/29 23:24:09 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.451 2022/05/30 07:19:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.450 2022/05/29 23:24:09 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.451 2022/05/30 07:19:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -255,10 +255,14 @@ ic_expr(const tnode_t *tn)
 {
 	integer_constraints lc, rc;
 
+	lint_assert(is_integer(tn->tn_type->t_tspec));
+
 	switch (tn->tn_op) {
 	case CON:
 		return ic_con(tn->tn_type, tn->tn_val);
 	case CVT:
+		if (!is_integer(tn->tn_left->tn_type->t_tspec))
+			return ic_any(tn->tn_type);
 		lc = ic_expr(tn->tn_left);
 		return ic_cvt(tn->tn_type, tn->tn_left->tn_type, lc);
 	case SHL:

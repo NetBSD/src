@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.15 2022/05/29 23:24:09 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.16 2022/05/30 07:19:28 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -213,4 +213,12 @@ test_bit_fields(struct bit_fields s, unsigned long m)
 
 	/* expect+1: warning: conversion from 'unsigned long' to 'unsigned char' may lose accuracy [132] */
 	return s.bits_32 & m;
+}
+
+
+unsigned int
+convert_pointer_to_smaller_integer(void *ptr)
+{
+	/* expect+1: warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy [132] */
+	return (unsigned long)(ptr) >> 12;
 }
