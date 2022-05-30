@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.4 2018/10/12 01:28:58 ryo Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.5 2022/05/30 21:18:37 jkoshy Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@
 #define R_AARCH64_TLSLE_LDST128_TPREL_LO12	570	/* TPREL(S+A) */
 #define R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC	571	/* TPREL(S+A) */
 #define R_AARCH64_TLSLD_LDST128_DTPREL_LO12	572	/* DTPREL(S+A) */
-#define R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC	572	/* DTPREL(S+A) */
+#define R_AARCH64_TLSLD_LDST128_DTPREL_LO12_NC	573	/* DTPREL(S+A) */
 
 /* Dynamic Relocations */
 #define R_AARCH64_P32_COPY		180
