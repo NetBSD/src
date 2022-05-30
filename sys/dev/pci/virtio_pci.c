@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.37 2022/04/13 22:41:17 uwe Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.38 2022/05/30 20:28:18 riastradh Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.37 2022/04/13 22:41:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.38 2022/05/30 20:28:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -880,9 +880,9 @@ virtio_pci_setup_interrupts_09(struct virtio_softc *sc, int reinit)
 
 	bus_space_write_2(psc->sc_iot, psc->sc_ioh, offset, vector);
 	ret = bus_space_read_2(psc->sc_iot, psc->sc_ioh, offset);
-	aprint_debug_dev(sc->sc_dev, "expected=%d, actual=%d\n",
-	    vector, ret);
 	if (ret != vector) {
+		aprint_debug_dev(sc->sc_dev, "%s: expected=%d, actual=%d\n",
+		    __func__, vector, ret);
 		VIRTIO_PCI_LOG(sc, reinit,
 		    "can't set config msix vector\n");
 		return -1;
@@ -900,9 +900,10 @@ virtio_pci_setup_interrupts_09(struct virtio_softc *sc, int reinit)
 
 		bus_space_write_2(psc->sc_iot, psc->sc_ioh, offset, vector);
 		ret = bus_space_read_2(psc->sc_iot, psc->sc_ioh, offset);
-		aprint_debug_dev(sc->sc_dev, "expected=%d, actual=%d\n",
-		    vector, ret);
 		if (ret != vector) {
+			aprint_debug_dev(sc->sc_dev, "%s[qid=%d]:"
+			    " expected=%d, actual=%d\n",
+			    __func__, qid, vector, ret);
 			VIRTIO_PCI_LOG(sc, reinit, "can't set queue %d "
 			    "msix vector\n", qid);
 			return -1;
