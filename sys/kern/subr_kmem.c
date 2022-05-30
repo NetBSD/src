@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.84 2022/03/12 22:20:34 riastradh Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.85 2022/05/30 20:28:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.84 2022/03/12 22:20:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.85 2022/05/30 20:28:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.84 2022/03/12 22:20:34 riastradh Exp
 #include <sys/cpu.h>
 #include <sys/asan.h>
 #include <sys/msan.h>
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -102,41 +103,96 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.84 2022/03/12 22:20:34 riastradh Exp
 struct kmem_cache_info {
 	size_t		kc_size;
 	const char *	kc_name;
+#ifdef KDTRACE_HOOKS
+	const id_t	*kc_alloc_probe_id;
+	const id_t	*kc_free_probe_id;
+#endif
 };
 
+#define	KMEM_CACHE_SIZES(F)						      \
+	F(8, kmem-00008, kmem__00008)					      \
+	F(16, kmem-00016, kmem__00016)					      \
+	F(24, kmem-00024, kmem__00024)					      \
+	F(32, kmem-00032, kmem__00032)					      \
+	F(40, kmem-00040, kmem__00040)					      \
+	F(48, kmem-00048, kmem__00048)					      \
+	F(56, kmem-00056, kmem__00056)					      \
+	F(64, kmem-00064, kmem__00064)					      \
+	F(80, kmem-00080, kmem__00080)					      \
+	F(96, kmem-00096, kmem__00096)					      \
+	F(112, kmem-00112, kmem__00112)					      \
+	F(128, kmem-00128, kmem__00128)					      \
+	F(160, kmem-00160, kmem__00160)					      \
+	F(192, kmem-00192, kmem__00192)					      \
+	F(224, kmem-00224, kmem__00224)					      \
+	F(256, kmem-00256, kmem__00256)					      \
+	F(320, kmem-00320, kmem__00320)					      \
+	F(384, kmem-00384, kmem__00384)					      \
+	F(448, kmem-00448, kmem__00448)					      \
+	F(512, kmem-00512, kmem__00512)					      \
+	F(768, kmem-00768, kmem__00768)					      \
+	F(1024, kmem-01024, kmem__01024)				      \
+	/* end of KMEM_CACHE_SIZES */
+
+#define	KMEM_CACHE_BIG_SIZES(F)						      \
+	F(2048, kmem-02048, kmem__02048)				      \
+	F(4096, kmem-04096, kmem__04096)				      \
+	F(8192, kmem-08192, kmem__08192)				      \
+	F(16384, kmem-16384, kmem__16384)				      \
+	/* end of KMEM_CACHE_BIG_SIZES */
+
+/* sdt:kmem:alloc:kmem-* probes */
+#define	F(SZ, NAME, PROBENAME)						      \
+	SDT_PROBE_DEFINE4(sdt, kmem, alloc, PROBENAME,			      \
+	    "void *"/*ptr*/,						      \
+	    "size_t"/*requested_size*/,					      \
+	    "size_t"/*allocated_size*/,					      \
+	    "km_flag_t"/*kmflags*/);
+KMEM_CACHE_SIZES(F);
+KMEM_CACHE_BIG_SIZES(F);
+#undef	F
+
+/* sdt:kmem:free:kmem-* probes */
+#define	F(SZ, NAME, PROBENAME)						      \
+	SDT_PROBE_DEFINE3(sdt, kmem, free, PROBENAME,			      \
+	    "void *"/*ptr*/,						      \
+	    "size_t"/*requested_size*/,					      \
+	    "size_t"/*allocated_size*/);
+KMEM_CACHE_SIZES(F);
+KMEM_CACHE_BIG_SIZES(F);
+#undef	F
+
+/* sdt:kmem:alloc:large, sdt:kmem:free:large probes */
+SDT_PROBE_DEFINE4(sdt, kmem, alloc, large,
+    "void *"/*ptr*/,
+    "size_t"/*requested_size*/,
+    "size_t"/*allocated_size*/,
+    "km_flag_t"/*kmflags*/);
+SDT_PROBE_DEFINE3(sdt, kmem, free, large,
+    "void *"/*ptr*/,
+    "size_t"/*requested_size*/,
+    "size_t"/*allocated_size*/);
+
+#ifdef KDTRACE_HOOKS
+#define	F(SZ, NAME, PROBENAME)						      \
+	{ SZ, #NAME,							      \
+	  &sdt_sdt_kmem_alloc_##PROBENAME->id,				      \
+	  &sdt_sdt_kmem_free_##PROBENAME->id },
+#else
+#define	F(SZ, NAME, PROBENAME)	{ SZ, #NAME },
+#endif
+
 static const struct kmem_cache_info kmem_cache_sizes[] = {
-	{  8, "kmem-00008" },
-	{ 16, "kmem-00016" },
-	{ 24, "kmem-00024" },
-	{ 32, "kmem-00032" },
-	{ 40, "kmem-00040" },
-	{ 48, "kmem-00048" },
-	{ 56, "kmem-00056" },
-	{ 64, "kmem-00064" },
-	{ 80, "kmem-00080" },
-	{ 96, "kmem-00096" },
-	{ 112, "kmem-00112" },
-	{ 128, "kmem-00128" },
-	{ 160, "kmem-00160" },
-	{ 192, "kmem-00192" },
-	{ 224, "kmem-00224" },
-	{ 256, "kmem-00256" },
-	{ 320, "kmem-00320" },
-	{ 384, "kmem-00384" },
-	{ 448, "kmem-00448" },
-	{ 512, "kmem-00512" },
-	{ 768, "kmem-00768" },
-	{ 1024, "kmem-01024" },
+	KMEM_CACHE_SIZES(F)
 	{ 0, NULL }
 };
 
 static const struct kmem_cache_info kmem_cache_big_sizes[] = {
-	{ 2048, "kmem-02048" },
-	{ 4096, "kmem-04096" },
-	{ 8192, "kmem-08192" },
-	{ 16384, "kmem-16384" },
+	KMEM_CACHE_BIG_SIZES(F)
 	{ 0, NULL }
 };
+
+#undef	F
 
 /*
  * KMEM_ALIGN is the smallest guaranteed alignment and also the
@@ -177,6 +233,49 @@ static void kmem_size_check(void *, size_t);
 #define	kmem_size_check(p, sz)	/* nothing */
 #endif
 
+#ifndef KDTRACE_HOOKS
+
+static const id_t **const kmem_cache_alloc_probe_id = NULL;
+static const id_t **const kmem_cache_big_alloc_probe_id = NULL;
+static const id_t **const kmem_cache_free_probe_id = NULL;
+static const id_t **const kmem_cache_big_free_probe_id = NULL;
+
+#define	KMEM_CACHE_PROBE(ARRAY, INDEX, PTR, REQSIZE, ALLOCSIZE, FLAGS)	      \
+	__nothing
+
+#else
+
+static const id_t *kmem_cache_alloc_probe_id[KMEM_CACHE_COUNT];
+static const id_t *kmem_cache_big_alloc_probe_id[KMEM_CACHE_COUNT];
+static const id_t *kmem_cache_free_probe_id[KMEM_CACHE_COUNT];
+static const id_t *kmem_cache_big_free_probe_id[KMEM_CACHE_COUNT];
+
+#define	KMEM_CACHE_PROBE(ARRAY, INDEX, PTR, REQSIZE, ALLOCSIZE, FLAGS) do     \
+{									      \
+	id_t id;							      \
+									      \
+	KDASSERT((INDEX) < __arraycount(ARRAY));			      \
+	if (__predict_false((id = *(ARRAY)[INDEX]) != 0)) {		      \
+		(*sdt_probe_func)(id,					      \
+		    (uintptr_t)(PTR),					      \
+		    (uintptr_t)(REQSIZE),				      \
+		    (uintptr_t)(ALLOCSIZE),				      \
+		    (uintptr_t)(FLAGS),					      \
+		    (uintptr_t)0);					      \
+	}								      \
+} while (0)
+
+#endif	/* KDTRACE_HOOKS */
+
+#define	KMEM_CACHE_ALLOC_PROBE(I, P, RS, AS, F)				      \
+	KMEM_CACHE_PROBE(kmem_cache_alloc_probe_id, I, P, RS, AS, F)
+#define	KMEM_CACHE_BIG_ALLOC_PROBE(I, P, RS, AS, F)			      \
+	KMEM_CACHE_PROBE(kmem_cache_big_alloc_probe_id, I, P, RS, AS, F)
+#define	KMEM_CACHE_FREE_PROBE(I, P, RS, AS)				      \
+	KMEM_CACHE_PROBE(kmem_cache_free_probe_id, I, P, RS, AS, 0)
+#define	KMEM_CACHE_BIG_FREE_PROBE(I, P, RS, AS)				      \
+	KMEM_CACHE_PROBE(kmem_cache_big_free_probe_id, I, P, RS, AS, 0)
+
 CTASSERT(KM_SLEEP == PR_WAITOK);
 CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 
@@ -203,25 +302,31 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 	size = kmem_roundup_size(requested_size);
 	allocsz = size + SIZE_SIZE;
 
-	if ((index = ((allocsz -1) >> KMEM_SHIFT))
+	if ((index = ((allocsz - 1) >> KMEM_SHIFT))
 	    < kmem_cache_maxidx) {
 		pc = kmem_cache[index];
+		p = pool_cache_get(pc, kmflags);
+		KMEM_CACHE_ALLOC_PROBE(index,
+		    p, requested_size, allocsz, kmflags);
 	} else if ((index = ((allocsz - 1) >> KMEM_BIG_SHIFT))
 	    < kmem_cache_big_maxidx) {
 		pc = kmem_cache_big[index];
+		p = pool_cache_get(pc, kmflags);
+		KMEM_CACHE_BIG_ALLOC_PROBE(index,
+		    p, requested_size, allocsz, kmflags);
 	} else {
 		int ret = uvm_km_kmem_alloc(kmem_va_arena,
 		    (vsize_t)round_page(size),
 		    ((kmflags & KM_SLEEP) ? VM_SLEEP : VM_NOSLEEP)
 		     | VM_INSTANTFIT, (vmem_addr_t *)&p);
+		SDT_PROBE4(sdt, kmem, alloc, large,
+		    ret ? NULL : p, requested_size, round_page(size), kmflags);
 		if (ret) {
 			return NULL;
 		}
 		FREECHECK_OUT(&kmem_freecheck, p);
 		return p;
 	}
-
-	p = pool_cache_get(pc, kmflags);
 
 	if (__predict_true(p != NULL)) {
 		FREECHECK_OUT(&kmem_freecheck, p);
@@ -264,14 +369,18 @@ kmem_intr_free(void *p, size_t requested_size)
 	size = kmem_roundup_size(requested_size);
 	allocsz = size + SIZE_SIZE;
 
-	if ((index = ((allocsz -1) >> KMEM_SHIFT))
+	if ((index = ((allocsz - 1) >> KMEM_SHIFT))
 	    < kmem_cache_maxidx) {
+		KMEM_CACHE_FREE_PROBE(index, p, requested_size, allocsz);
 		pc = kmem_cache[index];
 	} else if ((index = ((allocsz - 1) >> KMEM_BIG_SHIFT))
 	    < kmem_cache_big_maxidx) {
+		KMEM_CACHE_BIG_FREE_PROBE(index, p, requested_size, allocsz);
 		pc = kmem_cache_big[index];
 	} else {
 		FREECHECK_IN(&kmem_freecheck, p);
+		SDT_PROBE3(sdt, kmem, free, large,
+		    p, requested_size, round_page(size));
 		uvm_km_kmem_free(kmem_va_arena, (vaddr_t)p,
 		    round_page(size));
 		return;
@@ -339,6 +448,7 @@ kmem_free(void *p, size_t size)
 
 static size_t
 kmem_create_caches(const struct kmem_cache_info *array,
+    const id_t *alloc_probe_table[], const id_t *free_probe_table[],
     pool_cache_t alloc_table[], size_t maxsize, int shift, int ipl)
 {
 	size_t maxidx = 0;
@@ -388,6 +498,14 @@ kmem_create_caches(const struct kmem_cache_info *array,
 
 		while (size <= cache_size) {
 			alloc_table[(size - 1) >> shift] = pc;
+			if (alloc_probe_table) {
+				alloc_probe_table[(size - 1) >> shift] =
+				    array[i].kc_alloc_probe_id;
+			}
+			if (free_probe_table) {
+				free_probe_table[(size - 1) >> shift] =
+				    array[i].kc_free_probe_id;
+			}
 			size += table_unit;
 		}
 	}
@@ -398,8 +516,10 @@ void
 kmem_init(void)
 {
 	kmem_cache_maxidx = kmem_create_caches(kmem_cache_sizes,
+	    kmem_cache_alloc_probe_id, kmem_cache_free_probe_id,
 	    kmem_cache, KMEM_MAXSIZE, KMEM_SHIFT, IPL_VM);
 	kmem_cache_big_maxidx = kmem_create_caches(kmem_cache_big_sizes,
+	    kmem_cache_big_alloc_probe_id, kmem_cache_big_free_probe_id,
 	    kmem_cache_big, PAGE_SIZE, KMEM_BIG_SHIFT, IPL_VM);
 }
 
