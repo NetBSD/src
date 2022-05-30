@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.23 2021/11/20 15:21:31 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.24 2022/05/30 17:05:51 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.23 2021/11/20 15:21:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.24 2022/05/30 17:05:51 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1819,6 +1819,7 @@ ixgbe_rxeof(struct ix_queue *que)
 	u32			staterr = 0;
 	u32			loopcount = 0, numdesc;
 	u32			limit = adapter->rx_process_limit;
+	u32			rx_copy_len = adapter->rx_copy_len;
 	bool			discard_multidesc = rxr->discard_multidesc;
 	bool			wraparound = false;
 	unsigned int		syncremain;
@@ -1929,7 +1930,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			/* Pre-alloc new mbuf. */
 
 			if ((rbuf->fmp == NULL) &&
-			    eop && (len <= adapter->rx_copy_len)) {
+			    eop && (len <= rx_copy_len)) {
 				/* For short packet. See below. */
 				sendmp = m_gethdr(M_NOWAIT, MT_DATA);
 				if (__predict_false(sendmp == NULL)) {
@@ -2035,7 +2036,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			 * packet.
 			 */
 
-			if (eop && (len <= adapter->rx_copy_len)) {
+			if (eop && (len <= rx_copy_len)) {
 				/*
 				 * Optimize.  This might be a small packet, may
 				 * be just a TCP ACK. Copy into a new mbuf, and
@@ -2047,7 +2048,7 @@ ixgbe_rxeof(struct ix_queue *que)
 				rxr->rx_copies.ev_count++;
 				rbuf->flags |= IXGBE_RX_COPY;
 			} else {
-				/* Non short packet */
+				/* For long packet */
 
 				/* Update new (used in future) mbuf */
 				newmp->m_pkthdr.len = newmp->m_len
