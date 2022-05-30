@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_168.c,v 1.5 2021/03/25 22:53:05 rillig Exp $	*/
+/*	$NetBSD: msg_168.c,v 1.6 2022/05/30 08:04:00 rillig Exp $	*/
 # 3 "msg_168.c"
 
 // Test for message: array subscript cannot be > %d: %ld [168]
@@ -39,4 +39,29 @@ array_with_c99_initializer(void)
 
 	print_string(to_roman['9']);
 	print_string(to_roman[':']);	/* expect: 168 */
+}
+
+
+struct s {
+	char offset_0;
+	char offset_1;
+	int offset_4;
+	short offset_8;
+	char offset_10;
+};
+
+struct s
+s_init(void)
+{
+	struct s s[1];
+	s->offset_0 = 1;
+	/* expect+1: warning: array subscript cannot be > 0: 1 [168] */
+	s->offset_1 = 2;
+	/* expect+1: warning: array subscript cannot be > 0: 4 [168] */
+	s->offset_4 = 3;
+	/* expect+1: warning: array subscript cannot be > 0: 8 [168] */
+	s->offset_8 = 4;
+	/* expect+1: warning: array subscript cannot be > 0: 10 [168] */
+	s->offset_10 = 5;
+	return s[0];
 }
