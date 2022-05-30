@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 2021/03/06 08:08:19 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.87 2022/05/30 14:09:01 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,12 +69,13 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2021/03/06 08:08:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2022/05/30 14:09:01 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ppcarch.h"
+#include "opt_ppcopts.h"
 #endif
 
 #include <sys/param.h>
@@ -116,8 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2021/03/06 08:08:19 rin Exp $");
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((void *)((int)(sp) + 8)) /* more args go here */
 
-static int fix_unaligned(struct lwp *l, struct trapframe *tf);
-
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 #if 0
 /* Not currently used nor exposed externally in any header file */
@@ -125,6 +124,10 @@ int badaddr(void *, size_t);
 int badaddr_read(void *, size_t, int *);
 #endif
 int ctx_setup(int, int);
+
+#ifndef PPC_NO_UNALIGNED
+static bool fix_unaligned(struct trapframe *, ksiginfo_t *);
+#endif
 
 #ifdef DEBUG
 #define TDB_ALL	0x1
@@ -290,14 +293,8 @@ isi:
 		break;
 
 	case EXC_ALI|EXC_USER:
-		if (fix_unaligned(l, tf) != 0) {
-			KSI_INIT_TRAP(&ksi);
-			ksi.ksi_signo = SIGBUS;
-			ksi.ksi_trap = EXC_ALI;
-			ksi.ksi_addr = (void *)tf->tf_dear;
+		if (fix_unaligned(tf, &ksi))
 			trapsignal(l, &ksi);
-		} else
-			tf->tf_srr0 += 4;
 		break;
 
 	case EXC_PGM|EXC_USER:
@@ -726,18 +723,18 @@ badaddr_read(void *addr, size_t size, int *rptr)
 }
 #endif
 
-/*
- * For now, this only deals with the particular unaligned access case
- * that gcc tends to generate.  Eventually it should handle all of the
- * possibilities that can happen on a 32-bit PowerPC in big-endian mode.
- */
-
-static int
-fix_unaligned(struct lwp *l, struct trapframe *tf)
+#ifndef PPC_NO_UNALIGNED
+static bool
+fix_unaligned(struct trapframe *tf, ksiginfo_t *ksi)
 {
 
-	return -1;
+	KSI_INIT_TRAP(ksi);
+	ksi->ksi_signo = SIGBUS;
+	ksi->ksi_trap = EXC_ALI;
+	ksi->ksi_addr = (void *)tf->tf_dear;
+	return true;
 }
+#endif
 
 /*
  * XXX Extremely lame implementations of _ufetch_* / _ustore_*.  IBM 4xx

@@ -1,4 +1,4 @@
-#	$NetBSD: std.explora,v 1.9 2021/06/26 09:03:46 rin Exp $
+#	$NetBSD: std.explora,v 1.10 2022/05/30 14:09:01 rin Exp $
 #
 # Standard/required options for NetBSD/explora.
 
@@ -8,6 +8,9 @@ include		"conf/std"	# MI standard options
 # standard ("mandatory") kernel options.
 options 	PPC_IBM4XX	# IBM 40x family
 options 	PPC_IBM403	# IBM 403GCX
+
+# 403 does not support unaligned memory access.
+options  	PPC_NO_UNALIGNED
 
 options 	VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
 						# default (slow cpu)
