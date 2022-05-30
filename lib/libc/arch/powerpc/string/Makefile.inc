@@ -1,16 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.15 2021/07/26 12:49:13 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2022/05/30 14:43:37 rin Exp $
 
 SRCS+=  bzero.S ffs.S strlen.S
 NO_SRCS+= memset.S
 
-# XXX
-# Disable asm versions that use unaligned memory access and thus break 403.
-.if ${MACHINE} == "evbppc"
-.  for name in bcopy memcmp memcpy memmove
-.    for suffix in o po pico go d
-${name}.${suffix}: ${name}.c
-.    endfor
-.  endfor
-.else
+# with unaligned memory access
 SRCS+=	memcmp.S bcopy.S memcpy.S memmove.S
-.endif
