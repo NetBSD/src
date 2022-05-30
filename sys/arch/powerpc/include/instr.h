@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.10 2022/05/29 11:55:05 rin Exp $ */
+/*	$NetBSD: instr.h,v 1.11 2022/05/30 13:58:51 rin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -316,6 +316,24 @@ union instr {
  * Opcode 31 sub-types (integer only)
  */
 #define OPC31_OR	0x1bc
+
+/*
+ * Opcode 31 sub-types (load/store multiple bytes)
+ */
+#define	OPC31_LWZX	0x017
+#define	OPC31_LWZUX	0x037
+#define	OPC31_STWX	0x097
+#define	OPC31_STWUX	0x0b7
+#define	OPC31_LHZX	0x117
+#define	OPC31_LHZUX	0x137
+#define	OPC31_LHAX	0x157
+#define	OPC31_LHAUX	0x177
+#define	OPC31_STHX	0x197
+#define	OPC31_STHUX	0x1b7
+#define	OPC31_LWBRX	0x216
+#define	OPC31_STWBRX	0x296
+#define	OPC31_LHBRX	0x316
+#define	OPC31_STHBRX	0x396
 
 /*
  * Opcode 59 sub-types:
