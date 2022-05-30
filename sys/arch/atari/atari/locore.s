@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115 2022/03/16 20:31:01 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.116 2022/05/30 09:56:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -769,7 +769,7 @@ ENTRY_NOPROFILE(lev7intr)
  * (profiling, scheduling) and software interrupts (network, softclock).
  * We check for ASTs first, just like the VAX.  To avoid excess overhead
  * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifing that we need an AST we
+ * do not have to do it here.  After identifying that we need an AST we
  * drop the IPL to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called

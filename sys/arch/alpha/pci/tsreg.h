@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.10 2021/07/17 23:53:02 thorpej Exp $ */
+/* $NetBSD: tsreg.h,v 1.11 2022/05/30 09:56:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -198,7 +198,7 @@
 #define	PCTL_REV	__BITS(24,31)	/* Pchip revision */
 #define	PCTL_CRQMAX	__BITS(32,35)	/* see manual */
 #define	PCTL_PTPMAX	__BITS(36,39)	/* see manual */
-#define	PCTL_PCLKX	__BITS(40,41)	/* PCI clock freq multipler */
+#define	PCTL_PCLKX	__BITS(40,41)	/* PCI clock freq multiplier */
 #define	PCTL_FDSDIS	__BIT(42)	/* fast DMA start and SGTE disable */
 #define	PCTL_FDWDIS	__BIT(43)	/* fast DMA read cache block disable */
 #define	PCTL_PTEVRFY	__BIT(44)	/* PTE verify for DMA read */
