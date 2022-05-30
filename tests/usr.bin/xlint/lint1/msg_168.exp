@@ -1,6 +1,2 @@
 msg_168.c(28): warning: array subscript cannot be > 19: 20 [168]
 msg_168.c(41): warning: array subscript cannot be > 57: 58 [168]
-msg_168.c(59): warning: array subscript cannot be > 0: 1 [168]
-msg_168.c(61): warning: array subscript cannot be > 0: 4 [168]
-msg_168.c(63): warning: array subscript cannot be > 0: 8 [168]
-msg_168.c(65): warning: array subscript cannot be > 0: 10 [168]
