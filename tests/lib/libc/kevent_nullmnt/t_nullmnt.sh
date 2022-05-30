@@ -1,12 +1,14 @@
+# find where everything lives
+
+curdir=$(pwd)
+helper=$(atf_get_srcdir)/h_nullmnt
+
 # common test body
-#    $1 = pathname of file to monitor
-#    $2 = pathname of file to update/modify
+#    $1 = directory of file to monitor
+#    $2 = directory of file to update/modify
 
 nullmnt_common()
 {    
-	curdir=$(pwd)
-	helper=$(atf_get_srcdir)/h_nullmnt
-
 	mkdir ${curdir}/lower_dir
 	mkdir ${curdir}/upper_dir
 	mount -t null ${curdir}/lower_dir ${curdir}/upper_dir
@@ -14,7 +16,7 @@ nullmnt_common()
 	touch ${curdir}/lower_dir/afile
 
 	atf_check -e ignore -o ignore -s exit:0		\
-		${helper} ${curdir}/${1} ${curdir}/${2}
+		${helper} ${curdir}/${1}/afile ${curdir}/${2}/afile
 }
 
 nullmnt_common_cleanup()
@@ -32,7 +34,7 @@ nullmnt_upper_lower_head()
 nullmnt_upper_lower_body()
 {
 	atf_expect_fail "PR kern/56713"
-	nullmnt_common lower_dir/afile upper_dir/afile
+	nullmnt_common lower_dir upper_dir
 } 
 nullmnt_upper_lower_cleanup()
 {
@@ -47,7 +49,7 @@ nullmnt_upper_upper_head()
 nullmnt_upper_upper_body()
 {
 	atf_expect_fail "PR kern/56713"
-	nullmnt_common upper_dir/afile upper_dir/afile
+	nullmnt_common upper_dir upper_dir
 } 
 nullmnt_upper_upper_cleanup()
 {
@@ -60,7 +62,7 @@ nullmnt_lower_upper_head()
 }
 nullmnt_lower_upper_body()
 {
-	nullmnt_common upper_dir/afile lower_dir/afile
+	nullmnt_common upper_dir lower_dir
 } 
 nullmnt_lower_upper_cleanup()
 {
@@ -74,7 +76,7 @@ nullmnt_lower_lower_head()
 }
 nullmnt_lower_lower_body()
 {
-	nullmnt_common lower_dir/afile lower_dir/afile
+	nullmnt_common lower_dir lower_dir
 } 
 nullmnt_lower_lower_cleanup
 {
