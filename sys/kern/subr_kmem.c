@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.85 2022/05/30 20:28:30 riastradh Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.86 2022/05/30 21:42:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.85 2022/05/30 20:28:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.86 2022/05/30 21:42:02 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -184,12 +184,16 @@ SDT_PROBE_DEFINE3(sdt, kmem, free, large,
 
 static const struct kmem_cache_info kmem_cache_sizes[] = {
 	KMEM_CACHE_SIZES(F)
+#ifndef KDTRACE_HOOKS
 	{ 0, NULL }
+#endif
 };
 
 static const struct kmem_cache_info kmem_cache_big_sizes[] = {
 	KMEM_CACHE_BIG_SIZES(F)
+#ifndef KDTRACE_HOOKS
 	{ 0, NULL }
+#endif
 };
 
 #undef	F
@@ -498,6 +502,7 @@ kmem_create_caches(const struct kmem_cache_info *array,
 
 		while (size <= cache_size) {
 			alloc_table[(size - 1) >> shift] = pc;
+#ifdef KDTRACE_HOOKS
 			if (alloc_probe_table) {
 				alloc_probe_table[(size - 1) >> shift] =
 				    array[i].kc_alloc_probe_id;
@@ -506,6 +511,7 @@ kmem_create_caches(const struct kmem_cache_info *array,
 				free_probe_table[(size - 1) >> shift] =
 				    array[i].kc_free_probe_id;
 			}
+#endif
 			size += table_unit;
 		}
 	}
