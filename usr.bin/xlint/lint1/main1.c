@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.62 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.63 2022/05/30 15:13:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.62 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.63 2022/05/30 15:13:25 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -288,6 +288,9 @@ main(int argc, char *argv[])
 	if (allow_gcc && allow_c90) {
 		if ((yyin = gcc_builtins()) == NULL)
 			err(1, "cannot open builtins");
+		curr_pos.p_file = "<gcc-builtins>";
+		curr_pos.p_line = 0;
+		lex_next_line();
 		yyparse();
 		(void)fclose(yyin);
 	}
@@ -295,6 +298,9 @@ main(int argc, char *argv[])
 	/* open the input file */
 	if ((yyin = fopen(argv[0], "r")) == NULL)
 		err(1, "cannot open '%s'", argv[0]);
+	curr_pos.p_file = argv[0];
+	curr_pos.p_line = 0;
+	lex_next_line();
 	yyparse();
 	(void)fclose(yyin);
 
