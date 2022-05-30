@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2884 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2885 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -585,6 +585,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	gomoku(6): Add highlighting, fix input handling, announce tie early,
 		prevent overly long thinking. [rillig 20220528]
 	powerpc: Add routines to fix userland unaligned memory access for 403.
-		[rin 20220531]
+		[rin 20220530]
 	powerpc: Unify libc binary among all 32-bit powerpc ports.
-		[rin 20220531]
+		[rin 20220530]
