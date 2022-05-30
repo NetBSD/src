@@ -1,0 +1,2 @@
+# $NetBSD: md.evbppc,v 1.1 2022/05/30 15:06:55 rin Exp $
+./etc/ld.so.conf	etc-sys-etc	!machine_arch=powerpc64

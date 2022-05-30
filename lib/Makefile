@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.293 2021/11/22 14:34:35 nia Exp $
+#	$NetBSD: Makefile,v 1.294 2022/05/30 15:06:55 rin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -33,6 +33,9 @@ SUBDIR+=	libarch \
 SUBDIR+=	libkern
 .endif
 
+.if (${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc")
+SUBDIR+=	libc_aligned
+.endif
 .if (${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "aarch64")
 LIBC_MACHINE_ARCH?=${MACHINE_ARCH}
 LIBC_MACHINE_CPU?=${MACHINE_CPU}
