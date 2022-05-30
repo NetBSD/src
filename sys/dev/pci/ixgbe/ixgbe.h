@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.85 2022/03/10 04:14:34 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.86 2022/05/30 05:08:17 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -479,7 +479,6 @@ struct adapter {
 	struct if_percpuq	*ipq;	/* softint-based input queues */
 
 	struct resource		*pci_mem;
-	struct resource		*msix_mem;
 
 	/* NetBSD: Interrupt resources are in osdep */
 
