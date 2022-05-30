@@ -1,4 +1,4 @@
-#	$NetBSD: std.explora,v 1.10 2022/05/30 14:09:01 rin Exp $
+#	$NetBSD: std.explora,v 1.11 2022/05/30 14:18:10 rin Exp $
 #
 # Standard/required options for NetBSD/explora.
 
@@ -11,6 +11,7 @@ options 	PPC_IBM403	# IBM 403GCX
 
 # 403 does not support unaligned memory access.
 options  	PPC_NO_UNALIGNED
+makeoptions	LIBKERN_MD_FLAGS+="strict-align"
 
 options 	VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
 						# default (slow cpu)
