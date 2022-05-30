@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.20 2022/02/02 14:25:49 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.21 2022/05/30 17:01:06 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.20 2022/02/02 14:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.21 2022/05/30 17:01:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -235,8 +235,6 @@ static int	ixgbe_set_advertise(struct adapter *, int);
 static int	ixgbe_get_default_advertise(struct adapter *);
 
 /* Sysctl handlers */
-static void	ixgbe_set_sysctl_value(struct adapter *, const char *,
-		     const char *, int *, int);
 static int	ixgbe_sysctl_flowcntl(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_advertise(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
@@ -256,6 +254,8 @@ static int	ixgbe_sysctl_tdh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_eee_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_debug(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_rx_copy_len(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_tx_process_limit(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_rx_process_limit(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wol_enable(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wufc(SYSCTLFN_PROTO);
 
@@ -922,15 +922,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* Set an initial default flow control value */
 	hw->fc.requested_mode = ixgbe_flow_control;
 
-	/* Sysctls for limiting the amount of work done in the taskqueues */
-	ixgbe_set_sysctl_value(adapter, "rx_processing_limit",
-	    "max number of rx packets to process",
-	    &adapter->rx_process_limit, ixgbe_rx_process_limit);
-
-	ixgbe_set_sysctl_value(adapter, "tx_processing_limit",
-	    "max number of tx packets to process",
-	    &adapter->tx_process_limit, ixgbe_tx_process_limit);
-
 	/* Do descriptor calc and sanity checks */
 	if (((ixgbe_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
 	    ixgbe_txd < MIN_TXD || ixgbe_txd > MAX_TXD) {
@@ -945,6 +936,14 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
 		adapter->num_rx_desc = ixgbe_rxd;
+
+	/* Sysctls for limiting the amount of work done in the taskqueues */
+	adapter->rx_process_limit
+	    = (ixgbe_rx_process_limit <= adapter->num_rx_desc)
+	    ? ixgbe_rx_process_limit : adapter->num_rx_desc;
+	adapter->tx_process_limit
+	    = (ixgbe_tx_process_limit <= adapter->num_tx_desc)
+	    ? ixgbe_tx_process_limit : adapter->num_tx_desc;
 
 	/* Set default high limit of copying mbuf in rxeof */
 	adapter->rx_copy_len = IXGBE_RX_COPY_LEN_MAX;
@@ -1086,6 +1085,10 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	hw->eeprom.ops.read(hw, IXGBE_ETRACKID_L, &low);
 	aprint_normal(" ETrackID %08x\n", ((uint32_t)high << 16) | low);
 
+	/* Printed Board Assembly number */
+	error = ixgbe_read_pba_string(hw, buf, IXGBE_PBANUM_LENGTH);
+	aprint_normal_dev(dev, "PBA number %s\n", error ? "unknown" : buf);
+
 	if (adapter->feat_en & IXGBE_FEATURE_MSIX) {
 		error = ixgbe_allocate_msix(adapter, pa);
 		if (error) {
@@ -1105,6 +1108,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 			}
 		}
 	}
+
 	/* Recovery mode */
 	switch (adapter->hw.mac.type) {
 	case ixgbe_mac_X550:
@@ -2487,7 +2491,7 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	struct vlanid_list *vlanidp;
 
 	/*
-	 *  This function is called from both if_init and ifflags_cb()
+	 * This function is called from both if_init and ifflags_cb()
 	 * on NetBSD.
 	 */
 
@@ -3103,7 +3107,7 @@ ixgbe_msix_link(void *arg)
 {
 	struct adapter	*adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
-	u32		eicr, eicr_mask;
+	u32		eicr;
 	s32		retval;
 
 	IXGBE_EVC_ADD(&adapter->link_irq, 1);
@@ -3125,6 +3129,8 @@ ixgbe_msix_link(void *arg)
 	IXGBE_WRITE_REG(hw, IXGBE_EICR, eicr);
 
 	if (ixgbe_is_sfp(hw)) {
+		u32 eicr_mask;
+
 		/* Pluggable optics-related interrupt */
 		if (hw->mac.type >= ixgbe_mac_X540)
 			eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
@@ -3159,6 +3165,7 @@ ixgbe_msix_link(void *arg)
 	}
 
 	if (adapter->hw.mac.type != ixgbe_mac_82598EB) {
+#ifdef IXGBE_FDIR
 		if ((adapter->feat_en & IXGBE_FEATURE_FDIR) &&
 		    (eicr & IXGBE_EICR_FLOW_DIR)) {
 			/* This is probably overkill :) */
@@ -3168,6 +3175,7 @@ ixgbe_msix_link(void *arg)
 			IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_FLOW_DIR);
 			softint_schedule(adapter->fdir_si);
 		}
+#endif
 
 		if (eicr & IXGBE_EICR_ECC) {
 			device_printf(adapter->dev,
@@ -3200,8 +3208,11 @@ ixgbe_msix_link(void *arg)
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
 					break;
-				device_printf(adapter->dev, "CRITICAL: OVER TEMP!! PHY IS SHUT DOWN!!\n");
-				device_printf(adapter->dev, "System shutdown required!\n");
+				device_printf(adapter->dev,
+				    "CRITICAL: OVER TEMP!! "
+				    "PHY IS SHUT DOWN!!\n");
+				device_printf(adapter->dev,
+				    "System shutdown required!\n");
 				IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_TS);
 				break;
 			}
@@ -3359,8 +3370,28 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_INT,
-	    "num_rx_desc", SYSCTL_DESCR("Number of rx descriptors"),
+	    "num_tx_desc", SYSCTL_DESCR("Number of TX descriptors"),
+	    NULL, 0, &adapter->num_tx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT,
+	    "num_rx_desc", SYSCTL_DESCR("Number of RX descriptors"),
 	    NULL, 0, &adapter->num_rx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "rx_process_limit",
+	    SYSCTL_DESCR("max number of RX packets to process"),
+	    ixgbe_sysctl_rx_process_limit, 0, (void *)adapter, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "tx_process_limit",
+	    SYSCTL_DESCR("max number of TX packets to process"),
+	    ixgbe_sysctl_tx_process_limit, 0, (void *)adapter, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
@@ -5024,13 +5055,12 @@ ixgbe_enable_intr(struct adapter *adapter)
 
 	/* With MSI-X we use auto clear */
 	if (adapter->msix_mem) {
-		mask = IXGBE_EIMS_ENABLE_MASK;
-		/* Don't autoclear Link */
-		mask &= ~IXGBE_EIMS_OTHER;
-		mask &= ~IXGBE_EIMS_LSC;
-		if (adapter->feat_cap & IXGBE_FEATURE_SRIOV)
-			mask &= ~IXGBE_EIMS_MAILBOX;
-		IXGBE_WRITE_REG(hw, IXGBE_EIAC, mask);
+		/*
+		 * We use auto clear for RTX_QUEUE only. Don't use other
+		 * interrupts (e.g. link interrupt). BTW, we don't use
+		 *  TCP_TIMER interrupt itself.
+		 */
+		IXGBE_WRITE_REG(hw, IXGBE_EIAC, IXGBE_EIMS_RTX_QUEUE);
 	}
 
 	/*
@@ -5095,9 +5125,10 @@ ixgbe_legacy_irq(void *arg)
 	struct ix_queue *que = arg;
 	struct adapter	*adapter = que->adapter;
 	struct ixgbe_hw	*hw = &adapter->hw;
+	struct ifnet	*ifp = adapter->ifp;
 	struct		tx_ring *txr = adapter->tx_rings;
 	bool		more = false;
-	u32		eicr, eicr_mask;
+	u32		eicr;
 	u32		eims_orig;
 
 	eims_orig = IXGBE_READ_REG(hw, IXGBE_EIMS);
@@ -5117,7 +5148,8 @@ ixgbe_legacy_irq(void *arg)
 	IXGBE_EVC_ADD(&adapter->stats.pf.legint, 1);
 
 	/* Queue (0) intr */
-	if ((eicr & IXGBE_EIMC_RTX_QUEUE) != 0) {
+	if (((ifp->if_flags & IFF_RUNNING) != 0) &&
+	    (eicr & IXGBE_EIMC_RTX_QUEUE) != 0) {
 		IXGBE_EVC_ADD(&que->irqs, 1);
 
 		/*
@@ -5153,6 +5185,8 @@ ixgbe_legacy_irq(void *arg)
 		softint_schedule(adapter->link_si);
 
 	if (ixgbe_is_sfp(hw)) {
+		u32 eicr_mask;
+
 		/* Pluggable optics-related interrupt */
 		if (hw->mac.type >= ixgbe_mac_X540)
 			eicr_mask = IXGBE_EICR_GPI_SDP0_X540;
@@ -5241,35 +5275,6 @@ ixgbe_free_pci_resources(struct adapter *adapter)
 	}
 
 } /* ixgbe_free_pci_resources */
-
-/************************************************************************
- * ixgbe_set_sysctl_value
- ************************************************************************/
-static void
-ixgbe_set_sysctl_value(struct adapter *adapter, const char *name,
-    const char *description, int *limit, int value)
-{
-	device_t dev =	adapter->dev;
-	struct sysctllog **log;
-	const struct sysctlnode *rnode, *cnode;
-
-	/*
-	 * It's not required to check recovery mode because this function never
-	 * touches hardware.
-	 */
-
-	log = &adapter->sysctllog;
-	if ((rnode = ixgbe_sysctl_instance(adapter)) == NULL) {
-		aprint_error_dev(dev, "could not create sysctl root\n");
-		return;
-	}
-	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    name, SYSCTL_DESCR(description),
-		NULL, 0, limit, 0, CTL_CREATE, CTL_EOL) != 0)
-		aprint_error_dev(dev, "could not create sysctl\n");
-	*limit = value;
-} /* ixgbe_set_sysctl_value */
 
 /************************************************************************
  * ixgbe_sysctl_flowcntl
@@ -6106,6 +6111,56 @@ ixgbe_sysctl_rx_copy_len(SYSCTLFN_ARGS)
 
 	return 0;
 } /* ixgbe_sysctl_rx_copy_len */
+
+/************************************************************************
+ * ixgbe_sysctl_tx_process_limit
+ ************************************************************************/
+static int
+ixgbe_sysctl_tx_process_limit(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int error;
+	int result = adapter->tx_process_limit;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if ((result <= 0) || (result > adapter->num_tx_desc))
+		return EINVAL;
+
+	adapter->tx_process_limit = result;
+
+	return 0;
+} /* ixgbe_sysctl_tx_process_limit */
+
+/************************************************************************
+ * ixgbe_sysctl_rx_process_limit
+ ************************************************************************/
+static int
+ixgbe_sysctl_rx_process_limit(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int error;
+	int result = adapter->rx_process_limit;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if ((result <= 0) || (result > adapter->num_rx_desc))
+		return EINVAL;
+
+	adapter->rx_process_limit = result;
+
+	return 0;
+} /* ixgbe_sysctl_rx_process_limit */
 
 /************************************************************************
  * ixgbe_init_device_features

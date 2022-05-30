@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.125.2.17 2022/02/02 14:25:49 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.125.2.18 2022/05/30 17:01:06 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.17 2022/02/02 14:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.18 2022/05/30 17:01:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -136,8 +136,6 @@ static void	ixv_add_stats_sysctls(struct adapter *);
 static void	ixv_clear_evcnt(struct adapter *);
 
 /* Sysctl handlers */
-static void	ixv_set_sysctl_value(struct adapter *, const char *,
-		    const char *, int *, int);
 static int	ixv_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_next_to_refresh_handler(SYSCTLFN_PROTO);
@@ -145,6 +143,8 @@ static int	ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_tdh_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_tx_process_limit(SYSCTLFN_PROTO);
+static int	ixv_sysctl_rx_process_limit(SYSCTLFN_PROTO);
 static int	ixv_sysctl_rx_copy_len(SYSCTLFN_PROTO);
 
 /* The MSI-X Interrupt handlers */
@@ -485,15 +485,6 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* Register for VLAN events */
 	ether_set_vlan_cb(&adapter->osdep.ec, ixv_vlan_cb);
 
-	/* Sysctls for limiting the amount of work done in the taskqueues */
-	ixv_set_sysctl_value(adapter, "rx_processing_limit",
-	    "max number of rx packets to process",
-	    &adapter->rx_process_limit, ixv_rx_process_limit);
-
-	ixv_set_sysctl_value(adapter, "tx_processing_limit",
-	    "max number of tx packets to process",
-	    &adapter->tx_process_limit, ixv_tx_process_limit);
-
 	/* Do descriptor calc and sanity checks */
 	if (((ixv_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
 	    ixv_txd < MIN_TXD || ixv_txd > MAX_TXD) {
@@ -508,6 +499,14 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
 		adapter->num_rx_desc = ixv_rxd;
+
+	/* Sysctls for limiting the amount of work done in the taskqueues */
+	adapter->rx_process_limit
+	    = (ixv_rx_process_limit <= adapter->num_rx_desc)
+	    ? ixv_rx_process_limit : adapter->num_rx_desc;
+	adapter->tx_process_limit
+	    = (ixv_tx_process_limit <= adapter->num_tx_desc)
+	    ? ixv_tx_process_limit : adapter->num_tx_desc;
 
 	/* Set default high limit of copying mbuf in rxeof */
 	adapter->rx_copy_len = IXGBE_RX_COPY_LEN_MAX;
@@ -2092,7 +2091,7 @@ ixv_setup_vlan_support(struct adapter *adapter)
 	int rv, error = 0;
 
 	/*
-	 *  This function is called from both if_init and ifflags_cb()
+	 * This function is called from both if_init and ifflags_cb()
 	 * on NetBSD.
 	 */
 
@@ -2503,8 +2502,8 @@ ixv_add_device_sysctls(struct adapter *adapter)
 	}
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "debug", SYSCTL_DESCR("Debug Info"),
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
+	    SYSCTL_DESCR("Debug Info"),
 	    ixv_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
@@ -2516,15 +2515,42 @@ ixv_add_device_sysctls(struct adapter *adapter)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
-	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
+	    CTLFLAG_READONLY, CTLTYPE_INT,
+	    "num_tx_desc", SYSCTL_DESCR("Number of TX descriptors"),
+	    NULL, 0, &adapter->num_tx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT,
+	    "num_rx_desc", SYSCTL_DESCR("Number of RX descriptors"),
+	    NULL, 0, &adapter->num_rx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "rx_process_limit",
+	    SYSCTL_DESCR("max number of RX packets to process"),
+	    ixv_sysctl_rx_process_limit, 0, (void *)adapter, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "tx_process_limit",
+	    SYSCTL_DESCR("max number of TX packets to process"),
+	    ixv_sysctl_tx_process_limit, 0, (void *)adapter, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "enable_aim",
+	    SYSCTL_DESCR("Interrupt Moderation"),
 	    NULL, 0, &adapter->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
-	    "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
-		NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL) != 0)
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "txrx_workqueue",
+	    SYSCTL_DESCR("Use workqueue for packet processing"),
+	    NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL)
+	    != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 }
 
@@ -2630,10 +2656,9 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 #endif /* LRO */
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_nxck", SYSCTL_DESCR("Receive Descriptor next to check"),
-			ixv_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxck",
+		    SYSCTL_DESCR("Receive Descriptor next to check"),
+		    ixv_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
@@ -2645,25 +2670,25 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_head",
+		    SYSCTL_DESCR("Receive Descriptor Head"),
 		    ixv_sysctl_rdh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_tail", SYSCTL_DESCR("Receive Descriptor Tail"),
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_tail",
+		    SYSCTL_DESCR("Receive Descriptor Tail"),
 		    ixv_sysctl_rdt_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Queue Packets Received");
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Packets Received");
 		evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Queue Bytes Received");
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Bytes Received");
 		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
 		evcnt_attach_dynamic(&rxr->no_mbuf, EVCNT_TYPE_MISC,
@@ -2794,30 +2819,6 @@ ixv_clear_evcnt(struct adapter *adapter)
 
 } /* ixv_clear_evcnt */
 
-/************************************************************************
- * ixv_set_sysctl_value
- ************************************************************************/
-static void
-ixv_set_sysctl_value(struct adapter *adapter, const char *name,
-	const char *description, int *limit, int value)
-{
-	device_t dev =	adapter->dev;
-	struct sysctllog **log;
-	const struct sysctlnode *rnode, *cnode;
-
-	log = &adapter->sysctllog;
-	if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
-		aprint_error_dev(dev, "could not create sysctl root\n");
-		return;
-	}
-	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    name, SYSCTL_DESCR(description),
-	    NULL, 0, limit, 0, CTL_CREATE, CTL_EOL) != 0)
-		aprint_error_dev(dev, "could not create sysctl\n");
-	*limit = value;
-} /* ixv_set_sysctl_value */
-
 #define PRINTQS(adapter, regname)					\
 	do {								\
 		struct ixgbe_hw	*_hw = &(adapter)->hw;			\
@@ -2909,7 +2910,57 @@ ixv_sysctl_rx_copy_len(SYSCTLFN_ARGS)
 	adapter->rx_copy_len = result;
 
 	return 0;
-} /* ixgbe_sysctl_rx_copy_len */
+} /* ixv_sysctl_rx_copy_len */
+
+/************************************************************************
+ * ixv_sysctl_tx_process_limit
+ ************************************************************************/
+static int
+ixv_sysctl_tx_process_limit(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int error;
+	int result = adapter->tx_process_limit;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if ((result <= 0) || (result > adapter->num_tx_desc))
+		return EINVAL;
+
+	adapter->tx_process_limit = result;
+
+	return 0;
+} /* ixv_sysctl_tx_process_limit */
+
+/************************************************************************
+ * ixv_sysctl_rx_process_limit
+ ************************************************************************/
+static int
+ixv_sysctl_rx_process_limit(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int error;
+	int result = adapter->rx_process_limit;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if ((result <= 0) || (result > adapter->num_rx_desc))
+		return EINVAL;
+
+	adapter->rx_process_limit = result;
+
+	return 0;
+} /* ixv_sysctl_rx_process_limit */
 
 /************************************************************************
  * ixv_init_device_features
@@ -3327,7 +3378,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    ixgbe_deferred_mq_start_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
 	    IXGBE_WORKQUEUE_FLAGS);
 	if (error) {
-		aprint_error_dev(dev, "couldn't create workqueue for deferred Tx\n");
+		aprint_error_dev(dev,
+		    "couldn't create workqueue for deferred Tx\n");
 	}
 	adapter->txr_wq_enqueued = percpu_alloc(sizeof(u_int));
 
@@ -3336,8 +3388,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    ixv_handle_que_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
 	    IXGBE_WORKQUEUE_FLAGS);
 	if (error) {
-		aprint_error_dev(dev,
-		    "couldn't create workqueue for Tx/Rx\n");
+		aprint_error_dev(dev, "couldn't create workqueue for Tx/Rx\n");
 	}
 
 	/* and Mailbox */
