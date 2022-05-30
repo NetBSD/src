@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.16 2017/10/28 06:27:32 riastradh Exp $	*/
+/*	$NetBSD: i2o.h,v 1.17 2022/05/30 09:56:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -722,7 +722,7 @@ struct i2o_rbs_block_read {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-	u_int32_t	flags;		/* flags, time multipler, read ahead */
+	u_int32_t	flags;		/* flags, time multiplier, read ahead */
 	u_int32_t	datasize;
 	u_int32_t	lowoffset;
 	u_int32_t	highoffset;
@@ -740,7 +740,7 @@ struct i2o_rbs_block_write {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-	u_int32_t	flags;		/* flags, time multipler */
+	u_int32_t	flags;		/* flags, time multiplier */
 	u_int32_t	datasize;
 	u_int32_t	lowoffset;
 	u_int32_t	highoffset;
@@ -758,7 +758,7 @@ struct i2o_rbs_cache_flush {
 	u_int32_t	msgfunc;
 	u_int32_t	msgictx;
 	u_int32_t	msgtctx;
-	u_int32_t	flags;		/* flags, time multipler */
+	u_int32_t	flags;		/* flags, time multiplier */
 } __packed;
 
 #define	I2O_RBS_MEDIA_MOUNT		0x41

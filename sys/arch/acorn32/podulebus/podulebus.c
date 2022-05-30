@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.33 2021/09/11 20:28:03 andvar Exp $ */
+/* $NetBSD: podulebus.c,v 1.34 2022/05/30 09:56:02 andvar Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.33 2021/09/11 20:28:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.34 2022/05/30 09:56:02 andvar Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -399,7 +399,7 @@ podulescan(device_t dev)
  * Attach podulebus.
  * This probes all the podules and sets up the podules array with
  * information found in the podule headers.
- * After identifing all the podules, all the children of the podulebus
+ * After identifying all the podules, all the children of the podulebus
  * are probed and attached.
  */
   

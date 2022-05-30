@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.67 2021/01/23 15:00:33 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 2022/05/30 09:56:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -813,7 +813,7 @@ ENTRY_NOPROFILE(intrhand_vectored)
  *
  * This code deals with checking for and servicing
  * ASTs (profiling, scheduling).
- * After identifing that we need an AST we drop the IPL
+ * After identifying that we need an AST we drop the IPL
  * to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called

@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.c,v 1.10 2017/08/23 14:14:59 skrll Exp $	*/
+/*	$NetBSD: am335x_prcm.c,v 1.11 2022/05/30 09:56:02 andvar Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.10 2017/08/23 14:14:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.11 2022/05/30 09:56:02 andvar Exp $");
 
 #include "tps65217pmic.h"
 
@@ -145,7 +145,7 @@ prcm_mpu_pll_config(u_int mpupll_m)
 		/* nothing */
 	}
 
-	/* Replace multipler */
+	/* Replace multiplier */
 	clksel &= ~AM335X_PRCM_CM_CLKSEL_DPLL_MULT;
 	clksel |= __SHIFTIN(mpupll_m, AM335X_PRCM_CM_CLKSEL_DPLL_MULT);
 	prcm_write_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_CLKSEL_DPLL_MPU, clksel);

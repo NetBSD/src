@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.174 2021/03/14 03:25:01 rin Exp $	*/
+/*	$NetBSD: locore.s,v 1.175 2022/05/30 09:56:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -818,7 +818,7 @@ ENTRY_NOPROFILE(rtclock_intr)
  * (profiling, scheduling) and software interrupts (network, softclock).
  * We check for ASTs first, just like the VAX.  To avoid excess overhead
  * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifing that we need an AST we
+ * do not have to do it here.  After identifying that we need an AST we
  * drop the IPL to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called
@@ -1015,7 +1015,7 @@ ENTRY(delay)
 	movl	%sp@(4),%d0		| get microseconds to delay
 	cmpl	#0x40000,%d0		| is it a "large" delay?
 	bls	.Ldelayshort		| no, normal calculation
-	movql	#0x7f,%d1		| adjust for scaled multipler (to
+	movql	#0x7f,%d1		| adjust for scaled multiplier (to
 	addl	%d1,%d0			|   avoid overflow)
 	lsrl	#7,%d0
 	mulul	_C_LABEL(delay_factor),%d0 | calculate number of loop iterations

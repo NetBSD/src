@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.172 2018/12/19 13:57:47 maxv Exp $	*/
+/*	$NetBSD: locore.s,v 1.173 2022/05/30 09:56:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -979,7 +979,7 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
  *
  * This code deals with checking for and servicing
  * ASTs (profiling, scheduling).
- * After identifing that we need an AST we drop the IPL
+ * After identifying that we need an AST we drop the IPL
  * to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called

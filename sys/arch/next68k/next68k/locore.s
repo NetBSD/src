@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.67 2021/01/25 13:08:05 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 2022/05/30 09:56:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -813,7 +813,7 @@ Lintrhand_exit:
  * (profiling, scheduling) and software interrupts (network, softclock).
  * We check for ASTs first, just like the VAX.  To avoid excess overhead
  * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifing that we need an AST we
+ * do not have to do it here.  After identifying that we need an AST we
  * drop the IPL to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called
