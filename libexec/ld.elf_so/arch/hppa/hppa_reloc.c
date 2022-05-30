@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.48 2021/12/04 14:39:08 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.49 2022/05/30 17:06:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.48 2021/12/04 14:39:08 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.49 2022/05/30 17:06:34 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: hppa_reloc.c,v 1.48 2021/12/04 14:39:08 skrll Exp $");
 caddr_t _rtld_bind(const Obj_Entry *, const Elf_Addr);
 void _rtld_bind_start(void);
 void __rtld_setup_hppa_pltgot(const Obj_Entry *, Elf_Addr *);
+void _rtld_set_dp(Elf_Addr *);
 
 /*
  * It is possible for the compiler to emit relocations for unaligned data.
@@ -416,6 +417,16 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 	const Elf_Sym *def = NULL;
 	const Obj_Entry *defobj = NULL;
 	unsigned long last_symnum = ULONG_MAX;
+
+	/*
+	 * This will be done by the crt0 code, but make sure it's set
+	 * early so that symbols overridden by the non-pic binary
+	 * get the right DP value.
+	 */
+	if (obj->mainprog) {
+		hdbg(("setting DP to %p", obj->pltgot));
+		_rtld_set_dp(obj->pltgot);
+	}
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf_Addr        *where;
