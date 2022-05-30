@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.48 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.49 2022/05/30 23:27:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.48 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.49 2022/05/30 23:27:45 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -264,12 +264,13 @@ chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 				 * union, also if the return value is ignored.
 				 * This is necessary because the caller must
 				 * allocate stack space for the return value.
-				 * If it does not, the return value would over-
-				 * write other data.
-				 * XXX Following massage may be confusing
+				 * If it does not, the return value would
+				 * overwrite other data.
+				 *
+				 * XXX Following message may be confusing
 				 * because it appears also if the return value
 				 * was declared inconsistently. But this
-				 * behavior matches pcc based lint, so it is
+				 * behavior matches pcc-based lint, so it is
 				 * accepted for now.
 				 */
 				pos1 = xstrdup(mkpos(&def->s_pos));
