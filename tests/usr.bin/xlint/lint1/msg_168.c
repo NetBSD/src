@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_168.c,v 1.6 2022/05/30 08:04:00 rillig Exp $	*/
+/*	$NetBSD: msg_168.c,v 1.7 2022/05/30 08:14:53 rillig Exp $	*/
 # 3 "msg_168.c"
 
 // Test for message: array subscript cannot be > %d: %ld [168]
@@ -55,13 +55,9 @@ s_init(void)
 {
 	struct s s[1];
 	s->offset_0 = 1;
-	/* expect+1: warning: array subscript cannot be > 0: 1 [168] */
 	s->offset_1 = 2;
-	/* expect+1: warning: array subscript cannot be > 0: 4 [168] */
 	s->offset_4 = 3;
-	/* expect+1: warning: array subscript cannot be > 0: 8 [168] */
 	s->offset_8 = 4;
-	/* expect+1: warning: array subscript cannot be > 0: 10 [168] */
 	s->offset_10 = 5;
 	return s[0];
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.451 2022/05/30 07:19:28 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.452 2022/05/30 08:14:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.451 2022/05/30 07:19:28 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.452 2022/05/30 08:14:52 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3152,7 +3152,12 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		tnode_t *elsz = subt_size_in_bytes(ln->tn_type);
 		if (rn->tn_type->t_tspec != elsz->tn_type->t_tspec)
 			rn = convert(NOOP, 0, elsz->tn_type, rn);
-		return new_tnode(op, sys, ln->tn_type, ln, rn);
+
+		tnode_t *prod = new_tnode(MULT, sys, rn->tn_type, rn, elsz);
+		if (rn->tn_op == CON)
+			prod = fold(prod);
+
+		return new_tnode(op, sys, ln->tn_type, ln, prod);
 	}
 
 	/* pointer - pointer */
@@ -3161,10 +3166,14 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		lint_assert(op == MINUS);
 
 		type_t *ptrdiff = gettyp(PTRDIFF_TSPEC);
-		tnode_t *diff = new_tnode(MINUS, sys, ptrdiff, ln, rn);
+		tnode_t *raw_diff = new_tnode(op, sys, ptrdiff, ln, rn);
 		if (ln->tn_op == CON && rn->tn_op == CON)
-			diff = fold(diff);
-		return diff;
+			raw_diff = fold(raw_diff);
+
+		tnode_t *elsz = subt_size_in_bytes(ln->tn_type);
+		balance(NOOP, &raw_diff, &elsz);
+
+		return new_tnode(DIV, sys, ptrdiff, raw_diff, elsz);
 	}
 
 	return new_tnode(op, sys, ln->tn_type, ln, rn);
@@ -4432,8 +4441,13 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool cond,
 static void
 check_array_index(tnode_t *tn, bool amper)
 {
-	tnode_t *ln = tn->tn_left;
-	tnode_t *rn = tn->tn_right;
+	int	dim;
+	tnode_t	*ln, *rn;
+	int	elsz;
+	int64_t	con;
+
+	ln = tn->tn_left;
+	rn = tn->tn_right;
 
 	/* We can only check constant indices. */
 	if (rn->tn_op != CON)
@@ -4454,8 +4468,19 @@ check_array_index(tnode_t *tn, bool amper)
 	if (is_incomplete(ln->tn_left->tn_type) && rn->tn_val->v_quad >= 0)
 		return;
 
-	int64_t con = rn->tn_val->v_quad;
-	int dim = ln->tn_left->tn_type->t_dim + (amper ? 1 : 0);
+	/* Get the size of one array element */
+	if ((elsz = length_in_bits(ln->tn_type->t_subt, NULL)) == 0)
+		return;
+	elsz /= CHAR_SIZE;
+
+	/* Change the unit of the index from bytes to element size. */
+	if (is_uinteger(rn->tn_type->t_tspec)) {
+		con = (uint64_t)rn->tn_val->v_quad / elsz;
+	} else {
+		con = rn->tn_val->v_quad / elsz;
+	}
+
+	dim = ln->tn_left->tn_type->t_dim + (amper ? 1 : 0);
 
 	if (!is_uinteger(rn->tn_type->t_tspec) && con < 0) {
 		/* array subscript cannot be negative: %ld */
