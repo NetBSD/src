@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.50 2022/05/30 17:05:51 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.51 2022/05/31 14:07:51 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.88.2.50 2022/05/30 17:05:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.88.2.51 2022/05/31 14:07:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1091,7 +1091,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 			ixgbe_free_queues(adapter);
 
 			/* Fallback to legacy interrupt */
-			adapter->feat_en &= ~IXGBE_FEATURE_MSIX;
 			if (adapter->feat_cap & IXGBE_FEATURE_MSI)
 				adapter->feat_en |= IXGBE_FEATURE_MSI;
 			adapter->num_queues = 1;
@@ -5033,7 +5032,7 @@ ixgbe_enable_intr(struct adapter *adapter)
 	IXGBE_WRITE_REG(hw, IXGBE_EIMS, mask);
 
 	/* With MSI-X we use auto clear */
-	if (adapter->msix_mem) {
+	if ((adapter->feat_en & IXGBE_FEATURE_MSIX) != 0) {
 		/*
 		 * We use auto clear for RTX_QUEUE only. Don't use other
 		 * interrupts (e.g. link interrupt). BTW, we don't use
@@ -5065,7 +5064,7 @@ ixgbe_disable_intr_internal(struct adapter *adapter, bool nestok)
 	/* disable interrupts other than queues */
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC, ~IXGBE_EIMC_RTX_QUEUE);
 
-	if (adapter->msix_mem)
+	if ((adapter->feat_en & IXGBE_FEATURE_MSIX) != 0)
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIAC, 0);
 
 	for (int i = 0; i < adapter->num_queues; i++, que++)
@@ -6710,6 +6709,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    adapter->osdep.nintrs) != 0) {
 		aprint_error_dev(dev,
 		    "failed to allocate MSI-X interrupt\n");
+		adapter->feat_en &= ~IXGBE_FEATURE_MSIX;
 		return (ENXIO);
 	}
 
@@ -6909,7 +6909,7 @@ ixgbe_configure_interrupts(struct adapter *adapter)
 	if (msgs < 2)
 		goto msi;
 
-	adapter->msix_mem = (void *)1; /* XXX */
+	adapter->feat_en |= IXGBE_FEATURE_MSIX;
 
 	/* Figure out a reasonable auto config value */
 	queues = (ncpu > (msgs - 1)) ? (msgs - 1) : ncpu;
@@ -6963,7 +6963,7 @@ msi:
 	adapter->feat_en  &= ~IXGBE_FEATURE_SRIOV;
 
 	msgs = pci_msi_count(adapter->osdep.pc, adapter->osdep.tag);
-	adapter->msix_mem = NULL; /* XXX */
+	adapter->feat_en &= ~IXGBE_FEATURE_MSIX;
 	if (msgs > 1)
 		msgs = 1;
 	if (msgs != 0) {

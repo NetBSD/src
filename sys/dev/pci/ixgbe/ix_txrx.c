@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.24 2022/05/30 17:05:51 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.25 2022/05/31 14:07:51 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.24 2022/05/30 17:05:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.25 2022/05/31 14:07:51 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2322,6 +2322,7 @@ ixgbe_dma_free(struct adapter *adapter, struct ixgbe_dma_alloc *dma)
 	bus_dmamap_sync(dma->dma_tag->dt_dmat, dma->dma_map, 0, dma->dma_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	ixgbe_dmamap_unload(dma->dma_tag, dma->dma_map);
+	bus_dmamem_unmap(dma->dma_tag->dt_dmat, dma->dma_vaddr, dma->dma_size);
 	bus_dmamem_free(dma->dma_tag->dt_dmat, &dma->dma_seg, 1);
 	ixgbe_dma_tag_destroy(dma->dma_tag);
 } /* ixgbe_dma_free */
