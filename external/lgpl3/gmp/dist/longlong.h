@@ -371,7 +371,7 @@ long __MPN(count_leading_zeros) (UDItype);
 #endif
 
 
-#if defined (__GNUC__)
+#if defined (__GNUC__) || defined(__lint__)
 
 /* We sometimes need to clobber "cc" with gcc2, but that would not be
    understood by gcc1.  Use cpp to avoid major code duplication.  */
