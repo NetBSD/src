@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.20 2021/12/20 11:17:40 skrll Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.21 2022/05/31 20:28:57 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.20 2021/12/20 11:17:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.21 2022/05/31 20:28:57 mrg Exp $");
+
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -515,6 +517,7 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 	if (ad->ad_device != NULL)
 		aprint_normal(" <%s>", device_xname(ad->ad_device));
 
+#if NPCI > 0
 	if (ad->ad_pciinfo != NULL) {
 
 		aprint_normal(" (PCI)");
@@ -539,6 +542,7 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 		if (dev != NULL)
 			aprint_normal(" <%s>", device_xname(dev));
 	}
+#endif
 
 	aprint_normal("\n");
 
