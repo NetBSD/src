@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.9 2022/01/15 23:21:34 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.10 2022/05/31 00:35:18 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -58,3 +58,30 @@ struct cover_member_declaration {
 	/* expect+1: error: syntax error 'member without type' [249] */
 	const;
 };
+
+/*
+ * At this point, lint assumes that the following code is still in the
+ * function 'access_declaration_after_syntax_error'.
+ */
+
+int gcc_statement_expression_1 = ({
+/* expect+1: warning: label 'unused_label' unused in function 'access_declaration_after_syntax_error' [232] */
+unused_label:
+	1;
+	1;
+});
+/* expect-1: error: non-constant initializer [177] */
+
+/* Even another function definition does not help. */
+void
+try_to_recover(void)
+{
+}
+
+int gcc_statement_expression_2 = ({
+/* expect+1: warning: label 'unused_label' unused in function 'try_to_recover' [232] */
+unused_label:
+	1;
+	1;
+});
+/* expect-1: error: non-constant initializer [177] */
