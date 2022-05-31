@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000reg.h,v 1.7 2021/10/21 13:21:54 andvar Exp $	*/
+/*	$NetBSD: dm9000reg.h,v 1.8 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -71,7 +71,7 @@
 #define  DM9000_TCR_PAD_DIS1	(1<<2)	/* disbale CRC append on Tx1 */
 #define  DM9000_TCR_CRC_DIS2	(1<<3)	/* disable PAD op on Tx2 */
 #define  DM9000_TCR_PAD_DIS2	(1<<4)	/* disbale CRC append on Tx2 */
-#define  DM9000_TCR_EXCECM	(1<<5)	/* allow infinate colli. retries */
+#define  DM9000_TCR_EXCECM	(1<<5)	/* allow infinite colli. retries */
 #define  DM9000_TCR_TJDIS	(1<<6)	/* disable xmit jabber, otherwise on */
 #define DM9000_TSR1		0x03	/* transmit completion status 1 */
 #define DM9000_TSR2		0x04	/* transmit completion status 2 */

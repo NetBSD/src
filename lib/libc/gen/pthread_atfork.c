@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.15 2020/05/15 14:37:21 joerg Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.16 2022/05/31 08:43:13 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.15 2020/05/15 14:37:21 joerg Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.16 2022/05/31 08:43:13 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -202,7 +202,7 @@ fork(void)
 		 * a locked mutex in this context.
 		 *
 		 * The problem exists for users of this interface,
-		 * too, since the intented use of pthread_atfork() is
+		 * too, since the intended use of pthread_atfork() is
 		 * to acquire locks across the fork call to ensure
 		 * that the child sees consistent state. There's not
 		 * much that can usefully be done in a child handler,

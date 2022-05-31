@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.155 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.156 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.155 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.156 2022/05/31 08:43:16 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -384,7 +384,7 @@ uao_free(struct uvm_aobj *aobj)
 	} else {
 
 		/*
-		 * free the array itsself.
+		 * free the array itself.
 		 */
 
 		kmem_free(aobj->u_swslots, aobj->u_pages * sizeof(int));

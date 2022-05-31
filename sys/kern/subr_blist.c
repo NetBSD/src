@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.14 2022/05/29 10:47:40 andvar Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.15 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.14 2022/05/29 10:47:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.15 2022/05/31 08:43:16 andvar Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
@@ -256,7 +256,7 @@ blist_alloc(blist_t bl, blist_blkno_t count)
 
 /*
  * blist_free() -	free up space in the block bitmap.  Return the base
- *		     	of a contiguous region.  Panic if an inconsistancy is
+ *		     	of a contiguous region.  Panic if an inconsistency is
  *			found.
  */
 

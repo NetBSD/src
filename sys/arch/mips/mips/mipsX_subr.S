@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.114 2022/03/13 17:50:55 andvar Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.115 2022/05/31 08:43:14 andvar Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.114 2022/03/13 17:50:55 andvar Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.115 2022/05/31 08:43:14 andvar Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -370,7 +370,7 @@ RCSID("$NetBSD: mipsX_subr.S,v 1.114 2022/03/13 17:50:55 andvar Exp $")
  *
  * Loongson2 processors don't have separate tlbmiss and xtlbmiss handlers;
  * so we have to check for useg addresses in tlb_miss. The good news is that
- * we can use 64 intructions from tlbmiss instead of 32.
+ * we can use 64 instructions from tlbmiss instead of 32.
  *
  *----------------------------------------------------------------------------
  */

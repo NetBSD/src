@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.31 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.32 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -270,7 +270,7 @@
 
 /*
  * The ADPCM encodings are differential, meaning each sample represents
- * a difference to add to a running sum.  The inital value is called the
+ * a difference to add to a running sum.  The initial value is called the
  * reference, or reference byte.  Any of the ADPCM DMA transfers can specify
  * that the given transfer begins with a reference byte by or'ing
  * in the bit below.

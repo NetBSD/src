@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.12 2021/12/03 08:33:30 gson Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.13 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.12 2021/12/03 08:33:30 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.13 2022/05/31 08:43:16 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -558,7 +558,7 @@ simplehook_disestablish(khook_list_t *l, khook_t *hd, kmutex_t *lock)
 		panic("hook_disestablish: hook %p not established", hd);
 #endif
 
-	/* The hook is not referred, remove immidiately */
+	/* The hook is not referred, remove immediately */
 	if (l->hl_state == HKLIST_IDLE) {
 		LIST_REMOVE(hd, hk_list);
 		kmem_free(hd, sizeof(*hd));

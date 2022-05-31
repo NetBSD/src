@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.15 2022/01/25 22:01:34 andvar Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.16 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -1386,7 +1386,7 @@ const LUNLEN_SINGLE_LEVEL_LUN 0xF
 
 /*
  * CDB Limit
- * The size, in bytes, of the embedded CDB field in initator SCBs.
+ * The size, in bytes, of the embedded CDB field in initiator SCBs.
  */
 register CDBLIMIT {
 	address			0x031

@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.78 2022/04/04 07:04:20 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.79 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.78 2022/04/04 07:04:20 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.79 2022/05/31 08:43:16 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1008,7 +1008,7 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_BOOL, "aux_mid_button_scroll",
-	    SYSCTL_DESCR("Interpet Y-Axis movement with the middle button held as scrolling on the passthrough device (e.g. TrackPoint)"),
+	    SYSCTL_DESCR("Interpret Y-Axis movement with the middle button held as scrolling on the passthrough device (e.g. TrackPoint)"),
 	    pms_sysctl_synaptics_verify, 0,
 	    &synaptics_aux_mid_button_scroll,
 	    0, CTL_HW, root_num, CTL_CREATE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsearch.c,v 1.15 2012/03/04 20:01:45 christos Exp $	*/
+/*	$NetBSD: bsearch.c,v 1.16 2022/05/31 08:43:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)bsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bsearch.c,v 1.15 2012/03/04 20:01:45 christos Exp $");
+__RCSID("$NetBSD: bsearch.c,v 1.16 2022/05/31 08:43:14 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: bsearch.c,v 1.15 2012/03/04 20:01:45 christos Exp $");
  * is odd, moving left simply involves halving lim: e.g., when lim
  * is 5 we look at item 2, so we change lim to 2 so that we will
  * look at items 0 & 1.  If lim is even, the same applies.  If lim
- * is odd, moving right again involes halving lim, this time moving
+ * is odd, moving right again involves halving lim, this time moving
  * the base up one item past p: e.g., when lim is 5 we change base
  * to item 3 and make lim 2 so that we will look at items 3 and 4.
  * If lim is even, however, we have to shrink it by one before

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.21 2022/05/24 06:18:34 andvar Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.22 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.21 2022/05/24 06:18:34 andvar Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.22 2022/05/31 08:43:16 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -5374,7 +5374,7 @@ DEF(AUDIO_SETINFO_sample_rate_0)
 		 * On NetBSD7,8 this will block system call and you will not
 		 * even be able to shutdown...
 		 */
-		XP_SKIP("This will cause an infinate loop in the kernel");
+		XP_SKIP("This will cause an infinite loop in the kernel");
 		return;
 	}
 

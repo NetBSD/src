@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.107 2022/02/27 14:24:11 riastradh Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.108 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -39,14 +39,14 @@
  *	vmem arena locks.
  * -	During pool_put calls no vmem mutexes are locked.
  * - 	pool_drain doesn't hold the pool's mutex while releasing memory to
- * 	its backing therefore no interferance with any vmem mutexes.
+ * 	its backing therefore no interference with any vmem mutexes.
  * -	The boundary tag pool is forced to put page headers into pool pages
  *  	(PR_PHINPAGE) and not off page to avoid pool recursion.
  *  	(due to sizeof(bt_t) it should be the case anyway)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.107 2022/02/27 14:24:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.108 2022/05/31 08:43:16 andvar Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"

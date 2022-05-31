@@ -1,4 +1,4 @@
-/*	$NetBSD: nbsvtool.c,v 1.4 2018/02/06 20:15:39 christos Exp $	*/
+/*	$NetBSD: nbsvtool.c,v 1.5 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ sign_file(X509 *cert, EVP_PKEY *private_key, STACK_OF(X509) *cert_chain,
 /*
  * Verifies a detached PEM signature in the file `sigfile' of file
  * `infile'. The trust anchor file `anchor' to the trust anchors must
- * be given. If its suspended that the sender didn't inlude the whole
+ * be given. If its suspended that the sender didn't include the whole
  * path from the signing certificate to the given trust anchor, extra
  * certificates can be passed in `cert_chain'.
  */

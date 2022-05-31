@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2019/12/01 15:34:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2022/05/31 08:43:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ struct cpu_info {
 	 */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
-	uint32_t ci_initapicid;		/* our intitial APIC ID */
+	uint32_t ci_initapicid;		/* our initial APIC ID */
 	struct pmap *ci_pmap;		/* current pmap */ /* XXX FreeBSD has *pcb_current_pmap in pcb ? */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
