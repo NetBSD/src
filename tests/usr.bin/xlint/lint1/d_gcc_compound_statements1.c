@@ -1,7 +1,20 @@
-/*	$NetBSD: d_gcc_compound_statements1.c,v 1.9 2022/04/24 20:08:23 rillig Exp $	*/
+/*	$NetBSD: d_gcc_compound_statements1.c,v 1.10 2022/05/31 00:35:18 rillig Exp $	*/
 # 3 "d_gcc_compound_statements1.c"
 
 /* GCC compound statement with expression */
+
+/*
+ * Compound statements are only allowed in functions, not at file scope.
+ *
+ * Before decl.c 1.283 from 2022-05-21, lint crashed with a segmentation
+ * fault due to the unused label.
+ */
+int invalid_gcc_statement_expression = ({
+unused_label:
+	3;
+/* expect+2: error: syntax error 'labels are only valid inside a function' [249] */
+/* expect+1: error: cannot initialize 'int' from 'void' [185] */
+});
 
 void foo(unsigned long z)
 {
