@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.16 2014/01/03 07:14:20 mlelstv Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.17 2022/05/31 15:24:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.16 2014/01/03 07:14:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.17 2022/05/31 15:24:59 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,7 +163,7 @@ free_stmem(void *mem)
 	/*
 	 * check ahead of us.
 	 */
-	if (next->type == MNODE_FREE) {
+	if (next != NULL && next->type == MNODE_FREE) {
 		/*
 		 * if next is: a valid node and a free node. ==> merge
 		 */
@@ -174,7 +174,7 @@ free_stmem(void *mem)
 		stmem_total += mn->size + sizeof(struct mem_node);
 		mn->size += next->size + sizeof(struct mem_node);
 	}
-	if (prev->type == MNODE_FREE) {
+	if (prev != NULL && prev->type == MNODE_FREE) {
 		/*
 		 * if prev is: a valid node and a free node. ==> merge
 		 */
