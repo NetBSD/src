@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.7 2021/12/19 11:06:44 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.8 2022/05/31 20:53:35 mrg Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.7 2021/12/19 11:06:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.8 2022/05/31 20:53:35 mrg Exp $");
 
 #define nvkm_mem(p) container_of((p), struct nvkm_mem, memory)
 #include "mem.h"
@@ -97,16 +97,21 @@ static void *
 nvkm_mem_dtor(struct nvkm_memory *memory)
 {
 	struct nvkm_mem *mem = nvkm_mem(memory);
-	if (mem->mem) {
 #ifdef __NetBSD__
+	if (mem->dma) {
+		kmem_free(mem->dma, mem->nseg * sizeof(mem->dma[0]));
+	}
+	if (mem->mem) {
 		struct nvkm_device *device = mem->mmu->subdev.device;
 		bus_dma_tag_t dmat = device->func->dma_tag(device);
-		kmem_free(mem->dma,
-		    mem->dmamap->dm_nsegs * sizeof(mem->dma[0]));
+
 		bus_dmamap_unload(dmat, mem->dmamap);
 		bus_dmamem_free(dmat, mem->mem, mem->nseg);
+		bus_dmamap_destroy(dmat, mem->dmamap);
 		kmem_free(mem->mem, mem->pages * sizeof(mem->mem[0]));
+	}
 #else
+	if (mem->mem) {
 		while (mem->pages--) {
 			dma_unmap_page(mem->mmu->subdev.device->dev,
 				       mem->dma[mem->pages], PAGE_SIZE,
@@ -115,8 +120,8 @@ nvkm_mem_dtor(struct nvkm_memory *memory)
 		}
 		kvfree(mem->dma);
 		kvfree(mem->mem);
-#endif
 	}
+#endif
 	return mem;
 }
 
@@ -218,7 +223,11 @@ nvkm_mem_new_host(struct nvkm_mmu *mmu, int type, u8 page, u64 size,
 	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))) {
 		if (args->v0.dma) {
 			nvkm_memory_ctor(&nvkm_mem_dma, &mem->memory);
+#ifndef __NetBSD__
+			mem->dma = args->v0.dma;
+#else
 			mem->dmamap = args->v0.dma;
+			mem->nseg = mem->dmamap->dm_nsegs;
 			mem->dma = kmem_zalloc(mem->dmamap->dm_nsegs *
 			    sizeof(mem->dma[0]), KM_SLEEP);
 			for (unsigned i = 0; i < mem->dmamap->dm_nsegs; i++) {
@@ -226,6 +235,7 @@ nvkm_mem_new_host(struct nvkm_mmu *mmu, int type, u8 page, u64 size,
 				    PAGE_SIZE);
 				mem->dma[i] = mem->dmamap->dm_segs[i].ds_addr;
 			}
+#endif
 		} else {
 #ifdef __NetBSD__
 			return -ENODEV;
@@ -238,6 +248,9 @@ nvkm_mem_new_host(struct nvkm_mmu *mmu, int type, u8 page, u64 size,
 		if (!IS_ALIGNED(size, PAGE_SIZE))
 			return -EINVAL;
 		mem->pages = size >> PAGE_SHIFT;
+#ifdef __NetBSD__
+		KASSERT(mem->pages == mem->nseg);
+#endif
 		return 0;
 	} else
 	if ( (ret = nvif_unvers(ret, &argv, &argc, args->vn))) {
@@ -283,6 +296,7 @@ fail2: __unused
 		mem->dma[i] = mem->dmamap->dm_segs[i].ds_addr;
 	}
 	mem->pages = size;
+	KASSERT(mem->pages == mem->nseg);
 #else
 	if (!(mem->mem = kvmalloc_array(size, sizeof(*mem->mem), GFP_KERNEL)))
 		return -ENOMEM;
