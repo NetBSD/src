@@ -1,4 +1,4 @@
-/* $NetBSD: exec_prot.h,v 1.1 2011/07/18 23:16:11 jym Exp $ */
+/* $NetBSD: exec_prot.h,v 1.2 2022/05/31 07:12:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -40,8 +40,13 @@
 /*
  * Trivial MD shellcode that justs returns 1.
  */
+#ifdef __hppa__
+extern char return_one[];
+extern char return_one_end[];
+#else
 int return_one(void);     /* begin marker -- shellcode entry */
 int return_one_end(void); /* end marker */
+#endif
 
 /*
  * MD callback to verify whether host offers executable space protection.
