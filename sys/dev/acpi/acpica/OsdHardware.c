@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.13 2021/12/31 17:22:15 riastradh Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.14 2022/05/31 20:28:57 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.13 2021/12/31 17:22:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.14 2022/05/31 20:28:57 mrg Exp $");
+
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -210,6 +212,7 @@ ACPI_STATUS
 AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, UINT64 *Value,
     UINT32 Width)
 {
+#if NPCI > 0
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	pcireg_t tmp;
@@ -240,6 +243,9 @@ AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, UINT64 *Value,
 	}
 
 	return AE_OK;
+#else
+	return AE_BAD_PARAMETER;
+#endif
 }
 
 /*
@@ -251,6 +257,7 @@ ACPI_STATUS
 AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
     ACPI_INTEGER Value, UINT32 Width)
 {
+#if NPCI > 0
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	pcireg_t tmp;
@@ -282,4 +289,7 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 	pci_conf_write(pc, tag, Register & ~3, tmp);
 
 	return AE_OK;
+#else
+	return AE_BAD_PARAMETER;
+#endif
 }

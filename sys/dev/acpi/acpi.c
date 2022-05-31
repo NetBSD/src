@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.297 2022/02/27 21:22:09 riastradh Exp $	*/
+/*	$NetBSD: acpi.c,v 1.298 2022/05/31 20:28:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.297 2022/02/27 21:22:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.298 2022/05/31 20:28:57 mrg Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -698,10 +698,12 @@ acpi_build_tree(struct acpi_softc *sc)
 	(void)AcpiWalkNamespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT, UINT32_MAX,
 	    acpi_make_devnode, acpi_make_devnode_post, &awc, NULL);
 
+#if NPCI > 0
 	/*
 	 * Scan the internal namespace.
 	 */
 	(void)acpi_pcidev_scan(sc->sc_root);
+#endif
 }
 
 static void

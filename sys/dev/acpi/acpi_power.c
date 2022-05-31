@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.35 2017/06/01 02:45:09 chs Exp $ */
+/* $NetBSD: acpi_power.c,v 1.36 2022/05/31 20:28:57 mrg Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.35 2017/06/01 02:45:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.36 2022/05/31 20:28:57 mrg Exp $");
+
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -670,7 +672,6 @@ void
 acpi_power_add(struct acpi_devnode *ad)
 {
 	const char *str = NULL;
-	device_t dev;
 	int err;
 
 	KASSERT(ad != NULL && ad->ad_root != NULL);
@@ -682,12 +683,14 @@ acpi_power_add(struct acpi_devnode *ad)
 
 	if (ad->ad_device != NULL)
 		str = device_xname(ad->ad_device);
+#if NPCI > 0
 	else {
-		dev = acpi_pcidev_find_dev(ad);
+		device_t dev = acpi_pcidev_find_dev(ad);
 
 		if (dev != NULL)
 			str = device_xname(dev);
 	}
+#endif
 
 	if (str == NULL)
 		return;
