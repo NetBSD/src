@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2022/05/29 17:01:42 rillig Exp $
+#	$NetBSD: Makefile,v 1.12 2022/05/31 19:11:58 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/24/94
 
 PROG=	gomoku
@@ -8,6 +8,10 @@ DPADD=	${LIBCURSES} ${LIBTERMINFO}
 LDADD=	-lcurses -lterminfo
 HIDEGAME=hidegame
 CPPFLAGS+=	${DEBUG:D-DDEBUG}
+
+.if ${MACHINE} == "vax"
+COPTS.pickmove.c += -O0
+.endif
 
 #WARNS=		6	# would produce warnings about small integer types
 LINTFLAGS+=	-w	# treat warnings as errors
