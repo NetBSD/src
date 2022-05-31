@@ -1,4 +1,4 @@
-/*	$NetBSD: content-bozo.c,v 1.20 2021/02/27 12:55:25 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.21 2022/05/31 06:34:33 mrg Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -197,6 +197,7 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".wrl",	"x-world/x-vrml",		"",		"", NULL },
 	{ ".vrml",	"x-world/x-vrml",		"",		"", NULL },
 	{ ".svg",	"image/svg+xml",		"",		"", NULL },
+	{ ".mobi",	"application/x-mobipocket-ebook", "",		"", NULL },
 	{ NULL,		NULL,		NULL,		NULL, NULL }
 };
 
