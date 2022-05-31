@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.54 2020/02/22 19:14:57 kamil Exp $
+# $NetBSD: Makefile,v 1.55 2022/05/31 13:42:59 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ TESTS_C+=	t_fpsetmask
 TESTS_C+=	t_fpsetround
 TESTS_C+=	t_ftok
 TESTS_C+=	t_getcwd
+TESTS_C+=	t_getentropy
 TESTS_C+=	t_getgrent
 TESTS_C+=	t_glob
 TESTS_C+=	t_humanize_number

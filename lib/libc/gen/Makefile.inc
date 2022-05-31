@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.215 2021/11/15 14:01:51 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.216 2022/05/31 13:42:59 riastradh Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -15,7 +15,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	errc.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
 	exect.c extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
-	getdevmajor.c getdomainname.c getgrent.c \
+	getdevmajor.c getdomainname.c getentropy.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c \
 	getnetgrent.c getpagesize.c \
@@ -61,7 +61,7 @@ MAN+=	alarm.3 arc4random.3 basename.3 bsd_signal.3 bswap.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 \
 	ftok.3 fts.3 ftw.3 \
 	getbsize.3 cgetcap.3 getcwd.3 getdevmajor.3 \
-	getdomainname.3 getdiskbyname.3 getfsent.3 \
+	getdomainname.3 getdiskbyname.3 getentropy.3 getfsent.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getlastlogx.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 \
 	getprogname.3 getpwent.3 getttyent.3 getusershell.3 glob.3 \
