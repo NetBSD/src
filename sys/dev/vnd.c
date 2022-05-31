@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.285 2022/03/31 19:30:15 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.286 2022/05/31 14:13:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.285 2022/03/31 19:30:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.286 2022/05/31 14:13:31 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1767,9 +1767,10 @@ vndclear(struct vnd_softc *vnd, int myminor)
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		mn = DISKMINOR(device_unit(vnd->sc_dev), i);
-		vdevgone(bmaj, mn, mn, VBLK);
-		if (mn != myminor) /* XXX avoid to kill own vnode */
+		if (mn != myminor) { /* XXX avoid to kill own vnode */
+			vdevgone(bmaj, mn, mn, VBLK);
 			vdevgone(cmaj, mn, mn, VCHR);
+		}
 	}
 
 	if ((vnd->sc_flags & VNF_READONLY) == 0)
