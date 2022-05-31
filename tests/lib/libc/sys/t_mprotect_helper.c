@@ -1,5 +1,6 @@
 #include "t_mprotect_helper.h"
 
+#ifndef __hppa__
 int
 return_1(void)
 {
@@ -15,3 +16,4 @@ return_3(void)
 {
 	return 3;
 }
+#endif
