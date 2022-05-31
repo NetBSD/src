@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000reg.h,v 1.9 2022/05/31 11:22:33 andvar Exp $	*/
+/*	$NetBSD: dm9000reg.h,v 1.10 2022/05/31 12:59:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -171,8 +171,8 @@
 #define DM9000_OTCR	0x2E	/* operation test control */
 #define DM9000_SMCR	0x2F	/* special mode control */
 #define  DM9000_FB0	(1<<0)	/* force shortest back-off time */
-#define  DM9000_FB1	(1<<1)	/* force longeset back-off time */
-#define  DM9000_FLC	(1<<2)	/* force late collsion */
+#define  DM9000_FB1	(1<<1)	/* force longest back-off time */
+#define  DM9000_FLC	(1<<2)	/* force late collision */
 #define  DM9000_SM_EN	(1<<7)	/* serial mode enable */
 #define DM9000_ETXCSR	0x30	/* early xmit control and status */
 #define DM9000_TCSCR	0x31	/* xmit checksum control */
