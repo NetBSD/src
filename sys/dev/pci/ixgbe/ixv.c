@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.125.2.18 2022/05/30 17:01:06 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.125.2.19 2022/05/31 14:03:26 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.18 2022/05/30 17:01:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.19 2022/05/31 14:03:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3487,7 +3487,6 @@ ixv_configure_interrupts(struct adapter *adapter)
 		return -1;
 	}
 
-	adapter->msix_mem = (void *)1; /* XXX */
 	aprint_normal_dev(dev,
 	    "Using MSI-X interrupts with %d vectors\n", msgs);
 	adapter->num_queues = queues;
