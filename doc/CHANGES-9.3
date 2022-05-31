@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.97 2022/05/30 17:03:54 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.98 2022/05/31 14:04:24 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1695,3 +1695,12 @@ sys/dev/pci/ixgbe/ixv.c				1.158,1.179-1.180 via patch
 	  - Modify comment for consistency.
 	  - Use cached rx_copy_len in ixgbe_rxeof().
 	[msaitoh, ticket #1457]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.315
+sys/dev/pci/ixgbe/ixgbe.h			1.86
+sys/dev/pci/ixgbe/ixv.c				1.181
+
+	PR 56857: fix a bug that the legacy interrupt doesn't work when MSI-X
+	allocation failed.
+	[msaitoh, ticket #1458]
+
