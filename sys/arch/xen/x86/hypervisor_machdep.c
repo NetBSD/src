@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.41 2022/05/31 12:52:59 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.42 2022/05/31 14:21:44 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.41 2022/05/31 12:52:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.42 2022/05/31 14:21:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,6 @@ stipending(void)
 	 */
 
 	while (vci->evtchn_upcall_pending) {
-		ret = 1;
 		x86_disable_intr();
 
 		vci->evtchn_upcall_pending = 0;
