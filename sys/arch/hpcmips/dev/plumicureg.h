@@ -1,4 +1,4 @@
-/*	$NetBSD: plumicureg.h,v 1.4 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: plumicureg.h,v 1.5 2022/05/31 11:22:33 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
 
 /* master-enables the USB interrupts */
 #define	PLUM_INT_USBINTEN_IEN		0x00000002
-/* enbales the clock restart request interrupts */
+/* enables the clock restart request interrupts */
 #define	PLUM_INT_USBINTEN_WIEN		0x00000001
 
 /*

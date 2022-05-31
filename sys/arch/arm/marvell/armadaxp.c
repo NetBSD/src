@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.24 2021/08/30 00:04:30 rin Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.25 2022/05/31 11:22:33 andvar Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.24 2021/08/30 00:04:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.25 2022/05/31 11:22:33 andvar Exp $");
 
 #define _INTR_PRIVATE
 
@@ -1149,7 +1149,7 @@ armadaxp_init_mbus(void)
 		reg |= MVSOC_MLMB_WCR_TARGET(def->target);
 		reg |= MVSOC_MLMB_WCR_ATTR(def->attr);
 #ifdef AURORA_IO_CACHE_COHERENCY
-		reg |= MVSOC_MLMB_WCR_SYNC; /* enbale I/O coherency barrior */
+		reg |= MVSOC_MLMB_WCR_SYNC; /* enable I/O coherency barrier */
 #endif
 		reg |= MVSOC_MLMB_WCR_WINEN;
 		write_mlmbreg(MVSOC_MLMB_WCR(def->window), reg);

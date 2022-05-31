@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawn.c,v 1.7 2021/11/22 15:09:16 christos Exp $ */
+/* $NetBSD: t_spawn.c,v 1.8 2022/05/31 11:22:34 andvar Exp $ */
 
 /*-
  * Copyright (c) 2012, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_spawn.c,v 1.7 2021/11/22 15:09:16 christos Exp $");
+__RCSID("$NetBSD: t_spawn.c,v 1.8 2022/05/31 11:22:34 andvar Exp $");
 
 #include <atf-c.h>
 
@@ -470,7 +470,7 @@ ATF_TC_BODY(t_spawn_fchdir_rel, tc)
 
 	/*
 	 * This is done in parts purposely.
-	 * It enbales the abs path of the relative dir
+	 * It enables the abs path of the relative dir
 	 * to be passed to 'check_success()' for comparing
 	 */
 	error = asprintf(&chdirwd, "%s/%s", testdir, relative_dir);
