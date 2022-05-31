@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.282 2022/05/26 13:40:49 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.283 2022/05/31 00:35:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.282 2022/05/26 13:40:49 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.283 2022/05/31 00:35:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3174,7 +3174,10 @@ check_label_usage(sym_t *lab)
 	lint_assert(block_level == 1);
 	lint_assert(lab->s_block_level == 1);
 
-	if (lab->s_set && !lab->s_used) {
+	if (funcsym == NULL) {
+		/* syntax error '%s' */
+		error(249, "labels are only valid inside a function");
+	} else if (lab->s_set && !lab->s_used) {
 		/* label '%s' unused in function '%s' */
 		warning_at(232, &lab->s_set_pos, lab->s_name, funcsym->s_name);
 	} else if (!lab->s_set) {
