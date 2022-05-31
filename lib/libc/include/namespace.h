@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.202 2021/09/11 20:28:03 andvar Exp $	*/
+/*	$NetBSD: namespace.h,v 1.203 2022/05/31 13:42:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -361,6 +361,7 @@
 #define getdevmajor		_getdevmajor
 #define getdiskbyname		_getdiskbyname
 #define getdomainname		_getdomainname
+#define getentropy		_getentropy
 #define getfsent		_getfsent
 #define getfsfile		_getfsfile
 #define getfsspec		_getfsspec

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.162 2021/10/15 22:32:28 andvar Exp $	*/
+/*	$NetBSD: unistd.h,v 1.163 2022/05/31 13:42:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -338,6 +338,7 @@ int	 fchroot(int);
 int	 fdiscard(int, off_t, off_t);
 int	 fsync_range(int, int, off_t, off_t);
 int	 getdomainname(char *, size_t);
+int	 getentropy(void *, size_t);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
 int	 getgroupmembership(const char *, gid_t, gid_t *, int, int *);
 mode_t	 getmode(const void *, mode_t);

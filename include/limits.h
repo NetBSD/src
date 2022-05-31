@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.42 2019/09/15 23:52:59 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.43 2022/05/31 13:42:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -143,6 +143,10 @@
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #define MB_LEN_MAX		32	/* Allow ISO/IEC 2022 */
+
+#ifdef _NETBSD_SOURCE
+#define	GETENTROPY_MAX		256
+#endif
 
 #include <machine/limits.h>
 
