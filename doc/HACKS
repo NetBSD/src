@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.228 2022/04/10 19:54:57 rillig Exp $
+# $NetBSD: HACKS,v 1.229 2022/05/31 19:14:10 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -581,6 +581,15 @@ port	vax
 	descr
 		lcWrap.c is miscompiled, which results in input failure via XIM.
 		Besides, some clients, e.g., pkgsrc/x11/kterm, receive SIGSEGV.
+	kcah
+
+	hack	gomoku compiler crash
+	date	Tue May 31 15:11:39 EDT 2022
+	who	christos
+	file	src/games/gomoku/Makefile : 1.12
+	descr
+		pickmove.c crashes with -O2, warns about ovi.o_intersect being
+		unitialized with -O1, works with -O0
 	kcah
 
 port	arm
