@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.69 2020/03/01 02:51:42 thorpej Exp $ */
+/*	$NetBSD: if_age.c,v 1.70 2022/05/31 08:43:15 andvar Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.69 2020/03/01 02:51:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.70 2022/05/31 08:43:15 andvar Exp $");
 
 #include "vlan.h"
 
@@ -1709,7 +1709,7 @@ age_init(struct ifnet *ifp)
 	 * it's hard to separate code path between Tx and Rx without
 	 * locking. If L1 hardware have a separate mail box register
 	 * for Tx and Rx consumer/producer management we could have
-	 * indepent Tx/Rx handler which in turn Rx handler could have
+	 * independent Tx/Rx handler which in turn Rx handler could have
 	 * been run without any locking.
 	*/
 	AGE_COMMIT_MBOX(sc);

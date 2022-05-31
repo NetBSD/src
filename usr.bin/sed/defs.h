@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 2020/05/15 22:39:54 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.14 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -88,7 +88,7 @@ struct s_tr {
 
 /*
  * An internally compiled command.
- * Initialy, label references are stored in t, on a second pass they
+ * Initially, label references are stored in t, on a second pass they
  * are updated to pointers.
  */
 struct s_command {

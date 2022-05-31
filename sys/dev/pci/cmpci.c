@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.59 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.60 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.59 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.60 2022/05/31 08:43:15 andvar Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -468,7 +468,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 			v = 1;
 			break;
 
-		/* volume with inital value 0 */
+		/* volume with initial value 0 */
 		case CMPCI_CD_VOL:
 		case CMPCI_LINE_IN_VOL:
 		case CMPCI_AUX_IN_VOL:

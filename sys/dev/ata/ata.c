@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.168 2022/05/28 22:16:43 andvar Exp $	*/
+/*	$NetBSD: ata.c,v 1.169 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.168 2022/05/28 22:16:43 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.169 2022/05/31 08:43:15 andvar Exp $");
 
 #include "opt_ata.h"
 
@@ -1024,7 +1024,7 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	/*
 	 * Standard commands are added to the end of command list, but
-	 * recovery commands must be run immediatelly.
+	 * recovery commands must be run immediately.
 	 */
 	if ((xfer->c_flags & C_SKIP_QUEUE) == 0)
 		SIMPLEQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer,

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.c,v 1.11 2016/02/14 18:11:16 dholland Exp $ */
+/* $NetBSD: ppbus_msq.c,v 1.12 2022/05/31 08:43:16 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.11 2016/02/14 18:11:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.12 2022/05/31 08:43:16 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ ppbus_MS_init_msq(struct ppbus_microseq * msq, int nbparam, ...)
 /*
  * ppbus_MS_microseq()
  *
- * Interprete a microsequence. Some microinstructions are executed at adapter
+ * Interpret a microsequence. Some microinstructions are executed at adapter
  * level to avoid function call overhead between ppbus and the adapter
  */
 int
