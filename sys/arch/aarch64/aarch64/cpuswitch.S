@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.34 2022/05/06 06:09:50 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.35 2022/05/31 07:40:25 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.34 2022/05/06 06:09:50 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.35 2022/05/31 07:40:25 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -315,7 +315,10 @@ END(lwp_trampoline)
 
 #ifdef DDB
 ENTRY_NP(cpu_Debugger)
+	stp	fp, lr, [sp, #-16]!
+	mov	fp, sp
 	brk	#0xffff
+	ldp	fp, lr, [sp], #16
 	ret
 END(cpu_Debugger)
 #endif /* DDB */
