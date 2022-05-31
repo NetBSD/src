@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2022/05/04 07:48:34 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2022/05/04 07:48:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2022/05/31 08:43:15 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2256,7 +2256,7 @@ pmap_protect_kernel(vaddr_t startva, vaddr_t endva, vm_prot_t prot)
  * and therefore do not need to map the page just to apply a protection
  * code.  Only pmap_enter() needs to create new mappings if they do not exist.
  *
- * XXX - This function could be speeded up by using pmap_stroll() for inital
+ * XXX - This function could be speeded up by using pmap_stroll() for initial
  *       setup, and then manual scrolling in the for() loop.
  */
 void

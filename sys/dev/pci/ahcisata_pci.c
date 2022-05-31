@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.64 2022/05/29 22:26:21 rin Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.65 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.64 2022/05/29 22:26:21 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.65 2022/05/31 08:43:15 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -374,7 +374,7 @@ ahci_pci_intr_establish(struct ahci_softc *sc, int port)
 			if (port == vec) {
 				/* Print error once */
 				aprint_error_dev(self,
-				    "port %d independant interrupt vector not "
+				    "port %d independent interrupt vector not "
 				    "available, sharing with further ports",
 				    port);
 			}

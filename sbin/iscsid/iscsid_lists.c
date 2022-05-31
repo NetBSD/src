@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.9 2016/05/29 13:35:45 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.10 2022/05/31 08:43:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -692,7 +692,7 @@ get_connection_info(iscsid_get_connection_info_req_t * req,
 /* ------------------------------------------------------------------------- */
 
 /*
- * find_initator_by_addr:
+ * find_initiator_by_addr:
  *    Find an Initiator Portal by Address.
  *
  *    Parameter:  the address

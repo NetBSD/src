@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.11 2015/11/05 21:08:18 palle Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.12 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.11 2015/11/05 21:08:18 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.12 2022/05/31 08:43:15 andvar Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -163,9 +163,9 @@ static const struct Error_Map IOC_SCSIStatus[] = {
 { SCSI_STATUS_COND_MET,			"Check Condition Met" },
 #endif
 { SCSI_BUSY,				"Busy" },
-{ SCSI_INTERM,				"Intermidiate Condition" },
+{ SCSI_INTERM,				"Intermediate Condition" },
 #if 0
-{ SCSI_STATUS_INTERMED_COND_MET,	"Intermidiate Condition Met" },
+{ SCSI_STATUS_INTERMED_COND_MET,	"Intermediate Condition Met" },
 #endif
 { SCSI_RESV_CONFLICT,			"Reservation Conflict" },
 #if 0

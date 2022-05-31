@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_locore.S,v 1.7 2007/03/04 06:00:34 christos Exp $	*/
+/*	$NetBSD: 4xx_locore.S,v 1.8 2022/05/31 08:43:15 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 /*
- * This is not a standalone file. To use it, #inlcude it at
+ * This is not a standalone file. To use it, #include it at
  * the end of your port's locore.S
  */
 

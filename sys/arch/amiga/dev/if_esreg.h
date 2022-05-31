@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esreg.h,v 1.7 2009/10/21 23:53:38 snj Exp $	*/
+/*	$NetBSD: if_esreg.h,v 1.8 2022/05/31 08:43:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -117,7 +117,7 @@ union smcregs {
 /* MMU Command Register */
 #define	MMUCR_NOOP	0x0000		/* No operation */
 #define	MMUCR_ALLOC	0x2000		/* Allocate memory for TX */
-#define	MMUCR_RESET	0x4000		/* Reset to intitial state */
+#define	MMUCR_RESET	0x4000		/* Reset to initial state */
 #define	MMUCR_REM_RX	0x6000		/* Remove frame from top of RX FIFO */
 #define	MMUCR_REMRLS_RX	0x8000		/* Remove & release from top of RX FIFO */
 #define	MMUCR_RLSPKT	0xa000		/* Release specific packet */

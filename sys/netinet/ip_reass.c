@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.22 2022/02/16 22:00:56 andvar Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.23 2022/05/31 08:43:16 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.22 2022/02/16 22:00:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.23 2022/05/31 08:43:16 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -464,7 +464,7 @@ ip_freef(ipfr_queue_t *fp)
  *
  *	Decrement TTL of all reasembly queue entries by `ticks'.  Count
  *	number of distinct fragments (as opposed to partial, fragmented
- *	datagrams) inthe reassembly queue.  While we  traverse the entire
+ *	datagrams) in the reassembly queue.  While we traverse the entire
  *	reassembly queue, compute and return the median TTL over all
  *	fragments.
  */
