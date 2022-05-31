@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.187 2021/11/10 15:59:08 msaitoh Exp $	*/
+/*	$NetBSD: locore.S,v 1.188 2022/05/31 18:04:11 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.187 2021/11/10 15:59:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.188 2022/05/31 18:04:11 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -326,6 +326,7 @@ LABEL(PDPpaddr)		.long	0	/* paddr of PDP, for libkvm */
 END(PDPpaddr)
 
 	/* Space for the temporary stack */
+	.globl	_C_LABEL(tmpstk)
 	.size	tmpstk, tmpstk - .
 	.space	512
 tmpstk:

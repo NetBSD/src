@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.834 2021/12/26 21:33:48 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.835 2022/05/31 18:04:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.834 2021/12/26 21:33:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.835 2022/05/31 18:04:11 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1423,6 +1423,8 @@ init386(paddr_t first_avail)
 #endif
 
 #ifdef XENPV
+	extern int tmpstk;
+	cpu_info_primary.ci_intrstack = &tmpstk;
 	events_default_setup();
 #else
 	intr_default_setup();
