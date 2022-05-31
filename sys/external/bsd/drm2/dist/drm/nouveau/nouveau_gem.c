@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.13 2021/12/19 10:50:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.14 2022/05/31 00:17:10 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.13 2021/12/19 10:50:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.14 2022/05/31 00:17:10 riastradh Exp $");
 
 #include <asm/uaccess.h>
 
@@ -202,13 +202,13 @@ nouveau_gem_new(struct nouveau_cli *cli, u64 size, int align, uint32_t domain,
 	 * to the caller, instead of a normal nouveau_bo ttm reference. */
 	ret = drm_gem_object_init(drm->dev, &nvbo->bo.base, size);
 	if (ret) {
-		nouveau_bo_ref(NULL, &nvbo);
+		kfree(nvbo);
 		return ret;
 	}
 
 	ret = nouveau_bo_init(nvbo, size, align, flags, NULL, NULL);
 	if (ret) {
-		nouveau_bo_ref(NULL, &nvbo);
+		/* XXX note: if this fails it kfrees nvbo */
 		return ret;
 	}
 
