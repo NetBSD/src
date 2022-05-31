@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.131 2022/05/30 17:08:06 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.132 2022/05/31 14:08:47 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2631,4 +2631,15 @@ sys/dev/pci/ixgbe/ixv.c				1.179-1.180 via patch
 	  - Modify comment for consistency.
 	  - Use cached rx_copy_len in ixgbe_rxeof().
 	[msaitoh, ticket #1744]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.98
+sys/dev/pci/ixgbe/ixgbe.c			1.315
+sys/dev/pci/ixgbe/ixgbe.h			1.86
+sys/dev/pci/ixgbe/ixv.c				1.181
+
+	ixg(4): bus_dmamem_unmap() before bus_dmamem_free(), otherwise we
+	may give back memory which is still (and will stay) mapped.
+	PR 56857: fix a bug that the legacy interrupt doesn't work when MSI-X
+	allocation failed.
+	[msaitoh, ticket #1745]
 
