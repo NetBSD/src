@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng_fast.c,v 1.16 2020/07/28 20:15:07 riastradh Exp $	*/
+/*	$NetBSD: cprng_fast.c,v 1.17 2022/06/01 15:44:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.16 2020/07/28 20:15:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.17 2022/06/01 15:44:37 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: cprng_fast.c,v 1.16 2020/07/28 20:15:07 riastradh Ex
 #include <sys/cpu.h>
 #include <sys/entropy.h>
 #include <sys/evcnt.h>
-#include <sys/intr.h>
 #include <sys/kmem.h>
 #include <sys/percpu.h>
 
@@ -58,8 +57,7 @@ struct cprng_fast {
 };
 
 static void	cprng_fast_init_cpu(void *, void *, struct cpu_info *);
-static void	cprng_fast_schedule_reseed(struct cprng_fast *);
-static void	cprng_fast_intr(void *);
+static void	cprng_fast_reseed(struct cprng_fast *);
 
 static void	cprng_fast_seed(struct cprng_fast *, const void *);
 static void	cprng_fast_buf(struct cprng_fast *, void *, unsigned);
@@ -68,7 +66,6 @@ static void	cprng_fast_buf_short(void *, size_t);
 static void	cprng_fast_buf_long(void *, size_t);
 
 static percpu_t	*cprng_fast_percpu	__read_mostly;
-static void	*cprng_fast_softint	__read_mostly;
 
 void
 cprng_fast_init(void)
@@ -76,20 +73,14 @@ cprng_fast_init(void)
 
 	cprng_fast_percpu = percpu_create(sizeof(struct cprng_fast),
 	    cprng_fast_init_cpu, NULL, NULL);
-	cprng_fast_softint = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
-	    &cprng_fast_intr, NULL);
 }
 
 static void
 cprng_fast_init_cpu(void *p, void *arg __unused, struct cpu_info *ci)
 {
 	struct cprng_fast *const cprng = p;
-	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 
-	cprng->epoch = entropy_epoch();
-	cprng_strong(kern_cprng, seed, sizeof seed, 0);
-	cprng_fast_seed(cprng, seed);
-	(void)explicit_memset(seed, 0, sizeof seed);
+	cprng->epoch = 0;
 
 	cprng->reseed_evcnt = kmem_alloc(sizeof(*cprng->reseed_evcnt),
 	    KM_SLEEP);
@@ -103,11 +94,16 @@ cprng_fast_get(struct cprng_fast **cprngp)
 	struct cprng_fast *cprng;
 	int s;
 
-	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
-	s = splvm();
+	KASSERT(!cpu_intr_p());
 
-	if (__predict_false(cprng->epoch != entropy_epoch()))
-		cprng_fast_schedule_reseed(cprng);
+	*cprngp = cprng = percpu_getref(cprng_fast_percpu);
+	s = splsoftserial();
+
+	if (__predict_false(cprng->epoch != entropy_epoch())) {
+		splx(s);
+		cprng_fast_reseed(cprng);
+		s = splsoftserial();
+	}
 
 	return s;
 }
@@ -123,29 +119,19 @@ cprng_fast_put(struct cprng_fast *cprng, int s)
 }
 
 static void
-cprng_fast_schedule_reseed(struct cprng_fast *cprng __unused)
-{
-
-	softint_schedule(cprng_fast_softint);
-}
-
-static void
-cprng_fast_intr(void *cookie __unused)
+cprng_fast_reseed(struct cprng_fast *cprng)
 {
 	unsigned epoch = entropy_epoch();
-	struct cprng_fast *cprng;
 	uint8_t seed[CPRNG_FAST_SEED_BYTES];
 	int s;
 
 	cprng_strong(kern_cprng, seed, sizeof(seed), 0);
 
-	cprng = percpu_getref(cprng_fast_percpu);
-	s = splvm();
+	s = splsoftserial();
 	cprng_fast_seed(cprng, seed);
 	cprng->epoch = epoch;
 	cprng->reseed_evcnt->ev_count++;
 	splx(s);
-	percpu_putref(cprng_fast_percpu);
 
 	explicit_memset(seed, 0, sizeof(seed));
 }
