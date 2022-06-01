@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.317 2022/06/01 04:15:41 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.318 2022/06/01 05:06:45 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.317 2022/06/01 04:15:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.318 2022/06/01 05:06:45 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4742,7 +4742,7 @@ ixgbe_handle_recovery_mode_timer(struct work *wk, void *context)
 
 	IXGBE_CORE_LOCK(adapter);
 	if (ixgbe_fw_recovery_mode(hw)) {
-		if (atomic_cas_uint(&adapter->recovery_mode, 0, 1)) {
+		if (atomic_cas_uint(&adapter->recovery_mode, 0, 1) == 0) {
 			/* Firmware error detected, entering recovery mode */
 			device_printf(adapter->dev, "Firmware recovery mode detected. Limiting functionality. Refer to the Intel(R) Ethernet Adapters and Devices User Guide for details on firmware recovery mode.\n");
 
