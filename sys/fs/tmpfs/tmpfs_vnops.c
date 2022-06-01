@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.149 2022/03/27 16:24:57 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.150 2022/06/01 08:42:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.149 2022/03/27 16:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.150 2022/06/01 08:42:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -555,7 +555,9 @@ tmpfs_read(void *v)
 		    UBC_READ | UBC_PARTIALOK | UBC_VNODE_FLAGS(vp));
 	}
 
-	tmpfs_update(vp, TMPFS_UPDATE_ATIME);
+	if ((vp->v_mount->mnt_flag & MNT_NOATIME) == 0)
+		tmpfs_update(vp, TMPFS_UPDATE_ATIME);
+
 	return error;
 }
 
