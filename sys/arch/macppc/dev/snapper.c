@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.63 2022/06/01 05:47:37 martin Exp $	*/
+/*	$NetBSD: snapper.c,v 1.64 2022/06/01 06:05:47 martin Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.63 2022/06/01 05:47:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.64 2022/06/01 06:05:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1274,11 +1274,11 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.s.num_mem = 3;
 		strcpy(dip->un.s.member[0].label.name, AudioNspeaker);
-		dip->un.s.member[0].mask = (1 << 1)|(1 << 2);
+		dip->un.s.member[0].mask = 1 << 0;
 		strcpy(dip->un.s.member[1].label.name, AudioNheadphone);
-		dip->un.s.member[1].mask = (1 << 0)|(1 << 2);
+		dip->un.s.member[1].mask = 1 << 1;
 		strcpy(dip->un.s.member[2].label.name, AudioNline);
-		dip->un.s.member[2].mask = (1 << 0)|(1 << 1);
+		dip->un.s.member[2].mask = 1 << 2;
 		return 0;
 
 	case SNAPPER_VOL_OUTPUT:
