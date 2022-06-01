@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.17 2020/04/17 14:19:43 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.18 2022/06/01 06:18:04 skrll Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
 	ldo	HPPA_FRAME_SIZE(%sp), %sp	!\
 	copy	%rp, %arg0			!\
 	bl	2f, %arg1			!\
-	depi	0, 31, 2, %arg1			!\
+	 depi	0, 31, 2, %arg1			!\
 2:						!\
 	bl	_mcount, %rp			!\
 	 ldo	1b - 2b(%arg1), %arg1		!\
