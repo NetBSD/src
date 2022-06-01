@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.15 2022/05/22 11:38:51 riastradh Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.16 2022/06/01 15:40:15 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -2020,7 +2020,7 @@ fail:
 /*
  * remove opencrypto session
  */
-int
+void
 mvxpsec_freesession(void *arg, uint64_t tid)
 {
 	struct mvxpsec_softc *sc = arg;
@@ -2056,8 +2056,6 @@ mvxpsec_freesession(void *arg, uint64_t tid)
 	crypto_unblock(sc->sc_cid, CRYPTO_SYMQ|CRYPTO_ASYMQ);
 
 	MVXPSEC_EVCNT_INCR(sc, session_free);
-
-	return 0;
 }
 
 /*
