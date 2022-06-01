@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.315 2022/05/30 05:07:38 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.316 2022/06/01 02:07:24 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.315 2022/05/30 05:07:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.316 2022/06/01 02:07:24 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2799,7 +2799,6 @@ ixgbe_msix_que(void *arg)
 	struct ifnet	*ifp = adapter->ifp;
 	struct tx_ring	*txr = que->txr;
 	struct rx_ring	*rxr = que->rxr;
-	bool		more;
 	u32		newitr = 0;
 
 	/* Protect against spurious interrupts */
@@ -2814,13 +2813,6 @@ ixgbe_msix_que(void *arg)
 	 * flip-flopping softint/workqueue mode in one deferred processing.
 	 */
 	que->txrx_use_workqueue = adapter->txrx_use_workqueue;
-
-#ifdef __NetBSD__
-	/* Don't run ixgbe_rxeof in interrupt context */
-	more = true;
-#else
-	more = ixgbe_rxeof(que);
-#endif
 
 	IXGBE_TX_LOCK(txr);
 	ixgbe_txeof(txr);
@@ -2882,10 +2874,7 @@ ixgbe_msix_que(void *arg)
 	rxr->packets = 0;
 
 no_calc:
-	if (more)
-		ixgbe_sched_handle_que(adapter, que);
-	else
-		ixgbe_enable_queue(adapter, que->msix);
+	ixgbe_sched_handle_que(adapter, que);
 
 	return 1;
 } /* ixgbe_msix_que */
