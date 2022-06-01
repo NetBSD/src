@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.316 2022/06/01 02:07:24 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.317 2022/06/01 04:15:41 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.316 2022/06/01 02:07:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.317 2022/06/01 04:15:41 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5320,7 +5320,7 @@ ixgbe_legacy_irq(void *arg)
 		eims_disable |= 1UL << 0;
 
 	} else
-		eims_enable |= IXGBE_EIMC_RTX_QUEUE;
+		eims_enable |= eims_orig & IXGBE_EIMC_RTX_QUEUE;
 
 	ixgbe_intr_admin_common(adapter, eicr, &eims_disable);
 
