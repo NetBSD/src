@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.61 2021/08/07 16:18:58 thorpej Exp $	*/
+/*	$NetBSD: snapper.c,v 1.62 2022/06/01 05:42:52 martin Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.61 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.62 2022/06/01 05:42:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -2200,10 +2200,12 @@ snapper_init(struct snapper_softc *sc, int node)
 			}
 		}
 		if (strcmp(audio_gpio, "lineout-mute") == 0 ||
-		    strcmp(name, "lineout-mute") == 0)
+		    strcmp(name, "lineout-mute") == 0 ||
+		    strcmp(name, "line-output-mute") == 0)
 			lineout_mute = addr;
 		if (strcmp(audio_gpio, "lineout-detect") == 0 ||
-		    strcmp(name, "lineout-detect") == 0) {
+		    strcmp(name, "lineout-detect") == 0 ||
+		    strcmp(name, "line-output-detect") == 0) {
 		    	uint32_t act = 0;
 			lineout_detect = addr;
 			OF_getprop(gpio, "audio-gpio-active-state", &act, 4);
