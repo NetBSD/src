@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.64 2022/06/01 06:05:47 martin Exp $	*/
+/*	$NetBSD: snapper.c,v 1.65 2022/06/02 16:22:27 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.64 2022/06/01 06:05:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.65 2022/06/02 16:22:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1962,9 +1962,9 @@ gpio_write(bus_size_t addr, int val)
 	obio_write_1(addr, data);
 }
 
-#define headphone_active 0	/* XXX OF */
-#define lineout_active 0	/* XXX OF */
-#define amp_active 0		/* XXX OF */
+int headphone_active = 0;
+int lineout_active = 0;
+int amp_active = 0;
 
 static void
 snapper_mute_speaker(struct snapper_softc *sc, int mute)
@@ -1977,9 +1977,9 @@ snapper_mute_speaker(struct snapper_softc *sc, int mute)
 		if (mute)
 			x = amp_active;		/* mute */
 		else
-			x = !amp_active;	/* unmute */
-		if (x != gpio_read(amp_mute))
-			gpio_write(amp_mute, x);
+			x = amp_active ^ 1;	/* unmute */
+
+		gpio_write(amp_mute, x);
 
 		DPRINTF("%d\n", gpio_read(amp_mute));
 	}
@@ -1996,9 +1996,9 @@ snapper_mute_headphone(struct snapper_softc *sc, int mute)
 		if (mute)
 			x = headphone_active;	/* mute */
 		else
-			x = !headphone_active;	/* unmute */
-		if (x != gpio_read(headphone_mute))
-			gpio_write(headphone_mute, x);
+			x = headphone_active ^ 1;	/* unmute */
+
+		gpio_write(headphone_mute, x);
 
 		DPRINTF("%d\n", gpio_read(headphone_mute));
 	}
@@ -2015,9 +2015,9 @@ snapper_mute_lineout(struct snapper_softc *sc, int mute)
 		if (mute)
 			x = lineout_active;	/* mute */
 		else
-			x = !lineout_active;	/* unmute */
-		if (x != gpio_read(lineout_mute))
-			gpio_write(lineout_mute, x);
+			x = lineout_active ^ 1;	/* unmute */
+
+		gpio_write(lineout_mute, x);
 
 		DPRINTF("%d\n", gpio_read(lineout_mute));
 	}
@@ -2134,7 +2134,7 @@ snapper_init(struct snapper_softc *sc, int node)
 {
 	int gpio;
 	int headphone_detect_intr, lineout_detect_intr;
-	uint32_t gpio_base, reg[1], fcreg;
+	uint32_t gpio_base, reg[1], fcreg, buf[8];
 	char intr_xname[INTRDEVNAMEBUF];
 #ifdef SNAPPER_DEBUG
 	char fcr[32];
@@ -2182,12 +2182,26 @@ snapper_init(struct snapper_softc *sc, int node)
 
 		/* gpio5 */
 		if (strcmp(audio_gpio, "headphone-mute") == 0 ||
-		    strcmp(name, "headphone-mute") == 0)
+		    strcmp(name, "headphone-mute") == 0) {
 			headphone_mute = addr;
+			if (OF_getprop(gpio,
+			    "platform-do-headphone-mute", buf, 20) == 20) {
+				headphone_active = buf[3] & 1;
+				DPRINTF("platform-do-headphone-mute %d\n",
+				    headphone_active);
+			}
+		}
 		/* gpio6 */
 		if (strcmp(audio_gpio, "amp-mute") == 0 ||
-		    strcmp(name, "amp-mute") == 0)
+		    strcmp(name, "amp-mute") == 0) {
 			amp_mute = addr;
+			if (OF_getprop(gpio,
+			    "platform-do-amp-mute", buf, 20) == 20) {
+				amp_active = buf[3] & 1;
+				DPRINTF("platform-do-amp-mute %d\n",
+				    amp_active);
+			}
+		}
 		/* extint-gpio15 */
 		if (strcmp(audio_gpio, "headphone-detect") == 0 ||
 		    strcmp(name, "headphone-detect") == 0) {
@@ -2201,8 +2215,15 @@ snapper_init(struct snapper_softc *sc, int node)
 		}
 		if (strcmp(audio_gpio, "lineout-mute") == 0 ||
 		    strcmp(name, "lineout-mute") == 0 ||
-		    strcmp(name, "line-output-mute") == 0)
+		    strcmp(name, "line-output-mute") == 0) {
 			lineout_mute = addr;
+			if (OF_getprop(gpio,
+			    "platform-do-lineout-mute", buf, 20) == 20) {
+				lineout_active = buf[3] & 1;
+				DPRINTF("platform-do-lineout-mute %d\n",
+				    lineout_active);
+			}
+		}
 		if (strcmp(audio_gpio, "lineout-detect") == 0 ||
 		    strcmp(name, "lineout-detect") == 0 ||
 		    strcmp(name, "line-output-detect") == 0) {
@@ -2242,8 +2263,8 @@ snapper_init(struct snapper_softc *sc, int node)
 	if (headphone_detect_intr != -1) {
 		snprintf(intr_xname, sizeof(intr_xname), "%s headphone",
 		    device_xname(sc->sc_dev));
-		intr_establish_xname(headphone_detect_intr, IST_EDGE, IPL_AUDIO,
-		    snapper_cint, sc, intr_xname);
+		intr_establish_xname(headphone_detect_intr, IST_EDGE,
+		    IPL_AUDIO, snapper_cint, sc, intr_xname);
 	}
 
 	if (lineout_detect_intr != -1) {
