@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.320 2022/06/02 16:56:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.321 2022/06/02 17:20:21 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.320 2022/06/02 16:56:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.321 2022/06/02 17:20:21 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2674,7 +2674,7 @@ display:
 } /* ixgbe_get_slot_info */
 
 /************************************************************************
- * ixgbe_enable_queue - MSI-X Interrupt Handlers and Tasklets
+ * ixgbe_enable_queue - Queue Interrupt Enabler
  ************************************************************************/
 static inline void
 ixgbe_enable_queue(struct adapter *adapter, u32 vector)
