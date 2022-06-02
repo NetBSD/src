@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1457 2022/05/11 20:44:05 markd Exp $
+$NetBSD: pcidevs,v 1.1458 2022/06/02 06:49:22 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1126,7 +1126,12 @@ product AMD F17_6X_HB		0x1632	17h/6xh Host Bridge
 product AMD F17_6X_PCIE_1	0x1633	17h/6xh PCIe
 product AMD F17_6X_PCIE_2	0x1634	17h/6xh PCIe
 product AMD F17_6X_PCIE_3	0x1635	17h/6xh PCIe
+product AMD F17_6X_HDAUDIO	0x1637	17h/6xh HD Audio Controller
 product AMD F17_6X_XHCI		0x1639	17h/6xh xHCI
+product AMD F17_6X_XGBE		0x1641	17h/6xh 10GbE Controller
+product AMD F17_6X_WLAN		0x1642	17h/6xh WLAN
+product AMD F17_6X_BT		0x1643	17h/6xh Bluetooth
+product AMD F17_6X_I2S		0x1644	17h/6xh I2S
 product AMD F19_5X_DF_0		0x166a	19h/5xh Data Fabric
 product AMD F19_5X_DF_1		0x166b	19h/5xh Data Fabric
 product AMD F19_5X_DF_2		0x166c	19h/5xh Data Fabric
