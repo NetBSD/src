@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.316 2022/05/23 22:33:56 rillig Exp $
+# $NetBSD: Makefile,v 1.317 2022/06/02 07:34:39 skrll Exp $
 #
 # Unit tests for make(1)
 #
@@ -670,7 +670,7 @@ MAKE_TEST_ENV+=	MALLOC_CONF="junk:true"	# for jemalloc 510
 MAKE_TEST_ENV+= TMPDIR=${TMPDIR}
 
 .if ${.MAKE.OS} == "NetBSD"
-LIMIT_RESOURCES?=	ulimit -v 200000
+LIMIT_RESOURCES?=	ulimit -v 300000
 .endif
 LIMIT_RESOURCES?=	:
 
