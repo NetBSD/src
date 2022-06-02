@@ -125,9 +125,9 @@ EOF
 	atf_check -s ignore -o ignore -e match:"Uninitialized bytes in __msan_check_mem_is_initialized at offset 0 inside" ./test
 }
 check_mem_pie_body(){
-	
+
 	#check whether -pie flag is supported on this architecture
-	if ! cc -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then 
+	if ! cc -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then
 		atf_set_skip "cc -pie not supported on this architecture"
 	fi
 	cat > test.c << EOF
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 }
 EOF
 
-	cc -fsanitize=memory -o test -fpie -pie test.c 
+	cc -fsanitize=memory -o test -fpie -pie test.c
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"Uninitialized bytes in __msan_check_mem_is_initialized at offset 0 inside" ./test
 }
