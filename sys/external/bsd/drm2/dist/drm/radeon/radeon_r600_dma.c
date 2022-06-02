@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r600_dma.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_r600_dma.c,v 1.3 2022/06/02 06:51:48 mrg Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r600_dma.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_r600_dma.c,v 1.3 2022/06/02 06:51:48 mrg Exp $");
 
 #include "radeon.h"
 #include "radeon_asic.h"
@@ -271,8 +271,8 @@ int r600_dma_ring_test(struct radeon_device *rdev,
 	if (i < rdev->usec_timeout) {
 		DRM_INFO("ring test on %d succeeded in %d usecs\n", ring->idx, i);
 	} else {
-		DRM_ERROR("radeon: ring %d test failed (0x%08X)\n",
-			  ring->idx, tmp);
+		DRM_ERROR("radeon: ring %d test failed (0x%08X) after %u usecs\n",
+			  ring->idx, tmp, rdev->usec_timeout);
 		r = -EINVAL;
 	}
 	return r;
