@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.80 2022/05/16 18:44:38 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.81 2022/06/02 15:36:08 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -881,6 +881,7 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 	int i = 0, dno, wno, skipped = 0;
 	int already_found, numdisks, selected_disk = -1;
 	int menu_no, w_menu_no;
+	size_t max_desc_len;
 	struct pm_devs *pm_i, *pm_last = NULL;
 	bool any_wedges = false;
 
@@ -895,6 +896,13 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 	refresh();
 	/* Kill typeahead, it won't be what the user had in mind */
 	fpurge(stdin);
+	/*
+	 * we need space for the menu box and the row label,
+	 * this sums up to 7 characters.
+	 */
+	max_desc_len = getmaxx(stdscr) - 8;
+	if (max_desc_len >= __arraycount(disks[0].dd_descr))
+		max_desc_len = __arraycount(disks[0].dd_descr) - 1;
 
 	/*
 	 * partman_go: <0 - we want to see menu with extended partitioning
@@ -923,6 +931,7 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 					any_wedges = true;
 					wedge_menu[wno].opt_name =
 					    disks[i].dd_descr;
+					disks[i].dd_descr[max_desc_len] = 0;
 					wedge_menu[wno].opt_flags = OPT_EXIT;
 					wedge_menu[wno].opt_action =
 					    set_menu_select;
@@ -931,6 +940,7 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 				} else {
 					dsk_menu[dno].opt_name =
 					    disks[i].dd_descr;
+					disks[i].dd_descr[max_desc_len] = 0;
 					dsk_menu[dno].opt_flags = OPT_EXIT;
 					dsk_menu[dno].opt_action =
 					    set_menu_select;
