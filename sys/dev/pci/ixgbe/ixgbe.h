@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.56.2.8 2022/05/31 14:03:27 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.56.2.9 2022/06/02 10:45:12 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -601,7 +601,7 @@ struct adapter {
 	struct evcnt		enomem_tx_dma_setup;
 	struct evcnt		tso_err;
 	struct evcnt		watchdog_events;
-	struct evcnt		link_irq;
+	struct evcnt		admin_irq;
 	struct evcnt		link_sicount;
 	struct evcnt		mod_sicount;
 	struct evcnt		msf_sicount;
@@ -633,6 +633,7 @@ struct adapter {
 
 	struct sysctllog	*sysctllog;
 	const struct sysctlnode *sysctltop;
+	struct timeval		lasterr_time;
 };
 
 /* Precision Time Sync (IEEE 1588) defines */

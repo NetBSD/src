@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.41.2.6 2022/01/31 17:36:25 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.41.2.7 2022/06/02 10:45:12 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -2007,6 +2007,13 @@ enum {
 #define IXGBE_EIMS_PBUR		IXGBE_EICR_PBUR /* Pkt Buf Handler Err */
 #define IXGBE_EIMS_DHER		IXGBE_EICR_DHER /* Descr Handler Error */
 #define IXGBE_EIMS_TCP_TIMER	IXGBE_EICR_TCP_TIMER /* TCP Timer */
+/*
+ * EIMS_OTHER is R/W on 82598 though the document says it's reserved.
+ * It MUST be required to set this bit to get OTHER interrupt.
+ *
+ * On other chips, it's read only. It's set if any bits of 29..16 is not zero.
+ * Bit 30 (TCP_TIMER) doesn't affect to EIMS_OTHER.
+ */
 #define IXGBE_EIMS_OTHER	IXGBE_EICR_OTHER /* INT Cause Active */
 
 /* Extended Interrupt Mask Clear */
@@ -2028,6 +2035,7 @@ enum {
 #define IXGBE_EIMC_PBUR		IXGBE_EICR_PBUR /* Pkt Buf Handler Err */
 #define IXGBE_EIMC_DHER		IXGBE_EICR_DHER /* Desc Handler Err */
 #define IXGBE_EIMC_TCP_TIMER	IXGBE_EICR_TCP_TIMER /* TCP Timer */
+/* EIMC_OTHER works only on 82598. See EIMS_OTHER's comment */
 #define IXGBE_EIMC_OTHER	IXGBE_EICR_OTHER /* INT Cause Active */
 
 #define IXGBE_EIMS_ENABLE_MASK ( \
@@ -2081,7 +2089,8 @@ enum {
 #define IXGBE_FTQF_QUEUE_ENABLE		0x80000000
 
 /* Interrupt clear mask */
-#define IXGBE_IRQ_CLEAR_MASK	0xFFFFFFFF
+#define IXGBE_IRQ_CLEAR_MASK		0xFFFFFFFF
+#define IXGBE_MSIX_OTHER_CLEAR_MASK	0xFFFF0000
 
 /* Interrupt Vector Allocation Registers */
 #define IXGBE_IVAR_REG_NUM		25
