@@ -1,4 +1,4 @@
-/*	$NetBSD: fix_unaligned.c,v 1.1 2022/05/30 13:58:51 rin Exp $	*/
+/*	$NetBSD: fix_unaligned.c,v 1.2 2022/06/02 00:32:14 rin Exp $	*/
 
 /*
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fix_unaligned.c,v 1.1 2022/05/30 13:58:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fix_unaligned.c,v 1.2 2022/06/02 00:32:14 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ppcarch.h"
@@ -187,27 +187,55 @@ emul_unaligned(struct trapframe *tf, ksiginfo_t *ksi, const union instr *insn)
 	int flags;
 
 	switch (insn->i_any.i_opcd) {
-	case OPC_LMW:
-		UA_EVCNT_INCR(lmw);
-#ifdef FIX_UNALIGNED_LSTMW
+	case OPC_LWZ:
+		UA_EVCNT_INCR(lwz);
 		flags = UAF_LOAD;
-		if (do_lstmw(tf, insn, flags))
-			goto fault;
-		return false;
-#else
-		goto unknown;
-#endif
+		break;
 
-	case OPC_STMW:
-		UA_EVCNT_INCR(stmw);
-#ifdef FIX_UNALIGNED_LSTMW
+	case OPC_LWZU:
+		UA_EVCNT_INCR(lwzu);
+		flags = UAF_LOAD | UAF_UPDATE;
+		break;
+
+	case OPC_STW:
+		UA_EVCNT_INCR(stw);
 		flags = UAF_STORE;
-		if (do_lstmw(tf, insn, flags))
-			goto fault;
-		return false;
-#else
-		goto unknown;
-#endif
+		break;
+
+	case OPC_STWU:
+		UA_EVCNT_INCR(stwu);
+		flags = UAF_STORE | UAF_UPDATE;
+		break;
+
+	case OPC_LHZ:
+		UA_EVCNT_INCR(lhz);
+		flags = UAF_LOAD | UAF_HALF;
+		break;
+
+	case OPC_LHZU:
+		UA_EVCNT_INCR(lhzu);
+		flags = UAF_LOAD | UAF_HALF | UAF_UPDATE;
+		break;
+
+	case OPC_LHA:
+		UA_EVCNT_INCR(lha);
+		flags = UAF_LOAD | UAF_HALF | UAF_ALGEBRA;
+		break;
+
+	case OPC_LHAU:
+		UA_EVCNT_INCR(lhau);
+		flags = UAF_LOAD | UAF_HALF | UAF_ALGEBRA | UAF_UPDATE;
+		break;
+
+	case OPC_STH:
+		UA_EVCNT_INCR(sth);
+		flags = UAF_STORE | UAF_HALF;
+		break;
+
+	case OPC_STHU:
+		UA_EVCNT_INCR(sthu);
+		flags = UAF_STORE | UAF_HALF | UAF_UPDATE;
+		break;
 
 	case OPC_integer_31:
 		switch (insn->i_x.i_xo) {
@@ -287,55 +315,27 @@ emul_unaligned(struct trapframe *tf, ksiginfo_t *ksi, const union instr *insn)
 		}
 		break;
 
-	case OPC_LWZ:
-		UA_EVCNT_INCR(lwz);
+	case OPC_LMW:
+		UA_EVCNT_INCR(lmw);
+#ifdef FIX_UNALIGNED_LSTMW
 		flags = UAF_LOAD;
-		break;
+		if (do_lstmw(tf, insn, flags))
+			goto fault;
+		return false;
+#else
+		goto unknown;
+#endif
 
-	case OPC_LWZU:
-		UA_EVCNT_INCR(lwzu);
-		flags = UAF_LOAD | UAF_UPDATE;
-		break;
-
-	case OPC_STW:
-		UA_EVCNT_INCR(stw);
+	case OPC_STMW:
+		UA_EVCNT_INCR(stmw);
+#ifdef FIX_UNALIGNED_LSTMW
 		flags = UAF_STORE;
-		break;
-
-	case OPC_STWU:
-		UA_EVCNT_INCR(stwu);
-		flags = UAF_STORE | UAF_UPDATE;
-		break;
-
-	case OPC_LHZ:
-		UA_EVCNT_INCR(lhz);
-		flags = UAF_LOAD | UAF_HALF;
-		break;
-
-	case OPC_LHZU:
-		UA_EVCNT_INCR(lhzu);
-		flags = UAF_LOAD | UAF_HALF | UAF_UPDATE;
-		break;
-
-	case OPC_LHA:
-		UA_EVCNT_INCR(lha);
-		flags = UAF_LOAD | UAF_HALF | UAF_ALGEBRA;
-		break;
-
-	case OPC_LHAU:
-		UA_EVCNT_INCR(lhau);
-		flags = UAF_LOAD | UAF_HALF | UAF_ALGEBRA | UAF_UPDATE;
-		break;
-
-	case OPC_STH:
-		UA_EVCNT_INCR(sth);
-		flags = UAF_STORE | UAF_HALF;
-		break;
-
-	case OPC_STHU:
-		UA_EVCNT_INCR(sthu);
-		flags = UAF_STORE | UAF_HALF | UAF_UPDATE;
-		break;
+		if (do_lstmw(tf, insn, flags))
+			goto fault;
+		return false;
+#else
+		goto unknown;
+#endif
 
 	default:
 		UA_EVCNT_INCR(unknown);
