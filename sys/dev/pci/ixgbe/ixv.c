@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.125.2.19 2022/05/31 14:03:26 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.125.2.20 2022/06/02 10:45:12 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.19 2022/05/31 14:03:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.125.2.20 2022/06/02 10:45:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -647,7 +647,7 @@ ixv_detach(device_t dev, int flags)
 	evcnt_detach(&adapter->enomem_tx_dma_setup);
 	evcnt_detach(&adapter->watchdog_events);
 	evcnt_detach(&adapter->tso_err);
-	evcnt_detach(&adapter->link_irq);
+	evcnt_detach(&adapter->admin_irq);
 
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
@@ -962,7 +962,7 @@ ixv_msix_mbx(void *arg)
 	struct adapter	*adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
 
-	IXGBE_EVC_ADD(&adapter->link_irq, 1);
+	IXGBE_EVC_ADD(&adapter->admin_irq, 1);
 	/* NetBSD: We use auto-clear, so it's not required to write VTEICR */
 
 	/* Link status change */
@@ -1787,18 +1787,18 @@ ixv_initialize_rss_mapping(struct adapter *adapter)
 	if (rss_hash_config & RSS_HASHTYPE_RSS_TCP_IPV6)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV6_TCP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	if (rss_hash_config & RSS_HASHTYPE_RSS_TCP_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_TCP_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_TCP_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV4)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV4_UDP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV6)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV6_UDP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_UDP_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_UDP_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	IXGBE_WRITE_REG(hw, IXGBE_VFMRQC, mrqc);
 } /* ixv_initialize_rss_mapping */
 
@@ -1832,7 +1832,9 @@ ixv_initialize_receive_units(struct adapter *adapter)
 
 	/* Tell PF our max_frame size */
 	if (ixgbevf_rlpml_set_vf(hw, adapter->max_frame_size) != 0) {
-		device_printf(adapter->dev, "There is a problem with the PF setup.  It is likely the receive unit for this VF will not function correctly.\n");
+		device_printf(adapter->dev, "There is a problem with the PF "
+		    "setup.  It is likely the receive unit for this VF will "
+		    "not function correctly.\n");
 	}
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++) {
@@ -2588,18 +2590,18 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	    NULL, xname, "Watchdog timeouts");
 	evcnt_attach_dynamic(&adapter->tso_err, EVCNT_TYPE_MISC,
 	    NULL, xname, "TSO errors");
-	evcnt_attach_dynamic(&adapter->link_irq, EVCNT_TYPE_INTR,
-	    NULL, xname, "Link MSI-X IRQ Handled");
+	evcnt_attach_dynamic(&adapter->admin_irq, EVCNT_TYPE_INTR,
+	    NULL, xname, "Admin MSI-X IRQ Handled");
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		snprintf(adapter->queues[i].evnamebuf,
-		    sizeof(adapter->queues[i].evnamebuf), "%s q%d",
-		    xname, i);
+		    sizeof(adapter->queues[i].evnamebuf), "%s q%d", xname, i);
 		snprintf(adapter->queues[i].namebuf,
 		    sizeof(adapter->queues[i].namebuf), "q%d", i);
 
 		if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
-			aprint_error_dev(dev, "could not create sysctl root\n");
+			aprint_error_dev(dev,
+			    "could not create sysctl root\n");
 			break;
 		}
 
@@ -2764,7 +2766,7 @@ ixv_clear_evcnt(struct adapter *adapter)
 	IXGBE_EVC_STORE(&adapter->enomem_tx_dma_setup, 0);
 	IXGBE_EVC_STORE(&adapter->watchdog_events, 0);
 	IXGBE_EVC_STORE(&adapter->tso_err, 0);
-	IXGBE_EVC_STORE(&adapter->link_irq, 0);
+	IXGBE_EVC_STORE(&adapter->admin_irq, 0);
 
 	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		IXGBE_EVC_STORE(&adapter->queues[i].irqs, 0);
@@ -3482,8 +3484,7 @@ ixv_configure_interrupts(struct adapter *adapter)
 	else {
 		aprint_error_dev(dev,
 		    "MSI-X Configuration Problem, "
-		    "%d vectors but %d queues wanted!\n",
-		    msgs, want);
+		    "%d vectors but %d queues wanted!\n", msgs, want);
 		return -1;
 	}
 

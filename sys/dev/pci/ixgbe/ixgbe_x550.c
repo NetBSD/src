@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x550.c,v 1.15.2.5 2022/01/30 15:58:29 martin Exp $ */
+/* $NetBSD: ixgbe_x550.c,v 1.15.2.6 2022/06/02 10:45:12 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.15.2.5 2022/01/30 15:58:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.15.2.6 2022/06/02 10:45:12 martin Exp $");
 
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"
@@ -1215,7 +1215,7 @@ s32 ixgbe_init_eeprom_params_X550(struct ixgbe_hw *hw)
 }
 
 /**
- * ixgbe_set_source_address_pruning_X550 - Enable/Disbale source address pruning
+ * ixgbe_set_source_address_pruning_X550 - Enable/Disable source address pruning
  * @hw: pointer to hardware structure
  * @enable: enable or disable source address pruning
  * @pool: Rx pool to set source address pruning for
