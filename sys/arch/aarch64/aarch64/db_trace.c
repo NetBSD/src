@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.16 2022/05/29 23:43:49 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.17 2022/06/02 05:09:01 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2022/05/29 23:43:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.17 2022/06/02 05:09:01 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,6 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2022/05/29 23:43:49 ryo Exp $");
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 
+#ifdef _KERNEL
+extern char el0_trap[];
+extern char el1_trap[];
+#else
+/* see also usr.sbin/crash/arch/aarch64.c */
+extern vaddr_t el0_trap;
+extern vaddr_t el1_trap;
+#endif
+
 #define MAXBACKTRACE	128	/* against infinite loop */
 
 
@@ -61,6 +70,31 @@ __CTASSERT(VM_MIN_ADDRESS == 0);
 #define IN_KERNEL_VM_ADDRESS(addr)	\
 	((VM_MIN_KERNEL_ADDRESS <= (addr)) && ((addr) < VM_MAX_KERNEL_ADDRESS))
 
+static void
+pr_frame(struct trapframe *tf, void (*pr)(const char *, ...) __printflike(1, 2))
+{
+	struct trapframe tf_buf;
+
+	db_read_bytes((db_addr_t)tf, sizeof(tf_buf), (char *)&tf_buf);
+
+	if (tf_buf.tf_sp == 0) {
+		(*pr)("---- switchframe %p (%zu bytes) ----\n",
+		    tf, sizeof(*tf));
+		dump_switchframe(tf, pr);
+	} else {
+#ifdef _KERNEL
+		(*pr)("---- %s: trapframe %p (%zu bytes) ----\n",
+		    (tf_buf.tf_esr == (uint64_t)-1) ? "Interrupt" :
+		    eclass_trapname(__SHIFTOUT(tf_buf.tf_esr, ESR_EC)),
+		    tf, sizeof(*tf));
+#else
+		(*pr)("---- trapframe %p (%zu bytes) ----\n", tf, sizeof(*tf));
+#endif
+		dump_trapframe(tf, pr);
+	}
+	(*pr)("------------------------"
+	      "------------------------\n");
+}
 
 static bool __unused
 is_lwp(void *p)
@@ -74,19 +108,44 @@ is_lwp(void *p)
 	return false;
 }
 
+static vaddr_t
+db_lwp_getuarea(lwp_t *l)
+{
+	void *laddr;
+	db_read_bytes((db_addr_t)&l->l_addr, sizeof(laddr), (char *)&laddr);
+	if (laddr == 0)
+		return 0;
+	return (vaddr_t)((char *)laddr - UAREA_PCB_OFFSET);
+}
+
 static const char *
 getlwpnamebysp(uint64_t sp)
 {
-#if defined(_KERNEL)
+	static char c_name[MAXCOMLEN];
 	lwp_t *lwp;
+	struct proc *pp;
+	char *lname;
 
 	for (lwp = db_lwp_first(); lwp != NULL; lwp = db_lwp_next(lwp)) {
-		uint64_t uarea = uvm_lwp_getuarea(lwp);
+		uint64_t uarea = db_lwp_getuarea(lwp);
 		if ((uarea <= sp) && (sp < (uarea + USPACE))) {
-			return lwp->l_name;
+			db_read_bytes((db_addr_t)&lwp->l_name, sizeof(lname),
+			    (char *)&lname);
+			if (lname != NULL) {
+				db_read_bytes((db_addr_t)lname, sizeof(c_name),
+			    c_name);
+				return c_name;
+			}
+			db_read_bytes((db_addr_t)&lwp->l_proc, sizeof(pp),
+			    (char *)&pp);
+			if (pp != NULL) {
+				db_read_bytes((db_addr_t)&pp->p_comm,
+				    sizeof(c_name), c_name);
+				return c_name;
+			}
+			break;
 		}
 	}
-#endif
 	return "unknown";
 }
 
@@ -253,22 +312,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		count = MAXBACKTRACE;
 
 	if (tf != NULL) {
-#if defined(_KERNEL)
-		if (tf->tf_sp == 0) {
-			(*pr)("---- switchframe %p (%zu bytes) ----\n",
-			    tf, sizeof(*tf));
-			dump_switchframe(tf, pr);
-		} else {
-			(*pr)("---- %s: trapframe %p (%zu bytes) ----\n",
-			    (tf->tf_esr == -1) ? "Interrupt" :
-			    eclass_trapname(__SHIFTOUT(tf->tf_esr, ESR_EC)),
-			    tf, sizeof(*tf));
-			dump_trapframe(tf, pr);
-		}
-		(*pr)("------------------------"
-		      "------------------------\n");
-
-#endif
+		pr_frame(tf, pr);
 		lastfp = lastlr = lr = fp = 0;
 
 		db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
@@ -294,9 +338,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (lr == 0 || (!trace_user && IN_USER_VM_ADDRESS(lr)))
 			break;
 
-#if defined(_KERNEL)
-		extern char el1_trap[];	/* XXX */
-		extern char el0_trap[];	/* XXX */
 		if (((char *)(lr - 4) == (char *)el0_trap) ||
 		    ((char *)(lr - 4) == (char *)el1_trap)) {
 
@@ -327,13 +368,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			if (lr == 0)
 				break;
 
-			(*pr)("---- %s: trapframe %p (%zu bytes) ----\n",
-			    (tf->tf_esr == -1) ? "Interrupt" :
-			    eclass_trapname(__SHIFTOUT(tf->tf_esr, ESR_EC)),
-			    tf, sizeof(*tf));
-			dump_trapframe(tf, pr);
-			(*pr)("------------------------"
-			      "------------------------\n");
+			pr_frame(tf, pr);
 			tf = NULL;
 
 			if (!trace_user && IN_USER_VM_ADDRESS(lr))
@@ -341,9 +376,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 			pr_traceaddr("fp", fp, lr, flags, pr);
 
-		} else
-#endif
-		{
+		} else {
 			pr_traceaddr("fp", fp, lr - 4, flags, pr);
 		}
 	}
