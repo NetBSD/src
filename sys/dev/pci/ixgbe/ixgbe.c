@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.319 2022/06/02 01:57:27 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.320 2022/06/02 16:56:22 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.319 2022/06/02 01:57:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.320 2022/06/02 16:56:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1607,7 +1607,6 @@ ixgbe_config_link(struct adapter *adapter)
 			err = hw->mac.ops.setup_link(hw, autoneg,
 			    adapter->link_up);
 	}
-
 } /* ixgbe_config_link */
 
 /************************************************************************
@@ -3115,7 +3114,7 @@ invalid:
 } /* ixgbe_media_change */
 
 /************************************************************************
- * ixgbe_msix_admin - Link status change ISR (MSI/MSI-X)
+ * ixgbe_msix_admin - Link status change ISR (MSI-X)
  ************************************************************************/
 static int
 ixgbe_msix_admin(void *arg)
@@ -5373,7 +5372,6 @@ ixgbe_free_pci_resources(struct adapter *adapter)
 		    adapter->osdep.mem_bus_space_handle,
 		    adapter->osdep.mem_size);
 	}
-
 } /* ixgbe_free_pci_resources */
 
 /************************************************************************
@@ -6367,7 +6365,8 @@ ixgbe_init_device_features(struct adapter *adapter)
 		if (adapter->feat_cap & IXGBE_FEATURE_FDIR)
 			adapter->feat_en |= IXGBE_FEATURE_FDIR;
 		else
-			device_printf(adapter->dev, "Device does not support Flow Director. Leaving disabled.");
+			device_printf(adapter->dev, "Device does not support "
+			    "Flow Director. Leaving disabled.");
 	}
 	/* Legacy (single queue) transmit */
 	if ((adapter->feat_cap & IXGBE_FEATURE_LEGACY_TX) &&
