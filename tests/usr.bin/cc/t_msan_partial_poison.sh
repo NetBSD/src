@@ -94,7 +94,7 @@ int main(void) {
 }
 EOF
 
-	cc -fsanitize=memory -o test -pg test.c 
+	cc -fsanitize=memory -o test -pg test.c
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:": 77654321" ./test
 }
@@ -128,9 +128,9 @@ EOF
 	atf_check -s ignore -o ignore -e match:": 77654321" ./test
 }
 partial_poison_pie_body(){
-	
+
 	#check whether -pie flag is supported on this architecture
-	if ! cc -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then 
+	if ! cc -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then
 		atf_set_skip "cc -pie not supported on this architecture"
 	fi
 	cat > test.c << EOF
