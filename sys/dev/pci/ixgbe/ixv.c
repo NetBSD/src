@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.181 2022/05/30 05:08:17 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.182 2022/06/02 01:57:27 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.181 2022/05/30 05:08:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.182 2022/06/02 01:57:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1835,18 +1835,18 @@ ixv_initialize_rss_mapping(struct adapter *adapter)
 	if (rss_hash_config & RSS_HASHTYPE_RSS_TCP_IPV6)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV6_TCP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	if (rss_hash_config & RSS_HASHTYPE_RSS_TCP_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_TCP_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_TCP_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV4)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV4_UDP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV6)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV6_UDP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_UDP_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_UDP_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	IXGBE_WRITE_REG(hw, IXGBE_VFMRQC, mrqc);
 } /* ixv_initialize_rss_mapping */
 
@@ -1880,7 +1880,9 @@ ixv_initialize_receive_units(struct adapter *adapter)
 
 	/* Tell PF our max_frame size */
 	if (ixgbevf_rlpml_set_vf(hw, adapter->max_frame_size) != 0) {
-		device_printf(adapter->dev, "There is a problem with the PF setup.  It is likely the receive unit for this VF will not function correctly.\n");
+		device_printf(adapter->dev, "There is a problem with the PF "
+		    "setup.  It is likely the receive unit for this VF will "
+		    "not function correctly.\n");
 	}
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++) {
@@ -2643,13 +2645,13 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		snprintf(adapter->queues[i].evnamebuf,
-		    sizeof(adapter->queues[i].evnamebuf), "%s q%d",
-		    xname, i);
+		    sizeof(adapter->queues[i].evnamebuf), "%s q%d", xname, i);
 		snprintf(adapter->queues[i].namebuf,
 		    sizeof(adapter->queues[i].namebuf), "q%d", i);
 
 		if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
-			aprint_error_dev(dev, "could not create sysctl root\n");
+			aprint_error_dev(dev,
+			    "could not create sysctl root\n");
 			break;
 		}
 
@@ -3546,8 +3548,7 @@ ixv_configure_interrupts(struct adapter *adapter)
 	else {
 		aprint_error_dev(dev,
 		    "MSI-X Configuration Problem, "
-		    "%d vectors but %d queues wanted!\n",
-		    msgs, want);
+		    "%d vectors but %d queues wanted!\n", msgs, want);
 		return -1;
 	}
 
