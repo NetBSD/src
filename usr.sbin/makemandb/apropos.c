@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.24 2017/11/25 14:29:38 abhinav Exp $	*/
+/*	$NetBSD: apropos.c,v 1.24.6.1 2022/06/03 12:25:14 martin Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.24 2017/11/25 14:29:38 abhinav Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.24.6.1 2022/06/03 12:25:14 martin Exp $");
 
 #include <err.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -157,6 +158,7 @@ main(int argc, char *argv[])
 	char *query = NULL;	// the user query
 	char *errmsg = NULL;
 	char *str;
+	int pc = 0;
 	int rc = 0;
 	size_t i;
 	int s;
@@ -222,6 +224,10 @@ main(int argc, char *argv[])
 		const char *pager = getenv("PAGER");
 		if (pager == NULL)
 			pager = _PATH_PAGER;
+
+		/* Don't get killed by a broken pipe */
+		signal(SIGPIPE, SIG_IGN);
+
 		/* Open a pipe to the pager */
 		if ((cbdata.out = popen(pager, "w")) == NULL) {
 			close_db(db);
@@ -249,6 +255,8 @@ main(int argc, char *argv[])
 	if (aflags.format == APROPOS_HTML)
 		fprintf(cbdata.out, "</table>\n</body>\n</html>\n");
 
+	if (aflags.pager)
+		pc = pclose(cbdata.out);
 	free(query);
 
 	if (aflags.sections) {
@@ -264,10 +272,15 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if (rc < 0) {
-		/* Something wrong with the database. Exit */
+	if (pc == -1)
+		err(EXIT_FAILURE, "pclose error");
+
+	/* 
+	 * Something wrong with the database, writing output, or a non-existent
+	 * pager.
+	 */
+	if (rc < 0)
 		exit(EXIT_FAILURE);
-	}
 
 	if (cbdata.count == 0) {
 		warnx("No relevant results obtained.\n"
@@ -280,7 +293,7 @@ main(int argc, char *argv[])
 /*
  * query_callback --
  *  Callback function for run_query.
- *  It simply outputs the results from do_query. If the user specified the -p
+ *  It simply outputs the results from run_query. If the user specified the -p
  *  option, then the output is sent to a pager, otherwise stdout is the default
  *  output stream.
  */
@@ -302,7 +315,7 @@ query_callback(query_callback_args *qargs)
 		    fprintf(out, "<tr><td colspan=2>%s</td></tr>\n", qargs->snippet);
 	}
 
-	return 0;
+	return fflush(out);
 }
 
 #include "stopwords.c"
