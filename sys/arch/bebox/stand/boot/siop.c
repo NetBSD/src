@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.10 2022/05/23 19:21:30 andvar Exp $	*/
+/*	$NetBSD: siop.c,v 1.11 2022/06/03 12:10:50 andvar Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -183,7 +183,7 @@ siop_sdp(struct siop_adapter *adp, struct siop_xfer *xfer, struct scsi_xfer *xs,
 		return;
 	/*
 	 * Save data pointer. We do this by adjusting the tables to point
-	 * at the begginning of the data not yet transferred.
+	 * at the beginning of the data not yet transferred.
 	 * offset points to the first table with untransferred data.
 	 */
 
@@ -238,7 +238,7 @@ siop_update_resid(struct siop_adapter *adp, struct siop_xfer *xfer,
 #if 0
 	/*
 	 * if CMDFL_RESID is set, the last table (pointed by offset) is a
-	 * partial transfers. If not, offset points to the entry folloing
+	 * partial transfers. If not, offset points to the entry following
 	 * the last full transfer.
 	 */
 	if (siop_cmd->flags & CMDFL_RESID) {
