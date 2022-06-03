@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.19 2017/06/22 16:46:52 flxd Exp $
+.\"	$NetBSD: hardware,v 1.20 2022/06/03 15:36:36 andvar Exp $
 .
 .Nx*M
 \*V runs on most of the
@@ -23,8 +23,8 @@ only one type of console loaded at any one time.
 If your system comes up with the ARC firmware, it may be possible
 to switch it to SRM with a menu or
 to download SRM from
-.Lk ftp://gatekeeper.dec.com/pub/Digital/Alpha/firmware/index.html
-You may want to buy a firmware update CD from Compaq Computer Corporation.
+.Lk ftp://ftp.hp.com/pub/alphaserver/firmware
+You may want to buy a firmware update CD from Hewlett Packard Enterprise.
 .Pp
 More information on supported platforms and devices can be found on the
 \*M port web pages at
