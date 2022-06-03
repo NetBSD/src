@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.23 2011/05/30 06:19:53 wiz Exp $
+.\"	$NetBSD: install,v 1.24 2022/06/03 13:50:32 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ Create the
 .Nx*M
 \*V boot tape as described in the section
 entitled
-.Sx "Preparing a boot tape" .
+.Sx "Creating boot/install tapes" .
 Then, with the tape in the drive, type the following at the Bug prompt:
 .Pp
 .Dl 147-Bug\*[Gt] Ic "bo 5"
@@ -89,7 +89,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.23 $]
+\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.24 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -435,7 +435,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.23 $]
+\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.24 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy

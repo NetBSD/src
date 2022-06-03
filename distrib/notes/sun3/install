@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.16 2008/09/06 22:31:53 tsutsui Exp $
+.\"	$NetBSD: install,v 1.17 2022/06/03 13:50:32 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ Create the
 .Nx*M
 \*V boot tape as described in the section
 entitled
-.Sx "Preparing a boot tape"
+.Sx "Creating boot/install tapes"
 and boot the tape.
 At the PROM monitor prompt, use one of the commands:
 .Pp
