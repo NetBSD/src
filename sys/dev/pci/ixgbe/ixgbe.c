@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.23 2022/06/02 10:45:12 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.24 2022/06/03 04:00:49 snj Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.23 2022/06/02 10:45:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.24 2022/06/03 04:00:49 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -6542,7 +6542,7 @@ ixgbe_handle_que(void *context)
 		ixgbe_enable_queue(adapter, que->msix);
 	} else {
 		/* INTx or MSI */
-		ixgbe_enable_intr(adapter);
+		ixgbe_enable_queue(adapter, 0);
 	}
 
 	return;
