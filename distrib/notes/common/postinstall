@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.89 2021/05/27 15:47:42 martin Exp $
+.\"	$NetBSD: postinstall,v 1.90 2022/06/03 14:02:48 andvar Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -371,7 +371,7 @@ framework for compiling packages and did not install it from the
 .Xr sysinst 8
 post-installation configuration menu, you can obtain it by retrieving
 the file
-.Lk https://cdn.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz .
+.Lk https://cdn.NetBSD.org/pub/pkgsrc/stable/pkgsrc.tar.gz .
 It is typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine) with the commands:
