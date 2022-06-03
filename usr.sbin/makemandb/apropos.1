@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.18 2016/06/17 18:48:07 abhinav Exp $
+.\" $NetBSD: apropos.1,v 1.18.18.1 2022/06/03 12:25:14 martin Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 16, 2016
+.Dd May 17, 2022
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 The
 .Nm
 utility performs a full text search over the complete content of all man pages.
-It uses the FTS engine of Sqlite to perform the search.
+It uses the FTS engine of SQLite to perform the search.
 The database is created with the help of the
 .Xr makemandb 8
 utility.
@@ -62,9 +62,13 @@ relevance.
 Quotes are optional for specifying multiword queries.
 .Pp
 It supports the following options:
-.Bl -tag -width indent
-.It Fl [1-9]
-Search only within the specified section of manual pages.
+.Bl -tag -width Fl
+.It Fl 1 , No \&... , Fl 9
+Limit the search to the specified section of the manual.
+By default, pages from all sections are shown.
+These options are abbreviations for the
+.Fl s
+option for single digit sections.
 .It Fl C Ar path
 Use different
 .Xr man 1
@@ -95,26 +99,32 @@ Turn off formatting.
 Limit the search to the pages for the specified machine architecture.
 By default pages for all architectures are shown in the search results.
 .It Fl s Ar section
-Restrict the search to the specified section of the manual.
+Limit the search to the specified section of the manual.
 By default, pages from all sections are shown.
-This option is for backwards compatibility with the classic version of apropos,
-using it is equivalent to using the
-.Op 123456789
-options directly.
+For single digit sections you can use abbreviations:
+.Fl 1 , No \&... , Fl 9 .
 .El
 .Sh FILES
 .Bl -hang -width /etc/man.conf -compact
 .It Pa /etc/man.conf
-The location of the Sqlite FTS database can be configured using the
+The location of the SQLite FTS database can be configured using the
 .Cd _mandb
 tag.
 .El
 .Sh ENVIRONMENT VARIABLES
-The
-.Ev APROPOS
-environment variable is white-space tokenized as an argument vector
+.Bl -tag -width Ev
+.It Ev APROPOS
+This environment variable is white-space tokenized as an argument vector
 and the options in it are parsed and set.
 Command line options override the environment options.
+.It Ev PAGER
+The pagination command used for writing the output, should this be requested.
+If the
+.Ev PAGER
+environment variable is null or not set, the standard pagination program
+.Xr more 1
+will be used.
+.El
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr whatis 1 ,
@@ -123,9 +133,10 @@ Command line options override the environment options.
 .Sh HISTORY
 The
 .Nm
-command appeared in 3.0BSD.
+command appeared in
+.Bx 3 .
 It was rewritten in
 .Nx 6.0
-to support full text search using Sqlite.
+to support full text search using SQLite.
 .Sh AUTHORS
 .An Abhinav Upadhyay
