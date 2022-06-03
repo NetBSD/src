@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.229 2021/12/05 07:28:20 msaitoh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.230 2022/06/03 00:21:44 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.229 2021/12/05 07:28:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.230 2022/06/03 00:21:44 dholland Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -752,7 +752,7 @@ struct uvm_faultctx {
 	struct vm_anon *anon_spare;
 
 	/*
-	 * the folloing is actually a uvm_fault_lower() internal.
+	 * the following is actually a uvm_fault_lower() internal.
 	 * it's here merely for debugging.
 	 * (or due to the mechanical separation of the function?)
 	 */
