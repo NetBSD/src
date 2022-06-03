@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.3 2018/02/04 08:19:42 mrg Exp $	*/
+/*	$NetBSD: ipf.c,v 1.4 2022/06/03 21:43:37 gutteridge Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -66,7 +66,7 @@ static	ioctlfunc_t	iocfunctions[IPL_LOGSIZE] = { ioctl, ioctl, ioctl,
 static void usage()
 {
 	fprintf(stderr, "usage: ipf [-6AdDEInoPrRsvVyzZ] %s %s %s\n",
-		"[-l block|pass|nomatch|state|nat]", "[-cc] [-F i|o|a|s|S|u]",
+		"[-l block|pass|nomatch|none|state|nat]", "[-cc] [-F i|o|a|s|S|u]",
 		"[-f filename] [-T <tuneopts>]");
 	exit(1);
 }
