@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.57 2022/05/23 19:21:30 andvar Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.58 2022/06/03 12:10:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.57 2022/05/23 19:21:30 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.58 2022/06/03 12:10:51 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,7 +815,7 @@ siop_sdp(struct siop_common_cmd *siop_cmd, int offset)
 #endif
 	/*
 	 * Save data pointer. We do this by adjusting the tables to point
-	 * at the begginning of the data not yet transferred.
+	 * at the beginning of the data not yet transferred.
 	 * offset points to the first table with untransferred data.
 	 */
 
@@ -869,7 +869,7 @@ siop_update_resid(struct siop_common_cmd *siop_cmd, int offset)
 		    siop_ctoh32(sc, siop_cmd->siop_tables->data[i].count);
 	/*
 	 * if CMDFL_RESID is set, the last table (pointed by offset) is a
-	 * partial transfers. If not, offset points to the entry folloing
+	 * partial transfers. If not, offset points to the entry following
 	 * the last full transfer.
 	 */
 	if (siop_cmd->flags & CMDFL_RESID) {
