@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.35 2022/05/31 07:40:25 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.36 2022/06/03 19:59:59 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.35 2022/05/31 07:40:25 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.36 2022/06/03 19:59:59 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -156,9 +156,8 @@ ENTRY_NP(cpu_switchto_softint)
 	stp	x19, x20, [sp, #-16]!	/* save */
 	sub	sp, sp, #TF_SIZE	/* make switchframe */
 	adr	x2, softint_cleanup	/* return address for cpu_switchto() */
-	mov	x20, lr			/* x20 := original lr */
 	mrs	x19, daif		/* x19 := original interrupt mask */
-	stp	x19, x20, [sp, #TF_X19]
+	stp	x19, lr, [sp, #TF_X19]	/* x20 := original lr */
 	stp	x21, x22, [sp, #TF_X21]
 	stp	x23, x24, [sp, #TF_X23]
 	stp	x25, x26, [sp, #TF_X25]
@@ -241,9 +240,8 @@ ENTRY_NP(cpu_switchto_softint)
 1:
 #endif
 
-	ldp	x19, x20, [sp, #TF_X19]
+	ldp	x19, lr, [sp, #TF_X19]	/* restore pinned_lwp lr */
 	msr	daif, x19		/* restore interrupt mask */
-	mov	lr, x20			/* restore pinned_lwp lr */
 
 	add	sp, sp, #TF_SIZE	/* unwind switchframe */
 	ldp	x19, x20, [sp], #16	/* restore */
