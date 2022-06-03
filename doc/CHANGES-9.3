@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.100 2022/06/03 04:01:38 snj Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.101 2022/06/03 12:26:17 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1736,4 +1736,17 @@ sys/dev/pci/ixgbe/ixgbe.c			patch
 	Fix previous to re-enable legacy interrupt correctly. It's a part of
 	ixgbe.c rev. 1.273.
 	[msaitoh, ticket #1460]
+
+usr.sbin/makemandb/apropos-utils.c		1.46,1.47,1.49
+usr.sbin/makemandb/apropos.1			1.19-1.23
+usr.sbin/makemandb/apropos.c			1.25,1.26
+
+	apropos(1) fixes:
+	- PR 54343: prevent crashes when man pages are missing certain
+	  mandatory fields.
+	- Make pager use functional.
+	- Handle some error cases properly.         
+	- Document the PAGER environment variable.    
+	- Other minor description and formatting adjustments to the man page.
+	[gutteridge, ticket #1461]
 
