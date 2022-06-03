@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.8,v 1.1.1.1 2012/03/23 21:20:11 christos Exp $
+.\"	$NetBSD: ipf.8,v 1.2 2022/06/03 21:43:37 gutteridge Exp $
 .\"
 .TH IPF 8
 .SH NAME
@@ -94,9 +94,10 @@ lists.
 .B \-I
 Set the list to make changes to the inactive list.
 .TP
-.B \-l \0<pass|block|nomatch>
+.B \-l \0<block|pass|nomatch|none|state|nat>
 Use of the \fB-l\fP flag toggles default logging of packets.  Valid
-arguments to this option are \fBpass\fP, \fBblock\fP and \fBnomatch\fP.
+arguments to this option are \fBpass\fP, \fBblock\fP, \fBnomatch\fP,
+\fBnone\fP, \fBstate\fP, and \fBnat\fP.
 When an option is set, any packet which exits filtering and matches the
 set category is logged.  This is most useful for causing all packets
 which don't match any of the loaded rules to be logged.
