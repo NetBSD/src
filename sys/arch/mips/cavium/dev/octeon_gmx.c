@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.21 2022/05/04 07:32:50 andvar Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.22 2022/06/03 12:10:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.21 2022/05/04 07:32:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.22 2022/06/03 12:10:50 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,7 @@ octgmx_init(struct octgmx_softc *sc)
 			sc->sc_port_types[2] = GMX_RGMII_PORT;
 		} else {
 			/* port 1: GMII/MII, port 2: disabled */
-			/* GMII or MII port is slected by GMX_PRT1_CFG[SPEED] */
+			/* GMII or MII port is selected by GMX_PRT1_CFG[SPEED] */
 			sc->sc_nports = 2;
 			sc->sc_port_types[1] = GMX_GMII_PORT;
 		}
@@ -1160,7 +1160,7 @@ octgmx_stats(struct octgmx_port_softc *sc)
 
 	/*
 	 *  GMX0_RX0_STATS_PKTS is not count.
-         *  input packet is counted when recepted packet in if_cnmac.
+         *  input packet is counted when received packet in if_cnmac.
          */
 	/*
          *  GMX0_RX0_STATS_PKTS_BAD count is included
