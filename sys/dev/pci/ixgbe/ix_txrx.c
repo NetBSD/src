@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.25 2022/05/31 14:07:51 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.26 2022/06/03 12:31:09 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.25 2022/05/31 14:07:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.24.2.26 2022/06/03 12:31:09 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -247,7 +247,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 
 	if (__predict_false(!pcq_put(txr->txr_interq, m))) {
 		m_freem(m);
-		txr->pcq_drops.ev_count++;
+		IXGBE_EVC_ADD(&txr->pcq_drops, 1);
 		return ENOBUFS;
 	}
 	if (IXGBE_TX_TRYLOCK(txr)) {
@@ -475,7 +475,7 @@ retry:
 	/* Make certain there are enough descriptors */
 	if (txr->tx_avail < (map->dm_nsegs + 2)) {
 		txr->txr_no_space = true;
-		txr->no_desc_avail.ev_count++;
+		IXGBE_EVC_ADD(&txr->no_desc_avail, 1);
 		ixgbe_dmamap_unload(txr->txtag, txbuf->map);
 		return EAGAIN;
 	}
@@ -546,7 +546,7 @@ retry:
 	 * Advance the Transmit Descriptor Tail (Tdt), this tells the
 	 * hardware that this frame is available to transmit.
 	 */
-	++txr->total_packets.ev_count;
+	IXGBE_EVC_ADD(&txr->total_packets, 1);
 	IXGBE_WRITE_REG(&adapter->hw, txr->tail, i);
 
 	/*
@@ -583,7 +583,7 @@ ixgbe_drain(struct ifnet *ifp, struct tx_ring *txr)
 
 	while ((m = pcq_get(txr->txr_interq)) != NULL) {
 		m_freem(m);
-		txr->pcq_drops.ev_count++;
+		IXGBE_EVC_ADD(&txr->pcq_drops, 1);
 	}
 }
 
@@ -846,7 +846,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 		int rv = ixgbe_tso_setup(txr, mp, cmd_type_len, olinfo_status);
 
 		if (rv != 0)
-			++adapter->tso_err.ev_count;
+			IXGBE_EVC_ADD(&adapter->tso_err, 1);
 		return rv;
 	}
 
@@ -1088,7 +1088,7 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *cmd_type_len,
 	*cmd_type_len |= IXGBE_ADVTXD_DCMD_TSE;
 	*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 	*olinfo_status |= paylen << IXGBE_ADVTXD_PAYLEN_SHIFT;
-	++txr->tso_tx.ev_count;
+	IXGBE_EVC_ADD(&txr->tso_tx, 1);
 
 	return (0);
 } /* ixgbe_tso_setup */
@@ -1360,7 +1360,7 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 		if (__predict_false(rxbuf->buf == NULL)) {
 			mp = ixgbe_getcl();
 			if (mp == NULL) {
-				rxr->no_mbuf.ev_count++;
+				IXGBE_EVC_ADD(&rxr->no_mbuf, 1);
 				goto update;
 			}
 			mp->m_pkthdr.len = mp->m_len = rxr->mbuf_sz;
@@ -1549,7 +1549,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		rxbuf->flags = 0;
 		rxbuf->buf = ixgbe_getcl();
 		if (rxbuf->buf == NULL) {
-			rxr->no_mbuf.ev_count++;
+			IXGBE_EVC_ADD(&rxr->no_mbuf, 1);
 			error = ENOBUFS;
 			goto fail;
 		}
@@ -1582,11 +1582,11 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	rxr->next_to_refresh = adapter->num_rx_desc - 1; /* Fully allocated */
 	rxr->lro_enabled = FALSE;
 	rxr->discard_multidesc = false;
-	rxr->rx_copies.ev_count = 0;
+	IXGBE_EVC_STORE(&rxr->rx_copies, 0);
 #if 0 /* NetBSD */
-	rxr->rx_bytes.ev_count = 0;
+	IXGBE_EVC_STORE(&rxr->rx_bytes, 0);
 #if 1	/* Fix inconsistency */
-	rxr->rx_packets.ev_count = 0;
+	IXGBE_EVC_STORE(&rxr->rx_packets, 0);
 #endif
 #endif
 	rxr->vtag_strip = FALSE;
@@ -1918,7 +1918,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			if (adapter->feat_en & IXGBE_FEATURE_VF)
 				if_inc_counter(ifp, IFCOUNTER_IERRORS, 1);
 #endif
-			rxr->rx_discarded.ev_count++;
+			IXGBE_EVC_ADD(&rxr->rx_discarded, 1);
 			ixgbe_rx_discard(rxr, i);
 			discard_multidesc = false;
 			goto next_desc;
@@ -1934,14 +1934,14 @@ ixgbe_rxeof(struct ix_queue *que)
 				/* For short packet. See below. */
 				sendmp = m_gethdr(M_NOWAIT, MT_DATA);
 				if (__predict_false(sendmp == NULL)) {
-					rxr->no_mbuf.ev_count++;
+					IXGBE_EVC_ADD(&rxr->no_mbuf, 1);
 					discard = true;
 				}
 			} else {
 				/* For long packet. */
 				newmp = ixgbe_getcl();
 				if (__predict_false(newmp == NULL)) {
-					rxr->no_mbuf.ev_count++;
+					IXGBE_EVC_ADD(&rxr->no_mbuf, 1);
 					discard = true;
 				}
 			}
@@ -2045,7 +2045,7 @@ ixgbe_rxeof(struct ix_queue *que)
 				sendmp->m_data += ETHER_ALIGN;
 				memcpy(mtod(sendmp, void *),
 				    mtod(mp, void *), len);
-				rxr->rx_copies.ev_count++;
+				IXGBE_EVC_ADD(&rxr->rx_copies, 1);
 				rbuf->flags |= IXGBE_RX_COPY;
 			} else {
 				/* For long packet */
@@ -2074,10 +2074,10 @@ ixgbe_rxeof(struct ix_queue *que)
 		} else { /* Sending this frame */
 			m_set_rcvif(sendmp, ifp);
 			++rxr->packets;
-			rxr->rx_packets.ev_count++;
+			IXGBE_EVC_ADD(&rxr->rx_packets, 1);
 			/* capture data for AIM */
 			rxr->bytes += sendmp->m_pkthdr.len;
-			rxr->rx_bytes.ev_count += sendmp->m_pkthdr.len;
+			IXGBE_EVC_ADD(&rxr->rx_bytes, sendmp->m_pkthdr.len);
 			/* Process vlan info */
 			if ((rxr->vtag_strip) && (staterr & IXGBE_RXD_STAT_VP))
 				vtag = le16toh(cur->wb.upper.vlan);
@@ -2218,23 +2218,23 @@ ixgbe_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
 
 	/* IPv4 checksum */
 	if (status & IXGBE_RXD_STAT_IPCS) {
-		stats->ipcs.ev_count++;
+		IXGBE_EVC_ADD(&stats->ipcs, 1);
 		if (!(errors & IXGBE_RXD_ERR_IPE)) {
 			/* IP Checksum Good */
 			mp->m_pkthdr.csum_flags = M_CSUM_IPv4;
 		} else {
-			stats->ipcs_bad.ev_count++;
+			IXGBE_EVC_ADD(&stats->ipcs_bad, 1);
 			mp->m_pkthdr.csum_flags = M_CSUM_IPv4|M_CSUM_IPv4_BAD;
 		}
 	}
 	/* TCP/UDP/SCTP checksum */
 	if (status & IXGBE_RXD_STAT_L4CS) {
-		stats->l4cs.ev_count++;
+		IXGBE_EVC_ADD(&stats->l4cs, 1);
 		int type = M_CSUM_TCPv4|M_CSUM_TCPv6|M_CSUM_UDPv4|M_CSUM_UDPv6;
 		if (!(errors & IXGBE_RXD_ERR_TCPE)) {
 			mp->m_pkthdr.csum_flags |= type;
 		} else {
-			stats->l4cs_bad.ev_count++;
+			IXGBE_EVC_ADD(&stats->l4cs_bad, 1);
 			mp->m_pkthdr.csum_flags |= type | M_CSUM_TCP_UDP_BAD;
 		}
 	}

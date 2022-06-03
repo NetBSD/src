@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.56.2.38 2022/05/31 14:07:51 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.56.2.39 2022/06/03 12:31:10 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.38 2022/05/31 14:07:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.39 2022/06/03 12:31:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -667,7 +667,7 @@ ixv_detach(device_t dev, int flags)
 	evcnt_detach(&adapter->enomem_tx_dma_setup);
 	evcnt_detach(&adapter->watchdog_events);
 	evcnt_detach(&adapter->tso_err);
-	evcnt_detach(&adapter->link_irq);
+	evcnt_detach(&adapter->admin_irq);
 
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
@@ -893,7 +893,7 @@ ixv_msix_que(void *arg)
 	u32		newitr = 0;
 
 	ixv_disable_queue(adapter, que->msix);
-	++que->irqs.ev_count;
+	IXGBE_EVC_ADD(&que->irqs, 1);
 
 #ifdef __NetBSD__
 	/* Don't run ixgbe_rxeof in interrupt context */
@@ -979,7 +979,7 @@ ixv_msix_mbx(void *arg)
 	struct adapter	*adapter = arg;
 	struct ixgbe_hw *hw = &adapter->hw;
 
-	++adapter->link_irq.ev_count;
+	IXGBE_EVC_ADD(&adapter->admin_irq, 1);
 	/* NetBSD: We use auto-clear, so it's not required to write VTEICR */
 
 	/* Link status change */
@@ -1306,14 +1306,14 @@ ixv_local_timer_locked(void *arg)
 		v6 += txr->q_enomem_tx_dma_setup;
 		v7 += txr->q_tso_err;
 	}
-	adapter->efbig_tx_dma_setup.ev_count = v0;
-	adapter->mbuf_defrag_failed.ev_count = v1;
-	adapter->efbig2_tx_dma_setup.ev_count = v2;
-	adapter->einval_tx_dma_setup.ev_count = v3;
-	adapter->other_tx_dma_setup.ev_count = v4;
-	adapter->eagain_tx_dma_setup.ev_count = v5;
-	adapter->enomem_tx_dma_setup.ev_count = v6;
-	adapter->tso_err.ev_count = v7;
+	IXGBE_EVC_STORE(&adapter->efbig_tx_dma_setup, v0);
+	IXGBE_EVC_STORE(&adapter->mbuf_defrag_failed, v1);
+	IXGBE_EVC_STORE(&adapter->efbig2_tx_dma_setup, v2);
+	IXGBE_EVC_STORE(&adapter->einval_tx_dma_setup, v3);
+	IXGBE_EVC_STORE(&adapter->other_tx_dma_setup, v4);
+	IXGBE_EVC_STORE(&adapter->eagain_tx_dma_setup, v5);
+	IXGBE_EVC_STORE(&adapter->enomem_tx_dma_setup, v6);
+	IXGBE_EVC_STORE(&adapter->tso_err, v7);
 
 	/*
 	 * Check the TX queues status
@@ -1364,7 +1364,7 @@ ixv_local_timer_locked(void *arg)
 watchdog:
 	device_printf(adapter->dev, "Watchdog timeout -- resetting\n");
 	adapter->ifp->if_flags &= ~IFF_RUNNING;
-	adapter->watchdog_events.ev_count++;
+	IXGBE_EVC_ADD(&adapter->watchdog_events, 1);
 	ixv_init_locked(adapter);
 } /* ixv_local_timer */
 
@@ -1798,18 +1798,18 @@ ixv_initialize_rss_mapping(struct adapter *adapter)
 	if (rss_hash_config & RSS_HASHTYPE_RSS_TCP_IPV6)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV6_TCP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	if (rss_hash_config & RSS_HASHTYPE_RSS_TCP_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_TCP_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_TCP_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV4)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV4_UDP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV6)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV6_UDP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV6_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_UDP_IPV6_EX defined, but not supported\n",
-		    __func__);
+		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_UDP_IPV6_EX "
+		    "defined, but not supported\n", __func__);
 	IXGBE_WRITE_REG(hw, IXGBE_VFMRQC, mrqc);
 } /* ixv_initialize_rss_mapping */
 
@@ -1843,7 +1843,9 @@ ixv_initialize_receive_units(struct adapter *adapter)
 
 	/* Tell PF our max_frame size */
 	if (ixgbevf_rlpml_set_vf(hw, adapter->max_frame_size) != 0) {
-		device_printf(adapter->dev, "There is a problem with the PF setup.  It is likely the receive unit for this VF will not function correctly.\n");
+		device_printf(adapter->dev, "There is a problem with the PF "
+		    "setup.  It is likely the receive unit for this VF will "
+		    "not function correctly.\n");
 	}
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++) {
@@ -2307,20 +2309,20 @@ ixv_init_stats(struct adapter *adapter)
 #define UPDATE_STAT_32(reg, last, count)		\
 {							\
 	u32 current = IXGBE_READ_REG(hw, (reg));	\
-	count.ev_count += current - last;		\
+	IXGBE_EVC_ADD(&count, current - (last));	\
 	(last) = current;				\
 }
 
-#define UPDATE_STAT_36(lsb, msb, last, count)		   	\
-{						   		\
-	u64 cur_lsb = IXGBE_READ_REG(hw, (lsb));		\
-	u64 cur_msb = IXGBE_READ_REG(hw, (msb));		\
-	u64 current = ((cur_msb << 32) | cur_lsb);		\
-	if (current < (last))					\
-		count.ev_count += current + __BIT(36) - (last);	\
-	else							\
-		count.ev_count += current - (last);		\
-	(last) = current;					\
+#define UPDATE_STAT_36(lsb, msb, last, count)				\
+	{								\
+	u64 cur_lsb = IXGBE_READ_REG(hw, (lsb));			\
+	u64 cur_msb = IXGBE_READ_REG(hw, (msb));			\
+	u64 current = ((cur_msb << 32) | cur_lsb);			\
+	if (current < (last))						\
+		IXGBE_EVC_ADD(&count, current + __BIT(36) - (last));	\
+	else								\
+		IXGBE_EVC_ADD(&count, current - (last));		\
+	(last) = current;						\
 }
 
 /************************************************************************
@@ -2519,18 +2521,18 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	    NULL, xname, "Watchdog timeouts");
 	evcnt_attach_dynamic(&adapter->tso_err, EVCNT_TYPE_MISC,
 	    NULL, xname, "TSO errors");
-	evcnt_attach_dynamic(&adapter->link_irq, EVCNT_TYPE_INTR,
-	    NULL, xname, "Link MSI-X IRQ Handled");
+	evcnt_attach_dynamic(&adapter->admin_irq, EVCNT_TYPE_INTR,
+	    NULL, xname, "Admin MSI-X IRQ Handled");
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		snprintf(adapter->queues[i].evnamebuf,
-		    sizeof(adapter->queues[i].evnamebuf), "%s q%d",
-		    xname, i);
+		    sizeof(adapter->queues[i].evnamebuf), "%s q%d", xname, i);
 		snprintf(adapter->queues[i].namebuf,
 		    sizeof(adapter->queues[i].namebuf), "q%d", i);
 
 		if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
-			aprint_error_dev(dev, "could not create sysctl root\n");
+			aprint_error_dev(dev,
+			    "could not create sysctl root\n");
 			break;
 		}
 
@@ -2686,26 +2688,26 @@ ixv_clear_evcnt(struct adapter *adapter)
 	int i;
 
 	/* Driver Statistics */
-	adapter->efbig_tx_dma_setup.ev_count = 0;
-	adapter->mbuf_defrag_failed.ev_count = 0;
-	adapter->efbig2_tx_dma_setup.ev_count = 0;
-	adapter->einval_tx_dma_setup.ev_count = 0;
-	adapter->other_tx_dma_setup.ev_count = 0;
-	adapter->eagain_tx_dma_setup.ev_count = 0;
-	adapter->enomem_tx_dma_setup.ev_count = 0;
-	adapter->watchdog_events.ev_count = 0;
-	adapter->tso_err.ev_count = 0;
-	adapter->link_irq.ev_count = 0;
+	IXGBE_EVC_STORE(&adapter->efbig_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->mbuf_defrag_failed, 0);
+	IXGBE_EVC_STORE(&adapter->efbig2_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->einval_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->other_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->eagain_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->enomem_tx_dma_setup, 0);
+	IXGBE_EVC_STORE(&adapter->watchdog_events, 0);
+	IXGBE_EVC_STORE(&adapter->tso_err, 0);
+	IXGBE_EVC_STORE(&adapter->admin_irq, 0);
 
 	for (i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
-		adapter->queues[i].irqs.ev_count = 0;
-		adapter->queues[i].handleq.ev_count = 0;
-		adapter->queues[i].req.ev_count = 0;
-		txr->tso_tx.ev_count = 0;
-		txr->no_desc_avail.ev_count = 0;
-		txr->total_packets.ev_count = 0;
+		IXGBE_EVC_STORE(&adapter->queues[i].irqs, 0);
+		IXGBE_EVC_STORE(&adapter->queues[i].handleq, 0);
+		IXGBE_EVC_STORE(&adapter->queues[i].req, 0);
+		IXGBE_EVC_STORE(&txr->tso_tx, 0);
+		IXGBE_EVC_STORE(&txr->no_desc_avail, 0);
+		IXGBE_EVC_STORE(&txr->total_packets, 0);
 #ifndef IXGBE_LEGACY_TX
-		txr->pcq_drops.ev_count = 0;
+		IXGBE_EVC_STORE(&txr->pcq_drops, 0);
 #endif
 		txr->q_efbig_tx_dma_setup = 0;
 		txr->q_mbuf_defrag_failed = 0;
@@ -2716,37 +2718,37 @@ ixv_clear_evcnt(struct adapter *adapter)
 		txr->q_enomem_tx_dma_setup = 0;
 		txr->q_tso_err = 0;
 
-		rxr->rx_packets.ev_count = 0;
-		rxr->rx_bytes.ev_count = 0;
-		rxr->rx_copies.ev_count = 0;
-		rxr->no_mbuf.ev_count = 0;
-		rxr->rx_discarded.ev_count = 0;
+		IXGBE_EVC_STORE(&rxr->rx_packets, 0);
+		IXGBE_EVC_STORE(&rxr->rx_bytes, 0);
+		IXGBE_EVC_STORE(&rxr->rx_copies, 0);
+		IXGBE_EVC_STORE(&rxr->no_mbuf, 0);
+		IXGBE_EVC_STORE(&rxr->rx_discarded, 0);
 	}
 
 	/* MAC stats get their own sub node */
 
-	stats->ipcs.ev_count = 0;
-	stats->l4cs.ev_count = 0;
-	stats->ipcs_bad.ev_count = 0;
-	stats->l4cs_bad.ev_count = 0;
+	IXGBE_EVC_STORE(&stats->ipcs, 0);
+	IXGBE_EVC_STORE(&stats->l4cs, 0);
+	IXGBE_EVC_STORE(&stats->ipcs_bad, 0);
+	IXGBE_EVC_STORE(&stats->l4cs_bad, 0);
 
 	/*
 	 * Packet Reception Stats.
 	 * Call ixv_init_stats() to save last VF counters' values.
 	 */
 	ixv_init_stats(adapter);
-	stats->vfgprc.ev_count = 0;
-	stats->vfgorc.ev_count = 0;
-	stats->vfmprc.ev_count = 0;
-	stats->vfgptc.ev_count = 0;
-	stats->vfgotc.ev_count = 0;
+	IXGBE_EVC_STORE(&stats->vfgprc, 0);
+	IXGBE_EVC_STORE(&stats->vfgorc, 0);
+	IXGBE_EVC_STORE(&stats->vfmprc, 0);
+	IXGBE_EVC_STORE(&stats->vfgptc, 0);
+	IXGBE_EVC_STORE(&stats->vfgotc, 0);
 
 	/* Mailbox Stats */
-	hw->mbx.stats.msgs_tx.ev_count = 0;
-	hw->mbx.stats.msgs_rx.ev_count = 0;
-	hw->mbx.stats.acks.ev_count = 0;
-	hw->mbx.stats.reqs.ev_count = 0;
-	hw->mbx.stats.rsts.ev_count = 0;
+	IXGBE_EVC_STORE(&hw->mbx.stats.msgs_tx, 0);
+	IXGBE_EVC_STORE(&hw->mbx.stats.msgs_rx, 0);
+	IXGBE_EVC_STORE(&hw->mbx.stats.acks, 0);
+	IXGBE_EVC_STORE(&hw->mbx.stats.reqs, 0);
+	IXGBE_EVC_STORE(&hw->mbx.stats.rsts, 0);
 
 } /* ixv_clear_evcnt */
 
@@ -3154,7 +3156,7 @@ ixv_handle_que(void *context)
 	struct ifnet	*ifp = adapter->ifp;
 	bool		more;
 
-	que->handleq.ev_count++;
+	IXGBE_EVC_ADD(&que->handleq, 1);
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		more = ixgbe_rxeof(que);
@@ -3170,7 +3172,7 @@ ixv_handle_que(void *context)
 			ixgbe_legacy_start_locked(ifp, txr);
 		IXGBE_TX_UNLOCK(txr);
 		if (more) {
-			que->req.ev_count++;
+			IXGBE_EVC_ADD(&que->req, 1);
 			if (adapter->txrx_use_workqueue) {
 				/*
 				 * "enqueued flag" is not required here
@@ -3396,8 +3398,7 @@ ixv_configure_interrupts(struct adapter *adapter)
 	else {
 		aprint_error_dev(dev,
 		    "MSI-X Configuration Problem, "
-		    "%d vectors but %d queues wanted!\n",
-		    msgs, want);
+		    "%d vectors but %d queues wanted!\n", msgs, want);
 		return -1;
 	}
 
