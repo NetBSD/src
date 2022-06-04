@@ -1,9 +1,0 @@
-#	$NetBSD: midi.ioconf,v 1.1 2017/06/01 09:58:27 pgoyette Exp $
-
-ioconf midi
-
-include "conf/files"
-
-pseudo-root midibus*
-
-midi* at midibus?
