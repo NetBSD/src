@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.265 2022/04/14 16:50:26 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.266 2022/06/04 03:31:10 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -115,6 +115,7 @@ SUBDIR+=	luasystm
 SUBDIR+=	luapmf
 SUBDIR+=	mfs
 SUBDIR+=	midi
+SUBDIR+=	midi_seq
 SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
 SUBDIR+=	mqueue

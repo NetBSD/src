@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.79 2022/04/16 11:13:10 riastradh Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.80 2022/06/04 03:31:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,10 +55,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.79 2022/04/16 11:13:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.80 2022/06/04 03:31:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
-#include "sequencer.h"
 #include "midi.h"
 #endif
 
@@ -76,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.79 2022/04/16 11:13:10 riastradh Exp
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/midiio.h>
-#include <sys/module.h>
 #include <sys/pcq.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
@@ -1656,21 +1654,6 @@ midiseq_loadpatch(struct midi_dev *md,
 static dev_type_open(midiopen);
 static dev_type_close(midiclose);
 
-const struct cdevsw midi_cdevsw = {
-	.d_open = midiopen,
-	.d_close = midiclose,
-	.d_read = noread,
-	.d_write = nowrite,
-	.d_ioctl = noioctl,
-	.d_stop = nostop,
-	.d_tty = notty,
-	.d_poll = nopoll,
-	.d_mmap = nommap,
-	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
-	.d_flag = D_OTHER | D_MPSAFE
-};
-
 /*
  * If someone has a sequencer, but no midi devices there will
  * be unresolved references, so we provide little stubs.
@@ -1687,8 +1670,6 @@ midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	return ENXIO;
 }
-
-struct cfdriver midi_cd;
 
 void
 midi_getinfo(dev_t dev, struct midi_info *mi)
@@ -1709,46 +1690,3 @@ midi_writebytes(int unit, u_char *bf, int cc)
 	return ENXIO;
 }
 #endif /* NMIDI == 0 */
-
-#ifdef _MODULE
-#include "ioconf.c"
-
-devmajor_t sequencer_bmajor = -1, sequencer_cmajor = -1;
-#endif
-
-MODULE(MODULE_CLASS_DRIVER, sequencer, "midi");
-
-static int
-sequencer_modcmd(modcmd_t cmd, void *arg)
-{
-	int error = 0;
-
-#ifdef _MODULE
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		error = devsw_attach(sequencer_cd.cd_name,
-		    NULL, &sequencer_bmajor,
-		    &sequencer_cdevsw, &sequencer_cmajor);
-		if (error)
-			break;
-
-		error = config_init_component(cfdriver_ioconf_sequencer,
-		    cfattach_ioconf_sequencer, cfdata_ioconf_sequencer);
-		if (error) {
-			devsw_detach(NULL, &sequencer_cdevsw);
-		}
-		break;
-	case MODULE_CMD_FINI:
-		error = config_fini_component(cfdriver_ioconf_sequencer,
-		   cfattach_ioconf_sequencer, cfdata_ioconf_sequencer);
-		if (error == 0)
-			devsw_detach(NULL, &sequencer_cdevsw);
-		break;
-	default:
-		error = ENOTTY;
-		break;
-	}
-#endif
-
-	return error;
-}
