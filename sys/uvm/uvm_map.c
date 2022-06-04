@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.394 2022/04/10 09:50:46 andvar Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.395 2022/06/04 20:54:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.394 2022/04/10 09:50:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.395 2022/06/04 20:54:24 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1813,12 +1813,17 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	uvm_map_check(map, "map_findspace entry");
 
 	/*
-	 * remember the original hint.  if we are aligning, then we
-	 * may have to try again with no alignment constraint if
-	 * we fail the first time.
+	 * Clamp the hint to the VM map's min/max address, and remmeber
+	 * the clamped original hint.  Remember the original hint,
+	 * clamped to the min/max address.  If we are aligning, then we
+	 * may have to try again with no alignment constraint if we
+	 * fail the first time.
+	 *
+	 * We use the original hint to verify later that the search has
+	 * been monotonic -- that is, nonincreasing or nondecreasing,
+	 * according to topdown or !topdown respectively.  But the
+	 * clamping is not monotonic.
 	 */
-
-	orig_hint = hint;
 	if (hint < vm_map_min(map)) {	/* check ranges ... */
 		if (flags & UVM_FLAG_FIXED) {
 			UVMHIST_LOG(maphist,"<- VA below map range",0,0,0,0);
@@ -1831,6 +1836,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 		    hint, vm_map_min(map), vm_map_max(map), 0);
 		return (NULL);
 	}
+	orig_hint = hint;
 
 	UVMHIST_LOG(maphist,"<- VA %#jx vs range [%#jx->%#jx]",
 	    hint, vm_map_min(map), vm_map_max(map), 0);
