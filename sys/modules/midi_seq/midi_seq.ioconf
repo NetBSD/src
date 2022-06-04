@@ -1,0 +1,11 @@
+#	$NetBSD: midi_seq.ioconf,v 1.1 2022/06/04 03:31:10 pgoyette Exp $
+
+ioconf midi_seq
+
+include	"conf/files"
+
+pseudo-root midibus*
+
+midi* at midibus?
+
+pseudo-device sequencer
