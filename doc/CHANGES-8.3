@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.133 2022/06/03 12:33:11 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.134 2022/06/04 12:41:38 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2673,4 +2673,9 @@ sys/dev/pci/ixgbe/ixv.c 			1.178,1.182 via patch
 	  - Fix typos in comment.
 	  - KNF.
 	[msaitoh, ticket #1746]
+
+sys/arch/atari/atari/stalloc.c			1.17
+
+	PR 56859: restore NULL pointer checks lost in rev 1.16.
+	[tsutsui, ticket #1747]
 
