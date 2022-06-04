@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.12 2021/03/02 07:44:08 rin Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.13 2022/06/04 22:32:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,29 +75,29 @@ __start:
 1:
 	/* Disable exceptions, caches, invalidate all TLB's. */
 
-	li	0,0
-	mtmsr	0
-	mttcr	0
-	mtdccr	0
-	mticcr	0
+	li	%r0,0
+	mtmsr	%r0
+	mttcr	%r0
+	mtdccr	%r0
+	mticcr	%r0
 	sync
 	isync
 
 /* Clear caches and invalidate tlbs */
-	li	7,256
-	mtctr	7
-	li	6,0
+	li	%r7,256
+	mtctr	%r7
+	li	%r6,0
 1:
-	dccci	0,6
-	addi	6,6,16
+	dccci	%r0,%r6
+	addi	%r6,%r6,16
 	bdnz	1b
 
-	li	7,512
-	mtctr	7
-	li	6,0
+	li	%r7,512
+	mtctr	%r7
+	li	%r6,0
 1:
-	iccci	0,6
-	addi	6,6,16
+	iccci	%r0,%r6
+	addi	%r6,%r6,16
 	bdnz	1b
 
 	tlbia
@@ -108,32 +108,27 @@ __start:
 
 	bl	_next
 _next:
-	mflr	3
-	subi	3,3,_next-__start
-	lis	4,STAGE1_BASE@h
-	ori	4,4,STAGE1_BASE@l
-	li	5,stage1size
+	mflr	%r3
+	subi	%r3,%r3,_next-__start
+	lis	%r4,STAGE1_BASE@h
+	ori	%r4,%r4,STAGE1_BASE@l
+	li	%r5,stage1size
 
 1:
-	lbz	1,0(3)
-	mr	0,5
-	cmpwi	0,0
-	stb	1,0(4)
-	addi	3,3,1
-	addi	4,4,1
-	addi	5,5,-1
+	lbz	%r1,0(%r3)
+	mr	%r0,%r5
+	cmpwi	%r0,0
+	stb	%r1,0(%r4)
+	addi	%r3,%r3,1
+	addi	%r4,%r4,1
+	addi	%r5,%r5,-1
 	bgt	1b
 
 /* Jump into the staging area so we can remap the dram. */
 
-#if 0
-	lis	0,stage1reloc@h
-	ori	0,0,stage1reloc@l
-#else
-	lis	0,((stage1reloc >> 16) & 0xffff)
-	ori	0,0,(stage1reloc & 0xffff)
-#endif
-	mtlr	0
+	lis	%r0,stage1reloc@h
+	ori	%r0,%r0,stage1reloc@l
+	mtlr	%r0
 	blr
 
 stage1reloc = .-__start+STAGE1_BASE
@@ -150,10 +145,10 @@ stage1reloc = .-__start+STAGE1_BASE
 	mtbr##r	tmp1 ; \
 1:
 
-	REMAP(4, 1, 2)
-	REMAP(5, 1, 2)
-	REMAP(6, 1, 2)
-	REMAP(7, 1, 2)
+	REMAP(4, %r1, %r2)
+	REMAP(5, %r1, %r2)
+	REMAP(6, %r1, %r2)
+	REMAP(7, %r1, %r2)
 
 #undef REMAP
 
@@ -164,37 +159,37 @@ stage1reloc = .-__start+STAGE1_BASE
 stage2:
 
 #ifdef PPC_4XX_NOCACHE
-	li	0,0
+	li	%r0,0
 #else
-	lis	0,0xfffc
+	lis	%r0,0xfffc
 #endif
-	mtdccr	0
-	mticcr	0
+	mtdccr	%r0
+	mticcr	%r0
 	sync
 	isync
 
 /* get start of bss */
-	lis	7,_C_LABEL(edata)-4@h
-	ori	7,7,_C_LABEL(edata)-4@l
+	lis	%r7,_C_LABEL(edata)-4@h
+	ori	%r7,%r7,_C_LABEL(edata)-4@l
 /* get end of kernel */
-	lis	4,_C_LABEL(end)@h
-	ori	4,4,_C_LABEL(end)@l
+	lis	%r4,_C_LABEL(end)@h
+	ori	%r4,%r4,_C_LABEL(end)@l
 /* clear bss */
-	li	3,0
+	li	%r3,0
 1:
-	stwu	3,4(7)
-	cmpw	7,4
+	stwu	%r3,4(%r7)
+	cmpw	%r7,%r4
 	bne+	1b
 
 /* Set kernel MMU context. */
-	li	0,KERNEL_PID
-	mtpid	0
+	li	%r0,KERNEL_PID
+	mtpid	%r0
 	sync
 
-	INIT_CPUINFO(4,1,9,0)
+	INIT_CPUINFO(%r4,%r1,%r9,%r0)
 
-	lis	3,__start@h
-	ori	3,3,__start@l
+	lis	%r3,__start@h
+	ori	%r3,%r3,__start@l
 
 /* Run the remaining setup in C. */
 	bl	_C_LABEL(initppc)
