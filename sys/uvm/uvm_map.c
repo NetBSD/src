@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.396 2022/06/04 20:54:53 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.397 2022/06/04 23:09:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.396 2022/06/04 20:54:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.397 2022/06/04 23:09:57 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -5116,6 +5116,8 @@ uvm_map_printit(struct vm_map *map, bool full,
 	    pmap_resident_count(map->pmap), pmap_wired_count(map->pmap));
 	if (!full)
 		return;
+	(*pr)("\tmin=%"PRIxVADDR", max=%"PRIxVADDR"\n",
+	    vm_map_min(map), vm_map_max(map));
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
 		(*pr)(" - %p: %#lx->%#lx: obj=%p/%#llx, amap=%p/%d\n",
@@ -5124,12 +5126,13 @@ uvm_map_printit(struct vm_map *map, bool full,
 		    entry->aref.ar_pageoff);
 		(*pr)(
 		    "\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
-		    "wc=%d, adv=%d\n",
+		    "wc=%d, adv=%d%s\n",
 		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
 		    (entry->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
 		    entry->protection, entry->max_protection,
-		    entry->inheritance, entry->wired_count, entry->advice);
+		    entry->inheritance, entry->wired_count, entry->advice,
+		    entry == map->first_free ? " (first_free)" : "");
 	}
 }
 
