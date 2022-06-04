@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.395 2022/06/04 20:54:24 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.396 2022/06/04 20:54:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.395 2022/06/04 20:54:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.396 2022/06/04 20:54:53 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1876,7 +1876,36 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	 * it, there would be four cases).
 	 */
 
-	if ((flags & UVM_FLAG_FIXED) == 0 && hint == vm_map_min(map)) {
+	if ((flags & UVM_FLAG_FIXED) == 0 &&
+	    hint == (topdown ? vm_map_max(map) : vm_map_min(map))) {
+		/*
+		 * The uvm_map_findspace algorithm is monotonic -- for
+		 * topdown VM it starts with a high hint and returns a
+		 * lower free address; for !topdown VM it starts with a
+		 * low hint and returns a higher free address.  As an
+		 * optimization, start with the first (highest for
+		 * topdown, lowest for !topdown) free address.
+		 *
+		 * XXX This `optimization' probably doesn't actually do
+		 * much in practice unless userland explicitly passes
+		 * the VM map's minimum or maximum address, which
+		 * varies from machine to machine (VM_MAX/MIN_ADDRESS,
+		 * e.g. 0x7fbfdfeff000 on amd64 but 0xfffffffff000 on
+		 * aarch64) and may vary according to other factors
+		 * like sysctl vm.user_va0_disable.  In particular, if
+		 * the user specifies 0 as a hint to mmap, then mmap
+		 * will choose a default address which is usually _not_
+		 * VM_MAX/MIN_ADDRESS but something else instead like
+		 * VM_MAX_ADDRESS - stack size - guard page overhead,
+		 * in which case this branch is never hit.
+		 *
+		 * In fact, this branch appears to have been broken for
+		 * two decades between when topdown was introduced in
+		 * ~2003 and when it was adapted to handle the topdown
+		 * case without violating the monotonicity assertion in
+		 * 2022.  Maybe Someone^TM should either ditch the
+		 * optimization or find a better way to do it.
+		 */
 		entry = map->first_free;
 	} else {
 		if (uvm_map_lookup_entry(map, hint, &entry)) {
