@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.397 2022/06/04 23:09:57 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.398 2022/06/04 23:26:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.397 2022/06/04 23:09:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.398 2022/06/04 23:26:05 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2150,10 +2150,20 @@ nextgap:
 	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=%#jx)", hint, 0,0,0);
-	KASSERTMSG( topdown || hint >= orig_hint, "hint: %#jx, orig_hint: %#jx",
-	    (uintmax_t)hint, (uintmax_t)orig_hint);
-	KASSERTMSG(!topdown || hint <= orig_hint, "hint: %#jx, orig_hint: %#jx",
-	    (uintmax_t)hint, (uintmax_t)orig_hint);
+	KASSERTMSG( topdown || hint >= orig_hint,
+	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
+	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
+	    " flags=%#x",
+	    map, hint, orig_hint,
+	    length, uobj, (unsigned long long)uoffset, align,
+	    flags);
+	KASSERTMSG(!topdown || hint <= orig_hint,
+	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
+	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
+	    " flags=%#x",
+	    map, hint, orig_hint,
+	    length, uobj, (unsigned long long)uoffset, align,
+	    flags);
 	KASSERT(entry->end <= hint);
 	KASSERT(hint + length <= entry->next->start);
 	return (entry);
