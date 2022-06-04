@@ -1,4 +1,4 @@
-#	$NetBSD: files.audio,v 1.15 2022/06/04 03:31:10 pgoyette Exp $
+#	$NetBSD: files.audio,v 1.16 2022/06/04 20:12:10 pgoyette Exp $
 
 defparam opt_audio.h	AUDIO_BLK_MS
 
@@ -28,6 +28,6 @@ file	dev/midi_mod.c			midi | sequencer	needs-flag
 file	dev/midi_seq_mod.c		midi | sequencer	needs-flag
 file	dev/midictl.c			midisyn
 file	dev/midisyn.c			midisyn
-file	dev/sequencer.c			midi | sequencer	needs-flag
-file	dev/sequencer_mod.c		midi | sequencer	needs-flag
+file	dev/sequencer.c			sequencer		needs-flag
+file	dev/sequencer_mod.c		sequencer		needs-flag
 file	dev/spkr_audio.c		spkr_audio		needs-flag

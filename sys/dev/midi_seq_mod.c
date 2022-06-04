@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_seq_mod.c,v 1.1 2022/06/04 03:31:10 pgoyette Exp $	*/
+/*	$NetBSD: midi_seq_mod.c,v 1.2 2022/06/04 20:12:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_seq_mod.c,v 1.1 2022/06/04 03:31:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_seq_mod.c,v 1.2 2022/06/04 20:12:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -85,32 +85,48 @@ midi_seq_modcmd(modcmd_t cmd, void *arg)
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#if NMIDI > 0
 		error = devsw_attach(midi_cd.cd_name, NULL, &midi_bmajor,
 		    &midi_cdevsw, &midi_cmajor);
 		if (error)
 			break;
+#endif
 
+#if NSEQUENCER > 0
 		error = devsw_attach(sequencer_cd.cd_name,
 		    NULL, &sequencer_bmajor,
 		    &sequencer_cdevsw, &sequencer_cmajor);
 		if (error) {
+#if NMIDI > 0
 			devsw_detach(NULL, &midi_cdevsw);
+#endif
 			break;
 		}
+#endif
 
+#if NMIDI > 0
 		error = config_init_component(cfdriver_ioconf_midi_seq,
 		    cfattach_ioconf_midi_seq, cfdata_ioconf_midi_seq);
 		if (error) {
+#if NSEQUENCER > 0
 			devsw_detach(NULL, &sequencer_cdevsw);
+#endif
 			devsw_detach(NULL, &midi_cdevsw);
+#endif
 		}
 		break;
 	case MODULE_CMD_FINI:
+#if NMIDI > 0
 		error = config_fini_component(cfdriver_ioconf_midi_seq,
 		   cfattach_ioconf_midi_seq, cfdata_ioconf_midi_seq);
 		if (error == 0) {
+#endif
+#if NSEQUENCER > 0
 			devsw_detach(NULL, &sequencer_cdevsw);
+#endif
+#if NMIDI > 0
 			devsw_detach(NULL, &midi_cdevsw);
+#endif
 		}
 		break;
 	default:
