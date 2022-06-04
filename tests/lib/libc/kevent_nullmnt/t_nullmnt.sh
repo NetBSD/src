@@ -78,9 +78,9 @@ nullmnt_lower_lower_body()
 {
 	nullmnt_common lower_dir lower_dir
 } 
-nullmnt_lower_lower_cleanup
+nullmnt_lower_lower_cleanup()
 {
-	nullmnt_common_cleanup()
+	nullmnt_common_cleanup
 }
 
 atf_init_test_cases()
