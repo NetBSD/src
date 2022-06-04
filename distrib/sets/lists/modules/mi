@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.153 2022/04/14 16:51:57 pgoyette Exp $
+# $NetBSD: mi,v 1.154 2022/06/04 03:32:04 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -311,6 +311,8 @@
 ./@MODULEDIR@/mfs/mfs.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/midi				modules-base-kernel	kmod
 ./@MODULEDIR@/midi/midi.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/midi_seq				modules-base-kernel	kmod
+./@MODULEDIR@/midi_seq/midi_seq.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/miiverbose			modules-base-kernel	kmod
 ./@MODULEDIR@/miiverbose/miiverbose.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/miniroot				modules-base-kernel	kmod
