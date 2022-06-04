@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.101 2022/06/03 12:26:17 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.102 2022/06/04 12:39:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1749,4 +1749,9 @@ usr.sbin/makemandb/apropos.c			1.25,1.26
 	- Document the PAGER environment variable.    
 	- Other minor description and formatting adjustments to the man page.
 	[gutteridge, ticket #1461]
+
+sys/arch/atari/atari/stalloc.c			1.17
+
+	PR 56859: restore NULL pointer checks lost in rev 1.16.
+	[tsutsui, ticket #1462]
 
