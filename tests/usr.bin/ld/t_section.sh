@@ -1,4 +1,4 @@
-#	$NetBSD: t_section.sh,v 1.4 2015/02/17 11:51:04 martin Exp $
+#	$NetBSD: t_section.sh,v 1.5 2022/06/05 08:42:25 skrll Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,7 +67,7 @@ int main(void) { return 0; }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore cc -o test test.c
 	readelf -S test |
-	grep ' \.text\| hoge\| \.data\| fuga\| \.bss' >test.secs
+	grep ' \.text \| hoge \| \.data \| fuga \| \.bss ' >test.secs
 	{
 		# Read-only orphan sections are placed after well-known
 		# read-only sections (.text, .rodata) but before .data.
