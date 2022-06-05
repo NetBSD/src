@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.399 2022/06/05 01:45:45 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.400 2022/06/05 13:45:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.399 2022/06/05 01:45:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.400 2022/06/05 13:45:28 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1778,6 +1778,29 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 	return (0);
 }
 
+static void
+uvm_findspace_invariants(struct vm_map *map, vaddr_t orig_hint, vaddr_t length,
+    struct uvm_object *uobj, voff_t uoffset, vsize_t align, int flags,
+    vaddr_t hint, int line)
+{
+	const int topdown = map->flags & VM_MAP_TOPDOWN;
+
+	KASSERTMSG( topdown || hint >= orig_hint,
+	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
+	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
+	    " flags=%#x (uvm_map_findspace line %d)",
+	    map, hint, orig_hint,
+	    length, uobj, (unsigned long long)uoffset, align,
+	    flags, line);
+	KASSERTMSG(!topdown || hint <= orig_hint,
+	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
+	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
+	    " flags=%#x (uvm_map_findspace line %d)",
+	    map, hint, orig_hint,
+	    length, uobj, (unsigned long long)uoffset, align,
+	    flags, line);
+}
+
 /*
  * uvm_map_findspace: find "length" sized space in "map".
  *
@@ -1796,10 +1819,14 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
     vaddr_t *result /* OUT */, struct uvm_object *uobj, voff_t uoffset,
     vsize_t align, int flags)
 {
+#define	INVARIANTS()							      \
+	uvm_findspace_invariants(map, orig_hint, length, uobj, uoffset, align,\
+	    flags, hint, __LINE__)
 	struct vm_map_entry *entry;
 	struct vm_map_entry *child, *prev, *tmp;
 	vaddr_t orig_hint __diagused;
 	const int topdown = map->flags & VM_MAP_TOPDOWN;
+	int avail;
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "(map=%#jx, hint=%#jx, len=%ju, flags=%#jx...",
 	    (uintptr_t)map, hint, length, flags);
@@ -1837,6 +1864,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 		return (NULL);
 	}
 	orig_hint = hint;
+	INVARIANTS();
 
 	UVMHIST_LOG(maphist,"<- VA %#jx vs range [%#jx->%#jx]",
 	    hint, vm_map_min(map), vm_map_max(map), 0);
@@ -1845,8 +1873,10 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	 * hint may not be aligned properly; we need round up or down it
 	 * before proceeding further.
 	 */
-	if ((flags & UVM_FLAG_COLORMATCH) == 0)
+	if ((flags & UVM_FLAG_COLORMATCH) == 0) {
 		uvm_map_align_va(&hint, align, topdown);
+		INVARIANTS();
+	}
 
 	UVMHIST_LOG(maphist,"<- VA %#jx vs range [%#jx->%#jx]",
 	    hint, vm_map_min(map), vm_map_max(map), 0);
@@ -1931,8 +1961,10 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 			/*
 			 * See if given hint fits in this gap.
 			 */
-			switch (uvm_map_space_avail(&hint, length,
-			    uoffset, align, flags, topdown, entry)) {
+			avail = uvm_map_space_avail(&hint, length,
+			    uoffset, align, flags, topdown, entry);
+			INVARIANTS();
+			switch (avail) {
 			case 1:
 				goto found;
 			case -1:
@@ -1963,8 +1995,11 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 
 	/* Check slot before any entry */
 	hint = topdown ? entry->next->start - length : entry->end;
-	switch (uvm_map_space_avail(&hint, length, uoffset, align, flags,
-	    topdown, entry)) {
+	INVARIANTS();
+	avail = uvm_map_space_avail(&hint, length, uoffset, align, flags,
+	    topdown, entry);
+	INVARIANTS();
+	switch (avail) {
 	case 1:
 		goto found;
 	case -1:
@@ -2031,8 +2066,11 @@ nextgap:
 			if (hint < tmp->end)
 				hint = tmp->end;
 		}
-		switch (uvm_map_space_avail(&hint, length, uoffset, align,
-		    flags, topdown, tmp)) {
+		INVARIANTS();
+		avail = uvm_map_space_avail(&hint, length, uoffset, align,
+		    flags, topdown, tmp);
+		INVARIANTS();
+		switch (avail) {
 		case 1:
 			entry = tmp;
 			goto found;
@@ -2053,8 +2091,11 @@ nextgap:
 		KASSERT(orig_hint <= prev->end);
 		hint = prev->end;
 	}
-	switch (uvm_map_space_avail(&hint, length, uoffset, align,
-	    flags, topdown, prev)) {
+	INVARIANTS();
+	avail = uvm_map_space_avail(&hint, length, uoffset, align,
+	    flags, topdown, prev);
+	INVARIANTS();
+	switch (avail) {
 	case 1:
 		entry = prev;
 		goto found;
@@ -2094,8 +2135,11 @@ nextgap:
 		KASSERT(orig_hint <= tmp->end);
 		hint = tmp->end;
 	}
-	switch (uvm_map_space_avail(&hint, length, uoffset, align,
-	    flags, topdown, tmp)) {
+	INVARIANTS();
+	avail = uvm_map_space_avail(&hint, length, uoffset, align,
+	    flags, topdown, tmp);
+	INVARIANTS();
+	switch (avail) {
 	case 1:
 		entry = tmp;
 		goto found;
@@ -2115,13 +2159,17 @@ nextgap:
 	 *	 entry->next->start = VA of end of current gap
 	 */
 
+	INVARIANTS();
 	for (;;) {
 		/* Update hint for current gap. */
 		hint = topdown ? entry->next->start - length : entry->end;
+		INVARIANTS();
 
 		/* See if it fits. */
-		switch (uvm_map_space_avail(&hint, length, uoffset, align,
-		    flags, topdown, entry)) {
+		avail = uvm_map_space_avail(&hint, length, uoffset, align,
+		    flags, topdown, entry);
+		INVARIANTS();
+		switch (avail) {
 		case 1:
 			goto found;
 		case -1:
@@ -2150,20 +2198,7 @@ nextgap:
 	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=%#jx)", hint, 0,0,0);
-	KASSERTMSG( topdown || hint >= orig_hint,
-	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
-	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
-	    " flags=%#x",
-	    map, hint, orig_hint,
-	    length, uobj, (unsigned long long)uoffset, align,
-	    flags);
-	KASSERTMSG(!topdown || hint <= orig_hint,
-	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
-	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
-	    " flags=%#x",
-	    map, hint, orig_hint,
-	    length, uobj, (unsigned long long)uoffset, align,
-	    flags);
+	INVARIANTS();
 	KASSERT(entry->end <= hint);
 	KASSERT(hint + length <= entry->next->start);
 	return (entry);
@@ -2177,6 +2212,7 @@ nextgap:
 	UVMHIST_LOG(maphist, "<- failed (notfound)", 0,0,0,0);
 
 	return (NULL);
+#undef INVARIANTS
 }
 
 /*
