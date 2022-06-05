@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.398 2022/06/04 23:26:05 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.399 2022/06/05 01:45:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.398 2022/06/04 23:26:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.399 2022/06/05 01:45:45 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -5126,8 +5126,6 @@ uvm_map_printit(struct vm_map *map, bool full,
 	    pmap_resident_count(map->pmap), pmap_wired_count(map->pmap));
 	if (!full)
 		return;
-	(*pr)("\tmin=%"PRIxVADDR", max=%"PRIxVADDR"\n",
-	    vm_map_min(map), vm_map_max(map));
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
 		(*pr)(" - %p: %#lx->%#lx: obj=%p/%#llx, amap=%p/%d\n",
