@@ -1,4 +1,4 @@
-/*	$NetBSD: sshkey-xmss.c,v 1.4 2019/01/27 02:08:33 pgoyette Exp $	*/
+/*	$NetBSD: sshkey-xmss.c,v 1.4.2.1 2022/06/06 03:07:03 msaitoh Exp $	*/
 /* $OpenBSD: sshkey-xmss.c,v 1.3 2018/07/09 21:59:10 markus Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey-xmss.c,v 1.4 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.4.2.1 2022/06/06 03:07:03 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -975,7 +975,8 @@ sshkey_xmss_decrypt_state(const struct sshkey *k, struct sshbuf *encoded,
 		goto out;
 	}
 	/* check that an appropriate amount of auth data is present */
-	if (sshbuf_len(encoded) < encrypted_len + authlen) {
+	if (sshbuf_len(encoded) < authlen ||
+	    sshbuf_len(encoded) - authlen < encrypted_len) {
 		r = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}
