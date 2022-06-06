@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2415 2022/05/31 13:42:58 riastradh Exp $
+#	$NetBSD: mi,v 1.2416 2022/06/06 10:56:27 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4037,8 +4037,8 @@
 ./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_kernfs.a			comp-c-lib		rump
 ./usr/lib/librumpfs_kernfs_p.a			comp-c-proflib		rump,profile
-./usr/lib/librumpfs_lfs.a			comp-c-lib		rump,lfs
-./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		rump,profile,lfs
+./usr/lib/librumpfs_lfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_mfs.a			comp-c-lib		rump
 ./usr/lib/librumpfs_mfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_msdos.a			comp-c-lib		rump
