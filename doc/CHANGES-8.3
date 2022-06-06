@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.134 2022/06/04 12:41:38 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.135 2022/06/06 11:10:24 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2678,4 +2678,9 @@ sys/arch/atari/atari/stalloc.c			1.17
 
 	PR 56859: restore NULL pointer checks lost in rev 1.16.
 	[tsutsui, ticket #1747]
+
+sys/dev/pci/ixgbe/ixgbe.c			(apply patch)
+
+	Fix the location of "break" statement. No functional change intended.
+	[msaitoh, ticket #1748]
 
