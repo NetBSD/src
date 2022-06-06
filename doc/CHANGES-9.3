@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.102 2022/06/04 12:39:48 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.103 2022/06/06 03:08:35 msaitoh Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1755,3 +1755,8 @@ sys/arch/atari/atari/stalloc.c			1.17
 	PR 56859: restore NULL pointer checks lost in rev 1.16.
 	[tsutsui, ticket #1462]
 
+crypto/external/bsd/openssh/dist/sshkey-xmss.c	patch
+crypto/external/bsd/openssh/dist/version.h	patch
+
+	ssh(1): apply upstream fix for CVE-2019-16905.
+	[martin, ticket #1463]
