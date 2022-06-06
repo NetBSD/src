@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.62 2022/04/06 03:23:38 gutteridge Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.63 2022/06/06 07:41:23 skrll Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.62 2022/04/06 03:23:38 gutteridge Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.63 2022/06/06 07:41:23 skrll Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1078,15 +1078,18 @@ mdoc_parse_Sh(const struct roff_node *n, mandb_rec *rec)
 
 	if (n->type == ROFFT_TEXT) {
 		mdoc_parse_section(n->sec, n->string, rec);
-	} else if (mdocs[n->tok] == pmdoc_Xr) {
-		/*
-		 * When encountering other inline macros,
-		 * call pmdoc_macro_handler.
-		 */
-		pmdoc_macro_handler(n, rec, MDOC_Xr);
-		xr_found = 1;
-	} else if (mdocs[n->tok] == pmdoc_Pp) {
-		pmdoc_macro_handler(n, rec, MDOC_Pp);
+	} else if (n->tok >= MDOC_Dd && n->tok < MDOC_MAX) {
+		const int tok_idx = n->tok - MDOC_Dd;
+		if (mdocs[tok_idx] == pmdoc_Xr) {
+			/*
+			* When encountering other inline macros,
+			* call pmdoc_macro_handler.
+			*/
+			pmdoc_macro_handler(n, rec, MDOC_Xr);
+			xr_found = 1;
+		} else if (mdocs[tok_idx] == pmdoc_Pp) {
+			pmdoc_macro_handler(n, rec, MDOC_Pp);
+		}
 	}
 
 	/*
