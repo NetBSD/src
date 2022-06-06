@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.103 2022/06/06 03:08:35 msaitoh Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.104 2022/06/06 11:36:16 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1760,3 +1760,15 @@ crypto/external/bsd/openssh/dist/version.h	patch
 
 	ssh(1): apply upstream fix for CVE-2019-16905.
 	[martin, ticket #1463]
+
+lib/libc/arch/hppa/sys/ptrace.S			1.8
+
+	PR 56864: preserve register %r19 across calls to __cerror.
+	[skrll, ticket #1464]
+
+usr.sbin/makemandb/makemandb.c			1.63
+
+	PR 56118: fix out of bounds array access.
+	[skrll, ticket #1465]
+
+
