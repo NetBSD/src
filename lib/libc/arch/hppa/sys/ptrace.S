@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.7 2020/05/09 08:25:33 skrll Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.8 2022/06/06 06:32:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,10 +42,12 @@ ENTRY(ptrace, HPPA_FRAME_SIZE)
 	stw	%arg1, HPPA_FRAME_ARG(1)(%sp)
 	stw	%arg2, HPPA_FRAME_ARG(2)(%sp)
 	stw	%arg3, HPPA_FRAME_ARG(3)(%sp)
+	stw	%r19, HPPA_FRAME_EDP(%sp)
 	ldo	HPPA_FRAME_SIZE(%sp),%sp
 	bl	__cerror, %rp
 	 copy	%r0, %t1
 	ldo	-HPPA_FRAME_SIZE(%sp), %sp
+	ldw	HPPA_FRAME_EDP(%sp), %r19
 	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
 	ldw	HPPA_FRAME_ARG(1)(%sp), %arg1
 	ldw	HPPA_FRAME_ARG(2)(%sp), %arg2
