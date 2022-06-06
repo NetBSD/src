@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.52 2022/06/03 12:31:10 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.53 2022/06/06 11:09:16 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.88.2.52 2022/06/03 12:31:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.88.2.53 2022/06/06 11:09:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3170,8 +3170,8 @@ ixgbe_intr_admin_common(struct adapter *adapter, u32 eicr, u32 *eims_disable)
 					    "PHY IS SHUT DOWN!!\n");
 					device_printf(adapter->dev,
 					    "System shutdown required!\n");
-					break;
 				}
+				break;
 			}
 		}
 
