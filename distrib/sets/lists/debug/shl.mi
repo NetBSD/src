@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.293 2022/05/27 07:28:22 nia Exp $
+# $NetBSD: shl.mi,v 1.294 2022/06/06 10:56:27 nia Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -240,7 +240,7 @@
 ./usr/libdata/debug/usr/lib/librumpfs_ffs.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_hfs.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_kernfs.so.0.0.debug	comp-rump-debug	debug,rump
-./usr/libdata/debug/usr/lib/librumpfs_lfs.so.0.0.debug		comp-rump-debug	debug,rump,lfs
+./usr/libdata/debug/usr/lib/librumpfs_lfs.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_mfs.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_msdos.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpfs_nfs.so.0.0.debug		comp-rump-debug	debug,rump

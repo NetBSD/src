@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.936 2022/05/27 07:28:21 nia Exp $
+# $NetBSD: shl.mi,v 1.937 2022/06/06 10:56:27 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -666,9 +666,9 @@
 ./usr/lib/librumpfs_kernfs.so			base-rump-shlib		rump
 ./usr/lib/librumpfs_kernfs.so.0			base-rump-shlib		rump
 ./usr/lib/librumpfs_kernfs.so.0.0		base-rump-shlib		rump
-./usr/lib/librumpfs_lfs.so			base-rump-shlib		rump,lfs
-./usr/lib/librumpfs_lfs.so.0			base-rump-shlib		rump,lfs
-./usr/lib/librumpfs_lfs.so.0.0			base-rump-shlib		rump,lfs
+./usr/lib/librumpfs_lfs.so			base-rump-shlib		rump
+./usr/lib/librumpfs_lfs.so.0			base-rump-shlib		rump
+./usr/lib/librumpfs_lfs.so.0.0			base-rump-shlib		rump
 ./usr/lib/librumpfs_mfs.so			base-rump-shlib		rump
 ./usr/lib/librumpfs_mfs.so.0			base-rump-shlib		rump
 ./usr/lib/librumpfs_mfs.so.0.0			base-rump-shlib		rump

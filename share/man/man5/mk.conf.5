@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.95 2022/05/29 15:23:20 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.96 2022/06/06 10:56:28 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 29, 2022
+.Dd December 20, 2021
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -404,13 +404,6 @@ Indicates whether debug information
 will be included in the build toolchain.
 .DFLTn
 .
-.It Sy MKDHCPD
-.YorN
-Indicates whether
-.Xr dhcpd 8
-will be built and installed.
-.DFLTy
-.
 .It Sy MKDOC
 .YorN
 Indicates whether system documentation destined for
@@ -443,15 +436,6 @@ link programs in
 and
 .Pa /sbin
 statically.
-.DFLTy
-.
-.It Sy MKFINGER
-.YorN
-Indicates whether
-.Xr finger 1
-and
-.Xr fingerd 8
-are to be built and installed.
 .DFLTy
 .
 .It Sy MKGCC
@@ -582,17 +566,6 @@ infrastructure
 (libraries and support programs) is built and installed.
 .DFLTy
 .
-.It Sy MKLFS
-.YorN
-Indicates whether the log-structured file system (LFS) programs
-are built and installed, i.e.
-.Xr newfs_lfs 8 ,
-.Xr mount_lfs 8 ,
-.Xr dumplfs 8 ,
-etc.
-.DFLTy
-.
-.
 .It Sy MKLINKLIB
 .YorN
 Indicates whether all of the shared library infrastructure is built.
@@ -660,27 +633,6 @@ Indicates whether the mDNS (Multicast DNS) infrastructure
 (libraries and support programs) is built and installed.
 .DFLTy
 .
-.It Sy MKMOUSED
-.YorN
-Indicates whether
-.Xr moused 8 ,
-the serial mouse support daemon is built and installed.
-.DFLTy
-.
-.It Sy MKMROUITNG
-.YorN
-Indicates whether multicast routing applications will be built and
-installed, i.e.
-.Xr map-mbone 8 ,
-.Xr mrinfo 8 ,
-.Xr mrouted 8 ,
-and
-.Xr mtrace 8 .
-These require the
-.Dv MROUTING
-kernel option to be enabled.
-.DFLTy
-.
 .It Sy MKNLS
 .YorN
 Indicates whether Native Language System (NLS) locale zone files will be
@@ -698,15 +650,6 @@ Platform dependent.
 .It Sy MKNPF
 .YorN
 Indicates whether the NPF packet filter is to be built and installed.
-.DFLTy
-.
-.It Sy MKNTP
-.YorN
-Indicates whether
-.Xr ntpd 8
-and
-.Xr ntpdate 8
-are to be built and installed.
 .DFLTy
 .
 .It Sy MKOBJ
@@ -811,20 +754,6 @@ utility is not installed as
 .It Sy MKPOSTFIX
 .YorN
 Indicates whether Postfix is built.
-.DFLTy
-.
-.It Sy MKPPP
-.YorN
-Indicates whether the Point-to-Point Protocol daemon
-.Xr pppd 8 ,
-as well as related utilities
-.Xr chat 8 ,
-.Xr pppdump 8 ,
-and
-.Xr pppstats 8
-will be built and installed.
-This option has no effect on PPPoE (Point-to-Point over Ethernet) support,
-but rather only affects serial links.
 .DFLTy
 .
 .It Sy MKPROFILE
@@ -932,31 +861,6 @@ Keeping non-temporary local symbols
 such as static function names is useful on using DTrace for
 userland libraries and getting a backtrace from a rump kernel
 loading shared libraries.
-.DFLTy
-.
-.It Sy MKTALK
-.YorN
-Indicates whether
-.Xr talk 1
-and
-.Xr ntalkd 8
-are to be built and installed.
-.DFLTy
-.
-.It Sy MKTCPDUMP
-.YorN
-Indicates whether
-.Xr tcpdump 8
-is to be built and installed.
-.DFLTy
-.
-.It Sy MKTIMED
-.YorN
-Indicates whether
-.Xr timed 8 ,
-the Time Synchronization Protocol daemon, not to be confused with
-.Xr ntpd 8 ,
-is to be built and installed.
 .DFLTy
 .
 .It Sy MKUNPRIVED

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.269 2022/05/29 08:09:59 nia Exp $
+# $NetBSD: mi,v 1.270 2022/06/06 10:56:27 nia Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -97,7 +97,7 @@
 ./etc/monthly					etc-sys-etc
 ./etc/monthly.conf				etc-sys-etc
 ./etc/motd					etc-sys-etc
-./etc/mrouted.conf				etc-router-etc		mrouting
+./etc/mrouted.conf				etc-router-etc
 ./etc/mtree/NetBSD.dist				etc-sys-etc
 ./etc/mtree/set.etc				etc-sys-etc
 ./etc/mtree/special				etc-sys-etc
@@ -111,7 +111,7 @@
 ./etc/networks					etc-net-etc
 ./etc/newsyslog.conf				etc-sysutil-etc
 ./etc/nsswitch.conf				etc-net-etc
-./etc/ntp.conf					etc-ntp-etc		ntp
+./etc/ntp.conf					etc-ntp-etc
 ./etc/obsolete/base				etc-obsolete		obsolete
 ./etc/obsolete/comp				etc-obsolete		obsolete
 ./etc/obsolete/etc				etc-obsolete		obsolete
@@ -263,7 +263,7 @@
 ./etc/rc.d/mountcritremote			etc-sys-rc
 ./etc/rc.d/mountd				etc-nfsserver-rc
 ./etc/rc.d/moused				etc-sysutil-rc
-./etc/rc.d/mrouted				etc-router-rc		mrouting
+./etc/rc.d/mrouted				etc-router-rc
 ./etc/rc.d/named				etc-bind-rc
 ./etc/rc.d/ndbootd				etc-bootserver-rc
 ./etc/rc.d/network				etc-net-rc
@@ -274,8 +274,8 @@
 ./etc/rc.d/npf_boot				etc-npf-rc
 ./etc/rc.d/npfd					etc-npf-rc
 ./etc/rc.d/nsd					etc-nsd-rc		nsd
-./etc/rc.d/ntpd					etc-ntp-rc		ntp
-./etc/rc.d/ntpdate				etc-ntp-rc		ntp
+./etc/rc.d/ntpd					etc-ntp-rc
+./etc/rc.d/ntpdate				etc-ntp-rc
 ./etc/rc.d/perusertmp				etc-sys-rc
 ./etc/rc.d/pf					etc-net-rc
 ./etc/rc.d/pf_boot				etc-net-rc
@@ -283,7 +283,7 @@
 ./etc/rc.d/poffd				etc-obsolete		obsolete
 ./etc/rc.d/postfix				etc-postfix-rc
 ./etc/rc.d/powerd				etc-sysutil-rc
-./etc/rc.d/ppp					etc-ppp-rc		ppp
+./etc/rc.d/ppp					etc-ppp-rc
 ./etc/rc.d/pwcheck				etc-sys-rc
 ./etc/rc.d/quota				etc-sys-rc
 ./etc/rc.d/racoon				etc-net-rc

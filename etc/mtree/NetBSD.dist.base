@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.244 2022/05/25 20:44:01 nia Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.245 2022/06/06 10:56:28 nia Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -395,6 +395,7 @@
 ./usr/share
 ./usr/share/atf
 ./usr/share/calendar
+./usr/share/dhcpd
 ./usr/share/dict
 ./usr/share/dict/papers
 ./usr/share/dict/special
@@ -468,6 +469,7 @@
 ./usr/share/examples/asm/hello
 ./usr/share/examples/atf
 ./usr/share/examples/blocklist
+./usr/share/examples/dhcp
 ./usr/share/examples/dhcpcd
 ./usr/share/examples/dhcpcd/hooks
 ./usr/share/examples/disktab

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.386 2022/05/31 13:42:59 riastradh Exp $
+# $NetBSD: mi,v 1.387 2022/06/06 10:56:27 nia Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -323,7 +323,7 @@
 ./usr/libdata/debug/bin/systrace.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/bin/tar.debug		comp-util-debug		debug,bsdtar
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
-./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug,lfs
+./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/netbsd			comp-sysutil-debug	debug,kernel_dir
 ./usr/libdata/debug/netbsd-@CONFIG@.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
@@ -353,12 +353,12 @@
 ./usr/libdata/debug/sbin/dmsetup.debug		comp-sysutil-debug	lvm,debug
 ./usr/libdata/debug/sbin/drvctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/dump_lfs.debug		comp-sysutil-debug	lfs,debug
+./usr/libdata/debug/sbin/dump_lfs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fdisk.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_ext2fs.debug	comp-ext2fs-debug	debug
 ./usr/libdata/debug/sbin/fsck_ffs.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/fsck_lfs.debug		comp-sysutil-debug	lfs,debug
+./usr/libdata/debug/sbin/fsck_lfs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_udf.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsck_v7fs.debug	comp-sysutil-debug	debug
@@ -389,7 +389,7 @@
 ./usr/libdata/debug/sbin/mount_filecore.debug	comp-filecorefs-debug	debug
 ./usr/libdata/debug/sbin/mount_hfs.debug	comp-hfs-debug		debug
 ./usr/libdata/debug/sbin/mount_kernfs.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/mount_lfs.debug	comp-sysutil-debug	lfs,debug
+./usr/libdata/debug/sbin/mount_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_nfs.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/sbin/mount_nilfs.debug	comp-sysutil-debug	debug
@@ -410,7 +410,7 @@
 ./usr/libdata/debug/sbin/mount_v7fs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_ext2fs.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/newfs_lfs.debug	comp-sysutil-debug	lfs,debug
+./usr/libdata/debug/sbin/newfs_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_udf.debug	comp-sysutil-debug	debug
@@ -428,7 +428,7 @@
 ./usr/libdata/debug/sbin/rcorder.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/reboot.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/resize_ffs.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/resize_lfs.debug	comp-sysutil-debug	lfs,debug
+./usr/libdata/debug/sbin/resize_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/restore.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/rndctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/route.debug		comp-netutil-debug	debug
@@ -561,7 +561,7 @@
 ./usr/libdata/debug/usr/bin/file.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fincore.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/find.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/finger.debug	comp-util-debug		finger,debug
+./usr/libdata/debug/usr/bin/finger.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/flock.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fmt.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fold.debug		comp-util-debug		debug
@@ -826,7 +826,7 @@
 ./usr/libdata/debug/usr/bin/systat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tabs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tail.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/talk.debug		comp-netutil-debug	talk,debug
+./usr/libdata/debug/usr/bin/talk.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/tbl.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/tcopy.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tee.debug		comp-util-debug		debug
@@ -975,7 +975,7 @@
 ./usr/libdata/debug/usr/libexec/cxxcom.debug	comp-cxx-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/digest-service.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		obsolete
-./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	finger,debug
+./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/ftpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		!makemandb,debug
@@ -1000,7 +1000,7 @@
 ./usr/libdata/debug/usr/libexec/mail.local.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/libexec/makekey.debug	comp-crypto-debug	debug
 ./usr/libdata/debug/usr/libexec/makewhatis.debug	comp-man-debug		!makemandb,debug
-./usr/libdata/debug/usr/libexec/ntalkd.debug	comp-netutil-debug	talk,debug
+./usr/libdata/debug/usr/libexec/ntalkd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/pcpp.debug	comp-c-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/postfix/anvil.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/bounce.debug	comp-postfix-debug	postfix,debug
@@ -1076,7 +1076,7 @@
 ./usr/libdata/debug/usr/sbin/btpand.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btuartd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
-./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		ppp,debug
+./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/chown.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/chroot.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/chrtbl.debug	comp-obsolete		obsolete
@@ -1088,8 +1088,8 @@
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
 ./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	dhcpd,debug
-./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	dhcpd,debug
+./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
+./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/diskpart.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-importkey.debug	comp-bind-debug		debug
@@ -1102,7 +1102,7 @@
 ./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dtrace.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	lfs,debug
+./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/edquota.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/envstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/eshconfig.debug	comp-obsolete		obsolete
@@ -1173,7 +1173,7 @@
 ./usr/libdata/debug/usr/sbin/makedbm.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/makefs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/makemandb.debug	comp-makemandb-debug	makemandb,debug
-./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	mrouting,debug
+./usr/libdata/debug/usr/sbin/map-mbone.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mdnsd.debug	comp-mdns-debug		mdns,debug
 ./usr/libdata/debug/usr/sbin/mdsetimage.debug	comp-sysutil-debug	binutils,debug
@@ -1193,11 +1193,11 @@
 ./usr/libdata/debug/usr/sbin/mount_puffsportal.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/sbin/mount_sysctlfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/mountd.debug	comp-nfsserver-debug	debug
-./usr/libdata/debug/usr/sbin/moused.debug	comp-sysutil-debug	moused,debug
-./usr/libdata/debug/usr/sbin/mrinfo.debug	comp-router-debug	mrouting,debug
-./usr/libdata/debug/usr/sbin/mrouted.debug	comp-router-debug	mrouting,debug
+./usr/libdata/debug/usr/sbin/moused.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/mrinfo.debug	comp-router-debug	debug
+./usr/libdata/debug/usr/sbin/mrouted.debug	comp-router-debug	debug
 ./usr/libdata/debug/usr/sbin/mscdlabel.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/mtrace.debug	comp-netutil-debug	mrouting,debug
+./usr/libdata/debug/usr/sbin/mtrace.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mtree.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-bind-bin		debug
@@ -1216,14 +1216,14 @@
 ./usr/libdata/debug/usr/sbin/nsd-control.debug		comp-nsd-debug	nsd
 ./usr/libdata/debug/usr/sbin/nsd.debug		comp-nsd-debug		nsd
 ./usr/libdata/debug/usr/sbin/nsec3hash.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		ntp,debug
-./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		ntp,debug
-./usr/libdata/debug/usr/sbin/ntpdate.debug	comp-ntp-debug		ntp,debug
-./usr/libdata/debug/usr/sbin/ntpdc.debug	comp-ntp-debug		ntp,debug
-./usr/libdata/debug/usr/sbin/ntpq.debug		comp-ntp-debug		ntp,debug
-./usr/libdata/debug/usr/sbin/ntptime.debug	comp-ntp-debug		ntp,debug
+./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		debug
+./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		debug
+./usr/libdata/debug/usr/sbin/ntpdate.debug	comp-ntp-debug		debug
+./usr/libdata/debug/usr/sbin/ntpdc.debug	comp-ntp-debug		debug
+./usr/libdata/debug/usr/sbin/ntpq.debug		comp-ntp-debug		debug
+./usr/libdata/debug/usr/sbin/ntptime.debug	comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/nvmmctl.debug	comp-sysutil-debug	debug,nvmm
-./usr/libdata/debug/usr/sbin/omshell.debug	comp-dhcpd-debug	debug,dhcpd
+./usr/libdata/debug/usr/sbin/omshell.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/pac.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/paxctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pcictl.debug	comp-sysutil-debug	debug
@@ -1248,9 +1248,9 @@
 ./usr/libdata/debug/usr/sbin/postsuper.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/posttls-finger.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/powerd.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/pppd.debug		comp-ppp-debug		ppp,debug
-./usr/libdata/debug/usr/sbin/pppdump.debug	comp-ppp-debug		ppp,debug
-./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		ppp,debug
+./usr/libdata/debug/usr/sbin/pppd.debug		comp-ppp-debug		debug
+./usr/libdata/debug/usr/sbin/pppdump.debug	comp-ppp-debug		debug
+./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/psrset.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-obsolete		obsolete
@@ -1295,7 +1295,7 @@
 ./usr/libdata/debug/usr/sbin/rump_ext2fs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_ffs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_hfs.debug	comp-puffs-debug	debug,rump
-./usr/libdata/debug/usr/sbin/rump_lfs.debug	comp-puffs-debug	debug,rump,lfs
+./usr/libdata/debug/usr/sbin/rump_lfs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_nfs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-puffs-debug	debug,rump
@@ -1315,7 +1315,7 @@
 ./usr/libdata/debug/usr/sbin/setencstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/setobjstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sliplogin.debug	comp-slip-debug		debug
-./usr/libdata/debug/usr/sbin/sntp.debug		comp-ntp-debug		ntp,debug
+./usr/libdata/debug/usr/sbin/sntp.debug		comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/spray.debug	comp-rpcutil-debug	debug
 ./usr/libdata/debug/usr/sbin/srtconfig.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sshd.debug		comp-secsh-debug	debug
@@ -1331,10 +1331,10 @@
 ./usr/libdata/debug/usr/sbin/tcpdchk.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdmatch.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdrop.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/tcpdump.debug	comp-netutil-debug	tcpdump,debug
+./usr/libdata/debug/usr/sbin/tcpdump.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcsd.debug		comp-tpm-debug		tpm,debug
-./usr/libdata/debug/usr/sbin/timed.debug	comp-timed-debug	timed,debug
-./usr/libdata/debug/usr/sbin/timedc.debug	comp-timed-debug	timed,debug
+./usr/libdata/debug/usr/sbin/timed.debug	comp-timed-debug	debug
+./usr/libdata/debug/usr/sbin/timedc.debug	comp-timed-debug	debug
 ./usr/libdata/debug/usr/sbin/tpm_changeownerauth.debug	comp-tpm-debug	tpm,debug
 ./usr/libdata/debug/usr/sbin/tpm_clear.debug		comp-tpm-debug	tpm,debug
 ./usr/libdata/debug/usr/sbin/tpm_createek.debug		comp-tpm-debug	tpm,debug
@@ -1692,8 +1692,8 @@
 ./usr/libdata/debug/usr/tests/fs/fifofs/t_fifo.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/hfs/t_pathconvert.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/fs/lfs/t_pr.debug				tests-fs-debug		debug,atf,rump,lfs
-./usr/libdata/debug/usr/tests/fs/lfs/t_rfw.debug			tests-fs-debug		debug,atf,rump,lfs
+./usr/libdata/debug/usr/tests/fs/lfs/t_pr.debug				tests-fs-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/fs/lfs/t_rfw.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/nfs/nfsservice/rumpnfsd.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/nfs/t_mountd.debug			tests-fs-debug		debug,atf,rump

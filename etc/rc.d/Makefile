@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.115 2022/05/29 08:10:00 nia Exp $
+# $NetBSD: Makefile,v 1.116 2022/06/06 10:56:28 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -29,10 +29,10 @@ CONFIGFILES=\
 		kdc \
 		ldconfig ldpd lvmlockdir local lpd lvm \
 		makemandb mdnsd mixerctl modules mopd motd mountall \
-		mountcritlocal mountcritremote mountd moused \
+		mountcritlocal mountcritremote mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking npf npf_boot \
-		npfd \
-		perusertmp pf pf_boot pflogd postfix powerd pwcheck \
+		npfd ntpd ntpdate \
+		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
 		rbootd resize_root rndctl root route6d routed rtadvd \
@@ -43,18 +43,6 @@ CONFIGFILES=\
 		veriexec virecover wdogctl wpa_supplicant wscons wsmoused
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
-
-.if ${MKMROUTING} != "no"
-CONFIGFILES+=	mrouted
-.endif
-
-.if ${MKNTP} != "no"
-CONFIGFILES+=	ntpd ntpdate
-.endif
-
-.if ${MKPPP} != "no"
-CONFIGFILES+=	ppp
-.endif
 
 .if ${MKYP} != "no"
 CONFIGFILES+=	ypbind yppasswdd ypserv

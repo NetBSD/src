@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.438 2022/05/29 15:23:20 nia Exp $
+#	$NetBSD: bsd.README,v 1.439 2022/06/06 10:56:29 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -201,9 +201,6 @@ MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
 		it is possibly slower.
 		Default "no"
 
-MKDHCPD		If "no", don't build or install dhcpd(8).
-		Default: yes
-
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
 
@@ -224,9 +221,6 @@ MKEXTSRC        If not "no", 'make build' also descends into either src/extsrc
 		to cross-build programs and libraries externally added by
 		users, and automatically enables creation of those sets.
 		Default: no
-
-MKFINGER	If "no", don't build finger(1) or fingerd(8).
-		Default: yes
 
 MKFIRMWARE      If not "no", install the /libdata/firmware directory,
 		which is necessary for several drivers: athn(4), bwfm(4),
@@ -306,11 +300,6 @@ MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
 		Default: yes
 
-MKLFS		If "no", disables building and installation of programs for
-		the log-structured file system - mount_lfs(8), newfs_lfs(8),
-		dumplfs(8), etc.
-		Default: yes
-
 MKLIBCSANITIZER	If "yes", use the selected sanitizer inside libc to compile
 		userland programs and libraries as defined in
 		USE_LIBCSANITIZER, which defaults to "undefined".
@@ -384,15 +373,6 @@ MKMDNS		If "no", disables building of mDNS infrastructure
 		(libraries and support programs).
 		Default: yes
 
-MKMOUSED	If "no", don't build moused(8) (serial mouse support
-		daemon, not to be confused with wsmoused(8)).
-		Default: yes
-
-MKMROUTING	If "no", don't build or install the multicast routing
-		applications - map-mbone(8), mrinfo(8), mrouted(8), or
-		mtrace(8).
-		Default: yes
-
 MKNLS		If "no", don't build or install the NLS files and locale
 		definition files.
 		Default: yes
@@ -407,9 +387,6 @@ MKNPF		If "no", don't build or install the NPF and its modules.
 MKNSD		If "no", don't build or install the "nsd" DNS authoritative
 		server.
 		Default: no
-
-MKNTP		If "no", don't build or install ntpd(8) or ntpdate(8).
-		Default: yes
 
 MKOBJ		If "no", don't enable the rule which creates objdirs,
 		and also acts as "MKOBJDIRS=no".
@@ -453,13 +430,6 @@ MKPIGZGZIP	If "no", only install pigz as pigz, not gzip.
 		Default: no
 
 MKPOSTFIX	If "no", don't build or install postfix(1).
-		Default: yes
-
-MKPPP		If "no", disables building the Point-to-Point Protocol
-		daemon pppd(8), as well as related utilities chat(8),
-		pppdump(8), and pppstats(8).
-		This option has no effect on PPPoE (Point-to-Point over
-		Ethernet) support, but rather only affects serial links.
 		Default: yes
 
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
@@ -536,16 +506,6 @@ MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
 		such as static function names is useful on using DTrace for
 		userland libraries and getting a backtrace from a rump kernel
 		loading shared libraries.
-		Default: yes
-
-MKTIMED		If "no", don't build timed(8) (original Time Synchronization
-		Protocol server, not to be confused with ntpd(8)).
-		Default: yes
-
-MKTOUCH		If "no", don't build talk(1) or ntalkd(8).
-		Default: yes
-
-MKTCPDUMP	If "no" then don't build tcpdump(8).
 		Default: yes
 
 MKTEGRAFIRMWARE	If "no", install the /libdata/firmware/nvidia directory,
