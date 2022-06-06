@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.400 2022/06/05 13:45:28 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.401 2022/06/06 07:00:02 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.400 2022/06/05 13:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.401 2022/06/06 07:00:02 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1781,24 +1781,24 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 static void
 uvm_findspace_invariants(struct vm_map *map, vaddr_t orig_hint, vaddr_t length,
     struct uvm_object *uobj, voff_t uoffset, vsize_t align, int flags,
-    vaddr_t hint, int line)
+    vaddr_t hint, struct vm_map_entry *entry, int line)
 {
 	const int topdown = map->flags & VM_MAP_TOPDOWN;
 
 	KASSERTMSG( topdown || hint >= orig_hint,
 	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
 	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
-	    " flags=%#x (uvm_map_findspace line %d)",
+	    " flags=%#x entry=%p (uvm_map_findspace line %d)",
 	    map, hint, orig_hint,
 	    length, uobj, (unsigned long long)uoffset, align,
-	    flags, line);
+	    flags, entry, line);
 	KASSERTMSG(!topdown || hint <= orig_hint,
 	    "map=%p hint=%#"PRIxVADDR" orig_hint=%#"PRIxVADDR
 	    " length=%#"PRIxVSIZE" uobj=%p uoffset=%#llx align=%"PRIxVSIZE
-	    " flags=%#x (uvm_map_findspace line %d)",
+	    " flags=%#x entry=%p (uvm_map_findspace line %d)",
 	    map, hint, orig_hint,
 	    length, uobj, (unsigned long long)uoffset, align,
-	    flags, line);
+	    flags, entry, line);
 }
 
 /*
@@ -1821,7 +1821,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 {
 #define	INVARIANTS()							      \
 	uvm_findspace_invariants(map, orig_hint, length, uobj, uoffset, align,\
-	    flags, hint, __LINE__)
+	    flags, hint, entry, __LINE__)
 	struct vm_map_entry *entry;
 	struct vm_map_entry *child, *prev, *tmp;
 	vaddr_t orig_hint __diagused;
