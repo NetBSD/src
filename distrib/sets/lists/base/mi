@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1307 2022/06/06 10:56:27 nia Exp $
+# $NetBSD: mi,v 1.1308 2022/06/06 13:28:55 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -384,7 +384,7 @@
 ./sbin/fsck_lfs					base-sysutil-root
 ./sbin/fsck_msdos				base-sysutil-root
 ./sbin/fsck_udf					base-sysutil-root
-./sbin/fsck_v7fs				base-sysutil-root	v7fs
+./sbin/fsck_v7fs				base-sysutil-root
 ./sbin/fsdb					base-sysutil-root
 ./sbin/fsirand					base-sysutil-root
 ./sbin/gpt					base-sysutil-root
@@ -405,23 +405,23 @@
 ./sbin/modstat					base-sysutil-root
 ./sbin/modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
-./sbin/mount_ados				base-adosfs-root	ados
+./sbin/mount_ados				base-adosfs-root
 ./sbin/mount_autofs				base-sysutil-root
 ./sbin/mount_cd9660				base-sysutil-root
-./sbin/mount_chfs				base-sysutil-root	chfs
-./sbin/mount_efs				base-efs-root		efs
+./sbin/mount_chfs				base-sysutil-root
+./sbin/mount_efs				base-efs-root
 ./sbin/mount_ext2fs				base-ext2fs-root
 ./sbin/mount_fdesc				base-miscfs-root
 ./sbin/mount_ffs				base-sysutil-root
-./sbin/mount_filecore				base-filecorefs-root	filecore
-./sbin/mount_hfs				base-hfs-root		hfs
+./sbin/mount_filecore				base-filecorefs-root
+./sbin/mount_hfs				base-hfs-root
 ./sbin/mount_hfsp				base-obsolete		obsolete
 ./sbin/mount_kernfs				base-sysutil-root
 ./sbin/mount_lfs				base-sysutil-root
 ./sbin/mount_mfs				base-sysutil-root
 ./sbin/mount_msdos				base-sysutil-root
 ./sbin/mount_nfs				base-nfsclient-root
-./sbin/mount_nilfs				base-sysutil-root	nilfs
+./sbin/mount_nilfs				base-sysutil-root
 ./sbin/mount_ntfs				base-ntfs-root
 ./sbin/mount_null				base-miscfs-root
 ./sbin/mount_overlay				base-miscfs-root
@@ -431,13 +431,13 @@
 ./sbin/mount_puffs				base-sysutil-root
 ./sbin/mount_qemufwcfg				base-sysutil-root
 ./sbin/mount_smbfs				base-obsolete		obsolete
-./sbin/mount_sysvbfs				base-sysutil-root	sysvbfs
+./sbin/mount_sysvbfs				base-sysutil-root
 ./sbin/mount_tmpfs				base-miscfs-root
 ./sbin/mount_udf				base-sysutil-root
 ./sbin/mount_ufs				base-sysutil-root
 ./sbin/mount_umap				base-miscfs-root
 ./sbin/mount_union				base-miscfs-root
-./sbin/mount_v7fs				base-sysutil-root	v7fs
+./sbin/mount_v7fs				base-sysutil-root
 ./sbin/mount_zfs				base-zfs-root		zfs
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
@@ -445,9 +445,9 @@
 ./sbin/newfs_ext2fs				base-sysutil-root
 ./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
-./sbin/newfs_sysvbfs				base-sysutil-root	sysvbfs
+./sbin/newfs_sysvbfs				base-sysutil-root
 ./sbin/newfs_udf				base-sysutil-root
-./sbin/newfs_v7fs				base-sysutil-root	v7fs
+./sbin/newfs_v7fs				base-sysutil-root
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
