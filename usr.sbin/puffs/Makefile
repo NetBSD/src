@@ -1,17 +1,13 @@
-#	$NetBSD: Makefile,v 1.20 2022/05/27 07:28:21 nia Exp $
+#	$NetBSD: Makefile,v 1.21 2022/06/06 10:56:29 nia Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	mount_9p mount_psshfs mount_sysctlfs
 
 .if (${MKRUMP} != "no")
-SUBDIR+=rump_cd9660 rump_efs rump_ext2fs rump_ffs rump_hfs
+SUBDIR+=rump_cd9660 rump_efs rump_ext2fs rump_ffs rump_hfs rump_lfs
 SUBDIR+=rump_msdos rump_nfs rump_ntfs rump_syspuffs rump_sysvbfs
 SUBDIR+=rump_tmpfs rump_udf rump_v7fs
-
-.  if ${MKLFS} != "no"
-SUBDIR+=rump_lfs
-.  endif
 
 #
 # The following are not built by default

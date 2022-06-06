@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.464 2022/05/30 15:06:55 rin Exp $
+#	$NetBSD: Makefile,v 1.465 2022/06/06 10:56:28 nia Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -105,19 +105,11 @@ BIN1+=	auto_master bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf dm.conf envsys.conf floppytab ftpchroot \
 	ftpusers gettytab gpio.conf group hosts hosts.lpd inetd.conf \
 	locate.conf login.conf mailer.conf man.conf monthly monthly.conf \
-	named.conf netconfig networks newsyslog.conf \
-	nsswitch.conf passwd.conf pkgpath.conf phones printcap \
+	mrouted.conf named.conf netconfig networks newsyslog.conf \
+	nsswitch.conf ntp.conf passwd.conf pkgpath.conf phones printcap \
 	profile protocols rbootd.conf rc rc.conf rc.local rc.subr \
 	rc.shutdown remote rpc security security.conf services shells \
 	shrc sysctl.conf syslog.conf weekly weekly.conf wscons.conf
-
-.if ${MKMROUTING} != "no"
-BIN1+=	mrouted.conf
-.endif
-
-.if ${MKNTP} != "no"
-BIN1+=	ntp.conf
-.endif
 
 # Use machine-specific disktab if it exists, or the MI one otherwise
 .if exists(etc.${MACHINE}/disktab)

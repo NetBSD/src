@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1306 2022/05/29 15:23:20 nia Exp $
+# $NetBSD: mi,v 1.1307 2022/06/06 10:56:27 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -327,7 +327,7 @@
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
 ./libexec/dhcpcd-run-hooks			base-dhcpcd-root
-./libexec/lfs_cleanerd				base-sysutil-bin	lfs
+./libexec/lfs_cleanerd				base-sysutil-bin
 ./libexec/resolvconf				base-resolvconf-root
 ./libexec/resolvconf/dnsmasq			base-resolvconf-root
 ./libexec/resolvconf/libc			base-resolvconf-root
@@ -371,7 +371,7 @@
 ./sbin/dmsetup					base-lvm-root		lvm
 ./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
-./sbin/dump_lfs					base-sysutil-root	lfs
+./sbin/dump_lfs					base-sysutil-root
 ./sbin/dumpfs					base-obsolete		obsolete
 ./sbin/dumplfs					base-obsolete		obsolete
 ./sbin/fastboot					base-sysutil-root
@@ -381,10 +381,10 @@
 ./sbin/fsck					base-sysutil-root
 ./sbin/fsck_ext2fs				base-ext2fs-root
 ./sbin/fsck_ffs					base-sysutil-root
-./sbin/fsck_lfs					base-sysutil-root	lfs
+./sbin/fsck_lfs					base-sysutil-root
 ./sbin/fsck_msdos				base-sysutil-root
 ./sbin/fsck_udf					base-sysutil-root
-./sbin/fsck_v7fs				base-sysutil-root
+./sbin/fsck_v7fs				base-sysutil-root	v7fs
 ./sbin/fsdb					base-sysutil-root
 ./sbin/fsirand					base-sysutil-root
 ./sbin/gpt					base-sysutil-root
@@ -405,23 +405,23 @@
 ./sbin/modstat					base-sysutil-root
 ./sbin/modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
-./sbin/mount_ados				base-adosfs-root
+./sbin/mount_ados				base-adosfs-root	ados
 ./sbin/mount_autofs				base-sysutil-root
 ./sbin/mount_cd9660				base-sysutil-root
-./sbin/mount_chfs				base-sysutil-root
-./sbin/mount_efs				base-efs-root
+./sbin/mount_chfs				base-sysutil-root	chfs
+./sbin/mount_efs				base-efs-root		efs
 ./sbin/mount_ext2fs				base-ext2fs-root
 ./sbin/mount_fdesc				base-miscfs-root
 ./sbin/mount_ffs				base-sysutil-root
-./sbin/mount_filecore				base-filecorefs-root
-./sbin/mount_hfs				base-hfs-root
+./sbin/mount_filecore				base-filecorefs-root	filecore
+./sbin/mount_hfs				base-hfs-root		hfs
 ./sbin/mount_hfsp				base-obsolete		obsolete
 ./sbin/mount_kernfs				base-sysutil-root
-./sbin/mount_lfs				base-sysutil-root	lfs
+./sbin/mount_lfs				base-sysutil-root
 ./sbin/mount_mfs				base-sysutil-root
 ./sbin/mount_msdos				base-sysutil-root
 ./sbin/mount_nfs				base-nfsclient-root
-./sbin/mount_nilfs				base-sysutil-root
+./sbin/mount_nilfs				base-sysutil-root	nilfs
 ./sbin/mount_ntfs				base-ntfs-root
 ./sbin/mount_null				base-miscfs-root
 ./sbin/mount_overlay				base-miscfs-root
@@ -431,23 +431,23 @@
 ./sbin/mount_puffs				base-sysutil-root
 ./sbin/mount_qemufwcfg				base-sysutil-root
 ./sbin/mount_smbfs				base-obsolete		obsolete
-./sbin/mount_sysvbfs				base-sysutil-root
+./sbin/mount_sysvbfs				base-sysutil-root	sysvbfs
 ./sbin/mount_tmpfs				base-miscfs-root
 ./sbin/mount_udf				base-sysutil-root
 ./sbin/mount_ufs				base-sysutil-root
 ./sbin/mount_umap				base-miscfs-root
 ./sbin/mount_union				base-miscfs-root
-./sbin/mount_v7fs				base-sysutil-root
+./sbin/mount_v7fs				base-sysutil-root	v7fs
 ./sbin/mount_zfs				base-zfs-root		zfs
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
 ./sbin/newfs_ext2fs				base-sysutil-root
-./sbin/newfs_lfs				base-sysutil-root	lfs
+./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
-./sbin/newfs_sysvbfs				base-sysutil-root
+./sbin/newfs_sysvbfs				base-sysutil-root	sysvbfs
 ./sbin/newfs_udf				base-sysutil-root
-./sbin/newfs_v7fs				base-sysutil-root
+./sbin/newfs_v7fs				base-sysutil-root	v7fs
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
@@ -466,10 +466,10 @@
 ./sbin/raidctl					base-sysutil-root
 ./sbin/rcorder					base-sysutil-root
 ./sbin/rdump					base-sysutil-root
-./sbin/rdump_lfs				base-sysutil-root	lfs
+./sbin/rdump_lfs				base-sysutil-root
 ./sbin/reboot					base-sysutil-root
 ./sbin/resize_ffs				base-sysutil-root
-./sbin/resize_lfs				base-sysutil-root	lfs
+./sbin/resize_lfs				base-sysutil-root
 ./sbin/resolvconf				base-resolvconf-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
@@ -608,7 +608,7 @@
 ./usr/bin/file					base-util-bin
 ./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
-./usr/bin/finger				base-util-bin		finger
+./usr/bin/finger				base-util-bin
 ./usr/bin/flock					base-util-bin
 ./usr/bin/fmt					base-util-bin
 ./usr/bin/fold					base-util-bin
@@ -861,7 +861,7 @@
 ./usr/bin/tabs					base-util-bin
 ./usr/bin/tac					base-util-bin
 ./usr/bin/tail					base-util-bin
-./usr/bin/talk					base-netutil-bin	talk
+./usr/bin/talk					base-netutil-bin
 ./usr/bin/tar					base-util-bin
 ./usr/bin/tcopy					base-util-bin
 ./usr/bin/tee					base-util-bin
@@ -1281,7 +1281,7 @@
 ./usr/libexec/cpp0				base-obsolete		obsolete
 ./usr/libexec/digest-service			base-krb5-bin		kerberos
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
-./usr/libexec/fingerd				base-netutil-bin	finger
+./usr/libexec/fingerd				base-netutil-bin
 ./usr/libexec/ftp-proxy				base-obsolete		obsolete
 ./usr/libexec/ftpd				base-netutil-bin
 ./usr/libexec/getNAME				base-man-bin		!makemandb
@@ -1310,7 +1310,7 @@
 ./usr/libexec/makewhatis			base-man-bin		!makemandb
 ./usr/libexec/named				base-bind-bin
 ./usr/libexec/named-xfer			base-obsolete		obsolete
-./usr/libexec/ntalkd				base-netutil-bin	talk
+./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/pfspamd				base-obsolete		obsolete
 ./usr/libexec/pfspamd-setup			base-obsolete		obsolete
 ./usr/libexec/pfspamlogd			base-obsolete		obsolete
@@ -1445,7 +1445,7 @@
 ./usr/sbin/btpand				base-sysutil-bin
 ./usr/sbin/btuartd				base-obsolete		obsolete
 ./usr/sbin/catman				base-man-bin
-./usr/sbin/chat					base-ppp-bin		ppp
+./usr/sbin/chat					base-ppp-bin
 ./usr/sbin/chown				base-sysutil-bin
 ./usr/sbin/chroot				base-sysutil-bin
 ./usr/sbin/chrtbl				base-obsolete		obsolete
@@ -1457,8 +1457,8 @@
 ./usr/sbin/dbsym				base-sysutil-bin	binutils
 ./usr/sbin/ddns-confgen				base-bind-bin
 ./usr/sbin/dev_mkdb				base-sysutil-bin
-./usr/sbin/dhcpd				base-dhcpd-bin		dhcpd
-./usr/sbin/dhcrelay				base-dhcpd-bin		dhcpd
+./usr/sbin/dhcpd				base-dhcpd-bin
+./usr/sbin/dhcrelay				base-dhcpd-bin
 ./usr/sbin/dig					base-obsolete		obsolete
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
@@ -1477,7 +1477,7 @@
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dtruss				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
-./usr/sbin/dumplfs				base-sysutil-bin	lfs
+./usr/sbin/dumplfs				base-sysutil-bin
 ./usr/sbin/eaytest				base-obsolete		obsolete
 ./usr/sbin/editmap				base-obsolete		obsolete
 ./usr/sbin/edquota				base-sysutil-bin
@@ -1570,7 +1570,7 @@
 ./usr/sbin/makefs				base-sysutil-bin
 ./usr/sbin/makemandb				base-man-bin		makemandb
 ./usr/sbin/makemap				base-obsolete		obsolete
-./usr/sbin/map-mbone				base-netutil-bin	mrouting
+./usr/sbin/map-mbone				base-netutil-bin
 ./usr/sbin/mbrlabel				base-obsolete		obsolete
 ./usr/sbin/mdconfig				base-sysutil-bin
 ./usr/sbin/mdnsd				base-mdns-bin		mdns
@@ -1592,11 +1592,11 @@
 ./usr/sbin/mount_puffsportal			base-obsolete		obsolete
 ./usr/sbin/mount_sysctlfs			base-puffs-bin
 ./usr/sbin/mountd				base-nfsserver-bin
-./usr/sbin/moused				base-sysutil-bin	moused
-./usr/sbin/mrinfo				base-router-bin		mrouting
-./usr/sbin/mrouted				base-router-bin		mrouting
+./usr/sbin/moused				base-sysutil-bin
+./usr/sbin/mrinfo				base-router-bin
+./usr/sbin/mrouted				base-router-bin
 ./usr/sbin/mscdlabel				base-sysutil-bin
-./usr/sbin/mtrace				base-netutil-bin	mrouting
+./usr/sbin/mtrace				base-netutil-bin
 ./usr/sbin/mtrace6				base-obsolete		obsolete
 ./usr/sbin/mtree				base-sysutil-bin
 ./usr/sbin/named				base-bind-bin
@@ -1626,16 +1626,16 @@
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
 ./usr/sbin/nstest				base-obsolete		obsolete
-./usr/sbin/ntp-keygen				base-ntp-bin		ntp
-./usr/sbin/ntpd					base-ntp-bin		ntp
-./usr/sbin/ntpdate				base-ntp-bin		ntp
-./usr/sbin/ntpdc				base-ntp-bin		ntp
-./usr/sbin/ntpq					base-ntp-bin		ntp
-./usr/sbin/ntptime				base-ntp-bin		ntp
+./usr/sbin/ntp-keygen				base-ntp-bin
+./usr/sbin/ntpd					base-ntp-bin
+./usr/sbin/ntpdate				base-ntp-bin
+./usr/sbin/ntpdc				base-ntp-bin
+./usr/sbin/ntpq					base-ntp-bin
+./usr/sbin/ntptime				base-ntp-bin
 ./usr/sbin/ntptimeset				base-obsolete		obsolete
-./usr/sbin/ntptrace				base-ntp-bin		ntp
+./usr/sbin/ntptrace				base-ntp-bin
 ./usr/sbin/nvmmctl				base-sysutil-bin	nvmm
-./usr/sbin/omshell				base-dhcpd-bin		dhcpd
+./usr/sbin/omshell				base-dhcpd-bin
 ./usr/sbin/opensnoop				base-debug-bin		dtrace
 ./usr/sbin/pac					base-sysutil-bin
 ./usr/sbin/paxctl				base-sysutil-bin
@@ -1668,10 +1668,10 @@
 ./usr/sbin/postsuper				base-postfix-bin	postfix
 ./usr/sbin/posttls-finger			base-postfix-bin	postfix
 ./usr/sbin/powerd				base-sysutil-bin
-./usr/sbin/pppd					base-ppp-bin		ppp
-./usr/sbin/pppdump				base-ppp-bin		ppp
+./usr/sbin/pppd					base-ppp-bin
+./usr/sbin/pppdump				base-ppp-bin
 ./usr/sbin/pppoectl				base-obsolete		obsolete
-./usr/sbin/pppstats				base-ppp-bin		ppp
+./usr/sbin/pppstats				base-ppp-bin
 ./usr/sbin/praliases				base-obsolete		obsolete
 ./usr/sbin/procsystime				base-debug-bin		dtrace
 ./usr/sbin/psrset				base-sysutil-bin
@@ -1721,7 +1721,7 @@
 ./usr/sbin/rump_ext2fs				base-puffs-bin	rump
 ./usr/sbin/rump_ffs				base-puffs-bin	rump
 ./usr/sbin/rump_hfs				base-puffs-bin	rump
-./usr/sbin/rump_lfs				base-puffs-bin	rump,lfs
+./usr/sbin/rump_lfs				base-puffs-bin	rump
 ./usr/sbin/rump_msdos				base-puffs-bin	rump
 ./usr/sbin/rump_nfs				base-puffs-bin	rump
 ./usr/sbin/rump_ntfs				base-puffs-bin	rump
@@ -1745,9 +1745,9 @@
 ./usr/sbin/setkey				base-obsolete		obsolete
 ./usr/sbin/setobjstat				base-sysutil-bin
 ./usr/sbin/sliplogin				base-slip-bin
-./usr/sbin/slstats				base-slip-bin		ppp
+./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
-./usr/sbin/sntp					base-ntp-bin		ntp
+./usr/sbin/sntp					base-ntp-bin
 ./usr/sbin/spamdb				base-obsolete		obsolete
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
@@ -1770,10 +1770,10 @@
 ./usr/sbin/tcpdchk				base-netutil-bin
 ./usr/sbin/tcpdmatch				base-netutil-bin
 ./usr/sbin/tcpdrop				base-netutil-bin
-./usr/sbin/tcpdump				base-netutil-bin	tcpdump
+./usr/sbin/tcpdump				base-netutil-bin
 ./usr/sbin/tcsd					base-tpm-bin		tpm
-./usr/sbin/timed				base-timed-bin		timed
-./usr/sbin/timedc				base-timed-bin		timed
+./usr/sbin/timed				base-timed-bin
+./usr/sbin/timedc				base-timed-bin
 ./usr/sbin/tpm_changeownerauth			base-tpm-bin		tpm
 ./usr/sbin/tpm_clear				base-tpm-bin		tpm
 ./usr/sbin/tpm_createek				base-tpm-bin		tpm
@@ -1867,8 +1867,8 @@
 ./usr/share/calendar/calendar.music		base-calendar-share	share
 ./usr/share/calendar/calendar.netbsd		base-calendar-share	share
 ./usr/share/calendar/calendar.usholiday		base-calendar-share	share
-./usr/share/dhcpd				base-dhcpd-bin		dhcpd
-./usr/share/dhcpd/pxe.defs			base-dhcpd-bin		dhcpd,share
+./usr/share/dhcpd				base-dhcpd-bin
+./usr/share/dhcpd/pxe.defs			base-dhcpd-bin		share
 ./usr/share/dict				base-reference-share
 ./usr/share/dict/papers				base-reference-share
 ./usr/share/dict/special			base-reference-share
@@ -2015,7 +2015,7 @@
 ./usr/share/examples/blocklist			base-sys-examples
 ./usr/share/examples/blocklist/blocklistd.conf	base-sys-examples
 ./usr/share/examples/blocklist/npf.conf		base-sys-examples
-./usr/share/examples/dhcp			base-dhcpd-examples	dhcpd
+./usr/share/examples/dhcp			base-dhcpd-examples
 ./usr/share/examples/dhcpcd			base-dhcpcd-examples
 ./usr/share/examples/dhcpcd/hooks		base-dhcpcd-examples
 ./usr/share/examples/disktab			base-sys-examples
