@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.49 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.50 2022/06/07 16:27:24 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -206,6 +206,20 @@ _npf_rules_process(nl_config_t *ncf, nvlist_t *dict, const char *key)
 }
 
 /*
+ * _npf_init_error: initialize the error structure with the message
+ * from the current error number
+ */
+static int
+_npf_init_error(int error, npf_error_t *errinfo)
+{
+	if (error && errinfo) {
+		memset(errinfo, 0, sizeof(*errinfo));
+		errinfo->error_msg = strerror(error);
+	}
+	return error;
+}
+
+/*
  * _npf_extract_error: check the error number field and extract the
  * error details into the npf_error_t structure.
  */
@@ -346,7 +360,7 @@ npf_config_submit(nl_config_t *ncf, int fd, npf_error_t *errinfo)
 
 	error = _npf_xfer_fd(fd, IOC_NPF_LOAD, ncf->ncf_dict, &resp);
 	if (error) {
-		return error;
+		return _npf_init_error(errno, errinfo);
 	}
 	error = _npf_extract_error(resp, errinfo);
 	nvlist_destroy(resp);
@@ -1258,12 +1272,12 @@ npf_table_replace(int fd, nl_table_t *tl, npf_error_t *errinfo)
 
 	/* Ensure const tables are built. */
 	if ((error = _npf_table_build_const(tl)) != 0) {
-		return error;
+		return _npf_init_error(errno, errinfo);
 	}
 	error = _npf_xfer_fd(fd, IOC_NPF_TABLE_REPLACE, tl->table_dict, &resp);
 	if (error) {
 		assert(resp == NULL);
-		return errno;
+		return _npf_init_error(errno, errinfo);
 	}
 	error = _npf_extract_error(resp, errinfo);
 	nvlist_destroy(resp);
