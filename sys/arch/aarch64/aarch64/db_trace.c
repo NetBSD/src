@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.18 2022/06/07 08:08:31 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.19 2022/06/07 23:55:25 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.18 2022/06/07 08:08:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19 2022/06/07 23:55:25 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -598,11 +598,90 @@ db_sp_trace(struct trapframe *tf, db_addr_t fp, db_expr_t count, int flags,
 	}
 }
 
+static void
+db_fp_trace(struct trapframe *tf, db_addr_t fp, db_expr_t count, int flags,
+    void (*pr)(const char *, ...) __printflike(1, 2))
+{
+	uint64_t lr;
+	uint64_t lastlr, lastfp;
+
+	if (tf != NULL) {
+		pr_frame(tf, pr);
+		lastfp = lastlr = lr = fp = 0;
+
+		db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
+		db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
+		lr = aarch64_strip_pac(lr);
+
+		pr_traceaddr("fp", fp, lr - 4, flags, pr);
+	}
+
+	for (; (count > 0) && (fp != 0); count--) {
+
+		lastfp = fp;
+		fp = lr = 0;
+		/*
+		 * normal stack frame
+		 *  fp[0]  saved fp(x29) value
+		 *  fp[1]  saved lr(x30) value
+		 */
+		db_read_bytes(lastfp + 0, sizeof(fp), (char *)&fp);
+		db_read_bytes(lastfp + 8, sizeof(lr), (char *)&lr);
+		lr = aarch64_strip_pac(lr);
+
+		if (lr == 0 || ((flags & TRACEFLAG_USERSPACE) == 0 &&
+		    IN_USER_VM_ADDRESS(lr)))
+			break;
+
+		if (((char *)(lr - 4) == (char *)el0_trap) ||
+		    ((char *)(lr - 4) == (char *)el1_trap)) {
+
+			tf = (struct trapframe *)fp;
+
+			lastfp = (uint64_t)tf;
+			lastlr = lr;
+			lr = fp = 0;
+			db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr),
+			    (char *)&lr);
+			if (lr == 0) {
+				/*
+				 * The exception may have been from a
+				 * jump to null, so the null pc we
+				 * would return to is useless.  Try
+				 * x[30] instead -- that will be the
+				 * return address for the jump.
+				 */
+				db_read_bytes((db_addr_t)&tf->tf_reg[30],
+				    sizeof(lr), (char *)&lr);
+			}
+			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp),
+			    (char *)&fp);
+			lr = aarch64_strip_pac(lr);
+
+			pr_traceaddr("tf", (db_addr_t)tf, lastlr - 4, flags, pr);
+
+			if (lr == 0)
+				break;
+
+			pr_frame(tf, pr);
+			tf = NULL;
+
+			if ((flags & TRACEFLAG_USERSPACE) == 0 &&
+			    IN_USER_VM_ADDRESS(lr))
+				break;
+
+			pr_traceaddr("fp", fp, lr, flags, pr);
+		} else {
+			pr_traceaddr("fp", fp, lr - 4, flags, pr);
+		}
+	}
+}
+
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...) __printflike(1, 2))
 {
-	uint64_t lr, fp, lastlr, lastfp;
+	uint64_t fp;
 	struct trapframe *tf = NULL;
 	int flags = 0;
 	bool trace_thread = false;
@@ -734,78 +813,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	if (trace_sp) {
 		/* trace $lr pushed to sp */
 		db_sp_trace(tf, fp, count, flags, pr);
-		return;
-	}
-
-	/* trace $fp linked list */
-	if (tf != NULL) {
-		pr_frame(tf, pr);
-		lastfp = lastlr = lr = fp = 0;
-
-		db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
-		db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
-		lr = aarch64_strip_pac(lr);
-
-		pr_traceaddr("fp", fp, lr - 4, flags, pr);
-	}
-
-	for (; (count > 0) && (fp != 0); count--) {
-
-		lastfp = fp;
-		fp = lr = 0;
-		/*
-		 * normal stack frame
-		 *  fp[0]  saved fp(x29) value
-		 *  fp[1]  saved lr(x30) value
-		 */
-		db_read_bytes(lastfp + 0, sizeof(fp), (char *)&fp);
-		db_read_bytes(lastfp + 8, sizeof(lr), (char *)&lr);
-		lr = aarch64_strip_pac(lr);
-
-		if (lr == 0 || ((flags & TRACEFLAG_USERSPACE) == 0 &&
-		    IN_USER_VM_ADDRESS(lr)))
-			break;
-
-		if (((char *)(lr - 4) == (char *)el0_trap) ||
-		    ((char *)(lr - 4) == (char *)el1_trap)) {
-
-			tf = (struct trapframe *)fp;
-
-			lastfp = (uint64_t)tf;
-			lastlr = lr;
-			lr = fp = 0;
-			db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr),
-			    (char *)&lr);
-			if (lr == 0) {
-				/*
-				 * The exception may have been from a
-				 * jump to null, so the null pc we
-				 * would return to is useless.  Try
-				 * x[30] instead -- that will be the
-				 * return address for the jump.
-				 */
-				db_read_bytes((db_addr_t)&tf->tf_reg[30],
-				    sizeof(lr), (char *)&lr);
-			}
-			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp),
-			    (char *)&fp);
-			lr = aarch64_strip_pac(lr);
-
-			pr_traceaddr("tf", (db_addr_t)tf, lastlr - 4, flags, pr);
-
-			if (lr == 0)
-				break;
-
-			pr_frame(tf, pr);
-			tf = NULL;
-
-			if ((flags & TRACEFLAG_USERSPACE) == 0 &&
-			    IN_USER_VM_ADDRESS(lr))
-				break;
-
-			pr_traceaddr("fp", fp, lr, flags, pr);
-		} else {
-			pr_traceaddr("fp", fp, lr - 4, flags, pr);
-		}
+	} else {
+		/* trace $fp linked list */
+		db_fp_trace(tf, fp, count, flags, pr);
 	}
 }
