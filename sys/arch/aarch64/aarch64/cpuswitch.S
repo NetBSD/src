@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.36 2022/06/03 19:59:59 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.37 2022/06/07 04:12:10 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.36 2022/06/03 19:59:59 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.37 2022/06/07 04:12:10 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -61,8 +61,13 @@ ENTRY_NP(cpu_switchto)
 	stp	x27, x28, [sp, #TF_X27]
 	stp	x29, x30, [sp, #TF_X29]
 #ifdef DDB
-	str	lr, [sp, #TF_PC]		/* for backtrace */
-	str	xzr, [sp, #TF_SP]		/* mark as switchframe */
+	/* mark as switchframe for backtrace */
+	.if TF_SP + 8 == TF_PC
+	stp	xzr, lr, [sp, #TF_SP]
+	.else
+	str	xzr, [sp, #TF_SP]
+	str	lr, [sp, #TF_PC]
+	.endif
 #endif
 
 	/*
