@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.1 2022/06/02 05:09:01 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.2 2022/06/07 08:08:31 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.1 2022/06/02 05:09:01 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.2 2022/06/07 08:08:31 ryo Exp $");
 #endif /* not lint */
 
 #include <kvm.h>
@@ -43,10 +43,12 @@ __RCSID("$NetBSD: aarch64.c,v 1.1 2022/06/02 05:09:01 ryo Exp $");
 
 vaddr_t el0_trap;
 vaddr_t el1_trap;
+vaddr_t cpu_switchto_softint;
 
 static struct nlist nl[] = {
-	{ .n_name = "el0_trap" },	/* 0 */
-	{ .n_name = "el1_trap" },	/* 1 */
+	{ .n_name = "el0_trap" },		/* 0 */
+	{ .n_name = "el1_trap" },		/* 1 */
+	{ .n_name = "cpu_switchto_softint" },	/* 2 */
 	{ .n_name = NULL },
 };
 
@@ -58,4 +60,5 @@ db_mach_init(kvm_t *kd)
 
 	el0_trap = nl[0].n_value;
 	el1_trap = nl[1].n_value;
+	cpu_switchto_softint = nl[2].n_value;
 }

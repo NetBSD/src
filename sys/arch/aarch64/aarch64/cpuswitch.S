@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.37 2022/06/07 04:12:10 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.38 2022/06/07 08:08:31 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.37 2022/06/07 04:12:10 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.38 2022/06/07 08:08:31 ryo Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -158,6 +158,9 @@ END(cpu_switchto)
  * }
  */
 ENTRY_NP(cpu_switchto_softint)
+#ifdef DDB
+	mov	x7, sp			/* keep original sp for backtrace */
+#endif
 	stp	x19, x20, [sp, #-16]!	/* save */
 	sub	sp, sp, #TF_SIZE	/* make switchframe */
 	adr	x2, softint_cleanup	/* return address for cpu_switchto() */
@@ -180,7 +183,13 @@ ENTRY_NP(cpu_switchto_softint)
 #ifdef KASAN
 	/* clear the new stack */
 	stp	x0, x1, [sp, #-16]!
+#ifdef DDB
+	stp	x7, lr, [sp, #-16]!	/* original sp and lr */
+#endif
 	bl	_C_LABEL(kasan_softint)
+#ifdef DDB
+	ldp	x7, lr, [sp], #16
+#endif
 	ldp	x0, x1, [sp], #16
 #endif
 
@@ -212,9 +221,18 @@ ENTRY_NP(cpu_switchto_softint)
 #endif
 	ENABLE_INTERRUPT
 
+#ifdef DDB
+	/* for db_trace.c:db_sp_trace() */
+	stp	x7, lr, [sp, #-16]!	/* push original sp,lr for backtrace info */
+#endif
+
 	/* softint_dispatch(pinned_lwp, ipl) */
 	mov	x0, x19			/* x0 := pinned_lwp */
 	bl	_C_LABEL(softint_dispatch)
+
+#ifdef DDB
+	add	sp, sp, #16		/* pop backtrace info */
+#endif
 
 	ldr	x6, [x19, #L_PCB]	/* x6 = lwp_getpcb(curlwp) */
 	ldr	x4, [x6, #PCB_TF]	/* x4 := pinned_lwp->l_addr->pcb_tf */
