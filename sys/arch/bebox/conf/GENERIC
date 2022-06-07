@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.165 2021/01/21 06:51:54 nia Exp $
+# $NetBSD: GENERIC,v 1.166 2022/06/07 18:30:49 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.165 $"
+#ident 		"GENERIC-$Revision: 1.166 $"
 
 maxusers	32
 
@@ -299,7 +299,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	sequencer		# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
