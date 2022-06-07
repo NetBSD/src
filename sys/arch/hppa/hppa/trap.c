@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.117 2022/05/28 21:14:56 andvar Exp $	*/
+/*	$NetBSD: trap.c,v 1.118 2022/06/07 06:06:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2022/05/28 21:14:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.118 2022/06/07 06:06:46 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -593,7 +593,7 @@ trap(int type, struct trapframe *frame)
 
 	switch (type) {
 	case T_NONEXIST:
-	case T_NONEXIST|T_USER:
+	case T_NONEXIST | T_USER:
 #if !defined(DDB) && !defined(KGDB)
 		/* we've got screwed up by the central scrutinizer */
 		panic ("trap: elvis has just left the building!");
@@ -601,7 +601,7 @@ trap(int type, struct trapframe *frame)
 #else
 		goto dead_end;
 #endif
-	case T_RECOVERY|T_USER:
+	case T_RECOVERY | T_USER:
 #ifdef USERTRACE
 		for (;;) {
 			if (frame->tf_iioq_head != rctr_next_iioq)
@@ -932,7 +932,7 @@ do_onfault:
 		break;
 
 	case T_INTERRUPT:
-	case T_INTERRUPT|T_USER:
+	case T_INTERRUPT | T_USER:
 		hppa_intr(frame);
 		mtctl(frame->tf_eiem, CR_EIEM);
 		break;
