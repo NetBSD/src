@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.95 2021/08/20 20:25:27 andvar Exp $
+#	$NetBSD: P5064,v 1.96 2022/06/07 18:33:41 martin Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.95 $"
+#ident 		"P5064-$Revision: 1.96 $"
 
 maxusers 32
 
@@ -380,7 +380,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-pseudo-device	sequencer		# MIDI sequencer
+#pseudo-device	sequencer		# MIDI sequencer
 #options 	RND_COM			# use "com" randomness too
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	drvctl			# user control of drive subsystem
