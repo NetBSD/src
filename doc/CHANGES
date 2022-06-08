@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2885 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2886 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -582,9 +582,17 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[rillig 20220503]
 	make(1): Add "randomize-targets" for debugging race conditions.
 		[rillig 20220507]
+	sysinst(8): Prompt for hostname even when using DHCP.
+		[jmcneill 20220515]
+	hyperv: Improved HyperV support: added support for multichannel in
+		vmbus(4), added support for changing the MTU, TX aggregation,
+		multichannel, and improved checksum offloading and VLAN
+		support in hvn(4). [nonaka 20220520]
 	gomoku(6): Add highlighting, fix input handling, announce tie early,
 		prevent overly long thinking. [rillig 20220528]
 	powerpc: Add routines to fix userland unaligned memory access for 403.
 		[rin 20220530]
 	powerpc: Unify libc binary among all 32-bit powerpc ports.
 		[rin 20220530]
+	getentropy(3): Re-introduced getentropy function to libc.
+		[riastradh 20220531]
