@@ -1,4 +1,4 @@
-/* $NetBSD: am335x_trng.c,v 1.5 2022/03/19 11:55:03 riastradh Exp $ */
+/* $NetBSD: am335x_trng.c,v 1.6 2022/06/08 23:12:27 andvar Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.5 2022/03/19 11:55:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_trng.c,v 1.6 2022/06/08 23:12:27 andvar Exp $");
 
 #include "opt_omap.h"
 
@@ -94,7 +94,7 @@ trng_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = obio->obio_iot;
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size,
 	    0, &sc->sc_ioh) != 0) {
-		aprint_error(": couldn't map address spcae\n");
+		aprint_error(": couldn't map address space\n");
 		return;
 	}
 
