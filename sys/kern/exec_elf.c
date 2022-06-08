@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.102 2021/05/18 08:59:44 hannken Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.103 2022/06/08 10:12:42 rin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.102 2021/05/18 08:59:44 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.103 2022/06/08 10:12:42 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1082,6 +1082,9 @@ netbsd_elf_note(struct exec_package *epp,
 		break;
 
 	case ELF_NOTE_TYPE_GO_BUILDID_TAG:
+		break;
+
+	case ELF_NOTE_TYPE_FDO_PACKAGING_METADATA:
 		break;
 
 	case ELF_NOTE_TYPE_NETBSD_EMUL_TAG:
