@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.20 2021/09/07 11:41:31 nia Exp $	*/
+/*	$NetBSD: boot.c,v 1.21 2022/06/08 21:43:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -453,8 +453,6 @@ command_boot(char *arg)
 	} else {
 		int i;
 
-		if (howto == 0)
-			bootdefault();
 		for (i = 0; i < NUMNAMES; i++) {
 			bootit(names[i][0], howto);
 			bootit(names[i][1], howto);
