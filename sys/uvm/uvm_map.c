@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.401 2022/06/06 07:00:02 rin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.402 2022/06/08 16:55:00 macallan Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.401 2022/06/06 07:00:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.402 2022/06/08 16:55:00 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1822,7 +1822,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 #define	INVARIANTS()							      \
 	uvm_findspace_invariants(map, orig_hint, length, uobj, uoffset, align,\
 	    flags, hint, entry, __LINE__)
-	struct vm_map_entry *entry;
+	struct vm_map_entry *entry = NULL;
 	struct vm_map_entry *child, *prev, *tmp;
 	vaddr_t orig_hint __diagused;
 	const int topdown = map->flags & VM_MAP_TOPDOWN;
