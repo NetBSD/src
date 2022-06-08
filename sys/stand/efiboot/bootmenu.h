@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.h,v 1.1 2020/06/21 23:53:26 jmcneill Exp $	*/
+/*	$NetBSD: bootmenu.h,v 1.2 2022/06/08 21:55:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,6 +33,5 @@
 
 int parsebootconf(const char *);
 void doboottypemenu(void);
-void bootdefault(void);
 
 #endif /* !_BOOTMENU_H */
