@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1308 2022/06/06 13:28:55 nia Exp $
+# $NetBSD: mi,v 1.1309 2022/06/08 19:27:37 uwe Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5066,6 +5066,14 @@
 ./usr/share/wscons/fonts/ter-i24n.wsf		base-util-share		share
 ./usr/share/wscons/fonts/ter-i28n.wsf		base-util-share		share
 ./usr/share/wscons/fonts/ter-i32n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-112n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-116b.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-116n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-116v.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-120n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-124n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-128n.wsf		base-util-share		share
+./usr/share/wscons/fonts/ter-132n.wsf		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.808		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.810		base-util-share		share
 ./usr/share/wscons/fonts/vt220h.814		base-util-share		share
