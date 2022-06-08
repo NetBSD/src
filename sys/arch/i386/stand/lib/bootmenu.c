@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.17 2018/04/02 09:44:18 nonaka Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.18 2022/06/08 21:55:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -126,24 +126,6 @@ docommandchoice(int choice)
 		/* Skip leading spaces */
 		for (; *ic == ' '; ic++);
 	} while (*ic);
-}
-
-void
-bootdefault(void)
-{
-	int choice;
-	static int entered;
-
-	if (bootcfg_info.nummenu > 0) {
-		if (entered) {
-			printf("default boot twice, skipping...\n");
-			return;
-		}
-		entered = 1;
-		choice = bootcfg_info.def;
-		printf("command(s): %s\n", bootcfg_info.command[choice]);
-		docommandchoice(choice);
-	}
 }
 
 __dead void
