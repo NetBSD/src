@@ -1,4 +1,4 @@
-/* $NetBSD: omap_edma.c,v 1.6 2022/05/21 19:07:23 andvar Exp $ */
+/* $NetBSD: omap_edma.c,v 1.7 2022/06/08 23:12:27 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_edma.c,v 1.6 2022/05/21 19:07:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_edma.c,v 1.7 2022/06/08 23:12:27 andvar Exp $");
 
 #include "opt_omap.h"
 
@@ -146,7 +146,7 @@ edma_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	if (bus_space_map(sc->sc_iot, mb->mb_iobase, mb->mb_iosize,
 	    0, &sc->sc_ioh) != 0) {
-		aprint_error(": couldn't map address spcae\n");
+		aprint_error(": couldn't map address space\n");
 		return;
 	}
 
