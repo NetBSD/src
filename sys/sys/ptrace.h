@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.74 2020/11/04 18:32:12 pgoyette Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.75 2022/06/08 23:12:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -135,7 +135,7 @@ struct ptrace_io_desc {
 
 /* piod_op */
 #define	PIOD_READ_D	1	/* read from D space */
-#define	PIOD_WRITE_D	2	/* write to D spcae */
+#define	PIOD_WRITE_D	2	/* write to D space */
 #define	PIOD_READ_I	3	/* read from I space */
 #define	PIOD_WRITE_I	4	/* write to I space */
 #define PIOD_READ_AUXV	5	/* Read from aux array */
