@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.77 2021/12/24 18:12:58 jmcneill Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.78 2022/06/08 19:47:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.77 2021/12/24 18:12:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.78 2022/06/08 19:47:10 uwe Exp $");
 
 #include "opt_wsfont.h"
 
@@ -1045,7 +1045,6 @@ static const struct wsfont_level1_glyphmap encodings[] = {
 	{ iso7_level1, 0, 0x26 },	/* WSDISPLAY_FONTENC_ISO7 */
 };
 
-#define MAX_ENCODING (sizeof(encodings) / sizeof(encodings[0]))
 
 /*
  * Remap Unicode character to glyph
@@ -1057,7 +1056,7 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 	const struct wsfont_level2_glyphmap *map2;
 	int hi, lo;
 
-	if (font->encoding < 0 || font->encoding >= MAX_ENCODING)
+	if (font->encoding < 0 || font->encoding >= __arraycount(encodings))
 		return (-1);
 
 	hi = (c >> 8);
