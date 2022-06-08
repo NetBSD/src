@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.169 2022/05/28 22:00:55 andvar Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.170 2022/06/08 10:12:42 rin Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1026,6 +1026,19 @@ typedef struct {
 #define ELF_NOTE_GO_BUILDID_NAMESZ	4
 #define ELF_NOTE_GO_BUILDID_DESCSZ	40
 #define ELF_NOTE_GO_BUILDID_NAME	"Go\0\0"
+
+/*
+ * FDO-specific note type: packaging metadata
+ * name: FDO\0
+ * namesz: 4
+ * desc:
+ *	a single JSON object encoded as a zero-terminated UTF-8 string
+ *	(see https://systemd.io/COREDUMP_PACKAGE_METADATA/)
+ * descsz: variable
+ */
+#define	ELF_NOTE_TYPE_FDO_PACKAGING_METADATA	0xcafe1a7e
+#define	ELF_NOTE_FDO_PACKAGING_METADATA_NAMESZ	4
+#define	ELF_NOTE_FDO_PACKAGING_METADATA_NAME	"FDO\0"
 
 /* NetBSD-specific note type: NetBSD ABI version.
  * name: NetBSD\0\0
