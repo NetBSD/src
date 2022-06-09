@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.167 2020/09/08 14:12:57 christos Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.168 2022/06/09 07:01:27 knakahara Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.167 2020/09/08 14:12:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.168 2022/06/09 07:01:27 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -698,7 +698,7 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
     u_int fport_arg, const struct sockaddr *src, u_int lport_arg, int cmd,
     void *cmdarg, void (*notify)(struct in6pcb *, int))
 {
-	struct inpcb_hdr *inph, *ninph;
+	struct inpcb_hdr *inph;
 	struct sockaddr_in6 sa6_src;
 	const struct sockaddr_in6 *sa6_dst;
 	u_int16_t fport = fport_arg, lport = lport_arg;
@@ -737,7 +737,7 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 	}
 
 	errno = inet6ctlerrmap[cmd];
-	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+	TAILQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
 		struct rtentry *rt = NULL;
 
@@ -843,13 +843,13 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 void
 in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 {
-	struct inpcb_hdr *inph, *ninph;
+	struct inpcb_hdr *inph;
 	struct ip6_moptions *im6o;
 	struct in6_multi_mship *imm, *nimm;
 
 	KASSERT(ifp != NULL);
 
-	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+	TAILQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
 		bool need_unlock = false;
 		if (in6p->in6p_af != AF_INET6)
@@ -896,9 +896,9 @@ void
 in6_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 {
 	struct rtentry *rt;
-	struct inpcb_hdr *inph, *ninph;
+	struct inpcb_hdr *inph;
 
-	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+	TAILQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
