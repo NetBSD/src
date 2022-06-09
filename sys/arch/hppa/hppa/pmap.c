@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2022/06/09 16:38:23 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119 2022/06/09 16:41:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2022/06/09 16:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2022/06/09 16:41:25 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1501,7 +1501,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		}
 		batch = pdemask == sva && sva + PDE_SIZE <= eva;
 
-//XXXNH valid check?
 		if ((pte = pmap_pte_get(pde, sva))) {
 
 			/* TODO measure here the speed tradeoff
@@ -1511,8 +1510,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			pmap_pte_flush(pmap, sva, pte);
 			if (pte & PTE_PROT(TLB_WIRED))
 				pmap->pm_stats.wired_count--;
-
-//XXXNH move to pmap_pv_remove?
 			pmap->pm_stats.resident_count--;
 
 			/* iff properly accounted pde will be dropped anyway */
