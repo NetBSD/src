@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.27 2022/05/24 06:18:34 andvar Exp $	*/
+/*	$NetBSD: partitions.h,v 1.28 2022/06/09 18:26:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -55,11 +55,21 @@
 #include <sys/disklabel.h>
 #undef FSTYPE_ENUMNAME
 
+/*
+ * Use random values (outside uint8_t range) to mark special file system
+ * types that are not in the FSTYPE enumeration.
+ */
 #ifndef	FS_TMPFS
-#define	FS_TMPFS	256	/* random value (outside uint8_t range) */
+#define	FS_TMPFS	256	/* tmpfs (prefered for /tmp if available) */
 #endif
 #ifndef	FS_MFS
-#define	FS_MFS		257	/* another random (out of range) value */
+#define	FS_MFS		257	/* mfs, alternative to tmpfs if that is
+				   not available */
+#endif
+#ifndef	FS_EFI_SP
+#define	FS_EFI_SP	258	/* EFI system partition, uses FS_MSDOS,
+				   but may have a different partition
+				   type */
 #endif
 
 #define	MAX_LABEL_LEN		128	/* max. length of a partition label */
