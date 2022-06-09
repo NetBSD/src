@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.186 2021/10/19 20:01:09 roy Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.187 2022/06/09 07:01:27 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.186 2021/10/19 20:01:09 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.187 2022/06/09 07:01:27 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -719,12 +719,12 @@ void
 in_pcbnotifyall(struct inpcbtable *table, struct in_addr faddr, int errno,
     void (*notify)(struct inpcb *, int))
 {
-	struct inpcb_hdr *inph, *ninph;
+	struct inpcb_hdr *inph;
 
 	if (in_nullhost(faddr) || notify == 0)
 		return;
 
-	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+	TAILQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
 		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
@@ -768,9 +768,9 @@ in_purgeifmcast(struct ip_moptions *imo, struct ifnet *ifp)
 void
 in_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 {
-	struct inpcb_hdr *inph, *ninph;
+	struct inpcb_hdr *inph;
 
-	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+	TAILQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
 		struct inpcb *inp = (struct inpcb *)inph;
 		bool need_unlock = false;
 
@@ -795,9 +795,9 @@ void
 in_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 {
 	struct rtentry *rt;
-	struct inpcb_hdr *inph, *ninph;
+	struct inpcb_hdr *inph;
 
-	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+	TAILQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
 		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
