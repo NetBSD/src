@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.40 2022/05/18 16:39:03 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.41 2022/06/09 18:26:06 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1325,6 +1325,7 @@ message free_space_line {Miejsce od $0..$1 $3 (rozmiar $2 $3)\n}
 
 message	fs_type_ffsv2	{FFSv2}
 message	fs_type_ffs	{FFS}
+message	fs_type_efi_sp	{EFI system partition}
 message fs_type_ext2old	{Linux Ext2 (old)}
 message	other_fs_type	{Inny typ}
 
