@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.33 2021/05/09 11:06:20 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.34 2022/06/09 18:26:06 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.33 2021/05/09 11:06:20 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.34 2022/06/09 18:26:06 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -525,11 +525,12 @@ renumber_partitions(struct partition_usage_set *pset)
  * Most often used file system types, we offer them in a first level menu.
  */
 static const uint edit_fs_common_types[] =
-    { FS_BSDFFS, FS_SWAP, FS_MSDOS, FS_BSDLFS, FS_EX2FS };
+    { FS_BSDFFS, FS_SWAP, FS_MSDOS, FS_EFI_SP, FS_BSDLFS, FS_EX2FS };
 
 /*
  * Functions for uncommon file system types - we offer the full list,
- * but put FFSv2 and FFSv1 at the front.
+ * but put FFSv2 and FFSv1 at the front and duplicat FS_MSDOS as
+ * EFI system partition.
  */
 static void
 init_fs_type_ext(menudesc *menu, void *arg)
@@ -560,6 +561,13 @@ init_fs_type_ext(menudesc *menu, void *arg)
 		if (i == t) {
 			menu->cursel = ndx;
 			break;
+		}
+		if (i == FS_MSDOS) {
+			ndx++;
+			if (t == FS_EFI_SP) {
+				menu->cursel = ndx;
+				break;
+			}
 		}
 		ndx++;
 	}
@@ -596,6 +604,14 @@ set_fstype_ext(menudesc *menu, void *arg)
 			goto found_type;
 		}
 		ndx++;
+		if (i == FS_MSDOS) {
+			ndx++;
+			if (ndx == (size_t)menu->cursel) {
+				edit->info.fs_type = FS_EFI_SP;
+				edit->info.fs_sub_type = 0;
+				goto found_type;
+			}
+		}
 	}
 	return 1;
 
@@ -623,7 +639,7 @@ edit_fs_type_ext(menudesc *menu, void *arg)
 	int m;
 	size_t i, ndx, cnt;
 
-	cnt = __arraycount(fstypenames);
+	cnt = __arraycount(fstypenames)+1;
 	opts = calloc(cnt, sizeof(*opts));
 	if (opts == NULL)
 		return 1;
@@ -645,6 +661,11 @@ edit_fs_type_ext(menudesc *menu, void *arg)
 		opts[ndx].opt_name = fstypenames[i];
 		opts[ndx].opt_action = set_fstype_ext;
 		ndx++;
+		if (i == FS_MSDOS) {
+			opts[ndx] = opts[ndx-1];
+			opts[ndx].opt_name = getfslabelname(FS_EFI_SP, 0);
+			ndx++;
+		}
 	}
 	opts[ndx].opt_name = msg_string(MSG_fs_type_ext2old);
 	opts[ndx].opt_action = set_fstype_ext;

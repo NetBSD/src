@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.81 2022/06/02 15:36:08 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.82 2022/06/09 18:26:06 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,6 +112,8 @@ getfslabelname(uint f, uint f_version)
 		return "tmpfs";
 	else if (f == FS_MFS)
 		return "mfs";
+	else if (f == FS_EFI_SP)
+		return msg_string(MSG_fs_type_efi_sp);
 	else if (f == FS_BSDFFS && f_version > 0)
 		return f_version == 2 ?
 		    msg_string(MSG_fs_type_ffsv2) : msg_string(MSG_fs_type_ffs);

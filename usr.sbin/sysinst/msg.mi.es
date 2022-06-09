@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.34 2022/05/18 16:39:03 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.35 2022/06/09 18:26:06 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1378,6 +1378,7 @@ message free_space_line {Espacio en $0..$1 $3 (tamaño $2 $3)\n}
 
 message	fs_type_ffsv2	{FFSv2}
 message	fs_type_ffs	{FFS}
+message	fs_type_efi_sp	{EFI system partition}
 message fs_type_ext2old	{Linux Ext2 (old)}
 message	other_fs_type	{Other type}
 
