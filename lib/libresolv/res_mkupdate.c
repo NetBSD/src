@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkupdate.c,v 1.2 2012/11/19 13:45:00 christos Exp $	*/
+/*	$NetBSD: res_mkupdate.c,v 1.3 2022/06/09 14:02:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #if 0
 static const char rcsid[] = "Id: res_mkupdate.c,v 1.10 2008/12/11 09:59:00 marka Exp ";
 #else
-__RCSID("$NetBSD: res_mkupdate.c,v 1.2 2012/11/19 13:45:00 christos Exp $");
+__RCSID("$NetBSD: res_mkupdate.c,v 1.3 2022/06/09 14:02:30 andvar Exp $");
 #endif
 
 #include "port_before.h"
@@ -750,7 +750,7 @@ getword_str(char *buf, size_t size, u_char **startpp, u_char *endp) {
 }
 
 /*%
- * get a white spae delimited string from memory.  Process quoted strings
+ * get a whitespace delimited string from memory.  Process quoted strings
  * and \\DDD escapes.  Return length or -1 on error.  Returned string may
  * contain nulls.
  */
