@@ -1,0 +1,1 @@
+msg_132_lp64.c(13): warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy [132]
