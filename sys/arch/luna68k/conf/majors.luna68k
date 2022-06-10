@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.24 2020/04/04 16:06:14 jdolecek Exp $
+#	$NetBSD: majors.luna68k,v 1.25 2022/06/10 21:42:23 tsutsui Exp $
 #
 # Device majors for luna68k
 #
@@ -40,6 +40,7 @@ device-major	ksyms		char 38			ksyms
 device-major	wsfont		char 39			wsfont
 device-major	xp		char 40			xp
 device-major	lcd		char 41			lcd
+device-major	audio		char 42			audio
 
 #device-major	obsolete	char 98			obsolete (nsmb)
 

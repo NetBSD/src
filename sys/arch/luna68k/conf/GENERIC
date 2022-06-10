@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.132 2022/05/27 16:59:19 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.133 2022/06/10 21:42:23 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -157,7 +157,14 @@ spc1	at mainbus0		# 2nd SCSI on LUNA-II
 fb0	at mainbus0		# 16 or 256 pseudo color
 
 # HD647180X I/O processor
-xp0	at mainbus0
+xpbus0	at mainbus0
+xp0	at xpbus0
+
+# HD647180X I/O processor as PSG PAM audio
+psgpam0	at xpbus0
+audio*	at psgpam?
+#spkr*	at audio?
+#wsbell*	at spkr?
 
 # Workstation Console attachments
 wsdisplay*	at fb?
@@ -203,6 +210,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 pseudo-device	wsmux			# mouse & keyboard multiplexsor

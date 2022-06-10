@@ -1,4 +1,4 @@
-/* $NetBSD: xp.c,v 1.6 2020/12/29 17:17:14 tsutsui Exp $ */
+/* $NetBSD: xp.c,v 1.7 2022/06/10 21:42:23 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2016 Izumi Tsutsui.  All rights reserved.
@@ -29,14 +29,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.6 2020/12/29 17:17:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.7 2022/06/10 21:42:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/kmem.h>
+#include <sys/mman.h>
 #include <sys/errno.h>
 
 #include <uvm/uvm_extern.h>
@@ -45,13 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.6 2020/12/29 17:17:14 tsutsui Exp $");
 #include <machine/board.h>
 #include <machine/xpio.h>
 
+#include <luna68k/dev/xpbusvar.h>
+
 #include "ioconf.h"
-
-#define TRI_PORT_RAM_XP_OFFSET	0x00000
-
-#define XP_SHM_BASE	(TRI_PORT_RAM + TRI_PORT_RAM_XP_OFFSET)
-#define XP_SHM_SIZE	0x00010000	/* 64KB for XP; rest 64KB for lance */
-#define XP_TAS_ADDR	OBIO_TAS
+#include "xplx/xplxdefs.h"
 
 struct xp_softc {
 	device_t	sc_dev;
@@ -61,6 +60,7 @@ struct xp_softc {
 	vaddr_t		sc_tas;
 
 	bool		sc_isopen;
+	int		sc_flags;
 };
 
 static int xp_match(device_t, cfdata_t, void *);
@@ -103,53 +103,16 @@ uint32_t xp_debug = 0;
 
 static bool xp_matched;
 
-/*
- * PIO 0 port C is connected to XP's reset line
- *
- * XXX: PIO port functions should be shared with machdep.c for DIP SWs
- */
-#define PIO_ADDR	OBIO_PIO0_BASE
-#define PORT_A		0
-#define PORT_B		1
-#define PORT_C		2
-#define CTRL		3
-
-/* PIO0 Port C bit definition */
-#define XP_INT1_REQ	0	/* INTR B */
-	/* unused */		/* IBF B */
-#define XP_INT1_ENA	2	/* INTE B */
-#define XP_INT5_REQ	3	/* INTR A */
-#define XP_INT5_ENA	4	/* INTE A */
-	/* unused */		/* IBF A */
-#define PARITY		6	/* PC6 output to enable parity error */
-#define XP_RESET	7	/* PC7 output to reset HD647180 XP */
-
-/* Port control for PC6 and PC7 */
-#define ON		1
-#define OFF		0
-
-static uint8_t put_pio0c(uint8_t bit, uint8_t set)
-{
-	volatile uint8_t * const pio0 = (uint8_t *)PIO_ADDR;
-
-	pio0[CTRL] = (bit << 1) | (set & 0x01);
-
-	return pio0[PORT_C];
-}
-
 static int
 xp_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct xpbus_attach_args *xa = aux;
 
 	/* only one XP processor */
 	if (xp_matched)
 		return 0;
 
-	if (strcmp(maa->ma_name, xp_cd.cd_name))
-		return 0;
-
-	if (maa->ma_addr != XP_SHM_BASE)
+	if (strcmp(xa->xa_name, xp_cd.cd_name))
 		return 0;
 
 	xp_matched = true;
@@ -175,6 +138,7 @@ xp_open(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct xp_softc *sc;
 	int unit;
+	u_int a;
 	
 	DPRINTF(XP_DEBUG_ALL, ("%s\n", __func__));
 
@@ -185,7 +149,23 @@ xp_open(dev_t dev, int flags, int devtype, struct lwp *l)
 	if (sc->sc_isopen)
 		return EBUSY;
 
+	if ((flags & FWRITE) != 0) {
+		/* exclusive if write */
+		a = xp_acquire(DEVID_XPBUS, XP_ACQ_EXCL);
+		if (a == 0)
+			return EBUSY;
+		if (a != (1 << DEVID_XPBUS)) {
+			xp_release(DEVID_XPBUS);
+			return EBUSY;
+		}
+	} else {
+		a = xp_acquire(DEVID_XPBUS, 0);
+		if (a == 0)
+			return EBUSY;
+	}
+
 	sc->sc_isopen = true;
+	sc->sc_flags = flags;
 
 	return 0;
 }
@@ -200,6 +180,9 @@ xp_close(dev_t dev, int flags, int mode, struct lwp *l)
 
 	unit = minor(dev);
 	sc = device_lookup_private(&xp_cd, unit);
+
+	xp_release(DEVID_XPBUS);
+
 	sc->sc_isopen = false;
 
 	return 0;
@@ -221,6 +204,9 @@ xp_ioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 
 	switch (cmd) {
 	case XPIOCDOWNLD:
+		if ((sc->sc_flags & FWRITE) == 0) {
+			return EACCES;
+		}
 		downld = addr;
 		loadsize = downld->size;
 		if (loadsize == 0 || loadsize > sc->sc_shm_size) {
@@ -230,11 +216,12 @@ xp_ioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 		loadbuf = kmem_alloc(loadsize, KM_SLEEP);
 		error = copyin(downld->data, loadbuf, loadsize);
 		if (error == 0) {
-			put_pio0c(XP_RESET, ON);
+			xp_set_shm_dirty();
+			xp_cpu_reset_hold();
 			delay(100);
 			memcpy((void *)sc->sc_shm_base, loadbuf, loadsize);
 			delay(100);
-			put_pio0c(XP_RESET, OFF);
+			xp_cpu_reset_release();
 		} else {
 			DPRINTF(XP_DEBUG_ALL, ("%s: ioctl failed (err =  %d)\n",
 			    __func__, error));
@@ -266,6 +253,9 @@ xp_mmap(dev_t dev, off_t offset, int prot)
 	    offset < sc->sc_shm_size) {
 		pa = m68k_btop(m68k_trunc_page(sc->sc_shm_base) + offset);
 	}
+
+	if ((prot & PROT_WRITE) != 0)
+		xp_set_shm_dirty();
 
 	return pa;
 }
