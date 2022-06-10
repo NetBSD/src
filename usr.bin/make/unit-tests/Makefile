@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.317 2022/06/02 07:34:39 skrll Exp $
+# $NetBSD: Makefile,v 1.318 2022/06/10 21:28:50 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -692,7 +692,7 @@ LIMIT_RESOURCES?=	:
 	echo $$status > ${.TARGET:R}.status
 	@mv ${.TARGET}.tmp ${.TARGET}
 
-# Postprocess the test output so that the results can be compared.
+# Postprocess the test output to make the output platform-independent.
 #
 # always pretend .MAKE was called 'make'
 _SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
