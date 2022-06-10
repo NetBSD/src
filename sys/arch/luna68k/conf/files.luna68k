@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.29 2021/12/26 16:08:20 andvar Exp $
+#	$NetBSD: files.luna68k,v 1.30 2022/06/10 21:42:23 tsutsui Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -48,9 +48,21 @@ attach siotty at sio
 file arch/luna68k/dev/siotty.c		siotty needs-flag
 
 # HD647180X I/O processor
+device xpbus {}
+attach xpbus at mainbus
+file arch/luna68k/dev/xpbus.c		xpbus
+file arch/luna68k/dev/xpcmd.c		xpbus
+file arch/luna68k/dev/xplxfirm.c	xpbus
+
 device xp
-attach xp at mainbus
+attach xp at xpbus
 file arch/luna68k/dev/xp.c		xp
+
+device psgpam: audiobus
+attach psgpam at xpbus
+file arch/luna68k/dev/psgpam.c		psgpam
+file arch/luna68k/dev/psgpam_enc.c	psgpam
+file arch/luna68k/dev/psgpam_table.c	psgpam
 
 device ws: wskbddev,wsmousedev
 attach ws at sio
@@ -80,5 +92,8 @@ include "compat/aoutm68k/files.aoutm68k"
 # SunOS binary compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
 
 include "arch/luna68k/conf/majors.luna68k"
