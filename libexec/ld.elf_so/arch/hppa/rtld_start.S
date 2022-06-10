@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.12 2012/01/06 10:38:57 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.12.42.1 2022/06/10 17:39:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -231,3 +231,9 @@ ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 	bv	%r0(%r21)
 	nop
 EXIT(_rtld_bind_start)
+
+
+LEAF_ENTRY_NOPROFILE(_rtld_set_dp)
+	bv	%r0(%rp)
+	 copy	%arg0, %dp
+EXIT(_rtld_set_dp)
