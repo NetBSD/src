@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.69 2020/09/08 14:12:57 christos Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.70 2022/06/10 09:54:54 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -83,7 +83,6 @@ struct mbuf;
  */
 struct inpcb {
 	struct inpcb_hdr inp_head;
-#define inp_hash	inp_head.inph_hash
 #define inp_queue	inp_head.inph_queue
 #define inp_af		inp_head.inph_af
 #define inp_ppcb	inp_head.inph_ppcb
