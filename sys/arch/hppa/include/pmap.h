@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2013/01/07 16:57:28 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37.42.1 2022/06/10 17:16:54 martin Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -71,6 +71,8 @@ struct pmap {
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
+
+#define	PMAP_DIRECTMAP	0x10000000 /* kenter_pa */
 
 /*
  * DON'T CHANGE THIS - this is assumed in lots of places.
