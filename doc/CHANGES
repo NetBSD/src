@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2886 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2887 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -596,3 +596,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[rin 20220530]
 	getentropy(3): Re-introduced getentropy function to libc.
 		[riastradh 20220531]
+	luna68k: Add psgpam(4) audio driver for LUNA, using YM2149 PSG/SSG
+		sound chip. [tsutsui 20220610]
