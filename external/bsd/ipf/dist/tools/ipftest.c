@@ -1,4 +1,4 @@
-/*	$NetBSD: ipftest.c,v 1.4 2018/02/04 08:19:42 mrg Exp $	*/
+/*	$NetBSD: ipftest.c,v 1.5 2022/06/10 06:06:00 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -88,6 +88,7 @@ main(argc,argv)
 	ip_t	*ip;
 
 	m = &mb;
+	memset(m, 0, sizeof(*m));
 	dir = 0;
 	dump = 0;
 	hlen = 0;
