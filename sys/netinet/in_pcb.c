@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.187 2022/06/09 07:01:27 knakahara Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.188 2022/06/10 09:51:10 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.187 2022/06/09 07:01:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.188 2022/06/10 09:51:10 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -691,7 +691,8 @@ in_pcbnotify(struct inpcbtable *table, struct in_addr faddr, u_int fport_arg,
     void (*notify)(struct inpcb *, int))
 {
 	struct inpcbhead *head;
-	struct inpcb *inp, *ninp;
+	struct inpcb_hdr *inph;
+	struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 	int nmatch;
 
@@ -700,10 +701,11 @@ in_pcbnotify(struct inpcbtable *table, struct in_addr faddr, u_int fport_arg,
 
 	nmatch = 0;
 	head = INPCBHASH_CONNECT(table, faddr, fport, laddr, lport);
-	for (inp = (struct inpcb *)LIST_FIRST(head); inp != NULL; inp = ninp) {
-		ninp = (struct inpcb *)LIST_NEXT(inp, inp_hash);
+	LIST_FOREACH(inph, head, inph_hash) {
+		inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
+
 		if (in_hosteq(inp->inp_faddr, faddr) &&
 		    inp->inp_fport == fport &&
 		    inp->inp_lport == lport &&
