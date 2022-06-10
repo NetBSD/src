@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.71 2021/06/29 10:22:36 nia Exp $
+# $NetBSD: GENERIC,v 1.72 2022/06/10 17:47:20 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.71 $"
+#ident          "GENERIC-$Revision: 1.72 $"
 
 maxusers	16		# estimated number of users
 
@@ -401,7 +401,7 @@ pseudo-device   accf_http		# "httpready" accept filter
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd			# concatenated/striped disk devices
-#pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
@@ -414,6 +414,8 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
 
+pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
