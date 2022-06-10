@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.671 2022/05/07 17:25:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.672 2022/06/10 22:04:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.671 2022/05/07 17:25:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.672 2022/06/10 22:04:49 rillig Exp $");
 
 /*
  * A file being read.
@@ -1170,31 +1170,23 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 		}
 		free(incdir);
 
+		/*
+		 * Makefile wasn't found in same directory as included
+		 * makefile.  Search for it on .PATH.suffix, then on the '-I'
+		 * search path, then on the .PATH.
+		 */
 		if (fullname == NULL) {
-			/*
-			 * Makefile wasn't found in same directory as included
-			 * makefile.
-			 *
-			 * Search for it first on the -I search path, then on
-			 * the .PATH search path, if not found in a -I
-			 * directory. If we have a suffix-specific path, we
-			 * should use that.
-			 */
 			const char *suff;
-			SearchPath *suffPath = NULL;
+			SearchPath *suffPath;
 
-			if ((suff = strrchr(file, '.')) != NULL) {
-				suffPath = Suff_GetPath(suff);
-				if (suffPath != NULL)
-					fullname = Dir_FindFile(file, suffPath);
-			}
-			if (fullname == NULL) {
-				fullname = Dir_FindFile(file, parseIncPath);
-				if (fullname == NULL)
-					fullname = Dir_FindFile(file,
-					    &dirSearchPath);
-			}
+			if ((suff = strrchr(file, '.')) != NULL &&
+			    (suffPath = Suff_GetPath(suff)) != NULL)
+				fullname = Dir_FindFile(file, suffPath);
 		}
+		if (fullname == NULL)
+			fullname = Dir_FindFile(file, parseIncPath);
+		if (fullname == NULL)
+			fullname = Dir_FindFile(file, &dirSearchPath);
 	}
 
 	/* Looking for a system file or file still not found */
