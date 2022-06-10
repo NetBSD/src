@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.9 2019/06/18 21:18:12 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.9.2.1 2022/06/10 17:34:22 martin Exp $	*/
 
 /*	$OpenBSD: ptrace.h,v 1.2 1998/12/01 03:05:44 mickey Exp $	*/
 
@@ -58,6 +58,11 @@
 #define PTRACE_REG_SP(r)	(r)->r_regs[30]
 #define PTRACE_REG_INTRV(r)	(r)->r_regs[28]
 
+#define HPPA_BREAK_GDB		4
+#define HPPA_BREAK_GDB_SS	8
+
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x00, 0x01, 0x00, 0x04 })
-#define PTRACE_BREAKPOINT_ASM	__asm __volatile("break	%0, %1" :: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SS) : "memory")
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("break	%0, %1" :: "i" (HPPA_BREAK_GDB), "i" (HPPA_BREAK_GDB_SS) : "memory")
 #define PTRACE_BREAKPOINT_SIZE	4
+
+#define PTRACE_ILLEGAL_ASM	__asm __volatile (".word 0x000ff000" : : : "memory")
