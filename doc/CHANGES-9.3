@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.104 2022/06/06 11:36:16 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.105 2022/06/10 17:40:40 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1771,4 +1771,34 @@ usr.sbin/makemandb/makemandb.c			1.63
 	PR 56118: fix out of bounds array access.
 	[skrll, ticket #1465]
 
+sys/arch/hppa/hppa/trap.c			1.119
+
+	PR 56118: fix sporadic app crashess on HPPA by handling
+	'NA' (non-access) traps for the lpa and probe instructions.
+	[skrll, ticket #1466]
+
+sys/arch/hppa/hppa/pmap.c			1.117
+sys/arch/hppa/include/pmap.h			1.41
+
+	PR 56849: fix kernel memory accounting on hppa:
+	- Don't include direct mapped memory in pmap statistics
+	- Decrement pmap statistics counts in pmap_kremove
+	[skrll, ticket #1467]
+
+sys/arch/hppa/hppa/trap.c			1.120
+sys/arch/hppa/include/ptrace.h			1.11,1.12 (patch)
+
+	PR 56866: fix confusion between actual breakpoints and
+	single-step breakpoints.
+	Define a PTRACE_ILLEGAL_ASM.
+	Only report the SSBREAKPOINT break instruction as SIGTRAP/TRAP_TRACE.
+	All other break instructions will be reported as SIGTRAP/TRAP_BRKPT.
+	[skrll, ticket #1468]
+
+libexec/ld.elf_so/arch/hppa/hppa_reloc.c	1.49
+libexec/ld.elf_so/arch/hppa/rtld_start.S	1.14
+
+	PR 56118: set DP early so that any binary functions that override
+	others get the right value if they're called before _start.
+	[skrll, ticket #1469]
 
