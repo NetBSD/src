@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132_ilp32.c,v 1.1 2021/08/25 22:04:52 rillig Exp $	*/
+/*	$NetBSD: msg_132_ilp32.c,v 1.2 2022/06/10 18:29:01 rillig Exp $	*/
 # 3 "msg_132_ilp32.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -29,4 +29,14 @@ array_subscript(const char *p, long long idx)
 {
 	/* expect+1: warning: conversion from 'long long' to 'int' may lose accuracy [132] */
 	return p + idx;
+}
+
+/*
+ * On ILP32 platforms, pointer, long and int have the same size, so there is
+ * no loss of accuracy.
+ */
+unsigned int
+convert_pointer_to_smaller_integer(void *ptr)
+{
+	return (unsigned long)(ptr) >> 12;
 }

@@ -27,6 +27,5 @@ msg_132.c(125): warning: function 'cover_build_plus_minus' expects to return val
 msg_132.c(141): warning: conversion from 'unsigned long long' to 'int' may lose accuracy [132]
 msg_132.c(193): warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132]
 msg_132.c(195): warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132]
-msg_132.c(209): warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy [132]
-msg_132.c(215): warning: conversion from 'unsigned long' to 'unsigned char' may lose accuracy [132]
-msg_132.c(223): warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy [132]
+msg_132.c(209): warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132]
+msg_132.c(215): warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132]
