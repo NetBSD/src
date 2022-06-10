@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.672 2022/06/10 22:04:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.673 2022/06/10 22:23:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.672 2022/06/10 22:04:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.673 2022/06/10 22:23:19 rillig Exp $");
 
 /*
  * A file being read.
@@ -1116,6 +1116,37 @@ ClearPaths(SearchPathList *paths)
 	Dir_SetPATH();
 }
 
+static char *
+FindInDirOfIncludingFile(const char *file)
+{
+	char *fullname, *incdir, *slash, *newName;
+	int i;
+
+	fullname = NULL;
+	incdir = bmake_strdup(CurFile()->name.str);
+	slash = strrchr(incdir, '/');
+	if (slash != NULL) {
+		*slash = '\0';
+		/*
+		 * Now do lexical processing of leading "../" on the
+		 * filename.
+		 */
+		for (i = 0; strncmp(file + i, "../", 3) == 0; i += 3) {
+			slash = strrchr(incdir + 1, '/');
+			if (slash == NULL || strcmp(slash, "/..") == 0)
+				break;
+			*slash = '\0';
+		}
+		newName = str_concat3(incdir, "/", file + i);
+		fullname = Dir_FindFile(newName, parseIncPath);
+		if (fullname == NULL)
+			fullname = Dir_FindFile(newName, &dirSearchPath);
+		free(newName);
+	}
+	free(incdir);
+	return fullname;
+}
+
 /*
  * Handle one of the .[-ds]include directives by remembering the current file
  * and pushing the included file on the stack.  After the included file has
@@ -1131,50 +1162,12 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 {
 	Buffer buf;
 	char *fullname;		/* full pathname of file */
-	char *newName;
-	char *slash, *incdir;
 	int fd;
-	int i;
 
 	fullname = file[0] == '/' ? bmake_strdup(file) : NULL;
 
 	if (fullname == NULL && !isSystem) {
-		/*
-		 * Include files contained in double-quotes are first searched
-		 * relative to the including file's location. We don't want to
-		 * cd there, of course, so we just tack on the old file's
-		 * leading path components and call Dir_FindFile to see if
-		 * we can locate the file.
-		 */
-
-		incdir = bmake_strdup(CurFile()->name.str);
-		slash = strrchr(incdir, '/');
-		if (slash != NULL) {
-			*slash = '\0';
-			/*
-			 * Now do lexical processing of leading "../" on the
-			 * filename.
-			 */
-			for (i = 0; strncmp(file + i, "../", 3) == 0; i += 3) {
-				slash = strrchr(incdir + 1, '/');
-				if (slash == NULL || strcmp(slash, "/..") == 0)
-					break;
-				*slash = '\0';
-			}
-			newName = str_concat3(incdir, "/", file + i);
-			fullname = Dir_FindFile(newName, parseIncPath);
-			if (fullname == NULL)
-				fullname = Dir_FindFile(newName,
-				    &dirSearchPath);
-			free(newName);
-		}
-		free(incdir);
-
-		/*
-		 * Makefile wasn't found in same directory as included
-		 * makefile.  Search for it on .PATH.suffix, then on the '-I'
-		 * search path, then on the .PATH.
-		 */
+		fullname = FindInDirOfIncludingFile(file);
 		if (fullname == NULL) {
 			const char *suff;
 			SearchPath *suffPath;
