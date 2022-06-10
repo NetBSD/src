@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.674 2022/06/10 22:35:05 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.675 2022/06/10 22:42:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -106,7 +106,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.674 2022/06/10 22:35:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.675 2022/06/10 22:42:47 rillig Exp $");
 
 /*
  * A file being read.
@@ -310,7 +310,7 @@ CurFile(void)
 }
 
 static Buffer
-loadfile(const char *path, int fd)
+LoadFile(const char *path, int fd)
 {
 	ssize_t n;
 	Buffer buf;
@@ -1207,7 +1207,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 		return;
 	}
 
-	buf = loadfile(fullname, fd);
+	buf = LoadFile(fullname, fd);
 	(void)close(fd);
 
 	Parse_PushInput(fullname, 1, 0, buf, NULL);
@@ -2864,7 +2864,7 @@ Parse_File(const char *name, int fd)
 	char *line;
 	Buffer buf;
 
-	buf = loadfile(name, fd != -1 ? fd : STDIN_FILENO);
+	buf = LoadFile(name, fd != -1 ? fd : STDIN_FILENO);
 	if (fd != -1)
 		(void)close(fd);
 
