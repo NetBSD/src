@@ -1,2 +1,2 @@
 msg_135.c(16): warning: converting 'pointer to const unsigned short' to 'pointer to const unsigned int' may cause alignment problem [135]
-msg_135.c(21): warning: struct incomplete never defined [233]
+msg_135.c(22): warning: struct 'incomplete' never defined [233]

@@ -1,12 +1,12 @@
-/*	$NetBSD: msg_260.c,v 1.4 2021/08/16 06:49:57 rillig Exp $	*/
+/*	$NetBSD: msg_260.c,v 1.5 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "msg_260.c"
 
-// Test for message: previous declaration of %s [260]
+// Test for message: previous declaration of '%s' [260]
 
 /* lint1-extra-flags: -r */
 
 # 100 "header.h" 1
-/* expect+1: previous declaration of s [260] */
+/* expect+1: previous declaration of 's' [260] */
 struct s {
     int member;
 };
@@ -14,7 +14,7 @@ struct s {
 
 # 200 "header.h" 1
 /* expect+2: error: struct tag 's' redeclared as union [46] */
-/* expect+1: previous declaration of s [260] */
+/* expect+1: previous declaration of 's' [260] */
 union s {
     int member;
 };

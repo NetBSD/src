@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_135.c,v 1.9 2021/07/15 21:22:19 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.10 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' may cause alignment problem [135]
@@ -18,7 +18,8 @@ read_uint(const unsigned short **pp)
 	return val;
 }
 
-struct incomplete;	/* expect: never defined */
+/* expect+1: warning: struct 'incomplete' never defined [233] */
+struct incomplete;
 
 struct complete {
     int member;

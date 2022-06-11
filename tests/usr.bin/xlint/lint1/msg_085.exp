@@ -1,4 +1,4 @@
 msg_085.c(6): warning: dubious tag declaration: struct in_argument [85]
 msg_085.c(7): warning: dubious tag declaration: union in_argument [85]
 msg_085.c(8): warning: dubious tag declaration: enum in_argument [85]
-msg_085.c(10): warning: struct ok never defined [233]
+msg_085.c(10): warning: struct 'ok' never defined [233]

@@ -1,1 +1,1 @@
-msg_268.c(10): warning: variable declared inline: local [268]
+msg_268.c(10): warning: variable 'local' declared inline [268]

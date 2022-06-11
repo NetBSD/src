@@ -1,1 +1,1 @@
-msg_307.c(7): warning: static variable set_but_not_used set but not used [307]
+msg_307.c(7): warning: static variable 'set_but_not_used' set but not used [307]
