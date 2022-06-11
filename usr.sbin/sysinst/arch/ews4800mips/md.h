@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2019/08/07 10:08:04 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2022/06/11 16:38:51 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,7 @@
 
 #define	PART_BOOT	(8*MEG)
 #define	PART_BOOT_TYPE	FS_SYSVBFS
+#define	PART_BOOT_MOUNT	"/boot"
 
 #define	DEFROOTSIZE	200	/* Default root size */
 #define	XNEEDMB		250	/* Extra megs for full X installation */
