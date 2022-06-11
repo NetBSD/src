@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_347.c,v 1.3 2021/09/13 06:11:51 rillig Exp $	*/
+/*	$NetBSD: msg_347.c,v 1.4 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "msg_347.c"
 
 // Test for message: redeclaration of '%s' with type '%s', expected '%s' [347]
@@ -23,13 +23,13 @@
  * ) returning void
  */
 /* FIXME: the type of the second parameter is not 'int' */
-/* expect+1: previous declaration of function_parameter [260] */
+/* expect+1: previous declaration of 'function_parameter' [260] */
 void function_parameter(void *, double *(void *, int));
 /* expect+1: error: redeclaration of 'function_parameter' with type 'function(pointer to void, pointer to function(pointer to void, int) returning pointer to double) returning void', expected 'function(pointer to void, int) returning void' [347] */
 void function_parameter(void *fs, double *func(void *, int));
 
 
-/* expect+1: warning: struct last_arg never defined [233] */
+/* expect+1: warning: struct 'last_arg' never defined [233] */
 struct last_arg;
 /*
  * FIXME: The following error is completely wrong.
@@ -37,7 +37,7 @@ struct last_arg;
  *  to it.
  */
 /* expect+2: error: '<unnamed>' has incomplete type 'incomplete struct last_arg' [31] */
-/* expect+1: previous declaration of last_arg_struct [260] */
+/* expect+1: previous declaration of 'last_arg_struct' [260] */
 void last_arg_struct(double, double *(struct last_arg *));
 /* expect+1: error: redeclaration of 'last_arg_struct' with type 'function(double, pointer to function(pointer to incomplete struct last_arg) returning pointer to double) returning void', expected 'function(double, incomplete struct last_arg) returning void' [347] */
 void last_arg_struct(double d, double *fn(struct last_arg *));
@@ -47,7 +47,7 @@ struct last_param {
 	int member;
 };
 
-/* expect+1: previous declaration of last_param [260] */
+/* expect+1: previous declaration of 'last_param' [260] */
 void last_param(double, double *(struct last_param));
 
 /*

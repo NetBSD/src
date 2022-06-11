@@ -1,2 +1,2 @@
-gcc_attribute_func.c(30): warning: static function used_function unused [236]
-gcc_attribute_func.c(36): warning: static function unused_function unused [236]
+gcc_attribute_func.c(30): warning: static function 'used_function' unused [236]
+gcc_attribute_func.c(36): warning: static function 'unused_function' unused [236]

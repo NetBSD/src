@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.4 2021/11/01 18:11:26 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.5 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message 348: maximum value %d of '%s' does not match maximum array index %d [348]
@@ -8,8 +8,8 @@
 enum color {
 	red,
 	green,
-	/* expect+2: previous declaration of blue [260] */
-	/* expect+1: previous declaration of blue [260] */
+	/* expect+2: previous declaration of 'blue' [260] */
+	/* expect+1: previous declaration of 'blue' [260] */
 	blue
 };
 

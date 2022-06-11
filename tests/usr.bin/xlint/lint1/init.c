@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.10 2021/12/22 00:45:53 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.11 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -111,7 +111,7 @@ union incomplete_union {
 /* expect+1: warning: cannot initialize extern declaration: extern_var [26] */
 extern int extern_var = 1;
 int defined_var = 1;
-/* expect+1: warning: static variable static_var unused [226] */
+/* expect+1: warning: static variable 'static_var' unused [226] */
 static int static_var = 1;
 /* expect+1: error: illegal storage class [8] */
 register int register_var = 1;

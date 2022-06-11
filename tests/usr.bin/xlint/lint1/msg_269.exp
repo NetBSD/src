@@ -1,1 +1,1 @@
-msg_269.c(7): warning: argument declared inline: x [269]
+msg_269.c(7): warning: argument 'x' declared inline [269]

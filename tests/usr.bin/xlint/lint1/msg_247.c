@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.16 2021/07/15 21:22:19 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.17 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -131,7 +131,8 @@ counter_increment(struct counter *counter)
  * warnings about possibly troublesome pointer casts.
  */
 
-struct lhash_st;		/* expect: struct lhash_st never defined */
+/* expect+1: warning: struct 'lhash_st' never defined [233] */
+struct lhash_st;
 
 struct lhash_st *OPENSSL_LH_new(void);
 
@@ -153,7 +154,7 @@ lh_OPENSSL_STRING_new(void)
 	 */
 	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
 }
-# 157 "msg_247.c" 2
+# 158 "msg_247.c" 2
 
 void sink(const void *);
 
