@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_261.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_261.c,v 1.3 2022/06/11 10:46:38 rillig Exp $	*/
 # 3 "msg_261.c"
 
 // Test for message: previous definition of %s [261]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -r */
+
+/* expect+2: previous definition of function [261] */
+void
+function(void)
+{
+}
+
+/* expect+2: error: redeclaration of 'function' with type 'function(void) returning int', expected 'function(void) returning void' [347] */
+/* expect+1: warning: static function function declared but not defined [290] */
+static int function(void);

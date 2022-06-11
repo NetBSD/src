@@ -1,1 +1,3 @@
-msg_261.c(6): error: syntax error ':' [249]
+msg_261.c(16): error: redeclaration of 'function' with type 'function(void) returning int', expected 'function(void) returning void' [347]
+msg_261.c(10): previous definition of function [261]
+msg_261.c(16): warning: static function function declared but not defined [290]
