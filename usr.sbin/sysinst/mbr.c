@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.43 2022/05/23 21:46:12 andvar Exp $ */
+/*	$NetBSD: mbr.c,v 1.44 2022/06/11 15:30:48 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,7 +97,6 @@
 /* A list of predefined partition types */
 const struct {
 	unsigned int ptype;
-	char short_desc[12];
 	const char *desc;
 } mbr_part_types_src[] = {
 	{ .ptype=MBR_PTYPE_NETBSD, .desc="NetBSD" },
