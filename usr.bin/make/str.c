@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.91 2022/05/13 21:42:30 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.92 2022/06/11 08:06:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.91 2022/05/13 21:42:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.92 2022/06/11 08:06:32 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -321,12 +321,8 @@ in_range(char e1, char c, char e2)
 bool
 Str_Match(const char *str, const char *pat)
 {
-	for (;;) {
-		if (*pat == '\0')
-			return *str == '\0';
-
-		/* A '*' in the pattern matches any substring. */
-		if (*pat == '*') {
+	for (; *pat != '\0'; pat++, str++) {
+		if (*pat == '*') {	/* match any substring */
 			pat++;
 			while (*pat == '*')
 				pat++;
@@ -341,9 +337,8 @@ Str_Match(const char *str, const char *pat)
 		if (*str == '\0')
 			return false;
 
-		/* A '?' in the pattern matches any single character. */
-		if (*pat == '?')
-			goto thisCharOK;
+		if (*pat == '?')	/* match any single character */
+			continue;
 
 		/*
 		 * A '[' in the pattern matches a character from a list.
@@ -387,26 +382,16 @@ Str_Match(const char *str, const char *pat)
 				pat++;
 			if (*pat == '\0')
 				pat--;
-			goto thisCharOK;
+			continue;
 		}
 
-		/*
-		 * A backslash in the pattern matches the character following
-		 * it exactly.
-		 */
-		if (*pat == '\\') {
+		if (*pat == '\\')	/* match the next character exactly */
 			pat++;
-			if (*pat == '\0')
-				return false;
-		}
 
 		if (*pat != *str)
 			return false;
-
-	thisCharOK:
-		pat++;
-		str++;
 	}
+	return *str == '\0';
 }
 
 void
