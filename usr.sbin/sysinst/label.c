@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.35 2022/06/11 15:41:19 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.36 2022/06/11 18:27:22 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.35 2022/06/11 15:41:19 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.36 2022/06/11 18:27:22 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -101,7 +101,7 @@ real_partition(const struct partition_usage_set *pset, int index)
 
 /*
  * Check partitioning for overlapping partitions.
- * Returns 0 if no overlapping partition found, nonzero otherwise.
+ * Returns true if no overlapping partition found.
  * Sets reference arguments ovly1 and ovly2 to the indices of
  * overlapping partitions if any are found.
  */
@@ -113,6 +113,9 @@ checklabel(struct disk_partitions *parts,
 	struct disk_part_info info;
 	daddr_t istart, iend, jstart, jend;
 	unsigned int fs_type, fs_sub_type;
+
+	if (parts->num_part == 0)
+		return true;
 
 	for (i = 0; i < parts->num_part - 1; i ++ ) {
 		if (!parts->pscheme->get_part_info(parts, i, &info))
