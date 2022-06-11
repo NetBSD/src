@@ -1,2 +1,2 @@
 msg_143.c(11): error: cannot take size/alignment of incomplete type [143]
-msg_143.c(6): warning: struct incomplete never defined [233]
+msg_143.c(6): warning: struct 'incomplete' never defined [233]

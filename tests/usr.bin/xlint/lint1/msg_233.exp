@@ -1,1 +1,1 @@
-msg_233.c(7): warning: struct declared_but_not_defined never defined [233]
+msg_233.c(7): warning: struct 'declared_but_not_defined' never defined [233]

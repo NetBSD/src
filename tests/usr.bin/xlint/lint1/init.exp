@@ -10,4 +10,4 @@ init.c(104): error: 'u2' has incomplete type 'incomplete union incomplete_union'
 init.c(112): warning: cannot initialize extern declaration: extern_var [26]
 init.c(117): error: illegal storage class [8]
 init.c(119): error: cannot initialize typedef: typedef_var [25]
-init.c(115): warning: static variable static_var unused [226]
+init.c(115): warning: static variable 'static_var' unused [226]

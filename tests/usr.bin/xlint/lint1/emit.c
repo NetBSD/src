@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.11 2022/04/24 19:21:01 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.12 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -104,7 +104,7 @@ extern enum {
 
 extern int			declared_int;
 int				defined_int;
-/* expect+1: warning: static variable static_int unused [226] */
+/* expect+1: warning: static variable 'static_int' unused [226] */
 static int			static_int;
 
 /*

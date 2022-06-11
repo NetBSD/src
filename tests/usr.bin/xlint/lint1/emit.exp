@@ -1,4 +1,4 @@
 emit.c(123): error: old style declaration; add 'int' [1]
-emit.c(108): warning: static variable static_int unused [226]
+emit.c(108): warning: static variable 'static_int' unused [226]
 emit.c(129): warning: static function static_return_void_no_parameters declared but not defined [290]
 emit.c(149): warning: static function static_function declared but not defined [290]

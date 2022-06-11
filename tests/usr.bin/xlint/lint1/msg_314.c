@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_314.c,v 1.3 2022/06/11 11:20:40 rillig Exp $	*/
+/*	$NetBSD: msg_314.c,v 1.4 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "msg_314.c"
 
-// Test for message: %s is not a structure or a union [314]
+// Test for message: '%s' is not a structure or a union [314]
 /* This message is not used. */
 
 /*

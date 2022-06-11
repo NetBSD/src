@@ -1,3 +1,3 @@
 msg_044.c(14): warning: declaration introduces new type in ANSI C: struct tag [44]
-msg_044.c(14): warning: struct tag never defined [233]
-msg_044.c(7): warning: struct tag never defined [233]
+msg_044.c(14): warning: struct 'tag' never defined [233]
+msg_044.c(7): warning: struct 'tag' never defined [233]

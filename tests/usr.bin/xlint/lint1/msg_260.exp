@@ -1,6 +1,6 @@
 header.h(202): error: struct tag 's' redeclared as union [46]
 	included from msg_260.c(15)
-header.h(101): previous declaration of s [260]
+header.h(101): previous declaration of 's' [260]
 	included from msg_260.c(15)
 msg_260.c(28): error: union tag 's' redeclared as union [46]
-header.h(202): previous declaration of s [260]
+header.h(202): previous declaration of 's' [260]

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.283 2022/05/31 00:35:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.284 2022/06/11 11:52:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.283 2022/05/31 00:35:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.284 2022/06/11 11:52:13 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1973,7 +1973,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 		if (dsym->s_type->t_tspec == FUNC) {
 			dsym->s_inline = true;
 		} else {
-			/* variable declared inline: %s */
+			/* variable '%s' declared inline */
 			warning(268, dsym->s_name);
 		}
 	}
@@ -2489,7 +2489,7 @@ declare_argument(sym_t *sym, bool initflg)
 	}
 
 	if (dcs->d_inline)
-		/* argument declared inline: %s */
+		/* argument '%s' declared inline */
 		warning(269, sym->s_name);
 
 	/*
@@ -2777,7 +2777,7 @@ declare_local(sym_t *dsym, bool initflg)
 		if (dsym->s_type->t_tspec == FUNC) {
 			dsym->s_inline = true;
 		} else {
-			/* variable declared inline: %s */
+			/* variable '%s' declared inline */
 			warning(268, dsym->s_name);
 		}
 	}
@@ -3199,15 +3199,15 @@ check_tag_usage(sym_t *sym)
 
 	switch (sym->s_type->t_tspec) {
 	case STRUCT:
-		/* struct %s never defined */
+		/* struct '%s' never defined */
 		warning_at(233, &sym->s_def_pos, sym->s_name);
 		break;
 	case UNION:
-		/* union %s never defined */
+		/* union '%s' never defined */
 		warning_at(234, &sym->s_def_pos, sym->s_name);
 		break;
 	case ENUM:
-		/* enum %s never defined */
+		/* enum '%s' never defined */
 		warning_at(235, &sym->s_def_pos, sym->s_name);
 		break;
 	default:
@@ -3250,17 +3250,17 @@ check_unused_static_global_variable(const sym_t *sym)
 	if (sym->s_type->t_tspec == FUNC) {
 		if (sym->s_def == DEF) {
 			if (!sym->s_inline)
-				/* static function %s unused */
+				/* static function '%s' unused */
 				warning_at(236, &sym->s_def_pos, sym->s_name);
 		} else {
 			/* static function %s declared but not defined */
 			warning_at(290, &sym->s_def_pos, sym->s_name);
 		}
 	} else if (!sym->s_set) {
-		/* static variable %s unused */
+		/* static variable '%s' unused */
 		warning_at(226, &sym->s_def_pos, sym->s_name);
 	} else {
-		/* static variable %s set but not used */
+		/* static variable '%s' set but not used */
 		warning_at(307, &sym->s_def_pos, sym->s_name);
 	}
 }
@@ -3351,10 +3351,10 @@ print_previous_declaration(int msg, const sym_t *psym)
 	if (msg != -1) {
 		(message_at)(msg, &psym->s_def_pos);
 	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
-		/* previous definition of %s */
+		/* previous definition of '%s' */
 		message_at(261, &psym->s_def_pos, psym->s_name);
 	} else {
-		/* previous declaration of %s */
+		/* previous declaration of '%s' */
 		message_at(260, &psym->s_def_pos, psym->s_name);
 	}
 }

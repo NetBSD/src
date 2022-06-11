@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.15 2022/04/24 20:08:23 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.16 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -108,8 +108,8 @@ declaration_without_type_specifier(void)
 	return i;
 }
 
-/* TODO: add quotes around %s */
-/* expect+2: warning: static function unused unused [236] */
+
+/* expect+2: warning: static function 'unused' unused [236] */
 static void
 unused(void)
 {
@@ -168,7 +168,7 @@ __thread int thread_int;
 __thread__ int thread_int;
 
 /* expect+4: error: old style declaration; add 'int' [1] */
-/* expect+2: warning: static function cover_func_declarator unused [236] */
+/* expect+2: warning: static function 'cover_func_declarator' unused [236] */
 static
 cover_func_declarator(void)
 {

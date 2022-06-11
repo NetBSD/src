@@ -1,6 +1,6 @@
 msg_348.c(36): warning: maximum value 2 of 'enum color' does not match maximum array index 1 [348]
-msg_348.c(13): previous declaration of blue [260]
+msg_348.c(13): previous declaration of 'blue' [260]
 msg_348.c(49): warning: maximum value 2 of 'enum color' does not match maximum array index 3 [348]
-msg_348.c(13): previous declaration of blue [260]
+msg_348.c(13): previous declaration of 'blue' [260]
 msg_348.c(107): warning: integral constant too large [56]
 msg_348.c(109): warning: integral constant too large [56]

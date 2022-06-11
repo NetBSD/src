@@ -1,3 +1,3 @@
 msg_175.c(8): error: initialization of incomplete type 'incomplete struct incomplete' [175]
 msg_175.c(10): error: 'incomplete' has incomplete type 'incomplete struct incomplete' [31]
-msg_175.c(6): warning: struct incomplete never defined [233]
+msg_175.c(6): warning: struct 'incomplete' never defined [233]

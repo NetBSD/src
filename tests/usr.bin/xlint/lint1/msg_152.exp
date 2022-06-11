@@ -1,4 +1,4 @@
 msg_152.c(8): error: '<unnamed>' has incomplete type 'incomplete struct incomplete' [31]
 msg_152.c(13): error: 'local_var' has incomplete type 'incomplete struct incomplete' [31]
 msg_152.c(14): error: argument cannot have unknown size, arg #1 [152]
-msg_152.c(6): warning: struct incomplete never defined [233]
+msg_152.c(6): warning: struct 'incomplete' never defined [233]

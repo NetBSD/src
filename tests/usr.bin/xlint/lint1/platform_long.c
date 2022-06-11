@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_long.c,v 1.3 2021/09/26 14:52:37 rillig Exp $	*/
+/*	$NetBSD: platform_long.c,v 1.4 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "platform_long.c"
 
 /*
@@ -30,5 +30,5 @@ convert_unsigned_char_to_size(unsigned char uc)
 	to_size(uc);
 }
 
-/* expect+1: warning: static variable unused_variable unused [226] */
+/* expect+1: warning: static variable 'unused_variable' unused [226] */
 static int unused_variable;

@@ -1,1 +1,1 @@
-msg_235.c(7): warning: enum declared_but_not_defined never defined [235]
+msg_235.c(7): warning: enum 'declared_but_not_defined' never defined [235]

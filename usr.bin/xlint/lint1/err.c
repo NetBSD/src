@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.167 2022/05/31 00:01:35 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.168 2022/06/11 11:52:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.167 2022/05/31 00:01:35 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.168 2022/06/11 11:52:13 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -280,17 +280,17 @@ const char *const msgs[] = {
 	"end-of-loop code not reached",				      /* 223 */
 	"cannot recover from previous errors",			      /* 224 */
 	"static function called but not defined: %s()",		      /* 225 */
-	"static variable %s unused",				      /* 226 */
+	"static variable '%s' unused",				      /* 226 */
 	"const object %s should have initializer",		      /* 227 */
 	"function cannot return const or volatile object",	      /* 228 */
 	"converting '%s' to '%s' is questionable",		      /* 229 */
 	"nonportable character comparison '%s %d'",		      /* 230 */
 	"argument '%s' unused in function '%s'",		      /* 231 */
 	"label '%s' unused in function '%s'",			      /* 232 */
-	"struct %s never defined",				      /* 233 */
-	"union %s never defined",				      /* 234 */
-	"enum %s never defined",				      /* 235 */
-	"static function %s unused",				      /* 236 */
+	"struct '%s' never defined",				      /* 233 */
+	"union '%s' never defined",				      /* 234 */
+	"enum '%s' never defined",				      /* 235 */
+	"static function '%s' unused",				      /* 236 */
 	"redeclaration of formal parameter %s",			      /* 237 */
 	"initialization of union is illegal in traditional C",	      /* 238 */
 	"constant argument to '!'",				      /* 239 */
@@ -314,16 +314,16 @@ const char *const msgs[] = {
 	"extra characters in lint comment",			      /* 257 */
 	"unterminated string constant",				      /* 258 */
 	"argument #%d is converted from '%s' to '%s' due to prototype", /* 259 */
-	"previous declaration of %s",				      /* 260 */
-	"previous definition of %s",				      /* 261 */
+	"previous declaration of '%s'",				      /* 260 */
+	"previous definition of '%s'",				      /* 261 */
 	"\\\" inside character constants undefined in traditional C", /* 262 */
 	"\\? undefined in traditional C",			      /* 263 */
 	"\\v undefined in traditional C",			      /* 264 */
 	"%s does not support 'long long'",			      /* 265 */
 	"'long double' is illegal in traditional C",		      /* 266 */
 	"shift equal to size of object",			      /* 267 */
-	"variable declared inline: %s",				      /* 268 */
-	"argument declared inline: %s",				      /* 269 */
+	"variable '%s' declared inline",			      /* 268 */
+	"argument '%s' declared inline",			      /* 269 */
 	"function prototypes are illegal in traditional C",	      /* 270 */
 	"switch expression must be of type 'int' in traditional C",   /* 271 */
 	"empty translation unit",				      /* 272 */
@@ -361,14 +361,14 @@ const char *const msgs[] = {
 	"ANSI C forbids conversion of %s to %s, arg #%d",	      /* 304 */
 	"ANSI C forbids conversion of %s to %s, op %s",		      /* 305 */
 	"constant truncated by conversion, op %s",		      /* 306 */
-	"static variable %s set but not used",			      /* 307 */
+	"static variable '%s' set but not used",		      /* 307 */
 	"invalid type for _Complex",				      /* 308 */
 	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'", /* 309 */
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
 	"%s does not support // comments",			      /* 312 */
 	"struct or union member name in initializer is a C99 feature",/* 313 */
-	"%s is not a structure or a union",			      /* 314 */
+	"",		/* never used */			      /* 314 */
 	"GCC style struct or union member name in initializer",	      /* 315 */
 	"__FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension",	      /* 316 */
 	"__func__ is a C99 feature",				      /* 317 */

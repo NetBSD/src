@@ -1,4 +1,4 @@
 msg_067.c(14): error: cannot return incomplete type [67]
 msg_067.c(16): error: 'r' has incomplete type 'incomplete struct incomplete' [31]
 msg_067.c(19): error: cannot return incomplete type [212]
-msg_067.c(7): warning: struct incomplete never defined [233]
+msg_067.c(7): warning: struct 'incomplete' never defined [233]

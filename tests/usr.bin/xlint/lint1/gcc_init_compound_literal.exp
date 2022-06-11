@@ -1,1 +1,1 @@
-gcc_init_compound_literal.c(41): warning: static variable guess unused [226]
+gcc_init_compound_literal.c(41): warning: static variable 'guess' unused [226]

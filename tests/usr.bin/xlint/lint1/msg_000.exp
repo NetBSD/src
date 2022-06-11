@@ -1,2 +1,2 @@
 msg_000.c(8): warning: empty declaration [0]
-msg_000.c(10): warning: static variable local_defined unused [226]
+msg_000.c(10): warning: static variable 'local_defined' unused [226]

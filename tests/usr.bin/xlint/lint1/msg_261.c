@@ -1,11 +1,11 @@
-/*	$NetBSD: msg_261.c,v 1.3 2022/06/11 10:46:38 rillig Exp $	*/
+/*	$NetBSD: msg_261.c,v 1.4 2022/06/11 11:52:13 rillig Exp $	*/
 # 3 "msg_261.c"
 
-// Test for message: previous definition of %s [261]
+// Test for message: previous definition of '%s' [261]
 
 /* lint1-extra-flags: -r */
 
-/* expect+2: previous definition of function [261] */
+/* expect+2: previous definition of 'function' [261] */
 void
 function(void)
 {
