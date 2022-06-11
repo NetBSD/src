@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.24 2020/01/25 18:53:31 thorpej Exp $
+.\"	$NetBSD: le.4,v 1.25 2022/06/11 15:25:52 tsutsui Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd January 25, 2020
+.Dd June 11, 2022
 .Dt LE 4
 .Os
 .Sh NAME
@@ -65,6 +65,8 @@
 .Cd "le0 at vme0 irq 5  # Riebl/PAM"
 .Ss hp300
 .Cd "le* at dio? scode ?"
+.Ss luna68k
+.Cd "le0 at mainbus0"
 .Ss mvme68k
 .Cd "le0 at pcc? ipl 3  # MVME147"
 .Ss news68k
