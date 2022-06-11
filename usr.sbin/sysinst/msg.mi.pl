@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.41 2022/06/09 18:26:06 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.42 2022/06/11 18:30:02 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -286,6 +286,8 @@ message cvtscheme_keep		{zostaw (uzyj tylko czesci dysku)}
 message cvtscheme_delete	{skasuj (wszystkie dane beda utracone!)}
 message cvtscheme_convert	{uzyj innego typu tablicy partycji}
 message cvtscheme_abort		{anuluj}
+message cvtscheme_error
+{Could not convert all partitions}
 
 /* Called with:				Example
  *  $0 = device name			wd0
