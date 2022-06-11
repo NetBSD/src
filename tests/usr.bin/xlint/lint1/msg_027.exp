@@ -1,2 +1,2 @@
 msg_027.c(9): error: redeclaration of 'identifier' with type 'function(void) returning double', expected 'function(void) returning int' [347]
-msg_027.c(14): error: redeclaration of constant [27]
+msg_027.c(14): error: redeclaration of 'constant' [27]

@@ -1,31 +1,38 @@
-/*	$NetBSD: msg_021.c,v 1.2 2021/01/31 09:48:47 rillig Exp $	*/
+/*	$NetBSD: msg_021.c,v 1.3 2022/06/11 12:24:00 rillig Exp $	*/
 # 3 "msg_021.c"
 
-// Test for message: redeclaration of formal parameter %s [21]
+// Test for message: redeclaration of formal parameter '%s' [21]
+
+/* See also message 237, which has the same text. */
 
 /*ARGSUSED*/
 void
-old_style_with_duplicate_parameter(parameter, parameter) /* expect: 21 */
+/* expect+1: error: redeclaration of formal parameter 'parameter' [21] */
+old_style_with_duplicate_parameter(parameter, parameter)
     int parameter;
-{				/* expect: 32 */
+{
+	/* expect-1: warning: argument type defaults to 'int': parameter [32] */
 }
 
 void
 old_style_with_duplicate_parameter_declaration(parameter)
     int parameter;
-    int parameter;		/* expect: 237 */
+    /* expect+1: error: redeclaration of formal parameter 'parameter' [237] */
+    int parameter;
 {
 }
 
 void old_style_with_local_variable(parameter)
     int parameter;
 {
-	int parameter;		/* expect: 27 */
+	/* expect+1: error: redeclaration of 'parameter' [27] */
+	int parameter;
 }
 
 /*ARGSUSED*/
 void
-prototype_with_duplicate_parameter(int param, int param) /* expect: 237 */
+/* expect+1: error: redeclaration of formal parameter 'param' [237] */
+prototype_with_duplicate_parameter(int param, int param)
 {
 
 }
@@ -33,5 +40,6 @@ prototype_with_duplicate_parameter(int param, int param) /* expect: 237 */
 void
 prototype_with_local_variable(int parameter)
 {
-	int parameter;		/* expect: 27 */
+	/* expect+1: error: redeclaration of 'parameter' [27] */
+	int parameter;
 }
