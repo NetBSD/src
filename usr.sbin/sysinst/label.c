@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.34 2022/06/09 18:26:06 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.35 2022/06/11 15:41:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.34 2022/06/09 18:26:06 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.35 2022/06/11 15:41:19 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1079,7 +1079,7 @@ update_edit_ptn_menu(menudesc *m, void *arg)
 			continue;
 		if (m->opts[i].opt_action == edit_fs_preserve &&
 		    t != FS_BSDFFS && t != FS_BSDLFS && t != FS_APPLEUFS &&
-		    t != FS_MSDOS && t != FS_EX2FS) {
+		    t != FS_MSDOS && t != FS_EFI_SP && t != FS_EX2FS) {
 			/* Can not newfs this filesystem */
 			edit->wanted->instflags &= ~PUIINST_NEWFS;
 			continue;
