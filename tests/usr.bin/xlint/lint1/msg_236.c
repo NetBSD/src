@@ -1,7 +1,15 @@
-/*	$NetBSD: msg_236.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_236.c,v 1.3 2022/06/11 11:20:40 rillig Exp $	*/
 # 3 "msg_236.c"
 
 // Test for message: static function %s unused [236]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+void
+external_function(void)
+{
+}
+
+/* expect+2: warning: static function static_function unused [236] */
+static void
+static_function(void)
+{
+}

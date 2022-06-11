@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_234.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_234.c,v 1.3 2022/06/11 11:20:40 rillig Exp $	*/
 # 3 "msg_234.c"
 
 // Test for message: union %s never defined [234]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* expect+1: warning: union declared_but_not_defined never defined [234] */
+union declared_but_not_defined;
