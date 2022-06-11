@@ -1,4 +1,4 @@
-/*	$NetBSD: psgpam.c,v 1.1 2022/06/10 21:42:23 tsutsui Exp $	*/
+/*	$NetBSD: psgpam.c,v 1.2 2022/06/11 14:45:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2018 Yosuke Sugahara. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psgpam.c,v 1.1 2022/06/10 21:42:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psgpam.c,v 1.2 2022/06/11 14:45:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,6 +194,10 @@ psgpam_match(device_t parent, cfdata_t cf, void *aux)
 	struct xpbus_attach_args *xa = aux;
 
 	if (psgpam_matched)
+		return 0;
+
+	/* Only the first generation LUNA has YM2149 at XP */
+	if (machtype != LUNA_I)
 		return 0;
 
 	if (strcmp(xa->xa_name, psgpam_cd.cd_name))
