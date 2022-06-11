@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.111 2022/04/23 16:22:23 hannken Exp $	*/
+/*	$NetBSD: dk.c,v 1.112 2022/06/11 18:17:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.111 2022/04/23 16:22:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.112 2022/06/11 18:17:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -483,10 +483,6 @@ dkwedge_add(struct dkwedge_info *dkw)
 		return (ENOMEM);
 	}
 
-	/* Return the devname to the caller. */
-	strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
-		sizeof(dkw->dkw_devname));
-
 	/*
 	 * XXX Really ought to make the disk_attach() and the changing
 	 * of state to RUNNING atomic.
@@ -507,6 +503,10 @@ announce:
 	    sc->sc_wname,	/* XXX Unicode */
 	    sc->sc_size, sc->sc_offset,
 	    sc->sc_ptype[0] == '\0' ? "<unknown>" : sc->sc_ptype);
+
+	/* Return the devname to the caller. */
+	strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
+		sizeof(dkw->dkw_devname));
 
 	return (0);
 }
