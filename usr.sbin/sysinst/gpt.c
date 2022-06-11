@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.28 2022/01/30 11:58:29 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.29 2022/06/11 15:41:19 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ struct {
 	{ .name = "windows",	.fstype = FS_NTFS,	.ptype = PT_FAT,
 	  .fsflags = GLM_MAYBE_FAT32|GLM_MAYBE_NTFS },
 	{ .name = "efi",	.fstype = FS_MSDOS,	.ptype = PT_EFI_SYSTEM,
+	  .fsflags = GLM_MAYBE_FAT32 },
+	{ .name = "efi",	.fstype = FS_EFI_SP,	.ptype = PT_EFI_SYSTEM,
 	  .fsflags = GLM_MAYBE_FAT32 },
 	{ .name = "bios",	.fstype = FS_MSDOS,	.ptype = PT_FAT,
 	  .fsflags = GLM_MAYBE_FAT32 },
