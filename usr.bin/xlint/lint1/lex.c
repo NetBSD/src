@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.131 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.132 2022/06/11 13:19:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.131 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.132 2022/06/11 13:19:28 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -87,8 +87,8 @@ bool in_system_header;
 	kwdef(name, token, 0, 0, 0,		since, gcc, 0, deco)
 #define kwdef_sclass(name, sclass,		since, gcc, deco) \
 	kwdef(name, T_SCLASS, sclass, 0, 0,	since, gcc, 0, deco)
-#define kwdef_type(name, tspec,			since, gcc, deco) \
-	kwdef(name, T_TYPE, 0, tspec, 0,	since, gcc, 0, deco)
+#define kwdef_type(name, tspec,			since) \
+	kwdef(name, T_TYPE, 0, tspec, 0,	since, 0, 0, 1)
 #define kwdef_tqual(name, tqual,		since, gcc, deco) \
 	kwdef(name, T_QUAL, 0, 0, tqual,	since, gcc, 0, deco)
 #define kwdef_keyword(name, token) \
@@ -118,33 +118,33 @@ static const struct keyword {
 	kwdef_token(	"asm",		T_ASM,			78,1,7),
 	kwdef_token(	"attribute",	T_ATTRIBUTE,		78,1,6),
 	kwdef_sclass(	"auto",		AUTO,			78,0,1),
-	kwdef_type(	"_Bool",	BOOL,			99,0,1),
+	kwdef_type(	"_Bool",	BOOL,			99),
 	kwdef_keyword(	"break",	T_BREAK),
 	kwdef_token(	"__builtin_offsetof", T_BUILTIN_OFFSETOF, 78,1,1),
 	kwdef_keyword(	"case",		T_CASE),
-	kwdef_type(	"char",		CHAR,			78,0,1),
-	kwdef_type(	"_Complex",	COMPLEX,		99,0,1),
+	kwdef_type(	"char",		CHAR,			78),
+	kwdef_type(	"_Complex",	COMPLEX,		99),
 	kwdef_tqual(	"const",	CONST,			90,0,7),
 	kwdef_keyword(	"continue",	T_CONTINUE),
 	kwdef_keyword(	"default",	T_DEFAULT),
 	kwdef_keyword(	"do",		T_DO),
-	kwdef_type(	"double",	DOUBLE,			78,0,1),
+	kwdef_type(	"double",	DOUBLE,			78),
 	kwdef_keyword(	"else",		T_ELSE),
 	kwdef_keyword(	"enum",		T_ENUM),
 	kwdef_token(	"__extension__",T_EXTENSION,		78,1,1),
 	kwdef_sclass(	"extern",	EXTERN,			78,0,1),
-	kwdef_type(	"float",	FLOAT,			78,0,1),
+	kwdef_type(	"float",	FLOAT,			78),
 	kwdef_keyword(	"for",		T_FOR),
 	kwdef_token(	"_Generic",	T_GENERIC,		11,0,1),
 	kwdef_keyword(	"goto",		T_GOTO),
 	kwdef_keyword(	"if",		T_IF),
 	kwdef_token(	"__imag__",	T_IMAG,			78,1,1),
 	kwdef_sclass(	"inline",	INLINE,			99,0,7),
-	kwdef_type(	"int",		INT,			78,0,1),
+	kwdef_type(	"int",		INT,			78),
 #ifdef INT128_SIZE
-	kwdef_type(	"__int128_t",	INT128,			99,0,1),
+	kwdef_type(	"__int128_t",	INT128,			99),
 #endif
-	kwdef_type(	"long",		LONG,			78,0,1),
+	kwdef_type(	"long",		LONG,			78),
 	kwdef_token(	"_Noreturn",	T_NORETURN,		11,0,1),
 	kwdef_token(	"__packed",	T_PACKED,		78,0,1),
 	kwdef_token(	"__real__",	T_REAL,			78,1,1),
@@ -152,8 +152,8 @@ static const struct keyword {
 	kwdef_tqual(	"restrict",	RESTRICT,		99,0,7),
 	kwdef_keyword(	"return",	T_RETURN),
 	kwdef(		"section",	T_AT_SECTION,	0,0,0,	78,1,1,7),
-	kwdef_type(	"short",	SHORT,			78,0,1),
-	kwdef_type(	"signed",	SIGNED,			90,0,3),
+	kwdef_type(	"short",	SHORT,			78),
+	kwdef(		"signed",	T_TYPE, 0, SIGNED, 0,	90,0,0,3),
 	kwdef_keyword(	"sizeof",	T_SIZEOF),
 	kwdef_sclass(	"static",	STATIC,			78,0,1),
 	kwdef_keyword(	"_Static_assert",	T_STATIC_ASSERT),
@@ -165,11 +165,11 @@ static const struct keyword {
 	kwdef_sclass(	"typedef",	TYPEDEF,		78,0,1),
 	kwdef_token(	"typeof",	T_TYPEOF,		78,1,7),
 #ifdef INT128_SIZE
-	kwdef_type(	"__uint128_t",	UINT128,		99,0,1),
+	kwdef_type(	"__uint128_t",	UINT128,		99),
 #endif
 	kwdef("union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	78,0,0,1),
-	kwdef_type(	"unsigned",	UNSIGN,			78,0,1),
-	kwdef_type(	"void",		VOID,			78,0,1),
+	kwdef_type(	"unsigned",	UNSIGN,			78),
+	kwdef_type(	"void",		VOID,			78),
 	kwdef_tqual(	"volatile",	VOLATILE,		90,0,7),
 	kwdef_keyword(	"while",	T_WHILE),
 
