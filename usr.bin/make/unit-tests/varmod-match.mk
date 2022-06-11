@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.9 2022/05/08 06:51:27 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.10 2022/06/11 07:54:25 rillig Exp $
 #
 # Tests for the :M variable modifier, which filters words that match the
 # given pattern.
@@ -28,9 +28,14 @@ NUMBERS=	One Two Three Four five six seven
 .  error
 .endif
 
-# Before 2020-06-13, this expression took quite a long time in Str_Match,
-# calling itself 601080390 times for 16 asterisks.
+# Before 2020-06-13, this expression called Str_Match 601,080,390 times.
+# Since 2020-06-13, this expression calls Str_Match 1 time.
 .if ${:U****************:M****************b}
+.endif
+
+# As of 2022-06-11, this expression calls Str_Match 5,242,223 times.
+# Adding another '*?' to the pattern calls Str_Match 41,261,143 times.
+.if ${:U..................................................b:M*?*?*?*?*?a}
 .endif
 
 # To match a dollar sign in a word, double it.
