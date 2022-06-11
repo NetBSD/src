@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.284 2022/06/11 11:52:13 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.285 2022/06/11 12:23:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.284 2022/06/11 11:52:13 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.285 2022/06/11 12:23:59 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -869,7 +869,7 @@ length_in_bits(const type_t *tp, const char *name)
 		break;
 	case ENUM:
 		if (is_incomplete(tp) && name != NULL) {
-			/* incomplete enum type: %s */
+			/* incomplete enum type '%s' */
 			warning(13, name);
 		}
 		/* FALLTHROUGH */
@@ -1659,7 +1659,7 @@ old_style_function_name(sym_t *sym)
 
 	if (sym->s_scl != NOSCL) {
 		if (block_level == sym->s_block_level) {
-			/* redeclaration of formal parameter %s */
+			/* redeclaration of formal parameter '%s' */
 			error(21, sym->s_name);
 			lint_assert(sym->s_defarg);
 		}
@@ -1908,7 +1908,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 				/* enumeration constant hides parameter: %s */
 				warning(57, sym->s_name);
 			} else {
-				/* redeclaration of %s */
+				/* redeclaration of '%s' */
 				error(27, sym->s_name);
 				/*
 				 * inside blocks it should not be too
@@ -2011,10 +2011,10 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 			if (dowarn) {
 				/* TODO: Make this an error in C99 mode as well. */
 				if (!allow_trad && !allow_c99)
-					/* redeclaration of %s */
+					/* redeclaration of '%s' */
 					error(27, dsym->s_name);
 				else
-					/* redeclaration of %s */
+					/* redeclaration of '%s' */
 					warning(27, dsym->s_name);
 				print_previous_declaration(-1, rdsym);
 			}
@@ -2120,7 +2120,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 
 	rsym = dcs->d_redeclared_symbol;
 	if (rsym->s_scl == ENUM_CONST) {
-		/* redeclaration of %s */
+		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
 		return true;
@@ -2132,7 +2132,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		return true;
 	}
 	if (dsym->s_scl == TYPEDEF) {
-		/* redeclaration of %s */
+		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
 		return true;
@@ -2161,7 +2161,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		 * All cases except "int a = 1; static int a;" are caught
 		 * above with or without a warning
 		 */
-		/* redeclaration of %s */
+		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
 		print_previous_declaration(-1, rsym);
 		return true;
@@ -2176,10 +2176,9 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 	 * Now it's one of:
 	 * "static a; int a;", "static a; int a = 1;", "static a = 1; int a;"
 	 */
-	/* redeclaration of %s; ANSI C requires "static" */
 	/* TODO: Make this an error in C99 mode as well. */
 	if (!allow_trad && !allow_c99) {
-		/* redeclaration of %s; ANSI C requires static */
+		/* redeclaration of '%s'; ANSI C requires static */
 		warning(30, dsym->s_name);
 		print_previous_declaration(-1, rsym);
 	}
@@ -2456,7 +2455,7 @@ declare_argument(sym_t *sym, bool initflg)
 
 	if (dcs->d_redeclared_symbol != NULL &&
 	    dcs->d_redeclared_symbol->s_block_level == block_level) {
-		/* redeclaration of formal parameter %s */
+		/* redeclaration of formal parameter '%s' */
 		error(237, sym->s_name);
 		rmsym(dcs->d_redeclared_symbol);
 		sym->s_arg = true;
@@ -2716,7 +2715,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
 		/* no hflag, because it's illegal! */
 		if (rsym->s_arg) {
 			/*
-			 * if allow_c90, a "redeclaration of %s" error
+			 * if allow_c90, a "redeclaration of '%s'" error
 			 * is produced below
 			 */
 			if (!allow_c90) {
@@ -2734,7 +2733,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
 	}
 
 	if (rsym->s_block_level == block_level) {
-		/* redeclaration of %s */
+		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
 		rmsym(rsym);
 	}
@@ -2844,7 +2843,7 @@ declare_external_in_block(sym_t *dsym)
 		return;
 	if (esym->s_scl != EXTERN && esym->s_scl != STATIC) {
 		/* gcc accepts this without a warning, pcc prints an error. */
-		/* redeclaration of %s */
+		/* redeclaration of '%s' */
 		warning(27, dsym->s_name);
 		print_previous_declaration(-1, esym);
 		return;

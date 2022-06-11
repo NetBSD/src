@@ -1,1 +1,1 @@
-msg_013.c(10): warning: incomplete enum type: <unnamed> [13]
+msg_013.c(10): warning: incomplete enum type '<unnamed>' [13]
