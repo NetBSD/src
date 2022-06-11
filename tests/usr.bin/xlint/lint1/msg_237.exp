@@ -1,1 +1,1 @@
-msg_237.c(6): error: syntax error ':' [249]
+msg_237.c(11): error: redeclaration of formal parameter 'param' [237]

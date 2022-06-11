@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.138 2022/05/26 13:40:49 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.139 2022/06/11 12:23:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.138 2022/05/26 13:40:49 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.139 2022/06/11 12:23:59 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -310,10 +310,10 @@ funcdef(sym_t *fsym)
 			if (dowarn && !fsym->s_osdef) {
 				/* TODO: error in C99 mode as well? */
 				if (!allow_trad && !allow_c99)
-					/* redeclaration of %s */
+					/* redeclaration of '%s' */
 					error(27, fsym->s_name);
 				else
-					/* redeclaration of %s */
+					/* redeclaration of '%s' */
 					warning(27, fsym->s_name);
 				print_previous_declaration(-1, rdsym);
 			}

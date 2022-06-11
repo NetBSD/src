@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.168 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.169 2022/06/11 12:23:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.168 2022/06/11 11:52:13 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.169 2022/06/11 12:23:59 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ const char *const msgs[] = {
 	"duplicate '%s'",					      /* 10 */
 	"bit-field initializer out of range",			      /* 11 */
 	"compiler takes size of function",			      /* 12 */
-	"incomplete enum type: %s",				      /* 13 */
+	"incomplete enum type '%s'",				      /* 13 */
 	"",							      /* 14 */
 	"function returns illegal type '%s'",			      /* 15 */
 	"array of function is illegal",				      /* 16 */
@@ -75,16 +75,16 @@ const char *const msgs[] = {
 	"illegal use of 'void'",				      /* 18 */
 	"void type for '%s'",					      /* 19 */
 	"negative array dimension (%d)",			      /* 20 */
-	"redeclaration of formal parameter %s",			      /* 21 */
+	"redeclaration of formal parameter '%s'",		      /* 21 */
 	"incomplete or misplaced function definition",		      /* 22 */
 	"undefined label '%s'",					      /* 23 */
 	"cannot initialize function: %s",			      /* 24 */
 	"cannot initialize typedef: %s",			      /* 25 */
 	"cannot initialize extern declaration: %s",		      /* 26 */
-	"redeclaration of %s",					      /* 27 */
+	"redeclaration of '%s'",				      /* 27 */
 	"redefinition of %s",					      /* 28 */
 	"previously declared extern, becomes static: %s",	      /* 29 */
-	"redeclaration of %s; ANSI C requires static",		      /* 30 */
+	"redeclaration of '%s'; ANSI C requires static",	      /* 30 */
 	"'%s' has incomplete type '%s'",			      /* 31 */
 	"argument type defaults to 'int': %s",			      /* 32 */
 	"duplicate member name: %s",				      /* 33 */
@@ -291,7 +291,7 @@ const char *const msgs[] = {
 	"union '%s' never defined",				      /* 234 */
 	"enum '%s' never defined",				      /* 235 */
 	"static function '%s' unused",				      /* 236 */
-	"redeclaration of formal parameter %s",			      /* 237 */
+	"redeclaration of formal parameter '%s'",		      /* 237 */
 	"initialization of union is illegal in traditional C",	      /* 238 */
 	"constant argument to '!'",				      /* 239 */
 	"assignment of different structures (%s != %s)",	      /* 240 */
