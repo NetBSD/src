@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.678 2022/06/11 17:41:35 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.679 2022/06/11 17:58:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.678 2022/06/11 17:41:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.679 2022/06/11 17:58:15 rillig Exp $");
 
 /*
  * A file being read.
@@ -1045,7 +1045,7 @@ HandleDependencyTargetMundane(const char *targetName)
 		while (!Lst_IsEmpty(&targetNames)) {
 			char *targName = Lst_Dequeue(&targetNames);
 			HandleSingleDependencyTargetMundane(targName);
-			/* TODO: free targName */
+			free(targName);
 		}
 	} else
 		HandleSingleDependencyTargetMundane(targetName);
