@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.44 2022/06/11 15:30:48 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.45 2022/06/11 15:41:19 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,7 +117,7 @@ const struct {
 	{ .ptype=MBR_PTYPE_FAT16B, .desc="DOS FAT16, >32M" },
 	{ .ptype=MBR_PTYPE_FAT16L, .desc="Windows FAT16, LBA" },
 	{ .ptype=MBR_PTYPE_FAT32, .desc="Windows FAT32" },
-	{ .ptype=MBR_PTYPE_EFI, .desc="(U)EFI Boot" },
+	{ .ptype=MBR_PTYPE_EFI, .desc="(U)EFI system partition" },
 };
 
 /* bookeeping of available partition types (including custom ones) */
@@ -1187,6 +1187,8 @@ mbr_get_fs_part_type(enum part_type pt, unsigned fs_type, unsigned sub_type)
 			return &mbr_gen_type_desc[sub_type].gen;
 		}
 		break;
+	case FS_EFI_SP:
+		return &mbr_gen_type_desc[MBR_PTYPE_EFI].gen;
 	}
 
 	return NULL;
