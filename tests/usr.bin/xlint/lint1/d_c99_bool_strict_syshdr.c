@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.15 2022/05/20 21:03:04 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.16 2022/06/11 14:17:33 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -136,11 +136,11 @@ ch_isspace_sys_bool(char c)
  *	* strcmp: 0 means equal, < 0 means less than, > 0 means greater than
  *
  * Without a detailed list of individual functions, it's not possible to
- * guess what the return value means.  Therefore in strict bool mode, the
+ * guess what the return value means.  Therefore, in strict bool mode, the
  * return value of these functions cannot be implicitly converted to bool,
- * not even in a context where the result is compared to 0.  Allowing that
- * would allow expressions like !strcmp(s1, s2), which is not correct since
- * strcmp returns an "ordered comparison result", not a bool.
+ * not even in a controlling expression.  Allowing that would allow
+ * expressions like !strcmp(s1, s2), which is not correct since strcmp
+ * returns an "ordered comparison result", not a bool.
  */
 
 # 1 "math.h" 3 4
@@ -246,4 +246,43 @@ pass_bool_to_function(void)
 	    __lint_false
 # 248 "d_c99_bool_strict_syshdr.c"
 	);
+}
+
+
+extern int *errno_location(void);
+
+/*
+ * As of 2022-06-11, the rule for loosening the strict boolean check for
+ * expressions from system headers is flawed.  That rule allows statements
+ * like 'if (NULL)' or 'if (errno)', even though these have pointer type or
+ * integer type.
+ */
+void
+if_pointer_or_int(void)
+{
+	/* if (NULL) */
+	if (
+# 266 "d_c99_bool_strict_syshdr.c" 3 4
+	    ((void *)0)
+# 268 "d_c99_bool_strict_syshdr.c"
+		       )
+		return;
+	/* expect-1: warning: statement not reached [193] */
+
+	/* if (EXIT_SUCCESS) */
+	if (
+# 275 "d_c99_bool_strict_syshdr.c" 3 4
+	    0
+# 277 "d_c99_bool_strict_syshdr.c"
+		       )
+		return;
+	/* expect-1: warning: statement not reached [193] */
+
+	/* if (errno) */
+	if (
+# 284 "d_c99_bool_strict_syshdr.c" 3 4
+	    (*errno_location())
+# 286 "d_c99_bool_strict_syshdr.c"
+		       )
+		return;
 }
