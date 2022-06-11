@@ -1,1 +1,1 @@
-msg_234.c(6): error: syntax error ':' [249]
+msg_234.c(7): warning: union declared_but_not_defined never defined [234]
