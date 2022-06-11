@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204 2021/06/29 10:22:37 nia Exp $
+# $NetBSD: GENERIC,v 1.205 2022/06/11 04:57:57 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,9 +22,9 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.204 $"
+#ident 		"GENERIC-$Revision: 1.205 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
+makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
 	# backtraces in DDB.
 
