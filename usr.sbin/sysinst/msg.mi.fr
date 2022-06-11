@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.40 2022/06/09 18:26:06 martin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.41 2022/06/11 18:30:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -303,6 +303,8 @@ message cvtscheme_keep		{keep (use only part of disk)}
 message cvtscheme_delete	{delete (all data will be lost!)}
 message cvtscheme_convert	{convert to another partitioning method}
 message cvtscheme_abort		{abort}
+message cvtscheme_error
+{Could not convert all partitions}
 
 /* Called with:				Example
  *  $0 = device name			wd0

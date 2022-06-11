@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.39 2022/06/09 18:26:06 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.40 2022/06/11 18:30:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -305,6 +305,8 @@ message cvtscheme_keep		{beibehalten (nur einen Teil benutzen)}
 message cvtscheme_delete	{löschen (alle Daten gehen verloren!)}
 message cvtscheme_convert	{in ein anderes Schema konvertieren}
 message cvtscheme_abort		{abbrechen}
+message cvtscheme_error
+{Nicht alle Partitionen konnten übernommen werden}
 
 /* Called with:				Example
  *  $0 = device name			wd0
