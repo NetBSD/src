@@ -6,3 +6,5 @@ d_c99_bool_strict_syshdr.c(172): error: operand of '!' must be bool, not 'int' [
 d_c99_bool_strict_syshdr.c(172): warning: function 'str_equal_bad' expects to return value [214]
 d_c99_bool_strict_syshdr.c(229): error: argument #1 expects '_Bool', gets passed 'int' [334]
 d_c99_bool_strict_syshdr.c(242): error: argument #1 expects '_Bool', gets passed 'int' [334]
+d_c99_bool_strict_syshdr.c(269): warning: statement not reached [193]
+d_c99_bool_strict_syshdr.c(278): warning: statement not reached [193]
