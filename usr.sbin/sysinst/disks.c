@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.82 2022/06/09 18:26:06 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.83 2022/06/11 18:30:02 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -779,12 +779,13 @@ delete_scheme(struct pm_devs *p)
 }
 
 
-static void
+static bool
 convert_copy(struct disk_partitions *old_parts,
     struct disk_partitions *new_parts)
 {
 	struct disk_part_info oinfo, ninfo;
 	part_id i;
+	bool err = false;
 
 	for (i = 0; i < old_parts->num_part; i++) {
 		if (!old_parts->pscheme->get_part_info(old_parts, i, &oinfo))
@@ -799,17 +800,23 @@ convert_copy(struct disk_partitions *old_parts,
 					old_parts->pscheme->
 					    secondary_partitions(
 					    old_parts, oinfo.start, false);
-				if (sec_part)
-					convert_copy(sec_part, new_parts);
+				if (sec_part && !convert_copy(sec_part,
+				    new_parts))
+					err = true;
 			}
 			continue;
 		}
 
 		if (!new_parts->pscheme->adapt_foreign_part_info(new_parts,
-			    &ninfo, old_parts->pscheme, &oinfo))
+			    &ninfo, old_parts->pscheme, &oinfo)) {
+			err = true;
 			continue;
-		new_parts->pscheme->add_partition(new_parts, &ninfo, NULL);
+		}
+		if (!new_parts->pscheme->add_partition(new_parts, &ninfo,
+		    NULL))
+			err = true;
 	}
+	return !err;
 }
 
 bool
@@ -838,10 +845,10 @@ convert_scheme(struct pm_devs *p, bool is_boot_drive, const char **err_msg)
 		return false;
 	}
 
-	convert_copy(old_parts, new_parts);
-
-	if (new_parts->num_part == 0 && old_parts->num_part != 0) {
+	if (!convert_copy(old_parts, new_parts)) {
 		/* need to cleanup */
+		if (err_msg)
+			*err_msg = MSG_cvtscheme_error;
 		new_parts->pscheme->free(new_parts);
 		return false;
 	}
