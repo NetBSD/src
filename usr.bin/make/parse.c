@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.676 2022/06/11 16:43:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.677 2022/06/11 16:47:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.676 2022/06/11 16:43:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.677 2022/06/11 16:47:24 rillig Exp $");
 
 /*
  * A file being read.
@@ -1021,6 +1021,18 @@ HandleDependencyTarget(const char *targetName,
 }
 
 static void
+HandleSingleDependencyTargetMundane(const char *name)
+{
+	GNode *gn = Suff_IsTransform(name)
+	    ? Suff_AddTransform(name)
+	    : Targ_GetNode(name);
+	if (doing_depend)
+		RememberLocation(gn);
+
+	Lst_Append(targets, gn);
+}
+
+static void
 HandleDependencyTargetMundane(char *targetName)
 {
 	StringList targetNames = LST_INIT;
@@ -1034,13 +1046,7 @@ HandleDependencyTargetMundane(char *targetName)
 
 	while (!Lst_IsEmpty(&targetNames)) {
 		char *targName = Lst_Dequeue(&targetNames);
-		GNode *gn = Suff_IsTransform(targName)
-		    ? Suff_AddTransform(targName)
-		    : Targ_GetNode(targName);
-		if (doing_depend)
-			RememberLocation(gn);
-
-		Lst_Append(targets, gn);
+		HandleSingleDependencyTargetMundane(targName);
 	}
 }
 
