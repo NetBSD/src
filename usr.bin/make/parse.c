@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.677 2022/06/11 16:47:24 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.678 2022/06/11 17:41:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.677 2022/06/11 16:47:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.678 2022/06/11 17:41:35 rillig Exp $");
 
 /*
  * A file being read.
@@ -1033,21 +1033,22 @@ HandleSingleDependencyTargetMundane(const char *name)
 }
 
 static void
-HandleDependencyTargetMundane(char *targetName)
+HandleDependencyTargetMundane(const char *targetName)
 {
-	StringList targetNames = LST_INIT;
-
 	if (Dir_HasWildcards(targetName)) {
+		StringList targetNames = LST_INIT;
+
 		SearchPath *emptyPath = SearchPath_New();
 		SearchPath_Expand(emptyPath, targetName, &targetNames);
 		SearchPath_Free(emptyPath);
-	} else
-		Lst_Append(&targetNames, targetName);
 
-	while (!Lst_IsEmpty(&targetNames)) {
-		char *targName = Lst_Dequeue(&targetNames);
-		HandleSingleDependencyTargetMundane(targName);
-	}
+		while (!Lst_IsEmpty(&targetNames)) {
+			char *targName = Lst_Dequeue(&targetNames);
+			HandleSingleDependencyTargetMundane(targName);
+			/* TODO: free targName */
+		}
+	} else
+		HandleSingleDependencyTargetMundane(targetName);
 }
 
 static void
