@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.675 2022/06/10 22:42:47 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.676 2022/06/11 16:43:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -98,7 +98,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <stdint.h>
 
 #include "make.h"
 #include "dir.h"
@@ -106,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.675 2022/06/10 22:42:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.676 2022/06/11 16:43:16 rillig Exp $");
 
 /*
  * A file being read.
