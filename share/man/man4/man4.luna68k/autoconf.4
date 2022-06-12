@@ -1,4 +1,4 @@
-.\"	$NetBSD: autoconf.4,v 1.1 2022/06/12 03:51:13 tsutsui Exp $
+.\"	$NetBSD: autoconf.4,v 1.2 2022/06/12 20:17:35 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,8 @@ When
 bootstraps it probes the innards of the machine
 on which it is running
 and locates controllers, drives, and other devices, printing out
-what it finds on the console.  This procedure is driven by a system
+what it finds on the console.
+This procedure is driven by a system
 configuration table which is processed by
 .Xr config 1
 and compiled into each kernel.
@@ -66,7 +67,6 @@ type which it doesn't
 (or at least this compiled version of
 .Nx
 doesn't) understand.
-.Pp
 .It %s%d at mainbus0
 .It %s%d: %s
 An on-board device controller was found.
