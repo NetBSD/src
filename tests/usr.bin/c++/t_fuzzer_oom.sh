@@ -90,7 +90,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 }
 EOF
 
-	c++ -fsanitize=fuzzer -o test -pg test.cc
+	c++ -fsanitize=fuzzer -static -o test -pg test.cc
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"ERROR: libFuzzer: out-of-memory" ./test -rss_limit_mb=30
 }
