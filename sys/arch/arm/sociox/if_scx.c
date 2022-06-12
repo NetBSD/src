@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.36 2022/01/27 02:34:23 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.37 2022/06/12 16:22:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.36 2022/01/27 02:34:23 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.37 2022/06/12 16:22:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,7 +128,7 @@ struct rdes {
 #define  MODENRM	(1U<<28)	/* change mode to normal */
 #define  ENJUMBO	(1U<<27)	/* allow jumbo frame */
 #define  RPTCSUMERR	(1U<<3)		/* log Rx checksum error */
-#define  RPTHDCOMP	(1U<<2)		/* log HD imcomplete condition */
+#define  RPTHDCOMP	(1U<<2)		/* log HD incomplete condition */
 #define  RPTHDERR	(1U<<1)		/* log HD error */
 #define  DROPNOMATCH	(1U<<0)		/* drop no match frames */
 #define xINTSR		0x200		/* aggregated interrupt status */
@@ -360,11 +360,11 @@ struct rdes {
 #define  DMAI_UNF	(1U<<5)		/* Tx underflow detected */
 #define  DMAI_OVF	(1U<<4)		/* receive buffer overflow detected */
 #define  DMAI_TJT	(1U<<3)		/* longer than 2048 frame sent */
-#define  DMAI_TU	(1U<<2)		/* Tx discriptor not available */
+#define  DMAI_TU	(1U<<2)		/* Tx descriptor not available */
 #define  DMAI_TPS	(1U<<1)		/* transmission is stopped */
 #define  DMAI_TI	(1U<<0)		/* frame Tx completed by T0_IC */
 #define GMACOMR		0x1018		/* DMA operation mode */
-#define  OMR_RSF	(1U<<25)	/* 1: Rx store&forword, 0: immed. */
+#define  OMR_RSF	(1U<<25)	/* 1: Rx store&forward, 0: immed. */
 #define  OMR_TSF	(1U<<21)	/* 1: Tx store&forward, 0: immed. */
 #define  OMR_TTC	(14)		/* 16:14 Tx threshold */
 #define  OMR_ST		(1U<<13)	/* run Tx DMA engine, 0 to stop */
