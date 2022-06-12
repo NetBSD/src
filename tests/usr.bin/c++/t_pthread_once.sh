@@ -1,4 +1,4 @@
-#	$NetBSD: t_pthread_once.sh,v 1.5 2022/06/12 08:55:36 skrll Exp $
+#	$NetBSD: t_pthread_once.sh,v 1.6 2022/06/12 15:08:38 skrll Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -109,7 +109,7 @@ int main(void) {
         return 0;
 }
 EOF
-	atf_check -s exit:0 -static -o ignore -e ignore c++ -pg -o pthread_once test.cpp -pthread
+	atf_check -s exit:0 -o ignore -e ignore c++ -static -pg -o pthread_once test.cpp -pthread
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./pthread_once
 }
 
@@ -135,7 +135,7 @@ int main(void) {
         return 0;
 }
 EOF
-	atf_check -s exit:0 -static -o ignore -e ignore c++ -m32 -pg -o pthread_once test.cpp -pthread
+	atf_check -s exit:0 -o ignore -e ignore c++ -static -m32 -pg -o pthread_once test.cpp -pthread
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./pthread_once
 }
 
