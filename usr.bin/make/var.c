@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1021 2022/05/14 12:25:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1022 2022/06/12 13:37:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1021 2022/05/14 12:25:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1022 2022/06/12 13:37:32 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4523,8 +4523,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	if (v->inUse) {
 		if (scope->fname != NULL) {
 			fprintf(stderr, "In a command near ");
-			PrintLocation(stderr, false,
-			    scope->fname, scope->lineno);
+			PrintLocation(stderr, false, scope);
 		}
 		Fatal("Variable %s is recursive.", v->name.str);
 	}
