@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.302 2022/05/07 17:49:47 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.303 2022/06/12 13:37:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -852,7 +852,7 @@ bool GetBooleanExpr(const char *, bool);
 void Parse_Init(void);
 void Parse_End(void);
 
-void PrintLocation(FILE *, bool, const char *, unsigned);
+void PrintLocation(FILE *, bool, const GNode *);
 void PrintStackTrace(bool);
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 bool Parse_VarAssign(const char *, bool, GNode *) MAKE_ATTR_USE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.679 2022/06/11 17:58:15 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.680 2022/06/12 13:37:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.679 2022/06/11 17:58:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.680 2022/06/12 13:37:32 rillig Exp $");
 
 /*
  * A file being read.
@@ -436,10 +436,22 @@ FindKeyword(const char *str)
 }
 
 void
-PrintLocation(FILE *f, bool useVars, const char *fname, unsigned lineno)
+PrintLocation(FILE *f, bool useVars, const GNode *gn)
 {
 	char dirbuf[MAXPATHLEN + 1];
 	FStr dir, base;
+	const char *fname;
+	unsigned lineno;
+
+	if (gn != NULL) {
+		fname = gn->fname;
+		lineno = gn->lineno;
+	} else if (includes.len > 0) {
+		IncludedFile *curFile = CurFile();
+		fname = curFile->name.str;
+		lineno = curFile->lineno;
+	} else
+		return;
 
 	if (!useVars || fname[0] == '/' || strcmp(fname, "(stdin)") == 0) {
 		(void)fprintf(f, "\"%s\" line %u: ", fname, lineno);
@@ -462,16 +474,15 @@ PrintLocation(FILE *f, bool useVars, const char *fname, unsigned lineno)
 	FStr_Done(&dir);
 }
 
-static void MAKE_ATTR_PRINTFLIKE(6, 0)
-ParseVErrorInternal(FILE *f, bool useVars, const char *fname, unsigned lineno,
+static void MAKE_ATTR_PRINTFLIKE(5, 0)
+ParseVErrorInternal(FILE *f, bool useVars, const GNode *gn,
 		    ParseErrorLevel level, const char *fmt, va_list ap)
 {
 	static bool fatal_warning_error_printed = false;
 
 	(void)fprintf(f, "%s: ", progname);
 
-	if (fname != NULL)
-		PrintLocation(f, useVars, fname, lineno);
+	PrintLocation(f, useVars, gn);
 	if (level == PARSE_WARNING)
 		(void)fprintf(f, "warning: ");
 	(void)vfprintf(f, fmt, ap);
@@ -492,20 +503,20 @@ ParseVErrorInternal(FILE *f, bool useVars, const char *fname, unsigned lineno,
 		PrintStackTrace(false);
 }
 
-static void MAKE_ATTR_PRINTFLIKE(4, 5)
-ParseErrorInternal(const char *fname, unsigned lineno,
+static void MAKE_ATTR_PRINTFLIKE(3, 4)
+ParseErrorInternal(const GNode *gn,
 		   ParseErrorLevel level, const char *fmt, ...)
 {
 	va_list ap;
 
 	(void)fflush(stdout);
 	va_start(ap, fmt);
-	ParseVErrorInternal(stderr, false, fname, lineno, level, fmt, ap);
+	ParseVErrorInternal(stderr, false, gn, level, fmt, ap);
 	va_end(ap);
 
 	if (opts.debug_file != stdout && opts.debug_file != stderr) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(opts.debug_file, false, fname, lineno,
+		ParseVErrorInternal(opts.debug_file, false, gn,
 		    level, fmt, ap);
 		va_end(ap);
 	}
@@ -523,26 +534,15 @@ void
 Parse_Error(ParseErrorLevel level, const char *fmt, ...)
 {
 	va_list ap;
-	const char *fname;
-	unsigned lineno;
-
-	if (includes.len == 0) {
-		fname = NULL;
-		lineno = 0;
-	} else {
-		IncludedFile *curFile = CurFile();
-		fname = curFile->name.str;
-		lineno = curFile->lineno;
-	}
 
 	(void)fflush(stdout);
 	va_start(ap, fmt);
-	ParseVErrorInternal(stderr, true, fname, lineno, level, fmt, ap);
+	ParseVErrorInternal(stderr, true, NULL, level, fmt, ap);
 	va_end(ap);
 
 	if (opts.debug_file != stdout && opts.debug_file != stderr) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(opts.debug_file, true, fname, lineno,
+		ParseVErrorInternal(opts.debug_file, true, NULL,
 		    level, fmt, ap);
 		va_end(ap);
 	}
@@ -1921,7 +1921,7 @@ GNode_AddCommand(GNode *gn, char *cmd)
 		Parse_Error(PARSE_WARNING,
 		    "duplicate script for target \"%s\" ignored",
 		    gn->name);
-		ParseErrorInternal(gn->fname, gn->lineno, PARSE_WARNING,
+		ParseErrorInternal(gn, PARSE_WARNING,
 		    "using previous script for \"%s\" defined here",
 		    gn->name);
 #endif
