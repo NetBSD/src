@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.19 2021/11/07 17:14:20 jmcneill Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.20 2022/06/12 08:04:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.19 2021/11/07 17:14:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.20 2022/06/12 08:04:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -256,9 +256,30 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Only host mode is supported */
+	/*
+	 * Only host mode is supported, but this includes otg devices
+	 * that have 'usb-role-switch' and 'role-switch-default-mode' of
+	 * 'host'
+	 */
 	const char *dr_mode = fdtbus_get_string(dwc3_phandle, "dr_mode");
-	if (dr_mode == NULL || strcmp(dr_mode, "host") != 0) {
+	if (dr_mode == NULL || strcmp(dr_mode, "otg") == 0) {
+		bool ok = false;
+		if (of_hasprop(dwc3_phandle, "usb-role-switch")) {
+			const char *rsdm = fdtbus_get_string(dwc3_phandle,
+			    "role-switch-default-mode");
+			if (rsdm != NULL && strcmp(rsdm, "host") == 0)
+				ok = true;
+
+			if (!ok) {
+				aprint_error(": host is not default mode\n");
+				return;
+			}
+		}
+		if (!ok) {
+			aprint_error(": cannot switch 'otg' mode to host\n");
+			return;
+		}
+	} else if (strcmp(dr_mode, "host") != 0) {
 		aprint_error(": '%s' not supported\n", dr_mode);
 		return;
 	}
