@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-null.mk,v 1.2 2022/05/08 06:51:27 rillig Exp $
+# $NetBSD: directive-for-null.mk,v 1.3 2022/06/12 15:03:27 rillig Exp $
 #
 # Test for parsing a .for loop that accidentally contains a null byte.
 #
@@ -15,5 +15,9 @@
 # line that contains a null byte is line 2.
 
 all: .PHONY
-	@printf '%s\n' '.for i in 1 2 3' 'VAR=value' '.endfor' | tr 'l' '\0' \
+	@printf '%s\n' \
+	    '.for i in 1 2 3' \
+	    'VAR=value' \
+	    '.endfor' \
+	| tr 'l' '\0' \
 	| ${MAKE} -f -
