@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.28 2022/05/14 14:20:10 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.29 2022/06/12 14:59:44 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.28 2022/05/14 14:20:10 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.29 2022/06/12 14:59:44 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -490,6 +490,7 @@ handle_key(void)
 
 	switch (ch) {
 	case 1:			/* ^A */
+	case KEY_BEG:
 	case KEY_HOME:
 		cursor_x = 0;
 		break;
