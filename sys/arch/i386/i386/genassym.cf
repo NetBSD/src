@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.123 2022/05/24 15:55:19 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.124 2022/06/12 11:36:42 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -392,3 +392,8 @@ define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
 define SCHEDOP_yield		SCHEDOP_yield
 endif /* XEN */
+
+ifdef XENPV
+define CPU_INFO_XEN_CLOCKF_USERMODE offsetof(struct cpu_info, ci_xen_clockf_usermode)
+define CPU_INFO_XEN_CLOCKF_PC	offsetof(struct cpu_info, ci_xen_clockf_pc)
+endif /* XENPV */
