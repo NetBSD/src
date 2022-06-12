@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.245 2022/06/06 10:56:28 nia Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.246 2022/06/12 03:51:13 tsutsui Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -998,6 +998,7 @@
 ./usr/share/man/cat4/hpcsh
 ./usr/share/man/cat4/hppa
 ./usr/share/man/cat4/i386
+./usr/share/man/cat4/luna68k
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/macppc
 ./usr/share/man/cat4/mvme68k
@@ -1107,6 +1108,7 @@
 ./usr/share/man/html4/hpcsh
 ./usr/share/man/html4/hppa
 ./usr/share/man/html4/i386
+./usr/share/man/html4/luna68k
 ./usr/share/man/html4/mac68k
 ./usr/share/man/html4/macppc
 ./usr/share/man/html4/mvme68k
@@ -1216,6 +1218,7 @@
 ./usr/share/man/man4/hpcsh
 ./usr/share/man/man4/hppa
 ./usr/share/man/man4/i386
+./usr/share/man/man4/luna68k
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/macppc
 ./usr/share/man/man4/mvme68k
