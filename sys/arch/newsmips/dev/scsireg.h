@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.13 2022/01/05 16:01:54 andvar Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.14 2022/06/12 16:22:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -266,7 +266,7 @@ struct sc_softc {
 #define SC_DMAC_RD	1
 #define SC_DMAC_WR	2
 
-	struct sc_chan_stat *wbq_actf;		/* forword active pointer */
+	struct sc_chan_stat *wbq_actf;		/* forward active pointer */
 	struct sc_chan_stat *wbq_actl;		/* last active pointer */
 
 	uint8_t	*act_cmd_pointer;
