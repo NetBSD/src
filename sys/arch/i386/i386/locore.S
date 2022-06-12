@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.188 2022/05/31 18:04:11 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.189 2022/06/12 11:36:42 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.188 2022/05/31 18:04:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.189 2022/06/12 11:36:42 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1406,6 +1406,15 @@ ENTRY(cpu_switchto)
 	 */
 	movl	%edi,%ecx
 	xchgl	%ecx,CPUVAR(CURLWP)
+
+#ifdef XENPV
+	/* if we are there, we're obviously not in user context.
+	 * reset ci_xen_clockf_* in case the splx() at the end of mi_switch()
+	 * triggers a deffered call do xen_timer_handler()
+	 */
+	movb	$0, CPUVAR(XEN_CLOCKF_USERMODE)
+	movl	$_C_LABEL(cpu_switchto), CPUVAR(XEN_CLOCKF_PC)
+#endif
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testl	%edx,%edx
