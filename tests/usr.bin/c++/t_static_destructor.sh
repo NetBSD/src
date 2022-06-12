@@ -1,4 +1,4 @@
-#	$NetBSD: t_static_destructor.sh,v 1.4 2020/10/13 06:49:27 rin Exp $
+#	$NetBSD: t_static_destructor.sh,v 1.5 2022/06/12 08:55:36 skrll Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -122,7 +122,7 @@ struct B {
 };
 int main(void) {struct B b;return 0;}
 EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -pg -o hello test.cpp
+	atf_check -s exit:0 -static -o ignore -e ignore c++ -pg -o hello test.cpp
 	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
 }
 
@@ -153,7 +153,7 @@ struct B {
 };
 int main(void) {struct B b;return 0;}
 EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -m32 -pg -o hello test.cpp
+	atf_check -s exit:0 -static -o ignore -e ignore c++ -m32 -pg -o hello test.cpp
 	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
 }
 

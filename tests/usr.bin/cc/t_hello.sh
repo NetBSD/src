@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.10 2020/10/13 06:49:27 rin Exp $
+#	$NetBSD: t_hello.sh,v 1.11 2022/06/12 08:55:36 skrll Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,7 +71,7 @@ hello_profile_body() {
 #include <stdlib.h>
 int main(void) {printf("hello world\n");exit(0);}
 EOF
-	atf_check -s exit:0 -o ignore -e ignore cc -o hello -pg test.c
+	atf_check -s exit:0 -static -o ignore -e ignore cc -o hello -pg test.c
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 	atf_check -s exit:0 -o ignore -e ignore cc -o hello2 -fprofile-generate test.c
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello2

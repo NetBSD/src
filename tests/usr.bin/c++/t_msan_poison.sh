@@ -92,7 +92,7 @@ int main(void) {
 }
 EOF
 
-	c++ -fsanitize=memory -o test -pg test.cc
+	c++ -fsanitize=memory -static -o test -pg test.cc
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"Uninitialized bytes in __msan_check_mem_is_initialized at offset 5 inside" ./test
 }

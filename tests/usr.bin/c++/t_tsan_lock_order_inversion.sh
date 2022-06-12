@@ -106,7 +106,7 @@ int main() {
 }
 EOF
 
-	c++ -fsanitize=thread -o test -pg test.cc
+	c++ -fsanitize=thread -static -o test -pg test.cc
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: lock-order-inversion" ./test
 }

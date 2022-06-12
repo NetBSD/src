@@ -88,7 +88,7 @@ int main() {
 }
 EOF
 
-	cc -fsanitize=memory -o test -pg test.c
+	cc -fsanitize=memory -static -o test -pg test.c
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"MemorySanitizer: bad pointer" ./test
 }

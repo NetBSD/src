@@ -78,7 +78,7 @@ heap_profile_body(){
 int main() { int *a = (int *)malloc(sizeof(int)); return *a; }
 EOF
 
-	cc -fsanitize=memory -o test -pg test.c
+	cc -fsanitize=memory -static -o test -pg test.c
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"WARNING: MemorySanitizer: use-of-uninitialized-value" ./test
 }

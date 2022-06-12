@@ -94,7 +94,7 @@ int main(void) {
 }
 EOF
 
-	c++ -fsanitize=memory -o test -pg test.cc
+	c++ -fsanitize=memory -static -o test -pg test.cc
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:": 77654321" ./test
 }

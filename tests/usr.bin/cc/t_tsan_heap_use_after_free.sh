@@ -113,7 +113,7 @@ int main() {
 }
 EOF
 
-	cc -fsanitize=thread -o test -pg test.c
+	cc -fsanitize=thread -static -o test -pg test.c
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: heap-use-after-free" ./test
 }

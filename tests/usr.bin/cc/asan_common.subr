@@ -1,4 +1,4 @@
-#	$NetBSD: asan_common.subr,v 1.2 2021/10/12 18:40:01 skrll Exp $
+#	$NetBSD: asan_common.subr,v 1.3 2022/06/12 08:55:36 skrll Exp $
 #
 # Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,7 +93,7 @@ asan_test_case() {
 
 	$1_profile_body() {
 		echo \"\$ASAN_CODE\" > test.c
-		cc -fsanitize=address -o test -pg test.c
+		cc -fsanitize=address -static -o test -pg test.c
 		paxctl +a test
 		atf_check -s not-exit:0 -o not-match:'CHECK\n' -e match:'$3' ./test
 	}
@@ -148,7 +148,7 @@ asan_test_case() {
 		atf_check -s not-exit:0 -o not-match:'CHECK\n' -e match:'$3' ./df32
 
 # and another test with profile 32bit binaries
-		cc -fsanitize=address -o test -pg -m32 test.c
+		cc -fsanitize=address -static -o test -pg -m32 test.c
 		paxctl +a test
 		atf_check -s not-exit:0 -o not-match:'CHECK\n' -e match:'$3' ./test
 	}"
