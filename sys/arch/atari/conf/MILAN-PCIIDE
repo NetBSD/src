@@ -1,15 +1,15 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.99 2021/01/26 10:51:27 rin Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.100 2022/06/12 06:57:07 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.29 2019/05/04 13:12:03 tsutsui Exp $
-#		NetBSD: GENERIC.in,v 1.121 2021/01/21 06:51:54 nia Exp $
+#		NetBSD: GENERIC.in,v 1.122 2022/06/12 06:54:32 tsutsui Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
-makeoptions COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer" # See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for backtraces in DDB.
+makeoptions COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer" # See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for backtraces in DDB.
 maxusers 16
 options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels
