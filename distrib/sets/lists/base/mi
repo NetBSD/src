@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1309 2022/06/08 19:27:37 uwe Exp $
+# $NetBSD: mi,v 1.1310 2022/06/12 03:51:13 tsutsui Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4206,6 +4206,7 @@
 ./usr/share/man/cat4/hpcsh			base-man-share
 ./usr/share/man/cat4/hppa			base-man-share
 ./usr/share/man/cat4/i386			base-man-share
+./usr/share/man/cat4/luna68k			base-man-share
 ./usr/share/man/cat4/mac68k			base-man-share
 ./usr/share/man/cat4/macppc			base-man-share
 ./usr/share/man/cat4/mvme68k			base-man-share
@@ -4336,6 +4337,7 @@
 ./usr/share/man/html4/hpcsh			base-man-share
 ./usr/share/man/html4/hppa			base-man-share
 ./usr/share/man/html4/i386			base-man-share
+./usr/share/man/html4/luna68k			base-man-share
 ./usr/share/man/html4/mac68k			base-man-share
 ./usr/share/man/html4/macppc			base-man-share
 ./usr/share/man/html4/mvme68k			base-man-share
@@ -4467,6 +4469,7 @@
 ./usr/share/man/man4/hpcsh			base-man-share
 ./usr/share/man/man4/hppa			base-man-share
 ./usr/share/man/man4/i386			base-man-share
+./usr/share/man/man4/luna68k			base-man-share
 ./usr/share/man/man4/mac68k			base-man-share
 ./usr/share/man/man4/macppc			base-man-share
 ./usr/share/man/man4/mvme68k			base-man-share

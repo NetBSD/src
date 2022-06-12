@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1748 2022/06/06 10:56:27 nia Exp $
+# $NetBSD: mi,v 1.1749 2022/06/12 03:51:13 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1432,6 +1432,12 @@
 ./usr/share/man/cat4/lo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lsu.0			man-obsolete		obsolete
 ./usr/share/man/cat4/lua.0			man-sys-catman		.cat
+./usr/share/man/cat4/luna68k/autoconf.0		man-sys-catman		.cat
+./usr/share/man/cat4/luna68k/intro.0		man-sys-catman		.cat
+./usr/share/man/cat4/luna68k/kmem.0		man-sys-catman		.cat
+./usr/share/man/cat4/luna68k/lcd.0		man-sys-catman		.cat
+./usr/share/man/cat4/luna68k/mem.0		man-sys-catman		.cat
+./usr/share/man/cat4/luna68k/xp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/lxtphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/m25p.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/adb.0		man-obsolete		obsolete
@@ -4654,6 +4660,12 @@
 ./usr/share/man/html4/lmtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/lo.html			man-sys-htmlman		html
 ./usr/share/man/html4/lua.html			man-sys-htmlman		html
+./usr/share/man/html4/luna68k/autoconf.html	man-sys-htmlman		html
+./usr/share/man/html4/luna68k/intro.html	man-sys-htmlman		html
+./usr/share/man/html4/luna68k/kmem.html		man-sys-htmlman		html
+./usr/share/man/html4/luna68k/lcd.html		man-sys-htmlman		html
+./usr/share/man/html4/luna68k/mem.html		man-sys-htmlman		html
+./usr/share/man/html4/luna68k/xp.html		man-sys-htmlman		html
 ./usr/share/man/html4/lxtphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/m25p.html			man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/ae.html		man-sys-htmlman		html
@@ -7718,6 +7730,12 @@
 ./usr/share/man/man4/lo.4			man-sys-man		.man
 ./usr/share/man/man4/lsu.4			man-obsolete		obsolete
 ./usr/share/man/man4/lua.4			man-sys-man		.man
+./usr/share/man/man4/luna68k/autoconf.4		man-sys-man		.man
+./usr/share/man/man4/luna68k/intro.4		man-sys-man		.man
+./usr/share/man/man4/luna68k/kmem.4		man-sys-man		.man
+./usr/share/man/man4/luna68k/lcd.4		man-sys-man		.man
+./usr/share/man/man4/luna68k/mem.4		man-sys-man		.man
+./usr/share/man/man4/luna68k/xp.4		man-sys-man		.man
 ./usr/share/man/man4/lxtphy.4			man-sys-man		.man
 ./usr/share/man/man4/m25p.4			man-sys-man		.man
 ./usr/share/man/man4/mac68k/adb.4		man-obsolete		obsolete
