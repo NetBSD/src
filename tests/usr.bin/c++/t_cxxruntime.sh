@@ -1,4 +1,4 @@
-#	$NetBSD: t_cxxruntime.sh,v 1.6 2022/06/12 08:55:36 skrll Exp $
+#	$NetBSD: t_cxxruntime.sh,v 1.7 2022/06/12 15:08:38 skrll Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -104,7 +104,7 @@ cxxruntime_profile_body() {
 #include <iostream>
 int main(void) {std::cout << "hello world" << std::endl;exit(0);}
 EOF
-	atf_check -s exit:0 -static -o ignore -e ignore c++ -pg -o hello test.cpp
+	atf_check -s exit:0 -o ignore -e ignore c++ -static -pg -o hello test.cpp
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
@@ -126,7 +126,7 @@ cxxruntime_profile_32_body() {
 #include <iostream>
 int main(void) {std::cout << "hello world" << std::endl;exit(0);}
 EOF
-	atf_check -s exit:0 -static -o ignore -e ignore c++ -m32 -pg -o hello test.cpp
+	atf_check -s exit:0 -o ignore -e ignore c++ -static -m32 -pg -o hello test.cpp
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
