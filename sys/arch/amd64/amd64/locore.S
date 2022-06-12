@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.212 2021/11/10 15:59:07 msaitoh Exp $	*/
+/*	$NetBSD: locore.S,v 1.213 2022/06/12 11:36:42 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1182,6 +1182,16 @@ ENTRY(cpu_switchto)
 	 */
 	movq	%r12,%rcx
 	xchgq	%rcx,CPUVAR(CURLWP)
+
+#ifdef XENPV
+	/* if we are there, we're obviously not in user context.
+	 * reset ci_xen_clockf_* in case the splx() at the end of mi_switch()
+	 * triggers a deffered call do xen_timer_handler()
+	 */
+	movb    $0, CPUVAR(XEN_CLOCKF_USERMODE)
+	movq    $_C_LABEL(cpu_switchto), CPUVAR(XEN_CLOCKF_PC)
+#endif
+
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testb	%dl,%dl		/* returning = true ? */
