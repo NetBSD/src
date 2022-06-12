@@ -1,4 +1,4 @@
-#	$NetBSD: ubsan_common.subr,v 1.1 2019/01/29 20:07:03 mgorny Exp $
+#	$NetBSD: ubsan_common.subr,v 1.2 2022/06/12 08:55:36 skrll Exp $
 #
 # Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,7 +91,7 @@ ubsan_test_case() {
 
 	$1_profile_body() {
 		echo \"\$UBSAN_CODE\" > test.cpp
-		c++ -fsanitize=undefined -o test -pg test.cpp
+		c++ -fsanitize=undefined -static -o test -pg test.cpp
 		atf_check -s ignore -e match:'$3' ./test
 	}
 
@@ -142,7 +142,7 @@ ubsan_test_case() {
 		atf_check -s ignore -e match:'$3' ./df32
 
 # and another test with profile 32bit binaries
-		c++ -fsanitize=undefined -o test -pg -m32 test.cpp
+		c++ -fsanitize=undefined -static -o test -pg -m32 test.cpp
 		atf_check -s ignore -e match:'$3' ./test
 	}"
 }

@@ -88,7 +88,7 @@ int main() {
 }
 EOF
 
-	c++ -fsanitize=memory -o test -pg test.cc
+	c++ -fsanitize=memory -static -o test -pg test.cc
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"WARNING: MemorySanitizer: use-of-uninitialized-value" ./test
 }

@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 }
 EOF
 
-	cc -fsanitize=memory -o test -pg test.c
+	cc -fsanitize=memory -static -o test -pg test.c
 	paxctl +a test
 	atf_check -s ignore -o match:"2" -e match:"00000000 ff000000" ./test
 }

@@ -98,7 +98,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 }
 EOF
 
-	cc -fsanitize=fuzzer -o test -pg test.c
+	cc -fsanitize=fuzzer -static -o test -pg test.c
 	paxctl +a test
 	atf_check -s ignore -o ignore -e match:"BINGO" ./test
 }
