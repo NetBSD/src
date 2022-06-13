@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.11 2021/11/26 20:02:35 gson Exp $
+#	$NetBSD: t_misc.sh,v 1.12 2022/06/13 07:59:15 martin Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -603,7 +603,7 @@ wg_malformed_head()
 
 	atf_set "descr" "tests malformed packet headers"
 	atf_set "require.progs" "nc" "rump_server" "wgconfig" "wg-keygen"
-	atf_set "timeout" "10"
+	atf_set "timeout" "100"
 }
 
 wg_malformed_body()
