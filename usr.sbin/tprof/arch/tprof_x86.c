@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.11 2022/06/13 07:40:58 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.12 2022/06/13 09:28:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ static struct event_table intel_arch1 = {
 static struct event_table *
 init_intel_arch1(void)
 {
-	unsigned int eax, ebx, ecx, edx;
+	unsigned int eax, ebx, ecx, edx, vectorlen;
 	struct event_table *table;
 	size_t i;
 
@@ -109,9 +109,17 @@ init_intel_arch1(void)
 	edx = 0;
 	x86_cpuid(&eax, &ebx, &ecx, &edx);
 
+	vectorlen = __SHIFTOUT(eax, CPUID_PERF_BVECLEN);
+
 	table = &intel_arch1;
 	for (i = 0; i < table->nevents; i++) {
-		/* Disable the unsupported events. */
+		/*
+		 * Disable the unsupported events from:
+		 * a) the bit vector length in EAX.
+		 * b) the disable bit in EBX.
+		 */
+		if (i >= vectorlen)
+			table->names[i].enabled = false;
 		if ((ebx & (i << 1)) != 0)
 			table->names[i].enabled = false;
 	}
