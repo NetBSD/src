@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.180 2020/09/08 14:12:57 christos Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.181 2022/06/13 09:23:23 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.180 2020/09/08 14:12:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.181 2022/06/13 09:23:23 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -241,11 +241,11 @@ rip_pcbnotify(struct inpcbtable *table,
     struct in_addr faddr, struct in_addr laddr, int proto, int errno,
     void (*notify)(struct inpcb *, int))
 {
-	struct inpcb_hdr *inph, *ninph;
+	struct inpcb_hdr *inph;
 	int nmatch;
 
 	nmatch = 0;
-	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
+	TAILQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
 		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
