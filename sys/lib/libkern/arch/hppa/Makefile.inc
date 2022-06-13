@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.12 2014/03/13 16:09:11 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2022/06/13 16:03:07 skrll Exp $
 
 SRCS+=	milli.S
 SRCS+=	bcopy.S memcpy.S memmove.S
+SRCS+=	milli_extra.S
 
 # XXX: spcopy does not really belong in libkern in the first place
 .ifndef RUMPKERNEL
