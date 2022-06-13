@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.10 2020/04/17 03:15:50 knakahara Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.11 2022/06/13 07:40:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ static struct name_to_event intel_arch1_names[] = {
 	{ "llc-misses",			0x2E, 0x41, true },
 	{ "branch-instruction-retired",	0xC4, 0x00, true },
 	{ "branch-misses-retired",	0xC5, 0x00, true },
+	{ "topdown-slots",		0xA4, 0x01, true },
 };
 
 static struct event_table intel_arch1 = {
