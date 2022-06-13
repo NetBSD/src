@@ -76,7 +76,7 @@
 
 	.global	_C_LABEL(mini2440_start)
 _C_LABEL(mini2440_start):
-	/* r0 (argument 0) remains unchanged until initarm is caled() */
+	/* r0 (argument 0) remains unchanged until initarm() is called */
 	
 	/* Jump to kernel code in TRUE VA */
 	adr	r1, Lstart
