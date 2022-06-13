@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.189 2022/02/01 05:27:40 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.190 2022/06/13 06:22:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -557,10 +557,11 @@
 #define CPUID_PERF_LLCMISS	__BIT(4)       /* No LLCache miss */
 #define CPUID_PERF_BRINSRETR	__BIT(5)       /* No branch inst. retried */
 #define CPUID_PERF_BRMISPRRETR	__BIT(6)       /* No branch mispredict retry */
+#define CPUID_PERF_TOPDOWNSLOT	__BIT(7)       /* No top-down slots */
 
-#define CPUID_PERF_FLAGS1	"\177\20"			      \
-	"b\0CORECYCL\0" "b\1INSTRETRY\0" "b\2REFCYCL\0" "b\3LLCREF\0" \
-	"b\4LLCMISS\0" "b\5BRINSRETR\0" "b\6BRMISPRRETR\0"
+#define CPUID_PERF_FLAGS1	"\177\20"				      \
+	"b\0CORECYCL\0" "b\1INSTRETRY\0" "b\2REFCYCL\0" "b\3LLCREF\0"	      \
+	"b\4LLCMISS\0" "b\5BRINSRETR\0" "b\6BRMISPRRETR\0" "b\7TOPDOWNSLOT\0"
 
 /* %edx */
 #define CPUID_PERF_NFFPC	__BITS(4, 0)   /* Num of fixed-funct perfcnt */
