@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1022 2022/06/12 13:37:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1023 2022/06/14 19:37:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1022 2022/06/12 13:37:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1023 2022/06/14 19:37:11 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4138,15 +4138,15 @@ ParseVarname(const char **pp, char startc, char endc,
 	*pp = p;
 }
 
-static VarParseResult
-ValidShortVarname(char varname, const char *start)
+static bool
+IsShortVarnameValid(char varname, const char *start)
 {
 	if (varname != '$' && varname != ':' && varname != '}' &&
 	    varname != ')' && varname != '\0')
-		return VPR_OK;
+		return true;
 
 	if (!opts.strict)
-		return VPR_ERR;	/* XXX: Missing error message */
+		return false;	/* XXX: Missing error message */
 
 	if (varname == '$')
 		Parse_Error(PARSE_FATAL,
@@ -4157,7 +4157,7 @@ ValidShortVarname(char varname, const char *start)
 		Parse_Error(PARSE_FATAL,
 		    "Invalid variable name '%c', at \"%s\"", varname, start);
 
-	return VPR_ERR;
+	return false;
 }
 
 /*
@@ -4172,12 +4172,10 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 {
 	char name[2];
 	Var *v;
-	VarParseResult vpr;
 
-	vpr = ValidShortVarname(varname, *pp);
-	if (vpr != VPR_OK) {
+	if (!IsShortVarnameValid(varname, *pp)) {
 		(*pp)++;
-		*out_false_res = vpr;
+		*out_false_res = VPR_ERR;
 		*out_false_val = var_Error;
 		return false;
 	}
