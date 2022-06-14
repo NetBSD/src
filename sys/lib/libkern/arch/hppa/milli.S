@@ -1,4 +1,4 @@
-;	$NetBSD: milli.S,v 1.1 2002/06/06 20:03:39 fredette Exp $
+;	$NetBSD: milli.S,v 1.1.204.1 2022/06/14 10:41:18 martin Exp $
 ;
 ;	$OpenBSD: milli.S,v 1.5 2001/03/29 04:08:20 mickey Exp $
 ;
@@ -443,7 +443,6 @@ noshlibs:
 	be	0(sr0,r22)
 	stw	rp,-24(sp)
 	.procend
-#endif
 
 $$sh_func_adrs:
 	.proc
@@ -456,6 +455,7 @@ $$sh_func_adrs:
 	bv	r0(r31)
 	ldws	0(r26),ret1
 	.procend
+#endif
 
 temp: .EQU	r1
 
