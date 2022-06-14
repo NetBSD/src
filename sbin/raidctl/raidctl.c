@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.74 2021/08/02 20:31:15 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.75 2022/06/14 08:05:55 kre Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.74 2021/08/02 20:31:15 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.75 2022/06/14 08:05:55 kre Exp $");
 #endif
 
 
@@ -294,7 +294,7 @@ main(int argc,char *argv[])
 
 	raidID = DISKUNIT(st.st_rdev);
 
-	switch(action) {
+	switch (action) {
 	case RAIDFRAME_ADD_HOT_SPARE:
 		add_hot_spare(fd, component);
 		break;
@@ -490,7 +490,8 @@ rf_get_device_status(int fd)
 			} else {
 				printf("%s status is: %s.  Skipping label.\n",
 				       device_config.spares[i].devname,
-				       device_status(device_config.spares[i].status));
+				       device_status(
+					   device_config.spares[i].status));
 			}		
 		}
 	}
@@ -966,7 +967,8 @@ check_parity(int fd, int do_rewrite, char *dev_name)
 				     get started. */
 			if (verbose) {
 				printf("Parity Re-write status:\n");
-				do_meter(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
+				do_meter(fd,
+				    RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 			} else {
 				do_ioctl(fd, 
 					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
@@ -975,13 +977,14 @@ check_parity(int fd, int do_rewrite, char *dev_name)
 					 );
 				while( percent_done < 100 ) {
 					sleep(3); /* wait a bit... */
-					do_ioctl(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
-						 &percent_done, "RAIDFRAME_CHECK_PARITYREWRITE_STATUS");
+					do_ioctl(fd,
+					   RAIDFRAME_CHECK_PARITYREWRITE_STATUS,
+						 &percent_done,
+				    "RAIDFRAME_CHECK_PARITYREWRITE_STATUS");
 				}
 
 			}
-			       printf("%s: Parity Re-write complete\n",
-				      dev_name);
+			printf("%s: Parity Re-write complete\n", dev_name);
 		} else {
 			/* parity is wrong, and is not being fixed.
 			   Exit w/ an error. */
@@ -1175,7 +1178,8 @@ get_time_string(char *string, size_t len, int simple_time)
 #endif
 		
 		if (hours > 0) {
-			snprintf(hours_buffer,sizeof hours_buffer,"%02d:",hours);
+			snprintf(hours_buffer,sizeof hours_buffer,
+			    "%02d:",hours);
 		} else {
 			snprintf(hours_buffer,sizeof hours_buffer,"   ");
 		}
@@ -1195,7 +1199,9 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s [-v] -A [yes | no | softroot | hardroot] dev\n", progname);
+	fprintf(stderr,
+	    "usage: %s [-v] -A [yes | no | softroot | hardroot] dev\n",
+	    progname);
 	fprintf(stderr, "       %s [-v] -a component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -B dev\n", progname);
 	fprintf(stderr, "       %s [-v] -C config_file dev\n", progname);
