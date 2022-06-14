@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.105 2022/06/10 17:40:40 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.106 2022/06/14 10:42:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1801,4 +1801,30 @@ libexec/ld.elf_so/arch/hppa/rtld_start.S	1.14
 	PR 56118: set DP early so that any binary functions that override
 	others get the right value if they're called before _start.
 	[skrll, ticket #1469]
+
+distrib/notes/alpha/hardware			1.20
+distrib/notes/common/postinstall		1.90 (patch)
+distrib/notes/mvme68k/install			1.24
+distrib/notes/sun3/install			1.17
+
+	Fix the title of the boot tape creation section.
+	Fix some links to HP alpha firmware.
+	Fix link to pkgsrc.tar.gz file.
+	[andvar, ticket #1470]
+
+distrib/notes/common/main			1.569 (patch)
+distrib/notes/sparc/contents			1.27,1.28 (patch)
+distrib/notes/sparc/install			1.59-1.61 (patch)
+
+	Remove floppy installation instructions from sparc documentation.
+	Nroff and typo fixes.
+	[andvar, ticket #1471]
+
+sys/lib/libkern/arch/hppa/Makefile.inc		1.13
+sys/lib/libkern/arch/hppa/milli.S		1.3
+sys/lib/libkern/arch/hppa/milli_extra.S		1.1
+
+	PR 56878: don't need $$sh_func_adrs.
+	Provide a (trivial) __canonicalize_funcptr_for_compare.
+	[skrll, ticket #1472]
 
