@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1024 2022/06/14 19:43:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1025 2022/06/14 19:57:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1024 2022/06/14 19:43:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1025 2022/06/14 19:57:56 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4175,7 +4175,7 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 	const char *val;
 
 	if (!IsShortVarnameValid(varname, *pp)) {
-		(*pp)++;
+		(*pp)++;	/* only skip the '$' */
 		*out_false_res = VPR_ERR;
 		*out_false_val = var_Error;
 		return false;
@@ -4185,7 +4185,7 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 	name[1] = '\0';
 	v = VarFind(name, scope, true);
 	if (v != NULL) {
-		/* XXX: *pp should be incremented in this case as well. */
+		/* No need to advance *pp, the calling code handles this. */
 		*out_true_var = v;
 		return true;
 	}
@@ -4214,8 +4214,7 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 	 * If undefined expressions are allowed, this should rather
 	 * be VPR_UNDEF instead of VPR_OK.
 	 */
-	*out_false_res = emode == VARE_UNDEFERR
-	    ? VPR_UNDEF : VPR_OK;
+	*out_false_res = emode == VARE_UNDEFERR ? VPR_UNDEF : VPR_OK;
 	*out_false_val = val;
 	return false;
 }
