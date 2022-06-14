@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.75 2022/06/14 08:05:55 kre Exp $   */
+/*      $NetBSD: raidctl.c,v 1.76 2022/06/14 08:06:01 kre Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.75 2022/06/14 08:05:55 kre Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.76 2022/06/14 08:06:01 kre Exp $");
 #endif
 
 
@@ -223,6 +223,16 @@ main(int argc,char *argv[])
 			while (i < 3)
 				parityparams[i++] = 0;
 			break;
+		case 'p':
+			action = RAIDFRAME_CHECK_PARITY;
+			openmode = O_RDONLY;
+			num_options++;
+			break;
+		case 'P':
+			action = RAIDFRAME_CHECK_PARITY;
+			do_rewrite = 1;
+			num_options++;
+			break;
 		case 'r':
 			action = RAIDFRAME_REMOVE_HOT_SPARE;
 			get_comp(component, optarg, sizeof(component));
@@ -241,16 +251,6 @@ main(int argc,char *argv[])
 		case 'S':
 			action = RAIDFRAME_CHECK_RECON_STATUS_EXT;
 			openmode = O_RDONLY;
-			num_options++;
-			break;
-		case 'p':
-			action = RAIDFRAME_CHECK_PARITY;
-			openmode = O_RDONLY;
-			num_options++;
-			break;
-		case 'P':
-			action = RAIDFRAME_CHECK_PARITY;
-			do_rewrite = 1;
 			num_options++;
 			break;
 		case 'u':
