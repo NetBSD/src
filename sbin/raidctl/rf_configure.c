@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.34 2020/09/06 05:31:46 mrg Exp $ */
+/*	$NetBSD: rf_configure.c,v 1.35 2022/06/14 08:06:07 kre Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.34 2020/09/06 05:31:46 mrg Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.35 2022/06/14 08:06:07 kre Exp $");
 #endif
 
 
@@ -250,8 +250,8 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 
 		if (rf_get_next_nonblank_line(
 		    buf, sizeof(buf), fp, NULL)) {
-			warnx("Config file error: unable to get device "
-			    "file for disk at row %d col %d", 0, c);
+			warnx("Config file error: unable to find device "
+			    "file name for disk at col %d", c);
 			retcode = -1;
 			goto out;
 		}
@@ -259,8 +259,8 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 		b = getfsspecname(b1, sizeof(b1), buf);
 		if (b == NULL) {
 			warnx("Config file error: warning: unable to "
-			    "get device file for disk at row %d col "
-			    "%d: %s", 0, c, b1);
+			    "get device file for disk at col %d: %s",
+			    c, b1);
 			b = buf;
 		}
 

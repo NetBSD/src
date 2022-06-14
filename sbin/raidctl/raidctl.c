@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.76 2022/06/14 08:06:01 kre Exp $   */
+/*      $NetBSD: raidctl.c,v 1.77 2022/06/14 08:06:07 kre Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.76 2022/06/14 08:06:01 kre Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.77 2022/06/14 08:06:07 kre Exp $");
 #endif
 
 
@@ -637,14 +637,9 @@ rf_output_configuration(int fd, const char *name)
 	nspares = MIN(device_config.nspares,
 	                __arraycount(device_config.spares));
 	
-	/*
-	 * After NetBSD 9, convert this to not output the numRow's value,
-	 * which is no longer required or ever used.
-	 */
 	printf("START array\n");
-	printf("# numRow numCol numSpare\n");
-	printf("%d %d %d\n", 1, device_config.cols,
-	    device_config.nspares);
+	printf("# numCol numSpare\n");
+	printf("%d %d\n", device_config.cols, device_config.nspares);
 	printf("\n");
 
 	printf("START disks\n");
