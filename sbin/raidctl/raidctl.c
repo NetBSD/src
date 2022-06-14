@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.77 2022/06/14 08:06:07 kre Exp $   */
+/*      $NetBSD: raidctl.c,v 1.78 2022/06/14 08:06:18 kre Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.77 2022/06/14 08:06:07 kre Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.78 2022/06/14 08:06:18 kre Exp $");
 #endif
 
 
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: raidctl.c,v 1.77 2022/06/14 08:06:07 kre Exp $");
 #include <dev/raidframe/raidframeio.h>
 #include "rf_configure.h"
 #include "prog_ops.h"
+
+#define	CONFIGURE_TEST	1	/* must be different from any raidframe ioctl */
 
 void	do_ioctl(int, u_long, void *, const char *);
 static  void rf_configure(int, char*, int);
@@ -133,9 +135,9 @@ main(int argc,char *argv[])
 	last_unit = 0;
 	openmode = O_RDWR;	/* default to read/write */
 
-	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:LmM:r:R:sSpPuU:v"))
-	       != -1)
-		switch(ch) {
+	while ((ch = getopt(argc, argv,
+	    "a:A:Bc:C:f:F:g:GiI:l:LmM:r:R:sSpPt:uU:v")) != -1)
+		switch (ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
 			get_comp(component, optarg, sizeof(component));
@@ -253,6 +255,12 @@ main(int argc,char *argv[])
 			openmode = O_RDONLY;
 			num_options++;
 			break;
+		case 't':
+			action = CONFIGURE_TEST;
+			strlcpy(config_filename, optarg,
+			    sizeof(config_filename));
+			num_options++;
+			break;
 		case 'u':
 			action = RAIDFRAME_SHUTDOWN;
 			num_options++;
@@ -276,7 +284,20 @@ main(int argc,char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if ((num_options > 1) || (argc == 0)) 
+	if (num_options > 1)
+		usage();
+
+	if (action == CONFIGURE_TEST) {
+		RF_Config_t cfg;
+
+		if (argc != 0)
+			usage();
+		if (rf_MakeConfig(config_filename, &cfg) != 0)
+			exit(1);
+		exit(0);;
+	}
+
+	if (argc != 1)
 		usage();
 
 	if (prog_init && prog_init() == -1)
@@ -1216,6 +1237,7 @@ usage(void)
 	fprintf(stderr, "       %s [-v] -r component dev\n", progname); 
 	fprintf(stderr, "       %s [-v] -S dev\n", progname);
 	fprintf(stderr, "       %s [-v] -s dev\n", progname);
+	fprintf(stderr, "       %s [-v] -t config_file\n", progname);
 	fprintf(stderr, "       %s [-v] -U unit dev\n", progname);
 	fprintf(stderr, "       %s [-v] -u dev\n", progname);
 	exit(1);
