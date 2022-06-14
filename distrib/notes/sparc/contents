@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.23.4.3 2019/12/08 12:50:44 martin Exp $
+.\"	$NetBSD: contents,v 1.23.4.4 2022/06/14 10:37:05 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,10 +109,6 @@ see below.
 .
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .
-.		It Pa floppy/
-.
-\*M boot and installation floppies; see below.
-.
 .		It Pa miniroot/
 .
 \*M miniroot file system image; see below.
@@ -184,7 +180,7 @@ system call and library manual pages.
 This distribution set contains debug information for
 all base system utilities.
 It is useful when reporting issues with binaries or during
-developement.
+development.
 This set is huge, if the target disk is small, do not install it.
 .
 .It Sy etc
@@ -317,7 +313,7 @@ The extra libraries and include files needed to compile X source code.
 This distribution set contains debug information for
 all X11 binaries.
 It is useful when reporting issues with these binaries or during
-developement.
+development.
 This set is huge, if the target disk is small, do not install it.
 .
 .It Sy xfont
