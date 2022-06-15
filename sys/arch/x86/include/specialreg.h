@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.190 2022/06/13 06:22:31 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.191 2022/06/15 16:25:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -560,8 +560,13 @@
 #define CPUID_PERF_TOPDOWNSLOT	__BIT(7)       /* No top-down slots */
 
 #define CPUID_PERF_FLAGS1	"\177\20"				      \
-	"b\0CORECYCL\0" "b\1INSTRETRY\0" "b\2REFCYCL\0" "b\3LLCREF\0"	      \
-	"b\4LLCMISS\0" "b\5BRINSRETR\0" "b\6BRMISPRRETR\0" "b\7TOPDOWNSLOT\0"
+	"b\0CORECYCL\0"	"b\1INST\0"	"b\2REFCYCL\0"	"b\3LLCREF\0"	      \
+	"b\4LLCMISS\0"	"b\5BRINST\0"	"b\6BRMISPR\0"	"b\7TOPDOWNSLOT\0"
+
+/* %ecx */
+
+#define CPUID_PERF_FLAGS2	"\177\20"				      \
+	"b\0INST\0" "b\1CLK_CORETHREAD\0" "b\2CLK_REF_TSC\0" "b\3TOPDOWNSLOT\0"
 
 /* %edx */
 #define CPUID_PERF_NFFPC	__BITS(4, 0)   /* Num of fixed-funct perfcnt */
