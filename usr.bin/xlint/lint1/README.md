@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.4 2022/04/16 20:18:51 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.5 2022/06/15 18:11:02 rillig Exp $)
 
 # Introduction
 
@@ -59,9 +59,9 @@ it needs to be copied using `block_dup_type` or `expr_dup_type`.
 
 ## tnode_t
 
-When lint parses an expressions,
+When lint parses an expression,
 it builds a tree of nodes representing the AST.
-Each node has an operator, which defines which other members may be accessed.
+Each node has an operator that defines which other members may be accessed.
 The operators and their properties are defined in `ops.def`.
 Some examples for operators:
 
