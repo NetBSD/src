@@ -1,1 +1,1 @@
-msg_029.c(9): warning: previously declared extern, becomes static: function [29]
+msg_029.c(10): warning: previously declared extern, becomes static: function [29]

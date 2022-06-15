@@ -1,2 +1,2 @@
-msg_077.c(8): warning: bad octal digit 8 [77]
-msg_077.c(26): warning: multi-character character constant [294]
+msg_077.c(9): warning: bad octal digit 8 [77]
+msg_077.c(27): warning: multi-character character constant [294]

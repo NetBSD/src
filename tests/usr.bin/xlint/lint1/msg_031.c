@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_031.c,v 1.6 2021/07/13 22:01:34 rillig Exp $	*/
+/*	$NetBSD: msg_031.c,v 1.7 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_031.c"
 
 // Test for message: '%s' has incomplete type '%s' [31]
@@ -7,7 +7,8 @@ struct complete {
 	int dummy;
 };
 
-struct incomplete;			/* expect: 233 */
+/* expect+1: warning: struct 'incomplete' never defined [233] */
+struct incomplete;
 
 
 struct complete complete_var;

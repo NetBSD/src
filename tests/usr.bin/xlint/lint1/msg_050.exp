@@ -1,2 +1,2 @@
-msg_050.c(11): warning: a function is declared as an argument: f [50]
-msg_050.c(10): warning: argument 'f' unused in function 'example' [231]
+msg_050.c(13): warning: a function is declared as an argument: f [50]
+msg_050.c(11): warning: argument 'f' unused in function 'example' [231]

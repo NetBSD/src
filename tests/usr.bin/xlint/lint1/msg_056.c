@@ -1,8 +1,10 @@
-/*	$NetBSD: msg_056.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_056.c,v 1.4 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_056.c"
 
 // Test for message: integral constant too large [56]
 
 enum color {
-	WHITE = 0xFFFFFFFFFFFFFFFFFFFF	/* expect: 252 */
-};					/* expect: 56 */
+	/* expect+1: warning: integer constant out of range [252] */
+	WHITE = 0xFFFFFFFFFFFFFFFFFFFF
+};
+/* expect-1: warning: integral constant too large [56] */

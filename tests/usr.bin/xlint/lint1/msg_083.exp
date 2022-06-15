@@ -1,2 +1,2 @@
-msg_083.c(9): warning: storage class after type is obsolescent [83]
-msg_083.c(14): warning: storage class after type is obsolescent [83]
+msg_083.c(10): warning: storage class after type is obsolescent [83]
+msg_083.c(15): warning: storage class after type is obsolescent [83]

@@ -1,7 +1,17 @@
-/*	$NetBSD: msg_106.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_106.c,v 1.3 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_106.c"
 
 // Test for message: left operand of '->' must be pointer [106]
+// This message is not used.
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+struct s {
+	int member;
+};
+
+void example(struct s s)
+{
+	s.member++;
+
+	/* expect+1: error: left operand of '->' must be pointer to struct or union, not 'struct s' [104] */
+	return s->member;
+}

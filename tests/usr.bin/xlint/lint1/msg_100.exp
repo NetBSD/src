@@ -1,2 +1,1 @@
-msg_100.c(10): warning: function prototypes are illegal in traditional C [270]
-msg_100.c(11): warning: unary + is illegal in traditional C [100]
+msg_100.c(13): warning: unary + is illegal in traditional C [100]

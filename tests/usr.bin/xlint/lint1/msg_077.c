@@ -1,11 +1,12 @@
-/*	$NetBSD: msg_077.c,v 1.4 2021/06/29 07:23:21 rillig Exp $	*/
+/*	$NetBSD: msg_077.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_077.c"
 
 /* Test for message: bad octal digit %c [77] */
 
 /* lint1-flags: -tw */
 
-char single_digit = '\8';	/* expect: bad octal digit 8 [77] */
+/* expect+1: warning: bad octal digit 8 [77] */
+char single_digit = '\8';
 
 /*
  * Before lex.c 1.47 from 2021-06-29, lint intended to detect a "bad octal

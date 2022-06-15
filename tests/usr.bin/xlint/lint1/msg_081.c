@@ -1,8 +1,9 @@
-/*	$NetBSD: msg_081.c,v 1.4 2022/04/16 13:25:27 rillig Exp $	*/
+/*	$NetBSD: msg_081.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_081.c"
 
 /* Test for message: \a undefined in traditional C [81] */
 
 /* lint1-flags: -tw */
 
-char str[] = "The bell\a rings";	/* expect: 81 */
+/* expect+1: warning: \a undefined in traditional C [81] */
+char str[] = "The bell\a rings";

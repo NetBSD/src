@@ -1,4 +1,4 @@
-msg_060.c(7): error: void must be sole parameter [60]
-msg_060.c(8): error: void must be sole parameter [60]
-msg_060.c(8): error: void must be sole parameter [60]
-msg_060.c(8): error: void must be sole parameter [60]
+msg_060.c(9): error: void must be sole parameter [60]
+msg_060.c(14): error: void must be sole parameter [60]
+msg_060.c(14): error: void must be sole parameter [60]
+msg_060.c(14): error: void must be sole parameter [60]
