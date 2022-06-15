@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.285 2022/06/11 12:23:59 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.286 2022/06/15 17:57:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.285 2022/06/11 12:23:59 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.286 2022/06/15 17:57:16 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: decl.c,v 1.285 2022/06/11 12:23:59 rillig Exp $");
 const	char *unnamed = "<unnamed>";
 
 /* shared type structures for arithmetic types and void */
-static	type_t	*typetab;
+static	type_t	typetab[NTSPEC];
 
 /* value of next enumerator during declaration of enum types */
 int	enumval;
@@ -91,7 +91,6 @@ __attribute__((optimize("O0")))
 #endif
 initdecl(void)
 {
-	int i;
 
 	/* declaration stack */
 	dcs = xcalloc(1, sizeof(*dcs));
@@ -101,13 +100,8 @@ initdecl(void)
 	/* type information and classification */
 	inittyp();
 
-	/* shared type structures */
-	typetab = xcalloc(NTSPEC, sizeof(*typetab));
-	for (i = 0; i < NTSPEC; i++)
-		typetab[i].t_tspec = NOTSPEC;
-
 	/*
-	 * The following two are not real types. They are only used by the
+	 * The following two are not really types. They are only used by the
 	 * parser to handle the keywords "signed" and "unsigned".
 	 */
 	typetab[SIGNED].t_tspec = SIGNED;
