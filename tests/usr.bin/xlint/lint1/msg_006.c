@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_006.c,v 1.4 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: msg_006.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_006.c"
 
 // Test for message: use 'double' instead of 'long float' [6]
 
-long float x;			/* expect: 6 *//* expect: 4 */
+/* expect+2: warning: use 'double' instead of 'long float' [6] */
+/* expect+1: error: illegal type combination [4] */
+long float x;
 double x;

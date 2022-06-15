@@ -1,2 +1,2 @@
-msg_056.c(7): warning: integer constant out of range [252]
-msg_056.c(8): warning: integral constant too large [56]
+msg_056.c(8): warning: integer constant out of range [252]
+msg_056.c(9): warning: integral constant too large [56]

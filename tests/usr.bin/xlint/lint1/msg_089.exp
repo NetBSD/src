@@ -1,2 +1,2 @@
-msg_089.c(7): error: typedef redeclared: number [89]
 msg_089.c(8): error: typedef redeclared: number [89]
+msg_089.c(10): error: typedef redeclared: number [89]

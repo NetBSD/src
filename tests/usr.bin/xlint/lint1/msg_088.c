@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_088.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_088.c,v 1.4 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_088.c"
 
 // Test for message: typedef hides external declaration: %s [88]
@@ -10,5 +10,6 @@ extern int identifier;
 void
 func(void)
 {
-	typedef double identifier;	/* expect: 88 */
+	/* expect+1: warning: typedef hides external declaration: identifier [88] */
+	typedef double identifier;
 }

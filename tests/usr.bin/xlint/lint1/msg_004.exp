@@ -1,4 +1,4 @@
-msg_004.c(13): error: invalid type for _Complex [308]
-msg_004.c(13): error: illegal type combination [4]
-msg_004.c(17): error: illegal type combination [4]
-msg_004.c(21): error: illegal type combination [4]
+msg_004.c(15): error: invalid type for _Complex [308]
+msg_004.c(15): error: illegal type combination [4]
+msg_004.c(19): error: illegal type combination [4]
+msg_004.c(24): error: illegal type combination [4]

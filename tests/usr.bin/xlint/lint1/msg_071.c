@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_071.c,v 1.4 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: msg_071.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_071.c"
 
 // Test for message: too many characters in character constant [71]
@@ -8,4 +8,6 @@
  * sequence of characters that can constitute the escape sequence.
  */
 char valid_multi_digit_hex = '\x0000000000000000000000a';
-char invalid_multi_digit_hex = '\x000g000000000000000000a'; /* expect: 71 *//* expect: 178 */
+/* expect+2: error: too many characters in character constant [71] */
+/* expect+1: warning: initializer does not fit [178] */
+char invalid_multi_digit_hex = '\x000g000000000000000000a';
