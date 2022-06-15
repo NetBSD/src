@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.160 2022/04/30 22:31:23 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.161 2022/06/15 18:06:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -153,7 +153,6 @@ void	debug_leave(const char *);
  */
 extern	int	nerr;
 extern	int	sytxerr;
-extern	const char *const msgs[];
 
 extern	void	msglist(void);
 extern	void	error_at(int, const pos_t *, ...);
