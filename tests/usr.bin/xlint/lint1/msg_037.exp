@@ -1,1 +1,1 @@
-msg_037.c(7): error: zero size bit-field [37]
+msg_037.c(8): error: zero size bit-field [37]

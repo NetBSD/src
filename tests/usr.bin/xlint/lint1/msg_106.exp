@@ -1,1 +1,1 @@
-msg_106.c(6): error: syntax error ':' [249]
+msg_106.c(16): error: left operand of '->' must be pointer to struct or union, not 'struct s' [104]

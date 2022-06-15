@@ -1,8 +1,10 @@
-/*	$NetBSD: msg_089.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_089.c,v 1.4 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_089.c"
 
 // Test for message: typedef redeclared: %s [89]
 
 typedef int number;
-typedef int number;		/* expect: 89 */
-typedef double number;		/* expect: 89 */
+/* expect+1: error: typedef redeclared: number [89] */
+typedef int number;
+/* expect+1: error: typedef redeclared: number [89] */
+typedef double number;

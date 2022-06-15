@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_035.c,v 1.10 2021/12/22 14:25:35 rillig Exp $	*/
+/*	$NetBSD: msg_035.c,v 1.11 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_035.c"
 
 // Test for message: illegal bit-field type '%s' [35]
@@ -41,24 +41,48 @@ struct example {
 	unsigned short unsigned_short_flag: 1;
 	int int_flag: 1;
 	unsigned int unsigned_int_flag: 1;
-	long long_flag: 1;				/* expect: 35 */
-	unsigned long unsigned_long_flag: 1;		/* expect: 35 */
-	long long long_long_flag: 1;			/* expect: 35 */
-	unsigned long long unsigned_long_long_flag: 1;	/* expect: 35 */
+
+	/* expect+1: warning: illegal bit-field type 'long' [35] */
+	long long_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'unsigned long' [35] */
+	unsigned long unsigned_long_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'long long' [35] */
+	long long long_long_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'unsigned long long' [35] */
+	unsigned long long unsigned_long_long_flag: 1;
+
 	/* __int128_t omitted since it is not always defined */
 	/* __uint128_t omitted since it is not always defined */
-	float float_flag: 1;				/* expect: 35 */
-	double double_flag: 1;				/* expect: 35 */
-	long double long_double_flag: 1;		/* expect: 35 */
-	void void_flag: 1;				/* expect: 19 *//* expect: 37 */
-	example_struct struct_flag: 1;			/* expect: 35 */
-	example_union union_flag: 1;			/* expect: 35 */
+
+	/* expect+1: warning: illegal bit-field type 'float' [35] */
+	float float_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'double' [35] */
+	double double_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'long double' [35] */
+	long double long_double_flag: 1;
+	/* expect+2: error: void type for 'void_flag' [19] */
+	/* expect+1: error: zero size bit-field [37] */
+	void void_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'struct typedef example_struct' [35] */
+	example_struct struct_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'union typedef example_union' [35] */
+	example_union union_flag: 1;
+
 	example_enum enum_flag: 1;
-	void *pointer_flag: 1;				/* expect: 35 */
-	unsigned int array_flag[4]: 1;			/* expect: 35 */
-	example_function function_flag: 1;		/* expect: 35 */
-	_Complex complex_flag: 1;			/* expect: 35 *//* expect: 308 */
-	float _Complex float_complex_flag: 1;		/* expect: 35 */
-	double _Complex double_complex_flag: 1;		/* expect: 35 */
-	long double _Complex long_double_complex_flag: 1; /* expect: 35 */
+
+	/* expect+1: warning: illegal bit-field type 'pointer to void' [35] */
+	void *pointer_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'array[4] of unsigned int' [35] */
+	unsigned int array_flag[4]: 1;
+	/* expect+1: warning: illegal bit-field type 'function(int, pointer to const char) returning void' [35] */
+	example_function function_flag: 1;
+	/* expect+2: error: invalid type for _Complex [308] */
+	/* expect+1: warning: illegal bit-field type 'double _Complex' [35] */
+	_Complex complex_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'float _Complex' [35] */
+	float _Complex float_complex_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'double _Complex' [35] */
+	double _Complex double_complex_flag: 1;
+	/* expect+1: warning: illegal bit-field type 'long double _Complex' [35] */
+	long double _Complex long_double_complex_flag: 1;
 };

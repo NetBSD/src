@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_004.c,v 1.5 2021/07/04 13:32:35 rillig Exp $	*/
+/*	$NetBSD: msg_004.c,v 1.6 2022/06/15 20:18:31 rillig Exp $	*/
 # 3 "msg_004.c"
 
 // Test for message: illegal type combination [4]
@@ -10,12 +10,16 @@ int ok_int;
 double ok_double;
 float _Complex ok_float_complex;
 
-int _Complex illegal_int_complex;	/* expect: 4 *//* expect: 308 */
+/* expect+2: error: invalid type for _Complex [308] */
+/* expect+1: error: illegal type combination [4] */
+int _Complex illegal_int_complex;
 
 char enum {
 	CHAR
-};					/* expect: 4 */
+};
+/* expect-1: error: illegal type combination [4] */
 
 long struct {
 	int member;
-};					/* expect: 4 */
+};
+/* expect-1: error: illegal type combination [4] */
