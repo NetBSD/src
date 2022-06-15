@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.15 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.16 2022/06/15 18:11:02 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.15 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.16 2022/06/15 18:11:02 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -141,7 +141,6 @@ bool
 typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 			  const tnode_t *ln,
 			  const tnode_t *rn)
-
 {
 	tspec_t lt, rt;
 
