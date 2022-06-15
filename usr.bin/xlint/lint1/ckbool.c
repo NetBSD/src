@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.16 2022/06/15 18:11:02 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.17 2022/06/15 18:29:21 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.16 2022/06/15 18:11:02 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.17 2022/06/15 18:29:21 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -158,9 +158,9 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 	    !typeok_strict_bool_binary_compatible(op, arg, ln, lt, rn, rt))
 		return false;
 
-	if (mp->m_requires_bool) {
+	if (mp->m_compares_with_zero) {
 		bool binary = mp->m_binary;
-		bool lbool = is_typeok_bool_operand(ln);
+		bool lbool = is_typeok_bool_compares_with_zero(ln);
 		bool ok = true;
 
 		if (!binary && !lbool) {
@@ -173,7 +173,8 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 			error(331, op_name(op), tspec_name(lt));
 			ok = false;
 		}
-		if (binary && op != QUEST && !is_typeok_bool_operand(rn)) {
+		if (binary && op != QUEST &&
+		    !is_typeok_bool_compares_with_zero(rn)) {
 			/* right operand of '%s' must be bool, not '%s' */
 			error(332, op_name(op), tspec_name(rt));
 			ok = false;
@@ -212,7 +213,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
  * argument with 0.
  */
 bool
-is_typeok_bool_operand(const tnode_t *tn)
+is_typeok_bool_compares_with_zero(const tnode_t *tn)
 {
 	tspec_t t;
 

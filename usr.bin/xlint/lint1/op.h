@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.19 2022/04/16 22:21:10 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.20 2022/06/15 18:29:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -34,13 +34,13 @@
 #include <stdbool.h>
 
 /*
- * Various information about operators
+ * Various information about operators; see ops.def.
  */
 typedef	struct {
 	bool	m_binary: 1;
 	bool	m_returns_bool: 1;
 	bool	m_takes_bool: 1;
-	bool	m_requires_bool: 1;
+	bool	m_compares_with_zero: 1;
 	bool	m_requires_integer: 1;
 	bool	m_requires_integer_or_complex: 1;
 	bool	m_requires_arith: 1;
