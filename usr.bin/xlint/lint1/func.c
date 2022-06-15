@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.139 2022/06/11 12:23:59 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.140 2022/06/15 18:29:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.139 2022/06/11 12:23:59 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.140 2022/06/15 18:29:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -621,7 +621,7 @@ check_controlling_expression(tnode_t *tn)
 		return NULL;
 	}
 
-	if (tn != NULL && Tflag && !is_typeok_bool_operand(tn)) {
+	if (tn != NULL && Tflag && !is_typeok_bool_compares_with_zero(tn)) {
 		/* controlling expression must be bool, not '%s' */
 		error(333, tspec_name(tn->tn_type->t_tspec));
 	}
