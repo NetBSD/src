@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.127 2022/01/29 08:20:45 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.128 2022/06/15 16:28:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.127 2022/01/29 08:20:45 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.128 2022/06/15 16:28:01 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2249,13 +2249,48 @@ identifycpu(int fd, const char *cpuname)
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
 		if (ci->ci_max_cpuid >= 0x0a) {
+			unsigned int pmcver, ncounter, veclen;
+
 			x86_cpuid(0x0a, descs);
-			print_bits(cpuname, "Perfmon-eax",
-			    CPUID_PERF_FLAGS0, descs[0]);
-			print_bits(cpuname, "Perfmon-ebx",
+			pmcver = __SHIFTOUT(descs[0], CPUID_PERF_VERSION);
+			ncounter = __SHIFTOUT(descs[0], CPUID_PERF_NGPPC);
+			veclen = __SHIFTOUT(descs[0], CPUID_PERF_BVECLEN);
+			aprint_verbose("%s: Perfmon: Ver. %u",
+			    cpuname, pmcver);
+			if (((pmcver >= 3) && (pmcver <= 4)) ||
+			    ((pmcver >= 5) &&
+				(descs[3] & CPUID_PERF_ANYTHREADDEPR) == 0))
+				aprint_verbose(" <ANYTHREAD>\n");
+			else
+				aprint_verbose("\n");
+		    
+			aprint_verbose("%s: Perfmon: General: "
+			    "bitwidth %u, %u counters\n", cpuname,
+			    (uint32_t)__SHIFTOUT(descs[0], CPUID_PERF_NBWGPPC),
+			    ncounter);
+			/* Invert logic for the output */
+			descs[1] ^= __BITS(veclen - 1, 0);
+			/*
+			 * Mask unrelated bits. An hypervisor reduces the
+			 * vector and set bit(s) out of the vector.
+			 */
+			descs[1] &= __BITS(veclen - 1, 0);
+			print_bits(cpuname, "Perfmon: General: avail",
 			    CPUID_PERF_FLAGS1, descs[1]);
-			print_bits(cpuname, "Perfmon-edx",
-			    CPUID_PERF_FLAGS3, descs[3]);
+
+			if (pmcver >= 2) {
+				ncounter = __SHIFTOUT(descs[3],
+				    CPUID_PERF_NFFPC);
+				aprint_verbose("%s: Perfmon: Fixed: "
+				    "bitwidth %u, %u counters\n", cpuname,
+				    (uint32_t)__SHIFTOUT(descs[3],
+					CPUID_PERF_NBWFFPC),
+				    ncounter);
+				if (pmcver <= 4)
+					descs[2] = __BITS(ncounter - 1, 0);
+				print_bits(cpuname, "Perfmon: Fixed: avail",
+				    CPUID_PERF_FLAGS2, descs[2]);
+			}
 		}
 		if (ci->ci_max_cpuid >= 0x1a) {
 			x86_cpuid(0x1a, descs);
