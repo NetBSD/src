@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.52 2020/09/08 14:12:57 christos Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.53 2022/06/15 04:31:22 knakahara Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ struct icmp6_filter;
 
 struct	in6pcb {
 	struct inpcb_hdr in6p_head;
-#define in6p_hash	 in6p_head.inph_hash
 #define in6p_queue	 in6p_head.inph_queue
 #define in6p_af		 in6p_head.inph_af
 #define in6p_ppcb	 in6p_head.inph_ppcb
