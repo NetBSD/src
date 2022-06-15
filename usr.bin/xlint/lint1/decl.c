@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.286 2022/06/15 17:57:16 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.287 2022/06/15 18:06:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.286 2022/06/15 17:57:16 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.287 2022/06/15 18:06:51 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -850,8 +850,8 @@ length_in_bits(const type_t *tp, const char *name)
 
 	switch (tp->t_tspec) {
 	case FUNC:
-		/* compiler takes size of function */
-		INTERNAL_ERROR("%s", msgs[12]);
+		lint_assert(/*CONSTCOND*/ false);
+		break;		/* GCC 10 thinks this were reachable */
 		/* NOTREACHED */
 	case STRUCT:
 	case UNION:
