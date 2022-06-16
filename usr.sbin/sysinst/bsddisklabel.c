@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.63 2022/05/28 10:36:24 andvar Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.64 2022/06/16 16:27:30 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -124,7 +124,7 @@ default_parts_init[] =
 #endif
 #endif
 #ifdef PART_BOOT2_SUBT
-	  .fs_version = PART_BOOT1_SUBT,
+	  .fs_version = PART_BOOT2_SUBT,
 #endif
 	},
 #endif
