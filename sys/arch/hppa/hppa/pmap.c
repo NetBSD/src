@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119 2022/06/09 16:41:25 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120 2022/06/16 06:25:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2020 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2022/06/09 16:41:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2022/06/16 06:25:42 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1873,10 +1873,13 @@ pmap_activate(struct lwp *l)
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	const pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	const pa_space_t space = pmap->pm_space;
 
-	fdcache(pmap->pm_space, va, len);
-	ficache(pmap->pm_space, va, len);
+	fdcache(space, va, len);
+	ficache(space, va, len);
+	pdtlb(space, va);
+	pitlb(space, va);
 }
 
 static inline void
