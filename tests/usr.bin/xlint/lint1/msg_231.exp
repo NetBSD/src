@@ -1,2 +1,2 @@
-msg_231.c(9): warning: 'local' unused in function 'example' [192]
-msg_231.c(7): warning: argument 'param' unused in function 'example' [231]
+msg_231.c(11): warning: 'local' unused in function 'example' [192]
+msg_231.c(8): warning: argument 'param' unused in function 'example' [231]

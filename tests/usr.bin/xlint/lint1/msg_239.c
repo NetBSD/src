@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_239.c,v 1.5 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: msg_239.c,v 1.6 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_239.c"
 
 // Test for message: constant argument to '!' [239]
@@ -10,8 +10,12 @@ example(int n)
 {
 	_Bool b;
 
-	b = !0;		/* expect: constant in conditional context *//* expect: 239 */
-	b = !1;		/* expect: constant in conditional context *//* expect: 239 */
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: warning: constant argument to '!' [239] */
+	b = !0;
+	/* expect+2: warning: constant in conditional context [161] */
+	/* expect+1: warning: constant argument to '!' [239] */
+	b = !1;
 	b = !(n > 1);
 
 	return b;

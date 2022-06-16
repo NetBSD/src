@@ -1,2 +1,2 @@
-msg_279.c(18): warning: combination of 'enum E' and 'int' in return [279]
-msg_279.c(24): warning: combination of 'int' and 'enum E' in return [279]
+msg_279.c(19): warning: combination of 'enum E' and 'int' in return [279]
+msg_279.c(26): warning: combination of 'int' and 'enum E' in return [279]

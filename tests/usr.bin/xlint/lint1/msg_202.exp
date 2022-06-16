@@ -1,1 +1,1 @@
-msg_202.c(6): error: syntax error ':' [249]
+msg_202.c(14): error: duplicate default in switch [202]

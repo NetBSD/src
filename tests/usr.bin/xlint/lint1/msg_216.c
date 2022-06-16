@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_216.c,v 1.3 2022/04/24 20:08:23 rillig Exp $	*/
+/*	$NetBSD: msg_216.c,v 1.4 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_216.c"
 
 // Test for message: function %s has return (e); and return; [216]
@@ -10,4 +10,5 @@ random(int n)
 		return -3;
 	if (n < 2)
 		return;
-}				/* expect: 216 */
+}
+/* expect-1: warning: function random has return (e); and return; [216] */

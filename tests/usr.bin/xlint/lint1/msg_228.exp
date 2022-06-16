@@ -1,1 +1,2 @@
-msg_228.c(6): error: syntax error ':' [249]
+msg_228.c(12): warning: function cannot return const or volatile object [228]
+msg_228.c(19): warning: function cannot return const or volatile object [228]

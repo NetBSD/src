@@ -1,1 +1,1 @@
-msg_275.c(11): warning: cast discards 'const' from type 'pointer to const char' [275]
+msg_275.c(12): warning: cast discards 'const' from type 'pointer to const char' [275]

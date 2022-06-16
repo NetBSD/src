@@ -1,1 +1,4 @@
-msg_282.c(6): error: syntax error ':' [249]
+msg_282.c(7): warning: must precede function definition: /* ARGSUSED */ [282]
+msg_282.c(11): warning: must precede function definition: /* VARARGS */ [282]
+msg_282.c(15): warning: must precede function definition: /* PRINTFLIKE */ [282]
+msg_282.c(19): warning: must precede function definition: /* SCANFLIKE */ [282]

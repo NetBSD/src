@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.10 2022/05/31 00:35:18 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.11 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -31,7 +31,8 @@ function(void)
 	/* expect+2: warning: statement not reached [193] */
 	if (0)
 		;
-	);			/* expect: syntax error ')' */
+	/* expect+1: error: syntax error ')' [249] */
+	);
 }
 
 /* XXX: It is unexpected that this error is not detected. */
