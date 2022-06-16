@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_153.c,v 1.5 2021/02/28 01:20:54 rillig Exp $	*/
+/*	$NetBSD: msg_153.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_153.c"
 
 // Test for message: converting '%s' to incompatible '%s' for argument %d [153]
@@ -12,11 +12,13 @@ void sink_int_pointer(int *);
 void
 to_function_pointer(int *x)
 {
-	sink_function_pointer(x);	/* expect: 153 */
+	/* expect+1: warning: converting 'pointer to int' to incompatible 'pointer to function(double) returning double' for argument 1 [153] */
+	sink_function_pointer(x);
 }
 
 void
 to_int_pointer(unary_operator op)
 {
-	sink_int_pointer(op);		/* expect: 153 */
+	/* expect+1: warning: converting 'pointer to function(double) returning double' to incompatible 'pointer to int' for argument 1 [153] */
+	sink_int_pointer(op);
 }

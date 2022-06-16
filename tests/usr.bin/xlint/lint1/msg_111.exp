@@ -1,1 +1,2 @@
-msg_111.c(6): error: syntax error ':' [249]
+msg_111.c(17): warning: left operand of '.' must be struct or union, not 'function() returning void' [103]
+msg_111.c(17): error: unacceptable operand of '.' [111]

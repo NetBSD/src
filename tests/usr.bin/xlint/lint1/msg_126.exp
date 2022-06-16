@@ -1,5 +1,2 @@
-msg_126.c(9): error: incompatible types 'pointer to void' and 'double' in conditional [126]
-msg_126.c(9): warning: function 'max' expects to return value [214]
-msg_126.c(7): warning: argument 'cond' unused in function 'max' [231]
-msg_126.c(7): warning: argument 'ptr' unused in function 'max' [231]
-msg_126.c(7): warning: argument 'dbl' unused in function 'max' [231]
+msg_126.c(12): error: incompatible types 'pointer to void' and 'double' in conditional [126]
+msg_126.c(12): warning: function 'max' expects to return value [214]

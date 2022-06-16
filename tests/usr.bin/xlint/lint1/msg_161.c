@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_161.c,v 1.8 2022/04/16 20:57:10 rillig Exp $	*/
+/*	$NetBSD: msg_161.c,v 1.9 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_161.c"
 
 // Test for message: constant in conditional context [161]
@@ -8,15 +8,19 @@
 void
 while_1(void)
 {
-	while (1)		/* expect: 161 */
+	/* expect+1: warning: constant in conditional context [161] */
+	while (1)
 		continue;
 }
 
 void
 while_0(void)
 {
-	while (0)		/* expect: 161 */
-		continue;	/* expect: statement not reached */
+	/* expect+1: warning: constant in conditional context [161] */
+	while (0) {
+		/* expect+1: warning: statement not reached [193] */
+		continue;
+	}
 }
 
 /*
@@ -37,8 +41,8 @@ void
 do_while_1(void)
 {
 	do {
-
-	} while (1);		/* expect: 161 */
+		/* expect+1: warning: constant in conditional context [161] */
+	} while (1);
 }
 
 extern void println(const char *);

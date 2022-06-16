@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.17 2022/06/10 18:29:01 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.18 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -26,17 +26,23 @@ signed long long s64;
 void
 unsigned_to_unsigned(void)
 {
-	u8 = u16;		/* expect: 132 */
-	u8 = u32;		/* expect: 132 */
-	u8 = u64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'unsigned short' to 'unsigned char' may lose accuracy [132] */
+	u8 = u16;
+	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned char' may lose accuracy [132] */
+	u8 = u32;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
+	u8 = u64;
 
 	u16 = u8;
-	u16 = u32;		/* expect: 132 */
-	u16 = u64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned short' may lose accuracy [132] */
+	u16 = u32;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned short' may lose accuracy [132] */
+	u16 = u64;
 
 	u32 = u8;
 	u32 = u16;
-	u32 = u64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+	u32 = u64;
 
 	u64 = u8;
 	u64 = u16;
@@ -46,17 +52,23 @@ unsigned_to_unsigned(void)
 void
 unsigned_to_signed(void)
 {
-	s8 = u16;		/* expect: 132 */
-	s8 = u32;		/* expect: 132 */
-	s8 = u64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'unsigned short' to 'signed char' may lose accuracy [132] */
+	s8 = u16;
+	/* expect+1: warning: conversion from 'unsigned int' to 'signed char' may lose accuracy [132] */
+	s8 = u32;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'signed char' may lose accuracy [132] */
+	s8 = u64;
 
 	s16 = u8;
-	s16 = u32;		/* expect: 132 */
-	s16 = u64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'unsigned int' to 'short' may lose accuracy [132] */
+	s16 = u32;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'short' may lose accuracy [132] */
+	s16 = u64;
 
 	s32 = u8;
 	s32 = u16;
-	s32 = u64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'unsigned long long' to 'int' may lose accuracy [132] */
+	s32 = u64;
 
 	s64 = u8;
 	s64 = u16;
@@ -66,17 +78,23 @@ unsigned_to_signed(void)
 void
 signed_to_unsigned(void)
 {
-	u8 = s16;		/* expect: 132 */
-	u8 = s32;		/* expect: 132 */
-	u8 = s64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'short' to 'unsigned char' may lose accuracy [132] */
+	u8 = s16;
+	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
+	u8 = s32;
+	/* expect+1: warning: conversion from 'long long' to 'unsigned char' may lose accuracy [132] */
+	u8 = s64;
 
 	u16 = s8;
-	u16 = s32;		/* expect: 132 */
-	u16 = s64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
+	u16 = s32;
+	/* expect+1: warning: conversion from 'long long' to 'unsigned short' may lose accuracy [132] */
+	u16 = s64;
 
 	u32 = s8;
 	u32 = s16;
-	u32 = s64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'long long' to 'unsigned int' may lose accuracy [132] */
+	u32 = s64;
 
 	u64 = s8;
 	u64 = s16;
@@ -86,17 +104,23 @@ signed_to_unsigned(void)
 void
 signed_to_signed(void)
 {
-	s8 = s16;		/* expect: 132 */
-	s8 = s32;		/* expect: 132 */
-	s8 = s64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'short' to 'signed char' may lose accuracy [132] */
+	s8 = s16;
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = s32;
+	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
+	s8 = s64;
 
 	s16 = s8;
-	s16 = s32;		/* expect: 132 */
-	s16 = s64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'int' to 'short' may lose accuracy [132] */
+	s16 = s32;
+	/* expect+1: warning: conversion from 'long long' to 'short' may lose accuracy [132] */
+	s16 = s64;
 
 	s32 = s8;
 	s32 = s16;
-	s32 = s64;		/* expect: 132 */
+	/* expect+1: warning: conversion from 'long long' to 'int' may lose accuracy [132] */
+	s32 = s64;
 
 	s64 = s8;
 	s64 = s16;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_166.c,v 1.3 2021/05/16 11:11:37 rillig Exp $	*/
+/*	$NetBSD: msg_166.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_166.c"
 
 // Test for message: precision lost in bit-field assignment [166]
@@ -22,8 +22,10 @@ struct bit_set {
 	 * https://bugs.llvm.org/show_bug.cgi?id=11272.
 	 */
 
-	int minus_1_to_0: 1;		/* expect: 344 */
-	int minus_8_to_7: 4;		/* expect: 344 */
+	/* expect+1: warning: bit-field of type plain 'int' has implementation-defined signedness [344] */
+	int minus_1_to_0: 1;
+	/* expect+1: warning: bit-field of type plain 'int' has implementation-defined signedness [344] */
+	int minus_8_to_7: 4;
 	unsigned zero_to_1: 1;
 	unsigned zero_to_15: 4;
 };
@@ -32,28 +34,39 @@ void example(void) {
 	struct bit_set bits;
 
 	/* Clang doesn't warn about the 1. */
-	bits.minus_1_to_0 = -2;		/* expect: 166 */
+	/* expect+1: warning: precision lost in bit-field assignment [166] */
+	bits.minus_1_to_0 = -2;
 	bits.minus_1_to_0 = -1;
 	bits.minus_1_to_0 = 0;
-	bits.minus_1_to_0 = 1;		/* expect: 166 */
-	bits.minus_1_to_0 = 2;		/* expect: 166 */
+	/* expect+1: warning: precision lost in bit-field assignment [166] */
+	bits.minus_1_to_0 = 1;
+	/* expect+1: warning: precision lost in bit-field assignment [166] */
+	bits.minus_1_to_0 = 2;
 
-	bits.minus_8_to_7 = -9;		/* expect: 166 */
+	/* expect+1: warning: precision lost in bit-field assignment [166] */
+	bits.minus_8_to_7 = -9;
 	bits.minus_8_to_7 = -8;
 	bits.minus_8_to_7 = 7;
-	bits.minus_8_to_7 = 8;		/* expect: 166 */
+	/* expect+1: warning: precision lost in bit-field assignment [166] */
+	bits.minus_8_to_7 = 8;
 
 	/* Clang doesn't warn about the -1. */
-	bits.zero_to_1 = -2;		/* expect: 164 */
-	bits.zero_to_1 = -1;		/* expect: 164 */
+	/* expect+1: warning: assignment of negative constant to unsigned type [164] */
+	bits.zero_to_1 = -2;
+	/* expect+1: warning: assignment of negative constant to unsigned type [164] */
+	bits.zero_to_1 = -1;
 	bits.zero_to_1 = 0;
 	bits.zero_to_1 = 1;
-	bits.zero_to_1 = 2;		/* expect: 166 */
+	/* expect+1: warning: precision lost in bit-field assignment [166] */
+	bits.zero_to_1 = 2;
 
 	/* Clang doesn't warn about the -8. */
-	bits.zero_to_15 = -9;		/* expect: 164 */
-	bits.zero_to_15 = -8;		/* expect: 164 */
+	/* expect+1: warning: assignment of negative constant to unsigned type [164] */
+	bits.zero_to_15 = -9;
+	/* expect+1: warning: assignment of negative constant to unsigned type [164] */
+	bits.zero_to_15 = -8;
 	bits.zero_to_15 = 0;
 	bits.zero_to_15 = 15;
-	bits.zero_to_15 = 16;		/* expect: 166 */
+	/* expect+1: warning: precision lost in bit-field assignment [166] */
+	bits.zero_to_15 = 16;
 }

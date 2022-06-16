@@ -1,1 +1,1 @@
-msg_186.c(16): warning: bit-field initialization is illegal in traditional C [186]
+msg_186.c(17): warning: bit-field initialization is illegal in traditional C [186]

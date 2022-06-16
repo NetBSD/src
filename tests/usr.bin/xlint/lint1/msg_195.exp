@@ -1,1 +1,2 @@
-msg_195.c(6): error: syntax error ':' [249]
+msg_195.c(10): error: case not in switch [195]
+msg_195.c(12): error: case not in switch [195]

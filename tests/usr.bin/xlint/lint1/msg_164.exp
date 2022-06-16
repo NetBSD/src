@@ -1,4 +1,4 @@
 msg_164.c(10): warning: initialization of unsigned with negative constant [221]
-msg_164.c(12): warning: assignment of negative constant to unsigned type [164]
-msg_164.c(13): warning: conversion of negative constant to unsigned type [222]
-msg_164.c(14): warning: conversion of negative constant to unsigned type [222]
+msg_164.c(13): warning: assignment of negative constant to unsigned type [164]
+msg_164.c(15): warning: conversion of negative constant to unsigned type [222]
+msg_164.c(17): warning: conversion of negative constant to unsigned type [222]

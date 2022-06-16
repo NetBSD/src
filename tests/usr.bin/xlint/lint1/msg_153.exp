@@ -1,2 +1,2 @@
-msg_153.c(15): warning: converting 'pointer to int' to incompatible 'pointer to function(double) returning double' for argument 1 [153]
-msg_153.c(21): warning: converting 'pointer to function(double) returning double' to incompatible 'pointer to int' for argument 1 [153]
+msg_153.c(16): warning: converting 'pointer to int' to incompatible 'pointer to function(double) returning double' for argument 1 [153]
+msg_153.c(23): warning: converting 'pointer to function(double) returning double' to incompatible 'pointer to int' for argument 1 [153]

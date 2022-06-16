@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_108.c,v 1.5 2021/02/28 12:40:00 rillig Exp $	*/
+/*	$NetBSD: msg_108.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_108.c"
 
 // Test for message: operand of '%s' has invalid type (%s) [108]
@@ -21,5 +21,6 @@ complement_of_a_struct(void)
 	    0
 	};
 
-	s = ~s;			/* expect: 108 */
+	/* expect+1: error: operand of '~' has invalid type (struct) [108] */
+	s = ~s;
 }

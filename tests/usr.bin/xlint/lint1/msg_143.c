@@ -1,12 +1,14 @@
-/*	$NetBSD: msg_143.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_143.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_143.c"
 
 // Test for message: cannot take size/alignment of incomplete type [143]
 
-struct incomplete;				/* expect: 233 */
+/* expect+1: warning: struct 'incomplete' never defined [233] */
+struct incomplete;
 
 unsigned long
 sizeof_incomplete(void)
 {
-	return sizeof(struct incomplete);	/* expect: 143 */
+	/* expect+1: error: cannot take size/alignment of incomplete type [143] */
+	return sizeof(struct incomplete);
 }
