@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2019/10/02 11:16:01 maya Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2022/06/16 14:03:37 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,9 +54,8 @@
 #define	PART_BOOT_SUBT	MBR_PTYPE_FAT12
 
 /* default partition size */
-#define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
+#define DEFROOTSIZE	64	/* Default root size */
 #define DEFSWAPSIZE	128	/* Default swap size */
-#define DEFROOTSIZE	64	/* Default root size, if created */
 #define DEFVARSIZE	64	/* Default /var size, if created */
 #define DEFUSRSIZE	750	/* Default /usr size, if created */
 
