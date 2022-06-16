@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_238.c,v 1.4 2021/03/29 22:24:34 rillig Exp $	*/
+/*	$NetBSD: msg_238.c,v 1.5 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_238.c"
 
 /* Test for message: initialization of union is illegal in traditional C [238] */
@@ -13,6 +13,7 @@ struct {
 
 union {
 	int x;
-} u = {				/* expect: 238 */
+/* expect+1: warning: initialization of union is illegal in traditional C [238] */
+} u = {
 	3
 };

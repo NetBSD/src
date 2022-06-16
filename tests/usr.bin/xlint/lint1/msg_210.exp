@@ -1,2 +1,2 @@
-msg_210.c(23): warning: enum type mismatch between 'enum A' and 'enum B' in initialization [210]
-msg_210.c(25): warning: enum type mismatch between 'enum typedef C' and 'enum typedef D' in initialization [210]
+msg_210.c(24): warning: enum type mismatch between 'enum A' and 'enum B' in initialization [210]
+msg_210.c(27): warning: enum type mismatch between 'enum typedef C' and 'enum typedef D' in initialization [210]

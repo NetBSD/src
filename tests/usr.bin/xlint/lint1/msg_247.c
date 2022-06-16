@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.17 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.18 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -28,7 +28,8 @@ example(struct Other *arg)
 	 *  with no hint at all that there is a typedef for a pointer to the
 	 *  struct.
 	 */
-	display = (PDisplay)arg;	/* expect: 247 */
+	/* expect+1: warning: pointer cast from 'pointer to struct Other' to 'pointer to struct <unnamed>' may be troublesome [247] */
+	display = (PDisplay)arg;
 }
 
 /*
@@ -67,7 +68,8 @@ cast_to_unsigned_char_pointer(struct Other *arg)
 signed char *
 cast_to_signed_char_pointer(struct Other *arg)
 {
-	return (signed char *)arg;	/* expect: 247 */
+	/* expect+1: warning: pointer cast from 'pointer to struct Other' to 'pointer to signed char' may be troublesome [247] */
+	return (signed char *)arg;
 }
 
 char *
@@ -154,7 +156,7 @@ lh_OPENSSL_STRING_new(void)
 	 */
 	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
 }
-# 158 "msg_247.c" 2
+# 160 "msg_247.c" 2
 
 void sink(const void *);
 

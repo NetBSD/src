@@ -1,1 +1,1 @@
-msg_266.c(6): error: syntax error ':' [249]
+msg_266.c(9): warning: 'long double' is illegal in traditional C [266]

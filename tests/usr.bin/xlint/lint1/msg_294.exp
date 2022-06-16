@@ -1,1 +1,2 @@
-msg_294.c(6): error: syntax error ':' [249]
+msg_294.c(8): warning: multi-character character constant [294]
+msg_294.c(8): warning: initializer does not fit [178]

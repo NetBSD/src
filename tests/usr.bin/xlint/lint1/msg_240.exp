@@ -1,1 +1,3 @@
-msg_240.c(6): error: syntax error ':' [249]
+msg_240.c(26): warning: argument 's_arg' unused in function 'return_other_struct' [231]
+msg_240.c(34): warning: argument 's_arg' unused in function 'assign_other_struct' [231]
+msg_240.c(43): warning: argument 'u_arg' unused in function 'return_other_union' [231]

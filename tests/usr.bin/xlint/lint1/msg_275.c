@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_275.c,v 1.4 2021/02/28 12:40:00 rillig Exp $	*/
+/*	$NetBSD: msg_275.c,v 1.5 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_275.c"
 
 // Test for message: cast discards 'const' from type '%s' [275]
@@ -8,7 +8,8 @@
 char *
 unconst_string(const char *s)
 {
-	return (char *)s;	/* expect: 275 */
+	/* expect+1: warning: cast discards 'const' from type 'pointer to const char' [275] */
+	return (char *)s;
 }
 
 const char *

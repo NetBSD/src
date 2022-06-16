@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_241.c,v 1.7 2021/10/30 22:04:42 rillig Exp $	*/
+/*	$NetBSD: msg_241.c,v 1.8 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_241.c"
 
 // Test for message: dubious operation on enum, op %s [241]
@@ -27,21 +27,36 @@ example(void)
 {
 	enum color c = RED;
 
-	sink_bool(!c);		/* expect: 241 */
-	sink_color(~c);		/* expect: 241 */
-	++c;			/* expect: 241 */
-	--c;			/* expect: 241 */
-	c++;			/* expect: 241 */
-	c--;			/* expect: 241 */
-	sink_color(+c);		/* expect: 241 */
-	sink_color(-c);		/* expect: 241 */
-	sink_color(c * c);	/* expect: 241 */
-	sink_color(c / c);	/* expect: 241 */
-	sink_color(c % c);	/* expect: 241 */
-	sink_color(c + c);	/* expect: 241 */
-	sink_color(c - c);	/* expect: 241 */
-	sink_color(c << c);	/* expect: 241 */
-	sink_color(c >> c);	/* expect: 241 */
+	/* expect+1: warning: dubious operation on enum, op ! [241] */
+	sink_bool(!c);
+	/* expect+1: warning: dubious operation on enum, op ~ [241] */
+	sink_color(~c);
+	/* expect+1: warning: dubious operation on enum, op ++x [241] */
+	++c;
+	/* expect+1: warning: dubious operation on enum, op --x [241] */
+	--c;
+	/* expect+1: warning: dubious operation on enum, op x++ [241] */
+	c++;
+	/* expect+1: warning: dubious operation on enum, op x-- [241] */
+	c--;
+	/* expect+1: warning: dubious operation on enum, op + [241] */
+	sink_color(+c);
+	/* expect+1: warning: dubious operation on enum, op - [241] */
+	sink_color(-c);
+	/* expect+1: warning: dubious operation on enum, op * [241] */
+	sink_color(c * c);
+	/* expect+1: warning: dubious operation on enum, op / [241] */
+	sink_color(c / c);
+	/* expect+1: warning: dubious operation on enum, op % [241] */
+	sink_color(c % c);
+	/* expect+1: warning: dubious operation on enum, op + [241] */
+	sink_color(c + c);
+	/* expect+1: warning: dubious operation on enum, op - [241] */
+	sink_color(c - c);
+	/* expect+1: warning: dubious operation on enum, op << [241] */
+	sink_color(c << c);
+	/* expect+1: warning: dubious operation on enum, op >> [241] */
+	sink_color(c >> c);
 
 	sink_bool(c < c);
 	sink_bool(c <= c);
@@ -50,28 +65,44 @@ example(void)
 	sink_bool(c == c);
 	sink_bool(c != c);
 
-	sink_color(c & c);	/* expect: 241 */
-	sink_color(c ^ c);	/* expect: 241 */
-	sink_color(c | c);	/* expect: 241 */
+	/* expect+1: warning: dubious operation on enum, op & [241] */
+	sink_color(c & c);
+	/* expect+1: warning: dubious operation on enum, op ^ [241] */
+	sink_color(c ^ c);
+	/* expect+1: warning: dubious operation on enum, op | [241] */
+	sink_color(c | c);
 
-	sink_bool(c && c);	/* expect: 241 */
-	sink_bool(c || c);	/* expect: 241 */
+	/* expect+1: warning: dubious operation on enum, op && [241] */
+	sink_bool(c && c);
+	/* expect+1: warning: dubious operation on enum, op || [241] */
+	sink_bool(c || c);
 	sink_color(c ? c : BLUE);
 
 	c = GREEN;
-	c *= c;			/* expect: 241 */
-	c /= c;			/* expect: 241 */
-	c %= c;			/* expect: 241 */
-	c += c;			/* expect: 241 */
-	c -= c;			/* expect: 241 */
-	c <<= c;		/* expect: 241 */
-	c >>= c;		/* expect: 241 */
-	c &= c;			/* expect: 241 */
-	c ^= c;			/* expect: 241 */
-	c |= c;			/* expect: 241 */
+	/* expect+1: warning: dubious operation on enum, op *= [241] */
+	c *= c;
+	/* expect+1: warning: dubious operation on enum, op /= [241] */
+	c /= c;
+	/* expect+1: warning: dubious operation on enum, op %= [241] */
+	c %= c;
+	/* expect+1: warning: dubious operation on enum, op += [241] */
+	c += c;
+	/* expect+1: warning: dubious operation on enum, op -= [241] */
+	c -= c;
+	/* expect+1: warning: dubious operation on enum, op <<= [241] */
+	c <<= c;
+	/* expect+1: warning: dubious operation on enum, op >>= [241] */
+	c >>= c;
+	/* expect+1: warning: dubious operation on enum, op &= [241] */
+	c &= c;
+	/* expect+1: warning: dubious operation on enum, op ^= [241] */
+	c ^= c;
+	/* expect+1: warning: dubious operation on enum, op |= [241] */
+	c |= c;
 
 	/* The cast to unsigned is required by GCC at WARNS=6. */
-	c &= ~(unsigned)GREEN;	/* expect: 241 */
+	/* expect+1: warning: dubious operation on enum, op &= [241] */
+	c &= ~(unsigned)GREEN;
 }
 
 void

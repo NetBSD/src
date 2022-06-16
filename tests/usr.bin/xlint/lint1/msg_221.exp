@@ -1,1 +1,1 @@
-msg_221.c(10): warning: initialization of unsigned with negative constant [221]
+msg_221.c(11): warning: initialization of unsigned with negative constant [221]

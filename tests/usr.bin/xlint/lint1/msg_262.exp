@@ -1,1 +1,1 @@
-msg_262.c(8): warning: \" inside character constants undefined in traditional C [262]
+msg_262.c(9): warning: \" inside character constants undefined in traditional C [262]

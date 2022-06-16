@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_217.c,v 1.9 2021/03/21 15:24:56 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.10 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function %s falls off bottom without returning value [217]
@@ -8,7 +8,8 @@ random(int n)
 {
 	if (n < 0)
 		return -3;
-}				/* expect: 217 */
+}
+/* expect-1: warning: function random falls off bottom without returning value [217] */
 
 /*
  * The pattern 'do { } while (0)' is often used in statement macros.
@@ -62,7 +63,9 @@ unreachable_continue_falls_through(void)
 {
 	for (;;) {
 		if (0)
-			continue; /* expect: statement not reached */
+			/* expect+1: warning: statement not reached [193] */
+			continue;
 		break;
 	}
-}				/* expect: 217 */
+}
+/* expect-1: warning: function unreachable_continue_falls_through falls off bottom without returning value [217] */

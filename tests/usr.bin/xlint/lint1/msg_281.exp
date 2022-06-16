@@ -1,1 +1,1 @@
-msg_281.c(6): error: syntax error ':' [249]
+msg_281.c(7): warning: duplicate use of /* ARGSUSED */ [281]

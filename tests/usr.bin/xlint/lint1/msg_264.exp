@@ -1,1 +1,1 @@
-msg_264.c(6): error: syntax error ':' [249]
+msg_264.c(9): warning: \v undefined in traditional C [264]

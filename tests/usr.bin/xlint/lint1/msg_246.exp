@@ -1,1 +1,1 @@
-msg_246.c(6): error: syntax error ':' [249]
+msg_246.c(21): warning: illegal combination of pointer (pointer to void) and integer (enum color) [183]

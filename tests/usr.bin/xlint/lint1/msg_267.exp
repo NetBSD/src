@@ -1,2 +1,2 @@
-msg_267.c(9): warning: shift equal to size of object [267]
-msg_267.c(15): warning: shift equal to size of object [267]
+msg_267.c(10): warning: shift equal to size of object [267]
+msg_267.c(17): warning: shift equal to size of object [267]

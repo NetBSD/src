@@ -1,1 +1,1 @@
-msg_238.c(16): warning: initialization of union is illegal in traditional C [238]
+msg_238.c(17): warning: initialization of union is illegal in traditional C [238]

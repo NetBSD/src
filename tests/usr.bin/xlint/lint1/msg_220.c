@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_220.c,v 1.7 2021/08/29 09:29:32 rillig Exp $	*/
+/*	$NetBSD: msg_220.c,v 1.8 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_220.c"
 
 // Test for message: fallthrough on case statement [220]
@@ -16,10 +16,12 @@ example(int n)
 	case 3:
 	case 5:
 		println("odd");
-	case 2:			/* expect: 220 */
+		/* expect+1: warning: fallthrough on case statement [220] */
+	case 2:
 	case 7:
 		println("prime");
-	default:		/* expect: 284 */
+		/* expect+1: warning: fallthrough on default statement [284] */
+	default:
 		println("number");
 	}
 }
