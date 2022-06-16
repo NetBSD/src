@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.106 2022/06/14 10:42:20 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.107 2022/06/16 14:23:27 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1827,4 +1827,14 @@ sys/lib/libkern/arch/hppa/milli_extra.S		1.1
 	PR 56878: don't need $$sh_func_adrs.
 	Provide a (trivial) __canonicalize_funcptr_for_compare.
 	[skrll, ticket #1472]
+
+sys/lib/libkern/arch/hppa/milli_extra.S		1.2
+
+	Fix wrong register usage in ticket #1472.
+	[skrll, ticket #1473]
+
+sys/arch/hppa/hppa/pmap.c			1.120
+
+	PR 56867: purge the translations from the TLBs in pmap_procwr.
+	[skrll, ticket #1474]
 
