@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2020/06/10 16:26:33 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2022/06/16 14:03:38 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,9 +52,8 @@
 #define	PART_BOOT_MOUNT		"/ext2"
 
 /* default partition size */
-#define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
+#define DEFROOTSIZE	64	/* Default root size */
 #define DEFSWAPSIZE	128	/* Default swap size */
-#define DEFROOTSIZE	64	/* Default root size, if created */
 #define DEFVARSIZE	64	/* Default /var size, if created */
 #define DEFUSRSIZE	850	/* Default /usr size, if created */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2019/10/02 11:16:02 maya Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2022/06/16 14:03:38 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,8 +50,8 @@
  */
 #define BOOT_SIZE	hp300_boot_size()
 
-#define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	40	/* Default root size */
+#define DEFSWAPSIZE	32	/* Default swap size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
 #define DEFUSRSIZE	700	/* Default /usr size, if created */
 #define XNEEDMB		250	/* Extra megs for full X installation */
