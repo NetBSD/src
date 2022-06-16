@@ -1,7 +1,21 @@
-/*	$NetBSD: msg_228.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_228.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_228.c"
 
-// Test for message: function cannot return const or volatile object [228]
+/* Test for message: function cannot return const or volatile object [228] */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* TODO: Also warn in C99 mode and later. */
+/* lint1-flags: -sw */
+
+const int
+return_const_int(void)
+/* expect+1: warning: function cannot return const or volatile object [228] */
+{
+	return 3;
+}
+
+volatile int
+return_volatile_int(void)
+/* expect+1: warning: function cannot return const or volatile object [228] */
+{
+	return 3;
+}

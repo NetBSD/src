@@ -1,1 +1,1 @@
-msg_288.c(6): error: syntax error ':' [249]
+msg_288.c(22): warning: dubious use of /* VARARGS */ with /* PRINTFLIKE */ [288]

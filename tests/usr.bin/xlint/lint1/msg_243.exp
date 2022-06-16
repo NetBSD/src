@@ -1,4 +1,4 @@
-msg_243.c(19): warning: dubious comparison of enums, op < [243]
-msg_243.c(20): warning: dubious comparison of enums, op <= [243]
-msg_243.c(21): warning: dubious comparison of enums, op > [243]
-msg_243.c(22): warning: dubious comparison of enums, op >= [243]
+msg_243.c(20): warning: dubious comparison of enums, op < [243]
+msg_243.c(22): warning: dubious comparison of enums, op <= [243]
+msg_243.c(24): warning: dubious comparison of enums, op > [243]
+msg_243.c(26): warning: dubious comparison of enums, op >= [243]

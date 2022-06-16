@@ -1,7 +1,10 @@
-/*	$NetBSD: msg_227.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_227.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_227.c"
 
 // Test for message: const object %s should have initializer [227]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* expect+2: warning: static variable 'without_initializer' unused [226] */
+/* expect+1: warning: const object without_initializer should have initializer [227] */
+static const int without_initializer;
+/* expect+1: warning: static variable 'with_initializer' unused [226] */
+static const int with_initializer = 1;

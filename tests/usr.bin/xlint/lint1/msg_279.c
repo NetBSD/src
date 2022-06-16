@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_279.c,v 1.3 2021/02/27 18:01:29 rillig Exp $	*/
+/*	$NetBSD: msg_279.c,v 1.4 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_279.c"
 
 // Test for message: combination of '%s' and '%s' in return [279]
@@ -15,11 +15,13 @@ void sink_int(int);
 enum E
 returning_enum(int i)
 {
-	return i;		/* expect: 279 */
+	/* expect+1: warning: combination of 'enum E' and 'int' in return [279] */
+	return i;
 }
 
 int
 returning_int(enum E e)
 {
-	return e;		/* expect: 279 */
+	/* expect+1: warning: combination of 'int' and 'enum E' in return [279] */
+	return e;
 }

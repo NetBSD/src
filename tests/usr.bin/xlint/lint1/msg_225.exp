@@ -1,1 +1,1 @@
-msg_225.c(13): error: static function called but not defined: undefined() [225]
+msg_225.c(14): error: static function called but not defined: undefined() [225]

@@ -1,7 +1,10 @@
-/*	$NetBSD: msg_204.c,v 1.6 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: msg_204.c,v 1.7 2022/06/16 21:24:41 rillig Exp $	*/
 # 3 "msg_204.c"
 
 // Test for message: controlling expressions must have scalar type [204]
+
+/* Suppress message "argument '%s' unused in function '%s'". */
+/* lint1-extra-flags: -X 231 */
 
 extern void
 extern_function(void);
@@ -84,18 +87,26 @@ void if_enum(enum e e)			{ if (e) return; }
 
 /* C99 6.2.5p20 */
 void if_array(struct arr arr)		{ if (arr.arr) return; }
-void if_struct(struct s s)		{ if (s) return; }	/* expect: 204 *//* expect: 231 */
-void if_union(union u u)		{ if (u) return; }	/* expect: 204 *//* expect: 231 */
+/* expect+1: error: controlling expressions must have scalar type [204] */
+void if_struct(struct s s)		{ if (s) return; }
+/* expect+1: error: controlling expressions must have scalar type [204] */
+void if_union(union u u)		{ if (u) return; }
 void if_function(void)			{ if (if_function) return; }
 void if_pointer(void *p)		{ if (p) return; }
 
 /* C99 6.8.5 */
-void while_struct(struct s s)		{ while (s) return; }	/* expect: 204 *//* expect: 231 */
-void for_struct(struct s s)		{ for (;s;) return; }	/* expect: 204 *//* expect: 223 *//* expect: 231 */
-void do_while_struct(struct s s)	{ do { return; } while (s); }	/* expect: 204 *//* expect: 231 */
+/* expect+1: error: controlling expressions must have scalar type [204] */
+void while_struct(struct s s)		{ while (s) return; }
+/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+1: warning: end-of-loop code not reached [223] */
+void for_struct(struct s s)		{ for (;s;) return; }
+/* expect+1: error: controlling expressions must have scalar type [204] */
+void do_while_struct(struct s s)	{ do { return; } while (s); }
 
 /*
  * C99 6.5.15 for the '?:' operator does not explicitly mention that the
  * controlling expression must have a scalar type, curiously.
  */
-int conditional_struct(struct s s)	{ return s ? 1 : 2; }	/* expect: 170 *//* expect: 214 *//* expect: 231 */
+/* expect+2: error: first operand must have scalar type, op ? : [170] */
+/* expect+1: warning: function 'conditional_struct' expects to return value [214] */
+int conditional_struct(struct s s)	{ return s ? 1 : 2; }

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.125 2022/06/16 16:58:36 rillig Exp $
+# $NetBSD: Makefile,v 1.126 2022/06/16 21:24:41 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	349		# see lint1/err.c
@@ -276,6 +276,7 @@ MSG_NO_EXP.040=	yes
 MSG_NO_EXP.070=	yes
 MSG_NO_EXP.131=	yes
 MSG_NO_EXP.176=	yes
+MSG_NO_EXP.212=	yes
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.
