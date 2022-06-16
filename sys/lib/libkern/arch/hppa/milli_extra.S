@@ -37,6 +37,6 @@
 	.entry
 
 MILLI_ENTRY(__canonicalize_funcptr_for_compare)
-	bv	%r0(%sp)
+	bv	%r0(%rp)
 	 copy	%arg0, %ret0
 EXIT(__canonicalize_funcptr_for_compare)
