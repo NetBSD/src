@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_171.c,v 1.7 2021/12/21 23:12:21 rillig Exp $	*/
+/*	$NetBSD: msg_171.c,v 1.8 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_171.c"
 
 // Test for message: cannot assign to '%s' from '%s' [171]
@@ -11,11 +11,15 @@ struct s {
 void
 example(int i, void *vp, struct s *s)
 {
-	i = *s;			/* expect: 171 */
-	*s = i;			/* expect: 171 */
+	/* expect+1: error: cannot assign to 'int' from 'struct s' [171] */
+	i = *s;
+	/* expect+1: error: cannot assign to 'struct s' from 'int' [171] */
+	*s = i;
 
-	vp = *s;		/* expect: 171 */
-	*s = vp;		/* expect: 171 */
+	/* expect+1: error: cannot assign to 'pointer to void' from 'struct s' [171] */
+	vp = *s;
+	/* expect+1: error: cannot assign to 'struct s' from 'pointer to void' [171] */
+	*s = vp;
 }
 
 /*

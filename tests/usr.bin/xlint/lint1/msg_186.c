@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_186.c,v 1.4 2021/02/22 15:09:50 rillig Exp $	*/
+/*	$NetBSD: msg_186.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_186.c"
 
 /* Test for message: bit-field initialization is illegal in traditional C [186] */
@@ -13,7 +13,8 @@ struct bit_field {
 
 struct bit_field bit_field = {
 	1,
-	3.0,			/* expect: 186 */
+	/* expect+1: warning: bit-field initialization is illegal in traditional C [186] */
+	3.0,
 	2
 };
 /* XXX: The message is misleading.  Initialization using integers is ok. */

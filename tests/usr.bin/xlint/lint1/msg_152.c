@@ -1,15 +1,19 @@
-/*	$NetBSD: msg_152.c,v 1.3 2021/03/16 23:39:41 rillig Exp $	*/
+/*	$NetBSD: msg_152.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_152.c"
 
 // Test for message: argument cannot have unknown size, arg #%d [152]
 
-struct incomplete;			/* expect: 233 */
+/* expect+1: warning: struct 'incomplete' never defined [233] */
+struct incomplete;
 
-void callee(struct incomplete);		/* expect: 31 */
+/* expect+1: error: '<unnamed>' has incomplete type 'incomplete struct incomplete' [31] */
+void callee(struct incomplete);
 
 void
 caller(void)
 {
-	struct incomplete local_var;	/* expect: 31 */
-	callee(local_var);		/* expect: 152 */
+	/* expect+1: error: 'local_var' has incomplete type 'incomplete struct incomplete' [31] */
+	struct incomplete local_var;
+	/* expect+1: error: argument cannot have unknown size, arg #1 [152] */
+	callee(local_var);
 }

@@ -1,1 +1,1 @@
-msg_119.c(6): error: syntax error ':' [249]
+msg_119.c(10): warning: conversion of 'double' to 'float' is out of range [119]

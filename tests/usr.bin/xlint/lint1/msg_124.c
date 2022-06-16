@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_124.c,v 1.11 2021/08/14 13:00:55 rillig Exp $	*/
+/*	$NetBSD: msg_124.c,v 1.12 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_124.c"
 
 // Test for message: illegal combination of '%s' and '%s', op '%s' [124]
@@ -15,9 +15,12 @@ typedef int(*printflike)(const char *, ...)
 void
 example(int *ptr)
 {
-	signal_handler handler = ptr;	/* expect: 124 */
-	sys_signal signal = ptr;	/* expect: 124 */
-	printflike printf = ptr;	/* expect: 124 */
+	/* expect+1: warning: illegal combination of 'pointer to function(int) returning void' and 'pointer to int', op 'init' [124] */
+	signal_handler handler = ptr;
+	/* expect+1: warning: illegal combination of 'pointer to function(pointer to function(int) returning void) returning pointer to function(int) returning void' and 'pointer to int', op 'init' [124] */
+	sys_signal signal = ptr;
+	/* expect+1: warning: illegal combination of 'pointer to function(pointer to const char, ...) returning int' and 'pointer to int', op 'init' [124] */
+	printflike printf = ptr;
 }
 
 void ok(_Bool);
@@ -29,9 +32,12 @@ compare_pointers(const void *vp, const char *cp, const int *ip,
 {
 	ok(vp == cp);
 	ok(vp == ip);
-	ok(vp == fp);		/* expect: 274 */
-	not_ok(cp == ip);	/* expect: 124 */
-	not_ok(cp == fp);	/* expect: 124 */
+	/* expect+1: warning: ANSI C forbids comparison of 'void *' with function pointer [274] */
+	ok(vp == fp);
+	/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to const int', op '==' [124] */
+	not_ok(cp == ip);
+	/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to function(int) returning void', op '==' [124] */
+	not_ok(cp == fp);
 	ok(vp == (void *)0);
 	ok(cp == (void *)0);
 	ok(ip == (void *)0);

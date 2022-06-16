@@ -1,1 +1,1 @@
-msg_172.c(12): error: too many struct/union initializers [172]
+msg_172.c(13): error: too many struct/union initializers [172]

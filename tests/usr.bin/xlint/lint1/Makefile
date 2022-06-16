@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.124 2022/06/10 18:29:01 rillig Exp $
+# $NetBSD: Makefile,v 1.125 2022/06/16 16:58:36 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	349		# see lint1/err.c
@@ -274,6 +274,7 @@ MSG_IDS=	${:U0 ${:U:${:Urange=${MAX_MESSAGE}}}:C,^.$,0&,:C,^..$,0&,}
 MSG_FILES=	${MSG_IDS:@id@msg_${id}.c ${MSG_NO_EXP.${id}:D:Umsg_${id}.exp}@}
 MSG_NO_EXP.040=	yes
 MSG_NO_EXP.070=	yes
+MSG_NO_EXP.131=	yes
 MSG_NO_EXP.176=	yes
 
 # Note: only works for adding tests.

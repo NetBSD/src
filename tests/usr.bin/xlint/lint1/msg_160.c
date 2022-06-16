@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_160.c,v 1.8 2022/05/18 20:10:11 rillig Exp $	*/
+/*	$NetBSD: msg_160.c,v 1.9 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_160.c"
 
 // Test for message: operator '==' found where '=' was expected [160]
@@ -27,7 +27,8 @@ unparenthesized(int a, int b, int c, _Bool z)
 	 * on both sides.  Parenthesizing its left-hand operand doesn't
 	 * hurt though.
 	 */
-	eval(a == b == z);		/* expect: 160 */
+	/* expect+1: warning: operator '==' found where '=' was expected [160] */
+	eval(a == b == z);
 
 	/*
 	 * Before tree.c 1.201 from 2021-01-31, lint warned about the
@@ -40,7 +41,8 @@ unparenthesized(int a, int b, int c, _Bool z)
 	 * This one is definitely wrong.  C, unlike Python, does not chain
 	 * comparison operators in the way mathematicians are used to.
 	 */
-	eval(a == b == c);		/* expect: 160 */
+	/* expect+1: warning: operator '==' found where '=' was expected [160] */
+	eval(a == b == c);
 
 	/* Parenthesizing one of the operands makes it obvious enough. */
 	/*

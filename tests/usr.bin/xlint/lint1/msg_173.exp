@@ -1,1 +1,1 @@
-msg_173.c(6): error: too many array initializers, expected 3 [173]
+msg_173.c(7): error: too many array initializers, expected 3 [173]

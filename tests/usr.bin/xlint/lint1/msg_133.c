@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_133.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_133.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_133.c"
 
 // Test for message: conversion of pointer to '%s' loses bits [133]
@@ -6,5 +6,6 @@
 char
 to_char(void *ptr)
 {
-	return (char)ptr;	/* expect: 133 */
+	/* expect+1: warning: conversion of pointer to 'char' loses bits [133] */
+	return (char)ptr;
 }

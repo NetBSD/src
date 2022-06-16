@@ -1,2 +1,2 @@
-msg_145.c(16): error: cannot take size/alignment of bit-field [145]
-msg_145.c(24): error: cannot take size/alignment of bit-field [145]
+msg_145.c(17): error: cannot take size/alignment of bit-field [145]
+msg_145.c(26): error: cannot take size/alignment of bit-field [145]
