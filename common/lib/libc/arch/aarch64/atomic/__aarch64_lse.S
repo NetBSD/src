@@ -1,4 +1,4 @@
-/* $NetBSD: __aarch64_lse.S,v 1.2 2021/08/08 07:17:18 skrll Exp $ */
+/* $NetBSD: __aarch64_lse.S,v 1.3 2022/06/16 08:21:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Nick Hudson.
-w *
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
