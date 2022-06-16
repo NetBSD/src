@@ -1,12 +1,14 @@
-/*	$NetBSD: msg_114.c,v 1.4 2021/01/31 16:00:05 rillig Exp $	*/
+/*	$NetBSD: msg_114.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_114.c"
 
 // Test for message: %soperand of '%s' must be lvalue [114]
 
+/* ARGSUSED */
 void
-example(int a)			/* expect: 231 */
+example(int a)
 {
-	3++;			/* expect: 114 */
+	/* expect+1: error: operand of 'x++' must be lvalue [114] */
+	3++;
 
 	/*
 	 * Before tree.c 1.137 from 2021-01-09, trying to increment an array
@@ -14,7 +16,9 @@ example(int a)			/* expect: 231 */
 	 *
 	 * See msg_108.c for more details.
 	 */
-	"string"++;		/* expect: 108 */
+	/* expect+1: error: operand of 'x++' has invalid type (array) [108] */
+	"string"++;
 
-	(a + a)++;		/* expect: 114 */
+	/* expect+1: error: operand of 'x++' must be lvalue [114] */
+	(a + a)++;
 }

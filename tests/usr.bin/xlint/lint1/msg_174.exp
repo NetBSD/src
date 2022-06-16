@@ -1,1 +1,1 @@
-msg_174.c(12): error: too many initializers [174]
+msg_174.c(13): error: too many initializers [174]

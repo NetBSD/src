@@ -1,1 +1,1 @@
-msg_191.c(11): warning: 'local' set but not used in function 'example' [191]
+msg_191.c(12): warning: 'local' set but not used in function 'example' [191]

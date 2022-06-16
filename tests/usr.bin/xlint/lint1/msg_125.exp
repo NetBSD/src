@@ -1,1 +1,1 @@
-msg_125.c(13): warning: ANSI C forbids ordered comparisons of pointers to functions [125]
+msg_125.c(14): warning: ANSI C forbids ordered comparisons of pointers to functions [125]

@@ -1,1 +1,1 @@
-msg_154.c(11): warning: illegal combination of integer (int) and pointer (pointer to int), arg #1 [154]
+msg_154.c(12): warning: illegal combination of integer (int) and pointer (pointer to int), arg #1 [154]

@@ -1,2 +1,2 @@
-msg_194.c(11): error: label label redefined [194]
+msg_194.c(12): error: label label redefined [194]
 msg_194.c(9): warning: label 'label' unused in function 'example' [232]

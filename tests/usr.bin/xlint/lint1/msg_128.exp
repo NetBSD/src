@@ -1,1 +1,1 @@
-msg_128.c(10): warning: operands have incompatible pointer types, op = (char != const char) [128]
+msg_128.c(11): warning: operands have incompatible pointer types, op = (char != const char) [128]

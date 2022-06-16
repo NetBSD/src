@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_116.c,v 1.4 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_116.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_116.c"
 
 // Test for message: illegal pointer subtraction [116]
@@ -12,7 +12,8 @@
 _Bool
 example(int *a, double *b)
 {
-	return a - b > 0;	/* expect: 116 */
+	/* expect+1: error: illegal pointer subtraction [116] */
+	return a - b > 0;
 }
 
 /*
@@ -24,7 +25,8 @@ example(int *a, double *b)
 _Bool
 subtract_character_pointers(signed char *scp, unsigned char *ucp)
 {
-	return scp - ucp > 0;	/* expect: 116 */
+	/* expect+1: error: illegal pointer subtraction [116] */
+	return scp - ucp > 0;
 }
 
 _Bool

@@ -1,4 +1,4 @@
-msg_139.c(20): error: division by 0 [139]
 msg_139.c(21): error: division by 0 [139]
-msg_139.c(22): error: division by 0 [139]
 msg_139.c(23): error: division by 0 [139]
+msg_139.c(25): error: division by 0 [139]
+msg_139.c(27): error: division by 0 [139]

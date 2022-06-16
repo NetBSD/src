@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_127.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_127.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_127.c"
 
 /* Test for message: '&' before array or function: ignored [127] */
@@ -8,6 +8,7 @@
 void
 example()
 {
-	if (&example != (void *)0)	/* expect: 127 */
+	/* expect+1: warning: '&' before array or function: ignored [127] */
+	if (&example != (void *)0)
 		return;
 }

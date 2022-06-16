@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_129.c,v 1.5 2021/08/21 08:18:48 rillig Exp $	*/
+/*	$NetBSD: msg_129.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_129.c"
 
 // Test for message: expression has null effect [129]
@@ -34,11 +34,13 @@ void
 operator_comma(void)
 {
 	side_effect(), 0;		/* the 0 is redundant */
-	0, side_effect();		/* expect: 129 */
+	/* expect+1: warning: expression has null effect [129] */
+	0, side_effect();
 
 	if (side_effect(), 0)		/* the 0 controls the 'if' */
 		return;
-	if (0, side_effect())		/* expect: 129 */
+	/* expect+1: warning: expression has null effect [129] */
+	if (0, side_effect())
 		return;
 }
 

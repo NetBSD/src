@@ -1,1 +1,1 @@
-msg_107.c(6): error: syntax error ':' [249]
+msg_107.c(11): error: operands of '==' have incompatible types (double != pointer) [107]

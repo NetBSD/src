@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_145.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_145.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
 # 3 "msg_145.c"
 
 // Test for message: cannot take size/alignment of bit-field [145]
@@ -13,7 +13,8 @@ sizeof_one(void)
 {
 	struct bits local_bits;
 
-	return sizeof(local_bits.one);		/* expect: 145 */
+	/* expect+1: error: cannot take size/alignment of bit-field [145] */
+	return sizeof(local_bits.one);
 }
 
 unsigned long
@@ -21,5 +22,6 @@ sizeof_eight(void)
 {
 	struct bits local_bits;
 
-	return sizeof(local_bits.eight);	/* expect: 145 */
+	/* expect+1: error: cannot take size/alignment of bit-field [145] */
+	return sizeof(local_bits.eight);
 }
