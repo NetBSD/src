@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_066.c,v 1.5 2021/08/26 19:23:25 rillig Exp $	*/
+/*	$NetBSD: msg_066.c,v 1.6 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_066.c"
 
 // Test for message: syntax requires ';' after last struct/union member [66]
@@ -12,5 +12,5 @@
 struct number {
 	int value
 };
-/* expect-1: syntax error '}' [249] */
+/* expect-1: error: syntax error '}' [249] */
 /* expect+1: error: cannot recover from previous errors [224] */

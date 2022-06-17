@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_wide_char.c,v 1.2 2021/06/20 18:38:12 rillig Exp $	*/
+/*	$NetBSD: lex_wide_char.c,v 1.3 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "lex_wide_char.c"
 
 /*
@@ -12,7 +12,7 @@ void sink(int);
 void
 test(void)
 {
-	/* expect+1: empty character constant */
+	/* expect+1: error: empty character constant [73] */
 	sink(L'');
 
 	sink(L'a');
@@ -20,11 +20,11 @@ test(void)
 	sink(L'\0');
 
 	/* UTF-8 */
-	/* expect+1: too many characters in character constant */
+	/* expect+1: error: too many characters in character constant [71] */
 	sink(L'ä');
 
 	/* GCC extension */
-	/* expect+1: dubious escape \e */
+	/* expect+1: warning: dubious escape \e [79] */
 	sink(L'\e');
 
 	/* since C99 */
@@ -36,6 +36,6 @@ test(void)
 	/* newline */
 	sink(L'\n');
 
-	/* expect+1: empty character constant */
+	/* expect+1: error: empty character constant [73] */
 	sink(L'');
 }

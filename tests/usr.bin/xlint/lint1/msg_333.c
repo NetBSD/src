@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_333.c,v 1.4 2021/07/04 07:09:39 rillig Exp $	*/
+/*	$NetBSD: msg_333.c,v 1.5 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_333.c"
 
 // Test for message: controlling expression must be bool, not '%s' [333]
@@ -16,11 +16,11 @@ example(bool b, int i, const char *p)
 	if (b)
 		return "bool";
 
-	/* expect+1: must be bool, not 'int' [333] */
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	if (i)
 		return "int";
 
-	/* expect+1: must be bool, not 'pointer' [333] */
+	/* expect+1: error: controlling expression must be bool, not 'pointer' [333] */
 	if (p)
 		return "pointer";
 
@@ -29,7 +29,7 @@ example(bool b, int i, const char *p)
 		return "bool constant";
 	}
 
-	/* expect+1: controlling expression must be bool, not 'int' [333] */
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	if (0) {
 		/* expect+1: warning: statement not reached [193] */
 		return "integer constant";

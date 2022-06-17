@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_034.c,v 1.5 2021/05/16 11:11:37 rillig Exp $	*/
+/*	$NetBSD: msg_034.c,v 1.6 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_034.c"
 
 // Test for message: nonportable bit-field type '%s' [34]
@@ -17,10 +17,10 @@
  * typedef-types for bit-fields.
  */
 struct example {
-	/* expect+1: 34 */
+	/* expect+1: warning: nonportable bit-field type 'unsigned short' [34] */
 	unsigned short ushort: 1;
 
-	/* expect+1: 344 */
+	/* expect+1: warning: bit-field of type plain 'int' has implementation-defined signedness [344] */
 	int plain_int: 1;
 
 	signed int signed_int: 1;

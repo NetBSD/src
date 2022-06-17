@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.5 2022/06/15 18:11:02 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.6 2022/06/17 18:54:53 rillig Exp $)
 
 # Introduction
 
@@ -160,7 +160,9 @@ The comment `/* expect+1: ... */` expects a diagnostic to be generated for the
 code 1 line below, `/* expect-5: ... */` expects a diagnostic to be generated
 for the code 5 lines above.
 Each `expect` comment must be in a single line.
-There may be other code or comments in the same line.
+At the start and the end of the comment, the placeholder `...` stands for an
+arbitrary sequence of characters.
+There may be other code or comments in the same line of the `.c` file.
 
 Each diagnostic has its own test `msg_???.c` that triggers the corresponding
 diagnostic.

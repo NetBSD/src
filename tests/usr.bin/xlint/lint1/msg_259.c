@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.20 2022/04/15 21:50:07 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.21 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259]
@@ -48,7 +48,7 @@ change_in_type_width(char c, int i, long l)
 	signed_long(i);
 
 	plain_char(l);		/* XXX: why no warning? */
-	/* expect+1: from 'long' to 'int' due to prototype [259] */
+	/* expect+1: ... from 'long' to 'int' due to prototype [259] */
 	signed_int(l);
 	signed_long(l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.16 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.17 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -39,7 +39,7 @@ qualifier_specifier(void)
 void
 declarator_with_prefix_qualifier(void)
 {
-	/* expect+1: syntax error 'const' [249] */
+	/* expect+1: error: syntax error 'const' [249] */
 	char a = 1, const b = 2;
 
 	a = 1;
@@ -50,7 +50,7 @@ declarator_with_prefix_qualifier(void)
 void
 declarator_with_postfix_qualifier(void)
 {
-	/* expect+1: syntax error 'const' [249] */
+	/* expect+1: error: syntax error 'const' [249] */
 	char a = 1, b const = 2;
 
 	a = 1;
@@ -64,11 +64,11 @@ declarators(void)
 {
 	char *pc = 0, c = 0, **ppc = 0;
 
-	/* expect+1: warning: converting 'pointer to char' to incompatible 'pointer to double' */
+	/* expect+1: warning: converting 'pointer to char' to incompatible 'pointer to double' for argument 1 [153] */
 	sink(pc);
-	/* expect+1: warning: illegal combination of pointer (pointer to double) and integer (char) */
+	/* expect+1: warning: illegal combination of pointer (pointer to double) and integer (char), arg #1 [154] */
 	sink(c);
-	/* expect+1: converting 'pointer to pointer to char' to incompatible 'pointer to double' */
+	/* expect+1: warning: converting 'pointer to pointer to char' to incompatible 'pointer to double' for argument 1 [153] */
 	sink(ppc);
 }
 
@@ -76,7 +76,7 @@ _Bool
 enum_error_handling(void)
 {
 	enum {
-		/* expect+1: syntax error '"' [249] */
+		/* expect+1: error: syntax error '"' [249] */
 		"error 1"
 		:		/* still the same error */
 		,		/* back on track */
@@ -160,11 +160,11 @@ unsigned long sizes =
     sizeof(const typeof(unnamed_struct));
 
 /* expect+2: error: old style declaration; add 'int' [1] */
-/* expect+1: syntax error 'int' [249] */
+/* expect+1: error: syntax error 'int' [249] */
 thread int thread_int;
 __thread int thread_int;
 /* expect+2: error: old style declaration; add 'int' [1] */
-/* expect+1: syntax error 'int' [249] */
+/* expect+1: error: syntax error 'int' [249] */
 __thread__ int thread_int;
 
 /* expect+4: error: old style declaration; add 'int' [1] */

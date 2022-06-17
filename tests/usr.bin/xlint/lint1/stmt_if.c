@@ -1,4 +1,4 @@
-/*	$NetBSD: stmt_if.c,v 1.1 2021/07/11 18:58:13 rillig Exp $	*/
+/*	$NetBSD: stmt_if.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "stmt_if.c"
 
 /*
@@ -22,7 +22,7 @@ dangling_else(int x)
 	 */
 	else
 		println("not positive");
-	/* expect+1: syntax error 'else' [249] */
+	/* expect+1: error: syntax error 'else' [249] */
 	else
 		println("syntax error");
 }

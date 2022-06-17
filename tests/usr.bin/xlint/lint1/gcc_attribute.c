@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.10 2021/07/15 21:00:05 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.11 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -29,7 +29,7 @@ function_nonnull_list(void *, const void *, int);
 void __attribute__((nonnull(1, 2)))
 function_nonnull_list(void *, const void *, int);
 
-/* expect+1: syntax error 'unknown_attribute' */
+/* expect+1: error: syntax error 'unknown_attribute' [249] */
 void __attribute__((unknown_attribute))
 function_with_unknown_attribute(void);
 
@@ -125,5 +125,5 @@ __attribute__((deprecated("d5")))
  */
 int const_function(int) __attribute__((const));
 /* cover 'gcc_attribute_spec: T_QUAL' */
-/* expect+1: syntax error 'volatile' [249] */
+/* expect+1: error: syntax error 'volatile' [249] */
 int volatile_function(int) __attribute__((volatile));

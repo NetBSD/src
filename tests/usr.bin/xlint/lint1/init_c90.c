@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c90.c,v 1.3 2022/02/27 11:40:30 rillig Exp $	*/
+/*	$NetBSD: init_c90.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "init_c90.c"
 
 /*
@@ -25,6 +25,6 @@ struct point points_c99[] = {[3] = { 0, 0 }};
 
 struct point
 compound_literal(void) {
-	/* expect+1: compound literals are a C99/GCC extension [319] */
+	/* expect+1: error: compound literals are a C99/GCC extension [319] */
 	return (struct point){ 0, 0 };
 }
