@@ -1,4 +1,0 @@
-lex_integer_ilp32.c(26): warning: conversion of 'unsigned long' to 'int' is out of range, arg #1 [295]
-lex_integer_ilp32.c(32): warning: ANSI C treats constant as unsigned, op - [218]
-lex_integer_ilp32.c(32): warning: conversion of 'unsigned long' to 'int' is out of range, arg #1 [295]
-lex_integer_ilp32.c(43): warning: integer constant out of range [252]

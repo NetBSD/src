@@ -1,2 +1,0 @@
-msg_337.c(20): error: right operand of '+' must not be bool [337]
-msg_337.c(20): error: argument #1 expects '_Bool', gets passed 'int' [334]

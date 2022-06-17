@@ -1,2 +1,0 @@
-msg_293.c(9): warning: argument 1 must be 'char *' for PRINTFLIKE/SCANFLIKE [293]
-msg_293.c(9): warning: argument 'msgid' unused in function 'my_printf' [231]

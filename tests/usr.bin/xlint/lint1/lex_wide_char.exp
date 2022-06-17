@@ -1,4 +1,0 @@
-lex_wide_char.c(16): error: empty character constant [73]
-lex_wide_char.c(24): error: too many characters in character constant [71]
-lex_wide_char.c(28): warning: dubious escape \e [79]
-lex_wide_char.c(40): error: empty character constant [73]

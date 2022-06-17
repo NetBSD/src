@@ -1,3 +1,0 @@
-msg_244.c(18): error: illegal pointer subtraction [116]
-msg_244.c(25): warning: incompatible structure pointers: 'pointer to struct a' '<' 'pointer to struct b' [245]
-msg_244.c(32): warning: illegal structure pointer combination [244]

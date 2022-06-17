@@ -1,5 +1,0 @@
-msg_254.c(19): error: newline in string or char constant [254]
-msg_254.c(19): error: unterminated string constant [258]
-msg_254.c(19): error: syntax error '"' [249]
-msg_254.c(20): error: newline in string or char constant [254]
-msg_254.c(20): error: unterminated string constant [258]

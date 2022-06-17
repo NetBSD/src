@@ -1,3 +1,0 @@
-msg_114.c(11): error: operand of 'x++' must be lvalue [114]
-msg_114.c(20): error: operand of 'x++' has invalid type (array) [108]
-msg_114.c(23): error: operand of 'x++' must be lvalue [114]

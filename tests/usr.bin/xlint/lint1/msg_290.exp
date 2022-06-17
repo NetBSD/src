@@ -1,2 +1,0 @@
-msg_290.c(7): warning: static function only_declared declared but not defined [290]
-msg_290.c(14): error: static function called but not defined: declared_and_called() [225]

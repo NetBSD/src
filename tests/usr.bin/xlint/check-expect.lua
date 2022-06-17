@@ -1,14 +1,17 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.22 2022/06/17 19:01:01 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.23 2022/06/17 20:23:58 rillig Exp $
 
 --[[
 
 usage: lua ./check-expect.lua *.c
 
 Check that the /* expect+-n: ... */ comments in the .c source files match the
-actual messages found in the corresponding .exp files.
+actual messages found in the corresponding .exp files.  The .exp files are 
+expected in the current working directory.
 
-To regenerate the .exp files, see lint1/accept.sh.
+The .exp files are generated on the fly during the ATF tests, see
+t_integration.sh.  During development, they can be generated using
+lint1/accept.sh.
 ]]
 
 
@@ -173,7 +176,7 @@ end)
 
 
 local function check_test(c_fname)
-  local exp_fname = c_fname:gsub("%.c$", ".exp")
+  local exp_fname = c_fname:gsub("%.c$", ".exp"):gsub(".+/", "")
 
   local c_comment_locations, c_comments_by_location = load_c(c_fname)
   if c_comment_locations == nil then return end

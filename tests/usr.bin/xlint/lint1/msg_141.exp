@@ -1,5 +1,0 @@
-msg_141.c(21): warning: integer overflow detected, op '+' [141]
-msg_141.c(25): warning: integer overflow detected, op '+' [141]
-msg_141.c(25): warning: initialization of unsigned with negative constant [221]
-msg_141.c(30): warning: integer overflow detected, op '-' [141]
-msg_141.c(33): warning: integer overflow detected, op '-' [141]

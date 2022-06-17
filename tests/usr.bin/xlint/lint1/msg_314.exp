@@ -1,2 +1,0 @@
-msg_314.c(17): error: type 'int' does not have member 'member' [101]
-msg_314.c(19): error: type 'int' does not have member 'member' [101]

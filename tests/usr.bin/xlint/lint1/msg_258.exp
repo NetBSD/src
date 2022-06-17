@@ -1,3 +1,0 @@
-msg_258.c(17): error: unterminated string constant [258]
-msg_258.c(17): error: syntax error '' [249]
-msg_258.c(17): error: empty array declaration: str [190]

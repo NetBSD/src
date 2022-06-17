@@ -1,2 +1,0 @@
-expr_cast.c(32): error: invalid cast from 'struct S' to 'struct S' [147]
-expr_cast.c(32): warning: function 'cast' expects to return value [214]

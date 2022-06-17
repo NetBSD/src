@@ -1,5 +1,0 @@
-init_braces.c(19): error: {}-enclosed initializer required [181]
-init_braces.c(19): error: empty array declaration: num0 [190]
-init_braces.c(46): warning: illegal combination of integer (char) and pointer (pointer to char) [183]
-init_braces.c(53): warning: illegal combination of integer (char) and pointer (pointer to char) [183]
-init_braces.c(62): warning: illegal combination of integer (char) and pointer (pointer to char) [183]

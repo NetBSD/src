@@ -1,4 +1,0 @@
-msg_171.c(15): error: cannot assign to 'int' from 'struct s' [171]
-msg_171.c(17): error: cannot assign to 'struct s' from 'int' [171]
-msg_171.c(20): error: cannot assign to 'pointer to void' from 'struct s' [171]
-msg_171.c(22): error: cannot assign to 'struct s' from 'pointer to void' [171]

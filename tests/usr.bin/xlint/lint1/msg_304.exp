@@ -1,2 +1,0 @@
-msg_304.c(15): warning: ANSI C forbids conversion of function pointer to 'void *', arg #1 [304]
-msg_304.c(18): warning: ANSI C forbids conversion of 'void *' to function pointer, arg #1 [304]

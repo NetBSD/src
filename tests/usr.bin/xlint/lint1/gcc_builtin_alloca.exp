@@ -1,1 +1,0 @@
-gcc_builtin_alloca.c(21): warning: illegal combination of pointer (pointer to char) and integer (int) [183]

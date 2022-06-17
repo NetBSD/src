@@ -1,6 +1,0 @@
-msg_242.c(20): warning: initialization of 'enum E' with 'int' [277]
-msg_242.c(22): warning: initialization of 'int' with 'enum E' [277]
-msg_242.c(26): warning: combination of 'enum E' and 'int', op = [242]
-msg_242.c(28): warning: combination of 'int' and 'enum E', op = [242]
-msg_242.c(55): warning: dubious operation on enum, op * [241]
-msg_242.c(55): warning: combination of 'unsigned int' and 'unsigned int', op = [242]

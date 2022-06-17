@@ -1,6 +1,0 @@
-msg_341.c(24): warning: argument to 'isspace' must be 'unsigned char' or EOF, not 'char' [341]
-msg_341.c(33): warning: argument to 'isspace' must be cast to 'unsigned char', not to 'int' [342]
-msg_341.c(36): warning: argument to 'isspace' must be cast to 'unsigned char', not to 'unsigned int' [342]
-msg_341.c(67): warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'char' [341]
-msg_341.c(73): warning: argument to 'function from <ctype.h>' must be cast to 'unsigned char', not to 'int' [342]
-msg_341.c(76): warning: argument to 'function from <ctype.h>' must be cast to 'unsigned char', not to 'unsigned int' [342]

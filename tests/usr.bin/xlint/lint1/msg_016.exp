@@ -1,2 +1,0 @@
-msg_016.c(9): error: array of function is illegal [16]
-msg_016.c(15): warning: illegal combination of integer (int) and pointer (pointer to void) [183]

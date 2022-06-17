@@ -1,1 +1,0 @@
-msg_103.c(15): error: left operand of '.' must be struct or union, not 'pointer to struct point' [103]

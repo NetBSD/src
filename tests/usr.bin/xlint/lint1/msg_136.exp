@@ -1,2 +1,0 @@
-msg_136.c(13): error: cannot do pointer arithmetic on operand of unknown size [136]
-msg_136.c(7): warning: struct 'incomplete' never defined [233]

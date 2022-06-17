@@ -1,2 +1,0 @@
-msg_182.c(10): warning: incompatible pointer types (void != volatile void) [182]
-msg_182.c(17): warning: incompatible pointer types (void != volatile void) [182]

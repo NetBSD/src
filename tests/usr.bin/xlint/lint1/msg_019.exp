@@ -1,6 +1,0 @@
-msg_019.c(7): error: void type for 'global_variable' [19]
-msg_019.c(11): error: void type for 'unit_variable' [19]
-msg_019.c(16): error: void parameter cannot have name: parameter [61]
-msg_019.c(19): error: void type for 'local_variable' [19]
-msg_019.c(16): warning: argument 'parameter' unused in function 'function' [231]
-msg_019.c(11): warning: static variable 'unit_variable' unused [226]

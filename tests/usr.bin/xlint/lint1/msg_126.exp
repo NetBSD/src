@@ -1,2 +1,0 @@
-msg_126.c(12): error: incompatible types 'pointer to void' and 'double' in conditional [126]
-msg_126.c(12): warning: function 'max' expects to return value [214]
