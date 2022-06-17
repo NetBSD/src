@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_string.c,v 1.4 2021/11/20 17:27:46 rillig Exp $	*/
+/*	$NetBSD: lex_string.c,v 1.5 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "lex_string.c"
 
 /*
@@ -20,10 +20,10 @@ test(void)
 
 	sink("\0\0\0\0");
 
-	/* expect+1: no hex digits follow \x [74] */
+	/* expect+1: error: no hex digits follow \x [74] */
 	sink("\x");		/* unfinished */
 
-	/* expect+1: dubious escape \y [79] */
+	/* expect+1: warning: dubious escape \y [79] */
 	sink("\y");		/* unknown escape sequence */
 
 	sink("first" "second");

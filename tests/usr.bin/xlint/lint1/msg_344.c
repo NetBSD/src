@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_344.c,v 1.1 2021/05/16 11:11:37 rillig Exp $	*/
+/*	$NetBSD: msg_344.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_344.c"
 
 // Test for message: bit-field of type plain 'int' has implementation-defined signedness [344]
@@ -16,7 +16,7 @@
  * allows typedef-types for bit-fields.
  */
 struct example {
-	/* expect+1: 344 */
+	/* expect+1: warning: bit-field of type plain 'int' has implementation-defined signedness [344] */
 	int plain_int: 1;
 
 	signed int signed_int: 1;

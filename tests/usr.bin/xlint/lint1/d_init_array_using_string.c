@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_array_using_string.c,v 1.10 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: d_init_array_using_string.c,v 1.11 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "d_init_array_using_string.c"
 
 /*
@@ -72,9 +72,9 @@ test_array_initialization_in_struct(void)
 	};
 
 	struct cs_ws too_many_characters = {
-		/* expect+1: warning: string literal too long (11) for target array (10) */
+		/* expect+1: warning: string literal too long (11) for target array (10) [187] */
 		"0123456789X",
-		/* expect+1: warning: string literal too long (11) for target array (10) */
+		/* expect+1: warning: string literal too long (11) for target array (10) [187] */
 		L"0123456789X",
 	};
 

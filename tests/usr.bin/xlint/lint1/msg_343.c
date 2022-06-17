@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_343.c,v 1.6 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_343.c,v 1.7 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_343.c"
 
 /* Test for message: static array size is a C11 extension [343] */
@@ -9,7 +9,7 @@ void takes_int_pointer(int []);
 void takes_int_pointer_with_ignored_size(int [3]);
 /* expect+1: error: static array size is a C11 extension [343] */
 void takes_int_array(int[static 3]);
-/* expect+1: syntax error '3' */
+/* expect+1: error: syntax error '3' [249] */
 void takes_volatile_int_array(int[volatile 3]);
 
 int
@@ -32,11 +32,11 @@ returns_int_array(int a[static 3])
 }
 
 int
-/* expect+1: syntax error '3' */
+/* expect+1: error: syntax error '3' [249] */
 returns_volatile_int_array(int a[volatile 3])
 {
-	/* expect+2: cannot dereference non-pointer type */
-	/* expect+1: expects to return value */
+	/* expect+2: error: cannot dereference non-pointer type [96] */
+	/* expect+1: ... expects to return value [214] */
 	return a[0];
 }
 

@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.20 2022/06/17 16:10:10 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.21 2022/06/17 18:54:53 rillig Exp $
 
 --[[
 
@@ -10,6 +10,17 @@ actual messages found in the corresponding .exp files.
 
 To regenerate the .exp files, see lint1/accept.sh.
 ]]
+
+
+local function test(func)
+  func()
+end
+
+local function assert_equals(got, expected)
+  if got ~= expected then
+    assert(false, string.format("got %q, expected %q", got, expected))
+  end
+end
 
 
 local had_errors = false
@@ -33,6 +44,7 @@ local function load_lines(fname)
 
   return lines
 end
+
 
 -- Load the 'expect:' comments from a C source file.
 --
@@ -114,6 +126,52 @@ local function load_exp(exp_fname)
 end
 
 
+---@param comment string
+---@param pattern string
+---@return boolean
+local function matches(comment, pattern)
+  if comment == "" then return false end
+
+  local any_prefix = pattern:sub(1, 3) == "..."
+  if any_prefix then pattern = pattern:sub(4) end
+  local any_suffix = pattern:sub(-3) == "..."
+  if any_suffix then pattern = pattern:sub(1, -4) end
+
+  if any_prefix and any_suffix then
+    return comment:find(pattern, 1, true) ~= nil
+  elseif any_prefix then
+    return pattern ~= "" and comment:sub(-#pattern) == pattern
+  elseif any_suffix then
+    return comment:sub(1, #pattern) == pattern
+  else
+    return comment == pattern
+  end
+end
+
+test(function()
+  assert_equals(matches("a", "a"), true)
+  assert_equals(matches("a", "b"), false)
+  assert_equals(matches("a", "aaa"), false)
+
+  assert_equals(matches("abc", "a..."), true)
+  assert_equals(matches("abc", "c..."), false)
+
+  assert_equals(matches("abc", "...c"), true)
+  assert_equals(matches("abc", "...a"), false)
+
+  assert_equals(matches("abc123xyz", "...a..."), true)
+  assert_equals(matches("abc123xyz", "...b..."), true)
+  assert_equals(matches("abc123xyz", "...c..."), true)
+  assert_equals(matches("abc123xyz", "...1..."), true)
+  assert_equals(matches("abc123xyz", "...2..."), true)
+  assert_equals(matches("abc123xyz", "...3..."), true)
+  assert_equals(matches("abc123xyz", "...x..."), true)
+  assert_equals(matches("abc123xyz", "...y..."), true)
+  assert_equals(matches("abc123xyz", "...z..."), true)
+  assert_equals(matches("pattern", "...pattern..."), true)
+end)
+
+
 local function check_test(c_fname)
   local exp_fname = c_fname:gsub("%.c$", ".exp")
 
@@ -125,12 +183,12 @@ local function check_test(c_fname)
 
   for _, exp_message in ipairs(exp_messages) do
     local c_comments = c_comments_by_location[exp_message.location] or {}
-    local expected_comment =
+    local expected_message =
       exp_message.message:gsub("/%*", "**"):gsub("%*/", "**")
 
     local found = false
     for i, c_comment in ipairs(c_comments) do
-      if c_comment ~= "" and expected_comment:find(c_comment, 1, true) then
+      if c_comment ~= "" and matches(expected_message, c_comment) then
         c_comments[i] = ""
         found = true
         break
@@ -139,7 +197,7 @@ local function check_test(c_fname)
 
     if not found then
       print_error("error: %s: missing /* expect+1: %s */",
-        exp_message.location, expected_comment)
+        exp_message.location, expected_message)
     end
   end
 

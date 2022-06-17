@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_stmt_error.c,v 1.1 2021/07/25 09:29:20 rillig Exp $	*/
+/*	$NetBSD: parse_stmt_error.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "parse_stmt_error.c"
 
 /*
@@ -13,7 +13,7 @@ cover_selection_statement_else(_Bool cond)
 	if (cond)
 		do_nothing();
 	else
-		/* expect+1: syntax error ']' [249] */
+		/* expect+1: error: syntax error ']' [249] */
 		];
 }
 
@@ -21,6 +21,6 @@ void
 cover_selection_statement_switch(int x)
 {
 	switch (x)
-		/* expect+1: syntax error ']' [249] */
+		/* expect+1: error: syntax error ']' [249] */
 		];
 }

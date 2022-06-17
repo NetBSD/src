@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.11 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.12 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -6,7 +6,7 @@
 /*
  * Cover the grammar rule 'top_level_declaration: error T_SEMI'.
  */
-/* expect+1: syntax error '"' [249] */
+/* expect+1: error: syntax error '"' [249] */
 "syntax error in top_level_declaration";
 
 /* XXX: This is necessary to recover the yacc parser. */
@@ -15,7 +15,7 @@ int recover_from_semi;
 /*
  * Cover the grammar rule 'top_level_declaration: error T_RBRACE'.
  */
-/* expect+1: syntax error '"' [249] */
+/* expect+1: error: syntax error '"' [249] */
 "syntax error in top_level_declaration"}
 
 /* XXX: This is necessary to recover the yacc parser. */

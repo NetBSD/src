@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_341.c,v 1.1 2021/04/05 02:05:47 rillig Exp $	*/
+/*	$NetBSD: msg_341.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_341.c"
 
 // Test for message: argument to '%s' must be 'unsigned char' or EOF, not '%s' [341]
@@ -20,7 +20,7 @@ void
 function_call_char(char c)
 {
 
-	/* expect+1: argument to 'isspace' must be 'unsigned char' or EOF, not 'char' */
+	/* expect+1: warning: argument to 'isspace' must be 'unsigned char' or EOF, not 'char' [341] */
 	(isspace)(c);
 
 	/* This is the only allowed form. */
@@ -29,10 +29,10 @@ function_call_char(char c)
 	/* The cast to 'int' is redundant, it doesn't hurt though. */
 	isspace((int)(unsigned char)c);
 
-	/* expect+1: argument to 'isspace' must be cast to 'unsigned char', not to 'int' */
+	/* expect+1: warning: argument to 'isspace' must be cast to 'unsigned char', not to 'int' [342] */
 	isspace((int)c);
 
-	/* expect+1: argument to 'isspace' must be cast to 'unsigned char', not to 'unsigned int' */
+	/* expect+1: warning: argument to 'isspace' must be cast to 'unsigned char', not to 'unsigned int' [342] */
 	isspace((unsigned int)c);
 }
 
@@ -63,15 +63,15 @@ void
 macro_invocation_NetBSD(char c)
 {
 
-	/* expect+1: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'char' */
+	/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'char' [341] */
 	sink(((int)((_ctype_tab_ + 1)[(c)] & 0x0040)));
 
 	/* This is the only allowed form. */
 	sink(((int)((_ctype_tab_ + 1)[((unsigned char)c)] & 0x0040)));
 
-	/* expect+1: argument to 'function from <ctype.h>' must be cast to 'unsigned char', not to 'int' */
+	/* expect+1: warning: argument to 'function from <ctype.h>' must be cast to 'unsigned char', not to 'int' [342] */
 	sink(((int)((_ctype_tab_ + 1)[((int)c)] & 0x0040)));
 
-	/* expect+1: argument to 'function from <ctype.h>' must be cast to 'unsigned char', not to 'unsigned int' */
+	/* expect+1: warning: argument to 'function from <ctype.h>' must be cast to 'unsigned char', not to 'unsigned int' [342] */
 	sink(((int)((_ctype_tab_ + 1)[((unsigned int)c)] & 0x0040)));
 }
