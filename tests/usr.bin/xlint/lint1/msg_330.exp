@@ -1,4 +1,0 @@
-msg_330.c(23): error: operand of '!' must be bool, not 'char' [330]
-msg_330.c(23): error: argument #1 expects '_Bool', gets passed 'int' [334]
-msg_330.c(27): error: operand of '!' must be bool, not 'int' [330]
-msg_330.c(27): error: argument #1 expects '_Bool', gets passed 'int' [334]

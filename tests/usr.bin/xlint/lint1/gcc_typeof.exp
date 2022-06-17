@@ -1,2 +1,0 @@
-gcc_typeof.c(24): warning: passing 'pointer to function(double) returning double' to incompatible 'double', arg #1 [155]
-gcc_typeof.c(27): warning: passing 'double' to incompatible 'pointer to function(double) returning double', arg #1 [155]

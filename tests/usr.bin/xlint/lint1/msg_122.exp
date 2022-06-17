@@ -1,1 +1,0 @@
-msg_122.c(10): warning: shift amount 129 is greater than bit-size 32 of 'int' [122]

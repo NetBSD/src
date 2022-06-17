@@ -1,1 +1,0 @@
-platform_lp64.c(22): warning: static variable 'unused_variable' unused [226]

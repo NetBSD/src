@@ -1,3 +1,0 @@
-msg_259_ilp32.c(26): warning: argument #1 is converted from 'char' to 'long' due to prototype [259]
-msg_259_ilp32.c(31): warning: argument #1 is converted from 'int' to 'long' due to prototype [259]
-msg_259_ilp32.c(35): warning: argument #1 is converted from 'long' to 'int' due to prototype [259]

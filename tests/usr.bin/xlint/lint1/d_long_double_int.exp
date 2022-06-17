@@ -1,1 +1,0 @@
-d_long_double_int.c(10): warning: illegal combination of 'pointer to long double' and 'pointer to long', op '==' [124]

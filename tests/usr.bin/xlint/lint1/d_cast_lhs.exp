@@ -1,4 +1,0 @@
-d_cast_lhs.c(24): error: a cast does not yield an lvalue [163]
-d_cast_lhs.c(24): error: left operand of '=' must be lvalue [114]
-d_cast_lhs.c(28): error: a cast does not yield an lvalue [163]
-d_cast_lhs.c(28): error: operand of '&' must be lvalue [114]

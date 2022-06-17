@@ -1,5 +1,0 @@
-msg_005.c(9): warning: modifying typedef with 'signed'; only qualifiers allowed [5]
-msg_005.c(12): warning: modifying typedef with 'unsigned'; only qualifiers allowed [5]
-msg_005.c(15): warning: modifying typedef with 'short'; only qualifiers allowed [5]
-msg_005.c(18): warning: modifying typedef with 'long'; only qualifiers allowed [5]
-msg_005.c(26): error: syntax error 'prefix_long_number' [249]

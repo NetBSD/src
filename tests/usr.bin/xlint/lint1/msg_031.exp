@@ -1,3 +1,0 @@
-msg_031.c(21): error: '<unnamed>' has incomplete type 'incomplete struct incomplete' [31]
-msg_031.c(11): warning: struct 'incomplete' never defined [233]
-msg_031.c(17): error: 'incomplete_var' has incomplete type 'incomplete struct incomplete' [31]

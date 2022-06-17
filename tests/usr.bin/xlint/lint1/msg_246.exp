@@ -1,1 +1,0 @@
-msg_246.c(21): warning: illegal combination of pointer (pointer to void) and integer (enum color) [183]

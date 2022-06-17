@@ -1,2 +1,0 @@
-msg_156.c(27): warning: enum type mismatch, arg #1 (enum color != enum size) [156]
-msg_156.c(29): warning: enum type mismatch, arg #1 (enum color != enum size) [156]

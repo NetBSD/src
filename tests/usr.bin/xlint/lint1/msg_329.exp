@@ -1,1 +1,0 @@
-msg_329.c(37): error: type 'pointer to char' is not a member of 'union u' [329]

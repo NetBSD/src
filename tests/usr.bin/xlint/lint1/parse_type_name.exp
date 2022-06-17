@@ -1,7 +1,0 @@
-parse_type_name.c(52): error: cannot take size/alignment of function type 'function(int) returning int' [144]
-parse_type_name.c(72): error: null dimension [17]
-parse_type_name.c(76): error: null dimension [17]
-parse_type_name.c(118): error: syntax error 'goto' [249]
-parse_type_name.c(120): error: syntax error 'goto' [249]
-parse_type_name.c(126): error: syntax error 'goto' [249]
-parse_type_name.c(140): warning: ANSI C requires formal parameter before '...' [84]

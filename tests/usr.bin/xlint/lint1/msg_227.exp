@@ -1,3 +1,0 @@
-msg_227.c(8): warning: static variable 'without_initializer' unused [226]
-msg_227.c(8): warning: const object without_initializer should have initializer [227]
-msg_227.c(10): warning: static variable 'with_initializer' unused [226]

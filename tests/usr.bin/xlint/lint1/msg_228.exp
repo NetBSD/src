@@ -1,2 +1,0 @@
-msg_228.c(12): warning: function cannot return const or volatile object [228]
-msg_228.c(19): warning: function cannot return const or volatile object [228]

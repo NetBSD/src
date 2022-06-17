@@ -1,2 +1,0 @@
-msg_278.c(20): warning: combination of 'enum E' and 'int', arg #1 [278]
-msg_278.c(23): warning: combination of 'int' and 'enum E', arg #1 [278]

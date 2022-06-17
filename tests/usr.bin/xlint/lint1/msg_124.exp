@@ -1,6 +1,0 @@
-msg_124.c(19): warning: illegal combination of 'pointer to function(int) returning void' and 'pointer to int', op 'init' [124]
-msg_124.c(21): warning: illegal combination of 'pointer to function(pointer to function(int) returning void) returning pointer to function(int) returning void' and 'pointer to int', op 'init' [124]
-msg_124.c(23): warning: illegal combination of 'pointer to function(pointer to const char, ...) returning int' and 'pointer to int', op 'init' [124]
-msg_124.c(36): warning: ANSI C forbids comparison of 'void *' with function pointer [274]
-msg_124.c(38): warning: illegal combination of 'pointer to const char' and 'pointer to const int', op '==' [124]
-msg_124.c(40): warning: illegal combination of 'pointer to const char' and 'pointer to function(int) returning void', op '==' [124]

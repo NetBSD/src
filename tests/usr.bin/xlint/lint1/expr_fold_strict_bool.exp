@@ -1,4 +1,0 @@
-expr_fold_strict_bool.c(21): error: illegal bit-field size: 255 [36]
-expr_fold_strict_bool.c(25): error: illegal bit-field size: 255 [36]
-expr_fold_strict_bool.c(29): error: illegal bit-field size: 255 [36]
-expr_fold_strict_bool.c(40): error: illegal bit-field size: 255 [36]

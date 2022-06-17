@@ -1,1 +1,0 @@
-gcc_bit_field_types.c(21): warning: illegal bit-field type 'double' [35]

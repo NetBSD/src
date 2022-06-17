@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.90 2022/04/09 15:43:41 rillig Exp $
+#	$NetBSD: Makefile,v 1.91 2022/06/17 20:23:58 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -108,12 +108,10 @@ add-test: .PHONY
 		'// TODO: Add some code that passes.' \
 		'// TODO: Add some code that fails.' \
 	> "$$test.c"; \
-	> "$$test.exp"; \
-	cvs add "$$test.c" "$$test.exp"; \
+	cvs add "$$test.c"; \
 	printf '%s\n' \
 		'/^FILES+=/i' \
 		"FILES+=		$$test.c" \
-		"FILES+=		$$test.exp" \
 		'.' 'w' 'q' \
 	| ed Makefile; \
 	${MAKE} sync-mi
