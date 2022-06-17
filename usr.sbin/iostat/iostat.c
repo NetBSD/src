@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.67 2018/04/08 11:37:31 mlelstv Exp $	*/
+/*	$NetBSD: iostat.c,v 1.68 2022/06/17 01:47:45 kre Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.67 2018/04/08 11:37:31 mlelstv Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.68 2022/06/17 01:47:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ static volatile int do_header;
 static void header(void);
 __dead static void usage(void);
 static void display(void);
-static int selectdrives(int, char *[]);
+static int selectdrives(int, char *[], int);
 
 int
 main(int argc, char *argv[])
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 	drvinit(0);
 	cpureadstats();
 	drvreadstats();
-	ndrives = selectdrives(argc, argv);
+	ndrives = selectdrives(argc, argv, 1);
 	if (ndrives == 0) {
 		/* No drives are selected.  No need to show drive stats. */
 		todo &= ~SHOW_STATS_ALL;
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 		cpureadstats();
 		drvreadstats();
 
-		ndrives = selectdrives(argc, argv);
+		ndrives = selectdrives(argc, argv, 0);
 	}
 	exit(0);
 }
@@ -614,7 +614,7 @@ out:
 }
 
 static int
-selectdrives(int argc, char *argv[])
+selectdrives(int argc, char *argv[], int first)
 {
 	int	i, maxdrives, ndrives, tried;
 
@@ -663,7 +663,7 @@ selectdrives(int argc, char *argv[])
 	}
 
 #ifdef BACKWARD_COMPATIBILITY
-	if (*argv) {
+	if (first && *argv) {
 		interval = atoi(*argv);
 		if (*++argv)
 			reps = atoi(*argv);
