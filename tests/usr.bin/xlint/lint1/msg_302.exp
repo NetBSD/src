@@ -1,1 +1,3 @@
-msg_302.c(6): error: syntax error ':' [249]
+msg_302.c(10): warning: return_arg returns pointer to automatic object [302]
+msg_302.c(18): warning: return_local returns pointer to automatic object [302]
+msg_302.c(32): warning: return_local_array returns pointer to automatic object [302]

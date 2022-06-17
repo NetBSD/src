@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_309.c,v 1.4 2021/05/16 10:18:25 rillig Exp $	*/
+/*	$NetBSD: msg_309.c,v 1.5 2022/06/17 06:59:16 rillig Exp $	*/
 # 3 "msg_309.c"
 
 // Test for message: extra bits set to 0 in conversion of '%s' to '%s', op '%s' [309]
@@ -20,7 +20,8 @@ scale(unsigned long long x) {
 	 * bit mask here.  This situation may occur during migration from a
 	 * 32-bit to a 64-bit platform.
 	 */
-	if ((x & 0xffff0000) != 0)	/* expect: 309 */
+	/* expect+1: warning: extra bits set to 0 in conversion of 'unsigned int' to 'unsigned long long', op '&' [309] */
+	if ((x & 0xffff0000) != 0)
 		return 16;
 
 	/*

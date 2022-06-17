@@ -1,1 +1,2 @@
-msg_310.c(6): error: syntax error ':' [249]
+msg_310.c(8): warning: argument 'callback' unused in function 'function' [231]
+msg_310.c(13): error: syntax error ':' [249]

@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_316.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_316.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
 # 3 "msg_316.c"
 
 // Test for message: __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension [316]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -Sw */
+
+void println(const char *);
+
+void debug(void)
+{
+	/* expect+1: warning: __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension [316] */
+	println(__FUNCTION__);
+	/* expect+1: warning: __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension [316] */
+	println(__PRETTY_FUNCTION__);
+}

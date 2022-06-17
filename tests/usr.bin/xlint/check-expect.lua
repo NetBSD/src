@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.17 2022/06/16 21:24:41 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.18 2022/06/17 06:59:16 rillig Exp $
 
 --[[
 
@@ -64,7 +64,7 @@ local function load_expect_comments_from_c(fname)
     -- only the raw message ID, without the actual message text,
     -- which makes them harder to understand without looking up more context.
     for comment in line:gmatch("/%* expect: (.-) %*/") do
-      if not fname:match("^msg_[012]") then
+      if not fname:match("^msg_") then
         add_expectation(0, comment)
       end
     end

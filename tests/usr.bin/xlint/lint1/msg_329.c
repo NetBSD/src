@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_329.c,v 1.3 2021/08/03 20:57:06 rillig Exp $	*/
+/*	$NetBSD: msg_329.c,v 1.4 2022/06/17 06:59:16 rillig Exp $	*/
 # 3 "msg_329.c"
 
 // Test for message: type '%s' is not a member of '%s' [329]
@@ -33,5 +33,6 @@ example(void)
 	 */
 	union u u_i1 = (union u)3;
 	union u u_vp = (union u)(void *)0;
-	union u u_cp = (union u)(char *)0;	/* expect: 329 */
+	/* expect+1: error: type 'pointer to char' is not a member of 'union u' [329] */
+	union u u_cp = (union u)(char *)0;
 }
