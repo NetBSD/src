@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.15 2021/11/06 22:11:39 andvar Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.16 2022/06/17 06:18:09 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.15 2021/11/06 22:11:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.16 2022/06/17 06:18:09 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2699,8 +2699,9 @@ iavf_rxeof(struct iavf_softc *sc, struct iavf_rx_ring *rxr, u_int rxlimit,
 			word0 = le64toh(rxd->qword0);
 
 			if (ISSET(word, IXL_RX_DESC_L2TAG1P)) {
-				vlan_set_tag(m,
-				    __SHIFTOUT(word0, IXL_RX_DESC_L2TAG1_MASK));
+				uint16_t vtag;
+				vtag = __SHIFTOUT(word0, IXL_RX_DESC_L2TAG1_MASK);
+				vlan_set_tag(m, le16toh(vtag));
 			}
 
 			if ((ifp->if_capenable & IAVF_IFCAP_RXCSUM) != 0)
@@ -3032,9 +3033,10 @@ iavf_tx_common_locked(struct ifnet *ifp, struct iavf_tx_ring *txr,
 			iavf_tx_setup_offloads(m, &cmd_txd);
 		}
 		if (vlan_has_tag(m)) {
+			uint16_t vtag;
+			vtag = htole16(vlan_get_tag(m));
 			cmd_txd |= IXL_TX_DESC_CMD_IL2TAG1 |
-			    ((uint64_t)vlan_get_tag(m)
-			    << IXL_TX_DESC_L2TAG1_SHIFT);
+			    ((uint64_t)vtag << IXL_TX_DESC_L2TAG1_SHIFT);
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
