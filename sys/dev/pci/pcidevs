@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1458 2022/06/02 06:49:22 mrg Exp $
+$NetBSD: pcidevs,v 1.1459 2022/06/17 06:52:51 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4013,8 +4013,8 @@ product INTEL 82801H_AMT	0x104a	i82801H (AMT) LAN Controller
 product INTEL 82801H_LAN	0x104b	i82801H LAN Controller
 product INTEL 82801H_IFE_LAN	0x104c	i82801H (IFE) LAN Controller
 product INTEL 82801H_M_LAN	0x104d	i82801H (M) LAN Controller
-product INTEL X710_10G_SFP	0x104e	X710 10GbE SFP+
-product INTEL X710_10G_BP	0x104f	X710 10GbE Backplane
+product INTEL X710_10G_SFP	0x104e	X710-TM4 10GbE SFP+
+product INTEL X710_10G_BP	0x104f	X710-TM4 10GbE Backplane
 product INTEL PRO_100_VM_6	0x1050	PRO/100 VM Network Controller w/ 82562ET/EZ PHY
 product INTEL 82801EB_LAN	0x1051	82801EB/ER 10/100 Ethernet
 product INTEL PRO_100_VM_7	0x1052	PRO/100 VM Network Connection
@@ -4216,21 +4216,21 @@ product INTEL X550_VF		0x1565	X550 10 GbE Virtual Function
 product INTEL I219_LM		0x156f	I219-LM Ethernet Connection
 product INTEL I219_V		0x1570	I219-V Ethernet Connection
 product INTEL XL710_VF_HV	0x1571	XL710 Ethernet Virtual Function
-product INTEL XL710_SFP		0x1572	XL710 SFP+ Ethernet
+product INTEL XL710_SFP		0x1572	XL710 SFP+ Ethernet (SFI)
 product INTEL I210_COPPER_WOF	0x157b	I210 Ethernet (COPPER)
 product INTEL I210_SERDES_WOF	0x157c	I210 Ethernet (SERDES)
 product INTEL XL710_KX_A	0x157f	XL710 KX Ethernet
-product INTEL XL710_KX_B	0x1580	XL710 KX Ethernet
-product INTEL XL710_KX_C	0x1581	XL710 KX Ethernet
+product INTEL XL710_KX_B	0x1580	XL710 40GbE backplane (KX)
+product INTEL XL710_KX_C	0x1581	XL710 10GbE backplane (KX)
 product INTEL XL710_QSFP_A	0x1583	XL710 40GbE QSFP+
 product INTEL XL710_QSFP_B	0x1584	XL710 40GbE QSFP+
 product INTEL XL710_QSFP_C	0x1585	XL710 40GbE QSFP+
-product INTEL X710_10G_T_1	0x1586	X710 10GBaseT Ethernet
+product INTEL X710_10G_T_1	0x1586	X710 10GBASE-T Ethernet
 product INTEL XL710_20G_BP_1	0x1587	XL710 20GbE Backplane
 product INTEL XL710_20G_BP_2	0x1588	XL710 20GbE Backplane
 product INTEL X710_T4_10G	0x1589	X710-T4 10GbaseT
 product INTEL XXV710_25G_BP	0x158a	XXV710 25GbE Backplane
-product INTEL XXV710_25G_SFP28	0x158b	XXV710 SFP28
+product INTEL XXV710_25G_SFP28	0x158b	XXV710 25GbE SFP28
 product INTEL I218_LM2		0x15a0	I218-LM Ethernet Connection
 product INTEL I218_V2		0x15a1	I218-V Ethernet Connection
 product INTEL I218_LM3		0x15a2	I218-LM Ethernet Connection
@@ -4281,7 +4281,7 @@ product INTEL I219_LM14		0x15f9	I219-LM (14) Ethernet Connection
 product INTEL I219_V14		0x15fa	I219-V (14) Ethernet Connection
 product INTEL I219_LM13		0x15fb	I219-LM (13) Ethernet Connection
 product INTEL I219_V13		0x15fc	I219-V (13) Ethernet Connection
-product INTEL X710_10G_T_2	0x15ff	X710 10GBaseT Ethernet
+product INTEL X710_10G_T_2	0x15ff	X710-TM4 10GBASE-T Ethernet
 product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
 product INTEL CORE5G_M_GT1	0x1606	HD Graphics (GT1)
 product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
