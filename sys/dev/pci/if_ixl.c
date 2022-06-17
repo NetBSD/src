@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.83 2022/05/23 13:53:37 rin Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.84 2022/06/17 06:18:09 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.83 2022/05/23 13:53:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.84 2022/06/17 06:18:09 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2714,7 +2714,9 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 		}
 
 		if (vlan_has_tag(m)) {
-			cmd_txd |= (uint64_t)vlan_get_tag(m) <<
+			uint16_t vtag;
+			vtag = htole16(vlan_get_tag(m));
+			cmd_txd |= (uint64_t)vtag <<
 			    IXL_TX_DESC_L2TAG1_SHIFT;
 			cmd_txd |= IXL_TX_DESC_CMD_IL2TAG1;
 		}
@@ -3223,8 +3225,9 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 			word0 = le64toh(rxd->qword0);
 
 			if (ISSET(word, IXL_RX_DESC_L2TAG1P)) {
-				vlan_set_tag(m,
-				    __SHIFTOUT(word0, IXL_RX_DESC_L2TAG1_MASK));
+				uint16_t vtag;
+				vtag = __SHIFTOUT(word0, IXL_RX_DESC_L2TAG1_MASK);
+				vlan_set_tag(m, le16toh(vtag));
 			}
 
 			if ((ifp->if_capenable & IXL_IFCAP_RXCSUM) != 0)
