@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.19 2022/06/17 07:06:50 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.20 2022/06/17 16:10:10 rillig Exp $
 
 --[[
 
@@ -8,6 +8,7 @@ usage: lua ./check-expect.lua *.c
 Check that the /* expect+-n: ... */ comments in the .c source files match the
 actual messages found in the corresponding .exp files.
 
+To regenerate the .exp files, see lint1/accept.sh.
 ]]
 
 
@@ -33,8 +34,15 @@ local function load_lines(fname)
   return lines
 end
 
-
-local function load_expect_comments_from_c(fname)
+-- Load the 'expect:' comments from a C source file.
+--
+-- example return values:
+--   {
+--     ["file.c(18)"] = {"invalid argument 'a'", "invalid argument 'b'"},
+--     ["file.c(23)"] = {"not a constant expression [123]"},
+--   },
+--   { "file.c(18)", "file.c(23)" }
+local function load_c(fname)
 
   local lines = load_lines(fname)
   if lines == nil then return nil, nil end
@@ -77,7 +85,16 @@ local function load_expect_comments_from_c(fname)
 end
 
 
-local function load_actual_messages_from_exp(exp_fname)
+-- Load the expected raw lint output from a .exp file.
+--
+-- example return value: {
+--   {
+--     exp_lineno = "18",
+--     location = "file.c(18)",
+--     message = "not a constant expression [123]",
+--   }
+-- }
+local function load_exp(exp_fname)
 
   local lines = load_lines(exp_fname)
   if lines == nil then return {} end
@@ -100,21 +117,21 @@ end
 local function check_test(c_fname)
   local exp_fname = c_fname:gsub("%.c$", ".exp")
 
-  local comment_locations, comments_by_location =
-    load_expect_comments_from_c(c_fname)
-  if comment_locations == nil then return end
+  local c_comment_locations, c_comments_by_location = load_c(c_fname)
+  if c_comment_locations == nil then return end
 
-  local messages = load_actual_messages_from_exp(exp_fname)
-  if messages == nil then return end
+  local exp_messages = load_exp(exp_fname)
+  if exp_messages == nil then return end
 
-  for _, act in ipairs(messages) do
-    local exp = comments_by_location[act.location] or {}
-    local exp_comment = act.message:gsub("/%*", "**"):gsub("%*/", "**")
+  for _, exp_message in ipairs(exp_messages) do
+    local c_comments = c_comments_by_location[exp_message.location] or {}
+    local expected_comment =
+      exp_message.message:gsub("/%*", "**"):gsub("%*/", "**")
 
     local found = false
-    for i, message in ipairs(exp) do
-      if message ~= "" and exp_comment:find(message, 1, true) then
-        exp[i] = ""
+    for i, c_comment in ipairs(c_comments) do
+      if c_comment ~= "" and expected_comment:find(c_comment, 1, true) then
+        c_comments[i] = ""
         found = true
         break
       end
@@ -122,16 +139,16 @@ local function check_test(c_fname)
 
     if not found then
       print_error("error: %s: missing /* expect+1: %s */",
-        act.location, exp_comment)
+        exp_message.location, expected_comment)
     end
   end
 
-  for _, location in ipairs(comment_locations) do
-    for _, message in ipairs(comments_by_location[location]) do
-      if message ~= "" then
+  for _, c_comment_location in ipairs(c_comment_locations) do
+    for _, c_comment in ipairs(c_comments_by_location[c_comment_location]) do
+      if c_comment ~= "" then
         print_error(
           "error: %s: declared message \"%s\" is not in the actual output",
-          location, message)
+          c_comment_location, c_comment)
       end
     end
   end
