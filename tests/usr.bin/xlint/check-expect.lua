@@ -1,11 +1,11 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.18 2022/06/17 06:59:16 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.19 2022/06/17 07:06:50 rillig Exp $
 
 --[[
 
 usage: lua ./check-expect.lua *.c
 
-Check that the /* expect: ... */ comments in the .c source files match the
+Check that the /* expect+-n: ... */ comments in the .c source files match the
 actual messages found in the corresponding .exp files.
 
 ]]
@@ -58,15 +58,6 @@ local function load_expect_comments_from_c(fname)
 
     for offset, comment in line:gmatch("/%* expect([+%-]%d+): (.-) %*/") do
       add_expectation(tonumber(offset), comment)
-    end
-
-    -- TODO: Remove these comments for all tests, as they often contain
-    -- only the raw message ID, without the actual message text,
-    -- which makes them harder to understand without looking up more context.
-    for comment in line:gmatch("/%* expect: (.-) %*/") do
-      if not fname:match("^msg_") then
-        add_expectation(0, comment)
-      end
     end
 
     pp_lineno = pp_lineno + 1
