@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 2022/06/17 16:06:19 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.8 2022/06/17 16:09:47 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,7 +59,7 @@
 #define DEFVARSIZE	32	/* Default /var size, if created */
 #define DEFUSRSIZE	700	/* Default /usr size, if /home */
 #define XNEEDMB		250	/* Extra megs for full X installation */
-#define	DEBNEEDMB	800	/* Extra megs for debug sets */
+#define DEBNEEDMB	800	/* Extra megs for debug sets */
 
 /* have support for booting from UFS2 */
 #define HAVE_UFS2_BOOT
@@ -95,4 +95,4 @@
  * to in-core disklabels, so we can not check for existence of "real"
  * disklabels on-disk before offering disklabel partitions.
  */
-#define	DISKLABEL_NO_ONDISK_VERIFY	1
+#define DISKLABEL_NO_ONDISK_VERIFY	1

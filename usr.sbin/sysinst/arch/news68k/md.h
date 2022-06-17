@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2022/06/16 14:03:38 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2022/06/17 16:09:47 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,4 +67,4 @@
  * If not defined, we assume the port does not support disklabels and
  * the hand-edited disklabel will NOT be written by MI code.
  */
-#define	DISKLABEL_CMD	"disklabel -w -r"
+#define DISKLABEL_CMD	"disklabel -w -r"
