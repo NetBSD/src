@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer_binary.c,v 1.1 2021/07/13 19:38:10 rillig Exp $	*/
+/*	$NetBSD: lex_integer_binary.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "lex_integer_binary.c"
 
 /*
@@ -25,6 +25,6 @@ binary_literal(void)
 	 * Even though it would be useful for binary literals, GCC does not
 	 * support underscores to separate the digit groups.
 	 */
-	/* expect+1: syntax error '_0000_0101_1010' [249] */
+	/* expect+1: error: syntax error '_0000_0101_1010' [249] */
 	sink(0b1111_0000_0101_1010);
 }

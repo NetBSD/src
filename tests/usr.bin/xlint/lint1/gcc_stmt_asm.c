@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_stmt_asm.c,v 1.3 2021/07/21 21:04:00 rillig Exp $	*/
+/*	$NetBSD: gcc_stmt_asm.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "gcc_stmt_asm.c"
 
 /*
@@ -33,7 +33,7 @@ __asm__();
 void
 syntax_error(void)
 {
-	/* expect+1: syntax error '__asm__' [249] */
+	/* expect+1: error: syntax error '__asm__' [249] */
 	int i = __asm__();
 }
 

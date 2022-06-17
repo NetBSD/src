@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259_ilp32.c,v 1.7 2022/04/16 18:41:21 rillig Exp $	*/
+/*	$NetBSD: msg_259_ilp32.c,v 1.8 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_259_ilp32.c"
 
 /* Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259] */
@@ -22,16 +22,16 @@ example(char c, int i, long l)
 {
 	plain_char(c);
 	signed_int(c);
-	/* expect+1: from 'char' to 'long' due to prototype [259] */
+	/* expect+1: ... from 'char' to 'long' due to prototype [259] */
 	signed_long(c);
 
 	plain_char(i);
 	signed_int(i);
-	/* expect+1: from 'int' to 'long' due to prototype [259] */
+	/* expect+1: ... from 'int' to 'long' due to prototype [259] */
 	signed_long(i);
 
 	plain_char(l);
-	/* expect+1: from 'long' to 'int' due to prototype [259] */
+	/* expect+1: ... from 'long' to 'int' due to prototype [259] */
 	signed_int(l);
 	signed_long(l);
 }

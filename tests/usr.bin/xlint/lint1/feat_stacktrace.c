@@ -1,4 +1,4 @@
-/*	$NetBSD: feat_stacktrace.c,v 1.2 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: feat_stacktrace.c,v 1.3 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "feat_stacktrace.c"
 
 /*
@@ -23,7 +23,7 @@
  * the main file as well.
  */
 # 1 "common_int_types.h" 1 3 4
-/* expect+1: typedef declares no type name [72] */
+/* expect+1: warning: typedef declares no type name [72] */
 typedef int;
 # 39 "common_int_types.h" 3 4
 # 39 "/usr/include/amd64/int_types.h" 2 3 4

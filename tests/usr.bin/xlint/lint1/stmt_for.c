@@ -1,4 +1,4 @@
-/*	$NetBSD: stmt_for.c,v 1.2 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: stmt_for.c,v 1.3 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "stmt_for.c"
 
 /*
@@ -14,4 +14,4 @@ test(void)
 	for (0 0;
 }
 
-/* expect+1: cannot recover from previous errors */
+/* expect+1: error: cannot recover from previous errors [224] */

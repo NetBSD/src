@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_077.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
+/*	$NetBSD: msg_077.c,v 1.6 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "msg_077.c"
 
 /* Test for message: bad octal digit %c [77] */
@@ -23,5 +23,5 @@ char single_digit = '\8';
  * anyway.
  * https://mail-index.netbsd.org/tech-toolchain/2021/03/16/msg003933.html
  */
-/* expect+1: multi-character character constant [294] */
+/* expect+1: warning: multi-character character constant [294] */
 char several_digits = '\08';

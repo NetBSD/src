@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_init_compound_literal.c,v 1.5 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: gcc_init_compound_literal.c,v 1.6 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "gcc_init_compound_literal.c"
 
 /*
@@ -37,7 +37,7 @@ struct node {
  * Initial tree for representing the decisions in the classic number guessing
  * game often used in teaching the basics of programming.
  */
-/* expect+1: static variable 'guess' unused */
+/* expect+1: warning: static variable 'guess' unused [226] */
 static const struct node guess = {
 	50,
 	&(struct node){

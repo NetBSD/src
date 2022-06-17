@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.14 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.15 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -87,4 +87,4 @@ struct {
  * assertion "t == NOTSPEC" failed in end_type at decl.c:774
  */
 };
-/* expect+1: cannot recover from previous errors */
+/* expect+1: error: cannot recover from previous errors [224] */

@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.11 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.12 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -20,14 +20,14 @@
 const char *
 classify_type_without_default(double var)
 {
-	/* expect-2: argument 'var' unused */
+	/* expect-2: warning: argument 'var' unused in function 'classify_type_without_default' [231] */
 
 	return _Generic(var,
 	    long double: "long double",
 	    long long: "long long",
 	    unsigned: "unsigned"
 	);
-	/* expect-1: expects to return value [214] */
+	/* expect-1: warning: function 'classify_type_without_default' expects to return value [214] */
 }
 
 /*
@@ -36,7 +36,7 @@ classify_type_without_default(double var)
 const char *
 classify_type_with_default(double var)
 {
-	/* expect-2: argument 'var' unused */
+	/* expect-2: warning: argument 'var' unused in function 'classify_type_with_default' [231] */
 
 	return _Generic(var,
 	    long double: "long double",
@@ -52,7 +52,7 @@ classify_type_with_default(double var)
 const char *
 classify_char(char c)
 {
-	/* expect-2: argument 'c' unused */
+	/* expect-2: warning: argument 'c' unused in function 'classify_char' [231] */
 
 	return _Generic(c,
 	    char: "yes",
@@ -74,7 +74,7 @@ comma_expression(char first, double second)
 	    char: "first",
 	    double: 2.0
 	);
-	/* expect+1: without returning value [217] */
+	/* expect+1: warning: function comma_expression falls off bottom without returning value [217] */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.40 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.41 2022/06/17 18:54:53 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -222,11 +222,11 @@ struct geometry geometry = {
 	.pentagons[0].points[4].x = 1,
 	.points[0][0][0] = { 0, 0 },
 	.points[2][4][1] = {301, 302 },
-	/* expect+1: array subscript cannot be > 2: 3 */
+	/* expect+1: error: array subscript cannot be > 2: 3 [168] */
 	.points[3][0][0] = {3001, 3002 },
-	/* expect+1: array subscript cannot be > 4: 5 */
+	/* expect+1: error: array subscript cannot be > 4: 5 [168] */
 	.points[0][5][0] = {501, 502 },
-	/* expect+1: array subscript cannot be > 1: 2 */
+	/* expect+1: error: array subscript cannot be > 1: 2 [168] */
 	.points[0][0][2] = {21, 22 },
 };
 
@@ -235,13 +235,13 @@ struct ends_with_unnamed_bit_field {
 	int:0;
 } ends_with_unnamed_bit_field = {
 	12345,
-	/* expect+1: too many struct/union initializers */
+	/* expect+1: error: too many struct/union initializers [172] */
 	23456,
 };
 
 char prefixed_message[] = {
 	'E', ':', ' ',
-	/* expect+1: illegal combination of integer (char) and pointer */
+	/* expect+1: warning: illegal combination of integer (char) and pointer (pointer to char) [183] */
 	"message\n",
 };
 
