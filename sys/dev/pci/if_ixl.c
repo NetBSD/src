@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.84 2022/06/17 06:18:09 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.85 2022/06/17 06:26:00 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.84 2022/06/17 06:18:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.85 2022/06/17 06:26:00 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6075,7 +6075,7 @@ ixl_setup_stats(struct ixl_softc *sc)
 	evcnt_attach_dynamic(&isc->isc_vsi_rx_bytes, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Rx bytes / vsi");
 	evcnt_attach_dynamic(&isc->isc_vsi_rx_discards, EVCNT_TYPE_MISC,
-	    NULL, device_xname(sc->sc_dev), "Rx discard / vsi");
+	    NULL, device_xname(sc->sc_dev), "Rx discards / vsi");
 	evcnt_attach_dynamic(&isc->isc_vsi_rx_unicast, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Rx unicast / vsi");
 	evcnt_attach_dynamic(&isc->isc_vsi_rx_multicast, EVCNT_TYPE_MISC,
