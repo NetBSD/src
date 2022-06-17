@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.135 2022/06/06 11:10:24 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.136 2022/06/17 15:28:01 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2683,4 +2683,9 @@ sys/dev/pci/ixgbe/ixgbe.c			(apply patch)
 
 	Fix the location of "break" statement. No functional change intended.
 	[msaitoh, ticket #1748]
+
+sys/miscfs/procfs/procfs_vnops.c		1.229
+
+	procfs: add missing permission check.
+	[shm, ticket #1748]
 
