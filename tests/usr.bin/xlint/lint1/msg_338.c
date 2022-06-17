@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_338.c,v 1.7 2021/10/09 14:22:42 rillig Exp $	*/
+/*	$NetBSD: msg_338.c,v 1.8 2022/06/17 06:59:16 rillig Exp $	*/
 # 3 "msg_338.c"
 
 // Test for message: option '%c' should be handled in the switch [338]
@@ -11,7 +11,9 @@ main(int argc, char **argv)
 {
 	int o;
 
-	while ((o = getopt(argc, argv, "a:bc:d")) != -1) { /* expect: 338 *//* expect: 338 */
+	/* expect+2: warning: option 'c' should be handled in the switch [338] */
+	/* expect+1: warning: option 'd' should be handled in the switch [338] */
+	while ((o = getopt(argc, argv, "a:bc:d")) != -1) {
 		switch (o) {
 		case 'a':
 			break;
@@ -23,9 +25,11 @@ main(int argc, char **argv)
 			while (optarg[0] != '\0')
 				optarg++;
 			break;
-		case 'e':	/* expect: option 'e' should be listed */
+		case 'e':
+			/* expect-1: warning: option 'e' should be listed in the options string [339] */
 			break;
-		case 'f':	/* expect: option 'f' should be listed */
+		case 'f':
+			/* expect-1: warning: option 'f' should be listed in the options string [339] */
 			/*
 			 * The case labels in nested switch statements are
 			 * ignored by the check for getopt options.

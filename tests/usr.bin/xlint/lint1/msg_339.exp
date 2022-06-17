@@ -1,4 +1,4 @@
-msg_339.c(26): warning: option 'e' should be listed in the options string [339]
-msg_339.c(28): warning: option 'f' should be listed in the options string [339]
-msg_339.c(14): warning: option 'c' should be handled in the switch [338]
-msg_339.c(14): warning: option 'd' should be handled in the switch [338]
+msg_339.c(28): warning: option 'e' should be listed in the options string [339]
+msg_339.c(31): warning: option 'f' should be listed in the options string [339]
+msg_339.c(16): warning: option 'c' should be handled in the switch [338]
+msg_339.c(16): warning: option 'd' should be handled in the switch [338]

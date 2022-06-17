@@ -1,1 +1,1 @@
-msg_326.c(6): error: syntax error ':' [249]
+msg_326.c(7): warning: packed attribute ignored for int [326]
