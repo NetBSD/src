@@ -1,3 +1,0 @@
-msg_245.c(30): warning: incompatible structure pointers: 'pointer to struct tag_and_typedef_tag' '==' 'pointer to struct only_tag' [245]
-msg_245.c(32): warning: incompatible structure pointers: 'pointer to struct tag_and_typedef_tag' '==' 'pointer to struct typedef only_typedef' [245]
-msg_245.c(34): warning: incompatible structure pointers: 'pointer to struct tag_and_typedef_tag' '==' 'pointer to struct <unnamed>' [245]

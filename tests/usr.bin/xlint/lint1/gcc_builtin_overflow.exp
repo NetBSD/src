@@ -1,1 +1,0 @@
-gcc_builtin_overflow.c(25): error: controlling expression must be bool, not 'int' [333]

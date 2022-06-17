@@ -1,1 +1,0 @@
-d_return_type.c(16): warning: return value type mismatch (enum A) and (enum B) [211]

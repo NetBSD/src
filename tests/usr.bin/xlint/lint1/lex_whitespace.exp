@@ -1,4 +1,0 @@
-lex_whitespace.c(13): warning: typedef declares no type name [72]
-lex_whitespace.c(17): warning: typedef declares no type name [72]
-lex_whitespace.c(21): warning: typedef declares no type name [72]
-lex_whitespace.c(25): warning: typedef declares no type name [72]

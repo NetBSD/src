@@ -1,2 +1,0 @@
-msg_036.c(8): error: illegal bit-field size: 160 [36]
-msg_036.c(10): error: illegal bit-field size: 255 [36]

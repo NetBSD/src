@@ -1,4 +1,0 @@
-msg_163.c(20): error: a cast does not yield an lvalue [163]
-msg_163.c(20): error: operand of 'x++' must be lvalue [114]
-msg_163.c(26): error: a cast does not yield an lvalue [163]
-msg_163.c(26): error: operand of 'x++' must be lvalue [114]

@@ -1,1 +1,0 @@
-msg_185.c(16): error: cannot initialize 'pointer to const void' from 'double' [185]

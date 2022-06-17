@@ -1,5 +1,0 @@
-msg_222.c(7): warning: initialization of unsigned with negative constant [221]
-msg_222.c(15): warning: initialization of unsigned with negative constant [221]
-msg_222.c(18): warning: conversion of negative constant to unsigned type, arg #1 [296]
-msg_222.c(24): warning: comparison of unsigned int with negative constant, op < [162]
-msg_222.c(30): warning: conversion of negative constant to unsigned type [222]

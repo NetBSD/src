@@ -1,8 +1,0 @@
-decl_struct_member.c(34): error: syntax error 'goto' [249]
-decl_struct_member.c(36): error: illegal type combination [4]
-decl_struct_member.c(38): error: syntax error '}' [249]
-decl_struct_member.c(38): warning: empty declaration [0]
-decl_struct_member.c(48): error: syntax error 'unnamed member' [249]
-decl_struct_member.c(73): warning: illegal bit-field type 'array[8] of unsigned int' [35]
-decl_struct_member.c(81): error: syntax error '0' [249]
-decl_struct_member.c(91): error: cannot recover from previous errors [224]

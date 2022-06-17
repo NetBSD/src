@@ -1,2 +1,0 @@
-msg_211.c(17): warning: illegal combination of integer (int) and pointer (pointer to void) [183]
-msg_211.c(20): error: return value type mismatch (int) and (struct str) [211]

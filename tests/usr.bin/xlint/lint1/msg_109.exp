@@ -1,2 +1,0 @@
-msg_109.c(12): error: void type illegal in expression [109]
-msg_109.c(12): warning: function 'example' expects to return value [214]

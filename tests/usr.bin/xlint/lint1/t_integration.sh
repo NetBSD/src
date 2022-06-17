@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.75 2022/02/26 20:36:11 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.76 2022/06/17 20:24:00 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -113,7 +113,7 @@ configure_test_case()
 check_lint1()
 {
 	local src="$(atf_get_srcdir)/$1"
-	local exp="${src%.c}.exp"
+	local exp="${1%.c}.exp"
 	local exp_ln="${src%.c}.exp-ln"
 	local wrk_ln="${1%.c}.ln"
 	local flags=""
@@ -130,15 +130,11 @@ check_lint1()
 		atf_skip "unsuitable platform"
 	fi
 
-	if [ -f "$exp" ]; then
-		# shellcheck disable=SC2086
-		atf_check -s not-exit:0 -o "file:$exp" -e empty \
-		    "$lint1" $flags "$src" "$wrk_ln"
-	else
-		# shellcheck disable=SC2086
-		atf_check -s exit:0 \
-		    "$lint1" $flags "$src" "$wrk_ln"
-	fi
+	# shellcheck disable=SC2086
+	# XXX: -s 'exit:any' would be better
+	atf_check -s 'ignore' -o "save:$exp" \
+	    "$lint1" $flags "$src" "$wrk_ln"
+	atf_check lua "$(atf_get_srcdir)/check-expect.lua" "$src"
 
 	if [ "$exp_ln" != '/dev/null' ]; then
 		atf_check -o "file:$exp_ln" cat "$wrk_ln"

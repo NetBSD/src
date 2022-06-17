@@ -1,5 +1,0 @@
-lex_char.c(16): error: empty character constant [73]
-lex_char.c(25): warning: multi-character character constant [294]
-lex_char.c(25): warning: conversion of 'int' to 'char' is out of range, arg #1 [295]
-lex_char.c(29): warning: dubious escape \e [79]
-lex_char.c(38): error: empty character constant [73]

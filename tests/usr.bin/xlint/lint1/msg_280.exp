@@ -1,6 +1,0 @@
-msg_280.c(40): warning: must be outside function: /* VARARGS */ [280]
-msg_280.c(49): warning: must be outside function: /* VARARGS */ [280]
-msg_280.c(58): warning: must be outside function: /* ARGSUSED */ [280]
-msg_280.c(55): warning: argument 'str' unused in function 'argsused_bad_body' [231]
-msg_280.c(65): warning: must be outside function: /* PRINTFLIKE */ [280]
-msg_280.c(73): warning: must be outside function: /* SCANFLIKE */ [280]

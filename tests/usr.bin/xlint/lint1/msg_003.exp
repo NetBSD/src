@@ -1,3 +1,0 @@
-msg_003.c(10): warning: 'incomplete struct struct_in_argument' declared in argument declaration list [3]
-msg_003.c(12): warning: 'incomplete union union_in_argument' declared in argument declaration list [3]
-msg_003.c(14): warning: 'enum enum_in_argument' declared in argument declaration list [3]

@@ -1,3 +1,0 @@
-msg_247.c(32): warning: pointer cast from 'pointer to struct Other' to 'pointer to struct <unnamed>' may be troublesome [247]
-msg_247.c(72): warning: pointer cast from 'pointer to struct Other' to 'pointer to signed char' may be troublesome [247]
-msg_247.c(137): warning: struct 'lhash_st' never defined [233]

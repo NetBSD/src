@@ -1,3 +1,0 @@
-stmt_goto.c(9): error: syntax error 'goto' [249]
-stmt_goto.c(17): error: syntax error '"' [249]
-stmt_goto.c(25): error: syntax error '12345' [249]

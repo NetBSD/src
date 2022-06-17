@@ -1,2 +1,0 @@
-msg_276.c(7): error: __real__ is illegal for type double [276]
-msg_276.c(9): error: __imag__ is illegal for type double [276]

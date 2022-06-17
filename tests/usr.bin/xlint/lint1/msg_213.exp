@@ -1,2 +1,0 @@
-msg_213.c(11): error: void function example cannot return value [213]
-msg_213.c(8): warning: argument 'x' unused in function 'example' [231]

@@ -1,3 +1,0 @@
-msg_183.c(12): error: return value type mismatch (pointer to void) and (double) [211]
-msg_183.c(16): warning: illegal combination of pointer (pointer to void) and integer (int) [183]
-msg_183.c(8): warning: argument 'x' unused in function 'example' [231]

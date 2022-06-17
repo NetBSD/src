@@ -1,1 +1,0 @@
-msg_107.c(11): error: operands of '==' have incompatible types (double != pointer) [107]

@@ -1,4 +1,0 @@
-msg_051.c(16): error: parameter mismatch: 2 declared, 3 defined [51]
-msg_051.c(13): warning: argument 'a' unused in function 'example' [231]
-msg_051.c(13): warning: argument 'b' unused in function 'example' [231]
-msg_051.c(13): warning: argument 'c' unused in function 'example' [231]

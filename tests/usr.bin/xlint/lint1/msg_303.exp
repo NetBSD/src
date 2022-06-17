@@ -1,2 +1,0 @@
-msg_303.c(14): warning: ANSI C forbids conversion of function pointer to 'void *' [303]
-msg_303.c(20): warning: ANSI C forbids conversion of 'void *' to function pointer [303]

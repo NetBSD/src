@@ -1,3 +1,0 @@
-msg_298.c(15): warning: conversion from 'long' to 'unsigned char' may lose accuracy, arg #1 [298]
-msg_298.c(18): warning: conversion from 'long' to 'unsigned char' may lose accuracy, arg #1 [298]
-msg_298.c(20): warning: conversion from 'long' to 'signed char' may lose accuracy, arg #1 [298]

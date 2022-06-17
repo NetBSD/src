@@ -1,2 +1,0 @@
-msg_297.c(16): warning: conversion to 'unsigned long long' may sign-extend incorrectly, arg #1 [297]
-msg_297.c(23): warning: conversion to 'long long' may sign-extend incorrectly, arg #1 [297]

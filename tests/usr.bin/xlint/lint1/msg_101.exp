@@ -1,6 +1,0 @@
-msg_101.c(21): error: type 'pointer to const struct point' does not have member 'z' [101]
-msg_101.c(23): error: type 'const struct point' does not have member 'z' [101]
-msg_101.c(27): error: left operand of '.' must be struct or union, not 'pointer to const struct point' [103]
-msg_101.c(29): error: left operand of '->' must be pointer to struct or union, not 'struct point' [104]
-msg_101.c(33): error: type 'pointer to const struct point' does not have member 'z' [101]
-msg_101.c(35): error: type 'struct point' does not have member 'z' [101]

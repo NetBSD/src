@@ -1,2 +1,0 @@
-msg_229.c(12): warning: converting 'pointer to function(double) returning double' to 'pointer to int' is questionable [229]
-msg_229.c(19): warning: converting 'pointer to int' to 'pointer to function(double) returning double' is questionable [229]

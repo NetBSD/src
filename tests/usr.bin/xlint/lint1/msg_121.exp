@@ -1,2 +1,0 @@
-msg_121.c(10): warning: negative shift [121]
-msg_121.c(21): error: operands of '<<' have incompatible types (int != double) [107]

@@ -1,8 +1,0 @@
-msg_115.c(11): warning: left operand of '=' must be modifiable lvalue [115]
-msg_115.c(13): warning: left operand of '+=' must be modifiable lvalue [115]
-msg_115.c(15): warning: left operand of '-=' must be modifiable lvalue [115]
-msg_115.c(17): warning: left operand of '*=' must be modifiable lvalue [115]
-msg_115.c(19): warning: left operand of '/=' must be modifiable lvalue [115]
-msg_115.c(21): warning: left operand of '%=' must be modifiable lvalue [115]
-msg_115.c(23): warning: operand of 'x++' must be modifiable lvalue [115]
-msg_115.c(27): error: left operand of '=' must be lvalue [114]

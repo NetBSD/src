@@ -1,2 +1,0 @@
-gcc_attribute.c(33): error: syntax error 'unknown_attribute' [249]
-gcc_attribute.c(129): error: syntax error 'volatile' [249]

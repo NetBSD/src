@@ -1,3 +1,0 @@
-msg_170.c(16): error: first operand must have scalar type, op ? : [170]
-msg_170.c(16): warning: function 'example' expects to return value [214]
-msg_170.c(12): warning: argument 'num' unused in function 'example' [231]

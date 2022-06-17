@@ -1,6 +1,0 @@
-msg_120.c(12): warning: bitwise '>>' on signed value possibly nonportable [117]
-msg_120.c(25): warning: bitwise '>>' on signed value nonportable [120]
-msg_120.c(33): warning: bitwise '>>' on signed value possibly nonportable [117]
-msg_120.c(33): warning: shift amount 4660 is greater than bit-size 32 of 'int' [122]
-msg_120.c(41): warning: bitwise '>>' on signed value possibly nonportable [117]
-msg_120.c(41): warning: negative shift [121]

@@ -1,6 +1,0 @@
-msg_057.c(15): warning: enumeration constant hides parameter: red [57]
-msg_057.c(15): warning: enumeration constant hides parameter: green [57]
-msg_057.c(16): warning: enumeration constant hides parameter: blue [57]
-msg_057.c(10): warning: argument 'red' unused in function 'rgb' [231]
-msg_057.c(10): warning: argument 'green' unused in function 'rgb' [231]
-msg_057.c(10): warning: argument 'blue' unused in function 'rgb' [231]

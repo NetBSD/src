@@ -1,3 +1,0 @@
-msg_010.c(7): warning: duplicate 'inline' [10]
-msg_010.c(13): warning: duplicate 'const' [10]
-msg_010.c(20): warning: duplicate 'volatile' [10]

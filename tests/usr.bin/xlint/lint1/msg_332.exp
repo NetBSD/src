@@ -1,4 +1,0 @@
-msg_332.c(22): error: right operand of '&&' must be bool, not 'char' [332]
-msg_332.c(22): error: argument #1 expects '_Bool', gets passed 'int' [334]
-msg_332.c(26): error: right operand of '&&' must be bool, not 'int' [332]
-msg_332.c(26): error: argument #1 expects '_Bool', gets passed 'int' [334]

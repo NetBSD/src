@@ -1,3 +1,0 @@
-msg_301.c(15): error: cannot take size/alignment of incomplete type [143]
-msg_301.c(9): warning: struct 'incomplete' never defined [233]
-msg_301.c(12): error: 'var' has incomplete type 'incomplete struct incomplete' [31]

@@ -1,2 +1,0 @@
-msg_105.c(37): error: non-unique member requires struct/union pointer [105]
-msg_105.c(45): error: illegal member use: member [102]

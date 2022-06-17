@@ -1,2 +1,0 @@
-msg_006.c(8): warning: use 'double' instead of 'long float' [6]
-msg_006.c(8): error: illegal type combination [4]

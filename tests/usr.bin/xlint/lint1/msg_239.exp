@@ -1,4 +1,0 @@
-msg_239.c(15): warning: constant in conditional context [161]
-msg_239.c(15): warning: constant argument to '!' [239]
-msg_239.c(18): warning: constant in conditional context [161]
-msg_239.c(18): warning: constant argument to '!' [239]

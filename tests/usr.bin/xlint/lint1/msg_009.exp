@@ -1,4 +1,0 @@
-msg_009.c(7): error: only register valid as formal parameter storage class [9]
-msg_009.c(9): error: only register valid as formal parameter storage class [9]
-msg_009.c(11): error: only register valid as formal parameter storage class [9]
-msg_009.c(13): error: only register valid as formal parameter storage class [9]

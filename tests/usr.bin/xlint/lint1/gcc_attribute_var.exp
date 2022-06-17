@@ -1,2 +1,0 @@
-gcc_attribute_var.c(59): warning: 'var2' unused in function 'ambiguity_for_attribute' [192]
-gcc_attribute_var.c(75): error: syntax error 'syntax_error' [249]
