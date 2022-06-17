@@ -1,1 +1,2 @@
-msg_306.c(6): error: syntax error ':' [249]
+msg_306.c(10): warning: conversion of 'int' to 'unsigned char' is out of range [119]
+msg_306.c(24): warning: constant truncated by conversion, op |= [306]

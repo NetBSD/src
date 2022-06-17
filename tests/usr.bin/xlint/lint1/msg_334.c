@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_334.c,v 1.1 2021/01/14 22:18:14 rillig Exp $	*/
+/*	$NetBSD: msg_334.c,v 1.2 2022/06/17 06:59:16 rillig Exp $	*/
 # 3 "msg_334.c"
 
 // Test for message: argument #%d expects '%s', gets passed '%s' [334]
@@ -18,7 +18,12 @@ void
 caller(bool b, int i)
 {
 	test_bool(b);
-	test_bool(i);		/* expect: 334 */
-	test_int(b);		/* expect: 334 */
+
+	/* expect+1: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	test_bool(i);
+
+	/* expect+1: error: argument #1 expects 'int', gets passed '_Bool' [334] */
+	test_int(b);
+
 	test_int(i);
 }

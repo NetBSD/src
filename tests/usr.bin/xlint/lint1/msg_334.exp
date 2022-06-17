@@ -1,2 +1,2 @@
-msg_334.c(21): error: argument #1 expects '_Bool', gets passed 'int' [334]
-msg_334.c(22): error: argument #1 expects 'int', gets passed '_Bool' [334]
+msg_334.c(23): error: argument #1 expects '_Bool', gets passed 'int' [334]
+msg_334.c(26): error: argument #1 expects 'int', gets passed '_Bool' [334]

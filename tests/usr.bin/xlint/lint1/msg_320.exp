@@ -1,1 +1,1 @@
-msg_320.c(6): error: syntax error ':' [249]
+msg_320.c(15): warning: ({ }) is a GCC extension [320]

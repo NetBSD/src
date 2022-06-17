@@ -1,4 +1,4 @@
-msg_331.c(19): error: left operand of '&&' must be bool, not 'char' [331]
-msg_331.c(19): error: argument #1 expects '_Bool', gets passed 'int' [334]
-msg_331.c(20): error: left operand of '&&' must be bool, not 'int' [331]
-msg_331.c(20): error: argument #1 expects '_Bool', gets passed 'int' [334]
+msg_331.c(22): error: left operand of '&&' must be bool, not 'char' [331]
+msg_331.c(22): error: argument #1 expects '_Bool', gets passed 'int' [334]
+msg_331.c(26): error: left operand of '&&' must be bool, not 'int' [331]
+msg_331.c(26): error: argument #1 expects '_Bool', gets passed 'int' [334]

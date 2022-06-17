@@ -1,2 +1,2 @@
-msg_336.c(18): error: left operand of '+' must not be bool [336]
-msg_336.c(18): error: argument #1 expects '_Bool', gets passed 'int' [334]
+msg_336.c(20): error: left operand of '+' must not be bool [336]
+msg_336.c(20): error: argument #1 expects '_Bool', gets passed 'int' [334]

@@ -1,3 +1,3 @@
-msg_327.c(15): warning: declarations after statements is a C99 feature [327]
-msg_327.c(17): warning: declarations after statements is a C99 feature [327]
+msg_327.c(16): warning: declarations after statements is a C99 feature [327]
 msg_327.c(19): warning: declarations after statements is a C99 feature [327]
+msg_327.c(22): warning: declarations after statements is a C99 feature [327]

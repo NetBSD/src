@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_340.c,v 1.3 2022/04/16 13:25:27 rillig Exp $	*/
+/*	$NetBSD: msg_340.c,v 1.4 2022/06/17 06:59:16 rillig Exp $	*/
 # 3 "msg_340.c"
 
 // Test for message: initialization with '[a...b]' is a GCC extension [340]
@@ -13,7 +13,8 @@ int
 example(void)
 {
 	int numbers[] = {
-		[2 ... 3] = 12	/* expect: 340 */
+		/* expect+1: warning: initialization with '[a...b]' is a GCC extension [340] */
+		[2 ... 3] = 12
 	};
 	return numbers[0];
 }

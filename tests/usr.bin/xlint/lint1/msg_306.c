@@ -1,7 +1,30 @@
-/*	$NetBSD: msg_306.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_306.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
 # 3 "msg_306.c"
 
 // Test for message: constant truncated by conversion, op %s [306]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+unsigned char
+to_u8(void)
+{
+	/* expect+1: warning: conversion of 'int' to 'unsigned char' is out of range [119] */
+	return 12345;
+}
+
+unsigned char
+and_u8(unsigned char a)
+{
+	/* XXX: unused bits in constant */
+	return a & 0x1234;
+}
+
+unsigned char
+or_u8(unsigned char a)
+{
+	/* expect+1: warning: constant truncated by conversion, op |= [306] */
+	a |= 0x1234;
+
+	/* XXX: Lint doesn't care about the expanded form of the same code. */
+	a = a | 0x1234;
+
+	return a;
+}

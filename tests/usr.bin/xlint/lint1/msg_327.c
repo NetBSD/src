@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_327.c,v 1.5 2021/03/20 15:28:07 rillig Exp $	*/
+/*	$NetBSD: msg_327.c,v 1.6 2022/06/17 06:59:16 rillig Exp $	*/
 # 3 "msg_327.c"
 
 /* Test for message: declarations after statements is a C99 feature [327] */
@@ -12,9 +12,12 @@ void
 example(void)
 {
 	statement();
-	int declaration_1;	/* expect: 327 */
+	/* expect+1: warning: declarations after statements is a C99 feature [327] */
+	int declaration_1;
 	statement();
-	int declaration_2;	/* expect: 327 */
+	/* expect+1: warning: declarations after statements is a C99 feature [327] */
+	int declaration_2;
 	statement();
-	int declaration_3;	/* expect: 327 */
+	/* expect+1: warning: declarations after statements is a C99 feature [327] */
+	int declaration_3;
 }
