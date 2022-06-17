@@ -343,20 +343,34 @@ read_leb128 (unsigned char *data,
   while (data < end)
     {
       unsigned char byte = *data++;
+      bfd_boolean cont = (byte & 0x80) ? TRUE : FALSE;
+
+      byte &= 0x7f;
       num_read++;
 
       if (shift < sizeof (result) * 8)
-	{
-	  result |= ((dwarf_vma) (byte & 0x7f)) << shift;
-	  if ((result >> shift) != (byte & 0x7f))
-	    /* Overflow.  */
-	    status |= 2;
+        {
+          result |= ((dwarf_vma) byte) << shift;
+          if (sign)
+            {
+              if ((((dwarf_signed_vma) result >> shift) & 0x7f) != byte)
+                /* Overflow.  */
+                status |= 2;
+            }
+          else if ((result >> shift) != byte)
+            {
+              /* Overflow.  */
+              status |= 2;
+            }
+
 	  shift += 7;
 	}
-      else if ((byte & 0x7f) != 0)
-	status |= 2;
+      else if (byte != 0)
+        {
+          status |= 2;
+        }
 
-      if ((byte & 0x80) == 0)
+      if (!cont)
 	{
 	  status &= ~1;
 	  if (sign && (shift < 8 * sizeof (result)) && (byte & 0x40))
