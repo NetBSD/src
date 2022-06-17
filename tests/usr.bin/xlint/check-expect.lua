@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.21 2022/06/17 18:54:53 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.22 2022/06/17 19:01:01 rillig Exp $
 
 --[[
 
@@ -178,8 +178,7 @@ local function check_test(c_fname)
   local c_comment_locations, c_comments_by_location = load_c(c_fname)
   if c_comment_locations == nil then return end
 
-  local exp_messages = load_exp(exp_fname)
-  if exp_messages == nil then return end
+  local exp_messages = load_exp(exp_fname) or {}
 
   for _, exp_message in ipairs(exp_messages) do
     local c_comments = c_comments_by_location[exp_message.location] or {}
