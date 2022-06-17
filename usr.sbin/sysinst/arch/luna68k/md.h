@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2022/06/17 16:06:19 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2022/06/17 16:09:47 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,7 +43,7 @@
 
 #define PART_BOOT	(8 * MEG)	/* for a.out kernel and boot */
 #define PART_BOOT_TYPE	FS_BSDFFS
-#define	PART_BOOT_SUBT	1		/* old 4.3BSD UFS */
+#define PART_BOOT_SUBT	1		/* old 4.3BSD UFS */
 
 #define DEFROOTSIZE	40	/* Default root size */
 #define DEFSWAPSIZE	32	/* Default swap size */
@@ -63,4 +63,4 @@
  * If not defined, we assume the port does not support disklabels and
  * the hand-edited disklabel will NOT be written by MI code.
  */
-#define	DISKLABEL_CMD	"disklabel -w -r"
+#define DISKLABEL_CMD	"disklabel -w -r"
