@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.127 2022/06/17 20:23:58 rillig Exp $
+# $NetBSD: Makefile,v 1.128 2022/06/17 20:31:56 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	349		# see lint1/err.c
@@ -171,7 +171,7 @@ FILES+=		stmt_for.c
 FILES+=		stmt_goto.c
 FILES+=		stmt_if.c
 
-FILES+=		../check-expect.lua
+FILES+=		check-expect.lua
 
 MSG_IDS=	${:U0 ${:U:${:Urange=${MAX_MESSAGE}}}:C,^.$,0&,:C,^..$,0&,}
 MSG_FILES=	${MSG_IDS:%=msg_%.c}
@@ -185,7 +185,7 @@ sync-mi: .PHONY
 	cvs update "$$mi";						\
 	fmt="./usr/tests/usr.bin/xlint/lint1/%s\ttests-usr.bin-tests\tcompattestfile,atf\n"; \
 	cat "$$mi" > "$$mi.tmp";					\
-	printf "$$fmt" ${FILES:T} >> "$$mi.tmp";			\
+	printf "$$fmt" ${FILES} >> "$$mi.tmp";				\
 	distrib/sets/fmt-list "$$mi.tmp";				\
 	mv "$$mi.tmp" "$$mi";						\
 	cvs diff "$$mi" || true
