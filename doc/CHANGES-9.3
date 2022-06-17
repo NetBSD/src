@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.107 2022/06/16 14:23:27 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.108 2022/06/17 15:26:31 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1837,4 +1837,9 @@ sys/arch/hppa/hppa/pmap.c			1.120
 
 	PR 56867: purge the translations from the TLBs in pmap_procwr.
 	[skrll, ticket #1474]
+
+sys/miscfs/procfs/procfs_vnops.c		1.229
+
+	procfs: add missing permission check.
+	[shm, ticket #1475]
 
