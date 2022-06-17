@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.228 2022/03/27 17:10:56 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.229 2022/06/17 14:30:37 shm Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.228 2022/03/27 17:10:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.229 2022/06/17 14:30:37 shm Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -975,6 +975,9 @@ procfs_lookup(void *v)
 	pfstype type;
 
 	*vpp = NULL;
+
+	if ((error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred)) != 0)
+		return (error);
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
