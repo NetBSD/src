@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.68 2022/06/17 01:47:45 kre Exp $	*/
+/*	$NetBSD: iostat.c,v 1.69 2022/06/18 11:33:13 kre Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.68 2022/06/17 01:47:45 kre Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.69 2022/06/18 11:33:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,12 @@ static int	defdrives;
 static int	winlines = 20;
 static int	wincols = 80;
 
+static int *order, ordersize;
+
+static char Line_Marker[] = "________________________________________________";
+
 #define	MAX(a,b)	(((a)>(b))?(a):(b))
+#define	MIN(a,b)	(((a)<(b))?(a):(b))
 
 #define	ISSET(x, a)	((x) & (a))
 #define	SHOW_CPU	(1<<0)
@@ -108,22 +113,85 @@ static int	wincols = 80;
 #define	SHOW_STATS_2	(1<<3)
 #define	SHOW_STATS_X	(1<<4)
 #define	SHOW_STATS_Y	(1<<5)
+#define	SHOW_UPDATES	(1<<6)
 #define	SHOW_TOTALS	(1<<7)
-#define	SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 | SHOW_STATS_X | SHOW_STATS_Y)
+#define	SHOW_NEW_TOTALS	(1<<8)
+#define	SUPPRESS_ZERO	(1<<9)
+
+#define	SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 |	\
+			    SHOW_STATS_X | SHOW_STATS_Y)
+
+/*
+ * Decide how many screen columns each output statistic is given
+ * (these are determined empirically ("looks good to me") and likely
+ * will require changes from time to time as technology advances).
+ *
+ * The odd "+ N" at the end of the summary (total width of stat) definition
+ * allows for the gaps between the columns, and is (#data cols - 1).
+ * So, tty stats have "in" and "out", 2 columns, so there is 1 extra space,
+ * whereas the cpu stats have 5 columns, so 4 extra spaces (etc).
+ */
+#define	LAYOUT_TTY_IN	4	/* tty input in last interval */
+#define	LAYOUT_TTY_TIN	7	/* tty input forever */
+#define	LAYOUT_TTY_OUT	5	/* tty output in last interval */
+#define	LAYOUT_TTY_TOUT	10	/* tty output forever */
+#define	LAYOUT_TTY	(((todo & SHOW_TOTALS)				     \
+				? (LAYOUT_TTY_TIN + LAYOUT_TTY_TOUT)	     \
+				: (LAYOUT_TTY_IN + LAYOUT_TTY_OUT)) + 1)
+#define	LAYOUT_TTY_GAP	0		/* always starts at left margin */
+
+#define	LAYOUT_CPU_USER	2
+#define	LAYOUT_CPU_NICE	2
+#define	LAYOUT_CPU_SYS	2
+#define	LAYOUT_CPU_INT	2
+#define	LAYOUT_CPU_IDLE	3
+#define	LAYOUT_CPU	(LAYOUT_CPU_USER + LAYOUT_CPU_NICE + LAYOUT_CPU_SYS + \
+			    LAYOUT_CPU_INT + LAYOUT_CPU_IDLE + 4)
+#define	LAYOUT_CPU_GAP	2
+
+			/* used for:       w/o TOTALS  w TOTALS	*/
+#define	LAYOUT_DRIVE_1_XSIZE	5	/*	KB/t	KB/t	*/
+#define	LAYOUT_DRIVE_1_RATE	6	/*	t/s		*/
+#define	LAYOUT_DRIVE_1_XFER	10	/*		xfr	*/
+#define	LAYOUT_DRIVE_1_SPEED	5	/*	MB/s		*/
+#define	LAYOUT_DRIVE_1_VOLUME	8	/*		MB	*/
+#define	LAYOUT_DRIVE_1_INCR	5	/*		(inc)	*/
+
+#define	LAYOUT_DRIVE_2_XSIZE	7	/*	KB		*/
+#define	LAYOUT_DRIVE_2_VOLUME	11	/*		KB	*/
+#define	LAYOUT_DRIVE_2_XFR	7	/*	xfr		*/
+#define	LAYOUT_DRIVE_2_TXFR	10	/*		xfr	*/
+#define	LAYOUT_DRIVE_2_INCR	5	/*		(inc)	*/
+#define	LAYOUT_DRIVE_2_TBUSY	9	/*		time	*/
+#define	LAYOUT_DRIVE_2_BUSY	5	/*	time		*/
+
+#define	LAYOUT_DRIVE_1	(LAYOUT_DRIVE_1_XSIZE + ((todo & SHOW_TOTALS) ?	       \
+			    (LAYOUT_DRIVE_1_XFER + LAYOUT_DRIVE_1_VOLUME +     \
+			    ((todo&SHOW_UPDATES)? 2*LAYOUT_DRIVE_1_INCR+2 :0)) \
+			  : (LAYOUT_DRIVE_1_RATE + LAYOUT_DRIVE_1_SPEED)) + 3)
+#define	LAYOUT_DRIVE_2	(((todo & SHOW_TOTALS) ? (LAYOUT_DRIVE_2_VOLUME +      \
+			    LAYOUT_DRIVE_2_TXFR + LAYOUT_DRIVE_2_TBUSY +       \
+			    ((todo&SHOW_UPDATES)? 2*LAYOUT_DRIVE_2_INCR+2 : 0))\
+			  : (LAYOUT_DRIVE_2_XSIZE + LAYOUT_DRIVE_2_XFR +       \
+			     LAYOUT_DRIVE_2_BUSY)) + 3)
+
+#define	LAYOUT_DRIVE_GAP 0	/* Gap included in column, always present */
+
+/* TODO: X & Y stats layouts */
 
 static void cpustats(void);
 static double drive_time(double, int);
-static void drive_stats(double);
-static void drive_stats2(double);
-static void drive_statsx(double);
-static void drive_statsy(double);
+static void drive_stats(int, double);
+static void drive_stats2(int, double);
+static void drive_statsx(int, double);
+static void drive_statsy(int, double);
 static void drive_statsy_io(double, double, double);
 static void drive_statsy_q(double, double, double, double, double, double);
 static void sig_header(int);
 static volatile int do_header;
-static void header(void);
+static void header(int);
 __dead static void usage(void);
-static void display(void);
+static void display(int);
 static int selectdrives(int, char *[], int);
 
 int
@@ -132,8 +200,14 @@ main(int argc, char *argv[])
 	int ch, hdrcnt, hdroffset, ndrives, lines;
 	struct timespec	tv;
 	struct ttysize ts;
+	long width = -1, height = -1;
+	char *ep;
 
-	while ((ch = getopt(argc, argv, "Cc:dDITw:xy")) != -1)
+#if 0		/* -i and -u are not currently (sanely) implementable */
+	while ((ch = getopt(argc, argv, "Cc:dDH:iITuw:W:xyz")) != -1)
+#else
+	while ((ch = getopt(argc, argv, "Cc:dDH:ITw:W:xyz")) != -1)
+#endif
 		switch (ch) {
 		case 'c':
 			if ((reps = atoi(optarg)) <= 0)
@@ -150,15 +224,36 @@ main(int argc, char *argv[])
 			todo &= ~SHOW_STATS_ALL;
 			todo |= SHOW_STATS_2;
 			break;
+		case 'H':
+			height = strtol(optarg, &ep, 10);
+			if (height < 0 || *ep != '\0')
+				errx(1, "bad height (-H) value.");
+			height += 2;	/* magic, but needed to be sane */
+			break;
+#if 0
+		case 'i':
+			todo |= SHOW_TOTALS | SHOW_NEW_TOTALS;
+			break;
+#endif
 		case 'I':
 			todo |= SHOW_TOTALS;
 			break;
 		case 'T':
 			todo |= SHOW_TTY;
 			break;
+#if 0
+		case 'u':
+			todo |= SHOW_UPDATES;
+			break;
+#endif
 		case 'w':
 			if ((interval = atoi(optarg)) <= 0)
 				errx(1, "interval <= 0.");
+			break;
+		case 'W':
+			width = strtol(optarg, &ep, 10);
+			if (width < 0 || *ep != '\0')
+				errx(1, "bad width (-W) value.");
 			break;
 		case 'x':
 			todo &= ~SHOW_STATS_ALL;
@@ -167,6 +262,9 @@ main(int argc, char *argv[])
 		case 'y':
 			todo &= ~SHOW_STATS_ALL;
 			todo |= SHOW_STATS_Y;
+			break;
+		case 'z':
+			todo |= SUPPRESS_ZERO;
 			break;
 		case '?':
 		default:
@@ -193,16 +291,40 @@ main(int argc, char *argv[])
 			wincols = ts.ts_cols;
 	}
 
-	defdrives = wincols;
-	if (ISSET(todo, SHOW_CPU))
-		defdrives -= 16;	/* XXX magic number */
-	if (ISSET(todo, SHOW_TTY))
-		defdrives -= 10;	/* XXX magic number */
-	defdrives /= 18;		/* XXX magic number */
+	if (height == -1) {
+		char *lns = getenv("LINES");
+
+		if (lns == NULL || (height = strtol(lns, &ep, 10)) < 0 ||
+		    *ep != '\0')
+			height = winlines;
+	}
+	winlines = height;
+
+	if (width == -1) {
+		char *cols = getenv("COLUMNS");
+
+		if (cols == NULL || (width = strtol(cols, &ep, 10)) < 0 ||
+		    *ep != '\0')
+			width = wincols;
+	}
+	defdrives = width;
+	if (defdrives == 0) {
+		defdrives = 5000;	/* anything absurdly big */
+	} else {
+		if (ISSET(todo, SHOW_CPU))
+			defdrives -= LAYOUT_CPU + LAYOUT_CPU_GAP;
+		if (ISSET(todo, SHOW_TTY))
+			defdrives -= LAYOUT_TTY + LAYOUT_TTY_GAP;
+		if (ISSET(todo, SHOW_STATS_2))
+			defdrives /= LAYOUT_DRIVE_2 + LAYOUT_DRIVE_GAP;
+		else
+			defdrives /= LAYOUT_DRIVE_1 + LAYOUT_DRIVE_GAP;
+	}
 
 	drvinit(0);
 	cpureadstats();
 	drvreadstats();
+	ordersize = 0;
 	ndrives = selectdrives(argc, argv, 1);
 	if (ndrives == 0) {
 		/* No drives are selected.  No need to show drive stats. */
@@ -215,6 +337,7 @@ main(int argc, char *argv[])
 
 	/* print a new header on sigcont */
 	(void)signal(SIGCONT, sig_header);
+	do_header = 1;
 
 	for (hdrcnt = 1;;) {
 		if (ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y)) {
@@ -225,19 +348,20 @@ main(int argc, char *argv[])
 			hdroffset = 4;
 		}
 
-		if (do_header || (hdrcnt -= lines) <= 0) {
+		if (do_header || (winlines != 0 && (hdrcnt -= lines) <= 0)) {
 			do_header = 0;
-			header();
+			header(ndrives);
 			hdrcnt = winlines - hdroffset;
 		}
 
-		if (!ISSET(todo, SHOW_TOTALS)) {
+		if (!ISSET(todo, SHOW_TOTALS) || ISSET(todo, SHOW_NEW_TOTALS)) {
 			cpuswap();
 			drvswap();
 			tkswap();
+			todo &= ~SHOW_NEW_TOTALS;
 		}
 
-		display();
+		display(ndrives);
 
 		if (reps >= 0 && --reps <= 0)
 			break;
@@ -257,9 +381,9 @@ sig_header(int signo)
 }
 
 static void
-header(void)
+header(int ndrives)
 {
-	size_t i;
+	int i;
 
 					/* Main Headers. */
 	if (ISSET(todo, SHOW_STATS_X)) {
@@ -283,47 +407,101 @@ header(void)
 	}
 
 	if (ISSET(todo, SHOW_TTY))
-		(void)printf("      tty");
+		(void)printf("%*s", LAYOUT_TTY_GAP + LAYOUT_TTY, "tty");
 
 	if (ISSET(todo, SHOW_STATS_1)) {
-		for (i = 0; i < ndrive; i++)
-			if (cur.select[i])
-				(void)printf("        %9.9s ", cur.name[i]);
+		for (i = 0; i < ndrives; i++) {
+			char *dname = cur.name[order[i]];
+			int dnlen = (int)strlen(dname);
+
+			printf(" ");	/* always a 1 column gap */
+			if (dnlen < LAYOUT_DRIVE_1 - 6)
+				printf("|%-*.*s ",
+				    (LAYOUT_DRIVE_1 - 1 - dnlen - 1) / 2 - 1,
+				    (LAYOUT_DRIVE_1 - 1 - dnlen - 1) / 2 - 1,
+				    Line_Marker);
+			printf("%*.*s", ((dnlen >= LAYOUT_DRIVE_1 - 6) ?
+			    MIN(MAX((LAYOUT_DRIVE_1 - dnlen) / 2, 0),
+				LAYOUT_DRIVE_1) : 0),
+			    LAYOUT_DRIVE_1, dname);
+			if (dnlen < LAYOUT_DRIVE_1 - 6)
+				printf(" %*.*s|",
+				    (LAYOUT_DRIVE_1 - 1 - dnlen - 2) / 2 - 1,
+				    (LAYOUT_DRIVE_1 - 1 - dnlen - 2) / 2 - 1,
+				    Line_Marker);
+		}
 	}
 
 	if (ISSET(todo, SHOW_STATS_2)) {
-		for (i = 0; i < ndrive; i++)
-			if (cur.select[i])
-				(void)printf("        %9.9s ", cur.name[i]);
+		for (i = 0; i < ndrives; i++) {
+			char *dname = cur.name[order[i]];
+			int dnlen = (int)strlen(dname);
+
+			printf(" ");	/* always a 1 column gap */
+			if (dnlen < LAYOUT_DRIVE_2 - 6)
+				printf("|%-*.*s ",
+				    (LAYOUT_DRIVE_2 - 1 - dnlen - 1) / 2 - 1,
+				    (LAYOUT_DRIVE_2 - 1 - dnlen - 1) / 2 - 1,
+				    Line_Marker);
+			printf("%*.*s", ((dnlen >= LAYOUT_DRIVE_1 - 6) ?
+			    MIN(MAX((LAYOUT_DRIVE_2 - dnlen) / 2, 0),
+				LAYOUT_DRIVE_2) : 0),
+			    LAYOUT_DRIVE_1, dname);
+			if (dnlen < LAYOUT_DRIVE_2 - 6)
+				printf(" %*.*s|",
+				    (LAYOUT_DRIVE_2 - 1 - dnlen - 2) / 2 - 1,
+				    (LAYOUT_DRIVE_2 - 1 - dnlen - 2) / 2 - 1,
+				    Line_Marker);
+		}
 	}
 
 	if (ISSET(todo, SHOW_CPU))
-		(void)printf("            CPU");
+		(void)printf("%*s", LAYOUT_CPU + LAYOUT_CPU_GAP, "CPU");
 
 	printf("\n");
 
 					/* Sub-Headers. */
-	if (ISSET(todo, SHOW_TTY))
-		printf(" tin  tout");
+	if (ISSET(todo, SHOW_TTY)) {
+		printf("%*s %*s",
+		   ((todo&SHOW_TOTALS)?LAYOUT_TTY_TIN:LAYOUT_TTY_IN), "tin",
+		   ((todo&SHOW_TOTALS)?LAYOUT_TTY_TOUT:LAYOUT_TTY_OUT), "tout");
+	}
 
 	if (ISSET(todo, SHOW_STATS_1)) {
-		for (i = 0; i < ndrive; i++)
-			if (cur.select[i]) {
-				if (ISSET(todo, SHOW_TOTALS))
-					(void)printf("  KB/t  xfr  MB   ");
-				else
-					(void)printf("  KB/t  t/s  MB/s ");
+		for (i = 0; i < ndrives; i++) {
+			if (ISSET(todo, SHOW_TOTALS)) {
+				(void)printf(" %*s %*s %*s",
+				    LAYOUT_DRIVE_1_XFER, "xfr",
+				    LAYOUT_DRIVE_1_XSIZE, "KB/t",
+				    LAYOUT_DRIVE_1_VOLUME, "MB");
+			} else {
+				(void)printf(" %*s %*s %*s",
+				    LAYOUT_DRIVE_1_RATE, "t/s",
+				    LAYOUT_DRIVE_1_XSIZE, "KB/t",
+				    LAYOUT_DRIVE_1_SPEED, "MB/s");
 			}
+		}
 	}
 
 	if (ISSET(todo, SHOW_STATS_2)) {
-		for (i = 0; i < ndrive; i++)
-			if (cur.select[i])
-				(void)printf("    KB   xfr time ");
+		for (i = 0; i < ndrives; i++) {
+			if (ISSET(todo, SHOW_TOTALS)) {
+				(void)printf(" %*s %*s %*s",
+				    LAYOUT_DRIVE_2_TXFR, "xfr",
+				    LAYOUT_DRIVE_2_VOLUME, "KB",
+				    LAYOUT_DRIVE_2_TBUSY, "time");
+			} else {
+				(void)printf(" %*s %*s %*s",
+				    LAYOUT_DRIVE_2_XFR, "xfr",
+				    LAYOUT_DRIVE_2_XSIZE, "KB",
+				    LAYOUT_DRIVE_2_BUSY, "time");
+			}
+		}
 	}
 
+	/* should do this properly, but it is such a simple case... */
 	if (ISSET(todo, SHOW_CPU))
-		(void)printf(" us ni sy in id");
+		(void)printf("  us ni sy in  id");
 	printf("\n");
 }
 
@@ -342,16 +520,43 @@ drive_time(double etime, int dn)
 }
 
 static void
-drive_stats(double etime)
+drive_stats(int ndrives, double etime)
 {
-	size_t dn;
+	int drive;
 	double atime, dtime, mbps;
+	int c1, c2, c3;
 
-	for (dn = 0; dn < ndrive; ++dn) {
-		if (!cur.select[dn])
+	if (ISSET(todo, SHOW_TOTALS)) {
+		c1 = LAYOUT_DRIVE_1_XFER;
+		c2 = LAYOUT_DRIVE_1_XSIZE;
+		c3 = LAYOUT_DRIVE_1_VOLUME;	
+	} else {
+		c1 = LAYOUT_DRIVE_1_RATE;
+		c2 = LAYOUT_DRIVE_1_XSIZE;
+		c3 = LAYOUT_DRIVE_1_SPEED;
+	}
+
+	for (drive = 0; drive < ndrives; ++drive) {
+		int dn = order[drive];
+
+		if (!cur.select[dn])	/* should be impossible */
 			continue;
 
+		if (todo & SUPPRESS_ZERO) {
+			if (cur.rxfer[dn] == 0 &&
+			    cur.wxfer[dn] == 0 &&
+			    cur.rbytes[dn] == 0 &&
+			    cur.wbytes[dn] == 0) {
+				printf("%*s", c1 + 1 + c2 + 1 + c3 + 1, "");
+				continue;
+			}
+		}
+
 		dtime = drive_time(etime, dn);
+
+					/* average transfers per second. */
+		(void)printf(" %*.0f", c1,
+		    (cur.rxfer[dn] + cur.wxfer[dn]) / dtime);
 
 					/* average Kbytes per transfer. */
 		if (cur.rxfer[dn] + cur.wxfer[dn])
@@ -359,12 +564,8 @@ drive_stats(double etime)
 			    1024.0) / (cur.rxfer[dn] + cur.wxfer[dn]);
 		else
 			mbps = 0.0;
-		(void)printf(" %5.*f",
+		(void)printf(" %*.*f", c2,
 		    MAX(0, 3 - (int)floor(log10(fmax(1.0, mbps)))), mbps);
-
-					/* average transfers per second. */
-		(void)printf(" %4.0f",
-		    (cur.rxfer[dn] + cur.wxfer[dn]) / dtime);
 
 					/* time busy in drive activity */
 		atime = (double)cur.time[dn].tv_sec +
@@ -377,51 +578,84 @@ drive_stats(double etime)
 		else
 			mbps = 0;
 		mbps /= dtime;
-		(void)printf(" %5.*f ",
+		(void)printf(" %*.*f", c3,
 		    MAX(0, 3 - (int)floor(log10(fmax(1.0, mbps)))), mbps);
 	}
 }
 
 static void
-drive_stats2(double etime)
+drive_stats2(int ndrives, double etime)
 {
-	size_t dn;
+	int drive;
 	double atime, dtime;
+	int c1, c2, c3;
 
-	for (dn = 0; dn < ndrive; ++dn) {
-		if (!cur.select[dn])
+	if (ISSET(todo, SHOW_TOTALS)) {
+		c1 = LAYOUT_DRIVE_2_TXFR;
+		c2 = LAYOUT_DRIVE_2_VOLUME;
+		c3 = LAYOUT_DRIVE_2_TBUSY;	
+	} else {
+		c1 = LAYOUT_DRIVE_2_XFR;
+		c2 = LAYOUT_DRIVE_2_XSIZE;
+		c3 = LAYOUT_DRIVE_2_BUSY;
+	}
+
+	for (drive = 0; drive < ndrives; ++drive) {
+		int dn = order[drive];
+
+		if (!cur.select[dn])		/* should be impossible */
 			continue;
+
+		if (todo & SUPPRESS_ZERO) {
+			if (cur.rxfer[dn] == 0 &&
+			    cur.wxfer[dn] == 0 &&
+			    cur.rbytes[dn] == 0 &&
+			    cur.wbytes[dn] == 0) {
+				printf("%*s", c1 + 1 + c2 + 1 + c3 + 1, "");
+				continue;
+			}
+		}
 
 		dtime = drive_time(etime, dn);
 
-					/* average kbytes per second. */
-		(void)printf(" %5.0f",
-		    (cur.rbytes[dn] + cur.wbytes[dn]) / 1024.0 / dtime);
-
 					/* average transfers per second. */
-		(void)printf(" %5.0f",
+		(void)printf(" %*.0f", c1,
 		    (cur.rxfer[dn] + cur.wxfer[dn]) / dtime);
 
-					/* average time busy in drive activity */
+					/* average kbytes per second. */
+		(void)printf(" %*.0f", c2,
+		    (cur.rbytes[dn] + cur.wbytes[dn]) / 1024.0 / dtime);
+
+					/* average time busy in dn activity */
 		atime = (double)cur.time[dn].tv_sec +
 		    ((double)cur.time[dn].tv_usec / (double)1000000);
-		(void)printf(" %4.2f ", atime / dtime);
+		(void)printf(" %*.2f", c3, atime / dtime);
 	}
 }
 
 static void
-drive_statsx(double etime)
+drive_statsx(int ndrives, double etime)
 {
-	size_t dn;
+	int dn, drive;
 	double atime, dtime, kbps;
 
-	for (dn = 0; dn < ndrive; ++dn) {
-		if (!cur.select[dn])
+	for (drive = 0; drive < ndrives; ++drive) {
+		dn = order[drive];
+
+		if (!cur.select[dn])	/* impossible */
 			continue;
 
-		dtime = drive_time(etime, dn);
-
 		(void)printf("%-8.8s", cur.name[dn]);
+
+		if (todo & SUPPRESS_ZERO) {
+			if (cur.rbytes[dn] == 0 && cur.rxfer[dn] == 0 &&
+			    cur.wbytes[dn] == 0 && cur.wxfer[dn] == 0) {
+				printf("\n");
+				continue;
+			}
+		}
+
+		dtime = drive_time(etime, dn);
 
 					/* average read Kbytes per transfer */
 		if (cur.rxfer[dn])
@@ -510,18 +744,27 @@ drive_statsy_q(double elapsed, double busy, double wait, double busysum, double 
 }
 
 static void
-drive_statsy(double etime)
+drive_statsy(int ndrives, double etime)
 {
-	size_t dn;
+	int drive, dn;
 	double atime, await, abusysum, awaitsum, dtime;
 
-	for (dn = 0; dn < ndrive; ++dn) {
-		if (!cur.select[dn])
+	for (drive = 0; drive < ndrives; ++drive) {
+		dn = order[drive];
+		if (!cur.select[dn])	/* impossible */
 			continue;
 
-		dtime = drive_time(etime, dn);
-
 		(void)printf("%-8.8s", cur.name[dn]);
+
+		if (todo & SUPPRESS_ZERO) {
+			if (cur.rbytes[dn] == 0 && cur.rxfer[dn] == 0 &&
+			    cur.wbytes[dn] == 0 && cur.wxfer[dn] == 0) {
+				printf("\n");
+				continue;
+			}
+		}
+
+		dtime = drive_time(etime, dn);
 
 		atime = (double)cur.time[dn].tv_sec +
 		    ((double)cur.time[dn].tv_usec / (double)1000000);
@@ -547,27 +790,42 @@ cpustats(void)
 	int state;
 	double ttime;
 
+	static int cwidth[CPUSTATES] = {
+		LAYOUT_CPU_USER,
+		LAYOUT_CPU_NICE,
+		LAYOUT_CPU_SYS,
+		LAYOUT_CPU_INT,
+		LAYOUT_CPU_IDLE
+	};
+
 	ttime = 0;
 	for (state = 0; state < CPUSTATES; ++state)
 		ttime += cur.cp_time[state];
 	if (!ttime)
 		ttime = 1.0;
-			/* States are generally never 100% and can use %3.0f. */
-	for (state = 0; state < CPUSTATES; ++state)
-		printf(" %2.0f", 100. * cur.cp_time[state] / ttime);
+
+	printf("%*s", LAYOUT_CPU_GAP - 1, "");	/* the 1 is the next space */
+	for (state = 0; state < CPUSTATES; ++state) {
+		if ((todo & SUPPRESS_ZERO) && cur.cp_time[state] == 0) {
+			printf(" %*s", cwidth[state], "");
+			continue;
+		}
+		printf(" %*.0f", cwidth[state],
+		    100. * cur.cp_time[state] / ttime);
+	}
 }
 
 static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: iostat [-CdDITxy] [-c count] "
-	    "[-w wait] [drives]\n");
+	(void)fprintf(stderr, "usage: iostat [-CdDITxyz] [-c count] "
+	    "[-H height] [-W width] [-w wait] [drives]\n");
 	exit(1);
 }
 
 static void
-display(void)
+display(int ndrives)
 {
 	double	etime;
 
@@ -582,25 +840,29 @@ display(void)
 		etime = 1.0;
 
 	if (ISSET(todo, SHOW_STATS_X)) {
-		drive_statsx(etime);
+		drive_statsx(ndrives, etime);
 		goto out;
 	}
 
 	if (ISSET(todo, SHOW_STATS_Y)) {
-		drive_statsy(etime);
+		drive_statsy(ndrives, etime);
 		goto out;
 	}
 
 	if (ISSET(todo, SHOW_TTY))
-		printf("%4.0f %5.0f", cur.tk_nin / etime, cur.tk_nout / etime);
+		printf("%*.0f %*.0f",
+		    ((todo & SHOW_TOTALS) ? LAYOUT_TTY_TIN : LAYOUT_TTY_IN),
+		    cur.tk_nin / etime,
+		    ((todo & SHOW_TOTALS) ? LAYOUT_TTY_TOUT : LAYOUT_TTY_OUT),
+		    cur.tk_nout / etime);
 
 	if (ISSET(todo, SHOW_STATS_1)) {
-		drive_stats(etime);
+		drive_stats(ndrives, etime);
 	}
 
 
 	if (ISSET(todo, SHOW_STATS_2)) {
-		drive_stats2(etime);
+		drive_stats2(ndrives, etime);
 	}
 
 
@@ -639,7 +901,15 @@ selectdrives(int argc, char *argv[], int first)
 			if (fnmatch(*argv, cur.name[i], 0))
 				continue;
 			cur.select[i] = 1;
-			++ndrives;
+			if (ordersize <= ndrives) {
+				int *new = realloc(order,
+				    (ordersize + 8) * sizeof *order);
+				if (new == NULL)
+					break;
+				ordersize += 8;
+				order = new;
+			}
+			order[ndrives++] = i;
 		}
 
 	}
@@ -652,8 +922,14 @@ selectdrives(int argc, char *argv[], int first)
 		maxdrives = (ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y) ||
 			     (int)ndrive < defdrives)
 			? (int)(ndrive) : defdrives;
+		ordersize = maxdrives;
+		free(order);
+		order = calloc(ordersize, sizeof *order);
+		if (order == NULL)
+			errx(1, "Insufficient memory");
 		for (i = 0; i < maxdrives; i++) {
 			cur.select[i] = 1;
+			order[i] = i;
 
 			++ndrives;
 			if (!ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y) &&
