@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.conf.5,v 1.28 2022/06/18 02:19:07 gutteridge Exp $
+.\"	$NetBSD: man.conf.5,v 1.29 2022/06/18 13:41:12 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,14 +64,14 @@ section subdirectory contains unformatted copies of the pages (see
 and
 .Xr mdoc 7 ) .
 Formatted manual pages are normally named with a trailing
-.Dq \.0
+.Ql \&.0
 suffix.
 .Pp
 The
 .Nm
 file contains comment and configuration lines.
 Comment lines start with the
-.Dq #
+.Ql #
 character.
 Blank lines are also treated as comment lines.
 Configuration lines consist of a configuration keyword followed by a
@@ -79,31 +79,37 @@ configuration string.
 There are two types of configuration keywords: control keywords and
 section keywords.
 Control keywords must start with the
-.Dq _
+.Ql _
 character.
 The following control keywords are currently defined:
-.Bl -tag -width XXmachineX
-.It _build
+.Bl -tag -width Ic
+.It Ic _build
 Identifies the set of suffixes used for manual pages that must be
 formatted for display and the command that should be used to format
 them.
 Manual file names, regardless of their format, are expected to end in a
-.Dq \.*
+.Dq \&.*
 pattern, i.e. a
-.Dq \&\.
+.Ql \&.
 followed by some suffix.
-The first field of a _build line contains a man page suffix specification.
+The first field of a
+.Ic _build
+line contains a man page suffix specification.
 The suffix specification may contain the normal shell globbing characters
-(NOT including curly braces
-.Pq Dq {} ) .
-The rest of the _build line is a shell command line whose standard
+.Po
+.Em not
+including csh-style curly braces
+.Pc .
+The rest of the
+.Ic _build
+line is a shell command line whose standard
 output is a formatted manual page that can be directly displayed to
 the user.
 There should be exactly one occurrence of the string
-.Dq %s
+.Ql %s
 in the shell command line, and it will
 be replaced by the name of the file which is being formatted.
-.It _crunch
+.It Ic _crunch
 Used by
 .Xr catman 8
 to determine how to crunch formatted pages
@@ -113,29 +119,27 @@ used to compress the man page.
 The rest of the line must be a shell command line, used to compress the
 formatted pages.
 There should be exactly one occurrence of the string
-.Dq %s
+.Ql %s
 in the shell command line, and it will
 be replaced by the name of the output file.
-.It _default
+.It Ic _default
 Contains the system-wide default man path used to search for man pages.
-.It _mandb
+.It Ic _mandb
 Defines the full pathname (not just a directory path) for a database to
-be used
-by the
+be used by the
 .Xr apropos 1
 and
 .Xr whatis 1
 commands.
 The pathname may contain the normal shell globbing characters,
-including curly braces
-.Pq Dq {} ;
+including csh-style curly braces;
 to escape a shell globbing character,
 precede it with a backslash
-.Pq Dq \e .
-.It _subdir
+.Pq Ql \e .
+.It Ic _subdir
 Contains the list (in search order) of section subdirectories which will
 be searched in any man path directory named with a trailing slash
-.Pq Dq /
+.Pq Ql /
 character.
 This list is also used, even if there is no trailing slash character,
 when a path is specified to the
@@ -147,28 +151,29 @@ environment variable, or by the
 and
 .Fl m
 options.
-.It _suffix
+.It Ic _suffix
 identifies the set of suffixes used for formatted man pages
 (the
-.Dq \.0
+.Ql \&.0
 suffix is normally used here).
 Formatted man pages can be directly displayed to the user.
-Each suffix may contain the normal shell globbing characters (NOT
-including curly braces
-.Pq Dq {} ) .
-.It _version
+Each suffix may contain the normal shell globbing characters
+.Po
+.Em not
+including csh-style curly braces
+.Pc .
+.It Ic _version
 Contains the version of the configuration file.
-.It _ Ns Aq machine
+.It Ic _ Ns Aq Ar machine
 Defines additional paths to be searched for the particular
-.Dv machine
+.Ar machine
 hardware name whose literal value is taken from
 .Xr uname 1
 .Fl m .
-For example on an
-.Dv amd64 ,
-.Dv _amd64
-is used, where
-.Dq x86
+For example on an amd64,
+.Ic _amd64
+control keyword is used, where
+.Ql x86
 is commonly supplied as an alternate machine path to also search.
 .El
 .Pp
@@ -178,13 +183,12 @@ consist of a section keyword naming the section and a configuration
 string that defines the directory or subdirectory path that the section's
 manual pages are located in.
 The path may contain the normal shell globbing characters,
-including curly braces
-.Pq Dq {} ;
+including csh-style curly braces;
 to escape a shell globbing character,
 precede it with a backslash
-.Pq Dq \e .
+.Pq Ql \e .
 Section keywords must not start with the
-.Dq _
+.Ql _
 character.
 .Pp
 A section path may contain either a list of absolute directories or
@@ -192,17 +196,17 @@ a list of relative directories (but not both).
 Relative directory paths are treated as a list of subdirectories that
 are appended to the current man path directory being searched.
 Section configuration lines with absolute directory paths (starting with
-.Dq / )
+.Ql / )
 completely replace the current man search path directory with their
 content.
 .Pp
 Section configuration lines with absolute directory paths ending
 with a trailing slash character are expected to contain subdirectories
 of manual pages, (see the keyword
-.Dq _subdir
+.Ic _subdir
 above).
 The
-.Dq _subdir
+.Ic _subdir
 subdirectory list is not applied to absolute section directories
 if there is no trailing slash.
 .Pp
@@ -224,7 +228,7 @@ configuration lines are
 cumulative and the entries are used in the order listed in the file;
 multiple entries may be listed per line, as well.
 .Sh FILES
-.Bl -tag -width /etc/man.conf -compact
+.Bl -tag -width Pa -compact
 .It Pa /etc/man.conf
 Standard manual configuration file.
 .El
@@ -246,34 +250,34 @@ sect3		/usr/share/man/{old/,}cat3
 By default, the command
 .Dq Li man mktemp
 will search for
-.Dq mktemp. Ns Aq any_digit
+.Pa mktemp. Ns Aq Ar digit
 and
-.Dq mktemp.tbl
+.Pa  mktemp.tbl
 in the directories
-.Dq Pa /usr/share/man/cat1 ,
-.Dq Pa /usr/share/man/cat2 ,
+.Pa /usr/share/man/cat1 ,
+.Pa /usr/share/man/cat2 ,
 and
-.Dq Pa /usr/share/man/cat3 .
+.Pa /usr/share/man/cat3 .
 If on a machine of type
 .Dq vax ,
 the subdirectory
-.Dq vax
+.Pa vax
 in each
 directory would be searched as well, before the directory was
 searched.
 .Pp
 If
-.Dq mktemp.tbl
+.Pa mktemp.tbl
 was found first, the command
-.Dq Li tbl Ao manual page Ac | nroff -man
+.Dq Li tbl Ao Ar manual page Ac Li \&| nroff -man
 would be run to build a man page for display to the user.
 .Pp
 The command
 .Dq Li man sect3 mktemp
 would search the directories
-.Dq Pa /usr/share/man/old/cat3
+.Pa /usr/share/man/old/cat3
 and
-.Dq Pa /usr/share/man/cat3 ,
+.Pa /usr/share/man/cat3 ,
 in that order, for
 the mktemp manual page.
 If a subdirectory with the same name as the current machine type
