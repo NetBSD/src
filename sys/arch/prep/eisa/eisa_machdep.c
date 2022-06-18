@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.5 2014/03/29 19:28:29 christos Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.6 2022/06/18 22:11:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.5 2014/03/29 19:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.6 2022/06/18 22:11:00 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.5 2014/03/29 19:28:29 christos Ex
 
 /*
  * EISA doesn't have any special needs; just use the generic versions
- * of these funcions.
+ * of these functions.
  */
 struct powerpc_bus_dma_tag eisa_bus_dma_tag = {
 	0,			/* _bounce_thresh */

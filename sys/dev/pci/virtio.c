@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.54 2022/04/24 11:51:09 uwe Exp $	*/
+/*	$NetBSD: virtio.c,v 1.55 2022/06/18 22:11:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.54 2022/04/24 11:51:09 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.55 2022/06/18 22:11:01 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ virtio_read_device_config_8(struct virtio_softc *sc, int index) {
 /*
  * In the older virtio spec, device config registers are host endian. On newer
  * they are little endian. Some newer devices however explicitly specify their
- * register to always be little endian. These fuctions cater for these.
+ * register to always be little endian. These functions cater for these.
  */
 uint16_t
 virtio_read_device_config_le_2(struct virtio_softc *sc, int index) {
@@ -356,7 +356,7 @@ virtio_write_device_config_8(struct virtio_softc *sc, int index, uint64_t value)
 /*
  * In the older virtio spec, device config registers are host endian. On newer
  * they are little endian. Some newer devices however explicitly specify their
- * register to always be little endian. These fuctions cater for these.
+ * register to always be little endian. These functions cater for these.
  */
 void
 virtio_write_device_config_le_2(struct virtio_softc *sc, int index, uint16_t value)

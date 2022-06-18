@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.40 2015/04/27 08:30:10 knakahara Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.41 2022/06/18 22:11:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.40 2015/04/27 08:30:10 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.41 2022/06/18 22:11:00 andvar Exp $");
 
 #include "ioapic.h"
 
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.40 2015/04/27 08:30:10 knakahara 
 
 /*
  * EISA doesn't have any special needs; just use the generic versions
- * of these funcions.
+ * of these functions.
  *
  * XXX really doesn't use bounce buffers? --dyoung
  */

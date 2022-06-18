@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.15 2021/08/07 16:18:58 thorpej Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.16 2022/06/18 22:11:00 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.15 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.16 2022/06/18 22:11:00 andvar Exp $");
 
 #include "locators.h"
 
@@ -77,7 +77,7 @@ static void	ausmbus_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ausmbus, sizeof(struct ausmbus_softc),
 	ausmbus_match, ausmbus_attach, NULL, NULL);
 
-/* fuctions for i2c_controller */
+/* functions for i2c_controller */
 static int	ausmbus_acquire_bus(void *, int);
 static void	ausmbus_release_bus(void *, int);
 static int	ausmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
