@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.36 2022/06/11 18:27:22 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.37 2022/06/18 13:52:42 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.36 2022/06/11 18:27:22 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.37 2022/06/18 13:52:42 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -532,7 +532,7 @@ static const uint edit_fs_common_types[] =
 
 /*
  * Functions for uncommon file system types - we offer the full list,
- * but put FFSv2 and FFSv1 at the front and duplicat FS_MSDOS as
+ * but put FFSv2 and FFSv1 at the front and duplicate FS_MSDOS as
  * EFI system partition.
  */
 static void
