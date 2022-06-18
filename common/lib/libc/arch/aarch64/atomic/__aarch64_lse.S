@@ -1,4 +1,4 @@
-/* $NetBSD: __aarch64_lse.S,v 1.3 2022/06/16 08:21:57 skrll Exp $ */
+/* $NetBSD: __aarch64_lse.S,v 1.4 2022/06/18 07:55:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -174,8 +174,9 @@ ENTRY_NP(CASP_FUNC)
 	ret
 99:
 #endif
-	mov	x4, x0			/* need x0 for return value	*/
-1:	LDXP	x5, x6, [x4]		/* load old value		*/
+	mov	x5, x0			/* need x0 for return value	*/
+	mov	x6, x1			/* need x1 for return value	*/
+1:	LDXP	x0, x1, [x4]		/* load old value		*/
 	cmp	x5, x0			/* compare			*/
 	b.ne	2f			/*   not equal? return		*/
 	cmp	x6, x1
