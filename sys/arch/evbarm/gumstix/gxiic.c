@@ -1,4 +1,4 @@
-/*	$NetBSD: gxiic.c,v 1.11 2021/08/07 16:18:49 thorpej Exp $ */
+/*	$NetBSD: gxiic.c,v 1.12 2022/06/18 22:11:00 andvar Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.11 2021/08/07 16:18:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.12 2022/06/18 22:11:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,7 @@ struct gxiic_softc {
 static int gxiicmatch(device_t, cfdata_t, void *);
 static void gxiicattach(device_t, device_t, void *);
 
-/* fuctions for i2c_controller */
+/* functions for i2c_controller */
 static int gxiic_acquire_bus(void *, int);
 static void gxiic_release_bus(void *, int);
 static int gxiic_exec(void *cookie, i2c_op_t, i2c_addr_t, const void *, size_t,
