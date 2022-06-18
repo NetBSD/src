@@ -1,4 +1,4 @@
-/*	$NetBSD: nbpiic.c,v 1.5 2021/08/07 16:18:53 thorpej Exp $ */
+/*	$NetBSD: nbpiic.c,v 1.6 2022/06/18 22:11:00 andvar Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.5 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.6 2022/06/18 22:11:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,7 +63,7 @@ static void pxaiic_attach(device_t, device_t, void *);
 static int nbpiic_intr(void *);
 int nbpiic_poll(void *, int, char *);
 
-/* fuctions for i2c_controller */
+/* functions for i2c_controller */
 static int nbpiic_exec(void *cookie, i2c_op_t, i2c_addr_t, const void *, size_t,
     void *, size_t, int);
 

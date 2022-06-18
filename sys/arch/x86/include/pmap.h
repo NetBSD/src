@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.127 2021/04/30 13:54:26 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.128 2022/06/18 22:11:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -542,7 +542,7 @@ void	pmap_cpu_init_late(struct cpu_info *);
 /* Selects the index of a PTE in (A)PTE_BASE */
 #define XPTE_SHIFT	(L1_SHIFT - ilog2(sizeof(pt_entry_t)))
 
-/* PTE access inline fuctions */
+/* PTE access inline functions */
 
 /*
  * Get the machine address of the pointed pte
