@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.28 2022/03/14 06:40:12 mlelstv Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.29 2022/06/18 08:22:10 skrll Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -182,9 +182,9 @@ static void	bwfm_sdio_rx_frames(struct bwfm_sdio_softc *);
 static void	bwfm_sdio_rx_glom(struct bwfm_sdio_softc *,
 		    uint16_t *, int, uint16_t *);
 
-#ifdef BWFM_DEBUG 
+#ifdef BWFM_DEBUG
 static void	bwfm_sdio_debug_console(struct bwfm_sdio_softc *);
-#endif 
+#endif
 
 static const struct bwfm_firmware_selector bwfm_sdio_fwtab[] = {
 	BWFM_FW_ENTRY(BRCM_CC_43143_CHIP_ID,
@@ -233,7 +233,7 @@ static const struct bwfm_firmware_selector bwfm_sdio_fwtab[] = {
 
 	BWFM_FW_ENTRY(BRCM_CC_4354_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac4354-sdio"),
-	
+
 	BWFM_FW_ENTRY(BRCM_CC_4356_CHIP_ID,
 		      BWFM_FWSEL_ALLREVS, "brcmfmac4356-sdio"),
 
@@ -274,32 +274,32 @@ static const struct bwfm_sdio_product {
 } bwfm_sdio_products[] = {
 	{
 		SDMMC_VENDOR_BROADCOM,
-		SDMMC_PRODUCT_BROADCOM_BCM4330, 
+		SDMMC_PRODUCT_BROADCOM_BCM4330,
 		SDMMC_CIS_BROADCOM_BCM4330
 	},
 	{
 		SDMMC_VENDOR_BROADCOM,
-		SDMMC_PRODUCT_BROADCOM_BCM4334, 
+		SDMMC_PRODUCT_BROADCOM_BCM4334,
 		SDMMC_CIS_BROADCOM_BCM4334
 	},
 	{
 		SDMMC_VENDOR_BROADCOM,
-		SDMMC_PRODUCT_BROADCOM_BCM43143, 
+		SDMMC_PRODUCT_BROADCOM_BCM43143,
 		SDMMC_CIS_BROADCOM_BCM43143
 	},
 	{
 		SDMMC_VENDOR_BROADCOM,
-		SDMMC_PRODUCT_BROADCOM_BCM43430, 
+		SDMMC_PRODUCT_BROADCOM_BCM43430,
 		SDMMC_CIS_BROADCOM_BCM43430
 	},
 	{
 		SDMMC_VENDOR_BROADCOM,
-		SDMMC_PRODUCT_BROADCOM_BCM43455, 
+		SDMMC_PRODUCT_BROADCOM_BCM43455,
 		SDMMC_CIS_BROADCOM_BCM43455
 	},
 	{
 		SDMMC_VENDOR_BROADCOM,
-		SDMMC_PRODUCT_BROADCOM_BCM43362, 
+		SDMMC_PRODUCT_BROADCOM_BCM43362,
 		SDMMC_CIS_BROADCOM_BCM43362
 	},
 };
@@ -379,7 +379,7 @@ bwfm_sdio_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sf[sf->number] = sf;
 	}
 
-	sdmmc_io_set_blocklen(sc->sc_sf[1], 64); 
+	sdmmc_io_set_blocklen(sc->sc_sf[1], 64);
 	sdmmc_io_set_blocklen(sc->sc_sf[2], 512);
 
 	/* Enable Function 1. */
@@ -1308,9 +1308,9 @@ static struct bwfm_sdio_dstab pmu11_1v8[] = {
 	{1, 0x1},
 	{0, 0x0}
 }, pmu17_1v8[] = {
-	{3, 0x3},       
-	{2, 0x2},       
-	{1, 0x1},       
+	{3, 0x3},
+	{2, 0x2},
+	{1, 0x1},
 	{0, 0x0}
 }, pmu17_3v3[] = {
 	{16, 0x7},
@@ -1536,7 +1536,7 @@ bwfm_sdio_tx_ok(struct bwfm_sdio_softc *sc)
 	    ((uint8_t)(sc->sc_tx_max_seq - sc->sc_tx_seq) & 0x80) == 0;
 }
 
-static void    
+static void
 bwfm_sdio_tx_frames(struct bwfm_sdio_softc *sc)
 {
 	struct mbuf *m;
@@ -1556,7 +1556,7 @@ bwfm_sdio_tx_frames(struct bwfm_sdio_softc *sc)
 		if (m->m_type == MT_CONTROL)
 			bwfm_sdio_tx_ctrlframe(sc, m);
 		else {
-			bwfm_sdio_tx_dataframe(sc, m);  
+			bwfm_sdio_tx_dataframe(sc, m);
 			if_statinc(ifp, if_opackets);
 			ifstart = true;
 		}
@@ -1576,7 +1576,7 @@ bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc, struct mbuf *m)
 	struct bwfm_sdio_hwhdr *hwhdr;
 	struct bwfm_sdio_swhdr *swhdr;
 	size_t len, roundto;
-	
+
 	len = sizeof(*hwhdr) + sizeof(*swhdr) + m->m_len;
 
 	/* Zero-pad to either block-size or 4-byte alignment. */
@@ -1586,24 +1586,24 @@ bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc, struct mbuf *m)
 		roundto = 4;
 
 	KASSERT(roundup(len, roundto) <= sc->sc_bounce_size);
- 
+
 	hwhdr = (void *)sc->sc_bounce_buf;
 	hwhdr->frmlen = htole16(len);
 	hwhdr->cksum = htole16(~len);
-	
+
 	swhdr = (void *)&hwhdr[1];
 	swhdr->seqnr = sc->sc_tx_seq++;
 	swhdr->chanflag = BWFM_SDIO_SWHDR_CHANNEL_CONTROL;
 	swhdr->nextlen = 0;
 	swhdr->dataoff = sizeof(*hwhdr) + sizeof(*swhdr);
 	swhdr->maxseqnr = 0;
-	
+
 	m_copydata(m, 0, m->m_len, &swhdr[1]);
-	
+
 	if (roundup(len, roundto) != len)
 		memset(sc->sc_bounce_buf + len, 0,
 		    roundup(len, roundto) - len);
-	
+
 	bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
 	    roundup(len, roundto), 1);
 }
@@ -1688,11 +1688,11 @@ bwfm_sdio_rxctl(struct bwfm_softc *bwfm, char *buf, size_t *lenp)
 
 static void
 bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
-{       
+{
 	struct bwfm_sdio_hwhdr *hwhdr;
 	struct bwfm_sdio_swhdr *swhdr;
 	struct bwfm_proto_bcdc_hdr *bcdc;
-	uint16_t *sublen, nextlen = 0;  
+	uint16_t *sublen, nextlen = 0;
 	struct mbuf *m;
 	size_t flen, off, hoff;
 	char *data;
@@ -1702,7 +1702,7 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 	hwhdr = (struct bwfm_sdio_hwhdr *)sc->sc_bounce_buf;
 	swhdr = (struct bwfm_sdio_swhdr *)&hwhdr[1];
 	data = (char *)&swhdr[1];
-	
+
 	for (;;) {
 		/* If we know the next size, just read ahead. */
 		if (nextlen) {
@@ -1713,25 +1713,25 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 		} else {
 			if (bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
 			    sizeof(*hwhdr) + sizeof(*swhdr), 0))
-				break; 
+				break;
 		}
-	
+
 		hwhdr->frmlen = le16toh(hwhdr->frmlen);
 		hwhdr->cksum = le16toh(hwhdr->cksum);
-	
+
 		if (hwhdr->frmlen == 0 && hwhdr->cksum == 0) {
 			break;
 		}
 
 		if ((hwhdr->frmlen ^ hwhdr->cksum) != 0xffff) {
 			printf("%s: checksum error\n", DEVNAME(sc));
-			break;  
+			break;
 		}
 
 		if (hwhdr->frmlen < sizeof(*hwhdr) + sizeof(*swhdr)) {
 			printf("%s: length error\n", DEVNAME(sc));
 			break;
-		} 
+		}
 
 		if (nextlen && hwhdr->frmlen > nextlen) {
 			printf("%s: read ahead length error (%u > %u)\n",
@@ -2000,8 +2000,8 @@ bwfm_sdio_debug_console(struct bwfm_sdio_softc *sc)
 	err = bwfm_sdio_ram_read_write(sc, sc->sc_console_addr,
 	    (char *)&c, sizeof(c), 0);
 	if (err)
-		return; 
- 
+		return;
+
 	c.log_buf = le32toh(c.log_buf);
 	c.log_bufsz = le32toh(c.log_bufsz);
 	c.log_idx = le32toh(c.log_idx);
