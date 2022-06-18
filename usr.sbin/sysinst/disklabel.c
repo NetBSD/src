@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.44 2021/08/08 21:50:10 andvar Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.45 2022/06/18 13:56:41 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -780,7 +780,8 @@ disklabel_get_part_info(const struct disk_partitions *arg, part_id id,
 			    parts->l.d_partitions[part].p_fstype == FS_UNUSED)
 				info->flags |=
 				    PTI_PSCHEME_INTERNAL|PTI_RAW_PART;
-			if (info->start == parts->install_target)
+			if (info->start == parts->install_target &&
+			    parts->l.d_partitions[part].p_fstype != FS_UNUSED)
 				info->flags |= PTI_INSTALL_TARGET;
 #if RAW_PART == 3
 			if (part == (RAW_PART-1) && parts->dp.parent != NULL &&
