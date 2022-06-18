@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.321 2022/06/02 17:20:21 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.322 2022/06/18 08:20:56 skrll Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.321 2022/06/02 17:20:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.322 2022/06/18 08:20:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -6923,7 +6923,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		if (error == 0) {
 #if 1 /* def IXGBE_DEBUG */
 #ifdef	RSS
-			aprintf_normal(", bound RSS bucket %d to CPU %d", i,
+			aprint_normal(", bound RSS bucket %d to CPU %d", i,
 			    cpu_id % ncpu);
 #else
 			aprint_normal(", bound queue %d to cpu %d", i,
