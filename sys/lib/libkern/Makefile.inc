@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.47 2022/05/30 14:13:59 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.48 2022/06/19 18:28:16 rillig Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -41,7 +41,7 @@ KERNLIBLN=	${KERNDST}/${LIBKERNLNBN}
 LIBKERN_MD_FLAGS?=	none
 
 KERNMAKE= \
-	cd ${KERNDST} && ${MAKE} -f ${KERNDIR:q}/Makefile \
+	cd ${KERNDST} && ${MAKE} -f ${KERNDIR:Q}/Makefile \
 	    KERNDIR=${KERNDIR:q} \
 	    CC=${CC:q} CFLAGS=${CFLAGS:q} CPUFLAGS= \
 	    AS=${AS:q} AFLAGS=${AFLAGS:q} \
