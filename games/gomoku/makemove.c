@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.42 2022/05/29 17:01:42 rillig Exp $	*/
+/*	$NetBSD: makemove.c,v 1.43 2022/06/19 10:23:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	@(#)makemove.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: makemove.c,v 1.42 2022/05/29 17:01:42 rillig Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.43 2022/06/19 10:23:48 rillig Exp $");
 
 #include "gomoku.h"
 
@@ -121,7 +121,7 @@ makemove(player_color us, spot_index mv)
 	    for (int f = 5; --f >= 0; fsp -= d) {	/* for each frame */
 		if (fsp->s_occ == BORDER)
 		    goto nextr;
-		if ((fsp->s_flags & BFLAG << r) != 0)
+		if (is_blocked(fsp, r))
 		    continue;
 
 		struct combostr *cbp = &frames[fsp->s_frame[r]];
@@ -139,8 +139,8 @@ makemove(player_color us, spot_index mv)
 		    else if (sp->s_occ == EMPTY)
 			sp->s_wval -= val;
 		    else {
-			/* this frame is now blocked, adjust values */
-			fsp->s_flags |= BFLAG << r;
+			set_blocked(fsp, r);
+			/* adjust values */
 			fsp->s_fval[BLACK][r].s = 0x600;
 			fsp->s_fval[WHITE][r].s = 0x600;
 			while (off-- > 0) {
@@ -290,7 +290,7 @@ update_overlap_different_direction(spot_index os, frame_index a, direction rb)
 		const struct spotstr *sp = &board[os - db * off];
 		if (sp->s_occ == BORDER)
 			break;
-		if ((sp->s_flags & BFLAG << rb) != 0)
+		if (is_blocked(sp, rb))
 			continue;
 
 		frame_index b = sp->s_frame[rb];
@@ -314,7 +314,7 @@ update_overlap(spot_index os)
 	    for (int f = 0; f < 6; f++, s1 -= d) {
 		if (board[s1].s_occ == BORDER)
 		    break;
-		if ((board[s1].s_flags & BFLAG << r) != 0)
+		if (is_blocked(&board[s1], r))
 		    continue;
 
 		/*
@@ -330,7 +330,7 @@ update_overlap(spot_index os)
 		for (int off = f + 1; off < 6; off++, s2 -= d) {
 		    if (board[s2].s_occ == BORDER)
 			break;
-		    if ((board[s2].s_flags & BFLAG << r) != 0)
+		    if (is_blocked(&board[s2], r))
 			continue;
 
 		    update_overlap_same_direction(s1, s2, a, d, off - f, r);
