@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.36 2022/06/19 10:23:48 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.37 2022/06/19 10:33:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.36 2022/06/19 10:23:48 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.37 2022/06/19 10:33:17 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -73,14 +73,14 @@ init_spot_flags_and_fval(struct spotstr *sp, int col, int row)
 		sp->s_fval[WHITE][DIR_D_].s = 0x401;
 		sp->s_fval[WHITE][DIR_DL].s = 0x401;
 	}
-	if (col > (BSZ - 4)) {
+	if (col > BSZ - 4) {
 		set_blocked(sp, DIR__R);
 		set_blocked(sp, DIR_DR);
 		sp->s_fval[BLACK][DIR__R].s = 0x600;
 		sp->s_fval[BLACK][DIR_DR].s = 0x600;
 		sp->s_fval[WHITE][DIR__R].s = 0x600;
 		sp->s_fval[WHITE][DIR_DR].s = 0x600;
-	} else if (col == (BSZ - 4)) {
+	} else if (col == BSZ - 4) {
 		sp->s_fval[BLACK][DIR__R].s = 0x500;
 		sp->s_fval[WHITE][DIR__R].s = 0x500;
 		if (!is_blocked(sp, DIR_DR)) {
