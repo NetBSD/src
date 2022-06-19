@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.287 2022/06/15 18:06:51 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.288 2022/06/19 11:50:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.287 2022/06/15 18:06:51 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.288 2022/06/19 11:50:42 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2132,7 +2132,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		return true;
 	}
 	if (rsym->s_def == DEF && dsym->s_def == DEF) {
-		/* redefinition of %s */
+		/* redefinition of '%s' */
 		error(28, dsym->s_name);
 		print_previous_declaration(-1, rsym);
 		return true;
@@ -2161,7 +2161,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		return true;
 	}
 	if (rsym->s_scl == EXTERN) {
-		/* previously declared extern, becomes static: %s */
+		/* '%s' was previously declared extern, becomes static */
 		warning(29, dsym->s_name);
 		print_previous_declaration(-1, rsym);
 		return false;
@@ -2879,20 +2879,19 @@ check_init(sym_t *sym)
 	erred = false;
 
 	if (sym->s_type->t_tspec == FUNC) {
-		/* cannot initialize function: %s */
+		/* cannot initialize function '%s' */
 		error(24, sym->s_name);
 		erred = true;
 	} else if (sym->s_scl == TYPEDEF) {
-		/* cannot initialize typedef: %s */
+		/* cannot initialize typedef '%s' */
 		error(25, sym->s_name);
 		erred = true;
 	} else if (sym->s_scl == EXTERN && sym->s_def == DECL) {
-		/* cannot initialize "extern" declaration: %s */
 		if (dcs->d_kind == DK_EXTERN) {
-			/* cannot initialize extern declaration: %s */
+			/* cannot initialize extern declaration '%s' */
 			warning(26, sym->s_name);
 		} else {
-			/* cannot initialize extern declaration: %s */
+			/* cannot initialize extern declaration '%s' */
 			error(26, sym->s_name);
 			erred = true;
 		}
