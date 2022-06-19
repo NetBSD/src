@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.83 2022/06/11 18:30:02 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.84 2022/06/19 12:08:31 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1220,6 +1220,27 @@ sort_part_usage_by_mount(const void *a, const void *b)
 	return (uintptr_t)a < (uintptr_t)b ? -1 : 1;
 }
 
+/*
+ * Are we able to newfs this type of file system?
+ * Keep in sync with switch labels below!
+ */
+bool
+can_newfs_fstype(unsigned int t)
+{
+	switch (t) {
+	case FS_APPLEUFS:
+	case FS_BSDFFS:
+	case FS_BSDLFS:
+	case FS_MSDOS:
+	case FS_EFI_SP:
+	case FS_SYSVBFS:
+	case FS_V7:
+	case FS_EX2FS:
+		return true;
+	}
+	return false;
+}
+
 int
 make_filesystems(struct install_partition_desc *install)
 {
@@ -1331,6 +1352,7 @@ make_filesystems(struct install_partition_desc *install)
 			fsname = "lfs";
 			break;
 		case FS_MSDOS:
+		case FS_EFI_SP:
 			asprintf(&newfs, "/sbin/newfs_msdos");
 			mnt_opts = "-tmsdos";
 			fsname = "msdos";

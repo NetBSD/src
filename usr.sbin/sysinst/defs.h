@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.83 2022/05/22 11:27:37 andvar Exp $	*/
+/*	$NetBSD: defs.h,v 1.84 2022/06/19 12:08:31 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -718,6 +718,7 @@ bool	clone_partition_data(struct disk_partitions *dest_parts, part_id did,
 
 struct menudesc;
 void	disp_cur_fspart(int, int);
+bool	can_newfs_fstype(unsigned int);
 int	make_filesystems(struct install_partition_desc *);
 int	make_fstab(struct install_partition_desc *);
 int	mount_disks(struct install_partition_desc *);
