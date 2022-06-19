@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.55 2022/05/29 17:01:42 rillig Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.56 2022/06/19 10:23:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -200,6 +200,10 @@ typedef unsigned short frame_index;
 
 /* 0 = right, 1 = down right, 2 = down, 3 = down left. */
 typedef unsigned char direction;
+#define DIR__R		0		/* right */
+#define DIR_DR		1		/* down right */
+#define DIR_D_		2		/* down */
+#define DIR_DL		3		/* down left */
 
 /*
  * One spot structure for each location on the board.
@@ -230,6 +234,18 @@ struct	spotstr {
 #define MFLAGALL	0x00F000	/* all frames seen */
 #define BFLAG		0x010000	/* frame intersects border or dead */
 #define BFLAGALL	0x0F0000	/* all frames dead */
+
+static inline bool
+is_blocked(const struct spotstr *sp, direction r)
+{
+	return (sp->s_flags & (BFLAG << r)) != 0;
+}
+
+static inline void
+set_blocked(struct spotstr *sp, direction r)
+{
+	sp->s_flags |= BFLAG << r;
+}
 
 struct game {
 	unsigned int	nmoves;		/* number of played moves */

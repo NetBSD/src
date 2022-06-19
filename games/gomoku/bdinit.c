@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.35 2022/05/29 16:30:44 rillig Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.36 2022/06/19 10:23:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /*	from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95	*/
-__RCSID("$NetBSD: bdinit.c,v 1.35 2022/05/29 16:30:44 rillig Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.36 2022/06/19 10:23:48 rillig Exp $");
 
 #include <string.h>
 #include "gomoku.h"
@@ -47,59 +47,56 @@ init_spot_flags_and_fval(struct spotstr *sp, int col, int row)
 
 	sp->s_flags = 0;
 	if (row < 5) {
-		/* directions 1, 2, 3 are blocked */
-		sp->s_flags |= (BFLAG << 1) | (BFLAG << 2) |
-		    (BFLAG << 3);
-		sp->s_fval[BLACK][1].s = 0x600;
-		sp->s_fval[BLACK][2].s = 0x600;
-		sp->s_fval[BLACK][3].s = 0x600;
-		sp->s_fval[WHITE][1].s = 0x600;
-		sp->s_fval[WHITE][2].s = 0x600;
-		sp->s_fval[WHITE][3].s = 0x600;
+		set_blocked(sp, DIR_DR);
+		set_blocked(sp, DIR_D_);
+		set_blocked(sp, DIR_DL);
+		sp->s_fval[BLACK][DIR_DR].s = 0x600;
+		sp->s_fval[BLACK][DIR_D_].s = 0x600;
+		sp->s_fval[BLACK][DIR_DL].s = 0x600;
+		sp->s_fval[WHITE][DIR_DR].s = 0x600;
+		sp->s_fval[WHITE][DIR_D_].s = 0x600;
+		sp->s_fval[WHITE][DIR_DL].s = 0x600;
 	} else if (row == 5) {
 		/* five spaces, blocked on one side */
-		sp->s_fval[BLACK][1].s = 0x500;
-		sp->s_fval[BLACK][2].s = 0x500;
-		sp->s_fval[BLACK][3].s = 0x500;
-		sp->s_fval[WHITE][1].s = 0x500;
-		sp->s_fval[WHITE][2].s = 0x500;
-		sp->s_fval[WHITE][3].s = 0x500;
+		sp->s_fval[BLACK][DIR_DR].s = 0x500;
+		sp->s_fval[BLACK][DIR_D_].s = 0x500;
+		sp->s_fval[BLACK][DIR_DL].s = 0x500;
+		sp->s_fval[WHITE][DIR_DR].s = 0x500;
+		sp->s_fval[WHITE][DIR_D_].s = 0x500;
+		sp->s_fval[WHITE][DIR_DL].s = 0x500;
 	} else {
 		/* six spaces, not blocked */
-		sp->s_fval[BLACK][1].s = 0x401;
-		sp->s_fval[BLACK][2].s = 0x401;
-		sp->s_fval[BLACK][3].s = 0x401;
-		sp->s_fval[WHITE][1].s = 0x401;
-		sp->s_fval[WHITE][2].s = 0x401;
-		sp->s_fval[WHITE][3].s = 0x401;
+		sp->s_fval[BLACK][DIR_DR].s = 0x401;
+		sp->s_fval[BLACK][DIR_D_].s = 0x401;
+		sp->s_fval[BLACK][DIR_DL].s = 0x401;
+		sp->s_fval[WHITE][DIR_DR].s = 0x401;
+		sp->s_fval[WHITE][DIR_D_].s = 0x401;
+		sp->s_fval[WHITE][DIR_DL].s = 0x401;
 	}
 	if (col > (BSZ - 4)) {
-		/* directions 0, 1 are blocked */
-		sp->s_flags |= BFLAG | (BFLAG << 1);
-		sp->s_fval[BLACK][0].s = 0x600;
-		sp->s_fval[BLACK][1].s = 0x600;
-		sp->s_fval[WHITE][0].s = 0x600;
-		sp->s_fval[WHITE][1].s = 0x600;
+		set_blocked(sp, DIR__R);
+		set_blocked(sp, DIR_DR);
+		sp->s_fval[BLACK][DIR__R].s = 0x600;
+		sp->s_fval[BLACK][DIR_DR].s = 0x600;
+		sp->s_fval[WHITE][DIR__R].s = 0x600;
+		sp->s_fval[WHITE][DIR_DR].s = 0x600;
 	} else if (col == (BSZ - 4)) {
-		sp->s_fval[BLACK][0].s = 0x500;
-		sp->s_fval[WHITE][0].s = 0x500;
-		/* if direction 1 is not blocked */
-		if ((sp->s_flags & (BFLAG << 1)) == 0) {
-			sp->s_fval[BLACK][1].s = 0x500;
-			sp->s_fval[WHITE][1].s = 0x500;
+		sp->s_fval[BLACK][DIR__R].s = 0x500;
+		sp->s_fval[WHITE][DIR__R].s = 0x500;
+		if (!is_blocked(sp, DIR_DR)) {
+			sp->s_fval[BLACK][DIR_DR].s = 0x500;
+			sp->s_fval[WHITE][DIR_DR].s = 0x500;
 		}
 	} else {
-		sp->s_fval[BLACK][0].s = 0x401;
-		sp->s_fval[WHITE][0].s = 0x401;
+		sp->s_fval[BLACK][DIR__R].s = 0x401;
+		sp->s_fval[WHITE][DIR__R].s = 0x401;
 		if (col < 5) {
-			/* direction 3 is blocked */
-			sp->s_flags |= (BFLAG << 3);
-			sp->s_fval[BLACK][3].s = 0x600;
-			sp->s_fval[WHITE][3].s = 0x600;
-		} else if (col == 5 &&
-		    (sp->s_flags & (BFLAG << 3)) == 0) {
-			sp->s_fval[BLACK][3].s = 0x500;
-			sp->s_fval[WHITE][3].s = 0x500;
+			set_blocked(sp, DIR_DL);
+			sp->s_fval[BLACK][DIR_DL].s = 0x600;
+			sp->s_fval[WHITE][DIR_DL].s = 0x600;
+		} else if (col == 5 && !is_blocked(sp, DIR_DL)) {
+			sp->s_fval[BLACK][DIR_DL].s = 0x500;
+			sp->s_fval[WHITE][DIR_DL].s = 0x500;
 		}
 	}
 }
@@ -110,7 +107,7 @@ init_spot_frame(struct spotstr *sp, frame_index *fip)
 {
 
 	for (direction r = 4; r-- > 0; ) {
-		if ((sp->s_flags & (BFLAG << r)) != 0)
+		if (is_blocked(sp, r))
 			continue;
 
 		frame_index fi = (*fip)++;
@@ -247,7 +244,7 @@ init_overlap_frame(int fia, int ra, int offa, spot_index s, int mask)
 			const struct spotstr *spb0 = &board[s - offb * db];
 			if (spb0->s_occ == BORDER)
 				break;
-			if ((spb0->s_flags & BFLAG << rb) != 0)
+			if (is_blocked(spb0, rb))
 				continue;
 
 			frame_index fib = spb0->s_frame[rb];
