@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_complex_split.c,v 1.9 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: d_c99_complex_split.c,v 1.10 2022/06/19 12:14:34 rillig Exp $	*/
 # 3 "d_c99_complex_split.c"
 
 /*
@@ -79,7 +79,7 @@ void
 trigger_warning(double _Complex c)
 {
 	c += 1.0;
-	/* expect+1: error: operands of '|' have incompatible types (double _Complex != double _Complex) [107] */
+	/* expect+1: error: operands of '|' have incompatible types 'double _Complex' and 'double _Complex' [107] */
 	return c | c;
 }
 

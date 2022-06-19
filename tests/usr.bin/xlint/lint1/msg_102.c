@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_102.c,v 1.3 2021/12/14 18:26:39 rillig Exp $	*/
+/*	$NetBSD: msg_102.c,v 1.4 2022/06/19 12:14:34 rillig Exp $	*/
 # 3 "msg_102.c"
 
-// Test for message: illegal member use: %s [102]
+// Test for message: illegal use of member '%s' [102]
 
 // Anonymous members are defined in C11 6.7.2.1p2.
 
@@ -23,7 +23,7 @@ eq(const struct bit_fields_and_bits *a, const struct bit_fields_and_bits *b)
 	 * external/mit/xorg/lib/dri.old/Makefile again.
 	 */
 	/* TODO: Add support for C11 anonymous struct and union members. */
-	/* expect+2: error: illegal member use: bits [102] */
-	/* expect+1: error: illegal member use: bits [102] */
+	/* expect+2: error: illegal use of member 'bits' [102] */
+	/* expect+1: error: illegal use of member 'bits' [102] */
 	return a->bits == b->bits;
 }

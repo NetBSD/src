@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.16 2022/06/11 14:17:33 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.17 2022/06/19 12:14:34 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -78,7 +78,7 @@ strict_bool_system_header_ctype(int c)
 	    (int)((ctype_table + 1)[c] & 0x0040)	/* INT */
 # 80 "d_c99_bool_strict_syshdr.c"
 	;
-	/* expect-1: error: operands of 'init' have incompatible types (_Bool != int) [107] */
+	/* expect-1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
 
 	int system_bool_assigned_to_int =
 # 85 "d_c99_bool_strict_syshdr.c" 3 4

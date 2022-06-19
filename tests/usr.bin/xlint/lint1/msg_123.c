@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_123.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_123.c,v 1.6 2022/06/19 12:14:34 rillig Exp $	*/
 # 3 "msg_123.c"
 
 // Test for message: illegal combination of %s '%s' and %s '%s', op '%s' [123]
@@ -22,13 +22,13 @@ compare(_Bool b, int i, double d, const char *p)
 	ok(d < b);
 	ok(d < i);
 	ok(d < d);
-	/* expect+1: error: operands of '<' have incompatible types (double != pointer) [107] */
+	/* expect+1: error: operands of '<' have incompatible types 'double' and 'pointer' [107] */
 	bad(d < p);
 	/* expect+1: warning: illegal combination of pointer 'pointer to const char' and integer '_Bool', op '<' [123] */
 	bad(p < b);
 	/* expect+1: warning: illegal combination of pointer 'pointer to const char' and integer 'int', op '<' [123] */
 	bad(p < i);
-	/* expect+1: error: operands of '<' have incompatible types (pointer != double) [107] */
+	/* expect+1: error: operands of '<' have incompatible types 'pointer' and 'double' [107] */
 	bad(p < d);
 	ok(p < p);
 }
