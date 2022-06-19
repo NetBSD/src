@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.11 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.12 2022/06/19 11:50:42 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -108,14 +108,14 @@ union incomplete_union {
 };
 
 
-/* expect+1: warning: cannot initialize extern declaration: extern_var [26] */
+/* expect+1: warning: cannot initialize extern declaration 'extern_var' [26] */
 extern int extern_var = 1;
 int defined_var = 1;
 /* expect+1: warning: static variable 'static_var' unused [226] */
 static int static_var = 1;
 /* expect+1: error: illegal storage class [8] */
 register int register_var = 1;
-/* expect+1: error: cannot initialize typedef: typedef_var [25] */
+/* expect+1: error: cannot initialize typedef 'typedef_var' [25] */
 typedef int typedef_var = 1;
 
 
