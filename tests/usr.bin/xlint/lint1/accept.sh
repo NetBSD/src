@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.10 2022/06/17 20:23:58 rillig Exp $
+# $NetBSD: accept.sh,v 1.11 2022/06/19 11:50:42 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,11 +37,11 @@ set -eu
 : "${archsubdir:=$(make -v ARCHSUBDIR)}"
 . './t_integration.sh'		# for configure_test_case
 
+done_tests=''
 for pattern in "$@"; do
 	# shellcheck disable=SC2231
-	for test in *$pattern*.c; do
-		base=${test%.*}
-		cfile="$base.c"
+	for cfile in *$pattern*.c; do
+		base=${cfile%.*}
 		expfile="$base.exp"
 		ln_file="$base.exp-ln"
 
@@ -85,8 +85,10 @@ for pattern in "$@"; do
 				fi
 			fi
 		esac
+
+		done_tests="$done_tests $cfile"
 	done
 done
 
-# shellcheck disable=SC2035
-lua '../check-expect.lua' *.c
+# shellcheck disable=SC2086
+lua './check-expect.lua' $done_tests

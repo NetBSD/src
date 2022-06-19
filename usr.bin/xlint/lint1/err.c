@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.170 2022/06/15 18:06:51 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.171 2022/06/19 11:50:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.170 2022/06/15 18:06:51 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.171 2022/06/19 11:50:42 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -78,12 +78,12 @@ static const char *const msgs[] = {
 	"redeclaration of formal parameter '%s'",		      /* 21 */
 	"incomplete or misplaced function definition",		      /* 22 */
 	"undefined label '%s'",					      /* 23 */
-	"cannot initialize function: %s",			      /* 24 */
-	"cannot initialize typedef: %s",			      /* 25 */
-	"cannot initialize extern declaration: %s",		      /* 26 */
+	"cannot initialize function '%s'",			      /* 24 */
+	"cannot initialize typedef '%s'",			      /* 25 */
+	"cannot initialize extern declaration '%s'",		      /* 26 */
 	"redeclaration of '%s'",				      /* 27 */
-	"redefinition of %s",					      /* 28 */
-	"previously declared extern, becomes static: %s",	      /* 29 */
+	"redefinition of '%s'",					      /* 28 */
+	"'%s' was previously declared extern, becomes static",	      /* 29 */
 	"redeclaration of '%s'; ANSI C requires static",	      /* 30 */
 	"'%s' has incomplete type '%s'",			      /* 31 */
 	"argument type defaults to 'int': %s",			      /* 32 */

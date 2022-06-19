@@ -1,12 +1,12 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.1 2022/06/17 20:31:56 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.2 2022/06/19 11:50:42 rillig Exp $
 
 --[[
 
 usage: lua ./check-expect.lua *.c
 
 Check that the /* expect+-n: ... */ comments in the .c source files match the
-actual messages found in the corresponding .exp files.  The .exp files are 
+actual messages found in the corresponding .exp files.  The .exp files are
 expected in the current working directory.
 
 The .exp files are generated on the fly during the ATF tests, see
@@ -112,7 +112,10 @@ end
 local function load_exp(exp_fname)
 
   local lines = load_lines(exp_fname)
-  if lines == nil then return {} end
+  if lines == nil then
+    print_error("check-expect.lua: error: file " .. exp_fname .. " not found")
+    return
+  end
 
   local messages = {}
   for exp_lineno, line in ipairs(lines) do

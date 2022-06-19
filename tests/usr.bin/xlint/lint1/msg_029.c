@@ -1,12 +1,12 @@
-/*	$NetBSD: msg_029.c,v 1.4 2022/06/15 20:18:31 rillig Exp $	*/
+/*	$NetBSD: msg_029.c,v 1.5 2022/06/19 11:50:42 rillig Exp $	*/
 # 3 "msg_029.c"
 
-// Test for message: previously declared extern, becomes static: %s [29]
+// Test for message: '%s' was previously declared extern, becomes static [29]
 
 extern int function(void);
 
 static int function(void)
-/* expect+1: warning: previously declared extern, becomes static: function [29] */
+/* expect+1: warning: 'function' was previously declared extern, becomes static [29] */
 {
 	return function();
 }
