@@ -1,4 +1,4 @@
-/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.4 2021/08/08 13:19:51 rillig Exp $	*/
+/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.5 2022/06/19 12:14:34 rillig Exp $	*/
 # 3 "c99_bool_strict_suppressed.c"
 
 /*
@@ -29,7 +29,7 @@ test(_Bool b, int i, const char *p)
 	while (1)
 		break;
 
-	/* suppressed+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* suppressed+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	b = i;
 
 	/* suppressed+1: error: operand of '!' must be bool, not 'int' [330] */

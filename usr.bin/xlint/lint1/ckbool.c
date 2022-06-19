@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.17 2022/06/15 18:29:21 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.18 2022/06/19 12:14:33 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.17 2022/06/15 18:29:21 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.18 2022/06/19 12:14:33 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -126,7 +126,7 @@ typeok_strict_bool_binary_compatible(op_t op, int arg,
 		/* return value type mismatch (%s) and (%s) */
 		error(211, tspec_name(lt), tspec_name(rt));
 	} else {
-		/* operands of '%s' have incompatible types (%s != %s) */
+		/* operands of '%s' have incompatible types '%s' and '%s' */
 		error(107, op_name(op), tspec_name(lt), tspec_name(rt));
 	}
 

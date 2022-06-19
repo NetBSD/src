@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.288 2022/06/19 11:50:42 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.289 2022/06/19 12:14:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.288 2022/06/19 11:50:42 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.289 2022/06/19 12:14:33 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1124,7 +1124,7 @@ declarator_1_struct_union(sym_t *dsym)
 
 		if (dsym->u.s_member.sm_sou_type ==
 		    dcs->d_redeclared_symbol->u.s_member.sm_sou_type) {
-			/* duplicate member name: %s */
+			/* duplicate member name '%s' */
 			error(33, dsym->s_name);
 			rmsym(dcs->d_redeclared_symbol);
 		}
@@ -2120,7 +2120,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		return true;
 	}
 	if (rsym->s_scl == TYPEDEF) {
-		/* typedef redeclared: %s */
+		/* typedef '%s' redeclared */
 		error(89, dsym->s_name);
 		print_previous_declaration(-1, rsym);
 		return true;

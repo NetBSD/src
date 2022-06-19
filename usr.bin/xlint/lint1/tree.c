@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.453 2022/06/15 18:29:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.454 2022/06/19 12:14:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.453 2022/06/15 18:29:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.454 2022/06/19 12:14:33 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -643,10 +643,10 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 */
 	if (str != NULL) {
 		if (eq && !allow_c90) {
-			/* illegal member use: %s */
+			/* illegal use of member '%s' */
 			warning(102, msym->s_name);
 		} else {
-			/* illegal member use: %s */
+			/* illegal use of member '%s' */
 			error(102, msym->s_name);
 		}
 		return msym;
@@ -2898,7 +2898,7 @@ warn_incompatible_types(op_t op,
 			error(171, type_name(ltp), type_name(rtp));
 		}
 	} else if (mp->m_binary) {
-		/* operands of '%s' have incompatible types (%s != %s) */
+		/* operands of '%s' have incompatible types '%s' and '%s' */
 		error(107, mp->m_name, tspec_name(lt), tspec_name(rt));
 	} else {
 		lint_assert(rt == NOTSPEC);

@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.37 2022/02/27 08:31:26 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.38 2022/06/19 12:14:34 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -226,17 +226,17 @@ strict_bool_bit_fields(void)
 	bool b;
 
 	b = flags.bool_flag;
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != unsigned int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'unsigned int' [107] */
 	b = flags.uint_flag;
 	flags.bool_flag = b;
-	/* expect+1: error: operands of '=' have incompatible types (unsigned int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'unsigned int' and '_Bool' [107] */
 	flags.uint_flag = b;
 
 	b = flags_ptr->bool_flag;
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != unsigned int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'unsigned int' [107] */
 	b = flags_ptr->uint_flag;
 	flags_ptr->bool_flag = b;
-	/* expect+1: error: operands of '=' have incompatible types (unsigned int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'unsigned int' and '_Bool' [107] */
 	flags_ptr->uint_flag = b;
 }
 
@@ -373,23 +373,23 @@ strict_bool_conversion_between_bool_and_int(void)
 	bool b;
 	int i;
 
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	b = 0;
 	b = __lint_false;
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	b = 1;
 	b = __lint_true;
 
 	i = 0;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = __lint_false;
 	i = 1;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = __lint_true;
 
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = b;
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	b = i;
 }
 
@@ -402,13 +402,13 @@ strict_bool_conversion_from_bool_to_scalar(bool b)
 	double d;
 	void *p;
 
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = b;
-	/* expect+1: error: operands of '=' have incompatible types (unsigned int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'unsigned int' and '_Bool' [107] */
 	u = b;
-	/* expect+1: error: operands of '=' have incompatible types (double != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'double' and '_Bool' [107] */
 	d = b;
-	/* expect+1: error: operands of '=' have incompatible types (pointer != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'pointer' and '_Bool' [107] */
 	p = b;
 }
 
@@ -554,14 +554,14 @@ strict_bool_operand_binary_dot_arrow(void)
 	struct bool_struct bs = { __lint_true };
 	b = bs.b;
 	bs.b = b;
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	bs.b = 0;
 
 	/* Access a struct member using the '->' operator. */
 	struct bool_struct *bsp = &bs;
 	b = bsp->b;
 	bsp->b = b;
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	bsp->b = 0;
 }
 
@@ -722,9 +722,9 @@ strict_bool_operand_binary_all(bool b, unsigned u)
 	/* expect+1: error: right operand of '>>' must not be bool [337] */
 	u = u >> b;
 	u = b ? u : u;
-	/* expect+1: error: operands of ':' have incompatible types (_Bool != unsigned int) [107] */
+	/* expect+1: error: operands of ':' have incompatible types '_Bool' and 'unsigned int' [107] */
 	u = b ? b : u;
-	/* expect+1: error: operands of ':' have incompatible types (unsigned int != _Bool) [107] */
+	/* expect+1: error: operands of ':' have incompatible types 'unsigned int' and '_Bool' [107] */
 	u = b ? u : b;
 }
 
@@ -747,13 +747,13 @@ strict_bool_operand_binary_comma(bool b, int i)
 void
 strict_bool_operator_result(bool b)
 {
-	/* expect+1: error: operands of 'init' have incompatible types (char != _Bool) [107] */
+	/* expect+1: error: operands of 'init' have incompatible types 'char' and '_Bool' [107] */
 	char c = b;
-	/* expect+1: error: operands of 'init' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of 'init' have incompatible types 'int' and '_Bool' [107] */
 	int i = b;
-	/* expect+1: error: operands of 'init' have incompatible types (double != _Bool) [107] */
+	/* expect+1: error: operands of 'init' have incompatible types 'double' and '_Bool' [107] */
 	double d = b;
-	/* expect+1: error: operands of 'init' have incompatible types (pointer != _Bool) [107] */
+	/* expect+1: error: operands of 'init' have incompatible types 'pointer' and '_Bool' [107] */
 	void *p = b;
 
 	/* The right-hand sides of these assignments are all ok. */
@@ -771,23 +771,23 @@ strict_bool_operator_result(bool b)
 	 * The right-hand sides of these assignments are not ok, they
 	 * implicitly convert from bool to int.
 	 */
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = !b;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = i == i;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = i != i;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = i < i;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = i <= i;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = i >= i;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = i > i;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = b && b;
-	/* expect+1: error: operands of '=' have incompatible types (int != _Bool) [107] */
+	/* expect+1: error: operands of '=' have incompatible types 'int' and '_Bool' [107] */
 	i = b || b;
 }
 
@@ -827,7 +827,7 @@ strict_bool_bitwise_and_enum(enum Flags flags)
 	 * because it would be too confusing if FLAG0 would work and all the
 	 * other flags wouldn't.
 	 */
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	b = flags & FLAG0;
 
 	/*
@@ -836,7 +836,7 @@ strict_bool_bitwise_and_enum(enum Flags flags)
 	 * it as 2, as that is the integer value of FLAG1.  Since FLAG1 fits
 	 * in a uint8_t, no truncation takes place.
 	 */
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	b = flags & FLAG1;
 
 	/*
@@ -844,7 +844,7 @@ strict_bool_bitwise_and_enum(enum Flags flags)
 	 * zero.  In a uint8_t, the stored value would be 0 since bit 28 is
 	 * out of range for a uint8_t and thus gets truncated.
 	 */
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '=' have incompatible types '_Bool' and 'int' [107] */
 	b = flags & FLAG28;
 }
 
@@ -884,7 +884,7 @@ query_flag_from_enum_bit_set(enum Flags flags)
 void
 strict_bool_operator_eq_bool_int(void)
 {
-	/* expect+1: error: operands of '==' have incompatible types (_Bool != int) [107] */
+	/* expect+1: error: operands of '==' have incompatible types '_Bool' and 'int' [107] */
 	(void)(strict_bool_conversion_return_false() == 0);
 }
 
@@ -940,9 +940,9 @@ initialization(void)
 	} var[] = {
 	    { __lint_false },
 	    { __lint_true },
-	    /* expect+1: error: operands of 'init' have incompatible types (_Bool != int) [107] */
+	    /* expect+1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
 	    { 0 },
-	    /* expect+1: error: operands of 'init' have incompatible types (_Bool != int) [107] */
+	    /* expect+1: error: operands of 'init' have incompatible types '_Bool' and 'int' [107] */
 	    { 1 },
 	};
 }

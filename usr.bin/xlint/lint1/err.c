@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.171 2022/06/19 11:50:42 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.172 2022/06/19 12:14:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.171 2022/06/19 11:50:42 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.172 2022/06/19 12:14:33 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ static const char *const msgs[] = {
 	"redeclaration of '%s'; ANSI C requires static",	      /* 30 */
 	"'%s' has incomplete type '%s'",			      /* 31 */
 	"argument type defaults to 'int': %s",			      /* 32 */
-	"duplicate member name: %s",				      /* 33 */
+	"duplicate member name '%s'",				      /* 33 */
 	"nonportable bit-field type '%s'",			      /* 34 */
 	"illegal bit-field type '%s'",				      /* 35 */
 	"illegal bit-field size: %d",				      /* 36 */
@@ -143,7 +143,7 @@ static const char *const msgs[] = {
 	"automatic hides external declaration: %s",		      /* 86 */
 	"static hides external declaration: %s",		      /* 87 */
 	"typedef hides external declaration: %s",		      /* 88 */
-	"typedef redeclared: %s",				      /* 89 */
+	"typedef '%s' redeclared",				      /* 89 */
 	"inconsistent redeclaration of extern: %s",		      /* 90 */
 	"declaration hides parameter: %s",			      /* 91 */
 	"inconsistent redeclaration of static: %s",		      /* 92 */
@@ -156,12 +156,12 @@ static const char *const msgs[] = {
 	"'%s' undefined",					      /* 99 */
 	"unary + is illegal in traditional C",			      /* 100 */
 	"type '%s' does not have member '%s'",			      /* 101 */
-	"illegal member use: %s",				      /* 102 */
+	"illegal use of member '%s'",				      /* 102 */
 	"left operand of '.' must be struct or union, not '%s'",      /* 103 */
 	"left operand of '->' must be pointer to struct or union, not '%s'", /* 104 */
 	"non-unique member requires struct/union %s",		      /* 105 */
 	"left operand of '->' must be pointer",			      /* 106 */
-	"operands of '%s' have incompatible types (%s != %s)",	      /* 107 */
+	"operands of '%s' have incompatible types '%s' and '%s'",     /* 107 */
 	"operand of '%s' has invalid type (%s)",		      /* 108 */
 	"void type illegal in expression",			      /* 109 */
 	"pointer to function is not allowed here",		      /* 110 */
