@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.37 2022/06/18 13:52:42 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.38 2022/06/19 12:08:31 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.37 2022/06/18 13:52:42 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.38 2022/06/19 12:08:31 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -978,6 +978,8 @@ edit_ptn(menudesc *menu, void *arg)
 		edit.info.last_mounted = edit.wanted->mount;
 		if (is_new_part) {
 			edit.wanted->parts = pset->parts;
+			if (!can_newfs_fstype(edit.wanted->fs_type))
+				edit.wanted->instflags &= ~PUIINST_NEWFS;
 			edit.wanted->cur_part_id = pset->parts->pscheme->
 			    add_partition(pset->parts, &edit.info, &err);
 			if (edit.wanted->cur_part_id == NO_PART)
@@ -1081,8 +1083,7 @@ update_edit_ptn_menu(menudesc *m, void *arg)
 			/* can only install onto PT_root partitions */
 			continue;
 		if (m->opts[i].opt_action == edit_fs_preserve &&
-		    t != FS_BSDFFS && t != FS_BSDLFS && t != FS_APPLEUFS &&
-		    t != FS_MSDOS && t != FS_EFI_SP && t != FS_EX2FS) {
+		    !can_newfs_fstype(t)) {
 			/* Can not newfs this filesystem */
 			edit->wanted->instflags &= ~PUIINST_NEWFS;
 			continue;
