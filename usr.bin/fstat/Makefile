@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2019/10/13 07:28:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2022/06/19 11:31:19 simonb Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -6,6 +6,9 @@
 USE_FORT?= yes	# setuid
 PROG=	fstat
 SRCS=	fstat.c isofs.c ntfs.c ptyfs.c tmpfs.c misc.c
+.if (${MKZFS} != "no")
+SRCS+=	zfs.c
+.endif
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 BINGRP=	kmem
@@ -15,6 +18,9 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/sys
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
+.endif
+.if (${MKZFS} != "no")
+CPPFLAGS+=-DHAVE_ZFS
 .endif
 CPPFLAGS+=-D_KMEMUSER
 
