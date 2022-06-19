@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.114 2020/08/26 23:08:29 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.115 2022/06/19 11:31:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.114 2020/08/26 23:08:29 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.115 2022/06/19 11:31:19 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -611,6 +611,12 @@ vfilestat(struct vnode *vp, struct filestat *fsp)
 			if (!tmpfs_filestat(vp, fsp))
 				badtype = "error";
 			break;
+#ifdef HAVE_ZFS
+		case VT_ZFS:
+			if (!zfs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+#endif
 		case VT_NULL:
 		case VT_OVERLAY:
 		case VT_UMAP:
