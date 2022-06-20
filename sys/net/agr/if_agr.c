@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.54 2021/12/31 14:25:24 riastradh Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.55 2022/06/20 08:02:25 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.54 2021/12/31 14:25:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.55 2022/06/20 08:02:25 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -167,10 +167,12 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	 * see if the device performed the decapsulation and
 	 * provided us with the tag.
 	 */
-	if (ec->ec_nvlans && vlan_has_tag(m)) {
-		MODULE_HOOK_CALL_VOID(if_vlan_vlan_input_hook, (ifp, m),
-		    m_freem(m));
-		return;
+	if (ec->ec_nvlans && vlan_has_tag(m) &&
+	    EVL_VLANOFTAG(vlan_get_tag(m)) != 0) {
+		MODULE_HOOK_CALL(if_vlan_vlan_input_hook, (ifp, m),
+		    m, m);
+		if (m == NULL)
+			return;
 	}
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
