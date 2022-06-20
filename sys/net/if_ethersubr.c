@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.312 2022/06/20 08:02:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.313 2022/06/20 08:14:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.312 2022/06/20 08:02:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.313 2022/06/20 08:14:48 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -725,6 +725,18 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	if_statadd(ifp, if_ibytes, m->m_pkthdr.len);
 
+	if (!vlan_has_tag(m) && etype == ETHERTYPE_VLAN) {
+		m = ether_strip_vlantag(m);
+		if (m == NULL) {
+			if_statinc(ifp, if_ierrors);
+			return;
+		}
+
+		eh = mtod(m, struct ether_header *);
+		etype = ntohs(eh->ether_type);
+		ehlen = sizeof(*eh);
+	}
+
 	if ((m->m_flags & (M_BCAST | M_MCAST | M_PROMISC)) == 0 &&
 	    (ifp->if_flags & IFF_PROMISC) != 0 &&
 	    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
@@ -763,22 +775,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * does not exist to take those frames, they're returned
 	 * to ether_input().
 	 */
-	if (vlan_has_tag(m) || etype == ETHERTYPE_VLAN) {
-		struct ether_vlan_header *evl = (void *)eh;
-		uint16_t vlan_id;
 
-		if (vlan_has_tag(m)) {
-			vlan_id = EVL_VLANOFTAG(vlan_get_tag(m));
-		} else {
-			if (m->m_len < sizeof(*evl))
-				goto error;
-
-			vlan_id = EVL_VLANOFTAG(ntohs(evl->evl_tag));
-			etype = ntohs(evl->evl_proto);
-			ehlen = sizeof(*evl);
-		}
-
-		if (vlan_id == 0) {
+	if (vlan_has_tag(m)) {
+		if (EVL_VLANOFTAG(vlan_get_tag(m)) == 0) {
 			if (etype == ETHERTYPE_VLAN ||
 			     etype == ETHERTYPE_QINQ)
 				goto drop;
@@ -1745,6 +1744,108 @@ ether_del_vlantag(struct ifnet *ifp, uint16_t vtag)
 	kmem_free(vidp, sizeof(*vidp));
 
 	return 0;
+}
+
+int
+ether_inject_vlantag(struct mbuf **mp, uint16_t etype, uint16_t tag)
+{
+	static const size_t min_data_len =
+	    ETHER_MIN_LEN - ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN;
+	/* Used to pad ethernet frames with < ETHER_MIN_LEN bytes */
+	static const char vlan_zero_pad_buff[ETHER_MIN_LEN] = { 0 };
+
+	struct ether_vlan_header *evl;
+	struct mbuf *m = *mp;
+	int error;
+
+	error = 0;
+
+	M_PREPEND(m, ETHER_VLAN_ENCAP_LEN, M_DONTWAIT);
+	if (m == NULL) {
+		error = ENOBUFS;
+		goto out;
+	}
+
+	if (m->m_len < sizeof(*evl)) {
+		m = m_pullup(m, sizeof(*evl));
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto out;
+		}
+	}
+
+	/*
+	 * Transform the Ethernet header into an
+	 * Ethernet header with 802.1Q encapsulation.
+	 */
+	memmove(mtod(m, void *),
+	    mtod(m, char *) + ETHER_VLAN_ENCAP_LEN,
+	    sizeof(struct ether_header));
+	evl = mtod(m, struct ether_vlan_header *);
+	evl->evl_proto = evl->evl_encap_proto;
+	evl->evl_encap_proto = htons(etype);
+	evl->evl_tag = htons(tag);
+
+	/*
+	 * To cater for VLAN-aware layer 2 ethernet
+	 * switches which may need to strip the tag
+	 * before forwarding the packet, make sure
+	 * the packet+tag is at least 68 bytes long.
+	 * This is necessary because our parent will
+	 * only pad to 64 bytes (ETHER_MIN_LEN) and
+	 * some switches will not pad by themselves
+	 * after deleting a tag.
+	 */
+	if (m->m_pkthdr.len < min_data_len) {
+		m_copyback(m, m->m_pkthdr.len,
+		    min_data_len - m->m_pkthdr.len,
+		    vlan_zero_pad_buff);
+	}
+
+	m->m_flags &= ~M_VLANTAG;
+
+out:
+	*mp = m;
+	return error;
+}
+
+struct mbuf *
+ether_strip_vlantag(struct mbuf *m)
+{
+	struct ether_vlan_header *evl;
+
+	if (m->m_len < sizeof(*evl) &&
+	    (m = m_pullup(m, sizeof(*evl))) == NULL) {
+		return NULL;
+	}
+
+	if (m_makewritable(&m, 0, sizeof(*evl), M_DONTWAIT)) {
+		m_freem(m);
+		return NULL;
+	}
+
+	evl = mtod(m, struct ether_vlan_header *);
+	KASSERT(ntohs(evl->evl_encap_proto) == ETHERTYPE_VLAN);
+
+	vlan_set_tag(m, ntohs(evl->evl_tag));
+
+	/*
+	 * Restore the original ethertype.  We'll remove
+	 * the encapsulation after we've found the vlan
+	 * interface corresponding to the tag.
+	 */
+	evl->evl_encap_proto = evl->evl_proto;
+
+	/*
+	 * Remove the encapsulation header and append tag.
+	 * The original header has already been fixed up above.
+	 */
+	vlan_set_tag(m, ntohs(evl->evl_tag));
+	memmove((char *)evl + ETHER_VLAN_ENCAP_LEN, evl,
+	    offsetof(struct ether_vlan_header, evl_encap_proto));
+	m_adj(m, ETHER_VLAN_ENCAP_LEN);
+
+	return m;
 }
 
 static int

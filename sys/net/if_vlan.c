@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.169 2022/06/20 08:09:13 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.170 2022/06/20 08:14:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.169 2022/06/20 08:09:13 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.170 2022/06/20 08:14:48 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -227,9 +227,6 @@ static struct psref_class *ifvm_psref_class __read_mostly;
 
 struct if_clone vlan_cloner =
     IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
-
-/* Used to pad ethernet frames with < ETHER_MIN_LEN bytes */
-static char vlan_zero_pad_buff[ETHER_MIN_LEN];
 
 static uint32_t nvlanifs;
 
@@ -1281,57 +1278,14 @@ vlan_start(struct ifnet *ifp)
 
 			switch (p->if_type) {
 			case IFT_ETHER:
-			    {
-				struct ether_vlan_header *evl;
-
-				M_PREPEND(m, ETHER_VLAN_ENCAP_LEN, M_DONTWAIT);
+				(void)ether_inject_vlantag(&m,
+				    ETHERTYPE_VLAN, mib->ifvm_tag);
 				if (m == NULL) {
-					printf("%s: unable to prepend encap header",
+					printf("%s: unable to inject VLAN tag",
 					    p->if_xname);
-					if_statinc(ifp, if_oerrors);
 					continue;
-				}
-				if (m->m_len < sizeof(struct ether_vlan_header))
-					m = m_pullup(m,
-					    sizeof(struct ether_vlan_header));
-				if (m == NULL) {
-					printf("%s: unable to pullup encap "
-					    "header", p->if_xname);
-					if_statinc(ifp, if_oerrors);
-					continue;
-				}
-
-				/*
-				 * Transform the Ethernet header into an
-				 * Ethernet header with 802.1Q encapsulation.
-				 */
-				memmove(mtod(m, void *),
-				    mtod(m, char *) + ETHER_VLAN_ENCAP_LEN,
-				    sizeof(struct ether_header));
-				evl = mtod(m, struct ether_vlan_header *);
-				evl->evl_proto = evl->evl_encap_proto;
-				evl->evl_encap_proto = htons(ETHERTYPE_VLAN);
-				evl->evl_tag = htons(mib->ifvm_tag);
-
-				/*
-				 * To cater for VLAN-aware layer 2 ethernet
-				 * switches which may need to strip the tag
-				 * before forwarding the packet, make sure
-				 * the packet+tag is at least 68 bytes long.
-				 * This is necessary because our parent will
-				 * only pad to 64 bytes (ETHER_MIN_LEN) and
-				 * some switches will not pad by themselves
-				 * after deleting a tag.
-				 */
-				const size_t min_data_len = ETHER_MIN_LEN -
-				    ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN;
-				if (m->m_pkthdr.len < min_data_len) {
-					m_copyback(m, m->m_pkthdr.len,
-					    min_data_len - m->m_pkthdr.len,
-					    vlan_zero_pad_buff);
 				}
 				break;
-			    }
 
 			default:
 				panic("%s: impossible", __func__);
@@ -1424,59 +1378,15 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 		 */
 		switch (p->if_type) {
 		case IFT_ETHER:
-		    {
-			struct ether_vlan_header *evl;
-
-			M_PREPEND(m, ETHER_VLAN_ENCAP_LEN, M_DONTWAIT);
-			if (m == NULL) {
-				printf("%s: unable to prepend encap header",
+			error = ether_inject_vlantag(&m,
+			    ETHERTYPE_VLAN, mib->ifvm_tag);
+			if (error != 0) {
+				KASSERT(m == NULL);
+				printf("%s: unable to inject VLAN tag",
 				    p->if_xname);
-				if_statinc(ifp, if_oerrors);
-				error = ENOBUFS;
 				goto out;
-			}
-			if (m->m_len < sizeof(struct ether_vlan_header))
-				m = m_pullup(m,
-				    sizeof(struct ether_vlan_header));
-			if (m == NULL) {
-				printf("%s: unable to pullup encap "
-				    "header", p->if_xname);
-				if_statinc(ifp, if_oerrors);
-				error = ENOBUFS;
-				goto out;
-			}
-
-			/*
-			 * Transform the Ethernet header into an
-			 * Ethernet header with 802.1Q encapsulation.
-			 */
-			memmove(mtod(m, void *),
-			    mtod(m, char *) + ETHER_VLAN_ENCAP_LEN,
-			    sizeof(struct ether_header));
-			evl = mtod(m, struct ether_vlan_header *);
-			evl->evl_proto = evl->evl_encap_proto;
-			evl->evl_encap_proto = htons(ETHERTYPE_VLAN);
-			evl->evl_tag = htons(mib->ifvm_tag);
-
-			/*
-			 * To cater for VLAN-aware layer 2 ethernet
-			 * switches which may need to strip the tag
-			 * before forwarding the packet, make sure
-			 * the packet+tag is at least 68 bytes long.
-			 * This is necessary because our parent will
-			 * only pad to 64 bytes (ETHER_MIN_LEN) and
-			 * some switches will not pad by themselves
-			 * after deleting a tag.
-			 */
-			const size_t min_data_len = ETHER_MIN_LEN -
-			    ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN;
-			if (m->m_pkthdr.len < min_data_len) {
-				m_copyback(m, m->m_pkthdr.len,
-				    min_data_len - m->m_pkthdr.len,
-				    vlan_zero_pad_buff);
 			}
 			break;
-		    }
 
 		default:
 			panic("%s: impossible", __func__);
@@ -1523,53 +1433,10 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
 
-	if (vlan_has_tag(m)) {
-		vid = EVL_VLANOFTAG(vlan_get_tag(m));
-	} else {
-		struct ether_vlan_header *evl;
-
-		if (ifp->if_type != IFT_ETHER) {
-			panic("%s: impossible", __func__);
-		}
-
-		if (m->m_len < sizeof(struct ether_vlan_header) &&
-		    (m = m_pullup(m,
-		     sizeof(struct ether_vlan_header))) == NULL) {
-			printf("%s: no memory for VLAN header, "
-			    "dropping packet.\n", ifp->if_xname);
-			return NULL;
-		}
-
-		if (m_makewritable(&m, 0,
-		    sizeof(struct ether_vlan_header), M_DONTWAIT)) {
-			m_freem(m);
-			if_statinc(ifp, if_ierrors);
-			return NULL;
-		}
-
-		evl = mtod(m, struct ether_vlan_header *);
-		KASSERT(ntohs(evl->evl_encap_proto) == ETHERTYPE_VLAN);
-
-		vid = EVL_VLANOFTAG(ntohs(evl->evl_tag));
-		vlan_set_tag(m, ntohs(evl->evl_tag));
-
-		/*
-		 * Restore the original ethertype.  We'll remove
-		 * the encapsulation after we've found the vlan
-		 * interface corresponding to the tag.
-		 */
-		evl->evl_encap_proto = evl->evl_proto;
-
-		/*
-		 * Remove the encapsulation header and append tag.
-		 * The original header has already been fixed up above.
-		 */
-		memmove((char *)evl + ETHER_VLAN_ENCAP_LEN, evl,
-		    offsetof(struct ether_vlan_header, evl_encap_proto));
-		m_adj(m, ETHER_VLAN_ENCAP_LEN);
-	}
-
+	KASSERT(vlan_has_tag(m));
+	vid = EVL_VLANOFTAG(vlan_get_tag(m));
 	KASSERT(vid != 0);
+
 	mib = vlan_lookup_tag_psref(ifp, vid, &psref);
 	if (mib == NULL) {
 		return m;
