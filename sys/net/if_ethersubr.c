@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.313 2022/06/20 08:14:48 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.314 2022/06/20 08:20:09 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.313 2022/06/20 08:14:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.314 2022/06/20 08:20:09 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -971,6 +971,37 @@ error:
 	return;
 }
 
+static void
+ether_bpf_mtap(struct bpf_if *bp, struct mbuf *m, u_int direction)
+{
+	struct ether_vlan_header evl;
+	struct m_hdr mh, md;
+
+	KASSERT(bp != NULL);
+
+	if (!vlan_has_tag(m)) {
+		bpf_mtap3(bp, m, direction);
+		return;
+	}
+
+	memcpy(&evl, mtod(m, char *), ETHER_HDR_LEN);
+	evl.evl_proto = evl.evl_encap_proto;
+	evl.evl_encap_proto = htons(ETHERTYPE_VLAN);
+	evl.evl_tag = htons(vlan_get_tag(m));
+
+	md.mh_flags = 0;
+	md.mh_data = m->m_data + ETHER_HDR_LEN;
+	md.mh_len = m->m_len - ETHER_HDR_LEN;
+	md.mh_next = m->m_next;
+
+	mh.mh_flags = 0;
+	mh.mh_data = (char *)&evl;
+	mh.mh_len = sizeof(evl);
+	mh.mh_next = (struct mbuf *)&md;
+
+	bpf_mtap3(bp, (struct mbuf *)&mh, direction);
+}
+
 /*
  * Convert Ethernet address to printable (loggable) representation.
  */
@@ -1011,6 +1042,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->_if_input = ether_input;
+	ifp->if_bpf_mtap = ether_bpf_mtap;
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 
