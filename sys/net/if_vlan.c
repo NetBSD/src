@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.168 2022/06/20 08:02:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.169 2022/06/20 08:09:13 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.168 2022/06/20 08:02:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.169 2022/06/20 08:09:13 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -138,7 +138,6 @@ struct vlan_mc_entry {
 struct ifvlan_linkmib {
 	struct ifvlan *ifvm_ifvlan;
 	const struct vlan_multisw *ifvm_msw;
-	int	ifvm_encaplen;	/* encapsulation length */
 	int	ifvm_mtufudge;	/* MTU fudged by this much */
 	int	ifvm_mintu;	/* min transmission unit */
 	uint16_t ifvm_proto;	/* encapsulation ethertype */
@@ -170,7 +169,6 @@ struct ifvlan {
 #define	ifv_if		ifv_ec.ec_if
 
 #define	ifv_msw		ifv_mib.ifvm_msw
-#define	ifv_encaplen	ifv_mib.ifvm_encaplen
 #define	ifv_mtufudge	ifv_mib.ifvm_mtufudge
 #define	ifv_mintu	ifv_mib.ifvm_mintu
 #define	ifv_tag		ifv_mib.ifvm_tag
@@ -437,7 +435,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 		struct ethercom *ec = (void *)p;
 
 		nmib->ifvm_msw = &vlan_ether_multisw;
-		nmib->ifvm_encaplen = ETHER_VLAN_ENCAP_LEN;
 		nmib->ifvm_mintu = ETHERMIN;
 
 		error = ether_add_vlantag(p, tag, NULL);
@@ -454,7 +451,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 			 * the feature with other NetBSD
 			 * implementations, which might still be useful.
 			 */
-			nmib->ifvm_mtufudge = nmib->ifvm_encaplen;
+			nmib->ifvm_mtufudge = ETHER_VLAN_ENCAP_LEN;
 		}
 
 		/*
@@ -1281,19 +1278,19 @@ vlan_start(struct ifnet *ifp)
 			/*
 			 * insert the tag ourselves
 			 */
-			M_PREPEND(m, mib->ifvm_encaplen, M_DONTWAIT);
-			if (m == NULL) {
-				printf("%s: unable to prepend encap header",
-				    p->if_xname);
-				if_statinc(ifp, if_oerrors);
-				continue;
-			}
 
 			switch (p->if_type) {
 			case IFT_ETHER:
 			    {
 				struct ether_vlan_header *evl;
 
+				M_PREPEND(m, ETHER_VLAN_ENCAP_LEN, M_DONTWAIT);
+				if (m == NULL) {
+					printf("%s: unable to prepend encap header",
+					    p->if_xname);
+					if_statinc(ifp, if_oerrors);
+					continue;
+				}
 				if (m->m_len < sizeof(struct ether_vlan_header))
 					m = m_pullup(m,
 					    sizeof(struct ether_vlan_header));
@@ -1309,7 +1306,7 @@ vlan_start(struct ifnet *ifp)
 				 * Ethernet header with 802.1Q encapsulation.
 				 */
 				memmove(mtod(m, void *),
-				    mtod(m, char *) + mib->ifvm_encaplen,
+				    mtod(m, char *) + ETHER_VLAN_ENCAP_LEN,
 				    sizeof(struct ether_header));
 				evl = mtod(m, struct ether_vlan_header *);
 				evl->evl_proto = evl->evl_encap_proto;
@@ -1425,20 +1422,19 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 		/*
 		 * insert the tag ourselves
 		 */
-		M_PREPEND(m, mib->ifvm_encaplen, M_DONTWAIT);
-		if (m == NULL) {
-			printf("%s: unable to prepend encap header",
-			    p->if_xname);
-			if_statinc(ifp, if_oerrors);
-			error = ENOBUFS;
-			goto out;
-		}
-
 		switch (p->if_type) {
 		case IFT_ETHER:
 		    {
 			struct ether_vlan_header *evl;
 
+			M_PREPEND(m, ETHER_VLAN_ENCAP_LEN, M_DONTWAIT);
+			if (m == NULL) {
+				printf("%s: unable to prepend encap header",
+				    p->if_xname);
+				if_statinc(ifp, if_oerrors);
+				error = ENOBUFS;
+				goto out;
+			}
 			if (m->m_len < sizeof(struct ether_vlan_header))
 				m = m_pullup(m,
 				    sizeof(struct ether_vlan_header));
@@ -1455,7 +1451,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 			 * Ethernet header with 802.1Q encapsulation.
 			 */
 			memmove(mtod(m, void *),
-			    mtod(m, char *) + mib->ifvm_encaplen,
+			    mtod(m, char *) + ETHER_VLAN_ENCAP_LEN,
 			    sizeof(struct ether_header));
 			evl = mtod(m, struct ether_vlan_header *);
 			evl->evl_proto = evl->evl_encap_proto;
@@ -1526,12 +1522,9 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	uint16_t vid;
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
-	bool have_vtag;
 
-	have_vtag = vlan_has_tag(m);
-	if (have_vtag) {
+	if (vlan_has_tag(m)) {
 		vid = EVL_VLANOFTAG(vlan_get_tag(m));
-		m->m_flags &= ~M_VLANTAG;
 	} else {
 		struct ether_vlan_header *evl;
 
@@ -1558,6 +1551,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 		KASSERT(ntohs(evl->evl_encap_proto) == ETHERTYPE_VLAN);
 
 		vid = EVL_VLANOFTAG(ntohs(evl->evl_tag));
+		vlan_set_tag(m, ntohs(evl->evl_tag));
 
 		/*
 		 * Restore the original ethertype.  We'll remove
@@ -1565,6 +1559,14 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 		 * interface corresponding to the tag.
 		 */
 		evl->evl_encap_proto = evl->evl_proto;
+
+		/*
+		 * Remove the encapsulation header and append tag.
+		 * The original header has already been fixed up above.
+		 */
+		memmove((char *)evl + ETHER_VLAN_ENCAP_LEN, evl,
+		    offsetof(struct ether_vlan_header, evl_encap_proto));
+		m_adj(m, ETHER_VLAN_ENCAP_LEN);
 	}
 
 	KASSERT(vid != 0);
@@ -1572,7 +1574,6 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	if (mib == NULL) {
 		return m;
 	}
-	KASSERT(mib->ifvm_encaplen == ETHER_VLAN_ENCAP_LEN);
 
 	ifv = mib->ifvm_ifvlan;
 	if ((ifv->ifv_if.if_flags & (IFF_UP | IFF_RUNNING)) !=
@@ -1583,14 +1584,11 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	/*
-	 * Now, remove the encapsulation header.  The original
-	 * header has already been fixed up above.
+	 * Having found a valid vlan interface corresponding to
+	 * the given source interface and vlan tag.
+	 * remove the vlan tag.
 	 */
-	if (!have_vtag) {
-		memmove(mtod(m, char *) + mib->ifvm_encaplen,
-		    mtod(m, void *), sizeof(struct ether_header));
-		m_adj(m, mib->ifvm_encaplen);
-	}
+	m->m_flags &= ~M_VLANTAG;
 
 	/*
 	 * Drop promiscuously received packets if we are not in
