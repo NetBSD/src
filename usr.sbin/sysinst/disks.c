@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.84 2022/06/19 12:08:31 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.85 2022/06/20 18:06:28 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -982,6 +982,8 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 				msg_fmt_display(MSG_ask_disk, "%s", doingwhat);
 				i = -1;
 				process_menu(menu_no, &i);
+				if (i == -1)
+					return -1;
 				if (disk_no[i] == -2) {
 					/* do wedges menu */
 					if (w_menu_no == -1) {
