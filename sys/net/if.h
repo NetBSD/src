@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.297 2022/06/20 08:02:25 yamaguchi Exp $	*/
+/*	$NetBSD: if.h,v 1.298 2022/06/20 08:20:09 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -340,6 +340,8 @@ typedef struct ifnet {
 #define	if_watchdog	if_slowtimo
 	void		(*if_drain)	/* :: routine to release resources */
 			    (struct ifnet *);
+	void		(*if_bpf_mtap)	/* :: bpf routine */
+			    (struct bpf_if *, struct mbuf *, u_int);
 	struct ifaltq	if_snd;		/* q: output queue (includes altq) */
 	struct ifaddr	*if_dl;		/* i: identity of this interface. */
 	const struct sockaddr_dl
