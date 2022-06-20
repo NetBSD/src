@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.88 2021/11/15 07:07:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.89 2022/06/20 08:14:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -364,12 +364,6 @@ vlan_set_tag(struct mbuf *m, uint16_t vlantag)
 	return;
 }
 
-static __inline bool
-vlan_has_tag(struct mbuf *m)
-{
-	return (m->m_flags & M_VLANTAG) != 0;
-}
-
 /* extract VLAN ID value from a VLAN tag */
 static __inline uint16_t
 vlan_get_tag(struct mbuf *m)
@@ -377,6 +371,23 @@ vlan_get_tag(struct mbuf *m)
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	KASSERT(m->m_flags & M_VLANTAG);
 	return m->m_pkthdr.ether_vtag;
+}
+
+static __inline bool
+vlan_has_tag(struct mbuf *m)
+{
+	return (m->m_flags & M_VLANTAG) != 0;
+}
+
+static __inline bool
+vlan_is_hwtag_enabled(struct ifnet *_ifp)
+{
+	struct ethercom *ec = (void *)_ifp;
+
+	if (ec->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
+		return true;
+
+	return false;
 }
 
 /* test if any VLAN is configured for this interface */
@@ -403,6 +414,9 @@ int	ether_enable_vlan_mtu(struct ifnet *);
 int	ether_disable_vlan_mtu(struct ifnet *);
 int	ether_add_vlantag(struct ifnet *, uint16_t, bool *);
 int	ether_del_vlantag(struct ifnet *, uint16_t);
+int	ether_inject_vlantag(struct mbuf **, uint16_t, uint16_t);
+struct mbuf *
+	ether_strip_vlantag(struct mbuf *);
 #else
 /*
  * Prototype ethers(3) functions.
