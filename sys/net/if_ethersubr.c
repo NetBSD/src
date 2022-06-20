@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.311 2022/04/04 06:10:00 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.312 2022/06/20 08:02:25 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.311 2022/04/04 06:10:00 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.312 2022/06/20 08:02:25 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -725,19 +725,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	if_statadd(ifp, if_ibytes, m->m_pkthdr.len);
 
-#if NCARP > 0
-	if (__predict_false(ifp->if_carp && ifp->if_type != IFT_CARP)) {
-		/*
-		 * Clear M_PROMISC, in case the packet comes from a
-		 * vlan.
-		 */
-		m->m_flags &= ~M_PROMISC;
-		if (carp_input(m, (uint8_t *)&eh->ether_shost,
-		    (uint8_t *)&eh->ether_dhost, eh->ether_type) == 0)
-			return;
-	}
-#endif
-
 	if ((m->m_flags & (M_BCAST | M_MCAST | M_PROMISC)) == 0 &&
 	    (ifp->if_flags & IFF_PROMISC) != 0 &&
 	    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
@@ -755,6 +742,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		etype = ntohs(eh->ether_type);
 	}
 
+	/*
+	 * Processing a logical interfaces that are able
+	 * to configure vlan(4).
+	*/
 #if NAGR > 0
 	if (ifp->if_lagg != NULL &&
 	    __predict_true(etype != ETHERTYPE_SLOWPROTOCOLS)) {
@@ -765,59 +756,68 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	/*
-	 * If VLANs are configured on the interface, check to
-	 * see if the device performed the decapsulation and
-	 * provided us with the tag.
+	 * VLAN processing.
+	 *
+	 * VLAN provides service delimiting so the frames are
+	 * processed before other handlings. If a VLAN interface
+	 * does not exist to take those frames, they're returned
+	 * to ether_input().
 	 */
-	if (ec->ec_nvlans && vlan_has_tag(m)) {
+	if (vlan_has_tag(m) || etype == ETHERTYPE_VLAN) {
+		struct ether_vlan_header *evl = (void *)eh;
+		uint16_t vlan_id;
+
+		if (vlan_has_tag(m)) {
+			vlan_id = EVL_VLANOFTAG(vlan_get_tag(m));
+		} else {
+			if (m->m_len < sizeof(*evl))
+				goto error;
+
+			vlan_id = EVL_VLANOFTAG(ntohs(evl->evl_tag));
+			etype = ntohs(evl->evl_proto);
+			ehlen = sizeof(*evl);
+		}
+
+		if (vlan_id == 0) {
+			if (etype == ETHERTYPE_VLAN ||
+			     etype == ETHERTYPE_QINQ)
+				goto drop;
+
+			/* XXX we should actually use the prio value? */
+			m->m_flags &= ~M_VLANTAG;
+		} else {
 #if NVLAN > 0
-		/*
-		 * vlan_input() will either recursively call ether_input()
-		 * or drop the packet.
-		 */
-		vlan_input(ifp, m);
-		return;
-#else
-		goto noproto;
+			if (ec->ec_nvlans > 0) {
+				m = vlan_input(ifp, m);
+
+				/* vlan_input() called ether_input() recursively */
+				if (m == NULL)
+					return;
+			}
 #endif
+			/* drop VLAN frames not for this port. */
+			goto noproto;
+		}
 	}
+
+#if NCARP > 0
+	if (__predict_false(ifp->if_carp && ifp->if_type != IFT_CARP)) {
+		/*
+		 * Clear M_PROMISC, in case the packet comes from a
+		 * vlan.
+		 */
+		m->m_flags &= ~M_PROMISC;
+		if (carp_input(m, (uint8_t *)&eh->ether_shost,
+		    (uint8_t *)&eh->ether_dhost, eh->ether_type) == 0)
+			return;
+	}
+#endif
 
 	/*
 	 * Handle protocols that expect to have the Ethernet header
 	 * (and possibly FCS) intact.
 	 */
 	switch (etype) {
-	case ETHERTYPE_VLAN: {
-		struct ether_vlan_header *evl = (void *)eh;
-
-		/*
-		 * If there is a tag of 0, then the VLAN header was probably
-		 * just being used to store the priority.  Extract the ether
-		 * type, and if IP or IPV6, let them deal with it.
-		 */
-		if (m->m_len >= sizeof(*evl) &&
-		    EVL_VLANOFTAG(ntohs(evl->evl_tag)) == 0) {
-			etype = ntohs(evl->evl_proto);
-			ehlen = sizeof(*evl);
-			if ((m->m_flags & M_PROMISC) == 0 &&
-			    (etype == ETHERTYPE_IP ||
-			     etype == ETHERTYPE_IPV6))
-				break;
-		}
-
-#if NVLAN > 0
-		/*
-		 * vlan_input() will either recursively call ether_input()
-		 * or drop the packet.
-		 */
-		if (ec->ec_nvlans != 0) {
-			vlan_input(ifp, m);
-			return;
-		} else
-#endif
-			goto noproto;
-	}
-
 #if NPPPOE > 0
 	case ETHERTYPE_PPPOEDISC:
 		pppoedisc_input(ifp, m);
