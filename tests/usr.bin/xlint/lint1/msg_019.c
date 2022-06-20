@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_019.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
+/*	$NetBSD: msg_019.c,v 1.6 2022/06/20 21:13:36 rillig Exp $	*/
 # 3 "msg_019.c"
 
 // Test for message: void type for '%s' [19]
@@ -11,7 +11,7 @@ void global_variable;
 static void unit_variable;
 
 /* expect+3: warning: argument 'parameter' unused in function 'function' [231] */
-/* expect+2: error: void parameter cannot have name: parameter [61] */
+/* expect+2: error: void parameter 'parameter' cannot have name [61] */
 void
 function(void parameter)
 {

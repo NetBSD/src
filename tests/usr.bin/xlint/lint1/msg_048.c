@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_048.c,v 1.5 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_048.c,v 1.6 2022/06/20 21:13:36 rillig Exp $	*/
 # 3 "msg_048.c"
 
-// Test for message: overflow in enumeration values: %s [48]
+// Test for message: enumeration value '%s' overflows [48]
 
 /*
  * Before decl.c 1.269 from 2022-04-08, the comparison for enum constant
@@ -16,7 +16,7 @@ enum int_limits {
 	MAX_MINUS_2 = 0x7ffffffd,
 	MAX_MINUS_1,
 	MAX,
-	/* expect+1: warning: overflow in enumeration values: MIN [48] */
+	/* expect+1: warning: enumeration value 'MIN' overflows [48] */
 	MIN,
 	MIN_PLUS_1
 };

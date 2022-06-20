@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.289 2022/06/19 12:14:33 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.290 2022/06/20 21:13:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.289 2022/06/19 12:14:33 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.290 2022/06/20 21:13:35 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1006,7 +1006,7 @@ check_type(sym_t *sym)
 			if (dcs->d_kind == DK_PROTO_ARG) {
 				if (sym->s_scl != ABSTRACT) {
 					lint_assert(sym->s_name != unnamed);
-					/* void parameter cannot have ... */
+					/* void parameter '%s' cannot ... */
 					error(61, sym->s_name);
 					*tpp = gettyp(INT);
 				}
@@ -1149,7 +1149,7 @@ declarator_1_struct_union(sym_t *dsym)
 	 */
 	if ((sz = length_in_bits(dsym->s_type, dsym->s_name)) == 0) {
 		if (t == ARRAY && dsym->s_type->t_dim == 0) {
-			/* zero sized array in struct is a C99 extension: %s */
+			/* zero-sized array '%s' in struct is a C99 extension */
 			c99ism(39, dsym->s_name);
 		}
 	}
@@ -1754,7 +1754,7 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			if (allow_c90) {
 				/* XXX: Why is this warning suppressed in C90 mode? */
 				if (allow_trad || allow_c99)
-					/* declaration introduces new ... */
+					/* declaration of '%s %s' intro... */
 					warning(44, storage_class_name(scl),
 					    tag->s_name);
 				tag = pushdown(tag);
@@ -1767,7 +1767,7 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 		} else if (decl) {
 			/* "struct a { ... } " */
 			if (hflag)
-				/* redefinition hides earlier one: %s */
+				/* redefinition of '%s' hides earlier one */
 				warning(43, tag->s_name);
 			tag = pushdown(tag);
 			dcs->d_enclosing->d_nonempty_decl = true;
@@ -1777,7 +1777,7 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			    tag->s_name);
 			/* XXX: Why is this warning suppressed in C90 mode? */
 			if (allow_trad || allow_c99) {
-				/* declaration introduces new type in ... */
+				/* declaration of '%s %s' introduces ... */
 				warning(44, storage_class_name(scl),
 				    tag->s_name);
 			}
@@ -1897,9 +1897,9 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 
 	if (sym->s_scl != NOSCL) {
 		if (sym->s_block_level == block_level) {
-			/* no hflag, because this is illegal!!! */
+			/* no hflag, because this is illegal */
 			if (sym->s_arg) {
-				/* enumeration constant hides parameter: %s */
+				/* enumeration constant '%s' hides parameter */
 				warning(57, sym->s_name);
 			} else {
 				/* redeclaration of '%s' */
@@ -1914,7 +1914,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 			}
 		} else {
 			if (hflag)
-				/* redefinition hides earlier one: %s */
+				/* redefinition of '%s' hides earlier one */
 				warning(43, sym->s_name);
 		}
 		sym = pushdown(sym);
@@ -1923,7 +1923,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	sym->s_type = dcs->d_tagtyp;
 	sym->u.s_enum_constant = val;
 	if (impl && val == TARG_INT_MIN) {
-		/* overflow in enumeration values: %s */
+		/* enumeration value '%s' overflows */
 		warning(48, sym->s_name);
 	}
 	enumval = val == TARG_INT_MAX ? TARG_INT_MIN : val + 1;
@@ -2456,13 +2456,13 @@ declare_argument(sym_t *sym, bool initflg)
 	}
 
 	if (!sym->s_arg) {
-		/* declared argument %s is missing */
+		/* declared argument '%s' is missing */
 		error(53, sym->s_name);
 		sym->s_arg = true;
 	}
 
 	if (initflg) {
-		/* cannot initialize parameter: %s */
+		/* cannot initialize parameter '%s' */
 		error(52, sym->s_name);
 	}
 
@@ -2473,7 +2473,7 @@ declare_argument(sym_t *sym, bool initflg)
 		sym->s_type = block_derive_type(sym->s_type->t_subt, PTR);
 	} else if (t == FUNC) {
 		if (!allow_c90)
-			/* a function is declared as an argument: %s */
+			/* argument '%s' has function type, should be ... */
 			warning(50, sym->s_name);
 		sym->s_type = block_derive_type(sym->s_type, PTR);
 	} else if (t == FLOAT) {
@@ -2588,7 +2588,7 @@ check_func_old_style_arguments(void)
 	 */
 	for (arg = args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_defarg) {
-			/* argument type defaults to 'int': %s */
+			/* type of argument '%s' defaults to 'int' */
 			warning(32, arg->s_name);
 			arg->s_defarg = false;
 			mark_as_set(arg);
@@ -2652,20 +2652,20 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 
 	if (!eqtype(tp, ptp, true, true, &dowarn)) {
 		if (eqtype(tp, ptp, true, false, &dowarn)) {
-			/* type does not match prototype: %s */
+			/* type of '%s' does not match prototype */
 			return gnuism(58, arg->s_name);
 		} else {
-			/* type does not match prototype: %s */
+			/* type of '%s' does not match prototype */
 			error(58, arg->s_name);
 			return true;
 		}
 	} else if (dowarn) {
 		/* TODO: Make this an error in C99 mode as well. */
 		if (!allow_trad && !allow_c99)
-			/* type does not match prototype: %s */
+			/* type of '%s' does not match prototype */
 			error(58, arg->s_name);
 		else
-			/* type does not match prototype: %s */
+			/* type of '%s' does not match prototype */
 			warning(58, arg->s_name);
 		return true;
 	}
@@ -2678,15 +2678,15 @@ check_local_hiding(const sym_t *dsym)
 {
 	switch (dsym->s_scl) {
 	case AUTO:
-		/* automatic hides external declaration: %s */
+		/* automatic '%s' hides external declaration */
 		warning(86, dsym->s_name);
 		break;
 	case STATIC:
-		/* static hides external declaration: %s */
+		/* static '%s' hides external declaration */
 		warning(87, dsym->s_name);
 		break;
 	case TYPEDEF:
-		/* typedef hides external declaration: %s */
+		/* typedef '%s' hides external declaration */
 		warning(88, dsym->s_name);
 		break;
 	case EXTERN:
@@ -2714,7 +2714,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
 			 */
 			if (!allow_c90) {
 				if (hflag)
-					/* declaration hides parameter: %s */
+					/* declaration of '%s' hides ... */
 					warning(91, dsym->s_name);
 				rmsym(rsym);
 			}

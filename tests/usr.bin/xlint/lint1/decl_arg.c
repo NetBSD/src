@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.6 2021/07/25 06:04:40 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.7 2022/06/20 21:13:36 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -35,16 +35,16 @@ static;
 static "error";
 /* expect+1: warning: empty declaration [2] */
 const;
-/* expect+1: error: declared argument undeclared is missing [53] */
+/* expect+1: error: declared argument 'undeclared' is missing [53] */
 const undeclared;
-/* expect+2: error: declared argument undeclared_initialized is missing [53] */
-/* expect+1: error: cannot initialize parameter: undeclared_initialized [52] */
+/* expect+2: error: declared argument 'undeclared_initialized' is missing [53] */
+/* expect+1: error: cannot initialize parameter 'undeclared_initialized' [52] */
 const undeclared_initialized = 12345;
 /* expect+1: warning: empty declaration [2] */
 int;
 /* expect+1: warning: 'struct arg_struct' declared in argument declaration list [3] */
 struct arg_struct { int member; };
-/* expect+1: error: cannot initialize parameter: an_int [52] */
+/* expect+1: error: cannot initialize parameter 'an_int' [52] */
 int an_int = 12345;
 const int a_const_int;
 number a_number;
@@ -61,27 +61,27 @@ struct a_struct { int member; } a_struct;
 extern int
 cover_notype_direct_decl(arg)
 int arg;
-/* expect+1: error: declared argument name is missing [53] */
+/* expect+1: error: declared argument 'name' is missing [53] */
 const name;
-/* expect+1: error: declared argument parenthesized_name is missing [53] */
+/* expect+1: error: declared argument 'parenthesized_name' is missing [53] */
 const (parenthesized_name);
-/* expect+1: error: declared argument array is missing [53] */
+/* expect+1: error: declared argument 'array' is missing [53] */
 const array[];
-/* expect+1: error: declared argument array_size is missing [53] */
+/* expect+1: error: declared argument 'array_size' is missing [53] */
 const array_size[1+1+1];
-/* expect+2: error: declared argument multi_array is missing [53] */
+/* expect+2: error: declared argument 'multi_array' is missing [53] */
 /* expect+1: error: null dimension [17] */
 const multi_array[][][][][][];
-/* expect+1: error: declared argument function is missing [53] */
+/* expect+1: error: declared argument 'function' is missing [53] */
 const function(void);
-/* expect+1: error: declared argument prefix_attribute is missing [53] */
+/* expect+1: error: declared argument 'prefix_attribute' is missing [53] */
 const __attribute__((deprecated)) prefix_attribute;
-/* expect+1: error: declared argument postfix_attribute is missing [53] */
+/* expect+1: error: declared argument 'postfix_attribute' is missing [53] */
 const postfix_attribute __attribute__((deprecated));
-/* expect+1: error: declared argument infix_attribute is missing [53] */
+/* expect+1: error: declared argument 'infix_attribute' is missing [53] */
 const __attribute__((deprecated)) infix_attribute __attribute__((deprecated));
 /* The __attribute__ before the '*' is consumed by some other grammar rule. */
-/* expect+7: error: declared argument pointer_prefix_attribute is missing [53] */
+/* expect+7: error: declared argument 'pointer_prefix_attribute' is missing [53] */
 const
     __attribute__((deprecated))
     *

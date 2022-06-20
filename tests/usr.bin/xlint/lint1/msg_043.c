@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_043.c,v 1.3 2022/04/08 21:29:29 rillig Exp $	*/
+/*	$NetBSD: msg_043.c,v 1.4 2022/06/20 21:13:36 rillig Exp $	*/
 # 3 "msg_043.c"
 
-/* Test for message: redefinition hides earlier one: %s [43] */
+/* Test for message: redefinition of '%s' hides earlier one [43] */
 
 /* lint1-extra-flags: -h */
 
@@ -12,7 +12,7 @@ struct s {
 void
 example(void)
 {
-	/* expect+1: warning: redefinition hides earlier one: s [43] */
+	/* expect+1: warning: redefinition of 's' hides earlier one [43] */
 	struct s {
 		int member;
 	};
