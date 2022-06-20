@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.314 2022/06/20 08:20:09 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.315 2022/06/20 12:22:00 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.314 2022/06/20 08:20:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.315 2022/06/20 12:22:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -644,7 +644,9 @@ error:
 void
 ether_input(struct ifnet *ifp, struct mbuf *m)
 {
+#if NVLAN > 0 || defined(MBUFTRACE)
 	struct ethercom *ec = (struct ethercom *) ifp;
+#endif
 	pktqueue_t *pktq = NULL;
 	struct ifqueue *inq = NULL;
 	uint16_t etype;
