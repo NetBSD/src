@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.140 2022/06/15 18:29:21 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.141 2022/06/20 21:13:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.140 2022/06/15 18:29:21 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.141 2022/06/20 21:13:35 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -283,7 +283,7 @@ funcdef(sym_t *fsym)
 	for (arg = fsym->s_type->t_args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_scl == ABSTRACT) {
 			lint_assert(arg->s_name == unnamed);
-			/* formal parameter lacks name: param #%d */
+			/* formal parameter #%d lacks name */
 			error(59, n);
 		} else {
 			lint_assert(arg->s_name != unnamed);

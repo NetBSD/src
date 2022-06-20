@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.419 2022/05/26 13:40:49 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.420 2022/06/20 21:13:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.419 2022/05/26 13:40:49 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.420 2022/06/20 21:13:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -603,7 +603,7 @@ unary_expression:
 	  }
 	| T_ADDITIVE sys cast_expression {
 		if (!allow_c90 && $1 == PLUS) {
-			/* unary + is illegal in traditional C */
+			/* unary '+' is illegal in traditional C */
 			warning(100);
 		}
 		$$ = build_unary($1 == PLUS ? UPLUS : UMINUS, $2, $3);

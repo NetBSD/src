@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_021.c,v 1.3 2022/06/11 12:24:00 rillig Exp $	*/
+/*	$NetBSD: msg_021.c,v 1.4 2022/06/20 21:13:36 rillig Exp $	*/
 # 3 "msg_021.c"
 
 // Test for message: redeclaration of formal parameter '%s' [21]
@@ -11,7 +11,7 @@ void
 old_style_with_duplicate_parameter(parameter, parameter)
     int parameter;
 {
-	/* expect-1: warning: argument type defaults to 'int': parameter [32] */
+	/* expect-1: warning: type of argument 'parameter' defaults to 'int' [32] */
 }
 
 void
