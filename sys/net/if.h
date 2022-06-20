@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.296 2021/12/31 14:24:26 riastradh Exp $	*/
+/*	$NetBSD: if.h,v 1.297 2022/06/20 08:02:25 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1409,7 +1409,8 @@ int	sysctl_ifq(int *name, u_int namelen, void *oldp,
 /* 
  * Hook for if_vlan - needed by if_agr
  */
-MODULE_HOOK(if_vlan_vlan_input_hook, void, (struct ifnet *, struct mbuf *));
+MODULE_HOOK(if_vlan_vlan_input_hook,
+    struct mbuf *, (struct ifnet *, struct mbuf *));
 
 #endif /* _KERNEL */
 
