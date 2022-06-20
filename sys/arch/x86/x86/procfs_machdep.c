@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.44 2022/01/31 06:54:50 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.45 2022/06/20 15:40:24 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.44 2022/01/31 06:54:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.45 2022/06/20 15:40:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ static const char * const x86_features[][32] = {
 	{ /* (8) Linux mapping */
 	"tpr_shadow", "vnmi", "flexpriority", "ept", "vpid", NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, "vmmcall",
-	NULL, "ept_ad", NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, "ept_ad", NULL, NULL, NULL, NULL, "tdx_guest", NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (9) Intel-defined: 00000007 ebx */
@@ -157,13 +157,13 @@ static const char * const x86_features[][32] = {
 	"clzero", "irperf", "xsaveerptr", NULL, "rdpru", NULL, NULL, NULL,
 	NULL, "wbnoinvd", NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, "ppin",
-	NULL, "virt_ssbd", NULL, "cppc", NULL, NULL, NULL, NULL},
+	NULL, "virt_ssbd", NULL, "cppc", NULL, NULL, NULL, "brs"},
 
 	{ /* (14) 0x00000006 eax */
 	"dtherm", "ida", "arat", NULL, "pln", NULL, "pts", "hwp",
 	"hwp_notify", "hwp_act_window", "hwp_epp","hwp_pkg_req",
 	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, "hfi", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (15) AMD 0x8000000a edx */
@@ -193,8 +193,8 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, "avx512_4vnniw", "avx512_4fmaps", "fsrm", NULL, NULL, NULL,
 	"vp2intersect", NULL, "md_clear", NULL, NULL, NULL, "serialize", NULL,
 	"tsxldtrk", NULL, "pconfig", "arch_lbr",
-	NULL, NULL, NULL, "avx512_fp16",
-	NULL, NULL, NULL, NULL,
+	"ibt", NULL, "amx_bf16", "avx512_fp16",
+	"amx_tile", "amx_int8", NULL, NULL,
 	"flush_l1d", "arch_capabilities", NULL, "ssbd"},
 
 	{ /* (19) AMD 0x8000001f eax */
