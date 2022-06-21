@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.456 2022/06/21 22:10:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.457 2022/06/21 22:16:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.456 2022/06/21 22:10:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.457 2022/06/21 22:16:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: tree.c,v 1.456 2022/06/21 22:10:30 rillig Exp $");
 #include <string.h>
 
 #include "lint1.h"
-#include "cgram.h"
 
 typedef struct integer_constraints {
 	int64_t		smin;	/* signed minimum */
@@ -1079,7 +1078,7 @@ typeok_address(const mod_t *mp,
 static bool
 typeok_indir(const type_t *tp, tspec_t t)
 {
-	/* until now there were no type checks for this operator */
+
 	if (t != PTR) {
 		/* cannot dereference non-pointer type '%s' */
 		error(96, type_name(tp));
@@ -1093,7 +1092,7 @@ typeok_plus(op_t op,
 	    const type_t *ltp, tspec_t lt,
 	    const type_t *rtp, tspec_t rt)
 {
-	/* operands have scalar types (checked above) */
+	/* operands have scalar types (checked in typeok) */
 	if ((lt == PTR && !is_integer(rt)) || (rt == PTR && !is_integer(lt))) {
 		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		return false;
@@ -1106,7 +1105,7 @@ typeok_minus(op_t op,
 	     const type_t *ltp, tspec_t lt,
 	     const type_t *rtp, tspec_t rt)
 {
-	/* operands have scalar types (checked above) */
+	/* operands have scalar types (checked in typeok) */
 	if (lt == PTR && (!is_integer(rt) && rt != PTR)) {
 		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		return false;
@@ -1133,7 +1132,7 @@ typeok_shr(const mod_t *mp,
 	olt = before_conversion(ln)->tn_type->t_tspec;
 	ort = before_conversion(rn)->tn_type->t_tspec;
 
-	/* operands have integer types (checked above) */
+	/* operands have integer types (checked in typeok) */
 	if (pflag && !is_uinteger(olt)) {
 		/*
 		 * The left operand is signed. This means that
@@ -1272,7 +1271,7 @@ typeok_colon_pointer(const mod_t *mp, const type_t *ltp, const type_t *rtp)
 	tspec_t rst = rstp->t_tspec;
 
 	if ((lst == VOID && rst == FUNC) || (lst == FUNC && rst == VOID)) {
-		/* (void *)0 handled above */
+		/* (void *)0 is handled in typeok_colon */
 		/* TODO: C99 behaves like C90 here. */
 		if (!allow_trad && !allow_c99)
 			/* ANSI C forbids conversion of %s to %s, op %s */
