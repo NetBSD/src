@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.25 2022/06/21 06:41:39 skrll Exp $ */
+/* $NetBSD: crt0-common.c,v 1.26 2022/06/21 06:47:37 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.25 2022/06/21 06:41:39 skrll Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.26 2022/06/21 06:47:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -126,10 +126,15 @@ _finiarray(void)
 	}
 }
 
-#if defined(__x86_64__) || defined(__powerpc__) || defined(__sparc__)
+#if \
+    defined(__powerpc__) || \
+    defined(__sparc__) || \
+    defined(__x86_64__)
 #define HAS_IPLTA
 static void fix_iplta(void) __noinline;
-#elif defined(__i386__) || defined(__arm__)
+#elif \
+    defined(__arm__) || \
+    defined(__i386__)
 #define HAS_IPLT
 static void fix_iplt(void) __noinline;
 #endif

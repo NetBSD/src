@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.142 2021/12/04 14:39:08 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.143 2022/06/21 06:47:37 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -302,8 +302,12 @@ typedef struct Struct_Obj_Entry {
 	size_t		fini_arraysz;	/* # of entries in it */
 	/* IRELATIVE relocations */
 	size_t		ifunc_remaining;
-#if defined(__sparc__) || defined(__powerpc__) || defined(__arm__) || \
-    defined(__i386__) || defined(__x86_64__)
+#if \
+    defined(__arm__) || \
+    defined(__i386__) || \
+    defined(__powerpc__) || \
+    defined(__sparc__) || \
+    defined(__x86_64__)
 #define IFUNC_NONPLT
 	/* On SPARC, the PLT variant is called JMP_IREL and counted above. */
 	size_t		ifunc_remaining_nonplt;
