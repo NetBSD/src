@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.457 2022/06/21 22:16:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.458 2022/06/21 22:21:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.457 2022/06/21 22:16:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.458 2022/06/21 22:21:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1106,10 +1106,8 @@ typeok_minus(op_t op,
 	     const type_t *rtp, tspec_t rt)
 {
 	/* operands have scalar types (checked in typeok) */
-	if (lt == PTR && (!is_integer(rt) && rt != PTR)) {
-		warn_incompatible_types(op, ltp, lt, rtp, rt);
-		return false;
-	} else if (rt == PTR && lt != PTR) {
+	if ((lt == PTR && rt != PTR && !is_integer(rt)) ||
+	    (lt != PTR && rt == PTR)) {
 		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		return false;
 	}
