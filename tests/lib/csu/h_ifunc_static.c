@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ifunc_static.c,v 1.6 2022/06/21 06:47:38 skrll Exp $	*/
+/*	$NetBSD: h_ifunc_static.c,v 1.7 2022/06/21 06:52:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #if \
+    defined(__aarch64__) || \
     defined(__arm__) || \
     defined(__i386__) || \
     defined(__powerpc__) || \

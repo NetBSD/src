@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.15 2022/05/31 08:43:14 andvar Exp $ */
+/* $NetBSD: mdreloc.c,v 1.16 2022/06/21 06:52:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.15 2022/05/31 08:43:14 andvar Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.16 2022/06/21 06:52:17 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -248,6 +248,14 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    obj->path, (void *)tmp, where, defobj->path));
 			break;
 
+		case R_TYPE(IRELATIVE):
+			/* IFUNC relocations are handled in _rtld_call_ifunc */
+			if (obj->ifunc_remaining_nonplt == 0)
+				obj->ifunc_remaining_nonplt = obj->relalim - rela;
+			rdbg(("IRELATIVE in %s, %zx", obj->path,
+			    obj->ifunc_remaining_nonplt));
+			/* FALLTHROUGH */
+
 		case R_TYPE(RELATIVE):	/* word B + A */
 			*where = (Elf_Addr)(obj->relocbase + rela->r_addend);
 			rdbg(("RELATIVE in %s --> %p", obj->path,
@@ -330,8 +338,9 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 	for (const Elf_Rela *rela = obj->pltrela; rela < obj->pltrelalim; rela++) {
 		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 
-		assert((ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT)) ||
-		    (ELF_R_TYPE(rela->r_info) == R_TYPE(TLSDESC)));
+		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT) ||
+		       ELF_R_TYPE(rela->r_info) == R_TYPE(TLSDESC) ||
+		       ELF_R_TYPE(rela->r_info) == R_TYPE(IRELATIVE));
 
 		switch (ELF_R_TYPE(rela->r_info)) {
 		case R_TYPE(JUMP_SLOT):
@@ -341,6 +350,9 @@ _rtld_relocate_plt_lazy(Obj_Entry *obj)
 			break;
 		case R_TYPE(TLSDESC):
 			_rtld_tlsdesc_fill(obj, rela, where, SYMLOOK_IN_PLT);
+			break;
+		case R_TYPE(IRELATIVE):
+			obj->ifunc_remaining = obj->pltrelalim - rela;
 			break;
 		}
 	}
