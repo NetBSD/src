@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.455 2022/06/21 21:18:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.456 2022/06/21 22:10:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.455 2022/06/21 21:18:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.456 2022/06/21 22:10:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -563,11 +563,11 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	str = NULL;
 	t = (tp = tn->tn_type)->t_tspec;
 	if (op == POINT) {
-		if (t == STRUCT || t == UNION)
+		if (is_struct_or_union(t))
 			str = tp->t_str;
 	} else if (op == ARROW && t == PTR) {
 		t = (tp = tp->t_subt)->t_tspec;
-		if (t == STRUCT || t == UNION)
+		if (is_struct_or_union(t))
 			str = tp->t_str;
 	}
 
@@ -1349,7 +1349,7 @@ typeok_assign(op_t op, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 		/* %soperand of '%s' must be lvalue */
 		error(114, "left ", op_name(op));
 		return false;
-	} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
+	} else if (ltp->t_const || (is_struct_or_union(lt) &&
 				    has_constant_member(ltp))) {
 		if (allow_c90)
 			/* %soperand of '%s' must be modifiable lvalue */
@@ -1863,7 +1863,7 @@ check_assign_types_compatible(op_t op, int arg,
 	if (is_arithmetic(lt) && (is_arithmetic(rt) || rt == BOOL))
 		return true;
 
-	if ((lt == STRUCT || lt == UNION) && (rt == STRUCT || rt == UNION))
+	if (is_struct_or_union(lt) && is_struct_or_union(rt))
 		/* both are struct or union */
 		return ltp->t_str == rtp->t_str;
 
@@ -2509,7 +2509,7 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	if (is_incomplete(nstp) || is_incomplete(ostp))
 		return false;
 
-	if ((nst == STRUCT || nst == UNION) && nstp->t_str != ostp->t_str)
+	if (is_struct_or_union(nst) && nstp->t_str != ostp->t_str)
 		return true;
 
 	if (nst == CHAR || nst == UCHAR)
@@ -2889,8 +2889,7 @@ warn_incompatible_types(op_t op,
 		/* void type illegal in expression */
 		error(109);
 	} else if (op == ASSIGN) {
-		if ((lt == STRUCT || lt == UNION) &&
-		    (rt == STRUCT || rt == UNION)) {
+		if (is_struct_or_union(lt) && is_struct_or_union(rt)) {
 			/* assignment of different structures (%s != %s) */
 			error(240, tspec_name(lt), tspec_name(rt));
 		} else {
@@ -2923,7 +2922,7 @@ warn_incompatible_pointers(const mod_t *mp,
 	lt = ltp->t_subt->t_tspec;
 	rt = rtp->t_subt->t_tspec;
 
-	if ((lt == STRUCT || lt == UNION) && (rt == STRUCT || rt == UNION)) {
+	if (is_struct_or_union(lt) && is_struct_or_union(rt)) {
 		if (mp == NULL) {
 			/* illegal structure pointer combination */
 			warning(244);
@@ -3218,9 +3217,9 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 		tp = ln->tn_type;
 	} else if (lt == VOID || rt == VOID) {
 		tp = gettyp(VOID);
-	} else if (lt == STRUCT || lt == UNION) {
+	} else if (is_struct_or_union(lt)) {
 		/* Both types must be identical. */
-		lint_assert(rt == STRUCT || rt == UNION);
+		lint_assert(is_struct_or_union(rt));
 		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
 		if (is_incomplete(ln->tn_type)) {
 			/* unknown operand size, op %s */
@@ -3854,7 +3853,7 @@ cast(tnode_t *tn, type_t *tp)
 		/* Casting to a struct is an undocumented GCC extension. */
 		if (!(allow_gcc && nt == STRUCT))
 			goto invalid_cast;
-	} else if (ot == STRUCT || ot == UNION) {
+	} else if (is_struct_or_union(ot)) {
 		goto invalid_cast;
 	} else if (ot == VOID) {
 		/* improper cast of void expression */
@@ -3994,7 +3993,7 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 			/* void expressions may not be arguments, arg #%d */
 			error(151, n);
 			return NULL;
-		} else if ((at == STRUCT || at == UNION) &&
+		} else if (is_struct_or_union(at) &&
 			   is_incomplete(arg->tn_left->tn_type)) {
 			/* argument cannot have unknown size, arg #%d */
 			error(152, n);
