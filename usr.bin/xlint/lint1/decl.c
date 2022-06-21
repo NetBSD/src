@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.291 2022/06/21 21:18:30 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.292 2022/06/21 22:10:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.291 2022/06/21 21:18:30 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.292 2022/06/21 22:10:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -210,7 +210,7 @@ is_incomplete(const type_t *tp)
 		return true;
 	} else if (t == ARRAY) {
 		return tp->t_incomplete_array;
-	} else if (t == STRUCT || t == UNION) {
+	} else if (is_struct_or_union(t)) {
 		return tp->t_str->sou_incomplete;
 	} else if (t == ENUM) {
 		return tp->t_enum->en_incomplete;
@@ -278,7 +278,7 @@ add_type(type_t *tp)
 
 	t = tp->t_tspec;
 
-	if (t == STRUCT || t == UNION || t == ENUM) {
+	if (is_struct_or_union(t) || t == ENUM) {
 		/*
 		 * something like "int struct a ..."
 		 * struct/union/enum with anything else is not allowed
@@ -2245,7 +2245,7 @@ eqtype(const type_t *tp1, const type_t *tp2,
 		if (!qualifiers_correspond(tp1, tp2, ignqual))
 			return false;
 
-		if (t == STRUCT || t == UNION)
+		if (is_struct_or_union(t))
 			return tp1->t_str == tp2->t_str;
 
 		if (t == ENUM && eflag)

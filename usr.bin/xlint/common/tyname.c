@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.51 2022/05/20 21:18:54 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.52 2022/06/21 22:10:30 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.51 2022/05/20 21:18:54 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.52 2022/06/21 22:10:30 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -264,7 +264,7 @@ type_name(const type_t *tp)
 		buf_add(&buf, "volatile ");
 
 #ifdef IS_LINT1
-	if ((t == STRUCT || t == UNION) && tp->t_str->sou_incomplete)
+	if (is_struct_or_union(t) && tp->t_str->sou_incomplete)
 		buf_add(&buf, "incomplete ");
 #endif
 	buf_add(&buf, tspec_name(t));
