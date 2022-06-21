@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.47 2022/06/21 15:42:43 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.48 2022/06/21 16:08:25 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -826,7 +826,8 @@ disklabel_set_part_info(struct disk_partitions *arg, part_id id,
 			parts->l.d_partitions[part].p_offset = info->start;
 			if (part != RAW_PART
 #if RAW_PART == 3
-				|| part == RAW_PART-1
+				&& (part != RAW_PART-1 ||
+				    parts->dp.parent == NULL)
 #endif
 							) {
 				parts->dp.free_space +=
