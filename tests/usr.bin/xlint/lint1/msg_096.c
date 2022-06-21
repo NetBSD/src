@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_096.c,v 1.5 2022/04/03 09:34:45 rillig Exp $	*/
+/*	$NetBSD: msg_096.c,v 1.6 2022/06/21 21:18:30 rillig Exp $	*/
 # 3 "msg_096.c"
 
-// Test for message: cannot dereference non-pointer type [96]
+// Test for message: cannot dereference non-pointer type '%s' [96]
 
 int
 unary_plus(int i)
@@ -20,6 +20,6 @@ unary_asterisk(int i)
 {
 	i++;
 
-	/* expect+1: error: cannot dereference non-pointer type [96] */
+	/* expect+1: error: cannot dereference non-pointer type 'int' [96] */
 	return *i;
 }

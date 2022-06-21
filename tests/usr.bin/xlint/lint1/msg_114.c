@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_114.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_114.c,v 1.6 2022/06/21 21:18:30 rillig Exp $	*/
 # 3 "msg_114.c"
 
 // Test for message: %soperand of '%s' must be lvalue [114]
@@ -16,7 +16,7 @@ example(int a)
 	 *
 	 * See msg_108.c for more details.
 	 */
-	/* expect+1: error: operand of 'x++' has invalid type (array) [108] */
+	/* expect+1: error: operand of 'x++' has invalid type 'array[7] of char' [108] */
 	"string"++;
 
 	/* expect+1: error: operand of 'x++' must be lvalue [114] */

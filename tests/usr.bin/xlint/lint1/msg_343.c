@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_343.c,v 1.7 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_343.c,v 1.8 2022/06/21 21:18:30 rillig Exp $	*/
 # 3 "msg_343.c"
 
 /* Test for message: static array size is a C11 extension [343] */
@@ -35,7 +35,7 @@ int
 /* expect+1: error: syntax error '3' [249] */
 returns_volatile_int_array(int a[volatile 3])
 {
-	/* expect+2: error: cannot dereference non-pointer type [96] */
+	/* expect+2: error: cannot dereference non-pointer type 'int' [96] */
 	/* expect+1: ... expects to return value [214] */
 	return a[0];
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.290 2022/06/20 21:13:35 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.291 2022/06/21 21:18:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.290 2022/06/20 21:13:35 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.291 2022/06/21 21:18:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1477,7 +1477,7 @@ new_style_function(sym_t *args)
 	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_level_next) {
 		sc = sym->s_scl;
 		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG) {
-			/* dubious tag declaration: %s %s */
+			/* dubious tag declaration '%s %s' */
 			warning(85, storage_class_name(sc), sym->s_name);
 		}
 	}
@@ -2722,7 +2722,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
 
 	} else if (rsym->s_block_level < block_level) {
 		if (hflag)
-			/* declaration hides earlier one: %s */
+			/* declaration of '%s' hides earlier one */
 			warning(95, dsym->s_name);
 	}
 
@@ -2749,11 +2749,11 @@ declare_local(sym_t *dsym, bool initflg)
 
 	if (dsym->s_type->t_tspec == FUNC) {
 		if (dsym->s_scl == STATIC) {
-			/* dubious static function at block level: %s */
+			/* dubious static function '%s' at block level */
 			warning(93, dsym->s_name);
 			dsym->s_scl = EXTERN;
 		} else if (dsym->s_scl != EXTERN && dsym->s_scl != TYPEDEF) {
-			/* function has illegal storage class: %s */
+			/* function '%s' has illegal storage class */
 			error(94, dsym->s_name);
 			dsym->s_scl = EXTERN;
 		}
@@ -2848,11 +2848,11 @@ declare_external_in_block(sym_t *dsym)
 
 	if (!eqt || dowarn) {
 		if (esym->s_scl == EXTERN) {
-			/* inconsistent redeclaration of extern: %s */
+			/* inconsistent redeclaration of extern '%s' */
 			warning(90, dsym->s_name);
 			print_previous_declaration(-1, esym);
 		} else {
-			/* inconsistent redeclaration of static: %s */
+			/* inconsistent redeclaration of static '%s' */
 			warning(92, dsym->s_name);
 			print_previous_declaration(-1, esym);
 		}
