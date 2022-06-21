@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.46 2022/06/21 15:41:29 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.47 2022/06/21 15:42:43 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -520,6 +520,8 @@ disklabel_delete(struct disk_partitions *arg, part_id id,
 			if (parts->install_target ==
 			    parts->l.d_partitions[part].p_offset)
 				parts->install_target = -1;
+			parts->dp.free_space +=
+			    parts->l.d_partitions[part].p_size;
 			parts->l.d_partitions[part].p_size = 0;
 			parts->l.d_partitions[part].p_offset = 0;
 			parts->l.d_partitions[part].p_fstype = FS_UNUSED;
@@ -822,6 +824,15 @@ disklabel_set_part_info(struct disk_partitions *arg, part_id id,
 			was_inst_target = parts->l.d_partitions[part].p_offset
 			    == parts->install_target;
 			parts->l.d_partitions[part].p_offset = info->start;
+			if (part != RAW_PART
+#if RAW_PART == 3
+				|| part == RAW_PART-1
+#endif
+							) {
+				parts->dp.free_space +=
+				    parts->l.d_partitions[part].p_size -
+				    info->size;
+			}
 			parts->l.d_partitions[part].p_size = info->size;
 			parts->l.d_partitions[part].p_fstype =
 			    dl_part_type_from_generic(info->nat_type);
