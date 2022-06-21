@@ -1,4 +1,4 @@
-# $NetBSD: t_ifunc_static.sh,v 1.2 2019/01/30 12:42:53 martin Exp $
+# $NetBSD: t_ifunc_static.sh,v 1.3 2022/06/21 06:52:17 skrll Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,10 +33,10 @@ ifunc_static_head()
 ifunc_static_body()
 {
 	case `uname -p` in
-	i386|x86_64|powerpc|*sparc*|*arm*)
+	i386|x86_64|powerpc|*sparc*|*arm*|*aarch64*)
 		;;
 	*)
-		atf_skip "ifunc is supposed only on ARM, i386, PowerPC, SPARC and x86-64"
+		atf_skip "ifunc is supposed only on AARCH64, ARM, i386, PowerPC, SPARC and x86-64"
 		;;
 	esac
 

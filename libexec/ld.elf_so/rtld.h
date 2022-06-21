@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.143 2022/06/21 06:47:37 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.144 2022/06/21 06:52:17 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -303,6 +303,7 @@ typedef struct Struct_Obj_Entry {
 	/* IRELATIVE relocations */
 	size_t		ifunc_remaining;
 #if \
+    defined(__aarch64__) || \
     defined(__arm__) || \
     defined(__i386__) || \
     defined(__powerpc__) || \
