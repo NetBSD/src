@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.15 2014/02/11 08:06:07 tsutsui Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.16 2022/06/21 12:20:43 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -289,7 +289,7 @@ sdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 	}
 	nblks = howmany(size, 256 << current_blklen);
 
-	if ((dblk & 0x1fffff) == 0x1fffff && (nblks & 0xff) == nblks) {
+	if (start < 0x200000 && nblks < 256) {
 		if (rw & F_WRITE)
 			error = IOCS_S_WRITE(start, nblks, current_id,
 			                     current_blklen, buf);
