@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.454 2022/06/19 12:14:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.455 2022/06/21 21:18:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.454 2022/06/19 12:14:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.455 2022/06/21 21:18:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1077,12 +1077,12 @@ typeok_address(const mod_t *mp,
 }
 
 static bool
-typeok_indir(tspec_t t)
+typeok_indir(const type_t *tp, tspec_t t)
 {
 	/* until now there were no type checks for this operator */
 	if (t != PTR) {
-		/* cannot dereference non-pointer type */
-		error(96);
+		/* cannot dereference non-pointer type '%s' */
+		error(96, type_name(tp));
 		return false;
 	}
 	return true;
@@ -1414,7 +1414,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case DECAFT:
 		return typeok_incdec(op, ln, ltp);
 	case INDIR:
-		return typeok_indir(lt);
+		return typeok_indir(ltp, lt);
 	case ADDR:
 		return typeok_address(mp, ln, ltp, lt);
 	case PLUS:
@@ -2902,8 +2902,8 @@ warn_incompatible_types(op_t op,
 		error(107, mp->m_name, tspec_name(lt), tspec_name(rt));
 	} else {
 		lint_assert(rt == NOTSPEC);
-		/* operand of '%s' has invalid type (%s) */
-		error(108, mp->m_name, tspec_name(lt));
+		/* operand of '%s' has invalid type '%s' */
+		error(108, mp->m_name, type_name(ltp));
 	}
 }
 

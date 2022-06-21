@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.174 2022/06/20 21:26:44 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.175 2022/06/21 21:18:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.174 2022/06/20 21:26:44 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.175 2022/06/21 21:18:30 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -111,7 +111,7 @@ static const char *const msgs[] = {
 	"integral constant expression expected",		      /* 55 */
 	"integral constant too large",				      /* 56 */
 	"enumeration constant '%s' hides parameter",		      /* 57 */
-	"type of '%s' does not match prototype",			      /* 58 */
+	"type of '%s' does not match prototype",		      /* 58 */
 	"formal parameter #%d lacks name",			      /* 59 */
 	"void must be sole parameter",				      /* 60 */
 	"void parameter '%s' cannot have name",			      /* 61 */
@@ -138,18 +138,18 @@ static const char *const msgs[] = {
 	"\\x undefined in traditional C",			      /* 82 */
 	"storage class after type is obsolescent",		      /* 83 */
 	"ANSI C requires formal parameter before '...'",	      /* 84 */
-	"dubious tag declaration: %s %s",			      /* 85 */
+	"dubious tag declaration '%s %s'",			      /* 85 */
 	"automatic '%s' hides external declaration",		      /* 86 */
 	"static '%s' hides external declaration",		      /* 87 */
 	"typedef '%s' hides external declaration",		      /* 88 */
 	"typedef '%s' redeclared",				      /* 89 */
-	"inconsistent redeclaration of extern: %s",		      /* 90 */
+	"inconsistent redeclaration of extern '%s'",		      /* 90 */
 	"declaration of '%s' hides parameter",			      /* 91 */
-	"inconsistent redeclaration of static: %s",		      /* 92 */
-	"dubious static function at block level: %s",		      /* 93 */
-	"function has illegal storage class: %s",		      /* 94 */
-	"declaration hides earlier one: %s",			      /* 95 */
-	"cannot dereference non-pointer type",			      /* 96 */
+	"inconsistent redeclaration of static '%s'",		      /* 92 */
+	"dubious static function '%s' at block level",		      /* 93 */
+	"function '%s' has illegal storage class",		      /* 94 */
+	"declaration of '%s' hides earlier one",		      /* 95 */
+	"cannot dereference non-pointer type '%s'",		      /* 96 */
 	"suffix U is illegal in traditional C",			      /* 97 */
 	"suffixes F and L are illegal in traditional C",	      /* 98 */
 	"'%s' undefined",					      /* 99 */
@@ -161,7 +161,7 @@ static const char *const msgs[] = {
 	"non-unique member requires struct/union %s",		      /* 105 */
 	"left operand of '->' must be pointer",			      /* 106 */
 	"operands of '%s' have incompatible types '%s' and '%s'",     /* 107 */
-	"operand of '%s' has invalid type (%s)",		      /* 108 */
+	"operand of '%s' has invalid type '%s'",		      /* 108 */
 	"void type illegal in expression",			      /* 109 */
 	"pointer to function is not allowed here",		      /* 110 */
 	"unacceptable operand of '%s'",				      /* 111 */
