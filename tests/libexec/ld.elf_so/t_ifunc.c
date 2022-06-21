@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ifunc.c,v 1.12 2022/06/21 06:52:17 skrll Exp $	*/
+/*	$NetBSD: t_ifunc.c,v 1.13 2022/06/21 16:24:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
     defined(__aarch64__) || \
     defined(__arm__) || \
     defined(__i386__) || \
-    defined(__sparc__) || \
     defined(__powerpc__) || \
+    defined(__sparc__) || \
     defined(__x86_64__)
 #define	LINKER_SUPPORT 1
 #else
