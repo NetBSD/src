@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.16 2022/06/21 12:20:43 isaki Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.17 2022/06/21 12:43:57 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -26,6 +26,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/bitops.h>
 #include <sys/disklabel.h>
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
@@ -36,9 +37,14 @@
 
 
 static int current_id = -1;
-static int current_blklen, current_devsize, current_npart;
+static int current_blkbytes;
+static int current_blkshift;
+static int current_devsize, current_npart;
 static struct boot_partinfo partitions[MAXPARTITIONS];
 
+static uint human2blk(uint);
+static uint human2bsd(uint);
+static uint bsd2blk(uint);
 static int readdisklabel(int);
 static int check_unit(int);
 
@@ -47,6 +53,44 @@ static int check_unit(int);
 #else
 #define DPRINTF(x)	
 #endif
+
+/*
+ * Convert the number of sectors on Human68k
+ * into the number of blocks on the current device.
+ */
+static uint
+human2blk(uint n)
+{
+	uint blk_per_sect;
+
+	/* Human68k uses 1024 byte/sector. */
+	blk_per_sect = 4 >> current_blkshift;
+	if (blk_per_sect == 0)
+		blk_per_sect = 1;
+	return blk_per_sect * n;
+}
+
+/*
+ * Convert the number of sectors on Human68k
+ * into the number of DEV_BSIZE sectors.
+ */
+static uint
+human2bsd(uint n)
+{
+
+	return n * (1024 / DEV_BSIZE);
+}
+
+/*
+ * Convert the number of DEV_BSIZE sectors
+ * into the number of blocks on the current device.
+ */
+static uint
+bsd2blk(uint n)
+{
+
+	return ((DEV_BSIZE / 256) * n) >> current_blkshift;
+}
 
 static int
 check_unit(int id)
@@ -90,12 +134,13 @@ check_unit(int id)
 			error = EUNIT;
 			goto out;
 		}
-		current_blklen = rcdata->size >> 9;
+		current_blkbytes = rcdata->size;
+		current_blkshift = fls32(current_blkbytes) - 9;
 		current_devsize = rcdata->block;
 	}
 
 	{
-		error = IOCS_S_READ(0, 1, id, current_blklen, buffer);
+		error = IOCS_S_READ(0, 1, id, current_blkshift, buffer);
 		if (error < 0) {
 			error =  EIO;
 			goto out;
@@ -125,15 +170,15 @@ readdisklabel(int id)
 	error = check_unit(id);
 	if (error)
 		return error;
-	if (current_blklen > 4) {
+	if (current_blkbytes > 2048) {
 		printf("FATAL: Unsupported block size %d.\n",
-		    256 << current_blklen);
+		    current_blkbytes);
 		return ERDLAB;
 	}
 
 	/* Try BSD disklabel first */
 	buffer = alloca(2048);
-	error = IOCS_S_READ(LABELSECTOR, 1, id, current_blklen, buffer);
+	error = IOCS_S_READ(LABELSECTOR, 1, id, current_blkshift, buffer);
 	if (error < 0)
 		return EIO;
 	label = (void *)(buffer + LABELOFFSET);
@@ -149,13 +194,7 @@ readdisklabel(int id)
 	}
 
 	/* Try Human68K-style partition table */
-#if 0
-	/* assumes 512byte/sec */
-	error = IOCS_S_READ(DOSPARTOFF, 2, id, current_blklen, buffer);
-#else
-	error = IOCS_S_READ(8 >> current_blklen, 8 >> current_blklen,
-			    id, current_blklen, buffer);
-#endif
+	error = IOCS_S_READ(human2blk(2), 1, id, current_blkshift, buffer);
 	if (error < 0)
 		return EIO;
 	parttbl = (void *)(buffer + DOSBBSECTOR);
@@ -166,9 +205,9 @@ readdisklabel(int id)
 	     current_npart < MAXPARTITIONS && i < 15 && parttbl[i].dp_size;
 	     i++) {
 		partitions[current_npart].start
-			= parttbl[i].dp_start * 2;
+			= human2bsd(parttbl[i].dp_start);
 		partitions[current_npart].size
-			= parttbl[i].dp_size  * 2;
+			= human2bsd(parttbl[i].dp_size);
 		if (++current_npart == RAW_PART) {
 			partitions[current_npart].start = 0;
 			partitions[current_npart].size = -1; /* XXX */
@@ -205,8 +244,7 @@ sd_getbsdpartition(int id, int humanpart)
 		return -1;
 	}
 	buffer = alloca(2048);
-	error = IOCS_S_READ(8 >> current_blklen, 8 >> current_blklen,
-			    id, current_blklen, buffer);
+	error = IOCS_S_READ(human2blk(2), 1, id, current_blkshift, buffer);
 	if (error < 0) {
 		printf("Reading partition table: %s\n", strerror(error));
 		return -1;
@@ -214,8 +252,7 @@ sd_getbsdpartition(int id, int humanpart)
 	parttbl = (void *)(buffer + DOSBBSECTOR);
 	if (strncmp(buffer, "X68K", 4) != 0)
 		return 0;
-	parttop = parttbl[humanpart].dp_start;
-	parttop = parttop << (2 - current_blklen);
+	parttop = human2bsd(parttbl[humanpart].dp_start);
 
 	for (i = 0; i < current_npart; i++) {
 		if (partitions[i].start == parttop)
@@ -230,7 +267,6 @@ sd_getbsdpartition(int id, int humanpart)
 struct sdcd_softc {
 	int			sc_part;
 	struct boot_partinfo	sc_partinfo;
-	int			sc_blocksize;
 };
 
 /* sdopen(struct open_file *f, int id, int part) */
@@ -260,7 +296,6 @@ sdopen(struct open_file *f, ...)
 	sc = alloc(sizeof(struct sdcd_softc));
 	sc->sc_part = part;
 	sc->sc_partinfo = partitions[part];
-	sc->sc_blocksize = current_blklen << 9;
 	f->f_devdata = sc;
 	return 0;
 }
@@ -287,22 +322,23 @@ sdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 			*rsize = 0;
 		return 0;
 	}
-	nblks = howmany(size, 256 << current_blklen);
+	start = bsd2blk(start);
+	nblks = howmany(size, current_blkbytes);
 
 	if (start < 0x200000 && nblks < 256) {
 		if (rw & F_WRITE)
 			error = IOCS_S_WRITE(start, nblks, current_id,
-			                     current_blklen, buf);
+			                     current_blkshift, buf);
 		else
 			error = IOCS_S_READ(start, nblks, current_id,
-			                    current_blklen, buf);
+			                    current_blkshift, buf);
 	} else {
 		if (rw & F_WRITE)
 			error = IOCS_S_WRITEEXT(start, nblks, current_id,
-			                        current_blklen, buf);
+			                        current_blkshift, buf);
 		else
 			error = IOCS_S_READEXT(start, nblks, current_id,
-			                       current_blklen, buf);
+			                       current_blkshift, buf);
 	}
 	if (error < 0)
 		return EIO;
@@ -341,7 +377,6 @@ cdopen(struct open_file *f, ...)
 	sc->sc_part = 0;
 	sc->sc_partinfo.start = 0;
 	sc->sc_partinfo.size = current_devsize;
-	sc->sc_blocksize = current_blklen << 9;
 	f->f_devdata = sc;
 	current_id = id;
 
@@ -360,10 +395,5 @@ int
 cdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
            void *buf, size_t *rsize)
 {
-	struct sdcd_softc *sc = arg;
-
-	/* cast dblk to avoid divdi3; 32bit is enough even for BD-ROMs.  */
-	return sdstrategy(arg, rw,
-			  (unsigned int) dblk / (sc->sc_blocksize/DEV_BSIZE),
-	                  size, buf, rsize);
+	return sdstrategy(arg, rw, dblk, size, buf, rsize);
 }
