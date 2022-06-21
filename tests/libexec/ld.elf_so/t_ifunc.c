@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ifunc.c,v 1.11 2022/06/21 06:47:38 skrll Exp $	*/
+/*	$NetBSD: t_ifunc.c,v 1.12 2022/06/21 06:52:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include "h_macros.h"
 
 #if \
+    defined(__aarch64__) || \
     defined(__arm__) || \
     defined(__i386__) || \
     defined(__sparc__) || \

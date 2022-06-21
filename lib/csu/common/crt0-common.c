@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.26 2022/06/21 06:47:37 skrll Exp $ */
+/* $NetBSD: crt0-common.c,v 1.27 2022/06/21 06:52:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.26 2022/06/21 06:47:37 skrll Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.27 2022/06/21 06:52:17 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -127,6 +127,7 @@ _finiarray(void)
 }
 
 #if \
+    defined(__aarch64__) || \
     defined(__powerpc__) || \
     defined(__sparc__) || \
     defined(__x86_64__)
