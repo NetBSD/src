@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.40 2022/06/21 15:45:03 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.41 2022/06/21 15:46:10 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.40 2022/06/21 15:45:03 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.41 2022/06/21 15:46:10 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1007,6 +1007,9 @@ edit_ptn(menudesc *menu, void *arg)
 			if (!pset->parts->pscheme->set_part_info(pset->parts,
 			    edit.id, &edit.info, &err))
 				err_msg_win(err);
+			else
+				pset->cur_free_space += edit.old_info.size -
+				    edit.info.size;
 		}
 
 		/*
@@ -1036,7 +1039,7 @@ edit_ptn(menudesc *menu, void *arg)
 		}
 		remember_deleted(pset,
 		    pset->infos[edit.index].parts);
-		pset->cur_free_space += pset->infos[edit.index].size;
+		pset->cur_free_space += edit.info.size;
 		memmove(pset->infos+edit.index,
 		    pset->infos+edit.index+1,
 		    sizeof(*pset->infos)*(pset->num-edit.index));
