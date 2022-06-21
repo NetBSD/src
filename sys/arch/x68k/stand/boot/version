@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.8 2016/06/25 14:35:58 isaki Exp $
+$NetBSD: version,v 1.9 2022/06/21 12:45:46 isaki Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -14,3 +14,4 @@ is taken as the current.
 	non ASCII keys (CTRL, OPT.1 etc.) are pressed during boot.
 1.6:	Disable slow gunzip CRC32 calculation.
 1.7:	Integrate netboot.
+1.8:	Fix blocksize parameter passes to SCSI IOCS.
