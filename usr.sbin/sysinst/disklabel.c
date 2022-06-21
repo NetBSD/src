@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.45 2022/06/18 13:56:41 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.46 2022/06/21 15:41:29 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -940,7 +940,8 @@ disklabel_can_add_partition(const struct disk_partitions *arg)
 	if (disklabel_get_free_spaces_internal(parts, &space, 1,
 	    parts->ptn_alignment, parts->ptn_alignment, 0, -1) < 1)
 		return false;
-
+	if (parts->l.d_npartitions < dl_maxpart)
+		return true;
 	for (i = 0; i < parts->l.d_npartitions; i++) {
 		if (i == RAW_PART)
 			continue;
