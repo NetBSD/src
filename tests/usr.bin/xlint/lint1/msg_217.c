@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_217.c,v 1.10 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.11 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_217.c"
 
-// Test for message: function %s falls off bottom without returning value [217]
+// Test for message: function '%s' falls off bottom without returning value [217]
 
 int
 random(int n)
@@ -9,7 +9,7 @@ random(int n)
 	if (n < 0)
 		return -3;
 }
-/* expect-1: warning: function random falls off bottom without returning value [217] */
+/* expect-1: warning: function 'random' falls off bottom without returning value [217] */
 
 /*
  * The pattern 'do { } while (0)' is often used in statement macros.
@@ -68,4 +68,4 @@ unreachable_continue_falls_through(void)
 		break;
 	}
 }
-/* expect-1: warning: function unreachable_continue_falls_through falls off bottom without returning value [217] */
+/* expect-1: warning: function 'unreachable_continue_falls_through' falls off bottom without returning value [217] */

@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_280.c,v 1.5 2021/09/05 19:16:37 rillig Exp $	*/
+/*	$NetBSD: msg_280.c,v 1.6 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_280.c"
 
-// Test for message: must be outside function: /* %s */ [280]
+// Test for message: comment /* %s */ must be outside function [280]
 
 /* VARARGS */
 void
@@ -36,7 +36,7 @@ varargs_bad_param(/* VARARGS */ const char *str, ...)
 }
 
 void
-/* expect+1: warning: must be outside function: ** VARARGS ** [280] */
+/* expect+1: warning: comment ** VARARGS ** must be outside function [280] */
 varargs_bad_ellipsis(const char *str, /* VARARGS */ ...)
 {
 	(void)str;
@@ -45,7 +45,7 @@ varargs_bad_ellipsis(const char *str, /* VARARGS */ ...)
 void
 varargs_bad_body(const char *str, ...)
 {
-	/* expect+1: warning: must be outside function: ** VARARGS ** [280] */
+	/* expect+1: warning: comment ** VARARGS ** must be outside function [280] */
 	/* VARARGS */
 	(void)str;
 }
@@ -54,14 +54,14 @@ void
 /* expect+1: warning: argument 'str' unused in function 'argsused_bad_body' [231] */
 argsused_bad_body(const char *str)
 {
-	/* expect+1: warning: must be outside function: ** ARGSUSED ** [280] */
+	/* expect+1: warning: comment ** ARGSUSED ** must be outside function [280] */
 	/* ARGSUSED */
 }
 
 void
 printflike_bad_body(const char *fmt, ...)
 {
-	/* expect+1: warning: must be outside function: ** PRINTFLIKE ** [280] */
+	/* expect+1: warning: comment ** PRINTFLIKE ** must be outside function [280] */
 	/* PRINTFLIKE */
 	(void)fmt;
 }
@@ -69,7 +69,7 @@ printflike_bad_body(const char *fmt, ...)
 void
 scanflike_bad_body(const char *fmt, ...)
 {
-	/* expect+1: warning: must be outside function: ** SCANFLIKE ** [280] */
+	/* expect+1: warning: comment ** SCANFLIKE ** must be outside function [280] */
 	/* SCANFLIKE */
 	(void)fmt;
 }

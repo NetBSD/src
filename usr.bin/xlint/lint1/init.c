@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.235 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.236 2022/06/22 19:23:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.235 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.236 2022/06/22 19:23:17 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -824,7 +824,7 @@ initialization_rbrace(initialization *in)
 	if (in->in_sym->s_type->t_incomplete_array &&
 	    in->in_brace_level->bl_enclosing == NULL) {
 
-		/* prevent "empty array declaration: %s" */
+		/* prevent "empty array declaration for '%s' [190]" */
 		size_t dim = in->in_max_subscript;
 		if (dim == 0 && in->in_err)
 			dim = 1;

@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_243.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_243.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_243.c"
 
-// Test for message: dubious comparison of enums, op %s [243]
+// Test for message: dubious comparison of enums, op '%s' [243]
 
 /* lint1-extra-flags: -eP */
 
@@ -16,13 +16,13 @@ void eval(_Bool);
 void
 example(enum color a, enum color b)
 {
-	/* expect+1: warning: dubious comparison of enums, op < [243] */
+	/* expect+1: warning: dubious comparison of enums, op '<' [243] */
 	eval(a < b);
-	/* expect+1: warning: dubious comparison of enums, op <= [243] */
+	/* expect+1: warning: dubious comparison of enums, op '<=' [243] */
 	eval(a <= b);
-	/* expect+1: warning: dubious comparison of enums, op > [243] */
+	/* expect+1: warning: dubious comparison of enums, op '>' [243] */
 	eval(a > b);
-	/* expect+1: warning: dubious comparison of enums, op >= [243] */
+	/* expect+1: warning: dubious comparison of enums, op '>=' [243] */
 	eval(a >= b);
 	eval(a == b);
 	eval(a != b);

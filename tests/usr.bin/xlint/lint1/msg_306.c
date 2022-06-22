@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_306.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_306.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_306.c"
 
-// Test for message: constant truncated by conversion, op %s [306]
+// Test for message: constant truncated by conversion, op '%s' [306]
 
 unsigned char
 to_u8(void)
@@ -20,7 +20,7 @@ and_u8(unsigned char a)
 unsigned char
 or_u8(unsigned char a)
 {
-	/* expect+1: warning: constant truncated by conversion, op |= [306] */
+	/* expect+1: warning: constant truncated by conversion, op '|=' [306] */
 	a |= 0x1234;
 
 	/* XXX: Lint doesn't care about the expanded form of the same code. */

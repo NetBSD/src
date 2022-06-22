@@ -1,4 +1,4 @@
-/*	$NetBSD: d_alignof.c,v 1.7 2022/05/12 20:57:49 rillig Exp $	*/
+/*	$NetBSD: d_alignof.c,v 1.8 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "d_alignof.c"
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Alignment.html */
@@ -23,7 +23,7 @@ plain_alignof_type(void)
 	/* expect+1: error: syntax error 'short' [249] */
 	return alignof(short);
 }
-/* expect-1: warning: function plain_alignof_type falls off bottom without returning value [217] */
+/* expect-1: warning: function 'plain_alignof_type' falls off bottom without returning value [217] */
 
 unsigned long
 leading_and_trailing_alignof_expr(void)
@@ -45,7 +45,7 @@ plain_alignof_expr(void)
 	/* expect+1: error: syntax error '3' [249] */
 	return alignof 3;
 }
-/* expect-1: warning: function plain_alignof_expr falls off bottom without returning value [217] */
+/* expect-1: warning: function 'plain_alignof_expr' falls off bottom without returning value [217] */
 
 
 /*

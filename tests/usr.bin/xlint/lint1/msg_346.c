@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_346.c,v 1.6 2021/10/09 20:03:20 rillig Exp $	*/
+/*	$NetBSD: msg_346.c,v 1.7 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_346.c"
 
 // Test for message: call to '%s' effectively discards 'const' from argument [346]
@@ -54,9 +54,9 @@ all_functions(void)
 
 void
 edge_cases(void)
-{
+{	/* TODO: '0 argument passed' is not correct English */
 	/* No arguments, to cover the 'an == NULL' in is_first_arg_const. */
-	/* expect+1: error: argument mismatch: 0 arg passed, 2 expected [150] */
+	/* expect+1: error: argument mismatch: 0 argument passed, 2 expected [150] */
 	take_char_ptr(strchr());
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.12 2022/06/19 11:50:42 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.13 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -12,7 +12,7 @@
  * Lint allows this syntactically, it just complains if the resulting
  * object is empty.
  */
-/* expect+1: error: empty array declaration: empty_array_with_initializer [190] */
+/* expect+1: error: empty array declaration for 'empty_array_with_initializer' [190] */
 double empty_array_with_initializer[] = {};
 double array_with_empty_initializer[3] = {};
 

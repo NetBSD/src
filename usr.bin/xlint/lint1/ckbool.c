@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.18 2022/06/19 12:14:33 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.19 2022/06/22 19:23:17 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.18 2022/06/19 12:14:33 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.19 2022/06/22 19:23:17 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -123,7 +123,7 @@ typeok_strict_bool_binary_compatible(op_t op, int arg,
 		/* argument #%d expects '%s', gets passed '%s' */
 		error(334, arg, tspec_name(lt), tspec_name(rt));
 	} else if (op == RETURN) {
-		/* return value type mismatch (%s) and (%s) */
+		/* function has return type '%s' but returns '%s' */
 		error(211, tspec_name(lt), tspec_name(rt));
 	} else {
 		/* operands of '%s' have incompatible types '%s' and '%s' */

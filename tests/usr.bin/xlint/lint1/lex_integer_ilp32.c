@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer_ilp32.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: lex_integer_ilp32.c,v 1.5 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "lex_integer_ilp32.c"
 
 /*
@@ -27,7 +27,7 @@ test_signed_int(void)
 
 	sinki(-2147483647);
 
-	/* expect+2: warning: ANSI C treats constant as unsigned, op - [218] */
+	/* expect+2: warning: ANSI C treats constant as unsigned, op '-' [218] */
 	/* expect+1: warning: conversion of 'unsigned long' to 'int' is out of range, arg #1 [295] */
 	sinki(-2147483648);
 }

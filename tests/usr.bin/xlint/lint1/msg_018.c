@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_018.c,v 1.4 2022/04/05 23:09:19 rillig Exp $	*/
+/*	$NetBSD: msg_018.c,v 1.5 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_018.c"
 
 // Test for message: illegal use of 'void' [18]
@@ -10,5 +10,5 @@ void x;
 unsigned long sizeof_void = sizeof(void);
 
 /* expect+2: error: illegal use of 'void' [18] */
-/* expect+1: warning: empty array declaration: void_array [190] */
+/* expect+1: warning: empty array declaration for 'void_array' [190] */
 void void_array[];

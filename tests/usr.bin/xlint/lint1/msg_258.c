@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_258.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_258.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_258.c"
 
 // Test for message: unterminated string constant [258]
@@ -12,5 +12,5 @@ int dummy;
 
 /* expect+4: error: unterminated string constant [258] */
 /* expect+3: error: syntax error '' [249] */
-/* expect+2: error: empty array declaration: str [190] */
+/* expect+2: error: empty array declaration for 'str' [190] */
 const char str[] = "This is the end.

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_222.c,v 1.3 2021/08/27 20:49:25 rillig Exp $	*/
+/*	$NetBSD: msg_222.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_222.c"
 
 // Test for message: conversion of negative constant to unsigned type [222]
@@ -20,7 +20,7 @@ function(void)
 	if (local & -1)
 		return;
 
-	/* expect+1: warning: comparison of unsigned int with negative constant, op < [162] */
+	/* expect+1: warning: operator '<' compares 'unsigned int' with 'negative constant' [162] */
 	if (local < -1)
 		return;
 

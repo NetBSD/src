@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.41 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.42 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -241,7 +241,7 @@ struct ends_with_unnamed_bit_field {
 
 char prefixed_message[] = {
 	'E', ':', ' ',
-	/* expect+1: warning: illegal combination of integer (char) and pointer (pointer to char) [183] */
+	/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' [183] */
 	"message\n",
 };
 
@@ -458,7 +458,7 @@ struct point unknown_member_on_scalar = {
 
 struct {
 	int:16;
-	/* expect+2: warning: structure has no named members [65] */
+	/* expect+2: warning: 'struct <unnamed>' has no named members [65] */
 	/* expect+1: error: cannot initialize struct/union with no named member [179] */
 } struct_with_only_unnamed_members = {
 	123,
@@ -466,7 +466,7 @@ struct {
 
 union {
 	int:16;
-	/* expect+2: warning: union has no named members [65] */
+	/* expect+2: warning: 'union <unnamed>' has no named members [65] */
 	/* expect+1: error: cannot initialize struct/union with no named member [179] */
 } union_with_only_unnamed_members = {
 	123,
