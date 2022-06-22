@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_162.c,v 1.6 2021/09/05 17:49:55 rillig Exp $	*/
+/*	$NetBSD: msg_162.c,v 1.7 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_162.c"
 
-// Test for message: comparison of %s with %s, op %s [162]
+// Test for message: operator '%s' compares '%s' with '%s' [162]
 
 /* lint1-extra-flags: -hp */
 
@@ -11,15 +11,15 @@ left_unsigned(unsigned int ui)
 	if (ui < -5.0) {
 	}
 
-	/* expect+1: warning: comparison of unsigned int with negative constant, op < [162] */
+	/* expect+1: warning: operator '<' compares 'unsigned int' with 'negative constant' [162] */
 	if (ui < -5) {
 	}
 
-	/* expect+1: warning: comparison of unsigned int with 0, op < [162] */
+	/* expect+1: warning: operator '<' compares 'unsigned int' with '0' [162] */
 	if (ui < 0) {
 	}
 
-	/* expect+1: warning: comparison of unsigned int with 0, op >= [162] */
+	/* expect+1: warning: operator '>=' compares 'unsigned int' with '0' [162] */
 	if (ui >= 0) {
 	}
 
@@ -35,15 +35,15 @@ right_unsigned(unsigned int ui)
 	if (-5.0 > ui) {
 	}
 
-	/* expect+1: warning: comparison of negative constant with unsigned int, op > [162] */
+	/* expect+1: warning: operator '>' compares 'negative constant' with 'unsigned int' [162] */
 	if (-5 > ui) {
 	}
 
-	/* expect+1: warning: comparison of 0 with unsigned int, op > [162] */
+	/* expect+1: warning: operator '>' compares '0' with 'unsigned int' [162] */
 	if (0 > ui) {
 	}
 
-	/* expect+1: warning: comparison of 0 with unsigned int, op <= [162] */
+	/* expect+1: warning: operator '<=' compares '0' with 'unsigned int' [162] */
 	if (0 <= ui) {
 	}
 
@@ -72,7 +72,7 @@ compare_signed_char(signed char sc)
 void
 compare_unsigned_char(unsigned char uc)
 {
-	/* expect+1: warning: comparison of unsigned char with negative constant, op == [162] */
+	/* expect+1: warning: operator '==' compares 'unsigned char' with 'negative constant' [162] */
 	if (uc == -1)
 		return;
 	if (uc == 0)
@@ -88,13 +88,13 @@ void take_bool(_Bool);
 void
 compare_operators(unsigned int x)
 {
-	/* expect+1: warning: comparison of unsigned int with negative constant, op < [162] */
+	/* expect+1: warning: operator '<' compares 'unsigned int' with 'negative constant' [162] */
 	take_bool(x < -1);
-	/* expect+1: warning: comparison of unsigned int with 0, op < [162] */
+	/* expect+1: warning: operator '<' compares 'unsigned int' with '0' [162] */
 	take_bool(x < 0);
 	take_bool(x < 1);
 
-	/* expect+1: warning: comparison of unsigned int with negative constant, op <= [162] */
+	/* expect+1: warning: operator '<=' compares 'unsigned int' with 'negative constant' [162] */
 	take_bool(x <= -1);
 	/*
 	 * Before tree.c 1.379 from 2021-09-05, lint warned about
@@ -112,23 +112,23 @@ compare_operators(unsigned int x)
 	take_bool(x <= 0);
 	take_bool(x <= 1);
 
-	/* expect+1: warning: comparison of unsigned int with negative constant, op > [162] */
+	/* expect+1: warning: operator '>' compares 'unsigned int' with 'negative constant' [162] */
 	take_bool(x > -1);
 	take_bool(x > 0);
 	take_bool(x > 1);
 
-	/* expect+1: warning: comparison of unsigned int with negative constant, op >= [162] */
+	/* expect+1: warning: operator '>=' compares 'unsigned int' with 'negative constant' [162] */
 	take_bool(x >= -1);
-	/* expect+1: warning: comparison of unsigned int with 0, op >= [162] */
+	/* expect+1: warning: operator '>=' compares 'unsigned int' with '0' [162] */
 	take_bool(x >= 0);
 	take_bool(x >= 1);
 
-	/* expect+1: warning: comparison of unsigned int with negative constant, op == [162] */
+	/* expect+1: warning: operator '==' compares 'unsigned int' with 'negative constant' [162] */
 	take_bool(x == -1);
 	take_bool(x == 0);
 	take_bool(x == 1);
 
-	/* expect+1: warning: comparison of unsigned int with negative constant, op != [162] */
+	/* expect+1: warning: operator '!=' compares 'unsigned int' with 'negative constant' [162] */
 	take_bool(x != -1);
 	take_bool(x != 0);
 	take_bool(x != 1);

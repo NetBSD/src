@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_complex_split.c,v 1.10 2022/06/19 12:14:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_complex_split.c,v 1.11 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "d_c99_complex_split.c"
 
 /*
@@ -42,7 +42,7 @@ set_complex_complete(double re, double im)
 
 /*
  * Before tree.c 1.275 from 2021-04-09, lint wrongly warned that when
- * '__real__ c' was assigned, 'c may be used before set'.
+ * '__real__ c' was assigned, 'c may be used before set [158]'.
  *
  * As of 2021-04-09, support for _Complex is still very incomplete, see
  * build_real_imag for details.
@@ -59,7 +59,7 @@ set_complex_only_real(double re)
 
 /*
  * Before tree.c 1.275 from 2021-04-09, lint wrongly warned that when
- * '__imag__ c' was assigned, 'c may be used before set'.
+ * '__imag__ c' was assigned, 'c may be used before set [158]'.
  *
  * As of 2021-04-09, support for _Complex is still very incomplete, see
  * build_real_imag for details.

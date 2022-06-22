@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.12 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.13 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -74,7 +74,7 @@ comma_expression(char first, double second)
 	    char: "first",
 	    double: 2.0
 	);
-	/* expect+1: warning: function comma_expression falls off bottom without returning value [217] */
+	/* expect+1: warning: function 'comma_expression' falls off bottom without returning value [217] */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_215.c,v 1.11 2021/08/29 17:01:27 rillig Exp $	*/
+/*	$NetBSD: msg_215.c,v 1.12 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_215.c"
 
 // Test for message: function '%s' implicitly declared to return int [215]
@@ -21,11 +21,11 @@ test(struct str str, const double *p_double)
 	name();
 
 	/* expect+2: error: 'parenthesized' undefined [99] */
-	/* expect+1: error: illegal function (type int) [149] */
+	/* expect+1: error: cannot call 'int', must be a function [149] */
 	(parenthesized)();
 
 	/* expect+2: error: type 'struct str' does not have member 'member' [101] */
-	/* expect+1: error: illegal function (type int) [149] */
+	/* expect+1: error: cannot call 'int', must be a function [149] */
 	str.member();
 
 	/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */

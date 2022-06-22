@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.17 2022/06/19 12:14:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.18 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -153,7 +153,7 @@ extern int strcmp(const char *, const char *);
 _Bool
 call_finite_bad(double d)
 {
-	/* expect+1: error: return value type mismatch (_Bool) and (int) [211] */
+	/* expect+1: error: function has return type '_Bool' but returns 'int' [211] */
 	return finite(d);
 }
 

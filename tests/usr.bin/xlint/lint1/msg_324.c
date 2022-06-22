@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_324.c,v 1.6 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_324.c,v 1.7 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_324.c"
 
-// Test for message: suggest cast from '%s' to '%s' on op %s to avoid overflow [324]
+// Test for message: suggest cast from '%s' to '%s' on op '%s' to avoid overflow [324]
 
 /*
  * This warning applies to binary operators if the result of the operator
@@ -22,19 +22,19 @@ example(char c, int i, unsigned u)
 	long long ll;
 	unsigned long long ull;
 
-	/* expect+1: warning: suggest cast from 'int' to 'long long' on op + to avoid overflow [324] */
+	/* expect+1: warning: suggest cast from 'int' to 'long long' on op '+' to avoid overflow [324] */
 	ll = c + i;
-	/* expect+1: warning: suggest cast from 'int' to 'long long' on op - to avoid overflow [324] */
+	/* expect+1: warning: suggest cast from 'int' to 'long long' on op '-' to avoid overflow [324] */
 	ll = i - c;
-	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op * to avoid overflow [324] */
+	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op '*' to avoid overflow [324] */
 	ull = c * u;
-	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op + to avoid overflow [324] */
+	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op '+' to avoid overflow [324] */
 	ull = u + c;
-	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op - to avoid overflow [324] */
+	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op '-' to avoid overflow [324] */
 	ull = i - u;
-	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op * to avoid overflow [324] */
+	/* expect+1: warning: suggest cast from 'unsigned int' to 'unsigned long long' on op '*' to avoid overflow [324] */
 	ull = u * i;
-	/* expect+1: warning: suggest cast from 'int' to 'long long' on op << to avoid overflow [324] */
+	/* expect+1: warning: suggest cast from 'int' to 'long long' on op '<<' to avoid overflow [324] */
 	ll = i << c;
 
 	/*

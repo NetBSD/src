@@ -1,12 +1,12 @@
-/*	$NetBSD: msg_302.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_302.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_302.c"
 
-// Test for message: %s returns pointer to automatic object [302]
+// Test for message: '%s' returns pointer to automatic object [302]
 
 void *
 return_arg(int arg)
 {
-	/* expect+1: warning: return_arg returns pointer to automatic object [302] */
+	/* expect+1: warning: 'return_arg' returns pointer to automatic object [302] */
 	return &arg;
 }
 
@@ -14,7 +14,7 @@ void *
 return_local(void)
 {
 	int local = 3;
-	/* expect+1: warning: return_local returns pointer to automatic object [302] */
+	/* expect+1: warning: 'return_local' returns pointer to automatic object [302] */
 	return &local;
 }
 
@@ -28,7 +28,7 @@ return_local_array(_Bool cond)
 	if (cond)
 		return p;
 
-	/* expect+1: warning: return_local_array returns pointer to automatic object [302] */
+	/* expect+1: warning: 'return_local_array' returns pointer to automatic object [302] */
 	return local + 5;
 }
 

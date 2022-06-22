@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_326.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_326.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_326.c"
 
-// Test for message: %s attribute ignored for %s [326]
+// Test for message: attribute '%s' ignored for '%s' [326]
 
-/* expect+1: warning: packed attribute ignored for int [326] */
+/* expect+1: warning: attribute 'packed' ignored for 'int' [326] */
 int variable __packed;

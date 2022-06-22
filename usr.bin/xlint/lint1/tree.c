@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.458 2022/06/21 22:21:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.459 2022/06/22 19:23:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.458 2022/06/21 22:21:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.459 2022/06/22 19:23:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -758,13 +758,13 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	 */
 	if (mp->m_warn_if_left_unsigned_in_c90 &&
 	    ln->tn_op == CON && ln->tn_val->v_unsigned_since_c90) {
-		/* ANSI C treats constant as unsigned, op %s */
+		/* ANSI C treats constant as unsigned, op '%s' */
 		warning(218, mp->m_name);
 		ln->tn_val->v_unsigned_since_c90 = false;
 	}
 	if (mp->m_warn_if_right_unsigned_in_c90 &&
 	    rn->tn_op == CON && rn->tn_val->v_unsigned_since_c90) {
-		/* ANSI C treats constant as unsigned, op %s */
+		/* ANSI C treats constant as unsigned, op '%s' */
 		warning(218, mp->m_name);
 		rn->tn_val->v_unsigned_since_c90 = false;
 	}
@@ -1068,7 +1068,7 @@ typeok_address(const mod_t *mp,
 		return false;
 	}
 	if (tn->tn_op == NAME && tn->tn_sym->s_register) {
-		/* cannot take address of register %s */
+		/* cannot take address of register '%s' */
 		error(113, tn->tn_sym->s_name);
 		return false;
 	}
@@ -1735,7 +1735,7 @@ check_assign_void_pointer_compat(op_t op, int arg,
 		switch (op) {
 		case INIT:
 		case RETURN:
-			/* incompatible pointer types (%s != %s) */
+			/* incompatible pointer types to '%s' and '%s' */
 			warning(182, type_name(lstp), type_name(rstp));
 			break;
 		case FARG:
@@ -1744,7 +1744,7 @@ check_assign_void_pointer_compat(op_t op, int arg,
 			    type_name(rtp), type_name(ltp), arg);
 			break;
 		default:
-			/* operands have incompatible pointer type... */
+			/* operands of '%s' have incompatible pointer ... */
 			warning(128, op_name(op),
 			    type_name(lstp), type_name(rstp));
 			break;
@@ -1773,11 +1773,11 @@ check_assign_pointer_integer(op_t op, int arg,
 	switch (op) {
 	case INIT:
 	case RETURN:
-		/* illegal combination of %s (%s) and %s (%s) */
+		/* illegal combination of %s '%s' and %s '%s' */
 		warning(183, lx, type_name(ltp), rx, type_name(rtp));
 		break;
 	case FARG:
-		/* illegal combination of %s (%s) and %s (%s), arg #%d */
+		/* illegal combination of %s '%s' and %s '%s', arg #%d */
 		warning(154,
 		    lx, type_name(ltp), rx, type_name(rtp), arg);
 		break;
@@ -1824,7 +1824,7 @@ warn_assign(op_t op, int arg,
 		error(185, type_name(ltp), type_name(rtp));
 		break;
 	case RETURN:
-		/* return value type mismatch (%s) and (%s) */
+		/* function has return type '%s' but returns '%s' */
 		error(211, type_name(ltp), type_name(rtp));
 		break;
 	case FARG:
@@ -1902,7 +1902,7 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 		return;
 	}
 
-	/* dubious operation on enum, op %s */
+	/* dubious operation on enum, op '%s' */
 	warning(241, op_name(op));
 }
 
@@ -1924,12 +1924,13 @@ check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 			    type_name(ln->tn_type), type_name(rn->tn_type));
 			break;
 		case FARG:
-			/* enum type mismatch, arg #%d (%s != %s) */
-			warning(156, arg,
-			    type_name(ln->tn_type), type_name(rn->tn_type));
+			/* function expects '%s', passing '%s' for arg #%d */
+			warning(156,
+			    type_name(ln->tn_type), type_name(rn->tn_type),
+			    arg);
 			break;
 		case RETURN:
-			/* return value type mismatch (%s) and (%s) */
+			/* function has return type '%s' but returns '%s' */
 			warning(211,
 			    type_name(ln->tn_type), type_name(rn->tn_type));
 			break;
@@ -1941,7 +1942,7 @@ check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 		}
 	} else if (Pflag && mp->m_comparison && op != EQ && op != NE) {
 		if (eflag)
-			/* dubious comparison of enums, op %s */
+			/* dubious comparison of enums, op '%s' */
 			warning(243, mp->m_name);
 	}
 }
@@ -1978,7 +1979,7 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 		warning(279, type_name(ln->tn_type), type_name(rn->tn_type));
 		break;
 	default:
-		/* combination of '%s' and '%s', op %s */
+		/* combination of '%s' and '%s', op '%s' */
 		warning(242, type_name(ln->tn_type), type_name(rn->tn_type),
 		    op_name(op));
 		break;
@@ -2444,7 +2445,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	if (Pflag && portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
 	    (tn->tn_op == PLUS || tn->tn_op == MINUS || tn->tn_op == MULT ||
 	     tn->tn_op == SHL)) {
-		/* suggest cast from '%s' to '%s' on op %s to ... */
+		/* suggest cast from '%s' to '%s' on op '%s' to ... */
 		warning(324, type_name(gettyp(ot)), type_name(tp),
 		    op_name(tn->tn_op));
 	}
@@ -2661,7 +2662,7 @@ convert_constant_check_range_bitor(size_t nsz, size_t osz, const val_t *v,
 				   uint64_t xmask, op_t op)
 {
 	if (nsz < osz && (v->v_quad & xmask) != 0) {
-		/* constant truncated by conversion, op %s */
+		/* constant truncated by conversion, op '%s' */
 		warning(306, op_name(op));
 	}
 }
@@ -2686,7 +2687,7 @@ convert_constant_check_range_bitand(size_t nsz, size_t osz,
 	} else if (nsz < osz &&
 		   (v->v_quad & xmask) != xmask &&
 		   (v->v_quad & xmask) != 0) {
-		/* constant truncated by conversion, op %s */
+		/* constant truncated by conversion, op '%s' */
 		warning(306, op_name(op));
 	}
 }
@@ -3087,7 +3088,7 @@ build_real_imag(op_t op, bool sys, tnode_t *ln)
 		cn = build_integer_constant(FLOAT, (int64_t)1);
 		break;
 	default:
-		/* __%s__ is illegal for type %s */
+		/* '__%s__' is illegal for type '%s' */
 		error(276, op == REAL ? "real" : "imag",
 		    type_name(ln->tn_type));
 		return NULL;
@@ -3655,7 +3656,7 @@ fold_float(tnode_t *tn)
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
 	    (t == DOUBLE &&
 	     (v->v_ldbl > DBL_MAX || v->v_ldbl < -DBL_MAX))) {
-		/* floating point overflow detected, op %s */
+		/* floating point overflow on operator '%s' */
 		warning(142, op_name(tn->tn_op));
 		v->v_ldbl = floating_error_value(t, v->v_ldbl);
 		fpe = 0;
@@ -3935,7 +3936,7 @@ build_function_call(tnode_t *func, bool sys, tnode_t *args)
 
 	if (func->tn_type->t_tspec != PTR ||
 	    func->tn_type->t_subt->t_tspec != FUNC) {
-		/* illegal function (type %s) */
+		/* cannot call '%s', must be a function */
 		error(149, type_name(func->tn_type));
 		return NULL;
 	}
@@ -3971,8 +3972,8 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 
 	asym = ftp->t_args;
 	if (ftp->t_proto && npar != narg && !(ftp->t_vararg && npar < narg)) {
-		/* argument mismatch: %d arg%s passed, %d expected */
-		error(150, narg, narg > 1 ? "s" : "", npar);
+		/* argument mismatch: %d %s passed, %d expected */
+		error(150, narg, narg > 1 ? "arguments" : "argument", npar);
 		asym = NULL;
 	}
 
@@ -4268,7 +4269,7 @@ check_expr_side_effect(const tnode_t *ln, bool szof)
 		}
 		if (sc != EXTERN && sc != STATIC &&
 		    !ln->tn_sym->s_set && !szof && di == NULL) {
-			/* %s may be used before set */
+			/* '%s' may be used before set */
 			warning(158, ln->tn_sym->s_name);
 			mark_as_set(ln->tn_sym);
 		}
@@ -4528,24 +4529,24 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 	if (is_uinteger(lt) && !is_uinteger(rt) &&
 	    rn->tn_op == CON && rn->tn_val->v_quad <= 0) {
 		if (rn->tn_val->v_quad < 0) {
-			/* comparison of %s with %s, op %s */
-			warning(162, type_name(ln->tn_type),
-			    "negative constant", op_name(op));
+			/* operator '%s' compares '%s' with '%s' */
+			warning(162, op_name(op),
+			    type_name(ln->tn_type), "negative constant");
 		} else if (op == LT || op == GE) {
-			/* comparison of %s with %s, op %s */
-			warning(162, type_name(ln->tn_type), "0", op_name(op));
+			/* operator '%s' compares '%s' with '%s' */
+			warning(162, op_name(op), type_name(ln->tn_type), "0");
 		}
 		return;
 	}
 	if (is_uinteger(rt) && !is_uinteger(lt) &&
 	    ln->tn_op == CON && ln->tn_val->v_quad <= 0) {
 		if (ln->tn_val->v_quad < 0) {
-			/* comparison of %s with %s, op %s */
-			warning(162, "negative constant",
-			    type_name(rn->tn_type), op_name(op));
+			/* operator '%s' compares '%s' with '%s' */
+			warning(162, op_name(op),
+			    "negative constant", type_name(rn->tn_type));
 		} else if (op == GT || op == LE) {
-			/* comparison of %s with %s, op %s */
-			warning(162, "0", type_name(rn->tn_type), op_name(op));
+			/* operator '%s' compares '%s' with '%s' */
+			warning(162, op_name(op), "0", type_name(rn->tn_type));
 		}
 		return;
 	}

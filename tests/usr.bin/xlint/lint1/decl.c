@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.17 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.18 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -66,7 +66,7 @@ declarators(void)
 
 	/* expect+1: warning: converting 'pointer to char' to incompatible 'pointer to double' for argument 1 [153] */
 	sink(pc);
-	/* expect+1: warning: illegal combination of pointer (pointer to double) and integer (char), arg #1 [154] */
+	/* expect+1: warning: illegal combination of pointer 'pointer to double' and integer 'char', arg #1 [154] */
 	sink(c);
 	/* expect+1: warning: converting 'pointer to pointer to char' to incompatible 'pointer to double' for argument 1 [153] */
 	sink(ppc);
@@ -179,5 +179,5 @@ cover_func_declarator(void)
  * "elsz > 0" in 'length'.
  */
 /* expect+2: error: syntax error 'goto' [249] */
-/* expect+1: warning: empty array declaration: void_array_error [190] */
+/* expect+1: warning: empty array declaration for 'void_array_error' [190] */
 void void_array_error[] goto;
