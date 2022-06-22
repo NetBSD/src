@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.1,v 1.1 2022/06/22 18:02:43 kre Exp $
+.\"	$NetBSD: readlink.1,v 1.2 2022/06/22 19:18:17 uwe Exp $
 .\"
 .\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ return the absolute pathname corresponding to
 In this case, the argument does not need to be a symbolic link.
 .Pp
 The options are as follows:
-.Bl -tag -width XFXXX
+.Bl -tag -width Fl
 .It Fl f
 Canonicalize the pathname of
 .Ar file ,
@@ -90,6 +90,7 @@ This is the inverse of
 .Fl q
 and
 .Fl s .
+.El
 .Sh SEE ALSO
 .Xr stat 1 ,
 .Xr lstat 2 ,
