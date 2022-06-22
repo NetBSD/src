@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.41 2022/06/22 18:02:43 kre Exp $
+.\"	$NetBSD: stat.1,v 1.42 2022/06/22 18:20:30 kre Exp $
 .\"
 .\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,6 +76,9 @@ The
 .Sq path name )
 in this case is
 .Dq \&(stdin) .
+The file number
+.Pq Dq %@
+will be zero.
 .Pp
 Otherwise the information displayed is obtained by calling
 .Xr lstat 2
@@ -487,11 +490,17 @@ from the
 .Fa st_rdev
 field for character or block special devices
 (that is,
-.Dq %Hr,%Lr )
+.Dq %Hr,%-Lr )
 and gives size output
 .Pq Fa st_size
 .Pq Dq %z
 for all others.
+A specified field width applies to the overall result
+(approximately half each for the two device file sub-fields),
+but precision, output format, and flags are used separately for
+each conversion made (but note the
+.Sq Fl
+in the %Lr conversion.)
 .El
 .El
 .Pp
