@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.141 2022/06/20 21:13:35 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.142 2022/06/22 19:23:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.141 2022/06/20 21:13:35 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.142 2022/06/22 19:23:17 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -366,7 +366,7 @@ check_missing_return_value(void)
 	if (allow_c99 && strcmp(funcsym->s_name, "main") == 0)
 		return;
 
-	/* function %s falls off bottom without returning value */
+	/* function '%s' falls off bottom without returning value */
 	warning(217, funcsym->s_name);
 }
 
@@ -391,7 +391,7 @@ funcend(void)
 	 */
 	if (cstmt->c_had_return_noval && cstmt->c_had_return_value &&
 	    funcsym->s_return_type_implicit_int)
-		/* function %s has return (e); and return; */
+		/* function '%s' has 'return expr' and 'return' */
 		warning(216, funcsym->s_name);
 
 	/* Print warnings for unused arguments */
@@ -439,7 +439,7 @@ named_label(sym_t *sym)
 {
 
 	if (sym->s_set) {
-		/* label %s redefined */
+		/* label '%s' redefined */
 		error(194, sym->s_name);
 	} else {
 		mark_as_set(sym);
@@ -1074,7 +1074,7 @@ do_return(bool sys, tnode_t *tn)
 		cs->c_had_return_noval = true;
 
 	if (tn != NULL && funcsym->s_type->t_subt->t_tspec == VOID) {
-		/* void function %s cannot return value */
+		/* void function '%s' cannot return value */
 		error(213, funcsym->s_name);
 		expr_free_all();
 		tn = NULL;
@@ -1105,7 +1105,7 @@ do_return(bool sys, tnode_t *tn)
 				rn = rn->tn_left;
 			if (rn->tn_op == ADDR && rn->tn_left->tn_op == NAME &&
 			    rn->tn_left->tn_sym->s_scl == AUTO) {
-				/* %s returns pointer to automatic object */
+				/* '%s' returns pointer to automatic object */
 				warning(302, funcsym->s_name);
 			}
 		}
@@ -1131,21 +1131,21 @@ global_clean_up_decl(bool silent)
 
 	if (nargusg != -1) {
 		if (!silent) {
-			/* must precede function definition: ** %s ** */
+			/* comment ** %s ** must precede function definition */
 			warning_at(282, &argsused_pos, "ARGSUSED");
 		}
 		nargusg = -1;
 	}
 	if (nvararg != -1) {
 		if (!silent) {
-			/* must precede function definition: ** %s ** */
+			/* comment ** %s ** must precede function definition */
 			warning_at(282, &vapos, "VARARGS");
 		}
 		nvararg = -1;
 	}
 	if (printflike_argnum != -1) {
 		if (!silent) {
-			/* must precede function definition: ** %s ** */
+			/* comment ** %s ** must precede function definition */
 			warning_at(282, &printflike_pos, "PRINTFLIKE");
 		}
 		printflike_argnum = -1;
@@ -1183,12 +1183,12 @@ argsused(int n)
 		n = 0;
 
 	if (dcs->d_kind != DK_EXTERN) {
-		/* must be outside function: ** %s ** */
+		/* comment ** %s ** must be outside function */
 		warning(280, "ARGSUSED");
 		return;
 	}
 	if (nargusg != -1) {
-		/* duplicate use of ** %s ** */
+		/* duplicate comment ** %s ** */
 		warning(281, "ARGSUSED");
 	}
 	nargusg = n;
@@ -1209,12 +1209,12 @@ varargs(int n)
 		n = 0;
 
 	if (dcs->d_kind != DK_EXTERN) {
-		/* must be outside function: ** %s ** */
+		/* comment ** %s ** must be outside function */
 		warning(280, "VARARGS");
 		return;
 	}
 	if (nvararg != -1) {
-		/* duplicate use of ** %s ** */
+		/* duplicate comment ** %s ** */
 		warning(281, "VARARGS");
 	}
 	nvararg = n;
@@ -1235,12 +1235,12 @@ printflike(int n)
 		n = 0;
 
 	if (dcs->d_kind != DK_EXTERN) {
-		/* must be outside function: ** %s ** */
+		/* comment ** %s ** must be outside function */
 		warning(280, "PRINTFLIKE");
 		return;
 	}
 	if (printflike_argnum != -1) {
-		/* duplicate use of ** %s ** */
+		/* duplicate comment ** %s ** */
 		warning(281, "PRINTFLIKE");
 	}
 	printflike_argnum = n;
@@ -1261,12 +1261,12 @@ scanflike(int n)
 		n = 0;
 
 	if (dcs->d_kind != DK_EXTERN) {
-		/* must be outside function: ** %s ** */
+		/* comment ** %s ** must be outside function */
 		warning(280, "SCANFLIKE");
 		return;
 	}
 	if (scanflike_argnum != -1) {
-		/* duplicate use of ** %s ** */
+		/* duplicate comment ** %s ** */
 		warning(281, "SCANFLIKE");
 	}
 	scanflike_argnum = n;
@@ -1316,7 +1316,7 @@ lintlib(int n)
 {
 
 	if (dcs->d_kind != DK_EXTERN) {
-		/* must be outside function: ** %s ** */
+		/* comment ** %s ** must be outside function */
 		warning(280, "LINTLIBRARY");
 		return;
 	}
@@ -1359,7 +1359,7 @@ protolib(int n)
 {
 
 	if (dcs->d_kind != DK_EXTERN) {
-		/* must be outside function: ** %s ** */
+		/* comment ** %s ** must be outside function */
 		warning(280, "PROTOLIB");
 		return;
 	}

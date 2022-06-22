@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.292 2022/06/21 22:10:30 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.293 2022/06/22 19:23:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.292 2022/06/21 22:10:30 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.293 2022/06/22 19:23:17 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -512,7 +512,7 @@ setpackedsize(type_t *tp)
 		}
 		break;
 	default:
-		/* %s attribute ignored for %s */
+		/* attribute '%s' ignored for '%s' */
 		warning(326, "packed", type_name(tp));
 		break;
 	}
@@ -1869,8 +1869,8 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	}
 
 	if (n == 0 && sp->sou_size_in_bits != 0) {
-		/* %s has no named members */
-		warning(65, t == STRUCT ? "structure" : "union");
+		/* '%s' has no named members */
+		warning(65, type_name(tp));
 	}
 	return tp;
 }
@@ -2528,24 +2528,24 @@ check_func_lint_directives(void)
 	for (arg = dcs->d_func_args; arg != NULL; arg = arg->s_next)
 		narg++;
 	if (nargusg > narg) {
-		/* argument number mismatch with directive: ** %s ** */
+		/* argument number mismatch with directive ** %s ** */
 		warning(283, "ARGSUSED");
 		nargusg = 0;
 	}
 	if (nvararg > narg) {
-		/* argument number mismatch with directive: ** %s ** */
+		/* argument number mismatch with directive ** %s ** */
 		warning(283, "VARARGS");
 		nvararg = 0;
 	}
 	if (printflike_argnum > narg) {
-		/* argument number mismatch with directive: ** %s ** */
+		/* argument number mismatch with directive ** %s ** */
 		warning(283, "PRINTFLIKE");
 		printflike_argnum = -1;
 	} else if (printflike_argnum == 0) {
 		printflike_argnum = -1;
 	}
 	if (scanflike_argnum > narg) {
-		/* argument number mismatch with directive: ** %s ** */
+		/* argument number mismatch with directive ** %s ** */
 		warning(283, "SCANFLIKE");
 		scanflike_argnum = -1;
 	} else if (scanflike_argnum == 0) {
@@ -2988,10 +2988,10 @@ check_size(sym_t *dsym)
 	if (length_in_bits(dsym->s_type, dsym->s_name) == 0 &&
 	    dsym->s_type->t_tspec == ARRAY && dsym->s_type->t_dim == 0) {
 		if (!allow_c90) {
-			/* empty array declaration: %s */
+			/* empty array declaration for '%s' */
 			warning(190, dsym->s_name);
 		} else {
-			/* empty array declaration: %s */
+			/* empty array declaration for '%s' */
 			error(190, dsym->s_name);
 		}
 	}
@@ -3245,7 +3245,7 @@ check_unused_static_global_variable(const sym_t *sym)
 				/* static function '%s' unused */
 				warning_at(236, &sym->s_def_pos, sym->s_name);
 		} else {
-			/* static function %s declared but not defined */
+			/* static function '%s' declared but not defined */
 			warning_at(290, &sym->s_def_pos, sym->s_name);
 		}
 	} else if (!sym->s_set) {
@@ -3261,7 +3261,7 @@ static void
 check_static_global_variable(const sym_t *sym)
 {
 	if (sym->s_type->t_tspec == FUNC && sym->s_used && sym->s_def != DEF) {
-		/* static function called but not defined: %s() */
+		/* static function '%s' called but not defined */
 		error_at(225, &sym->s_use_pos, sym->s_name);
 	}
 
@@ -3269,7 +3269,7 @@ check_static_global_variable(const sym_t *sym)
 		check_unused_static_global_variable(sym);
 
 	if (allow_c90 && sym->s_def == TDEF && sym->s_type->t_const) {
-		/* const object %s should have initializer */
+		/* const object '%s' should have initializer */
 		warning_at(227, &sym->s_def_pos, sym->s_name);
 	}
 }
@@ -3321,10 +3321,10 @@ check_global_variable_size(const sym_t *sym)
 		/* TODO: C99 6.7.5.2p1 defines this as an error as well. */
 		if (!allow_c90 ||
 		    (sym->s_scl == EXTERN && (allow_trad || allow_c99))) {
-			/* empty array declaration: %s */
+			/* empty array declaration for '%s' */
 			warning_at(190, &sym->s_def_pos, sym->s_name);
 		} else {
-			/* empty array declaration: %s */
+			/* empty array declaration for '%s' */
 			error_at(190, &sym->s_def_pos, sym->s_name);
 		}
 	}

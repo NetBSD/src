@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.12 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.13 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -125,7 +125,7 @@ extern /* implicit int */ return_implicit_int_unknown_parameters();
 /* For function declarations, the keyword 'extern' is optional. */
 extern void extern_return_void_no_parameters(void);
 /* implicit extern */ void return_void_no_parameters(void);
-/* expect+1: warning: static function static_return_void_no_parameters declared but not defined [290] */
+/* expect+1: warning: static function 'static_return_void_no_parameters' declared but not defined [290] */
 static void static_return_void_no_parameters(void);
 
 void taking_int(int);
@@ -145,7 +145,7 @@ void taking_varargs(const char *, ...);
  * is nevertheless recorded.  There's probably a good reason for recording
  * it.
  */
-/* expect+1: warning: static function static_function declared but not defined [290] */
+/* expect+1: warning: static function 'static_function' declared but not defined [290] */
 static int static_function(void);
 
 void my_printf(const char *, ...);

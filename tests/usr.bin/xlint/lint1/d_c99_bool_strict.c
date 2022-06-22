@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.38 2022/06/19 12:14:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.39 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -279,21 +279,21 @@ strict_bool_conversion_return_bool(bool b)
 bool
 strict_bool_conversion_return_0(void)
 {
-	/* expect+1: error: return value type mismatch (_Bool) and (int) [211] */
+	/* expect+1: error: function has return type '_Bool' but returns 'int' [211] */
 	return 0;
 }
 
 bool
 strict_bool_conversion_return_1(void)
 {
-	/* expect+1: error: return value type mismatch (_Bool) and (int) [211] */
+	/* expect+1: error: function has return type '_Bool' but returns 'int' [211] */
 	return 1;
 }
 
 bool
 strict_bool_conversion_return_2(void)
 {
-	/* expect+1: error: return value type mismatch (_Bool) and (int) [211] */
+	/* expect+1: error: function has return type '_Bool' but returns 'int' [211] */
 	return 2;
 }
 
@@ -301,21 +301,21 @@ strict_bool_conversion_return_2(void)
 bool
 strict_bool_conversion_return_pointer(const void *p)
 {
-	/* expect+1: error: return value type mismatch (_Bool) and (pointer) [211] */
+	/* expect+1: error: function has return type '_Bool' but returns 'pointer' [211] */
 	return p;
 }
 
 char
 strict_bool_conversion_return_false_as_char(void)
 {
-	/* expect+1: error: return value type mismatch (char) and (_Bool) [211] */
+	/* expect+1: error: function has return type 'char' but returns '_Bool' [211] */
 	return __lint_false;
 }
 
 char
 strict_bool_conversion_return_true_as_char(void)
 {
-	/* expect+1: error: return value type mismatch (char) and (_Bool) [211] */
+	/* expect+1: error: function has return type 'char' but returns '_Bool' [211] */
 	return __lint_true;
 }
 
@@ -340,12 +340,12 @@ strict_bool_conversion_function_argument_pass(bool b, int i, const char *p)
 
 	/* Implicitly converting int to bool (arg #1). */
 	/* expect+2: error: argument #1 expects '_Bool', gets passed 'int' [334] */
-	/* expect+1: warning: illegal combination of pointer (pointer to const char) and integer (int), arg #3 [154] */
+	/* expect+1: warning: illegal combination of pointer 'pointer to const char' and integer 'int', arg #3 [154] */
 	take_arguments(i, i, i);
 
 	/* Implicitly converting pointer to bool (arg #1). */
 	/* expect+2: error: argument #1 expects '_Bool', gets passed 'pointer' [334] */
-	/* expect+1: warning: illegal combination of integer (int) and pointer (pointer to const char), arg #2 [154] */
+	/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to const char', arg #2 [154] */
 	take_arguments(p, p, p);
 
 	/* Passing bool as vararg. */

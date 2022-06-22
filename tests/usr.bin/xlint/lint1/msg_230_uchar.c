@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230_uchar.c,v 1.8 2022/03/14 20:25:26 rillig Exp $	*/
+/*	$NetBSD: msg_230_uchar.c,v 1.9 2022/06/22 19:23:18 rillig Exp $	*/
 # 3 "msg_230_uchar.c"
 
 // Test for message: nonportable character comparison '%s %d' [230]
@@ -95,7 +95,7 @@ compare_greater(char c)
 	 * behaves differently depending on the platform.  Such a comparison
 	 * should never be needed.
 	 */
-	/* expect+1: warning: comparison of char with 0, op >= [162] */
+	/* expect+1: warning: operator '>=' compares 'char' with '0' [162] */
 	if (c >= 0)
 		return;
 
