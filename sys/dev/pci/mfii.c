@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.15 2022/05/13 10:44:38 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.16 2022/06/22 14:29:11 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.15 2022/05/13 10:44:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.16 2022/06/22 14:29:11 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -1840,7 +1840,11 @@ mfii_load_mfa(struct mfii_softc *sc, struct mfii_ccb *ccb,
 static void
 mfii_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
+#if defined(__LP64__) && 0
 	u_long *r = (u_long *)&ccb->ccb_req;
+#else
+	uint32_t *r = (uint32_t *)&ccb->ccb_req;
+#endif
 
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_requests),
 	    ccb->ccb_request_offset, MFII_REQUEST_SIZE,
