@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.10.2.7 2021/05/12 06:53:55 msaitoh Exp $	*/
+/*	$NetBSD: label.c,v 1.10.2.8 2022/06/22 23:48:54 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.10.2.7 2021/05/12 06:53:55 msaitoh Exp $");
+__RCSID("$NetBSD: label.c,v 1.10.2.8 2022/06/22 23:48:54 msaitoh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -258,14 +258,18 @@ edit_fs_start(menudesc *m, void *arg)
 
 	start = getpartoff(edit->pset->parts, edit->info.start);
 	if (edit->info.size != 0) {
-		/* Try to keep end in the same place */
-		end = edit->info.start + edit->info.size;
-		if (end < start)
-			edit->info.size = edit->pset->parts->pscheme->
-			    max_free_space_at(edit->pset->parts,
-			    edit->info.start);
-		else
-			edit->info.size = end - start;
+		if (start < (edit->info.start+edit->info.size)) {
+			/* Try to keep end in the same place */
+			end = edit->info.start + edit->info.size;
+			if (end < start)
+				edit->info.size = edit->pset->parts->pscheme->
+				    max_free_space_at(edit->pset->parts,
+				    edit->info.start);
+			else
+				edit->info.size = end - start;
+		} else {
+			edit->info.size = 0;
+		}
 	}
 	edit->info.start = start;
 	return 0;
@@ -279,8 +283,9 @@ edit_fs_size(menudesc *m, void *arg)
 	daddr_t size;
 
 	/* get original partition data, in case start moved already */
-	edit->pset->parts->pscheme->get_part_info(edit->pset->parts,
-	    edit->id, &pinfo);
+	if (!edit->pset->parts->pscheme->get_part_info(edit->pset->parts,
+	    edit->id, &pinfo))
+		pinfo = edit->info;
 	/* ask for new size with old start and current values */
 	size = getpartsize(edit->pset->parts, pinfo.start,
 	    edit->info.start, edit->info.size);
