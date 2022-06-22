@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.43 2022/06/22 22:25:23 wiz Exp $
+.\"	$NetBSD: stat.1,v 1.44 2022/06/22 22:41:13 uwe Exp $
 .\"
 .\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,9 +75,9 @@ The
 (and also the
 .Sq path name )
 in this case is
-.Dq \&(stdin) .
+.Ql \&(stdin) .
 The file number
-.Pq Dq %@
+.Pq Ql %@
 will be zero.
 .Pp
 Otherwise the information displayed is obtained by calling
@@ -108,23 +108,23 @@ and
 fields, in that order.
 .Pp
 The options are as follows:
-.Bl -tag -width XFXformatXXX
+.Bl -tag -width Fl
 .It Fl F
 As in
 .Xr ls 1 ,
 display a slash
-.Pq Sq /
+.Pq Ql /
 immediately after each pathname that is a directory, an
 asterisk
-.Pq Sq *
+.Pq Ql *
 after each that is executable, an at sign
-.Pq Sq @
+.Pq Ql @
 after each symbolic link, a percent sign
-.Pq Sq %
+.Pq Ql %
 after each whiteout, an equal sign
-.Pq Sq =
+.Pq Ql =
 after each socket, and a vertical bar
-.Pq Sq \&|
+.Pq Ql \&|
 after each that is a FIFO.
 The use of
 .Fl F
@@ -184,14 +184,20 @@ FMT="$FMT st_flags=%f"
 stat -t %s -f "$FMT" .
 .Ed
 .Pp
-The timefmt may be altered from the default for
+The
+.Ar timefmt
+may be altered from the default for
 .Fl s
-.Pq Dq \&%s ,
+.Pq Ql \&%s
 by also using the
 .Fl t
 option.
-Note that if you use a timefmt that contains embedded whitespace or shell
-meta-characters, or if the shell's IFS is set to a non-standard value,
+Note that if you use a
+.Ar timefmt
+that contains embedded whitespace or shell
+meta-characters, or if the shell's
+.Dv IFS
+is set to a non-standard value,
 you will need to
 include appropriate quoting in the
 .Fl t
@@ -206,7 +212,9 @@ using the specified format.
 This format is
 passed directly to
 .Xr strftime 3
-with the extension that %f prints nanoseconds if available.
+with the extension that
+.Ql %f
+prints nanoseconds if available.
 .It Fl x
 Display information in a more verbose way as seen from some Linux
 distributions.
@@ -235,7 +243,7 @@ or the current file number in the argument list is printed.
 Otherwise the string is examined for the following:
 .Pp
 Any of the following optional flags in any order:
-.Bl -tag -width Ds
+.Bl -tag -width Cm
 .It Cm #
 Selects an alternate output form for string, octal and hexadecimal output.
 String output will be encoded in
@@ -243,7 +251,7 @@ String output will be encoded in
 style.
 Octal output will have a leading zero.
 Non-zero hexadecimal output will have
-.Dq 0x
+.Ql 0x
 prepended to it.
 .It Cm +
 Asserts that a sign indicating whether a number is positive or negative
@@ -262,22 +270,20 @@ overrides a space if both are used.
 .El
 .Pp
 Then followed by the following fields in the following order:
-.Bl -tag -width Ds
-.It Cm size
+.Bl -tag -width Ar
+.It Ar size
 An optional decimal digit string specifying the minimum field width.
-Note that a leading zero
-.Pq Sq 0
-is treated as the
-.Sq 0
+Note that a leading zero is treated as the
+.Sq Cm 0
 flag (above), subsequent embedded zeroes are part of the
-.Cm size .
-.It Cm prec
+.Ar size .
+.It Ar prec
 An optional precision composed of a decimal point
 .Sq Cm \&.
 and a decimal digit string that indicates the maximum string length,
 the number of digits to appear after the decimal point in floating point
 output, or the minimum number of digits to appear in other numeric output.
-.It Cm fmt
+.It Ar fmt
 An optional output format specifier which is one of
 .Cm D ,
 .Cm O ,
@@ -301,20 +307,22 @@ The special output format specifier
 .Cm S
 may be used to indicate that the output, if
 applicable, should be in string format.
-May be used in combination with
-.Bl -tag -width Ds
-.It Cm amc
+May be used in combination with the following field specifiers:
+.Bl -tag -width Cm
+.It Cm a , m , c
 Display date in
 .Xr strftime 3
-format with the extension that %f prints nanoseconds if available.
-.It Cm dr
+format with the extension that
+.Ql %f
+prints nanoseconds if available.
+.It Cm d , r
 Display actual device name.
-.It Cm gu
+.It Cm g , u
 Display group or user name.
 .It Cm p
 Display the mode of
 .Ar file
-as in
+symbolically, as in
 .Ic ls -lTd .
 .It Cm N
 Displays the name of
@@ -322,8 +330,10 @@ Displays the name of
 .It Cm T
 Displays the type of
 .Ar file .
-.It Cm RY
-Insert a `` -> '' into the output.
+.It Cm R , Y
+Insert a
+.Sq Li \~->\~ \" .Ql, but force quotes even in PS output
+into the output.
 Note that the default output formats for
 .Cm Y
 and
@@ -332,49 +342,51 @@ are strings, if
 .Cm S
 is specified explicitly, these four characters are prepended.
 .El
-.It Cm sub
-An optional sub field specifier (high, middle, or low).
+.It Ar sub
+An optional sub field specifier: high, middle, or low.
 Only applies to the
-.Cm p ,
 .Cm d ,
+.Cm N ,
+.Cm p ,
 .Cm r ,
 .Cm T ,
-.Cm N ,
 and
 .Cm z
 output field specifiers.
 It can be one of the following:
-.Bl -tag -width Ds
+.Bl -tag -width Cm
 .It Cm H
 .Dq High
-\(em depending on the
-.Cm datum :
-.Bl -tag -compact -width door
+subfield of
+.Ar datum\^ :
+.Bl -tag -compact -width Cm
 .It Cm d , r
 Major number for devices
-.It Cm p
-.Dq User
-bits from the string form of permissions or the file
-.Dq type
-bits from the numeric forms
-.It Cm T
-The long output form of file type
 .It Cm N
 Directory path of the file, similar to what
 .Xr dirname 1
 would show
+.It Cm p
+.Dq User
+bits from the string form of permissions,
+or the file
+.Dq type
+bits from the numeric forms
+.It Cm T
+The long output form of file type
 .It Cm z
 File size, rounded to the nearest gigabyte
 .El
 .It Cm M
 .Dq Middle
-\(em depending on the
-.Cm datum :
-.Bl -tag -compact -width door
+subfield of
+.Ar datum\^ :
+.Bl -tag -compact -width Cm
 .It Cm p
 The
 .Dq group
-bits from the string form of permissions or the
+bits from the string form of permissions,
+or the
 .Dq suid ,
 .Dq sgid ,
 and
@@ -385,15 +397,20 @@ File size, rounded to the nearest megabyte
 .El
 .It Cm L
 .Dq Low
-\(em depending on the
-.Cm datum :
-.Bl -tag -compact -width door
-.It Cm r , d
+subfield of
+.Ar datum\^ :
+.Bl -tag -compact -width Cm
+.It Cm d , r
 Minor number for devices
+.It Cm N
+Base filename of the file, similar to what
+.Xr basename 1
+would show
 .It Cm p
 The
 .Dq other
-bits from the string form of permissions or the
+bits from the string form of permissions,
+or the
 .Dq user ,
 .Dq group ,
 and
@@ -405,15 +422,11 @@ The
 style output character for file type (the use of
 .Cm L
 here is optional)
-.It Cm N
-Base filename of the file, similar to what
-.Xr basename 1
-would show
 .It Cm z
 File size, rounded to the nearest kilobyte
 .El
 .El
-.It Cm datum
+.It Ar datum
 A required field specifier, ending the conversion specification,
 being one of the following:
 .Bl -tag -width 11n
@@ -469,7 +482,9 @@ Inode generation number
 .El
 .Pp
 The following five field specifiers are not drawn directly from the
-data in struct stat, but are:
+data in
+.Vt struct stat ,
+but are:
 .Bl -tag -width Ds
 .It Cm N
 The name of the file.
@@ -485,28 +500,31 @@ is given.
 The target of a symbolic link.
 .It Cm Z
 Expands to
-.Dq Ar major , Ns Ar minor
-from the
-.Fa st_rdev
-field for character or block special devices
-(that is,
-.Dq %Hr,%-Lr )
+.Dq Ar major Ns Li \&, Ns Ar minor\^
+.Po
+that is,
+.Sq Li %Hr,%-Lr
+.Pc
+for character or block special devices,
 and gives size output
-.Pq Fa st_size
-.Pq Dq %z
-for all others.
+.Pq Sq Li %z
+for all other file types.
 A specified field width applies to the overall result
 (approximately half each for the two device file sub-fields),
 but precision, output format, and flags are used separately for
 each conversion made (but note the
-.Sq Fl
-in the %Lr conversion.)
+.Sq Cm -
+in the
+.Sq Li %-Lr
+conversion.)
 .El
 .El
 .Pp
 Only the
-.Cm %
-and the datum (field specifier) are required.
+.Sq Cm %
+and the
+.Ar datum
+(field specifier) are required.
 Most field specifiers default to
 .Cm U
 as an output format, with the
@@ -540,14 +558,14 @@ Thus:
 .Ed
 .Pp
 This next example produces output very similar to that from
-.Ic find ... -ls
-(except that
+.Ic find Ar \&.\|.\|. Ic -ls ,
+except that
 .Xr find 1
 displays the time in a different format, and
 .Xr find 1
 sometimes adds one or more spaces after the comma in
-.Dq Ar major , Ns Ar minor
-for device nodes):
+.Dq Ar major Ns Li \&, Ns Ar minor\^
+for device nodes:
 .Bd -literal -offset indent
 > stat -f "%7i %6b %-11Sp %3l %-17Su %-17Sg %9Z %Sm %N%SY" /tmp/bar
   78852      0 -rw-r--r--    1 root              wheel                     0 Jul  8 10:26:03 2004 /tmp/bar
@@ -557,15 +575,13 @@ for device nodes):
 .Ed
 .Pp
 This example produces output very similar to that from
-.Ic ls -lTd
-(except that
+.Ic ls -lTd ,
+except that
 .Xr ls 1
 adjusts the column spacing differently when listing multiple files,
-and
-.Xr ls 1
-adds at least one space after the comma in
-.Dq Ar major , Ns Ar minor
-for device nodes):
+and adds at least one space after the comma in
+.Dq Ar major Ns Li \&, Ns Ar minor\^
+for device nodes:
 .Bd -literal -offset indent
 > stat -f "%-11Sp %l %Su  %Sg  %Z %Sm %N%SY" /tmp/bar
 -rw-r--r--  1 root  wheel  0 Jul  8 10:26:03 2004 /tmp/bar
@@ -575,10 +591,8 @@ for device nodes):
 .Ed
 .Pp
 Given a symbolic link
-.Dq foo
-that points from
 .Pa /tmp/foo
-to
+that points to
 .Pa / ,
 you would use
 .Nm
@@ -591,7 +605,7 @@ lrwxrwxrwx 1 jschauma cs 1 Apr 24 16:37:28 2002 /tmp/foo@ -> /
 drwxr-xr-x 16 root wheel 512 Apr 19 10:57:54 2002 /tmp/foo/
 .Ed
 .Pp
-To initialize some shell-variables, you could use the
+To initialize some shell variables, you could use the
 .Fl s
 flag as follows:
 .Bd -literal -offset indent
@@ -653,8 +667,8 @@ User names, group names, and file names that contain spaces
 or other special characters may be encoded in
 .Xr vis 3
 style, using the
-.Cm \&#
-modifier:
+.Sq Cm \&#
+flag:
 .Bd -literal -offset indent
 > ln -s 'target with spaces' 'link with spaces'
 > stat -f "%#N%#SY" 'link with spaces'
@@ -663,7 +677,7 @@ link\eswith\esspaces -> target\eswith\esspaces
 .Sh SEE ALSO
 .Xr basename 1 ,
 .Xr dirname 1 ,
-.Xr file 1 ,
+.Xr find 1 ,
 .Xr ls 1 ,
 .Xr readlink 1 ,
 .Xr fstat 2 ,
