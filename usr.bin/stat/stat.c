@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.47 2021/08/27 18:11:07 rillig Exp $ */
+/*	$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.47 2021/08/27 18:11:07 rillig Exp $");
+__RCSID("$NetBSD: stat.c,v 1.48 2022/06/22 18:20:30 kre Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -322,9 +322,10 @@ main(int argc, char *argv[])
 
 	errs = 0;
 	do {
-		if (argc == 0)
+		if (argc == 0) {
+			fn = 0;
 			rc = fstat(STDIN_FILENO, &st);
-		else if (usestat) {
+		} else if (usestat) {
 			/*
 			 * Try stat() and if it fails, fall back to
 			 * lstat() just in case we're examining a
@@ -334,8 +335,7 @@ main(int argc, char *argv[])
 			    errno == ENOENT &&
 			    (rc = lstat(argv[0], &st)) == -1)
 				errno = ENOENT;
-		}
-		else
+		} else
 			rc = lstat(argv[0], &st);
 
 		if (rc == -1) {
@@ -345,8 +345,7 @@ main(int argc, char *argv[])
 				warn("%s: %s",
 				    argc == 0 ? "(stdin)" : argv[0],
 				    usestat ? "stat" : "lstat");
-		}
-		else
+		} else
 			output(&st, argv[0], statfmt, fn, nonl, quiet);
 
 		argv++;
@@ -1030,17 +1029,19 @@ format1(const struct stat *st,
 			char majdev[20], mindev[20];
 			int l1, l2;
 
+			if (size == 0)		/* avoid -1/2 */
+				size++;		/* 1/2 == 0/2 so this is safe */
 			l1 = format1(st,
 			    file,
 			    fmt, flen,
 			    majdev, sizeof(majdev),
-			    flags, size, prec,
+			    flags, (size - 1) / 2, prec,
 			    ofmt, HIGH_PIECE, SHOW_st_rdev, quiet);
 			l2 = format1(st,
 			    file,
 			    fmt, flen,
 			    mindev, sizeof(mindev),
-			    flags, size, prec,
+			    flags | FLAG_MINUS , size / 2, prec,
 			    ofmt, LOW_PIECE, SHOW_st_rdev, quiet);
 			return (snprintf(buf, blen, "%.*s,%.*s",
 			    l1, majdev, l2, mindev));
