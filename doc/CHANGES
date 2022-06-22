@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2887 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2888 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -596,5 +596,16 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[rin 20220530]
 	getentropy(3): Re-introduced getentropy function to libc.
 		[riastradh 20220531]
+	xen: Restore support for grant tables v1. [bouyer 20220603]
 	luna68k: Add psgpam(4) audio driver for LUNA, using YM2149 PSG/SSG
 		sound chip. [tsutsui 20220610]
+	raidctl(8): Add -t option to test validity of config files.
+		[kre 20220614]
+	iostat(8): Various changes to layout of output, add -z option
+		to suppress output of inactive devices.
+		[kre 20220618]
+	fstat(1): Add basic ZFS support. [simonb 20220619]
+	bpf(4): Support VLAN hardware offloading of Ethernet devices.
+		[yamaguchi 20220620]
+	bridge(4): Support VLAN frames stripped by hardware tagging.
+		[yamaguchi 20220620]
