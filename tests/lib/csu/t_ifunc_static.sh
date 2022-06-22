@@ -1,4 +1,4 @@
-# $NetBSD: t_ifunc_static.sh,v 1.3 2022/06/21 06:52:17 skrll Exp $
+# $NetBSD: t_ifunc_static.sh,v 1.4 2022/06/22 21:11:41 wiz Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@ ifunc_static_body()
 	i386|x86_64|powerpc|*sparc*|*arm*|*aarch64*)
 		;;
 	*)
-		atf_skip "ifunc is supposed only on AARCH64, ARM, i386, PowerPC, SPARC and x86-64"
+		atf_skip "ifunc is only supported on AARCH64, ARM, i386, PowerPC, SPARC and x86-64"
 		;;
 	esac
 
