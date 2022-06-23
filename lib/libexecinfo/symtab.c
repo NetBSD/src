@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.7 2022/06/23 09:53:49 skrll Exp $	*/
+/*	$NetBSD: symtab.c,v 1.8 2022/06/23 09:58:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.7 2022/06/23 09:53:49 skrll Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.8 2022/06/23 09:58:25 skrll Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -194,7 +194,7 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 	uintptr_t dd, sd, me = (uintptr_t)p - fbase;
 	uintptr_t ad = (uintptr_t)dli->dli_saddr - fbase;
 
-	DPRINTF("[fbase=%#jx, saddr=%p, sa=%#jx, me=%#jx ad=%#jx]",
+	DPRINTF("[fbase=%#jx, saddr=%p, me=%#jx ad=%#jx]",
 	    (uintmax_t)fbase, dli->dli_saddr,
 	    (uintmax_t)me, (uintmax_t)ad);
 
