@@ -1,4 +1,4 @@
-/*	$NetBSD: libx68k.h,v 1.7 2016/06/26 04:17:17 isaki Exp $	*/
+/*	$NetBSD: libx68k.h,v 1.8 2022/06/23 12:32:22 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -50,13 +50,11 @@ int parseboot(char *, char **, int *);
 
 /* sdcd.c */
 struct sd_softc;
-int sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int sdopen(struct open_file *, ...);
-int sdclose(struct open_file *);
+int sdcdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int sdcdclose(struct open_file *);
 int sd_getbsdpartition(int, int);
-int cdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int cdopen(struct open_file *, ...);
-int cdclose(struct open_file *);
 
 /* fd.c */
 int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
