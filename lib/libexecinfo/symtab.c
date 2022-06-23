@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.5 2016/04/20 14:00:16 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.6 2022/06/23 09:48:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.5 2016/04/20 14:00:16 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.6 2022/06/23 09:48:00 skrll Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -142,7 +142,7 @@ symtab_create(int fd, int bind, int type)
 			    (uintmax_t)sym.st_value, ELF_ST_BIND(sym.st_info),
 			    ELF_ST_TYPE(sym.st_info));
 #endif
-			
+
 			if (bind != -1 &&
 			    (unsigned)bind != ELF_ST_BIND(sym.st_info))
 				continue;
@@ -177,7 +177,7 @@ out:
 	return NULL;
 }
 
-	
+
 int
 symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 {
