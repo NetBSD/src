@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.6 2015/09/25 19:27:31 christos Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.7 2022/06/23 09:48:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backtrace.c,v 1.6 2015/09/25 19:27:31 christos Exp $");
+__RCSID("$NetBSD: backtrace.c,v 1.7 2022/06/23 09:48:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -93,7 +93,7 @@ rasprintf(char **buf, size_t *bufsiz, size_t offs, const char *fmt, ...)
 			nbufsiz = MAX(*bufsiz + 512, (size_t)len + 1);
 		} else
 			nbufsiz = MAX(offs, *bufsiz) + 512;
-			
+
 		nbuf = realloc(*buf, nbufsiz);
 		if (nbuf == NULL)
 			return -1;
