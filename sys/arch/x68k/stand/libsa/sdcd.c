@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.17 2022/06/21 12:43:57 isaki Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.18 2022/06/23 12:32:22 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -301,7 +301,7 @@ sdopen(struct open_file *f, ...)
 }
 
 int
-sdclose(struct open_file *f)
+sdcdclose(struct open_file *f)
 {
 
 	dealloc(f->f_devdata, sizeof(struct sdcd_softc));
@@ -309,7 +309,7 @@ sdclose(struct open_file *f)
 }
 
 int
-sdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
+sdcdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
            void *buf, size_t *rsize)
 {
 	struct sdcd_softc *sc = arg;
@@ -381,19 +381,4 @@ cdopen(struct open_file *f, ...)
 	current_id = id;
 
 	return 0;
-}
-
-int
-cdclose(struct open_file *f)
-{
-
-	dealloc(f->f_devdata, sizeof(struct sdcd_softc));
-	return 0;
-}
-
-int
-cdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
-           void *buf, size_t *rsize)
-{
-	return sdstrategy(arg, rw, dblk, size, buf, rsize);
 }
