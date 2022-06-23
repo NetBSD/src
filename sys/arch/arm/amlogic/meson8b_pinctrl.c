@@ -1,4 +1,4 @@
-/* $NetBSD: meson8b_pinctrl.c,v 1.2 2019/08/14 09:50:20 jmcneill Exp $ */
+/* $NetBSD: meson8b_pinctrl.c,v 1.3 2022/06/23 03:36:00 brook Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson8b_pinctrl.c,v 1.2 2019/08/14 09:50:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson8b_pinctrl.c,v 1.3 2022/06/23 03:36:00 brook Exp $");
 
 #include <sys/param.h>
 
@@ -226,6 +226,7 @@ static const struct meson_pinctrl_gpio meson8b_cbus_gpios[] = {
 	CBUS_GPIO(GPIOY_14, 3, 14, 3, 14),
 
 	/* GPIODV */
+	CBUS_GPIO(GPIODV_9, 6, 9, 0, 9),
 	CBUS_GPIO(GPIODV_24, 6, 24, 0, 24),
 	CBUS_GPIO(GPIODV_25, 6, 25, 0, 25),
 	CBUS_GPIO(GPIODV_26, 6, 26, 0, 26),
