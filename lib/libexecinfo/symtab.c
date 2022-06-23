@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.6 2022/06/23 09:48:00 skrll Exp $	*/
+/*	$NetBSD: symtab.c,v 1.7 2022/06/23 09:53:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.6 2022/06/23 09:48:00 skrll Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.7 2022/06/23 09:53:49 skrll Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,6 +49,12 @@ __RCSID("$NetBSD: symtab.c,v 1.6 2022/06/23 09:48:00 skrll Exp $");
 #endif
 
 #include "symtab.h"
+
+#ifdef SYMTAB_DEBUG
+#define DPRINTF(fmt, ...)	fprintf(stderr, "%s: " fmt "\n", __func__, __VA_ARGS__)
+#else
+#define DPRINTF(fmt, ...)
+#endif
 
 struct symbol {
 	char *st_name;
@@ -136,12 +142,10 @@ symtab_create(int fd, int bind, int type)
 			GElf_Sym sym;
                         gelf_getsym(edata, (int)i, &sym);
 
-#ifdef SYMTAB_DEBUG
-			fprintf(stderr, "%s: %s@%#jx=%d,%d\n", __func__,
+			DPRINTF("%s@%#jx=%d,%d",
 			    elf_strptr(elf, shdr.sh_link, sym.st_name),
 			    (uintmax_t)sym.st_value, ELF_ST_BIND(sym.st_info),
 			    ELF_ST_TYPE(sym.st_info));
-#endif
 
 			if (bind != -1 &&
 			    (unsigned)bind != ELF_ST_BIND(sym.st_info))
@@ -190,11 +194,10 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 	uintptr_t dd, sd, me = (uintptr_t)p - fbase;
 	uintptr_t ad = (uintptr_t)dli->dli_saddr - fbase;
 
-#ifdef SYMTAB_DEBUG
-	fprintf(stderr, "%s: [fbase=%#jx, saddr=%p, me=%#jx ad=%#jx]\n",
-	    __func__, (uintmax_t)fbase, dli->dli_saddr, (uintmax_t)me,
-	    (uintmax_t)ad);
-#endif
+	DPRINTF("[fbase=%#jx, saddr=%p, sa=%#jx, me=%#jx ad=%#jx]",
+	    (uintmax_t)fbase, dli->dli_saddr,
+	    (uintmax_t)me, (uintmax_t)ad);
+
 	for (;;) {
 		if (s[mid].st_value < me)
 			lo = mid;
@@ -213,15 +216,11 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 	if (dd > sd) {
 		dli->dli_saddr = (void *)s[mid].st_value;
 		dli->dli_sname = s[mid].st_name;
-#ifdef SYMTAB_DEBUG
-		fprintf(stderr, "%s: me=%#jx -> [%#jx, %s]\n", __func__,
-		    (uintmax_t)me, (uintmax_t)sd, dli->dli_sname);
-#endif
+		DPRINTF("me=%#jx -> [%#jx, %s]", (uintmax_t)me, (uintmax_t)sd,
+		    dli->dli_sname);
+	} else {
+		DPRINTF("%#jx -> [%#jx, ***]", (uintmax_t)me, (uintmax_t)sd);
 	}
-#ifdef SYMTAB_DEBUG
-	else
-		fprintf(stderr, "%s: %#jx -> [%#jx, ***]\n", __func__,
-		    (uintmax_t)me, (uintmax_t)sd);
-#endif
+
 	return 1;
 }
