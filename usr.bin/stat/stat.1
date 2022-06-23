@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.44 2022/06/22 22:41:13 uwe Exp $
+.\"	$NetBSD: stat.1,v 1.45 2022/06/23 23:41:26 uwe Exp $
 .\"
 .\" Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -429,7 +429,7 @@ File size, rounded to the nearest kilobyte
 .It Ar datum
 A required field specifier, ending the conversion specification,
 being one of the following:
-.Bl -tag -width 11n
+.Bl -tag -width Cm
 .It Cm d
 Device upon which
 .Ar file
@@ -485,7 +485,7 @@ The following five field specifiers are not drawn directly from the
 data in
 .Vt struct stat ,
 but are:
-.Bl -tag -width Ds
+.Bl -tag -width Cm
 .It Cm N
 The name of the file.
 .It Cm R
