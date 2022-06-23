@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.95 2022/05/25 15:52:25 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.96 2022/06/23 14:32:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.95 2022/05/25 15:52:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.96 2022/06/23 14:32:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.95 2022/05/25 15:52:25 bouyer Exp $
 #include "xenbus.h"
 #include "xencons.h"
 #include "isa.h"
+#include "isadma.h"
 #include "pci.h"
 #include "acpica.h"
 #include "kernfs.h"
@@ -689,6 +690,14 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 
 #if defined(DOM0OPS)
 #if defined(XENPV)
+#if NISADMA > 0 && NACPICA > 0
+        /*
+	 * ACPI needs ISA DMA initialized before they start probing.
+	 */
+	isa_dmainit(&x86_isa_chipset, x86_bus_space_io, &isa_bus_dma_tag,
+	    self);
+#endif
+
 #if NPCI > 0
 #if NACPICA > 0
 	if (acpi_present) {
