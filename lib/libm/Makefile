@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.215 2022/06/23 07:50:14 he Exp $
+#  $NetBSD: Makefile,v 1.216 2022/06/23 16:42:50 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -195,6 +195,7 @@ ARCH_SRCS += s_fmin.S s_fminf.S
 COMMON_SRCS += fenv.c
 .endif
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
+ARCH_SRCS += s_fma.S s_fmaf.S
 
 .elif (${LIBC_MACHINE_CPU} == "mips")
 .PATH:	${.CURDIR}/arch/mips
