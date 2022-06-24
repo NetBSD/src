@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.24 2022/06/24 20:44:53 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.25 2022/06/24 21:02:10 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -304,4 +304,24 @@ cast_between_first_member_struct(void *ptr)
 	void *t2 = (ctl_named_node_t *)(ctl_node_t *)ptr;
 
 	return t2;
+}
+
+double *
+unnecessary_cast_from_array_to_pointer(int dim)
+{
+	static double storage_1d[10];
+	static double storage_2d[10][5];
+
+	if (dim == 1)
+		return (double *)storage_1d;
+
+	if (dim == -1)
+		return storage_1d;
+
+	if (dim == 2)
+		/* expect+1: warning: illegal combination of 'pointer to double' and 'pointer to array[5] of double' [184] */
+		return storage_2d;
+
+	/* expect+1: warning: pointer cast from 'pointer to array[5] of double' to 'pointer to double' may be troublesome [247] */
+	return (double *)storage_2d;
 }
