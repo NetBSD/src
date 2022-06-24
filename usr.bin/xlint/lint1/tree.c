@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.460 2022/06/24 19:27:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.461 2022/06/24 20:16:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.460 2022/06/24 19:27:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.461 2022/06/24 20:16:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2491,6 +2491,14 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 }
 
 static bool
+is_byte_array(const type_t *tp)
+{
+
+	return tp->t_tspec == ARRAY &&
+	       (tp->t_subt->t_tspec == CHAR || tp->t_subt->t_tspec == UCHAR);
+}
+
+static bool
 should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 			       const type_t *ostp, tspec_t ost)
 {
@@ -2511,6 +2519,21 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 		return false;	/* for the sake of traditional C code */
 	if (ost == CHAR || ost == UCHAR)
 		return false;	/* for the sake of traditional C code */
+
+	/* Allow cast between pointers to sockaddr variants. */
+	if (nst == STRUCT && ost == STRUCT) {
+		const sym_t *nmem = nstp->t_str->sou_first_member;
+		const sym_t *omem = ostp->t_str->sou_first_member;
+		while (nmem != NULL && omem != NULL &&
+		       eqtype(nmem->s_type, omem->s_type, true, false, NULL))
+			nmem = nmem->s_next, omem = omem->s_next;
+		if (nmem != NULL && is_byte_array(nmem->s_type))
+			return false;
+		if (omem != NULL && is_byte_array(omem->s_type))
+			return false;
+		if (nmem == NULL && omem == NULL)
+			return false;
+	}
 
 	if (is_struct_or_union(nst) && nstp->t_str != ostp->t_str)
 		return true;

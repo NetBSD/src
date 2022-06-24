@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.21 2022/06/24 20:02:58 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.22 2022/06/24 20:16:21 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -14,13 +14,14 @@ struct Other {
 	int id;
 };
 
-void
+PDisplay
 example(struct Other *arg)
 {
-	PDisplay display;
-
 	/*
-	 * XXX: The target type is reported as 'struct <unnamed>'.  In cases
+	 * Before tree.c 1.461 from 2022-06-24, lint warned about the cast
+	 * between the structs.
+	 *
+	 * XXX: The target type was reported as 'struct <unnamed>'.  In cases
 	 *  like these, it would be helpful to print at least the type name
 	 *  of the pointer.  This type name though is discarded immediately
 	 *  in the grammar rule 'typespec: T_TYPENAME'.
@@ -28,8 +29,7 @@ example(struct Other *arg)
 	 *  with no hint at all that there is a typedef for a pointer to the
 	 *  struct.
 	 */
-	/* expect+1: warning: pointer cast from 'pointer to struct Other' to 'pointer to struct <unnamed>' may be troublesome [247] */
-	display = (PDisplay)arg;
+	return (PDisplay)arg;
 }
 
 /*
@@ -249,21 +249,26 @@ struct sockaddr_in6 {
 	uint32_t sin6_scope_id;
 };
 
+/*
+ * Before tree.c 1.461 from 2022-06-24, lint warned about the cast between the
+ * sockaddr variants.  Since then, lint allows casts between pointers to
+ * structs if the initial members have compatible types and either of the
+ * struct types continues with a byte array.
+ */
 void *
 cast_between_sockaddr_variants(void *ptr)
 {
 
-	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr' to 'pointer to struct sockaddr_in' may be troublesome [247] */
 	void *t1 = (struct sockaddr_in *)(struct sockaddr *)ptr;
-
-	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr_in' to 'pointer to struct sockaddr' may be troublesome [247] */
 	void *t2 = (struct sockaddr *)(struct sockaddr_in *)t1;
-
-	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr' to 'pointer to struct sockaddr_in6' may be troublesome [247] */
 	void *t3 = (struct sockaddr_in6 *)(struct sockaddr *)t2;
-
-	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr_in6' to 'pointer to struct sockaddr' may be troublesome [247] */
 	void *t4 = (struct sockaddr *)(struct sockaddr_in6 *)t3;
 
-	return t4;
+	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr_in6' to 'pointer to struct sockaddr_in' may be troublesome [247] */
+	void *t5 = (struct sockaddr_in *)(struct sockaddr_in6 *)t4;
+
+	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr_in' to 'pointer to struct sockaddr_in6' may be troublesome [247] */
+	void *t6 = (struct sockaddr_in6 *)(struct sockaddr_in *)t5;
+
+	return t6;
 }
