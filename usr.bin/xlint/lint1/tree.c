@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.459 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.460 2022/06/24 19:27:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.459 2022/06/22 19:23:18 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.460 2022/06/24 19:27:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2507,13 +2507,13 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	if (is_incomplete(nstp) || is_incomplete(ostp))
 		return false;
 
-	if (is_struct_or_union(nst) && nstp->t_str != ostp->t_str)
-		return true;
-
 	if (nst == CHAR || nst == UCHAR)
 		return false;	/* for the sake of traditional C code */
 	if (ost == CHAR || ost == UCHAR)
 		return false;	/* for the sake of traditional C code */
+
+	if (is_struct_or_union(nst) && nstp->t_str != ostp->t_str)
+		return true;
 
 	return portable_size_in_bits(nst) != portable_size_in_bits(ost);
 }
