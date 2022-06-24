@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.85 2022/06/20 18:06:28 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.86 2022/06/24 22:05:24 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -130,7 +130,7 @@ getfslabelname(uint f, uint f_version)
  * shm_open() and friends will not perform well anyway.
  */
 static bool
-tmpfs_on_var_shm()
+tmpfs_on_var_shm(void)
 {
 	uint64_t ram;
 	size_t len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.67 2022/05/18 16:39:03 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.68 2022/06/24 22:05:24 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2375,7 +2375,7 @@ msg_display_add_subst(const char *master, size_t argc, ...)
 
 /* initialize have_* variables */
 void
-check_available_binaries()
+check_available_binaries(void)
 {
 	static int did_test = false;
 
