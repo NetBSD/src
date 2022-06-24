@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.18 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.19 2022/06/24 19:20:39 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -188,4 +188,18 @@ plain_char_to_unsigned_type(char *cp)
 
 	usp = (unsigned short *)cp;
 	sink(usp);
+}
+
+void
+char_to_struct(void *ptr)
+{
+
+	/* expect+1: warning: pointer cast from 'pointer to char' to 'pointer to struct counter' may be troublesome [247] */
+	sink((struct counter *)(char *)ptr);
+
+	/* expect+1: warning: pointer cast from 'pointer to unsigned char' to 'pointer to struct counter' may be troublesome [247] */
+	sink((struct counter *)(unsigned char *)ptr);
+
+	/* expect+1: warning: pointer cast from 'pointer to signed char' to 'pointer to struct counter' may be troublesome [247] */
+	sink((struct counter *)(signed char *)ptr);
 }
