@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.41 2022/05/26 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.42 2022/06/24 23:44:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.41 2022/05/26 14:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.42 2022/06/24 23:44:18 tsutsui Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -74,13 +74,15 @@ struct kbd_softc {
 };
 
 void	kbdenable(int);
-int	kbdintr(void *);
-void	kbdsoftint(void *);
-void	kbd_bell(int);
-int	kbdcngetc(void);
 void	kbd_setLED(void);
-int	kbd_send_command(int);
+#if NITE > 0
+int	kbdcngetc(void);
+#endif
 
+static int	kbdintr(void *);
+static void	kbdsoftint(void *);
+static void	kbd_bell(int);
+static int	kbd_send_command(int);
 
 static int kbdmatch(device_t, cfdata_t, void *);
 static void kbdattach(device_t, device_t, void *);
@@ -90,12 +92,12 @@ CFATTACH_DECL_NEW(kbd, sizeof(struct kbd_softc),
 
 static int kbd_attached;
 
-dev_type_open(kbdopen);
-dev_type_close(kbdclose);
-dev_type_read(kbdread);
-dev_type_ioctl(kbdioctl);
-dev_type_poll(kbdpoll);
-dev_type_kqfilter(kbdkqfilter);
+static dev_type_open(kbdopen);
+static dev_type_close(kbdclose);
+static dev_type_read(kbdread);
+static dev_type_ioctl(kbdioctl);
+static dev_type_poll(kbdpoll);
+static dev_type_kqfilter(kbdkqfilter);
 
 const struct cdevsw kbd_cdevsw = {
 	.d_open = kbdopen,
@@ -181,7 +183,7 @@ kbdenable(int mode)	/* 1: interrupt, 0: poll */
 		aprint_normal(" (no connected keyboard)");
 }
 
-int
+static int
 kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k;
@@ -198,7 +200,7 @@ kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
@@ -212,7 +214,7 @@ kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 
-int
+static int
 kbdread(dev_t dev, struct uio *uio, int flags)
 {
 	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
@@ -227,7 +229,7 @@ void opm_bell_on(void);
 void opm_bell_off(void);
 #endif
 
-int
+static int
 kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
@@ -299,7 +301,7 @@ kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 
-int
+static int
 kbdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kbd_softc *k;
@@ -308,7 +310,7 @@ kbdpoll(dev_t dev, int events, struct lwp *l)
 	return (ev_poll(&k->sc_events, events, l));
 }
 
-int
+static int
 kbdkqfilter(dev_t dev, struct knote *kn)
 {
 	struct kbd_softc *k;
@@ -323,7 +325,7 @@ static u_char kbdbuf[KBDBUFSIZ];
 static int kbdputoff = 0;
 static int kbdgetoff = 0;
 
-int
+static int
 kbdintr(void *arg)
 {
 	uint8_t c, st;
@@ -366,7 +368,7 @@ kbdintr(void *arg)
 	return 0;
 }
 
-void
+static void
 kbdsoftint(void *arg)			/* what if ite is not configured? */
 {
 	struct kbd_softc *sc = arg;
@@ -385,7 +387,7 @@ kbdsoftint(void *arg)			/* what if ite is not configured? */
 	mutex_exit(&sc->sc_lock);
 }
 
-void
+static void
 kbd_bell(int mode)
 {
 #if NBELL > 0
@@ -404,7 +406,7 @@ kbd_setLED(void)
 	mfp_send_usart(~kbdled | 0x80);
 }
 
-int
+static int
 kbd_send_command(int cmd)
 {
 	switch (cmd) {
