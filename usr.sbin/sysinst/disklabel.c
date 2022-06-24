@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.48 2022/06/21 16:08:25 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.49 2022/06/24 22:28:11 tsutsui Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -198,16 +198,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 	int fd;
 	char diskpath[MAXPATHLEN];
 	uint flags;
-#ifndef DISKLABEL_NO_ONDISK_VERIFY
-	bool have_raw_label = false;
-
-	/*
-	 * Verify we really have a disklabel.
-	 */
-	if (run_program(RUN_SILENT | RUN_ERROR_OK,
-	    "disklabel -r %s", disk) == 0)
-		have_raw_label = true;
-#endif
+	bool have_own_label = false;
 
 	/* read partitions */
 
@@ -304,8 +295,30 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 	}
 	close(fd);
 
-#ifndef DISKLABEL_NO_ONDISK_VERIFY
-	if (!have_raw_label) {
+	/*
+	 * Verify we really have a disklabel on the target disk.
+	 */
+	if (run_program(RUN_SILENT | RUN_ERROR_OK,
+	    "disklabel -r %s", disk) == 0) {
+		have_own_label = true;
+	}
+#ifdef DISKLABEL_NO_ONDISK_VERIFY
+	else {
+		/*
+		 * disklabel(8) with -r checks a native disklabel at
+		 * LABELOFFSET sector, but several ports don't have
+		 * a native label and use emulated one translated from
+		 * port specific MD disk partition information.
+		 * Unfortunately, there is no MI way to check whether
+		 * the disk has a native BSD disklabel by readdisklabel(9)
+		 * via DIOCGDINFO.  So check if returned label looks
+		 * defaults set by readdisklabel(9) per MD way.
+		 */
+		have_own_label = !md_disklabel_is_default(&parts->l);
+	}
+#endif
+
+	if (!have_own_label) {
 		bool found_real_part = false;
 
 		if (parts->l.d_npartitions <= RAW_PART ||
@@ -338,7 +351,6 @@ no_valid_label:
 			return NULL;
 		}
 	}
-#endif
 
 	return &parts->dp;
 }
