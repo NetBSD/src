@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.200 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.201 2022/06/24 16:50:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.200 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.201 2022/06/24 16:50:00 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -878,8 +878,6 @@ nfs_doio_read(struct buf *bp, struct uio *uiop)
 			 * Just zero fill the rest of the valid area.
 			 */
 
-			KASSERT(vp->v_size >=
-			    uiop->uio_offset + uiop->uio_resid);
 			diff = bp->b_bcount - uiop->uio_resid;
 			len = uiop->uio_resid;
 			memset((char *)bp->b_data + diff, 0, len);
