@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.22 2022/06/24 20:16:21 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.23 2022/06/24 20:32:12 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -103,12 +103,22 @@ struct counter_impl {
 void *allocate(void);
 
 struct counter *
-counter_new(void)
+counter_new_typesafe(void)
 {
 	struct counter_impl *impl = allocate();
 	impl->public_part.count = 12345;
 	impl->saved_count = 12346;
 	return &impl->public_part;
+}
+
+struct counter *
+counter_new_cast(void)
+{
+	struct counter_impl *impl = allocate();
+	impl->public_part.count = 12345;
+	impl->saved_count = 12346;
+	/* expect+1: warning: pointer cast from 'pointer to struct counter_impl' to 'pointer to struct counter' may be troublesome [247] */
+	return (struct counter *)impl;
 }
 
 void
@@ -156,7 +166,7 @@ lh_OPENSSL_STRING_new(void)
 	 */
 	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
 }
-# 160 "msg_247.c" 2
+# 170 "msg_247.c" 2
 
 void sink(const void *);
 
@@ -271,4 +281,27 @@ cast_between_sockaddr_variants(void *ptr)
 	void *t6 = (struct sockaddr_in6 *)(struct sockaddr_in *)t5;
 
 	return t6;
+}
+
+
+// From jemalloc.
+
+typedef struct ctl_node_s {
+	_Bool named;
+} ctl_node_t;
+
+typedef struct ctl_named_node_s {
+	ctl_node_t node;
+	const char *name;
+} ctl_named_node_t;
+
+void *
+cast_between_initial_struct(void *ptr)
+{
+	/* expect+1: warning: pointer cast from 'pointer to struct ctl_named_node_s' to 'pointer to struct ctl_node_s' may be troublesome [247] */
+	void *t1 = (ctl_node_t *)(ctl_named_node_t *)ptr;
+
+	void *t2 = (ctl_named_node_t *)(ctl_node_t *)ptr;
+
+	return t2;
 }
