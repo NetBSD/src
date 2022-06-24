@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.19 2022/06/24 19:20:39 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.20 2022/06/24 19:27:43 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -190,14 +190,18 @@ plain_char_to_unsigned_type(char *cp)
 	sink(usp);
 }
 
+/*
+ * Before tree.c 1.460 from 2022-06-24, lint warned about pointer casts from
+ * unsigned char or plain char to a struct or union type.  These casts often
+ * occur in traditional code that does not use void pointers, even 30 years
+ * after C90 introduced 'void'.
+ */
 void
 char_to_struct(void *ptr)
 {
 
-	/* expect+1: warning: pointer cast from 'pointer to char' to 'pointer to struct counter' may be troublesome [247] */
 	sink((struct counter *)(char *)ptr);
 
-	/* expect+1: warning: pointer cast from 'pointer to unsigned char' to 'pointer to struct counter' may be troublesome [247] */
 	sink((struct counter *)(unsigned char *)ptr);
 
 	/* expect+1: warning: pointer cast from 'pointer to signed char' to 'pointer to struct counter' may be troublesome [247] */
