@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.462 2022/06/24 20:44:53 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.463 2022/06/24 21:22:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.462 2022/06/24 20:44:53 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.463 2022/06/24 21:22:11 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2511,6 +2511,11 @@ static bool
 should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 			       const type_t *ostp, tspec_t ost)
 {
+
+	while (nst == ARRAY)
+		nstp = nstp->t_subt, nst = nstp->t_tspec;
+	while (ost == ARRAY)
+		ostp = ostp->t_subt, ost = ostp->t_tspec;
 
 	if (nst == STRUCT && ost == STRUCT &&
 	    (struct_starts_with(nstp, ostp) ||

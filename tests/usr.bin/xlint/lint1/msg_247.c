@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.25 2022/06/24 21:02:10 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.26 2022/06/24 21:22:11 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -322,6 +322,13 @@ unnecessary_cast_from_array_to_pointer(int dim)
 		/* expect+1: warning: illegal combination of 'pointer to double' and 'pointer to array[5] of double' [184] */
 		return storage_2d;
 
-	/* expect+1: warning: pointer cast from 'pointer to array[5] of double' to 'pointer to double' may be troublesome [247] */
+	/*
+	 * C11 6.3.2.1p3 says that an array is converted to a pointer to its
+	 * first element.  That paragraph doesn't say 'recursively', that
+	 * word is only used two paragraphs above, in 6.3.2.1p1.
+	 */
+	if (dim == -2)
+		return storage_2d[0];
+
 	return (double *)storage_2d;
 }
