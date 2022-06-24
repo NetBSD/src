@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.20 2022/04/21 17:30:15 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.21 2022/06/24 22:05:24 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -197,7 +197,7 @@ merge_X(const char *xroot)
  * Unpacks sets,  clobbering existing contents.
  */
 void
-do_reinstall_sets()
+do_reinstall_sets(void)
 {
 	struct install_partition_desc install = {};
 	int retcode = 0;
