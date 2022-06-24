@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.23 2022/06/24 20:32:12 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.24 2022/06/24 20:44:53 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -117,7 +117,7 @@ counter_new_cast(void)
 	struct counter_impl *impl = allocate();
 	impl->public_part.count = 12345;
 	impl->saved_count = 12346;
-	/* expect+1: warning: pointer cast from 'pointer to struct counter_impl' to 'pointer to struct counter' may be troublesome [247] */
+	/* Before tree.c 1.462 from 2022-06-24, lint warned about this cast. */
 	return (struct counter *)impl;
 }
 
@@ -296,9 +296,9 @@ typedef struct ctl_named_node_s {
 } ctl_named_node_t;
 
 void *
-cast_between_initial_struct(void *ptr)
+cast_between_first_member_struct(void *ptr)
 {
-	/* expect+1: warning: pointer cast from 'pointer to struct ctl_named_node_s' to 'pointer to struct ctl_node_s' may be troublesome [247] */
+	/* Before tree.c 1.462 from 2022-06-24, lint warned about this cast. */
 	void *t1 = (ctl_node_t *)(ctl_named_node_t *)ptr;
 
 	void *t2 = (ctl_named_node_t *)(ctl_node_t *)ptr;

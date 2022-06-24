@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.461 2022/06/24 20:16:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.462 2022/06/24 20:44:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.461 2022/06/24 20:16:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.462 2022/06/24 20:44:53 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2491,6 +2491,15 @@ check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 }
 
 static bool
+struct_starts_with(const type_t *struct_tp, const type_t *member_tp)
+{
+
+	return struct_tp->t_str->sou_first_member != NULL &&
+	       eqtype(struct_tp->t_str->sou_first_member->s_type, member_tp,
+		   true, false, NULL);
+}
+
+static bool
 is_byte_array(const type_t *tp)
 {
 
@@ -2502,14 +2511,10 @@ static bool
 should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 			       const type_t *ostp, tspec_t ost)
 {
-	/*
-	 * Casting a pointer to 'struct S' to a pointer to another struct that
-	 * has 'struct S' as its first member is ok, see msg_247.c, 'struct
-	 * counter'.
-	 */
+
 	if (nst == STRUCT && ost == STRUCT &&
-	    nstp->t_str->sou_first_member != NULL &&
-	    nstp->t_str->sou_first_member->s_type == ostp)
+	    (struct_starts_with(nstp, ostp) ||
+	     struct_starts_with(ostp, nstp)))
 		return false;
 
 	if (is_incomplete(nstp) || is_incomplete(ostp))
