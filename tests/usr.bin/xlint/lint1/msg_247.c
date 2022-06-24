@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.20 2022/06/24 19:27:43 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.21 2022/06/24 20:02:58 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -206,4 +206,64 @@ char_to_struct(void *ptr)
 
 	/* expect+1: warning: pointer cast from 'pointer to signed char' to 'pointer to struct counter' may be troublesome [247] */
 	sink((struct counter *)(signed char *)ptr);
+}
+
+
+// The following data types are simplified from various system headers.
+
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+
+typedef uint16_t in_port_t;
+typedef uint8_t sa_family_t;
+
+struct sockaddr {
+	uint8_t sa_len;
+	sa_family_t sa_family;
+	char sa_data[14];
+};
+
+struct in_addr {
+	uint32_t s_addr;
+};
+
+struct sockaddr_in {
+	uint8_t sin_len;
+	sa_family_t sin_family;
+	in_port_t sin_port;
+	struct in_addr sin_addr;
+	uint8_t sin_zero[8];
+};
+
+struct sockaddr_in6 {
+	uint8_t sin6_len;
+	sa_family_t sin6_family;
+	in_port_t sin6_port;
+	uint32_t sin6_flowinfo;
+	union {
+		uint8_t u6_addr8[16];
+		uint16_t u6_addr16[8];
+		uint32_t u6_addr32[4];
+	} sin6_addr;
+	uint32_t sin6_scope_id;
+};
+
+void *
+cast_between_sockaddr_variants(void *ptr)
+{
+
+	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr' to 'pointer to struct sockaddr_in' may be troublesome [247] */
+	void *t1 = (struct sockaddr_in *)(struct sockaddr *)ptr;
+
+	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr_in' to 'pointer to struct sockaddr' may be troublesome [247] */
+	void *t2 = (struct sockaddr *)(struct sockaddr_in *)t1;
+
+	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr' to 'pointer to struct sockaddr_in6' may be troublesome [247] */
+	void *t3 = (struct sockaddr_in6 *)(struct sockaddr *)t2;
+
+	/* expect+1: warning: pointer cast from 'pointer to struct sockaddr_in6' to 'pointer to struct sockaddr' may be troublesome [247] */
+	void *t4 = (struct sockaddr *)(struct sockaddr_in6 *)t3;
+
+	return t4;
 }
