@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.47 2021/02/20 09:36:31 rin Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.48 2022/06/25 02:46:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.47 2021/02/20 09:36:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.48 2022/06/25 02:46:15 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -689,8 +689,8 @@ sonic_txintr(struct sonic_softc *sc)
 	if (sc->sc_txpending == 0)
 		ifp->if_timer = 0;
 
-	if (count != 0)
-		rnd_add_uint32(&sc->sc_rndsource, count);
+	if (totstat != 0)
+		rnd_add_uint32(&sc->sc_rndsource, totstat);
 
 	return totstat;
 }

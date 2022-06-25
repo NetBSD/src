@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.204 2020/03/15 22:19:00 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.205 2022/06/25 02:46:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.204 2020/03/15 22:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.205 2022/06/25 02:46:15 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -1010,7 +1010,7 @@ tlp_intr(void *arg)
 {
 	struct tulip_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t status, rxstatus, txstatus;
+	uint32_t status, rxstatus, txstatus, rndstatus = 0;
 	int handled = 0, txthresh;
 
 	DPRINTF(sc, ("%s: tlp_intr\n", device_xname(sc->sc_dev)));
@@ -1042,8 +1042,10 @@ tlp_intr(void *arg)
 
 	for (;;) {
 		status = TULIP_READ(sc, CSR_STATUS);
-		if (status)
+		if (status) {
 			TULIP_WRITE(sc, CSR_STATUS, status);
+			rndstatus = status;
+		}
 
 		if ((status & sc->sc_inten) == 0)
 			break;
@@ -1186,7 +1188,7 @@ tlp_intr(void *arg)
 	if_schedule_deferred_start(ifp);
 
 	if (handled)
-		rnd_add_uint32(&sc->sc_rnd_source, status);
+		rnd_add_uint32(&sc->sc_rnd_source, rndstatus);
 
 	return handled;
 }
