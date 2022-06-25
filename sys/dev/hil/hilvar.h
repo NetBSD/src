@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.3 2022/06/25 02:36:27 tsutsui Exp $	*/
 /*	$OpenBSD: hilvar.h,v 1.10 2006/11/05 14:39:32 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -65,6 +65,8 @@
  *	@(#)hilvar.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/rndsource.h>
+
 #define NHILD		8		/* 7 actual + loop pseudo (dev 0) */
 
 struct hildev_softc;
@@ -94,6 +96,7 @@ struct hil_softc {
 #define	HIL_PENDING_UNPLUGGED	0x02
 	u_int		sc_maxdev;	/* number of devices on loop */
 	device_t	sc_devices[NHILD];	/* interrupt dispatcher */
+	krndsource_t	sc_rndsource;
 };
 
 #ifdef _KERNEL

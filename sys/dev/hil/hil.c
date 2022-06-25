@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.6 2021/12/10 20:36:03 andvar Exp $	*/
+/*	$NetBSD: hil.c,v 1.7 2022/06/25 02:36:27 tsutsui Exp $	*/
 /*	$OpenBSD: hil.c,v 1.24 2010/11/20 16:45:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
@@ -138,6 +138,9 @@ hildatawait(struct hil_softc *sc)
 void
 hil_attach(struct hil_softc *sc, int *hil_is_console)
 {
+
+	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
+	    RND_TYPE_TTY, RND_FLAG_DEFAULT);
 
 	aprint_normal("\n");
 
@@ -289,6 +292,8 @@ hil_intr(void *v)
 
 	if (sc->sc_status != HIL_STATUS_BUSY)
 		hil_process_pending(sc);
+
+	rnd_add_uint32(&sc->sc_rndsource, (stat << 8) | c);
 
 	return 1;
 }
