@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.53 2022/06/25 15:36:33 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.54 2022/06/25 16:09:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.53 2022/06/25 15:36:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.54 2022/06/25 16:09:28 tsutsui Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.53 2022/06/25 15:36:33 tsutsui Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
+#include <sys/rndsource.h>
+
 #include <dev/cons.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
@@ -93,6 +95,7 @@ struct kbd_softc {
 	int		sc_pollingmode;	/* polling mode on? whatever it is... */
 #endif
 	void		*sc_sicookie;	/* softint(9) cookie		*/
+	krndsource_t	sc_rndsource;	/* rnd(9) entropy 		*/
 };
 
 /* WSKBD */
@@ -252,6 +255,8 @@ kbdattach(device_t parent, device_t self, void *aux)
 	kbd_write_poll(kbd_icmd, sizeof(kbd_icmd));
 
 	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, kbdsoft, NULL);
+	rnd_attach_source(&sc->sc_rndsource, device_xname(self),
+	    RND_TYPE_TTY, RND_FLAG_DEFAULT);
 
 #if NWSKBD > 0
 	if (self != NULL) {
@@ -419,20 +424,24 @@ kbdintr(int sr)
 	/* sr: sr at time of interrupt	*/
 {
 	struct kbd_softc *sc = &kbd_softc;
-	uint8_t code;
+	uint8_t stat, code;
+	uint32_t rndstat;
 	bool got_char = false;
 
 	/*
 	 * There may be multiple keys available. Read them all.
 	 */
-	while ((KBD->ac_cs & (A_RXRDY | A_OE | A_PE)) != 0) {
+	stat = KBD->ac_cs;
+	rndstat = stat;
+	while ((stat & (A_RXRDY | A_OE | A_PE)) != 0) {
 		got_char = true;
 		code = KBD->ac_da;
-		if ((KBD->ac_cs & (A_OE | A_PE)) != 0) {
+		if ((stat & (A_OE | A_PE)) == 0) {
+			kbd_ring[kbd_rbput++ & KBD_RING_MASK] = code;
+		} else {
 			/* Silently ignore errors */
-			continue;
 		}
-		kbd_ring[kbd_rbput++ & KBD_RING_MASK] = code;
+		stat = KBD->ac_cs;
 	}
 
 	/*
@@ -456,9 +465,12 @@ kbdintr(int sr)
 
 	/*
 	 * Activate software-level to handle possible input.
+	 * Also add status and data to the rnd(9) pool.
 	 */
-	if (got_char)
+	if (got_char) {
 		softint_schedule(sc->sc_sicookie);
+		rnd_add_uint32(&sc->sc_rndsource, (rndstat << 8) | code);
+	}
 }
 
 /*
