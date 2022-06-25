@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.23 2022/06/25 12:39:46 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.24 2022/06/25 13:24:35 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.23 2022/06/25 12:39:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.24 2022/06/25 13:24:35 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -49,16 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.23 2022/06/25 12:39:46 jmcneill E
 
 #include <arm/pic/picvar.h>
 
-static int	pic_default_splraise(int);
-static int	pic_default_spllower(int);
-static void	pic_default_splx(int);
-
-int (*pic_splraise)(int) = pic_default_splraise;
-int (*pic_spllower)(int) = pic_default_spllower;
-void (*pic_splx)(int) = pic_default_splx;
-
-static int
-pic_default_splraise(int newipl)
+int
+_splraise(int newipl)
 {
 	struct cpu_info * const ci = curcpu();
 	const int oldipl = ci->ci_cpl;
@@ -69,8 +61,8 @@ pic_default_splraise(int newipl)
 	return oldipl;
 }
 
-static int
-pic_default_spllower(int newipl)
+int
+_spllower(int newipl)
 {
 	struct cpu_info * const ci = curcpu();
 	const int oldipl = ci->ci_cpl;
@@ -87,8 +79,8 @@ pic_default_spllower(int newipl)
 	return oldipl;
 }
 
-static void
-pic_default_splx(int savedipl)
+void
+splx(int savedipl)
 {
 	struct cpu_info * const ci = curcpu();
 	KASSERT(savedipl < NIPL);
@@ -117,38 +109,3 @@ pic_default_splx(int savedipl)
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
 	    ci->ci_cpl, savedipl);
 }
-
-#ifdef MODULAR
-#ifdef _spllower
-#undef _spllower
-#endif
-int _spllower(int);
-
-#ifdef _splraise
-#undef _splraise
-#endif
-int _splraise(int);
-
-#ifdef splx
-#undef splx
-#endif
-void splx(int);
-
-int
-_spllower(int newipl)
-{
-	return pic_spllower(newipl);
-}
-
-int
-_splraise(int newipl)
-{
-	return pic_splraise(newipl);
-}
-
-void
-splx(int savedipl)
-{
-	pic_splx(savedipl);
-}
-#endif /* !MODULAR */

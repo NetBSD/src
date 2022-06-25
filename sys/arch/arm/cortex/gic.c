@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.54 2022/06/25 12:41:55 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.55 2022/06/25 13:24:34 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.54 2022/06/25 12:41:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.55 2022/06/25 13:24:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.54 2022/06/25 12:41:55 jmcneill Exp $");
 
 #include <arm/cortex/gic_reg.h>
 #include <arm/cortex/mpcore_var.h>
-
-#ifdef GIC_SPLFUNCS
-#include <arm/cortex/gic_splfuncs.h>
-#endif
 
 void armgic_irq_handler(void *);
 
@@ -745,10 +741,6 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "%u Priorities, %zu SPIs, %u PPIs, "
 	    "%u SGIs\n",  priorities, sc->sc_gic_lines - ppis - sgis, ppis,
 	    sgis);
-
-#ifdef GIC_SPLFUNCS
-	gic_spl_init();
-#endif
 }
 
 CFATTACH_DECL_NEW(armgic, 0,

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.h,v 1.7 2021/09/20 21:05:15 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.h,v 1.8 2022/06/25 13:24:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -39,10 +39,6 @@
 
 #define	PIC_MAXSOURCES		8192
 #define	PIC_MAXMAXSOURCES	(PIC_MAXSOURCES * 2 + 32)
-
-#define	_splraise	pic_splraise
-#define	_spllower	pic_spllower
-#define	splx		pic_splx
 
 void	arm_fdt_irq_set_handler(void (*)(void *));
 void	arm_fdt_irq_handler(void *);
