@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.42 2022/06/24 23:44:18 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.43 2022/06/25 00:58:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.42 2022/06/24 23:44:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.43 2022/06/25 00:58:36 tsutsui Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.42 2022/06/24 23:44:18 tsutsui Exp $");
 #include <sys/bus.h>
 #include <sys/intr.h>
 #include <sys/mutex.h>
+#include <sys/rndsource.h>
 
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/mfp.h>
@@ -71,6 +72,7 @@ struct kbd_softc {
 	struct evvar sc_events; /* event queue state */
 	void *sc_softintr_cookie;
 	kmutex_t sc_lock;
+	krndsource_t sc_rndsource;
 };
 
 void	kbdenable(int);
@@ -140,6 +142,9 @@ kbdattach(device_t parent, device_t self, void *aux)
 	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, sc);
 	sc->sc_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    kbdsoftint, sc);
+
+	rnd_attach_source(&sc->sc_rndsource, device_xname(self),
+	    RND_TYPE_TTY, RND_FLAG_DEFAULT);
 
 	kbdenable(1);
 	sc->sc_event_mode = 0;
@@ -337,6 +342,8 @@ kbdintr(void *arg)
 	st = mfp_get_rsr();
 
 	c = mfp_get_udr();
+
+	rnd_add_uint32(&sc->sc_rndsource, (st << 8) | c);
 
 	if ((st & MFP_RSR_BF) == 0)
 		return 0;	/* intr caused by an err -- no char received */
