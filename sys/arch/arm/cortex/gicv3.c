@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.52 2022/06/25 13:24:34 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.53 2022/06/25 18:05:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.52 2022/06/25 13:24:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.53 2022/06/25 18:05:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.52 2022/06/25 13:24:34 jmcneill Exp $");
 
 #define	IPL_TO_PRIORITY(sc, ipl)	(((0xff - (ipl)) << (sc)->sc_priority_shift) & 0xff)
 #define	IPL_TO_PMR(sc, ipl)		(((0xff - (ipl)) << (sc)->sc_pmr_shift) & 0xff)
+#define	IPL_TO_HWPL(ipl)		((ipl) >= IPL_VM ? (ipl) : IPL_NONE)
 
 #define	GIC_SUPPORTS_1OFN(sc)		(((sc)->sc_gicd_typer & GICD_TYPER_No1N) == 0)
 
@@ -232,12 +233,13 @@ gicv3_set_priority(struct pic_softc *pic, int ipl)
 {
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
 	struct cpu_info * const ci = curcpu();
+	const int hwpl = IPL_TO_HWPL(ipl);
 
-	while (ipl < ci->ci_hwpl) {
+	while (hwpl < ci->ci_hwpl) {
 		/* Lowering priority mask */
-		ci->ci_hwpl = ipl;
+		ci->ci_hwpl = hwpl;
 		__insn_barrier();
-		icc_pmr_write(IPL_TO_PMR(sc, ipl));
+		icc_pmr_write(IPL_TO_PMR(sc, hwpl));
 	}
 	__insn_barrier();
 	ci->ci_cpl = ipl;
@@ -729,13 +731,14 @@ gicv3_irq_handler(void *frame)
 	struct gicv3_softc * const sc = gicv3_softc;
 	struct pic_softc *pic;
 	const int oldipl = ci->ci_cpl;
+	const int oldhwpl = IPL_TO_HWPL(oldipl);
 
 	ci->ci_data.cpu_nintr++;
 
-	if (ci->ci_hwpl != oldipl) {
-		ci->ci_hwpl = oldipl;
-		icc_pmr_write(IPL_TO_PMR(sc, oldipl));
-		if (oldipl == IPL_HIGH) {
+	if (ci->ci_hwpl != oldhwpl) {
+		ci->ci_hwpl = oldhwpl;
+		icc_pmr_write(IPL_TO_PMR(sc, oldhwpl));
+		if (oldhwpl == IPL_HIGH) {
 			return;
 		}
 	}
@@ -760,6 +763,7 @@ gicv3_irq_handler(void *frame)
 		if (__predict_false(ipl < ci->ci_cpl)) {
 			pic_do_pending_ints(I32_bit, ipl, frame);
 		} else if (ci->ci_cpl != ipl) {
+			KASSERT(ipl >= IPL_VM);
 			icc_pmr_write(IPL_TO_PMR(sc, ipl));
 			ci->ci_hwpl = ci->ci_cpl = ipl;
 		}
