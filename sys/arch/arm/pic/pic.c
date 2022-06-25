@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.79 2022/01/02 11:17:39 riastradh Exp $	*/
+/*	$NetBSD: pic.c,v 1.80 2022/06/25 12:41:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.79 2022/01/02 11:17:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.80 2022/06/25 12:41:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -98,13 +98,12 @@ static int pic_init(void);
 void
 pic_set_priority(struct cpu_info *ci, int newipl)
 {
-	register_t psw = DISABLE_INTERRUPT_SAVE();
-	if (pic_list[0] != NULL)
-		(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], newipl);
-	ci->ci_cpl = newipl;
-	if ((psw & I32_bit) == 0) {
-		ENABLE_INTERRUPT();
+	if (__predict_false(pic_list[0] == NULL)) {
+		ci->ci_cpl = newipl;
+		return;
 	}
+
+	pic_list[0]->pic_ops->pic_set_priority(pic_list[0], newipl);
 }
 #endif
 

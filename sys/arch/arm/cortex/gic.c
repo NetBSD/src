@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.53 2022/03/03 06:26:28 riastradh Exp $	*/
+/*	$NetBSD: gic.c,v 1.54 2022/06/25 12:41:55 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.53 2022/03/03 06:26:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.54 2022/06/25 12:41:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -229,11 +229,14 @@ armgic_set_priority(struct pic_softc *pic, int ipl)
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
 	struct cpu_info * const ci = curcpu();
 
-	if (ipl < ci->ci_hwpl) {
+	while (ipl < ci->ci_hwpl) {
 		/* Lowering priority mask */
 		ci->ci_hwpl = ipl;
+		__insn_barrier();
 		gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ipl));
 	}
+	__insn_barrier();
+	ci->ci_cpl = ipl;
 }
 
 #ifdef MULTIPROCESSOR

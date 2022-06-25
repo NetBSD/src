@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_intc.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_intc.c,v 1.8 2022/06/25 12:41:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.8 2022/06/25 12:41:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,6 +121,7 @@ sunxi_intc_establish_irq(struct pic_softc *pic, struct intrsource *is)
 static void
 sunxi_intc_set_priority(struct pic_softc *pic, int ipl)
 {
+	curcpu()->ci_cpl = ipl;
 }
 
 static const struct pic_ops sunxi_intc_picops = {
