@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.51 2021/08/25 23:03:01 rillig Exp $	*/
+/*	$NetBSD: cksum.c,v 1.52 2022/06/25 02:22:42 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.51 2021/08/25 23:03:01 rillig Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.52 2022/06/25 02:22:42 gutteridge Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -421,8 +421,11 @@ main(int argc, char **argv)
 			strlcpy(cksum, p_cksum, l_cksum+1);
 
 			if (hash) {
+				char *h;
+
 				if (access(filename, R_OK) == 0
-				    && strcmp(cksum, hash->filefunc(filename, NULL)) == 0)
+				    && (h = hash->filefunc(filename, NULL)) != NULL
+				    && strcmp(cksum, h) == 0)
 					ok = 1;
 				else
 					ok = 0;
