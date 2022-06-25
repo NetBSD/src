@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.69 2022/06/25 03:18:38 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.70 2022/06/25 05:01:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69 2022/06/25 03:18:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70 2022/06/25 05:01:31 tsutsui Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -1319,7 +1319,7 @@ iteputchar(int c, struct ite_softc *ip)
 			case 'B':	/* ASCII */
 			case 'A':	/* ISO latin 1 */
 			case '<':	/* user preferred suplemental */
-			case '0':	/* dec special graphics */
+			case '0':	/* DEC special graphics */
 
 			/* 96-character sets: */
 			case '-':	/* G1 */
@@ -1464,7 +1464,7 @@ iteputchar(int c, struct ite_softc *ip)
 				ip->G0 = CSET_JISROMA;
 				ip->escape = 0;
 				return;
-			case '0': /* dec special graphics */
+			case '0': /* DEC special graphics */
 				ip->G0 = CSET_DECGRAPH;
 				ip->escape = 0;
 				return;
@@ -1481,34 +1481,7 @@ iteputchar(int c, struct ite_softc *ip)
 			}
 
 		case ')': /* designate G1 */
-			switch (c) {
-			case 'B': /* USASCII */
-				ip->G1 = CSET_ASCII;
-				ip->escape = 0;
-				return;
-			case 'I':
-				ip->G1 = CSET_JISKANA;
-				ip->escape = 0;
-				return;
-			case 'J':
-				ip->G1 = CSET_JISROMA;
-				ip->escape = 0;
-				return;
-			case '0': /* dec special graphics */
-				ip->G1 = CSET_DECGRAPH;
-				ip->escape = 0;
-				return;
-			case 'A': /* British or ISO-Latin-1 */
-			case 'H': /* Swedish */
-			case 'K': /* German */
-			case 'R': /* French */
-			case 'Y': /* Italian */
-			case 'Z': /* Spanish */
-			default:
-				/* not supported */
-				ip->escape = 0;
-				return;
-			}
+			ip->escape = 0;
 			return;
 
 		case '$': /* 94-multibyte character set */
