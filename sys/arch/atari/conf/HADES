@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.118 2022/06/12 06:57:07 tsutsui Exp $
+# $NetBSD: HADES,v 1.119 2022/06/25 13:20:30 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.16 2018/03/31 04:19:41 tsutsui Exp $
-#		NetBSD: GENERIC.in,v 1.122 2022/06/12 06:54:32 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.123 2022/06/25 13:17:04 tsutsui Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer" # See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for backtraces in DDB.
@@ -48,7 +48,7 @@ options KTRACE # Add kernel tracing system call
 options USERCONF # userconf(4) support
 options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
 options MODULAR # new style module(7) framework
-options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=56 # for SCSI, FDC, and Xserver
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
 options MEMORY_DISK_HOOKS # Boot RAM-disk
