@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.122 2022/06/12 06:54:32 tsutsui Exp $
+#	$NetBSD: GENERIC.in,v 1.123 2022/06/25 13:17:04 tsutsui Exp $
 #
 # Generic atari
 #
@@ -207,7 +207,7 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 # Atari specific options
 #
 #options 	KFONT_8x8		# Use 8x8 font instead of 8x16
-options 	ST_POOL_SIZE=24		# smallest that allows TT-HIGH
+options 	ST_POOL_SIZE=56		# for SCSI, FDC, and Xserver
 #if defined(TT030_KERNEL) || defined(HADES_KERNEL)
 options 	TT_SCSI			# SCSI-support for TT
 options 	TT_VIDEO		# Graphics support for TT
