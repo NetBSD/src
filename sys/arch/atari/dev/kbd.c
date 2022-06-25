@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.51 2022/06/25 14:39:19 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.52 2022/06/25 15:10:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.51 2022/06/25 14:39:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.52 2022/06/25 15:10:26 tsutsui Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -78,21 +78,21 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.51 2022/06/25 14:39:19 tsutsui Exp $");
 #define KBD_RING_MASK	255   /* Modulo mask for above			     */
 
 struct kbd_softc {
-	int		k_event_mode;	/* if 1, collect events,	*/
+	int		sc_event_mode;	/* if 1, collect events,	*/
 					/*   else pass to ite		*/
-	struct evvar	k_events;	/* event queue state		*/
-	uint8_t		k_soft_cs;	/* control-reg. copy		*/
-	uint8_t		k_package[20];	/* XXX package being build	*/
-	uint8_t		k_pkg_size;	/* Size of the package		*/
-	uint8_t		k_pkg_idx;	/* Running pkg assembly index	*/
-	uint8_t		k_pkg_type;	/* Type of package		*/
-	const uint8_t	*k_sendp;	/* Output pointer		*/
-	int		k_send_cnt;	/* Chars left for output	*/
+	struct evvar	sc_events;	/* event queue state		*/
+	uint8_t		sc_soft_cs;	/* control-reg. copy		*/
+	uint8_t		sc_package[20];	/* XXX package being build	*/
+	uint8_t		sc_pkg_size;	/* Size of the package		*/
+	uint8_t		sc_pkg_idx;	/* Running pkg assembly index	*/
+	uint8_t		sc_pkg_type;	/* Type of package		*/
+	const uint8_t	*sc_sendp;	/* Output pointer		*/
+	int		sc_send_cnt;	/* Chars left for output	*/
 #if NWSKBD > 0
-	device_t	k_wskbddev;   /* pointer to wskbd for sending strokes */
-	int		k_pollingmode;	/* polling mode on? whatever it is... */
+	device_t	sc_wskbddev;  /* pointer to wskbd for sending strokes */
+	int		sc_pollingmode;	/* polling mode on? whatever it is... */
 #endif
-	void		*k_sicookie;	/* softint(9) cookie		*/
+	void		*sc_sicookie;	/* softint(9) cookie		*/
 };
 
 /* WSKBD */
@@ -128,7 +128,7 @@ static uint8_t		kbd_ring[KBD_RING_SIZE];
 static volatile u_int	kbd_rbput = 0;	/* 'put' index			*/
 static u_int		kbd_rbget = 0;	/* 'get' index			*/
 
-static struct kbd_softc kbd_softc;
+static struct kbd_softc kbd_softc;	/* XXX */
 
 /* {b,c}devsw[] function prototypes */
 static dev_type_open(kbdopen);
@@ -209,6 +209,7 @@ kbdmatch(device_t parent, cfdata_t cf, void *aux)
 static void
 kbdattach(device_t parent, device_t self, void *aux)
 {
+	struct kbd_softc *sc = &kbd_softc;
 	int timeout;
 	const uint8_t kbd_rst[]  = { 0x80, 0x01 };
 	const uint8_t kbd_icmd[] = { 0x12, 0x15 };
@@ -224,7 +225,7 @@ kbdattach(device_t parent, device_t self, void *aux)
 	 */
 	KBD->ac_cs = A_RESET;
 	delay(100);	/* XXX: enough? */
-	KBD->ac_cs = kbd_softc.k_soft_cs = KBD_INIT | A_RXINT;
+	KBD->ac_cs = sc->sc_soft_cs = KBD_INIT | A_RXINT;
 
 	/*
 	 * Clear error conditions
@@ -251,7 +252,7 @@ kbdattach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	kbd_softc.k_sicookie = softint_establish(SOFTINT_SERIAL, kbdsoft, NULL);
+	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, kbdsoft, NULL);
 
 #if NWSKBD > 0
 	if (self != NULL) {
@@ -267,10 +268,10 @@ kbdattach(device_t parent, device_t self, void *aux)
 		waa.keymap = &kbd_mapdata;
 		waa.accessops = &kbd_accessops;
 		waa.accesscookie = NULL;
-		kbd_softc.k_wskbddev = config_found(self, &waa, wskbddevprint,
+		sc->sc_wskbddev = config_found(self, &waa, wskbddevprint,
 		    CFARGS_NONE);
 
-		kbd_softc.k_pollingmode = 0;
+		sc->sc_pollingmode = 0;
 
 		kbdenable();
 	}
@@ -280,6 +281,7 @@ kbdattach(device_t parent, device_t self, void *aux)
 void
 kbdenable(void)
 {
+	struct kbd_softc *sc = &kbd_softc;
 	int s;
 
 	s = spltty();
@@ -296,47 +298,50 @@ kbdenable(void)
 	MFP->mf_ierb |= IB_AINT;
 	MFP->mf_imrb |= IB_AINT;
 
-	kbd_softc.k_event_mode   = 0;
-	kbd_softc.k_events.ev_io = 0;
-	kbd_softc.k_pkg_size     = 0;
+	sc->sc_event_mode   = 0;
+	sc->sc_events.ev_io = 0;
+	sc->sc_pkg_size     = 0;
 	splx(s);
 }
 
 static int
 kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct kbd_softc *sc = &kbd_softc;
 
-	if (kbd_softc.k_events.ev_io)
+	if (sc->sc_events.ev_io)
 		return EBUSY;
 
-	kbd_softc.k_events.ev_io = l->l_proc;
-	ev_init(&kbd_softc.k_events);
+	sc->sc_events.ev_io = l->l_proc;
+	ev_init(&sc->sc_events);
 	return 0;
 }
 
 static int
 kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct kbd_softc *sc = &kbd_softc;
 
 	/* Turn off event mode, dump the queue */
-	kbd_softc.k_event_mode = 0;
-	ev_fini(&kbd_softc.k_events);
-	kbd_softc.k_events.ev_io = NULL;
+	sc->sc_event_mode = 0;
+	ev_fini(&sc->sc_events);
+	sc->sc_events.ev_io = NULL;
 	return 0;
 }
 
 static int
 kbdread(dev_t dev, struct uio *uio, int flags)
 {
+	struct kbd_softc *sc = &kbd_softc;
 
-	return ev_read(&kbd_softc.k_events, uio, flags);
+	return ev_read(&sc->sc_events, uio, flags);
 }
 
 static int
-kbdioctl(dev_t dev, u_long cmd, register void *data, int flag, struct lwp *l)
+kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct kbd_softc *k = &kbd_softc;
-	struct kbdbell	*kb;
+	struct kbd_softc *sc = &kbd_softc;
+	struct kbdbell *kb;
 
 	switch (cmd) {
 	case KIOCTRANS:
@@ -352,7 +357,7 @@ kbdioctl(dev_t dev, u_long cmd, register void *data, int flag, struct lwp *l)
 		return 0;
 
 	case KIOCSDIRECT:
-		k->k_event_mode = *(int *)data;
+		sc->sc_event_mode = *(int *)data;
 		return 0;
 
 	case KIOCRINGBELL:
@@ -367,17 +372,17 @@ kbdioctl(dev_t dev, u_long cmd, register void *data, int flag, struct lwp *l)
 		return 0;
 
 	case FIOASYNC:
-		k->k_events.ev_async = *(int *)data != 0;
+		sc->sc_events.ev_async = *(int *)data != 0;
 		return 0;
 
 	case FIOSETOWN:
-		if (-*(int *)data != k->k_events.ev_io->p_pgid &&
-		    *(int *)data != k->k_events.ev_io->p_pid)
+		if (-*(int *)data != sc->sc_events.ev_io->p_pgid &&
+		    *(int *)data != sc->sc_events.ev_io->p_pid)
 			return EPERM;
 		return 0;
 
 	case TIOCSPGRP:
-		if (*(int *)data != k->k_events.ev_io->p_pgid)
+		if (*(int *)data != sc->sc_events.ev_io->p_pgid)
 			return EPERM;
 		return 0;
 
@@ -394,15 +399,17 @@ kbdioctl(dev_t dev, u_long cmd, register void *data, int flag, struct lwp *l)
 static int
 kbdpoll(dev_t dev, int events, struct lwp *l)
 {
+	struct kbd_softc *sc = &kbd_softc;
 
-	return ev_poll(&kbd_softc.k_events, events, l);
+	return ev_poll(&sc->sc_events, events, l);
 }
 
 static int
 kbdkqfilter(dev_t dev, struct knote *kn)
 {
+	struct kbd_softc *sc = &kbd_softc;
 
-	return ev_kqfilter(&kbd_softc.k_events, kn);
+	return ev_kqfilter(&sc->sc_events, kn);
 }
 
 /*
@@ -412,6 +419,7 @@ void
 kbdintr(int sr)
 	/* sr: sr at time of interrupt	*/
 {
+	struct kbd_softc *sc = &kbd_softc;
 	uint8_t code;
 	bool got_char = false;
 
@@ -431,19 +439,19 @@ kbdintr(int sr)
 	/*
 	 * If characters are waiting for transmit, send them.
 	 */
-	if ((kbd_softc.k_soft_cs & A_TXINT) != 0 &&
+	if ((sc->sc_soft_cs & A_TXINT) != 0 &&
 	    (KBD->ac_cs & A_TXRDY) != 0) {
-		if (kbd_softc.k_sendp != NULL)
-			KBD->ac_da = *kbd_softc.k_sendp++;
-		if (--kbd_softc.k_send_cnt <= 0) {
+		if (sc->sc_sendp != NULL)
+			KBD->ac_da = *sc->sc_sendp++;
+		if (--sc->sc_send_cnt <= 0) {
 			/*
 			 * The total package has been transmitted,
 			 * wakeup anyone waiting for it.
 			 */
-			KBD->ac_cs = (kbd_softc.k_soft_cs &= ~A_TXINT);
-			kbd_softc.k_sendp    = NULL;
-			kbd_softc.k_send_cnt = 0;
-			wakeup((void *)&kbd_softc.k_send_cnt);
+			KBD->ac_cs = (sc->sc_soft_cs &= ~A_TXINT);
+			sc->sc_sendp = NULL;
+			sc->sc_send_cnt = 0;
+			wakeup((void *)&sc->sc_send_cnt);
 		}
 	}
 
@@ -451,7 +459,7 @@ kbdintr(int sr)
 	 * Activate software-level to handle possible input.
 	 */
 	if (got_char)
-		softint_schedule(kbd_softc.k_sicookie);
+		softint_schedule(sc->sc_sicookie);
 }
 
 /*
@@ -460,9 +468,9 @@ kbdintr(int sr)
 static void
 kbdsoft(void *junk1)
 {
+	struct kbd_softc *sc = &kbd_softc;
 	int s;
 	uint8_t code;
-	struct kbd_softc *k = &kbd_softc;
 	struct firm_event *fe;
 	int put, get, n;
 
@@ -484,24 +492,25 @@ kbdsoft(void *junk1)
 			 * If collecting a package, stuff it in and
 			 * continue.
 			 */
-			if (k->k_pkg_size && (k->k_pkg_idx < k->k_pkg_size)) {
-			    k->k_package[k->k_pkg_idx++] = code;
-				if (k->k_pkg_idx == k->k_pkg_size) {
+			if (sc->sc_pkg_size &&
+			    (sc->sc_pkg_idx < sc->sc_pkg_size)) {
+				sc->sc_package[sc->sc_pkg_idx++] = code;
+				if (sc->sc_pkg_idx == sc->sc_pkg_size) {
 					/*
 					 * Package is complete.
 					 */
-					switch (k->k_pkg_type) {
+					switch (sc->sc_pkg_type) {
 #if NMOUSE > 0
 					case KBD_AMS_PKG:
 					case KBD_RMS_PKG:
 					case KBD_JOY1_PKG:
 						mouse_soft(
-						    (REL_MOUSE *)k->k_package,
-						    k->k_pkg_size,
-						    k->k_pkg_type);
+						    (REL_MOUSE *)sc->sc_package,
+						    sc->sc_pkg_size,
+						    sc->sc_pkg_type);
 #endif /* NMOUSE */
 					}
-					k->k_pkg_size = 0;
+					sc->sc_pkg_size = 0;
 				}
 				continue;
 			}
@@ -509,7 +518,7 @@ kbdsoft(void *junk1)
 			 * If this is a package header, init pkg. handling.
 			 */
 			if (!KBD_IS_KEY(code)) {
-				kbd_pkg_start(k, code);
+				kbd_pkg_start(sc, code);
 				continue;
 			}
 #if NWSKBD > 0
@@ -519,10 +528,10 @@ kbdsoft(void *junk1)
 			 * keystroke to the wskbd.
 			 */
 
-			if (kbd_softc.k_pollingmode == 0 &&
-			    kbd_softc.k_wskbddev != NULL &&
-			    k->k_event_mode == 0) {
-				wskbd_input(kbd_softc.k_wskbddev,
+			if (sc->sc_pollingmode == 0 &&
+			    sc->sc_wskbddev != NULL &&
+			    sc->sc_event_mode == 0) {
+				wskbd_input(sc->sc_wskbddev,
 				    KBD_RELEASED(code) ?
 				    WSCONS_EVENT_KEY_UP :
 				    WSCONS_EVENT_KEY_DOWN,
@@ -531,7 +540,7 @@ kbdsoft(void *junk1)
 			}
 #endif /* NWSKBD */
 #if NITE > 0
-			if (kbd_do_modifier(code) && !k->k_event_mode)
+			if (kbd_do_modifier(code) && !sc->sc_event_mode)
 				continue;
 #endif
 
@@ -539,7 +548,7 @@ kbdsoft(void *junk1)
 			 * if not in event mode, deliver straight to ite to
 			 * process key stroke
 			 */
-			if (!k->k_event_mode) {
+			if (!sc->sc_event_mode) {
 				/* Gets to spltty() by itself	*/
 #if NITE > 0
 				ite_filter(code, ITEFILT_TTY);
@@ -553,10 +562,10 @@ kbdsoft(void *junk1)
 			 * is full, the keystroke is lost (sorry!).
 			 */
 			s = spltty();
-			put = k->k_events.ev_put;
-			fe  = &k->k_events.ev_q[put];
+			put = sc->sc_events.ev_put;
+			fe  = &sc->sc_events.ev_q[put];
 			put = (put + 1) % EV_QSIZE;
-			if (put == k->k_events.ev_get) {
+			if (put == sc->sc_events.ev_get) {
 				log(LOG_WARNING,
 				    "keyboard event queue overflow\n");
 				splx(s);
@@ -565,15 +574,15 @@ kbdsoft(void *junk1)
 			fe->id    = KBD_SCANCODE(code);
 			fe->value = KBD_RELEASED(code) ? VKEY_UP : VKEY_DOWN;
 			firm_gettime(fe);
-			k->k_events.ev_put = put;
-			EV_WAKEUP(&k->k_events);
+			sc->sc_events.ev_put = put;
+			EV_WAKEUP(&sc->sc_events);
 			splx(s);
 		}
 		kbd_rbget = get;
 	}
 }
 
-static	uint8_t sound[] = {
+static uint8_t sound[] = {
 	0xA8, 0x01, 0xA9, 0x01, 0xAA, 0x01, 0x00,
 	0xF8, 0x10, 0x10, 0x10, 0x00, 0x20, 0x03
 };
@@ -581,14 +590,14 @@ static	uint8_t sound[] = {
 void
 kbdbell(void)
 {
-	register int	i, sps;
+	int i, s;
 
-	sps = splhigh();
+	s = splhigh();
 	for (i = 0; i < sizeof(sound); i++) {
 		YM2149->sd_selr = i;
 		YM2149->sd_wdat = sound[i];
 	}
-	splx(sps);
+	splx(s);
 }
 
 
@@ -602,7 +611,7 @@ kbdbell(void)
 void
 kbd_bell_gparms(u_int *volume, u_int *pitch, u_int *duration)
 {
-	u_int	tmp;
+	u_int tmp;
 
 	tmp = sound[11] | (sound[12] << 8);
 	*duration = (tmp * KBDBELLDURATION) / 1000;
@@ -616,7 +625,7 @@ kbd_bell_gparms(u_int *volume, u_int *pitch, u_int *duration)
 void
 kbd_bell_sparms(u_int volume, u_int pitch, u_int duration)
 {
-	u_int	f, t;
+	u_int f, t;
 
 	f = pitch > 10 ? pitch : 10;	/* minimum pitch */
 	if (f > 20000)
@@ -654,7 +663,7 @@ kbdgetcn(void)
 		MFP->mf_imrb &= ~IB_AINT;
 	}
 	for (;;) {
-		while (!((KBD->ac_cs & (A_IRQ|A_RXRDY)) == (A_IRQ|A_RXRDY)))
+		while (!((KBD->ac_cs & (A_IRQ | A_RXRDY)) == (A_IRQ | A_RXRDY)))
 			continue;	/* Wait for key	*/
 		if ((KBD->ac_cs & (A_OE | A_PE)) != 0) {
 			code = KBD->ac_da;	/* Silently ignore errors */
@@ -700,8 +709,8 @@ kbd_write_poll(const uint8_t *cmd, int len)
 void
 kbd_write(const uint8_t *cmd, int len)
 {
-	struct kbd_softc	*k = &kbd_softc;
-	int			s;
+	struct kbd_softc *sc = &kbd_softc;
+	int s;
 
 	/*
 	 * Get to splhigh, 'real' interrupts arrive at spl6!
@@ -711,15 +720,15 @@ kbd_write(const uint8_t *cmd, int len)
 	/*
 	 * Make sure any privious write has ended...
 	 */
-	while (k->k_sendp != NULL)
-		tsleep((void *)&k->k_sendp, TTOPRI, "kbd_write1", 0);
+	while (sc->sc_sendp != NULL)
+		tsleep((void *)&sc->sc_sendp, TTOPRI, "kbd_write1", 0);
 
 	/*
 	 * If the KBD-acia is not currently busy, send the first
 	 * character now.
 	 */
-	KBD->ac_cs = (k->k_soft_cs |= A_TXINT);
-	if (KBD->ac_cs & A_TXRDY) {
+	KBD->ac_cs = (sc->sc_soft_cs |= A_TXINT);
+	if ((KBD->ac_cs & A_TXRDY) != 0) {
 		KBD->ac_da = *cmd++;
 		len--;
 	}
@@ -728,54 +737,54 @@ kbd_write(const uint8_t *cmd, int len)
 	 * If we're not yet done, wait until all characters are send.
 	 */
 	if (len > 0) {
-		k->k_sendp    = cmd;
-		k->k_send_cnt = len;
-		tsleep((void *)&k->k_send_cnt, TTOPRI, "kbd_write2", 0);
+		sc->sc_sendp    = cmd;
+		sc->sc_send_cnt = len;
+		tsleep((void *)&sc->sc_send_cnt, TTOPRI, "kbd_write2", 0);
 	}
 	splx(s);
 
 	/*
 	 * Wakeup all procs waiting for us.
 	 */
-	wakeup((void *)&k->k_sendp);
+	wakeup((void *)&sc->sc_sendp);
 }
 
 /*
  * Setup softc-fields to assemble a keyboard package.
  */
 static void
-kbd_pkg_start(struct kbd_softc *kp, uint8_t msg_start)
+kbd_pkg_start(struct kbd_softc *sc, uint8_t msg_start)
 {
 
-	kp->k_pkg_idx    = 1;
-	kp->k_package[0] = msg_start;
+	sc->sc_pkg_idx    = 1;
+	sc->sc_package[0] = msg_start;
 	switch (msg_start) {
 	case 0xf6:
-		kp->k_pkg_type = KBD_MEM_PKG;
-		kp->k_pkg_size = 8;
+		sc->sc_pkg_type = KBD_MEM_PKG;
+		sc->sc_pkg_size = 8;
 		break;
 	case 0xf7:
-		kp->k_pkg_type = KBD_AMS_PKG;
-		kp->k_pkg_size = 6;
+		sc->sc_pkg_type = KBD_AMS_PKG;
+		sc->sc_pkg_size = 6;
 		break;
 	case 0xf8:
 	case 0xf9:
 	case 0xfa:
 	case 0xfb:
-		kp->k_pkg_type = KBD_RMS_PKG;
-		kp->k_pkg_size = 3;
+		sc->sc_pkg_type = KBD_RMS_PKG;
+		sc->sc_pkg_size = 3;
 		break;
 	case 0xfc:
-		kp->k_pkg_type = KBD_CLK_PKG;
-		kp->k_pkg_size = 7;
+		sc->sc_pkg_type = KBD_CLK_PKG;
+		sc->sc_pkg_size = 7;
 		break;
 	case 0xfe:
-		kp->k_pkg_type = KBD_JOY0_PKG;
-		kp->k_pkg_size = 2;
+		sc->sc_pkg_type = KBD_JOY0_PKG;
+		sc->sc_pkg_size = 2;
 		break;
 	case 0xff:
-		kp->k_pkg_type = KBD_JOY1_PKG;
-		kp->k_pkg_size = 2;
+		sc->sc_pkg_type = KBD_JOY1_PKG;
+		sc->sc_pkg_size = 2;
 		break;
 	default:
 		printf("kbd: Unknown packet 0x%x\n", msg_start);
@@ -878,6 +887,7 @@ static void
 kbd_getc(void *c, u_int *type, int *data)
 {
 	int key;
+
 	key = kbdgetcn();
 
 	*data = KBD_SCANCODE(key);
@@ -887,8 +897,9 @@ kbd_getc(void *c, u_int *type, int *data)
 static void
 kbd_pollc(void *c, int on)
 {
+	struct kbd_softc *sc = &kbd_softc;
 
-	kbd_softc.k_pollingmode = on;
+	sc->sc_pollingmode = on;
 }
 
 static void
