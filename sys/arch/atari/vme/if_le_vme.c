@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.32 2022/06/25 22:31:09 tsutsui Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.33 2022/06/25 22:38:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.32 2022/06/25 22:31:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.33 2022/06/25 22:38:43 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -233,8 +233,7 @@ le_vme_match(device_t parent, cfdata_t cfp, void *aux)
 
 		if (bus_space_map(iot, le_ap->reg_addr, le_ap->reg_size, 0,
 		    &ioh)) {
-			aprint_error("leprobe: cannot map io-area\n");
-			return 0;
+			continue;
 		}
 		if (le_ap->mem_size == VMECF_MEMSIZ_DEFAULT) {
 			if (bvme410_probe(iot, ioh)) {
@@ -252,8 +251,7 @@ le_vme_match(device_t parent, cfdata_t cfp, void *aux)
 		if (bus_space_map(memt, le_ap->mem_addr, le_ap->mem_size, 0,
 		    &memh)) {
 			bus_space_unmap(iot, ioh, le_ap->reg_size);
-			aprint_error("leprobe: cannot map memory-area\n");
-			return 0;
+			continue;
 		}
 		found = probe_addresses(&iot, &memt, &ioh, &memh);
 		bus_space_unmap(iot, ioh, le_ap->reg_size);
