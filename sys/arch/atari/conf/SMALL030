@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.26 2022/06/12 06:57:07 tsutsui Exp $
+# $NetBSD: SMALL030,v 1.27 2022/06/25 13:20:30 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.122 2022/06/12 06:54:32 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.123 2022/06/25 13:17:04 tsutsui Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os -fno-unwind-tables" # optimize for space
 maxusers 16
@@ -30,7 +30,7 @@ no options COMPAT_13 # NetBSD 1.3,
 no options COMPAT_14 # NetBSD 1.4,
 no options COMPAT_15 # NetBSD 1.5,
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
-options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=56 # for SCSI, FDC, and Xserver
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
 options FALCON_SCSI # SCSI-support for Falcon
