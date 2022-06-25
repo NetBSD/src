@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.22 2021/09/20 21:05:15 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.23 2022/06/25 12:39:46 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.22 2021/09/20 21:05:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.23 2022/06/25 12:39:46 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -97,17 +97,22 @@ pic_default_splx(int savedipl)
 		return;
 	}
 
-	register_t psw = DISABLE_INTERRUPT_SAVE();
-	KASSERTMSG(panicstr != NULL || savedipl < ci->ci_cpl,
-	    "splx(%d) to a higher ipl than %d", savedipl, ci->ci_cpl);
+	if (ci->ci_cpl >= IPL_VM) {
+		register_t psw = DISABLE_INTERRUPT_SAVE();
+		KASSERTMSG(panicstr != NULL || savedipl < ci->ci_cpl,
+		    "splx(%d) to a higher ipl than %d", savedipl, ci->ci_cpl);
 
-	ci->ci_intr_depth++;
-	pic_do_pending_ints(psw, savedipl, NULL);
-	ci->ci_intr_depth--;
-	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
-	    ci->ci_cpl, savedipl);
-	if ((psw & I32_bit) == 0)
-		ENABLE_INTERRUPT();
+		ci->ci_intr_depth++;
+		pic_do_pending_ints(psw, savedipl, NULL);
+		ci->ci_intr_depth--;
+		KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
+		    ci->ci_cpl, savedipl);
+		if ((psw & I32_bit) == 0)
+			ENABLE_INTERRUPT();
+	} else {
+		pic_set_priority(ci, savedipl);
+	}
+
 	cpu_dosoftints();
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
 	    ci->ci_cpl, savedipl);
