@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.159 2020/02/07 00:56:48 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.160 2022/06/25 02:46:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.159 2020/02/07 00:56:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.160 2022/06/25 02:46:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1074,7 +1074,7 @@ fxp_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_dmamap_t rxmap;
 	int claimed = 0, rnr;
-	uint8_t statack;
+	uint8_t statack, rndstat = 0;
 
 	if (!device_is_active(sc->sc_dev) || sc->sc_enabled == 0)
 		return (0);
@@ -1092,6 +1092,7 @@ fxp_intr(void *arg)
 	}
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
+		rndstat = statack;
 		claimed = 1;
 
 		/*
@@ -1146,7 +1147,7 @@ fxp_intr(void *arg)
 	}
 
 	if (claimed)
-		rnd_add_uint32(&sc->rnd_source, statack);
+		rnd_add_uint32(&sc->rnd_source, rndstat);
 	return (claimed);
 }
 
