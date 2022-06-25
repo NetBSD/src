@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.52 2022/06/25 15:10:26 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.53 2022/06/25 15:36:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.52 2022/06/25 15:10:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.53 2022/06/25 15:36:33 tsutsui Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -236,8 +236,9 @@ kbdattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Now send the reset string, and read+ignore its response
 	 */
+	aprint_normal("\n");
 	if (kbd_write_poll(kbd_rst, 2) == 0)
-		printf("kbd: error cannot reset keyboard\n");
+		aprint_error_dev(self, "error cannot reset keyboard\n");
 	for (timeout = 1000; timeout > 0; timeout--) {
 		if ((KBD->ac_cs & (A_IRQ | A_RXRDY)) != 0) {
 			timeout = KBD->ac_da;
@@ -249,8 +250,6 @@ kbdattach(device_t parent, device_t self, void *aux)
 	 * Send init command: disable mice & joysticks
 	 */
 	kbd_write_poll(kbd_icmd, sizeof(kbd_icmd));
-
-	printf("\n");
 
 	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, kbdsoft, NULL);
 
