@@ -1,4 +1,4 @@
-/* $Id: imx23_icoll.c,v 1.3 2014/02/25 08:39:39 martin Exp $ */
+/* $Id: imx23_icoll.c,v 1.4 2022/06/25 12:41:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -251,6 +251,8 @@ icoll_set_priority(struct pic_softc *pic, int newipl)
 	struct intrsource *is;
 	int i;
 
+	register_t psw = DISABLE_INTERRUPT_SAVE();
+
 	for (i = 0; i < pic->pic_maxsources; i++) {
 		is = pic->pic_sources[i];
 		if (is == NULL)
@@ -259,6 +261,12 @@ icoll_set_priority(struct pic_softc *pic, int newipl)
 			ICOLL_SET_IRQ(sc, pic->pic_irqbase + is->is_irq);
 		else
 			ICOLL_CLR_IRQ(sc, pic->pic_irqbase + is->is_irq);
+	}
+
+	curcpu()->ci_cpl = newipl;
+
+	if ((psw & I32_bit) == 0) {
+		ENABLE_INTERRUPT();
 	}
 }
 

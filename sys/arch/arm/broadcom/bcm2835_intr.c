@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.42 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.43 2022/06/25 12:41:55 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.42 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.43 2022/06/25 12:41:55 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 
@@ -150,6 +150,7 @@ static int bcm2836mp_int_base[BCM2836_NCPUS];
 static void
 bcm2835_set_priority(struct pic_softc *pic, int ipl)
 {
+	curcpu()->ci_cpl = ipl;
 }
 
 static struct pic_ops bcm2835_picops = {

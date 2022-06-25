@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.50 2022/03/28 19:59:35 riastradh Exp $ */
+/* $NetBSD: gicv3.c,v 1.51 2022/06/25 12:41:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.50 2022/03/28 19:59:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.51 2022/06/25 12:41:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -237,11 +237,14 @@ gicv3_set_priority(struct pic_softc *pic, int ipl)
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
 	struct cpu_info * const ci = curcpu();
 
-	if (ipl < ci->ci_hwpl) {
+	while (ipl < ci->ci_hwpl) {
 		/* Lowering priority mask */
 		ci->ci_hwpl = ipl;
+		__insn_barrier();
 		icc_pmr_write(IPL_TO_PMR(sc, ipl));
 	}
+	__insn_barrier();
+	ci->ci_cpl = ipl;
 }
 
 static void
