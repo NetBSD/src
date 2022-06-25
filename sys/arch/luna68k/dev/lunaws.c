@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.40 2021/10/09 20:59:47 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.41 2022/06/25 01:54:37 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.40 2021/10/09 20:59:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.41 2022/06/25 01:54:37 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.40 2021/10/09 20:59:47 tsutsui Exp $");
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/rndsource.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -130,6 +131,7 @@ struct ws_softc {
 	int		sc_rawkbd;
 
 	struct ws_conscookie *sc_conscookie;
+	krndsource_t	sc_rndsource;
 };
 
 static void omkbd_input(struct ws_softc *, int);
@@ -241,6 +243,8 @@ wsattach(device_t parent, device_t self, void *aux)
 	sc->sc_tx_done = false;
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, wssoftintr, sc);
+	rnd_attach_source(&sc->sc_rndsource, device_xname(self),
+	    RND_TYPE_TTY, RND_FLAG_DEFAULT);
 
 	/* enable interrupt */
 	setsioreg(sc->sc_ctl, WR1, sc->sc_wr[WR1]);
@@ -274,11 +278,12 @@ wsintr(void *arg)
 {
 	struct ws_softc *sc = arg;
 	struct sioreg *sio = sc->sc_ctl;
-	uint8_t code;
-	uint16_t rr;
+	uint8_t code = 0;
+	uint16_t rr, rndcsr = 0;
 	bool handled = false;
 
 	rr = getsiocsr(sio);
+	rndcsr = rr;
 	if ((rr & RR_RXRDY) != 0) {
 		do {
 			code = sio->sio_data;
@@ -299,8 +304,10 @@ wsintr(void *arg)
 			handled = true;
 		}
 	}
-	if (handled)
+	if (handled) {
 		softint_schedule(sc->sc_si);
+		rnd_add_uint32(&sc->sc_rndsource, (rndcsr << 8) | code);
+	}
 }
 
 static void
