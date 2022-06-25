@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.25 2022/05/31 11:22:33 andvar Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.26 2022/06/25 12:41:56 jmcneill Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.25 2022/05/31 11:22:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.26 2022/06/25 12:41:56 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 
@@ -656,10 +656,18 @@ armadaxp_pic_set_priority(struct pic_softc *pic, int ipl)
 {
 	int ctp;
 
+	register_t psw = DISABLE_INTERRUPT_SAVE();
+
 	ctp = MPIC_CPU_READ(ARMADAXP_MLMB_MPIC_CTP);
 	ctp &= ~(0xf << MPIC_CTP_SHIFT);
 	ctp |= (ipl << MPIC_CTP_SHIFT);
 	MPIC_CPU_WRITE(ARMADAXP_MLMB_MPIC_CTP, ctp);
+
+	curcpu()->ci_cpl = ipl;
+
+	if ((psw & I32_bit) == 0) {
+		ENABLE_INTERRUPT();
+	}
 }
 
 static void
