@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.207 2021/10/09 20:00:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208 2022/06/25 08:19:01 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2021/10/09 20:00:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2022/06/25 08:19:01 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1256,7 +1256,9 @@ cpu_intr_p(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+#ifdef EXTENDED_MEMORY
 	int i;
+#endif
 
 	/* Main memory */
 	if (phys_basemem_seg.start <= pa && pa < phys_basemem_seg.end)
