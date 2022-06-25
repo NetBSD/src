@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.8 2022/06/23 09:58:25 skrll Exp $	*/
+/*	$NetBSD: symtab.c,v 1.9 2022/06/25 06:51:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.8 2022/06/23 09:58:25 skrll Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.9 2022/06/25 06:51:37 skrll Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: symtab.c,v 1.8 2022/06/23 09:58:25 skrll Exp $");
 #define ELF_ST_TYPE(x)          (((unsigned int)x) & 0xf)
 #endif
 
+#include "symbol.h"
 #include "symtab.h"
 
 #ifdef SYMTAB_DEBUG
@@ -192,11 +193,12 @@ symtab_find(const symtab_t *st, const void *p, Dl_info *dli)
 	size_t mid = ns / 2;
 	uintptr_t fbase = st->ispie ? (uintptr_t)dli->dli_fbase : 0;
 	uintptr_t dd, sd, me = (uintptr_t)p - fbase;
-	uintptr_t ad = (uintptr_t)dli->dli_saddr - fbase;
+	uintptr_t sa = SYMBOL_CANONICALIZE(dli->dli_saddr);
+	uintptr_t ad = sa - fbase;
 
-	DPRINTF("[fbase=%#jx, saddr=%p, me=%#jx ad=%#jx]",
-	    (uintmax_t)fbase, dli->dli_saddr,
-	    (uintmax_t)me, (uintmax_t)ad);
+ 	DPRINTF("[fbase=%#jx, saddr=%p, sa=%#jx, me=%#jx ad=%#jx]",
+	    (uintmax_t)fbase, dli->dli_saddr, (uintmax_t)sa,
+ 	    (uintmax_t)me, (uintmax_t)ad);
 
 	for (;;) {
 		if (s[mid].st_value < me)
