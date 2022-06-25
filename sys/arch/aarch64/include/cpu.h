@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.46 2022/06/25 12:41:56 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.47 2022/06/25 13:24:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -134,8 +134,6 @@ struct cpu_info {
 	volatile uint32_t ci_blocked_pics;
 	volatile uint32_t ci_pending_pics;
 	volatile uint32_t ci_pending_ipls;
-	void *ci_splx_restart;
-	int ci_splx_savedipl;
 
 	int ci_kfpu_spl;
 

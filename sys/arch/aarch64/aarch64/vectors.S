@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.27 2022/05/29 23:39:59 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.28 2022/06/25 13:24:34 jmcneill Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
@@ -11,7 +11,7 @@
 #include "opt_dtrace.h"
 #include "opt_gic.h"
 
-RCSID("$NetBSD: vectors.S,v 1.27 2022/05/29 23:39:59 ryo Exp $")
+RCSID("$NetBSD: vectors.S,v 1.28 2022/06/25 13:24:34 jmcneill Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -227,23 +227,7 @@ ENTRY_NP(el1_trap_exit)
 
 	unwind_x3_x30
 
-#ifdef GIC_SPLFUNCS
-	mrs	x0, tpidr_el1		/* get curlwp */
-	ldr	x0, [x0, #L_CPU]	/* get curcpu */
-
-	/*
-	 * If ci_intr_depth == 0 and ci_splx_restart != 0, return
-	 * to splx restart. Otherwise return to exception pc.
-	 */
-	ldr	w1, [x0, #CI_INTR_DEPTH]
-	cbnz	w1, 1f
-	ldr	x0, [x0, #CI_SPLX_RESTART]
-	cbnz	x0, 2f
-1:
-	ldr	x0, [sp, #TF_PC]
-2:
-	ldr	x1, [sp, #TF_SPSR]
-#elif TF_PC + 8 == TF_SPSR
+#if TF_PC + 8 == TF_SPSR
 	ldp	x0, x1, [sp, #TF_PC]
 #else
 	ldr	x0, [sp, #TF_PC]

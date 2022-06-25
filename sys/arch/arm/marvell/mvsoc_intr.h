@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.h,v 1.7 2021/09/24 08:07:40 skrll Exp $	*/
+/*	$NetBSD: mvsoc_intr.h,v 1.8 2022/06/25 13:24:35 jmcneill Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -44,10 +44,6 @@
 extern int (*find_pending_irqs)(void);
 
 void mvsoc_irq_handler(void *);
-
-#define	_splraise	pic_splraise
-#define	_spllower	pic_spllower
-#define	splx		pic_splx
 
 #include <arm/pic/picvar.h>
 

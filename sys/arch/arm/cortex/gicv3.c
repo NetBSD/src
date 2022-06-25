@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.51 2022/06/25 12:41:55 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.52 2022/06/25 13:24:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.51 2022/06/25 12:41:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.52 2022/06/25 13:24:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.51 2022/06/25 12:41:55 jmcneill Exp $");
 
 #include <arm/cortex/gicv3.h>
 #include <arm/cortex/gic_reg.h>
-
-#ifdef GIC_SPLFUNCS
-#include <arm/cortex/gic_splfuncs.h>
-#endif
 
 #define	PICTOSOFTC(pic)	\
 	container_of(pic, struct gicv3_softc, sc_pic)
@@ -949,10 +945,6 @@ gicv3_init(struct gicv3_softc *sc)
 #ifdef __HAVE_PREEMPTION
 	intr_establish_xname(IPI_KPREEMPT, IPL_VM, IST_MPSAFE | IST_EDGE, pic_ipi_kpreempt, (void *)-1, "IPI kpreempt");
 #endif
-#endif
-
-#ifdef GIC_SPLFUNCS
-	gic_spl_init();
 #endif
 
 	return 0;

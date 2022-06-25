@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.37 2021/10/30 20:23:11 jmcneill Exp $
+# $NetBSD: genassym.cf,v 1.38 2022/06/25 13:24:34 jmcneill Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -298,9 +298,6 @@ define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
-define	CI_SPLX_RESTART		offsetof(struct cpu_info, ci_splx_restart)
-define	CI_SPLX_SAVEDIPL	offsetof(struct cpu_info, ci_splx_savedipl)
-define	CI_HWPL			offsetof(struct cpu_info, ci_hwpl)
 
 define	V_RESCHED_KPREEMPT	ilog2(RESCHED_KPREEMPT)
 
