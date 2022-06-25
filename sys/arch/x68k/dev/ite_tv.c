@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.17 2018/02/08 09:05:18 dholland Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.18 2022/06/25 03:18:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.17 2018/02/08 09:05:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.18 2022/06/25 03:18:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,39 +69,38 @@ __KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.17 2018/02/08 09:05:18 dholland Exp $")
 #define ROWBYTES    (PLANEWIDTH  / FONTWIDTH)
 #define PLANESIZE   (PLANEHEIGHT * ROWBYTES)
 
-u_int  tv_top;
-u_char *tv_row[PLANELINES];
-char   *tv_font[256];
-volatile char *tv_kfont[0x7f];
+static u_int  tv_top;
+static uint8_t *tv_row[PLANELINES];
+static uint8_t *tv_font[256];
+static volatile uint8_t *tv_kfont[0x7f];
 
-u_char kern_font[256 * FONTHEIGHT];
+uint8_t kern_font[256 * FONTHEIGHT];
 
 #define PHYSLINE(y)  ((tv_top + (y)) % PLANELINES)
 #define ROWOFFSET(y) ((y) * FONTHEIGHT * ROWBYTES)
 #define CHADDR(y, x) (tv_row[PHYSLINE(y)] + (x))
 
-#define SETGLYPH(to,from) memcpy(&kern_font[(from)*16],&kern_font[(to)*16], 16)
+#define SETGLYPH(to,from)	\
+	memcpy(&kern_font[(from) * 16],&kern_font[(to) * 16], 16)
 #define KFONTBASE(left)   ((left) * 32 * 0x5e - 0x21 * 32)
 
 /* prototype */
-void tv_init(struct ite_softc *);
-void tv_deinit(struct ite_softc *);
-void tv_putc(struct ite_softc *, int, int, int, int);
-void tv_cursor(struct ite_softc *, int);
-void tv_clear(struct ite_softc *, int, int, int, int);
-void tv_scroll(struct ite_softc *, int, int, int, int);
+static void tv_putc(struct ite_softc *, int, int, int, int);
+static void tv_cursor(struct ite_softc *, int);
+static void tv_clear(struct ite_softc *, int, int, int, int);
+static void tv_scroll(struct ite_softc *, int, int, int, int);
 
-inline static int expbits(int);
-inline static void txrascpy(u_char, u_char, short, signed short);
+static inline uint32_t expbits(uint32_t);
+static inline void txrascpy(uint8_t, uint8_t, int16_t, uint16_t);
 
 static inline void
-txrascpy(u_char src, u_char dst, short size, short mode)
+txrascpy(uint8_t src, uint8_t dst, int16_t size, uint16_t mode)
 {
 	/*int s;*/
-	u_short saved_r21 = CRTC.r21;
-	char d;
+	uint16_t saved_r21 = CRTC.r21;
+	int8_t d;
 
-	d = (mode < 0) ? -1 : 1;
+	d = ((mode & 0x8000) != 0) ? -1 : 1;
 	src *= FONTHEIGHT / 4;
 	dst *= FONTHEIGHT / 4;
 	size *= 4;
@@ -117,10 +116,10 @@ txrascpy(u_char src, u_char dst, short size, short mode)
 	/*s = splhigh();*/
 	while (--size >= 0) {
 		/* wait for hsync */
-		mfp_wait_for_hsync ();
+		mfp_wait_for_hsync();
 		CRTC.r22 = (src << 8) | dst;	/* specify raster number */
 		/* start raster copy */
-		CRTC.crtctrl = 8;
+		CRTC.crtctrl = 0x0008;
 
 		src += d;
 		dst += d;
@@ -128,10 +127,10 @@ txrascpy(u_char src, u_char dst, short size, short mode)
 	/*splx(s);*/
 
 	/* wait for hsync */
-	mfp_wait_for_hsync ();
+	mfp_wait_for_hsync();
 
 	/* stop raster copy */
-	CRTC.crtctrl = 0;
+	CRTC.crtctrl = 0x0000;
 
 	CRTC.r21 = saved_r21;
 }
@@ -142,13 +141,13 @@ txrascpy(u_char src, u_char dst, short size, short mode)
 void
 ite_set_glyph(void)
 {
-	u_char glyph = IODEVbase->io_sram[0x59];
+	uint8_t glyph = IODEVbase->io_sram[0x59];
 	
-	if (glyph & 4)
+	if ((glyph & 4) != 0)
 		SETGLYPH(0x82, '|');
-	if (glyph & 2)
+	if ((glyph & 2) != 0)
 		SETGLYPH(0x81, '~');
-	if (glyph & 1)
+	if ((glyph & 1) != 0)
 		SETGLYPH(0x80, '\\');
 }
 
@@ -165,7 +164,8 @@ tv_init(struct ite_softc *ip)
 	 */
 	tv_top = 0;
 	for (i = 0; i < PLANELINES; i++)
-		tv_row[i] = (void *)__UNVOLATILE(&IODEVbase->tvram[ROWOFFSET(i)]);
+		tv_row[i] =
+		    (void *)__UNVOLATILE(&IODEVbase->tvram[ROWOFFSET(i)]);
 	/* shadow ANK font */
 	memcpy(kern_font, (void *)&IODEVbase->cgrom0_8x16, 256 * FONTHEIGHT);
 	ite_set_glyph();
@@ -212,9 +212,11 @@ tv_init(struct ite_softc *ip)
 void
 tv_deinit(struct ite_softc *ip)
 {
+
 	ip->flags &= ~ITE_INITED; /* XXX? */
 }
 
+static inline uint8_t *tv_getfont(int, int);
 typedef void tv_putcfunc(struct ite_softc *, int, char *);
 static tv_putcfunc tv_putc_nm;
 static tv_putcfunc tv_putc_in;
@@ -226,32 +228,32 @@ static tv_putcfunc tv_putc_bd_ul;
 static tv_putcfunc tv_putc_bd_ul_in;
 
 static tv_putcfunc *putc_func[ATTR_ALL + 1] = {
-	tv_putc_nm,
-	tv_putc_in,
-	tv_putc_ul,
-	tv_putc_ul_in,
-	tv_putc_bd,
-	tv_putc_bd_in,
-	tv_putc_bd_ul,
-	tv_putc_bd_ul_in,
+	[ATTR_NOR]					= tv_putc_nm,
+	[ATTR_INV]					= tv_putc_in,
+	[ATTR_UL]					= tv_putc_ul,
+	[ATTR_INV | ATTR_UL]				= tv_putc_ul_in,
+	[ATTR_BOLD]					= tv_putc_bd,
+	[ATTR_BOLD | ATTR_INV]				= tv_putc_bd_in,
+	[ATTR_BOLD | ATTR_UL]				= tv_putc_bd_ul,
+	[ATTR_BOLD | ATTR_UL | ATTR_INV]		= tv_putc_bd_ul_in,
 	/* no support for blink */
-	tv_putc_nm,
-	tv_putc_in,
-	tv_putc_ul,
-	tv_putc_ul_in,
-	tv_putc_bd,
-	tv_putc_bd_in,
-	tv_putc_bd_ul,
-	tv_putc_bd_ul_in,
+	[ATTR_BLINK]					= tv_putc_nm,
+	[ATTR_BLINK | ATTR_INV]				= tv_putc_in,
+	[ATTR_BLINK | ATTR_UL]				= tv_putc_ul,
+	[ATTR_BLINK | ATTR_UL | ATTR_INV]		= tv_putc_ul_in,
+	[ATTR_BLINK | ATTR_BOLD]			= tv_putc_bd,
+	[ATTR_BLINK | ATTR_BOLD | ATTR_INV]		= tv_putc_bd_in,
+	[ATTR_BLINK | ATTR_BOLD | ATTR_UL]		= tv_putc_bd_ul,
+	[ATTR_BLINK | ATTR_BOLD | ATTR_UL | ATTR_INV]	= tv_putc_bd_ul_in,
 };
 
 /*
  * simple put character function
  */
-void
+static void
 tv_putc(struct ite_softc *ip, int ch, int y, int x, int mode)
 {
-	char *p = CHADDR(y, x);
+	uint8_t *p = CHADDR(y, x);
 	short fh;
 
 	/* multi page write mode */
@@ -264,7 +266,7 @@ tv_putc(struct ite_softc *ip, int ch, int y, int x, int mode)
 	CRTC.r21 ^= 0x00f0;
 	if (ip->save_char) {
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
-			*(u_short *)p = 0;
+			*(uint16_t *)p = 0;
 	} else {
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
 			*p = 0;
@@ -274,138 +276,152 @@ tv_putc(struct ite_softc *ip, int ch, int y, int x, int mode)
 	CRTC.r21 = 0;
 }
 
-void
+static inline uint8_t *
+tv_getfont(int cset, int ch)
+{
+
+	if (cset == CSET_JISKANA) {
+		ch |= 0x80;
+	} else if (cset == CSET_DECGRAPH) {
+		if (ch < 0x80) {
+			ch = ite_decgraph2ascii[ch];
+		}
+	}
+
+	return tv_font[ch];
+}
+
+static void
 tv_putc_nm(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
-	char *f;
-	volatile short *kf;
+	volatile uint16_t *kf;
+	uint8_t *f;
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e &&
+	    (ch & 0x7f) >= 0x21 && (ch & 0x7f) <= 0x7e) {
 		/* multibyte character */
-		kf = (volatile short *)tv_kfont[hi];
-		kf += ch * FONTHEIGHT;
+		kf = (volatile uint16_t *)tv_kfont[hi];
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
-			*(u_short *)p = *kf++;
+			*(uint16_t *)p = *kf++;
 		return;
 	}
 
 	/* singlebyte character */
-	if (*ip->GL == CSET_JISKANA)
-		ch |= 0x80;
-	f = tv_font[ch];
+	f = tv_getfont(*ip->GL, ch);
 
 	/* draw plane */
 	for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
 		*p = *f++;
 }
 
-void
+static void
 tv_putc_in(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
-	char *f;
-	volatile short *kf;
+	volatile uint16_t *kf;
+	uint8_t *f;
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e &&
+	    (ch & 0x7f) >= 0x21 && (ch & 0x7f) <= 0x7e) {
 		/* multibyte character */
-		kf = (volatile short *)tv_kfont[hi];
-		kf += ch * FONTHEIGHT;
+		kf = (volatile uint16_t *)tv_kfont[hi];
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
-			*(u_short *)p = ~*kf++;
+			*(uint16_t *)p = ~*kf++;
 		return;
 	}
 
 	/* singlebyte character */
-	if (*ip->GL == CSET_JISKANA)
-		ch |= 0x80;
-	f = tv_font[ch];
+	f = tv_getfont(*ip->GL, ch);
 
 	/* draw plane */
 	for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES)
 		*p = ~*f++;
 }
 
-void
+static void
 tv_putc_bd(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
-	char *f;
-	volatile short *kf;
+	u_int data;
+	volatile uint16_t *kf;
+	uint8_t *f;
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e &&
+	    (ch & 0x7f) >= 0x21 && (ch & 0x7f) <= 0x7e) {
 		/* multibyte character */
-		kf = (volatile short *)tv_kfont[hi];
-		kf += ch * FONTHEIGHT;
+		kf = (volatile uint16_t *)tv_kfont[hi];
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
-			ch = *kf++;
-			*(u_short *)p = ch | (ch >> 1);
+			data = *kf++;
+			*(uint16_t *)p = data | (data >> 1);
 		}
 		return;
 	}
 
 	/* singlebyte character */
-	if (*ip->GL == CSET_JISKANA)
-		ch |= 0x80;
-	f = tv_font[ch];
+	f = tv_getfont(*ip->GL, ch);
 
 	/* draw plane */
 	for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
-		ch = *f++;
-		*p = ch | (ch >> 1);
+		data = *f++;
+		*p = data | (data >> 1);
 	}
 }
 
-inline static int
-expbits(int data)
+static inline uint32_t
+expbits(uint32_t data)
 {
-	int i, nd = 0;
-	if (data & 1)
+	int i;
+	u_int nd = 0;
+
+	if ((data & 1) != 0)
 		nd |= 0x02;
-	for (i=1; i < 32; i++) {
-		if (data & (1 << i))
-			nd |= 0x5 << (i-1);
+	for (i = 1; i < 32; i++) {
+		if ((data & (1 << i)) != 0)
+			nd |= 0x5 << (i - 1);
 	}
 	nd &= ~data;
-	return (~nd);
+	return ~nd;
 }
 
-void
+static void
 tv_putc_ul(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
-	char *f;
-	volatile short *kf;
+	volatile uint16_t *kf;
+	uint8_t *f;
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e &&
+	    (ch & 0x7f) >= 0x21 && (ch & 0x7f) <= 0x7e) {
 		/* multibyte character */
-		kf = (volatile short *)tv_kfont[hi];
-		kf += ch * FONTHEIGHT;
+		kf = (volatile uint16_t *)tv_kfont[hi];
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
-			*(u_short *)p = *kf++;
-		*(u_short *)p = expbits(*kf++);
+			*(uint16_t *)p = *kf++;
+		*(uint16_t *)p = expbits(*kf++);
 		p += ROWBYTES;
 		for (fh++; fh < FONTHEIGHT; fh++, p += ROWBYTES)
-			*(u_short *)p = *kf++;
+			*(uint16_t *)p = *kf++;
 		return;
 	}
 
 	/* singlebyte character */
-	if (*ip->GL == CSET_JISKANA)
-		ch |= 0x80;
-	f = tv_font[ch];
+	f = tv_getfont(*ip->GL, ch);
 
 	/* draw plane */
 	for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
@@ -416,66 +432,65 @@ tv_putc_ul(struct ite_softc *ip, int ch, char *p)
 		*p = *f++;
 }
 
-void
+static void
 tv_putc_bd_in(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
-	char *f;
-	volatile short *kf;
+	u_int data;
+	volatile uint16_t *kf;
+	uint8_t *f;
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e &&
+	    (ch & 0x7f) >= 0x21 && (ch & 0x7f) <= 0x7e) {
 		/* multibyte character */
-		kf = (volatile short *)tv_kfont[hi];
-		kf += ch * FONTHEIGHT;
+		kf = (volatile uint16_t *)tv_kfont[hi];
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
-			ch = *kf++;
-			*(u_short *)p = ~(ch | (ch >> 1));
+			data = *kf++;
+			*(uint16_t *)p = ~(data | (data >> 1));
 		}
 		return;
 	}
 
 	/* singlebyte character */
-	if (*ip->GL == CSET_JISKANA)
-		ch |= 0x80;
-	f = tv_font[ch];
+	f = tv_getfont(*ip->GL, ch);
 
 	/* draw plane */
 	for (fh = 0; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
-		ch = *f++;
-		*p = ~(ch | (ch >> 1));
+		data = *f++;
+		*p = ~(data | (data >> 1));
 	}
 }
 
-void
+static void
 tv_putc_ul_in(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
-	char *f;
-	volatile short *kf;
+	volatile uint16_t *kf;
+	uint8_t *f;
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e &&
+	    (ch & 0x7f) >= 0x21 && (ch & 0x7f) <= 0x7e) {
 		/* multibyte character */
-		kf = (volatile short *)tv_kfont[hi];
-		kf += ch * FONTHEIGHT;
+		kf = (volatile uint16_t *)tv_kfont[hi];
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
-			*(u_short *)p = ~*kf++;
-		*(u_short *)p = ~expbits(*kf++);
+			*(uint16_t *)p = ~*kf++;
+		*(uint16_t *)p = ~expbits(*kf++);
 		p += ROWBYTES;
 		for (fh++; fh < FONTHEIGHT; fh++, p += ROWBYTES)
-			*(u_short *)p = ~*kf++;
+			*(uint16_t *)p = ~*kf++;
 		return;
 	}
 
 	/* singlebyte character */
-	if (*ip->GL == CSET_JISKANA)
-		ch |= 0x80;
-	f = tv_font[ch];
+	f = tv_getfont(*ip->GL, ch);
 
 	/* draw plane */
 	for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES)
@@ -486,108 +501,108 @@ tv_putc_ul_in(struct ite_softc *ip, int ch, char *p)
 		*p = ~*f++;
 }
 
-void
+static void
 tv_putc_bd_ul(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
-	char *f;
-	volatile short *kf;
+	u_int data;
+	volatile uint16_t *kf;
+	uint8_t *f;
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e &&
+	    (ch & 0x7f) >= 0x21 && (ch & 0x7f) <= 0x7e) {
 		/* multibyte character */
-		kf = (volatile short *)tv_kfont[hi];
-		kf += ch * FONTHEIGHT;
+		kf = (volatile uint16_t *)tv_kfont[hi];
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
-			ch = *kf++;
-			*(u_short *)p = ch | (ch >> 1);
+			data = *kf++;
+			*(uint16_t *)p = data | (data >> 1);
 		}
-		ch = *kf++;
-		*(u_short *)p = expbits(ch | (ch >> 1));
+		data = *kf++;
+		*(uint16_t *)p = expbits(data | (data >> 1));
 		p += ROWBYTES;
 		for (fh++; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
-			ch = *kf++;
-			*(u_short *)p = ch | (ch >> 1);
+			data = *kf++;
+			*(uint16_t *)p = data | (data >> 1);
 		}
 		return;
 	}
 
 	/* singlebyte character */
-	if (*ip->GL == CSET_JISKANA)
-		ch |= 0x80;
-	f = tv_font[ch];
+	f = tv_getfont(*ip->GL, ch);
 
 	/* draw plane */
 	for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
-		ch = *f++;
-		*p = ch | (ch >> 1);
+		data = *f++;
+		*p = data | (data >> 1);
 	}
-	ch = *f++;
-	*p = expbits(ch | (ch >> 1));
+	data = *f++;
+	*p = expbits(data | (data >> 1));
 	p += ROWBYTES;
 	for (fh++; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
-		ch = *f++;
-		*p = ch | (ch >> 1);
+		data = *f++;
+		*p = data | (data >> 1);
 	}
 }
 
-void
+static void
 tv_putc_bd_ul_in(struct ite_softc *ip, int ch, char *p)
 {
 	short fh, hi;
-	char *f;
-	volatile short *kf;
+	u_int data;
+	volatile uint16_t *kf;
+	uint8_t *f;
 
 	hi = ip->save_char & 0x7f;
 
-	if (hi >= 0x21 && hi <= 0x7e && ch >= 0x21 && ch <= 0x7e) {
+	if (hi >= 0x21 && hi <= 0x7e &&
+	    (ch & 0x7f) >= 0x21 && (ch & 0x7f) <= 0x7e) {
 		/* multibyte character */
-		kf = (volatile short *)tv_kfont[hi];
-		kf += ch * FONTHEIGHT;
+		kf = (volatile uint16_t *)tv_kfont[hi];
+		kf += (ch & 0x7f) * FONTHEIGHT;
 		/* draw plane */
 		for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
-			ch = *kf++;
-			*(u_short *)p = ~(ch | (ch >> 1));
+			data = *kf++;
+			*(uint16_t *)p = ~(data | (data >> 1));
 		}
-		ch = *kf++;
-		*(u_short *)p = ~expbits(ch | (ch >> 1));
+		data = *kf++;
+		*(uint16_t *)p = ~expbits(data | (data >> 1));
 		p += ROWBYTES;
 		for (fh++; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
-			ch = *kf++;
-			*(u_short *)p = ~(ch | (ch >> 1));
+			data = *kf++;
+			*(uint16_t *)p = ~(data | (data >> 1));
 		}
 		return;
 	}
 
 	/* singlebyte character */
-	if (*ip->GL == CSET_JISKANA)
-		ch |= 0x80;
-	f = tv_font[ch];
+	f = tv_getfont(*ip->GL, ch);
 
 	/* draw plane */
 	for (fh = 0; fh < UNDERLINE; fh++, p += ROWBYTES) {
-		ch = *f++;
-		*p = ~(ch | (ch >> 1));
+		data = *f++;
+		*p = ~(data | (data >> 1));
 	}
-	ch = *f++;
-	*p = ~expbits(ch | (ch >> 1));
+	data = *f++;
+	*p = ~expbits(data | (data >> 1));
 	p += ROWBYTES;
 	for (fh++; fh < FONTHEIGHT; fh++, p += ROWBYTES) {
-		ch = *f++;
-		ch |= ch >> 1;
-		*p = ~(ch | (ch >> 1));
+		data = *f++;
+		data |= data >> 1;
+		*p = ~(data | (data >> 1));
 	}
 }
 
 /*
  * draw/erase/move cursor
  */
-void
+static void
 tv_cursor(struct ite_softc *ip, int flag)
 {
-	u_char *p;
+	uint8_t *p;
 	short fh;
 
 	/* erase */
@@ -626,10 +641,10 @@ tv_cursor(struct ite_softc *ip, int flag)
 /*
  * clear rectangle
  */
-void
+static void
 tv_clear(struct ite_softc *ip, int y, int x, int height, int width)
 {
-	char *p;
+	uint8_t *p;
 	short fh;
 
 	/* XXX: reset scroll register on clearing whole screen */
@@ -651,7 +666,7 @@ tv_clear(struct ite_softc *ip, int y, int x, int height, int width)
 /*
  * scroll lines/columns
  */
-void
+static void
 tv_scroll(struct ite_softc *ip, int srcy, int srcx, int count, int dir)
 {
 	int dst, siz, pl;
@@ -698,8 +713,8 @@ tv_scroll(struct ite_softc *ip, int srcy, int srcx, int count, int dir)
 	case SCROLL_LEFT:
 		for (pl = 0; pl < PLANESIZE * 4; pl += PLANESIZE) {
 			short fh;
-			char *src = CHADDR(srcy, srcx) + pl;
-			char *dest = CHADDR(srcy, srcx - count) + pl;
+			uint8_t *src = CHADDR(srcy, srcx) + pl;
+			uint8_t *dest = CHADDR(srcy, srcx - count) + pl;
 
 			siz = ip->cols - srcx;
 			for (fh = 0; fh < FONTHEIGHT; fh++) {
@@ -713,8 +728,8 @@ tv_scroll(struct ite_softc *ip, int srcy, int srcx, int count, int dir)
 	case SCROLL_RIGHT:
 		for (pl = 0; pl < PLANESIZE * 4; pl += PLANESIZE) {
 			short fh;
-			char *src = CHADDR(srcy, srcx) + pl;
-			char *dest = CHADDR(srcy, srcx + count) + pl;
+			uint8_t *src = CHADDR(srcy, srcx) + pl;
+			uint8_t *dest = CHADDR(srcy, srcx + count) + pl;
 
 			siz = ip->cols - (srcx + count);
 			for (fh = 0; fh < FONTHEIGHT; fh++) {

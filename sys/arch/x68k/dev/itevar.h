@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.15 2012/10/10 17:49:50 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.16 2022/06/25 03:18:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -223,6 +223,7 @@ enum tab_size { TABSIZE = 8 };
 #define CSET_JIS1978	(3|CSET_MULTI) /* iso2022jp old jis kanji */
 #define CSET_JIS1983	(4|CSET_MULTI) /* iso2022jp new jis kanji */
 #define CSET_JIS1990	(5|CSET_MULTI) /* iso2022jp hojo kanji */
+#define CSET_DECGRAPH	6 /* DEC special graphics characters */
 
 struct consdev;
 
@@ -235,7 +236,6 @@ void	itecnfinish(struct ite_softc *);
 
 /* standard ite device entry points. */
 void	iteinit(dev_t);
-void	itestart(struct tty *);
 
 /* ite functions */
 int	iteon(dev_t, int);
@@ -256,4 +256,7 @@ extern unsigned char kern_font[];
 extern unsigned char kbdled;
 void ite_set_glyph(void);
 void kbd_setLED(void);
+
+/* DEC special graphics character to ASCII table for box drawing etc. */
+extern const uint8_t ite_decgraph2ascii[];
 #endif
