@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.81 2022/05/28 10:36:22 andvar Exp $	*/
+/*	$NetBSD: ite.c,v 1.82 2022/06/25 03:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.81 2022/05/28 10:36:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2022/06/25 03:33:29 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -736,6 +736,12 @@ ite_reset(struct ite_softc *sc)
 	sc->keypad_appmode = 0;
 	sc->imode = 0;
 	sc->key_repeat = 1;
+	sc->G0 = CSET_ASCII;
+	sc->G1 = CSET_DECGRAPH;
+	sc->G2 = 0;
+	sc->G3 = 0;
+	sc->GL = &sc->G0;
+	sc->GR = &sc->G1;
 	memset(sc->tabs, 0, sc->cols);
 	for (i = 0; i < sc->cols; i++)
 		sc->tabs[i] = ((i & 7) == 0);
@@ -1247,6 +1253,14 @@ ite_lf (struct ite_softc *sc)
     }
   SUBR_CURSOR(sc, MOVE_CURSOR);
   clr_attr(sc, ATTR_INV);
+
+  /* reset character set */
+  sc->G0 = CSET_ASCII;
+  sc->G1 = CSET_DECGRAPH;
+  sc->G2 = 0;
+  sc->G3 = 0;
+  sc->GL = &sc->G0;
+  sc->GR = &sc->G1;
 }
 
 static inline void
@@ -1446,7 +1460,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		  case 'B':	/* ASCII */
 		  case 'A':	/* ISO latin 1 */
 		  case '<':	/* user preferred suplemental */
-		  case '0':	/* dec special graphics */
+		  case '0':	/* DEC special graphics */
 		  
 		  /* 96-character sets: */
 		  case '-':	/* G1 */
@@ -1471,27 +1485,32 @@ iteputchar(register int c, struct ite_softc *sc)
 		  
 		  /* locking shift modes (as you might guess, not yet supported..) */
 		  case '`':
-		    sc->GR = sc->G1;
+		    sc->GR = &sc->G1;
 		    sc->escape = 0;
 		    return;
 		    
 		  case 'n':
-		    sc->GL = sc->G2;
+		    sc->GL = &sc->G2;
 		    sc->escape = 0;
 		    return;
 		    
 		  case '}':
-		    sc->GR = sc->G2;
+		    sc->GR = &sc->G2;
 		    sc->escape = 0;
 		    return;
 		    
 		  case 'o':
-		    sc->GL = sc->G3;
+		    sc->GL = &sc->G3;
 		    sc->escape = 0;
 		    return;
 		    
 		  case '|':
-		    sc->GR = sc->G3;
+		    sc->GR = &sc->G3;
+		    sc->escape = 0;
+		    return;
+
+		  case '~':
+		    sc->GR = &sc->G1;
 		    sc->escape = 0;
 		    return;
 		    
@@ -1511,16 +1530,30 @@ iteputchar(register int c, struct ite_softc *sc)
 
 
 		  case '7':
+		    /* save cursor */
 		    sc->save_curx = sc->curx;
 		    sc->save_cury = sc->cury;
 		    sc->save_attribute = sc->attribute;
+		    sc->sc_G0 = sc->G0;
+		    sc->sc_G1 = sc->G1;
+		    sc->sc_G2 = sc->G2;
+		    sc->sc_G3 = sc->G3;
+		    sc->sc_GL = sc->GL;
+		    sc->sc_GR = sc->GR;
 		    sc->escape = 0;
 		    return;
 		    
 		  case '8':
+		    /* restore cursor */
 		    sc->curx = sc->save_curx;
 		    sc->cury = sc->save_cury;
 		    sc->attribute = sc->save_attribute;
+		    sc->G0 = sc->sc_G0;
+		    sc->G1 = sc->sc_G1;
+		    sc->G2 = sc->sc_G2;
+		    sc->G3 = sc->sc_G3;
+		    sc->GL = sc->sc_GL;
+		    sc->GR = sc->sc_GR;
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    sc->escape = 0;
 		    return;
@@ -1551,8 +1584,22 @@ iteputchar(register int c, struct ite_softc *sc)
 		break;
 
 
-	      case '(':
-	      case ')':
+	      case '(': /* designated G0 */
+		switch (c) {
+		case 'B': /* US-ASCII */
+		  sc->G0 = CSET_ASCII;
+		  sc->escape = 0;
+		  return;
+		case '0': /* DEC special graphics */
+		  sc->G0 = CSET_DECGRAPH;
+		  sc->escape = 0;
+		  return;
+		default:
+		  /* not supported */
+		  sc->escape = 0;
+		  return;
+		}
+	      case ')': /* designated G1 */
 		sc->escape = 0;
 		return;
 
@@ -2165,11 +2212,11 @@ iteputchar(register int c, struct ite_softc *sc)
 		break;
 
 	case SO:
-		sc->GL = sc->G1;
+		sc->GL = &sc->G1;
 		break;
 		
 	case SI:
-		sc->GL = sc->G0;
+		sc->GL = &sc->G0;
 		break;
 
 	case ENQ:

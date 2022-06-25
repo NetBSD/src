@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.14 2011/06/05 16:25:12 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.15 2022/06/25 03:33:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -72,12 +72,18 @@ struct ite_softc {
 	u_char			escape;
 	u_char			cursor_opt;
 	u_char			key_repeat;
-	char			GL;
-	char			GR;
 	char			G0;
 	char			G1;
 	char			G2;
 	char			G3;
+	char			*GL;
+	char			*GR;
+	char			sc_G0;
+	char			sc_G1;
+	char			sc_G2;
+	char			sc_G3;
+	char			*sc_GL;
+	char			*sc_GR;
 	char			linefeed_newline;
 	char			auto_wrap;
 	char			cursor_appmode;
@@ -172,6 +178,10 @@ enum tab_size { TABSIZE = 8 };
 #define attrset(ip, attr)
 
 #ifdef _KERNEL
+
+/* character set */
+#define CSET_ASCII	0	/* US-ASCII */
+#define CSET_DECGRAPH	1	/* DEC special graphics characters */
 
 extern int ite_default_x;
 extern int ite_default_y;
