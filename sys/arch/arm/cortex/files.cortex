@@ -1,4 +1,4 @@
-# $NetBSD: files.cortex,v 1.16 2021/08/10 17:12:31 jmcneill Exp $
+# $NetBSD: files.cortex,v 1.17 2022/06/25 13:24:34 jmcneill Exp $
 
 defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
 
@@ -10,9 +10,6 @@ define	mpcorebus {}
 device	armperiph: mpcorebus
 attach	armperiph at mainbus
 file	arch/arm/cortex/armperiph.c		armperiph
-
-defflag	opt_gic.h				GIC_SPLFUNCS
-file	arch/arm/cortex/gic_splfuncs.c		gic_splfuncs
 
 # ARM Generic Interrupt Controller (initially on Cortex-A9)
 device	armgic: pic, pic_splfuncs

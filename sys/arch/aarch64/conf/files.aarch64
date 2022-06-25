@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.37 2022/01/31 09:16:09 ryo Exp $
+#	$NetBSD: files.aarch64,v 1.38 2022/06/25 13:24:34 jmcneill Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -119,9 +119,6 @@ file	arch/aarch64/aarch64/pmapboot.c
 file	arch/aarch64/aarch64/pmap_page.S
 file	uvm/pmap/pmap_tlb.c
 file	uvm/pmap/pmap_pvt.c
-
-# GIC
-file	arch/arm/cortex/gic_splfuncs_armv8.S		gic_splfuncs
 
 # EFI runtime (machdep)
 file	arch/aarch64/aarch64/efi_machdep.c		efi_runtime

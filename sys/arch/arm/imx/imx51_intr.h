@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_intr.h,v 1.2 2021/09/24 08:07:40 skrll Exp $	*/
+/*	$NetBSD: imx51_intr.h,v 1.3 2022/06/25 13:24:35 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2009 SHIMIZU Ryo <ryo@nerv.org>
  * All rights reserved.
@@ -289,10 +289,6 @@
 
 #define	PIC_MAXSOURCES		128
 #define	PIC_MAXMAXSOURCES	(PIC_MAXSOURCES+128)
-
-#define	_splraise	pic_splraise
-#define	_spllower	pic_spllower
-#define	splx		pic_splx
 
 #include <arm/pic/picvar.h>
 
