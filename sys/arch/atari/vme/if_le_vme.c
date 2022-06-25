@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.31 2011/07/01 20:34:06 dyoung Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.32 2022/06/25 22:31:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.31 2011/07/01 20:34:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.32 2022/06/25 22:31:09 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -111,8 +111,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.31 2011/07/01 20:34:06 dyoung Exp $"
 #include <atari/vme/if_levar.h>
 
 /*
- * All cards except BVME410 have 64KB RAM. However.... On the Riebl cards the
- * area between the offsets 0xee70-0xeec0 is used to store config data.
+ * All cards except BVME410 have 64KB RAM. However,
+ *  - On the Riebl cards the area between the offsets 0xee70-0xeec0 is used
+ *    to store config data.
+ *  - On PAM and ROTHRON, mem_addr cannot be mapped if reg_addr is already
+ *    mapped because they are overwrapped. Just use 32KB as Linux does.
  */
 struct le_addresses {
 	u_long	reg_addr;
@@ -124,9 +127,9 @@ struct le_addresses {
 } lestd[] = {
 	{ 0xfe00fff0, 0xfe010000, IRQUNK, 16, 64*1024,
 				LE_OLD_RIEBL|LE_NEW_RIEBL }, /* Riebl	*/
-	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024,
+	{ 0xfecffff0, 0xfecf0000,      5, 16, 32*1024,
 				LE_PAM },		     /* PAM	*/
-	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024,
+	{ 0xfecffff0, 0xfecf0000,      5, 16, 32*1024,
 				LE_ROTHRON },		     /* Rhotron	*/
 	{ 0xfeff4100, 0xfe000000,      4,  8, VMECF_MEMSIZ_DEFAULT,
 				LE_BVME410 }		     /* BVME410 */
