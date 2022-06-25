@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.171 2022/05/24 20:50:19 andvar Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.172 2022/06/25 02:46:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.171 2022/05/24 20:50:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.172 2022/06/25 02:46:15 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1530,7 +1530,7 @@ re_intr(void *arg)
 {
 	struct rtk_softc *sc = arg;
 	struct ifnet *ifp;
-	uint16_t status;
+	uint16_t status, rndstatus = 0;
 	int handled = 0;
 
 	if (!device_has_power(sc->sc_dev))
@@ -1550,9 +1550,10 @@ re_intr(void *arg)
 		/* If the card has gone away the read returns 0xffff. */
 		if (status == 0xffff)
 			break;
-		if (status) {
+		if (status != 0) {
 			handled = 1;
 			CSR_WRITE_2(sc, RTK_ISR, status);
+			rndstatus = status;
 		}
 
 		if ((status & status_mask) == 0)
@@ -1578,7 +1579,7 @@ re_intr(void *arg)
 	if (handled)
 		if_schedule_deferred_start(ifp);
 
-	rnd_add_uint32(&sc->rnd_source, status);
+	rnd_add_uint32(&sc->rnd_source, rndstatus);
 
 	return handled;
 }

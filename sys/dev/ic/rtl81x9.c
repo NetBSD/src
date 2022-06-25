@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.111 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.112 2022/06/25 02:46:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.111 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.112 2022/06/25 02:46:15 tsutsui Exp $");
 
 
 #include <sys/param.h>
@@ -1166,7 +1166,7 @@ rtk_intr(void *arg)
 {
 	struct rtk_softc *sc;
 	struct ifnet *ifp;
-	uint16_t status;
+	uint16_t status, rndstatus = 0;
 	int handled;
 
 	sc = arg;
@@ -1186,8 +1186,10 @@ rtk_intr(void *arg)
 		if (status == 0xffff)
 			break; /* Card is gone... */
 
-		if (status)
+		if (status) {
 			CSR_WRITE_2(sc, RTK_ISR, status);
+			rndstatus = status;
+		}
 
 		if ((status & RTK_INTRS) == 0)
 			break;
@@ -1214,7 +1216,7 @@ rtk_intr(void *arg)
 
 	if_schedule_deferred_start(ifp);
 
-	rnd_add_uint32(&sc->rnd_source, status);
+	rnd_add_uint32(&sc->rnd_source, rndstatus);
 
 	return handled;
 }
