@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.50 2022/06/25 14:27:43 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.51 2022/06/25 14:39:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.50 2022/06/25 14:27:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.51 2022/06/25 14:39:19 tsutsui Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -69,6 +69,31 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.50 2022/06/25 14:27:43 tsutsui Exp $");
 #include <dev/wscons/wsksymvar.h>
 #include <atari/dev/wskbdmap_atari.h>
 #endif
+
+/*
+ * The ringbuffer is the interface between the hard and soft interrupt handler.
+ * The hard interrupt runs straight from the MFP interrupt.
+ */
+#define KBD_RING_SIZE	256   /* Sz of input ring buffer, must be power of 2 */
+#define KBD_RING_MASK	255   /* Modulo mask for above			     */
+
+struct kbd_softc {
+	int		k_event_mode;	/* if 1, collect events,	*/
+					/*   else pass to ite		*/
+	struct evvar	k_events;	/* event queue state		*/
+	uint8_t		k_soft_cs;	/* control-reg. copy		*/
+	uint8_t		k_package[20];	/* XXX package being build	*/
+	uint8_t		k_pkg_size;	/* Size of the package		*/
+	uint8_t		k_pkg_idx;	/* Running pkg assembly index	*/
+	uint8_t		k_pkg_type;	/* Type of package		*/
+	const uint8_t	*k_sendp;	/* Output pointer		*/
+	int		k_send_cnt;	/* Chars left for output	*/
+#if NWSKBD > 0
+	device_t	k_wskbddev;   /* pointer to wskbd for sending strokes */
+	int		k_pollingmode;	/* polling mode on? whatever it is... */
+#endif
+	void		*k_sicookie;	/* softint(9) cookie		*/
+};
 
 /* WSKBD */
 /*
@@ -112,9 +137,6 @@ static dev_type_read(kbdread);
 static dev_type_ioctl(kbdioctl);
 static dev_type_poll(kbdpoll);
 static dev_type_kqfilter(kbdkqfilter);
-
-/* Interrupt handler */
-void	kbdintr(int);
 
 static void kbdsoft(void *);
 static void kbdattach(device_t, device_t, void *);
