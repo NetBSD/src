@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2020/01/22 15:10:32 mgorny Exp $
+# $NetBSD: Makefile,v 1.10 2022/06/25 06:51:37 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,10 @@ SRCS+=unwind_arm_ehabi_stub.c
 .endif
 .else
 SRCS+=builtin.c
+.endif
+
+.if exists(${.CURDIR}/symbol_${LIBEXECINFO_MACHINE_ARCH}.c)
+SRCS+=symbol_${LIBEXECINFO_MACHINE_ARCH}.c
 .endif
 
 MLINKS+= backtrace.3 backtrace_symbols.3
