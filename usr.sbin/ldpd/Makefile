@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2021/02/23 15:05:08 joerg Exp $
+# $NetBSD: Makefile,v 1.8 2022/06/26 17:55:38 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -25,8 +25,5 @@ LDADD+=	-lcrypt
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
-
-CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
-CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

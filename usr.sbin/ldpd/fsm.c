@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.15 2014/03/18 18:20:47 riastradh Exp $ */
+/* $NetBSD: fsm.c,v 1.16 2022/06/26 17:55:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ run_ldp_hello(const struct ldp_pdu * pduid, const struct hello_tlv * ht,
 	const struct transport_address_tlv *trtlv;
 	struct hello_info *hi = NULL;
 	union sockunion traddr;
+	struct in_addr ldp_id;
 
 	if ((!pduid) || (!ht))
 		return;
@@ -125,7 +126,8 @@ run_ldp_hello(const struct ldp_pdu * pduid, const struct hello_tlv * ht,
 			hi->keepalive = LDP_THELLO_KEEP;
 	}
 
-	if (!get_ldp_peer_by_id(&pduid->ldp_id)) {
+	ldp_id = pduid->ldp_id;
+	if (!get_ldp_peer_by_id(&ldp_id)) {
 		/*
 		 * RFC 5036 2.5.2: If A1 > A2, LSR1 plays the active role;
 		 * otherwise it is passive.
@@ -134,7 +136,7 @@ run_ldp_hello(const struct ldp_pdu * pduid, const struct hello_tlv * ht,
 		    (hi->transport_address.sa.sa_family == AF_INET &&
 		    ntohl(hi->transport_address.sin.sin_addr.s_addr) <
 		    ntohl(ladd->s_addr))) {
-			peer = ldp_peer_new(&pduid->ldp_id, padd,
+			peer = ldp_peer_new(&ldp_id, padd,
 				&hi->transport_address.sa,
 				ntohs(ht->ch.holdtime), 0);
 			if (peer == NULL)
@@ -151,7 +153,7 @@ build_address_list_tlv(void)
 	struct address_list_tlv *t;
 	struct ifaddrs *ifa, *ifb;
 	struct sockaddr_in *sa;
-	struct in_addr *ia;
+	char *ia;
 	uint16_t       adrcount = 0;
 
 	if (getifaddrs(&ifa) == -1)
@@ -184,7 +186,7 @@ build_address_list_tlv(void)
 	    adrcount * sizeof(struct in_addr));
 	t->a_af = htons(LDP_AF_INET);
 
-	ia = &t->a_address;
+	ia = (void *)&t->a_address;
 	for (adrcount = 0, ifb = ifa; ifb; ifb = ifb->ifa_next) {
 		if ((ifb->ifa_addr->sa_family != AF_INET) ||
 		    (!(ifb->ifa_flags & IFF_UP)))
@@ -192,7 +194,8 @@ build_address_list_tlv(void)
 		sa = (struct sockaddr_in *) ifb->ifa_addr;
 		if (ntohl(sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET)
 			continue;
-		memcpy(&ia[adrcount], &sa->sin_addr, sizeof(struct in_addr));
+		memcpy(ia + adrcount*sizeof(struct in_addr), &sa->sin_addr,
+		    sizeof(struct in_addr));
 		adrcount++;
 	}
 	freeifaddrs(ifa);
