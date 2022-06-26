@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.28 2022/06/25 13:24:34 jmcneill Exp $	*/
+/*	$NetBSD: vectors.S,v 1.29 2022/06/26 11:14:36 jmcneill Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
@@ -9,9 +9,8 @@
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
-#include "opt_gic.h"
 
-RCSID("$NetBSD: vectors.S,v 1.28 2022/06/25 13:24:34 jmcneill Exp $")
+RCSID("$NetBSD: vectors.S,v 1.29 2022/06/26 11:14:36 jmcneill Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
