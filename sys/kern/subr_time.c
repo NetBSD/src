@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.32 2022/03/13 17:52:45 riastradh Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.33 2022/06/26 22:31:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.32 2022/03/13 17:52:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.33 2022/06/26 22:31:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -363,4 +363,222 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 	KASSERT(*timo > 0);
 
 	return 0;
+}
+
+bool
+timespecaddok(const struct timespec *tsp, const struct timespec *usp)
+{
+	enum { TIME_MIN = __type_min(time_t), TIME_MAX = __type_max(time_t) };
+	time_t a = tsp->tv_sec;
+	time_t b = usp->tv_sec;
+	bool carry;
+
+	/*
+	 * Caller is responsible for guaranteeing valid timespec
+	 * inputs.  Any user-controlled inputs must be validated or
+	 * adjusted.
+	 */
+	KASSERT(tsp->tv_nsec >= 0);
+	KASSERT(usp->tv_nsec >= 0);
+	KASSERT(tsp->tv_nsec < 1000000000L);
+	KASSERT(usp->tv_nsec < 1000000000L);
+	CTASSERT(1000000000L <= __type_max(long) - 1000000000L);
+
+	/*
+	 * Fail if a + b + carry overflows TIME_MAX, or if a + b
+	 * overflows TIME_MIN because timespecadd adds the carry after
+	 * computing a + b.
+	 *
+	 * Break it into two mutually exclusive and exhaustive cases:
+	 * I. a >= 0
+	 * II. a < 0
+	 */
+	carry = (tsp->tv_nsec + usp->tv_nsec >= 1000000000L);
+	if (a >= 0) {
+		/*
+		 * Case I: a >= 0.  If b < 0, then b + 1 <= 0, so
+		 *
+		 *	a + b + 1 <= a + 0 <= TIME_MAX,
+		 *
+		 * and
+		 *
+		 *	a + b >= 0 + b = b >= TIME_MIN,
+		 *
+		 * so this can't overflow.
+		 *
+		 * If b >= 0, then a + b + carry >= a + b >= 0, so
+		 * negative results and thus results below TIME_MIN are
+		 * impossible; we need only avoid
+		 *
+		 *	a + b + carry > TIME_MAX,
+		 *
+		 * which we will do by rejecting if
+		 *
+		 *	b > TIME_MAX - a - carry,
+		 *
+		 * which in turn is incidentally always false if b < 0
+		 * so we don't need extra logic to discriminate on the
+		 * b >= 0 and b < 0 cases.
+		 *
+		 * Since 0 <= a <= TIME_MAX, we know
+		 *
+		 *	0 <= TIME_MAX - a <= TIME_MAX,
+		 *
+		 * and hence
+		 *
+		 *	-1 <= TIME_MAX - a - 1 < TIME_MAX.
+		 *
+		 * So we can compute TIME_MAX - a - carry (i.e., either
+		 * TIME_MAX - a or TIME_MAX - a - 1) safely without
+		 * overflow.
+		 */
+		if (b > TIME_MAX - a - carry)
+			return false;
+	} else {
+		/*
+		 * Case II: a < 0.  If b >= 0, then since a + 1 <= 0,
+		 * we have
+		 *
+		 *	a + b + 1 <= b <= TIME_MAX,
+		 *
+		 * and
+		 *
+		 *	a + b >= a >= TIME_MIN,
+		 *
+		 * so this can't overflow.
+		 *
+		 * If b < 0, then the intermediate a + b is negative
+		 * and the outcome a + b + 1 is nonpositive, so we need
+		 * only avoid
+		 *
+		 *	a + b < TIME_MIN,
+		 *
+		 * which we will do by rejecting if
+		 *
+		 *	a < TIME_MIN - b.
+		 *
+		 * (Reminder: The carry is added afterward in
+		 * timespecadd, so to avoid overflow it is not enough
+		 * to merely reject a + b + carry < TIME_MIN.)
+		 *
+		 * It is safe to compute the difference TIME_MIN - b
+		 * because b is negative, so the result lies in
+		 * (TIME_MIN, 0].
+		 */
+		if (b < 0 && a < TIME_MIN - b)
+			return false;
+	}
+
+	return true;
+}
+
+bool
+timespecsubok(const struct timespec *tsp, const struct timespec *usp)
+{
+	enum { TIME_MIN = __type_min(time_t), TIME_MAX = __type_max(time_t) };
+	time_t a = tsp->tv_sec, b = usp->tv_sec;
+	bool borrow;
+
+	/*
+	 * Caller is responsible for guaranteeing valid timespec
+	 * inputs.  Any user-controlled inputs must be validated or
+	 * adjusted.
+	 */
+	KASSERT(tsp->tv_nsec >= 0);
+	KASSERT(usp->tv_nsec >= 0);
+	KASSERT(tsp->tv_nsec < 1000000000L);
+	KASSERT(usp->tv_nsec < 1000000000L);
+	CTASSERT(1000000000L <= __type_max(long) - 1000000000L);
+
+	/*
+	 * Fail if a - b - borrow overflows TIME_MIN, or if a - b
+	 * overflows TIME_MAX because timespecsub subtracts the borrow
+	 * after computing a - b.
+	 *
+	 * Break it into two mutually exclusive and exhaustive cases:
+	 * I. a < 0
+	 * II. a >= 0
+	 */
+	borrow = (tsp->tv_nsec - usp->tv_nsec < 0);
+	if (a < 0) {
+		/*
+		 * Case I: a < 0.  If b < 0, then -b - 1 >= 0, so
+		 *
+		 *	a - b - 1 >= a + 0 >= TIME_MIN,
+		 *
+		 * and, since a <= -1, provided that TIME_MIN <=
+		 * -TIME_MAX - 1 so that TIME_MAX <= -TIME_MIN - 1 (in
+		 * fact, equality holds, under the assumption of
+		 * two's-complement arithmetic),
+		 *
+		 *	a - b <= -1 - b = -b - 1 <= TIME_MAX,
+		 *
+		 * so this can't overflow.
+		 */
+		CTASSERT(TIME_MIN <= -TIME_MAX - 1);
+
+		/*
+		 * If b >= 0, then a - b - borrow <= a - b < 0, so
+		 * positive results and thus results above TIME_MAX are
+		 * impossible; we need only avoid
+		 *
+		 *	a - b - borrow < TIME_MIN,
+		 *
+		 * which we will do by rejecting if
+		 *
+		 *	a < TIME_MIN + b + borrow.
+		 *
+		 * The right-hand side is safe to evaluate for any
+		 * values of b and borrow as long as TIME_MIN +
+		 * TIME_MAX + 1 <= TIME_MAX, i.e., TIME_MIN <= -1.
+		 * (Note: If time_t were unsigned, this would fail!)
+		 *
+		 * Note: Unlike Case I in timespecaddok, this criterion
+		 * does not work for b < 0, nor can the roles of a and
+		 * b in the inequality be reversed (e.g., -b < TIME_MIN
+		 * - a + borrow) without extra cases like checking for
+		 * b = TEST_MIN.
+		 */
+		CTASSERT(TIME_MIN < -1);
+		if (b >= 0 && a < TIME_MIN + b + borrow)
+			return false;
+	} else {
+		/*
+		 * Case II: a >= 0.  If b >= 0, then
+		 *
+		 *	a - b <= a <= TIME_MAX,
+		 *
+		 * and, provided TIME_MIN <= -TIME_MAX - 1 (in fact,
+		 * equality holds, under the assumption of
+		 * two's-complement arithmetic)
+		 *
+		 *	a - b - 1 >= -b - 1 >= -TIME_MAX - 1 >= TIME_MIN,
+		 *
+		 * so this can't overflow.
+		 */
+		CTASSERT(TIME_MIN <= -TIME_MAX - 1);
+
+		/*
+		 * If b < 0, then a - b >= a >= 0, so negative results
+		 * and thus results below TIME_MIN are impossible; we
+		 * need only avoid
+		 *
+		 *	a - b > TIME_MAX,
+		 *
+		 * which we will do by rejecting if
+		 *
+		 *	a > TIME_MAX + b.
+		 *
+		 * (Reminder: The borrow is subtracted afterward in
+		 * timespecsub, so to avoid overflow it is not enough
+		 * to merely reject a - b - borrow > TIME_MAX.)
+		 *
+		 * It is safe to compute the sum TIME_MAX + b because b
+		 * is negative, so the result lies in [0, TIME_MAX).
+		 */
+		if (b < 0 && a > TIME_MAX + b)
+			return false;
+	}
+
+	return true;
 }

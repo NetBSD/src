@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.79 2017/01/17 15:28:34 maya Exp $	*/
+/*	$NetBSD: time.h,v 1.80 2022/06/26 22:31:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -265,6 +265,12 @@ ns2bintime(uint64_t ns)
 		}							\
 	} while (/* CONSTCOND */ 0)
 #define timespec2ns(x) (((uint64_t)(x)->tv_sec) * 1000000000L + (x)->tv_nsec)
+
+#ifdef _KERNEL
+bool timespecaddok(const struct timespec *, const struct timespec *) __pure;
+bool timespecsubok(const struct timespec *, const struct timespec *) __pure;
+#endif
+
 #endif /* _NETBSD_SOURCE */
 
 /*
