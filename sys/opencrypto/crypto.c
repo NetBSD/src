@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.130 2022/05/22 11:40:54 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.131 2022/06/26 22:52:30 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.130 2022/05/22 11:40:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.131 2022/06/26 22:52:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1485,6 +1485,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 		return error;
 	} else {
 		krp->krp_status = ENODEV;
+		krp->reqcpu = curcpu();
 		crypto_kdone(krp);
 		return 0;
 	}
