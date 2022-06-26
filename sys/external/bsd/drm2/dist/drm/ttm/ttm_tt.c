@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.c,v 1.18 2021/12/19 12:29:16 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.c,v 1.19 2022/06/26 17:53:06 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.18 2021/12/19 12:29:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.19 2022/06/26 17:53:06 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -112,8 +112,11 @@ static int ttm_dma_tt_alloc_page_directory(struct ttm_dma_tt *ttm)
 
 	/* Create bus DMA map at ttm->dma_address.  */
 	r = ttm_sg_tt_alloc_page_directory(ttm);
-	if (r)
+	if (r) {
+		kvfree(ttm->ttm.pages);
+		ttm->ttm.pages = NULL;
 		return r;
+	}
 
 	/* Success!  */
 	return 0;
