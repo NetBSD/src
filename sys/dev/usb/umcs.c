@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.19 2022/04/19 01:35:28 riastradh Exp $ */
+/* $NetBSD: umcs.c,v 1.20 2022/06/26 21:35:53 riastradh Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.19 2022/04/19 01:35:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.20 2022/06/26 21:35:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,12 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	}
 	if (intr_addr < 0) {
 		aprint_error_dev(self, "interrupt pipe not found\n");
+		sc->sc_dying = true;
+		return;
+	}
+	if (sc->sc_intr_buflen == 0) {
+		aprint_error_dev(self, "invalid interrupt endpoint"
+		    " (addr %d)\n", intr_addr);
 		sc->sc_dying = true;
 		return;
 	}
