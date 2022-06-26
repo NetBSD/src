@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2022/06/24 22:28:11 tsutsui Exp $ */
+/*	$NetBSD: md.c,v 1.9 2022/06/26 09:14:14 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,7 +112,7 @@ md_disklabel_is_default(const struct disklabel *lp)
 	    lp->d_npartitions == RAW_PART + 1 &&
 	    lp->d_partitions[RAW_PART].p_size == 0x1fffffff &&
 	    lp->d_partitions[0].p_size == lp->d_partitions[RAW_PART].p_size &&
-	    lp->d_partitions[0].p_offset == 0;
+	    lp->d_partitions[0].p_offset == 0 &&
 	    lp->d_partitions[0].p_fstype == FS_BSDFFS;
 
 	return maybe_default;
