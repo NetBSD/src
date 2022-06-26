@@ -1,4 +1,4 @@
-/* $NetBSD: emdtvvar.h,v 1.4 2016/04/23 10:15:31 skrll Exp $ */
+/* $NetBSD: emdtvvar.h,v 1.5 2022/06/26 22:49:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -69,6 +69,8 @@ struct emdtv_softc {
 	device_t		sc_dtvdev;
 
 	uint16_t		sc_vendor, sc_product;
+
+	bool			sc_subdevs_attached;
 
 	const struct emdtv_board *sc_board;
 
