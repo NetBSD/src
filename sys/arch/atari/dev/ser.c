@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.56 2014/11/15 19:20:01 christos Exp $	*/
+/*	$NetBSD: ser.c,v 1.57 2022/06/26 06:25:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.56 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.57 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -249,14 +249,14 @@ static void serattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ser, sizeof(struct ser_softc),
     sermatch, serattach, NULL, NULL);
 
-dev_type_open(seropen);
-dev_type_close(serclose);
-dev_type_read(serread);
-dev_type_write(serwrite);
-dev_type_ioctl(serioctl);
-dev_type_stop(serstop);
-dev_type_tty(sertty);
-dev_type_poll(serpoll);
+static dev_type_open(seropen);
+static dev_type_close(serclose);
+static dev_type_read(serread);
+static dev_type_write(serwrite);
+static dev_type_ioctl(serioctl);
+static dev_type_stop(serstop);
+static dev_type_tty(sertty);
+static dev_type_poll(serpoll);
 
 const struct cdevsw ser_cdevsw = {
 	.d_open = seropen,
@@ -371,7 +371,7 @@ serstatus(struct ser_softc *sc, char *str)
 }
 #endif /* SER_DEBUG */
 
-int
+static int
 seropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SERUNIT(dev);
@@ -489,7 +489,7 @@ bad:
 	return error;
 }
  
-int
+static int
 serclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SERUNIT(dev);
@@ -515,7 +515,7 @@ serclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 serread(dev_t dev, struct uio *uio, int flag)
 {
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
@@ -524,7 +524,7 @@ serread(dev_t dev, struct uio *uio, int flag)
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
  
-int
+static int
 serwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
@@ -533,7 +533,7 @@ serwrite(dev_t dev, struct uio *uio, int flag)
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
-int
+static int
 serpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
@@ -542,7 +542,7 @@ serpoll(dev_t dev, int events, struct lwp *l)
 	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
-struct tty *
+static struct tty *
 sertty(dev_t dev)
 {
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
@@ -551,7 +551,7 @@ sertty(dev_t dev)
 	return tp;
 }
 
-int
+static int
 serioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = SERUNIT(dev);
@@ -989,7 +989,7 @@ out:
 /*
  * Stop output on a line.
  */
-void
+static void
 serstop(struct tty *tp, int flag)
 {
 	struct ser_softc *sc =

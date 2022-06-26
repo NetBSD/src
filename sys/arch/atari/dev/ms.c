@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.27 2022/06/26 06:02:28 tsutsui Exp $	*/
+/*	$NetBSD: ms.c,v 1.28 2022/06/26 06:25:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.27 2022/06/26 06:02:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.28 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -83,12 +83,12 @@ typedef void (*FPV)(void *);
 
 static struct ms_softc ms_softc[NMOUSE];
 
-dev_type_open(msopen);
-dev_type_close(msclose);
-dev_type_read(msread);
-dev_type_ioctl(msioctl);
-dev_type_poll(mspoll);
-dev_type_kqfilter(mskqfilter);
+static dev_type_open(msopen);
+static dev_type_close(msclose);
+static dev_type_read(msread);
+static dev_type_ioctl(msioctl);
+static dev_type_poll(mspoll);
+static dev_type_kqfilter(mskqfilter);
 
 const struct cdevsw ms_cdevsw = {
 	.d_open = msopen,
@@ -319,7 +319,7 @@ mouse_soft(REL_MOUSE *rel_ms, int size, int type)
 	EV_WAKEUP(&ms->ms_events);
 }
 
-int
+static int
 msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	uint8_t report_ms_joy[] = { 0x14, 0x08 };
@@ -349,7 +349,7 @@ msopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	uint8_t disable_ms_joy[] = { 0x12, 0x1a };
@@ -368,7 +368,7 @@ msclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_softc *ms;
@@ -377,7 +377,7 @@ msread(dev_t dev, struct uio *uio, int flags)
 	return ev_read(&ms->ms_events, uio, flags);
 }
 
-int
+static int
 msioctl(dev_t dev, u_long cmd, register void * data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -418,7 +418,7 @@ msioctl(dev_t dev, u_long cmd, register void * data, int flag, struct lwp *l)
 	return ENOTTY;
 }
 
-int
+static int
 mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_softc *ms;
@@ -427,7 +427,7 @@ mspoll(dev_t dev, int events, struct lwp *l)
 	return ev_poll(&ms->ms_events, events, l);
 }
 
-int
+static int
 mskqfilter(dev_t dev, struct knote *kn)
 {
 	struct ms_softc *ms;

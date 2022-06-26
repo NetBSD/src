@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.82 2022/06/25 03:33:29 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.83 2022/06/26 06:25:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2022/06/25 03:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.83 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -152,13 +152,13 @@ dev_type_cnputc(itecnputc);
 CFATTACH_DECL_NEW(ite, sizeof(struct ite_softc),
     itematch, iteattach, NULL, NULL);
 
-dev_type_open(iteopen);
-dev_type_close(iteclose);
-dev_type_read(iteread);
-dev_type_write(itewrite);
-dev_type_ioctl(iteioctl);
-dev_type_tty(itetty);
-dev_type_poll(itepoll);
+static dev_type_open(iteopen);
+static dev_type_close(iteclose);
+static dev_type_read(iteread);
+static dev_type_write(itewrite);
+static dev_type_ioctl(iteioctl);
+static dev_type_tty(itetty);
+static dev_type_poll(itepoll);
 
 const struct cdevsw ite_cdevsw = {
 	.d_open = iteopen,
@@ -378,7 +378,7 @@ iteinit(dev_t dev)
 	sc->flags |= ITE_INITED;
 }
 
-int
+static int
 iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 {
 	struct ite_softc *sc;
@@ -449,7 +449,7 @@ bad:
 	return (error);
 }
 
-int
+static int
 iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
@@ -463,7 +463,7 @@ iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 iteread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
@@ -474,7 +474,7 @@ iteread(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_read) (tp, uio, flag));
 }
 
-int
+static int
 itewrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
@@ -485,7 +485,7 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 	return ((*tp->t_linesw->l_write) (tp, uio, flag));
 }
 
-int
+static int
 itepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp;
@@ -496,13 +496,13 @@ itepoll(dev_t dev, int events, struct lwp *l)
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
-struct tty *
+static struct tty *
 itetty(dev_t dev)
 {
 	return(getitesp(dev)->tp);
 }
 
-int
+static int
 iteioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct iterepeat	*irp;

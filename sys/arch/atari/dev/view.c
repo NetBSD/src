@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.36 2021/09/19 10:34:08 andvar Exp $	*/
+/*	$NetBSD: view.c,v 1.37 2022/06/26 06:25:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.36 2021/09/19 10:34:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.37 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,10 @@ int view_default_width  = 640;
 int view_default_height = 400;
 int view_default_depth  = 1;
 
-dev_type_open(viewopen);
-dev_type_close(viewclose);
-dev_type_ioctl(viewioctl);
-dev_type_mmap(viewmmap);
+static dev_type_open(viewopen);
+static dev_type_close(viewclose);
+static dev_type_ioctl(viewioctl);
+static dev_type_mmap(viewmmap);
 
 const struct cdevsw view_cdevsw = {
 	.d_open = viewopen,
@@ -302,7 +302,7 @@ view_set_colormap(struct view_softc *vu, colormap_t *ucm)
  */
 
 /*ARGSUSED*/
-int
+static int
 viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	dimen_t			size;
@@ -334,7 +334,7 @@ viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int
+static int
 viewclose (dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct view_softc *vu;
@@ -352,7 +352,7 @@ viewclose (dev_t dev, int flags, int mode, struct lwp *l)
 
 
 /*ARGSUSED*/
-int
+static int
 viewioctl (dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 	struct view_softc	*vu;
@@ -399,7 +399,7 @@ viewioctl (dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 }
 
 /*ARGSUSED*/
-paddr_t
+static paddr_t
 viewmmap(dev_t dev, off_t off, int prot)
 {
 	struct view_softc	*vu;

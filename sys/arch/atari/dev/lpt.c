@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.38 2018/09/03 16:29:24 riastradh Exp $ */
+/*	$NetBSD: lpt.c,v 1.39 2022/06/26 06:25:09 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.38 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.39 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +114,10 @@ struct lpt_softc {
 #define	NOT_READY()	(MFP->mf_gpip & IO_PBSY)
 
 /* {b,c}devsw[] function prototypes */
-dev_type_open(lpopen);
-dev_type_close(lpclose);
-dev_type_write(lpwrite);
-dev_type_ioctl(lpioctl);
+static dev_type_open(lpopen);
+static dev_type_close(lpclose);
+static dev_type_write(lpwrite);
+static dev_type_ioctl(lpioctl);
 
 static void lptwakeup (void *arg);
 static int pushbytes (struct lpt_softc *);
@@ -185,7 +185,7 @@ lpattach(device_t parent, device_t self, void *aux)
 /*
  * Reset the printer, then wait until it's selected and not busy.
  */
-int
+static int
 lpopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	u_char			flags = LPTFLAGS(dev);
@@ -256,7 +256,7 @@ lptwakeup(void *arg)
 /*
  * Close the device, and free the local line buffer.
  */
-int
+static int
 lpclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct lpt_softc *sc = device_lookup_private(&lp_cd, LPTUNIT(dev));
@@ -339,7 +339,7 @@ pushbytes(struct lpt_softc *sc)
  * Copy a line from user space to a local buffer, then call putc to get the
  * chars moved to the output queue.
  */
-int
+static int
 lpwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct lpt_softc *sc = device_lookup_private(&lp_cd,LPTUNIT(dev));
@@ -415,7 +415,7 @@ lpthwintr(void *arg)
 	return 1;
 }
 
-int
+static int
 lpioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error = 0;
