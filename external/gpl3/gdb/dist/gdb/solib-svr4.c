@@ -541,6 +541,40 @@ read_program_header (int type, int *p_arch_size, CORE_ADDR *base_addr)
   if (target_read_memory (sect_addr, buf.data (), sect_size))
     return {};
 
+#if defined(__NetBSD__) && defined(__m68k__)
+  /*
+   * XXX PR toolchain/56268
+   *
+   * For NetBSD/m68k, program header is erroneously readable from core dump,
+   * although a page containing it is missing. This spoils relocation for
+   * the main executable, and debugging with core dumps becomes impossible,
+   * as described in toolchain/56268.
+   *
+   * In order to avoid this failure, we carry out consistency check for
+   * program header; for NetBSD, 1st entry of program header refers program
+   * header itself. If this is not the case, we should be reading random
+   * garbage from core dump.
+   */
+  if (type == -1 && arch_size == 32)
+    {
+      Elf32_External_Phdr phdr;
+      int p_type, p_filesz, p_memsz;
+
+      if (target_read_memory (at_phdr, (gdb_byte *)&phdr, sizeof (phdr)))
+        return {};
+
+      p_type = extract_unsigned_integer ((gdb_byte *) phdr.p_type, 4,
+					 byte_order);
+      p_filesz = extract_unsigned_integer ((gdb_byte *)phdr.p_filesz, 4,
+					   byte_order);
+      p_memsz = extract_unsigned_integer ((gdb_byte *)phdr.p_memsz, 4,
+					  byte_order);
+
+      if (p_type != PT_PHDR || p_filesz != sect_size || p_memsz != sect_size)
+	return {};
+    }
+#endif
+
   if (p_arch_size)
     *p_arch_size = arch_size;
   if (base_addr)
