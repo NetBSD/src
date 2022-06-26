@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.90 2022/06/26 06:25:09 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.91 2022/06/26 18:46:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.90 2022/06/26 06:25:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.91 2022/06/26 18:46:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -436,10 +436,10 @@ fdcattach(device_t parent, device_t self, void *aux)
 		has_fifo = 1;
 	} else {
 		(void)rd_fdc_reg(fddata);
-		printf(": no fifo");
+		aprint_normal(": no fifo");
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	callout_init(&fdc->sc_timo_ch, 0);
 	callout_init(&fdc->sc_intr_ch, 0);
@@ -447,7 +447,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 	if (intr_establish(22, USER_VEC|FAST_VEC, 0,
 			   (hw_ifun_t)(has_fifo ? mfp_hdfd_fifo : mfp_hdfd_nf),
 			   NULL) == NULL) {
-		printf("fdcattach: Can't establish interrupt\n");
+		aprint_error_dev(self, "Can't establish interrupt\n");
 		return;
 	}
 
@@ -537,10 +537,10 @@ fdattach(device_t parent, device_t self, void *aux)
 	/* XXX Allow `flags' to override device type? */
 
 	if (type)
-		printf(": %s %d cyl, %d head, %d sec\n", type->name,
+		aprint_normal(": %s %d cyl, %d head, %d sec\n", type->name,
 		    type->tracks, type->heads, type->sectrac);
 	else
-		printf(": density unknown\n");
+		aprint_normal(": density unknown\n");
 
 	bufq_alloc(&fd->sc_q, "disksort", BUFQ_SORT_CYLINDER);
 	fd->sc_cylin      = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.83 2022/06/26 06:25:09 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.84 2022/06/26 18:46:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.83 2022/06/26 06:25:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.84 2022/06/26 18:46:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -230,15 +230,15 @@ iteattach(device_t parent, device_t self, void *aux)
 		splx(s);
 
 		iteinit(gsc->g_itedev);
-		printf(": %dx%d", sc->rows, sc->cols);
-		printf(" repeat at (%d/100)s next at (%d/100)s",
+		aprint_normal(": %dx%d", sc->rows, sc->cols);
+		aprint_normal(" repeat at (%d/100)s next at (%d/100)s",
 		    start_repeat_timeo, next_repeat_timeo);
 
 		if (kbd_ite == NULL)
 			kbd_ite = sc;
 		if (kbd_ite == sc)
-			printf(" has keyboard");
-		printf("\n");
+			aprint_normal(" has keyboard");
+		aprint_normal("\n");
 		sc->flags |= ITE_ATTACHED;
  	} else {
 		if (con_itesoftc.grf != NULL &&

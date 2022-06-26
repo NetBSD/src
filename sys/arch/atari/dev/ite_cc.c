@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.45 2022/06/25 03:33:29 tsutsui Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.46 2022/06/26 18:46:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.45 2022/06/25 03:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.46 2022/06/26 18:46:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -259,12 +259,12 @@ grfccattach(device_t parent, device_t self, void *aux)
 		grf_viewsync(sc);
 	}
 
-	printf(": width %d height %d", sc->g_display.gd_dwidth,
+	aprint_normal(": width %d height %d", sc->g_display.gd_dwidth,
 		    sc->g_display.gd_dheight);
 	if (sc->g_display.gd_colors == 2)
-		printf(" monochrome\n");
+		aprint_normal(" monochrome\n");
 	else
-		printf(" colors %d\n", sc->g_display.gd_colors);
+		aprint_normal(" colors %d\n", sc->g_display.gd_colors);
 	
 	/*
 	 * try and attach an ite
