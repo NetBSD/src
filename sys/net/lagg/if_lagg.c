@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.47 2022/04/04 09:59:41 martin Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.48 2022/06/26 17:55:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.47 2022/04/04 09:59:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.48 2022/06/26 17:55:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -895,7 +895,7 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	*(hp) = hash32_buf(&(v), sizeof(v), *(hp));	\
 } while(0)
 
-	eh = lagg_m_extract(m, 0, sizeof(*eh), &buf);
+	eh = lagg_m_extract(m, 0, sizeof(*eh), __alignof(*eh), &buf);
 	if (eh == NULL)
 		goto out;
 
@@ -903,7 +903,8 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	etype = ntohs(eh->ether_type);
 
 	if (etype == ETHERTYPE_VLAN) {
-		evl = lagg_m_extract(m, 0, sizeof(*evl), &buf);
+		evl = lagg_m_extract(m, 0, sizeof(*evl), __alignof(*evl),
+		    &buf);
 		if (evl == NULL)
 			goto out;
 
@@ -924,7 +925,7 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 
 	switch (etype) {
 	case ETHERTYPE_IP:
-		ip = lagg_m_extract(m, off, sizeof(*ip), &buf);
+		ip = lagg_m_extract(m, off, sizeof(*ip), __alignof(*ip), &buf);
 		if (ip == NULL)
 			goto out;
 
@@ -937,7 +938,8 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 		proto = ip->ip_p;
 		break;
 	case ETHERTYPE_IPV6:
-		ip6 = lagg_m_extract(m, off, sizeof(*ip6), &buf);
+		ip6 = lagg_m_extract(m, off, sizeof(*ip6), __alignof(*ip6),
+		    &buf);
 		if (ip6 == NULL)
 			goto out;
 
@@ -957,7 +959,7 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 
 	switch (proto) {
 	case IPPROTO_TCP:
-		th = lagg_m_extract(m, off, sizeof(*th), &buf);
+		th = lagg_m_extract(m, off, sizeof(*th), __alignof(*th), &buf);
 		if (th == NULL)
 			goto out;
 
@@ -967,7 +969,7 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 		}
 		break;
 	case IPPROTO_UDP:
-		uh = lagg_m_extract(m, off, sizeof(*uh), &buf);
+		uh = lagg_m_extract(m, off, sizeof(*uh), __alignof(*uh), &buf);
 		if (uh == NULL)
 			goto out;
 

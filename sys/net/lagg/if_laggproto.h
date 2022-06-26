@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.17 2022/05/24 20:50:20 andvar Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.18 2022/06/26 17:55:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -217,7 +217,8 @@ struct lagg_softc {
 	(_lp)->lp_ioctl((_lp)->lp_ifp, (_cmd), (_data))
 
 static inline const void *
-lagg_m_extract(struct mbuf *m, size_t off, size_t reqlen, void *buf)
+lagg_m_extract(struct mbuf *m, size_t off, size_t reqlen, size_t align,
+    void *buf)
 {
 	ssize_t len;
 	const void *rv;
@@ -229,7 +230,8 @@ lagg_m_extract(struct mbuf *m, size_t off, size_t reqlen, void *buf)
 		return NULL;
 	}
 
-	if (m->m_len >= len) {
+	if (m->m_len >= len &&
+	    ((uintptr_t)(mtod(m, uint8_t *) + off) % align) == 0) {
 		rv = mtod(m, uint8_t *) + off;
 	} else {
 		m_copydata(m, off, reqlen, buf);
