@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb00t.ahdi.S,v 1.2 2005/12/11 12:17:02 christos Exp $	*/
+/*	$NetBSD: sdb00t.ahdi.S,v 1.3 2022/06/26 14:14:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -32,19 +32,11 @@
 
 #include "xxboot.h"
 
-#ifdef __ELF__
 	.globl	_start, main, fill
 
 	.text
 
 _start:	bras	main
-#else
-	.globl	start, main, fill
-
-	.text
-
-start:	bras	main
-#endif
 	bra	rds0
 
 main:	bclr	#2,(_drvbits+3):w
