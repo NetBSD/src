@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_neon_subr.c,v 1.7 2020/08/09 02:48:38 riastradh Exp $	*/
+/*	$NetBSD: aes_neon_subr.c,v 1.8 2022/06/26 17:52:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.7 2020/08/09 02:48:38 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_neon_subr.c,v 1.8 2022/06/26 17:52:54 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/systm.h>
@@ -183,11 +183,11 @@ aes_neon_xts_update_selftest(void)
 	for (i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
 		storeblock(t, aes_neon_xts_update(loadblock(cases[i].in)));
 		if (memcmp(t, cases[i].out, 16)) {
-			char buf[33];
+			char buf[3*16 + 1];
 			unsigned j;
 
 			for (j = 0; j < 16; j++) {
-				snprintf(buf + 2*j, sizeof(buf) - 2*j,
+				snprintf(buf + 3*j, sizeof(buf) - 3*j,
 				    " %02hhx", t[j]);
 			}
 			printf("%s %u: %s\n", __func__, i, buf);
