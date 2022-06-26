@@ -786,6 +786,7 @@ case "${targ}" in
 		gdb_osabi=GDB_OSABI_FREEBSD ;;
 *-*-linux* | *-*-uclinux*)
 		gdb_osabi=GDB_OSABI_LINUX ;;
+*-*-netbsd*)	gdb_osabi=GDB_OSABI_NETBSD ;;
 *-*-nto*)	gdb_osabi=GDB_OSABI_QNXNTO ;;
 m68*-*-openbsd* | m88*-*-openbsd* | vax-*-openbsd*) ;;
 *-*-openbsd*)	gdb_osabi=GDB_OSABI_OPENBSD ;;
