@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.10 2022/06/26 22:18:30 riastradh Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11 2022/06/26 22:29:28 riastradh Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,7 +26,7 @@
  * rights to redistribute these changes.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.10 2022/06/26 22:18:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.11 2022/06/26 22:29:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,6 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	struct x86_64_frame *fp;
 	struct intrframe *ifp;
 	int traptype, trapno, err, i;
-	db_expr_t syscallno;
 
 	switch (is_trap) {
 	    case NONE:
@@ -128,16 +127,8 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 
 	    case SYSCALL:
 		tf = (struct trapframe *)argp;
-		syscallno = db_get_value((long)&tf->tf_rax, 8, false);
-		if (syscallno == SYS_syscall) {
-			syscallno = db_get_value((long)&tf->tf_rdi, 8, false);
-			(*pr)("--- syscall (number %"DDB_EXPR_FMT"u"
-			    " via SYS_syscall) ---\n",
-			    syscallno);
-		} else {
-			(*pr)("--- syscall (number %"DDB_EXPR_FMT"u) ---\n",
-			    syscallno);
-		}
+		(*pr)("--- syscall (number %"DDB_EXPR_FMT"u) ---\n",
+		    db_get_value((long)&tf->tf_rax, 8, false));
 		return 0;
 
 	    case TRAP:
