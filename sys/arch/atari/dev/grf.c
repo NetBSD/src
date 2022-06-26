@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.53 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.54 2022/06/26 06:25:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.54 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,10 +102,10 @@ struct grf_softc *grfsp[NGRF]; /* XXX */
 CFATTACH_DECL_NEW(grfbus, 0,
     grfbusmatch, grfbusattach, NULL, NULL);
 
-dev_type_open(grfopen);
-dev_type_close(grfclose);
-dev_type_ioctl(grfioctl);
-dev_type_mmap(grfmmap);
+static dev_type_open(grfopen);
+static dev_type_close(grfclose);
+static dev_type_ioctl(grfioctl);
+static dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	.d_open = grfopen,
@@ -166,7 +166,7 @@ grfbusprint(void *aux, const char *name)
 }
 
 /*ARGSUSED*/
-int
+static int
 grfopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct grf_softc *gp;
@@ -189,7 +189,7 @@ grfopen(dev_t dev, int flags, int devtype, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int
+static int
 grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct grf_softc *gp;
@@ -201,7 +201,7 @@ grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int
+static int
 grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 	struct grf_softc	*gp;
@@ -266,7 +266,7 @@ grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
  * map the contents of a graphics display card into process' 
  * memory space.
  */
-paddr_t
+static paddr_t
 grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc	*gp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.89 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.90 2022/06/26 06:25:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.89 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.90 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -131,12 +131,12 @@ __KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.89 2021/08/07 16:18:46 thorpej Exp $");
 /*
  * {b,c}devsw[] function prototypes
  */
-dev_type_open(fdopen);
-dev_type_close(fdclose);
-dev_type_read(fdread);
-dev_type_write(fdwrite);
-dev_type_ioctl(fdioctl);
-dev_type_strategy(fdstrategy);
+static dev_type_open(fdopen);
+static dev_type_close(fdclose);
+static dev_type_read(fdread);
+static dev_type_write(fdwrite);
+static dev_type_ioctl(fdioctl);
+static dev_type_strategy(fdstrategy);
 
 volatile u_char	*fdio_addr;
 
@@ -602,7 +602,7 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 	return type ? &fd_types[type - 1] : fd->sc_deftype;
 }
 
-void
+static void
 fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd = device_lookup_private(&hdfd_cd, FDUNIT(bp->b_dev));
@@ -717,14 +717,14 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 	fdc->sc_state = DEVIDLE;
 }
 
-int
+static int
 fdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return physio(fdstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
-int
+static int
 fdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
@@ -815,7 +815,7 @@ out_fdc(u_char x)
 	return 0;
 }
 
-int
+static int
 fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct fd_softc *fd;
@@ -840,7 +840,7 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct fd_softc *fd = device_lookup_private(&hdfd_cd, FDUNIT(dev));
@@ -1289,7 +1289,7 @@ fdcretry(struct fdc_softc *fdc)
 	fdc->sc_errors++;
 }
 
-int
+static int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc		*fd;
