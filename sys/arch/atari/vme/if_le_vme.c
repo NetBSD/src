@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.33 2022/06/25 22:38:43 tsutsui Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.34 2022/06/26 04:51:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.33 2022/06/25 22:38:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.34 2022/06/26 04:51:17 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.33 2022/06/25 22:38:43 tsutsui Exp $
  *  - On PAM and ROTHRON, mem_addr cannot be mapped if reg_addr is already
  *    mapped because they are overwrapped. Just use 32KB as Linux does.
  */
-struct le_addresses {
+static struct le_addresses {
 	u_long	reg_addr;
 	u_long	mem_addr;
 	int	irq;
@@ -141,7 +141,7 @@ struct le_addresses {
  * Default mac for RIEBL cards without a (working) battery. The first 4 bytes
  * are the manufacturer id.
  */
-static u_char riebl_def_mac[] = {
+static const uint8_t riebl_def_mac[] = {
 	0x00, 0x00, 0x36, 0x04, 0x00, 0x00
 };
 
@@ -165,22 +165,14 @@ CFATTACH_DECL_NEW(le_vme, sizeof(struct le_softc),
 #include "opt_ddb.h"
 #endif
 
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static inline
-#define hide		static
-#endif
+static void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+static uint16_t lerdcsr(struct lance_softc *, uint16_t);
 
-hide void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
-hide uint16_t lerdcsr(struct lance_softc *, uint16_t);
-
-hide void
+static void
 lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
-	struct le_softc		*lesc = (struct le_softc *)sc;
-	int			s;
+	struct le_softc *lesc = (struct le_softc *)sc;
+	int s;
 
 	s = splhigh();
 	bus_space_write_2(lesc->sc_iot, lesc->sc_ioh, LER_RAP, port);
@@ -188,12 +180,12 @@ lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 	splx(s);
 }
 
-hide uint16_t
+static uint16_t
 lerdcsr(struct lance_softc *sc, uint16_t port)
 {
-	struct le_softc		*lesc = (struct le_softc *)sc;
-	uint16_t		val;
-	int			s;
+	struct le_softc *lesc = (struct le_softc *)sc;
+	uint16_t val;
+	int s;
 
 	s = splhigh();
 	bus_space_write_2(lesc->sc_iot, lesc->sc_ioh, LER_RAP, port);
@@ -206,19 +198,17 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 static int
 le_vme_match(device_t parent, cfdata_t cfp, void *aux)
 {
-	struct vme_attach_args	*va = aux;
-	int			i;
-	bus_space_tag_t		iot;
-	bus_space_tag_t		memt;
-	bus_space_handle_t	ioh;
-	bus_space_handle_t	memh;
+	struct vme_attach_args *va = aux;
+	int i;
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
 
 	iot  = va->va_iot;
 	memt = va->va_memt;
 
 	for (i = 0; i < NLESTD; i++) {
-		struct le_addresses	*le_ap = &lestd[i];
-		int			found  = 0;
+		struct le_addresses *le_ap = &lestd[i];
+		int found;
 
 		if ((va->va_iobase != IOBASEUNK)
 		     && (va->va_iobase != le_ap->reg_addr))
@@ -325,8 +315,8 @@ probe_addresses(bus_space_tag_t	*iot, bus_space_tag_t *memt,
 static int
 le_intr(struct le_softc *lesc, int sr)
 {
-	struct lance_softc	*sc = &lesc->sc_am7990.lsc;
-	uint16_t		csr0;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	uint16_t csr0;
 
 	if ((sr & PSL_IPL) < (ipl2psl_table[IPL_NET] & PSL_IPL))
 		am7990_intr(sc);
@@ -342,7 +332,7 @@ le_intr(struct le_softc *lesc, int sr)
 static void
 lepseudointr(struct le_softc *lesc, void *sc)
 {
-	int	s;
+	int s;
 
 	s = splx(lesc->sc_splval);
 	am7990_intr(sc);
@@ -352,25 +342,27 @@ lepseudointr(struct le_softc *lesc, void *sc)
 static void
 le_vme_attach(device_t parent, device_t self, void *aux)
 {
-	struct le_softc		*lesc = device_private(self);
-	struct lance_softc	*sc = &lesc->sc_am7990.lsc;
-	struct vme_attach_args	*va = aux;
-	bus_space_handle_t	ioh;
-	bus_space_handle_t	memh;
-	struct le_addresses	*le_ap;
-	int			i;
+	struct le_softc *lesc = device_private(self);
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	struct vme_attach_args *va = aux;
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
+	struct le_addresses *le_ap;
+	int i;
 
 	sc->sc_dev = self;
 	aprint_normal("\n%s: ", device_xname(self));
 
-	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
-		panic("leattach: cannot map io-area");
-	if (bus_space_map(va->va_memt, va->va_maddr, va->va_msize, 0, &memh))
-		panic("leattach: cannot map mem-area");
+	iot  = va->va_iot;
+	memt = va->va_memt;
+	if (bus_space_map(iot, va->va_iobase, va->va_iosize, 0, &ioh))
+		panic("%s: cannot map io-area", __func__);
+	if (bus_space_map(memt, va->va_maddr, va->va_msize, 0, &memh))
+		panic("%s: cannot map mem-area", __func__);
 
-	lesc->sc_iot    = va->va_iot;
+	lesc->sc_iot    = iot;
 	lesc->sc_ioh    = ioh;
-	lesc->sc_memt   = va->va_memt;
+	lesc->sc_memt   = memt;
 	lesc->sc_memh   = memh;
 	lesc->sc_splval = (va->va_irq << 8) | PSL_S; /* XXX */
 	le_ap           = (struct le_addresses *)va->va_aux;
@@ -378,26 +370,28 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Go on to find board type
 	 */
-	if ((le_ap->type_hint & LE_PAM) &&
-	    bus_space_peek_1(va->va_iot, ioh, LER_EEPROM)) {
+	if ((le_ap->type_hint & LE_PAM) != 0 &&
+	    bus_space_peek_1(iot, ioh, LER_EEPROM)) {
 		aprint_normal("PAM card");
 		lesc->sc_type = LE_PAM;
-		bus_space_read_1(va->va_iot, ioh, LER_MEME);
-	} else if ((le_ap->type_hint & LE_BVME410) &&
-	    bvme410_probe(va->va_iot, ioh)) {
+		bus_space_read_1(iot, ioh, LER_MEME);
+	} else if ((le_ap->type_hint & LE_BVME410) != 0 &&
+	    bvme410_probe(iot, ioh)) {
 		aprint_normal("BVME410");
 		lesc->sc_type = LE_BVME410;
-	} else if (le_ap->type_hint & (LE_NEW_RIEBL|LE_OLD_RIEBL)) {
+	} else if ((le_ap->type_hint & (LE_NEW_RIEBL|LE_OLD_RIEBL)) != 0) {
 		aprint_normal("Riebl card");
-		if (bus_space_read_4(va->va_memt, memh, RIEBL_MAGIC_ADDR) ==
+		if (bus_space_read_4(memt, memh, RIEBL_MAGIC_ADDR) ==
 		    RIEBL_MAGIC)
 			lesc->sc_type = LE_NEW_RIEBL;
 		else {
 			aprint_normal("(without battery) ");
 			lesc->sc_type = LE_OLD_RIEBL;
 		}
-	} else
-		aprint_error("le_vme_attach: Unsupported card!");
+	} else {
+		aprint_error("Unsupported card!\n");
+		return;
+	}
 
 	switch (lesc->sc_type) {
 	case LE_BVME410:
@@ -429,32 +423,31 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	 */
 	switch (lesc->sc_type) {
 	case LE_OLD_RIEBL:
-		memcpy(sc->sc_enaddr, riebl_def_mac,
-					sizeof(sc->sc_enaddr));
+		memcpy(sc->sc_enaddr, riebl_def_mac, sizeof(sc->sc_enaddr));
 		break;
 	case LE_NEW_RIEBL:
 		for (i = 0; i < sizeof(sc->sc_enaddr); i++)
-		    sc->sc_enaddr[i] =
-			bus_space_read_1(va->va_memt, memh, i + RIEBL_MAC_ADDR);
-			break;
+			sc->sc_enaddr[i] =
+			    bus_space_read_1(memt, memh, i + RIEBL_MAC_ADDR);
+		break;
 	case LE_PAM:
-		i = bus_space_read_1(va->va_iot, ioh, LER_EEPROM);
+		i = bus_space_read_1(iot, ioh, LER_EEPROM);
 		for (i = 0; i < sizeof(sc->sc_enaddr); i++) {
-		    sc->sc_enaddr[i] =
-			(bus_space_read_2(va->va_memt, memh, 2 * i) << 4) |
-			(bus_space_read_2(va->va_memt, memh, 2 * i + 1) & 0xf);
+			sc->sc_enaddr[i] =
+			    (bus_space_read_2(memt, memh, 2 * i) << 4) |
+			    (bus_space_read_2(memt, memh, 2 * i + 1) & 0xf);
 		}
-		i = bus_space_read_1(va->va_iot, ioh, LER_MEME);
+		i = bus_space_read_1(iot, ioh, LER_MEME);
 		break;
 	case LE_BVME410:
 		for (i = 0; i < (sizeof(sc->sc_enaddr) >> 1); i++) {
-		    uint16_t tmp;
+			uint16_t tmp;
 
-		    tmp = nm93c06_read(va->va_iot, ioh, i);
-		    sc->sc_enaddr[2 * i] = (tmp >> 8) & 0xff;
-		    sc->sc_enaddr[2 * i + 1] = tmp & 0xff;
+			tmp = nm93c06_read(iot, ioh, i);
+			sc->sc_enaddr[2 * i] = (tmp >> 8) & 0xff;
+			sc->sc_enaddr[2 * i + 1] = tmp & 0xff;
 		}
-		bus_space_write_2(va->va_iot, ioh, BVME410_BAR, 0x1); /* XXX */
+		bus_space_write_2(iot, ioh, BVME410_BAR, 0x1); /* XXX */
 	}
 
 	am7990_config(&lesc->sc_am7990);
@@ -475,25 +468,22 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	 * Notify the card of the vector
 	 */
 	switch (lesc->sc_type) {
-		case LE_OLD_RIEBL:
-		case LE_NEW_RIEBL:
-			bus_space_write_2(va->va_memt, memh,
-			    RIEBL_IVEC_ADDR, 64 + 64);
-			break;
-		case LE_PAM:
-			bus_space_write_1(va->va_iot, ioh,
-			    LER_IVEC, 64 + 64);
-			break;
-		case LE_BVME410:
-			bus_space_write_2(va->va_iot, ioh,
-			    BVME410_IVEC, 64 + 64);
-			break;
+	case LE_OLD_RIEBL:
+	case LE_NEW_RIEBL:
+		bus_space_write_2(memt, memh, RIEBL_IVEC_ADDR, 64 + 64);
+		break;
+	case LE_PAM:
+		bus_space_write_1(iot, ioh, LER_IVEC, 64 + 64);
+		break;
+	case LE_BVME410:
+		bus_space_write_2(iot, ioh, BVME410_IVEC, 64 + 64);
+		break;
 	}
 
 	/*
 	 * Unmask the VME-interrupt we're on
 	 */
-	if (machineid & ATARI_TT)
+	if ((machineid & ATARI_TT) != 0)
 		SCU->vme_mask |= 1 << va->va_irq;
 }
 
@@ -505,8 +495,8 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 static void
 riebl_skip_reserved_area(struct lance_softc *sc)
 {
-	int	offset = 0;
-	int	i;
+	int offset = 0;
+	int i;
 
 	for (i = 0; i < sc->sc_nrbuf; i++) {
 		if (WITHIN(sc->sc_rbufaddr[i], LEBLEN, RIEBL_RES_START) ||
@@ -617,23 +607,24 @@ bvme410_mem_size(bus_space_tag_t memt, u_long mem_addr)
 static void
 bvme410_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
-	volatile char *buf = (volatile char *)sc->sc_mem;
-	char *f = (char *)from;
+	volatile uint8_t *buf = (volatile uint8_t *)sc->sc_mem;
+	uint8_t *f = (uint8_t *)from;
 
-	for (buf += boff; len; buf++,f++,len--)
+	for (buf += boff; len != 0; buf++, f++, len--) {
 		do {
  			*buf = *f;
 		} while (*buf != *f);
+	}
 }
 
 static void
 bvme410_zerobuf(struct lance_softc *sc, int boff, int len)
 {
-	volatile char *buf = (volatile char *)sc->sc_mem;
+	volatile uint8_t *buf = (volatile uint8_t *)sc->sc_mem;
 
-	for (buf += boff; len; buf++,len--)
+	for (buf += boff; len != 0; buf++, len--) {
 		do {
  			*buf = '\0';
 		} while (*buf != '\0');
+	}
 }
-
