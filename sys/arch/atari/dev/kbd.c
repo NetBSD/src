@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.55 2022/06/26 04:45:30 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.56 2022/06/26 09:18:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.55 2022/06/26 04:45:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.56 2022/06/26 09:18:06 martin Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -424,7 +424,7 @@ kbdintr(int sr)
 	/* sr: sr at time of interrupt	*/
 {
 	struct kbd_softc *sc = &kbd_softc;
-	uint8_t stat, code;
+	uint8_t stat, code = 0 /* XXX gcc */;
 	uint32_t rndstat;
 	bool got_char = false;
 
