@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.17 2022/03/29 09:08:44 riastradh Exp $ */
+/* $NetBSD: emdtv.c,v 1.18 2022/06/26 22:49:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.17 2022/03/29 09:08:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.18 2022/06/26 22:49:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,7 @@ emdtv_attach(device_t parent, device_t self, void *opaque)
 
 	emdtv_dtv_attach(sc);
 	emdtv_ir_attach(sc);
+	sc->sc_subdevs_attached = true;
 }
 
 static int
@@ -163,8 +164,10 @@ emdtv_detach(device_t self, int flags)
 	if (error)
 		return error;
 
-	emdtv_ir_detach(sc, flags);
-	emdtv_dtv_detach(sc, flags);
+	if (sc->sc_subdevs_attached) {
+		emdtv_ir_detach(sc, flags);
+		emdtv_dtv_detach(sc, flags);
+	}
 
 	if (sc->sc_iface != NULL) {
 		status = usbd_set_interface(sc->sc_iface, 0);
