@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.93 2022/06/26 06:25:09 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.94 2022/06/26 18:46:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.93 2022/06/26 06:25:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94 2022/06/26 18:46:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 	int i, nfound, first_found;
 
 	nfound = first_found = 0;
-	printf("\n");
+	aprint_normal("\n");
 	fddeselect();
 	for (i = 0; i < NR_DRIVES; i++) {
 

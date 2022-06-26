@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63 2022/06/26 06:25:09 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.64 2022/06/26 18:46:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63 2022/06/26 06:25:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.64 2022/06/26 18:46:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -196,11 +196,11 @@ clockattach(device_t parent, device_t self, void *aux)
 	clk_timecounter.tc_frequency = CLOCK_HZ;
 
 	if (hz != 48 && hz != 64 && hz != 96) { /* XXX */
-		printf (": illegal value %d for systemclock, reset to %d\n\t",
+		aprint_normal(": illegal value %d for systemclock, reset to %d\n\t",
 								hz, 64);
 		hz = 64;
 	}
-	printf(": system hz %d timer-A divisor 200/%d\n", hz, divisor);
+	aprint_normal(": system hz %d timer-A divisor 200/%d\n", hz, divisor);
 	tc_init(&clk_timecounter);
 
 #ifdef STATCLOCK
