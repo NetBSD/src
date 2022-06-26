@@ -181,10 +181,10 @@
 #define HAVE_PTHREAD_PRIO_INHERIT 1
 
 /* Define to 1 if you have the `pthread_setname_np' function. */
-/* #undef HAVE_PTHREAD_SETNAME_NP */
+#define HAVE_PTHREAD_SETNAME_NP 1
 
 /* Define to 1 if you have the `pthread_sigmask' function. */
-/* #undef HAVE_PTHREAD_SIGMASK */
+#define HAVE_PTHREAD_SIGMASK 1
 
 /* Define to 1 if you have the `ptrace64' function. */
 /* #undef HAVE_PTRACE64 */
