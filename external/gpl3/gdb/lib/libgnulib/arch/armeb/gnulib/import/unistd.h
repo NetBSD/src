@@ -129,7 +129,7 @@
 #if (0 || defined GNULIB_POSIXCHECK) \
     && ((defined __APPLE__ && defined __MACH__) || defined __sun \
         || defined __ANDROID__) \
-    && 0 \
+    && 1 \
     && !defined __GLIBC__
 # include <sys/random.h>
 #endif

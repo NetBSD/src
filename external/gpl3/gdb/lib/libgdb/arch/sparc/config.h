@@ -9,10 +9,10 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* Directories from which to load auto-loaded scripts. */
-#define AUTO_LOAD_DIR ":${prefix}/share/auto-load"
+#define AUTO_LOAD_DIR "$debugdir:$datadir/auto-load"
 
 /* Directories safe to hold auto-loaded files. */
-#define AUTO_LOAD_SAFE_PATH ":${prefix}/share/auto-load"
+#define AUTO_LOAD_SAFE_PATH "$debugdir:$datadir/auto-load"
 
 /* Directory of programs. */
 #define BINDIR "/usr/bin"
@@ -74,7 +74,7 @@
 /* #undef GDB_NM_FILE */
 
 /* Define to the default OS ABI for this configuration. */
-/* #undef GDB_OSABI_DEFAULT */
+#define GDB_OSABI_DEFAULT GDB_OSABI_NETBSD
 
 /* Define if self-testing features should be enabled */
 #define GDB_SELF_TEST 1

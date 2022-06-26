@@ -492,7 +492,7 @@
 #define HAVE_FREXP 1
 
 /* Define if the frexpl() function is available. */
-/* #undef HAVE_FREXPL */
+#define HAVE_FREXPL 1
 
 /* Define to 1 if you have the `fstatat' function. */
 #define HAVE_FSTATAT 1
@@ -523,7 +523,7 @@
 #define HAVE_GETPWNAM_R 1
 
 /* Define to 1 if you have the `getrandom' function. */
-/* #undef HAVE_GETRANDOM */
+#define HAVE_GETRANDOM 1
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #define HAVE_GETTIMEOFDAY 1

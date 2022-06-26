@@ -9,10 +9,10 @@
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* Directories from which to load auto-loaded scripts. */
-#define AUTO_LOAD_DIR ":${prefix}/share/auto-load"
+#define AUTO_LOAD_DIR "$debugdir:$datadir/auto-load"
 
 /* Directories safe to hold auto-loaded files. */
-#define AUTO_LOAD_SAFE_PATH ":${prefix}/share/auto-load"
+#define AUTO_LOAD_SAFE_PATH "$debugdir:$datadir/auto-load"
 
 /* Directory of programs. */
 #define BINDIR "/usr/bin"
@@ -74,7 +74,7 @@
 /* #undef GDB_NM_FILE */
 
 /* Define to the default OS ABI for this configuration. */
-/* #undef GDB_OSABI_DEFAULT */
+#define GDB_OSABI_DEFAULT GDB_OSABI_NETBSD
 
 /* Define if self-testing features should be enabled */
 #define GDB_SELF_TEST 1
@@ -346,10 +346,10 @@
 #define HAVE_PTHREAD_PRIO_INHERIT 1
 
 /* Define to 1 if you have the `pthread_setname_np' function. */
-/* #undef HAVE_PTHREAD_SETNAME_NP */
+#define HAVE_PTHREAD_SETNAME_NP 1
 
 /* Define to 1 if you have the `pthread_sigmask' function. */
-/* #undef HAVE_PTHREAD_SIGMASK */
+#define HAVE_PTHREAD_SIGMASK 1
 
 /* Define to 1 if you have the `ptrace64' function. */
 /* #undef HAVE_PTRACE64 */
@@ -379,7 +379,7 @@
 /* #undef HAVE_PYTHON */
 
 /* Define to 1 if you have the `resize_term' function. */
-/* #undef HAVE_RESIZE_TERM */
+#define HAVE_RESIZE_TERM 1
 
 /* Define to 1 if you have the `sbrk' function. */
 #define HAVE_SBRK 1
@@ -544,7 +544,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `use_default_colors' function. */
-/* #undef HAVE_USE_DEFAULT_COLORS */
+#define HAVE_USE_DEFAULT_COLORS 1
 
 /* Define to 1 if you have the `vfork' function. */
 #define HAVE_VFORK 1
@@ -559,7 +559,7 @@
 /* #undef HAVE_WAIT_H */
 
 /* Define to 1 if you have the `wborder' function. */
-/* #undef HAVE_WBORDER */
+#define HAVE_WBORDER 1
 
 /* Define to 1 if you have the <windows.h> header file. */
 /* #undef HAVE_WINDOWS_H */
@@ -571,7 +571,7 @@
 #define HAVE_WORKING_VFORK 1
 
 /* Define to 1 if you have the `wresize' function. */
-/* #undef HAVE_WRESIZE */
+#define HAVE_WRESIZE 1
 
 /* Define to 1 if you have the <ws2tcpip.h> header file. */
 /* #undef HAVE_WS2TCPIP_H */
