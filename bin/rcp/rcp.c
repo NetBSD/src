@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.50 2020/05/06 18:15:40 aymeric Exp $	*/
+/*	$NetBSD: rcp.c,v 1.51 2022/06/26 09:29:59 rin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.50 2020/05/06 18:15:40 aymeric Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.51 2022/06/26 09:29:59 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: rcp.c,v 1.50 2020/05/06 18:15:40 aymeric Exp $");
 #include <fcntl.h>
 #include <locale.h>
 #include <netdb.h>
+#include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -79,6 +80,8 @@ int pflag, iamremote, iamrecursive, targetshouldbedirectory;
 int family = AF_UNSPEC;
 static char dot[] = ".";
 
+static sig_atomic_t print_info = 0;
+
 #define	CMDNEEDS	64
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 
@@ -89,6 +92,8 @@ void	 source(int, char *[]);
 void	 tolocal(int, char *[]);
 void	 toremote(char *, int, char *[]);
 void	 usage(void);
+static void	got_siginfo(int);
+static void	progress(const char *, uintmax_t, uintmax_t);
 
 int
 main(int argc, char *argv[])
@@ -173,6 +178,7 @@ main(int argc, char *argv[])
 	    targetshouldbedirectory ? " -d" : "");
 
 	(void)signal(SIGPIPE, lostconn);
+	(void)signal(SIGINFO, got_siginfo);
 
 	if ((targ = colon(argv[argc - 1])) != NULL)/* Dest is remote host. */
 		toremote(targ, argc, argv);
@@ -385,6 +391,8 @@ next:			(void)close(fd);
 		/* Keep writing after an error so that we stay sync'd up. */
 		haderr = 0;
 		for (i = 0; i < stb.st_size; i += bp->cnt) {
+			if (print_info)
+				progress(name, i, stb.st_size);
 			amt = bp->cnt;
 			if (i + amt > stb.st_size)
 				amt = stb.st_size - i;
@@ -658,6 +666,8 @@ bad:			run_err("%s: %s", np, strerror(errno));
 
 		count = 0;
 		for (i = 0; i < size; i += BUFSIZ) {
+			if (print_info)
+				progress(np, i, size);
 			amt = BUFSIZ;
 			if (i + amt > size)
 				amt = size - i;
@@ -808,4 +818,37 @@ run_err(const char *fmt, ...)
 		vwarnx(fmt, ap);
 		va_end(ap);
 	}
+}
+
+static void
+got_siginfo(int signo)
+{
+
+	print_info = 1;
+}
+
+static void
+progress(const char *file, uintmax_t done, uintmax_t total)
+{
+	static int ttyfd = -2;
+	const double pcent = (100.0 * done) / total;
+	char buf[2048];
+	int n;
+
+	if (ttyfd == -2)
+		ttyfd = open(_PATH_TTY, O_RDWR | O_CLOEXEC);
+
+	if (ttyfd == -1)
+		return;
+
+	n = snprintf(buf, sizeof(buf),
+	    "%s: %s: %ju/%ju bytes %3.2f%% written\n",
+	    getprogname(), file, done, total, pcent);
+
+	if (n < 0)
+		return;
+
+	write(ttyfd, buf, (size_t)n);
+
+	print_info = 0;
 }
