@@ -1,4 +1,4 @@
-/*	$NetBSD: wdboot.S,v 1.2 2005/12/11 12:17:02 christos Exp $	*/
+/*	$NetBSD: wdboot.S,v 1.3 2022/06/26 14:14:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -32,17 +32,10 @@
 
 #include "xxboot.h"
 
-#ifdef __ELF__
 	.globl	_start, main, fill
 
 	.text
 _start:
-#else
-	.globl	start, main, fill
-
-	.text
-start:
-#endif
 /*
  * in: d3 ('DMAr' flag), d4 (SCSI target), d5 (boot pref), d7 (ACSI target)
  */
