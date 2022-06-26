@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.6 2020/05/05 06:20:55 skrll Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.7 2022/06/26 14:37:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -57,6 +57,7 @@
  */
 
 #include "SYS.h"
+#include "assym.h"
 
 /*
  * The hppa signal trampoline is required to call the handler
@@ -76,7 +77,67 @@
  *		siginfo_t sf_si;
  *		ucontext_t sf_uc;
  *	};
+ *
+ * The DWARF register numbers for the general purpose registers are the
+ * same as the architected register numbers.  For HPPA, there is a DWARF
+ * pseudo-register for signal handler return addresses.
  */
+
+#if defined(__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__)
+#define	DWARF_SIGRETURN_REG		__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__
+#else
+#define	DWARF_SIGRETURN_REG		89	/* 61 on hppa64 */
+#endif
+
+#define	CFI_OFFSET_DWARF_REG(d, r)	.cfi_offset d, r * 4
+#define	CFI_OFFSET(r)			CFI_OFFSET_DWARF_REG(r, r)
+
+	.text
+	.cfi_startproc
+	.cfi_signal_frame
+	.cfi_def_cfa _REG_R30,  -SIZEOF_SIGTRAMP + SIZEOF_SIGINFO + _UC_GREGS
+	CFI_OFFSET(_REG_R1)
+	CFI_OFFSET(_REG_R2)
+	CFI_OFFSET(_REG_R3)
+	CFI_OFFSET(_REG_R4)
+	CFI_OFFSET(_REG_R5)
+	CFI_OFFSET(_REG_R6)
+	CFI_OFFSET(_REG_R7)
+	CFI_OFFSET(_REG_R8)
+	CFI_OFFSET(_REG_R9)
+	CFI_OFFSET(_REG_R10)
+	CFI_OFFSET(_REG_R11)
+	CFI_OFFSET(_REG_R12)
+	CFI_OFFSET(_REG_R13)
+	CFI_OFFSET(_REG_R14)
+	CFI_OFFSET(_REG_R15)
+	CFI_OFFSET(_REG_R16)
+	CFI_OFFSET(_REG_R17)
+	CFI_OFFSET(_REG_R18)
+	CFI_OFFSET(_REG_R19)
+	CFI_OFFSET(_REG_R20)
+	CFI_OFFSET(_REG_R21)
+	CFI_OFFSET(_REG_R22)
+	CFI_OFFSET(_REG_R23)
+	CFI_OFFSET(_REG_R24)
+	CFI_OFFSET(_REG_R25)
+	CFI_OFFSET(_REG_R26)
+	CFI_OFFSET(_REG_R27)
+	CFI_OFFSET(_REG_R28)
+	CFI_OFFSET(_REG_R29)
+	CFI_OFFSET(_REG_R30)
+	CFI_OFFSET(_REG_R31)
+	.cfi_return_column DWARF_SIGRETURN_REG
+	CFI_OFFSET_DWARF_REG(DWARF_SIGRETURN_REG, _REG_PCOQH)
+
+/*
+ * The unwind entry includes one instruction slot prior to the trampoline
+ * because the unwinder will look up to (return PC - 1 insn) while unwinding.
+ * Normally this would be the jump / branch, but since there isn't one in
+ * this case, we place an explicit nop there instead.
+ */
+
+	nop
 
 ENTRY_NOPROFILE(__sigtramp_siginfo_2, 0)
 	.call
@@ -130,4 +191,5 @@ L$sigcode_bounce:
 	.call
 	ble	4(%sr2, %r1)
 	 ldi	SYS_exit, %t1
+	.cfi_endproc
 EXIT(__sigtramp_siginfo_2)
