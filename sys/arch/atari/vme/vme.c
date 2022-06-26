@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.19 2021/08/07 16:18:47 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.20 2022/06/26 05:11:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.19 2021/08/07 16:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.20 2022/06/26 05:11:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,33 +40,33 @@ __KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.19 2021/08/07 16:18:47 thorpej Exp $");
 
 #include <atari/vme/vmevar.h>
 
-int vmematch(device_t, cfdata_t, void *);
-void vmeattach(device_t, device_t, void *);
-int vmeprint(void *, const char *);
+static int vmematch(device_t, cfdata_t, void *);
+static void vmeattach(device_t, device_t, void *);
+static int vmeprint(void *, const char *);
 
 CFATTACH_DECL_NEW(vme, sizeof(struct vme_softc),
     vmematch, vmeattach, NULL, NULL);
 
-int	vmesearch(device_t, cfdata_t, const int *, void *);
+static int vmesearch(device_t, cfdata_t, const int *, void *);
 
-int
+static int
 vmematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vmebus_attach_args *vba = aux;
 
 	if (strcmp(vba->vba_busname, cf->cf_name))
-		return (0);
+		return 0;
 
-        return (1);
+        return 1;
 }
 
-void
+static void
 vmeattach(device_t parent, device_t self, void *aux)
 {
 	struct vme_softc *sc = device_private(self);
 	struct vmebus_attach_args *vba = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_dev = self;
 	sc->sc_iot  = vba->vba_iot;
@@ -77,7 +77,7 @@ vmeattach(device_t parent, device_t self, void *aux)
 	    CFARGS(.search = vmesearch));
 }
 
-int
+static int
 vmeprint(void *aux, const char *vme)
 {
 	struct vme_attach_args *va = aux;
@@ -92,10 +92,10 @@ vmeprint(void *aux, const char *vme)
 		aprint_normal("-0x%x", va->va_maddr + va->va_msize - 1);
 	if (va->va_irq != IRQUNK)
 		aprint_normal(" irq %d", va->va_irq);
-	return (UNCONF);
+	return UNCONF;
 }
 
-int
+static int
 vmesearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct vme_softc *sc = device_private(parent);
@@ -112,5 +112,5 @@ vmesearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	if (config_probe(parent, cf, &va))
 		config_attach(parent, cf, &va, vmeprint, CFARGS_NONE);
-	return (0);
+	return 0;
 }
