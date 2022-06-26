@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.23 2021/08/07 16:18:47 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.24 2022/06/26 05:16:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.23 2021/08/07 16:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.24 2022/06/26 05:16:22 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,9 +53,9 @@ static void	vmebusattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(avmebus, 0,
     vmebusmatch, vmebusattach, NULL, NULL);
 
-int vmebus_attached;
+static int vmebus_attached;
 
-int
+static int
 vmebusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
@@ -63,13 +63,13 @@ vmebusmatch(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 	if (strcmp((char *)aux, "avmebus") || vmebus_attached)
 		return 0;
-	return (machineid & ATARI_FALCON) ? 0 : 1;
+	return ((machineid & ATARI_FALCON) != 0) ? 0 : 1;
 }
 
-void
+static void
 vmebusattach(device_t parent, device_t self, void *aux)
 {
-	struct vmebus_attach_args	vba;
+	struct vmebus_attach_args vba;
 
 	vmebus_attached = 1;
 
@@ -77,7 +77,7 @@ vmebusattach(device_t parent, device_t self, void *aux)
 	vba.vba_iot     = beb_alloc_bus_space_tag(NULL);
 	vba.vba_memt    = beb_alloc_bus_space_tag(NULL);
 	if ((vba.vba_iot == NULL) || (vba.vba_memt == NULL)) {
-		printf("beb_alloc_bus_space_tag failed!\n");
+		aprint_error("beb_alloc_bus_space_tag failed!\n");
 		return;
 	}
 
@@ -87,11 +87,11 @@ vmebusattach(device_t parent, device_t self, void *aux)
 	vba.vba_iot->base  = 0;
 	vba.vba_memt->base = 0;
 
-	printf("\n");
+	aprint_normal("\n");
 	config_found(self, &vba, vmebusprint, CFARGS_NONE);
 }
 
-int
+static int
 vmebusprint(void *aux, const char *name)
 {
 
