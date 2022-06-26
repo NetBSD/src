@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.53 2022/06/25 18:05:09 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.54 2022/06/26 11:14:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,11 @@
  */
 
 #include "opt_multiprocessor.h"
-#include "opt_gic.h"
 
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.53 2022/06/25 18:05:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.54 2022/06/26 11:14:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

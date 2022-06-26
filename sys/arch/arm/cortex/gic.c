@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.55 2022/06/25 13:24:34 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.56 2022/06/26 11:14:36 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,12 +30,11 @@
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
-#include "opt_gic.h"
 
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.55 2022/06/25 13:24:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.56 2022/06/26 11:14:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
