@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.214 2022/05/15 16:20:10 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.215 2022/06/26 22:31:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.214 2022/05/15 16:20:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.215 2022/06/26 22:31:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1681,17 +1681,26 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	TIMEVAL_TO_TIMESPEC(&itvp->it_value, &it->it_time.it_value);
 	TIMEVAL_TO_TIMESPEC(&itvp->it_interval, &it->it_time.it_interval);
 
+	error = 0;
 	if (timespecisset(&it->it_time.it_value)) {
 		/* Convert to absolute time */
 		/* XXX need to wrap in splclock for timecounters case? */
 		switch (which) {
 		case ITIMER_REAL:
 			getnanotime(&now);
+			if (!timespecaddok(&it->it_time.it_value, &now)) {
+				error = EINVAL;
+				goto out;
+			}
 			timespecadd(&it->it_time.it_value, &now,
 			    &it->it_time.it_value);
 			break;
 		case ITIMER_MONOTONIC:
 			getnanouptime(&now);
+			if (!timespecaddok(&it->it_time.it_value, &now)) {
+				error = EINVAL;
+				goto out;
+			}
 			timespecadd(&it->it_time.it_value, &now,
 			    &it->it_time.it_value);
 			break;
@@ -1699,17 +1708,19 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 			break;
 		}
 	}
+
 	error = itimer_settime(it);
 	if (error == ERESTART) {
 		KASSERT(!CLOCK_VIRTUAL_P(it->it_clockid));
 		goto restart;
 	}
 	KASSERT(error == 0);
+out:
 	itimer_unlock();
 	if (spare != NULL)
 		kmem_free(spare, sizeof(*spare));
 
-	return (0);
+	return error;
 }
 
 /*
