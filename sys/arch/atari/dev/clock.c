@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.62 2020/07/03 16:23:03 maxv Exp $	*/
+/*	$NetBSD: clock.c,v 1.63 2022/06/26 06:25:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.62 2020/07/03 16:23:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -107,10 +107,10 @@ struct clock_softc {
  */
 #define	RTC_OPEN	1
 
-dev_type_open(rtcopen);
-dev_type_close(rtcclose);
-dev_type_read(rtcread);
-dev_type_write(rtcwrite);
+static dev_type_open(rtcopen);
+static dev_type_close(rtcclose);
+static dev_type_read(rtcread);
+static dev_type_write(rtcwrite);
 
 static void	clockattach(device_t, device_t, void *);
 static int	clockmatch(device_t, cfdata_t, void *);
@@ -482,7 +482,7 @@ atari_rtc_set(todr_chip_handle_t todr, struct clock_ymdhms *dtp)
 /***********************************************************************
  *                   RTC-device support				       *
  ***********************************************************************/
-int
+static int
 rtcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int			unit = minor(dev);
@@ -498,7 +498,7 @@ rtcopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 rtcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int			unit = minor(dev);
@@ -508,7 +508,7 @@ rtcclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 rtcread(dev_t dev, struct uio *uio, int flags)
 {
 	mc_todregs		clkregs;
@@ -546,7 +546,7 @@ twodigits(char *buffer, int pos)
 	return result;
 }
 
-int
+static int
 rtcwrite(dev_t dev, struct uio *uio, int flags)
 {
 	mc_todregs		clkregs;

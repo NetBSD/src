@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.92 2022/05/15 20:37:51 andvar Exp $	*/
+/*	$NetBSD: fd.c,v 1.93 2022/06/26 06:25:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.92 2022/05/15 20:37:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.93 2022/06/26 06:25:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,12 +193,12 @@ static short	def_type = 0;		/* Reflects config-switches	*/
 
 typedef void	(*FPV)(void *);
 
-dev_type_open(fdopen);
-dev_type_close(fdclose);
-dev_type_read(fdread);
-dev_type_write(fdwrite);
-dev_type_ioctl(fdioctl);
-dev_type_strategy(fdstrategy);
+static dev_type_open(fdopen);
+static dev_type_close(fdclose);
+static dev_type_read(fdread);
+static dev_type_write(fdwrite);
+static dev_type_ioctl(fdioctl);
+static dev_type_strategy(fdstrategy);
 
 /*
  * Private drive functions....
@@ -424,7 +424,7 @@ fdattach(device_t parent, device_t self, void *aux)
 	disk_attach(&sc->dkdev);
 }
 
-int
+static int
 fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct fd_softc *sc;
@@ -465,7 +465,7 @@ fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
  *	partition 0: 360Kb
  *	partition 1: 780Kb
  */
-int
+static int
 fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc	*sc;
@@ -564,7 +564,7 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc	*sc;
@@ -580,7 +580,7 @@ fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 	return 0;
 }
 
-void
+static void
 fdstrategy(struct buf *bp)
 {
 	struct fd_softc *sc;
@@ -648,14 +648,14 @@ done:
 	biodone(bp);
 }
 
-int
+static int
 fdread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return physio(fdstrategy, NULL, dev, B_READ, fdminphys, uio);
 }
 
-int
+static int
 fdwrite(dev_t dev, struct uio *uio, int flags)
 {
 
