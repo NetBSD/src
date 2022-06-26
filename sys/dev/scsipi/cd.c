@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.353 2021/10/12 08:36:29 andvar Exp $	*/
+/*	$NetBSD: cd.c,v 1.354 2022/06/26 21:00:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.353 2021/10/12 08:36:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.354 2022/06/26 21:00:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2461,7 +2461,7 @@ mmc_profile2class(uint16_t mmc_profile)
 		return MMC_CLASS_DVD;
 	case 0x40 : /* BD-ROM  */
 	case 0x41 : /* BD-R Sequential recording (SRM) */
-	case 0x42 : /* BD-R Ramdom Recording (RRM) */
+	case 0x42 : /* BD-R Random Recording (RRM) */
 	case 0x43 : /* BD-RE */
 		return MMC_CLASS_BD;
 	}
@@ -3334,7 +3334,7 @@ mmc_do_closetrack(struct scsipi_periph *periph, struct mmc_op *mmc_op)
 	case 0x12 : /* DVD-RAM */
 	case 0x1a : /* DVD+RW  */
 	case 0x2a : /* DVD+RW Dual layer */
-	case 0x42 : /* BD-R Ramdom Recording (RRM) */
+	case 0x42 : /* BD-R Random Recording (RRM) */
 	case 0x43 : /* BD-RE */
 	case 0x52 : /* HD DVD-RW ; DVD-RAM like */
 		return EINVAL;
@@ -3393,7 +3393,7 @@ mmc_do_close_or_finalise(struct scsipi_periph *periph, struct mmc_op *mmc_op)
 	case 0x12 : /* DVD-RAM */
 	case 0x1a : /* DVD+RW  */
 	case 0x2a : /* DVD+RW Dual layer */
-	case 0x42 : /* BD-R Ramdom Recording (RRM) */
+	case 0x42 : /* BD-R Random Recording (RRM) */
 	case 0x43 : /* BD-RE */
 	case 0x52 : /* HD DVD-RW; DVD-RAM like */
 		return EINVAL;
