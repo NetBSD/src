@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.4 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: msvar.h,v 1.5 2022/06/26 06:02:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,17 +32,17 @@
  * define the REL_MOUSE package, as this is the only one used.
  */
 typedef struct {
-	u_char	id;
-	char	dx;
-	char	dy;
+	uint8_t	id;
+	int8_t	dx;
+	int8_t	dy;
 } REL_MOUSE;
 
 #define IS_REL_MOUSE(id)	(((u_int)(id) & 0xF8) == 0xF8)
 #define TIMEOUT_ID		(0xFC)
 
 struct ms_softc {
-	u_char			ms_buttons; /* button states		*/
-	u_char			ms_emul3b;  /* emulate 3rd button	*/
+	uint8_t			ms_buttons; /* button states		*/
+	uint8_t			ms_emul3b;  /* emulate 3rd button	*/
 	struct	evvar		ms_events;  /* event queue state	*/
 	int			ms_dx;	    /* accumulated dx		*/
 	int			ms_dy;	    /* accumulated dy		*/
