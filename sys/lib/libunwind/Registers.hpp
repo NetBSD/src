@@ -945,6 +945,7 @@ enum {
   DWARF_HPPA_R31 = 31,
   DWARF_HPPA_FR4L = 32,
   DWARF_HPPA_FR31H = 87,
+  DWARF_HPPA_SIGRETURN = 89,
 
   REGNO_HPPA_PC = 0,
   REGNO_HPPA_R1 = 1,
@@ -953,13 +954,14 @@ enum {
   REGNO_HPPA_R31 = 31,
   REGNO_HPPA_FR4L = 32,
   REGNO_HPPA_FR31H = 87,
+  REGNO_HPPA_SIGRETURN = 89,
 };
 
 class Registers_HPPA {
 public:
   enum {
     LAST_REGISTER = REGNO_HPPA_FR31H,
-    LAST_RESTORE_REG = REGNO_HPPA_FR31H,
+    LAST_RESTORE_REG = REGNO_HPPA_SIGRETURN,
     RETURN_OFFSET = 0,
     RETURN_MASK = 3,
   };
@@ -971,21 +973,30 @@ public:
       return REGNO_HPPA_R1 + (num - DWARF_HPPA_R1);
     if (num >= DWARF_HPPA_FR4L && num <= DWARF_HPPA_FR31H)
       return REGNO_HPPA_FR4L + (num - DWARF_HPPA_FR31H);
+    if (num == DWARF_HPPA_SIGRETURN)
+      return REGNO_HPPA_SIGRETURN;
     return LAST_REGISTER + 1;
   }
 
   bool validRegister(int num) const {
-    return num >= REGNO_HPPA_PC && num <= REGNO_HPPA_R31;
+    return num >= REGNO_HPPA_PC && num <= REGNO_HPPA_R31) ||
+       num == REGNO_HPPA_SIGRETURN;
   }
 
   uint64_t getRegister(int num) const {
     assert(validRegister(num));
-    return reg[num];
+    if (num == REGNO_HPPA_SIGRETURN)
+      return sigreturn_reg;
+    else
+      return reg[num];
   }
 
   void setRegister(int num, uint64_t value) {
     assert(validRegister(num));
-    reg[num] = value;
+    if (num == REGNO_HPPA_SIGRETURN)
+      sigreturn_reg = value;
+    else
+      reg[num] = value;
   }
 
   uint64_t getIP() const { return reg[REGNO_HPPA_PC]; }
@@ -1011,6 +1022,7 @@ public:
 private:
   uint32_t reg[REGNO_HPPA_R31 + 1];
   uint32_t fpreg[56];
+  uint32_t sigreturn_reg;
 };
 
 enum {
