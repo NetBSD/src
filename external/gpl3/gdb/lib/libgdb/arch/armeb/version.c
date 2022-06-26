@@ -4,5 +4,5 @@
 
 #include "gdbsupport/version.h"
 const char version[] = "11.0.50.20200914-git";
-const char host_name[] = "armeb--netbsdelf";
-const char target_name[] = "armeb--netbsdelf";
+const char host_name[] = "armeb--netbsdelf-eabi";
+const char target_name[] = "armeb--netbsdelf-eabi";
