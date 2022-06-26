@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.54 2022/06/25 16:09:28 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.55 2022/06/26 04:45:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.54 2022/06/25 16:09:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.55 2022/06/26 04:45:30 tsutsui Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -435,11 +435,12 @@ kbdintr(int sr)
 	rndstat = stat;
 	while ((stat & (A_RXRDY | A_OE | A_PE)) != 0) {
 		got_char = true;
-		code = KBD->ac_da;
-		if ((stat & (A_OE | A_PE)) == 0) {
+		if ((KBD->ac_cs & (A_OE | A_PE)) == 0) {
+			code = KBD->ac_da;
 			kbd_ring[kbd_rbput++ & KBD_RING_MASK] = code;
 		} else {
 			/* Silently ignore errors */
+			code = KBD->ac_da;
 		}
 		stat = KBD->ac_cs;
 	}
