@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2020/07/26 15:38:22 nia Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2022/06/27 18:48:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,12 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2020/07/26 15:38:22 nia Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2022/06/27 18:48:49 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
 #include <curses.h>
+#include <string.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
