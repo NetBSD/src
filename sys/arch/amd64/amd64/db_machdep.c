@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.12 2022/06/26 22:31:12 riastradh Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.13 2022/06/27 23:36:48 riastradh Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,7 +26,7 @@
  * rights to redistribute these changes.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.12 2022/06/26 22:31:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.13 2022/06/27 23:36:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	    case SYSCALL:
 		tf = (struct trapframe *)argp;
 		syscallno = db_get_value((long)&tf->tf_rax, 8, false);
-		if (syscallno == SYS_syscall) {
+		if (syscallno == SYS_syscall || syscallno == SYS___syscall) {
 			syscallno = db_get_value((long)&tf->tf_rdi, 8, false);
 			(*pr)("--- syscall (number %"DDB_EXPR_FMT"u"
 			    " via SYS_syscall) ---\n",
