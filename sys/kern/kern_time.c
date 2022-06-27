@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.215 2022/06/26 22:31:58 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.216 2022/06/27 00:34:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.215 2022/06/26 22:31:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.216 2022/06/27 00:34:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -851,10 +851,18 @@ itimer_callout(void *arg)
 	} else {
 		getnanotime(&now);
 	}
+
 	backwards = (timespeccmp(&it->it_time.it_value, &now, >));
-	timespecadd(&it->it_time.it_value, &it->it_time.it_interval, &next);
+
+	/* Nonnegative interval guaranteed by itimerfix.  */
+	KASSERT(it->it_time.it_interval.tv_sec >= 0);
+	KASSERT(it->it_time.it_interval.tv_nsec >= 0);
+
 	/* Handle the easy case of non-overflown timers first. */
-	if (!backwards && timespeccmp(&next, &now, >)) {
+	if (!backwards &&
+	    timespecaddok(&it->it_time.it_value, &it->it_time.it_interval)) {
+		timespecadd(&it->it_time.it_value, &it->it_time.it_interval,
+		    &next);
 		it->it_time.it_value = next;
 	} else {
 		now_ns = timespec2ns(&now);
