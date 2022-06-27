@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.87 2022/04/17 13:15:15 riastradh Exp $	*/
+/*	$NetBSD: umidi.c,v 1.88 2022/06/27 18:56:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.87 2022/04/17 13:15:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.88 2022/06/27 18:56:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -739,7 +739,7 @@ alloc_all_endpoints(struct umidi_softc *sc)
 
 	ep = sc->sc_endpoints;
 	for (i = sc->sc_out_num_endpoints+sc->sc_in_num_endpoints; i > 0; i--) {
-		err = alloc_pipe(ep++);
+		err = alloc_pipe(ep);
 		if (err != USBD_NORMAL_COMPLETION) {
 			for (; ep != sc->sc_endpoints; ep--)
 				free_pipe(ep-1);
@@ -747,6 +747,7 @@ alloc_all_endpoints(struct umidi_softc *sc)
 			sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 			break;
 		}
+		ep++;
 	}
 	return err;
 }
