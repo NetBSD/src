@@ -979,7 +979,7 @@ public:
   }
 
   bool validRegister(int num) const {
-    return num >= REGNO_HPPA_PC && num <= REGNO_HPPA_R31) ||
+    return (num >= REGNO_HPPA_PC && num <= REGNO_HPPA_R31) ||
        num == REGNO_HPPA_SIGRETURN;
   }
 
