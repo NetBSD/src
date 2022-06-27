@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.202 2021/10/02 17:37:21 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.203 2022/06/27 04:06:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.202 2021/10/02 17:37:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.203 2022/06/27 04:06:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1627,6 +1627,10 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, enum uio_seg seg,
 		mhdr.msg_controllen = buflen;
 		for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(&mhdr); cmsg;
 		    cmsg = CMSG_NXTHDR(&mhdr, cmsg)) {
+			KASSERT(((char *)cmsg - mtod(m, char *)) <= buflen);
+			if (cmsg->cmsg_len >
+			    buflen - ((char *)cmsg - mtod(m, char *)))
+				break;
 			ktrkuser(mbuftypes[type], cmsg, cmsg->cmsg_len);
 		}
 		return 0;
