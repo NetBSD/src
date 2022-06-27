@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.179 2022/03/12 17:45:53 riastradh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.180 2022/06/27 03:56:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.179 2022/03/12 17:45:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.180 2022/06/27 03:56:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -950,7 +950,8 @@ ktr_kuser(const char *id, const void *addr, size_t len)
 	if (error != 0)
 		return;
 
-	strlcpy(ktp->ktr_id, id, KTR_USER_MAXIDLEN);
+	strncpy(ktp->ktr_id, id, KTR_USER_MAXIDLEN - 1);
+	ktp->ktr_id[KTR_USER_MAXIDLEN - 1] = '\0';
 
 	memcpy(ktp + 1, addr, len);
 
