@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.7 2022/01/30 19:49:30 christos Exp $	*/
+/*	$NetBSD: hp.c,v 1.8 2022/06/27 16:44:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,7 +87,7 @@ tid(void) {
 
 void
 isc_hp_init(int max_threads) {
-	syslog(LOG_ERR, "setting maxthreads to %d from %d", max_threads,
+	syslog(LOG_DEBUG, "setting maxthreads to %d from %d", max_threads,
 	    isc__hp_max_threads);
 	isc__hp_max_threads = max_threads;
 	isc__hp_max_retired = max_threads * HP_MAX_HPS;
@@ -108,7 +108,7 @@ isc_hp_new(isc_mem_t *mctx, size_t max_hps, isc_hp_deletefunc_t *deletefunc) {
 	hp->hp = isc_mem_get(mctx, isc__hp_max_threads * sizeof(hp->hp[0]));
 	hp->rl = isc_mem_get(mctx, isc__hp_max_threads * sizeof(hp->rl[0]));
 
-	syslog(LOG_ERR, "%s: max_hps=%zu max_threads=%d", __func__, max_hps,
+	syslog(LOG_DEBUG, "%s: max_hps=%zu max_threads=%d", __func__, max_hps,
 	    isc__hp_max_threads);
 
 	for (int i = 0; i < isc__hp_max_threads; i++) {
