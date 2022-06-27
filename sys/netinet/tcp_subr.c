@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.289 2021/07/31 20:29:37 andvar Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.290 2022/06/27 01:29:51 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.289 2021/07/31 20:29:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.290 2022/06/27 01:29:51 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1297,8 +1297,7 @@ tcp_drain(void)
 		}
 		if (tp != NULL) {
 			/*
-			 * We may be called from a device's interrupt
-			 * context.  If the tcpcb is already busy,
+			 * If the tcpcb is already busy,
 			 * just bail out now.
 			 */
 			if (tcp_reass_lock_try(tp) == 0)
