@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.146 2022/05/23 19:52:35 andvar Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.147 2022/06/27 22:41:29 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.146 2022/05/23 19:52:35 andvar Exp $
+ * $Id: aic7xxx.c,v 1.147 2022/06/27 22:41:29 andvar Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.146 2022/05/23 19:52:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.147 2022/06/27 22:41:29 andvar Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -3556,7 +3556,7 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 }
 
 /*
- * Process an ingnore wide residue message.
+ * Process an ignore wide residue message.
  */
 static void
 ahc_handle_ign_wide_residue(struct ahc_softc *ahc,
@@ -5942,7 +5942,7 @@ ahc_reset_channel(struct ahc_softc *ahc, char channel, int initiate_reset)
 	 *	 we have run out of ATIO resources to drain that
 	 *	 queue, we may not get them all out here.  Further,
 	 *	 the blocked transactions for the reset channel
-	 *	 should just be killed off, irrespecitve of whether
+	 *	 should just be killed off, irrespective of whether
 	 *	 we are blocked on ATIO resources.  Write a routine
 	 *	 to compact the tqinfifo appropriately.
 	 */

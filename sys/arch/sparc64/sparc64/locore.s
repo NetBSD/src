@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.429 2022/05/22 11:27:34 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.430 2022/06/27 22:41:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1207,7 +1207,7 @@ _C_LABEL(trapbase_sun4v):
 		
 #if 0
 /*
- * If the cleanwin trap handler detects an overfow we come here.
+ * If the cleanwin trap handler detects an overflow we come here.
  * We need to fix up the window registers, switch to the interrupt
  * stack, and then trap to the debugger.
  */
@@ -2013,7 +2013,7 @@ winfixfill:
 	and	%g4, CWP, %g5		! %g4 = %cwp of trap
 	wrpr	%g7, 0, %tt
 	bz,a,pt	%icc, datafault		! We were in user mode -- normal fault
-	 wrpr	%g5, %cwp		! Restore cwp from before fill trap -- regs should now be consisent
+	 wrpr	%g5, %cwp		! Restore cwp from before fill trap -- regs should now be consistent
 
 	/*
 	 * We're in a pickle here.  We were trying to return to user mode
@@ -2037,7 +2037,7 @@ winfixfill:
 	stw	%g7, [%g4]
 #endif
 #if 0 /* Need to switch over to new stuff to fix WDR bug */
-	wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consisent
+	wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consistent
 	wrpr	%g2, %g0, %tl				! Restore trap level -- we need to reuse it
 	set	return_from_trap, %g4			! XXX - need to set %g1 to tstate
 	set	CTX_PRIMARY, %g7
@@ -4193,7 +4193,7 @@ syscall_setup:
 
 	/* see `lwp_trampoline' for the reason for this label */
 return_from_syscall:
-	wrpr	%g0, PSTATE_KERN, %pstate	! Disable intterrupts
+	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
 	wrpr	%g0, 0, %tl			! Return to tl==0
 	b	return_from_trap
 	 nop
@@ -4424,9 +4424,9 @@ sun4v_dev_mondo:
 	mov	0x3d8, %g1			! Dev Mondo Queue Tail
 	ldxa	[%g1] ASI_QUEUE, %g4		! fetch index value
 	cmp	%g2, %g4			! head = queue? 
-	bne,pt 	%xcc, 2f			! unsually not the case
+	bne,pt 	%xcc, 2f			! unusually not the case
 	 nop
-	retry					! unlikely, ingnore interrupt
+	retry					! unlikely, ignore interrupt
 2:	
 	set	CPUINFO_VA, %g3			 ! fetch cpuinfo pa
 	ldx	[%g3 + CI_PADDR], %g3		 ! fetch intstack pa
@@ -5211,7 +5211,7 @@ rft_user:
 
 	/*
 	 * The restore instruction further down may cause the trap level
-	 * to exceede the maximum trap level on sun4v, so a manual fill
+	 * to exceed the maximum trap level on sun4v, so a manual fill
 	 * may be necessary.
 	*/
 
@@ -7755,7 +7755,7 @@ ENTRY(savetstate)
 	 nop
 
 	/*
-	 * Debug stuff.  Resore trap registers from buffer.
+	 * Debug stuff.  Restore trap registers from buffer.
 	 *
 	 *  %o0 = %tl
 	 *  %o1 = *ts
