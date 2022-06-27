@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.16 2022/06/22 14:29:11 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.17 2022/06/27 15:32:30 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.16 2022/06/22 14:29:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.17 2022/06/27 15:32:30 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -587,23 +587,30 @@ struct mfii_device {
 };
 
 static const struct mfii_device mfii_devices[] = {
+	 /* Fusion */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_2208,
 	    &mfii_iop_thunderbolt },
+	/* Fury */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3008,
 	    &mfii_iop_25 },
+	/* Invader */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3108,
 	    &mfii_iop_25 },
+	 /* Crusader */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3404,
-	    &mfii_iop_35 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3504,
-	    &mfii_iop_35 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3408,
-	    &mfii_iop_35 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3508,
 	    &mfii_iop_35 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3416,
 	    &mfii_iop_35 },
+	 /* Ventura */
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3504,
+	    &mfii_iop_35 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3516,
+	    &mfii_iop_35 },
+	 /* Tomcat */
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3408,
+	    &mfii_iop_35 },
+	 /* Harpoon */
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3508,
 	    &mfii_iop_35 }
 };
 
