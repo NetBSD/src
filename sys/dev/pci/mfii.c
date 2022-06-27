@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.17 2022/06/27 15:32:30 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.18 2022/06/27 15:38:19 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.17 2022/06/27 15:32:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.18 2022/06/27 15:38:19 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -595,6 +595,16 @@ static const struct mfii_device mfii_devices[] = {
 	    &mfii_iop_25 },
 	/* Invader */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3108,
+	    &mfii_iop_25 },
+	/* Intruder */
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3316,
+	    &mfii_iop_25 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3324,
+	    &mfii_iop_25 },
+	/* Cutlass */
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_32XX_1,
+	    &mfii_iop_25 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_32XX_2,
 	    &mfii_iop_25 },
 	 /* Crusader */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3404,
