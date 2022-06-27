@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.18 2022/06/27 15:38:19 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.19 2022/06/27 15:55:11 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.18 2022/06/27 15:38:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.19 2022/06/27 15:55:11 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -587,7 +587,7 @@ struct mfii_device {
 };
 
 static const struct mfii_device mfii_devices[] = {
-	 /* Fusion */
+	/* Fusion */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_2208,
 	    &mfii_iop_thunderbolt },
 	/* Fury */
@@ -606,20 +606,20 @@ static const struct mfii_device mfii_devices[] = {
 	    &mfii_iop_25 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_32XX_2,
 	    &mfii_iop_25 },
-	 /* Crusader */
+	/* Crusader */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3404,
 	    &mfii_iop_35 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3416,
 	    &mfii_iop_35 },
-	 /* Ventura */
+	/* Ventura */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3504,
 	    &mfii_iop_35 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3516,
 	    &mfii_iop_35 },
-	 /* Tomcat */
+	/* Tomcat */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3408,
 	    &mfii_iop_35 },
-	 /* Harpoon */
+	/* Harpoon */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3508,
 	    &mfii_iop_35 }
 };
@@ -1009,7 +1009,8 @@ mfii_rescan(device_t self, const char *ifattr, const int *locators)
 	if (sc->sc_child != NULL)
 		return 0;
 
-	sc->sc_child = config_found(self, &sc->sc_chan, scsiprint, CFARGS_NONE);
+	sc->sc_child = config_found(self, &sc->sc_chan, scsiprint,
+	    CFARGS_NONE);
 	return 0;
 }
 
@@ -1063,7 +1064,8 @@ mfii_shutdown(device_t dev, int how)
 		mfii_scrub_ccb(ccb);
 		if (mfii_do_mgmt(sc, ccb, MR_DCMD_CTRL_CACHE_FLUSH, &mbox,
 		    NULL, 0, MFII_DATA_NONE, true)) {
-			aprint_error_dev(dev, "shutdown: cache flush failed\n");
+			aprint_error_dev(dev,
+			    "shutdown: cache flush failed\n");
 			rv = false;
 			goto fail;
 		}
@@ -1202,7 +1204,8 @@ mfii_aen_register(struct mfii_softc *sc)
 	mdm = mfii_dmamem_alloc(sc, sizeof(struct mfi_evt_detail));
 	if (mdm == NULL) {
 		mfii_put_ccb(sc, ccb);
-		aprint_error_dev(sc->sc_dev, "unable to allocate event data\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate event data\n");
 		return (ENOMEM);
 	}
 
@@ -1347,8 +1350,8 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 	if (mfii_mgmt(sc, MR_DCMD_LD_GET_LIST, NULL, &sc->sc_ld_list,
 	    sizeof(sc->sc_ld_list), MFII_DATA_IN, false) != 0) {
 		mutex_exit(&sc->sc_lock);
-		DNPRINTF(MFII_D_MISC, "%s: getting list of logical disks failed\n",
-		    DEVNAME(sc));
+		DNPRINTF(MFII_D_MISC,
+		    "%s: getting list of logical disks failed\n", DEVNAME(sc));
 		return;
 	}
 	mutex_exit(&sc->sc_lock);
@@ -1587,7 +1590,8 @@ mfii_get_info(struct mfii_softc *sc)
 	    sc->sc_info.mci_host.mih_port_count);
 
 	for (i = 0; i < 8; i++)
-		DPRINTF("%.0" PRIx64 " ", sc->sc_info.mci_host.mih_port_addr[i]);
+		DPRINTF("%.0" PRIx64 " ",
+		    sc->sc_info.mci_host.mih_port_addr[i]);
 	DPRINTF("\n");
 
 	DPRINTF("%s: type %.x port_count %d port_addr ",
@@ -1596,7 +1600,8 @@ mfii_get_info(struct mfii_softc *sc)
 	    sc->sc_info.mci_device.mid_port_count);
 
 	for (i = 0; i < 8; i++)
-		DPRINTF("%.0" PRIx64 " ", sc->sc_info.mci_device.mid_port_addr[i]);
+		DPRINTF("%.0" PRIx64 " ",
+		    sc->sc_info.mci_device.mid_port_addr[i]);
 	DPRINTF("\n");
 
 	return (0);
@@ -2037,7 +2042,8 @@ mfii_postq(struct mfii_softc *sc)
 
 	for (;;) {
 		rdp = &postq[sc->sc_reply_postq_index];
-		DNPRINTF(MFII_D_INTR, "%s: mfii_postq index %d flags 0x%x data 0x%x\n",
+		DNPRINTF(MFII_D_INTR,
+		    "%s: mfii_postq index %d flags 0x%x data 0x%x\n",
 		    DEVNAME(sc), sc->sc_reply_postq_index, rdp->reply_flags,
 			rdp->data == 0xffffffff);
 		if ((rdp->reply_flags & MPII_REPLY_DESCR_TYPE_MASK) ==
@@ -2991,7 +2997,8 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 	if (sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth > 1)
 		bv->bv_level *= 10;
 
-	bv->bv_nodisk = sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_no_drv_per_span *
+	bv->bv_nodisk =
+	    sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_no_drv_per_span *
 	    sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_span_depth;
 
 	bv->bv_size = sc->sc_ld_details[i].mld_size * 512; /* bytes per block */
@@ -3189,8 +3196,9 @@ mfii_ioctl_alarm(struct mfii_softc *sc, struct bioc_alarm *ba)
 		break;
 
 	default:
-		DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_alarm biocalarm invalid "
-		    "opcode %x\n", DEVNAME(sc), ba->ba_opcode);
+		DNPRINTF(MFII_D_IOCTL,
+		    "%s: mfii_ioctl_alarm biocalarm invalid opcode %x\n",
+		    DEVNAME(sc), ba->ba_opcode);
 		return (EINVAL);
 	}
 
@@ -3250,8 +3258,9 @@ mfii_ioctl_blink(struct mfii_softc *sc, struct bioc_blink *bb)
 
 	case BIOC_SBALARM:
 	default:
-		DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_blink biocblink invalid "
-		    "opcode %x\n", DEVNAME(sc), bb->bb_status);
+		DNPRINTF(MFII_D_IOCTL,
+		    "%s: mfii_ioctl_blink biocblink invalid opcode %x\n",
+		    DEVNAME(sc), bb->bb_status);
 		goto done;
 	}
 
@@ -3524,7 +3533,8 @@ mfii_ioctl_patrol(struct mfii_softc *sc, struct bioc_patrol *bp)
 				if (bp->bp_autonext < 0)
 					return (EINVAL);
 				else
-					prop.next_exec = time + bp->bp_autonext;
+					prop.next_exec =
+					    time + bp->bp_autonext;
 			}
 			prop.op_mode = MFI_PR_OPMODE_AUTO;
 			break;
@@ -3595,8 +3605,9 @@ mfii_ioctl_patrol(struct mfii_softc *sc, struct bioc_patrol *bp)
 		break;
 
 	default:
-		DNPRINTF(MFII_D_IOCTL, "%s: mfii_ioctl_patrol biocpatrol invalid "
-		    "opcode %x\n", DEVNAME(sc), bp->bp_opcode);
+		DNPRINTF(MFII_D_IOCTL,
+		    "%s: mfii_ioctl_patrol biocpatrol invalid opcode %x\n",
+		    DEVNAME(sc), bp->bp_opcode);
 		return (EINVAL);
 	}
 
@@ -3655,7 +3666,8 @@ mfii_bio_hs(struct mfii_softc *sc, int volid, int type, void *bio_hs)
 	/* offset into hotspare structure */
 	i = volid - cfg->mfc_no_ld;
 
-	DNPRINTF(MFII_D_IOCTL, "%s: mfii_vol_hs i %d volid %d no_ld %d no_hs %d "
+	DNPRINTF(MFII_D_IOCTL,
+	    "%s: mfii_vol_hs i %d volid %d no_ld %d no_hs %d "
 	    "hs %p cfg %p id %02x\n", DEVNAME(sc), i, volid, cfg->mfc_no_ld,
 	    cfg->mfc_no_hs, hs, cfg, hs[i].mhs_pd.mfp_id);
 
@@ -3761,7 +3773,8 @@ mfii_bbu(struct mfii_softc *sc, envsys_data_t *edata)
 		edata->state = ENVSYS_SVALID;
 		return;
 	case 3:
-		edata->value_cur = le16toh(bbu.temperature) * 1000000 + 273150000;
+		edata->value_cur =
+		    le16toh(bbu.temperature) * 1000000 + 273150000;
 		edata->state = ENVSYS_SVALID;
 		return;
 	}
