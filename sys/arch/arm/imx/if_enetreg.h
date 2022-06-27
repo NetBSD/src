@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enetreg.h,v 1.4 2019/11/12 05:09:29 hkenken Exp $	*/
+/*	$NetBSD: if_enetreg.h,v 1.5 2022/06/27 22:41:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -282,7 +282,7 @@ struct enet_txdesc {
 #define TXFLAGS2_EE			__BIT(12)	/* Excess colls Err */
 #define TXFLAGS2_FE			__BIT(11)	/* Frame Error */
 #define TXFLAGS2_LCE			__BIT(10)	/* Late collision Err */
-#define TXFLAGS2_OE			__BIT(9)	/* Overfow Error */
+#define TXFLAGS2_OE			__BIT(9)	/* Overflow Error */
 #define TXFLAGS2_TSE			__BIT(8)	/* Timestamp Error */
 	uint32_t tx__reserved1;
 	uint32_t tx_flags3;

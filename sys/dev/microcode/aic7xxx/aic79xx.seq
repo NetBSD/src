@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.16 2022/01/25 22:01:34 andvar Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.17 2022/06/27 22:41:29 andvar Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -1020,7 +1020,7 @@ mesgin_complete:
 complete_accepted:
 
 	/*
-	 * See if we attempted to deliver a message but the target ingnored us.
+	 * See if we attempted to deliver a message but the target ignored us.
 	 */
 	test	SCB_CONTROL, MK_MESSAGE jz complete_nomsg;
 	SET_SEQINTCODE(MKMSG_FAILED)
