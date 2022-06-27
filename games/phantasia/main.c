@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2022/06/27 22:41:28 andvar Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -964,7 +964,7 @@ genchar(int type)
 static void
 playinit(void)
 {
-	/* catch/ingnore signals */
+	/* catch/ignore signals */
 
 #ifdef	BSD41
 	sigignore(SIGQUIT);
