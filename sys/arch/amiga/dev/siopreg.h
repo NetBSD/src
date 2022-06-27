@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.15 2012/08/24 09:01:22 msaitoh Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.16 2022/06/27 20:28:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -462,7 +462,7 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 #define	SIOP_CTEST4_ZMOD	0x40	/* High-impedance outputs */
 #define	SIOP_CTEST4_SZM		0x20	/* ditto, SCSI "outputs" */
 #ifndef ARCH_720
-#define	SIOP_CTEST4_SLBE	0x10	/* SCSI loobpack enable */
+#define	SIOP_CTEST4_SLBE	0x10	/* SCSI loopback enable */
 #define	SIOP_CTEST4_SFWR	0x08	/* SCSI FIFO write enable (from sodl) */
 #else
 #define	SIOP_CTEST4_SRTM	0x10	/* Shadow Register Test Mode */
