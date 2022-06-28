@@ -1,4 +1,4 @@
-/* $NetBSD: apple_intc.c,v 1.8 2022/05/02 04:39:29 ryo Exp $ */
+/* $NetBSD: apple_intc.c,v 1.9 2022/06/28 10:42:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.8 2022/05/02 04:39:29 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.9 2022/06/28 10:42:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -150,6 +150,7 @@ apple_intc_establish_irq(struct pic_softc *pic, struct intrsource *is)
 static void
 apple_intc_set_priority(struct pic_softc *pic, int ipl)
 {
+	curcpu()->ci_cpl = ipl;
 }
 
 static void
