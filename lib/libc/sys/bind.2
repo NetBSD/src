@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.31 2021/03/28 03:29:31 dholland Exp $
+.\"	$NetBSD: bind.2,v 1.32 2022/06/28 20:24:08 rillig Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)bind.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 27, 2021
+.Dd June 28, 2022
 .Dt BIND 2
 .Os
 .Sh NAME
@@ -133,7 +133,9 @@ The name would reside on a read-only file system.
 .Xr connect 2 ,
 .Xr getsockname 2 ,
 .Xr listen 2 ,
-.Xr socket 2
+.Xr socket 2 ,
+.Xr inet 4 ,
+.Xr inet6 4
 .Sh HISTORY
 The
 .Fn bind
