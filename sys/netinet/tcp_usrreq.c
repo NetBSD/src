@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.230 2021/08/04 08:47:10 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.231 2022/06/28 01:44:19 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.230 2021/08/04 08:47:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.231 2022/06/28 01:44:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1157,6 +1157,16 @@ tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
 		m_freem(m);
 		m_freem(control);
 		return error;
+	}
+	if (tp->t_template == NULL) {
+		/*
+		 * XXX FreeBSD appears to open the connection
+		 * automagically in this case, but the socket address
+		 * isn't passed through here so we can't do that.
+		 */
+		m_freem(m);
+		m_freem(control);
+		return ENOTCONN;
 	}
 
 	ostate = tcp_debug_capture(tp, PRU_SENDOOB);
