@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.353 2022/05/19 04:43:43 buhrow Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.354 2022/06/28 06:24:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.353 2022/05/19 04:43:43 buhrow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.354 2022/06/28 06:24:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1080,7 +1080,7 @@ bge_read_eeprom(struct bge_softc *sc, void *destv, int off, int cnt)
 static int
 bge_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
-	struct bge_softc *sc = device_private(dev);
+	struct bge_softc * const sc = device_private(dev);
 	uint32_t data;
 	uint32_t autopoll;
 	int rv = 0;
@@ -1134,7 +1134,7 @@ bge_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 static int
 bge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
-	struct bge_softc *sc = device_private(dev);
+	struct bge_softc * const sc = device_private(dev);
 	uint32_t data, autopoll;
 	int rv = 0;
 	int i;
@@ -1194,7 +1194,7 @@ bge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 static void
 bge_miibus_statchg(struct ifnet *ifp)
 {
-	struct bge_softc *sc = ifp->if_softc;
+	struct bge_softc * const sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
 	uint32_t mac_mode, rx_mode, tx_mode;
 
@@ -1251,7 +1251,7 @@ bge_miibus_statchg(struct ifnet *ifp)
 static void
 bge_set_thresh(struct ifnet *ifp, int lvl)
 {
-	struct bge_softc *sc = ifp->if_softc;
+	struct bge_softc * const sc = ifp->if_softc;
 	int s;
 
 	/* For now, just save the new Rx-intr thresholds and record
@@ -1428,11 +1428,8 @@ static void
 bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct bge_jpool_entry *entry;
-	struct bge_softc *sc;
+	struct bge_softc * const sc = arg;
 	int i, s;
-
-	/* Extract the softc struct pointer. */
-	sc = (struct bge_softc *)arg;
 
 	if (sc == NULL)
 		panic("bge_jfree: can't find softc pointer!");
@@ -1722,7 +1719,7 @@ bge_free_tx_ring(struct bge_softc *sc, bool disable)
 static int
 bge_init_tx_ring(struct bge_softc *sc)
 {
-	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	int i;
 	bus_dmamap_t dmamap, dmamap32;
 	bus_size_t maxsegsz;
@@ -1800,8 +1797,8 @@ alloc_done:
 static void
 bge_setmulti(struct bge_softc *sc)
 {
-	struct ethercom		*ec = &sc->ethercom;
-	struct ifnet		*ifp = &ec->ec_if;
+	struct ethercom * const ec = &sc->ethercom;
+	struct ifnet * const ifp = &ec->ec_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	uint32_t		hashes[4] = { 0, 0, 0, 0 };
@@ -2310,7 +2307,7 @@ bge_blockinit(struct bge_softc *sc)
 {
 	volatile struct bge_rcb	 *rcb;
 	bus_size_t rcb_addr;
-	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	bge_hostaddr taddr;
 	uint32_t	dmactl, rdmareg, mimode, val;
 	int		i, limit;
@@ -3177,8 +3174,8 @@ bge_probe(device_t parent, cfdata_t match, void *aux)
 static void
 bge_attach(device_t parent, device_t self, void *aux)
 {
-	struct bge_softc	*sc = device_private(self);
-	struct pci_attach_args	*pa = aux;
+	struct bge_softc * const sc = device_private(self);
+	struct pci_attach_args * const pa = aux;
 	prop_dictionary_t dict;
 	const struct bge_product *bp;
 	const struct bge_revision *br;
@@ -4031,8 +4028,8 @@ again:
 static int
 bge_detach(device_t self, int flags __unused)
 {
-	struct bge_softc *sc = device_private(self);
-	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct bge_softc * const sc = device_private(self);
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	int s;
 
 	s = splnet();
@@ -4656,13 +4653,11 @@ bge_txeof(struct bge_softc *sc)
 static int
 bge_intr(void *xsc)
 {
-	struct bge_softc *sc;
-	struct ifnet *ifp;
+	struct bge_softc * const sc = xsc;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	uint32_t pcistate, statusword, statustag;
 	uint32_t intrmask = BGE_PCISTATE_INTR_NOT_ACTIVE;
 
-	sc = xsc;
-	ifp = &sc->ethercom.ec_if;
 
 	/* 5717 and newer chips have no BGE_PCISTATE_INTR_NOT_ACTIVE bit */
 	if (BGE_IS_5717_PLUS(sc))
@@ -4775,8 +4770,8 @@ bge_asf_driver_up(struct bge_softc *sc)
 static void
 bge_tick(void *xsc)
 {
-	struct bge_softc *sc = xsc;
-	struct mii_data *mii = &sc->bge_mii;
+	struct bge_softc * const sc = xsc;
+	struct mii_data * const mii = &sc->bge_mii;
 	int s;
 
 	s = splnet();
@@ -4815,7 +4810,7 @@ bge_tick(void *xsc)
 static void
 bge_stats_update_regs(struct bge_softc *sc)
 {
-	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct ifnet *const ifp = &sc->ethercom.ec_if;
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
@@ -4872,7 +4867,7 @@ bge_stats_update_regs(struct bge_softc *sc)
 static void
 bge_stats_update(struct bge_softc *sc)
 {
-	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	bus_size_t stats = BGE_MEMWIN_START + BGE_STATS_BLOCK;
 
 #define READ_STAT(sc, stats, stat) \
@@ -5087,7 +5082,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 static int
 bge_encap(struct bge_softc *sc, struct mbuf *m_head, uint32_t *txidx)
 {
-	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	struct bge_tx_bd	*f, *prev_f;
 	uint32_t		frag, cur;
 	uint16_t		csum_flags = 0;
@@ -5423,14 +5418,12 @@ fail_unload:
 static void
 bge_start(struct ifnet *ifp)
 {
-	struct bge_softc *sc;
+	struct bge_softc * const sc = ifp->if_softc;
 	struct mbuf *m_head = NULL;
 	struct mbuf *m;
 	uint32_t prodidx;
 	int pkts = 0;
 	int error;
-
-	sc = ifp->if_softc;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -5509,7 +5502,7 @@ bge_start(struct ifnet *ifp)
 static int
 bge_init(struct ifnet *ifp)
 {
-	struct bge_softc *sc = ifp->if_softc;
+	struct bge_softc * const sc = ifp->if_softc;
 	const uint16_t *m;
 	uint32_t mode, reg;
 	int s, error = 0;
@@ -5713,9 +5706,9 @@ out:
 static int
 bge_ifmedia_upd(struct ifnet *ifp)
 {
-	struct bge_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->bge_mii;
-	struct ifmedia *ifm = &sc->bge_ifmedia;
+	struct bge_softc * const sc = ifp->if_softc;
+	struct mii_data * const mii = &sc->bge_mii;
+	struct ifmedia * const ifm = &sc->bge_ifmedia;
 	int rc;
 
 	/* If this is a 1000baseX NIC, enable the TBI port. */
@@ -5813,8 +5806,8 @@ bge_ifmedia_upd(struct ifnet *ifp)
 static void
 bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct bge_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->bge_mii;
+	struct bge_softc * const sc = ifp->if_softc;
+	struct mii_data * const mii = &sc->bge_mii;
 
 	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		ifmr->ifm_status = IFM_AVALID;
@@ -5839,8 +5832,8 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 static int
 bge_ifflags_cb(struct ethercom *ec)
 {
-	struct ifnet *ifp = &ec->ec_if;
-	struct bge_softc *sc = ifp->if_softc;
+	struct ifnet * const ifp = &ec->ec_if;
+	struct bge_softc * const sc = ifp->if_softc;
 	u_short change = ifp->if_flags ^ sc->bge_if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0)
@@ -5862,8 +5855,8 @@ bge_ifflags_cb(struct ethercom *ec)
 static int
 bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
-	struct bge_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
+	struct bge_softc * const sc = ifp->if_softc;
+	struct ifreq * const ifr = (struct ifreq *) data;
 	int s, error = 0;
 	struct mii_data *mii;
 
@@ -5921,10 +5914,8 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 static void
 bge_watchdog(struct ifnet *ifp)
 {
-	struct bge_softc *sc;
+	struct bge_softc * const sc = ifp->if_softc;
 	uint32_t status;
-
-	sc = ifp->if_softc;
 
 	/* If pause frames are active then don't reset the hardware. */
 	if ((CSR_READ_4(sc, BGE_RX_MODE) & BGE_RXMODE_FLOWCTL_ENABLE) != 0) {
@@ -5991,7 +5982,7 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 static void
 bge_stop(struct ifnet *ifp, int disable)
 {
-	struct bge_softc *sc = ifp->if_softc;
+	struct bge_softc * const sc = ifp->if_softc;
 
 	if (disable) {
 		sc->bge_detaching = 1;
@@ -6096,8 +6087,8 @@ bge_stop(struct ifnet *ifp, int disable)
 static void
 bge_link_upd(struct bge_softc *sc)
 {
-	struct ifnet *ifp = &sc->ethercom.ec_if;
-	struct mii_data *mii = &sc->bge_mii;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
+	struct mii_data * const mii = &sc->bge_mii;
 	uint32_t status;
 	uint16_t phyval;
 	int link;
