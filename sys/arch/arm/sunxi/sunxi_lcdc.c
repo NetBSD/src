@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.14 2021/12/19 11:01:10 riastradh Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.15 2022/06/28 05:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.14 2021/12/19 11:01:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.15 2022/06/28 05:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,6 +109,7 @@ enum tcon_type {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-h3-tcon-tv",	.value = TYPE_TCON1 },
+	{ .compat = "allwinner,sun8i-v3s-tcon",		.value = TYPE_TCON0 },
 	{ .compat = "allwinner,sun50i-a64-tcon-lcd",	.value = TYPE_TCON0 },
 	{ .compat = "allwinner,sun50i-a64-tcon-tv",	.value = TYPE_TCON1 },
 	DEVICE_COMPAT_EOL
