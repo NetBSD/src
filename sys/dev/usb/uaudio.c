@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.173 2021/11/13 10:34:00 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.174 2022/06/28 05:22:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.173 2021/11/13 10:34:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.174 2022/06/28 05:22:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1583,7 +1583,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 				         asf1d->bDescriptorType, asf1d->bDescriptorSubtype);
 				if (asf1d->bFormatType != FORMAT_TYPE_I) {
 					aprint_normal_dev(sc->sc_dev,
-					    "ignored setting with type %d format\n", UGETW(asid->wFormatTag));
+					    "ignored setting with type %d format\n", asf1d->bFormatType);
 					return USBD_NORMAL_COMPLETION;
 				}
 				break;
