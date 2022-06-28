@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.63 2020/05/17 19:34:07 ad Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.64 2022/06/28 00:13:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.63 2020/05/17 19:34:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.64 2022/06/28 00:13:48 riastradh Exp $");
 
 /*
  * File system transaction operations.
@@ -462,7 +462,8 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 	if (do_alloc) {
 		if (__predict_false(fli == NULL))
 			fli = fstrans_alloc_lwp_info(mp);
-		KASSERT(fli != NULL && !fli->fli_mountinfo->fmi_gone);
+		KASSERT(fli != NULL);
+		KASSERT(!fli->fli_mountinfo->fmi_gone);
 	} else {
 		KASSERT(fli != NULL);
 	}
