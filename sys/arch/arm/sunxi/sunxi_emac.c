@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.35 2021/12/31 14:25:22 riastradh Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.36 2022/06/28 05:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.35 2021/12/31 14:25:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.36 2022/06/28 05:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -134,6 +134,7 @@ enum sunxi_emac_type {
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-a83t-emac",	.value = EMAC_A83T },
 	{ .compat = "allwinner,sun8i-h3-emac",		.value = EMAC_H3 },
+	{ .compat = "allwinner,sun8i-v3s-emac",		.value = EMAC_H3 },
 	{ .compat = "allwinner,sun50i-a64-emac",	.value = EMAC_A64 },
 	{ .compat = "allwinner,sun50i-h6-emac",		.value = EMAC_H6 },
 	DEVICE_COMPAT_EOL

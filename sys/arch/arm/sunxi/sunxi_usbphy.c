@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.16 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.17 2022/06/28 05:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.16 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.17 2022/06/28 05:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,6 +91,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun7i-a20-usb-phy",	.value = USBPHY_A20 },
 	{ .compat = "allwinner,sun8i-a83t-usb-phy",	.value = USBPHY_A83T },
 	{ .compat = "allwinner,sun8i-h3-usb-phy",	.value = USBPHY_H3 },
+	{ .compat = "allwinner,sun8i-v3s-usb-phy",	.value = USBPHY_H3 },
 	{ .compat = "allwinner,sun50i-a64-usb-phy",	.value = USBPHY_A64 },
 	{ .compat = "allwinner,sun50i-h6-usb-phy",	.value = USBPHY_H6 },
 	DEVICE_COMPAT_EOL

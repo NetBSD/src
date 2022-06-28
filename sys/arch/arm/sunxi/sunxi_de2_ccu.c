@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_de2_ccu.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_de2_ccu.c,v 1.8 2022/06/28 05:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_de2_ccu.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_de2_ccu.c,v 1.8 2022/06/28 05:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,6 +99,8 @@ static const struct sunxi_de2_ccu_config sun50i_a64_de2_config = {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-h3-de2-clk",
+	  .data = &sun8i_h3_de2_config },
+	{ .compat = "allwinner,sun8i-v3s-de2-clk",
 	  .data = &sun8i_h3_de2_config },
 	{ .compat = "allwinner,sun50i-a64-de2-clk",
 	  .data = &sun50i_a64_de2_config },

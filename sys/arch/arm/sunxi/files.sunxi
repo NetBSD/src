@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.70 2021/11/07 17:13:12 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.71 2022/06/28 05:19:03 skrll Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -137,6 +137,7 @@ file	arch/arm/sunxi/sun6i_a31_gpio.c		sunxi_gpio & soc_sun6i_a31
 file	arch/arm/sunxi/sun7i_a20_gpio.c		sunxi_gpio & soc_sun7i_a20
 file	arch/arm/sunxi/sun8i_a83t_gpio.c	sunxi_gpio & soc_sun8i_a83t
 file	arch/arm/sunxi/sun8i_h3_gpio.c		sunxi_gpio & soc_sun8i_h3
+file	arch/arm/sunxi/sun8i_v3s_gpio.c		sunxi_gpio & soc_sun8i_v3s
 file	arch/arm/sunxi/sun9i_a80_gpio.c		sunxi_gpio & soc_sun9i_a80
 file	arch/arm/sunxi/sun50i_a64_gpio.c	sunxi_gpio & soc_sun50i_a64
 file	arch/arm/sunxi/sun50i_h6_gpio.c		sunxi_gpio & soc_sun50i_h6
