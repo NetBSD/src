@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.107 2022/04/02 11:16:07 skrll Exp $
+#	$NetBSD: GENERIC,v 1.108 2022/06/28 05:19:03 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -26,6 +26,7 @@ options 	SOC_SUN6I_A31
 options 	SOC_SUN7I_A20
 options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
+options 	SOC_SUN8I_V3S
 options 	SOC_SUN9I_A80
 options 	SOC_TEGRA124
 options 	SOC_VIRT

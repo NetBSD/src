@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.45 2021/07/31 11:34:40 tnn Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.46 2022/06/28 05:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.45 2021/07/31 11:34:40 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.46 2022/06/28 05:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -490,6 +490,7 @@ static const struct arm_platform sun8i_platform = {
 
 ARM_PLATFORM(sun8i_h2plus, "allwinner,sun8i-h2-plus", &sun8i_platform);
 ARM_PLATFORM(sun8i_h3, "allwinner,sun8i-h3", &sun8i_platform);
+ARM_PLATFORM(sun8i_v3s, "allwinner,sun8i-v3s", &sun8i_platform);
 
 static const struct arm_platform sun8i_a83t_platform = {
 	.ap_devmap = sun8i_a83t_platform_devmap,

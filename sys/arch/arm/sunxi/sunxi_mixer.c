@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.18 2021/12/19 11:01:10 riastradh Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.19 2022/06/28 05:19:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.18 2021/12/19 11:01:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.19 2022/06/28 05:19:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -202,6 +202,8 @@ struct sunxi_mixer_compat_data mixer1_data = {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun8i-h3-de2-mixer-0",
+	  .data = &mixer0_data },
+	{ .compat = "allwinner,sun8i-v3s-de2-mixer",
 	  .data = &mixer0_data },
 	{ .compat = "allwinner,sun50i-a64-de2-mixer-0",
 	  .data = &mixer0_data },
