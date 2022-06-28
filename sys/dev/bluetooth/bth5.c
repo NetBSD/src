@@ -1,4 +1,4 @@
-/*	$NetBSD: bth5.c,v 1.6 2019/11/16 22:06:49 mlelstv Exp $	*/
+/*	$NetBSD: bth5.c,v 1.7 2022/06/28 13:25:36 plunky Exp $	*/
 /*
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.6 2019/11/16 22:06:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bth5.c,v 1.7 2022/06/28 13:25:36 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -392,8 +392,6 @@ bth5open(dev_t device __unused, struct tty *tp)
 		}
 	}
 
-	KASSERT(tp->t_oproc != NULL);
-
 	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < bthfive_cd.cd_ndevs; unit++)
 		if (device_lookup(&bthfive_cd, unit) == NULL)
@@ -633,7 +631,7 @@ bth5_slip_transmit(struct tty *tp)
 
 	sc->sc_stats.byte_tx += count;
 
-	if (tp->t_outq.c_cc != 0)
+	if (tp->t_outq.c_cc != 0 && tp->t_oproc != NULL)
 		(*tp->t_oproc)(tp);
 
 	return 0;
