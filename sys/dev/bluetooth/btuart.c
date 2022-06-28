@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.29 2019/01/24 09:33:03 knakahara Exp $	*/
+/*	$NetBSD: btuart.c,v 1.30 2022/06/28 13:25:36 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.29 2019/01/24 09:33:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.30 2022/06/28 13:25:36 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -239,8 +239,6 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 			return EBUSY;
 		}
 	}
-
-	KASSERT(tp->t_oproc != NULL);
 
 	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < btuart_cd.cd_ndevs; unit++)
@@ -543,7 +541,7 @@ btuartstart(struct tty *tp)
 
 	sc->sc_stats.byte_tx += count;
 
-	if (tp->t_outq.c_cc != 0)
+	if (tp->t_outq.c_cc != 0 && tp->t_oproc != NULL)
 		(*tp->t_oproc)(tp);
 
 	return 0;
