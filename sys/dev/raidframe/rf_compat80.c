@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.16 2021/12/11 19:24:21 mrg Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.17 2022/06/28 03:13:27 oster Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -315,11 +315,11 @@ raidframe_ioctl_80(struct raid_softc *rs, u_long cmd, void *data)
 	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80:
 	case RAIDFRAME_GET_INFO80:
 	case RAIDFRAME_GET_COMPONENT_LABEL80:
+	case RAIDFRAME_FAIL_DISK80:
 		if (!rf_inited(rs))
 			return ENXIO;
 		break;
 	case RAIDFRAME_CONFIGURE80:
-	case RAIDFRAME_FAIL_DISK80:
 		break;
 	default:
 		return EPASSTHROUGH;
