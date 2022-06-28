@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.34 2022/06/26 22:31:47 riastradh Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.35 2022/06/28 02:04:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.34 2022/06/26 22:31:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.35 2022/06/28 02:04:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -207,6 +207,7 @@ inittimeleft(struct timespec *ts, struct timespec *sleepts)
 	if (itimespecfix(ts)) {
 		return -1;
 	}
+	KASSERT(ts->tv_sec >= 0);
 	getnanouptime(sleepts);
 	return 0;
 }
@@ -214,15 +215,23 @@ inittimeleft(struct timespec *ts, struct timespec *sleepts)
 int
 gettimeleft(struct timespec *ts, struct timespec *sleepts)
 {
-	struct timespec sleptts;
+	struct timespec now, sleptts;
+
+	KASSERT(ts->tv_sec >= 0);
 
 	/*
 	 * Reduce ts by elapsed time based on monotonic time scale.
 	 */
-	getnanouptime(&sleptts);
-	timespecadd(ts, sleepts, ts);
+	getnanouptime(&now);
+	KASSERT(timespeccmp(sleepts, &now, <=));
+	timespecsub(&now, sleepts, &sleptts);
+	*sleepts = now;
+
+	if (timespeccmp(ts, &sleptts, <=)) { /* timed out */
+		timespecclear(ts);
+		return 0;
+	}
 	timespecsub(ts, &sleptts, ts);
-	*sleepts = sleptts;
 
 	return tstohz(ts);
 }
