@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.59 2022/04/09 23:52:05 riastradh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.60 2022/06/29 22:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.59 2022/04/09 23:52:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.60 2022/06/29 22:27:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,7 @@ state_check:
 		l->l_kpriority = true;
 		sleepq_enter(&sc->sc_sleepq, l, lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, opname, &select_sobj, true);
-		error = sleepq_block(timo, true);
+		error = sleepq_block(timo, true, &select_sobj);
 		if (error != 0) {
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.53 2020/11/01 20:55:15 christos Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.54 2022/06/29 22:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.53 2020/11/01 20:55:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.54 2022/06/29 22:27:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 	KASSERT(mutex_owned(mtx));
 
 	cv_enter(cv, mtx, l, false);
-	(void)sleepq_block(0, false);
+	(void)sleepq_block(0, false, &cv_syncobj);
 	mutex_enter(mtx);
 }
 
@@ -192,7 +192,7 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 	KASSERT(mutex_owned(mtx));
 
 	cv_enter(cv, mtx, l, true);
-	error = sleepq_block(0, true);
+	error = sleepq_block(0, true, &cv_syncobj);
 	mutex_enter(mtx);
 	return error;
 }
@@ -215,7 +215,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	KASSERT(mutex_owned(mtx));
 
 	cv_enter(cv, mtx, l, false);
-	error = sleepq_block(timo, false);
+	error = sleepq_block(timo, false, &cv_syncobj);
 	mutex_enter(mtx);
 	return error;
 }
@@ -240,7 +240,7 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 	KASSERT(mutex_owned(mtx));
 
 	cv_enter(cv, mtx, l, true);
-	error = sleepq_block(timo, true);
+	error = sleepq_block(timo, true, &cv_syncobj);
 	mutex_enter(mtx);
 	return error;
 }

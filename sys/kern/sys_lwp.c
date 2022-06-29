@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.82 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.83 2022/06/29 22:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.82 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.83 2022/06/29 22:27:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,7 +533,7 @@ lwp_park(clockid_t clock_id, int flags, struct timespec *ts)
 	}
 	l->l_biglocks = 0;
 	sleepq_enqueue(NULL, l, "parked", &lwp_park_syncobj, true);
-	error = sleepq_block(timo, true);
+	error = sleepq_block(timo, true, &lwp_park_syncobj);
 	switch (error) {
 	case EWOULDBLOCK:
 		error = ETIMEDOUT;

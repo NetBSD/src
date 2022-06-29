@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.350 2022/03/10 12:21:25 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.351 2022/06/29 22:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.350 2022/03/10 12:21:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.351 2022/06/29 22:27:01 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -188,7 +188,7 @@ tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 	sq = sleeptab_lookup(&sleeptab, ident, &mp);
 	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj, catch_p);
-	return sleepq_block(timo, catch_p);
+	return sleepq_block(timo, catch_p, &sleep_syncobj);
 }
 
 int
@@ -215,7 +215,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj, catch_p);
 	mutex_exit(mtx);
-	error = sleepq_block(timo, catch_p);
+	error = sleepq_block(timo, catch_p, &sleep_syncobj);
 
 	if ((priority & PNORELOCK) == 0)
 		mutex_enter(mtx);
@@ -243,7 +243,7 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	lwp_lock(l);
 	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
 	sleepq_enqueue(NULL, l, wmesg, &kpause_syncobj, intr);
-	error = sleepq_block(timo, intr);
+	error = sleepq_block(timo, intr, &kpause_syncobj);
 	if (mtx != NULL)
 		mutex_enter(mtx);
 
