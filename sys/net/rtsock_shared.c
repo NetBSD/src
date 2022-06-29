@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.20 2022/06/26 21:42:19 riastradh Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.21 2022/06/29 23:15:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.20 2022/06/26 21:42:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.21 2022/06/29 23:15:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -647,6 +647,7 @@ int
 COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 {
 	struct sockproto proto = { .sp_family = PF_XROUTE, };
+	struct rt_xmsghdr hdr;
 	struct rt_xmsghdr *rtm = NULL;
 	struct rt_xmsghdr *old_rtm = NULL, *new_rtm = NULL;
 	struct rtentry *rt = NULL;
@@ -658,7 +659,6 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	int bound = curlwp_bind();
 	bool do_rt_free = false;
 	struct sockaddr_storage netmask;
-	unsigned short msglen;
 
 #define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
 	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
@@ -673,9 +673,8 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		info.rti_info[RTAX_DST] = NULL;
 		senderr(EINVAL);
 	}
-	memcpy(&msglen, &mtod(m, struct rt_xmsghdr *)->rtm_msglen,
-	    sizeof(msglen));
-	if (len != msglen) {
+	m_copydata(m, 0, sizeof(hdr), &hdr);
+	if (len != hdr.rtm_msglen) {
 		info.rti_info[RTAX_DST] = NULL;
 		senderr(EINVAL);
 	}
