@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.204 2022/06/28 11:41:32 riastradh Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.205 2022/06/29 22:27:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.204 2022/06/28 11:41:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.205 2022/06/29 22:27:12 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1041,6 +1041,8 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 	if (SCARG(uap, timeout)) {
 		if ((error = copyin(SCARG(uap, timeout), &ts, sizeof(ts))) != 0)
 			return error;
+		if (ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000L)
+			return EINVAL;
 		getnanotime(&now);
 		if (timespecaddok(&now, &ts)) {
 			timespecadd(&now, &ts, &ts);
