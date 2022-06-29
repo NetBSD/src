@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.32 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.33 2022/06/29 17:59:40 mlelstv Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -43,6 +43,9 @@
 #else
 #define DPRINTF while (0) printf
 #endif
+
+#define KI2C_EXEC_MAX_CMDLEN	32
+#define KI2C_EXEC_MAX_BUFLEN	32
 
 int ki2c_match(device_t, cfdata_t, void *);
 void ki2c_attach(device_t, device_t, void *);
@@ -393,7 +396,7 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	int i;
 	size_t w_len;
 	uint8_t *wp;
-	uint8_t wrbuf[I2C_EXEC_MAX_CMDLEN + I2C_EXEC_MAX_CMDLEN];
+	uint8_t wrbuf[KI2C_EXEC_MAX_CMDLEN + KI2C_EXEC_MAX_CMDLEN];
 	uint8_t channel;
 
 	/*
@@ -402,6 +405,13 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	 * return an error.
 	 */
 	if (cmdlen == 0 && buflen == 0)
+		return -1;
+
+	/*
+	 * Transaction could be much larger now. Bail if it exceeds our
+	 * small combining buffer, we don't expect such devices.
+	 */
+	if (cmdlen + buflen > sizeof(wrbuf))
 		return -1;
 
 	channel = (addr & 0xf80) ? 0x10 : 0x00;
