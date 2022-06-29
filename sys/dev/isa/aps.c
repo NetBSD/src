@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.17 2015/04/23 23:23:00 pgoyette Exp $	*/
+/*	$NetBSD: aps.c,v 1.18 2022/06/29 15:56:58 mlelstv Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.17 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.18 2022/06/29 15:56:58 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,6 +348,7 @@ aps_attach(device_t parent, device_t self, void *aux)
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 			&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			goto out;
 		}
 	}
@@ -361,6 +362,7 @@ aps_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "unable to register with sysmon (%d)\n", i);
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 		goto out;
 	}
 
