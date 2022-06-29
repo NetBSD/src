@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.72 2022/06/29 22:10:43 riastradh Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.73 2022/06/29 22:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.72 2022/06/29 22:10:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.73 2022/06/29 22:27:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -302,14 +302,13 @@ sleepq_uncatch(lwp_t *l)
  *	timo is a timeout in ticks.  timo = 0 specifies an infinite timeout.
  */
 int
-sleepq_block(int timo, bool catch_p)
+sleepq_block(int timo, bool catch_p, struct syncobj *syncobj)
 {
 	int error = 0, sig;
 	struct proc *p;
 	lwp_t *l = curlwp;
 	bool early = false;
 	int biglocks = l->l_biglocks;
-	struct syncobj *syncobj = l->l_syncobj;
 
 	ktrcsw(1, 0, syncobj);
 

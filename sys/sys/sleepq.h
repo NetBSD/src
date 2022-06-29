@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.34 2020/11/01 20:56:13 christos Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.35 2022/06/29 22:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -60,7 +60,7 @@ void	sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
-int	sleepq_block(int, bool);
+int	sleepq_block(int, bool, struct syncobj *);
 
 #ifdef _KERNEL
 typedef union {

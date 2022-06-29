@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.43 2022/05/28 22:08:46 andvar Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.44 2022/06/29 22:27:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.43 2022/05/28 22:08:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.44 2022/06/29 22:27:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -435,7 +435,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	KPREEMPT_DISABLE(l);
 	KASSERT(lock == l->l_mutex);
 	turnstile_lendpri(l);
-	sleepq_block(0, false);
+	sleepq_block(0, false, sobj);
 	l->l_kpribase = obase;
 	KPREEMPT_ENABLE(l);
 }
