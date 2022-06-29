@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.66 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.67 2022/06/29 15:37:25 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.66 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.67 2022/06/29 15:37:25 mlelstv Exp $");
 
 #include "ehci.h"
 
@@ -68,6 +68,7 @@ struct uhci_pci_softc {
 	unsigned		sc_initialized;
 #define		SC_INIT_UHCI	1
 #define		SC_INIT_PMF	2
+#define		SC_INIT_MAPPED	4
 };
 
 static int
@@ -107,6 +108,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
+	sc->sc_initialized = SC_INIT_MAPPED;
 
 	/*
 	 * Disable interrupts, so we don't get any spurious ones.
@@ -174,7 +176,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
-	sc->sc_initialized = SC_INIT_UHCI;
+	sc->sc_initialized |= SC_INIT_UHCI;
 
 #if NEHCI > 0
 	usb_pci_add(&sc->sc_pci, pa, self);
@@ -206,9 +208,12 @@ uhci_pci_detach(device_t self, int flags)
 		pmf_device_deregister(self);
 
 	/* disable interrupts and acknowledge any pending */
-	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
-	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
-	    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
+	if (sc->sc_initialized & SC_INIT_MAPPED) {
+		bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+		bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
+		    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
+	}
+	sc->sc_initialized = 0;
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
