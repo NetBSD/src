@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.67 2021/09/14 22:01:40 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.68 2022/06/29 22:10:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -297,6 +297,8 @@ __END_DECLS
 
 #else
 
+struct syncobj;
+
 void ktrinit(void);
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
@@ -307,7 +309,7 @@ extern int ktrace_on;
 int ktruser(const char *, void *, size_t, int);
 bool ktr_point(int);
 
-void ktr_csw(int, int);
+void ktr_csw(int, int, const struct syncobj *);
 void ktr_emul(void);
 void ktr_geniov(int, enum uio_rw, struct iovec *, size_t, int);
 void ktr_genio(int, enum uio_rw, const void *, size_t, int);
@@ -349,10 +351,10 @@ ktrpoint(int fac)
 }
 
 static __inline void
-ktrcsw(int a, int b)
+ktrcsw(int a, int b, const struct syncobj *c)
 {
 	if (__predict_false(ktrace_on))
-		ktr_csw(a, b);
+		ktr_csw(a, b, c);
 }
 
 static __inline void

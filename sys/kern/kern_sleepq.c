@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.71 2022/04/08 10:17:55 andvar Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.72 2022/06/29 22:10:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.71 2022/04/08 10:17:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.72 2022/06/29 22:10:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -309,8 +309,9 @@ sleepq_block(int timo, bool catch_p)
 	lwp_t *l = curlwp;
 	bool early = false;
 	int biglocks = l->l_biglocks;
+	struct syncobj *syncobj = l->l_syncobj;
 
-	ktrcsw(1, 0);
+	ktrcsw(1, 0, syncobj);
 
 	/*
 	 * If sleeping interruptably, check for pending signals, exits or
@@ -397,7 +398,7 @@ sleepq_block(int timo, bool catch_p)
 		}
 	}
 
-	ktrcsw(0, 0);
+	ktrcsw(0, 0, syncobj);
 	if (__predict_false(biglocks != 0)) {
 		KERNEL_LOCK(biglocks, NULL);
 	}
