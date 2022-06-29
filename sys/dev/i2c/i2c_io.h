@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_io.h,v 1.4 2017/10/28 06:27:32 riastradh Exp $	*/
+/*	$NetBSD: i2c_io.h,v 1.5 2022/06/29 15:34:15 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -99,8 +99,8 @@ typedef struct i2c_ioctl_exec {
 	void *iie_buf;			/* pointer to data buffer */
 	size_t iie_buflen;		/* length of data buffer */
 } i2c_ioctl_exec_t;
-#define	I2C_EXEC_MAX_CMDLEN	32
-#define	I2C_EXEC_MAX_BUFLEN	32
+#define	I2C_EXEC_MAX_CMDLEN	4096
+#define	I2C_EXEC_MAX_BUFLEN	4096
 
 #define	I2C_IOCTL_EXEC		 _IOW('I', 0, i2c_ioctl_exec_t)
 
