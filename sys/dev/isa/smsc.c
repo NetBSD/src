@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.12 2015/04/23 23:23:00 pgoyette Exp $ */
+/*	$NetBSD: smsc.c,v 1.13 2022/06/29 15:56:58 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.12 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.13 2022/06/29 15:56:58 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,6 +217,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 			return;
 		}
@@ -229,6 +230,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	if ((i = sysmon_envsys_register(sc->sc_sme)) != 0) {
 		aprint_error(": unable to register with sysmon (%d)\n", i);
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 		return;
 	}
@@ -255,7 +257,8 @@ smsc_detach(device_t self, int flags)
 {
 	struct smsc_softc *sc = device_private(self);
 
-	sysmon_envsys_unregister(sc->sc_sme);
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 	return 0;
 }

@@ -1,5 +1,5 @@
 /*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
-/*	$NetBSD: finsio_isa.c,v 1.8 2015/04/23 23:23:00 pgoyette Exp $	*/
+/*	$NetBSD: finsio_isa.c,v 1.9 2022/06/29 15:56:58 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 Juan Romero Pardines
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.8 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.9 2022/06/29 15:56:58 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,6 +573,7 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 
 fail:
 	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, FINSIO_DECODE_SIZE);
 }
 
@@ -581,7 +582,8 @@ finsio_isa_detach(device_t self, int flags)
 {
 	struct finsio_softc *sc = device_private(self);
 
-	sysmon_envsys_unregister(sc->sc_sme);
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, FINSIO_DECODE_SIZE);
 	return 0;
 }
