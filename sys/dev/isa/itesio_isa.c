@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.29 2021/07/03 04:44:16 nonaka Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.30 2022/06/29 15:56:58 mlelstv Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.29 2021/07/03 04:44:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.30 2022/06/29 15:56:58 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -311,6 +311,7 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			goto out;
 		}
 	}
@@ -325,6 +326,7 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "unable to register with sysmon (%d)\n", error);
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 		goto out;
 	}
 	sc->sc_hwmon_enabled = true;
