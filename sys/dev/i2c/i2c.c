@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.86 2022/04/01 15:49:12 pgoyette Exp $	*/
+/*	$NetBSD: i2c.c,v 1.87 2022/06/29 15:33:45 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.86 2022/04/01 15:49:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.87 2022/06/29 15:33:45 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -819,7 +819,7 @@ static int
 iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 {
 	i2c_tag_t ic = sc->sc_tag;
-	uint8_t buf[I2C_EXEC_MAX_BUFLEN];
+	uint8_t *buf = NULL;
 	void *cmd = NULL;
 	int error;
 
@@ -849,10 +849,13 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 			goto out;
 	}
 
-	if (iie->iie_buf != NULL && I2C_OP_WRITE_P(iie->iie_op)) {
-		error = copyin(iie->iie_buf, buf, iie->iie_buflen);
-		if (error)
-			goto out;
+	if (iie->iie_buf != NULL) {
+		buf = kmem_alloc(iie->iie_buflen, KM_SLEEP);
+		if (I2C_OP_WRITE_P(iie->iie_op)) {
+			error = copyin(iie->iie_buf, buf, iie->iie_buflen);
+			if (error)
+				goto out;
+		}
 	}
 
 	iic_acquire_bus(ic, 0);
@@ -867,14 +870,17 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 		error = EIO;
 
 out:
+	if (iie->iie_buf != NULL && I2C_OP_READ_P(iie->iie_op))
+		error = copyout(buf, iie->iie_buf, iie->iie_buflen);
+
+	if (buf)
+		kmem_free(buf, iie->iie_buflen);
+
 	if (cmd)
 		kmem_free(cmd, iie->iie_cmdlen);
 
 	if (error)
 		return error;
-
-	if (iie->iie_buf != NULL && I2C_OP_READ_P(iie->iie_op))
-		error = copyout(buf, iie->iie_buf, iie->iie_buflen);
 
 	return error;
 }
