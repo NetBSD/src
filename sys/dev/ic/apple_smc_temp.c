@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_temp.c,v 1.5 2015/04/23 23:23:00 pgoyette Exp $	*/
+/*	$NetBSD: apple_smc_temp.c,v 1.6 2022/06/29 15:58:12 mlelstv Exp $	*/
 
 /*
  * Apple System Management Controller: Temperature Sensors
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.5 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_temp.c,v 1.6 2022/06/29 15:58:12 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,7 +153,6 @@ apple_smc_temp_detach(device_t self, int flags)
 	/* If we registered with sysmon_envsys, unregister.  */
 	if (sc->sc_sme != NULL) {
 		sysmon_envsys_unregister(sc->sc_sme);
-		sc->sc_sme = NULL;
 
 		KASSERT(sc->sc_sensors != NULL);
 		KASSERT(sc->sc_nsensors > 0);
