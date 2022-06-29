@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.14 2022/03/14 12:02:19 riastradh Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.15 2022/06/29 16:33:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.14 2022/03/14 12:02:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.15 2022/06/29 16:33:09 hannken Exp $");
 
 #include <sys/syscall_stats.h>
 #include <sys/syscallvar.h>
@@ -99,9 +99,8 @@ SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
 #endif
 
 	error = trace_enter(code, callp, TRACE_ARGS);
-	if (__predict_false(error != 0))
-		return error;
-	error = sy_call(callp, l, &uap->args, rval);
+	if (__predict_true(error == 0))
+		error = sy_call(callp, l, &uap->args, rval);
 	trace_exit(code, callp, &uap->args, rval, error);
 	CONCAT(SYS_SYSCALL, _biglockcheck)(p, code);
 	return error;
