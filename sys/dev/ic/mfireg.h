@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.21 2022/05/12 12:05:04 msaitoh Exp $ */
+/* $NetBSD: mfireg.h,v 1.22 2022/06/29 13:03:20 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -1267,6 +1267,7 @@ struct mfi_bbu_status {
 #define MFI_BBU_TYPE_IBBU	1
 #define MFI_BBU_TYPE_BBU	2
 #define MFI_BBU_TYPE_IBBU09	5
+#define MFI_BBU_TYPE_CVPM02	6
 	uint8_t			reserved;
 	uint16_t		voltage; /* mV */
 	int16_t			current; /* mA */
