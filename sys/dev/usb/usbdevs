@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.805 2022/06/23 13:19:18 brook Exp $
+$NetBSD: usbdevs,v 1.806 2022/06/29 19:43:04 macallan Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3552,7 +3552,9 @@ product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
 product WACOM XD0912U		0x0043	Intuos2 A4 i-920 XD-0912-U
 product WACOM CTL671		0x0301	CTL-671 Tablet
+product WACOM CTH490K0		0x033c	Intuos Art CTH-490/K0
 product WACOM CTH690K0		0x033e	Intuos Art CTH-690/K0
+product WACOM CTL6100WL		0x0378	Intuos M
 
 /* Weltrend Semiconductor */
 product WELTREND HID		0x2201	HID Device
