@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.356 2022/06/30 16:49:55 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.357 2022/06/30 19:06:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.356 2022/06/30 16:49:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.357 2022/06/30 19:06:35 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1255,7 +1255,8 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 	struct bge_softc * const sc = ifp->if_softc;
 	int s;
 
-	/* For now, just save the new Rx-intr thresholds and record
+	/*
+	 * For now, just save the new Rx-intr thresholds and record
 	 * that a threshold update is pending.  Updating the hardware
 	 * registers here (even at splhigh()) is observed to
 	 * occasionally cause glitches where Rx-interrupts are not
@@ -4664,7 +4665,8 @@ bge_intr(void *xsc)
 	if (BGE_IS_5717_PLUS(sc))
 		intrmask = 0;
 
-	/* It is possible for the interrupt to arrive before
+	/*
+	 * It is possible for the interrupt to arrive before
 	 * the status block is updated prior to the interrupt.
 	 * Reading the PCI State register will confirm whether the
 	 * interrupt is ours and will flush the status block.
@@ -4986,7 +4988,8 @@ bge_compact_dma_runt(struct mbuf *pkt)
 		if (mlen >= 8)
 			continue;
 
-		/* If we get here, mbuf data is too small for DMA engine.
+		/*
+		 * If we get here, mbuf data is too small for DMA engine.
 		 * Try to fix by shuffling data to prev or next in chain.
 		 * If that fails, do a compacting deep-copy of the whole chain.
 		 */
@@ -5011,7 +5014,8 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			m->m_next->m_len -= shortfall;
 			m->m_next->m_data += shortfall;
 		} else if (m->m_next == NULL || 1) {
-			/* Got a runt at the very end of the packet.
+			/*
+			 * Got a runt at the very end of the packet.
 			 * borrow data from the tail of the preceding mbuf and
 			 * update its length in-place. (The original data is
 			 * still valid, so we can do this even if prev is not
