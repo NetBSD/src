@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.177 2021/06/29 10:22:37 nia Exp $
+#	$NetBSD: files.usb,v 1.178 2022/06/30 06:30:44 macallan Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -181,6 +181,11 @@ file	dev/usb/uts.c			uts
 device	uep: wsmousedev, tpcalib
 attach	uep at usbdevif
 file	dev/usb/uep.c			uep			needs-flag
+
+# Wacom Intuos PTS Pen
+device	uintuos: wsmousedev, tpcalib
+attach	uintuos at uhidbus
+file	dev/usb/uintuos.c			uintuos
 
 # Cypress microcontroller based serial adapters
 device	ucycom: hid
