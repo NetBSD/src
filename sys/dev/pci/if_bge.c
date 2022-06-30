@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.354 2022/06/28 06:24:00 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.355 2022/06/30 16:36:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,19 +79,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.354 2022/06/28 06:24:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.355 2022/06/30 16:36:11 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
 #include <sys/callout.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/socket.h>
-#include <sys/sysctl.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/kernel.h>
 #include <sys/rndsource.h>
+#include <sys/socket.h>
+#include <sys/sockio.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
