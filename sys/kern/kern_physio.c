@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.100 2022/03/13 18:37:10 riastradh Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.101 2022/06/30 01:52:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.100 2022/03/13 18:37:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.101 2022/06/30 01:52:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ physio_biodone(struct buf *bp)
 	KASSERT(bp->b_bcount <= todo);
 	KASSERT(bp->b_resid <= bp->b_bcount);
 	if (done == todo)
-		KASSERT(bp->b_error == 0);
+		KASSERTMSG(bp->b_error == 0, "error=%d", bp->b_error);
 #endif /* defined(DIAGNOSTIC) */
 
 	workqueue_enqueue(physio_workqueue, &bp->b_work, NULL);
