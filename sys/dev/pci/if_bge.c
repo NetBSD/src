@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.355 2022/06/30 16:36:11 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.356 2022/06/30 16:49:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.355 2022/06/30 16:36:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.356 2022/06/30 16:49:55 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -5583,8 +5583,6 @@ bge_init(struct ifnet *ifp)
 		splx(s);
 		return error;
 	}
-
-	ifp = &sc->ethercom.ec_if;
 
 	/* 5718 step 25, 57XX step 54 */
 	/* Specify MTU. */
