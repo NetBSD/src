@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.22 2022/04/09 23:45:23 riastradh Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.23 2022/06/30 07:47:07 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.22 2022/04/09 23:45:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.23 2022/06/30 07:47:07 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -69,7 +69,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob,
 }
 
 int
-sleepq_block(int timo, bool catch)
+sleepq_block(int timo, bool catch, struct syncobj *syncobj __unused)
 {
 	struct lwp *l = curlwp;
 	int error = 0;
