@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.464 2022/07/01 17:48:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.465 2022/07/01 19:52:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.464 2022/07/01 17:48:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.465 2022/07/01 19:52:41 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2286,14 +2286,29 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	if (allow_trad && allow_c90 && op == FARG)
 		check_prototype_conversion(arg, nt, ot, tp, tn);
 
-	if (is_integer(nt) && is_integer(ot)) {
-		convert_integer_from_integer(op, arg, nt, ot, tp, tn);
-	} else if (nt == PTR && is_null_pointer(tn)) {
-		/* a null pointer may be assigned to any pointer. */
-	} else if (is_integer(nt) && nt != BOOL && ot == PTR) {
-		convert_integer_from_pointer(op, nt, tp, tn);
-	} else if (nt == PTR && ot == PTR && op == CVT) {
-		convert_pointer_from_pointer(tp, tn);
+	if (nt == BOOL) {
+		/* No further checks. */
+
+	} else if (is_integer(nt)) {
+		if (ot == BOOL) {
+			/* No further checks. */
+		} else if (is_integer(ot)) {
+			convert_integer_from_integer(op, arg, nt, ot, tp, tn);
+		} else if (is_floating(ot)) {
+			/* No further checks. */
+		} else if (ot == PTR) {
+			convert_integer_from_pointer(op, nt, tp, tn);
+		}
+
+	} else if (is_floating(nt)) {
+		/* No further checks. */
+
+	} else if (nt == PTR) {
+		if (is_null_pointer(tn)) {
+			/* a null pointer may be assigned to any pointer. */
+		} else if (ot == PTR && op == CVT) {
+			convert_pointer_from_pointer(tp, tn);
+		}
 	}
 
 	ntn = expr_alloc_tnode();
@@ -2423,9 +2438,6 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 
 	if (op == CVT)
 		return;
-
-	if (allow_c99 && nt == BOOL)
-		return;		/* See C99 6.3.1.2 */
 
 	if (Pflag && pflag && aflag > 0 &&
 	    portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
