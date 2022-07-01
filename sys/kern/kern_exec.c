@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.517 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.518 2022/07/01 01:05:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.517 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.518 2022/07/01 01:05:31 riastradh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2568,7 +2568,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	struct lwp *l2;
 	int error;
 	struct spawn_exec_data *spawn_data;
-	vaddr_t uaddr;
+	vaddr_t uaddr = 0;
 	pid_t pid;
 	bool have_exec_lock = false;
 
@@ -2852,6 +2852,8 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	}
 	mutex_exit(&spawn_data->sed_mtx_child);
 	spawn_exec_data_release(spawn_data);
+	if (uaddr != 0)
+		uvm_uarea_free(uaddr);
 
 	return error;
 }
