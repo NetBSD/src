@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_138.c,v 1.4 2022/07/01 20:35:18 rillig Exp $	*/
+/*	$NetBSD: msg_138.c,v 1.5 2022/07/01 20:53:13 rillig Exp $	*/
 # 3 "msg_138.c"
 
-// Test for message: unknown operand size, op %s [138]
+// Test for message: unknown operand size, op '%s' [138]
 
 /* lint1-extra-flags: -z */
 
@@ -18,10 +18,10 @@ function(_Bool cond, struct incomplete *i1, struct incomplete *i2)
 	/* expect+1: error: cannot initialize 'incomplete struct incomplete' from 'pointer to incomplete struct incomplete' [185] */
 	struct incomplete local = i1;
 
-	/* expect+1: error: unknown operand size, op = [138] */
+	/* expect+1: error: unknown operand size, op '=' [138] */
 	*i1 = *i2;
 
-	/* expect+1: error: unknown operand size, op : [138] */
+	/* expect+1: error: unknown operand size, op ':' [138] */
 	return cond ? *i1 : *i2;
 }
 
