@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.80 2022/06/04 03:31:10 pgoyette Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.81 2022/07/01 01:04:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.80 2022/06/04 03:31:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.81 2022/07/01 01:04:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -744,8 +744,10 @@ sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	case FIOASYNC:
 		if (*(int *)addr) {
-			if (sc->async != 0)
-				return EBUSY;
+			if (sc->async != 0) {
+				error = EBUSY;
+				break;
+			}
 			sc->async = curproc->p_pid;
 			DPRINTF(("%s: FIOASYNC %d\n", __func__,
 			    sc->async));
