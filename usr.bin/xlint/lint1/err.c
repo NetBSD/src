@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.178 2022/07/01 21:25:39 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.179 2022/07/01 21:48:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.178 2022/07/01 21:25:39 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.179 2022/07/01 21:48:05 rillig Exp $");
 #endif
 
 #include <errno.h>
@@ -408,22 +408,7 @@ static const char *const msgs[] = {
 	"non type argument to alignof is a GCC extension",	      /* 349 */
 };
 
-#define	ERR_SETSIZE	1024
-#define __NERRBITS (sizeof(unsigned int))
-
-typedef	struct err_set {
-	unsigned int	errs_bits[(ERR_SETSIZE + __NERRBITS-1) / __NERRBITS];
-} err_set;
-
-#define	ERR_SET(n, p)	\
-	((p)->errs_bits[(n)/__NERRBITS] |= (1 << ((n) % __NERRBITS)))
-#define	ERR_CLR(n, p)	\
-	((p)->errs_bits[(n)/__NERRBITS] &= ~(1 << ((n) % __NERRBITS)))
-#define	ERR_ISSET(n, p)	\
-	(((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS))) != 0)
-#define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
-
-static err_set	msgset;
+static bool	is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
 
 static struct include_level {
 	const char *filename;
@@ -435,17 +420,15 @@ void
 suppress_messages(char *ids)
 {
 	char *ptr, *end;
-	long id;
+	unsigned long id;
 
 	for (ptr = strtok(ids, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
 		errno = 0;
-		id = strtol(ptr, &end, 0);
-		if ((id == TARG_LONG_MIN || id == TARG_LONG_MAX) &&
-		    errno == ERANGE)
-			err(1, "invalid error message id '%s'", ptr);
-		if (*end != '\0' || ptr == end || id < 0 || id >= ERR_SETSIZE)
+		id = strtoul(ptr, &end, 0);
+		if (*end != '\0' || ptr == end ||
+		    id >= sizeof(msgs) / sizeof(msgs[0]))
 			errx(1, "invalid error message id '%s'", ptr);
-		ERR_SET(id, &msgset);
+		is_suppressed[id] = true;
 	}
 }
 
@@ -536,7 +519,7 @@ verror_at(int msgid, const pos_t *pos, va_list ap)
 {
 	const	char *fn;
 
-	if (ERR_ISSET(msgid, &msgset))
+	if (is_suppressed[msgid])
 		return;
 
 	fn = lbasename(pos->p_file);
@@ -552,7 +535,7 @@ vwarning_at(int msgid, const pos_t *pos, va_list ap)
 {
 	const	char *fn;
 
-	if (ERR_ISSET(msgid, &msgset))
+	if (is_suppressed[msgid])
 		return;
 
 	debug_step("%s: lwarn=%d msgid=%d", __func__, lwarn, msgid);
@@ -574,7 +557,7 @@ vmessage_at(int msgid, const pos_t *pos, va_list ap)
 {
 	const char *fn;
 
-	if (ERR_ISSET(msgid, &msgset))
+	if (is_suppressed[msgid])
 		return;
 
 	fn = lbasename(pos->p_file);
