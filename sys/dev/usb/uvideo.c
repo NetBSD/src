@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.82 2022/07/01 01:06:31 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.83 2022/07/01 01:06:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.82 2022/07/01 01:06:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.83 2022/07/01 01:06:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -300,11 +300,11 @@ static struct uvideo_unit *	uvideo_unit_alloc(const uvideo_descriptor_t *);
 static usbd_status		uvideo_unit_init(struct uvideo_unit *,
 						 const uvideo_descriptor_t *);
 static void			uvideo_unit_free(struct uvideo_unit *);
-static usbd_status		uvideo_unit_alloc_controls(struct uvideo_unit *,
+static void			uvideo_unit_alloc_controls(struct uvideo_unit *,
 							   uint8_t,
 							   const uint8_t *);
 static void			uvideo_unit_free_controls(struct uvideo_unit *);
-static usbd_status		uvideo_unit_alloc_sources(struct uvideo_unit *,
+static void			uvideo_unit_alloc_sources(struct uvideo_unit *,
 							  uint8_t,
 							  const uint8_t *);
 static void			uvideo_unit_free_sources(struct uvideo_unit *);
@@ -991,12 +991,12 @@ uvideo_unit_free(struct uvideo_unit *vu)
 	kmem_free(vu, sizeof(*vu));
 }
 
-static usbd_status
+static void
 uvideo_unit_alloc_sources(struct uvideo_unit *vu,
 			  uint8_t nsrcs, const uint8_t *src_ids)
 {
-	vu->vu_nsrcs = nsrcs;
 
+	vu->vu_nsrcs = nsrcs;
 	if (nsrcs == 0) {
 		/* do nothing */
 	} else if (nsrcs == 1) {
@@ -1006,41 +1006,43 @@ uvideo_unit_alloc_sources(struct uvideo_unit *vu,
 		    kmem_alloc(sizeof(*vu->s.vu_src_id_ary) * nsrcs, KM_SLEEP);
 		memcpy(vu->s.vu_src_id_ary, src_ids, nsrcs);
 	}
-
-	return USBD_NORMAL_COMPLETION;
 }
 
 static void
 uvideo_unit_free_sources(struct uvideo_unit *vu)
 {
-	if (vu->vu_nsrcs == 1)
+
+	if (vu->vu_nsrcs <= 1)
 		return;
 
 	kmem_free(vu->s.vu_src_id_ary,
-		  sizeof(*vu->s.vu_src_id_ary) * vu->vu_nsrcs);
-	vu->vu_nsrcs = 0;
+	    sizeof(*vu->s.vu_src_id_ary) * vu->vu_nsrcs);
 	vu->s.vu_src_id_ary = NULL;
+	vu->vu_nsrcs = 0;
 }
 
-static usbd_status
+static void
 uvideo_unit_alloc_controls(struct uvideo_unit *vu, uint8_t size,
 			   const uint8_t *controls)
 {
+
+	vu->vu_control_size = size;
 	if (size == 0)
-		return USBD_INVAL;
+		return;
 
 	vu->vu_controls = kmem_alloc(sizeof(*vu->vu_controls) * size, KM_SLEEP);
-	vu->vu_control_size = size;
 	memcpy(vu->vu_controls, controls, size);
-
-	return USBD_NORMAL_COMPLETION;
 }
 
 static void
 uvideo_unit_free_controls(struct uvideo_unit *vu)
 {
+
+	if (vu->vu_control_size == 0)
+		return;
+
 	kmem_free(vu->vu_controls,
-		  sizeof(*vu->vu_controls) * vu->vu_control_size);
+	    sizeof(*vu->vu_controls) * vu->vu_control_size);
 	vu->vu_controls = NULL;
 	vu->vu_control_size = 0;
 }
