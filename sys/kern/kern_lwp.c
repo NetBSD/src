@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.250 2022/05/22 11:27:36 andvar Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.251 2022/07/01 01:06:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.250 2022/05/22 11:27:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.251 2022/07/01 01:06:04 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1532,7 +1532,7 @@ lwp_find(struct proc *p, lwpid_t id)
  * This happens early in the syscall path, on user trap, and on LWP
  * creation.  A long-running LWP can also voluntarily choose to update
  * its credentials by calling this routine.  This may be called from
- * LWP_CACHE_CREDS(), which checks l->l_cred != p->p_cred beforehand.
+ * LWP_CACHE_CREDS(), which checks l->l_prflag & LPR_CRMOD beforehand.
  */
 void
 lwp_update_creds(struct lwp *l)
