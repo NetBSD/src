@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.205 2022/06/29 22:27:12 riastradh Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.206 2022/07/01 22:30:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.205 2022/06/29 22:27:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.206 2022/07/01 22:30:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -498,7 +498,7 @@ sys_sendto(struct lwp *l, const struct sys_sendto_args *uap,
 		syscallarg(const struct sockaddr *)	to;
 		syscallarg(unsigned int)		tolen;
 	} */
-	struct msghdr	msg;
+	struct msghdr	msg = {0};
 	struct iovec	aiov;
 
 	msg.msg_name = __UNCONST(SCARG(uap, to)); /* XXXUNCONST kills const */
@@ -694,7 +694,7 @@ sys_recvfrom(struct lwp *l, const struct sys_recvfrom_args *uap,
 		syscallarg(struct sockaddr *)	from;
 		syscallarg(unsigned int *)	fromlenaddr;
 	} */
-	struct msghdr	msg;
+	struct msghdr	msg = {0};
 	struct iovec	aiov;
 	int		error;
 	struct mbuf	*from;
