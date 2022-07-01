@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.465 2022/07/01 19:52:41 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.466 2022/07/01 20:53:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.465 2022/07/01 19:52:41 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.466 2022/07/01 20:53:13 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2923,13 +2923,8 @@ warn_incompatible_types(op_t op,
 		/* void type illegal in expression */
 		error(109);
 	} else if (op == ASSIGN) {
-		if (is_struct_or_union(lt) && is_struct_or_union(rt)) {
-			/* assignment of different structures (%s != %s) */
-			error(240, tspec_name(lt), tspec_name(rt));
-		} else {
-			/* cannot assign to '%s' from '%s' */
-			error(171, type_name(ltp), type_name(rtp));
-		}
+		/* cannot assign to '%s' from '%s' */
+		error(171, type_name(ltp), type_name(rtp));
 	} else if (mp->m_binary) {
 		/* operands of '%s' have incompatible types '%s' and '%s' */
 		error(107, mp->m_name, tspec_name(lt), tspec_name(rt));
@@ -3256,7 +3251,7 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 		lint_assert(is_struct_or_union(rt));
 		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
 		if (is_incomplete(ln->tn_type)) {
-			/* unknown operand size, op %s */
+			/* unknown operand size, op '%s' */
 			error(138, op_name(COLON));
 			return NULL;
 		}
@@ -3326,7 +3321,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 				/* cannot return incomplete type */
 				error(212);
 			} else {
-				/* unknown operand size, op %s */
+				/* unknown operand size, op '%s' */
 				error(138, op_name(op));
 			}
 			return NULL;
