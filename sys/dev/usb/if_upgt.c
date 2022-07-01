@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.32 2021/08/21 11:55:25 andvar Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.33 2022/07/01 01:07:32 riastradh Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.32 2021/08/21 11:55:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.33 2022/07/01 01:07:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2374,13 +2374,14 @@ upgt_free_cmd(struct upgt_softc *sc)
 {
 	struct upgt_data *data_cmd = &sc->cmd_data;
 
-	if (data_cmd->xfer != NULL) {
-		usbd_destroy_xfer(data_cmd->xfer);
-		data_cmd->xfer = NULL;
-	}
+	if (data_cmd->xfer == NULL)
+		return;
 
 	mutex_destroy(&sc->sc_mtx);
 	cv_destroy(&sc->sc_cv);
+
+	usbd_destroy_xfer(data_cmd->xfer);
+	data_cmd->xfer = NULL;
 }
 
 static int
