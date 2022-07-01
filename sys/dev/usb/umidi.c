@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.88 2022/06/27 18:56:56 riastradh Exp $	*/
+/*	$NetBSD: umidi.c,v 1.89 2022/07/01 01:08:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.88 2022/06/27 18:56:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.89 2022/07/01 01:08:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -724,8 +724,7 @@ static usbd_status
 alloc_all_endpoints(struct umidi_softc *sc)
 {
 	usbd_status err;
-	struct umidi_endpoint *ep;
-	int i;
+	int i, n;
 
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_FIXED_EP)) {
 		err = alloc_all_endpoints_fixed_ep(sc);
@@ -737,17 +736,16 @@ alloc_all_endpoints(struct umidi_softc *sc)
 	if (err != USBD_NORMAL_COMPLETION)
 		return err;
 
-	ep = sc->sc_endpoints;
-	for (i = sc->sc_out_num_endpoints+sc->sc_in_num_endpoints; i > 0; i--) {
-		err = alloc_pipe(ep);
+	n = sc->sc_out_num_endpoints + sc->sc_in_num_endpoints;
+	for (i = 0; i < n; i++) {
+		err = alloc_pipe(&sc->sc_endpoints[i]);
 		if (err != USBD_NORMAL_COMPLETION) {
-			for (; ep != sc->sc_endpoints; ep--)
-				free_pipe(ep-1);
+			while (i --> 0)
+				free_pipe(&sc->sc_endpoints[i]);
 			kmem_free(sc->sc_endpoints, sc->sc_endpoints_len);
 			sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 			break;
 		}
-		ep++;
 	}
 	return err;
 }
@@ -755,14 +753,15 @@ alloc_all_endpoints(struct umidi_softc *sc)
 static void
 free_all_endpoints(struct umidi_softc *sc)
 {
-	int i;
+	int i, n;
 
 	if (sc->sc_endpoints == NULL) {
 		/* nothing to free */
 		return;
 	}
 
-	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
+	n = sc->sc_in_num_endpoints + sc->sc_out_num_endpoints;
+	for (i = 0; i < n; i++)
 		free_pipe(&sc->sc_endpoints[i]);
 	kmem_free(sc->sc_endpoints, sc->sc_endpoints_len);
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
