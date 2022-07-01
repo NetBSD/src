@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.228 2022/07/01 01:05:21 riastradh Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.229 2022/07/01 09:54:36 prlw1 Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.228 2022/07/01 01:05:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.229 2022/07/01 09:54:36 prlw1 Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -311,8 +311,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		/* We were unable to allocate a process ID. */
 		uvm_uarea_free(uaddr);
 		mutex_enter(p1->p_lock);
-		cred = p1->p_cred;
-		uid = kauth_cred_getuid(cred);
+		uid = kauth_cred_getuid(p1->p_cred);
 		(void)chgproccnt(uid, -1);
 		mutex_exit(p1->p_lock);
 		atomic_dec_uint(&nprocs);
