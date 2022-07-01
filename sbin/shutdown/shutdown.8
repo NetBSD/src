@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.33 2016/09/14 00:16:31 kre Exp $
+.\"	$NetBSD: shutdown.8,v 1.34 2022/07/01 16:45:12 kre Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd September 12, 2016
+.Dd July 1, 2022
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -148,17 +148,22 @@ or a future time in one of two formats:
 .Ar +number ,
 or
 .Ar [[[[[cc]yy]mm]dd]hh]mm ,
-where the century, year, month, day, and hour may be defaulted
+where the century, year, month, day, and hour are two digit decimal
+values, which may be defaulted
 to the current system values.
+The two digit (decimal, even with a leading zero) minute field is
+required in this form.
 The first form brings the system down
 .Ar number
 minutes from the current time; the second brings the system down at the
 absolute time specified.
-If the century is not specified, it defaults to 1900 for years between 69
-and 99, or 2000 for years between 0 and 68.
+If the century is not specified, but the year is,
+the century defaults to 2000 (cc==20, the 21st century)
+for years between 20 and 99,
+or 2100 for years between 0 and 19.
 A leading zero in the
 .Dq yy
-value is
+value (as with all the others) is
 .Em not
 optional.
 .It Ar message ...

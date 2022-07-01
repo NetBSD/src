@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.57 2017/08/07 22:08:12 uwe Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.58 2022/07/01 16:45:12 kre Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.57 2017/08/07 22:08:12 uwe Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.58 2022/07/01 16:45:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -486,10 +486,10 @@ getoffset(char *timearg)
 			lt->tm_year += ATOI2(timearg);
 		} else {
 			yearset = ATOI2(timearg);
-			if (yearset < 69)
-				lt->tm_year = yearset + 2000 - TM_YEAR_BASE;
+			if (yearset < 20)
+				lt->tm_year = yearset + 2100 - TM_YEAR_BASE;
 			else
-				lt->tm_year = yearset + 1900 - TM_YEAR_BASE;
+				lt->tm_year = yearset + 2000 - TM_YEAR_BASE;
 		}
 		/* FALLTHROUGH */
 	case 8:
