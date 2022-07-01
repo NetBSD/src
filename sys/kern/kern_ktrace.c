@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.181 2022/06/29 22:10:43 riastradh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.182 2022/07/01 01:07:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.181 2022/06/29 22:10:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.182 2022/07/01 01:07:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -790,6 +790,7 @@ ktr_psig(int sig, sig_t action, const sigset_t *mask,
 	if (ktealloc(&kte, (void *)&kbuf, l, KTR_PSIG, sizeof(*kbuf)))
 		return;
 
+	memset(&kbuf->kp, 0, sizeof(kbuf->kp));
 	kbuf->kp.signo = (char)sig;
 	kbuf->kp.action = action;
 	kbuf->kp.mask = *mask;
