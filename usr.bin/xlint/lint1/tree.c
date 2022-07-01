@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.463 2022/06/24 21:22:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.464 2022/07/01 17:48:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.463 2022/06/24 21:22:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.464 2022/07/01 17:48:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -78,11 +78,11 @@ static	void	warn_incompatible_pointers(const mod_t *,
 static	bool	has_constant_member(const type_t *);
 static	void	check_prototype_conversion(int, tspec_t, tspec_t, type_t *,
 					   tnode_t *);
-static	void	check_integer_conversion(op_t, int, tspec_t, tspec_t, type_t *,
-					 tnode_t *);
-static	void	check_pointer_integer_conversion(op_t, tspec_t, type_t *,
-						 tnode_t *);
-static	void	check_pointer_conversion(tnode_t *, type_t *);
+static	void	convert_integer_from_integer(op_t, int, tspec_t, tspec_t,
+					     type_t *, tnode_t *);
+static	void	convert_integer_from_pointer(op_t, tspec_t, type_t *,
+					     tnode_t *);
+static	void	convert_pointer_from_pointer(type_t *, tnode_t *);
 static	tnode_t	*build_struct_access(op_t, bool, tnode_t *, tnode_t *);
 static	tnode_t	*build_prepost_incdec(op_t, bool, tnode_t *);
 static	tnode_t	*build_real_imag(op_t, bool, tnode_t *);
@@ -2287,13 +2287,13 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		check_prototype_conversion(arg, nt, ot, tp, tn);
 
 	if (is_integer(nt) && is_integer(ot)) {
-		check_integer_conversion(op, arg, nt, ot, tp, tn);
+		convert_integer_from_integer(op, arg, nt, ot, tp, tn);
 	} else if (nt == PTR && is_null_pointer(tn)) {
 		/* a null pointer may be assigned to any pointer. */
 	} else if (is_integer(nt) && nt != BOOL && ot == PTR) {
-		check_pointer_integer_conversion(op, nt, tp, tn);
+		convert_integer_from_pointer(op, nt, tp, tn);
 	} else if (nt == PTR && ot == PTR && op == CVT) {
-		check_pointer_conversion(tn, tp);
+		convert_pointer_from_pointer(tp, tn);
 	}
 
 	ntn = expr_alloc_tnode();
@@ -2413,12 +2413,9 @@ can_represent(const type_t *tp, const tnode_t *tn)
 	return false;
 }
 
-/*
- * Print warnings for conversions of integer types which may cause problems.
- */
 static void
-check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
-			 tnode_t *tn)
+convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
+			     type_t *tp, tnode_t *tn)
 {
 
 	if (tn->tn_op == CON)
@@ -2467,11 +2464,8 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	}
 }
 
-/*
- * Print warnings for dubious conversions of pointer to integer.
- */
 static void
-check_pointer_integer_conversion(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
+convert_integer_from_pointer(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 {
 
 	if (tn->tn_op == CON)
@@ -2551,11 +2545,8 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	return portable_size_in_bits(nst) != portable_size_in_bits(ost);
 }
 
-/*
- * Warn about questionable pointer conversions.
- */
 static void
-check_pointer_conversion(tnode_t *tn, type_t *ntp)
+convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
 {
 	const type_t *nstp, *otp, *ostp;
 	tspec_t nst, ost;
