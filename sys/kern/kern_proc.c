@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.267 2022/05/07 19:44:40 mrg Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.268 2022/07/01 01:06:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.267 2022/05/07 19:44:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.268 2022/07/01 01:06:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1826,8 +1826,7 @@ proc_crmod_enter(void)
 /*
  * Set in a new process credential, and drop the write lock.  The credential
  * must have a reference already.  Optionally, free a no-longer required
- * credential.  The scheduler also needs to inspect p_cred, so we also
- * briefly acquire the sched state mutex.
+ * credential.
  */
 void
 proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
