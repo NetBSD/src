@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.216 2022/06/27 00:34:24 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.217 2022/07/01 21:22:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.216 2022/06/27 00:34:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.217 2022/07/01 21:22:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -192,7 +192,7 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 	 * unreasonable system behaviour.
 	 */
 	if (ts->tv_sec < 0 || ts->tv_sec > (1LL << 36))
-		return (EINVAL);
+		return EINVAL;
 
 	nanotime(&now);
 	timespecsub(ts, &now, &delta);
@@ -200,12 +200,12 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 	if (check_kauth && kauth_authorize_system(kauth_cred_get(),
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, __UNCONST(ts),
 	    &delta, KAUTH_ARG(check_kauth ? false : true)) != 0) {
-		return (EPERM);
+		return EPERM;
 	}
 
 #ifdef notyet
 	if ((delta.tv_sec < 86400) && securelevel > 0) { /* XXX elad - notyet */
-		return (EPERM);
+		return EPERM;
 	}
 #endif
 
@@ -230,13 +230,13 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 	}
 	itimer_unlock();
 
-	return (0);
+	return 0;
 }
 
 int
 settime(struct proc *p, struct timespec *ts)
 {
-	return (settime1(p, ts, true));
+	return settime1(p, ts, true);
 }
 
 /* ARGSUSED */
@@ -289,12 +289,12 @@ clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp,
 	switch (clock_id) {
 	case CLOCK_REALTIME:
 		if ((error = settime1(p, tp, check_kauth)) != 0)
-			return (error);
+			return error;
 		break;
 	case CLOCK_MONOTONIC:
-		return (EINVAL);	/* read-only clock */
+		return EINVAL;	/* read-only clock */
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	return 0;
@@ -354,7 +354,7 @@ sys___nanosleep50(struct lwp *l, const struct sys___nanosleep50_args *uap,
 
 	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
 	if (error)
-		return (error);
+		return error;
 
 	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqt,
 	    SCARG(uap, rmtp) ? &rmt : NULL);
@@ -507,7 +507,7 @@ sys___gettimeofday50(struct lwp *l, const struct sys___gettimeofday50_args *uap,
 		microtime(&atv);
 		error = copyout(&atv, SCARG(uap, tp), sizeof(atv));
 		if (error)
-			return (error);
+			return error;
 	}
 	if (SCARG(uap, tzp)) {
 		/*
@@ -518,7 +518,7 @@ sys___gettimeofday50(struct lwp *l, const struct sys___gettimeofday50_args *uap,
 		tzfake.tz_dsttime = 0;
 		error = copyout(&tzfake, SCARG(uap, tzp), sizeof(tzfake));
 	}
-	return (error);
+	return error;
 }
 
 /* ARGSUSED */
@@ -552,7 +552,7 @@ settimeofday1(const struct timeval *utv, bool userspace,
 		log(LOG_WARNING, "pid %d attempted to set the "
 		    "(obsolete) kernel time zone\n", l->l_proc->p_pid);
 
-	if (utv == NULL) 
+	if (utv == NULL)
 		return 0;
 
 	if (userspace) {
@@ -590,7 +590,7 @@ sys___adjtime50(struct lwp *l, const struct sys___adjtime50_args *uap,
 		error = copyin(SCARG(uap, delta), &atv,
 		    sizeof(*SCARG(uap, delta)));
 		if (error)
-			return (error);
+			return error;
 	}
 	adjtime1(SCARG(uap, delta) ? &atv : NULL,
 	    SCARG(uap, olddelta) ? &oldatv : NULL, l->l_proc);
@@ -1222,7 +1222,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	p = l->l_proc;
 
 	if ((u_int)id > CLOCK_MONOTONIC)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((pts = p->p_timers) == NULL)
 		pts = ptimers_alloc(p);
@@ -1310,14 +1310,14 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
 
 	timerid = SCARG(uap, timerid);
 	pts = p->p_timers;
-	
+
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
-		return (EINVAL);
+		return EINVAL;
 
 	itimer_lock();
 	if ((it = pts->pts_timers[timerid]) == NULL) {
 		itimer_unlock();
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	if (CLOCK_VIRTUAL_P(it->it_clockid)) {
@@ -1335,7 +1335,7 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
 	/* Free the timer and release the lock.  */
 	ptimer_free(pts, timerid);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1359,7 +1359,7 @@ sys___timer_settime50(struct lwp *l,
 
 	if ((error = copyin(SCARG(uap, value), &value,
 	    sizeof(struct itimerspec))) != 0)
-		return (error);
+		return error;
 
 	if (SCARG(uap, ovalue))
 		ovp = &ovalue;
@@ -1446,7 +1446,7 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	if (ovalue)
 		*ovalue = oval;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1480,11 +1480,11 @@ dotimer_gettime(int timerid, struct proc *p, struct itimerspec *its)
 
 	pts = p->p_timers;
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
-		return (EINVAL);
+		return EINVAL;
 	itimer_lock();
 	if ((it = pts->pts_timers[timerid]) == NULL) {
 		itimer_unlock();
-		return (EINVAL);
+		return EINVAL;
 	}
 	itimer_gettime(it, its);
 	itimer_unlock();
@@ -1516,11 +1516,11 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 
 	pts = p->p_timers;
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
-		return (EINVAL);
+		return EINVAL;
 	itimer_lock();
 	if ((it = pts->pts_timers[timerid]) == NULL) {
 		itimer_unlock();
-		return (EINVAL);
+		return EINVAL;
 	}
 	pt = container_of(it, struct ptimer, pt_itimer);
 	*retval = pt->pt_poverruns;
@@ -1528,7 +1528,7 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 		*retval = DELAYTIMER_MAX;
 	itimer_unlock();
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1552,7 +1552,7 @@ sys___getitimer50(struct lwp *l, const struct sys___getitimer50_args *uap,
 	error = dogetitimer(p, SCARG(uap, which), &aitv);
 	if (error)
 		return error;
-	return (copyout(&aitv, SCARG(uap, itv), sizeof(struct itimerval)));
+	return copyout(&aitv, SCARG(uap, itv), sizeof(struct itimerval));
 }
 
 int
@@ -1563,7 +1563,7 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct itimerspec its;
 
 	if ((u_int)which > ITIMER_MONOTONIC)
-		return (EINVAL);
+		return EINVAL;
 
 	itimer_lock();
 	pts = p->p_timers;
@@ -1604,15 +1604,15 @@ sys___setitimer50(struct lwp *l, const struct sys___setitimer50_args *uap,
 	itvp = SCARG(uap, itv);
 	if (itvp &&
 	    (error = copyin(itvp, &aitv, sizeof(struct itimerval))) != 0)
-		return (error);
+		return error;
 	if (SCARG(uap, oitv) != NULL) {
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = sys___getitimer50(l, &getargs, retval)) != 0)
-			return (error);
+			return error;
 	}
 	if (itvp == 0)
-		return (0);
+		return 0;
 
 	return dosetitimer(p, which, &aitv);
 }
@@ -1628,9 +1628,9 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	int error;
 
 	if ((u_int)which > ITIMER_MONOTONIC)
-		return (EINVAL);
+		return EINVAL;
 	if (itimerfix(&itvp->it_value) || itimerfix(&itvp->it_interval))
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Don't bother allocating data structures if the process just
@@ -1641,7 +1641,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
  retry:
 	if (!timerisset(&itvp->it_value) && (pts == NULL ||
 	    pts->pts_timers[which] == NULL))
-		return (0);
+		return 0;
 	if (pts == NULL)
 		pts = ptimers_alloc(p);
 	itimer_lock();
@@ -1775,7 +1775,7 @@ ptimer_intr(void *cookie)
 	struct itimer *it;
 	struct ptimer *pt;
 	proc_t *p;
-	
+
 	mutex_enter(&proc_lock);
 	itimer_lock();
 	while ((pt = TAILQ_FIRST(&ptimer_queue)) != NULL) {
