@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.154 2022/05/26 13:40:49 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.155 2022/07/01 21:25:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -442,21 +442,6 @@ typedef struct {
 
 #include "externs1.h"
 
-#define	ERR_SETSIZE	1024
-#define __NERRBITS (sizeof(unsigned int))
-
-typedef	struct err_set {
-	unsigned int	errs_bits[(ERR_SETSIZE + __NERRBITS-1) / __NERRBITS];
-} err_set;
-
-#define	ERR_SET(n, p)	\
-	((p)->errs_bits[(n)/__NERRBITS] |= (1 << ((n) % __NERRBITS)))
-#define	ERR_CLR(n, p)	\
-	((p)->errs_bits[(n)/__NERRBITS] &= ~(1 << ((n) % __NERRBITS)))
-#define	ERR_ISSET(n, p)	\
-	(((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS))) != 0)
-#define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
-
 #define INTERNAL_ERROR(fmt, args...) \
 	internal_error(__FILE__, __LINE__, fmt, ##args)
 
@@ -465,9 +450,6 @@ typedef	struct err_set {
 		if (!(cond))						\
 			assert_failed(__FILE__, __LINE__, __func__, #cond); \
 	} while (false)
-
-extern err_set	msgset;
-
 
 #ifdef DEBUG
 #  include "err-msgs.h"
