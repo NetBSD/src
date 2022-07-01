@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.75 2022/04/16 18:15:22 andvar Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.76 2022/07/01 01:04:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.75 2022/04/16 18:15:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.76 2022/07/01 01:04:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,6 +815,8 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	off_t start, end;
 	int error = 0;
 
+	KASSERTMSG(size >= 0, "size=%jd", (intmax_t)size);
+
 	/*
 	 * Convert the flock structure into a start and end.
 	 */
@@ -829,6 +831,8 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		break;
 
 	case SEEK_END:
+		if (fl->l_start > __type_max(off_t) - size)
+			return EINVAL;
 		start = size + fl->l_start;
 		break;
 
@@ -839,10 +843,14 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	if (fl->l_len == 0)
 		end = -1;
 	else {
-		if (fl->l_len > 0)
+		if (fl->l_len >= 0) {
+			if (fl->l_len - 1 > __type_max(off_t) - start)
+				return EINVAL;
 			end = start + fl->l_len - 1;
-		else {
+		} else {
 			/* lockf() allows -ve lengths */
+			if (start < 0)
+				return EINVAL;
 			end = start - 1;
 			start += fl->l_len;
 		}
