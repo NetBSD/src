@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.81 2022/05/14 15:29:08 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.82 2022/07/01 01:06:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.81 2022/05/14 15:29:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.82 2022/07/01 01:06:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -811,6 +811,7 @@ uvideo_init_control(struct uvideo_softc *sc,
 		if (uvdesc->bDescriptorSubtype < UDESC_INPUT_TERMINAL ||
 		    uvdesc->bDescriptorSubtype > UDESC_EXTENSION_UNIT)
 			continue;
+		KASSERT(nunits < 255);
 		++nunits;
 	}
 
@@ -843,6 +844,7 @@ uvideo_init_control(struct uvideo_softc *sc,
 		/* TODO: free other units before returning? */
 		if (sc->sc_unit[i] == NULL)
 			goto enomem;
+		KASSERT(i < 255);
 		++i;
 	}
 
