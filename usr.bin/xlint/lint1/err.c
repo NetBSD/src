@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.176 2022/06/22 19:23:17 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.177 2022/07/01 20:53:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.176 2022/06/22 19:23:17 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.177 2022/07/01 20:53:13 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -191,7 +191,7 @@ static const char *const msgs[] = {
 	"converting '%s' to '%s' may cause alignment problem",	      /* 135 */
 	"cannot do pointer arithmetic on operand of unknown size",    /* 136 */
 	"",			/* unused */			      /* 137 */
-	"unknown operand size, op %s",				      /* 138 */
+	"unknown operand size, op '%s'",			      /* 138 */
 	"division by 0",					      /* 139 */
 	"modulus by 0",						      /* 140 */
 	"integer overflow detected, op '%s'",			      /* 141 */
@@ -293,7 +293,7 @@ static const char *const msgs[] = {
 	"redeclaration of formal parameter '%s'",		      /* 237 */
 	"initialization of union is illegal in traditional C",	      /* 238 */
 	"constant argument to '!'",				      /* 239 */
-	"assignment of different structures (%s != %s)",	      /* 240 */
+	"",			/* unused */			      /* 240 */
 	"dubious operation on enum, op '%s'",			      /* 241 */
 	"combination of '%s' and '%s', op '%s'",		      /* 242 */
 	"dubious comparison of enums, op '%s'",			      /* 243 */

@@ -1,9 +1,8 @@
-/*	$NetBSD: msg_240.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_240.c,v 1.4 2022/07/01 20:53:13 rillig Exp $	*/
 # 3 "msg_240.c"
 
 // Test for message: assignment of different structures (%s != %s) [240]
 // This message is not used.
-// TODO: Remove the code, as the message is unreachable.
 
 struct s_arg {
 	int member;
