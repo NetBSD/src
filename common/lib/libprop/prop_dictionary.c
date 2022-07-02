@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.43 2021/12/05 02:52:17 msaitoh Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.44 2022/07/02 16:30:13 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -689,7 +689,7 @@ prop_dictionary_create_with_capacity(unsigned int capacity)
  * prop_dictionary_copy --
  *	Copy a dictionary.  The new dictionary has an initial capacity equal
  *	to the number of objects stored int the original dictionary.  The new
- *	dictionary contains refrences to the original dictionary's objects,
+ *	dictionary contains references to the original dictionary's objects,
  *	not copies of those objects (i.e. a shallow copy).
  */
 prop_dictionary_t
