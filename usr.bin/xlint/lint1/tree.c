@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.466 2022/07/01 20:53:13 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.467 2022/07/02 10:23:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.466 2022/07/01 20:53:13 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.467 2022/07/02 10:23:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3213,13 +3213,10 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 static tnode_t *
 build_bit_shift(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
-	tspec_t	t;
-	tnode_t	*ntn;
 
-	if ((t = rn->tn_type->t_tspec) != INT && t != UINT)
-		rn = convert(CVT, 0, gettyp(INT), rn);
-	ntn = new_tnode(op, sys, ln->tn_type, ln, rn);
-	return ntn;
+	if (!allow_c90 && rn->tn_type->t_tspec != INT)
+		rn = convert(NOOP, 0, gettyp(INT), rn);
+	return new_tnode(op, sys, ln->tn_type, ln, rn);
 }
 
 /*
