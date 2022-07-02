@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.360 2022/07/02 08:31:43 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.361 2022/07/02 08:33:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.360 2022/07/02 08:31:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.361 2022/07/02 08:33:26 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1183,11 +1183,6 @@ bge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	}
 
 	bge_ape_unlock(sc, sc->bge_phy_ape_lock);
-
-	if (i == BGE_TIMEOUT) {
-		aprint_error_dev(sc->bge_dev, "PHY read timed out\n");
-		return ETIMEDOUT;
-	}
 
 	return rv;
 }
