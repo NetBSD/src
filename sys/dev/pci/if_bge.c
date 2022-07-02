@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.357 2022/06/30 19:06:35 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.358 2022/07/02 07:07:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.357 2022/06/30 19:06:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.358 2022/07/02 07:07:07 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -4391,7 +4391,7 @@ bge_reset(struct bge_softc *sc)
 static void
 bge_rxeof(struct bge_softc *sc)
 {
-	struct ifnet *ifp;
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	uint16_t rx_prod, rx_cons;
 	int stdcnt = 0, jumbocnt = 0;
 	bus_dmamap_t dmamap;
@@ -4405,8 +4405,6 @@ bge_rxeof(struct bge_softc *sc)
 	/* Nothing to do */
 	if (rx_cons == rx_prod)
 		return;
-
-	ifp = &sc->ethercom.ec_if;
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_status_block),
@@ -4572,15 +4570,13 @@ bge_rxcsum(struct bge_softc *sc, struct bge_rx_bd *cur_rx, struct mbuf *m)
 static void
 bge_txeof(struct bge_softc *sc)
 {
+	struct ifnet * const ifp = &sc->ethercom.ec_if;
 	struct bge_tx_bd *cur_tx = NULL;
-	struct ifnet *ifp;
 	struct txdmamap_pool_entry *dma;
 	bus_addr_t offset, toff;
 	bus_size_t tlen;
 	int tosync;
 	struct mbuf *m;
-
-	ifp = &sc->ethercom.ec_if;
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_status_block),
@@ -5514,7 +5510,7 @@ bge_init(struct ifnet *ifp)
 
 	s = splnet();
 
-	ifp = &sc->ethercom.ec_if;
+	KASSERT(ifp == &sc->ethercom.ec_if);
 
 	/* Cancel pending I/O and flush buffers. */
 	bge_stop(ifp, 0);
