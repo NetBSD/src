@@ -1,7 +1,7 @@
-/*	$NetBSD: pkill.c,v 1.31 2017/02/21 13:09:56 kre Exp $	*/
+/*	$NetBSD: pkill.c,v 1.32 2022/07/02 20:50:26 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2022 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.31 2017/02/21 13:09:56 kre Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.32 2022/07/02 20:50:26 ad Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -266,7 +266,7 @@ main(int argc, char **argv)
 	 * Allocate memory which will be used to keep track of the
 	 * selection.
 	 */
-	if ((selected = calloc((size_t)1, (size_t)nproc)) == NULL)
+	if ((selected = calloc(sizeof(*selected), (size_t)nproc)) == NULL)
 		err(STATUS_ERROR, "Cannot allocate memory for %d processes",
 		    nproc);
 
