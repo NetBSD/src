@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.359 2022/07/02 07:32:16 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.360 2022/07/02 08:31:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.359 2022/07/02 07:32:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.360 2022/07/02 08:31:43 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1276,21 +1276,19 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 static void
 bge_update_all_threshes(int lvl)
 {
-	struct ifnet *ifp;
 	const char * const namebuf = "bge";
-	int namelen;
-	int s;
+	const size_t namelen = strlen(namebuf);
+	struct ifnet *ifp;
 
 	if (lvl < 0)
 		lvl = 0;
 	else if (lvl >= NBGE_RX_THRESH)
 		lvl = NBGE_RX_THRESH - 1;
 
-	namelen = strlen(namebuf);
 	/*
 	 * Now search all the interfaces for this name/number
 	 */
-	s = pserialize_read_enter();
+	int s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		if (strncmp(ifp->if_xname, namebuf, namelen) != 0)
 		      continue;
