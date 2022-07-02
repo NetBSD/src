@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.733 2022/05/19 02:23:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.734 2022/07/02 06:09:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.733 2022/05/19 02:23:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.734 2022/07/02 06:09:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3490,6 +3490,9 @@ wm_tick(void *arg)
 		wm_tbi_tick(sc);
 
 	WM_CORE_UNLOCK(sc);
+#ifndef WM_MPSAFE
+	splx(s);
+#endif
 
 	wm_watchdog(ifp);
 
