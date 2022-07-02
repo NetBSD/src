@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.72 2022/03/28 12:38:57 riastradh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.73 2022/07/02 13:47:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.72 2022/03/28 12:38:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.73 2022/07/02 13:47:53 tsutsui Exp $");
 
 #include "opt_md.h"
 
@@ -319,7 +319,7 @@ mbattach(device_t parent, device_t self, void *aux)
 
 	mb_attached = 1;
 
-	printf ("\n");
+	aprint_normal("\n");
 	config_found(self, __UNCONST("clock")   , simple_devprint, CFARGS_NONE);
 	config_found(self, __UNCONST("grfbus")  , simple_devprint, CFARGS_NONE);
 	config_found(self, __UNCONST("kbd")     , simple_devprint, CFARGS_NONE);
