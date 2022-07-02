@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_machdep.c,v 1.1 2011/11/15 12:23:21 tsutsui Exp $	*/
+/*	$NetBSD: fpu_machdep.c,v 1.2 2022/07/02 08:35:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.1 2011/11/15 12:23:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.2 2022/07/02 08:35:49 tsutsui Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -57,8 +57,8 @@ static const char *fpu_descr[] = {
 #else
 	[FPU_NONE] = " no ",
 #endif
-	[FPU_68881] = " mc68881 ",
-	[FPU_68882] = " mc68882 ",
+	[FPU_68881] = " MC68881 ",
+	[FPU_68882] = " MC68882 ",
 	[FPU_68040] = "/",
 	[FPU_68060] = "/",
 	[FPU_UNKNOWN] = "??? "
