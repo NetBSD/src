@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.361 2022/07/02 08:33:26 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.362 2022/07/02 08:39:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.361 2022/07/02 08:33:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.362 2022/07/02 08:39:48 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -588,7 +588,7 @@ static uint32_t
 bge_readreg_ind(struct bge_softc *sc, int off)
 {
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_REG_BASEADDR, off);
-	return (pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_REG_DATA));
+	return pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_REG_DATA);
 }
 #endif
 
@@ -731,7 +731,7 @@ bge_ape_lock(struct bge_softc *sc, int locknum)
 	int i, off;
 
 	if ((sc->bge_mfw_flags & BGE_MFW_ON_APE) == 0)
-		return (0);
+		return 0;
 
 	/* Lock request/grant registers have different bases. */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761) {
@@ -748,7 +748,7 @@ bge_ape_lock(struct bge_softc *sc, int locknum)
 	case BGE_APE_LOCK_GPIO:
 		/* Lock required when using GPIO. */
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761)
-			return (0);
+			return 0;
 		if (pa->pa_function == 0)
 			bit = BGE_APE_LOCK_REQ_DRIVER0;
 		else
@@ -776,7 +776,7 @@ bge_ape_lock(struct bge_softc *sc, int locknum)
 		bit = BGE_APE_LOCK_REQ_DRIVER0;
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	/* Request a lock. */
@@ -799,10 +799,10 @@ bge_ape_lock(struct bge_softc *sc, int locknum)
 		    status & 0xFFFF);
 		/* Revoke the lock request. */
 		APE_WRITE_4(sc, gnt + off, bit);
-		return (EBUSY);
+		return EBUSY;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -1009,7 +1009,7 @@ bge_read_nvram(struct bge_softc *sc, uint8_t *dest, int off, int cnt)
 		*(dest + i) = byte;
 	}
 
-	return (error ? 1 : 0);
+	return error ? 1 : 0;
 }
 
 /*
@@ -1075,7 +1075,7 @@ bge_read_eeprom(struct bge_softc *sc, void *destv, int off, int cnt)
 		*(dest + i) = byte;
 	}
 
-	return (error ? 1 : 0);
+	return error ? 1 : 0;
 }
 
 static int
@@ -1413,7 +1413,7 @@ bge_jalloc(struct bge_softc *sc)
 
 	SLIST_REMOVE_HEAD(&sc->bge_jfree_listhead, jpool_entries);
 	SLIST_INSERT_HEAD(&sc->bge_jinuse_listhead, entry, jpool_entries);
-	return (sc->bge_cdata.bge_jslots[entry->slot]);
+	return sc->bge_cdata.bge_jslots[entry->slot];
 }
 
 /*
@@ -3144,7 +3144,7 @@ bge_can_use_msi(struct bge_softc *sc)
 		if (BGE_IS_575X_PLUS(sc))
 			can_use_msi = 1;
 	}
-	return (can_use_msi);
+	return can_use_msi;
 }
 
 /*
@@ -4672,14 +4672,14 @@ bge_intr(void *xsc)
 		if (sc->bge_lasttag == statustag &&
 		    (~pcistate & intrmask)) {
 			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious);
-			return (0);
+			return 0;
 		}
 		sc->bge_lasttag = statustag;
 	} else {
 		if (!(statusword & BGE_STATFLAG_UPDATED) &&
 		    !(~pcistate & intrmask)) {
 			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious2);
-			return (0);
+			return 0;
 		}
 		statustag = 0;
 	}
@@ -6410,5 +6410,5 @@ bge_get_eaddr(struct bge_softc *sc, uint8_t eaddr[])
 		if ((*func)(sc, eaddr) == 0)
 			break;
 	}
-	return (*func == NULL ? ENXIO : 0);
+	return *func == NULL ? ENXIO : 0;
 }
