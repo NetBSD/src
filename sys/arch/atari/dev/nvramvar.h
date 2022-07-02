@@ -1,4 +1,4 @@
-/*	$NetBSD: nvramvar.h,v 1.4 2011/06/05 06:33:43 tsutsui Exp $	*/
+/*	$NetBSD: nvramvar.h,v 1.5 2022/07/02 14:29:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,9 +29,9 @@
  * Nvram driver - variable definitions
  */
 
-struct	nvr_softc {
-	device_t		sc_dev;
-	u_int16_t		sc_flags;
+struct nvr_softc {
+	device_t sc_dev;
+	uint16_t sc_flags;
 };
 
 /*
