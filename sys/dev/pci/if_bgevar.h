@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.27 2022/07/02 07:19:36 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.28 2022/07/02 07:22:41 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -286,11 +286,11 @@ struct bge_softc {
 	uint16_t		bge_mps;
 	int			bge_expmrq;
 	uint32_t		bge_lasttag;
-	u_int32_t		bge_mfw_flags;  /* Management F/W flags */
-#define	BGE_MFW_ON_RXCPU	0x00000001
-#define	BGE_MFW_ON_APE		0x00000002
-#define	BGE_MFW_TYPE_NCSI	0x00000004
-#define	BGE_MFW_TYPE_DASH	0x00000008
+	uint32_t		bge_mfw_flags;  /* Management F/W flags */
+#define	BGE_MFW_ON_RXCPU	__BIT(0)
+#define	BGE_MFW_ON_APE		__BIT(1)
+#define	BGE_MFW_TYPE_NCSI	__BIT(2)
+#define	BGE_MFW_TYPE_DASH	__BIT(3)
 	int			bge_phy_ape_lock;
 	int			bge_phy_addr;
 	uint32_t		bge_chipid;
