@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.179 2022/07/01 21:48:05 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.180 2022/07/02 11:17:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,10 +37,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.179 2022/07/01 21:48:05 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.180 2022/07/02 11:17:54 rillig Exp $");
 #endif
 
-#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -423,8 +422,7 @@ suppress_messages(char *ids)
 	unsigned long id;
 
 	for (ptr = strtok(ids, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
-		errno = 0;
-		id = strtoul(ptr, &end, 0);
+		id = strtoul(ptr, &end, 10);
 		if (*end != '\0' || ptr == end ||
 		    id >= sizeof(msgs) / sizeof(msgs[0]))
 			errx(1, "invalid error message id '%s'", ptr);
