@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.358 2022/07/02 07:07:07 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.359 2022/07/02 07:32:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.358 2022/07/02 07:07:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.359 2022/07/02 07:32:16 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -4612,9 +4612,7 @@ bge_txeof(struct bge_softc *sc)
 	 */
 	while (sc->bge_tx_saved_considx !=
 	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx) {
-		uint32_t		idx = 0;
-
-		idx = sc->bge_tx_saved_considx;
+		uint32_t idx = sc->bge_tx_saved_considx;
 		cur_tx = &sc->bge_rdata->bge_tx_ring[idx];
 		if (cur_tx->bge_flags & BGE_TXBDFLAG_END)
 			if_statinc(ifp, if_opackets);
