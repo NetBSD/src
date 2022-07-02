@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.467 2022/07/02 10:23:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.468 2022/07/02 10:41:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.467 2022/07/02 10:23:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.468 2022/07/02 10:41:13 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2272,7 +2272,15 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 /*
  * Insert a conversion operator, which converts the type of the node
  * to another given type.
- * If op is FARG, arg is the number of the argument (used for warnings).
+ *
+ * Possible values for 'op':
+ *	CVT	a cast-expression
+ *	binary	integer promotion for one of the operands, or a usual
+ *		arithmetic conversion
+ *	binary	plain or compound assignments to bit-fields
+ *	FARG	'arg' is the number of the argument (used for warnings)
+ *	NOOP	several other implicit conversions
+ *	...
  */
 tnode_t *
 convert(op_t op, int arg, type_t *tp, tnode_t *tn)
@@ -3499,6 +3507,7 @@ fold(tnode_t *tn)
 			ovfl = true;
 		break;
 	case SHL:
+		/* TODO: warn against out-of-bounds 'sr'. */
 		q = utyp ? (int64_t)(ul << sr) : sl << sr;
 		break;
 	case SHR:
@@ -3506,6 +3515,7 @@ fold(tnode_t *tn)
 		 * The sign must be explicitly extended because
 		 * shifts of signed values are implementation dependent.
 		 */
+		/* TODO: warn against out-of-bounds 'sr'. */
 		q = ul >> sr;
 		q = convert_integer(q, t, size_in_bits(t) - (int)sr);
 		break;
