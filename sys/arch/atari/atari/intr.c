@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.29 2022/07/02 08:11:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2022/07/02 08:11:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	 * If the vec_list is empty, we insert ourselves at the head of the
 	 * list and we re-route the 'hard-vector' to the appropriate handler.
 	 */
-	if (vec_list->lh_first == NULL) {
+	if (LIST_EMPTY(vec_list)) {
 
 		s = splhigh();
 		LIST_INSERT_HEAD(vec_list, ih, ih_link);
@@ -178,7 +178,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	/*
 	 * Check for FAST_VEC botches
 	 */
-	cur_vec = vec_list->lh_first;
+	cur_vec = LIST_FIRST(vec_list);
 	if (cur_vec->ih_type & FAST_VEC) {
 		kmem_free(ih, sizeof(*ih));
 		printf("intr_establish: vector cannot be shared\n");
@@ -189,8 +189,9 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	 * We traverse the list and place ourselves after any handlers with
 	 * our current (or higher) priority level.
 	 */
-	for (cur_vec = vec_list->lh_first; cur_vec->ih_link.le_next != NULL;
-	    cur_vec = cur_vec->ih_link.le_next) {
+	for (cur_vec = LIST_FIRST(vec_list);
+	    LIST_NEXT(cur_vec, ih_link) != NULL;
+	    cur_vec = LIST_NEXT(cur_vec, ih_link)) {
 		if (ih->ih_pri > cur_vec->ih_pri) {
 
 			s = splhigh();
@@ -242,8 +243,9 @@ intr_disestablish(struct intrhand *ih)
 	/*
 	 * Check if the vector is really in the list we think it's in....
 	 */
-	for (cur_vec = vec_list->lh_first; cur_vec->ih_link.le_next != NULL;
-	    cur_vec = cur_vec->ih_link.le_next) {
+	for (cur_vec = LIST_FIRST(vec_list);
+	    LIST_NEXT(cur_vec, ih_link) != NULL;
+	    cur_vec = LIST_NEXT(cur_vec, ih_link)) {
 		if (ih == cur_vec)
 			break;
 	}
@@ -254,7 +256,7 @@ intr_disestablish(struct intrhand *ih)
 
 	s = splhigh();
 	LIST_REMOVE(ih, ih_link);
-	if ((vec_list->lh_first == NULL) && (ih->ih_type & FAST_VEC))
+	if (LIST_EMPTY(vec_list) && (ih->ih_type & FAST_VEC))
 		*hard_vec = (u_long)intr_glue;
 	splx(s);
 
@@ -284,7 +286,7 @@ intr_dispatch(struct clockframe frame)
 	else
 		panic("intr_dispatch: Bogus vector %d", vector);
 
-	if ((ih = vec_list->lh_first) == NULL) {
+	if ((ih = LIST_FIRST(vec_list)) == NULL) {
 		printf("intr_dispatch: vector %d unexpected\n", vector);
 		if (++unexpected > 10)
 			panic("intr_dispatch: too many unexpected interrupts");
@@ -293,7 +295,7 @@ intr_dispatch(struct clockframe frame)
 	ih->ih_intrcnt[0]++;
 
 	/* Give all the handlers a chance. */
-	for (; ih != NULL; ih = ih->ih_link.le_next)
+	for (; ih != NULL; ih = LIST_NEXT(ih, ih_link))
 		handled |= (*ih->ih_fun)((ih->ih_type & ARG_CLOCKFRAME) ?
 		    &frame : ih->ih_arg, frame.cf_sr);
 
