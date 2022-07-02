@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29 2022/07/02 08:11:47 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.30 2022/07/02 08:25:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2022/07/02 08:11:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2022/07/02 08:25:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2022/07/02 08:11:47 tsutsui Exp $");
 #define	UVEC_LOC	64
 
 typedef LIST_HEAD(, intrhand) ih_list_t;
-ih_list_t autovec_list[AVEC_MAX - AVEC_MIN + 1];
-ih_list_t uservec_list[UVEC_MAX - UVEC_MIN + 1];
+static ih_list_t autovec_list[AVEC_MAX - AVEC_MIN + 1];
+static ih_list_t uservec_list[UVEC_MAX - UVEC_MIN + 1];
 int idepth;
 volatile int ssir;
 
@@ -129,9 +129,9 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 			kmem_free(ih, sizeof(*ih));
 			return NULL;
 		}
-		vec_list = &autovec_list[vector-1];
-		hard_vec = &autovects[vector-1];
-		ih->ih_intrcnt = &intrcnt_auto[vector-1];
+		vec_list = &autovec_list[vector - 1];
+		hard_vec = &autovects[vector - 1];
+		ih->ih_intrcnt = &intrcnt_auto[vector - 1];
 		break;
 	case USER_VEC:
 		if (vector < UVEC_MIN || vector > UVEC_MAX) {
@@ -156,7 +156,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 
 		s = splhigh();
 		LIST_INSERT_HEAD(vec_list, ih, ih_link);
-		if (type & FAST_VEC)
+		if ((type & FAST_VEC) != 0)
 			*hard_vec = (u_long)ih->ih_fun;
 		else if (*hard_vec != (u_long)intr_glue) {
 			/*
@@ -181,7 +181,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	cur_vec = LIST_FIRST(vec_list);
 	if (cur_vec->ih_type & FAST_VEC) {
 		kmem_free(ih, sizeof(*ih));
-		printf("intr_establish: vector cannot be shared\n");
+		printf("%s: vector cannot be shared\n", __func__);
 		return NULL;
 	}
 
@@ -226,8 +226,8 @@ intr_disestablish(struct intrhand *ih)
 	case AUTO_VEC:
 		if (vector < AVEC_MIN || vector > AVEC_MAX)
 			return 0;
-		vec_list = &autovec_list[vector-1];
-		hard_vec = &autovects[vector-1];
+		vec_list = &autovec_list[vector - 1];
+		hard_vec = &autovects[vector - 1];
 		break;
 	case USER_VEC:
 		if (vector < UVEC_MIN || vector > UVEC_MAX)
@@ -236,7 +236,7 @@ intr_disestablish(struct intrhand *ih)
 		hard_vec = &uservects[vector];
 		break;
 	default:
-		printf("intr_disestablish: bogus vector type\n");
+		printf("%s: bogus vector type\n", __func__);
 		return 0;
 	}
 
@@ -250,13 +250,13 @@ intr_disestablish(struct intrhand *ih)
 			break;
 	}
 	if (ih != cur_vec) {
-		printf("intr_disestablish: 'ih' has inconsistent data\n");
+		printf("%s: 'ih' has inconsistent data\n", __func__);
 		return 0;
 	}
 
 	s = splhigh();
 	LIST_REMOVE(ih, ih_link);
-	if (LIST_EMPTY(vec_list) && (ih->ih_type & FAST_VEC))
+	if (LIST_EMPTY(vec_list) && (ih->ih_type & FAST_VEC) != 0)
 		*hard_vec = (u_long)intr_glue;
 	splx(s);
 
@@ -279,17 +279,17 @@ intr_dispatch(struct clockframe frame)
 
 	curcpu()->ci_data.cpu_nintr++;
 	vector = (frame.cf_vo & 0xfff) >> 2;
-	if (vector < (AVEC_LOC+AVEC_MAX) && vector >= AVEC_LOC)
+	if (vector < (AVEC_LOC + AVEC_MAX) && vector >= AVEC_LOC)
 		vec_list = &autovec_list[vector - AVEC_LOC];
-	else if (vector <= (UVEC_LOC+UVEC_MAX) && vector >= UVEC_LOC)
+	else if (vector <= (UVEC_LOC + UVEC_MAX) && vector >= UVEC_LOC)
 		vec_list = &uservec_list[vector - UVEC_LOC];
 	else
-		panic("intr_dispatch: Bogus vector %d", vector);
+		panic("%s: Bogus vector %d", __func__, vector);
 
 	if ((ih = LIST_FIRST(vec_list)) == NULL) {
-		printf("intr_dispatch: vector %d unexpected\n", vector);
+		printf("%s: vector %d unexpected\n", __func__, vector);
 		if (++unexpected > 10)
-			panic("intr_dispatch: too many unexpected interrupts");
+			panic("%s: too many unexpected interrupts", __func__);
 		return;
 	}
 	ih->ih_intrcnt[0]++;
@@ -302,9 +302,9 @@ intr_dispatch(struct clockframe frame)
 	if (handled)
 		straycount = 0;
 	else if (++straycount > 50)
-		panic("intr_dispatch: too many stray interrupts");
+		panic("%s: too many stray interrupts", __func__);
 	else
-		printf("intr_dispatch: stray level %d interrupt\n", vector);
+		printf("%s: stray level %d interrupt\n", __func__, vector);
 }
 
 bool
