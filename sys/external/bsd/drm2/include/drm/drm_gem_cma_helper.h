@@ -1,157 +1,77 @@
-/*	$NetBSD: drm_gem_cma_helper.h,v 1.2 2021/12/19 10:29:16 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_cma_helper.h,v 1.3 2022/07/02 00:26:07 riastradh Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __DRM_GEM_CMA_HELPER_H__
-#define __DRM_GEM_CMA_HELPER_H__
+/*-
+ * Copyright (c) 2022 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
-#include <drm/drm_file.h>
-#include <drm/drm_ioctl.h>
-#include <drm/drm_gem.h>
+#ifndef	_DRM_DRM_GEM_CMA_HELPER_H_
+#define	_DRM_DRM_GEM_CMA_HELPER_H_
 
+#include <sys/types.h>
+
+#include <sys/bus.h>
 #include <sys/vmem.h>
 
-struct drm_mode_create_dumb;
+#include <uvm/uvm_pager.h>
 
-/**
- * struct drm_gem_cma_object - GEM object backed by CMA memory allocations
- * @base: base GEM object
- * @paddr: physical address of the backing memory
- * @sgt: scatter/gather table for imported PRIME buffers. The table can have
- *       more than one entry but they are guaranteed to have contiguous
- *       DMA addresses.
- * @vaddr: kernel virtual address of the backing memory
- */
+#include <drm/drm_gem.h>
+
+struct dma_buf_attachment
+struct drm_device;
+struct drm_file;
+struct drm_gem_cma_object;
+struct drm_gem_object;
+struct drm_mode_create_dumb;
+struct sg_table;
+struct vmem;
+
 struct drm_gem_cma_object {
 	struct drm_gem_object base;
-#ifdef __NetBSD__
-	bus_dma_tag_t dmat;
+	bus_dmamap_t dmamap;
 	bus_dma_segment_t dmasegs[1];
 	bus_size_t dmasize;
-	bus_dmamap_t dmamap;
-	vmem_t *vmem_pool;
-	vmem_addr_t vmem_addr;
-#else
-	dma_addr_t paddr;
-#endif
+	bus_dma_tag_t dmat;
 	struct sg_table *sgt;
-
-	/* For objects with DMA memory allocated by GEM CMA */
 	void *vaddr;
+	vmem_addr_t vmem_addr;
+	struct vmem *vmem_pool;
 };
 
-#define to_drm_gem_cma_obj(gem_obj) \
-	container_of(gem_obj, struct drm_gem_cma_object, base)
+#define	to_drm_gem_cma_obj(GEM_OBJ)					      \
+	container_of((GEM_OBJ), struct drm_gem_cma_object, base)
 
-#ifndef CONFIG_MMU
-#define DRM_GEM_CMA_UNMAPPED_AREA_FOPS \
-	.get_unmapped_area	= drm_gem_cma_get_unmapped_area,
-#else
-#define DRM_GEM_CMA_UNMAPPED_AREA_FOPS
-#endif
-
-/**
- * DEFINE_DRM_GEM_CMA_FOPS() - macro to generate file operations for CMA drivers
- * @name: name for the generated structure
- *
- * This macro autogenerates a suitable &struct file_operations for CMA based
- * drivers, which can be assigned to &drm_driver.fops. Note that this structure
- * cannot be shared between drivers, because it contains a reference to the
- * current module using THIS_MODULE.
- *
- * Note that the declaration is already marked as static - if you need a
- * non-static version of this you're probably doing it wrong and will break the
- * THIS_MODULE reference by accident.
- */
-#define DEFINE_DRM_GEM_CMA_FOPS(name) \
-	static const struct file_operations name = {\
-		.owner		= THIS_MODULE,\
-		.open		= drm_open,\
-		.release	= drm_release,\
-		.unlocked_ioctl	= drm_ioctl,\
-		.compat_ioctl	= drm_compat_ioctl,\
-		.poll		= drm_poll,\
-		.read		= drm_read,\
-		.llseek		= noop_llseek,\
-		.mmap		= drm_gem_cma_mmap,\
-		DRM_GEM_CMA_UNMAPPED_AREA_FOPS \
-	}
-
-/* free GEM object */
-void drm_gem_cma_free_object(struct drm_gem_object *gem_obj);
-
-/* create memory region for DRM framebuffer */
-int drm_gem_cma_dumb_create_internal(struct drm_file *file_priv,
-				     struct drm_device *drm,
-				     struct drm_mode_create_dumb *args);
-
-/* create memory region for DRM framebuffer */
-int drm_gem_cma_dumb_create(struct drm_file *file_priv,
-			    struct drm_device *drm,
-			    struct drm_mode_create_dumb *args);
-
-/* set vm_flags and we can change the VM attribute to other one at here */
-#ifndef __NetBSD__
-int drm_gem_cma_mmap(struct file *filp, struct vm_area_struct *vma);
-#endif
-
-/* allocate physical memory */
-struct drm_gem_cma_object *drm_gem_cma_create(struct drm_device *drm,
-					      size_t size);
-
-#ifdef __NetBSD__
 extern const struct uvm_pagerops drm_gem_cma_uvm_ops;
-#else
-extern const struct vm_operations_struct drm_gem_cma_vm_ops;
-#endif
 
-#ifndef CONFIG_MMU
-unsigned long drm_gem_cma_get_unmapped_area(struct file *filp,
-					    unsigned long addr,
-					    unsigned long len,
-					    unsigned long pgoff,
-					    unsigned long flags);
-#endif
+struct drm_gem_cma_object *drm_gem_cma_create(struct drm_device *, size_t);
+int drm_gem_cma_dumb_create(struct drm_file *, struct drm_device *,
+    struct drm_mode_create_dumb *);
+void drm_gem_cma_free_object(struct drm_gem_object *);
+struct sg_table *drm_gem_cma_prime_get_sg_table(struct drm_gem_object *);
+struct drm_gem_object *drm_gem_cma_prime_import_sg_table(struct drm_device *,
+    struct dma_buf_attachment *, struct sg_table *);
+void *drm_gem_cma_prime_vmap(struct drm_gem_object *);
+void drm_gem_cma_prime_vunmap(struct drm_gem_object *, void *);
 
-void drm_gem_cma_print_info(struct drm_printer *p, unsigned int indent,
-			    const struct drm_gem_object *obj);
-
-struct sg_table *drm_gem_cma_prime_get_sg_table(struct drm_gem_object *obj);
-struct drm_gem_object *
-drm_gem_cma_prime_import_sg_table(struct drm_device *dev,
-				  struct dma_buf_attachment *attach,
-				  struct sg_table *sgt);
-#ifdef __NetBSD__
-int drm_gem_cma_prime_mmap(struct drm_gem_object *, off_t *, size_t, int,
-    int *, int *, struct uvm_object **, int *);
-#else
-int drm_gem_cma_prime_mmap(struct drm_gem_object *obj,
-			   struct vm_area_struct *vma);
-#endif
-void *drm_gem_cma_prime_vmap(struct drm_gem_object *obj);
-void drm_gem_cma_prime_vunmap(struct drm_gem_object *obj, void *vaddr);
-
-struct drm_gem_object *
-drm_cma_gem_create_object_default_funcs(struct drm_device *dev, size_t size);
-
-/**
- * DRM_GEM_CMA_VMAP_DRIVER_OPS - CMA GEM driver operations ensuring a virtual
- *                               address on the buffer
- *
- * This macro provides a shortcut for setting the default GEM operations in the
- * &drm_driver structure for drivers that need the virtual address also on
- * imported buffers.
- */
-#define DRM_GEM_CMA_VMAP_DRIVER_OPS \
-	.gem_create_object	= drm_cma_gem_create_object_default_funcs, \
-	.dumb_create		= drm_gem_cma_dumb_create, \
-	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd, \
-	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle, \
-	.gem_prime_import_sg_table = drm_gem_cma_prime_import_sg_table_vmap, \
-	.gem_prime_mmap		= drm_gem_prime_mmap
-
-struct drm_gem_object *
-drm_gem_cma_prime_import_sg_table_vmap(struct drm_device *drm,
-				       struct dma_buf_attachment *attach,
-				       struct sg_table *sgt);
-
-#endif /* __DRM_GEM_CMA_HELPER_H__ */
+#endif	/* _DRM_DRM_GEM_CMA_HELPER_H_ */

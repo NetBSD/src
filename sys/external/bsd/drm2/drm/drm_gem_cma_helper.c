@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.13 2021/12/19 09:52:00 riastradh Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.14 2022/07/02 00:26:07 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,16 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.13 2021/12/19 09:52:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.14 2022/07/02 00:26:07 riastradh Exp $");
 
 #include <linux/err.h>
 
-#include <drm/drm_drv.h>
-#include <drm/drm_print.h>
-#include <drm/drm_gem_cma_helper.h>
 #include <drm/bus_dma_hacks.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_prime.h>
+#include <drm/drm_print.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 static struct drm_gem_cma_object *
 drm_gem_cma_create_internal(struct drm_device *ddev, size_t size,
