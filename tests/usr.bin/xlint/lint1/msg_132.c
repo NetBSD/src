@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.19 2022/06/19 12:14:34 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.20 2022/07/02 09:48:18 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -13,15 +13,24 @@
 
 /* lint1-extra-flags: -aa */
 
-unsigned char u8;
-unsigned short u16;
-unsigned int u32;
-unsigned long long u64;
+typedef unsigned char u8_t;
+typedef unsigned short u16_t;
+typedef unsigned int u32_t;
+typedef unsigned long long u64_t;
+typedef signed char s8_t;
+typedef signed short s16_t;
+typedef signed int s32_t;
+typedef signed long long s64_t;
 
-signed char s8;
-signed short s16;
-signed int s32;
-signed long long s64;
+u8_t u8;
+u16_t u16;
+u32_t u32;
+u64_t u64;
+
+s8_t s8;
+s16_t s16;
+s32_t s32;
+s64_t s64;
 
 void
 unsigned_to_unsigned(void)
@@ -165,11 +174,6 @@ non_constant_expression(void)
 	return not_a_constant * 8ULL;
 }
 
-typedef unsigned char u8_t;
-typedef unsigned short u16_t;
-typedef unsigned int u32_t;
-typedef unsigned long long u64_t;
-
 /*
  * PR 36668 notices that lint wrongly complains about the possible loss.
  *
@@ -237,4 +241,28 @@ test_bit_fields(struct bit_fields s, unsigned long long m)
 
 	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	return s.bits_32 & m;
+}
+
+u64_t
+u64_shl(u64_t lhs, u64_t rhs)
+{
+	return lhs << rhs;
+}
+
+u64_t
+u64_shr(u64_t lhs, u64_t rhs)
+{
+	return lhs >> rhs;
+}
+
+s64_t
+s64_shl(s64_t lhs, s64_t rhs)
+{
+	return lhs << rhs;
+}
+
+s64_t
+s64_shr(s64_t lhs, s64_t rhs)
+{
+	return lhs >> rhs;
 }
