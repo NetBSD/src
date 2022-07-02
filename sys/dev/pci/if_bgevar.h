@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.26 2020/02/01 06:17:23 thorpej Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.27 2022/07/02 07:19:36 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -73,9 +73,9 @@
 
 #define BGE_HOSTADDR(x, y)						\
 	do {								\
-		(x).bge_addr_lo = ((uint64_t) (y) & 0xffffffff);	\
+		(x).bge_addr_lo = BUS_ADDR_LO32(y);			\
 		if (sizeof (bus_addr_t) == 8)				\
-			(x).bge_addr_hi = ((uint64_t) (y) >> 32);	\
+			(x).bge_addr_hi = BUS_ADDR_HI32(y);		\
 		else							\
 			(x).bge_addr_hi = 0;				\
 	} while(0)
