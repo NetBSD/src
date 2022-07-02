@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.734 2022/07/02 06:09:37 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.735 2022/07/02 06:10:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.734 2022/07/02 06:09:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.735 2022/07/02 06:10:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9955,9 +9955,9 @@ wm_intr_legacy(void *arg)
 #if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
 	if (icr & (ICR_RXDMT0 | ICR_RXT0)) {
 		DPRINTF(sc, WM_DEBUG_RX,
-		    ("%s: RX: got Rx intr 0x%08x\n",
+		    ("%s: RX: got Rx intr 0x" PRIxBIT "\n",
 			device_xname(sc->sc_dev),
-			icr & (uint32_t)(ICR_RXDMT0 | ICR_RXT0)));
+			icr & (ICR_RXDMT0 | ICR_RXT0)));
 		WM_Q_EVCNT_INCR(rxq, intr);
 	}
 #endif
@@ -12555,8 +12555,8 @@ wm_tbi_mediachange(struct ifnet *ifp)
 
 		status = CSR_READ(sc, WMREG_STATUS);
 		DPRINTF(sc, WM_DEBUG_LINK,
-		    ("%s: status after final read = 0x%x, STATUS_LU = 0x%x\n",
-			device_xname(sc->sc_dev), status, (uint32_t)STATUS_LU));
+		    ("%s: status after final read = 0x%x, STATUS_LU = 0x" PRIxBIT "\n",
+			device_xname(sc->sc_dev), status, STATUS_LU));
 		if (status & STATUS_LU) {
 			/* Link is up. */
 			DPRINTF(sc, WM_DEBUG_LINK,
