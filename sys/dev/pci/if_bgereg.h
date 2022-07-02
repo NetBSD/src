@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.96 2019/03/05 08:25:02 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.97 2022/07/02 07:26:53 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2242,15 +2242,15 @@
 #define	BGE_SRAM_FW_MB_MAGIC	0x4B657654 /* == ~0xB49A89AB */
 
 typedef struct {
-	volatile u_int32_t	bge_addr_hi;
-	volatile u_int32_t	bge_addr_lo;
+	volatile uint32_t	bge_addr_hi;
+	volatile uint32_t	bge_addr_lo;
 } bge_hostaddr;
 
 /* Ring control block structure */
 struct bge_rcb {
 	bge_hostaddr		bge_hostaddr;
-	volatile u_int32_t	bge_maxlen_flags;	/* two 16-bit fields */
-	volatile u_int32_t	bge_nicaddr;
+	volatile uint32_t	bge_maxlen_flags;	/* two 16-bit fields */
+	volatile uint32_t	bge_nicaddr;
 };
 
 #define	BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen) << 16 | (flags))
@@ -2261,15 +2261,15 @@ struct bge_rcb {
 struct bge_tx_bd {
 	bge_hostaddr		bge_addr;
 #if BYTE_ORDER == BIG_ENDIAN
-	volatile u_int16_t	bge_len;
-	volatile u_int16_t	bge_flags;
-	volatile u_int16_t	bge_rsvd;
-	volatile u_int16_t	bge_vlan_tag;
+	volatile uint16_t	bge_len;
+	volatile uint16_t	bge_flags;
+	volatile uint16_t	bge_rsvd;
+	volatile uint16_t	bge_vlan_tag;
 #else
-	volatile u_int16_t	bge_flags;
-	volatile u_int16_t	bge_len;
-	volatile u_int16_t	bge_vlan_tag;
-	volatile u_int16_t	bge_rsvd;
+	volatile uint16_t	bge_flags;
+	volatile uint16_t	bge_len;
+	volatile uint16_t	bge_vlan_tag;
+	volatile uint16_t	bge_rsvd;
 #endif
 };
 
@@ -2293,26 +2293,26 @@ struct bge_tx_bd {
 struct bge_rx_bd {
 	bge_hostaddr		bge_addr;
 #if BYTE_ORDER == BIG_ENDIAN
-	volatile u_int16_t	bge_idx;
-	volatile u_int16_t	bge_len;
-	volatile u_int16_t	bge_type;
-	volatile u_int16_t	bge_flags;
-	volatile u_int16_t	bge_ip_csum;
-	volatile u_int16_t	bge_tcp_udp_csum;
-	volatile u_int16_t	bge_error_flag;
-	volatile u_int16_t	bge_vlan_tag;
+	volatile uint16_t	bge_idx;
+	volatile uint16_t	bge_len;
+	volatile uint16_t	bge_type;
+	volatile uint16_t	bge_flags;
+	volatile uint16_t	bge_ip_csum;
+	volatile uint16_t	bge_tcp_udp_csum;
+	volatile uint16_t	bge_error_flag;
+	volatile uint16_t	bge_vlan_tag;
 #else
-	volatile u_int16_t	bge_len;
-	volatile u_int16_t	bge_idx;
-	volatile u_int16_t	bge_flags;
-	volatile u_int16_t	bge_type;
-	volatile u_int16_t	bge_tcp_udp_csum;
-	volatile u_int16_t	bge_ip_csum;
-	volatile u_int16_t	bge_vlan_tag;
-	volatile u_int16_t	bge_error_flag;
+	volatile uint16_t	bge_len;
+	volatile uint16_t	bge_idx;
+	volatile uint16_t	bge_flags;
+	volatile uint16_t	bge_type;
+	volatile uint16_t	bge_tcp_udp_csum;
+	volatile uint16_t	bge_ip_csum;
+	volatile uint16_t	bge_vlan_tag;
+	volatile uint16_t	bge_error_flag;
 #endif
-	volatile u_int32_t	bge_rsvd;
-	volatile u_int32_t	bge_opaque;
+	volatile uint32_t	bge_rsvd;
+	volatile uint32_t	bge_opaque;
 };
 
 #define BGE_RXBDFLAG_END		0x0004
@@ -2337,27 +2337,27 @@ struct bge_rx_bd {
 
 struct bge_sts_idx {
 #if BYTE_ORDER == BIG_ENDIAN
-	volatile u_int16_t	bge_tx_cons_idx;
-	volatile u_int16_t	bge_rx_prod_idx;
+	volatile uint16_t	bge_tx_cons_idx;
+	volatile uint16_t	bge_rx_prod_idx;
 #else
-	volatile u_int16_t	bge_rx_prod_idx;
-	volatile u_int16_t	bge_tx_cons_idx;
+	volatile uint16_t	bge_rx_prod_idx;
+	volatile uint16_t	bge_tx_cons_idx;
 #endif
 };
 
 struct bge_status_block {
-	volatile u_int32_t	bge_status;
-	volatile u_int32_t	bge_status_tag;
+	volatile uint32_t	bge_status;
+	volatile uint32_t	bge_status_tag;
 #if BYTE_ORDER == BIG_ENDIAN
-	volatile u_int16_t	bge_rx_std_cons_idx;
-	volatile u_int16_t	bge_rx_jumbo_cons_idx;
-	volatile u_int16_t	bge_rsvd1;
-	volatile u_int16_t	bge_rx_mini_cons_idx;
+	volatile uint16_t	bge_rx_std_cons_idx;
+	volatile uint16_t	bge_rx_jumbo_cons_idx;
+	volatile uint16_t	bge_rsvd1;
+	volatile uint16_t	bge_rx_mini_cons_idx;
 #else
-	volatile u_int16_t	bge_rx_jumbo_cons_idx;
-	volatile u_int16_t	bge_rx_std_cons_idx;
-	volatile u_int16_t	bge_rx_mini_cons_idx;
-	volatile u_int16_t	bge_rsvd1;
+	volatile uint16_t	bge_rx_jumbo_cons_idx;
+	volatile uint16_t	bge_rx_std_cons_idx;
+	volatile uint16_t	bge_rx_mini_cons_idx;
+	volatile uint16_t	bge_rsvd1;
 #endif
 	struct bge_sts_idx	bge_idx[16];
 };
@@ -2471,43 +2471,43 @@ struct bge_status_block {
 
 /* Stats counters access through registers */
 struct bge_mac_stats_regs {
-	u_int32_t		ifHCOutOctets;
-	u_int32_t		Reserved0;
-	u_int32_t		etherStatsCollisions;
-	u_int32_t		outXonSent;
-	u_int32_t		outXoffSent;
-	u_int32_t		Reserved1;
-	u_int32_t		dot3StatsInternalMacTransmitErrors;
-	u_int32_t		dot3StatsSingleCollisionFrames;
-	u_int32_t		dot3StatsMultipleCollisionFrames;
-	u_int32_t		dot3StatsDeferredTransmissions;
-	u_int32_t		Reserved2;
-	u_int32_t		dot3StatsExcessiveCollisions;
-	u_int32_t		dot3StatsLateCollisions;
-	u_int32_t		Reserved3[14];
-	u_int32_t		ifHCOutUcastPkts;
-	u_int32_t		ifHCOutMulticastPkts;
-	u_int32_t		ifHCOutBroadcastPkts;
-	u_int32_t		Reserved4[2];
-	u_int32_t		ifHCInOctets;
-	u_int32_t		Reserved5;
-	u_int32_t		etherStatsFragments;
-	u_int32_t		ifHCInUcastPkts;
-	u_int32_t		ifHCInMulticastPkts;
-	u_int32_t		ifHCInBroadcastPkts;
-	u_int32_t		dot3StatsFCSErrors;
-	u_int32_t		dot3StatsAlignmentErrors;
-	u_int32_t		xonPauseFramesReceived;
-	u_int32_t		xoffPauseFramesReceived;
-	u_int32_t		macControlFramesReceived;
-	u_int32_t		xoffStateEntered;
-	u_int32_t		dot3StatsFramesTooLong;
-	u_int32_t		etherStatsJabbers;
-	u_int32_t		etherStatsUndersizePkts;
+	uint32_t		ifHCOutOctets;
+	uint32_t		Reserved0;
+	uint32_t		etherStatsCollisions;
+	uint32_t		outXonSent;
+	uint32_t		outXoffSent;
+	uint32_t		Reserved1;
+	uint32_t		dot3StatsInternalMacTransmitErrors;
+	uint32_t		dot3StatsSingleCollisionFrames;
+	uint32_t		dot3StatsMultipleCollisionFrames;
+	uint32_t		dot3StatsDeferredTransmissions;
+	uint32_t		Reserved2;
+	uint32_t		dot3StatsExcessiveCollisions;
+	uint32_t		dot3StatsLateCollisions;
+	uint32_t		Reserved3[14];
+	uint32_t		ifHCOutUcastPkts;
+	uint32_t		ifHCOutMulticastPkts;
+	uint32_t		ifHCOutBroadcastPkts;
+	uint32_t		Reserved4[2];
+	uint32_t		ifHCInOctets;
+	uint32_t		Reserved5;
+	uint32_t		etherStatsFragments;
+	uint32_t		ifHCInUcastPkts;
+	uint32_t		ifHCInMulticastPkts;
+	uint32_t		ifHCInBroadcastPkts;
+	uint32_t		dot3StatsFCSErrors;
+	uint32_t		dot3StatsAlignmentErrors;
+	uint32_t		xonPauseFramesReceived;
+	uint32_t		xoffPauseFramesReceived;
+	uint32_t		macControlFramesReceived;
+	uint32_t		xoffStateEntered;
+	uint32_t		dot3StatsFramesTooLong;
+	uint32_t		etherStatsJabbers;
+	uint32_t		etherStatsUndersizePkts;
 };
 
 struct bge_stats {
-	u_int8_t		Reserved0[256];
+	uint8_t			Reserved0[256];
 
 	/* Statistics maintained by Receive MAC. */
 	bge_hostaddr		ifHCInOctets;
@@ -2602,7 +2602,7 @@ struct bge_stats {
 	bge_hostaddr		nicAvoidedInterrupts;
 	bge_hostaddr		nicSendThresholdHit;
 
-	u_int8_t		Reserved4[320];
+	uint8_t			Reserved4[320];
 };
 
 /*
@@ -2643,14 +2643,14 @@ struct bge_gib {
 
 /* VPD structures */
 struct vpd_res {
-	u_int8_t		vr_id;
-	u_int8_t		vr_len;
-	u_int8_t		vr_pad;
+	uint8_t			vr_id;
+	uint8_t			vr_len;
+	uint8_t			vr_pad;
 };
 
 struct vpd_key {
 	char			vk_key[2];
-	u_int8_t		vk_len;
+	uint8_t			vk_len;
 };
 
 #define VPD_RES_ID	0x82	/* ID string */
