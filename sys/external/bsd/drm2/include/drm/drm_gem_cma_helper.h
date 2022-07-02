@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_cma_helper.h,v 1.3 2022/07/02 00:26:07 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_cma_helper.h,v 1.4 2022/07/02 04:37:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <drm/drm_gem.h>
 
-struct dma_buf_attachment
+struct dma_buf_attachment;
 struct drm_device;
 struct drm_file;
 struct drm_gem_cma_object;
