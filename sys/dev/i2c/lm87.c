@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.15 2021/06/13 09:46:04 mlelstv Exp $	*/
+/*	$NetBSD: lm87.c,v 1.16 2022/07/02 16:28:39 andvar Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.15 2021/06/13 09:46:04 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.16 2022/07/02 16:28:39 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.15 2021/06/13 09:46:04 mlelstv Exp $");
 #define LM87_5V			0x23	/* +5V reading */
 #define LM87_12V		0x24	/* +12V reading */
 #define LM87_VCCP2		0x25	/* Vccp2 reading */
-#define LM87_EXT_TEMP		0x26	/* External tempurature 1 reading */
+#define LM87_EXT_TEMP		0x26	/* External temperature 1 reading */
 #define LM87_INT_TEMP		0x27	/* Internal temperature reading */
 #define LM87_FAN1		0x28	/* Fan1 or AIN1 reading */
 #define LM87_FAN2		0x29	/* Fan2 or AIN2 reading */
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.15 2021/06/13 09:46:04 mlelstv Exp $");
 #define LM87_12V_LOW		0x34	/* +12V low limit */
 #define LM87_VCCP2_HIGH		0x35	/* Vccp2 high limit */
 #define LM87_VCCP2_LOW		0x36	/* Vccp2 low limit */
-#define LM87_EXT_HIGH		0x37	/* External tempurature 1 high limit */
-#define LM87_EXT_LOW		0x38	/* External tempurature low limit */
-#define LM87_INT_HIGH		0x39	/* Internal tempurature 1 high limit */
-#define LM87_INT_LOW		0x3a	/* Internal tempurature low limit */
+#define LM87_EXT_HIGH		0x37	/* External temperature 1 high limit */
+#define LM87_EXT_LOW		0x38	/* External temperature low limit */
+#define LM87_INT_HIGH		0x39	/* Internal temperature 1 high limit */
+#define LM87_INT_LOW		0x3a	/* Internal temperature low limit */
 #define LM87_FAN1_HIGH		0x3b	/* Fan 1 count or AIN1 high limit */
 #define LM87_FAN2_HIGH		0x3c	/* Fan 2 count or AIN2 high limit */
 #define LM87_COMPANY_ID		0x3e	/* Company ID */
