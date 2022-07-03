@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.150 2022/01/25 22:01:34 andvar Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.151 2022/07/03 19:58:42 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.150 2022/01/25 22:01:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.151 2022/07/03 19:58:42 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1733,7 +1733,7 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 		goto out;
 
 	/* allocate DB entries and attach one to each DMA channels */
-	/* DB entry must start at 16 bytes bounary. */
+	/* DB entry must start at 16 bytes boundary. */
 	STAILQ_INIT(&dbch->db_trq);
 	db_tr = (struct fwohcidb_tr *)malloc(db_tr_sz, M_FW, M_WAITOK | M_ZERO);
 	if (db_tr == NULL) {
