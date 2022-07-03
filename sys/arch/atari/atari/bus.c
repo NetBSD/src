@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.63 2022/07/03 16:03:08 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.64 2022/07/03 16:33:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.63 2022/07/03 16:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.64 2022/07/03 16:33:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,6 @@ static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 static struct extent *iomem_ex;
 static int iomem_malloc_safe = 0;
 
-int  bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
-		bus_size_t alignment, bus_size_t boundary,
-		bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-		paddr_t low, paddr_t high);
 static int  _bus_dmamap_load_buffer(bus_dma_tag_t tag, bus_dmamap_t,
 		void *, bus_size_t, struct vmspace *, int, paddr_t *,
 		int *, int);
@@ -94,6 +90,7 @@ static int	bootm_free(vaddr_t va, u_long size);
 void
 bootm_init(vaddr_t va, void *ptep, vsize_t size)
 {
+
 	bootm_ex = extent_create("bootmem", va, va + size,
 	    (void *)bootm_ex_storage, sizeof(bootm_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
@@ -107,7 +104,7 @@ bootm_alloc(paddr_t pa, u_long size, int flags)
 	pt_entry_t	pg_proto;
 	vaddr_t		va, rva;
 
-	if (extent_alloc(bootm_ex, size, PAGE_SIZE, 0, EX_NOWAIT, &rva)) {
+	if (extent_alloc(bootm_ex, size, PAGE_SIZE, 0, EX_NOWAIT, &rva) != 0) {
 		printf("bootm_alloc fails! Not enough fixed extents?\n");
 		printf("Requested extent: pa=%lx, size=%lx\n",
 						(u_long)pa, size);
@@ -118,7 +115,7 @@ bootm_alloc(paddr_t pa, u_long size, int flags)
 	epg = &pg[btoc(size)];
 	va  = rva;
 	pg_proto = pa | PG_RW | PG_V;
-	if (!(flags & BUS_SPACE_MAP_CACHEABLE))
+	if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0)
 		pg_proto |= PG_CI;
 	while (pg < epg) {
 		*pg++     = pg_proto;
@@ -199,11 +196,11 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	error = extent_alloc_region(iomem_ex, bpa + t->base, size,
 			EX_NOWAIT | iomem_malloc_safe);
 
-	if (error)
+	if (error != 0)
 		return error;
 
 	error = bus_mem_add_mapping(t, bpa, size, flags, mhp);
-	if (error) {
+	if (error != 0) {
 		if (extent_free(iomem_ex, bpa + t->base, size,
 		    EX_NOWAIT | iomem_malloc_safe)) {
 			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
@@ -240,16 +237,16 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	    rend + t->base, size, alignment, boundary,
 	    EX_FAST | EX_NOWAIT | iomem_malloc_safe, &bpa);
 
-	if (error)
+	if (error != 0)
 		return error;
 
 	/*
 	 * Map the bus physical address to a kernel virtual address.
 	 */
 	error = bus_mem_add_mapping(t, bpa, size, flags, bshp);
-	if (error) {
+	if (error != 0) {
 		if (extent_free(iomem_ex, bpa, size,
-		    EX_NOWAIT | iomem_malloc_safe)) {
+		    EX_NOWAIT | iomem_malloc_safe) != 0) {
 			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
 			    bpa, size);
 			printf("bus_space_alloc: can't free region\n");
@@ -296,7 +293,7 @@ bus_mem_add_mapping(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	*bshp = va + (bpa & PGOFSET);
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		u_int	*ptep, npte;
+		pt_entry_t *ptep, npte;
 
 		pmap_enter(pmap_kernel(), (vaddr_t)va, pa,
 		    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE);
@@ -330,7 +327,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 #endif
 
 	(void)pmap_extract(pmap_kernel(), va, &bpa);
-	bpa += ((u_long)bsh & PGOFSET);
+	bpa += ((paddr_t)bsh & PGOFSET);
 
 	/*
 	 * Free the kernel virtual mapping.
@@ -344,7 +341,8 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	/*
 	 * Mark as free in the extent map.
 	 */
-	if (extent_free(iomem_ex, bpa, size, EX_NOWAIT | iomem_malloc_safe)) {
+	if (extent_free(iomem_ex, bpa, size, EX_NOWAIT | iomem_malloc_safe)
+	    != 0) {
 		printf("bus_space_unmap: pa 0x%lx, size 0x%lx\n", bpa, size);
 		printf("bus_space_unmap: can't free region\n");
 	}
@@ -380,6 +378,7 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
 static size_t
 _bus_dmamap_mapsize(int const nsegments)
 {
+
 	KASSERT(nsegments > 0); 
 	return sizeof(struct atari_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
@@ -409,7 +408,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * the (nsegments - 1).
 	 */
 	if ((mapstore = kmem_zalloc(_bus_dmamap_mapsize(nsegments),
-	    (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP)) == NULL)
+	    (flags & BUS_DMA_NOWAIT) != 0 ? KM_NOSLEEP : KM_SLEEP)) == NULL)
 		return ENOMEM;
 
 	map = (struct atari_bus_dmamap *)mapstore;
@@ -649,7 +648,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		ps = seg->ds_addr + offset;
 		pe = ps + seglen;
 
-		if (ops & BUS_DMASYNC_PREWRITE) {
+		if ((ops & BUS_DMASYNC_PREWRITE) != 0) {
 			p = ps & ~CACHELINE_MASK;
 			e = (pe + CACHELINE_MASK) & ~CACHELINE_MASK;
 
@@ -720,9 +719,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * start/end of the cache. In such a case, *flush* the
 		 * cachelines at the start and end of the required region.
 		 */
-		else if (ops & BUS_DMASYNC_PREREAD) {
+		else if ((ops & BUS_DMASYNC_PREREAD) != 0) {
 			/* flush cacheline on start boundary */
-			if (ps & CACHELINE_MASK) {
+			if ((ps & CACHELINE_MASK) != 0) {
 				DCFL(ps & ~CACHELINE_MASK);
 			}
 
@@ -892,7 +891,7 @@ bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
+	if ((vaddr_t)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
 
@@ -917,11 +916,11 @@ bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 
 	for (i = 0; i < nsegs; i++) {
 #ifdef DIAGNOSTIC
-		if (off & PGOFSET)
+		if ((off & PGOFSET) != 0)
 			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
+		if ((segs[i].ds_addr & PGOFSET) != 0)
 			panic("_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
+		if ((segs[i].ds_len & PGOFSET) != 0)
 			panic("_bus_dmamem_mmap: segment size not multiple"
 			    " of page size");
 #endif
@@ -930,7 +929,7 @@ bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return (m68k_btop((char *)segs[i].ds_addr - offset + off));
+		return m68k_btop((char *)segs[i].ds_addr - offset + off);
 	}
 
 	/* Page not found. */
@@ -969,12 +968,12 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		(void) pmap_extract(pmap, vaddr, &curaddr);
+		(void)pmap_extract(pmap, vaddr, &curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((vaddr_t)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -1052,7 +1051,7 @@ bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 */
 	error = uvm_pglistalloc(size, low, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
+	if (error != 0)
 		return error;
 
 	/*
