@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.362 2022/07/02 08:39:48 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.363 2022/07/03 13:21:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.362 2022/07/02 08:39:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.363 2022/07/03 13:21:28 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -4392,17 +4392,17 @@ bge_rxeof(struct bge_softc *sc)
 	bus_size_t tlen;
 	int tosync;
 
+	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+	    offsetof(struct bge_ring_data, bge_status_block),
+	    sizeof (struct bge_status_block),
+	    BUS_DMASYNC_POSTREAD);
+
 	rx_cons = sc->bge_rx_saved_considx;
 	rx_prod = sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx;
 
 	/* Nothing to do */
 	if (rx_cons == rx_prod)
 		return;
-
-	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-	    offsetof(struct bge_ring_data, bge_status_block),
-	    sizeof (struct bge_status_block),
-	    BUS_DMASYNC_POSTREAD);
 
 	offset = offsetof(struct bge_ring_data, bge_rx_return_ring);
 	tosync = rx_prod - rx_cons;
