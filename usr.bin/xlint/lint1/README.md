@@ -1,10 +1,10 @@
-[//]: # ($NetBSD: README.md,v 1.6 2022/06/17 18:54:53 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.7 2022/07/03 19:47:34 rillig Exp $)
 
 # Introduction
 
 Lint1 analyzes a single translation unit of C code.
 
-* It reads the output of the C preprocessor, comments are retained.
+* It reads the output of the C preprocessor, retaining the comments.
 * The lexer in `scan.l` and `lex.c` splits the input into tokens.
 * The parser in `cgram.y` creates types and expressions from the tokens.
 * It checks declarations in `decl.c`.
@@ -19,8 +19,13 @@ test in `tests/usr.bin/xlint/lint1/msg_???.c`.
 ## Type checking
 
 Lint has stricter type checking than most C compilers.
-It warns about type conversions that may result in alignment problems,
-see the test `msg_135.c` for examples.
+
+In _strict bool mode_, lint treats `bool` as a type that is incompatible with
+other scalar types, like in C#, Go, Java.
+See the test `d_c99_bool_strict.c` for details.
+
+Lint warns about type conversions that may result in alignment problems.
+See the test `msg_135.c` for examples.
 
 ## Control flow analysis
 
@@ -35,6 +40,27 @@ Lint tries to continue parsing and checking even after seeing errors.
 This part of lint is not robust though, so expect some crashes here,
 as variables may not be properly initialized or be null pointers.
 The cleanup after handling a parse error is often incomplete.
+
+## Configurable diagnostic messages
+
+Whether lint prints a message and whether each message is an error or a 
+warning depends on several things:
+
+* The language level, with its possible values:
+    * traditional C (`-t`)
+    * migration from traditional C and C90 (default)
+    * C90 (`-s`)
+    * C99 (`-S`)
+    * C11 (`-Ac11`)
+* In GCC mode (`-g`), lint allows several GNU extensions,
+  reducing the amount of printed messages.
+* In strict bool mode (`-T`), lint issues errors when `bool` is mixed with
+  other scalar types, reusing the existing messages 107 and 211, while also
+  defining new messages that are specific to strict bool mode.
+* The option `-a` performs the check for lossy conversions from large integer
+  types, the option `-aa` extends this check to small integer types as well,
+  reusing the same message ID.
+* The option `-X` suppresses arbitrary messages by their message ID.
 
 # Fundamental types
 
@@ -133,15 +159,15 @@ See `expr_free_all`.
 
 Useful breakpoints are:
 
-| Location                      | Remarks                                              |
-|-------------------------------|------------------------------------------------------|
-| build_binary in tree.c        | Creates an expression for a unary or binary operator |
-| initialization_expr in init.c | Checks a single initializer                          |
-| expr in tree.c                | Checks a full expression                             |
-| typeok in tree.c              | Checks two types for compatibility                   |
-| vwarning_at in err.c          | Prints a warning                                     |
-| verror_at in err.c            | Prints an error                                      |
-| assert_failed in err.c        | Prints the location of a failed assertion            |
+| Function            | File   | Remarks                                              |
+|---------------------|--------|------------------------------------------------------|
+| build_binary        | tree.c | Creates an expression for a unary or binary operator |
+| initialization_expr | init.c | Checks a single initializer                          |
+| expr                | tree.c | Checks a full expression                             |
+| typeok              | tree.c | Checks two types for compatibility                   |
+| vwarning_at         | err.c  | Prints a warning                                     |
+| verror_at           | err.c  | Prints an error                                      |
+| assert_failed       | err.c  | Prints the location of a failed assertion            |
 
 # Tests
 
@@ -171,7 +197,9 @@ Most other tests focus on a single feature.
 ## Adding a new test
 
 1. Run `make add-test NAME=test_name`.
-2. Sort the `FILES` lines in `../../tests/usr.bin/xlint/lint1/Makefile`.
-3. Make the test generate the desired diagnostics.
-4. Run `cd ../../tests/usr.bin/xlint/lint1 && sh ./accept.sh test_name`.
-5. Run `cd ../.. && cvs commit distrib/sets/lists/tests/mi tests/usr.bin/xlint`.
+2. Run `cd ../../../tests/usr.bin/xlint/lint1`.
+3. Sort the `FILES` lines in `Makefile`.
+4. Make the test generate the desired diagnostics.
+5. Run `./accept.sh test_name` until it no longer complains.
+6. Run `cd ../../..`.
+7. Run `cvs commit distrib/sets/lists/tests/mi tests/usr.bin/xlint`.
