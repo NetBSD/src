@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2022/01/02 16:40:46 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2022/07/03 19:58:42 andvar Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2022/01/02 16:40:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2022/07/03 19:58:42 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -791,7 +791,7 @@ initarm(void *arg)
 	 * array.
 	 *
 	 * The kernel page directory must be on a 16K boundary.  The page
-	 * tables must be on 4K bounaries.  What we do is allocate the
+	 * tables must be on 4K boundaries.  What we do is allocate the
 	 * page directory on the first 16K boundary that we encounter, and
 	 * the page tables on 4K boundaries otherwise.  Since we allocate
 	 * at least 3 L2 page tables, we are guaranteed to encounter at
