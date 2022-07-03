@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181reg.h,v 1.4 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: ite8181reg.h,v 1.5 2022/07/03 11:30:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -38,7 +38,7 @@
 #define		ITE8181_DATA_CLASS      0x03800000
 #define		ITE8181_CLASS_MASK      0xffff0000
 #define		ITE8181_REV_MASK	0x000000ff
-#define ITE8181_MBA      0x10	/* Memory Base Address(4MB bounday) */
+#define ITE8181_MBA      0x10	/* Memory Base Address(4MB boundary) */
 #define ITE8181_GBA      0x14	/* GUI Base Address(32KB boundary) */
 #define ITE8181_SBA      0x18	/* Graphic Base Address (64KB boundary) */
 #define ITE8181_TEST     0x40	/* Test Reg. */
@@ -49,7 +49,7 @@
 #define 	ITE8181_DATA_PLL1_RESET		0x4000	/* PLL1 reset */
 #define 	ITE8181_DATA_PLL2_PWDOWN	0x2000	/* PLL2 powerdown */
 #define 	ITE8181_DATA_PLL1_PWDOWN	0x1000	/* PLL1 powerdown */
-#define		ITE8181_DATA_PALETTESTBY	0x0200	/* Pallete RAM standby */
+#define		ITE8181_DATA_PALETTESTBY	0x0200	/* Palette RAM standby */
 #define		ITE8181_DATA_CURSORSTBY		0x0100	/* Cursor standby */
 #define		ITE8181_DATA_BITBLTSTBY		0x0080	/* BitBlt engine standby */
 #define		ITE8181_DATA_LINESTBY		0x0040	/* Line Draw standby */
@@ -204,7 +204,7 @@
 #define		ITE8181_FRCCOL_8	0x80	/* option1, 8 color */
 #define		ITE8181_FRCCOL_16	0x00	/* option2, 16 color */
 
-#define ITE8181_EMA_FRCPAT	0xa3	/* select frame rate perttern */
+#define ITE8181_EMA_FRCPAT	0xa3	/* select frame rate pattern */
 #define		ITE8181_FRCPAT_PROGRAM	0x80
 #define		ITE8181_FRCPAT_CONSTANT	0x00
 
