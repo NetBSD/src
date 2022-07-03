@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.142 2022/06/22 19:23:17 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.143 2022/07/03 07:33:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.142 2022/06/22 19:23:17 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.143 2022/07/03 07:33:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1152,7 +1152,7 @@ global_clean_up_decl(bool silent)
 	}
 	if (scanflike_argnum != -1) {
 		if (!silent) {
-			/* must precede function definition: ** %s ** */
+			/* comment ** %s ** must precede function definition */
 			warning_at(282, &scanflike_pos, "SCANFLIKE");
 		}
 		scanflike_argnum = -1;
