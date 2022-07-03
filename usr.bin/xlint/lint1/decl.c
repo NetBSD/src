@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.293 2022/06/22 19:23:17 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.294 2022/07/03 14:35:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.293 2022/06/22 19:23:17 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.294 2022/07/03 14:35:54 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1052,11 +1052,15 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 		if (!bitfieldtype_ok) {
 			/* TODO: Make this an error in C99 mode as well. */
 			if (!allow_trad && !allow_c99) {
+				type_t *btp = block_dup_type(tp);
+				btp->t_bitfield = false;
 				/* bit-field type '%s' invalid in ANSI C */
-				warning(273, type_name(tp));
+				warning(273, type_name(btp));
 			} else if (pflag) {
+				type_t *btp = block_dup_type(tp);
+				btp->t_bitfield = false;
 				/* nonportable bit-field type '%s' */
-				warning(34, type_name(tp));
+				warning(34, type_name(btp));
 			}
 		}
 	} else if (t == INT && dcs->d_sign_mod == NOTSPEC) {
@@ -1067,8 +1071,10 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 	} else if (!(t == INT || t == UINT || t == BOOL ||
 		     (is_integer(t) && (bitfieldtype_ok || allow_gcc)))) {
 
+		type_t *btp = block_dup_type(tp);
+		btp->t_bitfield = false;
 		/* illegal bit-field type '%s' */
-		warning(35, type_name(tp));
+		warning(35, type_name(btp));
 
 		unsigned int sz = tp->t_flen;
 		dsym->s_type = tp = block_dup_type(gettyp(t = INT));

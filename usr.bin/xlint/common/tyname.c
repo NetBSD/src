@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.52 2022/06/21 22:10:30 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.53 2022/07/03 14:35:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.52 2022/06/21 22:10:30 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.53 2022/07/03 14:35:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -268,6 +268,13 @@ type_name(const type_t *tp)
 		buf_add(&buf, "incomplete ");
 #endif
 	buf_add(&buf, tspec_name(t));
+
+#ifdef IS_LINT1
+	if (tp->t_bitfield) {
+		buf_add(&buf, ":");
+		buf_add_int(&buf, (int)tp->t_flen);
+	}
+#endif
 
 	switch (t) {
 	case PTR:
