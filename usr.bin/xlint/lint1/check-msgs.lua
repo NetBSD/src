@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.15 2022/07/03 20:05:46 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.16 2022/07/03 21:17:24 rillig Exp $
 
 --[[
 
@@ -11,14 +11,14 @@ actual user-visible message text in err.c.
 ]]
 
 
-local function load_messages(fname)
-  local msgs = {} ---@type table<number>string
+local function load_messages()
+  local msgs = {} ---@type table<string>string
 
-  local f = assert(io.open(fname, "r"))
+  local f = assert(io.open("err.c"))
   for line in f:lines() do
     local msg, id = line:match("%s*\"(.+)\",%s*/%*%s*(%d+)%s*%*/$")
     if msg ~= nil then
-      msgs[tonumber(id)] = msg
+      msgs[id] = msg
     end
   end
 
@@ -40,7 +40,7 @@ local function check_message(fname, lineno, id, comment, msgs)
   local msg = msgs[id]
 
   if msg == nil then
-    print_error("%s:%d: id=%d not found", fname, lineno, id)
+    print_error("%s:%d: id=%s not found", fname, lineno, id)
     return
   end
 
@@ -57,7 +57,7 @@ local function check_message(fname, lineno, id, comment, msgs)
     return
   end
 
-  print_error("%s:%d:   id=%-3d   msg=%-40s   comment=%s",
+  print_error("%s:%d:   id=%-3s   msg=%-40s   comment=%s",
     fname, lineno, id, msg, comment)
 end
 
@@ -80,12 +80,11 @@ local function check_file(fname, msgs)
 
     local func, id = line:match("^%s+([%w_]+)%((%d+)[),]")
     if is_message_function[func] then
-      id = tonumber(id)
       local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then
         check_message(fname, lineno, id, comment, msgs)
       else
-        print_error("%s:%d: missing comment for %d: /* %s */",
+        print_error("%s:%d: missing comment for %s: /* %s */",
           fname, lineno, id, msgs[id])
       end
     end
@@ -112,10 +111,10 @@ local function check_test_files(msgs)
   local cmd = ("cd '%s' && printf '%%s\\n' msg_[0-9][0-9][0-9]*.c"):format(testdir)
   local filenames = assert(io.popen(cmd))
   for filename in filenames:lines() do
-    local msgid = tonumber(filename:match("^msg_(%d%d%d)"))
+    local msgid = filename:match("^msg_(%d%d%d)")
     if msgs[msgid] then
       local unescaped_msg = msgs[msgid]:gsub("\\(.)", "%1")
-      local expected_text = ("%s [%d]"):format(unescaped_msg, msgid)
+      local expected_text = ("%s [%s]"):format(unescaped_msg, msgid)
       local fullname = ("%s/%s"):format(testdir, filename)
       if not file_contains(fullname, expected_text) then
         print_error("%s must contain: %s", fullname, expected_text)
@@ -126,7 +125,7 @@ local function check_test_files(msgs)
 end
 
 local function main(arg)
-  local msgs = load_messages("err.c")
+  local msgs = load_messages()
   for _, fname in ipairs(arg) do
     check_file(fname, msgs)
   end
