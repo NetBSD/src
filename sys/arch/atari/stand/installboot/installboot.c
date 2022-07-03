@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.38 2022/05/11 10:31:12 rin Exp $	*/
+/*	$NetBSD: installboot.c,v 1.39 2022/07/03 16:16:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -86,7 +86,7 @@ usage(void)
 {
 	fprintf(stderr,
 		"usage: installboot [options] device\n"
-#ifndef NO_USAGE
+#ifdef USAGE
 		"where options are:\n"
 		"\t-N  do not actually write anything on the disk\n"
 		"\t-m  use Milan boot blocks\n"
