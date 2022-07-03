@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.8 2019/12/21 09:11:59 wiz Exp $
+.\"	$NetBSD: awk.1,v 1.9 2022/07/03 10:56:22 rillig Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd December 19, 2019
+.Dd July 3, 2022
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -711,10 +711,11 @@ Print all lines between start/stop pairs:
 .Pp
 Simulate echo(1):
 .Bd -literal -offset indent
-BEGIN { # Simulate echo(1)
-        for (i = 1; i < ARGC; i++) printf "%s ", ARGV[i]
-        printf "\en"
-        exit }
+BEGIN {
+	if (1 < ARGC) printf "%s", ARGV[1]
+	for (i = 2; i < ARGC; i++) printf " %s", ARGV[i]
+	printf "\en"
+}
 .Ed
 .Pp
 Print an error message to standard error:
