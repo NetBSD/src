@@ -1,4 +1,4 @@
-/* $NetBSD: tgareg.h,v 1.6 2005/12/11 12:22:50 christos Exp $ */
+/* $NetBSD: tgareg.h,v 1.7 2022/07/03 11:30:48 andvar Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -111,7 +111,7 @@ typedef u_int32_t tga_reg_t;
 #define	TGA_REG_GGVR	0x02d		/* Green Value */
 #define	TGA_REG_GBVR	0x02e		/* Blue Value */
 #define	TGA_REG_GSWR	0x02f		/* Span Width */
-#define	TGA_REG_EPSR	0x030		/* Pallete and DAC Setup */
+#define	TGA_REG_EPSR	0x030		/* Palette and DAC Setup */
 
 /*	reserved	0x031 - 0x3f */
 
@@ -156,7 +156,7 @@ typedef u_int32_t tga_reg_t;
 
 /*	reserved	0x07b */
 
-#define	TGA_REG_EPDR	0x07c		/* Pallete and DAC Data */
+#define	TGA_REG_EPDR	0x07c		/* Palette and DAC Data */
 
 /*	reserved	0x07d */
 

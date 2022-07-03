@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.56 2022/05/24 06:28:00 andvar Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.57 2022/07/03 11:30:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.56 2022/05/24 06:28:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.57 2022/07/03 11:30:48 andvar Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1127,7 +1127,7 @@ hd64461video_set_clut(struct hd64461video_chip *vc, int idx, int cnt,
 {
 	KASSERT(r && g && b);
 
-	/* index pallete */
+	/* index palette */
 	hd64461_reg_write_2(HD64461_LCDCPTWAR_REG16,
 	    HD64461_LCDCPTWAR_SET(0, idx));
 	/* set data */
@@ -1151,7 +1151,7 @@ hd64461video_get_clut(struct hd64461video_chip *vc, int idx, int cnt,
 {
 	KASSERT(r && g && b);
 
-	/* index pallete */
+	/* index palette */
 	hd64461_reg_write_2(HD64461_LCDCPTRAR_REG16,
 	    HD64461_LCDCPTRAR_SET(0, idx));
 	

@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.43 2021/08/07 16:18:57 thorpej Exp $ */
+/* $NetBSD: lunafb.c,v 1.44 2022/07/03 11:30:48 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.43 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.44 2022/07/03 11:30:48 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,7 +430,7 @@ omfb_resetcmap(struct om_hwdevconfig *dc)
 		ndac->bt_addr = 0x05;
 		ndac->bt_ctrl = 0x00; /* all planes have non-blink */
 		ndac->bt_addr = 0x06;
-		ndac->bt_ctrl = 0x40; /* pallete enabled, ovly plane disabled */
+		ndac->bt_ctrl = 0x40; /* palette enabled, ovly plane disabled */
 		ndac->bt_addr = 0x07;
 		ndac->bt_ctrl = 0x00; /* no test mode */
 
