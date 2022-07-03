@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.38 2021/08/17 22:00:28 andvar Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.39 2022/07/03 19:58:42 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.
@@ -548,7 +548,7 @@ initarm(void *arg)
 	 * array.
 	 *
 	 * The kernel page directory must be on a 16K boundary.  The page
-	 * tables must be on 4K bounaries.  What we do is allocate the
+	 * tables must be on 4K boundaries.  What we do is allocate the
 	 * page directory on the first 16K boundary that we encounter, and
 	 * the page tables on 4K boundaries otherwise.  Since we allocate
 	 * at least 3 L2 page tables, we are guaranteed to encounter at
