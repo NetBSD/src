@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.363 2022/07/03 13:21:28 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.364 2022/07/03 13:25:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,15 +79,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.363 2022/07/03 13:21:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.364 2022/07/03 13:25:18 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <sys/callout.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/rndsource.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -1510,8 +1510,8 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_rx_std_ring) +
-		i * sizeof (struct bge_rx_bd),
-	    sizeof (struct bge_rx_bd),
+		i * sizeof(struct bge_rx_bd),
+	    sizeof(struct bge_rx_bd),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	return 0;
@@ -1569,8 +1569,8 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_rx_jumbo_ring) +
-		i * sizeof (struct bge_rx_bd),
-	    sizeof (struct bge_rx_bd),
+		i * sizeof(struct bge_rx_bd),
+	    sizeof(struct bge_rx_bd),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	return 0;
@@ -2541,7 +2541,7 @@ bge_blockinit(struct bge_softc *sc)
 
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    offsetof(struct bge_ring_data, bge_info),
-		    sizeof (struct bge_gib),
+		    sizeof(struct bge_gib),
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
@@ -4394,7 +4394,7 @@ bge_rxeof(struct bge_softc *sc)
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_status_block),
-	    sizeof (struct bge_status_block),
+	    sizeof(struct bge_status_block),
 	    BUS_DMASYNC_POSTREAD);
 
 	rx_cons = sc->bge_rx_saved_considx;
@@ -4410,11 +4410,11 @@ bge_rxeof(struct bge_softc *sc)
 	if (tosync != 0)
 		rnd_add_uint32(&sc->rnd_source, tosync);
 
-	toff = offset + (rx_cons * sizeof (struct bge_rx_bd));
+	toff = offset + (rx_cons * sizeof(struct bge_rx_bd));
 
 	if (tosync < 0) {
 		tlen = (sc->bge_return_ring_cnt - rx_cons) *
-		    sizeof (struct bge_rx_bd);
+		    sizeof(struct bge_rx_bd);
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    toff, tlen, BUS_DMASYNC_POSTREAD);
 		tosync = -tosync;
@@ -4422,7 +4422,7 @@ bge_rxeof(struct bge_softc *sc)
 
 	if (tosync != 0) {
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-		    offset, tosync * sizeof (struct bge_rx_bd),
+		    offset, tosync * sizeof(struct bge_rx_bd),
 		    BUS_DMASYNC_POSTREAD);
 	}
 
@@ -4573,7 +4573,7 @@ bge_txeof(struct bge_softc *sc)
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_status_block),
-	    sizeof (struct bge_status_block),
+	    sizeof(struct bge_status_block),
 	    BUS_DMASYNC_POSTREAD);
 
 	offset = offsetof(struct bge_ring_data, bge_tx_ring);
@@ -4583,11 +4583,11 @@ bge_txeof(struct bge_softc *sc)
 	if (tosync != 0)
 		rnd_add_uint32(&sc->rnd_source, tosync);
 
-	toff = offset + (sc->bge_tx_saved_considx * sizeof (struct bge_tx_bd));
+	toff = offset + (sc->bge_tx_saved_considx * sizeof(struct bge_tx_bd));
 
 	if (tosync < 0) {
 		tlen = (BGE_TX_RING_CNT - sc->bge_tx_saved_considx) *
-		    sizeof (struct bge_tx_bd);
+		    sizeof(struct bge_tx_bd);
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    toff, tlen, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		tosync = -tosync;
@@ -4595,7 +4595,7 @@ bge_txeof(struct bge_softc *sc)
 
 	if (tosync != 0) {
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-		    offset, tosync * sizeof (struct bge_tx_bd),
+		    offset, tosync * sizeof(struct bge_tx_bd),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -4663,7 +4663,7 @@ bge_intr(void *xsc)
 	/* read status word from status block */
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_status_block),
-	    sizeof (struct bge_status_block),
+	    sizeof(struct bge_status_block),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	statusword = sc->bge_rdata->bge_status_block.bge_status;
 	statustag = sc->bge_rdata->bge_status_block.bge_status_tag << 24;
@@ -4692,7 +4692,7 @@ bge_intr(void *xsc)
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_status_block),
-	    sizeof (struct bge_status_block),
+	    sizeof(struct bge_status_block),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
