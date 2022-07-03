@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.14 2022/07/03 07:33:08 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.15 2022/07/03 20:05:46 rillig Exp $
 
 --[[
 
@@ -108,13 +108,6 @@ end
 -- Ensure that each test file for a particular message mentions the full text
 -- of that message and the message ID.
 local function check_test_files(msgs)
-
-  local msgids = {}
-  for msgid, _ in pairs(msgs) do
-    table.insert(msgids, msgid)
-  end
-  table.sort(msgids)
-
   local testdir = "../../../tests/usr.bin/xlint/lint1"
   local cmd = ("cd '%s' && printf '%%s\\n' msg_[0-9][0-9][0-9]*.c"):format(testdir)
   local filenames = assert(io.popen(cmd))
