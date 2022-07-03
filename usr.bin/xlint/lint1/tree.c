@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.469 2022/07/02 10:47:29 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.470 2022/07/03 14:15:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.469 2022/07/02 10:47:29 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.470 2022/07/03 14:15:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2546,6 +2546,8 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 
 	/* Allow cast between pointers to sockaddr variants. */
 	if (nst == STRUCT && ost == STRUCT) {
+		debug_type(nstp);
+		debug_type(ostp);
 		const sym_t *nmem = nstp->t_str->sou_first_member;
 		const sym_t *omem = ostp->t_str->sou_first_member;
 		while (nmem != NULL && omem != NULL &&
