@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.64 2022/07/03 16:33:31 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.65 2022/07/03 16:40:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.64 2022/07/03 16:33:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.65 2022/07/03 16:40:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1058,14 +1058,14 @@ bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	m = mlist.tqh_first;
+	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
 	lastaddr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_addr = lastaddr + offset;
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.queue.tqe_next;
+	m = TAILQ_NEXT(m, pageq.queue);
 
-	for (; m != NULL; m = m->pageq.queue.tqe_next) {
+	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
