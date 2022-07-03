@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.12 2018/05/08 16:37:59 kamil Exp $	*/
+/*	$NetBSD: expr.c,v 1.13 2022/07/03 06:30:31 kre Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: expr.c,v 1.12 2018/05/08 16:37:59 kamil Exp $");
+__RCSID("$NetBSD: expr.c,v 1.13 2022/07/03 06:30:31 kre Exp $");
 #endif
 
 
@@ -311,6 +311,8 @@ evalexpr(es, prec)
 			token(es);
 		} else if (op == O_PLUSPLUS || op == O_MINUSMINUS) {
 			token(es);
+			if (es->tok != VAR)
+				evalerr(es, ET_LVALUE, opinfo[(int) op].name);
 			vl = do_ppmm(es, op, es->val, true);
 			token(es);
 		} else if (op == VAR || op == LIT) {
