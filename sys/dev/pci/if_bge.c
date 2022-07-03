@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.364 2022/07/03 13:25:18 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.365 2022/07/03 13:29:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.364 2022/07/03 13:25:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.365 2022/07/03 13:29:28 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1365,8 +1365,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	for (i = 0; i < BGE_JSLOTS; i++) {
 		sc->bge_cdata.bge_jslots[i] = ptr;
 		ptr += BGE_JLEN;
-		entry = malloc(sizeof(struct bge_jpool_entry),
-		    M_DEVBUF, M_WAITOK);
+		entry = malloc(sizeof(*entry), M_DEVBUF, M_WAITOK);
 		entry->slot = i;
 		SLIST_INSERT_HEAD(&sc->bge_jfree_listhead,
 				 entry, jpool_entries);
