@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.3 2021/05/30 02:20:09 joerg Exp $
+#	$NetBSD: Makefile.common,v 1.4 2022/07/03 14:09:22 rillig Exp $
 
 CPPFLAGS+=	-DHAVE_WCHAR_H		\
 		-DHAVE_WCTYPE_H		\
@@ -22,3 +22,8 @@ COPTS.Pixmap.c+=	${${ACTIVE_CC} == "gcc":? -Wno-discarded-qualifiers :}
 COPTS.Pixmap.c+=	${${ACTIVE_CC} == "clang":? -Wno-incompatible-pointer-types-discards-qualifiers :}
 COPTS.TextAction.c+=	${${ACTIVE_CC} == "gcc":? -Wno-discarded-qualifiers :}
 COPTS.TextAction.c+=	${${ACTIVE_CC} == "clang":? -Wno-incompatible-pointer-types-discards-qualifiers :}
+
+# This warning mostly affects casts between _WidgetRec and _TextRec,
+# which don't have a common type prefix, but their members are compatible
+# nevertheless.
+LINTFLAGS+=	-X 247	# pointer cast from '%s' to '%s' may be troublesome
