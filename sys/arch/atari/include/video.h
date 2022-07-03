@@ -1,4 +1,4 @@
-/*	$NetBSD: video.h,v 1.7 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: video.h,v 1.8 2022/07/03 11:30:48 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -112,7 +112,7 @@ struct video {
 #define	RES_TTMID	0x0400	/* 640x480, 16 colors			*/
 #define	RES_TTHIGH	0x0600	/* 1280x960, monochrome			*/
 #define	RES_TTLOW	0x0700	/* 320x480,  256 colors			*/
-#define TT_PALLET	0x000f	/* Pallette number			*/
+#define TT_PALLET	0x000f	/* Palette number			*/
 #define	TT_HYMONO	0x8000	/* Hyper mono mode			*/
 #define	TT_SHOLD	0x1000	/* Sample/hold mode			*/
 
