@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.65 2022/07/03 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.66 2022/07/03 16:48:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.65 2022/07/03 16:40:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.66 2022/07/03 16:48:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,9 +203,9 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	if (error != 0) {
 		if (extent_free(iomem_ex, bpa + t->base, size,
 		    EX_NOWAIT | iomem_malloc_safe)) {
-			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
-			    bpa, size);
-			printf("bus_space_map: can't free region\n");
+			printf("%s: pa 0x%lx, size 0x%lx\n",
+			    __func__, bpa, size);
+			printf("%s: can't free region\n", __func__);
 		}
 	}
 	return error;
@@ -227,7 +227,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	 */
 	if ((rstart + t->base) < iomem_ex->ex_start ||
 	    (rend + t->base) > iomem_ex->ex_end)
-		panic("bus_space_alloc: bad region start/end");
+		panic("%s: bad region start/end", __func__);
 #endif /* DIAGNOSTIC */
 
 	/*
@@ -247,9 +247,9 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	if (error != 0) {
 		if (extent_free(iomem_ex, bpa, size,
 		    EX_NOWAIT | iomem_malloc_safe) != 0) {
-			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
-			    bpa, size);
-			printf("bus_space_alloc: can't free region\n");
+			printf("%s: pa 0x%lx, size 0x%lx\n",
+			    __func__, bpa, size);
+			printf("%s: can't free region\n", __func__);
 		}
 	}
 
@@ -270,7 +270,7 @@ bus_mem_add_mapping(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
-		panic("bus_mem_add_mapping: overflow");
+		panic("%s: overflow", __func__);
 #endif
 
 	if (kernel_map == NULL) {
@@ -323,7 +323,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	endva = m68k_round_page(((char *)bsh + size) - 1);
 #ifdef DIAGNOSTIC
 	if (endva < va)
-		panic("unmap_iospace: overflow");
+		panic("%s: overflow", __func__);
 #endif
 
 	(void)pmap_extract(pmap_kernel(), va, &bpa);
@@ -343,8 +343,8 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	 */
 	if (extent_free(iomem_ex, bpa, size, EX_NOWAIT | iomem_malloc_safe)
 	    != 0) {
-		printf("bus_space_unmap: pa 0x%lx, size 0x%lx\n", bpa, size);
-		printf("bus_space_unmap: can't free region\n");
+		printf("%s: pa 0x%lx, size 0x%lx\n", __func__, bpa, size);
+		printf("%s: can't free region\n", __func__);
 	}
 }
 
@@ -494,7 +494,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf: no packet header");
+		panic("%s: no packet header", __func__);
 #endif
 
 	if (m0->m_pkthdr.len > map->_dm_size)
@@ -573,7 +573,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 
-	panic("bus_dmamap_load_raw: not implemented");
+	panic("%s: not implemented", __func__);
 }
 
 /*
@@ -871,7 +871,7 @@ bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
-				panic("_bus_dmamem_map: size botch");
+				panic("%s: size botch", __func__);
 			pmap_enter(pmap_kernel(), va, addr - offset,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE);
@@ -892,7 +892,7 @@ bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 
 #ifdef DIAGNOSTIC
 	if ((vaddr_t)kva & PGOFSET)
-		panic("_bus_dmamem_unmap");
+		panic("%s", __func__);
 #endif
 
 	size = round_page(size);
@@ -917,12 +917,12 @@ bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 	for (i = 0; i < nsegs; i++) {
 #ifdef DIAGNOSTIC
 		if ((off & PGOFSET) != 0)
-			panic("_bus_dmamem_mmap: offset unaligned");
+			panic("%s: offset unaligned", __func__);
 		if ((segs[i].ds_addr & PGOFSET) != 0)
-			panic("_bus_dmamem_mmap: segment unaligned");
+			panic("%s: segment unaligned", __func__);
 		if ((segs[i].ds_len & PGOFSET) != 0)
-			panic("_bus_dmamem_mmap: segment size not multiple"
-			    " of page size");
+			panic("%s: segment size not multiple of page size",
+			    __func__);
 #endif
 		if (off >= segs[i].ds_len) {
 			off -= segs[i].ds_len;
@@ -1071,7 +1071,7 @@ bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 		if (curaddr < low || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%lx\n", curaddr);
-			panic("_bus_dmamem_alloc_range");
+			panic("%s", __func__);
 		}
 #endif
 		if (curaddr == (lastaddr + PAGE_SIZE))
