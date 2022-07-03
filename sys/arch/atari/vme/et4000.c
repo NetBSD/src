@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.26 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: et4000.c,v 1.27 2022/07/03 15:25:54 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.26 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.27 2022/07/03 15:25:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -130,12 +130,12 @@ struct et4k_softc {
 CFATTACH_DECL_NEW(et4k, sizeof(struct et4k_softc),
     et4k_vme_match, et4k_vme_attach, NULL, NULL);
 
-dev_type_open(et4kopen);
-dev_type_close(et4kclose);
-dev_type_read(et4kread);
-dev_type_write(et4kwrite);
-dev_type_ioctl(et4kioctl);
-dev_type_mmap(et4kmmap);
+static dev_type_open(et4kopen);
+static dev_type_close(et4kclose);
+static dev_type_read(et4kread);
+static dev_type_write(et4kwrite);
+static dev_type_ioctl(et4kioctl);
+static dev_type_mmap(et4kmmap);
 
 const struct cdevsw et4k_cdevsw = {
 	.d_open = et4kopen,

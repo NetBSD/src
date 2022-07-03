@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.22 2017/02/01 14:33:10 christos Exp $	*/
+/*	$NetBSD: leo.c,v 1.23 2022/07/03 15:25:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.22 2017/02/01 14:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.23 2022/07/03 15:25:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,11 @@ static int leo_scroll(struct leo_softc *, int);
 CFATTACH_DECL_NEW(leo, sizeof(struct leo_softc),
     leo_match, leo_attach, NULL, NULL);
 
-dev_type_open(leoopen);
-dev_type_close(leoclose);
-dev_type_read(leomove);
-dev_type_ioctl(leoioctl);
-dev_type_mmap(leommap);
+static dev_type_open(leoopen);
+static dev_type_close(leoclose);
+static dev_type_read(leomove);
+static dev_type_ioctl(leoioctl);
+static dev_type_mmap(leommap);
 
 const struct cdevsw leo_cdevsw = {
 	.d_open = leoopen,
