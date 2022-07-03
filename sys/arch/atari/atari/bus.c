@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.62 2022/05/24 19:55:10 andvar Exp $	*/
+/*	$NetBSD: bus.c,v 1.63 2022/07/03 16:03:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.62 2022/05/24 19:55:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.63 2022/07/03 16:03:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,18 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.62 2022/05/24 19:55:10 andvar Exp $");
 #define	_ATARI_BUS_DMA_PRIVATE
 #include <sys/bus.h>
 
+/*
+ * Extent maps to manage all memory space, including I/O ranges.  Allocate
+ * storage for 16 regions in each, initially.  Later, iomem_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
+ * This means that the fixed static storage is only used for registrating
+ * the found memory regions and the bus-mapping of the console.
+ */
+static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
+static struct extent *iomem_ex;
+static int iomem_malloc_safe = 0;
+
 int  bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 		bus_size_t alignment, bus_size_t boundary,
 		bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
@@ -58,9 +70,6 @@ static int  _bus_dmamap_load_buffer(bus_dma_tag_t tag, bus_dmamap_t,
 		int *, int);
 static int  bus_mem_add_mapping(bus_space_tag_t t, bus_addr_t bpa,
 		bus_size_t size, int flags, bus_space_handle_t *bsph);
-
-extern struct extent *iomem_ex;
-extern int iomem_malloc_safe;
 
 extern paddr_t avail_end;
 
@@ -79,17 +88,16 @@ static long		bootm_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) /
 								sizeof(long)];
 static struct extent	*bootm_ex;
 
-void bootm_init(vaddr_t, pt_entry_t *, u_long);
 static vaddr_t	bootm_alloc(paddr_t pa, u_long size, int flags);
 static int	bootm_free(vaddr_t va, u_long size);
 
 void
-bootm_init(vaddr_t va, pt_entry_t *ptep, u_long size)
+bootm_init(vaddr_t va, void *ptep, vsize_t size)
 {
 	bootm_ex = extent_create("bootmem", va, va + size,
 	    (void *)bootm_ex_storage, sizeof(bootm_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	bootm_ptep = ptep;
+	bootm_ptep = (pt_entry_t *)ptep;
 }
 
 vaddr_t
@@ -137,6 +145,47 @@ bootm_free(vaddr_t va, u_long size)
 	return 1;
 }
 
+void
+atari_bus_space_extent_init(paddr_t startpa, paddr_t endpa)
+{
+
+	/*
+	 * Initialize the I/O mem extent map.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, all
+	 * extents of RAM are allocated from the map.
+	 */
+	iomem_ex = extent_create("iomem", startpa, endpa,
+	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE | EX_NOWAIT);
+}
+
+int
+atari_bus_space_alloc_physmem(paddr_t startpa, paddr_t endpa)
+{
+
+	return extent_alloc_region(iomem_ex, startpa, endpa - startpa,
+	    EX_NOWAIT);
+}
+
+void
+atari_bus_space_malloc_set_safe(void)
+{
+
+	iomem_malloc_safe = EX_MALLOCOK;
+}
+
+int
+atari_bus_space_extent_malloc_flag(void)
+{
+
+	return iomem_malloc_safe;
+}
+
 int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *mhp)
@@ -148,15 +197,15 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 * region is available.
 	 */
 	error = extent_alloc_region(iomem_ex, bpa + t->base, size,
-			EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0));
+			EX_NOWAIT | iomem_malloc_safe);
 
 	if (error)
 		return error;
 
 	error = bus_mem_add_mapping(t, bpa, size, flags, mhp);
 	if (error) {
-		if (extent_free(iomem_ex, bpa + t->base, size, EX_NOWAIT |
-		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+		if (extent_free(iomem_ex, bpa + t->base, size,
+		    EX_NOWAIT | iomem_malloc_safe)) {
 			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
 			    bpa, size);
 			printf("bus_space_map: can't free region\n");
@@ -189,8 +238,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	 */
 	error = extent_alloc_subregion(iomem_ex, rstart + t->base,
 	    rend + t->base, size, alignment, boundary,
-	    EX_FAST | EX_NOWAIT | (iomem_malloc_safe ?  EX_MALLOCOK : 0),
-	    &bpa);
+	    EX_FAST | EX_NOWAIT | iomem_malloc_safe, &bpa);
 
 	if (error)
 		return error;
@@ -200,8 +248,8 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	 */
 	error = bus_mem_add_mapping(t, bpa, size, flags, bshp);
 	if (error) {
-		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
-		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+		if (extent_free(iomem_ex, bpa, size,
+		    EX_NOWAIT | iomem_malloc_safe)) {
 			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
 			    bpa, size);
 			printf("bus_space_alloc: can't free region\n");
@@ -296,8 +344,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	/*
 	 * Mark as free in the extent map.
 	 */
-	if (extent_free(iomem_ex, bpa, size,
-	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+	if (extent_free(iomem_ex, bpa, size, EX_NOWAIT | iomem_malloc_safe)) {
 		printf("bus_space_unmap: pa 0x%lx, size 0x%lx\n", bpa, size);
 		printf("bus_space_unmap: can't free region\n");
 	}
