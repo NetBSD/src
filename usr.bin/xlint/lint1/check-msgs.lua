@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.13 2021/12/16 21:14:58 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.14 2022/07/03 07:33:08 rillig Exp $
 
 --[[
 
@@ -61,6 +61,15 @@ local function check_message(fname, lineno, id, comment, msgs)
     fname, lineno, id, msg, comment)
 end
 
+local is_message_function = {
+  error = true,
+  error_at = true,
+  warning = true,
+  warning_at = true,
+  c99ism = true,
+  c11ism = true,
+  gnuism = true,
+}
 
 local function check_file(fname, msgs)
   local f = assert(io.open(fname, "r"))
@@ -69,11 +78,9 @@ local function check_file(fname, msgs)
   for line in f:lines() do
     lineno = lineno + 1
 
-    local func, id = line:match("^%s+(%w+)%((%d+)[),]")
-    id = tonumber(id)
-    if func == "error" or func == "warning" or
-       func == "c99ism" or func == "c11ism" or
-       func == "gnuism" or func == "message" then
+    local func, id = line:match("^%s+([%w_]+)%((%d+)[),]")
+    if is_message_function[func] then
+      id = tonumber(id)
       local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then
         check_message(fname, lineno, id, comment, msgs)
