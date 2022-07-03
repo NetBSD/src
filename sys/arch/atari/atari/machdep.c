@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187 2022/07/02 08:35:49 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.188 2022/07/03 16:03:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2022/07/02 08:35:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2022/07/03 16:03:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2022/07/02 08:35:49 tsutsui Exp $"
 #include <sys/exec_aout.h>
 #include <sys/cpu.h>
 #include <sys/exec_elf.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -175,7 +176,6 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	extern int iomem_malloc_safe;
 	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -217,7 +217,7 @@ cpu_startup(void)
 	/*
 	 * Alloc extent allocation to use malloc
 	 */
-	iomem_malloc_safe = 1;
+	atari_bus_space_malloc_set_safe();
 }
 
 /*

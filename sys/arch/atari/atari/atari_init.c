@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.105 2022/06/25 13:17:04 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.106 2022/07/03 16:03:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.105 2022/06/25 13:17:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.106 2022/07/03 16:03:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.105 2022/06/25 13:17:04 tsutsui Exp
 #include <sys/exec_aout.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -108,21 +109,6 @@ static u_int milan_probe_bank(paddr_t paddr);
 #define MAGIC_32M	(32 - 1)
 #define MAGIC_64M	(64 - 1)
 #endif
-
-/*
- * Extent maps to manage all memory space, including I/O ranges.  Allocate
- * storage for 16 regions in each, initially.  Later, iomem_malloc_safe
- * will indicate that it's safe to use malloc() to dynamically allocate
- * region descriptors.
- * This means that the fixed static storage is only used for registrating
- * the found memory regions and the bus-mapping of the console.
- *
- * The extent maps are not static!  They are used for bus address space
- * allocation.
- */
-static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
-struct extent *iomem_ex;
-int iomem_malloc_safe;
 
 /*
  * All info needed to generate a panic dump. All fields are setup by
@@ -685,25 +671,13 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	init_stmem();
 
 	/*
-	 * Initialize the I/O mem extent map.
-	 * Note: we don't have to check the return value since
-	 * creation of a fixed extent map will never fail (since
-	 * descriptor storage has already been allocated).
-	 *
-	 * N.B. The iomem extent manages _all_ physical addresses
-	 * on the machine.  When the amount of RAM is found, all
-	 * extents of RAM are allocated from the map.
+	 * Initialize the iomem extent for bus_space(9) to manage address
+	 * spaces and allocate the physical RAM from the extent map.
 	 */
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff,
-	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-
-	/*
-	 * Allocate the physical RAM from the extent map
-	 */
+	atari_bus_space_extent_init(0x0, 0xffffffff);
 	for (i = 0; i < NMEM_SEGS && boot_segs[i].end != 0; i++) {
-		if (extent_alloc_region(iomem_ex, boot_segs[i].start,
-		    boot_segs[i].end - boot_segs[i].start, EX_NOWAIT)) {
+		if (atari_bus_space_alloc_physmem(boot_segs[i].start,
+		    boot_segs[i].end)) {
 			/* XXX: Ahum, should not happen ;-) */
 			printf("Warning: Cannot allocate boot memory from"
 			    " extent map!?\n");
@@ -973,7 +947,6 @@ map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
 	/* ptsize:	 Size of 'pt' in bytes		*/
 	/* ptextra:	 #of additional I/O pte's	*/
 {
-	extern void	bootm_init(vaddr_t, pt_entry_t *, u_long);
 	vaddr_t		ioaddr;
 	pt_entry_t	*pt, *pg, *epg;
 	pt_entry_t	pg_proto;
