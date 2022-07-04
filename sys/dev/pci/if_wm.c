@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.735 2022/07/02 06:10:29 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.736 2022/07/04 15:09:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.735 2022/07/02 06:10:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.736 2022/07/04 15:09:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3020,7 +3020,8 @@ alloc_retry:
 	} else {
 		ifp->if_start = wm_start;
 		/*
-		 * wm_transmit() has the same disadvantage as wm_transmit().
+		 * wm_transmit() has the same disadvantages as wm_nq_transmit()
+		 * described above.
 		 */
 		if (wm_is_using_multiqueue(sc))
 			ifp->if_transmit = wm_transmit;
