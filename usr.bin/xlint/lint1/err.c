@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.180 2022/07/02 11:17:54 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.181 2022/07/05 22:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.180 2022/07/02 11:17:54 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.181 2022/07/05 22:50:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -705,4 +705,58 @@ bool
 		vwarning_at(msgid, &curr_pos, ap);
 	va_end(ap);
 	return severity > 0;
+}
+
+
+static const char *queries[] = {
+	"",			/* unused, to make queries 1-based */
+	"implicit conversion from floating point '%s' to integer '%s'", /* Q1 */
+	"cast from floating point '%s' to integer '%s'",	      /* Q2 */
+	"implicit conversion changes sign from '%s' to '%s'",	      /* Q3 */
+	"usual arithmetic conversion for '%s' from '%s' to '%s'",     /* Q4 */
+	"pointer addition has integer on the left-hand side",	      /* Q5 */
+	"no-op cast from '%s' to '%s'",				      /* Q6 */
+	"redundant cast from '%s' to '%s' before assignment",	      /* Q7 */
+};
+
+bool any_query_enabled;		/* for optimizing non-query scenarios */
+static bool is_query_enabled[sizeof(queries) / sizeof(queries[0])];
+
+void
+(query_message)(int query_id, ...)
+{
+	va_list ap;
+
+	if (!is_query_enabled[query_id])
+		return;
+
+	(void)printf("%s(%d): ", lbasename(curr_pos.p_file), curr_pos.p_line);
+	va_start(ap, query_id);
+	(void)vprintf(queries[query_id], ap);
+	va_end(ap);
+	(void)printf(" [Q%d]\n", query_id);
+	print_stack_trace();
+}
+
+void
+enable_queries(const char *arg)
+{
+
+	for (const char *s = arg;;) {
+		const char *e = s + strcspn(s, ",");
+
+		char *end;
+		unsigned long id = strtoul(s, &end, 10);
+		if (!(ch_isdigit(s[0]) && end == e &&
+		      id < sizeof(queries) / sizeof(queries[0]) &&
+		      queries[id][0] != '\0'))
+			errx(1, "invalid query ID '%s'", s);
+
+		any_query_enabled = true;
+		is_query_enabled[id] = true;
+
+		if (*e == '\0')
+			break;
+		s = e + 1;
+	}
 }

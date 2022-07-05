@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.7 2022/07/03 19:47:34 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.8 2022/07/05 22:50:41 rillig Exp $)
 
 # Introduction
 
@@ -43,8 +43,8 @@ The cleanup after handling a parse error is often incomplete.
 
 ## Configurable diagnostic messages
 
-Whether lint prints a message and whether each message is an error or a 
-warning depends on several things:
+Whether lint prints a message and whether each message is an error, a warning
+or just informational depends on several things:
 
 * The language level, with its possible values:
     * traditional C (`-t`)
@@ -61,6 +61,8 @@ warning depends on several things:
   types, the option `-aa` extends this check to small integer types as well,
   reusing the same message ID.
 * The option `-X` suppresses arbitrary messages by their message ID.
+* The option `-q` enables additional queries that are not suitable as regular
+  warnings but may be interesting to look at on a case-by-case basis.
 
 # Fundamental types
 

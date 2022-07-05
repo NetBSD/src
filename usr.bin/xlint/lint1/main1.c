@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.64 2022/07/01 21:25:39 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.65 2022/07/05 22:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.64 2022/07/01 21:25:39 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.65 2022/07/05 22:50:41 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -177,7 +177,7 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "abceghmprstuvwyzA:FPR:STX:")) != -1) {
+	while ((c = getopt(argc, argv, "abceghmpq:rstuvwyzA:FPR:STX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = true;	break;
@@ -188,6 +188,7 @@ main(int argc, char *argv[])
 		case 'h':	hflag = true;	break;
 		case 'p':	pflag = true;	break;
 		case 'P':	Pflag = true;	break;
+		case 'q':	enable_queries(optarg);	break;
 		case 'r':	rflag = true;	break;
 		case 's':
 			allow_trad = false;
@@ -247,7 +248,7 @@ main(int argc, char *argv[])
 
 
 	/* initialize output */
-	outopen(argv[1]);
+	outopen(any_query_enabled ? "/dev/null" : argv[1]);
 
 #ifdef DEBUG
 	setvbuf(stdout, NULL, _IONBF, 0);

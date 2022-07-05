@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.128 2022/06/17 20:31:56 rillig Exp $
+# $NetBSD: Makefile,v 1.129 2022/07/05 22:50:41 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	349		# see lint1/err.c
@@ -167,6 +167,7 @@ FILES+=		platform_long.c
 FILES+=		platform_lp64.c
 FILES+=		platform_schar.c
 FILES+=		platform_uchar.c
+FILES+=		queries.c
 FILES+=		stmt_for.c
 FILES+=		stmt_goto.c
 FILES+=		stmt_if.c
