@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.23 2022/07/05 15:35:53 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.24 2022/07/05 15:56:42 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -313,33 +313,37 @@ each call of
 .Ic getline
 returns the next line of output from
 .Ar expr .
-.It Ic print Oo Ar expr-list Oc Op Ic > Ar file
-The
-.Ic print
-statement prints its arguments on the standard output (or to a file
-if
-.Ic \*[Gt] file
-or to a pipe if
-.Ic \&| Ar expr
-is present),
-separated by the current output field separator
+.It Ic print Oo Ar expr-list Oc Op Ar redirection
+Print arguments separated by the current output field separator
 .Va OFS ,
 and terminated by the
 output record separator
 .Va ORS .
-Both
-.Ar file
-and
-.Ar expr
-may be literal names or parenthesized expressions; identical string values in
-different statements denote the same open file.
-.It Ic printf Ar format\| Ns Oo Ic \&, Ar expr-list Oc Op Ic \*[Gt] Ar file
+.It Ic printf Ar format\| Ns Oo Ic \&, Ar expr-list Oc Op Ar redirection
 Format and print its expression list according to
 .Ar format .
 See
 .Xr printf 3
 for list of supported formats and their meaning.
 .El
+.Pp
+Both
+.Ic print
+and
+.Ic printf
+statements write to standard output by default.
+The output is written to the file or pipe specified by
+.Ar redirection
+if one is supplied, as follows:
+.Ic \&> Ar file , ""
+.Ic \&>> Ar file , No or
+.Ic \&| Ar expr .
+Both
+.Ar file
+and
+.Ar expr
+may be literal names or parenthesized expressions; identical string values in
+different statements denote the same open file.
 .Ss Mathematical and Numeric Functions
 AWK has the following mathematical and numerical functions built-in:
 .Bl -tag -width Fn
