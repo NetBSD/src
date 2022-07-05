@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.164 2022/07/03 14:15:38 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.165 2022/07/05 22:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -155,6 +155,7 @@ void	debug_leave(const char *);
  */
 extern	int	nerr;
 extern	int	sytxerr;
+extern	bool	any_query_enabled;
 
 extern	void	msglist(void);
 extern	void	error_at(int, const pos_t *, ...);
@@ -171,6 +172,9 @@ extern	void	assert_failed(const char *, int, const char *, const char *)
 		__attribute__((__noreturn__));
 extern	void	update_location(const char *, int, bool, bool);
 extern	void	suppress_messages(char *);
+
+extern	void	query_message(int, ...);
+extern	void	enable_queries(const char *);
 
 /*
  * decl.c

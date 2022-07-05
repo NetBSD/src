@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.470 2022/07/03 14:15:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.471 2022/07/05 22:50:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.470 2022/07/03 14:15:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.471 2022/07/05 22:50:41 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2260,13 +2260,31 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	if (t != lt) {
 		ntp = expr_dup_type((*lnp)->tn_type);
 		ntp->t_tspec = t;
+		/* usual arithmetic conversion for '%s' from '%s' to '%s' */
+		query_message(4, op_name(op),
+		    type_name((*lnp)->tn_type), type_name(ntp));
 		*lnp = convert(op, 0, ntp, *lnp);
 	}
 	if (t != rt) {
 		ntp = expr_dup_type((*rnp)->tn_type);
 		ntp->t_tspec = t;
+		/* usual arithmetic conversion for '%s' from '%s' to '%s' */
+		query_message(4, op_name(op),
+		    type_name((*rnp)->tn_type), type_name(ntp));
 		*rnp = convert(op, 0, ntp, *rnp);
 	}
+}
+
+static void
+convert_integer_from_floating(op_t op, const type_t *tp, const tnode_t *tn)
+{
+
+	if (op == CVT)
+		/* cast from floating point '%s' to integer '%s' */
+		query_message(2, type_name(tn->tn_type), type_name(tp));
+	else
+		/* implicit conversion from floating point '%s' to ... */
+		query_message(1, type_name(tn->tn_type), type_name(tp));
 }
 
 /*
@@ -2303,7 +2321,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		} else if (is_integer(ot)) {
 			convert_integer_from_integer(op, arg, nt, ot, tp, tn);
 		} else if (is_floating(ot)) {
-			/* No further checks. */
+			convert_integer_from_floating(op, tp, tn);
 		} else if (ot == PTR) {
 			convert_integer_from_pointer(op, nt, tp, tn);
 		}
@@ -2482,6 +2500,10 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 			    type_name(tn->tn_type), type_name(tp));
 		}
 	}
+
+	if (is_uinteger(nt) != is_uinteger(ot))
+		/* implicit conversion changes sign from '%s' to '%s' */
+		query_message(3, type_name(tn->tn_type), type_name(tp));
 }
 
 static void
@@ -3178,6 +3200,8 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		tnode_t *tmp = ln;
 		ln = rn;
 		rn = tmp;
+		/* pointer addition has integer on the left-hand side */
+		query_message(5);
 	}
 
 	/* pointer +- integer */
@@ -3349,6 +3373,13 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 				rt = lt;
 			}
 		}
+	}
+
+	if (any_query_enabled && rn->tn_op == CVT && rn->tn_cast &&
+	    eqtype(ln->tn_type, rn->tn_type, false, false, NULL)) {
+		/* redundant cast from '%s' to '%s' before assignment */
+		query_message(7,
+		    type_name(rn->tn_left->tn_type), type_name(rn->tn_type));
 	}
 
 	ntn = new_tnode(op, sys, ln->tn_type, ln, rn);
@@ -3911,6 +3942,10 @@ cast(tnode_t *tn, type_t *tp)
 		}
 	} else
 		goto invalid_cast;
+
+	if (any_query_enabled && eqtype(tp, tn->tn_type, false, false, NULL))
+		/* no-op cast from '%s' to '%s' */
+		query_message(6, type_name(tn->tn_type), type_name(tp));
 
 	tn = convert(CVT, 0, tp, tn);
 	tn->tn_cast = true;

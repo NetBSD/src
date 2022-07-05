@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2022/06/17 20:23:58 rillig Exp $
+#	$NetBSD: Makefile,v 1.92 2022/07/05 22:50:41 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -62,9 +62,11 @@ cgram.ln: cgram.c
 	    ${CPPFLAGS:C/-([IDUW]) */-\1/Wg:M-[IDUW]*} \
 	    -i -UYYDEBUG ${.IMPSRC}
 
-${MAN}:		makeman ${LINT1:./%=%} Makefile ${MAN}.date
+${MAN}:		makeman err.c Makefile ${MAN}.date
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${.ALLSRC:M*makeman} "$$(cat ${.ALLSRC:M*.date})" ${LINT1} -m >${.TARGET}
+	${HOST_SH} ${.ALLSRC:M*makeman} \
+	    "$$(cat ${.ALLSRC:M*.date})" ${.ALLSRC:M*err.c} \
+	    >${.TARGET}
 
 LDADD+=		-lm
 .ifndef HOSTPROG

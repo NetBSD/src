@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.16 2022/07/03 21:17:24 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.17 2022/07/05 22:50:41 rillig Exp $
 
 --[[
 
@@ -16,7 +16,7 @@ local function load_messages()
 
   local f = assert(io.open("err.c"))
   for line in f:lines() do
-    local msg, id = line:match("%s*\"(.+)\",%s*/%*%s*(%d+)%s*%*/$")
+    local msg, id = line:match("%s*\"(.+)\",%s*/%*%s*(Q?%d+)%s*%*/$")
     if msg ~= nil then
       msgs[id] = msg
     end
@@ -61,14 +61,15 @@ local function check_message(fname, lineno, id, comment, msgs)
     fname, lineno, id, msg, comment)
 end
 
-local is_message_function = {
-  error = true,
-  error_at = true,
-  warning = true,
-  warning_at = true,
-  c99ism = true,
-  c11ism = true,
-  gnuism = true,
+local message_prefix = {
+  error = "",
+  error_at = "",
+  warning = "",
+  warning_at = "",
+  query_message = "Q",
+  c99ism = "",
+  c11ism = "",
+  gnuism = "",
 }
 
 local function check_file(fname, msgs)
@@ -79,7 +80,9 @@ local function check_file(fname, msgs)
     lineno = lineno + 1
 
     local func, id = line:match("^%s+([%w_]+)%((%d+)[),]")
-    if is_message_function[func] then
+    local prefix = message_prefix[func]
+    if prefix then
+      id = prefix .. id
       local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then
         check_message(fname, lineno, id, comment, msgs)
