@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.19 2022/07/05 14:36:33 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.20 2022/07/05 15:21:39 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -282,25 +282,25 @@ Returns zero on success; otherwise nonzero.
 Flushes any buffered output for the file or pipe
 .Ar expr .
 Returns zero on success; otherwise nonzero.
-.It Ic getline Bq Va var
+.It Ic getline Op Ar var
 Set
-.Va var
+.Ar var
 (or
 .Li $ Ns Va 0
 if
-.Va var
+.Ar var
 is not specified)
 to the next input record from the current input file.
 .Ic getline
 returns 1 for a successful input,
 0 for end of file, and \-1 for an error.
-.It Ic getline Bo Va var Bc Ic \*[Lt] Ar file
+.It Ic getline Oo Ar var Oc Ic < Ar file
 Set
-.Va var
+.Ar var
 (or
 .Li $ Ns Va 0
 if
-.Va var
+.Ar var
 is not specified)
 to the next input record from the specified file
 .Ar file .
@@ -313,7 +313,7 @@ each call of
 .Ic getline
 returns the next line of output from
 .Ar expr .
-.It Ic print Bo Ar expr-list Bc Bq Ic \*[Gt] Ar file
+.It Ic print Oo Ar expr-list Oc Op Ic > Ar file
 The
 .Ic print
 statement prints its arguments on the standard output (or to a file
@@ -333,7 +333,7 @@ and
 .Ar expr
 may be literal names or parenthesized expressions; identical string values in
 different statements denote the same open file.
-.It Ic printf Ar format Bo Ic \&, Ar expr-list Bc Bq Ic \*[Gt] Ar file
+.It Ic printf Ar format\| Ns Oo Ic \&, Ar expr-list Oc Op Ic \*[Gt] Ar file
 Format and print its expression list according to
 .Ar format .
 See
@@ -398,9 +398,9 @@ for matches of the regular expression
 If
 .Ar h
 is a string beginning with
-.Ic g
+.Ql g
 or
-.Ic G ,
+.Ql G ,
 then replace all matches of
 .Ar r
 with
@@ -438,7 +438,7 @@ and the original target is
 .Em not
 changed.
 Note that the
-.Ar \en
+.Ql \en
 sequences within replacement string
 .Ar s
 supported by GNU
@@ -482,12 +482,12 @@ are set to the position and length of the matched string.
 splits the string
 .Ar s
 into array elements
-.Va a[1] ,
-.Va a[2] ,
+.Ar a Ns Li [1] ,
+.Ar a Ns Li [2] ,
 \&...,
-.Va a[n] ,
+.Ar a Ns Li \&[ Ns Ar n Ns Li \&] ,
 and returns
-.Va n .
+.Ar n .
 The separation is done with the regular expression
 .Ar fs
 or with the field separator
@@ -518,7 +518,7 @@ is not given,
 is used.
 .It Fn substr s m [n]
 Returns the at most
-.Ar n Ns No -character
+.Ar n\^ Ns No -character
 substring of
 .Ar s
 starting at position
@@ -548,8 +548,7 @@ stamps and formatting them:
 .Bl -tag -width Fn
 .It Fn systime
 Returns the value of time in seconds since the start of
-.Tn Unix
-Epoch (Midnight, January 1, 1970, Coordinated Universal Time).
+Unix Epoch (midnight, January 1, 1970, Coordinated Universal Time).
 See also
 .Xr time 3 .
 .It Fn strftime "[format [, timestamp]]"
