@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.16 2022/07/05 13:29:18 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.17 2022/07/05 13:48:07 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -136,10 +136,10 @@ If
 .Va FS
 is null, the input line is split into one field per character.
 The fields are denoted
-.Va $1 ,
-.Va $2 ,
+.Li $ Ns Va 1 ,
+.Li $ Ns Va 2 ,
 \&..., while
-.Va $0
+.Li $ Ns Va 0
 refers to the entire line.
 Setting any other field causes the re-evaluation of
 .Li $ Ns Va 0
@@ -164,7 +164,7 @@ semicolons, newlines or right braces.
 An empty
 .Ar expression-list
 stands for
-.Va $0 .
+.Li $ Ns Va 0 .
 String constants are quoted
 .Em \&"\ \&" ,
 with the usual C escapes recognized within.
@@ -283,7 +283,8 @@ Returns zero on success; otherwise nonzero.
 Set
 .Va var
 (or
-.Va $0 if
+.Li $ Ns Va 0
+if
 .Va var
 is not specified)
 to the next input record from the current input file.
@@ -294,7 +295,8 @@ returns 1 for a successful input,
 Set
 .Va var
 (or
-.Va $0 if
+.Li $ Ns Va 0
+if
 .Va var
 is not specified)
 to the next input record from the specified file
@@ -408,7 +410,7 @@ to replace.
 If no
 .Ar t
 is supplied,
-.Va $0
+.Li $ Ns Va 0
 is used instead.
 .\"Within the replacement text
 .\".Ar s ,
@@ -460,7 +462,7 @@ occurs, or 0 if it does not.
 the length of its argument
 taken as a string,
 or of
-.Va $0
+.Li $ Ns Va 0
 if no argument.
 .It Fn match s r
 the position in
@@ -509,7 +511,7 @@ in the target string
 If
 .Ar t
 is not given,
-.Va $0
+.Li $ Ns Va 0
 is used.
 .It Fn substr s m [n]
 Returns the at most
