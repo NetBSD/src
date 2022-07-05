@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.59 2020/09/29 02:49:56 msaitoh Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.60 2022/07/05 19:21:26 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.59 2020/09/29 02:49:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.60 2022/07/05 19:21:26 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ struct ultrix_getmnt_args {
 #define ULTRIX_NM_WSIZE    0x0004  /* set write size */
 #define ULTRIX_NM_RSIZE    0x0008  /* set read size */
 #define ULTRIX_NM_TIMEO    0x0010  /* set initial timeout */
-#define ULTRIX_NM_RETRANS  0x0020  /* set number of request retrys */
+#define ULTRIX_NM_RETRANS  0x0020  /* set number of request retries */
 #define ULTRIX_NM_HOSTNAME 0x0040  /* set hostname for error printf */
 #define ULTRIX_NM_PGTHRESH 0x0080  /* set page threshold for exec */
 #define ULTRIX_NM_INT      0x0100  /* allow hard mount keyboard interrupts */

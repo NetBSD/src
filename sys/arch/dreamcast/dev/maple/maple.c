@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.56 2022/03/28 12:38:58 riastradh Exp $	*/
+/*	$NetBSD: maple.c,v 1.57 2022/07/05 19:21:26 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.56 2022/03/28 12:38:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.57 2022/07/05 19:21:26 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -339,7 +339,7 @@ maple_run_polling(device_t dev)
 	for (port = 0; port < MAPLE_PORTS; port++)
 		for (subunit = 0; subunit < MAPLE_SUBUNITS; subunit++)
 			sc->sc_unit[port][subunit].u_dma_stat = MAPLE_DMA_IDLE;
-	SIMPLEQ_INIT(&sc->sc_retryq);	/* XXX discard current retrys */
+	SIMPLEQ_INIT(&sc->sc_retryq);	/* XXX discard current retries */
 
 	/*
 	 * do polling (periodic status check only)
