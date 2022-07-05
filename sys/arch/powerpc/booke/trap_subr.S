@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.14 2022/05/07 04:19:22 rin Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.15 2022/07/05 20:15:40 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.14 2022/05/07 04:19:22 rin Exp $")
+RCSID("$NetBSD: trap_subr.S,v 1.15 2022/07/05 20:15:40 andvar Exp $")
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -48,9 +48,9 @@ RCSID("$NetBSD: trap_subr.S,v 1.14 2022/05/07 04:19:22 rin Exp $")
 	/*
 	 * We have a problem with critical (MSR[CE] or machine check (MSR[ME])
 	 * or debug (MSR[DE]) interrupts/exception in that they could happen
-	 * inbetween the mtsprg1 %r2 and mfsprg1 %r2.  If that happens, %r2
+	 * in-between the mtsprg1 %r2 and mfsprg1 %r2.  If that happens, %r2
 	 * will be lost.  Even if we moved to a different sprg, subsequent
-	 * expceptions would use SPRG1 and its value would be lost.  The only
+	 * exceptions would use SPRG1 and its value would be lost.  The only
 	 * way to be safe for CE/ME/DE faults to save and restore SPRG1.
 	 *
 	 * Since CE/ME/DE faults may happen anytime, we need r1 to always
@@ -61,7 +61,7 @@ RCSID("$NetBSD: trap_subr.S,v 1.14 2022/05/07 04:19:22 rin Exp $")
 	 * mchk) uses a unique sprg to save %r2 (sprg1, sprg4, sprg5).
 	 *
 	 * Since we can't control how many nested exceptions we might get,
-	 * we don't use a dedicated save area.  Instead we have a upwards
+	 * we don't use a dedicated save area.  Instead we have an upwards
 	 * growing "stack" of them; the pointer to which is kept in sprg3.
 	 *
 	 * To allocate from the stack, one fetches sprg3, adds the amount
@@ -181,10 +181,10 @@ RCSID("$NetBSD: trap_subr.S,v 1.14 2022/05/07 04:19:22 rin Exp $")
 #define	FRAME_RESTORE_SPEFSCR
 #endif
 /*
- * Before the first memory refernence, we must have our state inside registers
+ * Before the first memory reference, we must have our state inside registers
  * since the first memory access might cause an exception which would cause
  * SRR0/SRR1 and DEAR/ESR to become unrecoverable.  CR and XER also need to be
- * saved early since they will modified by instrction flow.  The saved stack
+ * saved early since they will modified by instruction flow.  The saved stack
  * pointer is also critical but LR and CTR can be deferred being saved until
  * we are actually filling a trapframe.
  */
