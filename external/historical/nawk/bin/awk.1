@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.24 2022/07/05 15:56:42 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.25 2022/07/05 16:21:35 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -344,6 +344,19 @@ and
 .Ar expr
 may be literal names or parenthesized expressions; identical string values in
 different statements denote the same open file.
+For that purpose file names
+.Pa /dev/stdin ,
+.Pa /dev/stdout ,
+and
+.Pa /dev/stderr
+refer to program's
+.Va stdin ,
+.Va stdout ,
+and
+.Va stderr
+respecively (and are unrelated to
+.Xr fd 4
+devices of the same names).
 .Ss Mathematical and Numeric Functions
 AWK has the following mathematical and numerical functions built-in:
 .Bl -tag -width Fn
