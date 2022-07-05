@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.14 2022/07/05 13:05:20 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.15 2022/07/05 13:21:38 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -130,16 +130,24 @@ version on standard output and exit.
 .Pp
 An input line is normally made up of fields separated by white space,
 or by regular expression
-.Va FS .
+.Va FS
+built-in variable is set to.
+If
+.Va FS
+is null, the input line is split into one field per character.
 The fields are denoted
 .Va $1 ,
 .Va $2 ,
 \&..., while
 .Va $0
 refers to the entire line.
-If
-.Va FS
-is null, the input line is split into one field per character.
+Setting any other field causes the re-evaluation of
+.Li $ Ns Va 0
+Assigning to
+.Li $ Ns Va 0
+shall reset the values of all other fields and the
+.Va NF
+built-in variable.
 .Pp
 A pattern-action statement has the form
 .Lp
