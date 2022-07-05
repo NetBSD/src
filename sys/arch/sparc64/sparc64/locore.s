@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.430 2022/06/27 22:41:28 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.431 2022/07/05 20:15:40 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6679,7 +6679,7 @@ ENTRY(cpu_idle)
  * cpu_switchto() switches to an lwp to run and runs it, saving the
  * current one away.
  *
- * stuct lwp * cpu_switchto(struct lwp *current, struct lwp *next)
+ * struct lwp * cpu_switchto(struct lwp *current, struct lwp *next)
  * Switch to the specified next LWP
  * Arguments:
  *	i0	'struct lwp *' of the current LWP
