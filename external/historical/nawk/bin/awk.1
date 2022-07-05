@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.28 2022/07/05 18:18:48 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.29 2022/07/05 18:40:03 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -479,7 +479,7 @@ and
 .Fn gsub
 return the number of replacements.
 .It Fn index s t
-the position in
+The position in
 .Ar s
 where the string
 .Ar t
@@ -491,13 +491,13 @@ occurs, or 0 if it does not.
 .Fa string
 .Oc Ns \&)
 .Oc Xc
-the length of its argument
+The length of its argument
 taken as a string,
 or of
 .Li $ Ns Va 0
 if no argument.
 .It Fn match s r
-the position in
+The position in
 .Ar s
 where the regular expression
 .Ar r
@@ -511,7 +511,7 @@ are set to the position and length of the matched string.
 .Fa s a\|
 .Oo Fa fs
 .Oc Fc Xc
-splits the string
+Splits the string
 .Ar s
 into array elements
 .Ar a Ns Li [1] ,
@@ -540,7 +540,7 @@ format
 .Fa r s\|
 .Oo Fa t
 .Oc Fc Xc
-substitutes
+Substitutes
 .Ar s
 for the first occurrence of the regular expression
 .Ar r
@@ -568,12 +568,12 @@ is omitted, the rest of
 .Ar s
 is returned.
 .It Fn tolower str
-returns a copy of
+Returns a copy of
 .Ar str
 with all upper-case characters translated to their
 corresponding lower-case equivalents.
 .It Fn toupper str
-returns a copy of
+Returns a copy of
 .Ar str
 with all lower-case characters translated to their
 corresponding upper-case equivalents.
@@ -616,9 +616,9 @@ for the format conversions which are supported.
 .Ss Other built-in functions
 .Bl -tag -width Fn
 .It Fn system cmd
-executes
+Executes
 .Ar cmd
-and returns its exit status
+and returns its exit status.
 .El
 .Ss Patterns
 Patterns are arbitrary Boolean combinations
@@ -736,11 +736,11 @@ output record separator (default newline)
 .It Va RS
 input record separator (default newline)
 .It Va RSTART
-Position of the first character matched by
+position of the first character matched by
 .Fn match ;
-0 if not match.
+0 if no match.
 .It Va RLENGTH
-Length of the string matched by
+length of the string matched by
 .Fn match ;
 \-1 if no match.
 .It Va SUBSEP
