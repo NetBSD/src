@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.45 2020/05/15 21:56:14 jdolecek Exp $	*/
+/*	$NetBSD: atareg.h,v 1.46 2022/07/05 19:21:26 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -101,7 +101,7 @@
 
 #define	WDCC_WRITE		0x30	/* disk write code */
 #define	 WDCC__LONG		 0x02	/* modifier -- access ecc bytes */
-#define	 WDCC__NORETRY		 0x01	/* modifier -- no retrys */
+#define	 WDCC__NORETRY		 0x01	/* modifier -- no retries */
 
 #define	WDCC_READ_LOG_DMA_EXT	0x47	/* DMA variant of READ_LOG_EXT */
 
