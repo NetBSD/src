@@ -1,8 +1,3 @@
-/*	$NetBSD: kcore.h,v 1.1 2000/01/05 08:48:58 nisimura Exp $	*/
-
-#ifndef _MACHINE_KCORE_H_
-#define _MACHINE_KCORE_H_
+/*	$NetBSD: kcore.h,v 1.2 2022/07/05 15:37:13 tsutsui Exp $	*/
 
 #include <m68k/kcore.h>
-
-#endif
