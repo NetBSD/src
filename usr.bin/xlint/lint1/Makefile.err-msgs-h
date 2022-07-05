@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.err-msgs-h,v 1.3 2021/04/10 23:51:37 rillig Exp $
+#	$NetBSD: Makefile.err-msgs-h,v 1.4 2022/07/05 22:50:41 rillig Exp $
 
 err-msgs.h: err.c Makefile.err-msgs-h
 	${_MKTARGET_CREATE}
 	sp='[[:space:]]*'; \
-	from="^$$sp\(\".*\"\)\,$$sp/\*$$sp\([0-9][0-9]*\)$$sp\*/\$$"; \
+	from="^$$sp\(\".*\"\)\,$$sp/\*$$sp\(Q*[0-9][0-9]*\)$$sp\*/\$$"; \
 	${TOOL_SED} -n -e "s,$$from,#define MSG_\2 \1,p" < ${.ALLSRC:M*err.c} > ${.TARGET}.tmp
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
