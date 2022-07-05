@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.26 2022/07/05 16:59:41 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.27 2022/07/05 17:58:47 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -787,6 +787,12 @@ BEGIN  {
         printf("%s%s", ARGV[i], i==ARGC-1?"\en":" ")
 }
 .Ed
+.Pp
+Another way to do the same that demonstrates field assignment and
+.Li $ Ns Va 0
+re-evaluation:
+.Pp
+.Dl BEGIN { for (i = 1; i < ARGC; ++i) $i = ARGV[i]; print }
 .Pp
 Print an error message to standard error:
 .Bd -literal -offset indent
