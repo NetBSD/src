@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.30 2022/07/05 22:07:20 rillig Exp $
+.\"	$NetBSD: awk.1,v 1.31 2022/07/05 22:20:55 rillig Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -129,9 +129,9 @@ version on standard output and exit.
 .El
 .Pp
 An input line is normally made up of fields separated by white space,
-or by regular expression
+or by the regular expression
 .Va FS
-built-in variable is set to.
+the built-in variable is set to.
 If
 .Va FS
 is null, the input line is split into one field per character.
@@ -344,17 +344,17 @@ and
 .Ar expr
 may be literal names or parenthesized expressions; identical string values in
 different statements denote the same open file.
-For that purpose file names
+For that purpose the file names
 .Pa /dev/stdin ,
 .Pa /dev/stdout ,
 and
 .Pa /dev/stderr
-refer to program's
+refer to the program's
 .Va stdin ,
 .Va stdout ,
 and
 .Va stderr
-respecively (and are unrelated to
+respectively (and are unrelated to the
 .Xr fd 4
 devices of the same names).
 .Ss Mathematical and Numeric Functions
@@ -687,7 +687,7 @@ and the
 .Ic BEGIN
 action contains no
 .Ic getline
-statement, awk shall exit without reading its input when the last
+statement, awk exits without reading its input when the last
 statement in the last
 .Ic BEGIN
 action is executed.
@@ -697,7 +697,7 @@ or only actions with the patterns
 .Ic BEGIN
 and
 .Ic END ,
-the input shall be read before the statements in the
+the input is read before the statements in the
 .Ic END
 actions are executed.
 .Ss Built-in Variables
