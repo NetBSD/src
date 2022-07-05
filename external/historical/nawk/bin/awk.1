@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.15 2022/07/05 13:21:38 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.16 2022/07/05 13:29:18 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -634,6 +634,26 @@ and after the last.
 and
 .Ic END
 do not combine with other patterns.
+.Pp
+If an awk program consists of only actions with the pattern
+.Ic BEGIN ,
+and the
+.Ic BEGIN
+action contains no
+.Ic getline
+statement, awk shall exit without reading its input when the last
+statement in the last
+.Ic BEGIN
+action is executed.
+If an awk program consists of only actions with the pattern
+.Ic END
+or only actions with the patterns
+.Ic BEGIN
+and
+.Ic END ,
+the input shall be read before the statements in the
+.Ic END
+actions are executed.
 .Ss Built-in Variables
 Variable names with special meanings:
 .Bl -hang -width Va
