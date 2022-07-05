@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.12 2022/07/05 12:46:48 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.13 2022/07/05 12:59:01 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -86,7 +86,7 @@ option defines the input field separator to be the regular expression
 .Ar fs .
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl d Ns Op Ar N
 Set debug level to specified number
 .Ar N .
@@ -181,7 +181,7 @@ separated by the value of
 .Nm
 operators, in order of decreasing precedence, are:
 .Pp
-.Bl -tag -width ident -compact
+.Bl -tag -width Ic -compact
 .It Ic (...)
 Grouping
 .It Ic $
@@ -235,7 +235,7 @@ Assignment and Operator-Assignment
 .El
 .Ss Control Statements
 The control statements are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Fn
 .It Ic if \&( Ar expression Ic \&) Ar statement Bq Ic else Ar statement
 .It Ic while \&( Ar expression Ic \&) Ar statement
 .It Ic for \&( Ar expression Ic \&; Ar expression Ic \&; \
@@ -262,7 +262,7 @@ Exit immediately; status is
 .El
 .Ss I/O Statements
 The input/output statements are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Fn
 .It Fn close expr
 Closes the file or pipe
 .Ar expr .
@@ -329,7 +329,7 @@ for list of supported formats and their meaning.
 .El
 .Ss Mathematical and Numeric Functions
 AWK has the following mathematical and numerical functions built-in:
-.Bl -tag -width indent
+.Bl -tag -width Fn
 .It Fn atan2 x y
 Returns the arctangent of
 .Ar x Ic / Ar y
@@ -376,7 +376,7 @@ and returns the previous seed.
 .El
 .Ss String Functions
 AWK has the following string functions built-in:
-.Bl -tag -width indent
+.Bl -tag -width Fn
 .It Fn gensub r s h [t]
 Search the target string
 .Ar t
@@ -532,7 +532,7 @@ This
 .Nm
 provides the following two functions for obtaining time
 stamps and formatting them:
-.Bl -tag -width indent
+.Bl -tag -width Fn
 .It Fn systime
 Returns the value of time in seconds since the start of
 .Tn Unix
@@ -560,7 +560,7 @@ See the specification of ANSI C
 for the format conversions which are supported.
 .El
 .Ss Other built-in functions
-.Bl -tag -width indent
+.Bl -tag -width Fn
 .It Fn system cmd
 executes
 .Ar cmd
@@ -593,7 +593,7 @@ from an occurrence of the first pattern
 though an occurrence of the second.
 .Pp
 A relational expression is one of the following:
-.Bl -tag -offset indent -width indent -compact
+.Bl -tag -offset indent -width Fn -compact
 .It Ar expression matchop regular-expression
 .It Ar expression relop expression
 .It Ar expression Ic in Ar array-name
@@ -628,7 +628,7 @@ and
 do not combine with other patterns.
 .Ss Built-in Variables
 Variable names with special meanings:
-.Bl -hang -width FILENAMES
+.Bl -hang -width Va
 .It Va ARGC
 argument count, assignable
 .It Va ARGV
