@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.22 2022/07/05 15:28:02 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.23 2022/07/05 15:35:53 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -167,7 +167,7 @@ An empty
 stands for
 .Li $ Ns Va 0 .
 String constants are quoted
-.Em \&"\ \&" ,
+.Li \(dq\(dq ,
 with the usual C escapes recognized within.
 Expressions take on string or numeric values as appropriate,
 and are built using the
@@ -175,14 +175,14 @@ and are built using the
 (see next subsection).
 Variables may be scalars, array elements
 (denoted
-.Va x[i] )
+.Va x\| Ns Li [ Ns Va i\^ Ns Li ] )
 or fields.
 Variables are initialized to the null string.
 Array subscripts may be any string,
 not necessarily numeric;
 this allows for a form of associative memory.
 Multiple subscripts such as
-.Va [i,j,k]
+.Li [ Ns Ar i Ns Li \&, Ns Ar j Ns Li \&, Ns Ar k Ns Li ]
 are permitted; the constituents are concatenated,
 separated by the value of
 .Va SUBSEP .
@@ -199,9 +199,9 @@ Field reference
 Increment and decrement, can be used either as postfix or prefix.
 .It Ic ^
 Exponentiation (the
-.Ic **
+.Ic **\^
 form is also supported, and
-.Ic **=
+.Ic **\^=
 for the assignment operator).
 .It + \- \&!
 Unary plus, unary minus and logical negation.
