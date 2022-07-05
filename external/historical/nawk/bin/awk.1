@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.27 2022/07/05 17:58:47 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.28 2022/07/05 18:18:48 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -484,9 +484,13 @@ the position in
 where the string
 .Ar t
 occurs, or 0 if it does not.
-.It Xo Fo length
-.Oo Fa string
-.Oc Fc Xc
+.\" .Fn cannot be told to omit parens, so piece this together manually
+.\" to mark empty parens optional too
+.It Xo Ic length\^ Ns Oo \&( Ns
+.Oo Ns
+.Fa string
+.Oc Ns \&)
+.Oc Xc
 the length of its argument
 taken as a string,
 or of
@@ -755,9 +759,13 @@ Parameters are local to the function; all other variables are global.
 Thus local variables may be created by providing excess parameters in
 the function definition.
 .Sh EXAMPLES
-Print lines longer than 72 characters:
+Print lines longer than 72 characters.
+.Fn length
+defaults to
+.Li $ Ns Va 0
+and the empty parens can aslo be omitted in this case:
 .Pp
-.Dl length($0) > 72
+.Dl length > 72
 .Pp
 Print first two fields in opposite order:
 .Pp
