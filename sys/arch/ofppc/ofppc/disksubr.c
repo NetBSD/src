@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.30 2022/05/24 06:28:00 andvar Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.31 2022/07/05 19:31:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30 2022/05/24 06:28:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2022/07/05 19:31:04 andvar Exp $");
 
 #include "opt_disksubr.h"
 
@@ -493,7 +493,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			 * the swap partition. copy BCPL string into packname
 			 * [the reason we use the swap partition: the user
 			 *  can supply a decent packname without worry
-			 *  of having to access an odly named partition
+			 *  of having to access an oddly named partition
 			 *  under AmigaDos]
 			 */
 			s = lp->d_packname;
