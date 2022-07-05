@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.25 2022/07/05 16:21:35 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.26 2022/07/05 16:59:41 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -407,7 +407,10 @@ and returns the previous seed.
 .Ss String Functions
 AWK has the following string functions built-in:
 .Bl -tag -width Fn
-.It Fn gensub r s h [t]
+.It Xo Fo gensub
+.Fa r s h\|
+.Oo Fa t
+.Oc Fc Xc
 Search the target string
 .Ar t
 for matches of the regular expression
@@ -463,7 +466,10 @@ supported by GNU
 are
 .Em not
 supported at this moment.
-.It Fn gsub r s "[t]"
+.It Xo Fo gsub
+.Fa r s\|
+.Oo Fa t
+.Oc Fc Xc
 Same as
 .Fn sub
 except that all occurrences of the regular expression
@@ -478,7 +484,9 @@ the position in
 where the string
 .Ar t
 occurs, or 0 if it does not.
-.It Fn length "[string]"
+.It Xo Fo length
+.Oo Fa string
+.Oc Fc Xc
 the length of its argument
 taken as a string,
 or of
@@ -495,7 +503,10 @@ The variables
 and
 .Va RLENGTH
 are set to the position and length of the matched string.
-.It Fn split s a "[fs]"
+.It Xo Fo split
+.Fa s a\|
+.Oo Fa fs
+.Oc Fc Xc
 splits the string
 .Ar s
 into array elements
@@ -521,7 +532,10 @@ according to the
 .Xr printf 3
 format
 .Ar fmt .
-.It Fn sub r s "[t]"
+.It Xo Fo sub
+.Fa r s\|
+.Oo Fa t
+.Oc Fc Xc
 substitutes
 .Ar s
 for the first occurrence of the regular expression
@@ -533,7 +547,10 @@ If
 is not given,
 .Li $ Ns Va 0
 is used.
-.It Fn substr s m [n]
+.It Xo Fo substr
+.Fa s m\|
+.Oo Fa n
+.Oc Fc Xc
 Returns the at most
 .Ar n\^ Ns No -character
 substring of
@@ -568,7 +585,11 @@ Returns the value of time in seconds since the start of
 Unix Epoch (midnight, January 1, 1970, Coordinated Universal Time).
 See also
 .Xr time 3 .
-.It Fn strftime "[format [, timestamp]]"
+.\"It Fn strftime "[format [, timestamp]]"
+.It Xo Fo strftime
+.Oo Fa format\|
+.Oo Fa timestamp\|
+.Oc Oc Fc Xc
 Formats the time
 .Ar timestamp
 according to the string
