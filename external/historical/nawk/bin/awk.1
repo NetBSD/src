@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.11 2022/07/05 00:47:32 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.12 2022/07/05 12:46:48 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -702,7 +702,7 @@ BEGIN { FS = ",[ \et]*|[ \et]+" }
 Add up first column, print sum and average:
 .Bd -literal -offset indent
 { s += $1 }
-END { print "sum is", s, " average is", s/NR }
+END { print "sum is", s, "average is", s/NR }
 .Ed
 .Pp
 Print all lines between start/stop pairs:
