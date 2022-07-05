@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.31 2022/07/05 22:20:55 rillig Exp $
+.\"	$NetBSD: awk.1,v 1.32 2022/07/05 22:50:43 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd December 19, 2019
+.Dd July 5, 2022
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -129,9 +129,9 @@ version on standard output and exit.
 .El
 .Pp
 An input line is normally made up of fields separated by white space,
-or by the regular expression
+or by the regular expression the built-in variable
 .Va FS
-the built-in variable is set to.
+is set to.
 If
 .Va FS
 is null, the input line is split into one field per character.
