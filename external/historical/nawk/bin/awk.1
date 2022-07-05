@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.17 2022/07/05 13:48:07 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.18 2022/07/05 14:10:09 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -151,9 +151,10 @@ built-in variable.
 .Pp
 A pattern-action statement has the form
 .Lp
-.Dl pattern \&{ action \&}
+.D1 Ar pattern Li \&{ Ar action Li \&}
 .Lp
-A missing \&{ action \&}
+A missing
+.Li \&{ Ar action Li \&}
 means print the line;
 a missing pattern always matches.
 Pattern-action statements are separated by newlines or semicolons.
@@ -190,7 +191,7 @@ separated by the value of
 operators, in order of decreasing precedence, are:
 .Pp
 .Bl -tag -width Ic -compact
-.It Ic (...)
+.It Ic \&( Ns No ... Ns Ic \&)
 Grouping
 .It Ic $
 Field reference
@@ -202,16 +203,16 @@ Exponentiation (the
 form is also supported, and
 .Ic **=
 for the assignment operator).
-.It + - \&!
+.It + \- \&!
 Unary plus, unary minus and logical negation.
 .It * / %
 Multiplication, division and modulus.
-.It + -
+.It + \-
 Addition and subtraction.
-.It Ar space
+.It Em space
 String concatenation.
 .It Ic \*[Lt] \*[Gt]
-.It Ic \*[Le] \*[Ge]
+.It Ic <= >=
 .It Ic != ==
 Regular relational operators
 .It Ic ~ !~
@@ -244,27 +245,29 @@ Assignment and Operator-Assignment
 .Ss Control Statements
 The control statements are as follows:
 .Bl -tag -width Fn
-.It Ic if \&( Ar expression Ic \&) Ar statement Bq Ic else Ar statement
-.It Ic while \&( Ar expression Ic \&) Ar statement
-.It Ic for \&( Ar expression Ic \&; Ar expression Ic \&; \
-Ar expression Ic \&) Ar statement
-.It Ic for \&( Va var Ic in Ar array Ic \&) Ar statement
-.It Ic do Ar statement Ic while \&( Ar expression Ic \&)
+.It Ic if \&( Ns Ar expression\^ Ns Ic \&) Ar statement Bq Ic else Ar statement
+.It Ic while \&( Ns Ar expression\^ Ns Ic \&) Ar statement
+.It Ic for \&( Ns Ar expression\^ Ns Ic \&; \
+ Ar expression\^ Ns Ic \&; \
+ Ar expression\^ Ns Ic \&) Ar statement
+.It Ic for \&( Ns Ar var Ic in Ar array\^ Ns Ic \&) Ar statement
+.It Ic do Ar statement Ic while \&( Ns Ar expression\^ Ns Ic \&)
 .It Ic break
 .It Ic continue
-.It Ic \&{ Ar [ statement ... ] Ic \&}
+.It Ic \&{ Oo Ar statement ... Oc Ic \&}
 .It Ar expression
-Commonly var = expression
-.It Ic return Bq Ar expression
+Commonly
+.Ar var Ic = Ar expression
+.It Ic return Op Ar expression
 .It Ic next
 Skip remaining patterns on this input line
 .It Ic nextfile
 Skip rest of this file, open next, start at top
-.It Ic delete Va array Bq Ar expression
+.It Ic delete Ar array\| Ns Cm \&[ Ns Ar expression\^ Ns Cm \&]
 Delete an array element
-.It Ic delete Va array
+.It Ic delete Ar array
 Delete all elements of an array
-.It Ic exit Bq Ar expression
+.It Ic exit Op Ar expression
 Exit immediately; status is
 .Ar expression
 .El
@@ -342,7 +345,7 @@ AWK has the following mathematical and numerical functions built-in:
 .Bl -tag -width Fn
 .It Fn atan2 x y
 Returns the arctangent of
-.Ar x Ic / Ar y
+.Ar x\| Ns Li / Ns Ar y
 in radians.
 See also
 .Xr atan2 3 .
@@ -380,8 +383,8 @@ Computes the non-negative square root of
 See also
 .Xr sqrt 3 .
 .It Fn srand [expr]
-Sets seed for random number generator (
-.Fn rand )
+Sets seed for random number generator
+.Pq Fn rand
 and returns the previous seed.
 .El
 .Ss String Functions
@@ -591,7 +594,7 @@ relational expressions, using the operators
 .Ic ~
 and
 .Ic !~ .
-.Ic / re /
+.Ic / Ns Ar re Ns Ic /
 is a constant regular expression;
 any string (constant or variable) may be used
 as a regular expression, except in the position of an isolated regular expression
@@ -607,7 +610,7 @@ A relational expression is one of the following:
 .It Ar expression matchop regular-expression
 .It Ar expression relop expression
 .It Ar expression Ic in Ar array-name
-.It ( Ar expr , expr,\&... Ic ") in" Ar array-name
+.It Ic \&( Ns Ar expr Ns Ic \&, Ar expr Ns Ic \&, No Ar ... Ic \&) in Ar array-name
 .El
 .Pp
 where a
@@ -667,7 +670,7 @@ non-null members are taken as filenames
 .It Va CONVFMT
 conversion format used when converting numbers
 (default
-.Qq %.6g )
+.Li \(dq%.6g\(dq )
 .It Va ENVIRON
 array of environment variables; subscripts are names.
 .It Va FILENAME
@@ -684,8 +687,7 @@ number of fields in the current record
 ordinal number of the current record
 .It Va OFMT
 output format for numbers (default
-.Qq "%.6g"
-)
+.Li \(dq%.6g\(dq )
 .It Va OFS
 output field separator (default blank)
 .It Va ORS
@@ -699,9 +701,10 @@ Position of the first character matched by
 .It Va RLENGTH
 Length of the string matched by
 .Fn match ;
--1 if no match.
+\-1 if no match.
 .It Va SUBSEP
-separates multiple subscripts (default 034)
+separates multiple subscripts (default
+.Li 034 )
 .El
 .Ss Functions
 Functions may be defined (at the position of a pattern-action statement) thus:
@@ -739,7 +742,8 @@ Print all lines between start/stop pairs:
 .Pp
 .Dl /start/, /stop/
 .Pp
-Simulate echo(1):
+Simulate
+.Xr echo 1 :
 .Bd -literal -offset indent
 BEGIN  {
         for (i = 1; i < ARGC; ++i)
