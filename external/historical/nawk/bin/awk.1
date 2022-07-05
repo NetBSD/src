@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.13 2022/07/05 12:59:01 uwe Exp $
+.\"	$NetBSD: awk.1,v 1.14 2022/07/05 13:05:20 uwe Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -31,7 +31,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl F Ar fs
-.Op Fl v Ar var=value
+.Op Fl v Ar var\| Ns Cm \&= Ns Ar value
 .Op Fl safe
 .Op Fl d Ns Op Ar N
 .Op Ar prog | Fl f Ar progfile
@@ -68,13 +68,13 @@ means the standard input.
 Any
 .Ar file
 of the form
-.Ar var=value
+.Ar var\| Ns Cm \&= Ns Ar value
 is treated as an assignment, not a filename,
 and is executed at the time it would have been opened if it were a filename.
 The option
 .Fl v
 followed by
-.Ar var=value
+.Ar var\| Ns Cm \&= Ns Ar value
 is an assignment to be done before
 .Ar prog
 is executed; any number of
@@ -111,11 +111,11 @@ fields number.
 Potentially unsafe functions such as
 .Fn system
 make the program abort (with a warning message).
-.It Fl v Ar var Ns = Ns Ar value
+.It Fl v Ar var\| Ns Cm \&= Ns Ar value
 Assign the value
 .Ar value
 to the variable
-.Va var
+.Ar var
 before
 .Ar prog
 is executed.
