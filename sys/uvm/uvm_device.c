@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.74 2022/07/06 01:12:46 riastradh Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.75 2022/07/06 01:13:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.74 2022/07/06 01:12:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.75 2022/07/06 01:13:30 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -133,12 +133,17 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 	}
 
 	/*
-	 * Negative offsets on the object are not allowed.
+	 * Negative offsets on the object are not allowed, unless the
+	 * device has affirmatively set D_NEGOFFSAFE.
 	 */
-
-	if ((cdev->d_flag & D_NEGOFFSAFE) == 0 &&
-	    off != UVM_UNKNOWN_OFFSET && off < 0)
-		return(NULL);
+	if ((cdev->d_flag & D_NEGOFFSAFE) == 0 && off != UVM_UNKNOWN_OFFSET) {
+		if (off < 0)
+			return NULL;
+		if (size > __type_max(voff_t))
+			return NULL;
+		if (off > __type_max(voff_t) - size)
+			return NULL;
+	}
 
 	/*
 	 * Check that the specified range of the device allows the
