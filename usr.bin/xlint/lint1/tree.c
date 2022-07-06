@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.471 2022/07/05 22:50:41 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.472 2022/07/06 22:26:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.471 2022/07/05 22:50:41 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.472 2022/07/06 22:26:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -103,6 +103,18 @@ static	void	check_integer_comparison(op_t, tnode_t *, tnode_t *);
 static	void	check_precedence_confusion(tnode_t *);
 
 extern sig_atomic_t fpe;
+
+static uint64_t
+u64_fill_right(uint64_t x)
+{
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	x |= x >> 32;
+	return x;
+}
 
 static bool
 ic_maybe_signed(const type_t *tp, const integer_constraints *ic)
@@ -200,6 +212,23 @@ ic_bitor(integer_constraints a, integer_constraints b)
 }
 
 static integer_constraints
+ic_mod(const type_t *tp, integer_constraints a, integer_constraints b)
+{
+	integer_constraints c;
+
+	if (ic_maybe_signed(tp, &a) || ic_maybe_signed(tp, &b))
+		return ic_any(tp);
+
+	c.smin = INT64_MIN;
+	c.smax = INT64_MAX;
+	c.umin = 0;
+	c.umax = b.umax - 1;
+	c.bset = 0;
+	c.bclr = ~u64_fill_right(c.umax);
+	return c;
+}
+
+static integer_constraints
 ic_shl(const type_t *tp, integer_constraints a, integer_constraints b)
 {
 	integer_constraints c;
@@ -264,6 +293,10 @@ ic_expr(const tnode_t *tn)
 			return ic_any(tn->tn_type);
 		lc = ic_expr(tn->tn_left);
 		return ic_cvt(tn->tn_type, tn->tn_left->tn_type, lc);
+	case MOD:
+		lc = ic_expr(before_conversion(tn->tn_left));
+		rc = ic_expr(before_conversion(tn->tn_right));
+		return ic_mod(tn->tn_type, lc, rc);
 	case SHL:
 		lc = ic_expr(tn->tn_left);
 		rc = ic_expr(tn->tn_right);
