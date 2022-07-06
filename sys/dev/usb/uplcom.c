@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.92 2022/07/06 06:00:40 nat Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.93 2022/07/06 06:25:24 nat Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.92 2022/07/06 06:00:40 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.93 2022/07/06 06:25:24 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -115,13 +115,13 @@ fail:
 #define	UPLCOM_SET_REQUEST		0x01
 #define	UPLCOM_SET_CRTSCTS_0		0x41
 #define	UPLCOM_SET_CRTSCTS_HX		0x61
+#define UPLCOM_HX_STATUS_REG		0x8080
 
 #define	UPLCOM_N_SERIAL_CTS		0x80
 
 #define UPLCOM_HXN_SET_REQUEST		0x80
 #define UPLCOM_HXN_SET_CRTSCTS_REG	0x0A
 #define UPLCOM_HXN_SET_CRTSCTS		0xFA
-#define UPLCOM_HX_STATUS_REG		0x8080
 
 enum  pl2303_type {
 	UPLCOM_TYPE_0,	/* we use this for all non-HX variants */
@@ -316,9 +316,8 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	/* determine chip type */
 	ddesc = usbd_get_device_descriptor(dev);
 	if (ddesc->bDeviceClass != UDCLASS_COMM &&
-	    ddesc->bMaxPacketSize == 0x40) {
+	    ddesc->bMaxPacketSize == 0x40)
 		sc->sc_type = UPLCOM_TYPE_HX;
-	}
 
 	if (sc->sc_type == UPLCOM_TYPE_HX) {
 		req.bmRequestType = UT_READ_VENDOR_DEVICE;
