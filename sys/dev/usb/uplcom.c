@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.93 2022/07/06 06:25:24 nat Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.94 2022/07/06 15:24:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.93 2022/07/06 06:25:24 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.94 2022/07/06 15:24:14 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -335,7 +335,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	/* print the chip type */
 	if (sc->sc_type == UPLCOM_TYPE_HXN) {
 		DPRINTF("chiptype HXN", 0, 0, 0, 0);
-	else if (sc->sc_type == UPLCOM_TYPE_HX) {
+	} else if (sc->sc_type == UPLCOM_TYPE_HX) {
 		DPRINTF("chiptype HX", 0, 0, 0, 0);
 	} else {
 		DPRINTF("chiptype 0", 0, 0, 0, 0);
