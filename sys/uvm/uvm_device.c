@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.75 2022/07/06 01:13:30 riastradh Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.76 2022/07/06 01:15:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.75 2022/07/06 01:13:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.76 2022/07/06 01:15:51 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -125,11 +125,11 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 
 	cdev = cdevsw_lookup(device);
 	if (cdev == NULL) {
-		return (NULL);
+		return NULL;
 	}
 	mapfn = cdev->d_mmap;
 	if (mapfn == NULL || mapfn == nommap) {
-		return(NULL);
+		return NULL;
 	}
 
 	/*
@@ -211,7 +211,7 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 				wakeup(lcv);
 			lcv->u_flags &= ~(UVM_DEVICE_WANTED|UVM_DEVICE_HOLD);
 			mutex_exit(&udv_lock);
-			return(&lcv->u_obj);
+			return &lcv->u_obj;
 		}
 
 		/*
@@ -257,7 +257,7 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 		udv->u_device = device;
 		LIST_INSERT_HEAD(&udv_list, udv, u_list);
 		mutex_exit(&udv_lock);
-		return(&udv->u_obj);
+		return &udv->u_obj;
 	}
 	/*NOTREACHED*/
 }
@@ -382,7 +382,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=%#jx)",
 		    entry->etype, 0,0,0);
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
-		return(EIO);
+		return EIO;
 	}
 
 	/*
@@ -393,7 +393,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	if (cdevsw_lookup(device) == NULL) {
 		/* XXX This should not happen */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
-		return (EIO);
+		return EIO;
 	}
 
 	/*
@@ -453,5 +453,5 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 
 	pmap_update(ufi->orig_map->pmap);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
-	return (retval);
+	return retval;
 }
