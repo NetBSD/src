@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_raster.h,v 1.10 2006/10/09 11:03:43 peter Exp $ */
+/* $NetBSD: wscons_raster.h,v 1.11 2022/07/06 12:33:42 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,8 +46,8 @@
 struct rcons {
 	/* Console raster.  Filled in before rcons_init(). */
 	struct	raster *rc_sp;		/* frame buffer raster */
-	int	*rc_crowp;		/* ptr to cursror row */
-	int	*rc_ccolp;		/* ptr to cursror column */
+	int	*rc_crowp;		/* ptr to cursor row */
+	int	*rc_ccolp;		/* ptr to cursor column */
 
 	/* Number of rows/columns on raster.  Filled in by rcons_init(). */
 	int	rc_maxrow;		/* emulator height of screen */
@@ -64,8 +64,8 @@ struct rcons {
 	int	rc_raswidth;		/* raster width for row copies */
 
 	/* Internal cursor row and column.  XXX  Weird Sun cursor pointers. */
-	int	rc_crow;		/* internal cursror row */
-	int	rc_ccol;		/* ptr to cursror column */
+	int	rc_crow;		/* internal cursor row */
+	int	rc_ccol;		/* ptr to cursor column */
 };
 
 #if 0
