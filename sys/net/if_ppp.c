@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.168 2022/07/06 08:06:59 riastradh Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.169 2022/07/06 08:07:23 riastradh Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.168 2022/07/06 08:06:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.169 2022/07/06 08:07:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -597,6 +597,8 @@ pppioctl(struct ppp_softc *sc, u_long cmd, void *data, int flag,
 		nb = odp->length;
 		if (nb > sizeof(ccp_option))
 			nb = sizeof(ccp_option);
+		if (nb < 3)
+			return EINVAL;
 		if ((error = copyin(odp->ptr, ccp_option, nb)) != 0)
 			return error;
 		/* preliminary check on the length byte */
