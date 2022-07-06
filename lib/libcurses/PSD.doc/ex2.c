@@ -1,4 +1,4 @@
-.\"	$NetBSD: ex2.c,v 1.7 2003/08/07 16:44:27 agc Exp $
+.\"	$NetBSD: ex2.c,v 1.8 2022/07/06 12:33:41 andvar Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	 The Regents of the University of California.  All rights reserved.
@@ -91,7 +91,7 @@ main()
 	 * 'b' - move cursor one position to the left.
 	 * 'n' - move cursor one line down.
 	 * 'p' - move cursor one line up.
-	 * 'h' - home cusor.
+	 * 'h' - home cursor.
 	 * 'l' - force refresh.
 	 * 'r' - simulate a carriage return.
 	 *
