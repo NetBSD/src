@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.133 2022/04/23 11:44:01 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.134 2022/07/06 01:12:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.133 2022/04/23 11:44:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.134 2022/07/06 01:12:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2098,6 +2098,8 @@ audiommap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	int bound;
 	int error;
 
+	KASSERT(len > 0);
+
 	KASSERT(fp->f_audioctx);
 	file = fp->f_audioctx;
 	dev = file->dev;
@@ -3561,6 +3563,8 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 	int error;
 
 	TRACEF(2, file, "off=%lld, prot=%d", (long long)(*offp), prot);
+
+	KASSERT(len > 0);
 
 	if (*offp < 0)
 		return EINVAL;

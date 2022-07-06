@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.105 2021/09/22 05:42:19 rin Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.106 2022/07/06 01:12:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.105 2021/09/22 05:42:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.106 2022/07/06 01:12:46 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -1395,6 +1395,7 @@ ksymsmmap(struct file *fp, off_t *offp, size_t nbytes, int prot, int *flagsp,
 	/* uvm_mmap guarantees page-aligned offset and size.  */
 	KASSERT(*offp == round_page(*offp));
 	KASSERT(nbytes == round_page(nbytes));
+	KASSERT(nbytes > 0);
 
 	/* Refuse negative offsets.  */
 	if (*offp < 0)
