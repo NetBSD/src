@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.91 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.92 2022/07/06 06:00:40 nat Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.91 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.92 2022/07/06 06:00:40 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -112,15 +112,21 @@ fail:
 #define	UPLCOM_IFACE_INDEX	0
 #define	UPLCOM_SECOND_IFACE_INDEX	1
 
-#define	UPLCOM_SET_REQUEST	0x01
-#define	UPLCOM_SET_CRTSCTS_0	0x41
-#define	UPLCOM_SET_CRTSCTS_HX	0x61
+#define	UPLCOM_SET_REQUEST		0x01
+#define	UPLCOM_SET_CRTSCTS_0		0x41
+#define	UPLCOM_SET_CRTSCTS_HX		0x61
 
-#define	UPLCOM_N_SERIAL_CTS	0x80
+#define	UPLCOM_N_SERIAL_CTS		0x80
+
+#define UPLCOM_HXN_SET_REQUEST		0x80
+#define UPLCOM_HXN_SET_CRTSCTS_REG	0x0A
+#define UPLCOM_HXN_SET_CRTSCTS		0xFA
+#define UPLCOM_HX_STATUS_REG		0x8080
 
 enum  pl2303_type {
 	UPLCOM_TYPE_0,	/* we use this for all non-HX variants */
 	UPLCOM_TYPE_HX,
+	UPLCOM_TYPE_HXN,
 };
 
 struct	uplcom_softc {
@@ -233,6 +239,13 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_CGUSBRS232R },
 	/* Sharp CE-175TU (USB to Zaurus option port 15 adapter) */
 	{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_CE175TU },
+	/* Various */
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303GB },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303GC },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303GE },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303GL },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303GS },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303GT },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
@@ -263,9 +276,11 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
+	usb_device_request_t req;
 	char *devinfop;
 	const char *devname = device_xname(self);
 	usbd_status err;
+	uint8_t val;
 	int i;
 	struct ucom_attach_args ucaa;
 
@@ -301,12 +316,27 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	/* determine chip type */
 	ddesc = usbd_get_device_descriptor(dev);
 	if (ddesc->bDeviceClass != UDCLASS_COMM &&
-	    ddesc->bMaxPacketSize == 0x40)
+	    ddesc->bMaxPacketSize == 0x40) {
 		sc->sc_type = UPLCOM_TYPE_HX;
+	}
+
+	if (sc->sc_type == UPLCOM_TYPE_HX) {
+		req.bmRequestType = UT_READ_VENDOR_DEVICE;
+		req.bRequest = UPLCOM_SET_REQUEST;
+		USETW(req.wValue, UPLCOM_HX_STATUS_REG);
+		USETW(req.wIndex, sc->sc_iface_number);
+		USETW(req.wLength, 1);
+
+		err = usbd_do_request(sc->sc_udev, &req, &val);
+		if (err)
+			sc->sc_type = UPLCOM_TYPE_HXN;
+	}
 
 #ifdef UPLCOM_DEBUG
 	/* print the chip type */
-	if (sc->sc_type == UPLCOM_TYPE_HX) {
+	if (sc->sc_type == UPLCOM_TYPE_HXN) {
+		DPRINTF("chiptype HXN", 0, 0, 0, 0);
+	else if (sc->sc_type == UPLCOM_TYPE_HX) {
 		DPRINTF("chiptype HX", 0, 0, 0, 0);
 	} else {
 		DPRINTF("chiptype 0", 0, 0, 0, 0);
@@ -521,6 +551,9 @@ uplcom_reset(struct uplcom_softc *sc)
 	usb_device_request_t req;
 	usbd_status err;
 
+	if (sc->sc_type == UPLCOM_TYPE_HXN)
+		return 0;
+
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = UPLCOM_SET_REQUEST;
 	USETW(req.wValue, 0);
@@ -693,9 +726,17 @@ uplcom_set_crtscts(struct uplcom_softc *sc)
 	UPLCOMHIST_FUNC(); UPLCOMHIST_CALLED();
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-	req.bRequest = UPLCOM_SET_REQUEST;
-	USETW(req.wValue, 0);
-	if (sc->sc_type == UPLCOM_TYPE_HX)
+	if (sc->sc_type == UPLCOM_TYPE_HXN) {
+		req.bRequest = UPLCOM_HXN_SET_REQUEST;
+		USETW(req.wValue, UPLCOM_HXN_SET_CRTSCTS_REG);
+	} else {
+		req.bRequest = UPLCOM_SET_REQUEST;
+		USETW(req.wValue, 0);
+	}
+
+	if (sc->sc_type == UPLCOM_TYPE_HXN)
+		USETW(req.wIndex, UPLCOM_HXN_SET_CRTSCTS);
+	else if (sc->sc_type == UPLCOM_TYPE_HX)
 		USETW(req.wIndex, UPLCOM_SET_CRTSCTS_HX);
 	else
 		USETW(req.wIndex, UPLCOM_SET_CRTSCTS_0);
