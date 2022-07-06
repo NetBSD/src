@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.229 2022/07/06 01:12:46 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.230 2022/07/06 01:13:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.229 2022/07/06 01:12:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.230 2022/07/06 01:13:06 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -930,7 +930,8 @@ vn_mmap(struct file *fp, off_t *offp, size_t size, int prot, int *flagsp,
 	if (vp->v_type != VCHR && off < 0) {
 		return EINVAL;
 	}
-	if (vp->v_type != VCHR && (off_t)(off + size) < off) {
+	if (vp->v_type != VCHR &&
+	    (size > __type_max(off_t) || off > __type_max(off_t) - size)) {
 		/* no offset wrapping */
 		return EOVERFLOW;
 	}
