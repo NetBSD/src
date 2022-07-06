@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.22 2022/07/06 21:59:06 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.23 2022/07/06 22:26:31 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -290,18 +290,22 @@ void
 test_ic_mod(void)
 {
 	/* The result is between 0 and 254. */
-	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	u8 = u64 % u8;
+
+	/* The result is between 0 and 255. */
+	u8 = u64 % 256;
+
+	/* The result is between 0 and 256. */
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
+	u8 = u64 % 257;
 
 	/* The result is between 0 and 1000. */
 	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
 	u8 = u64 % 1000;
-	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned short' may lose accuracy [132] */
-	u16 = u64 % 1000;
 	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int:9' may lose accuracy [132] */
 	bits.u9 = u64 % 1000;
-	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int:10' may lose accuracy [132] */
 	bits.u10 = u64 % 1000;
+	u16 = u64 % 1000;
 
 	/*
 	 * For signed division, if the result of 'a / b' is not representable
@@ -309,8 +313,19 @@ test_ic_mod(void)
 	 * '(a / b) * a + a % b == a'.
 	 *
 	 * If the result of 'a / b' is not representable exactly, the result
-	 * of 'a % b' is not defined.
+	 * of 'a % b' is not defined.  Due to this uncertainty, lint does not
+	 * narrow down the range for signed modulo expressions.
 	 *
 	 * C90 6.3.5, C99 6.5.5.
 	 */
+
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = s16 % s8;
+
+	/*
+	 * The result is always 0, it's a theoretical edge case though, so
+	 * lint doesn't care to implement this.
+	 */
+	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
+	s8 = s64 % 1;
 }
