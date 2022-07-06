@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.76 2022/07/06 01:15:51 riastradh Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.77 2022/07/06 01:16:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.76 2022/07/06 01:15:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.77 2022/07/06 01:16:36 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -152,13 +152,29 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 	 * XXX assumes VM_PROT_* == PROT_*
 	 * XXX clobbers off and size, but nothing else here needs them.
 	 */
-
-	while (size != 0) {
-		if (cdev_mmap(device, off, accessprot) == -1) {
-			return (NULL);
+	do {
+		KASSERTMSG((off % PAGE_SIZE) == 0, "off=%jd", (intmax_t)off);
+		KASSERTMSG(size >= PAGE_SIZE, "size=%"PRIuVSIZE, size);
+		if (cdev_mmap(device, off, accessprot) == -1)
+			return NULL;
+		KASSERT(off <= __type_max(voff_t) - PAGE_SIZE ||
+		    (cdev->d_flag & D_NEGOFFSAFE) != 0);
+		if (__predict_false(off > __type_max(voff_t) - PAGE_SIZE)) {
+			/*
+			 * off += PAGE_SIZE, with two's-complement
+			 * wraparound, or
+			 *
+			 *	off += PAGE_SIZE - 2*(VOFF_MAX + 1).
+			 */
+			CTASSERT(PAGE_SIZE >= 2);
+			off -= __type_max(voff_t);
+			off += PAGE_SIZE - 2;
+			off -= __type_max(voff_t);
+		} else {
+			off += PAGE_SIZE;
 		}
-		off += PAGE_SIZE; size -= PAGE_SIZE;
-	}
+		size -= PAGE_SIZE;
+	} while (size != 0);
 
 	/*
 	 * keep looping until we get it
