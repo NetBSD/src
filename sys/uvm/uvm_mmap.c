@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.181 2022/07/06 00:40:16 riastradh Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.182 2022/07/06 00:40:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.181 2022/07/06 00:40:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.182 2022/07/06 00:40:28 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -368,6 +368,8 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 
 	advice = UVM_ADV_NORMAL;
 	if ((flags & MAP_ANON) == 0) {
+		KASSERT(size != 0);
+
 		if ((fp = fd_getfile(fd)) == NULL)
 			return EBADF;
 
