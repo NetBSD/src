@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.19 2021/12/19 11:37:23 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.20 2022/07/06 01:12:45 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.19 2021/12/19 11:37:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.20 2022/07/06 01:12:45 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -901,6 +901,7 @@ int drm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
 		goto out;
 
 #ifdef __NetBSD__
+	KASSERT(size > 0);
 	ret = obj->dev->driver->mmap_object(obj->dev, *offp, size, prot, uobjp,
 	    offp, fil);
 #else
@@ -946,6 +947,7 @@ int drm_gem_dmabuf_mmap(struct dma_buf *dma_buf, struct vm_area_struct *vma)
 		return -ENOSYS;
 
 #ifdef __NetBSD__
+	KASSERT(size > 0);
 	return dev->driver->gem_prime_mmap(obj, offp, size, prot, flagsp,
 	    advicep, uobjp, maxprotp);
 #else

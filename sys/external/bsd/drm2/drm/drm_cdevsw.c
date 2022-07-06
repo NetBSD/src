@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.29 2021/12/19 12:23:42 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.30 2022/07/06 01:12:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.29 2021/12/19 12:23:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.30 2022/07/06 01:12:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -520,6 +520,8 @@ drm_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	int error;
 
 	KASSERT(fp == file->filp);
+	KASSERT(len > 0);
+
 	/* XXX errno Linux->NetBSD */
 	error = -(*dev->driver->mmap_object)(dev, *offp, len, prot, uobjp,
 	    offp, file->filp);

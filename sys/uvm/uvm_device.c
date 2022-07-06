@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.73 2022/03/28 12:39:18 riastradh Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.74 2022/07/06 01:12:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.73 2022/03/28 12:39:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.74 2022/07/06 01:12:46 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -116,6 +116,8 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(maphist, "(device=%#jx)", device,0,0,0);
+
+	KASSERT(size > 0);
 
 	/*
 	 * before we do anything, ensure this device supports mmap

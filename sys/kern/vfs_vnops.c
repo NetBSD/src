@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.228 2022/05/22 11:27:36 andvar Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.229 2022/07/06 01:12:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.228 2022/05/22 11:27:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.229 2022/07/06 01:12:46 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -918,6 +918,8 @@ vn_mmap(struct file *fp, off_t *offp, size_t size, int prot, int *flagsp,
 	off = *offp;
 	flags = *flagsp;
 	maxprot = VM_PROT_EXECUTE;
+
+	KASSERT(size > 0);
 
 	vp = fp->f_vnode;
 	if (vp->v_type != VREG && vp->v_type != VCHR &&

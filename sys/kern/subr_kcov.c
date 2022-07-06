@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.16 2020/07/03 16:11:11 maxv Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.17 2022/07/06 01:12:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -523,6 +523,8 @@ kcov_fops_mmap(file_t *fp, off_t *offp, size_t size, int prot, int *flagsp,
 	off_t off = *offp;
 	kcov_t *kd, *kdbuf;
 	int error = 0;
+
+	KASSERT(size > 0);
 
 	if (prot & PROT_EXEC)
 		return EACCES;
