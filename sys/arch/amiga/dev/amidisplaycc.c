@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.39 2022/02/06 10:05:56 jandberg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.40 2022/07/06 14:34:13 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.39 2022/02/06 10:05:56 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.40 2022/07/06 14:34:13 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1112,14 +1112,13 @@ amidisplaycc_getfbinfo(struct amidisplaycc_softc *adp, struct wsdisplayio_fbinfo
 	bm = adp->gfxview->bitmap;
 	KASSERT(bm);
 
-	/* Depth 1 since current X wsfb driver doesn't support multiple bitplanes */
 	memset(fbinfo, 0, sizeof(*fbinfo));
-	fbinfo->fbi_fbsize = bm->bytes_per_row * bm->rows;
+	fbinfo->fbi_fbsize = bm->bytes_per_row * bm->rows * adp->gfxdepth;
 	fbinfo->fbi_fboffset = 0;
 	fbinfo->fbi_width = bm->bytes_per_row * 8;
 	fbinfo->fbi_height = bm->rows;
 	fbinfo->fbi_stride = bm->bytes_per_row;
-	fbinfo->fbi_bitsperpixel = 1;
+	fbinfo->fbi_bitsperpixel = adp->gfxdepth;
 	fbinfo->fbi_pixeltype = WSFB_CI;
 	fbinfo->fbi_flags = 0;
 	fbinfo->fbi_subtype.fbi_cmapinfo.cmap_entries = 1 << adp->gfxdepth;
