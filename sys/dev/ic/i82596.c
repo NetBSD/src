@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.46 2022/05/29 10:43:46 rin Exp $ */
+/* $NetBSD: i82596.c,v 1.47 2022/07/06 15:41:47 andvar Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.46 2022/05/29 10:43:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.47 2022/07/06 15:41:47 andvar Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -132,7 +132,7 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * Rev B and C chips support big endian byte ordering for 32 bit entities,
  * and this new feature is enabled by IEE_SYSBUS_BE in the sysbus byte.
  *
- * With the IEE_SYSBUS_BE feature, all 32 bit address ponters are
+ * With the IEE_SYSBUS_BE feature, all 32 bit address pointers are
  * treated as true 32 bit entities but the SCB absolute address and
  * statistical counters are still treated as two 16 bit big endian entities,
  * so we have to always swap high and low words for these entities.
