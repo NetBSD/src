@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.737 2022/07/06 05:49:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.738 2022/07/06 06:33:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.737 2022/07/06 05:49:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.738 2022/07/06 06:33:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9946,6 +9946,29 @@ wm_intr_legacy(void *arg)
 	if (rndval == 0)
 		rndval = icr;
 
+	mutex_enter(txq->txq_lock);
+
+	if (txq->txq_stopping) {
+		mutex_exit(txq->txq_lock);
+		return 1;
+	}
+
+#if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
+	if (icr & ICR_TXDW) {
+		DPRINTF(sc, WM_DEBUG_TX,
+		    ("%s: TX: got TXDW interrupt\n",
+			device_xname(sc->sc_dev)));
+		WM_Q_EVCNT_INCR(txq, txdw);
+	}
+#endif
+	if (txlimit > 0) {
+		more |= wm_txeof(txq, txlimit);
+		if (!IF_IS_EMPTY(&ifp->if_snd))
+			more = true;
+	} else
+		more = true;
+	mutex_exit(txq->txq_lock);
+
 	mutex_enter(rxq->rxq_lock);
 
 	if (rxq->rxq_stopping) {
@@ -9974,28 +9997,6 @@ wm_intr_legacy(void *arg)
 
 	mutex_exit(rxq->rxq_lock);
 
-	mutex_enter(txq->txq_lock);
-
-	if (txq->txq_stopping) {
-		mutex_exit(txq->txq_lock);
-		return 1;
-	}
-
-#if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
-	if (icr & ICR_TXDW) {
-		DPRINTF(sc, WM_DEBUG_TX,
-		    ("%s: TX: got TXDW interrupt\n",
-			device_xname(sc->sc_dev)));
-		WM_Q_EVCNT_INCR(txq, txdw);
-	}
-#endif
-	if (txlimit > 0) {
-		more |= wm_txeof(txq, txlimit);
-		if (!IF_IS_EMPTY(&ifp->if_snd))
-			more = true;
-	} else
-		more = true;
-	mutex_exit(txq->txq_lock);
 	WM_CORE_LOCK(sc);
 
 	if (sc->sc_core_stopping) {
