@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.231 2022/07/06 01:13:17 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.232 2022/07/06 01:15:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.231 2022/07/06 01:13:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.232 2022/07/06 01:15:32 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -598,7 +598,7 @@ unionread:
 	mutex_exit(&fp->f_lock);
 	VOP_UNLOCK(vp);
 	if (error)
-		return error
+		return error;
 
 	if (count == auio.uio_resid && vn_union_readdir_hook) {
 		struct vnode *ovp = vp;
