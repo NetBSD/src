@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.21 2022/07/03 14:35:54 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.22 2022/07/06 21:59:06 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -22,6 +22,7 @@ typedef signed short s16_t;
 typedef signed int s32_t;
 typedef signed long long s64_t;
 
+
 u8_t u8;
 u16_t u16;
 u32_t u32;
@@ -31,6 +32,23 @@ s8_t s8;
 s16_t s16;
 s32_t s32;
 s64_t s64;
+
+struct bit_fields {
+	unsigned u1:1;
+	unsigned u2:2;
+	unsigned u3:3;
+	unsigned u4:4;
+	unsigned u5:5;
+	unsigned u6:6;
+	unsigned u7:7;
+	unsigned u8:8;
+	unsigned u9:9;
+	unsigned u10:10;
+	unsigned u11:11;
+	unsigned u12:12;
+	unsigned u32:32;
+} bits;
+
 
 void
 unsigned_to_unsigned(void)
@@ -223,25 +241,26 @@ test_ic_shr(u64_t x)
 	return x;
 }
 
-
-struct bit_fields {
-	unsigned bits_32: 32;
-	unsigned bits_5: 5;
-	unsigned bits_3: 3;
-};
-
 unsigned char
-test_bit_fields(struct bit_fields s, unsigned long long m)
+test_bit_fields(unsigned long long m)
 {
 	/* expect+1: warning: conversion from 'unsigned long long:32' to 'unsigned int:3' may lose accuracy [132] */
-	s.bits_3 = s.bits_32 & m;
+	bits.u3 = bits.u32 & m;
 
-	s.bits_5 = s.bits_3 & m;
-	s.bits_32 = s.bits_5 & m;
+	bits.u5 = bits.u3 & m;
+	bits.u32 = bits.u5 & m;
 
 	/* expect+1: warning: conversion from 'unsigned long long:32' to 'unsigned char' may lose accuracy [132] */
-	return s.bits_32 & m;
+	return bits.u32 & m;
 }
+
+/*
+ * Traditional C has an extra rule that the right-hand operand of a bit shift
+ * operator is converted to 'int'.  Before tree.c 1.467 from 2022-07-02, this
+ * conversion was implemented as a CVT node, which means a cast, not an
+ * implicit conversion.  Changing the CVT to NOOP would have caused a wrong
+ * warning 'may lose accuracy' in language levels other than traditional C.
+ */
 
 u64_t
 u64_shl(u64_t lhs, u64_t rhs)
@@ -265,4 +284,33 @@ s64_t
 s64_shr(s64_t lhs, s64_t rhs)
 {
 	return lhs >> rhs;
+}
+
+void
+test_ic_mod(void)
+{
+	/* The result is between 0 and 254. */
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
+	u8 = u64 % u8;
+
+	/* The result is between 0 and 1000. */
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned char' may lose accuracy [132] */
+	u8 = u64 % 1000;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned short' may lose accuracy [132] */
+	u16 = u64 % 1000;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int:9' may lose accuracy [132] */
+	bits.u9 = u64 % 1000;
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int:10' may lose accuracy [132] */
+	bits.u10 = u64 % 1000;
+
+	/*
+	 * For signed division, if the result of 'a / b' is not representable
+	 * exactly, the result of 'a % b' is defined such that
+	 * '(a / b) * a + a % b == a'.
+	 *
+	 * If the result of 'a / b' is not representable exactly, the result
+	 * of 'a % b' is not defined.
+	 *
+	 * C90 6.3.5, C99 6.5.5.
+	 */
 }
