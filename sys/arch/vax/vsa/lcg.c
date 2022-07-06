@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.9 2022/02/12 17:09:43 riastradh Exp $ */
+/*	$NetBSD: lcg.c,v 1.10 2022/07/06 12:33:41 andvar Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.9 2022/02/12 17:09:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.10 2022/07/06 12:33:41 andvar Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -1256,7 +1256,7 @@ lcg_init_common(struct device *self, struct vsbus_attach_args *va)
 	 *  1         1 video enable
 	 *  0         1 refresh clock enable
 	 */
-	/* prepare video_config reg for LUT relaod */
+	/* prepare video_config reg for LUT reload */
 	video_conf
 		 = (3 << 30) /* vertical state */
 		 | (3 << 28) /* horizontal state */
@@ -1272,7 +1272,7 @@ lcg_init_common(struct device *self, struct vsbus_attach_args *va)
 		 | (1 << 12) /* enable horizontal sync */
 		 | (1 << 10) /* video clock select */
 		 | (1 << 6) /* video refresh select */
-		 | (1 << 4) /* read curosr output */
+		 | (1 << 4) /* read cursor output */
 		 | (1 << 3) /* LUT load enable */
 		 | (0 << 2) /* cursor enable */
 		 | (1 << 1) /* video enable */
