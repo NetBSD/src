@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.182 2022/07/06 00:40:28 riastradh Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.183 2022/07/06 01:12:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.182 2022/07/06 00:40:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.183 2022/07/06 01:12:46 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1010,6 +1010,8 @@ uvm_mmap_dev(struct proc *p, void **addrp, size_t len, dev_t dev,
 {
 	struct uvm_object *uobj;
 	int error, flags, prot;
+
+	KASSERT(len > 0);
 
 	flags = MAP_SHARED;
 	prot = VM_PROT_READ | VM_PROT_WRITE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.43 2021/04/12 09:22:58 mrg Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.44 2022/07/06 01:12:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.43 2021/04/12 09:22:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.44 2022/07/06 01:12:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1098,6 +1098,8 @@ nvmm_mmap(file_t *fp, off_t *offp, size_t size, int prot, int *flagsp,
 	nvmm_machid_t machid;
 	nvmm_cpuid_t cpuid;
 	int error;
+
+	KASESRT(size > 0);
 
 	if (prot & PROT_EXEC)
 		return EACCES;

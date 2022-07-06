@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.14 2021/12/19 09:52:00 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.15 2022/07/06 01:12:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.14 2021/12/19 09:52:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.15 2022/07/06 01:12:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -71,6 +71,8 @@ drm_gem_or_legacy_mmap_object(struct drm_device *dev, off_t byte_offset,
 {
 	int ret;
 
+	KASSERT(nbytes > 0);
+
 	ret = drm_gem_mmap_object(dev, byte_offset, nbytes, prot, uobjp,
 	    uoffsetp, file);
 	if (ret)
@@ -87,6 +89,8 @@ drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
     int prot, struct uvm_object **uobjp, voff_t *uoffsetp, struct file *file)
 {
 	int ret;
+
+	KASSERT(nbytes > 0);
 
 	mutex_lock(&dev->struct_mutex);
 	ret = drm_gem_mmap_object_locked(dev, byte_offset, nbytes, prot,

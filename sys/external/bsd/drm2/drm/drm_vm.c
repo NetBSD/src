@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.12 2021/12/19 09:52:59 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.13 2022/07/06 01:12:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.12 2021/12/19 09:52:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.13 2022/07/06 01:12:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -60,6 +60,7 @@ drm_legacy_mmap_object(struct drm_device *dev, off_t offset, size_t size,
 	struct uvm_object *uobj;
 
 	KASSERT(offset == (offset & ~(PAGE_SIZE-1)));
+	KASSERT(size > 0);
 
 	/*
 	 * Attach the device.  The size and offset are used only for
