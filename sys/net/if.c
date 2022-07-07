@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.505 2022/05/22 11:27:36 andvar Exp $	*/
+/*	$NetBSD: if.c,v 1.506 2022/07/07 18:17:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.505 2022/05/22 11:27:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.506 2022/07/07 18:17:33 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3449,6 +3449,9 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			    &req->ifcr_total);
 		}
 	}
+
+	if ((cmd & IOC_IN) == 0 || IOCPARM_LEN(cmd) < sizeof(ifr->ifr_name))
+		return EINVAL;
 
 	bound = curlwp_bind();
 	ifp = if_get(ifr->ifr_name, &psref);
