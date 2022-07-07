@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.23 2022/07/06 22:26:31 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.24 2022/07/07 18:11:29 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -328,4 +328,21 @@ test_ic_mod(void)
 	 */
 	/* expect+1: warning: conversion from 'long long' to 'signed char' may lose accuracy [132] */
 	s8 = s64 % 1;
+}
+
+void
+test_ic_bitand(void)
+{
+	/*
+	 * ic_bitand assumes that integers are represented in 2's complement,
+	 * and that the sign bit of signed integers behaves like a value bit.
+	 * That way, the following expressions get their constraints computed
+	 * correctly, regardless of whether ic_expr takes care of integer
+	 * promotions or not.  Compare ic_mod, which ignores signed types.
+	 */
+
+	u8 = u8 & u16;
+
+	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned char' may lose accuracy [132] */
+	u8 = u16 & u32;
 }
