@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.79 2022/07/07 11:29:18 rin Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.80 2022/07/07 13:27:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.79 2022/07/07 11:29:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.80 2022/07/07 13:27:02 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -168,7 +168,7 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 			 *
 			 *	off += PAGE_SIZE - 2*(VOFF_MAX + 1).
 			 */
-			KASSERT(PAGE_SIZE >= 2);
+			CTASSERT(MIN_PAGE_SIZE >= 2);
 			off -= __type_max(voff_t);
 			off += PAGE_SIZE - 2;
 			off -= __type_max(voff_t);
