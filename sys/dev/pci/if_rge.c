@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.22 2021/10/11 15:11:49 msaitoh Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.23 2022/07/07 06:11:08 skrll Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.22 2021/10/11 15:11:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.23 2022/07/07 06:11:08 skrll Exp $");
 
 #include <sys/types.h>
 
@@ -841,7 +841,7 @@ rge_stop(struct ifnet *ifp, int disable)
 
 	if (disable) {
 		callout_halt(&sc->sc_timeout, NULL);
-	} else 
+	} else
 		callout_stop(&sc->sc_timeout);
 
 	ifp->if_timer = 0;
@@ -1771,11 +1771,11 @@ rge_phy_config_mac_cfg4(struct rge_softc *sc)
 	uint16_t val;
 	int i;
 	static const uint16_t mac_cfg4_b87c_value[] =
-	    { 0x8013, 0x0700, 0x8fb9, 0x2801, 0x8fba, 0x0100, 0x8fbc, 0x1900, 
-	      0x8fbe, 0xe100, 0x8fc0, 0x0800, 0x8fc2, 0xe500, 0x8fc4, 0x0f00, 
-	      0x8fc6, 0xf100, 0x8fc8, 0x0400, 0x8fca, 0xf300, 0x8fcc, 0xfd00, 
-	      0x8fce, 0xff00, 0x8fd0, 0xfb00, 0x8fd2, 0x0100, 0x8fd4, 0xf400, 
-	      0x8fd6, 0xff00, 0x8fd8, 0xf600, 0x813d, 0x390e, 0x814f, 0x790e, 
+	    { 0x8013, 0x0700, 0x8fb9, 0x2801, 0x8fba, 0x0100, 0x8fbc, 0x1900,
+	      0x8fbe, 0xe100, 0x8fc0, 0x0800, 0x8fc2, 0xe500, 0x8fc4, 0x0f00,
+	      0x8fc6, 0xf100, 0x8fc8, 0x0400, 0x8fca, 0xf300, 0x8fcc, 0xfd00,
+	      0x8fce, 0xff00, 0x8fd0, 0xfb00, 0x8fd2, 0x0100, 0x8fd4, 0xf400,
+	      0x8fd6, 0xff00, 0x8fd8, 0xf600, 0x813d, 0x390e, 0x814f, 0x790e,
 	      0x80b0, 0x0f31 };
 
 	for (i = 0; i < nitems(rtl8125_mac_cfg4_ephy); i++)
@@ -1924,8 +1924,8 @@ rge_phy_config_mac_cfg4(struct rge_softc *sc)
 	val = rge_read_phy_ocp(sc, 0xa438) & ~0xff00;
 	rge_write_phy_ocp(sc, 0xa438, val | 0xc000);
 	rge_patch_phy_mcu(sc, 1);
-	RGE_PHY_CLRBIT(sc, 0xb896, 0x0001); 
-	RGE_PHY_CLRBIT(sc, 0xb892, 0xff00); 
+	RGE_PHY_CLRBIT(sc, 0xb896, 0x0001);
+	RGE_PHY_CLRBIT(sc, 0xb892, 0xff00);
 	rge_write_phy_ocp(sc, 0xb88e, 0xc23e);
 	rge_write_phy_ocp(sc, 0xb890, 0x0000);
 	rge_write_phy_ocp(sc, 0xb88e, 0xc240);
@@ -1940,10 +1940,10 @@ rge_phy_config_mac_cfg4(struct rge_softc *sc)
 	rge_write_phy_ocp(sc, 0xb890, 0x1012);
 	rge_write_phy_ocp(sc, 0xb88e, 0xc24a);
 	rge_write_phy_ocp(sc, 0xb890, 0x1416);
-	RGE_PHY_SETBIT(sc, 0xb896, 0x0001); 
+	RGE_PHY_SETBIT(sc, 0xb896, 0x0001);
 	rge_patch_phy_mcu(sc, 0);
-	RGE_PHY_SETBIT(sc, 0xa86a, 0x0001); 
-	RGE_PHY_SETBIT(sc, 0xa6f0, 0x0001); 
+	RGE_PHY_SETBIT(sc, 0xa86a, 0x0001);
+	RGE_PHY_SETBIT(sc, 0xa6f0, 0x0001);
 	rge_write_phy_ocp(sc, 0xbfa0, 0xd70d);
 	rge_write_phy_ocp(sc, 0xbfa2, 0x4100);
 	rge_write_phy_ocp(sc, 0xbfa4, 0xe868);
@@ -1951,7 +1951,7 @@ rge_phy_config_mac_cfg4(struct rge_softc *sc)
 	rge_write_phy_ocp(sc, 0xb54c, 0x3c18);
 	RGE_PHY_CLRBIT(sc, 0xbfa4, 0x0020);
 	rge_write_phy_ocp(sc, 0xa436, 0x817d);
-	RGE_PHY_SETBIT(sc, 0xa438, 0x1000); 
+	RGE_PHY_SETBIT(sc, 0xa438, 0x1000);
 }
 
 void
