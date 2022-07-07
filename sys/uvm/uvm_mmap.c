@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.183 2022/07/06 01:12:46 riastradh Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.184 2022/07/07 11:29:18 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.183 2022/07/06 01:12:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.184 2022/07/07 11:29:18 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -314,8 +314,8 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	 */
 	pageoff = pos & PAGE_MASK;
 	pos -= pageoff;
-	CTASSERT(PAGE_MASK <= __type_max(vsize_t));
-	CTASSERT((__type_max(vsize_t) - PAGE_SIZE + 1) % PAGE_SIZE == 0);
+	KASSERT(PAGE_MASK <= __type_max(vsize_t));
+	KASSERT((__type_max(vsize_t) - PAGE_SIZE + 1) % PAGE_SIZE == 0);
 	if (size > __type_max(vsize_t) - PAGE_SIZE + 1 - pageoff)
 		return ENOMEM;
 	/*
