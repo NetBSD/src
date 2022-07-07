@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.23 2020/07/16 15:02:08 msaitoh Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.24 2022/07/07 18:17:33 riastradh Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.23 2020/07/16 15:02:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.24 2022/07/07 18:17:33 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -41,7 +41,6 @@ compat_ifconf(u_long cmd, void *data)
 	struct oifreq ifr, *ifrp = NULL;
 	int space = 0, error = 0;
 	const int sz = (int)sizeof(ifr);
-	const bool docopy = ifc->ifc_req != NULL;
 	int s;
 	int bound;
 	struct psref psref;
@@ -54,6 +53,7 @@ compat_ifconf(u_long cmd, void *data)
 		return ENOSYS;
 	}
 
+	const bool docopy = ifc->ifc_req != NULL;
 	if (docopy) {
 		if (ifc->ifc_len < 0)
 			return EINVAL;
