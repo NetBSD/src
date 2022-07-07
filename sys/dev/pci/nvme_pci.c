@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.32 2022/03/31 19:30:16 pgoyette Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.33 2022/07/07 23:54:17 pgoyette Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.32 2022/03/31 19:30:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.33 2022/07/07 23:54:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,8 +504,8 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 		error = devsw_attach(nvme_cd.cd_name, NULL, &bmajor,
 		    &nvme_cdevsw, &cmajor);
 		if (error) {
-			aprint_error("%s: unable to register devsw\n",
-			    nvme_cd.cd_name);
+			aprint_error("%s: unable to register devsw, err %d\n",
+			    nvme_cd.cd_name, error);
 			/* do not abort, just /dev/nvme* will not work */
 		}
 		error = config_init_component(cfdriver_ioconf_nvme_pci,
