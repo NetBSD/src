@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.115 2022/01/01 10:32:29 msaitoh Exp $	*/
+/*	$NetBSD: if_se.c,v 1.116 2022/07/07 06:11:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.115 2022/01/01 10:32:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.116 2022/07/07 06:11:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -465,7 +465,7 @@ se_ifstart(struct ifnet *ifp)
 	if (!sc->sc_send_work_pending)  {
 		sc->sc_send_work_pending = true;
 		workqueue_enqueue(sc->sc_send_wq, &sc->sc_send_work, NULL);
-	} 
+	}
 	/* else: nothing to do - work is already queued */
 	mutex_exit(&sc->sc_iflock);
 }
@@ -915,7 +915,7 @@ se_init(struct se_softc *sc)
 			sc->sc_recv_work_pending = true;
 			workqueue_enqueue(sc->sc_recv_wq, &sc->sc_recv_work,
 			    NULL);
-		} 
+		}
 		mutex_exit(&sc->sc_iflock);
 		ifp->if_flags &= ~IFF_OACTIVE;
 		mutex_enter(&sc->sc_iflock);
@@ -923,7 +923,7 @@ se_init(struct se_softc *sc)
 			sc->sc_send_work_pending = true;
 			workqueue_enqueue(sc->sc_send_wq, &sc->sc_send_work,
 			    NULL);
-		} 
+		}
 		mutex_exit(&sc->sc_iflock);
 	}
 	return (error);

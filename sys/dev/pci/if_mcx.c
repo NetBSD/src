@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.23 2021/11/05 23:39:47 andvar Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.24 2022/07/07 06:11:19 skrll Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.23 2021/11/05 23:39:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.24 2022/07/07 06:11:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4052,7 +4052,7 @@ mcx_hca_max_caps(struct mcx_softc *sc)
 	 */
 	sc->sc_bf_size = (1 << hca->log_bf_reg_size) / 2;
 	sc->sc_max_rqt_size = (1 << hca->log_max_rqt_size);
-	
+
 	if (hca->local_ca_ack_delay & MCX_CAP_DEVICE_MCAM_REG)
 		sc->sc_mcam_reg = 1;
 
@@ -8803,7 +8803,7 @@ mcx_kstat_queue_read(struct kstat *ks)
 	int error = 0;
 
 	KERNEL_LOCK();
-	
+
 	if (mcx_query_rq(sc, &q->q_rx, &u.rq) != 0) {
 		error = EIO;
 		goto out;
