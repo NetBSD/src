@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.45 2022/07/06 13:10:49 riastradh Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.46 2022/07/07 23:50:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.45 2022/07/06 13:10:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.46 2022/07/07 23:50:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1255,7 +1255,9 @@ nvmm_modcmd(modcmd_t cmd, void *arg)
 #endif
 		error = config_cfattach_attach(nvmm_cd.cd_name, &nvmm_ca);
 		if (error) {
+#if defined(_MODULE)
 			config_cfdriver_detach(&nvmm_cd);
+#endif
 			aprint_error("%s: config_cfattach_attach failed\n",
 			    nvmm_cd.cd_name);
 			return error;
@@ -1264,7 +1266,9 @@ nvmm_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfdata_attach(nvmm_cfdata, 1);
 		if (error) {
 			config_cfattach_detach(nvmm_cd.cd_name, &nvmm_ca);
+#if defined(_MODULE)
 			config_cfdriver_detach(&nvmm_cd);
+#endif
 			aprint_error("%s: unable to register cfdata\n",
 			    nvmm_cd.cd_name);
 			return error;
@@ -1274,7 +1278,9 @@ nvmm_modcmd(modcmd_t cmd, void *arg)
 			aprint_error("%s: config_attach_pseudo failed\n",
 			    nvmm_cd.cd_name);
 			config_cfattach_detach(nvmm_cd.cd_name, &nvmm_ca);
+#if defined(_MODULE)
 			config_cfdriver_detach(&nvmm_cd);
+#endif
 			return ENXIO;
 		}
 
@@ -1283,8 +1289,8 @@ nvmm_modcmd(modcmd_t cmd, void *arg)
 		error = devsw_attach(nvmm_cd.cd_name, NULL, &bmajor,
 			&nvmm_cdevsw, &cmajor);
 		if (error) {
-			aprint_error("%s: unable to register devsw\n",
-			    nvmm_cd.cd_name);
+			aprint_error("%s: unable to register devsw, err %d\n",
+			    nvmm_cd.cd_name, error);
 			config_cfattach_detach(nvmm_cd.cd_name, &nvmm_ca);
 			config_cfdriver_detach(&nvmm_cd);
 			return error;
