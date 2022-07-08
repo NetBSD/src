@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.473 2022/07/08 20:27:36 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.474 2022/07/08 21:19:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.473 2022/07/08 20:27:36 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.474 2022/07/08 21:19:07 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3357,8 +3357,8 @@ is_cast_redundant(const tnode_t *tn)
 	const type_t *ntp = tn->tn_type, *otp = tn->tn_left->tn_type;
 	tspec_t nt = ntp->t_tspec, ot = otp->t_tspec;
 
-	if (nt == BOOL && ot == BOOL)
-		return true;
+	if (nt == BOOL || ot == BOOL)
+		return nt == BOOL && ot == BOOL;
 
 	if (is_integer(nt) && is_integer(ot)) {
 		unsigned int nw = width_in_bits(ntp), ow = width_in_bits(otp);
@@ -3367,10 +3367,11 @@ is_cast_redundant(const tnode_t *tn)
 		return is_uinteger(ot) && nw > ow;
 	}
 
-	if (is_floating(nt) && is_floating(ot))
-		return size_in_bits(nt) >= size_in_bits(ot);
+	if (is_complex(nt) || is_complex(ot))
+		return is_complex(nt) && is_complex(ot) &&
+		       size_in_bits(nt) >= size_in_bits(ot);
 
-	if (is_complex(nt) && is_complex(ot))
+	if (is_floating(nt) && is_floating(ot))
 		return size_in_bits(nt) >= size_in_bits(ot);
 
 	if (nt == PTR && ot == PTR) {
@@ -3380,7 +3381,8 @@ is_cast_redundant(const tnode_t *tn)
 			return false;
 
 		if (ntp->t_subt->t_tspec == VOID ||
-		    otp->t_subt->t_tspec == VOID)
+		    otp->t_subt->t_tspec == VOID ||
+		    eqtype(ntp->t_subt, otp->t_subt, false, false, NULL))
 			return true;
 	}
 
