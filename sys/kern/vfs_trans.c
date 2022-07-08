@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.64 2022/06/28 00:13:48 riastradh Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.65 2022/07/08 07:42:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.64 2022/06/28 00:13:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.65 2022/07/08 07:42:05 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -748,7 +748,6 @@ vfs_suspend(struct mount *mp, int nowait)
 		return EOPNOTSUPP;
 
 	fli = fstrans_get_lwp_info(mp, true);
-	mp = fli->fli_mount;
 
 	if (nowait) {
 		if (!mutex_tryenter(&vfs_suspend_lock))
@@ -756,10 +755,17 @@ vfs_suspend(struct mount *mp, int nowait)
 	} else
 		mutex_enter(&vfs_suspend_lock);
 
-	if ((error = VFS_SUSPENDCTL(mp, SUSPEND_SUSPEND)) != 0)
+	if ((error = VFS_SUSPENDCTL(fli->fli_mount, SUSPEND_SUSPEND)) != 0) {
 		mutex_exit(&vfs_suspend_lock);
+		return error;
+	}
 
-	return error;
+	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
+		vfs_resume(mp);
+		return ENOENT;
+	}
+
+	return 0;
 }
 
 /*
