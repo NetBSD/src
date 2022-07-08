@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.2 2022/07/08 20:27:36 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.3 2022/07/08 21:19:07 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -31,6 +31,12 @@ typedef double f64_t;
 typedef float _Complex c32_t;
 typedef double _Complex c64_t;
 
+typedef char *str_t;
+typedef const char *cstr_t;
+typedef volatile char *vstr_t;
+
+_Bool cond;
+
 u8_t u8;
 u16_t u16;
 u32_t u32;
@@ -60,6 +66,7 @@ c64_t c64;
 
 char *str;
 const char *cstr;
+volatile char *vstr;
 
 int
 Q1(double dbl)
@@ -132,6 +139,12 @@ void
 Q7(void)
 {
 
+	/* expect+2: no-op cast from '_Bool' to '_Bool' [Q6] */
+	/* expect+1: redundant cast from '_Bool' to '_Bool' before assignment [Q7] */
+	cond = (_Bool)cond;
+	cond = (_Bool)u8;
+	u8 = (u8_t)cond;
+
 	/* expect+2: no-op cast from 'unsigned char' to 'unsigned char' [Q6] */
 	/* expect+1: redundant cast from 'unsigned char' to 'unsigned char' before assignment [Q7] */
 	u8 = (u8_t)u8;
@@ -200,11 +213,56 @@ Q7(void)
 	c64 = (c64_t)c64;
 
 
+	/* Mixing real and complex floating point types. */
+	/* expect+1: no-op cast from 'float' to 'float' [Q6] */
+	c32 = (f32_t)f32;
+	c32 = (c32_t)f32;
+	/* expect+1: no-op cast from 'float' to 'float' [Q6] */
+	c64 = (f32_t)f32;
+	c64 = (f64_t)f32;
+	c64 = (c32_t)f32;
+	c64 = (c64_t)f32;
+
+
 	/* expect+1: redundant cast from 'pointer to void' to 'pointer to char' before assignment [Q7] */
 	str = (char *)allocate();
 	/* expect+1: redundant cast from 'pointer to void' to 'pointer to const char' before assignment [Q7] */
 	cstr = (const char *)allocate();
 	cstr = (char *)allocate();
+
+	/* expect+2: no-op cast from 'pointer to char' to 'pointer to char' [Q6] */
+	/* expect+1: redundant cast from 'pointer to char' to 'pointer to char' before assignment [Q7] */
+	str = (str_t)str;
+	str = (str_t)cstr;
+	/* expect+1: warning: operands of '=' have incompatible pointer types to 'char' and 'const char' [128] */
+	str = (cstr_t)str;
+	/* expect+2: no-op cast from 'pointer to const char' to 'pointer to const char' [Q6] */
+	/* expect+1: warning: operands of '=' have incompatible pointer types to 'char' and 'const char' [128] */
+	str = (cstr_t)cstr;
+	/* expect+1: no-op cast from 'pointer to char' to 'pointer to char' [Q6] */
+	cstr = (str_t)str;
+	cstr = (str_t)cstr;
+	cstr = (cstr_t)str;
+	/* expect+2: no-op cast from 'pointer to const char' to 'pointer to const char' [Q6] */
+	/* expect+1: redundant cast from 'pointer to const char' to 'pointer to const char' before assignment [Q7] */
+	cstr = (cstr_t)cstr;
+
+	/* expect+2: no-op cast from 'pointer to char' to 'pointer to char' [Q6] */
+	/* expect+1: redundant cast from 'pointer to char' to 'pointer to char' before assignment [Q7] */
+	str = (str_t)str;
+	str = (str_t)vstr;
+	/* expect+1: warning: operands of '=' have incompatible pointer types to 'char' and 'volatile char' [128] */
+	str = (vstr_t)str;
+	/* expect+2: no-op cast from 'pointer to volatile char' to 'pointer to volatile char' [Q6] */
+	/* expect+1: warning: operands of '=' have incompatible pointer types to 'char' and 'volatile char' [128] */
+	str = (vstr_t)vstr;
+	/* expect+1: no-op cast from 'pointer to char' to 'pointer to char' [Q6] */
+	vstr = (str_t)str;
+	vstr = (str_t)vstr;
+	vstr = (vstr_t)str;
+	/* expect+2: no-op cast from 'pointer to volatile char' to 'pointer to volatile char' [Q6] */
+	/* expect+1: redundant cast from 'pointer to volatile char' to 'pointer to volatile char' before assignment [Q7] */
+	vstr = (vstr_t)vstr;
 }
 
 

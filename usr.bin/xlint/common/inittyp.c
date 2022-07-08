@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.31 2022/05/20 21:18:54 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.32 2022/07/08 21:19:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: inittyp.c,v 1.31 2022/05/20 21:18:54 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.32 2022/07/08 21:19:06 rillig Exp $");
 #endif
 
 #if defined(IS_LINT1)
@@ -124,7 +124,11 @@ ttab_t	ttab[NTSPEC] = {
 	    0, 1, 0, 0, 1, 0),
 	typeinfo("array", ARRAY, ARRAY, 0, 0, 0, 0, 0, 0, 0, 0),
 	typeinfo("function", FUNC, FUNC, 0, 0, 0, 0, 0, 0, 0, 0),
+#ifdef DEBUG
+	typeinfo("_Complex", NOTSPEC, NOTSPEC, 0, 0, 0, 0, 0, 0, 0, 0),
+#else
 	typeinfo(NULL, NOTSPEC, NOTSPEC, 0, 0, 0, 0, 0, 0, 0, 0),
+#endif
 	typeinfo("float _Complex", FCOMPLEX, FCOMPLEX,
 	    FLOAT_SIZE * 2, 32 * 2, 0, 0, 1, 1, 1, 1),
 	typeinfo("double _Complex", DCOMPLEX, DCOMPLEX,
