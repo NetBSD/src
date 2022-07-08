@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.93 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.94 2022/07/08 07:43:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.93 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.94 2022/07/08 07:43:19 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -773,12 +773,20 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	 */
 	mp->mnt_flag = flags & (MNT_BASIC_FLAGS | MNT_FORCE | MNT_IGNORE);
 
-	mutex_enter(mp->mnt_updating);
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
-	if (error != 0)
-		goto err_unmounted;
+	if (error != 0) {
+		vfs_rele(mp);
+		return error;
+	}
+
+	/* Suspend new file system before taking mnt_updating. */
+	do {
+		error2 = vfs_suspend(mp, 0);
+	} while (error2 == EINTR || error2 == ERESTART);
+	KASSERT(error2 == 0 || error2 == EOPNOTSUPP);
+	mutex_enter(mp->mnt_updating);
 
 	/*
 	 * Validate and prepare the mount point.
@@ -823,6 +831,8 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 
 	mount_checkdirs(vp);
 	mutex_exit(mp->mnt_updating);
+	if (error2 == 0)
+		vfs_resume(mp);
 
 	/* Hold an additional reference to the mount across VFS_START(). */
 	vfs_ref(mp);
@@ -840,19 +850,11 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	return error;
 
 err_mounted:
-	do {
-		error2 = vfs_suspend(mp, 0);
-	} while (error2 == EINTR || error2 == ERESTART);
-	KASSERT(error2 == 0 || error2 == EOPNOTSUPP);
-
 	if (VFS_UNMOUNT(mp, MNT_FORCE) != 0)
 		panic("Unmounting fresh file system failed");
-
+	mutex_exit(mp->mnt_updating);
 	if (error2 == 0)
 		vfs_resume(mp);
-
-err_unmounted:
-	mutex_exit(mp->mnt_updating);
 	vfs_rele(mp);
 
 	return error;
