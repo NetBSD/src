@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1750 2022/07/08 08:59:33 nia Exp $
+# $NetBSD: mi,v 1.1751 2022/07/08 16:50:10 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1758,6 +1758,7 @@
 ./usr/share/man/cat4/slhci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/slide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/slip.0			man-sys-catman		.cat
+./usr/share/man/cat4/slurm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smsc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smscmon.0			man-sys-catman		.cat
@@ -4955,6 +4956,7 @@
 ./usr/share/man/html4/slhci.html		man-sys-htmlman		html
 ./usr/share/man/html4/slide.html		man-sys-htmlman		html
 ./usr/share/man/html4/slip.html			man-sys-htmlman		html
+./usr/share/man/html4/slurm.html		man-sys-htmlman		html
 ./usr/share/man/html4/sm.html			man-sys-htmlman		html
 ./usr/share/man/html4/smsc.html			man-sys-htmlman		html
 ./usr/share/man/html4/smscmon.html		man-sys-htmlman		html
@@ -8058,6 +8060,7 @@
 ./usr/share/man/man4/slhci.4			man-sys-man		.man
 ./usr/share/man/man4/slide.4			man-sys-man		.man
 ./usr/share/man/man4/slip.4			man-sys-man		.man
+./usr/share/man/man4/slurm.4			man-sys-man		.man
 ./usr/share/man/man4/sm.4			man-sys-man		.man
 ./usr/share/man/man4/smsc.4			man-sys-man		.man
 ./usr/share/man/man4/smscmon.4			man-sys-man		.man
