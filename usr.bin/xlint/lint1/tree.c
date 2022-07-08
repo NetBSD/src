@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.472 2022/07/06 22:26:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.473 2022/07/08 20:27:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.472 2022/07/06 22:26:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.473 2022/07/08 20:27:36 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -116,6 +116,14 @@ u64_fill_right(uint64_t x)
 	return x;
 }
 
+static unsigned
+width_in_bits(const type_t *tp)
+{
+
+	lint_assert(is_integer(tp->t_tspec));
+	return tp->t_bitfield ? tp->t_flen : size_in_bits(tp->t_tspec);
+}
+
 static bool
 ic_maybe_signed(const type_t *tp, const integer_constraints *ic)
 {
@@ -124,20 +132,12 @@ ic_maybe_signed(const type_t *tp, const integer_constraints *ic)
 	    (ic->bclr & ((uint64_t)1 << 63)) == 0;
 }
 
-static unsigned
-ic_length_in_bits(const type_t *tp)
-{
-
-	lint_assert(is_integer(tp->t_tspec));
-	return tp->t_bitfield ? tp->t_flen : size_in_bits(tp->t_tspec);
-}
-
 static integer_constraints
 ic_any(const type_t *tp)
 {
 	integer_constraints c;
 
-	uint64_t vbits = value_bits(ic_length_in_bits(tp));
+	uint64_t vbits = value_bits(width_in_bits(tp));
 	if (is_uinteger(tp->t_tspec)) {
 		c.smin = INT64_MIN;
 		c.smax = INT64_MAX;
@@ -177,7 +177,7 @@ static integer_constraints
 ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
 {
 
-	if (ic_length_in_bits(ntp) > ic_length_in_bits(otp) &&
+	if (width_in_bits(ntp) > width_in_bits(otp) &&
 	    is_uinteger(otp->t_tspec))
 		return a;
 	return ic_any(ntp);
@@ -2476,7 +2476,7 @@ can_represent(const type_t *tp, const tnode_t *tn)
 	debug_step("%s: type '%s'", __func__, type_name(tp));
 	debug_node(tn);
 
-	uint64_t nmask = value_bits(ic_length_in_bits(tp));
+	uint64_t nmask = value_bits(width_in_bits(tp));
 	if (!is_uinteger(tp->t_tspec))
 		nmask >>= 1;
 
@@ -3351,6 +3351,42 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 	return ntn;
 }
 
+static bool
+is_cast_redundant(const tnode_t *tn)
+{
+	const type_t *ntp = tn->tn_type, *otp = tn->tn_left->tn_type;
+	tspec_t nt = ntp->t_tspec, ot = otp->t_tspec;
+
+	if (nt == BOOL && ot == BOOL)
+		return true;
+
+	if (is_integer(nt) && is_integer(ot)) {
+		unsigned int nw = width_in_bits(ntp), ow = width_in_bits(otp);
+		if (is_uinteger(nt) == is_uinteger(ot))
+		       return nw >= ow;
+		return is_uinteger(ot) && nw > ow;
+	}
+
+	if (is_floating(nt) && is_floating(ot))
+		return size_in_bits(nt) >= size_in_bits(ot);
+
+	if (is_complex(nt) && is_complex(ot))
+		return size_in_bits(nt) >= size_in_bits(ot);
+
+	if (nt == PTR && ot == PTR) {
+		if (!ntp->t_subt->t_const && otp->t_subt->t_const)
+			return false;
+		if (!ntp->t_subt->t_volatile && otp->t_subt->t_volatile)
+			return false;
+
+		if (ntp->t_subt->t_tspec == VOID ||
+		    otp->t_subt->t_tspec == VOID)
+			return true;
+	}
+
+	return false;
+}
+
 /*
  * Create a node for an assignment operator (both = and op= ).
  */
@@ -3409,7 +3445,8 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	}
 
 	if (any_query_enabled && rn->tn_op == CVT && rn->tn_cast &&
-	    eqtype(ln->tn_type, rn->tn_type, false, false, NULL)) {
+	    eqtype(ln->tn_type, rn->tn_type, false, false, NULL) &&
+	    is_cast_redundant(rn)) {
 		/* redundant cast from '%s' to '%s' before assignment */
 		query_message(7,
 		    type_name(rn->tn_left->tn_type), type_name(rn->tn_type));

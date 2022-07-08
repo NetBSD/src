@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.1 2022/07/05 22:50:41 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.2 2022/07/08 20:27:36 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -17,6 +17,50 @@
 
 /* lint1-extra-flags: -q 1,2,3,4,5,6,7 */
 
+typedef unsigned char u8_t;
+typedef unsigned short u16_t;
+typedef unsigned int u32_t;
+typedef unsigned long long u64_t;
+typedef signed char s8_t;
+typedef signed short s16_t;
+typedef signed int s32_t;
+typedef signed long long s64_t;
+
+typedef float f32_t;
+typedef double f64_t;
+typedef float _Complex c32_t;
+typedef double _Complex c64_t;
+
+u8_t u8;
+u16_t u16;
+u32_t u32;
+u64_t u64;
+
+s8_t s8;
+s16_t s16;
+s32_t s32;
+s64_t s64;
+
+struct {
+	unsigned u8:8;
+	unsigned u9:9;
+	unsigned u10:10;
+	unsigned u32:32;
+	int s8:8;
+	int s9:9;
+	int s10:10;
+	int s32:32;
+} bits;
+
+f32_t f32;
+f64_t f64;
+
+c32_t c32;
+c64_t c64;
+
+char *str;
+const char *cstr;
+
 int
 Q1(double dbl)
 {
@@ -27,8 +71,7 @@ Q1(double dbl)
 int
 Q2(double dbl)
 {
-	/* expect+2: cast from floating point 'double' to integer 'int' [Q2] */
-	/* expect+1: redundant cast from 'double' to 'int' before assignment [Q7] */
+	/* expect+1: cast from floating point 'double' to integer 'int' [Q2] */
 	return (int)dbl;
 }
 
@@ -83,19 +126,85 @@ Q6(int i)
 	i = (int)i + 1;
 }
 
-extern void *allocate(unsigned long);
+extern void *allocate(void);
 
-char *
+void
 Q7(void)
 {
+
+	/* expect+2: no-op cast from 'unsigned char' to 'unsigned char' [Q6] */
+	/* expect+1: redundant cast from 'unsigned char' to 'unsigned char' before assignment [Q7] */
+	u8 = (u8_t)u8;
+	u8 = (u8_t)u16;
+	u8 = (u16_t)u8;
+	/* expect+1: no-op cast from 'unsigned short' to 'unsigned short' [Q6] */
+	u8 = (u16_t)u16;
+	/* expect+1: no-op cast from 'unsigned char' to 'unsigned char' [Q6] */
+	u16 = (u8_t)u8;
+	u16 = (u8_t)u16;
+	/* expect+1: redundant cast from 'unsigned char' to 'unsigned short' before assignment [Q7] */
+	u16 = (u16_t)u8;
+	/* expect+2: no-op cast from 'unsigned short' to 'unsigned short' [Q6] */
+	/* expect+1: redundant cast from 'unsigned short' to 'unsigned short' before assignment [Q7] */
+	u16 = (u16_t)u16;
+
+	/* Mixing signed and unsigned types. */
+	u8 = (u8_t)s8;
+	s8 = (s8_t)u8;
+	/* expect+1: redundant cast from 'unsigned char' to 'short' before assignment [Q7] */
+	s16 = (s16_t)u8;
+	/* expect+1: redundant cast from 'signed char' to 'short' before assignment [Q7] */
+	s16 = (s16_t)s8;
+
+
+	/*
+	 * Neither GCC nor Clang accept typeof(bit-field), as that would add
+	 * unnecessary complexity.  Lint accepts it but silently discards the
+	 * bit-field portion from the type; see add_type.
+	 */
+	/* expect+1: redundant cast from 'unsigned char' to 'unsigned int' before assignment [Q7] */
+	bits.u9 = (typeof(bits.u9))u8;
+
+
+	/* expect+2: no-op cast from 'float' to 'float' [Q6] */
+	/* expect+1: redundant cast from 'float' to 'float' before assignment [Q7] */
+	f32 = (f32_t)f32;
+	f32 = (f32_t)f64;
+	f32 = (f64_t)f32;
+	/* expect+1: no-op cast from 'double' to 'double' [Q6] */
+	f32 = (f64_t)f64;
+	/* expect+1: no-op cast from 'float' to 'float' [Q6] */
+	f64 = (f32_t)f32;
+	f64 = (f32_t)f64;
+	/* expect+1: redundant cast from 'float' to 'double' before assignment [Q7] */
+	f64 = (f64_t)f32;
+	/* expect+2: no-op cast from 'double' to 'double' [Q6] */
+	/* expect+1: redundant cast from 'double' to 'double' before assignment [Q7] */
+	f64 = (f64_t)f64;
+
+
+	/* expect+2: no-op cast from 'float _Complex' to 'float _Complex' [Q6] */
+	/* expect+1: redundant cast from 'float _Complex' to 'float _Complex' before assignment [Q7] */
+	c32 = (c32_t)c32;
+	c32 = (c32_t)c64;
+	c32 = (c64_t)c32;
+	/* expect+1: no-op cast from 'double _Complex' to 'double _Complex' [Q6] */
+	c32 = (c64_t)c64;
+	/* expect+1: no-op cast from 'float _Complex' to 'float _Complex' [Q6] */
+	c64 = (c32_t)c32;
+	c64 = (c32_t)c64;
+	/* expect+1: redundant cast from 'float _Complex' to 'double _Complex' before assignment [Q7] */
+	c64 = (c64_t)c32;
+	/* expect+2: no-op cast from 'double _Complex' to 'double _Complex' [Q6] */
+	/* expect+1: redundant cast from 'double _Complex' to 'double _Complex' before assignment [Q7] */
+	c64 = (c64_t)c64;
+
+
 	/* expect+1: redundant cast from 'pointer to void' to 'pointer to char' before assignment [Q7] */
-	char *str = (char *)allocate(64);
-
-	if (str == (void *)0)
-		/* expect+1: redundant cast from 'pointer to void' to 'pointer to char' before assignment [Q7] */
-		str = (char *)allocate(64);
-
-	return str;
+	str = (char *)allocate();
+	/* expect+1: redundant cast from 'pointer to void' to 'pointer to const char' before assignment [Q7] */
+	cstr = (const char *)allocate();
+	cstr = (char *)allocate();
 }
 
 

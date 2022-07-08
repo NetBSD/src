@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.8 2022/07/05 22:50:41 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.9 2022/07/08 20:27:36 rillig Exp $)
 
 # Introduction
 
@@ -161,15 +161,16 @@ See `expr_free_all`.
 
 Useful breakpoints are:
 
-| Function            | File   | Remarks                                              |
-|---------------------|--------|------------------------------------------------------|
-| build_binary        | tree.c | Creates an expression for a unary or binary operator |
-| initialization_expr | init.c | Checks a single initializer                          |
-| expr                | tree.c | Checks a full expression                             |
-| typeok              | tree.c | Checks two types for compatibility                   |
-| vwarning_at         | err.c  | Prints a warning                                     |
-| verror_at           | err.c  | Prints an error                                      |
-| assert_failed       | err.c  | Prints the location of a failed assertion            |
+| Function/Code       | File    | Remarks                                              |
+|---------------------|---------|------------------------------------------------------|
+| build_binary        | tree.c  | Creates an expression for a unary or binary operator |
+| initialization_expr | init.c  | Checks a single initializer                          |
+| expr                | tree.c  | Checks a full expression                             |
+| typeok              | tree.c  | Checks two types for compatibility                   |
+| vwarning_at         | err.c   | Prints a warning                                     |
+| verror_at           | err.c   | Prints an error                                      |
+| assert_failed       | err.c   | Prints the location of a failed assertion            |
+| `switch (yyn)`      | cgram.c | Reduction of a grammar rule                          |
 
 # Tests
 
