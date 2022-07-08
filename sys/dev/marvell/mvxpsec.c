@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.16 2022/06/01 15:40:15 riastradh Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.17 2022/07/08 07:02:47 skrll Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -1498,7 +1498,7 @@ mvxpsec_session_alloc(struct mvxpsec_softc *sc)
 		log(LOG_ERR, "%s: cannot allocate memory\n", __func__);
 		return NULL;
 	}
-	mv_s->refs = 1; /* 0 means session is alredy invalid */
+	mv_s->refs = 1; /* 0 means session is already invalid */
 	mv_s->sflags = 0;
 
 	return mv_s;

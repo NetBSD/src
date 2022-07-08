@@ -1,4 +1,4 @@
-/* $NetBSD: ip.c,v 1.4 2019/03/31 20:08:45 christos Exp $ */
+/* $NetBSD: ip.c,v 1.5 2022/07/08 07:02:47 skrll Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -59,7 +59,7 @@
 #include "net.h"
 
 /*
- * sends an IP packet, if it's alredy constructed
+ * sends an IP packet, if it's already constructed
 */
 static ssize_t
 _sendip(struct iodesc *d, struct ip *ip, size_t len)

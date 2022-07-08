@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.506 2022/07/07 18:17:33 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.507 2022/07/08 07:02:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.506 2022/07/07 18:17:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.507 2022/07/08 07:02:47 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3743,11 +3743,11 @@ if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		KERNEL_UNLOCK_ONE(NULL);
 		error = (*ifp->if_transmit)(ifp, m);
-		/* mbuf is alredy freed */
+		/* mbuf is already freed */
 	}
 #else /* !ALTQ */
 	error = (*ifp->if_transmit)(ifp, m);
-	/* mbuf is alredy freed */
+	/* mbuf is already freed */
 #endif /* !ALTQ */
 
 	return error;
