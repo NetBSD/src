@@ -1,4 +1,4 @@
-/* $NetBSD: exec_elf32.c,v 1.14 2009/04/11 12:53:52 lukem Exp $ */
+/* $NetBSD: exec_elf32.c,v 1.15 2022/07/08 17:47:47 andvar Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.14 2009/04/11 12:53:52 lukem Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.15 2022/07/08 17:47:47 andvar Exp $");
 #endif
  
 #ifndef ELFSIZE
@@ -133,7 +133,7 @@ ELFNAMEEND(check)(int fd, const char *fn)
 	struct stat sb;
 
 	/*
-	 * Check the header to maek sure it's an ELF file (of the
+	 * Check the header to make sure it's an ELF file (of the
 	 * appropriate size).
 	 */
 	if (fstat(fd, &sb) == -1)
