@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.34 2022/07/08 16:10:34 pgoyette Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.35 2022/07/08 17:32:19 pgoyette Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.34 2022/07/08 16:10:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.35 2022/07/08 17:32:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 #ifdef _MODULE
 	devmajor_t cmajor, bmajor;
 	extern const struct cdevsw nvme_cdevsw;
-	bool devsw_ok = false;
+	static bool devsw_ok;
 #endif
 	int error = 0;
 
@@ -506,6 +506,7 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 		error = devsw_attach(nvme_cd.cd_name, NULL, &bmajor,
 		    &nvme_cdevsw, &cmajor);
 		if (error) {
+			devsw_ok = false;
 			aprint_error("%s: unable to register devsw, err %d\n",
 			    nvme_cd.cd_name, error);
 			/* do not abort, just /dev/nvme* will not work */
@@ -516,16 +517,20 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 		error = config_init_component(cfdriver_ioconf_nvme_pci,
 		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
 		if (error) {
-			if (devsw_ok)
+			if (devsw_ok) {
 				devsw_detach(NULL, &nvme_cdevsw);
+				devsw_ok = false;
+			}
 			break;
 		}
 		break;
 	case MODULE_CMD_FINI:
 		error = config_fini_component(cfdriver_ioconf_nvme_pci,
 		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
-		if (devsw_ok)
+		if (devsw_ok) {
 			devsw_detach(NULL, &nvme_cdevsw);
+			devsw_ok = false;
+		}
 		break;
 	default:
 		break;
