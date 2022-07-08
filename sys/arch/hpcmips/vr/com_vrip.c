@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.23 2018/12/08 17:46:11 thorpej Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.24 2022/07/08 07:02:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.23 2018/12/08 17:46:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.24 2022/07/08 07:02:47 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -145,7 +145,7 @@ com_vrip_probe(device_t parent, cfdata_t cf, void *aux)
 
 	if (com_is_console(iot, va->va_addr, 0)) {
 		/*
-		 *  We have alredy probed.
+		 *  We have already probed.
 		 */
 		rv = 1;
 	} else {
