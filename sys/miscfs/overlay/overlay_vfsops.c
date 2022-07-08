@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.71 2020/04/13 19:23:19 ad Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.72 2022/07/08 07:43:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.71 2020/04/13 19:23:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.72 2022/07/08 07:43:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 */
 	lowerrootvp = mp->mnt_vnodecovered;
 	vref(lowerrootvp);
-	if ((error = vn_lock(lowerrootvp, LK_EXCLUSIVE | LK_RETRY))) {
+	if ((error = vn_lock(lowerrootvp, LK_EXCLUSIVE))) {
 		vrele(lowerrootvp);
 		return (error);
 	}
