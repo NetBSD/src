@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.19 2022/07/09 18:11:23 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.20 2022/07/09 18:11:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -345,8 +345,9 @@ union hdmi_vendor_any_infoframe {
 union hdmi_infoframe {
 	struct hdmi_infoframe_header	any;
 	struct hdmi_avi_infoframe	avi;
-	struct hdmi_drm_infoframe	drm;
 	struct hdmi_spd_infoframe	spd;
+	struct hdmi_audio_infoframe	audio;
+	struct hdmi_drm_infoframe	drm;
 	union hdmi_vendor_any_infoframe	vendor;
 };
 
