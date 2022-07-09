@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdmi.c,v 1.7 2022/07/09 18:41:23 riastradh Exp $	*/
+/*	$NetBSD: linux_hdmi.c,v 1.8 2022/07/09 19:53:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.7 2022/07/09 18:41:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.8 2022/07/09 19:53:00 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -691,15 +691,14 @@ int
 hdmi_infoframe_unpack(union hdmi_infoframe *frame, const void *buf,
     size_t size)
 {
-	struct hdmi_infoframe_header header;
 	int ret;
 
 	memset(frame, 0, sizeof(*frame));
 
-	ret = hdmi_infoframe_header_unpack(&header, buf, size);
+	ret = hdmi_infoframe_header_unpack(&frame->any, buf, size);
 	if (ret)
 		return ret;
-	switch (header.type) {
+	switch (frame->any.type) {
 	case HDMI_INFOFRAME_TYPE_VENDOR:
 		return hdmi_vendor_infoframe_unpack(&frame->vendor.hdmi, buf,
 		    size);
