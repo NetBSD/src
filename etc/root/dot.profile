@@ -1,7 +1,11 @@
-#	$NetBSD: dot.profile,v 1.32 2020/08/24 12:46:57 nia Exp $
+#	$NetBSD: dot.profile,v 1.33 2022/07/09 09:43:51 kre Exp $
 
-export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
-export PATH=${PATH}:/usr/X11R7/bin:/usr/local/sbin:/usr/local/bin
+case "${PATH}" in
+/rescue:*)	;; # leave it alone, user can change manually (if required)
+*)	export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
+	export PATH=${PATH}:/usr/X11R7/bin:/usr/local/sbin:/usr/local/bin
+	;;
+esac
 
 # Uncomment the following line(s) to install binary packages
 # from cdn.NetBSD.org via pkg_add.  (See also pkg_install.conf)
