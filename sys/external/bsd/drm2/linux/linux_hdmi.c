@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdmi.c,v 1.6 2022/07/09 18:21:23 riastradh Exp $	*/
+/*	$NetBSD: linux_hdmi.c,v 1.7 2022/07/09 18:41:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.6 2022/07/09 18:21:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.7 2022/07/09 18:41:23 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -671,15 +671,17 @@ hdmi_infoframe_pack(const union hdmi_infoframe *frame, void *buf, size_t size)
 {
 
 	switch (frame->any.type) {
-	case HDMI_INFOFRAME_TYPE_AVI:
-		return hdmi_avi_infoframe_pack(&frame->avi, buf, size);
-	case HDMI_INFOFRAME_TYPE_DRM:
-		return hdmi_drm_infoframe_pack(&frame->drm, buf, size);
-	case HDMI_INFOFRAME_TYPE_SPD:
-		return hdmi_spd_infoframe_pack(&frame->spd, buf, size);
 	case HDMI_INFOFRAME_TYPE_VENDOR:
 		return hdmi_vendor_infoframe_pack(&frame->vendor.hdmi, buf,
 		    size);
+	case HDMI_INFOFRAME_TYPE_AVI:
+		return hdmi_avi_infoframe_pack(&frame->avi, buf, size);
+	case HDMI_INFOFRAME_TYPE_SPD:
+		return hdmi_spd_infoframe_pack(&frame->spd, buf, size);
+	case HDMI_INFOFRAME_TYPE_AUDIO:
+		return hdmi_audio_infoframe_pack(&frame->audio, buf, size);
+	case HDMI_INFOFRAME_TYPE_DRM:
+		return hdmi_drm_infoframe_pack(&frame->drm, buf, size);
 	default:
 		return -EINVAL;
 	}
