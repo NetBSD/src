@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.21 2022/07/09 11:41:18 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.22 2022/07/09 11:41:56 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.21 2022/07/09 11:41:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.22 2022/07/09 11:41:56 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -1862,18 +1862,18 @@ mfii_load_mfa(struct mfii_softc *sc, struct mfii_ccb *ccb,
 static void
 mfii_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
-#if defined(__LP64__) && 0
-	u_long *r = (u_long *)&ccb->ccb_req;
-#else
 	uint32_t *r = (uint32_t *)&ccb->ccb_req;
+#if defined(__LP64__)
+	uint64_t buf;
 #endif
 
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_requests),
 	    ccb->ccb_request_offset, MFII_REQUEST_SIZE,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-#if defined(__LP64__) && 0
-	bus_space_write_8(sc->sc_iot, sc->sc_ioh, MFI_IQPL, *r);
+#if defined(__LP64__)
+	buf = ((uint64_t)r[1] << 32) | r[0];
+	bus_space_write_8(sc->sc_iot, sc->sc_ioh, MFI_IQPL, buf);
 #else
 	mutex_enter(&sc->sc_post_mtx);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_IQPL, r[0]);
