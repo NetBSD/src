@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.18 2022/07/09 18:06:45 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.19 2022/07/09 18:11:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,16 +39,13 @@ struct device;
 /* namespace */
 #define	hdmi_audio_infoframe_init	linux_hdmi_audio_infoframe_init
 #define	hdmi_audio_infoframe_pack	linux_hdmi_audio_infoframe_pack
-#define	hdmi_audio_infoframe_unpack	linux_hdmi_audio_infoframe_unpack
 #define	hdmi_avi_infoframe_check	linux_hdmi_avi_infoframe_check
 #define	hdmi_avi_infoframe_init		linux_hdmi_avi_infoframe_init
 #define	hdmi_avi_infoframe_pack		linux_hdmi_avi_infoframe_pack
-#define	hdmi_avi_infoframe_unpack	linux_hdmi_avi_infoframe_unpack
 #define	hdmi_drm_infoframe_check	linux_hdmi_drm_infoframe_check
 #define	hdmi_drm_infoframe_init		linux_hdmi_drm_infoframe_init
 #define	hdmi_drm_infoframe_pack		linux_hdmi_drm_infoframe_pack
 #define	hdmi_drm_infoframe_pack_only	linux_hdmi_drm_infoframe_pack_only
-#define	hdmi_drm_infoframe_unpack	linux_hdmi_drm_infoframe_unpack
 #define	hdmi_infoframe_checksum		linux_hdmi_infoframe_checksum
 #define	hdmi_infoframe_log		linux_hdmi_infoframe_log
 #define	hdmi_infoframe_pack		linux_hdmi_infoframe_pack
@@ -58,12 +55,10 @@ struct device;
 #define	hdmi_spd_infoframe_check	linux_hdmi_spd_infoframe_check
 #define	hdmi_spd_infoframe_init		linux_hdmi_spd_infoframe_init
 #define	hdmi_spd_infoframe_pack		linux_hdmi_spd_infoframe_pack
-#define	hdmi_spd_infoframe_unpack	linux_hdmi_spd_infoframe_unpack
 #define	hdmi_vendor_infoframe_check	linux_hdmi_vendor_infoframe_check
 #define	hdmi_vendor_infoframe_init	linux_hdmi_vendor_infoframe_init
 #define	hdmi_vendor_infoframe_length	linux_hdmi_vendor_infoframe_length
 #define	hdmi_vendor_infoframe_pack	linux_hdmi_vendor_infoframe_pack
-#define	hdmi_vendor_infoframe_unpack	linux_hdmi_vendor_infoframe_unpack
 
 enum hdmi_3d_structure {
 	HDMI_3D_STRUCTURE_INVALID		= -1,
@@ -358,14 +353,10 @@ union hdmi_infoframe {
 int hdmi_audio_infoframe_init(struct hdmi_audio_infoframe *);
 ssize_t hdmi_audio_infoframe_pack(const struct hdmi_audio_infoframe *, void *,
     size_t);
-int hdmi_audio_infoframe_unpack(struct hdmi_audio_infoframe *, const void *,
-    size_t);
 
 int hdmi_avi_infoframe_init(struct hdmi_avi_infoframe *);
 int hdmi_avi_infoframe_check(const struct hdmi_avi_infoframe *);
 ssize_t hdmi_avi_infoframe_pack(const struct hdmi_avi_infoframe *, void *,
-    size_t);
-int hdmi_avi_infoframe_unpack(struct hdmi_avi_infoframe *, const void *,
     size_t);
 
 int hdmi_drm_infoframe_init(struct hdmi_drm_infoframe *);
@@ -373,23 +364,16 @@ int hdmi_drm_infoframe_check(const struct hdmi_drm_infoframe *);
 int hdmi_drm_infoframe_pack(const struct hdmi_drm_infoframe *, void *, size_t);
 int hdmi_drm_infoframe_pack_only(const struct hdmi_drm_infoframe *, void *,
     size_t);
-int hdmi_drm_infoframe_unpack(struct hdmi_drm_infoframe *, const void *,
-    size_t);
 
 int hdmi_spd_infoframe_init(struct hdmi_spd_infoframe *, const char *,
     const char *);
 int hdmi_spd_infoframe_check(const struct hdmi_spd_infoframe *);
 ssize_t hdmi_spd_infoframe_pack(const struct hdmi_spd_infoframe *, void *,
     size_t);
-int hdmi_spd_infoframe_unpack(struct hdmi_spd_infoframe *, const void *,
-    size_t);
 
 int hdmi_vendor_infoframe_init(struct hdmi_vendor_infoframe *);
-size_t hdmi_vendor_infoframe_length(const struct hdmi_vendor_infoframe *);
 int hdmi_vendor_infoframe_check(const struct hdmi_vendor_infoframe *);
 int hdmi_vendor_infoframe_pack(const struct hdmi_vendor_infoframe *, void *,
-    size_t);
-int hdmi_vendor_infoframe_unpack(struct hdmi_vendor_infoframe *, const void *,
     size_t);
 
 ssize_t hdmi_infoframe_pack(const union hdmi_infoframe *, void *, size_t);
