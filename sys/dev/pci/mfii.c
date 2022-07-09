@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.22 2022/07/09 11:41:56 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.23 2022/07/09 11:44:57 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.22 2022/07/09 11:41:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.23 2022/07/09 11:44:57 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -279,6 +279,9 @@ struct mfii_iop {
 	u_int8_t ldio_ctx_type_nseg;
 	u_int8_t sge_flag_chain;
 	u_int8_t sge_flag_eol;
+	u_int8_t iop_flag;
+#define MFII_IOP_QUIRK_REGREAD		0x01
+#define MFII_IOP_HAS_32BITDESC_BIT	0x02
 };
 
 struct mfii_softc {
@@ -287,6 +290,8 @@ struct mfii_softc {
 	struct scsipi_adapter   sc_adapt;
 
 	const struct mfii_iop	*sc_iop;
+	u_int			sc_iop_flag;
+#define MFII_IOP_DESC_32BIT		0x01
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
@@ -422,6 +427,9 @@ static int		mfii_initialise_firmware(struct mfii_softc *);
 static int		mfii_get_info(struct mfii_softc *);
 
 static void		mfii_start(struct mfii_softc *, struct mfii_ccb *);
+static void		mfii_start64(struct mfii_softc *, struct mfii_ccb *);
+static void		mfii_start_common(struct mfii_softc *,
+			    struct mfii_ccb *, bool);
 static void		mfii_done(struct mfii_softc *, struct mfii_ccb *);
 static int		mfii_poll(struct mfii_softc *, struct mfii_ccb *);
 static void		mfii_poll_done(struct mfii_softc *, struct mfii_ccb *);
@@ -554,6 +562,7 @@ static const struct mfii_iop mfii_iop_thunderbolt = {
 	MFII_REQ_TYPE_LDIO,
 	0,
 	MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA,
+	0,
 	0
 };
 
@@ -567,7 +576,8 @@ static const struct mfii_iop mfii_iop_25 = {
 	MFII_REQ_TYPE_NO_LOCK,
 	MFII_RAID_CTX_TYPE_CUDA | 0x1,
 	MFII_SGE_CHAIN_ELEMENT,
-	MFII_SGE_END_OF_LIST
+	MFII_SGE_END_OF_LIST,
+	0
 };
 
 static const struct mfii_iop mfii_iop_35 = {
@@ -577,8 +587,22 @@ static const struct mfii_iop mfii_iop_35 = {
 	MFII_REQ_TYPE_NO_LOCK,
 	MFII_RAID_CTX_TYPE_CUDA | 0x1,
 	MFII_SGE_CHAIN_ELEMENT,
-	MFII_SGE_END_OF_LIST
+	MFII_SGE_END_OF_LIST,
+	0
 };
+
+#if 0
+static const struct mfii_iop mfii_iop_aero = {
+	MFII_BAR_35,
+	MFII_IOP_NUM_SGE_LOC_35,
+	MFII_RAID_CTX_ROUTING_FLAGS_CPU0, /* | MFII_RAID_CTX_ROUTING_FLAGS_SQN */
+	MFII_REQ_TYPE_NO_LOCK,
+	MFII_RAID_CTX_TYPE_CUDA | 0x1,
+	MFII_SGE_CHAIN_ELEMENT,
+	MFII_SGE_END_OF_LIST,
+	MFII_IOP_QUIRK_REGREAD | MFII_IOP_HAS_32BITDESC_BIT
+};
+#endif
 
 struct mfii_device {
 	pcireg_t		mpd_vendor;
@@ -621,7 +645,18 @@ static const struct mfii_device mfii_devices[] = {
 	    &mfii_iop_35 },
 	/* Harpoon */
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_3508,
-	    &mfii_iop_35 }
+	    &mfii_iop_35 },
+#if 0
+	/* Aero */
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_39XX_2,
+	    &mfii_iop_aero },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_39XX_3,
+	    &mfii_iop_aero },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_38XX_2,
+	    &mfii_iop_aero },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_38XX_3,
+	    &mfii_iop_aero }
+#endif
 };
 
 static const struct mfii_iop *mfii_find_iop(struct pci_attach_args *);
@@ -746,6 +781,11 @@ mfii_attach(device_t parent, device_t self, void *aux)
 	sc->sc_max_sgl = 1;
 	while ((sc->sc_max_sgl << 1) <= (nsge_in_io + nsge_in_chain))
 		sc->sc_max_sgl <<= 1;
+
+	/* Check for atomic(32bit) descriptor */
+	if (((sc->sc_iop->iop_flag & MFII_IOP_HAS_32BITDESC_BIT) != 0) &&
+	    ((scpad2 & MFI_STATE_ATOMIC_DESCRIPTOR) != 0))
+		sc->sc_iop_flag |= MFII_IOP_DESC_32BIT;
 
 	DNPRINTF(MFII_D_MISC, "%s: OSP 0x%08x, OSP2 0x%08x, OSP3 0x%08x\n",
 	    DEVNAME(sc), status, scpad2, scpad3);
@@ -1089,12 +1129,30 @@ fail:
 	return rv;
 }
 
-static u_int32_t
-mfii_read(struct mfii_softc *sc, bus_size_t r)
+/* Register read function without retry */
+static inline u_int32_t
+mfii_read_wor(struct mfii_softc *sc, bus_size_t r)
 {
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
 	    BUS_SPACE_BARRIER_READ);
 	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, r));
+}
+
+static u_int32_t
+mfii_read(struct mfii_softc *sc, bus_size_t r)
+{
+	uint32_t rv;
+	int i = 0;
+
+	if ((sc->sc_iop->iop_flag & MFII_IOP_QUIRK_REGREAD) != 0) {
+		do {
+			rv = mfii_read_wor(sc, r);
+			i++;
+		} while ((rv == 0) && (i < 3));
+	} else
+		rv = mfii_read_wor(sc, r);
+
+	return rv;
 }
 
 static void
@@ -1626,7 +1684,12 @@ mfii_mfa_poll(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	r = MFII_REQ_MFA(ccb->ccb_request_dva);
 	memcpy(&ccb->ccb_req, &r, sizeof(ccb->ccb_req));
 
-	mfii_start(sc, ccb);
+	/*
+	 * Even if the Aero card supports 32bit descriptor, 64bit descriptor
+	 * access is required for MFI_CMD_INIT.
+	 * Currently, mfii_mfa_poll() is called for MFI_CMD_INIT only.
+	 */
+	mfii_start64(sc, ccb);
 
 	for (;;) {
 		bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_requests),
@@ -1862,26 +1925,44 @@ mfii_load_mfa(struct mfii_softc *sc, struct mfii_ccb *ccb,
 static void
 mfii_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
+
+	mfii_start_common(sc, ccb,
+	    ((sc->sc_iop_flag & MFII_IOP_DESC_32BIT) != 0) ? true : false);
+}
+
+static void
+mfii_start64(struct mfii_softc *sc, struct mfii_ccb *ccb)
+{
+
+	mfii_start_common(sc, ccb, false);
+}
+
+static void
+mfii_start_common(struct mfii_softc *sc, struct mfii_ccb *ccb, bool do32)
+{
 	uint32_t *r = (uint32_t *)&ccb->ccb_req;
-#if defined(__LP64__)
-	uint64_t buf;
-#endif
 
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_requests),
 	    ccb->ccb_request_offset, MFII_REQUEST_SIZE,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+	if (do32)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_ISQP, r[0]);
+	else {
 #if defined(__LP64__)
-	buf = ((uint64_t)r[1] << 32) | r[0];
-	bus_space_write_8(sc->sc_iot, sc->sc_ioh, MFI_IQPL, buf);
+		uint64_t buf;
+
+		buf = ((uint64_t)r[1] << 32) | r[0];
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh, MFI_IQPL, buf);
 #else
-	mutex_enter(&sc->sc_post_mtx);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_IQPL, r[0]);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_IQPH, r[1]);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
-	    MFI_IQPL, 8, BUS_SPACE_BARRIER_WRITE);
-	mutex_exit(&sc->sc_post_mtx);
+		mutex_enter(&sc->sc_post_mtx);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_IQPL, r[0]);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_IQPH, r[1]);
+		bus_space_barrier(sc->sc_iot, sc->sc_ioh,
+		    MFI_IQPL, 8, BUS_SPACE_BARRIER_WRITE);
+		mutex_exit(&sc->sc_post_mtx);
 #endif
+	}
 }
 
 static void

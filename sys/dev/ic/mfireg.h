@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.22 2022/06/29 13:03:20 msaitoh Exp $ */
+/* $NetBSD: mfireg.h,v 1.23 2022/07/09 11:44:57 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -82,6 +82,9 @@
 #define MFI_ILQP			0xc0 /* inbound_low_queue_port */
 #define MFI_IHQP			0xc4 /* inbound_high_queue_port */
 
+/* Aero specific Register */
+#define MFI_ISQP			0xc8 /* inbound_single_queue_port */
+
 /* OCR registers */
 #define MFI_WSR				0x004 /* write sequence register */
 #define MFI_HDR				0x008 /* host diagnostic register */
@@ -123,6 +126,9 @@
 #define MFI_STATE_TB_READY		0x10000000
 #define MFI_STATE_TB_OPERATIONAL	0x20000000
 #define MFI_STATE_TB_FAULT		0x40000000
+
+/* Aero Support */
+#define MFI_STATE_ATOMIC_DESCRIPTOR	0x01000000
 
 /* command reset register */
 #define MFI_INIT_ABORT			0x00000001
