@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.86 2022/03/28 11:21:40 mlelstv Exp $ */
+/*	$NetBSD: genfb.c,v 1.87 2022/07/09 13:37:12 rin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.86 2022/03/28 11:21:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.87 2022/07/09 13:37:12 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1004,7 +1004,7 @@ genfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct genfb_softc *sc = scr->scr_cookie;
-	uint8_t *src, *dst;
+	uint8_t *src, *dst, *hwdst;
 	gc_bucket *b;
 	int i, idx, bi, cell;
 
@@ -1083,6 +1083,16 @@ genfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		memcpy(dst, src, ri->ri_xscale);
 		src += ri->ri_xscale;
 		dst += ri->ri_stride;
+	}
+	if (ri->ri_hwbits) {
+		src = sc->sc_cache + cell * sc->sc_cache_ri.ri_yscale;
+		hwdst = ri->ri_hwbits
+		    + row * ri->ri_yscale + col * ri->ri_xscale;
+		for (i = 0; i < ri->ri_font->fontheight; i++) {
+			memcpy(hwdst, src, ri->ri_xscale);
+			src += ri->ri_xscale;
+			hwdst += ri->ri_stride;
+		}
 	}
 	b->gb_lastread = time_uptime;
 	return;
