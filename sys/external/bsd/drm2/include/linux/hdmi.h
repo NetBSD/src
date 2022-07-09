@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.20 2022/07/09 18:11:35 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.21 2022/07/09 18:18:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -362,7 +362,8 @@ ssize_t hdmi_avi_infoframe_pack(const struct hdmi_avi_infoframe *, void *,
 
 int hdmi_drm_infoframe_init(struct hdmi_drm_infoframe *);
 int hdmi_drm_infoframe_check(const struct hdmi_drm_infoframe *);
-int hdmi_drm_infoframe_pack(const struct hdmi_drm_infoframe *, void *, size_t);
+ssize_t hdmi_drm_infoframe_pack(const struct hdmi_drm_infoframe *, void *,
+    size_t);
 int hdmi_drm_infoframe_pack_only(const struct hdmi_drm_infoframe *, void *,
     size_t);
 
@@ -374,8 +375,8 @@ ssize_t hdmi_spd_infoframe_pack(const struct hdmi_spd_infoframe *, void *,
 
 int hdmi_vendor_infoframe_init(struct hdmi_vendor_infoframe *);
 int hdmi_vendor_infoframe_check(const struct hdmi_vendor_infoframe *);
-int hdmi_vendor_infoframe_pack(const struct hdmi_vendor_infoframe *, void *,
-    size_t);
+ssize_t hdmi_vendor_infoframe_pack(const struct hdmi_vendor_infoframe *,
+    void *, size_t);
 
 ssize_t hdmi_infoframe_pack(const union hdmi_infoframe *, void *, size_t);
 ssize_t hdmi_infoframe_pack_only(const union hdmi_infoframe *, void *, size_t);
