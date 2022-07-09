@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.14 2021/12/19 11:45:35 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.15 2022/07/09 15:24:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -718,7 +718,7 @@ hdmi_spd_infoframe_check(const struct hdmi_spd_infoframe *frame)
 	int ret;
 
 	ret = hdmi_infoframe_header_check(&frame->header,
-	    HDMI_INFOFRAME_TYPE_SPD, 2, HDMI_SPD_INFOFRAME_SIZE);
+	    HDMI_INFOFRAME_TYPE_SPD, 1, HDMI_SPD_INFOFRAME_SIZE);
 	if (ret)
 		return ret;
 
