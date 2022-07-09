@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.17 2022/07/09 17:59:27 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.18 2022/07/09 18:06:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ struct device;
 #define	hdmi_audio_infoframe_pack	linux_hdmi_audio_infoframe_pack
 #define	hdmi_audio_infoframe_unpack	linux_hdmi_audio_infoframe_unpack
 #define	hdmi_avi_infoframe_check	linux_hdmi_avi_infoframe_check
+#define	hdmi_avi_infoframe_init		linux_hdmi_avi_infoframe_init
 #define	hdmi_avi_infoframe_pack		linux_hdmi_avi_infoframe_pack
 #define	hdmi_avi_infoframe_unpack	linux_hdmi_avi_infoframe_unpack
 #define	hdmi_drm_infoframe_check	linux_hdmi_drm_infoframe_check
