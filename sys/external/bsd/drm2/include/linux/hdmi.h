@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.15 2022/07/09 15:24:42 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.16 2022/07/09 17:13:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+
+#include <lib/libkern/libkern.h>
 
 enum hdmi_3d_structure {
 	HDMI_3D_STRUCTURE_INVALID		= -1,
@@ -995,7 +997,8 @@ static inline void
 hdmi_infoframe_log(const char *level, struct device *device,
     const union hdmi_infoframe *frame)
 {
-	/* XXX */
+
+	hexdump(printf, device_xname(device), frame, sizeof(*frame));
 }
 
 #endif	/* _LINUX_HDMI_H_ */
