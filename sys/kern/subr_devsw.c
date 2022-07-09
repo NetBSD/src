@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.45 2022/03/28 12:41:17 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.46 2022/07/09 10:30:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.45 2022/03/28 12:41:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.46 2022/07/09 10:30:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -372,9 +372,34 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 static void
 devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
-	int bi, ci = -1/*XXXGCC*/;
+	int bi, ci = -1/*XXXGCC*/, di;
+	struct cfdriver *cd;
+	device_t dv;
 
 	KASSERT(mutex_owned(&device_lock));
+
+	/*
+	 * If this is wired to an autoconf device, make sure the device
+	 * has no more instances.  No locking here because under
+	 * correct use of devsw_detach, none of this state can change
+	 * at this point.
+	 */
+	if (cdev != NULL && (cd = cdev->d_cfdriver) != NULL) {
+		for (di = 0; di < cd->cd_ndevs; di++) {
+			KASSERTMSG((dv = cd->cd_devs[di]) == NULL,
+			    "detaching character device driver %s"
+			    " still has attached unit %s",
+			    cd->cd_name, device_xname(dv));
+		}
+	}
+	if (bdev != NULL && (cd = bdev->d_cfdriver) != NULL) {
+		for (di = 0; di < cd->cd_ndevs; di++) {
+			KASSERTMSG((dv = cd->cd_devs[di]) == NULL,
+			    "detaching block device driver %s"
+			    " still has attached unit %s",
+			    cd->cd_name, device_xname(dv));
+		}
+	}
 
 	/* Prevent new references.  */
 	if (bdev != NULL) {
