@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.20 2022/06/29 13:03:20 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.21 2022/07/09 11:41:18 msaitoh Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.20 2022/06/29 13:03:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.21 2022/07/09 11:41:18 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -1877,12 +1877,9 @@ mfii_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 #else
 	mutex_enter(&sc->sc_post_mtx);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_IQPL, r[0]);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
-	    MFI_IQPL, 8, BUS_SPACE_BARRIER_WRITE);
-
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_IQPH, r[1]);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
-	    MFI_IQPH, 8, BUS_SPACE_BARRIER_WRITE);
+	    MFI_IQPL, 8, BUS_SPACE_BARRIER_WRITE);
 	mutex_exit(&sc->sc_post_mtx);
 #endif
 }
