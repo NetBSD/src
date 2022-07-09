@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdmi.c,v 1.3 2022/07/09 18:11:36 riastradh Exp $	*/
+/*	$NetBSD: linux_hdmi.c,v 1.4 2022/07/09 18:11:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.3 2022/07/09 18:11:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.4 2022/07/09 18:11:47 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -192,8 +192,6 @@ hdmi_audio_infoframe_unpack(struct hdmi_audio_infoframe *frame,
 	const uint8_t *p = buf;
 	int ret;
 
-	memset(frame, 0, sizeof(*frame));
-
 	ret = hdmi_infoframe_header_unpack(&frame->header, p, size);
 	if (ret)
 		return ret;
@@ -301,8 +299,6 @@ hdmi_avi_infoframe_unpack(struct hdmi_avi_infoframe *frame, const void *buf,
 {
 	const uint8_t *p = buf;
 	int ret;
-
-	memset(frame, 0, sizeof(*frame));
 
 	ret = hdmi_infoframe_header_unpack(&frame->header, p, size);
 	if (ret)
@@ -419,8 +415,6 @@ hdmi_drm_infoframe_unpack(struct hdmi_drm_infoframe *frame, const void *buf,
 	unsigned i;
 	int ret;
 
-	memset(frame, 0, sizeof(*frame));
-
 	ret = hdmi_infoframe_header_unpack(&frame->header, p, size);
 	if (ret)
 		return ret;
@@ -511,8 +505,6 @@ hdmi_spd_infoframe_unpack(struct hdmi_spd_infoframe *frame, const void *buf,
 {
 	const uint8_t *p = buf;
 	int ret;
-
-	memset(frame, 0, sizeof(*frame));
 
 	ret = hdmi_infoframe_header_unpack(&frame->header, p, size);
 	if (ret)
@@ -629,8 +621,6 @@ hdmi_vendor_infoframe_unpack(struct hdmi_vendor_infoframe *frame,
 	const uint8_t *p = buf;
 	int ret;
 
-	memset(frame, 0, sizeof(*frame));
-
 	ret = hdmi_infoframe_header_unpack(&frame->header, p, size);
 	if (ret)
 		return ret;
@@ -701,6 +691,8 @@ hdmi_infoframe_unpack(union hdmi_infoframe *frame, const void *buf,
 {
 	struct hdmi_infoframe_header header;
 	int ret;
+
+	memset(frame, 0, sizeof(*frame));
 
 	ret = hdmi_infoframe_header_unpack(&header, buf, size);
 	if (ret)
