@@ -1,8 +1,8 @@
-	$NetBSD: README.compileopts,v 1.15 2022/05/03 08:34:00 hannken Exp $
+	$NetBSD: README.compileopts,v 1.16 2022/07/09 20:11:00 andvar Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
-for a desciption of NetBSD build options.
+for a description of NetBSD build options.
 
 Note: after changing an option, do a clean build.
 
