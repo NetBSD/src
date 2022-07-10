@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.54 2018/06/10 17:55:11 christos Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.55 2022/07/10 21:16:57 rillig Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -6,25 +6,10 @@
 .if !defined(NOSUBDIR)					# {
 
 .for dir in ${SUBDIR}
-.if "${dir}" == ".WAIT"
-# Don't play with .WAIT
-__REALSUBDIR+=${dir}
-.else
-.if "${dir:H}" != ""
-# It is a relative path; make it absolute so exists can't search the path.
-.if exists(${.CURDIR}/${dir}.${MACHINE})
+.if ${dir} != ".WAIT" && exists(${.CURDIR}/${dir}.${MACHINE})
 __REALSUBDIR+=${dir}.${MACHINE}
 .else
 __REALSUBDIR+=${dir}
-.endif
-.else
-# It is an absolute path; leave it alone
-.if exists(${dir}.${MACHINE})
-__REALSUBDIR+=${dir}.${MACHINE}
-.else
-__REALSUBDIR+=${dir}
-.endif
-.endif
 .endif
 .endfor
 
