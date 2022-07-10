@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.23 2022/04/21 17:30:15 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.24 2022/07/10 10:52:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -173,7 +173,7 @@ do_install(void)
 	/* Create and mount partitions */
 	find_disks_ret = find_disks(msg_string(MSG_install), false);
 	if (partman_go == 1) {
-		if (partman() < 0) {
+		if (partman(&install) < 0) {
 			hit_enter_to_continue(MSG_abort_part, NULL);
 			return;
 		}
