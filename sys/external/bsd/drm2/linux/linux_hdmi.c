@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdmi.c,v 1.8 2022/07/09 19:53:00 riastradh Exp $	*/
+/*	$NetBSD: linux_hdmi.c,v 1.9 2022/07/10 12:32:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.8 2022/07/09 19:53:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.9 2022/07/10 12:32:31 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -111,7 +111,7 @@ hdmi_infoframe_header_unpack(struct hdmi_infoframe_header *header,
 		return -EINVAL;
 
 	hdmi_infoframe_header_init(header, p[0], p[1], p[2]);
-	return HDMI_INFOFRAME_HEADER_SIZE;
+	return 0;
 }
 
 static void
