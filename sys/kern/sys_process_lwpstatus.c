@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process_lwpstatus.c,v 1.3 2020/10/20 22:31:20 rin Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.4 2022/07/10 17:47:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.3 2020/10/20 22:31:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.4 2022/07/10 17:47:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -56,8 +56,7 @@ void
 ptrace_read_lwpstatus(struct lwp *l, struct ptrace_lwpstatus *pls)
 {
 
-	KASSERT(l->l_lid == pls->pl_lwpid);
-
+	pls->pl_lwpid = l->l_lid;
 	memcpy(&pls->pl_sigmask, &l->l_sigmask, sizeof(pls->pl_sigmask));
 	memcpy(&pls->pl_sigpend, &l->l_sigpend.sp_set, sizeof(pls->pl_sigpend));
 
@@ -78,8 +77,6 @@ ptrace_read_lwpstatus(struct lwp *l, struct ptrace_lwpstatus *pls)
 void
 process_read_lwpstatus(struct lwp *l, struct ptrace_lwpstatus *pls)
 {
-
-	pls->pl_lwpid = l->l_lid;
 
 	ptrace_read_lwpstatus(l, pls);
 }
