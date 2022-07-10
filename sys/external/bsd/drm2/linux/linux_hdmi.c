@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdmi.c,v 1.9 2022/07/10 12:32:31 riastradh Exp $	*/
+/*	$NetBSD: linux_hdmi.c,v 1.10 2022/07/10 13:56:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.9 2022/07/10 12:32:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdmi.c,v 1.10 2022/07/10 13:56:44 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -515,7 +515,7 @@ hdmi_spd_infoframe_unpack(struct hdmi_spd_infoframe *frame, const void *buf,
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
 	memcpy(frame->vendor, &p[0], 8);
-	memcpy(frame->product, &p[8], 8);
+	memcpy(frame->product, &p[8], 16);
 	frame->sdi = p[24];
 
 	return 0;
