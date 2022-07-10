@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.133 2021/09/11 10:08:55 riastradh Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.134 2022/07/10 23:12:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.133 2021/09/11 10:08:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.134 2022/07/10 23:12:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,8 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 		 * Therefore we must restrict the length to SSIZE_MAX to
 		 * avoid garbage return values.
 		 */
-		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
+		if (iov->iov_len > SSIZE_MAX ||
+		    auio.uio_resid > SSIZE_MAX - iov->iov_len) {
 			error = EINVAL;
 			goto done;
 		}
@@ -456,7 +457,8 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 		 * Therefore we must restrict the length to SSIZE_MAX to
 		 * avoid garbage return values.
 		 */
-		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
+		if (iov->iov_len > SSIZE_MAX ||
+		    auio.uio_resid > SSIZE_MAX - iov->iov_len) {
 			error = EINVAL;
 			goto done;
 		}
