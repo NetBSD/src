@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1751 2022/07/08 16:50:10 nia Exp $
+# $NetBSD: mi,v 1.1752 2022/07/10 19:49:24 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1915,6 +1915,7 @@
 ./usr/share/man/cat4/ucom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ucycom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/udav.0			man-sys-catman		.cat
+./usr/share/man/cat4/udl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/udp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/udsbr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uep.0			man-sys-catman		.cat
@@ -5104,6 +5105,7 @@
 ./usr/share/man/html4/ucom.html			man-sys-htmlman		html
 ./usr/share/man/html4/ucycom.html		man-sys-htmlman		html
 ./usr/share/man/html4/udav.html			man-sys-htmlman		html
+./usr/share/man/html4/udl.html			man-sys-htmlman		html
 ./usr/share/man/html4/udp.html			man-sys-htmlman		html
 ./usr/share/man/html4/udsbr.html		man-sys-htmlman		html
 ./usr/share/man/html4/uep.html			man-sys-htmlman		html
@@ -8217,6 +8219,7 @@
 ./usr/share/man/man4/ucom.4			man-sys-man		.man
 ./usr/share/man/man4/ucycom.4			man-sys-man		.man
 ./usr/share/man/man4/udav.4			man-sys-man		.man
+./usr/share/man/man4/udl.4			man-sys-man		.man
 ./usr/share/man/man4/udp.4			man-sys-man		.man
 ./usr/share/man/man4/udsbr.4			man-sys-man		.man
 ./usr/share/man/man4/uep.4			man-sys-man		.man
