@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.102 2021/12/05 04:46:33 msaitoh Exp $
+.\"	$NetBSD: installboot.8,v 1.103 2022/07/10 19:28:00 brook Exp $
 .\"
 .\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Op Fl m Ar machine
 .Op Fl o Ar options
 .Op Fl t Ar fstype
+.Op Fl u Ar U-boot-paths
 .Ar filesystem
 .Ar primary
 .Op Ar secondary
@@ -407,6 +408,23 @@ be provided with
 .Fl B Ar s2bno .
 .El
 .
+.It Fl u Ar U-boot-paths
+.Ar U-boot-paths
+is a colon-separated list of search paths to scan for
+.Sy U-boot
+packages with
+.Nm installboot
+installation overlays.
+If multiple overlays are found, overlays from paths closer to the front
+of the list take precedence.
+If not specified, environment variable 
+.Ev INSTALLBOOT_UBOOT_PATHS
+is used if defined; otherwise, the default path is
+.Pa /usr/pkg/share/u-boot .
+This option is only used on platforms that support
+using
+.Sy U-boot .
+.
 .It Fl v
 Verbose operation.
 .
@@ -485,8 +503,7 @@ If not specified, the default path is
 .Pa /usr/pkg/share/u-boot .
 This environment variable is only used on platforms that support
 using
-.Sy U-boot :
-.Sy evbarm .
+.Sy U-boot .
 .
 .It Ev MACHINE
 Default value for
