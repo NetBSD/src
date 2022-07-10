@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.55 2022/07/10 21:16:57 rillig Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.56 2022/07/10 21:32:09 rillig Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -27,16 +27,13 @@ clean:
 __RECURSETARG=	${TARGETS}
 .endif
 
-# for obscure reasons, we can't do a simple .if ${dir} == ".WAIT"
-# but have to assign to __TARGDIR first.
 .for targ in ${__RECURSETARG}
 .for dir in ${__REALSUBDIR}
-__TARGDIR := ${dir}
-.if ${__TARGDIR} == ".WAIT"
-SUBDIR_${targ} += .WAIT
+.if ${dir} == ".WAIT"
+SUBDIR_${targ}+= .WAIT
 .elif !commands(${targ}-${dir})
 ${targ}-${dir}: .PHONY .MAKE __recurse
-SUBDIR_${targ} += ${targ}-${dir}
+SUBDIR_${targ}+= ${targ}-${dir}
 .endif
 .endfor
 subdir-${targ}: .PHONY ${SUBDIR_${targ}}
