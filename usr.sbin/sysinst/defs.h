@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.85 2022/06/24 22:28:11 tsutsui Exp $	*/
+/*	$NetBSD: defs.h,v 1.86 2022/07/10 10:52:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -503,6 +503,7 @@ struct part_entry {
 	part_id id;
 	struct disk_partitions *parts;
 	void *dev_ptr;
+	struct install_partition_desc *install;
 	size_t index;	/* e.g. if PM_RAID: this is raids[index] */
 	int dev_ptr_delta;
 	char fullname[SSTRSIZE];
@@ -895,6 +896,11 @@ bool	use_tgz_for_set(const char*);
 const char *set_postfix(const char*);
 bool	usage_set_from_parts(struct partition_usage_set*,
 	    struct disk_partitions*);
+bool	usage_set_from_install_desc(struct partition_usage_set*,
+	    const struct install_partition_desc*,
+	    struct disk_partitions*);
+bool	merge_usage_set_into_install_desc(struct install_partition_desc*,
+	    const struct partition_usage_set*);
 void	free_usage_set(struct partition_usage_set*);
 bool	install_desc_from_parts(struct install_partition_desc *,
 	    struct disk_partitions*);
@@ -938,12 +944,12 @@ void	umount_root(void);
 
 /* from partman.c */
 #ifndef NO_PARTMAN
-int partman(void);
+int partman(struct install_partition_desc*);
 int pm_getrefdev(struct pm_devs *);
 void update_wedges(const char *);
 void pm_destroy_all(void);
 #else
-static inline int partman(void) { return -1; }
+static inline int partman(struct install_partition_desc*) { return -1; }
 static inline int pm_getrefdev(struct pm_devs *x __unused) { return -1; }
 #define update_wedges(x) __nothing
 #endif

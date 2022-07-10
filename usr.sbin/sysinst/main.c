@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2022/01/28 19:38:51 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2022/07/10 10:52:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -307,7 +307,7 @@ main(int argc, char **argv)
 
 	/* Menu processing */
 	if (partman_go)
-		partman();
+		partman(NULL);
 	else
 		process_menu(MENU_netbsd, NULL);
 

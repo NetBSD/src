@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.68 2022/06/24 22:05:24 tsutsui Exp $	*/
+/*	$NetBSD: util.c,v 1.69 2022/07/10 10:52:41 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2466,6 +2466,47 @@ usage_set_from_parts(struct partition_usage_set *wanted,
 	wanted->parts = parts;
 
 	return usage_info_list_from_parts(&wanted->infos, &wanted->num, parts);
+}
+
+bool
+usage_set_from_install_desc(struct partition_usage_set *pset,
+    const struct install_partition_desc *install,
+    struct disk_partitions *parts)
+{
+	size_t cnt, i;
+
+	memset(pset, 0, sizeof(*pset));
+	pset->parts = parts;
+
+	if (!install->infos || !install->num)
+		return false;
+
+	for (cnt = 0, i = 0; i < install->num; i++) {
+		if (install->infos[i].parts != parts)
+			continue;
+		cnt++;
+	}
+	if (!cnt)
+		return false;
+	pset->num = cnt;
+	pset->infos = calloc(cnt, sizeof(*pset->infos));
+	if (!pset->infos)
+		return false;
+	for (cnt = 0, i = 0; i < install->num; i++) {
+		if (install->infos[i].parts != parts)
+			continue;
+		pset->infos[cnt] = install->infos[i];
+		cnt++;
+	}
+	return true;
+}
+
+bool
+merge_usage_set_into_install_desc(struct install_partition_desc *install,
+    const struct partition_usage_set *pset)
+{
+	// XXX
+	return false;
 }
 
 struct disk_partitions *
