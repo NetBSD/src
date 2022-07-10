@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.45 2022/06/11 15:41:19 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.46 2022/07/10 12:49:05 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -617,7 +617,8 @@ read_mbr(const char *disk, size_t secsize, mbr_info_t *mbri,
 				    mbrp->mbrp_type == MBR_PTYPE_FAT16B ||
 				    mbrp->mbrp_type == MBR_PTYPE_FAT32 ||
 				    mbrp->mbrp_type == MBR_PTYPE_FAT32L ||
-				    mbrp->mbrp_type == MBR_PTYPE_FAT16L)
+				    mbrp->mbrp_type == MBR_PTYPE_FAT16L ||
+				    mbrp->mbrp_type == MBR_PTYPE_EFI)
 					flags |= GLM_MAYBE_FAT32;
 				else if (mbrp->mbrp_type == MBR_PTYPE_NTFS)
 					flags |= GLM_MAYBE_NTFS;
