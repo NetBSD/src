@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.39 2020/10/10 15:59:41 christos Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.40 2022/07/10 13:57:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.39 2020/10/10 15:59:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.40 2022/07/10 13:57:14 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -220,11 +220,9 @@ compat_43_ttioctl(struct tty *tp, u_long com, void *data, int flag,
 	case TIOCLBIC:
 	case TIOCLSET: {
 		struct termios term;
-		int argbits, flags;
+		unsigned argbits, flags;
 
 		argbits = *(int *)data;
-		if (argbits < 0)
-			return EINVAL;
 
 		mutex_spin_enter(&tty_lock);
 		term = tp->t_termios;
