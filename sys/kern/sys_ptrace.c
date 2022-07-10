@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace.c,v 1.11 2020/11/04 19:16:34 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.12 2022/07/10 14:07:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.11 2020/11/04 19:16:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.12 2022/07/10 14:07:55 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -158,39 +158,39 @@ static struct ptrace_methods native_ptm = {
 static const struct syscall_package ptrace_syscalls[] = {
 	{ SYS_ptrace, 0, (sy_call_t *)sys_ptrace },
 	{ 0, 0, NULL },
-}; 
+};
 
-/*    
+/*
  * Process debugging system call.
- */   
-int   
+ */
+int
 sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 {
-	/* { 
+	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
 		syscallarg(void *) addr;
 		syscallarg(int) data;
 	} */
- 
+
         return do_ptrace(&native_ptm, l, SCARG(uap, req), SCARG(uap, pid),
             SCARG(uap, addr), SCARG(uap, data), retval);
 }
 
-#define	DEPS	"ptrace_common"  
+#define	DEPS	"ptrace_common"
 
 MODULE(MODULE_CLASS_EXEC, ptrace, DEPS);
 
 static int
 ptrace_init(void)
-{ 
+{
 	int error;
 
 	error = syscall_establish(&emul_netbsd, ptrace_syscalls);
 	return error;
-}       
- 
-static int     
+}
+
+static int
 ptrace_fini(void)
 {
 	int error;
@@ -199,14 +199,14 @@ ptrace_fini(void)
 	return error;
 }
 
- 
+
 static int
 ptrace_modcmd(modcmd_t cmd, void *arg)
 {
 	int error;
- 
+
 	switch (cmd) {
-	case MODULE_CMD_INIT: 
+	case MODULE_CMD_INIT:
 		error = ptrace_init();
 		break;
 	case MODULE_CMD_FINI:
