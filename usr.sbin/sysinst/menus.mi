@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.25 2022/05/18 16:39:03 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.26 2022/07/10 10:52:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ menu utility, title MSG_NetBSD_VERSION_Utilities, exit,
 		action {
 #ifndef NO_PARTMAN
 			partman_go = 1;
-			partman();
+			partman(NULL);
 #endif
 		};
 	option MSG_Logging_functions, action { do_logging(); };

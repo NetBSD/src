@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.55 2022/04/08 10:17:55 andvar Exp $ */
+/*	$NetBSD: partman.c,v 1.56 2022/07/10 10:52:41 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -241,8 +241,15 @@ static int pm_raid_disk_add(menudesc *, void *);
 static int pm_raid_disk_del(menudesc *, void *);
 static int pm_cgd_disk_set(struct cgd_desc *, struct part_entry *);
 static int pm_mount(struct pm_devs *, int);
-static int pm_upddevlist(menudesc *, void *);
+static int pm_upddevlist(menudesc *, void *, struct install_partition_desc *);
 static void pm_select(struct pm_devs *);
+
+
+static int
+pm_do_upddevlist(menudesc *m, void *arg)
+{
+	return pm_upddevlist(m, arg, ((struct part_entry*)arg)->install);
+}
 
 static void
 pm_edit_size_value(msg prompt_msg, daddr_t bps, daddr_t cylsec, daddr_t *size)
@@ -2706,7 +2713,7 @@ pm_commit(menudesc *m, void *arg)
 		return -1;
 	}
 	if (m != NULL && arg != NULL)
-		pm_upddevlist(m, arg);
+		pm_do_upddevlist(m, arg);
 	if (logfp)
 		fflush (logfp);
 
@@ -2947,7 +2954,7 @@ pm_upddevlist_adv(menudesc *m, void *arg, int *i,
 
 /* Update partman main menu with devices list */
 static int
-pm_upddevlist(menudesc *m, void *arg)
+pm_upddevlist(menudesc *m, void *arg, struct install_partition_desc *install)
 {
 	int i = 0;
 	size_t ii;
@@ -2980,17 +2987,19 @@ pm_upddevlist(menudesc *m, void *arg)
 		return -1;
 
 	SLIST_FOREACH(pm_i, &pm_head, l) {
+		struct part_entry *cur_entry = ((struct part_entry *)arg)+i;
 		memset(&m->opts[i], 0, sizeof m->opts[i]);
 		m->opts[i].opt_action = pm_submenu;
-		((struct part_entry *)arg)[i].dev_ptr = pm_i;
-		((struct part_entry *)arg)[i].id = NO_PART;
+		cur_entry->dev_ptr = pm_i;
+		cur_entry->id = NO_PART;
+		cur_entry->install = install;
 		if (pm_i->no_part)
-			((struct part_entry *)arg)[i].type = PM_SPEC;
+			cur_entry->type = PM_SPEC;
 		else {
 			ps = pm_i->parts != NULL ? pm_i->parts->pscheme : NULL;
 			secondary = NULL;
 
-			((struct part_entry *)arg)[i].type = PM_DISK;
+			cur_entry->type = PM_DISK;
 
 			for (ii = 0; pm_i->parts != NULL &&
 			    ii < pm_i->parts->num_part; ii++) {
@@ -3014,13 +3023,14 @@ pm_upddevlist(menudesc *m, void *arg)
 				if (i >= MAX_ENTRIES)
 					break;
 				i++;
+				cur_entry = ((struct part_entry *)arg)+i;
 				memset(&m->opts[i], 0, sizeof m->opts[i]);
 				m->opts[i].opt_action = pm_submenu;
-				((struct part_entry *)arg)[i].parts =
-				    pm_i->parts;
-				((struct part_entry *)arg)[i].dev_ptr = pm_i;
-				((struct part_entry *)arg)[i].id = ii;
-				((struct part_entry *)arg)[i].type = PM_PART;
+				cur_entry->parts = pm_i->parts;
+				cur_entry->dev_ptr = pm_i;
+				cur_entry->install = install;
+				cur_entry->id = ii;
+				cur_entry->type = PM_PART;
 			}
 
 			for (ii = 0; secondary != NULL &&
@@ -3036,12 +3046,14 @@ pm_upddevlist(menudesc *m, void *arg)
 				if (i >= MAX_ENTRIES)
 					break;
 				i++;
+				cur_entry = ((struct part_entry *)arg)+i;
 				memset(&m->opts[i], 0, sizeof m->opts[i]);
 				m->opts[i].opt_action = pm_submenu;
-				((struct part_entry *)arg)[i].parts = secondary;
-				((struct part_entry *)arg)[i].dev_ptr = pm_i;
-				((struct part_entry *)arg)[i].id = ii;
-				((struct part_entry *)arg)[i].type = PM_PART;
+				cur_entry->parts = secondary;
+				cur_entry->dev_ptr = pm_i;
+				cur_entry->install = install;
+				cur_entry->id = ii;
+				cur_entry->type = PM_PART;
 			}
 		}
 		i++;
@@ -3072,7 +3084,7 @@ pm_upddevlist(menudesc *m, void *arg)
 
 	m->opts[i++] = (struct menu_ent) {
 		.opt_name = MSG_updpmlist,
-		.opt_action = pm_upddevlist,
+		.opt_action = pm_do_upddevlist,
 	};
 	m->opts[i  ] = (struct menu_ent) {
 		.opt_name = MSG_savepm,
@@ -3103,12 +3115,12 @@ pm_menuout(menudesc *m, void *arg)
 
 /* Main partman function */
 int
-partman(void)
+partman(struct install_partition_desc *install)
 {
 	int menu_no, menu_num_entries;
 	static int firstrun = 1;
 	menu_ent menu_entries[MAX_ENTRIES+6];
-	struct part_entry args[MAX_ENTRIES];
+	struct part_entry args[MAX_ENTRIES] = { 0 };
 
 	if (firstrun) {
 		check_available_binaries();
@@ -3181,7 +3193,8 @@ partman(void)
 	}
 
 	do {
-		menu_num_entries = pm_upddevlist(&(menudesc){.opts = menu_entries}, args);
+		menu_num_entries = pm_upddevlist(&(menudesc){.opts = menu_entries},
+		    args, install);
 		menu_no = new_menu(MSG_partman_header,
 			menu_entries, menu_num_entries+1, 1, 1, 0, 75, /* Fixed width */
 			MC_ALWAYS_SCROLL | MC_NOBOX | MC_NOCLEAR,
@@ -3270,8 +3283,14 @@ pm_edit_partitions(struct part_entry *pe)
 	}
 
 	if (parts != NULL) {
-		usage_set_from_parts(&pset, parts);
+		if (!pe->install ||
+		    !usage_set_from_install_desc(&pset, pe->install, parts))
+			usage_set_from_parts(&pset, parts);
 		edit_and_check_label(my_pm, &pset, false);
+
+		if (pe->install)
+			merge_usage_set_into_install_desc(pe->install,
+			    &pset);
 		free_usage_set(&pset);
 	}
 
