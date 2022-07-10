@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.40 2019/05/07 05:02:42 thorpej Exp $	*/
+/*	$NetBSD: installboot.c,v 1.41 2022/07/10 19:28:00 brook Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.40 2019/05/07 05:02:42 thorpej Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.41 2022/07/10 19:28:00 brook Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: installboot.c,v 1.40 2019/05/07 05:02:42 thorpej Exp $");
 
 static	void	getmachine(ib_params *, const char *, const char *);
 static	void	getfstype(ib_params *, const char *, const char *);
+static	void	getubootpaths(ib_params *, const char *);
 static	void	parseoptions(ib_params *, const char *);
 __dead static	void	usage(void);
 static	void	options_usage(void);
@@ -103,6 +104,14 @@ const struct option {
 
 #define DFL_SECSIZE	512	/* Don't use DEV_BSIZE. It's host's value. */
 
+#ifndef DEFAULT_UBOOT_PKG_PATH
+#define	DEFAULT_UBOOT_PKG_PATH	"/usr/pkg/share/u-boot"
+#endif
+
+#ifndef UBOOT_PATHS_ENV_VAR
+#define	UBOOT_PATHS_ENV_VAR	"INSTALLBOOT_UBOOT_PATHS"
+#endif
+
 int
 main(int argc, char *argv[])
 {
@@ -126,8 +135,12 @@ main(int argc, char *argv[])
 	params->s1fd = -1;
 	if ((p = getenv("MACHINE")) != NULL)
 		getmachine(params, p, "$MACHINE");
+	getubootpaths(params, DEFAULT_UBOOT_PKG_PATH);
+	if ((p = getenv(UBOOT_PATHS_ENV_VAR)) != NULL) {
+		getubootpaths(params, p);
+	}
 
-	while ((ch = getopt(argc, argv, "b:B:cefm:no:t:v")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:cefm:no:t:u:v")) != -1) {
 		switch (ch) {
 
 		case 'b':
@@ -174,6 +187,10 @@ main(int argc, char *argv[])
 
 		case 't':
 			getfstype(params, optarg, "-t");
+			break;
+
+		case 'u':
+			getubootpaths(params, optarg);
 			break;
 
 		case 'v':
@@ -602,6 +619,15 @@ fstype_usage(void)
 }
 
 static void
+getubootpaths(ib_params *param, const char *paths)
+{
+	assert(param != NULL);
+	assert(paths != NULL);
+
+	param->uboot_paths = paths;
+}
+
+static void
 usage(void)
 {
 	const char	*prog;
@@ -609,7 +635,7 @@ usage(void)
 	prog = getprogname();
 	fprintf(stderr,
 "usage: %s [-fnv] [-B s2bno] [-b s1bno] [-m machine] [-o options]\n"
-"\t\t   [-t fstype] filesystem primary [secondary]\n"
+"\t\t   [-t fstype] [-u uboot-paths] filesystem primary [secondary]\n"
 "usage: %s -c [-fnv] [-m machine] [-o options] [-t fstype] filesystem\n"
 "usage: %s -e [-fnv] [-m machine] [-o options] bootstrap\n",
 	    prog, prog, prog);

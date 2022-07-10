@@ -1,4 +1,4 @@
-/*	$NetBSD: evboards.c,v 1.6 2021/08/06 07:55:13 andvar Exp $	*/
+/*	$NetBSD: evboards.c,v 1.7 2022/07/10 19:28:00 brook Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: evboards.c,v 1.6 2021/08/06 07:55:13 andvar Exp $");
+__RCSID("$NetBSD: evboards.c,v 1.7 2022/07/10 19:28:00 brook Exp $");
 #endif  /* !__lint */
 
 #include <sys/types.h>
@@ -152,8 +152,9 @@ __RCSID("$NetBSD: evboards.c,v 1.6 2021/08/06 07:55:13 andvar Exp $");
  *
  *	/usr/pkg/share/u-boot
  *
- * This can be overridden with the INSTALLBOOT_UBOOT_PATHS environment
- * variable, which contains a colon-separated list of directories, e.g.:
+ * This can be overridden with either the INSTALLBOOT_UBOOT_PATHS
+ * environment variable or the command line option -u, which contains
+ * a colon-separated list of directories, e.g.:
  *
  *	/usr/pkg/share/u-boot:/home/jmcneill/hackityhack/u-boot
  *
@@ -441,16 +442,6 @@ make_path(char *buf, size_t bufsize, const char *fmt, ...)
 static const char evb_db_base_location[] =
     EVBOARDS_PLIST_BASE "/share/installboot";
 
-#ifndef DEFAULT_UBOOT_PKG_PATH
-#define	DEFAULT_UBOOT_PKG_PATH	"/usr/pkg/share/u-boot"
-#endif
-
-#ifndef UBOOT_PATHS_ENV_VAR
-#define	UBOOT_PATHS_ENV_VAR	"INSTALLBOOT_UBOOT_PATHS"
-#endif
-
-static const char evb_uboot_pkg_path[] = DEFAULT_UBOOT_PKG_PATH;
-
 /*
  * evb_db_base_path --
  *	Returns the path to the base board db file.
@@ -483,9 +474,8 @@ evb_uboot_pkg_paths(ib_params *params, int *countp, void **bufp)
 	int i, count;
 	char *cp, *startcp;
 
-	pathspec = getenv(UBOOT_PATHS_ENV_VAR);
-	if (pathspec == NULL)
-		pathspec = evb_uboot_pkg_path;
+	pathspec = params->uboot_paths;
+	assert(pathspec != NULL);
 
 	if (strlen(pathspec) == 0)
 		goto out;

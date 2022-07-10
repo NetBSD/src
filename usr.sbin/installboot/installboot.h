@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.42 2020/06/21 17:17:02 thorpej Exp $	*/
+/*	$NetBSD: installboot.h,v 1.43 2022/07/10 19:28:00 brook Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ typedef struct {
 	const char	*stage2;	/* name of stage2 bootstrap */
 	uint64_t	 s2start;	/*  start block of stage2 */
 	uint32_t	 sectorsize;	/* sector size of target fs */
+	const char	*uboot_paths;	/* u-boot paths */
 		/* parsed -o option=value data */
 	const char	*command;	/* name of command string */
 	const char	*console;	/* name of console */
