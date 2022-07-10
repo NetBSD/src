@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.1 2021/02/28 20:27:40 thorpej Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.2 2022/07/10 14:18:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -56,14 +56,13 @@ ofw_claimphys(paddr_t pa, vsize_t size)
 	paddr_t result;
 
 	if (ofw_address_cells == 2) {
-		/* order of cells is phys.lo ... phys.hi */
-		*p++ = (uint32_t)pa;
 		*p++ = ((uint64_t)pa) >> 32;
+		*p++ = (uint32_t)pa;
 	} else {
 		*p++ = (uint32_t)pa;
 	}
 
-#if 0	/* No known Mac systems with 2, and spec is ambiguous about order. */
+#if 0	/* No known Mac systems with 2. */
 	if (ofw_size_cells == 2) {
 		*p++ = ((uint64_t)size) >> 32;
 		*p++ = (uint32_t)size;
@@ -80,10 +79,9 @@ ofw_claimphys(paddr_t pa, vsize_t size)
 	}
 
 	if (ofw_address_cells == 2) {
-		/* order of cells is base.lo ... base.hi */
 		uint64_t v;
-		v = *p++;
-		v |= (uint64_t)(*p++) << 32;
+		v = (uint64_t)(*p++) << 32;
+		v |= *p++;
 		result = (paddr_t)v;
 	} else {
 		result = *p++;
@@ -106,14 +104,13 @@ ofw_releasephys(paddr_t pa, vsize_t size)
 	uint32_t *p = cells;
 
 	if (ofw_address_cells == 2) {
-		/* order of cells is phys.lo ... phys.hi */
-		*p++ = (uint32_t)pa;
 		*p++ = ((uint64_t)pa) >> 32;
+		*p++ = (uint32_t)pa;
 	} else {
 		*p++ = (uint32_t)pa;
 	}
 
-#if 0	/* No known Mac systems with 2, and spec is ambiguous about order. */
+#if 0	/* No known Mac systems with 2. */
 	if (ofw_size_cells == 2) {
 		*p++ = ((uint64_t)size) >> 32;
 		*p++ = (uint32_t)size;
@@ -184,9 +181,8 @@ ofw_map(vaddr_t va, paddr_t pa, vsize_t size)
 	uint32_t *p = cells;
 
 	if (ofw_address_cells == 2) {
-		/* order of cells is phys.lo ... phys.hi */
-		*p++ = (uint32_t)pa;
 		*p++ = ((uint64_t)pa) >> 32;
+		*p++ = (uint32_t)pa;
 	} else {
 		*p++ = (uint32_t)pa;
 	}
