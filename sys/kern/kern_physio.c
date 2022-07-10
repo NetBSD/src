@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.101 2022/06/30 01:52:29 riastradh Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.102 2022/07/10 23:11:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.101 2022/06/30 01:52:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.102 2022/07/10 23:11:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 				 * aligned, the block addresses are used to track
 				 * errors of finished requests.
 				 */
-				if (dbtob(bp->b_blkno) != uio->uio_offset) {
+				if (uio->uio_offset & (DEV_BSIZE - 1)) {
 					error = EINVAL;
 					goto done;
 				}
