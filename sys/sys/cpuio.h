@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuio.h,v 1.9 2013/01/05 16:36:38 dsl Exp $	*/
+/*	$NetBSD: cpuio.h,v 1.10 2022/07/10 09:59:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2009, 2012 The NetBSD Foundation, Inc.
@@ -47,9 +47,9 @@
  */
 typedef struct cpustate {
 	u_int		cs_id;		/* matching ci_cpuid */
-	bool		cs_online;	/* running unbound LWPs */
-	bool		cs_intr;	/* fielding interrupts */
-	bool		cs_unused[2];	/* reserved */
+	uint8_t		cs_online;	/* running unbound LWPs */
+	uint8_t		cs_intr;	/* fielding interrupts */
+	uint8_t		cs_unused[2];	/* reserved */
 	int32_t		cs_lastmod;	/* time of last state change */
 	char		cs_name[16];	/* reserved */
 	int32_t		cs_lastmodhi;	/* time of last state change */
