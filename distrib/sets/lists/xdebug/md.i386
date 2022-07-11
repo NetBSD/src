@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.51 2022/02/25 17:42:59 mrg Exp $
+# $NetBSD: md.i386,v 1.52 2022/07/11 19:35:42 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib
@@ -48,10 +48,10 @@
 ./usr/libdata/debug/usr/X11R7/lib/libchromeXvMC.so.1.0.debug	xdebug-libchromeXvMC-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libchromeXvMCPro.so.1.0.debug	xdebug-libchromeXvMCPro-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_amdgpu.so.0.1.debug	xdebug-obsolete		xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/libdrm_amdgpu.so.1.1.debug	xdebug-libdrm_amdgpu-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libdrm_amdgpu.so.1.2.debug	xdebug-libdrm_amdgpu-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_intel.so.0.2.debug	xdebug-libdrm_intel-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.2.0.debug	xdebug-obsolete		xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.0.debug	xdebug-libdrm_nouveau-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.1.debug	xdebug-libdrm_nouveau-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libvdpau.so.1.0.debug		xdebug-libvdpau-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i810_dri.so.0.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i915_dri.so.0.debug	xdebug-xf86-video-intel-debug		xorg,debug

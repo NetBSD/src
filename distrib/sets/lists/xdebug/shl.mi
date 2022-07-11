@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.63 2021/07/13 05:53:12 mrg Exp $
+# $NetBSD: shl.mi,v 1.64 2022/07/11 19:35:42 mrg Exp $
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		obsolete
@@ -56,7 +56,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libXxf86dga.so.2.0.debug	xdebug-libXxf86dga-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXxf86misc.so.2.0.debug	xdebug-libXxf86misc-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXxf86vm.so.2.0.debug	xdebug-libXxf86vm-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libdrm.so.3.5.debug	xdebug-libdrm-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libdrm.so.3.6.debug	xdebug-libdrm-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_radeon.so.0.0.debug	xdebug-libdrm_radeon-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libepoxy.so.0.1.debug	xdebug-libepoxy-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libexpat.so.2.0.debug	xdebug-obsolete		xorg,obsolete,compatx11file
