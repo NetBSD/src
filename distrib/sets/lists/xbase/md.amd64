@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.20 2021/04/27 03:09:15 mrg Exp $
+# $NetBSD: md.amd64,v 1.21 2022/07/11 19:35:41 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC.so			xbase-libI810XvMC-lib		xorg,compatx11file
 ./usr/X11R7/lib/libI810XvMC.so.1		xbase-libI810XvMC-lib		xorg,compatx11file
 ./usr/X11R7/lib/libI810XvMC.so.1.0		xbase-libI810XvMC-lib		xorg,compatx11file
@@ -13,13 +13,13 @@
 ./usr/X11R7/lib/libchromeXvMCPro.so.1.0		xbase-libchromeXvMCPro-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_amdgpu.so		xbase-libdrm_amdgpu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_amdgpu.so.1		xbase-libdrm_amdgpu-lib		xorg,compatx11file
-./usr/X11R7/lib/libdrm_amdgpu.so.1.1		xbase-libdrm_amdgpu-lib		xorg,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu.so.1.2		xbase-libdrm_amdgpu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel.so			xbase-libdrm_intel-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel.so.0		xbase-libdrm_intel-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel.so.0.2		xbase-libdrm_intel-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau.so		xbase-libdrm_nouveau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau.so.3		xbase-libdrm_nouveau-lib		xorg,compatx11file
-./usr/X11R7/lib/libdrm_nouveau.so.3.0		xbase-libdrm_nouveau-lib		xorg,compatx11file
+./usr/X11R7/lib/libdrm_nouveau.so.3.1		xbase-libdrm_nouveau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libvdpau.so			xbase-libvdpau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libvdpau.so.1			xbase-libvdpau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libvdpau.so.1.0			xbase-libvdpau-lib		xorg,compatx11file

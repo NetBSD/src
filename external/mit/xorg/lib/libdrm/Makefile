@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2021/07/11 00:43:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2022/07/11 19:33:33 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ INCSDIR=${X11INCDIR}
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm -I${X11SRCDIR.${LIB}}/../include
 
-SUBDIR=	drm kms
+SUBDIR=	drm
 
 PKGCONFIG=	libdrm
 PKGDIST=	${LIB}
