@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.739 2022/07/11 06:15:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.740 2022/07/11 06:16:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.739 2022/07/11 06:15:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.740 2022/07/11 06:16:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -321,7 +321,7 @@ struct wm_softc;
 #endif
 
 #ifdef WM_EVENT_COUNTERS
-#define WM_Q_EVCNT_DEFINE(qname, evname)				\
+#define WM_Q_EVCNT_DEFINE(qname, evname)				 \
 	char qname##_##evname##_evcnt_name[sizeof("qname##XX##evname")]; \
 	struct evcnt qname##_ev_##evname
 
@@ -2049,8 +2049,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 				aprint_error_dev(sc->sc_dev,
 				    "WARNING: I/O BAR at zero.\n");
 			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
-					0, &sc->sc_iot, &sc->sc_ioh,
-					NULL, &sc->sc_ios) == 0) {
+			    0, &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_ios)
+			    == 0) {
 				sc->sc_flags |= WM_F_IOH_VALID;
 			} else
 				aprint_error_dev(sc->sc_dev,
@@ -3114,13 +3114,11 @@ alloc_retry:
 	 * If we're a i82544 or greater (except i82547), we can do
 	 * TCP segmentation offload.
 	 */
-	if (sc->sc_type >= WM_T_82544 && sc->sc_type != WM_T_82547) {
+	if (sc->sc_type >= WM_T_82544 && sc->sc_type != WM_T_82547)
 		ifp->if_capabilities |= IFCAP_TSOv4;
-	}
 
-	if (sc->sc_type >= WM_T_82571) {
+	if (sc->sc_type >= WM_T_82571)
 		ifp->if_capabilities |= IFCAP_TSOv6;
-	}
 
 	sc->sc_tx_process_limit = WM_TX_PROCESS_LIMIT_DEFAULT;
 	sc->sc_tx_intr_process_limit = WM_TX_INTR_PROCESS_LIMIT_DEFAULT;
@@ -7245,8 +7243,10 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 
 		for (j = 0; j < WM_NTXSEGS; j++) {
 			snprintf(txq->txq_txseg_evcnt_names[j],
-			    sizeof(txq->txq_txseg_evcnt_names[j]), "txq%02dtxseg%d", i, j);
-			evcnt_attach_dynamic(&txq->txq_ev_txseg[j], EVCNT_TYPE_MISC,
+			    sizeof(txq->txq_txseg_evcnt_names[j]),
+			    "txq%02dtxseg%d", i, j);
+			evcnt_attach_dynamic(&txq->txq_ev_txseg[j],
+			    EVCNT_TYPE_MISC,
 			    NULL, xname, txq->txq_txseg_evcnt_names[j]);
 		}
 
@@ -7531,10 +7531,15 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
-				panic("%s: MCLBYTES %d unsupported for 82575 or higher\n", __func__, MCLBYTES);
+				panic("%s: MCLBYTES %d unsupported for 82575 "
+				    "or higher\n", __func__, MCLBYTES);
 
-			/* Currently, support SRRCTL_DESCTYPE_ADV_ONEBUF only. */
-			CSR_WRITE(sc, WMREG_SRRCTL(qid), SRRCTL_DESCTYPE_ADV_ONEBUF
+			/*
+			 * Currently, support SRRCTL_DESCTYPE_ADV_ONEBUF
+			 * only.
+			 */
+			CSR_WRITE(sc, WMREG_SRRCTL(qid),
+			    SRRCTL_DESCTYPE_ADV_ONEBUF
 			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT));
 			CSR_WRITE(sc, WMREG_RXDCTL(qid), RXDCTL_QUEUE_ENABLE
 			    | RXDCTL_PTHRESH(16) | RXDCTL_HTHRESH(8)
@@ -9255,15 +9260,15 @@ wm_rxdesc_ensure_checksum(struct wm_rxqueue *rxq, uint32_t status,
 
 	if (!wm_rxdesc_is_set_status(sc, status, WRX_ST_IXSM, 0, 0)) {
 		if (wm_rxdesc_is_set_status(sc, status,
-			WRX_ST_IPCS, EXTRXC_STATUS_IPCS, NQRXC_STATUS_IPCS)) {
+		    WRX_ST_IPCS, EXTRXC_STATUS_IPCS, NQRXC_STATUS_IPCS)) {
 			WM_Q_EVCNT_INCR(rxq, ipsum);
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (wm_rxdesc_is_set_error(sc, errors,
-				WRX_ER_IPE, EXTRXC_ERROR_IPE, NQRXC_ERROR_IPE))
+			    WRX_ER_IPE, EXTRXC_ERROR_IPE, NQRXC_ERROR_IPE))
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
 		if (wm_rxdesc_is_set_status(sc, status,
-			WRX_ST_TCPCS, EXTRXC_STATUS_TCPCS, NQRXC_STATUS_L4I)) {
+		    WRX_ST_TCPCS, EXTRXC_STATUS_TCPCS, NQRXC_STATUS_L4I)) {
 			/*
 			 * Note: we don't know if this was TCP or UDP,
 			 * so we just set both bits, and expect the
@@ -9318,9 +9323,8 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 		uint8_t rsstype = wm_rxdesc_get_rsstype(rxq, i);
 #endif
 
-		if (!wm_rxdesc_dd(rxq, i, status)) {
+		if (!wm_rxdesc_dd(rxq, i, status))
 			break;
-		}
 
 		if (limit-- == 0) {
 			more = true;
@@ -9523,10 +9527,9 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 	if ((sc->sc_type == WM_T_ICH8) && (link == false))
 		wm_gig_downshift_workaround_ich8lan(sc);
 
-	if ((sc->sc_type == WM_T_ICH8)
-	    && (sc->sc_phytype == WMPHY_IGP_3)) {
+	if ((sc->sc_type == WM_T_ICH8) && (sc->sc_phytype == WMPHY_IGP_3))
 		wm_kmrn_lock_loss_workaround_ich8lan(sc);
-	}
+
 	DPRINTF(sc, WM_DEBUG_LINK, ("%s: LINK: LSC -> mii_pollstat\n",
 		device_xname(dev)));
 	mii_pollstat(&sc->sc_mii);
@@ -9795,7 +9798,8 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 		/* Update LED */
 		wm_tbi_serdes_set_linkled(sc);
 	} else if (icr & ICR_RXSEQ)
-		DPRINTF(sc, WM_DEBUG_LINK, ("%s: LINK: Receive sequence error\n",
+		DPRINTF(sc, WM_DEBUG_LINK,
+		    ("%s: LINK: Receive sequence error\n",
 			device_xname(sc->sc_dev)));
 }
 
@@ -9870,7 +9874,8 @@ wm_linkintr_serdes(struct wm_softc *sc, uint32_t icr)
 		/* Update LED */
 		wm_tbi_serdes_set_linkled(sc);
 	} else
-		DPRINTF(sc, WM_DEBUG_LINK, ("%s: LINK: Receive sequence error\n",
+		DPRINTF(sc, WM_DEBUG_LINK,
+		    ("%s: LINK: Receive sequence error\n",
 		    device_xname(sc->sc_dev)));
 }
 
@@ -11107,7 +11112,8 @@ wm_gmii_i82543_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	    (MII_COMMAND_READ << 10) | (MII_COMMAND_START << 12), 14);
 	*val = wm_i82543_mii_recvbits(sc) & 0xffff;
 
-	DPRINTF(sc, WM_DEBUG_GMII, ("%s: GMII: read phy %d reg %d -> 0x%04hx\n",
+	DPRINTF(sc, WM_DEBUG_GMII,
+	    ("%s: GMII: read phy %d reg %d -> 0x%04hx\n",
 		device_xname(dev), phy, reg, *val));
 
 	return 0;
@@ -11167,7 +11173,8 @@ wm_gmii_mdic_readreg(device_t dev, int phy, int reg, uint16_t *val)
 		return ETIMEDOUT;
 	} else if (mdic & MDIC_E) {
 		/* This is normal if no PHY is present. */
-		DPRINTF(sc, WM_DEBUG_GMII, ("%s: MDIC read error: phy %d reg %d\n",
+		DPRINTF(sc, WM_DEBUG_GMII,
+		    ("%s: MDIC read error: phy %d reg %d\n",
 			device_xname(sc->sc_dev), phy, reg));
 		return -1;
 	} else
@@ -12435,11 +12442,11 @@ wm_tbi_mediainit(struct wm_softc *sc)
 
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
-#define	ADD(ss, mm, dd)							\
-do {									\
-	aprint_normal("%s%s", sep, ss);					\
+#define	ADD(ss, mm, dd)							  \
+do {									  \
+	aprint_normal("%s%s", sep, ss);					  \
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | (mm), (dd), NULL); \
-	sep = ", ";							\
+	sep = ", ";							  \
 } while (/*CONSTCOND*/0)
 
 	aprint_normal_dev(sc->sc_dev, "");
@@ -12541,8 +12548,8 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	ctrl = CSR_READ(sc, WMREG_CTRL);
 	signal = wm_tbi_havesignal(sc, ctrl);
 
-	DPRINTF(sc, WM_DEBUG_LINK, ("%s: signal = %d\n", device_xname(sc->sc_dev),
-		signal));
+	DPRINTF(sc, WM_DEBUG_LINK,
+	    ("%s: signal = %d\n", device_xname(sc->sc_dev), signal));
 
 	if (signal) {
 		/* Have signal; wait for the link to come up. */
@@ -12552,7 +12559,8 @@ wm_tbi_mediachange(struct ifnet *ifp)
 				break;
 		}
 
-		DPRINTF(sc, WM_DEBUG_LINK,("%s: i = %d after waiting for link\n",
+		DPRINTF(sc, WM_DEBUG_LINK,
+		    ("%s: i = %d after waiting for link\n",
 			device_xname(sc->sc_dev), i));
 
 		status = CSR_READ(sc, WMREG_STATUS);
@@ -12596,7 +12604,8 @@ wm_tbi_mediachange(struct ifnet *ifp)
 			sc->sc_tbi_linkup = 0;
 		}
 	} else {
-		DPRINTF(sc, WM_DEBUG_LINK, ("%s: LINK: set media -> no signal\n",
+		DPRINTF(sc, WM_DEBUG_LINK,
+		    ("%s: LINK: set media -> no signal\n",
 			device_xname(sc->sc_dev)));
 		sc->sc_tbi_linkup = 0;
 	}
@@ -12707,8 +12716,7 @@ wm_check_for_link(struct wm_softc *sc)
 	    && (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)) {
 		sc->sc_tbi_linkup = 1;
 		DPRINTF(sc, WM_DEBUG_LINK, ("%s: %s: go back to autonego\n",
-			device_xname(sc->sc_dev),
-			__func__));
+			device_xname(sc->sc_dev), __func__));
 		CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 		CSR_WRITE(sc, WMREG_CTRL, (ctrl & ~CTRL_SLU));
 	} else if (signal && ((rxcw & RXCW_C) != 0)) {
@@ -12953,7 +12961,8 @@ wm_serdes_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		/* Check flow */
 		reg = CSR_READ(sc, WMREG_PCS_LSTS);
 		if ((reg & PCS_LSTS_AN_COMP) == 0) {
-			DPRINTF(sc, WM_DEBUG_LINK, ("XXX LINKOK but not ACOMP\n"));
+			DPRINTF(sc, WM_DEBUG_LINK,
+			    ("XXX LINKOK but not ACOMP\n"));
 			goto setled;
 		}
 		pcs_adv = CSR_READ(sc, WMREG_PCS_ANADV);
@@ -14512,8 +14521,7 @@ retry:
 			wm_put_swsm_semaphore(sc);
 			goto retry;
 		}
-		aprint_error_dev(sc->sc_dev,
-		    "could not acquire SWSM SMBI\n");
+		aprint_error_dev(sc->sc_dev, "could not acquire SWSM SMBI\n");
 		return 1;
 	}
 
@@ -14819,9 +14827,8 @@ wm_put_swflag_ich8lan(struct wm_softc *sc)
 	if (ext_ctrl & EXTCNFCTR_MDIO_SW_OWNERSHIP) {
 		ext_ctrl &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
 		CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
-	} else {
+	} else
 		device_printf(sc->sc_dev, "Semaphore unexpectedly released\n");
-	}
 
 	mutex_exit(sc->sc_ich_phymtx);
 }
@@ -16545,8 +16552,8 @@ wm_k1_workaround_lpt_lp(struct wm_softc *sc, bool link)
 
 	if (link && (speed == STATUS_SPEED_1000)) {
 		sc->phy.acquire(sc);
-		int rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
-		    &phyreg);
+		int rv = wm_kmrn_readreg_locked(sc,
+		    KUMCTRLSTA_OFFSET_K1_CONFIG, &phyreg);
 		if (rv != 0)
 			goto release;
 		rv = wm_kmrn_writereg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
