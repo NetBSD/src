@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.16 2021/12/27 13:29:15 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.17 2022/07/11 18:56:00 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.16 2021/12/27 13:29:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.17 2022/07/11 18:56:00 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -1630,7 +1630,6 @@ long i915_request_wait(struct i915_request *rq,
 		timeout = -ETIME;
 	}
 	spin_unlock(rq->fence.lock);
-	DRM_DESTROY_WAITQUEUE(&wait.wq);
 #else
 	for (;;) {
 		set_current_state(state);
@@ -1657,6 +1656,9 @@ long i915_request_wait(struct i915_request *rq,
 #endif
 
 	dma_fence_remove_callback(&rq->fence, &wait.cb);
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&wait.wq);
+#endif
 
 out:
 	mutex_release(&rq->engine->gt->reset.mutex.dep_map, _THIS_IP_);
