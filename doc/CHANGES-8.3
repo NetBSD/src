@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.137 2022/06/17 15:33:02 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.138 2022/07/11 14:17:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2683,4 +2683,25 @@ sys/miscfs/procfs/procfs_vnops.c		1.229
 
 	procfs: add missing permission check.
 	[shm, ticket #1748]
+
+sys/dev/pci/if_wmreg.h				1.122-1.125 via patch
+sys/dev/pci/if_wmvar.h				1.48
+sys/dev/pci/if_wm.c				1.719-1.720,1.722-1.725,
+						1.727-1.740 via patch
+
+	- wm_tick: Add missing splx(s) when not WM_MPSAFE.
+	- Print DMA range info if the system is booting in the verbose mode.
+	- Micro optimization:
+	  - Call m_freem(m) only if m0 == NULL.
+	  - Call wm_xxeof() only when limit > 0.
+	  - Don't set the more flag when there is no packet to process.
+	- No functional changes:
+	  - Call txeof first, then rxeof for the consistency.
+	  - Remove duplicated break.
+	  - Remove stray semicolons from struct declaration.
+	  - Fix value return from void function.
+	  - Use macros.
+	  - Modify comment.
+	  - KNF.
+	[msaitoh, ticket #1751]
 
