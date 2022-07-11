@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.738 2022/07/06 06:33:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.739 2022/07/11 06:15:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.738 2022/07/06 06:33:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.739 2022/07/11 06:15:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -323,7 +323,7 @@ struct wm_softc;
 #ifdef WM_EVENT_COUNTERS
 #define WM_Q_EVCNT_DEFINE(qname, evname)				\
 	char qname##_##evname##_evcnt_name[sizeof("qname##XX##evname")]; \
-	struct evcnt qname##_ev_##evname;
+	struct evcnt qname##_ev_##evname
 
 #define WM_Q_EVCNT_ATTACH(qname, evname, q, qnum, xname, evtype)	\
 	do {								\
@@ -342,7 +342,7 @@ struct wm_softc;
 	WM_Q_EVCNT_ATTACH(qname, evname, q, qnum, xname, EVCNT_TYPE_INTR)
 
 #define WM_Q_EVCNT_DETACH(qname, evname, q, qnum)	\
-	evcnt_detach(&(q)->qname##_ev_##evname);
+	evcnt_detach(&(q)->qname##_ev_##evname)
 #endif /* WM_EVENT_COUNTERS */
 
 struct wm_txqueue {
@@ -409,27 +409,27 @@ struct wm_txqueue {
 	uint32_t txq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
 	/* TX event counters */
-	WM_Q_EVCNT_DEFINE(txq, txsstall)    /* Stalled due to no txs */
-	WM_Q_EVCNT_DEFINE(txq, txdstall)    /* Stalled due to no txd */
-	WM_Q_EVCNT_DEFINE(txq, fifo_stall)  /* FIFO stalls (82547) */
-	WM_Q_EVCNT_DEFINE(txq, txdw)	    /* Tx descriptor interrupts */
-	WM_Q_EVCNT_DEFINE(txq, txqe)	    /* Tx queue empty interrupts */
+	WM_Q_EVCNT_DEFINE(txq, txsstall);   /* Stalled due to no txs */
+	WM_Q_EVCNT_DEFINE(txq, txdstall);   /* Stalled due to no txd */
+	WM_Q_EVCNT_DEFINE(txq, fifo_stall); /* FIFO stalls (82547) */
+	WM_Q_EVCNT_DEFINE(txq, txdw);	    /* Tx descriptor interrupts */
+	WM_Q_EVCNT_DEFINE(txq, txqe);	    /* Tx queue empty interrupts */
 					    /* XXX not used? */
 
-	WM_Q_EVCNT_DEFINE(txq, ipsum)	    /* IP checksums comp. */
-	WM_Q_EVCNT_DEFINE(txq, tusum)	    /* TCP/UDP cksums comp. */
-	WM_Q_EVCNT_DEFINE(txq, tusum6)	    /* TCP/UDP v6 cksums comp. */
-	WM_Q_EVCNT_DEFINE(txq, tso)	    /* TCP seg offload (IPv4) */
-	WM_Q_EVCNT_DEFINE(txq, tso6)	    /* TCP seg offload (IPv6) */
-	WM_Q_EVCNT_DEFINE(txq, tsopain)	    /* Painful header manip. for TSO */
-	WM_Q_EVCNT_DEFINE(txq, pcqdrop)	    /* Pkt dropped in pcq */
-	WM_Q_EVCNT_DEFINE(txq, descdrop)    /* Pkt dropped in MAC desc ring */
+	WM_Q_EVCNT_DEFINE(txq, ipsum);	    /* IP checksums comp. */
+	WM_Q_EVCNT_DEFINE(txq, tusum);	    /* TCP/UDP cksums comp. */
+	WM_Q_EVCNT_DEFINE(txq, tusum6);	    /* TCP/UDP v6 cksums comp. */
+	WM_Q_EVCNT_DEFINE(txq, tso);	    /* TCP seg offload (IPv4) */
+	WM_Q_EVCNT_DEFINE(txq, tso6);	    /* TCP seg offload (IPv6) */
+	WM_Q_EVCNT_DEFINE(txq, tsopain);    /* Painful header manip. for TSO */
+	WM_Q_EVCNT_DEFINE(txq, pcqdrop);    /* Pkt dropped in pcq */
+	WM_Q_EVCNT_DEFINE(txq, descdrop);   /* Pkt dropped in MAC desc ring */
 					    /* other than toomanyseg */
 
-	WM_Q_EVCNT_DEFINE(txq, toomanyseg)  /* Pkt dropped(toomany DMA segs) */
-	WM_Q_EVCNT_DEFINE(txq, defrag)	    /* m_defrag() */
-	WM_Q_EVCNT_DEFINE(txq, underrun)    /* Tx underrun */
-	WM_Q_EVCNT_DEFINE(txq, skipcontext) /* Tx skip wrong cksum context */
+	WM_Q_EVCNT_DEFINE(txq, toomanyseg); /* Pkt dropped(toomany DMA segs) */
+	WM_Q_EVCNT_DEFINE(txq, defrag);	    /* m_defrag() */
+	WM_Q_EVCNT_DEFINE(txq, underrun);   /* Tx underrun */
+	WM_Q_EVCNT_DEFINE(txq, skipcontext); /* Tx skip wrong cksum context */
 
 	char txq_txseg_evcnt_names[WM_NTXSEGS][sizeof("txqXXtxsegXXX")];
 	struct evcnt txq_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
@@ -471,11 +471,11 @@ struct wm_rxqueue {
 	uint32_t rxq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
 	/* RX event counters */
-	WM_Q_EVCNT_DEFINE(rxq, intr)	/* Interrupts */
-	WM_Q_EVCNT_DEFINE(rxq, defer)	/* Rx deferred processing */
+	WM_Q_EVCNT_DEFINE(rxq, intr);	/* Interrupts */
+	WM_Q_EVCNT_DEFINE(rxq, defer);	/* Rx deferred processing */
 
-	WM_Q_EVCNT_DEFINE(rxq, ipsum)	/* IP checksums checked */
-	WM_Q_EVCNT_DEFINE(rxq, tusum)	/* TCP/UDP cksums checked */
+	WM_Q_EVCNT_DEFINE(rxq, ipsum);	/* IP checksums checked */
+	WM_Q_EVCNT_DEFINE(rxq, tusum);	/* TCP/UDP cksums checked */
 #endif
 };
 
