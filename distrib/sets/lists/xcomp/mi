@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.233 2022/05/03 13:46:22 uwe Exp $
+#	 $NetBSD: mi,v 1.234 2022/07/11 19:35:42 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -727,7 +727,7 @@
 ./usr/X11R7/include/libdrm/sis_drm.h			xcomp-libdrm-include	xorg
 ./usr/X11R7/include/libdrm/via_drm.h			xcomp-libdrm-include	xorg
 ./usr/X11R7/include/libdrm/virtgpu_drm.h		xcomp-libdrm-include	xorg
-./usr/X11R7/include/libkms/libkms.h			xcomp-libkms-include	xorg
+./usr/X11R7/include/libkms/libkms.h			xcomp-obsolete		obsolete
 ./usr/X11R7/include/libsync.h				xcomp-libdrm-include	xorg
 ./usr/X11R7/include/pciaccess.h				xcomp-libpciaccess-include	xorg
 ./usr/X11R7/include/pixman-1/pixman-version.h		xcomp-pixman-include	xorg
