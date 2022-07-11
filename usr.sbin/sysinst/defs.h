@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.86 2022/07/10 10:52:40 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.87 2022/07/11 15:12:24 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -949,7 +949,7 @@ int pm_getrefdev(struct pm_devs *);
 void update_wedges(const char *);
 void pm_destroy_all(void);
 #else
-static inline int partman(struct install_partition_desc*) { return -1; }
+static inline int partman(struct install_partition_desc *i __unused) { return -1; }
 static inline int pm_getrefdev(struct pm_devs *x __unused) { return -1; }
 #define update_wedges(x) __nothing
 #endif
