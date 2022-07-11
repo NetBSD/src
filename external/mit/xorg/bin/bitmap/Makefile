@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/31 09:14:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2022/07/11 08:05:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 
 SUBDIR=	bmtoa atobm app-defaults
 
-.PATH:	${X11SRCDIR.bitmap}
+.PATH:	${X11SRCDIR.bitmap} ${X11SRCDIR.bitmap}/bitmaps
 
 CWARNFLAGS.clang+=	-Wno-format
 
