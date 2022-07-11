@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.508 2022/07/11 07:36:56 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.509 2022/07/11 07:40:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.508 2022/07/11 07:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.509 2022/07/11 07:40:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2424,7 +2424,8 @@ if_link_state_change_work(struct work *work, void *arg)
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	s = splnet();
 
-	/* Pop a link state change from the queue and process it.
+	/*
+	 * Pop a link state change from the queue and process it.
 	 * If there is nothing to process then if_detach() has been called.
 	 * We keep if_link_scheduled = true so the queue can safely drain
 	 * without more work being queued. */
@@ -3869,7 +3870,8 @@ if_flags_set(ifnet_t *ifp, const u_short flags)
 		if (cantflags != 0)
 			ifp->if_flags ^= cantflags;
 
-                /* Traditionally, we do not call if_ioctl after
+                /*
+		 * Traditionally, we do not call if_ioctl after
                  * setting/clearing only IFF_PROMISC if the interface
                  * isn't IFF_UP.  Uphold that tradition.
 		 */
