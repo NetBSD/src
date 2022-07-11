@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2021/03/02 07:37:27 rin Exp $ */
+/*	$NetBSD: intr.h,v 1.19 2022/07/11 09:39:10 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,13 +28,15 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.18 2021/03/02 07:37:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.19 2022/07/11 09:39:10 martin Exp $");
 #endif
 
 #ifndef _POWERPC_INTR_MACHDEP_H_
 #define _POWERPC_INTR_MACHDEP_H_
 
+#if 0	/* PR port-powerpc/56922: fast softints are broken on powerpc */
 #define	__HAVE_FAST_SOFTINTS	1
+#endif
 
 
 /* Interrupt priority `levels'. */
