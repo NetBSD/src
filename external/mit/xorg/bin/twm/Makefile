@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/09/13 10:31:46 maya Exp $
+#	$NetBSD: Makefile,v 1.9 2022/07/11 09:16:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,8 +16,13 @@ X11EXTRAMANTRANSFORMS+=	__datadir__/X11/twm ${TWMCONFIGDIR}
 TWMDIR=			${X11SRCDIR.${PROG}}
 
 CPPFLAGS+=		-I. -I${TWMDIR}/src
-CPPFLAGS+=		-DHAVE_MKSTEMP -DXORG_RELEASE=${XORG_RELEASE} \
-			-DXVENDORNAME=${XVENDORNAME}
+CPPFLAGS+=		-DHAVE_MKSTEMP \
+			-DHAVE_XRANDR \
+			-DXORG_RELEASE=${XORG_RELEASE} \
+			-DXVENDORNAME=${XVENDORNAME} \
+			-DAPP_NAME=\"twm\" \
+			-DAPP_CLASS=\"twm\" \
+			-DAPP_VERSION=\"$(VERSION)\"
 
 CPPFLAGS.parse.c=	-DSYSTEM_INIT_FILE=\"${TWMCONFIGDIR}/system.twmrc\"
 
@@ -33,14 +38,14 @@ deftwmrc.c: system.twmrc deftwmrc.sed
 	echo ' * This file is generated automatically from the default' >>$@
 	echo ' * twm bindings file system.twmrc by the twm Makefile.' >>$@
 	echo ' */' >>$@
-	echo 'char *defTwmrc[] = {' >>$@
+	echo 'const unsigned char *defTwmrc[] = {' >>$@
 	${TOOL_SED} -f ${TWMDIR}/src/deftwmrc.sed \
 	     < ${TWMDIR}/src/system.twmrc >>$@
 	echo '    (char *) 0 };' >>$@
 
 
-LDADD+=	-lXmu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lXrandr -lXmu -lXt -lSM -lICE -lXext -lX11
+DPADD+=	${LIBXRANDR} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
 .PATH:	${TWMDIR}/src ${TWMDIR}/man
 
@@ -52,3 +57,6 @@ COPTS.util.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
+
+# Needs bsd.x11.mk
+VERSION!=		${PRINT_PACKAGE_VERSION} ${X11SRCDIR.twm}/configure
