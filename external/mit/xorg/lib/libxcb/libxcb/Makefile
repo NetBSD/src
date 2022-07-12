@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2022/05/14 11:26:23 rillig Exp $
+#	$NetBSD: Makefile,v 1.12 2022/07/12 02:53:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -68,7 +68,6 @@ INCS=	\
 	xcb.h \
 	xcbext.h \
 	xf86dri.h \
-	xf86vidmode.h \
 	xfixes.h \
 	xinerama.h \
 	xinput.h \
