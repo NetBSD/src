@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.10 2019/11/03 01:35:47 uki Exp $
+# $NetBSD: md.bebox,v 1.11 2022/07/12 01:51:05 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		xdebug-obsolete	xorg,obsolete
@@ -18,7 +18,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-xf86-video-cirrus_alpine-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.2.debug	xdebug-xf86-video-mga-debug	xorg,debug
