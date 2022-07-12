@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.312 2022/07/12 22:51:12 rillig Exp $
+.\"	$NetBSD: make.1,v 1.313 2022/07/12 22:59:43 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -878,9 +878,10 @@ the first part of which can be controlled via
 If
 .Va .MAKE.JOB.PREFIX
 is empty, no token is printed.
-.br
-For example:
-.Li .MAKE.JOB.PREFIX=${.newline}---${.MAKE:T}[${.MAKE.PID}]
+For example, setting
+.Va .MAKE.JOB.PREFIX
+to
+.Li ${.newline}---${.MAKE:T}[${.MAKE.PID}]
 would produce tokens like
 .Ql ---make[1234] target ---
 making it easier to track the degree of parallelism being achieved.
