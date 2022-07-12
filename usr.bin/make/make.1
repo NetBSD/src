@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.311 2022/07/12 22:45:05 rillig Exp $
+.\"	$NetBSD: make.1,v 1.312 2022/07/12 22:51:12 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -583,7 +583,7 @@ starts with that as its current working directory.
 Variables in make behave much like macros in the C preprocessor.
 .Pp
 Variable assignments have the form
-.Sq Ar NAME No Ar op No Ar value ,
+.Sq Ar NAME Ar op Ar value ,
 where:
 .Bl -tag -width Ds
 .It Ar NAME
@@ -1176,8 +1176,8 @@ are both set only while the
 .Sq Pa Makefiles
 are being parsed.
 If you want to retain their current values, assign them to a variable
-using assignment with expansion:
-.Pq Ql Cm \&:= .
+using assignment with expansion
+.Sq Cm \&:= .
 .It Va .PATH
 A variable that represents the list of directories that
 .Nm
@@ -1269,7 +1269,7 @@ The standard shell wildcard characters
 .Pf ( Ql * ,
 .Ql \&? ,
 and
-.Ql Oo Oc )
+.Ql \&[] )
 may
 be used.
 The wildcard characters may be escaped with a backslash
@@ -1306,7 +1306,7 @@ Orders every word in variable in reverse numerical order.
 Shuffles the words in variable.
 The results will be different each time you are referring to the
 modified variable; use the assignment with expansion
-.Pq Ql Cm \&:=
+.Sq Cm \&:=
 to prevent such behavior.
 For example,
 .Bd -literal -offset indent
