@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.66 2022/07/12 01:51:05 mrg Exp $
+# $NetBSD: md.cats,v 1.67 2022/07/12 23:19:53 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -49,7 +49,7 @@
 ./usr/X11R7/lib/modules/drivers/imstt_drv.so		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		xserver-xf86-input-keyboard-drivers	xorg
-./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		xserver-xf86-input-keyboard-drivers	xorg
+./usr/X11R7/lib/modules/drivers/kbd_drv.so.2		xserver-xf86-input-keyboard-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/mga_drv.so		xserver-xf86-video-mga-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/mga_drv.so.2		xserver-xf86-video-mga-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		xserver-xf86-input-mouse-drivers	xorg

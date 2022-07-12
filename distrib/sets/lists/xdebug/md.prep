@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.11 2022/07/12 01:51:05 mrg Exp $
+# $NetBSD: md.prep,v 1.12 2022/07/12 23:19:53 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		xdebug-obsolete	xorg,obsolete
@@ -20,7 +20,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.2.debug	xdebug-xf86-video-mga-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	xdebug-xf86-video-s3-debug	xorg,debug

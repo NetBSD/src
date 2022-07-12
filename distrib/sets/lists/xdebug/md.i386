@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.53 2022/07/12 01:51:05 mrg Exp $
+# $NetBSD: md.i386,v 1.54 2022/07/12 23:19:53 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib
@@ -115,7 +115,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/intel_drv_old.so.2.debug	xdebug-xf86-video-intel-debug	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ivch_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ivch_drv.so.2.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	xdebug-xf86-input-keyboard-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libapm_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libark_drv.so.0.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libast_drv.so.0.debug	xdebug-obsolete	xorg,obsolete
@@ -133,7 +133,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libi740_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libintel_drv.so.2.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libivch_drv.so.2.debug	xdebug-obsolete	xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.2.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmach64_drv.so.6.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmga_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
