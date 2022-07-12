@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.23 2022/05/03 12:53:51 uwe Exp $
+# $NetBSD: md.bebox,v 1.24 2022/07/12 01:51:05 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -8,8 +8,8 @@
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/dri/mga_dri.so			xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		xserver-obsolete	obsolete
-./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	xserver-xf86-video-cirrus_alpine-drivers	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1	xserver-xf86-video-cirrus_alpine-drivers	xorg
+./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1	xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so		xserver-xf86-video-cirrus-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so.1		xserver-xf86-video-cirrus-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		xserver-xf86-input-keyboard-drivers	xorg
