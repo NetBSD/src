@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.29 2021/07/24 19:06:25 thorpej Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.30 2022/07/12 02:12:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.29 2021/07/24 19:06:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.30 2022/07/12 02:12:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,9 +221,6 @@ mlx_v1_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 		/* Copy mailbox data to window. */
 		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
 		    MLX_V1REG_MAILBOX, mc->mc_mbox, 13);
-		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V1REG_MAILBOX, 13,
-		    BUS_SPACE_BARRIER_WRITE);
 
 		/* Post command. */
 		mlx_outb(mlx, MLX_V1REG_IDB, MLX_V1_IDB_FULL);

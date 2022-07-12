@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.34 2021/10/24 20:00:12 andvar Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.35 2022/07/12 02:10:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.34 2021/10/24 20:00:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.35 2022/07/12 02:10:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,7 +376,6 @@ ie_vme_read16(struct ie_softc *sc, int offset)
 {
 	uint16_t v;
 
-	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
 	v = bus_space_read_2(sc->bt, sc->bh, offset);
 	return (((v&0xff)<<8) | ((v>>8)&0xff));
 }
@@ -386,7 +385,6 @@ ie_vme_write16(struct ie_softc *sc, int offset, uint16_t v)
 {
 	int v0 = ((((v)&0xff)<<8) | (((v)>>8)&0xff));
 	bus_space_write_2(sc->bt, sc->bh, offset, v0);
-	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 void
@@ -403,8 +401,6 @@ ie_vme_write24(struct ie_softc *sc, int offset, int addr)
 	t = (u_char *)&v1;
 	t[0] = f[1]; t[1] = 0;
 	bus_space_write_2(sc->bt, sc->bh, offset+2, v1);
-
-	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
 int
