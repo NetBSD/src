@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.35 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.36 2022/07/12 02:03:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.35 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.36 2022/07/12 02:03:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,6 @@ static uint16_t
 ef_read_16(struct ie_softc *sc, int offset)
 {
 
-	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
 	return bus_space_read_2(sc->bt, sc->bh, offset);
 }
 
@@ -246,9 +245,6 @@ ef_copyin(struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int dribble;
 	uint8_t *bptr = dst;
-
-	bus_space_barrier(sc->bt, sc->bh, offset, size,
-	    BUS_SPACE_BARRIER_READ);
 
 	if (offset % 2) {
 		*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
@@ -270,8 +266,6 @@ static void
 ef_copyout(struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int dribble;
-	int osize = size;
-	int ooffset = offset;
 	const uint8_t *bptr = src;
 
 	if (offset % 2) {
@@ -287,9 +281,6 @@ ef_copyout(struct ie_softc *sc, const void *src, int offset, size_t size)
 		offset += size - 1;
 		bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
 	}
-
-	bus_space_barrier(sc->bt, sc->bh, ooffset, osize,
-	    BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
@@ -297,7 +288,6 @@ ef_write_16(struct ie_softc *sc, int offset, uint16_t value)
 {
 
 	bus_space_write_2(sc->bt, sc->bh, offset, value);
-	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
@@ -306,7 +296,6 @@ ef_write_24(struct ie_softc *sc, int offset, int addr)
 
 	bus_space_write_4(sc->bt, sc->bh, offset,
 	    addr + (u_long)sc->sc_maddr - (u_long)sc->sc_iobase);
-	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
@@ -576,8 +565,6 @@ ef_attach(device_t parent, device_t self, void *aux)
 	ef_write_24(sc, IE_ISCP_BASE((u_long)sc->iscp), (u_long)sc->iscp);
 
 	/* flush setup of pointers, check if chip answers */
-	bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
-			  BUS_SPACE_BARRIER_WRITE);
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: can't talk to i82586!\n",
 			device_xname(self)));
