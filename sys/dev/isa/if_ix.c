@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.38 2019/04/25 10:08:46 msaitoh Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.39 2022/07/12 02:03:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.38 2019/04/25 10:08:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.39 2022/07/12 02:03:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,6 @@ static int	ix_intrhook(struct ie_softc *, int);
 
 static void	ix_copyin(struct ie_softc *, void *, int, size_t);
 static void	ix_copyout(struct ie_softc *, const void *, int, size_t);
-
-static void	ix_bus_barrier(struct ie_softc *, int, int, int);
 
 static uint16_t ix_read_16(struct ie_softc *, int);
 static void	ix_write_16(struct ie_softc *, int, uint16_t);
@@ -246,14 +244,8 @@ ix_copyin(struct ie_softc *sc, void *dst, int offset, size_t size)
 
 	if (isc->use_pio) {
 		/* Reset read pointer to the specified offset */
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
-		    BUS_SPACE_BARRIER_READ);
 		bus_space_write_2(sc->bt, sc->bh, IX_READPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_READPTR, 2,
-		    BUS_SPACE_BARRIER_WRITE);
-	} else
-		bus_space_barrier(sc->bt, sc->bh, offset, size,
-		    BUS_SPACE_BARRIER_READ);
+	}
 
 	if (offset % 2) {
 		if (isc->use_pio)
@@ -290,8 +282,6 @@ static void
 ix_copyout(struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int i, dribble;
-	int osize = size;
-	int ooffset = offset;
 	const uint8_t *bptr = src;
 	const uint16_t *wptr = src;
 	struct ix_softc *isc = (struct ix_softc *)sc;
@@ -299,8 +289,6 @@ ix_copyout(struct ie_softc *sc, const void *src, int offset, size_t size)
 	if (isc->use_pio) {
 		/* Reset write pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
-						  BUS_SPACE_BARRIER_WRITE);
 	}
 
 	if (offset % 2) {
@@ -332,24 +320,6 @@ ix_copyout(struct ie_softc *sc, const void *src, int offset, size_t size)
 		else
 			bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
 	}
-
-	if (isc->use_pio)
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
-		    BUS_SPACE_BARRIER_WRITE);
-	else
-		bus_space_barrier(sc->bt, sc->bh, ooffset, osize,
-		    BUS_SPACE_BARRIER_WRITE);
-}
-
-static void
-ix_bus_barrier(struct ie_softc *sc, int offset, int length, int flags)
-{
-	struct ix_softc *isc = (struct ix_softc *)sc;
-
-	if (isc->use_pio)
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, flags);
-	else
-		bus_space_barrier(sc->bt, sc->bh, offset, length, flags);
 }
 
 static uint16_t
@@ -358,18 +328,11 @@ ix_read_16(struct ie_softc *sc, int offset)
 	struct ix_softc *isc = (struct ix_softc *)sc;
 
 	if (isc->use_pio) {
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
-		    BUS_SPACE_BARRIER_READ);
-
 		/* Reset read pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_READPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_READPTR, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 
 		return bus_space_read_2(sc->bt, sc->bh, IX_DATAPORT);
 	} else {
-		bus_space_barrier(sc->bt, sc->bh, offset, 2,
-		    BUS_SPACE_BARRIER_READ);
 		return bus_space_read_2(sc->bt, sc->bh, offset);
 	}
 }
@@ -382,16 +345,10 @@ ix_write_16(struct ie_softc *sc, int offset, uint16_t value)
 	if (isc->use_pio) {
 		/* Reset write pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 
 		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, value);
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 	} else {
 		bus_space_write_2(sc->bt, sc->bh, offset, value);
-		bus_space_barrier(sc->bt, sc->bh, offset, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 	}
 }
 
@@ -405,20 +362,14 @@ ix_write_24 (struct ie_softc *sc, int offset, int addr)
 	if (isc->use_pio) {
 		/* Reset write pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 
 		ptr = (char*)&val;
 		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT,
 		    *((uint16_t *)ptr));
 		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT,
 		    *((uint16_t *)(ptr + 2)));
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 	} else {
 		bus_space_write_4(sc->bt, sc->bh, offset, val);
-		bus_space_barrier(sc->bt, sc->bh, offset, 4,
-		    BUS_SPACE_BARRIER_WRITE);
 	}
 }
 
@@ -432,8 +383,6 @@ ix_zeromem(struct ie_softc *sc, int offset, int count)
 	if (isc->use_pio) {
 		/* Reset write pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 
 		if (offset % 2) {
 			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, 0);
@@ -446,13 +395,8 @@ ix_zeromem(struct ie_softc *sc, int offset, int count)
 
 		if (dribble)
 			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, 0);
-
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 	} else {
 		bus_space_set_region_1(sc->bt, sc->bh, offset, 0, count);
-		bus_space_barrier(sc->bt, sc->bh, offset, count,
-		    BUS_SPACE_BARRIER_WRITE);
 	}
 }
 
@@ -744,13 +688,6 @@ ix_attach(device_t parent, device_t self, void *aux)
 	sc->memcopyin = ix_copyin;
 	sc->memcopyout = ix_copyout;
 
-	/* If using PIO, make sure to setup single-byte read/write functions */
-	if (isc->use_pio) {
-		sc->ie_bus_barrier = ix_bus_barrier;
-	} else {
-		sc->ie_bus_barrier = NULL;
-	}
-
 	sc->ie_bus_read16 = ix_read_16;
 	sc->ie_bus_write16 = ix_write_16;
 	sc->ie_bus_write24 = ix_write_24;
@@ -776,8 +713,6 @@ ix_attach(device_t parent, device_t self, void *aux)
 
 			/* Reset write pointer to the start of RAM */
 			bus_space_write_2(iot, ioh, IX_WRITEPTR, 0);
-			bus_space_barrier(iot, ioh, IX_WRITEPTR, 2,
-			    BUS_SPACE_BARRIER_WRITE);
 
 			/* Write test pattern */
 			for (i = 0, wpat = 1; i < memsize; i += 2) {
@@ -785,14 +720,8 @@ ix_attach(device_t parent, device_t self, void *aux)
 				wpat += 3;
 			}
 
-			/* Flush all reads & writes to data port */
-			bus_space_barrier(iot, ioh, IX_DATAPORT, 2,
-			    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
-
 			/* Reset read pointer to beginning of card RAM */
 			bus_space_write_2(iot, ioh, IX_READPTR, 0);
-			bus_space_barrier(iot, ioh, IX_READPTR, 2,
-			    BUS_SPACE_BARRIER_WRITE);
 
 			/* Read and verify test pattern */
 			for (i = 0, wpat = 1; i < memsize; i += 2) {
@@ -814,8 +743,6 @@ ix_attach(device_t parent, device_t self, void *aux)
 
 			/* Reset write pointer to start of card RAM */
 			bus_space_write_2(iot, ioh, IX_WRITEPTR, 0);
-			bus_space_barrier(iot, ioh, IX_WRITEPTR, 2,
-			    BUS_SPACE_BARRIER_WRITE);
 
 			/* Write out test pattern */
 			for (i = 0, bpat = 1; i < memsize; i++) {
@@ -823,14 +750,8 @@ ix_attach(device_t parent, device_t self, void *aux)
 				bpat += 3;
 			}
 
-			/* Flush all reads & writes to data port */
-			bus_space_barrier(iot, ioh, IX_DATAPORT, 2,
-			    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
-
 			/* Reset read pointer to beginning of card RAM */
 			bus_space_write_2(iot, ioh, IX_READPTR, 0);
-			bus_space_barrier(iot, ioh, IX_READPTR, 2,
-			    BUS_SPACE_BARRIER_WRITE);
 
 			/* Read and verify test pattern */
 			for (i = 0, bpat = 1; i < memsize; i++) {
@@ -885,8 +806,6 @@ ix_attach(device_t parent, device_t self, void *aux)
 	if (isc->use_pio) {
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR,
 		    IE_SCP_BUS_USE((u_long)sc->scp));
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
-		    BUS_SPACE_BARRIER_WRITE);
 
 		bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT,
 		    IE_SYSBUS_16BIT);
@@ -900,13 +819,6 @@ ix_attach(device_t parent, device_t self, void *aux)
 	ix_write_24(sc, IE_ISCP_BASE((u_long)sc->iscp), (u_long)sc->iscp);
 
 	/* Flush setup of pointers, check if chip answers */
-	if (isc->use_pio) {
-		bus_space_barrier(sc->bt, sc->bh, 0, IX_IOSIZE,
-		    BUS_SPACE_BARRIER_WRITE);
-	} else
-		bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
-		    BUS_SPACE_BARRIER_WRITE);
-
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: Can't talk to i82586!\n",
 			device_xname(self)));
@@ -941,10 +853,6 @@ ix_attach(device_t parent, device_t self, void *aux)
 
 	/* Enable interrupts */
 	bus_space_write_1(iot, ioh, IX_IRQ, irq_encoded | IX_IRQ_ENABLE);
-
-	/* Flush all writes to registers */
-	bus_space_barrier(iot, ioh, 0, ia->ia_io[0].ir_size,
-	    BUS_SPACE_BARRIER_WRITE);
 
 	isc->irq_encoded = irq_encoded;
 
