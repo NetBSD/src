@@ -3025,6 +3025,15 @@ xcb_glx_set_client_info_arb_sizeof (const void  *_buffer)
     xcb_block_len += _aux->gl_str_len * sizeof(char);
     xcb_tmp += xcb_block_len;
     xcb_align_to = ALIGNOF(char);
+    xcb_align_to = 4;
+    /* insert padding */
+    xcb_pad = -xcb_block_len & (xcb_align_to - 1);
+    xcb_buffer_len += xcb_block_len + xcb_pad;
+    if (0 != xcb_pad) {
+        xcb_tmp += xcb_pad;
+        xcb_pad = 0;
+    }
+    xcb_block_len = 0;
     /* insert padding */
     xcb_pad = -xcb_block_len & (xcb_align_to - 1);
     xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -3203,7 +3212,7 @@ char *
 xcb_glx_set_client_info_arb_glx_extension_string (const xcb_glx_set_client_info_arb_request_t *R)
 {
     xcb_generic_iterator_t prev = xcb_glx_set_client_info_arb_gl_extension_string_end(R);
-    return (char *) ((char *) prev.data + XCB_TYPE_PAD(char, prev.index) + 0);
+    return (char *) ((char *) prev.data + ((-prev.index) & (4 - 1)) + 0);
 }
 
 int
@@ -3217,7 +3226,7 @@ xcb_glx_set_client_info_arb_glx_extension_string_end (const xcb_glx_set_client_i
 {
     xcb_generic_iterator_t i;
     xcb_generic_iterator_t prev = xcb_glx_set_client_info_arb_gl_extension_string_end(R);
-    i.data = ((char *) ((char*) prev.data + XCB_TYPE_PAD(char, prev.index))) + (R->glx_str_len);
+    i.data = ((char *) ((char*) prev.data + ((-prev.index) & (4 - 1)))) + (R->glx_str_len);
     i.rem = 0;
     i.index = (char *) i.data - (char *) R;
     return i;
@@ -3393,6 +3402,15 @@ xcb_glx_set_client_info_2arb_sizeof (const void  *_buffer)
     xcb_block_len += _aux->gl_str_len * sizeof(char);
     xcb_tmp += xcb_block_len;
     xcb_align_to = ALIGNOF(char);
+    xcb_align_to = 4;
+    /* insert padding */
+    xcb_pad = -xcb_block_len & (xcb_align_to - 1);
+    xcb_buffer_len += xcb_block_len + xcb_pad;
+    if (0 != xcb_pad) {
+        xcb_tmp += xcb_pad;
+        xcb_pad = 0;
+    }
+    xcb_block_len = 0;
     /* insert padding */
     xcb_pad = -xcb_block_len & (xcb_align_to - 1);
     xcb_buffer_len += xcb_block_len + xcb_pad;
@@ -3571,7 +3589,7 @@ char *
 xcb_glx_set_client_info_2arb_glx_extension_string (const xcb_glx_set_client_info_2arb_request_t *R)
 {
     xcb_generic_iterator_t prev = xcb_glx_set_client_info_2arb_gl_extension_string_end(R);
-    return (char *) ((char *) prev.data + XCB_TYPE_PAD(char, prev.index) + 0);
+    return (char *) ((char *) prev.data + ((-prev.index) & (4 - 1)) + 0);
 }
 
 int
@@ -3585,7 +3603,7 @@ xcb_glx_set_client_info_2arb_glx_extension_string_end (const xcb_glx_set_client_
 {
     xcb_generic_iterator_t i;
     xcb_generic_iterator_t prev = xcb_glx_set_client_info_2arb_gl_extension_string_end(R);
-    i.data = ((char *) ((char*) prev.data + XCB_TYPE_PAD(char, prev.index))) + (R->glx_str_len);
+    i.data = ((char *) ((char*) prev.data + ((-prev.index) & (4 - 1)))) + (R->glx_str_len);
     i.rem = 0;
     i.index = (char *) i.data - (char *) R;
     return i;

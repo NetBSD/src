@@ -193,8 +193,7 @@ typedef struct xcb_screensaver_suspend_request_t {
     uint8_t  major_opcode;
     uint8_t  minor_opcode;
     uint16_t length;
-    uint8_t  suspend;
-    uint8_t  pad0[3];
+    uint32_t suspend;
 } xcb_screensaver_suspend_request_t;
 
 /** Opcode for xcb_screensaver_notify. */
@@ -492,7 +491,7 @@ xcb_screensaver_unset_attributes (xcb_connection_t *c,
  */
 xcb_void_cookie_t
 xcb_screensaver_suspend_checked (xcb_connection_t *c,
-                                 uint8_t           suspend);
+                                 uint32_t          suspend);
 
 /**
  *
@@ -504,7 +503,7 @@ xcb_screensaver_suspend_checked (xcb_connection_t *c,
  */
 xcb_void_cookie_t
 xcb_screensaver_suspend (xcb_connection_t *c,
-                         uint8_t           suspend);
+                         uint32_t          suspend);
 
 
 #ifdef __cplusplus
