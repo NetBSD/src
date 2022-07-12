@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.65 2022/05/03 12:53:51 uwe Exp $
+# $NetBSD: md.cats,v 1.66 2022/07/12 01:51:05 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -26,16 +26,16 @@
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.19		xserver-xf86-video-ati-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		xserver-xf86-video-chips-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		xserver-xf86-video-chips-drivers	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	xserver-xf86-video-cirrus_alpine-drivers	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1	xserver-xf86-video-cirrus_alpine-drivers	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so	xdebug-obsolete	obsolete
-./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so.1	xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1	xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so	xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so.1	xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so		xserver-xf86-video-cirrus-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so.1		xserver-xf86-video-cirrus-drivers	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_laguna.so	xserver-xf86-video-cirrus_laguna-drivers	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1	xserver-xf86-video-cirrus_laguna-drivers	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so	xdebug-obsolete	obsolete
-./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	xdebug-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_laguna.so	xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1	xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so	xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so.1		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=110

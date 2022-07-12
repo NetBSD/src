@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.15 2022/02/25 17:42:59 mrg Exp $
+# $NetBSD: md.cats,v 1.16 2022/07/12 01:51:05 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -40,9 +40,9 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.19.debug	xdebug-xf86-video-ati-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug	xdebug-xf86-video-chips-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-xf86-video-cirrus_alpine-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	xdebug-xf86-video-cirrus_laguna-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-xf86-video-glint-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	xdebug-xf86-video-i128-debug		xorg,debug
