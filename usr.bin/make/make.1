@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.314 2022/07/12 23:03:52 rillig Exp $
+.\"	$NetBSD: make.1,v 1.315 2022/07/12 23:47:00 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1263,7 +1263,7 @@ The supported modifiers are:
 Replaces each word in the variable with its suffix.
 .It Cm \&:H
 Replaces each word in the variable with everything but the last component.
-.It Cm \&:M Ns Ar pattern
+.It Cm \&:M\| Ns Ar pattern
 Selects only those words that match
 .Ar pattern .
 The standard shell wildcard characters
@@ -1282,7 +1282,7 @@ will normalize the inter-word spacing, removing all leading and
 trailing space, and converting multiple consecutive spaces
 to single spaces.
 .
-.It Cm \&:N Ns Ar pattern
+.It Cm \&:N\| Ns Ar pattern
 This is identical to
 .Sq Cm \&:M ,
 but selects all words which do not match
@@ -1341,11 +1341,11 @@ This is equivalent to:
 .Sq \&:S/\e\&$/&&/g:Q .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
-.It Cm \&:range[=count]
+.It Cm \&:range Ns Oo = Ns Ar count Oc
 The value is an integer sequence representing the words of the original
 value, or the supplied
 .Va count .
-.It Cm \&:gmtime[=utc]
+.It Cm \&:gmtime Ns Oo = Ns Ar utc Oc
 The value is a format string for
 .Xr strftime 3 ,
 using
@@ -1355,7 +1355,7 @@ If a
 value is not provided or is 0, the current time is used.
 .It Cm \&:hash
 Computes a 32-bit hash of the value and encode it as hex digits.
-.It Cm \&:localtime[=utc]
+.It Cm \&:localtime Ns Oo = Ns Ar utc Oc
 The value is a format string for
 .Xr strftime 3 ,
 using
@@ -1390,7 +1390,7 @@ words delimited by white space.
 See also
 .Sq Cm \&:[@] .
 .Sm off
-.It Cm \&:S No \&/ Ar old_string No \&/ Ar new_string No \&/ Op Cm 1gW
+.It Cm \&:S\| No \&/ Ar old_string\| No \&/ Ar new_string\| No \&/ Op Cm 1gW
 .Sm on
 Modifies the first occurrence of
 .Ar old_string
@@ -1445,7 +1445,7 @@ of a dollar sign
 .Pq Ql \&$ ,
 not a preceding dollar sign as is usual.
 .Sm off
-.It Cm \&:C No \&/ Ar pattern No \&/ Ar replacement No \&/ Op Cm 1gW
+.It Cm \&:C\| No \&/ Ar pattern\| No \&/ Ar replacement\| No \&/ Op Cm 1gW
 .Sm on
 The
 .Cm \&:C
@@ -1490,7 +1490,7 @@ Replaces each word in the variable with its last path component.
 Removes adjacent duplicate words (like
 .Xr uniq 1 ) .
 .Sm off
-.It Cm \&:\&? Ar true_string Cm \&: Ar false_string
+.It Cm \&:\&?\| Ar true_string\| Cm \&: Ar false_string
 .Sm on
 If the variable name (not its value), when parsed as a .if conditional
 expression, evaluates to true, return as its value the
@@ -1505,7 +1505,7 @@ A common error is trying to use expressions like
 which actually tests defined(NUMBERS),
 to determine if any words match "42" you need to use something like:
 .Dl ${"${NUMBERS:M42}" != \&"\&":?match:no} .
-.It Ar :old_string=new_string
+.It Cm :\| Ns Ar old_string\| Ns Cm = Ns Ar new_string
 This is the
 .At V
 style variable substitution.
@@ -1558,7 +1558,7 @@ expansion of a dollar sign
 .Pq Ql \&$ ,
 not a preceding dollar sign as is usual.
 .Sm off
-.It Cm \&:@ Ar temp Cm @ Ar string Cm @
+.It Cm \&:@ Ar temp\| Cm @ Ar string\| Cm @
 .Sm on
 This is the loop expansion mechanism from the OSF Development
 Environment (ODE) make.
@@ -1577,7 +1577,7 @@ For example.
 .Pp
 However a single character variable is often more readable:
 .Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}
-.It Cm \&:_[=var]
+.It Cm \&:_ Ns Oo Cm = Ns Ar var Oc
 Saves the current variable value in
 .Ql $_
 or the named
@@ -1598,7 +1598,7 @@ is used to save the result of the
 .Ql :S
 modifier which is later referenced using the index values from
 .Ql :range .
-.It Cm \&:U Ns Ar newval
+.It Cm \&:U\| Ns Ar newval
 If the variable is undefined,
 .Ar newval
 is the value.
@@ -1608,7 +1608,7 @@ It is handy for setting per-target CFLAGS for instance:
 .Dl ${_${.TARGET:T}_CFLAGS:U${DEF_CFLAGS}}
 If a value is only required if the variable is undefined, use:
 .Dl ${VAR:D:Unewval}
-.It Cm \&:D Ns Ar newval
+.It Cm \&:D\| Ns Ar newval
 If the variable is defined,
 .Ar newval
 is the value.
@@ -1622,7 +1622,7 @@ name of the variable is used.
 In order for this modifier to work, the name (node) must at least have
 appeared on the rhs of a dependency.
 .Sm off
-.It Cm \&:\&! Ar cmd Cm \&!
+.It Cm \&:\&! Ar cmd\| Cm \&!
 .Sm on
 The output of running
 .Ar cmd
