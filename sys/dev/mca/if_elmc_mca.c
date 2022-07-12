@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.32 2016/07/14 04:00:45 msaitoh Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.33 2022/07/12 02:06:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.32 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.33 2022/07/12 02:06:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,6 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 	    (u_long) sc->iscp);
 
 	/* flush setup of pointers, check if chip answers */
-	bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
-			  BUS_SPACE_BARRIER_WRITE);
 	if (!i82586_proberam(sc)) {
 		aprint_error_dev(self, "can't talk to i82586!\n");
 
@@ -282,9 +280,6 @@ elmc_mca_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 	int dribble;
 	u_int8_t* bptr = dst;
 
-	bus_space_barrier(sc->bt, sc->bh, offset, size,
-			  BUS_SPACE_BARRIER_READ);
-
 	if (offset % 2) {
 		*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
 		offset++; bptr++; size--;
@@ -306,8 +301,6 @@ elmc_mca_copyout (struct ie_softc *sc, const void *src, int offset,
     size_t size)
 {
 	int dribble;
-	int osize = size;
-	int ooffset = offset;
 	const u_int8_t* bptr = src;
 
 	if (offset % 2) {
@@ -323,15 +316,11 @@ elmc_mca_copyout (struct ie_softc *sc, const void *src, int offset,
 		offset += size - 1;
 		bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
 	}
-
-	bus_space_barrier(sc->bt, sc->bh, ooffset, osize,
-			  BUS_SPACE_BARRIER_WRITE);
 }
 
 static u_int16_t
 elmc_mca_read_16 (struct ie_softc *sc, int offset)
 {
-	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
         return bus_space_read_2(sc->bt, sc->bh, offset);
 }
 
@@ -339,7 +328,6 @@ static void
 elmc_mca_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 {
         bus_space_write_2(sc->bt, sc->bh, offset, value);
-	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
@@ -347,7 +335,6 @@ elmc_mca_write_24 (struct ie_softc *sc, int offset, int addr)
 {
         bus_space_write_4(sc->bt, sc->bh, offset, addr +
 	    (u_long) sc->sc_maddr - (u_long) sc->sc_iobase);
-	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
 /*
