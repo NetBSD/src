@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.313 2022/07/12 22:59:43 rillig Exp $
+.\"	$NetBSD: make.1,v 1.314 2022/07/12 23:03:52 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -252,7 +252,7 @@ This option should
 be specified by the user.
 .Pp
 When the
-.Ar j
+.Fl j
 option is in use in a recursive build, this option is passed by a make
 to child makes to allow all the make processes in the build to
 cooperate to avoid overloading the system.
@@ -263,8 +263,8 @@ may have running at any one time.
 The value is saved in
 .Va .MAKE.JOBS .
 Turns compatibility mode off, unless the
-.Ar B
-flag is also specified.
+.Fl B
+option is also specified.
 When compatibility mode is off, all commands associated with a
 target are executed in a single shell invocation as opposed to the
 traditional one shell invocation per line.
@@ -870,8 +870,8 @@ option.
 If
 .Nm
 is run with
-.Ar j
-then output for each target is prefixed with a token
+.Fl j ,
+the output for each target is prefixed with a token
 .Ql --- target ---
 the first part of which can be controlled via
 .Va .MAKE.JOB.PREFIX .
