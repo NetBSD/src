@@ -627,9 +627,10 @@ xcb_shm_create_segment_reply (xcb_connection_t                 *c,
  * @param c      The connection
  * @param reply  The reply
  *
- * Returns the array of reply fds of the request asked by
+ * Returns a pointer to the array of reply fds of the reply.
  *
- * The returned value must be freed by the caller using free().
+ * The returned value points into the reply and must not be free().
+ * The fds are not managed by xcb. You must close() them before freeing the reply.
  */
 int *
 xcb_shm_create_segment_reply_fds (xcb_connection_t                *c  /**< */,

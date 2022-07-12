@@ -171,6 +171,8 @@ typedef struct xcb_record_bad_context_error_t {
     uint8_t  error_code;
     uint16_t sequence;
     uint32_t invalid_record;
+    uint16_t minor_opcode;
+    uint8_t  major_opcode;
 } xcb_record_bad_context_error_t;
 
 /**

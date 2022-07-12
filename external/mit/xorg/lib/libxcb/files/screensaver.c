@@ -797,7 +797,7 @@ xcb_screensaver_unset_attributes (xcb_connection_t *c,
 
 xcb_void_cookie_t
 xcb_screensaver_suspend_checked (xcb_connection_t *c,
-                                 uint8_t           suspend)
+                                 uint32_t          suspend)
 {
     static const xcb_protocol_request_t xcb_req = {
         .count = 2,
@@ -811,7 +811,6 @@ xcb_screensaver_suspend_checked (xcb_connection_t *c,
     xcb_screensaver_suspend_request_t xcb_out;
 
     xcb_out.suspend = suspend;
-    memset(xcb_out.pad0, 0, 3);
 
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
@@ -824,7 +823,7 @@ xcb_screensaver_suspend_checked (xcb_connection_t *c,
 
 xcb_void_cookie_t
 xcb_screensaver_suspend (xcb_connection_t *c,
-                         uint8_t           suspend)
+                         uint32_t          suspend)
 {
     static const xcb_protocol_request_t xcb_req = {
         .count = 2,
@@ -838,7 +837,6 @@ xcb_screensaver_suspend (xcb_connection_t *c,
     xcb_screensaver_suspend_request_t xcb_out;
 
     xcb_out.suspend = suspend;
-    memset(xcb_out.pad0, 0, 3);
 
     xcb_parts[2].iov_base = (char *) &xcb_out;
     xcb_parts[2].iov_len = sizeof(xcb_out);
