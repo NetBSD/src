@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.234 2022/07/11 19:35:42 mrg Exp $
+#	 $NetBSD: mi,v 1.235 2022/07/12 02:44:43 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -763,9 +763,9 @@
 ./usr/X11R7/include/xcb/xcb_renderutil.h		xcomp-xcb-util-include	xorg
 ./usr/X11R7/include/xcb/xcb_reply.h			xcomp-xcb-util-include	xorg
 ./usr/X11R7/include/xcb/xcbext.h			xcomp-libxcb-include	xorg
-./usr/X11R7/include/xcb/xevie.h				xcomp-obsolete	obsolete
+./usr/X11R7/include/xcb/xevie.h				xcomp-obsolete		obsolete
 ./usr/X11R7/include/xcb/xf86dri.h			xcomp-libxcb-include	xorg
-./usr/X11R7/include/xcb/xf86vidmode.h			xcomp-xorgproto-include	xorg
+./usr/X11R7/include/xcb/xf86vidmode.h			xcomp-obsolete		obsolete
 ./usr/X11R7/include/xcb/xfixes.h			xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/xinerama.h			xcomp-libxcb-include	xorg
 ./usr/X11R7/include/xcb/xinput.h			xcomp-libxcb-include	xorg
@@ -5853,6 +5853,7 @@
 ./usr/X11R7/share/xcb/bigreq.xml			xcomp-xcb-proto-share	xorg
 ./usr/X11R7/share/xcb/composite.xml			xcomp-xcb-proto-share	xorg
 ./usr/X11R7/share/xcb/damage.xml			xcomp-xcb-proto-share	xorg
+./usr/X11R7/share/xcb/dbe.xml				xcomp-xcb-proto-share	xorg
 ./usr/X11R7/share/xcb/dpms.xml				xcomp-xcb-proto-share	xorg
 ./usr/X11R7/share/xcb/dri2.xml				xcomp-xcb-proto-share	xorg
 ./usr/X11R7/share/xcb/dri3.xml				xcomp-xcb-proto-share	xorg
