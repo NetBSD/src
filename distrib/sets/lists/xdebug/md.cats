@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.16 2022/07/12 01:51:05 mrg Exp $
+# $NetBSD: md.cats,v 1.17 2022/07/12 23:19:53 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -47,7 +47,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-xf86-video-glint-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	xdebug-xf86-video-i128-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i740_drv.so.1.debug	xdebug-xf86-video-i740-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	xdebug-xf86-input-keyboard-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libapm_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libark_drv.so.0.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libast_drv.so.0.debug	xdebug-obsolete	xorg,obsolete
@@ -59,7 +59,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libglint_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libi128_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libi740_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.2.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmga_drv.so.2.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libneomagic_drv.so.1.debug	xdebug-obsolete	xorg,obsolete

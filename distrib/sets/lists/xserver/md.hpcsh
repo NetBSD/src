@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.29 2022/05/03 12:53:51 uwe Exp $
+# $NetBSD: md.hpcsh,v 1.30 2022/07/12 23:19:53 mrg Exp $
 ./etc/X11/xorg.conf.640x240-jp				xserver-xorg-server-etc	xorg
 ./etc/X11/xorg.conf.640x240-us				xserver-xorg-server-etc	xorg
 ./etc/X11/xorg.conf.640x480-jp				xserver-xorg-server-etc	xorg
@@ -13,7 +13,7 @@
 ./usr/X11R7/lib/X11/doc/README.modes			xserver-xorg-server-lib	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		xserver-xf86-input-keyboard-drivers	xorg
-./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		xserver-xf86-input-keyboard-drivers	xorg
+./usr/X11R7/lib/modules/drivers/kbd_drv.so.2		xserver-xf86-input-keyboard-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		xserver-xf86-input-mouse-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		xserver-xf86-input-mouse-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/ws_drv.so		xserver-xf86-input-ws-drivers	xorg

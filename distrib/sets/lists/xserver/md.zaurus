@@ -1,4 +1,4 @@
-# $NetBSD: md.zaurus,v 1.26 2022/05/03 12:53:51 uwe Exp $
+# $NetBSD: md.zaurus,v 1.27 2022/07/12 23:19:53 mrg Exp $
 ./etc/X11/xorg.conf.C3x00				xserver-xorg-server-etc	xorg
 ./etc/X11/xorg.conf.C7x0				xserver-xorg-server-etc	xorg
 ./etc/X11/xorg.conf.sample				xserver-obsolete	obsolete
@@ -10,7 +10,7 @@
 ./usr/X11R7/lib/X11/doc/README.modes			xserver-xorg-server-lib	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		xserver-xf86-input-keyboard-drivers	xorg
-./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		xserver-xf86-input-keyboard-drivers	xorg
+./usr/X11R7/lib/modules/drivers/kbd_drv.so.2		xserver-xf86-input-keyboard-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		xserver-xf86-input-mouse-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		xserver-xf86-input-mouse-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		xserver-obsolete	obsolete
